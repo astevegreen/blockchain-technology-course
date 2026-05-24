@@ -1,0 +1,35 @@
+name: consensus-lab
+
+# Phase 9.2a: student containers are now managed by the lane-service.
+# They're created on demand via `docker run` using the student image.
+# The student service here is only used as a build target for the image.
+
+services:
+  # Build target only — lane-service creates containers from this image.
+  student:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: consensus-lab-student
+    profiles: ["build-only"]
+    networks:
+      - student-net
+
+  # Instructor terminal (always up, not lane-managed)
+  instructor:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: consensus-lab-instructor:latest
+    networks:
+      - instructor-net
+    volumes:
+      - ./lab4_pow_pos_overview.qmd:/home/student/lab/lab4_pow_pos_overview.qmd:ro
+
+networks:
+  student-net:
+    name: consensus-student-net
+    external: true
+  instructor-net:
+    name: consensus-instructor-net
+    external: true

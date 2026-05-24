@@ -1,0 +1,716 @@
+---
+title: Trust and P2P
+subtitle: 'Section III: Distributed Systems Fundamentals'
+author: Army Cyber Institute
+lesson: 03-DS
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## Intro: “The Bad Download” {.smaller}
+
+:::: columns
+
+::: column
+![](../images/trust_intro.png)
+:::
+
+::: column
+
+- You need a copy of a specific training manual PDF. Your file got corrupted the night before a graded assignment
+- You find two sources on a peer-to-peer file sharing network:
+  - **Peer A** has no download history, no ratings, and just appeared, but the file is available *right now*
+  - **Peer B** has months of activity, dozens of verified successful transfers, and multiple positive ratings, but they're in demand and you'll wait an estimated 30 minutes
+- Your assignment is due in 45 minutes. Do you gamble on the unknown peer to save time, or wait for the one with a track record?
+
+:::
+
+::::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes trust in P2P as a practical decision under uncertainty, not just an abstract security property. It matters here because the rest of the lesson explains how systems turn that uncertainty into usable signals and defenses. Emphasize that urgency, risk, and lack of a central referee are what make trust mechanisms necessary.
+
+**Key Points**
+- Trust decisions in P2P are made under uncertainty and time pressure.
+- Open networks usually lack a central authority to vouch for strangers.
+- Trust mechanisms help peers choose safer partners when direct knowledge is limited.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+
+## What Is “Trust” in P2P?
+
+- **Trust:** expectation a peer will behave as promised
+- **Reputation:** summary of past behavior used to predict trust
+- **Why it matters:** no central authority; strangers must cooperate
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines the lesson's core terms so students can distinguish trust from reputation before comparing models. It matters here because the rest of the lesson depends on that distinction when moving from local judgments to formal scoring systems. Emphasize that trust predicts future behavior while reputation summarizes past evidence.
+
+**Key Points**
+- Trust is an expectation about how a peer will behave in the next interaction.
+- Reputation is a summary of prior outcomes used to inform that expectation.
+- In P2P, these signals help strangers cooperate without central enforcement.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+
+## Cryptographic vs. Social Trust
+
+::: {.column width="50%"}
+**Cryptographic trust**
+
+- Verifies identity and message integrity
+- Prevents tampering/impersonation
+- Needs keys, signatures, certificates
+:::
+::: {.column width="50%"}
+**Social (behavioral) trust**
+
+- Rates honesty/reliability over time
+- Uses feedback and reputation
+- Predicts who will deliver correctly
+:::
+
+
+::: {.callout-note appearance="simple"}
+A valid signature proves who sent a message, but it says nothing about whether they will behave honestly. These layers solve separate problems.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates identity and integrity assurances from behavioral predictions. It matters here because students often over-credit cryptography and need to see why reputation systems are still required. Emphasize that a peer can prove who they are and still behave dishonestly.
+
+**Key Points**
+- Cryptographic trust verifies identity, integrity, and authenticity.
+- Social trust estimates whether a peer is likely to behave honestly over time.
+- These layers complement each other rather than replacing one another.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+## Direct vs. Indirect Trust {.smaller}
+
+
+- **Direct trust:** first-hand experiences with a peer
+  - *Example:* You've downloaded files from Peer A five times, and every file verified correct. Your confidence in Peer A is high.
+  - *Strength:* High confidence, but limited reach. You can only rate peers you've personally interacted with.
+- **Indirect trust:** recommendations from others you trust
+  - *Example:* Peer B, whom you trust, vouches for Peer C, someone you've never met. You tentatively extend trust to C.
+  - *Strength:* Extends your reach across the network, but must be discounted by the recommender's own credibility.
+- **Combining both:** Use direct trust where you have it; fall back on indirect trust (weighted by recommender quality) for strangers. Direct experience should quickly override hearsay as relationships form.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how trust evidence is gathered from both personal experience and community reports. It matters here because later models differ in how they weight and propagate these two sources. Emphasize that direct evidence is stronger, while indirect evidence expands reach but must be discounted by source quality.
+
+**Key Points**
+- Direct trust comes from first-hand interactions and is usually the strongest signal.
+- Indirect trust extends your view through recommendations from other peers.
+- Acronym P2P means peer-to-peer.
+- Recommendations should be weighted by the recommender's credibility.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+
+## Properties of Reputation Systems {.smaller}
+
+
+- **Accuracy:** Scores correlate with actual future behavior; honest peers trend high, dishonest peers trend low. Scores should reflect verified outcomes, not just volume of ratings.
+- **Scalability:** Computation, storage, and communication costs remain manageable as the network grows. Updates should be incremental, not require global recomputation.
+- **Robustness:** The system resists manipulation. Sybil floods, collusion rings, and slander campaigns cannot easily distort scores. No single actor or small group can dominate the signal.
+- **Bootstrap:** New participants start with low or neutral trust and must earn reputation through verified interactions. This prevents free-ride entry while still allowing honest newcomers to climb.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines the design criteria a reputation system must satisfy before it is useful in production. It matters here because the next model comparisons only make sense if students know what counts as a good trust system. Emphasize that accuracy, scalability, robustness, and newcomer handling must all be balanced at once.
+
+**Key Points**
+- Scores should correlate with future behavior, not just rating volume.
+- Scalable systems keep computation, storage, and messaging manageable as the network grows.
+- Robust systems resist manipulation such as Sybil attacks and collusion.
+- Bootstrap means how new participants enter and begin earning reputation.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+
+
+## PeerTrust: How Trust Is Calculated {.smaller}
+
+- **Feedback score:** how satisfied peers were with past interactions.
+- **Feedback scope:** number of transactions behind the rating.
+- **Rater credibility:** weight ratings by how trustworthy the reviewer is.
+- **Context factors:** consider the type of transaction and the surrounding community norms.
+
+::: {.callout-note appearance=”simple”}
+**Simplified formula:**
+
+$$T(peer) = \sum_{i} \underbrace{S(i)}_{\text{satisfaction}} \times \underbrace{Cr(i)}_{\text{rater credibility}} \times \underbrace{TF(i)}_{\text{context weight}}$$
+
+Each rater $i$'s feedback is scaled by how credible *they* are and how relevant the transaction type is. Low-credibility raters and low-stakes transactions contribute less to the final score.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces PeerTrust as a context-aware local reputation model built from weighted feedback. It matters here because students are now ready to see how abstract trust properties become a concrete scoring mechanism. Emphasize that PeerTrust is more than averaging ratings; it weights evidence by quality, scope, and context.
+
+**Key Points**
+- PeerTrust combines satisfaction, rater credibility, transaction scope, and context.
+- Low-credibility raters should contribute less to the final score.
+- Context weighting helps prevent high-volume trivial successes from masking important failures.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+
+:::
+
+
+## PeerTrust: Handling Manipulation {.smaller}
+
+How do PeerTrust's factors defend against manipulation?
+
+- **Credibility weighting vs. ballot stuffing:** Five fake accounts all rate each other 5 stars. But none of them have established credibility, so their ratings carry near-zero weight. The inflation attempt fizzles.
+- **Context sensitivity vs. reputation milking:** A peer completes 50 small file transfers successfully, then delivers a corrupted critical file. The high-stakes failure is weighted far more heavily, so the score drops sharply despite the long "good" streak.
+- **Feedback scope vs. thin history:** A newcomer with 3 perfect ratings looks good, but 3 data points aren't enough for confidence. PeerTrust's scope parameter keeps scores tentative until evidence accumulates.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how PeerTrust's design choices blunt common manipulation tactics in practice. It matters here because students need to see not only how the model is computed, but why its weighting choices improve resilience. Emphasize that credibility, context, and evidence depth make fast reputation fraud harder.
+
+**Key Points**
+- Credibility weighting reduces the impact of ballot stuffing by untrusted raters.
+- Context weighting makes high-stakes failures matter more than many trivial successes.
+- Thin history should be treated cautiously until enough evidence accumulates.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+
+:::
+
+
+## EigenTrust: From Local Opinions to Global Scores {.smaller}
+
+- Begin with each peer’s **local satisfaction ratios** from direct interactions.
+- **Normalize per rater** to form a consistent trust matrix.
+- **Iteratively propagate** trust values through the network until scores converge and stabilize.
+
+::: {.callout-note appearance="simple"}
+**Simplified formula:**
+
+Where: $s_{ij}$ = net satisfaction (successful minus failed interactions between peers $i$ and $j$); $c_{ij}$ = normalized local trust that $i$ places in $j$; $C$ = the matrix of all $c_{ij}$ values; $\vec{t}$ = the global trust vector; $k$ = iteration round.
+
+1. **Local trust:** $c_{ij} = \frac{\max(s_{ij},\; 0)}{\sum_k \max(s_{ik},\; 0)}$ . Normalize each peer’s positive experiences into a probability distribution
+2. **Global trust:** $\vec{t}^{\,(k+1)} = C^T \cdot \vec{t}^{\,(k)}$ . Iteratively propagate trust through the network until scores stabilize
+3. **Anchor mixing:** blend in a small weight toward pre-trusted peers at each step to prevent drift
+
+The result is a single trust vector $\vec{t}$ where each entry is peer $j$’s global reputation.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces EigenTrust as a way to turn many local trust judgments into a shared global score. It matters here because the lesson is shifting from personalized trust to network-wide reputation. Emphasize that normalization and iteration let the system converge on a common baseline without a central server.
+
+**Key Points**
+- EigenTrust starts from local satisfaction ratios built from direct interactions.
+- Normalization turns those local values into a bounded trust matrix.
+- Iterative propagation produces a global trust vector for the network.
+- Matrix means a structured table of values used in the computation.
+
+**Walkthrough**
+None
+
+**Sources**
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+## EigenTrust: Anchors and Collusion Resistance {.smaller}
+
+
+How do EigenTrust’s anchors defend against manipulation?
+
+- **Anchors vs. collusion:** Ten nodes form a clique and rate each other highly. But trust only propagates globally if it traces back to anchor nodes, and anchors never endorsed the clique. Their mutual praise stays contained within their cluster; the rest of the network never sees high scores for them.
+- **Normalization vs. flooding:** Each node’s trust values are normalized to probabilities, so total influence stays bounded. A node that rates 100 peers highly doesn’t give each one more trust than a node that rates 5. Influence is spread, not amplified.
+- **Low initial trust vs. rebranding:** A misbehaving node discards its identity and rejoins fresh. But newcomers start with near-zero trust weight. There’s no shortcut back to influence without sustained, verified good behavior.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why EigenTrust uses anchors to keep global trust from drifting into colluding clusters. It matters here because a global model needs a stable starting point if it is going to resist manipulation. Emphasize that anchors are not all-powerful controllers; they are trusted reference points that constrain propagation.
+
+**Key Points**
+- Pre-trusted anchors provide a stable reference for the global trust calculation.
+- Colluding groups struggle to gain broad influence if anchors do not endorse them.
+- New identities begin with little weight and must earn trust over time.
+
+**Walkthrough**
+None
+
+**Sources**
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+
+## PeerTrust vs. EigenTrust: Summary {.smaller}
+
+
+Now that we've examined each model individually:
+
+:::: columns
+
+::: {.column width=”50%”}
+**PeerTrust: Local / Personalized**
+
+- Multi-factor: feedback score, scope, rater credibility, context
+- Scores are **per-peer and context-aware**, tailored to your perspective
+- Fast reaction to your own evidence
+- Narrow coverage; vulnerable to echo chambers
+:::
+::: {.column width=”50%”}
+**EigenTrust: Global / Network-Wide**
+
+- Normalizes local trust; iterates to converge on global scores
+- **Pre-trusted anchors** ground the computation and resist collusion
+- Broad coverage of the network; isolates universally bad actors
+- Needs careful anchoring and damping
+:::
+
+::::
+
+::: {.callout-note appearance=”simple”}
+Many real systems blend both: start with a global baseline (EigenTrust-style) to stay safe among strangers, then personalize with local context (PeerTrust-style) as your own interactions accumulate.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide compares PeerTrust and EigenTrust directly so students can see when each model is a better fit. It matters here because the lesson has covered both mechanisms separately and now needs a practical synthesis. Emphasize the trade-off between local precision and global coverage, and note that hybrid designs often use both.
+
+**Key Points**
+- PeerTrust is local, multi-factor, and sensitive to transaction context.
+- EigenTrust is global, anchor-based, and useful when dealing with strangers at scale.
+- Hybrid systems can combine a global prior with local personalization.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+## Trust but Verify: The Complete Trust Loop {.smaller}
+
+
+A complete trust decision has three steps:
+
+1. **Cryptographic verification.** Use hashes and digital signatures to confirm data integrity and sender identity. This is the crypto trust layer from earlier: it answers *”was this tampered with?”* but not *”is this person honest?”*
+2. **Reputation-based selection.** Choose peers with established track records for the task type. Use PeerTrust-style context weighting for tasks you understand, EigenTrust-style global scores for strangers.
+3. **Close the loop.** Feed verified outcomes (good *and* bad) back into the reputation system. Verified results should carry more weight than unverified opinions, because they’re grounded in facts rather than assertions.
+
+::: {.callout-note appearance=”simple”}
+This is the “trust but verify” pattern: let reputation aim you toward good peers, let verification confirm the result, then update your aim for next time.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide ties cryptographic checks, reputation, and outcome feedback into one operating loop. It matters here because students should leave with a workflow, not just isolated concepts. Emphasize that verification gives reputation systems stronger evidence and helps good decisions improve over time.
+
+**Key Points**
+- Use cryptography first to verify identity and integrity.
+- Use reputation to choose among plausible peers before interacting.
+- Feed verified good and bad outcomes back into the trust system.
+- Integrity means that data has not been altered in transit.
+
+**Walkthrough**
+None
+
+**Sources**
+- @kamvar_eigentrustalgorithmreputation_2003
+- @marti_trustreputationpeertopeer_2005
+- @lixiong_peertrustsupportingreputationbased_2004
+
+:::
+
+
+## Threats: Sybil Attacks {.smaller}
+
+
+**The attack:** A single adversary creates many fake identities to gain outsized influence: flooding feedback, capturing neighbor slots, or surrounding a target.
+
+**Scale matters: 1 new identity vs. 1,000:**
+
+- **One newcomer** is straightforward, but **1,000 newcomers from one attacker** can overwhelm by volume: mutual endorsements, vote flooding, or neighbor capture.
+
+**How each system defends:**
+
+- **PeerTrust:** Newcomers have zero credibility, so their ratings carry near-zero weight. Even 1,000 low-credibility raters endorsing each other produce negligible score inflation. Credibility must be *earned* through verified interactions.
+- **EigenTrust:** Trust only propagates globally through anchor nodes. A cluster of 1k Sybils recycling praise among themselves gains no endorsement from anchors, so their trust stays contained. Normalization bounds total influence per node.
+
+::: {.callout-note appearance="simple"}
+The shared principle: **influence must be earned, not manufactured.** Cheap identities can flood a network, but both systems ensure those identities start with near-zero weight and can only gain influence through sustained, verified good behavior.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide frames Sybil attacks as an identity-scaling problem rather than a single bad-peer problem. It matters here because many trust systems fail when they let fresh identities gain influence too quickly. Emphasize that both PeerTrust and EigenTrust defend by making influence costly even when identities are cheap.
+
+**Key Points**
+- A Sybil attack creates many fake identities to amplify one adversary's influence.
+- Newcomers should start with near-zero weight until they earn trust.
+- PeerTrust uses credibility weighting, while EigenTrust uses anchor-based propagation.
+
+**Walkthrough**
+None
+
+**Sources**
+- @kamvar_eigentrustalgorithmreputation_2003
+- @douceur_sybilattack_2002
+
+:::
+
+
+## Threats: Rebranding Attacks {.smaller}
+
+
+**The attack:** A node with a bad reputation discards its identity and rejoins as a “new” participant with a clean slate.
+
+- Unlike Sybil attacks (many identities at once), rebranding is a *serial* strategy: one identity at a time, discarded when tainted.
+- The attacker hopes that “new” means “neutral” rather than “suspicious.”
+
+**How each system defends:**
+
+- **PeerTrust:** Newcomers start with low feedback scope (few transactions) and zero rater credibility. Even after rebranding, the attacker must complete many verified interactions before gaining meaningful influence, the same cost as the first time.
+- **EigenTrust:** New identities carry near-zero weight in the global trust vector. Without endorsement from anchor nodes, the rebranded identity has no shortcut to high scores. The cost of rebuilding reputation is the defense.
+
+::: {.callout-note appearance=”simple”}
+The shared principle: **there is no free ride for new identities.** Trust must be earned through sustained, verified good behavior, making rebranding a slow and costly strategy.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains rebranding as a serial version of the identity reset problem. It matters here because systems that treat new as neutral or trustworthy invite attackers to discard bad histories and start over. Emphasize that the defense is to make newcomers rebuild trust from the beginning.
+
+**Key Points**
+- Rebranding means abandoning a tainted identity and rejoining with a new one.
+- Both models defend by giving new identities little initial influence.
+- The cost of rebuilding reputation is what makes rebranding unattractive.
+
+**Walkthrough**
+None
+
+**Sources**
+- @kamvar_eigentrustalgorithmreputation_2003
+- @douceur_sybilattack_2002
+
+:::
+
+
+## Threats: Collusion {.smaller}
+
+**The attack:** A group of 10 peers forms a ring. They rate each other 5 stars on every interaction and rate a competing honest peer 1 star, trying to boost themselves and bury the competition.
+
+**How each system defends:**
+
+- **PeerTrust:** The ring members must each have independently earned credibility before their ratings carry weight. Ten low-credibility peers rating each other produces negligible score changes. Think: 10 strangers writing each other glowing LinkedIn recommendations on day one.
+- **EigenTrust:** Trust only propagates globally through anchor nodes. The ring’s internal praise circulates within the cluster but never reaches anchors, so their scores stay contained. Normalization ensures that even high-volume raters can’t amplify each other beyond their bounded share.
+
+::: {.callout-note appearance="simple"}
+The shared principle: **praise without external endorsement stays local.** Colluders can inflate each other’s ratings, but without credibility (PeerTrust) or anchor-traced trust (EigenTrust), that inflation never reaches the broader network.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how coordinated praise can distort naive rating systems. It matters here because collusion is a natural threat when multiple adversaries can coordinate their feedback. Emphasize that local credibility and anchor-based global propagation both keep fake praise from spreading widely.
+
+**Key Points**
+- Collusion uses coordinated positive ratings inside a malicious group.
+- Raw averaging is vulnerable because it ignores who is doing the rating.
+- Credibility weighting and anchors help keep praise without outside endorsement local.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+
+## Threats: Slander {.smaller}
+
+**The attack:** Five malicious peers target an honest node by flooding it with false 1-star ratings after every interaction, trying to destroy its reputation.
+
+**How each system defends:**
+
+- **PeerTrust:** Your own direct experience with the target overrides distant negatives. If you’ve had 20 successful interactions with the target, five bad ratings from strangers barely move the needle. Credibility weighting further discounts the attackers if they lack established track records.
+- **EigenTrust:** The slanderers’ influence on the global trust vector is proportional to their own trust scores. If they’re low-trust nodes, their negative feedback propagates weakly. The target’s score remains anchored by endorsements that trace back to pre-trusted nodes.
+
+::: {.callout-note appearance="simple"}
+The shared principle: **your own experience outweighs distant accusations.** Slander fails because low-credibility attackers have limited influence, and direct positive interactions with the target carry more weight than secondhand negatives.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide presents slander as the negative mirror image of collusion. It matters here because robust systems must handle both inflated praise and false denunciation. Emphasize that direct experience and low influence for untrusted raters help honest peers resist coordinated smear campaigns.
+
+**Key Points**
+- Slander is coordinated false negative feedback against a target.
+- Your own successful interactions should outweigh distant accusations from strangers.
+- Verification-weighted feedback makes unsubstantiated claims less damaging.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+## Threats: On–Off (Reputation Milking) {.smaller}
+
+- **Pattern:** an actor builds trust through good behavior, then exploits that reputation to cheat before disappearing.
+- **Mitigation:** apply **recency weighting** so recent behavior matters most, and use **anomaly detection** to flag sudden shifts.
+- **Accountability:** penalize severe or high-impact failures more heavily to discourage short-term exploitation.
+
+**Real-world examples:**
+
+- **Reddit karma farming:** Users post harmless, crowd-pleasing content for months to accumulate karma. Once the account looks credible, they sell it or pivot to pushing spam, scams, or propaganda, exploiting the trust signals they built.
+- **Gaming / social account sales:** Players grind a high-level or high-reputation account in a game or social network, then sell it. The buyer leverages the reputation for malicious activity that the original owner's history didn't predict.
+
+
+::: {.callout-note appearance="simple"}
+The shared principle: **trust must be renewed, not banked.** Recency weighting ensures that past good behavior cannot indefinitely shield present exploitation. Recent actions always speak louder than old ones.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains how attackers can exploit reputation they earned earlier to cause higher-impact harm later. It matters here because students need to see why trust cannot be treated as a permanent banked asset. Emphasize that recent and severe failures should matter more than a long but stale success streak.
+
+**Key Points**
+- On-off attacks build trust first and spend it during a brief burst of abuse.
+- Recency weighting helps recent behavior matter more than old history.
+- Severe failures should be penalized more heavily than routine successes are rewarded.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+
+:::
+
+
+## Key Considerations in System Design
+
+- **Self-policing:** rely on decentralized mechanisms for moderation, storage, and computation.  
+- **Privacy-aware:** preserve user anonymity and data protection while maintaining accountability.  
+- **Efficient:** minimize messaging, bandwidth, and state overhead for scalability.  
+- **Robust:** resist Sybil, collusion, slander, and on–off attacks through cost and credibility mechanisms.  
+- **Welcoming bootstrap:** provide safe, fair onboarding so newcomers can build reputation gradually.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns the earlier attack discussions into a practical design checklist for real systems. It matters here because students now need a compact way to evaluate whether a proposed trust system is operationally sound. Emphasize that privacy, efficiency, robustness, and onboarding are design constraints, not optional add-ons.
+
+**Key Points**
+- Good systems define goals, threat models, and operating constraints explicitly.
+- Privacy-aware means protecting user data while still supporting accountability.
+- Efficient means keeping messaging, bandwidth, and state overhead manageable.
+- Bootstrap choices determine how safely honest newcomers can join and grow.
+
+**Walkthrough**
+None
+
+**Sources**
+- @kamvar_eigentrustalgorithmreputation_2003
+- @lixiong_peertrustsupportingreputationbased_2004
+
+:::
+
+
+## Micro Lab: Trust Simulation
+
+[Open Trust Simulation Lab](/assets/labs/trust-simulation/trust_simulation_lab.html)
+
+::: {.notes}
+
+**Overall Slide Concept**
+This lab slide gives students a way to test how trust models behave under different attack patterns. It matters here because the lesson has moved from theory to comparison, and the simulation helps students see those trade-offs dynamically. Emphasize experimentation and debriefing rather than a single right answer.
+
+**Key Points**
+- The simulation lets students compare how different attacks affect trust models.
+- Pair work encourages students to discuss why one defense works better than another.
+- Debriefing should connect observed behavior back to the models' design choices.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+## Key Takeaways {.smaller}
+
+
+- **Cryptography ≠ behavior:** Cryptographic tools (signatures, hashes, certificates) prove identity and integrity, but they cannot predict whether a peer will act honestly. Reputation fills that gap by modeling observed outcomes over time.
+- **Direct + indirect trust:** Direct trust comes from your own verified experiences and is the strongest signal. Indirect trust extends your reach through recommendations, but must be weighted by the recommender's credibility.
+- **PeerTrust** provides multi-factor, context-aware scoring. Feedback is weighted by rater credibility, transaction scope, and context. Scores are personalized to your perspective and update quickly.
+- **EigenTrust** provides anchored global reputation. Local trust values are normalized and iteratively propagated to produce network-wide scores. Pre-trusted anchors ground the computation and resist collusion.
+- **Design for adversaries:** Sybil attacks, collusion, slander, rebranding, and on-off exploitation are expected threats. Defend with: no free ride for newcomers, anchor-based propagation, credibility weighting, recency decay, and verification loops.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This summary slide consolidates the lesson's main distinctions so students leave with a coherent mental model. It matters here because the course will soon move from forecasting peer behavior to verifying and recording shared state. Emphasize the separation between cryptographic proof, reputation, and adversarial design.
+
+**Key Points**
+- Cryptography verifies identity and integrity but does not guarantee honest behavior.
+- Direct and indirect trust supply different kinds of evidence for decision-making.
+- PeerTrust and EigenTrust offer local and global approaches to reputation.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+## Check‑on‑Learning
+
+- Why can’t cryptography alone solve honest behavior?
+- When would you prefer global over local trust?
+- Name one mitigation for Sybil and explain why it works.
+- How does transaction context change trust scoring?
+- What’s your verify‑before‑trust plan for a critical download?
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This closing slide checks whether students can apply the lesson's distinctions and defenses on their own. It matters here because it reveals whether they can move from vocabulary recall to practical reasoning. Emphasize clear justification, not just naming a concept or attack.
+
+**Key Points**
+- Students should be able to separate cryptographic assurance from behavioral trust.
+- They should explain when local versus global trust is a better fit.
+- They should justify a mitigation for a concrete attack scenario.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lixiong_peertrustsupportingreputationbased_2004
+- @kamvar_eigentrustalgorithmreputation_2003
+- @douceur_sybilattack_2002
+- @marti_trustreputationpeertopeer_2005
+
+:::
+
+## References

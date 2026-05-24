@@ -1,0 +1,867 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --panel-bg: #11151a;
+    --border: #242c35;
+    --border-strong: #313b46;
+    --text: #edf2f7;
+    --muted: #97a4b2;
+    --accent: #d7e6f7;
+    --accent-bg: #1a2734;
+  }
+  html, body { margin:0; padding:0; height:100%; }
+  body {
+    display:flex; flex-direction:column;
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  #panel {
+    flex:none; background:var(--panel-bg); border-bottom:1px solid var(--border);
+    padding:6px 12px; display:flex; align-items:center; gap:10px;
+    font-size:13px; color:var(--muted);
+  }
+  #panel:empty { display:none; }
+  #panel .station { color:var(--accent); letter-spacing:.02em; }
+  #panel .grow { flex:1; }
+  #panel .pbtn {
+    color:var(--accent); background:var(--accent-bg);
+    border:1px solid var(--border-strong); padding:4px 10px;
+    font-size:12px; cursor:pointer; text-decoration:none; border-radius:0;
+    font-family:inherit;
+  }
+  #panel .pbtn:hover { background:#22313f; }
+  #panel .peers-wrap { position:relative; }
+  #panel #peers-dropdown {
+    display:none; position:absolute; right:0; top:calc(100% + 4px);
+    min-width:220px; max-height:60vh; overflow:auto;
+    background:var(--panel-bg); border:1px solid var(--border-strong);
+    padding:4px; z-index:10;
+  }
+  #panel #peers-dropdown.show { display:block; }
+  #panel #peers-dropdown .peer-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:6px 8px; color:var(--accent); text-decoration:none;
+    font-size:12px; gap:8px; border-bottom:1px solid var(--border);
+  }
+  #panel #peers-dropdown .peer-row:last-child { border-bottom:none; }
+  #panel #peers-dropdown .peer-row:hover { background:var(--accent-bg); }
+  #panel #peers-dropdown .peer-empty {
+    padding:8px; color:var(--muted); font-size:12px; text-align:center;
+  }
+
+  #main { flex:1; display:flex; flex-direction:column; min-height:0; }
+
+  /* Default: no guide — ttyd fills everything. */
+  #term-wrap { flex:1; position:relative; min-height:0; }
+  #guide-wrap { display:none; }
+
+  /* Guide enabled: vertical split. Defaults override set by JS based on mode. */
+  body.has-guide #term-wrap { flex:0 0 35%; }
+  body.has-guide #split-handle {
+    display:block; flex:0 0 6px; cursor:row-resize;
+    background:var(--border); border-top:1px solid var(--border-strong);
+    border-bottom:1px solid var(--border-strong);
+  }
+  body.has-guide #split-handle:hover { background:var(--border-strong); }
+  body.has-guide #guide-wrap {
+    display:flex; flex-direction:column; flex:1; min-height:0;
+    background:var(--panel-bg);
+  }
+  body.console-hidden #term-wrap { display:none; }
+  body.console-hidden #split-handle { display:none; }
+  body.console-hidden #guide-wrap { flex:1; }
+  body.console-popout #term-wrap { display:none; }
+  body.console-popout #split-handle { display:none; }
+  body.console-popout #guide-wrap { flex:1; }
+  #split-handle { display:none; }
+  body.resizing { cursor:row-resize; user-select:none; }
+  body.resizing iframe { pointer-events:none; }
+
+  iframe { width:100%; height:100%; border:none; display:block; }
+  #splash {
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:1.25rem;
+    background:var(--bg); color:var(--text);
+  }
+  #splash .spinner {
+    width:42px; height:42px; border:3px solid #334155;
+    border-top-color:#38bdf8; border-radius:50%;
+    animation:spin 0.9s linear infinite;
+  }
+  #splash .msg { font-size:.95rem; letter-spacing:.02em; opacity:.85; }
+  #splash .detail { font-size:.75rem; opacity:.55; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #term { display:none; }
+
+  /* Guide chrome */
+	  #guide-toolbar {
+	    flex:none; display:flex; align-items:center; gap:8px;
+	    padding:6px 12px; border-bottom:1px solid var(--border);
+	    background:var(--panel-bg); font-size:12px;
+	    position:relative; z-index:5; flex-wrap:wrap;
+	  }
+  #guide-toolbar select, #guide-toolbar .gbtn {
+    color:var(--accent); background:var(--accent-bg);
+    border:1px solid var(--border-strong); padding:4px 10px;
+    font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  #guide-toolbar .gbtn:hover { background:#22313f; }
+  #guide-toolbar .lab-tabs { display:flex; gap:4px; }
+  #guide-toolbar .lab-tab {
+    color:var(--muted); background:transparent;
+    border:1px solid var(--border-strong); padding:4px 10px;
+    font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  #guide-toolbar .lab-tab:hover { background:var(--accent-bg); color:var(--accent); }
+  #guide-toolbar .lab-tab.active {
+    color:var(--bg); background:var(--accent); border-color:var(--accent);
+  }
+	  #guide-toolbar .grow { flex:1; }
+	  #help-btn { flex:0 0 auto; position:relative; z-index:6; }
+  #guide-toolbar .progress {
+    color:var(--muted); font-size:11px; letter-spacing:.02em;
+    min-width:80px; text-align:center;
+  }
+  #guide-toolbar .nav-btn {
+    color:var(--accent); background:var(--accent-bg);
+    border:1px solid var(--border-strong); padding:4px 10px;
+    font-size:12px; cursor:pointer; font-family:inherit;
+  }
+  #guide-toolbar .nav-btn:hover:not([disabled]) { background:#22313f; }
+  #guide-toolbar .nav-btn[disabled] { opacity:.4; cursor:default; }
+  #progress-bar {
+    flex:none; display:flex; gap:3px;
+    padding:6px 12px 8px;
+    background:var(--panel-bg); border-bottom:1px solid var(--border);
+  }
+  #progress-bar .pip { flex:1; height:4px; background:var(--border); min-width:4px; }
+  #progress-bar .pip.done { background:#7fd0a2; }
+  #progress-bar .pip.active { background:var(--accent); }
+  #guide-body {
+    flex:1; overflow-y:auto; padding:18px 22px; line-height:1.55;
+    scrollbar-gutter:stable;
+  }
+  #guide-body h1, #guide-body h2, #guide-body h3 {
+    color:var(--accent); margin:0 0 .5em 0;
+  }
+  #guide-body .chapter-label {
+    color:var(--muted); font-size:11px; text-transform:uppercase;
+    letter-spacing:.08em; margin-bottom:4px;
+  }
+  #guide-body .exercise-title { font-size:20px; margin-bottom:12px; }
+  #guide-body .section { margin:14px 0; }
+  #guide-body .section-title {
+    color:var(--accent); font-size:12px; text-transform:uppercase;
+    letter-spacing:.08em; margin-bottom:6px;
+  }
+  #guide-body ul { margin:0; padding-left:20px; }
+  #guide-body li { margin:4px 0; }
+  #guide-body p { margin:0 0 8px 0; }
+  #guide-body .muted { color:var(--muted); }
+  #guide-body .surface-links a {
+    display:inline-block; margin-right:8px;
+    color:var(--accent); background:var(--accent-bg);
+    border:1px solid var(--border-strong); padding:3px 8px;
+    font-size:11px; text-decoration:none;
+  }
+  #guide-body .nav-row {
+    display:flex; justify-content:space-between; align-items:center;
+    gap:8px; margin-top:18px; padding-top:12px;
+    border-top:1px solid var(--border);
+  }
+  #guide-body .nav-row .gbtn[disabled] {
+    opacity:.4; cursor:default;
+  }
+  #guide-body .transition {
+    color:var(--muted); font-style:italic; margin-top:6px;
+  }
+  #guide-body code {
+    background:var(--accent-bg); border:1px solid var(--border);
+    padding:1px 5px; font-size:12px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  #guide-body .code-block {
+    position:relative; margin:10px 0; background:#0c1014;
+    border:1px solid var(--border-strong); max-width:100%; box-sizing:border-box;
+  }
+  #guide-body .code-block pre {
+    margin:0; padding:12px 14px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size:13px; line-height:1.5; color:#dbe6f1;
+    white-space:pre-wrap; word-break:break-word; overflow-wrap:anywhere;
+  }
+  #guide-body .code-block pre code {
+    background:transparent; border:0; padding:0; font-size:13px;
+    color:inherit; white-space:inherit; word-break:inherit; overflow-wrap:inherit;
+  }
+  #guide-body .code-block .copy-btn {
+    position:absolute; top:6px; right:6px;
+    background:var(--panel-bg); color:var(--muted);
+    border:1px solid var(--border-strong);
+    padding:3px 9px; font-size:11px; letter-spacing:.04em;
+    cursor:pointer; text-transform:uppercase;
+    opacity:0; transition:opacity 120ms ease;
+    font-family:inherit;
+  }
+  #guide-body .code-block:hover .copy-btn,
+  #guide-body .code-block .copy-btn:focus-visible,
+  #guide-body .code-block .copy-btn.copied { opacity:1; }
+  #guide-body .code-block .copy-btn:hover {
+    background:var(--accent-bg); color:var(--accent);
+  }
+  #guide-body .code-block .copy-btn.copied {
+    background:#2e7d48; color:#fff; border-color:#2e7d48;
+  }
+  #guide-body li .code-block { margin:6px 0; }
+
+  #help-modal-backdrop[hidden] { display:none; }
+  #help-modal-backdrop {
+    position:fixed; inset:0; z-index:30;
+    background:rgba(5, 8, 11, 0.72);
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  #help-modal {
+    width:min(760px, 100%);
+    max-height:min(80vh, 860px);
+    overflow:auto;
+    background:var(--panel-bg);
+    border:1px solid var(--border-strong);
+    box-shadow:0 18px 54px rgba(0, 0, 0, 0.45);
+  }
+  #help-modal-header {
+    display:flex; align-items:center; gap:12px;
+    padding:14px 18px;
+    border-bottom:1px solid var(--border);
+  }
+  #help-modal-title {
+    color:var(--accent);
+    font-size:14px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  #help-modal-close {
+    margin-left:auto;
+  }
+  #help-modal-body {
+    padding:18px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    gap:18px;
+  }
+  .help-card {
+    background:#0c1014;
+    border:1px solid var(--border);
+    padding:14px;
+  }
+  .help-card h3 {
+    margin:0 0 10px 0;
+    color:var(--accent);
+    font-size:13px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+  }
+  .help-card p {
+    margin:0 0 10px 0;
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.5;
+  }
+  .help-card ul {
+    margin:0;
+    padding-left:18px;
+  }
+  .help-card li {
+    margin:8px 0;
+    line-height:1.5;
+    font-size:13px;
+  }
+  .help-card code {
+    background:var(--accent-bg);
+    border:1px solid var(--border);
+    padding:1px 5px;
+    font-size:12px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+</style>
+<div id="panel">{{PANEL_HTML}}</div>
+<div id="main">
+  <div id="term-wrap">
+    <div id="splash">
+      <div class="spinner"></div>
+      <div class="msg">Spinning up your lab&hellip;</div>
+      <div class="detail" id="detail">Allocating a lane</div>
+    </div>
+    <iframe id="term"></iframe>
+  </div>
+  <div id="split-handle" role="separator" aria-orientation="horizontal" aria-label="Resize console" title="Drag to resize"></div>
+  <div id="guide-wrap">
+    <div id="guide-toolbar">
+      <div class="lab-tabs" id="lab-tabs"></div>
+      <select id="chapter-select" aria-label="Chapter"></select>
+      <button class="nav-btn" id="top-prev-btn" aria-label="Previous exercise">&larr;</button>
+      <span class="progress" id="progress-text"></span>
+      <button class="nav-btn" id="top-next-btn" aria-label="Next exercise">&rarr;</button>
+      <span class="grow"></span>
+      <button class="gbtn" id="help-btn" title="Show shell and terminal help">Help</button>
+      <button class="gbtn" id="hide-console-btn" title="Toggle console visibility">Hide Console</button>
+      <button class="gbtn" id="popout-console-btn" title="Open console in a new window">Popout</button>
+    </div>
+    <div id="progress-bar" aria-hidden="true"></div>
+    <div id="guide-body"></div>
+  </div>
+</div>
+<div id="help-modal-backdrop" hidden>
+  <div id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
+    <div id="help-modal-header">
+      <div id="help-modal-title">Terminal Help</div>
+      <button class="gbtn" id="help-modal-close" type="button" aria-label="Close help">Close</button>
+    </div>
+    <div id="help-modal-body">
+      <div class="help-card">
+        <h3>Bash Basics</h3>
+        <p>Use these when you need to orient yourself, inspect files, or move around the workstation.</p>
+        <ul>
+          <li><code>pwd</code> shows your current directory.</li>
+          <li><code>ls</code> or <code>ls -a</code> lists files in the current directory.</li>
+          <li><code>cd &lt;dir&gt;</code>, <code>cd ..</code>, and <code>cd ~</code> move around the filesystem.</li>
+          <li><code>cat &lt;file&gt;</code> prints a short file, and <code>less &lt;file&gt;</code> opens a scrollable viewer.</li>
+          <li><code>nano &lt;file&gt;</code> opens a simple editor. Save with <code>Ctrl+O</code>, then exit with <code>Ctrl+X</code>.</li>
+          <li><code>grep "text" &lt;file&gt;</code> searches for a string inside a file.</li>
+          <li><code>exit</code> closes the current shell or pane.</li>
+        </ul>
+      </div>
+      <div class="help-card">
+        <h3>Zellij Basics</h3>
+        <p>These labs run inside zellij so you can keep multiple terminal views alive in one browser session. Available keys are shown in the status bar at the bottom.</p>
+        <ul>
+          <li><code>Alt+n</code> opens a new pane. On Mac use <code>Ctrl+p</code> then <code>n</code>.</li>
+          <li><code>Alt+Arrow</code> moves between panes (crosses to the next tab at the edge). On Mac use <code>Ctrl+p</code> then arrow keys.</li>
+          <li><code>Ctrl+p</code> enters pane mode: <code>r</code> splits right, <code>d</code> splits down, <code>x</code> closes the pane.</li>
+          <li><code>Ctrl+t</code> enters tab mode: <code>n</code> creates a new tab, <code>Left/Right</code> switches tabs.</li>
+          <li><code>Ctrl+s</code> enters scroll mode. Use arrows or Page Up/Down, then press <code>Esc</code> to return.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var uuid = "{{UUID}}";
+  var lab = "{{LAB}}";
+  var station = "{{STATION}}";
+  var ttydUrl = "{{TTYD_URL}}";
+  var guideEnabled = "{{GUIDE_ENABLED}}" === "1";
+  var tokenUrl = ttydUrl + "token";
+  var splash = document.getElementById("splash");
+  var detail = document.getElementById("detail");
+  var term = document.getElementById("term");
+  var helpBtn = document.getElementById("help-btn");
+  var helpBackdrop = document.getElementById("help-modal-backdrop");
+  var helpClose = document.getElementById("help-modal-close");
+
+  window.__lab = {uuid: uuid, lab: lab, station: station, ttydUrl: ttydUrl};
+
+  function closeHelp() {
+    if (!helpBackdrop) return;
+    helpBackdrop.hidden = true;
+  }
+
+  function openHelp() {
+    if (!helpBackdrop) return;
+    helpBackdrop.hidden = false;
+  }
+
+	  if (helpBtn) {
+	    helpBtn.addEventListener("click", function(ev){
+	      ev.preventDefault();
+	      ev.stopPropagation();
+	      openHelp();
+	    });
+	  }
+  if (helpClose) {
+    helpClose.addEventListener("click", closeHelp);
+  }
+  if (helpBackdrop) {
+    helpBackdrop.addEventListener("click", function(ev){
+      if (ev.target === helpBackdrop) closeHelp();
+    });
+  }
+  document.addEventListener("keydown", function(ev){
+    if (ev.key === "Escape") closeHelp();
+  });
+
+  // --------------------------------------------------------------
+  // ttyd boot probe — unchanged
+  // --------------------------------------------------------------
+  var start = Date.now();
+  var deadline = start + 60000;
+  (function probe(){
+    fetch(tokenUrl, {cache: "no-store"})
+      .then(function(r){
+        if (r.ok) {
+          term.style.display = "block";
+          term.src = ttydUrl;
+          term.addEventListener("load", function(){ splash.remove(); }, {once: true});
+          setTimeout(function(){ if (splash.isConnected) splash.remove(); }, 3000);
+          return;
+        }
+        throw new Error("not ready");
+      })
+      .catch(function(){
+        var elapsed = Math.round((Date.now() - start) / 1000);
+        if (Date.now() > deadline) {
+          detail.textContent = "Lab didn't come up in time — try reloading.";
+          return;
+        }
+        detail.textContent = "Booting container (" + elapsed + "s)";
+        setTimeout(probe, 500);
+      });
+  })();
+
+  // --------------------------------------------------------------
+  // heartbeat
+  // --------------------------------------------------------------
+  setInterval(function(){
+    fetch("/api/" + lab + "/claims/heartbeat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({session: uuid})
+    }).catch(function(){});
+  }, 30000);
+
+  if (!guideEnabled) return;
+
+  // --------------------------------------------------------------
+  // progress beacon — fire-and-forget, dedup within 1500ms
+  // --------------------------------------------------------------
+  var lastSent = null, lastSentAt = 0;
+  function beacon(routeId) {
+    if (!routeId) return;
+    var now = Date.now();
+    if (routeId === lastSent && (now - lastSentAt) < 1500) return;
+    lastSent = routeId;
+    lastSentAt = now;
+    try {
+      fetch("/api/" + lab + "/progress/touch", {
+        method: "POST",
+        credentials: "include",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({route_id: routeId}),
+        keepalive: true,
+      }).catch(function(){});
+    } catch (_) {}
+  }
+
+  // --------------------------------------------------------------
+  // sessionStorage UI state
+  // --------------------------------------------------------------
+  var STATE_KEY = "labui:" + lab + ":" + uuid;
+  function loadState() {
+    try { return JSON.parse(sessionStorage.getItem(STATE_KEY) || "{}") || {}; }
+    catch (_) { return {}; }
+  }
+  function saveState(patch) {
+    var s = loadState();
+    for (var k in patch) s[k] = patch[k];
+    try { sessionStorage.setItem(STATE_KEY, JSON.stringify(s)); } catch (_) {}
+  }
+
+  // --------------------------------------------------------------
+  // console modes: inline (default), hidden, popout
+  // --------------------------------------------------------------
+  var popoutWin = null;
+  function applyConsoleMode(mode) {
+    document.body.classList.remove("console-hidden", "console-popout");
+    var btn = document.getElementById("hide-console-btn");
+    // Inline console is hidden in both "hidden" and "popout" modes, so the
+    // toggle should read "Show Console" in either case.
+    if (mode === "hidden") {
+      document.body.classList.add("console-hidden");
+      btn.textContent = "Show Console";
+    } else if (mode === "popout") {
+      document.body.classList.add("console-popout");
+      btn.textContent = "Show Console";
+      if (!popoutWin || popoutWin.closed) {
+        popoutWin = window.open(ttydUrl, lab + "-console-" + uuid.slice(0, 8),
+          "noopener,width=900,height=640");
+      } else {
+        popoutWin.focus();
+      }
+    } else {
+      btn.textContent = "Hide Console";
+    }
+    saveState({consoleMode: mode});
+  }
+
+  document.getElementById("hide-console-btn").addEventListener("click", function(){
+    var s = loadState();
+    // From any "not-inline" mode, bring the inline console back. From inline,
+    // hide it.
+    applyConsoleMode(s.consoleMode === "inline" || !s.consoleMode ? "hidden" : "inline");
+  });
+  document.getElementById("popout-console-btn").addEventListener("click", function(){
+    applyConsoleMode("popout");
+  });
+
+  // --------------------------------------------------------------
+  // exercise pager
+  // --------------------------------------------------------------
+  var catalog = null;
+  var allExercises = [];
+  var exercises = [];              // filtered by activeLab
+  var chapterById = {};
+  var labs = [];                   // intro.labs (may be empty)
+  var activeLab = null;            // id of current lab, or null = no filtering
+  var currentIndex = 0;
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function renderInline(s) {
+    // Minimal inline: **bold** and `code`. Everything else is escaped.
+    var t = escapeHtml(s);
+    t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+    return t;
+  }
+  function renderBlock(s) {
+    if (!s) return "";
+    return s.split(/\n{2,}/).map(function(p){
+      return "<p>" + renderInline(p) + "</p>";
+    }).join("");
+  }
+  function renderCodeBlock(raw) {
+    var body = String(raw == null ? "" : raw)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    var attr = String(raw == null ? "" : raw)
+      .replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return '<div class="code-block">' +
+           '<button type="button" class="copy-btn" data-copy="' + attr +
+           '" aria-label="Copy to clipboard">Copy</button>' +
+           '<pre><code>' + body + '</code></pre></div>';
+  }
+  // Extract ```fenced``` blocks before prose rendering so they aren't munged.
+  function splitFenced(text, wrapProse) {
+    if (!text) return "";
+    var re = /```[a-zA-Z0-9_-]*\n?([\s\S]*?)```/g;
+    var out = [];
+    var lastIdx = 0;
+    var m;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > lastIdx) out.push(wrapProse(text.slice(lastIdx, m.index)));
+      out.push(renderCodeBlock(m[1].replace(/\n+$/, "")));
+      lastIdx = m.index + m[0].length;
+    }
+    if (lastIdx < text.length) out.push(wrapProse(text.slice(lastIdx)));
+    return out.join("");
+  }
+  function renderRich(text) { return splitFenced(text, renderBlock); }
+  function renderRichInline(text) { return splitFenced(text, renderInline); }
+  function renderList(items) {
+    if (!items || !items.length) return "";
+    return "<ul>" + items.map(function(it){
+      return "<li>" + renderRichInline(it) + "</li>";
+    }).join("") + "</ul>";
+  }
+  function renderSurfaces(items) {
+    if (!items || !items.length) return "";
+    return '<div class="surface-links">' + items.map(function(s){
+      return '<a href="' + escapeHtml(s.href) + '" target="_blank" rel="noopener">'
+             + escapeHtml(s.label) + "</a>";
+    }).join("") + "</div>";
+  }
+
+  function renderCurrent() {
+    var ex = exercises[currentIndex];
+    if (!ex) {
+      document.getElementById("guide-body").innerHTML =
+        '<div class="muted">No exercises registered for this lab.</div>';
+      return;
+    }
+    var chapter = chapterById[ex.chapter] || {};
+    var sel = document.getElementById("chapter-select");
+    if (sel.value !== ex.chapter) sel.value = ex.chapter || "";
+
+    var prevDisabled = currentIndex <= 0 ? "disabled" : "";
+    var nextDisabled = currentIndex >= exercises.length - 1 ? "disabled" : "";
+    var html =
+      '<div class="chapter-label">' + escapeHtml(chapter.title || "") + '</div>' +
+      '<div class="exercise-title">' + escapeHtml(ex.title || "") + '</div>';
+    if (ex.goal) html += section("Goal", renderRich(ex.goal));
+    if (ex.question) html += section("Question", renderRich(ex.question));
+    if (ex.prediction_prompt) html += section("Before You Look",
+      '<div class="muted">' + renderRich(ex.prediction_prompt) + "</div>");
+    if (ex.student_steps && ex.student_steps.length)
+      html += section("Your Steps", renderList(ex.student_steps));
+    if (ex.expected_observations && ex.expected_observations.length)
+      html += section("Expected Observations", renderList(ex.expected_observations));
+    if (ex.meaning && ex.meaning.length)
+      html += section("Why This Matters", renderList(ex.meaning));
+    if (ex.surfaces && ex.surfaces.length)
+      html += section("Where To Work", renderSurfaces(ex.surfaces));
+    if (ex.transition)
+      html += '<div class="transition">Next: ' + renderRichInline(ex.transition) + "</div>";
+    html +=
+      '<div class="nav-row">' +
+      '  <button class="gbtn" id="prev-btn" ' + prevDisabled + '>&larr; Previous</button>' +
+      '  <span class="muted">' + (currentIndex + 1) + " / " + exercises.length + "</span>" +
+      '  <button class="gbtn" id="next-btn" ' + nextDisabled + '>Next &rarr;</button>' +
+      '</div>';
+
+    // Preserve scroll: only change innerHTML, don't scrollTo.
+    document.getElementById("guide-body").innerHTML = html;
+    document.getElementById("prev-btn").addEventListener("click", function(){ go(currentIndex - 1); });
+    document.getElementById("next-btn").addEventListener("click", function(){ go(currentIndex + 1); });
+    document.getElementById("progress-text").textContent =
+      (currentIndex + 1) + " / " + exercises.length;
+    var topPrev = document.getElementById("top-prev-btn");
+    var topNext = document.getElementById("top-next-btn");
+    if (topPrev) topPrev.disabled = currentIndex <= 0;
+    if (topNext) topNext.disabled = currentIndex >= exercises.length - 1;
+    renderProgressPips();
+
+    if (ex.id) beacon("exercise:" + ex.id);
+  }
+
+  function renderProgressPips() {
+    var bar = document.getElementById("progress-bar");
+    if (!bar) return;
+    if (!exercises.length) { bar.innerHTML = ""; return; }
+    var html = "";
+    for (var i = 0; i < exercises.length; i++) {
+      var cls = "pip";
+      if (i < currentIndex) cls += " done";
+      else if (i === currentIndex) cls += " active";
+      html += '<div class="' + cls + '" title="' +
+              escapeHtml(exercises[i].title || ("Exercise " + (i + 1))) + '"></div>';
+    }
+    bar.innerHTML = html;
+  }
+
+  function section(title, body) {
+    return '<div class="section">' +
+           '<div class="section-title">' + escapeHtml(title) + "</div>" +
+           body + "</div>";
+  }
+
+  function go(idx) {
+    if (idx < 0 || idx >= exercises.length) return;
+    currentIndex = idx;
+    var ex = exercises[idx];
+    var patch = {exerciseIndex: idx};
+    if (ex && ex.id) patch.exerciseId = ex.id;
+    if (activeLab) {
+      var s = loadState();
+      var perLab = s.exerciseIndexByLab || {};
+      perLab[activeLab] = idx;
+      patch.exerciseIndexByLab = perLab;
+    }
+    saveState(patch);
+    renderCurrent();
+  }
+
+  function buildChapterSelect() {
+    var sel = document.getElementById("chapter-select");
+    sel.innerHTML = "";
+    var chapters = (catalog.intro && catalog.intro.chapters) || [];
+    chapters.forEach(function(ch){
+      if (activeLab && ch.lab && ch.lab !== activeLab) return;
+      var opt = document.createElement("option");
+      opt.value = ch.id;
+      opt.textContent = ch.title || ch.id;
+      sel.appendChild(opt);
+    });
+  }
+
+  function buildLabTabs() {
+    var row = document.getElementById("lab-tabs");
+    row.innerHTML = "";
+    if (!labs.length) return;
+    labs.forEach(function(l){
+      var btn = document.createElement("button");
+      btn.className = "lab-tab" + (l.id === activeLab ? " active" : "");
+      btn.textContent = l.title || l.id;
+      btn.setAttribute("data-lab-id", l.id);
+      btn.addEventListener("click", function(){ setActiveLab(l.id); });
+      row.appendChild(btn);
+    });
+  }
+
+  function filterExercises() {
+    if (!activeLab) { exercises = allExercises.slice(); return; }
+    exercises = allExercises.filter(function(ex){
+      var ch = chapterById[ex.chapter];
+      var exLab = (ex.lab) || (ch && ch.lab) || null;
+      return exLab === activeLab;
+    });
+  }
+
+  function setActiveLab(labId, opts) {
+    opts = opts || {};
+    activeLab = labId;
+    filterExercises();
+    buildLabTabs();
+    buildChapterSelect();
+
+    var s = loadState();
+    var perLab = s.exerciseIndexByLab || {};
+    var idx = 0;
+    if (typeof perLab[labId] === "number" &&
+        perLab[labId] >= 0 && perLab[labId] < exercises.length) {
+      idx = perLab[labId];
+    }
+    currentIndex = idx;
+    if (!opts.skipSave) {
+      perLab[labId] = idx;
+      saveState({activeLab: labId, exerciseIndexByLab: perLab});
+    }
+    renderCurrent();
+  }
+
+  document.getElementById("chapter-select").addEventListener("change", function(){
+    var target = this.value;
+    for (var i = 0; i < exercises.length; i++) {
+      if (exercises[i].chapter === target) { go(i); break; }
+    }
+  });
+
+  document.getElementById("top-prev-btn").addEventListener("click", function(){
+    go(currentIndex - 1);
+  });
+  document.getElementById("top-next-btn").addEventListener("click", function(){
+    go(currentIndex + 1);
+  });
+
+  // --------------------------------------------------------------
+  // Delegated copy-to-clipboard for .copy-btn inside rendered code blocks.
+  // --------------------------------------------------------------
+  document.addEventListener("click", function(ev){
+    var btn = ev.target && ev.target.closest && ev.target.closest(".copy-btn");
+    if (!btn) return;
+    var text = btn.getAttribute("data-copy") || "";
+    function done() {
+      var prev = btn.textContent;
+      btn.classList.add("copied");
+      btn.textContent = "Copied";
+      setTimeout(function(){
+        btn.classList.remove("copied");
+        btn.textContent = prev;
+      }, 1200);
+    }
+    function fallback() {
+      var code = btn.parentElement && btn.parentElement.querySelector("code");
+      if (!code) return;
+      var range = document.createRange();
+      range.selectNode(code);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      try { document.execCommand("copy"); done(); } catch (_e) {}
+      sel.removeAllRanges();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  // --------------------------------------------------------------
+  // Draggable split between console and guide
+  // --------------------------------------------------------------
+  (function setupResize(){
+    var handle = document.getElementById("split-handle");
+    var termWrap = document.getElementById("term-wrap");
+    if (!handle || !termWrap) return;
+
+    function applyHeight(px) {
+      var main = document.getElementById("main");
+      var max = main ? main.clientHeight - 120 : window.innerHeight - 200;
+      var clamped = Math.max(80, Math.min(max, px));
+      termWrap.style.flex = "0 0 " + clamped + "px";
+      return clamped;
+    }
+
+    var s = loadState();
+    if (typeof s.consoleHeightPx === "number") applyHeight(s.consoleHeightPx);
+
+    var dragging = false, startY = 0, startHeight = 0;
+    handle.addEventListener("mousedown", function(ev){
+      dragging = true;
+      startY = ev.clientY;
+      startHeight = termWrap.getBoundingClientRect().height;
+      document.body.classList.add("resizing");
+      ev.preventDefault();
+    });
+    document.addEventListener("mousemove", function(ev){
+      if (!dragging) return;
+      var next = startHeight + (ev.clientY - startY);
+      applyHeight(next);
+    });
+    document.addEventListener("mouseup", function(){
+      if (!dragging) return;
+      dragging = false;
+      document.body.classList.remove("resizing");
+      var h = termWrap.getBoundingClientRect().height;
+      saveState({consoleHeightPx: Math.round(h)});
+    });
+
+    // Reclamp on window resize so the saved pixel value doesn't blow past
+    // a smaller viewport.
+    window.addEventListener("resize", function(){
+      var h = termWrap.getBoundingClientRect().height;
+      applyHeight(h);
+    });
+  })();
+
+  fetch("/api/" + lab + "/exercises", {cache: "no-store"})
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      catalog = data || {};
+      allExercises = catalog.exercises || [];
+      if (!allExercises.length) {
+        document.getElementById("guide-body").innerHTML =
+          '<div class="muted">No exercises registered for this lab.</div>';
+        return;
+      }
+      var intro = catalog.intro || {};
+      (intro.chapters || []).forEach(function(ch){ chapterById[ch.id] = ch; });
+      labs = intro.labs || [];
+      document.body.classList.add("has-guide");
+
+      var s = loadState();
+      var initialLab = null;
+      if (labs.length) {
+        var savedValid = labs.some(function(l){ return l.id === s.activeLab; });
+        initialLab = savedValid ? s.activeLab : labs[0].id;
+      }
+
+      if (initialLab) {
+        setActiveLab(initialLab, {skipSave: true});
+      } else {
+        exercises = allExercises.slice();
+        buildChapterSelect();
+        if (typeof s.exerciseIndex === "number" &&
+            s.exerciseIndex >= 0 && s.exerciseIndex < exercises.length) {
+          currentIndex = s.exerciseIndex;
+        }
+        renderCurrent();
+      }
+
+      if (s.consoleMode === "hidden" || s.consoleMode === "popout") {
+        applyConsoleMode(s.consoleMode);
+      }
+    })
+    .catch(function(err){
+      document.getElementById("guide-body").innerHTML =
+        '<div class="muted">Failed to load exercises: ' + escapeHtml(err.message) + "</div>";
+    });
+})();
+</script>
+{{PANEL_SCRIPT}}

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proof of Stake Simulator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            background-color: #f0f2f5; color: #333;
+        }
+        #container { display: flex; width: 95%; max-width: 1400px; gap: 20px; }
+        #controls {
+            flex-basis: 300px; flex-shrink: 0; padding: 15px; background-color: #fff;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #simulation-container { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
+        #canvas-container {
+            position: relative; background-color: #fff; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 500px;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        #timeline-container {
+            margin-top: 15px; padding: 10px; background: #fff; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 120px; overflow-x: auto;
+            white-space: nowrap; display: flex; align-items: center;
+        }
+        .block {
+            flex-shrink: 0; width: 60px; height: 60px; border: 2px solid;
+            border-radius: 4px; margin: 5px; position: relative; text-align: center;
+            line-height: 1.2; font-weight: bold; display: flex; flex-direction: column; justify-content: center;
+        }
+        .block-proposed { border-color: #999; background-color: #f8f9fa; }
+        .block-justified { border-color: #007bff; background-color: #e7f1ff; }
+        .block-finalized { border-color: #28a745; background-color: #e9f7ea; }
+        .epoch-boundary { flex-shrink: 0; width: 4px; height: 100%; background-color: #dc3545; margin: 0 10px; }
+
+        #log-wrapper { width: 95%; max-width: 1400px; }
+        #log {
+            margin-top: 15px; height: 150px; background-color: #fff; border-radius: 8px;
+            padding: 15px; overflow-y: scroll; font-family: "Courier New", monospace;
+            font-size: 0.9em; display: flex; flex-direction: column-reverse;
+        }
+        #scenario-controls { margin-top: 15px; }
+        label, select, button, input { display: block; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        button.pause-btn.paused { background-color: #28a745; }
+        h1, h2, h3 { text-align: center; } h3 { margin-top: 0; }
+        .validator-control { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .reward-section { padding: 10px; background-color: #e9f7ea; border-radius: 5px; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Proof of Stake Simulator</h1>
+    <div id="container">
+        <div id="controls">
+            <h3>Controls</h3>
+            <label for="scenario-select">Choose PoS Scenario:</label>
+            <select id="scenario-select">
+                <option value="staking">1. Staking & Selection</option>
+                <option value="slashing">2. Slashing</option>
+                <option value="full">3. The Full Picture (Epochs & Finality)</option>
+            </select>
+            <button id="reset-button">Reset Simulation</button>
+            <hr>
+            <button id="pause-button" class="pause-btn">Pause</button>
+            <label for="speed-slider">Speed:</label>
+            <input type="range" id="speed-slider" min="1" max="100" value="5">
+            <div id="scenario-controls"></div>
+        </div>
+        <div id="simulation-container">
+             <div id="canvas-container"><canvas id="network-canvas"></canvas></div>
+             <div id="timeline-container-wrapper">
+                <h3>Blockchain Timeline</h3>
+                <div id="timeline-container"></div>
+             </div>
+        </div>
+    </div>
+    <div id="log-wrapper">
+        <h3>Event Log</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    const controlsDiv = document.getElementById('scenario-controls');
+    const scenarioSelect = document.getElementById('scenario-select');
+    const resetButton = document.getElementById('reset-button');
+    const pauseButton = document.getElementById('pause-button');
+    const speedSlider = document.getElementById('speed-slider');
+    const timelineContainer = document.getElementById('timeline-container');
+    const logDiv = document.getElementById('log');
+
+    let validators = [], blockchain = [], simulationState = {};
+    let intervalId;
+
+    function setupCanvas() {
+        const container = document.getElementById('canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
+
+    function log(message) {
+        const p = document.createElement('p');
+        p.style.margin = '2px 0';
+        p.textContent = message;
+        logDiv.prepend(p);
+    }
+    
+    class Validator {
+        constructor(id, stake, x, y) {
+            this.id = id; this.baseStake = stake; this.delegatedStake = 0; this.x = x; this.y = y;
+            this.status = 'active'; this.color = `hsl(${id * 60}, 70%, 50%)`;
+        }
+        get totalStake() { return this.baseStake + this.delegatedStake; }
+        draw() {
+            const radius = Math.sqrt(this.totalStake) * 2;
+            ctx.beginPath(); ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.status === 'slashed' ? '#6c757d' : this.color;
+            ctx.globalAlpha = (this.status === 'offline' || this.status === 'slashed') ? 0.3 : 1.0;
+            ctx.fill();
+            if (simulationState.proposer && simulationState.proposer.id === this.id) {
+                ctx.strokeStyle = '#ffc107'; ctx.lineWidth = 5; ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0; ctx.closePath();
+            ctx.fillStyle = "#000"; ctx.font = "12px Arial"; ctx.textAlign = "center";
+            ctx.fillText(`V${this.id}`, this.x, this.y - radius - 5);
+            ctx.fillText(`${this.totalStake}`, this.x, this.y + radius + 10);
+        }
+    }
+    
+    function createValidators(count) {
+        validators = []; const width = canvas.width; const height = canvas.height;
+        for (let i = 0; i < count; i++) {
+            validators.push(new Validator(i, 100 + Math.floor(Math.random() * 200), Math.random() * width, Math.random() * height));
+        }
+    }
+
+    function drawTimeline() {
+        timelineContainer.innerHTML = '';
+        const SLOTS_PER_EPOCH = simulationState.SLOTS_PER_EPOCH || 8;
+        blockchain.forEach((block, index) => {
+            if (index > 0 && index % SLOTS_PER_EPOCH === 0) {
+                const boundary = document.createElement('div');
+                boundary.className = 'epoch-boundary';
+                boundary.title = `End of Epoch ${index / SLOTS_PER_EPOCH - 1}`;
+                timelineContainer.appendChild(boundary);
+            }
+            const blockDiv = document.createElement('div');
+            blockDiv.className = `block block-${block.status}`;
+            blockDiv.innerHTML = `<span>#${block.id}</span><small>V${block.proposer}</small>`;
+            timelineContainer.appendChild(blockDiv);
+        });
+        timelineContainer.scrollLeft = timelineContainer.scrollWidth;
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        validators.forEach(v => v.draw());
+        drawTimeline();
+    }
+    
+    function selectProposer() {
+        const activeValidators = validators.filter(v => v.status === 'active');
+        const totalStake = activeValidators.reduce((sum, v) => sum + v.totalStake, 0);
+        if (totalStake === 0) return null;
+        let random = Math.random() * totalStake;
+        for (const validator of activeValidators) {
+            random -= validator.totalStake;
+            if (random <= 0) return validator;
+        }
+        return activeValidators[0];
+    }
+    
+    const scenarios = {
+        'staking': {
+            name: "Staking & Validator Selection",
+            description: "Delegate your stake to validators. When they propose a block, you earn a share of the reward. Claim your rewards to increase your total stake and reinvest!",
+            init: () => {
+                simulationState.userStake = 100;
+                simulationState.userRewards = 0;
+                simulationState.proposer = null;
+                createValidators(5); blockchain = [];
+                controlsDiv.innerHTML = `
+                    <h4>Your Stake: <span id="user-stake">${simulationState.userStake}</span></h4>
+                    <div class="reward-section">
+                        Rewards: <b id="user-rewards">0.00</b><br/>
+                        <button id="claim-rewards-btn">Claim & Re-Stake</button>
+                    </div>
+                `;
+                validators.forEach(v => {
+                    const control = document.createElement('div'); control.className = 'validator-control';
+                    control.innerHTML = `<strong>Validator ${v.id}</strong> (Stake: <span id="stake-v${v.id}">${v.totalStake}</span>)<br/>Delegated: <span id="delegated-v${v.id}">0</span><input type="range" class="delegate-slider" id="slider-v${v.id}" min="0" max="${simulationState.userStake}" value="0">`;
+                    controlsDiv.appendChild(control);
+                });
+
+                function updateDelegation() {
+                    let totalDelegated = 0;
+                    document.querySelectorAll('.delegate-slider').forEach(s => { totalDelegated += parseInt(s.value); });
+                    
+                    if (totalDelegated > simulationState.userStake) {
+                        // This part is tricky, simply reducing the current slider is one way to handle it
+                        const over = totalDelegated - simulationState.userStake;
+                        this.value = parseInt(this.value) - over;
+                    }
+
+                    totalDelegated = 0; // Recalculate after correction
+                     document.querySelectorAll('.delegate-slider').forEach(s => { totalDelegated += parseInt(s.value); });
+
+                    validators.forEach(v => {
+                        v.delegatedStake = parseInt(document.getElementById(`slider-v${v.id}`).value);
+                        document.getElementById(`stake-v${v.id}`).textContent = v.totalStake;
+                        document.getElementById(`delegated-v${v.id}`).textContent = v.delegatedStake;
+                    });
+                    document.getElementById('user-stake').textContent = (simulationState.userStake - totalDelegated).toFixed(2);
+                }
+
+                document.querySelectorAll('.delegate-slider').forEach(slider => {
+                    slider.addEventListener('input', updateDelegation);
+                });
+
+                document.getElementById('claim-rewards-btn').addEventListener('click', () => {
+                    if (simulationState.userRewards <= 0) return;
+                    log(`REWARDS: Claimed ${simulationState.userRewards.toFixed(2)} rewards. They have been added to your main stake.`);
+                    simulationState.userStake += simulationState.userRewards;
+                    simulationState.userRewards = 0;
+                    document.getElementById('user-rewards').textContent = "0.00";
+                    // Update max value of all sliders and recalculate available display
+                    let totalDelegated = 0;
+                    document.querySelectorAll('.delegate-slider').forEach(s => {
+                        s.max = Math.floor(simulationState.userStake);
+                        totalDelegated += parseInt(s.value);
+                    });
+                    document.getElementById('user-stake').textContent = (simulationState.userStake - totalDelegated).toFixed(2);
+                });
+            },
+            update: () => {
+                const proposer = selectProposer();
+                simulationState.proposer = proposer;
+                blockchain.push({id: blockchain.length, proposer: proposer.id, status: 'proposed'});
+                log(`Validator ${proposer.id} was chosen to propose block #${blockchain.length - 1}.`);
+
+                // NEW: Reward Logic
+                if (proposer.delegatedStake > 0) {
+                    const blockReward = 5; // Arbitrary reward per block
+                    const userShare = proposer.delegatedStake / proposer.totalStake;
+                    const earnedReward = userShare * blockReward;
+                    simulationState.userRewards += earnedReward;
+                    document.getElementById('user-rewards').textContent = simulationState.userRewards.toFixed(2);
+                    log(`REWARDS: You earned ${earnedReward.toFixed(2)} from Validator ${proposer.id}.`);
+                }
+            }
+        },
+        'slashing': {
+            // This scenario remains unchanged
+            name: "Slashing",
+            description: "The 'stick' in PoS. Validators who misbehave (e.g., go offline) are punished by having a portion of their stake destroyed. This secures the network by making attacks costly.",
+            init: () => {
+                simulationState.proposer = null; createValidators(5); blockchain = [];
+                controlsDiv.innerHTML = '<h4>Click a button to make a validator misbehave.</h4>';
+                validators.forEach(v => {
+                    const control = document.createElement('div'); control.className = 'validator-control';
+                    control.innerHTML = `<strong>Validator ${v.id}</strong> (Stake: <span id="stake-v${v.id}">${v.totalStake}</span>)<br/>Status: <span id="status-v${v.id}">${v.status}</span><button id="offline-btn-v${v.id}">Take Offline</button>`;
+                    controlsDiv.appendChild(control);
+                    document.getElementById(`offline-btn-v${v.id}`).addEventListener('click', () => {
+                        if (v.status === 'active') {
+                            v.status = 'offline'; v.offlineSince = simulationState.time;
+                            log(`MANUAL: Validator ${v.id} taken offline.`);
+                            document.getElementById(`status-v${v.id}`).textContent = 'offline';
+                        }
+                    });
+                });
+            },
+            update: () => {
+                 const proposer = selectProposer();
+                 if(proposer) {
+                     simulationState.proposer = proposer;
+                     blockchain.push({id: blockchain.length, proposer: proposer.id, status: 'proposed'});
+                     log(`Validator ${proposer.id} proposes block #${blockchain.length - 1}.`);
+                 } else { log(`No active validators to propose a block!`); }
+                 validators.forEach(v => {
+                    if (v.status === 'offline' && (simulationState.time - (v.offlineSince || 0) > 3)) {
+                        const slashAmount = Math.min(Math.floor(v.totalStake * 0.2), v.baseStake); v.baseStake -= slashAmount;
+                        v.status = 'slashed';
+                        log(`!!! SLASHING !!! Validator ${v.id} was offline too long. ${slashAmount} stake burned.`);
+                        document.getElementById(`stake-v${v.id}`).textContent = v.totalStake;
+                        document.getElementById(`status-v${v.id}`).textContent = 'slashed';
+                        document.getElementById(`offline-btn-v${v.id}`).disabled = true;
+                    }
+                });
+            }
+        },
+        'full': {
+            // This scenario remains unchanged
+            name: "The Full Picture: Epochs & Finality",
+            description: "PoS chains finalize blocks in epochs. Blocks are first 'justified', then 'finalized' after two epochs, making them permanent. This provides stronger security guarantees than PoW's probabilistic finality — once a block is finalized, it cannot be reverted without a large portion of stake being destroyed.",
+            init: () => {
+                simulationState.proposer = null; simulationState.SLOTS_PER_EPOCH = 8;
+                simulationState.justifiedEpoch = -1; simulationState.finalizedEpoch = -1;
+                createValidators(10); blockchain = [];
+                controlsDiv.innerHTML = `<p><b>Slot:</b> <span id="slot-num">0</span></p><p><b>Epoch:</b> <span id="epoch-num">0</span></p><p><b>Justified Epoch:</b> <span id="just-epoch">-1</span></p><p><b>Finalized Epoch:</b> <span id="final-epoch">-1</span></p><hr><p>Blocks are proposed, then justified, then finalized.</p>`;
+            },
+            update: () => {
+                const time = simulationState.time; const SLOTS_PER_EPOCH = simulationState.SLOTS_PER_EPOCH;
+                const proposer = selectProposer(); simulationState.proposer = proposer;
+                blockchain.push({id: time, proposer: proposer.id, status: 'proposed', epoch: Math.floor(time/SLOTS_PER_EPOCH)});
+                if (time > 0 && time % SLOTS_PER_EPOCH === 0) {
+                    const currentEpoch = Math.floor(time / SLOTS_PER_EPOCH);
+                    log(`----------- Starting Epoch ${currentEpoch} -----------`);
+                    if (simulationState.justifiedEpoch === currentEpoch - 2) {
+                        simulationState.finalizedEpoch = currentEpoch - 2;
+                        log(`FINALIZED: Epoch ${simulationState.finalizedEpoch} is now final.`);
+                        blockchain.forEach(b => { if (b.epoch === simulationState.finalizedEpoch) b.status = 'finalized'; });
+                    }
+                    simulationState.justifiedEpoch = currentEpoch - 1;
+                    log(`JUSTIFIED: Epoch ${simulationState.justifiedEpoch} has been justified.`);
+                     blockchain.forEach(b => { if (b.epoch === simulationState.justifiedEpoch && b.status !== 'finalized') b.status = 'justified'; });
+                }
+                document.getElementById('slot-num').textContent = time;
+                document.getElementById('epoch-num').textContent = Math.floor(time / SLOTS_PER_EPOCH);
+                document.getElementById('just-epoch').textContent = simulationState.justifiedEpoch;
+                document.getElementById('final-epoch').textContent = simulationState.finalizedEpoch;
+            }
+        }
+    };
+    
+    function gameLoop() {
+        if (simulationState.isPaused) return;
+        const currentScenario = scenarios[scenarioSelect.value];
+        if (currentScenario && currentScenario.update) {
+            currentScenario.update();
+            simulationState.time++;
+        }
+        render();
+    }
+
+    function startSimulation() {
+        clearInterval(intervalId);
+        if (!simulationState.isPaused) {
+            let loopSpeed = 1000 / (simulationState.speed || 50);
+            if(scenarioSelect.value === 'staking') loopSpeed = 2000 / (simulationState.speed || 50);
+            if (scenarioSelect.value === 'full') loopSpeed = 3000 / (simulationState.speed || 50);
+            intervalId = setInterval(gameLoop, loopSpeed);
+        }
+    }
+
+    function reset() {
+        logDiv.innerHTML = '';
+        pauseButton.textContent = 'Pause';
+        pauseButton.classList.remove('paused');
+        simulationState = { isPaused: false, time: 0, speed: speedSlider.value };
+        const currentScenario = scenarios[scenarioSelect.value];
+        currentScenario.init();
+        log(`Initialized: ${currentScenario.name}`);
+        log(currentScenario.description);
+        startSimulation();
+    }
+    
+    function togglePause() {
+        simulationState.isPaused = !simulationState.isPaused;
+        if (simulationState.isPaused) {
+            pauseButton.textContent = 'Resume';
+            pauseButton.classList.add('paused');
+            clearInterval(intervalId);
+        } else {
+            pauseButton.textContent = 'Pause';
+            pauseButton.classList.remove('paused');
+            startSimulation();
+        }
+    }
+
+    window.addEventListener('resize', setupCanvas);
+    scenarioSelect.addEventListener('change', reset);
+    resetButton.addEventListener('click', reset);
+    pauseButton.addEventListener('click', togglePause);
+    speedSlider.addEventListener('input', (e) => {
+        simulationState.speed = e.target.value;
+        startSimulation();
+    });
+
+    setupCanvas();
+    reset();
+    </script>
+</body>
+</html>

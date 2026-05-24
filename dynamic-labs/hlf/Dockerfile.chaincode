@@ -1,0 +1,11 @@
+FROM node:20-alpine
+WORKDIR /chaincode
+COPY runtime/fabric-samples/asset-transfer-basic/chaincode-javascript/package*.json ./
+RUN npm install --production
+COPY runtime/fabric-samples/asset-transfer-basic/chaincode-javascript/ ./
+COPY chaincode_overrides/asset-transfer-basic/chaincode-javascript/lib/assetTransfer.js ./lib/assetTransfer.js
+COPY managed_runtime/schools.json /tmp/schools.json
+RUN node -e "const fs=require('fs'); const schools=JSON.parse(fs.readFileSync('/tmp/schools.json','utf8')); const consortium=[{msp:'Org1MSP',school:'Cascadia State',prefixes:['cascadia']},{msp:'Org2MSP',school:'Chesapeake Canoe University',prefixes:['chesapeake','canoe']},{msp:'Org3MSP',school:'South Hudson Institute',prefixes:['south hudson','southhudson']},{msp:'Org4MSP',school:'Maple Leaf Academy',prefixes:['maple leaf','mapleleaf']}]; const mapping=[...consortium]; for (const sid of Object.keys(schools).sort()) { const entry=schools[sid]||{}; const msp=entry.msp_id||''; const school=entry.default_school_name||''; if (!msp || !school) continue; const prefix=school.toLowerCase().replace(/\\s+(university|college|institute|polytechnic|academy)$/,'').trim(); mapping.push({msp, school, prefixes:[prefix]}); } fs.writeFileSync('/chaincode/lib/schoolMapping.json', JSON.stringify(mapping, null, 2));"
+RUN rm -f /tmp/schools.json
+EXPOSE 7052
+CMD ["npx", "fabric-chaincode-node", "server"]

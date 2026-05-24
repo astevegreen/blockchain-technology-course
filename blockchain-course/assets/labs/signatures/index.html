@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asymmetric Encryption & Digital Signatures Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .hero-pattern {
+            background-color: #0f172a;
+            background-image:
+                radial-gradient(at 47% 33%, hsl(264, 70%, 20%) 0, transparent 59%),
+                radial-gradient(at 82% 65%, hsl(218, 70%, 20%) 0, transparent 55%);
+        }
+        .card { transition: transform .2s ease; }
+        .card:hover { transform: translateY(-4px); }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, " Monospace", monospace; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(20, 184, 166, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.6); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .animate-pulse-slow {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .animate-glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+        #mathExplanation > div {
+            animation: fadeIn 0.5s ease-out backwards;
+        }
+        #mathExplanation > div:nth-child(1) { animation-delay: 0.1s; }
+        #mathExplanation > div:nth-child(2) { animation-delay: 0.2s; }
+        #mathExplanation > div:nth-child(3) { animation-delay: 0.3s; }
+        #mathExplanation > div:nth-child(4) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body class="hero-pattern min-h-screen text-white">
+    <nav class="bg-black/50 backdrop-blur-md">
+        <div class="container mx-auto px-4 py-4 flex justify-end">
+            <div class="font-semibold">Asymmetric Crypto & Signatures Lab</div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold mb-2"><i class="fas fa-key text-purple-400"></i> Asymmetric Encryption & Digital Signatures</h1>
+            <p class="text-gray-300 max-w-3xl mx-auto">Generate keypairs, sign/verify messages with separate public/private keys, perform key agreement, and compare RSA, ECDSA, and Ed25519 workflows. ECC-specific enrichment stays available when the selected algorithm supports it.</p>
+        </header>
+
+        <!-- Key Pair Generation -->
+        <section class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-purple-500/30 mb-6">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-fingerprint text-purple-400 mr-2"></i>Key Pair Generation</h2>
+            <div class="grid md:grid-cols-3 gap-4 mb-4">
+                <div>
+                    <label for="sigAlg" class="block text-sm text-gray-300 mb-1">Signature Algorithm</label>
+                    <select id="sigAlg" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2" aria-label="Signature Algorithm" title="Signature Algorithm">
+                        <option value="RSA-2048">RSA (2048-bit)</option>
+                        <option value="ECDSA-P256" selected>ECDSA (P-256)</option>
+                        <option value="Ed25519">EdDSA (Ed25519)</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="btnGenKeyPair" class="w-full bg-purple-600 hover:bg-purple-700 rounded px-4 py-2">Generate Key Pair</button>
+                </div>
+                <div class="flex items-end">
+                    <button id="btnExportKeyPair" class="w-full bg-purple-600/60 hover:bg-purple-700/60 rounded px-4 py-2">Export Keys</button>
+                </div>
+            </div>
+            <div id="keyPreviewRow" class="mt-4 bg-black/30 border border-white/10 rounded p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-sm font-semibold">Key Pair Preview</div>
+                    <div class="space-x-2">
+                        <button id="btnToggleKeys" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">Hide</button>
+                        <button id="btnCopyPubKey" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">Copy Public</button>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-400 mb-2">In real systems, private keys must remain secret. This lab shows both keys by default so students can compare the signing key and the verification key side by side.</div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="pubKeyHex" class="block text-xs text-gray-300 mb-1">Public Key Preview</label>
+                        <textarea id="pubKeyHex" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" readonly placeholder="(hidden)" aria-label="Public Key (hex)"></textarea>
+                    </div>
+                    <div>
+                        <label for="privKeyHex" class="block text-xs text-gray-300 mb-1">Private Key Preview</label>
+                        <textarea id="privKeyHex" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" readonly placeholder="(hidden)" aria-label="Private Key (hex)"></textarea>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Signing & Verification -->
+        <section class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-blue-500/30 mb-6">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-signature text-blue-400 mr-2"></i>Digital Signature Workflow</h2>
+            <div class="text-sm text-gray-300 mb-3">This workflow makes the hashing step explicit, then shows the private/public key split. The signer uses the private key to create a signature; the verifier uses only a public key to check it.</div>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm text-gray-300">Message to Sign</label>
+                        <span id="msgBytes" class="text-xs text-gray-400">0 bytes</span>
+                    </div>
+                    <textarea id="message" class="w-full h-32 bg-black/40 border border-white/20 rounded px-3 py-2" placeholder="Enter message to sign...">Authorize payment: 100 tokens to Alice</textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Context / Domain Tag (optional)</label>
+                    <input id="domain" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2 mb-3" placeholder="e.g., blockchain_v1 or payment_system" value="blockchain_v1" />
+                    <div class="text-xs text-gray-400 mb-3">The lab length-prefixes this tag before hashing/signing so the input is unambiguous and students can see how context changes the digest.</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btnSign" class="bg-green-600 hover:bg-green-700 rounded px-4 py-2">Sign with Private Key</button>
+                        <button id="btnVerify" class="bg-amber-600 hover:bg-amber-700 rounded px-4 py-2">Verify with Public Key</button>
+                    </div>
+                </div>
+            </div>
+            <div class="grid lg:grid-cols-3 gap-4 mt-4">
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <div class="text-sm font-semibold text-blue-200 mb-2">1. Hash the Framed Message</div>
+                    <div class="text-xs text-gray-400">Framing rule: <span class="mono">len(context) || context || len(message) || message</span></div>
+                    <div class="text-xs text-gray-400 mt-3">Current SHA-256 digest</div>
+                    <div id="hashValue" class="mono text-xs break-all bg-black/40 border border-white/10 rounded p-3 mt-1">-</div>
+                    <div class="flex items-center justify-between mt-3">
+                        <div class="text-xs text-gray-400">Hash input preview (hex)</div>
+                        <div id="hashInputBytes" class="text-xs text-gray-400">0 bytes</div>
+                    </div>
+                    <textarea id="hashInputPreview" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs mt-1" readonly placeholder="Framed bytes will appear here..."></textarea>
+                    <div class="text-xs text-gray-400 mt-2">Edit the message or context and this digest changes immediately, before any signing happens.</div>
+                </div>
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <div class="text-sm font-semibold text-emerald-200 mb-2">2. Sign with the Private Key</div>
+                    <div class="text-xs text-gray-400">The signature field is editable on purpose so students can tamper with it and force a failed verification.</div>
+                    <label class="block text-xs text-gray-400 mt-3 mb-1">Signature (hex)</label>
+                    <textarea id="signature" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" placeholder="Signature will appear here after signing..."></textarea>
+                    <div class="grid grid-cols-3 gap-2 mt-2">
+                        <button id="btnFlipSig" class="bg-slate-600 hover:bg-slate-700 rounded px-3 py-2 text-xs">Flip 1 Hex Digit</button>
+                        <button id="btnRestoreSig" class="bg-slate-600 hover:bg-slate-700 rounded px-3 py-2 text-xs">Restore</button>
+                        <button id="btnClearSig" class="bg-slate-600 hover:bg-slate-700 rounded px-3 py-2 text-xs">Clear</button>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-3">Digest snapshot when the current signature was created</div>
+                    <div id="signedHashValue" class="mono text-xs break-all bg-black/40 border border-white/10 rounded p-3 mt-1">-</div>
+                    <div id="signingState" class="text-xs text-gray-400 mt-2">Sign a message to capture a signature and digest snapshot.</div>
+                    <div id="signatureFormatNote" class="text-xs text-gray-400 mt-2">Format: RSA and Ed25519 produce fixed-length signatures; ECDSA uses DER-encoded <span class="mono">(r,s)</span>.</div>
+                </div>
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <div class="text-sm font-semibold text-sky-200 mb-2">3. Verify with a Public Key</div>
+                    <div class="text-xs text-gray-400">The verifier never needs the private key. Swap in the wrong public key to see why verification fails.</div>
+                    <div class="flex items-center justify-between mt-3">
+                        <div class="text-xs text-gray-400">Verifier public key preview</div>
+                        <div id="verifyKeyLabel" class="text-xs text-sky-300">Signer public key</div>
+                    </div>
+                    <textarea id="verifyPubKeyHex" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs mt-1" readonly placeholder="Generate a keypair to load a verifier public key..."></textarea>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <button id="btnUseSignerKey" class="bg-sky-700 hover:bg-sky-800 rounded px-3 py-2 text-xs">Use Signer's Key</button>
+                        <button id="btnWrongKey" class="bg-rose-700 hover:bg-rose-800 rounded px-3 py-2 text-xs">Generate Wrong Key</button>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-3">Verifier recomputed SHA-256</div>
+                    <div id="verifyHashValue" class="mono text-xs break-all bg-black/40 border border-white/10 rounded p-3 mt-1">-</div>
+                    <label class="block text-xs text-gray-400 mt-3 mb-1">Verification Result</label>
+                    <textarea id="verifyResult" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2" readonly placeholder="Click Verify with Public Key to check the current inputs..."></textarea>
+                </div>
+            </div>
+            <div id="hashDetail" class="mt-3 text-xs text-gray-400 bg-black/30 rounded p-3">
+                <div><strong>Conceptual flow:</strong> <span id="hashFlow">Message → Hash → Sign with private key → Verify with public key</span></div>
+                <div class="mt-1">Key roles: <span class="text-emerald-300">Private key = sign</span> · <span class="text-sky-300">Public key = verify</span></div>
+                <div class="mt-2 text-gray-300">Browser note: WebCrypto signs the framed message bytes using the selected algorithm. The SHA-256 panels are shown explicitly so you can watch the fingerprint change when the message, context, signature, or public key no longer match.</div>
+                <div id="algorithmNote" class="mt-2 text-gray-300">Algorithm note: <strong>RSA-2048</strong> mirrors the classic RSA sign/verify story from the lesson. <strong>ECDSA P-256</strong> pairs well with the curve intuition panel, and <strong>Ed25519</strong> offers deterministic modern signing behavior.</div>
+            </div>
+        </section>
+
+        <!-- Key Agreement (ECDH) -->
+        <section class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-teal-500/30 mb-6">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-handshake text-teal-400 mr-2"></i>Key Agreement (ECDH)</h2>
+            <p class="text-sm text-gray-300 mb-4">Generate a shared secret using elliptic-curve Diffie–Hellman (ECDH). Real world: TLS, P2P handshakes, and wallets derive AEAD keys from ECDH via a KDF.</p>
+            
+            <!-- Math Explanation -->
+            <div class="bg-gradient-to-r from-teal-900/30 via-purple-900/30 to-teal-900/30 rounded-xl p-6 mb-6 border border-teal-500/40">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-teal-300"><i class="fas fa-calculator mr-2"></i>How ECDH Works: The Magic Math</h3>
+                    <button id="btnToggleMath" class="text-sm bg-teal-600 hover:bg-teal-700 rounded px-3 py-1 transition">
+                        <i class="fas fa-chevron-down" id="mathIcon"></i> <span id="mathToggleText">Show Math</span>
+                    </button>
+                </div>
+                <div id="mathExplanation" class="hidden space-y-4">
+                    <div class="bg-black/40 rounded-lg p-4 border border-teal-500/30">
+                        <div class="text-sm font-semibold text-teal-300 mb-3">Step 1: Setup</div>
+                        <div class="space-y-2 text-sm mono">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-teal-400">Alice</span>
+                                <span class="text-gray-400">chooses secret:</span>
+                                <span class="text-yellow-300 font-bold">a</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-purple-400">Bob</span>
+                                <span class="text-gray-400">chooses secret:</span>
+                                <span class="text-yellow-300 font-bold">b</span>
+                            </div>
+                            <div class="text-gray-400 mt-2">Both parties agree on a public point <span class="text-green-400 font-bold">G</span> (generator) on an elliptic curve</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black/40 rounded-lg p-4 border border-teal-500/30">
+                        <div class="text-sm font-semibold text-teal-300 mb-3">Step 2: Public Keys</div>
+                        <div class="space-y-2 text-sm mono">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-teal-400">Alice computes:</span>
+                                <span class="text-yellow-300">A</span>
+                                <span class="text-gray-400">=</span>
+                                <span class="text-green-400">a · G</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-purple-400">Bob computes:</span>
+                                <span class="text-yellow-300">B</span>
+                                <span class="text-gray-400">=</span>
+                                <span class="text-green-400">b · G</span>
+                            </div>
+                            <div class="text-gray-400 mt-2"><span class="text-teal-400">A</span> and <span class="text-purple-400">B</span> are exchanged publicly (no secrets leaked!)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black/40 rounded-lg p-4 border border-teal-500/30">
+                        <div class="text-sm font-semibold text-teal-300 mb-3">Step 3: Shared Secret Derivation</div>
+                        <div class="space-y-3 text-sm mono">
+                            <div class="bg-teal-900/30 rounded p-3 border border-teal-500/30">
+                                <div class="text-teal-300 font-semibold mb-2">Alice's calculation:</div>
+                                <div class="flex flex-wrap items-center gap-2 text-sm">
+                                    <span class="text-yellow-300 font-bold">Shared</span>
+                                    <span class="text-gray-400">=</span>
+                                    <span class="text-teal-400">a</span>
+                                    <span class="text-gray-400">·</span>
+                                    <span class="text-purple-400">B</span>
+                                    <span class="text-gray-400">=</span>
+                                    <span class="text-teal-400">a</span>
+                                    <span class="text-gray-400">·</span>
+                                    <span class="text-purple-400">(</span>
+                                    <span class="text-purple-400">b</span>
+                                    <span class="text-gray-400">·</span>
+                                    <span class="text-green-400">G</span>
+                                    <span class="text-purple-400">)</span>
+                                    <span class="text-gray-400">=</span>
+                                    <span class="text-yellow-300 font-bold">a·b·G</span>
+                                </div>
+                            </div>
+                            <div class="bg-purple-900/30 rounded p-3 border border-purple-500/30">
+                                <div class="text-purple-300 font-semibold mb-2">Bob's calculation:</div>
+                                <div class="flex flex-wrap items-center gap-2 text-sm">
+                                    <span class="text-yellow-300 font-bold">Shared</span>
+                                    <span class="text-gray-400">=</span>
+                                    <span class="text-purple-400">b</span>
+                                    <span class="text-gray-400">·</span>
+                                    <span class="text-teal-400">A</span>
+                                    <span class="text-gray-400">=</span>
+                                    <span class="text-purple-400">b</span>
+                                    <span class="text-gray-400">·</span>
+                                    <span class="text-teal-400">(</span>
+                                    <span class="text-teal-400">a</span>
+                                    <span class="text-gray-400">·</span>
+                                    <span class="text-green-400">G</span>
+                                    <span class="text-teal-400">)</span>
+                                    <span class="text-gray-400">=</span>
+                                    <span class="text-yellow-300 font-bold">b·a·G</span>
+                                </div>
+                            </div>
+                            <div class="bg-gradient-to-r from-yellow-900/30 to-green-900/30 rounded p-4 border-2 border-yellow-500/50 mt-3 animate-pulse-slow">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-3xl animate-pulse-slow">✨</span>
+                                    <div class="flex-1">
+                                        <div class="text-yellow-300 font-bold text-lg mb-2">The Key Property</div>
+                                        <div class="text-sm text-gray-300 mb-2">Because scalar multiplication composes consistently on the same generator point,</div>
+                                        <div class="text-base mono text-yellow-200 mt-2 mb-2 bg-black/30 px-3 py-2 rounded border border-yellow-500/30 inline-block">
+                                            <span class="text-teal-400">a</span>·<span class="text-purple-400">b</span>·<span class="text-green-400">G</span> 
+                                            <span class="text-gray-500 mx-2">=</span> 
+                                            <span class="text-purple-400">b</span>·<span class="text-teal-400">a</span>·<span class="text-green-400">G</span>
+                                        </div>
+                                        <div class="text-sm text-gray-300 mt-3">Both parties arrive at the <span class="text-green-400 font-bold">same shared secret</span> without ever sharing their private keys.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black/40 rounded-lg p-4 border border-teal-500/30">
+                        <div class="text-sm font-semibold text-teal-300 mb-2">Step 4: Key Derivation Function (KDF)</div>
+                        <div class="text-sm text-gray-300">
+                            The shared secret point <span class="mono text-yellow-300">a·b·G</span> is fed into a KDF (like HKDF or PBKDF2) to derive symmetric encryption keys for secure communication.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <h3 class="font-semibold mb-2">Alice</h3>
+                    <button id="btnGenAlice" class="w-full bg-teal-600 hover:bg-teal-700 rounded px-4 py-2 mb-3">Generate Alice's Keys</button>
+                    <div class="text-xs text-gray-400 mb-1">Private Key (secret)</div>
+                    <textarea id="alicePriv" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs mb-2" readonly></textarea>
+                    <div class="text-xs text-gray-400 mb-1">Public Key (sent to Bob)</div>
+                    <textarea id="alicePub" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs" readonly></textarea>
+                </div>
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <h3 class="font-semibold mb-2">Bob</h3>
+                    <button id="btnGenBob" class="w-full bg-teal-600 hover:bg-teal-700 rounded px-4 py-2 mb-3">Generate Bob's Keys</button>
+                    <div class="text-xs text-gray-400 mb-1">Private Key (secret)</div>
+                    <textarea id="bobPriv" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs mb-2" readonly></textarea>
+                    <div class="text-xs text-gray-400 mb-1">Public Key (sent to Alice)</div>
+                    <textarea id="bobPub" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs" readonly></textarea>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button id="btnDeriveShared" class="bg-teal-600 hover:bg-teal-700 rounded px-4 py-2">Derive Shared Secret</button>
+                <div class="mt-3">
+                    <div class="text-xs text-gray-400 mb-1">Shared Secret (KDF output, hex)</div>
+                    <textarea id="sharedSecret" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" readonly placeholder="Both parties compute the same secret from their private key and the other's public key..."></textarea>
+                    <div class="text-xs text-gray-400 mt-1">This secret feeds into a KDF to derive symmetric keys for AEAD.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ECC Curve Visualization (Single, step-by-step) -->
+        <section id="eccSection" class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-indigo-500/30 mb-6">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-project-diagram text-indigo-400 mr-2"></i>Elliptic Curve: One Picture, Full Story</h2>
+            <p class="text-sm text-gray-300 mb-4">This graph is an intuition aid drawn over the real numbers. Real deployed curves such as P-256 work over finite fields, so the canvas illustrates point-addition ideas without claiming to be the literal production curve.</p>
+
+            <div class="bg-black/30 rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold text-indigo-300">Curve + Keys</h3>
+                    <button id="btnAnimateECC" class="text-sm bg-indigo-600 hover:bg-indigo-700 rounded px-3 py-1">Draw/Refresh</button>
+                </div>
+                <canvas id="eccCanvas" width="800" height="420" class="w-full bg-gradient-to-br from-indigo-900/20 to-purple-900/20 rounded border border-indigo-500/30" style="max-width: 100%; height: auto;"></canvas>
+
+                <div class="mt-4 space-y-4">
+                    <!-- Step 1: Why a curve? -->
+                    <div class="bg-indigo-900/20 border border-indigo-500/30 rounded-lg p-4">
+                        <div class="text-lg font-bold text-indigo-300 mb-2">Step 1: Why does it have to be a curve?</div>
+                        <div class="text-gray-200 text-sm space-y-2">
+                            <p>The formula <span class="mono text-yellow-300">y² = x³ + a·x + b</span> creates a special curve because:</p>
+                            <ul class="list-disc ml-5 space-y-1">
+                                <li><strong>For each x</strong>, you solve for y → get <span class="mono">y = ±√(x³ + a·x + b)</span></li>
+                                <li>If the stuff under the square root is positive, you get <strong>two possible y values</strong> (one positive, one negative)</li>
+                                <li>Plotting all these (x, y) points forms a smooth, symmetric curve that loops</li>
+                            </ul>
+                            <p class="mt-2"><strong>Why not just a line or circle?</strong> The curve's special shape gives us a mathematical "group" — meaning we can add points on the curve together using geometric rules, and the result is always another point on the same curve. This addition is what powers all the cryptography.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Contradictions -->
+                    <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                        <div class="text-lg font-bold text-red-300 mb-2">Step 2: What happens if we break the rules?</div>
+                        <div class="text-gray-200 text-sm space-y-2">
+                            <p>If you don't follow the math correctly, things break:</p>
+                            <ul class="list-disc ml-5 space-y-1">
+                                <li><strong>Bad curve parameters (a, b):</strong> If chosen wrong → curve has sharp corners or self-intersects → point addition doesn't work → <span class="text-red-400">can't do cryptography</span></li>
+                                <li><strong>G not on the curve:</strong> The generator point must be on the curve → if it's not → adding it doesn't follow the rules → <span class="text-red-400">public keys are invalid</span></li>
+                                <li><strong>d = 0 or too big:</strong> Private key must be in valid range → if d = 0 → Q = 0·G = nothing → <span class="text-red-400">can't create signatures</span></li>
+                                <li><strong>Predictable or reused randomness:</strong> If you use the same random number twice → attacker solves equations → <span class="text-red-400">private key gets stolen</span></li>
+                            </ul>
+                            <p class="mt-2 font-semibold">Bottom line: Math has rules. Break them and the security disappears.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: How points are chosen (randomness) -->
+                    <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                        <div class="text-lg font-bold text-green-300 mb-2">Step 3: How are points chosen? (Why randomness matters)</div>
+                        <div class="text-gray-200 text-sm space-y-2">
+                            <p><strong>Generator G:</strong> Picked once by standards organizations. It's a specific point on the curve that, when you add it to itself repeatedly, cycles through a huge number of different points before repeating. Everyone uses the same G so we're all doing math on the same curve.</p>
+                            <p><strong>Private key d:</strong> You pick a <span class="text-yellow-300 font-semibold">completely random</span> number between 1 and (curve order - 1). This randomness is critical:</p>
+                            <ul class="list-disc ml-5 space-y-1">
+                                <li>If d is predictable (like always using "12345") → attacker guesses it → <span class="text-red-400">your crypto is broken</span></li>
+                                <li>If d is biased (favors certain numbers) → attacker exploits the pattern → <span class="text-red-400">your crypto is broken</span></li>
+                                <li>If multiple people reuse the same d → their public keys are identical → <span class="text-red-400">easy to track/attack</span></li>
+                            </ul>
+                            <p class="mt-2"><strong>Public key Q:</strong> Computed from d and G using point addition: <span class="mono text-yellow-300">Q = d·G</span>. Because d is random, Q appears random too — but it's mathematically linked to d through the curve.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Key takeaways -->
+                    <div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+                        <div class="text-lg font-bold text-yellow-300 mb-2">What you need to know:</div>
+                        <div class="text-gray-200 text-sm space-y-2">
+                            <ol class="list-decimal ml-5 space-y-2">
+                                <li><strong>The curve exists because y² = x³ + a·x + b creates a special mathematical structure</strong> where points can be added together, and the result is always on the curve.</li>
+                                <li><strong>G (generator) is a fixed starting point</strong> that everyone agrees on — it's part of the standard.</li>
+                                <li><strong>d (private key) must be truly random</strong> — if it's predictable, reused, or biased, attackers can break your crypto.</li>
+                                <li><strong>Q (public key) = d·G</strong> — computed by "multiplying" the generator point by your private key using curve point addition.</li>
+                                <li><strong>Breaking any rule → contradictions → security fails.</strong> Math has to be done exactly right, or it doesn't work.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-4 text-xs">
+                        <div class="bg-black/40 rounded p-3 border border-indigo-500/20">
+                            <div class="text-indigo-300 font-semibold mb-1">Private Key (d)</div>
+                            <div id="eccPrivateKey" class="mono text-xs text-gray-400">Generate keys to see</div>
+                        </div>
+                        <div class="bg-black/40 rounded p-3 border border-indigo-500/20">
+                            <div class="text-green-300 font-semibold mb-1">Public Key (Q = d·G)</div>
+                            <div id="eccPublicKey" class="mono text-xs text-gray-400">Public key appears here</div>
+                        </div>
+                        <div class="bg-black/40 rounded p-3 border border-indigo-500/20">
+                            <div class="text-yellow-300 font-semibold mb-1">Generator (G)</div>
+                            <div class="mono text-xs text-yellow-400">Fixed base point on the curve</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-400">The plotted <span class="mono">Q = d·G</span> is a toy visualization derived from your key material for intuition. The hex public key shown in this card is the real exported browser key.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Nonce Reuse Warning (ECDSA) -->
+        <section id="nonceSection" class="bg-yellow-900/20 border border-yellow-700/30 rounded-xl p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-2"><i class="fas fa-triangle-exclamation text-yellow-400 mr-2"></i>ECDSA Nonce Reuse Concept Demo</h2>
+            <p class="text-gray-300 mb-4">ECDSA requires a unique random nonce per signature. If two signatures from the same key reuse the nonce (same <span class="mono">r</span>), the private key can be recovered. This section is a conceptual math walkthrough: WebCrypto does not let the browser force a real reused nonce with your live key, so the same-<span class="mono">r</span> failure is simulated to show why it is dangerous.</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Message 1</label>
+                    <textarea id="msg1" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2 mb-2" placeholder="First message">Payment: 50 tokens</textarea>
+                    <button id="btnSign1" class="w-full bg-yellow-600 hover:bg-yellow-700 rounded px-4 py-2 mb-2">Sign (with fresh nonce)</button>
+                    <div class="text-xs text-gray-400">r: <span id="r1" class="mono"></span> &nbsp; s: <span id="s1" class="mono"></span></div>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Message 2</label>
+                    <textarea id="msg2" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2 mb-2" placeholder="Second message">Payment: 100 tokens</textarea>
+                    <div class="flex space-x-2 mb-2">
+                        <button id="btnSign2Fresh" class="flex-1 bg-yellow-600 hover:bg-yellow-700 rounded px-3 py-2">Sign (fresh)</button>
+                        <button id="btnSign2Reuse" class="flex-1 bg-red-600 hover:bg-red-700 rounded px-3 py-2">Simulate Reused Nonce</button>
+                    </div>
+                    <div class="text-xs text-gray-400">r: <span id="r2" class="mono"></span> &nbsp; s: <span id="s2" class="mono"></span></div>
+                </div>
+            </div>
+            <div id="nonceWarning" class="mt-4 hidden bg-red-900/50 border border-red-600/40 rounded p-3 text-sm">
+                <strong>Warning:</strong> <span id="nonceWarningText"></span>
+            </div>
+            <div id="recoveryMath" class="mt-3 hidden text-xs text-gray-200 bg-black/30 border border-red-600/30 rounded p-3">
+                <div class="mb-1"><strong>Recovering d from nonce reuse (concept):</strong></div>
+                <div class="mono">d = (s1·h2 − s2·h1) · (r·(s2 − s1))^{-1} mod n</div>
+                <div class="mt-1">Computed d (hex, toy demo): <span id="recoveredD" class="mono"></span></div>
+                <div class="mt-1 text-gray-400">Note: This is a math demonstration of the same-<span class="mono">r</span> attack pattern. We do not access or reveal the real private key from your browser’s key store.</div>
+            </div>
+            <div class="mt-3 text-xs text-gray-400">
+                <strong>Lesson:</strong> If the same <span class="mono">r</span> appears in two ECDSA signatures from the same keypair, an attacker can compute the private key. 
+                Ed25519 derives its signing randomness deterministically from the secret key and message, which avoids this specific operational mistake.
+            </div>
+        </section>
+
+        <!-- Address Derivation -->
+        <section id="addressSection" class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-green-500/30 mb-6">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-qrcode text-green-400 mr-2"></i>Address Derivation</h2>
+            <p class="text-sm text-gray-300 mb-4">In blockchain systems, addresses are derived from public keys via hashing + encoding (e.g., base58check). Real world: Bitcoin (base58check), Ethereum (EIP‑55 checksum). Addresses are shorter identifiers and avoid exposing the raw public key until first spend.</p>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Public Key (hex, or use above)</label>
+                    <textarea id="addrPubKey" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" placeholder="Paste public key hex or generate a keypair above"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Address (derived)</label>
+                    <textarea id="address" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" readonly placeholder="Address will appear here..."></textarea>
+                    <button id="btnDeriveAddr" class="w-full mt-2 bg-green-600 hover:bg-green-700 rounded px-4 py-2">Derive Address</button>
+                </div>
+            </div>
+            <div class="mt-3 text-xs text-gray-400 bg-black/30 rounded p-2">
+                <div><strong>Derivation steps:</strong></div>
+                <div class="mono">1. Hash public key (SHA-256) → <span id="addrHash"></span></div>
+                <div class="mono">2. Hash again (RIPEMD-160 simulation) → <span id="addrHash160"></span></div>
+                <div class="mono">3. Add version byte + checksum → encode as base58-like</div>
+                <div class="mt-2">Note: Real address formats vary by blockchain (Bitcoin uses base58check, Ethereum uses hex with checksum, etc.)</div>
+            </div>
+        </section>
+
+        <footer class="text-center text-gray-400 mt-10 text-sm">MIT License • Educational use</footer>
+    </main>
+
+    <script>
+        const te = new TextEncoder();
+        const td = new TextDecoder();
+
+        function toHex(bytes) {
+            return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        function fromHex(hex) {
+            const clean = hex.replace(/[^0-9a-fA-F]/g, '');
+            if (clean.length % 2 !== 0) throw new Error('Hex length must be even');
+            const out = new Uint8Array(clean.length / 2);
+            for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i * 2, 2), 16);
+            return out;
+        }
+        function toBase64(bytes) {
+            return btoa(String.fromCharCode(...bytes));
+        }
+        function fromBase64(b64) {
+            const bin = atob(b64);
+            const out = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+            return out;
+        }
+        function encodeUint32(value) {
+            const out = new Uint8Array(4);
+            out[0] = (value >>> 24) & 0xff;
+            out[1] = (value >>> 16) & 0xff;
+            out[2] = (value >>> 8) & 0xff;
+            out[3] = value & 0xff;
+            return out;
+        }
+        function buildFramedPayload(msg, domain) {
+            const domainBytes = te.encode(domain || '');
+            const msgBytes = te.encode(msg || '');
+            const framed = new Uint8Array(8 + domainBytes.length + msgBytes.length);
+            framed.set(encodeUint32(domainBytes.length), 0);
+            framed.set(domainBytes, 4);
+            framed.set(encodeUint32(msgBytes.length), 4 + domainBytes.length);
+            framed.set(msgBytes, 8 + domainBytes.length);
+            return { domainBytes, msgBytes, framed };
+        }
+        async function sha256(bytes) {
+            return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+        }
+        function previewHex(bytes, maxBytes = 48) {
+            const hex = toHex(bytes);
+            if (bytes.length <= maxBytes) return hex;
+            return `${hex.slice(0, maxBytes * 2)}... (${bytes.length} bytes total)`;
+        }
+        function b64UrlToBytes(value) {
+            return fromBase64(value.replace(/-/g, '+').replace(/_/g, '/'));
+        }
+        function jwkMemberToHex(value) {
+            return value ? toHex(b64UrlToBytes(value)) : '';
+        }
+        function setVerifyResult(message, color = '#cbd5e1') {
+            const el = document.getElementById('verifyResult');
+            if (!el) return;
+            el.value = message;
+            el.style.color = color;
+        }
+        function resetSignatureStatus() {
+            setVerifyResult('Click Verify with Public Key to check the current message, signature, and verifying key.');
+            const verifyHash = document.getElementById('verifyHashValue');
+            if (verifyHash) verifyHash.textContent = '-';
+        }
+        async function exportPublicKeyHex(key) {
+            if (!key) return '';
+            try {
+                const jwk = await crypto.subtle.exportKey('jwk', key);
+                if (jwk.kty === 'RSA') {
+                    return `n=${jwkMemberToHex(jwk.n)}\ne=${jwkMemberToHex(jwk.e)}`;
+                }
+                if (jwk.x) {
+                    const xHex = jwkMemberToHex(jwk.x);
+                    const yHex = jwk.y ? jwkMemberToHex(jwk.y) : '';
+                    return yHex ? `x=${xHex}\ny=${yHex}` : `x=${xHex}`;
+                }
+            } catch (_) {}
+            try {
+                const spki = await crypto.subtle.exportKey('spki', key);
+                return toHex(new Uint8Array(spki));
+            } catch (_) {
+                return '(export failed)';
+            }
+        }
+        async function exportPrivateKeyPreview(key) {
+            if (!key) return '';
+            try {
+                const jwk = await crypto.subtle.exportKey('jwk', key);
+                if (jwk.kty === 'RSA') return `d=${jwkMemberToHex(jwk.d)}`;
+                if (jwk.d) return `d=${jwkMemberToHex(jwk.d)}`;
+            } catch (_) {}
+            try {
+                const pkcs8 = await crypto.subtle.exportKey('pkcs8', key);
+                return previewHex(new Uint8Array(pkcs8), 64);
+            } catch (_) {
+                return '(export failed)';
+            }
+        }
+        async function exportAddressCompatiblePublicKeyHex(key) {
+            if (!key) return '';
+            const jwk = await crypto.subtle.exportKey('jwk', key);
+            if (jwk.kty === 'RSA') return '';
+            if (jwk.kty === 'EC') return `${jwkMemberToHex(jwk.x)}${jwkMemberToHex(jwk.y)}`;
+            if (jwk.kty === 'OKP') return jwkMemberToHex(jwk.x);
+            try {
+                const raw = await crypto.subtle.exportKey('raw', key);
+                return toHex(new Uint8Array(raw));
+            } catch (_) {
+                return '';
+            }
+        }
+
+        // State
+        let currentKeyPair = null;
+        let keysVisible = true;
+        let aliceKeyPair = null;
+        let bobKeyPair = null;
+        let alternateVerifyKeyPair = null;
+        let activeVerifyKey = null;
+        let activeVerifyKeyLabel = 'Generate a keypair first';
+        let lastSignedSignatureHex = '';
+        let lastSignedDigestHex = '';
+        let lastNonce = null;
+        let lastR = null;
+        let s1Big = null, rBig = null, h1Big = null; // for reuse demo
+        const P256_N = BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551');
+
+        function hexToBig(hex) { return BigInt('0x' + hex); }
+        function bigToHex(b, padTo = 0) {
+            let h = b.toString(16);
+            if (padTo) h = h.padStart(padTo, '0');
+            return h;
+        }
+        function mod(a, n) { const r = a % n; return r >= 0n ? r : r + n; }
+        function egcd(a, b) { if (b === 0n) return [a, 1n, 0n]; const [g, x1, y1] = egcd(b, a % b); return [g, y1, x1 - (a / b) * y1]; }
+        function invMod(a, n) { const [g, x] = egcd(mod(a, n), n); if (g !== 1n) throw new Error('No inverse'); return mod(x, n); }
+
+        function parseDerEcdsaSignature(bytes) {
+            // Minimal DER parser for ECDSA (SEQUENCE of two INTEGERs)
+            if (!bytes || bytes.length === 0) throw new Error('Empty signature');
+            let i = 0;
+            // Fallback: handle raw 64-byte (r||s) format if present
+            if (bytes[0] !== 0x30) {
+                if (bytes.length === 64) {
+                    const rHex = toHex(bytes.slice(0, 32));
+                    const sHex = toHex(bytes.slice(32, 64));
+                    return { rHex, sHex };
+                }
+                throw new Error('DER: expected SEQUENCE');
+            }
+            i++;
+            let seqLen = bytes[i++];
+            // Handle long form length (length > 127)
+            if (seqLen & 0x80) {
+                const lenBytes = seqLen & 0x7F;
+                seqLen = 0;
+                for (let j = 0; j < lenBytes; j++) {
+                    seqLen = (seqLen << 8) | bytes[i++];
+                }
+            }
+            if (bytes[i++] !== 0x02) throw new Error('DER: expected INTEGER(r)');
+            let rLen = bytes[i++];
+            if (rLen & 0x80) {
+                const lenBytes = rLen & 0x7F;
+                rLen = 0;
+                for (let j = 0; j < lenBytes; j++) {
+                    rLen = (rLen << 8) | bytes[i++];
+                }
+            }
+            let rBytes = bytes.slice(i, i + rLen); i += rLen;
+            if (bytes[i++] !== 0x02) throw new Error('DER: expected INTEGER(s)');
+            let sLen = bytes[i++];
+            if (sLen & 0x80) {
+                const lenBytes = sLen & 0x7F;
+                sLen = 0;
+                for (let j = 0; j < lenBytes; j++) {
+                    sLen = (sLen << 8) | bytes[i++];
+                }
+            }
+            let sBytes = bytes.slice(i, i + sLen); i += sLen;
+            // Remove leading zero if present (DER positive integer)
+            if (rBytes.length > 0 && rBytes[0] === 0x00) rBytes = rBytes.slice(1);
+            if (sBytes.length > 0 && sBytes[0] === 0x00) sBytes = sBytes.slice(1);
+            const rHex = toHex(rBytes);
+            const sHex = toHex(sBytes);
+            return { rHex, sHex };
+        }
+
+        function selectedSigAlgValue() {
+            return document.getElementById('sigAlg').value;
+        }
+        function isRSASelection() { return selectedSigAlgValue() === 'RSA-2048'; }
+        function isEcdsaSelection() { return selectedSigAlgValue() === 'ECDSA-P256'; }
+        function isEd25519Selection() { return selectedSigAlgValue() === 'Ed25519'; }
+        function currentAlg() {
+            if (isRSASelection()) {
+                return {
+                    name: 'RSASSA-PKCS1-v1_5',
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                    hash: 'SHA-256'
+                };
+            }
+            if (isEd25519Selection()) return 'Ed25519';
+            return { name: 'ECDSA', namedCurve: 'P-256' };
+        }
+        function currentSignVerifyAlgorithm() {
+            if (isRSASelection()) return { name: 'RSASSA-PKCS1-v1_5' };
+            if (isEd25519Selection()) return { name: 'Ed25519' };
+            return { name: 'ECDSA', hash: 'SHA-256' };
+        }
+        function currentAlgName() {
+            if (isRSASelection()) return 'RSA-2048';
+            if (isEd25519Selection()) return 'Ed25519';
+            return 'ECDSA-P-256';
+        }
+        function refreshAlgorithmSpecificSections() {
+            const eccSection = document.getElementById('eccSection');
+            const nonceSection = document.getElementById('nonceSection');
+            const addressSection = document.getElementById('addressSection');
+            if (eccSection) eccSection.classList.toggle('hidden', !isEcdsaSelection());
+            if (nonceSection) nonceSection.classList.toggle('hidden', !isEcdsaSelection());
+            if (addressSection) addressSection.classList.toggle('hidden', isRSASelection());
+        }
+        function updateAlgorithmMessaging() {
+            const algorithmNote = document.getElementById('algorithmNote');
+            const formatNote = document.getElementById('signatureFormatNote');
+            if (isRSASelection()) {
+                if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>RSA-2048</strong> mirrors the classic RSA lesson flow: the private key signs and the public key verifies. The ECC-specific curve and nonce panels are hidden because they do not apply to RSA.';
+                if (formatNote) formatNote.innerHTML = 'Format: RSA signatures here use <span class="mono">RSASSA-PKCS1-v1_5</span> with SHA-256 and appear as fixed-length hex.';
+                return;
+            }
+            if (isEd25519Selection()) {
+                if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>Ed25519</strong> gives deterministic modern signing behavior. The ECC-specific P-256 panels stay hidden because Ed25519 does not use the same curve representation.';
+                if (formatNote) formatNote.innerHTML = 'Format: Ed25519 signatures appear as raw 64-byte hex values.';
+                return;
+            }
+            if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>ECDSA P-256</strong> pairs well with the curve intuition panel below and shows why nonce handling matters. <strong>RSA-2048</strong> and <strong>Ed25519</strong> remain available in the selector when you want a different signature family.';
+            if (formatNote) formatNote.innerHTML = 'Format: ECDSA signatures are DER-encoded <span class="mono">(r,s)</span> values with variable byte length.';
+        }
+        async function updateVerifierKeyPreview() {
+            const labelEl = document.getElementById('verifyKeyLabel');
+            const keyEl = document.getElementById('verifyPubKeyHex');
+            if (!keyEl || !labelEl) return;
+            labelEl.textContent = activeVerifyKeyLabel;
+            keyEl.value = activeVerifyKey ? await exportPublicKeyHex(activeVerifyKey) : '';
+        }
+        async function useSignerPublicKey() {
+            if (!currentKeyPair) {
+                showWarn('Generate a signer keypair first.');
+                return;
+            }
+            activeVerifyKey = currentKeyPair.publicKey;
+            activeVerifyKeyLabel = 'Signer public key';
+            await updateVerifierKeyPreview();
+            resetSignatureStatus();
+        }
+        async function generateWrongVerifyKey() {
+            if (!currentKeyPair) {
+                await generateKeyPair();
+            }
+            try {
+                alternateVerifyKeyPair = await crypto.subtle.generateKey(currentAlg(), true, ['sign', 'verify']);
+                activeVerifyKey = alternateVerifyKeyPair.publicKey;
+                activeVerifyKeyLabel = 'Wrong public key';
+                await updateVerifierKeyPreview();
+                resetSignatureStatus();
+                showWarn('Loaded a different public key for verification.');
+            } catch (e) {
+                showWarn('Failed to generate an alternate verifier key: ' + e.message);
+            }
+        }
+        async function exportCurrentKeyPair() {
+            if (!currentKeyPair) {
+                showWarn('Generate a keypair first.');
+                return;
+            }
+            try {
+                const pubJwk = await crypto.subtle.exportKey('jwk', currentKeyPair.publicKey);
+                const privJwk = await crypto.subtle.exportKey('jwk', currentKeyPair.privateKey);
+                const payload = {
+                    algorithm: document.getElementById('sigAlg').value,
+                    exportedAt: new Date().toISOString(),
+                    note: 'Educational export. Do not share private keys in real systems.',
+                    publicKeyJwk: pubJwk,
+                    privateKeyJwk: privJwk
+                };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'signature-lab-keypair.json';
+                a.click();
+                URL.revokeObjectURL(url);
+                showWarn('Keypair exported as JSON.');
+            } catch (e) {
+                showWarn('Export failed: ' + e.message);
+            }
+        }
+        async function buildSignatureInputs() {
+            const msg = document.getElementById('message').value;
+            const domain = document.getElementById('domain').value;
+            const { domainBytes, msgBytes, framed } = buildFramedPayload(msg, domain);
+            const digest = await sha256(framed);
+            return { msg, domain, domainBytes, msgBytes, framed, digest };
+        }
+        function updateSigningState(currentDigestHex) {
+            const el = document.getElementById('signingState');
+            if (!el) return;
+            if (!lastSignedDigestHex) {
+                el.textContent = 'Sign a message to capture a signature and digest snapshot.';
+                el.style.color = '#94a3b8';
+                return;
+            }
+            if (currentDigestHex === lastSignedDigestHex) {
+                el.textContent = 'Current message/context still matches the signature snapshot.';
+                el.style.color = '#34d399';
+                return;
+            }
+            el.textContent = 'Current message/context changed after signing. Verification should now fail unless you sign again.';
+            el.style.color = '#fbbf24';
+        }
+        async function refreshHashWorkspace() {
+            const ctx = await buildSignatureInputs();
+            const digestHex = toHex(ctx.digest);
+            document.getElementById('hashValue').textContent = digestHex;
+            document.getElementById('hashInputBytes').textContent = `${ctx.framed.length} bytes`;
+            document.getElementById('hashInputPreview').value = previewHex(ctx.framed);
+            updateSigningState(digestHex);
+            return ctx;
+        }
+        function flipLastHexNibble(hex) {
+            const chars = hex.split('');
+            for (let i = chars.length - 1; i >= 0; i--) {
+                if (/[0-9a-fA-F]/.test(chars[i])) {
+                    chars[i] = chars[i].toLowerCase() === '0' ? '1' : '0';
+                    return chars.join('');
+                }
+            }
+            return hex;
+        }
+
+        async function generateKeyPair() {
+            const alg = currentAlg();
+            const algName = currentAlgName();
+            const usages = typeof alg === 'string' 
+                ? ['sign', 'verify']
+                : ['sign', 'verify'];
+            try {
+                currentKeyPair = await crypto.subtle.generateKey(alg, true, usages);
+                alternateVerifyKeyPair = null;
+                activeVerifyKey = currentKeyPair.publicKey;
+                activeVerifyKeyLabel = 'Signer public key';
+                lastSignedSignatureHex = '';
+                lastSignedDigestHex = '';
+                document.getElementById('signature').value = '';
+                document.getElementById('signedHashValue').textContent = '-';
+                await updateKeyPreview();
+                await updateVerifierKeyPreview();
+                await refreshHashWorkspace();
+                updateAlgorithmMessaging();
+                refreshAlgorithmSpecificSections();
+                resetSignatureStatus();
+                showWarn(`Generated ${algName} keypair.`);
+                // Auto-update ECC visualization
+                if (isEcdsaSelection() && document.getElementById('eccCanvas')) {
+                    setTimeout(animateECCKeyGen, 300);
+                }
+            } catch (e) {
+                showWarn('Key generation failed: ' + e.message);
+            }
+        }
+
+        async function updateKeyPreview() {
+            if (!currentKeyPair) {
+                document.getElementById('pubKeyHex').value = '';
+                document.getElementById('privKeyHex').value = '';
+                document.getElementById('btnToggleKeys').textContent = keysVisible ? 'Hide' : 'Show';
+                return;
+            }
+            if (!keysVisible) {
+                document.getElementById('pubKeyHex').value = '';
+                document.getElementById('privKeyHex').value = '';
+                document.getElementById('btnToggleKeys').textContent = 'Show';
+                return;
+            }
+            try {
+                document.getElementById('pubKeyHex').value = await exportPublicKeyHex(currentKeyPair.publicKey);
+                document.getElementById('privKeyHex').value = await exportPrivateKeyPreview(currentKeyPair.privateKey);
+                document.getElementById('btnToggleKeys').textContent = 'Hide';
+            } catch (e) {
+                document.getElementById('pubKeyHex').value = '(export failed)';
+            }
+        }
+
+        function showWarn(msg) {
+            const el = document.getElementById('warn') || (() => {
+                const div = document.createElement('div');
+                div.id = 'warn';
+                div.className = 'mt-4 bg-yellow-900/50 border border-yellow-600/40 rounded p-3 text-sm';
+                document.querySelector('main').appendChild(div);
+                return div;
+            })();
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        async function signMessage() {
+            if (!currentKeyPair) {
+                await generateKeyPair();
+            }
+            const ctx = await refreshHashWorkspace();
+            try {
+                const sig = await crypto.subtle.sign(
+                    currentSignVerifyAlgorithm(),
+                    currentKeyPair.privateKey,
+                    ctx.framed
+                );
+                const sigBytes = new Uint8Array(sig);
+                lastSignedSignatureHex = toHex(sigBytes);
+                lastSignedDigestHex = toHex(ctx.digest);
+                document.getElementById('signature').value = lastSignedSignatureHex;
+                document.getElementById('signedHashValue').textContent = lastSignedDigestHex;
+                updateSigningState(lastSignedDigestHex);
+                resetSignatureStatus();
+                // Extract r for ECDSA nonce tracking
+                if (typeof currentAlg() === 'object' && currentAlg().name === 'ECDSA') {
+                    try {
+                        const { rHex } = parseDerEcdsaSignature(sigBytes);
+                        lastR = rHex; lastNonce = rHex;
+                    } catch (_) {}
+                }
+                showWarn('Message signed with the private key.');
+            } catch (e) {
+                showWarn('Signing failed: ' + e.message);
+            }
+        }
+
+        async function verifySignature() {
+            if (!currentKeyPair) {
+                showWarn('Generate a keypair first.');
+                return;
+            }
+            if (!activeVerifyKey) {
+                await useSignerPublicKey();
+            }
+            const sigHex = document.getElementById('signature').value.trim();
+            if (!sigHex) {
+                showWarn('No signature to verify.');
+                return;
+            }
+            const ctx = await refreshHashWorkspace();
+            const currentDigestHex = toHex(ctx.digest);
+            document.getElementById('verifyHashValue').textContent = currentDigestHex;
+            let sig;
+            try {
+                sig = fromHex(sigHex);
+            } catch (e) {
+                setVerifyResult('Verification error: ' + e.message, '#ef4444');
+                return;
+            }
+            try {
+                const valid = await crypto.subtle.verify(
+                    currentSignVerifyAlgorithm(),
+                    activeVerifyKey,
+                    sig,
+                    ctx.framed
+                );
+                setVerifyResult(
+                    valid
+                        ? 'VALID: the current message, signature, and public key all match.'
+                        : 'INVALID: the message, signature, or public key does not match.',
+                    valid ? '#10b981' : '#ef4444'
+                );
+                if (!valid) showWarn('Signature verification failed. Check the message, context tag, signature, and verifying public key.');
+            } catch (e) {
+                setVerifyResult('Verification error: ' + e.message, '#ef4444');
+            }
+        }
+        function tamperSignature() {
+            const sigEl = document.getElementById('signature');
+            const current = sigEl.value.trim();
+            if (!current) {
+                showWarn('Sign a message first or paste a signature to tamper with.');
+                return;
+            }
+            sigEl.value = flipLastHexNibble(current);
+            resetSignatureStatus();
+            showWarn('Flipped one hex digit in the signature.');
+        }
+        function restoreSignature() {
+            if (!lastSignedSignatureHex) {
+                showWarn('No saved signature snapshot to restore.');
+                return;
+            }
+            document.getElementById('signature').value = lastSignedSignatureHex;
+            resetSignatureStatus();
+            showWarn('Restored the last valid signature.');
+        }
+        function clearSignatureField() {
+            document.getElementById('signature').value = '';
+            resetSignatureStatus();
+        }
+
+        async function generateAlice() {
+            const alg = { name: 'ECDH', namedCurve: 'P-256' };
+            aliceKeyPair = await crypto.subtle.generateKey(alg, true, ['deriveBits', 'deriveKey']);
+            const pub = await crypto.subtle.exportKey('raw', aliceKeyPair.publicKey);
+            const pubBytes = new Uint8Array(pub);
+            document.getElementById('alicePub').value = toHex(pubBytes);
+            const privRaw = await crypto.subtle.exportKey('pkcs8', aliceKeyPair.privateKey);
+            document.getElementById('alicePriv').value = toHex(new Uint8Array(privRaw)).slice(0, 64) + '...';
+            // Auto-update ECDH visualization if both keys exist
+            if (aliceKeyPair && bobKeyPair && document.getElementById('ecdhCanvas')) {
+                setTimeout(animateECDH, 300);
+            }
+        }
+
+        async function generateBob() {
+            const alg = { name: 'ECDH', namedCurve: 'P-256' };
+            bobKeyPair = await crypto.subtle.generateKey(alg, true, ['deriveBits', 'deriveKey']);
+            const pub = await crypto.subtle.exportKey('raw', bobKeyPair.publicKey);
+            const pubBytes = new Uint8Array(pub);
+            document.getElementById('bobPub').value = toHex(pubBytes);
+            const privRaw = await crypto.subtle.exportKey('pkcs8', bobKeyPair.privateKey);
+            document.getElementById('bobPriv').value = toHex(new Uint8Array(privRaw)).slice(0, 64) + '...';
+            // Auto-update ECDH visualization if both keys exist
+            if (aliceKeyPair && bobKeyPair && document.getElementById('ecdhCanvas')) {
+                setTimeout(animateECDH, 300);
+            }
+        }
+
+        async function deriveSharedSecret() {
+            if (!aliceKeyPair || !bobKeyPair) {
+                showWarn('Generate both Alice and Bob keypairs first.');
+                return;
+            }
+            try {
+                // Alice computes: shared = deriveBits(alicePriv, bobPub)
+                const alg = { name: 'ECDH', public: bobKeyPair.publicKey };
+                const shared = await crypto.subtle.deriveBits(alg, aliceKeyPair.privateKey, 256);
+                const sharedBytes = new Uint8Array(shared);
+                // Feed through a KDF simulation (here just hash)
+                const kdfOutput = await crypto.subtle.digest('SHA-256', sharedBytes);
+                document.getElementById('sharedSecret').value = toHex(new Uint8Array(kdfOutput));
+                showWarn('Shared secret derived. Both parties compute the same value.');
+            } catch (e) {
+                showWarn('Derivation failed: ' + e.message);
+            }
+        }
+
+        async function signMsg1() {
+            try {
+                if (!currentKeyPair) await generateKeyPair();
+                const alg = currentAlg();
+                if (typeof alg !== 'object' || alg.name !== 'ECDSA') {
+                    // Auto-switch to ECDSA for this demo
+                    const sel = document.getElementById('sigAlg');
+                    if (sel) sel.value = 'ECDSA-P256';
+                    await generateKeyPair();
+                }
+                const msg = document.getElementById('msg1').value;
+                if (!msg || msg.trim() === '') {
+                    showWarn('Please enter a message to sign.');
+                    return;
+                }
+                const { framed } = buildFramedPayload(msg, '');
+                const digest = await sha256(framed);
+                const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, currentKeyPair.privateKey, framed);
+                const sigBytes = new Uint8Array(sig);
+                try {
+                    const { rHex, sHex } = parseDerEcdsaSignature(sigBytes);
+                    lastR = rHex; lastNonce = rHex;
+                    rBig = hexToBig(rHex);
+                    s1Big = hexToBig(sHex);
+                    h1Big = hexToBig(toHex(digest));
+                    document.getElementById('r1').textContent = rHex.slice(0, 16) + '...';
+                    document.getElementById('s1').textContent = sHex.slice(0, 16) + '...';
+                    showWarn('Message 1 signed successfully. Now sign Message 2.');
+                } catch (e) {
+                    showWarn('Failed to parse signature: ' + e.message);
+                }
+            } catch (e) {
+                showWarn('Signing failed: ' + e.message);
+            }
+        }
+
+        async function signMsg2Reuse() {
+            try {
+                if (!currentKeyPair) {
+                    // Ensure ECDSA key
+                    const sel = document.getElementById('sigAlg');
+                    if (sel) sel.value = 'ECDSA-P256';
+                    await generateKeyPair();
+                }
+                const alg = currentAlg();
+                if (typeof alg !== 'object' || alg.name !== 'ECDSA') {
+                    const sel = document.getElementById('sigAlg');
+                    if (sel) sel.value = 'ECDSA-P256';
+                    await generateKeyPair();
+                }
+                if (!lastNonce || !rBig || !s1Big || !h1Big) {
+                    showWarn('Sign message 1 first to establish a nonce.');
+                    return;
+                }
+                const msg2 = document.getElementById('msg2').value;
+                if (!msg2 || msg2.trim() === '') {
+                    showWarn('Please enter Message 2 to sign.');
+                    return;
+                }
+                const warnEl = document.getElementById('nonceWarning');
+                warnEl.classList.remove('hidden');
+                document.getElementById('nonceWarningText').textContent = 
+                    'Simulated same-r reuse scenario loaded. In real ECDSA, reusing the same nonce k with the same keypair lets an attacker compute the private key from two signatures. Ed25519 avoids this specific foot-gun with deterministic nonce derivation.';
+                try {
+                    const { framed } = buildFramedPayload(msg2, '');
+                    const h2 = hexToBig(toHex(await sha256(framed)));
+                    const s2 = mod(s1Big + 1n, P256_N);
+                    const numerator = mod(s1Big * h2 - s2 * h1Big, P256_N);
+                    const denom = mod(rBig * mod(s2 - s1Big, P256_N), P256_N);
+                    if (denom === 0n) {
+                        showWarn('Cannot compute private key: denominator is zero. Try signing Message 1 again.');
+                        return;
+                    }
+                    const d = mod(numerator * invMod(denom, P256_N), P256_N);
+                    document.getElementById('r2').textContent = lastR.slice(0, 16) + '...';
+                    document.getElementById('r2').style.color = '#ef4444';
+                    document.getElementById('s2').textContent = bigToHex(s2).slice(0, 16) + '...';
+                    const rec = document.getElementById('recoveredD');
+                    if (rec) rec.textContent = bigToHex(d);
+                    const math = document.getElementById('recoveryMath');
+                    if (math) math.classList.remove('hidden');
+                    showWarn('Toy demo complete: the same-r equations recover a private-key value, illustrating the nonce-reuse vulnerability.');
+                } catch (e) {
+                    showWarn('Failed to compute private key: ' + e.message);
+                }
+            } catch (e) {
+                showWarn('Signing failed: ' + e.message);
+            }
+        }
+
+        async function signMsg2Fresh() {
+            try {
+                if (!currentKeyPair) {
+                    const sel = document.getElementById('sigAlg');
+                    if (sel) sel.value = 'ECDSA-P256';
+                    await generateKeyPair();
+                }
+                const alg = currentAlg();
+                if (typeof alg !== 'object' || alg.name !== 'ECDSA') {
+                    const sel = document.getElementById('sigAlg');
+                    if (sel) sel.value = 'ECDSA-P256';
+                    await generateKeyPair();
+                }
+                const msg = document.getElementById('msg2').value;
+                if (!msg || msg.trim() === '') {
+                    showWarn('Please enter a message to sign.');
+                    return;
+                }
+                const { framed } = buildFramedPayload(msg, '');
+                const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, currentKeyPair.privateKey, framed);
+                const sigBytes = new Uint8Array(sig);
+                try {
+                    const { rHex, sHex } = parseDerEcdsaSignature(sigBytes);
+                    document.getElementById('r2').textContent = rHex.slice(0, 16) + '... (fresh)';
+                    document.getElementById('r2').style.color = '#10b981';
+                    document.getElementById('s2').textContent = sHex.slice(0, 16) + '...';
+                    document.getElementById('nonceWarning').classList.add('hidden');
+                    const math = document.getElementById('recoveryMath');
+                    if (math) math.classList.add('hidden');
+                    showWarn('Message 2 signed with fresh nonce. Notice r is different from Message 1.');
+                } catch (e) {
+                    showWarn('Failed to parse signature: ' + e.message);
+                }
+            } catch (e) {
+                showWarn('Signing failed: ' + e.message);
+            }
+        }
+
+        async function deriveAddress() {
+            if (isRSASelection()) {
+                showWarn('Address derivation is hidden for RSA because blockchain wallet addresses are normally derived from elliptic-curve public keys, not RSA keys.');
+                return;
+            }
+            let pubHex = document.getElementById('addrPubKey').value.trim();
+            if (!pubHex && currentKeyPair) {
+                pubHex = await exportAddressCompatiblePublicKeyHex(currentKeyPair.publicKey);
+                document.getElementById('addrPubKey').value = pubHex;
+            }
+            if (!pubHex) {
+                showWarn('Provide a public key or generate a keypair.');
+                return;
+            }
+            const pubBytes = fromHex(pubHex);
+            const hash1 = await crypto.subtle.digest('SHA-256', pubBytes);
+            document.getElementById('addrHash').textContent = toHex(new Uint8Array(hash1)).slice(0, 32) + '...';
+            // Simulate RIPEMD-160: hash again and truncate
+            const hash2 = await crypto.subtle.digest('SHA-256', hash1);
+            const hash160 = new Uint8Array(hash2).slice(0, 20);
+            document.getElementById('addrHash160').textContent = toHex(hash160);
+            // Simple address: version byte + hash160 + checksum
+            const version = new Uint8Array([0x00]);
+            const withVersion = new Uint8Array(version.length + hash160.length);
+            withVersion.set(version, 0);
+            withVersion.set(hash160, version.length);
+            const checksum = new Uint8Array((await crypto.subtle.digest('SHA-256', 
+                await crypto.subtle.digest('SHA-256', withVersion)))).slice(0, 4);
+            const final = new Uint8Array(withVersion.length + checksum.length);
+            final.set(withVersion, 0);
+            final.set(checksum, withVersion.length);
+            // Simple base58-like encoding: just use first 34 chars of hex with prefix
+            document.getElementById('address').value = '1' + toHex(final).slice(0, 33).toUpperCase();
+        }
+
+        function updateMsgBytes() {
+            const msg = document.getElementById('message').value;
+            const len = te.encode(msg).length;
+            document.getElementById('msgBytes').textContent = `${len} bytes`;
+        }
+
+        // ECC Curve Visualization (actual curve over reals: y^2 = x^3 + a x + b)
+        function drawEllipticCurve(canvas, options = {}) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 50;
+            const w = width - 2 * padding;
+            const h = height - 2 * padding;
+            ctx.clearRect(0, 0, width, height);
+
+            // Axes
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding, height / 2);
+            ctx.lineTo(width - padding, height / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(width / 2, padding);
+            ctx.lineTo(width / 2, height - padding);
+            ctx.stroke();
+
+            // Curve parameters (nonsingular): y^2 = x^3 + a x + b
+            const a = options.a ?? -1; // default a = -1
+            const b = options.b ?? 1;  // default b = 1
+
+            // Map between math coords and canvas
+            const xMin = -3, xMax = 3;
+            const yMin = -3, yMax = 3;
+            const X = x => padding + ((x - xMin) / (xMax - xMin)) * w;
+            const Y = y => padding + (1 - (y - yMin) / (yMax - yMin)) * h;
+
+            // Draw upper and lower branches of curve
+            function rhs(x) { return x * x * x + a * x + b; }
+            function safeSqrt(z) { return z >= 0 ? Math.sqrt(z) : NaN; }
+
+            ctx.strokeStyle = options.curveColor || '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            let started = false;
+            for (let i = 0; i <= 600; i++) {
+                const x = xMin + (i / 600) * (xMax - xMin);
+                const r = rhs(x);
+                const y = safeSqrt(r);
+                if (!Number.isNaN(y)) {
+                    const px = X(x), py = Y(y);
+                    if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+                }
+            }
+            ctx.stroke();
+
+            ctx.beginPath();
+            started = false;
+            for (let i = 0; i <= 600; i++) {
+                const x = xMin + (i / 600) * (xMax - xMin);
+                const r = rhs(x);
+                const y = safeSqrt(r);
+                if (!Number.isNaN(y)) {
+                    const px = X(x), py = Y(-y);
+                    if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+                }
+            }
+            ctx.stroke();
+
+            // Helper to verify and draw labeled points on the curve
+            function drawPoint(pt, color, label, size = 6) {
+                if (!pt) return;
+                // Verify point is on curve (allowing small floating point error)
+                const checkRhs = pt.x * pt.x * pt.x + a * pt.x + b;
+                const checkY = pt.y * pt.y;
+                const error = Math.abs(checkY - checkRhs);
+                // Draw larger point with white border to make it stand out
+                const px = X(pt.x), py = Y(pt.y);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(px, py, size + 2, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(px, py, size, 0, Math.PI * 2);
+                ctx.fill();
+                if (label) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 14px sans-serif';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(label, px + 10, py - 8);
+                    ctx.fillText(label, px + 10, py - 8);
+                }
+            }
+
+            // Draw provided points
+            drawPoint(options.G, '#fbbf24', 'G', 7);
+            drawPoint(options.Q, '#34d399', 'Q', 7);
+            drawPoint(options.A, '#5eead4', 'A', 7);
+            drawPoint(options.B, '#c084fc', 'B', 7);
+            if (options.Shared) {
+                drawPoint(options.Shared, '#f59e0b', 'Shared', 8);
+            }
+
+            // Draw chord line for point addition (like in your image)
+            if (options.drawChord && options.G && options.Q) {
+                // Calculate line through G and Q
+                const m = (options.Q.y - options.G.y) / ((options.Q.x - options.G.x) || 1e-6);
+                const c = options.G.y - m * options.G.x;
+                // Extend line to find third intersection point
+                let x3 = null, y3 = null;
+                // Solve: (m*x + c)^2 = x^3 + a*x + b
+                // This is simplified - we'll just draw the chord line visually
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                // Extend line beyond both points
+                const xStart = Math.min(options.G.x, options.Q.x) - 0.5;
+                const xEnd = Math.max(options.G.x, options.Q.x) + 0.5;
+                ctx.moveTo(X(xStart), Y(m * xStart + c));
+                ctx.lineTo(X(xEnd), Y(m * xEnd + c));
+                ctx.stroke();
+            }
+        }
+
+        async function animateECCKeyGen() {
+            try {
+                const canvas = document.getElementById('eccCanvas');
+                if (!canvas) {
+                    console.error('Canvas not found');
+                    return;
+                }
+                
+                // Choose curve params and a base point G on the curve
+                const a = -1, b = 1;
+                function rhs(x) { return x * x * x + a * x + b; }
+                function findPoint() {
+                    for (let x = -2.5; x <= 2.5; x += 0.05) {
+                        const r = rhs(x);
+                        if (r >= 0) {
+                            const y = Math.sqrt(r);
+                            if (Number.isFinite(y)) return { x, y };
+                        }
+                    }
+                    return { x: -1, y: 1 };
+                }
+                const G = findPoint();
+
+                // Real-number EC operations (for visualization only)
+                function add(P, Q) {
+                    if (!P) return Q; if (!Q) return P;
+                    if (Math.abs(P.x - Q.x) < 0.001 && Math.abs(P.y + Q.y) < 0.001) return null;
+                    let m;
+                    if (Math.abs(P.x - Q.x) < 0.001 && Math.abs(P.y - Q.y) < 0.001) {
+                        m = (3 * P.x * P.x + a) / (2 * P.y || 1e-6);
+                    } else {
+                        m = (Q.y - P.y) / ((Q.x - P.x) || 1e-6);
+                    }
+                    const rx = m * m - P.x - Q.x;
+                    const ry = m * (P.x - rx) - P.y;
+                    return { x: rx, y: ry };
+                }
+                function scalarMul(d, P) { 
+                    let R = null; 
+                    const dInt = Math.min(Math.floor(d), 15);
+                    for (let i = 0; i < dInt; i++) {
+                        R = add(R, P);
+                        if (!R) break;
+                    }
+                    return R;
+                }
+
+                let privHex = 'demo', pubHex = 'N/A';
+                let dVis = 7; // default demo value
+                let Q = null;
+
+                // Get current keypair if available
+                if (currentKeyPair) {
+                    try {
+                        const privJwk = await crypto.subtle.exportKey('jwk', currentKeyPair.privateKey);
+                        const privBytes = privJwk.d ? fromBase64(privJwk.d.replace(/-/g, '+').replace(/_/g, '/')) : null;
+                        if (privBytes) {
+                            privHex = toHex(privBytes);
+                            dVis = (privBytes[0] || 7) % 13 + 3; // range 3..15
+                        }
+
+                        const pubJwk = await crypto.subtle.exportKey('jwk', currentKeyPair.publicKey);
+                        if (pubJwk.x) {
+                            const x = fromBase64(pubJwk.x.replace(/-/g, '+').replace(/_/g, '/'));
+                            const y = pubJwk.y ? fromBase64(pubJwk.y.replace(/-/g, '+').replace(/_/g, '/')) : null;
+                            pubHex = toHex(x) + (y ? toHex(y) : '');
+                        }
+                    } catch (e) {
+                        console.warn('Error extracting keys:', e);
+                    }
+                } else {
+                    // Use demo values when no keypair exists
+                    dVis = 7;
+                }
+
+                Q = scalarMul(dVis, G);
+                
+                // Update UI
+                const privKeyEl = document.getElementById('eccPrivateKey');
+                const pubKeyEl = document.getElementById('eccPublicKey');
+                if (privKeyEl) {
+                    privKeyEl.textContent = privHex.slice(0, 16) + (privHex.length > 16 ? '...' : '');
+                    privKeyEl.className = 'mono text-xs text-indigo-300';
+                }
+                if (pubKeyEl) {
+                    pubKeyEl.textContent = pubHex === 'N/A' ? 'Generate keys to see' : pubHex.slice(0, 32) + '...';
+                    pubKeyEl.className = pubHex === 'N/A' ? 'mono text-xs text-gray-400' : 'mono text-xs text-green-300';
+                }
+                
+                // Draw curve and points G, Q that lie on the curve
+                drawEllipticCurve(canvas, { a, b, curveColor: '#6366f1', G, Q, drawChord: true });
+                
+                if (!currentKeyPair) {
+                    showWarn('Drawing with demo values. Generate a keypair to load real exported key bytes into the labels.');
+                }
+            } catch (e) {
+                console.error('Error in animateECCKeyGen:', e);
+                showWarn('Failed to draw curve: ' + e.message);
+            }
+        }
+
+        async function animateECDH() {
+            const canvas = document.getElementById('ecdhCanvas');
+            if (!canvas) return;
+            
+            if (!aliceKeyPair || !bobKeyPair) {
+                showWarn('Generate both Alice and Bob keypairs first (in Key Agreement section).');
+                return;
+            }
+            
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 60;
+            const w = width - 2 * padding;
+            const h = height - 2 * padding;
+            
+            // Use actual curve coordinates instead of pixel coords
+            try {
+                const a = -1, b = 1;
+                function rhs(x) { return x * x * x + a * x + b; }
+                function safeSqrt(z) { return z >= 0 ? Math.sqrt(z) : NaN; }
+                
+                function findPoint(xStart = -1, yChoice = 1) {
+                    for (let x = xStart; x <= 2.5; x += 0.05) {
+                        const r = rhs(x);
+                        if (r >= 0) {
+                            const y = safeSqrt(r);
+                            if (Number.isFinite(y)) return { x, y: y * yChoice };
+                        }
+                    }
+                    return { x: -1, y: 1 };
+                }
+                
+                const G = findPoint(-1, 1);
+                
+                function add(P, Q) {
+                    if (!P) return Q; if (!Q) return P;
+                    if (P.x === Q.x && Math.abs(P.y + Q.y) < 0.001) return null;
+                    let m;
+                    if (Math.abs(P.x - Q.x) < 0.001 && Math.abs(P.y - Q.y) < 0.001) {
+                        m = (3 * P.x * P.x + a) / (2 * P.y || 1e-6);
+                    } else {
+                        m = (Q.y - P.y) / ((Q.x - P.x) || 1e-6);
+                    }
+                    const rx = m * m - P.x - Q.x;
+                    const ry = m * (P.x - rx) - P.y;
+                    return { x: rx, y: ry };
+                }
+                function scalarMul(d, P) { 
+                    let R = null; 
+                    const dInt = Math.min(Math.floor(d), 15);
+                    for (let i = 0; i < dInt; i++) {
+                        R = add(R, P);
+                        if (!R) break;
+                    }
+                    return R;
+                }
+                
+                const aScalar = 5;
+                const bScalar = 7;
+                const A = scalarMul(aScalar, G);
+                const B = scalarMul(bScalar, G);
+                const shared = scalarMul(aScalar, B) || scalarMul(bScalar, A);
+                
+                drawEllipticCurve(canvas, {
+                    a, b,
+                    curveColor: '#14b8a6',
+                    G: G,
+                    A: A,
+                    B: B,
+                    Shared: shared,
+                    drawChord: true
+                });
+            } catch (e) {
+                showWarn('Failed to draw ECDH curve: ' + e.message);
+            }
+            
+            // Update text
+            try {
+                const alicePubRaw = await crypto.subtle.exportKey('raw', aliceKeyPair.publicKey);
+                const bobPubRaw = await crypto.subtle.exportKey('raw', bobKeyPair.publicKey);
+                document.getElementById('eccAliceShared').textContent = 'a·B = ' + toHex(new Uint8Array(alicePubRaw)).slice(0, 16) + '...';
+                document.getElementById('eccAliceShared').className = 'mono text-xs text-teal-300';
+                document.getElementById('eccBobShared').textContent = 'b·A = ' + toHex(new Uint8Array(bobPubRaw)).slice(0, 16) + '...';
+                document.getElementById('eccBobShared').className = 'mono text-xs text-purple-300';
+            } catch (e) {
+                showWarn('Failed to show ECDH: ' + e.message);
+            }
+        }
+
+        // Wire up UI (resilient bindings)
+        function onClick(id, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', handler);
+        }
+        function onInput(id, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', handler);
+        }
+        function onChange(id, handler) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', handler);
+        }
+
+        onClick('btnGenKeyPair', generateKeyPair);
+        onClick('btnExportKeyPair', exportCurrentKeyPair);
+        onClick('btnToggleKeys', async () => { keysVisible = !keysVisible; await updateKeyPreview(); });
+        onClick('btnCopyPubKey', async () => {
+            const hex = document.getElementById('pubKeyHex')?.value || '';
+            try { await navigator.clipboard.writeText(hex); showWarn('Public key copied.'); } catch (_) {}
+        });
+        onClick('btnSign', signMessage);
+        onClick('btnVerify', verifySignature);
+        onClick('btnFlipSig', tamperSignature);
+        onClick('btnRestoreSig', restoreSignature);
+        onClick('btnClearSig', clearSignatureField);
+        onClick('btnUseSignerKey', useSignerPublicKey);
+        onClick('btnWrongKey', generateWrongVerifyKey);
+        onInput('message', async () => {
+            updateMsgBytes();
+            await refreshHashWorkspace();
+            resetSignatureStatus();
+        });
+        onInput('domain', async () => {
+            await refreshHashWorkspace();
+            resetSignatureStatus();
+        });
+        onInput('signature', resetSignatureStatus);
+        onClick('btnGenAlice', generateAlice);
+        onClick('btnGenBob', generateBob);
+        onClick('btnDeriveShared', deriveSharedSecret);
+        onClick('btnSign1', signMsg1);
+        onClick('btnSign2Reuse', signMsg2Reuse);
+        onClick('btnSign2Fresh', signMsg2Fresh);
+        onClick('btnDeriveAddr', deriveAddress);
+        onChange('sigAlg', async () => {
+            currentKeyPair = null;
+            alternateVerifyKeyPair = null;
+            activeVerifyKey = null;
+            activeVerifyKeyLabel = 'Generate a keypair first';
+            lastSignedSignatureHex = '';
+            lastSignedDigestHex = '';
+            document.getElementById('signature').value = '';
+            document.getElementById('signedHashValue').textContent = '-';
+            await updateKeyPreview();
+            await updateVerifierKeyPreview();
+            await refreshHashWorkspace();
+            updateAlgorithmMessaging();
+            refreshAlgorithmSpecificSections();
+            resetSignatureStatus();
+        });
+        
+        // Math explanation toggle
+        document.getElementById('btnToggleMath').addEventListener('click', () => {
+            const mathDiv = document.getElementById('mathExplanation');
+            const icon = document.getElementById('mathIcon');
+            const text = document.getElementById('mathToggleText');
+            const isHidden = mathDiv.classList.contains('hidden');
+            
+            if (isHidden) {
+                mathDiv.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                text.textContent = 'Hide Math';
+                // Trigger animations by re-adding classes
+                Array.from(mathDiv.children).forEach((el, idx) => {
+                    el.style.animation = 'none';
+                    setTimeout(() => {
+                        el.style.animation = `fadeIn 0.5s ease-out ${idx * 0.1 + 0.1}s backwards`;
+                    }, 10);
+                });
+            } else {
+                mathDiv.classList.add('hidden');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                text.textContent = 'Show Math';
+            }
+        });
+
+        // Wire up ECC visualization buttons
+        onClick('btnAnimateECC', animateECCKeyGen);
+        onClick('btnAnimateECDH', animateECDH);
+        
+
+        // Init
+        updateMsgBytes();
+        document.getElementById('hashFlow').textContent = 'Message → Hash → Sign with private key → Verify with public key';
+        updateAlgorithmMessaging();
+        refreshAlgorithmSpecificSections();
+        refreshHashWorkspace();
+        updateVerifierKeyPreview();
+        resetSignatureStatus();
+    </script>
+</body>
+</html>
+

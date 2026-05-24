@@ -1,0 +1,429 @@
+{
+  "lesson_id": "consensus_primitives_01_cm_consensus_in_distributed_systems_and_blockchains_intro",
+  "lesson_title": "Consensus in Distributed Systems and Blockchains: An Introduction",
+  "date_generated": "2026-04-26",
+  "topic": "primitives",
+  "tags": [
+    "consensus-primitives",
+    "primitives",
+    "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+    "consensus",
+    "distributed-systems",
+    "bft",
+    "slva",
+    "finality",
+    "quorums",
+    "byzantine-fault-tolerance",
+    "crash-fault-tolerance",
+    "partial-synchrony",
+    "flp-impossibility",
+    "nakamoto-consensus",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "consensus_primitives",
+    "lesson_file_stem": "01-CM-consensus_in_distributed_systems_and_blockchains_intro",
+    "lesson_source_path": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd",
+    "reading_source_path": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt",
+    "reading_status": "acquired",
+    "source_mix": {
+      "lesson_source_questions": 10,
+      "reading_source_questions": 3
+    },
+    "generation_notes": "Questions prioritize mechanism tracing, scenario diagnosis, quorum reasoning, timing assumptions, and consensus-family tradeoffs. Publication metadata and platform trivia are intentionally avoided."
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A node receives a transaction with a valid digital signature, but two different blocks try to spend the same coin. What does the lesson imply the system needs beyond local signature checking?",
+      "correct_answer": "System-wide consensus on the canonical ledger history, because local validity alone cannot choose between conflicting spends.",
+      "incorrect_answers": [
+        "Immediate cryptographic signature revocation, because invalid keys must be blacklisted to stop transaction propagation.",
+        "Local clock synchronization across all active nodes, because timing coordination lets individual peers reject late blocks.",
+        "Asymmetric encryption on the transaction payload, because the key size determines which block is canonical to the system."
+      ],
+      "explanation": "The lesson distinguishes local validation from consensus. A valid signature can show that a transaction was authorized, but the network still needs agreement on one ordered ledger history to prevent conflicting spends from both being accepted.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "consensus",
+        "local-validation",
+        "double-spending",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Why Agreement Matters",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Why Agreement Matters"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "Two correct nodes finalize different blocks at the same height and neither block can be rolled back under the protocol rules. Which correctness guarantee is most directly broken?",
+      "correct_answer": "Safety, because the protocol has allowed conflicting finalized outcomes.",
+      "incorrect_answers": [
+        "Liveness, because the protocol has stalled and ceased making progress.",
+        "Validity, because a protocol accepts values that were never proposed.",
+        "Sybil resistance, because the protocol allows unauthenticated nodes."
+      ],
+      "explanation": "Safety, also framed as finality or consistency in the lesson's SLVA/FPIC mapping, means the system should never commit conflicting values. Finalizing two incompatible blocks at the same height violates that guarantee.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "slva",
+        "safety",
+        "finality",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "The Correctness Framework",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Foundations of Consensus"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "During a round, one node sends block A to half the validators and block B to the other half while pretending to follow the protocol. Which failure model best describes this behavior?",
+      "correct_answer": "Byzantine fault, because the node is active and equivocal rather than merely stopped.",
+      "incorrect_answers": [
+        "Crash fault, because the node has halted execution and stopped sending updates.",
+        "Omission fault, because the node drops outgoing messages due to buffer overflows.",
+        "Timing fault, because the node sends correct messages outside its expected latency."
+      ],
+      "explanation": "The lesson defines Byzantine behavior as arbitrary or malicious behavior, including sending conflicting information to different peers. A crashed node stops; this node continues participating while lying differently to different recipients.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "byzantine-fault",
+        "equivocation",
+        "failure-models",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Failure Models",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Failure Models"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does a fully asynchronous network make deterministic consensus so hard when even one node may fail?",
+      "correct_answer": "A delayed message can be indistinguishable from a failed node, so a protocol cannot always know whether waiting or deciding is safe for progress.",
+      "incorrect_answers": [
+        "Asynchronous networks require every honest validator to wait for a universal timeout, so signatures become invalid once any slow node falls behind.",
+        "Unbounded message delays force correct validators to behave Byzantine, so safety must fail before the protocol decides any proposed block value safely.",
+        "Deterministic consensus fails because validator public keys expire during latency spikes, making honest nodes reject otherwise valid signed votes."
+      ],
+      "explanation": "The lesson uses FLP to show the timing-model problem: without bounds on message delay, deterministic protocols cannot always distinguish slow communication from failure while guaranteeing both safety and liveness.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "flp-impossibility",
+        "asynchrony",
+        "timing-models",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "The Timing Limits - FLP and DLS Results",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: The Timing Limits - FLP and DLS Results"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "In the lesson's standard BFT round pattern, what is the role of a quorum certificate?",
+      "correct_answer": "It is portable evidence that enough validators signed support for a proposal to justify advancing toward commit or finality.",
+      "incorrect_answers": [
+        "It is a leader-only secret that decrypts votes, allowing the proposer to count private ballots before choosing the commit path.",
+        "It is a proof that every validator has individually accepted the block, so the network no longer needs quorum overlap or later votes.",
+        "It is a proof-of-work receipt showing the leader solved a hash puzzle before validators can sign the proposed block in that round."
+      ],
+      "explanation": "The Propose, Vote, Commit structure relies on collecting a quorum of signed votes. A quorum certificate packages that support so later protocol steps can rely on it without re-asking every participant.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "bft",
+        "quorum-certificate",
+        "propose-vote-commit",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "BFT Mechanics",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: BFT Mechanics"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A BFT network has 7 validators and is designed around n = 3t + 1. How many Byzantine faults can it tolerate, and what quorum size matches the lesson's 2t + 1 rule?",
+      "correct_answer": "It can tolerate t = 2 Byzantine validators, requiring quorums of 5.",
+      "incorrect_answers": [
+        "It can tolerate t = 3 Byzantine validators, requiring quorums of four.",
+        "It can tolerate t = 1 Byzantine validator, requiring quorums of six.",
+        "It can tolerate t = 4 Byzantine validators, requiring quorums of three."
+      ],
+      "explanation": "For n = 3t + 1, a seven-node BFT system corresponds to t = 2. The quorum threshold is 2t + 1, so five signed votes are required to preserve the needed overlap despite Byzantine behavior.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "quorum-thresholds",
+        "byzantine-fault-tolerance",
+        "bft",
+        "slides",
+        "application"
+      ],
+      "lesson_block": "Quorums",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Quorums"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "Why is quorum overlap central to BFT safety rather than just a convenient way to count votes?",
+      "correct_answer": "Two valid quorums must share at least one honest node, which prevents that honest node from supporting two conflicting finalized values.",
+      "incorrect_answers": [
+        "Quorum overlap ensures the round leader remains honest throughout execution, which guarantees that all proposed blocks are perfectly valid.",
+        "Forced overlap requires each validator to vote on every proposal, which removes the need for active timeout recovery under partitions.",
+        "Sufficient quorum overlap restricts message delivery to a fixed subset of nodes, preventing delay spikes by enforcing timing bounds."
+      ],
+      "explanation": "The lesson emphasizes the intersection logic behind BFT quorum math. If two commit quorums intersect in at least one honest node, that honest node will not sign conflicting decisions, blocking two incompatible finalizations.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "quorum-overlap",
+        "safety",
+        "byzantine-fault-tolerance",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Quorums",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Quorums"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A leader stops proposing blocks, so validators' timeouts expire and they move to a new view with a different leader. Which goal does this mechanism primarily support?",
+      "correct_answer": "Liveness, because the protocol needs a way to keep making progress when the current leader fails or is suspected.",
+      "incorrect_answers": [
+        "Collision resistance, because a leader must perform a complex cryptographic search to locate a different block hash.",
+        "Validity, because sudden view changes automatically force the system to drop any pending invalid transactions.",
+        "Sybil resistance, because view changes remove the need to know which specific nodes are active in each round."
+      ],
+      "explanation": "View changes and timeouts are liveness recovery mechanisms in leader-based consensus. They let the system replace a failed or faulty leader while preserving safety constraints from earlier rounds.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "view-change",
+        "leader-failure",
+        "liveness",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "BFT Mechanics",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: BFT Mechanics"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A consortium of known organizations wants final blocks that cannot later be reverted, and it worries that some participants may actively lie. Which consensus family best matches that design goal?",
+      "correct_answer": "BFT consensus, because it assumes known participants and can provide deterministic finality despite a bounded number of Byzantine faults.",
+      "incorrect_answers": [
+        "CFT consensus, because it assumes known participants and provides deterministic finality while tolerating any active Byzantine equivocation.",
+        "Nakamoto consensus, as it assumes permissionless participation and can provide deterministic finality using computational work puzzles.",
+        "Local validation, because it relies on independent verification and can guarantee ledger integrity without requiring global ordering."
+      ],
+      "explanation": "The lesson compares CFT, BFT, and Nakamoto-style consensus by identity model, adversary model, and finality. Known membership plus malicious insiders points toward BFT rather than crash-only or probabilistic longest-chain consensus.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "bft",
+        "consensus-families",
+        "finality",
+        "slides",
+        "tradeoff"
+      ],
+      "lesson_block": "Comparing Consensus Families",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Comparing Consensus Families"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the lesson describe proof of work as using asymmetric difficulty?",
+      "correct_answer": "Producing a valid block requires costly trial-and-error, while checking that the proof satisfies the target is cheap for other nodes.",
+      "incorrect_answers": [
+        "Producing and verifying blocks are made intentionally expensive, while restricting smaller computational nodes from joining the process.",
+        "Verifying a block is extremely hard because correct nodes execute the miner's entire search process again to reach local consensus.",
+        "The cryptographic proof hides the leader's identity within a secret signature, requiring nodes to decrypt it using a private key."
+      ],
+      "explanation": "Nakamoto-style consensus uses proof of work as Sybil resistance in open participation. The puzzle should be hard to solve but easy to verify, allowing the network to cheaply check expensive mining effort.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "proof-of-work",
+        "sybil-resistance",
+        "nakamoto-consensus",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Nakamoto (Proof-of-Work) Consensus",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_01-CM-consensus_in_distributed_systems_and_blockchains_intro-slides-only.qmd: Nakamoto (Proof-of-Work) Consensus"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "The assigned reading frames blockchain consensus as atomic broadcast rather than a one-time vote. What practical requirement does that emphasize for ledger replicas?",
+      "correct_answer": "Correct nodes must deliver the same sequence of valid transactions so deterministic state machines evolve identically.",
+      "incorrect_answers": [
+        "Correct nodes only need to agree once on genesis block proposals, after which local ordering processes are entirely safe.",
+        "Each individual node may order verified transactions differently, provided that each digital signature is correct.",
+        "Validators must generate unique cryptographic keys first, so transaction ordering becomes optional afterward."
+      ],
+      "explanation": "Cachin and Vukolic connect blockchains to state-machine replication and atomic broadcast. The core issue is ordered delivery over time: if correct replicas process the same requests in different orders, their ledger states may diverge.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "atomic-broadcast",
+        "state-machine-replication",
+        "ledger-ordering",
+        "reading",
+        "assigned-reading",
+        "mechanism"
+      ],
+      "lesson_block": "Reading: Consensus As Ordered Delivery",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt: Consensus As Ordered Delivery"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "In the reading's eventual-synchrony model, what should happen during a period of arbitrary network delay if the fault assumptions still hold?",
+      "correct_answer": "The protocol may stop making progress, but it should not decide conflicting histories.",
+      "incorrect_answers": [
+        "The protocol should continue to finalize blocks by ignoring any messages that are delayed.",
+        "Both safety and liveness guarantees must fail the instant network latency increases.",
+        "The protocol transitions to an open system because validator identities are lost."
+      ],
+      "explanation": "The reading stresses a practical safety/liveness split. During unstable network periods, FLP-style limits may block progress, but safety should remain intact; liveness resumes after the network stabilizes enough for timeouts and view changes to work.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "eventual-synchrony",
+        "safety",
+        "liveness",
+        "reading",
+        "assigned-reading",
+        "scenario"
+      ],
+      "lesson_block": "Reading: Eventual Synchrony Protects Safety While Delaying Progress",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt: Eventual Synchrony Protects Safety While Delaying Progress"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A permissioned blockchain orders transactions first, then each node applies a validity rule that depends on local wall-clock time and private configuration. What reading-grounded risk does this create?",
+      "correct_answer": "Correct nodes may compute different validity results after the same ordered prefix, undermining consistent ledger state.",
+      "incorrect_answers": [
+        "A network automatically gains Byzantine fault tolerance after independent checks, eliminating transaction execution delays.",
+        "Invalid transactions will not affect the replicated ledger after signatures are verified, ensuring block finalization.",
+        "Global consensus is unnecessary after local validation rules run, guaranteeing correct state transitions everywhere."
+      ],
+      "explanation": "The reading's external-validity discussion warns that blockchain validation must be deterministic and shared. If correct nodes evaluate validity differently after the same delivered sequence, ordering alone does not ensure consistent replicated state.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "primitives",
+        "01-cm-consensus-in-distributed-systems-and-blockchains-intro",
+        "external-validity",
+        "deterministic-validation",
+        "state-machine-replication",
+        "reading",
+        "assigned-reading",
+        "application"
+      ],
+      "lesson_block": "Reading: Validation Must Be Deterministic And Shared",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/cachin_vukolic_blockchain_consensus_wild.txt: Validation Must Be Deterministic And Shared"
+    }
+  ],
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_consensus_primitives",
+        "title": "Consensus Primitives",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_consensus_intro_lesson_slides",
+            "title": "Consensus in Distributed Systems and Blockchains: An Introduction - lesson slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_consensus_intro_assigned_reading",
+            "title": "Consensus in Distributed Systems and Blockchains: An Introduction - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

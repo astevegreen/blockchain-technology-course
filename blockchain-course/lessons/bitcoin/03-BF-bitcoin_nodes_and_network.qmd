@@ -1,0 +1,1025 @@
+---
+title: 'Bitcoin Nodes and Network'
+subtitle: 'Section VI: Bitcoin Framework'
+author: 'Army Cyber Institute'
+lesson: 03-BF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+
+## Bitcoin’s Peer-to-Peer Network {.smaller}
+
+- **Architecture:** a fully decentralized network where nodes connect directly to one another—no central servers or coordinators.  
+- **Connectivity:** each node discovers peers dynamically and maintains multiple simultaneous connections for redundancy and robustness.  
+- **Roles within the network:**  
+  - **Full nodes:** validate blocks and transactions, and relay data to peers.  
+  - **Miners:** perform Proof-of-Work and extend the blockchain with new blocks.  
+  - **SPV (light) clients:** verify transactions using block headers and Merkle proofs without storing full data.  
+- **Goal:** achieve global resilience, censorship resistance, and permissionless participation through replication and independent validation.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes Bitcoin's peer-to-peer network as the infrastructure that lets independent validators, miners, and light clients coordinate without a central server. It matters here because the lesson is shifting from transactions and mining mechanics to the communication fabric that carries those actions across the system. Emphasize that resilience and trust minimization come from replication and independent validation rather than from any central coordinator.
+
+**Key Points**
+- Bitcoin uses a decentralized peer-to-peer network rather than a central hub.
+- Full nodes, miners, and light clients play different roles within that network.
+- The network's purpose is resilient relay, independent verification, and permissionless participation.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+## Elements of the Bitcoin Network {.smaller}
+
+- **Scale:** typically ~10,000 publicly reachable nodes worldwide (exact count fluctuates over time).  
+- **Connectivity:** each node maintains multiple outbound and inbound peer connections to ensure redundancy and fast data propagation.  
+- **Core network functions:**  
+  - **Transaction relay:** broadcasting and verifying unconfirmed transactions.  
+  - **Block propagation:** distributing newly mined blocks across the network.  
+  - **Peer discovery:** finding and maintaining new connections dynamically.  
+- **Incentive and resilience:** the network’s health depends on broad, independent participation—more nodes mean greater redundancy, decentralization, and censorship resistance.
+
+
+
+
+
+
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the Bitcoin network as a large, dynamic graph of reachable and hidden participants exchanging transactions, blocks, and peer information. It matters here because students should see that network health depends on connectivity patterns and broad participation, not just on protocol rules. Emphasize that node count and connection diversity contribute directly to resilience and censorship resistance.
+
+**Key Points**
+- The public network includes thousands of reachable nodes, plus many more behind NAT or firewalls.
+- Nodes maintain multiple connections to support redundancy and fast relay.
+- Transaction relay, block propagation, and peer discovery are the network's core recurring functions.
+
+**Walkthrough**
+None
+
+**Sources**
+- @thebitnodesproject_reachablebitcoinnodes_2025
+
+:::
+
+
+
+## What Is a Bitcoin Node? {.smaller}
+
+:::: columns
+
+::: column
+- **Definition:** a node is any computer running Bitcoin software that participates directly in the peer-to-peer network. 
+- Its **Core functions** include: 
+  - **Validation:** checks the correctness of transactions and blocks against consensus rules.  
+  - **Relay:** shares verified information with connected peers to keep the network synchronized.  
+  - **Storage:** maintains a local copy (full or partial) of the blockchain ledger.  
+
+:::
+
+::: column 
+
+
+```{dot}
+digraph BitcoinNodes {
+rankdir=BT;
+bgcolor="transparent"
+node [shape=circle, style="filled", fillcolor="#e0f2fe", color="#38bdf8",
+fontname="Inter,Helvetica,Arial", fontsize=12, width=.8, fixedsize=true];
+edge [color="#94a3b8", arrowsize=0.6];
+
+N1 [label="Node A"];
+N2 [label="Node B"];
+N3 [label="Node C"];
+N4 [label="Node D"];
+N5 [label="Node E"];
+U [label="User Wallet", shape=box, style="rounded,filled", fillcolor="#fef9c3", color="#f59e0b"];
+
+N1 -> N2 [dir=both];
+N2 -> N3 [dir=both];
+N3 -> N4 [dir=both];
+N4 -> N5 [dir=both];
+N5 -> N1 [dir=both];
+N2 -> N4 [dir=both];
+N3 -> N5 [dir=both];
+
+U -> N1 [label="broadcast tx", color="#f59e0b"];
+N4 -> U [label="confirmed block", color="#34d399"];
+}
+```
+
+:::
+
+::::
+
+::: {.callout-note appearance="simple"}
+**Why it matters:** nodes *are* the distributed record—without them, there is no independent verification or decentralized consensus.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what a Bitcoin node actually is: software that validates, relays, and stores ledger data as part of the peer-to-peer network. It matters here because students often confuse miners with nodes or treat nodes as passive data copies rather than as active rule enforcers. Emphasize that miners propose blocks, but nodes decide whether those proposals are valid.
+
+**Key Points**
+- A node is any computer running Bitcoin software that participates directly in the network.
+- Nodes validate transactions and blocks, relay accepted data, and store blockchain information.
+- Without independent nodes, decentralized consensus has no practical enforcement layer.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+
+## Types of Nodes {.smaller}
+
+- **Full nodes:**  
+  - Store the *entire* blockchain history.  
+  - Independently validate every transaction and consensus rule.  
+  - Form the backbone of network integrity and decentralization.  
+
+- **Light clients (SPV):**  
+  - Download only block headers instead of full blocks.  
+  - Verify transactions using Merkle proofs provided by full nodes.  
+  - Trade some independence for lower bandwidth and storage needs.  
+
+- **Core trade-off:** full validation offers maximum trustlessness, while lightweight clients prioritize accessibility and efficiency.
+
+
+
+
+
+<div style="position: relative; top: -175px; z-index: -1; margin-bottom: -200px; ">
+```{dot}
+digraph NodeTypes {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial", fontsize=16];
+edge [color="#64748b", arrowsize=0.7];
+
+FN1 [label="Full Node 1", fillcolor="#e0f2fe", color="#38bdf8"];
+FN2 [label="Full Node 2", fillcolor="#e0f2fe", color="#38bdf8"];
+FN3 [label="Full Node 3", fillcolor="#e0f2fe", color="#38bdf8"];
+SPV1 [label="Light Client A (SPV)", fillcolor="#fef9c3", color="#f59e0b"];
+SPV2 [label="Light Client B (SPV)", fillcolor="#fef9c3", color="#f59e0b"];
+
+// Mesh of full nodes
+FN1 -> FN2 [dir=both];
+FN2 -> FN3 [dir=both];
+FN3 -> FN1 [dir=both];
+
+// Light clients connecting to full nodes
+SPV1 -> FN1 [dir=both, label="headers & proofs"];
+SPV2 -> FN3 [dir=both, label="headers & proofs"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the trust trade-off between full validation and lightweight participation. It matters here because students need to understand why full nodes anchor Bitcoin's security model while SPV clients make Bitcoin accessible on constrained devices. Emphasize that convenience and bandwidth savings come at the cost of reduced independence.
+
+**Key Points**
+- Full nodes store and validate the entire chain and all consensus rules.
+- Light clients verify inclusion using headers and proofs rather than full validation.
+- The core trade-off is independence versus efficiency.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @risson_surveyresearchrobust_2004
+
+:::
+
+## Why Run a Node?
+- **Security:** Verify transactions without trusting others.
+- **Privacy:** Directly query blockchain data.
+- **Decentralization:** More nodes, stronger network.
+- **Control:** Enforce Bitcoin's consensus rules locally, so your node only accepts blocks and transactions that match the version of Bitcoin you choose to run.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why someone would run a node even without mining: to verify personally, preserve privacy, and strengthen the network's decentralization. It matters here because the lesson is connecting network participation to both ideology and operational security. Emphasize that running a node lets a user enforce Bitcoin's rules locally instead of outsourcing trust.
+
+**Key Points**
+- Running a node supports "don't trust, verify" by removing reliance on third-party infrastructure.
+- A personal node can reduce privacy leakage from address and transaction queries.
+- More independent nodes make censorship and centralization harder.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## Setting Up a Full Node
+- **Install:** download and run *Bitcoin Core*, the open-source reference implementation.  
+- Requirements:
+  - Disk space: 600+ GB (growing).
+  - Stable internet connection.
+  - Regular updates to keep consensus rules current.
+- Initial block download can take days.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what is required to operate a full validating node in practice. It matters here because students should see that independence has real storage, bandwidth, and time costs, especially during initial block download. Emphasize that the resource burden is the price paid for complete local verification.
+
+**Key Points**
+- Bitcoin Core is the reference implementation most users rely on for full-node operation.
+- Full nodes require substantial disk space, stable connectivity, and ongoing maintenance.
+- Initial block download is slow because the node verifies history from genesis rather than trusting a shortcut.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+
+:::
+
+## Setting Up a Light Client
+
+- **Deployment:** typically built into mobile or desktop wallets for quick setup and low resource use.  
+- **Simplified Payment Verification (SPV):**  
+  - Downloads only block headers, not full blocks.  
+  - Requests Merkle proofs from connected full nodes to verify specific transactions.  
+- **Trade-off:** lightweight and fast to sync, but shifts trust toward the full nodes it connects to and assumes they are honest and well-connected.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes light clients as the practical alternative for users who want Bitcoin access without running a full node. It matters here because most real-world wallet users interact through lightweight verification models rather than through full-chain validation. Emphasize that SPV improves usability, but it shifts some trust back toward full nodes and peer selection.
+
+**Key Points**
+- Light clients download only block headers and request proofs for relevant transactions.
+- SPV makes mobile and low-resource wallets practical.
+- The trade-off is reduced independence and greater exposure to dishonest or poorly connected peers.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+
+:::
+
+
+## Joining the Bitcoin Network {.smaller}
+
+:::: columns
+
+
+::: {.column width="60%"}
+
+- **Peer-to-peer architecture:** nodes connect directly without central coordination.  
+- **Outbound connections:** by default, a node initiates ~8 outbound TCP connections to maintain healthy network gossip and redundancy.  
+- **Peer discovery:**  
+  - Uses **DNS seeds** (publicly maintained domain names) that return IPs of reachable nodes.  
+  - May also use **hardcoded “fallback” peers** or **address gossip** from other nodes once connected.  
+
+::: 
+
+::: {.column width="40%"}
+
+```{dot}
+digraph PeerDiscovery {
+  rankdir=LR;
+  bgcolor="transparent"
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
+        color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=16];
+
+  edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+
+  // New node and discovery sources
+  N [label="New Node\n(Joining)"];
+  DNS1 [label="DNS Seed A\n(seed.bitcoin.sipa.be)", fillcolor="#e0f2fe", color="#38bdf8"];
+  DNS2 [label="DNS Seed B\n(seed.bitcoinstats.com)", fillcolor="#e0f2fe", color="#38bdf8"];
+  HC [label="Hardcoded\nFallback Peers", fillcolor="#fef9c3", color="#f59e0b"];
+
+  // Peers discovered
+  P1 [label="Peer 1"];
+  P2 [label="Peer 2"];
+  P3 [label="Peer 3"];
+  P4 [label="Peer 4"];
+  P5 [label="Peer 5"];
+
+  // Flows: discovery
+  N -> DNS1 [label="DNS query"];
+  N -> DNS2 [label="DNS query"];
+  DNS1 -> P1 [label="returns IPs"];
+  DNS1 -> P2;
+  DNS2 -> P3;
+  DNS2 -> P4;
+  HC -> P5 [label="fallback"];
+
+  // Outbound connections from new node
+  N -> P1 [label="connect"];
+  N -> P2 [label="connect"];
+  N -> P3 [label="connect"];
+  N -> P4 [label="connect"];
+  N -> P5 [label="connect"];
+
+  // Gossip once connected
+  P1 -> N [label="addr relay", color="#34d399"];
+  P2 -> N [label="block/tx relay", color="#34d399"];
+  P3 -> N [label="addr relay", color="#34d399"];
+  P4 -> N [label="ping/pong", color="#94a3b8"];
+
+  // Layout grouping
+  { rank=same; DNS1; DNS2; HC; }
+  { rank=same; P1; P2; P3; P4; P5; }
+
+}
+```
+
+:::
+
+::::
+
+**Goal:** ensure that every honest node can find and maintain diverse peers for transaction relay, block propagation, and consensus updates.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how a new node bootstraps into a decentralized network without a central peer directory. It matters here because peer discovery is a precondition for all later relay and validation behavior. Emphasize that DNS seeds and fallback peers are startup aids, while ongoing peer exchange sustains the mesh afterward.
+
+**Key Points**
+- New nodes begin with DNS seeds, fallback peers, and then transition to address gossip from connected peers.
+- Default outbound connections are designed to create a healthy initial view of the network.
+- Peer discovery is decentralized after bootstrap, even though a few helper mechanisms exist at startup.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @decker_informationpropagationbitcoin_2013
+
+:::
+
+## Node Operator Responsibilities {.smaller}
+
+- **Maintain consensus:** keep node software updated and aligned with the latest consensus rules.  
+- **Policy decisions:**  
+  - Choose which implementation or version of Bitcoin to run—especially relevant during forks or upgrades.  
+  - Configure peer connections, including optional blocklists, whitelists, and connection limits.  
+- **Economic influence:** nodes operated by exchanges, merchants, custodians, and mining pools carry greater weight in practice, since their policy choices affect which rules and transactions the wider ecosystem recognizes.  
+- **Stewardship role:** running a node is both a technical and civic act—operators collectively define the active consensus of the network.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes node operation as an active governance role rather than a passive background service. It matters here because node operators influence consensus outcomes through software version choice, peer configuration, and the economic weight attached to their services. Emphasize that Bitcoin governance emerges through voluntary coordination among many validating actors.
+
+**Key Points**
+- Node operators choose what software and rules they are willing to enforce.
+- Configuration choices around peers and policies shape how a node participates in the wider network.
+- Economically important nodes can have outsized influence during upgrades and disputes.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## Decisions Nodes Make {.smaller}
+
+- **Consensus rules:** choose which version of the protocol to enforce—determining which blocks and transactions are considered valid.  
+- **Relay policy:** set minimum transaction fees, rate limits, or filters that shape what data the node will forward to peers.  
+- **Network management:** select and manage peers, blocking spammy or malicious nodes while prioritizing reliable connections.  
+- **Principle:** each node is a *sovereign participant*—it independently enforces the rules it accepts, forming consensus through voluntary coordination, not central command.
+
+<div style="position: relative; top: -125px; z-index: -1;">
+
+```{dot}
+digraph NodeDecisions {
+bgcolor="transparent"
+rankdir=TB;
+nodesep=0.1;
+pad=0.1; 
+ranksep=0.1;
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial", fontsize=10, margin=0.1];
+edge [color="#64748b", arrowsize=0.7];
+
+NODE1 [label="Individual Node\n(Operator Policy)", fillcolor="#fef9c3", color="#f59e0b"];
+CONS [label="Consensus Rules\n(Which blocks are valid)", fillcolor="#e0f2fe", color="#38bdf8"];
+RELAY [label="Relay Policy\n(Mempool & fee filters)", fillcolor="#ecfdf5", color="#34d399"];
+PEERS [label="Peer Selection\n(Connections & reputation)", fillcolor="#fee2e2", color="#f87171"];
+
+NODE1 -> CONS;
+NODE1 -> RELAY;
+NODE1 -> PEERS;
+
+NETWORK [label="Network Consensus\nEmerges from many nodes", fillcolor="#e0f2fe", color="#38bdf8"];
+CONS -> NETWORK [style=dashed];
+RELAY -> NETWORK [style=dashed];
+PEERS -> NETWORK [style=dashed];
+
+}
+
+```
+</div>
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the difference between consensus decisions and policy decisions made by nodes. It matters here because students need to understand that not every relay choice is a validity rule, even though both affect network behavior. Emphasize that Bitcoin's decentralized governance comes from many nodes independently enforcing the rules they accept.
+
+**Key Points**
+- Consensus rules determine validity, while policy rules shape relay and mempool behavior.
+- Nodes also manage peers to improve reliability and reduce exposure to abuse.
+- Emergent network behavior comes from many independent nodes making these decisions locally.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## Gossip and Peer Connections {.smaller}
+
+- **After bootstrap:** each node learns about new peers through a *gossip protocol*—nodes share information about other reachable nodes.  
+- **Address exchange:** `addr` and `addrv2` messages advertise known peers, allowing the network to expand organically without a central directory.  
+- **Connectivity pattern:** each node maintains roughly 8 outbound and a variable number of inbound connections, forming a constantly shifting mesh topology.  
+- **Dynamic behavior:** peers are periodically dropped, replaced, or added—promoting redundancy, fault tolerance, and resistance to partitioning or isolation attacks.
+
+```{dot}
+//| fig-width: 7.2
+//| fig-height: 2.6
+digraph GossipMesh {
+  graph [layout=neato, overlap=false, splines=true, bgcolor="transparent"];
+  node [shape=circle, style="filled", fillcolor="#f8fafc", color="#64748b",
+        fontname="Helvetica-Bold", fontsize=12, width=0.7, fixedsize=true];
+  edge [color="#94a3b8", penwidth=1.2, fontname="Helvetica", fontsize=10, arrowsize=0.6];
+
+  A [label="Node A", pos="0,0!"];
+  B [label="Node B", pos="2.1,0.8!"];
+  C [label="Node C", pos="2.2,-0.9!"];
+  D [label="Node D", pos="4.2,0!"];
+
+  A -> B [label="addr"];
+  B -> A [label="addr list"];
+  A -> C [color="#cbd5e1"];
+  C -> A [color="#cbd5e1"];
+  B -> D [label="addrv2"];
+  D -> B [color="#cbd5e1"];
+  C -> D [color="#cbd5e1"];
+  D -> C [color="#cbd5e1"];
+  B -> C [color="#cbd5e1"];
+  C -> B [color="#cbd5e1"];
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how nodes expand their network view after initial bootstrap through address gossip and changing peer sets. It matters here because the network's resilience depends on dynamic connectivity rather than on fixed topologies. Emphasize that peer churn and multiple connection types make long-term isolation harder.
+
+**Key Points**
+- Nodes learn about additional peers through `addr` and `addrv2` messages.
+- Typical nodes keep multiple outbound and inbound links to avoid brittle dependence on a few peers.
+- Rotating peers over time improves freshness and resistance to eclipse-style attacks.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+## Communication Protocol Basics {.smaller}
+
+- **Transport layer:** nodes communicate over long-lived TCP connections, exchanging structured messages in both directions.  
+- **Message types:** the Bitcoin protocol defines around 30 core message commands—examples include `version`, `verack`, `inv`, `getdata`, `tx`, and `block`.  
+- **Message format:**  
+  - **Header:** contains the command name, payload length, and checksum for integrity verification.  
+  - **Payload:** carries the message-specific data (e.g., transaction contents or block headers).  
+- **Design goal:** minimize overhead while ensuring reliable propagation of transactions, blocks, and peer information across a global network.
+
+<div style="position: relative; top: -175px; z-index: -1;">
+
+```{dot}
+digraph MessageFormat {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=record, fontname="Inter,Helvetica,Arial", fontsize=16, color="#cbd5e1", style="filled", fillcolor="#f8fafc", margin=0.15];
+edge [color="#64748b", arrowsize=0.7];
+
+MSG [label="{ Message | { <hdr> Header | <pl> Payload } }"];
+HDR [label="{ Header | Command | Payload Length | Checksum }", shape=record, fillcolor="#e0f2fe", color="#38bdf8"];
+PL  [label="{ Payload | Structure Depends on Msg Type }", shape=record, fillcolor="#ecfdf5", color="#34d399"];
+
+MSG:hdr -> HDR;
+MSG:pl  -> PL;
+
+NOTE [shape=note, fillcolor="#fff7ed", color="#fdba74",
+label="Example message types:\n• version / verack\n• inv / getdata\n• tx / block"];
+
+PL -> NOTE [style=dotted, arrowsize=0.5];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the low-level communication format that lets Bitcoin nodes exchange information reliably across the Internet. It matters here because block and transaction relay depend on structured, predictable messages over long-lived connections. Emphasize that compact message headers and specific command types make the network's "plumbing" efficient and verifiable.
+
+**Key Points**
+- Bitcoin nodes communicate over TCP using a defined set of message commands.
+- Each message has a header describing the payload and a payload carrying the actual data.
+- Efficient message design helps the network propagate data quickly without unnecessary overhead.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+## Transaction Relay {.smaller}
+
+- **Announcement:** when a node receives a new transaction, it advertises it to peers using an `inv` (inventory) message.  
+- **Request:** peers that don’t already have the transaction respond with a `getdata` message requesting the full data.  
+- **Transmission:** the originating node then sends the complete transaction using a `tx` message.  
+- **Goal:** efficient, bandwidth-aware propagation—nodes announce first, then only transmit when requested.
+
+<div style="position: relative; top: -100px; z-index: -1;">
+```{dot}
+digraph TxRelay {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial", fontsize=16, fillcolor="#f8fafc", color="#cbd5e1", width=2.5];
+edge [color="#64748b", arrowsize=0.7];
+
+A [label="Node A"];
+B [label="Node B"];
+
+// Sequence of message exchanges
+A -> B [label="inv(TX)\nAdvertise new transaction", color="#38bdf8"];
+B -> A [label="getdata(TX)\nRequest details", color="#f59e0b"];
+A -> B [label="tx(TX)\nSend full transaction", color="#34d399"];
+}
+
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the announce-request-transmit pattern that Bitcoin uses to relay transactions without flooding the network. It matters here because efficient transaction propagation is a prerequisite for good mempool synchronization and later block assembly. Emphasize that propagation does not equal confirmation; it only ensures data reaches peers that may want it.
+
+**Key Points**
+- Nodes advertise new transactions with `inv`, respond to requests with `getdata`, and then send the transaction with `tx`.
+- This pattern saves bandwidth because full data is sent only to peers that need it.
+- Efficient relay helps transactions reach miners and validating peers quickly.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+## Block Propagation {.smaller}
+
+- **Process:** block relay follows the same announce–request–transmit pattern as transactions: `inv` → `getdata` → `block`.  
+- **Efficiency improvement:** the *compact block relay* protocol minimizes bandwidth use by sending:  
+  - Short transaction IDs for transactions peers likely already have.  
+  - Only full transactions if the peer’s mempool is missing them.  
+- **Goal:** achieve rapid, global block propagation to keep miners in sync and reduce the risk of competing forks.
+
+<div style="position: relative; top: -100px; z-index: -1;">
+
+```{dot}
+digraph BlockPropagation {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial", width=2, fontsize=16, fillcolor="#f8fafc", color="#cbd5e1"];
+edge [color="#64748b", arrowsize=0.7, penwidth=1.2, fontname="Helvetica", fontsize=11];
+
+// Nodes
+A [label="Miner A\n(Finds New Block)"];
+B [label="Peer Node B"];
+C [label="Peer Node C"];
+
+// Relay process in chronological order, top to bottom
+A -> B [label="1. inv(Block)", color="#38bdf8"];
+B -> A [label="2. getdata(Block)", color="#f59e0b"];
+A -> B [label="3. cmpctblock\n(short TX IDs)", color="#34d399"];
+B -> A [label="4. getblocktxn\n(request missing TXs)", color="#f87171"];
+A -> B [label="5. blocktxn\n(send missing TXs)", color="#f87171"];
+B -> C [label="6. inv(Block)", color="#38bdf8"];
+}
+
+```
+</div>
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how block relay extends the same announce-request logic while adding compact block optimizations for speed. It matters here because fast block propagation reduces stale-block risk and keeps miners working on the same chain tip. Emphasize that bandwidth efficiency is a consensus-security issue because slower propagation increases the chance of competing tips.
+
+**Key Points**
+- Blocks are announced, requested, and relayed much like transactions.
+- Compact block relay sends short transaction IDs when peers likely already have the underlying transactions.
+- Faster propagation lowers wasted work and reduces the chance of competing forks.
+
+**Walkthrough**
+None
+
+**Sources**
+- @corallo_bip152compact_2016
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+## Fault Tolerance {.smaller}
+
+- **Redundant connectivity:** each node maintains multiple inbound and outbound links, so losing a few peers does not disconnect it from the network.  
+- **Gossip resilience:** Bitcoin’s peer-to-peer gossip protocol ensures that transactions and blocks eventually reach the entire network, even when some links fail.  
+- **Potential threats:**  
+  - **Eclipse attacks:** an adversary surrounds and isolates a node, controlling all its connections.  
+  - **Partitioning attacks:** attempt to split the network into disconnected regions to delay consensus or block propagation.  
+- **Mitigation:** peer and route diversity, rotating connections, and independent discovery methods make large-scale isolation difficult and improve overall network robustness.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that Bitcoin's network robustness depends on redundant connectivity and broad participant diversity, not on perfect links. It matters here because students should see eclipse and partitioning attacks as attacks on visibility and timing rather than on signatures or validity rules. Emphasize that resilience comes from many independent routes and changing peer relationships.
+
+**Key Points**
+- Multiple connections and redundant gossip paths prevent minor failures from isolating a node.
+- Eclipse and partitioning attacks target a node's or region's network view rather than Bitcoin's cryptography.
+- Diverse peers, routes, and rotation make those attacks harder and improve overall robustness.
+
+**Walkthrough**
+None
+
+**Sources**
+- @apostolaki_hijackingbitcoinrouting_2017
+- @decker_informationpropagationbitcoin_2013
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+
+## Network Growth and Concerns {.smaller}
+
+- **Dynamic participation:** the number of reachable nodes fluctuates over time as hardware costs, energy prices, and incentives influence who runs infrastructure.  
+- **Resource demands:** as the blockchain grows, running a full node requires increasing storage, bandwidth, and processing power—raising the barrier to entry.  
+- **Centralization pressures:**  
+  - **Mining concentration:** large mining pools dominate block production due to economies of scale.  
+  - **Node consolidation:** fewer independently operated full nodes reduce network diversity and resilience.  
+- **Design tension:** achieving scalability often increases efficiency at the expense of decentralization—balancing the two is an ongoing challenge.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the long-run pressures that can make a decentralized network harder to sustain as usage and costs rise. It matters here because students need to see that decentralization is an ongoing economic balance, not a one-time design achievement. Emphasize the tension between capacity, operator diversity, and the incentives that shape both nodes and miners.
+
+**Key Points**
+- Node counts and reachable participation fluctuate with costs and incentives.
+- Growing storage, bandwidth, and mining specialization can raise barriers to entry.
+- Bitcoin continually balances scalability pressures against decentralization goals.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+
+:::
+
+## Introduction to Bitcoin Script {.smaller}
+
+- **Purpose:** Bitcoin transactions use a *stack-based scripting language* to specify the exact conditions required to spend each output (UTXO).  
+- **Functionality:** scripts are executed and validated by nodes—if the conditions evaluate to “true,” the spend is accepted.  
+- **Design:** intentionally *not Turing-complete* to avoid loops, reduce complexity, and prioritize safety and determinism.  
+- **Heritage:** part of Bitcoin’s design since the Genesis Block—enabling programmable spending rules long before smart contracts became a broader concept.
+
+<div style="position: relative; top: -100px; z-index: -1;">
+
+```{dot}
+digraph BitcoinScript {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=box, style="rounded,filled", width=3, margin=".25,.10", fontname="Inter,Helvetica,Arial", fontsize=16, fillcolor="#f8fafc", color="#cbd5e1"];
+edge [color="#64748b", arrowsize=0.7];
+
+// UTXO locking script
+L [label="Locking Script\n(scriptPubKey)\nConditions for Spending", fillcolor="#e0f2fe", color="#38bdf8"];
+
+// Unlocking script
+U [label="Unlocking Script\n(scriptSig)\nProvides Data/Signature", fillcolor="#fef9c3", color="#f59e0b"];
+
+// Combined execution
+E [label="Combined Script Execution\n(stack evaluated → TRUE = valid spend)", fillcolor="#ecfdf5", color="#34d399"];
+
+U -> E [label="pushed to stack"];
+L -> E [label="validation logic"];
+}
+
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Bitcoin Script as the mechanism that turns UTXOs into programmable spending conditions. It matters here because the lesson is shifting from network transport into the rule language that nodes evaluate when a spend is attempted. Emphasize that Script supports conditional payments while remaining deliberately constrained for safety and determinism.
+
+**Key Points**
+- Bitcoin Script is a stack-based language used to define spending conditions for outputs.
+- Nodes validate script execution when an output is spent.
+- Script is intentionally not Turing-complete to keep behavior bounded and predictable.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_contractsbitcoindeveloper_2024
+
+:::
+
+## Why Bitcoin Script Exists {.smaller}
+
+- **Original vision:** allow transactions to include flexible spending conditions such as multi-signature authorization, time locks, and other constraints.  
+- **Purpose:** make money programmable *without requiring a central authority*—rules are enforced by consensus, not trust.  
+- **Role in the system:** serves as the foundation for advanced transaction types and later contract layers (e.g., Lightning, sidechains).  
+- **Example:** a time-locked output prevents spending until a specified block height or timestamp is reached.  
+- **Enforcement:** full nodes validate these conditions automatically when a spend is attempted, ensuring deterministic and decentralized rule execution.
+
+<div style="position: relative; top: -150px; z-index: -1;">
+
+```{dot}
+digraph ScriptPurpose {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial",margin="0.25,.1", fontsize=16, fillcolor="#f8fafc", color="#cbd5e1"];
+edge [color="#64748b", arrowsize=0.7];
+
+TXO [label="Unspent Output (UTXO)\n+ Locking Script (Conditions)", fillcolor="#e0f2fe", color="#38bdf8"];
+ATTEMPT [label="Spend Attempt\n(Unlocking Script)", fillcolor="#fef9c3", color="#f59e0b"];
+NODE5 [label="Full Node Validation\nExecutes Script Stack", fillcolor="#ecfdf5", color="#34d399"];
+RESULT [label="Valid Spend\n(if Script evaluates TRUE)", fillcolor="#d1fae5", color="#34d399"];
+FAIL [label="Rejected\n(if Script evaluates FALSE)", fillcolor="#fee2e2", color="#f87171"];
+
+TXO -> NODE5 [label="rules + conditions"];
+ATTEMPT -> NODE5 [label="provided data/signature"];
+NODE5 -> RESULT [label="TRUE"];
+NODE5 -> FAIL [label="FALSE"];
+}
+
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why Script exists at all: to make money programmable without introducing a trusted intermediary or a general-purpose virtual machine. It matters here because students should see advanced spending conditions as part of Bitcoin's original design, not as an afterthought. Emphasize that full nodes enforce these conditions automatically when a spend is attempted.
+
+**Key Points**
+- Script allows conditions like multisig and time locks to be enforced by the network.
+- The rules are checked at spend time rather than by a central administrator.
+- Script gives Bitcoin limited programmability while preserving safety and consensus clarity.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_contractsbitcoindeveloper_2024
+
+:::
+
+## Bitcoin Script Basics {.smaller}
+
+<div style="font-size: 0.9em; line-height: 1.12;">
+
+- **Two components of a Bitcoin transaction input/output pair:**  
+  - **`scriptPubKey` (locking script):** defines the spending conditions for a UTXO—what must be provided to unlock it.  
+  - **`scriptSig` (unlocking script):** provides the data (e.g., signature, public key) needed to satisfy those conditions.  
+- **Example:** *Pay-to-PubKey-Hash (P2PKH)* — the most common script type.  
+  - The locking script requires a signature matching a specific public key hash.  
+  - The unlocking script supplies that signature and corresponding public key.  
+- **Execution model:** nodes concatenate both scripts and evaluate them on a stack; if the result is `TRUE`, the spend is valid.
+
+</div>
+
+<div style="position: relative; top: -150px; z-index: -1;">
+```{dot}
+digraph ScriptBasics {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial",
+fontsize=16, fillcolor="#f8fafc", margin=".25,.1", color="#cbd5e1"];
+edge [color="#64748b", arrowsize=0.7];
+
+// Scripts and stack
+LOCK [label="Locking Script\n(scriptPubKey:\nPubKeyHash)", fillcolor="#e0f2fe", color="#38bdf8"];
+UNLOCK [label="Unlocking Script\n(scriptSig:\nSignature + PubKey)", fillcolor="#fef9c3", color="#f59e0b"];
+STACK [label="Execution Stack\n(Evaluate Combined Script)", fillcolor="#ecfdf5", color="#34d399"];
+VERIFY [label="Result:\nTRUE = Valid Spend\nFALSE = Invalid", fillcolor="#fff7ed", color="#fdba74"];
+
+LOCK -> STACK [label="defines conditions"];
+UNLOCK -> STACK [label="provides data"];
+STACK -> VERIFY [label="check conditions"];
+}
+
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the two-part structure of a scripted Bitcoin spend: the locking script on the UTXO and the unlocking data provided by the spender. It matters here because students need a simple mental model before the lesson introduces specific opcodes and P2PKH evaluation. Emphasize that validity comes from evaluating both parts together on a stack.
+
+**Key Points**
+- `scriptPubKey` encodes the conditions attached to an output.
+- `scriptSig` provides the data needed to satisfy those conditions.
+- A spend is valid only if the combined script execution leaves a true result.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_contractsbitcoindeveloper_2024
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## Script Primitives {.smaller}
+
+<div style="font-size: 0.9em; line-height: 1.12;">
+
+- **Cryptographic operations:**  
+  - `OP_CHECKSIG` — verifies a single digital signature.  
+  - `OP_CHECKMULTISIG` — validates multiple signatures against a set of public keys.  
+
+- **Hashing operations:**  
+  - `OP_HASH160` — applies SHA-256 followed by RIPEMD-160 (used in P2PKH).  
+  - `OP_SHA256` — computes a standard SHA-256 hash.  
+
+- **Time-based constraints:**  
+  - `OP_CHECKLOCKTIMEVERIFY` — prevents spending until a specified block height or timestamp.  
+  - `OP_CHECKSEQUENCEVERIFY` — enforces relative time locks between transactions.  
+
+- **Control flow:**  
+  - `OP_IF`, `OP_ELSE`, `OP_ENDIF` — conditional logic to enable script branches.  
+
+- **Data operations:**  
+  - Push, duplicate (`OP_DUP`), and compare values on the stack.
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Script as a toolbox of small opcodes that can be combined into useful but bounded spending rules. It matters here because it shows how Bitcoin achieves flexibility without adopting unbounded computation. Emphasize the categories of operations rather than memorizing every opcode in isolation.
+
+**Key Points**
+- Script includes cryptographic, hashing, time-lock, control-flow, and data-manipulation operations.
+- These primitives support multisig, conditional payments, and delayed spending.
+- The limited opcode set reflects Bitcoin's preference for safety and predictable validation.
+
+**Walkthrough**
+None
+
+**Sources**
+- @todd_bip65op_checklocktimeverify_2014
+- @btcdrak_bip112checksequenceverify_2015
+
+:::
+
+## Example: Pay-to-PubKey-Hash (P2PKH) {.smaller}
+
+- **Overview:** the most common and foundational Bitcoin script type—used in standard single-signature payments.
+- **Locking script (`scriptPubKey`):**
+  ```
+  OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+  ```
+- **Unlocking script (`scriptSig`):**
+  ```
+  <signature> <pubKey>
+  ```
+- **Meaning:**
+  - The spender must provide a public key whose hash matches `<pubKeyHash>`.
+  - The provided signature must correctly verify against that public key.
+- **Execution flow:**
+  1. The unlocking data is pushed to the stack.
+  2. The locking script runs its operations on the same stack.
+  3. If the final result evaluates to `TRUE`, the spend is valid.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes P2PKH as the canonical example of how Bitcoin Script enforces ownership with hashes and signatures. It matters here because it makes the abstract locking/unlocking model concrete using the most recognizable standard payment pattern. Emphasize the step-by-step check: matching the public key hash first, then verifying the signature.
+
+**Key Points**
+- P2PKH requires the spender to reveal a public key matching the locked hash.
+- The spender must also provide a valid signature for the transaction.
+- This example shows how a small set of opcodes can enforce strong cryptographic conditions.
+
+**Walkthrough**
+1. Push the unlocking data, the signature and public key, onto the stack.
+2. Run the locking script to duplicate and hash the provided public key, then compare it to the expected hash.
+3. Finish with `OP_CHECKSIG` to verify the signature and accept the spend only if all checks pass.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_contractsbitcoindeveloper_2024
+
+:::
+
+## Summary {.smaller}
+
+- **Nodes:** full nodes independently validate and store the entire blockchain; light clients rely on simplified proofs and full nodes for verification.  
+- **Network:** a decentralized peer-to-peer system using gossip-based communication and redundant connections for resilience and fault tolerance.  
+- **Bitcoin Script:** a stack-based, purpose-built scripting language that enables conditional spending without the risks of general-purpose computation.  
+- **Design constraints:** no loops or unbounded logic—prioritizing determinism, auditability, and security over flexibility.  
+- **Big picture:** Bitcoin’s architecture reflects a deliberate trade-off: *security and simplicity* take precedence over expressiveness and speed.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This closing slide establishes the lesson's integrated picture: nodes enforce rules, the peer-to-peer network moves data, and Script defines spend conditions under tight safety constraints. It matters here because students should leave understanding how Bitcoin's communication layer and validation layer support one another. Emphasize that Bitcoin consistently favors decentralization, auditability, and predictability over maximum expressiveness.
+
+**Key Points**
+- Full nodes anchor trust by validating independently, while light clients trade some independence for efficiency.
+- Gossip and redundant connections keep the network resilient and synchronized.
+- Script adds programmable spending, but only within carefully bounded limits.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+- @bitcoin.orgdevelopers_contractsbitcoindeveloper_2024
+
+:::
+
+## References

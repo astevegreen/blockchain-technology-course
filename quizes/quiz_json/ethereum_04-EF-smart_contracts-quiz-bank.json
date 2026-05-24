@@ -1,0 +1,441 @@
+{
+  "lesson_id": "ethereum_04_ef_smart_contracts",
+  "lesson_title": "Smart Contracts: From Concept to Ethereum",
+  "date_generated": "2026-04-26",
+  "topic": "ethereum",
+  "tags": [
+    "ethereum",
+    "04-ef-smart-contracts",
+    "smart-contracts",
+    "evm",
+    "solidity",
+    "contract-accounts",
+    "call-frames",
+    "storage-memory-calldata",
+    "reentrancy",
+    "checks-effects-interactions",
+    "upgradeability",
+    "oracles",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "ethereum",
+    "lesson_file_stem": "04-EF-smart_contracts",
+    "question_count": 13,
+    "source_mix": {
+      "lesson_questions": 10,
+      "reading_questions": 3
+    },
+    "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd",
+    "reading_sources": [
+      "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt",
+      "/tmp/blockchain-course-readings/mastering_ethereum_ch7.html"
+    ]
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_ethereum",
+        "title": "Ethereum",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_smart_contracts_lesson_slides",
+            "title": "Smart Contracts: From Concept to Ethereum - lesson slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_smart_contracts_assigned_reading",
+            "title": "Smart Contracts: From Concept to Ethereum - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A student says a smart contract is mainly a legal agreement uploaded to Ethereum. Which correction best matches the lesson's framing?",
+      "correct_answer": "A smart contract is deterministic code plus persistent state that executes under blockchain consensus rules.",
+      "incorrect_answers": [
+        "A smart contract is a natural-language legal document that validators execute during dispute resolution.",
+        "A smart contract is an off-chain automated database that replicates transaction signatures across servers.",
+        "A smart contract is a client-side wallet script that authorizes user account transitions via private keys."
+      ],
+      "explanation": "The lesson separates smart contracts from legal contracts. Their technical force comes from deterministic bytecode execution and persistent on-chain state, not from interpretation of intent.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "smart-contracts",
+        "deterministic-execution",
+        "misconception"
+      ],
+      "lesson_block": "Smart Contracts As Deterministic Stateful Programs",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Smart Contracts: Concept and Scope; Smart Contracts As Deterministic Stateful Programs",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A team wants rich lending logic, shared token standards, and composability with other on-chain applications. What tradeoff does the lesson suggest they accept by choosing Solidity/EVM contracts over a constrained Script-like model?",
+      "correct_answer": "They gain stateful expressiveness and interoperability while increasing the attack surface and security complexity.",
+      "incorrect_answers": [
+        "They gain absolute transactional privacy and off-chain execution speed while eliminating gas fees entirely.",
+        "They obtain compile-time formal verification and execution safety while sacrificing multi-asset integration.",
+        "They establish automatic bug-free operation and faster confirmations while removing the need for validator fees."
+      ],
+      "explanation": "The lesson uses Bitcoin Script versus Solidity to show the expressiveness-versus-safety tradeoff. Ethereum's flexibility enables richer applications, but more expressive stateful code creates more ways to fail.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "bitcoin-script",
+        "solidity",
+        "expressiveness",
+        "tradeoff"
+      ],
+      "lesson_block": "Expressiveness Versus Safety",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: From Bitcoin Script to Solidity; Expressiveness Versus Safety",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "A contract contains logic that should run every hour. Why can it not simply wake itself up and execute on Ethereum?",
+      "correct_answer": "Contract accounts cannot self-initiate execution; on-chain actions must trace back to an EOA-signed transaction or an existing call chain.",
+      "incorrect_answers": [
+        "Contract accounts cannot hold ether balances to pay gas; all scheduled functions require external funding from validator nodes.",
+        "Contract accounts are automatically archived after transaction execution; they must be redeployed to restore their code and state.",
+        "Contract accounts only permit code execution during their deployment phase; they function as read-only data registries thereafter."
+      ],
+      "explanation": "The lesson distinguishes EOAs from contract accounts. Contracts contain code and storage and can react to calls, but they do not sign or initiate transactions on their own.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "contract-accounts",
+        "eoa",
+        "call-frames",
+        "mechanism"
+      ],
+      "lesson_block": "Ethereum Execution Model",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Ethereum Accounts and Contract Review; Calls and Control Flow in the EVM",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A user calls Contract A, and Contract A calls Contract B. Inside Contract B, which interpretation of `msg.sender` is correct for ordinary calls?",
+      "correct_answer": "`msg.sender` is Contract A, because it is the immediate caller in B's current call frame.",
+      "incorrect_answers": [
+        "`msg.sender` is the original user, because authorization always follows the transaction signer.",
+        "`msg.sender` is Contract B, because the variable always references the executing contract.",
+        "`msg.sender` is the validator, because validators evaluate the call route during consensus."
+      ],
+      "explanation": "`msg.sender` is local to the current call frame and identifies the immediate caller. Confusing it with the original user is a common access-control mistake.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "msg-sender",
+        "call-frames",
+        "access-control",
+        "scenario"
+      ],
+      "lesson_block": "Calls and Control Flow in the EVM",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Calls and Control Flow in the EVM; Ethereum Execution Model",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "After a Solidity contract is deployed, what best describes the role of the constructor and deployed runtime bytecode?",
+      "correct_answer": "The constructor runs during deployment to initialize state, while the runtime bytecode is what remains at the contract address for later calls.",
+      "incorrect_answers": [
+        "The constructor can be called later to reset initialized state, while deployed runtime bytecode is erased after deployment setup is complete.",
+        "The constructor generates a contract-specific private key for signing, while the runtime bytecode functions as an off-chain data storage container.",
+        "The constructor executes dynamically before every incoming transaction, while the runtime bytecode is accessed only when generating client event logs."
+      ],
+      "explanation": "The lesson's deployment model distinguishes initialization from later execution. Deployment creates a contract account whose persistent state and runtime code are used after the constructor has finished.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "contract-deployment",
+        "constructors",
+        "runtime-bytecode",
+        "mechanism"
+      ],
+      "lesson_block": "Contract Deployment",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Contract Deployment; Deployment and Runtime Bytecode",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "During a code review, a function copies a large input array into storage even though it only needs to inspect the values during that call. What is the best diagnosis?",
+      "correct_answer": "It likely wastes gas and changes persistence unnecessarily; calldata or memory would better match temporary read-only inspection.",
+      "incorrect_answers": [
+        "It is mandatory because EVM reference types must be copied into persistent storage before any loop can inspect their values.",
+        "It secures input parameter privacy against public block observers because writing variables to storage encrypts the data by default.",
+        "It successfully blocks all potential reentrancy attacks because writing variables to storage freezes the calling contract state."
+      ],
+      "explanation": "The lesson treats storage, memory, and calldata as design choices with persistence, cost, copying, and mutation consequences. Storage is persistent and expensive, while calldata and memory are temporary.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "storage-memory-calldata",
+        "gas",
+        "code-review",
+        "application"
+      ],
+      "lesson_block": "Data Locations: Storage, Memory, Calldata",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Data Locations: Storage, Memory, Calldata; Solidity As A State And Interface Language",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A contract emits an event whenever a transfer occurs. An on-chain function later tries to read those event logs to calculate the current balance. Why is this design flawed?",
+      "correct_answer": "Events are receipt logs for off-chain consumers, not contract storage that on-chain logic can query as persistent state.",
+      "incorrect_answers": [
+        "Events are restricted to EOA authorization signatures, not internal mechanisms that contract logic can emit independently.",
+        "Events are temporary variables stored inside calldata, not persistent records that external applications can track over time.",
+        "Events are direct instructions that overwrite storage slots, not separate entities that contract logic can execute in parallel."
+      ],
+      "explanation": "The lesson distinguishes logs from storage. Events are useful for UIs, wallets, indexers, and monitoring, but contract logic should rely on stored state for values it must later read.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "events",
+        "logs",
+        "storage",
+        "misconception"
+      ],
+      "lesson_block": "Events and Logs",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Events and Logs; Interfaces To Off-Chain Systems",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A withdrawal function sends ETH to the caller before reducing the caller's recorded balance. Why is this sequence dangerous?",
+      "correct_answer": "The external transfer can hand control to untrusted code that reenters before the balance has been updated.",
+      "incorrect_answers": [
+        "The external transfer will trigger an automatic EVM hard fork that reverts the caller contract storage status.",
+        "The external transfer makes the caller's internal balance ledger immutable once the transfer transaction starts.",
+        "The external transfer forces the EVM to reject subsequent state updates after a payable function is triggered."
+      ],
+      "explanation": "Reentrancy arises when a contract yields control while its internal state is still inconsistent. Checks-Effects-Interactions mitigates this by updating internal accounting before interacting externally.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "reentrancy",
+        "checks-effects-interactions",
+        "external-calls",
+        "scenario"
+      ],
+      "lesson_block": "Reentrancy: Anatomy and Defenses",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Reentrancy: Anatomy and Defenses; Reentrancy: Vulnerable Pattern (Code); Reentrancy: Checks-Effects-Interactions (Fix)",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "Why might a project use a proxy pattern instead of deploying only an immutable contract, and what new risk does that introduce?",
+      "correct_answer": "A proxy can preserve a stable address and storage while changing logic, but it adds governance complexity and malicious-upgrade risk.",
+      "incorrect_answers": [
+        "A proxy lets validators patch deployed bytecode directly while preserving storage, but it disables admin controls after each approved upgrade.",
+        "A proxy allows contracts to execute external API queries while maintaining logic, but it disables future custom event emission.",
+        "A proxy eliminates the requirement to deploy raw bytecode while preserving execution, but it renders all state variables temporary."
+      ],
+      "explanation": "The lesson frames proxy upgradeability as a tradeoff. `delegatecall` lets replaceable logic operate over stable proxy storage, which helps with upgrades but creates operational and authorization risks around governance controls.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "upgradeability",
+        "proxy-patterns",
+        "delegatecall",
+        "tradeoff"
+      ],
+      "lesson_block": "Upgradeability and Proxy Patterns",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Upgradeability and Proxy Patterns; Immutability, Upgradeability, And External Data",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A lottery contract chooses a winner by directly fetching a random number from a web API during EVM execution. What is the core problem with this design?",
+      "correct_answer": "Validators must execute deterministically, so external data and randomness need mediated designs such as oracles, commit-reveal, or VRFs with explicit trust assumptions.",
+      "incorrect_answers": [
+        "The EVM requires identical gas prices across all nodes, so external API links are limited to validator windows that synchronize network latency before execution can safely begin.",
+        "Randomness remains physically impossible on decentralized networks, so lottery designs must rely on pre-computed hardware arrays deployed by validating institutions.",
+        "Web APIs are inherently vulnerable to transaction reordering, so contracts must emit structured event logs to establish secure callback routes before reading data."
+      ],
+      "explanation": "The lesson emphasizes the boundary between deterministic on-chain execution and external data. Oracles and randomness schemes bridge that boundary, but they add assumptions about data sources, freshness, manipulation resistance, and failure handling.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "oracles",
+        "randomness",
+        "deterministic-execution",
+        "trust-assumptions"
+      ],
+      "lesson_block": "Randomness, Oracles, and External Data",
+      "source": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Randomness, Oracles, and External Data; Immutability, Upgradeability, And External Data",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction calls Contract A, which calls Contract B. Contract B reverts after Contract A has already updated some state. According to the reading, what is the usual effect if the failure is not handled?",
+      "correct_answer": "The state effects of the call chain revert atomically, but gas already spent is still charged and the attempted transaction is recorded.",
+      "incorrect_answers": [
+        "Only Contract B state is reversed after its revert, while Contract A updates remain permanently committed in the same transaction history.",
+        "The entire transaction is erased from the block history, but a penalty fee is deducted from the block validator's security deposit.",
+        "The EVM halts execution and prompts the sender for manual input, but all preceding state writes remain frozen until resolved."
+      ],
+      "explanation": "The reading stresses transaction atomicity and gas. Failed execution rolls back state effects across the execution path unless failure is caught or handled, but the work already performed still consumes gas.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "reading",
+        "assigned-reading",
+        "transaction-atomicity",
+        "error-handling",
+        "gas",
+        "mechanism",
+        "mastering-ethereum-ch7"
+      ],
+      "lesson_block": "Atomicity, Error Handling, And Gas",
+      "source": "reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt: Atomicity, Error Handling, And Gas; Core Reading Takeaways",
+      "source_type": "assigned_reading"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A developer marks a Solidity variable `private` because it contains information they do not want blockchain observers to see. What does the reading imply?",
+      "correct_answer": "`private` limits Solidity-level access from other contracts and derived contracts, but it does not make public-chain data secret.",
+      "incorrect_answers": [
+        "`private` automatically encrypts the variable value using the creator's key, but it permits decryption during transactions.",
+        "`private` prevents network validators from verifying the state variable directly, but it exposes variable values to client wallets.",
+        "`private` reroutes the variable's storage path into off-chain transaction logs, but it increases the gas cost of subsequent reads."
+      ],
+      "explanation": "The reading distinguishes visibility from privacy. Solidity visibility controls callability and inheritance access; it does not hide data from observers of a public blockchain.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "reading",
+        "assigned-reading",
+        "visibility",
+        "privacy",
+        "access-control",
+        "misconception",
+        "mastering-ethereum-ch7"
+      ],
+      "lesson_block": "Visibility, Privacy, And Access Control",
+      "source": "reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt: Visibility, Privacy, And Access Control; Function visibility and mutability",
+      "source_type": "assigned_reading"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A contract accepts an arbitrary address from a user, casts it to an expected contract type, then calls it without additional checks. What risk from the reading is most relevant?",
+      "correct_answer": "The cast assumes an interface but does not prove the address has the expected code or behavior, so the callee may fail or act maliciously.",
+      "incorrect_answers": [
+        "The cast automatically transfers administrative ownership of the calling contract to the target address, so future state modifications are restricted.",
+        "The EVM rejects execution when calling any external address not deployed using `new`, so the transaction reverts without wasting gas.",
+        "The cast establishes a compiler-verified connection that validates the target's bytecode, so the execution runs with safety guarantees."
+      ],
+      "explanation": "The reading compares contract-calling patterns. Creating a known instance gives stronger assumptions, while casting an arbitrary address and low-level calls rely on assumptions that must be checked and handled defensively.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "reading",
+        "assigned-reading",
+        "contract-to-contract-calls",
+        "address-casting",
+        "low-level-calls",
+        "trust-boundaries",
+        "mastering-ethereum-ch7"
+      ],
+      "lesson_block": "Calls, Trust Boundaries, And Context",
+      "source": "reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt: Calling Other Contracts; Creating a new instance; Addressing an existing instance; Raw call, delegatecall, and staticcall",
+      "source_type": "assigned_reading"
+    }
+  ]
+}

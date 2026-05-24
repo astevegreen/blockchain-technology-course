@@ -1,0 +1,351 @@
+# Managed HLF test-network runtime template.
+# Rendered into fabric-samples/test-network/compose/compose-test-net.yaml by lab.sh.
+
+volumes:
+  orderer.example.com:
+  peer0.cascadiastate.example.com:
+  peer0.chesapeakecanoe.example.com:
+  peer0.southhudson.example.com:
+  peer0.mapleleaf.example.com:
+  peer0.meridian.example.com:
+
+networks:
+  test:
+    name: fabric_test
+    external: true
+  instructor-term:
+    name: hlf-instructor-term
+    external: true
+
+services:
+
+  orderer.example.com:
+    platform: __PLATFORM__
+    container_name: orderer.example.com
+    image: hlf-orderer-ttyd:latest
+    pull_policy: never
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      - ORDERER_GENERAL_TLS_ENABLED=true
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_CLUSTER_CLIENTCERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_CLUSTER_CLIENTPRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_CLUSTER_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_GENERAL_BOOTSTRAPMETHOD=none
+      - ORDERER_CHANNELPARTICIPATION_ENABLED=true
+      - ORDERER_ADMIN_TLS_ENABLED=true
+      - ORDERER_ADMIN_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_ADMIN_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_ADMIN_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_TLS_CLIENTROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      - ORDERER_ADMIN_LISTENADDRESS=0.0.0.0:7053
+      - ORDERER_OPERATIONS_LISTENADDRESS=orderer.example.com:9443
+      - ORDERER_METRICS_PROVIDER=prometheus
+      - HLF_NODE_TYPE=orderer
+      - HLF_MSP_ID=OrdererMSP
+      - HLF_ORG_DOMAIN=example.com
+      - HLF_PEER_ADDRESS=orderer.example.com:7050
+      - HLF_PROMPT=orderer
+      - HLF_TITLE=orderer.example.com
+    working_dir: /root
+    command: ["bash", "/opt/hlf-scripts/hlf_ttyd_wrapper.sh", "orderer"]
+    volumes:
+      - ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp:/var/hyperledger/orderer/msp
+      - ../organizations/ordererOrganizations/example.com/orderers/orderer.example.com/tls/:/var/hyperledger/orderer/tls
+      - orderer.example.com:/var/hyperledger/production/orderer
+
+      - ../organizations:/opt/hlf-orgs:ro
+    pids_limit: 512
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /run:size=16m
+    ports:
+      - 7050:7050
+      - 7053:7053
+      - 9443:9443
+    networks:
+      - test
+      - instructor-term
+
+  peer0.cascadiastate.example.com:
+    platform: __PLATFORM__
+    container_name: peer0.cascadiastate.example.com
+    image: hlf-peer-ttyd:latest
+    pull_policy: never
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.cascadiastate.example.com
+      - CORE_PEER_ADDRESS=peer0.cascadiastate.example.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.cascadiastate.example.com:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.cascadiastate.example.com:7051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.cascadiastate.example.com:7051
+      - CORE_PEER_LOCALMSPID=Org1MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.cascadiastate.example.com:9444
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org1"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - HLF_NODE_TYPE=consortium
+      - HLF_MSP_ID=Org1MSP
+      - HLF_ORG_DOMAIN=cascadiastate.example.com
+      - HLF_PEER_ADDRESS=peer0.cascadiastate.example.com:7051
+      - HLF_PROMPT=org1
+      - HLF_TITLE=Cascadia State University (peer0.cascadiastate.example.com)
+      - HLF_ADMIN_USER=Admin@cascadiastate.example.com
+    volumes:
+      - ../organizations/peerOrganizations/cascadiastate.example.com/peers/peer0.cascadiastate.example.com:/etc/hyperledger/fabric
+      - ./docker/peercfg:/etc/hyperledger/peercfg
+      - peer0.cascadiastate.example.com:/var/hyperledger/production
+
+      - ../organizations:/opt/hlf-orgs:ro
+    pids_limit: 512
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /run:size=16m
+    working_dir: /root
+    command: ["bash", "/opt/hlf-scripts/hlf_ttyd_wrapper.sh", "peer", "node", "start"]
+    ports:
+      - 7051:7051
+      - 9444:9444
+    networks:
+      - test
+      - instructor-term
+
+  peer0.chesapeakecanoe.example.com:
+    platform: __PLATFORM__
+    container_name: peer0.chesapeakecanoe.example.com
+    image: hlf-peer-ttyd:latest
+    pull_policy: never
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.chesapeakecanoe.example.com
+      - CORE_PEER_ADDRESS=peer0.chesapeakecanoe.example.com:9051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:9051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.chesapeakecanoe.example.com:9052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:9052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.chesapeakecanoe.example.com:9051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.chesapeakecanoe.example.com:9051
+      - CORE_PEER_LOCALMSPID=Org2MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.chesapeakecanoe.example.com:9445
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org2"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - HLF_NODE_TYPE=consortium
+      - HLF_MSP_ID=Org2MSP
+      - HLF_ORG_DOMAIN=chesapeakecanoe.example.com
+      - HLF_PEER_ADDRESS=peer0.chesapeakecanoe.example.com:9051
+      - HLF_PROMPT=org2
+      - HLF_TITLE=Chesapeake Canoe University (peer0.chesapeakecanoe.example.com)
+      - HLF_ADMIN_USER=Admin@chesapeakecanoe.example.com
+    volumes:
+      - ../organizations/peerOrganizations/chesapeakecanoe.example.com/peers/peer0.chesapeakecanoe.example.com:/etc/hyperledger/fabric
+      - ./docker/peercfg:/etc/hyperledger/peercfg
+      - peer0.chesapeakecanoe.example.com:/var/hyperledger/production
+
+      - ../organizations:/opt/hlf-orgs:ro
+    pids_limit: 512
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /run:size=16m
+    working_dir: /root
+    command: ["bash", "/opt/hlf-scripts/hlf_ttyd_wrapper.sh", "peer", "node", "start"]
+    ports:
+      - 9051:9051
+      - 9445:9445
+    networks:
+      - test
+      - instructor-term
+
+  peer0.southhudson.example.com:
+    platform: __PLATFORM__
+    container_name: peer0.southhudson.example.com
+    image: hlf-peer-ttyd:latest
+    pull_policy: never
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.southhudson.example.com
+      - CORE_PEER_ADDRESS=peer0.southhudson.example.com:11051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:11051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.southhudson.example.com:11052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:11052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.southhudson.example.com:11051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.southhudson.example.com:11051
+      - CORE_PEER_LOCALMSPID=Org3MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.southhudson.example.com:9446
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org3"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - HLF_NODE_TYPE=consortium
+      - HLF_MSP_ID=Org3MSP
+      - HLF_ORG_DOMAIN=southhudson.example.com
+      - HLF_PEER_ADDRESS=peer0.southhudson.example.com:11051
+      - HLF_PROMPT=org3
+      - HLF_TITLE=South Hudson Institute of Technology (peer0.southhudson.example.com)
+      - HLF_ADMIN_USER=Admin@southhudson.example.com
+    volumes:
+      - ../organizations/peerOrganizations/southhudson.example.com/peers/peer0.southhudson.example.com:/etc/hyperledger/fabric
+      - ./docker/peercfg:/etc/hyperledger/peercfg
+      - peer0.southhudson.example.com:/var/hyperledger/production
+
+      - ../organizations:/opt/hlf-orgs:ro
+    pids_limit: 512
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /run:size=16m
+    working_dir: /root
+    command: ["bash", "/opt/hlf-scripts/hlf_ttyd_wrapper.sh", "peer", "node", "start"]
+    ports:
+      - 11051:11051
+      - 9446:9446
+    networks:
+      - test
+      - instructor-term
+
+  peer0.mapleleaf.example.com:
+    platform: __PLATFORM__
+    container_name: peer0.mapleleaf.example.com
+    image: hlf-peer-ttyd:latest
+    pull_policy: never
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.mapleleaf.example.com
+      - CORE_PEER_ADDRESS=peer0.mapleleaf.example.com:13051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:13051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.mapleleaf.example.com:13052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:13052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.mapleleaf.example.com:13051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.mapleleaf.example.com:13051
+      - CORE_PEER_LOCALMSPID=Org4MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.mapleleaf.example.com:9447
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org4"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - HLF_NODE_TYPE=consortium
+      - HLF_MSP_ID=Org4MSP
+      - HLF_ORG_DOMAIN=mapleleaf.example.com
+      - HLF_PEER_ADDRESS=peer0.mapleleaf.example.com:13051
+      - HLF_PROMPT=org4
+      - HLF_TITLE=Maple Leaf Academy (peer0.mapleleaf.example.com)
+      - HLF_ADMIN_USER=Admin@mapleleaf.example.com
+    volumes:
+      - ../organizations/peerOrganizations/mapleleaf.example.com/peers/peer0.mapleleaf.example.com:/etc/hyperledger/fabric
+      - ./docker/peercfg:/etc/hyperledger/peercfg
+      - peer0.mapleleaf.example.com:/var/hyperledger/production
+
+      - ../organizations:/opt/hlf-orgs:ro
+    pids_limit: 512
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /run:size=16m
+    working_dir: /root
+    command: ["bash", "/opt/hlf-scripts/hlf_ttyd_wrapper.sh", "peer", "node", "start"]
+    ports:
+      - 13051:13051
+      - 9447:9447
+    networks:
+      - test
+      - instructor-term
+
+  # Org5 = Meridian Industries. Channel member with read-only narrative role:
+  # the peer is provisioned identically to consortium peers (it must gossip,
+  # fetch blocks, and participate in channel config validation), but the
+  # channel-level endorsement policy in configtx excludes Org5MSP.peer, so
+  # chaincode invocations never land here for endorsement.
+  peer0.meridian.example.com:
+    platform: __PLATFORM__
+    container_name: peer0.meridian.example.com
+    image: hlf-peer-ttyd:latest
+    pull_policy: never
+    labels:
+      service: hyperledger-fabric
+    environment:
+      - FABRIC_CFG_PATH=/etc/hyperledger/peercfg
+      - FABRIC_LOGGING_SPEC=INFO
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_PROFILE_ENABLED=false
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/fabric/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/fabric/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/fabric/tls/ca.crt
+      - CORE_PEER_ID=peer0.meridian.example.com
+      - CORE_PEER_ADDRESS=peer0.meridian.example.com:15051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:15051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.meridian.example.com:15052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:15052
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.meridian.example.com:15051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.meridian.example.com:15051
+      - CORE_PEER_LOCALMSPID=Org5MSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/fabric/msp
+      - CORE_OPERATIONS_LISTENADDRESS=peer0.meridian.example.com:9448
+      - CORE_METRICS_PROVIDER=prometheus
+      - CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG={"peername":"peer0org5"}
+      - CORE_CHAINCODE_EXECUTETIMEOUT=300s
+      - HLF_NODE_TYPE=consortium
+      - HLF_MSP_ID=Org5MSP
+      - HLF_ORG_DOMAIN=meridian.example.com
+      - HLF_PEER_ADDRESS=peer0.meridian.example.com:15051
+      - HLF_PROMPT=employer
+      - HLF_TITLE=Meridian Industries (peer0.meridian.example.com) - read-only verifier
+      - HLF_ADMIN_USER=Admin@meridian.example.com
+    volumes:
+      - ../organizations/peerOrganizations/meridian.example.com/peers/peer0.meridian.example.com:/etc/hyperledger/fabric
+      - ./docker/peercfg:/etc/hyperledger/peercfg
+      - peer0.meridian.example.com:/var/hyperledger/production
+
+      - ../organizations:/opt/hlf-orgs:ro
+    pids_limit: 512
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /run:size=16m
+    working_dir: /root
+    command: ["bash", "/opt/hlf-scripts/hlf_ttyd_wrapper.sh", "peer", "node", "start"]
+    ports:
+      - 15051:15051
+      - 9448:9448
+    networks:
+      - test
+      - instructor-term

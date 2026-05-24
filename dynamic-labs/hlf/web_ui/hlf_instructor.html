@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HLF Instructor Console</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --bg-elevated: #11151a;
+      --bg-panel: #151a20;
+      --bg-panel-soft: #101419;
+      --border: #242c35;
+      --border-strong: #313b46;
+      --text: #edf2f7;
+      --muted: #97a4b2;
+      --accent: #d7e6f7;
+      --accent-bg: #1a2734;
+      --ok: #7fd0a2;
+      --warn: #e6c26c;
+      --error: #ea7a7a;
+    }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #0b0d10 0%, #0e1216 100%); color: var(--text); }
+    header { padding: 14px 18px; border-bottom: 1px solid var(--border); background: rgba(10, 12, 15, 0.96); display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; position: sticky; top: 0; backdrop-filter: blur(10px); }
+    h1 { margin: 0; font-size: 20px; color: var(--accent); }
+    main { padding: 18px; display:grid; gap:16px; }
+    .grid { display:grid; grid-template-columns: 1.1fr 1fr; gap:16px; }
+    .panel { background: linear-gradient(180deg, rgba(18,22,27,0.98) 0%, rgba(14,18,23,0.98) 100%); border: 1px solid var(--border); border-radius: 0; overflow: hidden; }
+    .panel h2 { margin: 0; padding: 10px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--bg-elevated); }
+    .content { padding: 14px; }
+    .stats { display:flex; gap:16px; flex-wrap:wrap; }
+    .stat { background:var(--bg-panel-soft); border:1px solid var(--border); border-radius:0; padding:12px 14px; min-width:140px; }
+    .stat .label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+    .stat .value { font-size:24px; margin-top:6px; }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; }
+    .toolbar button, .toolbar a.btn { border:1px solid var(--border-strong); border-radius:0; padding:9px 14px; cursor:pointer; color:var(--text); background: transparent; text-decoration:none; font-size:inherit; font-family:inherit; display:inline-block; line-height:normal; }
+    .toolbar button:hover, .toolbar a.btn:hover { background: var(--bg-panel); }
+    .btn-primary, .btn-danger, .btn-secondary, .btn-warning { background: transparent; }
+    .muted { color:var(--muted); }
+    .node-card { background:var(--bg-panel-soft); border:1px solid var(--border); border-radius:0; padding:12px; margin-bottom:10px; }
+    .scenario-list { display:grid; gap:10px; }
+    .scenario { background:var(--bg-panel-soft); border:1px solid var(--border); border-radius:0; padding:12px; }
+    .scenario .tag { display:inline-block; padding:3px 8px; border-radius:0; font-size:12px; background:var(--accent-bg); color:var(--accent); margin-top:6px; border:1px solid var(--border-strong); }
+    .scenario .actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .scenario .actions button { border:1px solid var(--border-strong); border-radius:0; padding:7px 10px; cursor:pointer; color:var(--text); background:transparent; }
+    .exercise-card { background:var(--bg-panel-soft); border:1px solid var(--border); border-radius:0; padding:12px; margin-bottom:10px; }
+    .exercise-card ul { margin:8px 0 0; padding-left:18px; }
+    .exercise-card li { margin-bottom:6px; color:#d8e4f0; }
+    .message { min-height: 20px; }
+    .progress { margin-top: 16px; background:var(--bg-panel-soft); border:1px solid var(--border); border-radius:0; padding:12px 14px; }
+    .progress strong { display:block; margin-bottom:6px; }
+    .progress-meta { color:var(--muted); font-size:13px; margin-bottom:8px; }
+    .progress-detail { color:#d8e4f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size:13px; white-space: pre-wrap; }
+    pre { background: var(--bg-panel-soft) !important; border:1px solid var(--border) !important; border-radius:0 !important; }
+    .lane-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap:8px; margin-top:12px; }
+    .lane-cell { background:var(--bg-panel-soft); border:1px solid var(--border); padding:8px; font-size:12px; }
+    .lane-cell.running { border-color: #3a6b4a; background:#11211a; }
+    .lane-cell.error { border-color: #8a3a3a; background:#21110f; }
+    .lane-cell.starting, .lane-cell.stopping { border-color: #8a6a2a; background:#1f1a10; }
+    .lane-cell .lane-id { font-weight:bold; color:var(--accent); }
+    .lane-cell .lane-status { color:var(--muted); margin-top:2px; }
+    .lane-cell .lane-claim { color:#d8e4f0; margin-top:3px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10px; }
+    .lane-cell .lane-claim.unclaimed { color:var(--muted); }
+    .lane-cell .lane-actions { margin-top:6px; display:flex; gap:4px; flex-wrap:wrap; }
+    .lane-cell .lane-actions button { padding:3px 6px; font-size:11px; background:transparent; border:1px solid var(--border-strong); color:var(--text); cursor:pointer; border-radius:0; }
+    .lane-cell .lane-actions button:hover { background:var(--bg-panel); }
+    .lane-cell .lane-msg { color:var(--muted); margin-top:4px; font-size:10px; }
+    .lane-cell.clickable { cursor:pointer; }
+    .lane-cell.clickable:hover { outline:1px solid var(--accent); }
+    .lane-progress { margin-top:4px; }
+    .lane-progress-bar { height:6px; background:#0d1620; border:1px solid var(--border); position:relative; overflow:hidden; }
+    .lane-progress-bar > span { display:block; height:100%; background:var(--accent); transition: width .25s ease; }
+    .lane-progress-label { color:#d8e4f0; font-size:10px; margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .lane-progress-now { color:var(--muted); font-size:10px; margin-top:1px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .lane-progress-chips { margin-top:3px; display:flex; gap:3px; flex-wrap:wrap; }
+    .lane-progress-chips .chip { font-size:9px; padding:1px 4px; border:1px solid var(--border); color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; }
+    .lane-progress-chips .chip.seen { color:#9fd4ae; border-color:#3a6b4a; }
+    .classroom-input { width:64px; margin-left:6px; padding:6px; background:var(--bg-panel-soft); color:var(--text); border:1px solid var(--border-strong); font-family:inherit; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(3,6,11,0.8); display:none; align-items:flex-start; justify-content:center; z-index:500; padding:40px 20px; overflow:auto; }
+    .modal-backdrop.open { display:flex; }
+    .modal-card { background:var(--bg-panel); border:1px solid var(--border-strong); max-width:820px; width:100%; padding:20px 24px; font-size:13px; color:var(--text); }
+    .modal-card h3 { margin:0 0 6px 0; color:var(--accent); }
+    .modal-card .modal-meta { color:var(--muted); font-size:12px; margin-bottom:14px; }
+    .modal-card .modal-close { float:right; background:transparent; border:1px solid var(--border-strong); color:var(--text); padding:4px 10px; cursor:pointer; }
+    .modal-section { margin-top:14px; }
+    .modal-section h4 { margin:0 0 6px 0; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent); }
+    .modal-list { list-style:none; margin:0; padding:0; }
+    .modal-list li { padding:4px 0; border-bottom:1px dashed var(--border); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; color:#d8e4f0; display:flex; justify-content:space-between; gap:12px; }
+    .modal-list li .when { color:var(--muted); font-size:11px; flex-shrink:0; }
+    .modal-list li.unvisited { color:var(--muted); font-style:italic; }
+    /* Fault-action loading overlay */
+    #faultOverlay { position:fixed; inset:0; background:rgba(3,6,11,0.82); display:none; align-items:center; justify-content:center; z-index:550; }
+    #faultOverlay.open { display:flex; }
+    #faultOverlay .fault-card { background:var(--bg-panel); border:1px solid var(--border-strong); padding:24px 32px; text-align:center; min-width:260px; }
+    #faultOverlay .fault-card h3 { margin:0 0 8px; color:var(--accent); font-size:15px; }
+    #faultOverlay .fault-card .fault-status { color:var(--muted); font-size:13px; margin-bottom:16px; }
+    #faultOverlay .fault-card .spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--border-strong); border-top-color:var(--accent); border-radius:50%; animation:faultSpin .7s linear infinite; margin-bottom:12px; }
+    @keyframes faultSpin { to { transform:rotate(360deg); } }
+    #faultOverlay .fault-card button { border:1px solid var(--border-strong); padding:8px 18px; cursor:pointer; color:var(--text); background:transparent; font-size:13px; }
+    #faultOverlay .fault-card button:hover { background:var(--bg-panel-soft); }
+    #faultOverlay .fault-card .fault-result { margin-top:10px; font-size:13px; }
+    #faultOverlay .fault-card .fault-result.ok { color:var(--ok); }
+    #faultOverlay .fault-card .fault-result.err { color:var(--error); }
+    @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+    /* Lifecycle overlay */
+    #lifecycleOverlay { position:fixed; inset:0; background:rgba(3,6,11,0.92); display:none; flex-direction:column; z-index:600; }
+    #lifecycleOverlay.open { display:flex; }
+    #lifecycleOverlay .lc-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-shrink:0; background:var(--bg-elevated); }
+    #lifecycleOverlay .lc-header h2 { margin:0; font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); }
+    #lifecycleOverlay .lc-meta { padding:10px 20px; font-size:12px; color:var(--muted); border-bottom:1px solid var(--border); flex-shrink:0; background:var(--bg-panel); }
+    #lifecycleOverlay .lc-log { flex:1; overflow-y:auto; padding:12px 20px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; line-height:1.6; color:#d8e4f0; white-space:pre-wrap; word-break:break-all; background:var(--bg); }
+    #lifecycleOverlay .lc-footer { padding:10px 20px; border-top:1px solid var(--border); display:flex; gap:10px; align-items:center; flex-shrink:0; background:var(--bg-elevated); }
+    #lifecycleOverlay .lc-footer button { border:1px solid var(--border-strong); padding:8px 16px; cursor:pointer; color:var(--text); background:transparent; font-size:13px; }
+    #lifecycleOverlay .lc-footer button:hover { background:var(--bg-panel); }
+    #lifecycleOverlay .lc-footer .lc-status { color:var(--muted); font-size:12px; margin-left:auto; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>HLF Instructor Console</h1>
+      <div class="muted">Operational controls and teaching notes for the managed Hyperledger Fabric lab.</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn-primary" id="btnStart" onclick="startNetwork()">Start Network</button>
+      <button class="btn-danger" id="btnStop" onclick="stopNetwork()">Stop Network</button>
+      <button class="btn-warning" id="btnReset" onclick="resetNetwork()">Reset Network</button>
+      <a class="btn btn-secondary" id="exercisesLink" href="/exercises/" target="_blank">Open Exercises</a>
+      <a class="btn btn-secondary" id="explorerLink" href="/explorer/" target="_blank">Open Explorer</a>
+      <a class="btn btn-secondary" id="learnerLink" href="/" target="_blank">Open Learner View</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Network Status</h2>
+      <div class="content">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Status</div>
+            <div id="networkStatus" class="value">...</div>
+          </div>
+          <div class="stat">
+            <div class="label">Running Nodes</div>
+            <div id="runningNodes" class="value">...</div>
+          </div>
+          <div class="stat">
+            <div class="label">Committed Chaincode</div>
+            <div id="chaincodeStatus" class="value">...</div>
+          </div>
+        </div>
+        <p id="actionMessage" class="message muted"></p>
+        <div class="progress">
+          <strong>Lifecycle Progress</strong>
+          <div id="progressMeta" class="progress-meta">No lifecycle task in progress.</div>
+          <div id="progressDetail" class="progress-detail">Waiting for network action.</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>Node Overview</h2>
+        <div class="content">
+          <div id="nodeOverview"></div>
+          <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">
+            <a href="/labs/hlf/peer/org1/" target="_blank" rel="noopener"
+               class="btn-secondary"
+               style="text-decoration:none; padding:7px 11px; border:1px solid var(--border-strong); color:var(--text); background:transparent; font-size:12px;"
+               title="Cascadia State University — consortium endorser (Org1MSP)">
+              Org1 · Cascadia State
+            </a>
+            <a href="/labs/hlf/peer/org2/" target="_blank" rel="noopener"
+               class="btn-secondary"
+               style="text-decoration:none; padding:7px 11px; border:1px solid var(--border-strong); color:var(--text); background:transparent; font-size:12px;"
+               title="Chesapeake Canoe University — consortium endorser (Org2MSP)">
+              Org2 · Chesapeake Canoe
+            </a>
+            <a href="/labs/hlf/peer/org3/" target="_blank" rel="noopener"
+               class="btn-secondary"
+               style="text-decoration:none; padding:7px 11px; border:1px solid var(--border-strong); color:var(--text); background:transparent; font-size:12px;"
+               title="South Hudson Institute of Technology — consortium endorser (Org3MSP)">
+              Org3 · South Hudson
+            </a>
+            <a href="/labs/hlf/peer/org4/" target="_blank" rel="noopener"
+               class="btn-secondary"
+               style="text-decoration:none; padding:7px 11px; border:1px solid var(--border-strong); color:var(--text); background:transparent; font-size:12px;"
+               title="Maple Leaf Academy — consortium endorser (Org4MSP)">
+              Org4 · Maple Leaf
+            </a>
+            <a href="/labs/hlf/peer/org5/" target="_blank" rel="noopener"
+               class="btn-secondary"
+               style="text-decoration:none; padding:7px 11px; border:1px solid var(--border-strong); color:var(--text); background:var(--accent-bg); font-size:12px;"
+               title="Meridian Industries — channel member, excluded from endorsement policy. Demo verifying diplomas without write access.">
+              Org5 · Meridian (read-only)
+            </a>
+            <a href="/labs/hlf/orderer/" target="_blank" rel="noopener"
+               class="btn-secondary"
+               style="text-decoration:none; padding:7px 11px; border:1px solid var(--border-strong); color:var(--text); background:transparent; font-size:12px;"
+               title="Raft ordering service — orderer.example.com">
+              Orderer
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Scenario Controls</h2>
+        <div class="content scenario-list" id="scenarioControls">
+          <div class="scenario muted">Loading scenario controls...</div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <h2>Classroom (Lanes &amp; Claims)</h2>
+      <div class="content">
+        <div class="stats">
+          <div class="stat" title="How many configured lanes currently have an active student claim (cookie + UUID).">
+            <div class="label">Claimed</div><div id="claimedCount" class="value">…</div>
+          </div>
+          <div class="stat" title="Pre-warmed peers sitting idle, ready to absorb the next claim with zero start-up wait.">
+            <div class="label">Hot Free</div><div id="hotFreeCount" class="value">…</div>
+          </div>
+          <div class="stat" title="Target size of the hot-swap pool. The lane manager keeps this many unclaimed peers warm.">
+            <div class="label">Pool Size</div><div id="poolSizeDisplay" class="value">…</div>
+          </div>
+          <div class="stat" title="Release policy — what happens to a student's peer when their claim is released (manually or by the idle sweeper).&#10;&#10;• sticky: peer keeps its state. Next student to land on this lane inherits whatever the previous occupant committed locally. Good mid-class if students step away and come back.&#10;&#10;• wipe: peer is reset and returned to the pool clean. Next student lands on a fresh peer that must resync the channel from scratch. Good between classes or when you want guaranteed clean starts.&#10;&#10;The shared ledger is never affected either way — only the student's local peer state.">
+            <div class="label">Policy <span style="color:var(--muted); font-weight:normal;">&#9432;</span></div><div id="policyDisplay" class="value">…</div>
+          </div>
+          <div class="stat" title="Idle sweeper: releases claims that haven't heartbeat within the idle timeout. Pause during an exam so nobody gets evicted.">
+            <div class="label">Sweeper</div><div id="sweeperDisplay" class="value">…</div>
+          </div>
+        </div>
+        <div class="toolbar" style="margin-top:12px; align-items:center;">
+          <label style="color:var(--muted); font-size:12px;" title="Number of unclaimed peers to keep pre-started so the next student gets a peer with no boot wait.">Pool size
+            <input type="number" id="poolSizeInput" min="0" max="40" class="classroom-input" />
+          </label>
+          <button class="btn-secondary" onclick="applyPoolSize()" title="Apply the pool size you typed. Lane manager will spin peers up or stop idle ones to match.">Set Pool</button>
+          <button class="btn-secondary" onclick="togglePolicy()" title="Flip the release policy between sticky and wipe.&#10;&#10;sticky → released peers keep their local state (students can step away and resume).&#10;wipe → released peers reset back to pool-clean (guaranteed fresh start for the next claim).&#10;&#10;Shared ledger is never touched. Only the student's peer-local state is affected.">Toggle Policy</button>
+          <button class="btn-secondary" onclick="toggleSweeper()" title="Pause evicts nobody for idle; resume re-enables automatic idle release.">Pause/Resume Sweeper</button>
+        </div>
+        <p id="classroomMessage" class="message muted" style="margin-top:10px;"></p>
+        <div id="laneGrid" class="lane-grid"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>How to Run a Class</h2>
+      <div class="content">
+        <p class="muted" style="margin-top:0;">Quick operational runbook for the Phase 7 classroom flow. The Classroom panel above is the single control surface for everything described here.</p>
+        <ul style="color:#d8e4f0; line-height:1.6;">
+          <li><strong>Before class.</strong>
+            Start the network (<em>Start Network</em> above).
+            Set <strong>Pool Size</strong> to ~20% of expected class size (e.g. 4 for a class of 20) so the first wave of students gets hot peers with no boot wait.
+            Set <strong>Policy</strong> to <code>wipe</code> for the first class (guarantees a clean slate on reuse); switch to <code>sticky</code> if you want students' work to survive brief disconnects.
+            Distribute the claim URL to students: <code>/labs/hlf/claim</code>. Each student gets their own UUID cookie, their own lane (<code>s01</code>…<code>sNN</code>), their own peer, and their own ttyd shell.
+          </li>
+          <li><strong>During class.</strong>
+            Watch the <strong>lane grid</strong>: green = running, amber = starting/stopping, red = error, grey = stopped.
+            Each cell shows the claim's UUID prefix (or "unclaimed") and idle time.
+            <strong>Nudge a stuck student</strong>: <em>Reset</em> their lane to rebuild their peer (their state goes, but the shared ledger is untouched).
+            <strong>Demo a fault</strong>: use the scenario panel — Cascadia/Chesapeake Canoe/South Hudson/Maple Leaf peer outage, orderer outage, endorsement policy failure. These hit the 4 consortium peers and the orderer, not any student peer.
+            <strong>Pause the sweeper</strong> during an exam so nobody gets auto-released for going quiet.
+          </li>
+          <li><strong>End of class.</strong>
+            Switch <strong>Policy</strong> to <code>wipe</code> if not already.
+            Click <em>Release</em> on every claimed lane (or just run the idle sweeper — it'll get them).
+            For a hard reset between classes, use <em>Reset Network</em> at the top — rebuilds everything from genesis, including the shared ledger. The per-lane <em>Reset</em> only wipes one student's peer.
+          </li>
+          <li><strong>If something breaks.</strong>
+            Check <strong>Recent Network Logs</strong> below for orderer/peer errors.
+            A lane stuck in <code>error</code> usually means docker-compose couldn't start the peer — try per-lane <em>Reset</em>, then <em>Start</em>.
+            A lane stuck in <code>starting</code> &gt; 30s likely means the peer is replaying the ledger — give it another minute before assuming it's broken.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Ledger Seeding</h2>
+      <div class="content">
+        <div class="toolbar">
+          <button class="btn-primary" id="btnSeedSample" onclick="seedTransactions('sample')">Seed Sample Transactions</button>
+          <button class="btn-secondary" id="btnSeedWestview" onclick="seedTransactions('westview')">Seed Westview Inventory</button>
+          <a class="btn btn-secondary" id="chaincodeDetailLink" href="/explorer/chaincode/" target="_blank">Open Chaincode Detail</a>
+        </div>
+        <p class="muted"><strong>Sample</strong>: Issues two diplomas (Frederick Douglass and Sojourner Truth) and transfers one — gives the explorer data to inspect. <strong>Westview</strong>: Loads the 10 Westview Used-Car Exchange vehicles for Chapter 6.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Guided Teaching Prompts</h2>
+      <div class="content" id="exercisePrompts">
+        <div class="exercise-card muted">Loading exercise prompts...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Infrastructure Notes</h2>
+      <div class="content">
+        <p class="muted" style="margin-top:0;">
+          The classroom runs <strong>one real Hyperledger Fabric consortium</strong> — one orderer, four always-on org peers (Cascadia State, Chesapeake Canoe University, South Hudson, Maple Leaf) under 3-of-4 MAJORITY endorsement — plus <strong>one on-demand peer per student</strong>, all joined to the same channel and writing to the same shared ledger. Every chain operation (block fetch, chaincode invoke, fault injection) goes through genuine Fabric tooling (<code>peer</code>, <code>configtxlator</code>, <code>docker</code>). The notes below call out where the UI takes small liberties with presentation, and (at the bottom) what is genuinely live.
+        </p>
+        <h3 style="color:var(--accent); font-size:13px; margin-top:18px; text-transform:uppercase; letter-spacing:.05em;">Classroom Topology</h3>
+        <ul style="color:#d8e4f0; line-height:1.6;">
+          <li><strong>Lane manager.</strong> Runs inside <code>hlf-runner</code>. Owns the configured student lanes (<code>s01</code>…<code>sNN</code>), each mapped to a profile-gated peer service in <code>compose-students.yaml</code>. It brings peers up on demand — each peer container runs its own built-in <code>ttyd</code> (baked into the <code>hlf-peer-ttyd</code> image), tied to that student's admin MSP — and stops idle peers to free RAM. Lane state persists in <code>runtime/lanes.json</code> so restarts don't drop the world.</li>
+          <li><strong>Claim manager.</strong> Sits in front of the lane manager. Each student calls <code>GET /labs/hlf/claim</code> and gets a UUID cookie + a station (lowest-numbered free <code>s##</code>). Resuming from the same device reuses the same UUID. An idle sweeper releases claims after a timeout; pause it during exams. Release <strong>policy</strong> decides whether the peer survives (<code>sticky</code>) or is wiped back to pool-clean (<code>wipe</code>).</li>
+          <li><strong>Hot-swap pool.</strong> <em>Pool Size</em> is how many unclaimed peers to keep pre-warmed. When a student claims, the lowest warm peer is handed over and the pool refills in the background. Shrinking the pool stops the surplus peers; growing it boots new ones async. Hot Free is the instantaneous pool depth.</li>
+          <li><strong>Endorsement on student writes.</strong> Every student write needs the student's own peer to endorse, plus the matching consortium peer for their org identity — so writes go through <em>two</em> real Fabric signatures even in the single-student case. With all four consortium peers up, the 3-of-4 MAJORITY policy still applies to the consortium side.</li>
+          <li><strong>Per-student reset ≠ network reset.</strong> The <em>Reset</em> button on a lane tears down one student's peer + volume only. Crypto, channel membership, and ledger all persist; the peer will resync from the orderer when it comes back. The <em>Reset Network</em> button at the top tears down everything and regenerates from genesis — use that only between classes.</li>
+        </ul>
+        <h3 style="color:var(--accent); font-size:13px; margin-top:18px; text-transform:uppercase; letter-spacing:.05em;">Presentation Caveats</h3>
+        <ul style="color:#d8e4f0; line-height:1.6;">
+          <li><strong>Chaincode source viewer.</strong> Explorer → Chaincode → View Source reads the chaincode files from disk (<code>runtime/fabric-samples/asset-transfer-basic/chaincode-javascript/</code>), not from the installed tarball on the peer. The committed Package ID hash shown above it <em>is</em> computed from the tarball that was actually installed, so the two should match — but if someone edits the disk source after install, the modal will show the edited source while the chain keeps running the original.</li>
+          <li><strong>Governance panel is cached ~15s.</strong> Channel policy comes from a real <code>peer channel fetch config</code> + <code>configtxlator proto_decode</code>, but the result is cached for up to 15 seconds to keep the UI snappy. After a policy change (rare in this lab), the panel can lag briefly.</li>
+          <li><strong>Block type labels.</strong> The integer <code>type</code> field from the block header is mapped to readable labels (<code>ENDORSER_TRANSACTION</code>, <code>CONFIG</code>, etc.) in Python. The integers themselves are real and come straight from the decoded protobuf — the mapping is just for display.</li>
+          <li><strong>Endorser identities.</strong> Transaction detail shows a certificate fingerprint + CN/OU extracted from the endorser's PEM. The PEM bytes are real (pulled from the block); the fingerprint is a SHA-256 digest we compute for readability.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Recent Network Logs</h2>
+      <div class="content">
+        <div class="toolbar" style="margin-bottom:10px;">
+          <button class="btn-secondary" onclick="refreshRecentLogs()">Refresh Logs</button>
+          <button class="btn-secondary" onclick="downloadLogs()">Download Full Log</button>
+        </div>
+        <pre id="recentLogs" style="margin:0; max-height:600px; overflow:auto; background:#0f1720; border:1px solid #223244; border-radius:8px; padding:12px;">Loading recent logs...</pre>
+      </div>
+    </section>
+  </main>
+  <div id="progressModal" class="modal-backdrop" onclick="if (event.target === this) closeProgressModal();">
+    <div class="modal-card" id="progressModalCard">
+      <button class="modal-close" onclick="closeProgressModal()">Close</button>
+      <h3 id="progressModalTitle">Student Progress</h3>
+      <div class="modal-meta" id="progressModalMeta"></div>
+      <div class="modal-section">
+        <h4>Unvisited Key Resources</h4>
+        <ul id="progressModalUnvisited" class="modal-list"></ul>
+      </div>
+      <div class="modal-section">
+        <h4>Chronological Timeline</h4>
+        <ul id="progressModalTimeline" class="modal-list"></ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="lifecycleOverlay">
+    <div class="lc-header">
+      <h2 id="lcTitle">Network Operation</h2>
+    </div>
+    <div class="lc-meta" id="lcMeta">Waiting...</div>
+    <div class="lc-log" id="lcLog"></div>
+    <div class="lc-footer">
+      <button id="lcCancel" onclick="cancelLifecycle()">Cancel</button>
+      <button id="lcDismiss" onclick="dismissLifecycle()" style="display:none;">Dismiss</button>
+      <span class="lc-status" id="lcStatus"></span>
+    </div>
+  </div>
+
+  <div id="faultOverlay">
+    <div class="fault-card">
+      <div class="spinner" id="faultSpinner"></div>
+      <h3 id="faultTitle">Applying fault…</h3>
+      <div class="fault-status" id="faultStatus">Please wait.</div>
+      <div class="fault-result" id="faultResult"></div>
+      <button id="faultCancelBtn" onclick="cancelFaultOverlay()">Cancel</button>
+      <button id="faultDismissBtn" onclick="dismissFaultOverlay()" style="display:none;">Dismiss</button>
+    </div>
+  </div>
+
+  <script src="/instructor/csrf.js"></script>
+  <script src="/labs/hlf/hlf_session.js"></script>
+  <script src="/labs/hlf/hlf_instructor.js"></script>
+</body>
+</html>

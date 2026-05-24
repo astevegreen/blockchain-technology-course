@@ -1,0 +1,1075 @@
+---
+title: "Permissioned Distributed Ledgers For Blockchain"
+subtitle: 'Section V: Permissioned Chains'
+author: Army Cyber Institute
+lesson: 01-PC
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+smaller: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## Scenario
+
+
+
+:::: {.columns}
+::: {.column width="58%"}
+- A number of different groups all need access to records of cargo handoffs.
+- They must coordinate on:
+  - Who transferred custody.
+  - When the handoff occurred.
+  - Which documents were approved.
+- They cooperate, but they are not all on the same team:
+  - Some are competitors.
+  - Some are regulators.
+  - Some should see only part of the data.
+- Do the systems we've been discussing work here?
+  - What are key aspects of an ideal system in this scenario?
+:::
+::: {.column width="42%"}
+```{=html}
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.7rem;margin:0 auto;width:100%;min-height:24rem;padding-top:2.2rem;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.45rem;width:100%;max-width:340px;">
+    <div style="padding:0.42rem 0.45rem;border:1px solid #93c5fd;border-radius:10px;background:#dbeafe;text-align:center;font-size:0.77em;">Item Sender</div>
+    <div style="padding:0.42rem 0.45rem;border:1px solid #60a5fa;border-radius:10px;background:#bfdbfe;text-align:center;font-size:0.77em;">Item Recipient</div>
+    <div style="padding:0.42rem 0.45rem;border:1px solid #38bdf8;border-radius:10px;background:#e0f2fe;text-align:center;font-size:0.77em;">Shipper</div>
+    <div style="padding:0.42rem 0.45rem;border:1px solid #2563eb;border-radius:10px;background:#dbeafe;text-align:center;font-size:0.77em;">Trucker</div>
+  </div>
+  <div style="font-size:1.2em;line-height:1;">↑</div>
+  <div style="padding:0.6rem 0.7rem;border:1px solid #fca5a5;border-radius:12px;background:#fee2e2;text-align:center;font-size:0.82em;max-width:240px;">
+    Shared Handoff Record
+  </div>
+  <div style="font-size:1.2em;line-height:1;">↓</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.45rem;width:100%;max-width:340px;">
+    <div style="padding:0.42rem 0.45rem;border:1px solid #86efac;border-radius:10px;background:#dcfce7;text-align:center;font-size:0.77em;">Port</div>
+    <div style="padding:0.42rem 0.45rem;border:1px solid #fcd34d;border-radius:10px;background:#fef3c7;text-align:center;font-size:0.77em;">Insurer</div>
+    <div style="padding:0.42rem 0.45rem;border:1px solid #c4b5fd;border-radius:10px;background:#ede9fe;text-align:center;font-size:0.77em;">Auditor</div>
+    <div style="padding:0.42rem 0.45rem;border:1px solid #4ade80;border-radius:10px;background:#bbf7d0;text-align:center;font-size:0.77em;">Customs</div>
+  </div>
+</div>
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening scenario establishes the kind of cross-organization record-sharing problem permissioned ledgers are meant to solve. It matters here because the rest of the lesson explains which design features let many known parties share one authoritative record without handing control to a single company. Emphasize that the challenge is not just storing data, but assigning rights, visibility, and authority across different roles.
+
+**Key Points**
+- Multiple organizations need one shared handoff record while retaining different permissions.
+- Some parties should write, some should only read, and some should audit.
+- The core design question is who gets to do what and who decides those roles.
+
+**Walkthrough**
+None
+
+**Sources**
+@yaga_blockchaintechnologyoverview_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+
+
+
+## Agenda
+
+1. Why permissioned ledgers/systems
+2. What changes when participation is centrally controlled
+3. Identity, membership, and policy as core mechanisms
+4. Consensus and finality under known membership
+5. Governance
+6. Operational risk
+7. Problem fit
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This agenda slide gives students the lesson roadmap so they can see how technical mechanisms and governance questions fit together. It matters here because permissioned systems are easiest to understand when identity, policy, consensus, and operations are treated as one stack. Emphasize that the lesson moves from problem fit through mechanism design to operational risk.
+
+**Key Points**
+- The lesson progresses from motivation to mechanism to governance and risk.
+- Identity, membership, and policy will be treated as first-class system components.
+- Problem fit matters because a permissioned ledger is not automatically the right answer.
+
+**Walkthrough**
+None
+
+**Sources**
+@bano_consensusageblockchains_2017; @yaga_blockchaintechnologyoverview_2018
+
+:::
+## Why Not A Shared Database?
+
+- If one company runs the database, everyone else must trust that company not to:
+  - Edit or hide history.
+  - Expose competitor data.
+  - Lock others out during a dispute.
+- If everyone gets broad administrative access, the system becomes hard to govern and easy to misuse.
+- Simple replication helps availability, but it does not solve authority, visibility, or finality.
+- An append-only shared ledger also helps with audit:
+  - History is preserved across organizations instead of overwritten.
+  - Sensitive data can remain off-chain while hashes or commitments support later verification.
+
+::: {.fragment .fade-in}
+**Key idea:** permissioned ledgers fit when multiple known organizations need a shared record without a single administrative owner.
+:::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why a simple shared database does not fully solve a multi-organization trust problem. It matters here because students need to see that replication and administration are not the same as neutral shared control. Emphasize that authority, visibility, and dispute handling remain unsolved if one party still owns the database.
+
+**Key Points**
+- A single-operator database forces everyone else to trust that operator's control plane.
+- Broad admin access for all parties creates governance and misuse problems instead of solving them.
+- Append-only shared records help with auditability across organizational boundaries.
+
+**Walkthrough**
+None
+
+**Sources**
+@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## What Changes
+
+- The hard problem shifts from "how do we let anyone join safely?" to "how do we control participation and authority safely?"
+
+| Dimension | Permissionless | Permissioned |
+|:--|:--|:--|
+| Participation | Open | Curated |
+| Identity | Pseudonymous / economic | Named / authenticated |
+| Sybil resistance | Resource cost | Admission control |
+| Ordering | Chosen by miner / proposer selection | Often handled by explicit leaders or ordering services |
+| Finality | Often probabilistic | Often deterministic |
+| Governance | Social + economic | Administrative + policy-driven |
+| Failure Concentration | Broadly distributed influence | More risk from small control-plane failures |
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how the core problem changes once membership is known and curated. It matters here because permissioned design replaces open-admission defenses with identity, policy, and administrative controls. Emphasize that the trust model changes, not the need for careful system design.
+
+**Key Points**
+- Permissioned systems trade open participation for curated admission and explicit authority.
+- Sybil resistance shifts from economic cost to admission control and identity verification.
+- Finality and governance often become more deterministic because participants are known in advance.
+
+**Walkthrough**
+None
+
+**Sources**
+@yaga_blockchaintechnologyoverview_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+## Key Components {.smaller}
+
+:::: {.columns}
+::: {.column width="68%"}
+  - **Identity And Membership:** The mechanisms that decide who a participant is and what standing they have in the network.
+    - A permissioned system only works if every action can be tied back to a recognized participant with the right role.
+  - **Policy And Governance:** The rules that decide who may act, what approvals are required, and who can change the network itself.
+    - Good consensus does not help if weak rules let the wrong people approve transactions.
+  - **Core Operation:** The day-to-day transaction path that moves requests from proposal to shared committed history.
+    - Turns approved requests into one shared history that authorized participants can rely on.
+:::
+::: {.column width="32%"}
+```{=html}
+<div style="display:flex;flex-direction:column;justify-content:center;gap:0.5rem;min-height:24rem;max-width:285px;margin:0 auto;">
+  <div style="border:2px solid #93c5fd;border-radius:16px;background:#eff6ff;padding:0.58rem 0.65rem;">
+    <div style="font-weight:700;font-size:0.9em;text-align:center;color:#1d4ed8;margin-bottom:0.32rem;">Identity And Membership</div>
+    <div style="display:flex;flex-direction:column;gap:0.24rem;">
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#dbeafe;border:1px solid #93c5fd;font-size:0.74em;text-align:center;">Verify Identity</div>
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#bfdbfe;border:1px solid #60a5fa;font-size:0.74em;text-align:center;">Assign Role</div>
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#93c5fd;border:1px solid #3b82f6;font-size:0.74em;text-align:center;">Issue / Revoke Credentials</div>
+    </div>
+  </div>
+  <div style="border:2px solid #86efac;border-radius:16px;background:#f0fdf4;padding:0.58rem 0.65rem;">
+    <div style="font-weight:700;font-size:0.9em;text-align:center;color:#15803d;margin-bottom:0.32rem;">Policy And Governance</div>
+    <div style="display:flex;flex-direction:column;gap:0.24rem;">
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#dcfce7;border:1px solid #86efac;font-size:0.74em;text-align:center;">Transaction Policy</div>
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#bbf7d0;border:1px solid #4ade80;font-size:0.74em;text-align:center;">Access Policy</div>
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#86efac;border:1px solid #22c55e;font-size:0.74em;text-align:center;">Membership Policy</div>
+    </div>
+  </div>
+  <div style="border:2px solid #fcd34d;border-radius:16px;background:#fffbeb;padding:0.58rem 0.65rem;">
+    <div style="font-weight:700;font-size:0.9em;text-align:center;color:#b45309;margin-bottom:0.32rem;">Core Operation</div>
+    <div style="display:flex;flex-direction:column;gap:0.24rem;">
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#fef3c7;border:1px solid #fcd34d;font-size:0.74em;text-align:center;">Submit</div>
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#fde68a;border:1px solid #f59e0b;font-size:0.74em;text-align:center;">Approve</div>
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#fcd34d;border:1px solid #d97706;font-size:0.74em;text-align:center;">Order</div>
+      <div style="padding:0.28rem 0.38rem;border-radius:10px;background:#facc15;border:1px solid #ca8a04;font-size:0.74em;text-align:center;">Validate / Commit</div>
+    </div>
+  </div>
+</div>
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide groups the three pillars of a permissioned ledger into one picture before the class studies them in detail. It matters here because students should understand that identity, policy, and transaction processing are inseparable in this setting. Emphasize that strong consensus is not enough if identity or governance is weak.
+
+**Key Points**
+- Identity and membership determine who the system recognizes and trusts to act.
+- Policy and governance define what those recognized parties may do.
+- Core operation turns approved requests into one shared committed history.
+
+**Walkthrough**
+None
+
+**Sources**
+@bano_consensusageblockchains_2017; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## Open vs Curated Admission
+
+:::: {.columns}
+::: {.column width="42%"}
+- Open systems ask:
+  - How do we stop one actor from creating many identities?
+- Permissioned systems ask:
+  - Who is allowed in, and who decides?
+- Permissioned admission adds overhead up front:
+  - In return, it enables stronger accountability, traceability, and role-based trust later.
+:::
+::: {.column width="58%"}
+```{=html}
+<div style="display:flex;justify-content:center;align-items:flex-start;gap:1rem;max-width:520px;margin:0 auto;">
+  <div style="flex:1;max-width:200px;border:2px solid #93c5fd;border-radius:16px;background:#eff6ff;padding:0.7rem 0.75rem;">
+    <div style="font-weight:700;font-size:0.9em;text-align:center;color:#1d4ed8;margin-bottom:0.45rem;">Permissionless Join Path</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.28rem;">
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#dbeafe;border:1px solid #93c5fd;font-size:0.75em;text-align:center;">Generate Keypair</div>
+      <div style="font-size:1.05em;line-height:1;color:#64748b;">↓</div>
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#bfdbfe;border:1px solid #60a5fa;font-size:0.75em;text-align:center;">Connect To Network</div>
+      <div style="font-size:1.05em;line-height:1;color:#64748b;">↓</div>
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#93c5fd;border:1px solid #3b82f6;font-size:0.75em;text-align:center;">Participate Under Public Rules</div>
+    </div>
+  </div>
+  <div style="flex:1;max-width:220px;border:2px solid #86efac;border-radius:16px;background:#f0fdf4;padding:0.7rem 0.75rem;">
+    <div style="font-weight:700;font-size:0.9em;text-align:center;color:#15803d;margin-bottom:0.45rem;">Permissioned Join Path</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.28rem;">
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#dcfce7;border:1px solid #86efac;font-size:0.75em;text-align:center;">Identify Applicant</div>
+      <div style="font-size:1.05em;line-height:1;color:#64748b;">↓</div>
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#bbf7d0;border:1px solid #4ade80;font-size:0.75em;text-align:center;">Vet And Approve</div>
+      <div style="font-size:1.05em;line-height:1;color:#64748b;">↓</div>
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#86efac;border:1px solid #22c55e;font-size:0.75em;text-align:center;">Issue Credential</div>
+      <div style="font-size:1.05em;line-height:1;color:#64748b;">↓</div>
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#4ade80;border:1px solid #16a34a;font-size:0.75em;text-align:center;">Assign Role</div>
+      <div style="font-size:1.05em;line-height:1;color:#64748b;">↓</div>
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#22c55e;border:1px solid #15803d;font-size:0.75em;text-align:center;color:#052e16;">Connect To Network</div>
+      <div style="font-size:1.05em;line-height:1;color:#64748b;">↓</div>
+      <div style="width:100%;padding:0.38rem 0.45rem;border-radius:10px;background:#22c55e;border:1px solid #15803d;font-size:0.75em;text-align:center;color:#052e16;">Participate Under Tracked Identity</div>
+    </div>
+  </div>
+</div>
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide contrasts open admission with curated admission so students can see what overhead permissioned systems deliberately accept. It matters here because stronger accountability later depends on heavier vetting earlier. Emphasize that front-loaded admission work is the price of role-based trust and traceability.
+
+**Key Points**
+- Open systems worry about fake identity multiplication, while permissioned systems worry about who gets admitted at all.
+- Curated admission adds vetting, credential issuance, and role assignment before participation begins.
+- The payoff is stronger accountability and traceability once the network is running.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+## Trust Shifts
+
+- In PoW, security relies on **costly work**: 
+  - Hardware investment and electricity expenditure impose real-world cost to influence block production.
+- In PoS, security relies on **stake and penalties**: 
+  - Locked capital and slashing expose participants to direct financial loss for misbehavior.
+- In permissioned systems, security relies on **identity, policy, and governance**: 
+  - Vetted participants, assigned roles, and revocable access replace open-admission economics.
+- Intuition: in an ongoing consortium, bad behavior damages future cooperation, contracts, reputation, and access in ways that pseudonymous open networks cannot rely on.
+
+::: {.fragment .fade-in}
+**Key idea:** a permissioned ledger still distributes trust, but it distributes it through institutions and policy instead of open economic competition.
+:::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains how the basis of trust shifts from open economic competition to institutional identity and governance. It matters here because students have already seen PoW and PoS, and now need a third trust model for comparison. Emphasize that permissioned systems still distribute trust, but through known organizations and enforceable policies.
+
+**Key Points**
+- PoW relies on costly work, and PoS relies on stake plus penalties.
+- Permissioned systems rely on vetted identity, assigned roles, and revocable access.
+- Institutional relationships and future cooperation become part of the security story.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Identity
+
+- Identity is not just convenience; it defines who the system recognizes and what their actions mean.
+- In this setting:
+  - An **Organization** is a consortium member such as a carrier, port, regulator, or insurer
+  - A **User / Operator** is a person or service acting on behalf of that organization
+  - A **Node** is a software instance run by an organization to submit, approve, order, or store ledger activity
+  - A **Credential** is the cryptographic proof tying those actions to an organization and role
+- Messages, approvals, and administrative actions are meaningful only if identities are verifiable.
+- If identity is weak, all later policy checks become weak too.
+- Example: a "Port Operator reviewer" and a "Port Operator admin" should not be treated as the same authority.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines identity precisely enough for policy enforcement to make sense. It matters here because all later approval, ordering, and governance actions depend on knowing who is acting in what capacity. Emphasize that organizations, users, nodes, and credentials are related but not interchangeable.
+
+**Key Points**
+- Organizations, operators, nodes, and credentials play different roles in the system.
+- Credentials bind actions to recognized entities and assigned roles.
+- Weak identity undermines every later policy check built on top of it.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+## Membership Lifecycle
+
+:::: {.columns}
+::: {.column width="62%"}
+- Permissioned membership is not a one-time setup. Implementations must decide
+  - **How new members are verified:** usually some combination of identity proofing, organizational approval, and role assignment before any credential is issued.
+  - **How often credentials expire:** often measured in months, not decades; short-lived operational certificates and longer-lived organizational roots are both common.
+  - **How quickly revocation propagates:** ideally minutes to hours; stale admin access is a major threat in a permissioned network.
+  - **How audits and periodic reviews are conducted:** many organizations review access quarterly or at least annually, and high-risk roles are often checked more often.
+
+
+
+:::
+::: {.column width="38%"}
+```{dot}
+digraph MembershipLifecycle {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", color="#94a3b8", fontsize=10];
+  edge [color="#64748b", penwidth=1.3];
+
+  A [label="Join Request", fillcolor="#dbeafe"];
+  B [label="Verify", fillcolor="#bfdbfe"];
+  C [label="Issue", fillcolor="#93c5fd"];
+  D [label="Use", fillcolor="#bbf7d0"];
+  E [label="Review", fillcolor="#fde68a"];
+  F [label="Renew / Rotate", fillcolor="#fcd34d"];
+  G [label="Revoke", fillcolor="#fecaca"];
+
+  A -> B -> C -> D -> E -> F;
+  F -> D;
+  E -> G [color="#dc2626"];
+}
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that membership management is a continuous control process rather than a one-time onboarding event. It matters here because expired credentials, stale admin rights, and slow revocation can all create system-wide failures. Emphasize that join, review, renew, and revoke are all part of security.
+
+**Key Points**
+- Membership must cover verification, issuance, review, renewal, and revocation.
+- Credential lifetime and revocation speed directly affect risk.
+- Operational reviews are necessary because identities and roles change over time.
+
+**Walkthrough**
+None
+
+**Sources**
+@castro_practicalbyzantinefault_1999; @ongaro_searchunderstandableconsensus_2014
+
+:::
+## Roles and Duties {.smaller}
+
+| Role | Responsibility | Why Separate? |
+|:--|:--|:--|
+| Client / app | Submit business requests | Business activity ≠ admin control |
+| Validator / endorser | Approve transactions | Requesters can't self-approve |
+| Orderer / sequencer | Establish order | Sequencing ≠ business logic |
+| Administrator | Manage config & membership | Power isn't concentrated in one team |
+| Auditor / observer | Review history & compliance | Oversight stays independent |
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates system roles so students can see how permissioned safety often depends on not concentrating authority. It matters here because blending business activity, approval, sequencing, and administration can turn one compromise into total control. Emphasize the security value of role separation.
+
+**Key Points**
+- Submitting requests, approving them, ordering them, and governing the network are distinct jobs.
+- Separation of duties limits the blast radius of a compromised identity or team.
+- Independent audit roles help keep oversight separate from direct operational power.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @ongaro_searchunderstandableconsensus_2014
+
+:::
+## Consensus
+
+- Because participants are known, permissioned systems can use classical CFT or BFT techniques.
+- That usually means:
+  - Leaders or coordinators.
+  - Quorums.
+  - Signed approvals.
+  - Deterministic commit rules.
+- The system counts **approved signatures from known members**.
+  - It no longer needs mining or staking at all; access control and transaction policies replace them.
+- Usually not everyone votes:
+  - Read-only or audit-only participants typically do not.
+  - A designated subset of approving members usually does.
+  - Governance committees may be the same as, or different from, transaction approvers.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces permissioned consensus as a known-membership coordination problem rather than an open-entry contest. It matters here because students should connect classical CFT/BFT techniques to the governance setting they now understand. Emphasize that signed approvals from named participants replace mining or staking.
+
+**Key Points**
+- Permissioned systems often use classical leader, quorum, and signed-approval techniques.
+- Not every participant needs to vote; roles determine who actually approves transactions.
+- Access control and policy replace open-admission Sybil defenses such as PoW or PoS.
+
+**Walkthrough**
+None
+
+**Sources**
+@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## Deterministic Finality
+
+:::: {.columns}
+::: {.column width="70%"}
+- **Deterministic finality:** because CFT/BFT algorithms work with known participants, once the required signatures are collected and the quorum rule is met, the transaction is final: no waiting, no probability, no risk of reordering.
+- **Contrast with PoW:** PoW finality is probabilistic. Confidence grows as computing investment accumulates on top of a block. Permissioned systems avoid mining, forking, and longest-chain races entirely.
+  - You *could* build a permissioned PoW ledger, but it creates extra overhead for no benefit.
+- **Contrast with PoS:** permissioned approaches have more overlap with PoS, but PoS must handle unknown validators. It relies on staking, randomness, and economic penalties to make misbehavior costly. Permissioned systems replace these with identity and policy.
+:::
+::: {.column width="30%"}
+```{dot}
+digraph DeterministicFinality {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10];
+  edge [color="#64748b"];
+
+  P [label="Proposal", fillcolor="#dbeafe"];
+  A [label="Required Signed Approvals", fillcolor="#dcfce7"];
+  Q [label="Quorum Rule Met", fillcolor="#fef3c7"];
+  C [label="Commit Is Final", fillcolor="#fee2e2"];
+
+  P -> A -> Q -> C;
+}
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why permissioned systems can often offer deterministic finality. It matters here because finality behavior is one of the biggest practical differences from public-chain designs students have already seen. Emphasize that once the required approvals and quorum rules are satisfied, there is no waiting for probabilistic confidence to grow.
+
+**Key Points**
+- Deterministic finality means a committed transaction is final as soon as the protocol's threshold is met.
+- Permissioned systems avoid mining races and longest-chain competition.
+- Identity and policy replace the economic machinery public systems use to discipline participants.
+
+**Walkthrough**
+None
+
+**Sources**
+@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @yaga_blockchaintechnologyoverview_2018
+
+:::
+## Transaction Path
+
+:::: {.columns}
+::: {.column width="55%"}
+- **Identity check:** Does the requester have a valid role and credential?
+- **Proposal / submission:** A participant submits a business event, such as a cargo handoff.
+- **Required approvals:** Policy determines which organizations or nodes must approve; sometimes one organization, sometimes several.
+- **Ordering / sequencing:** An ordering service or leader-based cluster places accepted requests into a consistent order.
+- **Validation against policy:** Committing or validating nodes check that the ordered request still satisfies policy and state rules.
+- **Commit:** The record is written to the shared ledger.
+
+:::
+::: {.column width="45%"}
+```{dot}
+digraph GenericPath {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10];
+  edge [color="#64748b"];
+
+  C1 [label="Submitting Org", fillcolor="#dbeafe"];
+  I [label="Identity Check", fillcolor="#bfdbfe"];
+  A1 [label="Approving Org A", fillcolor="#dcfce7"];
+  A2 [label="Approving Org B", fillcolor="#bbf7d0"];
+  O [label="Ordering Service\n(Single Node or Small Cluster)", fillcolor="#fef3c7"];
+  V [label="Validating / Committing Nodes", fillcolor="#fde68a"];
+  L [label="Shared Ledger", fillcolor="#fee2e2"];
+
+  C1 -> I;
+  I -> A1;
+  I -> A2;
+  {A1 A2} -> O;
+  O -> V -> L;
+}
+```
+:::
+::::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns the permissioned model into an operational transaction pipeline. It matters here because students should be able to trace how a business request becomes a committed shared record. Emphasize that identity checks, approvals, ordering, validation, and commit are separate steps with different control points.
+
+**Key Points**
+- Requests are checked for identity and role before entering the approval path.
+- Policy determines which organizations or nodes must approve a given action.
+- Ordering and validation convert approved requests into one consistent committed history.
+
+**Walkthrough**
+1. Identity check: verify the requester has the right credential and role.
+2. Proposal and approval: submit the event and collect the required organizational signoffs.
+3. Order and validate: place approved requests into a consistent sequence and confirm they still satisfy policy.
+4. Commit: write the accepted result to the shared ledger.
+
+**Sources**
+@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @yaga_blockchaintechnologyoverview_2018
+
+:::
+## Policy Layers
+
+:::: {.columns}
+::: {.column width="54%"}
+- In **permissionless systems**, security often rests on economics.
+- In permissioned systems, much of the security story lives in **policy**:
+  - Which organization may submit a shipment handoff.
+  - Which organizations must approve that handoff.
+  - Who may change consortium configuration.
+  - Who may add or remove members.
+- These are not side documents; they are part of the system's effective trust model.
+- A participant may be allowed to read without writing, submit without approving, or approve without controlling policy.
+:::
+::: {.column width="46%"}
+```{dot}
+digraph PolicyPyramid {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="filled,rounded", fontname="Helvetica", fontsize=9, margin="0.08,0.05"];
+  edge [style=invis];
+
+  G [label="May Change\nMembers / Policy", fillcolor="#fef3c7", width=1.45, height=0.5];
+  A [label="May Approve\nTransactions", fillcolor="#86efac", width=1.9, height=0.5];
+  S [label="May Submit\nTransactions", fillcolor="#bfdbfe", width=2.35, height=0.5];
+  R [label="May Read /\nAudit", fillcolor="#dbeafe", width=2.8, height=0.5];
+
+  G -> A -> S -> R;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains that much of permissioned security lives in explicit policy, not only in the ordering protocol. It matters here because students may otherwise treat governance documents as external paperwork instead of part of the trust model. Emphasize that read, submit, approve, and administer are distinct powers that policy must define carefully.
+
+**Key Points**
+- Permissioned security depends on who may read, submit, approve, and govern.
+- Policy is part of the effective trust model, not an afterthought.
+- Different powers can and should be distributed across different groups.
+
+**Walkthrough**
+None
+
+**Sources**
+@pishdar_denialofserviceattackspermissioned_2025; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+
+
+
+## Governance Boundary
+
+- Governance decides who can change the people, rules, and thresholds.
+- That makes governance part of the attack surface.
+- In a permissioned system, "consensus" usually means some known set of members approves transactions and some service orders them under policy.
+- Even if that transaction-approval and ordering path is sound, the system can still fail if governance is weak.
+- Strong transaction consensus cannot compensate for:
+  - Weak admission decisions.
+  - Poor key management.
+  - Ambiguous authority.
+  - Unsafe upgrade procedures.
+- Typical failure pattern: the ledger software works as designed, but the wrong people are allowed to change the rules.
+
+::: {.callout-warning appearance="simple"}
+Blockchain does not protect a permissioned network from bad governance.
+:::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide makes governance itself visible as a security boundary. It matters here because a technically correct transaction path can still be undone by weak membership control or unsafe rule changes. Emphasize that governance failures are not outside the system; they are one of its main attack surfaces.
+
+**Key Points**
+- Governance decides who can change members, thresholds, and operational rules.
+- Weak admission, key management, or upgrade control can break the system even if consensus works as intended.
+- Permissioned blockchains do not automatically protect against bad institutional decision-making.
+
+**Walkthrough**
+None
+
+**Sources**
+@pishdar_denialofserviceattackspermissioned_2025; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## Governance Actions
+
+:::: {.columns}
+::: {.column width="65%"}
+
+- Governance is a critical component of any blockchain, and it has substantial ramifications for the differences between permissioned and permissionless networks.
+
+  - *Permissionless networks* upgrades depend on adoption decisions by each node.
+    - Disagreements can result in hard forks, splitting into two separate blockchains or ledgers.
+  - *Permissioned networks:* authorized governance members decide according to policy first, and then all managed members implement their instructions.
+    - Forks are avoided, governance processes coordinate a single outcome across nodes.
+    
+:::
+::: {.column width="35%"}
+```{=html}
+<div style="display:flex;flex-direction:column;gap:0.9rem;max-width:520px;margin:0 auto;">
+  <div style="border:2px solid #93c5fd;border-radius:16px;background:#eff6ff;padding:0.7rem 0.8rem;">
+    <div style="font-weight:700;font-size:0.9em;color:#1d4ed8;text-align:center;margin-bottom:0.45rem;">Permissionless Upgrade</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0.28rem;margin-bottom:0.35rem;">
+      <div style="display:flex;justify-content:center;gap:0.38rem;flex-wrap:wrap;max-width:270px;">
+        <div style="width:17px;height:17px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#ef4444;border:2px solid #b91c1c;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#ef4444;border:2px solid #b91c1c;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#ef4444;border:2px solid #b91c1c;"></div>
+        <div style="width:17px;height:17px;border-radius:999px;background:#ef4444;border:2px solid #b91c1c;"></div>
+      </div>
+      <div style="width:86%;height:2px;background:linear-gradient(90deg,#22c55e 0%,#22c55e 58%,#64748b 58%,#64748b 42%,#ef4444 42%,#ef4444 100%);border-radius:999px;"></div>
+      <div style="display:flex;justify-content:space-between;width:86%;font-size:0.68em;color:#475569;">
+        <div>New chain</div>
+        <div>Old chain</div>
+      </div>
+    </div>
+    
+  </div>
+  <div style="border:2px solid #86efac;border-radius:16px;background:#f0fdf4;padding:0.7rem 0.8rem;">
+    <div style="font-weight:700;font-size:0.9em;color:#15803d;text-align:center;margin-bottom:0.45rem;">Permissioned Upgrade</div>
+    <div style="font-size:0.75em;text-align:center;color:#166534;margin-bottom:0.22rem;">Governance committee vote</div>
+    <div style="display:flex;justify-content:center;gap:0.42rem;flex-wrap:wrap;margin-bottom:0.16rem;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.08rem;"><div style="width:18px;height:18px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div><div style="font-size:0.62em;color:#166534;">Yes</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.08rem;"><div style="width:18px;height:18px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div><div style="font-size:0.62em;color:#166534;">Yes</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.08rem;"><div style="width:18px;height:18px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div><div style="font-size:0.62em;color:#166534;">Yes</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.08rem;"><div style="width:18px;height:18px;border-radius:999px;background:#ef4444;border:2px solid #b91c1c;"></div><div style="font-size:0.62em;color:#991b1b;">No</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0.08rem;"><div style="width:18px;height:18px;border-radius:999px;background:#ef4444;border:2px solid #b91c1c;"></div><div style="font-size:0.62em;color:#991b1b;">No</div></div>
+    </div>
+    <div style="font-size:1.0em;line-height:1;text-align:center;color:#64748b;margin-bottom:0.28rem;">↓</div>
+    <div style="font-size:0.75em;text-align:center;color:#166534;margin-bottom:0.28rem;">Managed network members</div>
+    <div style="display:flex;justify-content:center;gap:0.42rem;flex-wrap:wrap;margin-bottom:0.35rem;">
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+      <div style="width:16px;height:16px;border-radius:999px;background:#22c55e;border:2px solid #15803d;"></div>
+    </div>
+    
+  </div>
+ </div>
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide compares how governance actions propagate in permissionless and permissioned environments. It matters here because upgrade and dispute resolution reveal how authority is actually exercised in each model. Emphasize that permissioned systems aim for one administratively chosen outcome, while permissionless systems may split when adoption diverges.
+
+**Key Points**
+- Permissionless upgrades depend on independent adoption decisions and can result in forks.
+- Permissioned upgrades are typically decided administratively and then applied across managed members.
+- Governance processes shape not just policy but how change enters the network at all.
+
+**Walkthrough**
+None
+
+**Sources**
+@yaga_blockchaintechnologyoverview_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+## Threats to Permissioned Systems
+
+- In **permissionless systems**, the biggest threats often target the consensus mechanism itself.
+- In **permissioned systems**, the attack surface shifts toward a smaller set of high-impact roles and services.
+- Important threats include:
+  - Credential or admin compromise, which can change membership, policy, or trust relationships.
+  - DDoS or simple downtime on orderers, membership providers, or governance voters.
+  - Network and timing attacks on small clusters that coordinate ordering or approval.
+  - Disrupting a few approvers and preventing quorum or targeted transaction flow.
+- Not all nodes are equal; a handful may matter far more than the rest.
+- Defenses therefore shift toward hardening critical services, protecting credentials, building redundancy, and planning failover and incident response.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reframes the attack surface for permissioned systems around small numbers of powerful roles and services. It matters here because threats in these systems often target identity, ordering, and administration more than open-membership consensus economics. Emphasize that not all nodes matter equally; a few key services may dominate risk.
+
+**Key Points**
+- High-impact roles such as orderers, admins, and approvers become prime targets.
+- DDoS, downtime, key theft, and quorum disruption can all have outsized effects.
+- Defense focuses on credential protection, redundancy, failover, and incident response.
+
+**Walkthrough**
+None
+
+**Sources**
+@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## Identity Theft Risks
+
+| Compromised Target | Ability | Impact |
+|:--|:--|:--|
+| Read / Audit Identity | Observe permitted records | Confidentiality loss, minimal control impact |
+| Submit / Write Identity | Submit to blockchain | Fraudulent submissions, subversion of trust |
+| Approval / Voting Identity | Approve transactions | Direct influence over commits to ledger |
+| Ordering Service Identity / Role | Sequence accepted transactions | Availability loss or ordering disruption |
+| Membership / Admin Identity | Add members, change policy, alter configuration | Highest level of concern; rules of the system can change |
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide ranks credential compromise by how much authority the stolen identity grants. It matters here because permissioned risk analysis depends on understanding that not all credentials are equal. Emphasize that admin and membership keys are especially dangerous because they can rewrite the system's rules, not just its data.
+
+**Key Points**
+- Different compromised identities create very different levels of damage.
+- Read-only compromise mainly affects confidentiality, while approval and admin compromise affect integrity and control.
+- Membership and configuration identities are the highest-value targets in the network.
+
+**Walkthrough**
+None
+
+**Sources**
+@yaga_blockchaintechnologyoverview_2018; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## Sybil Resistance
+
+- Permissioned systems do not ignore Sybil risk.
+- They prevent it differently:
+  - *Admission control*: only specified people are allowed to interact with the network.
+  - *Organizational sponsorship:* known organizations are responsible for ensuring appropriate representatives can participate in their name, and they can be held accountable.
+  - *Certificate issuance and revocation:* revoking the credentials and access from identified malicious actors and those who no longer have a need to use the system minimizes the risk profile.
+- The goal is the same as in public chains:
+  - One real actor should not cheaply obtain disproportionate influence.
+- Hypothetical failure:
+  - If identity administration is weak, a fired administrator or careless sponsor could flood the network with fake or unauthorized users.
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains how permissioned systems solve the same core Sybil problem through controlled admission rather than public resource costs. It matters here because students should see continuity with earlier consensus material even though the mechanism changes. Emphasize that weak identity administration can recreate the very influence inflation the design is supposed to prevent.
+
+**Key Points**
+- Permissioned networks still need to stop one real actor from gaining many effective identities.
+- Admission control, sponsorship, and credential revocation are the main defenses.
+- Poor administration can let unauthorized or duplicate identities flood the system.
+
+**Walkthrough**
+None
+
+**Sources**
+@yaga_blockchaintechnologyoverview_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+## Privacy
+
+- Permissioned does **not** mean "everything is private."
+- It usually means the system can separate:
+  - Who participates.
+  - Who sees which data.
+  - Who can verify which proofs.
+- Common mechanisms include:
+  - Channels or partitions.
+  - Private data collections.
+  - Role-based access control.
+  - Audit-visible metadata with restricted payloads.
+- Example: shipping companies may see detailed cargo documents, while customs or insurers see only the records and proofs they are entitled to inspect.
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates participation from visibility, clarifying that permissioned does not automatically mean confidential. It matters here because students should understand that privacy still requires explicit design choices on top of known membership. Emphasize selective visibility: different roles may verify different parts of the system without seeing the same payloads.
+
+**Key Points**
+- Permissioned systems can separate who joins from who sees which data.
+- Channels, private data collections, and role-based access control implement selective disclosure.
+- Auditability can coexist with restricted payload visibility if proofs are designed carefully.
+
+**Walkthrough**
+None
+
+**Sources**
+@yaga_blockchaintechnologyoverview_2018; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## Case Study: [Fabric Lockout](https://lists.lfdecentralizedtrust.org/g/fabric/topic/criticial_admin_certificate/71743922)
+
+
+
+
+
+:::: {.columns}
+::: {.column width="38%"}
+```{dot}
+digraph FailureWalkthrough {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10];
+  edge [color="#64748b", arrowsize=0.6];
+
+  A [label="1. Admin Certificates Expire", fillcolor="#fee2e2"];
+  B [label="2. Admin Actions Start Failing", fillcolor="#fecaca"];
+  C [label="3. Config / Channel Changes Cannot Be Applied", fillcolor="#fef3c7"];
+  D [label="4. Network Enters Lockout Situation", fillcolor="#fde68a"];
+  E [label="5. Recovery Requires Out-Of-Band Fixes", fillcolor="#fecdd3"];
+
+  A -> B -> C -> D -> E;
+}
+```
+:::
+::: {.column width="62%"}
+- **1. Admin certificates expire:** In a reported Hyperledger Fabric production network, organization admin certificates expired.
+- **2. Admin actions start failing:** The network could still exist, but critical administrative actions no longer authenticated cleanly.
+- **3. Config / channel changes cannot be applied:** Because admin identity is part of the control plane, expired credentials blocked the ability to manage the system normally.
+- **4. Network enters lockout situation:** Not a malicious takeover; it was an operational failure caused by poor credential lifecycle management.
+- **5. Recovery requires out-of-band fixes:** The lesson is that permissioned systems can fail hard if identity, renewal, and revocation are treated as secondary concerns.
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This case study shows how an operational identity-management failure can partially disable a permissioned network without any cryptographic break. It matters here because it demonstrates the exact kind of control-plane risk the lesson has been warning about. Emphasize that expired admin certificates can cause lockout even when the core ledger software is otherwise healthy.
+
+**Key Points**
+- Expired admin credentials can block configuration and channel-management actions.
+- Permissioned outages often stem from credential lifecycle failures rather than consensus failure.
+- Recovery may require out-of-band operational fixes, which highlights control-plane dependence.
+
+**Walkthrough**
+None
+
+**Sources**
+- Hyperledger Fabric documentation: https://hyperledger-fabric.readthedocs.io/en/latest/certs_management.html
+- Hyperledger Fabric mailing list lockout thread: https://lists.lfdecentralizedtrust.org/g/fabric/topic/criticial_admin_certificate/71743922
+
+:::
+
+
+
+## Recap: Three Approaches Compared {.smaller}
+
+
+
+:::: columns
+::: {.column width="33%"}
+**Permissioned Ledger**
+
+Benefits:
+
+- Deterministic finality
+- Known participants, enforceable policy
+- Auditability with privacy controls
+
+Challenges:
+
+- Governance capture risk
+- Credential and admin lifecycle failures
+- Small validator sets create high-value targets
+:::
+::: {.column width="33%"}
+**Permissionless Ledger**
+
+Benefits:
+
+- Open participation, no gatekeeper
+- Censorship resistance
+- No single point of administrative failure
+
+Challenges:
+
+- Probabilistic finality (PoW) or complex staking economics (PoS)
+- Sybil resistance depends on economic cost
+- Limited throughput and high latency
+:::
+::: {.column width="33%"}
+**Mutable Database**
+
+Benefits:
+
+- Highest throughput and lowest latency
+- Mature tooling, simple operations
+- Full control for the owning organization
+
+Challenges:
+
+- Single operator must be trusted
+- No built-in tamper evidence
+- Cross-org disputes rely on legal agreements
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This recap slide places permissioned ledgers alongside permissionless ledgers and mutable databases using the same benefit-challenge framing. It matters here because students should now be able to compare all three options by governance, finality, and operational risk. Emphasize that each option solves a different trust problem rather than competing on one universal metric.
+
+**Key Points**
+- Permissioned ledgers offer strong policy control and deterministic finality for known participants.
+- Permissionless ledgers offer open participation and censorship resistance at higher coordination cost.
+- Mutable databases remain the best fit when one owner is trusted and performance dominates.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+## When To Use What? {.smaller}
+
+For each scenario, decide as a class: **permissioned ledger**, **permissionless ledger**, or **mutable database**?
+
+<table style="font-size: 0.7em; width: 100%;">
+<thead>
+<tr><th style="width: 82%;">Scenario</th><th style="width: 18%;">Best Fit</th></tr>
+</thead>
+<tbody>
+<tr><td>A hospital system tracks patient consent records internally; one IT department controls all access.</td><td class="fragment" data-fragment-index="1">Mutable DB</td></tr>
+<tr><td>An open-source project wants anyone to verify that released binaries match audited source, with no central authority.</td><td class="fragment" data-fragment-index="2">Permissionless</td></tr>
+<tr><td>Competing shipping companies need a shared system to record cargo handoffs and provide tamper-evident records for customs audits.</td><td class="fragment" data-fragment-index="3">Permissioned</td></tr>
+<tr><td>A social media platform wants users to own their identity and post history even if the platform shuts down.</td><td class="fragment" data-fragment-index="4">Permissionless</td></tr>
+<tr><td>Three allied nations want a joint logistics ledger where no single country controls finality, restricted to vetted military units.</td><td class="fragment" data-fragment-index="5">Permissioned</td></tr>
+<tr><td>A retail chain needs a high-speed inventory system for one warehouse, managed by a single operations team.</td><td class="fragment" data-fragment-index="6">Mutable DB</td></tr>
+<tr><td>A consortium of banks needs to settle cross-border payments with shared finality; regulators can audit but not alter transactions.</td><td class="fragment" data-fragment-index="7">Permissioned</td></tr>
+<tr><td>A volunteer disaster-relief network wants any NGO to join and log aid distributions without a central coordinator.</td><td class="fragment" data-fragment-index="8">Permissionless</td></tr>
+</tbody>
+</table>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students practice matching system type to scenario instead of reaching for blockchain by default. It matters here because correct tool choice is one of the main learning goals of the section. Emphasize the governance question first: who is trusted, who must coordinate, and who needs independent verification.
+
+**Key Points**
+- Tool choice should follow the trust boundary and operational needs of the scenario.
+- Permissioned ledgers fit known multi-party coordination problems with shared finality needs.
+- Mutable databases fit single-owner systems, and permissionless ledgers fit open-verification or open-participation cases.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+
+## Wrap-Up
+
+- Permissioned ledgers solve coordination among **known** participants.
+- Their security depends heavily on **identity, policy, and governance**.
+- They often deliver **deterministic finality** without open-admission mechanisms like PoW or PoS.
+- The next step is to see how these ideas appear in a real platform: Hyperledger Fabric.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This wrap-up slide compresses the lesson's main claim into a short decision rule students can carry forward. It matters here because the next lesson will move from general permissioned design to a concrete platform example. Emphasize that identity, policy, and governance are the real pillars of permissioned-chain security.
+
+**Key Points**
+- Permissioned ledgers coordinate known participants rather than anonymous open membership.
+- Their main security dependencies are identity, policy, governance, and operational discipline.
+- Deterministic finality is powerful, but only when the surrounding control plane is well managed.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+## References

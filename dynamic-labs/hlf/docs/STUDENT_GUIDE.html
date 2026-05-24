@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>student_guide</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="STUDENT_GUIDE_files/libs/clipboard/clipboard.min.js"></script>
+<script src="STUDENT_GUIDE_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="STUDENT_GUIDE_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="STUDENT_GUIDE_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="STUDENT_GUIDE_files/libs/quarto-html/popper.min.js"></script>
+<script src="STUDENT_GUIDE_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="STUDENT_GUIDE_files/libs/quarto-html/anchor.min.js"></script>
+<link href="STUDENT_GUIDE_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="STUDENT_GUIDE_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="STUDENT_GUIDE_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="STUDENT_GUIDE_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="STUDENT_GUIDE_files/libs/bootstrap/bootstrap-d6a003b94517c951b2d65075d42fb01b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="hyperledger-fabric-lab-westview-used-car-exchange-student-guide" class="level1">
+<h1>Hyperledger Fabric Lab — Westview Used-Car Exchange (Student Guide)</h1>
+<p>This lab gives you a <strong>hands-on, web-based Hyperledger Fabric sandbox</strong>. You will interact with a private permissioned blockchain using a browser UI that includes:</p>
+<ul>
+<li>a CLI terminal (for commands)</li>
+<li>live network logs</li>
+<li>live block creation</li>
+<li>live ledger state changes</li>
+</ul>
+<section id="learning-goals-6090-min" class="level2">
+<h2 class="anchored" data-anchor-id="learning-goals-6090-min">Learning Goals (60–90 min)</h2>
+<p>By the end of this lab, you will be able to:</p>
+<ul>
+<li>explain how <strong>permissioned</strong> blockchains differ from public ones</li>
+<li>describe Fabric’s <strong>peers</strong>, <strong>orderer</strong>, <strong>MSP</strong>, <strong>channels</strong>, and <strong>chaincode</strong></li>
+<li>submit multiple transactions and observe <strong>endorsement → ordering → commit</strong></li>
+<li><strong>query, create, transfer, update, and remove</strong> ledger entries representing real-world inventory</li>
+<li>articulate why a private network can reduce disputes in multi-party workflows (e.g., titles, wholesale swaps, pricing changes)</li>
+</ul>
+<p>This lab aligns with the module that precedes it (distributed ledgers + Hyperledger Fabric) and complements your other course labs focused on consensus attacks, smart contract risks, and protocol vulnerabilities.</p>
+<hr>
+</section>
+<section id="lab-narrative-operation-westview-wheels" class="level2">
+<h2 class="anchored" data-anchor-id="lab-narrative-operation-westview-wheels">Lab Narrative: Operation Westview Wheels</h2>
+<p>Welcome to <strong>Westview, New Jersey</strong>—a charming town with excellent pizza, suspiciously dense traffic circles, and an unusually high concentration of used-car dealerships.</p>
+<p>The dealerships have formed a private, permissioned network called the <strong>Westview Used-Car Exchange (WUCE)</strong>. The pitch was simple:</p>
+<ul>
+<li>Every dealer wants to move inventory quickly.</li>
+<li>Nobody wants to fight about <em>who listed what, when the price changed,</em> or <em>whether a car was “already sold”</em> (again).</li>
+<li>The state title system is reliable <strong>except when it isn’t</strong>, and the “backup process” involves a fax machine that sounds like a dying robot.</li>
+</ul>
+<p>Two dealerships are key participants in today’s exercise:</p>
+<ul>
+<li><strong>Org1 = Cascadia State University</strong> (the institution that issues and records diplomas)</li>
+<li><strong>Org2 = Chesapeake Canoe University</strong> (an employer that verifies credentials on the shared ledger)</li>
+</ul>
+<p>Your job is to operate the exchange as a shared system of record:</p>
+<ol type="1">
+<li>bring the network online,</li>
+<li>initialize the shared inventory ledger,</li>
+<li>run several common dealership workflows (listings, wholesale swaps, price updates, and removals),</li>
+<li>observe how Fabric enforces trust between competing organizations.</li>
+</ol>
+<p><strong>How cars map to ledger assets (important):</strong></p>
+<ul>
+<li><code>ID</code> = a short inventory ID (think “stock number”)</li>
+<li><code>Color</code> = exterior color</li>
+<li><code>Size</code> = <strong>mileage bucket</strong> (integer; interpret as <em>mileage in tens of thousands</em>, e.g., <code>6</code> ≈ 60,000 miles)</li>
+<li><code>Owner</code> = who currently controls the listing (dealership or buyer)</li>
+<li><code>AppraisedValue</code> = listed price in USD</li>
+</ul>
+<p><strong>Canonical vs optional fields:</strong></p>
+<ul>
+<li>Canonical fields (always present): <code>ID</code>, <code>Color</code>, <code>Size</code>, <code>Owner</code>, <code>AppraisedValue</code> (and <code>docType</code> if shown).</li>
+<li>Optional car fields (may appear): <code>Year</code>, <code>Make</code>, <code>Model</code>, <code>Trim</code>, <code>Mileage</code>, <code>VIN</code>.</li>
+<li>If <code>Mileage</code> is provided, then <code>Size ~= floor(Mileage / 10000)</code> (the chaincode updates <code>Size</code> when you set <code>Mileage</code>).</li>
+</ul>
+<hr>
+</section>
+<section id="interface-overview" class="level2">
+<h2 class="anchored" data-anchor-id="interface-overview">Interface Overview</h2>
+<p>The web UI provides four terminals:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Terminal</th>
+<th>Purpose</th>
+<th>What You’ll Observe</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>CLI</strong></td>
+<td>Run commands</td>
+<td>Command output + errors</td>
+</tr>
+<tr class="even">
+<td><strong>Logs</strong></td>
+<td>Network activity</td>
+<td>Endorsement, ordering, commits</td>
+</tr>
+<tr class="odd">
+<td><strong>Blocks</strong></td>
+<td>Block creation</td>
+<td>New block height updates</td>
+</tr>
+<tr class="even">
+<td><strong>State</strong></td>
+<td>Ledger changes</td>
+<td>Asset state changes</td>
+</tr>
+</tbody>
+</table>
+<p>Buttons you will use:</p>
+<ul>
+<li><strong>Start Network</strong> — launches the Fabric network and chaincode</li>
+<li><strong>Stop Network</strong> — shuts it down cleanly</li>
+<li><strong>Student Guide</strong> — opens this document in a separate window</li>
+</ul>
+<hr>
+</section>
+<section id="start-the-network-5-min" class="level2">
+<h2 class="anchored" data-anchor-id="start-the-network-5-min">1) Start the Network (5 min)</h2>
+<ol type="1">
+<li>Click <strong>Start Network</strong>.</li>
+<li>Watch the <strong>Logs</strong> terminal for startup progress.</li>
+<li>Wait until status shows <strong>Network Running</strong>.</li>
+</ol>
+<p><strong>Why this matters:</strong> Fabric is not “always on.” Operators control network lifecycle and membership. This is a key difference from public blockchains.</p>
+<hr>
+</section>
+<section id="confirm-the-channel-is-live-5-min" class="level2">
+<h2 class="anchored" data-anchor-id="confirm-the-channel-is-live-5-min">2) Confirm the Channel Is Live (5 min)</h2>
+<p>In the <strong>CLI</strong> terminal, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">peer</span> channel getinfo <span class="at">-c</span> mychannel</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Expected: a response that includes <code>height: N</code>.</p>
+<p><strong>Why this matters:</strong> Channels are private subnets in Fabric. This confirms your peer is connected and the channel ledger exists.</p>
+<hr>
+</section>
+<section id="initialize-the-ledger-10-min" class="level2">
+<h2 class="anchored" data-anchor-id="initialize-the-ledger-10-min">3) Initialize the Ledger (10 min)</h2>
+<p>In the <strong>CLI</strong> terminal, run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> init-ledger</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Watch all four terminals:</p>
+<ul>
+<li><strong>Logs:</strong> endorsement + commit activity</li>
+<li><strong>Blocks:</strong> new block created</li>
+<li><strong>State:</strong> initial assets appear</li>
+</ul>
+<p><strong>Why this matters:</strong> This is the full Fabric transaction lifecycle.</p>
+<p><strong>What’s happening in this scenario:</strong> <code>init-ledger</code> pre-loads the exchange with a starter inventory so you can immediately practice the end-to-end workflow.</p>
+<hr>
+</section>
+<section id="starter-inventory-reference" class="level2">
+<h2 class="anchored" data-anchor-id="starter-inventory-reference">Starter Inventory (reference)</h2>
+<p>These listings are pre-loaded by <code>init-ledger</code>. Mileage buckets are in <strong>tens of thousands</strong> of miles.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>ID</th>
+<th>Year</th>
+<th>Make</th>
+<th>Model</th>
+<th>Trim</th>
+<th>Mileage</th>
+<th>Bucket</th>
+<th>Color</th>
+<th>Owner</th>
+<th>Price (USD)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>car101</td>
+<td>2017</td>
+<td>Toyoda</td>
+<td>Coroll-Yeah</td>
+<td>LE</td>
+<td>62000</td>
+<td>6</td>
+<td>silver</td>
+<td>carmaste</td>
+<td>12495</td>
+</tr>
+<tr class="even">
+<td>car102</td>
+<td>2014</td>
+<td>Hondé</td>
+<td>Civ-ish</td>
+<td>EX</td>
+<td>93000</td>
+<td>9</td>
+<td>blue</td>
+<td>not-your-fathers</td>
+<td>10995</td>
+</tr>
+<tr class="odd">
+<td>car103</td>
+<td>2019</td>
+<td>Fjord</td>
+<td>Escapé</td>
+<td>SE</td>
+<td>41000</td>
+<td>4</td>
+<td>black</td>
+<td>carmaste</td>
+<td>16495</td>
+</tr>
+<tr class="even">
+<td>car104</td>
+<td>2016</td>
+<td>SubaRoo</td>
+<td>Outbackpack</td>
+<td>Premium</td>
+<td>72000</td>
+<td>7</td>
+<td>white</td>
+<td>not-your-fathers</td>
+<td>13995</td>
+</tr>
+<tr class="odd">
+<td>car105</td>
+<td>2012</td>
+<td>Voltswagon</td>
+<td>Jettison</td>
+<td>S</td>
+<td>112000</td>
+<td>11</td>
+<td>gray</td>
+<td>carmaste</td>
+<td>8995</td>
+</tr>
+<tr class="even">
+<td>car106</td>
+<td>2018</td>
+<td>Nissand</td>
+<td>Altimaybe</td>
+<td>SV</td>
+<td>56000</td>
+<td>5</td>
+<td>red</td>
+<td>not-your-fathers</td>
+<td>14995</td>
+</tr>
+<tr class="odd">
+<td>car107</td>
+<td>2015</td>
+<td>Maz-Duh</td>
+<td>CX-Five-ish</td>
+<td>Touring</td>
+<td>83000</td>
+<td>8</td>
+<td>green</td>
+<td>carmaste</td>
+<td>11995</td>
+</tr>
+<tr class="even">
+<td>car108</td>
+<td>2011</td>
+<td>Chevrolate</td>
+<td>Malibruh</td>
+<td>LT</td>
+<td>133000</td>
+<td>13</td>
+<td>maroon</td>
+<td>not-your-fathers</td>
+<td>7995</td>
+</tr>
+<tr class="odd">
+<td>car109</td>
+<td>2020</td>
+<td>Kia-ya</td>
+<td>CR-Vroom</td>
+<td>LX</td>
+<td>31000</td>
+<td>3</td>
+<td>tan</td>
+<td>carmaste</td>
+<td>18995</td>
+</tr>
+<tr class="even">
+<td>car110</td>
+<td>2013</td>
+<td>Jëëp</td>
+<td>Patri-not</td>
+<td>Sport</td>
+<td>101000</td>
+<td>10</td>
+<td>navy</td>
+<td>not-your-fathers</td>
+<td>10495</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="inspect-the-exchange-inventory-510-min" class="level2">
+<h2 class="anchored" data-anchor-id="inspect-the-exchange-inventory-510-min">4) Inspect the Exchange Inventory (5–10 min)</h2>
+<p>Query the full vehicle list (all listings on the exchange):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Optional: pretty‑print with <code>jq</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all <span class="kw">|</span> <span class="ex">jq</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>You should see a JSON list of “assets.” In this lab, each asset represents a used car listing.</p>
+<p><strong>Why this matters:</strong> Reads do not create blocks, which makes Fabric efficient for queries. The ledger state is still cryptographically verifiable, even when you’re “just reading.”</p>
+<hr>
+</section>
+<section id="transaction-run-checklist-2030-min" class="level2">
+<h2 class="anchored" data-anchor-id="transaction-run-checklist-2030-min">5) Transaction Run Checklist (20–30 min)</h2>
+<p>Complete the checklist in order. This ensures you log <strong>8–12+ total transactions</strong> and verify each step with a query. Use the <code>invoke</code> helper for write actions and the <code>query</code> helper for reads.</p>
+<p>Step 1 — Initialize the ledger:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> init-ledger</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 2 — Verify starter inventory:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 3 — Create <strong>two</strong> new listings:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> create car900 silver 6 carmaste 14995</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> create car901 blue 12 not-your-fathers 9995</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 4 — Verify with a query:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 5 — Add vehicle details to one listing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-vehicle car900 2019 Toyoda Coroll-Yeah SE 45888 WV-F4K3-900-SE</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 6 — Transfer one listing dealer → dealer:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> transfer car900 not-your-fathers</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 7 — Reprice <strong>two</strong> listings:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> reprice car900 13995</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> reprice car103 15995</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 8 — Transfer one listing to a buyer:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> transfer car900 buyer-alex</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 9 — Remove one listing from inventory:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> delete car901</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 10 — Verify all changes (run after each step if you want extra credit):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+<section id="post-new-listings-1015-min" class="level2">
+<h2 class="anchored" data-anchor-id="post-new-listings-1015-min">6) Post New Listings (10–15 min)</h2>
+<p>A customer walks into <strong>Carmasté Used Cars</strong> and trades in a vehicle right as your manager says, “Let’s put it on the exchange <em>immediately</em>.”</p>
+<p>Create a new listing using the <code>invoke</code> helper:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> create car900 silver 6 carmaste 14995</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Optional: add vehicle details:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-vehicle car900 2019 Toyoda Coroll-Yeah SE 45888 WV-F4K3-900-SE</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Re-run the inventory query:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>You should now see <code>car900</code> in the output.</p>
+<p><strong>Why this matters:</strong> You’re writing new state to the ledger and observing how Fabric makes that change visible across participants.</p>
+<p><strong>Optional (do 1–2 more):</strong> Post one or two more listings with different mileage buckets and prices.</p>
+<hr>
+</section>
+<section id="run-dealership-workflows-2030-min" class="level2">
+<h2 class="anchored" data-anchor-id="run-dealership-workflows-2030-min">7) Run Dealership Workflows (20–30 min)</h2>
+<section id="a-wholesale-swap-between-dealers-transfer" class="level3">
+<h3 class="anchored" data-anchor-id="a-wholesale-swap-between-dealers-transfer">A) Wholesale swap between dealers (transfer)</h3>
+<p>Cascadia State University and Chesapeake Canoe University agree to transfer an asset between organizations.</p>
+<p>Transfer control of the listing to Chesapeake Canoe University:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> transfer car900 not-your-fathers</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Verify:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> car900</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Watch the <strong>Logs</strong>, <strong>Blocks</strong>, and <strong>State</strong> terminals for the endorsement/commit activity.</p>
+<p><strong>Why this matters:</strong> Fabric enforces endorsement policies before commits. This is how multi-org trust is enforced without mining.</p>
+<hr>
+</section>
+<section id="b-price-update-repriceasset" class="level3">
+<h3 class="anchored" data-anchor-id="b-price-update-repriceasset">B) Price update (RepriceAsset)</h3>
+<p>The car sits for 20 minutes and suddenly “the market has spoken.” In Westview, that means someone checked a competing listing and panicked.</p>
+<p>Use the dedicated function to update the price (same <code>ID</code>, updated <code>AppraisedValue</code>).</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> reprice car900 13995</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then confirm:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> car900</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Why this matters:</strong> State changes are explicit and auditable. In a shared exchange, this reduces disputes about <em>when</em> a price changed.</p>
+<hr>
+</section>
+<section id="c-final-sale-transfer-to-buyer" class="level3">
+<h3 class="anchored" data-anchor-id="c-final-sale-transfer-to-buyer">C) Final sale (transfer to buyer)</h3>
+<p>A buyer shows up with “a pre-approved loan” and the confidence of someone who watched one YouTube video about negotiation.</p>
+<p>Transfer the listing to the buyer (any name is fine):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> transfer car900 buyer-alex</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Verify:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> car900</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+<section id="d-remove-listing-deleteasset" class="level3">
+<h3 class="anchored" data-anchor-id="d-remove-listing-deleteasset">D) Remove listing (DeleteAsset)</h3>
+<p>Once sold, the exchange should not keep advertising it as available inventory. Remove the listing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> delete car900</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Confirm it’s gone by querying all assets again:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>Why this matters:</strong> Real workflows include lifecycle events (listed → repriced → transferred → removed). Private ledgers can keep the <em>history</em> while presenting a clean current state.</p>
+<hr>
+</section>
+</section>
+<section id="pricing-paperwork-1520-min" class="level2">
+<h2 class="anchored" data-anchor-id="pricing-paperwork-1520-min">8) Pricing &amp; Paperwork (15–20 min)</h2>
+<p>These are dealership-friendly actions that track tags, title/inspection status, and “out-the-door” totals. Helper commands treat each argument as a single token, so use hyphens instead of spaces in short descriptions (e.g., <code>Documentation-fee</code>).</p>
+<p>Step 1 — Add a tag that describes the listing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> add-tag car103 certified-pre-owned</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 2 — Set title and inspection status:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-title car103 clean</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-inspection car103 passed</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 3 — Add a paperwork fee:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> add-fee car103 DOC Documentation-fee 199</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 4 — Add an optional addon:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb29"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> add-addon car103 TINT Window-tint 350</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 5 — Set dealer pricing config:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb30"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-dealer-pricing carmaste DEALER_MARKUP Dealer-adjustment 500 625</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 6 — Apply that dealer markup to the listing:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> apply-dealer-markup car103 carmaste</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 7 — Compute the out-the-door price breakdown:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> price car103</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Step 8 — Optional cleanup:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> remove-tag car103 certified-pre-owned</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> remove-fee car103 DOC</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+<section id="under-the-hood-peer-cli-optional" class="level2">
+<h2 class="anchored" data-anchor-id="under-the-hood-peer-cli-optional">9) Under the Hood: peer CLI (optional)</h2>
+<p>The <code>invoke</code> and <code>query</code> helpers are convenience wrappers around the Fabric CLI. Under the hood, they run <code>peer</code> commands with the right channel (<code>-C</code>), chaincode name (<code>-n</code>), and JSON payload (<code>-c</code>).</p>
+<p>The <code>peer</code> command does much more than chaincode operations. Here is the built‑in help menu (spacing normalized so it renders cleanly in terminals):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb34"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> peer <span class="at">-h</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Using</span> organization 1</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Usage:</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">peer</span> <span class="pp">[</span><span class="ss">command</span><span class="pp">]</span></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="ex">Available</span> Commands:</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  <span class="ex">chaincode</span>   Operate a chaincode: install<span class="kw">|</span><span class="ex">instantiate</span><span class="kw">|</span><span class="ex">invoke</span><span class="kw">|</span><span class="ex">package</span><span class="kw">|</span><span class="ex">query</span><span class="kw">|</span><span class="ex">signpackage</span><span class="kw">|</span><span class="ex">upgrade</span><span class="kw">|</span><span class="ex">list</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="ex">channel</span>     Operate a channel: create<span class="kw">|</span><span class="ex">fetch</span><span class="kw">|</span><span class="fu">join</span><span class="kw">|</span><span class="ex">joinbysnapshot</span><span class="kw">|</span><span class="ex">joinbysnapshotstatus</span><span class="kw">|</span><span class="ex">list</span><span class="kw">|</span><span class="ex">update</span><span class="kw">|</span><span class="ex">signconfigtx</span><span class="kw">|</span><span class="ex">getinfo</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  <span class="ex">completion</span>  Generate the autocompletion script for the specified shell</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="bu">help</span>        Help about any command</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>  <span class="ex">lifecycle</span>   Perform _lifecycle operations</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>  <span class="ex">node</span>        Operate a peer node: start<span class="kw">|</span><span class="ex">reset</span><span class="kw">|</span><span class="ex">rollback</span><span class="kw">|</span><span class="ex">pause</span><span class="kw">|</span><span class="ex">resume</span><span class="kw">|</span><span class="ex">rebuild-dbs</span><span class="kw">|</span><span class="ex">unjoin</span><span class="kw">|</span><span class="ex">upgrade-dbs</span></span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>  <span class="ex">snapshot</span>    Manage snapshot requests: submitrequest<span class="kw">|</span><span class="ex">cancelrequest</span><span class="kw">|</span><span class="ex">listpending</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>  <span class="ex">version</span>     Print fabric peer version</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="ex">Flags:</span></span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>  <span class="ex">-h,</span> <span class="at">--help</span>  help for peer</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a><span class="ex">Use</span> <span class="st">"peer [command] --help"</span> for more information about a command.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><strong>What these options do:</strong></p>
+<ul>
+<li><code>chaincode</code> — install, invoke, query, and manage chaincode on peers</li>
+<li><code>channel</code> — create/join channels and fetch channel data or config</li>
+<li><code>lifecycle</code> — manage chaincode definitions (the modern deployment path)</li>
+<li><code>node</code> — operate the peer node process and its databases</li>
+<li><code>snapshot</code> — manage state snapshots for data portability</li>
+<li><code>completion</code> — generate shell auto‑complete scripts</li>
+<li><code>version</code> — print peer binary version info</li>
+<li><code>help</code> and <code>-h/--help</code> — discover usage details</li>
+</ul>
+<p>Tip: if your terminal shows tabbed spacing, run <code>peer -h | expand -t 2</code> to convert tabs to spaces.</p>
+<p><strong>Chaincode syntax basics:</strong></p>
+<ul>
+<li>Invoke (write): <code>peer chaincode invoke -C &lt;channel&gt; -n &lt;chaincode&gt; -c '{"Args":["Function","arg1","arg2"]}'</code></li>
+<li>Query (read): <code>peer chaincode query -C &lt;channel&gt; -n &lt;chaincode&gt; -c '{"Args":["Function","arg1"]}'</code></li>
+</ul>
+<p><strong>Replay a few earlier steps using the peer CLI:</strong></p>
+<ol type="1">
+<li>Init the ledger:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="ex">peer</span> chaincode invoke <span class="at">-C</span> mychannel <span class="at">-n</span> basic <span class="at">-c</span> <span class="st">'{"Args":["InitLedger"]}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ol type="1">
+<li>Create a listing:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="ex">peer</span> chaincode invoke <span class="at">-C</span> mychannel <span class="at">-n</span> basic <span class="at">-c</span> <span class="st">'{"Args":["CreateAsset","car902","gray","7","carmaste","13995"]}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ol type="1">
+<li>Set vehicle details:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="ex">peer</span> chaincode invoke <span class="at">-C</span> mychannel <span class="at">-n</span> basic <span class="at">-c</span> <span class="st">'{"Args":["SetVehicleDetails","car902","2018","SubaRoo","Outbackpack","Premium","72000","WV-F4K3-902-PR"]}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<ol type="1">
+<li>Read it back:</li>
+</ol>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb38"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="ex">peer</span> chaincode query <span class="at">-C</span> mychannel <span class="at">-n</span> basic <span class="at">-c</span> <span class="st">'{"Args":["ReadAsset","car902"]}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+<section id="optional-challenge-westview-expands-2030-min" class="level2">
+<h2 class="anchored" data-anchor-id="optional-challenge-westview-expands-2030-min">10) Optional Challenge: Westview Expands (20–30 min)</h2>
+<p>Pick <strong>one</strong> of the challenges below. Both require you to look up peer command syntax or Fabric docs.</p>
+<p><strong>A) New dealership joins WUCE (Org3):</strong> Use the Fabric sample add‑org flow to onboard a third dealership (e.g., <strong>Garden State Motors</strong>). Your goal is to add Org3, set its environment, and create 1–2 listings as that org. Hint: Fabric samples include an <code>addOrg3</code> flow; you’ll need to find it and follow its steps.</p>
+<p><strong>B) Cross‑state compliance:</strong> Imagine Westview is close to NY/PA. Add tags and pricing differences to simulate paperwork/tax differences across states. Use tags (e.g., <code>ny-title</code>, <code>pa-tax</code>) and dealer pricing to compute different out‑the‑door totals.</p>
+<p>Write a short paragraph summarizing what you did and why it matters for private networks (auditability, shared rules, fewer disputes).</p>
+<section id="optional-expansion-advanced-add-org3-dealership" class="level3">
+<h3 class="anchored" data-anchor-id="optional-expansion-advanced-add-org3-dealership">Optional Expansion (advanced): Add Org3 dealership</h3>
+<p>If you want to simulate a third dealership, you can use the Fabric sample <code>addOrg3</code> flow (opt‑in, not required for the lab):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb39"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> fabric/fabric-samples/test-network</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./addOrg3/addOrg3.sh</span> up <span class="at">-c</span> mychannel</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then set Org3 env vars in the same terminal and run a peer command as Org3:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> ./scripts/envVar.sh</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="ex">setGlobals</span> 3</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="ex">peer</span> chaincode invoke <span class="at">-C</span> mychannel <span class="at">-n</span> basic <span class="at">-c</span> <span class="st">'{"Args":["CreateAsset","car980","white","8","garden-state","12995"]}'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This keeps the default lab path unchanged but shows how additional orgs can be onboarded in a real network.</p>
+<hr>
+</section>
+</section>
+<section id="reflect-why-a-private-exchange-10-min" class="level2">
+<h2 class="anchored" data-anchor-id="reflect-why-a-private-exchange-10-min">11) Reflect: Why a Private Exchange? (10 min)</h2>
+<p>Answer these short questions:</p>
+<ol type="1">
+<li>What disputes does WUCE prevent (or at least make easier to resolve)? List two.</li>
+<li>Why do endorsement policies matter when Cascadia State and Chesapeake Canoe University are independent organizations?</li>
+<li>What risks appear if an organization’s MSP/identity material is compromised?</li>
+<li>If this were a public blockchain, what tradeoffs would worsen the user experience for dealerships?</li>
+</ol>
+<hr>
+</section>
+<section id="shut-down-5-min" class="level2">
+<h2 class="anchored" data-anchor-id="shut-down-5-min">12) Shut Down (5 min)</h2>
+<p>Click <strong>Stop Network</strong>.</p>
+<p><strong>Why this matters:</strong> Operational control is part of permissioned blockchain security.</p>
+<hr>
+</section>
+<section id="quick-reference-cli" class="level2">
+<h2 class="anchored" data-anchor-id="quick-reference-cli">Quick Reference (CLI)</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb41"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Channel / network</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="ex">peer</span> channel getinfo <span class="at">-c</span> mychannel</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Lab helpers (may vary by environment)</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> init-ledger</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> create <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>color<span class="op">&gt;</span> <span class="op">&lt;</span>mileageBucket<span class="op">&gt;</span> <span class="op">&lt;</span>owner<span class="op">&gt;</span> <span class="op">&lt;</span>price<span class="op">&gt;</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> transfer <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>newOwner<span class="op">&gt;</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> delete <span class="op">&lt;</span>carId<span class="op">&gt;</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> reprice <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>newPrice<span class="op">&gt;</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-vehicle <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>year<span class="op">&gt;</span> <span class="op">&lt;</span>make<span class="op">&gt;</span> <span class="op">&lt;</span>model<span class="op">&gt;</span> <span class="op">&lt;</span>trim<span class="op">&gt;</span> <span class="op">&lt;</span>mileage<span class="op">&gt;</span> <span class="op">&lt;</span>vin<span class="op">&gt;</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> add-tag <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>tag<span class="op">&gt;</span></span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> remove-tag <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>tag<span class="op">&gt;</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-title <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>status<span class="op">&gt;</span></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-inspection <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>status<span class="op">&gt;</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> add-fee <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>code<span class="op">&gt;</span> <span class="op">&lt;</span>description<span class="op">&gt;</span> <span class="op">&lt;</span>amount<span class="op">&gt;</span></span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> remove-fee <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>code<span class="op">&gt;</span></span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> add-addon <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>code<span class="op">&gt;</span> <span class="op">&lt;</span>description<span class="op">&gt;</span> <span class="op">&lt;</span>amount<span class="op">&gt;</span></span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> remove-addon <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>code<span class="op">&gt;</span></span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> set-dealer-pricing <span class="op">&lt;</span>dealer<span class="op">&gt;</span> <span class="op">&lt;</span>markupCode<span class="op">&gt;</span> <span class="op">&lt;</span>markupDesc<span class="op">&gt;</span> <span class="op">&lt;</span>markupAmount<span class="op">&gt;</span> <span class="op">&lt;</span>taxRateBps<span class="op">&gt;</span></span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a><span class="ex">invoke</span> apply-dealer-markup <span class="op">&lt;</span>carId<span class="op">&gt;</span> <span class="op">&lt;</span>dealer<span class="op">&gt;</span></span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Queries</span></span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> all</span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> <span class="op">&lt;</span>carId<span class="op">&gt;</span></span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a><span class="ex">query</span> price <span class="op">&lt;</span>carId<span class="op">&gt;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+<section id="if-something-doesnt-work" class="level2">
+<h2 class="anchored" data-anchor-id="if-something-doesnt-work">If Something Doesn’t Work</h2>
+<ul>
+<li>Use <strong>Stop Network</strong> and then <strong>Start Network</strong> once.</li>
+<li>If it still fails, notify your instructor (they have the troubleshooting guide).</li>
+</ul>
+<hr>
+</section>
+<section id="why-this-lab-matters" class="level2">
+<h2 class="anchored" data-anchor-id="why-this-lab-matters">Why This Lab Matters</h2>
+<p>You just operated a permissioned blockchain network and watched it behave like a real enterprise system:</p>
+<ul>
+<li><strong>Identity + MSP</strong> replaces anonymous participation</li>
+<li><strong>Endorsement</strong> replaces proof-of-work</li>
+<li><strong>Ordering</strong> guarantees consistency without mining</li>
+<li><strong>Channels</strong> provide privacy and governance</li>
+<li><strong>Shared state + history</strong> reduces multi-party disputes (who changed what, when)</li>
+</ul>
+<p>This gives you a practical foundation before you move deeper into smart contract security and adversarial blockchain behavior.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

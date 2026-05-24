@@ -1,0 +1,1247 @@
+---
+title: "Distributed Systems"
+subtitle: 'Section III: Distributed Systems Fundamentals'
+author: Army Cyber Institute
+lesson: 01-DS
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## What Is a Distributed System?
+
+**Working definition:** Multiple nodes that communicate over a network to appear as one system to users.
+
+- Examples: web apps with external auth, multiplayer games, file sync, P2P sharing.
+- Key properties: resistant to independent failures and unreliable networks; shared ownership.
+- Design goal: deliver correct, available service despite those limits.
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes the working definition of a distributed system before the lesson branches into architectures, failures, and blockchain networking. It matters here because students need a shared baseline for what counts as distributed and why these systems are hard to reason about. Emphasize that users want one coherent service even though many imperfect components are cooperating behind the scenes.
+
+**Key Points**
+- A distributed system is made of multiple nodes communicating over a network to deliver one service.
+- Independent failures, message delays, and partial visibility are normal conditions rather than edge cases.
+- The core challenge is making many moving parts feel coherent and dependable to users.
+
+**Walkthrough**
+None
+
+**Sources**
+@lamport_distributedsystems_1987; @lampson_mitocwprinciples_2002
+
+:::
+
+
+## Client–Server: Centralized Index and Control {.smaller}
+
+**Definition:** Clients request data or service from a centralized server (or cluster) that holds authority.
+
+- **Strengths:**
+  - Simple mental model
+  - Easier to govern and enforce policy
+  - Fast, centralized search and indexing
+- **Weaknesses:**
+  - Control and failure are concentrated (single point of failure)
+  - Scaling hotspots (the server can become a bottleneck)
+- **Real-world pattern:** Centralized discovery combined with direct data transfer (e.g., DNS, traditional web apps).
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes client-server architecture as the baseline centralized model against which later P2P designs are compared. It matters here because many real systems still centralize authority, indexing, or policy even when they distribute some workloads. Emphasize the tradeoff: strong control and operational simplicity in exchange for concentrated risk.
+
+**Key Points**
+- Client-server systems centralize authority, indexing, and policy enforcement in one place.
+- Centralization simplifies governance and observability but also creates bottlenecks and chokepoints.
+- Hybrid systems often keep centralized discovery even when data transfer later becomes peer-to-peer.
+
+**Walkthrough**
+None
+
+**Sources**
+@lampson_mitocwprinciples_2002; @kozinski_amrecordsinc_2001
+
+:::
+
+## Blackout at 8 PM: Can We Still Share? {.smaller}
+
+* Imagine an outage of major internet services (AWS, Google, Cloudflare, etc.).
+  - Your phone has data; your home internet works.
+  - You can't reach Google, but you ccould share a file directly with your neighbor - but how?
+
+* Can we still share without a central server?
+* What if the internet/cell service are completely down?
+
+:::: {.columns}
+::: {.column width="50%"}
+<div style="text-align:center;">
+::: {.fragment .fade-in}
+![](../images/p2p_vs_central-0.png){width="55%"}
+:::
+</div>
+:::
+::: {.column width="50%"}
+<div style="text-align:center;">
+::: {.fragment .fade-in}
+![](../images/p2p_vs_central-1.png){width="55%"}
+:::
+</div>
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the outage thought experiment that motivates peer-to-peer networking as a resilience pattern rather than a novelty. It matters here because students can immediately picture what central-service dependence feels like when the hub disappears. Emphasize that direct local communication can persist even when large centralized services fail.
+
+**Key Points**
+- P2P designs let participants communicate directly without requiring a central coordinating server for every action.
+- Resilience improves because one failed service does not automatically erase the whole network.
+- Blockchain networks are specialized P2P systems, so understanding this shift is foundational for later lessons.
+
+**Walkthrough**
+None
+
+**Sources**
+@kirk_gnutellaprotocolspecification_2004
+
+:::
+
+## Centralized vs. P2P {.smaller}
+
+> This is the core idea of a **Peer-to-Peer (P2P)** network. 
+
+* **P2P networks** have been around for decades and were central to early file-sharing systems.
+  - *ARPANet (1966)* $\rightarrow$ early packet-switched network that helped shape the *Internet*
+  - *Usenet (1979)* $\rightarrow$ early distributed discussion system widely associated with the early Internet era
+  - *DNS (1983)* $\rightarrow$ naming infrastructure, essential to the *world wide web*
+
+* They do not rely on a central server to work! 
+
+::: {.notes}
+
+**Overall Slide Concept**
+This short slide establishes peer-to-peer networking as a longstanding systems pattern rather than something invented by blockchains. It matters here because students may otherwise treat P2P as a niche or purely ideological design choice. Emphasize continuity: blockchain networking inherits and adapts older decentralized communication ideas.
+
+**Key Points**
+- P2P networks long predate blockchains and have appeared in multiple generations of networked systems.
+- The defining feature is removal of the mandatory central coordinator for normal operation.
+- This historical context helps students see blockchain as one application of a broader architecture family.
+
+**Walkthrough**
+None
+
+**Sources**
+@lamport_byzantinegeneralsproblem_1982; @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+## Centralized vs. P2P {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+<div style="text-align:center;">
+**Centralized**
+<div style="position:relative;width:100%;max-width:320px;height:220px;margin:0 auto;">
+  <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="130" y1="110" x2="55" y2="40" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="125" y2="28" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="205" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="40" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="218" y2="100" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="52" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="130" y2="192" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="208" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <circle cx="130" cy="110" r="22" fill="#22c55e" stroke="#15803d" stroke-width="4"/>
+    <circle cx="55" cy="40" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="125" cy="28" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="205" cy="42" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="40" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="218" cy="100" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="52" cy="182" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="130" cy="192" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="178" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <text x="130" y="116" text-anchor="middle" font-size="12" font-family="sans-serif" fill="#ffffff">Server</text>
+  </svg>
+
+  <svg class="fragment fade-in" data-fragment-index="1" viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="130" y1="110" x2="55" y2="40" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="125" y2="28" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="205" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="40" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="218" y2="100" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="52" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="130" y2="192" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="208" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="55" y1="40" x2="130" y2="110" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="130" y1="110" x2="208" y2="178" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="130" cy="110" r="22" fill="#22c55e" stroke="#15803d" stroke-width="4"/>
+    <circle cx="55" cy="40" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <circle cx="125" cy="28" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="205" cy="42" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="40" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="218" cy="100" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="52" cy="182" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="130" cy="192" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="178" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <text x="130" y="116" text-anchor="middle" font-size="12" font-family="sans-serif" fill="#ffffff">Server</text>
+  </svg>
+
+  <svg class="fragment fade-in" data-fragment-index="2" viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="130" y1="110" x2="55" y2="40" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="125" y2="28" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="205" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="40" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="218" y2="100" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="52" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="130" y2="192" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="208" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="55" y1="40" x2="130" y2="110" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="130" y1="110" x2="208" y2="178" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="130" cy="110" r="22" fill="#22c55e" stroke="#15803d" stroke-width="4"/>
+    <circle cx="55" cy="40" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <circle cx="125" cy="28" r="16" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+    <circle cx="205" cy="42" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="40" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="218" cy="100" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="52" cy="182" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="130" cy="192" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="178" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <text x="130" y="116" text-anchor="middle" font-size="12" font-family="sans-serif" fill="#ffffff">Server</text>
+  </svg>
+
+  <svg class="fragment fade-in" data-fragment-index="3" viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="130" y1="110" x2="55" y2="40" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="125" y2="28" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="205" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="40" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="218" y2="100" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="52" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="130" y2="192" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="130" y1="110" x2="208" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="55" y1="40" x2="130" y2="110" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+    <line x1="130" y1="110" x2="208" y2="178" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="130" cy="110" r="24" fill="#ef4444" stroke="#991b1b" stroke-width="5"/>
+    <circle cx="55" cy="40" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <circle cx="125" cy="28" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="205" cy="42" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="40" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="218" cy="100" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="52" cy="182" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="130" cy="192" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="178" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <text x="130" y="116" text-anchor="middle" font-size="12" font-family="sans-serif" fill="#ffffff">Server</text>
+  </svg>
+</div>
+</div>
+:::
+::: {.column width="50%"}
+<div style="text-align:center;">
+**Peer-to-Peer**
+<div style="position:relative;width:100%;max-width:320px;height:220px;margin:0 auto;">
+  <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="48" y1="52" x2="98" y2="38" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="98" y1="38" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="155" y1="58" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="118" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="78" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="78" y1="178" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <circle cx="48" cy="52" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="98" cy="38" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="155" cy="58" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="42" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="62" cy="112" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="118" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="198" cy="110" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="78" cy="178" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="138" cy="182" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="210" cy="170" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+  </svg>
+
+  <svg class="fragment fade-in" data-fragment-index="1" viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="48" y1="52" x2="98" y2="38" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="98" y1="38" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="155" y1="58" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="118" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="78" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="78" y1="178" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="62" y1="112" x2="78" y2="178" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="78" y1="178" x2="138" y2="182" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="138" y1="182" x2="210" y2="170" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="48" cy="52" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <circle cx="98" cy="38" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="155" cy="58" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="42" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="62" cy="112" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="118" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="198" cy="110" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="78" cy="178" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="138" cy="182" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="210" cy="170" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+  </svg>
+
+  <svg class="fragment fade-in" data-fragment-index="2" viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="48" y1="52" x2="98" y2="38" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="98" y1="38" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="155" y1="58" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="118" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="78" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="78" y1="178" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="62" y1="112" x2="78" y2="178" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="78" y1="178" x2="138" y2="182" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="138" y1="182" x2="210" y2="170" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="48" cy="52" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <circle cx="98" cy="38" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="155" cy="58" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="42" r="16" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+    <circle cx="62" cy="112" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="118" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="198" cy="110" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="78" cy="178" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="138" cy="182" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="210" cy="170" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+  </svg>
+
+  <svg class="fragment fade-in" data-fragment-index="3" viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+    <rect x="8" y="8" width="244" height="204" rx="16" fill="#fafafa" stroke="#d0d0d0" stroke-width="2"/>
+    <line x1="48" y1="52" x2="98" y2="38" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="98" y1="38" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="155" y1="58" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="118" y2="102" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="155" y2="58" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="208" y2="42" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="62" y1="112" x2="78" y2="178" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="78" y1="178" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="198" y2="110" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="138" y1="182" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="118" y1="102" x2="138" y2="182" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="198" y1="110" x2="210" y2="170" stroke="#94a3b8" stroke-width="3"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+    <line x1="62" y1="112" x2="78" y2="178" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+    <line x1="78" y1="178" x2="138" y2="182" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+    <line x1="138" y1="182" x2="210" y2="170" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+    <line x1="48" y1="52" x2="62" y2="112" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="62" y1="112" x2="118" y2="102" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="118" y1="102" x2="198" y2="110" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <line x1="198" y1="110" x2="210" y2="170" stroke="#2563eb" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="48" cy="52" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+    <circle cx="98" cy="38" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="155" cy="58" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="208" cy="42" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="62" cy="112" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="118" cy="102" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="198" cy="110" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="78" cy="178" r="14" fill="#86efac" stroke="#16a34a" stroke-width="3"/>
+    <circle cx="138" cy="182" r="16" fill="#ef4444" stroke="#991b1b" stroke-width="4"/>
+    <circle cx="210" cy="170" r="16" fill="#bbf7d0" stroke="#16a34a" stroke-width="4"/>
+  </svg>
+</div>
+</div>
+:::
+::::
+
+:::: {.callout-note appearance="simple" .fragment .fade-in data-fragment-index="3"}
+**Takeaway**
+
+P2P overlays are often less efficient than a centralized hub because messages may travel through more hops and coordination is harder. That extra complexity buys robustness: no single chokepoint controls availability, censorship, or total failure.
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This visual slide establishes the contrast between centralized and peer-to-peer structures in a way students can compare at a glance. It matters here because architecture diagrams make the resilience and chokepoint tradeoff concrete. Emphasize that P2P usually buys robustness by accepting more coordination cost and path complexity.
+
+**Key Points**
+- Centralized networks route authority and often traffic through a hub, which creates a clear failure point.
+- P2P overlays distribute communication paths across many peers instead of one central node.
+- More hops and more coordination can reduce efficiency, but they also reduce single-point dependence.
+
+**Walkthrough**
+None
+
+**Sources**
+@lampson_mitocwprinciples_2002; @vogels_eightfallaciesdistributed_1997
+
+:::
+
+## Centralized vs. Decentralized: Trade‑offs
+
+**Centralized**
+
+- Clear control and governance
+- Strong consistency and observability
+- Single point of failure and policy risk
+
+**Decentralized (P2P)**
+
+- No central chokepoint; resilient to takedown
+- Autonomy for participants; local control
+- Higher coordination cost; variable consistency
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the high-level tradeoff language between centralized and decentralized designs before the lesson moves deeper into failures and fallacies. It matters here because students need a balanced frame rather than a simplistic “decentralized is always better” story. Emphasize that architecture choice reflects values, risks, and operational constraints.
+
+**Key Points**
+- Centralized systems offer clearer governance and often stronger observability and consistency.
+- Decentralized systems reduce chokepoints but increase coordination and policy complexity.
+- The right choice depends on which risks matter most in the environment you are designing for.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997; @lampson_mitocwprinciples_2002
+
+:::
+
+
+
+
+
+
+## Why Distribute? Motivations and Risks {.smaller}
+
+**Motivations**
+
+- Scale out capacity and storage
+- Place compute near users to reduce perceived delay
+- Fault isolation and graceful degradation
+- Autonomy between teams or organizations
+
+**Risks**
+
+- Coordination complexity and new failure modes
+- Latency and bandwidth limits
+- Security, trust, and heterogeneous administration
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why engineers distribute systems in the first place and why those benefits arrive bundled with new risks. It matters here because students need to understand that distribution is usually a response to concrete pressures, not a default virtue. Emphasize that every motivation such as scale or locality brings corresponding operational complexity.
+
+**Key Points**
+- Systems are distributed to scale capacity, improve locality, isolate faults, and share control.
+- Distribution introduces coordination, visibility, and failure-handling problems that single-machine systems avoid.
+- Engineers should weigh motivations and risks together instead of assuming distribution is always the right answer.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997; @lampson_mitocwprinciples_2002
+
+:::
+
+## Distributed Failures
+
+- Node-level, service-level, and network-level failures are different in scope and impact.
+  - **Node-level** failures affect one machine or process.
+  - **Service-level** failures break a shared application or dependency used by many nodes.
+  - **Network-level** failures partition links, racks, zones, or regions and can disrupt multiple services at once.
+- Hidden external dependencies can turn a small fault into a major outage.
+- Failures may be contained with isolation, timeouts, and graceful degradation.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes failure as the normal backdrop of distributed computing rather than an exceptional event. It matters here because many later blockchain and overlay problems are really distributed-failure problems in disguise. Emphasize partial failure: some components are broken while others are still running, which is harder than all-up or all-down behavior.
+
+**Key Points**
+- Distributed systems face dropped messages, timeouts, partial outages, stale state, and split views.
+- Partial failure is especially difficult because some components appear healthy while the overall workflow is broken.
+- Timeouts, retries, bulkheads, and replication are practical tools for making failure survivable.
+
+**Walkthrough**
+None
+
+**Sources**
+@lamport_distributedsystems_1987; @lampson_mitocwprinciples_2002
+
+:::
+
+## Distributed Computing and Blockchain
+
+- Blockchains are inherently distributed systems.
+- A local-only blockchain would be little more than a personal log; the value comes from shared state across many machines.
+- Bitcoin combined distributed networking, cryptography, and incentives into a system with no central operator.
+- Understanding failure, propagation, and coordination helps us understand blockchain design constraints.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes blockchain as a specific kind of distributed system rather than a completely separate conceptual domain. It matters here because students should map networking and failure vocabulary directly onto blockchain behavior. Emphasize that shared state, propagation, and coordination constraints are part of what give blockchains their character.
+
+**Key Points**
+- Blockchains depend on many machines maintaining and propagating shared state.
+- A blockchain without distribution would lose the shared-verification property that makes it interesting.
+- Later blockchain design choices make more sense once students view them as distributed-systems responses.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997; @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Availability, MTTF, and MTTR
+
+- **Availability** ≈ (time the service is operational) ÷ (total time users need it).  
+- **MTTF (Mean Time To Failure):** average time a system runs before failing.  
+- **MTTR (Mean Time To Repair):** average time to recover and restore service after failure.  
+- To improve availability: increase **MTTF** (fail less often) and reduce **MTTR** (recover faster).  
+- Core design levers: **retry** failed operations and **replicate** critical components.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes simple availability vocabulary so students can reason about uptime in terms of failure frequency and recovery speed. It matters here because distributed-system resilience is easier to improve when the levers are named clearly. Emphasize that both fewer failures and faster recovery raise user-visible availability.
+
+**Key Points**
+- Availability reflects the fraction of relevant time a service is usable.
+- MTTF measures how long systems stay up before failing, while MTTR measures how quickly they recover.
+- Retry and replication are two practical patterns that improve these levers.
+
+**Walkthrough**
+None
+
+**Sources**
+@lampson_mitocwprinciples_2002
+
+:::
+
+
+## The Eight Fallacies {.smaller}
+
+- **What they are:** A checklist of common bad assumptions engineers make about networks in distributed systems.
+- **Why they matter:** These assumptions cause fragile designs, outages, security gaps, and poor user experience.
+- **Blockchain relevance:** Blockchains are distributed systems on hostile, unreliable networks, so each fallacy shows up in practice.
+- **Historical origin:** The fallacies were developed over time at Sun Microsystems in the 1990s, largely from internal engineering experience.
+- **Attribution note:** The first seven are often credited to L. Peter Deutsch; James Gosling is commonly credited with adding the eighth.
+
+::: {.callout-note appearance="simple"}
+Think of these as a pre-flight checklist: before trusting a design, ask which fallacies it accidentally assumes.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the eight fallacies as a compact checklist of bad assumptions that repeatedly undermine distributed designs. It matters here because the rest of the lesson uses them as a structured way to discuss real network pain points. Emphasize that these are not trivia items; they are reminders about how reality punishes naive designs.
+
+**Key Points**
+- The fallacies are recurring false assumptions about networks and distributed environments.
+- Each one maps to common outages, fragile protocols, or security mistakes.
+- Blockchain systems inherit these same pitfalls because they operate on hostile, imperfect networks too.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997; @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+
+
+## Fallacy #1: The Network Is Reliable {.smaller}
+
+- **Fallacy:** Messages will get through if we send them.
+- **Reality:** Networks drop, duplicate, reorder, and delay packets; partial failure is normal.
+- **Failure mode:** A payment API call times out after server-side success, and the client assumes failure.
+- **Design response:** Use timeouts, retries with backoff, and idempotent operations with request IDs.
+- **Blockchain lens:** Transaction and block propagation is best-effort, not guaranteed.
+
+::: {.callout-note appearance="simple"}
+Where would we see this in Bitcoin or Ethereum propagation behavior?
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes reliability as the first false assumption engineers often make about networks. It matters here because retries, idempotency, and propagation behavior all depend on accepting that messages can fail. Emphasize that best-effort transport is not the same as guaranteed delivery.
+
+**Key Points**
+- Messages can be dropped, duplicated, reordered, or delayed in normal operation.
+- Idempotent operations make retries safe when clients are unsure whether the first attempt succeeded.
+- Blockchain propagation is also best-effort, which is why nodes can have temporarily different views.
+
+**Walkthrough**
+None
+
+**Sources**
+@lampson_mitocwprinciples_2002; @vogels_eightfallaciesdistributed_1997
+
+:::
+
+## Fallacy #2: Latency Is Zero {.smaller}
+
+- **Fallacy:** Distance and round trips are negligible.
+- **Reality:** Latency is unavoidable and accumulates across protocol steps.
+- **Failure mode:** A chatty protocol with multiple back-and-forth exchanges causes visible user lag.
+- **Design response:** Reduce round trips, batch requests, cache reads, and colocate tightly coupled services.
+- **Blockchain lens:** Propagation delay affects mempool view, confirmation speed, and fork creation.
+
+::: {.callout-note appearance="simple"}
+What user-facing blockchain behaviors are really latency artifacts?
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes latency as a design constraint that accumulates across protocol chatter. It matters here because many slow systems are slow from round trips, not from raw CPU work. Emphasize that cutting protocol steps often matters more than shaving milliseconds from one hop.
+
+**Key Points**
+- Distance and round trips create unavoidable delay in distributed interactions.
+- Chatty protocols feel slow even on reasonably fast networks because latency stacks.
+- Batching, caching, and fewer exchanges are common design responses.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997; @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Fallacy #3: Bandwidth Is Infinite {.smaller}
+
+- **Fallacy:** We can broadcast freely without cost or congestion.
+- **Reality:** Throughput is finite, shared, and uneven across participants.
+- **Failure mode:** Flooding queries or large payload gossip saturates links and starves useful traffic.
+- **Design response:** Compress data, cap message size, deduplicate inventory, and avoid blind broadcast.
+- **Blockchain lens:** Bigger or more frequent messages disadvantage low-bandwidth nodes and strain decentralization, many blockchain efforts to minimize amount of data transmitted.
+
+::: {.callout-note appearance="simple"}
+How can bandwidth pressure quietly centralize a network?
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes bandwidth as a finite shared resource that can quietly shape system behavior and even governance. It matters here because flooding and oversized payloads are classic failure patterns in decentralized networks. Emphasize that bandwidth pressure can exclude weaker participants and push systems toward centralization.
+
+**Key Points**
+- Throughput is limited and shared, so noisy protocols can crowd out useful work.
+- Broadcast-heavy designs can saturate links long before CPU limits are reached.
+- Smaller operators are hurt first by bandwidth pressure, which can reduce participation diversity.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997; @lampson_mitocwprinciples_2002
+
+:::
+
+## Fallacy #4: The Network Is Secure {.smaller}
+
+- **Fallacy:** Peers and links are trustworthy by default.
+- **Reality:** Networks are adversarial; spoofing, eclipse attempts, and malicious peers exist.
+- **Failure mode:** A node accepts biased peer data and gets a distorted view of the network.
+- **Design response:** Authenticate data, diversify peers, validate independently, and enforce rate limits.
+- **Blockchain lens:** Signatures protect authenticity, but not peer honesty or availability; public blockchains must handle malicious nodes and network connections.
+
+::: {.callout-note appearance="simple"}
+What attacks remain possible even with strong cryptographic signatures?
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes security as a network assumption that must be earned, not presumed. It matters here because signatures protect message authenticity but do not stop malicious peers from manipulating topology, timing, or availability. Emphasize that untrusted peers are part of the system model, not an anomaly.
+
+**Key Points**
+- Networks contain spoofing, eclipse, and manipulation risks even when data objects are signed.
+- Peer honesty, connectivity diversity, and validation discipline all matter.
+- Strong cryptography does not eliminate operational attacks on availability or view distortion.
+
+**Walkthrough**
+None
+
+**Sources**
+@kozinski_amrecordsinc_2001
+
+:::
+
+
+
+## Fallacy #5: Topology Doesn't Change {.smaller}
+
+- **Fallacy:** Node membership and paths stay stable.
+- **Reality:** Churn is constant; nodes join, leave, reboot, and move.
+- **Failure mode:** Static peer assumptions cause partitions or stalled gossip during churn events.
+- **Design response:** Continuous peer discovery, health-based eviction, and resilient rebroadcast policies.
+- **Blockchain lens:** Gossip and peer discovery have to tolerate constant churn - nodes are always leaving or joining the network.
+
+::: {.callout-note appearance="simple"}
+What breaks if your design assumes a stable peer list?
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes churn and changing membership as normal properties of distributed overlays. It matters here because stale assumptions about peers or routes can quickly break service or propagation. Emphasize that robust systems continuously rediscover and reevaluate their neighbors.
+
+**Key Points**
+- Nodes join, leave, reboot, move, and reconnect constantly.
+- Static peer assumptions create partitions, stale routing, and fragile gossip behavior.
+- Discovery, health checks, and rebroadcast strategies are part of normal network maintenance.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997
+
+:::
+
+
+## Fallacy #6: There Is One Administrator {.smaller}
+
+- **Fallacy:** One authority controls policy, upgrades, and operations.
+- **Reality:** Real systems span teams and organizations with different incentives, timelines, and governance.
+- **Failure mode:** Incompatible upgrades or policy divergence split behavior across clients or operators.
+- **Design response:** Version negotiation, staged rollouts, explicit governance, and backward compatibility windows.
+- **Blockchain lens:** Permissionless/public networks coordinate upgrades without a single administrator.
+
+::: {.callout-note appearance="simple"}
+Who gets to decide protocol changes in a decentralized network?
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes multi-admin reality as a governance and rollout problem, not just a social inconvenience. It matters here because decentralized and federated systems rarely have one person or team in charge of upgrades. Emphasize that version negotiation and backward compatibility are technical responses to human coordination limits.
+
+**Key Points**
+- Different operators may upgrade at different times or follow different policies.
+- Protocol changes therefore need staging, negotiation, and compatibility windows.
+- Public blockchains make this visible because no single administrator can force instant convergence.
+
+**Walkthrough**
+None
+
+**Sources**
+@kirk_gnutellaprotocolspecification_2004; @ripeanu_mappinggnutellanetwork_2002
+
+:::
+
+
+## Fallacy #7: Transport Cost Is Zero {.smaller}
+
+- **Fallacy:** Moving data has negligible monetary and resource cost.
+- **Reality:** Egress, relay, storage, and compute costs shape architecture viability.
+- **Failure mode:** High relay or egress burden pushes smaller operators offline, reducing decentralization.
+- **Design response:** Efficient relay protocols, pruning or light modes, and incentive-aware resource budgeting.
+- **Blockchain lens:** Node operating cost directly affects participation and diversity.
+
+::: {.callout-note appearance="simple"}
+Who pays for "free" decentralization in practice?
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes transport cost as a real economic constraint that shapes who can participate in a network. It matters here because decentralization is easier to advocate than to fund. Emphasize that relay, storage, and bandwidth costs influence architecture and can centralize systems if ignored.
+
+**Key Points**
+- Moving and storing data consumes money, bandwidth, and operator time.
+- High relay or hosting costs can push out smaller participants.
+- Efficient protocols are not only faster; they also support healthier participation diversity.
+
+**Walkthrough**
+None
+
+**Sources**
+@kirk_gnutellaprotocolspecification_2004; @ripeanu_mappinggnutellanetwork_2002
+
+:::
+
+
+## Fallacy #8: The Network Is Homogeneous {.smaller}
+
+- **Fallacy:** All nodes run similar hardware, software, and links.
+- **Reality:** Heterogeneity is the norm across clients, OSes, devices, and connection quality.
+- **Failure mode:** Assumptions tied to one stack cause interoperability bugs and uneven behavior.
+- **Design response:** Protocol conformance testing, feature negotiation, and graceful fallback paths.
+- **Blockchain lens:** There is no oversight on who can join, and that means making no assumptions about the devices connecting; multi-client diversity improves resilience but increases compatibility burden.
+
+::: {.callout-note appearance="simple"}
+When does client diversity increase safety, and when does it increase risk?
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes heterogeneity as the norm across devices, clients, software versions, and links. It matters here because assumptions tied to one stack often create silent interoperability failures. Emphasize that diversity can improve resilience but only if protocols tolerate differences gracefully.
+
+**Key Points**
+- Real networks include mixed hardware, software versions, operating systems, and connection qualities.
+- Feature negotiation and conformance testing help mixed environments interoperate.
+- Client diversity can reduce monoculture risk while increasing compatibility burden.
+
+**Walkthrough**
+None
+
+**Sources**
+@nakamoto_bitcoinpeertopeerelectronic_2008; @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+
+## The Eight Fallacies of Distributed Computing {.smaller}
+
+- The transport network is reliable.
+- Latency is zero.
+- Bandwidth is infinite.
+- The system network is secure.
+- Topology doesn’t change.
+- There is one administrator.
+- Transport cost is zero.
+- The network is homogeneous.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the eight fallacies as one consolidated engineering checklist students can carry into later lessons and projects. It matters here because the individual examples are easier to remember once they are gathered into one mental model. Emphasize the habit: ask which fallacies a design is accidentally assuming before trusting it.
+
+**Key Points**
+- The list summarizes common wrong assumptions about reliability, latency, cost, trust, and coordination.
+- Each fallacy points toward specific mitigations like retries, authentication, or graceful fallback.
+- The checklist is a practical design guardrail, not just a historical artifact.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogels_eightfallaciesdistributed_1997
+
+:::
+
+
+
+
+
+
+
+## Case Study: Napster {.smaller}
+
+:::: {.columns}
+::: {.column width="225px"}
+![](../images/napster_logo.png){width="200px" align="center"}
+:::
+::: {.column}
+
+  **Napster** was an early 2000s P2P file-sharing network that caused significant controversy by enabling widespread music piracy.
+
+Famously shut down in 2001 after a court ruling found it liable for contributory copyright infringement.
+:::
+:::: 
+
+
+  
+* Napster's network featured a hybrid P2P model consisting of:
+  - *centralized index:* users register file metadata with Napster’s servers.
+  - *Peer-to-peer transfer:* actual files move directly between users.
+  - *Result:* fast search, but central control and a central point of failure.
+
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Napster as a hybrid architecture case study where centralized discovery and peer-to-peer transfer were combined for performance and usability. It matters here because it shows that real systems often mix architectural ideas instead of choosing one pure model. Emphasize that central indexing delivered fast search but also created legal and technical choke points.
+
+**Key Points**
+- Napster centralized metadata and search while letting peers transfer the actual files directly.
+- The design gained fast discovery but kept a vulnerable central point of control and failure.
+- Hybrid systems often inherit both the strengths and weaknesses of their centralized components.
+
+**Walkthrough**
+None
+
+**Sources**
+@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024; @decker_informationpropagationbitcoin_2013
+
+:::
+
+## Case Study: Gnutella & "Flooding" {.smaller .nostretch}
+
+![](../images/gnutella-logo-transparent.png){width="200px" align="center"}
+
+  : An early P2P file-sharing network that showed the pros and cons of an unstructured, "flooding" design.
+
+::: {.r-stack}
+::: {.fragment .fade-in-then-out}
+
+#### How Gnutella Worked:
+1.  **Join:** A new peer (a "servent") connects to one or more known peers.
+2.  **Search:** To find a file, the peer sends a `Query` message to all its neighbors.
+3.  **Flood:** Those neighbors send the `Query` to *their* neighbors, and so on. A "Time-to-Live" (TTL) counter stops the flood from going on forever.
+4.  **Respond:** If a peer has the file, it sends a `QueryHit` (a "Here it is!") message *back along the same path* the query came from.
+
+
+:::
+
+::: {.fragment .fade-up}
+#### Problems:
+
+* **Massive Traffic:** A single query could create a "broadcast storm," flooding the network with duplicate messages.
+* **Poor Scaling:** The network couldn't grow large without being overwhelmed by search traffic.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Gnutella as the contrasting fully decentralized response to Napster’s central chokepoint. It matters here because students can compare resilience gains against the cost of naive flooding-based discovery. Emphasize that removing the index did not remove complexity; it redistributed it into the network.
+
+**Key Points**
+- Gnutella removed the central index and let peers flood search requests through the overlay.
+- This avoided one central takedown target but created major bandwidth and efficiency problems.
+- Decentralization can solve authority concentration while introducing scaling pain elsewhere.
+
+**Walkthrough**
+None
+
+**Sources**
+@setiathomeproject_setihome_2020; @anderson_boincplatformvolunteer_2020
+
+:::
+
+
+## Gnutella's Fix: Supernodes & "Smart Flooding" {.smaller}
+
+To solve its scaling problem, Gnutella 0.6 created a two-level hierarchy. This idea is central to how blockchains work today.
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**The Gnutella 0.6 Model**
+
+* **Supernodes (or "Ultrapeers"):** Peers with good bandwidth and uptime. They acted as powerful hubs, indexing the files of all the weaker peers connected to them.
+* **Leaf Nodes:** Regular users (like on a home PC). They would connect *only* to a Supernode and send their searches *only* to that Supernode.
+
+:::
+
+::: {.column width="50%"}
+
+**The "Smart Flood"**
+
+1.  A Leaf Node sends a query to its Supernode.
+2.  The Supernode checks its *own* index of files from all its *other* leaves.
+3.  If no match is found, the Supernode *only* floods the query to *other Supernodes*.
+
+This was a huge improvement. It stopped millions of weak leaf nodes from participating in the network-clogging flood.
+
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes supernodes and smarter forwarding as engineering responses to the inefficiency of blind flooding. It matters here because it shows decentralized networks evolving structure when raw peer equality proves too costly. Emphasize that these optimizations trade some purity for better scalability.
+
+**Key Points**
+- Supernodes reduce flooding overhead by concentrating some relay and indexing work in stronger peers.
+- Smarter forwarding directs traffic more selectively than blind broadcast.
+- Overlay designs often evolve toward partial hierarchy when efficiency becomes critical.
+
+**Walkthrough**
+None
+
+**Sources**
+@boincproject_howboincworks_2023; @anderson_boincplatformvolunteer_2020
+
+:::
+
+
+## The Blockchain Link {.smaller}
+
+This two-tier model from gnutella is the direct ancestor of modern blockchains.
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**Supernode** $\rightarrow$ **Full Node**
+
+* A powerful, always-on computer.
+* Downloads and validates *every transaction* and *every block*.
+* Acts as a hub for the network, serving data to weaker peers.
+
+:::
+
+::: {.column width="50%"}
+
+**Leaf Node** $\rightarrow$ **Light Client**
+
+* Your mobile phone wallet or hardware wallet.
+* Doesn't download the whole blockchain.
+* Connects to a trusted Full Node to query network
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the explicit bridge from historical distributed-systems cases to blockchain networking. It matters here because students should see that blockchain did not invent networking problems; it inherits and reinterprets them. Emphasize that decentralization, propagation, and adversarial peers are old systems themes in a new trust setting.
+
+**Key Points**
+- Blockchain networking sits inside the broader history of distributed overlays and P2P systems.
+- Earlier systems teach lessons about discovery, propagation, bottlenecks, and operator incentives.
+- The main blockchain difference is the combination of networking with cryptography and consensus.
+
+**Walkthrough**
+None
+
+**Sources**
+@baset_analysisskypepeertopeer_2006
+
+:::
+
+## Gossip in a Blockchain Network {.smaller}
+
+- In many blockchains, this two-tier network uses **gossip** to spread new information.
+- When you send a transaction, your node does not flood the whole network at once.
+- It forwards the transaction to a small set of peers, who validate it and relay it onward if it is new.
+- This is a controlled flood built for spreading new transactions and blocks quickly across a changing network.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes gossip as the practical dissemination pattern many blockchain systems use instead of global broadcast. It matters here because propagation behavior influences latency, mempool views, and fork risk. Emphasize that gossip is probabilistic and redundant by design, not perfectly synchronized delivery.
+
+**Key Points**
+- Gossip spreads messages gradually through peer forwarding rather than one all-knowing broadcast.
+- Redundancy helps robustness but also creates propagation delay and bandwidth cost.
+- Different nodes can temporarily disagree simply because they heard about events at different times.
+
+**Walkthrough**
+None
+
+**Sources**
+@nakamoto_bitcoinpeertopeerelectronic_2008; @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+
+## Scientific Applications 
+
+![](../images/SETI_at_home_logo.png){width="200px" align="center"}
+
+### SETI@home’s "Screensaver Supercomputer"
+
+- Millions of volunteers lent idle CPU time to analyze radio telescope data to aid SETI in its search of extraterrestrial intelligence. 
+- Work units were distributed; results validated redundantly to detect errors and cheating.
+- Showed how P2P/volunteer computing can reach supercomputer‑scale.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that distributed-system ideas matter well beyond file sharing and blockchains by pointing to scientific computing. It matters here because the lesson wants students to recognize the generality of these architectures. Emphasize workload sharing, resilience, and coordination across many independent participants.
+
+**Key Points**
+- Scientific distributed systems use many machines to process large tasks cooperatively.
+- They illustrate the same coordination and failure issues seen in other distributed domains.
+- Domain changes, but the underlying systems questions remain similar.
+
+**Walkthrough**
+None
+
+**Sources**
+@lamport_distributedsystems_1987; @vogels_eightfallaciesdistributed_1997; @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+## Volunteer Computing Pipeline: BOINC
+
+- Generalized platform:
+fetch work → compute → upload results → validate → credit
+
+- Redundancy and quorum rules detect errors and malicious results.
+- Widely used beyond SETI for science projects.
+
+
+::: {.callout-note appearance="simple"}
+BOINC: Berkeley Open Infrastructure for Network Computing.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes BOINC as a concrete volunteer-computing pipeline where coordination, task assignment, and result validation matter. It matters here because it gives students a non-blockchain example of large-scale distributed participation by heterogeneous nodes. Emphasize how central coordination and distributed execution can coexist.
+
+**Key Points**
+- BOINC coordinates tasks centrally while using many volunteer machines for execution.
+- Heterogeneity and trust require validation and careful task packaging.
+- This is another example of mixing centralized orchestration with distributed work.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+## Communications Application: Skype’s P2P Telephony
+
+- Early Skype used supernodes and end‑to‑end encrypted P2P paths.
+- Login/authentication used central servers; after login, a supernode P2P overlay provided directory lookups, signaling, and NAT traversal via relays when needed.
+- Demonstrated P2P for real‑time voice at global scale.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Skype’s historical P2P telephony design as an example where real-time communication constraints shaped overlay choices. It matters here because low latency and NAT traversal pressure produce different networking decisions than file sharing. Emphasize that application goals strongly influence overlay architecture.
+
+**Key Points**
+- Real-time voice traffic demands low-latency coordination and resilient peer connectivity.
+- Skype’s design showed that P2P ideas could support mainstream communication, not just file sharing.
+- Different application requirements expose different distributed-systems bottlenecks.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+## Finance Application: Bitcoin’s P2P Idea
+
+- **Goal:** electronic cash directly between peers without a trusted intermediary.
+- **Network:** nodes broadcast transactions and blocks over a P2P overlay.
+
+- We defer consensus and ledger internals to later lectures.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Bitcoin as a P2P idea applied to financial state rather than to files or voice traffic. It matters here because the course is now bringing the distributed-systems vocabulary back to its main blockchain focus. Emphasize that Bitcoin’s novelty lies in combining old networking ideas with cryptographic validation and incentives.
+
+**Key Points**
+- Bitcoin uses peer-to-peer networking to propagate transactions and blocks without a central server.
+- The network’s design must cope with latency, churn, adversarial peers, and inconsistent views.
+- Distributed-systems thinking is therefore essential to understanding blockchain behavior.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+
+
+
+## Summary
+
+- What distributed systems are
+- Client–server vs. P2P
+- Centralized vs. decentralized trade-offs
+- The fallacies
+- Resilience patterns: retries, replication, graceful degradation
+- Historical applications (Napster, Gnutella, SETI@home/BOINC, Skype, Bitcoin)
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This closing slide establishes the full lesson thread from architecture choices to failure models to case studies and blockchain relevance. It matters here because later distributed-systems lessons will build on this vocabulary rather than redefining it. Emphasize that architecture, propagation, and failure assumptions shape what decentralized systems can actually achieve.
+
+**Key Points**
+- Distributed systems are about making many imperfect parts feel like one dependable service.
+- Centralized and P2P designs trade control, efficiency, resilience, and governance in different ways.
+- Blockchain networking is best understood as distributed-systems engineering under adversarial conditions.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+## References

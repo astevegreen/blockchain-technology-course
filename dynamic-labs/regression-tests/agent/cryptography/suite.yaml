@@ -1,0 +1,71 @@
+version: 1
+suite_id: cryptography-agent-regression
+lab: cryptography
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/cryptography/README.md
+assumptions:
+  - MCP browser tooling is available.
+  - The Cryptography automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  instructor_credentials_file: .runtime/instructor-credentials.txt
+observability:
+  required:
+    - console_logs
+    - network_failures
+  suggested_mcp_methods:
+    - get_console_logs
+    - get_network_digest
+    - get_network_traffic
+shared_rules:
+  - Use a fresh browser context per task.
+  - Keep student and instructor cookies in separate contexts.
+  - When switching roles, discard the old browser context and create a fresh session for the new role.
+  - Prefer visible Streamlit controls over direct URL edits once the app is loaded.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+  - Run at least one real command through the on-page terminal widget in each student task that covers a module.
+  - Record command-text drift explicitly when the page instructions and actual command behavior disagree.
+parallelization:
+  recommended:
+    - Run the instructor task in parallel with any student task.
+    - Student tasks can run in parallel because Cryptography is sticky-session based, not claim-limited.
+  cleanup:
+    - No claim cleanup is required after the suite.
+tasks:
+  - id: crypto-student-landing-app
+    title: Student landing and app shell
+    file: tasks/student-landing-app.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/cryptography/
+      - /labs/cryptography/app/
+    parallel_safe: true
+  - id: crypto-student-scenarios
+    title: Student scenario commands and navigation
+    file: tasks/student-scenario-commands.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/cryptography/
+      - /labs/cryptography/app/
+    parallel_safe: true
+  - id: crypto-instructor-auth-surfaces
+    title: Instructor admin and guide
+    file: tasks/instructor-auth-surfaces.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /instructor/
+      - /labs/cryptography/admin
+      - /labs/cryptography/instructor/
+      - /api/cryptography/instructor-guide
+      - /labs/cryptography/instructor/lab02_crypto_overview.qmd
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
+  - The suite is complete only when student landing, module navigation, on-page commands, and instructor surfaces have all been checked.

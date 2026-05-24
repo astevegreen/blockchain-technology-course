@@ -1,0 +1,77 @@
+version: 1
+suite_id: quiz-engine-agent-regression
+lab: quiz-engine
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/quiz-engine/README.md
+assumptions:
+  - MCP browser tooling is available.
+  - The Quiz Engine v2 automated suite has already run against the same live environment.
+  - The automated suite has already seeded the deterministic v2 regression quiz.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  instructor_credentials_file: .runtime/instructor-credentials.txt
+observability:
+  required:
+    - console_logs
+    - network_failures
+  suggested_mcp_methods:
+    - get_console_logs
+    - get_network_digest
+    - get_network_traffic
+shared_rules:
+  - Use a fresh browser context per task.
+  - Keep student and instructor cookies in separate contexts.
+  - When switching roles, discard the old browser context and create a fresh session for the new role.
+  - Prefer visible form entry and visible quiz controls over URL surgery once the page is loaded.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+parallelization:
+  recommended:
+    - Run the instructor task in parallel with either student task.
+    - Do not run two student quiz-taking tasks against the same fresh browser context.
+tasks:
+  - id: quiz-student-entry
+    title: Public home, identifier issue, and identifier sign-in
+    file: tasks/student-entry.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /quiz/
+      - /quiz/student/
+      - /quiz/student/enroll
+      - /quiz/student/quizzes
+    parallel_safe: true
+  - id: quiz-student-quiz-flow
+    title: Student v2 quiz and results flow
+    file: tasks/student-quiz-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /quiz/
+      - /quiz/student/quizzes
+      - /quiz/student/attempts/<attempt-id>
+      - /quiz/student/attempts/<attempt-id>/results
+    parallel_safe: true
+  - id: quiz-instructor-surfaces
+    title: Instructor dashboard, management surfaces, and CSRF
+    file: tasks/instructor-surfaces.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /instructor/
+      - /quiz/instructor
+      - /quiz/instructor/ingest
+      - /quiz/instructor/banks
+      - /quiz/instructor/questions
+      - /quiz/instructor/templates
+      - /quiz/instructor/quiz-versions
+      - /quiz/instructor/grading
+      - /quiz/instructor/metrics
+      - /quiz/instructor/exports
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
+  - The suite is complete only when student entry, live quiz-taking, result visibility, instructor surfaces, and CSRF-protected form behavior have all been checked.

@@ -1,0 +1,838 @@
+---
+title: "Trust and Distributed Systems: Foundations for Blockchain"
+subtitle: 'Section I: Introduction'
+author: Army Cyber Institute
+lesson: 05-IN
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 3
+aci-mermaid: true
+---
+
+
+## Opening Exercise: The Insider {.smaller}
+
+**Scenario:** You are a group that shares a sensitive secret. However, an "Insider" has infiltrated your ranks. You must identify them before they figure out the secret.
+
+**The Rules:**
+
+1.  **The Secret:** 6 of you will receive the exact same Secret Word. 1 of you will receive a blank card that says: *You are the Insider*.
+2.  **The Broadcast:** Go around the circle. Each person must say exactly **one word** related to the Secret Word to prove to the group that they are in on it.
+    *   *Strategy:* Be specific enough to prove you know the secret, but vague enough that the Insider can't guess it!
+3.  **Consensus:** After everyone has spoken, count to three and point at the person you believe is the Insider. 
+4.  **Resolution:** If the group votes out the Insider, the group is safe! If the group votes out an honest member, or if the Insider successfully guesses the Secret Word, the Insider wins!
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening exercise establishes the emotional and practical feel of distributed coordination under uncertainty before any formal terminology appears. It matters here because students will understand later fault and consensus concepts better if they have already experienced the social version of an insider problem. Emphasize that the exercise is a live model of mutual suspicion, imperfect information, and group decision-making under risk.
+
+**Key Points**
+- The insider game turns trust and deception into a concrete classroom experience before the theory is introduced.
+- Students should feel the tension between being informative enough to prove membership and vague enough not to help the adversary.
+- Consensus here means the group's shared judgment about who the insider is after incomplete, peer-to-peer communication.
+
+**Walkthrough**
+1. Explain the secret-word and insider roles.
+2. Have participants give one-word clues and then vote on the suspected insider.
+3. Use the debrief to connect the game to malicious actors and agreement in distributed systems.
+
+**Sources**
+None
+
+:::
+
+## Exercise (Digital Version)
+
+<div align="center" style="text-align:center;">
+[blockchain-6dd63ebf.training-as-code.com/exercises/insider/](https://blockchain-6dd63ebf.training-as-code.com/exercises/insider/)
+
+{{< rrqr https://blockchain-6dd63ebf.training-as-code.com/exercises/insider/ >}}
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the digital version of the insider exercise as an optional or alternate delivery mechanism. It matters here because the lesson's opening dynamic should still be usable when the class is remote, device-enabled, or short on time. Emphasize that the digital version serves the same conceptual purpose as the in-person exercise.
+
+**Key Points**
+- The link provides a digital equivalent of the insider exercise for classroom use.
+- It preserves the same trust and deception dynamic even when the activity is run on devices.
+- The tool is supplemental to the lesson rather than a separate concept to master.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+## Trust {.smaller}
+
+- **Two‑party trust (A ↔ B):** At human scale, trust is an expectation that the other party will behave as promised; in security engineering, this becomes an *assumption* the system relies on about an entity’s behavior under stated conditions. 
+- **Introducing a third party (A ↔ TTP ↔ B):** A *trusted third party* (e.g., broker, auditor, or certification authority) vouches for identity/attributes so A and B don’t need direct verification
+- **Trade‑offs:** Third parties can reduce bilateral friction but create **transitive trust** and potential single points of failure; the path‑validation algorithm and trust‑anchor model formalize how that trust is established and verified. 
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes trust as an engineering dependency rather than a vague human sentiment. It matters here because the rest of the lesson will repeatedly ask where trust sits in a system and what happens when that trust is misplaced or compromised. Emphasize that introducing a trusted third party can reduce friction while also widening the failure domain.
+
+**Key Points**
+- In security engineering, trust means a system depends on some entity behaving correctly under stated conditions.
+- Trusted third party, or TTP, means an external actor such as a broker, auditor, or certificate authority that others rely on.
+- Transitive trust means trusting one relationship because it is vouched for by another trusted entity.
+
+**Walkthrough**
+None
+
+**Sources**
+- @l35_helium_hotspot_app_2026
+- @ipfs_docs_2025
+- @l35_hivemapper_map_products_2025
+- @l35_mastodon_network_features_2026
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## What is “trust” in digital systems? {.smaller }
+
+- *Trust* is the **set of explicit assumptions and dependencies** about an entity that a system’s security properties rely on.
+
+- **Where trust “lives” in practice:** 
+  - **Centralized Trust:** Concentrated in a one or more third-parties (e.g., a bank or Certificate Authority). The system's security relies entirely on the trusted entities behaving correctly. If compromised, the entire system fails.
+  - **Distributed Trust:** Spread across multiple participants and mechanisms. Instead of trusting one entity, trust is relocated to cryptography, consensus algorithms, and economic incentives, assuming that a majority of the network will act honestly.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the core distinction between centralized and distributed trust in digital systems. It matters here because blockchain will later be framed not as trustless, but as a system that relocates trust from institutions to mechanisms. Emphasize that the real analytical question is where the dependency sits and how failure propagates from there.
+
+**Key Points**
+- Centralized trust places critical dependence in one or a small number of authorities.
+- Distributed trust shifts that dependence toward cryptography, consensus rules, and broader participant behavior.
+- The phrase trustless is misleading; blockchains still rely on explicit trust assumptions, just in different places.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+
+## Centralized vs. Distributed Architectures {.smaller}
+
+::: {.column width="50%"}
+- **Centralized Architecture**
+  - **Control:** A single authority dictates system state and coordinates all work.
+  - **Complexity:** Simpler to design, update, monitor, and maintain.
+  - **Trust Model:** Users must place implicit, complete trust in the central hub.
+  - **Vulnerability:** Creates a single point of failure (both technical and administrative) that can compromise the entire service.
+
+:::
+
+::: {.column width="50%"}
+- **Distributed Architecture**
+  - **Control:** Shared responsibility among many peer nodes without a central hub.
+  - **Complexity:** Highly complex to coordinate, synchronize state, and test under load.
+  - **Trust Model:** Trust is shifted from a central hub to cryptographic proofs and consensus rules.
+  - **Vulnerability:** Highly resilient to individual node failures, but susceptible to coordination breakdowns or network partitions.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes architecture as a trust decision as much as an engineering one. It matters here because students need to see that centralization and distribution are not just performance choices; they define control, resilience, and failure modes. Emphasize that simpler centralized coordination buys speed while distributed design buys resilience at the cost of complexity.
+
+**Key Points**
+- Centralized systems are easier to coordinate but create concentrated trust and failure points.
+- Distributed systems spread control and resilience, but they make synchronization and diagnosis harder.
+- Architecture determines what users must trust and what kinds of attacks or failures matter most.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+## Everyday Examples of Distributed Systems {.smaller} 
+
+- **Helium (IoT Network):** 
+  - A decentralized wireless network built by individuals deploying hotspots in their homes to provide connectivity over unlicensed radio frequencies (e.g., 915 MHz in the US).
+- **InterPlanetary File System (IPFS):** 
+  - A peer-to-peer network for storing and sharing data. Files are found by their cryptographic hash rather than a centralized server location.
+- **Hivemapper:** 
+  - A decentralized, community-owned mapping network where contributors use dashcams to collect imagery and update a global map.
+- **The Fediverse (e.g., Mastodon):** 
+  - An ensemble of federated social networks where independent servers communicate with each other, eliminating reliance on a single corporate platform.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that distributed systems are not rare abstractions; they already shape physical infrastructure, file sharing, mapping, and social networks. It matters here because students should see blockchain as part of a wider family of coordination designs rather than as a one-off anomaly. Emphasize that these systems distribute not only computation, but often control, ownership, or participation.
+
+**Key Points**
+- Helium, IPFS, Hivemapper, and the Fediverse each show different ways to coordinate without one central operator.
+- DePIN means decentralized physical infrastructure networks built from distributed hardware contributions.
+- A shared protocol can produce one user experience even when many independent machines or communities participate.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+## Why Suspicion Matters
+
+- **The Reality of Distributed Trust:** Unlike centralized systems with a single trusted referee, distributed systems span multiple participants where perfect trust cannot be guaranteed.
+- **Accident vs. Adversary:** A node might fail due to a benign hardware crash (accidental), or it might actively lie and attempt to subvert the network (malicious).
+- **Mutual Suspicion:** The core design principle that every participant must operate as if others may be faulty or hostile. The system must be engineered to coordinate and reach consensus *despite* this distrust.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes mutual suspicion as the default design posture for distributed systems. It matters here because consensus and fault tolerance only become necessary once students assume that some participants may fail, lie, or act against the group's interests. Emphasize that suspicion is not paranoia; it is an engineering assumption about uncertainty and adversarial behavior.
+
+**Key Points**
+- Distributed systems lack one fully trusted referee, so they must be designed under imperfect trust.
+- Nodes may fail accidentally or maliciously, and protocols must survive both possibilities.
+- Mutual suspicion means each participant verifies rather than assumes the correctness of others.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+
+## Suspicion In Practice {.smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+- **Hardware & Network Glitches:** A faulty router might arbitrarily drop or misroute packets, creating inconsistent views of the network's state.
+- **Data Corruption:** A degraded database replica might unknowingly serve different, conflicting answers to different clients querying the same record.
+- **Malicious Insiders:** A compromised node in a coalition system might deliberately alter intelligence data before forwarding it to allied peers.
+- **The Takeaway:** Mutual suspicion requires engineering systems that survive both benign accidents and deliberate attacks, often without needing to differentiate between the two.
+:::
+
+::: {.column width="40%"}
+```{dot}
+//| fig-width: 4
+//| fig-height: 4
+graph G {
+    layout=neato
+    overlap=false
+    sep="+25"
+    splines=true
+    node [shape=circle, style=filled, fontname="Helvetica", width=0.4, label=""]
+    edge [color="#cccccc"]
+    bgcolor="transparent";
+
+    // Healthy Nodes
+    node [fillcolor="#c1e1c1", stroke="#77af77"]
+    n1 -- n2; n1 -- n3; n1 -- n5;
+    n2 -- n4; n2 -- n6;
+    n3 -- n4; n3 -- n7;
+    n4 -- n5; n5 -- n6;
+    n6 -- n7; n7 -- n1;
+
+    // Suspicious/Red Nodes
+    node [fillcolor="#f9d0c4", color="#e06666", penwidth=2]
+    bad1 [label="!"]
+    bad2 [label="?"]
+
+    // Connecting the bad nodes to the mesh
+    bad1 -- n2;
+    bad1 -- n4;
+    bad2 -- n5;
+    bad2 -- n7;
+    bad1 -- bad2 [style=dashed, color="#e06666"];
+}
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what mutual suspicion looks like in operational reality. It matters here because students need to translate the abstract idea of distrust into concrete issues such as packet loss, corruption, and malicious insiders. Emphasize that from the system's perspective, bad information is dangerous whether it comes from accident or attack.
+
+**Key Points**
+- Hardware glitches, corrupted replicas, and compromised insiders can all create conflicting system views.
+- Distributed systems must often survive the same observable behavior whether the cause is benign or malicious.
+- Verification and redundancy are needed because intent is usually hidden from the receiving node.
+
+**Walkthrough**
+1. Point to the healthy nodes and explain that they represent ordinary participants in the network.
+2. Highlight the suspicious nodes to show that some participants may inject bad or conflicting information.
+3. Conclude that the system has to continue functioning without first knowing which failures are accidental and which are hostile.
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+
+
+## Crash Faults
+
+- **The Failure:** A node suddenly and completely stops responding, going "dark" without sending any further messages.
+- **Common Causes:** Benign hardware failures (like a power supply death), software panics, or deliberate denial-of-service attacks.
+- **Detection & Recovery:** Relatively easy to detect because silence is a clear indicator of failure. Systems recover using simple redundancy, such as failing over to a hot standby or routing traffic to another replica.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes crash faults as the simplest failure model in distributed systems. It matters here because students should understand the baseline case before moving to more subtle or adversarial faults. Emphasize that silence is usually easier to detect than deception, even though it still requires redundancy and failover planning.
+
+**Key Points**
+- A crash fault means the node stops responding entirely and contributes no further messages.
+- Timeouts and failover mechanisms make crash faults comparatively straightforward to handle.
+- Redundancy means multiple components can take over when one goes dark.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+## Omission Faults
+
+- **The Failure:** A node fails to send or receive some messages, but otherwise remains active and appears functional to the rest of the network.
+- **Common Causes:** Network congestion, dropped packets, flaky hardware connections, or an overloaded server quietly discarding requests.
+- **Detection & Recovery:** Harder to diagnose than a complete crash because the failures are intermittent. Defended against using robust communication protocols that require acknowledgments and automatic retries (e.g., TCP).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes omission faults as failures where a node is still alive but communication becomes unreliable. It matters here because students need to see that partial participation can be harder to diagnose than complete silence. Emphasize that these faults are common and are addressed through acknowledgment, retry, and communication protocol design.
+
+**Key Points**
+- Omission faults occur when messages are dropped or never received even though the node appears active.
+- Intermittent communication failure is operationally harder to diagnose than a full crash.
+- TCP uses acknowledgments and retransmissions to defend against this class of failure.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+## Timing Faults
+
+- **The Failure:** A node responds with the correct data, but outside of the required time window (typically arriving too late to be useful).
+- **Common Causes:** Overloaded processors, heavy network latency, or clock drift across distributed machines.
+- **Detection & Recovery:** Critical in real-time systems (like algorithmic trading or air traffic control) where a late response is practically equivalent to a wrong response. Managed through strict deadlines, timeouts, and logical sequencing.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes timing faults as correct responses that arrive too late to preserve system correctness. It matters here because distributed systems depend not only on what is said, but on when it is said. Emphasize that delays can be functionally equivalent to wrong answers in systems where ordering and deadlines matter.
+
+**Key Points**
+- Timing faults involve lateness, ordering problems, or deadline misses rather than outright false values.
+- Real-time and safety-critical systems are especially sensitive to timing failures.
+- Logical clocks are abstract ordering mechanisms that help distributed systems reason about event sequence without one perfect physical clock.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+- @lamport_timeclocksordering_1978
+
+:::
+
+## Commission Faults
+
+- **The Failure:** A node actively processes a request but returns an incorrect or corrupted result to the network.
+- **Common Causes:** Undetected software bugs, memory corruption, misconfigurations, or unintentional logic errors.
+- **Detection & Recovery:** Highly dangerous because the output initially appears structurally valid. Systems must use cross-checking, replication (asking multiple nodes and comparing answers), and error-correcting codes to spot the discrepancy.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes commission faults as active wrong answers produced by nodes that still appear operational. It matters here because the lesson is escalating from silence and delay to faults that can mimic intentional deception. Emphasize that a system cannot assume an active node is a correct node.
+
+**Key Points**
+- Commission faults produce incorrect outputs while the node remains online and responsive.
+- Bugs, corruption, or misconfiguration can make these faults look malicious from the outside.
+- Cross-checking across replicas is necessary because one active answer may still be wrong.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+
+## Byzantine Faults {.smaller}
+
+- **The Failure:** A node behaves arbitrarily and unpredictably, often with deliberate malicious intent to subvert the system.
+- **The Behavior:** The node doesn't just crash; it actively lies, sends conflicting messages to different peers, or impersonates other nodes to break consensus.
+- **The Challenge:** This is the most dangerous and difficult fault to defend against, as the malicious node can dynamically adapt its behavior to exploit network rules.
+- **Detection & Recovery:** Simple redundancy is useless here. Defense requires specialized Byzantine Fault Tolerant (BFT) consensus protocols that utilize strict multi-party verification and voting thresholds.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Byzantine faults as the most dangerous failure model because the node can behave arbitrarily and adaptively. It matters here because blockchain consensus is fundamentally about surviving this stronger adversarial setting rather than only crash faults. Emphasize that redundancy alone is not enough when the faulty participant can lie differently to different peers.
+
+**Key Points**
+- Byzantine faults include active deception, conflicting messages, and strategic misbehavior.
+- They are harder than ordinary faults because the node may continue participating while trying to subvert the group.
+- BFT stands for Byzantine Fault Tolerant, referring to protocols built to survive this class of behavior.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lamport_byzantinegeneralsproblem_1982
+- @chaum_computersystemsestablished_1982
+
+:::
+
+
+## Byzantine Generals Problem {.smaller .non-scrollable}
+
+**Question:** How can loyal actors reach reliable agreement despite malicious behavior?
+
+:::: {.columns}
+::: {.column width="50%"}
+- **Peer-to-Peer:** Every node communicates directly with every other node
+- **Independent Decisions:** Each node broadcasts ("Attack" or "Retreat") 
+- **Information Isolation:** Nodes only see the messages sent directly to them
+- **The Threat:** A "traitor" node actively sends *conflicting* decisions 
+- **The Goal:** All loyal nodes must arrive at the exact same correct conclusion
+:::
+
+::: {.column width="50%"}
+```{dot}
+//| fig-width: 5
+//| fig-height: 4
+digraph G {
+    layout=circo;
+    overlap=false;
+    splines=true;
+    outputorder=edgesfirst;
+    
+    // Global styling for small, clean layout
+    node [shape=circle, style=filled, fontname="Helvetica-Bold", width=0.4, fixedsize=true, fontsize=9, penwidth=1];
+    edge [fontname="Helvetica", fontsize=7, penwidth=0.5, arrowsize=0.4];
+    bgcolor="transparent";
+
+    // 4 Loyal Nodes (Green)
+    node [fillcolor="#c1e1c1", color="#77af77"];
+    L1; L2; L3; L4;
+
+    // 3 Traitor Nodes (Red)
+    node [fillcolor="#f9d0c4", color="#e06666"];
+    T1; T2; T3;
+
+    // Loyal nodes consistently send "A" to everyone else
+    edge [color="#77af77", fontcolor="#3b7a3b", style=solid];
+    L1 -> {L2 L3 L4 T1 T2 T3} [label="A"];
+    L2 -> {L1 L3 L4 T1 T2 T3} [label="A"];
+    L3 -> {L1 L2 L4 T1 T2 T3} [label="A"];
+    L4 -> {L1 L2 L3 T1 T2 T3} [label="A"];
+
+    // Traitors send conflicting messages (Dashed Red Lines)
+    edge [color="#e06666", style=dashed];
+    
+    // T1 lies
+    T1 -> {L1 L3 T2} [label="R", fontcolor="#a33333"];
+    T1 -> {L2 L4 T3} [label="A", fontcolor="#a33333"];
+
+    // T2 lies
+    T2 -> {L2 L4 T1} [label="R", fontcolor="#a33333"];
+    T2 -> {L1 L3 T3} [label="A", fontcolor="#a33333"];
+
+    // T3 lies
+    T3 -> {L1 L2 T2} [label="R", fontcolor="#a33333"];
+    T3 -> {L3 L4 T1} [label="A", fontcolor="#a33333"];
+}
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the Byzantine Generals Problem as the intuitive story behind adversarial consensus failure. It matters here because students need a mental model before they encounter the formal version and later blockchain consensus designs. Emphasize that the hard part is not sharing messages, but distinguishing honest agreement from coordinated or conflicting lies.
+
+**Key Points**
+- Loyal participants must agree even when traitors send conflicting information.
+- Information isolation is what gives the traitor leverage: no one sees the whole picture immediately.
+- The problem is fundamentally about reliable agreement under uncertainty and deception, not about military history itself.
+
+**Walkthrough**
+1. Identify the loyal and traitorous nodes in the diagram.
+2. Show that loyal nodes send consistent messages while traitors send different instructions to different peers.
+3. Conclude that the group needs a protocol strong enough to overcome contradictory reports and still converge.
+
+**Sources**
+- @lamport_paxosmadesimple_2001
+- @ongaro_searchunderstandableconsensus_2014
+- @castro_practicalbyzantinefault_1999
+
+:::
+
+
+
+## Fault Tolerance Spectrum {.smaller}
+
+- **Crash Faults (Easy):** The node simply stops. Mitigated relatively easily with basic redundancy and timeouts.
+- **Omission Faults (Moderate):** The node remains active but drops messages. Addressed through acknowledgments and retransmissions.
+- **Timing Faults (Moderate):** The response is correct but arrives too late. Managed via strict deadlines and logical clocks.
+- **Commission Faults (Hard):** The node actively sends incorrect data due to bugs. Requires cross-checking across multiple nodes.
+- **Byzantine Faults (Extreme):** A node acts maliciously or unpredictably to actively subvert the system. Requires specialized cryptographic consensus protocols.
+
+```{dot}
+//| fig-width: 9
+//| fig-height: 1.5
+digraph G {
+    rankdir=LR;
+    bgcolor="transparent";
+    node [shape=box, style="filled,rounded", fontname="Helvetica", penwidth=2, margin="0.25,0.15"];
+    edge [color="#666666", penwidth=1.5, arrowsize=0.8];
+
+    A [label="Crash", fillcolor="#c1e1c1", color="#77af77"];
+    B [label="Omission", fillcolor="#d9ead3", color="#93c47d"];
+    C [label="Timing", fillcolor="#fff2cc", color="#ffd966"];
+    D [label="Commission", fillcolor="#fce5cd", color="#f6b26b"];
+    E [label="Byzantine", fillcolor="#f9d0c4", color="#e06666"];
+
+    A -> B -> C -> D -> E;
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that not all faults are equal and that system design depends on where a threat model sits on the severity spectrum. It matters here because students should not assume every distributed system needs the same defensive machinery. Emphasize that moving rightward on the spectrum means more coordination cost and stronger verification requirements.
+
+**Key Points**
+- Crash faults are easier to tolerate than Byzantine faults because they do not involve active deception.
+- The spectrum helps explain why protocols built for benign environments fail in open hostile networks.
+- Threat models determine how much fault tolerance and verification a system must pay for.
+
+**Walkthrough**
+1. Start at crash faults and explain why simple redundancy is often enough there.
+2. Move through omission, timing, and commission faults as the challenge becomes less visible and more misleading.
+3. End at Byzantine faults to show why specialized consensus is needed in adversarial settings.
+
+**Sources**
+- @lamport_byzantinegeneralsproblem_1982
+- @chaum_computersystemsestablished_1982
+
+:::
+
+## Why Failures Become Security Risks {.smaller}
+
+- **Ambiguity of Intent:** In distributed systems, benign operational faults and deliberate malicious attacks often manifest identically.
+- **Crash vs. Denial-of-Service:** A node suddenly going dark could be a simple power failure, or a targeted DoS attack.
+- **Omission vs. Censorship:** Dropped messages might stem from standard network congestion, or an adversary intentionally filtering traffic.
+- **Commission vs. Compromise:** A node returning incorrect data could be suffering from a software bug, or it may have been actively hijacked.
+- **The Engineering Reality:** Because failures do not come with labels, reliability and security are inextricably linked. Systems must survive the *behavior*, regardless of the *intent*.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the bridge between reliability engineering and security engineering in distributed systems. It matters here because students should understand that many attacks first appear as ordinary failures, so systems must defend the behavior rather than wait for proof of intent. Emphasize that security risk often begins where fault diagnosis becomes ambiguous.
+
+**Key Points**
+- The same symptom can reflect a benign outage or an active attack.
+- Denial-of-service, censorship, and compromise often masquerade as routine failure modes.
+- Reliability mechanisms are therefore part of a system's security posture, not separate from it.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+
+
+## Adversarial Scenario: The Compromised Node {.smaller}
+
+- **The 1990s Dinner Problem:** You and five friends are coordinating dinner plans using only 1:1 landline phone calls. Everyone must agree on the same restaurant, or the night is ruined.
+- **The "Alien Imposter":** Unbeknownst to you, one friend is compromised by a malicious imposter. To cause maximum chaos, the imposter tells half the group "we are getting pizza" and the other half "we are getting tacos."
+- **Spreading Confusion:** Because everyone only communicates 1:1, honest friends start passing along conflicting information. A single bad actor creates disagreement where none existed.
+- **The Defense:** To survive this, the group needs a protocol (like everyone calling everyone else to cross-check answers) to identify the lie and reach a majority decision despite the imposter.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes a relatable analogy for how one compromised participant can poison group coordination. It matters here because students should feel how quickly consensus breaks down when communication is isolated and one actor lies strategically. Emphasize that the dinner example is structurally the same kind of problem as a compromised node in a distributed system.
+
+**Key Points**
+- A single bad actor can create disagreement by telling different peers different stories.
+- One-to-one communication makes cross-checking slower and uncertainty harder to resolve.
+- The defense is protocol, not intuition: the group needs a reliable way to compare and verify messages.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+## Strategies for Handling Suspicion {.smaller}
+
+- **Redundancy & Replication:** Instead of relying on a single server, multiple nodes maintain identical copies of the data and provide the same service, ensuring that no single hardware failure can destroy the information.
+- **Majority Voting:** The system relies on the collective decision of the group rather than trusting any individual node. The result agreed upon by the majority is accepted as truth.
+- **Quorum Systems:** Protocols require a strict minimum number of consistent responses (a quorum) before committing a transaction or making a system-wide decision, preventing a small malicious faction from hijacking the network.
+- **Cryptographic Proofs:** Data is mathematically verified (e.g., through digital signatures and cryptographic hashes) to ensure it has not been altered by a Byzantine node.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the practical toolkit systems use to operate under mutual suspicion. It matters here because the lesson is moving from problem diagnosis into the defensive patterns that make agreement possible. Emphasize that robust distributed systems survive distrust by multiplying evidence rather than trusting a single participant.
+
+**Key Points**
+- Replication, majority voting, quorums, and cryptographic proofs are core strategies for surviving suspicion.
+- A quorum is the minimum set of agreeing participants required before the system treats a decision as authoritative.
+- These mechanisms turn distrust into a structured verification process rather than an unsolved obstacle.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+
+## Consensus as the Core Goal {.smaller}
+
+- **The Objective:** In a distributed network, consensus is the mechanism by which all honest, non-faulty nodes agree on a single shared state or action.
+- **Safety (Consistency):** The guarantee that *the system never contradicts itself*. Once an agreement is reached, it is final, and no two honest nodes will ever decide on conflicting values.
+- **Liveness (Availability):** The guarantee that *the system always makes progress*. The system must continue to process transactions and cannot be permanently stalled by failures or malicious actors.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes consensus as the central objective that ties together all of the lesson's earlier discussions about trust, suspicion, and fault tolerance. It matters here because distributed systems only become coherent shared systems when honest participants can agree on one state despite faults. Emphasize safety and liveness as the two recurring constraints students will keep seeing throughout the course.
+
+**Key Points**
+- Consensus is the process by which honest nodes converge on one shared result.
+- Safety means honest nodes do not finalize contradictory outcomes; liveness means the system continues making progress.
+- Distributed systems must balance both properties even when some nodes crash, delay, or deceive.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+
+## Classical Consensus Approaches {.smaller}
+
+- **Simple Replication:** Early systems merely copied data across multiple nodes and periodically checked for consistency, offering basic redundancy but poor conflict resolution.
+- **Two-Phase Commit:** A central coordinator asks all participants if they are ready to proceed. Only if *everyone* says yes does the coordinator issue a final commit command.
+- **Paxos & Raft:** Formal, robust algorithms that use leader election and majority voting to achieve consensus safely, even if some nodes crash or messages are lost.
+- **The Limitation:** These classical models were designed for benign corporate environments. They expertly handle crash and omission faults but completely break down if a node turns Byzantine (malicious).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that blockchain consensus builds on older distributed-systems work rather than replacing it from scratch. It matters here because students should understand that protocols like Paxos and Raft solved important agreement problems, but mainly for more cooperative and bounded environments. Emphasize that the major leap to blockchain came from extending consensus into open, adversarial settings.
+
+**Key Points**
+- Replication and two-phase commit were early coordination tools but did not fully solve adversarial agreement.
+- Paxos and Raft handle crash-fault environments well through leader election and majority logic.
+- Classical consensus protocols generally assume a more trusted membership model than open blockchains do.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+## Why Decentralization Is Harder {.smaller}
+
+- **No Central Referee:** There is no single trusted authority to dictate the truth, resolve disputes, or coordinate actions. Every node must independently verify the state of the network.
+- **Massive Scale:** Reaching agreement requires coordination and communication across thousands of independent nodes, vastly increasing the computational overhead.
+- **Network Latency:** In a global, decentralized network, messages take time to travel across continents, leading to unavoidable delays and temporary inconsistencies.
+- **Adversarial Environments:** Because anyone can join an open network, systems must assume the presence of malicious participants actively attempting to subvert the consensus or feed the network bad data.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why decentralization is costly even when it is desirable. It matters here because students need to appreciate that removing the central referee means taking on global coordination, open membership, latency, and adversarial participation all at once. Emphasize that blockchain's significance lies partly in surviving these harsher conditions, not in making them disappear.
+
+**Key Points**
+- Decentralization removes the easy coordinator and forces every node to participate in verification and agreement.
+- Open membership invites Sybil-style risk because anyone can attempt to join or imitate many participants.
+- The benefits of decentralization come with overhead in coordination, bandwidth, and engineering difficulty.
+
+**Walkthrough**
+None
+
+**Sources**
+- @chaum_computersystemsestablished_1982
+
+:::
+
+
+
+## The Byzantine Generals Problem (formal) {.smaller .non-scrollable}
+
+-   **Problem Statement:** A group of distributed actors (generals) must agree on a single plan (attack/retreat), but some actors (traitors) or communication channels may be faulty and actively malicious.
+
+-   **Goal (Interactive Consistency):**
+    1.  All loyal actors must agree on the same plan.
+
+-   **The Impossibility Result:** With oral (unauthenticated) messages, a solution is only possible if the total number of generals, $n$, is strictly greater than three times the number of traitors, $m$. 
+    $$n > 3m \text{ or } n \ge 3m + 1$$ 
+
+::: {.callout-note appearance="minimal"}
+***Note:** this presentation slightly adapts the original 1982 formulation by removing the hierarchical Commander/Lieutenant dynamic to better reflect flat, peer-to-peer blockchain networks.*
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the formal version of Byzantine agreement and the conditions under which unauthenticated message systems can or cannot succeed. It matters here because students have now seen the intuition and are ready for the mathematical statement that frames later consensus research. Emphasize that authentication changes what can be solved because it reduces ambiguity about who said what.
+
+**Key Points**
+- The formal goal is interactive consistency: loyal participants must agree and follow a loyal leader's instruction consistently.
+- With unauthenticated messages, agreement requires enough honest participants to outnumber traitors by the classic threshold condition.
+- Authenticated messages, such as digital signatures, make lying and impersonation easier to detect and therefore change the problem.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+
+
+## Mini-Activity: Byzantine Agreement {.smaller}
+
+- **Setup:** Form groups of 6 or 7. The instructor will hand you a secret card defining your **Role** (Loyal or Traitor) and your **Initial Value** ("Attack" or "Retreat").
+- **Phase 1: Broadcast:** You must send a direct, secret message (e.g., a slip of paper) to *every other person* in your group stating your value.
+  - *Loyal nodes:* Must accurately send their given Initial Value to everyone.
+  - *Traitor nodes:* Can lie, and should actively send *conflicting* values to different peers to cause confusion.
+- **Phase 2: Tally:** Look at the messages you received. Combine them with your own Initial Value. What is the majority? 
+- **Phase 3: Reveal:** On the count of three, point up for "Attack" or down for "Retreat." Did the loyal nodes reach consensus?
+
+::: {.notes}
+
+**Overall Slide Concept**
+This activity slide establishes a hands-on simulation of Byzantine agreement without a central coordinator. It matters here because students can feel how majority logic and cross-checking become necessary once traitors are allowed to send conflicting values. Emphasize that the exercise demonstrates why consensus depends on structured message exchange rather than trust in any one participant.
+
+**Key Points**
+- Loyal nodes must send consistent values, while traitors try to break agreement by sending conflicting ones.
+- The exercise forces students to reconstruct shared truth from individually received messages.
+- Majority voting here is a simplified illustration of the broader principle behind many consensus protocols.
+
+**Walkthrough**
+1. Students receive secret role and initial-value cards.
+2. Each participant sends direct messages to every other participant, with traitors free to lie.
+3. Each student tallies the received values and reveals a final decision so the group can see whether consensus held.
+
+**Sources**
+None
+
+:::
+
+## Mini-Activity: Digital Version
+
+<div align="center" style="text-align:center;">
+[blockchain-6dd63ebf.training-as-code.com/exercises/bgp/](https://blockchain-6dd63ebf.training-as-code.com/exercises/bgp/)
+
+{{< rrqr https://blockchain-6dd63ebf.training-as-code.com/exercises/bgp/ >}}
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes a digital version of the Byzantine agreement activity for classroom use. It matters here because the conceptual exercise should remain usable in different teaching environments or time constraints. Emphasize that the digital version serves the same instructional purpose as the paper-based simulation.
+
+**Key Points**
+- The digital exercise recreates the same loyalty, betrayal, and tallying dynamics in an online format.
+- It is a delivery option, not a separate concept students must memorize.
+- The core learning goal remains understanding how agreement can survive a traitor.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+
+## Recap & Key Takeaways {.smaller}
+
+-   **Trust is an Engineering Assumption:** In secure systems, trust is not a feeling; it's a documented dependency.
+
+-   **Centralized Trust** requires delegated third-parties.
+
+-   **Decentralized Trust** requires a mechanism for forming consensus. 
+
+-   **The Byzantine Generals Problem** is the foundational challenge of reaching agreement in the presence of malicious actors. The solution depends on the assumptions you can make (e.g., unforgeable signatures).
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This recap slide establishes the lasting lesson takeaway: trust in distributed systems is a design assumption, and consensus is the mechanism that makes decentralized coordination possible under suspicion. It matters here because students should leave with one coherent chain from trust assumptions to fault models to Byzantine agreement and consensus design. Emphasize that blockchain inherits and extends these distributed-systems foundations rather than escaping them.
+
+**Key Points**
+- Trust should now be understood as an engineering dependency rather than a vague social feeling.
+- Decentralized systems survive by relocating trust into protocols, verification, and incentives.
+- The Byzantine Generals Problem is the canonical foundation for understanding malicious-agreement challenges in blockchain systems.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+
+## References {.smaller}

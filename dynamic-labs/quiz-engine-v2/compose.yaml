@@ -1,0 +1,50 @@
+services:
+  app:
+    build: .
+    image: quiz-engine-v2:local
+    environment:
+      QUIZ_ENGINE_DB_PATH: /data/quiz-engine.sqlite
+      QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE: ${QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE:-test-header}
+      INSTRUCTOR_AUTH_MODE: ${INSTRUCTOR_AUTH_MODE:-test-header}
+      HLF_INSTRUCTOR_COOKIE_SECRET: ${HLF_INSTRUCTOR_COOKIE_SECRET:-}
+      HLF_WEB_SECRET_KEY: ${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
+      FLASK_ENV: ${FLASK_ENV:-development}
+      QUIZ_ENGINE_TEST_INSTRUCTOR_HEADER: X-Test-Instructor
+      QUIZ_ENGINE_SECRET_KEY: local-dev-only-change-before-deploy
+    ports:
+      - "${QUIZ_ENGINE_HOST:-127.0.0.1}:${QUIZ_ENGINE_PORT:-8050}:8000"
+    volumes:
+      - quiz_engine_data:/data
+    networks:
+      router-net:
+        aliases:
+          - quiz-engine-v2
+      quiz_engine_browser:
+        ipv4_address: 10.2.0.10
+
+  test:
+    profiles: ["test"]
+    build: .
+    image: quiz-engine-v2:local
+    environment:
+      QUIZ_ENGINE_DB_PATH: /tmp/quiz-engine-test.sqlite
+      QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE: test-header
+      QUIZ_ENGINE_TEST_INSTRUCTOR_HEADER: X-Test-Instructor
+      QUIZ_ENGINE_SECRET_KEY: test-only
+      TESTING: "1"
+      QUIZ_ENGINE_SAMPLE_QUIZ_DIR: /quizes
+    volumes:
+      - ../../quizes:/quizes:ro
+    command: ["python", "-m", "pytest", "-q"]
+
+volumes:
+  quiz_engine_data:
+
+networks:
+  router-net:
+    external: true
+  quiz_engine_browser:
+    name: quiz_engine_v2_browser
+    ipam:
+      config:
+        - subnet: 10.2.0.0/24

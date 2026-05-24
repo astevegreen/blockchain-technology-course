@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard</title>
+    <style>
+        :root {
+            --bg: #f3efe6;
+            --card: #fffdf8;
+            --border: #d8ccb4;
+            --text: #1f2933;
+            --muted: #596579;
+            --accent: #a5471c;
+            --ok: #2d6a4f;
+            --warn: #9a6700;
+            --danger: #a61b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Georgia, "Times New Roman", serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(165, 71, 28, 0.16), transparent 25%),
+                linear-gradient(180deg, #ece3d2, var(--bg));
+            padding:
+                calc(28px + env(safe-area-inset-top))
+                calc(28px + env(safe-area-inset-right))
+                calc(28px + env(safe-area-inset-bottom))
+                calc(28px + env(safe-area-inset-left));
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .title h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 4vw, 3rem);
+        }
+
+        .title p {
+            margin: 0;
+            color: var(--muted);
+            max-width: 52ch;
+        }
+
+        .launch {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            background: var(--accent);
+            color: #fff;
+            padding: 12px 18px;
+            border-radius: 999px;
+            font-weight: 700;
+            min-height: 46px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+            gap: 18px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 12px 28px rgba(31, 41, 51, 0.12);
+            padding: 18px;
+        }
+
+        .card.clean {
+            border-color: var(--ok);
+            box-shadow: 0 12px 28px rgba(45, 106, 79, 0.18);
+        }
+
+        .card h2, .card h3, .card p, .card ul {
+            margin: 0;
+        }
+
+        .settings-form {
+            display: grid;
+            gap: 12px;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        select, textarea, button {
+            font: inherit;
+        }
+
+        select, textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #fff;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        textarea {
+            min-height: 88px;
+            resize: vertical;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--muted);
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 11px 16px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            min-height: 46px;
+        }
+
+        button:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .rooms {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .room {
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            background: #fff;
+        }
+
+        .room-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(89, 101, 121, 0.1);
+            font-size: 0.92rem;
+        }
+
+        .state-lobby { color: var(--muted); }
+        .state-clue { color: var(--warn); }
+        .state-reveal { color: var(--accent); }
+        .state-vote { color: var(--accent); }
+        .state-guess { color: var(--danger); }
+        .state-results { color: var(--ok); }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            gap: 10px;
+        }
+
+        li {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 10px 12px;
+            background: #fff;
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .player-tags {
+            color: var(--muted);
+            font-size: 0.9rem;
+            overflow-wrap: anywhere;
+        }
+
+        .player-name.inactive {
+            color: var(--muted);
+            text-decoration: line-through;
+        }
+
+        .meta,
+        .player-name {
+            overflow-wrap: anywhere;
+        }
+
+        .insider {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .empty {
+            color: var(--muted);
+            background: rgba(255, 253, 248, 0.8);
+            border: 1px dashed var(--border);
+            border-radius: 18px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .helper {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                padding:
+                    calc(18px + env(safe-area-inset-top))
+                    calc(18px + env(safe-area-inset-right))
+                    calc(18px + env(safe-area-inset-bottom))
+                    calc(18px + env(safe-area-inset-left));
+            }
+            .layout {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                align-items: flex-start;
+            }
+            .launch {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding:
+                    calc(12px + env(safe-area-inset-top))
+                    calc(12px + env(safe-area-inset-right))
+                    calc(16px + env(safe-area-inset-bottom))
+                    calc(12px + env(safe-area-inset-left));
+            }
+            .card,
+            .room,
+            .empty {
+                border-radius: 16px;
+                padding: 14px;
+            }
+            .player-row {
+                align-items: flex-start;
+            }
+            .toggle-row {
+                align-items: flex-start;
+            }
+            .rooms {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <script src="{{ socketio_client_url }}"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="title">
+            <h1>Instructor Dashboard</h1>
+            <p>Configure global lesson settings, then monitor or advance each room in real time.</p>
+        </div>
+        <a class="launch" href="{{ student_url }}" target="_blank" rel="noreferrer">Open student view</a>
+    </header>
+
+    <main class="layout">
+        <section class="card clean" id="settings-card">
+            <h2>Lesson Controls</h2>
+            <form class="settings-form" id="settings-form">
+                <div>
+                    <label for="mode-select">Mode</label>
+                    <select id="mode-select">
+                        <option value="standalone">Standalone</option>
+                        <option value="classroom">Classroom</option>
+                    </select>
+                </div>
+
+                <div class="toggle-row">
+                    <input id="game-enabled-toggle" type="checkbox" checked>
+                    <label for="game-enabled-toggle">Game is online for students</label>
+                </div>
+
+                <div class="toggle-row">
+                    <input id="agents-toggle" type="checkbox">
+                    <label for="agents-toggle">Enable agents in classroom mode</label>
+                </div>
+
+                <div>
+                    <label for="reveal-select">Commit / reveal mode</label>
+                    <select id="reveal-select">
+                        <option value="simultaneous">Reveal all clues at once</option>
+                        <option value="random">Random sequence, one clue at a time</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="disconnect-seconds">Disconnect grace period (seconds)</label>
+                    <select id="disconnect-seconds">
+                        <option value="0">0</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                        <option value="30">30</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="action-timeout-seconds">Action timeout per phase (seconds)</label>
+                    <select id="action-timeout-seconds">
+                        <option value="15">15</option>
+                        <option value="30">30</option>
+                        <option value="45">45</option>
+                        <option value="60">60</option>
+                        <option value="90">90</option>
+                        <option value="120">120</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="context-input">Context shown to students</label>
+                    <textarea id="context-input" placeholder="Explain the scenario for this class run."></textarea>
+                </div>
+
+                <div>
+                    <label for="words-input">Optional custom secret words</label>
+                    <textarea id="words-input" placeholder="One secret per line. Leave blank to use the default mixed word pool."></textarea>
+                    <p class="helper">Custom words replace the default list for future rounds.</p>
+                </div>
+
+                <button id="save-settings-btn" type="submit" disabled>Save settings</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Active Rooms</h2>
+            <div id="rooms-container" class="rooms">
+                <div class="empty">Waiting for active rooms.</div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const socketioPath = {{ socketio_path|tojson }};
+        const socket = io({ path: socketioPath });
+        const container = document.getElementById("rooms-container");
+        const settingsCard = document.getElementById("settings-card");
+        const settingsForm = document.getElementById("settings-form");
+        const saveSettingsBtn = document.getElementById("save-settings-btn");
+        const modeSelect = document.getElementById("mode-select");
+        const gameEnabledToggle = document.getElementById("game-enabled-toggle");
+        const agentsToggle = document.getElementById("agents-toggle");
+        const revealSelect = document.getElementById("reveal-select");
+        const disconnectSeconds = document.getElementById("disconnect-seconds");
+        const actionTimeoutSeconds = document.getElementById("action-timeout-seconds");
+        const contextInput = document.getElementById("context-input");
+        const wordsInput = document.getElementById("words-input");
+        let lastSavedSettings = null;
+
+        function currentSettingsPayload() {
+            return {
+                mode: modeSelect.value,
+                game_enabled: gameEnabledToggle.checked,
+                agents_enabled: agentsToggle.checked,
+                reveal_mode: revealSelect.value,
+                disconnect_grace_seconds: Number(disconnectSeconds.value),
+                action_timeout_seconds: Number(actionTimeoutSeconds.value),
+                context: contextInput.value.trim(),
+                custom_words: wordsInput.value.trim()
+            };
+        }
+
+        function normalizeSettings(settings) {
+            return {
+                mode: settings.mode || "standalone",
+                game_enabled: settings.game_enabled !== false,
+                agents_enabled: Boolean(settings.agents_enabled),
+                reveal_mode: settings.reveal_mode || "random",
+                disconnect_grace_seconds: Number(settings.disconnect_grace_seconds ?? 15),
+                action_timeout_seconds: Number(settings.action_timeout_seconds ?? 60),
+                context: settings.context || "",
+                custom_words: settings.custom_words || ""
+            };
+        }
+
+        function updateDirtyState() {
+            const pending = JSON.stringify(currentSettingsPayload()) !== JSON.stringify(lastSavedSettings);
+            saveSettingsBtn.disabled = !pending;
+            settingsCard.classList.toggle("clean", !pending);
+        }
+
+        function applySettings(settings) {
+            const normalized = normalizeSettings(settings);
+            modeSelect.value = normalized.mode;
+            gameEnabledToggle.checked = normalized.game_enabled;
+            agentsToggle.checked = normalized.agents_enabled;
+            agentsToggle.disabled = modeSelect.value !== "classroom";
+            revealSelect.value = normalized.reveal_mode;
+            disconnectSeconds.value = String(normalized.disconnect_grace_seconds);
+            actionTimeoutSeconds.value = String(normalized.action_timeout_seconds);
+            contextInput.value = normalized.context;
+            wordsInput.value = normalized.custom_words;
+            lastSavedSettings = currentSettingsPayload();
+            updateDirtyState();
+        }
+
+        function renderRoom(roomId, room) {
+            const card = document.createElement("section");
+            card.className = "room";
+
+            const players = room.players.map((player) => {
+                const tags = [];
+                if (player.is_host) tags.push("Host");
+                if (player.has_committed_clue) tags.push("Clue");
+                if (player.has_voted) tags.push("Voted");
+                if (player.role) tags.push(`Role: ${player.role}`);
+                if (!player.connected) tags.push("Offline");
+                if (player.is_agent) tags.push("Agent");
+                if (player.is_insider) tags.push("Insider");
+                if (player.status_reason) tags.push(`Removed: ${player.status_reason}`);
+
+                return `
+                    <li>
+                        <div class="player-row">
+                            <strong class="player-name${player.status_reason ? " inactive" : ""} ${player.is_insider ? "insider" : ""}">${player.name}</strong>
+                            <span class="player-tags">${tags.join(" • ") || "Ready"}</span>
+                        </div>
+                    </li>
+                `;
+            }).join("");
+
+            const clues = (room.revealed_clues || []).map((entry) => `
+                <li>${entry.player_name}: ${entry.clue}</li>
+            `).join("");
+
+            const revealButton = room.state === "reveal"
+                ? `<button type="button" data-room="${roomId}" class="advance-btn">Reveal next clue</button>`
+                : "";
+
+            const result = room.result ? `<p class="meta">${room.result.message}</p>` : '<p class="meta">No finished result yet.</p>';
+            const resultsStatus = room.state === "results"
+                ? `<span class="pill">${room.game_over ? "Game over" : "Waiting for next round"}</span>`
+                : "";
+            const word = room.word || "Not assigned";
+            const turnLine = room.current_turn_name
+                ? `<p class="meta">Current turn: ${room.current_turn_name}</p>`
+                : "";
+
+            card.innerHTML = `
+                <div class="room-head">
+                    <h3>Room ${roomId}</h3>
+                    <span class="meta">${room.player_count}/{{ room_max_size }} players</span>
+                </div>
+                <div class="pill-row">
+                    <span class="pill state-${room.state}">State: ${room.state}</span>
+                    <span class="pill">Round ${room.round}</span>
+                    ${resultsStatus}
+                    <span class="pill">Secret: ${word}</span>
+                    <span class="pill">Committed clues: ${room.clues_committed}</span>
+                </div>
+                ${result}
+                ${turnLine}
+                ${revealButton}
+                <p class="meta" style="margin-top:12px;">Revealed clues</p>
+                <ul>${clues || "<li>No clues revealed yet.</li>"}</ul>
+                <p class="meta" style="margin-top:12px;">Players</p>
+                <ul>${players || "<li>No players connected.</li>"}</ul>
+            `;
+            return card;
+        }
+
+        settingsForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            socket.emit("update_settings", currentSettingsPayload());
+        });
+
+        modeSelect.addEventListener("change", () => {
+            agentsToggle.disabled = modeSelect.value !== "classroom";
+            if (modeSelect.value !== "classroom") {
+                agentsToggle.checked = false;
+            }
+            updateDirtyState();
+        });
+
+        [
+            gameEnabledToggle,
+            agentsToggle,
+            revealSelect,
+            disconnectSeconds,
+            actionTimeoutSeconds,
+            contextInput,
+            wordsInput
+        ].forEach((element) => {
+            element.addEventListener("input", updateDirtyState);
+            element.addEventListener("change", updateDirtyState);
+        });
+
+        container.addEventListener("click", (event) => {
+            if (!event.target.classList.contains("advance-btn")) return;
+            socket.emit("advance_room", { room_id: event.target.dataset.room });
+        });
+
+        socket.on("connect", () => {
+            socket.emit("instructor_join");
+        });
+
+        socket.on("instructor_update", (payload) => {
+            applySettings(payload.settings || {});
+            const entries = Object.entries(payload.rooms || {});
+            container.innerHTML = "";
+
+            if (!entries.length) {
+                container.innerHTML = '<div class="empty">No rooms are active right now.</div>';
+                return;
+            }
+
+            entries.forEach(([roomId, room]) => {
+                container.appendChild(renderRoom(roomId, room));
+            });
+        });
+    </script>
+</body>
+</html>

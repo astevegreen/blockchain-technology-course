@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Merkle Tree Exercise — Self‑Contained</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #0f172a;
+      --ink: #e5e7eb;
+      --muted: #9ca3af;
+      --ok: #10b981;
+      --bad: #ef4444;
+      --accent: #60a5fa;
+      --accent-2: #22d3ee;
+      --border: #1f2937;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --round: 14px;
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0; padding: 0; background: linear-gradient(180deg, #0b1220, #0b1324 40%, #0a1222);
+      color: var(--ink); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    .wrap { max-width: 1100px; margin: 24px auto 56px; padding: 0 16px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px;
+    }
+    h1 { font-size: 20px; letter-spacing: 0.3px; margin: 0; }
+    .hint { color: var(--muted); font-size: 13px; }
+
+    .toolbar {
+      background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border); border-radius: var(--round);
+      padding: 14px; display: grid; gap: 12px; grid-template-columns: 1.2fr 1fr auto auto; align-items: start;
+    }
+    .toolbar label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+    .toolbar textarea {
+      width: 100%; min-height: 120px; resize: vertical; border-radius: 10px; border: 1px solid var(--border);
+      background: #0b1428; color: var(--ink); padding: 10px; font-family: var(--mono); font-size: 13px;
+    }
+    .toolbar select, .toolbar input[type="number"], .toolbar button {
+      width: 100%; box-sizing: border-box;
+    }
+    .toolbar select, .toolbar input[type="number"] {
+      padding: 10px 10px; border-radius: 10px; border: 1px solid var(--border); background: #0b1428; color: var(--ink); font-size: 14px;
+    }
+    .toolbar .col { display: flex; flex-direction: column; gap: 8px; }
+
+    button {
+      border: 1px solid var(--border); background: linear-gradient(180deg, #0ea5e9, #0891b2);
+      color: white; padding: 10px 12px; border-radius: 12px; font-weight: 600; cursor: pointer; letter-spacing: 0.3px;
+      box-shadow: 0 6px 18px rgba(34, 211, 238, 0.25), inset 0 0 0 1px rgba(255,255,255,0.08);
+    }
+    button.secondary { background: linear-gradient(180deg, #22c55e, #16a34a); }
+    button.ghost { background: transparent; border: 1px dashed var(--border); color: var(--ink); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .legend { display: flex; gap: 14px; align-items: center; margin: 12px 0 4px; color: var(--muted); font-size: 12px; }
+    .pill { display: inline-flex; gap: 8px; align-items: center; background: rgba(148,163,184,0.1); border: 1px solid var(--border); border-radius: 999px; padding: 6px 10px; }
+    .dot { width: 10px; height: 10px; border-radius: 999px; }
+    .dot.ok { background: var(--ok); }
+    .dot.bad { background: var(--bad); }
+
+    .tree {
+      margin-top: 18px; display: grid; gap: 22px; grid-auto-rows: min-content;
+    }
+    .level { display: grid; gap: 16px; grid-auto-flow: column; justify-content: center; align-items: start; }
+
+    .node {
+      background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 10px; min-width: 240px; max-width: 320px;
+      box-shadow: 0 8px 24px rgba(2, 132, 199, 0.18);
+    }
+    .node.leaf { background: #0d1b2a; }
+    .node .title { font-weight: 700; font-size: 12px; color: var(--muted); letter-spacing: 0.3px; margin-bottom: 6px; text-transform: uppercase; }
+    .kv { display: grid; gap: 8px; }
+
+    .node textarea.leaftext { width: 100%; min-height: 80px; resize: vertical; font-family: var(--mono); font-size: 12px; color: var(--ink);
+      background: #081222; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+
+    .hashbox { display: flex; align-items: center; gap: 8px; }
+    .hashbox input.hash { flex: 1; font-family: var(--mono); font-size: 12px; color: var(--ink);
+      background: #081222; border: 1px solid var(--border); border-radius: 10px; padding: 8px; }
+    .hashbox .copy { border-radius: 10px; padding: 6px 8px; background: rgba(99,102,241,0.15); border: 1px solid #4338ca; color: #c7d2fe; font-size: 12px; cursor: pointer; }
+
+    .node.good { outline: 2px solid rgba(16,185,129,0.9); }
+    .node.bad  { outline: 2px solid rgba(239,68,68,0.9); }
+
+    .footnote { color: var(--muted); font-size: 12px; margin-top: 12px; }
+    .mono { font-family: var(--mono); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Merkle Tree Interactive</h1>
+      <div class="hint">SHA‑256 for calculation • display uses last 16 bytes (32 hex chars)</div>
+    </header>
+
+    <section class="toolbar" id="toolbar">
+      <div class="col">
+        <label for="content">Content (auto‑populates with a random scene summary)</label>
+        <textarea id="content" spellcheck="false"></textarea>
+        <div class="legend">
+          <span class="pill"><span class="dot ok"></span> Path consistent</span>
+          <span class="pill"><span class="dot bad"></span> Path mismatch</span>
+          <span class="pill">Leaf tag <span class="mono">0x00</span>; Node tag <span class="mono">0x01</span></span>
+        </div>
+      </div>
+      <div class="col">
+        <label for="scene">Pick a preset scene</label>
+        <select id="scene"></select>
+        <button id="useScene" class="ghost">Use selected</button>
+        <label for="blockSize">Block size (bytes per leaf)</label>
+        <input id="blockSize" type="number" min="8" step="1" value="64" />
+      </div>
+      <div class="col" style="align-self: end;">
+        <button id="generate" title="Build tree from current content and block size">Generate Tree</button>
+        <button id="recalc" class="secondary" disabled title="Recompute hashes upward from leaves">Recalculate from Leaves</button>
+      </div>
+      <div class="col">
+        <div class="footnote">
+          Notes: We split the UTF‑8 byte stream into fixed‑size blocks. A multi‑byte character may span blocks; that’s okay—the hashing rule operates on bytes. Odd node counts duplicate the last node at a level.
+        </div>
+      </div>
+    </section>
+
+    <section class="tree" id="tree"></section>
+  </div>
+
+  <script>
+  // ----------------- Utilities -----------------
+  const enc = new TextEncoder();
+  const dec = new TextDecoder('utf-8', { fatal: false });
+  const TAG_LEAF = new Uint8Array([0x00]);
+  const TAG_NODE = new Uint8Array([0x01]);
+
+  function toHex(bytes) {
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  function fromHex(hex) {
+    const clean = hex.replace(/[^0-9a-f]/gi, '');
+    const out = new Uint8Array(clean.length / 2);
+    for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i*2,2), 16);
+    return out;
+  }
+  function concatBytes(...arrays) {
+    const total = arrays.reduce((s,a) => s + a.length, 0);
+    const out = new Uint8Array(total);
+    let o = 0;
+    for (const a of arrays) { out.set(a, o); o += a.length; }
+    return out;
+  }
+  async function sha256(bytes) {
+    const buf = await crypto.subtle.digest('SHA-256', bytes);
+    return new Uint8Array(buf);
+  }
+  function trunc16Hex(fullBytes) { // last 16 bytes of SHA-256 -> 32 hex chars
+    const last = fullBytes.slice(-16);
+    return toHex(last);
+  }
+
+  function splitUtf8ByBytes(str, size) {
+    const b = enc.encode(str);
+    const chunks = [];
+    for (let i = 0; i < b.length; i += size) {
+      const slice = b.slice(i, i + size);
+      chunks.push({ bytes: slice, text: dec.decode(slice) });
+    }
+    return chunks;
+  }
+
+  // ----------------- Merkle Structures -----------------
+  class MerkleNode {
+    constructor(kind, level, index) {
+      this.kind = kind; // 'leaf' or 'node'
+      this.level = level; // 0 = leaves
+      this.index = index; // position within level
+      this.left = null; this.right = null; this.parent = null;
+      this.leafBytes = null; // for leaves
+      this.computedFull = null; // Uint8Array 32 bytes (recomputed from leaves)
+      this.currentInputHex = null; // value from the editable input (truncated hex)
+      this.dom = null; // container element
+      this.inputEl = null; // hash input element
+      this.leafTextEl = null; // textarea for leaf text
+    }
+  }
+
+  // Build tree from content and block size (bytes)
+  async function buildMerkle(content, blockSize) {
+    const treeEl = document.getElementById('tree');
+    treeEl.innerHTML = '';
+
+    // Build leaves
+    const chunks = splitUtf8ByBytes(content, blockSize);
+    if (chunks.length === 0) chunks.push({ bytes: new Uint8Array(), text: '' });
+
+    const levels = [];
+    const leaves = [];
+    const leavesRow = document.createElement('div');
+    leavesRow.className = 'level';
+
+    for (let i = 0; i < chunks.length; i++) {
+      const node = new MerkleNode('leaf', 0, i);
+      node.leafBytes = chunks[i].bytes;
+      const full = await sha256(concatBytes(TAG_LEAF, node.leafBytes));
+      node.computedFull = full;
+
+      // DOM for leaf
+      const card = document.createElement('div');
+      card.className = 'node leaf good';
+      const title = document.createElement('div');
+      title.className = 'title';
+      title.textContent = `Leaf #${i+1}`;
+
+      const kv = document.createElement('div'); kv.className = 'kv';
+      const text = document.createElement('textarea'); text.className = 'leaftext'; text.value = chunks[i].text;
+      text.addEventListener('input', () => { node.leafBytes = enc.encode(text.value); scheduleVerify(); });
+
+      const hb = document.createElement('div'); hb.className = 'hashbox';
+      const label = document.createElement('div'); label.textContent = 'hash:'; label.style.fontSize = '11px'; label.style.color = 'var(--muted)';
+      const input = document.createElement('input'); input.className = 'hash'; input.value = trunc16Hex(full);
+      input.addEventListener('input', () => { node.currentInputHex = input.value.trim().toLowerCase(); scheduleVerify(); });
+      const copyBtn = document.createElement('button'); copyBtn.className = 'copy'; copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', () => { navigator.clipboard?.writeText(input.value); copyBtn.textContent = 'Copied!'; setTimeout(()=>copyBtn.textContent='Copy', 700); });
+
+      hb.append(label, input, copyBtn);
+      kv.append(text, hb);
+      card.append(title, kv);
+      leavesRow.appendChild(card);
+
+      node.dom = card; node.inputEl = input; node.leafTextEl = text; node.currentInputHex = input.value.trim().toLowerCase();
+      leaves.push(node);
+    }
+
+    levels.push(leaves);
+    treeEl.appendChild(leavesRow);
+
+    // Internal levels
+    let current = leaves; let levelIdx = 1;
+    while (current.length > 1) {
+      const next = [];
+      // duplicate last if odd
+      const nodes = current.slice();
+      if (nodes.length % 2 === 1) nodes.push(nodes[nodes.length-1]);
+
+      const row = document.createElement('div'); row.className = 'level';
+
+      for (let i = 0; i < nodes.length; i += 2) {
+        const left = nodes[i], right = nodes[i+1];
+        const parent = new MerkleNode('node', levelIdx, i/2);
+        parent.left = left; parent.right = right; left.parent = parent; right.parent = parent;
+
+        const full = await sha256(concatBytes(TAG_NODE, left.computedFull, right.computedFull));
+        parent.computedFull = full;
+
+        // DOM for internal node
+        const card = document.createElement('div'); card.className = 'node good';
+        const title = document.createElement('div'); title.className = 'title';
+        title.textContent = (nodes.length === 2) ? 'Root' : `Level ${levelIdx}`;
+
+        const hb = document.createElement('div'); hb.className = 'hashbox';
+        const label = document.createElement('div'); label.textContent = 'hash:'; label.style.fontSize = '11px'; label.style.color = 'var(--muted)';
+        const input = document.createElement('input'); input.className = 'hash'; input.value = trunc16Hex(full);
+        input.addEventListener('input', () => { parent.currentInputHex = input.value.trim().toLowerCase(); scheduleVerify(); });
+        const copyBtn = document.createElement('button'); copyBtn.className = 'copy'; copyBtn.textContent = 'Copy';
+        copyBtn.addEventListener('click', () => { navigator.clipboard?.writeText(input.value); copyBtn.textContent = 'Copied!'; setTimeout(()=>copyBtn.textContent='Copy', 700); });
+
+        hb.append(label, input, copyBtn);
+        card.append(title, hb);
+        row.appendChild(card);
+
+        parent.dom = card; parent.inputEl = input; parent.currentInputHex = input.value.trim().toLowerCase();
+        next.push(parent);
+      }
+
+      levels.push(next);
+      treeEl.prepend(row); // so root ends up at top; we are building upward
+      current = next; levelIdx++;
+    }
+
+    // Enable recalc
+    const recalcBtn = document.getElementById('recalc');
+    recalcBtn.disabled = false;
+    recalcBtn.onclick = async () => { await recalcFromLeaves(levels); };
+
+    // Initial verify (all should be green)
+    await verifyAll(levels);
+
+    return { levels };
+  }
+
+  // Recompute all full hashes from leaves and update displayed inputs to match (fix tree)
+  async function recalcFromLeaves(levels) {
+    // Recompute bottom-up
+    for (const leaf of levels[0]) {
+      leaf.computedFull = await sha256(concatBytes(TAG_LEAF, leaf.leafBytes));
+    }
+    for (let L = 1; L < levels.length; L++) {
+      for (const node of levels[L]) {
+        node.computedFull = await sha256(concatBytes(TAG_NODE, node.left.computedFull, node.right.computedFull));
+      }
+    }
+    // Update inputs to truncated expected values
+    for (const level of levels) {
+      for (const node of level) {
+        const t = trunc16Hex(node.computedFull);
+        node.inputEl.value = t; node.currentInputHex = t;
+      }
+    }
+    await verifyAll(levels);
+  }
+
+  // Verify: mark nodes green/red based on whether the displayed hash equals recomputed truncated hash from leaves
+  let verifyTimer = null;
+  function scheduleVerify() {
+    if (verifyTimer) cancelAnimationFrame(verifyTimer);
+    verifyTimer = requestAnimationFrame(async () => {
+      const levels = currentLevels; if (!levels) return; await verifyAll(levels);
+    });
+  }
+
+  async function verifyAll(levels) {
+    if (!levels) return;
+    // 1) recompute from leaves using current leaf text
+    for (const leaf of levels[0]) {
+      leaf.computedFull = await sha256(concatBytes(TAG_LEAF, leaf.leafBytes));
+    }
+    for (let L = 1; L < levels.length; L++) {
+      for (const node of levels[L]) {
+        node.computedFull = await sha256(concatBytes(TAG_NODE, node.left.computedFull, node.right.computedFull));
+      }
+    }
+    // 2) compare displayed vs expected (self check)
+    for (const level of levels) {
+      for (const node of level) {
+        const expected = trunc16Hex(node.computedFull).toLowerCase();
+        const got = (node.currentInputHex ?? node.inputEl.value).trim().toLowerCase();
+        node.selfOk = (expected === got);
+      }
+    }
+
+    // 3) propagate path validity upward: a node is green only if it and all descendants are selfOk
+    // leaves first
+    for (const leaf of levels[0]) { leaf.pathOk = !!leaf.selfOk; }
+    for (let L = 1; L < levels.length; L++) {
+      for (const node of levels[L]) {
+        node.pathOk = !!(node.selfOk && node.left.pathOk && node.right.pathOk);
+      }
+    }
+
+    // 4) colorize with propagated status (makes ancestors red if any descendant mismatches)
+    for (const level of levels) {
+      for (const node of level) {
+        node.dom.classList.toggle('good', !!node.pathOk);
+        node.dom.classList.toggle('bad', !node.pathOk);
+      }
+    }
+  }
+
+  // ----------------- Preset Scenes (no long quotes; short summaries only) -----------------
+  const SCENES = [
+    'A desert world: a droid escapes with secret plans; starships trade laser fire.',
+    'A masked figure boards a corvette as defenders hold the corridor against troops.',
+    'A mentor reveals a hidden heritage during a duel on a narrow catwalk.',
+    'A smug pilot and a rookie dash through a crowded port under blaster fire.',
+    'A space station trench run; targeting computer off, instincts on.',
+    'A super‑soldier leaps from a jet to board a ship at dawn above the ocean.',
+    'A genius inventor tests a flight suit, careening over the city skyline.',
+    'A prince of a hidden nation faces ritual combat beside a waterfall.',
+    'A team argues in a lab while a cube of energy hums and grows unstable.',
+    'Two friends on a Brooklyn bridge, shield and metal arm colliding.',
+    'A sorcerer folds a city into a kaleidoscope of streets and towers.',
+    'A raccoon and a tree pilot a battered ship through a glittering asteroid field.'
+  ];
+
+  function populateScenes() {
+    const sel = document.getElementById('scene');
+    sel.innerHTML = '';
+    SCENES.forEach((s, i) => {
+      const opt = document.createElement('option');
+      opt.value = i; opt.textContent = s; sel.appendChild(opt);
+    });
+    const pick = Math.floor(Math.random() * SCENES.length);
+    sel.value = String(pick);
+    document.getElementById('content').value = SCENES[pick];
+  }
+
+  // ----------------- Wire‑up -----------------
+  let currentLevels = null;
+  window.addEventListener('DOMContentLoaded', () => {
+    populateScenes();
+    document.getElementById('useScene').addEventListener('click', () => {
+      const sel = document.getElementById('scene');
+      document.getElementById('content').value = SCENES[Number(sel.value)];
+    });
+
+    document.getElementById('generate').addEventListener('click', async () => {
+      const content = document.getElementById('content').value || '';
+      const blockSize = Math.max(8, Number(document.getElementById('blockSize').value) || 64);
+      const { levels } = await buildMerkle(content, blockSize);
+      currentLevels = levels; // keep reference for verification updates
+    });
+
+    document.getElementById('recalc').addEventListener('click', async () => {
+      if (currentLevels) await recalcFromLeaves(currentLevels);
+    });
+
+    // Auto‑build once at start
+    setTimeout(async () => {
+      const content = document.getElementById('content').value || '';
+      const blockSize = Math.max(8, Number(document.getElementById('blockSize').value) || 64);
+      const { levels } = await buildMerkle(content, blockSize);
+      currentLevels = levels;
+    }, 0);
+
+    // ----------------- Minimal Self‑Tests (console) -----------------
+    (async function runTests(){
+      const results = [];
+      function pass(name){ results.push({name, ok:true}); console.log('%cPASS','color:#10b981', name); }
+      function fail(name, err){ results.push({name, ok:false, err}); console.error('FAIL', name, err); }
+      try {
+        // Test 1: SHA‑256("abc") truncated last 16 bytes
+        const h = await sha256(enc.encode('abc'));
+        const t = trunc16Hex(h);
+        const expected = 'b00361a396177a9cb410ff61f20015ad';
+        if (t === expected) pass('sha256 trunc16Hex("abc")'); else fail('sha256 trunc16Hex("abc")', {got:t, expected});
+
+        // Test 2: splitter
+        const blocks = splitUtf8ByBytes('hello', 2);
+        if (blocks.length === 3 && blocks[0].text === 'he' && blocks[1].text === 'll' && blocks[2].text === 'o') pass('splitUtf8ByBytes("hello",2)');
+        else fail('splitUtf8ByBytes("hello",2)', blocks.map(b=>b.text));
+
+        // Test 3: path propagation (mocked tree)
+        // create 4 leaves with one byte each
+        const Ls = [];
+        for (const ch of ['A','B','C','D']){
+          const n = new MerkleNode('leaf',0,0);
+          n.leafBytes = enc.encode(ch);
+          n.dom = { classList: { toggle: ()=>{} } }; // mock
+          n.inputEl = { value: '' };
+          Ls.push(n);
+        }
+        const N1 = new MerkleNode('node',1,0); N1.left = Ls[0]; N1.right = Ls[1]; N1.dom = { classList: { toggle: ()=>{} } }; N1.inputEl = { value: '' };
+        const N2 = new MerkleNode('node',1,1); N2.left = Ls[2]; N2.right = Ls[3]; N2.dom = { classList: { toggle: ()=>{} } }; N2.inputEl = { value: '' };
+        const R  = new MerkleNode('node',2,0); R.left = N1; R.right = N2; R.dom = { classList: { toggle: ()=>{} } }; R.inputEl = { value: '' };
+        const mockLevels = [Ls, [N1,N2], [R]];
+        await verifyAll(mockLevels); // baseline OK
+        const before = R.pathOk === true;
+        // corrupt N1 by setting a wrong displayed hash
+        N1.currentInputHex = 'deadbeefdeadbeefdeadbeefdeadbeef';
+        await verifyAll(mockLevels);
+        const after = R.pathOk === false;
+        if (before && after) pass('path propagation to root'); else fail('path propagation to root', {before, after});
+      } catch (e) { console.error('Tests runtime error', e); }
+    })();
+  });
+  </script>
+</body>
+</html>

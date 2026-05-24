@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hash Microlab: Pre-image, Collisions, Avalanche, Uniformity</title>
+<script src="libs/js-md5/md5.min.js"></script>
+<style>
+  :root {
+    --fg:#0f172a; --muted:#475569; --accent:#2563eb; --bg:#ffffff; --soft:#f8fafc;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    --green:#16a34a; --red:#dc2626; --ink:#0f172a;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:var(--sans)}
+  .wrap{max-width:980px;margin:40px auto;padding:0 16px}
+  h1{font-size:1.75rem;margin:0 0 14px}
+  h2{font-size:1.25rem;margin:28px 0 10px}
+  p.sub{color:var(--muted);margin-top:0}
+  .panel{background:var(--soft);border-radius:14px;padding:16px 16px 18px;margin:18px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  select, input[type="number"], button{
+    font:inherit;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;background:#fff
+  }
+  button{cursor:pointer}
+  textarea{
+    width:100%;min-height:110px;resize:vertical;border:1px solid #e5e7eb;border-radius:10px;padding:10px;font-family:var(--mono)
+  }
+  .table {
+    display:grid;
+    grid-template-columns: auto 1fr;
+    gap:10px 14px;
+    align-items:center;
+  }
+  .cell-label{color:var(--muted)}
+  .hash{
+    font-family:var(--mono);font-size:.95rem;word-break:break-all;background:#fff;border-radius:10px;padding:8px 10px
+  }
+  .muted{color:var(--muted);font-size:.9rem}
+  .row{display:contents}
+  .hint{font-size:.85rem;color:var(--muted)}
+  .flex{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .bar > span {
+    width:10px; background:#93c5fd; border-top-left-radius:8px; border-top-right-radius:8px; transition:height .12s linear
+  }
+  .bar-label {text-align:center; font-family:var(--mono); font-size:.8rem; color:var(--muted); margin-top:4px}
+  .statline{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:.9rem;margin-top:8px}
+  .pill{background:#eef2ff;color:#3730a3;border-radius:999px;padding:4px 8px}
+  .note{font-size:.85rem;color:var(--muted);margin-top:6px}
+  .hr{height:1px;background:#e5e7eb;margin:18px 0}
+  .kbd{font-family:var(--mono);background:#111827;color:#f9fafb;border-radius:6px;padding:0 6px}
+
+  /* Diff mirrors */
+  .diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px}
+  .mirror{
+    white-space:pre-wrap;word-break:break-word;border:1px dashed #e5e7eb;border-radius:10px;padding:10px;background:#fff;min-height:90px;font-family:var(--mono)
+  }
+  .same{color:var(--green)}
+  .diff{color:var(--red)}
+
+  .freq {
+  display: grid;
+  grid-template-columns: repeat(256, 1fr);  /* one column per hex pair (00–ff) */
+  gap: 2px;                                 /* small gap between bars */
+  margin-top: 12px;
+  overflow-x: auto;                         /* allow scrolling if container is too narrow */
+  padding-bottom: 8px;
+}
+
+/* Optional: shrink each bar width slightly for visual balance */
+.bar {
+  height: 120px;
+  background: linear-gradient(to top, #dbeafe 0%, #eff6ff 100%);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 6px;                           /* keeps bars thin but visible */
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Interactive Hash Microlab</h1>
+  <p class="sub">Explore pre-image resistance, second pre-image resistance, collision resistance (MD5), the avalanche effect, and uniform output distribution.</p>
+
+  <!-- SECTION 1: Two-input hashing workspace -->
+  <div class="panel">
+    <div class="controls">
+      <label>Algorithm:
+        <select id="algo">
+          <option value="md5">MD5 (broken)</option>
+          <option value="sha1">SHA-1 (deprecated)</option>
+          <option value="sha256" selected>SHA-256</option>
+          <option value="homemade">HomemadeHash-16 (toy, insecure)</option>
+        </select>
+      </label>
+
+      <label>MD5 Collision demos:
+        <select id="collision">
+          <option value="">— Select a demo —</option>
+          <option value="pair1">Built-in collision pair (binary hex)</option>
+        </select>
+      </label>
+
+      <label>Avalanche demos:
+        <select id="avalanche">
+          <option value="">— Select a demo —</option>
+          <option value="hello">"HELLO" vs "HELLo"</option>
+          <option value="pangram">Quick brown fox vs f0x</option>
+          <option value="json">{"amount": 100} vs {"amount": 101}</option>
+        </select>
+      </label>
+
+      <label class="flex">
+        <input type="checkbox" id="hexMode" />
+        <span class="hint">Treat inputs as <strong>hex</strong> bytes when prefixed with <span class="kbd">hex:</span></span>
+      </label>
+    </div>
+
+    <div class="grid">
+      <div>
+        <h2>Input A</h2>
+        <textarea id="inA" placeholder='Type here… or try "HELLO". For binary, use: hex:48656c6c6f'></textarea>
+      </div>
+      <div>
+        <h2>Input B</h2>
+        <textarea id="inB" placeholder='Type here… or try "HELLo". For binary, use: hex:48454c4c4f'></textarea>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+
+        <!-- Diff mirrors -->
+    <div class="diff-grid">
+      <div>
+        <h3 style="margin:12px 0 6px">Input A — Differences</h3>
+        <pre class="mirror" id="diffA">—</pre>
+      </div>
+      <div>
+        <h3 style="margin:12px 0 6px">Input B — Differences</h3>
+        <pre class="mirror" id="diffB">—</pre>
+      </div>
+    </div>
+
+     <div class="hr"></div>
+
+    <div class="table" id="hashTable">
+      <div class="row">
+        <div class="cell-label">Hash A</div>
+        <div class="hash" id="outA">—</div>
+      </div>
+      <div class="row">
+        <div class="cell-label">Hash B</div>
+        <div class="hash" id="outB">—</div>
+      </div>
+      <div class="row">
+        <div class="cell-label">Same?</div>
+        <div class="hash" id="same">—</div>
+      </div>
+    </div>
+
+
+    <!-- Hash output diffs -->
+<div class="diff-grid" style="margin-top:12px">
+  <div>
+    <h3 style="margin:12px 0 6px">Hash A — Differences vs B</h3>
+    <pre class="mirror" id="hDiffA">—</pre>
+  </div>
+  <div>
+    <h3 style="margin:12px 0 6px">Hash B — Differences vs A</h3>
+    <pre class="mirror" id="hDiffB">—</pre>
+  </div>
+</div>
+
+
+    <p class="note">Tip: Switch algorithms, select a demo, or toggle <span class="kbd">hex:</span> mode for binary collisions. Equal chars show <span style="color:#16a34a">green</span>; differences show <span style="color:#dc2626">red</span>.</p>
+  </div>
+
+  <!-- SECTION 2: Uniform distribution (continuous, last hex char) -->
+  <div class="panel">
+    <h2>Uniform Distribution Demo (continuous)</h2>
+    <div class="controls">
+      <label>Rate (hashes per batch):
+        <input type="number" id="batchSize" min="16" max="100000" value="2000" />
+      </label>
+      <button id="go">Start</button>
+      <button id="stop" disabled>Stop</button>
+      <span class="hint">Hashes integers 0,1,2,… and updates continuously using the <em>current</em> algorithm.</span>
+    </div>
+
+    <div class="freq" id="freqBars"></div>
+    <div class="statline" id="stats"></div>
+  </div>
+
+  <p class="muted">
+    Notes: MD5 is shown for educational contrast (collisions exist). SHA-1 is deprecated; SHA-256 remains standard.
+  </p>
+</div>
+
+<script>
+/** =========================
+ * Utilities
+ * =======================**/
+const te = new TextEncoder();
+
+function toHex(buf) {
+  const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  return Array.from(u8).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function hexToBytes(hex) {
+  hex = hex.trim().replace(/^hex:/i,'');
+  if (hex.length % 2) throw new Error("Hex length must be even");
+  const out = new Uint8Array(hex.length/2);
+  for (let i=0;i<out.length;i++) out[i] = parseInt(hex.substr(i*2,2),16);
+  return out;
+}
+function strToBytes(str) { return te.encode(str); }
+
+// Safe digest helper that falls back to MD5 if WebCrypto is unavailable (e.g., file:// in some browsers)
+async function subtleDigestSafe(name, bytes){
+  try{
+    if (window.crypto && crypto.subtle) {
+      const d = await crypto.subtle.digest(name, bytes);
+      return new Uint8Array(d);
+    }
+  }catch(e){ /* fall through */ }
+  // Fallback to MD5 to keep the chart updating (clearly mark in UI)
+  const hex = window.md5(bytes);
+  const out = new Uint8Array(hex.length/2);
+  for (let i=0;i<out.length;i++) out[i] = parseInt(hex.substr(i*2,2),16);
+  // set a flag
+  window.__fallbackUsed = true;
+  return out;
+}
+
+// Unified hashing: MD5 via js-md5; SHA-* via Web Crypto (with fallback)
+async function hashBytes(algo, bytes) {
+  algo = algo.toLowerCase();
+  if (algo === 'md5') {
+    const hex = window.md5(bytes);
+    const out = new Uint8Array(hex.length/2);
+    for (let i=0;i<out.length;i++) out[i] = parseInt(hex.substr(i*2,2),16);
+    return out;
+  } else if (algo === 'sha1' || algo === 'sha-1') {
+    return subtleDigestSafe('SHA-1', bytes);
+  } else if (algo === 'sha256' || algo === 'sha-256') {
+    return subtleDigestSafe('SHA-256', bytes);
+  } else if (algo === 'homemade') {
+    // HomemadeHash-16: tiny, biased, collision-prone (DO NOT USE IN REAL SYSTEMS)
+    let sum = 0;
+      for (let i = 0; i < bytes.length; i++) sum = (sum + bytes[i]) & 0xff;
+      const first = bytes.length ? bytes[0] : 0;
+      const digest = new Uint8Array(16);
+      for (let i = 0; i < 16; i++) {
+        const mixed = (sum + first * (i + 1) + (bytes.length * (i * 13 + 7))) & 0xff;
+        digest[i] = mixed;
+      }
+      return digest;
+  }
+  throw new Error('Unsupported algorithm: ' + algo);
+}
+
+async function hashTextMaybeHex(algo, text, hexMode) {
+  const bytes = (hexMode && /^hex:/i.test(text.trim())) ? hexToBytes(text) : strToBytes(text);
+  const digestBytes = await hashBytes(algo, bytes);
+  return toHex(digestBytes);
+}
+
+/** =========================
+ * Simple LCS-based char diff for highlighting
+ * =======================**/
+function lcsTable(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array(m+1).fill(null).map(()=>Array(n+1).fill(0));
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);
+    }
+  }
+  return dp;
+}
+function backtrackDiff(a,b,dp){
+  let i=a.length,j=b.length;
+  const resA=[],resB=[];
+  while(i>0||j>0){
+    if(i>0&&j>0&&a[i-1]===b[j-1]){
+      resA.push({ch:a[i-1],same:true}); resB.push({ch:b[j-1],same:true}); i--; j--;
+    }else if(j>0 && (i===0 || dp[i][j-1]>=dp[i-1][j])){
+      // insertion in B (char present only in B)
+      resA.push({ch:'',same:false}); resB.push({ch:b[j-1],same:false}); j--;
+    }else if(i>0 && (j===0 || dp[i][j-1]<dp[i-1][j])){
+      // deletion from A (char present only in A)
+      resA.push({ch:a[i-1],same:false}); resB.push({ch:'',same:false}); i--;
+    }
+  }
+  resA.reverse(); resB.reverse();
+  return {resA,resB};
+}
+function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function renderDiffHTML(seq){
+  let html='';
+  for(const seg of seq){
+    if(seg.ch===''){ html += '<span class="diff">·</span>'; } // marker for gap
+    else{
+      const cls = seg.same ? 'same' : 'diff';
+      const ch = escapeHtml(seg.ch);
+      html += `<span class="${cls}">${ch}</span>`;
+    }
+  }
+  return html || '—';
+}
+
+function pairwiseHashDiff(a, b) {
+  const L = Math.max(a.length, b.length);
+  const seqA = [], seqB = [];
+  for (let i = 0; i < L; i++) {
+    const ca = a[i] ?? '';
+    const cb = b[i] ?? '';
+    const same = ca !== '' && cb !== '' && ca === cb;
+    // If one side is shorter, show a gap marker on that side
+    if (ca === '') seqA.push({ ch: '', same: false });
+    else           seqA.push({ ch: ca, same });
+
+    if (cb === '') seqB.push({ ch: '', same: false });
+    else           seqB.push({ ch: cb, same });
+  }
+  return { seqA, seqB };
+}
+
+
+/** =========================
+ * UI Wiring
+ * =======================**/
+const $ = sel => document.querySelector(sel);
+const algoSel = $('#algo');
+const inA = $('#inA'), inB = $('#inB');
+const outA = $('#outA'), outB = $('#outB'), same = $('#same');
+const collSel = $('#collision'), avaSel = $('#avalanche');
+const hexMode = $('#hexMode');
+const diffA = $('#diffA'), diffB = $('#diffB');
+const hDiffA = $('#hDiffA'), hDiffB = $('#hDiffB');
+
+
+let fallbackNotified = false;
+
+async function recalc(){
+  const algo = algoSel.value;
+  const aText = inA.value;
+  const bText = inB.value;
+  try {
+    const [ha, hb] = await Promise.all([
+      hashTextMaybeHex(algo, aText, hexMode.checked),
+      hashTextMaybeHex(algo, bText, hexMode.checked)
+    ]);
+    outA.textContent = ha || '—';
+    outB.textContent = hb || '—';
+    if (!ha || !hb) same.textContent = '—';
+    else {
+      const eq = ha === hb;
+      same.textContent = eq ? 'Yes (collision)' : 'No';
+      same.style.background = eq ? '#dcfce7' : '#fff';
+    }
+    // After setting outA/outB/same...
+    if (ha && hb) {
+      const { seqA, seqB } = pairwiseHashDiff(ha, hb);
+      hDiffA.innerHTML = renderDiffHTML(seqA);  // green = same, red = diff
+      hDiffB.innerHTML = renderDiffHTML(seqB);
+    } else {
+      hDiffA.textContent = '—';
+      hDiffB.textContent = '—';
+    }
+
+  } catch (e) {
+    outA.textContent = 'Error';
+    outB.textContent = 'Error';
+    same.textContent = e.message;
+    same.style.background = '#fee2e2';
+  }
+
+  // Diff render
+  const a = aText, b = bText;
+  const dp = lcsTable(a,b);
+  const {resA, resB} = backtrackDiff(a,b,dp);
+  diffA.innerHTML = renderDiffHTML(resA);
+  diffB.innerHTML = renderDiffHTML(resB);
+}
+
+[inA, inB, algoSel, hexMode].forEach(el => el.addEventListener('input', recalc));
+[inA, inB, algoSel, hexMode].forEach(el => el.addEventListener('change', recalc));
+
+collSel.addEventListener('change', () => {
+  if (collSel.value === 'pair1') {
+    // Known MD5-colliding pair (binary as hex)
+    const m1 =
+      'hex:d131dd02c5e6eec4693d9a0698aff95c2fcab58712467eab4004583eb8fb7f8955ad340609f4b30283e488832571415a085125e8f7cdc99fd91dbdf280373c5bd8823e3156348f5bae6dacd436c919c6dd53e2b487da03fd02396306d248cda0e99f33420f577ee8ce54b67080a80d1ec69821bcb6a8839396f9652b6ff72a70';
+    const m2 =
+      'hex:d131dd02c5e6eec4693d9a0698aff95c2fcab50712467eab4004583eb8fb7f8955ad340609f4b30283e4888325f1415a085125e8f7cdc99fd91dbd7280373c5bd8823e3156348f5bae6dacd436c919c6dd53e23487da03fd02396306d248cda0e99f33420f577ee8ce54b67080280d1ec69821bcb6a8839396f965ab6ff72a70';
+    inA.value = m1;
+    inB.value = m2;
+    hexMode.checked = true;
+    algoSel.value = 'md5';
+    recalc();
+  }
+});
+
+avaSel.addEventListener('change', () => {
+  const v = avaSel.value;
+  if (!v) return;
+  if (v === 'hello') {
+    inA.value = 'HELLO';
+    inB.value = 'HELLo';
+  } else if (v === 'pangram') {
+    inA.value = 'The quick brown fox jumps over the lazy dog';
+    inB.value = 'The quick brown f0x jumps over the lazy dog';
+  } else if (v === 'json') {
+    inA.value = '{"amount": 100}';
+    inB.value = '{"amount": 101}';
+  }
+  recalc();
+});
+
+/** =========================
+ * Uniform distribution (continuous, last hex char of digest)
+ * =======================**/
+const freqBars = $('#freqBars');
+const stats = $('#stats');
+const goBtn = $('#go');
+const stopBtn = $('#stop');
+const batchSizeEl = $('#batchSize');
+const HEXS = Array.from({length:256},(_,i)=>i.toString(16).padStart(2,'0'));
+
+let stopRequested = false;
+let counter = 0;
+let counts = new Array(256).fill(0);
+let total = 0;
+
+function drawBars(){
+  // Ensure bars exist once; reuse DOM for smoother updates
+  if (!freqBars.dataset.initialized){
+    freqBars.innerHTML = '';
+    for (let i=0;i<256;i++){
+      const wr = document.createElement('div');
+      wr.style.display='flex'; wr.style.flexDirection='column'; wr.style.alignItems='center';
+      const bar = document.createElement('div'); bar.className='bar';
+      const fill = document.createElement('span'); fill.style.height='2%'; fill.dataset.idx=i;
+      const lab = document.createElement('div'); lab.className='bar-label'; lab.textContent = HEXS[i];
+      bar.appendChild(fill); wr.appendChild(bar); wr.appendChild(lab); freqBars.appendChild(wr);
+    }
+    freqBars.dataset.initialized = '1';
+  }
+  const max = Math.max(1, ...counts);
+  const fills = freqBars.querySelectorAll('.bar > span');
+  fills.forEach(span => {
+    const i = +span.dataset.idx;
+    const h = Math.round((counts[i]/max)*100);
+    span.style.height = (h||2) + '%';
+  });
+  const ideal = (total/256)||0;
+  const diffs = counts.map(c=>Math.abs(c-ideal));
+  const avgDev = diffs.reduce((a,b)=>a+b,0)/256;
+  let extra = '';
+  if (window.__fallbackUsed && !fallbackNotified){
+    extra = ' • Note: WebCrypto unavailable here, using MD5 fallback for chart.';
+    fallbackNotified = true;
+  }
+  stats.innerHTML = `
+    <span class="pill">Total: ${total.toLocaleString()}</span>
+    <span class="pill">Ideal/char: ${ideal.toFixed(1)}</span>
+    <span class="pill">Avg abs deviation: ${avgDev.toFixed(2)}</span>
+    ${extra ? `<span class="pill" title="Some browsers disable SHA-* on file://">⚠${extra}</span>` : ''}
+  `;
+}
+
+async function tickOnce(){
+  const algo = algoSel.value;
+  const batch = Math.max(16, Math.min(100000, parseInt(batchSizeEl.value||'0',10)));
+  const promises = [];
+  for (let i=0;i<batch;i++,counter++){
+    promises.push(hashBytes(algo, strToBytes(String(counter))));
+  }
+  const results = await Promise.all(promises);
+  for (const u8 of results){
+    const last = u8[u8.length-1];
+    const idx = last; // 0..255 maps to 00..ff
+    counts[idx] += 1;
+  }
+  total += batch;
+  drawBars();
+}
+
+async function runContinuous(){
+  stopRequested = false;
+  goBtn.disabled = true; stopBtn.disabled = false;
+  // Reset counters when (re)starting
+  counts = new Array(256).fill(0);
+  total = 0;
+  counter = 0;
+  window.__fallbackUsed = false;
+  drawBars();
+
+  while (!stopRequested){
+    await tickOnce();
+    // Yield to UI
+    await new Promise(r => setTimeout(r, 0));
+  }
+  goBtn.disabled = false; stopBtn.disabled = true;
+}
+
+goBtn.addEventListener('click', runContinuous);
+stopBtn.addEventListener('click', ()=>{ stopRequested = true; });
+
+/** =========================
+ * Init
+ * =======================**/
+recalc();
+drawBars();
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+version: 1
+suite_id: ethereum-agent-regression
+lab: ethereum_lab
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/ethereum_lab/README.md
+assumptions:
+  - MCP browser tooling is available.
+  - The Ethereum automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  instructor_credentials_file: .runtime/instructor-credentials.txt
+observability:
+  required:
+    - console_logs
+    - network_failures
+  suggested_mcp_methods:
+    - get_console_logs
+    - get_network_digest
+    - get_network_traffic
+shared_rules:
+  - Use a fresh browser context per task.
+  - Keep student and instructor cookies in separate contexts.
+  - When switching roles, discard the old browser context and create a fresh session for the new role.
+  - Prefer visible SPA controls over URL surgery once the page is loaded.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+  - Run at least one real command through the browser Lab Terminal path.
+parallelization:
+  recommended:
+    - Run the instructor task in parallel with any student task.
+    - Serialize student tasks if free Ethereum stations are limited.
+  cleanup:
+    - After the full suite, optionally wipe throwaway student claims if the environment should be restored.
+tasks:
+  - id: eth-student-claim-spa
+    title: Student claim and SPA shell
+    file: tasks/student-claim-spa.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/ethereum_lab/
+      - /api/ethereum/claim
+      - /labs/ethereum_lab/api/config.json
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: eth-student-terminal-rpc
+    title: Student terminal and RPC
+    file: tasks/student-terminal-rpc.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/ethereum_lab/terminal
+      - /labs/ethereum_lab/ws/terminal
+      - /labs/ethereum_lab/rpc
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: eth-student-views
+    title: Student SPA views
+    file: tasks/student-views.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/ethereum_lab/
+      - /labs/ethereum_lab/?view=live
+      - /labs/ethereum_lab/?view=diagnostics
+      - /labs/ethereum_lab/?view=beacon-lab
+      - /labs/ethereum_lab/?view=contract-builder-lab
+      - /labs/ethereum_lab/?view=tokenization-lab
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: eth-instructor-auth-surfaces
+    title: Instructor admin and mode
+    file: tasks/instructor-auth-surfaces.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /instructor/
+      - /labs/ethereum/admin
+      - /labs/ethereum_lab/instructor/
+      - /labs/ethereum_lab/?mode=instructor
+      - /labs/ethereum_lab/lab-api/fund-requests
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
+  - The suite is complete only when claim flow, core student views, terminal, RPC, and instructor surfaces have all been checked.

@@ -1,0 +1,219 @@
+intro:
+  title: 'Consensus: PoW vs PoS'
+  summary: Two labs. Lab A runs the Proof-of-Work simulator so you can watch fork resolution, selfish mining, and centralization from raw hash-rate. Lab B runs the Proof-of-Stake simulator so you can feel the same failure modes when the scarce resource is capital instead of energy.
+  labs:
+  - id: lab-pow
+    title: Lab A · Proof of Work
+    summary: Run a local Bitcoin-style mining simulator against CPU bots, first honestly and then adversarially. Watch competing histories resolve under the Longest Chain Rule, then break the rule to earn more than your fair share.
+  - id: lab-pos
+    title: Lab B · Proof of Stake
+    summary: Trade hashing for staking. Observe compounding rewards concentrate ownership, then sit at the validator's seat during consensus wars, double-sign pressure, and block withholding by a 70% whale.
+  chapters:
+  - id: pow-forks
+    lab: lab-pow
+    title: PoW · Forks & Reorgs
+    summary: Run honest mining against CPU bots and watch competing histories resolve under the Longest Chain Rule.
+  - id: pow-selfish
+    lab: lab-pow
+    title: PoW · Selfish Mining
+    summary: Withhold blocks to bait honest miners into wasting hashes on a stale branch.
+  - id: pow-attacker
+    lab: lab-pow
+    title: PoW · Attacker Dominance
+    summary: Tune a single miner past the 30% threshold and watch fairness collapse.
+  - id: pow-reflect
+    lab: lab-pow
+    title: PoW · Record & Reflect
+    summary: Fill the scenario table and compare outcomes before moving to PoS.
+  - id: pos-compounding
+    lab: lab-pos
+    title: PoS · Rich Get Richer
+    summary: High-speed compounding sim showing small validators getting diluted by whales.
+  - id: pos-consensus-war
+    lab: lab-pos
+    title: PoS · Consensus War
+    summary: Play validator through cartel forks, bribes, and the nothing-at-stake dilemma.
+  - id: pos-oligarch
+    lab: lab-pos
+    title: PoS · The Oligarch
+    summary: A 70% stakeholder withholds blocks to orphan honest proposals; observe the effect on rewards.
+  - id: pos-reflect
+    lab: lab-pos
+    title: PoS · Record & Reflect
+    summary: Log fork events, stake shifts, and how slashing reshapes the incentives.
+exercises:
+- id: pow-honest-mining
+  chapter: pow-forks
+  title: Honest Mining Against CPU Bots
+  goal: |-
+    **Orientation**
+
+    **Scenario.** You are stepping into the role of a participant in a contested blockchain network. In Lab A you will watch a Bitcoin-style Proof-of-Work network resolve forks and reward miners based on hash-rate; in Lab B you will revisit the same coordination problem in a Proof-of-Stake world where capital, not electricity, determines who gets influence.
+
+    **Purpose.** This lab is designed to make consensus feel operational instead of abstract. Rather than reading about reorgs, selfish mining, compounding stake, and cartel pressure, you will run the simulators yourself and watch those behaviors emerge from the rules.
+
+    **What you'll learn.** By the end, you should be able to explain how the Longest Chain Rule handles competing histories, why selfish strategies can outperform honest participation, how concentration changes network outcomes in both PoW and PoS, and why incentive design matters as much as the protocol itself.
+
+    **How to approach this first exercise.** Start by running the honest PoW simulator and treating it as your baseline. Watch the event log, notice when the canonical tip changes, and get comfortable reading the final tree. Those observations will give you the reference point you need before you start breaking the system on purpose.
+
+    Start the simulator in **honest** mode. Four CPU miners race against you to solve a Hashcash puzzle; the Longest Chain Rule decides whose blocks survive. You will see blocks you thought were confirmed get orphaned when a heavier branch appears.
+  student_steps:
+  - |-
+    Reset the local block DB and launch honest mining:
+
+    ```
+    python3 scripts/pow_local.py --reset --miners 4 --strategy honest
+    ```
+  - Whenever the prompt asks for a nonce, let it run — the `--throttle` default paces the human miner so you can watch events scroll past.
+  - Let a few dozen blocks accumulate, then `Ctrl+C` and scroll up through the event log.
+  - 'Examine the final ASCII tree at the end of the run: branches that were pruned are your **orphans**.'
+  expected_observations:
+  - Some of **your** mined blocks show up as orphaned because a CPU miner extended a competing branch faster.
+  - The canonical tip keeps shifting as blocks accumulate — this is a **reorg**.
+  - No single miner wins every block; reward share tracks hash share.
+  meaning:
+  - 'Probabilistic finality is real: a block is only safe after enough descendants pile on top.'
+  - The Longest Chain Rule is a **tie-breaker**, not a guarantee — it only resolves after one branch pulls ahead in work.
+  transition: Now see what happens when one miner stops playing honest.
+- id: pow-selfish-cpu
+  chapter: pow-selfish
+  title: Selfish Mining by a CPU Bot
+  goal: Restart the simulator with `--strategy selfish-cpu`. `CPU_0` will now withhold valid blocks and release them strategically to invalidate the honest chain. You play an honest miner.
+  student_steps:
+  - |-
+    Reset the chain and launch selfish-CPU mode:
+
+    ```
+    python3 scripts/pow_local.py --reset --miners 4 --strategy selfish-cpu
+    ```
+  - Watch the event stream for `[HIDDEN]` annotations — those are blocks `CPU_0` is withholding from the network.
+  - When `CPU_0` publishes a hidden chain, note how many of your honest blocks get orphaned in a single reorg.
+  expected_observations:
+  - '`CPU_0`''s published reward share exceeds its hash share (it has ~25% of miners but earns more than 25% of accepted blocks).'
+  - Honest miners occasionally lose a long streak of blocks at once when a hidden branch gets revealed.
+  meaning:
+  - A miner with **less than 50%** hashrate can earn **more than its fair share** by timing releases.
+  - Protocol compliance is not a Nash equilibrium — deviation pays.
+  transition: Now step into the attacker's seat yourself.
+- id: pow-selfish-student
+  chapter: pow-selfish
+  title: Play the Selfish Miner
+  goal: You control the selfish strategy now. With `--strategy selfish-student`, one of the CPU slots is removed and you are prompted to decide when to publish your hidden blocks.
+  student_steps:
+  - |-
+    Reset and launch the interactive selfish mode:
+
+    ```
+    python3 scripts/pow_local.py --reset --miners 4 --strategy selfish-student
+    ```
+  - When you mine a block, choose to **hold** it. Keep holding while honest miners build on top of what they see as the tip.
+  - Release your hidden chain when it is **one block longer** than the public chain — that's the moment the reorg fires.
+  expected_observations:
+  - Held blocks show as `[HIDDEN]` in your status output.
+  - Timing the release right invalidates multiple honest blocks at once.
+  - Releasing too early wastes the advantage; releasing too late risks the honest chain overtaking you.
+  meaning:
+  - The attack only pays above a threshold hash share and with favorable network timing.
+  - Real networks counter with faster block propagation (FIBRE, Compact Blocks) to shrink the attacker's window.
+  transition: What if one miner is just very large?
+- id: pow-attacker-dominance
+  chapter: pow-attacker
+  title: A Dominant Miner Warps the Chain
+  goal: Let one CPU miner dwarf the others. Observe how a single dominant hash-rate holder captures more than its fair share of rewards **without cheating** — just by being large.
+  student_steps:
+  - |-
+    Restart with four miners where CPU_0 is throttled down so it's proportionally stronger than the rest (the sim wraps this as the default `honest` mode with a tuned throttle):
+
+    ```
+    python3 scripts/pow_local.py --reset --miners 4 --throttle 0.3 --strategy honest
+    ```
+  - Compare CPU_0's accepted-block count against the other miners over 20+ blocks.
+  - '(Optional) Swap the honest CPU_0 for a selfish one: rerun with `--strategy selfish-cpu` and note how dominance amplifies selfish gains.'
+  expected_observations:
+  - CPU_0's reward share tracks its hash share as long as everyone stays honest.
+  - Forks become rarer — CPU_0 builds on its own tip too fast for competitors to overtake.
+  meaning:
+  - A concentration of hash-rate does **not** violate the protocol, but it erodes the diversity the protocol depends on.
+  - Pool centralization in real Bitcoin is the same phenomenon with real-world stakes.
+  transition: Record the three PoW scenarios side-by-side before switching economies.
+- id: pow-record
+  chapter: pow-reflect
+  title: Record the PoW Scenarios
+  goal: Capture your three runs in one table so the PoS comparison is honest.
+  student_steps:
+  - 'For each scenario (Honest, Selfish, Dominant CPU) record: miners, your share %, strategy, final reward %, and number of forks seen.'
+  - Note at least one run where your own mined block ended up as an orphan — record the block height.
+  meaning:
+  - Keeping the numbers lets you defend claims like "selfish mining pays at ~30% share" with data from your own simulator.
+  transition: On to Proof of Stake — same failure modes, different scarce resource.
+- id: pos-stake-growth
+  chapter: pos-compounding
+  title: Stake Growth Over 15 Rounds
+  goal: Run the baseline PoS compounding simulation. Validators start with different stakes; each round, the proposer is chosen weighted by stake and gets a reward proportional to its stake.
+  student_steps:
+  - |-
+    Run the compounding simulator:
+
+    ```
+    python3 scripts/pos_sim.py --rounds 15
+    ```
+  - Record the final stake distribution — note the top validator's share vs. the bottom validator's.
+  - Rerun with `--rounds 100` and watch the dilution compound.
+  expected_observations:
+  - The largest validator's share grows every round; the smallest shrinks in relative terms.
+  - No one is cheating — this is the natural consequence of stake-weighted reward.
+  meaning:
+  - Without **redistribution**, compounding + fixed operating costs centralize PoS the same way electricity prices centralize PoW mining.
+  - Real chains mitigate with inflation caps, quadratic voting, or separate reward-issuance rules.
+  transition: 'Next: step into the validator''s seat during a fork.'
+- id: pos-consensus-war-game
+  chapter: pos-consensus-war
+  title: Vote in the Consensus War
+  goal: 'Launch the multi-scenario PoS strategy menu. Select the **Consensus War** scenario: competing forks appear, and a cartel may try to bribe you.'
+  student_steps:
+  - |-
+    Start the menu-driven strategy lab:
+
+    ```
+    python3 scripts/pos_strategy.py
+    ```
+  - From the menu, pick **2. Consensus War**.
+  - Each round, choose which fork to sign. Accept at least one bribe to feel the reward, then decline to feel the opportunity cost.
+  - Back at the menu, run **4. Nothing-at-Stake vs Slashing** and try double-signing (`both`) to see slashing fire.
+  expected_observations:
+  - Signing both forks (`both`) earns rewards twice **until** slashing kicks in and burns a fraction of your stake.
+  - Bribes inflate short-term yield but get clawed back if your bribing fork loses.
+  meaning:
+  - '**Slashing** is the PoS analogue of "mining was work" — it turns double-signing into a real, enforceable cost.'
+  - Targeted bribery requires the attacker to **know** which validator is up next — which is why VRFs and fast rotation matter.
+  transition: 'One more scenario: what does a majority stakeholder look like?'
+- id: pos-oligarch-attack
+  chapter: pos-oligarch
+  title: Watch the 70% Oligarch
+  goal: Observe a 70%-stake validator using block withholding to orphan honest proposals — the PoS mirror of selfish mining.
+  student_steps:
+  - |-
+    Back in the strategy menu, pick **3. The Oligarch (Block Withholding Attack)**:
+
+    ```
+    python3 scripts/pos_strategy.py
+    ```
+  - Watch the Oligarch mine only when selected, but **secretly** build a heavier chain.
+  - Record how much of the **honest peasant** rewards get wiped when the Oligarch publishes.
+  expected_observations:
+  - The Oligarch follows the protocol rules — it only proposes when selected.
+  - Its strategic timing still lets it capture **more than 70%** of total rewards over time.
+  meaning:
+  - Majority stake is not just censorship power — it is **timing** power.
+  - 'Defenses: finality gadgets (e.g., Casper FFG) that commit to recent blocks so they can''t be rewritten.'
+  transition: Wrap up with the comparison table.
+- id: pos-record
+  chapter: pos-reflect
+  title: Fork Logs, Stake Shifts, Slashing
+  goal: Record the PoS runs the same way you recorded PoW.
+  student_steps:
+  - 'For each PoS scenario (Compounding, Consensus War, Oligarch), log: starting stake, ending stake, rewards vs. share, slashes fired, double-signs attempted.'
+  - 'Write one paragraph: **Why is double-signing tempting, and what specifically does slashing change?**'
+  - Write a one-paragraph comparison of PoW and PoS on fairness, energy, security, and decentralization.
+  meaning:
+  - You now have lived-through data on both consensus families — use it to argue the trade-offs instead of repeating marketing.

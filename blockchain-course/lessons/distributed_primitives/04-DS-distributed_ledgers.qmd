@@ -1,0 +1,768 @@
+---
+title: "Distributed Ledgers"
+subtitle: 'Section III: Distributed Systems Fundamentals'
+author: Army Cyber Institute
+lesson: 04-DS
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## The Shared Notebook Problem
+
+**Scenario:** Three agencies must keep the same incident log. No one is “the boss.” Changes must be visible, final, and independently verifiable.
+
+- What happens when Agency B writes an entry while Agency A is offline?
+- What if someone needs to correct a past entry — can they just edit it?
+- Does the order of entries matter? What if two agencies write at the same time?
+- What if one agency's copy gets corrupted — how do the others know?
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide frames distributed ledgers as a coordination solution for shared records without a single trusted owner. It matters here because the rest of the lesson explains which technical and governance features turn a shared notebook into a reliable ledger. Emphasize that the problem is not just storage, but ordering, visibility, and independent verification across organizations.
+
+**Key Points**
+- Multiple agencies may need one shared record without appointing a single boss.
+- The hard problems are ordering, correction, synchronization, and corruption recovery.
+- Distributed ledgers are designed to make changes visible, durable, and independently checkable.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @haber_howtimestampdigital_1991
+
+:::
+
+## From Logs to Ledgers {.smaller}
+
+
+- **Logs** record events or actions over time — server access logs, transaction histories, audit trails.
+  - Each entry is append-only: you add to the end, you don't edit the past.
+
+- **What challenges do we face when trying to distribute logs?**
+  - *Consistency:* If multiple nodes write simultaneously, which version is correct?
+  - *Integrity:* How do you detect if one node silently edits a past entry?
+  - *Ordering:* Does the sequence of entries matter? (Yes — especially for financial transactions, access records, or anything where “who went first” has consequences.)
+
+- A **ledger** takes the append-only log and adds the machinery to solve these problems across multiple participants:
+  - **Replication** — every participant holds a copy, so no single node controls the record
+  - **Hash-linking** — each entry commits to the one before it, making retroactive edits detectable
+  - **Consensus** — a process to agree on what gets appended and in what order
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how an ordinary append-only log becomes a distributed ledger when replication, hash-linking, and agreement are added. It matters here because students need to see the incremental evolution from a familiar system to a multi-party one. Emphasize that a ledger solves distribution problems that a simple replicated log does not.
+
+**Key Points**
+- Logs already preserve event history, but distribution introduces ordering and integrity problems.
+- Replication prevents one node from becoming the only copy of record.
+- Hash-linking and consensus add tamper-evidence and shared ordering.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @haber_howtimestampdigital_1991
+
+:::
+
+## A Distributed Ledger
+
+
+
+**Definition:** A distributed ledger is a shared, append‑only record replicated across multiple participants, where entries are accepted and ordered according to a consensus process, and tamper‑evidence is provided by cryptographic linking.
+
+- Replicated state
+- Append‑only, tamper‑evident history
+- Agreement on order (consensus)
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the lesson's compact definition of a distributed ledger. It matters here because later comparisons and case studies all build on these three elements: shared copies, append-only history, and agreement on order. Emphasize that cryptographic linking and consensus are what make the shared record dependable across parties.
+
+**Key Points**
+- A distributed ledger is shared across multiple participants.
+- History is append-only and tamper-evident rather than freely editable.
+- Consensus determines which entries are accepted and in what order.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Distributed Ledger vs. Centralized Database (Compare/Contrast)
+
+
+
+ Feature | **Distributed Ledger** | **Centralized Database** |
+|:--|:--|:--|
+| Trust Model | Adversarial-tolerant | Admin-trusted |
+| Mutability | Append-only | Mutable |
+| Ordering | Consensus-ordered | index-based ordering |
+| Governance | Protocol / Consortium | Owner |
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide contrasts ledgers with centralized databases so students choose between them for the right reason. It matters here because many ledger mistakes come from confusing a governance problem with a storage problem. Emphasize that the trust model drives the tool choice more than the data model does.
+
+**Key Points**
+- Databases assume an administrator is trusted to manage the truth.
+- Ledgers trade performance and mutability for shared control and independent verification.
+- Governance should be the first question before adopting a ledger.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ruan_blockchainsvsdistributed_2019
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Immutability Source
+
+
+
+- Hash‑chaining makes retroactive edits detectable.
+  - What would this look like in practice?
+  - If I drop the oldest entries to save space:
+    - can I still add new data to the chain?
+    - under what circumstances can I detect if someone else has made changes to dropped data?
+- Distributed replication makes unilateral edits ineffective.
+- Requires a consensus model to derive finality.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains where so-called immutability really comes from. It matters here because students need a precise, non-mystical explanation before they later study consensus and attacks in more detail. Emphasize that ledgers provide tamper-evidence plus costly or rule-bound finality, not absolute impossibility of change.
+
+**Key Points**
+- Hash-chaining makes retroactive edits visible because later links no longer match.
+- Replication prevents one node's rewrite from becoming the shared truth by default.
+- Finality depends on the consensus model and its assumptions.
+
+**Walkthrough**
+None
+
+**Sources**
+- @haber_howtimestampdigital_1991
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Transparency vs. Privacy
+
+
+- **Transparency:** anyone (or any permitted member) can verify state changes.
+- **Privacy:** access control, encryption, or partitioning restricts who sees what.
+- Are there ways around the tension between these two?
+  - Commit private data through hashing
+  - Zero-knowledge Proofs
+  - Homomorphic Encryption
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide distinguishes verifiability from full public disclosure. It matters here because students often assume transparency always means exposing all underlying data. Emphasize that good ledger design can make proofs broadly checkable while keeping sensitive payloads visible only to authorized parties.
+
+**Key Points**
+- Transparency means others can verify that rules were followed and history is intact.
+- Privacy uses access control, encryption, partitioning, or proof systems to limit visibility.
+- Zero-knowledge proof means proving a claim without revealing all underlying data.
+- Homomorphic encryption means computing on encrypted data without first decrypting it.
+
+**Walkthrough**
+None
+
+**Sources**
+- @androulaki_hyperledgerfabricdistributed_2018
+- @boneh_zeroknowledgeproofs_2020
+- @boneh_fullyhomomorphicencryption_2020
+
+:::
+
+
+## Permissioned Ledgers {.smaller}
+
+A **permissioned ledger** is a distributed ledger where participation is restricted to known, authenticated entities admitted through a governance process.
+
+- **Membership is curated:** organizations join by invitation or application — each participant is identified and authenticated (e.g., via certificates from a Membership Service Provider).
+- **Access control is explicit:** policies define who can propose transactions, who must endorse them, who orders them, and who can read which data.
+- **Performance and privacy can be tuned:** because participants are known, the system can optimize for throughput and use private data channels.
+- **Exemplar:** Hyperledger Fabric separates execution, ordering, and validation — a modular architecture built for enterprise inter-organizational workflows.
+
+*What are potential use cases for permissioned ledgers outside of finance?*
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces permissioned ledgers as distributed ledgers built around known members and explicit policy. It matters here because the lesson is now splitting the design space based on membership and governance. Emphasize that permissioned systems optimize for controlled collaboration, confidentiality, and institutional accountability.
+
+**Key Points**
+- Membership is curated, and participants are authenticated through governance.
+- Access control policies determine who can propose, endorse, order, and read transactions.
+- Known membership allows higher throughput and more targeted privacy controls.
+- MSP stands for Membership Service Provider.
+
+**Walkthrough**
+None
+
+**Sources**
+- @androulaki_hyperledgerfabricdistributed_2018
+- @hyperledger_blockchainplatformenterprise_2023
+
+:::
+
+## Permissionless Ledgers {.smaller}
+
+A **permissionless ledger** is a distributed ledger where anyone can participate — read, write, and validate — without needing approval from a central authority.
+
+- **Open by default:** participation is gated by protocol rules, not an access control list. Identity is expressed through key pairs, not real-world vetting.
+- **Sybil resistance through economics:** because anyone can join, the system uses economic or computational costs (proof of work, proof of stake) to prevent one actor from cheaply overwhelming the network.
+- **Probabilistic or economic finality:** confidence in an entry grows as the network builds on top of it, rather than being declared final by an authority.
+- **Exemplar:** Bitcoin — transactions are authorized by digital signatures, broadcast peer-to-peer, and accepted into the shared history by nodes following common validation rules.
+
+*Where would you want to use permissionless ledgers outside of cryptocurrencies?*
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces permissionless ledgers as open-by-default systems that must defend themselves against cheap identity creation. It matters here because the trust boundary here is the protocol rather than a consortium's admission process. Emphasize that broad openness brings stronger censorship resistance but also higher coordination overhead.
+
+**Key Points**
+- Anyone may participate if they follow the protocol rules.
+- Security depends on economic or computational costs that make domination expensive.
+- Finality is often probabilistic or economic rather than declared by an administrator.
+- PoW means Proof of Work, and PoS means Proof of Stake.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Permissioned vs. Permissionless: Comparison {.smaller}
+
+
+| Dimension | **Permissioned** | **Permissionless** |
+|---|---|---|
+| **Membership** | Known, authenticated; join by governance | Open; anyone with software + keys |
+| **Identity** | Real-world identity via certificates/MSP | Pseudonymous via key pairs |
+| **Sybil resistance** | Admission control | Economic cost (PoW, PoS) |
+| **Throughput** | Higher (fewer nodes, known trust) | Lower (broad replication, open membership) |
+| **Finality** | Deterministic (once ordered, it's final) | Probabilistic (confidence grows over time) |
+| **Privacy** | Private channels / selective disclosure | Public by default (all nodes see all data) |
+| **Trust assumption** | Trust the governance process | Trust the protocol + economic incentives |
+| **Example** | Hyperledger Fabric | Bitcoin, Ethereum |
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This comparison slide helps students evaluate permissioned and permissionless ledgers across the same dimensions. It matters here because design decisions become clearer when identity, privacy, finality, and trust assumptions are placed side by side. Emphasize that neither column is universally superior; each fits a different governance reality.
+
+**Key Points**
+- Permissioned systems favor explicit identity, privacy controls, and deterministic finality.
+- Permissionless systems favor open participation, broad verifiability, and censorship resistance.
+- Sybil resistance differs because one model uses admission control and the other uses protocol cost.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @deirmentzoglou_surveylongrangeattacks_2019
+- @androulaki_hyperledgerfabricdistributed_2018
+- @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+
+## Governance Models {.smaller}
+
+
+:::: columns
+
+::: {.column width="50%"}
+**Permissionless Governance**
+
+- Changes proposed via improvement proposals (BIPs, EIPs)
+- Adopted through rough consensus among independent operators
+- Disagreements can lead to **hard forks** — the network splits and both chains continue (e.g., Bitcoin vs. Bitcoin Cash)
+- No authority can force an upgrade; users "vote with their nodes"
+:::
+
+::: {.column width="50%"}
+**Permissioned Governance**
+
+- Changes governed by charters, contracts, or consortium votes
+- Membership changes require formal approval
+- Disagreements resolved through contractual or legal processes — not forks
+- A governing body can mandate upgrades, revoke membership, or roll back errors
+:::
+
+::::
+
+- In both models: **clarity on governance reduces technical surprises.** Write down decision rights before arguing about throughput.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that governance is part of ledger architecture, not a separate legal afterthought. It matters here because upgrades, membership changes, and dispute resolution shape how the system behaves over time. Emphasize that technical mechanisms only make sense once decision rights are explicit.
+
+**Key Points**
+- Permissionless governance relies on rough consensus among independent operators.
+- Permissioned governance relies on charters, contracts, votes, and defined administrators.
+- Hard fork means a network split where incompatible rule sets continue separately.
+- Explicit governance reduces technical surprises during upgrades and incidents.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+
+## Threats to Distributed Ledgers {.smaller}
+
+
+Both permissioned and permissionless ledgers face threats — but the specific risks differ:
+
+- **Network partitions and eclipse attacks:** An adversary isolates a node or group of nodes, feeding them a false view of the network.
+  - *Permissionless:* eclipsed miners/validators may waste resources on the wrong chain.
+  - *Permissioned:* a partitioned organization may miss critical updates or fall out of sync.
+- **Majority or collusion attacks:** An actor (or coalition) gains enough influence to control the ledger.
+  - *Permissionless:* 51% attacks — amassing hash power or stake to rewrite recent history.
+  - *Permissioned:* colluding member organizations can push fraudulent transactions if endorsement policies are too weak.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the threat landscape that both kinds of ledgers must manage. It matters here because students should see that permissioned and permissionless systems face different versions of similar underlying risks. Emphasize that the specific attack path changes with the membership model, even when the high-level threat category is the same.
+
+**Key Points**
+- Network partitions and eclipse attacks can isolate nodes from the wider system view.
+- Majority or collusion attacks arise when one actor or coalition gains too much influence.
+- A 51% attack means an attacker controls enough validating power to dominate recent history.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+
+## Threats to Distributed Ledgers (cont.) {.smaller}
+
+- **Long-range or history rewrite attacks:** An attacker uses old credentials (keys or stake) to construct an alternative version of distant history and present it as legitimate. Unlike a 51% attack on recent blocks, this targets the deep past.
+  - *Permissionless:* in proof-of-stake systems without checkpointing, an attacker who held stake months ago can cheaply build a competing chain from that point forward. Proof-of-work is less vulnerable because re-mining old blocks requires re-spending real energy.
+  - *Permissioned:* largely mitigated by deterministic finality. Once a block is committed by the ordering service, it is final and there is no mechanism to "fork from the past."
+- **Insider and operational failures:** Key compromise, misconfigured policies, or governance failures.
+  - *Permissionless:* lost private keys = lost funds, permanently.
+  - *Permissioned:* compromised admin credentials can alter membership, endorsement policies, or channel configurations.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This continuation slide broadens the threat model beyond consensus manipulation to include operational failure. It matters here because real ledger incidents often involve keys, policy errors, or governance weaknesses rather than purely algorithmic attacks. Emphasize that secure operation is as important as secure protocol design.
+
+**Key Points**
+- Long-range attacks target older portions of history rather than only recent blocks.
+- Key compromise and policy misconfiguration can be as damaging as protocol attacks.
+- Governance and key management determine how quickly a system can recover from errors.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+
+## Consensus {.smaller}
+
+**Consensus** is the process by which distributed nodes agree on a single, consistent ordering of events — ensuring that every participant sees the same history, even when some nodes fail or act maliciously.
+
+- **Finality:** There is a point at which an entry is considered permanent. This can be **deterministic** (a protocol step declares it final, as in BFT-based systems) or **probabilistic** (confidence grows as more work builds on top, as in Bitcoin). *Think: “when can I treat this as done?”*
+
+Different consensus families (PoW, PoS, BFT) deliver these properties under different assumptions. We will unpack specific algorithms in the next lesson.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines consensus at a high level before later lessons dive into specific algorithms. It matters here because every ledger depends on a way to produce one shared order of events. Emphasize safety, liveness, and finality as the core questions students should ask of any consensus family.
+
+**Key Points**
+- Consensus gives distributed nodes one consistent ordering of events.
+- Safety means the system should not accept conflicting histories.
+- Liveness means the system continues to make progress despite faults or delays.
+- Finality tells you when an entry can reasonably be treated as done.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Trade‑offs
+
+
+We saw the permissioned vs. permissionless comparison — now zoom out to the underlying trade-off:
+
+- **Decentralization** increases overhead: more verification, more propagation, more conservative assumptions → lower throughput, higher latency.
+- **Centralization** boosts speed and privacy — but concentrates power and risk in fewer hands.
+- The **design choice** is where you want the trust boundary to lie.
+- There is no one-size-fits-all solution.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reframes the permissioned-versus-permissionless discussion as a broader trust-boundary trade-off. It matters here because students need to understand that decentralization, performance, and control pull against one another. Emphasize that architecture is about placing the trust boundary intentionally, not maximizing one dimension blindly.
+
+**Key Points**
+- More decentralization usually means more verification, propagation, and overhead.
+- More centralization usually improves speed and privacy while concentrating power.
+- Design choices should be justified by where the trust boundary must sit.
+
+**Walkthrough**
+None
+
+**Sources**
+- @androulaki_hyperledgerfabricdistributed_2018
+- @ruan_blockchainsvsdistributed_2019
+
+:::
+
+##  Case Study A — Hyperledger Fabric (Permissioned)
+
+- **Membership Service Provider (MSP):** known organizations with verifiable identities.  
+- **Execute–Order–Validate** architecture separates execution from consensus.  
+- **Endorsement policies** define which peers must approve a transaction.  
+- **Private channels** and **collections** restrict data visibility.  
+- Focus: governance, confidentiality, and modular consensus.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This case study turns the abstract permissioned model into a concrete enterprise architecture. It matters here because Fabric shows how governance, endorsement, privacy, and ordering can be separated cleanly in one system. Emphasize that Fabric is built for controlled inter-organizational workflows rather than open public participation.
+
+**Key Points**
+- Hyperledger Fabric uses authenticated membership and policy-driven endorsement.
+- Execute-order-validate separates transaction simulation, ordering, and commitment.
+- Private channels and collections limit which participants can see sensitive data.
+
+**Walkthrough**
+1. Execute: endorsing peers simulate the proposal and sign the result.
+2. Order: the ordering service sequences endorsed transactions.
+3. Validate and commit: peers verify policy satisfaction and then update the ledger.
+
+**Sources**
+- @androulaki_hyperledgerfabricdistributed_2018
+- @hyperledger_blockchainplatformenterprise_2023
+
+:::
+
+
+
+## Case Study B — Public Sector: EBSI & Estonia (KSI){.smaller}
+
+- **European Blockchain Services Infrastructure (EBSI)**  
+  - EU initiative to provide a shared, permissioned ledger for trusted cross-border services.  
+  - Focus areas: digital diplomas, verifiable credentials, business registries, and document notarization.  
+  - Operated by national authorities under EU governance 
+    - Trust through institutional federation rather than mining.  
+
+- **Estonia — Keyless Signature Infrastructure (KSI)**  
+  - Protects the integrity of government and healthcare data through hash-linked proofs anchored in public ledgers.  
+  - Nation-scale auditability without exposing data by using hashes instead of content.  
+  - Public, permissioned ledger.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This case study shows how public-sector organizations use permissioned ledger ideas for integrity and cross-border verification. It matters here because it demonstrates that ledgers can add value without replacing every underlying government system. Emphasize interoperability, auditability, and institutional federation rather than cryptocurrency.
+
+**Key Points**
+- EBSI supports cross-border services such as credentials and document verification.
+- Estonia's KSI uses hash-linked proofs to strengthen integrity without exposing full records.
+- These systems treat the ledger as a verification layer atop existing services.
+
+**Walkthrough**
+None
+
+**Sources**
+- @europeancommission_europeanblockchainservices_2025 (Policy)
+- @europeancommission_vcframeworkebsi_2025
+- @estoniabusinessandinnovationagency_ksiblockchain_2024
+
+:::
+
+
+## Case Study C — Bitcoin Ledger (Permissionless)
+
+
+
+- Anyone can validate; open read/write under rules.
+  - Anyone *can* write, although they need to solve a puzzle first
+- Pseudonymous keys and public auditability of transactions.
+- Payments cleared via network‑verified history as recorded in the ledger.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This case study grounds the permissionless model in the best-known public ledger example. It matters here because students can now connect openness, pseudonymity, auditability, and probabilistic finality to a real system. Emphasize that Bitcoin's ledger is a shared record of payments validated by common rules rather than by a financial administrator.
+
+**Key Points**
+- Bitcoin is a permissionless ledger with open validation under protocol rules.
+- Transactions are authorized by digital signatures and recorded in a public history.
+- Finality is probabilistic, so confidence increases as more blocks are added.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+
+## Poll: When Does a Distributed Ledger Help?
+
+
+
+- **A.** Multi‑company supply provenance with audits and no trusted hub  
+- **B.** Single‑company HR system with strict privacy and 100k writes/sec  
+- **C.** Cross‑border diploma verification among universities  
+- **D.** Internal sensor telemetry with one operator and strict real‑time needs
+- **E.** An online karma system for use in a psuedo-anonymous message board
+
+::: {.notes}
+
+**Overall Slide Concept**
+This poll asks students to apply the lesson's governance-first reasoning to concrete scenarios. It matters here because students should now be able to distinguish when a ledger genuinely solves a trust problem and when a database is the better tool. Emphasize the decision criteria rather than the letter answer alone.
+
+**Key Points**
+- Ledgers help most when multiple parties need one verifiable record without a trusted hub.
+- Single-owner high-throughput systems usually fit databases better.
+- Cross-border credential verification is a strong example of a ledger-friendly use case.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @europeancommission_vcframeworkebsi_2025
+
+:::
+
+## When a Centralized Database Wins
+
+
+
+- One owner can be trusted to administer the truth.
+- Heavy transaction processing requirements with strict latency targets.
+- Regular changes to data and rich queries.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide makes the anti-hype case directly: many workloads should stay on centralized databases. It matters here because students need permission to reject ledger use when the governance problem is absent. Emphasize that performance, rich queries, and simple ownership often outweigh the benefits of shared verification.
+
+**Key Points**
+- Databases excel when one owner can be trusted to operate the system.
+- High write rates, low latency, and rich updates often favor centralized data stores.
+- Integrity techniques can be layered onto databases without adopting a full ledger.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ruan_blockchainsvsdistributed_2019
+
+:::
+
+## Design Questions
+
+
+
+- Who are the writers and readers? Is membership open or curated?
+- What are the trust assumptions and incentives?
+- What privacy model is required?
+- What throughput/latency is acceptable?
+- What is the governance and upgrade process?
+- What external systems must interoperate?
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students a reusable checklist for evaluating real proposals. It matters here because design quality often depends on asking the right governance, privacy, and interoperability questions before choosing technology. Emphasize that the checklist narrows options and prevents 'blockchain for everything' thinking.
+
+**Key Points**
+- Membership, trust assumptions, and privacy needs narrow the design space quickly.
+- Throughput, latency, and governance rules further refine what is practical.
+- Interoperability often points toward shared standards such as verifiable credentials.
+- VC means verifiable credential.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @europeancommission_ebsihub_2025
+
+:::
+
+## Common Pitfalls {.smaller}
+
+
+- **”Blockchain everywhere” without a trust problem**
+  - If there's no multi-party trust issue, a database run by the responsible owner is simpler, faster, and cheaper.
+  - Ask: “Would a shared spreadsheet with an auditor solve this?” If yes, you probably don't need a ledger.
+- **Ignoring identity/governance in permissioned designs**
+  - Permissioned ledgers are identity-driven systems. If you don't define who can join, who can sign, and how upgrades are approved *before* writing code, you'll discover obligations mid-incident.
+  - PKI, membership services, and endorsement policies are core components, not afterthoughts.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide highlights common reasons ledger projects fail before they reach operational maturity. It matters here because many problems come from governance and scoping mistakes rather than broken cryptography. Emphasize that identity, membership, and decision rights must be defined before implementation details.
+
+**Key Points**
+- A ledger adds little value when there is no real multi-party trust problem.
+- Permissioned systems depend heavily on identity, access control, and membership policy.
+- PKI stands for Public Key Infrastructure.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @hyperledgerfabricdocs_chaincodedevelopers_2018
+
+:::
+
+
+## Common Pitfalls (cont.) {.smaller}
+
+- **Assuming “transparent” means “public data”**
+  - Transparency means *verifiability*: proving that rules were followed and history is intact.
+  - It does not mean exposing personally identifiable information. Design for selective disclosure: make proofs broadly checkable and limit payload visibility to authorized parties.
+- **Underestimating operational complexity**
+  - Distributed systems require monitoring, key rotation, upgrade coordination, and incident response across multiple organizations.
+  - The hardest problems are often social (governance disputes, key compromise response) rather than technical.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This continuation slide warns against two persistent misunderstandings: that transparency means exposing all data, and that operations will be easy once the protocol works. It matters here because real deployments succeed or fail on privacy design and cross-organization coordination. Emphasize that many of the hardest problems are social and procedural.
+
+**Key Points**
+- Transparency should mean verifiability, not public exposure of sensitive data.
+- Operational complexity includes monitoring, key rotation, upgrades, and incident response.
+- Governance disputes and credential failures can be as dangerous as software bugs.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Micro Lab: Tamper-Evident Ledger
+
+[Open Tamper-Evident Ledger Lab](/assets/labs/tamper-ledger/tamper_ledger_lab.html)
+
+::: {.notes}
+
+**Overall Slide Concept**
+This lab slide gives students a hands-on way to see tamper-evidence rather than only hearing it described. It matters here because hash-linking becomes much easier to remember once students watch a historical edit break the chain. Emphasize experimentation and the cost of rewriting history forward from a past change.
+
+**Key Points**
+- The lab makes append-only, hash-linked history tangible.
+- Students should observe how editing old data breaks later links.
+- Recomputing forward illustrates why history rewriting becomes expensive.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+## References
+
+
+

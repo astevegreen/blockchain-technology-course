@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyperledger Fabric Lab</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --bg-elevated: #11151a;
+      --bg-panel: #151a20;
+      --bg-panel-soft: #101419;
+      --border: #242c35;
+      --border-strong: #313b46;
+      --text: #edf2f7;
+      --muted: #97a4b2;
+      --accent: #d7e6f7;
+      --accent-bg: #1a2734;
+      --ok: #7fd0a2;
+      --warn: #e6c26c;
+      --error: #ea7a7a;
+    }
+    html { scroll-padding-top: 80px; }
+    #content-wrap { scroll-padding-top: 20px; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(180deg, #0b0d10 0%, #0e1216 100%); color: var(--text); }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: rgba(10, 12, 15, 0.96); border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; position: sticky; top: 0; backdrop-filter: blur(10px); }
+    .title { font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; font-size: 13px; color: var(--accent); }
+    .controls button, .controls a.btn { margin-left: 8px; padding: 7px 11px; border: 1px solid var(--border-strong); border-radius: 0; cursor: pointer; background: transparent; color: var(--text); transition: background 120ms ease, border-color 120ms ease; text-decoration: none; font-size: inherit; font-family: inherit; display: inline-block; line-height: normal; }
+    .controls button:hover, .controls a.btn:hover { background: var(--bg-panel); border-color: #425160; }
+    .btn-secondary { background: transparent; color: var(--text); }
+    .help-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.62); display: none; align-items: center; justify-content: center; z-index: 350; padding: 20px; box-sizing: border-box; }
+    .help-backdrop.open { display: flex; }
+    .help-modal { width: min(720px, 100%); max-height: min(80vh, 720px); overflow: auto; background: linear-gradient(180deg, rgba(18,22,27,0.98) 0%, rgba(14,18,23,0.98) 100%); border: 1px solid var(--border-strong); box-shadow: 0 18px 40px rgba(0,0,0,0.45); }
+    .help-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--bg-elevated); }
+    .help-head strong { color: var(--accent); font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .help-close { background: transparent; border: 1px solid var(--border-strong); color: var(--muted); padding: 6px 10px; cursor: pointer; }
+    .help-close:hover { background: var(--bg-panel); color: var(--text); }
+    .help-body { padding: 16px; display: grid; gap: 14px; }
+    .help-card { background: var(--bg-panel-soft); border: 1px solid var(--border); padding: 14px; }
+    .help-card h2 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .help-card p { margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .help-list { margin: 0; padding-left: 18px; color: var(--text); }
+    .help-list li { margin-bottom: 8px; line-height: 1.5; }
+    .help-list code { background: #0c1014; }
+    .status { display: flex; align-items: center; gap: 8px; }
+    .indicator { width: 10px; height: 10px; border-radius: 0; background: #777; }
+    .status-running { background: var(--ok); }
+    .status-starting { background: var(--warn); }
+    .status-stopped { background: #7d8791; }
+    .status-error { background: var(--error); }
+    .layout { display: flex; flex-direction: column; height: calc(100vh - 74px); overflow: hidden; }
+    #term-wrap { flex: 0 0 35%; position: relative; min-height: 0; display: none; }
+    #term-wrap.active { display: block; }
+    #split-handle { display: none; flex: 0 0 6px; cursor: row-resize; background: var(--border); border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); }
+    #split-handle:hover { background: var(--border-strong); }
+    #split-handle.active { display: block; }
+    #content-wrap { flex: 1; overflow-y: auto; min-height: 0; }
+    body.console-hidden #term-wrap { display: none !important; }
+    body.console-hidden #split-handle { display: none !important; }
+    body.console-popout #term-wrap { display: none !important; }
+    body.console-popout #split-handle { display: none !important; }
+    body.resizing { cursor: row-resize; user-select: none; }
+    body.resizing iframe { pointer-events: none; }
+    #term-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
+    #term-wrap #term { display: none; }
+    #splash { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; background: var(--bg); color: var(--text); z-index: 1; }
+    #splash .spinner { width: 42px; height: 42px; border: 3px solid #334155; border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.9s linear infinite; }
+    #splash .msg { font-size: .95rem; letter-spacing: .02em; opacity: .85; }
+    #splash .detail { font-size: .75rem; opacity: .55; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .exercise-strip { display: grid; grid-template-columns: 1fr; gap: 10px; padding: 16px; max-width: 900px; margin: 0 auto; box-sizing: border-box; width: 100%; }
+    .exercise-card { background: linear-gradient(180deg, rgba(18,22,27,0.96) 0%, rgba(15,19,24,0.96) 100%); border: 1px solid var(--border); border-radius: 0; padding: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); }
+    .exercise-card h2 { margin: 0 0 8px; font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
+    .exercise-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; max-width: 90ch; }
+    .exercise-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .exercise-links a { color: var(--accent); text-decoration: none; background: var(--accent-bg); border: 1px solid var(--border-strong); padding: 6px 10px; border-radius: 0; font-size: 12px; }
+    .exercise-steps ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 13px; }
+    .exercise-steps li { margin-bottom: 8px; }
+    .exercise-phase { display:inline-block; margin: 8px 0 10px; padding: 4px 8px; border-radius: 0; background: var(--accent-bg); border: 1px solid var(--border-strong); color: var(--accent); font-size: 12px; }
+    .exercise-status { margin-top: 12px; display: grid; gap: 8px; }
+    .status-card { background: var(--bg-panel-soft); border: 1px solid var(--border); border-radius: 0; padding: 10px; }
+    .status-card strong { color: var(--accent); }
+    .status-card .muted { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .status-ok { color: var(--ok); }
+    .status-pending { color: var(--warn); }
+    .exercise-question { margin-top: 10px; padding: 10px 12px; background: var(--accent-bg); border: 1px solid var(--border-strong); font-size: 14px; color: var(--text); line-height: 1.5; }
+    .exercise-prediction { margin-top: 8px; padding: 8px 12px; background: var(--bg-panel-soft); border: 1px solid var(--border); font-size: 13px; color: var(--muted); line-height: 1.5; font-style: italic; }
+    .lesson-progress { display: flex; gap: 3px; margin-bottom: 10px; }
+    .lesson-progress .pip { flex: 1; height: 4px; background: var(--border); }
+    .lesson-progress .pip.done { background: var(--ok); }
+    .lesson-progress .pip.active { background: var(--accent); }
+    .exercise-nav { display: flex; gap: 8px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+    .exercise-nav button, .exercise-nav a { padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: 0; cursor: pointer; background: transparent; color: var(--text); font-size: 12px; text-decoration: none; }
+    .exercise-nav button:hover, .exercise-nav a:hover { background: var(--bg-panel); }
+    .exercise-nav button:disabled { opacity: 0.35; cursor: default; }
+    .exercise-nav .nav-pos { color: var(--muted); font-size: 12px; }
+    .exercise-card p { line-height: 1.6; }
+    .exercise-card p.md-bullet { padding-left: 16px; margin: 0; }
+    .exercise-card code { background: var(--bg-panel-soft); border: 1px solid var(--border); padding: 1px 5px; font-size: 12px; }
+    .code-block { position: relative; margin: 10px 0; background: #0c1014; border: 1px solid var(--border-strong); max-width: 100%; box-sizing: border-box; }
+    .code-block pre { margin: 0; padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; color: #dbe6f1; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+    .code-block pre code { background: transparent; border: 0; padding: 0; font-size: 13px; color: inherit; white-space: inherit; word-break: inherit; overflow-wrap: inherit; }
+    .code-block .copy-btn { position: absolute; top: 6px; right: 6px; background: var(--bg-panel); color: var(--muted); border: 1px solid var(--border-strong); padding: 3px 9px; font-size: 11px; letter-spacing: 0.04em; cursor: pointer; text-transform: uppercase; opacity: 0; transition: opacity 120ms ease; }
+    .code-block:hover .copy-btn, .code-block .copy-btn:focus-visible, .code-block .copy-btn.copied { opacity: 1; }
+    .code-block .copy-btn:hover { background: var(--accent-bg); color: var(--accent); }
+    .code-block .copy-btn.copied { background: var(--ok, #2e7d48); color: #fff; border-color: var(--ok, #2e7d48); }
+
+    /* Sidebar TOC */
+    .toc-toggle { background: transparent; border: 1px solid var(--border-strong); color: var(--muted); padding: 7px 11px; cursor: pointer; font-size: 12px; letter-spacing: 0.02em; }
+    .toc-toggle:hover { background: var(--bg-panel); color: var(--text); }
+    .toc-sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 300px; background: var(--bg-elevated); border-right: 1px solid var(--border); z-index: 200; transform: translateX(-100%); transition: transform 180ms ease; overflow-y: auto; display: flex; flex-direction: column; }
+    .toc-sidebar.open { transform: translateX(0); }
+    .toc-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 199; display: none; }
+    .toc-backdrop.open { display: block; }
+    .toc-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .toc-header span { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); font-weight: 600; }
+    .toc-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 0 4px; }
+    .toc-body { padding: 8px 0; flex: 1; }
+    .toc-chapter { padding: 10px 16px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+    .toc-item { display: block; padding: 8px 16px 8px 28px; font-size: 13px; color: var(--text); cursor: pointer; border-left: 3px solid transparent; text-decoration: none; line-height: 1.4; }
+    .toc-item:hover { background: var(--bg-panel); }
+    .toc-item.active { border-left-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .toc-item.done { color: var(--muted); }
+    .toc-item .toc-step { display: inline-block; width: 20px; color: var(--muted); font-size: 11px; }
+
+    .status-card a { color: #d9e7f5; text-decoration: none; }
+    .status-card a:hover { text-decoration: underline; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: none; align-items: center; justify-content: center; color: #fff; font-size: 18px; }
+    @media (max-width: 1100px) {
+      .toc-sidebar { width: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">Hyperledger Fabric Lab</div>
+    <div class="status">
+      <div id="statusIndicator" class="indicator"></div>
+      <div id="statusText">Network Stopped</div>
+    </div>
+    <div class="controls">
+      <button class="toc-toggle" onclick="toggleTOC()">Lesson Nav</button>
+      <a class="btn btn-secondary" id="explorerLink" href="/explorer/" target="_blank">Explorer</a>
+      <a class="btn btn-secondary" id="guideLink" href="/api/hlf/guide" target="_blank">Student Guide</a>
+      <button class="btn-secondary" id="hide-console-btn">Hide Console</button>
+      <button class="btn-secondary" id="popout-console-btn">Popout</button>
+      <button class="btn-secondary" id="helpBtn" type="button">Help</button>
+    </div>
+  </header>
+
+  <div id="faultBanner" style="display:none; padding:10px 18px; background:#3a2e12; color:#f5d27a; border-bottom:1px solid #6b5420; font-size:14px;"></div>
+
+  <div id="tocBackdrop" class="toc-backdrop" onclick="closeTOC()"></div>
+  <nav id="tocSidebar" class="toc-sidebar">
+    <div class="toc-header">
+      <span>Lesson Contents</span>
+      <button class="toc-close" onclick="closeTOC()">&times;</button>
+    </div>
+    <div class="toc-body" id="tocBody">
+      <div class="toc-chapter">Loading...</div>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <div id="term-wrap">
+      <div id="splash">
+        <div class="spinner"></div>
+        <div class="msg">Connecting to your console&hellip;</div>
+        <div class="detail" id="term-detail">Resolving session</div>
+      </div>
+      <iframe id="term" allow="clipboard-read; clipboard-write" title="Console"></iframe>
+    </div>
+    <div id="split-handle" role="separator" aria-orientation="horizontal" aria-label="Resize console" title="Drag to resize"></div>
+    <div id="content-wrap">
+      <div class="exercise-strip">
+        <section class="exercise-card" id="lessonCard">
+          <div id="lessonProgress" class="lesson-progress"></div>
+          <div class="lesson-title-row" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <h2 id="exerciseTitle" style="margin:0; flex:1 1 auto;">Permissioned Ledger Lab</h2>
+            <div class="exercise-nav exercise-nav-top" id="exerciseNavTop" style="display:none; margin:0; flex:0 0 auto;"></div>
+          </div>
+          <div id="exercisePhase" class="exercise-phase">Loading lesson...</div>
+          <p id="exerciseIntro">You are working with a permissioned blockchain network built on Hyperledger Fabric. The lesson starts with a university credential system — institutions that issue and verify academic records on a shared ledger — then moves into outages, governance, and a more complex trade-finance scenario.</p>
+          <div id="exerciseQuestion" class="exercise-question" style="display:none;"></div>
+          <div id="exercisePrediction" class="exercise-prediction" style="display:none;"></div>
+          <div class="exercise-steps" style="margin-top:12px;">
+            <h2 style="margin-top:0;">Your Next Steps</h2>
+            <ol id="exerciseChecklist">
+              <li>Read the question for this step.</li>
+              <li>Make a prediction before you inspect the network.</li>
+              <li>Use the explorer and node consoles to confirm or revise your answer.</li>
+            </ol>
+          </div>
+          <div class="exercise-status" id="exerciseStatusCards"></div>
+          <div class="exercise-nav" id="exerciseNav" style="display:none;"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="overlay">
+    <div id="loadingText">Starting...</div>
+  </div>
+
+  <div id="helpBackdrop" class="help-backdrop" aria-hidden="true">
+    <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="help-head">
+        <strong id="helpTitle">Terminal Help</strong>
+        <button id="helpClose" class="help-close" type="button">Close</button>
+      </div>
+      <div class="help-body">
+        <section class="help-card">
+          <h2>Bash Basics</h2>
+          <p>Use these to get oriented before you run Fabric commands.</p>
+          <ul class="help-list">
+            <li><code>pwd</code> shows your current directory.</li>
+            <li><code>ls</code> lists files. Try <code>ls -l</code> for details.</li>
+            <li><code>cd ..</code> goes up one level. <code>cd ~</code> returns home.</li>
+            <li><code>less FILE</code> opens a scrollable viewer. Press <code>q</code> to exit.</li>
+            <li><code>nano FILE</code> opens a simple editor. Use <code>Ctrl+O</code> to save and <code>Ctrl+X</code> to quit.</li>
+          </ul>
+        </section>
+        <section class="help-card">
+          <h2>Zellij Basics</h2>
+          <p>The terminal runs inside zellij. Available keys are shown in the status bar at the bottom.</p>
+          <ul class="help-list">
+            <li><code>Alt+n</code> opens a new pane. On Mac use <code>Ctrl+p</code> then <code>n</code>.</li>
+            <li><code>Alt+Arrow</code> moves between panes (crosses to the next tab at the edge). On Mac use <code>Ctrl+p</code> then arrow keys.</li>
+            <li><code>Ctrl+p</code> enters pane mode: <code>r</code> splits right, <code>d</code> splits down, <code>x</code> closes the pane.</li>
+            <li><code>Ctrl+t</code> enters tab mode: <code>n</code> creates a new tab, <code>Left/Right</code> switches tabs.</li>
+            <li><code>Ctrl+s</code> enters scroll mode. Use arrows or Page Up/Down, then press <code>Esc</code> to return.</li>
+            <li>Type <code>exit</code> to close the current shell pane when you are done with it.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="hlf_session.js"></script>
+  <script src="progress_beacon.js"></script>
+  <script src="hlf_markdown.js"></script>
+  <script src="hlf_lab.js"></script>
+</body>
+</html>

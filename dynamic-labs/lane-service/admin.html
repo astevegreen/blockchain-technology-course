@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{TITLE}}</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #11151a;
+      --panel-soft: #151a20;
+      --border: #242c35;
+      --border-strong: #313b46;
+      --text: #edf2f7;
+      --muted: #97a4b2;
+      --accent: #d7e6f7;
+      --accent-bg: #1a2734;
+      --ok: #7fd0a2;
+      --warn: #e6c26c;
+      --error: #ea7a7a;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+           background: linear-gradient(180deg, #0b0d10 0%, #0e1216 100%); color:var(--text); min-height:100vh; }
+    header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex;
+             justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+             position:sticky; top:0; background:rgba(10,12,15,0.96); backdrop-filter: blur(10px); z-index:10; }
+    h1 { margin:0; font-size:18px; color:var(--accent); }
+    .muted { color:var(--muted); font-size:13px; }
+    main { padding:20px; display:grid; gap:18px; max-width:1280px; margin:0 auto; }
+    .panel { background:var(--panel); border:1px solid var(--border); overflow:hidden; }
+    .panel h2 { margin:0; padding:10px 14px; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+                color:var(--muted); border-bottom:1px solid var(--border); background:var(--panel-soft);
+                display:flex; justify-content:space-between; align-items:center; }
+    .content { padding:14px; }
+    .stats { display:flex; gap:12px; flex-wrap:wrap; }
+    .stat { background:var(--panel-soft); border:1px solid var(--border); padding:10px 14px; min-width:110px; }
+    .stat .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+    .stat .value { font-size:22px; margin-top:4px; }
+    .stat .value.ok { color:var(--ok); }
+    .stat .value.warn { color:var(--warn); }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    button, select, input[type=number] { border:1px solid var(--border-strong); background:transparent;
+             color:var(--text); padding:6px 12px; font-size:13px; font-family:inherit; cursor:pointer; }
+    button:hover { background:var(--panel-soft); }
+    button.danger { border-color:#7a3a3a; color:var(--error); }
+    button.danger:hover { background:#21110f; }
+    input[type=number] { width:70px; }
+    a.btn { display:inline-block; padding:6px 12px; border:1px solid var(--border-strong);
+            color:var(--accent); text-decoration:none; font-size:13px; }
+    a.btn:hover { background:var(--accent-bg); }
+    .lane-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap:8px; }
+    .lane { background:var(--panel-soft); border:1px solid var(--border); padding:10px; font-size:12px; }
+    .lane.running { border-color:#3a6b4a; background:#11211a; }
+    .lane.error { border-color:#8a3a3a; background:#21110f; }
+    .lane.starting, .lane.stopping { border-color:#8a6a2a; background:#1f1a10; }
+    .lane-id { font-weight:600; color:var(--accent); font-size:13px; }
+    .lane-status { color:var(--muted); margin-top:2px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; }
+    .lane-claim { color:#d8e4f0; margin-top:4px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10px; word-break:break-all; }
+    .lane-claim.unclaimed { color:var(--muted); font-style:italic; font-family:inherit; }
+    .lane-actions { margin-top:8px; display:flex; gap:4px; flex-wrap:wrap; }
+    .lane-actions button { padding:3px 7px; font-size:11px; }
+    .lane-progress { margin-top:6px; }
+    .lane-progress-bar { height:6px; background:#0d1620; border:1px solid var(--border); position:relative; overflow:hidden; }
+    .lane-progress-bar > span { display:block; height:100%; background:var(--accent); transition: width .25s ease; }
+    .lane-progress-label { color:#d8e4f0; font-size:10px; margin-top:2px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .lane-progress-now { color:var(--muted); font-size:10px; margin-top:1px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; word-break:break-all; }
+    .lane-progress-chips { margin-top:3px; display:flex; gap:3px; flex-wrap:wrap; }
+    .lane-progress-chips .chip { font-size:9px; padding:1px 4px; border:1px solid var(--border); color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; }
+    .lane-progress-chips .chip.seen { color:#9fd4ae; border-color:#3a6b4a; }
+    .claim-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .claim-table th, .claim-table td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
+    .claim-table th { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); background:var(--panel-soft); }
+    .claim-table td.uuid { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; color:#d8e4f0; }
+    .claim-table .idle-warn { color:var(--warn); }
+    .claim-table .idle-ok { color:var(--ok); }
+    .progress-row { cursor:pointer; }
+    .progress-row:hover td { background:var(--panel-soft); }
+    .progress-detail { background:#0d1620; }
+    .progress-detail td { padding:10px 14px !important; }
+    .progress-timeline { list-style:none; padding:0; margin:0; font-size:12px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .progress-timeline li { padding:3px 0; border-bottom:1px solid var(--border); display:flex; gap:12px; }
+    .progress-timeline .ts { color:var(--muted); min-width:80px; }
+    .progress-timeline .route { color:var(--accent); }
+    .progress-timeline .src { color:var(--muted); font-size:10px; }
+    .msg { min-height:18px; font-size:12px; color:var(--muted); }
+    .msg.ok { color:var(--ok); }
+    .msg.error { color:var(--error); }
+    .md-render h1, .md-render h2, .md-render h3 {
+      color:var(--accent); margin:18px 0 8px 0; line-height:1.3;
+    }
+    .md-render h1 { font-size:18px; }
+    .md-render h2 { font-size:16px; }
+    .md-render h3 { font-size:14px; }
+    .md-render h2:first-child, .md-render h1:first-child { margin-top:0; }
+    .md-render p { margin:0 0 10px 0; }
+    .md-render ul { margin:6px 0 10px 0; padding-left:22px; }
+    .md-render li { margin:3px 0; }
+    .md-render code {
+      background:var(--accent-bg); border:1px solid var(--border);
+      padding:1px 5px; font-size:12px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      word-break:break-all;
+    }
+    .md-render strong { color:var(--text); }
+    .md-render em { color:var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>{{TITLE}}</h1>
+      <div class="muted">Lane manager for the {{LAB_NAME}} lab.</div>
+    </div>
+    <div class="toolbar">
+      <a class="btn" href="{{INSTRUCTOR_HREF}}">Open Instructor Terminal &rarr;</a>
+      <a class="btn" href="/instructor/#labs-progress">Labs Progress</a>
+      <a class="btn" href="/instructor/">Portal</a>
+    </div>
+  </header>
+  <main>
+    <div class="panel">
+      <h2>Pool <span class="muted" id="pool-summary"></span></h2>
+      <div class="content stats" id="stats"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Controls</h2>
+      <div class="content toolbar">
+        <label>Policy on release:
+          <select id="policy">
+            <option value="sticky">Sticky</option>
+            <option value="wipe">Wipe</option>
+          </select>
+        </label>
+        <label>Warm pool size:
+          <input id="pool-size" type="number" min="0" />
+          <button id="apply-pool">Apply</button>
+        </label>
+        <button id="pause-btn">Pause sweeper</button>
+        <button id="forensics-btn" style="display:none;">Deploy Forensics Chain</button>
+        <button id="nuke-btn" class="danger" style="display:none;">Reset Lab</button>
+        <span class="msg" id="msg"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Lanes <span class="muted" id="lanes-summary"></span></h2>
+      <div class="content">
+        <div class="toolbar" style="margin-bottom:12px;">
+          <label style="font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+            <input type="checkbox" id="show-all" />
+            Show all (including cold)
+          </label>
+        </div>
+        <div class="lane-grid" id="lanes"></div>
+        <div class="muted" id="lanes-empty" style="padding:12px 0; display:none;">No active lanes. Claims will warm a lane on demand.</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Active Claims</h2>
+      <div class="content">
+        <table class="claim-table" id="claims">
+          <thead>
+            <tr>
+              <th>Station</th>
+              <th>Session UUID</th>
+              <th>Progress</th>
+              <th>Idle</th>
+              <th>Claimed</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="muted" id="claims-empty" style="padding:12px 0; display:none;">No active claims.</div>
+      </div>
+    </div>
+
+    <div class="panel" id="forensics-panel" style="display:none;">
+      <h2>Forensics Lab</h2>
+      <div class="content">
+        <details id="forensics-solution-details">
+          <summary style="cursor:pointer; color:var(--accent); font-size:13px;">Show forensics solution key</summary>
+          <div id="forensics-solution-body" class="md-render" style="margin-top:12px;
+                background:var(--panel-soft); border:1px solid var(--border); padding:14px 18px;
+                font-size:13px; color:var(--text); max-height:60vh; overflow:auto; line-height:1.55;">Expand to load.</div>
+        </details>
+      </div>
+    </div>
+
+    <div class="panel" id="progress-panel" style="display:none;">
+      <h2>Progress <span class="muted" id="progress-summary"></span></h2>
+      <div class="content">
+        <table class="claim-table" id="progress-table">
+          <thead>
+            <tr>
+              <th>Station</th>
+              <th>Session</th>
+              <th>Exercises</th>
+              <th>Last step</th>
+              <th>Last seen</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="muted" id="progress-empty" style="padding:12px 0; display:none;">No progress recorded yet.</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    (function(){
+      var LAB = "{{LAB_NAME}}";
+      var API = "/api/" + LAB;
+      var msg = document.getElementById("msg");
+
+      function setMsg(text, kind){
+        msg.textContent = text || "";
+        msg.className = "msg" + (kind ? " " + kind : "");
+        if (text) setTimeout(function(){ if (msg.textContent === text) { msg.textContent = ""; msg.className = "msg"; } }, 4000);
+      }
+
+      function fmtAge(secs){
+        if (secs == null) return "—";
+        if (secs < 60) return secs + "s";
+        if (secs < 3600) return Math.round(secs/60) + "m";
+        return (secs/3600).toFixed(1) + "h";
+      }
+      function fmtAbs(ts){
+        if (!ts) return "—";
+        var d = new Date(ts * 1000);
+        return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      }
+
+      async function api(path, opts){
+        var r = await fetch(API + path, Object.assign({credentials:"same-origin"}, opts || {}));
+        if (r.status === 401) { setMsg("Session expired — re-auth via /instructor/", "error"); throw new Error("auth"); }
+        return r;
+      }
+
+      async function refresh(){
+        try {
+          var [lanesR, claimsR, poolR, progressR] = await Promise.all([
+            api("/lanes"),
+            api("/claims"),
+            api("/claims/pool"),
+            fetch(API + "/progress", {credentials:"same-origin"}).catch(function(){ return null; }),
+          ]);
+          var lanes = (await lanesR.json()).lanes;
+          var claimsData = await claimsR.json();
+          var poolData = await poolR.json();
+          var progressByUuid = {};
+          if (progressR && progressR.ok) {
+            var pd = await progressR.json();
+            progressByUuid = pd.progress || {};
+          }
+          renderStats(claimsData.summary);
+          renderLanes(lanes, claimsData.claims, progressByUuid);
+          renderClaims(claimsData.claims, progressByUuid);
+          syncControls(claimsData.summary, poolData);
+          renderProgress(progressByUuid);
+        } catch (e) {
+          if (e.message !== "auth") setMsg("Fetch failed: " + e.message, "error");
+        }
+      }
+
+      function prettyRouteId(routeId){
+        if (!routeId) return "—";
+        if (routeId.indexOf("exercise:") === 0) return routeId.slice("exercise:".length);
+        if (routeId.indexOf("surface:") === 0) return routeId.slice("surface:".length);
+        return routeId;
+      }
+
+      var _expandedProgressUuid = null;
+
+      function renderProgress(progress){
+        var uuids = Object.keys(progress);
+        var panel = document.getElementById("progress-panel");
+        if (!uuids.length) {
+          panel.style.display = "none";
+          return;
+        }
+        panel.style.display = "";
+        var tb = document.querySelector("#progress-table tbody");
+        tb.innerHTML = "";
+        var active = 0;
+        var now = Date.now() / 1000;
+        uuids.sort(function(a, b){
+          return (progress[a].station || "").localeCompare(progress[b].station || "");
+        }).forEach(function(uuid){
+          var p = progress[uuid];
+          if (p.last_seen && (now - p.last_seen) < 600) active++;
+          var tr = document.createElement("tr");
+          tr.className = "progress-row";
+          tr.innerHTML =
+            '<td><strong>' + (p.station || "—") + '</strong></td>' +
+            '<td class="uuid">' + uuid.slice(0, 8) + "…</td>" +
+            '<td>' + p.exercises_visited + "/" + p.exercises_total +
+              ' <span class="muted">(' + p.percent + "%)</span></td>" +
+            '<td class="muted">' + (p.last_route || "—") + "</td>" +
+            '<td>' + fmtAbs(p.last_seen) + "</td>";
+          tr.addEventListener("click", function(){ toggleProgressDetail(uuid, tr); });
+          tb.appendChild(tr);
+          if (uuid === _expandedProgressUuid) {
+            _insertDetailRow(uuid, tr);
+          }
+        });
+        document.getElementById("progress-empty").style.display =
+          uuids.length ? "none" : "block";
+        document.getElementById("progress-summary").textContent =
+          uuids.length + " tracked · " + active + " active in last 10m";
+      }
+
+      function toggleProgressDetail(uuid, rowEl){
+        if (_expandedProgressUuid === uuid) {
+          _expandedProgressUuid = null;
+          var existing = rowEl.nextElementSibling;
+          if (existing && existing.classList.contains("progress-detail")) existing.remove();
+          return;
+        }
+        _expandedProgressUuid = uuid;
+        document.querySelectorAll(".progress-detail").forEach(function(el){ el.remove(); });
+        _insertDetailRow(uuid, rowEl);
+      }
+
+      function _insertDetailRow(uuid, rowEl){
+        var detailRow = document.createElement("tr");
+        detailRow.className = "progress-detail";
+        detailRow.innerHTML = '<td colspan="5" class="muted">Loading…</td>';
+        rowEl.after(detailRow);
+        fetch(API + "/progress/" + uuid, {credentials:"same-origin"})
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            if (!d.success || !d.detail) {
+              detailRow.innerHTML = '<td colspan="5" class="muted">No detail available.</td>';
+              return;
+            }
+            var det = d.detail;
+            var timeline = (det.timeline || []).slice().reverse();
+            var html = '<td colspan="5">';
+            html += '<div style="margin-bottom:6px;font-size:11px;color:var(--muted);">' +
+              'Session: ' + uuid + ' · Station: ' + (det.station || "—") +
+              ' · ' + Object.keys(det.visited || {}).length + '/' + (Object.keys(det.visited || {}).length + (det.unvisited || []).length) + ' exercises</div>';
+            html += '<ul class="progress-timeline">';
+            timeline.forEach(function(evt){
+              var d = new Date(evt.ts * 1000);
+              var ts = d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"});
+              html += '<li><span class="ts">' + ts + '</span>' +
+                '<span class="route">' + escapeHtml(evt.route_id) + '</span>' +
+                '<span class="src">' + (evt.source || "") + '</span></li>';
+            });
+            html += '</ul></td>';
+            detailRow.innerHTML = html;
+          })
+          .catch(function(){
+            detailRow.innerHTML = '<td colspan="5" class="muted">Failed to load detail.</td>';
+          });
+      }
+
+      function renderStats(s){
+        var el = document.getElementById("stats");
+        el.innerHTML = "";
+        var items = [
+          ["Total stations", s.total_stations],
+          ["Claimed", s.claimed, s.claimed > 0 ? "warn" : ""],
+          ["Free", s.free, "ok"],
+          ["Warm-free", s.pool_hot_free + "/" + s.pool_size],
+          ["Idle timeout", fmtAge(s.idle_timeout_seconds)],
+          ["Policy", s.policy],
+          ["Sweeper", s.paused ? "PAUSED" : "active", s.paused ? "warn" : "ok"],
+        ];
+        items.forEach(function(it){
+          var d = document.createElement("div");
+          d.className = "stat";
+          d.innerHTML = '<div class="label">' + it[0] + '</div><div class="value ' + (it[2] || '') + '">' + it[1] + '</div>';
+          el.appendChild(d);
+        });
+        document.getElementById("pool-summary").textContent =
+          s.claimed + "/" + s.total_stations + " claimed";
+      }
+
+      function renderLanes(lanes, claims, progressByUuid){
+        progressByUuid = progressByUuid || {};
+        var claimByStation = {};
+        claims.forEach(function(c){ claimByStation[c.station] = c; });
+        var showAll = document.getElementById("show-all").checked;
+        var visible = lanes.filter(function(l){
+          if (showAll) return true;
+          return l.status === "running" || !!claimByStation[l.id];
+        });
+        var el = document.getElementById("lanes");
+        el.innerHTML = "";
+        var now = Date.now() / 1000;
+        visible.forEach(function(l){
+          var claim = claimByStation[l.id];
+          var div = document.createElement("div");
+          div.className = "lane " + (l.status || "stopped");
+          var ageLabel = l.last_active ? fmtAge(Math.max(0, now - l.last_active)) : "never";
+          var claimLine = claim
+            ? '<div class="lane-claim">' + claim.uuid.slice(0,8) + '&hellip;</div>'
+            : '<div class="lane-claim unclaimed">unclaimed</div>';
+          var prog = claim ? progressByUuid[claim.uuid] : null;
+          var progressFragment = "";
+          if (prog) {
+            var pct = Math.max(0, Math.min(100, prog.percent || 0));
+            var visitedN = prog.exercises_visited || 0;
+            var total = prog.exercises_total || 0;
+            var nowLabel = prettyRouteId(prog.last_route);
+            var surfaces = prog.surfaces || {};
+            var chipKeys = Object.keys(surfaces);
+            var chipHtml = chipKeys.map(function(sid){
+              var seen = !!surfaces[sid];
+              var label = sid.replace(/^surface:/, "");
+              return '<span class="chip ' + (seen ? 'seen' : '') + '">' +
+                     escapeHtml(label) + '</span>';
+            }).join("");
+            progressFragment =
+              '<div class="lane-progress">' +
+                '<div class="lane-progress-bar"><span style="width:' + pct + '%"></span></div>' +
+                '<div class="lane-progress-label">' + visitedN + '/' + total + ' · ' + pct + '%</div>' +
+                '<div class="lane-progress-now">now: ' + escapeHtml(nowLabel) + '</div>' +
+                (chipHtml ? '<div class="lane-progress-chips">' + chipHtml + '</div>' : '') +
+              '</div>';
+          }
+          div.innerHTML =
+            '<div class="lane-id">' + l.id + '</div>' +
+            '<div class="lane-status">' + (l.status || "stopped") + ' · ' + ageLabel + '</div>' +
+            claimLine +
+            progressFragment +
+            '<div class="lane-actions">' +
+              '<button data-act="start" data-id="' + l.id + '">Start</button>' +
+              '<button data-act="stop" data-id="' + l.id + '">Stop</button>' +
+              '<button data-act="reset" data-id="' + l.id + '" class="danger">Reset</button>' +
+            '</div>';
+          el.appendChild(div);
+        });
+        document.getElementById("lanes-empty").style.display = visible.length ? "none" : "block";
+        var running = lanes.filter(function(l){ return l.status === "running"; }).length;
+        document.getElementById("lanes-summary").textContent =
+          showAll
+            ? running + " running / " + lanes.length + " total"
+            : "showing " + visible.length + " active / " + lanes.length + " total";
+      }
+
+      function renderClaims(claims, progressByUuid){
+        progressByUuid = progressByUuid || {};
+        var tb = document.querySelector("#claims tbody");
+        tb.innerHTML = "";
+        document.getElementById("claims-empty").style.display = claims.length ? "none" : "block";
+        claims.forEach(function(c){
+          var idleClass = c.idle_seconds > 600 ? "idle-warn" : "idle-ok";
+          var prog = progressByUuid[c.uuid];
+          var progressCell;
+          if (prog) {
+            var pct = Math.max(0, Math.min(100, prog.percent || 0));
+            progressCell =
+              '<td>' +
+                '<div style="display:flex; align-items:center; gap:8px; min-width:180px;">' +
+                  '<div class="lane-progress-bar" style="flex:1; min-width:80px;"><span style="width:' + pct + '%"></span></div>' +
+                  '<span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; white-space:nowrap;">' +
+                    (prog.exercises_visited || 0) + '/' + (prog.exercises_total || 0) + ' · ' + pct + '%' +
+                  '</span>' +
+                '</div>' +
+                '<div class="muted" style="font-size:10px; margin-top:3px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">now: ' +
+                  escapeHtml(prettyRouteId(prog.last_route)) +
+                '</div>' +
+              '</td>';
+          } else {
+            progressCell = '<td class="muted">—</td>';
+          }
+          var tr = document.createElement("tr");
+          tr.innerHTML =
+            '<td><strong>' + c.station + '</strong></td>' +
+            '<td class="uuid">' + c.uuid + '</td>' +
+            progressCell +
+            '<td class="' + idleClass + '">' + fmtAge(c.idle_seconds) + '</td>' +
+            '<td>' + fmtAbs(c.claimed_at) + '</td>' +
+            '<td><button data-release="' + c.uuid + '" class="danger">Release</button></td>';
+          tb.appendChild(tr);
+        });
+      }
+
+      function syncControls(summary, poolData){
+        document.getElementById("policy").value = summary.policy;
+        document.getElementById("pool-size").value = summary.pool_size;
+        document.getElementById("pause-btn").textContent = summary.paused ? "Resume sweeper" : "Pause sweeper";
+      }
+
+      document.addEventListener("click", async function(ev){
+        var t = ev.target;
+        if (t.dataset.act) {
+          try {
+            var r = await api("/lanes/" + t.dataset.id + "/" + t.dataset.act, {method:"POST"});
+            var j = await r.json();
+            setMsg(j.message || t.dataset.act + " " + t.dataset.id, j.success ? "ok" : "error");
+            refresh();
+          } catch(e){}
+        } else if (t.dataset.release) {
+          if (!confirm("Release claim " + t.dataset.release.slice(0,8) + "…?")) return;
+          try {
+            var r = await api("/claims/" + t.dataset.release, {method:"DELETE"});
+            var j = await r.json();
+            setMsg(j.message, j.success ? "ok" : "error");
+            refresh();
+          } catch(e){}
+        } else if (t.id === "apply-pool") {
+          var size = parseInt(document.getElementById("pool-size").value, 10);
+          try {
+            var r = await api("/claims/pool", {method:"POST", headers:{"Content-Type":"application/json"},
+                                                body: JSON.stringify({size: size})});
+            var j = await r.json();
+            setMsg(j.message, j.success ? "ok" : "error");
+            refresh();
+          } catch(e){}
+        } else if (t.id === "pause-btn") {
+          var pausing = t.textContent.indexOf("Pause") === 0;
+          try {
+            var r = await api("/claims/" + (pausing ? "pause" : "resume"), {method:"POST"});
+            await r.json();
+            setMsg(pausing ? "Sweeper paused" : "Sweeper resumed", "ok");
+            refresh();
+          } catch(e){}
+        } else if (t.id === "forensics-btn") {
+          var typed = prompt(
+            "Deploy Forensics Chain?\n\n" +
+            "Replaces the instructor's bitcoin datadir with the\n" +
+            "pre-built 275-block forensics chain. Student lanes\n" +
+            "stay up and reorg to the new chain via P2P gossip\n" +
+            "once the instructor comes back online.\n\n" +
+            "Type DEPLOY to confirm:"
+          );
+          if (typed !== "DEPLOY") { setMsg("Deploy cancelled", ""); return; }
+          t.disabled = true;
+          var fprev = t.textContent;
+          t.textContent = "Deploying…";
+          try {
+            var r = await api("/forensics/deploy", {method:"POST"});
+            var j = await r.json();
+            setMsg(j.message || (j.success ? "Forensics chain live" : "Deploy failed"),
+                   j.success ? "ok" : "error");
+            refresh();
+          } catch(e){ setMsg("Deploy failed: " + e.message, "error"); }
+          t.disabled = false;
+          t.textContent = fprev;
+        } else if (t.id === "nuke-btn") {
+          var typed = prompt(
+            "Reset the entire Bitcoin lab?\n\n" +
+            "This will wipe every student container AND the\n" +
+            "instructor chain. Every connected student will be\n" +
+            "booted and their progress cleared.\n\n" +
+            "Type RESET to confirm:"
+          );
+          if (typed !== "RESET") { setMsg("Reset cancelled", ""); return; }
+          t.disabled = true;
+          var prevText = t.textContent;
+          t.textContent = "Resetting…";
+          try {
+            var r = await api("/nuke", {method:"POST"});
+            var j = await r.json();
+            setMsg(j.message || (j.success ? "Lab reset" : "Reset failed"),
+                   j.success ? "ok" : "error");
+            refresh();
+          } catch(e){ setMsg("Reset failed: " + e.message, "error"); }
+          t.disabled = false;
+          t.textContent = prevText;
+        }
+      });
+
+      if (LAB === "bitcoin") {
+        document.getElementById("nuke-btn").style.display = "";
+        document.getElementById("forensics-btn").style.display = "";
+        var fp = document.getElementById("forensics-panel");
+        if (fp) fp.style.display = "";
+        wireForensicsSolution();
+      }
+
+      function escapeHtml(s){
+        return String(s == null ? "" : s)
+          .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      }
+      function renderInline(s){
+        // Order matters: escape first, then apply code, bold, italic.
+        var t = escapeHtml(s);
+        t = t.replace(/`([^`]+)`/g, "<code>$1</code>");
+        t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        t = t.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+        return t;
+      }
+      // Minimal markdown: headings (# / ## / ###), bullet lists (*),
+      // paragraphs split on blank lines, plus inline `code` / **bold** / *em*.
+      // Enough for the forensics lab's solution-key formatting.
+      function renderMarkdown(md){
+        if (!md) return "";
+        var lines = md.split(/\r?\n/);
+        var out = [], i = 0;
+        while (i < lines.length) {
+          var line = lines[i];
+          if (!line.trim()) { i++; continue; }
+          var h = /^(#{1,3})\s+(.*)$/.exec(line);
+          if (h) {
+            var level = h[1].length;
+            out.push("<h" + level + ">" + renderInline(h[2]) + "</h" + level + ">");
+            i++; continue;
+          }
+          if (/^\s*\*\s+/.test(line)) {
+            var items = [];
+            while (i < lines.length && /^\s*\*\s+/.test(lines[i])) {
+              items.push(lines[i].replace(/^\s*\*\s+/, ""));
+              i++;
+            }
+            out.push("<ul>" + items.map(function(it){
+              return "<li>" + renderInline(it) + "</li>";
+            }).join("") + "</ul>");
+            continue;
+          }
+          // Paragraph: join consecutive non-blank, non-list, non-heading lines.
+          var para = [];
+          while (i < lines.length && lines[i].trim() &&
+                 !/^\s*\*\s+/.test(lines[i]) && !/^#{1,3}\s+/.test(lines[i])) {
+            para.push(lines[i]);
+            i++;
+          }
+          out.push("<p>" + renderInline(para.join(" ")) + "</p>");
+        }
+        return out.join("");
+      }
+
+      function wireForensicsSolution(){
+        var det = document.getElementById("forensics-solution-details");
+        if (!det) return;
+        var body = document.getElementById("forensics-solution-body");
+        var loaded = false;
+        det.addEventListener("toggle", async function(){
+          if (!det.open || loaded) return;
+          body.textContent = "Loading…";
+          try {
+            var r = await fetch(API + "/forensics/solution", {credentials:"same-origin"});
+            if (!r.ok) { body.textContent = "Failed to load solution (HTTP " + r.status + ")."; return; }
+            var j = await r.json();
+            if (!j.success) { body.textContent = j.message || "Failed to load solution."; return; }
+            body.innerHTML = renderMarkdown(j.markdown || "");
+            loaded = true;
+          } catch (e) {
+            body.textContent = "Failed to load: " + e.message;
+          }
+        });
+      }
+
+      document.getElementById("show-all").addEventListener("change", refresh);
+
+      document.getElementById("policy").addEventListener("change", async function(ev){
+        try {
+          var r = await api("/claims/policy", {method:"POST", headers:{"Content-Type":"application/json"},
+                                                body: JSON.stringify({policy: ev.target.value})});
+          var j = await r.json();
+          setMsg(j.success ? "Policy: " + j.policy : j.message, j.success ? "ok" : "error");
+        } catch(e){}
+      });
+
+      refresh();
+      setInterval(refresh, 5000);
+    })();
+  </script>
+</body>
+</html>

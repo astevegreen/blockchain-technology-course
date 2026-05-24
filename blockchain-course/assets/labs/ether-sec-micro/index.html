@@ -1,0 +1,751 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ethereum Consensus Microlab Suite — Standalone</title>
+  <style>
+    :root {
+      --bg: #0f1320;
+      --panel: #151a2b;
+      --panel-2: #1b2140;
+      --muted: #98a2b3;
+      --text: #e6e6f0;
+      --success: #1fb36b;
+      --warn: #f0b429;
+      --error: #ef4444;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --yellow: #eab308;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg); color: var(--text);
+      display: grid; grid-template-rows: 1fr auto; gap: 8px; padding: 12px;
+    }
+    .app { display: grid; grid-template-columns: 320px 1fr; gap: 12px; min-height: 0; }
+    .left { background: var(--panel); border: 1px solid #222645; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+    .right { background: var(--panel); border: 1px solid #222645; border-radius: 12px; padding: 12px; display: grid; grid-template-rows: auto 1fr; gap: 10px; min-height: 0; }
+    h1 { font-size: 16px; margin: 0 0 6px; color: #cfd3ff; letter-spacing: 0.3px; }
+    .row { display: flex; align-items: center; gap: 8px; }
+    .select, .btn, .slider { width: 100%; }
+    .select, .btn { background: var(--panel-2); border: 1px solid #2a2f57; color: var(--text); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+    .btn { text-align: center; user-select: none; }
+    .btn:active { transform: translateY(1px); }
+    .btn.secondary { background: #10142a; border-color: #2a2f57; }
+    .btn.success { background: var(--success); color: #062212; border-color: #139155; font-weight: 600; }
+    .btn.warn { background: #2b2108; color: #ffdd8a; border-color: #5b450c; }
+    .btn.error { background: var(--error); color: white; border-color: #9f2d2d; font-weight: 600; }
+    .btn.paused { background: #0e2a15; color: #89f1c2; border-color: #1b7145; }
+    .group { background: #0d1122; border: 1px solid #232848; border-radius: 12px; padding: 10px; }
+    .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .muted { color: var(--muted); }
+    .tiny { font-size: 11px; color: var(--muted); }
+
+    .lab-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .lab-title { font-size: 18px; font-weight: 700; }
+    .lab-desc { color: var(--muted); font-size: 12px; }
+
+    .lab-area { background: #0c1020; border: 1px solid #232848; border-radius: 12px; padding: 10px; overflow: hidden; min-height: 520px; display: grid; grid-template-rows: auto 1fr; gap: 8px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .controls .btn, .controls .select { width: auto; }
+
+    /* Viewpane now resizable */
+    .view { min-height: 320px; overflow: auto; display: grid; grid-auto-rows: min-content; gap: 10px; resize: both; }
+    .resizable { resize: both; overflow: auto; }
+
+    .hchain { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
+    .block { min-width: 140px; border-radius: 10px; border: 1px solid #2a2f57; padding: 8px; background: #0c1433; cursor: pointer; }
+    .block .num { font-weight: 700; color: #c5d1ff; }
+    .block .hash { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 11px; color: #9fb1ff; word-break: break-all; }
+    .block.selected { outline: 2px solid var(--blue); }
+
+    .list { display: grid; grid-template-columns: 1fr; gap: 6px; max-height: 200px; overflow: auto; border: 1px dashed #2a2f57; border-radius: 10px; padding: 8px; }
+    .item { background: #0b1233; border: 1px solid #24306b; border-radius: 8px; padding: 6px 8px; cursor: pointer; display: grid; gap: 2px; }
+    .item:hover { background: #0e1540; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .split2 { display: grid; grid-template-columns: 320px 1fr; gap: 10px; min-height: 0; }
+    .panel { background: #0a0f25; border: 1px solid #232848; border-radius: 12px; padding: 10px; min-height: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 8px; }
+    .panel h3 { margin: 0; font-size: 14px; color: #cfd3ff; }
+    .panel-body { overflow: auto; min-height: 0; }
+    .panel.resizable { resize: both; overflow: auto; }
+
+    .inspector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-height: 0; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 6px; }
+    .kv div { padding: 2px 0; }
+    .clickable-hash { text-decoration: underline; cursor: pointer; }
+
+    .circle { position: relative; height: 360px; background: #0b1230; border: 1px solid #232848; border-radius: 12px; overflow: hidden; }
+    .val { position: absolute; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #2a2f57; background: #3a415f; font-size: 12px; }
+    .val.user { background: var(--yellow); color: #231f0a; border-color: #806b09; font-weight: 700; }
+    .val.proposer { box-shadow: 0 0 0 3px rgba(59,130,246,0.4); background: #203a6b; border-color: #3b82f6; }
+    .val.committee { box-shadow: 0 0 0 3px rgba(168,85,247,0.4); background: #2d1a4b; border-color: #a855f7; }
+    .val.revealed { border-color: #1fb36b; }
+
+    .timeline { display: flex; gap: 8px; overflow-x: auto; padding: 8px; height: 240px; }
+    .epoch { width: 120px; min-width: 120px; padding: 8px; border-radius: 10px; border: 1px solid #2a2f57; background: #0c1433; }
+    .epoch .id { font-weight: 700; }
+    .epoch.state-proposed { background: #19203d; }
+    .epoch.state-justified { background: #162848; box-shadow: inset 0 0 0 2px #3b82f6; }
+    .epoch.state-finalized { background: #0e2a15; box-shadow: inset 0 0 0 2px #1fb36b; }
+
+    .bars { position: relative; height: 220px; background: #0b1230; border: 1px solid #232848; border-radius: 12px; padding: 16px; display: grid; align-content: end; }
+    .bar { height: 40px; border-radius: 8px; }
+    .bar.active { background: #0e3a22; border: 1px solid #1fb36b; }
+    .bar.inactive { background: #3a0e0e; border: 1px solid #ef4444; }
+    .threshold { position: absolute; left: 66.7%; top: 8px; bottom: 8px; width: 2px; background: #ffd166; box-shadow: 0 0 0 1px #8a6d00; }
+    .halted { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 28px; color: #ffb3b3; text-shadow: 0 2px 10px rgba(239, 68, 68, 0.5); pointer-events: none; }
+
+    .chains { display: grid; grid-template-columns: 1fr; gap: 12px; height: 260px; }
+    .rowlabel { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .hchain.slim .block { min-width: 110px; }
+    .block.honest { background: #0b1e3c; }
+    .block.attacker { background: #3a0f0f; border-color: #6b2323; }
+    .checkpoint { outline: 3px solid #1fb36b; }
+
+    /* Log: normal flow so we can scroll to bottom */
+    .log { background: #0a0f25; border: 1px solid #232848; border-radius: 12px; padding: 8px; height: 180px; overflow: auto; }
+    .log-item { padding: 6px 8px; border-radius: 8px; margin: 4px 0; font-size: 12px; }
+    .log-item.info { background: #121a3a; border: 1px solid #2a3a7b; color: #cfe0ff; }
+    .log-item.success { background: #0e2a15; border: 1px solid #1b7a4a; color: #9ef1c9; }
+    .log-item.warn { background: #2b2108; border: 1px solid #5b450c; color: #ffdd8a; }
+    .log-item.error { background: #3a0e0e; border: 1px solid #6b2323; color: #ffb4b4; }
+
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; }
+    .modal { width: min(1000px, 92vw); background: #0a0f25; border: 1px solid #232848; border-radius: 12px; padding: 12px; }
+    .modal h3 { margin: 0 0 8px; }
+    .modal .close { float: right; cursor: pointer; color: #cfd3ff; }
+    canvas { image-rendering: pixelated; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="left" id="left">
+      <div class="group">
+        <h1>Microlab Suite</h1>
+        <div class="label">Select Lab</div>
+        <select id="labSelect" class="select">
+          <option value="lab1">Lab 1 — Anatomy of a Block</option>
+          <option value="lab2">Lab 2 — Validator Shuffle (RANDAO)</option>
+          <option value="lab3">Lab 3 — Consensus in Action (Gasper)</option>
+          <option value="lab4">Lab 4 — Attack Vectors</option>
+        </select>
+      </div>
+
+      <div class="group">
+        <div class="label">Simulation Controls</div>
+        <div class="row">
+          <button id="pauseBtn" class="btn">Pause</button>
+          <button id="resetBtn" class="btn secondary">Reset</button>
+        </div>
+        <div class="label">Speed (Slower ↔ Faster)</div>
+        <input id="speed" class="slider" type="range" min="1" max="100" value="35" />
+        <div class="tiny">Tick ~ <span id="tickLabel">1.00</span> / sec</div>
+      </div>
+
+      <div class="group">
+        <div class="label">Self-Tests</div>
+        <button id="selfTestBtn" class="btn">Run Self-Tests</button>
+        <div class="tiny">Automated checks verify core mechanics across labs. Results appear in the Event Log.</div>
+      </div>
+
+      <div class="group">
+        <div class="label">Teaching Aids</div>
+        <details>
+          <summary>Tips to maximize learning</summary>
+          <ul class="tiny">
+            <li>Ask students to predict each Merkle root change before clicking <em>Mine Block</em>.</li>
+            <li>Toggle withholding in RANDAO and discuss why the mix remains unpredictable.</li>
+            <li>In LMD-GHOST, steer the class to flip the head repeatedly—then ask what real networks do to stabilize.</li>
+            <li>Use the Finality Delay slider to show why the inactivity leak exists and when it restores finality.</li>
+            <li>Run the Double-Spend demo twice: once without broadcasting (no penalty), then broadcast to trigger slashing.</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+
+    <section class="right">
+      <header class="lab-header">
+        <div>
+          <div class="lab-title" id="labTitle">Lab 1 — Anatomy of a Block</div>
+          <div class="lab-desc" id="labDesc">Build blocks from a live mempool, watch roots update, and mine to extend the chain.</div>
+        </div>
+        <div class="tiny">Note: In-browser teaching hash = double SHA-256 (not Keccak-256).</div>
+      </header>
+      <section class="lab-area">
+        <div class="controls" id="labControls"></div>
+        <div class="view resizable" id="labView"></div>
+      </section>
+    </section>
+  </div>
+
+  <section class="log" id="log"></section>
+
+  <div class="modal-bg" id="modalBg">
+    <div class="modal">
+      <span class="close" id="modalClose">✕</span>
+      <h3 id="modalTitle">Merkle Tree</h3>
+      <canvas id="modalCanvas" width="960" height="560"></canvas>
+      <div class="tiny">Leaves & parents are double-SHA-256 of concatenated hex strings. Odd leaf duplication applied.</div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Utils ----------
+    const $ = (sel) => document.querySelector(sel);
+    const $el = (tag, cls, html) => { const e=document.createElement(tag); if (cls) e.className=cls; if (html!==undefined) e.innerHTML=html; return e; };
+    const logEl = $('#log');
+    function nowTs(){ return new Date().toLocaleTimeString(); }
+    function log(msg, type='info'){
+      const d=$el('div','log-item '+type, '<strong>['+nowTs()+']</strong> '+msg);
+      logEl.appendChild(d);
+      // auto-scroll log to bottom
+      logEl.scrollTop = logEl.scrollHeight;
+      // console mirror
+      (type==='error'?console.error:type==='warn'?console.warn:console.log)(msg);
+    }
+    function setTitle(t, d){ $('#labTitle').textContent=t; $('#labDesc').textContent=d||''; }
+
+    // ---------- Tick Engine ----------
+    let paused=false, tickMs=1000, tickHandle=null, currentLab=null;
+    function sliderToTickMs(v){ const minMs=100, maxMs=4500; const t=(100-v)/99; return Math.round(minMs + t*(maxMs-minMs)); }
+    function updateTick(){
+      if (tickHandle) clearInterval(tickHandle);
+      if (!paused) tickHandle=setInterval(()=>{ if (currentLab && typeof currentLab.tick==='function') currentLab.tick(); }, tickMs);
+      $('#tickLabel').textContent = (1000/tickMs).toFixed(2);
+    }
+
+    // ---------- Hashing ----------
+    const supportsSubtle = !!(window.crypto && window.crypto.subtle);
+    async function sha256Hex(str){
+      if (supportsSubtle){
+        const enc=new TextEncoder();
+        const buf=enc.encode(str);
+        const h=await crypto.subtle.digest('SHA-256', buf);
+        return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
+      } else {
+        // Tiny non-crypto fallback to keep the demo running offline
+        let h=5381; for (let i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h|=0; }
+        let hex=(h>>>0).toString(16); while(hex.length<64) hex='0'+hex; return hex;
+      }
+    }
+    const dsha = async (str)=> sha256Hex(await sha256Hex(str));
+
+    // ---------- Merkle ----------
+    async function merkleTree(leaves){
+      if (leaves.length===0){
+        const r = await dsha('');
+        return {levels:[[r]], root:r};
+      }
+      let level = [];
+      for (const it of leaves) level.push(await dsha(String(it)));
+      const levels=[level.slice()];
+      while (level.length>1){
+        const next=[];
+        for (let i=0;i<level.length;i+=2){
+          const a=level[i], b=(i+1<level.length)? level[i+1] : level[i];
+          next.push(await dsha(a+b));
+        }
+        level=next; levels.push(level.slice());
+      }
+      return {levels, root: level[0]};
+    }
+    function drawMerkle(canvas, tree){
+      const ctx=canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.font='11px ui-monospace, monospace'; ctx.textBaseline='top';
+      const levels=tree.levels;
+      const boxW=180, boxH=24, vGap=60, padX=24;
+      const startY=Math.max(12, canvas.height - (levels.length*(boxH+vGap)));
+      function rrect(x,y,w,h,r){ if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); ctx.stroke(); } else { ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h); } }
+      function box(x,y,text){ ctx.fillStyle='#10193a'; ctx.strokeStyle='#2a3a7b'; ctx.lineWidth=1.5; rrect(x,y,boxW,boxH,6); ctx.fillStyle='#cfe0ff'; ctx.fillText(text.slice(0,22)+'…', x+6, y+5); }
+      const positions=[];
+      for (let li=0; li<levels.length; li++){
+        const level=levels[li]; const y=startY + li*(boxH+vGap);
+        const totalW=level.length*(boxW+padX) - padX;
+        const startX=(canvas.width-totalW)/2;
+        const row=[];
+        for (let i=0;i<level.length;i++){ const x=startX + i*(boxW+padX); row.push([x,y]); box(x,y,level[i]); }
+        positions.push(row);
+      }
+      ctx.strokeStyle='#4256a5'; ctx.lineWidth=1.2;
+      for (let li=0; li<positions.length-1; li++){
+        const row=positions[li], next=positions[li+1];
+        for (let i=0;i<row.length;i+=2){
+          const a=row[i], b=(i+1<row.length)?row[i+1]:row[i], parent=next[Math.floor(i/2)];
+          const ay=a[1]+boxH, by=b[1]+boxH, py=parent[1];
+          const ax=a[0]+boxW/2, bx=b[0]+boxW/2, px=parent[0]+boxW/2;
+          ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(ax,py-6); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx,py-6); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(ax,py-6); ctx.lineTo(px,py-6); ctx.lineTo(px,py); ctx.stroke();
+        }
+      }
+    }
+    function openMerkleModal(title, items){
+      (async ()=>{
+        const tree = await merkleTree(items);
+        $('#modalTitle').textContent = title + ' — root ' + tree.root.slice(0,16) + '…';
+        drawMerkle($('#modalCanvas'), tree);
+        $('#modalBg').style.display = 'flex';
+      })();
+    }
+    $('#modalClose').onclick = ()=> $('#modalBg').style.display='none';
+    $('#modalBg').onclick = (e)=> { if (e.target.id==='modalBg') $('#modalBg').style.display='none'; };
+
+    // ---------- Helpers ----------
+    function clearView(){ $('#labControls').innerHTML=''; $('#labView').innerHTML=''; }
+    function autoScrollX(el){ el.scrollLeft = el.scrollWidth; }
+    function capLog(n=600){ while (logEl.children.length>n) logEl.removeChild(logEl.firstChild); }
+
+    // ---------- Global UI ----------
+    $('#speed').addEventListener('input', (e)=>{ tickMs=sliderToTickMs(Number(e.target.value)); updateTick(); });
+    $('#pauseBtn').addEventListener('click', ()=>{ paused=!paused; $('#pauseBtn').textContent=paused?'Resume':'Pause'; $('#pauseBtn').classList.toggle('paused', paused); updateTick(); });
+    $('#resetBtn').addEventListener('click', ()=>{ if (currentLab && typeof currentLab.reset==='function') currentLab.reset(); log('Simulation reset.','info'); if (paused){ paused=false; $('#pauseBtn').textContent='Pause'; $('#pauseBtn').classList.remove('paused'); updateTick(); } });
+    $('#labSelect').addEventListener('change', (e)=>{ switchLab(e.target.value); });
+
+    // ========== Lab 1: Block Anatomy ==========
+    const Lab1 = {
+      id:'lab1',
+      chain:[], building:[], mempool:[], stateRoot:'', selectedIndex:-1,
+      init(){
+        setTitle('Lab 1 — Anatomy of a Block', 'Build blocks from a live mempool, watch roots update, and mine to extend the chain.');
+        clearView();
+        const ctrl=$('#labControls'), view=$('#labView');
+        const memDiv=$el('div','panel resizable'); memDiv.innerHTML='<h3>Mempool</h3>';
+        const memList=$el('div','list panel-body'); memDiv.appendChild(memList);
+        const buildDiv=$el('div','panel resizable'); buildDiv.innerHTML='<h3>Building Block</h3>';
+        const buildList=$el('div','list panel-body'); buildDiv.appendChild(buildList);
+        const mineBtn=$el('button','btn success','Mine Block'); buildDiv.appendChild(mineBtn);
+        const left=$el('div','split2'); left.appendChild(memDiv); left.appendChild(buildDiv); view.appendChild(left);
+        const chainTitle=$el('div','rowlabel','Blockchain'); view.appendChild(chainTitle);
+        const chainDiv=$el('div','hchain'); view.appendChild(chainDiv);
+        const insp=$el('div','panel resizable'); insp.innerHTML='<h3>Inspector</h3>';
+        const inspBody=$el('div','inspector panel-body'); insp.appendChild(inspBody);
+        view.appendChild(insp);
+
+        this.els={memList, buildList, chainDiv, inspBody};
+        this.reset();
+        mineBtn.onclick = ()=> this.mineBlock();
+      },
+      reset(){ this.chain=[]; this.building=[]; this.mempool=[]; this.stateRoot=''; this.selectedIndex=-1; this.render(); log('Lab 1 reset.','info'); },
+      genTx(){ const types=['transfer','contract_call','nft_mint','approve']; const t=types[Math.floor(Math.random()*types.length)]; const v=(Math.random()*2).toFixed(3); const to='0x'+Math.random().toString(16).slice(2,8); const from='0x'+Math.random().toString(16).slice(2,8); return {id:'tx'+Math.random().toString(16).slice(2,10), type:t, from, to, value:v}; },
+      async computeRoots(txs){
+        const txStrs=txs.map(tx=> JSON.stringify(tx));
+        const txTree = await merkleTree(txStrs);
+        const receipts = txs.map(tx=> ({status:'OK', id:tx.id}));
+        const rcTree = await merkleTree(receipts.map(r=> JSON.stringify(r)));
+        const stateRoot = await dsha((this.stateRoot||'genesis') + txTree.root + rcTree.root);
+        return { transactionsRoot: txTree.root, receiptsRoot: rcTree.root, stateRoot };
+      },
+      async mineBlock(){
+        const number=this.chain.length;
+        const parentHash = this.chain.length? this.chain[this.chain.length-1].hash : '0xgenesis';
+        const roots = await this.computeRoots(this.building);
+        const header = { number, parentHash, transactions_root:roots.transactionsRoot, receipts_root:roots.receiptsRoot, state_root:roots.stateRoot, timestamp:Date.now() };
+        const hash = await dsha(Object.values(header).join('|'));
+        const block = { header, hash, txs: this.building.slice() };
+        this.chain.push(block); this.stateRoot=roots.stateRoot; this.building=[];
+        this.render(); log(`Mined block #${number} hash ${hash.slice(0,10)}…`,'success'); capLog();
+      },
+      selectBlock(i){ this.selectedIndex=i; this.render(); },
+      render(){
+        const {memList, buildList, chainDiv, inspBody} = this.els || {};
+        if (!memList) return;
+        // mempool
+        memList.innerHTML='';
+        this.mempool.forEach((tx, idx)=>{
+          const it=$el('div','item'); it.innerHTML=`<div><strong>${tx.type}</strong> <span class="tiny">${tx.id}</span></div><div class="tiny">${tx.from} → ${tx.to} (${tx.value} ETH)</div>`;
+          it.onclick=()=>{ this.building.push(tx); this.mempool.splice(idx,1); this.render(); };
+          memList.appendChild(it);
+        });
+        // building
+        buildList.innerHTML='';
+        this.building.forEach((tx, idx)=>{
+          const it=$el('div','item'); it.innerHTML=`<div><strong>${tx.type}</strong> <span class="tiny">${tx.id}</span></div><div class="tiny">${tx.from} → ${tx.to} (${tx.value} ETH)</div>`;
+          it.onclick=()=>{ this.mempool.push(tx); this.building.splice(idx,1); this.render(); };
+          buildList.appendChild(it);
+        });
+        // chain
+        chainDiv.innerHTML='';
+        this.chain.forEach((b,i)=>{
+          const div=$el('div','block'+(this.selectedIndex===i?' selected':''));
+          div.innerHTML=`<div class="num">#${b.header.number}</div><div class="hash mono">${b.hash.slice(0,24)}…</div>`;
+          div.onclick=()=> this.selectBlock(i);
+          chainDiv.appendChild(div);
+        });
+        autoScrollX(chainDiv);
+        // inspector
+        (async ()=>{
+          inspBody.innerHTML='';
+          if (this.selectedIndex>=0){
+            const b=this.chain[this.selectedIndex];
+            const kv=$el('div','kv');
+            function row(k,v){ const kd=$el('div','muted',k), vd=$el('div','mono'); vd.textContent=v; kv.appendChild(kd); kv.appendChild(vd); }
+            row('number', b.header.number); row('parentHash', b.header.parentHash);
+            const tr=$el('span','clickable-hash mono', b.header.transactions_root.slice(0,28)+'…'); tr.onclick=()=> openMerkleModal('Transactions Merkle Tree', b.txs.map(t=>JSON.stringify(t)));
+            const rr=$el('span','clickable-hash mono', b.header.receipts_root.slice(0,28)+'…'); rr.onclick=()=> openMerkleModal('Receipts Merkle Tree', b.txs.map(t=>JSON.stringify({status:'OK', id:t.id})));
+            const sr=$el('span','mono', b.header.state_root.slice(0,28)+'…');
+            kv.appendChild($el('div','muted','transactions_root')); const trc=$el('div'); trc.appendChild(tr); kv.appendChild(trc);
+            kv.appendChild($el('div','muted','receipts_root')); const rrc=$el('div'); rrc.appendChild(rr); kv.appendChild(rrc);
+            kv.appendChild($el('div','muted','state_root')); kv.appendChild(sr);
+            const txlist=$el('div','list'); b.txs.forEach(tx=>{ const it=$el('div','item'); it.innerHTML=`<div><strong>${tx.type}</strong> <span class="tiny">${tx.id}</span></div><div class="tiny">${tx.from} → ${tx.to} (${tx.value} ETH)</div>`; txlist.appendChild(it); });
+            const left=$el('div','panel resizable'); left.innerHTML='<h3>Header</h3>'; const leftBody=$el('div','panel-body'); leftBody.appendChild(kv); left.appendChild(leftBody);
+            const right=$el('div','panel resizable'); right.innerHTML='<h3>Transactions</h3>'; const rightBody=$el('div','panel-body'); rightBody.appendChild(txlist); right.appendChild(rightBody);
+            inspBody.appendChild(left); inspBody.appendChild(right);
+          } else {
+            const roots = await this.computeRoots(this.building);
+            const kv=$el('div','kv');
+            function row(k,v){ const kd=$el('div','muted',k), vd=$el('div','mono'); vd.textContent=(v && v.slice)? v.slice(0,28)+'…' : String(v); kv.appendChild(kd); kv.appendChild(vd); }
+            row('transactions_root', roots.transactionsRoot); row('receipts_root', roots.receiptsRoot); row('state_root (preview)', roots.stateRoot);
+            const left=$el('div','panel resizable'); left.innerHTML='<h3>Live Header Preview</h3>'; const lb=$el('div','panel-body'); lb.appendChild(kv); left.appendChild(lb);
+            const right=$el('div','panel resizable'); right.innerHTML='<h3>Selected Block</h3><div class="tiny">Click a block above to inspect.</div>'; const rb=$el('div','panel-body'); right.appendChild(rb);
+            inspBody.appendChild(left); inspBody.appendChild(right);
+          }
+        })();
+      },
+      tick(){ if (Math.random()<0.55) this.mempool.push(this.genTx()); if (this.mempool.length>60) this.mempool.shift(); this.render(); }
+    };
+
+    // ========== Lab 2: RANDAO ==========
+    const Lab2 = {
+      id:'lab2',
+      epoch:0, phase:'Commit', validators:[], randaoMix:'seed', withhold:false, proposer:null, committee:[], phaseTicks:0,
+      init(){
+        setTitle('Lab 2 — Validator Shuffle (RANDAO)','Commit → Reveal → Assign. Toggle withhold to see why grinding fails.');
+        clearView();
+        const ctrl=$('#labControls');
+        this.ctrlRoot = ctrl;
+        this.modeControls = $el('div','controls');
+        ctrl.appendChild(this.modeControls);
+
+        const phaseEl=$el('div','label','Phase: Commit'); this.modeControls.appendChild(phaseEl);
+        const epochEl=$el('div','label','Epoch: 0'); this.modeControls.appendChild(epochEl);
+        const toggle=$el('button','btn warn','Withhold Reveal (Grind): OFF');
+        toggle.onclick=()=>{ this.withhold=!this.withhold; toggle.textContent='Withhold Reveal (Grind): '+(this.withhold?'ON':'OFF'); log('User validator set to '+(this.withhold?'withhold':'reveal')+' during Reveal.', this.withhold?'warn':'info'); };
+        this.modeControls.appendChild(toggle);
+        const roles=$el('div','group'); roles.innerHTML='<div class="label">Assignments</div><div class="tiny" id="assignDisplay">—</div>'; this.modeControls.appendChild(roles);
+
+        const canvasWrap=$el('div','circle resizable'); $('#labView').appendChild(canvasWrap);
+        this.els = { phaseEl, epochEl, canvasWrap, assign: roles.querySelector('#assignDisplay') };
+        this.reset();
+      },
+      reset(){
+        this.epoch=0; this.phase='Commit'; this.randaoMix='seed'; this.phaseTicks=0;
+        this.validators = Array.from({length:16}, (_,i)=> ({ id:i, secret: Math.random().toString(36).slice(2,10), committed:'', revealed:false, penalty:0 }));
+        this.proposer=null; this.committee=[]; this.render(); log('Lab 2 reset.','info');
+      },
+      // PRNG seeded from mix (xorshift32-ish), for deterministic but simple shuffle
+      rng(seedHex){
+        let s = 0x9e3779b9 ^ parseInt(seedHex.slice(0,8), 16);
+        return ()=>{ s ^= s<<13; s ^= s>>>17; s ^= s<<5; s = (s>>>0); return (s % 100000)/100000; };
+      },
+      shuffleDet(arr, seed){
+        const rnd = this.rng(seed);
+        for (let i=arr.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+        return arr;
+      },
+      async advancePhase(){
+        if (this.phase==='Commit'){
+          for (const v of this.validators){ v.committed = await dsha(v.secret); v.revealed=false; }
+          this.phase='Reveal'; this.phaseTicks=0; log(`Epoch ${this.epoch}: Commit → Reveal`,'info');
+        } else if (this.phase==='Reveal'){
+          let mix=this.randaoMix;
+          for (const v of this.validators){
+            const isUser=(v.id===15);
+            const willReveal = !(isUser && this.withhold);
+            if (willReveal){ v.revealed=true; mix = await dsha(mix + v.secret); log(`V${v.id} revealed.`, 'info'); }
+            else { v.revealed=false; v.penalty+=1; log(`V${v.id} withheld reveal. Penalty applied.`, 'warn'); }
+          }
+          this.randaoMix=mix; this.phase='Assign'; this.phaseTicks=0; log(`Epoch ${this.epoch}: Reveal → Assign (mix ${this.randaoMix.slice(0,8)}…)`,'success');
+        } else if (this.phase==='Assign'){
+          const order = this.shuffleDet(Array.from(this.validators, v=>v.id), this.randaoMix);
+          this.proposer = order[0]; this.committee = order.slice(1, 1+4);
+          log(`Assignments: Proposer V${this.proposer}, Committee [${this.committee.join(', ')}]`,'info');
+          this.epoch++; this.phase='Commit'; this.phaseTicks=0;
+        }
+        this.render(); capLog();
+      },
+      layout(){
+        const R=150; const c=this.els.canvasWrap; const cx=c.clientWidth/2, cy=c.clientHeight/2;
+        return this.validators.map((v,i)=>{ const ang=(i/this.validators.length)*Math.PI*2; return { x: cx + R*Math.cos(ang) - 21, y: cy + R*Math.sin(ang) - 21 }; });
+      },
+      render(){
+        if (!this.els) return; const {phaseEl, epochEl, canvasWrap, assign} = this.els;
+        phaseEl.textContent = 'Phase: '+this.phase; epochEl.textContent = 'Epoch: '+this.epoch;
+        assign.textContent = this.proposer===null? '—' : `Proposer: V${this.proposer}; Committee: ${this.committee.join(', ')}`;
+        canvasWrap.innerHTML=''; const pos=this.layout();
+        this.validators.forEach((v,i)=>{
+          const d=$el('div','val', 'V'+v.id);
+          if (v.id===15) d.classList.add('user');
+          if (this.proposer===v.id) d.classList.add('proposer');
+          if (this.committee.includes(v.id)) d.classList.add('committee');
+          if (v.revealed) d.classList.add('revealed');
+          d.style.left=pos[i].x+'px'; d.style.top=pos[i].y+'px';
+          canvasWrap.appendChild(d);
+        });
+      },
+      tick(){
+        this.phaseTicks++;
+        if (this.phase==='Commit' && this.phaseTicks>=3) this.advancePhase();
+        if (this.phase==='Reveal' && this.phaseTicks>=3) this.advancePhase();
+        if (this.phase==='Assign' && this.phaseTicks>=2) this.advancePhase();
+      }
+    };
+
+    // ========== Lab 3: Gasper ==========
+    const Lab3 = {
+      id:'lab3', mode:'lmd',
+      init(){
+        setTitle('Lab 3 — Consensus in Action (Gasper)','Switch between LMD-GHOST, Casper-FFG, and Finality Delay.');
+        clearView();
+        const ctrl=$('#labControls');
+        this.modeControls = $el('div','controls');
+        ctrl.appendChild(this.modeControls);
+        const modeSel=$el('select','select'); modeSel.innerHTML='<option value="lmd">LMD-GHOST</option><option value="ffg">Casper-FFG</option><option value="delay">Finality Delay</option>';
+        modeSel.value=this.mode;
+        modeSel.onchange = ()=>{ this.mode = modeSel.value; this.reset(); };
+        this.modeControls.appendChild(modeSel);
+        this.view=$('#labView');
+        this.reset();
+      },
+      reset(){
+        if (this.subCtrl) this.subCtrl.remove();
+        this.view.innerHTML='';
+        if (this.mode==='lmd') this.initLMD();
+        if (this.mode==='ffg') this.initFFG();
+        if (this.mode==='delay') this.initDelay();
+        log('Lab 3 reset ('+this.mode+').','info');
+      },
+      tick(){ if (this.mode==='lmd') this.tickLMD(); if (this.mode==='ffg') this.tickFFG(); if (this.mode==='delay') this.tickDelay(); },
+
+      // LMD-GHOST
+      lA:[], lB:[], head:'A', nextId:0, elLmdRow:null,
+      initLMD(){
+        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
+        const voteA=$el('button','btn','Vote for Fork A'); const voteB=$el('button','btn','Vote for Fork B');
+        this.subCtrl.appendChild(voteA); this.subCtrl.appendChild(voteB);
+        const row=$el('div','hchain'); this.view.appendChild(row); this.elLmdRow=row;
+        this.lA=[{id:this.nextId++, weight:0, parent:null, branch:'A'}]; this.lB=[{id:this.nextId++, weight:0, parent:null, branch:'B'}];
+        this.renderLMD();
+        voteA.onclick=()=> this.vote('A'); voteB.onclick=()=> this.vote('B');
+      },
+      vote(branch){
+        const arr = (branch==='A'? this.lA : this.lB); const head=arr[arr.length-1]; head.weight+=10;
+        log('Added votes to Fork '+branch+' head (weight now '+head.weight+').','info');
+        const aHead=this.lA[this.lA.length-1], bHead=this.lB[this.lB.length-1];
+        this.head = (aHead.weight>=bHead.weight)? 'A':'B';
+        const parent=(this.head==='A'? aHead : bHead);
+        const newBlock={id:this.nextId++, weight:0, parent:parent.id, branch:this.head};
+        if (this.head==='A') this.lA.push(newBlock); else this.lB.push(newBlock);
+        this.renderLMD();
+      },
+      renderLMD(){
+        this.elLmdRow.innerHTML='';
+        const drawChain=(arr)=>{ arr.forEach((b,i)=>{ const d=$el('div','block '+(b.branch==='A'?'honest':'attacker')); const isHead=(arr===(this.head==='A'? this.lA : this.lB) && i===arr.length-1); d.style.outline = isHead? '2px solid #3b82f6' : '1px solid #2a2f57'; d.innerHTML = `<div class="num">${b.branch} #${b.id}</div><div class="tiny">weight ${b.weight}</div>`; this.elLmdRow.appendChild(d); }); };
+        drawChain(this.lA); drawChain(this.lB);
+        autoScrollX(this.elLmdRow);
+      },
+      tickLMD(){},
+
+      // Casper-FFG
+      epochs:[], ffgEl:null,
+      initFFG(){ const tl=$el('div','timeline'); this.view.appendChild(tl); this.ffgEl=tl; this.epochs=[]; },
+      tickFFG(){ const i=this.epochs.length; const state=(i===0)? 'proposed' : (i%3===1? 'justified':'proposed'); const e={id:i, state}; this.epochs.push(e); if (state==='justified' && i>=2){ this.epochs[i-2].state='finalized'; log('Epoch '+(i-2)+' finalized (grandparent of '+i+').','success'); } this.renderFFG(); },
+      renderFFG(){ this.ffgEl.innerHTML=''; this.epochs.forEach(e=>{ const d=$el('div','epoch state-'+e.state); d.innerHTML=`<div class="id">Epoch ${e.id}</div><div class="tiny">${e.state.toUpperCase()}</div>`; this.ffgEl.appendChild(d); }); autoScrollX(this.ffgEl); },
+
+      // Finality Delay
+      offlinePct:30, leakStep:0.4, halted:false, barsEl:null, activeBar:null, inactiveBar:null, livePctEl:null,
+      initDelay(){
+        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
+        const label=$el('div','label',`Offline: <span id="offVal">${this.offlinePct}</span>%`); this.subCtrl.appendChild(label);
+        const slider=$el('input','slider'); slider.type='range'; slider.min=0; slider.max=90; slider.value=this.offlinePct; slider.oninput=()=>{ this.offlinePct=Number(slider.value); $('#offVal').textContent=String(this.offlinePct); this.renderDelay(); }; this.subCtrl.appendChild(slider);
+        this.livePctEl=$el('div','tiny',`Live participation: <span id="livePct">${(100 - this.offlinePct).toFixed(1)}</span>%`); this.subCtrl.appendChild(this.livePctEl);
+        const bars=$el('div','bars resizable'); bars.innerHTML = '<div class="threshold"></div>'; this.view.appendChild(bars); this.barsEl=bars;
+        this.activeBar=$el('div','bar active'); this.inactiveBar=$el('div','bar inactive'); bars.appendChild(this.activeBar); bars.appendChild(this.inactiveBar);
+        this.renderDelay();
+      },
+      renderDelay(){
+        const activePct = 100 - this.offlinePct;
+        const inactivePct = 100 - activePct;
+        const lp = $('#livePct'); if (lp) lp.textContent = activePct.toFixed(1);
+        this.halted = activePct < 66.7;
+        this.activeBar.style.width = activePct+'%';
+        this.inactiveBar.style.width = inactivePct+'%';
+        const existing = this.barsEl.querySelector('.halted');
+        if (this.halted && !existing){ const h=$el('div','halted','FINALITY HALTED'); this.barsEl.appendChild(h); }
+        if (!this.halted && existing) existing.remove();
+      },
+      tickDelay(){ if (this.halted){ this.offlinePct = Math.max(0, this.offlinePct - this.leakStep); const wasH=this.halted; this.renderDelay(); if (wasH && !this.halted) log('Finality resumed after inactivity leak.','success'); } }
+    };
+
+    // ========== Lab 4: Attack Vectors ==========
+    const Lab4 = {
+      id:'lab4', mode:'double', forging:false,
+      init(){
+        setTitle('Lab 4 — Attack Vectors', 'Explore Double Spend & Slashing, and a Long-Range Attack with checkpoint sync.');
+        clearView();
+        const ctrl=$('#labControls');
+        this.modeControls = $el('div','controls'); ctrl.appendChild(this.modeControls);
+        const modeSel=$el('select','select'); modeSel.innerHTML='<option value="double">PoS Double Spend & Slashing</option><option value="lra">Long-Range Attack</option>';
+        modeSel.value=this.mode;
+        modeSel.onchange = ()=>{ this.mode=modeSel.value; this.reset(); };
+        this.modeControls.appendChild(modeSel);
+        this.view=$('#labView');
+        this.reset();
+      },
+      reset(){
+        if (this.subCtrl) this.subCtrl.remove();
+        this.view.innerHTML='';
+        if (this.mode==='double') this.initDouble();
+        if (this.mode==='lra') this.initLRA();
+        log('Lab 4 reset ('+this.mode+').','info');
+      },
+      tick(){ if (this.mode==='double') this.tickDouble(); if (this.mode==='lra') this.tickLRA(); },
+
+      // --- Double Spend & Slashing ---
+      honest:[], attacker:[], attackStake:32, nextId:0, slashed:false, el:{},
+      initDouble(){
+        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
+        const propose=$el('button','btn','Propose Secret Block'); const broadcast=$el('button','btn error','Broadcast Fork');
+        this.subCtrl.appendChild(propose); this.subCtrl.appendChild(broadcast);
+        propose.onclick=()=> this.proposeSecret(); broadcast.onclick=()=> this.broadcastFork();
+
+        const wrap=$el('div','chains resizable');
+        const honestRow=$el('div'); honestRow.innerHTML='<div class="rowlabel">Honest Chain</div>'; const honest=$el('div','hchain slim'); honestRow.appendChild(honest);
+        const atkRow=$el('div'); atkRow.innerHTML='<div class="rowlabel">Attacker\'s Secret Chain</div>'; const atk=$el('div','hchain slim'); atkRow.appendChild(atk);
+        wrap.appendChild(honestRow); wrap.appendChild(atkRow); this.view.appendChild(wrap);
+
+        const stakeBox=$el('div','group'); stakeBox.innerHTML='<div class="label">Attacker Stake</div><div id="stakeDisp" class="lab-title">32 ETH</div>'; this.view.appendChild(stakeBox);
+        this.el={honest, atk, stakeDisp: stakeBox.querySelector('#stakeDisp')};
+        this.honest=[]; this.attacker=[]; this.attackStake=32; this.slashed=false; this.nextId=0;
+        for (let i=0;i<3;i++) this.honest.push({id:this.nextId++});
+        this.renderDouble();
+      },
+      proposeSecret(){ this.attacker.push({id:this.nextId++}); this.renderDouble(); log('Secret block proposed on attacker chain (no penalty yet).','info'); },
+      broadcastFork(){
+        if (this.slashed){ log('Attacker already slashed. Further broadcasts ignored.','warn'); return; }
+        if (this.attacker.length===0){ log('No secret blocks to broadcast. Nothing to slash.','warn'); return; }
+        this.slashed=true; this.attackStake = Math.max(0, Math.floor(this.attackStake/2));
+        this.el.stakeDisp.textContent = this.attackStake+' ETH';
+        const splash=$el('div','halted','SLASHED!'); splash.style.fontSize='48px'; splash.style.color='#ffd1d1'; splash.style.textShadow='0 0 20px rgba(255,0,0,0.6)';
+        this.view.appendChild(splash); setTimeout(()=> splash.remove(), 1500);
+        log('Attacker broadcasted conflicting fork → SLASHED! Stake halved.','error');
+      },
+      renderDouble(){
+        const {honest, atk} = this.el;
+        honest.innerHTML=''; atk.innerHTML='';
+        const draw=(arr, el, cls)=>{ arr.forEach(b=>{ const d=$el('div','block '+cls); d.innerHTML=`<div class="num">#${b.id}</div>`; el.appendChild(d); }); };
+        draw(this.honest, honest, 'honest'); draw(this.attacker, atk, 'attacker');
+        this.el.stakeDisp.textContent = this.attackStake+' ETH';
+        autoScrollX(honest); autoScrollX(atk);
+      },
+      tickDouble(){ if (Math.random()<0.7){ this.honest.push({id:this.nextId++}); this.renderDouble(); } },
+
+      // --- Long-Range Attack ---
+      honest2:[], fake:[], checkpointIndex:3, node1:'honest', node2:'honest', elLra:null,
+      initLRA(){
+        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
+        const forge=$el('button','btn','Forge Historical Block'); this.subCtrl.appendChild(forge);
+        forge.onclick=()=> this.forgeFake();
+
+        const wrap=$el('div','chains resizable');
+        const honestRow=$el('div'); honestRow.innerHTML='<div class="rowlabel">Honest Chain</div>'; const honest=$el('div','hchain slim'); honestRow.appendChild(honest);
+        const fakeRow=$el('div'); fakeRow.innerHTML='<div class="rowlabel">Fake Fork</div>'; const fake=$el('div','hchain slim'); fakeRow.appendChild(fake);
+        wrap.appendChild(honestRow); wrap.appendChild(fakeRow); this.view.appendChild(wrap);
+
+        const nodes=$el('div','row');
+        nodes.innerHTML = '<div class="group" style="flex:1"><div class="label">Syncing Node 1 (Genesis)</div><div id="n1" class="lab-title">Honest</div></div><div class="group" style="flex:1"><div class="label">Syncing Node 2 (Checkpoint)</div><div id="n2" class="lab-title">Honest</div></div>';
+        this.view.appendChild(nodes);
+
+        this.elLra={honest, fake, n1: nodes.querySelector('#n1'), n2: nodes.querySelector('#n2')};
+        this.honest2=[]; this.fake=[]; this.node1='honest'; this.node2='honest'; this.forging=false;
+        for (let i=0;i<8;i++){ const b={id:i}; if (i===this.checkpointIndex) b.checkpoint=true; this.honest2.push(b); }
+        this.renderLRA();
+      },
+      forgeFake(){
+        // Start forging campaign; each tick will extend the fake fork.
+        this.fake.push({id: 'f'+(this.fake.length+1)});
+        this.forging = true;
+        this.renderLRA();
+        log('Forged a historical block on fake fork (attacker continues forging).','warn');
+      },
+      renderLRA(){
+        const draw=(arr, el, cls)=>{ el.innerHTML=''; arr.forEach(b=>{ const d=$el('div','block '+cls); d.innerHTML=`<div class="num">#${b.id}</div>`; if (b.checkpoint) d.classList.add('checkpoint'); el.appendChild(d); }); };
+        draw(this.honest2, this.elLra.honest, 'honest'); draw(this.fake, this.elLra.fake, 'attacker');
+        const honestLen=this.honest2.length; const fakeLen=this.fake.length + 2;
+        const prevNode1 = this.node1;
+        this.node1 = (fakeLen > honestLen)? 'fake' : 'honest';
+        this.elLra.n1.textContent = (this.node1==='fake'? 'Fake (deceived)':'Honest');
+        this.elLra.n1.style.color = this.node1==='fake'? '#ffb3b3':'#9ef1c9';
+        this.node2 = 'honest'; this.elLra.n2.textContent = 'Honest (checkpoint)'; this.elLra.n2.style.color = '#9ef1c9';
+        if (prevNode1!==this.node1 && this.node1==='fake'){ log('Node 1 switched to the fake fork (longest).','error'); }
+        autoScrollX(this.elLra.honest); autoScrollX(this.elLra.fake);
+      },
+      tickLRA(){
+        // Honest chain grows slowly; if forging campaign is active, fake grows too.
+        if (Math.random()<0.5){ this.honest2.push({id:this.honest2.length}); }
+        if (this.forging && Math.random()<0.8){ this.fake.push({id:'f'+(this.fake.length+1)}); }
+        this.renderLRA();
+      }
+    };
+
+    // ========== Self Tests ==========
+    async function runSelfTests(){
+      const results=[];
+      const pass=(n)=>{ log('✅ '+n,'success'); results.push(true); };
+      const fail=(n,why)=>{ log('❌ '+n+(why? ' — '+why:''),'error'); results.push(false); };
+      const origLab=$('#labSelect').value;
+
+      // Reset check
+      switchLab('lab1'); Lab1.mempool=[]; Lab1.building=[]; Lab1.chain=[]; Lab1.tick(); const before=Lab1.mempool.length; switchLab('lab2'); switchLab('lab1'); const after=Lab1.mempool.length;
+      (after===0 && Lab1.chain.length===0)? pass('Reset on lab switch cleans state') : fail('Reset on lab switch');
+
+      // Lab1 mempool + mining
+      switchLab('lab1'); Lab1.mempool=[]; for (let i=0;i<5;i++) Lab1.tick();
+      (Lab1.mempool.length>0)? pass('Lab1 mempool generates transactions'): fail('Lab1 mempool generation');
+      Lab1.building.push(...Lab1.mempool.splice(0,2)); await Lab1.mineBlock(); (Lab1.chain.length>=1)? pass('Lab1 mining adds a block'): fail('Lab1 mining failed');
+      const prev = await Lab1.computeRoots([]), next = await Lab1.computeRoots([{a:1}]); (prev.transactionsRoot!==next.transactionsRoot)? pass('Merkle root changes with content') : fail('Merkle root unchanged');
+
+      // Lab2 deterministic shuffle
+      switchLab('lab2'); const sh1=Lab2.shuffleDet([0,1,2,3,4,5],'a1b2c3d4').join(','), sh2=Lab2.shuffleDet([0,1,2,3,4,5],'a1b2c3d4').join(',');
+      (sh1===sh2)? pass('Deterministic shuffle stable') : fail('Shuffle nondeterminism');
+
+      // Lab3 finality delay
+      switchLab('lab3'); Lab3.mode='delay'; Lab3.reset(); Lab3.offlinePct=80; Lab3.renderDelay();
+      (Lab3.halted)? pass('Finality halts below threshold') : fail('Finality not halted');
+      let guard=0; while (Lab3.halted && guard<400){ Lab3.tickDelay(); guard++; }
+      (!Lab3.halted)? pass('Inactivity leak eventually restores finality'): fail('Inactivity leak did not restore');
+
+      // Lab4 slashing via methods & LRA forging
+      switchLab('lab4'); Lab4.mode='double'; Lab4.reset(); const pre=Lab4.attackStake; Lab4.proposeSecret(); Lab4.broadcastFork();
+      (Lab4.slashed && Lab4.attackStake===Math.floor(pre/2))? pass('Slashing halves stake after broadcast'): fail('Slashing did not trigger');
+      Lab4.mode='lra'; Lab4.reset(); Lab4.forgeFake(); // start forging
+      let flips=0, steps=0;
+      while (steps++<300 && flips===0){ Lab4.tickLRA(); if (Lab4.node1==='fake') flips=1; }
+      (flips===1)? pass('Node 1 switches to fake when fake becomes longest'): fail('LRA detection did not switch');
+
+      switchLab(origLab);
+      log('Self-tests complete: '+(results.filter(Boolean).length)+' / '+results.length+' passed.', results.every(Boolean)? 'success':'warn');
+    }
+    $('#selfTestBtn').onclick = runSelfTests;
+
+    // ========== Switcher & Boot ==========
+    function switchLab(id){
+      if (paused){ paused=false; $('#pauseBtn').textContent='Pause'; $('#pauseBtn').classList.remove('paused'); }
+      if (currentLab && currentLab.id===id){ currentLab.reset?.(); return; }
+      if (id==='lab1') currentLab=Lab1;
+      else if (id==='lab2') currentLab=Lab2;
+      else if (id==='lab3') currentLab=Lab3;
+      else if (id==='lab4') currentLab=Lab4;
+      else currentLab=Lab1;
+      clearView(); currentLab.init(); $('#labSelect').value=id;
+    }
+
+    (function boot(){ tickMs = sliderToTickMs(Number($('#speed').value)); updateTick(); switchLab('lab1'); log('Microlab Suite loaded. Hashing uses SHA-256 (teaching-only).','info'); })();
+  </script>
+</body>
+</html>

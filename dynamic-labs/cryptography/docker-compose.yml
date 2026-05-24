@@ -1,0 +1,40 @@
+name: crypto-lab
+
+# Phase 8.5: per-lab nginx retired. Outer router (dynamic-labs/router)
+# proxies /labs/cryptography/* directly to Streamlit (student) and to
+# a static nginx (instructor) on split --internal networks.
+
+services:
+  student:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: crypto-lab-student:latest
+    command:
+      - streamlit
+      - run
+      - Lab_2_Home.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+      - --server.baseUrlPath=labs/cryptography/app
+      - --server.enableCORS=false
+      - --server.enableXsrfProtection=false
+    networks:
+      - student-net
+
+  instructor:
+    build:
+      context: .
+      dockerfile: Dockerfile.instructor
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: crypto-lab-instructor:latest
+    networks:
+      - instructor-net
+
+networks:
+  student-net:
+    name: crypto-student-net
+    external: true
+  instructor-net:
+    name: crypto-instructor-net
+    external: true

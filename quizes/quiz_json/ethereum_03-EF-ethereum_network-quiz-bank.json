@@ -1,0 +1,447 @@
+{
+  "lesson_id": "ethereum_03_ef_ethereum_network",
+  "lesson_title": "The Ethereum Network",
+  "date_generated": "2026-04-26",
+  "topic": "ethereum",
+  "tags": [
+    "ethereum",
+    "03-ef-ethereum-network",
+    "ethereum-network",
+    "ethereum-networking",
+    "transaction-lifecycle",
+    "mempool",
+    "eip-1559",
+    "gas-fees",
+    "execution-layer",
+    "consensus-layer",
+    "engine-api",
+    "block-production",
+    "mev",
+    "proposer-builder-separation",
+    "ethereum-nodes",
+    "client-diversity",
+    "sync-modes",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "ethereum",
+    "lesson_file_stem": "03-EF-ethereum_network",
+    "reading_status": "acquired",
+    "question_count": 13,
+    "source_mix": {
+      "lesson_questions": 10,
+      "reading_questions": 3
+    },
+    "reading_scope_note": "The assigned reading primarily supports node architecture, access models, sync, JSON-RPC, and client diversity; transaction-fee, mempool, and MEV questions are grounded in the lesson slides.",
+    "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd",
+    "reading_sources": [
+      "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt",
+      "/tmp/blockchain-course-readings/mastering_ethereum_ch3.html"
+    ]
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_ethereum",
+        "title": "Ethereum",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_ethereum_network_lesson_slides",
+            "title": "The Ethereum Network - lesson slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_ethereum_network_assigned_reading",
+            "title": "The Ethereum Network - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A user signs a transaction in a wallet and later sees a receipt with logs. Which path best describes what happened between those events?",
+      "correct_answer": "The signed transaction entered local mempools through gossip, was selected for a block, re-executed by nodes, and produced a receipt recording status, gas used, and logs.",
+      "incorrect_answers": [
+        "The signed transaction was executed locally on the client's wallet, was approved by the consensus layer, verified by builders, and created a block updating the global account state.",
+        "The signed transaction bypassed the peer-to-peer network entirely, was instantly processed by validator hardware, executed across the network, and generated a state change log.",
+        "The signed transaction waited in a global consensus queue, was serialized by execution clients, committed to the database, and returned an instant notification to the user wallet."
+      ],
+      "explanation": "The lesson frames Ethereum networking as an operational pipeline: signed intent propagates through local mempools, block builders select transactions, nodes re-execute included transactions, and receipts/logs record execution outcomes for off-chain consumers.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "ethereum-networking",
+        "transaction-lifecycle",
+        "receipts",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Review: The Life of an Ethereum Transaction",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Transaction Lifecycle As The Backbone / Review: The Life of an Ethereum Transaction"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction is signed with the right private key but with the wrong chainId for the network where it is submitted. What should students infer from the lesson?",
+      "correct_answer": "The signature does not validly authorize that transaction on the target network because chainId binds the signed payload to a specific chain.",
+      "incorrect_answers": [
+        "The signature remains executable on the target network because public keys authorize payloads without checking the destination chain.",
+        "The wallet rewrites the transaction type at submission time, converting the signed payload into a cross-chain execution request.",
+        "Execution nodes refresh the signature during propagation because validators reconstruct payload fields before accepting it as valid."
+      ],
+      "explanation": "Transaction signatures commit to the encoded payload, and chainId is part of replay resistance. A correct private key is not enough if the signed transaction is bound to another network.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "transaction-signatures",
+        "chainid",
+        "replay-resistance",
+        "lesson",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "Transaction Fields and Signatures",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Transaction Validity, Ordering, And Resource Bounds / Transaction Fields and Signatures"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "Alice has pending transactions with nonces 7 and 9, but nonce 8 is missing. The nonce 9 transaction offers a much higher effective gas price. What can a builder validly do with Alice's transactions?",
+      "correct_answer": "Hold or ignore the nonce 9 transaction until nonce 8 is available and executable, because Alice's transactions must execute in nonce order.",
+      "incorrect_answers": [
+        "Execute the nonce 9 transaction immediately to capture the high gas fee, because builders prioritize profitable state changes over local sequence.",
+        "Process both transactions and generate a blank transaction for nonce 8, because the public protocol automatically resolves any sequence gaps.",
+        "Permanently reject the nonce 7 transaction because the high-fee transaction for nonce 9 demonstrates that Alice has replaced her earlier pending intent."
+      ],
+      "explanation": "Builders may prioritize profitable transactions across the mempool, but transactions from the same account must respect the account's nonce sequence. Nonce gaps can leave later transactions pending even when their fees are attractive.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "nonces",
+        "mempool",
+        "transaction-ordering",
+        "lesson",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Transaction Validity, Ordering, And Resource Bounds",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Nonce ordering and replacement / Common Misconceptions And Confusions"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction sets maxFeePerGas to 50 gwei and maxPriorityFeePerGas to 2 gwei. If the current base fee is 30 gwei, which outcome best reflects EIP-1559 fee mechanics?",
+      "correct_answer": "The effective gas price is 32 gwei, the 30 gwei base fee is burned, the 2 gwei priority fee compensates the proposer, and unused max fee headroom is not paid.",
+      "incorrect_answers": [
+        "The effective gas price is 50 gwei, the entire cap is paid to the proposer, no refund is returned, and the protocol burns zero transaction fees from this payment.",
+        "The effective gas price is 30 gwei, the 30 gwei base fee compensates the proposer, the 2 gwei priority fee is burned, and the remaining 18 gwei is locked.",
+        "The effective gas price is 52 gwei, the base fee is calculated as the sum of max fees, and the excess headroom is forfeited to validator rewards."
+      ],
+      "explanation": "EIP-1559 separates the burned base fee from the priority fee. The user caps total price with maxFeePerGas, but overpayment above the current base fee plus priority fee is refunded rather than automatically spent.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "eip-1559",
+        "gas-fees",
+        "priority-fee",
+        "base-fee",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "EIP-1559 Fee Mechanics",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Fee Mechanics As Inclusion Logic And User Risk / EIP-1559 Fee Mechanics"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "A wallet simulation estimates that a contract call will succeed, but before inclusion another transaction changes the contract's state. The user's transaction then reverts. What is the best explanation?",
+      "correct_answer": "Gas estimation is based on simulated execution against a state snapshot, so state-dependent logic can change before inclusion; a revert still consumes gas up to the failure point.",
+      "incorrect_answers": [
+        "Gas estimation guarantees protocol success after block inclusion, so validators must enforce the simulation result; any reverted transaction receives a full refund.",
+        "Gas estimation executes the transaction in real time across the consensus layer, so the state is locked against updates; a failed transaction is free since no state writes occurred.",
+        "Gas estimation errors arise solely when the user specifies an excessive gas limit, so execution clients reject the transaction early; a revert incurs no gas fee on execution nodes."
+      ],
+      "explanation": "The lesson distinguishes gas estimation from guaranteed success. Ethereum execution is state dependent, and failed execution still uses network resources that are charged as gas.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "gas-estimation",
+        "reverts",
+        "execution-risk",
+        "lesson",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Gas Strategy and UX",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Gas estimation and execution risk / Common Misconceptions And Confusions"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A student says, \"MEV searchers watch the Ethereum mempool, so there must be one official global queue of pending transactions.\" Which correction best matches the lesson?",
+      "correct_answer": "Ethereum nodes maintain local mempools that often converge through gossip but can differ, and public visibility of those local pending views creates ordering opportunities.",
+      "incorrect_answers": [
+        "Ethereum nodes synchronize a single global transaction queue through block headers, ensuring every participant observes identical order, and preventing searcher exploitation entirely.",
+        "Ethereum nodes reserve mempool visibility exclusively for consensus-layer validators, preventing external actors from viewing pending payloads before transaction finality is achieved.",
+        "Ethereum nodes utilize private submission relays to eliminate transaction ordering incentives, legally prohibiting builders from rearranging bundles or execution sequences on the chain."
+      ],
+      "explanation": "The lesson stresses that the mempool is not a single global queue. Public gossip makes user intent visible before inclusion, while private or direct submission changes the path through builders and relays rather than removing ordering power.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "mempool",
+        "mev",
+        "private-submission",
+        "lesson",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "The Mempool",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Mempool Visibility And MEV / The Mempool"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A consensus client receives a proposed Beacon block and asks its local execution client to evaluate the execution payload. The execution client returns INVALID. What should this mean for block acceptance?",
+      "correct_answer": "The consensus client should treat the block as unacceptable for fork choice because the execution payload failed local execution validation.",
+      "incorrect_answers": [
+        "The consensus client must accept the block because consensus-layer validator signatures automatically override execution-layer validation results.",
+        "The execution client must unilaterally finalize the local chain because returning INVALID indicates that the consensus client is offline.",
+        "The consensus client must accept the block temporarily because validation occurs only after execution receipts are queried by off-chain users."
+      ],
+      "explanation": "The Engine API is the local seam between consensus and execution clients. The execution client returns statuses such as VALID, INVALID, or SYNCING, and those results inform the consensus client's block acceptance and fork-choice behavior.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "execution-layer",
+        "consensus-layer",
+        "engine-api",
+        "block-validation",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Two Networks, One Chain",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Two Coordinated Networks / Engine API coordination"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "During a slot, which sequence best fits the lesson's description of block production?",
+      "correct_answer": "A proposer is selected, an execution payload is assembled, the payload is wrapped in a signed Beacon block, peers receive it, validators re-execute the payload, and attestations move the chain toward finality.",
+      "incorrect_answers": [
+        "Every validator builds an independent execution payload, the highest-fee block becomes final instantly, consensus messages are skipped, execution clients broadcast results, and wallets update records.",
+        "The execution client selects the proposer, broadcasts local attestations first, instructs the consensus client to run the virtual machine, validators approve the state, and the slot is closed immediately.",
+        "User wallets select a proposer, searchers assemble and finalize the block, validators download completed receipts without re-executing transactions, and the consensus client broadcasts the final state."
+      ],
+      "explanation": "The lesson connects proposer selection, payload assembly, Beacon block broadcast, execution validation, attestation, and finalization as one slot-level pipeline across the execution and consensus layers.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "block-production",
+        "slots",
+        "attestations",
+        "execution-layer",
+        "consensus-layer",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Block Production: Anatomy of a Slot",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Block Production In Time / Block Production: Anatomy of a Slot"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "An operator wants independent verification of the current chain but does not need arbitrary historical state queries from years ago. Which choice best fits the lesson's node-type tradeoff?",
+      "correct_answer": "Run a full node, because it independently verifies current chain data without retaining all historical state like an archive node.",
+      "incorrect_answers": [
+        "Use a remote wallet, because local signing alone provides the same current-chain verification guarantees as operating a full node.",
+        "Run an archive node, because standard full nodes cannot verify current execution payloads or follow the canonical chain.",
+        "Use a light client, because compact proofs automatically download and verify every historical storage slot without local state costs."
+      ],
+      "explanation": "The lesson distinguishes full, archive, and light access by verification independence, historical availability, storage cost, and trust assumptions. Archive nodes are for historical state retention, not a requirement for ordinary current-chain validation.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "full-node",
+        "archive-node",
+        "sync-modes",
+        "node-trust-models",
+        "lesson",
+        "slides",
+        "application"
+      ],
+      "lesson_block": "Nodes and Clients",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Node and sync modes / Sync Modes & Data Availability"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "In the lesson's MEV-Boost supply chain, what role separation is most accurate?",
+      "correct_answer": "Searchers find opportunities and submit bundles, builders assemble profitable blocks, relays validate and forward blinded bids, and validators choose a bid before receiving the full block body.",
+      "incorrect_answers": [
+        "Validators share private keys with searchers, builders execute transactions on remote client systems, relays record final receipt histories, and users confirm block inclusion before gas fees are charged.",
+        "Searchers finalize execution sequences, builders select consensus validator committees, relays burn base fee payments to secure networks, and validators examine mempools before confirming block bids.",
+        "MEV-Boost removes outside builders, relays authenticate user wallets directly, searchers verify consensus signatures, and validators build full execution payloads before bids are shared."
+      ],
+      "explanation": "Proposer-builder separation manages specialized block-building incentives by separating opportunity discovery, block assembly, bid relay, and proposer selection. It does not eliminate MEV or ordering discretion.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "mev",
+        "proposer-builder-separation",
+        "mev-boost",
+        "builders",
+        "relays",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Builder / Relay Stack and MEV",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: MEV Supply Chain And PBS / Builder Relay Stack and MEV"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "The reading says a current Ethereum node is not just one program. Which architecture best reflects Chapter 3's model?",
+      "correct_answer": "A node coordinates an execution client and a consensus client, with separate responsibilities and authenticated local communication between them.",
+      "incorrect_answers": [
+        "A node operates as a browser-based user wallet, signing individual state transitions while trusting external validators to maintain local chain databases.",
+        "A node comprises a single execution client instance, executing all transaction validations and performing consensus duties without external coordination.",
+        "A node is just a hosted JSON-RPC endpoint, supplying query service without peer communication or transaction validation duties at all."
+      ],
+      "explanation": "The reading emphasizes post-Merge two-client architecture: consensus software handles agreement over chain history, execution software processes blocks and transactions, and the two coordinate locally, such as through an authenticated endpoint.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "ethereum-nodes",
+        "execution-client",
+        "consensus-client",
+        "jwt-secret",
+        "reading",
+        "assigned-reading",
+        "mechanism",
+        "mastering-ethereum-ch3"
+      ],
+      "lesson_block": "Chapter 3. Ethereum Nodes",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt: Two-Client Node Architecture / Ethereum Nodes"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A researcher needs to query old contract storage at many historical blocks. A developer only needs convenient transaction submission through a hosted API. Which distinction from the reading matters most?",
+      "correct_answer": "The researcher likely needs archive-node data, while the developer can use remote access but accepts trust and privacy tradeoffs relative to operating a full node.",
+      "incorrect_answers": [
+        "Both individuals require only standard browser wallets, because client interfaces locally archive complete historical state once keys validate signed transactions.",
+        "Both individuals need consensus client installations only, because historical contract storage access and transaction broadcasting represent consensus-layer duties.",
+        "The researcher should use a public testnet node, because testnets automatically replicate mainnet history while eliminating local server costs entirely."
+      ],
+      "explanation": "Chapter 3 separates full nodes, archive nodes, remote clients, and wallets by storage, verification, convenience, privacy, and trust. Archive access is about retaining historical state, while hosted APIs shift blockchain access to another node.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "archive-node",
+        "remote-client",
+        "full-node",
+        "wallets",
+        "node-trust-models",
+        "reading",
+        "assigned-reading",
+        "scenario",
+        "mastering-ethereum-ch3"
+      ],
+      "lesson_block": "Full, Archive, Remote, And Light Access",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt: Full, Archive, Remote, And Light Access / Remote Ethereum Clients"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A team tests a trading bot only on a local blockchain simulation and a low-cost public testnet. Which limitation from the reading should they keep in mind before assuming mainnet behavior?",
+      "correct_answer": "Those environments are useful for development but may not reproduce mainnet congestion, real economic incentives, adversarial competition, or transaction sequencing pressure.",
+      "incorrect_answers": [
+        "Local simulations exhibit superior accuracy compared to mainnet execution because simulated environments automate and synchronize independent block producers by default.",
+        "Public testnets guarantee identical gas price behaviors as mainnet because test ether carries equivalent market value and enforces identical economic risk for validation.",
+        "Hosted JSON-RPC gateways standardize all network queues, ensuring that automated trading bot behavior remains identical across local, testnet, and mainnet network states."
+      ],
+      "explanation": "The reading treats testnets and local simulations as valuable but limited development environments. They reduce cost and friction, yet they do not fully model mainnet incentives, congestion, adversarial behavior, or organic transaction ordering.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "testnet",
+        "local-blockchain",
+        "json-rpc",
+        "development-environments",
+        "reading",
+        "assigned-reading",
+        "tradeoff",
+        "mastering-ethereum-ch3"
+      ],
+      "lesson_block": "Development Environment Realism",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt: Development Environment Realism / The JSON-RPC Interface"
+    }
+  ]
+}

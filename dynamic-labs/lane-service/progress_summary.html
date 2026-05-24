@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Labs Progress · Instructor</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #11151a;
+      --border: #242c35;
+      --text: #edf2f7;
+      --muted: #97a4b2;
+      --accent: #d7e6f7;
+      --ok: #7fd0a2;
+      --warn: #e6c26c;
+    }
+    body { margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+           background:var(--bg); color:var(--text); min-height:100vh; }
+    header { padding:14px 20px; border-bottom:1px solid var(--border);
+             display:flex; justify-content:space-between; align-items:center;
+             background:var(--panel); }
+    h1 { margin:0; font-size:18px; color:var(--accent); }
+    main { padding:20px; max-width:960px; margin:0 auto; }
+    .muted { color:var(--muted); font-size:13px; }
+    a.btn { display:inline-block; padding:6px 12px; border:1px solid var(--border);
+            color:var(--accent); text-decoration:none; font-size:13px; }
+    a.btn:hover { background:var(--panel); }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:12px; }
+    .card { background:var(--panel); border:1px solid var(--border); padding:14px; }
+    .card .lab { color:var(--accent); font-size:16px; text-transform:capitalize; margin-bottom:6px; }
+    .card .row { display:flex; justify-content:space-between; font-size:13px; margin:3px 0; }
+    .card .row .label { color:var(--muted); }
+    .card .active.nonzero { color:var(--ok); }
+    .card .sessions.zero { color:var(--muted); }
+    .card a { display:inline-block; margin-top:10px; color:var(--accent);
+              text-decoration:none; font-size:12px; border:1px solid var(--border);
+              padding:4px 8px; }
+    .card a:hover { background:#1a2734; }
+    .empty { color:var(--muted); padding:40px; text-align:center; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Labs Progress</h1>
+    <a class="btn" href="/instructor/">Portal</a>
+  </header>
+  <main>
+    <p class="muted">Cross-lab rollup — one card per lab with an active progress catalog. Active = last seen in the past 10 minutes.</p>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none;">No labs have registered progress catalogs yet.</div>
+  </main>
+  <script>
+    async function refresh() {
+      try {
+        var r = await fetch("/api/portal/progress-rollup", {credentials:"same-origin"});
+        if (!r.ok) return;
+        var data = await r.json();
+        var labs = data.labs || [];
+        try {
+          var h = await fetch("/labs/hlf/api/hlf/progress", {credentials:"same-origin"});
+          if (h.ok) {
+            var hp = await h.json();
+            var sessions = Object.keys(hp.progress || {});
+            var now = Date.now() / 1000;
+            var active = sessions.filter(function(k){ var s = hp.progress[k]; return s.last_seen > 0 && (now - s.last_seen) < 600; }).length;
+            var first = sessions.length ? hp.progress[sessions[0]] : null;
+            labs.push({lab:"hlf", sessions:sessions.length, active_10m:active, exercises_total: first ? (first.exercises_total || 0) : 0});
+            labs.sort(function(a,b){ return a.lab.localeCompare(b.lab); });
+          }
+        } catch(_){}
+        render(labs);
+      } catch (_) {}
+    }
+    function render(labs) {
+      var grid = document.getElementById("grid");
+      grid.innerHTML = "";
+      document.getElementById("empty").style.display = labs.length ? "none" : "block";
+      labs.forEach(function(l){
+        var d = document.createElement("div");
+        d.className = "card";
+        d.innerHTML =
+          '<div class="lab">' + l.lab + '</div>' +
+          '<div class="row"><span class="label">Sessions</span>' +
+            '<span class="sessions ' + (l.sessions ? "" : "zero") + '">' + l.sessions + '</span></div>' +
+          '<div class="row"><span class="label">Active (10m)</span>' +
+            '<span class="active ' + (l.active_10m ? "nonzero" : "") + '">' + l.active_10m + '</span></div>' +
+          '<div class="row"><span class="label">Exercises</span><span>' + l.exercises_total + '</span></div>' +
+          '<a href="' + adminHref(l.lab) + '">Open admin &rarr;</a>';
+        grid.appendChild(d);
+      });
+    }
+    function adminHref(lab) {
+      if (lab === "hlf") return "/labs/hlf/hlf_instructor.html";
+      return "/labs/" + lab + "/admin";
+    }
+    refresh();
+    setInterval(refresh, 10000);
+  </script>
+</body>
+</html>

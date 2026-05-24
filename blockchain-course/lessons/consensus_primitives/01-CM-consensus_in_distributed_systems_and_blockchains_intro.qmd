@@ -1,0 +1,695 @@
+---
+title: "Consensus in Distributed Systems & Blockchains — An Introduction"
+subtitle: 'Section IV: Consensus Mechanisms'
+author: Army Cyber Institute
+lesson: 01-CM
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+smaller: true
+format:
+  aci-revealjs:
+    scrolling: true
+    slide-level: 2
+---
+
+## Why Agreement Matters {.smaller}
+
+- In the previous lesson, we looked at ledgers in both permissionless and permissioned settings.
+- A ledger by itself does not solve the "which history do we all accept?" problem.
+- Some situations need system-wide agreement:
+  - Multiple nodes must agree which transaction happened first
+  - A double-spend attempt creates competing histories
+  - A failed or slow node cannot be allowed to define the ledger alone
+- Some situations do not:
+  - A single user reading a local copy of the ledger
+  - A node validating a signature or hash on its own
+- In distributed systems, this problem of reaching agreement is called **consensus**.
+
+
+## Foundations of Consensus {.smaller}
+
+**Consensus definition**
+  : Each process proposes a value; the protocol must guarantee that all non-faulty processes eventually agree on a single value that was proposed. (Fischer, Lynch & Paterson 1985)
+
+- Consensus algorithms provide formal guarantees for agreement in decentralized systems.
+- We will use four core properties throughout the lesson:
+  - **Safety:** no conflicting commits or later rollbacks.
+  - **Liveness:** the system eventually makes forward progress.
+  - **Validity:** only rule-following values are committed.
+  - **Agreement:** correct nodes converge on the same result.
+- Those four are often abbreviated as **SLVA**.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines consensus in formal distributed-systems terms so the lesson has a precise foundation. It matters here because every later protocol comparison depends on these guarantees and assumptions. Emphasize that consensus is not just agreement in the casual sense, but a protocol that constrains which values can be chosen and how nodes converge.
+
+**Key Points**
+- Consensus asks multiple processes to choose one value from proposed candidates.
+- SLVA names the four recurring guarantees used throughout the lesson.
+- Process means an independently running participant in the distributed system.
+- Validity ensures only proposed, rule-following values can be committed.
+
+**Walkthrough**
+None
+
+**Sources**
+- @fischer_impossibilitydistributedconsensus_1985
+
+:::
+
+## Consensus in the Real World
+
+| Real-world Example | Problem Solved | Consensus Mechanism |
+|:--|:--|:--|
+| Basketball shot clock | Prevents endless delay | Timeout |
+| Jury supermajority vote | Prevents conflicting outcomes | Quorum threshold |
+| Chair or moderator | Coordinates who speaks and when | Leader / proposer |
+
+- We already use structured processes to reach group agreement.
+- Consensus protocols formalize those same ideas for machines operating under faults and delay.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students everyday analogies for protocol mechanics before the formal machinery gets heavier. It matters here because quorums, leaders, and timeouts are easier to understand once students have a human process to compare them to. Emphasize that consensus protocols formalize familiar coordination patterns for machines operating under faults and delay.
+
+**Key Points**
+- Quorums, leaders, and timeouts already appear in ordinary human decision processes.
+- Protocols turn those intuition-level ideas into machine-readable rules.
+- Mapping the analogy early makes later safety and liveness concepts easier to follow.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ongaro_searchunderstandableconsensus_2014
+- @castro_practicalbyzantinefault_1999
+- @pease_reachingagreementpresence_1980
+
+:::
+
+## Consensus Properties: SLVA and FPIC {.smaller}
+
+Two vocabularies are commonly used to describe closely related correctness goals.
+
+| SLVA | Meaning | FPIC |
+|:--|:--|:--|
+| **Safety** | No conflicting commit or later rollback | **Finality** |
+| **Liveness** | Eventually makes forward progress | **Progress** |
+| **Validity** | Only rule-following values commit | **Integrity** |
+| **Agreement** | Correct nodes converge on one result | **Consistency** |
+
+::: {.callout-note appearance="minimal"}
+SLVA is the academic vocabulary (FLP, Paxos, Raft). Blockchain documentation uses the same ideas under different names. Both appear in your readings.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide translates between academic consensus vocabulary and the terms students will see in blockchain discussions. It matters here because the course uses both, and confusion about terminology can look like confusion about the guarantees themselves. Emphasize that these are closely related framings of the same correctness goals.
+
+**Key Points**
+- Safety and finality both address conflicting or reversible history.
+- Liveness and progress both ask whether the system eventually moves forward.
+- Validity and integrity constrain what kinds of values may be accepted.
+- Agreement and consistency both describe convergence among correct nodes.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bano_consensusageblockchains_2017
+
+:::
+
+## Failure Models {.smaller}
+
+When nodes fail to reach agreement, the system experiences a **failure**. Consensus protocols don't prevent failures—they manage them. To design robust protocols, we must classify the types of failures we expect.
+
+- **Crash faults**
+  - A node stops responding or goes offline
+  - Example: a replica process crashes and stops sending messages
+- **Omission faults**
+  - A node or network path drops some messages but not all
+  - Example: a firewall or overloaded link silently drops packets
+- **Byzantine faults**
+  - A node can send false, conflicting, or malicious messages
+  - Example: a compromised replica tells different peers different stories
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide classifies how distributed participants can fail before the class studies protocols built to tolerate those failures. It matters here because a consensus design is only meaningful relative to the failure model it assumes. Emphasize that protocols do not eliminate faults; they make bounded promises in the presence of specific kinds of faults.
+
+**Key Points**
+- Crash faults stop a node from responding without making it lie.
+- Omission faults drop some messages while leaving other behavior intact.
+- Byzantine faults allow arbitrary or malicious behavior, including conflicting messages.
+- Fault models define what the protocol must survive to remain correct.
+
+**Walkthrough**
+None
+
+**Sources**
+- @pease_reachingagreementpresence_1980
+- @lamport_byzantinegeneralsproblem_1982
+
+:::
+
+
+## Timing Models on a Spectrum {.smaller}
+
+::: {.callout-note appearance="simple"}
+
+Failure types alone don't determine correctness—our assumptions about message timing are equally critical.
+
+:::
+
+- **Asynchronous**: No known bound on message or processing delay
+  - *Example:* the network is so unpredictable that delay and failure look the same
+- **Partially synchronous**: The network may be unstable for a while, but eventually delays become bounded
+  - *Example:* a congested network eventually settles down enough for timeouts to work
+- **Synchronous**: Message and processing delays are bounded and known ahead of time
+  - *Example:* a tightly controlled lab network with fixed timing assumptions
+
+```{=html}
+<div style="position:relative;max-width:900px;margin:1rem auto 0;padding-bottom:3.2rem;">
+  <div style="height:20px;border-radius:999px;border:1px solid #94a3b8;background:linear-gradient(90deg,#ef4444 0%,#f59e0b 45%,#22c55e 100%);"></div>
+  <div style="position:absolute;left:0%;top:28px;transform:translateX(-10%);font-size:0.8em;">Asynchronous</div>
+  <div style="position:absolute;left:50%;top:28px;transform:translateX(-50%);font-size:0.8em;">Partially Synchronous</div>
+  <div style="position:absolute;left:100%;top:28px;transform:translateX(-90%);font-size:0.8em;">Synchronous</div>
+  <div style="text-align:center;font-size:0.8em;margin-top:2.1rem;color:#475569;">Less predictable timing -> More predictable timing</div>
+</div>
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that consensus difficulty depends on timing assumptions as much as on fault type. It matters here because many impossibility and liveness results hinge on whether the network is asynchronous, partially synchronous, or synchronous. Emphasize that real deployments usually live in the partial synchrony middle ground.
+
+**Key Points**
+- Consensus guarantees depend on both the fault model and the timing model.
+- Asynchronous networks have no known upper bound on delay.
+- Partial synchrony means timing may be unstable for a while but eventually becomes predictable enough for timeouts to work.
+- Synchronous systems assume known timing bounds from the start.
+
+**Walkthrough**
+None
+
+**Sources**
+- @dwork_consensuspresencepartial_1988
+- @fischer_impossibilitydistributedconsensus_1985
+
+:::
+
+## The Timing Limits — FLP and DLS Results {.smaller}
+
+- **FLP (Fischer, Lynch, Paterson 1985):** in a fully asynchronous system, a deterministic protocol cannot guarantee both safety and liveness if even one node may fail.
+  - If a message can be delayed forever, the rest of the system cannot tell whether a node is dead or just slow
+- **DLS (Dwork, Lynch, Stockmeyer 1988):** consensus becomes practical if the network eventually behaves well enough that timeouts start meaning something again.
+  - This is the usual "partial synchrony" assumption behind practical BFT protocols
+- Two practical implications:
+  - When timing is unstable, protocols prioritize **safety**
+  - Once timing stabilizes, **timeouts and view changes** help recover liveness
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why practical protocols separate safety from liveness when timing is uncertain. It matters here because the class needs the FLP and DLS results as the bridge from idealized theory to operational protocol design. Emphasize that when timing is unstable, safe systems may pause rather than guess incorrectly.
+
+**Key Points**
+- FLP shows deterministic consensus cannot guarantee both safety and liveness in pure asynchrony with even one fault.
+- DLS shows consensus becomes practical once the network is eventually timely enough for timeouts to mean something.
+- Practical protocols typically preserve safety first and recover liveness after stabilization.
+
+**Walkthrough**
+None
+
+**Sources**
+- @fischer_impossibilitydistributedconsensus_1985
+- @dwork_consensuspresencepartial_1988
+
+:::
+
+
+## Practical Consensus Design {.smaller}
+
+- If we cannot assume perfect timing, but still want safety under malicious behavior, what should a practical protocol do?
+- Practical protocols answer with four recurring ideas:
+  - **Structured rounds:** break progress into named steps so everyone can tell which proposal and evidence belong together
+  - **Quorum overlap:** require enough votes that two conflicting decisions cannot both gather support without sharing an honest node
+  - **Leader-based coordination:** give one node the job of proposing the next candidate value so the protocol does not descend into chaos
+  - **Timeouts and view changes:** detect stalls, rotate leadership, and help the protocol recover liveness once timing becomes predictable enough again
+- Together, these ideas let practical BFT protocols protect safety first and recover liveness when the network settles down.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gathers the recurring design patterns that make practical consensus protocols workable. It matters here because later slides unpack these mechanics individually, and students need the big picture first. Emphasize that rounds, quorum overlap, leaders, and timeout-driven recovery appear across many families for the same reason.
+
+**Key Points**
+- Structured rounds keep proposals and evidence aligned to the same step of the protocol.
+- Quorum overlap prevents conflicting decisions from both becoming valid.
+- Leader-based coordination reduces chaos, and view changes recover from stalled leaders.
+
+**Walkthrough**
+None
+
+**Sources**
+- @dwork_consensuspresencepartial_1988
+- @castro_practicalbyzantinefault_1999
+
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Rounds and Phases {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+- Consensus often proceeds in **rounds**.
+- Each round has a leader or proposer responsible for putting forward the next candidate value.
+- The three phases of a round are:
+  - **Propose:** the leader suggests a candidate value
+  - **Vote:** replicas or validators sign support for that value
+  - **Commit:** enough matching votes produce a quorum certificate and allow finalization
+- The quorum certificate is the portable proof that the round gathered enough support to move forward safely.
+:::
+::: {.column width="50%"}
+```{dot}
+digraph Phases {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [color="#64748b", arrowsize=0.7];
+
+  P [label="Propose", fillcolor="#dbeafe"];
+  V [label="Vote", fillcolor="#dcfce7"];
+  C [label="Commit", fillcolor="#fef3c7"];
+  QC [label="Quorum Certificate", fillcolor="#ede9fe"];
+
+  P -> V -> C -> QC;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the basic shape of a BFT round before the class looks at finality and quorum math. It matters here because students need to understand how propose, vote, and commit fit together in sequence. Emphasize that the quorum certificate is the portable evidence that a round gathered enough support to move forward safely.
+
+**Key Points**
+- Many consensus protocols advance in rounds with a designated proposer or leader.
+- Propose, vote, and commit are distinct phases with different jobs.
+- A quorum certificate proves that enough matching support was collected.
+
+**Walkthrough**
+1. Propose: the leader suggests the candidate value for the round.
+2. Vote: replicas or validators sign support for that value.
+3. Commit: enough matching votes form a quorum certificate and allow finalization.
+
+**Sources**
+- @castro_practicalbyzantinefault_1999
+- @ongaro_searchunderstandableconsensus_2014
+
+:::
+
+
+## Traditional BFT-Style Finality
+
+- In classical BFT protocols, finality is deterministic and immediate: once a quorum certificate is formed for a value at a slot, that slot is final and cannot be rolled back.
+- Once a quorum certificate is formed for a value, a conflicting value at that same position should not also be able to gather a valid certificate.
+- Even if Byzantine nodes vote twice, the quorum overlap still includes honest nodes that carry forward the prior safe history.
+- Those honest overlap nodes will not sign a conflicting commit.
+
+
+**Key idea:** a quorum certificate is not just evidence that "many nodes agreed"; it is the reason a conflicting commit should no longer be possible for that slot or height.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why classical BFT protocols can offer deterministic finality once a quorum certificate exists. It matters here because students need to see how quorum overlap turns many votes into a guarantee against conflicting commits. Emphasize that finality comes from overlap with honest participants, not from the sheer number of signatures alone.
+
+**Key Points**
+- Deterministic finality means a committed slot should not later roll back under the protocol assumptions.
+- A quorum certificate prevents a conflicting value at the same slot from safely gathering support.
+- Honest overlap nodes carry forward the safe history and refuse conflicting commits.
+
+**Walkthrough**
+None
+
+**Sources**
+- @castro_practicalbyzantinefault_1999
+- @pease_reachingagreementpresence_1980
+
+:::
+
+
+## Quorums {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+- Quorums are the safety mechanism behind BFT finality.
+- For a network with **total nodes** `n`, the largest Byzantine fault set we can tolerate is:
+  - `t = (n - 1) / 3`
+- The corresponding **quorum size** is:
+  - `2t + 1`
+- That quorum size guarantees overlapping membership between any two valid quorums, so conflicting commits cannot both collect enough support.
+
+**Key idea:** any two valid quorums must overlap in at least one honest node, and that overlap is what protects **safety**.
+
+:::
+::: {.column width="50%"}
+```{dot}
+digraph QuorumIntersection {
+  rankdir=LR;
+  bgcolor="transparent";
+  graph [fontsize=12, nodesep=0.4, ranksep=0.7];
+  node [shape=circle, fontname="Helvetica", fontsize=12];
+  edge [color="#94a3b8", arrowsize=0.6];
+
+  Q1 [shape=oval, label="Quorum Q1\n(size = 5)", style="rounded,filled", fillcolor="#dbeafe"];
+  Q2 [shape=oval, label="Quorum Q2\n(size = 5)", style="rounded,filled", fillcolor="#dcfce7"];
+
+  H1 [label="H1", style=filled, fillcolor="#bbf7d0"];
+  H2 [label="H2", style=filled, fillcolor="#bbf7d0"];
+  H3 [label="H3", style=filled, fillcolor="#22c55e", fontcolor="white", penwidth=2];
+  H4 [label="H4", style=filled, fillcolor="#bbf7d0"];
+  H5 [label="H5", style=filled, fillcolor="#bbf7d0"];
+  B1 [label="B1", style=filled, fillcolor="#fecaca"];
+  B2 [label="B2", style=filled, fillcolor="#fecaca"];
+
+  {rank=same; Q1; Q2}
+  {rank=same; H1 H2 H3 H4 H5 B1 B2}
+
+  Q1 -> H1; Q1 -> H2; Q1 -> H3; Q1 -> B1; Q1 -> B2;
+  Q2 -> H3; Q2 -> H4; Q2 -> H5; Q2 -> B1; Q2 -> B2;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the core quorum intuition behind BFT safety. It matters here because students will later see quorum sizes used mechanically, and they should understand the overlap argument rather than memorize the formula alone. Emphasize that the honest node in the intersection is the safety anchor.
+
+**Key Points**
+- BFT safety relies on quorum intersection, not just majority voting in the abstract.
+- With `n` total nodes, tolerating `t` Byzantine faults requires sufficiently large quorums to force overlap.
+- Any two valid quorums must share honest participation, which blocks conflicting commits.
+- Byzantine means a node may lie, equivocate, or collude.
+
+**Walkthrough**
+None
+
+**Sources**
+- @castro_practicalbyzantinefault_1999
+- @pease_reachingagreementpresence_1980
+
+:::
+
+
+## Timeouts and View Changes
+
+- A **leader** is the node responsible for proposing the next candidate value in a round.
+- If the leader is slow, faulty, or malicious, the round can stall.
+- Nodes use **timeouts** to decide that they have waited long enough.
+- When enough nodes timeout, they move to a new **view** with a new leader.
+- This is how practical BFT protocols recover liveness once the network becomes timely enough again.
+
+**Key idea:** timeouts and leader rotation preserve **liveness** once timing stabilizes.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how practical BFT protocols regain liveness after a bad leader or unstable period. It matters here because students need to connect the timing assumptions from FLP and DLS to a concrete recovery mechanism. Emphasize that timeouts do not prove failure; they are a disciplined trigger for trying a new view.
+
+**Key Points**
+- Leaders coordinate proposals, but a slow or faulty leader can stall progress.
+- Timeouts convert prolonged waiting into a protocol event that triggers recovery.
+- View changes rotate leadership so liveness can resume once timing is good enough again.
+
+**Walkthrough**
+None
+
+**Sources**
+- @dwork_consensuspresencepartial_1988
+- @ongaro_searchunderstandableconsensus_2014
+
+:::
+
+
+
+
+## Crash-Fault Tolerance (CFT) {.smaller}
+
+- **Identity model:** known, authenticated participants
+- **Sybil resistance:** not applicable—a *Sybil attack* occurs when an attacker creates multiple fake identities to gain disproportionate influence. CFT assumes participants are pre-authenticated and cannot engage in deception.
+- **Adversary assumption:** failures are crashes, restarts, or silence, not deceit
+- **Finality:** deterministic once the protocol commits
+- **Environment:** internal clusters or tightly controlled distributed systems
+- **Trade-offs:** efficient and simple, but not appropriate when participants may equivocate or collude
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide places crash-fault tolerant protocols in their proper operating environment. It matters here because students should not overgeneralize internal-cluster protocols to adversarial settings. Emphasize that CFT is efficient and useful, but only when the main failures are crashes and silence rather than deception.
+
+**Key Points**
+- CFT assumes authenticated participants and crash-style failures rather than lies.
+- Finality is deterministic once the protocol commits.
+- CFT fits internal clusters and tightly controlled environments better than adversarial networks.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ongaro_searchunderstandableconsensus_2014
+
+:::
+
+## Byzantine-Fault Tolerance (BFT) {.smaller}
+
+- **Identity model:** known participants with governed membership
+- **Sybil resistance:** handled through admission, authorization, and governance outside the voting protocol itself
+- **Adversary assumption:** some participants may lie, equivocate, or act maliciously
+- **Finality:** deterministic under the protocol's fault and timing assumptions
+- **Environment:** consortium or permissioned systems where membership is controlled but trust is incomplete
+- **Trade-offs:** strong safety and fast finality, but higher coordination and messaging cost
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces Byzantine-fault tolerance as the family designed for known participants who may still behave maliciously. It matters here because consortium and permissioned systems often live in exactly that middle ground between full trust and open membership. Emphasize that stronger adversary assumptions buy stronger safety, but at a coordination cost.
+
+**Key Points**
+- BFT assumes some participants may lie, equivocate, or collude.
+- Membership is governed, but trust within that membership is incomplete.
+- Deterministic finality is possible under the protocol's timing and fault assumptions.
+
+**Walkthrough**
+None
+
+**Sources**
+- @castro_practicalbyzantinefault_1999
+- @pease_reachingagreementpresence_1980
+
+:::
+
+## Nakamoto (Proof-of-Work) Consensus {.smaller}
+
+- **Identity model:** open participation
+- **Sybil resistance:** scarce computational work makes influence expensive
+  - **Asymmetric difficulty:** producing valid work is expensive, but verifying it is cheap
+- **Adversary assumption:** the protocol remains secure as long as no one controls a majority of the work
+- **Finality:** probabilistic rather than immediate
+- **Environment:** permissionless networks where nodes can appear, disappear, and remain anonymous
+- **Trade-offs:** global openness and censorship resistance, but with higher latency and energy cost
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces Nakamoto-style consensus as the open-membership response to the Sybil problem. It matters here because permissionless systems cannot rely on admission control and instead must tie influence to scarce resources. Emphasize that openness is purchased with probabilistic finality, latency, and cost.
+
+**Key Points**
+- Proof-of-Work makes influence expensive by requiring scarce computation.
+- Verification is much cheaper than producing the work, creating asymmetric difficulty.
+- Finality is probabilistic, so confidence grows over time rather than appearing instantly.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bano_consensusageblockchains_2017
+
+:::
+
+
+
+## Comparing Consensus Families {.smaller}
+
+::: {.callout-note appearance="simple"}
+Consensus protocols differ mainly in their assumptions about identity, adversaries, and finality.
+:::
+
+| Family | Identity model | Adversary model | Finality |
+|:--|:--|:--|:--|
+| **CFT** | Known, authenticated nodes | Crash-only faults | Deterministic |
+| **BFT** | Known nodes, possibly adversarial | Arbitrary or malicious faults | Deterministic under partial synchrony |
+| **Nakamoto-style (PoW)** | Open participation | Rational or Byzantine under work assumptions | Probabilistic |
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide compares the three major consensus families along the dimensions that matter most operationally. It matters here because students need a map for placing later protocols into the right design family. Emphasize that identity assumptions, adversary models, and finality style are the main decision axes.
+
+**Key Points**
+- CFT is efficient and deterministic in trusted clusters.
+- BFT handles malicious behavior among known members at higher coordination cost.
+- Nakamoto-style consensus supports open participation with probabilistic finality.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ongaro_searchunderstandableconsensus_2014
+- @castro_practicalbyzantinefault_1999
+- @bano_consensusageblockchains_2017
+
+:::
+
+## Why Consensus Matters in Blockchains {.smaller }
+
+- **Trust minimization:** replaces centralized intermediaries with protocol rules and economic incentives—participants reach agreement without a central authority.  
+- **Ledger convergence:** consensus ensures all honest nodes agree on a single canonical chain, preventing *double-spending* or conflicting transaction histories.  
+- **Finality spectrum:** open, permissionless systems (like PoW) achieve *probabilistic finality*—confidence grows with depth—while permissioned systems can achieve *deterministic finality* immediately.
+- **Intuition:** in public chains, branches may temporarily compete; consensus gives the network a rule for deciding which history survives.
+
+<div style="position: relative; top: -150px; z-index: -1;">
+```{dot}
+digraph ConsensusImportance {
+rankdir=LR;
+bgcolor="transparent"
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial",
+fontsize=16, fillcolor="#f8fafc", color="#cbd5e1"];
+edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+
+// Fork branches
+B0 [label="Block 0 (Genesis)"];
+B1 [label="Block 1"];
+B2a [label="Block 2a\n(Alice → Carol)", fillcolor="#e0f2fe", color="#38bdf8"];
+B2b [label="Block 2b\n(Alice → Dave)", fillcolor="#fee2e2", color="#f87171"];
+
+// Canonical chain
+C3 [label="Block 3\n(+1 confirmation)", fillcolor="#dcfce7", color="#22c55e"];
+C4 [label="Block k\n(+k confirmations)", fillcolor="#d1fae5", color="#16a34a"];
+
+// Flows
+B0 -> B1;
+B1 -> B2a;
+B1 -> B2b;
+B2a -> C3 -> C4;
+
+// Orphaned fork annotation
+X [label="Orphaned Branch\n(Double-Spend Invalidated)", shape=note, fillcolor="#fee2e2", color="#f87171"];
+B2b -> X [style=dashed, color="#f87171"];
+
+// Risk gradient notes
+HR [shape=note, fillcolor="#fee2e2", color="#f87171", label="High Risk\n(Few Confirmations)"];
+LR [shape=note, fillcolor="#dcfce7", color="#22c55e", label="Low Risk\n(More Confirmations)"];
+B2a -> HR [style=dotted, arrowsize=0.5];
+C4 -> LR [style=dotted, arrowsize=0.5];
+
+// Legend
+L [shape=note, fillcolor="#fff7ed", color="#fdba74", pad="[0.25,.15]",
+label="Consensus selects the \nheaviest (most-work) chain.\nForks are pruned;\n confidence grows with depth."];
+C4 -> L [style=dotted, arrowsize=0.5];
+}
+
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide connects abstract consensus guarantees to the concrete blockchain problem of choosing one canonical history. It matters here because signatures and hashes alone cannot resolve conflicting but valid-looking transaction histories. Emphasize that consensus is what turns valid pieces into one authoritative ledger.
+
+**Key Points**
+- Consensus prevents double-spending by making honest nodes converge on one accepted history.
+- Permissionless systems often use probabilistic finality, while permissioned systems may offer deterministic finality.
+- Applications convert those finality properties into operational policies such as waiting for confirmations.
+
+**Walkthrough**
+None
+
+**Sources**
+- @garay_bitcoinbackboneprotocol_2014
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+## References

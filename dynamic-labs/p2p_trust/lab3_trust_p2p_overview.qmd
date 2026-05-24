@@ -1,0 +1,70 @@
+---
+title: "Lab Summary: Decentralized Trust & P2P Protocols"
+format: pdf
+toc: false
+number-sections: true
+editor: visual
+---
+
+## Key Learning Objectives
+
+By the end of this lab sequence, students will be able to:
+
+1.  **Evaluate Reputation Vulnerabilities:** Identify structural weaknesses in endorsement-based trust systems, specifically the mechanics and impact of **Sybil Attacks**.
+2.  **Assess Authentication Controls:** Distinguish between identity creation (registration) and identity verification (authentication), understanding why digital signatures are essential for immutable logs.
+3.  **Analyze Trust Propagation:** Compare naive endorsement scoring against advanced mathematical trust models like **EigenTrust** and **PeerTrust**, evaluating their resilience to malicious collectives.
+4.  **Analyze Routing Efficiency:** Compare the performance trade-offs between Unstructured P2P networks (Gossip/Flooding) and Structured Overlays (DHTs), specifically analyzing bandwidth usage vs. lookup speed.
+5.  **Navigate Distributed Hash Tables:** Understand the mechanics of DHTs and be able to manually conduct and debug DHT routing algorithms (Chord and Pastry).
+
+---
+
+## Lab Module 1: Distributed Trust & Reputation
+
+This module focuses on the application layer, exploring how peers establish trust in a decentralized environment without a central authority to vet users.
+
+### Activity A: The Sybil Attack (Identity Inflation)
+
+* **Scenario:** Students interact with a deployed "Endorsement-Based Reputation System" via a simulated interface (`ngo_sim.py`).
+* **The Exploit:** Students discover that the system allows unrestricted registration of new "Organizations." They demonstrate a **Sybil Attack** by registering multiple fake entities to cross-endorse a specific target, inflating its score to the top of the naive leaderboard.
+* **Insight:** Students learn that in open systems, "one identity, one vote" is impossible to enforce without proof-of-humanity or cost-of-entry mechanisms.
+* **Objective Alignment:** Supports *Objective 1* by demonstrating how cheap identity creation undermines naive reputation metrics.
+
+### Activity B: Broken Authentication (Spoofing)
+
+* **Scenario:** Students apply a patch (`python3 ngo_sim.py patch`) that restricts endorsements to established, verified nodes, closing the Sybil loophole.
+* **The Exploit:** Students bypass the patch by analyzing the endorsement inputs. They realize the interface blindly accepts the `src` ID of the endorser without verifying authorization. They demonstrate an **Impersonation Attack** by spoofing endorsements from highly verified nodes.
+* **Insight:** Students learn the difference between **Authorization** (Who is allowed to be here?) and **Authentication** (Did they actually say this?).
+* **Objective Alignment:** Supports *Objective 2* by highlighting the necessity of Public Key Infrastructure (PKI) and cryptographic signatures.
+
+### Activity C: Mathematical Trust Propagation
+
+* **Scenario:** Students use the `audit` command to evaluate the same network state using **EigenTrust** and **PeerTrust** algorithms.
+* **The Task:** Students trace the trust flow to their spoofed or Sybil-inflated nodes, observing how EigenTrust utilizes a "pre-trusted" anchor vector to cut off malicious network branches.
+* **Insight:** Students learn that isolating malicious sub-graphs through iterative matrix multiplication provides significant mathematical resilience against coordinated P2P attacks. * **Objective Alignment:** Supports *Objective 3*.
+
+---
+
+## Lab Module 2: P2P Overlays & Routing
+
+This module moves to the network layer, contrasting "Unstructured" networks (Gossip) with "Structured" networks (DHTs).
+
+### Activity A: Unstructured P2P (Gossip vs. Flooding)
+
+* **Simulation:** Students interact with a simulated mesh network lacking a structured index (`gossip_demo.py`).
+* **The Task:** Students attempt to locate a specific file using random walks and flood searches. 
+* **Outcome:** The file is found almost instantly via flooding, but students observe a massive spike in network traffic metrics.
+* **Insight:** Students recognize the trade-off: **Flooding** is fast but creates a bandwidth storm (not scalable), whereas **Random Walks** are low-bandwidth but unreliable. 
+* **Objective Alignment:** Supports *Objective 4*.
+
+### Activity B: Manual Chord Lookup (The Finger Table)
+
+* **Exercise:** Students run a Chord routing simulation (`dht_demo.py`) that places them at a random node on a logical ring.
+* **The Task:** Students must manually trace the look-up path for a specific file key (ID) using only their local **Finger Table**. They iteratively narrow down the distance to the target node without overshooting.
+* **Insight:** Students visualize the $\mathcal{O}(\log N)$ efficiency of DHTs, seeing how a lookup takes only a few hops even in a large keyspace. * **Objective Alignment:** Supports *Objective 5*.
+
+### Activity C: Advanced Debugging (The Pastry Freeze)
+
+* **Simulation:** Students run a stress-test on a buggy Python implementation of a **Pastry DHT** (`pastry.py`).
+* **The Bug:** The implementation relies exclusively on **Prefix Routing**, failing when it encounters a gap in the routing table.
+* **The Fix:** Students must analyze the node state to realize they need to implement a fallback mechanism to the **Leaf Set** to guarantee message delivery.
+* **Objective Alignment:** Supports *Objective 5* by forcing students to reconcile the dual-nature of advanced DHTs: utilizing prefix shortcuts for speed, but relying on ring neighbors for guaranteed delivery.

@@ -1,0 +1,74 @@
+---
+title: "Lab Summary: Blockchain Mechanics & Cryptography"
+format: pdf
+toc: false
+number-sections: true
+editor: visual
+---
+
+## Key Learning Objectives
+
+By the end of this lab sequence, students will be able to:
+
+1.  **Identify Proper Uses and Limitations of Hashes:** Identify vulnerabilities in hashing, specifically the risks of **Hash Collisions** in small output spaces and **Low Entropy** in key generation.
+2.  **Construct Merkle Trees:** Explain and implement the mechanics of **Merkle Trees** and how they aggregate individual transactions into a single, immutable Root Hash.
+3.  **Perform Auditing of Merkle Proofs:** Manually verify **Merkle Proofs** to distinguish between valid inclusion paths and fraudulent data provided by untrusted peers.
+4.  **Differentiate Cryptographic Primitives:** Contrast the specific use cases of **Symmetric Encryption** (confidentiality via shared secrets) versus **Asymmetric Cryptography** (identity via digital signatures).
+
+---
+
+## Lab Module 1: Hashing & Entropy
+
+This module focuses on the fundamental building blocks of blockchain security, exploring why "using a hash function" is insufficient without proper implementation regarding output size and input randomness.
+
+### Activity A: The Flawed Ledger
+
+* **Scenario:** Students audit an informal intra-office payment system built by a former intern. The system uses a simplified **4-bit hash** (output space 0-15) to verify the integrity of payment logs.
+* **The Incident:** Students are tasked with demonstrating the insecurity of this legacy system by forging a transaction log.
+* **The Exploit:** Students take a valid transaction string and modify the payment details (e.g., changing the payee). They demonstrate a **Preimage Attack** by appending whitespace and punctuation to the fraudulent string until its 4-bit hash creates a **Collision** with the original valid hash.
+* **Insight:** Students contrast this with **SHA-256**, observing the **Avalanche Effect**, where a single bit of change in the input results in a completely different, unpredictable output, making brute-force attacks computationally infeasible on secure algorithms.
+* **Objective Alignment:** Supports *Objective 1* by demonstrating the mathematical inevitability of collisions in small keyspaces.
+
+### Activity B: The Ransomware Incident
+
+* **Scenario:** Students investigate a workstation compromised by "TimeLock" ransomware. Intelligence reports indicate the malware seeds its encryption key using the **Unix Timestamp** of the exact second the malicious process started.
+* **The Incident:** The workstation's files are locked, and the key is unknown. However, the file's "Last Modified" timestamp is visible.
+* **The Exploit:** Students identify that while SHA-256 is secure, the *input source* (time) has extremely **Low Entropy**. They write a script to generate keys from timestamps in a 5-minute window preceding the file save time, successfully brute-forcing the decryption key.
+* **Insight:** Students learn that the security of a cryptographic system relies entirely on the unpredictability (entropy) of the seed, not just the strength of the algorithm.
+* **Objective Alignment:** Supports *Objective 1* by highlighting the dangers of predictable randomness in key generation.
+
+---
+
+## Lab Module 2: Merkle Trees & Data Integrity
+
+This module scales up from individual hashes to data structures, exploring how blockchains efficiently store and verify millions of transactions.
+
+### Activity A: Manual Tree Construction (Scaling)
+
+* **Scenario:** The organization's ledger is scaling up. To publish transaction blocks efficiently without revealing every detail to the public, the IT department is moving to a **Merkle Tree** structure.
+* **The Task:** Students are provided with a raw block of 7 transactions. They must manually build the tree state: hashing the leaves, handling the odd-number duplicate (Leaf 7), and combining hashes pairwise to calculate the **Merkle Root**.
+* **Insight:** Students visualize the hierarchical structure of the tree and understand how a change in a single leaf transaction propagates upward to completely alter the Root Hash.
+* **Objective Alignment:** Supports *Objective 2* by solidifying the mechanics of tree construction and root calculation.
+
+### Activity B: The Lying Network (Proof Verification)
+
+* **Scenario:** Students act as "Light Clients" auditing a production blockchain. Two transactions have been flagged for review. The network provides a **Merkle Proof** (a path of sibling hashes) for each.
+* **The Incident:** One transaction is valid; the other is a forgery where the network is lying about the intermediate math.
+* **The Exploit:** Students manually calculate the hash of `(Current_Node + Sibling)` at each step of the path. They compare their result against the "Claimed Parent" provided by the network. They identify the **Fraudulent Proof** by locating the exact step where the network's claim deviates from the actual hash calculation.
+* **Insight:** Students learn that in a decentralized system, one cannot trust data provided by peers; one must mathematically verify the inclusion proof to ensure the chain of custody is unbroken.
+* **Objective Alignment:** Supports *Objective 3* by simulating the verification logic of a blockchain wallet.
+
+---
+
+## Lab Module 3: Cryptography & Identity
+
+This module focuses on the transition from "Integrity" (Hashes) to "Identity" (Keys), establishing the rules for who is allowed to authorize transactions.
+
+### Activity A: Symmetric vs. Asymmetric Keys
+
+* **Scenario:** Students implement a secure messaging channel for the payment system.
+* **The Task:**
+    1.  **Symmetric:** Students use a **Shared Key** to encrypt data, realizing the logistical difficulty of safely distributing this key to all parties (Key Distribution Problem).
+    2.  **Asymmetric:** Students generate **Key Pairs** (Public/Private). They demonstrate how to **Sign** a message (Sign with Private, Verify with Public) to prove authorship without revealing the secret key.
+* **Insight:** Students distinguish between **Secrecy** (keeping data hidden) and **Non-Repudiation** (proving who sent the data), creating the foundation for digital signatures in blockchain transactions.
+* **Objective Alignment:** Supports *Objective 4* by clarifying the necessity of Public Key Infrastructure (PKI) for decentralized identity.

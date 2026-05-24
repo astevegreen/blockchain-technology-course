@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Insider</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f2efe7;
+            --surface: #fffdf8;
+            --surface-strong: #f7f1e3;
+            --border: #d8ccb4;
+            --text: #1f2933;
+            --muted: #596579;
+            --accent: #a5471c;
+            --accent-dark: #7d3413;
+            --ok: #2d6a4f;
+            --warn: #9a6700;
+            --danger: #a61b1b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Georgia, "Times New Roman", serif;
+            background:
+                radial-gradient(circle at top, rgba(165, 71, 28, 0.14), transparent 40%),
+                linear-gradient(180deg, #efe6d4 0%, var(--bg) 100%);
+            color: var(--text);
+            padding:
+                calc(24px + env(safe-area-inset-top))
+                calc(24px + env(safe-area-inset-right))
+                calc(24px + env(safe-area-inset-bottom))
+                calc(24px + env(safe-area-inset-left));
+        }
+
+        .shell {
+            width: min(760px, 100%);
+            margin: 0 auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 18px 45px rgba(31, 41, 51, 0.14);
+            overflow: hidden;
+        }
+
+        .hero {
+            padding: 28px 28px 18px;
+            background: linear-gradient(135deg, rgba(165, 71, 28, 0.12), rgba(90, 103, 120, 0.06));
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1, h2, h3, p { margin: 0; }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .subtitle,
+        .status {
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .content {
+            padding: 24px 28px 28px;
+        }
+
+        .panel {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .hidden { display: none; }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        input, button, textarea { font: inherit; }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: #fff;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            min-height: 46px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+        }
+
+        button:hover { transform: translateY(-1px); }
+        button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+        .primary { background: var(--accent); color: #fff; }
+        .primary:hover { background: var(--accent-dark); }
+        .secondary { background: #e6dcc7; color: var(--text); }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .hero-actions {
+            margin-top: 14px;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(89, 101, 121, 0.1);
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .player-list li,
+        .vote-list button,
+        .summary-list li,
+        .clue-list li {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #fff;
+            padding: 12px 14px;
+        }
+
+        .player-list,
+        .vote-list,
+        .summary-list,
+        .clue-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .player-line {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .player-name,
+        .player-note,
+        .status,
+        .message,
+        .join-link {
+            overflow-wrap: anywhere;
+        }
+
+        .player-name.inactive {
+            color: var(--muted);
+            text-decoration: line-through;
+        }
+
+        .player-note {
+            color: var(--muted);
+            font-size: 0.9rem;
+            flex: 1 1 100%;
+        }
+
+        .role-card {
+            text-align: center;
+            padding: 24px 20px;
+            background: #1f2933;
+            color: #fff;
+            border-radius: 20px;
+            margin-bottom: 18px;
+        }
+
+        .role-card.insider-card {
+            padding-top: 34px;
+            padding-bottom: 34px;
+            background: linear-gradient(135deg, #4a1616, #7d3413);
+        }
+
+        .role-card.insider-card h2 {
+            font-size: clamp(2.2rem, 7vw, 3.4rem);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .secret {
+            font-size: clamp(1.75rem, 6vw, 2.8rem);
+            margin: 14px 0;
+            color: #f7d66b;
+            word-break: break-word;
+        }
+
+        .secret.insider { color: #ff9f80; }
+
+        .vote-list button {
+            width: 100%;
+            text-align: left;
+            background: #fff;
+            color: var(--text);
+            white-space: normal;
+            line-height: 1.4;
+        }
+
+        .callout {
+            border-left: 4px solid var(--accent);
+            padding-left: 14px;
+            margin-top: 14px;
+        }
+
+        .message {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #f8ead4;
+            color: #7d3413;
+        }
+
+        .message.error {
+            background: #f6d8d8;
+            color: var(--danger);
+        }
+
+        .summary-heading {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            margin-bottom: 10px;
+        }
+
+        .rules-panel {
+            border-style: dashed;
+        }
+
+        .rules-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .rules-list li {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .rules-list strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.95rem;
+        }
+
+        .field-stack {
+            display: grid;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .winner-group { color: var(--ok); font-weight: 700; }
+        .winner-insider { color: var(--danger); font-weight: 700; }
+
+        .qr-panel {
+            display: grid;
+            gap: 10px;
+            justify-items: center;
+            text-align: center;
+        }
+
+        .qr-panel img {
+            width: min(220px, 70vw);
+            height: auto;
+            border-radius: 14px;
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 10px;
+        }
+
+        .join-link {
+            width: 100%;
+            word-break: break-word;
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding:
+                    calc(12px + env(safe-area-inset-top))
+                    calc(12px + env(safe-area-inset-right))
+                    calc(18px + env(safe-area-inset-bottom))
+                    calc(12px + env(safe-area-inset-left));
+            }
+            .shell {
+                width: 100%;
+                border-radius: 20px;
+            }
+            .hero, .content {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            .hero {
+                padding-top: 22px;
+                padding-bottom: 16px;
+            }
+            .content {
+                padding-top: 18px;
+                padding-bottom: 20px;
+            }
+            .panel {
+                padding: 16px;
+                border-radius: 16px;
+            }
+            .button-row { flex-direction: column; }
+            .button-row button { width: 100%; }
+            .meta { gap: 8px; }
+            .badge {
+                max-width: 100%;
+                justify-content: center;
+            }
+            .player-line {
+                align-items: flex-start;
+            }
+            .role-card {
+                padding: 20px 16px;
+            }
+        }
+
+        @media (min-width: 900px) {
+            .content {
+                padding-bottom: 32px;
+            }
+        }
+    </style>
+    <script src="{{ socketio_client_url }}"></script>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <h1>The Insider</h1>
+            <p class="subtitle">A fast social deduction game where one hidden Insider tries to blend in while everyone else uses clues and votes to expose them. Rooms support up to {{ room_max_size }} players, with {{ room_min_size }} needed to begin a round.</p>
+            <div class="button-row hero-actions">
+                <button class="secondary" id="rules-toggle-btn" type="button">View rules</button>
+            </div>
+        </section>
+
+        <section class="content">
+            <div class="panel rules-panel hidden" id="rules-panel">
+                <h2>How the game works</h2>
+                <p class="status">This is a multi-round social deduction game. One player is secretly the Insider, and everyone else is trying to identify them before they win.</p>
+                <ul class="rules-list">
+                    <li><strong>Goal</strong>The group is trying to identify and eliminate the Insider. The Insider is trying to guess the secret word correctly without detection.</li>
+                    <li><strong>Roles</strong>Regular players receive the secret word for the current round and must give careful clues that show they know it without making it too obvious. The Insider does not receive the word and must bluff, blend in, and avoid suspicion.</li>
+                    <li><strong>Round</strong>Each round starts with a new secret word. Players give one-word clues, either all at once or in sequence depending on the instructor setting, and then everyone votes for the most suspicious player. If the Insider is voted out, they get one final guess at the secret word.</li>
+                    <li><strong>Win Conditions</strong>The group wins if the Insider is eliminated and misses that final guess, or if the Insider disconnects or times out. The Insider wins by guessing the word correctly at any time, or by surviving until only three active players remain.</li>
+                    <li><strong>Special Rules</strong>Duplicate clues are not allowed. In sequential mode you must wait for your turn and give a different clue from the ones already revealed. A tied vote eliminates nobody and the game continues. Each clue and vote phase has a live timer, and missing an action causes elimination for timeout. Disconnected players have a short grace period to reclaim their seat from the room link before being removed.</li>
+                </ul>
+            </div>
+
+            <div id="offline-view" class="hidden">
+                <div class="panel">
+                    <h2>Game paused</h2>
+                    <p class="status">The instructor has taken the game offline during instruction. Keep this page open and you can rejoin when the game comes back online.</p>
+                </div>
+            </div>
+
+            <div id="login-view">
+                <div class="panel">
+                    <label class="label" for="username">Your name</label>
+                    <input id="username" type="text" maxlength="40" placeholder="Enter your name to join">
+                    <div class="button-row" id="standalone-menu">
+                        <button class="secondary" id="join-open-btn" type="button">Join open game</button>
+                        <button class="secondary" id="create-private-btn" type="button">Create private game</button>
+                        <button class="secondary" id="join-private-btn" type="button">Join private game</button>
+                    </div>
+                    <div class="field-stack hidden" id="private-room-fields">
+                        <div id="private-room-code-block">
+                            <label class="label" for="private-room-code">Private room code</label>
+                            <input id="private-room-code" type="text" maxlength="8" placeholder="Enter private room code">
+                        </div>
+                        <div class="button-row" id="join-actions">
+                            <button class="primary" id="join-btn">Join game</button>
+                        </div>
+                    </div>
+                    <p class="callout status" id="login-copy">Recommended group size is 5 to 6. In classroom mode, the instructor can optionally add agents to help a room get started.</p>
+                </div>
+            </div>
+
+            <div id="lobby-view" class="hidden">
+                <div class="panel">
+                    <h2>Room <span id="room-code"></span></h2>
+                    <div class="meta">
+                        <span class="badge">Round <span id="round-number">0</span></span>
+                        <span class="badge"><span id="player-count">0</span> / {{ room_max_size }} players</span>
+                        <span class="badge">Mode: <span id="mode-label">standalone</span></span>
+                        <span class="badge">Reveal: <span id="reveal-label">simultaneous</span></span>
+                    </div>
+                    <p class="callout status" id="context-copy"></p>
+                    <p class="callout status" id="lobby-status">Waiting for enough players to begin.</p>
+                </div>
+
+                <div class="panel">
+                    <h3>Players</h3>
+                    <ul class="player-list" id="player-list"></ul>
+                    <div class="button-row hidden" id="agent-fill-controls">
+                        <button class="secondary" id="agent-fill-btn" type="button">Fill empty seats with agents</button>
+                    </div>
+                    <div class="button-row">
+                        <button class="primary" id="start-btn" disabled>Start round</button>
+                    </div>
+                </div>
+
+                <div class="panel hidden" id="qr-panel">
+                    <div class="qr-panel">
+                        <h3>Invite more players</h3>
+                        <p class="status">Scan this code to join the same room on a phone.</p>
+                        <img id="qr-image" alt="QR code for joining this room">
+                        <div class="join-link" id="join-link"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="clue-view" class="hidden">
+                <div class="role-card">
+                    <h2 id="role-title">Your role</h2>
+                    <div class="secret" id="secret-word"></div>
+                    <p id="role-instructions" class="status"></p>
+                </div>
+
+                <div class="panel">
+                    <h3>Commit your clue</h3>
+                    <p class="status" id="clue-mode-copy">Submit one clue word. Nobody sees clues until the commit phase is complete.</p>
+                    <p class="status" id="turn-status"></p>
+                    <label class="label" for="clue-input">One-word clue</label>
+                    <input id="clue-input" type="text" maxlength="30" placeholder="Enter a single clue word">
+                    <div class="button-row">
+                        <button class="primary" id="submit-clue-btn">Lock in clue</button>
+                    </div>
+                    <p class="message hidden" id="clue-status"></p>
+                    <div class="summary-heading">Revealed clues</div>
+                    <ul class="clue-list" id="live-clue-list"></ul>
+                </div>
+            </div>
+
+            <div id="reveal-view" class="hidden">
+                <div class="panel">
+                    <h2>Clues are being revealed</h2>
+                    <p class="status">This room is using random reveal mode. The host or instructor can reveal clues one at a time.</p>
+                    <ul class="clue-list" id="revealed-clue-list"></ul>
+                    <div class="button-row">
+                        <button class="primary" id="reveal-next-btn">Reveal next clue</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vote-view" class="hidden">
+                <div class="panel">
+                    <h2>Vote for the Insider</h2>
+                    <p class="status" id="vote-status">Choose the person you believe does not know the secret.</p>
+                    <div class="summary-heading">Clues</div>
+                    <ul class="clue-list" id="vote-clue-list"></ul>
+                </div>
+                <div class="vote-list" id="vote-list"></div>
+            </div>
+
+            <div id="guess-view" class="hidden">
+                <div class="panel">
+                    <h2>Final guess</h2>
+                    <p class="status" id="guess-status">The Insider was identified and gets one last chance to steal the round by guessing the secret.</p>
+                    <label class="label" for="guess-input">Secret word guess</label>
+                    <input id="guess-input" type="text" maxlength="60" placeholder="Enter the secret word">
+                    <div class="button-row">
+                        <button class="primary" id="guess-btn">Submit guess</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="results-view" class="hidden">
+                <div class="panel">
+                    <h2>Round results</h2>
+                    <p class="status" id="result-message"></p>
+                    <div class="meta">
+                        <span class="badge">Secret: <span id="revealed-word"></span></span>
+                        <span class="badge">Insider: <span id="revealed-insider"></span></span>
+                    </div>
+                    <p class="message hidden" id="final-guess-line"></p>
+                </div>
+
+                <div class="panel">
+                    <div class="summary-heading">Clues</div>
+                    <ul class="summary-list" id="result-clues"></ul>
+                    <div class="summary-heading">Votes</div>
+                    <ul class="summary-list" id="vote-summary"></ul>
+                    <div class="button-row">
+                        <button class="primary" id="play-again-btn">Return to main menu</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="insider-guess-panel" class="panel hidden">
+                <h2>Guess the Secret</h2>
+                <p class="status" id="live-guess-status">If you think you know the word, you can guess now to try to steal the game.</p>
+                <label class="label" for="live-guess-input">Secret word guess</label>
+                <input id="live-guess-input" type="text" maxlength="60" placeholder="Take your shot">
+                <div class="button-row">
+                    <button class="primary" id="live-guess-btn">Guess now</button>
+                </div>
+            </div>
+
+            <div id="message-box" class="message hidden"></div>
+        </section>
+    </main>
+
+    <script>
+        const scriptRoot = {{ script_root|tojson }};
+        const socketioPath = {{ socketio_path|tojson }};
+        const socket = io({ path: socketioPath });
+        const views = ["offline-view", "login-view", "lobby-view", "clue-view", "reveal-view", "vote-view", "guess-view", "results-view"];
+        const recommendedGroupSize = {{ recommended_group_size }};
+        const requestedRoom = {{ requested_room|tojson }};
+        const requestedPlayerToken = {{ requested_player_token|tojson }};
+        let mySid = null;
+        let currentRoom = null;
+        let players = [];
+        let resultPayload = null;
+        let myRole = null;
+        let latestRoomState = null;
+        let latestSettings = { mode: {{ current_mode|tojson }}, game_enabled: {{ current_game_enabled|tojson }}, reveal_mode: "random", context: "" };
+        let joinMode = requestedRoom ? "room_link" : "open";
+        let playerToken = requestedPlayerToken || "";
+        let attemptedResume = false;
+        const appBasePath = scriptRoot || "";
+
+        const els = {
+            roomCode: document.getElementById("room-code"),
+            roundNumber: document.getElementById("round-number"),
+            playerCount: document.getElementById("player-count"),
+            playerList: document.getElementById("player-list"),
+            lobbyStatus: document.getElementById("lobby-status"),
+            startBtn: document.getElementById("start-btn"),
+            agentFillControls: document.getElementById("agent-fill-controls"),
+            agentFillBtn: document.getElementById("agent-fill-btn"),
+            qrPanel: document.getElementById("qr-panel"),
+            qrImage: document.getElementById("qr-image"),
+            joinLink: document.getElementById("join-link"),
+            voteList: document.getElementById("vote-list"),
+            voteStatus: document.getElementById("vote-status"),
+            roleCard: document.querySelector(".role-card"),
+            roleTitle: document.getElementById("role-title"),
+            secretWord: document.getElementById("secret-word"),
+            roleInstructions: document.getElementById("role-instructions"),
+            guessStatus: document.getElementById("guess-status"),
+            guessInput: document.getElementById("guess-input"),
+            guessBtn: document.getElementById("guess-btn"),
+            liveGuessPanel: document.getElementById("insider-guess-panel"),
+            liveGuessStatus: document.getElementById("live-guess-status"),
+            liveGuessInput: document.getElementById("live-guess-input"),
+            liveGuessBtn: document.getElementById("live-guess-btn"),
+            resultMessage: document.getElementById("result-message"),
+            revealedWord: document.getElementById("revealed-word"),
+            revealedInsider: document.getElementById("revealed-insider"),
+            finalGuessLine: document.getElementById("final-guess-line"),
+            voteSummary: document.getElementById("vote-summary"),
+            resultClues: document.getElementById("result-clues"),
+            playAgainBtn: document.getElementById("play-again-btn"),
+            messageBox: document.getElementById("message-box"),
+            username: document.getElementById("username"),
+            joinActions: document.getElementById("join-actions"),
+            joinBtn: document.getElementById("join-btn"),
+            rulesToggleBtn: document.getElementById("rules-toggle-btn"),
+            rulesPanel: document.getElementById("rules-panel"),
+            standaloneMenu: document.getElementById("standalone-menu"),
+            joinOpenBtn: document.getElementById("join-open-btn"),
+            createPrivateBtn: document.getElementById("create-private-btn"),
+            joinPrivateBtn: document.getElementById("join-private-btn"),
+            privateRoomFields: document.getElementById("private-room-fields"),
+            privateRoomCodeBlock: document.getElementById("private-room-code-block"),
+            privateRoomCode: document.getElementById("private-room-code"),
+            loginCopy: document.getElementById("login-copy"),
+            clueInput: document.getElementById("clue-input"),
+            submitClueBtn: document.getElementById("submit-clue-btn"),
+            clueStatus: document.getElementById("clue-status"),
+            clueModeCopy: document.getElementById("clue-mode-copy"),
+            turnStatus: document.getElementById("turn-status"),
+            liveClueList: document.getElementById("live-clue-list"),
+            revealNextBtn: document.getElementById("reveal-next-btn"),
+            revealedClueList: document.getElementById("revealed-clue-list"),
+            voteClueList: document.getElementById("vote-clue-list"),
+            modeLabel: document.getElementById("mode-label"),
+            revealLabel: document.getElementById("reveal-label"),
+            contextCopy: document.getElementById("context-copy")
+        };
+
+        function showView(viewId) {
+            for (const id of views) {
+                document.getElementById(id).classList.toggle("hidden", id !== viewId);
+            }
+        }
+
+        function showMessage(text, isError = false) {
+            els.messageBox.textContent = text;
+            els.messageBox.classList.remove("hidden", "error");
+            if (isError) {
+                els.messageBox.classList.add("error");
+            }
+        }
+
+        function clearMessage() {
+            els.messageBox.textContent = "";
+            els.messageBox.classList.add("hidden");
+            els.messageBox.classList.remove("error");
+        }
+
+        function setRulesOpen(open) {
+            els.rulesPanel.classList.toggle("hidden", !open);
+            els.rulesToggleBtn.textContent = open ? "Hide rules" : "View rules";
+        }
+
+        function isHost() {
+            return players.some((player) => player.id === mySid && player.is_host);
+        }
+
+        function roleLabel(player) {
+            if (player.role === "insider") return "Insider";
+            if (player.role === "player") return "Player";
+            return null;
+        }
+
+        function statusLabel(player) {
+            if (player.status_reason === "disconnected") return "Removed: disconnected";
+            if (player.status_reason === "eliminated") return "Removed: eliminated";
+            if (player.status_reason === "timeout") return "Removed: timeout";
+            if (!player.connected) return "Offline";
+            return null;
+        }
+
+        function countdownText(room) {
+            if (!room || !room.phase_deadline) return "";
+            const seconds = Math.max(0, Math.ceil(room.phase_deadline - (Date.now() / 1000)));
+            return `Time left: ${seconds}s.`;
+        }
+
+        function formatNameList(names) {
+            if (!names.length) return "";
+            if (names.length === 1) return names[0];
+            if (names.length === 2) return `${names[0]} and ${names[1]}`;
+            return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+        }
+
+        function pendingClueNames(room) {
+            return (room.players || [])
+                .filter((player) => player.active && !player.has_committed_clue)
+                .map((player) => player.id === mySid ? "you" : player.name);
+        }
+
+        function pendingVoteNames(room) {
+            return (room.players || [])
+                .filter((player) => player.active && !player.has_voted)
+                .map((player) => player.id === mySid ? "you" : player.name);
+        }
+
+        function resultIsTerminal(result) {
+            return Boolean(result && result.game_over);
+        }
+
+        function updateInsiderGuessPanel(room) {
+            const canShow = Boolean(
+                room &&
+                room.settings &&
+                room.settings.game_enabled !== false &&
+                myRole === "insider" &&
+                ["clue", "reveal", "vote"].includes(room.state)
+            );
+            els.liveGuessPanel.classList.toggle("hidden", !canShow);
+            if (!canShow) {
+                return;
+            }
+            const phaseCopy = room.state === "clue"
+                ? "before the room finishes submitting clues"
+                : room.state === "reveal"
+                    ? "while clues are being revealed"
+                    : "before the vote locks in";
+            els.liveGuessStatus.textContent = `You can guess the secret at any time, including ${phaseCopy}. A correct guess wins immediately, and a wrong guess gives the game to the group.`;
+        }
+
+        function renderClueList(target, clues) {
+            target.innerHTML = "";
+            (clues || []).forEach((entry) => {
+                const li = document.createElement("li");
+                li.textContent = `${entry.player_name}: ${entry.clue}`;
+                target.appendChild(li);
+            });
+            if (!target.children.length) {
+                const li = document.createElement("li");
+                li.textContent = "No clues revealed yet.";
+                target.appendChild(li);
+            }
+        }
+
+        function updateSettings(settings) {
+            latestSettings = settings || latestSettings;
+            els.modeLabel.textContent = latestSettings.mode || "standalone";
+            els.revealLabel.textContent = latestSettings.reveal_mode || "simultaneous";
+            els.contextCopy.textContent = latestSettings.context || "";
+            updateJoinModeUI();
+        }
+
+        function updateJoinModeUI() {
+            const standalone = latestSettings.mode === "standalone";
+            const needsJoinAction = !standalone || joinMode === "room_link" || joinMode === "join_private";
+            const needsPrivateCode = standalone && joinMode === "join_private";
+            els.standaloneMenu.classList.toggle("hidden", !standalone || joinMode === "room_link");
+            els.privateRoomFields.classList.toggle("hidden", !needsJoinAction);
+            els.privateRoomCodeBlock.classList.toggle("hidden", !needsPrivateCode);
+
+            if (!standalone) {
+                els.joinBtn.textContent = "Join game";
+                els.loginCopy.textContent = "Recommended group size is 5 to 6. In classroom mode, the instructor can optionally add agents to help a room get started.";
+                return;
+            }
+
+            els.joinOpenBtn.classList.toggle("primary", joinMode === "open");
+            els.joinOpenBtn.classList.toggle("secondary", joinMode !== "open");
+            els.createPrivateBtn.classList.toggle("primary", joinMode === "create_private");
+            els.createPrivateBtn.classList.toggle("secondary", joinMode !== "create_private");
+            els.joinPrivateBtn.classList.toggle("primary", joinMode === "join_private");
+            els.joinPrivateBtn.classList.toggle("secondary", joinMode !== "join_private");
+
+            if (joinMode === "room_link") {
+                els.joinBtn.textContent = "Join linked game";
+                els.joinBtn.hidden = false;
+                els.loginCopy.textContent = `This link will join room ${requestedRoom}.`;
+            } else if (joinMode === "create_private") {
+                els.loginCopy.textContent = "Create a private room and share the join code or QR link with the people you want to invite.";
+                els.joinBtn.hidden = true;
+            } else if (joinMode === "join_private") {
+                els.joinBtn.textContent = "Continue";
+                els.joinBtn.hidden = false;
+                els.loginCopy.textContent = "Enter the private room code to join a specific game.";
+            } else {
+                els.joinBtn.hidden = true;
+                els.loginCopy.textContent = "Join the next available open game.";
+            }
+        }
+
+        function submitJoin(modeOverride = joinMode) {
+            clearMessage();
+            const roomId = modeOverride === "join_private" || modeOverride === "room_link"
+                ? (els.privateRoomCode.value.trim() || requestedRoom)
+                : "";
+            socket.emit("join", {
+                name: els.username.value.trim(),
+                room_id: roomId,
+                player_token: playerToken,
+                join_mode: modeOverride
+            });
+        }
+
+        function updateLobby(room) {
+            updateSettings(room.settings);
+            els.roomCode.textContent = room.room_id;
+            els.roundNumber.textContent = room.round;
+            els.playerCount.textContent = room.player_count;
+            els.playerList.innerHTML = "";
+
+            room.players.forEach((player) => {
+                const li = document.createElement("li");
+                const identity = player.id === mySid ? "You" : player.name;
+                const tags = [];
+                if (player.is_host) tags.push("Host");
+                if (player.is_agent) tags.push("Agent");
+                const role = roleLabel(player);
+                const status = statusLabel(player);
+                if (role) tags.push(`Role: ${role}`);
+                if (status) tags.push(status);
+
+                li.innerHTML = `
+                    <div class="player-line">
+                        <strong class="player-name${player.status_reason ? " inactive" : ""}">${identity}</strong>
+                        <span class="player-note">${tags.join(" • ") || "Ready"}</span>
+                    </div>
+                `;
+                els.playerList.appendChild(li);
+            });
+
+            const canToggleAgents = latestSettings.mode === "standalone" && isHost();
+            els.agentFillControls.classList.toggle("hidden", !canToggleAgents);
+            if (canToggleAgents) {
+                els.agentFillBtn.textContent = room.fill_with_agents
+                    ? "Start with only human players"
+                    : "Fill empty seats with agents";
+            }
+
+            const enoughPlayers = room.player_count >= room.min_size;
+            const projectedPlayers = room.fill_with_agents
+                ? Math.max(room.player_count, recommendedGroupSize)
+                : room.player_count;
+            els.startBtn.disabled = projectedPlayers < room.min_size || !isHost();
+            if (projectedPlayers < room.min_size) {
+                els.lobbyStatus.textContent = `Waiting for at least ${room.min_size} total players to begin.`;
+            } else if (isHost()) {
+                els.lobbyStatus.textContent = room.fill_with_agents
+                    ? "Your room is ready. Agents will fill the empty seats when the round starts."
+                    : "Your room is ready. Start the round when everyone is set.";
+            } else {
+                els.lobbyStatus.textContent = "Your room is ready. Waiting for the host to begin.";
+            }
+
+            const humanPlayers = room.players.filter((player) => player.active && !player.is_agent).length;
+            const showQr = latestSettings.mode === "standalone" && isHost() && humanPlayers === 1;
+            els.qrPanel.classList.toggle("hidden", !showQr);
+            if (showQr) {
+                const joinUrl = new URL(`${appBasePath || ""}/`, window.location.origin);
+                joinUrl.searchParams.set("room", room.room_id);
+                els.qrImage.src = `${appBasePath}/room/${encodeURIComponent(room.room_id)}/qr.png`;
+                els.joinLink.textContent = joinUrl.toString();
+            }
+        }
+
+        function updateCommit(room) {
+            const me = room.players.find((player) => player.id === mySid);
+            const alreadyCommitted = me ? me.has_committed_clue : false;
+            const sequentialMode = room.settings.reveal_mode === "random";
+            const timerText = countdownText(room);
+            renderClueList(els.liveClueList, room.revealed_clues);
+
+            if (sequentialMode) {
+                const myTurn = room.current_turn_sid === mySid;
+                els.clueModeCopy.textContent = "Players act in a randomized sequence. Wait for the previous clue to appear, then submit a different one on your turn.";
+                els.turnStatus.textContent = room.current_turn_name
+                    ? `${room.current_turn_name} is up now. ${timerText}`.trim()
+                    : "All clues are in. Voting will begin shortly.";
+                els.submitClueBtn.disabled = alreadyCommitted || !myTurn;
+                if (alreadyCommitted) {
+                    const waitingOn = room.current_turn_name ? `Waiting on ${room.current_turn_name}. ` : "";
+                    els.clueStatus.textContent = `Your clue is revealed. ${waitingOn}${timerText}`.trim();
+                } else if (myTurn) {
+                    els.clueStatus.textContent = `It is your turn. Submit a one-word clue that has not been used yet. ${timerText}`.trim();
+                } else {
+                    const waitingOn = room.current_turn_name ? `Waiting on ${room.current_turn_name}. ` : "";
+                    els.clueStatus.textContent = `${waitingOn}Wait for the previous player to reveal their clue before you respond. ${timerText}`.trim();
+                }
+                els.clueStatus.classList.remove("hidden");
+            } else {
+                els.clueModeCopy.textContent = "Submit one clue word. Nobody sees clues until the commit phase is complete.";
+                els.turnStatus.textContent = "";
+                els.submitClueBtn.disabled = alreadyCommitted;
+                if (alreadyCommitted) {
+                    const pendingNames = pendingClueNames(room).filter((name) => name !== "you");
+                    const waitingOn = pendingNames.length ? ` Waiting on ${formatNameList(pendingNames)}.` : "";
+                    els.clueStatus.textContent = `Clue locked in. Waiting for the rest of the room (${room.clues_committed}/${room.player_count}).${waitingOn} ${timerText}`.trim();
+                } else {
+                    const pendingNames = pendingClueNames(room);
+                    const waitingOn = pendingNames.length ? ` Waiting on ${formatNameList(pendingNames)}.` : "";
+                    els.clueStatus.textContent = `Clues committed so far: ${room.clues_committed}/${room.player_count}.${waitingOn} ${timerText}`.trim();
+                }
+                els.clueStatus.classList.remove("hidden");
+            }
+        }
+
+        function updateReveal(room) {
+            renderClueList(els.revealedClueList, room.revealed_clues);
+            els.revealNextBtn.disabled = !isHost();
+        }
+
+        function updateVoting(room) {
+            renderClueList(els.voteClueList, room.revealed_clues);
+            els.voteList.innerHTML = "";
+            const me = room.players.find((player) => player.id === mySid);
+            const alreadyVoted = me ? me.has_voted : false;
+            const timerText = countdownText(room);
+
+            room.players.forEach((player) => {
+                if (!player.active || player.id === mySid) return;
+                const button = document.createElement("button");
+                button.type = "button";
+                button.disabled = alreadyVoted;
+                button.textContent = player.is_agent ? `${player.name} (Agent)` : player.name;
+                button.addEventListener("click", () => {
+                    socket.emit("submit_vote", { target_sid: player.id });
+                });
+                els.voteList.appendChild(button);
+            });
+
+            const pendingNames = pendingVoteNames(room);
+            els.voteStatus.textContent = alreadyVoted
+                ? `Vote locked in. Waiting for ${formatNameList(pendingNames.filter((name) => name !== "you")) || "the rest of the room"} (${room.votes_cast}/${room.player_count}). ${timerText}`.trim()
+                : `Choose one person. Votes submitted so far: ${room.votes_cast}/${room.player_count}. ${pendingNames.length ? `Waiting on ${formatNameList(pendingNames)}. ` : ""}${timerText}`.trim();
+        }
+
+        function renderResults(result) {
+            resultPayload = result;
+            updateInsiderGuessPanel(null);
+            els.resultMessage.textContent = result.message || "";
+            els.resultMessage.className = "status";
+            if (result.winner === "group") els.resultMessage.classList.add("winner-group");
+            if (result.winner === "insider") els.resultMessage.classList.add("winner-insider");
+
+            els.revealedWord.textContent = result.word || "Unknown";
+            els.revealedInsider.textContent = result.insider_name || "Unknown";
+            renderClueList(els.resultClues, result.revealed_clues || []);
+            els.voteSummary.innerHTML = "";
+
+            (result.vote_summary || []).forEach((entry) => {
+                const li = document.createElement("li");
+                li.textContent = `${entry.voter_name} voted for ${entry.target_name}.`;
+                els.voteSummary.appendChild(li);
+            });
+
+            if (!els.voteSummary.children.length) {
+                const li = document.createElement("li");
+                li.textContent = "No complete vote summary is available for this round.";
+                els.voteSummary.appendChild(li);
+            }
+
+            if (result.final_guess) {
+                els.finalGuessLine.textContent = `Final guess: ${result.final_guess}`;
+                els.finalGuessLine.classList.remove("hidden");
+            } else {
+                els.finalGuessLine.textContent = "";
+                els.finalGuessLine.classList.add("hidden");
+            }
+
+            if (resultIsTerminal(result)) {
+                els.playAgainBtn.textContent = "Return to main menu";
+                els.playAgainBtn.disabled = false;
+            } else if (isHost()) {
+                els.playAgainBtn.textContent = "Start next round";
+                els.playAgainBtn.disabled = false;
+            } else {
+                els.playAgainBtn.textContent = "Waiting for host to start next round";
+                els.playAgainBtn.disabled = true;
+            }
+            showView("results-view");
+        }
+
+        function syncView(room) {
+            latestRoomState = room;
+            players = room.players;
+            currentRoom = room.room_id;
+            updateSettings(room.settings);
+            updateInsiderGuessPanel(room);
+
+            if (room.settings && room.settings.game_enabled === false) {
+                showView("offline-view");
+                return;
+            }
+
+            if (room.state === "lobby") {
+                updateLobby(room);
+                showView("lobby-view");
+                return;
+            }
+
+            if (room.state === "clue") {
+                updateCommit(room);
+                showView("clue-view");
+                return;
+            }
+
+            if (room.state === "reveal") {
+                updateReveal(room);
+                showView("reveal-view");
+                return;
+            }
+
+            if (room.state === "vote") {
+                updateVoting(room);
+                showView("vote-view");
+                return;
+            }
+
+            if (room.state === "guess") {
+                const amInsider = myRole === "insider";
+                els.guessBtn.disabled = !amInsider;
+                els.guessInput.disabled = !amInsider;
+                els.guessStatus.textContent = amInsider
+                    ? "You were identified as the Insider. Enter your final guess to try to steal the round."
+                    : `${resultPayload ? resultPayload.insider_name : "The Insider"} is making a final guess.`;
+                showView("guess-view");
+                return;
+            }
+
+            if (room.state === "results" && room.result) {
+                renderResults(room.result);
+            }
+        }
+
+        els.joinBtn.addEventListener("click", () => {
+            submitJoin();
+        });
+
+        els.rulesToggleBtn.addEventListener("click", () => {
+            const open = els.rulesPanel.classList.contains("hidden");
+            setRulesOpen(open);
+        });
+
+        els.joinOpenBtn.addEventListener("click", () => {
+            joinMode = "open";
+            updateJoinModeUI();
+            submitJoin("open");
+        });
+
+        els.createPrivateBtn.addEventListener("click", () => {
+            joinMode = "create_private";
+            updateJoinModeUI();
+            submitJoin("create_private");
+        });
+
+        els.joinPrivateBtn.addEventListener("click", () => {
+            joinMode = "join_private";
+            updateJoinModeUI();
+        });
+
+        els.username.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                submitJoin();
+            }
+        });
+
+        els.startBtn.addEventListener("click", () => {
+            clearMessage();
+            socket.emit("start_game");
+        });
+
+        els.agentFillBtn.addEventListener("click", () => {
+            clearMessage();
+            const enableAgents = els.agentFillBtn.textContent === "Fill empty seats with agents";
+            socket.emit("set_fill_with_agents", { enabled: enableAgents });
+        });
+
+        els.submitClueBtn.addEventListener("click", () => {
+            clearMessage();
+            socket.emit("submit_clue", { clue: els.clueInput.value.trim() });
+        });
+
+        els.revealNextBtn.addEventListener("click", () => {
+            clearMessage();
+            socket.emit("reveal_next");
+        });
+
+        els.guessBtn.addEventListener("click", () => {
+            clearMessage();
+            socket.emit("submit_guess", { guess: els.guessInput.value.trim() });
+        });
+
+        els.liveGuessBtn.addEventListener("click", () => {
+            clearMessage();
+            socket.emit("submit_guess", { guess: els.liveGuessInput.value.trim() });
+        });
+
+        els.liveGuessInput.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                clearMessage();
+                socket.emit("submit_guess", { guess: els.liveGuessInput.value.trim() });
+            }
+        });
+
+        els.playAgainBtn.addEventListener("click", () => {
+            clearMessage();
+            const activeResult = resultPayload || (latestRoomState && latestRoomState.result ? latestRoomState.result : null);
+            if (activeResult && !resultIsTerminal(activeResult)) {
+                if (!isHost()) {
+                    return;
+                }
+                els.playAgainBtn.disabled = true;
+                socket.emit("start_next_round");
+                return;
+            }
+            socket.emit("leave_game");
+        });
+
+        socket.on("connect", () => {
+            setRulesOpen(false);
+            updateJoinModeUI();
+            if (requestedRoom) {
+                els.privateRoomCode.value = requestedRoom;
+            }
+            if (requestedRoom && playerToken && !attemptedResume) {
+                attemptedResume = true;
+                socket.emit("join", {
+                    name: "",
+                    room_id: requestedRoom,
+                    player_token: playerToken,
+                    join_mode: "resume"
+                });
+            }
+            if (latestSettings.game_enabled === false) {
+                showView("offline-view");
+            }
+        });
+
+        socket.on("joined", (payload) => {
+            mySid = payload.sid;
+            currentRoom = payload.room_id;
+            playerToken = payload.player_token || playerToken;
+            const params = new URLSearchParams(window.location.search);
+            params.set("room", payload.room_id);
+            if (playerToken) {
+                params.set("player", playerToken);
+            }
+            window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+            clearMessage();
+        });
+
+        socket.on("room_update", (room) => {
+            syncView(room);
+        });
+
+        socket.on("role_assigned", (payload) => {
+            myRole = payload.role;
+            els.clueInput.value = "";
+            els.guessInput.value = "";
+            els.liveGuessInput.value = "";
+            els.roleCard.classList.toggle("insider-card", payload.role === "insider");
+            els.secretWord.classList.toggle("insider", payload.role === "insider");
+            els.secretWord.classList.toggle("hidden", payload.role === "insider");
+            if (payload.role === "insider") {
+                els.roleTitle.textContent = "You are the Insider";
+                els.secretWord.textContent = "";
+                els.roleInstructions.textContent = "Listen carefully, submit one clue word, and be ready to make a final guess if the group catches you.";
+            } else {
+                els.roleTitle.textContent = "You know the secret";
+                els.secretWord.textContent = payload.word || "Reconnecting to the round...";
+                els.roleInstructions.textContent = payload.word
+                    ? "Submit one clue word that proves you know the answer without making it too obvious."
+                    : "Your round is reconnecting. The secret word will appear again as soon as the server finishes restoring your seat.";
+            }
+            updateInsiderGuessPanel(latestRoomState);
+            showView("clue-view");
+        });
+
+        socket.on("guess_prompt", (result) => {
+            resultPayload = result;
+            updateInsiderGuessPanel(null);
+            showView("guess-view");
+        });
+
+        socket.on("game_over", (result) => {
+            renderResults(result);
+        });
+
+        socket.on("settings_updated", (settings) => {
+            updateSettings(settings);
+            if (settings.game_enabled === false) {
+                showView("offline-view");
+            } else if (!currentRoom) {
+                showView("login-view");
+            }
+        });
+
+        socket.on("error_message", (payload) => {
+            showMessage(payload.message, true);
+        });
+
+        socket.on("left_game", () => {
+            mySid = null;
+            currentRoom = null;
+            players = [];
+            resultPayload = null;
+            myRole = null;
+            latestRoomState = null;
+            playerToken = "";
+            attemptedResume = false;
+            setRulesOpen(false);
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, "", cleanUrl);
+            window.location.assign(cleanUrl);
+        });
+
+        window.setInterval(() => {
+            if (!latestRoomState) return;
+            if (latestRoomState.state === "clue") {
+                updateCommit(latestRoomState);
+            } else if (latestRoomState.state === "vote") {
+                updateVoting(latestRoomState);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

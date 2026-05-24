@@ -1,0 +1,27 @@
+services:
+  vm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    privileged: true
+    hostname: student-home-vm
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_BUILD_NETWORK: "${STUDENT_HOME_VM_DOCKER_BUILD_NETWORK:-host}"
+      LAB_MANAGER_DEFAULT_MAX_STUDENT_CAPACITY: "${STUDENT_HOME_VM_MAX_CAPACITY:-${STUDENT_HOME_VM_STUDENT_COUNT:-5}}"
+      LAB_MANAGER_DEFAULT_STUDENT_WARM_POOL_SIZE: "${STUDENT_HOME_VM_WARM_POOL_SIZE:-3}"
+      HLF_CLAIM_WARM_POOL_SIZE: "${STUDENT_HOME_VM_HLF_WARM_POOL_SIZE:-5}"
+    working_dir: /workspace/dynamic-labs
+    volumes:
+      - ../../../..:/src:ro
+      - student-home-vm-workspace:/workspace
+      - student-home-vm-docker:/var/lib/docker
+    ports:
+      - "${STUDENT_HOME_VM_HTTP_PORT:-8080}:80"
+      - "${STUDENT_HOME_VM_HTTPS_PORT:-8443}:443"
+    stdin_open: true
+    tty: true
+
+volumes:
+  student-home-vm-workspace:
+  student-home-vm-docker:

@@ -1,0 +1,25 @@
+name: instructor-auth-service
+
+services:
+  instructor-auth-service:
+    build:
+      context: ..
+      dockerfile: instructor_auth_service/Dockerfile
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: instructor-auth-service:latest
+    environment:
+      - SECRET_KEY=${INSTRUCTOR_AUTH_SERVICE_SECRET_KEY:-instructor-auth-service-secret}
+      - INSTRUCTOR_AUTH_USER=${INSTRUCTOR_AUTH_USER:-instructor}
+      - INSTRUCTOR_AUTH_KEY=${INSTRUCTOR_AUTH_KEY:-admin}
+      - HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
+      - HLF_INSTRUCTOR_USER=${HLF_INSTRUCTOR_USER:-admin}
+      - HLF_INSTRUCTOR_KEY=${HLF_INSTRUCTOR_KEY:-admin}
+      - INSTRUCTOR_AUDIT_LOG_PATH=/tmp/instructor-audit.log
+    networks:
+      router-net:
+        aliases:
+          - instructor-auth-service
+
+networks:
+  router-net:
+    external: true

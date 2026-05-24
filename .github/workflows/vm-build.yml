@@ -1,0 +1,277 @@
+name: Build VM Image (Manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-vm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      BITCOIN_LAB_IMAGE: ghcr.io/bja2142/bitcoin-lab:latest
+      BITCOIN_MEMPOOL_IMAGE: ghcr.io/bja2142/bitcoin-mempool:latest
+      HLF_IMAGE_TAG: 2.5.15
+      HLF_CA_IMAGE_TAG: 1.5.17
+      HLF_COUCHDB_IMAGE: couchdb:3.4.2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Fix Script Permissions
+        run: find . -type f -name "*.sh" -exec chmod +x {} \;
+      - name: Remove Unused Repo Payload
+        run: |
+          set -euo pipefail
+          echo "Before repo cleanup:"
+          du -sh dynamic-labs/bitcoin-forensics 2>/dev/null || true
+          du -sh dynamic-labs/hlf 2>/dev/null || true
+          # Keep only the live bitcoin forensics runtime assets:
+          # - lab.md
+          # - instructor-bitcoindir-success-backup-little-longer
+          rm -rf \
+            dynamic-labs/bitcoin-forensics/instructor-bitcoindir-forensics \
+            dynamic-labs/bitcoin-forensics/instructor.zip \
+            dynamic-labs/bitcoin-forensics/copilot-gen-script.sh \
+            dynamic-labs/bitcoin-forensics/malicious_seed.py \
+            dynamic-labs/bitcoin-forensics/malicious_seed_v*.py \
+            dynamic-labs/hlf/runtime/fabric-samples.bak.* \
+            dynamic-labs/hlf/runtime/fabric-samples.arm64.bak.* \
+            || true
+          find dynamic-labs/hlf -type f -name '*.meridian.bak' -delete 2>/dev/null || true
+          echo "After repo cleanup:"
+          du -sh dynamic-labs/bitcoin-forensics 2>/dev/null || true
+          du -sh dynamic-labs/hlf 2>/dev/null || true
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: false
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@v3
+      - name: Init Packer
+        run: packer init vm-build/ubuntu-lab.pkr.hcl
+      - name: Install QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 qemu-utils ovmf xorriso
+      - name: Prepare HLF Runtime Assets
+        run: bash ./vm-build/prepare-hlf-runtime-assets.sh
+      - name: Prepare Docker Image Bundles
+        run: bash ./vm-build/prepare-docker-image-bundles.sh
+      - name: Verify Quiz Engine v2 Bundle
+        run: |
+          set -euo pipefail
+          test -f vm-build/docker-image-bundles/quiz-engine-v2.tar
+      - name: Build VM Image
+        id: packer_build
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          report_disk() {
+            echo "== Disk snapshot: $1 =="
+            df -h "$GITHUB_WORKSPACE"
+            du -sh vm-build/docker-image-bundles 2>/dev/null || true
+            du -sh output-qemu 2>/dev/null || true
+            du -sh dynamic-labs/hlf/runtime/fabric-samples 2>/dev/null || true
+            du -sh vm-build/packer-debug.log 2>/dev/null || true
+            du -sh vm-build/packer-serial.log 2>/dev/null || true
+          }
+          mkdir -p "$GITHUB_WORKSPACE/vm-build/ci-artifacts"
+          report_disk "before packer build"
+          cd ./vm-build/docker-image-bundles
+          find . -maxdepth 1 -type f -name '*.tar' -printf '%f\n' | sort > manifest.txt
+          python3 -m http.server 8000 >/tmp/docker-bundles-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID >/dev/null 2>&1 || true' EXIT
+          cd "$GITHUB_WORKSPACE"
+          set +e
+          packer build -var "accelerator=none" vm-build/ubuntu-lab.pkr.hcl
+          PACKER_STATUS=$?
+          set -e
+          report_disk "after packer build"
+          if [ "$PACKER_STATUS" -ne 0 ]; then
+            exit "$PACKER_STATUS"
+          fi
+          mv output-qemu/blockchain-lab.qcow2 vm-build/ci-artifacts/blockchain-lab.qcow2
+          rm -rf output-qemu
+          rm -rf vm-build/docker-image-bundles
+          rm -rf dynamic-labs/hlf/runtime/fabric-samples
+          rm -f vm-build/packer-debug.log vm-build/packer-serial.log /tmp/docker-bundles-http.log
+          docker system prune -af --volumes >/dev/null 2>&1 || true
+          report_disk "after packer success cleanup"
+        env:
+          PACKER_LOG: 1
+          PACKER_LOG_PATH: ./vm-build/packer-debug.log
+      - name: Upload VM Serial Log
+        if: steps.packer_build.outcome != 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-build-serial-log
+          path: ./vm-build/packer-serial.log
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Upload Packer Debug Log
+        if: steps.packer_build.outcome != 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-build-packer-debug-log
+          path: ./vm-build/packer-debug.log
+          if-no-files-found: ignore
+          retention-days: 3
+      - name: Fail If VM Build Failed
+        if: steps.packer_build.outcome != 'success'
+        run: exit 1
+      - name: Initialize VM Pre-Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PROMPT_DISABLED: "1"
+          GH_NO_UPDATE_NOTIFIER: "1"
+          RELEASE_TAG: latest-vm-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists"
+            exit 0
+          fi
+          gh release create "$RELEASE_TAG" \
+            --title "Latest VM Build" \
+            --prerelease \
+            --notes ""
+
+      # Optional step to build OVA format alongside QCOW2 if using virtualbox
+      # Since we are using QEMU builder, we convert QCOW2 to OVA/VMDK.
+      - name: Convert QCOW2 to VMDK and Stream Upload Artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PROMPT_DISABLED: "1"
+          GH_NO_UPDATE_NOTIFIER: "1"
+          RELEASE_TAG: latest-vm-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          report_disk() {
+            echo "== Disk snapshot: $1 =="
+            df -h "$GITHUB_WORKSPACE"
+            du -sh vm-build/ci-artifacts 2>/dev/null || true
+            du -sh blockchain-lab-disk1.vmdk 2>/dev/null || true
+            du -sh hashes.txt 2>/dev/null || true
+          }
+          sudo apt-get update && sudo apt-get install -y qemu-utils tar
+          : > hashes.txt
+          QCOW2_PATH="$GITHUB_WORKSPACE/vm-build/ci-artifacts/blockchain-lab.qcow2"
+          OVA_PART_HASHES="$(mktemp)"
+          QCOW2_PART_HASHES="$(mktemp)"
+          export RELEASE_TAG OVA_PART_HASHES QCOW2_PART_HASHES
+          report_disk "before conversion"
+          echo "1. Converting QCOW2 to VMDK..."
+          qemu-img convert -O vmdk "$QCOW2_PATH" blockchain-lab-disk1.vmdk
+
+          # Create a basic OVF descriptor
+          cat <<EOF > blockchain-lab.ovf
+          <?xml version="1.0"?>
+          <Envelope ovf:version="1.0" xml:lang="en-US" xmlns="http://schemas.dmtf.org/ovf/envelope/1" xmlns:ovf="http://schemas.dmtf.org/ovf/envelope/1" xmlns:rasd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData" xmlns:vssd="http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:vbox="http://www.virtualbox.org/ovf/machine">
+            <References>
+              <File ovf:href="blockchain-lab-disk1.vmdk" ovf:id="file1"/>
+            </References>
+            <DiskSection>
+              <Info>List of the virtual disks used in the package</Info>
+              <Disk ovf:capacity="42949672960" ovf:diskId="vmdisk1" ovf:fileRef="file1" ovf:format="http://www.vmware.com/interfaces/specifications/vmdk.html#streamOptimized" vbox:uuid="00000000-0000-0000-0000-000000000000"/>
+            </DiskSection>
+            <NetworkSection>
+              <Info>Logical networks used in the package</Info>
+              <Network ovf:name="NAT">
+                <Description>Logical network used by this appliance.</Description>
+              </Network>
+            </NetworkSection>
+            <VirtualSystem ovf:id="blockchain-lab">
+              <Info>A virtual machine</Info>
+              <OperatingSystemSection ovf:id="94">
+                <Info>The kind of installed guest operating system</Info>
+                <Description>Ubuntu_64</Description>
+              </OperatingSystemSection>
+              <VirtualHardwareSection>
+                <Info>Virtual hardware requirements for a virtual machine</Info>
+                <System>
+                  <vssd:ElementName>Virtual Hardware Family</vssd:ElementName>
+                  <vssd:InstanceID>0</vssd:InstanceID>
+                  <vssd:VirtualSystemIdentifier>blockchain-lab</vssd:VirtualSystemIdentifier>
+                  <vssd:VirtualSystemType>virtualbox-2.2</vssd:VirtualSystemType>
+                </System>
+                <Item>
+                  <rasd:Caption>2 virtual CPU</rasd:Caption>
+                  <rasd:Description>Number of virtual CPUs</rasd:Description>
+                  <rasd:ElementName>2 virtual CPU</rasd:ElementName>
+                  <rasd:InstanceID>1</rasd:InstanceID>
+                  <rasd:ResourceType>3</rasd:ResourceType>
+                  <rasd:VirtualQuantity>2</rasd:VirtualQuantity>
+                </Item>
+                <Item>
+                  <rasd:AllocationUnits>MegaBytes</rasd:AllocationUnits>
+                  <rasd:Caption>4096 MB of memory</rasd:Caption>
+                  <rasd:Description>Memory Size</rasd:Description>
+                  <rasd:ElementName>4096 MB of memory</rasd:ElementName>
+                  <rasd:InstanceID>2</rasd:InstanceID>
+                  <rasd:ResourceType>4</rasd:ResourceType>
+                  <rasd:VirtualQuantity>4096</rasd:VirtualQuantity>
+                </Item>
+                <Item>
+                  <rasd:AddressOnParent>0</rasd:AddressOnParent>
+                  <rasd:Caption>disk1</rasd:Caption>
+                  <rasd:Description>Disk Image</rasd:Description>
+                  <rasd:ElementName>disk1</rasd:ElementName>
+                  <rasd:HostResource>/disk/vmdisk1</rasd:HostResource>
+                  <rasd:InstanceID>3</rasd:InstanceID>
+                  <rasd:ResourceType>17</rasd:ResourceType>
+                </Item>
+              </VirtualHardwareSection>
+            </VirtualSystem>
+          </Envelope>
+          EOF
+          echo "2. Packaging OVA, uploading chunks, and deleting them immediately..."
+          printf '%s\n' "SHA256 (full artifacts before split)" >> hashes.txt
+          tar -cf - blockchain-lab.ovf blockchain-lab-disk1.vmdk \
+            | tee >(sha256sum | awk '{print $1 "  blockchain-lab.ova"}' >> hashes.txt) \
+            | split -d -b 1900M \
+                --filter="cat > \"\$FILE\" && sha256sum \"\$FILE\" >> \"$OVA_PART_HASHES\" && gh release upload \"$RELEASE_TAG\" \"\$FILE\" --clobber && rm -f \"\$FILE\"" \
+                - blockchain-lab.ova.part-
+          echo "3. Freeing disk space: deleting intermediate OVA inputs..."
+          rm -f blockchain-lab-disk1.vmdk blockchain-lab.ovf
+          {
+            printf '\n'
+            printf '%s\n' "SHA256 (OVA parts)"
+            cat "$OVA_PART_HASHES"
+          } >> hashes.txt
+          echo "4. Splitting QCOW2, uploading chunks, and deleting them immediately..."
+          {
+            printf '\n'
+            printf '%s\n' "SHA256 (full artifacts before split)"
+          } >> hashes.txt
+          tee >(sha256sum | awk '{print $1 "  blockchain-lab.qcow2"}' >> hashes.txt) < "$QCOW2_PATH" \
+            | split -d -b 1900M \
+                --filter="cat > \"\$FILE\" && sha256sum \"\$FILE\" >> \"$QCOW2_PART_HASHES\" && gh release upload \"$RELEASE_TAG\" \"\$FILE\" --clobber && rm -f \"\$FILE\"" \
+                - blockchain-lab.qcow2.part-
+          {
+            printf '\n'
+            printf '%s\n' "SHA256 (QCOW2 parts)"
+            cat "$QCOW2_PART_HASHES"
+          } >> hashes.txt
+          echo "5. Freeing disk space: deleting staged QCOW2..."
+          rm -f "$QCOW2_PATH"
+          rmdir "$GITHUB_WORKSPACE/vm-build/ci-artifacts" 2>/dev/null || true
+          rm -f "$OVA_PART_HASHES" "$QCOW2_PART_HASHES"
+          echo "6. Uploading hashes.txt..."
+          gh release upload "$RELEASE_TAG" hashes.txt --clobber
+          report_disk "after conversion cleanup"
+      - name: Cleanup Old VM Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Cleaning up old releases (keeping only the 2 most recent)..."
+          # List releases, filter for VM builds, skip the 2 newest, and delete the rest
+          gh release list --limit 100 --json tagName --jq '.[] | select(.tagName | startswith("latest-vm-")) | .tagName' \
+            | tail -n +3 \
+            | xargs --no-run-if-empty -I {} gh release delete {} --yes --cleanup-tag || true

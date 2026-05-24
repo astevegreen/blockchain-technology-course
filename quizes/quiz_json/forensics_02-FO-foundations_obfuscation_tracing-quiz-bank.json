@@ -1,0 +1,495 @@
+{
+  "lesson_id": "forensics_02_fo_foundations_obfuscation_tracing",
+  "lesson_title": "Blockchain Forensics: Foundations, Obfuscation, and Tracing",
+  "date_generated": "2026-04-26",
+  "topic": "forensics",
+  "tags": [
+    "forensics",
+    "02-fo-foundations-obfuscation-tracing",
+    "foundations-obfuscation-tracing",
+    "blockchain-forensics",
+    "graph-analysis",
+    "utxo-model",
+    "account-model",
+    "address-clustering",
+    "heuristics",
+    "ethereum-logs-traces",
+    "obfuscation",
+    "privacy-coins",
+    "chain-hopping",
+    "attribution",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "forensics",
+    "lesson_file_stem": "02-FO-foundations_obfuscation_tracing",
+    "slide_source_path": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd",
+    "reading_source_path": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt",
+    "reading_status": "acquired",
+    "question_count": 16,
+    "source_mix": {
+      "lesson_grounded_questions": 12,
+      "reading_grounded_questions": 4
+    }
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_forensics",
+        "title": "Blockchain Forensics",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_foundations_obfuscation_tracing_lesson",
+            "title": "Blockchain Forensics: Foundations, Obfuscation, and Tracing - slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10",
+              "q11",
+              "q12"
+            ]
+          },
+          {
+            "id": "lec_foundations_obfuscation_tracing_reading",
+            "title": "Blockchain Forensics: Foundations, Obfuscation, and Tracing - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q13",
+              "q14",
+              "q15",
+              "q16"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst is moving from a Bitcoin theft investigation to an Ethereum token theft investigation. Which shift in evidence source best matches the lesson?",
+      "correct_answer": "Bitcoin tracing follows spent and newly created UTXOs, while Ethereum token tracing often requires account, contract, event-log, and trace data.",
+      "incorrect_answers": [
+        "Bitcoin tracing follows event logs and smart contracts, while Ethereum token tracing is based solely on tracking spent and newly created UTXO balances.",
+        "Bitcoin tracing follows persistent account state changes, while Ethereum token tracing requires following simple chains of unspent transaction outputs.",
+        "Bitcoin tracing follows top-level transaction fields alone, while Ethereum token tracing can be reliably resolved without parsing contract execution logs."
+      ],
+      "explanation": "The lesson emphasizes that the ledger model determines where evidence lives. Bitcoin's UTXO model supports coin ancestry and co-spend reasoning, while Ethereum's account and contract model often requires logs and traces to see economically meaningful flows.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "utxo-model",
+        "account-model",
+        "ethereum-logs-traces",
+        "comparison"
+      ],
+      "lesson_block": "Ledger Model Determines Evidence",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Recall: UTXO vs. Account Model; Reminder: Bitcoin's UTXO Model; Reminder: Ethereum's Account Model"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A graph shows one address sending funds to hundreds of new addresses in a short period. What is the most defensible interpretation from the lesson?",
+      "correct_answer": "It is a fan-out graph motif: one source sends to many destinations, so the pattern is only a contextual lead rather than a conclusion by itself.",
+      "incorrect_answers": [
+        "It is a fan-in graph motif: many sources send to one destination, so the pattern represents proof of laundering rather than a tentative starting lead.",
+        "It is a peeling chain motif: a single source splits balances continuously, so the pattern guarantees all destination addresses are owned by the sender.",
+        "It is an administrative dust motif: external accounts flood the network, so the pattern is inherently useless for making any investigative inference."
+      ],
+      "explanation": "The slide-visible point is that graph motifs help convert transactions into behavioral hypotheses. A fan-out shape is not a conclusion by itself; analysts need context before inferring intent.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "graph-analysis",
+        "fan-out",
+        "misconception"
+      ],
+      "lesson_block": "Graph Thinking Converts Transactions Into Behavior",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: The Analyst's Mindset: Graph Thinking; Graph Motif: The Fan-Out"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "Several Bitcoin inputs are spent together in one ordinary-looking transaction. When is common-input ownership reasoning most likely to be misleading?",
+      "correct_answer": "When the transaction was deliberately constructed by multiple parties, such as a CoinJoin, or by a service consolidating many customers' deposits.",
+      "incorrect_answers": [
+        "Whenever the transaction is processed on a public ledger, such as a Bitcoin node, or by a private validator validating unshielded contracts.",
+        "When the transaction uses the exact same script types, such as native SegWit, or by a wallet that standardizes inputs across different transactions.",
+        "Whenever the transaction contains multiple distinct outputs, such as change files, or by an analyst attempting to resolve address ownership tables."
+      ],
+      "explanation": "CIOH assumes inputs are controlled by one entity that can authorize the spend. CoinJoin and service consolidation intentionally violate or complicate that assumption, so the result is a lead rather than proof.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "cioh",
+        "address-clustering",
+        "coinjoin",
+        "heuristics"
+      ],
+      "lesson_block": "Heuristics Are Useful But Probabilistic",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Address Clustering; Pitfalls & Counter-Heuristics; Counter-Heuristic #1: CoinJoin"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A Bitcoin transaction sends 0.8 BTC to an old address and 3.17 BTC to a fresh address using the same script type as the inputs. What should a careful analyst conclude?",
+      "correct_answer": "The fresh, same-script, odd-sized output is a plausible change candidate, but the inference should be weighted with other wallet-behavior evidence.",
+      "incorrect_answers": [
+        "The fresh, same-script, odd-sized output is definitely a payment destination, but the conclusion must be held until the private keys are compromised.",
+        "The larger, reused-address output is automatically the change recipient, but the verification requires matching the public block hash with local files.",
+        "The fresh, same-script, odd-sized output must be ignored as useless noise, but the tracing should be restarted on a separate smart contract execution."
+      ],
+      "explanation": "Change detection depends on converging weak indicators, such as newness, script type, amount shape, address reuse, and wallet behavior. No single indicator is decisive enough to prove control.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "change-detection",
+        "heuristics",
+        "evidence-weighting",
+        "scenario"
+      ],
+      "lesson_block": "Change Address Detection",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Heuristic #2: Change Address Detection; Pitfalls & Counter-Heuristics"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "An Ethereum transaction has zero ETH value, but victims report that large amounts of USDC moved. What is the analyst's next best step?",
+      "correct_answer": "Inspect token contract event logs and transaction traces to reconstruct ERC-20 transfers and contract-to-contract execution.",
+      "incorrect_answers": [
+        "Apply Bitcoin change-output heuristics to reconstruct unspent output histories and wallet-to-wallet coin ancestry.",
+        "Analyze top-level ETH transaction value fields to estimate native gas consumption limits and database record updates.",
+        "Search public block header metadata and validator signatures to identify block-level rewards and consensus execution."
+      ],
+      "explanation": "ERC-20 transfers, swaps, and internal calls can move major token value without top-level ETH transfer. Ethereum investigations must use contract-aware evidence rather than only top-level transaction fields.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "ethereum-logs-traces",
+        "erc-20",
+        "smart-contracts",
+        "mechanism"
+      ],
+      "lesson_block": "Ethereum Requires Contract-Level Visibility",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Ethereum Forensics: Where the Evidence Hides; Following Token Flows: ERC-20 Transfers"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A DeFi exploit investigation fails when the analyst reviews only the user-facing transaction and ignores proxy calls, flash-loan setup, and internal execution. What did the analyst miss?",
+      "correct_answer": "The trace-level path of contract execution that explains how state and token balances changed across contracts.",
+      "incorrect_answers": [
+        "The public block header parameters, which are sufficient to resolve any internal contract-level balance changes.",
+        "The miner's private cryptographic key, which is strictly required to decrypt public ERC-20 contract event logs on-chain.",
+        "The UTXO ancestry chain, where Ethereum stores smart contract execution state and token balance changes across outputs."
+      ],
+      "explanation": "Proxy contracts, flash loans, reentrancy, and nested calls can radically change what a transaction means. The lesson stresses that smart contract forensics often requires traces, not just visible top-level fields.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "ethereum-logs-traces",
+        "defi",
+        "flash-loans",
+        "reentrancy"
+      ],
+      "lesson_block": "Smart Contract Forensics",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Smart Contract Forensics"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A stolen Bitcoin balance repeatedly sends a small amount onward while most of the remaining value rolls into a new address, then repeats the pattern many times. Which lesson concept best explains why this remains graph-detectable?",
+      "correct_answer": "It resembles a peeling chain: repeated separation of payments from a rolling change output creates a recognizable laundering motif.",
+      "incorrect_answers": [
+        "It resembles a fan-in pattern: consolidating many unrelated deposits into a single exchange address reveals a deposit motif.",
+        "It represents a CoinJoin pattern: matching equal-sized outputs proves that multiple distinct parties mixed inputs together.",
+        "It matches an Ethereum proxy trace: delegating smart contract execution through persistent storage obscures the actual sender."
+      ],
+      "explanation": "Peeling chains are useful because repeated automated behavior creates a persistent graph pattern. The motif still needs context, but it can help analysts follow a long-running laundering path.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "peeling-chains",
+        "graph-analysis",
+        "laundering",
+        "mechanism"
+      ],
+      "lesson_block": "Peeling Chains",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Heuristic #3: Peeling Chains; Live Trace: Following the Peeling Chains"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "After funds pass through a mixer, an investigator cannot follow direct provenance with confidence. Which response best reflects the lesson's strategy?",
+      "correct_answer": "Shift toward timing, amount correlation, pool-volume limits, infrastructure clues, endpoint records, and user mistakes rather than claiming the cryptography was broken.",
+      "incorrect_answers": [
+        "Halt the entire investigation immediately because privacy-preserving services render both public ledger data and external offline evidence fully inadmissible.",
+        "Assume the very first transaction output exiting the mixer belongs to the depositor, relying on a naive temporal proximity heuristic to establish tracing links.",
+        "Classify every individual user participating in the pool as a single joint liability entity, asserting that combined transactions signify shared legal control."
+      ],
+      "explanation": "The lesson argues that obfuscation tools are usually attacked through operational, statistical, infrastructure, endpoint, or human weaknesses, not by directly defeating their cryptographic design.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "mixers",
+        "obfuscation",
+        "endpoint-analysis",
+        "tradeoff"
+      ],
+      "lesson_block": "Breaking Mixers",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Obfuscation Service: Mixers & Tumblers; Breaking Mixers: Investigative Countermeasures"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "How does the lesson distinguish Privacy Pools from a traditional mixer in terms of forensic and privacy tradeoffs?",
+      "correct_answer": "Privacy Pools aim to let users selectively prove they are not linked to known illicit deposits without revealing their exact deposit.",
+      "incorrect_answers": [
+        "Privacy Pools aim to expose all transaction links publicly to guarantee compliance without offering any actual user anonymity.",
+        "Privacy Pools aim to escrow private keys with regulators to enable automated audits while preserving user asset custody.",
+        "Privacy Pools aim to reuse Bitcoin CoinJoin rounds to obscure simple transaction flows without any smart contract layer code."
+      ],
+      "explanation": "Privacy Pools are presented as a selective-disclosure design. The broader point is that privacy tools can be designed to reveal compliance-relevant facts without fully exposing user activity.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "privacy-pools",
+        "selective-disclosure",
+        "obfuscation",
+        "comparison"
+      ],
+      "lesson_block": "Privacy Pools",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: The Next Generation: Privacy Pools"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the lesson contrast Monero and Zcash when discussing privacy-coin forensics?",
+      "correct_answer": "Monero hides sender, receiver, and amount by default, while Zcash privacy is optional and depends heavily on shielded-pool use and adoption.",
+      "incorrect_answers": [
+        "Monero exposes all transaction details on a public ledger by default, while Zcash mandates that every user joins the private shielded pool immediately.",
+        "Monero reveals sender and receiver identities to validators, while Zcash conceals them only when exchanges request privacy keys.",
+        "Monero relies on transparent account balances by default, while Zcash hides sender, receiver, and amount for every transaction."
+      ],
+      "explanation": "The lesson uses the contrast to show that privacy design and user adoption shape forensic visibility. Optional privacy can leave correlation risks when many users remain transparent.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "privacy-coins",
+        "monero",
+        "zcash",
+        "comparison"
+      ],
+      "lesson_block": "Privacy Systems Vary By Design And Adoption",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Monero (XMR): Privacy by Default; Zcash (ZEC): Optional Privacy"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A launderer moves funds from one chain to another. Which hop is likely to leave the strongest on-chain linkage according to the lesson?",
+      "correct_answer": "A smart-contract bridge that records lock-and-mint events with correlated amounts and timing.",
+      "incorrect_answers": [
+        "A default privacy-coin transaction that completely conceals the sender, receiver, and asset amounts.",
+        "A cash-based private OTC trade occurring entirely outside of the public blockchain ledger.",
+        "A low-volume mixer transaction that spreads small withdrawals days apart across separate addresses."
+      ],
+      "explanation": "Not all chain hops are equally opaque. Bridge mechanisms can leave explicit lock-and-mint evidence, while privacy coins or off-chain endpoints may force analysts toward weaker correlations or external records.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "chain-hopping",
+        "cross-chain-bridges",
+        "cross-chain-forensics",
+        "scenario"
+      ],
+      "lesson_block": "Chain Hopping",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: The Modern Launderer: Chain Hopping; Not All Hops Are Equally Opaque"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "In a Bitfinex-style investigation, analysts trace peeling chains and cluster addresses, but the identity link comes from exchange records, OSINT, seized cloud data, and recovered keys. What lesson principle does this best illustrate?",
+      "correct_answer": "Graph analysis can generate strong leads, but attribution usually requires endpoint evidence, legal process, and operational-security failures.",
+      "incorrect_answers": [
+        "A perfect blockchain graph reconstruction is always sufficient to prove identity, so physical attribution needs no off-chain evidence.",
+        "Privacy failures occur exclusively when academic cryptographers break core protocol algorithms, meaning human user errors have zero impact on security.",
+        "Centralized KYC records can replace the need for on-chain tracing, meaning public ledger data holds no real forensic value in court cases."
+      ],
+      "explanation": "The case study's conceptual role is to show evidence fusion. Repeated graph patterns mattered, but the case turned on chokepoints, subpoenas, OSINT, seized infrastructure, and human mistakes.",
+      "difficulty_level": 5,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "slides",
+        "bitfinex-case-study",
+        "attribution",
+        "osint",
+        "opsec-failure"
+      ],
+      "lesson_block": "Case Study Integrates The Lesson",
+      "source_type": "slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/forensics_02-FO-foundations_obfuscation_tracing-slides-only.qmd: Case Study: The Bitfinex Hack; The Fatal Flaw: KYC Subpoenas; The Takedown and The Cloud Seizure"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A student argues that public blockchains make attribution automatic because anyone can inspect the ledger. Which correction best reflects the assigned reading?",
+      "correct_answer": "Public ledgers make flows visible, but pseudonymous addresses still require clustering and off-chain correlation before identity claims are justified.",
+      "incorrect_answers": [
+        "Public ledgers completely hide transaction histories from unauthorized viewers, meaning graph tracing cannot start without a legal warrant.",
+        "Pseudonymous addresses are legally equivalent to fully verified real-world identities, meaning a confirmed transaction establishes legal guilt immediately.",
+        "Public ledgers reveal identities automatically on proof-of-work blockchains, meaning miners are legally required to publish real names of all transaction senders."
+      ],
+      "explanation": "The reading frames blockchain forensics around the tension between transparency and pseudonymity. Visibility supports tracing, but addresses and transactions do not inherently identify real-world actors.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "reading",
+        "assigned-reading",
+        "blockchain-forensics",
+        "pseudonymity",
+        "attribution"
+      ],
+      "lesson_block": "Transparency Versus Attribution",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt: lines 77-83 and 453-462, transparency versus pseudonymous attribution"
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "An investigator collects a suspicious address list and immediately writes a report, but never documents how the transaction data was collected or hashes the exported evidence. Which adapted forensic lifecycle need is most clearly missing?",
+      "correct_answer": "Preservation and chain-of-custody work that maintains integrity, documentation, and reliability of the evidence.",
+      "incorrect_answers": [
+        "Identification of the correct blockchain ledger that automatically documents collection methods and protocol details.",
+        "Graph clustering heuristics that establish a suspect's physical identity using only public ledger data.",
+        "AI predictive modeling that must be completed before any physical on-chain records can be cryptographically preserved."
+      ],
+      "explanation": "The reading maps digital forensic phases onto blockchain evidence. Collection and analysis are not enough; preservation requires hashes, documentation, and handling records so results can be trusted and explained.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "reading",
+        "assigned-reading",
+        "forensic-lifecycle",
+        "evidence-integrity",
+        "chain-of-custody"
+      ],
+      "lesson_block": "Forensic Lifecycle Adaptation",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt: lines 524-535, preservation, hashes, documentation, and chain of custody"
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A blockchain evidence-management system stores hashes and custody events on a tamper-evident ledger. What limitation from the reading should an analyst still recognize?",
+      "correct_answer": "Tamper evidence can strengthen integrity, but it does not by itself solve privacy, scalability, integration, admissibility, or attribution problems.",
+      "incorrect_answers": [
+        "Tamper evidence guarantees complete legal admissibility, and it automatically resolves all underlying scalability, privacy, and attribution limitations.",
+        "Tamper evidence makes custody records unnecessary because ledger hashes prove who collected each file, when, and why in every forensic case.",
+        "Blockchain-based custody systems are useless, as immutability prevents investigators from proving target file reliability in court records."
+      ],
+      "explanation": "The reading notes that many frameworks promise integrity, custody, transparency, and auditability, but often lack real-world evaluation and still face operational and legal constraints.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "reading",
+        "assigned-reading",
+        "evidence-integrity",
+        "legal-admissibility",
+        "scalability",
+        "privacy-risks"
+      ],
+      "lesson_block": "Blockchain-Based Evidence Management",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt: lines 95-101, 1009-1038, and 2182-2252, evidence-management benefits and limits"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "A vendor claims its AI tool can replace investigators by automatically labeling suspicious blockchain activity across every chain. Which response best reflects the reading's position?",
+      "correct_answer": "Automation can help with scale, anomaly detection, and pattern recognition, but it still needs validation, specialized expertise, and human interpretation.",
+      "incorrect_answers": [
+        "AI tools make standard court admissibility processes completely irrelevant, because machine learning model outputs are treated as self-authenticating evidence.",
+        "A single AI model can resolve every ledger type because protocol differences do not affect tracing, clustering, or legal evidence interpretation.",
+        "AI modeling is unnecessary for blockchain forensics, because investigations can always be solved through manual transaction log tracing alone."
+      ],
+      "explanation": "The reading treats AI and ML as future directions for scale and automation, not as solved replacements for expert judgment. It also stresses protocol differences, standardization gaps, and legal constraints.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "02-fo-foundations-obfuscation-tracing",
+        "reading",
+        "assigned-reading",
+        "ai-ml-forensics",
+        "scalability",
+        "standardization",
+        "expert-judgment"
+      ],
+      "lesson_block": "Automation And Scale",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/blockchain_forensics_mdpi.txt: lines 2262-2284 and 2354-2367, AI/ML automation and future directions"
+    }
+  ]
+}

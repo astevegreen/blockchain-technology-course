@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>XOR Microlab — Encrypt / Decrypt with hex: inputs</title>
+<style>
+  :root{
+    --fg:#0f172a; --muted:#475569; --bg:#ffffff; --soft:#f8fafc;
+    --accent:#2563eb; --b1:#1d4ed8; --b0:#94a3b8;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans)}
+  .wrap{max-width:1000px;margin:32px auto;padding:0 16px}
+  h1{font-size:1.35rem;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .panel{background:var(--soft);border-radius:14px;padding:16px;margin:16px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  label{font-weight:600;display:block;margin-bottom:6px}
+  textarea{
+    width:100%;min-height:90px;resize:vertical;border:1px solid #e5e7eb;border-radius:10px;padding:10px;
+    font-family:var(--mono);font-size:0.95rem
+  }
+  .hexline{font-family:var(--mono);font-size:0.9rem;color:#111827;background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:8px;word-break:break-all}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .mode{display:flex;gap:10px;align-items:center}
+  button{font:inherit;border:1px solid #e5e7eb;border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer}
+  .note{color:var(--muted);font-size:.9rem}
+  .warn{color:#b91c1c;font-size:.9rem}
+  /* Bit viz */
+  .viz{overflow:auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+  .row{display:flex;gap:8px;align-items:flex-start;margin:6px 0}
+  .row .label{min-width:120px;color:var(--muted);font-size:.9rem}
+  .bits{display:flex;flex-wrap:wrap;gap:6px}
+  .byte{display:flex;gap:2px;padding:2px 4px;border-radius:6px;background:#f8fafc}
+  .bit{
+    width:16px;height:22px;line-height:22px;text-align:center;border-radius:4px;
+    font-family:var(--mono);font-size:.85rem;color:#fff;
+  }
+  .b1{background:var(--b1)}
+  .b0{background:var(--b0)}
+  .out .b1{background:#16a34a}
+  .out .b0{background:#a3a3a3}
+  .outline{border-top:1px dashed #e5e7eb;margin:10px 0}
+  .result{display:grid;grid-template-columns:1fr;gap:8px}
+  .finalText{white-space:pre-wrap;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:8px;font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>XOR Microlab (One-Time Pad) — Encrypt & Decrypt</h1>
+  <p class="sub">Type **plaintext**/**ciphertext** and an **OTP**, or generate an OTP. Prefix any input with <code>hex:</code> to enter raw bytes (e.g., <code>hex:414141</code> for “AAA”).</p>
+
+  <div class="panel">
+    <div class="mode">
+      <strong>Mode:</strong>
+      <label><input type="radio" name="mode" value="enc" checked> Encrypt (PT ⊕ OTP → CT)</label>
+      <label><input type="radio" name="mode" value="dec"> Decrypt (CT ⊕ OTP → PT)</label>
+    </div>
+    <div class="grid" style="margin-top:10px">
+      <div>
+        <label for="pt">Plaintext</label>
+        <textarea id="pt" placeholder="Enter message… e.g., ATTACK AT DAWN"></textarea>
+        <div class="hexline" id="hexPT">hex: —</div>
+      </div>
+      <div>
+        <label for="otp">One-Time Pad</label>
+        <textarea id="otp" placeholder="Enter OTP or click Generate…"></textarea>
+        <div class="hexline" id="hexOTP">hex: —</div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <div>
+        <label for="ct">Ciphertext</label>
+        <textarea id="ct" placeholder='Enter ciphertext (or will be produced). Supports "hex:...".'></textarea>
+        <div class="hexline" id="hexCT">hex: —</div>
+      </div>
+      <div class="controls">
+        <button id="gen">Generate OTP (seed = current time)</button>
+        <span class="note">OTP uses a time-seeded PRNG as printable ASCII (32–126) unless you type <code>hex:</code> yourself.</span>
+        <div id="lenWarn" class="warn" style="display:none;">Lengths differ — XOR uses the overlapping prefix.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin:0 0 8px">Live XOR Illustration</h3>
+    <div class="viz" id="viz">
+      <div class="row">
+        <div class="label" id="opALabel">Plaintext</div>
+        <div class="bits" id="bitsA"></div>
+      </div>
+      <div class="row">
+        <div class="label">OTP</div>
+        <div class="bits" id="bitsOTP"></div>
+      </div>
+      <div class="outline"></div>
+      <div class="row">
+        <div class="label" id="opOutLabel">XOR (PT ⊕ OTP)</div>
+        <div class="bits out" id="bitsOUT"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin:0 0 8px">XOR Result</h3>
+    <div class="result">
+      <div class="hexline" id="hexOUT">xor hex: —</div>
+      <div class="finalText" id="textOUT">xor text: —</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== Byte helpers ===== */
+const te = new TextEncoder();
+
+function parseHexString(hex){
+  const s = hex.trim().replace(/^hex:/i,'').replace(/\s+/g,'');
+  if (s.length % 2) throw new Error('hex length must be even');
+  const out = new Uint8Array(s.length/2);
+  for (let i=0;i<out.length;i++){
+    out[i] = parseInt(s.slice(2*i,2*i+2),16);
+    if (Number.isNaN(out[i])) throw new Error('invalid hex');
+  }
+  return out;
+}
+function parseInputFlexible(text){
+  if (/^\s*hex:/i.test(text)) return parseHexString(text);
+  return te.encode(text); // UTF-8
+}
+function bytesToHex(u8){ return Array.from(u8).map(b=>b.toString(16).padStart(2,'0')).join(''); }
+function bytesToLatin1(u8){ return Array.from(u8).map(b=>String.fromCharCode(b)).join(''); }
+function xorBytes(a,b){
+  const L = Math.min(a.length, b.length);
+  const out = new Uint8Array(L);
+  for(let i=0;i<L;i++) out[i] = a[i]^b[i];
+  return out;
+}
+function byteToBits(b){ return b.toString(2).padStart(8,'0').split('').map(ch => ({bit: ch, cls: ch==='1'?'b1':'b0'})); }
+function renderByte(b, extraCls=''){
+  const bits = byteToBits(b);
+  const wrap = document.createElement('div'); wrap.className = 'byte ' + extraCls;
+  for(const {bit, cls} of bits){ const span = document.createElement('div'); span.className = 'bit ' + cls; span.textContent = bit; wrap.appendChild(span); }
+  return wrap;
+}
+function renderBitsRow(container, bytes, extraCls=''){
+  container.innerHTML = '';
+  for(const b of bytes){ container.appendChild(renderByte(b, extraCls)); }
+  if(bytes.length===0){ const d=document.createElement('div'); d.textContent='—'; container.appendChild(d); }
+}
+
+/* ===== Time-seeded PRNG (xorshift32) for printable OTP ===== */
+function XorShift32(seed){ let x = seed>>>0 || 0x9e3779b9; return () => { x ^= x << 13; x >>>= 0; x ^= x >> 17; x >>>= 0; x ^= x << 5; x >>>= 0; return x>>>0; }; }
+function genOTPPrintable(len){
+  const next = XorShift32(Date.now() & 0xffffffff);
+  let s = '';
+  for(let i=0;i<len;i++){ const r = next() & 0xff; const ch = (r % 95) + 32; s += String.fromCharCode(ch); } // printable ASCII
+  return s;
+}
+
+/* ===== Wiring ===== */
+const $ = sel => document.querySelector(sel);
+const inPT = $('#pt'), inOTP = $('#otp'), inCT = $('#ct');
+const hexPT = $('#hexPT'), hexOTP = $('#hexOTP'), hexCT = $('#hexCT');
+const bitsA = $('#bitsA'), bitsB = $('#bitsOTP'), bitsOUT = $('#bitsOUT');
+const hexOUT = $('#hexOUT'), textOUT = $('#textOUT'), lenWarn = $('#lenWarn');
+const btnGen = $('#gen');
+const modeRadios = document.querySelectorAll('input[name="mode"]');
+const opALabel = $('#opALabel'), opOutLabel = $('#opOutLabel');
+
+let internalUpdate = false;
+
+function currentMode(){
+  for (const r of modeRadios) if (r.checked) return r.value; // 'enc' or 'dec'
+  return 'enc';
+}
+
+function updateAll(){
+  if (internalUpdate) return;
+
+  const mode = currentMode();
+  // Parse inputs (hex:... or text)
+  let ptBytes = new Uint8Array(0), otpBytes = new Uint8Array(0), ctBytes = new Uint8Array(0);
+  try { ptBytes = parseInputFlexible(inPT.value); } catch(e){ ptBytes = new Uint8Array(0); }
+  try { otpBytes = parseInputFlexible(inOTP.value); } catch(e){ otpBytes = new Uint8Array(0); }
+  try { ctBytes = parseInputFlexible(inCT.value); } catch(e){ ctBytes = new Uint8Array(0); }
+
+  // Hex under inputs
+  hexPT.textContent = ptBytes.length ? ('hex: ' + bytesToHex(ptBytes)) : 'hex: —';
+  hexOTP.textContent = otpBytes.length ? ('hex: ' + bytesToHex(otpBytes)) : 'hex: —';
+  hexCT.textContent = ctBytes.length ? ('hex: ' + bytesToHex(ctBytes)) : 'hex: —';
+
+  // Do XOR per mode
+  let A, B, OUT;
+  if (mode === 'enc') {
+    A = ptBytes; B = otpBytes; OUT = xorBytes(A,B); // CT
+  } else {
+    A = ctBytes; B = otpBytes; OUT = xorBytes(A,B); // PT
+  }
+
+  // Length warning based on operands in play
+  lenWarn.style.display = (A.length && B.length && A.length !== B.length) ? 'block' : 'none';
+
+  // Render bit visualization rows and labels
+  opALabel.textContent = (mode === 'enc') ? 'Plaintext' : 'Ciphertext';
+  opOutLabel.textContent = (mode === 'enc') ? 'XOR (PT ⊕ OTP → CT)' : 'XOR (CT ⊕ OTP → PT)';
+  renderBitsRow(bitsA, A);
+  renderBitsRow(bitsB, B);
+  renderBitsRow(bitsOUT, OUT, 'out');
+
+  // Result hex/text (OUT = CT in enc mode, OUT = PT in dec mode)
+  hexOUT.textContent = OUT.length ? ('xor hex: ' + bytesToHex(OUT)) : 'xor hex: —';
+  textOUT.textContent = 'xor text: ' + (OUT.length ? bytesToLatin1(OUT) : '—');
+
+  // Reflect computed OUT into the “other” textarea (without recursion)
+  internalUpdate = true;
+  if (mode === 'enc') {
+    // Set ciphertext box to the computed OUT (as raw text, not hex)
+    inCT.value = bytesToLatin1(OUT);
+    hexCT.textContent = OUT.length ? ('hex: ' + bytesToHex(OUT)) : 'hex: —';
+  } else {
+    // Set plaintext box to the computed OUT (as raw text)
+    inPT.value = bytesToLatin1(OUT);
+    hexPT.textContent = OUT.length ? ('hex: ' + bytesToHex(OUT)) : 'hex: —';
+  }
+  internalUpdate = false;
+}
+
+// Regenerate OTP based on active operand length (PT in enc mode, CT in dec mode)
+btnGen.addEventListener('click', () => {
+  const mode = currentMode();
+  const refLen = (mode === 'enc')
+    ? parseInputFlexible(/^\s*hex:/i.test(inPT.value) ? inPT.value : inPT.value).length
+    : parseInputFlexible(/^\s*hex:/i.test(inCT.value) ? inCT.value : inCT.value).length;
+  const otp = genOTPPrintable(refLen || 16);
+  inOTP.value = otp;
+  updateAll();
+});
+
+[inPT, inOTP, inCT].forEach(el => {
+  el.addEventListener('input', updateAll);
+  el.addEventListener('change', updateAll);
+});
+modeRadios.forEach(r => r.addEventListener('change', updateAll));
+
+// Initial state
+updateAll();
+</script>
+</body>
+</html>

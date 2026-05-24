@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Instructor Sessions</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#1e1e1e; color:#eee;
+           margin:0; padding:1.5rem; }
+    h1 { font-size:1.3rem; margin:0 0 1rem; color:#f9c80e; }
+    table { border-collapse: collapse; width:100%; max-width:900px;
+            background:#252525; }
+    th, td { text-align:left; padding:0.5rem 0.75rem;
+             border-bottom:1px solid #444; font-size:0.9rem; }
+    th { background:#2d2d2d; color:#f9c80e; text-transform:uppercase;
+         letter-spacing:0.04em; font-size:0.75rem; }
+    tr.self td { color:#9fd39f; }
+    button { background:#b03030; color:#fff; border:0; padding:0.3rem 0.7rem;
+             border-radius:3px; cursor:pointer; font-size:0.8rem; }
+    button:disabled { opacity:0.4; cursor:not-allowed; }
+    .nav { margin-bottom:1rem; }
+    .nav a { color:#f9c80e; margin-right:1rem; text-decoration:none; }
+    .msg { margin:1rem 0; color:#9fd39f; }
+    .msg.err { color:#fca5a5; }
+    .jti { font-family: monospace; font-size:0.75rem; color:#aaa; }
+  </style>
+</head>
+<body>
+  <script src="/instructor/csrf.js"></script>
+  <nav class="nav">
+    <a href="/instructor/">&larr; Instructor Portal</a>
+    <a href="/instructor/logout">Log out</a>
+  </nav>
+  <h1>Active Instructor Sessions</h1>
+  <div id="msg" class="msg" style="display:none"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>User</th><th>JTI</th><th>Issued</th><th>Last seen</th>
+        <th>IP</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+<script>
+let selfJti = null;
+
+function fmtTime(unix) {
+  if (!unix) return '-';
+  const d = new Date(unix * 1000);
+  return d.toLocaleString();
+}
+
+async function load() {
+  const rows = document.getElementById('rows');
+  rows.innerHTML = '<tr><td colspan="6">Loading…</td></tr>';
+  try {
+    const me = await (await fetch('/api/instructor/whoami',
+                                  { credentials:'same-origin' })).json();
+    // whoami doesn't expose jti (intentional); we detect "self" row only
+    // by matching `sub` — imperfect but OK for a single-admin classroom.
+    const r = await fetch('/api/instructor/sessions',
+                          { credentials:'same-origin' });
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    rows.innerHTML = '';
+    if (!j.sessions.length) {
+      rows.innerHTML = '<tr><td colspan="6">No active sessions.</td></tr>';
+      return;
+    }
+    for (const s of j.sessions) {
+      const tr = document.createElement('tr');
+      const isSelf = me.sub && me.sub === s.sub;
+      if (isSelf) tr.classList.add('self');
+      tr.innerHTML = `
+        <td>${s.sub || '-'}${isSelf ? ' (you)' : ''}</td>
+        <td class="jti">${s.jti.slice(0, 12)}…</td>
+        <td>${fmtTime(s.iat)}</td>
+        <td>${fmtTime(s.last_seen)}</td>
+        <td>${s.ip || '-'}</td>
+        <td>
+          <button data-jti="${s.jti}" ${isSelf ? 'disabled title="Use Log out for your own session"' : ''}>
+            Revoke
+          </button>
+        </td>`;
+      rows.appendChild(tr);
+    }
+    for (const btn of rows.querySelectorAll('button[data-jti]')) {
+      btn.addEventListener('click', () => revoke(btn.dataset.jti));
+    }
+  } catch (e) {
+    rows.innerHTML = `<tr><td colspan="6">Failed to load: ${e}</td></tr>`;
+  }
+}
+
+async function revoke(jti) {
+  const msg = document.getElementById('msg');
+  msg.style.display = 'block';
+  msg.className = 'msg';
+  msg.textContent = 'Revoking…';
+  try {
+    const r = await fetch('/api/instructor/sessions/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ jti }),
+    });
+    const j = await r.json();
+    if (!j.success) throw new Error(j.message || r.status);
+    msg.textContent = 'Revoked.';
+    await load();
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'Revoke failed: ' + e;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

@@ -1,0 +1,1229 @@
+---
+title: Bitcoin — Transactions and Mining
+subtitle: 'Section VI: Bitcoin Framework'
+author: Army Cyber Institute
+lesson: 02-BF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## Agenda
+- First, we start with wallets, keys, and addresses: what a Bitcoin user actually controls.
+- Next, we follow how a transaction is created, broadcast, and represented in the UTXO model.
+- Then, we examine blocks, mining, and how miners assemble and propagate valid blocks.
+- Finally, we connect confirmations, chain growth, and mining practice into one end-to-end system.
+
+
+## From Wallet to Block
+
+- This lesson follows two linked actions in Bitcoin: **transactions** and **mining**.
+- Users create and sign transactions; miners gather valid transactions into blocks.
+- Together, these actions move value, update the ledger, and secure the network.
+
+**Let's start with what a Bitcoin user actually has: a wallet that manages keys, addresses, and the authority to spend Bitcoin.**
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening content slide establishes the lesson arc from wallet control to mined block inclusion. It matters here because students need to see transactions and mining as two linked actions inside one lifecycle rather than as separate topics. Emphasize that user signing, node relay, miner selection, and block confirmation are one continuous process.
+
+**Key Points**
+- This lesson follows the path from user-controlled spending authority to block-level confirmation.
+- Transactions and mining are linked: one creates candidate value transfers and the other orders them into the ledger.
+- The lesson begins with wallets because they are the user-facing entry point into that larger process.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+- @bitcoin.orgdevelopers_miningdeveloperguide_2024
+
+:::
+
+## What Are Wallets? {.smaller}
+
+A user typically interacts with the Bitcoin network using a **wallet**, which serves several purposes:
+
+- **Key manager**: it creates or stores the private keys, often from a seed phrase.
+- **Signer**: it produces the digital signatures needed to authorize spending.
+- **State viewer**: it tracks which UTXOs and balances the user can control on-chain.
+- **Applies spending policy**: coin selection, fee estimation, change outputs, and address reuse rules.
+
+Two important clarifications:
+
+- **Wallets do not hold coins**. Coins remain on-chain; the wallet holds the cryptographic authority to control them.
+- **Backups and recovery** matter: seed phrase security is often more important than the wallet interface itself.
+
+::: {.callout-note appearance="simple"}
+**Seed phrase:** a human-readable backup phrase that a wallet can use to regenerate the private keys it manages.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what a wallet really does in Bitcoin: it manages keys, signs transactions, tracks spendable outputs, and applies spending policy. It matters here because many learners mistakenly think a wallet is where coins live rather than where spending authority is organized. Emphasize that coins stay on-chain while the wallet manages the cryptographic means to control them.
+
+**Key Points**
+- A wallet manages keys, signs transactions, and tracks spendable UTXOs.
+- Wallet software also handles policy choices like fee estimation and change handling.
+- Seed phrase backups matter because they protect the root needed to recover that authority.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+
+:::
+## Wallets, Addresses, and Keys
+
+:::: {.columns}
+
+::: {.column width="52%"}
+
+<div style="font-size: 0.84em; line-height: 1.16;">
+
+- Wallets usually manage **many keys and many addresses**, not just one.
+
+- Addresses are typically derived from **public keys**, while the matching **private keys** let a wallet control value sent to those addresses.
+
+- Wallets often generate a **new address for each transaction** to improve privacy, as address reuse can leak information.
+
+</div>
+
+:::
+
+::: {.column width="48%"}
+
+```{dot}
+digraph WalletModel {
+    bgcolor="transparent";
+    rankdir=TB;
+    splines=ortho;
+    nodesep=0.45;
+    ranksep=0.55;
+
+    node [shape=box, style="rounded,filled", color="#64748b", fillcolor="#f8fafc", fontname="Helvetica"];
+    edge [color="#64748b", penwidth=1.3, arrowsize=0.7];
+
+    wallet [label="Wallet\n(manages many keys)", fillcolor="#e0f2fe", color="#38bdf8"];
+
+    subgraph cluster_keys {
+        label="Keys";
+        color="#cbd5e1";
+        style="rounded";
+        k1 [label="Private Key A\n+\nPublic Key A"];
+        k2 [label="Private Key B\n+\nPublic Key B"];
+        k3 [label="Private Key C\n+\nPublic Key C"];
+    }
+
+    subgraph cluster_addresses {
+        label="Addresses";
+        color="#cbd5e1";
+        style="rounded";
+        a1 [label="Address 1"];
+        a2 [label="Address 2"];
+        a3 [label="Address 3"];
+    }
+
+    subgraph cluster_utxos {
+        label="UTXOs";
+        color="#cbd5e1";
+        style="rounded";
+        u1 [label="UTXO\n0.40 BTC", fillcolor="#ecfdf5", color="#34d399"];
+        u2 [label="UTXO\n0.15 BTC", fillcolor="#ecfdf5", color="#34d399"];
+        u3 [label="UTXO\n0.08 BTC", fillcolor="#ecfdf5", color="#34d399"];
+    }
+
+    wallet -> k1;
+    wallet -> k2;
+    wallet -> k3;
+
+    k1 -> a1 [label="derive"];
+    k2 -> a2 [label="derive"];
+    k3 -> a3 [label="derive"];
+
+    a1 -> u1 [label="locks value to"];
+    a2 -> u2 [label="locks value to"];
+    a3 -> u3 [label="locks value to"];
+}
+```
+
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the relationship among wallets, keys, addresses, and UTXOs so students stop treating them as interchangeable terms. It matters here because later transaction mechanics rely on a clear understanding of what is managed locally versus what exists on-chain. Emphasize that wallets manage many keypairs, addresses are derived from public keys, and UTXOs are locked to those addresses.
+
+**Key Points**
+- A wallet usually manages many keypairs and addresses, not a single account identifier.
+- Addresses are derived from public keys, while private keys authorize spending.
+- UTXOs are the on-chain value objects tied to those spending conditions.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+
+## Where Addresses Come From
+
+<div style="font-size: 0.88em; line-height: 1.14;">
+
+- Wallets usually start from one **seed phrase**, then deterministically derive many private keys, public keys, and fresh addresses.
+- This lets one wallet recover and regenerate many addresses from one backup root.
+- The derivation happens locally in wallet software, not through any central registry or issuer.
+- Common address formats include legacy (`1...`) and SegWit (`3...` or `bc1...`).
+
+</div>
+
+```{dot}
+//| fig-width: 13
+//| fig-height: 2.6
+digraph WalletKeyFlow {
+  graph [rankdir=LR, splines=ortho, nodesep=0.7, ranksep=0.9, bgcolor="transparent"];
+  node  [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
+         fontname="Helvetica", fontsize=18, margin=0.18];
+  edge  [fontname="Helvetica", fontsize=13, color="#64748b", penwidth=1.2, arrowsize=0.7];
+
+  Seed [label="Seed Phrase"];
+  Priv [label="Private Keys"];
+  Pub  [label="Public Keys"];
+  Hash [label="Hash160(pubkey)"];
+  Addr [label="Addresses\n(Base58 / Bech32)"];
+
+  Seed -> Priv [label="derive many"];
+  Priv -> Pub  [label="compute"];
+  Pub  -> Hash [label="hash"];
+  Hash -> Addr [label="encode"];
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes address derivation as a local wallet process rooted in a seed phrase rather than in any central registry. It matters here because it explains how a single backup can regenerate many receiving addresses while preserving user autonomy. Emphasize deterministic derivation and the practical role of address formats as encodings of script conditions.
+
+**Key Points**
+- One seed phrase can deterministically derive many private keys, public keys, and addresses.
+- Wallets generate fresh addresses locally, which supports recovery and better privacy habits.
+- Address formats like legacy and SegWit are user-facing encodings, not separate centralized account systems.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+
+:::
+
+
+## Transactions and the UTXO Model {.smaller}
+
+- Bitcoin enters circulation in a **coinbase transaction**, the first transaction of every block.
+- That reward appears as an **Unspent Transaction Output (UTXO)** credited to that block's miner.
+- A **UTXO** is a spendable output, like a receipt for a specific amount of bitcoin from an earlier transaction.
+- Wallet balances are the **sum of the UTXOs** a wallet can spend.
+- UTXOs are **indivisible**: each one must be spent in full or not at all.
+- Transactions use UTXOs as **inputs** and create new UTXOs as **outputs**.
+- New outputs usually go to the **recipient** and back to the **sender** as change.
+- Each UTXO is locked by a script, and spending it requires unlocking data (such as a valid digital signature and public key).
+- After signing a transaction, the wallet broadcasts it to the peer-to-peer network.
+
+::: {.callout-note appearance="simple"}
+**Smallest unit:** One bitcoin can be divided into **100,000,000 satoshis**, so **1 satoshi = 0.00000001 BTC**.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the UTXO model as the accounting foundation for Bitcoin transactions. It matters here because all later transaction examples depend on seeing value as discrete spendable outputs rather than as one mutable balance. Emphasize that transactions consume earlier outputs completely and create new outputs in their place.
+
+**Key Points**
+- A wallet balance is the sum of the UTXOs it can spend.
+- Transactions use existing UTXOs as inputs and create new UTXOs as outputs.
+- Because UTXOs are spent in full, change outputs are a normal part of Bitcoin payments.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+
+## UTXO Visualized
+
+```{dot}
+//| fig-height: 7
+//| fig-width: 15
+
+digraph UTXO_Flow {
+bgcolor="transparent";
+height="100%";
+rankdir=TB;
+node [shape=box, style="rounded,filled", fontname="Inter,Helvetica,Arial",
+fontsize=22, margin=0.25, fillcolor="#f8fafc", color="#cbd5e1"];
+edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+
+subgraph cluster_prev {
+label="Existing UTXOs (Unspent Outputs)";
+labelloc="t";
+color="#e2e8f0";
+U1 [label="UTXO A\nTXID:...:0\nscriptPubKey (locks to Alice)"];
+U2 [label="UTXO B\nTXID:...:1\nscriptPubKey (locks to Alice)"];
+}
+
+subgraph cluster_tx {
+label="Spending Transaction";
+labelloc="t";
+color="#e2e8f0";
+I [label="Inputs\n(ref TXID:index)"];
+UNL [label="Unlocking Data\n(scriptSig / witness)\n(signature + pubkey)", fillcolor="#fef9c3", color="#f59e0b"];
+CORE [label="Transaction Logic\n• verifies scripts\n• sums inputs ≥ outputs\n• includes fee", fillcolor="#e0f2fe", color="#38bdf8"];
+O1 [label="Output #0\nRecipient: Bob\nscriptPubKey (locks to Bob)", fillcolor="#ecfdf5", color="#34d399"];
+O2 [label="Output #1\nChange: Alice\nscriptPubKey (locks to Alice)", fillcolor="#ecfdf5", color="#34d399"];
+}
+
+subgraph cluster_next {
+label="After Inclusion in a Block";
+labelloc="t";
+color="#e2e8f0";
+SPENT [label="Consumed:\nUTXO A, UTXO B\n(removed from UTXO set)", fillcolor="#fee2e2", color="#f87171"];
+NEW1 [label="New UTXO: O#0\n(controls value for Bob)", fillcolor="#ecfdf5", color="#34d399"];
+NEW2 [label="New UTXO: O#1\n(controls change for Alice)", fillcolor="#ecfdf5", color="#34d399"];
+}
+
+U1 -> I;
+U2 -> I;
+I -> UNL [label="script checks"];
+UNL -> CORE;
+CORE -> O1;
+CORE -> O2;
+
+U1 -> SPENT [style=dashed, color="#f87171", label="spent"];
+U2 -> SPENT [style=dashed, color="#f87171", label="spent"];
+O1 -> NEW1;
+O2 -> NEW2;
+
+NOTE2 [shape=note, fillcolor="#fee2e2", color="#f87171",
+label="Double-spend check:\nAn output can be consumed at most once"];
+
+I -> NOTE2 [style=dotted, arrowsize=0.5];
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the UTXO model visually so students can track how inputs are consumed and replaced by new outputs. It matters here because the diagram makes Bitcoin's accounting rules more concrete than a verbal description alone. Emphasize that double-spend prevention begins with the rule that an output can only be consumed once.
+
+**Key Points**
+- Existing UTXOs are referenced as inputs and checked against unlocking data.
+- Valid spending destroys the old outputs and creates new outputs for recipient and change.
+- Bitcoin updates ownership by replacing outputs, not by editing one account balance in place.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_contractsbitcoindeveloper_2024
+
+:::
+
+
+## Why the UTXO Model?
+
+- Bitcoin does not track one mutable account balance; every spendable balance is a collection of **UTXOs**.
+- This makes validation simpler because each referenced output is either **unspent** or already **spent**.
+- It also supports cleaner transaction accounting and more parallel verification than an **account model** like Ethereum's.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why Bitcoin uses the UTXO model instead of a mutable account balance model. It matters here because students should understand that the data model supports simpler double-spend checks and cleaner validation logic. Emphasize that each referenced output is either still unspent or already consumed, which simplifies reasoning about validity.
+
+**Key Points**
+- Bitcoin tracks value as spendable outputs rather than as one changing account state.
+- Validation is simplified because each output has a binary status: unspent or already spent.
+- This model supports straightforward accounting and efficient verification.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+
+## Example Transaction
+
+<div style="font-size: 0.88em; line-height: 1.14;">
+
+- Alice wants to pay Bob **1 BTC**.
+- Alice controls UTXOs: 0.6 BTC + 0.7 BTC.
+- Does the math add up?
+- Why did the change go to a new address?
+
+</div>
+
+
+```{dot}
+#| label: fig-utxo-compose
+#| fig-cap: "Composing a Bitcoin transaction from two different prior UTXOs; change sent to a new address."
+#| echo: false
+#| fig-width: 14
+#| fig-height: 4.5
+digraph UTXOFlow {
+  graph [rankdir=LR, splines=ortho, nodesep=1.1, ranksep=1.0,
+         fontname="Helvetica", fontsize=16, bgcolor="transparent"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=18,
+         margin=0.22, penwidth=1.2, fillcolor="#f5f7fb", color="#64748b"];
+  edge  [fontname="Helvetica", fontsize=13, penwidth=1.1, color="#64748b", arrowsize=0.7];
+
+  U1 [label="0.60 BTC UTXO\n(to Alice addr A1)\nfrom Tx alpha", fillcolor="#FFF9C4", color="#d4b106"];
+  U2 [label="0.70 BTC UTXO\n(to Alice addr A2)\nfrom Tx beta", fillcolor="#FFE0B2", color="#dd8a24"];
+
+  TX [label="Transaction", shape=box, style="rounded,filled,bold", fillcolor="#E3F2FD", color="#38bdf8"];
+
+  OB [label="Bob\n1.00 BTC", fillcolor="#E8F5E9", color="#34d399"];
+  OC [label="Alice (change)\n0.29 BTC\nNEW address A3", style="rounded,filled,bold", fillcolor="#D1C4E9", color="#8b5cf6"];
+
+  U1 -> TX [label="input #1"];
+  U2 -> TX [label="input #2"];
+
+  TX -> OB [label="output #1"];
+  TX -> OC [label="output #2"];
+  
+  {rank=same; U1; U2;}
+  {rank=same; OB; OC;}
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes a concrete UTXO spend so students can see how multiple inputs, change, and fees work together in one real-looking payment. It matters here because abstract rules become easier to retain when mapped onto a simple numerical example. Emphasize that inputs are spent in full, outputs are reassigned, and the fee is the leftover difference.
+
+**Key Points**
+- Alice combines two smaller UTXOs to fund one payment to Bob.
+- Because inputs are fully consumed, change returns to Alice as a new output.
+- The difference between total inputs and total outputs becomes the miner fee.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+
+## Change Addresses and Fees
+
+<div style="font-size: 0.9em; line-height: 1.15;">
+
+- Because UTXOs must be spent in full, any leftover value returns to the sender as **change**.
+- Wallets usually send that change to a **new address** they control, which helps reduce address reuse and improve privacy.
+- The miner fee is **not a separate field** in the transaction body.
+- The sender, usually through their wallet software, **sets the fee** by choosing how much value to leave unassigned to outputs.
+- Instead, the fee is the arithmetic difference: **Inputs - Outputs**.
+- In the previous example: `1.30 BTC in - 1.29 BTC out = 0.01 BTC fee`.
+- A miner claims the fees from the block's transactions by rolling them into that block's **coinbase transaction**.
+- Higher fees usually give a transaction better priority for inclusion in a block.
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the connection between leftover value, privacy-preserving change handling, and fee creation. It matters here because students often assume change and fees are separate special mechanisms rather than natural consequences of the UTXO model. Emphasize that the sender's wallet decides both by selecting outputs and leaving a deliberate difference between total inputs and outputs.
+
+**Key Points**
+- Change exists because UTXOs are consumed in full and excess value must return somewhere.
+- Wallets usually send change to a fresh address to reduce address reuse.
+- Miner fees are created by the arithmetic gap between total inputs and total outputs.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_miningdeveloperguide_2024
+
+:::
+
+
+## Where Does a Transaction Go?
+
+- Transaction -> **local wallet -> node -> mempool**.
+- Mempool = holding area of unconfirmed transactions.
+- Miners choose which mempool transactions to include in a block.
+- Incentive: prioritize higher-fee transactions.
+
+```{dot}
+//| fig-width: 13
+//| fig-height: 2.8
+digraph TxPath {
+  graph [rankdir=LR, splines=ortho, nodesep=0.8, ranksep=0.9, bgcolor="transparent"];
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
+        fontname="Helvetica", fontsize=18, margin=0.18];
+  edge [color="#64748b", penwidth=1.2, arrowsize=0.7, fontname="Helvetica", fontsize=13];
+
+  Wallet [label="Wallet"];
+  Node [label="Full Node"];
+  Mempool [label="Mempool"];
+  Miner [label="Miner"];
+
+  Wallet -> Node;
+  Node -> Mempool;
+  Mempool -> Miner;
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the first network step after transaction creation: broadcast from wallet to node to mempool. It matters here because a signed transaction is not yet part of the blockchain; it must enter the network's relay and selection process first. Emphasize that the mempool is a temporary staging area for valid but unconfirmed transactions.
+
+**Key Points**
+- Wallets hand signed transactions to nodes, which validate and relay them.
+- Valid unconfirmed transactions live in node mempools until mined.
+- Miners generally favor higher-fee transactions when choosing what to include.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+
+## End-to-End Transaction Flow
+
+:::: {.columns}
+
+::: {.column width="10%"}
+:::
+
+::: {.column width="80%"}
+::: {style="font-size: 0.84em;"}
+
+```{mermaid}
+%%{init: {'sequence': {'diagramMarginY': 10, 'actorMargin': 30, 'messageMargin': 18, 'noteMargin': 8}} }%%
+sequenceDiagram
+participant U as Users (Wallets)
+participant N as Full Nodes
+participant M as Miner
+
+U->>N: Broadcast signed transaction
+N-->>N: Gossip to peers (mempool)
+M->>M: Build candidate block from mempool<br/>Find PoW solution (hash < target)
+M->>N: Broadcast new block
+N->>N: Validate block & transactions
+N->>M: Accept if valid
+N->>U: Confirmations increase over time
+```
+
+:::
+:::
+
+::: {.column width="10%"}
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the full lifecycle of a transaction from user signing through confirmation growth. It matters here because students need a single end-to-end picture before the lesson splits into confirmation details and mining mechanics. Emphasize the dual role of full nodes as both relays of pending transactions and validators of mined blocks.
+
+**Key Points**
+- Transactions are signed, broadcast, relayed, mined, validated, and then confirmed over time.
+- Full nodes participate at multiple stages, not just at final block acceptance.
+- Mining and confirmation are extensions of the same transaction lifecycle, not separate workflows.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @bitcoin.orgdevelopers_miningdeveloperguide_2024
+
+:::
+
+
+## When Is a Transaction Complete?
+
+:::: {.columns}
+
+::: {.column width="66%"}
+
+<div style="font-size: 0.98em; line-height: 1.16;">
+
+- Once mined into a block: **1 confirmation**.
+- Mining a new block usually takes about **10 minutes** on average.
+- More confirmations = more security.
+  - **Chain reorganizations** are possible in short windows. (Why?)
+- Exchanges and merchants often require **6 confirmations** (about 1 hour).
+- Finality in Bitcoin is **probabilistic**, not instant.
+
+</div>
+
+:::
+
+::: {.column width="34%"}
+
+```{dot}
+//| fig-width: 4
+//| fig-height: 6.5
+digraph Confirmations {
+  graph [rankdir=TB, splines=false, nodesep=0.25, ranksep=0.35, bgcolor="transparent"];
+  node [shape=box, style="rounded,filled", width=0.9, height=0.55, fixedsize=true,
+        fontname="Helvetica", fontsize=14, color="#475569", penwidth=1.1];
+  edge [color="#94a3b8", penwidth=1.2, arrowsize=0.55];
+
+  b1 [label="1", fillcolor="#ef4444", color="#b91c1c"];
+  b2 [label="2", fillcolor="#f97316", color="#c2410c"];
+  b3 [label="3", fillcolor="#f59e0b", color="#b45309"];
+  b4 [label="4", fillcolor="#eab308", color="#a16207"];
+  b5 [label="5", fillcolor="#84cc16", color="#4d7c0f"];
+  b6 [label=<<B>6</B>>, fillcolor="#22c55e", color="#2563eb", penwidth=2.8];
+  b7 [label="7", fillcolor="#22c55e", color="#15803d"];
+  b8 [label="8", fillcolor="#22c55e", color="#15803d"];
+  b9 [label="9", fillcolor="#22c55e", color="#15803d"];
+  b10 [label="10", fillcolor="#22c55e", color="#15803d"];
+
+  lab_newest [shape=plain, width=3.0, label=< <FONT POINT-SIZE="14">Newest block</FONT> >];
+  lab_oldest [shape=plain, width=3.0, label=< <FONT POINT-SIZE="14">Oldest block</FONT> >];
+  gap_newest_a [shape=plain, width=1.2, label=""];
+  gap_newest_b [shape=plain, width=1.2, label=""];
+  gap_oldest_a [shape=plain, width=1.2, label=""];
+  gap_oldest_b [shape=plain, width=1.2, label=""];
+
+  b1 -> b2 -> b3 -> b4 -> b5 -> b6 -> b7 -> b8 -> b9 -> b10;
+
+  {rank=same; lab_newest; gap_newest_a; gap_newest_b; b1;}
+  {rank=same; lab_oldest; gap_oldest_a; gap_oldest_b; b10;}
+
+  lab_newest -> gap_newest_a [style=invis, weight=10];
+  gap_newest_a -> gap_newest_b [style=invis, weight=10];
+  gap_newest_b -> b1 [style=dashed, arrowhead=none, color="#94a3b8", weight=10];
+  lab_oldest -> gap_oldest_a [style=invis, weight=10];
+  gap_oldest_a -> gap_oldest_b [style=invis, weight=10];
+  gap_oldest_b -> b10 [style=dashed, arrowhead=none, color="#94a3b8", weight=10];
+}
+```
+
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Bitcoin finality as probabilistic confidence that grows with added blocks rather than as an instant binary event. It matters here because students should understand why merchants care about confirmation counts and why short reorganizations are possible near the chain tip. Emphasize that each additional block raises the cost of reversal for an attacker.
+
+**Key Points**
+- One confirmation means the transaction is in a valid block, not that reversal is impossible.
+- Additional confirmations increase the work an attacker would need to replace history.
+- Businesses often wait for more confirmations when value or risk is high.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+
+:::
+
+
+## Transaction Challenges
+
+<div style="font-size: 0.92em; line-height: 1.15;">
+
+- **Slow confirmation**: if fees are too low or the mempool is crowded, transactions may wait a long time before inclusion.
+- **Probabilistic finality**: merchants may not want to treat a payment as settled until several confirmations have passed.
+- **Currency utility**: that delay makes Bitcoin less convenient for instant, in-person payments than cash or cards.
+- **Trade-off**: Bitcoin gains global, decentralized security by accepting slower local settlement.
+- **Price risk**: if bitcoin's price moves before finality, buyers and merchants face exchange-rate uncertainty during the wait.
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the user-facing consequences of delayed and probabilistic settlement. It matters here because students should connect confirmation mechanics to the practical limits of using Bitcoin as an everyday payment system. Emphasize that stronger decentralized security comes with slower local settlement and greater short-term usability friction.
+
+**Key Points**
+- Low fees or crowded mempools can delay inclusion for long periods.
+- Probabilistic finality makes instant in-person settlement less convenient than cash or cards.
+- Bitcoin's security properties come with real trade-offs in speed, certainty, and price exposure.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+## The Data Structure of a Block
+
+:::: {.columns}
+
+::: {.column width="54%"}
+
+<div style="font-size: 0.74em; line-height: 1.12;">
+
+- Each block contains a **header** (hash pointer to prior block, Merkle root, timestamp, nonce, etc.) and a **list of transactions**.
+  
+- Hashes link blocks; changing history breaks the chain (tamper‑evident).
+  
+- Merkle trees compress many transaction hashes into one for efficient verification.
+
+- A block header is only **80 bytes**, but a full block can grow up to Bitcoin's consensus limit of **4 million weight units** (roughly up to about **4 MB**, depending on transaction mix).
+  
+- Structure enables scalability of verification, not infinite throughput.
+
+</div>
+
+:::
+
+::: {.column width="42%"}
+
+```{dot}
+digraph BlockStructure {
+    bgcolor="transparent";
+    rankdir=TB;
+    node [shape=plain];
+
+    block [label=<
+    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0">
+        <TR>
+            <TD>
+                <TABLE BORDER="2" COLOR="#3f4854" CELLBORDER="0" CELLSPACING="0" CELLPADDING="10" WIDTH="260">
+                    <TR>
+                        <TD><FONT POINT-SIZE="18"><B>Block</B></FONT></TD>
+                    </TR>
+                    <TR>
+                        <TD>
+                            <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="100%">
+                                <TR>
+                                    <TD WIDTH="20"></TD>
+                                    <TD ALIGN="CENTER">
+                                        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" WIDTH="200">
+                                            <TR>
+                                                <TD BGCOLOR="#e9eef7">
+                                                    <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="4" CELLPADDING="0" WIDTH="100%">
+                                                        <TR>
+                                                            <TD ALIGN="CENTER"><B>Header</B></TD>
+                                                        </TR>
+                                                        <TR>
+                                                            <TD>
+                                                                <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="4" CELLPADDING="4" WIDTH="100%">
+                                                                    <TR>
+                                                                        <TD BGCOLOR="#ffffff" ALIGN="CENTER">Version<BR/><FONT POINT-SIZE="10">4 bytes</FONT></TD>
+                                                                        <TD BGCOLOR="#ffffff" ALIGN="CENTER">Hash ptr<BR/><FONT POINT-SIZE="10">32 bytes</FONT></TD>
+                                                                    </TR>
+                                                                    <TR>
+                                                                        <TD BGCOLOR="#ffffff" ALIGN="CENTER">Merkle root<BR/><FONT POINT-SIZE="10">32 bytes</FONT></TD>
+                                                                        <TD BGCOLOR="#ffffff" ALIGN="CENTER">Timestamp<BR/><FONT POINT-SIZE="10">4 bytes</FONT></TD>
+                                                                    </TR>
+                                                                    <TR>
+                                                                        <TD BGCOLOR="#ffffff" ALIGN="CENTER">Target<BR/><FONT POINT-SIZE="10">4 bytes</FONT></TD>
+                                                                        <TD BGCOLOR="#ffffff" ALIGN="CENTER">Nonce<BR/><FONT POINT-SIZE="10">4 bytes</FONT></TD>
+                                                                    </TR>
+                                                                </TABLE>
+                                                            </TD>
+                                                        </TR>
+                                                    </TABLE>
+                                                </TD>
+                                            </TR>
+                                        </TABLE>
+                                    </TD>
+                                    <TD WIDTH="20"></TD>
+                                </TR>
+                            </TABLE>
+                        </TD>
+                    </TR>
+                    <TR><TD HEIGHT="10" BORDER="0"></TD></TR>
+                    <TR>
+                        <TD>
+                            <TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0" WIDTH="100%">
+                                <TR>
+                                    <TD WIDTH="20"></TD>
+                                    <TD ALIGN="CENTER">
+                                        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="8" WIDTH="200">
+                                            <TR><TD BORDER="0" ALIGN="CENTER"><B>Transactions</B></TD></TR>
+                                            <TR><TD BGCOLOR="#f7f9fc" WIDTH="184" ALIGN="CENTER">Coinbase Tx</TD></TR>
+                                            <TR><TD BGCOLOR="#f7f9fc" WIDTH="184" ALIGN="CENTER">Tx</TD></TR>
+                                            <TR><TD BGCOLOR="#f7f9fc" WIDTH="184" ALIGN="CENTER">Tx</TD></TR>
+                                            <TR><TD BGCOLOR="#f7f9fc" WIDTH="184" ALIGN="CENTER">Tx</TD></TR>
+                                            <TR><TD BORDER="0" ALIGN="CENTER"><FONT POINT-SIZE="20">...</FONT></TD></TR>
+                                        </TABLE>
+                                    </TD>
+                                    <TD WIDTH="20"></TD>
+                                </TR>
+                            </TABLE>
+                        </TD>
+                    </TR>
+                </TABLE>
+            </TD>
+        </TR>
+    </TABLE>
+    >];
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the internal structure of a block by separating its compact header from its full transaction list. It matters here because mining works on the header while the header itself commits to all included transactions through the Merkle root. Emphasize that the block is both a data container and a compact cryptographic commitment.
+
+**Key Points**
+- A block has a small header plus a larger transaction list beginning with the coinbase transaction.
+- The Merkle root links the header to all included transactions.
+- Hash pointers and compact metadata make verification scalable, though not infinitely scalable.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+
+## Transactions in a Block
+
+- Blocks can contain thousands of transactions.
+- Each transaction contributes to the Merkle tree.
+- Nodes validate every transaction before accepting the block.
+
+<div style="margin-top: -2.5em;">
+
+```{dot}
+#| label: fig-merkle-tree
+#| fig-cap: "Merkle tree construction from transaction hashes to the Merkle Root."
+#| echo: false
+#| fig-width: 5.5
+#| fig-height: 2.8
+digraph Merkle {
+graph [rankdir=BT, splines=ortho, fontsize=9, nodesep=0.22, ranksep=0.22];
+node  [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica", fontsize=9, margin=0.08];
+edge  [fontname="Helvetica", fontsize=8, penwidth=0.9];
+bgcolor="transparent";
+
+TX1 [label="TX1"];
+TX2 [label="TX2"];
+TX3 [label="TX3"];
+TX4 [label="TX4"];
+
+HTX1 [label="Hash(TX1)"];
+HTX2 [label="Hash(TX2)"];
+HTX3 [label="Hash(TX3)"];
+HTX4 [label="Hash(TX4)"];
+
+H12 [label="Hash(H1 || H2)"];
+H34 [label="Hash(H3 || H4)"];
+
+MR  [label="Merkle Root", shape=oval, style=filled, fillcolor="#e8f5e9", fontsize=10];
+
+TX1 -> HTX1;
+TX2 -> HTX2;
+TX3 -> HTX3;
+TX4 -> HTX4;
+HTX1 -> H12;
+HTX2 -> H12;
+HTX3 -> H34;
+HTX4 -> H34;
+H12 -> MR;
+H34 -> MR;
+
+{rank=same; TX1; TX2; TX3; TX4;}
+{rank=same; HTX1; HTX2; HTX3; HTX4;}
+}
+```
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how many transactions are summarized into one block commitment using a Merkle tree. It matters here because students need to see why the header can stand in for a much larger transaction set during validation. Emphasize that nodes still validate all transactions even though the header stores only the root.
+
+**Key Points**
+- Each transaction contributes a leaf hash to the Merkle tree.
+- The Merkle root commits the block header to the full transaction set.
+- Merkle trees support compact inclusion proofs without requiring the entire block body.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+
+:::
+
+
+## Mining a Candidate Block
+
+:::: {.columns}
+
+::: {.column width="40%"}
+<div style="font-size: 0.8em; line-height: 1.1;">
+
+- Miners select valid pending transactions for a candidate block.
+- They add a **coinbase transaction** to claim subsidy and fees.
+- They hash the block header, mainly varying the **nonce** and related permitted fields.
+- The goal is a header hash below the current **difficulty target**.
+
+</div>
+:::
+
+::: {.column width="60%"}
+::: {style="font-size: 0.8em;"}
+```{dot}
+//| fig-width: 8.5
+//| fig-height: 5.4
+digraph MiningFlow {
+  graph [rankdir=TB, splines=ortho, nodesep=0.45, ranksep=0.42, bgcolor="transparent"];
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
+        fontname="Helvetica", fontsize=12, margin=0.14];
+  edge [color="#94a3b8", penwidth=1.1, arrowsize=0.65, fontname="Helvetica", fontsize=10];
+
+  s1 [label="Users -> Full Nodes\nBroadcast signed transaction"];
+  s2 [label="Full Nodes\nGossip to peers (mempool)", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
+  s3 [label="Miner\nBuild candidate block from mempool\nFind PoW solution (hash < target)", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
+  s4 [label="Miner -> Full Nodes\nBroadcast new block"];
+  s5 [label="Full Nodes\nValidate block & transactions"];
+  s6 [label="Full Nodes -> Miner\nAccept if valid"];
+  s7 [label="Full Nodes -> Users\nConfirmations increase over time"];
+
+  s1 -> s2 [color="#2563eb", penwidth=2];
+  s2 -> s3 [color="#2563eb", penwidth=2];
+  s3 -> s4;
+  s4 -> s5;
+  s5 -> s6;
+  s6 -> s7;
+}
+```
+:::
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the miner's job as assembling a candidate block and searching for a valid proof-of-work over its header. It matters here because here is where transaction inclusion, issuance, and competition for block rewards come together. Emphasize that mining is probabilistic and that miners vary allowed fields to keep generating new candidate headers.
+
+**Key Points**
+- Miners select valid transactions, add a coinbase transaction, and build a candidate block.
+- They search for a header hash below the current difficulty target by varying nonce-related data.
+- Mining joins transaction inclusion, new issuance, and network security in one process.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_miningdeveloperguide_2024
+
+:::
+
+
+## After Finding a Valid Block {.smaller}
+:::: {.columns}
+::: {.column width="40%"}
+- Miner broadcasts block to peers.
+- Peers validate:
+  - Proof-of-Work meets difficulty.
+  - Transactions are valid and unspent.
+  - Block builds on current longest chain.
+- Only then is the block relayed further.
+:::
+
+::: {.column width="60%"}
+::: {style="font-size: 0.8em;"}
+```{dot}
+//| fig-width: 8.5
+//| fig-height: 5.4
+digraph Step1Flow {
+  graph [rankdir=TB, splines=ortho, nodesep=0.45, ranksep=0.42, bgcolor="transparent"];
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
+        fontname="Helvetica", fontsize=12, margin=0.14];
+  edge [color="#94a3b8", penwidth=1.1, arrowsize=0.65, fontname="Helvetica", fontsize=10];
+
+  s1 [label="Users -> Full Nodes\nBroadcast signed transaction"];
+  s2 [label="Full Nodes\nGossip to peers (mempool)"];
+  s3 [label="Miner\nBuild candidate block from mempool\nFind PoW solution (hash < target)"];
+  s4 [label="Miner -> Full Nodes\nBroadcast new block", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
+  s5 [label="Full Nodes\nValidate block & transactions", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
+  s6 [label="Full Nodes -> Miner\nAccept if valid"];
+  s7 [label="Full Nodes -> Users\nConfirmations increase over time"];
+
+  s1 -> s2;
+  s2 -> s3;
+  s3 -> s4 [color="#2563eb", penwidth=2];
+  s4 -> s5 [color="#2563eb", penwidth=2];
+  s5 -> s6;
+  s6 -> s7;
+}
+```
+:::
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that finding a valid proof-of-work does not by itself place a block into Bitcoin's accepted history. It matters here because students must see that decentralized validation by peers is still the gate before broad propagation. Emphasize that miners propose blocks, but full nodes decide whether those blocks are relayed and accepted.
+
+**Key Points**
+- A mined block must still be broadcast to peers and survive independent validation.
+- Peers check proof-of-work, transaction validity, and proper chain extension before relaying.
+- Invalid blocks die locally instead of becoming part of the shared ledger.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+
+:::
+
+
+## Adding to the Chain {.smaller}
+:::: {.columns}
+::: {.column width="40%"}
+- If valid: the block is appended to a node's local chain.
+- Competing valid blocks can create temporary **forks**.
+- The network converges on the chain with the most cumulative work.
+- Transactions gain confirmations as more blocks are added on top.
+:::
+
+::: {.column width="60%"}
+::: {style="font-size: 0.8em;"}
+```{dot}
+//| fig-width: 8.5
+//| fig-height: 5.4
+digraph Step2Flow {
+  graph [rankdir=TB, splines=ortho, nodesep=0.45, ranksep=0.42, bgcolor="transparent"];
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
+        fontname="Helvetica", fontsize=12, margin=0.14];
+  edge [color="#94a3b8", penwidth=1.1, arrowsize=0.65, fontname="Helvetica", fontsize=10];
+
+  s1 [label="Users -> Full Nodes\nBroadcast signed transaction"];
+  s2 [label="Full Nodes\nGossip to peers (mempool)"];
+  s3 [label="Miner\nBuild candidate block from mempool\nFind PoW solution (hash < target)"];
+  s4 [label="Miner -> Full Nodes\nBroadcast new block"];
+  s5 [label="Full Nodes\nValidate block & transactions"];
+  s6 [label="Full Nodes -> Miner\nAccept if valid", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
+  s7 [label="Full Nodes -> Users\nConfirmations increase over time", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
+
+  s1 -> s2;
+  s2 -> s3;
+  s3 -> s4;
+  s4 -> s5;
+  s5 -> s6 [color="#2563eb", penwidth=2];
+  s6 -> s7 [color="#2563eb", penwidth=2];
+}
+```
+:::
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how local acceptance becomes chain-level convergence despite occasional temporary forks. It matters here because learners need to understand that multiple valid tips can coexist briefly without breaking the system's overall ordering rule. Emphasize that confirmations grow as the network continues building on the highest-work branch.
+
+**Key Points**
+- Nodes append valid blocks locally, but simultaneous discoveries can create short-lived forks.
+- The network converges by following the chain with the most cumulative work.
+- Each block added on top of a transaction's block increases confidence in that transaction's permanence.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+
+:::
+
+
+## Linking Blocks into a Chain {.smaller}
+- Each block references the **hash of the previous block header**.
+- Creates an **immutable chain** of history back to Genesis Block (2009).
+
+```{dot}
+#| label: fig-linking-blocks
+#| fig-cap: "Blocks linked by the previous block header hash."
+#| echo: false
+#| fig-width: 8
+#| fig-height: 2.5
+digraph Chain {
+graph [rankdir=LR, splines=ortho, nodesep=0.2, ranksep=0.1,
+fontname="Helvetica", fontsize=10];
+node  [shape=record, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica"];
+edge  [fontname="Helvetica"];
+bgcolor="transparent";
+
+G  [label="{ Genesis Block | Header Hash: h₀ }"];
+B1 [label="{ Block 1 | Header Hash: h₁ | Prev: h₀ }"];
+B2 [label="{ Block 2 | Header Hash: h₂ | Prev: h₁ }"];
+B3 [label="{ Block 3 | Header Hash: h₃ | Prev: h₂ }"];
+
+B1 -> G  [label="ref prev header hash (h₀)"];
+B2 -> B1 [label="ref prev header hash (h₁)"];
+B3 -> B2 [label="ref prev header hash (h₂)"];
+
+{rank=same; G; B1; B2; B3;}
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the cryptographic linkage that makes the blockchain tamper-evident over time. It matters here because students have just seen block acceptance in practice and now need to reconnect that process to the underlying hash-linked structure. Emphasize that changing an earlier block forces changes to every later reference and corresponding proof-of-work.
+
+**Key Points**
+- Each block header references the previous block header hash.
+- The chain structure makes history tamper-evident because edits ripple forward.
+- Rewriting deep history requires rebuilding later work and catching up with the honest chain.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+
+:::
+
+
+## Transactions and Mining Together
+
+- Transactions move value through the UTXO model.
+- Mining packages those transactions into blocks and secures their ordering.
+- Bitcoin works because spending, validation, incentives, and chain growth reinforce one another.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the lesson's central synthesis: transactions move value while mining orders and secures those transfers inside the chain. It matters here because the lesson is transitioning from individual mechanisms back to a systems-level picture before the historical hardware note and summary. Emphasize that spending, validation, incentives, and chain growth are mutually reinforcing parts of one design.
+
+**Key Points**
+- Transactions create and transfer UTXOs, while mining orders and confirms them.
+- Full-node validation and incentives connect user spending to durable ledger state.
+- Bitcoin works because these components reinforce one another rather than operating independently.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_miningdeveloperguide_2024
+
+:::
+
+
+## Evolution of Mining Hardware {.smaller}
+
+
+- In Bitcoin's early years, ordinary **CPUs** could mine blocks; miners soon shifted to **GPUs**, which performed SHA-256 hashing much faster through parallel computation.
+- A brief **FPGA** phase followed, but by about **2013** specialized **ASIC** miners had become the practical standard because they were far faster and more energy efficient.
+- Modern Bitcoin mining is therefore an industrial activity: profitability depends heavily on efficient ASICs, cheap electricity, and cooling.
+- A block header nonce is only **32 bits**, so miners eventually exhaust that search space; mining software then updates the **coinbase extra nonce**, rebuilds the Merkle root, and may refresh the timestamp within allowed bounds before hashing again.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes mining hardware evolution as a consequence of competitive proof-of-work economics. It matters here because it shows how a protocol rule translated into a real-world industrial arms race over efficiency and electricity. Emphasize that the move from CPUs to ASICs explains why modern mining is specialized and capital-intensive.
+
+**Key Points**
+- Bitcoin mining progressed from CPUs to GPUs to FPGAs and finally to ASICs.
+- Specialized hardware won because SHA-256 mining rewards speed and energy efficiency.
+- Extra nonce updates and related header changes are needed once the simple nonce space is exhausted.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_miningdeveloperguide_2024
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @neumueller_cambridgedigitalmining_2025
+
+:::
+
+
+## Summary
+- Wallets manage keys, addresses, and the authority to spend UTXOs.
+- Bitcoin transactions consume old UTXOs, create new outputs, and move through nodes into the mempool.
+- Miners assemble candidate blocks, search for valid proof-of-work, and broadcast winning blocks to the network.
+- Full nodes validate those blocks, adopt the accepted chain, and confirmations increase as more blocks are added.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This summary slide establishes the lesson's final integrated picture from wallets and UTXOs through mining and confirmations. It matters here because students should leave with one coherent flow that explains how user authority becomes settled ledger history. Emphasize that wallets, transactions, mempools, miners, and full nodes all play distinct roles in that same pipeline.
+
+**Key Points**
+- Wallets manage keys and UTXOs, then create signed transactions.
+- Nodes relay and hold valid transactions until miners include them in blocks.
+- Full-node validation and additional blocks turn inclusion into growing confidence over time.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoin.orgdevelopers_miningdeveloperguide_2024
+
+:::
+
+
+## References

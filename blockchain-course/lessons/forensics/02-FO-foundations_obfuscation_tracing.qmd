@@ -1,0 +1,1526 @@
+---
+title: "Blockchain Forensics: Foundations, Obfuscation, and Tracing"
+subtitle: 'Section VIII: Forensics'
+author: Army Cyber Institute
+lesson: 02-FO
+institute: U.S. Military Academy
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+smaller: true
+format:
+  aci-revealjs:
+    scrolling: true
+    slide-level: 2
+---
+
+## Recall: UTXO vs. Account Model {.smaller}
+
+| | **Bitcoin (UTXO)** | **Ethereum (Account)** |
+|---|---|---|
+| **How value moves** | Outputs are created and consumed — each coin has a traceable history | Balances update in place — accounts persist and change state |
+| **Tracing unit** | Individual UTXOs (discrete coin fragments) | Addresses and contract interactions |
+| **Where evidence lives** | Transaction inputs and outputs | Transaction record + event logs + internal call traces |
+| **Hidden value flows** | Rare — the tx record is mostly complete | Common — ERC-20 transfers and internal calls are invisible without parsing logs |
+| **Primary heuristic** | Common-Input-Ownership (CIOH) | Contract interaction clustering |
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening comparison slide establishes that Bitcoin and Ethereum require different forensic mental models because value and evidence are recorded differently. It matters here because the rest of the lesson depends on not applying UTXO heuristics blindly to account-based systems. Emphasize that the tracing unit changes the entire investigative workflow.
+
+**Key Points**
+- Bitcoin traces discrete outputs, while Ethereum often traces persistent accounts, contract calls, and event logs.
+- Analysts need to know where evidence actually lives before selecting heuristics or tools.
+- Spell out UTXO as unspent transaction output and define event log as contract-emitted data that records token and application activity.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Reminder: Bitcoin's UTXO Model
+
+Transactions **consume** old outputs and **create** new ones. Every satoshi has a traceable ancestry.
+
+::: {style="z-index: -1; position: relative; top: -75px; max-height: 440px; overflow: hidden;"}
+
+```{dot}
+#| echo: false
+#| fig-height: 2.2
+digraph UTXO {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica", fontsize=9];
+  edge [fontname="Helvetica", fontsize=8];
+
+  utxo_a [label="UTXO A\n0.6 BTC", fillcolor="#E6F7FF"];
+  utxo_b [label="UTXO B\n0.5 BTC", fillcolor="#E6F7FF"];
+  tx [label="Transaction", shape=ellipse, fillcolor="#fdd"];
+  out1 [label="Output 1\n1.0 BTC\n(Payee)", fillcolor="#e8f5e9"];
+  out2 [label="Output 2\n0.09 BTC\n(Change)", fillcolor="#E6F7FF"];
+
+  utxo_a -> tx;
+  utxo_b -> tx;
+  tx -> out1;
+  tx -> out2;
+}
+```
+
+:::
+
+::: {.callout-note appearance="minimal"}
+**Implication:** If you know one input address, the Common-Input-Ownership Heuristic (CIOH) lets you cluster all co-spent inputs as the same owner. Outputs can be identified as payment vs. change using heuristics.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the UTXO model as the foundation for classic Bitcoin forensics heuristics. It matters here because later heuristics such as CIOH and change detection only make sense in this model. Emphasize that value moves by consuming and recreating outputs rather than mutating balances in place.
+
+**Key Points**
+- Every Bitcoin transaction consumes prior outputs and creates new ones with their own traceable histories.
+- The structure makes payment and change inference possible when paired with heuristics.
+- Define CIOH briefly as the common-input-ownership heuristic that assumes co-spent inputs are controlled by one entity.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Reminder: Ethereum's Account Model
+
+Accounts **persist**. Transactions update balances — and trigger contract code, which may move value through many more contracts in a single block.
+
+::: {style="z-index: -1; position: relative; top: -50px; max-height: 400px; overflow: hidden;"}
+
+```{dot}
+#| echo: false
+#| fig-height: 2.2
+digraph Ethereum {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#f5f7fb"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  eoa [label="EOA\n(Your Wallet)", fillcolor="#E6F7FF"];
+  contract [label="Smart Contract\n(e.g., Uniswap)", fillcolor="#fff5cc"];
+  token [label="Token Contract\n(e.g., USDT)", fillcolor="#e8f5e9"];
+  eoa2 [label="EOA\n(Recipient)", fillcolor="#E6F7FF"];
+
+  eoa -> contract [label="1. Call swap()"];
+  contract -> token [label="2. Internal call"];
+  token -> eoa2 [label="3. Transfer event (log)", style=dashed, color="#2ecc71", fontcolor="#2ecc71"];
+}
+```
+
+:::
+
+::: {.callout-note appearance="minimal"}
+**Implication:** The top-level transaction may show $0 ETH transferred. All value movement is in the logs. You must parse every contract's event log to follow the money.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the account model as the reason Ethereum forensics often requires deeper parsing than Bitcoin. It matters here because a simple transaction view can hide most of the actual value movement. Emphasize that contracts, logs, and traces must be read together.
+
+**Key Points**
+- Ethereum accounts persist over time, and contracts can trigger many downstream actions from one top-level transaction.
+- Analysts often need logs and traces because top-level ETH value fields can be misleading or zero.
+- Define internal trace briefly as the record of contract-to-contract execution steps inside one transaction.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## The Analyst's Mindset: Graph Thinking {.smaller}
+
+Blockchain forensics is fundamentally **graph analysis**. On-chain data is represented as a network of nodes and edges to uncover patterns of activity.
+
+-   **Nodes:** Addresses, UTXOs, or **entity clusters** — a real-world actor assumed to control all addresses in the cluster.
+-   **Edges:** Transactions or value flows between nodes.
+
+::: {style="position: relative; top: -140px; overflow: hidden; max-height: 410px; z-index: -1; padding: 0; margin: 0;"}
+
+```{dot}
+#| echo: false
+#| fig-height: 2.2
+digraph GraphThinking {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10];
+
+  addr_a [label="Address A"];
+  addr_b [label="Address B"];
+  entity1 [label="Entity 1\n(Cluster: A+B)", shape=ellipse, fillcolor="#e8f5e9"];
+  addr_c [label="Address C"];
+  entity2 [label="Entity 2\n(Cluster: C)", shape=ellipse, fillcolor="#fdd"];
+
+  addr_a -> entity1 [style=dashed, label="belongs to"];
+  addr_b -> entity1 [style=dashed];
+  addr_c -> entity2 [style=dashed, label="belongs to"];
+  entity1 -> entity2 [label="Transaction", penwidth=2];
+}
+```
+
+
+:::
+
+::: {.callout-note appearance="minimal" style="position:relative; top:-100px;"}
+By identifying recurring **motifs** — fan-outs, fan-ins, peeling chains — analysts can infer entity behavior and intent.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes graph thinking as the core analytical mindset for blockchain forensics. It matters here because the lesson is about patterns of movement and control, not isolated transactions. Emphasize that the analyst's job is to collapse many addresses and flows into interpretable entity behavior.
+
+**Key Points**
+- Nodes can represent addresses, outputs, or clustered entities, and edges represent value movement or relationships.
+- Recognizable graph motifs help analysts infer laundering strategies, service roles, or operational intent.
+- Define entity cluster briefly as a set of addresses inferred to be controlled by one real-world actor or service.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Graph Motif: The "Fan-Out"
+
+A **Fan-Out** occurs when a single source sends to many destinations.
+
+```{dot}
+#| echo: false
+#| fig-height: 1.8
+digraph FanOut {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica", fontsize=11];
+  input [label="Input", fillcolor="#e3f2fd", color="#0d6efd", fontcolor="#0d6efd"];
+  source [label="Single Source", shape=ellipse, fillcolor="#fdd"];
+  dest1 [label="Dest 1"];
+  dest2 [label="Dest 2"];
+  dest3 [label="Dest 3"];
+  dest_n [label="...", style=dotted];
+
+  input -> source;
+  source -> dest1;
+  source -> dest2;
+  source -> dest3;
+  source -> dest_n;
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the fan-out as a basic graph motif whose meaning depends heavily on context. It matters here because many benign and malicious behaviors can look similar at first glance. Emphasize that pattern recognition must always be paired with domain interpretation.
+
+**Key Points**
+- A fan-out means one source distributes value to many destinations.
+- Exchanges, payouts, dusting attacks, and laundering steps can all produce fan-out shapes.
+- Define dusting briefly as sending tiny amounts to many addresses to tag or study them.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Graph Motif: The "Fan-In"
+
+A **Fan-In** consolidates many inputs into a single destination.
+
+```{dot}
+#| echo: false
+#| fig-height: 1.8
+digraph FanIn {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica", fontsize=11];
+  source1 [label="Source 1"];
+  source2 [label="Source 2"];
+  source_n [label="...", style=dotted];
+  dest [label="Single Destination", shape=ellipse, fillcolor="#fdd"];
+  output [label="Output", fillcolor="#e3f2fd", color="#0d6efd", fontcolor="#0d6efd"];
+
+  source1 -> dest;
+  source2 -> dest;
+  source_n -> dest;
+  dest -> output;
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the fan-in as the opposite graph motif: many sources consolidating into one destination. It matters here because consolidation often signals service infrastructure, laundering preparation, or fund aggregation. Emphasize that destination context determines whether the fan-in is routine or suspicious.
+
+**Key Points**
+- Fan-in patterns often appear when deposits are being aggregated before further movement or cash-out.
+- A known destination label can turn a generic fan-in into a strong investigative lead.
+- Define consolidation briefly as gathering funds from many addresses into a smaller number of controlled destinations.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Ethereum Forensics: Where the Evidence Hides
+
+A top-level Ethereum transaction tells you only part of the story.
+
+:::: {.columns}
+::: {.column width="50%"}
+**What the transaction record shows:**
+
+-   `from` / `to` / `value` (ETH transferred)
+-   Gas used, status (success/fail)
+
+**What it *doesn't* show:**
+
+-   ERC-20 / ERC-721 token transfers
+-   Internal calls between contracts
+-   Flash loan amounts
+-   DEX swap token flows
+:::
+::: {.column width="50%"}
+```{dot}
+#| echo: false
+digraph EthEvidence {
+  graph [bgcolor="transparent"];
+  rankdir=TB;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#f5f7fb"];
+  edge [fontname="Helvetica"];
+
+  tx [label="Top-Level Tx\n(value: $0 ETH)", fillcolor="#fdd"];
+  logs [label="Event Logs\n(ERC-20 Transfers,\nSwap events)", fillcolor="#e8f5e9"];
+  traces [label="Internal Traces\n(contract-to-contract\ncalls)", fillcolor="#fff5cc"];
+
+  tx -> logs [label="emitted by\ncontracts"];
+  tx -> traces [label="debug_trace\nTransaction"];
+}
+```
+
+:::
+::::
+
+::: {.callout-warning appearance="minimal"}
+A DeFi swap may show **$0 ETH** in the top-level transaction while moving **$10M in stablecoins** — all recorded only in event logs.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes one of the biggest pitfalls in Ethereum forensics: the main transaction record often omits the economically meaningful flows. It matters here because analysts who stop at top-level fields miss most token and DeFi activity. Emphasize where the hidden evidence actually lives.
+
+**Key Points**
+- ERC-20 transfers, internal calls, and flash-loan flows often appear only in logs or traces, not the top-level `value` field.
+- Ethereum investigations are incomplete without token and contract parsing.
+- Define DeFi briefly as decentralized finance applications built from smart contracts.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Following Token Flows: ERC-20 Transfers
+
+ERC-20 tokens (USDT, USDC, WETH, etc.) are the dominant form of value in DeFi. Their transfers are **invisible in the main transaction record**.
+
+Every ERC-20 transfer emits a log event from the token contract:
+
+```
+Transfer(address indexed from, address indexed to, uint256 value)
+```
+
+::: {style="overflow: hidden; position: relative; max-height: 300px; top: -100px;"}
+```{dot}
+#| echo: false
+#| fig-height: 1.8
+digraph ERC20 {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, fillcolor="#f5f7fb"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  eoa1 [label="EOA A\n(Sender)"];
+  router [label="DEX Router\n(Contract)", fillcolor="#fff5cc"];
+  token [label="USDT Contract\n(ERC-20)", fillcolor="#e8f5e9"];
+  eoa2 [label="EOA B\n(Receiver)"];
+
+  eoa1 -> router [label="Tx: swap()\nETH value: $0"];
+  router -> token [label="internal: transferFrom()"];
+  token -> eoa2 [label="LOG: Transfer\n$500,000 USDT", style=dashed, color="#2ecc71", fontcolor="#2ecc71"];
+}
+```
+:::
+
+
+
+**Forensic implication:** To trace USDT, USDC, or any token, you must query the *token contract's* event logs — not the sending transaction.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes ERC-20 transfer events as the primary evidence stream for token-denominated tracing on Ethereum. It matters here because stablecoins and wrapped assets dominate many high-value illicit flows. Emphasize that token contracts, not just user wallets, become the forensic recordkeepers.
+
+**Key Points**
+- ERC-20 token movement is recorded through emitted `Transfer` events rather than the top-level ETH value field.
+- Stablecoin tracing depends on querying token contract logs directly.
+- Spell out ERC as Ethereum Request for Comments and define stablecoin as a token designed to track a reference asset such as the U.S. dollar.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Smart Contract Forensics
+
+Three patterns every Ethereum forensics analyst must recognize:
+
+**Proxy Contracts (EIP-1967)**
+:   The address you see called on-chain is a thin shell that forwards all calls to a separate *implementation* contract. The code executing is NOT at the address you're looking at. Analysts must resolve the proxy to understand what ran.
+
+**Flash Loans**
+:   Borrowed and repaid within a single transaction — creating a distinctive trace signature of a massive inflow immediately followed by repayment. Often the first step in price manipulation exploits. The entire attack can happen in one block.
+
+**Reentrancy**
+:   The same contract is called multiple times recursively within a single transaction trace. A classic exploit pattern (The DAO, 2016) — detectable in traces but invisible at the transaction level.
+
+::: {.callout-note appearance="minimal"}
+These patterns are only visible in **transaction traces** (`debug_traceTransaction`). Etherscan's UI parses some of this, but automated forensic investigation requires trace-level data from an archive node or a provider like Alchemy/Infura.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the contract-level patterns analysts must recognize before they can interpret complex Ethereum incidents. It matters here because proxies, flash loans, and reentrancy can radically change what a transaction means. Emphasize that smart-contract architecture shapes trace interpretation.
+
+**Key Points**
+- Proxies, flash loans, and reentrant execution all produce trace signatures that can mislead an unprepared analyst.
+- Understanding contract patterns is necessary to avoid misattributing intent or execution path.
+- Define proxy briefly as a contract that forwards execution to another implementation contract.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Address Clustering {.smaller}
+
+The foundational rule for clustering Bitcoin addresses is the **Common-Input-Ownership Heuristic (CIOH)**:
+*If a transaction has multiple inputs, all inputs are controlled by the same user — because signing requires possession of all corresponding private keys.*
+
+::: {style="position: relative; z-index: -1; top: -50px; margin: 0; max-height: 410px; padding: 0;"}
+
+
+```{dot}
+#| echo: false
+#| fig-height: 0.8
+digraph CIOH {
+  graph [bgcolor="transparent",  nodesep=0.25, ranksep=0.4, fontname="Helvetica", fontsize=8];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica", fontsize=8];
+  edge [fontname="Helvetica", fontsize=7];
+
+  subgraph cluster_tx {
+    label="Single Transaction";
+    style=dashed;
+    tx [label="Transaction", shape=ellipse, fillcolor="#fdd"];
+    input1 [label="Address A (Input)"];
+    input2 [label="Address B (Input)"];
+    input1 -> tx;
+    input2 -> tx;
+  }
+
+  subgraph cluster_entity {
+    label="Analyst's Conclusion";
+    style=dashed;
+    entity [label="Entity 1", shape=cylinder, fillcolor="#e8f5e9"];
+  }
+
+  input1 -> entity [label="Belongs to", style=dashed];
+  input2 -> entity [label="Belongs to", style=dashed];
+}
+```
+
+:::
+
+::: {.callout-note appearance="minimal"}
+By repeatedly applying CIOH, a single known address can expand into a large cluster — providing a complete picture of an entity's activity.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes CIOH as the foundational Bitcoin clustering heuristic, while also signaling that it is an inference rather than a law. It matters here because clustering is powerful only when its assumptions are understood. Emphasize why co-signing implies likely shared control in ordinary transactions.
+
+**Key Points**
+- Multiple inputs in one standard Bitcoin transaction often indicate one controller with all needed private keys.
+- Repeated application of CIOH can grow one known address into a much larger cluster.
+- Define clustering briefly as grouping multiple addresses or outputs into one likely entity.
+
+**Walkthrough**
+None
+
+**Sources**
+@frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Heuristic #2: Change Address Detection 
+
+In the UTXO model, transactions often have two outputs: one to the payee, one back to the sender as **change**. Identifying the change output expands an entity's cluster.
+
+**Heuristic Indicators:**
+
+-   **New Address:** Change address is brand new with no prior history.
+-   **Script Type Match:** Change address script (e.g., P2WPKH) matches the input addresses.
+-   **No "Round" Number:** Payees receive round amounts (e.g., 0.1 BTC); change is the un-round remainder.
+-   **Wallet Fingerprinting:** Some wallets use a predictable output index for change (e.g., Electrum historically placed change at output index 1).
+-   **Address Reuse:** If one output has appeared in prior transactions, it is likely the known payee — making the other output the change.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes change detection as the second major heuristic for expanding Bitcoin clusters beyond explicit co-spends. It matters here because much of the sender's continued control is hidden in the change output. Emphasize that change identification is probabilistic and strongest when several indicators align.
+
+**Key Points**
+- Newness, script similarity, non-round values, and wallet patterns all help identify likely change outputs.
+- No single indicator is enough on its own; investigators rely on converging signals.
+- Define change output briefly as the remainder returned to the sender after paying the intended recipient.
+
+**Walkthrough**
+None
+
+**Sources**
+@frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Heuristic #3: Peeling Chains {.smaller}
+
+A **peeling chain** is a sequential pattern where an entity repeatedly "peels" small amounts off to destinations while sending the bulk to a new change address.
+
+::: {style="position: relative; z-index: -1; top: -50px; margin: 0; max-height: 410px; padding: 0;"}
+
+
+```{dot}
+#| echo: false
+#| fig-height: 1.9
+digraph PeelingChain {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica", fontsize=10];
+  edge [fontname="Helvetica", fontsize=10];
+
+  c0 [label="10 BTC", fillcolor="#fdd"];
+  c1 [label="9 BTC", fillcolor="#fff5cc"];
+  c2 [label="8 BTC", fillcolor="#fff5cc"];
+  c3 [label="...", style=dotted];
+
+  p1 [label="1 BTC\n→ Darknet", fillcolor="#e8f5e9"];
+  p2 [label="1 BTC\n→ Mixer", fillcolor="#e8f5e9"];
+  p3 [label="1 BTC\n→ Exchange", fillcolor="#e8f5e9"];
+
+  c0 -> p1;
+  c0 -> c1;
+  c1 -> p2;
+  c1 -> c2;
+  c2 -> p3;
+  c2 -> c3;
+}
+```
+
+:::
+
+::: {.callout-note appearance="minimal"}
+Analogous to financial "structuring" — used to send funds to high-risk destinations in small increments. Tools like **Chainalysis Reactor** and **Elliptic Investigator** automate detection by traversing transaction graphs algorithmically.
+:::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes peeling chains as one of the most recognizable laundering motifs in UTXO systems. It matters here because they turn large balances into long, repetitive transactional trails that machines can detect well. Emphasize the repeating pattern of small outward payments and one large continuing remainder.
+
+**Key Points**
+- Peeling chains structure movement into repeated small outputs and one large rolling change output.
+- The pattern is laborious for humans to follow manually but highly detectable algorithmically.
+- Define structuring briefly as breaking value into smaller movements to reduce attention or risk.
+
+**Walkthrough**
+None
+
+**Sources**
+@chainalysis_reports_2025; @trmlabs_trmlabsreports_2025; @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Pitfalls & Counter-Heuristics
+
+Heuristics are educated guesses, not ground truth. Blind reliance leads to errors.
+
+-   **CIOH Fails:** Deliberately broken by **CoinJoin** — multiple users co-sign a single transaction. Assuming common ownership here falsely merges distinct entities.
+-   **False Change:** Not all two-output transactions have change. A user could simply be paying two people. Misidentifying the payee as change misdirects the investigation.
+-   **Wallet Variations:** Different wallets — and versions of the same wallet — behave differently. A heuristic tuned to one wallet may fail silently on another.
+-   **Exchange UTXO Consolidation:** Exchanges regularly sweep thousands of customer deposits into shared hot wallets. Applying CIOH to these sweeps falsely merges thousands of unrelated users into a single "entity" — a significant source of false positives in commercial tools.
+
+::: {.callout-note appearance="minimal"}
+**Key Point:** Heuristic-based findings are **probabilistic leads**, not definitive proof. Always seek corroborating evidence.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the limits of heuristic reasoning so students do not confuse useful inference with ground truth. It matters here because false clustering can derail investigations and damage credibility. Emphasize the need for corroboration before asserting ownership or intent.
+
+**Key Points**
+- Heuristics break under adversarial design, unusual wallet behavior, and institutional consolidation patterns.
+- Analysts should treat heuristic outputs as leads that need confirmation, not as courtroom-ready proof.
+- Define false merge briefly as incorrectly combining unrelated users or addresses into one cluster.
+
+**Walkthrough**
+None
+
+**Sources**
+@frowis_safeguardingevidentialvalue_2020; @atlam_blockchainforensicssystematic_2024
+
+:::
+
+## Counter-Heuristic #1: CoinJoin
+
+:::: {.columns}
+::: {.column width="55%"}
+CIOH works because **only the owner of all private keys can create a valid multi-input transaction**. This assumption is the foundation of most Bitcoin clustering.
+
+**CoinJoin** pools multiple users' inputs into a single transaction, deliberately breaking CIOH by severing the link between sender and receiver.
+
+:::
+::: {.column width="45%"}
+
+```{dot}
+#| echo: false
+#| fig-height: 1.5
+digraph CoinJoinTx {
+  graph [bgcolor="transparent", splines=ortho, nodesep=0.15, ranksep=0.4];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9];
+  edge [fontname="Helvetica", fontsize=8];
+  A_in [label="User A", fillcolor="#E6F7FF"];
+  B_in [label="User B", fillcolor="#FFF5CC"];
+  C_in [label="User C", fillcolor="#E8F5E9"];
+  TX [label="CoinJoin", shape=ellipse, fillcolor="#fdd"];
+  subgraph cluster_outs {
+    label="Anonymity Set";
+    style=dashed;
+    fontname="Helvetica";
+    fontsize=9;
+    Out1 [label="Output 1"];
+    Out2 [label="Output 2"];
+    Out3 [label="Output 3"];
+  }
+  {A_in, B_in, C_in} -> TX -> {Out1, Out2, Out3};
+}
+```
+
+:::
+::::
+
+::: {.callout-warning appearance="minimal"}
+**Legal Status (2024):** Operators of **Samourai Wallet** were arrested on money laundering and unlicensed money transmission charges. Wasabi Wallet subsequently shut down its CoinJoin coordinator for U.S. users. Whether non-custodial CoinJoin coordination constitutes a crime is actively litigated.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes CoinJoin as the canonical counter-heuristic designed to break CIOH. It matters here because it shows that privacy tools often target the exact assumptions analysts rely on most. Emphasize that multi-party coordination changes the meaning of multi-input transactions.
+
+**Key Points**
+- CoinJoin intentionally makes multiple unrelated users appear inside one transaction.
+- This breaks naive common-input clustering and forces investigators toward other evidence sources.
+- Define anonymity set briefly as the group of possible candidates among whom one participant is hidden.
+
+**Walkthrough**
+None
+
+**Sources**
+@gmaxwell_coinjoinbitcoinprivacy_2013; @frowis_safeguardingevidentialvalue_2020; @departmentofjustice_operatorscryptocurrencymixers_2025
+
+:::
+
+## Obfuscation Service: Mixers & Tumblers
+
+A **mixer** breaks the chain of custody by pooling funds and redistributing them.
+
+```{dot}
+#| echo: false
+digraph Mixer {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [fontname="Helvetica"];
+
+  subgraph cluster_inputs {
+    label="Deposits";
+    style=dashed;
+    UserA [label="User A\n(Illicit)", fillcolor="#fdd"];
+    UserB [label="User B\n(Licit)", fillcolor="#e8f5e9"];
+    UserC [label="User C\n(Licit)", fillcolor="#e8f5e9"];
+  }
+
+  Mixer [label="Mixer Pool", shape=cylinder, fillcolor="#f5f7fb", height=1.5];
+
+  subgraph cluster_outputs {
+    label="Withdrawals";
+    style=dashed;
+    NewA [label="New Addr A'", fillcolor="#fdd"];
+    NewB [label="New Addr B'", fillcolor="#e8f5e9"];
+    NewC [label="New Addr C'", fillcolor="#e8f5e9"];
+  }
+
+  UserA -> Mixer;
+  UserB -> Mixer;
+  UserC -> Mixer;
+  Mixer -> NewA;
+  Mixer -> NewB;
+  Mixer -> NewC;
+}
+```
+
+Mixers can be centralized services or decentralized smart contracts (e.g., **Tornado Cash**, sanctioned by OFAC in 2022 for laundering funds for North Korean state actors).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes mixers as obfuscation services that break direct fund provenance by pooling and redistributing value. It matters here because mixers are a recurring pivot in laundering investigations. Emphasize that the service obscures custody links but usually creates new infrastructure that can itself be studied.
+
+**Key Points**
+- Mixers aim to sever direct transaction history between deposit and withdrawal addresses.
+- Centralized and decentralized mixers introduce different legal and operational weaknesses.
+- Define tumbler briefly as a service that redistributes pooled funds to obscure original custody.
+
+**Walkthrough**
+None
+
+**Sources**
+@sykes_virtualcurrenciesmoney_2019; @u.s.dept.oftreasury_ustreasurysanctions_2022; @departmentofjustice_operatorscryptocurrencymixers_2025
+
+:::
+
+## Breaking Mixers: Investigative Countermeasures
+
+Despite their obfuscation, mixers have exploitable weaknesses:
+
+-   **Timing Analysis:** If the pool has low volume, a deposit at time *T* can be correlated with a withdrawal at *T + δ*. Many mixers use insufficient time delays.
+-   **Amount Correlation:** Mixers that don't standardize output denominations leak information. A deposit of 3.47 BTC with a subsequent withdrawal of 3.44 BTC (minus fee) is a strong candidate.
+-   **Graph Clustering:** The mixer's own deposit and withdrawal infrastructure can be clustered. Investigators label the mixer, then focus on post-withdrawal behavior.
+-   **Operational Security Failures:** Users reuse addresses, withdraw directly to KYC exchanges, or leave OSINT trails — collapsing anonymity at the human endpoint.
+
+::: {.callout-tip appearance="minimal"}
+**Investigator's Principle:** You rarely break the mixer cryptographically. The chain of custody almost always fails at the **human endpoints**, not the protocol. 
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that mixers are usually broken operationally, not cryptographically. It matters here because investigators need to know where to focus effort after the trail enters a pool. Emphasize timing, amount, clustering, and user mistakes as the main attack surfaces.
+
+**Key Points**
+- Low-volume pools, imperfect denominations, and direct withdrawals to KYC services all weaken mixer anonymity.
+- Post-withdrawal behavior often reveals more than the pool mechanics themselves.
+- Define denomination standardization briefly as forcing withdrawals into fixed amounts to reduce amount-based correlation.
+
+**Walkthrough**
+None
+
+**Sources**
+@frowis_safeguardingevidentialvalue_2020; @sykes_virtualcurrenciesmoney_2019; @atlam_blockchainforensicssystematic_2024; @l35_privacy_pools_docs_2026; @boneh_zeroknowledgeproofs_2020
+
+:::
+
+## The Next Generation: Privacy Pools
+
+In response to Tornado Cash sanctions, **Privacy Pools** attempts to balance privacy with compliance.
+
+-   **Like a mixer:** Uses **zero-knowledge proofs** (ZKPs) to break the deposit-withdrawal link. A ZKP proves a statement is true without revealing the underlying data — like proving you're over 18 without showing your birthdate.
+-   **Compliance twist:** Users can generate a ZKP proving their funds did *not* originate from a known illicit source (a public blocklist) — without revealing which deposit is theirs.
+
+> "My withdrawal is one of 100 in this pool, and it is NOT from the 5 known illicit deposits."
+
+::: {.callout-note appearance="minimal"}
+Privacy Pools is still experimental (co-authored by Vitalik Buterin). It represents a broader trend: cryptographic tools that provide privacy to legitimate users while *reducing* the utility of the system for illicit actors — rather than treating privacy and compliance as opposites.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes privacy pools as an attempt to preserve privacy while excluding obviously tainted funds from the anonymity set. It matters here because privacy technology is evolving in response to both enforcement pressure and public criticism. Emphasize that newer designs try to differentiate 'privacy' from 'indiscriminate laundering support.'
+
+**Key Points**
+- Privacy pools aim to let users prove separation from known illicit deposits while still hiding exact transaction details.
+- The design reflects a broader trend toward selective disclosure rather than absolute opacity.
+- Define selective disclosure briefly as revealing limited compliance-relevant information without exposing everything.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @atlam_blockchainforensicssystematic_2024
+
+:::
+
+## The Shift in Strategy: Privacy-Preserving Blockchains
+
+While CoinJoin and mixing add obfuscation *on top of* transparent ledgers, some cryptocurrencies are designed with privacy as their default, primary feature.
+
+-   **Transparent Ledgers (Bitcoin, Ethereum):** The entire transaction graph is public. Forensics is about **analyzing** the graph.
+-   **Privacy-Preserving Ledgers (Monero, Zcash):** The graph is intentionally **hidden or broken**. Forensics shifts to metadata, endpoints, and voluntary disclosures.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the strategic shift from obfuscating on transparent ledgers to using systems designed around privacy from the start. It matters here because analysts must distinguish between privacy features bolted onto open chains and privacy-native ecosystems. Emphasize that the investigative toolkit changes dramatically when the base layer itself conceals flows.
+
+**Key Points**
+- Privacy-preserving chains reduce the usefulness of classic graph heuristics by hiding amounts, senders, or receivers at the protocol level.
+- Investigations in these environments rely more heavily on endpoints and off-chain evidence.
+- Define privacy-preserving blockchain briefly as a chain whose core protocol intentionally conceals transactional details from public observers.
+
+**Walkthrough**
+None
+
+**Sources**
+@koe_zeromonerosecond_2020; @electriccoincompany_zcashbasicszcash_2019
+
+:::
+
+## Monero (XMR): Privacy by Default
+
+Monero hides the sender, receiver, and amount of every transaction by default via three technologies:
+
+1.  **Ring Signatures:** Hides the **sender**. The true input is mixed with "decoy" UTXOs — an observer cannot determine which was spent.
+2.  **Stealth Addresses:** Hides the **receiver**. A new one-time address is created per transaction; the recipient's public address is never recorded on-chain.
+3.  **RingCT:** Hides the **amount**. Amounts are encrypted, but miners can verify no new money was created.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Monero as the main example of privacy by default rather than privacy by optional service use. It matters here because Monero represents a fundamentally harder forensic environment than Bitcoin or Ethereum. Emphasize that sender, receiver, and amount protection are protocol-level features.
+
+**Key Points**
+- Monero combines stealth addresses, ring signatures, and confidential amounts to obscure all major transaction fields.
+- Because privacy is default, investigators cannot rely on voluntary user adoption patterns the way they might in Zcash.
+- Define stealth address briefly as a one-time destination address derived so outside observers cannot link it publicly to the recipient.
+
+**Walkthrough**
+None
+
+**Sources**
+@koe_zeromonerosecond_2020; @monero_stealthaddress_2025; @monerocommunityundermit_moneroprivatekey_2025
+
+:::
+
+## Monero: Known Forensic Weaknesses
+
+Despite strong privacy, Monero has known investigative attack surfaces:
+
+-   **Historical ring size failures:** Pre-2017 Monero used ring size 1 — making those transactions fully traceable. Older outputs on the chain retain this weakness.
+-   **Endpoint correlation:** Monero must be bought and sold at exchanges. Correlating a XMR purchase (known amount, known time) with a subsequent sale of similar value and timing remains a viable approach — even without touching the chain.
+-   **IRS bounty program:** In 2020, the IRS awarded contracts to **Chainalysis** and **CipherTrace** to develop Monero tracing capabilities — indicating the government believes partial tracing is achievable under specific conditions, though the results remain classified.
+
+::: {style="position: relative; z-index: -1; top: -150px; max-height: 200px;"}
+```{dot}
+#| echo: false
+#| fig-height: 1.8
+digraph MoneroWeakness {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, fillcolor="#f5f7fb"];
+  edge [fontname="Helvetica", fontsize=10];
+
+  buy [label="Buy XMR\nat Exchange\n(KYC)", fillcolor="#fdd"];
+  chain [label="Monero Chain\n(opaque)", fillcolor="#e8e8e8", style="rounded,filled,dashed"];
+  sell [label="Sell XMR\nat Exchange\n(KYC)", fillcolor="#fdd"];
+
+  buy -> chain [label="entry"];
+  chain -> sell [label="exit", style=dashed];
+  buy -> sell [label="correlate:\namount + timing", style=dashed, color="#e74c3c", fontcolor="#e74c3c"];
+}
+```
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that even Monero has practical weaknesses, though they often arise at the edges rather than in its cryptography. It matters here because students should avoid absolutist thinking about either perfect privacy or perfect tracing. Emphasize the difference between protocol strength and user or exchange weakness.
+
+**Key Points**
+- Monero's strongest weaknesses tend to appear at on-ramps, off-ramps, metadata leaks, or poor operational behavior.
+- Privacy features reduce visibility but do not eliminate all correlation opportunities.
+- Define endpoint leakage briefly as information exposed when a user buys, sells, stores, or operationally mishandles an otherwise private asset.
+
+**Walkthrough**
+None
+
+**Sources**
+@koe_zeromonerosecond_2020; @chainalysis_reports_2025; @trmlabs_trmlabsreports_2025; @l35_ciphertrace_monero_2020
+
+:::
+
+## Monero's Ring Signature, Visualized
+
+The true input is hidden among several decoys. The signature proves *one* is spent, but not *which*.
+
+```{dot}
+#| echo: false
+digraph RingSignature {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fillcolor="#f5f7fb", fontname="Helvetica"];
+  edge [fontname="Helvetica"];
+
+  true_input [label="True Input\n(User's UTXO)", fillcolor="#fdd"];
+  decoy1 [label="Decoy 1"];
+  decoy2 [label="Decoy 2"];
+  decoy3 [label="Decoy 3"];
+
+  subgraph cluster_ring {
+    label="Ring of Potential Inputs";
+    style=dashed;
+    true_input; decoy1; decoy2; decoy3;
+  }
+
+  tx [label="Monero Tx", shape=ellipse, fillcolor="#e8f5e9"];
+  output [label="Stealth Address\n(Receiver Hidden)"];
+
+  {true_input, decoy1, decoy2, decoy3} -> tx;
+  tx -> output;
+}
+```
+
+An outside observer sees 4 plausible senders. The transaction graph is broken.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes ring signatures visually so students can understand what Monero is hiding when it obscures the true sender among many candidates. It matters here because privacy technology becomes more intuitive when seen as a set of plausible signers rather than as abstract cryptography alone. Emphasize the difference between one real signer and many decoys.
+
+**Key Points**
+- Ring signatures make one signer indistinguishable from a selected set of plausible alternatives.
+- The anonymity set only helps if decoys are realistic and analysis cannot prune them away.
+- Define ring signature briefly as a signature scheme that proves one member of a group signed without revealing which one.
+
+**Walkthrough**
+1. Identify the group of possible signers presented to the observer.
+2. Note that the transaction proves one of them signed, but not which one.
+3. End by connecting that ambiguity to the loss of sender-level tracing confidence.
+
+**Sources**
+@koe_zeromonerosecond_2020
+
+:::
+
+## Zcash (ZEC): Optional Privacy
+
+Zcash supports both transparent and fully shielded transactions in the same chain.
+
+-   **Transparent (t-addr):** Identical to Bitcoin — fully public and traceable.
+-   **Shielded (z-addr):** Sender, receiver, and amount hidden via **zk-SNARKs**.
+
+| Transaction Type | Privacy |
+|---|---|
+| t-addr → t-addr | None — fully traceable |
+| t-addr → z-addr | Shielding (entry visible, exit hidden) |
+| z-addr → z-addr | Full privacy |
+| z-addr → t-addr | De-shielding (exit visible, entry hidden) |
+
+The level of privacy depends on shielded pool activity. In practice, **the majority of ZEC transactions have historically used transparent addresses** — the anonymity set of the shielded pool remains small, making shielded-to-transparent correlation easier than Zcash's design implies in theory.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Zcash as a contrast case where privacy exists, but is optional and therefore adoption-dependent. It matters here because the real anonymity level depends not only on protocol design but on user behavior. Emphasize that optional privacy often creates a smaller and more analyzable shielded pool than theory suggests.
+
+**Key Points**
+- Zcash supports both transparent and shielded transaction modes on the same chain.
+- Shielded privacy is strongest when many users adopt it consistently; otherwise correlation remains easier.
+- Spell out zk-SNARK as zero-knowledge succinct non-interactive argument of knowledge.
+
+**Walkthrough**
+None
+
+**Sources**
+@electriccoincompany_zcashbasicszcash_2019; @hopwood_zcashnu5protocol_2024
+
+:::
+
+## Forensic Limitations & Voluntary Disclosure
+
+On-chain analysis of privacy coins is often a dead end. Investigations pivot to:
+
+-   **Endpoint Analysis:** Focus on exchanges where privacy coins are bought or sold — the on-ramps and off-ramps remain the weakest link.
+-   **Off-Chain Intelligence:** Server logs, informant tips, wallet files from seized devices.
+-   **View Keys:** Both Monero and Zcash have view keys — read-only keys that grant a third party access to transaction history without spending capability. Useful for compliance audits; rarely available in criminal investigations.
+-   **Subpoenas & MLATs:** Domestic KYC records via subpoena. International records require a **Mutual Legal Assistance Treaty (MLAT)** — a formal government-to-government evidence-sharing process that can take months to years, making rapid asset freezing nearly impossible in cross-border cases.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the endpoint strategy investigators must use when on-chain privacy blocks direct tracing. It matters here because most real cases still succeed at the edges where users interact with services or devices. Emphasize that voluntary disclosure, subpoenas, and view keys matter when the chain itself goes dark.
+
+**Key Points**
+- Privacy-coin investigations focus on exchanges, devices, server logs, and any available view keys rather than transparent flow reconstruction.
+- International process delays can make rapid asset freezing difficult even when investigators know where to ask.
+- Define MLAT briefly as mutual legal assistance treaty, the formal process for cross-border evidence requests.
+
+**Walkthrough**
+None
+
+**Sources**
+@frowis_safeguardingevidentialvalue_2020; @avice_linkingcryptoassetattribution_2025
+
+:::
+
+## Quantum Computing: Future Impact on Privacy Coin Forensics {.smaller}
+
+| Protocol | Vulnerable Primitive | Quantum Impact |
+|---|---|---|
+| **Bitcoin / Ethereum** | ECDSA / secp256k1 | Shor's algorithm could derive private keys from *spent* addresses, retroactively linking wallets |
+| **Monero** | Ed25519 ring signatures + EC-based RingCT | Ring signatures could be cracked, exposing the true sender in historical transactions |
+| **Zcash (shielded)** | zk-SNARKs over BLS12-381 curves | Proofs could be broken, revealing shielded sender, receiver, and amount |
+
+::: {.callout-note appearance="minimal"}
+**"Harvest now, decrypt later":** Adversaries may already be archiving privacy coin transaction data, betting on future quantum capability to retroactively de-anonymize it. Privacy used today may not be private forever.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes a longer-term forensic question: whether quantum computing could one day weaken the cryptography behind today's privacy guarantees. It matters here because privacy used today may still be vulnerable to future retrospective analysis. Emphasize the distinction between immediate operational risk and strategic archival risk.
+
+**Key Points**
+- Quantum attacks would target cryptographic primitives that underpin signatures, ring constructions, or proof systems.
+- Even if practical quantum attacks are not imminent, 'harvest now, decrypt later' changes the long-run privacy picture.
+- Define Shor's algorithm briefly as a quantum algorithm that could break widely used public-key cryptography if large enough quantum computers exist.
+
+**Walkthrough**
+None
+
+**Sources**
+@koe_zeromonerosecond_2020; @hopwood_zcashnu5protocol_2024
+
+:::
+
+## The Modern Launderer: "Chain Hopping"
+
+Illicit actors rarely stay on one chain. **Chain hopping** exploits the fact that blockchains are separate, siloed ecosystems.
+
+**Typical pattern:**
+
+1.  **Exploit/Crime** on Chain A (e.g., Ethereum).
+2.  **Swap** into a liquid or privacy-preserving asset.
+3.  **Bridge** to Chain B (e.g., TRON, Solana).
+4.  **Obfuscate** on Chain B via local mixers or DEXs.
+5.  **Bridge** to Chain C or **cash out** at a high-risk exchange.
+
+::: {.callout-note appearance="minimal"}
+**TRON** has become the dominant chain for illicit fund movement due to near-zero transaction fees and widespread USDT liquidity. UN and Chainalysis reports consistently flag TRON-based USDT transfers as the preferred mechanism for sanctions evasion, ransomware cashouts, and North Korean laundering operations.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes chain hopping as the modern launderer's way of exploiting fragmentation across blockchain ecosystems. It matters here because following one ledger well is no longer enough. Emphasize that each hop is both an evasion technique and a new infrastructure touchpoint analysts can study.
+
+**Key Points**
+- Launderers move across ledgers to exploit different tooling, liquidity, and visibility conditions.
+- TRON's low fees and USDT liquidity have made it especially attractive for illicit movement.
+- Define chain hopping briefly as moving value across multiple ledgers to complicate tracing and enforcement.
+
+**Walkthrough**
+None
+
+**Sources**
+@chainalysis_reports_2025; @trmlabs_trmlabsreports_2025; @lin_tracktraceautomatically_2025
+
+:::
+
+## Mechanisms for Chain Hopping
+
+Two primary technologies enable chain hopping:
+
+-   **Cross-Chain Bridges:** Lock an asset on the source chain; mint a wrapped equivalent on the destination chain. Many are decentralized and operate without KYC — prime targets for abuse. (e.g., RenBridge was heavily used for laundering before being shut down.)
+-   **Atomic Swaps / DEXs:** Trade assets from different chains directly, without a centralized intermediary — severs a clear custody trail with no shared record.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the main technical routes adversaries use to hop between chains. It matters here because mechanism choice determines what evidence remains available after the hop. Emphasize the difference between bridges, swaps, and other cross-chain conversion paths.
+
+**Key Points**
+- Cross-chain bridges and swap mechanisms create distinct evidentiary patterns and weaknesses.
+- Investigators should always ask what infrastructure mediated the hop before deciding what can be reconstructed.
+- Define wrapped asset briefly as a token representation of value originally locked or controlled on another chain.
+
+**Walkthrough**
+None
+
+**Sources**
+@lin_tracktraceautomatically_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Following the Hop: Cross-Chain Forensics
+
+An investigator correlates the "exit" on one chain with the "entry" on another.
+
+```{dot}
+#| echo: false
+digraph ChainHop {
+  graph [bgcolor="transparent"];
+  rankdir=TB;
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [fontname="Helvetica"];
+
+  subgraph cluster_btc {
+    label="Bitcoin";
+    color="#f0c419";
+    style=filled;
+    fillcolor="#fef9e7";
+    btc_addr [label="BTC Address", fillcolor="#f5f7fb"];
+    btc_tx [label="-10.1 BTC\n@ 14:02 UTC", fillcolor="#fdd"];
+    btc_addr -> btc_tx;
+  }
+
+  subgraph cluster_eth {
+    label="Ethereum";
+    color="#5bc0de";
+    style=filled;
+    fillcolor="#eaf2f8";
+    eth_addr [label="ETH Address", fillcolor="#f5f7fb"];
+    eth_tx [label="+3.0 ETH\n@ 14:05 UTC", fillcolor="#e8f5e9"];
+    eth_tx -> eth_addr;
+  }
+
+  swap [label="Swap Service", shape=hexagon, fillcolor="#f5f7fb"];
+
+  btc_tx -> swap;
+  swap -> eth_tx;
+}
+```
+
+Correlation signal: timing (Δt = 3 min) + approximate value match (~$500k).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what cross-chain tracing looks like in practice: correlation rather than one continuous ledger-native trace. It matters here because many modern cases are won through disciplined timing-and-value matching. Emphasize that cross-chain analysis is often a puzzle of likely correspondences rather than explicit links.
+
+**Key Points**
+- Analysts correlate exits and entries across chains using time windows, approximate value, and known service behavior.
+- Bridge or swap service knowledge turns rough correlation into a stronger investigative lead.
+- Define approximate value match briefly as a cross-chain comparison that tolerates fees and conversion differences.
+
+**Walkthrough**
+1. Identify the source-chain exit event and its timestamp or amount.
+2. Look for a plausible entry on the destination chain within the expected time and value range.
+3. Strengthen the inference by confirming the mediating service or bridge behavior.
+
+**Sources**
+@lin_tracktraceautomatically_2025; @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Not All Hops Are Equally Opaque
+
+| Hop Type | Traceability |
+|---|---|
+| Smart contract bridge (e.g., Wormhole) | **High** — lock and mint events are on-chain on both sides |
+| Centralized exchange swap | **Medium** — traceable with legal process (KYC subpoena) |
+| DEX / atomic swap | **Low** — only timing and value correlation available |
+| Privacy coin intermediary (e.g., XMR) | **Very low** — middle leg is cryptographically hidden |
+
+::: {.callout-tip appearance="minimal"}
+Smart contract bridges are actually the **most traceable** hop type — both the locking event and the minting event appear in on-chain logs and can be directly correlated. Privacy coin hops are the hardest: the middle leg leaves no on-chain record at all.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that not all cross-chain hops deserve the same investigative confidence. It matters here because analysts should allocate attention based on how much evidence each mechanism leaves behind. Emphasize the continuum from highly reconstructable smart-contract bridges to privacy-coin intermediaries that erase the middle leg.
+
+**Key Points**
+- Traceability depends on the hop mechanism, not just the fact that a hop occurred.
+- Smart-contract bridges often expose more than users expect, while privacy intermediaries expose much less.
+- Define traceability briefly as how well a movement can be reconstructed and defended analytically.
+
+**Walkthrough**
+None
+
+**Sources**
+@lin_tracktraceautomatically_2025; @koe_zeromonerosecond_2020
+
+:::
+
+## The Final Step: Attribution
+
+**Attribution** links a pseudonymous on-chain cluster to a real-world entity.
+
+-   **OSINT:** Search for addresses on social media, forums, code repositories, paste sites. Many services and individuals post crypto addresses openly.
+-   **Labeled Datasets:** Chainalysis, Elliptic, and community sites (Etherscan, BitcoinAbuse) maintain vast databases of labeled addresses for exchanges, mixers, darknet markets, and sanctioned entities.
+-   **Direct Interaction (Undercover):** Create an account or transact with a target service to obtain a fresh, investigator-controlled address — a technique analogous to a controlled buy in drug investigations. That address becomes a confident graph seed.
+-   **Exchange Subpoena (Most Common Final Step):** Trace funds to an exchange deposit address, then compel the exchange via legal process to reveal the KYC identity behind that account. This is the single most common mechanism linking blockchain activity to a real-world arrest.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes attribution as the endpoint of many forensic investigations: turning a cluster into a person, organization, or service. It matters here because tracing without attribution often cannot support enforcement or disruption. Emphasize that attribution usually comes from combining many moderate signals rather than one perfect clue.
+
+**Key Points**
+- OSINT, labels, undercover interactions, and subpoenas all contribute different strengths to attribution.
+- Exchange subpoenas remain one of the most common decisive steps because they connect flow to KYC records.
+- Define KYC subpoena briefly as legal process compelling an exchange to reveal the identified customer behind an account.
+
+**Walkthrough**
+None
+
+**Sources**
+@avice_linkingcryptoassetattribution_2025; @chainalysis_reports_2025; @trmlabs_trmlabsreports_2025
+
+:::
+
+## Attribution: Standards of Evidence and Known Pitfalls
+
+Attribution is **inferential**. Quality and legal admissibility vary significantly by source.
+
+| Source | Strength | Limitation |
+|---|---|---|
+| OSINT (forum post) | Weak lead | Self-reported, easily faked |
+| Analytics firm label | Strong indicator | Proprietary — methodology not always disclosed |
+| Undercover interaction | Strong | Requires legal authority and operational resources |
+| KYC subpoena | Court-admissible | Requires jurisdiction; MLAT delays for foreign exchanges |
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that attribution evidence has varying strength and admissibility, even when it is all operationally useful. It matters here because analysts need to know what supports a lead versus what supports a courtroom claim. Emphasize that source quality and methodology transparency affect confidence.
+
+**Key Points**
+- Some attribution sources are excellent investigative leads but weak legal proof if unsupported.
+- The strongest findings usually combine blockchain analysis with legally obtainable institutional records.
+- Define admissibility briefly as whether evidence can be accepted and relied on in formal legal proceedings.
+
+**Walkthrough**
+None
+
+**Sources**
+@frowis_safeguardingevidentialvalue_2020; @avice_linkingcryptoassetattribution_2025
+
+:::
+
+## Attribution: From Cluster to Identity
+
+```{dot}
+#| echo: false
+#| fig-height: 2.2
+digraph Attribution {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10];
+
+  cluster [label="On-Chain Cluster", shape=cylinder, fillcolor="#f5f7fb"];
+  osint [label="OSINT", fillcolor="#e8f5e9"];
+  labels [label="Analytics\nFirm Labels", fillcolor="#e8f5e9"];
+  offchain [label="KYC Subpoena\n(Exchange)", fillcolor="#fff5cc"];
+
+  subgraph cluster_intel {
+    label="Intelligence Fusion";
+    style=dashed;
+    osint; labels; offchain;
+  }
+
+  identity [label="Real-World\nIdentity", shape=house, fillcolor="#fdd"];
+
+  cluster -> {osint, labels, offchain} [style=dashed];
+  {osint, labels, offchain} -> identity;
+}
+```
+
+::: {.callout-warning}
+**Known Error Cases:** Analytics firm labels have been challenged in court. In *United States v. Roman Sterlingov* (Bitcoin Fog operator), defense experts disputed Chainalysis attribution methodology. Treat probabilistic findings as **investigative leads**, not proof.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes intelligence fusion as the bridge from anonymous cluster to real-world identity. It matters here because no single source usually closes attribution by itself. Emphasize the layered nature of evidence: on-chain patterns narrow possibilities, while off-chain records confirm them.
+
+**Key Points**
+- Identity attribution typically emerges from combining cluster analysis, labels, OSINT, and legal process.
+- The final leap to identity is strongest when different evidence types independently point to the same actor.
+- Define intelligence fusion briefly as combining multiple evidence streams to produce a stronger conclusion than any one stream alone.
+
+**Walkthrough**
+1. Start with the on-chain cluster as the initial unknown.
+2. Add OSINT, labels, and exchange records as separate evidence streams.
+3. End with the converged real-world identity only when the signals align credibly.
+
+**Sources**
+@avice_linkingcryptoassetattribution_2025; @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Conclusion: A Cat-and-Mouse Game {.smaller}
+
+Blockchain forensics is a dynamic, adversarial field.
+
+-   **Analysts** develop sophisticated graph algorithms, cross-chain tracking tools, and court-admissible attribution methodologies.
+-   **Illicit actors** adopt privacy coins, decentralized bridges, and novel obfuscation patterns to stay ahead.
+
+The transparency of most blockchains provides a permanent, immutable record. The challenge lies in reading that record when it has been intentionally obscured.
+
+**Analyst's Working Principles:**
+
+1.  **Follow the endpoints.** Mixers and privacy chains obscure the middle — but funds almost always enter and exit at identifiable services. Start and end there.
+2.  **Heuristics are leads, not proof.** Probabilistic clustering is an investigative tool, not court-admissible evidence. Corroborate before asserting attribution.
+3.  **Opsec fails before cryptography does.** The vast majority of de-anonymizations happen because of human mistakes — reused addresses, KYC exchanges, OSINT trails — not because a cryptographic protocol was broken.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This conclusion slide establishes blockchain forensics as an arms race rather than a solved problem. It matters here because the lesson has shown both analytical power and adversarial adaptation. Emphasize that successful analysts stay disciplined about endpoints, corroboration, and the primacy of human mistakes over broken cryptography.
+
+**Key Points**
+- Analysts and illicit actors continuously adapt to each other's tools, heuristics, and chokepoints.
+- Endpoints, corroboration, and operational security failures remain the most reliable sources of breakthrough.
+- Define cat-and-mouse game briefly as ongoing mutual adaptation where each side changes tactics in response to the other.
+
+**Walkthrough**
+None
+
+**Sources**
+@gjorgjev_blockchainforensicsunmasking_2025; @atlam_blockchainforensicssystematic_2024; @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Case Study: The Bitfinex Hack (2016)
+
+In August 2016, a hacker breached the Bitfinex cryptocurrency exchange, stealing approximately **119,754 BTC** (worth ~$71 million at the time, but billions later).
+
+For five years, the funds barely moved. Then, a highly sophisticated laundering operation began.
+
+**The Launderer's Playbook:**
+
+1.  Automated **peeling chains** to slowly siphon funds.
+2.  Depositing funds into **darknet markets** (like AlphaBay) to use them as makeshift mixers.
+3.  **Chain hopping** into Monero (XMR) to break the public ledger trail.
+4.  Using fictitious shell companies to justify cash-outs to traditional bank accounts.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This case-study opening establishes Bitfinex as a long-horizon laundering example that combines nearly every technique covered in the lesson. It matters here because it gives students one end-to-end narrative where heuristics, clustering, KYC, and OSINT all matter. Emphasize that sophisticated laundering can still fail over time.
+
+**Key Points**
+- The Bitfinex case shows that years of laundering effort can still be unraveled through cumulative forensic work.
+- The launderers used multiple obfuscation layers, but each introduced points where evidence could accumulate.
+- Define laundering playbook briefly as the repeatable sequence of concealment methods used to move stolen value toward usable form.
+
+**Walkthrough**
+None
+
+**Sources**
+@departmentofjustice_bitfinexhackerwife_2023
+
+:::
+
+## Live Trace: Following the Peeling Chains {.smaller}
+
+The launderers used automated scripts to move the stolen BTC through thousands of small, rapid transactions. This is a classic **peeling chain**.
+
+*   **The Input:** A large chunk of stolen BTC.
+*   **The Peel:** A small fraction sent to a darknet market or exchange.
+*   **The Change:** The remaining balance sent to a new, fresh address controlled by the launderers.
+*   **The Pattern:** 1 input $\rightarrow$ 2 outputs. Repeated thousands of times.
+
+::: {.callout-tip appearance="minimal"}
+**Interactive Walkthrough:** Let's look at the actual chain.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the peeling-chain pattern as the first major signature in the Bitfinex laundering operation. It matters here because the case becomes understandable once students can see how automation created a repeated graph motif. Emphasize that volume and repetition made the activity more machine-detectable, not less.
+
+**Key Points**
+- Automated peeling chains slowly moved value while preserving a traceable residual path at each step.
+- What looks like overwhelming volume to a human analyst often becomes a recognizable signature to graph tools.
+- Define automated peel briefly as scripted repeated withdrawal of small fractions from a larger controlled balance.
+
+**Walkthrough**
+None
+
+**Sources**
+@departmentofjustice_bitfinexhackerwife_2023; @chainalysis_reports_2025
+
+:::
+
+## Breaking the Obfuscation: Account Clustering {.smaller}
+
+The launderers sent thousands of "peels" into virtual currency exchanges (VCEs) using dozens of different user accounts, hoping to look like many unrelated users. 
+
+**How investigators clustered the accounts:**
+
+1.  **On-Chain Clustering (CIOH):** The launderers occasionally swept funds from multiple deposit addresses into a single transaction to pay for network fees, accidentally proving they owned all of them.
+2.  **The AlphaBay Seizure:** The launderers used the AlphaBay darknet market to mix funds. But in 2017, law enforcement seized AlphaBay's servers. The "mixer" suddenly became a giant, unencrypted database of the launderers' internal transfers.
+
+::: {.callout-tip appearance="minimal"}
+**Interactive Walkthrough:** Viewing exchange consolidation on-chain.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the next break in the Bitfinex case: clustering that survived the launderers' attempts to look like many separate users. It matters here because obfuscation often fails when operators need to consolidate or pay fees. Emphasize that off-chain seizures such as AlphaBay can retroactively validate on-chain inference.
+
+**Key Points**
+- Exchange-style or fee-related consolidation can accidentally prove common control across many addresses.
+- Seized third-party infrastructure can transform a presumed mixer into a source of direct mapping evidence.
+- Define validation event briefly as some outside evidence that confirms what an on-chain heuristic only suggested.
+
+**Walkthrough**
+None
+
+**Sources**
+@departmentofjustice_bitfinexhackerwife_2023; @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## The Fatal Flaw: KYC Subpoenas {.smaller}
+
+Once investigators traced the funds exiting the mixers and entering legitimate exchanges, they hit the **chokepoint**. They served legal subpoenas to the exchanges.
+
+**The Subpoena Returns:**
+
+*   **Fake Identities:** Accounts were registered to fictitious names and stolen Russian passports.
+*   **The OpSec Failure:** The accounts logged in using IP addresses associated with a specific cloud hosting provider in New York.
+*   **The Gift Cards:** One of the exchange accounts was used to purchase a $500 Walmart gift card. The subpoena revealed the gift card was delivered to a personal email address.
+*   **The PlayStation:** Another portion of the funds was traced to the purchase of a PlayStation, shipped to a physical apartment address in Manhattan.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the decisive bridge from blockchain evidence to real-world investigation: KYC subpoenas. It matters here because the case turns on the human need to spend or cash out. Emphasize that small everyday purchases can matter more than years of clever laundering.
+
+**Key Points**
+- Exchange subpoenas exposed fake identities, infrastructure clues, and consumer purchases tied to the suspects.
+- The human spending layer turned abstract tracing into physical-world leads.
+- Define operational security failure briefly as a preventable behavior that exposes identity, infrastructure, or intent.
+
+**Walkthrough**
+None
+
+**Sources**
+@departmentofjustice_bitfinexhackerwife_2023
+
+:::
+
+## OSINT: "The Crocodile of Wall Street" {.smaller}
+
+The email addresses and physical shipping addresses from the subpoenas led investigators to a married couple: **Ilya Lichtenstein** and **Heather Morgan**.
+
+Investigators immediately pivoted to **Open Source Intelligence (OSINT)** to build the profile:
+
+*   **LinkedIn/Forbes:** Morgan was a regular contributor to Forbes, writing articles about "protecting your business from cybercriminals."
+*   **Social Media:** Morgan had a highly public alter-ego as a comedic rapper named "Razzlekhan," self-described as the "Crocodile of Wall Street."
+*   **Business Records:** They operated several tech startups, which were used to justify the sudden influx of cash entering their traditional bank accounts.
+
+::: {.callout-note appearance="minimal"}
+**The Intelligence Fusion:** The on-chain cluster of stolen Bitfinex funds was now irrevocably tied to two real, highly visible people living in New York City.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes OSINT as the corroborating layer that made the Bitfinex suspects legible as real people, not just account holders. It matters here because public self-disclosure often fills the gap between subpoena returns and narrative understanding. Emphasize that highly visible online personas can become investigative liabilities.
+
+**Key Points**
+- Public writing, social media, business records, and self-branding all helped contextualize the suspects.
+- OSINT strengthens attribution by showing lifestyle, aliases, and business behavior consistent with the traced activity.
+- Define corroboration briefly as confirming a hypothesis by matching it with independent evidence.
+
+**Walkthrough**
+None
+
+**Sources**
+@departmentofjustice_bitfinexhackerwife_2023; @avice_linkingcryptoassetattribution_2025
+
+:::
+
+## The Takedown and The Cloud Seizure {.smaller}
+
+With the identity confirmed, law enforcement obtained a search warrant for Lichtenstein's cloud storage accounts (linked to the IP addresses from the exchange logins).
+
+**The Final Evidence:**
+
+*   Inside the cloud storage, agents found an encrypted spreadsheet.
+*   Upon decryption, the spreadsheet contained a list of **2,000 virtual currency addresses and their corresponding private keys**.
+*   These keys perfectly matched the addresses holding the unspent, stolen Bitfinex funds.
+
+**February 2022:**
+Lichtenstein and Morgan were arrested. Using the recovered private keys, the DOJ executed the largest financial seizure in U.S. history, recovering approximately **94,000 BTC** (valued at **$3.6 billion**). 
+
+::: {.notes}
+
+**Overall Slide Concept**
+This final case-study slide establishes the cloud seizure as the moment where long-term forensic pressure met stored incriminating evidence. It matters here because it reinforces the lesson that opsec failures, not broken cryptography, usually end these cases. Emphasize that one recovered set of keys can collapse years of concealment.
+
+**Key Points**
+- Investigators ultimately recovered direct wallet-control evidence from cloud storage tied to the suspects.
+- The seizure shows how immutable ledgers and searchable digital life together create powerful retrospective cases.
+- Define private key briefly as the secret cryptographic credential that authorizes spending from a blockchain address.
+
+**Walkthrough**
+None
+
+**Sources**
+@departmentofjustice_bitfinexhackerwife_2023
+
+:::
+
+::: {.callout-note appearance="minimal"}
+**Key Lesson:** Six years of sophisticated laundering — peeling chains, privacy coin hops, DeFi layering — ultimately failed because of a single KYC link at an exchange, a Walmart gift card, and a cloud storage account. OpSec fails before cryptography does.
+:::

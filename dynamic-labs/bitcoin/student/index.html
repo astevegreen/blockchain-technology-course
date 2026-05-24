@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wallet Address</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #11151a;
+      --panel-soft: #151a20;
+      --border: #242c35;
+      --border-strong: #313b46;
+      --text: #edf2f7;
+      --muted: #97a4b2;
+      --accent: #d7e6f7;
+      --accent-bg: #1a2734;
+      --ok: #7fd0a2;
+      --warn: #e6c26c;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+           background: linear-gradient(180deg, #0b0d10 0%, #0e1216 100%);
+           color:var(--text); min-height:100vh;
+           display:flex; align-items:center; justify-content:center; padding:24px; }
+    main { width:100%; max-width:640px; }
+    .panel { background:var(--panel); border:1px solid var(--border); padding:22px 24px; }
+    h1 { margin:0 0 4px 0; font-size:18px; color:var(--accent); letter-spacing:.02em; }
+    .sub { color:var(--muted); font-size:13px; margin-bottom:18px; }
+    .addr-row { display:flex; gap:8px; align-items:stretch; }
+    .addr { flex:1; background:var(--panel-soft); border:1px solid var(--border-strong);
+            padding:12px 14px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+            font-size:14px; color:var(--text); word-break:break-all; user-select:all; }
+    button { border:1px solid var(--border-strong); background:transparent;
+             color:var(--text); padding:0 16px; font-size:13px; font-family:inherit;
+             cursor:pointer; min-width:88px; }
+    button:hover { background:var(--panel-soft); }
+    button.copied { color:var(--ok); border-color:#3a6b4a; }
+    .empty { background:var(--panel-soft); border:1px dashed var(--border-strong);
+             padding:18px; color:var(--muted); font-size:13px; text-align:center; }
+    .hint { margin-top:14px; color:var(--muted); font-size:12px; }
+    .hint code { background:var(--panel-soft); padding:1px 6px; border:1px solid var(--border);
+                 font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="panel">
+      <h1>Wallet Address</h1>
+      <div class="sub">Published by this station for peers to send you bitcoin.</div>
+      <div id="body"></div>
+    </div>
+  </main>
+
+  <script>
+    (async function () {
+      var body = document.getElementById("body");
+
+      function renderEmpty() {
+        body.innerHTML =
+          '<div class="empty">No wallet address has been published yet.</div>' +
+          '<div class="hint">The station owner publishes their address with ' +
+          '<code>echo $MY_ADDR &gt; ~/share/address.txt</code>.</div>';
+      }
+
+      function renderAddr(addr) {
+        var row = document.createElement("div");
+        row.className = "addr-row";
+        var box = document.createElement("div");
+        box.className = "addr";
+        box.textContent = addr;
+        var btn = document.createElement("button");
+        btn.textContent = "Copy";
+        btn.addEventListener("click", async function () {
+          try {
+            await navigator.clipboard.writeText(addr);
+            var prev = btn.textContent;
+            btn.textContent = "Copied";
+            btn.classList.add("copied");
+            setTimeout(function () {
+              btn.textContent = prev;
+              btn.classList.remove("copied");
+            }, 1400);
+          } catch (_) {
+            var range = document.createRange();
+            range.selectNode(box);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+          }
+        });
+        row.appendChild(box);
+        row.appendChild(btn);
+        body.innerHTML = "";
+        body.appendChild(row);
+      }
+
+      try {
+        var r = await fetch("address.txt", { cache: "no-store" });
+        if (!r.ok) { renderEmpty(); return; }
+        var text = (await r.text()).trim();
+        if (!text) { renderEmpty(); return; }
+        renderAddr(text.split(/\s+/)[0]);
+      } catch (_) {
+        renderEmpty();
+      }
+    })();
+  </script>
+</body>
+</html>

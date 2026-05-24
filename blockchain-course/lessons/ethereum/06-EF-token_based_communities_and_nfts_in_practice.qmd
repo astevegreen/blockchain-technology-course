@@ -1,0 +1,1248 @@
+---
+title: "Token-Based Communities & NFTs in Practice"
+subtitle: 'Section VII: Ethereum Framework'
+author: Army Cyber Institute
+lesson: 06-EF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## Agenda {style="font-size: 0.88em;"}
+
+1. **Foundations** — What is a token? The on-chain primitive, its anatomy, and the fungible vs. non-fungible distinction.
+
+2. **Token-Based Communities** — How token ownership enforces membership, access, and governance — with real-world case studies.
+
+3. **Minting** — How tokens are created on-chain, contract patterns, metadata storage, soulbound credentials, and the permissioned contrast.
+
+4. **Adversarial & Failure Cases** — Rug pull forensics, the Decentralized Autonomous Organization (DAO)s re-entrancy attack, and centralisation chokepoints hiding inside decentralised systems.
+
+5. **Operational Implications** — Five capabilities this infrastructure enables — and why each one cuts in two directions.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This agenda slide establishes the lesson arc from token primitives to communities, minting, adversarial cases, and analyst-facing implications. It matters here because the lesson combines technical and operational material that benefits from a clear roadmap. Emphasize that the same primitive will be examined as infrastructure, social mechanism, and failure surface.
+
+**Key Points**
+- The lesson moves from what tokens are to how communities and institutions use them in practice.
+- Adversarial cases are not side topics; they are part of understanding how deployed token systems actually behave.
+- Define DAO briefly as decentralized autonomous organization.
+
+**Walkthrough**
+None
+
+**Sources**
+@wang_soktokenizationblockchain_2021; @ethereumorg_nfts_2025; @tierno_tokenizedassets_2025
+
+:::
+
+## What Is a Token? {style="font-size: 0.90em;"}
+
+::: {style="font-size: 0.70em;"}
+
+- A **token** is a programmable claim enforced by code on a shared ledger — not a coin, not an image.
+- Three properties every token carries: **unique or fungible ID**, **verifiable ownership**, **immutable transfer history**.
+- The ledger enforces the rules; humans and institutions supply the **meaning behind those rules**.
+- Same primitive, radically different applications: stablecoin, supply chain record, membership pass.
+
+::: {style="margin-top: -5em;"}
+```{dot}
+//| fig-width: 10
+//| fig-height: 4.8
+digraph token_anatomy {
+  rankdir=TB
+  graph [fontname="Arial Bold" fontsize=17 pad=0.3 nodesep=1.0 ranksep=0.9 splines=true bgcolor="transparent"]
+  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+
+  TOKEN [label="TOKEN\n─────────────────────────\nA programmable claim on\na shared ledger"
+         shape=ellipse style=filled fillcolor="#1a3a4a" fontcolor=white penwidth=3 fontsize=16]
+
+  ID    [label="Identifier\n─────────────────────────\nUnique (NFT) or fungible\n(interchangeable units)\nEnforced by the contract"
+         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+
+  OWN   [label="Owner\n─────────────────────────\nA wallet address\nVerifiable by anyone\nImmutably recorded"
+         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+
+  HIST  [label="Transfer History\n─────────────────────────\nEvery prior owner\nTimestamped on-chain\nCannot be altered"
+         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+
+  MEAN  [label="Meaning\n─────────────────────────\nArt · Deed · Vote · Key\nCredential · Currency\nNOT enforced by the chain"
+         shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
+
+  TOKEN -> ID   [label="  has a" color="#2ecc71" fontcolor="#2ecc71"]
+  TOKEN -> OWN  [label="  has an" color="#2ecc71" fontcolor="#2ecc71"]
+  TOKEN -> HIST [label="  carries" color="#2ecc71" fontcolor="#2ecc71"]
+  TOKEN -> MEAN [label="  acquires" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2]
+
+  { rank=same; ID; OWN; HIST; MEAN }
+}
+```
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the token as the underlying primitive before any specific use case is discussed. It matters here because the rest of the lesson depends on separating what the ledger enforces from what humans interpret. Emphasize that meaning sits on top of the token; the chain only enforces identifier, ownership, and transfer history.
+
+**Key Points**
+- A token is a programmable claim with an identifier, owner, and transfer history enforced on-chain.
+- The same primitive can support currency, membership, credentials, or supply-chain tracking depending on surrounding rules.
+- Define programmable claim briefly as a claim whose transfer and state changes are governed by contract logic rather than manual intervention.
+
+**Walkthrough**
+None
+
+**Sources**
+@wang_soktokenizationblockchain_2021; @ethereumorg_nfts_2025; @tierno_tokenizedassets_2025
+
+:::
+
+## Fungible vs. Non-Fungible
+
+::: {style="font-size: 0.55em;"}
+
+| Standard | Token Type | What the contract tracks | Transfer unit | Typical use |
+|---|---|---|---|---|
+| **ERC-20** | Fungible | Balances per address | Any amount | Governance token, stablecoin, social currency |
+| **ERC-721** | Non-Fungible | Owner per token ID | One whole token | Art, deed, membership pass, supply chain record |
+| **ERC-1155** | Multi-token | Balance per (address, ID) pair | Amounts per ID | Gaming inventory, enterprise asset catalogue |
+
+- Standards are **social and technical contracts** — wallets, markets, and indexers all speak them.
+
+- Choosing the wrong standard is an **architectural decision** — it constrains what the system can ever do.
+:::
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the mechanical difference between fungible and non-fungible token standards. It matters here because later community, minting, and operational examples depend on what the standard can track. Emphasize that standard choice determines identity, transfer granularity, and downstream integration patterns.
+
+**Key Points**
+- ERC-20 tracks balances, ERC-721 tracks unique ownership by token ID, and ERC-1155 supports mixed token types under one contract.
+- Standards are coordination tools for wallets, marketplaces, and indexers as much as they are code interfaces.
+- Spell out ERC as Ethereum Request for Comments.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereumorg_nfts_2025; @wang_soktokenizationblockchain_2021
+
+:::
+
+## Token Standard Design Considerations {style="font-size: 0.90em;"}
+
+```{dot}
+//| fig-width: 15
+//| fig-height: 7.0
+digraph token_design {
+  rankdir=TB
+  graph [fontname="Arial Bold" fontsize=17 pad=0.7 nodesep=1.1 ranksep=1.2 bgcolor="transparent"]
+  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+
+  Q1 [label="Are all instances\ninterchangeable?"
+      shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white penwidth=2]
+
+  Q2 [label="Do you need both\nfungible and unique\ntokens in one system?"
+      shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white penwidth=2]
+
+  ERC20 [label="ERC-20  —  Fungible\n─────────────────────────────\nTracks: balance per address\nTransfer unit: any amount\nConstraint: no individual identity\nUse: governance, stablecoin, currency"
+         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+
+  ERC721 [label="ERC-721  —  Non-Fungible\n─────────────────────────────\nTracks: one owner per token ID\nTransfer unit: one whole token\nConstraint: no batch efficiency\nUse: art, deed, membership, credential"
+          shape=box style=filled fillcolor="#1a3a5a" fontcolor=white]
+
+  ERC1155 [label="ERC-1155  —  Multi-Token\n─────────────────────────────\nTracks: balance per (address, ID) pair\nTransfer unit: amounts per ID\nConstraint: larger attack surface\nUse: gaming inventory, enterprise catalogue"
+           shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  WARN [label="Standard choice is\nan architectural commitment —\nit constrains every downstream\nwallet, market, and indexer."
+        shape=box style=filled fillcolor="#5a1a1a" fontcolor=white penwidth=2]
+
+  Q1 -> ERC20  [label="  Yes" color="#2ecc71" fontcolor="#2ecc71"]
+  Q1 -> Q2     [label="  No" color="#e74c3c" fontcolor="#e74c3c"]
+  Q2 -> ERC721 [label="  No — unique only" color="#3498db" fontcolor="#3498db"]
+  Q2 -> ERC1155[label="  Yes — mixed" color="#f39c12" fontcolor="#f39c12"]
+  ERC20   -> WARN [style=invis]
+  ERC721  -> WARN [style=invis]
+  ERC1155 -> WARN [style=invis]
+
+  { rank=same; ERC20; Q2 }
+  { rank=same; ERC721; ERC1155 }
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes standard selection as an architectural choice rather than a cosmetic one. It matters here because the token model chosen at design time constrains future wallet support, market behavior, and application logic. Emphasize that a token standard is part of the system's long-term operating model.
+
+**Key Points**
+- Designers should choose standards by asking whether units are interchangeable and whether mixed token types are needed.
+- Wrong standard choices create downstream friction that is expensive or impossible to undo after deployment.
+- Define architectural commitment briefly as an early design choice that constrains many later integration options.
+
+**Walkthrough**
+1. Start with the top question: are all units interchangeable?
+2. Follow the branch toward ERC-20, ERC-721, or ERC-1155 based on identity and mixed-use needs.
+3. End on the warning that standards lock in downstream expectations.
+
+**Sources**
+@vogelsteller_eip20tokenstandard_2015; @ethereumorg_nfts_2025; @wang_soktokenizationblockchain_2021
+
+:::
+
+## What Tokens Don't Guarantee {style="font-size: 0.85em;"}
+
+- The chain verifies: **signatures**, **balance changes**, **contract execution**, **event logs**.
+
+- The chain does **not** verify: file contents, legal ownership, identity of the wallet holder, or meaning of metadata.
+
+- `tokenURI` points to a JSON file — that file lives **somewhere else**, with its own integrity model.
+
+- A token on an immutable chain pointing to a **mutable server** is only as trustworthy as the server operator.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the central analytical boundary of the lesson: tokens enforce some facts on-chain, but not the full meaning people attach to them. It matters here because many user and analyst errors come from assuming the chain guarantees more than it does. Emphasize the difference between state enforcement and interpretation.
+
+**Key Points**
+- The chain guarantees signatures, state transitions, and event logs, but not metadata truth, legal rights, or real-world identity.
+- `tokenURI` is only a pointer, so token integrity can still depend on off-chain infrastructure.
+- Define `tokenURI` briefly as the metadata pointer a contract returns for a token.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereumorg_nfts_2025; @hammi_nonfungibletokensreview_2023
+
+:::
+
+## On-Chain vs. Off-Chain {style="font-size: 0.90em;"}
+::: {style="margin-top: -5em;"}
+```{dot}
+//| fig-width: 15
+//| fig-height: 6.2
+digraph onchain_offchain {
+  rankdir=LR
+  graph [fontname="Arial" fontsize=18 pad=0.5 splines=ortho bgcolor="transparent"]
+  node  [fontname="Arial" fontsize=18 penwidth=1.5]
+  edge  [fontname="Arial" fontsize=18 penwidth=1.5]
+
+  subgraph cluster_onchain {
+    label="On-Chain  —  Enforced by Consensus"
+    labeljust=l
+    style=filled
+    fillcolor="#1a3a2a"
+    color="#2ecc71"
+    penwidth=2
+    fontcolor="white"
+    fontsize=13
+
+    TID  [label="Token ID" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    OWN  [label="Owner Address" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    HIST [label="Transfer History" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    URI  [label="tokenURI\n(pointer)" shape=box style=filled fillcolor="#2d7a50" fontcolor=white]
+  }
+
+  subgraph cluster_offchain {
+    label="Off-Chain  —  NOT Enforced by Chain"
+    labeljust=l
+    style=filled
+    fillcolor="#3a1a1a"
+    color="#e74c3c"
+    penwidth=2
+    fontcolor="white"
+    fontsize=13
+
+    META [label="Metadata JSON\n(name, description, traits)" shape=box style=filled fillcolor="#8b2020" fontcolor=white]
+    IMG  [label="Image / File" shape=box style=filled fillcolor="#8b2020" fontcolor=white]
+    LEG  [label="Legal Rights" shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
+    ID   [label="Real-World Identity\nof Wallet Holder" shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
+  }
+
+  URI  -> META [label="  points to\n  (not enforced)" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2]
+  META -> IMG  [label="  links to" style=dashed color="#e74c3c" fontcolor="#e74c3c"]
+}
+```
+:::
+::: {.notes}
+
+**Overall Slide Concept**
+This diagram slide establishes the visual split between on-chain guarantees and off-chain meaning. It matters here because the rest of the deck keeps returning to this boundary when evaluating communities, credentials, and evidence claims. Emphasize the dashed arrow as the point where trust assumptions re-enter.
+
+**Key Points**
+- Ownership, IDs, and transfer history are on-chain; metadata, files, rights, and identity usually are not.
+- The metadata pointer is the bridge, but it does not make off-chain content consensus-enforced.
+- Define off-chain briefly as depending on systems or institutions outside the blockchain's consensus process.
+
+**Walkthrough**
+1. Point to the on-chain cluster and name the specific facts consensus enforces.
+2. Point to the off-chain cluster and name the claims the chain does not directly verify.
+3. End with the pointer from `tokenURI` to metadata as the core integrity gap.
+
+**Sources**
+@ethereumorg_nfts_2025; @ipfs_docs_2025; @hammi_nonfungibletokensreview_2023
+
+:::
+
+## Token-Based Communities {style="font-size: 0.88em;"}
+
+- A **token-based community** enforces membership, access, and/or governance through token ownership.
+
+- Three things token ownership can gate: **who gets in**, **who gets to speak**, **who gets to decide**.
+
+- The chain enforces the gate; humans supply the **community, culture, and purpose** behind it.
+
+- Key question: what exactly does the token *enforce* — and what does it merely *signal*?
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes token-based communities as systems where ownership controls access, speech, or decision rights. It matters here because the lesson now shifts from primitive definition to social and organizational application. Emphasize that tokens can enforce gates, but not culture or legitimacy by themselves.
+
+**Key Points**
+- Token ownership can gate membership, permissions, or governance participation.
+- Communities still rely on off-chain communication, norms, and moderation even when access is token-gated.
+- Define token gate briefly as a rule that grants or denies access based on ownership of a specified token.
+
+**Walkthrough**
+None
+
+**Sources**
+@wang_soktokenizationblockchain_2021; @collabland_tokengatingtutorial_2026; @ethereumorg_nfts_2025
+
+:::
+
+## Two-Layer Community Architecture {style="font-size: 0.90em;"}
+
+```{dot}
+//| fig-width: 15
+//| fig-height: 6.5
+digraph tbc_layers {
+  rankdir=LR
+  graph [fontname="Arial Bold" fontsize=17 pad=0.6 nodesep=0.7 ranksep=1.2 bgcolor="transparent"]
+  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+
+  subgraph cluster_enforced {
+    label="Enforced On-Chain"
+    labeljust=l
+    style=filled
+    fillcolor="#1a3a2a"
+    color="#2ecc71"
+    penwidth=2.5
+    fontcolor=white
+    fontsize=13
+
+    ACC  [label="Access Control\n(token gate)" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    GOV  [label="Governance Votes\n(token-weighted)" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    TRES [label="Treasury Disbursement\n(contract execution)" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+  }
+
+  subgraph cluster_social {
+    label="Social Layer  —  Off-Chain"
+    labeljust=l
+    style=filled
+    fillcolor="#1a2a3a"
+    color="#3498db"
+    penwidth=2.5
+    fontcolor=white
+    fontsize=13
+
+    COMS [label="Communication\n(Discord, Telegram, Forums)" shape=box style=filled fillcolor="#1a4a6e" fontcolor=white]
+    CULT [label="Culture / Norms\n(trust, reputation)" shape=box style=filled fillcolor="#1a4a6e" fontcolor=white]
+    MOD  [label="Moderation\n& Curation" shape=box style=filled fillcolor="#154060" fontcolor=white]
+  }
+
+  ACC  -> COMS [label="gates entry to" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2]
+  GOV  -> TRES [label="authorises" color="#2ecc71" fontcolor="#2ecc71"]
+  CULT -> MOD  [label="shapes" color="#3498db" fontcolor="#3498db"]
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the two-layer model behind token communities: enforced on-chain mechanisms and social off-chain coordination. It matters here because many claims about decentralization blur those layers together. Emphasize that the chain can enforce treasury or voting logic while still relying on centralized communication or moderation channels.
+
+**Key Points**
+- Access control, treasury execution, and formal voting can be enforced on-chain.
+- Communication, culture, and moderation usually stay in off-chain services or social processes.
+- Define treasury disbursement briefly as contract-controlled release of funds according to encoded rules.
+
+**Walkthrough**
+1. Identify the on-chain layer that enforces entry, treasury, and governance mechanics.
+2. Show the off-chain layer where discussion, moderation, and social cohesion actually occur.
+3. End with the arrows connecting them to show that token ownership gates access to social spaces.
+
+**Sources**
+@wang_soktokenizationblockchain_2021; @collabland_tokengatingtutorial_2026
+
+:::
+
+## Three Patterns: DAOs, Membership NFTs, and Social Tokens 
+
+::: {style="font-size: 0.65em;"}
+
+- **Decentralized Autonomous Organization - DAOs** — token-weighted control of a shared treasury and protocol; governance is the core function.
+
+- **Membership NFTs** — access control; the NFT is a key that unlocks content, events, or community spaces.
+
+- **Social tokens** — community currency; rewards contribution and aligns incentives around participation.
+
+- These patterns **mix freely** — most real communities combine elements of all three.
+
+```{dot}
+//| fig-width: 10
+//| fig-height: 3.0
+digraph community_patterns {
+  rankdir=LR
+  node [shape=box style=filled fontname="Arial" fontsize=10 bgcolor="transparent"]
+  edge [fontname="Arial Bold" fontsize=11]
+
+  DAO   [label=<<FONT COLOR="white"><B>DAO</B><BR/>──────────<BR/>Token: ERC-20<BR/>Enforces: votes,<BR/>treasury, upgrades<BR/>Example: Gitcoin</FONT>> fillcolor="#1e6e42"]
+  MEM   [label=<<FONT COLOR="white"><B>Membership NFT</B><BR/>──────────<BR/>Token: ERC-721<BR/>Enforces: access<BR/>to content/events<BR/>Example: BAYC</FONT>> fillcolor="#1a3a5a"]
+  SOC   [label=<<FONT COLOR="white"><B>Social Token</B><BR/>──────────<BR/>Token: ERC-20<BR/>Enforces: balance;<BR/>signals status/role<BR/>Example: FWB</FONT>> fillcolor="#4a3500"]
+  HYB   [label=<<FONT COLOR="white"><B>Hybrid</B><BR/>──────────<BR/>NFT = identity<BR/>Fungible = budget<BR/>Example: FWB + DAO</FONT>> fillcolor="#5a1a1a" shape=ellipse]
+
+  DAO -> HYB [label="add identity layer" color="#2ecc71" fontcolor="#2ecc71"]
+  MEM -> HYB [label="add governance layer" color="#3498db" fontcolor="#3498db"]
+  SOC -> HYB [label="add treasury control" color="#f39c12" fontcolor="#f39c12"]
+}
+```
+:::
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the three major design patterns for token-based communities. It matters here because students should learn to classify these systems by what the token is doing socially and operationally. Emphasize that governance, membership, and social-currency functions create different risk and incentive profiles.
+
+**Key Points**
+- DAOs, membership NFTs, and social tokens use the same infrastructure but emphasize different community mechanics.
+- The most useful analytical question is what power or privilege the token actually controls.
+- Define social token briefly as a fungible token used to coordinate identity, status, or participation around a community or creator.
+
+**Walkthrough**
+None
+
+**Sources**
+@wang_soktokenizationblockchain_2021; @ethereumorg_nfts_2025; @ante_nonfungibletokennft_2022
+
+:::
+
+## Token Community Examples
+
+::: {style="font-size: 0.55em;"}
+
+| Community | Pattern | Token | What it enforces | Notable feature |
+|---|---|---|---|---|
+| **Friends With Benefits** | Social + DAO | FWB (ERC-20) | Discord membership threshold | Token price creates plutocratic entry barrier |
+| **Bored Ape Yacht Club** | Membership NFT + DAO | BAYC (ERC-721) + APE (ERC-20) | Event access, IP rights, ApeCoin governance | Layered: NFT = identity; APE = treasury control |
+| **Doodles** | Membership NFT + DAO | Doodles (ERC-721) | Doodlebank treasury voting | Community launchpad funded \$300K+ in grants |
+| **Gitcoin** | DAO | GTC (ERC-20) | Quadratic funding allocation | Open-source grant funding; sybil resistance required |
+
+- Each community answers: *what does holding this token actually let you do?*
+
+- Each also illustrates a **structural tension** that token governance alone cannot resolve.
+:::
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes concrete case studies so students can compare token communities that look similar on-chain but operate differently in practice. It matters here because examples reveal the gap between token design and lived community behavior. Emphasize what each example enforces versus what it merely signals socially.
+
+**Key Points**
+- Community examples help distinguish governance-driven, access-driven, and brand-driven token ecosystems.
+- Similar token mechanics can support very different cultures, economic incentives, and abuse patterns.
+- Define case study briefly as a real example used to test how theory behaves in deployed systems.
+
+**Walkthrough**
+None
+
+**Sources**
+@wang_soktokenizationblockchain_2021; @ethereumorg_nfts_2025; @collabland_tokengatingtutorial_2026; Friends With Benefits, "Join" (https://www.fwb.help/join); Gitcoin Governance Manual (https://manual.gitcoin.co/); Doodles Digital Collectibles Media License Agreement (https://www.doodles.app/legal/digital-collectibles-licenses/digital-collectibles-media-license-agreement); ApeCoin DAO Governance Working Group materials (https://forum.apecoin.com/)
+
+:::
+
+## How Token Gating Works {style="font-size: 0.85em;"}
+
+- Flow: user connects wallet → **signs a message** (no gas) → contract checks token balance → access granted or denied.
+
+- Implementations: Discord bots (Collab.Land, Guild.xyz), web apps (wallet auth), physical events (FWB Gatekeeper).
+
+- **No passwords. No accounts. No central database.** Ownership is the credential.
+
+- Analytical split: **membership list is public** (on-chain); **community content is private** (off-chain).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the practical mechanics behind token gating so students see it as an authentication pattern rather than just a social label. It matters here because many token communities depend on wallet checks more than on formal governance contracts. Emphasize that ownership verification and session-level access are still distinct steps.
+
+**Key Points**
+- Token gating checks wallet-controlled assets before granting access to a forum, app, or service.
+- The gate verifies ownership, but the protected resource usually still lives in an off-chain platform.
+- Define wallet authentication briefly as proving control of an address by signing a challenge.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereumorg_nfts_2025; @collabland_tokengatingtutorial_2026
+
+:::
+
+## Token Gating: Access Flow {style="font-size: 0.90em;"}
+
+```{dot}
+//| fig-width: 15
+//| fig-height: 6
+digraph token_gate_flow {
+  rankdir=TB
+  graph [fontname="Arial" fontsize=17 pad=0.7 nodesep=1.2 ranksep=0.9 splines=ortho bgcolor="transparent"]
+  node  [fontname="Arial" fontsize=17 penwidth=2.5 margin="0.30,0.20" width=4.5]
+  edge  [fontname="Arial" fontsize=17 penwidth=2.5 arrowsize=1.2]
+
+  S1 [label="(1) User Wallet\nConnect wallet to bot / dApp"
+      shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
+
+  S2 [label="(2) Gate Bot / dApp\nIssues off-chain signature challenge\n(no gas, no on-chain record)"
+      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  S3 [label="(3) User Wallet\nSigns message — proves key control\n(still off-chain)"
+      shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
+
+  S4 [label="(4) Token Contract  ·  ON-CHAIN\nbalanceOf(wallet)  or  ownerOf(tokenId)"
+      shape=box style=filled fillcolor="#1e6e42" fontcolor=white penwidth=3]
+
+  S5 [label="(5) Gate Bot / dApp\nReceives confirmed / denied result"
+      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  DENY  [label="(6a)  Access Denied"
+         shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
+
+  GRANT [label="(6b)  Access Granted\nRole assigned — resource unlocked"
+         shape=box style=filled fillcolor="#1e4a2a" fontcolor=white]
+
+  S1 -> S2 [color="#3498db" penwidth=2.5]
+  S2 -> S3 [color="#f39c12" penwidth=2.5]
+  S3 -> S4 [color="#2ecc71" penwidth=2.5]
+  S4 -> S5 [color="#2ecc71" penwidth=2.5]
+  S5 -> DENY  [headlabel="no token  " labeldistance=2.5 labelangle=25 style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2.5]
+  S5 -> GRANT [headlabel="  token held" labeldistance=2.5 labelangle=-25 color="#2ecc71" fontcolor="#2ecc71" penwidth=2.5]
+
+  { rank=same; DENY; GRANT }
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This diagram slide establishes the flow of a typical token-gated access check from wallet to verifier to service. It matters here because students should be able to reason about where the gate can fail or be bypassed. Emphasize that the token check is only one component in a larger access-control chain.
+
+**Key Points**
+- Access flow usually combines wallet signature, on-chain ownership check, and application-side authorization.
+- Failure or compromise at the verifier or application layer can undermine a correct on-chain check.
+- Define authorization briefly as the application's decision to grant access after successful identity or ownership verification.
+
+**Walkthrough**
+1. Start with the user proving wallet control through a signed message.
+2. Show the ownership check against the relevant token contract.
+3. End with the application granting or denying access based on the result.
+
+**Sources**
+@ethereumorg_nfts_2025; @collabland_tokengatingtutorial_2026
+
+:::
+
+## What Is Minting? {style="font-size: 0.88em;"}
+
+::: {style="font-size: 0.72em;"}
+
+- **Minting** is a state-writing transaction that produces a new token ID and assigns an initial owner.
+
+- On Ethereum: a function call to a smart contract; the contract emits a `Transfer` event from **address zero**.
+
+- The minter controls: **who can mint**, **how many exist**, **what metadata the token points to**.
+
+- After minting: the token enters the standard ownership and transfer lifecycle.
+
+::: {style="margin-top: -5em;"}
+```{dot}
+//| fig-width: 13
+//| fig-height: 5.4
+digraph minting_flow {
+  rankdir=LR
+  graph [fontname="Arial Bold" fontsize=17 pad=0.5 nodesep=0.8 ranksep=1.4 splines=ortho bgcolor="transparent"]
+  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+
+  CALL  [label="mint() call\nsigned tx from\nauthorized address"
+         height=1.2 width=3 shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  CHECK [label="Contract checks\nmint conditions\n\nallowlist?\nsupply cap?\npayment?"
+         height=1.2 width=3 shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white]
+
+  WRITE [label="State written\n─────────────\ntokenId → owner\nTransfer emitted\nfrom 0x0"
+         height=1.2 width=3 shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+
+  META  [label="tokenURI set\n─────────────\npointer to metadata\n(off-chain storage)"
+         height=1.2 width=3 shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
+
+  DONE  [label="Token exists\non-chain"
+         height=1.2 width=3 shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+
+  REV   [label="Transaction\nreverts\n(nothing written)"
+         height=1.2 width=3 shape=box style=filled fillcolor="#5a1a1a" fontcolor="#ffaaaa"]
+
+  CALL  -> CHECK [color="#f39c12"]
+  CHECK -> WRITE [label="  conditions met" color="#2ecc71" fontcolor="#2ecc71"]
+  CHECK -> REV   [label="  conditions\n  not met" style=dashed color="#e74c3c" fontcolor="#e74c3c"]
+  WRITE -> META  [color="#2ecc71"]
+  META  -> DONE  [color="#2ecc71"]
+}
+```
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes minting as the act of creating new token state on-chain rather than merely listing or revealing an asset. It matters here because token supply, ownership history, and project economics begin at mint time. Emphasize that minting is a contract operation with security and fairness implications.
+
+**Key Points**
+- Minting creates or assigns token records according to contract-defined rules.
+- Supply control, payment rules, and access restrictions during mint shape later market behavior and trust.
+- Define minting briefly as creating a new token entry or balance on-chain.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogelsteller_eip20tokenstandard_2015; @ethereumorg_nfts_2025
+
+:::
+
+## Minting on Ethereum {style="font-size: 0.83em;"}
+
+::: {style="font-size: 0.72em;"}
+
+- **Public mint** — anyone can call `mint()`; supply cap is the only control. Risk: bot front-running.
+
+- **Allowlist (Merkle proof)** — a hash tree commits allowed addresses; callers prove membership without storing the list on-chain.
+
+- **Signature-based (lazy) mint** — deployer signs a voucher off-chain; buyer submits voucher + payment to mint on demand.
+
+- **Royalty signaling (EIP-2981)** — contract declares royalty recipient and basis points; marketplace enforcement varies.
+
+::: {style="margin-top: -9em;"}
+```{dot}
+//| fig-width: 10
+//| fig-height: 7
+digraph mint_patterns {
+  rankdir=TB
+  graph [fontname="Arial" fontsize=17 pad=0.6 nodesep=0.8 ranksep=1.2 bgcolor="transparent"]
+  node  [fontname="Arial" fontsize=17 penwidth=1.5]
+  edge  [fontname="Arial" fontsize=17 penwidth=1.5]
+
+  Q  [label="Who can mint?" width=2.5 height=1.5 shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white]
+
+  PUB [label="Public Mint\n─────────────\nAnyone, any time\nControl: supply cap only\nRisk: bot front-running"
+       shape=box style=filled fillcolor="#1a4a1a" fontcolor=white]
+
+  AL  [label="Allowlist — Merkle Proof\n─────────────\nMerkle root stored on-chain\nCaller submits inclusion proof\nRisk: proof generation backend"
+       shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
+
+  SIG [label="Lazy Mint — Signed Voucher\n─────────────\nDeployer backend signs voucher\nBuyer pays gas to mint on demand\nRisk: voucher replay w/o nonce"
+       shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  DEL [label="Delegated Minter Role\n─────────────\nTrusted address has MINTER_ROLE\nUsed for bridges / off-chain issuance\nRisk: key compromise = unlimited mint"
+       shape=box style=filled fillcolor="#5a1a1a" fontcolor=white]
+
+  Q -> PUB [label="Anyone" color="#2ecc71" fontcolor="#2ecc71"]
+  Q -> AL  [label="Pre-approved list" color="#3498db" fontcolor="#3498db"]
+  Q -> SIG [label="Voucher holders" color="#f39c12" fontcolor="#f39c12"]
+  Q -> DEL [label="Operator / bridge" color="#e74c3c" fontcolor="#e74c3c"]
+}
+```
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what minting looks like in Ethereum specifically: a contract call that writes supply and ownership state, often alongside metadata linkage. It matters here because students should tie abstract minting to concrete EVM-based state changes. Emphasize that mint logic is where distribution policy becomes code.
+
+**Key Points**
+- Ethereum minting typically updates ownership or balances, emits events, and may initialize metadata references.
+- Contract design determines who can mint, under what conditions, and at what cost.
+- Define minter briefly as the address or role allowed to create new tokens under the contract's rules.
+
+**Walkthrough**
+None
+
+**Sources**
+@vogelsteller_eip20tokenstandard_2015; @ethereumorg_nfts_2025; @tierno_tokenizedassets_2025
+
+:::
+
+## Metadata, IPFS, and the Pointer Problem {style="font-size: 0.83em;"}
+
+::: {style="font-size: 0.75em;"}
+
+- At mint, `tokenURI` is set — a string pointing to a JSON file containing name, image URL, and traits.
+
+- **Content addressing** (IPFS CID, Arweave TX ID): address is a hash of the content — change the file, address changes.
+
+- **Location addressing** (HTTP URL): address is a server location — server operator can change or delete the content silently.
+
+| Storage | Address type | Mutable? | Permanent? | Trust model |
+|---|---|---|---|---|
+| On-chain | State variable | No | Yes | Chain consensus |
+| IPFS | Content hash (CID) | No (hash changes) | Only if pinned | Pinning network |
+| Arweave | Content hash (TX ID) | No | Paid permanence | Arweave protocol |
+| HTTP URL | Location | **Yes** | Server-dependent | **Server operator** |
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the metadata pointer problem as the core integrity issue behind many NFT misunderstandings. It matters here because minting a token does not automatically make the associated content durable or immutable. Emphasize that storage choice determines whether the pointer is a commitment or just a location.
+
+**Key Points**
+- IPFS and similar systems improve integrity by referencing content through hashes rather than mutable URLs.
+- A token can be permanent while the referenced metadata or media remains mutable, unavailable, or misleading.
+- Spell out IPFS as InterPlanetary File System and define CID as content identifier.
+
+**Walkthrough**
+None
+
+**Sources**
+@ipfs_docs_2025; @ethereumorg_nfts_2025; @hammi_nonfungibletokensreview_2023
+
+:::
+
+## Soulbound Tokens
+
+::: {style="font-size: 0.75em;"}
+
+- A **Soulbound Token (SBT)** is minted with transfer disabled — bound to one wallet permanently.
+
+- Use cases: **identity attestations, academic credentials, membership records, on-chain reputation**.
+
+- Two standards: **ERC-5192** (locks ERC-721 transfer functions) and **ERC-4973** (account-bound; holder can relinquish).
+
+- **The open problem**: non-transferability binds the credential to a *wallet*, not a *person*.
+:::
+::: {style="margin-top: -7em;"}
+
+```{dot}
+//| fig-width: 14
+//| fig-height: 7
+digraph sbt_flow {
+  rankdir=LR
+  graph [fontname="Arial" fontsize=17 pad=0.6 nodesep=0.9 ranksep=1.5 bgcolor="transparent"]
+  node  [fontname="Arial" fontsize=17 penwidth=1.5]
+  edge  [fontname="Arial" fontsize=17 penwidth=1.5]
+
+  ISSUER [label="Issuer\n─────────────\nInstitution / DAO / Peer\nsigns mint transaction"
+          shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  MINT   [label="Mint SBT\n─────────────\nTransfer functions locked\nat contract level\n(ERC-5192 or ERC-4973)"
+          shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+
+  WALLET [label="Recipient Wallet\n─────────────\nCAN: hold, display,\nuse for access\nCANNOT: sell or transfer"
+          shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
+
+  PERSON [label="Real Person?\n─────────────\nBinding ONLY IF person\ncontrols the private key\n\nKey sale = credential sale\nKey compromise = identity theft"
+          shape=ellipse style=filled fillcolor="#5a1a1a" fontcolor=white]
+
+  ISSUER -> MINT   [label="  signs mint tx" color="#f39c12" fontcolor="#f39c12"]
+  MINT   -> WALLET [label="  token created\n  transfer disabled" color="#2ecc71" fontcolor="#2ecc71"]
+  WALLET -> PERSON [label="  assumed — NOT enforced\n  by any contract" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2.5]
+}
+```
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes soulbound tokens as a credential-oriented design that deliberately rejects normal transferability. It matters here because identity and reputation uses change both the purpose and the threat model of tokens. Emphasize that non-transferability solves some problems while creating others around privacy, recovery, and coercion.
+
+**Key Points**
+- Soulbound tokens are intended to represent credentials, reputation, or attestations rather than tradeable assets.
+- Preventing transfer changes incentives, but it does not automatically solve identity or legitimacy questions.
+- Define soulbound briefly as designed to be non-transferable once issued.
+
+**Walkthrough**
+None
+
+**Sources**
+@ohlhaver_weyl_buterin_decentralizedsociety_2022; @scharfman_nonfungibletokennft_2024
+
+:::
+
+## Minting on Hyperledger Fabric
+
+::: {style="font-size: 0.73em;"}
+
+- On Fabric, asset creation is **chaincode execution within a consortium** — identity is known at the protocol layer.
+
+- Asset = **composite key** (`type:id`) + JSON value (owner MSP, metadata hash, URI).
+
+- **Endorsement policy** defines which organizations must co-sign a mint — governance is explicit.
+
+- Fabric adds: **known identities, multi-org sign-off, private data**. It removes: **permissionlessness, public verifiability**.
+:::
+::: {style="margin-top: -2em;"}
+```{dot}
+//| fig-width: 11
+//| fig-height: 4.6
+digraph fabric_vs_eth {
+  rankdir=LR
+  graph [fontname="Arial" fontsize=12 pad=0.6 nodesep=0.7 ranksep=0.5 bgcolor="transparent"]
+  node  [fontname="Arial" fontsize=12 penwidth=2 color="#f4f7fb"]
+  edge  [fontname="Arial" fontsize=11 penwidth=1.8]
+
+  subgraph cluster_eth {
+    label="Ethereum — Public, Permissionless"
+    labeljust=l
+    style=filled
+    fillcolor="#0d1f35"
+    color="#3498db"
+    penwidth=2.5
+    fontcolor=white
+    fontsize=13
+
+    ETX  [label="Any wallet\ncalls mint()\n(no CA, no identity)"
+          shape=box style=filled fillcolor="#1a3a5a" fontcolor=white]
+    ECON [label="EVM executes\ncontract code\n(deterministic, public)"
+          shape=box style=filled fillcolor="#1a3a5a" fontcolor=white]
+    EPUB [label="State written\npublicly\n(anyone can read)"
+          shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    ETX -> ECON -> EPUB [color="#3498db"]
+  }
+
+  subgraph cluster_fab {
+    label="Hyperledger Fabric — Permissioned Consortium"
+    labeljust=l
+    style=filled
+    fillcolor="#2a1a00"
+    color="#f39c12"
+    penwidth=2.5
+    fontcolor=white
+    fontsize=13
+
+    FID   [label="X.509 Identity\n(CA-issued cert)\nknown at protocol level"
+           shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+    FEND  [label="Endorsing Peers\nrun chaincode\nmulti-org sign-off required"
+           shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+    FORD  [label="Orderer sequences\nblock committed\nto channel ledger"
+           shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    FPRIV [label="Private Data Collection\n(optional)\nhash on channel\ndata off-channel"
+           shape=box style=filled fillcolor="#5a1a1a" fontcolor=white]
+
+    FID  -> FEND [label="  authenticated\n  proposal" color="#f39c12" fontcolor="#f39c12"]
+    FEND -> FORD [label="  endorsed\n  read/write set" color="#f39c12" fontcolor="#f39c12"]
+    FORD -> FPRIV [style=dashed label="  if PDC used" color="#e74c3c" fontcolor="#e74c3c"]
+  }
+}
+```
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes a permissioned contrast by showing how token-like issuance can work in Hyperledger Fabric. It matters here because students should see that minting patterns exist outside open public networks. Emphasize how membership control and institutional trust reshape the system's assumptions.
+
+**Key Points**
+- Fabric-based minting relies on known organizations, permissioned identities, and chaincode-governed state updates.
+- The token idea remains, but governance and trust move from open consensus toward consortium control.
+- Define chaincode briefly as application logic executed by Hyperledger Fabric peers.
+
+**Walkthrough**
+None
+
+**Sources**
+@wang_soktokenizationblockchain_2021; @tierno_tokenizedassets_2025
+
+:::
+
+## The Frosties Rug Pull {style="font-size: 0.83em;"}
+
+::: {style="font-size: 0.85em;"}
+
+- The same minting primitives that enable open creation also enable **rug pulls** — projects that launch, collect mint funds, then abandon, sending value to zero.
+
+- **Frosties** (Jan 2022): 8,888 NFTs sold at 0.04 ETH each — **$1.1M raised and drained within hours** of sellout. Website deactivated, Discord deleted, Twitter posted "I'm sorry."
+
+- Operators transferred proceeds through **multiple wallets designed to obfuscate the source** — but every transfer was publicly recorded on-chain.
+
+- When arrested, the same operators were preparing a **second project ("Embers")** expected to raise $1.5M — the **wallet reuse** was the forensic link.
+
+- Broader pattern: study of **758 rug pulls across 10 marketplaces** found wallet reuse is the dominant forensic signal; one cluster attempted **37 rug pulls in three months**.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the Frosties case as a real-world failure where token infrastructure was used to extract value and abandon a community. It matters here because rug pulls are one of the clearest examples of how social trust can be abused on top of technically valid token mechanics. Emphasize that on-chain transparency does not prevent bad intent.
+
+**Key Points**
+- A rug pull occurs when project operators use user trust and token demand to extract value before disappearing or changing the rules.
+- The chain records the flows clearly, but that does not automatically protect buyers before the harm occurs.
+- Define rug pull briefly as a project-driven exit scam or abandonment after collecting user funds or value.
+
+**Walkthrough**
+None
+
+**Sources**
+@usdoj_frosties_2022; @zhou_stoppullingmy_2024
+
+:::
+
+## Rug Pull Operator Wallet Graph {style="font-size: 0.90em;"}
+
+```{dot}
+//| fig-width: 13
+//| fig-height: 7.0
+digraph rugpull_frosties {
+  rankdir=TB
+  graph [fontname="Arial" fontsize=14 pad=0.7 nodesep=1.0 ranksep=1.0 bgcolor="transparent"]
+  node  [fontname="Arial" fontsize=14 penwidth=1.5 width=4.5]
+  edge  [fontname="Arial" fontsize=13 penwidth=2.0]
+
+  S1 [label="(1)  8,888 Frosties Mint — Jan 9 2022\nPublic sale at 0.04 ETH each — raises ~$1.1M"
+      shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
+
+  S2 [label="(2)  Rug Pull — Hours After Sellout\nWebsite deactivated · Discord deleted · Twitter: 'I'm sorry'"
+      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  S3 [label="(3)  Frosties Wallet → Operator Wallet\n356.56 ETH transferred — visible on-chain to all holders"
+      shape=box style=filled fillcolor="#8b1a1a" fontcolor=white penwidth=2.5]
+
+  S4 [label="(4)  Funds Scattered Across Multiple Wallets\nTransactions designed to obfuscate source of funds"
+      shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
+
+  S5 [label="(5)  'Embers' — New Project Announced\nSame operators, new brand — expected $1.5M raise\nArrested before March 26 pre-sale"
+      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+
+  SIGNAL [label="FORENSIC SIGNAL\nOn-chain transfer was publicly visible —\nholders spotted it immediately.\nIRS-CI + HSI traced wallets to Nguyen & Llacuna"
+          shape=box style=filled fillcolor="#1e6e42" fontcolor=white penwidth=3]
+
+  S1 -> S2 [label="  sell out, abandon" color="#e74c3c" fontcolor="#e74c3c"]
+  S2 -> S3 [label="  ETH drained" color="#e74c3c" fontcolor="#e74c3c"]
+  S3 -> S4 [label="  obfuscation attempt" color="#f39c12" fontcolor="#f39c12"]
+  S4 -> S5 [label="  fund next project" color="#e74c3c" fontcolor="#e74c3c"]
+
+  S3 -> SIGNAL [style=dashed color="#2ecc71" fontcolor="#2ecc71" label="  key evidence"]
+
+  { rank=same; S5; SIGNAL }
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This graph slide establishes how wallet-flow analysis can reveal operator behavior behind a rug pull. It matters here because token systems leave an evidentiary trail even when identities are pseudonymous. Emphasize that graph structure is often the bridge from visible transactions to actionable forensic hypotheses.
+
+**Key Points**
+- Wallet graphs help analysts trace fund movement, clustering behavior, and relationships among project-controlled addresses.
+- Pseudonymity slows attribution, but it does not erase observable flow patterns.
+- Define wallet graph briefly as a network view of addresses and the transfers between them.
+
+**Walkthrough**
+1. Identify the main operator or treasury node in the graph.
+2. Follow the outbound flows to secondary wallets or cash-out points.
+3. End by noting what additional attribution data would be needed beyond the graph itself.
+
+**Sources**
+@usdoj_frosties_2022; @zhou_stoppullingmy_2024
+
+:::
+
+## The DAO Re-Entrancy Attack {style="font-size: 0.85em;"}
+
+::: {style="font-size: 0.72em;"}
+
+- **April 2016**: Christoph Jentzsch launches The DAO on Ethereum — a decentralized investment fund. **$150M raised from 11,000+ investors** in history's largest crowdfund at the time, representing ~14% of all ETH in circulation.
+
+- **June 12**: Stephan Tual, a DAO creator, announces a "recursive call bug" has been found — but claims **"no DAO funds at risk."** Programmers begin working on a fix. Over 50 project proposals are awaiting token-holder votes.
+
+- **June 17**: An unknown attacker exploits the unfixed flaw. The `withdraw()` function **sent ETH before updating the caller's balance** — the attacker's contract used its fallback function to re-enter `withdraw()` recursively. **3.6 million ETH (~$60M) drained** into a "child DAO" before anyone could intervene. ETH price crashes from $20+ to under $13 in a day.
+
+- **The response**: A "white hat" counter-strike group used the **same exploit** to race the attacker and rescue remaining funds. But the back-and-forth could have continued indefinitely — so the community voted to **hard fork** on July 20, 2016 (block 192,000), rewriting history to return stolen funds. A minority refused — that chain became **Ethereum Classic (ETC)**, which still runs today.
+
+- **The lesson**: The cryptography held. The chain worked as designed. **The contract code was wrong.** And when it mattered most, the community proved that blockchain immutability is a social commitment, not a physical law.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the DAO exploit as the canonical reminder that tokenized governance and treasury systems inherit smart-contract execution risk. It matters here because the lesson is about communities in practice, and the DAO shows how governance, code, and money can fail together. Emphasize that the chain executed the flawed logic faithfully.
+
+**Key Points**
+- The DAO attack was caused by a sequencing flaw, not by a cryptographic or consensus failure.
+- The incident shows that token-governed systems are only as safe as their contract logic and patch discipline.
+- Define re-entrancy briefly as reentering vulnerable contract logic before earlier execution has completed safely.
+
+**Walkthrough**
+None
+
+**Sources**
+@siegel_understandingdaoattack_2016; @mehar_understandingrevolutionaryflawed_2017; @l34_ethereum_dao_vulnerability_2016; @scharfman_nonfungibletokennft_2024
+
+:::
+
+## Re-Entrancy Drain Loop {style="font-size: 0.90em;"}
+
+::: {style="margin-top: -1em;"}
+```{dot}
+digraph reentrancy {
+  rankdir=TB
+  graph [
+    fontname="Arial Bold"
+    fontsize=22
+    pad=0.5
+    nodesep=1.2
+    ranksep=1.0
+    bgcolor="transparent"
+  ]
+  node [
+    fontname="Arial Bold"
+    fontsize=18
+    penwidth=2.0
+    margin="0.25,0.15"
+    width=5.0
+    shape=box
+    style=filled
+  ]
+  edge [
+    fontname="Arial"
+    fontsize=14
+    penwidth=2.5
+    arrowsize=1.2
+  ]
+
+  // ── MAIN FLOW (top to bottom) ──
+  A1 [
+    label="(1) Attacker calls withdraw(amount)"
+    fillcolor="#5a1a1a" fontcolor=white
+  ]
+
+  D1 [
+    label="(2) DAO checks balance → passes\nbalance was never decremented"
+    fillcolor="#4a3500" fontcolor=white
+  ]
+
+  D2 [
+    label="(3) DAO sends ETH to attacker\nbalance STILL not updated"
+    fillcolor="#4a3500" fontcolor=white
+  ]
+
+  A2 [
+    label="(4) Attacker fallback() fires → calls withdraw() again"
+    fillcolor="#5a1a1a" fontcolor=white
+    penwidth=3
+  ]
+
+  // ── OUTCOMES ──
+  DRAIN [
+    label="(5) Gas runs out → loop stops\n3.6M ETH ($60M) drained"
+    fillcolor="#8b1a1a" fontcolor=white
+    penwidth=3
+  ]
+
+  D3 [
+    label="(6) balances[msg.sender] -= amount\nNEVER REACHED during the loop"
+    fillcolor="#8b1a1a" fontcolor=white
+    style="filled,dashed"
+  ]
+
+  // ── EDGES ──
+  A1 -> D1 [color="#e74c3c"]
+  D1 -> D2 [color="#f39c12"]
+  D2 -> A2 [color="#e74c3c"]
+
+  // THE LOOP — this is the whole vulnerability
+  A2 -> D1 [
+    label="RE-ENTRY → back to ②\nbalance still unchanged"
+    style=dashed
+    color="#e74c3c"
+    fontcolor="#e74c3c"
+    penwidth=3.5
+    constraint=false
+  ]
+
+  A2 -> DRAIN [
+    label="eventually"
+    color="#888888"
+    fontcolor="#888888"
+    style=dotted
+  ]
+
+  D2 -> D3 [
+    label="should run next — never reached"
+    style=dotted
+    color="#888888"
+    fontcolor="#888888"
+    constraint=false
+  ]
+
+  // ── FORCE LAYOUT ──
+  { rank=same; DRAIN; D3 }
+}
+```
+:::
+
+::: {style="border: 2px solid #2ecc71; color: black; padding: 0.4em 0.8em; margin-top: -1.em; font-size: 0.50em;"}
+**FIX — Checks-Effects-Interactions:** Set `balances[msg.sender] = 0` **before** sending ETH. Re-entry hits zero balance → reverts. Order of operations is the entire vulnerability.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This diagram slide establishes the recursive loop that made the DAO exploit work. It matters here because seeing the order of operations makes the vulnerability easier to remember than a verbal description alone. Emphasize that the entire attack depends on external control being yielded before balances are updated.
+
+**Key Points**
+- The attacker repeatedly reentered before the contract could decrement the recorded balance.
+- The fix is to update state before sending value outward.
+- Define checks-effects-interactions briefly as a defensive ordering pattern that updates internal state before external calls.
+
+**Walkthrough**
+1. Start with the initial withdrawal call and the successful balance check.
+2. Follow the ETH transfer to the attacker's fallback and back into `withdraw`.
+3. End with the loop continuing until gas runs out or funds are exhausted.
+
+**Sources**
+@siegel_understandingdaoattack_2016; @l34_ethereum_dao_vulnerability_2016
+
+:::
+
+## Centralization Chokepoints {style="font-size: 0.83em;"}
+
+- Most users reach Ethereum through **Infura or Alchemy** — two centralized API providers. When Infura experienced an outage in 2020, dApps failed; the chain did not.
+
+- **Bridges** are controlled by multisigs far smaller than L1 consensus — the 2023 Multichain collapse proved it.
+
+- **Oracles** aggregate off-chain data through networks with their own, weaker security assumptions.
+
+- Although Ethereum L1 operates in a decentralized manner, the infrastructure layers many users actually depend on — RPC providers, bridges, and oracles — reintroduce the single points of failure that decentralization was designed to eliminate.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that many real Ethereum users interact first with centralized service layers rather than with decentralized base-layer infrastructure directly. It matters here because system resilience and trust can be undermined at those chokepoints even when Ethereum L1 remains healthy. Emphasize that decentralization claims should be evaluated across the whole dependency stack.
+
+**Key Points**
+- RPC providers, bridges, and oracle systems often concentrate power or operational dependency above the base layer.
+- Failures at those chokepoints can deny access or freeze value without any failure in Ethereum's consensus itself.
+- Spell out RPC as remote procedure call and define bridge briefly as infrastructure that represents assets or messages across chains.
+
+**Walkthrough**
+None
+
+**Sources**
+@l31_infura_ethereum_api_2026; @l31_alchemy_docs_2026; @l31_coindesk_multichain_fantom_2023; @l31_bis_crypto_ecosystem_risks_2022
+
+:::
+
+## Hidden Infrastructure Growth
+
+::: {style="font-size: .75em;"}
+
+- NFT secondary market volume fell ~**37% year-over-year** by late 2025 — the speculative layer collapsed.
+
+- Simultaneously: over **40% of Fortune 500 companies** integrated token infrastructure for operations.
+
+- Institutional use cases: **Digital Product Passports** (EU mandate), **supply chain traceability**, **tokenized loyalty**, **fractional real estate**.
+
+- The speculative layer and the utility layer have **decoupled** — most analysts are watching the wrong one.
+
+:::
+```{dot}
+//| fig-width: 7.5
+//| fig-height: 2.4
+digraph decoupling {
+  rankdir=LR
+  node [shape=box style=filled fontname="Arial" fontsize=10]
+  edge [fontname="Arial" fontsize=9]
+
+  SPEC [label="Speculative Layer\n──────────\nPFP collections\nSecondary market trading\nPrice speculation\nSTATUS: Collapsed -37% YoY" fillcolor="#6b1a1a" fontcolor=white]
+  UTIL [label="Utility Layer\n──────────\nDigital Product Passports\nSupply chain records\nTokenized loyalty\nSBT credentials\nSTATUS: Growing quietly" fillcolor="#1e6e42" fontcolor=white]
+  ANA  [label="Most analysts\nwatching here ↑" fillcolor="#4a3500" fontcolor=white shape=ellipse]
+  OPS  [label="Operational reality\nbuilding here ↑" fillcolor="#1a3a5a" fontcolor=white shape=ellipse]
+
+  ANA  -> SPEC [style=dashed color="#e74c3c" fontcolor="#e74c3c"]
+  OPS  -> UTIL [style=dashed color="#2ecc71" fontcolor="#2ecc71"]
+  SPEC -> UTIL [label="same primitive\ndifferent application" style=dotted color="#f39c12" fontcolor="#f39c12"]
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the structural decoupling between speculative NFT trading and quieter institutional token infrastructure growth. It matters here because many analysts overfocus on visible market bubbles while missing less glamorous operational adoption. Emphasize that the primitive can decline in one sector while growing in another.
+
+**Key Points**
+- Secondary-market collapse does not imply token infrastructure has stopped expanding in utility-oriented environments.
+- Analysts should track operational deployments such as provenance, loyalty, and product-passport systems separately from speculative volumes.
+- Define decoupling briefly as two related trends moving independently instead of rising and falling together.
+
+**Walkthrough**
+None
+
+**Sources**
+@tierno_tokenizedassets_2025; @ante_nonfungibletokennft_2022; @l34_c2pa_content_credentials_2026; @fda_foodtraceabilityrule_2025; Coinbase, "Fortune 500 Moving Onchain" / State of Crypto survey coverage (2024); Cointeeth, "Analysis of NFT Market Growth Data in 2025"
+
+:::
+
+## Analyst Implications
+
+::: {style="font-size: 0.7em;"}
+
+1. **Open membership enumeration** — any token-gated community's membership list is publicly readable on-chain; no special access required.
+
+2. **Pseudonymous coordination at scale** — token-based governance enables decision-making and value transfer among parties who never identify themselves.
+
+3. **Permanent, auditable financial records** — every token transfer is timestamped, signed, and immutable; the forensic substrate is always present.
+
+4. **Credential and identity systems outside traditional institutions** — SBTs and on-chain attestations create verifiable records with no central issuing authority.
+
+5. **Infrastructure concentration as leverage point** — RPC providers, bridges, and oracles are concentrated dependencies; disruption or compromise has outsized downstream effects.
+
+*Each capability cuts in two directions: it enables legitimate coordination and adversarial coordination with the same mechanism.*
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This closing slide establishes the practical intelligence and operational consequences of token infrastructure. It matters here because the lesson is ultimately about what these systems enable, not just how they are built. Emphasize that every capability listed has both legitimate and adversarial applications.
+
+**Key Points**
+- Token systems enable public membership mapping, pseudonymous coordination, durable financial records, credentialing, and targeted leverage through infrastructure chokepoints.
+- Analysts should evaluate both the benefits and the abuse potential of the same mechanism.
+- Define forensic substrate briefly as the persistent transaction record that supports later tracing and analysis.
+
+**Walkthrough**
+None
+
+**Sources**
+@sharma_understandingrugpulls_2023; @ohlhaver_weyl_buterin_decentralizedsociety_2022; @l31_bis_crypto_ecosystem_risks_2022; @zhu_governancetechnologyblockchain_2024
+
+:::
+
+## References

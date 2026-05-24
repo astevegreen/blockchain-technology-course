@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instructor Dashboard - Contract Status</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.16.0/dist/ethers.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #fff;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+    .header h1 { 
+      font-size: 2.8rem; 
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #4CAF50, #2196F3);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header p { color: #888; font-size: 1.1rem; }
+    
+    .connection-bar {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 12px;
+    }
+    .connection-bar input, .connection-bar select {
+      padding: 12px 16px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.3);
+      color: #fff;
+      font-size: 14px;
+    }
+    .connection-bar input { min-width: 280px; }
+    .connection-bar select { min-width: 180px; }
+    .connection-bar button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-connect { background: #4CAF50; color: white; }
+    .btn-connect:hover { background: #45a049; }
+    .btn-add { background: #2196F3; color: white; }
+    .btn-add:hover { background: #1976D2; }
+    .btn-clear { background: #f44336; color: white; }
+    .btn-clear:hover { background: #d32f2f; }
+    
+    .connection-status {
+      text-align: center;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .connection-status.connected { background: rgba(76,175,80,0.2); color: #81c784; }
+    .connection-status.disconnected { background: rgba(244,67,54,0.2); color: #e57373; }
+    
+    .contracts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+      gap: 25px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    .contract-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .contract-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+    }
+    .card-icon { font-size: 2.5rem; }
+    .card-title { font-size: 1.4rem; font-weight: 600; }
+    .card-address { 
+      font-family: monospace; 
+      font-size: 11px; 
+      color: #888; 
+      word-break: break-all;
+      margin-top: 4px;
+    }
+    .remove-btn {
+      margin-left: auto;
+      background: rgba(244,67,54,0.2);
+      border: none;
+      color: #e57373;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .remove-btn:hover { background: rgba(244,67,54,0.4); }
+    
+    .card-body { padding: 25px; }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 8px 20px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+    .status-badge.open { background: rgba(76,175,80,0.25); color: #81c784; border: 2px solid #4CAF50; }
+    .status-badge.closed { background: rgba(244,67,54,0.25); color: #e57373; border: 2px solid #f44336; }
+    .status-badge.pending { background: rgba(255,193,7,0.25); color: #ffd54f; border: 2px solid #ffc107; }
+    .status-badge.complete { background: rgba(33,150,243,0.25); color: #64b5f6; border: 2px solid #2196F3; }
+    
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #888; }
+    .info-value { font-weight: 600; font-family: monospace; }
+    .info-value.highlight { color: #4CAF50; font-size: 1.1rem; }
+    
+    .participants-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+    }
+    .participants-title {
+      font-size: 13px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .participant {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 13px;
+    }
+    .participant-role { color: #aaa; }
+    .participant-address { font-family: monospace; color: #fff; }
+    
+    .action-needed {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255,193,7,0.15);
+      border: 1px solid rgba(255,193,7,0.3);
+      border-radius: 10px;
+    }
+    .action-title { color: #ffd54f; font-weight: 600; margin-bottom: 8px; }
+    .action-desc { color: #ccc; font-size: 14px; }
+    
+    .vote-results { margin: 20px 0; }
+    .vote-option { margin-bottom: 15px; }
+    .option-label { font-weight: 500; margin-bottom: 8px; }
+    .vote-bar {
+      height: 35px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 18px;
+      overflow: hidden;
+      position: relative;
+    }
+    .vote-fill {
+      height: 100%;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      padding: 0 15px;
+      font-weight: 700;
+      transition: width 0.5s ease;
+    }
+    .vote-fill.a { background: linear-gradient(90deg, #4CAF50, #8BC34A); }
+    .vote-fill.b { background: linear-gradient(90deg, #2196F3, #03A9F4); }
+    .vote-count { color: #aaa; font-size: 13px; margin-top: 5px; }
+    
+    .total-voters {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+    .total-voters .number { font-size: 2.5rem; font-weight: 700; color: #4CAF50; }
+    .total-voters .label { color: #888; font-size: 14px; }
+    
+    .question-text {
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .state-timeline {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      padding: 0 10px;
+    }
+    .state-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      position: relative;
+    }
+    .state-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 50%;
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.2);
+      z-index: 0;
+    }
+    .state-step.completed:not(:last-child)::after { background: #4CAF50; }
+    .state-step.current:not(:last-child)::after {
+      background: linear-gradient(90deg, #4CAF50 50%, rgba(255,255,255,0.2) 50%);
+    }
+    .state-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      z-index: 1;
+      margin-bottom: 8px;
+    }
+    .state-step.completed .state-dot { background: #4CAF50; }
+    .state-step.current .state-dot { background: #ffc107; animation: pulse 1.5s infinite; }
+    .state-label { font-size: 11px; color: #888; text-align: center; }
+    .state-step.completed .state-label { color: #81c784; }
+    .state-step.current .state-label { color: #ffd54f; font-weight: 600; }
+    
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,193,7,0.4); }
+      50% { box-shadow: 0 0 0 10px rgba(255,193,7,0); }
+    }
+    
+    .no-contracts {
+      text-align: center;
+      padding: 80px 40px;
+      color: #666;
+    }
+    .no-contracts h2 { font-size: 1.8rem; margin-bottom: 15px; color: #888; }
+    .no-contracts p { font-size: 1.1rem; margin-bottom: 25px; }
+    .no-contracts .hint {
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .last-update {
+      text-align: center;
+      color: #555;
+      margin-top: 30px;
+      font-size: 13px;
+    }
+    
+    .error-card {
+      background: rgba(244,67,54,0.1);
+      border: 1px solid rgba(244,67,54,0.3);
+      padding: 20px;
+      border-radius: 10px;
+      color: #e57373;
+    }
+    
+    @media (max-width: 600px) {
+      .contracts-grid { grid-template-columns: 1fr; }
+      .connection-bar { flex-direction: column; }
+      .connection-bar input, .connection-bar select { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Instructor Dashboard</h1>
+    <p>Display contracts and their status for classroom participation</p>
+  </div>
+
+  <div class="connection-bar">
+    <input type="text" id="rpcUrl" value="http://localhost:8545" placeholder="Blockchain URL">
+    <select id="contractType">
+      <option value="houseSale">House Sale</option>
+      <option value="carSale">Car Sale</option>
+      <option value="ransomPayment">Ransomware</option>
+      <option value="classroomVote">Classroom Vote</option>
+      <option value="voting">Voting System</option>
+      <option value="crowdfunding">Crowdfunding</option>
+      <option value="eventTickets">Event Tickets</option>
+    </select>
+    <input type="text" id="contractAddress" placeholder="Contract Address (0x...)">
+    <button class="btn-add" onclick="addContract()">Add Contract</button>
+    <button class="btn-clear" onclick="clearAll()">Clear All</button>
+    <div id="connectionStatus" class="connection-status disconnected">Disconnected</div>
+  </div>
+
+  <div class="contracts-grid" id="contractsGrid">
+    <div class="no-contracts">
+      <h2>No Contracts Loaded</h2>
+      <p>Add a contract address above to display its status</p>
+      <div class="hint">
+        <strong>Quick Start:</strong><br>
+        1. Enter the blockchain URL (default: localhost:8545)<br>
+        2. Select the contract type<br>
+        3. Paste the contract address<br>
+        4. Click "Add Contract"
+      </div>
+    </div>
+  </div>
+
+  <div class="last-update" id="lastUpdate"></div>
+
+  <script>
+    let provider = null;
+    let contracts = [];
+    let refreshInterval = null;
+
+    const HOUSE_STATES = ['Listed', 'Deposit Paid', 'Inspection OK', 'Completed', 'Cancelled'];
+    
+    const ABIS = {
+      houseSale: [
+        'function currentState() view returns (uint8)',
+        'function propertyAddress() view returns (string)',
+        'function salePrice() view returns (uint256)',
+        'function depositAmount() view returns (uint256)',
+        'function admin() view returns (address)',
+        'function seller() view returns (address)',
+        'function buyer() view returns (address)',
+        'function getContractBalance() view returns (uint256)',
+      ],
+      classroomVote: [
+        'function getResults() view returns (string, string, uint256, string, uint256, uint256, bool)',
+      ],
+      voting: [
+        'function getAllResults() view returns (string[] memory, uint256[] memory)',
+        'function votingTitle() view returns (string)',
+        'function votingClosed() view returns (bool)',
+      ],
+      crowdfunding: [
+        'function getCampaignStatus() view returns (string, uint256, uint256, uint256, uint256, bool, bool)',
+      ],
+      eventTickets: [
+        'function getEventInfo() view returns (string, string, uint256, uint256, uint256, bool)',
+      ],
+      carSale: [
+        'function currentState() view returns (uint8)',
+        'function salePrice() view returns (uint256)',
+        'function depositAmount() view returns (uint256)',
+        'function getParticipants() view returns (address, address, address, address)',
+      ],
+      ransomPayment: [
+        'function attacker() view returns (address)',
+        'function getContractBalance() view returns (uint256)',
+      ],
+    };
+
+    const ICONS = {
+      houseSale: '🏠',
+      carSale: '🚗',
+      ransomPayment: '🔐',
+      classroomVote: '🎓',
+      voting: '🗳️',
+      crowdfunding: '💰',
+      eventTickets: '🎟️',
+    };
+
+    const CAR_SALE_STATES = ['Listed', 'DepositPaid', 'InspectionRequested', 'InspectionPassed', 'InspectionFailed', 'Completed', 'Refunded'];
+
+    async function connectProvider() {
+      const rpcUrl = document.getElementById('rpcUrl').value.trim();
+      const statusEl = document.getElementById('connectionStatus');
+      
+      try {
+        provider = new ethers.JsonRpcProvider(rpcUrl);
+        const blockNumber = await provider.getBlockNumber();
+        statusEl.className = 'connection-status connected';
+        statusEl.textContent = `Connected (Block ${blockNumber})`;
+        return true;
+      } catch (e) {
+        statusEl.className = 'connection-status disconnected';
+        statusEl.textContent = 'Connection Failed';
+        provider = null;
+        return false;
+      }
+    }
+
+    async function addContract() {
+      const address = document.getElementById('contractAddress').value.trim();
+      const type = document.getElementById('contractType').value;
+      
+      if (!address.startsWith('0x') || address.length !== 42) {
+        alert('Please enter a valid contract address (42 characters starting with 0x)');
+        return;
+      }
+      
+      if (contracts.find(c => c.address.toLowerCase() === address.toLowerCase())) {
+        alert('Contract already added');
+        return;
+      }
+      
+      if (!provider) {
+        const connected = await connectProvider();
+        if (!connected) {
+          alert('Could not connect to blockchain');
+          return;
+        }
+      }
+      
+      contracts.push({ address, type });
+      document.getElementById('contractAddress').value = '';
+      
+      saveContracts();
+      refreshAll();
+      
+      if (!refreshInterval) {
+        refreshInterval = setInterval(refreshAll, 3000);
+      }
+    }
+
+    function removeContract(address) {
+      contracts = contracts.filter(c => c.address.toLowerCase() !== address.toLowerCase());
+      saveContracts();
+      refreshAll();
+    }
+
+    function clearAll() {
+      if (!confirm('Remove all contracts from display?')) return;
+      contracts = [];
+      saveContracts();
+      refreshAll();
+    }
+
+    function saveContracts() {
+      localStorage.setItem('instructor-dashboard-contracts', JSON.stringify(contracts));
+    }
+
+    function loadContracts() {
+      const saved = localStorage.getItem('instructor-dashboard-contracts');
+      if (saved) {
+        try {
+          contracts = JSON.parse(saved);
+        } catch (e) {
+          contracts = [];
+        }
+      }
+    }
+
+    function shortenAddress(addr) {
+      return addr.slice(0, 6) + '...' + addr.slice(-4);
+    }
+
+    async function refreshAll() {
+      const grid = document.getElementById('contractsGrid');
+      
+      if (contracts.length === 0) {
+        grid.innerHTML = `
+          <div class="no-contracts">
+            <h2>No Contracts Loaded</h2>
+            <p>Add a contract address above to display its status</p>
+            <div class="hint">
+              <strong>Quick Start:</strong><br>
+              1. Enter the blockchain URL (default: localhost:8545)<br>
+              2. Select the contract type<br>
+              3. Paste the contract address<br>
+              4. Click "Add Contract"
+            </div>
+          </div>
+        `;
+        return;
+      }
+      
+      if (!provider) {
+        await connectProvider();
+        if (!provider) return;
+      }
+      
+      let html = '';
+      for (const contract of contracts) {
+        html += await renderContract(contract);
+      }
+      grid.innerHTML = html;
+      
+      document.getElementById('lastUpdate').textContent = 
+        `Auto-refreshing every 3 seconds | Last update: ${new Date().toLocaleTimeString()}`;
+    }
+
+    async function renderContract(contract) {
+      const { address, type } = contract;
+      const icon = ICONS[type];
+      const abi = ABIS[type];
+      
+      try {
+        const code = await provider.getCode(address);
+        if (code === '0x') {
+          return `
+            <div class="contract-card">
+              <div class="card-header">
+                <span class="card-icon">${icon}</span>
+                <div>
+                  <div class="card-title">${type}</div>
+                  <div class="card-address">${address}</div>
+                </div>
+                <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+              </div>
+              <div class="card-body">
+                <div class="error-card">
+                  Contract not found at this address.<br>
+                  The blockchain may have been restarted.
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        
+        const ethersContract = new ethers.Contract(address, abi, provider);
+        
+        switch (type) {
+          case 'houseSale': return await renderHouseSale(address, ethersContract);
+          case 'carSale': return await renderCarSale(address, ethersContract);
+          case 'ransomPayment': return await renderRansomPayment(address, ethersContract);
+          case 'classroomVote': return await renderClassroomVote(address, ethersContract);
+          case 'voting': return await renderVoting(address, ethersContract);
+          case 'crowdfunding': return await renderCrowdfunding(address, ethersContract);
+          case 'eventTickets': return await renderEventTickets(address, ethersContract);
+          default: return `<div class="contract-card"><div class="card-body">Unknown type</div></div>`;
+        }
+      } catch (e) {
+        return `
+          <div class="contract-card">
+            <div class="card-header">
+              <span class="card-icon">${icon}</span>
+              <div>
+                <div class="card-title">${type}</div>
+                <div class="card-address">${address}</div>
+              </div>
+              <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+            </div>
+            <div class="card-body">
+              <div class="error-card">Error loading contract: ${e.message}</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    async function renderHouseSale(address, contract) {
+      const state = Number(await contract.currentState());
+      const propAddr = await contract.propertyAddress();
+      const price = ethers.formatEther(await contract.salePrice());
+      const deposit = ethers.formatEther(await contract.depositAmount());
+      const balance = ethers.formatEther(await contract.getContractBalance());
+      const admin = await contract.admin();
+      const seller = await contract.seller();
+      const buyer = await contract.buyer();
+      
+      const stateClass = state === 3 ? 'complete' : state === 4 ? 'closed' : 'pending';
+      
+      const actions = {
+        0: { who: 'Buyer', action: 'Pay the deposit (' + deposit + ' ETH) using payDeposit()' },
+        1: { who: 'Buyer', action: 'Approve inspection using approveInspection()' },
+        2: { who: 'Buyer then Seller', action: 'Buyer: Pay balance (' + (parseFloat(price) - parseFloat(deposit)) + ' ETH) | Seller: Confirm transfer' },
+        3: { who: 'None', action: 'Sale completed! Seller received ' + price + ' ETH' },
+        4: { who: 'None', action: 'Sale was cancelled' },
+      };
+      
+      return `
+        <div class="contract-card">
+          <div class="card-header">
+            <span class="card-icon">🏠</span>
+            <div>
+              <div class="card-title">House Sale Contract</div>
+              <div class="card-address">${address}</div>
+            </div>
+            <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+          </div>
+          <div class="card-body">
+            <div class="question-text">${propAddr}</div>
+            
+            <span class="status-badge ${stateClass}">${HOUSE_STATES[state]}</span>
+            
+            <div class="state-timeline">
+              ${[0,1,2,3].map(i => `
+                <div class="state-step ${i < state ? 'completed' : i === state ? 'current' : ''}">
+                  <div class="state-dot">${i < state ? '✓' : i + 1}</div>
+                  <div class="state-label">${['Listed', 'Deposit', 'Inspect', 'Done'][i]}</div>
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">Sale Price</span>
+              <span class="info-value highlight">${price} ETH</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Required Deposit</span>
+              <span class="info-value">${deposit} ETH</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Contract Balance</span>
+              <span class="info-value">${balance} ETH</span>
+            </div>
+            
+            <div class="participants-section">
+              <div class="participants-title">Participants</div>
+              <div class="participant">
+                <span class="participant-role">Admin (Instructor)</span>
+                <span class="participant-address">${shortenAddress(admin)}</span>
+              </div>
+              <div class="participant">
+                <span class="participant-role">Seller (John)</span>
+                <span class="participant-address">${shortenAddress(seller)}</span>
+              </div>
+              <div class="participant">
+                <span class="participant-role">Buyer (Mark)</span>
+                <span class="participant-address">${shortenAddress(buyer)}</span>
+              </div>
+            </div>
+            
+            ${state < 4 ? `
+            <div class="action-needed">
+              <div class="action-title">Next Action: ${actions[state].who}</div>
+              <div class="action-desc">${actions[state].action}</div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderCarSale(address, contract) {
+      const state = Number(await contract.currentState());
+      const price = ethers.formatEther(await contract.salePrice());
+      const deposit = ethers.formatEther(await contract.depositAmount());
+      const [admin, seller, buyer, mechanic] = await contract.getParticipants();
+      const stateClass = state === 5 ? 'complete' : state === 6 ? 'closed' : 'pending';
+      return `
+        <div class="contract-card">
+          <div class="card-header">
+            <span class="card-icon">🚗</span>
+            <div>
+              <div class="card-title">Car Sale</div>
+              <div class="card-address">${address}</div>
+            </div>
+            <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+          </div>
+          <div class="card-body">
+            <span class="status-badge ${stateClass}">${CAR_SALE_STATES[state] || state}</span>
+            <div class="info-row">
+              <span class="info-label">Sale Price</span>
+              <span class="info-value highlight">${price} ETH</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Deposit</span>
+              <span class="info-value">${deposit} ETH</span>
+            </div>
+            <div class="participants-section">
+              <div class="participants-title">Participants</div>
+              <div class="participant">
+                <span class="participant-role">Seller</span>
+                <span class="participant-address">${shortenAddress(seller)}</span>
+              </div>
+              <div class="participant">
+                <span class="participant-role">Buyer</span>
+                <span class="participant-address">${shortenAddress(buyer)}</span>
+              </div>
+              <div class="participant">
+                <span class="participant-role">Mechanic</span>
+                <span class="participant-address">${shortenAddress(mechanic)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderRansomPayment(address, contract) {
+      const attacker = await contract.attacker();
+      const balance = ethers.formatEther(await contract.getContractBalance());
+      return `
+        <div class="contract-card">
+          <div class="card-header">
+            <span class="card-icon">🔐</span>
+            <div>
+              <div class="card-title">Ransomware Scenario</div>
+              <div class="card-address">${address}</div>
+            </div>
+            <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+          </div>
+          <div class="card-body">
+            <span class="status-badge open">Active</span>
+            <div class="info-row">
+              <span class="info-label">Attacker (receives)</span>
+              <span class="participant-address">${shortenAddress(attacker)}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Contract Balance</span>
+              <span class="info-value">${balance} ETH</span>
+            </div>
+            <div class="action-needed">
+              <div class="action-title">Investigator Task</div>
+              <div class="action-desc">Trace Victim → Contract → Attacker → Tumblers → Final address</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderClassroomVote(address, contract) {
+      const results = await contract.getResults();
+      const question = results[0];
+      const optionA = results[1];
+      const votesA = Number(results[2]);
+      const optionB = results[3];
+      const votesB = Number(results[4]);
+      const totalVoters = Number(results[5]);
+      const votingOpen = results[6];
+      
+      const total = votesA + votesB;
+      const pctA = total > 0 ? (votesA / total * 100).toFixed(1) : 0;
+      const pctB = total > 0 ? (votesB / total * 100).toFixed(1) : 0;
+      
+      return `
+        <div class="contract-card">
+          <div class="card-header">
+            <span class="card-icon">🎓</span>
+            <div>
+              <div class="card-title">Classroom Vote</div>
+              <div class="card-address">${address}</div>
+            </div>
+            <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+          </div>
+          <div class="card-body">
+            <div class="question-text">${question}</div>
+            
+            <span class="status-badge ${votingOpen ? 'open' : 'closed'}">
+              ${votingOpen ? 'VOTING OPEN' : 'VOTING CLOSED'}
+            </span>
+            
+            <div class="vote-results">
+              <div class="vote-option">
+                <div class="option-label">${optionA}</div>
+                <div class="vote-bar">
+                  <div class="vote-fill a" style="width: ${Math.max(pctA, votesA > 0 ? 8 : 0)}%">
+                    ${votesA > 0 ? votesA : ''}
+                  </div>
+                </div>
+                <div class="vote-count">${votesA} votes (${pctA}%)</div>
+              </div>
+              <div class="vote-option">
+                <div class="option-label">${optionB}</div>
+                <div class="vote-bar">
+                  <div class="vote-fill b" style="width: ${Math.max(pctB, votesB > 0 ? 8 : 0)}%">
+                    ${votesB > 0 ? votesB : ''}
+                  </div>
+                </div>
+                <div class="vote-count">${votesB} votes (${pctB}%)</div>
+              </div>
+            </div>
+            
+            <div class="total-voters">
+              <div class="number">${totalVoters}</div>
+              <div class="label">Total Participants</div>
+            </div>
+            
+            ${votingOpen ? `
+            <div class="action-needed">
+              <div class="action-title">Students Can Vote Now</div>
+              <div class="action-desc">
+                Use the contract address above to cast your vote via CLI Playground or web interface.
+              </div>
+            </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderVoting(address, contract) {
+      const [names, votes] = await contract.getAllResults();
+      const title = await contract.votingTitle();
+      const closed = await contract.votingClosed();
+      
+      const total = votes.reduce((sum, v) => sum + Number(v), 0);
+      
+      let optionsHtml = '';
+      for (let i = 0; i < names.length; i++) {
+        const count = Number(votes[i]);
+        const pct = total > 0 ? (count / total * 100).toFixed(1) : 0;
+        optionsHtml += `
+          <div class="vote-option">
+            <div class="option-label">${names[i]}</div>
+            <div class="vote-bar">
+              <div class="vote-fill a" style="width: ${Math.max(pct, count > 0 ? 8 : 0)}%">
+                ${count > 0 ? count : ''}
+              </div>
+            </div>
+            <div class="vote-count">${count} votes (${pct}%)</div>
+          </div>
+        `;
+      }
+      
+      return `
+        <div class="contract-card">
+          <div class="card-header">
+            <span class="card-icon">🗳️</span>
+            <div>
+              <div class="card-title">${title}</div>
+              <div class="card-address">${address}</div>
+            </div>
+            <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+          </div>
+          <div class="card-body">
+            <span class="status-badge ${closed ? 'closed' : 'open'}">
+              ${closed ? 'VOTING CLOSED' : 'VOTING OPEN'}
+            </span>
+            <div class="vote-results">${optionsHtml}</div>
+            <div class="total-voters">
+              <div class="number">${total}</div>
+              <div class="label">Total Votes</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderCrowdfunding(address, contract) {
+      const status = await contract.getCampaignStatus();
+      const name = status[0];
+      const goal = ethers.formatEther(status[1]);
+      const raised = ethers.formatEther(status[2]);
+      const contributors = Number(status[3]);
+      const deadline = Number(status[4]);
+      const goalReached = status[5];
+      const fundsWithdrawn = status[6];
+      
+      const pct = parseFloat(goal) > 0 ? Math.min((parseFloat(raised) / parseFloat(goal) * 100), 100).toFixed(1) : 0;
+      
+      return `
+        <div class="contract-card">
+          <div class="card-header">
+            <span class="card-icon">💰</span>
+            <div>
+              <div class="card-title">${name}</div>
+              <div class="card-address">${address}</div>
+            </div>
+            <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+          </div>
+          <div class="card-body">
+            <span class="status-badge ${goalReached ? 'complete' : 'open'}">
+              ${goalReached ? 'GOAL REACHED' : 'ACCEPTING CONTRIBUTIONS'}
+            </span>
+            
+            <div class="vote-bar" style="height:40px; margin: 20px 0;">
+              <div class="vote-fill a" style="width: ${pct}%">${pct}%</div>
+            </div>
+            
+            <div class="info-row">
+              <span class="info-label">Raised</span>
+              <span class="info-value highlight">${raised} ETH</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Goal</span>
+              <span class="info-value">${goal} ETH</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Contributors</span>
+              <span class="info-value">${contributors}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function renderEventTickets(address, contract) {
+      const info = await contract.getEventInfo();
+      const name = info[0];
+      const date = info[1];
+      const price = ethers.formatEther(info[2]);
+      const sold = Number(info[3]);
+      const remaining = Number(info[4]);
+      const cancelled = info[5];
+      
+      return `
+        <div class="contract-card">
+          <div class="card-header">
+            <span class="card-icon">🎟️</span>
+            <div>
+              <div class="card-title">${name}</div>
+              <div class="card-address">${address}</div>
+            </div>
+            <button class="remove-btn" onclick="removeContract('${address}')">Remove</button>
+          </div>
+          <div class="card-body">
+            <span class="status-badge ${cancelled ? 'closed' : remaining > 0 ? 'open' : 'complete'}">
+              ${cancelled ? 'CANCELLED' : remaining > 0 ? 'TICKETS AVAILABLE' : 'SOLD OUT'}
+            </span>
+            
+            <div class="info-row">
+              <span class="info-label">Event Date</span>
+              <span class="info-value">${date}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Ticket Price</span>
+              <span class="info-value highlight">${price} ETH</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Tickets Sold</span>
+              <span class="info-value">${sold}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Remaining</span>
+              <span class="info-value">${remaining}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Initialize
+    window.onload = async function() {
+      loadContracts();
+      
+      // Check URL params
+      const params = new URLSearchParams(window.location.search);
+      const rpc = params.get('rpc');
+      const address = params.get('address');
+      const type = params.get('type');
+      
+      if (rpc) document.getElementById('rpcUrl').value = rpc;
+      if (address) document.getElementById('contractAddress').value = address;
+      if (type) document.getElementById('contractType').value = type;
+      
+      // Auto-add if params provided
+      if (address && type) {
+        await addContract();
+      } else if (contracts.length > 0) {
+        await connectProvider();
+        refreshAll();
+        refreshInterval = setInterval(refreshAll, 3000);
+      }
+    };
+  </script>
+</body>
+</html>

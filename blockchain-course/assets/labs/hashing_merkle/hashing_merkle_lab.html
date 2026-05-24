@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hashing and Merkle Trees - Interactive Lab</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Pyodide -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .step-card {
+            min-height: 50px;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            display: none;
+        }
+        
+        .step-card.active {
+            opacity: 1;
+            display: block;
+        }
+        
+        .hash-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            font-size: 0.85rem;
+        }
+        
+        .tree-visual {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 250px;
+            position: relative;
+        }
+        
+        .merkle-node {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            min-width: 150px;
+        }
+        
+        .merkle-node.leaf {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+        }
+        
+        .merkle-node.branch {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+        
+        .merkle-node.root {
+            background: rgba(245, 158, 11, 0.3);
+            border-color: #f59e0b;
+            border-width: 3px;
+            font-weight: bold;
+        }
+        
+        .merkle-node.proof-path {
+            background: rgba(168, 85, 247, 0.4);
+            border-color: #a855f7;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(168, 85, 247, 0.8); }
+        }
+        
+        .avalanche-demo {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            margin: 8px 0;
+        }
+        
+        .bit-change {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        
+        .bit-match {
+            color: #22c55e;
+        }
+        
+        .bit-diff {
+            color: #fbbf24;
+        }
+        
+        .explanation-box {
+            background: rgba(59, 130, 246, 0.15);
+            border-left: 4px solid #3b82f6;
+            padding: 8px 10px;
+            margin: 6px 0;
+            border-radius: 4px;
+        }
+        
+        .concept-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin: 6px 0;
+        }
+        
+        .info-tooltip {
+            display: inline-block;
+            cursor: help;
+            color: #60a5fa;
+            margin-left: 5px;
+        }
+        
+        .computing {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="text-4xl mb-4 animate-spin">⏳</div>
+            <div class="text-xl font-bold">Loading Crypto System...</div>
+            <div class="text-sm text-gray-400 mt-2">Initializing Python environment in browser</div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="text-center text-white mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <a href="../index.html" class="text-white hover:text-blue-300 transition flex items-center text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> Back
+                </a>
+                <div class="px-3 py-1 bg-blue-600 rounded-lg text-sm">
+                    <i class="fas fa-tree"></i> Hashing & Merkle Trees Lab
+                </div>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">
+                <i class="fas fa-shield-alt"></i> Hashing and Merkle Trees
+            </h1>
+            <p class="text-sm text-gray-200">Understanding Cryptographic Hashing and Merkle Tree Verification</p>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="bg-white/10 backdrop-blur-md rounded-lg p-4">
+            <!-- Step Indicator -->
+            <div class="flex justify-center mb-4">
+                <div class="flex space-x-1 text-xs">
+                    <div class="step-indicator bg-blue-600 text-white px-3 py-1 rounded" data-step="0">1</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="1">2</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="2">3</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="3">4</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="4">5</div>
+                </div>
+            </div>
+
+            <!-- Interactive Demonstration Area -->
+            <div class="mb-3 p-2 bg-black/30 rounded-lg border-2 border-blue-500/50" style="min-height: 200px;">
+                <div id="demo-area" class="text-center text-gray-400 py-8">
+                    <i class="fas fa-arrow-circle-right text-2xl mb-1"></i>
+                    <div class="text-xs">Click "Next Step" to begin</div>
+                </div>
+            </div>
+
+            <!-- Step Content -->
+            <div id="step-content">
+                <!-- Step 0: Introduction -->
+                <div class="step-card active" data-step="0">
+                    <h2 class="text-lg font-bold text-white mb-2 text-center">
+                        <i class="fas fa-info-circle"></i> Step 1: Why This Matters
+                    </h2>
+                    
+                    <div class="mb-2 p-2 bg-yellow-500/20 rounded border border-yellow-500/50">
+                        <h3 class="text-yellow-300 font-bold mb-2"><i class="fas fa-exclamation-triangle"></i> Real Problem:</h3>
+                        <p class="text-sm text-gray-300 mb-2">
+                            Imagine you have a Bitcoin wallet on your phone. Your phone can't store the entire blockchain (it's huge!), 
+                            but you still need to verify that transactions are real. How do you do that?
+                        </p>
+                        <p class="text-sm text-blue-300 font-bold">
+                            Answer: Merkle Trees! Your phone only needs the block header (which contains the Merkle root) and a small "proof path" 
+                            to verify any transaction. This is called "Simplified Payment Verification" (SPV) - and it's what makes light wallets possible!
+                        </p>
+                    </div>
+                    
+                    <div class="text-sm text-gray-300 mb-3 p-3 bg-blue-500/20 rounded">
+                        <p class="font-bold text-blue-300 mb-2">What You'll Learn:</p>
+                        <div class="space-y-2">
+                            <div class="flex items-start">
+                                <span class="text-green-400 mr-2">✓</span>
+                                <span><strong>How hashes work:</strong> See how one tiny change creates a completely different hash</span>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="text-green-400 mr-2">✓</span>
+                                <span><strong>How Merkle trees organize data:</strong> Build a tree step-by-step and see how it commits to everything</span>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="text-green-400 mr-2">✓</span>
+                                <span><strong>How to verify without downloading everything:</strong> Use a "proof path" to prove a transaction exists</span>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="text-green-400 mr-2">✓</span>
+                                <span><strong>Why details matter:</strong> See how changing the order breaks everything!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Hash Properties - Avalanche Effect -->
+                <div class="step-card" data-step="1">
+                    <h2 class="text-lg font-bold text-white mb-2 text-center">
+                        <i class="fas fa-flask"></i> Step 2: Avalanche Effect
+                    </h2>
+                    
+                    <div class="text-sm text-gray-300 mb-2">
+                        <p class="text-xs text-gray-400 mb-2 italic">A single-bit change flips ~50% of output bits → tamper detection. Try changing one character!</p>
+                        <div class="avalanche-demo">
+                            <div class="text-xs text-gray-400 mb-2 italic">SHA-256: Converts text → bytes → 256-bit (64 hex) digest (always fixed size)</div>
+                            <div class="mb-2">
+                                <label class="block mb-1 font-bold">Enter a message:</label>
+                                <input type="text" id="hash-input-1" value="Hello" class="w-full px-3 py-2 bg-black/50 rounded text-white mb-2" placeholder="Enter text">
+                                <button onclick="hashAndDisplay('hash-input-1', 'hash-output-1')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold">
+                                    <i class="fas fa-hashtag"></i> Hash It
+                                </button>
+                            </div>
+                            <div id="hash-output-1" class="hash-box mt-2"></div>
+                            <div id="hash-explanation-1" class="text-xs text-gray-400 mt-2" style="display: none;"></div>
+                        </div>
+                        <div class="avalanche-demo mt-3">
+                            <div class="text-xs text-gray-400 mb-2 italic">One character change (l→m) = completely different hash. Security by unpredictability!</div>
+                            <div class="mb-2">
+                                <label class="block mb-1 font-bold">Same message, one character changed:</label>
+                                <input type="text" id="hash-input-2" value="Helmo" class="w-full px-3 py-2 bg-black/50 rounded text-white mb-2" placeholder="Enter text">
+                                <button onclick="hashAndDisplay('hash-input-2', 'hash-output-2')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-semibold">
+                                    <i class="fas fa-hashtag"></i> Hash It
+                                </button>
+                            </div>
+                            <div id="hash-output-2" class="hash-box mt-2"></div>
+                        </div>
+                        <div id="avalanche-comparison" class="mt-3 p-3 bg-green-500/20 rounded border border-green-500/50" style="display: none;">
+                            <p class="font-bold text-green-300 mb-2">Avalanche Analysis:</p>
+                            <div id="bit-comparison" class="text-xs font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Building Merkle Tree -->
+                <div class="step-card" data-step="2">
+                    <h2 class="text-lg font-bold text-white mb-2 text-center">
+                        <i class="fas fa-sitemap"></i> Step 3: Building a Merkle Tree
+                    </h2>
+                    
+                    <div class="text-xs text-gray-400 mb-2 italic">
+                        <strong>🌿 Leaves:</strong> Your data (transactions) → hashed. <strong>🌳 Branches:</strong> Two children hashed together. <strong>👑 Root:</strong> One hash representing everything. Change any leaf → root changes!
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="block mb-2 font-bold text-sm">Enter transactions (like in a Bitcoin block):</label>
+                        <div class="text-xs text-gray-400 mb-1 italic">
+                            Each line represents one transaction. In Bitcoin, these would be actual transaction data.
+                        </div>
+                        <textarea id="tree-data-input" class="w-full px-3 py-2 bg-black/50 rounded text-white mb-2 font-mono text-sm" rows="4" placeholder="tx1: Alice pays Bob 5 BTC&#10;tx2: Bob pays Charlie 2 BTC&#10;tx3: Charlie pays Alice 1 BTC&#10;tx4: Alice pays Dave 3 BTC">tx1: Alice pays Bob 5 BTC
+tx2: Bob pays Charlie 2 BTC
+tx3: Charlie pays Alice 1 BTC
+tx4: Alice pays Dave 3 BTC</textarea>
+                        <button onclick="buildMerkleTree()" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-sm font-semibold">
+                            <i class="fas fa-tree"></i> Build Merkle Tree
+                        </button>
+                    </div>
+                    <div id="tree-visualization" class="tree-visual mt-3"></div>
+                </div>
+
+                <!-- Step 3: Proof Verification -->
+                <div class="step-card" data-step="3">
+                    <h2 class="text-lg font-bold text-white mb-2 text-center">
+                        <i class="fas fa-check-double"></i> Step 4: Inclusion Proof
+                    </h2>
+                    
+                    <div class="text-xs text-gray-400 mb-2 italic">
+                        <strong>Light wallet scenario:</strong> You only have the block header (root). Someone claims "tx2" is in the block. Can you verify without all transactions? YES - with a proof path (leaf + siblings)!
+                    </div>
+                    <div class="mb-3">
+                        <label class="block mb-2 font-bold text-sm">Select a transaction to verify:</label>
+                        <select id="proof-leaf-select" class="w-full px-3 py-2 bg-black/50 rounded text-white mb-2">
+                            <option value="">Select a transaction...</option>
+                        </select>
+                        <button onclick="generateProof()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-sm font-semibold">
+                            <i class="fas fa-search"></i> Generate & Verify Proof Path
+                        </button>
+                        <div class="text-xs text-gray-400 mt-1 italic">
+                            The proof will show just the sibling hashes needed - not all transactions!
+                        </div>
+                    </div>
+                    <div id="proof-visualization" class="tree-visual mt-3"></div>
+                    <div id="proof-steps" class="mt-3 p-3 bg-purple-500/20 rounded border border-purple-500/50"></div>
+                </div>
+
+                <!-- Step 4: Ordering Matters -->
+                <div class="step-card" data-step="4">
+                    <h2 class="text-lg font-bold text-white mb-2 text-center">
+                        <i class="fas fa-exchange-alt"></i> Step 5: Why Order Matters
+                    </h2>
+                    
+                    <div class="text-xs text-gray-400 mb-2 italic">
+                        <strong>Critical:</strong> H(left || right) ≠ H(right || left)! Everyone must use the same order (Bitcoin uses H(left || right)). Different order = different root = broken verification.
+                    </div>
+                    
+                    <div class="text-sm text-gray-300">
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <div class="p-2 bg-blue-500/20 rounded border border-blue-500/50">
+                                <p class="font-bold text-xs mb-1">Correct: H(left || right)</p>
+                                <div id="correct-order-demo" class="hash-box text-xs"></div>
+                            </div>
+                            <div class="p-2 bg-red-500/20 rounded border border-red-500/50">
+                                <p class="font-bold text-xs mb-1">Wrong: H(right || left)</p>
+                                <div id="wrong-order-demo" class="hash-box text-xs"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between mt-4 sticky bottom-0 bg-white/10 backdrop-blur-sm py-2 -mx-4 px-4 rounded-b-lg border-t border-blue-500/30">
+                <button id="prev-btn" onclick="previousStep()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-white text-sm font-semibold transition opacity-50 cursor-not-allowed" disabled>
+                    <i class="fas fa-arrow-left mr-1"></i> Previous
+                </button>
+                <button id="next-btn" onclick="nextStep()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-semibold transition">
+                    Next Step <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="hashing_merkle_lab.js"></script>
+</body>
+</html>
+

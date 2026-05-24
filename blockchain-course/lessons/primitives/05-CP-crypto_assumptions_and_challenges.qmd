@@ -1,0 +1,827 @@
+---
+title: "Cryptographic Assumptions & Challenges"
+subtitle: 'Section II: Cryptographic Primitives'
+author: Army Cyber Institute
+lesson: 05-CP
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## Why These Topics Now? Scope & Objectives {.smaller}
+
+- We’ve covered symmetric, asymmetric, hashing, signatures.
+
+- Today: **assumptions under pressure** and **new tools**.
+
+- Themes: 
+  * Real-world implementation failures
+  * Quantum threats
+  * Post-quantum cryptography, 
+  * Fully-homomorphic Encryption
+  * Zero Knowledge Proofs
+
+- Outcome: awareness and evaluation skills, not proofs.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes the lesson as a capstone on pressure points, emerging tools, and real implementation failures rather than another narrow primitive tutorial. It matters here because students need a frame for why these topics belong after hashing, symmetric crypto, and public-key crypto. Emphasize breadth, evaluation skills, and the idea that mature engineering means anticipating assumption failure.
+
+**Key Points**
+- The lesson focuses on assumptions under pressure, not on deriving new proofs.
+- Quantum threats, migration planning, privacy tools, and implementation failures all affect real blockchain systems.
+- Students should leave asking better engineering questions, not just memorizing buzzwords.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Cryptographic Assumptions Decay Over Time
+
+- As attacks against algorithms evolve; difficulty to break ciphers falls.
+
+- We must build hash/signature agility now.
+
+- Plan migrations in protocols and apps.
+
+```{mermaid}
+timeline
+  title From "Safe" to "Deprecated"
+  1995 : SHA-1 standardized; RSA-1024 common
+  2005 : Theoretical attacks on SHA-1 published
+  2011 : SHA-1 deprecated in many standards
+  2017 : Practical SHA-1 collision demonstrated
+  202X : PQC standardization; migration planning
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that cryptographic security is time-dependent and that deprecation is part of responsible design, not an admission of defeat. It matters here because the rest of the lesson keeps returning to migration and agility rather than eternal trust in one primitive. Emphasize that standards age through both cryptanalysis and cheaper computation.
+
+**Key Points**
+- Security margins shrink as attacks improve and hardware becomes cheaper.
+- Systems should be designed for algorithm agility rather than single-algorithm permanence.
+- Blockchain upgrades are especially hard because migration touches consensus and ecosystem coordination.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Hash Fragility: Collision Resistance Isn’t Forever {.smaller}
+
+- **SHA-1 (1995-2017):** Once a global standard, now entirely deprecated due to practical collision attacks (e.g., SHAttered).
+- **The Threat:** Attackers can engineer two entirely different files (one benign, one malicious) that produce the **exact same hash**.
+- **The Impact:** Systems often sign the *hash*, not the file itself. A signature generated for the benign file will perfectly validate the malicious one.
+- **The Fix:** Migrate to modern, collision-resistant algorithms like **SHA-256**, **SHA-512**, or **SHA-3**.
+
+<div style="text-align: center; position:relative; z-index:-1; top:-100px;max-height:400px;">
+```{dot}
+digraph Collision {
+  bgcolor="transparent";
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=12, margin=0.15];
+  edge [fontname="Helvetica", fontsize=10, color="#64748b"];
+
+  subgraph cluster_docs {
+    label="1. Crafted Documents";
+    penwidth=0;
+    margin=15;
+    fontname="Helvetica-Bold";
+    fontsize=14;
+    Benign [label="Benign File\n(Safe)", fillcolor="#e8f5e9", color="#22c55e"];
+    Malicious [label="Malicious File\n(Exploit)", fillcolor="#fee2e2", color="#ef4444"];
+  }
+
+  HashFunc [label="SHA-1\n(Deprecated)", shape=ellipse, fillcolor="#fef3c7", color="#eab308", fontname="Helvetica-Bold"];
+
+  Digest [label="Identical Digest\n(e.g., 38762cf...)", fillcolor="#f1f5f9", color="#94a3b8"];
+
+  Signature [label="Valid Digital Signature\n(For Both Files!)", shape=note, fillcolor="#e0f2fe", color="#0ea5e9", fontname="Helvetica-Bold"];
+
+  Benign -> HashFunc;
+  Malicious -> HashFunc;
+  
+  HashFunc -> Digest [label=" Collision", fontcolor="#ef4444", color="#ef4444", style="bold"];
+  Digest -> Signature [label=" Sign"];
+}
+```
+</div>
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes collision failure as a concrete example of how a once-trusted primitive can become unsafe in deployed workflows. It matters here because students should connect broken collision resistance to signatures, file integrity, and other higher-level systems. Emphasize that signing a weak digest can accidentally authorize a malicious twin.
+
+**Key Points**
+- Practical collisions break workflows that assume one hash uniquely identifies one file.
+- Signed hashes are especially vulnerable when the hash function no longer resists chosen collisions.
+- Migration requires stronger hashes plus explicit algorithm identifiers and deprecation planning.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+## Quantum Primer: Why It Matters for Cryptography {.smaller}
+
+- **Classical vs. Quantum:** Classical computers use bits (0 or 1). Quantum computers use **qubits**, leveraging **superposition** and **entanglement** to represent complex, overlapping states.
+- **Exponential Speedup:** Quantum algorithms use **interference** to solve *specific structured math problems* exponentially faster than any classical supercomputer.
+- **The Cryptographic Threat:** Unfortunately, the mathematical foundations of **RSA** and **Elliptic Curve Cryptography (ECC)** are exactly the types of problems quantum computers excel at breaking.
+
+::: {.callout-warning appearance="minimal"}
+**The Timeline:** While practical, large-scale quantum computers do not exist yet, the threat of **"Harvest Now, Decrypt Later"** makes this an immediate priority for long-lived secrets.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why quantum computing matters specifically to cryptography rather than as a generic “faster computers” story. It matters here because the next two slides separate public-key collapse from symmetric security shrinkage. Emphasize that long-lived secrets can be harvested today for later decryption.
+
+**Key Points**
+- Quantum algorithms target specific mathematical structures underlying current public-key systems.
+- Shor and Grover change very different parts of the threat model.
+- Harvest-now-decrypt-later makes migration urgent before practical machines fully exist.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+## Shor’s Algorithm (1994): Breaking RSA and ECC {.smaller}
+
+- **The Mathematical Breakthrough:** In 1994, Peter Shor proved that a quantum computer could efficiently factor large integers and solve discrete logarithms, effectively breaking **RSA** and **ECC**.
+  - Breaking modern crypto requires millions of physical qubits with advanced **error correction**, which remains a monumental engineering challenge.
+- **The Mitigation:** Proactively adopt **Post-Quantum Cryptography (PQC)** signatures and hybrid deployments.
+
+<div style="text-align: center; position:relative; z-index:-1; top:-100px;max-height:400px;">
+```{dot}
+digraph Shors {
+  bgcolor="transparent";
+  rankdir=LR;
+  node [fontname="Helvetica", style="rounded,filled", shape=box, margin=0.15];
+  edge [fontname="Helvetica", fontsize=10, color="#64748b"];
+
+  subgraph cluster_public {
+    label="1. Public Keys (Exposed)";
+    fontname="Helvetica-Bold";
+    penwidth=0;
+    margin=15;
+    RSA_Pub [label="RSA Public Key\nN = p × q", fillcolor="#e0f2fe", color="#0ea5e9"];
+    ECC_Pub [label="ECC Public Key\nQ = k × P", fillcolor="#e0f2fe", color="#0ea5e9"];
+  }
+
+  Quantum [label="Shor's Algorithm\n(Quantum Computer)", shape=ellipse, fillcolor="#fef3c7", color="#eab308", fontname="Helvetica-Bold"];
+
+  subgraph cluster_private {
+    label="2. Private Keys (Recovered)";
+    fontname="Helvetica-Bold";
+    penwidth=0;
+    margin=15;
+    RSA_Priv [label="RSA Private Key\n(Factored p & q)", fillcolor="#fee2e2", color="#ef4444"];
+    ECC_Priv [label="ECC Private Key\n(Solved Discrete Log k)", fillcolor="#fee2e2", color="#ef4444"];
+  }
+
+  RSA_Pub -> Quantum;
+  ECC_Pub -> Quantum;
+  
+  Quantum -> RSA_Priv [label=" Exponential\n Speedup"];
+  Quantum -> ECC_Priv [label=" Exponential\n Speedup"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Shor’s algorithm as the reason RSA and ECC are not future-proof against sufficiently capable quantum computers. It matters here because many modern internet and blockchain identity systems depend on those exact assumptions. Emphasize that the risk is existential for classical public-key hardness, not just a modest speedup.
+
+**Key Points**
+- Shor’s algorithm would make factoring and discrete logs efficient on a large enough quantum computer.
+- That threatens RSA, Diffie–Hellman, ECC, and many signature systems built on them.
+- Migration planning includes hybrid deployments, reduced key exposure, and post-quantum replacements.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Grover’s Algorithm (1996) {.smaller}
+
+- Lov Grover formulated a quantum algorithm that searches unstructured data spaces quadratically faster than any classical algorithm.
+- This **effectively halves the security bit-strength of symmetric encryption (like AES) and cryptographic hashes (like SHA)**. A 128-bit key provides only 64 bits of security against a quantum adversary.
+- **The Mitigation:** double the key or hash length. Primitives like **AES-256** and **SHA-384/512** remain robust and future-ready in a post-quantum world.
+
+<div style="text-align: center; position:relative; z-index:-1; top:-100px;max-height:400px;">
+```{dot}
+digraph Grovers {
+  bgcolor="transparent";
+  rankdir=LR;
+  node [fontname="Helvetica", style="rounded,filled", shape=box, margin=0.15];
+  edge [fontname="Helvetica", fontsize=10, color="#64748b"];
+
+  subgraph cluster_targets {
+    label="1. Symmetric Primitives";
+    fontname="Helvetica-Bold";
+    penwidth=0;
+    margin=15;
+    AES128 [label="AES-128 / SHA-256\n(128-bit Classical Security)", fillcolor="#e0f2fe", color="#0ea5e9"];
+    AES256 [label="AES-256 / SHA-512\n(256-bit Classical Security)", fillcolor="#e0f2fe", color="#0ea5e9"];
+  }
+
+  Quantum [label="Grover's Algorithm\n(Quantum Search)", shape=ellipse, fillcolor="#fef3c7", color="#eab308", fontname="Helvetica-Bold"];
+
+  subgraph cluster_results {
+    label="2. Effective Quantum Strength";
+    fontname="Helvetica-Bold";
+    penwidth=0;
+    margin=15;
+    Weak [label="64-bit Security\n(Vulnerable)", fillcolor="#fee2e2", color="#ef4444"];
+    Strong [label="128-bit Security\n(Safe)", fillcolor="#e8f5e9", color="#22c55e"];
+  }
+
+  AES128 -> Quantum;
+  AES256 -> Quantum;
+  
+  Quantum -> Weak [label=" Quadratic\n Speedup", color="#ef4444", fontcolor="#ef4444", style="bold"];
+  Quantum -> Strong [label=" Quadratic\n Speedup"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Grover’s algorithm as a more limited but still important quantum effect on symmetric cryptography and hashing. It matters here because students should not walk away thinking quantum computing breaks everything equally. Emphasize that the main response is stronger parameters, not abandoning symmetric primitives.
+
+**Key Points**
+- Grover gives a square-root style search advantage rather than a full structural break.
+- Symmetric keys and digests therefore need larger sizes to preserve margins.
+- AES-256 and longer digests remain strong practical choices in that model.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Post-Quantum Cryptography: The New Toolbox {.smaller}
+
+- **The Objective:** Proactively replace vulnerable public-key systems (RSA, ECC) with mathematical problems that resist known quantum algorithms.
+- **The Candidates:** Emerging standards rely on entirely new math, primarily **lattice-based**, **code-based**, **hash-based**, and **multivariate** cryptography.
+- **The Replacements:** NIST is actively standardizing new algorithms specifically for Key Encapsulation Mechanisms (KEMs) and Digital Signatures.
+- **The Engineering Trade-offs:** There is no free lunch. PQC algorithms typically demand significantly larger key sizes, bulkier signatures, or heavier computation than modern ECC.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes post-quantum cryptography as the replacement toolbox for the public-key assumptions quantum algorithms threaten. It matters here because students need to understand that migration is about changing hardness assumptions, not abandoning asymmetric cryptography altogether. Emphasize tradeoffs in size, performance, and ecosystem maturity.
+
+**Key Points**
+- PQC replaces factoring and discrete-log assumptions with alternatives like lattices, codes, and hashes.
+- Different post-quantum families make different tradeoffs in key size, signature size, and speed.
+- Near-term deployments are likely to be hybrid rather than purely post-quantum from day one.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Lattices: Intuition Without the Math {.smaller}
+
+- A lattice is a complex, repeating, high-dimensional grid of points generated by a set of basis vectors.
+- Mathematical challenges like finding the closest point (**Shortest Vector Problem - SVP**) or solving linear equations with intentional noise (**Learning With Errors - LWE**) are astronomically difficult to solve at large dimensions.
+- **The PQC Foundation:** Unlike factoring (RSA), no efficient quantum algorithm exists to solve these lattice problems, making them the primary foundation for post-quantum encryption, signatures, and key encapsulation (KEMs).
+
+<div style="text-align: center; position:relative; z-index:-1; top:-100px;max-height:400px;">
+```{dot}
+digraph Lattices {
+  bgcolor="transparent";
+  rankdir=LR;
+  node [fontname="Helvetica", style="rounded,filled", shape=box, padding=0.15, margin=0.15];
+  edge [fontname="Helvetica", fontsize=10, color="#64748b"];
+
+  Basis [label="Basis Vectors\n(v₁, v₂, ...)", fillcolor="#e0f2fe", color="#0ea5e9"];
+  Grid [label="High-Dimensional\nLattice Grid", shape=ellipse, fillcolor="#fef3c7", color="#eab308", fontname="Helvetica-Bold"];
+  
+  subgraph cluster_problems {
+    label="Hard Math Problems";
+    fontname="Helvetica-Bold";
+    penwidth=0;
+    margin=15;
+    SVP [label="Shortest Vector\nProblem (SVP)", fillcolor="#fee2e2", color="#ef4444"];
+    LWE [label="Learning With\nErrors (LWE)", fillcolor="#fee2e2", color="#ef4444"];
+  }
+
+  PQC [label="Post-Quantum\nEncryption & Signatures", fillcolor="#e8f5e9", color="#22c55e", fontname="Helvetica-Bold", margin=0.25];
+
+  Basis -> Grid;
+  Grid -> SVP;
+  Grid -> LWE;
+  
+  SVP -> PQC [label=" Quantum\n Resistant"];
+  LWE -> PQC [label=" Quantum\n Resistant"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes lattice problems as the current leading intuition for post-quantum cryptography without requiring deep mathematics. It matters here because many standardized candidates rely on these assumptions. Emphasize high-dimensional hardness and noisy equations as the conceptual replacement for factoring and discrete logs.
+
+**Key Points**
+- Lattices can be pictured as high-dimensional grids generated by basis vectors.
+- Problems like SVP and LWE are believed hard even for quantum attackers at practical scales.
+- These assumptions now underpin many leading PQC encryption and signature schemes.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## PQC Migration in Blockchain Systems {.smaller}
+
+- **The Targets (Where to upgrade):** Public keys are exposed in wallets, consensus validators, cross-chain bridges, and light clients. These are the primary targets for migration.
+- **The Strategy (How to upgrade):** Deploy **hybrid signatures** (combining classical algorithms like ECDSA with a PQC algorithm) and introduce new address versions to allow a gradual, opt-in rollover without breaking legacy systems.
+- **The Engineering Challenges:** PQC algorithms typically require significantly **larger key sizes** and **higher computational verification costs**. In blockchains, this directly translates to larger block sizes, higher transaction fees, and increased user experience complexity.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what post-quantum migration would actually look like in blockchain systems rather than in abstract standards documents. It matters here because blockchain design magnifies signature size, verification cost, and address-format decisions. Emphasize inventory first: know where keys are exposed before choosing a migration path.
+
+**Key Points**
+- Wallets, validator keys, bridges, and light-client proofs are major blockchain migration targets.
+- Hybrid signatures and versioned address formats support gradual rollout.
+- Larger signatures and heavier verification can directly affect block size, fees, and UX.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Fully Homomorphic Encryption (FHE) {.smaller}
+
+- **The Concept:** FHE enables systems to perform arbitrary computations directly on encrypted data without ever needing a decryption key.
+- **The Mechanism:** When the owner decrypts the final ciphertext, the result perfectly matches the computation as if it had been performed on the plaintext.
+- **The Mathematical Breakthrough:** While theorized in 1978, Craig Gentry's 2009 breakthrough used lattice-based cryptography and **bootstrapping** (a method to "clean" computational noise from ciphertexts) to make unlimited homomorphic operations possible.
+- **Blockchain Relevance:** FHE is the key to **confidential smart contracts**. It allows decentralized nodes to execute complex contract logic over entirely encrypted user data and account states, providing total privacy on a public ledger.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes FHE as a privacy tool that allows useful computation without revealing plaintext inputs. It matters here because students often hear privacy claims in blockchain contexts without seeing the underlying cryptographic idea. Emphasize that FHE is powerful but still operationally expensive.
+
+**Key Points**
+- FHE lets a server compute on ciphertexts and return an encrypted result.
+- The decrypted output matches what would have been computed on plaintext.
+- Confidential smart contracts and private analytics are motivating application areas.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## FHE at a Glance {.smaller}
+
+
+- **Privacy by design:** the server computes entirely on ciphertexts — it never sees any plaintext.
+- **Correctness:** Dec(Eval(f, Enc(x))) = f(x) — the math guarantees the right answer.
+- **Bootstrapping:** periodically refreshes noisy ciphertexts so unlimited operations remain possible.
+- **Trade‑off:** heavy computation and memory cost, improving with optimization and hardware support.
+
+
+
+<div style="text-align: center; position:relative; z-index:-1; top:-100px;max-height:400px;">
+
+
+```{dot}
+digraph FHE {
+  rankdir=LR
+  graph [fontname="Helvetica", bgcolor="transparent", pad=0.3]
+  node  [fontname="Helvetica", fontsize=14, style=filled, shape=box, margin="0.2,0.1"]
+  edge  [fontname="Helvetica", fontsize=12]
+
+  subgraph cluster_owner {
+    label="Data Owner"
+    fontsize=25
+    fontcolor="#1a5276"
+    style=dashed
+    color="#1a5276"
+
+    P  [label="Plaintext\nx1, x2, ...",  fillcolor="#d6eaf8", color="#1a5276"]
+    K  [label="Secret Key\n(decrypt only)", shape=oval, fillcolor="#fdebd0", color="#b7770d"]
+    R  [label="Plain Result\nf(x1, x2, ...)", fillcolor="#d5f5e3", color="#1e8449"]
+  }
+
+  Enc [label="Encrypt\nEnc(xi, pk)", fillcolor="#eaf2ff", color="#2874a6", shape=parallelogram]
+
+  subgraph cluster_server {
+    label="Untrusted Server / Cloud"
+    fontsize=25
+    fontcolor="#7b241c"
+    style=dashed
+    color="#7b241c"
+
+    C   [label="Ciphertexts\nEnc(x1), Enc(x2), ...", fillcolor="#f9ebea", color="#7b241c"]
+    Bs  [label="Bootstrapping\n(noise refresh)", shape=diamond, fillcolor="#f5cba7", color="#a04000"]
+    Ev  [label="Homomorphic Eval\nf(Enc(x1), Enc(x2), ...)\nadds, multiplies on ciphertexts",
+         fillcolor="#f9ebea", color="#7b241c"]
+    C2  [label="Encrypted Result\nEnc(f(x))", fillcolor="#f9ebea", color="#7b241c"]
+  }
+
+  Dec [label="Decrypt\nDec(c, sk)", fillcolor="#eaf2ff", color="#2874a6", shape=parallelogram]
+
+  P  -> Enc [label="plaintext"]
+  Enc -> C  [label="send ciphertext\n(server never sees x)"]
+  C  -> Ev
+  Bs -> Ev  [label="periodic\nnoise reset", style=dashed, color="#a04000", fontcolor="#a04000"]
+  Ev -> C2  [label="Enc(f(x))"]
+  C2 -> Dec [label="return result"]
+  Dec -> R  [label="decrypts\ncorrectly"]
+  K  -> Dec [label="only owner\nholds key", style=dashed, color="#b7770d", fontcolor="#b7770d"]
+}
+```
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the FHE pipeline visually so students can distinguish the privacy promise from the cost tradeoff. It matters here because the prior slide states the idea, while this one shows the flow of encrypted computation. Emphasize correctness, hidden plaintext, and the role of bootstrapping in keeping the scheme viable.
+
+**Key Points**
+- Data stays encrypted while the untrusted server evaluates functions on it.
+- Bootstrapping refreshes noisy ciphertexts so longer computations remain possible.
+- The main cost today is performance and parameter tuning, not lack of conceptual power.
+
+**Walkthrough**
+1. Encrypt plaintext inputs locally before sending them to the server.
+2. Let the server evaluate the desired function directly on ciphertexts, refreshing noise when needed.
+3. Decrypt the returned ciphertext to recover the correct plaintext result.
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Zero‑Knowledge Proofs: Prove Without Revealing {.smaller}
+
+- **Completeness:** if the statement is true, an honest prover can always convince a verifier.
+- **Soundness:** a cheating prover cannot convince the verifier of a false statement (except with negligible probability).
+- **Zero‑knowledge:** the verifier learns *nothing* beyond the truth of the statement — no secrets, no witnesses.
+- **Interactive vs. non‑interactive:** classical ZK requires back-and-forth challenges; SNARKs/STARKs collapse this into a single short proof verifiable by anyone.
+- **Blockchain relevance:** ZK rollups (e.g., zkSync, StarkNet) use succinct proofs to compress thousands of transactions into one on-chain verification, preserving both scalability and correctness.  
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the three defining properties of zero-knowledge proofs and links them to their blockchain relevance. It matters here because privacy and scalability discussions later in the course depend on understanding why a proof can convince without revealing a witness. Emphasize completeness, soundness, and zero-knowledge as a package.
+
+**Key Points**
+- Completeness, soundness, and zero-knowledge describe what a valid proof system must guarantee.
+- Non-interactive forms like SNARKs and STARKs make public verification practical at scale.
+- ZK systems are useful for both privacy and compression of expensive computation.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+
+## Ali Baba Cave: The Protocol {.smaller}
+
+<div style="z-index:-1;position:relative; top:-25px; height:450px;">
+
+```{dot}
+digraph AliBabaCave {
+  rankdir=TB
+  compound=true
+  graph [fontname="Helvetica", bgcolor="transparent", pad=0.4, ranksep=0.7, nodesep=0.9]
+  node  [fontname="Helvetica", fontsize=12, style=filled, shape=box, margin="0.2,0.1"]
+  edge  [fontname="Helvetica", fontsize=10]
+
+  subgraph cluster_cave {
+    label="The Cave"
+    fontsize=13; fontcolor="#4a235a"; style=filled; fillcolor="#f5f0fa"; color="#4a235a"
+
+    ENT  [label="Entrance\n(Verifier waits here)", shape=invhouse,
+          fillcolor="#d7bde2", color="#4a235a"]
+    PA   [label="Path A", fillcolor="#d6eaf8", color="#1a5276"]
+    PB   [label="Path B", fillcolor="#fdebd0", color="#b7770d"]
+    DOOR [label="Secret Door\npassword-gated\n(only Prover knows)", shape=diamond,
+          fillcolor="#fadbd8", color="#922b21"]
+
+    ENT  -> PA   [label="go left"]
+    ENT  -> PB   [label="go right"]
+    PA   -> DOOR [dir=none, style=dashed, color="#922b21", label="dead end\nwithout password"]
+    PB   -> DOOR [dir=none, style=dashed, color="#922b21", label="dead end\nwithout password"]
+  }
+
+  subgraph cluster_proto {
+    label="One Round (repeat n times)"
+    fontsize=13; style=dashed; color="#555555"
+
+    S1 [label="Step 1: Prover enters,\nchooses A or B\nVerifier looks away",
+        fillcolor="#e8f8e8", color="#2d6a4f"]
+    S2 [label="Step 2: Verifier shouts\n\"Exit from A!\" or \"Exit from B!\"",
+        fillcolor="#dae8fc", color="#1a5276"]
+    S3K [label="Prover KNOWS secret\nUse door if needed\nAlways exits correctly",
+         fillcolor="#d5f5e3", color="#1e8449"]
+    S3N [label="Prover does NOT know\nCan only exit from\nthe side they entered\n50% chance of failure",
+         fillcolor="#fadbd8", color="#922b21"]
+
+    S1 -> S2
+    S2 -> S3K [label="if knows", color="#1e8449", fontcolor="#1e8449"]
+    S2 -> S3N [label="if bluffing", color="#922b21", fontcolor="#922b21"]
+  }
+
+  RESULT [label="After n rounds:\nP(undetected cheating) = (1/2)^n\nVerifier is convinced, yet learned zero about the password",
+          shape=note, fillcolor="#fef9e7", color="#b7770d"]
+
+  S3K -> RESULT [color="#1e8449"]
+  S3N -> RESULT [color="#922b21"]
+
+  ENT -> S1 [label="prover\nenters", style=dotted, lhead=cluster_proto, ltail=cluster_cave]
+}
+```
+
+</div>
+
+- **Key insight:** if Prover can always exit from the *called* side, they must know the secret. After 30 rounds the probability of successful deception is less than 1 in a billion.
+- **Digital analogy:** replace the cave with a hash function or elliptic‑curve relation; replace shouting with a random challenge bit.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the Ali Baba cave as an intuition pump for zero-knowledge before students encounter more formal blockchain proof systems. It matters here because the cave story makes repeated challenge-response soundness easy to picture. Emphasize that convincing transcripts do not necessarily reveal the secret itself.
+
+**Key Points**
+- A prover who knows the secret can always respond to the verifier’s random challenge correctly.
+- A bluffer succeeds only with limited probability each round, which shrinks rapidly with repetition.
+- The verifier gains confidence in knowledge of the secret without learning the secret.
+
+**Walkthrough**
+1. Let the prover choose a path while the verifier cannot see which one was chosen.
+2. Have the verifier request a specific exit path at random.
+3. Repeat many rounds and observe that only a secret-knowing prover can answer consistently.
+
+**Sources**
+None
+
+:::
+
+
+## Zero‑Knowledge in Blockchain Practice {.smaller}
+
+- **Privacy — shielded transactions:** protocols like Zcash use zk-SNARKs to prove that a transaction is valid (inputs balance outputs, sender is authorized) without revealing sender, receiver, or amount on-chain.
+- **Privacy — selective disclosure:** a user can prove a single attribute ("my balance exceeds $X", "I am over 18") derived from a private credential, sharing nothing else — enabled by ZK circuits over committed values.
+- **Scalability — ZK rollups:** zkSync, StarkNet, and Polygon zkEVM batch thousands of transactions off-chain, then post a single succinct validity proof on Ethereum. Verification costs roughly the same gas regardless of batch size, dramatically cutting per-transaction fees.
+- **Scalability — light clients:** a ZK proof of the chain's consensus state lets a mobile wallet verify the latest block header without downloading the full chain history.
+- **Compliance — private audits:** a business can prove to a regulator that all transactions satisfy AML/KYC rules without exposing counterparties or amounts, satisfying legal obligations while preserving commercial confidentiality.  
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how zero-knowledge ideas become real blockchain systems for privacy, scalability, and selective disclosure. It matters here because students need to see ZK as an engineering tool rather than only a philosophical curiosity. Emphasize that proof systems can replace expensive on-chain re-execution.
+
+**Key Points**
+- Shielded transactions use ZK to prove validity without exposing key transaction details.
+- ZK rollups compress many transactions into one succinct proof verified on chain.
+- Circuit bugs, setup assumptions, and proof-system choices are critical engineering risks.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+## When Good Crypto Goes Bad: Milk Sad (CVE-2023-39910) {.smaller}
+
+- **Rule one:** never substitute a general-purpose PRNG for a cryptographically secure one — the resulting key space is trivially brute-forceable.
+- **What happened:** Libbitcoin Explorer’s `bx seed` command used `std::mt19937` (Mersenne Twister) seeded with only 32 bits from the system clock to generate 256-bit wallet seeds.
+- **Consequence:** users believed they had 2²⁵⁶ possible keys; in reality they had only ~4.3 billion (2³²) — enumerable in days on commodity hardware.
+- **Impact (July 2023):** attackers swept 2,600+ wallets across Bitcoin, Ethereum, Solana, and others; approximately $900,000 in losses in a single coordinated campaign.
+- **Root cause:** CWE-338 — wrong tool, wrong context. `mt19937` is designed for simulations, not secrets.
+- **Lessons:** use OS-provided CSPRNGs (`/dev/urandom`, `getrandom()`, `BCryptGenRandom`); treat key generation as a security boundary, not a convenience call; use audited libraries (libsodium, OpenSSL) that make the secure choice by default.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Milk Sad as a cautionary case where excellent underlying cryptography failed because key material came from a disastrously weak generator. It matters here because students should internalize that entropy quality is part of the security boundary. Emphasize that the attack succeeded without breaking secp256k1 or SHA-256.
+
+**Key Points**
+- Mersenne Twister seeded from a 32-bit clock timestamp is not suitable for wallet seed generation.
+- The real keyspace was tiny enough to brute-force on commodity hardware.
+- CSPRNG choice is a first-class security decision, not a minor implementation detail.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020
+
+:::
+
+
+## Case Study: Linux.Encoder RNG Failure {.smaller}
+
+- **What it was:** Linux.Encoder.1 (2015) — ransomware that encrypted web servers using AES keys derived from `srand(time())`, a clock-seeded PRNG with no real entropy.
+- **Why it collapsed:** file modification timestamps narrowed the candidate seed to a few seconds; Bitdefender brute-forced it and released a free decryptor within days — without ever touching AES.
+- **The “fix" that wasn’t:** a patched version iterated `srand(h(h(...h(time())...)))`. Hashing a weak seed does not add entropy — it only obscures a still-guessable value.
+- **Blockchain relevance:** smart contract randomness faces the same trap. `block.timestamp`, `blockhash`, or miner-controlled fields are observable and manipulable — using them as entropy sources for key generation, lotteries, or NFT reveals repeats this exact mistake on a public ledger.
+- **Root cause:** CWE-335. The cipher was sound; the entropy feeding it was not. Use `/dev/urandom`, `getrandom()`, or a verifiable on-chain randomness oracle (e.g., Chainlink VRF).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Linux.Encoder as another entropy-failure case study, reinforcing that a strong cipher cannot compensate for predictable key generation. It matters here because students often over-credit the algorithm and under-credit the entropy source. Emphasize that hashing a weak seed does not create new randomness.
+
+**Key Points**
+- Time-seeded PRNG output collapses the key search space dramatically.
+- Observable timestamps can narrow brute-force windows even further in practice.
+- Entropy is a property of the seed source, not of how many times you hash it afterward.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020
+
+:::
+
+
+## Case Study: CryptoDefense — Keys Left in Plain Sight {.smaller}
+
+- **What it was:** CryptoDefense (2014) — Windows ransomware that correctly used RSA-2048 to encrypt victim files, then demanded payment for the decryption key.
+- **The mistake:** the authors called the Windows CryptoAPI without understanding it. `CryptGenKey` stores generated keys in the user’s own key store under `%AppData%\Microsoft\Crypto\RSA` — fully accessible to the victim. The private key needed to decrypt was sitting on the machine the whole time.
+- **Root cause:** correct algorithm, catastrophic key handling. Strong math is irrelevant if the private key is not protected.
+- **Blockchain relevance:** this failure class is the leading cause of cryptocurrency losses. Exchange hot wallets storing private keys on internet-connected servers, developers hardcoding keys in deployed contracts, and users keeping seed phrases in plaintext cloud documents are all the same mistake — the cryptography is sound but the key boundary is not defended.
+- **Lesson:** treat private keys as the single most sensitive asset in any system. Use hardware security modules (HSMs), hardware wallets, or OS-protected keystores; never leave keys reachable by an adversary who has already compromised the adjacent environment.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes CryptoDefense as the key-handling counterpart to the previous entropy failures: the algorithm and randomness were fine, but private-key storage was careless. It matters here because many high-value blockchain losses come from this exact operational class of mistake. Emphasize that cryptographic strength and key-boundary discipline are separate requirements.
+
+**Key Points**
+- Strong algorithms do not help if the private key is left accessible on the compromised machine.
+- Key handling errors are often more catastrophic and more common than mathematical breaks.
+- Hardware wallets, HSMs, and protected keystores exist to defend this boundary.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020
+
+:::
+
+
+
+## Putting It Together: Threats and Responses {.smaller}
+
+```{dot}
+digraph ThreatResponse {
+  rankdir=LR
+  graph [fontname="Helvetica", bgcolor="transparent", pad=0.4, ranksep=1.1, nodesep=0.55]
+  node  [fontname="Helvetica", fontsize=11, style=filled, shape=box, margin="0.18,0.1"]
+  edge  [fontname="Helvetica", fontsize=9, arrowsize=0.75]
+
+  C1 [label="Hash collisions\n(SHA-1 / MD5 broken)",        fillcolor="#fadbd8", color="#922b21"]
+  C2 [label="Quantum computing\n(Shor / Grover)",           fillcolor="#fadbd8", color="#922b21"]
+  C3 [label="Confidentiality on\npublic ledgers",           fillcolor="#fadbd8", color="#922b21"]
+  C4 [label="Verifiable computation\nwithout disclosure",   fillcolor="#fadbd8", color="#922b21"]
+  C5 [label="Implementation failures\n(RNG, key handling)", fillcolor="#fadbd8", color="#922b21"]
+
+  P1 [label="Collision and\npre-image resistance", fillcolor="#fdebd0", color="#b7770d", shape=oval]
+  P2 [label="Factoring and\ndiscrete-log hardness", fillcolor="#fdebd0", color="#b7770d", shape=oval]
+  P3 [label="Data\nconfidentiality",               fillcolor="#fdebd0", color="#b7770d", shape=oval]
+  P4 [label="Soundness plus\nzero-knowledge",      fillcolor="#fdebd0", color="#b7770d", shape=oval]
+  P5 [label="Key secrecy and\nentropy quality",    fillcolor="#fdebd0", color="#b7770d", shape=oval]
+
+  R1 [label="Hash agility\n(SHA-3, BLAKE3)",                 fillcolor="#d5f5e3", color="#1e8449"]
+  R2 [label="Post-quantum crypto\n(CRYSTALS-Kyber/Dilithium)", fillcolor="#d5f5e3", color="#1e8449"]
+  R3 [label="FHE and ZK proofs\n(confidential contracts)",   fillcolor="#d5f5e3", color="#1e8449"]
+  R4 [label="SNARKs / STARKs\n(ZK rollups, private audits)", fillcolor="#d5f5e3", color="#1e8449"]
+  R5 [label="CSPRNGs, HSMs\nAudited libraries",              fillcolor="#d5f5e3", color="#1e8449"]
+
+  { rank=same; C1; C2; C3; C4; C5 }
+  { rank=same; P1; P2; P3; P4; P5 }
+  { rank=same; R1; R2; R3; R4; R5 }
+
+  C1 -> P1 -> R1
+  C2 -> P2 -> R2
+  C3 -> P3 -> R3
+  C4 -> P4 -> R4
+  C5 -> P5 -> R5
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the synthesis map for the lesson: each threat undermines a specific security property, and each response targets that broken assumption. It matters here because students should leave able to classify failures by property, not only by headline. Emphasize the middle column logic: identify what property is under attack first.
+
+**Key Points**
+- Good analysis names the broken property before jumping to a fix.
+- Hash agility, PQC migration, privacy tools, and implementation hygiene each answer different threat classes.
+- Implementation discipline is the most immediately actionable response area for practitioners.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+
+## Key Takeaways
+
+- **Assumptions age—design for cryptographic agility.**  
+- **Prepare for quantum:** adopt PQC and strengthen symmetric parameters.  
+- **Leverage privacy tools:** FHE and ZK are moving from theory to practice.  
+- **Avoid DIY:** sound hygiene beats clever hacks.  
+
+::: {.notes}
+
+**Overall Slide Concept**
+This closing slide establishes the durable engineering habits the lesson wants students to carry forward. It matters here because the section ends not with a new algorithm but with a mindset about migration, privacy, and disciplined implementation. Emphasize evolution, standard tools, and avoidance of DIY cryptography.
+
+**Key Points**
+- Assume cryptographic assumptions will age and design systems that can migrate.
+- Strengthen parameters and prepare for post-quantum transitions where needed.
+- Use audited libraries and good hygiene instead of clever custom cryptography.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+
+
+
+## References

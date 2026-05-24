@@ -1,0 +1,70 @@
+# Ethereum Immersive Trainer - Student Mode
+#
+# Usage:
+#   1. Get the instructor's IP address and contract address
+#   2. Update INSTRUCTOR_RPC_URL below (or set as environment variable)
+#   3. Run: docker-compose -f docker-compose.student.yml up --build
+#
+# Example:
+#   INSTRUCTOR_RPC_URL=http://192.168.1.100:8545 docker-compose -f docker-compose.student.yml up --build
+#
+# Notes:
+#   - The student root filesystem is read-only.
+#   - /home/student is the only persistent writable path by default.
+#   - Override ETHEREUM_STUDENT_HOME_VOLUME with an absolute host path
+#     if you want a bind mount instead of the named volume.
+
+services:
+  ethereum-trainer-student:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ethereum-trainer-student
+    ports:
+      - "5173:5173"    # Frontend Web UI
+      - "3012:3002"    # Lab Terminal (PTY) - use 3012 if 3002 is in use
+      - "3013:3003"    # Lab Terminal fallback
+      - "3014:3004"    # Lab Terminal fallback
+    environment:
+      - MODE=student
+      - FRONTEND_PORT=5173
+      - TERMINAL_PORTS=3002,3003,3004
+      - TERMINAL_CWD=/home/student/workspace
+      - RPC_URL_PUBLIC=/rpc-proxy
+      - HOME=/home/student
+      - USER=student
+      - SHELL=/bin/bash
+      - TERMINAL_UID=1000
+      - TERMINAL_GID=1000
+      - STUDENT_HOME_SEED_PATH=/opt/student-home-seed
+      - STUDENT_HOME_OWNER_UID=1000
+      - STUDENT_HOME_OWNER_GID=1000
+      # Set this to instructor's blockchain address:
+      - INSTRUCTOR_RPC_URL=${INSTRUCTOR_RPC_URL:-http://localhost:8545}
+      # Optional: instructor HTTP endpoint for pulling deployed config
+      - INSTRUCTOR_HTTP_URL=${INSTRUCTOR_HTTP_URL:-}
+      # Optional: Pre-configure contract address
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS:-}
+    restart: unless-stopped
+    user: "1000:1000"
+    pids_limit: ${STUDENT_PIDS_LIMIT:-256}
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+      - /run:size=16m,uid=1000,gid=1000,mode=0755
+      - /app/frontend/dist/api:size=1m,uid=1000,gid=1000,mode=0755
+    volumes:
+      - ${ETHEREUM_STUDENT_HOME_VOLUME:-ethereum-student-home}:/home/student
+    networks:
+      - student-net
+
+networks:
+  student-net:
+    driver: bridge
+
+volumes:
+  ethereum-student-home:

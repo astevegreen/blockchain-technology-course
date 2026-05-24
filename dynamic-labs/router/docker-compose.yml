@@ -1,0 +1,75 @@
+services:
+  router:
+    image: nginx:alpine
+    ports:
+      - "${HOST_BIND:-0.0.0.0}:${HTTP_PORT:-80}:80"
+      - "${HOST_BIND:-0.0.0.0}:${TLS_PORT:-443}:443"
+    volumes:
+      - ./${NGINX_CONF:-nginx-ssl.conf}:/etc/nginx/conf.d/default.conf:ro
+      # Loaded at http{} scope (conf.d/*.conf); defines the
+      # instructor_auth_cache zone used by /_auth/instructor.
+      - ./nginx-cache.conf:/etc/nginx/conf.d/00-cache.conf:ro
+      # Phase 8.1: http{}-scope map directives live here. Empty today;
+      # consolidation sub-phases add entries as they land.
+      - ./nginx-maps.conf:/etc/nginx/conf.d/10-maps.conf:ro
+      - ./routes.conf:/etc/nginx/routes.conf:ro
+      - ./routes:/etc/nginx/routes:ro
+      - ./certs:/etc/nginx/certs:ro
+    networks:
+      - public
+      - router-net
+      # Phase 8.2: direct access to consensus lab ttyd containers
+      # now that the per-lab nginx is retired.
+      - consensus-student-net
+      - consensus-instructor-net
+      # Phase 8.3
+      - p2p-trust-student-net
+      - p2p-trust-instructor-net
+      # Phase 8.4 — router only on bitcoin-mgmt-net. bitcoin-p2p-net
+      # is used by bitcoind containers to gossip; the router does not
+      # belong there. ttyd-bind-mgmt.sh makes ttyd listen only on the
+      # mgmt-net interface so student shells on p2p-net cannot reach
+      # the instructor console.
+      - bitcoin-student-mgmt-net
+      - bitcoin-instructor-mgmt-net
+      # Phase 8.5
+      - crypto-student-net
+      - crypto-instructor-net
+      # Ethereum (lane-service managed). Router proxies /labs/ethereum_lab/rpc
+      # and /labs/ethereum_lab/instructor on the instructor mgmt net,
+      # and student SPA + ttyd on the student mgmt net.
+      - ethereum-student-mgmt-net
+      - ethereum-instructor-mgmt-net
+      # HLF: per-peer ttyd terminals. Student peers run ttyd on
+      # hlf-student-term; consortium peers on hlf-instructor-term.
+      - hlf-student-term
+      - hlf-instructor-term
+
+networks:
+  router-net:
+    external: true
+  consensus-student-net:
+    external: true
+  consensus-instructor-net:
+    external: true
+  p2p-trust-student-net:
+    external: true
+  p2p-trust-instructor-net:
+    external: true
+  bitcoin-student-mgmt-net:
+    external: true
+  bitcoin-instructor-mgmt-net:
+    external: true
+  crypto-student-net:
+    external: true
+  crypto-instructor-net:
+    external: true
+  ethereum-student-mgmt-net:
+    external: true
+  ethereum-instructor-mgmt-net:
+    external: true
+  hlf-student-term:
+    external: true
+  hlf-instructor-term:
+    external: true
+  public:

@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>P2P Routing — Flood vs DHT</title>
+  <style>
+    :root {
+      --fg: #0f172a;
+      --muted: #475569;
+      --bg: #ffffff;
+      --soft: #f8fafc;
+      --accent: #2563eb;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .wrap { max-width: 1000px; margin: 32px auto; padding: 0 20px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+    .panel {
+      background: var(--soft); border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 16px; margin-bottom: 16px;
+    }
+    .controls {
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    }
+    .controls label {
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .controls input[type="radio"] { accent-color: var(--accent); }
+    button {
+      background: var(--accent); color: #fff; border: none; border-radius: 8px;
+      padding: 8px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+    button.secondary {
+      background: transparent; color: var(--fg); border: 1px solid #cbd5e1;
+    }
+    button.secondary:hover { background: #f1f5f9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .legend {
+      display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-left: auto;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 4px; }
+    .legend .dot {
+      width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+    }
+
+    canvas {
+      display: block; width: 100%; border-radius: 8px;
+      background: #fff; border: 1px solid #e2e8f0;
+    }
+
+    .log-panel {
+      background: var(--fg); color: #e2e8f0; border-radius: 10px;
+      padding: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px; height: 160px; overflow-y: auto;
+    }
+    .log-panel .entry { margin-bottom: 4px; line-height: 1.4; }
+    .log-panel .entry .round { color: #60a5fa; font-weight: 600; }
+    .log-panel .muted { color: #94a3b8; }
+
+    .stats {
+      display: flex; gap: 24px; font-size: 13px; color: var(--muted);
+      margin-top: 10px;
+    }
+    .stats strong { color: var(--fg); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>P2P Routing: Flood vs DHT</h1>
+  <p class="subtitle">Compare how messages propagate through a peer-to-peer network under two routing strategies.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <label><input type="radio" name="mode" value="flood" checked> Flood</label>
+      <label><input type="radio" name="mode" value="dht"> DHT</label>
+      <button id="btn-send">Send Message</button>
+      <button id="btn-reset" class="secondary">Reset</button>
+      <div class="legend">
+        <span><span class="dot" style="background:#94a3b8"></span> Idle</span>
+        <span><span class="dot" style="background:#f97316"></span> Has message</span>
+        <span><span class="dot" style="background:#22c55e"></span> Destination</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="padding:8px;">
+    <canvas id="net" height="420"></canvas>
+  </div>
+
+  <div class="stats" id="stats"></div>
+  <div class="log-panel" id="log"><span class="muted">Event log will appear here...</span></div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('net');
+  const ctx = canvas.getContext('2d');
+  const logEl = document.getElementById('log');
+  const statsEl = document.getElementById('stats');
+  const btnSend = document.getElementById('btn-send');
+  const btnReset = document.getElementById('btn-reset');
+
+  /* ── Network topology ── */
+  const LABELS = 'ABCDEFGHIJKL'.split('');
+  const N = LABELS.length;
+  let nodes = [], edges = [];
+  let sourceIdx = -1, destIdx = -1;
+  let reached = new Set();   // indices that have the message
+  let destReached = false;
+  let animating = false;
+  let roundQueue = [];        // pre-computed rounds for animation
+  let currentRound = 0;
+  let msgCount = 0;
+
+  function buildNetwork() {
+    nodes = [];
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+    // Place nodes in a slightly randomized circle
+    const R = Math.min(W, H) * 0.36;
+    for (let i = 0; i < N; i++) {
+      const angle = (2 * Math.PI * i) / N - Math.PI / 2;
+      const jx = (Math.sin(i * 7.3) * 0.12) * R;
+      const jy = (Math.cos(i * 5.1) * 0.12) * R;
+      nodes.push({ x: cx + Math.cos(angle) * R + jx, y: cy + Math.sin(angle) * R + jy, label: LABELS[i] });
+    }
+    // Build edges: connect neighbors in ring + a few cross-links
+    edges = [];
+    for (let i = 0; i < N; i++) {
+      edges.push([i, (i + 1) % N]);
+      edges.push([i, (i + 2) % N]);
+    }
+    // A few long-range links for realism
+    edges.push([0, 6], [3, 9], [1, 8], [5, 11]);
+    // Deduplicate
+    const set = new Set();
+    edges = edges.filter(([a, b]) => {
+      const key = Math.min(a, b) + '-' + Math.max(a, b);
+      if (set.has(key)) return false;
+      set.add(key);
+      return true;
+    });
+  }
+
+  function neighbors(idx) {
+    const out = [];
+    for (const [a, b] of edges) {
+      if (a === idx) out.push(b);
+      else if (b === idx) out.push(a);
+    }
+    return out;
+  }
+
+  /* ── Routing logic ── */
+  function computeFlood(src, dst) {
+    // Real flood: every node that has the message sends it to ALL neighbors
+    // each round. Neighbors that already have it still receive (redundant)
+    // messages. A node stops sending once all its neighbors have the message.
+    const rounds = [];
+    const hasMsg = new Set([src]);
+    // Track which nodes have already broadcast (sent to all neighbors)
+    const hasBroadcast = new Set();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      const roundEntries = [];
+      // Every node that has the message and hasn't finished broadcasting sends to all neighbors
+      for (const node of [...hasMsg]) {
+        if (hasBroadcast.has(node)) continue;
+        const nbs = neighbors(node);
+        let allNeighborsHave = true;
+        for (const nb of nbs) {
+          roundEntries.push({ from: node, to: nb, redundant: hasMsg.has(nb) });
+          if (!hasMsg.has(nb)) {
+            allNeighborsHave = false;
+          }
+        }
+        // A node broadcasts once; new recipients broadcast next round
+        hasBroadcast.add(node);
+        changed = true;
+      }
+      // Now mark new recipients
+      for (const e of roundEntries) {
+        if (!e.redundant) hasMsg.add(e.to);
+      }
+      if (roundEntries.length) rounds.push(roundEntries);
+    }
+    return rounds;
+  }
+
+  function computeDHT(src, dst) {
+    // Shortest path via BFS, presented as one hop per round
+    const prev = new Array(N).fill(-1);
+    const visited = new Set([src]);
+    const queue = [src];
+    while (queue.length) {
+      const cur = queue.shift();
+      if (cur === dst) break;
+      for (const nb of neighbors(cur)) {
+        if (!visited.has(nb)) {
+          visited.add(nb);
+          prev[nb] = cur;
+          queue.push(nb);
+        }
+      }
+    }
+    // Reconstruct path
+    const path = [];
+    let cur = dst;
+    while (cur !== -1) { path.unshift(cur); cur = prev[cur]; }
+    if (path[0] !== src) return []; // no path (shouldn't happen)
+    const rounds = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      rounds.push([{ from: path[i], to: path[i + 1] }]);
+    }
+    return rounds;
+  }
+
+  /* ── Rendering ── */
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width - 16;
+    canvas.height = 420;
+  }
+
+  function draw() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Edges
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.5;
+    for (const [a, b] of edges) {
+      ctx.beginPath();
+      ctx.moveTo(nodes[a].x, nodes[a].y);
+      ctx.lineTo(nodes[b].x, nodes[b].y);
+      ctx.stroke();
+    }
+
+    // Nodes
+    for (let i = 0; i < N; i++) {
+      const n = nodes[i];
+      let color = '#94a3b8'; // idle gray
+      if (i === destIdx && destReached) color = '#22c55e';
+      else if (reached.has(i)) color = '#f97316';
+      else if (i === sourceIdx || i === destIdx) color = '#94a3b8';
+
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 20, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Label
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.label, n.x, n.y);
+
+      // Source / Dest indicator
+      if (i === sourceIdx && !animating && sourceIdx >= 0) {
+        ctx.fillStyle = var_accent();
+        ctx.font = '11px sans-serif';
+        ctx.fillText('SRC', n.x, n.y - 30);
+      }
+      if (i === destIdx && !destReached && destIdx >= 0) {
+        ctx.fillStyle = '#22c55e';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('DST', n.x, n.y - 30);
+      }
+    }
+  }
+
+  function var_accent() { return '#2563eb'; }
+
+  /* ── Animation ── */
+  function pickEndpoints() {
+    sourceIdx = Math.floor(Math.random() * N);
+    do { destIdx = Math.floor(Math.random() * N); } while (destIdx === sourceIdx);
+  }
+
+  function logClear() { logEl.innerHTML = ''; }
+  function logEntry(html) {
+    const div = document.createElement('div');
+    div.className = 'entry';
+    div.innerHTML = html;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function getMode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+  }
+
+  function startAnimation() {
+    if (animating) return;
+    resetState();
+    pickEndpoints();
+    const mode = getMode();
+    const rounds = mode === 'flood' ? computeFlood(sourceIdx, destIdx) : computeDHT(sourceIdx, destIdx);
+    roundQueue = rounds;
+    currentRound = 0;
+    msgCount = 0;
+    reached.add(sourceIdx);
+    animating = true;
+    btnSend.disabled = true;
+    logClear();
+    logEntry(`<span class="muted">${mode === 'flood' ? 'Flood' : 'DHT'} routing from <strong>${LABELS[sourceIdx]}</strong> → <strong>${LABELS[destIdx]}</strong></span>`);
+    draw();
+    setTimeout(playRound, 500);
+  }
+
+  let destReachedRound = 0;
+
+  function playRound() {
+    if (currentRound >= roundQueue.length) {
+      finishAnimation();
+      return;
+    }
+    // DHT stops when destination is reached
+    if (destReached && getMode() === 'dht') {
+      finishAnimation();
+      return;
+    }
+    const entries = roundQueue[currentRound];
+    const targets = [];
+    let roundRedundant = 0;
+    for (const e of entries) {
+      msgCount++;
+      if (e.redundant) {
+        roundRedundant++;
+        targets.push(`<span style="opacity:0.4">${LABELS[e.from]} → ${LABELS[e.to]}</span>`);
+      } else {
+        reached.add(e.to);
+        targets.push(`${LABELS[e.from]} → ${LABELS[e.to]}`);
+      }
+      if (e.to === destIdx && !destReached) {
+        destReached = true;
+        destReachedRound = currentRound + 1;
+      }
+    }
+    currentRound++;
+    const redundantNote = roundRedundant > 0 ? ` <span style="opacity:0.5">(${roundRedundant} redundant)</span>` : '';
+    logEntry(`<span class="round">Round ${currentRound}:</span> ${targets.join(', ')}${redundantNote}`);
+    if (destReached && destReachedRound === currentRound) {
+      logEntry(`<span class="muted">Destination <strong>${LABELS[destIdx]}</strong> reached in round ${destReachedRound}${getMode() === 'flood' ? ' — but flood continues until all nodes have the message.' : '.'}</span>`);
+    }
+    draw();
+    setTimeout(playRound, 600);
+  }
+
+  function finishAnimation() {
+    destReached = true;
+    draw();
+    const mode = getMode();
+    // Count how many messages were actually needed (non-redundant = N-1 for full flood)
+    const redundantCount = msgCount - (reached.size - 1); // subtract source which wasn't "sent to"
+    if (mode === 'flood') {
+      logEntry(`<span class="muted">Flood complete. All ${reached.size} reachable nodes have the message. Destination reached in round ${destReachedRound}. Total rounds: ${currentRound}. Messages sent: ${msgCount} (${redundantCount} redundant).</span>`);
+      statsEl.innerHTML = `<span>Dest reached: round <strong>${destReachedRound}</strong></span><span>Total rounds: <strong>${currentRound}</strong></span><span>Nodes: <strong>${reached.size}</strong> / ${N}</span><span>Messages: <strong>${msgCount}</strong> (${redundantCount} redundant)</span>`;
+    } else {
+      logEntry(`<span class="muted">Destination <strong>${LABELS[destIdx]}</strong> reached in ${currentRound} round(s). Nodes contacted: ${reached.size}. Messages sent: ${msgCount}.</span>`);
+      statsEl.innerHTML = `<span>Rounds: <strong>${currentRound}</strong></span><span>Nodes contacted: <strong>${reached.size}</strong> / ${N}</span><span>Messages sent: <strong>${msgCount}</strong></span>`;
+    }
+    animating = false;
+    btnSend.disabled = false;
+  }
+
+  function resetState() {
+    sourceIdx = -1;
+    destIdx = -1;
+    reached = new Set();
+    destReached = false;
+    destReachedRound = 0;
+    animating = false;
+    roundQueue = [];
+    currentRound = 0;
+    msgCount = 0;
+    btnSend.disabled = false;
+    statsEl.innerHTML = '';
+  }
+
+  function fullReset() {
+    resetState();
+    logEl.innerHTML = '<span class="muted">Event log will appear here...</span>';
+    resize();
+    buildNetwork();
+    draw();
+  }
+
+  /* ── Events ── */
+  btnSend.addEventListener('click', startAnimation);
+  btnReset.addEventListener('click', fullReset);
+  window.addEventListener('resize', () => { resize(); buildNetwork(); draw(); });
+
+  /* ── Init ── */
+  resize();
+  buildNetwork();
+  draw();
+})();
+</script>
+</body>
+</html>

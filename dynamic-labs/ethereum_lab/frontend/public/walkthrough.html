@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Role Walkthrough</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --sidebar: #1e293b;
+      --card: #334155;
+      --primary: #3b82f6;
+      --text: #f8fafc;
+      --accent: #8b5cf6;
+      --success: #22c55e;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    h1 { font-size: 1.75rem; margin: 0 0 0.5rem 0; color: var(--accent); }
+    h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem 0; color: var(--text); }
+    .role-badge {
+      display: inline-block;
+      background: rgba(139, 92, 246, 0.3);
+      border: 1px solid rgba(139, 92, 246, 0.5);
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+    .doctrine {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card);
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .doctrine p { margin: 0.35rem 0; font-size: 0.95rem; color: var(--muted); }
+    .doctrine strong { color: var(--text); }
+    .step {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card);
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .step-num {
+      display: inline-block;
+      width: 1.75rem;
+      height: 1.75rem;
+      line-height: 1.75rem;
+      text-align: center;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-right: 0.5rem;
+    }
+    .step-title { font-weight: bold; font-size: 1rem; margin-bottom: 0.5rem; }
+    .step-desc { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .code-block {
+      background: #0c0c0c;
+      border: 1px solid #1e293b;
+      border-radius: 0.35rem;
+      padding: 0.75rem 1rem;
+      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #86efac;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 0.5rem 0;
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      padding: 0.3rem 0.6rem;
+      background: rgba(139, 92, 246, 0.4);
+      border: 1px solid rgba(139, 92, 246, 0.6);
+      color: #c4b5fd;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .copy-btn:hover { background: rgba(139, 92, 246, 0.6); }
+    .copy-btn.copied { background: var(--success); color: white; border-color: var(--success); }
+    .no-role {
+      text-align: center;
+      padding: 3rem 2rem;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 0.75rem;
+    }
+    .no-role p { color: var(--muted); margin: 0.5rem 0; }
+    .back-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+    .option-list { margin: 0.5rem 0; padding-left: 1.25rem; }
+    .option-list li { margin: 0.35rem 0; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="content"></div>
+    <a href="/" class="back-link">← Back to Lab</a>
+  </div>
+
+  <script>
+    const ROLE_DOCTRINES = {
+      'Car Seller (Honest)': { goal: 'Sell your car fairly. Complete the sale with full transparency.', policy: 'You must allow inspection. Report any known issues. Do not bribe the mechanic.', hints: 'Your car is in good condition. Cooperate with the mechanic.' },
+      'Car Seller (Deceptive)': { goal: 'Sell the car without anyone finding out it has serious hidden defects.', policy: 'You may try to influence the mechanic. Avoid disclosing defects. Complete the sale before the buyer discovers the truth.', hints: 'The transmission slips in cold weather. Odometer may have been rolled back. Keep the mechanic on your side.' },
+      'Car Buyer': { goal: 'Avoid buying a defective vehicle. Investigate before completing the purchase.', policy: 'You must use the inspection flow. Review all artifacts. Do not skip inspection if you suspect issues.', hints: "Check chat history, transaction timing, and any posted documents. The mechanic's attestation is the only on-chain signal—but can it be trusted?" },
+      'Mechanic': { goal: 'Inspect the car and report honestly.', policy: 'You must call mechanicInspect(true) or mechanicInspect(false) based on your findings. Your attestation is on-chain.', hints: "You are the buyer's only on-chain protection. Your reputation matters." },
+      'Mechanic (Bribed)': { goal: "Approve the car for the buyer despite defects—you've been paid by the seller.", policy: 'Call mechanicInspect(true) regardless of condition. Do not reveal the bribe to the buyer.', hints: "The seller knows you're helping. Keep the buyer in the dark." },
+      'Escrow Agent': { goal: 'Hold funds until conditions are met. Release only when appropriate.', policy: 'Follow the contract flow. Do not release early.', hints: 'You are neutral. The contract enforces the flow.' },
+      'Victim': { goal: 'Recover your files—pay the ransom through the contract.', policy: 'Call payRansom() with ETH. Your payment is traceable on-chain.', hints: 'You have no choice. The payment creates a trail.' },
+      'Attacker': { goal: 'Receive ransom payments. Obscure the trail.', policy: 'Move funds through tumbler addresses. Avoid being traced.', hints: 'Use the forensics-setup flow. Investigators will try to trace you.' },
+      'Investigator': { goal: "Trace the ransom flow. Identify the attacker's final address.", policy: 'Use block explorer, Hardhat console, or forensics UI. Submit the correct address for reward.', hints: 'Follow Victim → Contract → Attacker → Tumblers → Final. First correct submission wins.' }
+    };
+
+    function copyToClipboard(btn) {
+      const code = btn.dataset.code ? JSON.parse(btn.dataset.code) : '';
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1500);
+      });
+    }
+
+    function codeBlock(code, label) {
+      const encoded = escapeHtml(JSON.stringify(code));
+      return `<div class="code-block">${label ? `<span style="color:#64748b;font-size:0.7rem;">${label}</span><br>` : ''}${escapeHtml(code)}<button class="copy-btn" data-code="${encoded}" onclick="copyToClipboard(this)">Copy</button></div>`;
+    }
+
+    function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function renderWalkthrough(role) {
+      const doc = ROLE_DOCTRINES[role];
+      const goal = doc ? doc.goal : '';
+      const policy = doc ? doc.policy : '';
+      const hints = doc ? doc.hints : '';
+
+      let steps = '';
+
+      if (role === 'Car Seller (Deceptive)' || role === 'Car Seller (Honest)') {
+        steps = `
+          <div class="step">
+            <span class="step-num">1</span><span class="step-title">Deploy your CarSellerRole contract</span>
+            <p class="step-desc">In the Lab app, use the one-click deploy button in your role card, or run this in the Blockchain Console:</p>
+            ${codeBlock('await deploy("CarSellerRole")', 'Copy and paste into the Console')}
+          </div>
+          <div class="step">
+            <span class="step-num">2</span><span class="step-title">Share your wallet address with the instructor</span>
+            <p class="step-desc">The instructor deploys Car Sale in <strong>Live → Contract Lab → Deploy</strong>, then sets you as seller in the contract. Copy your address from the top of the Live page and share it with the instructor.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span><span class="step-title">Wait for the sale flow</span>
+            <p class="step-desc">The buyer will pay deposit, request inspection, and the mechanic will attest. You do not call any contract functions—the buyer and mechanic drive the flow.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">4</span><span class="step-title">Monitor the sale state</span>
+            <p class="step-desc"><strong>Important:</strong> Replace <code>CARSALE_ADDR</code> with the actual CarSale contract address (0x + 40 hex chars) from the instructor. Pasting the placeholder will cause "network does not support ENS".</p>
+            ${codeBlock('const cs = connect("CARSALE_ADDR", CarSaleABI); await cs.currentState()', 'State 5 = Completed')}
+            <p class="step-desc" style="margin-top:0.5rem;">Verify you are the seller:</p>
+            ${codeBlock('await cs.seller()', 'Should match your wallet address')}
+          </div>
+          <div class="step">
+            <span class="step-num">5</span><span class="step-title">Withdraw your proceeds</span>
+            <p class="step-desc">When the sale completes (state 5), the contract sends ETH to your seller address. If that's your CarSellerRole contract, call withdraw. In the Console:</p>
+            ${codeBlock('const seller = connect("YOUR_SellerRole_CONTRACT_ADDR", (await fetch("/artifacts/CarSellerRole.json").then(r=>r.json())).abi); await seller.withdraw()', 'Replace with your deployed address')}
+          </div>
+          <div class="step">
+            <span class="step-num">6</span><span class="step-title">Roleplay options</span>
+            <p class="step-desc">Use the chat to:</p>
+            <ul class="option-list">
+              <li>${role === 'Car Seller (Deceptive)' ? 'Hype up the car ("runs great, low miles")—without revealing defects' : 'Describe the car honestly and encourage inspection'}</li>
+              <li>${role === 'Car Seller (Deceptive)' ? 'Deflect suspicion if the buyer asks questions' : 'Cooperate with the mechanic and buyer'}</li>
+              <li>${role === 'Car Seller (Deceptive)' ? 'Coordinate quietly with the bribed mechanic if needed' : 'Share any known issues'}</li>
+            </ul>
+          </div>
+        `;
+      } else if (role === 'Car Buyer') {
+        steps = `
+          <div class="step">
+            <span class="step-num">1</span><span class="step-title">Get the CarSale contract address from the instructor</span>
+            <p class="step-desc">The instructor deploys Car Sale in <strong>Live → Contract Lab → Deploy tab → Car Sale</strong>, then shares the address (write on board or chat).</p>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span><span class="step-title">Pay the deposit (1 ETH)</span>
+            <p class="step-desc">Replace CARSALE_ADDR with the actual address:</p>
+            ${codeBlock('const cs = connect("CARSALE_ADDR", CarSaleABI); await cs.payDeposit({ value: ethers.parseEther("1") })', '')}
+          </div>
+          <div class="step">
+            <span class="step-num">3</span><span class="step-title">Request inspection</span>
+            ${codeBlock('await cs.requestInspection()', '')}
+          </div>
+          <div class="step">
+            <span class="step-num">4</span><span class="step-title">Review before completing</span>
+            <p class="step-desc">Check chat history, transaction timing, and any posted documents. The mechanic's attestation is the only on-chain signal—but can it be trusted?</p>
+          </div>
+          <div class="step">
+            <span class="step-num">5</span><span class="step-title">Complete purchase or request refund</span>
+            <p class="step-desc">If inspection passed:</p>
+            ${codeBlock('await cs.completePurchase({ value: ethers.parseEther("1") })', '')}
+            <p class="step-desc" style="margin-top:0.5rem;">If inspection failed:</p>
+            ${codeBlock('await cs.requestRefund()', '')}
+          </div>
+        `;
+      } else if (role === 'Mechanic' || role === 'Mechanic (Bribed)') {
+        steps = `
+          <div class="step">
+            <span class="step-num">1</span><span class="step-title">Get the CarSale contract address from the instructor</span>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span><span class="step-title">Wait for the buyer to request an inspection</span>
+            <p class="step-desc">The contract state must be InspectionRequested.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span><span class="step-title">Call mechanicInspect</span>
+            <p class="step-desc">${role === 'Mechanic (Bribed)' ? 'You must pass the car regardless:' : 'Report honestly based on your findings:'}</p>
+            ${role === 'Mechanic (Bribed)' 
+              ? codeBlock('const cs = connect("CARSALE_ADDR", CarSaleABI); await cs.mechanicInspect(true)', 'Always true')
+              : codeBlock('const cs = connect("CARSALE_ADDR", CarSaleABI); await cs.mechanicInspect(true)', 'true = pass, false = fail (use false if you found defects)')}
+          </div>
+        `;
+      } else if (role === 'Victim') {
+        steps = `
+          <div class="step">
+            <span class="step-num">1</span><span class="step-title">Get the RansomPayment contract address from the instructor</span>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span><span class="step-title">Pay the ransom</span>
+            <p class="step-desc">In the Console, replace RANSOM_ADDR with the actual address:</p>
+            ${codeBlock('const ransom = connect("RANSOM_ADDR", [{"inputs":[],"name":"payRansom","outputs":[],"stateMutability":"payable","type":"function"}]); await ransom.payRansom({ value: ethers.parseEther("1") })', '')}
+          </div>
+        `;
+      } else if (role === 'Investigator') {
+        steps = `
+          <div class="step">
+            <span class="step-num">1</span><span class="step-title">Trace the ransom flow</span>
+            <p class="step-desc">Start from the Victim's address and follow the ETH through the contract and tumbler addresses.</p>
+            ${codeBlock('await balance("VICTIM_ADDR")', '')}
+            ${codeBlock('const r = await receipt("TX_HASH"); console.log(r.logs)', '')}
+          </div>
+          <div class="step">
+            <span class="step-num">2</span><span class="step-title">Submit the attacker's final address</span>
+            <p class="step-desc">First correct submission wins the bounty.</p>
+          </div>
+        `;
+      } else if (role === 'Attacker') {
+        steps = `
+          <div class="step">
+            <span class="step-num">1</span><span class="step-title">Share your contract address with the instructor</span>
+            <p class="step-desc">The instructor sets you as the attacker in the RansomPayment contract.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span><span class="step-title">Receive ransom payments</span>
+            <p class="step-desc">Victims pay through the contract; funds reach you.</p>
+          </div>
+          <div class="step">
+            <span class="step-num">3</span><span class="step-title">Obscure the trail</span>
+            <p class="step-desc">Move funds through intermediary addresses to make tracing harder.</p>
+          </div>
+        `;
+      } else {
+        steps = `
+          <div class="step">
+            <span class="step-num">1</span><span class="step-title">Deploy your role contract</span>
+            <p class="step-desc">Use the one-click deploy button in your role card, or run in the Console: <code>await deploy("YourRoleName")</code></p>
+          </div>
+          <div class="step">
+            <span class="step-num">2</span><span class="step-title">Follow the instructor's guidance</span>
+            <p class="step-desc">Each scenario has specific flow. Check the instructor's announcements and chat.</p>
+          </div>
+        `;
+      }
+
+      return `
+        <h1>Role Walkthrough</h1>
+        <div class="role-badge">${escapeHtml(role)}</div>
+        <div class="doctrine">
+          <p><strong>Goal:</strong> ${escapeHtml(goal)}</p>
+          <p><strong>Policy:</strong> ${escapeHtml(policy)}</p>
+          ${hints ? `<p><strong>Hints:</strong> ${escapeHtml(hints)}</p>` : ''}
+        </div>
+        <h2>Steps</h2>
+        ${steps}
+      `;
+    }
+
+    function init() {
+      const role = localStorage.getItem('scenario_role') || '';
+      const content = document.getElementById('content');
+
+      if (!role) {
+        content.innerHTML = `
+          <div class="no-role">
+            <h2>No role assigned yet</h2>
+            <p>Wait for the instructor to start a scenario and assign roles.</p>
+            <p>Once you have a role, this page will show step-by-step instructions.</p>
+          </div>
+        `;
+      } else {
+        content.innerHTML = renderWalkthrough(role);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+version: 1
+suite_id: bitcoin-agent-regression
+lab: bitcoin
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/bitcoin/reset-and-startup.md
+assumptions:
+  - MCP browser tooling is available.
+  - The Bitcoin automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  instructor_credentials_file: .runtime/instructor-credentials.txt
+observability:
+  required:
+    - console_logs
+    - network_failures
+  suggested_mcp_methods:
+    - get_console_logs
+    - get_network_digest
+    - get_network_traffic
+shared_rules:
+  - Use a fresh browser context per task.
+  - Keep student and instructor cookies in separate contexts.
+  - When switching roles, discard the old browser context and create a fresh session for the new role.
+  - Prefer clicking visible UI affordances over direct URL entry once the wrapper is loaded.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+  - Run page-derived commands from both Lab 1 and Lab 2 through the ttyd browser route.
+parallelization:
+  recommended:
+    - Run the instructor task in parallel with any student task.
+    - Run student tasks in parallel only when enough free Bitcoin stations exist.
+  fallback:
+    - Serialize student tasks if station capacity is unknown.
+  cleanup:
+    - After the full suite, optionally wipe throwaway student claims if the environment should be restored.
+report_template: report-template.md
+tasks:
+  - id: btc-student-claim-wrapper
+    title: Student claim and wrapper shell
+    file: tasks/student-claim-wrapper.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/bitcoin/
+      - /labs/bitcoin/c/<uuid>/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: btc-student-supplemental-surfaces
+    title: Student panel surfaces
+    file: tasks/student-supplemental-surfaces.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/bitcoin/
+      - /labs/bitcoin/mempool/
+      - /labs/bitcoin/btc-explorer/
+      - /labs/bitcoin/c/<uuid>/static/
+      - /labs/bitcoin/peer/<short>/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: btc-student-static-share-roundtrip
+    title: Student static share round trip
+    file: tasks/student-static-share-roundtrip.md
+    context: student_primary_plus_peer_probe
+    auth: none
+    routes:
+      - /labs/bitcoin/
+      - /labs/bitcoin/c/<uuid>/
+      - /labs/bitcoin/c/<uuid>/ttyd/
+      - /labs/bitcoin/c/<uuid>/static/<filename>
+      - /labs/bitcoin/peer/<short>/<filename>
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: btc-student-ttyd-guide-command
+    title: Student ttyd page-command coverage
+    file: tasks/student-ttyd-guide-command.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/bitcoin/
+      - /labs/bitcoin/c/<uuid>/
+      - /labs/bitcoin/c/<uuid>/ttyd/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: btc-instructor-auth-surfaces
+    title: Instructor auth, admin, and ttyd
+    file: tasks/instructor-auth-surfaces.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /instructor/
+      - /labs/bitcoin/admin
+      - /labs/bitcoin/instructor/
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
+  - The suite is complete only when student claim, wrapper, ttyd, page-derived Lab 1 and Lab 2 commands, panel surfaces, static-share round trip, and instructor surfaces have all been checked.

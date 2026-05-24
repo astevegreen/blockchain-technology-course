@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Micro‑Lab: Prove Your Friend Wrong — Ethereum as a Replicated Computer</title>
+<style>
+  :root{
+    --bg:#0f172a;          /* slate-900 */
+    --panel:#111827;       /* gray-900 */
+    --panel-2:#0b1220;     /* darker */
+    --text:#e5e7eb;        /* gray-200 */
+    --muted:#94a3b8;       /* slate-400 */
+    --accent:#22c55e;      /* green-500 */
+    --accent-2:#60a5fa;    /* blue-400 */
+    --warn:#f59e0b;        /* amber-500 */
+    --danger:#ef4444;      /* red-500 */
+    --code:#0b1220;
+    --chip:#1f2937;        /* gray-800 */
+    --chip-border:#334155; /* slate-700 */
+  }
+  html,body{height:100%;}
+  body{
+    margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,"Helvetica Neue",Arial;
+    color:var(--text); background: radial-gradient(1200px 800px at 15% -10%, #1e293b 0%, #0f172a 40%) fixed, var(--bg);
+    line-height:1.35;
+  }
+  header{
+    padding:16px 20px; border-bottom:1px solid #1f2937; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0));
+  }
+  header h1{margin:0; font-size:20px; letter-spacing:0.3px}
+  header p{margin:6px 0 0 0; color:var(--muted); font-size:13px}
+  .wrap{
+    display:grid; grid-template-columns: 360px 1fr 420px; gap:16px;
+    padding:16px; height:calc(100% - 80px);
+    box-sizing:border-box;
+  }
+  .panel{
+    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border:1px solid #1f2937; border-radius:12px; padding:14px; overflow:auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.03);
+  }
+  h2{font-size:16px; margin:0 0 10px 0; letter-spacing:0.3px}
+  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+  .muted{color:var(--muted); font-size:12px}
+  label{font-size:12px; color:var(--muted)}
+  input[type="number"], input[type="text"]{
+    background:#0b1220; border:1px solid #1f2937; color:var(--text);
+    padding:8px 10px; border-radius:8px; width:120px; font-size:14px;
+  }
+  input[type="range"]{width:160px}
+  .btn{
+    border:1px solid #1f2937; background:linear-gradient(180deg,#1f2937,#0b1220); color:var(--text);
+    padding:8px 10px; border-radius:10px; font-size:13px; cursor:pointer;
+    transition:.15s transform ease, .15s background ease, .15s box-shadow ease;
+  }
+  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,0.2)}
+  .btn-accent{border-color:#14532d; background:linear-gradient(180deg,#14532d,#0b1220);}
+  .btn-warn{border-color:#7c2d12; background:linear-gradient(180deg,#7c2d12,#0b1220);}
+  .btn-danger{border-color:#7f1d1d; background:linear-gradient(180deg,#7f1d1d,#0b1220);}
+  .chips{display:flex; gap:8px; flex-wrap:wrap}
+  .chip{
+    display:inline-flex; gap:6px; align-items:center;
+    border:1px solid var(--chip-border); background:linear-gradient(180deg,#0b1220,#0a0f1b);
+    padding:8px 10px; border-radius:999px; font-size:12px; cursor:pointer;
+  }
+  .chip .cost{color:#a7f3d0; font-weight:600}
+  .chip:hover{border-color:#475569}
+  .formula{ color: var(--danger); font-weight:700; }
+  .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .program{
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .step{
+    display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;
+    border:1px solid #1f2937; background:linear-gradient(180deg,#0b1220,#0a0f1b); border-radius:10px; padding:10px;
+  }
+  .step .title{font-weight:600}
+  .step .meta{font-size:12px; color:var(--muted)}
+  .step .actions{display:flex; align-items:center;}
+  .step .actions button{margin-left:6px}
+  .timesInput{
+    width:68px; margin-left:8px; margin-right:6px;
+    background:#0b1220; border:1px solid #1f2937; color:var(--text); padding:6px 8px; border-radius:8px;
+  }
+  .summary-box{
+    display:grid; grid-template-columns: repeat(4,1fr); gap:8px; margin-top:10px;
+  }
+  .card{
+    border:1px solid #1f2937; background:linear-gradient(180deg,#0b1220,#0a0f1b); border-radius:10px; padding:10px;
+    font-size:13px;
+  }
+  .big{font-size:20px; font-weight:700}
+  .good{color:var(--accent)}
+  .warn{color:var(--warn)}
+  .bad{color:var(--danger)}
+  .nodes{
+    display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;
+  }
+  .node{
+    border:1px solid #1f2937; background:linear-gradient(180deg,#0b1220,#0a0f1b); border-radius:10px; padding:10px;
+    font-size:12px;
+  }
+  .node h3{margin:0 0 6px 0; font-size:13px}
+  .log{background:var(--code); border:1px solid #1f2937; border-radius:8px; padding:8px; color:#93c5fd; max-height:120px; overflow:auto; white-space:pre-wrap}
+  .footer{
+    padding:10px 16px; color:var(--muted); font-size:12px; border-top:1px solid #1f2937;
+    background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0.02));
+  }
+  .divider{height:1px; background:#1f2937; margin:10px 0}
+  .pill{display:inline-block; border:1px solid #1f2937; background:#0b1220; padding:2px 8px; border-radius:999px; font-size:11px; color:#a7f3d0}
+  .right{float:right}
+  .hint{font-size:12px; color:#93c5fd}
+  .consensus{
+    margin-top:10px; padding:10px; border-radius:10px; border:1px solid #1f2937;
+    background:linear-gradient(180deg,#0b1220,#0a0f1b);
+  }
+  .consensus.good{box-shadow:0 0 0 1px rgba(34,197,94,0.25) inset}
+  .consensus.bad{box-shadow:0 0 0 1px rgba(239,68,68,0.25) inset}
+  .small{font-size:12px}
+  .flex{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .spacer{flex:1}
+  .kbd-key{border:1px solid #334155; background:#0b1220; padding:1px 6px; border-radius:6px}
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  .story{font-size:13px; color:var(--text); background:linear-gradient(180deg, rgba(96,165,250,0.1), rgba(0,0,0,0)); border:1px solid #1f2937; padding:10px; border-radius:10px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>Micro‑Lab: Prove Your Friend Wrong — Ethereum as a Replicated Computer</h1>
+    <p class="story">
+      Your mathematically‑challenged friend claims it’s <em>impossible</em> to reach a large target value from <span class="pill">x = 1</span> using his tiny contract. 
+      He deployed a minimalist “ArithmeticProxy” contract that exposes only a few calls. Each call changes a single storage variable <span class="pill">x</span> and costs gas.
+      <br/>Your challenge: from the same start state on every node, craft the <strong>lowest‑gas</strong> call sequence that lands exactly on <span class="pill">x = target</span>.
+      Honest Ethereum nodes must deterministically compute the same result — any divergent node is rejected by consensus.
+    </p>
+  </header>
+
+  <div class="wrap">
+    <!-- Left: Controls & Ops -->
+    <section class="panel" id="controls">
+      <h2>1) Configure the Challenge</h2>
+      <div class="row">
+        <label>Start x (storage):</label>
+        <input type="number" id="startX" value="1" step="1" readonly />
+        <span class="muted">Starts at 1. Use <span class="pill mono">x = 1</span> to reset (expensive).</span>
+      </div>
+      <div class="row">
+        <label>Target x:</label>
+        <input type="number" id="targetX" value="10000" step="1" />
+        <button class="btn" id="btnRandom10k" title="Pick a random ~10k target">🎯 Random (~10k)</button>
+      </div>
+      <div class="row">
+        <label>Nodes:</label>
+        <input type="range" id="nodesRange" min="3" max="8" value="5" />
+        <span id="nodesCount" class="muted">5</span>
+      </div>
+      <div class="row">
+        <label>Gas price (gwei):</label>
+        <input type="number" id="gasPrice" value="30" step="1" />
+      </div>
+      <div class="row">
+        <input type="checkbox" id="faultyToggle" />
+        <label for="faultyToggle"> Inject a faulty node (to illustrate consensus rejection)</label>
+      </div>
+      <div class="divider"></div>
+      <h2>2) Contract Calls</h2>
+      <p class="muted">Click to append calls to your “transaction.” Each has a gas cost. Because gcd(5,4)=1, the ±{5,4} pair lets you synthesize any integer.</p>
+      <div class="chips" id="opPalette"></div>
+      <p class="muted" style="margin-top:8px">Tip: <span class="pill">x = 1</span> is costly but can reset your path.</p>
+    </section>
+
+    <!-- Middle: Program Builder -->
+    <section class="panel" id="programPanel">
+      <h2>3) Your Call Sequence</h2>
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn" id="undo">↩️ Undo</button>
+        <button class="btn" id="clear">🗑️ Clear</button>
+        <button class="btn" id="demo">✨ Demo</button>
+        <span class="spacer"></span>
+        <button class="btn btn-accent" id="run">🚀 Execute on Nodes</button>
+      </div>
+      <div class="program" id="program"></div>
+
+      <div class="summary-box">
+        <div class="card">
+          <div class="muted">Total Gas</div>
+          <div class="big" id="totalGas">0</div>
+        </div>
+        <div class="card">
+          <div class="muted">Fee (gwei)</div>
+          <div class="big" id="feeGwei">0</div>
+        </div>
+        <div class="card">
+          <div class="muted">Fee (ETH)</div>
+          <div class="big" id="feeEth">0</div>
+        </div>
+        <div class="card">
+          <div class="muted">Friend’s Bet Budget (gwei)</div>
+          <div class="big" id="friendBudget">—</div>
+          <div class="muted small" id="betOutcome">Bet status: —</div>
+        </div>
+      </div>
+
+      <div class="consensus" id="consensusBox">
+        <div class="flex">
+          <strong>Consensus Result:</strong>
+          <span class="spacer"></span>
+          <span class="muted small">Determinism check across all nodes</span>
+        </div>
+        <div id="consensusMsg" class="small muted" style="margin-top:6px">— not executed yet —</div>
+      </div>
+
+      <div style="margin-top:10px" class="small muted">
+        <strong>Goal:</strong> Prove your friend wrong by hitting <span class="pill">x = target</span> with minimum gas — and beat their bet budget.
+      </div>
+    </section>
+
+    <!-- Right: Nodes / Logs / Auto-Solve -->
+    <section class="panel" id="nodesPanel">
+      <div class="flex">
+        <h2>4) Simulated Nodes</h2>
+        <span class="spacer"></span>
+        <button class="btn" id="autoSolve">🧠 Best‑Gas (search)</button>
+      </div>
+      <p class="muted small">Each node independently executes the same call sequence. Honest nodes must match exactly. A faulty node (if injected) will diverge and be rejected.</p>
+      <div class="nodes" id="nodes"></div>
+      <div class="divider"></div>
+      <details>
+        <summary class="hint">What is this showing?</summary>
+        <p class="small">Ethereum is a replicated state machine: given the same input (start state, call sequence, gas), all honest nodes compute the same output. The network reaches consensus on that output and rejects any divergent computation.</p>
+      </details>
+    </section>
+  </div>
+
+  <div class="footer">
+    <span>Hotkeys: <span class="kbd-key">R</span> run, <span class="kbd-key">U</span> undo, <span class="kbd-key">C</span> clear, <span class="kbd-key">D</span> demo.</span>
+    <span class="right">© Micro‑Lab | CC‑BY for classroom use</span>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* -------------------------
+   * Contract "ABI" (toy ops)
+   * ------------------------- */
+  const OPS = [
+    {
+      id:"add5",
+      label:"x = x + 5",
+      cost:5,
+      fn:(x)=> x + 5,
+      desc:"Add 5 to x. Cheap."
+    },
+    {
+      id:"sub4",
+      label:"x = x − 4",
+      cost:5,
+      fn:(x)=> x - 4,
+      desc:"Subtract 4 from x. Cheap; pairs with +5 to synthesize any integer."
+    },
+    {
+      id:"mul2",
+      label:"x = x × 2",
+      cost:100,
+      fn:(x)=> x * 2,
+      desc:"Double x. Moderate gas."
+    },
+    {
+      id:"square",
+      label:"x = x²",
+      cost:10000,
+      fn:(x)=> x * x,
+      desc:"Square x. Very expensive."
+    },
+    {
+      id:"set1",
+      label:"x = 1 (reset)",
+      cost:20000,
+      fn:(x)=> 1,
+      desc:"Reset x to one. Very expensive."
+    }
+  ];
+
+  /* Bounds to keep numbers sane */
+  const MAX_ABS = 1_000_000_000; // 1e9 absolute value bound
+  const STEP_DELAY_MS = 160;      // animation delay per step-group during exec
+
+  /* State */
+  /** program: array of { opId: string, times: number } */
+  let program = [];
+  let running = false;
+  let friendEstimateGas = null; // best (or near-best) gas estimate
+  let friendBudgetGwei = null;  // estimate * gasPrice + 100000
+
+  /* DOM */
+  const startXEl   = document.getElementById("startX");
+  const targetXEl  = document.getElementById("targetX");
+  const nodesRange = document.getElementById("nodesRange");
+  const nodesCount = document.getElementById("nodesCount");
+  const gasPriceEl = document.getElementById("gasPrice");
+  const faultyToggle = document.getElementById("faultyToggle");
+
+  const opPalette = document.getElementById("opPalette");
+  const programEl = document.getElementById("program");
+  const totalGasEl= document.getElementById("totalGas");
+  const feeGweiEl = document.getElementById("feeGwei");
+  const feeEthEl  = document.getElementById("feeEth");
+  const friendBudgetEl = document.getElementById("friendBudget");
+  const betOutcomeEl = document.getElementById("betOutcome");
+
+  const runBtn    = document.getElementById("run");
+  const undoBtn   = document.getElementById("undo");
+  const clearBtn  = document.getElementById("clear");
+  const demoBtn   = document.getElementById("demo");
+  const random10kBtn = document.getElementById("btnRandom10k");
+  const autoSolveBtn = document.getElementById("autoSolve");
+
+  const nodesEl   = document.getElementById("nodes");
+  const consensusBox = document.getElementById("consensusBox");
+  const consensusMsg = document.getElementById("consensusMsg");
+
+  /* Utility */
+  const getOpById = (id)=> OPS.find(o=>o.id===id);
+  const fmt = (n)=> new Intl.NumberFormat().format(n);
+
+  /* Palette with red formulas */
+  function renderPalette(){
+    opPalette.innerHTML = "";
+    OPS.forEach(op=>{
+      const chip = document.createElement("button");
+      chip.className = "chip";
+      chip.title = op.desc + " | Gas: " + op.cost;
+      chip.innerHTML = `<span class="mono formula">${op.label}</span> <span class="cost">• ${fmt(op.cost)} gas</span>`;
+      chip.addEventListener("click", ()=>{ addStep(op.id); });
+      opPalette.appendChild(chip);
+    });
+  }
+
+  /* Program manipulation */
+  function addStep(opId){
+    program.push({ opId, times: 1 });
+    renderProgram();
+  }
+  function removeStep(idx){
+    program.splice(idx,1);
+    renderProgram();
+  }
+  function moveStep(idx, dir){
+    const j = idx + dir;
+    if (j<0 || j>=program.length) return;
+    const t = program[idx]; program[idx] = program[j]; program[j] = t;
+    renderProgram();
+  }
+  function updateTimes(idx, v){
+    let t = Math.max(1, Math.min(9999, (Number(v) || 1)));
+    program[idx].times = t;
+    updateGasSummary();
+  }
+  function undo(){ if(program.length){ program.pop(); renderProgram(); } }
+  function clear(){ program = []; renderProgram(); }
+
+  /* Gas accounting */
+  function totalGas(){
+    return program.reduce((acc,step)=> acc + getOpById(step.opId).cost * step.times, 0);
+  }
+  function updateGasSummary(){
+    const gas = totalGas();
+    totalGasEl.textContent = fmt(gas);
+    const gwei = Number(gasPriceEl.value)||0;
+    const feeGwei = gas * gwei;
+    const feeEth = feeGwei / 1e9; // 1 gwei = 1e9 wei; 1 ETH = 1e18 wei
+    feeGweiEl.textContent = fmt(feeGwei);
+    feeEthEl.textContent = feeEth.toLocaleString(undefined,{maximumFractionDigits:9});
+    // Update bet comparison if we have a friend budget
+    updateBetOutcome();
+  }
+
+  /* Render program list with Times controls */
+  function renderProgram(){
+    programEl.innerHTML = "";
+    if (!program.length){
+      const empty = document.createElement("div");
+      empty.className = "muted";
+      empty.textContent = "Empty. Click contract calls on the left to build your sequence.";
+      programEl.appendChild(empty);
+    } else {
+      program.forEach((step, idx)=>{
+        const op = getOpById(step.opId);
+        const row = document.createElement("div");
+        row.className = "step";
+        row.innerHTML = `
+          <div>
+            <div class="title mono">#${idx+1} — CALL ${op.label} <span class="muted">×</span> <span class="mono">${step.times}</span></div>
+            <div class="meta">Gas: ${fmt(op.cost)} each • Total for step: ${fmt(op.cost*step.times)}</div>
+          </div>
+          <div class="actions">
+            <label class="muted">times</label>
+            <input class="timesInput" type="number" min="1" max="9999" value="${step.times}" />
+            <button class="btn" title="Move up">▲</button>
+            <button class="btn" title="Move down">▼</button>
+            <button class="btn btn-danger" title="Remove">✖</button>
+          </div>
+        `;
+        const timesEl = row.querySelector(".timesInput");
+        const [up,down,del] = row.querySelectorAll("button");
+        timesEl.addEventListener("input", (e)=> updateTimes(idx, e.target.value));
+        up.addEventListener("click", ()=> moveStep(idx,-1));
+        down.addEventListener("click", ()=> moveStep(idx,+1));
+        del.addEventListener("click", ()=> removeStep(idx));
+        programEl.appendChild(row);
+      });
+    }
+    updateGasSummary();
+  }
+
+  /* Nodes UI */
+  function renderNodes(n){
+    nodesEl.innerHTML = "";
+    for(let i=0;i<n;i++){
+      const div = document.createElement("div");
+      div.className = "node";
+      div.innerHTML = `
+        <h3>Node #${i+1} <span id="nodeBadge${i}" class="pill">idle</span></h3>
+        <div class="row small">
+          <div>start: <span id="nodeStart${i}" class="mono"></span></div>
+          <div>final: <span id="nodeFinal${i}" class="mono"></span></div>
+          <div>gas: <span id="nodeGas${i}" class="mono"></span></div>
+        </div>
+        <div class="log" id="nodeLog${i}"></div>
+      `;
+      nodesEl.appendChild(div);
+    }
+  }
+
+  function setConsensus(status, msg){
+    consensusMsg.textContent = msg;
+    consensusBox.classList.remove("good","bad");
+    if (status==="good"){ consensusBox.classList.add("good"); }
+    else if (status==="bad"){ consensusBox.classList.add("bad"); }
+  }
+
+  /* SHA-256 digest (for "state root" demo) */
+  async function sha256Hex(str){
+    const enc = new TextEncoder().encode(str);
+    const digest = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  }
+
+  /* Expand program steps into a count of primitive operations for fault injection placement */
+  function expandedOpCount(){
+    return program.reduce((acc,step)=> acc + step.times, 0);
+  }
+
+  /* Execute program on a node (with optional fault injection) */
+  async function executeOnNode(nodeIdx, start, progSteps, injectFault=false){
+    const logEl = document.getElementById("nodeLog"+nodeIdx);
+    const startEl = document.getElementById("nodeStart"+nodeIdx);
+    const finalEl = document.getElementById("nodeFinal"+nodeIdx);
+    const gasEl = document.getElementById("nodeGas"+nodeIdx);
+    const badgeEl = document.getElementById("nodeBadge"+nodeIdx);
+
+    startEl.textContent = String(start);
+    finalEl.textContent = "…";
+    gasEl.textContent = "…";
+    logEl.textContent = "";
+
+    let x = start;
+    let gas = 0;
+    badgeEl.textContent = "executing…";
+
+    // Choose an injection point around the middle of total primitive ops
+    const totalOps = expandedOpCount();
+    const injectIndex = injectFault ? Math.floor(totalOps/2) : -1;
+    let globalOpCounter = 0;
+    let injectedOnce = false;
+
+    for (let i=0; i<progSteps.length; i++){
+      await new Promise(r=>setTimeout(r, STEP_DELAY_MS));
+      const { opId, times } = progSteps[i];
+      const spec = getOpById(opId);
+
+      let before = x;
+      let localTimes = Math.max(1, Math.min(9999, Number(times) || 1));
+      let localGas = spec.cost * localTimes;
+
+      // Apply op 'times' times; inject a single fault on first eligible 'square' after injectIndex
+      for (let t=0; t<localTimes; t++){
+        let after;
+        if (injectFault && !injectedOnce && globalOpCounter>=injectIndex && spec.id==="square"){
+          after = before*before + 1; // faulty square
+          injectedOnce = true;
+        } else {
+          after = spec.fn(before);
+        }
+        if (!Number.isFinite(after) || Math.abs(after) > MAX_ABS){
+          logEl.textContent += `#${i+1}: CALL ${spec.label} × ${localTimes} → ❌ overflow/out-of-bounds\n`;
+          badgeEl.textContent = "error";
+          finalEl.textContent = "NaN";
+          gas += spec.cost * (t+1); // charge gas up to failure
+          gasEl.textContent = fmt(gas);
+          return { ok:false, final: NaN, gas };
+        }
+        before = after;
+        globalOpCounter++;
+      }
+      x = before;
+      gas += localGas;
+      logEl.textContent += `#${i+1}: CALL ${spec.label} × ${localTimes} → x=${x}\n`;
+    }
+    await new Promise(r=>setTimeout(r, STEP_DELAY_MS));
+    finalEl.textContent = String(x);
+    gasEl.textContent = fmt(gas);
+    const root = await sha256Hex(String(x));
+    logEl.textContent += `stateRoot = sha256(x) = ${root.slice(0,16)}…\n`;
+    badgeEl.textContent = "done";
+    return { ok:true, final:x, gas };
+  }
+
+  /* Orchestrate execution on all nodes */
+  async function runAll(){
+    if (running) return;
+    const n = Number(nodesRange.value)||5;
+    const start = Number(startXEl.value)||0;
+    const target = Number(targetXEl.value)||0;
+    const ops = program.map(p=>({opId:p.opId, times: p.times}));
+    if (ops.length===0){ alert("Add at least one CALL to your sequence."); return; }
+    if (!Number.isInteger(start) || !Number.isInteger(target)){
+      alert("Start and Target must be integers.");
+      return;
+    }
+    running = true;
+    setConsensus(null,"— executing —");
+    renderNodes(n);
+
+    const faultyIndex = faultyToggle.checked ? Math.floor(Math.random()*n) : -1;
+    const results = [];
+    for (let i=0;i<n;i++){
+      const inject = (i===faultyIndex);
+      /* stagger starts to simulate network timing */
+      await new Promise(r=>setTimeout(r, 80));
+      results.push(executeOnNode(i, start, ops, inject));
+    }
+    const settled = await Promise.all(results);
+    running = false;
+
+    // Check consensus: all results identical and all ok
+    const finals = settled.map(r=>r.final);
+    const allEqual = finals.every(v => v===finals[0]);
+    const allOk = settled.every(r=>r.ok);
+    const gasTotals = settled.map(r=>r.gas);
+
+    if (allOk && allEqual){
+      const success = (finals[0]===target);
+      const msg = `All ${settled.length} nodes agree: x = ${finals[0]}  •  Gas: ${fmt(gasTotals[0])}  •  ${success ? "✅ target reached" : "⚠️ target not reached"}`;
+      setConsensus("good", msg);
+    } else {
+      setConsensus("bad", `Divergence detected: ${JSON.stringify(finals)} • Block/result would be rejected by honest nodes.`);
+    }
+  }
+
+  /* -------
+   * Search: Uniform-cost (Dijkstra) to estimate best gas (can be near-optimal).
+   * We keep it synchronous; tuned bounds for ~10k targets.
+   * ------- */
+  function estimateBestGas(){
+    const start = Number(startXEl.value)||0;
+    const target = Number(targetXEl.value)||0;
+    const LIMIT_STEPS = 22;    // allow deeper sequences for ~10k targets
+    const VISIT_CAP  = 220000; // exploration cap
+
+    const OPS_FOR_SEARCH = OPS; // use all ops
+
+    const pq = []; // [cost, value, steps[]]
+    const push = (cost, val, steps)=>{
+      let i=0; while(i<pq.length && pq[i][0] <= cost) i++;
+      pq.splice(i,0,[cost, val, steps]);
+    };
+    const pop = ()=> pq.shift();
+
+    const best = new Map(); // value -> bestCost seen
+
+    push(0, start, []);
+    best.set(start, 0);
+    let visits = 0;
+
+    // heuristic bound to prune explosions when target is large
+    const bound = Math.max(1000, 3*Math.abs(target) + 500);
+
+    while(pq.length && visits < VISIT_CAP){
+      const [cost, val, steps] = pop();
+      visits++;
+      if (val===target){
+        // compress consecutive equal ops into {opId,times} list
+        const compressed = [];
+        for (let k=0;k<steps.length;k++){
+          const id = steps[k];
+          if (compressed.length && compressed[compressed.length-1].opId===id){
+            compressed[compressed.length-1].times++;
+          } else {
+            compressed.push({opId:id, times:1});
+          }
+        }
+        return {cost, stepsCompressed: compressed, visits};
+      }
+      if (steps.length >= LIMIT_STEPS) continue;
+
+      for (const op of OPS_FOR_SEARCH){
+        let nextVal = op.fn(val);
+        if (!Number.isFinite(nextVal) || Math.abs(nextVal) > MAX_ABS) continue;
+        if (Math.abs(nextVal) > bound) continue; // mild pruning
+        const nextCost = cost + op.cost;
+        if (!best.has(nextVal) || nextCost < best.get(nextVal)){
+          best.set(nextVal, nextCost);
+          push(nextCost, nextVal, [...steps, op.id]);
+        }
+      }
+    }
+    // Fallback: compute minimal gas using only ± ops (exact and fast)
+    const fallbackGas = plusMinusOnlyGas(target - start);
+    return {cost: fallbackGas, stepsCompressed: [{opId: (target-start)>=0 ? "add5":"sub4", times: Math.abs(target-start)}], visits};
+  }
+
+  /* Minimal gas using only +5 and -4 to reach delta d = target-start.
+     Solve 5a - 4b = d with a,b >= 0 minimizing a+b. Returns gas = 5*(a+b). */
+  function plusMinusOnlyGas(d){
+    // Try b from 0..(4) to find a solution with minimal a+b pattern (mod 5 trick)
+    let bestSteps = Infinity;
+    let best = null;
+    const MAX_B = 100000; // safety cap
+    for (let b=0; b<=MAX_B; b++){
+      const num = d + 4*b;
+      if (num % 5 !== 0) continue;
+      const a = num / 5;
+      if (a < 0) continue;
+      const steps = a + b;
+      if (steps < bestSteps){
+        bestSteps = steps;
+        best = {a, b};
+        // early exit heuristic: small b often optimal
+        if (b>5 && steps < 2000) break;
+      }
+    }
+    if (!best) return Math.abs(d)*5; // fallback worst case
+    return (best.a + best.b) * 5;
+  }
+
+  function updateFriendBet(){
+    const res = estimateBestGas();
+    friendEstimateGas = res.cost;
+    const gasPrice = Number(gasPriceEl.value)||0;
+    friendBudgetGwei = (friendEstimateGas * gasPrice) + 100000; // +100000 gwei over estimate
+    friendBudgetEl.textContent = isFinite(friendBudgetGwei) ? fmt(friendBudgetGwei) : "—";
+    updateBetOutcome();
+  }
+
+  function updateBetOutcome(){
+    if (friendBudgetGwei == null) { betOutcomeEl.textContent = "Bet status: —"; return; }
+    const gas = totalGas();
+    const gwei = Number(gasPriceEl.value)||0;
+    const feeGwei = gas * gwei;
+    if (!isFinite(feeGwei)) { betOutcomeEl.textContent = "Bet status: —"; return; }
+    if (feeGwei <= friendBudgetGwei){
+      betOutcomeEl.innerHTML = `<span class="good">✅ You beat the bet!</span> Your fee ${fmt(feeGwei)} ≤ ${fmt(friendBudgetGwei)} gwei.`;
+    } else {
+      betOutcomeEl.innerHTML = `<span class="bad">❌ Above bet.</span> Your fee ${fmt(feeGwei)} &gt; ${fmt(friendBudgetGwei)} gwei.`;
+    }
+  }
+
+  /* Auto-solve button uses same estimator and loads compressed program */
+  function autoSolveAndLoad(){
+    const res = estimateBestGas();
+    if (!res){ alert("No estimate found within search limits."); return; }
+    program = res.stepsCompressed;
+    renderProgram();
+    alert("Estimate found: best gas ≈ " + res.cost + " (expanded steps grouped; explored ~" + res.visits + " states).");
+  }
+
+  /* Demo sequence (simple illustration, not necessarily optimal) */
+  function loadDemo(){
+    program = [{opId:"mul2",times:1},{opId:"add5",times:1},{opId:"square",times:1},{opId:"sub4",times:3},{opId:"mul2",times:2},{opId:"add5",times:2}];
+    renderProgram();
+  }
+
+  /* Events */
+  nodesRange.addEventListener("input", ()=>{
+    nodesCount.textContent = nodesRange.value;
+  });
+  gasPriceEl.addEventListener("input", ()=>{ updateGasSummary(); updateFriendBet(); });
+  targetXEl.addEventListener("input", ()=>{ updateFriendBet(); });
+  undoBtn.addEventListener("click", undo);
+  clearBtn.addEventListener("click", clear);
+  demoBtn.addEventListener("click", loadDemo);
+  runBtn.addEventListener("click", runAll);
+  random10kBtn.addEventListener("click", ()=>{
+    targetXEl.value = String(Math.floor(8000 + Math.random()*12001));
+    updateFriendBet();
+  });
+  autoSolveBtn.addEventListener("click", autoSolveAndLoad);
+
+  /* Hotkeys */
+  window.addEventListener("keydown", (e)=>{
+    if (e.target.tagName === "INPUT") return;
+    if (e.key==='r' || e.key==='R'){ runAll(); }
+    if (e.key==='u' || e.key==='U'){ undo(); }
+    if (e.key==='c' || e.key==='C'){ clear(); }
+    if (e.key==='d' || e.key==='D'){ loadDemo(); }
+  });
+
+  /* Init */
+  renderPalette();
+  renderProgram();
+  renderNodes(Number(nodesRange.value));
+  document.getElementById("targetX").value = String(Math.floor(8000 + Math.random()*12001));
+  updateFriendBet();
+  // initial message
+  setConsensus(null, "— not executed yet —");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+version: 1
+suite_id: hlf-agent-regression
+lab: hlf
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/hlf/reset-and-startup.md
+assumptions:
+  - MCP browser tooling is available.
+  - The HLF automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  instructor_credentials_file: .runtime/instructor-credentials.txt
+observability:
+  required:
+    - console_logs
+    - network_failures
+  suggested_mcp_methods:
+    - get_console_logs
+    - get_network_digest
+    - get_network_traffic
+shared_rules:
+  - Use a fresh browser context per task.
+  - Keep student and instructor cookies in separate contexts.
+  - When switching roles, discard the old browser context and create a fresh session for the new role.
+  - Prefer visible UI navigation over direct URL entry once the page is loaded.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+  - Run the visible page-derived student lesson commands through the ttyd browser route.
+parallelization:
+  recommended:
+    - Run the instructor task in parallel with any student task.
+    - Run student tasks in parallel only when enough free HLF stations exist.
+  fallback:
+    - Serialize student tasks if station capacity is unknown.
+  cleanup:
+    - After the full suite, optionally wipe throwaway student claims if the environment should be restored.
+tasks:
+  - id: hlf-student-claim-wrapper
+    title: Student claim and wrapper shell
+    file: tasks/student-claim-wrapper.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/hlf/
+      - /labs/hlf/claim
+      - /labs/hlf/c/<uuid>/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: hlf-student-explorer-exercises
+    title: Student explorer, exercises, and governance
+    file: tasks/student-explorer-exercises.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/hlf/c/<uuid>/exercises/
+      - /labs/hlf/c/<uuid>/explorer/
+      - /labs/hlf/c/<uuid>/explorer/transactions/<txid>/
+      - /labs/hlf/c/<uuid>/explorer/assets/<assetid>/
+      - /labs/hlf/c/<uuid>/explorer/chaincode/
+      - /labs/hlf/c/<uuid>/explorer/governance/
+      - /labs/hlf/peer/org1/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: hlf-student-ttyd-command
+    title: Student ttyd lesson-command coverage
+    file: tasks/student-ttyd-command.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/hlf/c/<uuid>/
+      - /labs/hlf/c/<uuid>/exercises/
+      - /labs/hlf/c/<uuid>/term/
+      - /labs/hlf/s/<sid>/term/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: hlf-instructor-auth-faults
+    title: Instructor auth, consoles, and fault surfaces
+    file: tasks/instructor-auth-faults.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /instructor/
+      - /labs/hlf/hlf_instructor.html
+      - /labs/hlf/peer/org1/console/
+      - /labs/hlf/peer/org2/console/
+      - /labs/hlf/peer/org3/console/
+      - /labs/hlf/peer/org4/console/
+      - /labs/hlf/peer/org5/console/
+      - /labs/hlf/orderer/console/
+      - /labs/hlf/instructor/term/org1/
+      - /labs/hlf/instructor/term/org2/
+      - /labs/hlf/instructor/term/org3/
+      - /labs/hlf/instructor/term/org4/
+      - /labs/hlf/instructor/term/org5/
+      - /labs/hlf/instructor/term/orderer/
+      - /labs/hlf/api/hlf/instructor-snapshot
+    parallel_safe: true
+  - id: hlf-instructor-reset-start
+    title: Instructor reset and restart
+    file: tasks/instructor-reset-start.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /labs/hlf/hlf_instructor.html
+      - /labs/hlf/api/hlf/status
+      - /labs/hlf/api/hlf/reset
+      - /labs/hlf/api/hlf/start
+      - /labs/hlf/peer/org1/console/
+    parallel_safe: false
+  - id: hlf-instructor-scenario-controls
+    title: Instructor scenario controls and seed data
+    file: tasks/instructor-scenario-controls.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /labs/hlf/hlf_instructor.html
+      - /labs/hlf/api/hlf/seed
+      - /labs/hlf/api/hlf/fault
+      - /labs/hlf/api/hlf/status
+    parallel_safe: false
+  - id: hlf-student-westview-operations
+    title: Student Westview vehicle operations
+    file: tasks/student-westview-operations.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/hlf/c/<uuid>/exercises/
+      - /labs/hlf/c/<uuid>/term/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: hlf-instructor-westview-scenarios
+    title: Instructor Westview scenario controls
+    file: tasks/instructor-westview-scenarios.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /labs/hlf/instructor/
+      - /labs/hlf/hlf_instructor.html
+      - /labs/hlf/api/hlf/seed
+      - /labs/hlf/api/hlf/fault
+    parallel_safe: false
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
+  - The suite is complete only when student claim, wrapper, exercises, explorer drill-downs, visible student lesson commands through ttyd, instructor auth gates, consortium consoles, and scenario controls have all been checked.

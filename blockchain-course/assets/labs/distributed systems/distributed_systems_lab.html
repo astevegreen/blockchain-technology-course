@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Systems Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .hero { background:
+            radial-gradient(1200px 500px at 15% -10%, rgba(99,102,241,.20), transparent),
+            radial-gradient(900px 400px at 85% 0%, rgba(16,185,129,.18), transparent),
+            linear-gradient(180deg, #0b1020, #0f172a 40%);
+        }
+        canvas { image-rendering: crisp-edges; background: linear-gradient(180deg, rgba(2,6,23,.6), rgba(2,6,23,.2)); }
+        .card { background: linear-gradient(180deg, rgba(30,41,59,.45), rgba(15,23,42,.35)); border-color: rgba(148,163,184,.25); }
+    </style>
+</head>
+<body class="hero min-h-screen text-white">
+    <nav class="bg-black/50 backdrop-blur-md">
+        <div class="container mx-auto px-4 py-4 flex justify-between">
+            <a href="../index.html#labs" class="hover:text-indigo-300"><i class="fas fa-arrow-left mr-2"></i>Back to Labs</a>
+            <div class="font-semibold">Distributed Systems Lab</div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold mb-2"><i class="fas fa-network-wired text-indigo-400 mr-2"></i>Centralized vs P2P Blockchain Networks</h1>
+            <p class="text-gray-300 max-w-3xl">Interactive exploration of distributed system concepts: transaction propagation, fault tolerance, failure domains, and the trade-offs between centralized and peer-to-peer architectures as seen in blockchain networks.</p>
+        </header>
+
+        <!-- Single Main Visualization -->
+        <section class="card backdrop-blur-md rounded-xl p-6 border mb-6">
+            <h2 class="text-2xl font-bold mb-4"><i class="fas fa-project-diagram text-indigo-400 mr-2"></i>Centralized vs P2P: Transaction Propagation & Fault Tolerance</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2 text-red-300">Centralized Blockchain</h3>
+                    <canvas id="centralizedCanvas" width="400" height="400" class="w-full rounded border border-red-500/30 mb-3"></canvas>
+                    <div class="text-xs text-gray-300 space-y-1">
+                        <div><strong class="text-red-400">Advantages:</strong> Fast propagation (hub → level 1 → level 2 = 3 hops to reach all), clear control & governance, strong consistency, predictable</div>
+                        <div><strong class="text-red-400">Disadvantages:</strong> Hub failure = entire network down; level 1 node failure cascades to all its children; single point of attack; requires trust in central authority</div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold mb-2 text-green-300">P2P Blockchain (Bitcoin/Ethereum)</h3>
+                    <canvas id="p2pCanvas" width="400" height="400" class="w-full rounded border border-green-500/30 mb-3"></canvas>
+                    <div class="text-xs text-gray-300 space-y-1">
+                        <div><strong class="text-green-400">Advantages:</strong> Resilient to node failures, no central chokepoint, trustless, autonomy for participants</div>
+                        <div><strong class="text-green-400">Disadvantages:</strong> Slower propagation (gossip through many hops), higher coordination cost, variable consistency, bandwidth-intensive (many paths)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-3 mb-4">
+                <button id="btnPropagate" class="bg-indigo-600 hover:bg-indigo-700 rounded px-4 py-2">
+                    <i class="fas fa-play mr-2"></i>Start Transaction Propagation
+                </button>
+                <button id="btnFailNode" class="bg-amber-600 hover:bg-amber-700 rounded px-4 py-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Simulate Node Failure
+                </button>
+                <button id="btnReset" class="bg-slate-600 hover:bg-slate-700 rounded px-4 py-2">
+                    <i class="fas fa-redo mr-2"></i>Reset
+                </button>
+            </div>
+
+            <div class="bg-black/30 rounded-lg p-4 text-sm">
+                <div class="grid md:grid-cols-4 gap-4 text-xs">
+                    <div>
+                        <div class="text-gray-400">Centralized Hops:</div>
+                        <div id="centralHops" class="text-red-300 font-bold text-lg">-</div>
+                        <div class="text-gray-500 mt-1" id="centralNodesReached">Nodes: -</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-400">P2P Hops:</div>
+                        <div id="p2pHops" class="text-green-300 font-bold text-lg">-</div>
+                        <div class="text-gray-500 mt-1" id="p2pNodesReached">Nodes: -</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-400">Centralized Status:</div>
+                        <div id="centralStatus" class="font-semibold">Ready</div>
+                    </div>
+                    <div>
+                        <div class="text-gray-400">P2P Status:</div>
+                        <div id="p2pStatus" class="font-semibold">Ready</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-xs text-gray-400 space-y-2">
+                <p><strong>How to use:</strong> Click "Start Transaction Propagation" to see how a new transaction spreads. Centralized uses hierarchical broadcast (hub → level 1 nodes → level 2 nodes), completing in just 3 hops. P2P uses gossip protocol, spreading hop-by-hop through neighbors, taking more rounds. Click "Simulate Node Failure" repeatedly to see: centralized has cascading failures (level 1 node failure disables all its children; hub failure kills everything), while P2P continues operating as nodes fail individually.</p>
+                <p><strong>Lesson Connection - Hidden Dependencies & Failure Domains:</strong> In centralized systems, each level 1 node and the hub represent failure domains. When a level 1 node fails, all its level 2 children lose connectivity—this demonstrates cascading failure. When the hub fails, the entire network goes down—the ultimate "domino effect" from a hidden dependency. P2P networks distribute failure domains: each node fails independently, and the mesh routes around failures automatically. This demonstrates why Bitcoin/Ethereum use P2P: no single point of failure can take down the network.</p>
+            </div>
+        </section>
+
+        <!-- Lesson Concepts Connection -->
+        <section class="card backdrop-blur-md rounded-xl p-6 border mb-6">
+            <h2 class="text-xl font-bold mb-4"><i class="fas fa-lightbulb text-yellow-400 mr-2"></i>Connecting to Lesson Concepts</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-black/30 rounded-lg p-4">
+                    <h3 class="font-semibold text-red-300 mb-3">Centralized (Client-Server) Trade-offs</h3>
+                    <ul class="text-xs text-gray-300 space-y-2">
+                        <li><strong>✓ Strengths:</strong> Clear control and governance, fast centralized search (like Napster's index), strong consistency</li>
+                        <li><strong>✗ Weaknesses:</strong> Single point of failure, concentrated attack surface, requires trust in central authority</li>
+                        <li><strong>Fallacy Connection:</strong> Assumes "the network is reliable" and "there is one administrator" - when the hub fails, everything fails</li>
+                        <li><strong>Failure Domain:</strong> Narrow but deep - one failure affects the entire system</li>
+                        <li><strong>Availability Impact:</strong> Hub failure = MTTR is the time to restore the hub (high downtime risk)</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-black/30 rounded-lg p-4">
+                    <h3 class="font-semibold text-green-300 mb-3">P2P (Decentralized) Trade-offs</h3>
+                    <ul class="text-xs text-gray-300 space-y-2">
+                        <li><strong>✓ Strengths:</strong> No central chokepoint, resilient to takedown (like Gnutella), autonomy for participants</li>
+                        <li><strong>✗ Weaknesses:</strong> Slower propagation (multiple hops), higher coordination cost, variable consistency</li>
+                        <li><strong>Fallacy Connection:</strong> Acknowledges "latency is not zero" and "bandwidth is finite" - propagation takes time and uses network resources</li>
+                        <li><strong>Failure Domain:</strong> Wide but shallow - individual node failures don't cascade</li>
+                        <li><strong>Availability Impact:</strong> Node failures don't affect others; network continues with partial participation (better MTTF)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-indigo-900/20 rounded-lg p-4 border border-indigo-500/30">
+                <h3 class="font-semibold text-indigo-300 mb-3"><i class="fas fa-network-wired mr-2"></i>Transaction Propagation & The Fallacies</h3>
+                <div class="text-xs text-gray-300 space-y-2">
+                    <p><strong>Fallacy #1 (Network Reliability):</strong> Centralized systems assume the hub is always reachable. Click "Simulate Node Failure" to see what happens when this assumption breaks. P2P systems handle node failures gracefully through redundancy.</p>
+                    <p><strong>Fallacy #2 (Latency is Zero):</strong> Notice how P2P requires more hops to reach all nodes. Each hop adds latency. The centralized hub can broadcast in parallel, but P2P nodes must propagate sequentially through neighbors—this is the "latency stacks" principle.</p>
+                    <p><strong>Fallacy #3 (Bandwidth is Infinite):</strong> In P2P networks, messages flood through many paths. Each node forwards to multiple neighbors, multiplying traffic. Centralized systems route through one hub, using less bandwidth but creating a bottleneck.</p>
+                    <p><strong>Gossip Protocol (Bitcoin/Ethereum):</strong> When you submit a transaction to Bitcoin or Ethereum, it doesn't go to a central server. Instead, your node broadcasts it to neighbors, who broadcast to their neighbors. This is the "gossip protocol" - information spreads like a rumor through the network. It's slower than hub-and-spoke but resilient to single points of failure.</p>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-amber-900/20 rounded-lg p-4 border border-amber-500/30">
+                <h3 class="font-semibold text-amber-300 mb-3"><i class="fas fa-shield-alt mr-2"></i>Failure Domains & Availability</h3>
+                <div class="text-xs text-gray-300 space-y-2">
+                    <p><strong>Failure Domain Concept:</strong> A failure domain is a boundary where a single fault can affect everything inside. In centralized systems, the hub is one failure domain—if it fails, all clients lose service. In P2P systems, each node is its own failure domain—one node failing doesn't affect others.</p>
+                    <p><strong>MTTF (Mean Time To Failure):</strong> Centralized systems have a single point of failure (the hub), so MTTF depends entirely on that hub's reliability. P2P systems improve MTTF because many nodes must fail before the network becomes unusable.</p>
+                    <p><strong>MTTR (Mean Time To Repair):</strong> When the centralized hub fails, MTTR is the time to restore that specific hub—if it's down, nothing works. In P2P systems, individual node failures don't require immediate repair; the network continues operating with remaining nodes.</p>
+                    <p><strong>Real-World Example:</strong> This is why Bitcoin and Ethereum use P2P networks. If one node fails or is taken down, the network continues. A centralized cryptocurrency would be vulnerable to a single point of attack or failure.</p>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-emerald-900/20 rounded-lg p-4 border border-emerald-500/30">
+                <h3 class="font-semibold text-emerald-300 mb-3"><i class="fas fa-history mr-2"></i>Historical Context: Napster vs Gnutella vs Bitcoin</h3>
+                <div class="text-xs text-gray-300 space-y-2">
+                    <p><strong>Napster (Hybrid P2P):</strong> Used a centralized index for fast search (like our centralized visualization) but peer-to-peer transfer. The central index became a single point of failure—when it was shut down, the entire network stopped working.</p>
+                    <p><strong>Gnutella (Unstructured P2P):</strong> Removed the central index entirely. Queries flooded through the network hop-by-hop (like our P2P visualization). This made it resilient to takedown but slower and more bandwidth-intensive.</p>
+                    <p><strong>Bitcoin/Ethereum (Structured P2P):</strong> Uses a P2P network similar to Gnutella's philosophy but with more efficient routing. Transactions gossip through the network, and nodes validate and relay them. No central authority can shut it down because there's no hub to remove.</p>
+                    <p><strong>Lesson:</strong> The centralized vs P2P choice involves a fundamental trade-off: centralized systems offer speed and control but concentrate risk; P2P systems offer resilience and autonomy but require more coordination and patience.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-gray-400 mt-8 text-xs">MIT License • Educational use</footer>
+    </main>
+
+    <script>
+        // Centralized network
+        const centralCanvas = document.getElementById('centralizedCanvas');
+        const centralCtx = centralCanvas.getContext('2d');
+        
+        // P2P network
+        const p2pCanvas = document.getElementById('p2pCanvas');
+        const p2pCtx = p2pCanvas.getContext('2d');
+
+        let centralState = {
+            hub: { x: 200, y: 60, active: true, reached: false, level: 0 },
+            level1Nodes: [],
+            level2Nodes: [],
+            propagating: false,
+            failed: false,
+            failedNodeIdx: null
+        };
+
+        let p2pState = {
+            nodes: [],
+            propagating: false,
+            failedNodes: new Set(),
+            totalNodes: 0
+        };
+
+        // Initialize centralized network (hierarchical broadcast: hub → level 1 → level 2)
+        function initCentralized() {
+            centralState.level1Nodes = [];
+            centralState.level2Nodes = [];
+            const hub = centralState.hub;
+            
+            // Level 1: 4 intermediate nodes
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2 + Math.PI/4;
+                const radius = 75;
+                centralState.level1Nodes.push({
+                    x: hub.x + Math.cos(angle) * radius,
+                    y: hub.y + 90 + Math.sin(angle) * radius,
+                    reached: false,
+                    active: true,
+                    level: 1,
+                    failed: false,
+                    idx: i
+                });
+            }
+            
+            // Level 2: Each level 1 node has 2-3 children (total 10)
+            const childrenPerL1 = [3, 2, 2, 3];
+            centralState.level1Nodes.forEach((l1Node, l1Idx) => {
+                const children = childrenPerL1[l1Idx];
+                const baseAngle = (l1Idx / 4) * Math.PI * 2 + Math.PI/4;
+                for (let j = 0; j < children; j++) {
+                    const spread = (j - (children-1)/2) * 0.5;
+                    const angle = baseAngle + spread;
+                    const radius = 65;
+                    centralState.level2Nodes.push({
+                        x: l1Node.x + Math.cos(angle) * radius,
+                        y: l1Node.y + 75 + Math.sin(angle) * radius,
+                        reached: false,
+                        active: true,
+                        level: 2,
+                        parentIdx: l1Idx,
+                        failed: false
+                    });
+                }
+            });
+            
+            drawCentralized();
+        }
+
+        // Initialize P2P network (larger mesh with more connections)
+        function initP2P() {
+            p2pState.nodes = [];
+            p2pState.failedNodes.clear();
+            const cols = 5;
+            const rows = 4;
+            const spacingX = (p2pCanvas.width - 60) / (cols - 1);
+            const spacingY = (p2pCanvas.height - 60) / (rows - 1);
+            
+            // Create 20 nodes in a grid
+            for (let i = 0; i < 20; i++) {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                p2pState.nodes.push({
+                    x: 30 + col * spacingX,
+                    y: 30 + row * spacingY,
+                    reached: false,
+                    active: true,
+                    round: -1,
+                    connections: []
+                });
+            }
+            
+            // Connect to neighbors (including diagonals for richer mesh)
+            p2pState.nodes.forEach((node, i) => {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                node.connections = [];
+                // Horizontal and vertical neighbors
+                if (col > 0) node.connections.push(i - 1);
+                if (col < cols - 1) node.connections.push(i + 1);
+                if (row > 0) node.connections.push(i - cols);
+                if (row < rows - 1) node.connections.push(i + cols);
+                // Some diagonal connections for better connectivity
+                if (col > 0 && row > 0) node.connections.push(i - cols - 1);
+                if (col < cols - 1 && row < rows - 1) node.connections.push(i + cols + 1);
+            });
+            
+            p2pState.totalNodes = p2pState.nodes.length;
+            drawP2P();
+        }
+
+        function drawCentralized() {
+            centralCtx.clearRect(0, 0, centralCanvas.width, centralCanvas.height);
+            
+            const hub = centralState.hub;
+            
+            // Draw connections: Hub → Level 1
+            centralCtx.strokeStyle = hub.active && !centralState.failed ? 'rgba(239,68,68,0.4)' : 'rgba(100,100,100,0.2)';
+            centralCtx.lineWidth = 1.5;
+            centralState.level1Nodes.forEach(l1Node => {
+                if (l1Node.active && hub.active) {
+                    centralCtx.beginPath();
+                    centralCtx.moveTo(hub.x, hub.y);
+                    centralCtx.lineTo(l1Node.x, l1Node.y);
+                    centralCtx.stroke();
+                }
+            });
+            
+            // Draw connections: Level 1 → Level 2
+            centralCtx.strokeStyle = hub.active && !centralState.failed ? 'rgba(239,68,68,0.3)' : 'rgba(100,100,100,0.15)';
+            centralCtx.lineWidth = 1;
+            centralState.level2Nodes.forEach(l2Node => {
+                const parent = centralState.level1Nodes[l2Node.parentIdx];
+                if (l2Node.active && parent && parent.active && hub.active) {
+                    centralCtx.beginPath();
+                    centralCtx.moveTo(parent.x, parent.y);
+                    centralCtx.lineTo(l2Node.x, l2Node.y);
+                    centralCtx.stroke();
+                }
+            });
+            
+            // Draw hub
+            centralCtx.fillStyle = !hub.active || centralState.failed ? '#444' : 
+                                   hub.reached ? '#10b981' : '#ef4444';
+            centralCtx.beginPath();
+            centralCtx.arc(hub.x, hub.y, 20, 0, Math.PI * 2);
+            centralCtx.fill();
+            centralCtx.strokeStyle = centralState.failed ? '#ff0000' : 'white';
+            centralCtx.lineWidth = 2.5;
+            centralCtx.stroke();
+            centralCtx.fillStyle = 'white';
+            centralCtx.font = 'bold 12px sans-serif';
+            centralCtx.fillText('Hub', hub.x - 14, hub.y - 28);
+            if (centralState.failed) {
+                centralCtx.fillStyle = '#ff0000';
+                centralCtx.font = 'bold 10px sans-serif';
+                centralCtx.fillText('FAILED', hub.x - 20, hub.y + 35);
+            }
+            
+            // Draw Level 1 nodes
+            centralState.level1Nodes.forEach((l1Node, idx) => {
+                const failed = l1Node.failed || centralState.failed;
+                const color = failed ? '#444' : 
+                             !l1Node.active ? '#666' :
+                             l1Node.reached ? '#10b981' : '#f59e0b';
+                centralCtx.fillStyle = color;
+                centralCtx.beginPath();
+                centralCtx.arc(l1Node.x, l1Node.y, 12, 0, Math.PI * 2);
+                centralCtx.fill();
+                centralCtx.strokeStyle = failed ? '#ff0000' : 'white';
+                centralCtx.lineWidth = 2;
+                centralCtx.stroke();
+                if (l1Node.failed) {
+                    centralCtx.fillStyle = '#ff0000';
+                    centralCtx.font = 'bold 9px sans-serif';
+                    centralCtx.fillText('X', l1Node.x - 4, l1Node.y + 3);
+                }
+            });
+            
+            // Draw Level 2 nodes
+            centralState.level2Nodes.forEach(l2Node => {
+                const parent = centralState.level1Nodes[l2Node.parentIdx];
+                const failed = l2Node.failed || (parent && parent.failed) || centralState.failed;
+                const color = failed ? '#444' :
+                             !l2Node.active || (parent && !parent.active) ? '#666' :
+                             l2Node.reached ? '#10b981' : '#64748b';
+                centralCtx.fillStyle = color;
+                centralCtx.beginPath();
+                centralCtx.arc(l2Node.x, l2Node.y, 9, 0, Math.PI * 2);
+                centralCtx.fill();
+                centralCtx.strokeStyle = failed ? '#ff0000' : 'white';
+                centralCtx.lineWidth = 1.5;
+                centralCtx.stroke();
+            });
+            
+            // Draw legend/info
+            const totalNodes = 1 + centralState.level1Nodes.length + centralState.level2Nodes.length;
+            const reachedNodes = (hub.reached ? 1 : 0) + 
+                               centralState.level1Nodes.filter(n => n.reached).length +
+                               centralState.level2Nodes.filter(n => n.reached).length;
+            centralCtx.fillStyle = 'rgba(255,255,255,0.8)';
+            centralCtx.font = '10px sans-serif';
+            centralCtx.fillText(`Reached: ${reachedNodes}/${totalNodes}`, 10, centralCanvas.height - 10);
+            
+            // Update metric display
+            document.getElementById('centralNodesReached').textContent = `Nodes: ${reachedNodes}/${totalNodes}`;
+        }
+
+        function drawP2P() {
+            p2pCtx.clearRect(0, 0, p2pCanvas.width, p2pCanvas.height);
+            
+            // Draw connections
+            p2pCtx.strokeStyle = 'rgba(16,185,129,0.3)';
+            p2pCtx.lineWidth = 1;
+            p2pState.nodes.forEach((node, i) => {
+                if (!p2pState.failedNodes.has(i) && node.active) {
+                    node.connections.forEach(connIdx => {
+                        if (connIdx > i && !p2pState.failedNodes.has(connIdx) && p2pState.nodes[connIdx].active) {
+                            // Highlight connections if propagation is happening
+                            if (node.reached && p2pState.nodes[connIdx].reached && 
+                                Math.abs(node.round - p2pState.nodes[connIdx].round) <= 1) {
+                                p2pCtx.strokeStyle = 'rgba(16,185,129,0.6)';
+                                p2pCtx.lineWidth = 1.5;
+                            } else {
+                                p2pCtx.strokeStyle = 'rgba(16,185,129,0.3)';
+                                p2pCtx.lineWidth = 1;
+                            }
+                            p2pCtx.beginPath();
+                            p2pCtx.moveTo(node.x, node.y);
+                            p2pCtx.lineTo(p2pState.nodes[connIdx].x, p2pState.nodes[connIdx].y);
+                            p2pCtx.stroke();
+                        }
+                    });
+                }
+            });
+            
+            // Draw nodes
+            p2pState.nodes.forEach((node, i) => {
+                const isFailed = p2pState.failedNodes.has(i);
+                p2pCtx.fillStyle = !node.active || isFailed ? '#444' : 
+                                    node.reached ? '#10b981' : '#64748b';
+                const size = isFailed ? 8 : 10;
+                p2pCtx.beginPath();
+                p2pCtx.arc(node.x, node.y, size, 0, Math.PI * 2);
+                p2pCtx.fill();
+                p2pCtx.strokeStyle = isFailed ? '#ff0000' : 'white';
+                p2pCtx.lineWidth = isFailed ? 2 : 1.5;
+                p2pCtx.stroke();
+                if (isFailed) {
+                    p2pCtx.fillStyle = '#ff0000';
+                    p2pCtx.font = 'bold 8px sans-serif';
+                    p2pCtx.fillText('X', node.x - 3, node.y + 2);
+                }
+            });
+            
+            // Draw legend/info
+            const reachedNodes = p2pState.nodes.filter(n => n.reached).length;
+            p2pCtx.fillStyle = 'rgba(255,255,255,0.8)';
+            p2pCtx.font = '10px sans-serif';
+            p2pCtx.fillText(`Reached: ${reachedNodes}/${p2pState.totalNodes}`, 10, p2pCanvas.height - 10);
+            
+            // Update metric display
+            document.getElementById('p2pNodesReached').textContent = `Nodes: ${reachedNodes}/${p2pState.totalNodes}`;
+        }
+
+        let centralRound = 0;
+        let p2pRound = 0;
+        let animationInterval = null;
+
+        function animatePropagation() {
+            // Centralized propagation (hierarchical: hub → level 1 → level 2)
+            if (centralState.propagating && centralState.hub.active && !centralState.failed) {
+                if (centralRound === 0) {
+                    // Round 1: Transaction reaches hub
+                    centralState.hub.reached = true;
+                    document.getElementById('centralHops').textContent = '1';
+                    centralRound = 1;
+                } else if (centralRound === 1) {
+                    // Round 2: Hub broadcasts to all Level 1 nodes simultaneously
+                    centralState.level1Nodes.forEach(node => {
+                        if (node.active && !node.failed) node.reached = true;
+                    });
+                    document.getElementById('centralHops').textContent = '2';
+                    centralRound = 2;
+                } else if (centralRound === 2) {
+                    // Round 3: Each Level 1 node broadcasts to its Level 2 children
+                    centralState.level2Nodes.forEach(l2Node => {
+                        const parent = centralState.level1Nodes[l2Node.parentIdx];
+                        if (l2Node.active && parent && parent.reached && !l2Node.failed && !parent.failed) {
+                            l2Node.reached = true;
+                        }
+                    });
+                    document.getElementById('centralHops').textContent = '3';
+                    document.getElementById('centralStatus').textContent = 'Complete';
+                    document.getElementById('centralStatus').className = 'font-semibold text-green-400';
+                    centralState.propagating = false;
+                }
+                drawCentralized();
+            }
+            
+            // P2P propagation
+            if (p2pState.propagating) {
+                if (p2pRound === 0) {
+                    // Start from first active node
+                    const startNode = p2pState.nodes.findIndex((n, idx) => n.active && !p2pState.failedNodes.has(idx));
+                    if (startNode >= 0) {
+                        p2pState.nodes[startNode].reached = true;
+                        p2pState.nodes[startNode].round = 0;
+                        document.getElementById('p2pHops').textContent = '1';
+                    }
+                    p2pRound = 1;
+                } else {
+                    // Spread to neighbors
+                    const newlyReached = [];
+                    p2pState.nodes.forEach((node, i) => {
+                        if (node.reached && node.round === p2pRound - 1 && !p2pState.failedNodes.has(i)) {
+                            node.connections.forEach(connIdx => {
+                                const neighbor = p2pState.nodes[connIdx];
+                                if (!neighbor.reached && neighbor.active && !p2pState.failedNodes.has(connIdx)) {
+                                    neighbor.reached = true;
+                                    neighbor.round = p2pRound;
+                                    newlyReached.push(connIdx);
+                                }
+                            });
+                        }
+                    });
+                    
+                    if (newlyReached.length > 0) {
+                        document.getElementById('p2pHops').textContent = String(p2pRound + 1);
+                        p2pRound++;
+                    } else {
+                        document.getElementById('p2pStatus').textContent = 'Complete';
+                        document.getElementById('p2pStatus').className = 'font-semibold text-green-400';
+                        p2pState.propagating = false;
+                    }
+                }
+                drawP2P();
+            }
+            
+            if (!centralState.propagating && !p2pState.propagating) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+        }
+
+        // Event handlers
+        document.getElementById('btnPropagate').addEventListener('click', () => {
+            if (animationInterval) clearInterval(animationInterval);
+            
+            // Reset
+            centralState.hub.reached = false;
+            centralState.level1Nodes.forEach(n => n.reached = false);
+            centralState.level2Nodes.forEach(n => n.reached = false);
+            centralState.propagating = true;
+            centralRound = 0;
+            
+            p2pState.nodes.forEach(n => { n.reached = false; n.round = -1; });
+            p2pState.propagating = true;
+            p2pRound = 0;
+            
+            document.getElementById('centralHops').textContent = '-';
+            document.getElementById('p2pHops').textContent = '-';
+            document.getElementById('centralNodesReached').textContent = 'Nodes: -';
+            document.getElementById('p2pNodesReached').textContent = 'Nodes: -';
+            document.getElementById('centralStatus').textContent = 'Propagating...';
+            document.getElementById('centralStatus').className = 'font-semibold text-yellow-400';
+            document.getElementById('p2pStatus').textContent = 'Propagating...';
+            document.getElementById('p2pStatus').className = 'font-semibold text-yellow-400';
+            
+            animationInterval = setInterval(animatePropagation, 600);
+        });
+
+        document.getElementById('btnFailNode').addEventListener('click', () => {
+            // Centralized: Show cascading failure - first fail a level 1 node, then hub
+            const activeL1 = centralState.level1Nodes.filter((n, idx) => n.active && !n.failed);
+            if (activeL1.length > 0 && !centralState.failed) {
+                // Fail a random level 1 node (shows cascading to children)
+                const randomL1 = activeL1[Math.floor(Math.random() * activeL1.length)];
+                randomL1.failed = true;
+                randomL1.active = false;
+                // Cascade: disable all level 2 children
+                centralState.level2Nodes.forEach(l2Node => {
+                    if (l2Node.parentIdx === randomL1.idx) {
+                        l2Node.failed = true;
+                        l2Node.active = false;
+                    }
+                });
+                const affected = centralState.level2Nodes.filter(n => n.parentIdx === randomL1.idx).length;
+                document.getElementById('centralStatus').textContent = `Partial Failure (1 L1 + ${affected} L2 nodes down)`;
+                document.getElementById('centralStatus').className = 'font-semibold text-yellow-400';
+            } else if (!centralState.failed) {
+                // Fail hub (entire network dies)
+                centralState.hub.active = false;
+                centralState.failed = true;
+                document.getElementById('centralStatus').textContent = 'NETWORK DOWN (Hub Failed)';
+                document.getElementById('centralStatus').className = 'font-semibold text-red-400';
+            }
+            drawCentralized();
+            
+            // P2P: Fail random nodes (network continues until too many fail)
+            const activeNodes = p2pState.nodes
+                .map((n, i) => ({ node: n, index: i }))
+                .filter(({node, index}) => node.active && !p2pState.failedNodes.has(index));
+            
+            if (activeNodes.length > 3) {
+                const random = activeNodes[Math.floor(Math.random() * activeNodes.length)];
+                p2pState.failedNodes.add(random.index);
+                random.node.active = false;
+                const failedCount = p2pState.failedNodes.size;
+                document.getElementById('p2pStatus').textContent = `Resilient (${failedCount} node${failedCount > 1 ? 's' : ''} failed)`;
+                document.getElementById('p2pStatus').className = 'font-semibold text-yellow-400';
+                drawP2P();
+            } else if (activeNodes.length > 0) {
+                document.getElementById('p2pStatus').textContent = 'Network Degraded (many failures)';
+                document.getElementById('p2pStatus').className = 'font-semibold text-red-400';
+            }
+        });
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            if (animationInterval) {
+                clearInterval(animationInterval);
+                animationInterval = null;
+            }
+            
+            centralState.hub.active = true;
+            centralState.hub.reached = false;
+            centralState.failed = false;
+            centralState.propagating = false;
+            centralState.level1Nodes.forEach(n => { n.reached = false; n.active = true; n.failed = false; });
+            centralState.level2Nodes.forEach(n => { n.reached = false; n.active = true; n.failed = false; });
+            centralRound = 0;
+            
+            p2pState.nodes.forEach(n => { n.reached = false; n.active = true; n.round = -1; });
+            p2pState.failedNodes.clear();
+            p2pState.propagating = false;
+            p2pRound = 0;
+            
+            document.getElementById('centralHops').textContent = '-';
+            document.getElementById('p2pHops').textContent = '-';
+            document.getElementById('centralNodesReached').textContent = 'Nodes: -';
+            document.getElementById('p2pNodesReached').textContent = 'Nodes: -';
+            document.getElementById('centralStatus').textContent = 'Ready';
+            document.getElementById('centralStatus').className = 'font-semibold';
+            document.getElementById('p2pStatus').textContent = 'Ready';
+            document.getElementById('p2pStatus').className = 'font-semibold';
+            
+            initCentralized();
+            initP2P();
+        });
+
+        // Initialize
+        initCentralized();
+        initP2P();
+    </script>
+</body>
+</html>

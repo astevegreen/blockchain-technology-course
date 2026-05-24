@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instructor Portal</title>
+  <style>
+    :root {
+      --bg: #0b0d10;
+      --panel: #11151a;
+      --border: #242c35;
+      --border-strong: #313b46;
+      --text: #edf2f7;
+      --muted: #97a4b2;
+      --accent: #d7e6f7;
+      --accent-bg: #1a2734;
+      --error: #ea7a7a;
+      --ok: #7fd0a2;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+           background: linear-gradient(180deg, #0b0d10 0%, #0e1216 100%); color: var(--text);
+           min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 32px 24px; }
+    .wrap { width: 100%; min-width: 400px; max-width: 1200px; }
+    .panel { background: var(--panel); border: 1px solid var(--border); padding: 28px 32px; }
+    h1 { margin: 0 0 4px; font-size: 22px; color: var(--accent); }
+    h2 { margin: 0 0 10px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    p.sub { margin: 0 0 20px; color: var(--muted); font-size: 13px; }
+    form { display: flex; flex-direction: column; gap: 10px; max-width: 380px; }
+    label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+    input[type=text], input[type=password] {
+      padding: 10px; background: var(--bg); color: var(--text);
+      border: 1px solid var(--border-strong); font-family: inherit; font-size: 14px; }
+    button { padding: 10px; background: var(--accent-bg); color: var(--accent);
+             border: 1px solid var(--border-strong); cursor: pointer; font-size: 14px; }
+    button:hover { background: #22313f; }
+    .msg { min-height: 18px; font-size: 13px; }
+    .msg.error { color: var(--error); }
+    .msg.ok { color: var(--ok); }
+    .header-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
+    .logout { background: transparent; color: var(--muted); border: 1px solid var(--border);
+              padding: 6px 10px; font-size: 12px; }
+    .dev-notice { background: #2a1f12; border: 1px solid #7a5a2b; color: #e6c26c;
+                  padding: 8px 10px; font-size: 12px; margin-bottom: 12px; }
+
+    .dashboard { display: none; }
+    .dashboard.show { display: block; }
+
+    .progress-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-bottom: 24px; }
+    .progress-card { background: var(--bg); border: 1px solid var(--border); padding: 10px; }
+    .progress-card .lab-name { color: var(--accent); font-size: 14px; text-transform: capitalize; margin-bottom: 4px; }
+    .progress-card .stat-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .progress-card .stat-row .val { color: var(--text); }
+    .progress-card .val.active { color: var(--ok); }
+    .progress-card a { display: inline-block; margin-top: 6px; color: var(--accent); text-decoration: none; font-size: 11px; }
+    .progress-card a:hover { text-decoration: underline; }
+
+    .lab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+    .lab-card { background: var(--bg); border: 1px solid var(--border); padding: 14px 16px; }
+    .lab-card .card-title { font-size: 15px; font-weight: 600; color: var(--accent); margin-bottom: 8px; }
+    .lab-card .link-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+    .lab-card .link-row a { color: var(--text); text-decoration: none; font-size: 13px; }
+    .lab-card .link-row a:hover { color: var(--accent); }
+    .lab-card .badge { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+                       padding: 2px 6px; border-radius: 2px; flex-shrink: 0; }
+    .badge.instructor { background: #1e3a5f; color: #7eb8f0; }
+    .badge.student { background: #1a3328; color: #7fd0a2; }
+
+    .util-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+    .util-section .link-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+    .util-section .link-row a { color: var(--text); text-decoration: none; font-size: 13px; }
+    .util-section .link-row a:hover { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="header-row">
+        <h1>Instructor Portal</h1>
+        <button class="logout" id="logoutBtn" style="display:none" onclick="doLogout()">Log out</button>
+      </div>
+      <p class="sub">One login gates instructor controls across all labs.</p>
+      <div id="devNotice" class="dev-notice" style="display:none"></div>
+
+      <form id="loginForm" onsubmit="return doLogin(event)">
+        <label for="user">Username</label>
+        <input type="text" id="user" autocomplete="username" required />
+        <label for="key">Password</label>
+        <input type="password" id="key" autocomplete="current-password" required />
+        <button type="submit">Log In</button>
+        <div id="msg" class="msg"></div>
+        <a href="#" onclick="clearAllCookies(); return false;" style="color:var(--muted); font-size:11px; margin-top:4px;">Clear all cookies for this domain</a>
+      </form>
+
+      <div id="dashboard" class="dashboard">
+        <div id="labs-progress" style="display:none">
+          <h2>Live Progress</h2>
+          <div class="progress-grid" id="progressGrid"></div>
+        </div>
+
+        <h2>Labs</h2>
+        <div class="lab-grid">
+          <div class="lab-card">
+            <div class="card-title">Hyperledger Fabric</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/labs/hlf/hlf_instructor.html">Instructor Console</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/labs/hlf/">Student Lab</a></div>
+          </div>
+          <div class="lab-card">
+            <div class="card-title">Consensus</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/labs/consensus/admin">Instructor Console</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/labs/consensus/">Student Lab</a></div>
+          </div>
+          <div class="lab-card">
+            <div class="card-title">P2P Trust</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/labs/p2p_trust/admin">Instructor Console</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/labs/p2p_trust/">Student Lab</a></div>
+          </div>
+          <div class="lab-card">
+            <div class="card-title">Cryptography</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/labs/cryptography/instructor/">Instructor Guide</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/labs/cryptography/">Student Lab</a></div>
+          </div>
+          <div class="lab-card">
+            <div class="card-title">Bitcoin</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/labs/bitcoin/admin">Instructor Console</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/labs/bitcoin/">Student Lab</a></div>
+          </div>
+          <div class="lab-card">
+            <div class="card-title">Ethereum</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/labs/ethereum/admin">Instructor Console</a></div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/labs/ethereum_lab/?mode=instructor">Trainer Interface</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/labs/ethereum_lab/">Student Lab</a></div>
+          </div>
+        </div>
+
+        <h2 style="margin-top:20px">Exercises</h2>
+        <div class="lab-grid">
+          <div class="lab-card">
+            <div class="card-title">Trust Game</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/exercises/insider/instructor">Instructor View</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/exercises/insider/">Student View</a></div>
+          </div>
+          <div class="lab-card">
+            <div class="card-title">BGP Game</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/exercises/bgp/instructor">Instructor View</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/exercises/bgp/">Student View</a></div>
+          </div>
+          <div class="lab-card">
+            <div class="card-title">Quiz Engine</div>
+            <div class="link-row"><span class="badge instructor">Instructor</span> <a href="/quiz/instructor">Instructor View</a></div>
+            <div class="link-row"><span class="badge student">Student</span> <a href="/quiz/">Student View</a></div>
+          </div>
+        </div>
+
+        <div class="util-section">
+          <h2>Administration</h2>
+          <div class="link-row"><a href="/instructor/sessions">Active Sessions (revoke)</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    async function refresh() {
+      var msg = document.getElementById('msg');
+      var form = document.getElementById('loginForm');
+      var dashboard = document.getElementById('dashboard');
+      var logout = document.getElementById('logoutBtn');
+      var dev = document.getElementById('devNotice');
+      try {
+        var r = await fetch('/api/instructor/whoami', { credentials: 'same-origin' });
+        var j = await r.json();
+        if (j.auth_bypassed) {
+          dev.textContent = 'Auth bypass is active — authentication is a no-op (dev).';
+          dev.style.display = 'block';
+        } else if (j.using_default_credentials) {
+          dev.textContent = 'Default credentials active. Set INSTRUCTOR_AUTH_USER and INSTRUCTOR_AUTH_KEY to override.';
+          dev.style.display = 'block';
+        }
+        if (j.authenticated) {
+          form.style.display = 'none';
+          dashboard.classList.add('show');
+          logout.style.display = 'inline-block';
+          msg.textContent = '';
+          refreshProgress();
+        } else {
+          form.style.display = 'flex';
+          dashboard.classList.remove('show');
+          logout.style.display = 'none';
+        }
+      } catch (e) {
+        msg.textContent = 'Unable to reach instructor service.';
+        msg.className = 'msg error';
+      }
+    }
+    async function doLogin(ev) {
+      ev.preventDefault();
+      var user = document.getElementById('user').value;
+      var key = document.getElementById('key').value;
+      var msg = document.getElementById('msg');
+      msg.textContent = 'Signing in\u2026';
+      msg.className = 'msg';
+      try {
+        var r = await fetch('/api/instructor/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ user: user, key: key })
+        });
+        var j = await r.json();
+        if (j.success) {
+          msg.textContent = 'Signed in.';
+          msg.className = 'msg ok';
+          document.getElementById('key').value = '';
+          if (isSafeRedirectTarget(j.redirect_to)) {
+            window.location.assign(j.redirect_to);
+            return false;
+          }
+          await refresh();
+        } else {
+          msg.textContent = j.message || 'Login failed.';
+          msg.className = 'msg error';
+        }
+      } catch (e) {
+        msg.textContent = 'Network error.';
+        msg.className = 'msg error';
+      }
+      return false;
+    }
+    function isSafeRedirectTarget(target) {
+      if (!target || typeof target !== 'string') return false;
+      if (target.length > 2048) return false;
+      if (target[0] !== '/' || target.slice(0, 2) === '//') return false;
+      if (target === '/instructor' || target === '/instructor/') return false;
+      if (target.indexOf('/api/') === 0) return false;
+      return true;
+    }
+    async function doLogout() {
+      await fetch('/api/instructor/logout', { method: 'POST', credentials: 'same-origin' });
+      await refresh();
+    }
+    function buildHlfRollup(data) {
+      var entries = Object.values(data.progress || {});
+      var now = Date.now() / 1000;
+      var maxEx = 0;
+      var active = 0;
+      entries.forEach(function(e) {
+        if (e.exercises_total > maxEx) maxEx = e.exercises_total;
+        if (now - e.last_seen < 600) active++;
+      });
+      return {
+        lab: 'hlf', sessions: entries.length, active_10m: active,
+        exercises_total: maxEx
+      };
+    }
+    function adminHref(lab) {
+      if (lab === 'hlf') return '/labs/hlf/hlf_instructor.html';
+      return '/labs/' + lab + '/admin';
+    }
+    async function refreshProgress() {
+      var section = document.getElementById('labs-progress');
+      var grid = document.getElementById('progressGrid');
+      try {
+        var results = await Promise.all([
+          fetch('/api/portal/progress-rollup', { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : { labs: [] }; }),
+          fetch('/labs/hlf/api/hlf/progress', { credentials: 'same-origin' }).then(function(r) { return r.ok ? r.json() : null; }).catch(function() { return null; })
+        ]);
+        var labs = results[0].labs || [];
+        if (results[1]) labs.push(buildHlfRollup(results[1]));
+        labs.sort(function(a, b) { return a.lab.localeCompare(b.lab); });
+        if (!labs.length) return;
+        section.style.display = 'block';
+        grid.innerHTML = '';
+        labs.forEach(function(l) {
+          var d = document.createElement('div');
+          d.className = 'progress-card';
+          d.innerHTML =
+            '<div class="lab-name">' + l.lab + '</div>' +
+            '<div class="stat-row"><span>Sessions</span><span class="val">' + l.sessions + '</span></div>' +
+            '<div class="stat-row"><span>Active (10m)</span><span class="val' + (l.active_10m ? ' active' : '') + '">' + l.active_10m + '</span></div>' +
+            '<div class="stat-row"><span>Exercises</span><span class="val">' + l.exercises_total + '</span></div>' +
+            '<a href="' + adminHref(l.lab) + '">Open admin &rarr;</a>';
+          grid.appendChild(d);
+        });
+      } catch (_) {}
+    }
+    function clearAllCookies() {
+      document.cookie.split(';').forEach(function(c) {
+        var name = c.split('=')[0].trim();
+        if (!name) return;
+        var paths = ['/', '/instructor', '/labs', '/labs/hlf', '/api'];
+        paths.forEach(function(p) {
+          document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + p;
+        });
+      });
+      var msg = document.getElementById('msg');
+      msg.textContent = 'Cookies cleared. Please log in again.';
+      msg.className = 'msg ok';
+      document.getElementById('loginForm').style.display = '';
+      document.getElementById('dashboard').classList.remove('show');
+      document.getElementById('logoutBtn').style.display = 'none';
+    }
+    refresh();
+  </script>
+</body>
+</html>

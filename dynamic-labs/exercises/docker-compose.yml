@@ -1,0 +1,33 @@
+name: exercises
+
+services:
+  # The Inner Nginx Router
+  insider:
+    build:
+      context: l03-i3-trust-game
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: exercises-insider:latest
+    environment:
+      - SECRET_KEY=${TRUST_GAME_SECRET_KEY:-blockchain-course-secret}
+      # Shared secret used to verify the hlf_instructor cookie minted by
+      # the HLF runner. Falls back to HLF_WEB_SECRET_KEY if unset.
+      - HLF_INSTRUCTOR_COOKIE_SECRET=${HLF_INSTRUCTOR_COOKIE_SECRET:-}
+      - HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
+    networks:
+      - router-net
+
+  bgp:
+    build:
+      context: l03-i3-bgp-game
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: exercises-bgp:latest
+    environment:
+      - SECRET_KEY=${BGP_GAME_SECRET_KEY:-byzantine-generals-secret}
+      - HLF_INSTRUCTOR_COOKIE_SECRET=${HLF_INSTRUCTOR_COOKIE_SECRET:-}
+      - HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
+    networks:
+      - router-net
+
+networks:
+  router-net:
+    external: true

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Attack Simulator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            background-color: #f0f2f5; color: #333;
+        }
+        #container { display: flex; width: 95%; max-width: 1400px; gap: 20px; }
+        #controls {
+            flex-basis: 250px; flex-shrink: 0; padding: 15px; background-color: #fff;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #simulation-container { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
+        #canvas-container {
+            position: relative; background-color: #fff; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); height: 500px;
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        #blockchain-container-wrapper { margin-top: 15px; }
+        #blockchain-container {
+            padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 200px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .chain-row { min-height: 90px; }
+        .block {
+            display: inline-block; width: 80px; height: 80px; border: 2px solid;
+            border-radius: 4px; margin: 5px; position: relative;
+            text-align: center; line-height: 80px; font-weight: bold;
+        }
+        .block-honest { border-color: #28a745; background-color: #e9f7ea; }
+        .block-attacker { border-color: #dc3545; background-color: #fbeaec; }
+        .block-orphaned { border-color: #6c757d; background-color: #e6e8ea; text-decoration: line-through;}
+
+        #log-wrapper { width: 95%; max-width: 1400px; }
+        #log {
+            margin-top: 15px; height: 150px; background-color: #fff; border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 15px; overflow-y: scroll;
+            font-family: "Courier New", monospace; font-size: 0.9em; display: flex; flex-direction: column-reverse;
+        }
+        #scenario-controls { margin-top: 15px; }
+        label, select, button, input { display: block; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        button.pause-btn.paused { background-color: #28a745; }
+        h1, h2, h3 { text-align: center; }
+        h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>Blockchain Attack Simulator</h1>
+    <div id="container">
+        <div id="controls">
+            <h3>Controls</h3>
+            <label for="scenario-select">Choose Attack Scenario:</label>
+            <select id="scenario-select">
+                <option value="51">51% Attack</option>
+                <option value="sybil">Sybil Attack</option>
+                <option value="selfish">Selfish Mining</option>
+            </select>
+            <button id="reset-button">Reset Simulation</button>
+            <hr>
+            <button id="pause-button" class="pause-btn">Pause</button>
+            <label for="speed-slider">Speed:</label>
+            <input type="range" id="speed-slider" min="1" max="100" value="50">
+            
+            <div id="scenario-controls"></div>
+        </div>
+        <div id="simulation-container">
+             <div id="canvas-container"><canvas id="network-canvas"></canvas></div>
+             <div id="blockchain-container-wrapper">
+                <h3>Blockchain View</h3>
+                <div id="blockchain-container"></div>
+             </div>
+        </div>
+    </div>
+    <div id="log-wrapper">
+        <h3>Event Log</h3>
+        <div id="log"></div>
+    </div>
+
+    <script>
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    const controlsDiv = document.getElementById('scenario-controls');
+    const scenarioSelect = document.getElementById('scenario-select');
+    const resetButton = document.getElementById('reset-button');
+    const pauseButton = document.getElementById('pause-button');
+    const speedSlider = document.getElementById('speed-slider');
+    const blockchainContainer = document.getElementById('blockchain-container');
+    const logDiv = document.getElementById('log');
+
+    let nodes = [], blockchain = [], attackerChain = [];
+    let simulationState = {};
+    let animationFrameId, lastUpdateTime = 0;
+
+    function setupCanvas() {
+        const container = document.getElementById('canvas-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+    }
+
+    function log(message) {
+        const p = document.createElement('p');
+        p.style.margin = '2px 0';
+        p.textContent = `[T=${simulationState.time}] ${message}`;
+        logDiv.prepend(p);
+    }
+    
+    class Node {
+        constructor(id, type, x, y) { this.id = id; this.type = type; this.x = x; this.y = y; this.peers = []; }
+        draw() {
+            let color = {"honest":"#007bff","attacker":"#dc3545","victim":"#ffc107","sybil":"#6f42c1","trusted":"#28a745"}[this.type];
+            ctx.beginPath(); ctx.arc(this.x, this.y, 15, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+            ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke(); ctx.closePath();
+            ctx.fillStyle = "#fff"; ctx.font = "12px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.fillText(this.id, this.x, this.y);
+        }
+        drawConnections() {
+            ctx.strokeStyle = "rgba(0, 0, 0, 0.1)"; ctx.lineWidth = 1;
+            this.peers.forEach(peerId => {
+                const peer = nodes.find(n => n.id === peerId);
+                if (peer) { ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(peer.x, peer.y); ctx.stroke(); }
+            });
+        }
+    }
+    
+    function createNodes(counts) {
+        nodes = []; let id = 0; const width = canvas.width; const height = canvas.height; const margin = 30;
+        for (let i = 0; i < counts.honest; i++) nodes.push(new Node(id++, 'honest', margin + Math.random() * (width - margin*2), margin + Math.random() * (height - margin*2)));
+        for (let i = 0; i < counts.attacker; i++) nodes.push(new Node(id++, 'attacker', margin + Math.random() * (width - margin*2), margin + Math.random() * (height - margin*2)));
+        for (let i = 0; i < counts.victim; i++) nodes.push(new Node(id++, 'victim', width / 2, height / 2));
+        for (let i = 0; i < counts.trusted; i++) nodes.push(new Node(id++, 'trusted', margin + Math.random() * (width-margin*2), margin + Math.random() * (height-margin*2)));
+        nodes.forEach(node => {
+            if (node.type !== 'sybil') {
+                const potentialPeers = nodes.filter(p => p.id !== node.id && p.type !== 'sybil' && p.type !== 'victim');
+                while (node.peers.length < 3 && potentialPeers.length > 0) {
+                    const peer = potentialPeers[Math.floor(Math.random() * potentialPeers.length)];
+                    if (!node.peers.includes(peer.id)) { node.peers.push(peer.id); if (!peer.peers.includes(node.id)) peer.peers.push(node.id); }
+                }
+            }
+        });
+    }
+
+    function drawBlockchain() {
+        blockchainContainer.innerHTML = '';
+        const mainChainDiv = document.createElement('div'); mainChainDiv.className = 'chain-row';
+        blockchain.forEach(block => {
+            const blockDiv = document.createElement('div');
+            blockDiv.className = `block block-${block.minedBy}`;
+            if (block.orphaned) blockDiv.classList.add('block-orphaned');
+            blockDiv.textContent = `#${block.id}`;
+            mainChainDiv.appendChild(blockDiv);
+        });
+        blockchainContainer.appendChild(mainChainDiv);
+
+        if (attackerChain.length > 0 || scenarioSelect.value === '51' || scenarioSelect.value === 'selfish') {
+            const attackerChainDiv = document.createElement('div');
+            attackerChainDiv.className = 'chain-row'; attackerChainDiv.style.borderTop = "2px dashed red";
+            const title = document.createElement('div');
+            title.textContent = "Attacker's Private Chain"; title.style.margin = '5px 0 0 5px'; title.style.fontWeight = 'bold';
+            attackerChainDiv.appendChild(title);
+            attackerChain.forEach(block => {
+                const blockDiv = document.createElement('div');
+                blockDiv.className = `block block-${block.minedBy}`; blockDiv.textContent = `#${block.id}`;
+                attackerChainDiv.appendChild(blockDiv);
+            });
+            blockchainContainer.appendChild(attackerChainDiv);
+        }
+        blockchainContainer.scrollLeft = blockchainContainer.scrollWidth;
+    }
+    
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        nodes.forEach(node => node.drawConnections());
+        nodes.forEach(node => node.draw());
+        drawBlockchain();
+    }
+
+    const scenarios = {
+        '51': {
+            name: "51% Attack",
+            description: "An attacker with >50% hash power can reverse transactions. Here, they pay a merchant, wait for confirmation, then release a longer private chain that omits the payment.",
+            init: () => {
+                controlsDiv.innerHTML = `<label for="hash-power">Attacker Hash Power (%):</label><input type="range" id="hash-power" min="10" max="70" value="51"><p>Attacker has <strong id="hash-power-value">51%</strong></p><button id="double-spend-btn">1. Initiate Double Spend</button>`;
+                simulationState.hashPower = 51; simulationState.honestMineProgress = 0; simulationState.attackerMineProgress = 0;
+                simulationState.mineThreshold = 100; simulationState.mode = 'running'; simulationState.doubleSpendTx = null;
+                createNodes({ honest: 20, attacker: 0, victim: 0, trusted: 0 });
+                blockchain = [{id: 0, minedBy: 'honest'}]; attackerChain = [];
+                document.getElementById('hash-power').addEventListener('input', (e) => {
+                    simulationState.hashPower = parseInt(e.target.value);
+                    document.getElementById('hash-power-value').textContent = e.target.value + '%';
+                });
+                document.getElementById('double-spend-btn').addEventListener('click', () => {
+                    if (simulationState.mode === 'running') {
+                         simulationState.mode = 'double-spending';
+                         simulationState.doubleSpendTx = { from: 'attacker', to: 'merchant', blockId: blockchain.length };
+                         log("ATTACK: Attacker sends payment. Waiting for honest network to confirm.");
+                         document.getElementById('double-spend-btn').disabled = true;
+                    }
+                });
+            },
+            update: () => {
+                simulationState.honestMineProgress += (100 - simulationState.hashPower);
+                simulationState.attackerMineProgress += simulationState.hashPower;
+                if (simulationState.honestMineProgress >= simulationState.mineThreshold) {
+                    const newBlock = { id: blockchain.length, minedBy: 'honest' };
+                    if (simulationState.mode === 'double-spending' && !blockchain.find(b => b.tx === simulationState.doubleSpendTx)) {
+                        newBlock.tx = simulationState.doubleSpendTx;
+                        log(`HONEST: Mined block #${newBlock.id}, confirming payment.`);
+                        attackerChain = [...blockchain.slice(0, newBlock.id)];
+                        log(`ATTACK: Payment confirmed. Starting secret chain from block #${attackerChain.length - 1}.`);
+                    } else { log(`HONEST: Mined new block #${newBlock.id}.`); }
+                    blockchain.push(newBlock); simulationState.honestMineProgress = 0;
+                }
+                if (attackerChain.length > 0 && simulationState.attackerMineProgress >= simulationState.mineThreshold) {
+                    const newBlock = { id: attackerChain.length, minedBy: 'attacker' };
+                    attackerChain.push(newBlock);
+                    log(`ATTACK: Mined secret block #${newBlock.id}. Attacker chain: ${attackerChain.length}. Honest chain: ${blockchain.length}.`);
+                    simulationState.attackerMineProgress = 0;
+                    if (attackerChain.length > blockchain.length) {
+                        log("!!! ATTACK SUCCESSFUL !!! Attacker's longer chain broadcast.");
+                        log("NETWORK: Re-org! Honest blocks orphaned.");
+                        blockchain.forEach(b => { if (b.id >= attackerChain[0].id) { b.orphaned = true; } });
+                        blockchain = [...attackerChain]; attackerChain = []; simulationState.mode = 'running';
+                        log("Double spend complete. Merchant's payment vanished.");
+                        document.getElementById('double-spend-btn').disabled = false;
+                    }
+                }
+            }
+        },
+        'sybil': {
+             name: "Sybil Attack",
+            description: "An attacker creates fake nodes (Sybils, purple) to isolate a victim (yellow). The victim may believe a fake transaction is real because all its peers are attackers.",
+            init: () => {
+                controlsDiv.innerHTML = `<p>Trusted nodes (green) try to warn the victim.</p><button id="add-sybil-btn">Add 10 Sybil Nodes</button><button id="send-fake-tx-btn">Send Fake Tx To Victim</button>`;
+                simulationState.fakeTxStatus = 'none';
+                createNodes({ honest: 15, attacker: 1, victim: 1, trusted: 3 });
+                const victim = nodes.find(n => n.type === 'victim');
+                victim.peers = nodes.filter(n => n.type === 'trusted' || n.type === 'attacker').map(n => n.id);
+                document.getElementById('add-sybil-btn').addEventListener('click', () => {
+                    const victim = nodes.find(n => n.type === 'victim'); log(`ATTACK: Creating 10 Sybil nodes.`);
+                    for(let i=0; i<10; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const x = victim.x + (100 + Math.random() * 50) * Math.cos(angle);
+                        const y = victim.y + (100 + Math.random() * 50) * Math.sin(angle);
+                        const sybil = new Node(nodes.length, 'sybil', x, y);
+                        sybil.peers.push(victim.id); victim.peers.push(sybil.id); nodes.push(sybil);
+                    }
+                });
+                document.getElementById('send-fake-tx-btn').addEventListener('click', () => {
+                     log("ATTACK: Sending a FAKE transaction to victim via Sybil nodes.");
+                     simulationState.fakeTxStatus = 'sent';
+                });
+            },
+            update: () => {
+                if (simulationState.time % 100 === 0) {
+                     const sybilCount = nodes.filter(n => n.type === 'sybil').length;
+                     const trustedCount = 3;
+                     if (Math.random() < trustedCount / (sybilCount + trustedCount + 1)) {
+                        log("GOSSIP: Victim heard a real block update from a trusted peer!");
+                        if (simulationState.fakeTxStatus === 'confirmed') {
+                           log("VICTIM: 'My transaction isn't in the real chain! I've been deceived!'");
+                           simulationState.fakeTxStatus = 'none';
+                        }
+                     } else { log("GOSSIP: Victim only hears chatter from Sybil peers."); }
+                }
+                if (simulationState.fakeTxStatus === 'sent' && simulationState.time % 20 === 0) {
+                    log("SYBIL NETWORK: 'We confirm your transaction!'");
+                    log("VICTIM: 'Great, payment confirmed!' (SO WHAT: Victim ships goods for a payment that never happened).");
+                    simulationState.fakeTxStatus = 'confirmed';
+                }
+            }
+        },
+        'selfish': {
+            name: "Selfish Mining",
+            description: "A miner keeps found blocks secret. They publish strategically to orphan honest blocks, earning more than their fair share of rewards.",
+            init: () => {
+                 controlsDiv.innerHTML = `<label for="selfish-hash-power">Selfish Miner Hash Power (%):</label><input type="range" id="selfish-hash-power" min="10" max="49" value="35"><p>Miner has <strong id="selfish-hash-power-value">35%</strong></p><p>Revenue: Selfish <span id="selfish-rev">0</span> | Honest <span id="honest-rev">0</span></p><p>Expected: <span id="expected-rev">0.0</span>% | Actual: <span id="actual-rev">0.0</span>%</p>`;
+                simulationState.hashPower = 35; simulationState.honestMineProgress = 0; simulationState.attackerMineProgress = 0;
+                simulationState.mineThreshold = 100; simulationState.selfishRevenue = 0; simulationState.honestRevenue = 1;
+                createNodes({ honest: 20, attacker: 0, victim: 0, trusted: 0 });
+                blockchain = [{id: 0, minedBy: 'honest'}]; attackerChain = [];
+                document.getElementById('selfish-hash-power').addEventListener('input', (e) => {
+                    simulationState.hashPower = parseInt(e.target.value);
+                    document.getElementById('selfish-hash-power-value').textContent = e.target.value + '%';
+                });
+            },
+            update: () => {
+                simulationState.honestMineProgress += (100 - simulationState.hashPower);
+                simulationState.attackerMineProgress += simulationState.hashPower;
+                if (simulationState.attackerMineProgress >= simulationState.mineThreshold) {
+                    const parent = attackerChain.length > 0 ? attackerChain[attackerChain.length-1] : blockchain[blockchain.length-1];
+                    attackerChain.push({id: parent.id + 1, minedBy: 'attacker'});
+                    log(`SELFISH: Found block #${parent.id+1} secretly. Private chain length: ${attackerChain.length}.`);
+                    simulationState.attackerMineProgress = 0;
+                }
+                if (simulationState.honestMineProgress >= simulationState.mineThreshold) {
+                    const newHonestBlock = { id: blockchain.length, minedBy: 'honest' };
+                    log(`HONEST: Found block #${newHonestBlock.id}.`);
+                    const lead = attackerChain.length;
+                    if (lead === 0) {
+                        blockchain.push(newHonestBlock); simulationState.honestRevenue++;
+                    } else if (attackerChain[0].id === newHonestBlock.id) {
+                        log("RACE: Competing blocks found. Selfish miner publishes!");
+                        newHonestBlock.orphaned = true; blockchain.push(newHonestBlock);
+                        blockchain.push(...attackerChain); simulationState.selfishRevenue += attackerChain.length;
+                        log(`SELFISH: Published chain, orphaning honest block #${newHonestBlock.id}.`);
+                        attackerChain = [];
+                    } else {
+                        blockchain.push(newHonestBlock); simulationState.honestRevenue++;
+                        log(`SELFISH: Honest network pulled ahead. Ditching private chain.`);
+                        attackerChain = [];
+                    }
+                    simulationState.honestMineProgress = 0;
+                }
+                const totalRev = simulationState.selfishRevenue + simulationState.honestRevenue;
+                if (totalRev > 1) {
+                    document.getElementById('selfish-rev').textContent = simulationState.selfishRevenue;
+                    document.getElementById('honest-rev').textContent = simulationState.honestRevenue;
+                    const actualPercent = (simulationState.selfishRevenue / (totalRev-1) * 100).toFixed(1);
+                    document.getElementById('expected-rev').textContent = simulationState.hashPower.toFixed(1) + '%';
+                    document.getElementById('actual-rev').textContent = actualPercent + '%';
+                }
+            }
+        }
+    };
+
+    function gameLoop(currentTime) {
+        animationFrameId = requestAnimationFrame(gameLoop);
+        if (simulationState.isPaused) return;
+        const elapsed = currentTime - lastUpdateTime;
+        const tickInterval = 2000 / (simulationState.speed || 50);
+        if (elapsed > tickInterval) {
+            lastUpdateTime = currentTime;
+            const currentScenario = scenarios[scenarioSelect.value];
+            if (currentScenario && currentScenario.update) {
+                currentScenario.update();
+                simulationState.time++;
+            }
+            render();
+        }
+    }
+
+    function reset() {
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        logDiv.innerHTML = '';
+        // NEW BUG FIX: Explicitly reset button state before initializing new state
+        pauseButton.textContent = 'Pause';
+        pauseButton.classList.remove('paused');
+
+        simulationState = { isPaused: false, time: 0, speed: speedSlider.value };
+        const currentScenario = scenarios[scenarioSelect.value];
+        currentScenario.init();
+        log(`Initialized: ${currentScenario.name}`); log(currentScenario.description);
+        lastUpdateTime = 0;
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+    
+    function togglePause() {
+        simulationState.isPaused = !simulationState.isPaused;
+        if (simulationState.isPaused) {
+            pauseButton.textContent = 'Resume';
+            pauseButton.classList.add('paused');
+        } else {
+            lastUpdateTime = performance.now();
+            pauseButton.textContent = 'Pause';
+            pauseButton.classList.remove('paused');
+        }
+    }
+
+    window.addEventListener('resize', setupCanvas);
+    scenarioSelect.addEventListener('change', reset);
+    resetButton.addEventListener('click', reset);
+    pauseButton.addEventListener('click', togglePause);
+    speedSlider.addEventListener('input', (e) => simulationState.speed = e.target.value);
+
+    setupCanvas();
+    reset();
+    </script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+# Ethereum Immersive Trainer - shared instructor (one container per
+# classroom). Per-student frontends are spawned on demand by
+# lane-service (see ../lane-service/labs/ethereum.py) using the same
+# image with MODE=student.
+#
+# Networks (bitcoin-style split, all --internal, created by
+# lab-manager.sh ensure_networks):
+#   ethereum-instructor-mgmt-net — router ↔ instructor for /labs/ethereum_lab/rpc
+#                                  and /labs/ethereum_lab/instructor.
+#                                  Also joined by lane-service so it can
+#                                  fetch the pool/config that get injected
+#                                  into student lanes at start time.
+#
+# Host port maps (8545/5173/3002-3004) are kept for direct local
+# access during development; production traffic goes via the router.
+
+services:
+  ethereum-trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      args:
+        - VITE_BASE_PATH=/labs/ethereum_lab/
+    image: ethereum-trainer
+    container_name: ethereum-trainer-instructor
+    ports:
+      - "8545:8545"
+      - "5173:5173"
+      - "3002:3002"
+      - "3003:3003"
+      - "3004:3004"
+    environment:
+      - MODE=instructor
+      - RPC_PORT=8545
+      - FRONTEND_PORT=5173
+      # Phase 9.4: instructor identity comes from the platform router's
+      # `X-Instructor` header (driven by the hlf_instructor cookie). The
+      # IP allowlist is now only a fallback for direct host:5173 access
+      # in standalone laptop mode; default covers Docker bridge gateways.
+      # Set INSTRUCTOR_IP=* to bypass even that fallback.
+      - TERMINAL_PORTS=3002,3003,3004
+      - TERMINAL_CWD=/app
+      - LAB_TERMINAL_ENABLED=1
+      - NGINX_ENABLED=1
+      # Public RPC path the student SPA dials when fronted by the platform router.
+      - RPC_URL_PUBLIC=/rpc
+      - DEPLOY_BEACON_LAB=1
+      - COMMITTEES_PER_EPOCH=8
+      - VALIDATORS_PER_COMMITTEE=8
+      - MAX_STUDENT_CAPACITY=${MAX_STUDENT_CAPACITY:-20}
+      - ETHEREUM_STUDENT_CAPACITY=${ETHEREUM_STUDENT_CAPACITY:-}
+    volumes:
+      - blockchain-data:/app/.hardhat
+      - student-contracts:/app/contracts/student
+    restart: unless-stopped
+    networks:
+      - instructor-mgmt-net
+
+volumes:
+  blockchain-data:
+    driver: local
+  student-contracts:
+    driver: local
+
+networks:
+  instructor-mgmt-net:
+    name: ethereum-instructor-mgmt-net
+    external: true

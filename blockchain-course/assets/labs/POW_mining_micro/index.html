@@ -1,0 +1,933 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Proof‑of‑Work Coin Mining — Classroom Simulator</title>
+  <style>
+    :root{
+      --bg:#0e1117;
+      --panel:#151a23;
+      --ring:#2dd4bf;
+      --track:#273045;
+      --accent:#8b5cf6;
+      --accent-2:#22c55e;
+      --danger:#ef4444;
+      --text:#e5e7eb;
+      --muted:#9aa4b2;
+      --felt:#0b6b45;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 50% -200px, rgba(34,197,94,.08), transparent 70%), var(--bg);
+      color:var(--text);
+    }
+    .app{max-width:1200px; margin:0 auto; padding:24px;}
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
+    }
+    .title{font-weight:800; letter-spacing:.2px;}
+    .title .sub{display:block; font-weight:500; font-size:.9rem; color:var(--muted)}
+    .hud{display:flex; flex-wrap:wrap; align-items:center; gap:12px}
+    .pill{background:linear-gradient(180deg, #1b2332, #121825); border:1px solid #293046; color:var(--text); padding:10px 14px; border-radius:999px; box-shadow:var(--shadow); display:inline-flex; align-items:center; gap:10px}
+    .pill strong{letter-spacing:.4px}
+    .target{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight:700; letter-spacing:.5px}
+    .btn{cursor:pointer; border:1px solid transparent; border-radius:12px; padding:12px 16px; font-weight:700; color:#0b1220; background:linear-gradient(180deg, #a78bfa, #7c3aed); color:white; box-shadow:var(--shadow); transition:transform .06s ease, filter .2s ease, opacity .2s ease}
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .btn:active{transform: translateY(1px) scale(.997)}
+    .btn.secondary{background:linear-gradient(180deg, #10b981, #059669)}
+    .btn.ghost{background:transparent; color:var(--text); border-color:#334155}
+
+    /* Level tabs */
+    .level-tabs{display:flex; gap:6px; margin-bottom:18px;}
+    .tab-btn{
+      cursor:pointer; border:1px solid #334155; border-radius:10px;
+      padding:9px 20px; font-size:.95rem; font-weight:700; background:transparent;
+      color:var(--muted); transition:all .15s ease;
+    }
+    .tab-btn.active{
+      background:linear-gradient(180deg, #1e2d3d, #151f2e);
+      border-color:var(--accent); color:white;
+    }
+    .tab-btn:hover:not(.active){border-color:#4b5563; color:var(--text)}
+
+    .board{
+      background: radial-gradient(800px 500px at 50% -250px, rgba(34,197,94,.10), transparent 60%), linear-gradient(180deg, rgba(11,107,69,.06), rgba(11,107,69,.04));
+      border: 1px solid #2a3347; border-radius: var(--radius); padding:22px; box-shadow: var(--shadow);
+    }
+
+    .toolbar{display:flex; flex-wrap:wrap; align-items:center; gap:12px; justify-content:space-between; margin-bottom:16px}
+    .status{color:var(--muted); font-weight:600}
+    .status .live{color:#eab308}
+
+    .zones{display:grid; grid-template-columns: 1.1fr 2fr; gap:18px}
+    @media (max-width: 900px){ .zones{grid-template-columns: 1fr} }
+
+    /* USER PANEL */
+    .user-card{background:linear-gradient(180deg, #17202e, #101520); border:1px solid #2b344a; border-radius: var(--radius); padding:18px; display:flex; flex-direction:column; gap:14px}
+    .user-card h2{margin:0; font-size:1rem; letter-spacing:.4px; color:#cbd5e1}
+    .user-panel{display:grid; grid-template-columns: auto 1fr; align-items:center; gap:16px}
+    .user-node{position:relative; width:160px; height:160px}
+    .circle{
+      width:160px; height:160px; border-radius:50%;
+      background: radial-gradient(60% 60% at 50% 40%, #1c2535, #101520);
+      border: 1px solid #2a3347; display:flex; align-items:center; justify-content:center; text-align:center; box-shadow: inset 0 0 0 4px rgba(255,255,255,.02), var(--shadow);
+    }
+    .circle .inside{line-height:1.1}
+    .circle .label{font-size:.8rem; color:var(--muted)}
+    .circle .output{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:1.4rem; margin-top:6px; font-weight:800}
+    .circle .attempts{font-size:.8rem; color:var(--muted); margin-top:6px}
+    .actions{display:flex; gap:10px; flex-wrap:wrap}
+
+    /* MINERS GRID */
+    .miners{background:linear-gradient(180deg, #121826, #0e1420); border:1px solid #2a3347; border-radius: var(--radius); padding:16px}
+    .miners h3{margin:0 0 8px 0; font-size:.95rem; color:#cbd5e1}
+    .grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:16px}
+
+    .node{position:relative; width:160px; height:160px; border-radius:50%;}
+    .node svg{position:absolute; inset:0; width:100%; height:100%; transform: rotate(-90deg)}
+    .node .track{fill:none; stroke: var(--track); stroke-width:10}
+    .node .progress{fill:none; stroke: var(--ring); stroke-width:10; stroke-linecap:round; stroke-dasharray:100; stroke-dashoffset:0; animation: countdown 1s linear infinite}
+    .node .center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8px}
+    .node .center .label{font-size:.8rem; color:var(--muted)}
+    .node .center .output{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight:800; font-size:1.3rem; margin-top:6px}
+    .node .center .attempts{font-size:.75rem; color:var(--muted); margin-top:6px}
+
+    .winner{outline: 3px solid var(--accent-2); box-shadow: 0 0 0 6px rgba(34,197,94,.25), var(--shadow)}
+    .loser{opacity:.6; filter: grayscale(.2)}
+
+    .start-wrap{display:flex; gap:10px; align-items:center}
+    .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background:#0b1220; border:1px solid #2a3347; padding:2px 6px; border-radius:6px; font-size:.85em}
+
+    @keyframes countdown { from { stroke-dashoffset: 0 } to { stroke-dashoffset: 100 } }
+    @media (prefers-reduced-motion: reduce) { .progress { animation: none !important } }
+
+    /* ===== LEVEL 2 ===== */
+    .l2-hud{
+      display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;
+      background:linear-gradient(180deg,#12192a,#0e1420); border:1px solid #2a3347;
+      border-radius:14px; padding:14px 18px;
+    }
+    .l2-stat{display:flex; flex-direction:column; gap:2px; min-width:90px}
+    .l2-stat .l2-label{font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em}
+    .l2-stat .l2-value{font-size:1.25rem; font-weight:800; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace}
+    .l2-divider{width:1px; background:#2a3347; margin:0 6px}
+
+    .l2-target-row{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap}
+    .l2-target-row label{font-weight:600; color:#cbd5e1; font-size:.9rem}
+    .l2-target-row input[type=range]{accent-color:var(--accent); width:140px}
+    .l2-target-row .range-val{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight:700; min-width:40px}
+
+    /* Block log */
+    .block-log-wrap{
+      margin-top:18px; background:linear-gradient(180deg,#12192a,#0e1420);
+      border:1px solid #2a3347; border-radius:14px; padding:14px 18px; max-height:220px; overflow-y:auto;
+    }
+    .block-log-wrap h4{margin:0 0 10px; font-size:.9rem; color:#cbd5e1}
+    .block-log{display:flex; flex-direction:column; gap:6px}
+    .log-row{
+      display:flex; align-items:center; gap:10px; padding:6px 10px;
+      border-radius:8px; background:rgba(255,255,255,.02); font-size:.85rem;
+    }
+    .log-row .blk-num{color:var(--muted); min-width:60px; font-family:monospace}
+    .log-row .blk-winner{font-weight:700; min-width:80px}
+    .log-row .blk-time{font-family:monospace; color:#93c5fd}
+    .log-row .blk-diff{color:var(--muted); margin-left:auto}
+    .adj-event{
+      background:linear-gradient(90deg, rgba(139,92,246,.15), rgba(139,92,246,.05));
+      border-left:3px solid var(--accent);
+      padding:8px 12px; border-radius:0 8px 8px 0; font-size:.85rem; font-weight:600;
+      color:#c4b5fd; display:flex; align-items:center; gap:8px;
+    }
+    .adj-up{color:#f87171; border-left-color:#f87171; background:linear-gradient(90deg,rgba(248,113,113,.12),transparent)}
+    .adj-down{color:#34d399; border-left-color:#34d399; background:linear-gradient(90deg,rgba(52,211,153,.12),transparent)}
+    .adj-same{color:#fbbf24; border-left-color:#fbbf24; background:linear-gradient(90deg,rgba(251,191,36,.10),transparent)}
+
+    /* Remove button on miner nodes */
+    .node-remove{
+      position:absolute; top:6px; right:6px;
+      width:22px; height:22px; border-radius:50%;
+      background:#ef4444; border:none; color:white;
+      font-size:15px; font-weight:900; line-height:1;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      z-index:10; padding:0; opacity:.75; transition:opacity .15s, transform .1s;
+    }
+    .node-remove:hover{ opacity:1; transform:scale(1.15); }
+
+    /* Add miner row */
+    .add-miner-row{
+      display:none; align-items:center; gap:10px; margin-top:14px;
+      padding:10px 14px; background:rgba(255,255,255,.03);
+      border:1px solid #2a3347; border-radius:10px; flex-wrap:wrap;
+    }
+    .add-miner-row label{ font-weight:600; color:#cbd5e1; font-size:.9rem; }
+    .add-miner-row .miner-count{ color:var(--muted); font-size:.85rem; margin-left:auto; }
+
+    /* inter-block countdown banner */
+    .countdown-banner{
+      text-align:center; padding:10px; background:rgba(139,92,246,.1);
+      border:1px solid rgba(139,92,246,.3); border-radius:10px;
+      font-weight:700; color:#c4b5fd; font-size:1rem; margin-bottom:12px;
+      display:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <div style="font-size:1.6rem">⚒️ PoW Coin Mining — <span style="color:var(--accent)">Race to Match</span></div>
+        <span class="sub">A classroom-friendly simulation of proof‑of‑work where coins are "hashed" as H/T sequences.</span>
+      </div>
+      <div class="hud">
+        <div class="pill"><span>🎯 Target</span> <strong class="target" id="target">—</strong></div>
+      </div>
+    </header>
+
+    <!-- Level tabs -->
+    <div class="level-tabs">
+      <button class="tab-btn active" id="tab1">Level 1 — Single Round</button>
+      <button class="tab-btn" id="tab2">Level 2 — Blockchain + Difficulty Adjustment</button>
+    </div>
+
+    <!-- ===== LEVEL 1 PANEL ===== -->
+    <div id="l1panel">
+      <section class="board" aria-live="polite" aria-atomic="true">
+        <div class="l2-target-row" id="l1Settings">
+          <label>🤖 Nodes:</label>
+          <input type="range" id="l1NodeInput" min="4" max="12" value="5" step="1">
+          <span class="range-val"><span id="l1NodeDisplay">5</span></span>
+          <label style="margin-left:16px">⚡ Rate:</label>
+          <input type="range" id="l1RateInput" min="0.25" max="10" value="1" step="0.25">
+          <span class="range-val"><span id="l1RateDisplay">1</span>/s</span>
+        </div>
+        <div class="toolbar">
+          <div class="status" id="status">Press <span class="kbd">Start Game</span> or <span class="kbd">N</span> to begin.</div>
+          <div class="start-wrap">
+            <button id="startBtn" class="btn secondary">Start Game <span class="kbd">N</span></button>
+            <button id="mineBtn" class="btn ghost" disabled>Mine <span class="kbd">M</span></button>
+          </div>
+        </div>
+        <div class="zones">
+          <div class="user-card">
+            <h2>👤 You (manual miner)</h2>
+            <div class="user-panel">
+              <div class="user-node">
+                <div class="circle" id="userCircle">
+                  <div class="inside">
+                    <div class="label">Last Output</div>
+                    <div class="output" id="userOutput">—</div>
+                    <div class="attempts" id="userAttempts">0 attempts</div>
+                  </div>
+                </div>
+              </div>
+              <div class="user-info">
+                <p style="margin:0 0 10px 0; color:var(--muted)">Click <strong>Mine</strong> as fast as you like. Each click performs random coin flips. Bots only mine once per tick — you've got the edge.</p>
+                <ul style="margin:0; padding-left:1.1rem; color:#cbd5e1">
+                  <li>First to exactly match the target wins the block.</li>
+                  <li>If someone wins, the round freezes and you can start a new game.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="mineBtn2" class="btn" disabled>Mine Now <span class="kbd">M</span></button>
+              <button id="resetBtn" class="btn secondary" style="display:none">New Game <span class="kbd">N</span></button>
+            </div>
+          </div>
+          <div class="miners">
+            <h3 id="minersHeader">🤖 Simulated Miners</h3>
+            <div class="grid" id="minersGrid"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ===== LEVEL 2 PANEL ===== -->
+    <div id="l2panel" style="display:none">
+      <section class="board" aria-live="polite" aria-atomic="true">
+
+        <!-- Settings row -->
+        <div class="l2-target-row">
+          <label>⏱ Target block time:</label>
+          <input type="range" id="l2TargetInput" min="2" max="20" value="5" step="1">
+          <span class="range-val"><span id="l2TargetDisplay">5</span>s</span>
+          <label style="margin-left:16px">Starting flips:</label>
+          <input type="range" id="l2DiffInput" min="1" max="8" value="3" step="1">
+          <span class="range-val"><span id="l2DiffDisplay">3</span></span>
+          <label style="margin-left:16px">🤖 Nodes:</label>
+          <input type="range" id="l2NodeInput" min="1" max="24" value="5" step="1">
+          <span class="range-val"><span id="l2NodeDisplay">5</span></span>
+          <label style="margin-left:16px">⚡ Rate:</label>
+          <input type="range" id="l2RateInput" min="0.25" max="10" value="4" step="0.25">
+          <span class="range-val"><span id="l2RateDisplay">4</span>/s</span>
+        </div>
+
+        <!-- L2 HUD -->
+        <div class="l2-hud">
+          <div class="l2-stat">
+            <span class="l2-label">Block #</span>
+            <span class="l2-value" id="l2BlockNum">—</span>
+          </div>
+          <div class="l2-divider"></div>
+          <div class="l2-stat">
+            <span class="l2-label">Difficulty (flips)</span>
+            <span class="l2-value" id="l2DiffDisplay2">—</span>
+          </div>
+          <div class="l2-divider"></div>
+          <div class="l2-stat">
+            <span class="l2-label">Last Block Time</span>
+            <span class="l2-value" id="l2LastTime">—</span>
+          </div>
+          <div class="l2-divider"></div>
+          <div class="l2-stat">
+            <span class="l2-label">Avg (last 4)</span>
+            <span class="l2-value" id="l2AvgTime">—</span>
+          </div>
+          <div class="l2-divider"></div>
+          <div class="l2-stat">
+            <span class="l2-label">Next Adjustment</span>
+            <span class="l2-value" id="l2NextAdj">Block 4</span>
+          </div>
+        </div>
+
+        <div class="countdown-banner" id="l2Countdown"></div>
+
+        <div class="toolbar">
+          <div class="status" id="l2Status">Configure settings above then press <span class="kbd">Start Level 2</span>.</div>
+          <div class="start-wrap">
+            <button id="l2MineBtn" class="btn ghost" disabled>Mine <span class="kbd">M</span></button>
+            <button id="l2StartBtn" class="btn">Start Level 2</button>
+            <button id="l2StopBtn" class="btn secondary" style="display:none">Stop</button>
+          </div>
+        </div>
+
+        <div class="zones">
+          <div class="user-card">
+            <h2>👤 You (manual miner)</h2>
+            <div class="user-panel">
+              <div class="user-node">
+                <div class="circle" id="l2UserCircle">
+                  <div class="inside">
+                    <div class="label">Last Output</div>
+                    <div class="output" id="l2UserOutput">—</div>
+                    <div class="attempts" id="l2UserAttempts">0 attempts</div>
+                  </div>
+                </div>
+              </div>
+              <div class="user-info">
+                <p style="margin:0 0 10px 0; color:var(--muted)">Mine as fast as you like. After each block is found the simulation auto-advances. Watch difficulty climb or fall every 4 blocks.</p>
+                <ul style="margin:0; padding-left:1.1rem; color:#cbd5e1">
+                  <li>Blocks auto-chain together — no reset needed.</li>
+                  <li>Every 4 blocks, average time is compared to target and flips adjust.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="actions">
+              <button id="l2MineBtn2" class="btn" disabled>Mine Now <span class="kbd">M</span></button>
+            </div>
+          </div>
+          <div class="miners">
+            <h3 id="l2MinersHeader">🤖 Simulated Miners</h3>
+            <div class="grid" id="l2MinersGrid"></div>
+            <div class="add-miner-row" id="addMinerRow">
+              <label>⚡ New miner speed:</label>
+              <input type="range" id="newMinerRate" min="0.25" max="10" value="4" step="0.25">
+              <span class="range-val"><span id="newMinerRateDisplay">4</span>/s</span>
+              <button id="addMinerBtn" class="btn ghost" style="padding:8px 14px; font-size:.9rem">+ Add Miner</button>
+              <span class="miner-count" id="minerCount">5 / 24</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Block log -->
+        <div class="block-log-wrap">
+          <h4>📋 Block History</h4>
+          <div class="block-log" id="blockLog"></div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // LEVEL 1 — unchanged single-round game
+    // ============================================================
+    const SEQ_LEN = 5;
+    const TICK_MS = 1000;
+
+    let target = '';
+    let gameRunning = false;
+    let winner = null;
+    let minerTimer = null;
+    let userTries = 0;
+    const miners = [];
+
+    const targetEl     = document.getElementById('target');
+    const statusEl     = document.getElementById('status');
+    const startBtn     = document.getElementById('startBtn');
+    const resetBtn     = document.getElementById('resetBtn');
+    const mineBtn      = document.getElementById('mineBtn');
+    const mineBtn2     = document.getElementById('mineBtn2');
+    const userOutput   = document.getElementById('userOutput');
+    const userAttempts = document.getElementById('userAttempts');
+    const userCircle   = document.getElementById('userCircle');
+    const minersGrid   = document.getElementById('minersGrid');
+    const minersHeader = document.getElementById('minersHeader');
+    const l1NodeInput  = document.getElementById('l1NodeInput');
+    const l1RateInput  = document.getElementById('l1RateInput');
+    l1NodeInput.addEventListener('input', ()=>{
+      document.getElementById('l1NodeDisplay').textContent = l1NodeInput.value;
+      if(gameRunning){
+        const count = parseInt(l1NodeInput.value);
+        mountMiners(count);
+        startRings(miners);
+        minersHeader.textContent = `🤖 Simulated Miners (${count} nodes, ${l1RateInput.value}/s)`;
+      }
+    });
+    l1RateInput.addEventListener('input', ()=>{
+      document.getElementById('l1RateDisplay').textContent = l1RateInput.value;
+      if(gameRunning){
+        clearInterval(minerTimer);
+        minerTimer = setInterval(tickMiners, Math.round(1000 / parseFloat(l1RateInput.value)));
+        minersHeader.textContent = `🤖 Simulated Miners (${l1NodeInput.value} nodes, ${l1RateInput.value}/s)`;
+      }
+    });
+
+    const randHT = () => (Math.random() < 0.5 ? 'H' : 'T');
+    const randomSequence = (n) => Array.from({length:n}, randHT).join('');
+    const setStatus = (msg) => statusEl.innerHTML = msg;
+
+    function enableMiningUI(enabled){
+      mineBtn.disabled = !enabled;
+      mineBtn2.disabled = !enabled;
+    }
+
+    function buildMiner(label, withRemove = false){
+      const wrap = document.createElement('div');
+      wrap.className = 'node';
+      wrap.innerHTML = `
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="track" cx="60" cy="60" r="52" pathLength="100"></circle>
+          <circle class="progress" cx="60" cy="60" r="52" pathLength="100"></circle>
+        </svg>
+        <div class="center">
+          <div class="label">${label}</div>
+          <div class="output">—</div>
+          <div class="attempts">0 tries</div>
+        </div>
+        ${withRemove ? '<button class="node-remove" title="Remove miner">×</button>' : ''}`;
+      return {
+        el: wrap,
+        label,
+        outputEl: wrap.querySelector('.output'),
+        attemptsEl: wrap.querySelector('.attempts'),
+        ringEl: wrap.querySelector('.progress'),
+        removeBtn: withRemove ? wrap.querySelector('.node-remove') : null,
+        tries: 0,
+        last: '—',
+        timer: null,
+        tickMs: 250
+      };
+    }
+
+    function mountMiners(count){
+      minersGrid.innerHTML = '';
+      miners.length = 0;
+      const alpha = 'ABCDEFGHIJKL';
+      for(let i=0;i<count;i++){
+        const m = buildMiner(`Miner ${alpha[i]}`);
+        miners.push(m);
+        minersGrid.appendChild(m.el);
+      }
+    }
+
+    function startRings(arr){ arr.forEach(m => m.ringEl.style.animationPlayState = 'running'); }
+    function pauseRings(arr){ arr.forEach(m => m.ringEl.style.animationPlayState = 'paused'); }
+
+    function resetUserUI(){
+      userTries = 0;
+      userOutput.textContent = '—';
+      userAttempts.textContent = '0 attempts';
+      userCircle.classList.remove('winner','loser');
+    }
+
+    function resetMinerUI(arr){
+      arr.forEach(m => {
+        m.tries = 0; m.last = '—';
+        m.outputEl.textContent = '—';
+        m.attemptsEl.textContent = '0 tries';
+        m.el.classList.remove('winner','loser');
+      });
+    }
+
+    function pickNewTarget(len){ target = randomSequence(len); targetEl.textContent = target; }
+
+    function endGame(win){
+      gameRunning = false; winner = win;
+      enableMiningUI(false);
+      clearInterval(minerTimer); minerTimer = null;
+      pauseRings(miners);
+      const youWon = win.who === 'user';
+      const msg = youWon
+        ? `🎉 <strong>You win!</strong> Matched <span class="kbd">${win.sequence}</span>.`
+        : `⛏️ <strong>${win.label}</strong> won with <span class="kbd">${win.sequence}</span>.`;
+      setStatus(`${msg} <span class="live">Round over.</span> Press <strong>New Game</strong> to play again.`);
+      if(youWon){
+        userCircle.classList.add('winner');
+        miners.forEach(m => m.el.classList.add('loser'));
+      } else {
+        const winMiner = miners.find(m => m.label === win.label);
+        if(winMiner) winMiner.el.classList.add('winner');
+        userCircle.classList.add('loser');
+        miners.filter(m => m.label !== win.label).forEach(m => m.el.classList.add('loser'));
+      }
+      startBtn.style.display = 'none';
+      mineBtn.style.display = 'none';
+      mineBtn2.style.display = 'none';
+      resetBtn.style.display = 'inline-block';
+    }
+
+    function userMine(){
+      if(!gameRunning) return;
+      const seq = randomSequence(SEQ_LEN);
+      userTries++;
+      userOutput.textContent = seq;
+      userAttempts.textContent = `${userTries} ${userTries===1?'attempt':'attempts'}`;
+      if(seq === target) endGame({ who:'user', label:'You', sequence: seq });
+    }
+
+    function tickMiners(){
+      miners.forEach(m => {
+        if(!gameRunning) return;
+        const seq = randomSequence(SEQ_LEN);
+        m.last = seq; m.tries++;
+        m.outputEl.textContent = seq;
+        m.attemptsEl.textContent = `${m.tries} ${m.tries===1?'try':'tries'}`;
+        if(seq === target && gameRunning) endGame({ who:'miner', label:m.label, sequence: seq });
+      });
+    }
+
+    function startGame(){
+      const nodeCount = parseInt(l1NodeInput.value);
+      const tickMs    = Math.round(1000 / parseFloat(l1RateInput.value));
+      gameRunning = true; winner = null;
+      pickNewTarget(SEQ_LEN);
+      mountMiners(nodeCount);
+      minersHeader.textContent = `🤖 Simulated Miners (${nodeCount} nodes, ${l1RateInput.value}/s)`;
+      setStatus(`🟢 Mining started. First to match <span class="kbd">${target}</span> wins.`);
+      resetUserUI(); resetMinerUI(miners);
+      enableMiningUI(true); startRings(miners);
+      clearInterval(minerTimer);
+      minerTimer = setInterval(tickMiners, tickMs);
+      startBtn.style.display = 'none';
+      resetBtn.style.display = 'none';
+      mineBtn.style.display = 'inline-flex';
+      mineBtn2.style.display = 'inline-flex';
+    }
+
+    function newGame(){
+      // single action — reset then immediately start
+      clearInterval(minerTimer); minerTimer = null;
+      gameRunning = false; winner = null;
+      resetBtn.style.display = 'none';
+      mineBtn2.style.display = 'inline-flex';
+      startGame();
+    }
+
+    mountMiners(); pauseRings(miners);
+    startBtn.addEventListener('click', startGame);
+    resetBtn.addEventListener('click', newGame);
+    mineBtn.addEventListener('click', userMine);
+    mineBtn2.addEventListener('click', userMine);
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'm' || e.key === 'M'){
+        e.preventDefault();
+        if(activeLevel === 1 && !mineBtn.disabled) userMine();
+        if(activeLevel === 2 && !l2MineBtn.disabled) l2UserMine();
+      }
+      if((e.key === 'n' || e.key === 'N') && activeLevel === 1){
+        e.preventDefault();
+        if(!startBtn.disabled && startBtn.style.display !== 'none') startGame();
+        else if(resetBtn.style.display !== 'none') newGame();
+      }
+    });
+
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.hidden && !gameRunning && minerTimer){ clearInterval(minerTimer); minerTimer = null; }
+    });
+
+
+    // ============================================================
+    // LEVEL 2 — blockchain + difficulty adjustment
+    // ============================================================
+    const L2_TICK_MS = 250;
+    const L2_ADJUST_EVERY = 4;   // adjust every N blocks
+    const L2_INTER_BLOCK_MS = 1800; // pause between blocks
+
+    // State
+    let l2Running = false;
+    let l2Target = '';
+    let l2Difficulty = 3;         // number of flips (current)
+    let l2TargetSecs = 5;         // target block time
+    let l2TickMs = 250;           // ms between bot ticks (set on start)
+    let l2BlockNum = 0;
+    let l2BlockStart = null;      // Date.now() when current block started
+    let l2BlockTimes = [];        // times (ms) for each completed block
+    let l2MinerTimer = null;
+    let l2UserTries = 0;
+    let l2Paused = false;         // true during inter-block pause
+    const l2Miners = [];
+
+    const l2StatusEl      = document.getElementById('l2Status');
+    const l2StartBtn      = document.getElementById('l2StartBtn');
+    const l2StopBtn       = document.getElementById('l2StopBtn');
+    const l2MineBtn       = document.getElementById('l2MineBtn');
+    const l2MineBtn2      = document.getElementById('l2MineBtn2');
+    const l2UserOutput    = document.getElementById('l2UserOutput');
+    const l2UserAttempts  = document.getElementById('l2UserAttempts');
+    const l2UserCircle    = document.getElementById('l2UserCircle');
+    const l2MinersGrid    = document.getElementById('l2MinersGrid');
+    const l2BlockNumEl    = document.getElementById('l2BlockNum');
+    const l2DiffDisplay2  = document.getElementById('l2DiffDisplay2');
+    const l2LastTimeEl    = document.getElementById('l2LastTime');
+    const l2AvgTimeEl     = document.getElementById('l2AvgTime');
+    const l2NextAdjEl     = document.getElementById('l2NextAdj');
+    const l2CountdownEl   = document.getElementById('l2Countdown');
+    const blockLogEl      = document.getElementById('blockLog');
+
+    // Range inputs
+    const l2TargetInput  = document.getElementById('l2TargetInput');
+    const l2DiffInput    = document.getElementById('l2DiffInput');
+    const l2NodeInput    = document.getElementById('l2NodeInput');
+    const l2RateInput    = document.getElementById('l2RateInput');
+    document.getElementById('l2TargetDisplay').textContent = l2TargetInput.value;
+    document.getElementById('l2DiffDisplay').textContent   = l2DiffInput.value;
+    document.getElementById('l2NodeDisplay').textContent   = l2NodeInput.value;
+    document.getElementById('l2RateDisplay').textContent   = l2RateInput.value;
+    l2TargetInput.addEventListener('input', ()=>{ document.getElementById('l2TargetDisplay').textContent = l2TargetInput.value; });
+    l2DiffInput.addEventListener('input',  ()=>{ document.getElementById('l2DiffDisplay').textContent  = l2DiffInput.value; });
+    l2NodeInput.addEventListener('input',  ()=>{ document.getElementById('l2NodeDisplay').textContent  = l2NodeInput.value; });
+    l2RateInput.addEventListener('input',  ()=>{ document.getElementById('l2RateDisplay').textContent  = l2RateInput.value; });
+
+    const setL2Status = (msg) => l2StatusEl.innerHTML = msg;
+
+    function enableL2MiningUI(enabled){
+      l2MineBtn.disabled = !enabled;
+      l2MineBtn2.disabled = !enabled;
+    }
+
+    const L2_ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWX';
+
+    function updateMinerCount(){
+      const el = document.getElementById('minerCount');
+      if(el) el.textContent = `${l2Miners.length} / 24`;
+      const addBtn = document.getElementById('addMinerBtn');
+      if(addBtn) addBtn.disabled = l2Miners.length >= 24;
+    }
+
+    function startL2MinerTimer(m){
+      clearInterval(m.timer);
+      m.timer = setInterval(()=>{
+        if(!l2Running || l2Paused) return;
+        const seq = randomSequence(l2Difficulty);
+        m.last = seq; m.tries++;
+        m.outputEl.textContent = seq;
+        m.attemptsEl.textContent = `${m.tries} ${m.tries===1?'try':'tries'}`;
+        if(seq === l2Target && !l2Paused){
+          l2EndBlock({ who:'miner', label:m.label, sequence:seq });
+        }
+      }, m.tickMs);
+    }
+
+    function stopL2MinerTimer(m){
+      clearInterval(m.timer); m.timer = null;
+    }
+
+    function wireL2MinerRemove(m){
+      if(!m.removeBtn) return;
+      m.removeBtn.addEventListener('click', ()=>{
+        stopL2MinerTimer(m);
+        m.ringEl.style.animationPlayState = 'paused';
+        m.el.remove();
+        const idx = l2Miners.indexOf(m);
+        if(idx > -1) l2Miners.splice(idx, 1);
+        updateMinerCount();
+      });
+    }
+
+    function addL2Miner(){
+      if(l2Miners.length >= 24) return;
+      const usedLabels = new Set(l2Miners.map(m => m.label));
+      let label = '';
+      for(let i = 0; i < L2_ALPHA.length; i++){
+        const c = `Miner ${L2_ALPHA[i]}`;
+        if(!usedLabels.has(c)){ label = c; break; }
+      }
+      if(!label) label = `Miner ${l2Miners.length + 1}`;
+      const tickMs = Math.round(1000 / parseFloat(document.getElementById('newMinerRate').value));
+      const m = buildMiner(label, true);
+      m.tickMs = tickMs;
+      wireL2MinerRemove(m);
+      l2Miners.push(m);
+      l2MinersGrid.appendChild(m.el);
+      if(l2Running && !l2Paused){
+        startL2MinerTimer(m);
+        m.ringEl.style.animationPlayState = 'running';
+      }
+      updateMinerCount();
+    }
+
+    function mountL2Miners(count){
+      l2MinersGrid.innerHTML = '';
+      l2Miners.length = 0;
+      for(let i=0;i<count;i++){
+        const m = buildMiner(`Miner ${L2_ALPHA[i] || (i+1)}`, true);
+        m.tickMs = l2TickMs;
+        wireL2MinerRemove(m);
+        l2Miners.push(m);
+        l2MinersGrid.appendChild(m.el);
+      }
+      updateMinerCount();
+    }
+
+    function l2ResetUserUI(){
+      l2UserTries = 0;
+      l2UserOutput.textContent = '—';
+      l2UserAttempts.textContent = '0 attempts';
+      l2UserCircle.classList.remove('winner','loser');
+    }
+
+    function updateL2HUD(){
+      l2BlockNumEl.textContent   = l2BlockNum > 0 ? `#${l2BlockNum}` : '—';
+      l2DiffDisplay2.textContent = l2Difficulty;
+      const last = l2BlockTimes.length ? l2BlockTimes[l2BlockTimes.length-1] : null;
+      l2LastTimeEl.textContent   = last != null ? `${(last/1000).toFixed(1)}s` : '—';
+      // Average of last 4
+      const recent = l2BlockTimes.slice(-L2_ADJUST_EVERY);
+      if(recent.length){
+        const avg = recent.reduce((a,b)=>a+b,0)/recent.length;
+        l2AvgTimeEl.textContent = `${(avg/1000).toFixed(1)}s`;
+      } else {
+        l2AvgTimeEl.textContent = '—';
+      }
+      // Next adjustment
+      const blocksUntil = L2_ADJUST_EVERY - (l2BlockNum % L2_ADJUST_EVERY);
+      const nextAdjBlock = l2BlockNum + blocksUntil;
+      l2NextAdjEl.textContent = `Block ${nextAdjBlock}`;
+    }
+
+    function appendBlockLog(entry){
+      // entry: { type: 'block'|'adjustment', ... }
+      const div = document.createElement('div');
+      if(entry.type === 'block'){
+        div.className = 'log-row';
+        div.innerHTML = `
+          <span class="blk-num">Block #${entry.num}</span>
+          <span class="blk-winner">${entry.winner}</span>
+          <span class="blk-time">${(entry.timeMs/1000).toFixed(2)}s</span>
+          <span class="blk-diff">${entry.flips} flips</span>
+        `;
+      } else if(entry.type === 'adjustment'){
+        const cls = entry.direction === 'up' ? 'adj-up' : entry.direction === 'down' ? 'adj-down' : 'adj-same';
+        const icon = entry.direction === 'up' ? '🔺' : entry.direction === 'down' ? '🔻' : '➡️';
+        div.className = `adj-event ${cls}`;
+        div.innerHTML = `${icon} <strong>Difficulty Adjustment</strong> — avg ${(entry.avg/1000).toFixed(1)}s vs ${entry.target}s target → flips: ${entry.oldFlips} → ${entry.newFlips}`;
+      }
+      blockLogEl.prepend(div);
+    }
+
+    function runL2Adjustment(){
+      const recent = l2BlockTimes.slice(-L2_ADJUST_EVERY);
+      const avg = recent.reduce((a,b)=>a+b,0)/recent.length;
+      const targetMs = l2TargetSecs * 1000;
+      const oldFlips = l2Difficulty;
+      let newFlips = oldFlips;
+      let direction = 'same';
+
+      if(avg < targetMs * 0.8){
+        // Too fast — harder
+        newFlips = Math.min(oldFlips + 1, 10);
+        direction = newFlips > oldFlips ? 'up' : 'same';
+      } else if(avg > targetMs * 1.2){
+        // Too slow — easier
+        newFlips = Math.max(oldFlips - 1, 1);
+        direction = newFlips < oldFlips ? 'down' : 'same';
+      }
+
+      l2Difficulty = newFlips;
+      appendBlockLog({ type:'adjustment', avg, target: l2TargetSecs, oldFlips, newFlips, direction });
+    }
+
+    function l2EndBlock(win){
+      if(!l2Running || l2Paused) return;
+      l2Paused = true;
+      l2Miners.forEach(stopL2MinerTimer);
+      pauseRings(l2Miners);
+      enableL2MiningUI(false);
+
+      const elapsed = Date.now() - l2BlockStart;
+      l2BlockTimes.push(elapsed);
+
+      // Winner highlight
+      const youWon = win.who === 'user';
+      if(youWon){
+        l2UserCircle.classList.add('winner');
+        l2Miners.forEach(m => m.el.classList.add('loser'));
+      } else {
+        const winMiner = l2Miners.find(m => m.label === win.label);
+        if(winMiner) winMiner.el.classList.add('winner');
+        l2UserCircle.classList.add('loser');
+        l2Miners.filter(m => m.label !== win.label).forEach(m => m.el.classList.add('loser'));
+      }
+
+      appendBlockLog({ type:'block', num: l2BlockNum, winner: win.label, timeMs: elapsed, flips: l2Difficulty });
+
+      // Adjustment check (every L2_ADJUST_EVERY blocks)
+      if(l2BlockNum % L2_ADJUST_EVERY === 0){
+        runL2Adjustment();
+      }
+
+      updateL2HUD();
+
+      const msg = youWon
+        ? `🎉 <strong>You mined block #${l2BlockNum}!</strong> Time: ${(elapsed/1000).toFixed(2)}s`
+        : `⛏️ <strong>${win.label}</strong> mined block #${l2BlockNum}. Time: ${(elapsed/1000).toFixed(2)}s`;
+      setL2Status(`${msg} — next block starts shortly…`);
+
+      // Inter-block countdown then auto-start
+      let countdown = Math.round(L2_INTER_BLOCK_MS / 1000);
+      l2CountdownEl.style.display = 'block';
+      l2CountdownEl.textContent = `⛓ Next block in ${countdown}s…`;
+      const countdownInterval = setInterval(()=>{
+        countdown--;
+        if(countdown > 0){
+          l2CountdownEl.textContent = `⛓ Next block in ${countdown}s…`;
+        } else {
+          clearInterval(countdownInterval);
+          l2CountdownEl.style.display = 'none';
+          if(l2Running) l2StartBlock();
+        }
+      }, 1000);
+    }
+
+    function l2StartBlock(){
+      if(!l2Running) return;
+      l2Paused = false;
+      l2BlockNum++;
+      l2BlockStart = Date.now();
+      l2Target = randomSequence(l2Difficulty);
+      targetEl.textContent = l2Target;
+
+      // Reset miners and user for new block
+      l2ResetUserUI();
+      resetMinerUI(l2Miners);
+      l2Miners.forEach(m => m.el.classList.remove('winner','loser'));
+      l2UserCircle.classList.remove('winner','loser');
+
+      updateL2HUD();
+      enableL2MiningUI(true);
+      startRings(l2Miners);
+
+      setL2Status(`🟢 Mining block <strong>#${l2BlockNum}</strong> — match <span class="kbd">${l2Target}</span> (${l2Difficulty} flips, target ${l2TargetSecs}s)`);
+
+      l2Miners.forEach(startL2MinerTimer);
+    }
+
+    function l2UserMine(){
+      if(!l2Running || l2Paused) return;
+      const seq = randomSequence(l2Difficulty);
+      l2UserTries++;
+      l2UserOutput.textContent = seq;
+      l2UserAttempts.textContent = `${l2UserTries} ${l2UserTries===1?'attempt':'attempts'}`;
+      if(seq === l2Target){
+        l2EndBlock({ who:'user', label:'You', sequence:seq });
+      }
+    }
+
+    function startL2(){
+      const nodeCount   = parseInt(l2NodeInput.value);
+      l2Running = true; l2Paused = false;
+      l2BlockNum = 0; l2BlockTimes = [];
+      l2Difficulty = parseInt(l2DiffInput.value);
+      l2TargetSecs = parseInt(l2TargetInput.value);
+      l2TickMs     = Math.round(1000 / parseFloat(l2RateInput.value));
+      blockLogEl.innerHTML = '';
+      mountL2Miners(nodeCount);
+      document.getElementById('l2MinersHeader').textContent =
+        `🤖 Simulated Miners (${nodeCount} nodes, ${l2RateInput.value}/s)`;
+      updateL2HUD();
+      l2StartBtn.style.display = 'none';
+      l2StopBtn.style.display = 'inline-block';
+      l2TargetInput.disabled = true;
+      l2DiffInput.disabled   = true;
+      l2NodeInput.disabled   = true;
+      l2RateInput.disabled   = true;
+      document.getElementById('addMinerRow').style.display = 'flex';
+      l2StartBlock();
+    }
+
+    function stopL2(){
+      l2Running = false; l2Paused = false;
+      l2Miners.forEach(stopL2MinerTimer);
+      pauseRings(l2Miners);
+      enableL2MiningUI(false);
+      l2CountdownEl.style.display = 'none';
+      targetEl.textContent = '—';
+      l2StartBtn.style.display = 'inline-block';
+      l2StopBtn.style.display = 'none';
+      l2TargetInput.disabled = false;
+      l2DiffInput.disabled   = false;
+      l2NodeInput.disabled   = false;
+      l2RateInput.disabled   = false;
+      document.getElementById('addMinerRow').style.display = 'none';
+      setL2Status('Level 2 stopped. Configure settings and press <span class="kbd">Start Level 2</span>.');
+    }
+
+    // init: empty grid (no miners until game starts)
+    pauseRings(l2Miners);
+    l2StartBtn.addEventListener('click', startL2);
+    l2StopBtn.addEventListener('click', stopL2);
+    l2MineBtn.addEventListener('click', l2UserMine);
+    l2MineBtn2.addEventListener('click', l2UserMine);
+
+    const newMinerRateInput = document.getElementById('newMinerRate');
+    newMinerRateInput.addEventListener('input', ()=>{
+      document.getElementById('newMinerRateDisplay').textContent = newMinerRateInput.value;
+    });
+    document.getElementById('addMinerBtn').addEventListener('click', addL2Miner);
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.code === 'Space' && activeLevel === 2){
+        if(!l2MineBtn.disabled){ e.preventDefault(); l2UserMine(); }
+      }
+    });
+
+
+    // ============================================================
+    // TAB SWITCHING
+    // ============================================================
+    let activeLevel = 1;
+    const tab1 = document.getElementById('tab1');
+    const tab2 = document.getElementById('tab2');
+    const l1panel = document.getElementById('l1panel');
+    const l2panel = document.getElementById('l2panel');
+
+    tab1.addEventListener('click', ()=>{
+      activeLevel = 1;
+      tab1.classList.add('active'); tab2.classList.remove('active');
+      l1panel.style.display = ''; l2panel.style.display = 'none';
+    });
+
+    tab2.addEventListener('click', ()=>{
+      activeLevel = 2;
+      tab2.classList.add('active'); tab1.classList.remove('active');
+      l2panel.style.display = ''; l1panel.style.display = 'none';
+    });
+  </script>
+</body>
+</html>

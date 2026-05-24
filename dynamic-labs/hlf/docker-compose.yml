@@ -1,0 +1,91 @@
+name: hlf
+
+services:
+  hlf:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: hlf-web:latest
+    command: ["python", "web_service/ui_app.py"]
+    restart: unless-stopped
+    environment:
+      - HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
+    volumes:
+      - ./web_service:/opt/hlf/web_service
+      - ./web_ui:/opt/hlf/web_ui
+    ports:
+      - "${HTTP_PORT:-8086}:8080"
+    networks:
+      - router-net
+
+  hlf-runner:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: hlf-runner:latest
+    command: ["python", "web_service/app.py"]
+    restart: unless-stopped
+    stop_grace_period: 3m
+    environment:
+      HLF_WEB_SECRET_KEY: ${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
+      HLF_DEBUG: ${HLF_DEBUG:-0}
+      HLF_HOST_HLF_DIR: ${PWD}
+      HLF_AUTO_LAUNCH_WEB_UI: 0
+      HLF_AUTO_START_NETWORK: ${HLF_AUTO_START_NETWORK:-1}
+      HLF_STOP_NETWORK_ON_EXIT: ${HLF_STOP_NETWORK_ON_EXIT:-1}
+      DOCKER_BUILD_NETWORK: ${DOCKER_BUILD_NETWORK:-bridge}
+      HLF_PLATFORM: ${HLF_PLATFORM:-}
+      HLF_TTYD_ARCH: ${HLF_TTYD_ARCH:-}
+      HLF_STUDENT_COUNT: ${HLF_STUDENT_COUNT:-}
+      MAX_STUDENT_CAPACITY: ${MAX_STUDENT_CAPACITY:-20}
+      HLF_CLAIM_WARM_POOL_SIZE: ${HLF_CLAIM_WARM_POOL_SIZE:-3}
+      HLF_STUDENT_DISK_ROOT: ${HLF_STUDENT_DISK_ROOT:-}
+      STUDENT_PIDS_LIMIT: ${STUDENT_PIDS_LIMIT:-256}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./runtime:/opt/hlf/runtime
+      - ./web_service:/opt/hlf/web_service
+      - ./web_ui:/opt/hlf/web_ui
+      - ${PWD}:${PWD}
+      - ${PWD}/runtime:${PWD}/runtime
+    pre_stop:
+      - command: bash /opt/hlf/scripts/pre_stop_cleanup.sh
+        working_dir: /opt/hlf
+    networks:
+      - router-net
+
+  hlf-peer-ttyd:
+    profiles: [build-only]
+    platform: ${HLF_PLATFORM:-linux/amd64}
+    build:
+      context: .
+      dockerfile: Dockerfile.ttyd
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      args:
+        TTYD_ARCH: ${HLF_TTYD_ARCH:-x86_64}
+    image: hlf-peer-ttyd:latest
+
+  hlf-orderer-ttyd:
+    profiles: [build-only]
+    platform: ${HLF_PLATFORM:-linux/amd64}
+    build:
+      context: .
+      dockerfile: Dockerfile.ttyd
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      args:
+        FABRIC_ROLE: orderer
+        TTYD_ARCH: ${HLF_TTYD_ARCH:-x86_64}
+    image: hlf-orderer-ttyd:latest
+
+  chaincode-basic:
+    profiles: [build-only]
+    platform: ${HLF_PLATFORM:-linux/amd64}
+    build:
+      context: .
+      dockerfile: Dockerfile.chaincode
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: chaincode-basic:latest
+
+networks:
+  router-net:
+    external: true

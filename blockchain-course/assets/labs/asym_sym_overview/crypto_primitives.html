@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Primitives Lab - Key Exchange & Encryption</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .character-card {
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+        
+        .character-card.selected {
+            border-color: #10b981;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        }
+        
+        .step-card {
+            min-height: 50px;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            display: none;
+        }
+        
+        .step-card.active {
+            opacity: 1;
+            display: block;
+        }
+        
+        .crypto-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        
+        .message-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            margin: 10px 0;
+        }
+        
+        .envelope-exchange-container {
+            position: relative;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .envelope {
+            width: 60px;
+            height: 40px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        
+        .envelope-icon {
+            font-size: 20px;
+            animation: bounce 0.5s infinite alternate;
+        }
+        
+        .envelope-label {
+            font-size: 8px;
+            color: white;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+        
+        .message-bubble {
+            width: 80px;
+            height: 50px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 15;
+            border: 2px solid #fcd34d;
+        }
+        
+        .message-label {
+            font-size: 9px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        @keyframes bounce {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-3px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .message-display-animate {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+        }
+        
+        .glowing {
+            animation: glow 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes wrapBox {
+            0% { transform: scale(1); border-width: 2px; }
+            50% { transform: scale(1.1); border-width: 4px; }
+            100% { transform: scale(1); border-width: 4px; }
+        }
+        
+        .wrapping {
+            animation: wrapBox 1s ease-in-out;
+        }
+        
+        @keyframes unwrapBox {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        .unwrapping {
+            animation: unwrapBox 1s ease-out forwards;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+        }
+        
+        .sparkling {
+            animation: sparkle 0.8s ease-in-out infinite;
+        }
+        
+        
+        .arrow {
+            font-size: 2rem;
+            color: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="text-white text-center">
+            <div class="inline-block animate-spin rounded-full border-4 border-purple-400 border-t-transparent mb-4" style="width: 3rem; height: 3rem;"></div>
+            <h3 class="text-2xl">Loading Pyodide...</h3>
+            <p class="text-gray-300 mt-2">This may take a few seconds on first load</p>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-4 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center text-white mb-4">
+            <div class="flex items-center justify-between mb-2">
+                <a href="../index.html" class="text-white hover:text-purple-300 transition flex items-center text-sm">
+                    <i class="fas fa-arrow-left mr-2"></i> Back
+                </a>
+                <div class="px-3 py-1 bg-purple-600 rounded-lg text-sm">
+                    <i class="fas fa-user"></i> You are <strong>Alice</strong>
+                </div>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">
+                <i class="fas fa-key"></i> Crypto Primitives Lab
+            </h1>
+            <p class="text-sm text-gray-300">Understanding Key Exchange & Encrypted Communication</p>
+        </div>
+
+        <!-- Characters -->
+        <div id="characters" class="grid md:grid-cols-2 gap-4 mb-4">
+            <div class="character-card bg-gradient-to-br from-pink-900/50 to-rose-900/50 backdrop-blur-md rounded-lg p-4 text-center text-white">
+                <div class="text-4xl mb-2">👩</div>
+                <h3 class="text-lg font-bold mb-1">Alice</h3>
+                <div class="px-2 py-1 bg-purple-600 rounded-full text-xs">You</div>
+            </div>
+            
+            <div class="character-card bg-gradient-to-br from-blue-900/50 to-cyan-900/50 backdrop-blur-md rounded-lg p-4 text-center text-white">
+                <div class="text-4xl mb-2">👨</div>
+                <h3 class="text-lg font-bold mb-1">Bob</h3>
+                <div class="px-2 py-1 bg-blue-600 rounded-full text-xs">Communication Partner</div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="bg-white/10 backdrop-blur-md rounded-lg p-4">
+            <!-- Step Indicator - Compact at top -->
+            <div class="flex justify-center mb-3">
+                <div class="flex space-x-1 text-xs">
+                    <div class="step-indicator bg-purple-600 text-white px-3 py-1 rounded" data-step="0">1</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="1">2</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="2">3</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="3">4</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="4">5</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="5">6</div>
+                    <div class="step-indicator bg-gray-600 text-gray-300 px-3 py-1 rounded" data-step="6">7</div>
+                </div>
+            </div>
+
+            <!-- Single Frame Communication View -->
+            <div class="communication-frame mb-3 relative" style="height: 320px; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; border: 2px solid rgba(139, 92, 246, 0.3);" id="comm-frame">
+                <!-- Key Repository/Directory (Center Top) -->
+                <div id="key-repository" class="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-yellow-600/90 px-4 py-2 rounded-lg border-2 border-yellow-400 shadow-lg" style="display: none;">
+                    <div class="text-center">
+                        <div class="text-xl mb-1 animate-pulse">🗂️ Public Key Directory</div>
+                        <div id="repo-key-display" class="text-xs text-white font-mono font-bold"></div>
+                        <div class="text-xs text-yellow-200 mt-1">Anyone can access public keys!</div>
+                    </div>
+                </div>
+                
+                <!-- Alice Side (Left Center) -->
+                <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-center z-20">
+                    <div class="text-4xl mb-2">👩</div>
+                    <div class="text-sm font-bold text-purple-400">Alice</div>
+                    <div id="alice-status" class="text-xs text-gray-400 mt-1">Ready</div>
+                </div>
+                
+                <!-- Bob Side (Right Center) -->
+                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-center z-20">
+                    <div class="text-4xl mb-2">👨</div>
+                    <div class="text-sm font-bold text-blue-400">Bob</div>
+                    <div id="recipient-status" class="text-xs text-gray-400 mt-1">Available</div>
+                </div>
+                
+                <!-- Communication Path -->
+                <svg class="absolute inset-0 w-full h-full" style="pointer-events: none; z-index: 1;">
+                    <line id="communication-path" x1="80" y1="160" x2="80" y2="160" stroke="rgba(139, 92, 246, 0.4)" stroke-width="2" stroke-dasharray="5,5"/>
+                </svg>
+                
+                <!-- Shared Secret Generation Visual -->
+                <div id="secret-generation" class="absolute left-20 top-1/2 transform -translate-y-1/2 z-25" style="display: none;">
+                    <div class="bg-green-600/95 px-4 py-3 rounded-lg border-2 border-green-400 shadow-lg">
+                        <div class="flex items-center justify-center mb-2">
+                            <div class="text-3xl animate-spin mr-2">✨</div>
+                            <div class="text-sm text-white font-bold">Generating Random Secret</div>
+                        </div>
+                        <div id="secret-visual" class="text-xs text-yellow-300 font-mono mt-2 bg-black/50 px-2 py-1 rounded"></div>
+                        <div class="text-xs text-green-200 mt-2 text-center">This secret will be shared!</div>
+                    </div>
+                </div>
+                
+                <!-- Wrapping/Unwrapping Visuals -->
+                <div id="wrapping-visual" class="absolute z-25" style="display: none;">
+                    <div class="relative">
+                        <!-- Shared Secret Box -->
+                        <div id="secret-box" class="bg-green-500 p-4 rounded-lg border-2 border-green-400 shadow-lg">
+                            <div class="text-sm text-white font-bold mb-1">🔒 Shared Secret</div>
+                            <div id="secret-value-display" class="text-xs text-yellow-200 font-mono"></div>
+                        </div>
+                        <!-- Public Key Wrapper -->
+                        <div id="public-key-wrapper" class="absolute inset-0 border-4 border-blue-500 rounded-lg bg-blue-500/30" style="display: none;">
+                            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 z-30">
+                                <div class="bg-blue-700 px-3 py-1 rounded-lg border-2 border-blue-400 shadow-lg">
+                                    <div class="text-xs text-blue-100 font-bold">🔑 Bob's Public Key Wrapper</div>
+                                    <div class="text-xs text-blue-300 mt-1">Only Bob's private key can remove this!</div>
+                                </div>
+                            </div>
+                            <!-- Animated wrapper lines -->
+                            <div class="absolute inset-0 border-4 border-blue-400 rounded-lg animate-pulse"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="unwrapping-visual" class="absolute right-20 top-1/2 transform -translate-y-1/2 z-25" style="display: none;">
+                    <div class="bg-blue-600/95 px-4 py-3 rounded-lg border-2 border-blue-400 shadow-lg relative">
+                        <div id="private-key-tool" class="absolute -right-10 top-1/2 transform -translate-y-1/2 text-4xl animate-bounce">🔑</div>
+                        <div class="text-sm text-white font-bold mb-1">🔓 Unwrapping...</div>
+                        <div class="text-xs text-yellow-300 font-bold">Using MY Private Key</div>
+                        <div class="text-xs text-blue-200 mt-2">The wrapper is being removed!</div>
+                    </div>
+                </div>
+                
+                <!-- Envelopes and Messages -->
+                <div id="envelope-pubkey" class="envelope absolute" style="display: none; z-index: 15;">
+                    <div class="envelope-icon">🔑</div>
+                    <div class="envelope-label">Public Key</div>
+                </div>
+                
+                <div id="envelope-encrypted" class="envelope absolute" style="display: none; z-index: 15;">
+                    <div class="envelope-icon">📦</div>
+                    <div class="envelope-label">Wrapped Secret</div>
+                </div>
+                
+                <div id="envelope-acknowledgment" class="envelope absolute" style="display: none; z-index: 15;">
+                    <div class="envelope-icon">✅</div>
+                    <div class="envelope-label">Acknowledgment</div>
+                </div>
+                
+                <!-- Encrypted Messages -->
+                <div id="message-alice-to-bob" class="message-bubble absolute" style="display: none; z-index: 15;">
+                    <div class="message-label">🔒 Encrypted</div>
+                </div>
+                
+                <div id="message-bob-to-alice" class="message-bubble absolute" style="display: none; z-index: 15;">
+                    <div class="message-label">🔒 Encrypted</div>
+                </div>
+                
+                <!-- Action Indicators -->
+                <div id="action-indicator" class="absolute top-1/2 transform -translate-y-1/2 z-20 bg-black/70 px-4 py-2 rounded-lg border border-purple-400 whitespace-nowrap" style="display: none; max-width: calc(100% - 200px);">
+                    <div class="text-center text-white text-xs font-bold"></div>
+                </div>
+                
+                <!-- Message Display Areas -->
+                <div id="alice-message-display" class="absolute left-20 top-8 z-25 bg-purple-600/80 px-3 py-2 rounded-lg border border-purple-400" style="display: none; max-width: 180px;">
+                    <div class="text-xs text-white font-bold mb-1">👩 Alice:</div>
+                    <div id="alice-message-text" class="text-xs text-white"></div>
+                    <div id="alice-message-encrypted" class="text-xs text-yellow-300 mt-1 font-mono"></div>
+                </div>
+                
+                <div id="bob-message-display" class="absolute right-20 top-8 z-25 bg-blue-600/80 px-3 py-2 rounded-lg border border-blue-400" style="display: none; max-width: 180px;">
+                    <div class="text-xs text-white font-bold mb-1">👨 <span id="bob-message-name">Bob</span>:</div>
+                    <div id="bob-message-text" class="text-xs text-white"></div>
+                    <div id="bob-message-encrypted" class="text-xs text-yellow-300 mt-1 font-mono"></div>
+                </div>
+                
+                <!-- Step Information Display -->
+                <div id="step-info" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 bg-purple-600/80 px-4 py-2 rounded-lg">
+                    <div class="text-white text-xs font-bold text-center" id="step-info-text">Ready to begin key exchange with Bob</div>
+                </div>
+            </div>
+            
+            <!-- Success Modal -->
+            <div id="success-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" style="display: none;">
+                <div class="bg-gradient-to-br from-purple-900 to-blue-900 rounded-2xl p-8 max-w-md mx-4 border-4 border-green-500 shadow-2xl transform transition-all">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4 animate-bounce">🎉</div>
+                        <h2 class="text-3xl font-bold text-white mb-3">
+                            ✓ Secret Exchange Complete!
+                        </h2>
+                        <div class="bg-green-500/20 rounded-lg p-4 mb-4 border-2 border-green-400">
+                            <p class="text-green-300 font-bold text-lg mb-2">
+                                Both sides now have the shared secret key!
+                            </p>
+                            <p class="text-white text-sm">
+                                Alice and <span id="modal-recipient-name">Bob</span> can now exchange messages using fast symmetric encryption.
+                            </p>
+                        </div>
+                        <div class="bg-blue-500/20 rounded-lg p-3 mb-4 border-2 border-blue-400">
+                            <p class="text-blue-300 text-xs mb-1">
+                                <strong>Remember:</strong> Asymmetric encryption was only used to establish the shared secret.
+                            </p>
+                            <p class="text-blue-200 text-xs">
+                                All future communication uses efficient symmetric encryption!
+                            </p>
+                        </div>
+                        <button onclick="closeSuccessModal()" class="w-full py-3 bg-green-600 hover:bg-green-700 rounded-lg font-bold text-white transition transform hover:scale-105">
+                            <i class="fas fa-check mr-2"></i> Continue to Message Exchange
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step Content - Minimal to keep view stable -->
+            <div id="step-content" style="min-height: 100px;">
+                <!-- Step 0: Choose Recipient -->
+                <div class="step-card active" data-step="0">
+                    <p class="text-gray-300 text-center mb-2 text-sm" id="step0-instruction">
+                        Ready to begin key exchange with Bob. Click "Next Step" to continue.
+                    </p>
+                </div>
+
+                <!-- Step 1: Generate Keys -->
+                <div class="step-card" data-step="1">
+                    <h2 class="text-xl font-bold text-white mb-3 text-center">
+                        <i class="fas fa-key"></i> Step 2: Key Generation
+                    </h2>
+                    <div class="grid md:grid-cols-2 gap-3 mb-3">
+                        <div class="crypto-box p-3 rounded">
+                            <h3 class="text-sm font-bold text-purple-400 mb-2">
+                                <i class="fas fa-user"></i> Alice's Keys
+                            </h3>
+                            <div class="mb-2">
+                                <label class="text-gray-300 text-xs">Private:</label>
+                                <div id="alice-private" class="bg-black/50 p-1 rounded mt-1 text-green-400 text-xs"></div>
+                            </div>
+                            <div>
+                                <label class="text-gray-300 text-xs">Public:</label>
+                                <div id="alice-public" class="bg-black/50 p-1 rounded mt-1 text-blue-400 text-xs"></div>
+                            </div>
+                        </div>
+                        <div class="crypto-box p-3 rounded">
+                            <h3 class="text-sm font-bold text-blue-400 mb-2">
+                                <i class="fas fa-user"></i> <span id="recipient-name">Recipient's</span> Keys
+                            </h3>
+                            <div class="mb-2">
+                                <label class="text-gray-300 text-xs">Private:</label>
+                                <div id="recipient-private" class="bg-black/50 p-1 rounded mt-1 text-red-400 text-xs">*** SECRET ***</div>
+                            </div>
+                            <div>
+                                <label class="text-gray-300 text-xs">Public:</label>
+                                <div id="recipient-public" class="bg-black/50 p-1 rounded mt-1 text-blue-400 text-xs"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-300 text-center text-xs mb-3">
+                        <strong class="text-white">💡 Tip:</strong> Public keys are shared; private keys stay secret!
+                    </p>
+                </div>
+
+                <!-- Step 2: Create Shared Secret -->
+                <div class="step-card" data-step="2">
+                    <h2 class="text-xl font-bold text-white mb-3 text-center">
+                        <i class="fas fa-share-alt"></i> Step 3: Generate Shared Secret
+                    </h2>
+                    <div class="text-center text-xs text-gray-300 mb-3">
+                        Shared secret is being generated. Watch the frame above!
+                    </div>
+                    <div class="crypto-box p-3 rounded mb-3" style="opacity: 0.7;">
+                        <h3 class="text-sm font-bold text-green-400 mb-2">Shared Secret Key</h3>
+                        <div id="shared-secret" class="bg-black/50 p-2 rounded text-green-400 text-xs mb-2 font-mono"></div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Wrap Shared Secret -->
+                <div class="step-card" data-step="3">
+                    <h2 class="text-xl font-bold text-white mb-3 text-center">
+                        <i class="fas fa-lock"></i> Step 4: Wrap Shared Secret
+                    </h2>
+                    <div class="text-center text-xs text-gray-300 mb-3">
+                        Watch the frame above to see Alice wrap the secret with the recipient's public key!
+                    </div>
+                    <div class="crypto-box p-3 rounded mb-3" style="opacity: 0.7;">
+                        <h3 class="text-sm font-bold text-purple-400 mb-2">Encryption Details</h3>
+                        <div class="mb-2">
+                            <label class="text-gray-300 text-xs">Plaintext:</label>
+                            <div id="secret-plaintext" class="bg-black/50 p-1 rounded mt-1 text-green-400 text-xs font-mono"></div>
+                        </div>
+                        <div>
+                            <label class="text-gray-300 text-xs">Encrypted:</label>
+                            <div id="secret-encrypted" class="bg-black/50 p-1 rounded mt-1 text-yellow-400 text-xs font-mono"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Send Wrapped Secret -->
+                <div class="step-card" data-step="4">
+                    <h2 class="text-xl font-bold text-white mb-3 text-center">
+                        <i class="fas fa-paper-plane"></i> Step 5: Send Wrapped Secret
+                    </h2>
+                    <div class="text-center text-gray-300 text-sm mb-3">
+                        <p>Alice sends the wrapped secret to <span id="send-recipient-name">the recipient</span>.</p>
+                        <p class="text-xs mt-2 text-gray-400">Watch the animation above!</p>
+                    </div>
+                </div>
+
+                <!-- Step 6: Unlock Message with Private Key -->
+                <div class="step-card" data-step="5">
+                    <h2 class="text-xl font-bold text-white mb-3 text-center">
+                        <i class="fas fa-unlock"></i> Step 6: Unlock with Private Key
+                    </h2>
+                    <div class="text-center text-gray-300 text-sm mb-3">
+                        <p><span id="unlock-recipient-name">The recipient</span> uses his private key to unlock the message.</p>
+                        <p class="text-xs mt-2 text-gray-400">Watch the animation above to see the private key unlock the secret!</p>
+                    </div>
+                </div>
+
+                <!-- Step 7: Symmetric Encryption Communication -->
+                <div class="step-card" data-step="6">
+                    <h2 class="text-xl font-bold text-white mb-3 text-center">
+                        <i class="fas fa-comments"></i> Step 7: Symmetric Encryption Communication
+                    </h2>
+                    <div class="text-center text-xs text-gray-300 mb-3 p-2 bg-green-500/20 rounded border border-green-500">
+                        <p class="font-bold text-green-300">✓ Now Using Symmetric Encryption Only!</p>
+                        <p class="mt-1 text-gray-300">Both parties share the same secret key.</p>
+                        <p class="mt-1 text-gray-400">Fast and efficient for ongoing communication!</p>
+                    </div>
+                    <div class="text-center text-xs text-gray-400 mb-2">
+                        <p>Watch messages exchange automatically above using the shared secret!</p>
+                        <p class="mt-1 text-yellow-300">🔑 Same key used by both Alice and <span id="recipient-name-4-display2">Bob</span> for encryption/decryption</p>
+                    </div>
+                    <div class="space-y-2 mb-3" style="opacity: 0.8;">
+                        <div class="message-box text-xs px-2 py-1">
+                            <span class="font-bold">Alice:</span> <span id="alice-message" class="ml-1">Messages will appear here...</span>
+                            <div class="text-xs mt-1 opacity-75" id="alice-encrypted-status"></div>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-exchange-alt text-green-400 text-xs animate-pulse"></i>
+                            <p class="text-xs text-green-300 mt-1">Symmetric Encryption</p>
+                        </div>
+                        <div class="message-box text-xs px-2 py-1 bg-gradient-to-r from-blue-600 to-cyan-600">
+                            <span class="font-bold" id="recipient-name-4-display">Recipient:</span> <span id="recipient-message" class="ml-1">Messages will appear here...</span>
+                            <div class="text-xs mt-1 opacity-75" id="recipient-encrypted-status"></div>
+                        </div>
+                    </div>
+                    <div class="text-center text-xs text-gray-500 mt-3 p-2 bg-yellow-500/10 rounded border border-yellow-500/30">
+                        <p><strong>Key Insight:</strong> Asymmetric encryption (public/private keys) was only needed to establish the shared secret. Now all communication uses fast symmetric encryption!</p>
+                    </div>
+                </div>
+                
+            </div>
+
+            <!-- Navigation Buttons - Fixed position to avoid jumping -->
+            <div class="flex justify-between mt-3 sticky bottom-0 bg-white/10 backdrop-blur-sm py-2 -mx-4 px-4 rounded-b-lg border-t border-purple-500/30">
+                <button id="prev-btn" onclick="previousStep()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-white text-sm font-semibold transition opacity-50 cursor-not-allowed" disabled>
+                    <i class="fas fa-arrow-left mr-1"></i> Previous
+                </button>
+                <button id="next-btn" onclick="nextStep()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white text-sm font-semibold transition">
+                    Next Step <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Compact Info Panel -->
+        <div class="mt-4 bg-white/10 backdrop-blur-md rounded-lg p-3">
+            <h3 class="text-sm font-bold text-white mb-2">
+                <i class="fas fa-info-circle"></i> Learning Points
+            </h3>
+            <div class="grid md:grid-cols-4 gap-2 text-gray-200 text-xs">
+                <div>
+                    <h4 class="font-bold text-purple-400 text-xs mb-1">Public Key Encryption</h4>
+                    <p class="text-xs">Encrypt with public key, decrypt with private key</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-green-400 text-xs mb-1">Shared Secret</h4>
+                    <p class="text-xs">Enables fast two-way encrypted communication</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-blue-400 text-xs mb-1">Key Exchange</h4>
+                    <p class="text-xs">Securely transmit shared secret using public key</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-yellow-400 text-xs mb-1">Symmetric Encryption</h4>
+                    <p class="text-xs">Efficient once both parties have the secret</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pyodide -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+    
+    <!-- Main Script -->
+    <script src="crypto_primitives.js"></script>
+</body>
+</html>
+

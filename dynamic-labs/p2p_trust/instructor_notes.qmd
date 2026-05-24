@@ -1,0 +1,92 @@
+---
+title: "Instructor Guide: P2P Network Lab"
+format: pdf
+toc: true
+number-sections: true
+editor: visual
+---
+
+## Lab Overview & Tone
+
+This lab is designed to simulate a degraded, decentralized operational environment where traditional Command and Control (C2) and centralized authentication servers are unavailable. Students must adopt an adversarial mindset (OPFOR) to break the systems, and a defensive mindset to understand the mitigations.
+
+---
+
+## Part 1: Reputation System Audit
+
+### Phase 1: Sybil Attack Solutions
+**The Exploit Path:**
+
+1. Student runs `python3 ngo_sim.py score` and notes the current median is low.
+2. Student runs `python3 ngo_sim.py register` to create a fake node (e.g., `BadActor`). The system assigns a random 6-digit ID.
+3. Student runs `python3 ngo_sim.py register` again to create a burner node (e.g., `Fake1`).
+4. Student runs `python3 ngo_sim.py endorse`, inputs the ID for `Fake1`, and targets `BadActor`.
+5. Repeating this inflates the naive score, simulating a Sybil flood.
+
+**Discussion Points:**
+
+* *Open Registration Danger:* If spinning up a node is free, an adversary can instantly outvote legitimate nodes. In a military context, this is why Coalition networks require rigid onboarding and hardware roots of trust. 
+* *Anomaly vs. Malice:* A sudden spike in nodes *could* just be a new allied unit coming online. The key indicator of malice is the cross-endorsement clustering (the newly formed cluster exclusively praising one specific node).
+
+### Phase 2: Spoofing Solutions
+**The Exploit Path:**
+
+1. The instructor/student runs `python3 ngo_sim.py patch`.
+2. Student runs `python3 ngo_sim.py score` to find a highly active, verified node (e.g., `NGO_04`). Note its ID.
+3. Student runs `python3 ngo_sim.py endorse`, blindly inputs the ID of `NGO_04`, and targets their own malicious node.
+4. The system accepts it because the backend only checks if `NGO_04` *is allowed* to endorse, not if `NGO_04` *actually sent* the request.
+
+**Discussion Points:**
+
+* *Authorization vs. Authentication:* The patch authorized the ID, but the protocol failed to authenticate the packet. 
+* *Missing Crypto:* The solution is Public Key Infrastructure (PKI). Endorsements must be signed by the sender's private key. The ledger verifies the signature against the sender's known public key. 
+
+
+### Phase 3: EigenTrust Tracing
+**Execution:**
+Students run `python3 ngo_sim.py score` to recover the numeric ID for their suspicious `BadActor` row if needed, then `python3 ngo_sim.py audit --trace 123456` with `123456` replaced by their own attacker ID. They will see that despite having dozens of fake inbound links, `0.000` global trust is transferred because the fake nodes have no path back to the pre-trusted anchor nodes.
+
+**Discussion Points:**
+
+* *The Anchor:* EigenTrust utilizes an alpha damping factor. Every calculation round, a portion of trust is artificially routed back to known-good headquarters nodes. 
+* *Operational Risk:* If the pre-trusted nodes are destroyed, taken offline, or unreachable due to jamming, the entire trust calculation degrades. It creates a centralized point of failure in an otherwise decentralized system.
+
+---
+
+## Part 2: File System & Routing
+
+### Phase 4: Gossip vs DHT
+**Execution:**
+
+* `gossip_demo.py`: Students will see the "Broadcast" function scales exponentially.
+* `dht_demo.py`: Students must iteratively pick the highest number in their finger table that is *less than or equal to* the target hash. If they overshoot the target, they missed the node.
+
+**Discussion Points:**
+
+* *Bandwidth Storms:* A flood search in a 1,000-node tactical network will cripple the RF spectrum. It does not scale. 
+* *DHT Fragility:* DHTs require nodes to maintain accurate, updated routing tables. In a highly mobile, kinetic environment where nodes drop constantly, the structured ring fractures, causing routing failures. Gossip, while noisy, is highly resilient to node churn.
+
+### Phase 5: Pastry Fix (Advanced)
+**The Bug:**
+When `get_next_hop` encounters a prefix that it does not have an entry for, it currently returns `None`. 
+
+**The Solution:**
+Students need to edit `pastry.py` and replace the `return None` at the bottom of the `get_next_hop` function with a check against the `leaf_set`. 
+
+```python
+# --- Correct Solution for pastry.py ---
+# 2. If no Routing Table entry, check the Leaf Set
+if self.leaf_set:
+    best_leaf = min(self.leaf_set, key=lambda x: diff(x, target_key))
+    if diff(best_leaf, target_key) < diff(self.node_id, target_key):
+        return best_leaf
+
+# If even the leaf set doesn't have a closer node, 
+# we are the closest node to the key.
+return self.node_id
+```
+
+**Discussion Points:**
+
+* *Prefix Alone Fails:* Prefix tables are sparse to save memory. They guarantee logarithmic jumps, but they don't map every possible key.
+* *The Leaf Set:* The leaf set (the immediately adjacent nodes on the ring) guarantees that the ring is fully connected. If a massive prefix jump isn't available, the protocol can always fall back to "walking" along the leaf set to ensure the message arrives at the mathematically closest node.

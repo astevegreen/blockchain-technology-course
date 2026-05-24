@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symmetric Encryption Lab (AEAD)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .hero-pattern {
+            background-color: #0f172a;
+            background-image:
+                radial-gradient(at 47% 33%, hsl(264, 70%, 20%) 0, transparent 59%),
+                radial-gradient(at 82% 65%, hsl(218, 70%, 20%) 0, transparent 55%);
+        }
+        .card { transition: transform .2s ease; }
+        .card:hover { transform: translateY(-4px); }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    </style>
+</head>
+<body class="hero-pattern min-h-screen text-white">
+    <nav class="bg-black/50 backdrop-blur-md">
+        <div class="container mx-auto px-4 py-4 flex justify-end">
+            <div class="font-semibold">Symmetric Encryption Lab</div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold mb-2"><i class="fas fa-lock text-indigo-400"></i> Symmetric Encryption Lab</h1>
+            <p class="text-gray-300 max-w-3xl mx-auto">Hands-on exploration of modern symmetric encryption: try AES-GCM (AEAD), AES-CBC, and AES-CTR with randomly generated keys and nonces. See why nonce/IV rules matter and why ECB is unsafe.</p>
+        </header>
+
+        <section class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-indigo-500/30 mb-6">
+            <div class="grid md:grid-cols-3 gap-4 items-end">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Mode</label>
+                    <select id="mode" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2">
+                        <option value="AES-GCM">AES-GCM (AEAD)</option>
+                        <option value="AES-CBC">AES-CBC</option>
+                        <option value="AES-CTR">AES-CTR</option>
+                        <option value="ECB-visual">ECB (Visualization Only)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1">Key Size</label>
+                    <select id="keySize" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2">
+                        <option value="128">128-bit</option>
+                        <option value="192">192-bit</option>
+                        <option value="256" selected>256-bit</option>
+                    </select>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="btnGenKey" class="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded px-4 py-2">Generate Key</button>
+                    <button id="btnExportKey" class="flex-1 bg-indigo-600/60 hover:bg-indigo-700/60 rounded px-4 py-2">Export Key</button>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm text-gray-300 mb-1">Plaintext</label>
+                        <span id="ptBytes" class="text-xs text-gray-400">0 bytes</span>
+                    </div>
+                    <textarea id="plaintext" class="w-full h-28 bg-black/40 border border-white/20 rounded px-3 py-2" placeholder="Enter message to encrypt...">Hello, symmetric encryption!</textarea>
+                </div>
+                <div class="grid grid-rows-3 gap-3">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <label class="block text-sm text-gray-300 mb-1">IV / Nonce (hex)</label>
+                                <span id="ivBytes" class="text-xs text-gray-400">0 bytes</span>
+                            </div>
+                            <button id="btnRandomIv" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">Randomize</button>
+                        </div>
+                        <input id="ivHex" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2 mono" placeholder="e.g., 12ab... (96-bit recommended for GCM)" />
+                        <div class="text-xs mt-1"><span id="ivRule" class="text-gray-400">Rules: CBC requires unpredictable IV; CTR/GCM require unique nonce per key.</span></div>
+                    </div>
+                    <div id="aadRow" class="hidden">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-sm text-gray-300 mb-1">Associated Data (AAD)</label>
+                            <span class="flex items-center space-x-2">
+                                <select id="aadPreset" class="text-xs bg-black/40 border border-white/20 rounded px-2 py-1">
+                                    <option value="json_protocol">JSON protocol header</option>
+                                    <option value="http_headers">HTTP-style headers</option>
+                                    <option value="p2p_fields">P2P message fields</option>
+                                    <option value="empty">(empty)</option>
+                                </select>
+                                <button id="btnUseAadPreset" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">Insert</button>
+                                <span id="aadBytes" class="text-xs text-gray-400">0 bytes</span>
+                            </span>
+                        </div>
+                        <input id="aad" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2" placeholder="Authenticated but not encrypted (e.g., headers)" />
+                        <div class="text-xs text-gray-400 mt-1">AAD is verified at decryption time but never encrypted. If the AAD supplied to decrypt doesn't exactly match what was used during encryption, authentication fails and the message is rejected. Good choices are headers and routing info you want integrity-protected: JSON like <code>{"version":1,"msgType":"PAYMENT","sender":"Alice","recipient":"Bob"}</code> or HTTP-style fields like <code>Content-Type: application/json</code>, <code>X-Msg-Id: 123e4567</code>.</div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="btnEncrypt" class="flex-1 bg-green-600 hover:bg-green-700 rounded px-4 py-2">Encrypt</button>
+                        <button id="btnDecrypt" class="flex-1 bg-amber-600 hover:bg-amber-700 rounded px-4 py-2">Decrypt</button>
+                    </div>
+                </div>
+            </div>
+            <div id="keyPreviewRow" class="mt-4 bg-black/30 border border-white/10 rounded p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-sm font-semibold">Key Preview <span id="keyBits" class="text-xs text-gray-400"></span></div>
+                    <div class="space-x-2">
+                        <button id="btnToggleKey" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">Show</button>
+                        <button id="btnCopyKey" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">Copy</button>
+                    </div>
+                </div>
+                <div class="text-xs text-gray-400 mb-2">Educational view of the raw AES key (hex and base64). Never display or log keys in production systems.</div>
+                <textarea id="keyHex" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2 mono" readonly placeholder="(hidden)"></textarea>
+                <div class="text-xs text-gray-300 mt-2">Base64: <span id="keyB64" class="mono break-all"></span></div>
+            </div>
+            <div id="warn" class="mt-4 hidden bg-yellow-900/50 border border-yellow-600/40 rounded p-3 text-sm"></div>
+        </section>
+
+        <section class="grid md:grid-cols-2 gap-6">
+            <div class="card bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/10">
+                <h2 class="text-xl font-bold mb-3">Ciphertext</h2>
+                <textarea id="ciphertext" class="w-full h-40 bg-black/40 border border-white/20 rounded px-3 py-2 mono" readonly></textarea>
+                <div id="tagRow" class="hidden mt-3">
+                    <label class="block text-sm text-gray-300 mb-1">Auth Tag (GCM, hex)</label>
+                    <input id="authTag" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2 mono" readonly />
+                </div>
+                <div id="ctrInsightRow" class="hidden mt-3 bg-black/30 border border-white/10 rounded p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-semibold">CTR Insight</span>
+                        <button id="btnCtrRerun" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">New Nonce + Encrypt</button>
+                    </div>
+                    <div class="text-xs text-gray-300">Full counter block (16B): <span id="ctrNonceHex" class="mono"></span></div>
+                    <div class="text-xs text-gray-400 mt-1">The WebCrypto <code>length: 64</code> parameter means the first 8 bytes are a fixed nonce prefix; only the last 8 bytes increment as the counter.</div>
+                    <div class="text-xs text-gray-400 mt-1">First counter values (last 8 bytes incrementing):</div>
+                    <pre id="ctrCounters" class="mono text-[11px] bg-black/40 border border-white/10 rounded p-2 overflow-auto"></pre>
+                    <div class="text-xs text-gray-400">Keystream preview (encrypting zeros):</div>
+                    <pre id="ctrKeystream" class="mono text-[11px] bg-black/40 border border-white/10 rounded p-2 overflow-auto"></pre>
+                    <div class="text-[11px] text-gray-400">Same plaintext + new nonce ⇒ different keystream ⇒ different ciphertext.</div>
+                </div>
+            </div>
+            <div class="card bg-white/10 backdrop-blur-md rounded-xl p-5 border border-white/10">
+                <h2 class="text-xl font-bold mb-3">Decrypted Output</h2>
+                <textarea id="decrypted" class="w-full h-40 bg-black/40 border border-white/20 rounded px-3 py-2" readonly></textarea>
+                <div class="text-sm text-gray-400 mt-2">Decrypt uses current Mode, Key, and IV/Nonce; for GCM also uses the provided tag and AAD.</div>
+            </div>
+        </section>
+
+        <section class="mt-8 bg-white/10 backdrop-blur-md rounded-xl p-6 border border-blue-500/30">
+            <h2 class="text-2xl font-bold mb-2"><i class="fas fa-vial text-blue-400 mr-2"></i>Block Diff Explorer</h2>
+            <p class="text-gray-300 text-sm mb-2">See which ciphertext blocks change when you make a small edit. Behavior differs by mode:</p>
+            <ul class="text-gray-300 text-sm mb-4 list-disc list-inside space-y-1">
+                <li><strong>CBC</strong> — changes propagate to all later blocks due to chaining</li>
+                <li><strong>CTR</strong> — only the block(s) containing changed bytes differ</li>
+                <li><strong>GCM</strong> — same as CTR for the body, but the authentication tag always changes if anything changes</li>
+            </ul>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm text-gray-300 mb-1">Original Plaintext</label>
+                        <span id="ptABytes" class="text-xs text-gray-400">0 bytes</span>
+                    </div>
+                    <textarea id="ptA" class="w-full h-28 bg-black/40 border border-white/20 rounded px-3 py-2">Sphinx of black quartz, judge my vow.</textarea>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm text-gray-300 mb-1">Modified Plaintext</label>
+                        <span id="ptBBytes" class="text-xs text-gray-400">0 bytes</span>
+                    </div>
+                    <textarea id="ptB" class="w-full h-28 bg-black/40 border border-white/20 rounded px-3 py-2">Sphinx of black quartz, judge my vow!</textarea>
+                    <div class="text-xs text-gray-400 mt-1">Tip: change one character to see per-block impact.</div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 mt-3">
+                <button id="btnDiffEncrypt" class="bg-blue-600 hover:bg-blue-700 rounded px-4 py-2">Encrypt Both & Compare</button>
+                <span id="gcmTagNote" class="text-xs text-gray-400 hidden">GCM tag changes if anything (or AAD) changes.</span>
+            </div>
+            <div id="expectedList" class="mt-3 bg-black/20 border border-white/10 rounded p-3 text-xs text-gray-300"></div>
+            <div class="grid md:grid-cols-2 gap-4 mt-4">
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">Ciphertext A blocks <span class="text-gray-400 font-normal">(marked vs B)</span></h3>
+                    <pre id="blocksA" class="mono text-xs bg-black/40 border border-white/10 rounded p-3 overflow-auto"></pre>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-sm mb-2">Ciphertext B blocks <span class="text-gray-400 font-normal">(marked vs A)</span></h3>
+                    <pre id="blocksB" class="mono text-xs bg-black/40 border border-white/10 rounded p-3 overflow-auto"></pre>
+                </div>
+            </div>
+            <div id="legend" class="text-xs text-gray-400 mt-2">Legend: [=] identical block, [≠] different block. Block size = 16 bytes. Each panel shows its own ciphertext; [≠] marks blocks that differ from the other plaintext's encryption.</div>
+        </section>
+
+        <section class=”mt-8”>
+            <div class=”card bg-yellow-900/20 border border-yellow-700/30 rounded-xl p-5”>
+                <h3 class=”text-lg font-bold mb-2”><i class=”fas fa-triangle-exclamation text-yellow-400 mr-2”></i>ECB-style Visualization (Unsafe)</h3>
+                <p class=”text-gray-300 mb-3”>Browsers don’t expose AES-ECB. This demo hashes each 16-byte block with SHA-256 and shows the first 8 bytes as a stand-in “ciphertext.” Equal plaintext blocks map to equal outputs, illustrating ECB’s pattern leak. Try a repeated pattern:</p>
+                <div class=”flex space-x-2 mb-2”>
+                    <input id=”ecbInput” class=”flex-1 bg-black/40 border border-white/20 rounded px-3 py-2” value=”ABCDABCDABCDABCDABCDABCDABCDABCD” />
+                    <button id=”btnEcbVisualize” class=”bg-yellow-600 hover:bg-yellow-700 rounded px-4 py-2”>Visualize</button>
+                </div>
+                <div id=”ecbBlocks” class=”mono text-sm text-gray-200”></div>
+                <div class=”text-xs text-gray-400 mt-2”>Lesson: modes matter — use AEAD like GCM for confidentiality+integrity.</div>
+                <div class=”text-xs text-gray-400 mt-1”>Note: real ECB pads the last block to 16 bytes (PKCS#7) before encrypting. This simulation does not pad, so inputs not divisible by 16 bytes will have a shorter final block that differs from true ECB behavior.</div>
+            </div>
+        </section>
+
+        <section class=”mt-6 bg-white/10 backdrop-blur-md rounded-xl p-6 border border-green-500/30”>
+            <h3 class=”text-2xl font-bold mb-4”><i class=”fas fa-lightbulb text-green-400 mr-2”></i>Guidance</h3>
+            <div class=”grid md:grid-cols-2 gap-6 text-sm text-gray-300”>
+
+                <div>
+                    <h4 class=”font-semibold text-white mb-1”>1. Prefer AEAD: AES-GCM or ChaCha20-Poly1305</h4>
+                    <p class=”mb-2”>AEAD (Authenticated Encryption with Associated Data) provides <em>both</em> confidentiality and integrity in a single operation. Non-AEAD modes like CBC and CTR provide confidentiality only — an attacker can silently corrupt or tamper with ciphertext unless you add a separate MAC. Forgetting the MAC is a common and dangerous real-world mistake.</p>
+                    <p>AES-GCM is the standard choice in most environments. ChaCha20-Poly1305 is preferred when hardware AES acceleration is unavailable or when constant-time execution is a hard requirement (e.g., on embedded or mobile devices).</p>
+                </div>
+
+                <div>
+                    <h4 class=”font-semibold text-white mb-1”>2. Always supply AAD for metadata you want integrity-protected</h4>
+                    <p class=”mb-2”>GCM’s AAD field lets you authenticate metadata — routing headers, protocol version, sender/recipient identifiers — without encrypting it. If that metadata is modified in transit, decryption fails.</p>
+                    <p>Without AAD, an attacker could alter a header (e.g., change the recipient or message type) while the body decrypts successfully and the application never knows the message was tampered with.</p>
+                </div>
+
+                <div>
+                    <h4 class=”font-semibold text-white mb-1”>3. Nonce rules: unique per key, every single message</h4>
+                    <p class=”mb-2”><strong>CTR:</strong> If two messages share the same key and nonce, an attacker who observes both ciphertexts can XOR them to cancel the keystream, exposing a linear combination of the two plaintexts. With enough known context, both messages can be fully recovered.</p>
+                    <p class=”mb-2”><strong>GCM:</strong> Nonce reuse is catastrophic. GCM authenticates messages using a polynomial hash (GHASH) keyed by the encryption of the zero block under the same key. Reusing a nonce reveals this GHASH key, allowing the attacker to forge arbitrary authenticated messages — indefinitely, without ever learning the encryption key.</p>
+                    <p>Best practice: generate nonces randomly for each message (12 bytes / 96 bits for GCM). At 12 bytes, the probability of a random collision stays below 2<sup>−32</sup> for up to 2<sup>32</sup> messages under the same key. Beyond that threshold, rotate the key.</p>
+                </div>
+
+                <div>
+                    <h4 class=”font-semibold text-white mb-1”>4. CBC: use carefully, or avoid for new designs</h4>
+                    <p class=”mb-2”>CBC requires an IV that is <em>unpredictable</em> to the attacker before encryption. A predictable IV (e.g., a counter, or the previous ciphertext block) enables chosen-plaintext attacks. The BEAST attack exploited predictable IVs in TLS 1.0 to recover session cookies.</p>
+                    <p class=”mb-2”>CBC provides no integrity guarantee on its own. Without a MAC, an attacker can flip bits in a ciphertext block to predictably corrupt the decrypted output in the following block. CBC with PKCS#7 padding is also vulnerable to padding oracle attacks if decryption errors leak whether padding was valid — the POODLE and Lucky13 attacks exploited exactly this.</p>
+                    <p>For new designs, use GCM. If you must use CBC, pair it with HMAC-SHA256 (encrypt-then-MAC) and generate IVs with a CSPRNG.</p>
+                </div>
+
+                <div class=”md:col-span-2”>
+                    <h4 class=”font-semibold text-white mb-1”>5. Key management: CSPRNG and KDFs</h4>
+                    <div class=”grid md:grid-cols-2 gap-4”>
+                        <div>
+                            <p class=”mb-2”><strong>Use a CSPRNG.</strong> Keys must be generated with a cryptographically secure random number generator. In a browser, <code>crypto.getRandomValues()</code> is the correct API — what this lab uses. Never use <code>Math.random()</code> for anything security-sensitive; it is not cryptographically secure and its output can be predicted.</p>
+                        </div>
+                        <div>
+                            <p class=”mb-2”><strong>Derive keys from passwords with a KDF.</strong> If the key source is a user password, use a Key Derivation Function (KDF) such as PBKDF2, scrypt, or Argon2. These are deliberately slow and memory-hard, making brute-force attacks expensive. PBKDF2 is available in WebCrypto; scrypt and Argon2 require a library. Never use a password directly as a key — a 10-character password has far less entropy than a 256-bit random key and follows predictable patterns that attackers exploit.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <footer class="text-center text-gray-400 mt-10 text-sm">MIT License • Educational use</footer>
+    </main>
+
+    <script>
+        // Utility: encoders/decoders
+        const te = new TextEncoder();
+        const td = new TextDecoder();
+
+        function toHex(bytes) {
+            return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        function fromHex(hex) {
+            const clean = hex.replace(/[^0-9a-fA-F]/g, '');
+            if (clean.length % 2 !== 0) throw new Error('Hex length must be even');
+            const out = new Uint8Array(clean.length / 2);
+            for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i * 2, 2), 16);
+            return out;
+        }
+        function toBase64(bytes) {
+            return btoa(String.fromCharCode(...bytes));
+        }
+        function fromBase64(b64) {
+            const bin = atob(b64);
+            const out = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+            return out;
+        }
+
+        // State
+        let cryptoKey = null;
+        const usedNoncesByKey = new Map(); // keyId -> Set(hex nonce)
+        let lastCtrIv = null; // for CTR insight
+        let keyVisible = false;
+
+        function currentMode() { return document.getElementById('mode').value; }
+        function currentKeySize() { return parseInt(document.getElementById('keySize').value, 10); }
+
+        async function generateKey() {
+            const alg = currentMode().startsWith('AES-') ? currentMode() : 'AES-GCM';
+            const keyUsages = ['encrypt', 'decrypt'];
+            cryptoKey = await crypto.subtle.generateKey({ name: alg, length: currentKeySize() }, true, keyUsages);
+            showWarn('Generated a new key. Export or keep it in this session.');
+            usedNoncesByKey.clear();
+            await updateKeyPreview();
+        }
+
+        async function exportKey() {
+            if (!cryptoKey) return showWarn('Generate a key first.');
+            const jwk = await crypto.subtle.exportKey('jwk', cryptoKey);
+            const blob = new Blob([JSON.stringify(jwk, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'symmetric_key.jwk'; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function randomIvForMode(mode) {
+            if (mode === 'AES-GCM') return crypto.getRandomValues(new Uint8Array(12)); // 96-bit
+            if (mode === 'AES-CBC') return crypto.getRandomValues(new Uint8Array(16));
+            if (mode === 'AES-CTR') return crypto.getRandomValues(new Uint8Array(16)); // WebCrypto requires 16-byte counter
+            return crypto.getRandomValues(new Uint8Array(12));
+        }
+
+        function showWarn(msg) {
+            const el = document.getElementById('warn');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        function setModeUi() {
+            const mode = currentMode();
+            // Each AES mode requires a key generated with the matching algorithm name in WebCrypto.
+            // Clear so encrypt() will auto-generate a compatible key for the new mode.
+            cryptoKey = null;
+            updateKeyPreview();
+            document.getElementById('aadRow').classList.toggle('hidden', mode !== 'AES-GCM');
+            document.getElementById('tagRow').classList.toggle('hidden', mode !== 'AES-GCM');
+            updateByteInfos();
+        }
+
+        function rememberNonce(keyId, nonceHex) {
+            if (!usedNoncesByKey.has(keyId)) usedNoncesByKey.set(keyId, new Set());
+            const set = usedNoncesByKey.get(keyId);
+            const seen = set.has(nonceHex);
+            set.add(nonceHex);
+            return seen;
+        }
+
+        async function keyId() {
+            if (!cryptoKey) return '';
+            const jwk = await crypto.subtle.exportKey('jwk', cryptoKey);
+            // Hash the JWK to avoid exposing it. Simple hash via digest of JSON.
+            const data = te.encode(JSON.stringify({ k: jwk.k, kty: jwk.kty, alg: jwk.alg }));
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            return toHex(new Uint8Array(digest)).slice(0, 16);
+        }
+
+        async function encrypt() {
+            const mode = currentMode();
+            if (mode === 'ECB-visual') return showWarn('ECB is visualization-only. Choose CBC/CTR/GCM to encrypt.');
+            if (!cryptoKey) await generateKey();
+
+            const pt = te.encode(document.getElementById('plaintext').value);
+            let ivBytes;
+            try {
+                const ivHex = document.getElementById('ivHex').value.trim();
+                ivBytes = ivHex ? fromHex(ivHex) : randomIvForMode(mode);
+                if (!ivHex) document.getElementById('ivHex').value = toHex(ivBytes);
+            } catch (e) {
+                return showWarn('Invalid IV/Nonce hex.');
+            }
+
+            // Notify if IV size mismatches expectations
+            const ivLen = ivBytes.length;
+            const req = mode === 'AES-GCM' ? 12 : (mode === 'AES-CBC' ? 16 : (mode === 'AES-CTR' ? 16 : 12));
+            if (ivLen !== req) {
+                showWarn(`IV/Nonce is ${ivLen} bytes; expected ${req} bytes for ${mode}.`);
+            }
+
+            const kid = await keyId();
+            const seen = rememberNonce(kid, toHex(ivBytes));
+            if ((mode === 'AES-GCM' || mode === 'AES-CTR') && seen) {
+                showWarn('Warning: Nonce reuse detected for this key. This is unsafe for CTR/GCM.');
+            }
+
+            let params;
+            if (mode === 'AES-GCM') {
+                const aadStr = document.getElementById('aad').value;
+                params = { name: 'AES-GCM', iv: ivBytes, tagLength: 128 };
+                if (aadStr && aadStr.length > 0) {
+                    params.additionalData = te.encode(aadStr);
+                }
+            } else if (mode === 'AES-CBC') {
+                params = { name: 'AES-CBC', iv: ivBytes };
+            } else if (mode === 'AES-CTR') {
+                params = { name: 'AES-CTR', counter: ivBytes, length: 64 };
+            }
+
+            try {
+                const ctBuf = await crypto.subtle.encrypt(params, cryptoKey, pt);
+                const ct = new Uint8Array(ctBuf);
+                document.getElementById('ciphertext').value = toBase64(ct);
+                if (mode === 'AES-CTR') {
+                    lastCtrIv = ivBytes;
+                    await updateCtrInsight(ct.length);
+                } else {
+                    document.getElementById('ctrInsightRow').classList.add('hidden');
+                }
+                if (mode === 'AES-GCM') {
+                    // WebCrypto returns ciphertext || tag. Split last 16 bytes as tag.
+                    const tagLen = 16;
+                    if (ct.length >= tagLen) {
+                        const tag = ct.slice(ct.length - tagLen);
+                        const body = ct.slice(0, ct.length - tagLen);
+                        document.getElementById('ciphertext').value = toBase64(body);
+                        document.getElementById('authTag').value = toHex(tag);
+                    }
+                }
+            } catch (e) {
+                showWarn('Encryption failed: ' + e.message);
+            }
+        }
+
+        async function decrypt() {
+            const mode = currentMode();
+            if (mode === 'ECB-visual') return showWarn('ECB is visualization-only. Choose CBC/CTR/GCM to decrypt.');
+            if (!cryptoKey) return showWarn('Generate a key first.');
+
+            const ctB64 = document.getElementById('ciphertext').value.trim();
+            if (!ctB64) return showWarn('Provide ciphertext (base64).');
+            let ivBytes;
+            try {
+                ivBytes = fromHex(document.getElementById('ivHex').value.trim());
+            } catch (e) { return showWarn('Invalid IV/Nonce hex.'); }
+
+            let ct = fromBase64(ctB64);
+            let params;
+            if (mode === 'AES-GCM') {
+                const tagHex = document.getElementById('authTag').value.trim();
+                if (!tagHex) return showWarn('GCM requires the auth tag.');
+                const tag = fromHex(tagHex);
+                const merged = new Uint8Array(ct.length + tag.length);
+                merged.set(ct, 0); merged.set(tag, ct.length);
+                ct = merged;
+                const aadStr = document.getElementById('aad').value;
+                params = { name: 'AES-GCM', iv: ivBytes, tagLength: 128 };
+                if (aadStr && aadStr.length > 0) {
+                    params.additionalData = te.encode(aadStr);
+                }
+            } else if (mode === 'AES-CBC') {
+                params = { name: 'AES-CBC', iv: ivBytes };
+            } else if (mode === 'AES-CTR') {
+                params = { name: 'AES-CTR', counter: ivBytes, length: 64 };
+            }
+
+            try {
+                const ptBuf = await crypto.subtle.decrypt(params, cryptoKey, ct);
+                document.getElementById('decrypted').value = td.decode(ptBuf);
+            } catch (e) {
+                document.getElementById('decrypted').value = '';
+                showWarn('Decryption failed (wrong key/IV/tag/AAD?): ' + e.message);
+            }
+        }
+
+        async function ecbVisualize() {
+            const s = document.getElementById('ecbInput').value;
+            const blockSize = 16; // bytes
+            const bytes = te.encode(s);
+            const outLines = [];
+            for (let i = 0; i < bytes.length; i += blockSize) {
+                const block = bytes.slice(i, Math.min(i + blockSize, bytes.length));
+                const pHex = toHex(block);
+                const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', block));
+                const cHex = toHex(digest.slice(0, 8)); // first 8 bytes as stand-in
+                outLines.push(`P${(i / blockSize) + 1}: ${pHex}\nC${(i / blockSize) + 1}: ${cHex}`);
+            }
+            document.getElementById('ecbBlocks').textContent = outLines.join('\n\n') || '(no input)';
+        }
+
+        // Wire up UI
+        document.getElementById('mode').addEventListener('change', setModeUi);
+        document.getElementById('btnGenKey').addEventListener('click', generateKey);
+        document.getElementById('btnExportKey').addEventListener('click', exportKey);
+        document.getElementById('btnRandomIv').addEventListener('click', () => {
+            const iv = randomIvForMode(currentMode());
+            document.getElementById('ivHex').value = toHex(iv);
+        });
+        document.getElementById('btnEncrypt').addEventListener('click', encrypt);
+        document.getElementById('btnDecrypt').addEventListener('click', decrypt);
+        document.getElementById('btnEcbVisualize').addEventListener('click', () => { ecbVisualize(); });
+        document.getElementById('btnCtrRerun').addEventListener('click', async () => {
+            if (currentMode() !== 'AES-CTR') { showWarn('Switch to AES-CTR to use this.'); return; }
+            const iv = randomIvForMode('AES-CTR');
+            document.getElementById('ivHex').value = toHex(iv);
+            await encrypt();
+        });
+        document.getElementById('btnToggleKey').addEventListener('click', async () => {
+            keyVisible = !keyVisible;
+            await updateKeyPreview();
+        });
+        document.getElementById('btnCopyKey').addEventListener('click', async () => {
+            const hex = document.getElementById('keyHex').value;
+            try { await navigator.clipboard.writeText(hex); showWarn('Key copied to clipboard (hex).'); } catch (_) {}
+        });
+        document.getElementById('btnUseAadPreset').addEventListener('click', () => {
+            const sel = document.getElementById('aadPreset').value;
+            let v = '';
+            if (sel === 'json_protocol') {
+                v = '{"version":1,"msgType":"PAYMENT","sender":"Alice","recipient":"Bob"}';
+            } else if (sel === 'http_headers') {
+                v = 'Content-Type: application/json\nX-Msg-Id: 123e4567-e89b-12d3-a456-426614174000';
+            } else if (sel === 'p2p_fields') {
+                v = 'network: mainnet\nchannel: payments\nseq: 42';
+            } else {
+                v = '';
+            }
+            document.getElementById('aad').value = v;
+            updateByteInfos();
+        });
+
+        function splitCiphertextBodyAndTag() {
+            const mode = currentMode();
+            const ctB64 = document.getElementById('ciphertext').value.trim();
+            if (!ctB64) return { body: new Uint8Array(), tag: null };
+            let ct = fromBase64(ctB64);
+            if (mode === 'AES-GCM' && ct.length > 0) {
+                // In our UI, ciphertext textarea holds body only for GCM
+                const tagHex = document.getElementById('authTag').value.trim();
+                const tag = tagHex ? fromHex(tagHex) : null;
+                return { body: ct, tag };
+            }
+            return { body: ct, tag: null };
+        }
+
+        function setExpectedCopy() {
+            const mode = currentMode();
+            const el = document.getElementById('expectedList');
+            if (mode === 'AES-CBC') {
+                el.innerHTML = '<li>• CBC: A difference starting at plaintext block N causes ciphertext blocks N <em>and all subsequent blocks</em> to differ, because each ciphertext block is fed into the encryption of the next (forward chaining).</li><li>• CBC provides no authentication — a separate MAC or AEAD mode is required to detect tampering.</li>';
+            } else if (mode === 'AES-CTR') {
+                el.innerHTML = '<li>• CTR: Only the ciphertext block(s) that contain changed plaintext bytes will differ. Blocks before and after the change are identical, because CTR encrypts each block independently using a keystream.</li><li>• CTR provides no authentication — without a MAC an attacker can flip individual ciphertext bits to predictably flip plaintext bits.</li>';
+            } else if (mode === 'AES-GCM') {
+                el.innerHTML = '<li>• GCM body: Like CTR, only blocks containing changed bytes will differ.</li><li>• GCM tag: The authentication tag will always differ if <em>anything</em> in the plaintext or AAD changes — even a single bit.</li><li>• If you supply AAD, modify it here and click Encrypt Both &amp; Compare to see the tag change even when the plaintexts are identical.</li>';
+            } else {
+                el.innerHTML = '<li>• Select CBC, CTR, or GCM and click <em>Encrypt Both &amp; Compare</em> to see mode-specific diffusion behavior.</li>';
+            }
+        }
+
+        document.getElementById('mode').addEventListener('change', () => { setExpectedCopy(); });
+
+        async function encryptForDiff(plaintextStr) {
+            const mode = currentMode();
+            if (!cryptoKey) await generateKey();
+            let ivBytes;
+            try {
+                const ivHex = document.getElementById('ivHex').value.trim();
+                ivBytes = ivHex ? fromHex(ivHex) : randomIvForMode(mode);
+                if (!ivHex) document.getElementById('ivHex').value = toHex(ivBytes);
+            } catch (e) {
+                showWarn('Invalid IV/Nonce hex.');
+                return { body: new Uint8Array(), tag: null };
+            }
+            const pt = te.encode(plaintextStr);
+            let params;
+            if (mode === 'AES-GCM') {
+                const aadStr = document.getElementById('aad').value;
+                params = { name: 'AES-GCM', iv: ivBytes, tagLength: 128 };
+                if (aadStr && aadStr.length > 0) params.additionalData = te.encode(aadStr);
+            } else if (mode === 'AES-CBC') {
+                params = { name: 'AES-CBC', iv: ivBytes };
+            } else if (mode === 'AES-CTR') {
+                params = { name: 'AES-CTR', counter: ivBytes, length: 64 };
+            } else {
+                return { body: new Uint8Array(), tag: null };
+            }
+            const ctBuf = await crypto.subtle.encrypt(params, cryptoKey, pt);
+            const ct = new Uint8Array(ctBuf);
+            if (mode === 'AES-GCM') {
+                const tag = ct.slice(ct.length - 16);
+                const body = ct.slice(0, ct.length - 16);
+                return { body, tag };
+            }
+            return { body: ct, tag: null };
+        }
+
+        // Renders `primary` blocks in elId, with [=]/[≠] diff marks comparing each block to `other`.
+        function renderBlockList(elId, primary, other) {
+            const blockSize = 16;
+            const blocks = [];
+            for (let i = 0; i < Math.max(primary.length, other.length); i += blockSize) {
+                const a = primary.slice(i, i + blockSize);
+                const b = other.slice(i, i + blockSize);
+                const equal = a.length === b.length && a.every((v, idx) => v === b[idx]);
+                const mark = equal ? '[=]' : '[≠]';
+                blocks.push(`${(i / blockSize) | 0} ${mark}  ${toHex(a)}`);
+            }
+            document.getElementById(elId).textContent = blocks.join('\n');
+        }
+
+        async function runDiff() {
+            const mode = currentMode();
+            const a = document.getElementById('ptA').value;
+            const b = document.getElementById('ptB').value;
+            const encA = await encryptForDiff(a);
+            const encB = await encryptForDiff(b);
+            // Each panel shows its own ciphertext; [≠] marks blocks that differ from the other.
+            renderBlockList('blocksA', encA.body, encB.body);
+            renderBlockList('blocksB', encB.body, encA.body);
+            document.getElementById('gcmTagNote').classList.toggle('hidden', mode !== 'AES-GCM');
+            setExpectedCopy();
+        }
+
+        document.getElementById('btnDiffEncrypt').addEventListener('click', runDiff);
+        ;['ptA','ptB'].forEach(id => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', () => {
+                const len = te.encode(el.value).length;
+                document.getElementById(id === 'ptA' ? 'ptABytes' : 'ptBBytes').textContent = `${len} bytes`;
+            });
+        });
+
+        async function updateKeyPreview() {
+            const bitsEl = document.getElementById('keyBits');
+            const hexEl = document.getElementById('keyHex');
+            const b64El = document.getElementById('keyB64');
+            const btn = document.getElementById('btnToggleKey');
+            bitsEl.textContent = cryptoKey ? `(${currentKeySize()}-bit AES)` : '';
+            if (!cryptoKey || !keyVisible) {
+                hexEl.value = '';
+                b64El.textContent = '';
+                btn.textContent = 'Show';
+                return;
+            }
+            try {
+                const raw = new Uint8Array(await crypto.subtle.exportKey('raw', cryptoKey));
+                hexEl.value = toHex(raw);
+                b64El.textContent = toBase64(raw);
+                btn.textContent = 'Hide';
+            } catch (e) {
+                hexEl.value = '(not available)';
+                b64El.textContent = '';
+            }
+        }
+
+        function incCounterBigEndian(bytes, add = 1, lastBytes = 8) {
+            const out = new Uint8Array(bytes);
+            let carry = add;
+            for (let i = 0; i < lastBytes; i++) {
+                const idx = out.length - 1 - i;
+                const sum = out[idx] + (carry & 0xFF);
+                out[idx] = sum & 0xFF;
+                carry = (carry >>> 8) + (sum >>> 8);
+                if (!carry) break;
+            }
+            return out;
+        }
+
+        async function updateCtrInsight(totalLen) {
+            try {
+                const row = document.getElementById('ctrInsightRow');
+                if (currentMode() !== 'AES-CTR' || !cryptoKey || !lastCtrIv) { row.classList.add('hidden'); return; }
+                row.classList.remove('hidden');
+                document.getElementById('ctrNonceHex').textContent = toHex(lastCtrIv);
+                const blocks = Math.min(4, Math.max(1, Math.ceil((totalLen || 64) / 16)));
+                const lines = [];
+                for (let i = 0; i < blocks; i++) {
+                    const ctr = incCounterBigEndian(lastCtrIv, i, 8);
+                    lines.push(`${i}: ${toHex(ctr)}`);
+                }
+                document.getElementById('ctrCounters').textContent = lines.join('\n');
+                // Keystream preview: encrypt zeros
+                const zeros = new Uint8Array(blocks * 16);
+                const ksParams = { name: 'AES-CTR', counter: lastCtrIv, length: 64 };
+                const ksBuf = await crypto.subtle.encrypt(ksParams, cryptoKey, zeros);
+                const ks = new Uint8Array(ksBuf);
+                const ksLines = [];
+                for (let i = 0; i < ks.length; i += 16) {
+                    ksLines.push(`${(i/16)|0}: ${toHex(ks.slice(i, i+16))}`);
+                }
+                document.getElementById('ctrKeystream').textContent = ksLines.join('\n');
+            } catch (e) {
+                document.getElementById('ctrInsightRow').classList.add('hidden');
+            }
+        }
+
+        function updateByteInfos() {
+            const pt = document.getElementById('plaintext').value;
+            const aadStr = document.getElementById('aad').value || '';
+            const ivHex = document.getElementById('ivHex').value.trim();
+            const mode = currentMode();
+
+            const ptLen = te.encode(pt).length;
+            document.getElementById('ptBytes').textContent = `${ptLen} bytes`;
+
+            let ivLen = 0;
+            try { ivLen = ivHex ? fromHex(ivHex).length : 0; } catch (_) { ivLen = 0; }
+            const req = mode === 'AES-GCM' ? 12 : (mode === 'AES-CBC' ? 16 : (mode === 'AES-CTR' ? 16 : 0));
+            const ivInfo = document.getElementById('ivBytes');
+            ivInfo.textContent = `${ivLen} bytes (required: ${req})`;
+
+            const rule = document.getElementById('ivRule');
+            rule.textContent = mode === 'AES-GCM'
+                ? 'GCM: 12-byte nonce required; must be unique per key.'
+                : (mode === 'AES-CBC'
+                    ? 'CBC: 16-byte IV required; must be unpredictable (random).'
+                    : 'CTR: 16-byte counter block required (8-byte nonce prefix + 8-byte counter with length:64). Nonce must be unique per key.');
+
+            const aadLen = te.encode(aadStr).length;
+            const aadEl = document.getElementById('aadBytes');
+            if (aadEl) aadEl.textContent = `${aadLen} bytes (optional)`;
+        }
+
+        ['plaintext','aad','ivHex'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateByteInfos);
+        });
+        document.getElementById('mode').addEventListener('change', updateByteInfos);
+
+        // Init
+        setModeUi();
+        document.getElementById('ivHex').value = toHex(randomIvForMode('AES-GCM'));
+        updateByteInfos();
+        setExpectedCopy();
+    </script>
+</body>
+</html>

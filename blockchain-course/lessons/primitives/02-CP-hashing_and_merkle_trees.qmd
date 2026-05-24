@@ -1,0 +1,1042 @@
+---
+title: "Hashing and Merkle Trees"
+subtitle: 'Section II: Cryptographic Primitives'
+author: Army Cyber Institute
+lesson: 02-CP
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+
+## Objectives and Roadmap
+
+- Define a cryptographic hash function
+
+- Explain key properties: preimage, second‑preimage, collision resistance, and avalanche.
+
+- Build and verify Merkle tree commitments and inclusion proofs; discuss variants and pitfalls.
+
+- Understand the relevance of hashing to commit information within blockchain technology.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes the lesson roadmap from hash definitions to Merkle commitments and proofs. It matters here because students need to see that the session will move from individual hash properties to large-scale verification structures. Emphasize that blockchain relevance comes from using simple hash rules to verify large datasets efficiently.
+
+**Key Points**
+- The lesson starts with what a cryptographic hash function is and why its properties matter.
+- It then shows how those same properties enable Merkle trees and compact inclusion proofs.
+- A commitment is a short value that binds you to data without revealing all of it.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## What Is a Cryptographic Hash Function?
+
+- **Definition:** A deterministic algorithm that maps input of any length → fixed-length digest.  
+- **Formally:** $h : \{0,1\}^* \rightarrow \{0,1\}^n$
+- **Key properties:**  
+  - Deterministic: same input → same output.  
+  - Fast to compute.  
+  - Infeasible to invert (one-way).  
+  - Collision-resistant (no two distinct inputs share same hash).  
+- Output length typically 256 or 512 bits (e.g., SHA-256).
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the formal definition of a cryptographic hash function before the lesson starts unpacking its security properties one by one. It matters here because later slides assume students can separate determinism, fixed-length output, and one-way behavior. Emphasize that hashing is not encryption; it is a compact digest mechanism used for integrity and commitment.
+
+**Key Points**
+- A cryptographic hash maps arbitrary-length input to a fixed-length digest.
+- Deterministic means the same input always produces the same output.
+- Collision resistance means it should be infeasible to find two different inputs with the same digest.
+
+**Walkthrough**
+None
+
+**Sources**
+@nationalinstituteofstandardsandtechnologyus_securehashstandard_2015; @boneh_hashfunctions_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Hash Function Properties {.smaller}
+
+| Property | Meaning | Importance |
+|-----------|----------|-------------|
+| **Pre-image resistance** | Hard to find input for given hash. | Protects passwords and commitments. |
+| **Second pre-image resistance** | Hard to find another input with same hash. | Prevents forgery. |
+| **Collision resistance** | Hard to find *any* two inputs with same hash. | Ensures uniqueness and integrity. |
+| **Avalanche effect** | Tiny input change → major output change. | Detects even 1-bit alteration. |
+| **Uniform Distribution** | Outputs should be uniformly distributed | no structural shortcuts should exist. |
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the main security properties students will keep reusing throughout the lesson. It matters here because the next several slides each zoom in on one property and its real security consequences. Emphasize the distinctions among the properties so students do not collapse them into a vague idea of “strong hash.”
+
+**Key Points**
+- Pre-image, second pre-image, and collision resistance protect against different attacker goals.
+- Avalanche and uniform output describe how a strong hash should behave statistically.
+- MD5 and SHA-1 are important cautionary examples because public analysis found practical weaknesses.
+
+**Walkthrough**
+None
+
+**Sources**
+@nationalinstituteofstandardsandtechnologyus_securehashstandard_2015; @boneh_hashfunctions_2020; @katz_introductionmoderncryptography_2020
+
+:::
+
+## Pre-Image Resistance {.smaller}
+
+- **Definition:** Given a hash value $y$, it should be computationally infeasible to find any input $x$ such that $h(x) = y$.  
+- **Intuition:** Hashing is a one-way street — easy to go forward, practically impossible to reverse.  
+- **Example:**  
+  - $h(\text{"password123"})$ $\rightarrow$ `ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f`  
+  - $h(\text{"correcthorsebatterystaple"})$ $\rightarrow$ `cbe6beb26479b568e5f15b50217c6c83c0ee051dc4e522b9840d8e291d6aaf46`
+- **Use Cases:**  
+  - Password storage  
+  - Commitment schemes  
+  - Blockchain mining puzzles
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes pre-image resistance as the one-way property that keeps a digest from being directly inverted into its original input. It matters here because many everyday hash applications depend on the idea that seeing a hash is not enough to recover the underlying value. Emphasize that the claim is computational hardness under standard assumptions, not absolute impossibility.
+
+**Key Points**
+- Pre-image resistance asks whether an attacker can recover any input for a given digest.
+- This property supports password storage, commitments, and proof-of-work style puzzles.
+- Computationally infeasible means too costly for realistic attackers using known methods.
+
+**Walkthrough**
+None
+
+**Sources**
+@nationalinstituteofstandardsandtechnologyus_securehashstandard_2015; @katz_introductionmoderncryptography_2020
+
+:::
+
+## Second Pre-image Resistance
+
+- **Definition:** Given one input $x_1$, it should be infeasible to find another distinct input $x_2 \neq x_1$ such that $h(x_1) = h(x_2)$.  
+- **Intuition:** You can’t find a “different message” that produces the same hash.  
+- **Example:**  
+  - If $h(\text{"Alice pays Bob \$10"})$ is known,  
+    an attacker shouldn’t be able to find another message like "Alice pays Mallory \$100" with the same digest. 
+- **Use Case:** Prevents document or transaction substitution attacks.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes second pre-image resistance as protection against swapping one known message for another with the same digest. It matters here because integrity systems often begin with an existing message that an attacker wants to replace, not a random target hash. Emphasize the difference from pre-image resistance: the attacker starts from one fixed original message.
+
+**Key Points**
+- Second pre-image resistance prevents finding a different message that matches a known message’s digest.
+- It is especially relevant for signed files, documents, and transaction records.
+- Substitution attacks matter when a verifier trusts the digest of a specific original message.
+
+**Walkthrough**
+None
+
+**Sources**
+@boneh_hashfunctions_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+## Collision Resistance {.smaller}
+
+- **Definition:** It should be infeasible to find *any* two distinct inputs $x_1, x_2$ such that $h(x_1) = h(x_2)$.  
+- **Intuition:** No two different messages share the same fingerprint.  
+- **Example:**  
+  - MD5 and SHA-1 are **broken** because practical collisions have been found.  
+  - SHA-256 and SHA-3 are currently **collision resistant**.  
+- **Use Case:**  
+  - Essential for digital signatures, certificates, and blockchains.  
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes collision resistance as the strongest and most system-breaking hash property when it fails. It matters here because Merkle commitments, signatures, and certificates all assume attackers cannot cheaply manufacture digest matches. Emphasize that collision attacks target any two messages, which is why the birthday bound becomes so important.
+
+**Key Points**
+- Collision resistance asks whether an attacker can find any two distinct inputs with the same digest.
+- Broken hash families like MD5 and SHA-1 show that collision weaknesses become practical attack paths.
+- Birthday-bound attacks are easier than full inversion, so output length matters a lot.
+
+**Walkthrough**
+None
+
+**Sources**
+@stevens_firstcollisionfull_2017; @nationalinstituteofstandardsandtechnologyus_securehashstandard_2015
+
+:::
+
+## Avalanche Effect 
+
+- A hallmark of good hash and cipher design.  
+- **Definition:** A small change in the input causes a large, unpredictable change in the output.  
+- Ensures:  
+  - No visible correlation between input and output.  
+  - Robust diffusion — even minimal edits radically alter results.  
+- Demonstration:  
+  - Hash("HELLO") → `3615f80c9d293ed7...`  
+  - Hash("HELLo") → `c6f4b0a7af12e91b...`
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the avalanche effect as the visible symptom of good diffusion in a hash design. It matters here because students can often understand “sensitivity to small changes” faster than they can understand formal resistance definitions. Emphasize that strong hashes should destroy visible relationships between similar inputs.
+
+**Key Points**
+- Changing one bit or character should drastically change the digest.
+- Diffusion means input structure spreads across many output bits.
+- Without strong avalanche behavior, attackers may learn patterns from related inputs.
+
+**Walkthrough**
+None
+
+**Sources**
+@nationalinstituteofstandardsandtechnologyus_securehashstandard_2015; @boneh_hashfunctions_2020; @stinson_cryptographytheorypractice_2022
+
+:::
+
+
+## Uniform Distribution of Output {.smaller}
+
+- **Definition:** Hash outputs should be uniformly distributed across the entire output space $\{0,1\}^n$.  
+- **Intuition:** Every possible digest value is equally likely — no patterns or biases.  
+- **Consequences:**  
+  - Prevents clustering that could reveal input structure.  
+  - Ensures fair random-like behavior in protocols (e.g., load balancing, mining).  
+- **Verification:**  
+  - Empirically tested with randomness and correlation tests.  
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that a strong hash should distribute outputs evenly across its output space rather than clustering around patterns. It matters here because protocols often rely on hash outputs behaving like unbiased random-looking values. Emphasize that structural bias can create shortcuts or unfairness in downstream systems.
+
+**Key Points**
+- Uniform-looking output helps prevent attackers from exploiting predictable digest patterns.
+- Bias matters in settings like mining, indexing, and randomized protocol choices.
+- Randomness tests do not prove security, but they help detect obvious distribution flaws.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @stinson_cryptographytheorypractice_2022; @nationalinstituteofstandardsandtechnologyus_securehashstandard_2015
+
+:::
+
+
+## Math Spotlight: Birthday Paradox and Work Factors {.smaller}
+
+- **Birthday paradox:** Collisions become likely far sooner than intuition suggests — only after about $2^{n/2}$ hashes for an $n$-bit output.
+  - Analogy: only ~23 people are needed for a 50% chance two share a birthday, not 183!
+
+- **Work factors:**
+  - Collision search ≈ $2^{n/2}$  
+  - Pre-image / Second pre-image search ≈ $2^n$
+  - Hence: 128-bit collision security ⇒ 256-bit hash output.
+
+- **Expected collisions:**  
+  For $k \ll 2^{n/2}$ random hashes:  
+  $\displaystyle E[\text{collisions}] \approx \frac{k^2}{2^{n+1}}$
+
+::: {.callout-note appearance="simple"}
+  Choose digest lengths ensuring $2^{n/2}$ work is infeasible — e.g., *SHA-256* or *SHA-3*.
+
+:::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the birthday paradox as the reason collision security scales with half the digest length rather than the full digest length. It matters here because students need to connect output size choices to attacker work factors. Emphasize that collision search and pre-image search are different attack models with different exponents.
+
+**Key Points**
+- Birthday-style search finds collisions in about 2^(n/2) work for an n-bit digest.
+- Pre-image and second pre-image search still cost about 2^n work under standard assumptions.
+- That is why 256-bit hashes are commonly chosen to deliver roughly 128-bit collision security.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @boneh_hashfunctions_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+## Micro lab: Hashing
+
+[Use the following microlab to demonstrate
+the principles of hashing using real algorithms](/assets/labs/micro-hashing/)
+
+::: {.notes}
+
+**Overall Slide Concept**
+This lab slide establishes a hands-on checkpoint where students can see avalanche, collisions, and output distribution instead of only hearing about them abstractly. It matters here because the lesson has now built enough theory for students to test the ideas interactively. Emphasize that the lab is about observing how secure and insecure hash designs behave differently under the same experiments.
+
+**Key Points**
+- Use the lab to compare secure hash behavior with deliberately weak or broken constructions.
+- Avalanche demos make diffusion visible by comparing nearly identical inputs.
+- Collision and distribution demos help students connect theory to concrete attack intuition.
+
+**Walkthrough**
+1. Run the avalanche demo on SHA-1 and SHA-256 and compare nearly identical inputs.
+2. Switch to MD5 or the built-in collision demo to show how broken or weaker designs fail.
+3. Run the uniform-distribution visualizations and compare strong hashes against the homemade example.
+
+**Sources**
+@leurent_sha1shambles_2020; @cwiamsterdam_shattered_2017; @stevens_firstcollisionfull_2017
+
+:::
+
+
+## SHA Family Overview {.smaller}
+
+| Algorithm | Output (bits) | Status | Notes |
+|------------|---------------|--------|-------|
+| **SHA-1** | 160 | Deprecated | Collisions found |
+| **SHA-2** | 224–512 | Secure | Bitcoin uses SHA-256 |
+| **SHA-3** | 224–512 | Secure | sponge construction |
+
+- SHA-3 complements, not replaces, SHA-2.  
+- Both widely deployed for integrity, digital signatures, and blockchain linking.  
+- Continuous public evaluation ensures resistance to emerging attacks.  
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the SHA family as the practical standards landscape students are most likely to encounter in real systems. It matters here because the lesson is moving from abstract properties to named constructions used in blockchains and modern infrastructure. Emphasize both continuity and change: newer standards build on lessons learned from older broken ones.
+
+**Key Points**
+- SHA-1 is deprecated because practical collisions were found.
+- SHA-2 remains a widely used workhorse family, including SHA-256 in Bitcoin.
+- SHA-3 uses a different internal design and complements rather than simply replaces SHA-2.
+
+**Walkthrough**
+None
+
+**Sources**
+@nationalinstituteofstandardsandtechnologyus_securehashstandard_2015; @bertoni_keccakreferenceversion_2011; @stevens_firstcollisionfull_2017
+
+:::
+
+
+## Merkle–Damgård: How SHA-256 is Built {.smaller}
+
+**Core idea:** compress each message block one at a time, chaining the output into the next round.
+
+<div style="z-index:-1; position:relative; height:300px; top:-100px; ">
+
+```{dot}
+digraph md {
+  bgcolor="transparent";
+  rankdir=LR;
+  node [shape=box, style=filled, fillcolor=white, fontname="sans-serif"];
+  edge [fontname="sans-serif"];
+
+  IV  [label="IV",          shape=ellipse, fillcolor="#1565C0", fontcolor=white];
+  B1  [label="Block 1"];
+  f1  [label="compress"];
+  h1  [label="h₁",          shape=ellipse];
+  B2  [label="Block 2"];
+  f2  [label="compress"];
+  h2  [label="h₂",          shape=ellipse];
+  Bn  [label="Block n ‖ length"];
+  fn  [label="compress"];
+  H   [label="Digest",      shape=ellipse, fillcolor="#2E7D32", fontcolor=white];
+
+  { rank=same; B1; B2; Bn; }
+
+  IV -> f1;
+  B1 -> f1;
+  f1 -> h1;
+  h1 -> f2;
+  B2 -> f2;
+  f2 -> h2;
+  h2 -> fn;
+  Bn -> fn;
+  fn -> H;
+}
+```
+</div>
+
+- Each block is fed into a fixed-size **compression function** along with the previous output; the final output is the hash.
+- A **length field** is appended to the last block (Merkle–Damgård strengthening) to prevent trivial collisions.
+- Used by SHA-1, SHA-224, SHA-256, SHA-384, SHA-512.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Merkle–Damgård as the iterative compression structure behind SHA-256 and related hashes. It matters here because students are about to see how internal construction details create both strengths and pitfalls. Emphasize that the digest is the final chaining state after processing the padded blocks.
+
+**Key Points**
+- Merkle–Damgård hashes process fixed-size message blocks one at a time with a chaining state.
+- Padding and the appended length field make the final encoded message unambiguous.
+- Compression function means a fixed-size function that mixes one block and the current state into the next state.
+
+**Walkthrough**
+1. Start from the initialization vector and feed in the first message block.
+2. Reuse the resulting state as input to the compression function for each later block.
+3. After the final padded block, treat the last state value as the digest.
+
+**Sources**
+None
+
+:::
+
+## Aside: Length-Extension Attack {.smaller}
+
+**Root cause:** in Merkle–Damgård, the digest *is* the final internal state — so it can be used as a starting point to keep hashing.
+
+1. Attacker sees server broadcast `token` and `"amount=100"`, where `token = SHA256(secret ∥ "amount=100")` — they don’t know `secret`.
+2. They load `token` directly into SHA-256’s internal state (it’s just 8 words of 32 bits each).
+3. They feed in `pad ∥ "amount=1000000"` — continuing the hash as if they were the original signer.
+4. They produce `token2′ = SHA256(secret ∥ "amount=100" ∥ pad ∥ "amount=1000000")`.
+5. The server recomputes `SHA256(secret ∥ forged_body)` — and it matches `token2′`.
+
+::: {.callout-warning appearance="minimal"}
+Any scheme of the form `H(secret ∥ data)` used as a MAC is broken against length extension. This affected Flickr’s API (2009), several Amazon S3 auth schemes, and many custom-rolled API signatures.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes length extension as a structural weakness of Merkle–Damgård hashes when they are misused as message authentication codes. It matters here because students need to see that a secure hash can still be unsafe in the wrong construction. Emphasize that the problem comes from exposing the final internal state as the digest.
+
+**Key Points**
+- If a digest reveals the final chaining state, an attacker can continue hashing without knowing the original secret prefix.
+- Constructions like H(secret || data) are unsafe as MACs against this attack.
+- A MAC is a message authentication code used to prove both integrity and shared-secret knowledge.
+
+**Walkthrough**
+1. The attacker starts from a known token that equals the final internal state of the original hash.
+2. They continue hashing additional padded data as though they were the original sender.
+3. The verifier recomputes the same extended body and accepts the forged token if the scheme is badly designed.
+
+**Sources**
+None
+
+:::
+
+## Aside: HMAC {.smaller}
+
+**Mitigation: Hash-based Message Authentication Code (HMAC)**
+
+$$\text{HMAC}(k, m) = H\bigl(k \oplus \text{opad} \;\|\; H(k \oplus \text{ipad} \;\|\; m)\bigr)$$
+
+The outer hash takes the result of the inner hash as input — an attacker extending the inner computation gets a value that is immediately re-hashed with the key, producing garbage.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes HMAC as the standard fix for authenticating messages with hash functions safely. It matters here because students have just seen a broken naive design and now need the disciplined replacement. Emphasize that the outer keyed hash prevents attackers from turning an extended inner state into a valid final tag.
+
+**Key Points**
+- HMAC wraps the message in two keyed hash layers rather than hashing secret and message naively.
+- The outer keyed hash blocks straightforward length-extension attacks.
+- Never roll your own MAC construction when a standard one already addresses subtle structural failures.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+## Sponge Construction: How SHA-3 is Built {.smaller}
+
+**Core idea:** absorb message blocks into a large state, then squeeze output out — the hidden interior is never exposed.
+
+<div style="z-index:-1; position:relative; height:200px; top:-150px; ">
+
+
+```{dot}
+digraph sponge {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style=filled, fillcolor=white, fontname="sans-serif"];
+  edge [fontname="sans-serif"];
+
+  M1    [label="M₁"];
+  xor1  [label="⊕ rate bits"];
+  perm1 [label="permute (f)"];
+  M2    [label="M₂"];
+  xor2  [label="⊕ rate bits"];
+  perm2 [label="permute (f)"];
+  out   [label="extract\nrate bits"];
+  D     [label="Digest", shape=ellipse, fillcolor="#2E7D32", fontcolor=white];
+
+  { rank=same; M1; M2; }
+
+  M1    -> xor1;
+  xor1  -> perm1;
+  perm1 -> xor2  [label="state"];
+  M2    -> xor2;
+  xor2  -> perm2;
+  perm2 -> out   [label="rate only"];
+  out   -> D;
+}
+```
+</div>
+
+- State = **rate** (r) + **capacity** (c). Each round XORs a message block into the rate portion only, then permutes the full state.
+- The **capacity** bits are *never* output — they are the security margin. Target: c = 2 × desired security level.
+- Used by SHA-3/Keccak. Ethereum uses **Keccak-256** (pre-standardization padding — not identical to SHA3-256).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the sponge construction behind SHA-3 and contrasts it with Merkle–Damgård at the state-design level. It matters here because students need to see that construction choices can eliminate some attacks by design rather than only by mitigation. Emphasize that the hidden capacity portion is the key conceptual difference.
+
+**Key Points**
+- Sponge hashes absorb message blocks into part of a larger internal state, then squeeze output back out.
+- The capacity portion stays hidden and serves as a security margin.
+- Ethereum uses Keccak-256, which is closely related to but not identical with standardized SHA3-256.
+
+**Walkthrough**
+1. XOR each input block into the public rate portion of the state.
+2. Permute the full state after each absorption round.
+3. Extract output from the rate portion while the hidden capacity remains unexposed.
+
+**Sources**
+None
+
+:::
+
+## Merkle–Damgård vs. Sponge Construction {.smaller}
+
+| | Merkle–Damgård (SHA-256) | Sponge (SHA-3) |
+|---|---|---|
+| Structure | Iterated compression | Absorb → permute → squeeze |
+| Digest = internal state? | **Yes** | No — capacity is hidden |
+| Length-extension vulnerable? | **Yes** | No |
+| Used in Bitcoin / Ethereum | SHA-256 / Keccak-256 | Keccak-256 |
+
+::: {.callout-note appearance="simple"}
+The sponge’s hidden capacity makes length-extension impossible by design — you can’t reconstruct the full internal state from the digest alone.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the design contrast between Merkle–Damgård and sponge constructions in one place so students can compare attack surface and engineering tradeoffs. It matters here because the previous three slides are easiest to retain when their differences are made explicit. Emphasize that digest exposure versus hidden state is the conceptual hinge.
+
+**Key Points**
+- Merkle–Damgård exposes the final chaining state as the digest, while sponge designs keep part of the state hidden.
+- That difference explains why length extension affects SHA-256 style constructions but not SHA-3 style sponge designs.
+- Keccak-256 and SHA3-256 are related but not interchangeable due to padding and standardization differences.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+
+## Aside: Hash Salting {.smaller}
+
+- **Definition:** A *salt* is a random, unique value added to each input before hashing.  
+  - Formally: $h = \text{Hash}(\text{salt} \,\|\, \text{password})$
+  - Salt is stored *in cleartext* alongside the hash.
+
+- **Purpose:**  
+  - Defeats precomputed **rainbow table** attacks.  
+  - Ensures identical inputs produce **different hashes**.  
+  - Forces attackers to recompute hashes for each user.
+
+- **Properties:**  
+  - Each salt should be **unique** (ideally random 128 bits).  
+  - Salts **don’t need to be secret** — just unpredictable.  
+  - Common in password databases, key derivation, and digital commitments.
+
+- **Example:**  
+  - $h_1 = \text{SHA256}(\text{"A9F2"} \,\|\, \text{"password"})$  
+  - $h_2 = \text{SHA256}(\text{"B1C4"} \,\|\, \text{"password"})$ → different result.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes salting as a defense against precomputation and cross-user hash reuse, especially in password storage. It matters here because students often confuse secrecy with uniqueness when thinking about stored hashes. Emphasize that salts are public values whose job is to force fresh work, not to act as hidden keys.
+
+**Key Points**
+- A salt is a unique random value combined with the input before hashing.
+- Salting prevents identical passwords from producing identical stored digests.
+- Rainbow tables are precomputed lookup tables attackers use to speed up unsalted hash guessing.
+
+**Walkthrough**
+None
+
+**Sources**
+@temoshok_digitalidentityguidelines_2025; @bonneau_reliablestorage56bit_2014; @katz_introductionmoderncryptography_2020
+
+:::
+
+
+## Hashing as Commitment {.smaller}
+
+- A document can be represented by its hash.
+- The hash is unique to its contents.
+- Example:
+  - You want to prove ownership of intellectual property (document, book, etc).
+  - You publicly reveal the hash of the document (ie, tweet it out)
+  - At a later date, you can prove the document existed by showing the hash matches your tweet.
+- Publishing the hash “commits” you to the document without revealing it.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes a hash digest as a commitment that can prove later possession or prior existence without revealing the underlying content immediately. It matters here because Merkle trees extend exactly this commitment idea from one item to many items. Emphasize that the commitment is only useful if the hash remains binding and tamper-evident.
+
+**Key Points**
+- Publishing a hash can commit someone to a document without publishing the document itself.
+- Later disclosure works by recomputing the digest and comparing it to the earlier public commitment.
+- Binding means it should be infeasible to open the same commitment as two different documents.
+
+**Walkthrough**
+None
+
+**Sources**
+@haber_howtimestampdigital_1991
+
+:::
+
+## Merkle Trees: Motivation
+
+- **Problem:** How can we represent and verify a *large collection* of items with a single short value?
+- **Goal:** Detect any tampering and prove membership of an item **without** revealing or re‑sending everything.
+- **Key idea:** Build a tree of hashes so that one small value (the **root hash**) commits to *all* leaves.
+- **Payoff:**
+  - **Fast verification**: proofs size grows like $O(\log n)$.
+  - **Tamper‑evident**: any change propagates up to the root.
+  - **Storage‑friendly**: keep one root instead of all items.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why Merkle trees exist: one hash commitment is great for one document, but we often need one commitment for a large collection. It matters here because the lesson is now scaling the commitment idea from individual files to datasets and block contents. Emphasize the three payoffs together: compact commitment, efficient proofs, and tamper evidence.
+
+**Key Points**
+- A Merkle root commits to many leaves with one short digest.
+- Membership proofs let a verifier check one item without receiving the entire dataset.
+- Logarithmic proof growth is what makes the structure practical at blockchain scale.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011; @nationalinstituteofstandardsandtechnologyus_securehashstandard_2015; @dang_recommendationapplicationsusing_2012
+
+:::
+
+
+## What Is a Merkle Tree? {.smaller}
+
+- A **Merkle tree** is a **hash tree**:
+  - **Leaves:** $\ell_i = H(x_i)$ where $x_i$ is the $i$‑th data block.
+  - **Internal node:** $h = H(\text{left} \parallel \text{right})$.
+  - **Root:** the top hash commits to *all* leaves below.
+- **Concatenation** $\parallel$ is order‑sensitive: $H(a\parallel b) \ne H(b\parallel a)$ in general.
+- The **root hash** is a *commitment* to the whole dataset.
+
+<div style="z-index:-1; position:relative; height:300px; top:-50px; ">
+
+```{dot}
+digraph MerkleExample4 {
+rankdir=BT;
+bgcolor="transparent";
+
+graph [splines=true, nodesep=0.1, ranksep=0.1];
+
+node [shape=box, style="rounded,filled", padding=0.05, width=0.1, height=0.1, margin=0.05, fontname="Helvetica", fontsize=10,
+color="#0369a1", fillcolor="#e0f2fe"];
+
+R  [label="r = H(p1 ‖ p2)"];
+
+{rank=same;
+p1 [label="p1 = H(a ‖ b)"];
+p2 [label="p2 = H(c ‖ d)"];
+}
+
+/* Leaves */
+node [color="#9ca3af", fillcolor="#f3f4f6"];
+{rank=same;
+a [label="a = H(A)"];
+b [label="b = H(B)"];
+c [label="c = H(C)"];
+d [label="d = H(D)"];
+}
+
+/* Edges: leaves → parents → root */
+a -> p1; b -> p1;
+c -> p2; d -> p2;
+p1 -> R; p2 -> R;
+
+edge [color="#64748b"];
+}
+```
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the formal structure of a Merkle tree before the lesson starts constructing and verifying one. It matters here because left/right order, leaf hashing, and parent hashing are all easy to blur together unless the base definition is clear. Emphasize that the root is a commitment to the entire tree below it, not just a summary label.
+
+**Key Points**
+- Leaves are hashes of data items, and internal nodes are hashes of child hashes.
+- Concatenation order matters because H(left || right) is generally different from H(right || left).
+- The root commits to all leaves because any leaf change propagates upward through parent hashes.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Building a Merkle Tree {.smaller}
+
+1. Split your dataset into items $x_1,\ldots,x_n$.
+2. Compute leaf hashes: $\ell_i = H(\text{LeafTag}\parallel x_i)$.
+3. Pair adjacent hashes and compute parents: $p_j = H(\text{NodeTag}\parallel \ell_{2j-1} \parallel \ell_{2j})$.
+4. Repeat step 3 until a single **root** remains.
+5. If $n$ is odd, define a rule (e.g., **duplicate** the last hash or **carry it up**) and apply it consistently.
+
+- **Tags** (a.k.a. *domain separation*): include a short constant like `LeafTag` vs `NodeTag` to avoid ambiguity.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the deterministic recipe for building a Merkle tree so that independent parties arrive at the same root. It matters here because many practical bugs come from vague rules about tagging, ordering, or odd leaf counts rather than from the hash algorithm itself. Emphasize that consistency rules are part of security, not mere implementation detail.
+
+**Key Points**
+- Leaves and internal nodes should be encoded unambiguously, often with domain-separation tags.
+- Odd numbers of leaves require a published rule such as duplication or promotion.
+- Domain separation means marking different object types differently before hashing so they cannot be confused.
+
+**Walkthrough**
+1. Hash each input item into a leaf value using the chosen leaf encoding rule.
+2. Pair adjacent hashes and hash each pair into parent nodes using the node rule.
+3. Repeat until only one root remains, applying the odd-leaf rule consistently when needed.
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+
+## Worked Example (4 Items) {.smaller }
+
+- Let items be $A,B,C,D$.
+- Leaves: $a=H(\text{Leaf}\parallel A)$, $b=H(\text{Leaf}\parallel B)$, $c=H(\text{Leaf}\parallel C)$, $d=H(\text{Leaf}\parallel D)$.
+- Parents: $p_1=H(\text{Node}\parallel a\parallel b)$, $p_2=H(\text{Node}\parallel c\parallel d)$.
+- **Root:** $r=H(\text{Node}\parallel p_1\parallel p_2)$.
+
+```{dot}
+digraph MerkleExample4 {
+rankdir=TB;
+bgcolor="transparent";
+
+graph [splines=true, nodesep=0.2, ranksep=0.2];
+
+node [shape=box, style="rounded,filled", width=0.1, height=0.1, margin=0.05, fontname="Helvetica", fontsize=10,
+color="#0369a1", fillcolor="#e0f2fe"];
+
+R  [label="r = H(Node ‖ p1 ‖ p2)"];
+
+{rank=same;
+p1 [label="p1 = H(Node ‖ a ‖ b)"];
+p2 [label="p2 = H(Node ‖ c ‖ d)"];
+}
+
+/* Leaves */
+node [color="#9ca3af", fillcolor="#f3f4f6"];
+{rank=same;
+a [label="a = H(Leaf ‖ A)"];
+b [label="b = H(Leaf ‖ B)"];
+c [label="c = H(Leaf ‖ C)"];
+d [label="d = H(Leaf ‖ D)"];
+}
+
+/* Edges: arrows point leaf → root, layout keeps root at top */
+edge [color="#64748b", dir=back];
+R -> p1; R -> p2;
+p1 -> a; p1 -> b;
+p2 -> c; p2 -> d;
+}
+```
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the mechanical process of computing a small Merkle tree by hand so students can see tamper propagation directly. It matters here because the abstract tree definition becomes much easier to trust once students watch one concrete example build upward. Emphasize how one changed leaf forces every ancestor on its path to change.
+
+**Key Points**
+- The root is computed entirely from repeated local hash combinations.
+- A change to one data item changes its leaf, then its parent, and eventually the root.
+- Worked examples make proof verification easier because students can trace the exact path manually.
+
+**Walkthrough**
+1. Hash A, B, C, and D into four leaf digests.
+2. Combine the leaves pairwise to compute two parent hashes.
+3. Hash the two parents together to obtain the final root commitment.
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Merkle Proofs (Membership)
+
+- To prove an item $A$ is in the tree with root $r$:
+  1. Provide $A$ and its **authentication path**: the list of **sibling hashes** from the leaf up.
+  2. The verifier recomputes: $a=H(\text{Leaf}\parallel A)$, then combines with each sibling in the correct left/right order to reconstruct $r$.
+- If the recomputed root equals the claimed $r$, membership is verified.
+- **Proof size:** about $\lceil \log_2 n \rceil$ hashes.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the idea of a Merkle membership proof as a compact path from one item to the published root. It matters here because this is the payoff students care about in blockchains and transparency systems: proving inclusion without sending everything. Emphasize that the verifier needs the correct sibling values and the correct left/right positions.
+
+**Key Points**
+- A membership proof consists of the target item plus the sibling hashes needed to rebuild the root.
+- Verification works by hashing upward in the correct order until the claimed root is reconstructed.
+- Authentication path is another name for the ordered list of sibling hashes used in the proof.
+
+**Walkthrough**
+1. Hash the claimed item into its leaf value.
+2. Combine that leaf with each supplied sibling hash in the correct left/right order.
+3. Accept the proof only if the final reconstructed value equals the published root.
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Why Proofs Are Efficient
+
+- For $n$ leaves, depth is $\approx \log_2 n$ (binary tree).
+- **Proof length:** $\lceil \log_2 n \rceil$ hashes; e.g.,
+  - $n=1{,}000$ → about 10 hashes.
+  - $n=1{,}000{,}000$ → about 20 hashes.
+- **Verification time:** $O(\log n)$ hash calls.
+- **Storage:** You may store only the **root** (and a policy that defines how the tree is built).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why Merkle proofs scale well enough for very large datasets. It matters here because efficiency is the practical reason these trees appear in real systems instead of simpler full-dataset checks. Emphasize the logarithmic growth pattern rather than the exact constants.
+
+**Key Points**
+- Proof size grows with the depth of the tree, which is about log2(n) for binary trees.
+- Verifiers do not need the full dataset or all internal nodes if the proof is supplied.
+- Logarithmic means growth is slow: doubling the dataset adds only about one more proof step.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Tamper Evidence & Security Assumptions {.smaller}
+
+- Security relies on properties of the hash function $H$:
+  - **Collision resistance:** infeasible to find $x\ne x'$ with $H(x)=H(x')$.
+  - **Second‑preimage resistance:** given $x$, hard to find $x'\ne x$ with same hash.
+- **Ordering matters:** use left/right labels and explicit concatenation.
+- **Domain separation:** tag leaves vs internal nodes (e.g., `0x00` for leaves, `0x01` for nodes).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that Merkle trees inherit their security from both the hash function and the exact formatting rules used to build the tree. It matters here because students can otherwise walk away thinking “Merkle tree” alone guarantees correctness. Emphasize that collisions, ordering ambiguity, or inconsistent tags can all break the commitment.
+
+**Key Points**
+- Collision and second-preimage resistance underpin the tamper-evidence story.
+- Left/right labels and explicit encodings are necessary so honest parties derive the same root.
+- Domain separation helps prevent confusing a leaf value with an internal-node value.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Design Choices & Variants
+
+- **Branching factor:** binary vs $k$‑ary (trades depth for node size).
+- **Sorted vs original order:** some systems sort leaves for determinism; others preserve insertion order.
+- **Odd number of leaves:** duplicate last leaf, or promote it—pick one rule and publish it.
+- **Sparse trees:** massive key spaces with mostly empty leaves (useful when indices matter: concatenate node value with index or node tag prior to hashing).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that there is no single canonical Merkle tree design; real systems make choices that trade off depth, proof size, determinism, and indexing behavior. It matters here because students should expect design conventions to differ across systems while the core idea stays the same. Emphasize that publishing the rules is what preserves interoperability and verifiability.
+
+**Key Points**
+- Branching factor, sorting policy, and odd-leaf handling are all design choices that affect proofs.
+- Sparse trees are useful when positions or key spaces matter, not just item values.
+- Variants are fine as long as everyone agrees on the exact construction rules.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Where You’ll See Them (Non‑Exhaustive)
+
+- **Content‑addressed data systems:** version control stores (e.g., commit graphs as hash‑linked structures).
+- **Transparency logs:** public, append‑only logs use Merkle roots to audit inclusion and history.
+- **Package & software updates:** metadata signed via Merkle roots to ensure integrity.
+- **Filesystems & databases:** integrity trees over blocks/pages for fast corruption detection.
+- **Blockchain:** Block headers include a Merkle root committing to all transactions in the block.
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that Merkle trees are a general integrity tool, not a blockchain-only curiosity. It matters here because students should recognize the same commitment pattern in software updates, transparency systems, and content-addressed storage. Emphasize the transferable idea: one small root, many verifiable parts.
+
+**Key Points**
+- Merkle-style commitments appear anywhere large sets need compact integrity checks.
+- Blockchain transaction roots are one prominent instance, but not the only one.
+- Transparency logs and software distribution systems use similar proof patterns for auditability.
+
+**Walkthrough**
+None
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Practice: Micro Labs
+
+Review the following interactive labs:
+
+* First: [Merkle-trees Lab](/assets/labs/merkle-trees/)
+
+* Second: [Hashing Merkle Lab](/assets/labs/hashing_merkle/hashing_merkle_lab.html)
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes a practice checkpoint for building and breaking small Merkle examples interactively. It matters here because students now have enough theory to benefit from manipulating tree structure and proofs directly. Emphasize that the goal is to visualize proof construction, failure, and root recomputation.
+
+**Key Points**
+- The labs let students build trees, alter values, and observe proof failure visually.
+- They reinforce how block size, sibling paths, and recomputation affect the final root.
+- Practical manipulation helps students internalize why specification details matter.
+
+**Walkthrough**
+1. Use the Merkle-trees lab to generate a tree from sample text and vary the block size.
+2. Modify a value or hash and observe how the proof fails until the tree is recomputed.
+3. Use the second lab to walk through proof generation and verification step by step.
+
+**Sources**
+@katz_introductionmoderncryptography_2020; @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+
+## Summary
+
+- A cryptographic hash provides binding commitments with strong one‑way and collision resistance.
+- A Merkle tree is a **hash‑based commitment** to a whole dataset.
+- **Membership proofs** use sibling hashes along a path to rebuild the root.
+- **Efficiency:** verification cost and proof size grow logarithmically.
+- **Security:** depends on a good hash function and unambiguous formatting rules.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This closing slide establishes the lesson’s main synthesis: hashing creates commitments, and Merkle trees scale those commitments to datasets with efficient proofs. It matters here because the next course topics will build on these ideas rather than re-explain them. Emphasize the dependence on both strong hash assumptions and careful construction rules.
+
+**Key Points**
+- Cryptographic hashes provide binding digests with strong one-way and collision-resistant behavior.
+- Merkle trees use those digests to commit to many items while keeping proofs small.
+- Encoding, ordering, and domain-separation rules are as important as the hash function choice.
+
+**Walkthrough**
+None
+
+**Sources**
+@bayer_improvingefficiencyreliability_1993; @haber_howtimestampdigital_1991; @massias_designsecuretimestamping_1999; @nakamoto_bitcoinpeertopeerelectronic_2008; @nakamotoinstitute_bitcoinlibraryprimary_2014; @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## References

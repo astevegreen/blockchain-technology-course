@@ -1,0 +1,1012 @@
+---
+title: "Proof of Stake (PoS): Selection, Security, and Finality"
+subtitle: 'Section IV: Consensus Mechanisms'
+author: Army Cyber Institute
+lesson: 03-CM
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+
+## Orientation: Proof of Work vs Proof of Stake {.smaller}
+
+- **Proof of Work (PoW):** security arises from *expended computational work* - attackers must redo real, costly computation.
+- **Proof of Stake (PoS):** security arises from *economic stake and penalties* - validators risk their own capital if they misbehave.
+- **Common ground:** both rely on fork-choice rules, honest-majority or supermajority assumptions, and robust network propagation to maintain consensus.
+- **Key distinction:** PoS shifts the security budget from *energy costs* to *capital at risk*, introducing different incentives and failure modes.
+- **PoS purpose:** replace energy-based leader election with stake-weighted selection and penalties.
+- **Mechanics we'll cover:** validator roles, keys, stake, activation/deactivation, randomness, leader/committee selection, and `public verifiability`.
+- **Security lens:** fork choice, safety/liveness, slashing, nothing-at-stake, long-range attacks, weak subjectivity, and probabilistic vs deterministic finality.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide contrasts PoW and PoS so students can see what changes and what stays constant when the security budget shifts from energy to stake. It matters here because the rest of the lesson assumes students understand that PoS still needs fork choice, network propagation, and honest-majority-style assumptions. Emphasize that the main change is the source of economic pressure, not the need for consensus discipline.
+
+**Key Points**
+- PoW secures consensus with expended work, while PoS secures it with capital at risk.
+- Both systems still rely on fork-choice rules, timing assumptions, and network propagation.
+- PoS introduces validator lifecycle management, slashing, and new attack surfaces such as weak subjectivity.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nguyen_proofofstakeconsensusmechanisms_2019
+- @bano_consensusageblockchains_2017
+
+:::
+
+
+
+## Proof of Stake: The Full Lifecycle {.smaller}
+
+**PoS replaces energy with economics:** validators lock capital, fulfill duties each slot, and lose stake if they misbehave. PoS consists of 4 phases:
+
+1. **Node Joins** — deposit stake; wait in the activation queue
+2. **Slot Duty** — one validator *proposes*, a *committee* attests each slot
+3. **Epoch & Finality** — 32 slots form an epoch; checkpoints drive finality
+4. **Exit** — voluntary exit, unbond, and withdraw stake
+
+- **Slot** — the basic unit of time for one block proposal and committee attestation (duration varies by system)
+- **Epoch** — multiple slots grouped together (e.g., 32 slots in Ethereum) for checkpoints, finality updates, and validator selections
+
+<div style="position:relative; z-index:-1; top:-150px; max-height:350px; overflow:hidden;">
+```{dot}
+digraph PoSLifecycle {
+  rankdir=LR;
+  graph [fontsize=11, nodesep=0.5, ranksep=0.85, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+
+  P1 [label="① Join\nDeposit stake → activation queue\n→ active validator", fillcolor="#bfdbfe"];
+  P2 [label="② Slot Duty  (per slot)\nProposer selects txns + builds block\nCommittee attests (votes)", fillcolor="#bbf7d0"];
+  P3 [label="③ Epoch & Finality  (slot groups)\nEpoch checkpoint + 2/3 vote\n→ justified → finalized", fillcolor="#fde68a"];
+  P4 [label="④ Exit\nExit queue → unbonding period\n→ stake withdrawn", fillcolor="#fecdd3"];
+
+  P1 -> P2 [label="validator active"];
+  P2 -> P3 [label="end of epoch"];
+  P3 -> P2 [label="next slot", style=dashed, color="#6b7280"];
+  P2 -> P4 [label="voluntary exit", style=dashed, color="#6b7280", constraint=false];
+}
+```
+
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the whole PoS lifecycle before the class zooms into its parts. It matters here because students need a map for how joining, slot duties, epoch finality, and exit fit into one operational loop. Emphasize that a validator's job is continuous and structured, not just occasional block production.
+
+**Key Points**
+- The PoS lifecycle includes joining, active duties, epoch-based finality, and exit.
+- Slots and epochs create the time structure that organizes validator behavior.
+- PoS replaces continuous energy expenditure with ongoing exposure of bonded stake.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @bano_consensusageblockchains_2017
+
+:::
+
+
+## The Block Proposer: Selection and Building {.smaller}
+
+In each slot, **one validator is selected** to propose the next block:
+
+- **Selection** — chosen by stake-weighted randomness (unpredictable, verifiable)
+  - *Not* a race; selection is deterministic given the randomness source
+  - Chance of selection proportional to stake held
+
+- **Responsibilities:**
+  - **Selects transactions** from the mempool according to protocol rules
+  - **Builds and proposes** the block candidate
+  - If offline or misbehaves, the slot is *missed* — the chain continues
+
+- **Key point:** the proposer has **control over transaction ordering**
+  
+<div style="position:relative; z-index:-1; top:-150px; max-height:350px; overflow:hidden;">
+
+```{dot}
+digraph ProposerSelection {
+  rankdir=LR;
+  graph [fontsize=11, nodesep=0.45, ranksep=0.6, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+
+  Randomness [label="Verifiable\nRandomness\nBeacon", shape=ellipse, fillcolor="#e0e7ff"];
+  Selection  [label="Stake-Weighted\nSelection", fillcolor="#bfdbfe"];
+  Proposer   [label="Block Proposer\nSelected", fillcolor="#3b82f6", fontcolor=white];
+  Mempool    [label="Mempool\n(pending txns)", shape=cylinder, fillcolor="#f3f4f6"];
+  Block      [label="Block\nProposal", fillcolor="#2563eb", fontcolor=white];
+
+  Randomness -> Selection [label="input"];
+  Selection  -> Proposer  [label="deterministic\noutput"];
+  Mempool    -> Proposer  [label="select txns from", style=dashed, color="#6b7280"];
+  Proposer   -> Block     [label="build + propose"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the proposer role as PoS's answer to who gets to build the next block. It matters here because proposer selection and transaction ordering power are central to both performance and attack analysis later in the lesson. Emphasize that selection is stake-weighted and randomness-driven rather than a live race like PoW.
+
+**Key Points**
+- One validator is selected each slot to propose the next block candidate.
+- Selection is deterministic given the randomness source but unpredictable in advance.
+- The proposer controls transaction ordering and may miss the slot if offline.
+- MEV means maximal extractable value from transaction ordering and inclusion decisions.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_blockproposal_2024
+- @ethereumdevelopers_proofofstakepos_2025
+
+:::
+
+
+## The Committee: Attestation and Validation {.smaller}
+
+::: {.columns}
+::: {.column width="75%"}
+In each slot, **a random subset of validators** attests to the proposed block:
+
+- **Committee assignment** — a random group is tasked with validating the block
+
+  - Each member independently **attests** (votes) on the block they've received
+  - Vote includes: block hash, current chain head, source and target epochs
+  - Attestations are **stake-weighted** — voting power proportional to stake
+
+- **Canonical acceptance:**
+  - Attestations are **aggregated** into a Quorum Certificate (QC)
+  - **≥ 2/3 of committee stake** required for the block to be considered canonical
+:::
+::: {.column width="25%"}
+```{dot}
+digraph CommitteeAttestation {
+  rankdir=TB;
+  graph [fontsize=11, nodesep=0.4, ranksep=0.55, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+
+  Block      [label="Block\nProposal\n(from proposer)", fillcolor="#3b82f6", fontcolor=white];
+  Committee  [label="Committee\n(random validators)", fillcolor="#bbf7d0"];
+  Attest     [label="Attestations\n(stake-weighted votes)", fillcolor="#86efac"];
+  QC         [label="Quorum Certificate\n(aggregated sigs)", fillcolor="#fde68a"];
+  Canonical  [label="Block Canonical\n(≥ 2/3 stake)", fillcolor="#ca8a04", fontcolor=white];
+
+  Block     -> Committee [label="broadcast"];
+  Committee -> Attest    [label="validate + vote"];
+  Attest    -> QC        [label="aggregate"];
+  QC        -> Canonical [label="threshold met"];
+}
+```
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the committee as the second half of PoS block acceptance. It matters here because PoS security depends on separating proposal from collective validation. Emphasize that committees provide stake-weighted endorsement and that quorum evidence, not the proposer alone, gives a block legitimacy.
+
+**Key Points**
+- A random committee validates and attests to the proposed block in each slot.
+- Votes are stake-weighted, so endorsement power depends on bonded capital.
+- Aggregated attestations form a quorum-style proof that enough stake approved the block.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @ethereumdevelopers_blockproposal_2024
+
+:::
+
+
+## Epochs and Checkpoints: Organizing Slots {.smaller}
+
+::: {.columns}
+::: {.column width="65%"}
+**Slots are grouped into larger time units called epochs:**
+
+- **Epoch** — a collection of consecutive slots 
+- **Checkpoint** — the first block of each epoch; serves as a finality anchor
+
+**Why epochs?**
+
+- Organizing slots into epochs allows finality voting to work at a **coarser granularity**
+- Instead of voting on every single block, validators vote on epoch boundaries
+- This reduces voting overhead while maintaining consensus safety
+
+
+:::
+::: {.column width="34%"}
+```{dot}
+digraph EpochStructure {
+  rankdir=TB;
+  graph [fontsize=11, nodesep=0.4, ranksep=0.65, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+
+  S0     [label="Slot 0\n(epoch start)", fillcolor="#dcfce7"];
+  Slots1 [label="Slot 1, 2, …\nN-1", shape=ellipse, fillcolor="#f3f4f6"];
+  CP1    [label="Checkpoint\n(Epoch 1 start)", fillcolor="#fde68a"];
+  Slots2 [label="Slot N+1, …\nN+M-1", shape=ellipse, fillcolor="#f3f4f6"];
+  CP2    [label="Checkpoint\n(Epoch 2 start)", fillcolor="#fde68a"];
+
+  S0 -> Slots1 -> CP1 [label="epoch N slots"];
+  CP1 -> Slots2 -> CP2 [label="epoch N+1 slots"];
+}
+```
+
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why PoS systems group slots into epochs and designate checkpoints. It matters here because finality mechanisms often work at epoch boundaries rather than on every individual block. Emphasize that epochs reduce overhead by letting the system reason about larger units of progress.
+
+**Key Points**
+- Epochs bundle many slots into a larger time unit for coordination and finality.
+- Checkpoints anchor epoch-level voting and finality decisions.
+- Coarser-grained voting reduces overhead while preserving safety.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @namoo908_ethereumbeaconchain_2025
+
+:::
+
+
+## Justification: Supermajority Vote Links {.smaller}
+
+::: {.columns}
+::: {.column width="50%"}
+**Justification** is the first step toward finality:
+
+- **What it means** — when a supermajority (≥ 2/3 of total stake) votes for a link between two consecutive checkpoints, that link becomes *justified*
+- **Vote structure** — validators cast attestations linking the **source checkpoint** (previous epoch) to the **target checkpoint** (current epoch)
+- **Aggregation** — all attestations in the epoch are counted; if 2/3+ participate, the link is justified
+
+:::
+::: {.column width="50%"}
+```{dot}
+digraph Justification {
+  rankdir=LR;
+  graph [fontsize=11, nodesep=0.5, ranksep=0.65, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+
+  CPsrc [label="Source\nCheckpoint\n(Epoch N)", fillcolor="#fde68a"];
+  Vote  [label="Validators Vote\n(≥ 2/3 stake)", fillcolor="#bbf7d0"];
+  CPtr  [label="Target\nCheckpoint\n(Epoch N+1)", fillcolor="#fde68a"];
+  Justi [label="Justified Link\nSrc → Tgt", fillcolor="#2563eb", fontcolor=white];
+
+  CPsrc -> Vote [label="source"];
+  CPtr  -> Vote [label="target"];
+  Vote  -> Justi [label="aggregate"];
+}
+```
+:::
+:::
+
+**Key insight:**
+A single justified link means "most validators agree this is the chain." But one justification alone isn't enough for irreversibility — we need two.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces justification as the first step toward finality in checkpoint-based PoS designs. It matters here because students need to distinguish between intermediate endorsement and irreversible commitment. Emphasize that a justified link shows broad agreement, but by itself does not yet make history irreversible.
+
+**Key Points**
+- Validators vote from a source checkpoint to a target checkpoint.
+- A supermajority stake threshold is required for the link to become justified.
+- Justification signals strong support, but finalization requires an additional step.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @namoo908_ethereumbeaconchain_2025
+
+:::
+
+
+## Finalization: Irreversible History {.smaller}
+
+::: {.columns}
+::: {.column width="45%"}
+**Finalization** makes history irreversible:
+
+- **Rule** — when two consecutive checkpoints are both justified, the **earlier one is finalized**
+- **Example:** if Checkpoint N and Checkpoint N+1 are both justified, then Checkpoint N-1 (and all its descendants) is finalized
+- **Irreversibility** — reversing a finalized block would require a 2/3+ supermajority to sign conflicting justifications, which is provable slashing
+
+:::
+::: {.column width="55%"}
+```{dot}
+digraph Finalization {
+  rankdir=LR;
+  graph [fontsize=11, nodesep=0.4, ranksep=0.65, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+
+  CPN1 [label="Checkpoint\nN-1", fillcolor="#fde68a"];
+  CPN  [label="Checkpoint\nN", fillcolor="#fde68a"];
+  CPN1_next [label="Checkpoint\nN+1", fillcolor="#fde68a"];
+
+  Link1 [label="Justified\nLink", fillcolor="#86efac"];
+  Link2 [label="Justified\nLink", fillcolor="#86efac"];
+
+  Finalized [label="FINALIZED\nCheckpoint N-1", fillcolor="#b45309", fontcolor=white];
+
+  CPN1 -> Link1 [label="Cp N-1"];
+  CPN -> Link1 [label="Cp N"];
+  CPN -> Link2 [label="Cp N"];
+  CPN1_next -> Link2 [label="Cp N+1"];
+
+  Link1 -> Link2 [label="2 consecutive\njustified links"];
+  Link2 -> Finalized [label="→ Finalize\nCp N-1"];
+}
+```
+:::
+:::
+
+::: {.callout-warning appearance="simple"}
+**Cost to reverse:** Undoing a finalized block requires ≥ 1/3 of total stake to sign conflicting votes — provable on-chain and punished by slashing.
+:::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains how two consecutive justified links produce finality. It matters here because PoS safety claims become much more concrete when students see exactly when history becomes economically irreversible. Emphasize that reversing finality would require slashable conflicting behavior from a large amount of stake.
+
+**Key Points**
+- Finalization typically follows from consecutive justified checkpoints in a two-phase pattern.
+- Once finalized, reversing that history requires large-scale equivocation that can be proven and punished.
+- This is stronger than ordinary slot-by-slot acceptance because it is backed by slashable evidence.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @namoo908_ethereumbeaconchain_2025
+
+:::
+
+
+## From Slot Validation to Finality {.smaller}
+
+```{dot}
+digraph PoSFlow {
+  rankdir=TB;
+  graph [fontsize=36, nodesep=0.6, ranksep=0.7, bgcolor=transparent];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=36];
+  edge  [fontname="Helvetica", fontsize=28, arrowsize=1.2];
+
+  Proposer     [label="Block Proposer\n(stake-weighted selection)", fillcolor="#c8e6c9"];
+  Committee    [label="Committee\n(random validator subset)", fillcolor="#fff8e1"];
+  Attest       [label="Attestations\n(≥ 2/3 committee stake)", fillcolor="#c8e6c9"];
+  QC           [label="Quorum Certificate\n(aggregated signatures)", fillcolor="#bbdefb"];
+  Decide       [label="Epoch boundary?", shape=diamond, fillcolor="#fff9c4"];
+  Checkpoint   [label="Epoch Checkpoint", fillcolor="#fff176"];
+  Finalized    [label="Finalized\nCheckpoint", fillcolor="#f9a825", fontcolor=white];
+  NextProposer [label="Next Proposer\nSelected", fillcolor="#c8e6c9"];
+
+  Proposer     -> Committee    [label="proposes block"];
+  Committee    -> Attest       [label="vote"];
+  Attest       -> QC           [label="aggregate"];
+  QC           -> Decide;
+  Decide       -> Checkpoint   [label="yes"];
+  Decide       -> NextProposer [label="no (next slot)"];
+  Checkpoint   -> Finalized    [label="2 consecutive\njustified epochs"];
+  Finalized    -> NextProposer [label="epoch advances"];
+}
+```
+
+::: {.callout-note appearance="minimal"}
+Committees secure *each slot*, quorum certificates justify *checkpoints*, and supermajority links between checkpoints deliver **finality** — the point where history becomes irreversible.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide ties slot-level validation and epoch-level finality into one end-to-end picture. It matters here because PoS can feel fragmented unless students can see how proposer selection, attestations, quorum evidence, and finality connect. Emphasize that each layer builds on the evidence produced by the previous one.
+
+**Key Points**
+- Proposers create candidate blocks, committees validate them, and quorum evidence advances the chain.
+- Checkpoints aggregate slot activity into epoch-level finality decisions.
+- Finality is the cumulative result of repeated validated steps, not a separate magic process.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @nguyen_proofofstakeconsensusmechanisms_2019
+
+:::
+
+
+## Slashing — Making Misbehavior Expensive {.smaller}
+
+- **What it is:**  a **cryptoeconomic penalty** applied when validators produce cryptographic proof of misbehavior.  
+
+- **Slashable offenses:**  
+  - **Equivocation:** signing two conflicting blocks or votes in the same slot or height.  
+  - **Surround or double votes:** voting patterns that “wrap around” a previous vote due to delays, etc..  
+  - **Failure to participate:** Don't act when selected as proposer, committee member, checkpoint vote
+  
+- **Penalty mechanics:**  
+  - Offenders lose part or all of their **staked collateral**; evidence is included on-chain.  
+  - **Correlated slashing:** if many validators equivocate together, each loses *more* — deterring cartel behavior.
+  - Slashing also triggers **forced exit and cooldown**, preventing further influence.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains slashing as the economic enforcement layer that makes PoS safety credible. It matters here because without penalties, validators would often have incentives to support multiple forks. Emphasize that slashing turns cryptographic evidence of misbehavior into tangible financial loss.
+
+**Key Points**
+- Slashing penalizes provable misbehavior such as equivocation or protocol-violating vote patterns.
+- On-chain evidence makes misbehavior portable and independently checkable.
+- Correlated slashing raises the cost of coordinated attacks, not just individual mistakes.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @ethereumdevelopers_ethereumproofofstakeattack_2025
+
+:::
+
+
+## Becoming a Validator {.smaller}
+
+- **Role:** In Proof-of-Stake, validators replace miners.  
+  - Instead of racing with hardware and energy (PoW), they are **selected by stake** to propose and attest to blocks.
+
+- **Participation:**  
+  - Join by making a **stake deposit** and waiting for an **activation epoch**.  
+  - Leave through an **exit and withdrawal process**.
+
+- **Keys and Security:**
+  - **Signing key** — kept online for proposing and voting.
+  - **Withdrawal key** — held offline for custody and recovery.
+
+- **Operations and Uptime:**  
+  - Validators must stay **online and responsive** to earn rewards and avoid penalties for missed votes.  
+  - **Double-signing** (e.g., by redundant servers) leads to **slashing** — an enforced loss of stake.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the validator lifecycle from the perspective of an operator rather than a protocol designer. It matters here because stake-based consensus depends on who can join, activate, exit, and reclaim funds under what conditions. Emphasize that operational timing and queues are part of the security model, not mere administration.
+
+**Key Points**
+- Validators deposit stake, wait for activation, perform duties, then eventually exit and withdraw.
+- Entry and exit queues help the protocol manage churn and protect stability.
+- Unbonding means stake remains locked for a period after exit.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @nguyen_proofofstakeconsensusmechanisms_2019
+
+:::
+
+
+## How Proposers Are Selected {.smaller}
+
+- **Goal:** Choose who proposes and votes on each block *fairly and unpredictably*.  
+  
+  - Selection chance comes from **stake-weighted randomness** to ensure no participant can bias the draw to their favor. 
+
+- **Assignment:**  
+  - For each slot or round, one (or in some more uncommon protocols, more validators) are chosen to **propose** a block.  
+  - Over time, assignments rotate to spread influence and reduce collusion.
+
+- **Fairness and Security:**  
+  - Random selection prevents powerful stakers from dominating every round.  
+  - Committees average many votes → **Byzantine fault tolerance** through majority agreement.
+
+**Key idea:**  
+Where PoW relies on computational luck, PoS relies on **cryptographically verifiable randomness** — the foundation for modern committee-based and BFT-style consensus.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide revisits proposer selection with more detail about why randomness quality matters. It matters here because proposer predictability can turn into bribery, grinding, or censorship opportunities. Emphasize that selection should be verifiable after the fact but difficult to bias beforehand.
+
+**Key Points**
+- Proposer selection should be both publicly verifiable and hard to manipulate.
+- Stake weighting ties influence to bonded capital rather than equal identity counts.
+- Poor randomness lets adversaries game who is likely to propose future blocks.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_blockproposal_2024
+- @ethereumdevelopers_proofofstakepos_2025
+
+:::
+
+
+
+## Validator Committees {.smaller}
+
+- **Purpose:** Enable scalable, fault-tolerant consensus by replacing all-to-all voting with **small random samples**.
+
+- **Formation:**  
+  - Randomly selected each slot or epoch using an implementation-specific method.  
+
+- **Responsibilities:**  
+  - **Attestation:** vote on proposed blocks or checkpoints.  
+  - **Aggregation:** combine votes into a single **Quorum Certificate (QC)** or aggregate signature.  
+  - **Cross-checking:** provide redundant verification of proposer behavior.
+
+- **Requirements:**  
+  - Sufficient size to tolerate *t* Byzantine nodes and reach majority honest votes.  
+  - Secure randomness → unbiased membership; low overlap across rounds.
+
+**Key idea:** Committees make PoS practical — small, randomly chosen groups stand in for the whole network.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide expands the committee concept from a single slot into a reusable security pattern. It matters here because committee size, random assignment, and vote aggregation affect both safety and performance. Emphasize that committees are a way to scale validation without making every validator examine every slot identically.
+
+**Key Points**
+- Randomly assigned committees distribute validation responsibility across the validator set.
+- Committee thresholds are chosen to balance safety, bandwidth, and latency.
+- Aggregation compresses many votes into compact evidence for the rest of the protocol.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @nguyen_proofofstakeconsensusmechanisms_2019
+
+:::
+
+
+## From Committees to Checkpoints {.smaller}
+
+- **Committee Attestations:**  
+  - Each slot’s committee **attests** to the validity of the proposed block.  
+  - Votes are **stake-weighted** and aggregated into a **Quorum Certificate (QC)** once ≥ 2t + 1 signatures are collected.  
+  - The QC acts as verifiable evidence that a block is accepted by a supermajority of honest validators on the committee. 
+
+- **Checkpointing and Finality:**  
+  - Every *N* slots, a block becomes a **checkpoint**.  
+  - When a **supermajority (≥ 2/3 of total stake)** attests to a link between two checkpoints, the earlier one is **finalized** — it can no longer be reverted without slashing.  
+  - These finalized checkpoints define the chain’s **irreversible history**.
+
+
+**Key idea:**  
+Slot-level attestations build short-term confidence;  
+checkpoint finalization turns that confidence into **permanent consensus.**
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide connects committee voting to checkpoint-based finality so students can see the bridge from local validation to global history commitment. It matters here because finality is not just a vote count; it is the result of structured links across epochs. Emphasize that checkpoints organize evidence into a form that can be finalized safely.
+
+**Key Points**
+- Slot-level committee votes feed into epoch-level checkpoint links.
+- Checkpoint voting converts many local attestations into system-wide finality evidence.
+- The protocol uses structured aggregation so the chain can move from validation to irreversible commitment.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @nguyen_proofofstakeconsensusmechanisms_2019
+
+:::
+
+
+## Fork Choice Rules {.smaller}
+
+- **Why forks happen:**  
+  - Network delays or simultaneous proposals produce **competing blocks** at the same height.  
+  - Some committees vote on branch A, others on branch B → temporary divergence.
+
+- **Tie-breaking & honesty heuristics:**  
+  - Requires mechanism to resolve forks, if and when they occur
+  - Deterministic rules (hash/slot tiebreak) avoid oscillation.  
+  - Ignore obviously late or equivocal votes; rely on **latest** attestations only.
+
+- **Fork choice** selects the current head (short-term view).  
+- **Finality** makes parts of history **irreversible** (long-term safety).  
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces fork choice as the rule nodes use before finality is fully established. It matters here because PoS systems still need a live way to decide which branch to extend in the presence of temporary disagreement. Emphasize that fork choice and finality work together: one guides head selection, the other marks what can no longer be rolled back safely.
+
+**Key Points**
+- Fork choice tells nodes which currently viable chain head to follow.
+- It operates before or alongside finality rather than replacing it.
+- Good fork-choice design helps liveness while respecting finalized history.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_proofofstakepos_2025
+- @bagaria_proofofstakelongestchain_2022
+
+:::
+
+## Safety and Liveness — PoS Invariants {.smaller}
+
+*Recall from Consensus Lecture:*
+
+| Property | Definition | PoS guarantee |
+|---|---|---|
+| **Safety** | No conflicting commits or later rollbacks | Cannot finalize two conflicting checkpoints |
+| **Liveness** | The system eventually makes forward progress | Honest supermajority ensures new checkpoints finalize |
+
+:::{.r-stack}
+::: {.fragment .fade-out fragment-index=1 style="transition-duration: 0s;"}
+**Safety in PoS:**
+
+- The protocol must never finalize two conflicting checkpoints
+- Any equivocation (double vote or double proposal) produces **on-chain slashable evidence**
+- Safety holds as long as **≥ 2/3 of total stake is honest**
+- Safety is preserved even during network partitions — finalization pauses rather than risk a conflicting commit
+:::
+
+::: {.fragment .fade-in fragment-index=1 style="transition-duration: 0s;"}
+**Liveness in PoS:**
+
+- Under **eventual synchrony** and an **honest supermajority**, new checkpoints continue to finalize
+- Leader rotation ensures a new proposer is selected if the current one is offline or unresponsive
+- Liveness can degrade under Byzantine behavior or poor network conditions — but **safety is never sacrificed**
+:::
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide grounds PoS guarantees back in the classical safety-liveness vocabulary students saw earlier. It matters here because PoS claims can sound hand-wavy unless students can restate them as invariants under explicit assumptions. Emphasize that timing failures may pause progress, but should not permit conflicting finalized history.
+
+**Key Points**
+- Safety means conflicting checkpoints should not both finalize under the protocol assumptions.
+- Liveness means new checkpoints should eventually finalize when the network is sufficiently healthy.
+- Slashing and quorum thresholds support safety, while timing assumptions support liveness.
+
+**Walkthrough**
+None
+
+**Sources**
+- @katz_introductionmoderncryptography_2020
+- @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Nothing-at-Stake {.smaller}
+
+**The problem:** in PoW, signing multiple competing forks costs real energy. In PoS, producing a valid signature is nearly free — so without additional rules, a rational validator has no reason *not* to sign every fork.
+
+- **Nothing-at-stake:** a validator can vote for all competing chains simultaneously with no direct cost, undermining fork resolution and enabling double-finalization attacks.
+
+**Countermeasure — slashing:**
+
+- Slashable offenses (equivocation, surround votes) produce **on-chain evidence** that anyone can submit
+- Offenders lose a portion of their staked capital — the more validators equivocate together, the larger the penalty (**correlated slashing**)
+- This converts the nothing-at-stake incentive into a costly mistake
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces nothing-at-stake as the canonical economic problem PoS must solve. It matters here because PoS signatures are cheap to make, so validators need explicit reasons not to sign every fork they see. Emphasize that the problem is incentive structure, not cryptographic weakness.
+
+**Key Points**
+- Without penalties, validators could rationally sign multiple forks because signatures are cheap.
+- Multi-fork voting undermines fork resolution and can threaten finality.
+- Slashing is designed to turn that seemingly free behavior into a costly mistake.
+
+**Walkthrough**
+None
+
+**Sources**
+- @shi_proofofstakeoverviewsbc_2020
+- @ethereumdevelopers_ethereumproofofstakeattack_2025
+
+:::
+
+
+## Nothing-at-Stake and Economic Security {.smaller}
+
+**The broader economic security model:**
+
+| Mechanism | Purpose |
+|---|---|
+| **Staking rewards** | Incentivize participation and honest operation |
+| **Slashing** | Deter active misbehavior; scales with coordination |
+| **Inactivity leak** | Drains offline validators during extended partitions to restore liveness |
+| **Penalty calibration** | Tuned to deter adversaries without punishing honest operators for accidents |
+
+::: {.callout-note appearance=”minimal”}
+The **security budget** is the total stake at risk — the higher it is, the more expensive it becomes to attack the network.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide broadens nothing-at-stake into the full economic security system around rewards, penalties, and inactivity management. It matters here because security comes from the whole incentive design, not from slashing alone. Emphasize that well-tuned rewards and penalties steer honest behavior while making coordinated attacks economically painful.
+
+**Key Points**
+- Staking rewards motivate participation and honest ongoing service.
+- Slashing deters active misbehavior, while inactivity mechanisms help recover liveness during partitions.
+- Penalty calibration must be strong enough to deter attacks without making honest operation intolerably risky.
+
+**Walkthrough**
+None
+
+**Sources**
+- @katz_introductionmoderncryptography_2020
+- @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Weak Subjectivity {.smaller}
+
+**The core problem:** in PoW, any node can verify the canonical chain from genesis by checking proof of work — no external input needed. In PoS, signatures are cheap to produce with old keys.
+
+- **After a validator exits**, their signing key still exists and could be used to sign an alternative history — there is no “work” that makes a valid signature expensive to produce after the fact.
+- A new or returning node syncing from scratch **cannot distinguish the real chain from a fabricated one** using cryptography alone; both may have valid signatures from past validators.
+
+**Weak subjectivity** is the property that PoS nodes require an external, socially-distributed anchor — a **recent trusted checkpoint** — to resolve this ambiguity:
+
+- Nodes that are online continuously can follow the canonical chain in real time without issue
+- Nodes **joining for the first time** or **returning after a long absence** must obtain a recent finalized checkpoint hash from a trusted source before syncing
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces weak subjectivity as a property of PoS bootstrap and long-absence recovery. It matters here because PoS cannot always derive the canonical chain from genesis using cryptography alone the way PoW can. Emphasize that the issue affects new or long-offline nodes, not continuously online ones.
+
+**Key Points**
+- Old validator keys can still sign fabricated alternative histories after those validators exit.
+- A fresh or returning node may need a recent trusted checkpoint to know which history to follow.
+- Weak subjectivity is a design trade-off that comes with capital-based, cheap-signature consensus.
+
+**Walkthrough**
+None
+
+**Sources**
+- @deirmentzoglou_surveylongrangeattacks_2019
+- @shi_proofofstakeoverviewsbc_2020
+
+:::
+
+
+## Weak Subjectivity — Practical Mitigations {.smaller}
+
+**The goal:** give new and returning nodes a trustworthy anchor so they can safely join the canonical chain.
+
+- **Checkpoint hashes baked into clients** — node software ships with a recent finalized block hash; syncing begins from there rather than from genesis
+- **Out-of-band distribution** — community channels, block explorers, and trusted peers publish checkpoint hashes independently so no single source can lie undetected
+- **Unbonding period as a safety window** — stake remains locked after a validator exits, long enough that any fabricated history signed with old keys can still be detected and slashed
+
+**Key rule of thumb:** a node that has been offline longer than the unbonding period must obtain a fresh checkpoint before rejoining — it cannot safely determine the canonical chain on its own.
+
+
+::: {.callout-warning appearance="minimal"}
+**Failure mode:** a node that blindly syncs from an attacker-controlled source without verifying a checkpoint hash is vulnerable to being placed on a fabricated chain.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns weak subjectivity from an abstract property into concrete operator guidance. It matters here because safe PoS deployment depends on knowing when external checkpoint information is required. Emphasize that checkpoint distribution is partly social and operational, not purely protocol-internal.
+
+**Key Points**
+- Clients may ship with recent checkpoints or obtain them from diverse trusted channels.
+- Unbonding periods create a window in which fabricated old-history signatures can still be punished.
+- Nodes offline too long should refresh from a recent checkpoint before trusting the chain again.
+
+**Walkthrough**
+None
+
+**Sources**
+- @deirmentzoglou_surveylongrangeattacks_2019
+- @ethereumdevelopers_proofofstakepos_2025
+
+:::
+
+
+## Censorship, Bribery, and Eclipse {.smaller}
+
+| Attack | What happens | PoS mitigation |
+|---|---|---|
+| **Censorship** | Proposer deliberately omits transactions from a block | Stake-weighted randomness rotates proposers; other validators can attest to alternative blocks |
+| **Bribery** | Attacker pays validators to vote for a specific block or chain | Slashing makes equivocation provably costly; reputation and stake diversity deter coordination |
+| **Eclipse** | Validator’s network connections are hijacked, isolating them from the real chain | Peer diversity requirements, authenticated connections, and multiple independent relay paths |
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide groups three distinct but related attacks that target proposer discretion, validator incentives, and network visibility. It matters here because PoS security depends on more than just the finality gadget; it also depends on healthy rotation and communication. Emphasize that these attacks operate at economic and network layers as much as at the protocol layer.
+
+**Key Points**
+- Censorship exploits transaction-ordering or exclusion power in proposer roles.
+- Bribery tries to buy validator behavior despite stake-based deterrence.
+- Eclipse attacks isolate validators from the real network view and can distort their decisions.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumdevelopers_ethereumproofofstakeattack_2025
+- @nguyen_proofofstakeconsensusmechanisms_2019
+
+:::
+
+## Censorship, Bribery, and Eclipse (cont.) {.smaller}
+
+**Why censorship is hard to sustain:**
+
+- Any single proposer can censor for one slot, but the next slot’s proposer is selected independently
+- Committees are randomly assigned — a censor cannot predict or control which validators will attest
+- Persistent censorship requires controlling a majority of proposer slots over time, which is detectable and economically costly
+
+**Why bribery is hard to sustain:**
+
+- Bribing enough stake to reach 2/3 supermajority is expensive by design — the security budget scales with total stake
+- Slashing evidence is on-chain and permanent; validators who accept bribes and equivocate lose their stake
+
+::: {.notes}
+
+**Overall Slide Concept**
+This continuation slide explains why these attacks are hard to sustain in well-designed PoS systems. It matters here because students should connect randomness, stake scale, and slashability to concrete resistance against adversarial pressure. Emphasize that persistence, not one-slot influence, is what attackers struggle to achieve.
+
+**Key Points**
+- Independent proposer rotation makes long-term censorship difficult for any one validator.
+- Reaching bribery-effective supermajorities is expensive when a large stake base is at risk.
+- Network-layer hygiene remains essential because eclipse attacks bypass on-chain safeguards.
+
+**Walkthrough**
+None
+
+**Sources**
+- @katz_introductionmoderncryptography_2020
+- @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+## Parameters that Shape Security {.smaller}
+
+PoS protocols expose several tunable parameters. Each involves a **trade-off** — there is no universally correct value.
+
+| Parameter | If too low | If too high |
+|---|---|---|
+| **Committee size** |  Easier to corrupt a committee | Higher bandwidth and latency |
+| **Epoch length** |  More frequent finality overhead | Slower to detect and recover from failures |
+| **Randomness refresh** |  More opportunity for grinding attacks | Increased coordination overhead |
+| **Slash percentage** |  Weak deterrence for misbehavior | Honest operators fear accidental slashing |
+| **Correlation penalty** |  Cartels face low collective cost | Amplifies punishment for systemic failures |
+| **Fork-choice timeout** |  Stalls liveness under partitions | Faster malicious proposers can exploit the gap |
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide makes clear that PoS security is also shaped by protocol parameter tuning. It matters here because committee size, epoch length, timeout behavior, and slashing values all affect the balance between safety, liveness, and operational burden. Emphasize that these values are policy choices with technical consequences.
+
+**Key Points**
+- Security-relevant parameters trade off attack cost, bandwidth, latency, and operator risk.
+- Committee size and slash percentage directly affect the cost of corrupting the system.
+- Timeout and epoch settings influence how quickly the chain reacts to faults or partitions.
+
+**Walkthrough**
+None
+
+**Sources**
+- @katz_introductionmoderncryptography_2020
+- @menezes_handbookappliedcryptography_2011
+
+:::
+
+
+
+## PoW vs PoS at a Glance {.smaller}
+
+ Aspect | **Proof of Work (PoW)** | **Proof of Stake (PoS)** |
+|:--|:--|:--|
+| **Selection Mechanism** | Random “wins” by computational work | Lottery weighted by stake (capital at risk) |
+| **Primary Cost** | Energy consumption (watts) | Locked collateral (opportunity cost) |
+| **Fork Choice** | Longest / heaviest chain wins | Votes or checkpoints from validators |
+| **Finality** | Probabilistic (more blocks → higher confidence) | Often deterministic or semi-final with BFT-style commits |
+| **Security Budget** | Mining rewards fund energy costs | Validator rewards and slashing secure stake |
+| **Failure Risks** | 51% hashpower attacks | Stake concentration, long-range, inactivity |
+| **Common Goal** | Economic cost for consensus honesty | Economic penalty for consensus dishonesty |
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This summary comparison slide brings PoW and PoS back together using the same analytical categories. It matters here because students should now be able to compare the systems by selection method, cost model, finality, and threat profile rather than by slogans. Emphasize that both are trying to buy honest behavior, just with different resources and failure modes.
+
+**Key Points**
+- PoW spends energy to make attacks costly, while PoS risks stake to punish dishonest behavior.
+- Fork choice and finality work differently, but both systems still depend on timing and network assumptions.
+- The main design question is which security budget and trust trade-offs fit the environment.
+
+**Walkthrough**
+None
+
+**Sources**
+- @katz_introductionmoderncryptography_2020
+- @menezes_handbookappliedcryptography_2011
+
+:::
+
+## Proof of Stake Microlab
+
+
+[Open Proof of Stake Microlab](/assets/labs/pos-micro)
+
+::: {.notes}
+
+**Overall Slide Concept**
+This microlab slide gives students a chance to test PoS ideas actively instead of only reading diagrams. It matters here because committee voting, proposer selection, and checkpoint logic are easier to internalize once students manipulate them directly. Emphasize observation and explanation rather than just getting the "right" answer.
+
+**Key Points**
+- The lab helps students connect proposer selection, committee votes, and finality in one interactive flow.
+- It should reinforce how incentives and evidence interact in PoS systems.
+- Students should watch for where liveness, safety, and attack resistance show up in practice.
+
+**Walkthrough**
+None
+
+**Sources**
+- Course asset: `/assets/labs/pos-micro`
+
+:::
+ 
+
+## References

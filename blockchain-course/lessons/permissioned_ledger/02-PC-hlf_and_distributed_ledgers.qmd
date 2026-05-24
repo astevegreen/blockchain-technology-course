@@ -1,0 +1,1012 @@
+---
+title: Hyperledger Fabric
+subtitle: 'Section V: Permissioned Chains'
+author: Army Cyber Institute
+lesson: 02-PC
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+smaller: true
+format:
+  aci-revealjs:
+    scrolling: true
+    slide-level: 2
+---
+
+## Learning Goals
+
+- Locate each major Hyperledger Fabric component in the execute-order-validate path.
+- Explain what each component does and which trust decision it is responsible for.
+- Translate the generic permissioned-ledger ideas from the previous lesson into Fabric terms.
+- Trace one Fabric invoke from proposal to commit, including endorsement, ordering, validation, and state update.
+- Recognize where Fabric records evidence of success, invalidation, and failure.
+
+
+## Agenda
+
+1. Fabric network mental model
+2. Fabric vocabulary: map generic concepts to Fabric components
+3. Component deep dive (identity, peers, orderers, channels, policies)
+4. Transaction lifecycle, observability, and lab troubleshooting
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This agenda slide gives students the roadmap for turning generic permissioned-ledger ideas into Fabric-specific components. It matters here because Fabric is easiest to understand when students know they are mapping one abstract model onto a concrete platform. Emphasize that the lesson will trace both architecture and failure points.
+
+**Key Points**
+- The lesson maps generic permissioned-ledger ideas into Fabric vocabulary and components.
+- Students will trace one invoke from proposal through commit.
+- Observability and troubleshooting are part of understanding the platform, not separate extras.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## From Permissioned Concepts to Fabric Terms
+
+| Permissioned concept | Fabric term | Purpose in Fabric |
+|:--|:--|:--|
+| Identity and membership | Certificate Authority plus Membership Service Provider (MSP) | Establish trusted identities and define whose signatures count |
+| Transaction approval policy | Endorsement policy | Specify which organizations must approve a transaction |
+| Ordering service | Orderer cluster | Produce one agreed transaction order |
+| Shared ledger history | Block log plus current-value snapshot | Preserve accepted history while supporting efficient reads |
+| Governance and admin control | Channel configuration plus chaincode lifecycle policies | Control membership, upgrades, and administrative changes |
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide translates the previous lesson's generic permissioned concepts into Fabric terms. It matters here because students should be able to recognize the same trust layers under platform-specific names. Emphasize that Fabric's terminology is specialized, but the underlying design questions remain identity, approval, ordering, and governance.
+
+**Key Points**
+- Certificate authorities and MSPs implement identity and membership trust in Fabric.
+- Endorsement policies are Fabric's concrete approval logic.
+- Orderers, ledgers, and lifecycle policies map generic permissioned functions into named services and objects.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## The Big Picture: End-to-End Fabric Path {.smaller}
+
+:::: {.columns}
+::: {.column width="54%"}
+- The core architectural pattern is **execute-order-validate:**
+  - **Execute:** Endorsing peers run chaincode and sign the proposed result
+  - **Order:** The orderer cluster establishes one shared transaction sequence
+  - **Validate:** Committing peers check endorsements and state conflicts, then update the ledger
+- Key separations that distinguish Fabric from simpler designs:
+  - Ordering is separated from execution
+  - Approval (endorsement) is separated from commit
+  - Identity is verified at every stage
+:::
+::: {.column width="46%"}
+```{dot}
+digraph BigPicture {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fillcolor="#f8fafc", color="#94a3b8"];
+  edge [color="#64748b"];
+
+  CA [label="Certificate Authority", fillcolor="#dbeafe"];
+  MSP [label="Membership Service Provider", fillcolor="#bfdbfe"];
+  APP [label="Client App / SDK", fillcolor="#dcfce7"];
+  EP [label="Endorsing Peers + Chaincode", fillcolor="#bbf7d0"];
+  ORD [label="Orderer Cluster", fillcolor="#fef3c7"];
+  CP [label="Committing Peers", fillcolor="#fde68a"];
+  L [label="Block Log + Current Values", fillcolor="#ede9fe"];
+
+  CA -> MSP -> APP -> EP -> ORD -> CP -> L;
+}
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the full execute-order-validate pipeline before the class dives into each piece. It matters here because Fabric's main architectural choice is separation of responsibilities rather than one monolithic consensus engine. Emphasize that execution, ordering, validation, and identity checking are intentionally split across different components.
+
+**Key Points**
+- Execute-order-validate is Fabric's core architectural pattern.
+- Endorsers simulate and sign results, orderers sequence transactions, and committing peers validate and write them.
+- Identity is checked at every stage, not only at the network boundary.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Fabric-Specific Concepts To Watch For
+
+:::: columns
+::: {.column width="50%"}
+- **Execute-order-validate:** execute and endorse first, order second, validate at commit
+- **Channels:** separate ledger, membership, and policy boundaries (think classification compartments)
+- **Block log vs. world state:** durable history vs. current-value snapshot for fast queries
+:::
+::: {.column width="50%"}
+- **CA vs. MSP:** CA issues identities; MSP decides which are trusted (like a SAP determining who is read into a program)
+- **Chaincode:** Fabric's term for smart contracts. Application code that governs ledger updates. We will cover this in detail shortly.
+- **Endorsement policy:** which orgs must sign before a transaction moves forward
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide flags the Fabric-specific terms students need to remember so later diagrams do not feel like jargon soup. It matters here because each term corresponds to a distinct trust boundary or operational role. Emphasize that channels, MSPs, endorsement policies, and chaincode are practical handles for abstract permissioned concepts students already know.
+
+**Key Points**
+- CA and MSP answer different identity questions: who was issued a credential and whose signatures count.
+- Channels, world state, and endorsement policies are core Fabric abstractions to track.
+- Chaincode is Fabric's smart-contract layer, but it only becomes trusted through the larger pipeline.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Why Fabric Splits Responsibilities
+
+- In the previous lesson, we presented a generic pyramid: identity → policy → ordering → commit. Fabric **breaks that pyramid into distinct, named services** rather than bundling them into a single consensus engine:
+  - **MSP + CA:** decide whose signatures count (identity layer)
+  - **Endorsing peers:** execute chaincode and sign proposal results (approval layer)
+  - **Orderer cluster:** sequences accepted transactions but does *not* execute chaincode (ordering layer)
+  - **Committing peers:** validate and update local ledger state (commit layer)
+- This separation means three questions that many systems blend together are answered by *different components:*
+  - Who is authorized to act? → MSP
+  - Which organizations approved this state change? → Endorsement policy
+  - In what order should approved transactions be recorded? → Orderer
+- Importantly, authority in one layer does not grant authority in another. An organization that votes on policy upgrades does not automatically gain read access to every channel or the power to add new members to the network.
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why Fabric deliberately decomposes permissioned-ledger responsibilities into separate services. It matters here because students should not assume a single consensus engine handles identity, approval, ordering, and commit all at once. Emphasize that authority in one layer does not automatically imply authority in another.
+
+**Key Points**
+- Fabric separates identity, approval, ordering, and commit into different components.
+- MSP decides whose signatures count, endorsers approve execution results, and orderers sequence transactions.
+- Separation of responsibility limits how much power one compromised role automatically gains.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Identity Layer: CA and MSP
+
+- The Certificate Authority handles enrollment:
+  - It issues the certificates and keys bound to users, peers, admins, and organizations
+- The Membership Service Provider is Fabric's trust policy layer:
+  - It names which certificate roots are trusted
+  - Which roles are recognized
+  - Which signatures satisfy local checks
+- Fabric provides both a concrete way to issue identities and a separate mechanism to decide what those identities are allowed to mean inside the network.
+  - However, it is still up to the operators to verify the real-world identity of the people or organizations receiving those credentials.
+- Without valid identity, proposals, endorsements, administrative actions, and sometimes even channel participation are rejected before business logic matters.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces Fabric's identity stack at a high level before the class looks at MSP details. It matters here because almost every later permission check depends on understanding the CA-to-MSP relationship. Emphasize that certificate issuance and trust interpretation are distinct functions.
+
+**Key Points**
+- The CA issues credentials and keys for users, peers, admins, and organizations.
+- The MSP defines which credentials and roles are trusted inside the network.
+- Business logic is irrelevant if identity checks fail first.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## What is an MSP?
+
+- An **MSP** is not a single server and it is not a node type.
+- It is Fabric's structured trust definition for an organization:
+  - MSP ID
+  - trusted certificate roots
+  - admin certificates
+  - role rules and signature requirements
+- Fabric uses MSP information in more than one place:
+  - **Local MSP configuration** lets a peer, orderer, or client identify itself and verify trusted identities from disk.
+  - **Channel MSP definitions** tell the channel which organizations exist and which MSPs their signatures must satisfy.
+- So a network usually contains multiple MSPs, often one per organization, and a node checks both its local material and the relevant channel policy when deciding whether a signature counts.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide clarifies that an MSP is a trust definition rather than a running server process. It matters here because students often misread it as just another node type. Emphasize that MSPs are structured trust material used by Fabric components and channels to evaluate signatures.
+
+**Key Points**
+- An MSP contains identifiers, trusted roots, admin material, and role rules.
+- Fabric uses MSP data both locally and at the channel level.
+- Multiple organizations usually mean multiple MSPs operating within the same network.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## MSP in Practice
+
+- MSP mistakes are often early, loud failures: signature validation errors, policy failures, and admin commands rejected even though containers look healthy.
+- In practice, several important controls live around MSP and channel configuration:
+  - Enrollment and registration commands create identities through the CA.
+  
+  - Channel configuration defines which organizations exist on that channel and which MSPs their signatures must satisfy.
+  - Endorsement policies are typically set as part of the chaincode definition committed to a channel.
+- Fabric nodes are not constantly asking a central MSP service whether every action is allowed.
+  - They use local trust material plus channel policies to evaluate signatures and permissions.
+- MSP also explains why Fabric can be selective:
+  - One identity may submit but not administer.
+  - Another may approve lifecycle changes but not normal business transactions.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how MSP issues surface operationally in day-to-day Fabric work. It matters here because identity problems often appear as early, confusing policy or signature failures rather than obvious crashes. Emphasize that MSP configuration is part of live system behavior, not only initial setup.
+
+**Key Points**
+- MSP mistakes often show up as rejected signatures, failed admin actions, or policy mismatches.
+- Local trust material and channel policy together determine whether an action is allowed.
+- Different identities can and should hold different powers in the same organization.
+
+**Walkthrough**
+None
+
+**Sources**
+@hyperledgerfabricdocs_chaincodedevelopers_2018; @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+## Peers: Two Jobs, One Node Type
+
+- A peer can play multiple roles in the same network.
+- As an endorser, a peer:
+  - Simulates chaincode
+  - Produces a read-write set
+  - Signs the proposal response
+- As a committer, a peer:
+  - Receives ordered blocks.
+  - Re-checks policy and **MVCC** constraints.
+  - Updates the block log and world state.
+- **MVCC (multi-version concurrency control)** means a peer checks whether the keys read earlier still have the same versions at commit time.
+- This separation matters because "executed by a peer" does not mean "globally committed by the network."
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the peer as a node type that can perform multiple distinct jobs. It matters here because students need to separate simulation/endorsement from commit/validation even when the same software instance may do both. Emphasize that executing a proposal is not the same as globally committing it.
+
+**Key Points**
+- A peer may endorse by simulating chaincode and signing proposal results.
+- A peer may also commit by validating ordered blocks and updating ledger state.
+- MVCC checks whether the data versions read during simulation are still current at commit time.
+
+**Walkthrough**
+None
+
+**Sources**
+@hyperledgerfabricdocs_fabricsamplesgithubrepository_2025; @hyperledgerfabricdocs_chaincodedevelopers_2018
+
+:::
+## Chaincode: What It Is and How It Runs
+
+:::: {.columns}
+::: {.column width="50%"}
+- In Fabric, the smart contract is called **chaincode**: application code that all required organizations agree is allowed to govern ledger updates.
+- Chaincode exposes named functions that clients invoke: `InitLedger`, `CreateAsset`, `ReadAsset`, `TransferAsset`
+- Chaincode is where **business rules** live: what fields an asset has, which updates are allowed, and what events are emitted.
+- Chaincode alone does not create trust. Trust comes from chaincode **plus** endorsement policy, ordering, and commit validation.
+:::
+::: {.column width="50%"}
+- Chaincode runs during **proposal simulation**, not during final commit.
+- The key output is the proposed **read-write set (RW set)**: which ledger-state keys were read, which versions were seen, and which values the transaction wants to write.
+- Endorsers sign that result so the client can prove what was approved.
+- Later stages do not re-run the contract; they check whether the endorsed result still satisfies policy and state-version constraints.
+:::
+::::
+
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines chaincode in operational rather than marketing terms. It matters here because students should see that Fabric smart contracts are ordinary application logic embedded in a controlled transaction pipeline. Emphasize that trust comes from chaincode plus endorsement, ordering, and validation together.
+
+**Key Points**
+- Chaincode contains the business rules that describe allowed ledger updates.
+- It runs during proposal simulation rather than during final commit.
+- The critical output is the read-write set that later stages evaluate and commit if still valid.
+
+**Walkthrough**
+None
+
+**Sources**
+@hyperledgerfabricdocs_chaincodedevelopers_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Chaincode Example: `CreateAsset`
+
+:::: {.columns}
+::: {.column width="52%"}
+- This example is adapted from the lab's JavaScript chaincode.
+- It does four basic things:
+  - Checks whether the asset already exists
+  - Constructs a new asset object from the input fields
+  - Saves it through the Fabric stub helper
+  - Emits an event so observers can react
+- The important point is that this code looks like ordinary application logic.
+- What makes it "blockchain logic" is the surrounding Fabric pipeline that decides whether this proposed update becomes shared committed state.
+:::
+::: {.column width="48%"}
+```js
+async CreateAsset(ctx, id, color, size, owner, appraisedValue) {
+  const exists = await this.AssetExists(ctx, id);
+  if (exists) {
+    throw new Error(`The asset ${id} already exists`);
+  }
+
+  const asset = {
+    ID: id,
+    Color: color,
+    Size: Number(size),
+    Owner: owner,
+    AppraisedValue: Number(appraisedValue),
+  };
+
+  await this._saveAsset(ctx, asset);
+  await ctx.stub.setEvent('CAR_LISTED', Buffer.from(JSON.stringify(asset)));
+  return JSON.stringify(asset);
+}
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives a concrete chaincode function so students can connect the abstract idea to familiar application code. It matters here because Fabric can otherwise feel overly architectural and detached from programming practice. Emphasize that the code becomes blockchain-relevant only because the surrounding Fabric pipeline governs whether its output is accepted.
+
+**Key Points**
+- `CreateAsset` checks preconditions, builds an object, saves it, and emits an event like ordinary app code.
+- The surrounding platform decides whether this proposed update becomes shared state.
+- Events help external observers react to committed business actions.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledgerfabricdocs_chaincodedevelopers_2018
+
+:::
+## Chaincode Lifecycle
+
+
+- Lifecycle is distinct from normal transaction execution.
+- The **package** is the deployable chaincode artifact: smart-contract code plus metadata needed to run it on endorsing peers.
+- Organizations install the package on peers first, then approve a **chaincode definition** for a channel:
+  - name, version, sequence number, endorsement policy, and related settings
+- Once committed to the channel, transactions use that agreed contract version and policy.
+- This is another example of Fabric separating governance and rollout from day-to-day business writes.
+
+```{=html}
+<div style="margin-top:-4rem;">
+```
+```{dot}
+digraph Lifecycle {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [color="#64748b"];
+
+  I [label="Install package", fillcolor="#dbeafe"];
+  A [label="Approve definition", fillcolor="#dcfce7"];
+  C [label="Commit definition", fillcolor="#fef3c7"];
+  R [label="Ready to invoke", fillcolor="#bbf7d0"];
+
+  I -> A -> C -> R;
+}
+```
+```{=html}
+</div>
+```
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide distinguishes governance of chaincode versions from ordinary transaction execution. It matters here because Fabric separates contract rollout decisions from everyday business writes. Emphasize that install, approve, and commit are lifecycle governance steps, not the same thing as invoking a function.
+
+**Key Points**
+- Chaincode lifecycle manages package installation and channel-level definition approval.
+- Organizations must agree on the contract definition and policy before it is usable on a channel.
+- Lifecycle is another example of Fabric separating governance from normal transaction flow.
+
+**Walkthrough**
+1. Install the chaincode package on the relevant peers.
+2. Approve the chaincode definition for the channel.
+3. Commit the agreed definition so the channel can use that version and policy.
+4. Invoke transactions against the now-active contract.
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Determinism and Safety
+
+- Endorsers must produce matching results for the same proposal.
+- Non-deterministic logic breaks that expectation:
+  - Local time
+  - Randomness
+  - Uncontrolled external API calls
+  - Divergent local environment state
+- The result is usually endorsement mismatch rather than a spectacular crash.
+- That is a safety feature:
+  - Fabric would rather reject a transaction than let different endorsers certify different outcomes for the same proposal.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why deterministic chaincode execution is a safety requirement in Fabric. It matters here because endorsers must independently produce matching results for the same proposal. Emphasize that Fabric prefers to reject a non-deterministic transaction rather than let different peers certify different outcomes.
+
+**Key Points**
+- Matching endorsements require deterministic execution on all required endorsers.
+- Local time, randomness, external APIs, and inconsistent environment state can break determinism.
+- Endorsement mismatch is a protective failure mode, not just an inconvenience.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @amazon_workchannelsamazon_2025
+
+:::
+## Endorsement Policies as Trust Logic
+
+- Endorsement policy is Fabric's concrete implementation of the "approval layer" from the previous lesson's policy pyramid.
+  - It names the orgs/roles whose signatures are required for a transaction type.
+- Common approval patterns:
+  - **AND(Org1, Org2):** every listed organization must endorse. High assurance, but any single org going offline blocks all transactions.
+  - **OR(Org1, Org2):** any one organization is sufficient. Fast and resilient, but a compromised org can approve unilaterally.
+  - **OutOf(2, Org1, Org2, Org3):** majority threshold. Balances resilience (one org can be offline) with assurance (no single org acts alone).
+- Policies are defined **per-chaincode on a channel**, so a high-value asset contract can require stricter approval than a routine contract on the same network.
+- **Trade-off:** stronger policy (more endorsers) increases assurance but also increases latency and the chance that one missing endorser blocks progress. Misconfigured policies are a real operational risk: too loose and attackers slip through, too strict and legitimate work stalls.
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide presents endorsement policy as the practical expression of trust logic in Fabric. It matters here because approval thresholds are where business trust assumptions become enforceable protocol rules. Emphasize that stricter policies increase assurance but can also increase fragility and latency.
+
+**Key Points**
+- Endorsement policies state which organizations or roles must sign before a transaction can proceed.
+- `AND`, `OR`, and threshold-style policies produce different assurance and availability trade-offs.
+- Policy can and should vary by chaincode and channel depending on the business risk.
+
+**Walkthrough**
+None
+
+**Sources**
+@hyperledgerfabricdevelopers_privatedata_2022; @hyperledgerfabricdocs_securedprivateasset_2024
+
+:::
+## Channels: Confidentiality Boundary
+
+:::: {.columns}
+::: {.column width="46%"}
+- A channel is a separate governance and ledger boundary.
+- It is a separate ledger domain with its own:
+  - Members
+  - Blocks
+  - Policies
+  - Smart-contract definitions
+- That makes channels powerful for confidentiality, but also expensive:
+  - More channels can mean more governance surface and more operational overhead
+:::
+
+::: {.column width="54%"}
+```{dot}
+digraph Channels {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [color="#64748b"];
+
+  subgraph cluster_a {
+    label="Channel A";
+    color="#93c5fd";
+    A1 [label="Org1 Peer", fillcolor="#dbeafe"];
+    A2 [label="Org2 Peer", fillcolor="#dbeafe"];
+    LA [label="Ledger A", shape=cylinder, fillcolor="#bfdbfe"];
+    A1 -> LA;
+    A2 -> LA;
+  }
+
+  subgraph cluster_b {
+    label="Channel B";
+    color="#86efac";
+    B1 [label="Org2 Peer", fillcolor="#dcfce7"];
+    B2 [label="Org3 Peer", fillcolor="#dcfce7"];
+    LB [label="Ledger B", shape=cylinder, fillcolor="#bbf7d0"];
+    B1 -> LB;
+    B2 -> LB;
+  }
+}
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains channels as one of Fabric's main confidentiality and governance boundaries. It matters here because students need to see that Fabric can partition not just data, but also membership and policy. Emphasize that channels are powerful but operationally expensive because each one is effectively its own governed ledger space.
+
+**Key Points**
+- A channel defines its own members, blocks, policies, and chaincode definitions.
+- Channels create confidentiality boundaries by limiting participation and visibility.
+- More channels can improve separation but also increase governance and operational overhead.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @ongaro_searchunderstandableconsensus_2014
+
+:::
+## Private Data Collections
+
+- Private data collections are a lighter-weight confidentiality tool than creating a whole new channel.
+- Authorized peers receive the plaintext private payload.
+- The channel still records a hash anchor so all peers can verify integrity and later detect tampering.
+- This gives Fabric a useful middle ground:
+  - Not everyone sees the data
+  - But everyone can still verify that the committed history is consistent
+
+```{=html}
+<div style="margin-top:-2.5rem;">
+```
+```{dot}
+digraph PrivateDataFlow {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [color="#64748b"];
+
+  APP [label="Client Tx", fillcolor="#e2e8f0"];
+  PVT [label="Private Payload to authorized peers", fillcolor="#fef3c7"];
+  HASH [label="Hash anchored in block", fillcolor="#ddd6fe"];
+  ALL [label="All channel peers verify integrity anchor", fillcolor="#dbeafe"];
+
+  APP -> PVT -> HASH -> ALL;
+}
+```
+```{=html}
+</div>
+```
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces private data collections as a lighter confidentiality tool than full channel separation. It matters here because not every sensitive workflow justifies a whole new channel. Emphasize that plaintext visibility can be restricted while integrity remains verifiable to the wider channel through hash anchoring.
+
+**Key Points**
+- Authorized peers receive the private payload while the wider channel records a hash anchor.
+- This preserves selective confidentiality without abandoning shared integrity checks.
+- Private data collections occupy a middle ground between full channel separation and full data visibility.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Orderer Cluster and Raft Quorum
+
+- Fabric commonly uses Raft for crash-fault-tolerant (CFT) ordering.
+  - Raft handles orderer crashes but assumes orderers are not actively malicious. If Byzantine-fault tolerance (BFT) is needed, Fabric supports a BFT orderer option, though Raft remains the most common deployment.
+- The orderer cluster decides sequence, not business validity.
+- Its job is narrower but still critical:
+  - Accept endorsed transactions
+  - Produce one agreed sequence per channel
+  - Deliver blocks consistently to peers
+
+```{=html}
+<div style="margin-top:-8rem;">
+```
+```{dot}
+digraph RaftQuorum {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [color="#64748b"];
+
+  O1 [label="Orderer 1", fillcolor="#fef3c7"];
+  O2 [label="Orderer 2", fillcolor="#fef3c7"];
+  O3 [label="Orderer 3", fillcolor="#fef3c7"];
+  Q [label="Raft quorum agrees on block sequence", fillcolor="#dcfce7"];
+
+  O1 -> O2;
+  O2 -> O3;
+  O3 -> O1;
+  O1 -> Q;
+  O2 -> Q;
+  O3 -> Q;
+}
+```
+```{=html}
+</div>
+```
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the orderer cluster as Fabric's sequencing service rather than its business-rule engine. It matters here because students should not confuse transaction ordering with application-level approval. Emphasize that Raft provides crash-fault-tolerant ordering under known membership, while business validity is checked elsewhere.
+
+**Key Points**
+- The orderer cluster produces one agreed transaction sequence for each channel.
+- Raft handles crash faults among orderers but is not a Byzantine validity mechanism for business logic.
+- Sequencing and business approval are intentionally separated in Fabric.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Ledger Internals: Block Log vs World State
+
+- The block log is the durable history of what the network accepted.
+- It includes valid and invalid transactions, which matters for audit and diagnosis.
+- The world state is a performance layer:
+  - A query-friendly snapshot of the latest values
+- This is why "query all" can feel database-like even though the underlying trust model is ledger-based.
+
+```{dot}
+digraph LedgerInternals {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [color="#64748b"];
+
+  B [label="Immutable Block Log", shape=cylinder, fillcolor="#dbeafe"];
+  R [label="Replay / Audit", fillcolor="#e2e8f0"];
+  V [label="Validation History", fillcolor="#e2e8f0"];
+  W [label="World State", shape=cylinder, fillcolor="#dcfce7"];
+  Q [label="Fast current-state queries", fillcolor="#e2e8f0"];
+
+  B -> R;
+  B -> V;
+  B -> W;
+  W -> Q;
+}
+```
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide clarifies that Fabric keeps both an immutable block history and a fast current-state view. It matters here because students should understand why querying Fabric can feel database-like even though its trust model is ledger-based. Emphasize that world state is an optimization layer derived from the durable block history.
+
+**Key Points**
+- The block log preserves ordered history, including valid and invalid transactions.
+- World state is a current-value snapshot used for efficient queries.
+- Audit and replay come from the block log, while fast reads come from world state.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## One Invoke: Proposal to Commit
+
+:::: {.columns}
+::: {.column width="52%"}
+- A single Fabric invoke passes through four distinct decision points:
+  - **Proposal:** the client sends a signed request to endorsing peers
+  - **Approval:** endorsers simulate chaincode and return signed read-write sets
+  - **Ordering:** the client submits the endorsed transaction to the orderer cluster
+  - **Validation and commit:** peers check policy and state-version rules, then update ledger and world state
+- Watching those stages separately is the key to understanding why a transaction can be approved, ordered, and still later be marked invalid.
+:::
+::: {.column width="48%"}
+
+```{=html}
+<div style="margin-top:-1rem;">
+```
+```{dot}
+digraph TxLifecycle {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica"];
+  edge [color="#64748b"];
+
+  App [label="Client CLI / SDK", fillcolor="#e2e8f0"];
+  EP [label="Endorsing Peers", fillcolor="#dbeafe"];
+  Ord [label="Orderer Cluster", fillcolor="#fef3c7"];
+  CP [label="Committing Peers", fillcolor="#dcfce7"];
+  V [label="Validate policy + MVCC", fillcolor="#bbf7d0"];
+  C [label="Commit valid tx to ledger/state", fillcolor="#86efac"];
+
+  App -> EP [label="1) Propose"];
+  EP -> App [label="2) Endorse\n(RW set + signatures)", style=dashed];
+  App -> Ord [label="3) Submit"];
+  Ord -> CP [label="4) Deliver block", style=dashed];
+  CP -> V [label="5) Validate"];
+  V -> C [label="6) Commit"];
+}
+```
+```{=html}
+</div>
+```
+:::
+::::
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the full invoke path so students can diagnose where trust decisions are made. It matters here because a Fabric transaction may be approved, ordered, and still end up invalid at commit time. Emphasize the distinct decision points rather than treating the invoke as one atomic black box.
+
+**Key Points**
+- Proposal, approval, ordering, and commit are separate stages with separate checks.
+- A transaction can fail after ordering if later validation detects a problem.
+- Understanding stage boundaries is essential for both architecture and troubleshooting.
+
+**Walkthrough**
+1. Proposal: the client sends a signed request to endorsing peers.
+2. Approval: endorsers simulate the transaction and return signed read-write sets.
+3. Ordering: the client submits the endorsed transaction to the orderer cluster.
+4. Validation and commit: peers check policy and MVCC, then update ledger and world state if valid.
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Phase A: Proposal and Endorsement
+
+- The client sends a proposal under a valid MSP identity to the endorsing peers required by policy.
+- Each endorser simulates the chaincode without committing anything and returns a signed **read-write set (RW set)**:
+  - the ledger-state keys read, and the versions observed
+  - the world-state values the transaction wants to write
+- The client gathers enough matching endorsements to satisfy policy.
+- If the endorsements disagree, or the policy threshold is not met, the transaction never reaches ordering.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide zooms into the first half of the invoke path: identity, simulation, and endorsement. It matters here because many Fabric failures happen before ordering ever starts. Emphasize that matching endorsements are both a correctness requirement and a gate to the rest of the pipeline.
+
+**Key Points**
+- Proposal and endorsement happen under MSP-backed identities and channel policy.
+- Endorsers simulate chaincode and return signed read-write sets rather than committing state.
+- If endorsements do not match or policy is not satisfied, ordering never happens.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @bano_consensusageblockchains_2017
+
+:::
+## Phase B: Ordering, Validation, and Commit
+
+- The endorsed transaction is submitted to the orderer quorum for channel-wide sequencing.
+- Orderers do not decide whether the business action is valid; they decide where in the block stream the transaction belongs.
+- Ordered blocks are then delivered to committing peers for validation.
+- Peers re-check endorsement policy and **MVCC** constraints:
+  - **MVCC (multi-version concurrency control)** asks whether the keys read during endorsement still have the same versions at commit time
+- This is why a transaction can be endorsed successfully and still fail later:
+  - another transaction may have changed one of the keys first
+  - the endorsement set may no longer satisfy the final policy check
+  - the transaction may be malformed or duplicate by the time it is validated
+- Valid transactions update world state; invalid ones remain in block history and are marked invalid for audit.
+
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide covers the second half of the invoke path where ordered transactions are rechecked and either committed or marked invalid. It matters here because Fabric's safety model depends on validating after ordering, not trusting endorsements blindly. Emphasize that ordered does not automatically mean valid.
+
+**Key Points**
+- Orderers sequence transactions, but committing peers decide whether each ordered transaction is still valid.
+- MVCC and endorsement-policy rechecks catch conflicts and stale assumptions at commit time.
+- Invalid transactions still remain in block history for audit and diagnosis.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @pishdar_denialofserviceattackspermissioned_2025
+
+:::
+## How Fabric Avoids Public-Chain Consensus Costs
+
+- Known identities reduce Sybil assumptions.
+- Endorsement restricts who must execute and sign.
+- Orderer quorum agrees on order without a PoW race or open validator competition.
+- Peers validate deterministically rather than relying on probabilistic depth.
+- Finality is operationally immediate after valid commit under normal crash-fault assumptions.
+- The tradeoff is that Fabric inherits the strengths and weaknesses of managed membership, policy, and operational governance.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why Fabric avoids the costs associated with public-chain consensus mechanisms. It matters here because students should connect known membership to lower coordination overhead and faster finality. Emphasize that Fabric gains efficiency by replacing open-admission economics with identity, policy, and managed ordering.
+
+**Key Points**
+- Known identities remove the need for PoW races or public-stake competition.
+- Restricted endorsement execution narrows who must simulate and sign transactions.
+- Immediate operational finality comes with dependence on managed membership and governance.
+
+**Walkthrough**
+None
+
+**Sources**
+@hyperledger_blockchainplatformenterprise_2023; @pishdar_denialofserviceattackspermissioned_2025
+
+:::
+## Where Consensus Can Still Fail
+
+
+- Even with a sound architecture, Fabric transactions can fail at three distinct pipeline stages:
+  - **Pre-order:** endorsement or identity checks reject the proposal before it reaches the orderer
+  - **Post-order:** the transaction is ordered into a block but invalidated during commit-time validation
+  - **Liveness:** the ordering service itself stalls, so no blocks are produced
+- Use the diagram as a "which stage broke?" checklist when debugging.
+
+```{=html}
+<div style="margin-top:-5rem;">
+```
+```{dot}
+digraph FailureModes {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [color="#64748b"];
+
+  root [label="Transaction\nFailure Modes", fillcolor="#e2e8f0", fontsize=12, style="rounded,filled,bold"];
+
+  A [label="Pre-Order\nRejection", fillcolor="#fef3c7"];
+  A1 [label="Insufficient\nendorsements", fillcolor="#fde68a"];
+  A2 [label="MSP / certificate\nmismatch", fillcolor="#fde68a"];
+
+  B [label="Post-Order\nInvalidation", fillcolor="#fee2e2"];
+  B1 [label="MVCC read-set\nconflict", fillcolor="#fecaca"];
+  B2 [label="Endorsement policy\nnot satisfied", fillcolor="#fecaca"];
+
+  C [label="Liveness\nFailure", fillcolor="#dbeafe"];
+  C1 [label="Orderer quorum\nlost", fillcolor="#bfdbfe"];
+  C2 [label="Network partition\nor severe latency", fillcolor="#bfdbfe"];
+
+  root -> A;
+  root -> B;
+  root -> C;
+  A -> A1;
+  A -> A2;
+  B -> B1;
+  B -> B2;
+  C -> C1;
+  C -> C2;
+}
+```
+```{=html}
+</div>
+```
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide helps students categorize Fabric failures by stage rather than treating all failed transactions the same way. It matters here because debugging permissioned systems is much easier when you know whether the problem happened before ordering, after ordering, or at the liveness layer. Emphasize the pipeline-stage mindset for diagnosis.
+
+**Key Points**
+- Pre-order failures usually involve identity or endorsement issues.
+- Post-order failures usually involve MVCC conflicts or final policy mismatch.
+- Liveness failures come from ordering-service or network problems that stop progress altogether.
+
+**Walkthrough**
+None
+
+**Sources**
+@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
+
+:::
+## Observability: What to Watch Live
+
+- A clean mental model for observation is:
+  - Peer and orderer logs tell you which stage is currently happening and where it failed.
+  - The block log tells you ordering happened and whether the transaction was later marked valid or invalid.
+  - World state and queries tell you whether a valid commit changed current values.
+- If a block appears but state does not change, the transaction may have been ordered but later marked invalid.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns Fabric observability into a practical troubleshooting method. It matters here because the architecture only becomes useful operationally if students know where to look for evidence of each stage. Emphasize that logs, block history, and world-state queries answer different diagnostic questions.
+
+**Key Points**
+- Peer and orderer logs reveal what stage the transaction reached and where it failed.
+- The block log shows ordering and later validity outcomes.
+- World state only changes when a valid commit succeeds.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+## Wrap-Up
+
+- Fabric's architecture is role-separated by design: identity, execution, ordering, validation.
+- Its consensus-equivalent guarantees emerge from policy plus ordered commit, not mining.
+- The key analytic move is to ask which component is making which trust decision.
+- In the lab, the goal is to recognize how Fabric's architecture produces both successful commits and specific failure modes.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This wrap-up slide compresses the lesson into a reusable analytic rule for Fabric. It matters here because the important question in Fabric is always which component is making which trust decision. Emphasize role separation, policy-backed finality, and pipeline-aware troubleshooting as the lesson's main takeaways.
+
+**Key Points**
+- Fabric separates identity, execution, ordering, and validation by design.
+- Its trust guarantees come from policy plus ordered commit rather than public-chain mining.
+- Understanding successful and failed transactions requires tracing the full pipeline component by component.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+## References

@@ -1,0 +1,36 @@
+name: p2p-trust-lab
+
+# Phase 9.2b: student containers are now managed by the lane-service.
+# They're created on demand via `docker run` using the student image.
+# The student service here is only used as a build target for the image.
+
+services:
+  # Build target only — lane-service creates containers from this image.
+  student:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: p2p-trust-lab-student
+    profiles: ["build-only"]
+    networks:
+      - student-net
+
+  # Instructor terminal (always up, not lane-managed)
+  instructor:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: p2p-trust-lab-instructor:latest
+    networks:
+      - instructor-net
+    volumes:
+      - ./instructor_guide.qmd:/home/student/lab/instructor_guide.qmd:ro
+      - ./lab3_trust_p2p_overview.qmd:/home/student/lab/lab3_trust_p2p_overview.qmd:ro
+
+networks:
+  student-net:
+    name: p2p-trust-student-net
+    external: true
+  instructor-net:
+    name: p2p-trust-instructor-net
+    external: true

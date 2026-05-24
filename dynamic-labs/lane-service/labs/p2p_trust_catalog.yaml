@@ -1,0 +1,295 @@
+intro:
+  title: P2P Trust & Routing
+  summary: Two labs. Lab A attacks and defends a decentralized reputation system; Lab B compares unstructured (Gossip) and structured (DHT) peer-to-peer routing, then fixes a real bug in a Pastry implementation. The scenario is humanitarian relief coordination in a degraded operational environment.
+  labs:
+  - id: lab-trust
+    title: Lab A · Reputation
+    summary: Audit the ReliefLedger reputation system. Exploit open registration, bypass the patch with spoofed endorsements, then see how EigenTrust and PeerTrust neutralize both attacks by anchoring trust in a pre-trusted core.
+  - id: lab-routing
+    title: Lab B · Routing
+    summary: Route lookups across an unstructured gossip mesh and a structured Chord DHT, then debug a broken Pastry implementation where prefix routing hits a dead end.
+  chapters:
+  - id: trust-recon
+    lab: lab-trust
+    title: Reputation · Recon
+    summary: Snapshot the current NGO scores and get oriented in ngo_sim.py.
+  - id: trust-sybil
+    lab: lab-trust
+    title: Reputation · Sybil Attack
+    summary: 'Exploit open registration: create fake NGOs and cross-endorse your way to the top of the leaderboard.'
+  - id: trust-spoof
+    lab: lab-trust
+    title: Reputation · Spoofing Past the Patch
+    summary: Apply the anti-Sybil patch, then bypass it by forging the endorser ID on outbound endorsements.
+  - id: trust-eigentrust
+    lab: lab-trust
+    title: Reputation · EigenTrust / PeerTrust
+    summary: Run the advanced audit and trace how pre-trusted anchors starve malicious subgraphs of global trust.
+  - id: routing-gossip
+    lab: lab-routing
+    title: Routing · Gossip & Flooding
+    summary: Flood vs random-walk lookups on an unstructured mesh. Measure bandwidth cost vs hit rate.
+  - id: routing-chord
+    lab: lab-routing
+    title: Routing · Chord Finger Table
+    summary: Route a key across the Chord ring using only your finger table — log-N hops if you pick well.
+  - id: routing-pastry
+    lab: lab-routing
+    title: Routing · Fix the Pastry Bug
+    summary: Reproduce the dead-end in get_next_hop, then implement the leaf-set fallback to pass the stress test.
+exercises:
+- id: trust-score-recon
+  chapter: trust-recon
+  title: Snapshot the Reputation Ledger
+  goal: |-
+    **Orientation**
+
+    **Scenario.** You are operating inside a humanitarian relief network where NGOs need to discover reliable partners and route information in an unstable environment. Lab A focuses on trust: who gets believed, how reputation can be manipulated, and how stronger trust models resist abuse. Lab B shifts to routing: how information actually moves once peers try to find one another across a damaged or decentralized network.
+
+    **Purpose.** This lab connects two problems students often treat separately. A distributed system is only useful if you can both decide **who to trust** and **how to reach them**. The exercises show how weak assumptions in either area create openings for manipulation or failure.
+
+    **What you'll learn.** By the end, you should be able to explain how Sybil and spoofing attacks distort naive reputation systems, why anchored trust models such as EigenTrust and PeerTrust are more resilient, and how unstructured and structured routing trade reachability, bandwidth cost, and repair complexity.
+
+    **How to approach this first exercise.** Begin by reading the current reputation ledger before you attack it. The goal here is to build a mental model of the normal network state so you can recognize what changes when you inject fake identities and forged endorsements.
+
+    Get oriented before attacking. See the current set of NGOs, their verification status, baseline scores, and current endorsement counts.
+  student_steps:
+  - |-
+    Print the current ledger:
+
+    ```
+    python3 scripts/ngo_sim.py score
+    ```
+  - Note the median score and the top 3 NGOs.
+  - |-
+    Inspect the data file directly for structure:
+
+    ```
+    less data/endorsements.json
+    ```
+  expected_observations:
+  - The ledger has baseline NGOs like `NGO_01…NGO_NN` with small, uniform scores.
+  - Each NGO row shows `verified`, `age`, and `baseline_score` — remember these; the patch will check them.
+  meaning:
+  - Naive reputation systems treat **every endorsement as equal**, regardless of who sent it or whether they exist.
+  - 'Your attack surface is: cheap registration + unsigned endorsements + unweighted sums.'
+  transition: Register a fake NGO and vote it to the top.
+- id: trust-sybil-attack
+  chapter: trust-sybil
+  title: Run a Sybil Flood
+  goal: Open registration is free. Create a target NGO and a swarm of burner endorsers, then cross-endorse to inflate the target's score past legitimate NGOs.
+  student_steps:
+  - |-
+    Register your target — call it `BadActor`:
+
+    ```
+    python3 scripts/ngo_sim.py register
+    ```
+
+    Note the random 6-digit ID the system assigns.
+  - |-
+    Register several burner NGOs (`Fake1`, `Fake2`, `Fake3`, …), recording each ID:
+
+    ```
+    python3 scripts/ngo_sim.py register
+    ```
+  - |-
+    For each burner, run:
+
+    ```
+    python3 scripts/ngo_sim.py endorse
+    ```
+
+    input the burner ID as endorser, and `BadActor`'s ID as target.
+  - |-
+    Check the new leaderboard:
+
+    ```
+    python3 scripts/ngo_sim.py score
+    ```
+  expected_observations:
+  - '`BadActor` now sits at or near the top of the leaderboard.'
+  - The newly-registered NGOs cluster together and endorse only one target — an obvious **cross-endorsement ring** if you know to look for it.
+  meaning:
+  - '"One identity, one vote" is impossible to enforce without proof-of-humanity, cost-of-entry, or pre-approved enrollment.'
+  - 'Real-world defenses: invite-only, PoS-gated registration, hardware roots of trust (military contexts).'
+  transition: HQ authorizes a patch. You will learn it doesn't actually fix the root problem.
+- id: trust-apply-patch
+  chapter: trust-spoof
+  title: Apply the Anti-Sybil Patch
+  goal: The patch restricts endorsements to NGOs that are **verified** and at least 7 rounds old. Apply it, then confirm your burner NGOs are blocked.
+  student_steps:
+  - |-
+    Apply the patch:
+
+    ```
+    python3 scripts/ngo_sim.py patch
+    ```
+  - |-
+    Try endorsing from one of your burner IDs:
+
+    ```
+    python3 scripts/ngo_sim.py endorse
+    ```
+
+    You should be rejected with a verification error.
+  expected_observations:
+  - Burner NGOs cannot endorse.
+  - Verified legitimate NGOs still can.
+  meaning:
+  - The patch fixed **authorization** — who is allowed to act.
+  - It left **authentication** wide open — it still trusts the sender-ID field at face value.
+  transition: Now bypass the patch by pretending to be a legitimate endorser.
+- id: trust-spoof-endorsement
+  chapter: trust-spoof
+  title: Spoof a Verified Endorser
+  goal: The endorsement protocol asks you to type in the endorser ID but never cryptographically proves you own that identity. Impersonate a legitimate NGO.
+  student_steps:
+  - |-
+    Pick a high-reputation, verified NGO from the leaderboard (e.g., `NGO_04`) and note its ID:
+
+    ```
+    python3 scripts/ngo_sim.py score
+    ```
+  - |-
+    Endorse yourself using their ID:
+
+    ```
+    python3 scripts/ngo_sim.py endorse
+    ```
+
+    Enter the victim NGO's ID as the endorser, your `BadActor` as the target.
+  - Repeat for each verified NGO until `BadActor` has endorsements from the whole verified pool.
+  - Re-check the leaderboard.
+  expected_observations:
+  - The system accepts endorsements from legitimate NGOs that never actually sent them.
+  - '`BadActor` now ranks above many real NGOs.'
+  meaning:
+  - '**Authorization ≠ Authentication.** The patch checks who is allowed; it does not check who actually spoke.'
+  - 'Fix: sign each endorsement with the sender''s private key; reject packets that don''t verify against the sender''s registered public key (PKI).'
+  transition: Headquarters wants a more resilient scoring model. Let's see what EigenTrust does to your attack.
+- id: trust-eigentrust-audit
+  chapter: trust-eigentrust
+  title: Audit With EigenTrust & PeerTrust
+  goal: Recompute reputations with trust propagation anchored in a pre-trusted core. Trace trust flow into your `BadActor` and see why it gets starved.
+  student_steps:
+  - |-
+    Run the advanced audit:
+
+    ```
+    python3 scripts/ngo_sim.py audit
+    ```
+  - |-
+    Trace trust flow into your attacker ID. Replace the example `123456` value
+    with the numeric ID you recorded when you created `BadActor`; if you did not
+    record it, rerun `python3 scripts/ngo_sim.py score` and copy the suspicious
+    `BadActor` row:
+
+    ```
+    python3 scripts/ngo_sim.py audit --trace 123456
+    ```
+  - Compare the naive score vs the EigenTrust / PeerTrust score for `BadActor` and for a legitimate top-ranking NGO.
+  expected_observations:
+  - '`BadActor`''s **naive** score is still high but its **EigenTrust** score collapses to near 0.'
+  - Trace output shows no path from the pre-trusted anchor nodes into your attacker subgraph.
+  - PeerTrust behaves similarly but with different normalization — note the numerical differences.
+  meaning:
+  - 'EigenTrust''s pre-trusted anchor acts like an **alpha damping factor**: every round, a fraction of trust is artificially routed back to known-good nodes. Malicious subgraphs that don''t connect to them get starved.'
+  - 'Operational risk: if the anchor nodes are destroyed or jammed, the trust calculation degrades. You''ve replaced one centralization with a smaller one.'
+  transition: Reputation audited. Now move to the network layer.
+- id: routing-gossip-lookup
+  chapter: routing-gossip
+  title: 'Unstructured Lookups: Flood vs Random Walk'
+  goal: Route a file lookup through an unstructured mesh. Compare the bandwidth cost of flooding against the hit rate of a random walk.
+  student_steps:
+  - |-
+    Run a flood search:
+
+    ```
+    python3 scripts/gossip_demo.py --mode lookup
+    ```
+  - |-
+    Run a broadcast:
+
+    ```
+    python3 scripts/gossip_demo.py --mode broadcast
+    ```
+  - Record total messages exchanged and wall-clock time for each.
+  expected_observations:
+  - Flood hits the target almost immediately — but message count blows up roughly with the size of the network.
+  - Random walks use dramatically fewer messages but sometimes miss the target entirely.
+  meaning:
+  - Flooding scales with O(N) messages per query — a **bandwidth storm** in anything larger than a hobby network.
+  - Random walks are low-traffic but unreliable; they work best as a **complement** to structure, not a replacement.
+  transition: 'Now try the structured approach: Chord.'
+- id: routing-chord-lookup
+  chapter: routing-chord
+  title: Manual Chord Routing
+  goal: Route a key to its owner using only your node's finger table. Try to match the optimal log-N hop count.
+  student_steps:
+  - |-
+    Start the Chord simulator:
+
+    ```
+    python3 scripts/dht_demo.py
+    ```
+  - At each hop, pick the **furthest** entry in your finger table that does **not** overshoot the target key.
+  - Track your hop count and compare against the simulator's reported optimal path.
+  - Rerun and try to tie or beat it.
+  expected_observations:
+  - Even in a ring of hundreds of nodes, a good route takes only a handful of hops.
+  - Overshooting the target wastes a hop — the correct choice is the largest `<= target` entry.
+  meaning:
+  - 'DHTs are **O(log N)** in hops: each jump roughly halves the remaining distance in the keyspace.'
+  - 'Trade-off: every node must maintain an accurate finger table. In a high-churn network (mobile, kinetic), the ring fractures and lookups fail.'
+  transition: 'Advanced: Pastry works the same way in spirit but with prefix matching — and the implementation in front of you has a bug.'
+- id: routing-pastry-reproduce
+  chapter: routing-pastry
+  title: Reproduce the Pastry Dead-End
+  goal: Run the Pastry stress-test until a routing request gets stuck. Identify the code path that returns `None` and drops the message.
+  student_steps:
+  - |-
+    Run the stress test:
+
+    ```
+    python3 scripts/pastry.py
+    ```
+  - Wait for the failure; copy the key and node IDs it reports.
+  - Open `scripts/pastry.py` and find `get_next_hop(self, key)`. Locate the `return None` at the bottom.
+  expected_observations:
+  - After a random number of routes, the simulator reports a message dropped at node N with key K.
+  - The current `get_next_hop` tries the **Routing Table** (prefix match), then gives up.
+  meaning:
+  - Prefix tables are sparse by design — they don't cover every possible key. A prefix-only router has gaps.
+  - 'Pastry guarantees delivery with a secondary structure: the **Leaf Set** (immediate ring neighbors).'
+  transition: Implement the fallback.
+- id: routing-pastry-fix
+  chapter: routing-pastry
+  title: Implement the Leaf-Set Fallback
+  goal: Replace `return None` in `get_next_hop` with a leaf-set check so every message finds a closer neighbor, guaranteeing delivery.
+  student_steps:
+  - |-
+    Edit `scripts/pastry.py` and replace the final `return None` in `get_next_hop` with:
+
+    ```python
+    # If no Routing Table entry, check the Leaf Set
+    if self.leaf_set:
+        best_leaf = min(self.leaf_set, key=lambda x: diff(x, target_key))
+        if diff(best_leaf, target_key) < diff(self.node_id, target_key):
+            return best_leaf
+
+    # Leaf set doesn't have a closer node — we are the closest.
+    return self.node_id
+    ```
+  - |-
+    Rerun the stress test and confirm it finishes without dropping messages:
+
+    ```
+    python3 scripts/pastry.py
+    ```
+  expected_observations:
+  - The stress test completes, reporting 100% delivery.
+  - Hop counts are slightly higher on the previously-failing keys — the leaf-set walk is a slower fallback, but it delivers.
+  meaning:
+  - Prefix shortcuts give you speed; leaf-set walking gives you a **correctness guarantee**. Real DHTs layer both.
+  - In a degraded ring (node churn), the leaf-set walk is what keeps the network from fracturing entirely.

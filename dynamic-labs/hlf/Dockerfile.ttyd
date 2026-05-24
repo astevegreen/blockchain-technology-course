@@ -1,0 +1,29 @@
+ARG FABRIC_VERSION=2.5.15
+ARG FABRIC_ROLE=peer
+ARG TTYD_ARCH=x86_64
+
+FROM hyperledger/fabric-${FABRIC_ROLE}:${FABRIC_VERSION}
+ARG TTYD_ARCH
+
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ncurses-term jq \
+    && rm -rf /var/lib/apt/lists/*
+
+ADD https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${TTYD_ARCH} /usr/local/bin/ttyd
+ADD https://github.com/zellij-org/zellij/releases/latest/download/zellij-${TTYD_ARCH}-unknown-linux-musl.tar.gz /tmp/zellij.tar.gz
+RUN chmod +x /usr/local/bin/ttyd \
+    && tar xzf /tmp/zellij.tar.gz -C /usr/local/bin && rm /tmp/zellij.tar.gz && chmod +x /usr/local/bin/zellij
+
+COPY zellij-config.kdl /etc/zellij/config.kdl
+
+ENV ZELLIJ_CONFIG_DIR="/etc/zellij"
+
+COPY scripts/hlf_ttyd_wrapper.sh /opt/hlf-scripts/hlf_ttyd_wrapper.sh
+COPY scripts/hlf_peer_shell.sh   /opt/hlf-scripts/hlf_peer_shell.sh
+COPY scripts/hlf_cli_helpers.sh  /opt/hlf-scripts/hlf_cli_helpers.sh
+RUN if ! getent group hlf >/dev/null 2>&1; then groupadd --gid 1000 hlf; fi \
+    && if ! id -u hlf >/dev/null 2>&1; then useradd --uid 1000 --gid 1000 --home-dir /home/student --shell /bin/bash --no-create-home hlf; fi \
+    && mkdir -p /home/student /opt/student-home-seed /var/hyperledger/production \
+    && chown -R 1000:1000 /home/student /var/hyperledger/production \
+    && (cp -a /home/student/. /opt/student-home-seed/ 2>/dev/null || true) \
+    && chmod 755 /opt/hlf-scripts/*.sh

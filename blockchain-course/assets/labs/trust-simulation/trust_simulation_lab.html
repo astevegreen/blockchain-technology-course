@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trust in P2P Networks: EigenTrust Simulation</title>
+<style>
+  :root {
+    --fg:#0f172a; --muted:#475569; --bg:#ffffff; --soft:#f8fafc;
+    --accent:#2563eb; --green:#16a34a; --red:#dc2626; --yellow:#ca8a04;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:var(--sans)}
+  .wrap{max-width:1000px;margin:40px auto;padding:0 16px}
+  h1{font-size:1.75rem;margin:0 0 6px}
+  p.sub{color:var(--muted);margin-top:0;margin-bottom:20px}
+  .panel{background:var(--soft);border-radius:14px;padding:16px 18px 18px;margin:18px 0}
+  .panel h2{font-size:1.15rem;margin:0 0 12px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+  select,button{
+    font:inherit;border:1px solid #e5e7eb;border-radius:10px;padding:8px 14px;background:#fff;cursor:pointer
+  }
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  button.primary:hover{background:#1d4ed8}
+  button.danger{background:var(--red);color:#fff;border-color:var(--red)}
+  button.danger:hover{background:#b91c1c}
+
+  /* Node grid */
+  .node-grid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+  .node{
+    width:100px;height:100px;border-radius:14px;border:2px solid #e5e7eb;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    position:relative;transition:all .3s ease;background:#fff;
+  }
+  .node.anchor{border-color:var(--accent);border-width:3px}
+  .node .badge{
+    position:absolute;top:-8px;right:-8px;background:var(--accent);color:#fff;
+    font-size:.7rem;border-radius:999px;padding:2px 6px;font-weight:700
+  }
+  .node .label{font-weight:700;font-size:.95rem;margin-bottom:4px}
+  .node .score{font-family:var(--mono);font-size:.85rem;font-weight:600}
+  .node.sybil{border-style:dashed;border-color:var(--red)}
+  .node.colluding::after{
+    content:"";position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
+    width:8px;height:8px;border-radius:50%;background:var(--yellow)
+  }
+  .node.slandered{box-shadow:0 0 0 3px rgba(220,38,38,.25)}
+
+  .trust-green{background:#dcfce7;border-color:var(--green)}
+  .trust-yellow{background:#fef9c3;border-color:var(--yellow)}
+  .trust-red{background:#fee2e2;border-color:var(--red)}
+  .node.anchor.trust-green{border-color:var(--accent)}
+  .node.anchor.trust-yellow{border-color:var(--accent)}
+  .node.anchor.trust-red{border-color:var(--accent)}
+
+  /* Log */
+  .log{
+    height:160px;overflow-y:auto;font-family:var(--mono);font-size:.82rem;
+    background:#fff;border-radius:10px;padding:10px 12px;border:1px solid #e5e7eb;
+    display:flex;flex-direction:column-reverse
+  }
+  .log-entry{padding:2px 0;border-bottom:1px solid #f1f5f9}
+  .log-entry .round{color:var(--accent);font-weight:700}
+  .log-entry .atk{color:var(--red)}
+  .muted{color:var(--muted);font-size:.9rem}
+  .attack-desc{font-size:.85rem;color:var(--fg);background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;margin-bottom:10px;display:none;line-height:1.5}
+  .attack-desc.visible{display:block}
+  .attack-desc strong{color:var(--red)}
+  .attack-desc .expect{color:var(--accent);font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;color:var(--muted);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:4px}
+  .legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Trust in P2P Networks</h1>
+  <p class="sub">Simplified EigenTrust model &mdash; watch how reputation scores respond to attacks.</p>
+
+  <div class="panel">
+    <h2>Controls</h2>
+    <div class="controls">
+      <select id="attack-select">
+        <option value="">-- Choose Attack --</option>
+        <option value="sybil">Sybil Attack</option>
+        <option value="collusion">Collusion</option>
+        <option value="slander">Slander</option>
+      </select>
+      <button class="danger" id="btn-attack" disabled>Launch Attack</button>
+      <button class="primary" id="btn-step">Step</button>
+      <button id="btn-reset">Reset</button>
+    </div>
+    <div id="attack-desc" class="attack-desc"></div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--green)"></span> Trust &gt; 0.6</span>
+      <span><span class="dot" style="background:var(--yellow)"></span> Trust 0.3 &ndash; 0.6</span>
+      <span><span class="dot" style="background:var(--red)"></span> Trust &lt; 0.3</span>
+      <span style="color:var(--accent);font-weight:700">&#9733; Anchor node</span>
+      <span style="border:1px dashed var(--red);border-radius:4px;padding:0 4px">Sybil</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Network</h2>
+    <div class="node-grid" id="node-grid"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Event Log</h2>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+/* ── Config ── */
+const ANCHOR_IDS = [0, 3];
+const ANCHOR_TRUST = 0.85;
+const BLEND = 0.15;          // weight toward pre-trusted anchors each step
+const INITIAL_NODES = 8;
+
+/* ── State ── */
+let nodes, edges, round, logEl, attackActive;
+
+function init() {
+  round = 0;
+  attackActive = null;
+  nodes = [];
+  edges = [];
+  for (let i = 0; i < INITIAL_NODES; i++) {
+    nodes.push({
+      id: i,
+      label: 'N' + i,
+      trust: ANCHOR_IDS.includes(i) ? ANCHOR_TRUST : 0.5 + Math.random() * 0.2,
+      anchor: ANCHOR_IDS.includes(i),
+      sybil: false,
+      colluding: false,
+      slandered: false
+    });
+  }
+  // Build random neighbourhood: each node connects to 2-4 others
+  for (let i = 0; i < INITIAL_NODES; i++) {
+    const count = 2 + Math.floor(Math.random() * 3);
+    const targets = [];
+    while (targets.length < count) {
+      const t = Math.floor(Math.random() * INITIAL_NODES);
+      if (t !== i && !targets.includes(t)) targets.push(t);
+    }
+    targets.forEach(t => {
+      // local trust: positive interaction score
+      edges.push({ from: i, to: t, score: 0.6 + Math.random() * 0.4 });
+    });
+  }
+  // Run a few warm-up steps so scores settle from pure initial
+  for (let w = 0; w < 3; w++) stepTrust(true);
+  round = 0;
+  document.getElementById('attack-select').value = '';
+  document.getElementById('btn-attack').disabled = true;
+  render();
+  logEl = document.getElementById('log');
+  logEl.innerHTML = '';
+  log('Network initialised with ' + INITIAL_NODES + ' nodes. Anchors: ' +
+      ANCHOR_IDS.map(i => 'N' + i).join(', ') + '.');
+}
+
+/* ── Trust engine (simplified EigenTrust) ── */
+function stepTrust(silent) {
+  round++;
+  // 1. Build normalised local-trust matrix C[i][j]
+  const n = nodes.length;
+  const C = Array.from({ length: n }, () => new Float64Array(n));
+  edges.forEach(e => {
+    const fi = nodes.findIndex(nd => nd.id === e.from);
+    const ti = nodes.findIndex(nd => nd.id === e.to);
+    if (fi >= 0 && ti >= 0) C[fi][ti] = Math.max(e.score, 0);
+  });
+  // row-normalise
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    for (let j = 0; j < n; j++) sum += C[i][j];
+    if (sum > 0) for (let j = 0; j < n; j++) C[i][j] /= sum;
+  }
+
+  // 2. Compute new trust: t_new[j] = sum_i( t[i] * C[i][j] )
+  const tNew = new Float64Array(n);
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) tNew[j] += nodes[i].trust * C[i][j];
+  }
+
+  // 3. Blend toward pre-trusted anchors (uniform over anchors)
+  const p = new Float64Array(n);
+  const anchors = nodes.filter(nd => nd.anchor);
+  anchors.forEach(a => {
+    const idx = nodes.indexOf(a);
+    p[idx] = 1 / anchors.length;
+  });
+  for (let i = 0; i < n; i++) {
+    tNew[i] = (1 - BLEND) * tNew[i] + BLEND * p[i];
+  }
+
+  // 4. Normalise to [0,1] range (max-norm)
+  let mx = 0;
+  for (let i = 0; i < n; i++) if (tNew[i] > mx) mx = tNew[i];
+  if (mx > 0) for (let i = 0; i < n; i++) nodes[i].trust = Math.min(tNew[i] / mx, 1);
+
+  if (!silent) {
+    log('<span class="round">Round ' + round + '</span> &mdash; trust scores recalculated.');
+    render();
+  }
+}
+
+/* ── Attacks ── */
+function launchAttack(type) {
+  attackActive = type;
+  if (type === 'sybil') {
+    const base = nodes.length;
+    for (let i = 0; i < 3; i++) {
+      const id = base + i;
+      nodes.push({
+        id, label: 'S' + i, trust: 0.1,
+        anchor: false, sybil: true, colluding: false, slandered: false
+      });
+    }
+    // Sybils rate each other very highly
+    for (let i = base; i < base + 3; i++) {
+      for (let j = base; j < base + 3; j++) {
+        if (i !== j) edges.push({ from: nodes[i - base + (base)].id, to: nodes[j - base + (base)].id, score: 1.0 });
+      }
+    }
+    // Sybils also connect to a couple of real nodes
+    edges.push({ from: nodes[base].id, to: nodes[1].id, score: 0.9 });
+    edges.push({ from: nodes[base + 1].id, to: nodes[2].id, score: 0.9 });
+    log('<span class="atk">Sybil Attack launched:</span> 3 fake nodes (S0-S2) joined, rating each other 1.0. Click "Step" to see if their scores rise or stay contained by anchor-based propagation.');
+  } else if (type === 'collusion') {
+    const colluders = [1, 4, 6];
+    colluders.forEach(id => {
+      const nd = nodes.find(n => n.id === id);
+      if (nd) nd.colluding = true;
+    });
+    // Inflate mutual ratings
+    colluders.forEach(a => {
+      colluders.forEach(b => {
+        if (a !== b) {
+          const existing = edges.find(e => e.from === a && e.to === b);
+          if (existing) existing.score = 1.0;
+          else edges.push({ from: a, to: b, score: 1.0 });
+        }
+      });
+    });
+    log('<span class="atk">Collusion launched:</span> N1, N4, N6 now rate each other 1.0. Click "Step" to see if their coordinated praise translates into higher global trust, or if anchor-based propagation limits the effect.');
+  } else if (type === 'slander') {
+    const attackers = [5, 7];
+    const target = nodes.find(n => n.id === 2);
+    if (target) target.slandered = true;
+    attackers.forEach(a => {
+      const existing = edges.find(e => e.from === a && e.to === 2);
+      if (existing) existing.score = -0.5;
+      else edges.push({ from: a, to: 2, score: -0.5 });
+    });
+    log('<span class="atk">Slander launched:</span> N5 and N7 now give negative ratings to N2. Click "Step" to see whether their low-trust influence is enough to drag down N2\'s score, or if N2\'s anchor-backed reputation holds.');
+  }
+  render();
+}
+
+/* ── Rendering ── */
+function trustClass(t) {
+  if (t < 0.3) return 'trust-red';
+  if (t <= 0.6) return 'trust-yellow';
+  return 'trust-green';
+}
+
+function render() {
+  const grid = document.getElementById('node-grid');
+  grid.innerHTML = '';
+  nodes.forEach(nd => {
+    const div = document.createElement('div');
+    div.className = 'node ' + trustClass(nd.trust);
+    if (nd.anchor) div.classList.add('anchor');
+    if (nd.sybil) div.classList.add('sybil');
+    if (nd.colluding) div.classList.add('colluding');
+    if (nd.slandered) div.classList.add('slandered');
+    div.innerHTML =
+      (nd.anchor ? '<span class="badge">&#9733; Anchor</span>' : '') +
+      '<span class="label">' + nd.label + '</span>' +
+      '<span class="score">' + nd.trust.toFixed(3) + '</span>';
+    grid.appendChild(div);
+  });
+}
+
+function log(msg) {
+  const el = document.getElementById('log');
+  const d = document.createElement('div');
+  d.className = 'log-entry';
+  d.innerHTML = msg;
+  el.prepend(d);
+}
+
+/* ── Attack descriptions ── */
+const attackDescriptions = {
+  sybil: '<strong>Sybil Attack:</strong> Three fake nodes (S0-S2) join the network and rate each other with maximum trust. They also try to connect to real nodes. <span class="expect">Expected:</span> Because the Sybil nodes start with low trust and anchors never endorsed them, their mutual praise should stay contained. Click "Step" several times and watch whether the Sybil scores rise or stay low.',
+  collusion: '<strong>Collusion:</strong> Three existing nodes (N1, N4, N6) begin secretly inflating each other\'s ratings to 1.0. <span class="expect">Expected:</span> Their scores may rise slightly, but the effect is limited because trust must propagate through anchors. The colluders\' scores should plateau well below anchor-level trust. Compare their scores to honest non-anchor nodes.',
+  slander: '<strong>Slander:</strong> Two nodes (N5, N7) begin giving false negative ratings to N2, trying to destroy its reputation. <span class="expect">Expected:</span> N2\'s score may dip slightly, but because the slanderers have modest trust themselves, their negative influence is weak. N2\'s score should remain supported by its positive interactions with other peers and anchor endorsement.'
+};
+
+const descEl = document.getElementById('attack-desc');
+
+/* ── Event wiring ── */
+document.getElementById('attack-select').addEventListener('change', function () {
+  document.getElementById('btn-attack').disabled = !this.value;
+  if (this.value && attackDescriptions[this.value]) {
+    descEl.innerHTML = attackDescriptions[this.value];
+    descEl.classList.add('visible');
+  } else {
+    descEl.classList.remove('visible');
+  }
+});
+
+document.getElementById('btn-attack').addEventListener('click', function () {
+  const sel = document.getElementById('attack-select');
+  if (!sel.value) return;
+  launchAttack(sel.value);
+  sel.value = '';
+  this.disabled = true;
+  descEl.classList.remove('visible');
+});
+
+document.getElementById('btn-step').addEventListener('click', function () {
+  stepTrust(false);
+});
+
+document.getElementById('btn-reset').addEventListener('click', init);
+
+/* ── Boot ── */
+init();
+</script>
+</body>
+</html>

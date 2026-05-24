@@ -1,0 +1,401 @@
+{
+  "lesson_id": "primitives_03_cp_symmetric_encryption",
+  "lesson_title": "Symmetric Encryption",
+  "date_generated": "2026-04-26",
+  "topic": "primitives",
+  "tags": [
+    "primitives",
+    "03-cp-symmetric-encryption",
+    "symmetric-encryption",
+    "xor",
+    "one-time-pad",
+    "pseudorandom-generators",
+    "stream-ciphers",
+    "block-ciphers",
+    "cipher-modes",
+    "ecb-mode",
+    "initialization-vectors",
+    "aead",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "reading_status": "acquired",
+    "source_mix": {
+      "lesson_questions": 10,
+      "reading_questions": 3
+    },
+    "generation_notes": "Reading-grounded questions focus on Barak Chapter 3's PRG security model, stream-cipher construction, and insecure generator examples. Lesson-grounded questions cover the broader symmetric-encryption lesson topics, including modes, IVs/nonces, padding, and AEAD.",
+    "slide_source_path": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd",
+    "reading_source_paths": [
+      "/tmp/blockchain-course-readings/text/intensecrypto_ch03.txt",
+      "/tmp/blockchain-course-readings/intensecrypto_ch03.html"
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A student says symmetric encryption and hashing are basically the same because both turn readable data into unreadable-looking output. Which correction best captures the lesson distinction?",
+      "correct_answer": "Symmetric encryption is reversible with the shared secret key, while hashing is intended as a one-way commitment or digest.",
+      "incorrect_answers": [
+        "Symmetric encryption is one-way masking for storage, while hashing uses a shared secret key to recover every original message exactly.",
+        "Symmetric encryption only proves integrity, while hashing is the standard reversible way to conceal private messages.",
+        "Symmetric encryption needs public/private key pairs, while hashing restores data from a fixed-size digest value later."
+      ],
+      "explanation": "The lesson frames symmetric encryption as a two-way mechanism controlled by one shared secret key. Hashing is one-way and is not meant to recover the original message.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "symmetric-encryption",
+        "hashing",
+        "lesson",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "The Shared Key",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: The Shared Key"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "In a stream-cipher-style construction, Alice computes ciphertext by XORing plaintext with a keystream. Why can Bob recover the plaintext by XORing the ciphertext with the same keystream?",
+      "correct_answer": "XORing with the same value twice cancels the keystream and leaves the original plaintext bits.",
+      "incorrect_answers": [
+        "XOR reverses a fixed bit rotation, so Bob shifts the ciphertext back using the same keystream value.",
+        "XOR stores plaintext as parity data, letting Bob recover it by checking each ciphertext bit twice.",
+        "XOR hashes the message reversibly, so repeating the key expands the original plaintext bits again."
+      ],
+      "explanation": "XOR is reversible in this setting: plaintext XOR keystream produces ciphertext, and ciphertext XOR the same keystream restores the plaintext.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "xor",
+        "stream-ciphers",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Exclusive OR (XOR) Logic",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: Exclusive OR (XOR) Logic"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "Two different messages are encrypted with the same one-time-pad bytes. What is the main security problem?",
+      "correct_answer": "The reused pad creates relationships between the two plaintexts that an attacker can exploit.",
+      "incorrect_answers": [
+        "Reusing the pad only slows decryption because XOR must rebuild truth tables for both messages.",
+        "The pad becomes public only when the ciphertext files share exactly the same byte length value.",
+        "Pad reuse is safe for text because language patterns cancel under XOR encryption in natural writing."
+      ],
+      "explanation": "A one-time pad depends on truly random pad material that is never reused. Reuse cancels the shared pad relationship and exposes structure between the messages.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "one-time-pad",
+        "keystream-reuse",
+        "lesson",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Infinite-length One Time Pad",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: Infinite-length One Time Pad"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the lesson introduce pseudorandom generators after the one-time pad?",
+      "correct_answer": "A PRG lets a short shared seed generate a long keystream, making stream-cipher use practical when an infinite one-time pad cannot be pre-shared.",
+      "incorrect_answers": [
+        "A PRG removes the shared secret entirely because any observer can regenerate the keystream from public algorithm parameters and decrypt messages.",
+        "A PRG converts the stream cipher into a block cipher, so padding replaces synchronized secret seed material during every encryption session afterward.",
+        "A PRG gives perfect secrecy even when a short deterministic seed expands into a longer keystream that senders safely reuse across sessions later."
+      ],
+      "explanation": "The one-time pad is impractical because the pad must be as long as the message and never reused. The lesson introduces PRGs as a way to expand a short shared seed into a keystream for practical stream-cipher use.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "pseudorandom-generators",
+        "one-time-pad",
+        "lesson",
+        "slides",
+        "tradeoff"
+      ],
+      "lesson_block": "Pseudo-Random Generators",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: Pseudo-Random Generators"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "A block cipher design uses substitution boxes to obscure simple relationships with the key, then permutation boxes to spread each input bit's influence across many positions. Which lesson principles are being applied?",
+      "correct_answer": "Confusion through substitution and diffusion through permutation.",
+      "incorrect_answers": [
+        "Padding by substitution and signing through permutation rounds.",
+        "Nonce hiding with S-boxes and key sharing via P-box maps only.",
+        "Preimage lookup tables and signing through permutation steps."
+      ],
+      "explanation": "The lesson connects Shannon's confusion to obscuring key-ciphertext relationships, often via S-boxes, and diffusion to spreading influence widely, often via P-boxes.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "confusion-diffusion",
+        "block-ciphers",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Shannon's Principles: Confusion and Diffusion",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: Shannon's Principles: Confusion and Diffusion"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A system needs to encrypt low-latency media data as it arrives byte by byte, rather than waiting for fixed-size chunks. Which lesson comparison is most relevant?",
+      "correct_answer": "A stream cipher naturally processes a continuous stream, while a block cipher works on fixed-size blocks and needs a mode for longer data.",
+      "incorrect_answers": [
+        "A block cipher is best here because fixed blocks avoid all buffering and do not require padding, modes, or latency tradeoffs in live media.",
+        "Stream ciphers require full message files first, while block ciphers encrypt each arriving byte without a mode or padding step.",
+        "Both designs behave the same because modes and block boundaries cannot affect latency or byte-by-byte processing in this setting."
+      ],
+      "explanation": "The lesson contrasts stream ciphers, which combine a keystream with data as it flows, with block ciphers, which operate on fixed-size chunks and require modes of operation for larger messages.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "stream-ciphers",
+        "block-ciphers",
+        "lesson",
+        "slides",
+        "application"
+      ],
+      "lesson_block": "Block vs Stream Ciphers",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: Block vs Stream Ciphers; Modes of Operation"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A developer encrypts a highly repetitive bitmap image with AES in ECB mode. The ciphertext image still reveals the outline of the original picture. Why did this happen?",
+      "correct_answer": "ECB encrypts identical plaintext blocks into identical ciphertext blocks under the same key, so repeated structure remains visible.",
+      "incorrect_answers": [
+        "AES itself leaks bitmap outlines whenever image files include repeated headers, even if the mode randomizes every block independently.",
+        "ECB leaked patterns because its secret IV was hidden from the receiver, causing repeated blocks to form outlines in the file.",
+        "The leak occurred because block ciphers cannot encrypt raw pixel bytes unless the file is compressed losslessly first."
+      ],
+      "explanation": "The lesson's ECB pitfall is that each block is encrypted independently. Strong primitives can still fail when the mode preserves repeated block patterns.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "ecb-mode",
+        "cipher-modes",
+        "lesson",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "ECB Mode Pitfall",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: ECB Mode Pitfall"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A protocol sends a fresh nonce next to each ciphertext in plaintext. A reviewer objects that this leaks the nonce. What is the best response?",
+      "correct_answer": "That is usually acceptable because the nonce's critical requirement is uniqueness with the key, not secrecy.",
+      "incorrect_answers": [
+        "The reviewer is correct because each nonce is a secret password that must be encrypted before sending.",
+        "The nonce is unnecessary because repeated plaintexts should create the same ciphertext for auditing.",
+        "Reuse the nonce with the same key whenever one sender transmits related messages over a channel safely."
+      ],
+      "explanation": "The lesson emphasizes that IVs and nonces are commonly public. They protect semantic security by ensuring fresh encryption behavior, but reuse with the same key can be dangerous.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "initialization-vectors",
+        "nonces",
+        "lesson",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "Padding and Initialization Vectors",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: Padding and Initialization Vectors; CTR Mode"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A message is not an exact multiple of a block cipher's block size. What problem does padding solve?",
+      "correct_answer": "It formats the final partial block so the block cipher mode can process the whole message unambiguously.",
+      "incorrect_answers": [
+        "It hides the secret key by inserting random pad bytes directly into the cipher schedule before each block.",
+        "It replaces the IV by making repeated equal messages produce different ciphertexts by itself each time.",
+        "It authenticates every block so modified ciphertext is rejected before decryption begins safely."
+      ],
+      "explanation": "Padding is an operational mechanism for fitting variable-length data into fixed-size block processing. It is not a substitute for nonces, IVs, or authentication.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "padding",
+        "block-ciphers",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Padding and Initialization Vectors",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: Padding and Initialization Vectors"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "An attacker cannot understand an encrypted command but can flip bits in transit so the decrypted command changes. Which lesson recommendation addresses this failure?",
+      "correct_answer": "Use authenticated encryption so the receiver gets confidentiality and detects tampering before accepting the plaintext.",
+      "incorrect_answers": [
+        "Use ECB mode so repeated command blocks stay recognizable, preventing attacker bit flips automatically every time.",
+        "Keep the IV secret so the attacker cannot see public metadata and therefore cannot alter command contents safely.",
+        "Use encryption alone, because strong confidentiality automatically implies integrity for decrypted command data."
+      ],
+      "explanation": "The lesson distinguishes confidentiality from integrity. AEAD constructions are recommended because encryption alone can hide data without detecting malicious modification.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "aead",
+        "integrity",
+        "lesson",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "From Confidentiality to Authenticated Encryption (AEAD)",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_03-CP-symmetric_encryption-slides-only.qmd: From Confidentiality to Authenticated Encryption (AEAD)"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A generator produces about as many zeros as ones and has a very long period, but an efficient attacker can still distinguish its output from uniform randomness. According to the reading, what is missing?",
+      "correct_answer": "Cryptographic pseudorandomness against efficient distinguishers.",
+      "incorrect_answers": [
+        "A public proof that the generator outputs exactly half zeros forever.",
+        "A secret description of the generator algorithm wiring rules.",
+        "Long period certificates from statistical tests and samples."
+      ],
+      "explanation": "Barak's chapter emphasizes that superficial statistical properties are not enough. A PRG must be computationally indistinguishable from true randomness to efficient adversaries.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "pseudorandom-generators",
+        "computational-indistinguishability",
+        "reading",
+        "assigned-reading",
+        "misconception"
+      ],
+      "lesson_block": "Reading: Pseudorandomness and Distinguishers",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/intensecrypto_ch03.txt: PRG security and computational indistinguishability"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the reading say PRG security is defined against efficient attackers rather than attackers with unlimited computation?",
+      "correct_answer": "Because a length-expanding deterministic generator maps short seeds into only a subset of all longer strings, so exhaustive search could distinguish its image.",
+      "incorrect_answers": [
+        "Because unlimited computation still cannot enumerate candidate seeds when the algorithm is public, so the output's long period is the only practical security condition.",
+        "Because generated output becomes truly uniform once expansion exceeds the seed by more than one security parameter without any distinguisher needed.",
+        "Because only efficient attackers may read public algorithms, while unbounded attackers lack oracle access to the generator source code details anyway."
+      ],
+      "explanation": "The reading distinguishes computational pseudorandomness from information-theoretic randomness. With unlimited work, an attacker could test whether an output belongs to the generator's smaller image.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "pseudorandom-generators",
+        "bounded-adversary",
+        "computational-secrecy",
+        "reading",
+        "assigned-reading",
+        "mechanism"
+      ],
+      "lesson_block": "Reading: Perfect Secrecy Versus Computational Secrecy",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/intensecrypto_ch03.txt: Perfect secrecy versus bounded adversaries and deterministic expansion"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A proposed stream cipher uses a linear feedback shift register because it is fast, balanced, and has a long cycle. What is the reading-grounded concern?",
+      "correct_answer": "Linearity can turn observed output bits into equations about the hidden state, enabling prediction or state recovery.",
+      "incorrect_answers": [
+        "Long cycles are impossible in deterministic generators, so the stream stops before producing enough keystream bytes for use.",
+        "Efficiency proves insecurity because cryptographic generators must run slowly to hide internal transitions.",
+        "Balanced bits disable XOR cancellation, so the receiver cannot decrypt even with the correct keystream bytes."
+      ],
+      "explanation": "The reading uses linear generators such as LFSRs to show that long period and balanced bits do not imply cryptographic security. Linear structure can be exploited by efficient attacks.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "03-cp-symmetric-encryption",
+        "linear-generators",
+        "lfsr",
+        "keystream-security",
+        "reading",
+        "assigned-reading",
+        "scenario"
+      ],
+      "lesson_block": "Reading: Linear Generator Failure",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/intensecrypto_ch03.txt: Linear feedback shift registers and linear equations"
+    }
+  ],
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_primitives",
+        "title": "Cryptography & Primitives",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_symmetric_encryption_lesson_slides",
+            "title": "Symmetric Encryption - lesson slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_symmetric_encryption_assigned_reading",
+            "title": "Symmetric Encryption - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

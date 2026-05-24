@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pseudorandom Generator Demo (SHA-256, with Counter Patch)</title>
+<style>
+  :root {
+    --bg: #0b1020; --fg:#e9edf1; --muted:#aab3c0;
+    --accent:#7cc0ff; --good:#79f2a0; --warn:#ffb86b; --counter:#c792ea; --seed:#5eead4;
+    --card:#141b34; --edge:#222b4b; --outline:#2b355f;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    --radius: 14px;
+  }
+  html,body{background:var(--bg);color:var(--fg);margin:0;font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;}
+  header {padding:28px 20px 8px; text-align:center;}
+  h1{font-weight:800; letter-spacing:.3px; margin:.2rem 0 .4rem; font-size:1.6rem;}
+  .sub{color:var(--muted); font-size:.95rem}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  .panel{background:var(--card); border:1px solid var(--outline); border-radius:var(--radius); padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; margin:8px 0}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:0 0 6px 4px}
+  input[type="text"], input[type="number"], select{
+    width:100%; box-sizing:border-box; padding:10px 12px; border-radius:10px; border:1px solid var(--edge);
+    background:#0f1530; color:var(--fg); font-family:var(--mono);
+  }
+  .col{flex:1 1 240px}
+  .btns{display:flex; gap:10px; flex-wrap:wrap}
+  button{
+    background:linear-gradient(180deg,#3b82f6,#2563eb);
+    color:white; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:700
+  }
+  button.secondary{background:#202a51; border:1px solid var(--edge); color:var(--fg)}
+  button:disabled{opacity:.55; cursor:not-allowed}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; margin:10px 0 0}
+  .key{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:.85rem}
+  .swatch{width:14px;height:14px;border-radius:4px; border:1px solid rgba(255,255,255,.15)}
+  .swatch.seed{background:var(--seed)}
+  .swatch.keep{background:var(--good)}
+  .swatch.out{background:var(--warn)}
+  .swatch.counter{background:var(--counter)}
+  .results{margin:18px 0 80px; display:grid; gap:12px}
+  .round{background:var(--card); border:1px solid var(--edge); border-radius:var(--radius); overflow:hidden}
+  .round header{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:#0e1530; border-bottom:1px solid var(--edge)}
+  .round header h3{margin:0; font-size:1rem}
+  .round .grid{display:grid; grid-template-columns:1fr; gap:10px; padding:12px}
+  .block{border:1px dashed var(--edge); border-radius:10px; padding:8px}
+  .mono{font-family:var(--mono); overflow:auto; white-space:pre-wrap; word-break:break-word}
+  .tag{display:inline-block; font-size:.72rem; color:var(--muted); border:1px solid var(--edge); padding:.1rem .4rem; border-radius:999px; margin-bottom:6px}
+  .chip{display:inline-block; font-size:.78rem; color:#091224; background:var(--accent); padding:.12rem .45rem; border-radius:8px; margin-left:8px}
+  .highlight{background:rgba(124,192,255,.1); border-color:var(--accent)}
+  .bar{display:flex; flex-wrap:wrap; align-items:stretch; gap:0; border:1px solid var(--edge); border-radius:8px; overflow:hidden; margin-top:6px}
+  .seg{padding:6px 7px; font-family:var(--mono); font-size:.85rem}
+  .seg.seed{background:rgba(94,234,212,.12); border-right:1px solid var(--edge)}
+  .seg.keep{background:rgba(121,242,160,.12); border-right:1px solid var(--edge)}
+  .seg.out{background:rgba(255,184,107,.12)}
+  .seg.counter{background:rgba(199,146,234,.12); border-left:1px solid var(--edge)}
+  .arrow{color:var(--muted); font-size:.9rem; display:flex; align-items:center; gap:8px; margin:6px 0}
+  .arrow:before{content:"→"; font-weight:900; color:var(--accent)}
+  .footer{color:var(--muted); font-size:.85rem; margin-top:8px}
+  .tiny{font-size:.78rem; color:var(--muted)}
+  @media(min-width:920px){
+    .round .grid{grid-template-columns:repeat(3, 1fr)}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Simple Pseudorandom Generator (SHA-256)</h1>
+  <div class="sub">Visualizes how each iteration hashes the seed, emits one byte, and carries the rest forward. Includes a counter-patched variant that keeps the seed at 256 bits.</div>
+</header>
+
+<main>
+  <section class="panel">
+    <div class="row">
+      <div class="col">
+        <label for="seed">Initial seed <span class="tiny">(32 bytes hex / 64 hex chars)</span></label>
+        <input id="seed" type="text" spellcheck="false" placeholder="e.g. 000102...3f" />
+      </div>
+      <div class="col" style="max-width:180px">
+        <label for="rounds">Rounds (t)</label>
+        <input id="rounds" type="number" min="1" max="256" value="16" />
+      </div>
+      <div class="col" style="max-width:240px">
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option value="patched" selected>Counter-patched (keep 32B seed)</option>
+          <option value="original">Original (seed shrinks to 31B)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="btns">
+        <button id="run">Run demo</button>
+        <button id="rand" class="secondary">Random 32-byte seed</button>
+        <button id="example" class="secondary">Fill example seed</button>
+        <button id="copyout" class="secondary">Copy output bytes</button>
+      </div>
+      <div style="margin-left:auto" class="legend">
+        <div class="key"><span class="swatch seed"></span>seed in</div>
+        <div class="key"><span class="swatch keep"></span>kept → next seed</div>
+        <div class="key"><span class="swatch out"></span>emitted byte</div>
+        <div class="key"><span class="swatch counter"></span>counter byte</div>
+      </div>
+    </div>
+    <div class="footer tiny">
+      Counter-patched rule: for round <em>i</em>, compute <code>h<sub>i</sub> = SHA-256(s<sub>i-1</sub>)</code>, emit <code>y<sub>i</sub> = LSB<sub>8</sub>(h<sub>i</sub>)</code>, and set
+      <code>s<sub>i</sub> = h<sub>i</sub>[0:248] ∥ (i mod 256)</code>. This replaces the byte we emitted so the seed remains 256 bits.
+    </div>
+  </section>
+
+  <section id="results" class="results"></section>
+</main>
+
+<script>
+/*** ---------- Utilities: hex / bytes ---------- ***/
+function hexToBytes(hex) {
+  hex = (hex || "").replace(/^0x/,'').replace(/\s+/g,'').toLowerCase();
+  if (hex.length % 2) throw new Error("Hex length must be even.");
+  const out = new Uint8Array(hex.length/2);
+  for (let i=0;i<hex.length;i+=2){
+    const byte = parseInt(hex.slice(i,i+2),16);
+    if (Number.isNaN(byte)) throw new Error("Invalid hex.");
+    out[i/2]=byte;
+  }
+  return out;
+}
+function bytesToHex(bytes) {
+  const lut = [];
+  for (let i=0;i<256;i++){ lut.push((i+256).toString(16).slice(1)); }
+  let s = "";
+  for (let b of bytes) s += lut[b];
+  return s;
+}
+function concatBytes(a,b){
+  const out = new Uint8Array(a.length+b.length);
+  out.set(a,0); out.set(b,a.length);
+  return out;
+}
+
+/*** ---------- Pure JS SHA-256 (no deps) ---------- ***/
+// Based on the FIPS 180-4 standard; implemented from scratch: big-endian, 512-bit blocks.
+const K = new Uint32Array([
+  0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+  0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+  0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+  0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+  0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+  0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+  0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+  0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+]);
+function rotr(x,n){ return (x>>>n) | (x<<(32-n)); }
+function sha256(msgBytes){
+  // Initial hash values
+  let h0=0x6a09e667, h1=0xbb67ae85, h2=0x3c6ef372, h3=0xa54ff53a,
+      h4=0x510e527f, h5=0x9b05688c, h6=0x1f83d9ab, h7=0x5be0cd19;
+
+  // Preprocessing (padding)
+  const ml = msgBytes.length * 8;
+  const withOne = new Uint8Array(msgBytes.length + 1);
+  withOne.set(msgBytes,0); withOne[msgBytes.length] = 0x80;
+  // pad with zeros until length ≡ 56 (mod 64)
+  let padLen = (64 - ((withOne.length + 8) % 64)) % 64;
+  const padded = new Uint8Array(withOne.length + padLen + 8);
+  padded.set(withOne,0);
+  // append big-endian 64-bit length
+  const lenView = new DataView(padded.buffer);
+  const hi = Math.floor(ml / 2**32), lo = ml >>> 0;
+  lenView.setUint32(padded.length-8, hi>>>0);
+  lenView.setUint32(padded.length-4, lo>>>0);
+
+  const w = new Uint32Array(64);
+  for (let off=0; off<padded.length; off+=64){
+    // prepare message schedule
+    for (let i=0;i<16;i++){
+      const j = off + i*4;
+      w[i] = (padded[j]<<24)|(padded[j+1]<<16)|(padded[j+2]<<8)|(padded[j+3]);
+    }
+    for (let i=16;i<64;i++){
+      const s0 = rotr(w[i-15],7) ^ rotr(w[i-15],18) ^ (w[i-15]>>>3);
+      const s1 = rotr(w[i-2],17) ^ rotr(w[i-2],19) ^ (w[i-2]>>>10);
+      w[i] = (w[i-16] + s0 + w[i-7] + s1) >>> 0;
+    }
+
+    // init working vars
+    let a=h0,b=h1,c=h2,d=h3,e=h4,f=h5,g=h6,h=h7;
+
+    // main loop
+    for (let i=0;i<64;i++){
+      const S1 = rotr(e,6) ^ rotr(e,11) ^ rotr(e,25);
+      const ch = (e & f) ^ (~e & g);
+      const t1 = (h + S1 + ch + K[i] + w[i]) >>> 0;
+      const S0 = rotr(a,2) ^ rotr(a,13) ^ rotr(a,22);
+      const maj = (a & b) ^ (a & c) ^ (b & c);
+      const t2 = (S0 + maj) >>> 0;
+
+      h = g; g = f; f = e;
+      e = (d + t1) >>> 0;
+      d = c; c = b; b = a;
+      a = (t1 + t2) >>> 0;
+    }
+
+    // add to hash state
+    h0 = (h0 + a)>>>0; h1 = (h1 + b)>>>0; h2 = (h2 + c)>>>0; h3 = (h3 + d)>>>0;
+    h4 = (h4 + e)>>>0; h5 = (h5 + f)>>>0; h6 = (h6 + g)>>>0; h7 = (h7 + h)>>>0;
+  }
+
+  // produce digest
+  const out = new Uint8Array(32);
+  const dv = new DataView(out.buffer);
+  dv.setUint32(0,h0); dv.setUint32(4,h1); dv.setUint32(8,h2); dv.setUint32(12,h3);
+  dv.setUint32(16,h4); dv.setUint32(20,h5); dv.setUint32(24,h6); dv.setUint32(28,h7);
+  return out;
+}
+
+/*** ---------- PRG logic & visualization ---------- ***/
+const seedEl = document.getElementById('seed');
+const roundsEl = document.getElementById('rounds');
+const modeEl = document.getElementById('mode');
+const runBtn = document.getElementById('run');
+const randBtn = document.getElementById('rand');
+const exBtn = document.getElementById('example');
+const copyBtn = document.getElementById('copyout');
+const results = document.getElementById('results');
+
+function ensureSeedBytes(){
+  const hex = seedEl.value.trim();
+  let bytes = hex ? hexToBytes(hex) : new Uint8Array([]);
+  if (bytes.length === 0){
+    // if empty, fill with 00..1f
+    bytes = new Uint8Array(32); for (let i=0;i<32;i++) bytes[i]=i;
+    seedEl.value = bytesToHex(bytes);
+  }
+  if (bytes.length !== 32){
+    throw new Error(`Seed must be 32 bytes (got ${bytes.length}).`);
+  }
+  return bytes;
+}
+
+function renderRound(i, prevSeed, hash, yByte, nextSeed, mode){
+  const root = document.createElement('div');
+  root.className = 'round';
+  const hdr = document.createElement('header');
+  hdr.innerHTML = `<h3>Round #${i} <span class="chip">${mode==='patched' ? 'counter-patched' : 'original'}</span></h3>
+                   <div class="tiny">|s<sub>${i-1}</sub>| = ${prevSeed.length}B → |s<sub>${i}</sub>| = ${nextSeed.length}B</div>`;
+  root.appendChild(hdr);
+
+  const grid = document.createElement('div'); grid.className = 'grid';
+
+  // Seed in
+  const seedBlk = document.createElement('div'); seedBlk.className = 'block';
+  seedBlk.innerHTML = `<div class="tag">seed in s<sub>${i-1}</sub></div>
+    <div class="bar"><div class="seg seed mono">${bytesToHex(prevSeed)}</div></div>`;
+  grid.appendChild(seedBlk);
+
+  // Hash result
+  const hashBlk = document.createElement('div'); hashBlk.className = 'block highlight';
+  const hexHash = bytesToHex(hash);
+  const keptHex = bytesToHex(hash.slice(0,31));
+  const outHex  = bytesToHex(hash.slice(31));
+  hashBlk.innerHTML = `<div class="tag">hash h<sub>${i}</sub> = SHA-256(s<sub>${i-1}</sub>)</div>
+    <div class="bar">
+      <div class="seg keep mono" title="carried (first 31 bytes)">${keptHex}</div>
+      <div class="seg out mono" title="emitted (last byte)">${outHex}</div>
+    </div>
+    <div class="arrow">emit y<sub>${i}</sub> = LSB<sub>8</sub>(h<sub>${i}</sub>) = <span class="mono">${outHex}</span></div>`;
+  grid.appendChild(hashBlk);
+
+  // Next seed
+  const nextBlk = document.createElement('div'); nextBlk.className = 'block';
+  if (mode === 'patched'){
+    const counter = i & 0xff;
+    const counterHex = (counter+256).toString(16).slice(1);
+    nextBlk.innerHTML = `<div class="tag">next seed s<sub>${i}</sub> = h<sub>${i}</sub>[0:248] ∥ (i mod 256)</div>
+      <div class="bar">
+        <div class="seg keep mono" title="first 31 bytes from h">${keptHex}</div>
+        <div class="seg counter mono" title="counter byte (i mod 256)">${counterHex}</div>
+      </div>
+      <div class="arrow">this becomes the input to the next hash</div>
+      <div class="tiny">hex: <span class="mono">${bytesToHex(nextSeed)}</span></div>`;
+  } else {
+    nextBlk.innerHTML = `<div class="tag">next seed s<sub>${i}</sub> = h<sub>${i}</sub>[0:248]</div>
+      <div class="bar">
+        <div class="seg keep mono" title="first 31 bytes from h">${keptHex}</div>
+      </div>
+      <div class="arrow">note: seed shrinks to 31 bytes</div>
+      <div class="tiny">hex: <span class="mono">${bytesToHex(nextSeed)}</span></div>`;
+  }
+  grid.appendChild(nextBlk);
+
+  root.appendChild(grid);
+  return root;
+}
+
+function runDemo(){
+  results.innerHTML = "";
+  let seed = ensureSeedBytes();
+  const t = Math.min(Math.max(1, (roundsEl.value|0)), 256);
+  const mode = modeEl.value;
+  const outputs = [];
+
+  for (let i=1;i<=t;i++){
+    const h = sha256(seed);
+    const y = h[31]; outputs.push(y);
+
+    let nextSeed;
+    if (mode === 'patched'){
+      const counterByte = new Uint8Array([ i & 0xff ]);
+      nextSeed = concatBytes(h.slice(0,31), counterByte); // 31B from h + 1B counter
+    } else {
+      nextSeed = h.slice(0,31); // original: drop the emitted byte
+    }
+
+    const card = renderRound(i, seed, h, y, nextSeed, mode);
+    results.appendChild(card);
+    seed = nextSeed;
+  }
+
+  // Add final output block
+  const outHex = outputs.map(b => (b+256).toString(16).slice(1)).join('');
+  const outCard = document.createElement('div');
+  outCard.className = 'round';
+  outCard.innerHTML = `
+    <header><h3>Final Output</h3><div class="tiny">t = ${t} bytes</div></header>
+    <div class="grid">
+      <div class="block">
+        <div class="tag">Y = y₁ ∥ y₂ ∥ … ∥ y_t</div>
+        <div class="bar"><div class="seg out mono">${outHex}</div></div>
+        <div class="tiny">hex length: ${outHex.length} chars (${t} bytes)</div>
+      </div>
+      <div class="block">
+        <div class="tag">Interpretation</div>
+        <div class="mono tiny">
+          Each round hashes the current seed, emits one byte (LSB of the hash), and reuses the remaining bytes as the next seed.
+          In <strong>counter-patched</strong> mode we append (i mod 256) to keep |sᵢ| = 32 bytes, showing clearly how the previous iteration's hash feeds the next seed.
+          This demo is for illustration only; it is not a security proof.
+        </div>
+      </div>
+    </div>`;
+  results.appendChild(outCard);
+
+  // stash last output for copy
+  copyBtn.dataset.outhex = outHex;
+}
+
+runBtn.addEventListener('click', () => {
+  try { runDemo(); } catch (e){ alert(e.message); }
+});
+
+randBtn.addEventListener('click', () => {
+  const s = new Uint8Array(32);
+  (crypto && crypto.getRandomValues) ? crypto.getRandomValues(s) : s.forEach((_,i)=>s[i]=(Math.random()*256)|0);
+  seedEl.value = bytesToHex(s);
+});
+
+exBtn.addEventListener('click', () => {
+  // A deterministic 32B example seed: 00..1f
+  const s = new Uint8Array(32); for (let i=0;i<32;i++) s[i]=i;
+  seedEl.value = bytesToHex(s);
+});
+
+copyBtn.addEventListener('click', () => {
+  const hex = copyBtn.dataset.outhex || "";
+  if (!hex){ alert("Run the demo first to produce output."); return; }
+  navigator.clipboard?.writeText(hex).then(()=> {
+    copyBtn.textContent = "Copied!";
+    setTimeout(()=>copyBtn.textContent="Copy output bytes", 1000);
+  }).catch(()=> {
+    // fallback
+    const ta = document.createElement('textarea'); ta.value = hex; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+});
+
+// fill example seed initially
+document.getElementById('example').click();
+document.getElementById('run').click();
+</script>
+</body>
+</html>

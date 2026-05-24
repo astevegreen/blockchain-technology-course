@@ -1,0 +1,423 @@
+{
+  "lesson_id": "primitives_02_cp_hashing_and_merkle_trees",
+  "lesson_title": "Hashing and Merkle Trees",
+  "date_generated": "2026-04-26",
+  "topic": "primitives",
+  "tags": [
+    "primitives",
+    "02-cp-hashing-and-merkle-trees",
+    "hashing-and-merkle-trees",
+    "hashing",
+    "hash-functions",
+    "merkle-trees",
+    "collision-resistance",
+    "birthday-paradox",
+    "length-extension",
+    "salting",
+    "domain-separation",
+    "proof-of-work",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "primitives",
+    "lesson_file_stem": "02-CP-hashing_and_merkle_trees",
+    "reading_status": "acquired",
+    "source_mix": {
+      "lesson_questions": 10,
+      "reading_questions": 3
+    },
+    "slide_source_path": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd",
+    "reading_source_paths": [
+      "/tmp/blockchain-course-readings/text/intensecrypto_ch07.txt",
+      "/tmp/blockchain-course-readings/intensecrypto_ch07.html"
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A developer says a hash digest is basically encrypted data because it can identify the original file. Which correction best matches the lesson?",
+      "correct_answer": "A cryptographic hash is a one-way, fixed-length fingerprint; it can verify a candidate input but is not meant to be decrypted.",
+      "incorrect_answers": [
+        "A cryptographic hash is reversible ciphertext; it identifies a file and can be decrypted with the matching public key.",
+        "A cryptographic hash is a randomized key tag; it hides the input until sender reveals the salt and signing secret.",
+        "A cryptographic hash is a compression code; it stores original bytes in shorter form for exact later decoding by nodes."
+      ],
+      "explanation": "The lesson distinguishes hashing from encryption. Hashes are deterministic, fixed-length commitments to data, but they are one-way and keyless rather than reversible ciphertexts.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "hashing",
+        "hash-functions",
+        "lesson",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "Hash Function Properties",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Hash Function Properties; Pre-Image Resistance"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "An attacker sees a stored password hash and tries to find any password that produces that digest. Which hash property is the attacker trying to break?",
+      "correct_answer": "Pre-image resistance, because the attacker starts from a digest and tries to find an input that maps to it.",
+      "incorrect_answers": [
+        "Second pre-image resistance, because the attacker starts from a known input and tries to find another collision.",
+        "Collision resistance, because the attacker has no fixed digest and searches for any two inputs that match exactly.",
+        "Avalanche behavior, because the attacker flips one input bit and tries to predict the changed digest exactly."
+      ],
+      "explanation": "Pre-image resistance is the one-way property: given a hash output, it should be computationally infeasible to find an input producing that output.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "hashing",
+        "pre-image-resistance",
+        "lesson",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Pre-Image Resistance / Second Pre-image Resistance / Collision Resistance",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Pre-Image Resistance"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "Alice has already signed a contract file by signing its hash. Mallory wants to create a different contract file with the same hash so Alice's signature appears to apply to it. Which resistance property is most directly relevant?",
+      "correct_answer": "Second pre-image resistance, because Mallory is targeting a specific existing message and trying to find a different matching input.",
+      "incorrect_answers": [
+        "Pre-image resistance, because Mallory knows only Alice's signature and tries to recover the original contract text from the digest value.",
+        "Collision resistance, because Mallory wants to generate two brand-new unsigned contracts that share a digest before Alice signs either one.",
+        "Uniform distribution, because Mallory needs contract hashes spread evenly so no digest bucket is favored during signature verification."
+      ],
+      "explanation": "The attack starts with a particular signed message and seeks a different message with the same digest. That is the second pre-image scenario, not merely finding any collision anywhere.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "second-pre-image-resistance",
+        "collision-resistance",
+        "lesson",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Pre-Image Resistance / Second Pre-image Resistance / Collision Resistance",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Second Pre-image Resistance"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A protocol designer wants about 128 bits of security against collision search. Based on the lesson's birthday-paradox work factor, what digest length is the natural target?",
+      "correct_answer": "About 256 bits, because collision search becomes feasible around 2^(n/2) work for an n-bit digest.",
+      "incorrect_answers": [
+        "About 128 bits, because collision search requires about 2^n trials for an n-bit digest, not birthday work.",
+        "About 512 bits, because collision search drops to about 2^(n/4) work under a mistaken birthday estimate.",
+        "About 64 bits, because collision search needs about 2^(2n) attempts under the wrong double-exponent rule."
+      ],
+      "explanation": "The birthday paradox means an n-bit hash gives roughly n/2 bits of collision security. A 256-bit digest therefore targets about 128-bit collision security.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "birthday-paradox",
+        "collision-resistance",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Math Spotlight: Birthday Paradox and Work Factors",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Math Spotlight: Birthday Paradox and Work Factors"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "A service authenticates requests by publishing H(secret || message) using a Merkle-Damgard hash such as SHA-256. Why is this construction unsafe in the lesson's model?",
+      "correct_answer": "The digest exposes enough chaining state that an attacker can append data and compute a valid digest for the extended message.",
+      "incorrect_answers": [
+        "The digest leaks secret-key bits, so an attacker can forge a fresh valid signature for any unrelated message block with little work.",
+        "The padding removes block boundaries, letting an attacker erase the prefix and collide with the hidden secret value.",
+        "The compression step is linear, so an attacker solves equations to recover the original salt value directly from output."
+      ],
+      "explanation": "Merkle-Damgard hashes expose the final internal state as the digest. Used naively as H(secret || data), that structure enables length-extension attacks, which HMAC is designed to avoid.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "merkle-damgard",
+        "length-extension",
+        "hmac",
+        "lesson",
+        "slides",
+        "application"
+      ],
+      "lesson_block": "Merkle-Damgard: How SHA-256 is Built / Aside: Length-Extension Attack",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Merkle-Damgard: How SHA-256 is Built; Aside: Length-Extension Attack"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the lesson present the Sponge construction used by SHA-3 as naturally resistant to length extension?",
+      "correct_answer": "Only part of the internal state is exposed as output, while hidden capacity remains unavailable for continuing the computation.",
+      "incorrect_answers": [
+        "Every input block is compressed twice, while the second pass blocks attackers from reusing a digest as state later.",
+        "Its permutation uses a private key as seed, so outsiders cannot validate or extend intermediate rounds of each hash.",
+        "Padding includes a hidden random salt, preventing attackers from reconstructing the absorbed message prefix during extension checks."
+      ],
+      "explanation": "The lesson contrasts Merkle-Damgard's exposed final chaining state with Sponge's hidden capacity. Because the attacker does not learn the full state, the digest cannot simply be used to continue hashing.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "sponge-construction",
+        "sha-3",
+        "length-extension",
+        "lesson",
+        "slides",
+        "comparison"
+      ],
+      "lesson_block": "Sponge Construction: How SHA-3 is Built / Merkle-Damgard vs. Sponge Construction",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Sponge Construction: How SHA-3 is Built; Merkle-Damgard vs. Sponge Construction"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A password database stores a unique random salt next to each password hash. If the salts are public, why do they still help?",
+      "correct_answer": "They force attackers to recompute guesses for each salt, making precomputed rainbow tables ineffective across many users.",
+      "incorrect_answers": [
+        "They make each password hash use a public encryption key, preventing offline guessing across leaked credential databases.",
+        "They keep the salt secret from attackers, so leaked password hashes cannot be tested against guessed passwords offline.",
+        "They hide final chaining state, preventing length extension in request authentication schemes across many users worldwide."
+      ],
+      "explanation": "Salts are not secret keys. Their purpose is uniqueness: identical passwords hash differently and attackers cannot reuse one precomputed table across unsalted or commonly salted records.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "salting",
+        "rainbow-tables",
+        "pre-image-resistance",
+        "lesson",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "Aside: Hash Salting",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Aside: Hash Salting"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "In a Merkle tree, one transaction leaf is changed by a single bit. Assuming the hash function has the expected avalanche behavior, what should happen to the commitment?",
+      "correct_answer": "The changed leaf hash alters its parent chain, producing a different Merkle root.",
+      "incorrect_answers": [
+        "The sibling path stays unchanged, preserving the original Merkle root value.",
+        "The branch is isolated from every ancestor, producing an invalid Merkle root.",
+        "The balanced tree resets all ancestor levels, yielding the same Merkle root value."
+      ],
+      "explanation": "Merkle roots are tamper-evident commitments. A change to one leaf changes that leaf hash, then each ancestor on the path to the root, producing a different root with overwhelming probability.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "merkle-trees",
+        "merkle-root",
+        "avalanche-effect",
+        "lesson",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "What Is a Merkle Tree? / Building a Merkle Tree",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: What Is a Merkle Tree?; Building a Merkle Tree"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A lightweight client wants to verify that one transaction is included under a known Merkle root without downloading the whole block. What information is essential?",
+      "correct_answer": "The transaction and the sibling hashes along its path to the root, with enough ordering information to recompute each parent.",
+      "incorrect_answers": [
+        "The full block of transactions and every leaf, plus signatures for checking each transfer in order by the light client application.",
+        "The Merkle root and miner private keys, plus proof-of-work attempts for each included block in the same chain record.",
+        "The leaf digest and miner public key, plus chain history for tracing each validator record back to genesis block."
+      ],
+      "explanation": "A Merkle membership proof consists of the target item plus an authentication path of sibling hashes. Its size grows logarithmically with the number of leaves, not linearly with the whole dataset.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "merkle-trees",
+        "authentication-path",
+        "membership-proof",
+        "lesson",
+        "slides",
+        "application"
+      ],
+      "lesson_block": "Merkle Proofs (Membership) / Why Proofs Are Efficient",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Merkle Proofs (Membership); Why Proofs Are Efficient"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A Merkle tree design hashes leaves and internal nodes with the same untagged format and does not specify left/right ordering. What is the main security risk?",
+      "correct_answer": "Ambiguous encodings can let one structure be interpreted as another, such as a leaf value being confused with an internal-node pair.",
+      "incorrect_answers": [
+        "Inefficient compression can duplicate a root digest, such as storing a block header as an empty branch during proof checks.",
+        "Asymmetric paths can validate random sibling sequences, such as replacing a parent node with a key pair in verification.",
+        "Unordered outputs can make proof entries independent, such as overwriting a leaf index with a collision value in a path traversal record."
+      ],
+      "explanation": "The lesson emphasizes domain separation tags and explicit ordering rules. Without them, the tree commitment may be ambiguous in ways that undermine what exactly the root binds.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "merkle-trees",
+        "domain-separation",
+        "ordered-concatenation",
+        "lesson",
+        "slides",
+        "security-analysis"
+      ],
+      "lesson_block": "Tamper Evidence & Security Assumptions",
+      "source_type": "lesson",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/primitives_02-CP-hashing_and_merkle_trees-slides-only.qmd: Tamper Evidence & Security Assumptions"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "In the assigned reading's Bitcoin-like ledger model, why is a collision-resistant hash useful as a short identifier for ledger history?",
+      "correct_answer": "It gives a fixed-length value that is computationally bound to the prior history, so later steps need not carry the whole ledger state.",
+      "incorrect_answers": [
+        "It makes the ledger reversible from a compact digest, so external nodes can skip replaying the original transactions safely.",
+        "It removes the need for strict transaction ordering, so clients can accept blocks without synchronizing local network state first.",
+        "It prevents all double spending by itself, so centralized servers no longer need to track the complete ledger history across all blocks."
+      ],
+      "explanation": "The reading frames hashes as compact, practically binding identifiers. Collisions must exist for large-to-small maps, but the security goal is that efficient attackers cannot find useful alternate histories.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "hash-functions",
+        "collision-resistance",
+        "blockchain-ledgers",
+        "reading",
+        "assigned-reading",
+        "application"
+      ],
+      "lesson_block": "Reading: Compact Identifiers From Collision Resistance",
+      "source_type": "reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/intensecrypto_ch07.txt: Collision-resistant identifiers for ledgers"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A proof-of-work puzzle asks miners to find a nonce whose hash output satisfies a rare target. Why does this support public verification in the reading's model?",
+      "correct_answer": "Finding such a nonce requires many expected hash trials, while checking a proposed nonce requires only recomputing the hash and testing the target.",
+      "incorrect_answers": [
+        "Finding such a nonce requires solving algebraic equations over the hash, while checking it only reruns a short linear scan of candidate values.",
+        "Finding such a nonce requires collecting validator signatures, while checking it only compares the winning ledger fork against local balances.",
+        "Finding such a nonce requires private consensus coordination, while checking it only decrypts the hidden target from the block header."
+      ],
+      "explanation": "The reading connects hash unpredictability to proof of work: production is expensive because success is rare, but verification is cheap because anyone can test the hash output.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "proof-of-work",
+        "random-oracle-model",
+        "sybil-resistance",
+        "reading",
+        "assigned-reading",
+        "mechanism"
+      ],
+      "lesson_block": "Reading: Proof Of Work As Random Trial Search",
+      "source_type": "reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/intensecrypto_ch07.txt: Proof of work as random trial search"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A team argues that because its hash function is collision resistant, it automatically behaves like a pseudorandom function and is safe for any MAC-like use. Which reading-based response is best?",
+      "correct_answer": "Collision resistance and pseudorandomness are different properties; raw Merkle-Damgard hashes can still need HMAC-like wrapping for authentication roles.",
+      "incorrect_answers": [
+        "Collision resistance and preimage security are the same property; raw Merkle-Damgard hashes only need salted padding for MAC authentication roles.",
+        "Collision resistance and injectivity are equivalent traits; raw Merkle-Damgard hashes only need zero-knowledge proofs for authentication roles.",
+        "Collision resistance and uniformity are interchangeable metrics; raw Merkle-Damgard hashes only need bit-reversal maps for authentication roles."
+      ],
+      "explanation": "The reading warns against overgeneralizing from collision resistance. It specifically distinguishes collision resistance from PRF-like behavior and highlights length-extension risk in raw Merkle-Damgard use.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "primitives",
+        "02-cp-hashing-and-merkle-trees",
+        "collision-resistance",
+        "pseudorandomness",
+        "merkle-damgard",
+        "hmac",
+        "reading",
+        "assigned-reading",
+        "misconception"
+      ],
+      "lesson_block": "Reading: Collision Resistance vs PRF Security",
+      "source_type": "reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/intensecrypto_ch07.txt: Collision resistance vs PRF security and HMAC"
+    }
+  ],
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_primitives",
+        "title": "Cryptography & Primitives",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_hashing_and_merkle_trees_lesson_slides",
+            "title": "Hashing and Merkle Trees - lesson slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_hashing_and_merkle_trees_assigned_reading",
+            "title": "Hashing and Merkle Trees - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+version: 1
+suite_id: consensus-agent-regression
+lab: consensus
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/consensus/README.md
+assumptions:
+  - MCP browser tooling is available.
+  - The Consensus automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  instructor_credentials_file: .runtime/instructor-credentials.txt
+observability:
+  required:
+    - console_logs
+    - network_failures
+  suggested_mcp_methods:
+    - get_console_logs
+    - get_network_digest
+    - get_network_traffic
+shared_rules:
+  - Use a fresh browser context per task.
+  - Keep student and instructor cookies in separate contexts.
+  - When switching roles, discard the old browser context and create a fresh session for the new role.
+  - Prefer clicking visible wrapper affordances over direct URL entry once the wrapper is loaded.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+  - Run the visible page-derived PoW and PoS commands through the ttyd browser route.
+  - Use the browser stage for the commands the student page actually presents, but do not invent extra exploratory flows beyond the visible lesson content.
+parallelization:
+  recommended:
+    - Run the instructor task in parallel with any student task.
+    - Run student tasks in parallel only when enough free Consensus stations exist.
+  fallback:
+    - Serialize student tasks if station capacity is unknown.
+  cleanup:
+    - After the full suite, optionally wipe throwaway student claims if the environment should be restored.
+tasks:
+  - id: cons-student-claim-wrapper
+    title: Student claim and wrapper shell
+    file: tasks/student-claim-wrapper.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/consensus/
+      - /labs/consensus/c/<uuid>/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: cons-student-guide-surfaces
+    title: Student guide and tabs
+    file: tasks/student-guide-surfaces.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/consensus/
+      - /labs/consensus/c/<uuid>/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: cons-student-ttyd-smoke
+    title: Student ttyd page-command coverage
+    file: tasks/student-ttyd-smoke.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/consensus/
+      - /labs/consensus/c/<uuid>/
+      - /labs/consensus/c/<uuid>/ttyd/
+    requires_free_student_lane: 1
+    parallel_safe: true
+  - id: cons-instructor-auth-surfaces
+    title: Instructor auth and terminal
+    file: tasks/instructor-auth-surfaces.md
+    context: instructor_fresh
+    auth: instructor
+    routes:
+      - /instructor/
+      - /labs/consensus/admin
+      - /labs/consensus/instructor/
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
+  - The suite is complete only when student claim, wrapper, guide tabs, visible PoW and PoS page commands through ttyd, and instructor surfaces have all been checked.

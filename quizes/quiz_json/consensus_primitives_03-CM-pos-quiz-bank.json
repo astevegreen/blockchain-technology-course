@@ -1,0 +1,485 @@
+{
+  "lesson_id": "consensus_primitives_03_cm_pos",
+  "lesson_title": "Proof of Stake (PoS): Selection, Security, and Finality",
+  "date_generated": "2026-04-26",
+  "topic": "primitives",
+  "tags": [
+    "consensus-primitives",
+    "03-cm-pos",
+    "proof-of-stake",
+    "validators",
+    "stake-weighted-selection",
+    "committee-attestations",
+    "checkpoint-finality",
+    "slashing",
+    "fork-choice",
+    "safety-liveness",
+    "weak-subjectivity",
+    "nothing-at-stake",
+    "quiz-bank"
+  ],
+  "source_files": {
+    "lesson_slides": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd",
+    "assigned_reading": "/tmp/blockchain-course-readings/text/pos_longest_chain.txt",
+    "quiz_spec": "QUIZ_ENGINE_JSON_SPEC.md"
+  },
+  "question_counts": {
+    "total": 13,
+    "lesson_grounded": 10,
+    "reading_grounded": 3
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_consensus_primitives",
+        "title": "Consensus Primitives",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_03_cm_pos_lesson_slides",
+            "title": "Proof of Stake (PoS): Selection, Security, and Finality - lesson slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_03_cm_pos_assigned_reading",
+            "title": "Proof of Stake (PoS): Selection, Security, and Finality - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A student says Proof of Stake is just Proof of Work with the mining hardware removed. Which correction best captures the lesson's security-model shift?",
+      "correct_answer": "PoS replaces ongoing computational expenditure with bonded capital, validator duties, cryptographic evidence, and penalties for misbehavior.",
+      "incorrect_answers": [
+        "PoS removes mining hardware but keeps security based on recurring electricity costs, hash races, nonce search, and block rewards.",
+        "PoS replaces miners with a central operator roster, scheduled proposals, administrator vetoes, and fixed checkpoint approvals.",
+        "PoS secures history through validator reputation scores, manual audits, private attestations, and reversible penalty review logs."
+      ],
+      "explanation": "The lesson frames PoS as a different security budget: capital is put at risk and dishonest or unavailable behavior can be penalized. It still needs fork choice, network propagation, timing assumptions, and honest-stake thresholds.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "proof-of-work-comparison",
+        "economic-security",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "Orientation: Proof of Work vs Proof of Stake",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Orientation: Proof of Work vs Proof of Stake",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Orientation: Proof of Work vs Proof of Stake",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the validator lifecycle include activation queues, exit queues, and unbonding periods rather than letting stake enter and leave instantly?",
+      "correct_answer": "They stage validator entry and exit, and unbonding keeps stake locked long enough for old-key histories or misbehavior to be detected and slashed.",
+      "incorrect_answers": [
+        "They delay reward accounting for departing validators, and unbonding keeps balances visible until routine payout records are reconciled.",
+        "They rank validators by uptime history, and exit queues keep leaders scheduled long enough for slot assignments to stabilize per epoch.",
+        "They mainly throttle wallet support requests, and unbonding keeps nodes active until ordinary client updates finish and audits pass."
+      ],
+      "explanation": "The slides describe deposit, activation queue, exit queue, unbonding, withdrawal, and unbonding as a safety window. The staged lifecycle preserves accountability for validator actions taken while stake had consensus influence.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "validators",
+        "validator-lifecycle",
+        "unbonding",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Proof of Stake: The Full Lifecycle",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Proof of Stake: The Full Lifecycle; Becoming a Validator",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Proof of Stake: The Full Lifecycle",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "In a slot, a selected validator builds a block, but a random committee refuses to attest because the block is invalid. What does this illustrate about proposer power in PoS?",
+      "correct_answer": "A proposer can assemble and order a candidate block, but committee attestations and quorum evidence are needed for acceptance by the protocol.",
+      "incorrect_answers": [
+        "A proposer can finalize and secure a canonical chain, but individual signatures and physical broadcasts are sufficient for execution by the network.",
+        "A committee can assemble and dictate a complete transaction list, but custom rules and external approvals are required for proposal by the validator.",
+        "A proposer can choose and execute a standard network protocol, but decentralized clients and random committees are responsible for routing by the nodes."
+      ],
+      "explanation": "The lesson separates proposal from collective validation. The proposer has inclusion and ordering power for a candidate block, while committees validate and attest so the proposer alone cannot determine canonical history.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "block-proposer",
+        "committee-attestations",
+        "quorum-certificates",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Slot-Level Consensus: Proposers and Committees",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: The Block Proposer: Selection and Building; The Committee: Attestation and Validation",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "The Block Proposer: Selection and Building; The Committee: Attestation and Validation",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "Which property combination best matches the lesson's goal for PoS proposer selection?",
+      "correct_answer": "Selection should be stake-weighted, fair, unpredictable before selection, and verifiable after selection.",
+      "incorrect_answers": [
+        "Selection should be fixed in advance, permanent, predictable before execution, and unalterable after publication.",
+        "Selection should be identity-equal, uniform, independent of deposited capital, and unweighted after activation.",
+        "Selection should stay private, secret, unverifiable after block proposal, and unrecorded after publication."
+      ],
+      "explanation": "The slide-supported goal is not advance targeting analysis; it is a selection process weighted by stake that is fair, hard to predict before selection, and checkable afterward.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "stake-weighted-selection",
+        "randomness",
+        "slides",
+        "fairness",
+        "verifiability",
+        "scenario"
+      ],
+      "lesson_block": "How Proposers Are Selected",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: How Proposers Are Selected",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "How Proposers Are Selected",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "A checkpoint receives a supermajority vote linking it to a source checkpoint, but the next checkpoint has not yet received the needed follow-up support. How should a student describe its status under the lesson's finality model?",
+      "correct_answer": "The link is justified, but earlier history is not finalized until the required consecutive justified checkpoints are established.",
+      "incorrect_answers": [
+        "The checkpoint is finalized, but subsequent validation is not permitted until the next distinct supermajority epochs are completed.",
+        "The signature is temporary, but historical consensus is not influenced until the prospective local fork-choice options are consolidated.",
+        "The transaction is invalid, but current state is not synchronized until the specific independent slot-level checkpoints are registered."
+      ],
+      "explanation": "The lesson distinguishes justification from finalization. A supermajority link can justify a checkpoint, while finality requires the described pattern of consecutive justified checkpoints.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "checkpoint-finality",
+        "justification",
+        "finalization",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Epoch-Level Consensus: Checkpoints, Justification, and Finality",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Justification: Supermajority Vote Links; Finalization: Irreversible History",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Justification: Supermajority Vote Links; Finalization: Irreversible History",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "During a temporary network delay, two branches both attract some attestations. Later, one branch becomes the current head, and only after epoch voting does earlier history become economically irreversible. Which distinction is being tested?",
+      "correct_answer": "Fork choice selects the live head during uncertainty, while finality protects long-term history from reversal without large-scale slashable behavior.",
+      "incorrect_answers": [
+        "Fork choice activates only after finality fails during a partition, while finality assigns every slot's proposer without committees by itself.",
+        "Fork choice is regular voting during normal operation, while finality only counts balances without separate checkpoint rules per epoch.",
+        "Finality determines the live path during congestion, while fork choice restricts incoming stake without public signature validation for all client decisions."
+      ],
+      "explanation": "Fork choice handles current-head selection in the presence of temporary forks. Finality is the longer-term safety mechanism that marks history as hard to reverse under the protocol's assumptions.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "fork-choice",
+        "checkpoint-finality",
+        "safety-liveness",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Fork Choice Rules",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Fork Choice Rules; Safety and Liveness -- PoS Invariants",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Fork Choice Rules",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "Several validators sign conflicting votes on competing forks because signatures are cheap and they hope to be rewarded whichever fork wins. Why is slashing central to the PoS response?",
+      "correct_answer": "It turns provable conflicting consensus behavior into financial loss, making multi-fork voting costly instead of rationally free.",
+      "incorrect_answers": [
+        "It deletes conflicting vote records from network storage, making double signing invisible instead of economically punished.",
+        "It changes validator voting into equal shares, making fork support socially coordinated instead of stake-weighted in pools.",
+        "It treats ordinary downtime as provable fraud, making missed slots slashable instead of merely penalized by policy rules."
+      ],
+      "explanation": "The lesson presents nothing-at-stake as an incentive problem created by cheap signatures. Slashing uses cryptographic evidence of conflicting or equivocal behavior to put bonded capital at risk.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "slashing",
+        "nothing-at-stake",
+        "economic-security",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "Slashing -- Making Misbehavior Expensive",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Slashing -- Making Misbehavior Expensive; Nothing-at-Stake",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Slashing -- Making Misbehavior Expensive",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A node has been offline for months and returns to find a convincing-looking alternative PoS history signed by old validator keys. What lesson concept explains why the node may need a recent trusted checkpoint?",
+      "correct_answer": "Weak subjectivity, because a long-offline or new node may need a recent social or trusted anchor to distinguish the canonical chain from fabricated old-key histories.",
+      "incorrect_answers": [
+        "Committee aggregation, because a slow node may need a compressed signature proof to reject archival logs from unselected old-key proposers across epochs.",
+        "Fork choice rules, because an online node may need a static height or cumulative score to bypass fresh honest-validator branches during recovery audits and local policy checks.",
+        "Censorship resistance, because a new node may need encrypted transactions to protect active validators from malicious high-stake proposers during each epoch."
+      ],
+      "explanation": "Weak subjectivity is not arbitrary chain choice. Continuously online nodes can follow normal protocol evidence, but new or long-offline nodes may need a recent trusted checkpoint to avoid long-range fabricated histories.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "weak-subjectivity",
+        "long-range-attacks",
+        "checkpoint-finality",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Weak Subjectivity",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Weak Subjectivity; Weak Subjectivity -- Practical Mitigations",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Weak Subjectivity",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A malicious proposer excludes a user's transaction in one slot. Why does the lesson say this is not the same as permanent censorship by itself?",
+      "correct_answer": "Proposer rotation and randomly selected committees mean sustained censorship requires influence across many slots, not just one proposer's temporary ordering power.",
+      "incorrect_answers": [
+        "Committee validation and enforced protocols mean immediate selection requires coordination across all nodes, not one committee's local decision power.",
+        "Checkpoint validation and epoch justification mean block inclusion requires agreement across consecutive epochs, not one checkpoint's temporary voting power in every slot.",
+        "Slashing routines and penalty proofs mean transaction inclusion requires consensus across many rotating slots, not one validator's voluntary building power across the mempool."
+      ],
+      "explanation": "Proposers can influence inclusion and ordering for their slot, but rotation and broader consensus participation limit the effect of a single censoring proposer. Sustained censorship is a longer-running economic and network attack.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "block-proposer",
+        "censorship-resistance",
+        "committee-attestations",
+        "slides",
+        "application"
+      ],
+      "lesson_block": "Censorship, Bribery, and Eclipse",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Censorship, Bribery, and Eclipse",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Censorship, Bribery, and Eclipse",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A protocol designer proposes very small committees to reduce bandwidth and very harsh slashing to maximize deterrence. Which response best applies the lesson's parameter-tradeoff framing?",
+      "correct_answer": "Both changes may improve one goal while weakening others: small committees can reduce corruption resistance, and overly harsh slashing can increase honest-operator risk.",
+      "incorrect_answers": [
+        "Both changes guarantee network safety while maximizing throughput: tiny committees speed propagation, and huge penalties eliminate downtime during every epoch.",
+        "Both changes mainly adjust fees while preserving safety: small committees shrink signatures, and harsh slashing limits general validator access for users.",
+        "Both changes will stop finality outright: small committees block checkpoints, and heavy slashing prevents ordinary validator participation through inactivity leaks and forced exits."
+      ],
+      "explanation": "The lesson emphasizes that PoS parameters are security design choices with tradeoffs across safety, liveness, scalability, latency, recovery, and honest-operator risk. Higher or lower values are not automatically better.",
+      "difficulty_level": 5,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "protocol-parameters",
+        "committee-attestations",
+        "slashing",
+        "safety-liveness",
+        "slides",
+        "tradeoff"
+      ],
+      "lesson_block": "Parameters that Shape Security",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd: Parameters that Shape Security",
+      "source": {
+        "type": "lesson_slides",
+        "source_anchor": "Parameters that Shape Security",
+        "source_file": "/tmp/blockchain-course-slide-only/consensus_primitives_03-CM-pos-slides-only.qmd"
+      }
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "In the assigned reading, why is a VRF-based leader election not by itself a complete solution to PoS proposer-selection security?",
+      "correct_answer": "A VRF can make eligibility private before proposal and verifiable afterward, but the protocol must still prevent manipulable randomness inputs and dangerous prediction windows.",
+      "incorrect_answers": [
+        "A VRF can prove stake ownership before proposal and publish balances afterward, but the protocol must still verify signatures and active network channels during each slot.",
+        "A VRF can remove fork-choice rules before execution and settle block disputes afterward, but the protocol still needs transaction-pool ordering across epochs by committee policy.",
+        "A VRF can expose public leader schedules before proposal and static rosters afterward, while still allowing immediate validator updates after each epoch in consensus."
+      ],
+      "explanation": "The reading stresses that proposer election needs verifiability, unpredictability, and independence from adversarially chosen inputs. VRFs help with private, checkable eligibility but do not determine how randomness is updated or protected from grinding.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "leader-election",
+        "vrf",
+        "randomness-grinding",
+        "prediction-window",
+        "reading",
+        "assigned-reading",
+        "mechanism"
+      ],
+      "lesson_block": "Reading: Proposer Selection and Randomness",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/pos_longest_chain.txt: Section 3/4 proposer-selection discussion",
+      "source": {
+        "type": "assigned_reading",
+        "assigned_reading": "Wang et al., Proof-of-Stake Longest Chain Protocols Revisited",
+        "source_anchor": "Section 3/4 proposer-selection discussion: VRF requirements, verifiability, unpredictability, independence, and common randomness",
+        "source_file": "/tmp/blockchain-course-readings/text/pos_longest_chain.txt"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "The reading compares randomness updated every block with randomness held fixed for several blocks under c-correlation. What tradeoff does this comparison highlight?",
+      "correct_answer": "More frequent updates reduce advance prediction but can increase grinding across fork-dependent randomness paths, while holding randomness fixed reduces grinding at the cost of more short-term predictability.",
+      "incorrect_answers": [
+        "More frequent updates always raise the adversarial stake threshold and eliminate grinding across all fork paths, while fixed randomness merely pauses liveness for validators until the next epoch.",
+        "Holding randomness fixed eliminates bribery risk and maximizes transaction speed across validator pools, while hourly updates only add overhead during fork recovery and vote aggregation steps.",
+        "Update schedules only affect aggregate proof sizes and client verification costs, while ignoring update intervals merely slows honest proposers during adversarial forks, branch selection, and cross-client validation checks."
+      ],
+      "explanation": "The reading's central security-versus-predictability tension is that fresh block-dependent randomness limits prediction but gives adversaries more fork choices to grind, while c-correlation reduces grinding by reusing common randomness for c blocks but increases short-term predictability.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "c-nakamoto-pos",
+        "common-randomness",
+        "prediction-window",
+        "randomness-grinding",
+        "security-thresholds",
+        "reading",
+        "assigned-reading",
+        "tradeoff"
+      ],
+      "lesson_block": "Reading: Predictability Versus Nothing-at-Stake",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/pos_longest_chain.txt: Updating the common source of randomness; c-correlation",
+      "source": {
+        "type": "assigned_reading",
+        "assigned_reading": "Wang et al., Proof-of-Stake Longest Chain Protocols Revisited",
+        "source_anchor": "Section 4, Updating the common source of randomness",
+        "source_file": "/tmp/blockchain-course-readings/text/pos_longest_chain.txt"
+      }
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "An adversary repeatedly transfers stake to fresh keys after seeing favorable fork outcomes, hoping one of the new keys wins the next leader election. Which reading-based mitigation best addresses the consensus risk?",
+      "correct_answer": "Use delayed or ancestor-based stake for leader election and apply a truncated fork-choice rule so immediate stake changes cannot drive key or coin grinding.",
+      "incorrect_answers": [
+        "Activate transfers immediately for slot utility and use ordinary fork choice so honest operators can offset covert key grinding after each epoch.",
+        "Rely on slashing alone for safety and use standard signature checks so failed key-grinding attempts create public evidence for new validators.",
+        "Ignore transfer timing for slot assignments and use unmodified fork choice so private stake movements bypass honest blocks after rekeying attempts across epochs."
+      ],
+      "explanation": "The reading argues that dynamic stake is harder in PoS because immediately usable stake transfers can enable grinding over fresh keys or coins. It proposes using stake from an ancestor block and an s-truncated fork-choice rule as mitigations.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "consensus-primitives",
+        "03-cm-pos",
+        "proof-of-stake",
+        "dynamic-stake",
+        "stake-truncation",
+        "randomness-grinding",
+        "fork-choice",
+        "reading",
+        "assigned-reading",
+        "scenario"
+      ],
+      "lesson_block": "Reading: Dynamic Stake and Delayed Use",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/pos_longest_chain.txt: Section 6, Security analysis of the dynamic stake protocol",
+      "source": {
+        "type": "assigned_reading",
+        "assigned_reading": "Wang et al., Proof-of-Stake Longest Chain Protocols Revisited",
+        "source_anchor": "Section 6, Security analysis of the dynamic stake protocol",
+        "source_file": "/tmp/blockchain-course-readings/text/pos_longest_chain.txt"
+      }
+    }
+  ]
+}

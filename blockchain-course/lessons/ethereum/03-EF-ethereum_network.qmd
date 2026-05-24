@@ -1,0 +1,699 @@
+---
+title: The Ethereum Network
+subtitle: 'Section VII: Ethereum Framework'
+author: Army Cyber Institute
+lesson: 03-EF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## Agenda
+
+- Explain transaction flow, signatures, and EIP-1559 fee mechanics.
+- Describe client diversity, sync modes, and P2P networking.
+- Trace how MEV arises from transaction ordering and how PBS addresses it.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes the lesson's scope: Ethereum networking is not just transport, but the path from signed transaction to block inclusion and economic incentives. It matters here because students need a roadmap before the lesson splits into transaction mechanics, client architecture, and MEV. Emphasize that these pieces are interdependent parts of one operational system.
+
+**Key Points**
+- The lesson follows transactions from creation and gossip to execution, fees, and block construction.
+- Ethereum networking includes both technical communication paths and incentive-driven ordering decisions.
+- Spell out EIP as Ethereum Improvement Proposal and MEV as maximal extractable value.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereum.org_transactionsdeveloperdocs_2025; @ethereum.org_networksdeveloperdocs_2025
+
+:::
+
+## Review: The Life of an Ethereum Transaction {.smaller}
+
+In the last lesson we covered block structure and PoS consensus. Now we trace what happens *inside* those blocks -- how transactions are built, priced, propagated, and executed.
+
+- A user signs a transaction -- a **message** requesting a state change.
+- The transaction propagates through **peer-to-peer gossip** into node **mempools**.
+- **Validators** select pending transactions to include in blocks.
+- Every node **re-executes** transactions to verify the same post-state.
+- Receipts and logs record what happened for **off-chain consumers**.
+
+```{dot}
+//| echo: false
+//| fig-height: 1.5
+digraph TxLife {
+  graph [rankdir=LR, bgcolor="transparent", nodesep=0.4, ranksep=0.5,
+         fontname="Helvetica", fontsize=10, margin="0,0"];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9, height=0.4];
+  edge  [fontname="Helvetica", fontsize=8];
+
+  A [label="User / Wallet\n(EOA)", fillcolor="#dbeafe"];
+  B [label="Mempool\n(P2P Gossip)", fillcolor="#dcfce7"];
+  C [label="Block Builder /\nValidator", fillcolor="#fef3c7"];
+  D [label="EVM\nExecution", fillcolor="#fde68a"];
+  E [label="New State\n+ Receipt", fillcolor="#bbf7d0"];
+
+  A -> B -> C -> D -> E;
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This review slide establishes the common transaction lifecycle that the rest of the lesson will unpack in detail. It matters here because students need a shared baseline before focusing on signatures, mempools, and client coordination. Emphasize that every later mechanism fits somewhere on this path from user intent to recorded outcome.
+
+**Key Points**
+- Transactions move through a repeatable sequence: signing, propagation, selection, execution, and recording.
+- The lifecycle links users, networking, validators, and off-chain observers into one flow.
+- Define mempool briefly as the local pool of pending transactions a node is considering for inclusion.
+
+**Walkthrough**
+1. Start with the user signing a transaction that requests a state change.
+2. Follow that transaction into the peer-to-peer network and validator selection process.
+3. End with execution, receipts, and logs as the on-chain record of what happened.
+
+**Sources**
+@ethereum.org_transactionsdeveloperdocs_2025; @ethereum.org_networksdeveloperdocs_2025
+
+:::
+
+## Transactions: Structure and Flow {.smaller}
+
+- A transaction is a signed instruction from an EOA describing a desired state change.
+- Core fields define:
+  - Ordering: `nonce` increments per account, ensuring sequential execution and replay prevention.
+  - Resource bounds: `gasLimit`, `maxFeePerGas`, `maxPriorityFeePerGas`.
+  - Intent: `to`, `value`, and optional `data` for contract calls.
+- Nodes verify the `nonce` before adding to the mempool; transactions with gaps are held.
+- Builders select transactions ordered by effective gas price, processing valid transactions per account in nonce order.
+- Each transaction produces a receipt with status, gas used, and emitted logs.
+- Type-1 and Type-2 formats add optional access lists and EIP-1559 fee terms.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what information an Ethereum transaction carries and how that information guides validation and execution. It matters here because later fee and mempool behavior only make sense once students understand the transaction object itself. Emphasize that a transaction combines ordering, intent, and resource constraints in one signed package.
+
+**Key Points**
+- Core transaction fields describe nonce, gas bounds, destination, value, and optional call data.
+- Nodes use those fields to validate transactions before gossiping or including them in blocks.
+- Define nonce briefly as the per-account sequence number that preserves ordering and prevents replay.
+
+**Walkthrough**
+1. Identify the sender's signed transaction as the starting point.
+2. Explain how nodes check fields such as nonce and fee settings before accepting it into the mempool.
+3. Close by linking block inclusion to execution and the receipt that records the result.
+
+**Sources**
+@ethereum.org_transactionsdeveloperdocs_2025
+
+:::
+
+## ETH Execution-Network Message {.smaller}
+
+:::: {.columns}
+::: {.column width="45%"}
+
+```{dot}
+//| echo: false
+digraph ETHMsg {
+  graph [rankdir=TB, bgcolor="transparent", nodesep=0.3, ranksep=0.4,
+         fontname="Helvetica", fontsize=12];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11,
+         width=2.5, fixedsize=false];
+  edge  [fontname="Helvetica"];
+
+  TCP  [label="TCP / IP", fillcolor="#dbeafe"];
+  RLPx [label="RLPx / devp2p\n(encrypted session)", fillcolor="#dcfce7"];
+  ETH  [label="ETH Subprotocol\n(msg code + payload)", fillcolor="#fef3c7"];
+  RLP  [label="RLP-encoded\npayload", fillcolor="#fde68a"];
+
+  TCP -> RLPx -> ETH -> RLP;
+}
+```
+
+:::
+::: {.column width="55%"}
+
+- **TCP/IP** -- standard transport layer
+- **RLPx/devp2p** -- EC-based handshake, encrypted frames, capability negotiation (e.g. `eth/68`, `snap/1`)
+- **ETH subprotocol** -- message code identifies the type: `NewBlock`, `Transactions`, `GetBlockHeaders`, etc.
+- **Payload** -- RLP-encoded structs/lists; request IDs tie req/resp pairs
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the execution-layer message stack Ethereum uses to move data across the network. It matters here because students need to see how transaction and block messages are actually packaged and transported between peers. Emphasize the layered design from transport to encrypted session to subprotocol payload.
+
+**Key Points**
+- Ethereum execution clients communicate over a layered stack that starts with TCP/IP and adds RLPx and devp2p functionality.
+- ETH subprotocol messages identify whether peers are exchanging transactions, blocks, or requests for data.
+- Define RLP as Recursive Length Prefix encoding and devp2p as Ethereum's peer-to-peer networking framework.
+
+**Walkthrough**
+1. Start at the transport layer with TCP/IP carrying the connection.
+2. Move up to RLPx and devp2p, which establish encrypted sessions and negotiated capabilities.
+3. End with ETH subprotocol messages whose encoded payloads carry the actual data peers exchange.
+
+**Sources**
+@go-ethereumgeth_gettingstarted_2025; @ethereumorg_jsonrpcapi_2025; @ethereum.org_nodesclientsdeveloper_2025
+
+:::
+
+## Transaction Fields and Signatures {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+
+- Each transaction is digitally signed to prove control of the sender’s EOA.
+- The signed payload encodes: `nonce`, `gasLimit`, fee fields, `to`, `value`, `data`, `chainId`.
+- Encoding uses RLP (legacy) or SSZ (newer) for deterministic byte layout.
+- `chainId` (EIP-155) binds signature to a specific network.
+- `to = null` indicates contract creation; `data` holds init code.
+- Clients reject invalid signatures, bad `gasLimit`, or insufficient balance before gossip.
+
+:::
+::: {.column width="45%"}
+
+```{dot}
+//| echo: false
+digraph TxFields {
+  graph [rankdir=TB, bgcolor="transparent", nodesep=0.15, ranksep=0.15,
+         fontname="Helvetica", fontsize=11];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
+         width=1.8, height=0.3];
+
+  subgraph cluster_tx {
+    label="EIP-1559 Transaction";
+    labeljust=l;
+    fontname="Helvetica";
+    fontsize=11;
+    style="rounded";
+    color="#94a3b8";
+
+    chainId [label="chainId", fillcolor="#dbeafe"];
+    nonce   [label="nonce", fillcolor="#dbeafe"];
+    maxPri  [label="maxPriorityFee", fillcolor="#fef3c7"];
+    maxFee  [label="maxFeePerGas", fillcolor="#fef3c7"];
+    gas     [label="gasLimit", fillcolor="#fef3c7"];
+    to      [label="to", fillcolor="#dcfce7"];
+    value   [label="value", fillcolor="#dcfce7"];
+    data    [label="data", fillcolor="#dcfce7"];
+    sig     [label="v, r, s", fillcolor="#fee2e2"];
+
+    chainId -> nonce -> maxPri -> maxFee -> gas -> to -> value -> data -> sig
+      [style=invis];
+  }
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how Ethereum proves a transaction came from the claimed sender and binds the message to a particular network context. It matters here because transaction authenticity is the entry point for every later networking and execution step. Emphasize that signatures protect both integrity and replay resistance.
+
+**Key Points**
+- Digital signatures let nodes verify who authorized the transaction and whether the payload was altered.
+- Fields such as `chainId`, fee settings, and destination are part of what gets committed by the signature.
+- Define EOA as externally owned account and `chainId` as the network identifier that prevents cross-chain replay.
+
+**Walkthrough**
+1. Identify the transaction fields that must be encoded in a deterministic order.
+2. Explain that the sender signs that payload and nodes recover or verify the signing authority.
+3. Close by showing how pre-gossip checks reject invalid signatures, bad balances, or malformed fields.
+
+**Sources**
+@ethereum.org_transactionsdeveloperdocs_2025
+
+:::
+
+## EIP-1559 Fee Mechanics
+
+- Base fee adjusts per block to target 15M gas usage; burned each block.
+- Users specify `max_fee_per_gas` and `max_priority_fee_per_gas` (tip to proposer).
+- Effective gas price = `min(max_fee, base_fee + priority_fee)`.
+- Overpaying refunds the difference between `max_fee` and actual fee to the sender.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes EIP-1559 as Ethereum's modern fee mechanism for balancing demand, predictability, and proposer incentives. It matters here because transaction propagation and inclusion depend heavily on fee settings. Emphasize the separation between the burned base fee and the priority tip paid for inclusion.
+
+**Key Points**
+- EIP-1559 adjusts the base fee according to block demand while leaving users to choose a maximum fee and tip.
+- The base fee is burned, and the priority fee compensates the proposer for including the transaction.
+- Define effective gas price as the actual per-unit fee paid after applying the user's ceiling and the current base fee.
+
+**Walkthrough**
+None
+
+**Sources**
+@buterin_eip1559feemarket_2019
+
+:::
+
+## Gas Strategy and UX
+
+- `gas_limit` must exceed expected execution cost; unused gas is refunded (minus intrinsic cost).
+- Gas estimation relies on simulated execution; complex contracts may require manual buffers.
+- Reverts still consume gas up to the failure point.
+- Bundling actions into one transaction can save gas but raises failure risk.
+- Builders/relays may enforce inclusion lists or filters -- consider for MEV-aware design.
+
+::: {.callout-note appearance="simple"}
+**MEV (Maximal Extractable Value):** extra profit a block builder or validator can earn by choosing how to order, include, or exclude transactions.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the user-facing strategy problem behind gas settings and transaction execution risk. It matters here because fee mechanics are not just protocol details; they shape wallet behavior, failed transactions, and MEV exposure. Emphasize that execution cost estimation is probabilistic and can still fail under changing state conditions.
+
+**Key Points**
+- Users must choose gas limits and fee settings with enough margin to avoid unnecessary failures.
+- Reverts can still consume significant gas, so failed execution is not free.
+- Define gas estimation as simulated execution used to predict, but not guarantee, actual runtime cost.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereum.org_gasfeesdeveloper_2025; @buterin_eip1559feemarket_2019
+
+:::
+
+## The Mempool {.smaller}
+
+- When a user submits a transaction, it enters a local **mempool** (memory pool) -- a holding area of unconfirmed transactions.
+- The EL gossips new transactions to peers via devp2p; within seconds most nodes have a similar (but not identical) view.
+- Transactions sit in the mempool **sorted by effective gas price**; builders pull the most profitable ones first.
+- The mempool is **public by default** -- anyone running a node can watch pending transactions in real time.
+  - This visibility is what enables MEV: searchers monitor the mempool to find arbitrage, liquidation, and sandwich opportunities.
+- **Private/direct submission:** users can bypass the public mempool by sending transactions directly to builders (e.g. via Flashbots Protect), hiding their intent until the block is built.
+- Each Ethereum account has a **nonce** (sequence number, not cryptographic) -- a strict counter (0, 1, 2, ...) that must increment by exactly one. Resubmitting with the same nonce and a higher fee **replaces** a stuck transaction.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the mempool as the public waiting room where networking visibility and economic competition meet. It matters here because many Ethereum behaviors, including MEV and replacement transactions, begin before a block is ever built. Emphasize that there is no single global mempool, only many local views that usually converge.
+
+**Key Points**
+- Each node maintains its own pool of pending transactions and gossips new ones to peers.
+- Visibility into pending transactions enables searchers and builders to act on profit opportunities before inclusion.
+- Define replacement briefly as resubmitting a transaction with the same nonce and a higher fee to supersede the earlier one.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereum.org_transactionsdeveloperdocs_2025; @flashbotsltd_flashbots_2025
+
+:::
+
+## Two Networks, One Chain {.smaller}
+
+:::: columns
+::: {.column width="60%"}
+- The **Consensus Layer (CL)** runs the Beacon Chain: validator duties, fork-choice, and finality. It speaks **libp2p**.
+- The **Execution Layer (EL)** runs the EVM, maintains world state, and manages the mempool. It speaks **devp2p/RLPx**.
+- They are joined locally by the **Engine API** (JSON-RPC):
+  - **CL sends EL:** the execution payload (block header + transactions) and fork-choice state (head, safe, and finalized block hashes).
+  - **EL replies:** **VALID** (executed, state root matches), **INVALID** (state root mismatch or bad transaction), or **SYNCING** (EL hasn't caught up to the parent block yet).
+- The CL uses this status to accept or reject the block for its fork-choice rule.
+:::
+
+::: {.column width="40%"}
+```{dot}
+//| echo: false
+//| fig-height: 4
+digraph EngineAPI {
+  graph [rankdir=TB, bgcolor="transparent", nodesep=0.3, ranksep=0.4,
+         fontname="Helvetica", fontsize=10, margin=0];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9,
+         width=1.4, height=0.4];
+  edge  [fontname="Helvetica", fontsize=8];
+
+  CL [label="Consensus Client\n(libp2p)", fillcolor="#dbeafe"];
+  API [label="Engine API\n(JSON-RPC)", fillcolor="#fef3c7", shape=diamond,
+       width=1.6, height=0.8];
+  EL [label="Execution Client\n(devp2p)", fillcolor="#dcfce7"];
+
+  CL -> API [label="head block"];
+  API -> EL [label="block header +\ntransactions"];
+  EL -> API [label="  VALID / INVALID\n/ SYNCING"];
+  API -> CL [label="status +\n  latestValidHash"];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that post-Merge Ethereum is really two coordinated networks joined locally inside each operator's stack. It matters here because students often picture one monolithic client, when execution and consensus responsibilities are now split. Emphasize that the Engine API is the seam where these layers coordinate block validity and fork choice.
+
+**Key Points**
+- The consensus layer manages validators, fork choice, and finality, while the execution layer manages state transition and mempool behavior.
+- The Engine API lets the consensus client ask the execution client to build or validate payloads.
+- Spell out CL as consensus layer and EL as execution layer.
+
+**Walkthrough**
+1. Start with the two independent peer-to-peer networks: one for consensus and one for execution.
+2. Show how the local Engine API passes payload and fork-choice information between them.
+3. End with the execution client's reply, which influences whether the consensus client accepts the block.
+
+**Sources**
+@ethereumdevelopers_proofofstakepos_2025; @ethereum.org_nodesclientsdeveloper_2025; @ethereumorg_jsonrpcapi_2025
+
+:::
+
+## Block Production: Anatomy of a Slot {.smaller}
+
+Every 12 seconds, one validator is selected to propose a block. Here is the sequence:
+
+1. The **CL selects a proposer** for this slot via the RANDAO-based shuffling algorithm.
+2. The proposer's CL calls `engine_forkchoiceUpdatedV*` with **payload attributes**, telling its local EL: "start building a block."
+3. The **EL assembles an execution payload** from its mempool -- selecting transactions by effective gas price, respecting per-account nonce order.
+4. The CL retrieves the payload via `engine_getPayloadV*`, wraps it into a **Beacon block** (adding attestations, slashings, sync committee data), and **signs** it.
+5. The signed block is **broadcast via libp2p** GossipSub to the rest of the network.
+6. **Receiving validators** pass the execution payload to their own EL via `engine_newPayloadV*`, which re-executes the transactions and returns VALID/INVALID/SYNCING.
+7. If VALID, the CL **attests** to the block, and after enough attestations accumulate, the block is **justified** and eventually **finalized**.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the exact sequence of events inside one 12-second slot so students can place networking and execution messages in time. It matters here because earlier slides described the components separately, and this one shows how they interact during real block production. Emphasize the handoffs among proposer selection, payload assembly, broadcast, re-execution, and attestation.
+
+**Key Points**
+- A slot begins with proposer selection and ends with other validators validating and attesting to the resulting block.
+- Block production requires both local client coordination and network-wide message dissemination.
+- Define slot as the 12-second proposal window and attestation as a validator's vote on a block or checkpoint.
+
+**Walkthrough**
+1. Explain proposer selection and the execution client's payload-building step.
+2. Follow the block into Beacon wrapping, signing, and libp2p broadcast.
+3. End with receiving validators re-executing the payload and attesting if it is valid.
+
+**Sources**
+@ethereumdevelopers_blockproposal_2024; @ethereumdevelopers_proofofstakepos_2025; @ethereumorg_jsonrpcapi_2025
+
+:::
+
+## Nodes and Clients {.smaller}
+
+- Execution clients (Geth, Nethermind, Besu, Erigon) run EVM and state transition.
+- Consensus clients (Prysm, Lighthouse, Teku, Nimbus, Lodestar) run Beacon Chain logic.
+- Three primary node types:
+  - **Full node** -- runs both an execution and consensus client. Stores current state, verifies every new block. *Validators* pair a full node with a validator service to propose and attest. *Non-validating* full nodes verify independently without staking.
+  - **Archive node** -- a full node that also retains all historical state (terabytes). Required for queries like "what was this contract's storage two years ago?" without recomputation.
+  - **Light client** -- stores only block headers and requests Merkle proofs on demand. Minimal resources, but depends on at least one honest full-node peer to serve proofs. Typically runs only a consensus light client; execution-layer light clients are still maturing (portal network).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the major client and node roles students will encounter when operating or analyzing Ethereum infrastructure. It matters here because different node types answer different trust, storage, and availability questions. Emphasize that node choice reflects operational goals, not just resource limits.
+
+**Key Points**
+- Execution and consensus clients perform different parts of Ethereum's overall validation job.
+- Full, archive, and light nodes trade off storage, history retention, and independence.
+- Define archive node as a node that retains historical state needed for past-state queries.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereum.org_nodesclientsdeveloper_2025
+
+:::
+
+## Client Diversity & Pairing Practices {.smaller}
+
+- Diversity mitigates correlated bugs, as shown in these examples involving Prysm:
+  - **May 2023:** Prysm and Teku clients choked on attestations with old target checkpoints, causing resource exhaustion.
+    - Finality was lost for multiple epochs -- the first time ever on mainnet -- triggering Ethereum's inactivity leak mechanism.
+    - Non-affected clients maintained the chain; patched in Prysm v4.0.4.
+  - **Dec 2025 (Fusaka upgrade):** a bug in Prysm v7.0.0 caused nodes to reprocess stale attestations, exhausting CPU/memory.
+    - ~23% of validators affected; participation dropped to ~75% (nearly breaching the 2/3 finality threshold).
+    - ~248 blocks missed over ~4.4 hours; validators lost ~382 ETH (~$1.18M).
+    - Resolved via an emergency runtime flag, then permanent fix later.
+  - In both cases, client diversity prevented a full finality failure.
+- Community dashboards track share of each client combination.
+- Some organizations run canary validators before upgrading production fleets.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes client diversity as a security control, not just a software preference. It matters here because Ethereum's resilience depends on avoiding correlated failure across too much stake or too many operators. Emphasize that diversity reduces blast radius when one client family has a bug or bad interaction.
+
+**Key Points**
+- Client monoculture can turn a single implementation bug into a chain-wide incident.
+- Mixed execution and consensus client pairings reduce the chance that one defect affects too much of the network at once.
+- Define canary validator briefly as a limited deployment used to detect problems before broad rollout.
+
+**Walkthrough**
+None
+
+**Sources**
+@etheralpha_clientdiversityethereum_2025; @offchain_ethereumbeaconchain_2023; @hristov_ethereumvalidatorslost_2025
+
+:::
+
+## Sync Modes & Data Availability
+
+- Full sync replays blocks from genesis; resource-intensive but trust-minimized.
+- Snap sync (geth/Nethermind) downloads state snapshots + verifies Merkle proofs.
+- Archive mode retains historical state for each block -- required for some analytics.
+- Light clients track headers, request proofs on demand (in development via portal network).
+- Checkpoint sync (post-Merge default) starts from a recent finalized checkpoint.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that synchronization strategy is a trust and operations decision, not just a performance setting. It matters here because different users and services need different balances of speed, storage cost, and trust minimization. Emphasize that data availability and sync assumptions determine what a node can independently verify.
+
+**Key Points**
+- Full sync maximizes independent verification, while faster modes reduce time-to-usable-node by relying on additional assumptions or proofs.
+- Archive mode preserves historical state, and checkpoint sync starts from a recent finalized view.
+- Define weak subjectivity briefly as the need to start from a reasonably recent trusted checkpoint in PoS systems.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereum.org_nodesclientsdeveloper_2025; @go-ethereumgeth_gettingstarted_2025; @offchain_ethereumbeaconchain_2023
+
+:::
+
+## Execution-Layer Networking (devp2p / RLPx) {.smaller}
+
+- The **devp2p stack** defines how Ethereum nodes discover, authenticate, and communicate.  
+- It includes:
+  - **Discovery (v4/v5):** UDP-based peer discovery using Ethereum Node Records (ENRs).  
+  - **RLPx transport:** session handshake, encryption, and multiplexing over TCP.  
+  - **Capability negotiation:** peers advertise supported subprotocols (e.g., `eth/66`, `snap/1`).  
+  - **Subprotocol messaging:** each capability defines its own message set and encoding.  
+- Typical message types:  
+  - `eth`: `NewBlock`, `NewBlockHashes`, `Transactions`, `GetBlockHeaders`, `GetBlockBodies`.  
+  - `snap`: `GetAccountRange`, `GetStorageRanges`, etc. for fast state sync.  
+- Peer scoring and limits protect against spam and eclipse attacks.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the execution-layer networking stack as the mechanism that helps Ethereum nodes discover peers and exchange block or state data efficiently. It matters here because transaction propagation and sync performance depend on these lower-level communication choices. Emphasize that security here includes resilience against spam, eclipse pressure, and malformed data.
+
+**Key Points**
+- devp2p includes discovery, encrypted transport, capability negotiation, and subprotocol messaging.
+- Different subprotocols handle different tasks, such as transaction exchange or state-sync assistance.
+- Define ENR as Ethereum Node Record, the signed metadata peers use during discovery.
+
+**Walkthrough**
+None
+
+**Sources**
+@go-ethereumgeth_gettingstarted_2025; @ethereum.org_nodesclientsdeveloper_2025
+
+:::
+
+## Aside: Trust Mechanisms in Ethereum Networking {.smaller}
+
+- Ethereum clients operate in an **open, permissionless network** -- every peer connection must be *evaluated* for trustworthiness.
+- Remember the peer scoring and reputation models from our trust and P2P lectures? Ethereum clients implement exactly those ideas.
+- **Examples of peer-scoring behavior:**
+  - Responds correctly to requests: score increases.  
+  - Serves stale or malformed data: score decreases.  
+  - Floods invalid transactions or blocks: large penalty or disconnect.  
+  - Fails to respond or times out repeatedly: moderate penalty.  
+  - Maintains reliable connection and valid data exchange: slow positive drift.
+
+- **Client implementations:**
+  - *Geth* uses numeric reputation scores (−3000 to +100).  
+  - *Nethermind* and *Erigon* use adaptive credit and bucket models.  
+  - *Besu* tiers peers into trust levels with exponential backoff for misbehavior.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This aside establishes that Ethereum networking still relies on practical trust judgments even inside a permissionless protocol. It matters here because earlier course themes about trust and reputation now reappear in a concrete client implementation setting. Emphasize that each node is constantly assessing peer behavior, not blindly trusting all traffic equally.
+
+**Key Points**
+- Ethereum clients use local scoring or reputation models to reward useful peers and penalize harmful ones.
+- Peer-management heuristics help defend against spam, eclipse pressure, and repeated bad data.
+- Define peer scoring briefly as a local heuristic for deciding which peers to keep, deprioritize, or disconnect.
+
+**Walkthrough**
+None
+
+**Sources**
+@go-ethereumgeth_gettingstarted_2025; @ethereum.org_nodesclientsdeveloper_2025
+
+:::
+
+## Consensus-Layer Networking (libp2p / GossipSub) {.smaller}
+
+- The **consensus layer** (Beacon Chain) uses libp2p, a modular P2P framework from IPFS.  
+- libp2p provides:
+  - **Transports:** TCP, QUIC, or WebSockets for secure, multiplexed connections.  
+  - **Encryption:** Noise or TLS handshakes for authenticated channels.  
+  - **Peer discovery:** via bootnodes, DNS records, or discovery topics.  
+  - **Pub/Sub overlay:** **GossipSub** for message dissemination.  
+- GossipSub organizes messages by topics:
+  - Beacon blocks, attestations, sync committees, voluntary exits, etc.  
+- Each topic forms a rotating **mesh** of peers to balance bandwidth, diversity, and resilience.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the distinct networking model used by the consensus layer, where topic-based gossip spreads blocks and attestations quickly. It matters here because consensus liveness depends on timely dissemination across a changing mesh, not just pairwise requests. Emphasize how libp2p and GossipSub are tuned for broadcast behavior rather than the execution layer's request-response emphasis.
+
+**Key Points**
+- The Beacon Chain uses libp2p with topic-based GossipSub overlays to spread consensus messages.
+- Rotating meshes help balance bandwidth efficiency with resilience against censorship or isolation.
+- Spell out TLS as Transport Layer Security and explain GossipSub as a topic-based gossip protocol.
+
+**Walkthrough**
+None
+
+**Sources**
+@offchain_ethereumbeaconchain_2023; @ethereumdevelopers_blockproposal_2024
+
+:::
+
+## Maximal Extractable Value (MEV) {.smaller}
+
+- **MEV** is the extra profit a block producer (builder or validator) can earn by **choosing how to order, include, or exclude** transactions in a block.
+
+- **Arbitrage** -- exploit price gaps between DEXes.
+  - *Ex: token at 100 DAI on Uniswap, 102 on Sushiswap.*
+- **Liquidations** -- seize undercollateralized loans.
+  - *Ex: Aave loan below threshold; liquidator gets 5% discount.*
+- **Sandwich attacks** -- front/back-run a user’s swap.
+  - *Ex: buy before Alice’s swap, sell after, profit on price move.*
+- **Censorship/delay** -- withhold transactions for advantage.
+  - *Ex: delay oracle update to profit from stale prices.*
+
+::: {.callout-note appearance="simple"}
+**DeFi terms:** **DEX** = decentralized exchange (e.g. Uniswap). **DAI** = USD-pegged stablecoin. **Aave** = decentralized lending protocol.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes MEV as the profit opportunity created by transaction visibility and ordering discretion. It matters here because Ethereum networking and fee mechanics create the conditions under which builders and validators can extract value beyond basic fees. Emphasize that MEV is not one attack, but a family of opportunities tied to block construction power.
+
+**Key Points**
+- MEV comes from deciding transaction order, inclusion, or exclusion in a way that captures extra value.
+- Common examples include arbitrage, liquidations, sandwiching, and strategic delay.
+- Spell out DEX as decentralized exchange and define liquidation as closing an unsafe loan position for a reward.
+
+**Walkthrough**
+None
+
+**Sources**
+@flashbotsltd_flashbots_2025
+
+:::
+
+## Builder / Relay Stack and MEV {.smaller}
+
+- **Goal:** separate *block proposing* (validator duty) from *block building* (searching for profitable transaction orderings).
+
+1. **Searchers** Off-chain actors scanning the mempool for **MEV opportunities**.  
+   - Submit *bundles* of transactions with bid values to **builders**.
+
+2. **Builders** *(off-chain)*  
+   - Aggregate normal txs + MEV bundles to **assemble full blocks** with estimates of value/gas use.  
+
+3. **Relays** *(off-chain coordination services)*  
+   - Receive built blocks, verify validity, and **blindly forward block headers** (hash + bid value) to validators running **MEV-Boost**.  
+
+4. **Validators (Proposers)** *(on L1 consensus layer)*  
+   - Run **MEV-Boost** client alongside their validator software.  
+   - After signature, relay releases the full block body for inclusion.
+- MEV Demo here: [/assets/labs/ether_mev/](/assets/labs/ether_mev/mev_builders.html)
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes proposer-builder separation as the operational response to the growing MEV economy. It matters here because students now need to see how Ethereum block production changed to handle specialized search, bidding, and relay infrastructure. Emphasize that validators still finalize blocks, but profitable ordering work is increasingly delegated.
+
+**Key Points**
+- Searchers, builders, relays, and validators now occupy different roles in the MEV supply chain.
+- Relays forward blinded bids so proposers can choose profitable blocks without directly seeing the strategy contents first.
+- Spell out PBS as proposer-builder separation and note that MEV-Boost is the common tooling layer for this workflow.
+
+**Walkthrough**
+1. Start with searchers identifying profitable transaction bundles.
+2. Move to builders assembling full candidate blocks and relays forwarding blinded bids.
+3. End with the validator selecting a bid, signing, and receiving the full payload for inclusion.
+
+**Sources**
+@flashbotsltd_flashbots_2025
+
+:::
+
+## Conclusion: Putting It All Together
+
+- **Transactions and Execution:** EOA -> mempools -> EVM execution.  
+- **Networking:** Distinct but coordinated P2P networks:  
+  - The **execution layer (devp2p/RLPx)** gossips transactions and execution payloads.  
+  - The **consensus layer (libp2p/GossipSub)** spreads attestations, block proposals, and sync data.  
+- **Economic Design:** base fees that burn ETH and priority tips reward inclusion.
+
+**Next:** we look at what runs inside those execution payloads -- smart contracts and Solidity.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This conclusion slide establishes how the lesson's three threads fit together: transaction flow, network architecture, and economic ordering incentives. It matters here because students need a synthesized model before shifting into smart contracts in the next lesson. Emphasize that resilient Ethereum operation depends on both protocol design and disciplined client, fee, and infrastructure choices.
+
+**Key Points**
+- Transactions move from EOAs through mempools and execution into receipts and state updates.
+- Ethereum relies on distinct execution and consensus networks that must coordinate cleanly.
+- The fee market and MEV ecosystem shape which transactions make it into blocks and on what terms.
+
+**Walkthrough**
+None
+
+**Sources**
+@ethereum.org_transactionsdeveloperdocs_2025; @ethereum.org_networksdeveloperdocs_2025; @flashbotsltd_flashbots_2025
+
+:::
+
+## References

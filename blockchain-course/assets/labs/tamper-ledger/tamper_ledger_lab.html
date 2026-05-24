@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tamper-Evident Ledger</title>
+  <style>
+    :root {
+      --fg: #0f172a; --muted: #475569; --bg: #ffffff; --soft: #f8fafc;
+      --accent: #2563eb; --green: #16a34a; --red: #dc2626; --amber: #d97706;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; }
+    .wrap { max-width: 1060px; margin: 32px auto; padding: 0 16px; }
+    h1 { font-size: 1.35rem; margin: 0 0 4px; }
+    .sub { color: var(--muted); margin: 0 0 18px; }
+    .panel { background: var(--soft); border-radius: 14px; padding: 16px; margin: 0 0 16px; }
+    .panel h3 { margin: 0 0 10px; font-size: 1rem; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .grid2 { grid-template-columns: 1fr; } }
+
+    label { font-weight: 600; display: block; margin-bottom: 4px; font-size: 13px; }
+    select, input[type="number"] {
+      font: inherit; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 10px; width: 100%;
+    }
+    button {
+      font: inherit; border: 1px solid #e5e7eb; border-radius: 8px; padding: 7px 14px;
+      background: #fff; cursor: pointer; font-weight: 600;
+    }
+    button:hover { background: #f1f5f9; }
+    button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    button.primary:hover { background: #1d4ed8; }
+    button.danger { background: var(--red); color: #fff; border-color: var(--red); }
+    button.danger:hover { background: #b91c1c; }
+
+    .controls { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-bottom: 12px; }
+    .controls > div { flex: 1; min-width: 100px; }
+
+    .wallets { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .wallet {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 14px;
+      min-width: 110px; text-align: center;
+    }
+    .wallet .name { font-weight: 700; margin-bottom: 4px; }
+    .wallet .bal { font-family: var(--mono); font-size: 1.1rem; }
+    .wallet .bal.neg { color: var(--red); }
+
+    .chain { display: flex; flex-direction: column; gap: 0; }
+    .entry {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px;
+      margin-bottom: 8px; position: relative; transition: border-color 0.2s;
+    }
+    .entry.valid { border-left: 4px solid var(--green); }
+    .entry.invalid { border-left: 4px solid var(--red); background: #fef2f2; }
+    .entry .idx { font-weight: 700; font-size: 13px; color: var(--muted); }
+    .entry .data { margin: 4px 0; }
+    .entry .data input {
+      font-family: var(--mono); font-size: 13px; border: 1px dashed #cbd5e1;
+      border-radius: 4px; padding: 3px 6px; width: 100%; background: transparent;
+    }
+    .entry.invalid .data input { background: #fef2f2; }
+    .entry .hashes { font-family: var(--mono); font-size: 11px; color: var(--muted); word-break: break-all; }
+    .entry .hashes span { display: block; margin-top: 2px; }
+    .entry .rehash-btn {
+      position: absolute; top: 8px; right: 8px; font-size: 11px; padding: 3px 8px;
+      border-radius: 6px; background: var(--amber); color: #fff; border: none; cursor: pointer;
+      display: none;
+    }
+    .entry.invalid .rehash-btn { display: inline-block; }
+
+    .status-bar {
+      font-family: var(--mono); font-size: 12px; padding: 8px 12px;
+      border-radius: 8px; margin-top: 10px;
+    }
+    .status-bar.ok { background: #f0fdf4; color: var(--green); }
+    .status-bar.broken { background: #fef2f2; color: var(--red); }
+
+    .log {
+      font-family: var(--mono); font-size: 12px; background: #fff;
+      border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px;
+      max-height: 140px; overflow-y: auto;
+    }
+    .log div { padding: 2px 0; border-bottom: 1px solid #f8fafc; }
+    .log .warn { color: var(--red); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tamper-Evident Ledger</h1>
+  <p class="sub">Add transactions, then try editing past entries to see how hash-linking detects tampering.</p>
+
+  <div class="grid2">
+    <!-- Left: Ledger -->
+    <div>
+      <div class="panel">
+        <h3>Ledger</h3>
+        <div class="status-bar ok" id="statusBar">Chain valid</div>
+        <div class="chain" id="chain"></div>
+      </div>
+    </div>
+
+    <!-- Right: Controls + Wallets -->
+    <div>
+      <div class="panel">
+        <h3>Wallets</h3>
+        <div class="wallets" id="wallets"></div>
+      </div>
+
+      <div class="panel">
+        <h3>New Transaction</h3>
+        <div class="controls">
+          <div>
+            <label for="txType">Type</label>
+            <select id="txType">
+              <option value="deposit">Deposit</option>
+              <option value="withdraw">Withdraw</option>
+              <option value="transfer">Transfer</option>
+            </select>
+          </div>
+          <div>
+            <label for="txFrom">From</label>
+            <select id="txFrom"></select>
+          </div>
+          <div>
+            <label for="txTo">To</label>
+            <select id="txTo"></select>
+          </div>
+          <div>
+            <label for="txAmt">Amount</label>
+            <input type="number" id="txAmt" value="50" min="1" max="10000" />
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="primary" id="btnAdd">Add Transaction</button>
+          <button class="danger" id="btnReset">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Event Log</h3>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const walletNames = ['Alice', 'Bob', 'Charlie'];
+let ledger = [];    // [{data, hash, prevHash}]
+let balances = {};
+
+// Simple hash (djb2 variant, returns 8-char hex). Not cryptographic, but visible.
+function simpleHash(str) {
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for (let i = 0; i < str.length; i++) {
+    h1 ^= str.charCodeAt(i); h1 = Math.imul(h1, 0x01000193);
+    h2 ^= str.charCodeAt(i); h2 = Math.imul(h2, 0x811c9dc5);
+  }
+  return (((h1 >>> 0) & 0xFFFFFFFF).toString(16).padStart(8, '0') +
+          ((h2 >>> 0) & 0xFFFFFFFF).toString(16).padStart(8, '0'));
+}
+
+function computeHash(data, prevHash) {
+  return simpleHash(prevHash + '|' + data);
+}
+
+function initWallets() {
+  balances = {};
+  walletNames.forEach(n => balances[n] = 0);
+}
+
+function renderWallets() {
+  const el = $('#wallets');
+  el.innerHTML = walletNames.map(n => {
+    const neg = balances[n] < 0 ? ' neg' : '';
+    return `<div class="wallet"><div class="name">${n}</div><div class="bal${neg}">${balances[n]}</div></div>`;
+  }).join('');
+}
+
+function recalcBalances() {
+  initWallets();
+  ledger.forEach(e => {
+    const d = parseData(e.data);
+    if (!d) return;
+    if (d.type === 'deposit') balances[d.to] = (balances[d.to] || 0) + d.amt;
+    else if (d.type === 'withdraw') balances[d.from] = (balances[d.from] || 0) - d.amt;
+    else if (d.type === 'transfer') {
+      balances[d.from] = (balances[d.from] || 0) - d.amt;
+      balances[d.to] = (balances[d.to] || 0) + d.amt;
+    }
+  });
+  renderWallets();
+}
+
+function parseData(str) {
+  const m = str.match(/^(deposit|withdraw|transfer)\s+(\w+)(?:\s*->\s*(\w+))?\s+(\d+)$/i);
+  if (!m) return null;
+  return { type: m[1].toLowerCase(), from: m[2], to: m[3] || m[2], amt: parseInt(m[4]) };
+}
+
+function formatTx(type, from, to, amt) {
+  if (type === 'deposit') return `deposit ${to} ${amt}`;
+  if (type === 'withdraw') return `withdraw ${from} ${amt}`;
+  return `transfer ${from} -> ${to} ${amt}`;
+}
+
+function validate() {
+  let allValid = true;
+  for (let i = 0; i < ledger.length; i++) {
+    const e = ledger[i];
+    const expectedPrev = i === 0 ? '0000000000000000' : ledger[i - 1].hash;
+    const expectedHash = computeHash(e.data, expectedPrev);
+    e._valid = (e.prevHash === expectedPrev && e.hash === expectedHash);
+    if (!e._valid) allValid = false;
+  }
+  return allValid;
+}
+
+function renderChain() {
+  const allValid = validate();
+  const el = $('#chain');
+  el.innerHTML = '';
+  if (ledger.length === 0) {
+    el.innerHTML = '<div style="color:var(--muted);font-style:italic;padding:8px;">No entries yet. Add a transaction to start.</div>';
+    $('#statusBar').className = 'status-bar ok';
+    $('#statusBar').textContent = 'Chain empty';
+    return;
+  }
+  ledger.forEach((e, i) => {
+    const cls = e._valid ? 'valid' : 'invalid';
+    const div = document.createElement('div');
+    div.className = `entry ${cls}`;
+    div.innerHTML = `
+      <div class="idx">Entry #${i}</div>
+      <div class="data"><input value="${e.data.replace(/"/g, '&quot;')}" data-idx="${i}" /></div>
+      <div class="hashes">
+        <span>prev: ${e.prevHash}</span>
+        <span>hash: ${e.hash}</span>
+      </div>
+      <button class="rehash-btn" data-idx="${i}" title="Recalculate this entry's hash">Rehash</button>
+    `;
+    el.appendChild(div);
+  });
+  // Bind edit events
+  el.querySelectorAll('.data input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const idx = parseInt(inp.dataset.idx);
+      const oldData = ledger[idx].data;
+      ledger[idx].data = inp.value;
+      // Don't recompute hash automatically; that's the point
+      log(`Entry #${idx} data edited: "${oldData}" -> "${inp.value}"`, true);
+      recalcBalances();
+      renderChain();
+    });
+  });
+  // Bind rehash buttons
+  el.querySelectorAll('.rehash-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const prevHash = idx === 0 ? '0000000000000000' : ledger[idx - 1].hash;
+      ledger[idx].prevHash = prevHash;
+      ledger[idx].hash = computeHash(ledger[idx].data, prevHash);
+      log(`Rehashed entry #${idx}. ${idx < ledger.length - 1 ? 'Next entry now has a mismatched prevHash!' : 'Chain repaired from this point.'}`, false);
+      renderChain();
+    });
+  });
+  const bar = $('#statusBar');
+  if (allValid) {
+    bar.className = 'status-bar ok';
+    bar.textContent = `Chain valid (${ledger.length} entries)`;
+  } else {
+    const broken = ledger.filter(e => !e._valid).length;
+    bar.className = 'status-bar broken';
+    bar.textContent = `Chain broken! ${broken} invalid entr${broken === 1 ? 'y' : 'ies'} detected`;
+  }
+}
+
+function addEntry(data) {
+  const prevHash = ledger.length === 0 ? '0000000000000000' : ledger[ledger.length - 1].hash;
+  const hash = computeHash(data, prevHash);
+  ledger.push({ data, hash, prevHash });
+}
+
+function log(msg, warn) {
+  const el = $('#log');
+  const d = document.createElement('div');
+  if (warn) d.className = 'warn';
+  d.textContent = msg;
+  el.prepend(d);
+  // Trim to 50 entries
+  while (el.children.length > 50) el.removeChild(el.lastChild);
+}
+
+// UI setup
+function populateSelects() {
+  const opts = walletNames.map(n => `<option value="${n}">${n}</option>`).join('');
+  $('#txFrom').innerHTML = opts;
+  $('#txTo').innerHTML = opts;
+  $('#txTo').value = walletNames[1];
+}
+
+function updateFormVisibility() {
+  const t = $('#txType').value;
+  $('#txFrom').closest('div').style.display = (t === 'deposit') ? 'none' : '';
+  $('#txTo').closest('div').style.display = (t === 'withdraw') ? 'none' : '';
+}
+
+$('#txType').addEventListener('change', updateFormVisibility);
+
+$('#btnAdd').addEventListener('click', () => {
+  const type = $('#txType').value;
+  const from = $('#txFrom').value;
+  const to = $('#txTo').value;
+  const amt = parseInt($('#txAmt').value) || 0;
+  if (amt <= 0) return;
+  const data = formatTx(type, from, to, amt);
+  addEntry(data);
+  recalcBalances();
+  const hasNeg = Object.values(balances).some(b => b < 0);
+  log(`Added: ${data}`, false);
+  if (hasNeg) log(`Warning: negative balance detected! How would you prevent this?`, true);
+  renderChain();
+});
+
+$('#btnReset').addEventListener('click', () => {
+  ledger = [];
+  initWallets();
+  renderWallets();
+  renderChain();
+  $('#log').innerHTML = '';
+  log('Ledger reset.', false);
+});
+
+// Init
+populateSelects();
+updateFormVisibility();
+initWallets();
+renderWallets();
+renderChain();
+</script>
+</body>
+</html>

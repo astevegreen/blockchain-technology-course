@@ -1,0 +1,887 @@
+---
+title: "Blockchain at a Glance"
+subtitle: 'Section I: Introduction'
+author: Army Cyber Institute
+lesson: 02-IN
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 3
+aci-mermaid: true
+---
+
+## The Big Picture {.smaller}
+
+:::: {.columns}
+
+::: {.column width="40%"}
+![](../images/gemini-engine-block.png)
+:::
+
+::: {.column width="60%"}
+- **Our Goal Today:** Before we dive into the deep technical concepts of this course, we need to establish a high-level frame of reference.
+- **The Analogy:** Think of this lesson like looking at a **fully assembled car**. 
+  - Before we take the engine apart to learn how the pistons work, it helps to see the whole vehicle drive down the road.
+- **Setting Expectations:** We aren't going to build the engine today. We just want to identify the major components, learn what they are called, and see how they fit together.
+:::
+
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes the lesson's purpose as a high-level orientation rather than a deep technical dive. It matters here because students need a conceptual frame for the whole blockchain stack before later lessons unpack each component in detail. Emphasize that today is about vocabulary, system shape, and relationships among parts.
+
+**Key Points**
+- Use the car analogy to show that students are looking at an assembled system before studying its individual parts.
+- Set expectations that cryptographic math and protocol mechanics will come later in the course.
+- The immediate goal is to identify the major components and how they fit together.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## What is a Blockchain? {.smaller}
+
+- **A Shared Reality:** At its core, a blockchain is a system that allows multiple distributed participants to agree on a single, shared history of events without needing a central referee.
+- **An Append-Only Ledger:** It is a database that can only be added to. You cannot edit or delete past entries.
+- **A State Machine:** It moves from one agreed-upon "state" (e.g., Alice has 5 tokens) to the next (e.g., Alice has 2, Bob has 3) based on strict, universally enforced rules.
+
+::: {.callout-note appearance="minimal"}
+**Permissionless vs. Permissioned Ledgers**
+Public blockchains (like Bitcoin) assume participants are anonymous and untrusted. However, private/permissioned blockchains are used by known entities (like a consortium of banks) who share a ledger and want mathematical guarantees of accuracy.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the course's baseline definition of blockchain as shared state coordination without a central referee. It matters here because every later technical topic in the course supports this one core function: maintaining an agreed history among distributed participants. Emphasize that append-only behavior, state transitions, and distributed agreement are the important ideas to carry forward.
+
+**Key Points**
+- A blockchain is fundamentally a way for distributed parties to agree on one shared record of events.
+- Append-only means past entries are added to, not silently edited or deleted.
+- A state machine is a system that moves from one valid state to the next according to rules; permissionless and permissioned describe who is allowed to participate.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @bano_consensusageblockchains_2017
+
+:::
+
+## The "Block" in Blockchain {.smaller}
+
+- **The Analogy:** Think of a single block as a **page in a ledger book** or a **shipping container**.
+- **The Purpose:** Instead of processing transactions one by one, the network bundles them together into a single, organized package.
+- **The Heartbeat:** New blocks are sealed and added to the network at regular intervals.
+- **The Contents:** At a high level, a block contains a batch of approved script operations (commonly referred to as "transactions") and a mathematical link to the past.
+
+<div style="position: relative; z-index: -1; top: -150px;">
+```{dot}
+digraph Blocks {
+    rankdir=LR;
+    bgcolor="transparent";
+    node [shape=box, style="filled", fillcolor=white, fontname="Helvetica", margin=0.2];
+    edge [fontname="Helvetica", fontsize=10, color=gray50];
+
+    subgraph cluster_101 {
+        label="Block 101";
+        fontname="Helvetica-Bold";
+        style="rounded,filled";
+        fillcolor=lightblue;
+        color=gray50;
+        T1 [label="Transactions"];
+    }
+    subgraph cluster_102 {
+        label="Block 102";
+        fontname="Helvetica-Bold";
+        style="rounded,filled";
+        fillcolor=lightblue;
+        color=gray50;
+        T2 [label="Transactions"];
+    }
+    subgraph cluster_103 {
+        label="Block 103";
+        fontname="Helvetica-Bold";
+        style="rounded,filled";
+        fillcolor=lightblue;
+        color=gray50;
+        T3 [label="Transactions"];
+    }
+    subgraph cluster_104 {
+        label="Block 104";
+        fontname="Helvetica-Bold";
+        style="rounded,filled";
+        fillcolor=lightblue;
+        color=gray50;
+        T4 [label="Transactions"];
+    }
+    subgraph cluster_105 {
+        label="Block 105";
+        fontname="Helvetica-Bold";
+        style="rounded,filled";
+        fillcolor=lightblue;
+        color=gray50;
+        T5 [label="Transactions"];
+    }
+
+    T1 -> T2 [label=" Fingerprint of 101"];
+    T2 -> T3 [label=" Fingerprint of 102"];
+    T3 -> T4 [label=" Fingerprint of 103"];
+    T4 -> T5 [label=" Fingerprint of 104"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what a block contributes to the larger chain: batching activity into discrete, linked packages. It matters here because students must understand that blockchain time is organized into blocks before they can follow validation, consensus, and chaining. Emphasize that a block is not just storage; it is a structured checkpoint in the ledger's ongoing history.
+
+**Key Points**
+- A block is a batch of approved operations grouped together rather than processed one by one.
+- Each block carries a cryptographic link to the prior block, which is what makes the history chain together.
+- Heartbeat refers to the repeated cadence at which new blocks are proposed and added.
+
+**Walkthrough**
+1. Start at the leftmost block and identify it as one packaged set of transactions.
+2. Move across the diagram to show that each new block includes the fingerprint of the one before it.
+3. Conclude that changing an earlier block would break the later links in the chain.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## The Three Pillars {.smaller}
+
+A blockchain is not one single invention. It is the clever synthesis of three distinct technologies. 
+
+1. **Cryptography:** Secures the data and proves identity. (Encryption, Hashes, and Digital Signatures).
+2. **Peer-to-Peer (P2P) Networks:** Distributes the data so everyone has a copy and there is no central server to attack.
+3. **Consensus Mechanisms:** The rules by which the network agrees on what data is valid and what should be rejected.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes blockchain as a synthesis of three separate technologies rather than a single invention. It matters here because the rest of the module and the next course sections are organized around these pillars. Emphasize that cryptography, peer-to-peer networking, and consensus each solve a different part of the coordination problem.
+
+**Key Points**
+- Cryptography secures data and authorization, peer-to-peer networking distributes information, and consensus determines what becomes official history.
+- The course is structured to study each pillar separately after this overview.
+- Synthesis means blockchain works because these technologies are combined, not because any one of them is new by itself.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @bano_consensusageblockchains_2017
+
+:::
+
+## Pillar 1: Cryptography {.smaller}
+
+- **Encryption (Symmetric & Asymmetric):** The math used to scramble data for confidentiality. While blockchains generally do not encrypt the ledger itself, these concepts are the fundamental building blocks for digital signatures and advanced privacy features.
+- **Digital Signatures (Public/Private Keys):** A way to mathematically prove that *you* authorized an action without revealing your secret password.
+- **Cryptographic Hashes:** Think of this as a digital fingerprint. Any piece of data can be crushed down into a unique string of letters and numbers. If the data changes even slightly, the fingerprint changes completely.
+- **The Role:** Cryptography doesn't hide the data (most blockchains are entirely public). Instead, it makes the data **tamper-evident** and **unforgeable**.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes what cryptography contributes to blockchain: integrity, authorization, and tamper evidence rather than secrecy by default. It matters here because students often wrongly assume blockchain is mainly about encrypted hidden data. Emphasize that most public blockchains are transparent, but cryptography still makes unauthorized changes and forgeries visible and difficult.
+
+**Key Points**
+- Digital signatures use public and private keys to prove authorization without exposing the secret key.
+- Cryptographic hashes act like fingerprints: small input changes produce radically different outputs.
+- Tamper-evident means unauthorized changes can be detected; asymmetric means one key signs while another verifies.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @l31_r3_corda_enterprise_2026
+
+:::
+
+## Pillar 2: Peer-to-Peer Networks {.smaller}
+
+
+- **No Central Server:** There is no "blockchain.com" server running the network.
+- **Nodes:** Thousands of individual computers (nodes) run the blockchain software.
+- **Gossip Protocol:** When one node hears about a new transaction, it shouts it to its neighbors, who shout it to their neighbors, until the whole world knows.
+
+```{dot}
+graph Networks {
+    bgcolor="transparent";
+    layout=neato;
+    overlap=false;
+    splines=true;
+    rotate=90;
+    
+    node [shape=circle, style=filled, fillcolor=lightblue, label="", width=0.4];
+    edge [color=gray50];
+
+    // Organic P2P Mesh (40 nodes, randomized degrees between 3 and 5)
+    // Cluster A (Left)
+    N1 -- N3; N1 -- N4; N1 -- N5;
+    N2 -- N3; N2 -- N6; N2 -- N7;
+    N3 -- N4; N3 -- N8;
+    N4 -- N5; N4 -- N8;
+    N5 -- N6; N5 -- N7;
+    N6 -- N8; N7 -- N8;
+
+    // Link A to B
+    N4 -- N9; N5 -- N10; N8 -- N12;
+
+    // Cluster B
+    N9 -- N10; N9 -- N13;
+    N10 -- N11; N10 -- N14; N10 -- N15;
+    N11 -- N12; N11 -- N15; N11 -- N16;
+    N12 -- N13; N12 -- N16;
+    N13 -- N14; N13 -- N15;
+    N14 -- N15; N14 -- N16;
+    N15 -- N16;
+    
+    // Link B to C
+    N13 -- N17; N14 -- N18; N16 -- N20;
+
+    // Cluster C (Center)
+    N17 -- N18; N17 -- N19;
+    N18 -- N19; N18 -- N22;
+    N19 -- N20; N19 -- N23; N19 -- N24;
+    N20 -- N21; N20 -- N24;
+    N21 -- N22; N21 -- N23;
+    N22 -- N23; N22 -- N24;
+    
+    // Link C to D
+    N21 -- N25; N22 -- N26; N24 -- N28;
+
+    // Cluster D
+    N25 -- N26; N25 -- N27;
+    N26 -- N27; N26 -- N30;
+    N27 -- N28; N27 -- N31; N27 -- N32;
+    N28 -- N29; N28 -- N32;
+    N29 -- N30; N29 -- N31;
+    N30 -- N31; N30 -- N32;
+    
+    // Link D to E
+    N29 -- N33; N30 -- N34; N32 -- N36;
+
+    // Cluster E (Right)
+    N33 -- N34; N33 -- N35; N33 -- N37;
+    N34 -- N35; N34 -- N38;
+    N35 -- N36; N35 -- N39; N35 -- N40;
+    N36 -- N37; N36 -- N40;
+    N37 -- N38;
+    N38 -- N39; N38 -- N40;
+    N39 -- N40;
+
+    // Invisible nodes to act as anchors for dotted edges
+    node [shape=point, width=0, style=invis];
+    edge [style=dotted, color=gray50];
+    
+    // Dotted edges ONLY on the visual perimeter nodes to show network continuation
+    N1 -- ext1; N2 -- ext2; N3 -- ext3; N6 -- ext6; N7 -- ext7;
+    N9 -- ext9; N12 -- ext12; N17 -- ext17; N20 -- ext20;
+    N26 -- ext26; N31 -- ext31;
+    N34 -- ext34; N37 -- ext37; N38 -- ext38; N39 -- ext39; N40 -- ext40;
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how blockchain networks move information without relying on a central server. It matters here because later transaction lifecycle slides assume students understand that many independent nodes receive and relay the same data. Emphasize that peer-to-peer design removes the single point of failure but introduces coordination and propagation challenges.
+
+**Key Points**
+- Nodes are individual computers running the protocol and holding or relaying network data.
+- A gossip protocol spreads information by having each node forward valid messages to peers.
+- Peer-to-peer, or P2P, means there is no single authoritative server in the middle of every exchange.
+
+**Walkthrough**
+1. Point to one node learning about a transaction first.
+2. Show that it forwards the message to neighboring nodes.
+3. Explain that repeated forwarding propagates the same information across the global network.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## Pillar 3: Consensus {.smaller}
+
+- **The Problem of Errors and Conflicts:** In a P2P network, some participants will broadcast invalid or conflicting information (e.g., spending money they don't have).
+- **The Mechanism:** Consensus is the algorithmic process the nodes use to agree on what is valid and reject incorrect state changes. 
+- **Examples:** Proof of Work (Miners) or Proof of Stake (Validators). 
+- **The Result:** The network achieves the same synchronized state, defeating the problem of untrusted participants.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes consensus as the rule system that resolves conflicts and prevents invalid state changes from becoming official. It matters here because students have now seen how data is signed and spread, but still need to know how the network decides which version of events counts. Emphasize that consensus is the referee built into the protocol rather than a human authority.
+
+**Key Points**
+- Consensus decides what counts as valid when participants disagree or try to submit conflicting information.
+- Proof of Work and Proof of Stake are examples of different ways to enforce those rules.
+- Validators and miners are participants responsible for helping produce or confirm the next accepted block.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bano_consensusageblockchains_2017
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+## Putting it Together: The Lifecycle of a Transaction
+
+- To see how these three pillars interact, we will trace a single transaction from start to finish.
+- **The Scenario:** Alice wants to send Bob a digital asset over a blockchain network.
+
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; font-family: sans-serif;">
+<div style="text-align: center; color: #4CAF50;">
+<div style="width: 40px; height: 40px; border-radius: 50%; background: #4CAF50; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">1</div>
+<small>Sign</small>
+</div>
+<div style="flex-grow: 1; height: 4px; background: #ddd; margin: 0 10px; border-radius: 2px;"></div>
+<div style="text-align: center; color: #888;">
+<div style="width: 40px; height: 40px; border-radius: 50%; background: #ddd; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">2</div>
+<small>Broadcast</small>
+</div>
+<div style="flex-grow: 1; height: 4px; background: #ddd; margin: 0 10px; border-radius: 2px;"></div>
+<div style="text-align: center; color: #888;">
+<div style="width: 40px; height: 40px; border-radius: 50%; background: #ddd; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">...</div>
+<small>Mempool</small>
+</div>
+<div style="flex-grow: 1; height: 4px; background: #ddd; margin: 0 10px; border-radius: 2px;"></div>
+<div style="text-align: center; color: #888;">
+<div style="width: 40px; height: 40px; border-radius: 50%; background: #ddd; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">6</div>
+<small>Chain</small>
+</div>
+</div>
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the transaction lifecycle as the story that ties the three pillars together. It matters here because the following slides are easiest to understand as one continuous process rather than six unrelated technical steps. Emphasize that students should track how cryptography, networking, and consensus each appear in sequence.
+
+**Key Points**
+- The transaction story shows how a user action becomes accepted shared state on the network.
+- Alice and Bob are placeholders used to make the process concrete.
+- The numbered flow is a preview of the six-step sequence students are about to walk through.
+
+**Walkthrough**
+None
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @3blue1brown_howdoesbitcoin_2017
+
+:::
+
+## Step 1: Creation and Signing {.smaller}
+
+- **Intent:** Alice opens her wallet software and creates a message: *"Send 5 coins from Alice to Bob."*
+- **Signing (Cryptography):** Alice uses her Private Key to mathematically sign this message. 
+- **Security:** This signature proves Alice authorized it, and ensures no one can change the "5" to a "50" while the message is in transit.
+
+<style>
+@keyframes signMessage {
+0% { content: '"Send 5 coins to Bob"'; background-color: #f8f9fa; border-color: #dee2e6; }
+50% { background-color: #fff3cd; border-color: #ffe69c; }
+100% { content: 'Signature: 0x7F8B...9A2C'; background-color: #d1e7dd; border-color: #a3cfbb; color: #0f5132; }
+}
+.crypto-card {
+padding: 20px;
+border: 2px solid #dee2e6;
+border-radius: 8px;
+font-family: monospace;
+font-size: 1.2em;
+text-align: center;
+width: 300px;
+margin: 20px auto;
+animation: signMessage 4s infinite alternate;
+}
+.crypto-card::after {
+content: '"Send 5 coins to Bob"';
+}
+</style>
+<div style="text-align: center;">
+<div>🔏 <strong>Alice's Private Key Applied</strong></div>
+<div class="crypto-card"></div>
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that every blockchain transaction begins as an authorized message created by a user. It matters here because the chain cannot reason about intent unless that intent is expressed and signed in a verifiable way first. Emphasize that signing proves authorization and protects the transaction from undetected modification in transit.
+
+**Key Points**
+- Alice creates a transaction message and signs it with her private key before it enters the network.
+- A digital signature proves authorization and helps detect tampering.
+- Private key means the secret credential used to authorize actions; wallet software is the tool that manages this process for the user.
+
+**Walkthrough**
+1. Alice creates a message stating the intended transfer.
+2. Her wallet applies the private key to sign that message.
+3. The signed transaction becomes a portable proof that can be verified by the network.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @3blue1brown_howdoesbitcoin_2017
+
+:::
+
+
+## Step 2: The Broadcast {.smaller}
+
+- **Transmission:** Alice's wallet sends this signed message to a single node on the network.
+- **The Gossip (P2P Network):** That node checks the math. If it's valid, it passes it to its peers. Within moments, the transaction has spread across the network into other nodes' "waiting rooms."
+
+<style>
+.node { width: 20px; height: 20px; background-color: #0d6efd; border-radius: 50%; position: absolute; }
+.pulse {
+width: 20px; height: 20px; background-color: rgba(13, 110, 253, 0.5); border-radius: 50%;
+position: absolute; top: 0; left: 0;
+animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ping {
+75%, 100% { transform: scale(4); opacity: 0; }
+}
+</style>
+<div style="position: relative; height: 200px; width: 100%; max-width: 400px; margin: 0 auto;">
+<div style="position: absolute; top: 90px; left: 190px;">
+<div class="pulse"></div><div class="node"></div>
+</div>
+<div class="node" style="top: 20px; left: 100px; background: gray;"></div>
+<div class="node" style="top: 40px; left: 280px; background: gray;"></div>
+<div class="node" style="top: 150px; left: 120px; background: gray;"></div>
+<div class="node" style="top: 140px; left: 260px; background: gray;"></div>
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how a locally created transaction becomes network-visible through peer-to-peer propagation. It matters here because students need to see that no single node keeps the transaction private or authoritative once broadcast begins. Emphasize that validation starts immediately and that the network learns about new activity by relaying it outward.
+
+**Key Points**
+- Alice's wallet sends the signed transaction to one node, which checks basic validity before forwarding it.
+- Broadcast means distributing the transaction outward across many peers.
+- The network's copy of the transaction spreads quickly through repeated peer relay rather than through a central dispatcher.
+
+**Walkthrough**
+1. The wallet sends the signed transaction to an initial node.
+2. That node checks the message and forwards it if it passes basic validation.
+3. Neighboring nodes repeat the process until the transaction is widely known.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+
+## Step 3: The Mempool {.smaller}
+
+- **Pending State:** Transactions don't happen instantly. They sit in a holding area called the Memory Pool (Mempool).
+- **Unconfirmed:** At this stage, the network knows about Alice's intent, but it is not yet officially part of the blockchain's history. It is "unconfirmed."
+
+<style>
+.mempool-box { border: 3px dashed #6c757d; border-radius: 15px; height: 150px; position: relative; overflow: hidden; background: #f8f9fa; }
+.tx { position: absolute; padding: 5px 10px; background: #ffc107; color: #000; border-radius: 4px; font-size: 0.8em; font-family: monospace; }
+@keyframes float {
+0% { transform: translateY(0px) translateX(0px); }
+50% { transform: translateY(-10px) translateX(15px); }
+100% { transform: translateY(0px) translateX(0px); }
+}
+</style>
+<div class="mempool-box">
+<div class="tx" style="top: 20px; left: 10%; animation: float 3s infinite ease-in-out;">Tx: Alice->Bob</div>
+<div class="tx" style="top: 70px; left: 40%; animation: float 4s infinite ease-in-out reverse;">Tx: Charlie->Dave</div>
+<div class="tx" style="top: 30px; left: 70%; animation: float 3.5s infinite ease-in-out;">Tx: Eve->Alice</div>
+<div class="tx" style="top: 100px; left: 20%; animation: float 5s infinite ease-in-out;">Tx: Bob->Frank</div>
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the mempool as the waiting area between transaction propagation and final inclusion in a block. It matters here because students often imagine transactions as instantaneous, when in fact they usually spend time in a pending queue first. Emphasize that awareness by the network is not the same thing as confirmed inclusion in the ledger.
+
+**Key Points**
+- The mempool, or memory pool, holds valid but unconfirmed transactions waiting for selection.
+- Unconfirmed means the network has seen the transaction, but it is not yet part of accepted history.
+- Pending state is operationally important because later consensus and inclusion decisions happen from this queue.
+
+**Walkthrough**
+None
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+
+## Step 4: Block Assembly {.smaller}
+
+- **The Miner/Validator:** Special nodes on the network pull pending transactions out of the mempool.
+- **Packing the Box:** They verify that Alice actually has the 5 coins to spend, and then pack her transaction into a "Block" alongside hundreds of others.
+- **The Competition:** Multiple nodes are trying to pack blocks at the same time. Who gets to add theirs to the official chain?
+
+<style>
+.block-grid {
+display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+width: 100%; max-width: 300px; margin: 20px auto; padding: 10px;
+background: #e9ecef; border: 2px solid #ced4da; border-radius: 8px; position: relative;
+}
+.block-grid::before {
+content: 'Block #102'; position: absolute; top: -30px; left: 50%;
+transform: translateX(-50%); font-weight: bold; color: #495057;
+}
+.tx-cell { height: 30px; background: #fff; border: 1px solid #dee2e6; border-radius: 4px; }
+.tx-alice {
+background: #4CAF50; border-color: #388E3C; opacity: 0;
+animation: packIn 0.5s ease-out forwards; animation-delay: 1.2s;
+display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7em; font-weight: bold;
+}
+.tx-other {
+background: #ffc107; border-color: #ffb300; opacity: 0;
+animation: packIn 0.5s ease-out forwards;
+}
+@keyframes packIn {
+0% { transform: translateY(-30px) scale(1.1); opacity: 0; }
+100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+</style>
+<div class="block-grid">
+<div class="tx-cell tx-other" style="animation-delay: 0.2s;"></div>
+<div class="tx-cell tx-other" style="animation-delay: 0.5s;"></div>
+<div class="tx-cell tx-alice">Alice</div>
+<div class="tx-cell tx-other" style="animation-delay: 1.5s;"></div>
+<div class="tx-cell tx-other" style="animation-delay: 0.8s;"></div>
+<div class="tx-cell tx-other" style="animation-delay: 2.0s;"></div>
+<div class="tx-cell tx-other" style="animation-delay: 2.2s;"></div>
+<div class="tx-cell tx-other" style="animation-delay: 1.8s;"></div>
+<div class="tx-cell"></div>
+<div class="tx-cell"></div>
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the moment when specialized participants select transactions from the mempool and package them into candidate blocks. It matters here because students now need to see how pending transactions move toward formal inclusion. Emphasize that miners or validators both verify and assemble, but they may compete to have their block accepted.
+
+**Key Points**
+- Miners or validators pull transactions from the mempool and verify them before inclusion.
+- Block assembly is the packaging stage where many pending transactions become one candidate block.
+- The network may have multiple competing candidate blocks at once, which is why consensus is needed next.
+
+**Walkthrough**
+1. A miner or validator selects pending transactions from the mempool.
+2. It verifies that those transactions satisfy protocol rules, such as available funds or valid signatures.
+3. It packs them together into a candidate block for the network to evaluate.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @3blue1brown_howdoesbitcoin_2017
+
+:::
+
+## Step 5: Achieving Consensus {.smaller}
+
+- **The Rules:** The network uses its Consensus Mechanism (e.g., Proof of Work) to select one node's block to be the official next block.
+- **Winning the Right:** A node proves it followed the rules (expended energy, staked assets) and broadcasts its newly minted block to the network.
+
+
+<style>
+.race-container { max-width: 400px; margin: 20px auto; font-family: sans-serif; }
+.node-track { margin-bottom: 15px; }
+.node-label { font-size: 0.8em; font-weight: bold; margin-bottom: 5px; color: #555; }
+.progress-bar { height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; position: relative; }
+.progress-fill { height: 100%; background: #0d6efd; width: 0%; }
+
+.node-a .progress-fill { animation: raceA 4s ease-out infinite; }
+.node-b .progress-fill { animation: raceB 4s ease-out infinite; background: #4CAF50; }
+.node-c .progress-fill { animation: raceC 4s ease-out infinite; }
+
+@keyframes raceA { 0% { width: 0%; } 50%, 100% { width: 70%; } }
+@keyframes raceB { 0% { width: 0%; } 40% { width: 100%; } 100% { width: 100%; } }
+@keyframes raceC { 0% { width: 0%; } 60%, 100% { width: 40%; } }
+
+.winner-badge {
+position: absolute; right: 10px; top: 2px; color: white;
+font-size: 0.7em; font-weight: bold; opacity: 0;
+animation: showWinner 4s infinite;
+}
+@keyframes showWinner { 0%, 39% { opacity: 0; } 40%, 100% { opacity: 1; } }
+</style>
+
+<div class="race-container">
+<div class="node-track node-a">
+<div class="node-label">Node A (Hashing...)</div>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+<div class="node-track node-b">
+<div class="node-label">Node B (Hashing...)</div>
+<div class="progress-bar">
+<div class="progress-fill"></div>
+<div class="winner-badge">WINNER! Block Mined</div>
+</div>
+</div>
+<div class="node-track node-c">
+<div class="node-label">Node C (Hashing...)</div>
+<div class="progress-bar"><div class="progress-fill"></div></div>
+</div>
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how the network chooses one proposed block to become the next official block in the chain. It matters here because students have now seen many candidate blocks could exist at once, and consensus is what turns competition into one accepted outcome. Emphasize that the mechanism differs across systems, but the goal is the same: one agreed next state.
+
+**Key Points**
+- Consensus selects one block proposal as the accepted next block according to protocol rules.
+- Proof of Work and Proof of Stake are different ways to prove eligibility to add the next block.
+- Validators stake assets while miners expend computational work; both are examples of rule-following proofs rather than human approval.
+
+**Walkthrough**
+1. Multiple participants propose or compete to publish a valid next block.
+2. The protocol applies its consensus rules to determine which proposal is accepted.
+3. The accepted block is broadcast as the next official addition to the shared ledger.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bano_consensusageblockchains_2017
+
+:::
+
+## Step 6: Chaining the Block {.smaller}
+
+- **The Hash Link:** This is where the "chain" in blockchain comes in. The new block contains the "fingerprint" (cryptographic hash) of the *previous* block.
+
+- **Immutability:** Because Block 102 contains the fingerprint of Block 101, you cannot change a transaction in Block 101 without breaking Block 102, Block 103, and so on. 
+- **Alice's Transaction is Finalized:** Alice's transaction is now a part of that shared chain, recorded for all to see.
+
+<div style="position: relative; z-index: -1; top: -150px;">
+
+```{dot}
+digraph Chain {
+    rankdir=LR;
+    bgcolor="transparent";
+    margin=0;
+    size="8,1.5";
+    node [shape=box, style="rounded,filled", fillcolor=lightblue, fontname="Helvetica", margin=0.2];
+    edge [fontname="Helvetica", fontsize=10, color=gray50];
+
+    B1 [label="Block 101\nHash: 0xabc"];
+    B2 [label="Block 102\nHash: 0xdef"];
+    B3 [label="Block 103\nHash: 0xghi"];
+
+    B1 -> B2 [label=" Embeds 0xabc"];
+    B2 -> B3 [label=" Embeds 0xdef"];
+}
+```
+
+</div>
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why accepted blocks become difficult to alter after the fact. It matters here because students need to connect the idea of chaining with the stronger claim of immutability. Emphasize that the new block's hash link to prior blocks makes retrospective tampering visible and costly.
+
+**Key Points**
+- Each block includes the hash, or fingerprint, of the previous block.
+- Changing an earlier block would cascade forward and break the later links.
+- Immutability here means practical resistance to unnoticed revision, not magical impossibility.
+
+**Walkthrough**
+1. Identify the previous block's hash as data embedded in the new block.
+2. Explain that changing the earlier block changes its fingerprint.
+3. Show that the later blocks would no longer match unless the chain were recomputed under the protocol's rules.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## The Result: A Shared Truth {.smaller}
+
+- Every honest node on the network updates their local copy of the ledger.
+- Alice's balance decreases by 5; Bob's balance increases by 5.
+- **No central bank** processed it. **No administrator** approved it. 
+- Cryptography, P2P networking, and consensus rules orchestrated a secure state change in a mutually suspicious environment.
+
+<div style="display: flex; gap: 20px; justify-content: center; font-size: 0.6em;">
+<div style="border: 1px solid #ccc; padding: 10px; border-radius: 5px;">
+<strong>Node A Ledger</strong>
+<table style="width: 100%; margin-top: 10px;">
+<tr><td>Alice</td><td style="color: red;">-5</td></tr>
+<tr><td>Bob</td><td style="color: green;">+5</td></tr>
+</table>
+</div>
+<div style="border: 1px solid #ccc; padding: 10px; border-radius: 5px;">
+<strong>Node B Ledger</strong>
+<table style="width: 100%; margin-top: 10px;">
+<tr><td>Alice</td><td style="color: red;">-5</td></tr>
+<tr><td>Bob</td><td style="color: green;">+5</td></tr>
+</table>
+</div>
+<div style="border: 1px solid #ccc; padding: 10px; border-radius: 5px;">
+<strong>Node C Ledger</strong>
+<table style="width: 100%; margin-top: 10px;">
+<tr><td>Alice</td><td style="color: red;">-5</td></tr>
+<tr><td>Bob</td><td style="color: green;">+5</td></tr>
+</table>
+</div>
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the outcome the whole system is trying to achieve: many independent nodes converging on the same updated state. It matters here because the transaction story only makes sense if every honest participant ends up recognizing the same result. Emphasize that the shared truth comes from coordinated protocol behavior, not from a central administrator.
+
+**Key Points**
+- Honest nodes update their local ledgers to reflect the same accepted state change.
+- The final result is synchronized state across the network rather than a private update on one server.
+- This is the payoff of combining cryptography, peer-to-peer networking, and consensus in one system.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @bano_consensusageblockchains_2017
+- @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+
+
+## The Spectrum of Decentralization {.smaller}
+
+- Not all blockchains are designed like Bitcoin. They exist on a spectrum based on **who can participate**.
+- **Permissionless (Public):**
+  - Anyone can read, write, or participate in consensus.
+  - High censorship resistance, lower performance.
+  - *Examples:* Bitcoin, Ethereum.
+- **Permissioned (Private/Consortium):**
+  - Only authorized entities can read, write, or validate.
+  - Higher performance, better privacy, but requires trusting the gatekeepers.
+  - *Examples:* Hyperledger Fabric, Corda.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that blockchain design is not binary but exists along a participation spectrum. It matters here because students should not leave the lesson thinking every blockchain works like Bitcoin. Emphasize that permission rules shape performance, privacy, censorship resistance, and institutional trust.
+
+**Key Points**
+- Permissionless systems allow broad participation, while permissioned systems restrict participation to approved entities.
+- Censorship resistance is the ability to make it hard for gatekeepers to block valid transactions.
+- Hyperledger Fabric and Corda are permissioned examples; Bitcoin and Ethereum are permissionless examples.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## Common Misconceptions: What a Blockchain is NOT {.smaller}
+
+- **It is NOT a cloud storage drive:** 
+  - You do not store PDFs or large files on a blockchain. Space is incredibly expensive. It stores *state* and *receipts*, not massive data.
+- **It is NOT inherently anonymous:** 
+  - Most public blockchains are pseudonymous. Your name isn't on it, but your entire financial history is permanently public. If your address is ever linked to your identity, you have zero privacy.
+- **It is NOT an impenetrable fortress:** 
+  - While the cryptography is extremely strong, the *endpoints* (wallets, exchanges, smart contracts) are highly vulnerable to hacking and human error.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes guardrails against the most common beginner misconceptions about blockchain systems. It matters here because students need to leave the lesson with a more accurate mental model before the course adds more detail. Emphasize that real vulnerabilities often live in endpoints, metadata, privacy assumptions, and surrounding infrastructure rather than in the core hash function itself.
+
+**Key Points**
+- Blockchains typically store state and receipts, not large files like a cloud drive.
+- Public blockchains are usually pseudonymous rather than truly anonymous; pseudonymous means addresses are visible even if names are not.
+- Attackers often target wallets, exchanges, and smart contracts rather than breaking the underlying cryptography.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## Looking Ahead: Next Steps {.smaller}
+
+- You have now seen the assembled vehicle and watched it drive from Point A to Point B.
+- **Historical Context:** Before we dismantle the engine, the rest of this Introduction module will explore the history of how and why this technology was built.
+- **The Primitives:** After the introduction, we will take the car into the garage to dismantle the engine. We will dive deep into:
+  - **Cryptographic Primitives:** The math that makes hashes and signatures unforgeable.
+  - **Distributed Systems in Practice:** How P2P networks actually route data.
+  - **Consensus Deep-Dive:** How algorithms like Proof of Work and Proof of Stake enforce the rules against adversaries.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the bridge from this conceptual overview into the rest of the introduction and the technical modules that follow. It matters here because students should understand that the current lesson is a frame of reference, not the end of the explanation. Emphasize that future lessons will unpack the historical context and then dissect each pillar in depth.
+
+**Key Points**
+- This lesson is the assembled-system view that prepares students for deeper historical and technical study.
+- The next lessons move from conceptual overview into history and then into the primitives one by one.
+- Consensus, cryptography, and distributed systems will each be revisited at much greater depth later in the course.
+
+**Walkthrough**
+None
+
+**Sources**
+- @3blue1brown_howdoesbitcoin_2017
+
+:::
+ 
+## Bitcoin Video (Optional)
+
+<div style="text-align:center;">
+<iframe width="1000" height="562" style="margin:0px auto; display:inline; max-width:96%;" src="https://www.youtube.com/embed/bBC-nXj3Ng4?si=YFx2jvQ8Y87jC3gx" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes an optional supplemental resource for students who want another introductory explanation of Bitcoin. It matters here because some learners benefit from a second presentation of the ideas before the course moves forward. Emphasize that the video is optional and should reinforce, not replace, the lesson's core concepts.
+
+**Key Points**
+- The video is an optional reinforcement resource tied to the foundational material of the course.
+- Encourage students to use it for review if they want a different explanation style.
+- Keep expectations clear that optional media supplements the course but does not define it.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+## References

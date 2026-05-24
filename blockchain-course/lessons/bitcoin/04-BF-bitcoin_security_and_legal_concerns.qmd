@@ -1,0 +1,647 @@
+---
+title: Bitcoin Security and Legal Concerns
+subtitle: 'Section VI: Bitcoin Framework'
+author: Army Cyber Institute
+lesson: 04-BF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## Agenda
+
+- **Start with attack surfaces**: ask what an adversary might try to achieve against Bitcoin and which parts of the system they would target.
+- **Work through concrete examples**: compare consensus, network, and incentive attacks, then study the 2010 overflow bug and the Bitcoin Gold 51% attack.
+- **End with off-chain controls**: examine how KYC and AML shape Bitcoin use through exchanges and custodians rather than through the protocol itself.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This agenda slide establishes the lesson's three-part structure: attack surfaces, concrete case studies, and off-chain legal controls. It matters here because students need to keep protocol threats, implementation failures, and regulatory pressure analytically separate as the lesson progresses. Emphasize that Bitcoin security is shaped by code, economics, operations, and legal infrastructure together.
+
+**Key Points**
+- The lesson moves from theoretical attacks to real incidents and then to gateway-based controls.
+- Students should distinguish protocol-level issues from ecosystem and regulatory pressures.
+- The goal is to understand how different forms of control and failure operate around Bitcoin.
+
+**Walkthrough**
+None
+
+**Sources**
+None
+
+:::
+
+## Why Attack Bitcoin? {.smaller}
+
+- **Profit from fraud**: spend the same coins twice or redirect newly created coins by reorganizing recent blocks.
+- **Erode public trust**: make the shared ledger appear unreliable or unsafe.
+- **Impose policy control**: censor transactions or monitor participants to advance state or institutional goals.
+- **Cause strategic disruption**: trigger instability or price dislocation to create economic or political leverage.
+
+
+
+::: {.callout-note appearance="simple"}
+As we review these attacks, take a moment and assume an adversarial mindset and consider how an adversary can abuse weaknesses in bitcoin in unconventional ways.
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes attacker motivation as broader than simple theft. It matters here because the rest of the lesson makes more sense once students recognize that Bitcoin can be targeted for profit, censorship, surveillance, or reputational damage. Emphasize that an adversary may succeed simply by increasing fear and uncertainty, even without stealing coins directly.
+
+**Key Points**
+- Attackers may seek direct financial gain, strategic disruption, or political control.
+- Trust erosion can be an objective in its own right.
+- States and institutions may value censorship or surveillance more than immediate profit.
+
+**Walkthrough**
+None
+
+**Sources**
+- @mitdigitalcurrencyinitiative_51percentattacks_2021
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @financialactiontaskforce_updatedguidanceriskbased_2021
+
+:::
+
+
+
+## What Can Consensus Attacks Achieve?
+
+**Recall the basic idea**: a consensus attack tries to manipulate which version of recent ledger history honest nodes accept as the valid chain, which could possibly:
+
+- **Spend the same coins twice**: defraud merchants or trading platforms by reversing a recent payment.
+- **Block selected transactions**: delay or exclude chosen payments to enforce censorship.
+- **Rewrite recent ledger history**: perform short reorganizations that replace a few recent blocks.
+- **Split the network**: create conflicting versions of the ledger, causing confusion and loss of confidence.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the practical outcomes consensus attacks are trying to produce if they can distort which recent chain history honest nodes accept. It matters here because later discussions of 51% attacks, selfish mining, and smaller-chain failures all build on these specific consequences. Emphasize that consensus attacks threaten credibility and settlement, not just individual transactions.
+
+**Key Points**
+- Consensus attacks can enable double-spends, censorship, and short chain rewrites.
+- Even limited reorganizations can damage confidence in finality.
+- The deeper risk is undermining trust in the ledger's reliability.
+
+**Walkthrough**
+None
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @mitdigitalcurrencyinitiative_51percentattacks_2021
+
+:::
+
+
+
+## Sybil Attacks {.smaller}
+
+- **Attack premise:** a Sybil attack on Bitcoin means surrounding the peer-to-peer network with many attacker-controlled nodes so a victim is more likely to connect to them.
+- **Main practical goal:** isolate one wallet, merchant, or full node in an **eclipse attack**, so the victim sees a distorted view of transactions and blocks.
+- **How it works in Bitcoin:** attackers try to fill peer tables, bias address gossip, or exploit restarts and weak peer diversity so the target reconnects mostly to attacker peers.
+- **What it enables:** delayed block and transaction relay, selective censorship, bad fee estimates, and support for follow-on attacks like double-spends against a specific target.
+- **Why this is not a 51% attack:** the attacker controls the victim's network view, not global block production or the validity rules of Bitcoin itself.
+- **Bitcoin's defenses:** outbound peer preference, subnet and address diversity, anchor and feeler connections, peer rotation, and denial-of-service penalties all raise the cost of maintaining fake identities at scale.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Sybil-style pressure in Bitcoin as a network-view problem rather than a global consensus takeover. It matters here because students should understand how an attacker can manipulate a specific victim's connectivity without controlling global hash power. Emphasize that the practical goal is usually eclipse-style isolation and the distortions that follow from it.
+
+**Key Points**
+- Sybil pressure aims to increase the chance a victim connects mostly to attacker-controlled peers.
+- In Bitcoin this often supports eclipse attacks that distort a node's view of transactions and blocks.
+- These attacks affect visibility and timing, not the underlying validity rules of the protocol.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @heilman_eclipseattacksbitcoins_2015
+
+:::
+
+## Partitioning Attacks
+
+::: {style="font-size: 0.76em;"}
+- **Attack premise:** a partitioning attack tries to split nodes or miners into different network views so they stop learning about the same blocks at the same time.
+- **Real-world mechanism:** Internet routing incidents such as BGP hijacks and route leaks already happen in practice; [research showed](https://ieeexplore.ieee.org/document/7958588/) an AS-level attacker could exploit that infrastructure to isolate or delay Bitcoin traffic.
+- **Why Bitcoin is exposed:** mining and relay traffic are not spread evenly across the whole Internet, so a small number of routing choke points matter disproportionately.
+- **What this can cause:** slower block relay, wasted mining effort, temporary competing tips, and better conditions for targeted double-spend attempts.
+:::
+
+<div style="position: relative; top: -190px;">
+```{dot}
+digraph PartitioningAttack {
+  bgcolor="transparent"
+  graph [bgcolor="transparent", rankdir=LR, nodesep=0.45, ranksep=1.1];
+  node [shape=circle, style=filled, fillcolor="#e0f7fa", color="#006064", penwidth=1.2, fontname="Helvetica", fontsize=11, width=0.48, height=0.48];
+  edge [color="#4f6b72", penwidth=1.2, arrowsize=0.7];
+
+  subgraph cluster_a {
+    label="Region A";
+    color="#9ad7e0";
+    style="rounded";
+    A1 [label="A1"];
+    A2 [label="A2"];
+    A3 [label="A3"];
+    A1 -> A2 [dir=none];
+    A2 -> A3 [dir=none];
+    A1 -> A3 [dir=none, style=dotted];
+  }
+
+  subgraph cluster_b {
+    label="Region B";
+    color="#9ad7e0";
+    style="rounded";
+    B1 [label="B1"];
+    B2 [label="B2"];
+    B3 [label="B3"];
+    B1 -> B2 [dir=none];
+    B2 -> B3 [dir=none];
+    B1 -> B3 [dir=none, style=dotted];
+  }
+
+  A2 -> B2 [style=dashed, color="#c62828", fontcolor="#c62828", label="limited route", minlen=2];
+  A3 -> B1 [style=dashed, color="#c62828", fontcolor="#c62828", label="limited route", minlen=2];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes partitioning attacks as attempts to exploit Internet routing and topology so different parts of the Bitcoin network learn about blocks at different times. It matters here because it shows Bitcoin's dependence on ordinary Internet infrastructure even when the consensus rules themselves remain sound. Emphasize that the attacker is manipulating propagation and visibility, not signatures or proof-of-work validity directly.
+
+**Key Points**
+- Routing-layer interference can split or delay network views without breaking cryptography.
+- Uneven propagation can increase stale work and create opportunities for targeted fraud.
+- Bitcoin's exposure depends partly on where mining and relay traffic concentrate in the broader Internet.
+
+**Walkthrough**
+None
+
+**Sources**
+- @apostolaki_hijackingbitcoinrouting_2017
+- @heilman_eclipseattacksbitcoins_2015
+
+:::
+
+
+## Mitigations Against Eclipse/Partitioning
+
+::: {style="font-size: 0.76em;"}
+- Diversify peers across ISPs, ASNs, and regions so one network domain cannot dominate what your node sees.
+- Prefer stable outbound peers and refresh connections over time instead of trusting a static or attacker-shaped peer set.
+- Limit concentration from the same subnet or hosting provider to make eclipse-style crowding harder.
+- For miners, exchanges, and other high-value operators, watch for routing anomalies and use redundant paths before trusting rapid settlement.
+:::
+
+<div style="position: relative; top: -100px;">
+```{dot}
+digraph MitigationDiversity {
+  bgcolor="transparent"
+  graph [bgcolor="transparent", rankdir=TB, nodesep=0.55, ranksep=0.8];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, color="#444444", penwidth=1.1];
+  edge [color="#5f6b73", arrowsize=0.7, penwidth=1.2];
+
+  node0 [label="Your node", fillcolor="#ede7f6", color="#4527a0", penwidth=1.5];
+
+  peer1 [label="Peer\nRegion A\nASN 1", fillcolor="#e0f7fa", color="#006064"];
+  peer2 [label="Peer\nRegion B\nASN 2", fillcolor="#e0f7fa", color="#006064"];
+  peer3 [label="Peer\nRegion C\nASN 3", fillcolor="#e0f7fa", color="#006064"];
+
+  isp1 [label="ISP A", fillcolor="#f1f8e9", color="#33691e"];
+  isp2 [label="ISP B", fillcolor="#f1f8e9", color="#33691e"];
+
+  node0 -> peer1;
+  node0 -> peer2;
+  node0 -> peer3;
+
+  node0 -> isp1 [style=dashed, color="#c62828", label="alternate path"];
+  node0 -> isp2 [style=dashed, color="#c62828", label="alternate path"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that eclipse and partitioning threats are mitigated partly by protocol defaults and partly by operator choices about diversity and connectivity. It matters here because the lesson is moving from attack description to the practical behaviors that reduce risk. Emphasize that no single defense is perfect, but layered diversity makes long-term isolation much harder.
+
+**Key Points**
+- Diverse peers, routes, and discovery sources reduce a node's chance of isolation.
+- Core software defenses help, but operator hygiene still matters for high-value infrastructure.
+- Resilience depends on both protocol design and the diversity of participants.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @heilman_eclipseattacksbitcoins_2015
+- @apostolaki_hijackingbitcoinrouting_2017
+
+:::
+
+
+## Timing & Latency Attacks
+
+::: {style="font-size: 0.69em;"}
+- **Attack premise:** watch enough peers and infer the source from who relayed first.
+- **First-spy heuristic:** timestamp `inv(tx)` sightings and treat the earliest one as the best source guess.
+- **What it reveals:** a likely origin IP or network location that can be linked to a user or service.
+- **Why it matters:** [research showed](https://dl.acm.org/doi/10.1145/2660267.2660379) this can work in practice, and routing attackers can improve the view they observe.
+:::
+
+::: {.columns}
+::: {.column width="20%"}
+:::
+
+::: {.column width="60%"}
+```{mermaid}
+sequenceDiagram
+  participant U as User Node (Origin)
+  participant P1 as Peer 1
+  participant P2 as Peer 2 (Observer)
+  participant N as Network Monitor
+  U->>P1: inv(tx)
+  P1-->>P2: inv(tx)
+  P2-->>N: timestamp(tx seen)
+```
+
+:::
+
+::: {.column width="20%"}
+:::
+:::
+
+::: {.callout-note appearance="simple"}
+::: {style="font-size: 0.62em;"}
+"First-spy" correlates earliest sightings to infer origin
+:::
+:::
+
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes timing and latency as security-relevant because Bitcoin depends on who hears about transactions and blocks first. It matters here because even without total isolation, delays in propagation can change miner incentives, confirmation confidence, and stale-block risk. Emphasize that adversaries may exploit milliseconds and seconds of advantage rather than only trying dramatic takeovers.
+
+**Key Points**
+- Propagation delays can change which transactions or blocks different nodes act on first.
+- Latency affects stale-block rates, fee estimation, and confirmation confidence.
+- Security in Bitcoin includes timing and information-flow assumptions, not just rule correctness.
+
+**Walkthrough**
+None
+
+**Sources**
+- @biryukov_deanonymisationclientsbitcoin_2014
+- @apostolaki_hijackingbitcoinrouting_2017
+
+:::
+
+
+## Mitigating Network Deanonymization {.smaller}
+
+- **Goal:** make it harder for observers to link a transaction to the node, IP address, or user who first created it.
+- **Hide the apparent origin with Dandelion-style relay**: send the transaction quietly along a short random path before broader broadcast.
+- **Route through anonymity layers**: use Tor or a VPN so the first peers you contact do not learn your real network address.
+- **Add relay uncertainty**: broad rebroadcasting by many peers makes the true origin harder to infer from timing alone.
+- **Reduce on-chain linkability too**: tools like CoinJoin help because network privacy is weaker if the transaction graph remains easy to trace.
+- **Know the limits**: these measures reduce, but do not eliminate, deanonymization; timing, amounts, and wallet behavior can still leak patterns.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that Bitcoin's public ledger can still leak user information through network-layer metadata if traffic is observed or correlated. It matters here because students often focus on on-chain pseudonymity while overlooking how transaction origin can be inferred from relay behavior. Emphasize that deanonymization is often about metadata and observation, not broken signatures.
+
+**Key Points**
+- Observers may infer transaction origin from network-level timing and routing patterns.
+- Deanonymization risk persists even when addresses themselves lack explicit names.
+- Mitigations focus on obscuring network identity and reducing direct metadata leakage.
+
+**Walkthrough**
+None
+
+**Sources**
+- @biryukov_deanonymisationclientsbitcoin_2014
+- @venkatakrishnan_dandelionredesigningbitcoin_2017
+- @sykes_virtualcurrenciesmoney_2019
+
+:::
+
+
+## Selfish Mining
+::: {style="font-size: 0.76em;"}
+- Withhold found blocks and release them strategically to earn more than an honest miner with the same hash share.
+- In the [original analysis](https://doi.org/10.1007/978-3-662-45472-5_28), profitability begins above about **33%** hash power with no relay edge, and can fall toward **25%** with better fork-race wins.
+- Real-world comparison: [Foundry USA](https://foundrydigital.com/foundry-usa-pool-3/) calls itself the largest Bitcoin pool, and [mempool research](https://research.mempool.space/empty-block-report/) attributes about **28.7%** of blocks over the last 24 months to Foundry USA.
+- That does **not** mean Foundry is selfish mining; it means pool concentration can drift into the same range discussed in the theory.
+:::
+
+<div style="position: relative; top: -110px;">
+```{dot}
+digraph SelfishMining {
+  bgcolor="transparent"
+  graph [bgcolor="transparent", rankdir=LR, nodesep=0.55, ranksep=0.9];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, penwidth=1.2];
+  edge [arrowsize=0.7, penwidth=1.2, color="#666666"];
+
+  G0 [label="Public chain\nBlock h", fillcolor="#e0f7fa", color="#006064"];
+  H1 [label="Honest miners publish\nBlock h+1", fillcolor="#e0f7fa", color="#006064"];
+
+  A1 [label="Attacker finds\nBlock h+1*", fillcolor="#ffebee", color="#b71c1c"];
+  A2 [label="Keep private and mine\non hidden branch", fillcolor="#ffebee", color="#b71c1c"];
+  A3 [label="Attacker finds\nBlock h+2*", fillcolor="#ffebee", color="#b71c1c"];
+  A4 [label="Publish private lead\nwhen ahead", fillcolor="#ffcdd2", color="#b71c1c", penwidth=1.5];
+
+  G0 -> H1;
+  G0 -> A1 [style=dashed, color="#b71c1c"];
+  A1 -> A2 [color="#b71c1c"];
+  A2 -> A3 [color="#b71c1c"];
+  A3 -> A4 [color="#b71c1c"];
+  H1 -> A4 [style=dashed, color="#999999", label="honest work risks\nbeing orphaned", fontcolor="#666666"];
+}
+```
+</div>
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes selfish mining as an incentive attack where a miner or coalition withholds blocks strategically to gain outsized rewards. It matters here because it shows that a protocol can be followed at the block-validity level while still being gamed at the incentive layer. Emphasize that Bitcoin security depends on economic behavior, not just on cryptographic correctness.
+
+**Key Points**
+- Selfish mining exploits strategic withholding rather than invalid blocks.
+- The attacker aims to win a disproportionate share of rewards by manipulating others' view of the best chain.
+- This is an incentive-layer problem that can exist below full majority control.
+
+**Walkthrough**
+None
+
+**Sources**
+- @eyal_majoritynotenough_2014
+- @heilman_eclipseattacksbitcoins_2015
+- https://foundrydigital.com/foundry-usa-pool-3/
+- https://research.mempool.space/empty-block-report/
+
+:::
+
+## Bitcoin Overflow Bug
+
+- **August 15, 2010:** block `74638` included a transaction that created about **184 billion BTC**.
+- **Root cause:** an **integer overflow** in transaction validation let the outputs wrap around and appear valid.
+- **Why it mattered:** this directly violated Bitcoin’s fixed-supply rule and threatened trust in the system’s monetary integrity.
+- **Why it was caught quickly:** Bitcoin’s public ledger and open community made the anomaly visible almost immediately.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the 2010 overflow bug as a case where Bitcoin's implementation temporarily violated its intended monetary constraints. It matters here because it reminds students that secure protocol design still depends on correct software enforcing those rules. Emphasize that the bug was an implementation failure, not a deliberate protocol change.
+
+**Key Points**
+- A software bug briefly allowed creation of an impossibly large number of bitcoins in one block.
+- The incident showed that implementation quality is part of Bitcoin security.
+- Rapid detection and rollback limited the lasting damage.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lfm_overflowbugserious_2010
+- @nist_cve20105139_2012
+
+:::
+
+
+## Emergency Response to the Overflow Bug
+
+- Developers released a patch within hours to reject the overflow transaction and close the validation flaw.
+- A software patch alone was **not enough** because the invalid coins were already recorded on-chain.
+- The network coordinated a **rollback past block 74638**, reorganizing onto a valid chain without the overflow transaction.
+- This is one of Bitcoin’s clearest examples of the community choosing **security and rule integrity over strict immutability**.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes emergency response as a core part of real-world blockchain security. It matters here because students need to see that incident handling in decentralized systems still requires fast coordination among developers, miners, exchanges, and node operators. Emphasize that open review and rapid operator response were crucial to containing the overflow event.
+
+**Key Points**
+- The overflow bug was fixed by coordinated patching and rapid network response.
+- Decentralized systems still rely on human coordination during emergencies.
+- Transparent disclosure and open-source review improved trust in the fix.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lfm_overflowbugserious_2010
+- @nist_cve20105139_2012
+
+:::
+
+
+## Implementation vs. Design
+
+- Bitcoin’s **design rule** was sound: total supply should remain capped.
+- The failure came from an **implementation bug** in the code that checked transaction outputs.
+- The lesson is broader than Bitcoin: secure designs still fail when the enforcing software is wrong.
+- Open-source review, audits, and fast disclosure are part of the security model, not afterthoughts.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the analytical distinction between flaws in Bitcoin's abstract design and flaws in the code that enforces it. It matters here because later case studies and audits make more sense when students can separate protocol intent from implementation quality. Emphasize that sound theory is not enough if software can misapply the rules.
+
+**Key Points**
+- A protocol can be conceptually sound while its implementation remains vulnerable.
+- Security evaluation must consider both design assumptions and software engineering quality.
+- The overflow bug is a classic example of implementation failure rather than policy design failure.
+
+**Walkthrough**
+None
+
+**Sources**
+- @lfm_overflowbugserious_2010
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @nist_cve20105139_2012
+
+:::
+
+
+
+## Bitcoin Gold 51% Attack Discovery {.smaller}
+
+::: {.callout-note appearance="simple"}
+**Bitcoin Gold (BTG)** is a 2017 Bitcoin fork that changed the mining algorithm in an effort to resist ASIC concentration, but it never approached Bitcoin's hash rate or economic scale.
+:::
+
+- **January 23-24, 2020:** [two deep reorganizations](https://gist.github.com/metalicjames/71321570a105940529e709651d0a9765#file-btg-attacks-md) replaced about 29 blocks and enabled about 7,000 BTG in double-spends.
+- **Some double-spends succeeded,** but exchanges limited further losses by pausing activity and raising confirmation requirements.
+- **Community analysis pointed to temporary majority hash control,** likely rented on a much smaller Proof-of-Work network.
+- **Why this matters for Bitcoin:** BTG's much lower hash rate made this plausible; doing the same on Bitcoin would be far costlier and easier to detect.
+- **Key lesson:** smaller PoW networks may not stop majority attacks outright, so services rely more on deep confirmations and fast monitoring.
+
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Bitcoin Gold as a useful contrast case for understanding why smaller proof-of-work networks are easier to attack than Bitcoin itself. It matters here because it grounds majority-attack theory in a real event with measurable losses and response actions. Emphasize that lower hash rate and weaker economic depth materially change the feasibility of deep reorganizations.
+
+**Key Points**
+- Bitcoin Gold's lower security budget made temporary majority control much more plausible than on Bitcoin.
+- The attack used deep reorganizations to enable real double-spends.
+- Exchanges contained further damage operationally, but the attack itself still succeeded.
+
+**Walkthrough**
+None
+
+**Sources**
+- @mitdigitalcurrencyinitiative_51percentattacks_2021
+- @lovejoy_bitcoingoldbtg_2020
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## Lessons: Small Community Risks
+
+::: {style="font-size: 0.84em;"}
+- Hard forks often leave the new chain with much less hash power, liquidity, and ecosystem support.
+- Lower hash power makes majority attacks and deep reorganizations cheaper.
+- Concentrated mining means fewer independent defenders of the chain.
+- Trust depends on code, but also on the size and strength of the community securing it.
+:::
+
+::: {.callout-note appearance="simple"}
+**Hard fork vs. soft fork:** A **hard fork** can split the chain if the community does not upgrade together. A **soft fork** tightens the rules without forcing the same kind of split. In Bitcoin, both only matter if enough miners, nodes, businesses, and users coordinate around the same rules.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the broader lesson from Bitcoin Gold and similar forks: security depends on community strength, liquidity, and hash power, not just on copied code. It matters here because students should not assume that inheriting Bitcoin's software means inheriting Bitcoin's security posture. Emphasize that small ecosystems are often economically easier to overwhelm.
+
+**Key Points**
+- Hard forks often inherit code without inheriting Bitcoin's hash rate or economic depth.
+- Smaller communities and lower liquidity make attacks cheaper and defense weaker.
+- Security is social and economic as well as technical.
+
+**Walkthrough**
+None
+
+**Sources**
+- @mitdigitalcurrencyinitiative_51percentattacks_2021
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @lovejoy_bitcoingoldbtg_2020
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## Off-Chain Controls: KYC and AML {.smaller}
+
+**Bitcoin does not implement KYC or AML in the protocol**; these are obligations imposed on regulated intermediaries around Bitcoin.
+
+- **Know Your Customer (KYC)** means identifying the customer and, where required, the beneficial owner before or during service.
+- **Anti-Money Laundering (AML)** means ongoing risk-based monitoring: recordkeeping, sanctions screening, suspicious-activity review, and required reporting.
+- **Policy anchors** include U.S. Bank Secrecy Act / FinCEN guidance and FATF standards for virtual-asset service providers.
+- **Who is covered**: exchanges, custodians, brokers, and payment processors; not a person simply holding keys and transacting peer-to-peer on Bitcoin.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes KYC and AML as controls applied around Bitcoin by regulated intermediaries rather than rules embedded into the protocol itself. It matters here because students should distinguish Bitcoin's permissionless base layer from the identity-linked compliance environment at exchanges and custodians. Emphasize that the legal perimeter shapes access without changing consensus.
+
+**Key Points**
+- Bitcoin itself does not perform KYC or AML checks.
+- Regulated intermediaries apply identity verification, monitoring, and reporting obligations around Bitcoin activity.
+- The protocol remains open while the gateways into fiat and custody become compliance-heavy.
+
+**Walkthrough**
+None
+
+**Sources**
+- @financialcrimesenforcementnetworkfincen_applicationpersonsadministering_2013
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @financialactiontaskforce_updatedguidanceriskbased_2021
+- @l33_fatf_fatf_targeted_update_on_implementation_of_the_fatf_stan_2025
+
+:::
+
+
+## How KYC/AML Apply to Bitcoin {.smaller}
+
+- **Exchange onboarding links identity to Bitcoin activity**: IDs, addresses, and account records connect real people to deposit and withdrawal flows.
+- **Compliance teams monitor the ledger around those flows**: they screen for sanctions exposure, risky counterparties, structuring, and suspicious patterns.
+- **Blockchain analytics assist but do not replace judgment**: clustering and risk scoring help, but firms still decide whether to freeze, delay, or report activity.
+- **Bitcoin remains usable peer-to-peer**, but converting to fiat or using custodial services pulls activity into the regulated perimeter.
+- **Practical result**: Bitcoin is pseudonymous on-chain, yet often identifiable at the on/off ramps where most users enter and exit.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes how regulated services convert Bitcoin's pseudonymous on-chain activity into identity-linked activity in practice. It matters here because most users encounter Bitcoin through exchanges and custodians, where KYC records and AML monitoring bridge addresses back to real people. Emphasize that compliance changes the practical privacy experience even without changing the protocol.
+
+**Key Points**
+- Exchange onboarding links real-world identity to deposits and withdrawals.
+- AML monitoring extends that link through screening, alerts, and reporting.
+- Bitcoin remains peer-to-peer capable, but most fiat-facing activity enters the regulated perimeter.
+
+**Walkthrough**
+None
+
+**Sources**
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @financialactiontaskforce_updatedguidanceriskbased_2021
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @sykes_virtualcurrenciesmoney_2019
+
+:::
+
+
+## Regulatory Pressure Beyond Bitcoin {.smaller}
+
+- **Centralized digital money systems can be shut down outright**: e-gold and Liberty Reserve show what happens when operators fail or evade AML/KYC obligations.
+- **Privacy-enhancing assets face more exchange pressure** because opaque transaction graphs make screening, traceability, and transfer-information compliance harder.
+- **Bitcoin has generally remained listed** because its public ledger, deep liquidity, and mature analytics/compliance tooling make it easier for exchanges to monitor flows than with strong privacy coins.
+- **Big lesson**: regulation often works by constraining gateways, liquidity, and access rather than by changing the protocol itself.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes why Bitcoin has often faced a different regulatory path than centralized digital money systems or stronger privacy-preserving assets. It matters here because it shows how transparency, operator structure, and monitoring tools affect which systems remain accessible on major exchanges. Emphasize that regulation often shapes gateways and liquidity rather than rewriting protocol rules.
+
+**Key Points**
+- Centralized systems can be shut down directly through action against operators.
+- Privacy-heavy assets face more exchange friction because screening and traceability are harder.
+- Bitcoin's transparent ledger has made it comparatively easier for intermediaries to build compliance workflows around it.
+
+**Walkthrough**
+None
+
+**Sources**
+- @u.s.departmentofjustice_libertyreserveitmanager_2014
+- @u.s.departmentofjustice_egoldforfeited_2014
+- @financialactiontaskforce_updatedguidanceriskbased_2021
+- @l33_fatf_fatf_targeted_update_on_implementation_of_the_fatf_stan_2025
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+
+:::
+
+## References

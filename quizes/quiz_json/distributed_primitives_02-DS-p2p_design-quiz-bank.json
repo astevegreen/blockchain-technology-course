@@ -1,0 +1,414 @@
+{
+  "lesson_id": "distributed_primitives_02_ds_p2p_design",
+  "lesson_title": "Peer-to-Peer Design",
+  "date_generated": "2026-04-26",
+  "topic": "primitives",
+  "tags": [
+    "distributed-primitives",
+    "primitives",
+    "02-ds-p2p-design",
+    "p2p-design",
+    "overlay-networks",
+    "unstructured-p2p",
+    "structured-dht",
+    "churn",
+    "network-partitions",
+    "sybil-attacks",
+    "eclipse-attacks",
+    "chord",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "distributed_primitives",
+    "lesson_file_stem": "02-DS-p2p_design",
+    "lesson_source_path": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd",
+    "reading_source_path": "/tmp/blockchain-course-readings/text/chord_sigcomm.txt",
+    "reading_status": "acquired",
+    "source_mix": {
+      "lesson_source_questions": 10,
+      "reading_source_questions": 3
+    },
+    "generation_notes": "Questions emphasize mechanism tracing, workload-fit decisions, churn and partition reasoning, and overlay-layer security boundaries. Reading questions are grounded in the Chord paper and avoid publication trivia or pseudocode memorization."
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A student says a P2P overlay changes which fiber links or routers packets traverse on the Internet. Which correction best matches the lesson?",
+      "correct_answer": "An overlay is an application-level neighbor and routing map built on top of the existing physical Internet.",
+      "incorrect_answers": [
+        "An overlay is a carrier router path plan that rewires backbone links for each peer application session.",
+        "An overlay is a fiber topology map administered by ISPs as part of physical link management policy.",
+        "An overlay is a kernel tunnel fabric installed on WAN appliances to route packets directly among routers."
+      ],
+      "explanation": "The lesson separates physical topology from logical overlay topology. Peers choose application-level neighbors and routing rules without rewiring the underlying Internet.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "overlay-networks",
+        "topology",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "Overlay Networks as Logical Maps",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: Overlay Networks as Logical Maps"
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A network needs to spread a newly discovered transaction to as many peers as possible quickly, and duplicate messages are acceptable. Which overlay style best fits that workload?",
+      "correct_answer": "An unstructured overlay using flooding or gossip, because broad propagation matters more than exact lookup efficiency.",
+      "incorrect_answers": [
+        "A structured DHT using successor rings or finger tables, because path predictability matters more than broad propagation.",
+        "A centralized index using directory or static maps, because administrative control matters more than network resilience.",
+        "A successor-only ring using sequential walk steps, because eliminating redundant messages matters more than propagation."
+      ],
+      "explanation": "The lesson contrasts workloads. Unstructured overlays are noisy and can scale poorly, but they are useful when the goal is rapid network-wide propagation rather than locating one exact key.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "unstructured-p2p",
+        "flooding",
+        "workload-fit",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Unstructured Overlay Networks",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: Unstructured Overlay Networks / When to Use Which?"
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "A file-sharing application mostly needs to find the peer responsible for a specific content hash in a very large network. Why would a structured DHT be attractive?",
+      "correct_answer": "It organizes keys and peers so exact lookups can route through a small number of shortcuts instead of flooding the whole network.",
+      "incorrect_answers": [
+        "It replicates data and files so download requests can fetch from local mirrors instead of querying the primary source.",
+        "It removes neighbor state so direct connections can route through a small number of nodes instead of traversing the logical map.",
+        "It indexes names and wildcards so fuzzy queries can search through directory entries instead of targeting the specific key."
+      ],
+      "explanation": "Structured overlays trade strict maintenance for efficient exact lookup. Their routing geometry and shortcuts can locate a responsible peer with far less message overhead than network-wide flooding.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "structured-dht",
+        "routing-efficiency",
+        "exact-lookup",
+        "slides",
+        "application"
+      ],
+      "lesson_block": "Structured Overlay Networks",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: Structured Overlay Networks / Scalability Challenges"
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "As a P2P network grows from thousands to millions of peers, what is the core scalability problem with simple flooding?",
+      "correct_answer": "Message overhead grows roughly with the number of peers reached, creating broadcast storms as the network expands.",
+      "incorrect_answers": [
+        "Computing cost scales directly with proof-of-work difficulty, creating CPU bottlenecks as each network expands.",
+        "Routing distance grows linearly with ring circumference, creating lookup timeout loops as the network expands.",
+        "Duplicate prevention breaks down under redundant packet loads, creating memory exhaustion as the network expands."
+      ],
+      "explanation": "Flooding is simple and resilient, but its cost grows linearly with the number of peers or edges reached. That makes it expensive at large scale compared with structured lookup.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "flooding",
+        "routing-efficiency",
+        "scalability",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "Scalability Challenges",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: Scalability Challenges"
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "In a Chord-like structured overlay, what role do finger-table shortcuts play compared with walking neighbor by neighbor?",
+      "correct_answer": "They let a lookup skip large portions of the identifier space and move closer to the target in logarithmic-style steps.",
+      "incorrect_answers": [
+        "They force a query to traverse multiple rings of the global network and authenticate peers dynamically in zero-knowledge steps.",
+        "They require a node to maintain maps of the physical internet and calculate routing distances in millisecond-scale steps.",
+        "They eliminate a node's reliance on successor-ring structures and bypass neighbor pointers through single-hop lookup steps."
+      ],
+      "explanation": "The lesson uses Chord as a structured-routing example. Finger tables are shortcuts that reduce lookup cost by jumping through the logical space rather than traversing every node.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "chord",
+        "finger-tables",
+        "structured-dht",
+        "slides",
+        "mechanism"
+      ],
+      "lesson_block": "DHT Example: Chord",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: DHT Example: Chord / Chord - Example"
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "Which statement best captures the lesson's comparison between Chord, CAN, and Pastry?",
+      "correct_answer": "They are different structured-overlay geometries that use organized IDs or coordinates to route efficiently toward responsible peers.",
+      "incorrect_answers": [
+        "They are unstructured flooding schemes that use TTL counters to broadcast toward every reachable peer in one shared swarm during lookup.",
+        "They are consensus protocols that use mining weights or proof-of-work scores to select authoritative ledger chains after forks.",
+        "They are physical network-layer layouts that use fiber spans or hardware routers to forward packets toward host machines."
+      ],
+      "explanation": "The lesson presents Chord rings, CAN coordinate zones, and Pastry prefix matching as examples of the same architectural family: structured overlays for efficient routing.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "structured-dht",
+        "chord",
+        "can",
+        "pastry",
+        "slides"
+      ],
+      "lesson_block": "DHT Examples",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: DHT Example: Chord / DHT Example: CAN / DHT Example: Pastry"
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A peer responsible for several keys abruptly goes offline in a DHT. What does the lesson imply must happen for the overlay to remain useful?",
+      "correct_answer": "Neighbor links and replicated data responsibilities must be repaired through background maintenance.",
+      "incorrect_answers": [
+        "Physical routing and underlying network connections must be reconfigured through manual ISP intervention.",
+        "Dynamic overlays and existing client architectures must be abandoned through centralized server migration.",
+        "Routing correctness and stable overlay parameters will be sustained without performing periodic updates."
+      ],
+      "explanation": "Churn is normal in P2P systems. Structured overlays need stabilization, replication, and neighbor repair so departures do not break routing correctness or data availability.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "churn",
+        "self-healing",
+        "structured-dht",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Membership and Churn",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: Membership and Churn / The Self-Healing Solutions"
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the lesson treat a long-lived network partition as especially dangerous for a blockchain, rather than merely inconvenient?",
+      "correct_answer": "Separated groups may build conflicting ledger histories, creating forks and opportunities for double-spending when connectivity returns.",
+      "incorrect_answers": [
+        "Isolated nodes will expose private cryptographic credentials, enabling theft and compromise of active user wallets when connectivity returns.",
+        "Split networks will encounter moderate lookup latency delays, causing slowdowns but zero disruption in consensus when connectivity returns.",
+        "Disconnected peers will reject signature verification requests, causing consensus stalls and block dropouts when connectivity returns."
+      ],
+      "explanation": "In blockchains, connectivity is tied to consensus safety and a shared view of history. A partition can cause divergent chains that later conflict, unlike a simple delay in ordinary file sharing.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "network-partitions",
+        "blockchain-consensus",
+        "double-spending",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "Partitions and The Blockchain Link",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: Partitions & Healing / The Blockchain Link"
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "An attacker creates thousands of cheap peer identities and uses them to dominate how honest nodes choose neighbors. What kind of weakness is being exploited?",
+      "correct_answer": "A Sybil weakness in open membership, where identity creation is cheap enough to distort peer selection and influence.",
+      "incorrect_answers": [
+        "A collision defect in digital signatures, where key generation is simple enough to duplicate an existing user signature.",
+        "A routing fault in physical networks, where fiber cable damage is common enough to sever regional connection paths.",
+        "A pre-image vulnerability in hashing, where digest decryption is easy enough to recover private keys and transactions."
+      ],
+      "explanation": "The lesson frames Sybil attacks as overlay-layer attacks caused by free or cheap identity creation. The attacker manipulates who appears to be in the network without breaking cryptography.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "sybil-attacks",
+        "overlay-security",
+        "free-identity",
+        "slides",
+        "misconception"
+      ],
+      "lesson_block": "The Great P2P Weakness: Sybil and Eclipse Attacks",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: The Great P2P Weakness: Sybil & Eclipse Attacks"
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "A blockchain node's neighbor list is filled entirely with attacker-controlled peers that filter transactions and feed it a misleading chain view. What is the best diagnosis?",
+      "correct_answer": "An Eclipse attack, because the attacker has isolated the victim's overlay view by monopolizing its connections.",
+      "incorrect_answers": [
+        "A structured lookup, because the DHT has assigned the node's logical key destination by mapping its neighbors.",
+        "A hash collision, because the adversary has duplicated the blockchain's block headers by cracking its encryption.",
+        "A routine churn event, because the network has reorganized the system's neighbor lists by repairing its connections."
+      ],
+      "explanation": "An Eclipse attack uses control over a victim's neighbors to censor or deceive that node. It often builds on Sybil identities, but the key effect is isolating the victim's view of the network.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "eclipse-attacks",
+        "sybil-attacks",
+        "overlay-security",
+        "slides",
+        "scenario"
+      ],
+      "lesson_block": "The Eclipse Attack",
+      "source_type": "lesson_slides",
+      "specific_source_lesson": "/tmp/blockchain-course-slide-only/distributed_primitives_02-DS-p2p_design-slides-only.qmd: The Eclipse Attack"
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "An application wants keyword search across arbitrary document contents and asks whether Chord directly provides that feature. What is the reading-grounded answer?",
+      "correct_answer": "Chord maps a specific key to the node responsible for that key; keyword indexing or search must be built above it.",
+      "incorrect_answers": [
+        "Chord scans a full-text query to the peers holding that document; directory indexing or caching must be run inside it.",
+        "Chord matches a wildcard string to the nodes containing that pattern; indexing tables or databases must exist inside it.",
+        "Chord bundles a complete system to the layer administering that service; name lookup is solved below it."
+      ],
+      "explanation": "The Chord paper emphasizes Chord's narrow lookup primitive. It is a substrate for key-to-node lookup, while naming, indexing, search, authentication, and related features are application responsibilities.",
+      "difficulty_level": 3,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "chord",
+        "lookup-primitive",
+        "application-layer",
+        "reading",
+        "assigned-reading",
+        "scenario"
+      ],
+      "lesson_block": "Chord Lookup Primitive",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/chord_sigcomm.txt: Core Reading Takeaways / Application-layer responsibilities"
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "In Chord, a key hashes to a position on the identifier ring between two live nodes. Which node is responsible for that key?",
+      "correct_answer": "The key's successor: the first live node equal to or following the key on the ring, with wraparound if needed.",
+      "incorrect_answers": [
+        "The key requester: the active peer that initiates the lookup operation on the overlay, with authorization.",
+        "The key's gateway: the nearest switch attached to or routing the query on the network, with prioritization if needed.",
+        "The key neighbors: the full finger table sharing the value on the logical segment, with synchronization if needed."
+      ],
+      "explanation": "The reading explains successor ownership in the identifier ring. Nodes and keys share the same hash space, and a key belongs to the first node at or after that key's position.",
+      "difficulty_level": 2,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "chord",
+        "consistent-hashing",
+        "successor-routing",
+        "reading",
+        "assigned-reading",
+        "mechanism"
+      ],
+      "lesson_block": "Consistent Hashing and Successor Ownership",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/chord_sigcomm.txt: Section 4.2, Consistent Hashing / Figure 2"
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A Chord network has correct successor pointers but several stale finger-table entries after recent churn. What outcome best matches the reading's correctness-versus-performance distinction?",
+      "correct_answer": "Lookups may become slower or take extra hops, but they can still find the right successor if the successor structure remains correct.",
+      "incorrect_answers": [
+        "Queries will fail immediately or raise routing errors, because they cannot reach the active ring if the maintenance remains incomplete.",
+        "Rings will become static or block route changes, because they can freeze active hops if routing updates remain uncalled.",
+        "Storage layers will guarantee safety or enforce data validity, because they can always trust the keys if the successor remains unchanged."
+      ],
+      "explanation": "The reading distinguishes minimal correctness from speed. Successor pointers preserve the ability to route to the responsible node, while finger tables mainly improve lookup efficiency and must be refreshed by stabilization.",
+      "difficulty_level": 4,
+      "topic": "primitives",
+      "tags": [
+        "distributed-primitives",
+        "02-ds-p2p-design",
+        "chord",
+        "finger-tables",
+        "stabilization",
+        "churn",
+        "reading",
+        "assigned-reading",
+        "misconception"
+      ],
+      "lesson_block": "Correctness Versus Performance",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "/tmp/blockchain-course-readings/text/chord_sigcomm.txt: Correctness Versus Performance / Churn And Stabilization"
+    }
+  ],
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_distributed_primitives",
+        "title": "Distributed Primitives",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_p2p_design_lesson_slides",
+            "title": "Peer-to-Peer Design - lesson slides",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10"
+            ]
+          },
+          {
+            "id": "lec_p2p_design_assigned_reading",
+            "title": "Peer-to-Peer Design - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

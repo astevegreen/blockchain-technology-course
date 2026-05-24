@@ -1,0 +1,44 @@
+# Ethereum Immersive Trainer - Instructor Minimal Mode
+# Chain + frontend, NO Lab Terminal. Use when students run terminal locally.
+# Saves instructor container resources.
+#
+# Usage: docker-compose -f docker-compose.instructor-minimal.yml up --build
+#
+# Students: Run terminal locally (npm run terminal) or use docker exec into student container.
+
+services:
+  ethereum-trainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ethereum-trainer-instructor
+    ports:
+      - "8545:8545"    # Blockchain RPC - share this with students
+      - "5173:5173"    # Frontend Web UI
+    environment:
+      - MODE=instructor
+      - RPC_PORT=8545
+      - FRONTEND_PORT=5173
+      - INSTRUCTOR_IP=*
+      - TERMINAL_PORTS=3002,3003,3004
+      - TERMINAL_CWD=/app
+      - LAB_TERMINAL_ENABLED=0
+      - DEPLOY_BEACON_LAB=1
+      - COMMITTEES_PER_EPOCH=8
+      - VALIDATORS_PER_COMMITTEE=8
+    volumes:
+      - blockchain-data:/app/.hardhat
+      - student-contracts:/app/contracts/student
+    restart: unless-stopped
+    networks:
+      - ethereum-net
+
+volumes:
+  blockchain-data:
+    driver: local
+  student-contracts:
+    driver: local
+
+networks:
+  ethereum-net:
+    driver: bridge

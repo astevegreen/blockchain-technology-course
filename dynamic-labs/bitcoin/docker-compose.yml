@@ -1,0 +1,83 @@
+name: bitcoin
+
+# Phase 8.4/8.8: per-lab nginx retired. Outer router proxies
+# /labs/bitcoin/* directly to these containers.
+#
+# Three --internal networks:
+#   bitcoin-p2p-net          — bitcoind P2P gossip. All lab containers.
+#   bitcoin-student-mgmt-net — router + students + mempool. Router
+#                              reaches student ttyd and mempool UI here.
+#   bitcoin-instructor-mgmt-net — router + instructor only. Instructor
+#                              ttyd binds to this interface via
+#                              ttyd-bind-mgmt.sh. Students cannot reach
+#                              this network at all.
+#
+# ttyd-bind-mgmt.sh dynamically finds the mgmt-net IP by resolving
+# router-router-1 (Docker DNS scopes to shared networks) and binding
+# to the local src IP on that route. After the split, instructor's DNS
+# resolves to the router's instructor-mgmt IP, so ttyd binds there.
+#
+# Static-web on :8000 stays on 0.0.0.0 intentionally — wallet-address
+# sharing between students traverses the router, not direct container
+# cross-talk.
+
+services:
+  # Build target only — lane-service creates student containers from
+  # this image on demand via `docker run`.
+  student:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      args:
+        BITCOIN_LAB_BASE: "${BITCOIN_LAB_IMAGE:-ghcr.io/bja2142/bitcoin-lab:latest}"
+    image: bitcoin-lab-student
+    profiles: ["build-only"]
+    networks:
+      - p2p-net
+      - student-mgmt-net
+
+  instructor:
+    environment:
+      # Phase 9.3e: mine 11 classnet seed blocks on first boot so
+      # explorer/student tools start on a non-trivial chain tip.
+      # Idempotent: wrapper skips when getblockcount > 0.
+      SEED_CLASSNET: "1"
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      args:
+        BITCOIN_LAB_BASE: "${BITCOIN_LAB_IMAGE:-ghcr.io/bja2142/bitcoin-lab:latest}"
+    networks:
+      - p2p-net
+      - instructor-mgmt-net
+    # Phase 9.3g: named volume persists the instructor datadir so the
+    # forensics-deploy flow can stop the container, populate the volume
+    # with the pre-built chain snapshot via a one-shot busybox sidecar,
+    # then restart the container onto the new chain. Empty by default —
+    # bitcoind regenerates regtest state on first boot as before.
+    volumes:
+      - instructor-data:/home/user/.bitcoin
+
+  mempool:
+    environment:
+      BTCEXP_BASEURL: "/labs/bitcoin/btc-explorer/"
+      MEMPOOL_BASE_PATH: "/labs/bitcoin/mempool"
+    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/bja2142/bitcoin-mempool:latest}"
+    networks:
+      - p2p-net
+      - student-mgmt-net
+
+networks:
+  p2p-net:
+    name: bitcoin-p2p-net
+    external: true
+  student-mgmt-net:
+    name: bitcoin-student-mgmt-net
+    external: true
+  instructor-mgmt-net:
+    name: bitcoin-instructor-mgmt-net
+    external: true
+
+volumes:
+  instructor-data:
+    name: bitcoin-instructor-data

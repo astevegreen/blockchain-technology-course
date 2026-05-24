@@ -1,0 +1,42 @@
+version: 1
+suite_id: instructor-portal-agent-regression
+lab: portal
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../infrastructure/student-home-vm/README.md
+assumptions:
+  - MCP browser tooling is available.
+  - The live dynamic-labs environment is already running.
+  - At least one automated lab suite has already run against the same environment.
+shared_inputs:
+  instructor_credentials_file: .runtime/instructor-credentials.txt
+observability:
+  required:
+    - console_logs
+    - network_failures
+  suggested_mcp_methods:
+    - get_console_logs
+    - get_network_digest
+    - get_network_traffic
+shared_rules:
+  - Use a fresh browser context per task.
+  - Keep unauthenticated and authenticated portal checks in separate contexts.
+  - When switching roles, discard the old browser context and create a fresh session for the new role.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+tasks:
+  - id: portal-instructor-progress-surfaces
+    title: Instructor labs progress page and rollup
+    file: tasks/instructor-progress-surfaces.md
+    context: instructor_probe_then_auth
+    auth: instructor
+    routes:
+      - /instructor/
+      - /instructor/labs-progress
+      - /api/portal/progress-rollup
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
+  - The suite is complete only when the labs-progress page blocks before login, loads after auth, and its rollup request succeeds.

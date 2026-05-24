@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classroom Progress Display</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.16.0/dist/ethers.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      min-height: 100vh;
+      padding: 24px;
+      color: #e2e8f0;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid rgba(59, 130, 246, 0.4);
+    }
+    .header h1 { font-size: 2.2rem; color: #93c5fd; margin-bottom: 8px; }
+    .header p { color: #94a3b8; font-size: 1rem; }
+    .config-bar {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 12px;
+      border: 1px solid #334155;
+    }
+    .config-bar input {
+      padding: 12px 16px;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #e2e8f0;
+      font-size: 14px;
+      min-width: 320px;
+    }
+    .config-bar button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #3b82f6;
+      color: white;
+    }
+    .config-bar button:hover { background: #2563eb; }
+    .status { padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .status.connected { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+    .status.disconnected { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid #334155;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px;
+      background: rgba(59, 130, 246, 0.15);
+      border-bottom: 1px solid #334155;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #93c5fd;
+    }
+    .card-body { padding: 20px; }
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+    }
+    .leaderboard-table th {
+      padding: 12px 16px;
+      text-align: left;
+      color: #94a3b8;
+      font-weight: 600;
+      border-bottom: 1px solid #334155;
+    }
+    .leaderboard-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #334155;
+    }
+    .leaderboard-table tr:hover { background: rgba(59, 130, 246, 0.08); }
+    .leaderboard-table .you { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+    .leaderboard-table .rank { font-weight: 700; color: #fbbf24; }
+    .leaderboard-table .total { font-weight: 700; color: #86efac; }
+    .role-counts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .role-badge {
+      padding: 12px 20px;
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .role-badge .count { font-size: 1.5rem; font-weight: 700; color: #a78bfa; }
+    .role-badge .label { font-size: 0.85rem; color: #94a3b8; }
+    .last-update { text-align: center; color: #64748b; margin-top: 20px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Classroom Progress Display</h1>
+    <p>Live leaderboard and role completion — refresh every 5 seconds</p>
+  </div>
+
+  <div class="config-bar">
+    <input type="text" id="rpcUrl" value="http://localhost:8545" placeholder="Blockchain RPC URL">
+    <input type="text" id="posAddress" placeholder="PoS Contract Address (0x...)">
+    <button onclick="connectAndLoad()">Connect & Load</button>
+    <div id="connectionStatus" class="status disconnected">Disconnected</div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-header">PoS Leaderboard</div>
+      <div class="card-body">
+        <div id="leaderboardContent">
+          <p style="color: #64748b; text-align: center; padding: 40px;">Enter RPC URL and PoS address, then click Connect & Load</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">Role Completion</div>
+      <div class="card-body">
+        <div id="roleCountsContent">
+          <p style="color: #64748b; text-align: center; padding: 40px;">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="last-update" id="lastUpdate"></div>
+
+  <script>
+    const PoSABI = [
+      'function getValidatorCount() view returns (uint256)',
+      'function validatorList(uint256) view returns (address)',
+      'function getValidatorStats(address) view returns (uint256 stakeAmount, uint256 rewardAmount, uint256 slashes, uint256 blocks, uint256 attestations, uint256 unbondingTime)',
+      'event NewMessage(address indexed sender, string message, uint256 timestamp)'
+    ];
+    const HOUSE_STATES = ['Listed', 'Deposit Paid', 'Inspection', 'Complete', 'Cancelled'];
+    const CAR_SALE_STATES = ['Listed', 'DepositPaid', 'InspectionRequested', 'InspectionPassed', 'InspectionFailed', 'Completed', 'Refunded'];
+
+    let provider = null;
+    let refreshInterval = null;
+
+    function parseUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const rpc = params.get('rpc');
+      const pos = params.get('pos');
+      if (rpc) document.getElementById('rpcUrl').value = rpc;
+      if (pos) document.getElementById('posAddress').value = pos;
+    }
+    parseUrlParams();
+
+    async function connectAndLoad() {
+      const rpcUrl = document.getElementById('rpcUrl').value.trim();
+      const posAddr = document.getElementById('posAddress').value.trim();
+      if (!posAddr.startsWith('0x') || posAddr.length !== 42) {
+        alert('Enter a valid PoS contract address');
+        return;
+      }
+      try {
+        provider = new ethers.JsonRpcProvider(rpcUrl);
+        await provider.getBlockNumber();
+        document.getElementById('connectionStatus').className = 'status connected';
+        document.getElementById('connectionStatus').textContent = 'Connected';
+        await refreshData(posAddr);
+        if (refreshInterval) clearInterval(refreshInterval);
+        refreshInterval = setInterval(() => refreshData(posAddr), 5000);
+      } catch (e) {
+        document.getElementById('connectionStatus').className = 'status disconnected';
+        document.getElementById('connectionStatus').textContent = 'Connection Failed';
+        provider = null;
+      }
+    }
+
+    async function refreshData(posAddress) {
+      if (!provider) return;
+      try {
+        const contract = new ethers.Contract(posAddress, PoSABI, provider);
+        const count = await contract.getValidatorCount();
+        const countNum = Number(count);
+        const addresses = [];
+        for (let i = 0; i < countNum; i++) {
+          addresses.push(await contract.validatorList(i));
+        }
+        const statsPromises = addresses.map((a) => contract.getValidatorStats(a));
+        const balancePromises = addresses.map((a) => provider.getBalance(a));
+        const [statsList, balanceList] = await Promise.all([
+          Promise.all(statsPromises),
+          Promise.all(balancePromises)
+        ]);
+        const rows = addresses.map((addr, i) => {
+          const s = statsList[i];
+          const stake = s?.stakeAmount ?? s?.[0] ?? 0n;
+          const reward = s?.rewardAmount ?? s?.[1] ?? 0n;
+          const bal = balanceList[i];
+          const total = parseFloat(ethers.formatEther(bal)) + parseFloat(ethers.formatEther(stake)) + parseFloat(ethers.formatEther(reward));
+          return { addr: addr, total, stake: parseFloat(ethers.formatEther(stake)), reward: parseFloat(ethers.formatEther(reward)) };
+        });
+        rows.sort((a, b) => b.total - a.total);
+
+        const leaderboardHtml = `
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Address</th>
+                <th style="text-align:right">Staked</th>
+                <th style="text-align:right">Rewards</th>
+                <th style="text-align:right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((r, i) => `
+                <tr>
+                  <td class="rank">${i + 1}</td>
+                  <td>${r.addr.slice(0, 6)}...${r.addr.slice(-4)}</td>
+                  <td style="text-align:right">${r.stake.toFixed(4)}</td>
+                  <td style="text-align:right">${r.reward.toFixed(4)}</td>
+                  <td class="total" style="text-align:right">${r.total.toFixed(4)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        document.getElementById('leaderboardContent').innerHTML = leaderboardHtml;
+
+        const roleCountsHtml = `
+          <div class="role-badge">
+            <div class="count">${countNum}</div>
+            <div class="label">Validators</div>
+          </div>
+          <div class="role-badge">
+            <div class="count">${rows.filter(r => r.stake > 0).length}</div>
+            <div class="label">Staked</div>
+          </div>
+        `;
+        document.getElementById('roleCountsContent').innerHTML = roleCountsHtml;
+
+        document.getElementById('lastUpdate').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
+      } catch (e) {
+        document.getElementById('leaderboardContent').innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
