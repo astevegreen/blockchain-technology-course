@@ -52,6 +52,11 @@ class BlockchainSync {
     this.lastBlockNumber = 0;
     this.lastDataHash = '';
     this.retryCount = 0;
+    // Incremental event caches (see fetchAllData) — rebuild from genesis after a config change.
+    this._eventCursor = 0;
+    this._allMessages = [];
+    this._stakerSet = new Set();
+    this._lastSeenEventBlock = 0;
   }
 
   /**
@@ -92,6 +97,12 @@ class BlockchainSync {
     this.pollInterval = setInterval(() => {
       this.fetchAndNotify();
     }, this.pollIntervalMs);
+
+    // Refresh immediately when the tab becomes visible again (the poll no-ops while hidden).
+    if (typeof document !== 'undefined' && !this._visHandler) {
+      this._visHandler = () => { if (!document.hidden && this.isPolling) this.fetchAndNotify(); };
+      document.addEventListener('visibilitychange', this._visHandler);
+    }
   }
 
   /**
@@ -101,6 +112,10 @@ class BlockchainSync {
     if (this.pollInterval) {
       clearInterval(this.pollInterval);
       this.pollInterval = null;
+    }
+    if (typeof document !== 'undefined' && this._visHandler) {
+      document.removeEventListener('visibilitychange', this._visHandler);
+      this._visHandler = null;
     }
     this.isPolling = false;
     console.log('[BlockchainSync] Stopped polling');
@@ -119,6 +134,11 @@ class BlockchainSync {
    */
   async fetchAndNotify() {
     if (!this.provider || !this.contract) {
+      return;
+    }
+    // Skip entirely while the tab is hidden — a backgrounded student tab then costs the
+    // shared node nothing. The visibilitychange listener refreshes immediately on return.
+    if (typeof document !== 'undefined' && document.hidden) {
       return;
     }
 
@@ -221,24 +241,36 @@ class BlockchainSync {
       contract.queryFilter(contract.filters.BlockProposed(), fromBlock)
     ]);
 
-    // Process chat messages (all time)
-    const allMessages = await contract.queryFilter(contract.filters.NewMessage(), 0);
-    const messages = allMessages.map(e => {
+    // All-time chat history + participant roster, built INCREMENTALLY: keep accumulated
+    // results and query only blocks newer than last poll, instead of re-scanning NewMessage
+    // and Staked from block 0 every second. (Two genesis log-scans × 30 students × 1s was a
+    // top node-melting cost.) On a chain prune (head moves backwards) we rebuild from genesis.
+    if (this._eventCursor === undefined || blockNumber < (this._lastSeenEventBlock || 0)) {
+      this._eventCursor = 0;
+      this._allMessages = [];
+      this._stakerSet = new Set();
+    }
+    this._lastSeenEventBlock = blockNumber;
+    const [newMsgEvents, newStakeEvents] = await Promise.all([
+      contract.queryFilter(contract.filters.NewMessage(), this._eventCursor, blockNumber),
+      contract.queryFilter(contract.filters.Staked(), this._eventCursor, blockNumber),
+    ]);
+    this._eventCursor = blockNumber + 1;
+    for (const e of newMsgEvents) {
       const args = e.args || [];
-      return {
+      this._allMessages.push({
         sender: args[0] ?? args.sender,
         text: args[1] ?? args.message ?? '',
-        timestamp: Number(args[2] ?? args.timestamp ?? 0)
-      };
-    }).sort((a, b) => a.timestamp - b.timestamp);
-
-    // Build participant roster from events (stakers + chat participants)
-    const allStakeEvents = await contract.queryFilter(contract.filters.Staked(), 0);
-    const stakerAddresses = allStakeEvents.map(e => e.args.validator);
-    // Note: allMessages is raw events, so use e.args[0] not m.sender
-    const chatAddresses = allMessages.map(e => e.args[0]);
-    // Filter out any undefined values and create unique set
-    const validatorAddresses = [...new Set([...stakerAddresses, ...chatAddresses].filter(Boolean))];
+        timestamp: Number(args[2] ?? args.timestamp ?? 0),
+      });
+    }
+    for (const e of newStakeEvents) {
+      const v = e.args?.[0] ?? e.args?.validator;
+      if (v) this._stakerSet.add(v);
+    }
+    const messages = [...this._allMessages].sort((a, b) => a.timestamp - b.timestamp);
+    const chatAddresses = this._allMessages.map(m => m.sender);
+    const validatorAddresses = [...new Set([...this._stakerSet, ...chatAddresses].filter(Boolean))];
 
     // Build recent activity feed
     const recentActivity = [

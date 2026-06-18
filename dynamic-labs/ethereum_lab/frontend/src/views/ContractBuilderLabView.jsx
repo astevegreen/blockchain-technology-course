@@ -5,7 +5,9 @@
  */
 import { useState, useMemo, useEffect } from 'react';
 import InlineTerminal from '../components/InlineTerminal';
-import { ChainSearch } from '../components/ChainSearch';
+import { ChainExplorer } from '../components/ChainExplorer';
+import { ContractWorkshop } from '../components/ContractWorkshop';
+import { registerSource } from '../lib/contractSources';
 
 const DEFAULT_SIMPLE_STORAGE = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
@@ -132,9 +134,12 @@ function buildSaveScript(contractCode, contractName) {
 function makeDeployCode(contractName) {
   return `// Deploy — paste this into Hardhat console
 const contract = await ethers.deployContract("contracts/${contractName}.sol:${contractName}");
+const deployTx = contract.deploymentTransaction();
+if (deployTx?.hash) console.log("Deploy tx:", deployTx.hash);
 await contract.waitForDeployment();
 const addr = await contract.getAddress();
 console.log("Deployed to:", addr);
+console.log("Search this address or deploy tx in Chain Explorer.");
 console.log("Share this address with your partner!");`;
 }
 
@@ -178,7 +183,10 @@ function makeInteractDefault(contractName, addr, solidityCode) {
 const addr = '${addr || '0x...'}';
 const c = await ethers.getContractAt("${fqn}", addr);
 // Edit: call your contract's functions
-// e.g. await c.someFunction(arg);`;
+// e.g.
+// const tx = await c.someFunction(arg);
+// console.log("Tx:", tx.hash);
+// await tx.wait();`;
   }
 
   let lines = [`// Interact with contract`, `const addr = '${addr || '0x...'}';`, `const c = await ethers.getContractAt("${fqn}", addr);`];
@@ -187,8 +195,10 @@ const c = await ethers.getContractAt("${fqn}", addr);
     const w = writes[0];
     const args = w.params.map(p => exampleArg(p.type)).join(', ');
     lines.push(``, `// Write: ${w.name}`);
-    lines.push(`await c.${w.name}(${args});`);
-    lines.push(`console.log("${w.name} called successfully");`);
+    lines.push(`const tx = await c.${w.name}(${args});`);
+    lines.push(`console.log("Tx:", tx.hash);`);
+    lines.push(`await tx.wait();`);
+    lines.push(`console.log("${w.name} confirmed");`);
   }
 
   if (views.length > 0) {
@@ -235,16 +245,11 @@ const c = await ethers.getContractAt("${fqn}", addr);
 
 const CONTRACT_BEACON_IDS = {
   1: 'eth-contract-write',
-  2: 'eth-contract-prereqs',
-  3: 'eth-contract-deploy',
-  4: 'eth-contract-share',
-  5: 'eth-contract-interact',
-  6: 'eth-contract-verify',
 };
 
-export function ContractBuilderLabView({ provider, wallet, rpcUrl, terminalRpcUrl = '', onLoadCode, onExpandTerminal, fireProgressBeacon }) {
+export function ContractBuilderLabView({ provider, wallet, rpcUrl, terminalRpcUrl = '', onLoadCode, onExpandTerminal, fireProgressBeacon, terminalEnabled = true }) {
   const [currentStep, setCurrentStep] = useState(1);
-  const [terminalOpen, setTerminalOpen] = useState(true);
+  const [terminalOpen, setTerminalOpen] = useState(false);
   const [loadCode, setLoadCode] = useState('');
   const [loadFeedback, setLoadFeedback] = useState('');
   const [contractCode, setContractCode] = useState(DEFAULT_SIMPLE_STORAGE);
@@ -261,6 +266,15 @@ export function ContractBuilderLabView({ provider, wallet, rpcUrl, terminalRpcUr
   }, [contractCode]);
 
   const deployCode = useMemo(() => makeDeployCode(contractName), [contractName]);
+
+  // Once the student has a deployed address + source, remember it so the Chain
+  // Explorer can show the real Solidity for that contract.
+  useEffect(() => {
+    const addr = contractAddress.trim();
+    if (/^0x[0-9a-fA-F]{40}$/.test(addr) && contractCode) {
+      registerSource(addr, { name: contractName, source: contractCode });
+    }
+  }, [contractAddress, contractCode, contractName]);
 
   useEffect(() => {
     if (!interactEdited) {
@@ -401,6 +415,9 @@ export function ContractBuilderLabView({ provider, wallet, rpcUrl, terminalRpcUr
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6 }}>
             Ensure the chain is running, RPC URL is set in Connection Setup, and your wallet is connected. You need ETH to deploy.
           </p>
+          <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#fde047', lineHeight: 1.6 }}>
+            Hardhat console actions use the Hardhat signer shown by <code>ethers.getSigners()</code>. That may be different from the browser wallet in the sidebar. Use the printed deploy/write transaction hashes in Chain Explorer to verify what happened on-chain.
+          </div>
           <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#93c5fd', lineHeight: 1.7 }}>
             <strong style={{ color: '#e2e8f0' }}>In the Lab Terminal:</strong>
             <ol style={{ margin: '0.35rem 0 0 1rem', padding: 0 }}>
@@ -426,6 +443,9 @@ console.log('Balance:', ethers.formatEther(bal), 'ETH');`} />
           </p>
           <p style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.6, marginTop: '0.35rem' }}>
             Paste the deploy snippet below <strong>once</strong> per console session. If you already ran it and only need the address again, use the existing <code style={{ background: '#1e293b', padding: '0.1rem 0.3rem', borderRadius: '0.2rem' }}>addr</code> variable, or type <code style={{ background: '#1e293b', padding: '0.1rem 0.3rem', borderRadius: '0.2rem' }}>.exit</code> and start a fresh console before pasting again.
+          </p>
+          <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.6, marginTop: '0.35rem' }}>
+            After deployment, search the printed contract address or deploy transaction hash in Chain Explorer below.
           </p>
           <div style={{ marginTop: '0.75rem', padding: '0.75rem 1rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#93c5fd', lineHeight: 1.7 }}>
             <strong style={{ color: '#e2e8f0' }}>In the Lab Terminal (shell at project root):</strong>
@@ -522,7 +542,7 @@ console.log('Balance:', ethers.formatEther(bal), 'ETH');`} />
       return (
         <>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6 }}>
-            Use Search Chain (below) to look up the contract by address. Or paste the address below, edit the verify script, and run it in Hardhat console.
+            Use Chain Explorer below to look up the contract by address. Or paste the address below, edit the verify script, and run it in Hardhat console.
           </p>
           <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '0.35rem', fontSize: '0.8rem', color: '#93c5fd' }}>
             Start the Hardhat console if not already in it: <code>npx hardhat console --network localhost</code> (or <code>--network instructor</code> for remote)
@@ -599,10 +619,18 @@ console.log('Balance:', ethers.formatEther(bal), 'ETH');`} />
         </div>
       )}
       <p style={{ color: '#94a3b8', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-        Build any smart contract, deploy it to the chain, and interact with another student. SimpleStorage is pre-filled as a starting point — replace it with your own contract if you like.
+        Pick a contract (or write your own), compile it, and deploy straight from your wallet — no terminal needed. Once it’s on-chain, anyone in the class can interact with it from the list below.
       </p>
 
-      <a
+      <ContractWorkshop wallet={wallet} rpcUrl={rpcUrl} fireProgressBeacon={fireProgressBeacon} />
+
+      {terminalEnabled && (
+      <details style={{ marginTop: '2rem' }}>
+        <summary style={{ cursor: 'pointer', color: '#94a3b8', fontWeight: 600 }}>
+          Advanced: deploy via the Hardhat terminal (expert)
+        </summary>
+        <div style={{ marginTop: '1rem' }}>
+        <a
         href="/docs/guides/CHAIN_INTERACTION_GUIDE.md"
         target="_blank"
         rel="noopener noreferrer"
@@ -681,8 +709,11 @@ console.log('Balance:', ethers.formatEther(bal), 'ETH');`} />
           Next
         </button>
       </div>
+        </div>
+      </details>
+      )}
 
-      <ChainSearch provider={provider} rpcUrl={rpcUrl} />
+      <ChainExplorer provider={provider} rpcUrl={rpcUrl} signer={wallet?.signer} fireProgressBeacon={fireProgressBeacon} cacheOnly />
 
       {loadFeedback && (
         <div style={{ padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', borderRadius: '0.5rem', color: '#86efac', marginBottom: '1rem', fontSize: '0.9rem' }}>
@@ -690,47 +721,8 @@ console.log('Balance:', ethers.formatEther(bal), 'ETH');`} />
         </div>
       )}
 
+      {terminalEnabled && (
       <div style={{ marginTop: '1.5rem' }} data-lab-terminal>
-        <div style={{
-          padding: '1rem',
-          background: 'rgba(59,130,246,0.1)',
-          border: '1px solid rgba(59,130,246,0.3)',
-          borderRadius: '0.5rem',
-          marginBottom: '0.75rem',
-          fontSize: '0.9rem',
-          color: '#93c5fd',
-        }}>
-          <strong style={{ color: '#e2e8f0' }}>Lab Terminal instructions</strong>
-          <p style={{ margin: '0.5rem 0 0.35rem 0', color: '#cbd5e1', fontSize: '0.85rem' }}>
-            <strong>Easiest way:</strong> Click the <strong>Start Hardhat</strong> button in the terminal status bar to enter the Hardhat console (no typing required).
-          </p>
-          <ul style={{ margin: '0.5rem 0 0 1.25rem', padding: 0, lineHeight: 1.7 }}>
-            <li>If you&apos;re new to the terminal: type a command and press <strong>Enter</strong>. The prompt changes to <code>&gt;</code> when you&apos;re in Hardhat. Paste scripts there, then type <code>.exit</code> to leave.</li>
-            <li><strong>Directory:</strong> The terminal starts in the <strong>project root</strong> (where <code>package.json</code>, <code>contracts/</code>, and <code>scripts/</code> live). No need to <code>cd</code>.</li>
-            <li><strong>Compile:</strong> <code style={{ background: '#1e293b', padding: '0.15rem 0.4rem', borderRadius: '0.25rem' }}>npx hardhat compile</code> — run this in the shell before deploying.</li>
-            <li><strong>Enter Hardhat console (local):</strong> <code style={{ background: '#1e293b', padding: '0.15rem 0.4rem', borderRadius: '0.25rem' }}>npx hardhat console --network localhost</code></li>
-            <li><strong>Enter Hardhat console (remote):</strong> <code style={{ background: '#1e293b', padding: '0.15rem 0.4rem', borderRadius: '0.25rem' }}>npx hardhat console --network instructor</code></li>
-            <li><strong>Exit Hardhat console:</strong> Type <code>.exit</code> or press <code>Ctrl+C</code> twice to return to the shell.</li>
-          </ul>
-          <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '0.375rem' }}>
-            <strong style={{ color: '#fde047', fontSize: '0.85rem' }}>Connecting to a remote / instructor-hosted RPC</strong>
-            <p style={{ color: '#cbd5e1', fontSize: '0.85rem', margin: '0.4rem 0 0.4rem 0', lineHeight: 1.6 }}>
-              If the blockchain is running on a different machine or behind a shared reverse proxy, set the <code style={{ background: '#1e293b', padding: '0.1rem 0.3rem', borderRadius: '0.2rem' }}>RPC_URL</code> environment variable before starting the Hardhat console:
-            </p>
-            <div style={{ background: '#0f172a', padding: '0.5rem 0.75rem', borderRadius: '0.35rem', fontFamily: 'monospace', fontSize: '0.8rem', color: '#e2e8f0', lineHeight: 1.6, overflowX: 'auto' }}>
-              <div style={{ color: '#64748b' }}># Windows (PowerShell)</div>
-              <div>$env:RPC_URL=&quot;http://INSTRUCTOR_IP:8545&quot;</div>
-              <div>npx hardhat console --network instructor</div>
-              <div style={{ marginTop: '0.5rem', color: '#64748b' }}># Mac / Linux</div>
-              <div>RPC_URL=&quot;http://INSTRUCTOR_IP:8545&quot; npx hardhat console --network instructor</div>
-              <div style={{ marginTop: '0.5rem', color: '#64748b' }}># If the instructor shares a proxied lab URL</div>
-              <div>RPC_URL=&quot;http://INSTRUCTOR_HOST:8081/labs/ethereum_lab/rpc&quot; npx hardhat console --network instructor</div>
-            </div>
-            <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '0.4rem 0 0 0', lineHeight: 1.5 }}>
-              Replace <code style={{ fontSize: '0.8rem' }}>INSTRUCTOR_IP</code> with the actual IP address or hostname provided by your instructor. The <code style={{ fontSize: '0.8rem' }}>instructor</code> network in <code style={{ fontSize: '0.8rem' }}>hardhat.config.js</code> reads from this variable automatically.
-            </p>
-          </div>
-        </div>
         <button
           type="button"
           onClick={() => setTerminalOpen(!terminalOpen)}
@@ -763,6 +755,7 @@ console.log('Balance:', ethers.formatEther(bal), 'ETH');`} />
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

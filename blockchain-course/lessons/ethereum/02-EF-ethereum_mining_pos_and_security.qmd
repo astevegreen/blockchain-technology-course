@@ -39,25 +39,24 @@ None
 
 :::
 
-## Anatomy of the Ethereum Block
+## The Ethereum Operational Framework
 
 ::: {style="font-size: 0.70em;"}
 
 ::: columns
 ::: {.column width="50%"}
-- Think of Ethereum as a global append-only
+- Ethereum can be considered a global, append-only
   state machine shared by peers.
 
 - Anyone can submit a transaction; validators
   propose blocks and attesters verify and accept.
 
-- The chain with the most cumulative attestation
-  weight is the canonical history.
+- The chain with the most cumulative *attestation weight* is the canonical history.
 
 - Ownership is control of private keys
   (EOAs and contract accounts).
 
-- Incentives (block rewards + fees + MEV) fund
+- Incentives fund
   security and honest participation.
 :::
 ::: {.column width="50%"}
@@ -89,6 +88,10 @@ digraph EthBlockFlow {
 :::
 :::
 
+::: {.callout-note appearance="simple" style="font-size: 0.72em;"}
+**Attestation weight**: the total voting power behind a block or branch, measured by how much validator stake is represented in the latest attestations supporting it.
+:::
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -107,24 +110,24 @@ None
 
 :::
 
-## Ethereum Blocks: Header Structure {.smaller}
+## Execution Payload: Header Structure {.smaller}
 
 ::: {style="font-size: .8em;"}
 
 ::: columns
 ::: {.column width="69%"}
-- **Block = Header + Body**  
+- **Execution Payload = Header + Body**  
   - **Header:** commitments and metadata.  
-  - **Body:** ordered transactions + “ommer” references.  
+  - **Body:** ordered transactions and execution data.  
 - **Core header roots (Merkle–Patricia tries):**  
-  - A Merkle–Patricia trie is a key-value data structure that combines prefix-based path compression for efficient lookups with Merkle hashing so that a single root hash commits to all entries and any entry can be verified with a short proof.
+  - These are ordered, hash-linked data structures built with `Keccak-256`, so a single root commits to the exact contents and order beneath it.
   - `state_root` → commits to global state after execution.  
   - `transactions_root` → commits to ordered list of transactions.  
   - `receipts_root` → commits to execution results (status, gas, logs).  
 - **Operational Fields**: gas accounting, parent hash, indexing, etc.
 
-::: {.callout-note appearance="simple"}
-Ommer blocks, also known as uncle blocks, refer to valid blocks that are not included in the main chain. This occurs when multiple miners create valid blocks at nearly the same time, resulting in one being left out. 
+::: {.callout-note appearance="simple" style="font-size: 1.2em;"}
+**Keccak-256** is Ethereum's main cryptographic hash function. It is based on the **Keccak sponge construction**, not quite the Merkle-Damgard design used by `SHA-256`; it is closely related to but not identical with the NIST-standardized `SHA-3`.
 :::
 :::
 ::: {.column width="30%"}
@@ -138,11 +141,11 @@ digraph EthBlock {
   edge  [color="#9ba8b7", arrowsize=0.6];
 
   subgraph cluster_block {
-    label="Ethereum Block"; labeljust=c; fontname="Helvetica"; fontsize=12;
+    label="Execution Payload"; labeljust=c; fontname="Helvetica"; fontsize=12;
     style="rounded,filled"; fillcolor="#f5f7fa"; color="#9ba8b7";
 
     subgraph cluster_header {
-      label="Header (Commitments + Metadata)"; labeljust=c;
+      label="Header (Commitments + Metadata)\n~500-700 bytes"; labeljust=c;
       fontname="Helvetica"; fontsize=10;
       style="rounded,filled"; fillcolor="#eef2f7"; color="#b0bec5";
 
@@ -155,11 +158,11 @@ digraph EthBlock {
     }
 
     subgraph cluster_body {
-      label="Body (Execution Data)"; labeljust=c;
+      label="Body (Execution Data)\nvariable size"; labeljust=c;
       fontname="Helvetica"; fontsize=10;
       style="rounded,filled"; fillcolor="#eef2f7"; color="#b0bec5";
 
-      body_placeholder [label="Transactions\nOmmers\nReceipts",
+      body_placeholder [label="Transactions\nExecution Data",
                         fillcolor="#dce6f0"];
     }
 
@@ -175,10 +178,10 @@ digraph EthBlock {
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes why Ethereum block headers matter: they are compact commitments to the transactions, outcomes, and resulting state below them. It matters here because later security and verification discussions depend on understanding what these roots guarantee. Emphasize that the header is small, but it carries the cryptographic summary needed for verification.
+This slide establishes why the execution payload header matters: it is a compact commitment to the transactions, outcomes, and resulting state below it. It matters here because later security and verification discussions depend on understanding what these roots guarantee.
 
 **Key Points**
-- A block header contains commitments and metadata, while the body carries the execution data itself.
+- The execution payload header contains commitments and metadata, while the body carries the execution data itself.
 - The `state_root`, `transactions_root`, and `receipts_root` commit to world state, ordered transactions, and execution outcomes.
 - Define trie briefly as a key-value data structure that supports efficient lookup and hashed commitments.
 
@@ -192,20 +195,31 @@ This slide establishes why Ethereum block headers matter: they are compact commi
 
 :::
 
-## Ethereum Blocks: The Body
+## Beacon Blocks and Execution Payloads {.smaller}
 
-::: {style="font-size: .8em;"}
+::: {style="font-size: .74em;"}
 
 ::: columns
-::: {.column width="65%"}
-- **Block Body = Execution Data**  
-  - **Transactions:** signed actions initiated by EOAs (users).   
-  - **Ommers:** references to valid but non-canonical PoW blocks (unused in PoS). 
-  - **Receipts:** per-transaction outcomes — success/failure, gas used, and logs.  
+::: {.column width="52%"}
+- In post-Merge Ethereum, the **beacon block** is the outer consensus-layer container validators propose and attest to.
+- The **execution payload** resides inside that beacon block.
+- **Outer fields:**
+  - `slot` — **8 bytes**
+  - `proposer_index` — **8 bytes**
+  - `parent_root` — **32 bytes**
+  - `state_root` — **32 bytes**
+- **Body fields with fixed-size types:**
+  - `randao_reveal` (`BLSSignature`) — **96 bytes**
+  - `eth1_data` — deposit-contract view / deposit metadata
+  - `graffiti` — optional metadata, **32 bytes**
+- **Variable-size fields:**
+  - `attestations`, `proposer/attester slashings`, `deposits`, exits, sync data
+  - `execution_payload`
+
 :::
-::: {.column width="35%"}
+::: {.column width="54%"}
 ```{dot}
-digraph EthBlockBody {
+digraph BeaconBlockView {
   rankdir=TB;
   graph [bgcolor="transparent", fontsize=11, nodesep=0.25, ranksep=0.3,
          compound=true];
@@ -214,30 +228,37 @@ digraph EthBlockBody {
   edge  [color="#9ba8b7", arrowsize=0.6];
 
   subgraph cluster_block {
-    label="Ethereum Block"; labeljust=c; fontname="Helvetica"; fontsize=12;
+    label="Beacon Block (Consensus Layer)"; labeljust=c; fontname="Helvetica"; fontsize=12;
     style="rounded,filled"; fillcolor="#f5f7fa"; color="#9ba8b7";
 
     subgraph cluster_header {
-      label="Header"; labeljust=c;
+      label="Outer Fields"; labeljust=c;
       fontname="Helvetica"; fontsize=10;
       style="rounded,filled"; fillcolor="#eef2f7"; color="#b0bec5";
 
-      header_placeholder [label="", shape=point, width=0, height=0, style=invis];
+      slot     [label="slot\n8 B", fillcolor="#dce6f0"];
+      proposer [label="proposer_index\n8 B", fillcolor="#dce6f0"];
+      parent   [label="parent_root\n32 B", fillcolor="#dce6f0"];
+      state    [label="state_root\n32 B", fillcolor="#dce6f0"];
+
+      slot -> proposer -> parent -> state;
     }
 
     subgraph cluster_body {
-      label="Body"; labeljust=c;
+      label="Body\n(variable size)"; labeljust=c;
       fontname="Helvetica"; fontsize=10;
       style="rounded,filled"; fillcolor="#eef2f7"; color="#b0bec5";
 
-      txs     [label="Transactions",           fillcolor="#dce6f0"];
-      ommers  [label="Ommers (historical PoW)", fillcolor="#dce6f0"];
-      receipts[label="Receipts",                fillcolor="#dce6f0"];
+      randao   [label="randao_reveal\n96 B", fillcolor="#dce6f0"];
+      eth1     [label="eth1_data\nmetadata", fillcolor="#dce6f0"];
+      graffiti [label="graffiti\n32 B", fillcolor="#dce6f0"];
+      ops      [label="Attestations /\nSlashings /\nSync data\nvariable", fillcolor="#dce6f0"];
+      payload  [label="execution_payload\nexecution block\nvariable", fillcolor="#cfe8ff"];
 
-      txs -> ommers -> receipts;
+      randao -> eth1 -> graffiti -> ops -> payload;
     }
 
-    header_placeholder -> txs [ltail=cluster_header, lhead=cluster_body];
+    state -> randao [ltail=cluster_header, lhead=cluster_body];
   }
 }
 ```
@@ -247,110 +268,51 @@ digraph EthBlockBody {
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes what lives in the body of an Ethereum block and how that body supplies the raw material for execution and verification. It matters here because students have just seen the header commitments and now need to connect those commitments to actual transactions and outcomes. Emphasize that the body is the evidence that lets full nodes recompute what the header claims.
+This slide resolves the post-Merge ambiguity between the execution-layer block structure and the larger consensus-layer beacon block. It matters here because students need to know what validators actually propose and attest to, and where the execution payload sits inside that object.
 
 **Key Points**
-- Transactions are the signed inputs the Ethereum Virtual Machine executes in order.
-- Receipts capture outcomes such as status, gas used, and logs after execution.
-- Spell out EOA as externally owned account and note that ommers are a historical Proof of Work carryover.
+- The beacon block is the outer consensus-layer container.
+- The execution payload is nested inside it and carries the execution-layer block data.
+- Fixed-width fields such as `slot`, `state_root`, `randao_reveal`, and `graffiti` can be described precisely, while operational lists remain variable size.
 
 **Walkthrough**
-1. Identify transactions as the ordered actions submitted to the network.
-2. Explain receipts as per-transaction records of what happened during execution.
-3. Note that ommers remain in the block format for historical compatibility even though they are unused in PoS.
+1. Start with the outer box and explain that this is the beacon block validators gossip and attest to in the consensus layer.
+2. Point to the outer metadata fields: `slot`, `proposer_index`, `parent_root`, and `state_root`.
+3. Move into the body and identify `randao_reveal`, `eth1_data`, and `graffiti` as named beacon-block fields, while the slashings, attestations, and sync data vary in size.
+4. End by highlighting `execution_payload` as the embedded execution-layer block students will continue analyzing in the next slide.
 
 **Sources**
-@wood_ethereumsecuredecentralised_2016; @ethereum.org_blocksdeveloperdocs_2025
+@ethereum.org_blocksdeveloperdocs_2025; @ethereumdevelopers_proofofstakepos_2025
 
 :::
 
-## Inside the Roots — Inputs, Outputs, and State
+## The Merge: Beacon Chain to PoS
 
-- **`transactions_root`:** proves the *ordered list* of transactions.  Trie keys encode position (0, 1, 2 …), enabling inclusion + order proofs.  
-- **`receipts_root`:** proves the *outcomes* of those transactions.  Receipts store `status`, `gasUsed`, and logs.  
-- **`state_root`:** commits to the *entire world state* after execution. Each account (nonce, balance, code, storageRoot) sits in the state trie.  
-- These roots let full nodes and light clients verify:  
-  *what was included*, *what happened*, and *the final state.*
-- The body enables full nodes to recompute these roots
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the distinct roles of Ethereum's three root commitments: what was included, what happened, and what state resulted. It matters here because those roots become the basis for both full-node replay and lighter verification models. Emphasize that Ethereum separates inputs, outputs, and world state rather than collapsing them into one proof object.
-
-**Key Points**
-- `transactions_root` commits to the ordered transaction list, `receipts_root` commits to outcomes, and `state_root` commits to post-execution world state.
-- Full nodes can recompute these roots, while lighter clients can verify specific facts with proofs against them.
-- Define world state briefly as the current balances, code, nonces, and storage associated with accounts.
-
-**Walkthrough**
-None
-
-**Sources**
-@wood_ethereumsecuredecentralised_2016; @ethereum.org_blocksdeveloperdocs_2025
-
+::: {style="font-size: .8em;"}
+::: {style="text-align: center;"}
+![](../images/eth_merge.png){fig-alt="Diagram showing Ethereum's execution layer merging with the Beacon Chain's proof-of-stake consensus layer." width="78%"}
 :::
 
-## Before the Merge: Beacon Chain and Layer Forks
-::: {style="font-size: .95em;"}
-- **Beacon Chain** launched Dec 2020 — a parallel PoS chain where
-  validators staked 32 ETH and ran consensus duties for ~21 months
-  alongside PoW mainnet.
-- This parallel run bootstrapped the validator set and proved PoS
-  liveness under real conditions before it carried production traffic.
-- **Bellatrix** (Consensus Layer fork): prepared the Beacon Chain to accept
-  execution payloads. **Paris** (Execution Layer fork): stopped honoring PoW blocks.
-- Two layers, upgraded independently, then joined — the architectural
-  basis for the hot-swap that followed.
-
+- Execution layer: transactions, accounts, smart contracts, and state.
+- Consensus layer: handles validators, attestations, fork choice, and finality.
 :::
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes the Beacon Chain period as the operational bridge that made the Merge possible. It matters here because students need to see that Ethereum did not jump directly from PoW to PoS; it staged the transition with a parallel live consensus system. Emphasize that the Merge was prepared through layer-specific upgrades and long-running validator operations, not a single overnight swap.
+This is an orientation slide, not a history slide. It matters here because students are about to move from block structure into Proof-of-Stake mechanics, and they need a clear mental map of Ethereum's two-layer architecture before diving into validators, attestations, fork choice, and finality.
 
 **Key Points**
-- The Beacon Chain ran in parallel with mainnet to bootstrap validators and validate PoS behavior under real conditions.
-- Bellatrix prepared the consensus layer, while Paris prepared the execution layer for the handoff.
-- Spell out PoW as Proof of Work and CL/EL conceptually as consensus layer and execution layer.
+- The execution layer is where transactions are processed and state is updated.
+- The consensus layer is where validators coordinate around attestations, fork choice, and finality.
 
 **Walkthrough**
-None
+1. Start with the image and remind students that when we say "Ethereum" today, we really mean a system with two connected layers.
+2. Point to the execution layer and identify its responsibilities: transactions, smart contracts, accounts, and state.
+3. Point to the consensus layer and identify its responsibilities: validators, attestations, fork choice, and finality.
+4. Close by telling students that the remaining slides focus on how the consensus layer secures and finalizes what the execution layer computes.
 
 **Sources**
-@ethereumorg_history_2026; @l34_ethereumorg_merge_2022
-
-:::
-
-## The Merge: Transition to PoS
-
-::: {style="font-size: .95em;"}
-- 15 Sep 2022: mainnet switched from PoW to PoS during live operation,
-  handing block production to the Beacon Chain's already-active validators.
-- **TTD** (Total Terminal Difficulty) triggered the cutover — cumulative
-  difficulty, not a block number, so miners could not game the exact
-  transition block.
-- Contracts, balances, and application state continued uninterrupted —
-  only the consensus engine changed.
-- PoW security = continuous brute-force hashing (energy is the cost);
-  PoS security = BLS signing (computationally trivial). The **~99.95%
-  energy drop** follows mechanically from removing the hash race.
-:::
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the Merge as a consensus-engine replacement rather than a reset of Ethereum applications or state. It matters here because students often think the Merge changed everything, when the execution layer continued while block production authority changed hands. Emphasize that the key difference is how agreement is secured, not what contracts or balances existed.
-
-**Key Points**
-- The Merge switched Ethereum mainnet from Proof of Work to Proof of Stake during live operation.
-- Total Terminal Difficulty, or TTD, triggered the cutover using cumulative difficulty rather than a scheduled block number.
-- The large energy reduction follows from removing the continuous hash race required by PoW.
-
-**Walkthrough**
-None
-
-**Sources**
-@l34_ethereumorg_merge_2022; @ccri_ccriindicesethereums_2025; @ethereumorg_history_2026
+@l34_ethereumorg_merge_2022; @ethereumorg_history_2026
 
 :::
 
@@ -360,7 +322,7 @@ None
 - Join by staking **32 ETH** in the deposit contract on the execution layer.  
 - Each validator runs:  
   - **Execution client** → handles transactions and state (EVM).  
-  - **Consensus client** → runs the Beacon Chain: assigns duties, verifies blocks, manages committees and finality.  
+  - **Consensus client** → runs the Consensus Layer: assigns duties, verifies blocks, manages committees and finality.  
   - **Validator process** → signs duties assigned by the consensus client.  
 - Duties (execution):  
   - Rarely: propose a block for a slot.  
@@ -393,176 +355,6 @@ This slide establishes the main actors in Ethereum's PoS consensus process and h
 
 :::
 
-## Validator Selection & Randomness {.smaller}
-::: {style="font-size: .95em;"}
-
-- **Purpose:** prevent predictability or bias in proposer and committee selection.  
-- **Source:** RANDAO — a multi-party commit–reveal randomness beacon.  
-  - Each epoch, validators first commit to a secret hash, then later reveal the secret.  
-  - Reveals are mixed (XORed) into the epoch’s random seed.  
-- **Assignments:**  
-  - The Beacon Chain uses the seed to shuffle validators and assign proposers/committees per slot.  
-  - Short notice (~minutes) limits the chance to target specific validators.  
-- **Incentives:**  
-  - Withholding a reveal forfeits rewards and only minimally affects the outcome.  
-  - Many contributors make it infeasible for one actor to steer selection.  
-
-::: {.callout-note appearance="simple"}
-RANDAO is stake-weighted: each validator's influence on the random seed is proportional to their effective balance (up to 32 ETH per key), so selection probability scales with the amount of ETH staked.
-:::
-:::
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes that validator assignment must be unpredictable enough to resist manipulation while remaining verifiable to the network. It matters here because committee rotation and proposer selection only improve security if participants cannot cheaply game the process. Emphasize that randomness is not decorative here; it is part of Ethereum's defense against targeted influence.
-
-**Key Points**
-- Ethereum uses randomized assignment to determine which validators propose blocks and which join committees.
-- Strong randomness makes collusion, targeted denial, and advance manipulation harder.
-- Define validator selection as the process of assigning consensus duties to staked participants for a given slot or epoch.
-
-**Walkthrough**
-None
-
-**Sources**
-@ethereumdevelopers_proofofstakepos_2025; @ethereumdevelopers_blockproposal_2024
-
-:::
-
-## Verifiable Random Functions (VRFs) {.smaller}
-::: {style="font-size: .75em;"}
-
-- **Context:** Ethereum uses RANDAO for validator selection. Other PoS protocols (Algorand, Cardano/Ouroboros Praos) use VRFs instead.
-- **Purpose:** generate private, verifiable randomness for *individual* validators.
-- **Analogy:** a VRF is like a **provable coin flip** — each validator flips privately but can show cryptographic proof the flip was honest.
-
-- **Mechanics:**
-  - Each validator inputs a **secret key** and public parameters (e.g., slot, epoch) into a VRF → outputs a **random value + proof**.  
-  - The validator checks if the value falls below a **stake-weighted threshold** (e.g., `hash(output) < threshold × stake`).  
-  - If so, it has *won* the slot and broadcasts its proof.  
-  - Others verify the proof using the validator's public key — no coordination or trust required.
-
-- **Properties:**  
-  - **Unpredictable** until evaluated — prevents pre-computation or bias.  
-  - **Verifiable** by anyone — proof binds randomness to the validator's key and epoch.
-
-::: {.callout-note appearance="simple"}
-Ethereum does not currently use VRFs. Unlike RANDAO, where the last revealer can marginally bias the seed, VRFs eliminate this by keeping the output secret until broadcast. VRFs have been discussed as a potential future enhancement to Ethereum's randomness pipeline.
-:::
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the intuition for verifiable randomness as a value that is both unpredictable beforehand and provable afterward. It matters here because students need that concept before understanding how Ethereum produces fair validator assignments. Emphasize the combination of secrecy before revelation and public verification after revelation.
-
-**Key Points**
-- A verifiable random function produces an output and proof that others can check.
-- This design helps systems use randomness without asking everyone to trust the generator blindly.
-- Spell out VRF as verifiable random function and define proof briefly as evidence others can verify cryptographically.
-
-**Walkthrough**
-1. Start with the need for randomness that cannot be predicted in advance.
-2. Show that the generator reveals both the random-looking output and a proof.
-3. End with the benefit: others can verify the output without recreating the secret input.
-
-**Sources**
-@ethereumdevelopers_proofofstakepos_2025
-
-:::
-
-## Global Randomness: RANDAO + VDF Beacons {.smaller}
-
-::: {style="font-size: .75em;"}
-
-- **Why global randomness?**  
-  Individual selection (VRFs) decides *who wins locally*, but the network still needs a shared, unbiased seed for committee rotation and epoch-level tasks.
-
-- **RANDAO (RAndom DAO):**  
-  Despite the name, RANDAO is not a DAO — it is a **pseudorandom number generator (PRG)** built into Ethereum's Beacon Chain for committee and proposer selection.
-  1. Validators commit to random values (hash commitments).  
-  2. Later, they reveal them; revealed values are **XORed** → collective seed.  
-  3. The Beacon Chain uses this seed to shuffle validators into committees and assign proposers each epoch.  
-  4. Problem: the *last revealer* could withhold to bias the result.
-
-- **Verifiable Delay Function (VDF):**  
-  - Adds a *time-locked transformation* `seed' = VDF(seed)` that everyone can verify but no one can compute faster.  
-  - Prevents the final participant from seeing and influencing the outcome in advance.  
-  - VDFs are a proposed enhancement — not yet deployed on Ethereum mainnet.
-
-- **Result:**  
-  - A shared, **unbiased** randomness beacon usable by all nodes.
-
-::: {.callout-note appearance="simple"}
-RANDAO is Ethereum's current production randomness mechanism. The last-revealer bias is considered minor in practice because withholding forfeits rewards and the effect is diluted by hundreds of other contributors. VDFs would close this gap entirely but remain under research.
-:::  
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes that Ethereum's randomness is generated collectively rather than by a single trusted party. It matters here because committee assignment security depends on how randomness is sourced at the protocol level. Emphasize that RANDAO mixes contributions from many validators, while stronger beacon designs aim to reduce grinding or bias.
-
-**Key Points**
-- RANDAO combines validator reveals to build shared protocol randomness.
-- VDF stands for verifiable delay function and represents a way to make randomness harder to bias by forcing time-bound computation.
-- Collective randomness reduces dependence on any single party but still brings incentive and manipulation questions.
-
-**Walkthrough**
-1. Explain that multiple validators contribute reveals rather than one actor choosing the random value.
-2. Show that the protocol combines those reveals into a shared beacon value.
-3. Note that delay-based approaches aim to limit last-mover advantages or grinding opportunities.
-
-**Sources**
-@ethereumdevelopers_blockproposal_2024; @ethereumdevelopers_proofofstakepos_2025
-
-:::
-
-## Global Randomness: RANDAO + VDF Beacons: Image
-```{dot}
-digraph Beacon {
-  rankdir=LR;
-  graph [fontsize=12, nodesep=0.5, ranksep=0.6];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=12];
-  edge [fontname="Helvetica", fontsize=11, arrowsize=0.7];
-
-  C1 [label="Commit (hash r₁)", fillcolor="#e3f2fd"];
-  C2 [label="Commit (hash r₂)", fillcolor="#e3f2fd"];
-  C3 [label="Commit (hash r₃)", fillcolor="#e3f2fd"];
-  Reveal [label="Reveal r₁, r₂, r₃ → XOR", fillcolor="#fff8e1"];
-  Seed [label="Combined seed", fillcolor="#c8e6c9"];
-  VDF [label="VDF(seed) → unbiased output", fillcolor="#bbdefb"];
-
-  {C1 C2 C3} -> Reveal -> Seed -> VDF;
-}
-```
-
-::: {.fragment .fade-in}
-**Key idea:**
-RANDAO + VDF beacons provide **collective**, bias-resistant entropy — the *public dice roll* that keeps PoS selection fair across epochs.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This companion image slide reinforces the protocol-level randomness pipeline visually so students can map the abstract terms onto a sequence. It matters here because the preceding slide is conceptually dense and benefits from a diagrammatic anchor. Emphasize where validator contributions enter, where aggregation happens, and why unpredictability matters.
-
-**Key Points**
-- The diagram should be read as a flow from validator inputs to a shared randomness outcome.
-- The visual reinforces that randomness is protocol-generated, not chosen by a central coordinator.
-- Define beacon here as the shared random value the protocol later uses for assignments.
-
-**Walkthrough**
-1. Start at the validator contributions entering the randomness process.
-2. Follow the aggregation step that produces the shared beacon value.
-3. End with how that beacon influences later validator and committee assignments.
-
-**Sources**
-@ethereumdevelopers_blockproposal_2024; @ethereumdevelopers_proofofstakepos_2025
-
-:::
-
 ## Slots and Epochs
 
 ::: {style="font-size: .80em;"}
@@ -573,11 +365,11 @@ This companion image slide reinforces the protocol-level randomness pipeline vis
 - Missed slots happen — liveness continues through the next proposal.
 - Finality escalates through epoch checkpoints (Casper-FFG).
 - **Per-slot lifecycle:** proposer broadcasts a block (~0–4s), committee
-  attests to it (~4s mark), attestations are BLS-aggregated and included
+  attests to it (~4s mark), attestations are *BLS-aggregated* and included
   in a subsequent slot's block.
 
 ::: {.callout-note appearance="simple"}
-The original wording "most validators attest each slot" is misleading. In practice, the full validator set is divided evenly across the 32 slots of an epoch. Each validator is assigned to exactly one slot per epoch, so only ~1/32 of validators attest in any given slot — not most.
+**Boneh-Lynn-Shacham (BLS)** signature scheme compresses the signatures of the attestors into a single compact signature, which can be verified easily.
 :::
 
 :::
@@ -596,6 +388,148 @@ This slide establishes the cadence of Ethereum PoS by tying validator duties to 
 1. Define a slot as the basic time unit where a proposer may publish a block.
 2. Group several slots into an epoch to show how Ethereum batches larger consensus decisions.
 3. Connect this schedule to later topics such as justified and finalized checkpoints.
+
+**Sources**
+@ethereumdevelopers_blockproposal_2024; @ethereumdevelopers_proofofstakepos_2025
+
+:::
+
+## Validator Selection & Randomness {.smaller}
+::: {style="font-size: .95em;"}
+
+- **Purpose:** prevent predictability or bias in proposer and committee selection.  
+- **Source:** RANDAO — Ethereum's rolling randomness mechanism for validator selection.
+  - In each slot, the proposer includes a `randao_reveal` in the beacon block.
+  - Over time, those proposer reveals update the shared randomness seed used by the consensus layer.
+- **Assignments:**  
+  - The Consensus Layer uses the seed to shuffle validators and assign proposers/committees per slot.  
+  - Selection is weighted by effective balance and fixed only shortly before duties are performed.
+- **Incentives:**  
+  - Missing or withholding a reveal forfeits rewards and only marginally affects the overall result.
+  - Rolling contributions from many slots make the randomness hard to steer in practice.
+
+::: {.callout-note appearance="simple"}
+RANDAO is stake-weighted: each validator's influence on the random seed is proportional to their effective balance (up to 32 ETH per key), so selection probability scales with the amount of ETH staked.
+:::
+:::
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes that validator assignment must be unpredictable enough to resist manipulation while remaining verifiable to the network. It matters here because committee rotation and proposer selection only improve security if participants cannot cheaply game the process. Emphasize that randomness is not decorative here; it is part of Ethereum's defense against targeted influence.
+
+**Key Points**
+- Ethereum uses randomized assignment to determine which validators propose blocks and which join committees.
+- RANDAO is the production mechanism Ethereum uses to keep those assignments hard to predict and hard to bias.
+- Define validator selection as the process of assigning consensus duties to staked participants for a given slot or epoch.
+
+**Walkthrough**
+1. Start with the problem: validator duties must be assigned unpredictably enough to resist targeting or collusion.
+2. Explain that Ethereum solves this with RANDAO, a rolling source of shared randomness updated by block proposers.
+3. Close by connecting that shared seed to proposer selection and committee shuffling in the slots ahead.
+
+**Sources**
+@ethereumdevelopers_proofofstakepos_2025; @ethereumdevelopers_blockproposal_2024
+
+:::
+
+## RANDAO: How the Randomness Is Built {.smaller}
+::: {style="font-size: .76em;"}
+
+::: columns
+::: {.column width="45%"}
+- Each slot's proposer includes a **`randao_reveal`** in the beacon block.
+- That reveal is a **BLS signature on the current epoch number**.
+- The consensus layer **mixes** that reveal into the running RANDAO state.
+- The updated seed is then reused with slot and epoch context to:
+  - select future proposers
+  - shuffle validators into committees
+
+::: {.callout-note appearance="simple" style="font-size: 0.8em;"}
+**Contrast:** some PoS systems use **VRFs** for private per-validator randomness; Ethereum currently uses collective **RANDAO** instead.
+:::
+:::
+::: {.column width="55%"}
+```{dot}
+digraph RandaoFlow {
+  rankdir=LR;
+  graph [bgcolor="transparent", fontsize=12, nodesep=0.35, ranksep=0.55];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica",
+         fontsize=11, color="#9ba8b7", penwidth=1.1];
+  edge  [color="#9ba8b7", arrowsize=0.7, fontname="Helvetica", fontsize=10];
+
+  proposer [label="Current Slot\nProposer", fillcolor="#dbeafe"];
+  reveal   [label="`randao_reveal`\n(BLS-signs current epoch)", fillcolor="#e0f2fe"];
+  mix      [label="Mix Into\nRANDAO State", fillcolor="#fef3c7"];
+  seed     [label="Updated\nRANDAO Seed", fillcolor="#dcfce7"];
+  propnext [label="Select Next\nProposers", fillcolor="#e9d5ff"];
+  comm     [label="Shuffle Validators\nInto Committees", fillcolor="#fde68a"];
+
+  proposer -> reveal -> mix -> seed;
+  seed -> propnext;
+  seed -> comm;
+}
+```
+:::
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the mechanism behind Ethereum's randomness rather than detouring into a general VRF lecture. It matters here because students have already heard that RANDAO exists; now they need to see how proposer reveals become a shared seed that drives later duties.
+
+**Key Points**
+- Each proposer contributes a `randao_reveal` in its beacon block.
+- The reveal is a BLS signature over the current epoch that gets mixed into the running randomness state.
+- The resulting seed is reused by the consensus layer for proposer selection and committee shuffling.
+
+**Walkthrough**
+1. Start with the proposer box and explain that one proposer contributes per slot.
+2. Point to `randao_reveal` and explain that it is the proposer's BLS signature on the current epoch.
+3. Follow the diagram into the running RANDAO state and emphasize that the seed is updated collectively over time.
+4. End on the two outputs: the updated seed helps determine future proposers and committee assignments.
+
+**Sources**
+@ethereumdevelopers_blockproposal_2024; @ethereumdevelopers_proofofstakepos_2025
+
+:::
+
+## Global Randomness: RANDAO + VDF Beacons {.smaller}
+
+::: {style="font-size: .75em;"}
+
+- **Why shared randomness?**
+  - Ethereum needs one deterministic seed that the whole consensus layer can use for proposer selection and committee rotation.
+- **RANDAO's limitation:**
+  - the *last revealer* can withhold its contribution and marginally bias the final seed.
+- **Why this is tolerated in practice:**
+  - withholding forfeits rewards
+  - the effect is diluted by many prior contributions
+- **VDF idea:**
+  - a **Verifiable Delay Function** would add a time-locked step that is easy to verify but impossible to compute early.
+  - that would reduce or eliminate the last-revealer advantage.
+- **Mainnet status:** VDFs are still a proposed improvement, not part of Ethereum mainnet today.
+
+::: {.callout-note appearance="simple"}
+RANDAO is Ethereum's production randomness mechanism today. VDFs are mentioned because they address bias at the margin, not because they are already deployed.
+:::  
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reframes the discussion from mechanism to limitations. It matters here because students now know how RANDAO works and are ready to hear what residual bias remains and why researchers discuss VDFs.
+
+**Key Points**
+- Shared randomness is necessary for consensus-wide duty assignment.
+- RANDAO has a small last-revealer bias rather than perfect unpredictability.
+- VDF stands for verifiable delay function and is a proposed mitigation, not a deployed Ethereum feature.
+
+**Walkthrough**
+1. Start by reminding students that the previous slide explained how the seed is built.
+2. Introduce the remaining limitation: the final contributor can marginally bias the output by withholding.
+3. Close by explaining that VDFs are a research answer to that bias, but not something Ethereum mainnet currently uses.
 
 **Sources**
 @ethereumdevelopers_blockproposal_2024; @ethereumdevelopers_proofofstakepos_2025
@@ -777,7 +711,7 @@ None
 
 - **Parity Multisig Wallet (July 2017):** Hackers exploited a visibility bug in the Parity multisig library contract, stealing ~$31M in ETH from multiple wallets. A second Parity incident in November 2017 accidentally froze over 500,000 ETH when a user triggered a self-destruct on the shared library — a textbook case of code-reuse risk.
 
-- **Beacon Chain Finality Delays (May 2023):** On May 11–12, Ethereum mainnet experienced two finality delays — the first lasting ~25 minutes, the second over an hour. Consensus client bugs (Prysm, Teku) caused validators to go offline, dropping participation below the 2/3 threshold needed for finalization. Blocks continued to be produced (liveness held), and the network self-recovered without intervention. Client diversity was credited as the key reason the outage stayed brief.
+- **Consensus Layer Finality Delays (May 2023):** On May 11–12, Ethereum mainnet experienced two finality delays — the first lasting ~25 minutes, the second over an hour. Consensus client bugs (Prysm, Teku) caused validators to go offline, dropping participation below the 2/3 threshold needed for finalization. Blocks continued to be produced (liveness held), and the network self-recovered without intervention. Client diversity was credited as the key reason the outage stayed brief.
 
 - **Ethereum Classic 51% Attacks (2020):** ETC suffered multiple double-spend attacks where attackers rented enough hash power to reorganize thousands of blocks and reverse exchange deposits. This contrast illustrates why Ethereum's move to PoS — where stake cannot be rented and walked away from — fundamentally changes the attacker's calculus.
 
@@ -875,11 +809,14 @@ None
 
 ## Censorship
 ::: {style="font-size: .65em;"}
-- **Real-world case — OFAC / Tornado Cash (2022–2023):** After the U.S. Treasury sanctioned Tornado Cash in August 2022, the dominant MEV-Boost relay (Flashbots) began filtering out sanctioned transactions. By November 2022, ~77% of relayed blocks excluded those transactions.
-- Censorship occurred at the **relay and builder layer**, not the protocol itself — validators outsource block construction to builders via MEV-Boost, and most builders chose to comply with sanctions.
+- **Real-world case — OFAC / Tornado Cash (2022–2023):** After the U.S. Treasury sanctioned Tornado Cash in August 2022, the dominant relay (Flashbots) began filtering out sanctioned transactions. By November 2022, ~77% of relayed blocks excluded those transactions.
 - **Community response:** Flashbots open-sourced its relay code; non-censoring relays (Ultra Sound, Agnostic, bloXroute) launched. By mid-2023, censored blocks dropped to ~30%. Vitalik Buterin publicly supported treating sustained base-layer censorship as a slashable attack.
 - **Takeaway:** Ethereum's protocol never enforced censorship — sanctioned transactions still reached the chain, just with longer delays. But the episode exposed how **infrastructure centralization** (few relays, few builders) can create soft censorship even in a permissionless system.
 - **Proposed mitigations:** inclusion lists (forcing proposers to include pending transactions), encrypted mempools, and greater relay/builder diversity.
+
+::: {.callout-note appearance="simple" style="font-size: 0.78em;"}
+**Builders** assemble a candidate block from pending transactions, and a  **Relay** passes that block to validators running middleware (MEV-Boost), so they can choose and propose it without seeing all transaction details first.
+:::
 
 :::
 
@@ -898,28 +835,6 @@ None
 
 **Sources**
 @flashbotsltd_flashbots_2025; @u.s.dept.oftreasury_ustreasurysanctions_2022; @l35_mevwatch_2026
-
-:::
-
-## Exercises:
-
-* [Ethereum Security Lab](/assets/labs/ether-sec-micro)
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the lab as the bridge from conceptual understanding to hands-on analysis of Ethereum security issues. It matters here because the lesson has moved from architecture through threat models, and students now need practice applying those models. Emphasize that the exercise is where they test whether they can identify mechanism, assumption, and risk in concrete artifacts.
-
-**Key Points**
-- The lab asks students to apply the lesson's security concepts rather than just repeat definitions.
-- Students should connect observed issues back to consensus, application, or infrastructure assumptions.
-- Define lab expectations clearly as analysis, explanation, and evidence rather than memorization.
-
-**Walkthrough**
-None
-
-**Sources**
-None
 
 :::
 
@@ -952,25 +867,4 @@ None
 
 :::
 
-## Conclusion: Discussion & Reflection
-
-- Which security assurance (cryptography, protocol design, incentives) feels most fragile today?
-- How does PoS change your threat model compared to PoW deployments?
-
-::: {.notes}
-
-**Overall Slide Concept**
-This closing discussion slide establishes reflection as part of technical understanding, not an optional add-on. It matters here because students should leave the lesson able to articulate how PoS changes their mental model of security and operations. Emphasize that the goal is to convert the lesson into concrete judgments and follow-up questions.
-
-**Key Points**
-- The discussion should surface which assumptions students trust least and which operational responses they would change.
-- Reflection helps translate mechanism-level knowledge into design and incident-response instincts.
-- Define threat model briefly as the set of assumptions about adversaries, failures, and trust boundaries.
-
-**Walkthrough**
-None
-
-**Sources**
-@ethereumdevelopers_proofofstakepos_2025; @ethereumdevelopers_ethereumproofofstakeattack_2025
-
-:::
+## References

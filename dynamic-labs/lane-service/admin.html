@@ -139,6 +139,11 @@
         </label>
         <button id="pause-btn">Pause sweeper</button>
         <button id="forensics-btn" style="display:none;">Deploy Forensics Chain</button>
+        <button id="sol-f1-btn" style="display:none;">F1 Solutions: …</button>
+        <button id="sol-f2-btn" style="display:none;">F2 Solutions: …</button>
+        <button id="sol-f3-btn" style="display:none;">F3 Solutions: …</button>
+        <button id="graph-toggle-btn" style="display:none;">Graph Tool: …</button>
+        <button id="graph-rebuild-btn" style="display:none;">Rebuild Graph</button>
         <button id="nuke-btn" class="danger" style="display:none;">Reset Lab</button>
         <span class="msg" id="msg"></span>
       </div>
@@ -223,20 +228,20 @@
       }
 
       function fmtAge(secs){
-        if (secs == null) return "—";
+        if (secs == null) return "--";
         if (secs < 60) return secs + "s";
         if (secs < 3600) return Math.round(secs/60) + "m";
         return (secs/3600).toFixed(1) + "h";
       }
       function fmtAbs(ts){
-        if (!ts) return "—";
+        if (!ts) return "--";
         var d = new Date(ts * 1000);
         return d.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
       }
 
       async function api(path, opts){
         var r = await fetch(API + path, Object.assign({credentials:"same-origin"}, opts || {}));
-        if (r.status === 401) { setMsg("Session expired — re-auth via /instructor/", "error"); throw new Error("auth"); }
+        if (r.status === 401) { setMsg("Session expired -- re-auth via /instructor/", "error"); throw new Error("auth"); }
         return r;
       }
 
@@ -267,7 +272,7 @@
       }
 
       function prettyRouteId(routeId){
-        if (!routeId) return "—";
+        if (!routeId) return "--";
         if (routeId.indexOf("exercise:") === 0) return routeId.slice("exercise:".length);
         if (routeId.indexOf("surface:") === 0) return routeId.slice("surface:".length);
         return routeId;
@@ -295,11 +300,11 @@
           var tr = document.createElement("tr");
           tr.className = "progress-row";
           tr.innerHTML =
-            '<td><strong>' + (p.station || "—") + '</strong></td>' +
-            '<td class="uuid">' + uuid.slice(0, 8) + "…</td>" +
+            '<td><strong>' + (p.station || "--") + '</strong></td>' +
+            '<td class="uuid">' + uuid.slice(0, 8) + "...</td>" +
             '<td>' + p.exercises_visited + "/" + p.exercises_total +
               ' <span class="muted">(' + p.percent + "%)</span></td>" +
-            '<td class="muted">' + (p.last_route || "—") + "</td>" +
+            '<td class="muted">' + (p.last_route || "--") + "</td>" +
             '<td>' + fmtAbs(p.last_seen) + "</td>";
           tr.addEventListener("click", function(){ toggleProgressDetail(uuid, tr); });
           tb.appendChild(tr);
@@ -310,7 +315,7 @@
         document.getElementById("progress-empty").style.display =
           uuids.length ? "none" : "block";
         document.getElementById("progress-summary").textContent =
-          uuids.length + " tracked · " + active + " active in last 10m";
+          uuids.length + " tracked - " + active + " active in last 10m";
       }
 
       function toggleProgressDetail(uuid, rowEl){
@@ -328,7 +333,7 @@
       function _insertDetailRow(uuid, rowEl){
         var detailRow = document.createElement("tr");
         detailRow.className = "progress-detail";
-        detailRow.innerHTML = '<td colspan="5" class="muted">Loading…</td>';
+        detailRow.innerHTML = '<td colspan="5" class="muted">Loading...</td>';
         rowEl.after(detailRow);
         fetch(API + "/progress/" + uuid, {credentials:"same-origin"})
           .then(function(r){ return r.json(); })
@@ -341,8 +346,8 @@
             var timeline = (det.timeline || []).slice().reverse();
             var html = '<td colspan="5">';
             html += '<div style="margin-bottom:6px;font-size:11px;color:var(--muted);">' +
-              'Session: ' + uuid + ' · Station: ' + (det.station || "—") +
-              ' · ' + Object.keys(det.visited || {}).length + '/' + (Object.keys(det.visited || {}).length + (det.unvisited || []).length) + ' exercises</div>';
+              'Session: ' + uuid + ' - Station: ' + (det.station || "--") +
+              ' - ' + Object.keys(det.visited || {}).length + '/' + (Object.keys(det.visited || {}).length + (det.unvisited || []).length) + ' exercises</div>';
             html += '<ul class="progress-timeline">';
             timeline.forEach(function(evt){
               var d = new Date(evt.ts * 1000);
@@ -419,14 +424,14 @@
             progressFragment =
               '<div class="lane-progress">' +
                 '<div class="lane-progress-bar"><span style="width:' + pct + '%"></span></div>' +
-                '<div class="lane-progress-label">' + visitedN + '/' + total + ' · ' + pct + '%</div>' +
+                '<div class="lane-progress-label">' + visitedN + '/' + total + ' - ' + pct + '%</div>' +
                 '<div class="lane-progress-now">now: ' + escapeHtml(nowLabel) + '</div>' +
                 (chipHtml ? '<div class="lane-progress-chips">' + chipHtml + '</div>' : '') +
               '</div>';
           }
           div.innerHTML =
             '<div class="lane-id">' + l.id + '</div>' +
-            '<div class="lane-status">' + (l.status || "stopped") + ' · ' + ageLabel + '</div>' +
+            '<div class="lane-status">' + (l.status || "stopped") + ' - ' + ageLabel + '</div>' +
             claimLine +
             progressFragment +
             '<div class="lane-actions">' +
@@ -460,7 +465,7 @@
                 '<div style="display:flex; align-items:center; gap:8px; min-width:180px;">' +
                   '<div class="lane-progress-bar" style="flex:1; min-width:80px;"><span style="width:' + pct + '%"></span></div>' +
                   '<span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; white-space:nowrap;">' +
-                    (prog.exercises_visited || 0) + '/' + (prog.exercises_total || 0) + ' · ' + pct + '%' +
+                    (prog.exercises_visited || 0) + '/' + (prog.exercises_total || 0) + ' - ' + pct + '%' +
                   '</span>' +
                 '</div>' +
                 '<div class="muted" style="font-size:10px; margin-top:3px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">now: ' +
@@ -468,7 +473,7 @@
                 '</div>' +
               '</td>';
           } else {
-            progressCell = '<td class="muted">—</td>';
+            progressCell = '<td class="muted">--</td>';
           }
           var tr = document.createElement("tr");
           tr.innerHTML =
@@ -498,7 +503,7 @@
             refresh();
           } catch(e){}
         } else if (t.dataset.release) {
-          if (!confirm("Release claim " + t.dataset.release.slice(0,8) + "…?")) return;
+          if (!confirm("Release claim " + t.dataset.release.slice(0,8) + "...?")) return;
           try {
             var r = await api("/claims/" + t.dataset.release, {method:"DELETE"});
             var j = await r.json();
@@ -526,15 +531,16 @@
           var typed = prompt(
             "Deploy Forensics Chain?\n\n" +
             "Replaces the instructor's bitcoin datadir with the\n" +
-            "pre-built 275-block forensics chain. Student lanes\n" +
-            "stay up and reorg to the new chain via P2P gossip\n" +
-            "once the instructor comes back online.\n\n" +
+            "current pre-built 3-part forensics chain (Forensics\n" +
+            "1, 2, and 3: v34 + v35 + v36). Student lanes stay up\n" +
+            "and reorg to it via P2P gossip once the instructor\n" +
+            "comes back online.\n\n" +
             "Type DEPLOY to confirm:"
           );
           if (typed !== "DEPLOY") { setMsg("Deploy cancelled", ""); return; }
           t.disabled = true;
           var fprev = t.textContent;
-          t.textContent = "Deploying…";
+          t.textContent = "Deploying...";
           try {
             var r = await api("/forensics/deploy", {method:"POST"});
             var j = await r.json();
@@ -555,7 +561,7 @@
           if (typed !== "RESET") { setMsg("Reset cancelled", ""); return; }
           t.disabled = true;
           var prevText = t.textContent;
-          t.textContent = "Resetting…";
+          t.textContent = "Resetting...";
           try {
             var r = await api("/nuke", {method:"POST"});
             var j = await r.json();
@@ -568,12 +574,89 @@
         }
       });
 
+      // Per-step student solution toggles (Forensics 1 / 2, independent). Off by default.
+      async function wireSolutionToggles(){
+        var b1 = document.getElementById("sol-f1-btn");
+        var b2 = document.getElementById("sol-f2-btn");
+        var b3 = document.getElementById("sol-f3-btn");
+        if (!b1 || !b2 || !b3) return;
+        b1.style.display = ""; b2.style.display = ""; b3.style.display = "";
+        async function refreshLabels(){
+          try {
+            var j = await (await api("/forensics/show-solutions")).json();
+            b1.dataset.on = j.f1 ? "1" : "0"; b2.dataset.on = j.f2 ? "1" : "0"; b3.dataset.on = j.f3 ? "1" : "0";
+            b1.textContent = "F1 Solutions: " + (j.f1 ? "ON" : "off");
+            b2.textContent = "F2 Solutions: " + (j.f2 ? "ON" : "off");
+            b3.textContent = "F3 Solutions: " + (j.f3 ? "ON" : "off");
+          } catch(e){}
+        }
+        async function toggle(part, btn){
+          var on = btn.dataset.on !== "1";
+          try {
+            var j = await (await api("/forensics/show-solutions", {method:"POST",
+              headers:{"Content-Type":"application/json"}, body: JSON.stringify({part: part, on: on})})).json();
+            setMsg(j.message || (j.success ? "updated" : "failed"), j.success ? "ok" : "error");
+            await refreshLabels();
+          } catch(e){ setMsg("toggle failed: " + e.message, "error"); }
+        }
+        b1.onclick = function(){ toggle("f1", b1); };
+        b2.onclick = function(){ toggle("f2", b2); };
+        b3.onclick = function(){ toggle("f3", b3); };
+        await refreshLabels();
+      }
+
+      // Chain Graph: tool-wide enable toggle (hidden during Forensics 1,
+      // on for Forensics 2) + manual rebuild. Read state comes straight
+      // from the graph app; mutations go through lane-service.
+      async function wireGraphControls(){
+        var tg = document.getElementById("graph-toggle-btn");
+        var rb = document.getElementById("graph-rebuild-btn");
+        if (!tg || !rb) return;
+        tg.style.display = ""; rb.style.display = "";
+        async function refreshGraph(){
+          try {
+            var s = await (await fetch("/labs/bitcoin/graph/api/status",
+                                       {credentials:"same-origin"})).json();
+            tg.dataset.on = s.enabled ? "1" : "0";
+            var detail = s.state === "ready" ? ("@" + s.height)
+                       : (s.state || "empty");
+            tg.textContent = "Graph Tool: " + (s.enabled ? "ON" : "off") +
+                             " (" + detail + ")";
+          } catch(e){ tg.textContent = "Graph Tool: unreachable"; tg.dataset.on = "0"; }
+        }
+        tg.onclick = async function(){
+          var on = tg.dataset.on !== "1";
+          try {
+            var j = await (await api("/graph/enable", {method:"POST",
+              headers:{"Content-Type":"application/json"},
+              body: JSON.stringify({on: on})})).json();
+            setMsg(j.message || (j.success ? "updated" : "failed"), j.success ? "ok" : "error");
+          } catch(e){ setMsg("toggle failed: " + e.message, "error"); }
+          refreshGraph();
+        };
+        rb.onclick = async function(){
+          if (!confirm("Rebuild the transaction graph from the current chain?\n\n" +
+                       "Runs in the background (the graph page shows progress); " +
+                       "the tool serves a 'rebuilding' notice meanwhile.")) return;
+          try {
+            var j = await (await api("/graph/rebuild", {method:"POST"})).json();
+            setMsg(j.message || (j.success ? "rebuild started" : "rebuild failed"),
+                   j.success ? "ok" : "error");
+          } catch(e){ setMsg("rebuild failed: " + e.message, "error"); }
+          refreshGraph();
+        };
+        await refreshGraph();
+        setInterval(refreshGraph, 15000);
+      }
+
       if (LAB === "bitcoin") {
         document.getElementById("nuke-btn").style.display = "";
         document.getElementById("forensics-btn").style.display = "";
         var fp = document.getElementById("forensics-panel");
         if (fp) fp.style.display = "";
         wireForensicsSolution();
+        wireSolutionToggles();
+        wireGraphControls();
       }
 
       function escapeHtml(s){
@@ -634,7 +717,7 @@
         var loaded = false;
         det.addEventListener("toggle", async function(){
           if (!det.open || loaded) return;
-          body.textContent = "Loading…";
+          body.textContent = "Loading...";
           try {
             var r = await fetch(API + "/forensics/solution", {credentials:"same-origin"});
             if (!r.ok) { body.textContent = "Failed to load solution (HTTP " + r.status + ")."; return; }

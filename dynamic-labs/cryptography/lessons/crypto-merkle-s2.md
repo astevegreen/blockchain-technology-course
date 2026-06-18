@@ -4,4 +4,5 @@
 
 **Available Commands:**
 - `get_proof <A|B>` - Get the transaction data and sibling hashes
+- `sha256 <transaction text>` - Hash the transaction under review
 - `hash_pair <hash_L> <hash_R>` - Combine hashes manually without spaces

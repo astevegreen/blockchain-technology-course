@@ -5,10 +5,7 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     HLF_AUTO_START_NETWORK=1 \
-    HLF_STOP_NETWORK_ON_EXIT=1 \
-    XTERM_VERSION=5.5.0 \
-    XTERM_ADDON_FIT_VERSION=0.10.0 \
-    XTERM_ADDON_WEB_LINKS_VERSION=0.11.0
+    HLF_STOP_NETWORK_ON_EXIT=1
 
 WORKDIR /opt/hlf
 
@@ -39,11 +36,7 @@ COPY shared_instructor_auth/ /opt/hlf/shared_instructor_auth/
 COPY chaincode_overrides/ /opt/hlf/chaincode_overrides/
 COPY docs/STUDENT_GUIDE.md /opt/hlf/docs/STUDENT_GUIDE.md
 
-RUN mkdir -p /opt/hlf_vendor && \
-    curl -fsSL "https://cdn.jsdelivr.net/npm/@xterm/xterm@${XTERM_VERSION}/css/xterm.css" -o /opt/hlf_vendor/xterm.css && \
-    curl -fsSL "https://cdn.jsdelivr.net/npm/@xterm/xterm@${XTERM_VERSION}/lib/xterm.js" -o /opt/hlf_vendor/xterm.js && \
-    curl -fsSL "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@${XTERM_ADDON_FIT_VERSION}/lib/addon-fit.js" -o /opt/hlf_vendor/xterm-addon-fit.js && \
-    curl -fsSL "https://cdn.jsdelivr.net/npm/@xterm/addon-web-links@${XTERM_ADDON_WEB_LINKS_VERSION}/lib/addon-web-links.js" -o /opt/hlf_vendor/xterm-addon-web-links.js
+COPY vendor/xterm/ /opt/hlf_vendor/
 
 RUN arch="$(uname -m)" && \
     case "$arch" in \

@@ -7,16 +7,35 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ethers } from 'ethers';
 import BeaconChainLabABI from '../contracts/BeaconChainLab.json';
-import { ChainSearch } from '../components/ChainSearch';
+import { ChainExplorer } from '../components/ChainExplorer';
+import { MempoolTable } from '../components/MempoolTable';
+import { rpcClient } from '../lib/RpcClient';
+import { fetchSessionState, patchSessionNamespace } from '../lib/sessionState';
 
 const SESSION_STATE_LABELS = { 0: 'LOBBY', 1: 'ACTIVE', 2: 'FINISHED' };
 
+// Human-proposer (MEV/PBS) duty: this is a soft UI countdown. The conductor is
+// authoritative and also waits for already-pending proposal transactions so the
+// classroom delayed-mining window does not race the student click.
+const PROPOSAL_WINDOW_MS = 15000;
+const FALLBACK_BUNDLE_LABELS = [
+  { name: 'Vanilla block', emoji: '📦', desc: 'Only the pending transactions. Safe, modest reward.' },
+  { name: 'Arbitrage bundle', emoji: '🔁', desc: 'Bundle a DEX arbitrage. Higher value to the proposer.' },
+  { name: 'Sandwich bundle', emoji: '🥪', desc: 'Bundle a sandwich trade. Most extractive — usually the biggest bid.' },
+];
+const PROPOSER_TX_OPTIONS = {
+  gasLimit: 15_000_000n,
+  // If the conductor fallback is already pending, this lets the student's
+  // proposal-choice tx sort first in the delayed-mining block.
+  gasPrice: ethers.parseUnits('2', 'gwei'),
+};
+
 export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
-  // Use wallet's provider when available so reads hit the same network as writes (join, attest, etc.)
+  // Only user-initiated write helpers use this provider. Periodic lab state comes
+  // from the instructor cache so student browsers do not read from /rpc.
   const readProvider = wallet?.signer?.provider ?? provider;
 
   const [config, setConfig] = useState(null);
-  const [contract, setContract] = useState(null);
   const [sessionState, setSessionState] = useState(0);
   const [committee, setCommittee] = useState([]);
   const [committeeSize, setCommitteeSize] = useState(8);
@@ -30,6 +49,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   const [activityLog, setActivityLog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [cacheWarning, setCacheWarning] = useState('');
   const [txPending, setTxPending] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
   const [stakeAmount, setStakeAmount] = useState('32');
@@ -40,6 +60,10 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   const [selectedValidator, setSelectedValidator] = useState(null); // address
   const [blockDetailData, setBlockDetailData] = useState(null); // { attestations, slashEvents }
   const [blockSlashCounts, setBlockSlashCounts] = useState(new Map()); // blockIndex -> count
+  const [blockAttestations, setBlockAttestations] = useState(new Map()); // blockIndex -> address[]
+  const [validatorAttestations, setValidatorAttestations] = useState(new Map()); // lower address -> [{ blockIndex, slot }]
+  const [blockSlashEventsByBlock, setBlockSlashEventsByBlock] = useState(new Map()); // blockIndex -> slashEvents[]
+  const [validatorSlashEventsByValidator, setValidatorSlashEventsByValidator] = useState(new Map()); // lower address -> slashEvents[]
   const [blockIndexToEthBlock, setBlockIndexToEthBlock] = useState(new Map()); // blockIndex -> { blockNumber, blockHash }
   const [blocksPerEpoch, setBlocksPerEpoch] = useState(4);
   const [poolSize, setPoolSize] = useState(64);
@@ -50,6 +74,8 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   const [committeeForSlot, setCommitteeForSlot] = useState(null); // { epoch, slotIndex, members }
   const [pendingSlashes, setPendingSlashes] = useState([]); // addresses with pending slash
   const [pendingSlashEvidence, setPendingSlashEvidence] = useState(new Map()); // addr -> { reason, blockIndex, slot, expectedHash, attestedHash, firstBlock, secondBlock }
+  const [processingSlash, setProcessingSlash] = useState(null); // addr currently being reported (drives the per-row "Reporting…" disabled state)
+  const [locallySlashed, setLocallySlashed] = useState(() => new Set()); // addrs to drop from the pending list the instant our report confirms — the shared-cache refresh lags ~1.5s behind the write
   const [validatorDetailData, setValidatorDetailData] = useState(null); // { attestedBlocks, proposedCount, slashEvents }
   const [botWrongHashChance, setBotWrongHashChance] = useState(5);
   const [botDoubleVoteChance, setBotDoubleVoteChance] = useState(10);
@@ -68,31 +94,43 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   const [taskCompleted, setTaskCompleted] = useState(new Set());
   const [userExited, setUserExited] = useState(false); // Fetched directly so Rejoin shows even if not in committee stats
   const [userInPool, setUserInPool] = useState(false);  // contract.inPool - definitive "can attest" check (exited users have inPool=false)
-  const taskStorageKey = config?.contractAddress ? `beacon-lab-tasks-${config.contractAddress.toLowerCase()}` : null;
+  const [proposal, setProposal] = useState(null); // open human-proposer slot: { pending, proposer, slot, options:[bn,bn,bn], detectedAtMs }
+  const [proposalNow, setProposalNow] = useState(0); // ticking clock driving the countdown
+  const [proposalTxState, setProposalTxState] = useState(null); // { status, choice, label, hash, error }
+  const blocksRef = useRef([]);
+  const explorerRef = useRef(null);
+  const taskProgressLoadedRef = useRef(false);
+  // With auto-evict-on-join, a human can always take a seat while a session is open,
+  // even when bots fill the pool. The old "pool full" UI gates are obsolete, so treat
+  // the pool as always having room for a human during a LOBBY/ACTIVE session.
+  const poolHasRoom = sessionState === 0 || sessionState === 1;
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
 
   useEffect(() => {
-    if (!taskStorageKey) return;
-    try {
-      const s = localStorage.getItem(taskStorageKey);
-      const stored = s ? new Set(JSON.parse(s)) : new Set();
-      setTaskCompleted((prev) => new Set([...prev, ...stored]));
-    } catch (_) {}
-  }, [taskStorageKey]);
+    let cancelled = false;
+    fetchSessionState()
+      .then((data) => {
+        if (cancelled) return;
+        const items = data?.state?.beacon?.taskCompleted;
+        setTaskCompleted(new Set(Array.isArray(items) ? items : []));
+        taskProgressLoadedRef.current = true;
+      })
+      .catch(() => { taskProgressLoadedRef.current = true; });
+    return () => { cancelled = true; };
+  }, []);
 
   const markTaskComplete = useCallback((taskId) => {
     setTaskCompleted((prev) => {
       const next = new Set(prev);
       next.add(taskId);
+      if (taskProgressLoadedRef.current) {
+        patchSessionNamespace('beacon', { taskCompleted: [...next] }).catch(() => {});
+      }
       return next;
     });
   }, []);
-
-  useEffect(() => {
-    if (!taskStorageKey || taskCompleted.size === 0) return;
-    try {
-      localStorage.setItem(taskStorageKey, JSON.stringify([...taskCompleted]));
-    } catch (_) {}
-  }, [taskStorageKey, taskCompleted]);
 
   const isInstructor = wallet?.address && instructor && wallet.address.toLowerCase() === instructor.toLowerCase();
   const isCommitteeMember = committee.some((c) => c.toLowerCase() === wallet?.address?.toLowerCase());
@@ -125,17 +163,26 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     );
     if (userCommitteeIndex < 0) return [];
     return blocks.filter((b) => {
-      const blockEpoch = Math.floor(b.index / blocksPerEpoch) + 1;
+      const blockEpoch = b.epoch ?? (Math.floor(b.index / blocksPerEpoch) + 1);
       if (blockEpoch !== epochCommittees.epoch) return false;
       const committeeIndex = (b.slot - 1) % committeesPerEpoch;
-      return committeeIndex === userCommitteeIndex;
-    }).slice(-2); // last 2 blocks user can attest to
-  }, [blocks, epochCommittees, wallet?.address, blocksPerEpoch, committeesPerEpoch]);
+      if (committeeIndex !== userCommitteeIndex) return false;
+      // Drop slots that have concluded (justified/finalized) or that the user already
+      // voted on — those are no longer actionable, so they shouldn't sit in the dropdown.
+      if (b.justified || b.finalized) return false;
+      if (getAttested(wallet.address, b.index)) return false;
+      return true;
+    }).slice(-4); // remaining recent slots the user can still attest to
+  }, [blocks, epochCommittees, wallet?.address, blocksPerEpoch, committeesPerEpoch, hasAttestedMap]);
 
   // Pending slashes filtered to only those in blocks not yet finalized (or currently being justified)
   const filteredPendingSlashes = useMemo(() => {
     return pendingSlashes.filter((addr) => {
-      const ev = pendingSlashEvidence.get(addr);
+      // Drop validators already confirmed slashed (from the cache/poll) or optimistically
+      // slashed by our own just-confirmed report — so the row vanishes immediately on click
+      // even though the shared-cache refresh trails the write by ~1.5s.
+      if (locallySlashed.has(addr) || getStats(addr)?.slashed) return false;
+      const ev = pendingSlashEvidence.get(addr) ?? pendingSlashEvidence.get(addr.toLowerCase());
       if (!ev) return true; // keep if no evidence (shouldn't happen)
       const finalizedCutoff = lastFinalizedIndex != null ? lastFinalizedIndex : -1;
       if (ev.reason === 1) {
@@ -146,7 +193,18 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
       }
       return true;
     });
-  }, [pendingSlashes, pendingSlashEvidence, lastFinalizedIndex]);
+  }, [pendingSlashes, pendingSlashEvidence, lastFinalizedIndex, validatorStats, locallySlashed]);
+
+  // Keep the optimistic-slashed set bounded: once a validator leaves the on-chain pending
+  // list (conductor rotated it out / cache caught up), drop it from the local override.
+  useEffect(() => {
+    setLocallySlashed((prev) => {
+      if (prev.size === 0) return prev;
+      const pending = new Set(pendingSlashes);
+      const next = new Set([...prev].filter((a) => pending.has(a)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [pendingSlashes]);
 
   // Proposer selection stats: stake share vs actual proposal frequency (for educational comparison)
   const proposerStats = useMemo(() => {
@@ -210,214 +268,174 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   }, []);
 
   const fetchData = useCallback(async () => {
-    if (!contract || !readProvider) return;
-    try {
-      // Check that a contract exists at this address (0x = no contract / wrong network)
-      const addr = await contract.getAddress();
-      const code = await readProvider.getCode(addr);
-      if (!code || code === '0x' || code === '0x0') {
-        setError(`No BeaconChainLab contract at ${addr}. Connect to the correct network (e.g. local Hardhat node) and ensure the contract is deployed. Run: npm run deploy:beacon-lab`);
-        setLoading(false);
-        return;
-      }
-      const baseCalls = [
-        contract.getSessionState(),
-        contract.getCommittee(),
-        contract.getCommitteeSize(),
-        contract.totalStaked(),
-        contract.getQuorumThreshold(),
-        contract.getBlocksLength(),
-        contract.currentEpoch(),
-        contract.currentSlot(),
-        contract.lastFinalizedIndex(),
-        contract.instructor(),
-        contract.blocksPerEpoch ? contract.blocksPerEpoch() : Promise.resolve(4),
-      ];
-      // Optional calls for upgraded contract (old deployments lack these; catch to avoid revert)
-      const safeCall = async (fn, fallback) => {
-        try {
-          return await (typeof fn === 'function' ? fn() : fn);
-        } catch {
-          return fallback;
-        }
-      };
-      const [pSize, vpc, reqHuman, cpe, wrongCh, dvCh, inactPen] = await Promise.all([
-        safeCall(() => contract.getPoolSize(), 64),
-        safeCall(() => contract.validatorsPerCommittee(), 8),
-        safeCall(() => contract.requireHumanAttestation(), false),
-        safeCall(() => contract.committeesPerEpoch(), 8),
-        safeCall(() => contract.botWrongHashChance(), 5),
-        safeCall(() => contract.botDoubleVoteChance(), 10),
-        safeCall(() => contract.inactivityPenaltyEnabled(), false),
-      ]);
-      const all = await Promise.all(baseCalls);
-      const [state, committeeList, size, total, quorum, blocksLen, epoch, slot, lastFinal, inst, bpe] = all;
+    if (!config?.contractAddress) return;
 
-      setSessionState(Number(state));
-      setCommittee(committeeList || []);
-      setCommitteeSize(Number(size));
-      setTotalStaked(ethers.formatEther(total));
-      setQuorumThreshold(ethers.formatEther(quorum));
-      setCurrentEpoch(Number(epoch));
-      setCurrentSlot(Number(slot));
-      setLastFinalizedIndex(Number(blocksLen) > 0 ? Number(lastFinal) : null);
-      setInstructor(inst);
-      setBlocksPerEpoch(Number(bpe) || 4);
-      setPoolSize(Number(pSize) || 64);
-      const vpcNum = Number(vpc) || 8;
+    // ----- Shared-cache fast path (RPC fan-in) --------------------------------
+    // The instructor's lab-api polls the node once and serves a JSON snapshot of the
+    // shared chain state at /beacon-state. Consume it so 30 students don't each re-read
+    // the whole committee + blocks from the node. Background refreshes never fall back to
+    // direct RPC; if the cache is stale or unavailable, keep showing the last UI state.
+    const fetchSharedBeaconState = async () => {
+      const base = ((typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/').replace(/\/$/, '');
+      for (const url of [base + '/beacon-state', base + '/lab-api/beacon/state']) {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (j && j.ok && Array.isArray(j.blocks)) return j;
+        } catch { /* try next url */ }
+      }
+      return null;
+    };
+    const applyBeaconSnapshot = (s) => {
+      const cacheStale = !!s.cache?.stale || (s.ageMs != null && s.ageMs > 15000);
+      setCacheWarning(cacheStale ? `Beacon cache is stale (${((s.ageMs || 0) / 1000).toFixed(1)}s old); showing last cached state.` : '');
+      setSessionState(Number(s.sessionState));
+      setCommittee(s.committee || []);
+      setCommitteeSize(Number(s.committeeSize));
+      setTotalStaked(s.totalStaked);
+      setQuorumThreshold(s.quorumThreshold);
+      setCurrentEpoch(Number(s.currentEpoch));
+      setCurrentSlot(Number(s.currentSlot));
+      setLastFinalizedIndex(s.lastFinalizedIndex);
+      setInstructor(s.instructor);
+      setBlocksPerEpoch(Number(s.blocksPerEpoch) || 4);
+      setPoolSize(Number(s.poolSize) || 64);
+      const vpcNum = Number(s.validatorsPerCommittee) || 8;
       setValidatorsPerCommittee(vpcNum);
       setValidatorsPerCommitteeInput(String(vpcNum));
-      setRequireHumanAttestation(!!reqHuman);
-      setCommitteesPerEpoch(Number(cpe) || 8);
-      setBotWrongHashChance(Number(wrongCh) ?? 5);
-      setBotDoubleVoteChance(Number(dvCh) ?? 10);
-      setInactivityPenaltyEnabled(!!inactPen);
-
-      const blockInfos = [];
-      let useOldBlockFormat = false;
-      for (let i = 0; i < Number(blocksLen); i++) {
-        try {
-          const info = await contract.getBlockInfo(i);
-          const hasHumanCount = info.length >= 9;
-          blockInfos.push({
-            index: i,
-            proposer: info[0],
-            blockHash: info[1],
-            parentHash: info[2],
-            slot: Number(info[3]),
-            attestationCount: Number(info[4]),
-            attestationStake: ethers.formatEther(info[5]),
-            humanAttestationCount: hasHumanCount ? Number(info[6]) : 0,
-            justified: hasHumanCount ? info[7] : info[6],
-            finalized: hasHumanCount ? info[8] : info[7],
-          });
-        } catch (e) {
-          if (e.code !== 'BAD_DATA' && e.info?.code !== 'BAD_DATA') throw e;
-          let raw = e.data ?? e.value;
-          if (!raw || raw.length < 130) {
-            const match = String(e.message || e).match(/value="(0x[a-fA-F0-9]+)"/);
-            if (match) raw = match[1];
-          }
-          if (!raw || raw.length < 130) {
-            raw = await readProvider.call({
-              to: await contract.getAddress(),
-              data: contract.interface.encodeFunctionData('getBlockInfo', [i]),
-            });
-          }
-          if (raw && raw.length >= 130) {
-            useOldBlockFormat = true;
-            const decoded = ethers.AbiCoder.defaultAbiCoder().decode(
-              ['address', 'uint256', 'uint256', 'bool', 'bool'],
-              raw
-            );
-            blockInfos.push({
-              index: i,
-              proposer: decoded[0],
-              blockHash: null,
-              parentHash: null,
-              slot: i + 1,
-              attestationCount: Number(decoded[1]),
-              attestationStake: ethers.formatEther(decoded[2]),
-              justified: decoded[3],
-              finalized: decoded[4],
-            });
-          } else {
-            throw e;
-          }
-        }
-      }
-      setUseOldBlockFormat(useOldBlockFormat);
-      setOldFormatWarning(useOldBlockFormat ? 'Contract uses old format. Redeploy for slashing features: npm run deploy:beacon-lab' : null);
-      setError(null);
-      setBlocks(blockInfos);
-
-      // Map each Beacon block to the real Ethereum chain block that contains its propose tx
-      const ethBlockMap = new Map();
-      try {
-        const blockProposedEvents = await contract.queryFilter(contract.filters.BlockProposed());
-        const blockNumbers = new Set();
-        for (const ev of blockProposedEvents) {
-          const blockIndex = Number(ev.args[0]);
-          const ethBlockNumber = ev.blockNumber;
-          blockNumbers.add(ethBlockNumber);
-          ethBlockMap.set(blockIndex, { blockNumber: ethBlockNumber });
-        }
-        for (const bn of blockNumbers) {
-          try {
-            const ethBlock = await readProvider.getBlock(bn);
-            if (ethBlock?.hash) {
-              for (const [idx, data] of ethBlockMap) {
-                if (data.blockNumber === bn) ethBlockMap.set(idx, { ...data, blockHash: ethBlock.hash });
-              }
-            }
-          } catch (_) {}
-        }
-        setBlockIndexToEthBlock(ethBlockMap);
-      } catch (_) {
-        setBlockIndexToEthBlock(new Map());
-      }
-
-      if (blockInfos.length > 0) {
-        setLastProposer(blockInfos[blockInfos.length - 1].proposer);
-      }
-
+      setRequireHumanAttestation(!!s.requireHumanAttestation);
+      setCommitteesPerEpoch(Number(s.committeesPerEpoch) || 8);
+      setBotWrongHashChance(Number(s.botWrongHashChance));
+      setBotDoubleVoteChance(Number(s.botDoubleVoteChance));
+      setInactivityPenaltyEnabled(!!s.inactivityPenaltyEnabled);
+      setUseOldBlockFormat(false);
+      setOldFormatWarning(null);
+      const blks = s.blocks || [];
+      setBlocks(blks);
+      if (blks.length > 0) setLastProposer(blks[blks.length - 1].proposer);
+      const ethMap = new Map();
+      for (const [k, v] of Object.entries(s.blockIndexToEthBlock || {})) ethMap.set(Number(k), v);
+      setBlockIndexToEthBlock(ethMap);
+      const blockAtt = new Map();
+      for (const [k, v] of Object.entries(s.blockAttestations || {})) blockAtt.set(Number(k), v || []);
+      setBlockAttestations(blockAtt);
+      const validatorAtt = new Map();
+      for (const [k, v] of Object.entries(s.validatorAttestations || {})) validatorAtt.set(String(k).toLowerCase(), v || []);
+      setValidatorAttestations(validatorAtt);
+      const slashCounts = new Map();
+      for (const [k, v] of Object.entries(s.blockSlashCounts || {})) slashCounts.set(Number(k), Number(v));
+      setBlockSlashCounts(slashCounts);
+      const slashByBlock = new Map();
+      for (const [k, v] of Object.entries(s.blockSlashEvents || {})) slashByBlock.set(Number(k), v || []);
+      setBlockSlashEventsByBlock(slashByBlock);
+      const slashByValidator = new Map();
+      for (const [k, v] of Object.entries(s.validatorSlashEvents || {})) slashByValidator.set(String(k).toLowerCase(), v || []);
+      setValidatorSlashEventsByValidator(slashByValidator);
+      setEpochCommittees(s.epochCommittees || null);
+      setCommitteeForSlot(s.committeeForSlot || null);
+      setPendingSlashes(s.pendingSlashes || []);
+      const evidence = new Map();
+      for (const [addr, ev] of Object.entries(s.pendingSlashEvidence || {})) evidence.set(addr.toLowerCase(), ev);
+      setPendingSlashEvidence(evidence);
+      setActivityLog(s.recentActivity || []);
       const stats = new Map();
-      const attested = new Map();
-      for (const addr of committeeList || []) {
-        const [stake, isBot, isSlashed] = await contract.getValidatorStats(addr);
-        let exited = false;
-        try { exited = await contract.exited(addr); } catch (_) {}
-        const entry = { stake: ethers.formatEther(stake), isBot, slashed: isSlashed, exited };
-        stats.set(addr, entry);
-        stats.set(addr.toLowerCase(), entry); // support both formats for lookup
-        if (Number(blocksLen) > 0) {
-          const lastIdx = Number(blocksLen) - 1;
-          const hasAtt = await contract.hasAttested(addr, lastIdx);
-          attested.set(`${addr}-${lastIdx}`, hasAtt);
-          attested.set(`${addr.toLowerCase()}-${lastIdx}`, hasAtt);
-        }
-      }
-      if (wallet?.address && Number(blocksLen) > 0) {
-        for (let j = 0; j < Number(blocksLen); j++) {
-          const hasAtt = await contract.hasAttested(wallet.address, j);
-          attested.set(`${wallet.address}-${j}`, hasAtt);
-          attested.set(`${wallet.address.toLowerCase()}-${j}`, hasAtt);
-        }
+      for (const v of Object.values(s.validatorStats || {})) {
+        const entry = { stake: v.stake, isBot: v.isBot, slashed: v.slashed, exited: v.exited };
+        stats.set(v.address, entry);
+        stats.set(v.address.toLowerCase(), entry);
       }
       setValidatorStats(stats);
+      const attested = new Map();
+      if (s.lastIdx >= 0) {
+        for (const v of Object.values(s.validatorStats || {})) {
+          const had = s.committeeAttestedLast ? s.committeeAttestedLast[v.address.toLowerCase()] : undefined;
+          if (had !== undefined) {
+            attested.set(`${v.address}-${s.lastIdx}`, had);
+            attested.set(`${v.address.toLowerCase()}-${s.lastIdx}`, had);
+          }
+        }
+      }
+      for (const [blockIndex, addresses] of blockAtt) {
+        for (const addr of addresses) {
+          attested.set(`${addr}-${blockIndex}`, true);
+          attested.set(`${addr.toLowerCase()}-${blockIndex}`, true);
+        }
+      }
+      return attested;
+    };
+    const applyWalletStateFromSnapshot = (s, attested) => {
       setHasAttestedMap(attested);
-
-      // Fetch current user's inPool and exited status - use contract + stats fallback (stats come from committee iteration)
-      if (wallet?.address && contract) {
-        try {
-          const [inPoolVal, exitedVal] = await Promise.all([
-            contract.inPool(wallet.address),
-            contract.exited(wallet.address),
-          ]);
-          // Fallback: stats from committee iteration may have exited before direct call (e.g. RPC caching)
-          const statsEntry = stats.get(wallet.address) ?? stats.get(wallet.address?.toLowerCase?.());
-          const exitedFromStats = !!statsEntry?.exited;
-          const stakeZero = statsEntry && parseFloat(statsEntry.stake || '0') === 0;
-          const isExited = !!exitedVal || exitedFromStats || (stakeZero && !!statsEntry);
-          const isInPool = !!inPoolVal && !isExited;
-          setUserExited(isExited);
-          setUserInPool(isInPool);
-        } catch (_) {
-          const statsEntry = stats.get(wallet.address) ?? stats.get(wallet.address?.toLowerCase?.());
-          setUserExited(!!statsEntry?.exited);
-          setUserInPool(false);
+      if (wallet?.address) {
+        const walletKey = wallet.address.toLowerCase();
+        const statsEntry = (s.validatorStats || {})[walletKey];
+        const exitedFromEvent = !!(s.exitedValidators || {})[walletKey];
+        const slashedFromEvent = !!(s.slashedValidators || {})[walletKey];
+        const exitedFromStats = !!statsEntry?.exited;
+        const stakeZero = statsEntry && parseFloat(statsEntry.stake || '0') === 0;
+        const isExited = exitedFromEvent || exitedFromStats || (stakeZero && !!statsEntry);
+        const inPool = (s.committee || []).some((addr) => addr?.toLowerCase() === walletKey);
+        setUserExited(isExited);
+        setUserInPool(!!inPool && !isExited && !statsEntry?.slashed && !slashedFromEvent);
+        const p = s.proposal;
+        if (p?.pending && p.proposer?.toLowerCase() === walletKey) {
+          setProposal((prev) => {
+            const next = {
+              pending: true,
+              proposer: p.proposer,
+              slot: Number(p.slot),
+              optionCount: Math.max(1, Math.min(3, Number(p.optionCount || 3))),
+              options: (p.options || []).map((v) => BigInt(v)),
+              roots: p.roots || [],
+              bundles: Array.isArray(p.bundles) ? p.bundles : [],
+              bundleSource: p.bundleSource || null,
+              bundleUpdatedAt: p.bundleUpdatedAt || null,
+              detectedAtMs: Number(p.detectedAt || Date.now()),
+            };
+            if (prev?.pending && prev.proposer === next.proposer && prev.slot === next.slot) return { ...next, detectedAtMs: prev.detectedAtMs };
+            return next;
+          });
+        } else {
+          setProposal(null);
         }
       } else {
         setUserInPool(false);
         setUserExited(false);
+        setProposal(null);
       }
+      setContractSupportsReset(true);
+    };
 
-      // Check if contract has resetSession (sessionId was added in same update)
+    try {
+      // Use the shared snapshot only. If it is absent, leave the existing UI state in place.
+      const snap = await fetchSharedBeaconState();
+      if (!snap) {
+        if (blocksRef.current.length > 0) {
+          setCacheWarning('Beacon cache unavailable; showing last cached state.');
+          setError(null);
+        } else {
+          setCacheWarning('');
+          setError('Waiting for Beacon state cache...');
+        }
+        setLoading(false);
+        return;
+      }
       try {
-        await contract.sessionId();
-        setContractSupportsReset(true);
-      } catch {
-        setContractSupportsReset(false);
+        const attested = applyBeaconSnapshot(snap);
+        applyWalletStateFromSnapshot(snap, attested);
+        setError(null);
+        setLoading(false);
+        return;
+      } catch (snapErr) {
+        console.warn('[beacon] snapshot apply failed:', snapErr?.message);
+        if (blocksRef.current.length > 0) {
+          setCacheWarning('Beacon cache apply failed; showing last cached state.');
+          setError(null);
+        } else {
+          setError('Beacon cache is unavailable. Waiting for the instructor cache to refresh.');
+        }
+        setLoading(false);
+        return;
       }
     } catch (e) {
       const isBadData = e?.code === 'BAD_DATA' || e?.info?.code === 'BAD_DATA';
@@ -430,34 +448,50 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     } finally {
       setLoading(false);
     }
-  }, [contract, readProvider, wallet?.address]);
+  }, [config?.contractAddress, wallet?.address]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const cfg = await fetchConfig();
-      if (cancelled || !cfg?.contractAddress || !readProvider) return;
-      const c = new ethers.Contract(cfg.contractAddress, BeaconChainLabABI, readProvider);
-      setContract(c);
+      if (cancelled) return;
+      if (!cfg?.contractAddress) setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [readProvider, fetchConfig]);
+  }, [fetchConfig]);
 
   useEffect(() => {
-    if (!contract) return;
+    if (!config?.contractAddress) return;
+    // 4s (was 2s): with 30 students on a shared node, halving the poll rate halves node load.
+    // Pause entirely while the tab is hidden — a backgrounded student tab then costs the
+    // shared node nothing, and refreshes immediately when the student returns.
+    let iv = null;
+    const start = () => { if (!iv) iv = setInterval(fetchData, 4000); };
+    const stop = () => { if (iv) { clearInterval(iv); iv = null; } };
+    const onVis = () => {
+      if (typeof document !== 'undefined' && document.hidden) stop();
+      else { fetchData(); start(); }
+    };
     fetchData();
-    const iv = setInterval(fetchData, 2000);
-    return () => clearInterval(iv);
-  }, [contract, fetchData]);
+    if (typeof document === 'undefined' || !document.hidden) start();
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVis);
+    return () => { stop(); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVis); };
+  }, [config?.contractAddress, fetchData]);
 
   useEffect(() => {
-    if (attestableBlocks.length > 0) {
-      const validIndices = new Set(attestableBlocks.map((b) => b.index));
-      if (!validIndices.has(attestBlockIndex)) {
-        setAttestBlockIndex(attestableBlocks[attestableBlocks.length - 1].index);
-      }
+    if (attestableBlocks.length === 0) return;
+    const validIndices = new Set(attestableBlocks.map((b) => b.index));
+    // Auto-target the freshest block the user hasn't attested yet — that's the one
+    // held just below quorum where their vote can be the deciding (pivotal) one.
+    const freshestUnattested = [...attestableBlocks].reverse()
+      .find((b) => !getAttested(wallet?.address, b.index));
+    if (!validIndices.has(attestBlockIndex)) {
+      setAttestBlockIndex((freshestUnattested || attestableBlocks[attestableBlocks.length - 1]).index);
+    } else if (freshestUnattested && getAttested(wallet?.address, attestBlockIndex) && freshestUnattested.index !== attestBlockIndex) {
+      // Current target already attested — advance to the next pivotal block.
+      setAttestBlockIndex(freshestUnattested.index);
     }
-  }, [attestableBlocks, attestBlockIndex]);
+  }, [attestableBlocks, attestBlockIndex, hasAttestedMap, wallet?.address]);
 
   // URL state: ?block=5 or ?validator=0x... for bookmarkable drill-down (block takes priority)
   useEffect(() => {
@@ -477,341 +511,167 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     }
   }, [searchParams, blocks.length, committee]);
   const updateUrlForDrillDown = useCallback((block, validator) => {
-    const next = new URLSearchParams(searchParams);
+    const next = new URLSearchParams(window.location.search);
     next.set('view', 'beacon-lab'); // Preserve view so URL change doesn't navigate away
     if (block != null) next.set('block', String(block));
     else next.delete('block');
     if (validator) next.set('validator', validator);
     else next.delete('validator');
     setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [setSearchParams]);
 
-  // Fetch block detail when a block is selected (drill-down)
+  const openExplorerRoute = useCallback((view, id, { scroll = true } = {}) => {
+    if (id == null || id === '') return;
+    const next = new URLSearchParams(window.location.search);
+    next.set('view', 'beacon-lab');
+    next.set('ex', `${view}:${id}`);
+    window.history.replaceState({}, '', `${window.location.pathname}?${next.toString()}`);
+    window.dispatchEvent(new Event('popstate'));
+    if (scroll) {
+      setTimeout(() => explorerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+  }, []);
+
+  // Build block detail from the shared cache. This keeps the popup informative
+  // without each browser querying event logs on every cache refresh.
   useEffect(() => {
-    if (!contract || selectedBlockIndex === null || selectedBlockIndex >= blocks.length) {
+    if (selectedBlockIndex === null || selectedBlockIndex >= blocks.length) {
       setBlockDetailData(null);
       return;
     }
-    let cancelled = false;
-    (async () => {
-      try {
-        const blockIndex = selectedBlockIndex;
-        const attestations = [];
-        for (const addr of committee) {
-          const hasAtt = await contract.hasAttested(addr, blockIndex);
-          if (hasAtt) {
-            const [stake] = await contract.getValidatorStats(addr);
-            attestations.push({ address: addr, stake: ethers.formatEther(stake) });
-          }
-        }
-        const wrongSlashFilter = contract.filters.WrongAttestationSlashed(null, blockIndex);
-        const wrongSlashEvents = await contract.queryFilter(wrongSlashFilter);
-        const doubleSlashFilter = contract.filters.DoubleVoteSlashed();
-        const doubleSlashEvents = await contract.queryFilter(doubleSlashFilter);
-        const slashEvents = [
-          ...wrongSlashEvents.map((e) => ({
-            type: 'wrong_attestation',
-            validator: e.args[0],
-            blockIndex: Number(e.args[1]),
-            expectedHash: e.args[2],
-            attestedHash: e.args[3],
-          })),
-          ...doubleSlashEvents
-            .filter((e) => Number(e.args[2]) === blockIndex || Number(e.args[3]) === blockIndex)
-            .map((e) => ({
-              type: 'double_vote',
-              validator: e.args[0],
-              slot: Number(e.args[1]),
-              firstBlock: Number(e.args[2]),
-              secondBlock: Number(e.args[3]),
-            })),
-        ];
-        let transactions = [];
-        const ethBlockData = blockIndexToEthBlock.get(blockIndex);
-        if (ethBlockData?.blockNumber != null && readProvider) {
-          try {
-            const ethBlock = await readProvider.getBlock(ethBlockData.blockNumber, true);
-            const txs = ethBlock?.prefetchedTransactions ?? ethBlock?.transactions ?? [];
-            transactions = txs.map((tx) => ({
-              hash: typeof tx === 'string' ? tx : tx.hash,
-              from: typeof tx === 'object' ? tx.from : null,
-              to: typeof tx === 'object' ? tx.to : null,
-              value: typeof tx === 'object' ? tx.value : null,
-            }));
-          } catch (_) {}
-        }
-        if (!cancelled) {
-          setBlockDetailData({ attestations, slashEvents, transactions });
-        }
-      } catch (e) {
-        if (!cancelled) setBlockDetailData(null);
+    const blockIndex = selectedBlockIndex;
+    const attestations = (blockAttestations.get(blockIndex) || []).map((addr) => {
+      const stats = getStats(addr);
+      return {
+        address: addr,
+        stake: stats?.stake || '0',
+        isBot: !!stats?.isBot,
+        slashed: !!stats?.slashed,
+      };
+    });
+    const pendingForBlock = [];
+    for (const [validator, ev] of pendingSlashEvidence.entries()) {
+      if (!ev) continue;
+      if (ev.reason === 1 && ev.blockIndex === blockIndex) {
+        pendingForBlock.push({
+          type: 'wrong_attestation',
+          status: 'pending',
+          validator,
+          blockIndex: ev.blockIndex,
+          slot: ev.slot,
+          expectedHash: ev.expectedHash,
+          attestedHash: ev.attestedHash,
+        });
       }
-    })();
-    return () => { cancelled = true; };
-  }, [contract, selectedBlockIndex, committee, blocks.length, blockIndexToEthBlock, readProvider]);
+      if (ev.reason === 2 && (ev.firstBlock === blockIndex || ev.secondBlock === blockIndex)) {
+        pendingForBlock.push({
+          type: 'double_vote',
+          status: 'pending',
+          validator,
+          slot: ev.slot,
+          firstBlock: ev.firstBlock,
+          secondBlock: ev.secondBlock,
+        });
+      }
+    }
+    const slashEvents = [
+      ...(blockSlashEventsByBlock.get(blockIndex) || []).map((ev) => ({
+        ...ev,
+        slot: ev.slot ?? blocks[ev.blockIndex]?.slot ?? 0,
+      })),
+      ...pendingForBlock,
+    ];
+    const transactions = blockIndexToEthBlock.get(blockIndex)?.transactions || [];
+    setBlockDetailData({ attestations, slashEvents, transactions });
+  }, [selectedBlockIndex, blocks, blockAttestations, blockSlashEventsByBlock, blockIndexToEthBlock, pendingSlashEvidence, validatorStats]);
 
-  // Fetch validator detail when selected
+  // Build validator detail from cached event summaries.
   useEffect(() => {
-    if (!contract || !selectedValidator || committee.length === 0 || blocks.length === 0) {
+    if (!selectedValidator) {
       setValidatorDetailData(null);
       return;
     }
-    let cancelled = false;
-    (async () => {
-      try {
-        const addr = selectedValidator;
-        const attestedBlocks = [];
-        for (let i = 0; i < blocks.length; i++) {
-          const hasAtt = await contract.hasAttested(addr, i);
-          if (hasAtt) attestedBlocks.push({ blockIndex: i, slot: blocks[i].slot });
-        }
-        const proposedCount = blocks.filter((b) => b.proposer?.toLowerCase() === addr.toLowerCase()).length;
-        const wrongEvents = await contract.queryFilter(contract.filters.WrongAttestationSlashed(addr));
-        const doubleEvents = await contract.queryFilter(contract.filters.DoubleVoteSlashed(addr));
-        const manualEvents = await contract.queryFilter(contract.filters.Slashed(addr));
-        const manualOnly = manualEvents.filter((e) => {
-          const r = String(e.args[2] || '');
-          return r !== 'Wrong block hash' && r !== 'Double vote';
-        });
-        const slashEvents = [
-          ...wrongEvents.map((e) => ({ type: 'wrong_attestation', blockIndex: Number(e.args[1]), expectedHash: e.args[2], attestedHash: e.args[3] })),
-          ...doubleEvents.map((e) => ({ type: 'double_vote', slot: Number(e.args[1]), firstBlock: Number(e.args[2]), secondBlock: Number(e.args[3]) })),
-          ...manualOnly.map((e) => ({ type: 'manual', reason: e.args[2] })),
-        ];
-        if (!cancelled) {
-          setValidatorDetailData({ attestedBlocks, proposedCount, slashEvents });
-        }
-      } catch {
-        if (!cancelled) setValidatorDetailData(null);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [contract, selectedValidator, committee, blocks]);
+    const addr = selectedValidator;
+    const key = addr.toLowerCase();
+    const statsEntry = getStats(addr);
+    const stats = statsEntry ? {
+      ...statsEntry,
+      inPool: committee.some((v) => v?.toLowerCase() === key),
+    } : null;
+    const attestedBlocks = (validatorAttestations.get(key) || [])
+      .map((a) => ({ blockIndex: Number(a.blockIndex), slot: Number(a.slot || blocks[Number(a.blockIndex)]?.slot || 0) }))
+      .filter((a) => Number.isFinite(a.blockIndex))
+      .sort((a, b) => a.blockIndex - b.blockIndex);
+    const proposedCount = blocks.filter((b) => b.proposer?.toLowerCase() === key).length;
+    const slashEvents = validatorSlashEventsByValidator.get(key) || [];
+    setValidatorDetailData({ stats, attestedBlocks, proposedCount, slashEvents });
+  }, [selectedValidator, blocks, committee, validatorStats, validatorAttestations, validatorSlashEventsByValidator]);
 
-  // Fetch pending slashes and their evidence
-  useEffect(() => {
-    if (!contract || !contract.hasPendingSlash || committee.length === 0) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const pending = [];
-        const evidenceMap = new Map();
-        for (const addr of committee) {
-          const has = await contract.hasPendingSlash(addr);
-          if (has) {
-            pending.push(addr);
-            try {
-              const ev = await contract.pendingSlash(addr);
-              if (Number(ev.reason) !== 0) {
-                evidenceMap.set(addr, {
-                  reason: Number(ev.reason),
-                  blockIndex: Number(ev.blockIndex),
-                  slot: Number(ev.slot),
-                  expectedHash: ev.expectedHash,
-                  attestedHash: ev.attestedHash,
-                  firstBlock: Number(ev.firstBlock),
-                  secondBlock: Number(ev.secondBlock),
-                });
-              }
-            } catch (_) {}
-          }
-        }
-        if (!cancelled) {
-          setPendingSlashes(pending);
-          setPendingSlashEvidence(evidenceMap);
-        }
-      } catch {
-        if (!cancelled) setPendingSlashes([]);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [contract, committee]);
+  // Pending slashes, committee assignment, and slash badge counts are populated by
+  // the shared Beacon cache in fetchData(). Browsers intentionally do not poll RPC
+  // for these derived views.
 
-  // Fetch committee for current slot (for "Your committee" display)
-  useEffect(() => {
-    if (!contract || !contract.getCommitteeForSlot || blocks.length === 0) return;
-    const latest = blocks[blocks.length - 1];
-    if (!latest) return;
-    const epoch = Math.floor(latest.index / blocksPerEpoch) + 1;
-    const slotIndex = (latest.slot - 1) % committeesPerEpoch;
-    let cancelled = false;
-    (async () => {
-      try {
-        const members = await contract.getCommitteeForSlot(epoch, slotIndex);
-        if (!cancelled) setCommitteeForSlot({ epoch, slotIndex, members: members.filter(Boolean) });
-      } catch {
-        if (!cancelled) setCommitteeForSlot(null);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [contract, blocks, blocksPerEpoch, committeesPerEpoch]);
-
-  // Fetch all committees for current epoch (for committee assignment table)
-  useEffect(() => {
-    if (!contract || !contract.getCommitteeForSlot || blocks.length === 0 || sessionState !== 1) return;
-    const latest = blocks[blocks.length - 1];
-    if (!latest) return;
-    const epoch = Math.floor(latest.index / blocksPerEpoch) + 1;
-    let cancelled = false;
-    (async () => {
-      try {
-        const committees = [];
-        for (let i = 0; i < committeesPerEpoch; i++) {
-          const members = await contract.getCommitteeForSlot(epoch, i);
-          committees.push((members || []).filter(Boolean));
-        }
-        if (!cancelled) setEpochCommittees({ epoch, committees });
-      } catch {
-        if (!cancelled) setEpochCommittees(null);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [contract, blocks, committeesPerEpoch, sessionState]);
-
-  // Fetch slash counts per block for badges
-  useEffect(() => {
-    if (!contract || blocks.length === 0) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const counts = new Map();
-        const wrongEvents = await contract.queryFilter(contract.filters.WrongAttestationSlashed());
-        for (const e of wrongEvents) {
-          const idx = Number(e.args[1]);
-          counts.set(idx, (counts.get(idx) || 0) + 1);
-        }
-        const doubleEvents = await contract.queryFilter(contract.filters.DoubleVoteSlashed());
-        for (const e of doubleEvents) {
-          const fb = Number(e.args[2]);
-          const sb = Number(e.args[3]);
-          counts.set(fb, (counts.get(fb) || 0) + 1);
-          counts.set(sb, (counts.get(sb) || 0) + 1);
-        }
-        if (!cancelled) setBlockSlashCounts(counts);
-      } catch {
-        if (!cancelled) setBlockSlashCounts(new Map());
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [contract, blocks.length]);
-
-  // Auto-propose blocks (Ethereum simulation: ~12s block time, stake-weighted proposer selection)
+  // Block proposing is owned by the server-side Beacon conductor
+  // (scripts/beacon-conductor.js), which keeps the PoS loop running and the pool
+  // full of bots with no instructor tab open. The old in-browser auto-propose
+  // loop is intentionally disabled here to avoid two proposers racing.
   const proposingRef = useRef(false);
-  useEffect(() => {
-    if (!isInstructor || sessionState !== 1 || !config?.contractAddress || !wallet?.signer) return;
-    const BLOCK_TIME_MS = 12000; // Ethereum mainnet ~12 seconds
-    const propose = async () => {
-      if (proposingRef.current) return;
-      proposingRef.current = true;
-      try {
-        const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
-        await c.proposeBlock();
-      } catch (e) {
-        console.warn('[BeaconLab] Auto-propose:', e.message);
-      } finally {
-        proposingRef.current = false;
-      }
-    };
-    const t0 = setTimeout(propose, 3000); // First block after 3s
-    const iv = setInterval(propose, BLOCK_TIME_MS);
-    return () => {
-      clearTimeout(t0);
-      clearInterval(iv);
-    };
-  }, [isInstructor, sessionState, config?.contractAddress, wallet?.signer]);
 
-  useEffect(() => {
-    if (!contract || !readProvider) return;
-    const addLog = (msg) => setActivityLog((prev) => [...prev.slice(-99), { ts: Date.now(), msg }]);
-
-    const onBlockProposed = (idx, proposer, epoch) =>
-      addLog(`Block #${Number(idx)} proposed by ${proposer.slice(0, 10)}... (epoch ${Number(epoch)})`);
-    const onAttested = (validator, blockIndex) =>
-      addLog(`${validator.slice(0, 10)}... attested to block #${Number(blockIndex)}`);
-    const onJustified = (blockIndex) => addLog(`Block #${Number(blockIndex)} justified (justification threshold reached)`);
-    const onFinalized = (blockIndex) => addLog(`Block #${Number(blockIndex)} finalized`);
-    const onSlashed = (validator, amount, reason) =>
-      addLog(`Slashed ${validator.slice(0, 10)}... (${ethers.formatEther(amount)} ETH): ${reason}`);
-    const onWrongAttestationSlashed = (validator, blockIndex, expectedHash, attestedHash) =>
-      addLog(`Wrong attestation slash: ${validator.slice(0, 10)}... expected ${String(expectedHash).slice(0, 18)}..., attested ${String(attestedHash).slice(0, 18)}...`);
-    const onDoubleVoteSlashed = (validator, slot, firstBlock, secondBlock) =>
-      addLog(`Double vote slash: ${validator.slice(0, 10)}... at slot ${Number(slot)} attested to block #${Number(firstBlock)} and #${Number(secondBlock)}`);
-    const onJoined = (validator, stake) =>
-      addLog(`${validator.slice(0, 10)}... joined with ${ethers.formatEther(stake)} ETH`);
-    const onSessionStarted = (humanCount, botCount) =>
-      addLog(`Session started: ${Number(humanCount)} humans, ${Number(botCount)} bots`);
-    const onSessionEnded = () => addLog('Session ended');
-    const onSlashEvidenceSubmitted = (validator, reason) =>
-      addLog(`Slash evidence submitted for ${validator.slice(0, 10)}... (reason: ${Number(reason)})`);
-    const onSlashReported = (reporter, validator, reward) =>
-      addLog(`${reporter.slice(0, 10)}... reported slash, earned ${ethers.formatEther(reward)} ETH`);
-    const onCommitteesAssigned = (epoch) => addLog(`Committees assigned for epoch ${Number(epoch)}`);
-    const onEpochAdvanced = (epoch) => {
-      addLog(`Epoch advanced to ${Number(epoch)}`);
-      fetchData().catch((e) => console.warn('[BeaconLab] EpochAdvanced fetchData:', e));
-    };
-    const onValidatorExited = (validator, amount) =>
-      addLog(`${validator.slice(0, 10)}... exited, refunded ${ethers.formatEther(amount)} ETH`);
-    const onInactivityPenalty = (validator, blockIndex, amount) =>
-      addLog(`${validator.slice(0, 10)}... inactivity penalty (block #${Number(blockIndex)}): -${ethers.formatEther(amount)} ETH`);
-
-    contract.on('BlockProposed', onBlockProposed);
-    contract.on('Attested', onAttested);
-    contract.on('BlockJustified', onJustified);
-    contract.on('BlockFinalized', onFinalized);
-    contract.on('Slashed', onSlashed);
-    contract.on('WrongAttestationSlashed', onWrongAttestationSlashed);
-    contract.on('DoubleVoteSlashed', onDoubleVoteSlashed);
-    contract.on('Joined', onJoined);
-    contract.on('SessionStarted', onSessionStarted);
-    contract.on('SessionEnded', onSessionEnded);
-    try {
-      contract.on('SlashEvidenceSubmitted', onSlashEvidenceSubmitted);
-      contract.on('SlashReported', onSlashReported);
-      contract.on('CommitteesAssigned', onCommitteesAssigned);
-      contract.on('EpochAdvanced', onEpochAdvanced);
-      contract.on('ValidatorExited', onValidatorExited);
-      contract.on('InactivityPenalty', onInactivityPenalty);
-    } catch (_) {}
-
-    return () => {
-      contract.off('BlockProposed', onBlockProposed);
-      contract.off('Attested', onAttested);
-      contract.off('BlockJustified', onJustified);
-      contract.off('BlockFinalized', onFinalized);
-      contract.off('Slashed', onSlashed);
-      contract.off('WrongAttestationSlashed', onWrongAttestationSlashed);
-      contract.off('DoubleVoteSlashed', onDoubleVoteSlashed);
-      contract.off('Joined', onJoined);
-      contract.off('SessionStarted', onSessionStarted);
-      contract.off('SessionEnded', onSessionEnded);
-      try {
-        contract.off('SlashEvidenceSubmitted', onSlashEvidenceSubmitted);
-        contract.off('SlashReported', onSlashReported);
-        contract.off('CommitteesAssigned', onCommitteesAssigned);
-        contract.off('EpochAdvanced', onEpochAdvanced);
-        contract.off('ValidatorExited', onValidatorExited);
-        contract.off('InactivityPenalty', onInactivityPenalty);
-      } catch (_) {}
-    };
-  }, [contract, readProvider, fetchData]);
+  // Activity log is supplied by the shared cache. Avoid ethers event listeners here;
+  // they poll the RPC provider from every browser tab.
 
   const handleProcessSlash = async (validator) => {
     if (!config?.contractAddress || !wallet?.signer) return;
     setTxPending(true);
+    setProcessingSlash(validator);
     setStatusMsg('Reporting slash...');
     try {
       const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
       const tx = await c.processSlash(validator);
       await tx.wait();
+      // Optimistically drop the row now — the shared-cache refresh trails this write by ~1.5s.
+      setLocallySlashed((prev) => new Set(prev).add(validator));
       setStatusMsg('Slash reported! You earned a whistleblower reward.');
       fetchData();
     } catch (e) {
-      setStatusMsg('Error: ' + (e.reason || e.message));
+      const msg = e.reason || e.shortMessage || e.message || '';
+      // The conductor (or another student) may have processed it first — it IS slashed, so
+      // still drop the row and say so plainly rather than surfacing a raw revert.
+      if (/already slashed|no pending slash|not slashable/i.test(msg)) {
+        setLocallySlashed((prev) => new Set(prev).add(validator));
+        setStatusMsg('Already processed — that validator was just slashed by someone else.');
+      } else {
+        setStatusMsg('Error: ' + msg);
+      }
     } finally {
+      setProcessingSlash(null);
       setTxPending(false);
     }
   };
+
+  // Auto-fund the active wallet from the class bank so a student can stake in one
+  // action (top up to the needed stake + 1 ETH gas headroom if short).
+  const ensureFunded = async (neededEth) => {
+    try {
+      setStatusMsg('Funding your wallet from the class bank...');
+      const targetBalanceEth = (Number(neededEth) + 1).toString();
+      await rpcClient.ensureBankBalance(wallet.address, targetBalanceEth);
+      return true;
+    } catch (e) {
+      console.warn('[BeaconLab] Auto-funding failed:', e?.shortMessage || e?.message || e);
+      setStatusMsg('Could not fund your wallet from the class bank — please try Join again.');
+      return false;
+    }
+  };
+
+  const txErrorMessage = (e) => (
+    e?.reason
+    || e?.shortMessage
+    || e?.info?.error?.message
+    || e?.error?.message
+    || e?.message
+    || 'Transaction failed'
+  );
 
   const handleJoin = async () => {
     if (!config?.contractAddress || !wallet?.signer) {
@@ -827,12 +687,31 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     setStatusMsg('Joining...');
     try {
       const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
-      const tx = await c.join({ value: ethers.parseEther(stakeAmount) });
+      if (userInPool) {
+        setUserInPool(true);
+        setUserExited(false);
+        setStatusMsg('Already joined. Waiting to be seated in a committee.');
+        return;
+      }
+      if (userExited) {
+        setUserInPool(false);
+        setUserExited(true);
+        setStatusMsg('You already exited. Use Rejoin instead of Join.');
+        return;
+      }
+      if (!(await ensureFunded(stakeAmount))) { setTxPending(false); return; }
+      // Explicit gasLimit (skip estimateGas): join()'s cost varies with pool state and
+      // ethers' estimate goes stale when many students join at once — causing out-of-gas.
+      const tx = await c.join({ value: ethers.parseEther(stakeAmount), gasLimit: 2_000_000n });
       await tx.wait();
-      setStatusMsg('Joined successfully!');
+      // Optimistically reflect "joined" immediately so the Join button is replaced
+      // by the waiting-for-committee state without waiting for the next poll.
+      setUserInPool(true);
+      setUserExited(false);
+      setStatusMsg('✅ Joined! Waiting to be seated in a committee (next slot)…');
       fetchData();
     } catch (e) {
-      setStatusMsg('Error: ' + (e.reason || e.message));
+      setStatusMsg('Error: ' + txErrorMessage(e));
     } finally {
       setTxPending(false);
     }
@@ -852,12 +731,27 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     setStatusMsg('Rejoining...');
     try {
       const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
-      const tx = await c.rejoin({ value: ethers.parseEther(stakeAmount) });
+      if (userInPool) {
+        setUserInPool(true);
+        setUserExited(false);
+        setStatusMsg('Already in the validator pool.');
+        return;
+      }
+      if (!userExited) {
+        setUserInPool(false);
+        setUserExited(false);
+        setStatusMsg('You have not exited yet. Use Join instead.');
+        return;
+      }
+      if (!(await ensureFunded(stakeAmount))) { setTxPending(false); return; }
+      const tx = await c.rejoin({ value: ethers.parseEther(stakeAmount), gasLimit: 2_000_000n });
       await tx.wait();
-      setStatusMsg('Rejoined successfully!');
+      setUserInPool(true);
+      setUserExited(false);
+      setStatusMsg('✅ Rejoined! Waiting to be seated in a committee (next slot)…');
       fetchData();
     } catch (e) {
-      setStatusMsg('Error: ' + (e.reason || e.message));
+      setStatusMsg('Error: ' + txErrorMessage(e));
     } finally {
       setTxPending(false);
     }
@@ -934,12 +828,12 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     setTxPending(true);
     setStatusMsg('Joining as instructor...');
     try {
+      if (!(await ensureFunded(stakeAmount))) { setTxPending(false); return; }
       const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
       const joinTx = await c.join({ value: ethers.parseEther(stakeAmount) });
       await joinTx.wait();
       setStatusMsg('Joined. Filling bots and starting...');
-      const committeeList = await c.getCommittee();
-      const currentLen = (committeeList || []).length;
+      const currentLen = committee.length + 1;
       const emptySlots = poolSize - currentLen;
       const botsToAdd = emptySlots <= 0 ? 0 : Math.max(1, Math.min(emptySlots - Math.min(RESERVE_FOR_LATE_JOINERS, emptySlots - 1), config.botAddresses.length));
       const botAddrs = botsToAdd > 0 ? config.botAddresses.slice(0, botsToAdd) : config.botAddresses.slice(0, 1);
@@ -1010,24 +904,99 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     if (!block) return;
     const claimedHash = useWrongHash ? ethers.keccak256(ethers.toUtf8Bytes('wrong')) : block.blockHash;
     setTxPending(true);
-    setStatusMsg(useWrongHash ? 'Attesting with wrong hash (demo)...' : 'Attesting...');
+    setStatusMsg(useWrongHash ? '⚠️ Attesting with wrong hash (demo)...' : `⏳ Submitting attestation for block #${blockIndex}…`);
+    // % of the 2/3 quorum a given attestation-stake represents (100% = block justified)
+    const pctOfQuorum = (stake, quorum) => (quorum > 0n ? Number((stake * 10000n) / quorum) / 100 : 0);
     try {
       const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
-      const tx = await c.attest(blockIndex, claimedHash);
+      const beforeStake = ethers.parseEther(String(block.attestationStake || '0'));
+      const quorum = ethers.parseEther(String(quorumThreshold || '0'));
+      const beforeJustified = !!block.justified;
+      const tx = await c.attest(blockIndex, claimedHash, { gasLimit: 1_500_000n });
+      setStatusMsg(`⏳ Attestation tx submitted (${tx.hash.slice(0, 10)}…). Waiting for block confirmation…`);
       await tx.wait();
       if (useWrongHash) {
-        setStatusMsg('Attestation rejected (wrong hash). Violation reported - report slash to earn reward.');
+        setStatusMsg('⚠️ Attestation rejected (wrong hash). Violation reported — report the slash to earn a reward.');
+      } else if (quorum > 0n) {
+        const reward = '+0.002 ETH';
+        if (beforeJustified) {
+          setStatusMsg(`✅ Attestation included (${reward}). Block #${blockIndex} was already justified — bots reached quorum before you. Try the next block to be the deciding vote.`);
+        } else {
+          setStatusMsg(`✅ Attestation submitted (${reward}). Cache is updating from ${pctOfQuorum(beforeStake, quorum).toFixed(0)}% of quorum.`);
+        }
       } else {
-        setStatusMsg('Attested!');
+        setStatusMsg(`✅ Attested to block #${blockIndex}.`);
       }
       fetchData();
     } catch (e) {
-      const msg = e.reason || e.message || '';
-      setStatusMsg(msg.includes('slashed') ? 'Slashed (5% penalty). Click the block to see details.' : msg.includes('Not in committee') ? 'You are not in the committee for this slot.' : 'Error: ' + msg);
+      const msg = e.reason || e.shortMessage || e.message || '';
+      if (/Already attested/i.test(msg)) {
+        setStatusMsg(`ℹ️ You already attested to block #${blockIndex}. Each validator votes once per block — pick a newer block to attest to.`);
+      } else if (/slashed/i.test(msg)) {
+        setStatusMsg('⚠️ Slashed (5% penalty). Click the block to see details.');
+      } else if (/Not in committee/i.test(msg)) {
+        setStatusMsg('You are not in the committee for that slot — wait for a block in your committee (it auto-targets one for you).');
+      } else if (/Invalid block|Session not active/i.test(msg)) {
+        setStatusMsg('That block is no longer attestable (the round moved on). Try the highlighted block.');
+      } else {
+        setStatusMsg('Error: ' + msg);
+      }
     } finally {
       setTxPending(false);
     }
   };
+
+  // Human proposer picks one of the realistic candidate blocks and proposes it.
+  const handleProposeAsProposer = async (choice) => {
+    if (!config?.contractAddress || !wallet?.signer) return;
+    setTxPending(true);
+    const selectedBundle = proposal?.bundles?.[choice];
+    const fallbackLabel = FALLBACK_BUNDLE_LABELS[choice];
+    const label = selectedBundle?.name || fallbackLabel?.name || `Option ${choice + 1}`;
+    setProposalTxState({ status: 'building', choice, label, hash: null, error: null });
+    setStatusMsg(`📦 Building block — ${label}…`);
+    try {
+      const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
+      const reward = proposal?.options?.[choice];
+      // proposeAsProposer builds the whole block (32-validator attestation + fallback loops),
+      // so it's gas-heavy and time-sensitive — use a generous explicit limit, no estimate.
+      const tx = await c.proposeAsProposer(choice, PROPOSER_TX_OPTIONS);
+      setProposalTxState({ status: 'submitted', choice, label, hash: tx.hash, error: null });
+      setStatusMsg(`⏳ Proposal tx submitted (${tx.hash.slice(0, 10)}…). Waiting for delayed mining…`);
+      await tx.wait();
+      setProposalTxState({ status: 'confirmed', choice, label, hash: tx.hash, error: null });
+      setProposal(null);
+      setStatusMsg(`⚡ You proposed the block! Earned the block reward${reward != null ? ` + ${parseFloat(ethers.formatEther(reward)).toFixed(6)} ETH estimated fees` : ''}.`);
+      window.setTimeout(() => setProposalTxState((prev) => (prev?.hash === tx.hash ? null : prev)), 4500);
+      fetchData();
+    } catch (e) {
+      const msg = e.reason || e.shortMessage || e.message || '';
+      if (/Not your proposal slot/i.test(msg)) {
+        setProposal(null);
+        setProposalTxState({ status: 'expired', choice, label, hash: null, error: msg });
+        setStatusMsg('⌛ Too late — the proposal window closed and a bot proposed (missed-proposal penalty applied).');
+      } else {
+        setProposalTxState({ status: 'error', choice, label, hash: null, error: msg });
+        setStatusMsg('Error: ' + msg);
+      }
+    } finally {
+      setTxPending(false);
+    }
+  };
+
+  // Open proposer slots come from the shared Beacon cache; do not poll getProposalState
+  // from each browser.
+
+  useEffect(() => {
+    if (!proposal?.pending) return;
+    setProposalNow(Date.now());
+    const id = setInterval(() => setProposalNow(Date.now()), 150);
+    return () => clearInterval(id);
+  }, [proposal?.pending]);
+
+  useEffect(() => {
+    if (proposal?.pending) setProposalTxState(null);
+  }, [proposal?.proposer, proposal?.slot]);
 
   const handleExit = async () => {
     if (!config?.contractAddress || !wallet?.signer) return;
@@ -1035,12 +1004,25 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
     setStatusMsg('Exiting validator pool...');
     try {
       const c = new ethers.Contract(config.contractAddress, BeaconChainLabABI, wallet.signer);
-      const tx = await c.exit();
+      const isSlashed = !!getStats(wallet.address)?.slashed;
+      if (!userInPool || userExited) {
+        setUserInPool(false);
+        setUserExited(!!userExited);
+        setStatusMsg(userExited ? 'Already exited.' : 'You are not currently in the validator pool.');
+        return;
+      }
+      if (isSlashed) {
+        setStatusMsg('Slashed validators cannot exit.');
+        return;
+      }
+      const tx = await c.exit({ gasLimit: 1_000_000n });
       await tx.wait();
+      setUserInPool(false);
+      setUserExited(true);
       setStatusMsg('Exited! Stake refunded.');
       fetchData();
     } catch (e) {
-      setStatusMsg('Error: ' + (e.reason || e.message));
+      setStatusMsg('Error: ' + txErrorMessage(e));
     } finally {
       setTxPending(false);
     }
@@ -1183,21 +1165,37 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   if (!config) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8' }}>
-        <p>Beacon Chain Lab not deployed. Run: <code>npm run deploy:beacon-lab</code></p>
-        <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
-          Ensure the chain is running and deploy script writes to frontend/public/beacon-lab-config.json
-        </p>
+        <h1 style={{ color: 'var(--text)', marginBottom: '0.75rem' }}>Beacon Chain Lab</h1>
+        {loading ? (
+          <p>Loading Beacon Chain Lab configuration...</p>
+        ) : (
+          <>
+            <p>Beacon Chain Lab not deployed. Run: <code>npm run deploy:beacon-lab</code></p>
+            <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              Ensure the chain is running and deploy script writes to frontend/public/beacon-lab-config.json
+            </p>
+          </>
+        )}
       </div>
     );
   }
 
-  if (loading && !contract) {
-    return <div style={{ padding: '2rem', color: '#94a3b8' }}>Loading...</div>;
+  if (loading && blocks.length === 0) {
+    return (
+      <div style={{ padding: '2rem', color: '#94a3b8' }}>
+        <h1 style={{ color: 'var(--text)', marginBottom: '0.75rem' }}>Beacon Chain Lab</h1>
+        <p>Loading Beacon Chain Lab state from the classroom cache...</p>
+      </div>
+    );
   }
 
   const latestBlock = blocks.length > 0 ? blocks[blocks.length - 1] : null;
-  const attestationProgress = latestBlock && parseFloat(totalStaked) > 0
-    ? (parseFloat(latestBlock.attestationStake) / parseFloat(quorumThreshold)) * 100
+  // Progress toward the 2/3 justification threshold. Capped at 100% — once the
+  // threshold is met the block is justified; extra validators can keep attesting
+  // (up to ~150% of the threshold), but "progress toward a threshold" shouldn't
+  // read past 100%.
+  const attestationProgress = latestBlock && parseFloat(quorumThreshold) > 0
+    ? Math.min(100, (parseFloat(latestBlock.attestationStake) / parseFloat(quorumThreshold)) * 100)
     : 0;
 
   const participationPct = parseFloat(totalStaked) > 0 && latestBlock
@@ -1209,6 +1207,14 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   const finalizedSlot = lastFinalizedIndex != null && blocks[lastFinalizedIndex]
     ? blocks[lastFinalizedIndex].slot
     : 0;
+  const beaconRunSteps = [
+    { id: 'join', label: 'Join validator pool', done: userInPool || userExited || !!getStats(wallet?.address)?.slashed },
+    { id: 'start', label: 'Start session with bots', done: sessionState !== 0 },
+    { id: 'blocks', label: 'Observe proposed blocks', done: blocks.length > 0 },
+    { id: 'attest', label: 'Attest to a committee block', done: blocks.some((_, i) => getAttested(wallet?.address, i)) },
+    { id: 'finality', label: 'Observe justification/finality', done: blocks.some((b) => b.justified || b.finalized) },
+    { id: 'slash', label: 'Inspect slashing evidence', done: filteredPendingSlashes.length > 0 || blockSlashCounts.size > 0 },
+  ];
 
   const findBlockByHash = (hash) => {
     if (!hash || hash === ethers.ZeroHash) return null;
@@ -1336,15 +1342,139 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
   };
 
   const selectBlock = (idx) => {
-    setSelectedBlockIndex(idx === selectedBlockIndex ? null : idx);
+    const nextIdx = idx != null && idx !== selectedBlockIndex ? idx : null;
+    setSelectedBlockIndex(nextIdx);
     setSelectedValidator(null);
-    updateUrlForDrillDown(idx === selectedBlockIndex ? null : idx, null);
+    updateUrlForDrillDown(nextIdx, null);
+    const ethBlock = nextIdx != null ? blockIndexToEthBlock.get(nextIdx) : null;
+    if (ethBlock?.blockNumber != null) {
+      openExplorerRoute('block', ethBlock.blockNumber, { scroll: false });
+    }
   };
   const selectValidator = (addr) => {
-    setSelectedValidator(addr === selectedValidator ? null : addr);
+    const nextAddr = addr && addr !== selectedValidator ? addr : null;
+    setSelectedValidator(nextAddr);
     setSelectedBlockIndex(null);
-    updateUrlForDrillDown(null, addr === selectedValidator ? null : addr);
+    updateUrlForDrillDown(null, nextAddr);
+    if (nextAddr) openExplorerRoute('address', nextAddr, { scroll: true });
   };
+
+  // The MEV block-choice panel for an open proposer slot. Rendered inside the Lab Control
+  // Pane (front and center) so the student does all work in one place.
+  const proposalPanel = proposal?.pending ? (() => {
+    const remainingMs = Math.max(0, PROPOSAL_WINDOW_MS - (proposalNow - proposal.detectedAtMs));
+    const secs = (remainingMs / 1000).toFixed(1);
+    const frac = remainingMs / PROPOSAL_WINDOW_MS;
+    const barColor = frac > 0.5 ? '#22c55e' : frac > 0.25 ? '#f59e0b' : '#ef4444';
+    const optionCount = Math.max(1, Math.min(3, Number(proposal.optionCount || proposal.options.length || 3)));
+    const candidates = proposal.options.slice(0, optionCount).map((value, i) => {
+      const bundle = proposal.bundles?.[i];
+      const fallback = FALLBACK_BUNDLE_LABELS[i] || FALLBACK_BUNDLE_LABELS[0];
+      return {
+        value,
+        emoji: bundle ? (bundle.txCount === 0 ? '📭' : bundle.txCount === 1 ? '📄' : '🧱') : fallback.emoji,
+        name: bundle?.name || fallback.name,
+        desc: bundle?.description || fallback.desc,
+        txCount: bundle?.txCount,
+        gasLimit: bundle?.gasLimit,
+        transactions: Array.isArray(bundle?.transactions) ? bundle.transactions : [],
+      };
+    });
+    const best = candidates.reduce((bi, c, i, arr) => (c.value > arr[bi].value ? i : bi), 0);
+    const proposalBusy = proposalTxState?.status === 'building' || proposalTxState?.status === 'submitted';
+    return (
+      <div style={{
+        border: '2px solid #8b5cf6', background: 'linear-gradient(135deg, rgba(139,92,246,0.18), rgba(30,41,59,0.6))',
+        borderRadius: '0.75rem', padding: '1rem 1.1rem', marginBottom: '0.85rem', boxShadow: '0 0 0 4px rgba(139,92,246,0.12)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#c4b5fd' }}>
+            🎲 You're the block proposer for slot {proposal.slot}!
+          </div>
+          <div style={{ fontWeight: 800, fontSize: '1.2rem', color: barColor, fontVariantNumeric: 'tabular-nums' }}>⏱ {secs}s</div>
+        </div>
+        <div style={{ color: '#cbd5e1', fontSize: '0.85rem', margin: '0.3rem 0 0.5rem' }}>
+          Pick a candidate block built from the cached pending transaction pool. You keep the block reward <b>plus</b> the estimated transaction fees for the ordering you choose.
+          {proposal.bundleSource && (
+            <span style={{ color: '#94a3b8' }}> Captured {proposal.bundleSource.pendingTxCount} pending tx{proposal.bundleSource.pendingTxCount === 1 ? '' : 's'}.</span>
+          )}
+        </div>
+        <div style={{ height: '8px', background: '#334155', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.7rem' }}>
+          <div style={{ height: '100%', width: `${frac * 100}%`, background: barColor, transition: 'width 120ms linear' }} />
+        </div>
+        {proposalTxState && (
+          <div style={{
+            marginBottom: '0.7rem',
+            padding: '0.65rem 0.75rem',
+            borderRadius: '0.55rem',
+            border: `1px solid ${proposalTxState.status === 'error' || proposalTxState.status === 'expired' ? 'rgba(248,113,113,0.55)' : 'rgba(56,189,248,0.55)'}`,
+            background: proposalTxState.status === 'error' || proposalTxState.status === 'expired' ? 'rgba(127,29,29,0.25)' : 'rgba(8,47,73,0.35)',
+            color: proposalTxState.status === 'error' || proposalTxState.status === 'expired' ? '#fecaca' : '#bae6fd',
+            fontSize: '0.82rem',
+            fontWeight: 700,
+          }}>
+            {proposalTxState.status === 'building' && `Preparing ${proposalTxState.label} transaction...`}
+            {proposalTxState.status === 'submitted' && (
+              <>Submitted {proposalTxState.label} ({proposalTxState.hash?.slice(0, 10)}...). Waiting for delayed mining to include it.</>
+            )}
+            {proposalTxState.status === 'confirmed' && `Confirmed ${proposalTxState.label}. Cache is updating.`}
+            {proposalTxState.status === 'expired' && 'Proposal window closed before this transaction landed.'}
+            {proposalTxState.status === 'error' && `Proposal failed: ${proposalTxState.error || 'unknown error'}`}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+          {candidates.map((candidate, i) => (
+            <button
+              key={i}
+              onClick={() => handleProposeAsProposer(i)}
+              disabled={txPending || proposalBusy}
+              style={{
+                flex: '1 1 160px', minWidth: '160px', textAlign: 'left', cursor: txPending || proposalBusy ? 'not-allowed' : 'pointer',
+                background: i === best ? 'rgba(34,197,94,0.12)' : '#1e293b',
+                border: `1px solid ${proposalTxState?.choice === i ? '#38bdf8' : i === best ? '#22c55e' : '#475569'}`, borderRadius: '0.6rem', padding: '0.7rem 0.8rem',
+                color: '#e2e8f0', opacity: txPending || proposalBusy ? (proposalTxState?.choice === i ? 0.85 : 0.45) : 1,
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>
+                {candidate.emoji} {candidate.name}{i === best && <span style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: '#22c55e', fontWeight: 700 }}>best fees</span>}
+              </div>
+              {proposalTxState?.choice === i && proposalBusy && (
+                <div style={{ color: '#7dd3fc', fontSize: '0.72rem', fontWeight: 800, marginTop: '0.2rem' }}>
+                  {proposalTxState.status === 'building' ? 'Preparing transaction...' : 'Waiting for mining...'}
+                </div>
+              )}
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#86efac', margin: '0.2rem 0' }}>
+                +{parseFloat(ethers.formatEther(candidate.value || 0n)).toFixed(6)} ETH
+              </div>
+              <div style={{ fontSize: '0.76rem', color: '#94a3b8' }}>{candidate.desc}</div>
+              {candidate.txCount != null && (
+                <div style={{ marginTop: '0.45rem', fontSize: '0.72rem', color: '#cbd5e1' }}>
+                  {candidate.txCount} tx{candidate.txCount === 1 ? '' : 's'}{candidate.gasLimit ? ` · gas ${Number(candidate.gasLimit).toLocaleString()}` : ''}
+                </div>
+              )}
+              {candidate.transactions.length > 0 && (
+                <div style={{ marginTop: '0.4rem', display: 'grid', gap: '0.25rem' }}>
+                  {candidate.transactions.slice(0, 4).map((tx) => (
+                    <div key={tx.hash} style={{ padding: '0.25rem 0.3rem', background: 'rgba(15,23,42,0.65)', borderRadius: '0.3rem', color: '#94a3b8', fontSize: '0.68rem' }}>
+                      #{tx.position + 1} {tx.hash.slice(0, 10)}… fee {parseFloat(tx.estimatedFeeEth || '0').toFixed(6)} ETH
+                    </div>
+                  ))}
+                  {candidate.transactions.length > 4 && (
+                    <div style={{ color: '#64748b', fontSize: '0.68rem' }}>+{candidate.transactions.length - 4} more txs</div>
+                  )}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+        {remainingMs <= 0 && (
+          <div style={{ color: '#fca5a5', fontSize: '0.82rem', marginTop: '0.5rem', fontWeight: 600 }}>
+            ⌛ Window may be closing — you can still submit while this panel is visible. If the chain already moved, the lab will say so.
+          </div>
+        )}
+      </div>
+    );
+  })() : null;
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -1376,10 +1506,71 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
         <span style={{ color: '#94a3b8' }}>Participation {participationPct.toFixed(1)}%</span>
         <span style={{ color: '#94a3b8' }}>Pool {committee.length}/{poolSize}</span>
         {statusMsg && <span style={{ color: '#86efac', fontSize: '0.9rem' }}>{statusMsg}</span>}
+        {cacheWarning && <span style={{ color: '#fbbf24', fontSize: '0.9rem' }}>{cacheWarning}</span>}
+      </div>
+
+      <div style={{
+        marginBottom: '1rem',
+        padding: '1rem',
+        background: 'var(--card)',
+        borderRadius: '0.75rem',
+        border: '1px solid #475569',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+          <div>
+            <h2 style={{ margin: 0, color: '#f8fafc', fontSize: '1.2rem' }}>Proof-of-Stake Lab Path</h2>
+            <p style={{ margin: '0.25rem 0 0', color: '#94a3b8', fontSize: '0.9rem' }}>
+              Follow this path: stake, start validators, observe blocks, attest, finality, then slashing evidence.
+            </p>
+          </div>
+          <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+            Contract: <code>{config?.contractAddress ? `${config.contractAddress.slice(0, 8)}...${config.contractAddress.slice(-6)}` : 'not configured'}</code>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.5rem', marginBottom: '0.85rem' }}>
+          {beaconRunSteps.map((s, i) => (
+            <div
+              key={s.id}
+              style={{
+                padding: '0.6rem 0.7rem',
+                background: s.done ? 'rgba(34,197,94,0.12)' : 'rgba(15,23,42,0.8)',
+                border: s.done ? '1px solid rgba(34,197,94,0.35)' : '1px solid #334155',
+                borderRadius: '0.5rem',
+                color: s.done ? '#86efac' : '#cbd5e1',
+                fontSize: '0.85rem',
+                minHeight: '54px',
+              }}
+            >
+              <div style={{ fontWeight: 700 }}>{s.done ? '✓' : `${i + 1}.`} {s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+          {/* Join is offered only in the Attest path below to avoid two join buttons. */}
+          {isInstructor && sessionState === 0 && (
+            <button
+              onClick={committee.length === 0 ? handleJoinAndStart : handleFillBotsAndStart}
+              disabled={txPending}
+              style={{
+                padding: '0.5rem 0.9rem',
+                background: '#8b5cf6',
+                border: 'none',
+                borderRadius: '0.5rem',
+                color: 'white',
+                fontWeight: 'bold',
+                cursor: txPending ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {committee.length === 0 ? 'Join & Start Session' : 'Fill Bots and Start'}
+            </button>
+          )}
+          {/* All student actions (attest, demo slash, join, propose) live in the Lab
+              Control Pane below, so there's one obvious place to act. */}
+        </div>
       </div>
 
       {/* Prominent Rejoin section when user has exited - always visible at top */}
-      {wallet?.address && userExited && (sessionState === 0 || sessionState === 1) && committee.length < poolSize && (
+      {wallet?.address && userExited && (sessionState === 0 || sessionState === 1) && poolHasRoom && (
         <div style={{
           padding: '1rem 1.25rem',
           marginBottom: '1rem',
@@ -1414,7 +1605,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
             <span style={{ color: '#94a3b8' }}>ETH</span>
             <button
               onClick={handleRejoin}
-              disabled={txPending || committee.length >= poolSize}
+              disabled={txPending || !poolHasRoom}
               style={{
                 padding: '0.5rem 1.25rem',
                 background: 'var(--primary)',
@@ -1453,6 +1644,13 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
           {oldFormatWarning}
         </div>
       )}
+      <MempoolTable
+        title="Live pending transaction pool"
+        subtitle="Fast cached mirror of writes waiting to be mined. This panel reads /mempool-state, not the RPC port."
+        tone="dark"
+        maxPendingRows={10}
+        maxRecentRows={6}
+      />
       {error && (
         <div style={{
           padding: '1.25rem',
@@ -1491,11 +1689,9 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
         </div>
       )}
 
-      <ChainSearch provider={readProvider} rpcUrl={rpcUrl} />
-
       <div className="beacon-lab-grid">
-        <div>
-          {/* Attest to Block - always visible with buttons (disabled when not applicable) */}
+        <div style={{ gridColumn: '1 / -1' }}>
+          {/* Lab Control Pane - the single place students do all real-time work */}
           <div style={{
             marginBottom: '1.5rem',
             padding: '1rem',
@@ -1503,7 +1699,10 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
             borderRadius: '0.75rem',
             border: '2px solid var(--primary)',
           }}>
-            <h3 style={{ marginBottom: '0.75rem', color: 'var(--primary)' }}>Attest to Block</h3>
+            <h3 style={{ marginBottom: '0.25rem', color: 'var(--primary)' }}>🎛️ Lab Control Pane</h3>
+            <p style={{ margin: '0 0 0.75rem', color: '#94a3b8', fontSize: '0.82rem' }}>Your live workspace — propose, attest, join, and watch real-time updates here.</p>
+            {/* Proposer block-choice appears here, front and center, when it's your slot */}
+            {proposalPanel}
             {!wallet?.address ? (
               <div style={{ fontSize: '0.9rem', color: '#94a3b8' }}>Connect your wallet to attest.</div>
             ) : useOldBlockFormat ? (
@@ -1513,7 +1712,10 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                 {(sessionState === 1 && userInPool && !getStats(wallet?.address)?.slashed) && (
                   <div style={{ marginBottom: '0.5rem' }}>
                     <div style={{ fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>
-                      Attestation progress: {attestationProgress.toFixed(0)}% (threshold: {quorumThreshold} ETH)
+                      Attestation progress: {attestationProgress.toFixed(0)}%
+                      {latestBlock?.justified
+                        ? <span style={{ color: '#22c55e' }}> — ✓ justified (2/3 threshold reached)</span>
+                        : <span> (threshold: {parseFloat(quorumThreshold).toFixed(2)} ETH)</span>}
                     </div>
                     <div style={{ height: '8px', background: '#334155', borderRadius: '4px', marginTop: '0.25rem', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${Math.min(100, attestationProgress)}%`, background: 'var(--primary)' }} />
@@ -1574,7 +1776,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                   >
                     {getAttested(wallet?.address, attestBlockIndex) ? 'Attested' : 'Attest'}
                   </button>
-                  {!userInPool && !userExited && (sessionState === 0 || sessionState === 1) && committee.length < poolSize && (
+                  {!userInPool && !userExited && (sessionState === 0 || sessionState === 1) && (
                     <>
                       <input
                         type="number"
@@ -1595,7 +1797,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                       <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>ETH</span>
                       <button
                         onClick={handleJoin}
-                        disabled={txPending || committee.length >= poolSize}
+                        disabled={txPending || !poolHasRoom}
                         style={{
                           padding: '0.5rem 1rem',
                           background: '#22c55e',
@@ -1628,7 +1830,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                   >
                     Demo slash
                   </button>
-                  {userExited && (sessionState === 0 || sessionState === 1) && committee.length < poolSize && (
+                  {userExited && (sessionState === 0 || sessionState === 1) && poolHasRoom && (
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                       <input
                         type="number"
@@ -1649,7 +1851,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                       <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>ETH</span>
                       <button
                         onClick={handleRejoin}
-                        disabled={txPending || committee.length >= poolSize}
+                        disabled={txPending || !poolHasRoom}
                         style={{
                           padding: '0.5rem 1rem',
                           background: 'var(--primary)',
@@ -1730,7 +1932,9 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
               </>
             )}
           </div>
+        </div>
 
+        <div>
           <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Validator Pool</h3>
           <details style={{ marginBottom: '1rem', fontSize: '0.85rem', color: '#94a3b8' }}>
             <summary style={{ cursor: 'pointer', color: 'var(--primary)' }}>How committees form</summary>
@@ -1929,11 +2133,11 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
               </thead>
               <tbody>
                 {blocks.map((b) => {
-                  const bEpoch = Math.floor(b.index / blocksPerEpoch);
-                  const isFork = blocks.some((o) => o.index !== b.index && o.slot === b.slot && Math.floor(o.index / blocksPerEpoch) === bEpoch);
+                  const bEpoch = b.epoch ?? (Math.floor(b.index / blocksPerEpoch) + 1);
+                  const isFork = blocks.some((o) => o.index !== b.index && o.slot === b.slot && (o.epoch ?? (Math.floor(o.index / blocksPerEpoch) + 1)) === bEpoch);
                   const isOrphaned = isFork && !canonicalBlockIndices.has(b.index);
                   const isSelected = selectedBlockIndex === b.index;
-                  const epoch = Math.floor(b.index / blocksPerEpoch) + 1;
+                  const epoch = bEpoch;
                   const posInEpoch = ((b.slot - 1) % blocksPerEpoch) + 1;
                   const status = b.finalized ? 'finalized' : isOrphaned ? 'orphaned' : b.justified ? 'justified' : isFork ? 'fork' : 'proposed';
                   const slashCount = blockSlashCounts.get(b.index) || 0;
@@ -1988,12 +2192,22 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
           </div>
 
           {selectedBlockIndex !== null && blocks[selectedBlockIndex] && (
-            <div style={{
-              marginTop: '1.5rem',
-              padding: '1rem',
+            <div
+              onClick={() => selectBlock(null)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '4vh 1rem', overflowY: 'auto' }}
+            >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+              padding: '1.25rem 1.5rem',
               background: 'var(--card)',
               borderRadius: '0.75rem',
               border: '1px solid #475569',
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '88vh',
+              overflowY: 'auto',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h4 style={{ color: 'var(--primary)' }}>Slot {blocks[selectedBlockIndex].slot} — Block #{selectedBlockIndex}</h4>
@@ -2006,10 +2220,10 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
               </div>
               {(() => {
                 const b = blocks[selectedBlockIndex];
-                const bEpoch = Math.floor(b.index / blocksPerEpoch);
-                const isFork = blocks.some((o) => o.index !== b.index && o.slot === b.slot && Math.floor(o.index / blocksPerEpoch) === bEpoch);
+                const bEpoch = b.epoch ?? (Math.floor(b.index / blocksPerEpoch) + 1);
+                const isFork = blocks.some((o) => o.index !== b.index && o.slot === b.slot && (o.epoch ?? (Math.floor(o.index / blocksPerEpoch) + 1)) === bEpoch);
                 const isOrphaned = isFork && !canonicalBlockIndices.has(b.index);
-                const epoch = Math.floor(b.index / blocksPerEpoch) + 1;
+                const epoch = bEpoch;
                 const parentIdx = b.parentHash ? findBlockByHash(b.parentHash) : null;
                 const attesterSlashCount = blockDetailData?.slashEvents?.length ?? blockSlashCounts.get(selectedBlockIndex) ?? 0;
                 const statusLabel = b.finalized ? 'Finalized' : isOrphaned ? 'Orphaned' : b.justified ? 'Justified' : isFork ? 'Fork (proposed)' : 'Proposed';
@@ -2105,6 +2319,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                           <thead>
                             <tr style={{ background: '#334155', color: '#94a3b8' }}>
                               <th style={{ padding: '0.4rem 0.6rem', textAlign: 'left' }}>Validator</th>
+                              <th style={{ padding: '0.4rem 0.6rem', textAlign: 'left' }}>Type</th>
                               <th style={{ padding: '0.4rem 0.6rem', textAlign: 'right' }}>Stake</th>
                             </tr>
                           </thead>
@@ -2120,6 +2335,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                                     {a.address}
                                   </button>
                                 </td>
+                                <td style={{ padding: '0.4rem 0.6rem', color: a.slashed ? '#fca5a5' : '#94a3b8' }}>{a.isBot ? 'Bot' : 'Human'}{a.slashed ? ' · Slashed' : ''}</td>
                                 <td style={{ padding: '0.4rem 0.6rem', textAlign: 'right', color: '#e2e8f0' }}>{a.stake} ETH</td>
                               </tr>
                             ))}
@@ -2127,7 +2343,11 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                         </table>
                       </div>
                     ) : (
-                      <div style={{ color: '#64748b', marginBottom: '1rem' }}>No attestations yet</div>
+                      <div style={{ color: '#64748b', marginBottom: '1rem' }}>
+                        {b.attestationCount > 0
+                          ? `${b.attestationCount} attestations are recorded on-chain; detailed attester events are still loading or unavailable.`
+                          : 'No attestations yet'}
+                      </div>
                     )}
                     <h5 style={{ color: '#94a3b8', marginBottom: '0.5rem' }}>Transactions in Chain Block</h5>
                     {blockDetailData?.transactions?.length > 0 ? (
@@ -2161,7 +2381,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                       <div style={{ display: 'grid', gap: '0.75rem' }}>
                         {blockDetailData.slashEvents.map((s, i) => {
                           const ev = s.type === 'wrong_attestation'
-                            ? { reason: 1, blockIndex: s.blockIndex, slot: blocks[s.blockIndex]?.slot ?? 0, expectedHash: s.expectedHash, attestedHash: s.attestedHash, firstBlock: 0, secondBlock: 0 }
+                            ? { reason: 1, blockIndex: s.blockIndex, slot: s.slot ?? blocks[s.blockIndex]?.slot ?? 0, expectedHash: s.expectedHash, attestedHash: s.attestedHash, firstBlock: 0, secondBlock: 0 }
                             : s.type === 'double_vote'
                               ? { reason: 2, blockIndex: 0, slot: s.slot, expectedHash: ethers.ZeroHash, attestedHash: ethers.ZeroHash, firstBlock: s.firstBlock, secondBlock: s.secondBlock }
                               : null;
@@ -2169,6 +2389,9 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                             <div key={i} style={{ padding: '0.75rem', background: 'rgba(239,68,68,0.15)', borderRadius: '0.5rem', border: '1px solid rgba(239,68,68,0.4)' }}>
                               <div style={{ fontWeight: 'bold', color: '#fca5a5' }}>
                                 {s.type === 'wrong_attestation' ? 'Wrong attestation' : 'Double vote'}:{' '}
+                                <span style={{ color: s.status === 'pending' ? '#fcd34d' : '#fca5a5', marginRight: '0.35rem' }}>
+                                  {s.status === 'pending' ? 'Pending evidence' : 'Processed slash'}
+                                </span>
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); selectValidator(s.validator); }}
@@ -2189,9 +2412,10 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                 );
               })()}
             </div>
+            </div>
           )}
 
-          {selectedValidator && committee.some((c) => c.toLowerCase() === selectedValidator.toLowerCase()) && (
+          {selectedValidator && (
             <div style={{
               marginTop: '1.5rem',
               padding: '1rem',
@@ -2210,7 +2434,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                 </button>
               </div>
               {(() => {
-                const stats = getStats(selectedValidator);
+                const stats = validatorDetailData?.stats || getStats(selectedValidator);
                 return (
                   <div style={{ fontSize: '0.9rem' }}>
                     <div style={{ display: 'grid', gap: '0.75rem', marginBottom: '1.25rem' }}>
@@ -2229,12 +2453,14 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                       </div>
                       <div>
                         <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Stake</span>
-                        <div style={{ color: '#e2e8f0', fontWeight: 600 }}>{stats?.stake || '0'} ETH</div>
+                        <div style={{ color: '#e2e8f0', fontWeight: 600 }}>{stats?.stake ?? 'Unknown'}{stats?.stake != null ? ' ETH' : ''}</div>
                       </div>
                       <div>
                         <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Status</span>
                         <div style={{ color: '#e2e8f0' }}>
-                          {stats?.isBot ? 'Bot' : 'Human'}
+                          {stats ? (stats.isBot ? 'Bot' : 'Human') : 'Not in current pool'}
+                          {stats?.inPool && ' · In pool'}
+                          {stats?.exited && ' · Exited'}
                           {stats?.slashed && ' · Slashed'}
                         </div>
                       </div>
@@ -2302,7 +2528,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
               {userExited ? (
                 <>
                   <p style={{ fontSize: '0.9rem', color: '#94a3b8' }}>You have exited the pool. Your stake was refunded.</p>
-                  {committee.length < poolSize && (sessionState === 0 || sessionState === 1) && (
+                  {poolHasRoom && (sessionState === 0 || sessionState === 1) && (
                     <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                       <input
                         type="number"
@@ -2322,7 +2548,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                       <span style={{ color: '#94a3b8' }}>ETH</span>
                       <button
                         onClick={handleRejoin}
-                        disabled={txPending || committee.length >= poolSize}
+                        disabled={txPending || !poolHasRoom}
                         style={{
                           padding: '0.5rem 1rem',
                           background: 'var(--primary)',
@@ -2608,7 +2834,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
             </div>
           )}
 
-          {userExited && (sessionState === 0 || sessionState === 1) && committee.length < poolSize && (
+          {userExited && (sessionState === 0 || sessionState === 1) && poolHasRoom && (
             <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(99,102,241,0.1) 100%)', borderRadius: '0.75rem', border: '1px solid rgba(59,130,246,0.4)' }}>
               <h4 style={{ marginBottom: '0.75rem', color: '#93c5fd' }}>Rejoin Validator Pool</h4>
               <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '0.75rem' }}>You exited. Stake 32+ ETH to rejoin and participate again.</p>
@@ -2631,7 +2857,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                 <span style={{ color: '#94a3b8' }}>ETH</span>
                 <button
                   onClick={handleRejoin}
-                  disabled={txPending || committee.length >= poolSize}
+                  disabled={txPending || !poolHasRoom}
                   style={{
                     padding: '0.5rem 1rem',
                     background: 'var(--primary)',
@@ -2650,7 +2876,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
               </p>
             </div>
           )}
-          {!userInPool && !userExited && (sessionState === 0 || sessionState === 1) && committee.length < poolSize && (
+          {!userInPool && !userExited && (sessionState === 0 || sessionState === 1) && (
             <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--card)', borderRadius: '0.75rem', border: '1px solid #475569' }}>
               <h4 style={{ marginBottom: '0.75rem', color: '#e2e8f0' }}>Join Validator Pool</h4>
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -2672,7 +2898,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                 <span style={{ color: '#94a3b8' }}>ETH</span>
                 <button
                   onClick={handleJoin}
-                  disabled={txPending || committee.length >= poolSize}
+                  disabled={txPending || !poolHasRoom}
                   style={{
                     padding: '0.5rem 1rem',
                     background: 'var(--primary)',
@@ -2729,14 +2955,14 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                   );
                 })}
                 <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
-                  Tasks check off automatically when you do or observe them — no clicking needed. Progress is saved in your browser.
+                  Tasks check off automatically when you do or observe them — no clicking needed. Progress is saved with your lab session.
                 </div>
                 {taskCompleted.size > 0 && (
                   <button
                     type="button"
                     onClick={() => {
                       setTaskCompleted(new Set());
-                      try { taskStorageKey && localStorage.removeItem(taskStorageKey); } catch (_) {}
+                      patchSessionNamespace('beacon', { taskCompleted: [] }).catch(() => {});
                     }}
                     style={{ marginTop: '0.5rem', padding: '0.25rem 0.5rem', background: '#334155', border: 'none', borderRadius: '0.35rem', color: '#94a3b8', fontSize: '0.75rem', cursor: 'pointer' }}
                   >
@@ -2746,267 +2972,6 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
               </div>
             </>
           )}
-          {wallet?.address && !isInstructor && (
-            <div style={{
-              marginBottom: '1rem',
-              padding: '1rem',
-              background: 'var(--card)',
-              borderRadius: '0.75rem',
-              border: '1px solid #475569',
-            }}>
-              <h3 style={{ marginBottom: '0.75rem', color: 'var(--primary)' }}>Student Actions</h3>
-              {sessionState === 1 && userInPool && !getStats(wallet?.address)?.slashed && !useOldBlockFormat ? (
-                <>
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <div style={{ fontWeight: 'bold', color: '#94a3b8', fontSize: '0.85rem' }}>Attest</div>
-                    <div style={{ height: '6px', background: '#334155', borderRadius: '3px', marginTop: '0.2rem', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${Math.min(100, attestationProgress)}%`, background: 'var(--primary)' }} />
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>{attestationProgress.toFixed(0)}% (threshold: {quorumThreshold} ETH)</div>
-                    {requireHumanAttestation && latestBlock && (
-                      <div style={{ fontSize: '0.75rem', color: latestBlock.humanAttestationCount >= 1 ? '#22c55e' : '#f59e0b', marginTop: '0.2rem' }}>
-                        Human: {latestBlock.humanAttestationCount || 0}/1
-                      </div>
-                    )}
-                  </div>
-                  {blocks.length > 0 && (
-                    <div style={{ marginBottom: '0.5rem' }}>
-                      {attestableBlocks.length > 0 ? (
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                          <select
-                            value={attestBlockIndex}
-                            onChange={(e) => setAttestBlockIndex(Number(e.target.value))}
-                            style={{ padding: '0.3rem 0.5rem', background: '#334155', border: '1px solid #475569', borderRadius: '0.35rem', color: '#e2e8f0', fontSize: '0.8rem' }}
-                          >
-                            {attestableBlocks.map((b) => {
-                              const attested = getAttested(wallet?.address, b.index);
-                              return (
-                                <option key={b.index} value={b.index} disabled={attested}>
-                                  #{b.index} slot {b.slot} {attested ? '(attested)' : ''}
-                                </option>
-                              );
-                            })}
-                          </select>
-                          <button
-                            onClick={() => handleAttest(false)}
-                            disabled={txPending || getAttested(wallet?.address, attestBlockIndex)}
-                            style={{
-                              padding: '0.35rem 1rem',
-                              background: 'var(--primary)',
-                              border: 'none',
-                              borderRadius: '0.35rem',
-                              color: 'white',
-                              fontWeight: 'bold',
-                              fontSize: '0.85rem',
-                              cursor: txPending || getAttested(wallet?.address, attestBlockIndex) ? 'not-allowed' : 'pointer',
-                            }}
-                          >
-                            {getAttested(wallet?.address, attestBlockIndex) ? 'Attested' : 'Attest'}
-                          </button>
-                          <button
-                            onClick={() => handleAttest(true)}
-                            disabled={txPending || getAttested(wallet?.address, attestBlockIndex)}
-                            title="Attest with wrong hash to demonstrate slashing"
-                            style={{
-                              padding: '0.35rem 0.6rem',
-                              background: '#f59e0b',
-                              border: 'none',
-                              borderRadius: '0.35rem',
-                              color: 'white',
-                              fontSize: '0.8rem',
-                              cursor: txPending || getAttested(wallet?.address, attestBlockIndex) ? 'not-allowed' : 'pointer',
-                            }}
-                          >
-                            Demo slash
-                          </button>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                          No blocks in your committee — wait for next slot.
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <button
-                      type="button"
-                      onClick={handleExit}
-                      disabled={txPending}
-                      title="Voluntarily exit and withdraw your stake"
-                      style={{
-                        padding: '0.3rem 0.6rem',
-                        background: '#64748b',
-                        border: 'none',
-                        borderRadius: '0.35rem',
-                        color: '#e2e8f0',
-                        fontSize: '0.8rem',
-                        cursor: txPending ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      Exit validator pool
-                    </button>
-                  </div>
-                </>
-              ) : sessionState === 1 && (userExited || getStats(wallet?.address)?.slashed) ? (
-                <div>
-                  <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                    {userExited ? 'You have exited. Stake was refunded.' : 'You have been slashed.'}
-                  </div>
-                  {userExited && committee.length < poolSize && (
-                    <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <input
-                        type="number"
-                        min="32"
-                        step="1"
-                        value={stakeAmount}
-                        onChange={(e) => setStakeAmount(e.target.value)}
-                        style={{
-                          padding: '0.4rem',
-                          width: '80px',
-                          background: '#334155',
-                          border: '1px solid #475569',
-                          borderRadius: '0.35rem',
-                          color: '#e2e8f0',
-                          fontSize: '0.9rem',
-                        }}
-                      />
-                      <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>ETH</span>
-                      <button
-                        onClick={handleRejoin}
-                        disabled={txPending || committee.length >= poolSize}
-                        style={{
-                          padding: '0.4rem 0.75rem',
-                          background: 'var(--primary)',
-                          border: 'none',
-                          borderRadius: '0.35rem',
-                          color: 'white',
-                          fontWeight: 'bold',
-                          fontSize: '0.85rem',
-                          cursor: txPending ? 'not-allowed' : 'pointer',
-                        }}
-                      >
-                        Rejoin
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : sessionState === 1 && !userInPool && !userExited ? (
-                <div>
-                  {committee.length < poolSize ? (
-                    <>
-                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
-                        Join the validator pool to attest. Stake 32+ ETH.
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <input
-                          type="number"
-                          min="32"
-                          step="1"
-                          value={stakeAmount}
-                          onChange={(e) => setStakeAmount(e.target.value)}
-                          style={{
-                            padding: '0.4rem',
-                            width: '70px',
-                            background: '#334155',
-                            border: '1px solid #475569',
-                            borderRadius: '0.35rem',
-                            color: '#e2e8f0',
-                            fontSize: '0.9rem',
-                          }}
-                        />
-                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>ETH</span>
-                        <button
-                          onClick={handleJoin}
-                          disabled={txPending || committee.length >= poolSize}
-                          style={{
-                            padding: '0.4rem 0.75rem',
-                            background: 'var(--primary)',
-                            border: 'none',
-                            borderRadius: '0.35rem',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            fontSize: '0.85rem',
-                            cursor: txPending ? 'not-allowed' : 'pointer',
-                          }}
-                        >
-                          Join
-                        </button>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Pool {committee.length}/{poolSize}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                      Pool full ({committee.length}/{poolSize}). Wait for instructor to reset.
-                    </div>
-                  )}
-                </div>
-              ) : sessionState === 2 ? (
-                <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                  Session ended. Instructor can reset to start a new session.
-                </div>
-              ) : sessionState === 0 ? (
-                <div>
-                  {userInPool ? (
-                    <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                      You&apos;re in the pool. Session will start when instructor fills bots.
-                    </div>
-                  ) : committee.length < poolSize ? (
-                    <>
-                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
-                        Join the validator pool now. Stake 32+ ETH.
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <input
-                          type="number"
-                          min="32"
-                          step="1"
-                          value={stakeAmount}
-                          onChange={(e) => setStakeAmount(e.target.value)}
-                          style={{
-                            padding: '0.4rem',
-                            width: '70px',
-                            background: '#334155',
-                            border: '1px solid #475569',
-                            borderRadius: '0.35rem',
-                            color: '#e2e8f0',
-                            fontSize: '0.9rem',
-                          }}
-                        />
-                        <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>ETH</span>
-                        <button
-                          onClick={handleJoin}
-                          disabled={txPending || committee.length >= poolSize}
-                          style={{
-                            padding: '0.4rem 0.75rem',
-                            background: 'var(--primary)',
-                            border: 'none',
-                            borderRadius: '0.35rem',
-                            color: 'white',
-                            fontWeight: 'bold',
-                            fontSize: '0.85rem',
-                            cursor: txPending ? 'not-allowed' : 'pointer',
-                          }}
-                        >
-                          Join
-                        </button>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Pool {committee.length}/{poolSize}</span>
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                      Pool full ({committee.length}/{poolSize}). Session will start when instructor fills bots.
-                    </div>
-                  )}
-                </div>
-              ) : null}
-              <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: '#64748b', borderTop: '1px solid #334155', paddingTop: '0.75rem' }}>
-                <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: '#94a3b8' }}>Observe justified:</strong> Watch the progress bar above reach 100%.</div>
-                <div style={{ marginBottom: '0.35rem' }}><strong style={{ color: '#94a3b8' }}>Observe finalized:</strong> Latest Blocks table — Status changes to &quot;finalized&quot; when block N+2 is justified.</div>
-                <div><strong style={{ color: '#94a3b8' }}>View slash evidence:</strong> Click a block with Slash &gt; 0, or check Pending Slashes below.</div>
-              </div>
-            </div>
-          )}
-
           <h3 style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Stats</h3>
           <div style={{
             padding: '1rem',
@@ -3016,7 +2981,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
             marginBottom: '1rem',
           }}>
             <div style={{ marginBottom: '0.5rem' }}>Total staked: {totalStaked} ETH</div>
-            <div style={{ marginBottom: '0.5rem' }}>Justification threshold: {quorumThreshold} ETH</div>
+            <div style={{ marginBottom: '0.5rem' }}>Justification threshold: {parseFloat(quorumThreshold).toFixed(2)} ETH</div>
             <div style={{ marginBottom: '0.5rem' }}>Blocks: {blocks.length}</div>
             <div style={{ marginBottom: '0.5rem' }}>Finalized: {lastFinalizedIndex !== null ? Number(lastFinalizedIndex) + 1 : 0}</div>
             <div style={{ marginBottom: '0.5rem', fontWeight: 600, color: 'var(--primary)' }}>Epoch: {currentEpoch} · Slot: {currentSlot}</div>
@@ -3036,7 +3001,7 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                 {filteredPendingSlashes.length > 0 ? (
                   <>
                     {filteredPendingSlashes.map((addr, idx) => {
-                      const ev = pendingSlashEvidence.get(addr);
+                      const ev = pendingSlashEvidence.get(addr) ?? pendingSlashEvidence.get(addr.toLowerCase());
                       return (
                         <div key={addr} style={{ marginBottom: idx < filteredPendingSlashes.length - 1 ? '1rem' : 0, paddingBottom: idx < filteredPendingSlashes.length - 1 ? '1rem' : 0, borderBottom: idx < filteredPendingSlashes.length - 1 ? '1px solid rgba(245,158,11,0.3)' : 'none' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: ev ? '0.5rem' : 0 }}>
@@ -3050,18 +3015,19 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
                             <button
                               type="button"
                               onClick={() => handleProcessSlash(addr)}
-                              disabled={txPending}
+                              disabled={txPending || processingSlash !== null}
                               style={{
                                 padding: '0.25rem 0.5rem',
-                                background: '#f59e0b',
+                                background: processingSlash === addr ? '#b45309' : '#f59e0b',
                                 border: 'none',
                                 borderRadius: '0.35rem',
                                 color: 'white',
                                 fontSize: '0.8rem',
-                                cursor: txPending ? 'not-allowed' : 'pointer',
+                                cursor: (txPending || processingSlash !== null) ? 'not-allowed' : 'pointer',
+                                opacity: (txPending && processingSlash !== addr) ? 0.6 : 1,
                               }}
                             >
-                              Report slash (earn reward)
+                              {processingSlash === addr ? 'Reporting…' : 'Report slash (earn reward)'}
                             </button>
                           </div>
                           {ev && <SlashEvidenceChain ev={ev} validator={addr} onSelectBlock={selectBlock} />}
@@ -3141,6 +3107,11 @@ export function BeaconChainLabView({ provider, wallet, rpcUrl }) {
             )}
           </div>
         </div>
+      </div>
+
+      <div ref={explorerRef} style={{ marginTop: '1.5rem', scrollMarginTop: '1rem' }}>
+        <h3 style={{ color: 'var(--primary)', margin: '0 0 0.75rem' }}>🔎 Chain Explorer</h3>
+        <ChainExplorer provider={readProvider} rpcUrl={rpcUrl} signer={wallet?.signer} cacheOnly />
       </div>
     </div>
   );

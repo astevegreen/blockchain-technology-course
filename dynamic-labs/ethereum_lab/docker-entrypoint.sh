@@ -83,9 +83,12 @@ if [ "$MODE" = "instructor" ]; then
     # Ensure contracts directory exists
     mkdir -p /app/contracts/student
     
-    # Start Hardhat node in background
+    # Start Hardhat node in background.
+    # IMPORTANT: redirect stdout to /dev/null. Hardhat logs EVERY JSON-RPC call (~hundreds
+    # of lines/sec under student polling); that stream is ingested by the shared dockerd
+    # log driver and was burning host CPU across ALL labs. stderr is kept for real errors.
     echo -e "${BLUE}⛓️  Starting Hardhat blockchain node...${NC}"
-    npx hardhat node --hostname 0.0.0.0 --port $RPC_PORT &
+    npx hardhat node --hostname 0.0.0.0 --port $RPC_PORT >/dev/null &
     HARDHAT_PID=$!
     
     # Wait for node to be ready
@@ -108,6 +111,17 @@ if [ "$MODE" = "instructor" ]; then
     
     # Brief pause to ensure node is fully ready for deployments
     sleep 2
+
+    # Make the class-bank account effectively inexhaustible for classroom use.
+    # The top-off API still caps each request; this only prevents repeated
+    # legitimate top-offs from draining the Hardhat default 10,000 ETH account.
+    echo ""
+    echo -e "${BLUE}🏦 Funding class faucet bank...${NC}"
+    export FAUCET_RPC_URL="${FAUCET_RPC_URL:-http://127.0.0.1:$RPC_PORT}"
+    if ! node scripts/ensure-faucet-balance.js; then
+        echo -e "   ${RED}✗ Failed to fund class faucet bank${NC}"
+        exit 1
+    fi
     
     # Deploy PoS contracts (must succeed or container exits)
     echo ""
@@ -146,6 +160,78 @@ if [ "$MODE" = "instructor" ]; then
         fi
     fi
 
+    TOKENIZATION_NFT_ADDRESS=""
+    TOKENIZATION_SALE_ADDRESS=""
+    TOKENIZATION_MARKETPLACE_ADDRESS=""
+    ARCADE_TOKEN_ADDRESS=""
+    ARCADE_VENDOR_ADDRESS=""
+    ARCADE_VAULT_ADDRESS=""
+    ARCADE_TOKEN_PRICE_WEI=""
+    ARCADE_TOKEN_PRICE_ETH=""
+    ARCADE_TREASURY_ADDRESS=""
+    ARCADE_PLAY_COST=""
+    ENTROPY_LOTTERY_ADDRESS=""
+    THOUSAND_ETH_DOUBLER_ADDRESS=""
+    VULNERABLE_BANK_VAULT_ADDRESS=""
+    HONEYPOT_TOKEN_ADDRESS=""
+    APPROVAL_DRAINER_ADDRESS=""
+    FAKE_AIRDROP_CLAIMER_ADDRESS=""
+    TIMELOCK_RUG_VAULT_ADDRESS=""
+    TOKENIZATION_UPDATED_AT=""
+    echo ""
+    echo -e "${BLUE}🪙 Deploying Tokenization Lab contracts...${NC}"
+    if npx hardhat run --no-compile scripts/deploy-tokenization-contracts.js --network localhost; then
+        if [ -f "/app/frontend/public/labs/ethereum_lab/tokenization-config.json" ]; then
+            TOKENIZATION_NFT_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').nftAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            TOKENIZATION_SALE_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').saleAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            TOKENIZATION_MARKETPLACE_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').marketplaceAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            ARCADE_TOKEN_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').arcadeTokenAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            ARCADE_VENDOR_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').arcadeVendorAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            ARCADE_VAULT_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').arcadeVaultAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            ARCADE_TOKEN_PRICE_WEI=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').arcadeTokenPriceWei||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            ARCADE_TOKEN_PRICE_ETH=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').arcadeTokenPriceEth||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            ARCADE_TREASURY_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').arcadeTreasuryAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            ARCADE_PLAY_COST=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').arcadePlayCost||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            TOKENIZATION_UPDATED_AT=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/tokenization-config.json').updatedAt||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            echo -e "   ${GREEN}✓ Tokenization Lab contracts deployed${NC}"
+        fi
+    else
+        echo -e "   ${YELLOW}⚠ Tokenization Lab deployment failed${NC}"
+    fi
+
+    # Deploy intentionally flawed DeFi contracts for discovery/exploitation labs.
+    # This must run before the Beacon conductor snapshots the chain state.
+    if [ "${DEPLOY_DEFI_RISK_CONTRACTS:-1}" != "0" ]; then
+        echo ""
+        echo -e "${BLUE}🧪 Deploying DeFi Risk Garden contracts...${NC}"
+        if npx hardhat run --no-compile scripts/deploy-defi-risk-contracts.js --network localhost; then
+            if [ -f "/app/frontend/public/labs/ethereum_lab/defi-risk-config.json" ]; then
+                ENTROPY_LOTTERY_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/defi-risk-config.json').entropyLotteryAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+                THOUSAND_ETH_DOUBLER_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/defi-risk-config.json').thousandEthDoublerAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+                VULNERABLE_BANK_VAULT_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/defi-risk-config.json').vulnerableBankVaultAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+                HONEYPOT_TOKEN_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/defi-risk-config.json').honeypotTokenAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+                APPROVAL_DRAINER_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/defi-risk-config.json').approvalDrainerAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+                FAKE_AIRDROP_CLAIMER_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/defi-risk-config.json').fakeAirdropClaimerAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+                TIMELOCK_RUG_VAULT_ADDRESS=$(node -e "try{console.log(require('/app/frontend/public/labs/ethereum_lab/defi-risk-config.json').timelockRugVaultAddress||'')}catch(e){console.log('')}" 2>/dev/null || echo "")
+            fi
+            echo -e "   ${GREEN}✓ DeFi Risk Garden contracts deployed${NC}"
+        else
+            echo -e "   ${YELLOW}⚠ DeFi Risk Garden deployment failed${NC}"
+        fi
+    fi
+
+    # Start the self-running PoS conductor AFTER the Beacon, Tokenization, and
+    # DeFi risk contracts are deployed. The conductor takes an evm_snapshot at
+    # startup and reverts to it on every prune; if it snapshots before lab
+    # contracts deploy, later exercises call codeless addresses.
+    # Defaults ON whenever the Beacon lab is deployed; set BEACON_CONDUCTOR=0 to disable.
+    if [ "${DEPLOY_BEACON_LAB}" = "1" ] && [ "${BEACON_CONDUCTOR:-1}" != "0" ] && [ -f "/app/frontend/public/beacon-lab-config.json" ]; then
+        echo -e "${BLUE}🤖 Starting Beacon conductor...${NC}"
+        BEACON_BLOCK_MS="${BEACON_BLOCK_MS:-6000}" node scripts/beacon-conductor.js &
+        BEACON_CONDUCTOR_PID=$!
+        echo -e "   ${GREEN}✓ Beacon conductor running (pid ${BEACON_CONDUCTOR_PID})${NC}"
+    fi
+
     # Start Lab Terminal (PTY) in background unless disabled (LAB_TERMINAL_ENABLED=0 for students-run-locally)
     if [ "$LAB_TERMINAL_ENABLED" = "1" ] || [ "$LAB_TERMINAL_ENABLED" = "true" ]; then
         echo ""
@@ -176,12 +262,13 @@ if [ "$MODE" = "instructor" ]; then
         CONTAINER_IP=$(hostname -i 2>/dev/null || echo "localhost")
         
         # Create config JSON
-        # When NGINX_ENABLED=1: use /rpc (nginx routes to 8545). Else: /rpc-proxy (frontend proxies).
-        # RPC_URL_PUBLIC overrides (e.g. https://host/rpc)
+        # Browser RPC is write-filtered. Reads must use /chain-state, /beacon-state,
+        # or /marketplace-state; /rpc is intentionally unavailable to students.
+        # RPC_URL_PUBLIC overrides (e.g. https://host/rpc-write)
         if [ "$NGINX_ENABLED" = "1" ] || [ "$NGINX_ENABLED" = "true" ]; then
-            RPC_FOR_CONFIG="${RPC_URL_PUBLIC:-/rpc}"
+            RPC_FOR_CONFIG="${RPC_URL_PUBLIC:-/rpc-write}"
         else
-            RPC_FOR_CONFIG="${RPC_URL_PUBLIC:-/rpc-proxy}"
+            RPC_FOR_CONFIG="${RPC_URL_PUBLIC:-/rpc-write}"
         fi
         LAB_TERMINAL_JSON="false"
         [ "$LAB_TERMINAL_ENABLED" = "1" ] || [ "$LAB_TERMINAL_ENABLED" = "true" ] && LAB_TERMINAL_JSON="true"
@@ -193,6 +280,24 @@ if [ "$MODE" = "instructor" ]; then
   "mode": "instructor",
   "startTime": "$(date -Iseconds)",
   "beaconLabContractAddress": "$BEACON_LAB_ADDRESS",
+  "tokenizationNftAddress": "$TOKENIZATION_NFT_ADDRESS",
+  "tokenizationSaleAddress": "$TOKENIZATION_SALE_ADDRESS",
+  "tokenizationMarketplaceAddress": "$TOKENIZATION_MARKETPLACE_ADDRESS",
+  "arcadeTokenAddress": "$ARCADE_TOKEN_ADDRESS",
+  "arcadeVendorAddress": "$ARCADE_VENDOR_ADDRESS",
+  "arcadeVaultAddress": "$ARCADE_VAULT_ADDRESS",
+  "arcadeTokenPriceWei": "$ARCADE_TOKEN_PRICE_WEI",
+  "arcadeTokenPriceEth": "$ARCADE_TOKEN_PRICE_ETH",
+  "arcadeTreasuryAddress": "$ARCADE_TREASURY_ADDRESS",
+  "arcadePlayCost": "$ARCADE_PLAY_COST",
+  "entropyLotteryAddress": "$ENTROPY_LOTTERY_ADDRESS",
+  "thousandEthDoublerAddress": "$THOUSAND_ETH_DOUBLER_ADDRESS",
+  "vulnerableBankVaultAddress": "$VULNERABLE_BANK_VAULT_ADDRESS",
+  "honeypotTokenAddress": "$HONEYPOT_TOKEN_ADDRESS",
+  "approvalDrainerAddress": "$APPROVAL_DRAINER_ADDRESS",
+  "fakeAirdropClaimerAddress": "$FAKE_AIRDROP_CLAIMER_ADDRESS",
+  "timelockRugVaultAddress": "$TIMELOCK_RUG_VAULT_ADDRESS",
+  "tokenizationUpdatedAt": "$TOKENIZATION_UPDATED_AT",
   "labTerminalEnabled": $LAB_TERMINAL_JSON
 }
 EOF
@@ -203,6 +308,24 @@ EOF
   "rpcUrl": "$RPC_FOR_CONFIG",
   "mode": "instructor",
   "startTime": "$(date -Iseconds)",
+  "tokenizationNftAddress": "$TOKENIZATION_NFT_ADDRESS",
+  "tokenizationSaleAddress": "$TOKENIZATION_SALE_ADDRESS",
+  "tokenizationMarketplaceAddress": "$TOKENIZATION_MARKETPLACE_ADDRESS",
+  "arcadeTokenAddress": "$ARCADE_TOKEN_ADDRESS",
+  "arcadeVendorAddress": "$ARCADE_VENDOR_ADDRESS",
+  "arcadeVaultAddress": "$ARCADE_VAULT_ADDRESS",
+  "arcadeTokenPriceWei": "$ARCADE_TOKEN_PRICE_WEI",
+  "arcadeTokenPriceEth": "$ARCADE_TOKEN_PRICE_ETH",
+  "arcadeTreasuryAddress": "$ARCADE_TREASURY_ADDRESS",
+  "arcadePlayCost": "$ARCADE_PLAY_COST",
+  "entropyLotteryAddress": "$ENTROPY_LOTTERY_ADDRESS",
+  "thousandEthDoublerAddress": "$THOUSAND_ETH_DOUBLER_ADDRESS",
+  "vulnerableBankVaultAddress": "$VULNERABLE_BANK_VAULT_ADDRESS",
+  "honeypotTokenAddress": "$HONEYPOT_TOKEN_ADDRESS",
+  "approvalDrainerAddress": "$APPROVAL_DRAINER_ADDRESS",
+  "fakeAirdropClaimerAddress": "$FAKE_AIRDROP_CLAIMER_ADDRESS",
+  "timelockRugVaultAddress": "$TIMELOCK_RUG_VAULT_ADDRESS",
+  "tokenizationUpdatedAt": "$TOKENIZATION_UPDATED_AT",
   "labTerminalEnabled": $LAB_TERMINAL_JSON
 }
 EOF
@@ -226,7 +349,7 @@ EOF
     # Start nginx (in-container router) when NGINX_ENABLED=1
     if [ "$NGINX_ENABLED" = "1" ] || [ "$NGINX_ENABLED" = "true" ]; then
         echo ""
-        echo -e "${BLUE}🔀 Starting nginx (port 8080 → frontend, /rpc, /ws/terminal)...${NC}"
+        echo -e "${BLUE}🔀 Starting nginx (port 8080 → frontend, /rpc-write, /ws/terminal)...${NC}"
         nginx -c /etc/nginx/nginx-internal.conf &
         NGINX_PID=$!
         sleep 1
@@ -245,8 +368,8 @@ EOF
     echo "║                                                                ║"
     echo "║  LOCAL ACCESS:                                                 ║"
     if [ "$NGINX_ENABLED" = "1" ] || [ "$NGINX_ENABLED" = "true" ]; then
-    echo "║    All-in-one:    http://localhost:8080 (frontend, RPC, terminal) ║"
-    echo "║    Direct:        http://localhost:$FRONTEND_PORT (frontend), :$RPC_PORT (RPC)  ║"
+    echo "║    All-in-one:    http://localhost:8080 (frontend, write RPC, terminal) ║"
+    echo "║    Direct:        http://localhost:$FRONTEND_PORT (frontend), localhost:$RPC_PORT (debug RPC)  ║"
     else
     echo "║    Frontend:      http://localhost:$FRONTEND_PORT                       ║"
     echo "║    Blockchain:    http://localhost:$RPC_PORT                        ║"
@@ -263,7 +386,7 @@ EOF
     echo "║    1. Find your IP: hostname -I (Linux) or ipconfig (Windows)  ║"
     if [ "$NGINX_ENABLED" = "1" ] || [ "$NGINX_ENABLED" = "true" ]; then
     echo "║    2. Share: http://<YOUR-IP>:8080 (single URL for everything)  ║"
-    echo "║       - RPC: http://<YOUR-IP>:8080/rpc                           ║"
+    echo "║       - Write RPC: http://<YOUR-IP>:8080/rpc-write                 ║"
     else
     echo "║    2. Share:                                                   ║"
     echo "║       - Frontend: http://<YOUR-IP>:$FRONTEND_PORT                       ║"
@@ -292,7 +415,31 @@ elif [ "$MODE" = "student" ]; then
     STUDENT_HOME_OWNER_GID="${STUDENT_HOME_OWNER_GID:-1000}"
     CONTRACT_ADDRESS="${CONTRACT_ADDRESS:-}"
     BEACON_LAB_ADDRESS="${BEACON_LAB_ADDRESS:-}"
+    TOKENIZATION_NFT_ADDRESS="${TOKENIZATION_NFT_ADDRESS:-}"
+    TOKENIZATION_SALE_ADDRESS="${TOKENIZATION_SALE_ADDRESS:-}"
+    TOKENIZATION_MARKETPLACE_ADDRESS="${TOKENIZATION_MARKETPLACE_ADDRESS:-}"
+    ARCADE_TOKEN_ADDRESS="${ARCADE_TOKEN_ADDRESS:-}"
+    ARCADE_VENDOR_ADDRESS="${ARCADE_VENDOR_ADDRESS:-}"
+    ARCADE_VAULT_ADDRESS="${ARCADE_VAULT_ADDRESS:-}"
+    ARCADE_TOKEN_PRICE_WEI="${ARCADE_TOKEN_PRICE_WEI:-}"
+    ARCADE_TOKEN_PRICE_ETH="${ARCADE_TOKEN_PRICE_ETH:-}"
+    ARCADE_TREASURY_ADDRESS="${ARCADE_TREASURY_ADDRESS:-}"
+    ARCADE_PLAY_COST="${ARCADE_PLAY_COST:-}"
+    ENTROPY_LOTTERY_ADDRESS="${ENTROPY_LOTTERY_ADDRESS:-}"
+    THOUSAND_ETH_DOUBLER_ADDRESS="${THOUSAND_ETH_DOUBLER_ADDRESS:-}"
+    VULNERABLE_BANK_VAULT_ADDRESS="${VULNERABLE_BANK_VAULT_ADDRESS:-}"
+    HONEYPOT_TOKEN_ADDRESS="${HONEYPOT_TOKEN_ADDRESS:-}"
+    APPROVAL_DRAINER_ADDRESS="${APPROVAL_DRAINER_ADDRESS:-}"
+    FAKE_AIRDROP_CLAIMER_ADDRESS="${FAKE_AIRDROP_CLAIMER_ADDRESS:-}"
+    TIMELOCK_RUG_VAULT_ADDRESS="${TIMELOCK_RUG_VAULT_ADDRESS:-}"
+    TOKENIZATION_UPDATED_AT="${TOKENIZATION_UPDATED_AT:-}"
     TERMINAL_RPC_URL="${TERMINAL_RPC_URL:-${INSTRUCTOR_RPC_URL:-}}"
+    # Managed student lanes default the in-browser terminal OFF. It spawns a second
+    # Node process (terminal-server.js + node-pty) per lane AND exposes
+    # `hardhat console --network instructor` straight to the SHARED node — both of
+    # which crush the host at 25-30 concurrent students. lane-service sets this to 0;
+    # set LAB_TERMINAL_ENABLED=1 to re-enable (e.g. a single standalone student box).
+    LAB_TERMINAL_ENABLED="${LAB_TERMINAL_ENABLED:-0}"
     seed_student_home_if_needed
     
     # Check for required instructor connection info
@@ -311,7 +458,10 @@ elif [ "$MODE" = "student" ]; then
     echo "   - Frontend will run on port $FRONTEND_PORT"
     echo ""
     
-    # Start Lab Terminal (PTY) so remote students can use the terminal from their browser
+    # Start Lab Terminal (PTY) only when explicitly enabled. Disabled by default for
+    # managed student lanes (see note above): keeps each lane to a single Node process
+    # and blocks direct `hardhat console --network instructor` access to the shared node.
+    if [ "$LAB_TERMINAL_ENABLED" = "1" ] || [ "$LAB_TERMINAL_ENABLED" = "true" ]; then
     echo -e "${BLUE}🖥️  Starting Lab Terminal (ports 3002, 3003, 3004)...${NC}"
     TERMINAL_PORTS="${TERMINAL_PORTS:-3002,3003,3004}" \
     TERMINAL_CWD="${TERMINAL_CWD:-/home/student/workspace}" \
@@ -325,21 +475,42 @@ elif [ "$MODE" = "student" ]; then
     TERMINAL_PID=$!
     sleep 1
     echo -e "   ${GREEN}✓ Lab Terminal running (students can use terminal from browser)${NC}"
+    else
+        echo -e "${YELLOW}🚫 Lab Terminal disabled for this lane (LAB_TERMINAL_ENABLED=0) — GUI-only${NC}"
+    fi
     echo ""
     
-    # When the lane is fronted by the platform router, browsers can't
-    # resolve the docker hostname in $INSTRUCTOR_RPC_URL — they need a
-    # router-relative path. RPC_URL_PUBLIC overrides what the SPA uses.
-    RPC_FOR_CONFIG="${RPC_URL_PUBLIC:-$INSTRUCTOR_RPC_URL}"
+    # Browsers always use this lane's write-filtered proxy. The proxy itself
+    # targets $INSTRUCTOR_RPC_URL server-side when running in standalone
+    # student mode; platform lanes override with /rpc-write as well.
+    RPC_FOR_CONFIG="${RPC_URL_PUBLIC:-/rpc-write}"
     # Managed student lanes get contract metadata injected by lane-service.
     # Standalone student containers can still pull the deploy config from
     # an explicit instructor HTTP endpoint when provided.
-    if [ -z "$CONTRACT_ADDRESS" ] && [ -n "${INSTRUCTOR_HTTP_URL:-}" ]; then
+    if [ -n "${INSTRUCTOR_HTTP_URL:-}" ] && { [ -z "$CONTRACT_ADDRESS" ] || [ -z "$TIMELOCK_RUG_VAULT_ADDRESS" ]; }; then
         for i in $(seq 1 30); do
             CFG=$(curl -fsS "${INSTRUCTOR_HTTP_URL%/}/api/config.json" 2>/dev/null || true)
             if [ -n "$CFG" ]; then
                 CONTRACT_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).contractAddress||'')}catch(e){}})")
                 BEACON_LAB_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).beaconLabContractAddress||'')}catch(e){}})")
+                TOKENIZATION_NFT_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).tokenizationNftAddress||'')}catch(e){}})")
+                TOKENIZATION_SALE_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).tokenizationSaleAddress||'')}catch(e){}})")
+                TOKENIZATION_MARKETPLACE_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).tokenizationMarketplaceAddress||'')}catch(e){}})")
+                ARCADE_TOKEN_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).arcadeTokenAddress||'')}catch(e){}})")
+                ARCADE_VENDOR_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).arcadeVendorAddress||'')}catch(e){}})")
+                ARCADE_VAULT_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).arcadeVaultAddress||'')}catch(e){}})")
+                ARCADE_TOKEN_PRICE_WEI=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).arcadeTokenPriceWei||'')}catch(e){}})")
+                ARCADE_TOKEN_PRICE_ETH=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).arcadeTokenPriceEth||'')}catch(e){}})")
+                ARCADE_TREASURY_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).arcadeTreasuryAddress||'')}catch(e){}})")
+                ARCADE_PLAY_COST=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).arcadePlayCost||'')}catch(e){}})")
+                ENTROPY_LOTTERY_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).entropyLotteryAddress||'')}catch(e){}})")
+                THOUSAND_ETH_DOUBLER_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).thousandEthDoublerAddress||'')}catch(e){}})")
+                VULNERABLE_BANK_VAULT_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).vulnerableBankVaultAddress||'')}catch(e){}})")
+                HONEYPOT_TOKEN_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).honeypotTokenAddress||'')}catch(e){}})")
+                APPROVAL_DRAINER_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).approvalDrainerAddress||'')}catch(e){}})")
+                FAKE_AIRDROP_CLAIMER_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).fakeAirdropClaimerAddress||'')}catch(e){}})")
+                TIMELOCK_RUG_VAULT_ADDRESS=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).timelockRugVaultAddress||'')}catch(e){}})")
+                TOKENIZATION_UPDATED_AT=$(echo "$CFG" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).tokenizationUpdatedAt||'')}catch(e){}})")
                 [ -n "$CONTRACT_ADDRESS" ] && break
             fi
             sleep 1
@@ -349,18 +520,38 @@ elif [ "$MODE" = "student" ]; then
 
     # Create config for student to connect to instructor
     mkdir -p /app/frontend/dist/api
+    LAB_TERMINAL_JSON="false"
+    [ "$LAB_TERMINAL_ENABLED" = "1" ] || [ "$LAB_TERMINAL_ENABLED" = "true" ] && LAB_TERMINAL_JSON="true"
     cat > /app/frontend/dist/api/config.json << EOF
 {
   "rpcUrl": "$RPC_FOR_CONFIG",
   "terminalRpcUrl": "$TERMINAL_RPC_URL",
   "contractAddress": "$CONTRACT_ADDRESS",
   "beaconLabContractAddress": "$BEACON_LAB_ADDRESS",
+  "tokenizationNftAddress": "$TOKENIZATION_NFT_ADDRESS",
+  "tokenizationSaleAddress": "$TOKENIZATION_SALE_ADDRESS",
+  "tokenizationMarketplaceAddress": "$TOKENIZATION_MARKETPLACE_ADDRESS",
+  "arcadeTokenAddress": "$ARCADE_TOKEN_ADDRESS",
+  "arcadeVendorAddress": "$ARCADE_VENDOR_ADDRESS",
+  "arcadeVaultAddress": "$ARCADE_VAULT_ADDRESS",
+  "arcadeTokenPriceWei": "$ARCADE_TOKEN_PRICE_WEI",
+  "arcadeTokenPriceEth": "$ARCADE_TOKEN_PRICE_ETH",
+  "arcadeTreasuryAddress": "$ARCADE_TREASURY_ADDRESS",
+  "arcadePlayCost": "$ARCADE_PLAY_COST",
+  "entropyLotteryAddress": "$ENTROPY_LOTTERY_ADDRESS",
+  "thousandEthDoublerAddress": "$THOUSAND_ETH_DOUBLER_ADDRESS",
+  "vulnerableBankVaultAddress": "$VULNERABLE_BANK_VAULT_ADDRESS",
+  "honeypotTokenAddress": "$HONEYPOT_TOKEN_ADDRESS",
+  "approvalDrainerAddress": "$APPROVAL_DRAINER_ADDRESS",
+  "fakeAirdropClaimerAddress": "$FAKE_AIRDROP_CLAIMER_ADDRESS",
+  "timelockRugVaultAddress": "$TIMELOCK_RUG_VAULT_ADDRESS",
+  "tokenizationUpdatedAt": "$TOKENIZATION_UPDATED_AT",
   "mode": "student",
   "station": "${STATION:-}",
   "assignedAddress": "${ASSIGNED_ADDRESS:-}",
   "assignedPrivateKey": "${ASSIGNED_PRIVATE_KEY:-}",
   "startTime": "$(date -Iseconds)",
-  "labTerminalEnabled": true
+  "labTerminalEnabled": $LAB_TERMINAL_JSON
 }
 EOF
     

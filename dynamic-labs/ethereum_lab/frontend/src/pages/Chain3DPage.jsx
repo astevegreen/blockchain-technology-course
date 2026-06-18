@@ -1,7 +1,7 @@
 /**
  * Chain3DPage - Standalone 3D blockchain visualization page.
  * Route: /chain-3d
- * Pass ?rpc=http://... to connect to a specific node, or uses localStorage custom_rpc / localhost.
+ * Pass ?rpc=http://... to connect to a specific node.
  * Optional L2 RPC for Layer 2 chain (Optimism, Arbitrum, Base, etc.).
  */
 import { useState, useEffect } from 'react';
@@ -22,10 +22,11 @@ function createProvider(url) {
 export default function Chain3DPage() {
   const [searchParams] = useSearchParams();
   const rpcParam = searchParams.get('rpc') || '';
-  const rpcFromStorage = typeof localStorage !== 'undefined' ? localStorage.getItem('custom_rpc') : null;
 
   const [configRpcUrl, setConfigRpcUrl] = useState(null);
-  const rpcUrl = (rpcParam || configRpcUrl || rpcFromStorage || DEFAULT_RPC).trim() || DEFAULT_RPC;
+  const rpcUrl = (rpcParam || configRpcUrl || DEFAULT_RPC).trim() || DEFAULT_RPC;
+  const displayRpcUrl = provider ? rpcUrl : 'classroom cache: /chain-state';
+  const directRpcUrl = rpcParam.trim();
 
   const [provider, setProvider] = useState(null);
 
@@ -54,7 +55,11 @@ export default function Chain3DPage() {
   useEffect(() => {
     let cancelled = false;
     setProviderError(null);
-    const p = createProvider(rpcUrl);
+    if (!directRpcUrl) {
+      setProvider(null);
+      return;
+    }
+    const p = createProvider(directRpcUrl);
     if (!p) return;
     p.getBlockNumber()
       .then(() => {
@@ -70,7 +75,7 @@ export default function Chain3DPage() {
       cancelled = true;
       if (p?.destroy) p.destroy();
     };
-  }, [rpcUrl]);
+  }, [directRpcUrl]);
 
   const handleL2Connect = () => {
     if (!l2RpcInput.trim()) {
@@ -90,9 +95,6 @@ export default function Chain3DPage() {
       .then(() => {
         setL2Provider(p);
         setL2Connecting(false);
-        try {
-          localStorage.setItem('l2_connected', String(Date.now()));
-        } catch (_) {}
       })
       .catch((err) => {
         setL2Provider(null);
@@ -154,7 +156,7 @@ export default function Chain3DPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <div style={{ color: '#64748b', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-            L1: {rpcUrl}
+            L1: {displayRpcUrl}
           </div>
           {!l2Mode && (
             <>
@@ -227,17 +229,6 @@ export default function Chain3DPage() {
             <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
               Ensure Hardhat is running: <code style={{ color: '#22ff88' }}>npx hardhat node</code>
             </div>
-          </div>
-        ) : !provider ? (
-          <div
-            style={{
-              padding: '2rem',
-              textAlign: 'center',
-              color: '#22ff88',
-              fontFamily: 'monospace',
-            }}
-          >
-            Connecting to chain...
           </div>
         ) : (
           <>

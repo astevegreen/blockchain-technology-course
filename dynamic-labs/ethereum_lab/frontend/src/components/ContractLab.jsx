@@ -5,34 +5,24 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { ethers } from 'ethers';
-import { fetchAndLoadSolc } from 'web-solc';
+import { loadSolc } from 'web-solc';
 
-/** Mirrors `binaries.soliditylang.org` layout (`/wasm/list.json`, `/bin/list.json`). Often works when the official host is blocked. */
-const SOLC_JS_DELIVR_BASE = 'https://cdn.jsdelivr.net/gh/ethereum/solc-bin@gh-pages';
+/** Local solc-bin mirror layout under `frontend/public/vendor/solc`. */
+const SOLC_VENDOR_BASE = `${import.meta.env.BASE_URL || '/'}vendor/solc`.replace(/\/$/, '');
+const SOLC_VERSION = '0.8.26';
+const SOLC_VENDOR_PATH = `${SOLC_VENDOR_BASE}/bin/soljson-v0.8.26+commit.8a97fa7a.js`;
 
-const SOLC_FETCH_ATTEMPTS = [
-  { label: 'jsDelivr (wasm)', opts: { fetch: { repository: { baseUrl: SOLC_JS_DELIVR_BASE }, build: 'wasm' } } },
-  { label: 'soliditylang.org (wasm)', opts: { fetch: { build: 'wasm' } } },
-  { label: 'jsDelivr (legacy emscripten)', opts: { fetch: { repository: { baseUrl: SOLC_JS_DELIVR_BASE }, build: 'emscripten' } } },
-  { label: 'soliditylang.org (emscripten)', opts: { fetch: { build: 'emscripten' } } }
-];
-
-/** Tries several CDNs / builds so in-browser compile works behind strict networks. */
+/** Loads the vendored in-browser compiler. */
 async function fetchAndLoadSolcWithFallback() {
-  const range = '^0.8.19';
-  let lastErr;
-  for (const { label, opts } of SOLC_FETCH_ATTEMPTS) {
-    try {
-      const inst = await fetchAndLoadSolc(range, opts);
-      return { inst, label };
-    } catch (e) {
-      lastErr = e;
-      console.warn(`[ContractLab] solc load failed (${label}):`, e);
-    }
+  const response = await fetch(SOLC_VENDOR_PATH);
+  if (!response.ok) {
+    throw new Error(`Could not load vendored solc ${SOLC_VERSION}: ${response.status} ${response.statusText}`);
   }
-  throw lastErr;
+  const soljson = await response.text();
+  const inst = await loadSolc(soljson);
+  return { inst, label: `vendored solc ${SOLC_VERSION}` };
 }
-import { ChainSearch } from './ChainSearch';
+import { ChainExplorer } from './ChainExplorer';
 import { getExampleScripts } from '../constants/exampleScripts';
 import SimpleStorageArtifact from '../contracts/SimpleStorage.json';
 import ClassVoteArtifact from '../contracts/ClassVote.json';
@@ -54,11 +44,11 @@ function formatCompileFailure(e) {
     return (
       (msg || 'Browser compiler worker failed') +
       loc +
-      '. Often: blocked download of the Solidity compiler (check Network for binaries.soliditylang.org), an extension/adblocker, or a strict browser policy. Try another network or compile with npx hardhat compile in the project root.'
+      '. Often: the vendored Solidity compiler asset is missing or blocked. Rebuild the frontend assets, or compile with npx hardhat compile in the project root.'
     );
   }
   if (typeof Event !== 'undefined' && e instanceof Event) {
-    return `Worker "${e.type}" event (no details). Same fixes as above — allow binaries.soliditylang.org, disable strict blockers, or use Hardhat compile locally.`;
+    return `Worker "${e.type}" event (no details). Same fixes as above: confirm the vendored compiler exists, or use Hardhat compile locally.`;
   }
   try {
     return JSON.stringify(e);
@@ -366,7 +356,9 @@ function ContractLab({ provider, rpcUrl, wallet, posAddress, onLoadScript, setSt
     try {
       const factory = new ethers.ContractFactory(abi, bytecode, wallet.signer);
       const instance = await factory.deploy();
-      await instance.waitForDeployment();
+      const deployTx = instance.deploymentTransaction?.();
+      if (deployTx) await deployTx.wait();
+      else await instance.waitForDeployment();
       setDeployedAddress(instance.target);
       setStatusMsg?.('✅ Deployed! Address: ' + instance.target);
       setTimeout(() => setStatusMsg?.(''), 4000);
@@ -482,7 +474,7 @@ function ContractLab({ provider, rpcUrl, wallet, posAddress, onLoadScript, setSt
         Deploy templates, connect to classmate's contracts, and run example scripts to verify your setup.
       </p>
 
-      <ChainSearch provider={provider} rpcUrl={rpcUrl} />
+      <ChainExplorer provider={provider} rpcUrl={rpcUrl} signer={wallet?.signer} cacheOnly />
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         {['examples', 'write', 'deploy', 'connect'].map(tab => (
@@ -595,7 +587,7 @@ function ContractLab({ provider, rpcUrl, wallet, posAddress, onLoadScript, setSt
           <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem', lineHeight: 1.5 }}>
             <strong style={{ color: '#cbd5e1' }}>Easiest:</strong> skip browser compile and use the <strong>Deploy</strong> tab with <strong>SimpleStorage</strong> or <strong>Class Vote</strong>, or paste an ABI from <code style={{ background: '#1e293b', padding: '0.1rem 0.25rem', borderRadius: 3 }}>artifacts/</code> after{' '}
             <code style={{ background: '#1e293b', padding: '0.1rem 0.25rem', borderRadius: 3 }}>npx hardhat compile</code>.
-            {' '}The in-browser compiler tries several CDN mirrors (including jsDelivr) and wasm/emscripten builds; some networks still block all of them.
+            {' '}The in-browser compiler uses the vendored Solidity compiler bundled with this lab.
           </p>
           <input
             placeholder="Contract name (e.g. MyContract)"
@@ -622,7 +614,7 @@ function ContractLab({ provider, rpcUrl, wallet, posAddress, onLoadScript, setSt
           <button
             onClick={async () => {
               setCompiling(true);
-              setCompileOutput('⏳ Loading compiler (trying CDN mirrors)...');
+              setCompileOutput('⏳ Loading vendored compiler...');
               let solcInstance = null;
               try {
                 try {
@@ -632,7 +624,7 @@ function ContractLab({ provider, rpcUrl, wallet, posAddress, onLoadScript, setSt
                 } catch (fetchErr) {
                   console.error('[ContractLab] fetchAndLoadSolcWithFallback', fetchErr);
                   setCompileOutput(
-                    '❌ Could not load Solidity compiler from any mirror.\n' +
+                    '❌ Could not load the vendored Solidity compiler.\n' +
                       formatCompileFailure(fetchErr) +
                       '\n\nUse the Deploy tab with a built-in template, or run npx hardhat compile and paste ABI/bytecode.'
                   );

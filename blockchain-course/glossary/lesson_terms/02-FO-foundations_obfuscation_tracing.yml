@@ -1,0 +1,588 @@
+lesson_id: "02-FO"
+lesson_title: "Blockchain Forensics: Foundations, Obfuscation, and Tracing"
+source_path: "lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd"
+terms:
+  - term: "UTXO Model"
+    modifier: "Bitcoin"
+    aliases: ["unspent transaction output model", "UTXO"]
+    definition: "A ledger model where transactions consume old outputs and create new outputs, making each coin fragment traceable through its spending history."
+    context: "The lesson contrasts UTXO tracing with Ethereum account tracing to show why different forensic heuristics apply."
+    slide_heading: "Recall: UTXO vs. Account Model"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Account Model"
+    modifier: "Ethereum"
+    aliases: ["account-based model"]
+    definition: "A ledger model where persistent accounts hold balances and transactions update account state rather than consuming discrete coin outputs."
+    context: "Students need this distinction because Ethereum evidence often sits in account state, logs, and contract traces instead of input-output chains."
+    slide_heading: "Recall: UTXO vs. Account Model"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Common-Input-Ownership Heuristic"
+    modifier: "Bitcoin forensics"
+    aliases: ["CIOH", "common input ownership", "multi-input heuristic"]
+    definition: "A clustering heuristic that treats multiple inputs in one Bitcoin transaction as likely controlled by the same entity."
+    context: "The lesson uses CIOH as the foundational Bitcoin inference that later privacy tools and counter-heuristics deliberately try to break."
+    slide_heading: "Recall: UTXO vs. Account Model"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Event Log"
+    modifier: "Ethereum"
+    aliases: ["logs", "contract event log", "emitted event"]
+    definition: "Contract-emitted data that records token transfers and application activity not visible in the top-level ETH value field."
+    context: "Ethereum tracing requires event logs because economically meaningful token movement can be invisible in the main transaction record."
+    slide_heading: "Recall: UTXO vs. Account Model"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Internal Trace"
+    modifier: "Ethereum"
+    aliases: ["internal call trace", "contract trace", "internal transaction trace"]
+    definition: "A record of contract-to-contract execution steps that occur inside a single Ethereum transaction."
+    context: "The lesson stresses traces because smart contracts can move value through many internal calls while the top-level transaction appears simple."
+    slide_heading: "Reminder: Ethereum's Account Model"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Graph Analysis"
+    modifier: "blockchain forensics"
+    aliases: ["graph thinking", "transaction graph analysis"]
+    definition: "The practice of modeling on-chain actors and value flows as nodes and edges to detect patterns of control and movement."
+    context: "Graph analysis is the analytic lens the lesson uses for fan-outs, fan-ins, peeling chains, clustering, and attribution."
+    slide_heading: "The Analyst's Mindset: Graph Thinking"
+    tags: ["forensics", "distributed-systems"]
+    confidence: "high"
+  - term: "Entity Cluster"
+    modifier: "blockchain forensics"
+    aliases: ["cluster", "address cluster", "entity"]
+    definition: "A set of addresses, UTXOs, or accounts inferred to be controlled by one real-world actor or service."
+    context: "The lesson shows analysts collapsing raw addresses into entity clusters before interpreting behavior or seeking attribution."
+    slide_heading: "The Analyst's Mindset: Graph Thinking"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Graph Motif"
+    modifier: "blockchain forensics"
+    aliases: ["motif", "transaction pattern"]
+    definition: "A recurring graph shape that suggests a possible behavior, service role, or laundering tactic."
+    context: "Students use motifs such as fan-outs, fan-ins, and peeling chains as pattern-recognition tools that still require context."
+    slide_heading: "The Analyst's Mindset: Graph Thinking"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Fan-Out"
+    modifier: "blockchain forensics"
+    aliases: ["fan out", "one-to-many flow"]
+    definition: "A graph motif where one source distributes value to many destination addresses or accounts."
+    context: "The lesson warns that fan-outs can represent benign payouts, laundering, dusting, or service activity depending on context."
+    slide_heading: "Graph Motif: The \"Fan-Out\""
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Fan-In"
+    modifier: "blockchain forensics"
+    aliases: ["fan in", "many-to-one flow"]
+    definition: "A graph motif where value from many sources is gathered into one destination."
+    context: "Fan-ins help students recognize aggregation behavior such as service sweeps, laundering preparation, or cash-out staging."
+    slide_heading: "Graph Motif: The \"Fan-In\""
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Consolidation"
+    modifier: "blockchain forensics"
+    aliases: ["fund aggregation", "UTXO consolidation"]
+    definition: "The gathering of funds from many addresses or outputs into a smaller number of controlled destinations."
+    context: "The lesson treats consolidation as a signal that can reveal service infrastructure or common control, but also create false clustering risk."
+    slide_heading: "Graph Motif: The \"Fan-In\""
+    tags: ["forensics", "bitcoin"]
+    confidence: "high"
+  - term: "Top-Level Transaction"
+    modifier: "Ethereum"
+    aliases: ["top-level tx", "main transaction record"]
+    definition: "The outer Ethereum transaction record showing fields such as sender, recipient, ETH value, gas use, and status."
+    context: "The lesson emphasizes that stopping at this record can miss ERC-20 transfers, DEX swaps, flash loans, and internal calls."
+    slide_heading: "Ethereum Forensics: Where the Evidence Hides"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Decentralized Finance"
+    modifier: "Ethereum"
+    aliases: ["DeFi"]
+    definition: "Smart-contract-based financial applications such as swaps, lending, and token markets that execute on public blockchains."
+    context: "DeFi matters in the lesson because high-value flows may occur through contracts and logs rather than simple ETH transfers."
+    slide_heading: "Ethereum Forensics: Where the Evidence Hides"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Decentralized Exchange"
+    modifier: "Ethereum"
+    aliases: ["DEX", "DEXs", "decentralized exchanges"]
+    definition: "A smart-contract-based trading venue where users swap assets without a centralized exchange account."
+    context: "DEX swaps create token flows and contract interactions that analysts must reconstruct from logs and traces."
+    slide_heading: "Ethereum Forensics: Where the Evidence Hides"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Stablecoin"
+    modifier: null
+    aliases: ["stablecoins"]
+    definition: "A token designed to track a reference asset such as the U.S. dollar."
+    context: "The lesson highlights stablecoins because illicit actors often move large value in USDT or USDC rather than native ETH."
+    slide_heading: "Ethereum Forensics: Where the Evidence Hides"
+    tags: ["ethereum", "stablecoins", "forensics"]
+    confidence: "high"
+  - term: "ERC-20 Transfer Event"
+    modifier: "Ethereum"
+    aliases: ["ERC-20 transfer", "Transfer event", "ERC-20 logs"]
+    definition: "The standard log event emitted by an ERC-20 token contract when token balances move between addresses."
+    context: "Students must query token contract events to trace USDT, USDC, WETH, and similar assets accurately."
+    slide_heading: "Following Token Flows: ERC-20 Transfers"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Proxy Contract"
+    modifier: "Ethereum"
+    aliases: ["proxy contracts", "EIP-1967 proxy"]
+    definition: "A contract that forwards calls to a separate implementation contract where the actual execution logic lives."
+    context: "The lesson includes proxies because analysts can misunderstand what code ran if they inspect only the visible called address."
+    slide_heading: "Smart Contract Forensics"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Flash Loan"
+    modifier: "DeFi"
+    aliases: ["flash loans"]
+    definition: "A loan that is borrowed and repaid within a single transaction, often producing a large inflow followed immediately by repayment."
+    context: "Flash loans create distinctive trace signatures and often appear in DeFi manipulation or exploit investigations."
+    slide_heading: "Smart Contract Forensics"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Reentrancy"
+    modifier: "smart contract security"
+    aliases: ["reentrant execution", "recursive call pattern"]
+    definition: "A contract execution pattern where a contract is called again before the earlier call has finished."
+    context: "The lesson treats reentrancy as a classic exploit signature visible in traces but not in a simple transaction summary."
+    slide_heading: "Smart Contract Forensics"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Transaction Trace"
+    modifier: "Ethereum"
+    aliases: ["trace-level data", "debug_traceTransaction"]
+    definition: "Detailed execution data showing the internal calls and contract behavior that occurred during an Ethereum transaction."
+    context: "Automated Ethereum investigations need trace-level data to interpret proxies, flash loans, reentrancy, and internal value movement."
+    slide_heading: "Smart Contract Forensics"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Address Clustering"
+    modifier: "blockchain forensics"
+    aliases: ["clustering", "address cluster analysis"]
+    definition: "The process of grouping addresses or outputs that likely belong to the same actor based on transaction evidence and heuristics."
+    context: "The lesson uses clustering to turn one known address into a broader picture of an entity's activity."
+    slide_heading: "Address Clustering"
+    tags: ["forensics", "bitcoin"]
+    confidence: "high"
+  - term: "Change Address Detection"
+    modifier: "Bitcoin forensics"
+    aliases: ["change detection", "change output detection"]
+    definition: "A heuristic process for identifying which output in a UTXO transaction likely returns leftover value to the sender."
+    context: "Change detection expands clusters by identifying sender-controlled outputs that would otherwise look like payments."
+    slide_heading: "Heuristic #2: Change Address Detection"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Wallet Fingerprinting"
+    modifier: "Bitcoin forensics"
+    aliases: ["wallet behavior fingerprinting"]
+    definition: "Inferring wallet software or behavior from patterns such as output order, script type, or change address habits."
+    context: "The lesson lists wallet fingerprints as one signal that can support change address detection when combined with other evidence."
+    slide_heading: "Heuristic #2: Change Address Detection"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Peeling Chain"
+    modifier: "Bitcoin forensics"
+    aliases: ["peeling chains", "peel chain"]
+    definition: "A repeated UTXO pattern where small amounts are peeled off to destinations while most funds continue to a new change address."
+    context: "The lesson uses peeling chains as a recognizable laundering motif that graph tools can detect at scale."
+    slide_heading: "Heuristic #3: Peeling Chains"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Structuring"
+    modifier: "financial crime"
+    aliases: ["structured movement", "smurfing"]
+    definition: "Breaking value into smaller movements to reduce attention, detection, or perceived risk."
+    context: "Peeling chains are compared to structuring because they split large balances into many smaller transfers."
+    slide_heading: "Heuristic #3: Peeling Chains"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Counter-Heuristic"
+    modifier: "blockchain forensics"
+    aliases: ["counter heuristic", "anti-clustering technique"]
+    definition: "A wallet, protocol, or user behavior designed to break the assumptions behind common forensic heuristics."
+    context: "The lesson frames CoinJoin and similar tools as adversarial responses to analyst clustering methods."
+    slide_heading: "Pitfalls & Counter-Heuristics"
+    tags: ["forensics", "bitcoin"]
+    confidence: "high"
+  - term: "False Merge"
+    modifier: "blockchain forensics"
+    aliases: ["false clustering", "incorrect cluster merge"]
+    definition: "An error where unrelated users or addresses are incorrectly combined into one inferred entity."
+    context: "Students need this warning because exchange sweeps, CoinJoin, and unusual wallet behavior can make naive clustering misleading."
+    slide_heading: "Pitfalls & Counter-Heuristics"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Probabilistic Lead"
+    modifier: "blockchain forensics"
+    aliases: ["heuristic lead", "investigative lead"]
+    definition: "An inference that helps guide an investigation but does not by itself prove ownership, intent, or identity."
+    context: "The lesson repeatedly distinguishes heuristic findings from evidence strong enough for attribution or court use."
+    slide_heading: "Pitfalls & Counter-Heuristics"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "CoinJoin"
+    modifier: "Bitcoin privacy"
+    aliases: []
+    definition: "A collaborative transaction technique that pools multiple users' inputs and outputs to weaken sender-receiver linkage."
+    context: "CoinJoin is the lesson's canonical example of a privacy tool that deliberately breaks CIOH."
+    slide_heading: "Pitfalls & Counter-Heuristics"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Anonymity Set"
+    modifier: "privacy"
+    aliases: ["candidate set"]
+    definition: "The group of plausible participants among whom a user's action is hidden."
+    context: "The lesson uses anonymity sets to explain why CoinJoin and privacy pools make attribution less certain."
+    slide_heading: "Counter-Heuristic #1: CoinJoin"
+    tags: ["forensics", "cryptography"]
+    confidence: "high"
+  - term: "Mixer"
+    modifier: "blockchain forensics"
+    aliases: ["tumbler", "mixing service", "crypto mixer"]
+    definition: "A service or smart contract that pools deposits and redistributes withdrawals to obscure direct custody links."
+    context: "Mixers are a major obfuscation step that analysts approach through timing, amount, infrastructure, and endpoint evidence."
+    slide_heading: "Obfuscation Service: Mixers & Tumblers"
+    tags: ["forensics", "policy"]
+    confidence: "high"
+  - term: "Chain of Custody"
+    modifier: "blockchain forensics"
+    aliases: ["fund provenance", "custody chain"]
+    definition: "The traceable sequence of control or movement that links funds from one address, service, or actor to another."
+    context: "The lesson describes mixers as breaking chain of custody, forcing investigators to rely on indirect correlation and endpoints."
+    slide_heading: "Obfuscation Service: Mixers & Tumblers"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Timing Analysis"
+    modifier: "mixer investigations"
+    aliases: ["time correlation", "timing correlation"]
+    definition: "Correlating deposits and withdrawals by comparing when they occur, especially in low-volume pools."
+    context: "The lesson presents timing as one practical way investigators link activity despite mixer obfuscation."
+    slide_heading: "Breaking Mixers: Investigative Countermeasures"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Amount Correlation"
+    modifier: "mixer investigations"
+    aliases: ["value correlation", "amount matching"]
+    definition: "Linking possible source and destination flows by comparing amounts after accounting for fees or conversions."
+    context: "The lesson shows that nonstandardized withdrawal amounts can leak enough information to weaken mixer anonymity."
+    slide_heading: "Breaking Mixers: Investigative Countermeasures"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Denomination Standardization"
+    modifier: "privacy tooling"
+    aliases: ["standard denominations", "fixed output denominations"]
+    definition: "Forcing withdrawals into fixed amounts to reduce the usefulness of amount-based correlation."
+    context: "The lesson names poor denomination design as a weakness that lets investigators correlate mixer deposits and withdrawals."
+    slide_heading: "Breaking Mixers: Investigative Countermeasures"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Operational Security Failure"
+    modifier: "blockchain forensics"
+    aliases: ["opsec failure", "OpSec failure"]
+    definition: "A preventable user or operator mistake that exposes identity, infrastructure, or intent."
+    context: "The lesson emphasizes that investigations often succeed at human endpoints because users reuse addresses, touch KYC services, or leave OSINT trails."
+    slide_heading: "Breaking Mixers: Investigative Countermeasures"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Privacy Pools"
+    modifier: "privacy protocol"
+    aliases: []
+    definition: "An experimental mixer-like design that uses zero-knowledge proofs to preserve privacy while letting users prove separation from known illicit deposits."
+    context: "The lesson uses Privacy Pools to show a newer attempt to balance privacy with compliance after Tornado Cash sanctions."
+    slide_heading: "The Next Generation: Privacy Pools"
+    tags: ["cryptography", "forensics", "policy"]
+    confidence: "high"
+  - term: "Zero-Knowledge Proof"
+    modifier: "cryptography"
+    aliases: ["ZKP", "zero knowledge proof", "zero-knowledge proofs"]
+    definition: "A proof that a statement is true without revealing the underlying private data that makes it true."
+    context: "Zero-knowledge proofs support privacy pools and shielded transactions while still allowing limited claims to be verified."
+    slide_heading: "The Next Generation: Privacy Pools"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "Selective Disclosure"
+    modifier: "privacy compliance"
+    aliases: ["limited disclosure"]
+    definition: "Revealing only specific compliance-relevant facts while keeping broader transaction details private."
+    context: "The lesson frames selective disclosure as a way privacy tools can avoid treating privacy and compliance as opposites."
+    slide_heading: "The Next Generation: Privacy Pools"
+    tags: ["cryptography", "policy", "forensics"]
+    confidence: "high"
+  - term: "Privacy-Preserving Blockchain"
+    modifier: "blockchain forensics"
+    aliases: ["privacy-preserving ledger", "privacy-native blockchain", "privacy chain"]
+    definition: "A blockchain whose core protocol intentionally conceals transaction details such as sender, receiver, or amount."
+    context: "The lesson contrasts privacy-native chains with transparent ledgers that add obfuscation through optional tools."
+    slide_heading: "The Shift in Strategy: Privacy-Preserving Blockchains"
+    tags: ["forensics", "cryptography"]
+    confidence: "high"
+  - term: "Transparent Ledger"
+    modifier: "blockchain forensics"
+    aliases: ["transparent blockchain", "public transaction graph"]
+    definition: "A ledger where transaction relationships are publicly visible and can be analyzed as a graph."
+    context: "Bitcoin and Ethereum are treated as transparent ledgers where forensic work depends on interpreting visible patterns."
+    slide_heading: "The Shift in Strategy: Privacy-Preserving Blockchains"
+    tags: ["forensics", "bitcoin", "ethereum"]
+    confidence: "high"
+  - term: "Privacy Coin"
+    modifier: "blockchain forensics"
+    aliases: ["privacy-preserving cryptocurrency", "privacy asset"]
+    definition: "A cryptocurrency designed to hide transaction information more strongly than transparent-ledger assets."
+    context: "The lesson shifts from mixers to privacy coins to show why investigators often pivot from on-chain tracing to endpoints and metadata."
+    slide_heading: "The Shift in Strategy: Privacy-Preserving Blockchains"
+    tags: ["forensics", "cryptography"]
+    confidence: "high"
+  - term: "Monero"
+    modifier: "privacy coin"
+    aliases: ["XMR"]
+    definition: "A privacy-by-default cryptocurrency that hides sender, receiver, and amount using ring signatures, stealth addresses, and RingCT."
+    context: "Monero is the lesson's main example of a chain where ordinary graph tracing is intentionally broken at the protocol level."
+    slide_heading: "Monero (XMR): Privacy by Default"
+    tags: ["forensics", "cryptography"]
+    confidence: "high"
+  - term: "Ring Signature"
+    modifier: "Monero"
+    aliases: ["ring signatures"]
+    definition: "A signature scheme that proves one member of a group signed without revealing which member was the true signer."
+    context: "The lesson uses ring signatures to explain how Monero hides the sender among decoy inputs."
+    slide_heading: "Monero (XMR): Privacy by Default"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "Stealth Address"
+    modifier: "Monero"
+    aliases: ["stealth addresses", "one-time address"]
+    definition: "A one-time destination address derived so outside observers cannot publicly link the transaction to the recipient's main address."
+    context: "Stealth addresses are one of Monero's default privacy mechanisms for hiding receivers."
+    slide_heading: "Monero (XMR): Privacy by Default"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "RingCT"
+    modifier: "Monero"
+    aliases: ["Ring Confidential Transactions", "confidential transactions"]
+    definition: "Monero's confidential transaction mechanism that hides transaction amounts while still allowing supply validity checks."
+    context: "RingCT completes the Monero privacy model by concealing amounts as well as sender and receiver information."
+    slide_heading: "Monero (XMR): Privacy by Default"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "Endpoint Analysis"
+    modifier: "privacy coin forensics"
+    aliases: ["endpoint correlation", "on-ramp and off-ramp analysis"]
+    definition: "Investigating the services and records where users buy, sell, store, or otherwise expose an otherwise private asset."
+    context: "The lesson emphasizes endpoints because privacy coins often defeat direct on-chain flow reconstruction."
+    slide_heading: "Forensic Limitations & Voluntary Disclosure"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Zcash"
+    modifier: "privacy coin"
+    aliases: ["ZEC"]
+    definition: "A cryptocurrency that supports both transparent transactions and shielded transactions using zero-knowledge proofs."
+    context: "Zcash contrasts with Monero because its privacy is optional and therefore depends heavily on user adoption."
+    slide_heading: "Zcash (ZEC): Optional Privacy"
+    tags: ["forensics", "cryptography"]
+    confidence: "high"
+  - term: "Shielded Address"
+    modifier: "Zcash"
+    aliases: ["z-addr", "shielded address", "shielded addresses"]
+    definition: "A Zcash address type where sender, receiver, and amount can be hidden inside the shielded pool."
+    context: "The lesson contrasts shielded addresses with transparent addresses to show how optional privacy changes traceability."
+    slide_heading: "Zcash (ZEC): Optional Privacy"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "Transparent Address"
+    modifier: "Zcash"
+    aliases: ["t-addr", "transparent address", "transparent addresses"]
+    definition: "A Zcash address type whose transactions are publicly visible and traceable like Bitcoin transactions."
+    context: "Transparent address use reduces the practical anonymity of Zcash because many flows never enter fully shielded mode."
+    slide_heading: "Zcash (ZEC): Optional Privacy"
+    tags: ["forensics", "cryptography"]
+    confidence: "high"
+  - term: "Shielded Pool"
+    modifier: "Zcash"
+    aliases: ["shielded pool activity", "anonymity pool"]
+    definition: "The set of funds and transactions using Zcash shielded functionality, which determines the practical anonymity set."
+    context: "The lesson notes that a small or lightly used shielded pool makes correlation easier than the protocol design suggests in theory."
+    slide_heading: "Zcash (ZEC): Optional Privacy"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "zk-SNARK"
+    modifier: "Zcash"
+    aliases: ["zero-knowledge succinct non-interactive argument of knowledge", "zk-SNARKs"]
+    definition: "A compact zero-knowledge proof system used by Zcash to verify shielded transactions without revealing their private details."
+    context: "Students need this term to understand how Zcash hides transaction fields while preserving verifiability."
+    slide_heading: "Zcash (ZEC): Optional Privacy"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "View Key"
+    modifier: "privacy coin compliance"
+    aliases: ["view keys", "read-only key"]
+    definition: "A read-only key that lets a third party inspect transaction history without authorizing spending."
+    context: "The lesson presents view keys as useful for voluntary disclosure and compliance audits but rarely available in criminal investigations."
+    slide_heading: "Forensic Limitations & Voluntary Disclosure"
+    tags: ["cryptography", "forensics", "policy"]
+    confidence: "high"
+  - term: "Mutual Legal Assistance Treaty"
+    modifier: "cross-border investigations"
+    aliases: ["MLAT", "MLATs"]
+    definition: "A formal government-to-government process for requesting evidence across national borders."
+    context: "MLAT delays matter because international records can take months or years to obtain, limiting rapid asset freezes."
+    slide_heading: "Forensic Limitations & Voluntary Disclosure"
+    tags: ["forensics", "policy", "real-world"]
+    confidence: "high"
+  - term: "Harvest Now, Decrypt Later"
+    modifier: "privacy coin forensics"
+    aliases: ["harvest-now-decrypt-later", "HNDL"]
+    definition: "An adversary strategy of archiving protected data now in hopes that future cryptanalytic or quantum advances reveal it later."
+    context: "The lesson applies this idea to privacy coins by warning that today's hidden transaction data may be de-anonymized retrospectively."
+    slide_heading: "Quantum Computing: Future Impact on Privacy Coin Forensics"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "Shor's Algorithm"
+    modifier: "quantum computing"
+    aliases: ["Shor algorithm"]
+    definition: "A quantum algorithm that could break widely used public-key cryptography if large enough quantum computers become practical."
+    context: "The lesson uses Shor's algorithm to explain why future quantum capability could threaten signatures, RingCT, or proof systems."
+    slide_heading: "Quantum Computing: Future Impact on Privacy Coin Forensics"
+    tags: ["cryptography", "forensics"]
+    confidence: "high"
+  - term: "Chain Hopping"
+    modifier: "blockchain forensics"
+    aliases: ["cross-chain laundering", "chain hop"]
+    definition: "Moving value across multiple ledgers to complicate tracing, exploit different liquidity pools, or use privacy features on another chain."
+    context: "The lesson treats chain hopping as a modern laundering strategy that requires analysts to follow exits and entries across ecosystems."
+    slide_heading: "The Modern Launderer: \"Chain Hopping\""
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Cross-Chain Bridge"
+    modifier: "blockchain infrastructure"
+    aliases: ["bridge", "bridges", "smart contract bridge"]
+    definition: "Infrastructure that locks or controls an asset on one chain and represents equivalent value on another chain."
+    context: "Bridges are one of the main mechanisms that enable chain hopping and can leave correlated lock-and-mint evidence."
+    slide_heading: "Mechanisms for Chain Hopping"
+    tags: ["forensics", "distributed-systems"]
+    confidence: "high"
+  - term: "Wrapped Asset"
+    modifier: "cross-chain infrastructure"
+    aliases: ["wrapped token", "wrapped equivalent"]
+    definition: "A token representation of value that is locked, controlled, or otherwise backed on another chain."
+    context: "The lesson uses wrapped assets to explain what bridge users receive after value moves to a destination chain."
+    slide_heading: "Mechanisms for Chain Hopping"
+    tags: ["forensics", "distributed-systems"]
+    confidence: "high"
+  - term: "Atomic Swap"
+    modifier: "cross-chain trading"
+    aliases: ["atomic swaps"]
+    definition: "A direct trade of assets across different chains without a centralized intermediary."
+    context: "Atomic swaps can weaken custody trails because there may be no shared service record tying the two sides together."
+    slide_heading: "Mechanisms for Chain Hopping"
+    tags: ["forensics", "distributed-systems"]
+    confidence: "high"
+  - term: "Cross-Chain Forensics"
+    modifier: "blockchain forensics"
+    aliases: ["cross-chain tracing", "following the hop"]
+    definition: "The practice of correlating exits on one chain with entries on another using timing, value, and service behavior."
+    context: "The lesson shows cross-chain forensics as a correlation problem rather than one continuous ledger-native trace."
+    slide_heading: "Following the Hop: Cross-Chain Forensics"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Approximate Value Match"
+    modifier: "cross-chain forensics"
+    aliases: ["value match", "approximate amount match"]
+    definition: "A cross-chain comparison that links flows by similar economic value while allowing for fees, price movement, and conversion differences."
+    context: "The lesson pairs approximate value matching with timing to build a stronger inference across a swap or bridge."
+    slide_heading: "Following the Hop: Cross-Chain Forensics"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Traceability"
+    modifier: "blockchain forensics"
+    aliases: ["traceable", "traceability level"]
+    definition: "The degree to which a movement of funds can be reconstructed and defended from available on-chain and off-chain evidence."
+    context: "The lesson compares hop types by traceability, from highly visible bridge events to opaque privacy coin intermediaries."
+    slide_heading: "Not All Hops Are Equally Opaque"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Attribution"
+    modifier: "blockchain forensics"
+    aliases: ["identity attribution", "entity attribution"]
+    definition: "The process of linking a pseudonymous on-chain cluster to a real-world person, organization, or service."
+    context: "The lesson presents attribution as the final investigative step after tracing narrows the relevant cluster or cash-out point."
+    slide_heading: "The Final Step: Attribution"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Open Source Intelligence"
+    modifier: "blockchain attribution"
+    aliases: ["OSINT"]
+    definition: "Publicly available information from sources such as social media, forums, code repositories, paste sites, and business records."
+    context: "OSINT helps connect addresses, aliases, lifestyles, and services to the clusters identified through blockchain analysis."
+    slide_heading: "The Final Step: Attribution"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Labeled Dataset"
+    modifier: "blockchain analytics"
+    aliases: ["address labels", "analytics firm labels", "labeled addresses"]
+    definition: "A database mapping blockchain addresses or clusters to known services, markets, mixers, sanctioned entities, or other actors."
+    context: "The lesson treats labels as useful attribution indicators whose strength depends on source quality and methodology transparency."
+    slide_heading: "The Final Step: Attribution"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "KYC Subpoena"
+    modifier: "blockchain attribution"
+    aliases: ["exchange subpoena", "Know Your Customer subpoena", "KYC records"]
+    definition: "Legal process compelling an exchange or service to reveal the identified customer behind an account or deposit address."
+    context: "The lesson identifies KYC subpoenas as one of the most common ways blockchain tracing turns into real-world attribution."
+    slide_heading: "The Final Step: Attribution"
+    tags: ["forensics", "policy", "real-world"]
+    confidence: "high"
+  - term: "Admissibility"
+    modifier: "legal evidence"
+    aliases: ["legal admissibility", "court-admissible evidence"]
+    definition: "Whether evidence can be accepted and relied on in formal legal proceedings."
+    context: "Students need this concept to distinguish investigative leads from claims that can support a courtroom argument."
+    slide_heading: "Attribution: Standards of Evidence and Known Pitfalls"
+    tags: ["forensics", "policy", "real-world"]
+    confidence: "high"
+  - term: "Intelligence Fusion"
+    modifier: "blockchain attribution"
+    aliases: ["evidence fusion", "multi-source fusion"]
+    definition: "Combining multiple evidence streams to produce a stronger conclusion than any one source could support alone."
+    context: "The lesson shows identity attribution becoming stronger when clusters, labels, OSINT, and exchange records converge."
+    slide_heading: "Attribution: From Cluster to Identity"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Bitfinex Hack"
+    modifier: "case study"
+    aliases: ["Bitfinex Hack (2016)", "2016 Bitfinex hack"]
+    definition: "A major 2016 exchange theft whose laundering trail later illustrated peeling chains, chain hopping, KYC subpoenas, OSINT, and cloud evidence."
+    context: "The case study ties the lesson's tracing and attribution techniques into one end-to-end investigative narrative."
+    slide_heading: "Case Study: The Bitfinex Hack (2016)"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Virtual Currency Exchange"
+    modifier: "blockchain investigations"
+    aliases: ["VCE", "VCEs", "crypto exchange"]
+    definition: "A service where users trade or cash out crypto assets and where account records can become attribution evidence."
+    context: "The Bitfinex case shows exchanges as both laundering targets and investigative chokepoints when subpoenas expose account activity."
+    slide_heading: "Breaking the Obfuscation: Account Clustering"
+    tags: ["forensics", "policy", "real-world"]
+    confidence: "high"
+  - term: "Validation Event"
+    modifier: "blockchain forensics"
+    aliases: ["corroborating event", "external validation"]
+    definition: "Outside evidence that confirms what an on-chain heuristic previously suggested."
+    context: "The lesson uses the AlphaBay seizure as an example of off-chain evidence validating clustering in the Bitfinex investigation."
+    slide_heading: "Breaking the Obfuscation: Account Clustering"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Chokepoint"
+    modifier: "blockchain investigations"
+    aliases: ["investigative chokepoint", "cash-out chokepoint"]
+    definition: "A service or process where hidden on-chain activity intersects with identifiable accounts, records, or legal obligations."
+    context: "The lesson frames exchanges and KYC records as chokepoints where sophisticated laundering can still collapse into identity evidence."
+    slide_heading: "The Fatal Flaw: KYC Subpoenas"
+    tags: ["forensics", "policy", "real-world"]
+    confidence: "high"

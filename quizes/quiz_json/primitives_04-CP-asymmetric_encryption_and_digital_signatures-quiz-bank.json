@@ -37,9 +37,9 @@
       "question_stem": "A company wants every employee to communicate privately with every other employee using only symmetric encryption. Why does this become difficult as the company grows?",
       "correct_answer": "Each communicating pair needs a shared secret arranged securely in advance, so key management grows faster than the organization can handle.",
       "incorrect_answers": [
-        "Symmetric encryption completely stops functioning on the network once more than two corporate users try to access the same algorithm.",
-        "Every network participant must publish their private key to a shared directory before any message can be safely encrypted for them.",
-        "Symmetric encryption is structurally incapable of providing confidentiality for any message transmitted over open public networks."
+        "The main scaling problem is that each employee pair must invent and maintain a different encryption algorithm, not just a different key.",
+        "Every employee must first generate a public/private key pair before a symmetric cipher can encrypt messages between coworkers.",
+        "Symmetric encryption becomes slower than public-key encryption once messages cross the open corporate network and need routing."
       ],
       "explanation": "The lesson frames the key distribution problem as a scaling failure: symmetric encryption is efficient, but private communication among many dynamic pairs requires secure pre-distribution and management of many shared secrets.",
       "difficulty_level": 3,
@@ -60,12 +60,12 @@
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "Alice wants to send Bob a confidential message using public-key encryption. Which workflow matches the lesson's public/private key roles?",
+      "question_stem": "Alice wants to send Bob a confidential message using public-key encryption. Which workflow correctly matches the public/private key roles?",
       "correct_answer": "Alice encrypts with Bob's public key, and Bob decrypts with Bob's private key.",
       "incorrect_answers": [
-        "Alice encrypts with Alice's public key, and Bob decrypts with Bob's private key.",
-        "Alice encrypts with Bob's private key, and Bob decrypts with Bob's public key.",
-        "Alice and Bob publish one shared secret key, then use it for both directions."
+        "Alice signs with Alice's private key, and Bob verifies with Alice's public key.",
+        "Alice encrypts with Alice's public key, and Bob decrypts with Alice's private key.",
+        "Alice and Bob publish a shared session key, then both use that public key to encrypt."
       ],
       "explanation": "For confidentiality, the public key acts like a lock anyone can use to protect a message for Bob. Only Bob's private key can decrypt the result.",
       "difficulty_level": 2,
@@ -89,9 +89,9 @@
       "question_stem": "A developer says, \"A digital signature is just encryption with the private key, so it keeps the message secret.\" What is the best correction?",
       "correct_answer": "A signature is meant to prove authenticity and integrity, usually by signing a hash of the message, not to hide the message contents.",
       "incorrect_answers": [
-        "A digital signature encrypts the underlying message, hiding its contents from everyone on the network except the authorized signer.",
-        "A digital signature remains valid only when the network verifier already knows the signer's private key in advance of validation.",
-        "A digital signature completely replaces the structural need to hash the transaction or bind the result to a specific message body."
+        "A digital signature keeps the message secret because only the intended recipient can verify it with their private key later.",
+        "A digital signature proves signer approval, but verification requires the verifier to know the signer's private key in advance.",
+        "A digital signature should be generated over the full plaintext directly, so hashing the message first would weaken the proof."
       ],
       "explanation": "The lesson emphasizes the conceptual flip between confidentiality and authenticity. Digital signatures are verified with public information and are normally applied to a message hash, so they do not provide confidentiality by themselves.",
       "difficulty_level": 3,
@@ -115,9 +115,9 @@
       "question_stem": "Which description best captures why trapdoor functions make asymmetric cryptography possible?",
       "correct_answer": "They are easy to compute in the public direction but infeasible to reverse unless someone has specific secret information.",
       "incorrect_answers": [
-        "They work because the certificate authority secretly stores every user's trapdoor value for later public reversals by clients.",
-        "They secure the network by making encryption operations slow for legitimate users and fast only for active external attackers.",
-        "They remove private keys by allowing any verifier to reverse the public computation after seeing a signed message online later."
+        "They are hard to compute in both directions until a certificate authority publishes the algorithm needed for verification.",
+        "They let two parties use the same shared secret as both the public encryption input and the private decryption input.",
+        "They make verification possible because anyone can invert the private operation after seeing a signed message and public key."
       ],
       "explanation": "A trapdoor function separates public computation from private inversion. The public operation can be known, while the private key or trapdoor makes reversal feasible only for the authorized holder.",
       "difficulty_level": 2,
@@ -141,9 +141,9 @@
       "question_stem": "A messaging app uses asymmetric cryptography to authenticate a peer and establish a shared session key, then uses symmetric encryption for the conversation. Why is this hybrid design typical?",
       "correct_answer": "Asymmetric methods solve key exchange and authentication problems, while symmetric encryption is faster for bulk data.",
       "incorrect_answers": [
-        "Asymmetric encryption carries the full conversation because it is faster for bulk data than modern symmetric ciphers in practice.",
-        "Symmetric encryption supplies public identity binding, while asymmetric encryption efficiently hides long data streams.",
-        "Hybrid systems are needed because symmetric ciphers cannot provide confidentiality unless a public key signs every block."
+        "Asymmetric ciphers carry the full conversation after the handshake because they avoid creating any shared session key at all.",
+        "Symmetric encryption authenticates peer identities, while asymmetric encryption provides the high-speed data channel later.",
+        "The app needs both because public-key methods can hide data but cannot help strangers establish session material securely."
       ],
       "explanation": "The lesson warns against treating asymmetric cryptography as a full replacement for symmetric cryptography. In practice, the two are combined: public-key techniques handle scalable setup and authentication, then symmetric ciphers handle high-volume encryption.",
       "difficulty_level": 3,
@@ -164,12 +164,12 @@
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A blockchain wallet must minimize signature size, bandwidth, and verification overhead while preserving public-key security. Which lesson-grounded choice is most appropriate?",
+      "question_stem": "A blockchain wallet must minimize signature size, bandwidth, and verification overhead while preserving public-key security. Which choice is most appropriate?",
       "correct_answer": "Use elliptic curve cryptography because it can provide comparable security with smaller keys and signatures than RSA.",
       "incorrect_answers": [
-        "Use RSA because larger key sizes always make signing and verification operations much cheaper on constrained hardware.",
-        "Use symmetric encryption because its single-key architecture naturally supports public verification of digital signatures.",
-        "Avoid using public-key cryptography because standard blockchain addresses already prove real-world legal identities."
+        "Use RSA because increasing key size lets RSA signatures stay smaller than ECC signatures at comparable security levels.",
+        "Use Diffie-Hellman alone because key agreement produces signatures without adding a public verification algorithm for wallets.",
+        "Use a symmetric MAC because one shared wallet key gives validators public proof that the spender approved the transaction."
       ],
       "explanation": "The lesson contrasts RSA with ECC and highlights ECC's practical advantages in size and efficiency, especially in environments such as blockchains where storage, bandwidth, and signature overhead matter.",
       "difficulty_level": 3,
@@ -190,12 +190,12 @@
     {
       "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "A browser rejects a site's certificate even though the public key mathematically verifies a signature. Which explanation best matches the lesson's PKI model?",
+      "question_stem": "A browser rejects a site's certificate even though the public key mathematically verifies a signature. Which explanation best fits the PKI trust model?",
       "correct_answer": "The client must also validate identity binding details such as the issuer chain, domain match, expiration, and revocation status.",
       "incorrect_answers": [
-        "A certificate guarantees the website is safe, so any validation failure means the public-key algorithm itself has failed during TLS.",
-        "PKI works only if the website keeps its public key secret from browsers and reveals it to the certificate authority first.",
-        "The browser should accept any certificate automatically if the site decrypts earlier test messages sent to its server."
+        "The certificate should be trusted if its public key verifies any signature, because PKI only checks private-key possession by the site.",
+        "The browser can ignore expiration and revocation when the issuer chain verifies, because those details are outside PKI.",
+        "The site must keep its public key secret until after TLS begins, because exposing it in a certificate breaks identity binding."
       ],
       "explanation": "PKI is not just possession of a public key. It is a hierarchy for binding identities to keys, and clients must validate the certificate chain and related conditions before trusting that binding.",
       "difficulty_level": 4,
@@ -216,12 +216,12 @@
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "A blockchain node receives a transaction spending from an address. What does successful signature verification establish in the lesson's blockchain framing?",
+      "question_stem": "A blockchain node receives a transaction spending from an address. What does successful signature verification establish in a blockchain context?",
       "correct_answer": "The transaction was authorized by whoever controls the private key corresponding to that address, not that the network verified a real-world identity.",
       "incorrect_answers": [
-        "The signer's real-world identity has been officially vetted and verified by a centralized certificate authority before the transaction can be mined.",
-        "The transaction remains completely confidential because digital signatures encrypt and hide its contents from other validating peer nodes.",
-        "The public blockchain address can be mathematically processed by anyone to recover the signer's private key if a transaction dispute occurs."
+        "The network has confirmed the legal identity behind the address because mining requires a certificate chain to a root authority before inclusion and finality.",
+        "The transaction is confidential from other validating peer nodes because the signature encrypts the spending details during validation by default.",
+        "Validators can reverse the spend later if the signer proves the corresponding private key was stolen before block inclusion and settlement."
       ],
       "explanation": "The lesson contrasts PKI identity binding with blockchain pseudonymous ownership. Blockchains verify control of the relevant private key, not the human identity behind it.",
       "difficulty_level": 3,
@@ -242,12 +242,12 @@
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "A company's TLS private key and a user's blockchain wallet private key are both stolen. Which contrast best reflects the lesson's discussion of revocation?",
+      "question_stem": "A company's TLS private key and a user's blockchain wallet private key are both stolen. Which contrast best reflects how revocation works in each system?",
       "correct_answer": "PKI can use centralized revocation and replacement processes, while a blockchain network generally keeps accepting signatures from the stolen wallet key until assets are moved.",
       "incorrect_answers": [
-        "Both systems automatically revoke the stolen key and freeze every linked asset as soon as a theft report appears on the public network ledger and is confirmed by enough mining nodes.",
-        "Blockchain networks revoke compromised keys more easily than PKI because pseudonymous addresses include built-in expiry dates and administrator flags for wallets.",
-        "Traditional PKI cannot revoke certificates, but blockchains always have a central authority that reverses theft after notice from the user is filed with support."
+        "Both systems rely on certificate revocation lists and ledger-wide notices that make future signatures from the stolen private key invalid across participating nodes after confirmation.",
+        "PKI treats a stolen private key as permanent spending authority until every affected domain transfers its linked assets to a fresh address before anything can change.",
+        "Blockchain systems blacklist stolen wallet keys through the same issuer-chain and certificate revocation process that browsers use for TLS certificates after notice."
       ],
       "explanation": "The lesson highlights different trust infrastructures. PKI has centralized mechanisms for revocation and reissuance, while decentralized blockchains generally treat the private key as continuing authority unless control of funds is transferred first.",
       "difficulty_level": 4,
@@ -268,12 +268,12 @@
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "A system using a strong signature algorithm accepts a forged token because a logic bug skips the verification step in one code path. What lesson does this illustrate?",
+      "question_stem": "A system using a strong signature algorithm accepts a forged token because a logic bug skips the verification step in one code path. What broader principle about cryptographic security does this illustrate?",
       "correct_answer": "Cryptographic systems often fail through implementation logic and key-handling mistakes rather than through direct breaks of RSA or ECC mathematics.",
       "incorrect_answers": [
-        "The digital signature algorithm is structurally insecure because any skipped validation check proves the underlying mathematical hard problem is easy.",
-        "Signature verification is entirely optional if the digital transaction token was produced by a system that normally uses public-key cryptography.",
-        "Relying on a stronger centralized certificate authority would make it entirely safe for client applications to ignore standard signature checks."
+        "It shows that verification algorithms are optional safeguards when signed tokens come from a trusted public-key scheme and recognized issuer service.",
+        "It shows that the signature math is broken whenever an application accepts a forged token through a skipped code path in production traffic.",
+        "It shows that longer RSA or ECC keys would fix verification bypasses without changing the application's control flow checks around validation."
       ],
       "explanation": "The lesson's implementation-failure example emphasizes that attackers frequently bypass or misuse verification logic instead of solving the mathematical problem that protects the cryptographic primitive.",
       "difficulty_level": 4,
@@ -294,12 +294,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "In the Diffie-Hellman reading, why must a public key directory be protected against unauthorized modification even if everyone is allowed to read it?",
+      "question_stem": "In a Diffie-Hellman-style public-key system, why must a public key directory be protected against unauthorized modification even if everyone is allowed to read it?",
       "correct_answer": "An attacker who changes directory entries can substitute their own public key and redirect messages meant for someone else.",
       "incorrect_answers": [
-        "The directory must remain secret because reading any public key immediately reveals the corresponding private key to the attacker.",
-        "The directory is safe to modify because public-key security depends entirely on keeping the algorithms hidden from the public.",
-        "The public directory protects confidentiality only by preventing senders from learning the recipients' public keys beforehand."
+        "Read access must be limited because seeing a recipient's public encryption key is enough to compute the private exponent.",
+        "Modification is harmless if old ciphertexts remain secure, because senders can safely use whichever public key is listed.",
+        "The directory primarily protects secrecy by hiding which users can receive encrypted messages from potential senders."
       ],
       "explanation": "The reading treats public access as acceptable, but directory integrity as critical. If an attacker can replace a public key, senders may encrypt to the attacker while believing they are encrypting to the intended recipient.",
       "difficulty_level": 3,
@@ -320,12 +320,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A student describes Diffie-Hellman as \"a way for Alice to directly encrypt a long message to Bob.\" What is the reading-grounded correction?",
+      "question_stem": "A student describes Diffie-Hellman as \"a way for Alice to directly encrypt a long message to Bob.\" What is the correct characterization?",
       "correct_answer": "Diffie-Hellman is a public-key distribution method: Alice and Bob exchange public values and use private exponents to derive a shared key for later conventional encryption.",
       "incorrect_answers": [
-        "Diffie-Hellman is a certificate validation hierarchy that binds public keys to employees' legal identities before secure messaging begins in the organization during onboarding.",
-        "Diffie-Hellman signs a message hash with a private exponent so any third party can verify the author's legal identity and decrypt the message safely later.",
-        "Diffie-Hellman requires Alice to send the finished shared secret across the public channel before Bob can decrypt the following session traffic safely later."
+        "Diffie-Hellman is a public-key encryption scheme where Alice applies Bob's public value directly to each plaintext block before sending it across the channel to Bob.",
+        "Diffie-Hellman is a signing method where Alice uses her private exponent to create a message-dependent proof any observer can verify later in a payment dispute, without encryption.",
+        "Diffie-Hellman requires Alice and Bob to transmit the final session key encrypted under a pre-shared symmetric key before later encrypted traffic can begin."
       ],
       "explanation": "The reading distinguishes public-key cryptosystems from public-key distribution. Its Diffie-Hellman construction lets two parties compute the same shared key over an insecure channel without sending that key directly.",
       "difficulty_level": 3,
@@ -346,12 +346,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "The reading says practical public-key systems aim for computational security rather than unconditional security. What does that mean?",
+      "question_stem": "Practical public-key systems aim for computational security rather than unconditional security. What does that mean?",
       "correct_answer": "Breaking the system may be possible in principle with enough search or a better algorithm, but is assumed infeasible under realistic resource limits.",
       "incorrect_answers": [
-        "The system is secure only because its encryption and decryption algorithms are kept unpublished by the implementation team and never standardized publicly.",
-        "The system is impossible to break or compromise, even for an attacker with unlimited computing resources and better algorithms later on.",
-        "The system avoids all mathematical assumptions by relying entirely on physical key delivery and handwritten offline key lists during setup."
+        "The system is secure because public algorithms are hidden, so an attacker cannot identify the mathematical problem to attack later in practice.",
+        "The system is unconditionally secure because no amount of computation or algorithmic improvement can recover finite private keys from public data or signatures.",
+        "The system avoids assumptions about hard problems by distributing every private key through a secure physical channel before public use."
       ],
       "explanation": "Diffie and Hellman's framing is computational: finite-key systems are not absolutely impossible to attack, but security rests on the assumed infeasibility of reversing functions such as the discrete-log construction with available computation.",
       "difficulty_level": 4,

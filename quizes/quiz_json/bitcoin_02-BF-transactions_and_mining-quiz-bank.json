@@ -35,12 +35,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A learner says, \"My bitcoin is inside my wallet app, so losing the app deletes the coins.\" Which correction best matches the lesson?",
+      "question_stem": "A learner says, \"My bitcoin is inside my wallet app, so losing the app deletes the coins.\" Which correction is best?",
       "correct_answer": "The coins are represented on-chain as UTXOs; the wallet manages keys, addresses, policies, and signatures that authorize spending them.",
       "incorrect_answers": [
-        "The coins are stored locally in the wallet app; the software manages accounts, balances, passwords, and histories that contain them.",
-        "The coins are tracked on-chain as account balances; the node manages balances, accounts, ledgers, and transactions that update them.",
-        "The coins are stored on-chain at one permanent address; an app manages credentials, balances, keys, and passwords that unlock them."
+        "The coins are cached locally by the wallet app; the blockchain only records backup hints, labels, and recovery data for the app.",
+        "The coins are tracked on-chain as account balances; the wallet signs balance updates that nodes apply to the user's account.",
+        "The coins are stored under one permanent receiving address; the wallet keeps the password that unlocks the address for spending."
       ],
       "explanation": "The lesson frames a wallet as a local key and policy manager, not as a coin container. Spendable value remains on-chain as UTXOs controlled by the relevant spending conditions.",
       "difficulty_level": 2,
@@ -64,9 +64,9 @@
       "question_stem": "Why can one seed phrase often recover many receiving addresses in a Bitcoin wallet?",
       "correct_answer": "The wallet can deterministically derive many private keys, public keys, and addresses from the seed phrase.",
       "incorrect_answers": [
-        "The wallet can automatically ask miners to scan the ledger to issue replacement coins from a seed phrase.",
-        "The wallet can query a master account balance and retrieve all historical balances from the seed phrase.",
-        "The wallet can store a copy of all active UTXOs and broadcast them to the network from the seed phrase."
+        "The seed phrase lists every receiving address, so the wallet reloads addresses directly from the words.",
+        "The wallet can ask full nodes to restore a master account balance that was registered to the seed phrase.",
+        "The seed phrase stores copies of wallet UTXOs, so recovery rebroadcasts those outputs to the network."
       ],
       "explanation": "A deterministic wallet can regenerate a family of keys and addresses from one backup root. The seed phrase restores spending authority; it does not recreate coins outside the blockchain.",
       "difficulty_level": 2,
@@ -91,9 +91,9 @@
       "question_stem": "Alice spends two UTXOs worth 0.60 BTC and 0.70 BTC to pay Bob 1.00 BTC, creates a 0.29 BTC change output, and has no other outputs. What fee does the transaction pay?",
       "correct_answer": "0.01 BTC, because fees are total input value minus total output value.",
       "incorrect_answers": [
-        "0.29 BTC, because the change output is the fee paid fully to miners.",
-        "0.30 BTC, since unspent parts of inputs are kept by miners as fees.",
-        "0.00 BTC, since fees are paid only if a separate fee field is set."
+        "0.29 BTC, because sender change is counted as revenue for miners.",
+        "0.30 BTC, because only Bob's output is subtracted from the inputs.",
+        "0.00 BTC, because creating a change output means no fee is left."
       ],
       "explanation": "The transaction consumes 1.30 BTC of inputs and creates 1.29 BTC of outputs. The missing 0.01 BTC is the implicit transaction fee.",
       "difficulty_level": 3,
@@ -116,12 +116,12 @@
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "A node receives a transaction whose input references a UTXO that was already spent in an earlier accepted block. Why is the new transaction invalid in the lesson's model?",
+      "question_stem": "A node receives a transaction whose input references a UTXO that was already spent in an earlier accepted block. Why is the new transaction invalid under the UTXO model?",
       "correct_answer": "A transaction input must consume a currently unspent output; once that output has been spent, it cannot be used again.",
       "incorrect_answers": [
-        "A transaction input is valid if the sender's total personal balance is high; once that balance drops, it cannot be spent.",
-        "A typical input can reuse a spent output if a higher fee is paid; after that fee is collected, nodes must treat it as valid.",
-        "A transaction input stays spendable until a sender deletes it locally; once deleted, nodes treat the output as burned on-chain."
+        "A transaction input is valid if the wallet controls enough total UTXO value, even when this exact output was already used.",
+        "A spent output can be reused if the new transaction pays a higher fee than the transaction that spent it in an earlier block.",
+        "An input only needs a valid signature for the referenced output; nodes do not check whether the output remains unspent."
       ],
       "explanation": "The UTXO model simplifies validation by making each input point to a discrete previous output. Double-spend checks reduce to whether that referenced output is still unspent and unlocked correctly.",
       "difficulty_level": 3,
@@ -146,9 +146,9 @@
       "question_stem": "A valid signed transaction has propagated to several nodes and is visible in their mempools. What is still missing before it has one confirmation?",
       "correct_answer": "A miner must include it in a valid block that full nodes accept as part of the chain.",
       "incorrect_answers": [
-        "A wallet must store the coins in a local file that recipients open to spend their value.",
-        "A sender must reveal the private key to relay nodes that require it to transfer the UTXO.",
-        "A transaction must remain in local mempools that peer nodes run until they match globally."
+        "It must appear in every reachable node's mempool before any miner may include it in a block.",
+        "The receiving wallet must sign it before miners can place the payment in a valid block.",
+        "A full node must turn the mempool entry into a local balance update before it can be mined."
       ],
       "explanation": "Mempool presence means a transaction is an unconfirmed candidate for block inclusion. One confirmation begins only after the transaction is mined into an accepted block.",
       "difficulty_level": 2,
@@ -173,9 +173,9 @@
       "question_stem": "During a crowded mempool period, two valid transactions are waiting for inclusion. Why would miners usually prefer the one with the higher fee rate?",
       "correct_answer": "Miners have limited block space and collect fees from included transactions, so higher-fee transactions are economically more attractive.",
       "incorrect_answers": [
-        "Mining pools have total control over validity and bypass signature checks, so higher-fee transactions are automatically made valid by them.",
-        "Miners use fee rate to rewrite consensus rules during congestion, so higher-fee transactions can exceed the block weight limit for that block.",
-        "Miners have networks to broadcast payments and bypass ordinary block limits, so higher-fee transactions are directly accepted by all full nodes."
+        "Higher fee rate proves the transaction transfers a larger bitcoin amount, so miners prioritize it over smaller payments with lower values.",
+        "Higher fee rate lowers the proof-of-work target for that block, making the candidate block easier for a miner to find under network congestion.",
+        "Higher fee rate lets the transaction skip ordinary full-node validation after it is included in a block, reducing the miner's orphan risk after relay."
       ],
       "explanation": "The lesson connects fee choice to confirmation speed. Miners choose among mempool transactions under block constraints and are incentivized by fees, but fee payment does not replace validation.",
       "difficulty_level": 3,
@@ -200,9 +200,9 @@
       "question_stem": "A transaction inside a block is changed after the miner found a valid proof-of-work. What would this do to the block's commitment structure?",
       "correct_answer": "It would change the Merkle root, which changes the block header hash and breaks the previously found proof-of-work.",
       "incorrect_answers": [
-        "It would keep the header unchanged, which prevents validation of transactions and avoids their need for proof-of-work.",
-        "It would modify only the wallet balance, which leaves a block header intact and preserves existing chain linkage.",
-        "It would maintain block validity, which satisfies the prior block hash pointer and preserves the chain linkage."
+        "It would change only the local wallet record for nodes, leaving the Merkle root and block header hash unchanged.",
+        "It would require recomputing the transaction signatures, but the old proof-of-work would still match the same header.",
+        "It would change the previous block hash pointer while leaving the current block transaction commitment intact."
       ],
       "explanation": "The Merkle root commits the header to the block's transaction list. Altering a transaction changes that commitment and therefore the header hash that proof-of-work was found over.",
       "difficulty_level": 4,
@@ -227,9 +227,9 @@
       "question_stem": "A miner broadcasts a block with a valid-looking proof-of-work, but one transaction spends an already-spent output. What should full nodes do?",
       "correct_answer": "Reject the block, because miners propose blocks but full nodes independently validate transaction validity and unspent inputs.",
       "incorrect_answers": [
-        "Accept the block, since miners construct blocks but proof-of-work automatically guarantees transaction validity across the network.",
-        "Accept the block, since miners pay transaction fees but the coinbase transaction compensates the network for invalid inputs.",
-        "Hold the block, since miners queue transactions but the sender's wallet software automatically provides replacement UTXOs."
+        "Accept it temporarily, because valid proof-of-work lets later confirmations repair an invalid transaction after peers build on top.",
+        "Forward it for miner replacement, because mining pools decide whether referenced outputs are still unspent before full nodes accept it.",
+        "Accept the valid transactions in the block and ignore only the double-spending transaction inside it during validation."
       ],
       "explanation": "The lesson distinguishes miner proposal from full-node acceptance. Valid proof-of-work is necessary but not sufficient; peers also validate the transactions and chain extension rules.",
       "difficulty_level": 4,
@@ -255,9 +255,9 @@
       "question_stem": "What are miners trying to accomplish when they vary the nonce and related block fields during proof-of-work?",
       "correct_answer": "Find a block header hash below the current difficulty target.",
       "incorrect_answers": [
-        "Decrypt each transaction within their block using a private key.",
-        "Generate a private key matching a target recipient address.",
-        "Compress all transactions into a Merkle root for a block."
+        "Choose the transaction set that pays the highest total fees.",
+        "Find a previous block hash that points to the current chain tip.",
+        "Make the coinbase output match the block subsidy and fees."
       ],
       "explanation": "Mining is a target-based search over candidate block headers. Miners repeatedly hash modified headers until one hash satisfies the network difficulty target.",
       "difficulty_level": 2,
@@ -279,12 +279,12 @@
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "A merchant accepts a zero-confirmation payment for a high-value item because the transaction is visible in a mempool. Which risk assessment best fits the lesson?",
+      "question_stem": "A merchant accepts a zero-confirmation payment for a high-value item because the transaction is visible in a mempool. Which risk assessment is most accurate?",
       "correct_answer": "The payment has not yet gained probabilistic settlement security; inclusion and additional confirmations reduce reversal risk.",
       "incorrect_answers": [
-        "The payment is final since all mempool transactions are secure; inclusion and very rapid propagation guarantee absolute finality.",
-        "This payment is impossible to reverse once it is relayed by peers; consensus and instant propagation remove double-spending.",
-        "The payment gets secure if the merchant watches their local wallet; ignoring the blockchain and mining reduces update lag."
+        "It has the same settlement security as several confirmations because mempool relay shows nodes accepted it into their candidate ledgers.",
+        "Its main remaining risk is only slow wallet display; a relayed transaction cannot conflict with another spend of the same UTXO.",
+        "It becomes final once enough peers store it in their mempools, even before any block includes it in the chain history."
       ],
       "explanation": "Bitcoin finality is probabilistic. A transaction becomes more secure after block inclusion and as additional blocks build on top, while zero-confirmation payments carry greater double-spend or non-inclusion risk.",
       "difficulty_level": 4,
@@ -306,12 +306,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "In the reading's transaction model, why does a normal input need both a previous transaction identifier and an output index?",
+      "question_stem": "In Bitcoin's transaction model, why does a normal input need both a previous transaction identifier and an output index?",
       "correct_answer": "Together they form an outpoint that identifies the exact previous output being spent.",
       "incorrect_answers": [
-        "Together, they track a single account balance that all full nodes maintain on a network.",
-        "Together, they define a confirmation count that miners must award to a transaction.",
-        "Together they encode a private key that all spenders require to unlock the value."
+        "Together, they identify the sender's account and the sequence number of the next withdrawal.",
+        "Together, they identify a block height and the transaction's confirmation count.",
+        "Together, they identify the input script and a private key for unlocking value."
       ],
       "explanation": "The reading emphasizes that an input points to a specific prior output, not to a user account. The transaction identifier plus output index lets nodes locate the exact UTXO and its spending conditions.",
       "difficulty_level": 2,
@@ -335,12 +335,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A transaction creates many tiny outputs that are technically possible under consensus rules, but most nodes refuse to relay it as dust. What distinction from the reading does this illustrate?",
+      "question_stem": "A transaction creates many tiny outputs that are technically possible under consensus rules, but most nodes refuse to relay it as dust. What distinction does this illustrate?",
       "correct_answer": "Consensus validity and relay or mining policy are not identical; policy can discourage outputs that burden the UTXO set.",
       "incorrect_answers": [
-        "Consensus rules and fee estimation algorithms are not independent; all miners must accept any fee-paying transaction block.",
-        "Relay policy and transaction rules are not separate; local policy can change key controls without block confirmations.",
-        "Dust outputs and standard databases are not compatible; nodes can prevent users from storing multiple UTXOs locally."
+        "Consensus rules require nodes to relay every valid transaction they see, even when outputs are uneconomical for wallets.",
+        "Relay policy can make a transaction valid even when consensus rules would reject one of its spends in a block at validation time.",
+        "Dust policy mainly protects miners from large signatures, not the growing UTXO database maintained by full nodes."
       ],
       "explanation": "The reading uses dust and standardness policy to show that not every technically valid transaction pattern is relayed or mined by default. Tiny UTXOs impose ongoing costs on full-node operators.",
       "difficulty_level": 4,
@@ -364,12 +364,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "A contract protocol builds a child transaction that depends on a parent's transaction ID before the parent confirms. Why does the reading say transaction malleability was dangerous for this pattern?",
+      "question_stem": "A contract protocol builds a child transaction that depends on a parent's transaction ID before the parent confirms. Why was transaction malleability dangerous for this pattern?",
       "correct_answer": "If authorization data could be changed in a way that changed the parent's txid, the child transaction's reference could break even though the spend was otherwise valid.",
       "incorrect_answers": [
-        "If the parent transaction was modified in transit, the validating nodes would disable signature verification on all child spends even though the signatures were authentic.",
-        "If a transaction identifier was altered before mining, the parent output would permanently become an anyone-can-spend input even though the original script is secure.",
-        "If the witness structure was attached to the block, the miners could directly steal the parent output's locked funds even though the coinbase transaction was valid."
+        "If witness data changed, it would reveal the parent's private key to the child spender before either transaction confirmed, letting the child spend other outputs from the same wallet.",
+        "If the parent changed, the child would spend the whole parent transaction instead of one specific output index, consuming every output together from that parent.",
+        "If the parent was unconfirmed, nodes would require each child transaction to confirm first, creating a circular confirmation rule for dependent contract spends."
       ],
       "explanation": "The reading connects malleability to dependent and presigned transactions. Segwit reduces this problem by separating witness data from the txid calculation, improving txid stability for contract protocols.",
       "difficulty_level": 4,

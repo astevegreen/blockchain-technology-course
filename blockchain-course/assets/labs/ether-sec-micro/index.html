@@ -1,751 +1,2219 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ethereum Consensus Microlab Suite — Standalone</title>
+  <title>Ethereum PoS Security Console</title>
   <style>
     :root {
-      --bg: #0f1320;
-      --panel: #151a2b;
-      --panel-2: #1b2140;
-      --muted: #98a2b3;
-      --text: #e6e6f0;
-      --success: #1fb36b;
-      --warn: #f0b429;
-      --error: #ef4444;
-      --blue: #3b82f6;
-      --purple: #a855f7;
-      --yellow: #eab308;
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --panel-2: #f8fafc;
+      --panel-3: #f8fafc;
+      --line: #e5e7eb;
+      --line-soft: #e2e8f0;
+      --text: #0f172a;
+      --muted: #475569;
+      --green: #16a34a;
+      --green-soft: #f0fdf4;
+      --blue: #2563eb;
+      --blue-soft: #eff6ff;
+      --yellow: #ca8a04;
+      --yellow-soft: #fefce8;
+      --red: #b91c1c;
+      --red-soft: #fef2f2;
+      --violet: #7c3aed;
+      --violet-soft: #f5f3ff;
+      --orange: #ea580c;
+      --cyan: #0891b2;
+      --shadow: none;
     }
+
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
+
+    html, body { min-height: 100%; }
+
     body {
-      margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-      background: var(--bg); color: var(--text);
-      display: grid; grid-template-rows: 1fr auto; gap: 8px; padding: 12px;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
     }
-    .app { display: grid; grid-template-columns: 320px 1fr; gap: 12px; min-height: 0; }
-    .left { background: var(--panel); border: 1px solid #222645; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-    .right { background: var(--panel); border: 1px solid #222645; border-radius: 12px; padding: 12px; display: grid; grid-template-rows: auto 1fr; gap: 10px; min-height: 0; }
-    h1 { font-size: 16px; margin: 0 0 6px; color: #cfd3ff; letter-spacing: 0.3px; }
-    .row { display: flex; align-items: center; gap: 8px; }
-    .select, .btn, .slider { width: 100%; }
-    .select, .btn { background: var(--panel-2); border: 1px solid #2a2f57; color: var(--text); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
-    .btn { text-align: center; user-select: none; }
-    .btn:active { transform: translateY(1px); }
-    .btn.secondary { background: #10142a; border-color: #2a2f57; }
-    .btn.success { background: var(--success); color: #062212; border-color: #139155; font-weight: 600; }
-    .btn.warn { background: #2b2108; color: #ffdd8a; border-color: #5b450c; }
-    .btn.error { background: var(--error); color: white; border-color: #9f2d2d; font-weight: 600; }
-    .btn.paused { background: #0e2a15; color: #89f1c2; border-color: #1b7145; }
-    .group { background: #0d1122; border: 1px solid #232848; border-radius: 12px; padding: 10px; }
-    .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .muted { color: var(--muted); }
-    .tiny { font-size: 11px; color: var(--muted); }
 
-    .lab-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-    .lab-title { font-size: 18px; font-weight: 700; }
-    .lab-desc { color: var(--muted); font-size: 12px; }
+    button, select, input {
+      font: inherit;
+    }
 
-    .lab-area { background: #0c1020; border: 1px solid #232848; border-radius: 12px; padding: 10px; overflow: hidden; min-height: 520px; display: grid; grid-template-rows: auto 1fr; gap: 8px; }
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .controls .btn, .controls .select { width: auto; }
+    .app {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+      max-width: 1120px;
+      margin: 32px auto;
+      padding: 0 16px;
+      min-height: 0;
+    }
 
-    /* Viewpane now resizable */
-    .view { min-height: 320px; overflow: auto; display: grid; grid-auto-rows: min-content; gap: 10px; resize: both; }
-    .resizable { resize: both; overflow: auto; }
+    .sidebar {
+      background: var(--panel-2);
+      border-radius: 14px;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(420px, 1.8fr);
+      gap: 14px;
+      align-items: start;
+      min-height: 0;
+    }
 
-    .hchain { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; }
-    .block { min-width: 140px; border-radius: 10px; border: 1px solid #2a2f57; padding: 8px; background: #0c1433; cursor: pointer; }
-    .block .num { font-weight: 700; color: #c5d1ff; }
-    .block .hash { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 11px; color: #9fb1ff; word-break: break-all; }
-    .block.selected { outline: 2px solid var(--blue); }
+    .brand {
+      display: grid;
+      gap: 5px;
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
 
-    .list { display: grid; grid-template-columns: 1fr; gap: 6px; max-height: 200px; overflow: auto; border: 1px dashed #2a2f57; border-radius: 10px; padding: 8px; }
-    .item { background: #0b1233; border: 1px solid #24306b; border-radius: 8px; padding: 6px 8px; cursor: pointer; display: grid; gap: 2px; }
-    .item:hover { background: #0e1540; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
 
-    .split2 { display: grid; grid-template-columns: 320px 1fr; gap: 10px; min-height: 0; }
-    .panel { background: #0a0f25; border: 1px solid #232848; border-radius: 12px; padding: 10px; min-height: 0; display: grid; grid-template-rows: auto 1fr auto; gap: 8px; }
-    .panel h3 { margin: 0; font-size: 14px; color: #cfd3ff; }
-    .panel-body { overflow: auto; min-height: 0; }
-    .panel.resizable { resize: both; overflow: auto; }
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
 
-    .inspector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-height: 0; }
-    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 6px; }
-    .kv div { padding: 2px 0; }
-    .clickable-hash { text-decoration: underline; cursor: pointer; }
+    h3 {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text);
+      letter-spacing: 0;
+    }
 
-    .circle { position: relative; height: 360px; background: #0b1230; border: 1px solid #232848; border-radius: 12px; overflow: hidden; }
-    .val { position: absolute; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #2a2f57; background: #3a415f; font-size: 12px; }
-    .val.user { background: var(--yellow); color: #231f0a; border-color: #806b09; font-weight: 700; }
-    .val.proposer { box-shadow: 0 0 0 3px rgba(59,130,246,0.4); background: #203a6b; border-color: #3b82f6; }
-    .val.committee { box-shadow: 0 0 0 3px rgba(168,85,247,0.4); background: #2d1a4b; border-color: #a855f7; }
-    .val.revealed { border-color: #1fb36b; }
+    p { margin: 0; }
 
-    .timeline { display: flex; gap: 8px; overflow-x: auto; padding: 8px; height: 240px; }
-    .epoch { width: 120px; min-width: 120px; padding: 8px; border-radius: 10px; border: 1px solid #2a2f57; background: #0c1433; }
-    .epoch .id { font-weight: 700; }
-    .epoch.state-proposed { background: #19203d; }
-    .epoch.state-justified { background: #162848; box-shadow: inset 0 0 0 2px #3b82f6; }
-    .epoch.state-finalized { background: #0e2a15; box-shadow: inset 0 0 0 2px #1fb36b; }
+    .small {
+      font-size: 12px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
 
-    .bars { position: relative; height: 220px; background: #0b1230; border: 1px solid #232848; border-radius: 12px; padding: 16px; display: grid; align-content: end; }
-    .bar { height: 40px; border-radius: 8px; }
-    .bar.active { background: #0e3a22; border: 1px solid #1fb36b; }
-    .bar.inactive { background: #3a0e0e; border: 1px solid #ef4444; }
-    .threshold { position: absolute; left: 66.7%; top: 8px; bottom: 8px; width: 2px; background: #ffd166; box-shadow: 0 0 0 1px #8a6d00; }
-    .halted { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 28px; color: #ffb3b3; text-shadow: 0 2px 10px rgba(239, 68, 68, 0.5); pointer-events: none; }
+    .micro {
+      font-size: 11px;
+      color: var(--muted);
+    }
 
-    .chains { display: grid; grid-template-columns: 1fr; gap: 12px; height: 260px; }
-    .rowlabel { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    .hchain.slim .block { min-width: 110px; }
-    .block.honest { background: #0b1e3c; }
-    .block.attacker { background: #3a0f0f; border-color: #6b2323; }
-    .checkpoint { outline: 3px solid #1fb36b; }
+    .panel {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
 
-    /* Log: normal flow so we can scroll to bottom */
-    .log { background: #0a0f25; border: 1px solid #232848; border-radius: 12px; padding: 8px; height: 180px; overflow: auto; }
-    .log-item { padding: 6px 8px; border-radius: 8px; margin: 4px 0; font-size: 12px; }
-    .log-item.info { background: #121a3a; border: 1px solid #2a3a7b; color: #cfe0ff; }
-    .log-item.success { background: #0e2a15; border: 1px solid #1b7a4a; color: #9ef1c9; }
-    .log-item.warn { background: #2b2108; border: 1px solid #5b450c; color: #ffdd8a; }
-    .log-item.error { background: #3a0e0e; border: 1px solid #6b2323; color: #ffb4b4; }
+    .panel.quiet {
+      background: var(--panel-3);
+      box-shadow: none;
+    }
 
-    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; }
-    .modal { width: min(1000px, 92vw); background: #0a0f25; border: 1px solid #232848; border-radius: 12px; padding: 12px; }
-    .modal h3 { margin: 0 0 8px; }
-    .modal .close { float: right; cursor: pointer; color: #cfd3ff; }
-    canvas { image-rendering: pixelated; }
+    .stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .select, .btn, .range {
+      width: 100%;
+    }
+
+    .select, .btn {
+      min-height: 38px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--text);
+      padding: 8px 10px;
+    }
+
+    .btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      user-select: none;
+    }
+
+    .btn:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn.primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #ffffff;
+    }
+
+    .btn.success {
+      background: var(--green);
+      border-color: var(--green);
+      color: #ffffff;
+    }
+
+    .btn.warn {
+      background: var(--yellow-soft);
+      border-color: #facc15;
+      color: #713f12;
+    }
+
+    .btn.danger {
+      background: var(--red-soft);
+      border-color: #fecaca;
+      color: var(--red);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .action-card {
+      display: grid;
+      gap: 6px;
+      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 8px;
+    }
+
+    .action-card .btn {
+      min-height: 42px;
+    }
+
+    .action-card p {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 0;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title-block {
+      display: grid;
+      gap: 4px;
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(280px, 0.7fr);
+      gap: 14px;
+    }
+
+    .scenario-brief {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.7fr);
+      gap: 14px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      align-items: start;
+      min-width: 0;
+    }
+
+    .brief-copy {
+      display: grid;
+      gap: 8px;
+    }
+
+    .brief-copy p {
+      color: var(--muted);
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .reminder {
+      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--text);
+      overflow-wrap: anywhere;
+    }
+
+    .outcome {
+      background: var(--blue-soft);
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .outcome strong {
+      font-size: 12px;
+      color: var(--blue);
+    }
+
+    .outcome p {
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .step-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .step-list li {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 9px;
+      color: var(--muted);
+      font-size: 12px;
+      min-width: 0;
+    }
+
+    .step-list .num {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .view {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .side-view {
+      min-width: 0;
+      min-height: 0;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .metric {
+      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 68px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .metric .value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #ffffff;
+      white-space: nowrap;
+    }
+
+    .status-pill.good {
+      background: var(--green-soft);
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .status-pill.warn {
+      background: var(--yellow-soft);
+      border-color: #fde68a;
+      color: #713f12;
+    }
+
+    .status-pill.bad {
+      background: var(--red-soft);
+      border-color: #fecaca;
+      color: var(--red);
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(32, minmax(18px, 1fr));
+      gap: 4px;
+    }
+
+    .timeline-explain {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .timeline-explain .phase {
+      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 8px;
+      display: grid;
+      gap: 3px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .timeline-explain strong {
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .epoch-track {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+      gap: 8px;
+    }
+
+    .epoch-marker {
+      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 9px;
+      min-height: 78px;
+      display: grid;
+      gap: 4px;
+      align-content: start;
+    }
+
+    .epoch-marker strong {
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .epoch-marker span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .epoch-marker.finalized {
+      background: var(--green-soft);
+      border-color: #bbf7d0;
+    }
+
+    .epoch-marker.delayed {
+      background: var(--red-soft);
+      border-color: #fecaca;
+    }
+
+    .epoch-marker.recovering {
+      background: var(--yellow-soft);
+      border-color: #fde68a;
+    }
+
+    .epoch-marker.ready {
+      background: var(--blue-soft);
+      border-color: #bfdbfe;
+    }
+
+    .slot {
+      min-height: 46px;
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      color: var(--muted);
+      position: relative;
+    }
+
+    .slot.active {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: #1d4ed8;
+    }
+
+    .slot.fork-a {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: #1d4ed8;
+    }
+
+    .slot.fork-b {
+      border-color: var(--violet);
+      background: var(--violet-soft);
+      color: #5b21b6;
+    }
+
+    .slot.vote {
+      border-color: var(--green);
+      background: var(--green-soft);
+      color: #166534;
+    }
+
+    .slot.justified {
+      border-color: var(--yellow);
+      color: #713f12;
+    }
+
+    .slot.finalized {
+      border-color: var(--green);
+      color: #166534;
+    }
+
+    .fork-tree {
+      overflow-x: auto;
+      max-width: 100%;
+      min-width: 0;
+      padding-bottom: 4px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .gasper-tree {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 0.8fr) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .gasper-side,
+    .gasper-center {
+      min-width: 0;
+    }
+
+    .gasper-center .block {
+      min-height: 118px;
+      box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.06);
+    }
+
+    .gasper-center h3,
+    .gasper-side h3 {
+      font-size: 13px;
+    }
+
+    .branch-row {
+      min-width: min(660px, 100%);
+      display: grid;
+      grid-template-columns: minmax(180px, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .block {
+      border: 1px solid var(--line-soft);
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 10px;
+      min-height: 92px;
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+      align-content: start;
+      position: relative;
+    }
+
+    .block.head {
+      border-color: var(--blue);
+      box-shadow: inset 3px 0 0 var(--blue);
+    }
+
+    .block.finalized {
+      border-color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .block.justified {
+      border-color: var(--yellow);
+      background: var(--yellow-soft);
+    }
+
+    .block.fake {
+      border-color: #fecaca;
+      background: var(--red-soft);
+    }
+
+    .block.synced {
+      border-color: var(--blue);
+      box-shadow: inset 3px 0 0 var(--blue);
+    }
+
+    .block .name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .block .root {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+
+    .block .weight-bar {
+      width: 100%;
+    }
+
+    .weight-bar {
+      height: 9px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #f1f5f9;
+      border: 1px solid var(--line-soft);
+    }
+
+    .weight-fill {
+      height: 100%;
+      background: var(--blue);
+      width: 0;
+    }
+
+    .validator-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+      gap: 6px;
+      max-height: 300px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .validator {
+      min-height: 42px;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 6px;
+      background: #ffffff;
+      display: grid;
+      gap: 1px;
+    }
+
+    .validator.a { border-color: #bfdbfe; background: var(--blue-soft); }
+    .validator.b { border-color: #ddd6fe; background: var(--violet-soft); }
+    .validator.offline { border-color: #fecaca; background: var(--red-soft); }
+
+    details.compact-details {
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 8px 10px;
+    }
+
+    details.compact-details summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .bar-stack {
+      display: grid;
+      gap: 8px;
+    }
+
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 0;
+    }
+
+    .bar-label span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .bar-label span:last-child {
+      text-align: right;
+      white-space: normal;
+      flex: 0 1 auto;
+    }
+
+    .block .bar-label {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2px;
+    }
+
+    .block .bar-label span:last-child {
+      text-align: left;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+    }
+
+    .participation {
+      height: 28px;
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      border: 1px solid var(--line-soft);
+      background: #ffffff;
+    }
+
+    .part-online {
+      background: var(--green);
+      min-width: 0;
+    }
+
+    .part-offline {
+      background: var(--red);
+      min-width: 0;
+    }
+
+    .threshold-line {
+      position: relative;
+      height: 14px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .threshold-line::before {
+      content: "";
+      position: absolute;
+      left: 66.666%;
+      top: 0;
+      bottom: -6px;
+      width: 2px;
+      background: var(--yellow);
+    }
+
+    .threshold-line span {
+      position: absolute;
+      left: calc(66.666% + 7px);
+      top: -3px;
+      font-size: 11px;
+      color: var(--yellow);
+    }
+
+    .evidence {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .message-card {
+      background: #ffffff;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 4px 8px;
+      font-size: 12px;
+    }
+
+    .kv div:nth-child(odd) {
+      color: var(--muted);
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    .chain-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    .chain-row .block {
+      min-width: 118px;
+      min-height: 82px;
+    }
+
+    .log {
+      min-height: 132px;
+      max-height: 160px;
+      overflow: auto;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+    }
+
+    .log-wrap {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 8px;
+    }
+
+    .log-wrap > summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 4px;
+    }
+
+    .log-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin: 4px 0;
+      font-size: 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--line-soft);
+      color: var(--text);
+    }
+
+    .log-item.good {
+      background: var(--green-soft);
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+
+    .log-item.warn {
+      background: var(--yellow-soft);
+      border-color: #fde68a;
+      color: #713f12;
+    }
+
+    .log-item.bad {
+      background: var(--red-soft);
+      border-color: #fecaca;
+      color: var(--red);
+    }
+
+    .checklist {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .plain-list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .source-list {
+      display: grid;
+      gap: 5px;
+      margin: 0;
+      padding-left: 18px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .source-list a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .source-list a:hover {
+      text-decoration: underline;
+    }
+
+    .result-box {
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 10px;
+      background: #ffffff;
+      min-height: 68px;
+    }
+
+    .result-box.good {
+      background: var(--green-soft);
+      border-color: #bbf7d0;
+    }
+
+    .result-box.warn {
+      background: var(--yellow-soft);
+      border-color: #fde68a;
+    }
+
+    .result-box.bad {
+      background: var(--red-soft);
+      border-color: #fecaca;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1060px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { grid-template-columns: 1fr; }
+      .brand { grid-column: auto; }
+      .workspace { grid-template-columns: 1fr; }
+      .scenario-brief { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .app { margin: 24px auto; padding: 0 12px; }
+      .main, .sidebar { padding: 0; }
+      .header { display: grid; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .btn-row { grid-template-columns: 1fr; }
+      .action-grid { grid-template-columns: 1fr; }
+      .evidence { grid-template-columns: 1fr; }
+      .timeline { grid-template-columns: repeat(16, minmax(18px, 1fr)); }
+      .timeline-explain { grid-template-columns: 1fr; }
+      .branch-row { grid-template-columns: 1fr; min-width: 0; }
+      .branch-row > div:empty { display: none; }
+      .gasper-tree { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <div class="app">
-    <section class="left" id="left">
-      <div class="group">
-        <h1>Microlab Suite</h1>
-        <div class="label">Select Lab</div>
-        <select id="labSelect" class="select">
-          <option value="lab1">Lab 1 — Anatomy of a Block</option>
-          <option value="lab2">Lab 2 — Validator Shuffle (RANDAO)</option>
-          <option value="lab3">Lab 3 — Consensus in Action (Gasper)</option>
-          <option value="lab4">Lab 4 — Attack Vectors</option>
-        </select>
+    <main class="main">
+      <div class="brand">
+        <h1>Ethereum PoS Security Console</h1>
+        <p class="small">A static, classroom-scale model for applying the lesson's PoS consensus and security concepts.</p>
       </div>
 
-      <div class="group">
-        <div class="label">Simulation Controls</div>
-        <div class="row">
-          <button id="pauseBtn" class="btn">Pause</button>
-          <button id="resetBtn" class="btn secondary">Reset</button>
+      <section class="scenario-brief">
+        <div class="brief-copy">
+          <div class="header">
+            <div class="title-block">
+              <h2 id="scenarioTitle">Gasper: Head and Finality</h2>
+              <p id="scenarioDesc"></p>
+            </div>
+            <span id="scenarioStatus" class="status-pill">Ready</span>
+          </div>
+          <div class="outcome">
+            <strong>Learning outcome</strong>
+            <p id="scenarioOutcome"></p>
+          </div>
+          <p id="scenarioReminder" class="reminder"></p>
         </div>
-        <div class="label">Speed (Slower ↔ Faster)</div>
-        <input id="speed" class="slider" type="range" min="1" max="100" value="35" />
-        <div class="tiny">Tick ~ <span id="tickLabel">1.00</span> / sec</div>
-      </div>
-
-      <div class="group">
-        <div class="label">Self-Tests</div>
-        <button id="selfTestBtn" class="btn">Run Self-Tests</button>
-        <div class="tiny">Automated checks verify core mechanics across labs. Results appear in the Event Log.</div>
-      </div>
-
-      <div class="group">
-        <div class="label">Teaching Aids</div>
-        <details>
-          <summary>Tips to maximize learning</summary>
-          <ul class="tiny">
-            <li>Ask students to predict each Merkle root change before clicking <em>Mine Block</em>.</li>
-            <li>Toggle withholding in RANDAO and discuss why the mix remains unpredictable.</li>
-            <li>In LMD-GHOST, steer the class to flip the head repeatedly—then ask what real networks do to stabilize.</li>
-            <li>Use the Finality Delay slider to show why the inactivity leak exists and when it restores finality.</li>
-            <li>Run the Double-Spend demo twice: once without broadcasting (no penalty), then broadcast to trigger slashing.</li>
-          </ul>
-        </details>
-      </div>
-    </section>
-
-    <section class="right">
-      <header class="lab-header">
         <div>
-          <div class="lab-title" id="labTitle">Lab 1 — Anatomy of a Block</div>
-          <div class="lab-desc" id="labDesc">Build blocks from a live mempool, watch roots update, and mine to extend the chain.</div>
+          <h3>Activity</h3>
+          <ol id="scenarioSteps" class="step-list"></ol>
         </div>
-        <div class="tiny">Note: In-browser teaching hash = double SHA-256 (not Keccak-256).</div>
-      </header>
-      <section class="lab-area">
-        <div class="controls" id="labControls"></div>
-        <div class="view resizable" id="labView"></div>
       </section>
-    </section>
-  </div>
 
-  <section class="log" id="log"></section>
+      <section class="panel quiet stack controls-panel">
+        <div>
+          <div class="label">Scenario</div>
+          <select id="scenarioSelect" class="select">
+            <option value="gasper">Gasper: Head and Finality</option>
+            <option value="delay">Finality Delay</option>
+            <option value="slashing">Slashing Evidence</option>
+            <option value="weak">Weak Subjectivity</option>
+          </select>
+        </div>
+        <div id="scenarioControls" class="stack"></div>
+      </section>
 
-  <div class="modal-bg" id="modalBg">
-    <div class="modal">
-      <span class="close" id="modalClose">✕</span>
-      <h3 id="modalTitle">Merkle Tree</h3>
-      <canvas id="modalCanvas" width="960" height="560"></canvas>
-      <div class="tiny">Leaves & parents are double-SHA-256 of concatenated hex strings. Odd leaf duplication applied.</div>
-    </div>
+      <section id="selfTestPanel" class="panel quiet stack hidden">
+        <h3>Self-Tests</h3>
+        <button id="selfTestBtn" class="btn success">Run Self-Tests</button>
+        <p class="micro">Visible only when the URL contains <span class="mono">?run_self_checks</span>.</p>
+      </section>
+
+      <section class="workspace">
+        <div id="primaryView" class="view"></div>
+        <div id="sideView" class="side-view"></div>
+      </section>
+
+      <details class="log-wrap" id="logWrap">
+        <summary>Event log</summary>
+        <section class="log" id="eventLog" aria-live="polite"></section>
+      </details>
+    </main>
   </div>
 
   <script>
-    // ---------- Utils ----------
-    const $ = (sel) => document.querySelector(sel);
-    const $el = (tag, cls, html) => { const e=document.createElement(tag); if (cls) e.className=cls; if (html!==undefined) e.innerHTML=html; return e; };
-    const logEl = $('#log');
-    function nowTs(){ return new Date().toLocaleTimeString(); }
-    function log(msg, type='info'){
-      const d=$el('div','log-item '+type, '<strong>['+nowTs()+']</strong> '+msg);
-      logEl.appendChild(d);
-      // auto-scroll log to bottom
-      logEl.scrollTop = logEl.scrollHeight;
-      // console mirror
-      (type==='error'?console.error:type==='warn'?console.warn:console.log)(msg);
-    }
-    function setTitle(t, d){ $('#labTitle').textContent=t; $('#labDesc').textContent=d||''; }
+    const ETH = {
+      slotsPerEpoch: 32,
+      validatorCount: 64,
+      effectiveBalance: 32,
+      threshold: 2 / 3
+    };
 
-    // ---------- Tick Engine ----------
-    let paused=false, tickMs=1000, tickHandle=null, currentLab=null;
-    function sliderToTickMs(v){ const minMs=100, maxMs=4500; const t=(100-v)/99; return Math.round(minMs + t*(maxMs-minMs)); }
-    function updateTick(){
-      if (tickHandle) clearInterval(tickHandle);
-      if (!paused) tickHandle=setInterval(()=>{ if (currentLab && typeof currentLab.tick==='function') currentLab.tick(); }, tickMs);
-      $('#tickLabel').textContent = (1000/tickMs).toFixed(2);
+    const SOURCES = [
+      ['Ethereum PoS', 'https://ethereum.org/developers/docs/consensus-mechanisms/pos/'],
+      ['Block proposal', 'https://ethereum.org/developers/docs/consensus-mechanisms/pos/block-proposal/'],
+      ['Attack and defense', 'https://ethereum.org/developers/docs/consensus-mechanisms/pos/attack-and-defense/'],
+      ['Merkle Patricia Trie', 'https://ethereum.org/developers/docs/data-structures-and-encoding/patricia-merkle-trie/']
+    ];
+
+    const $ = (selector) => document.querySelector(selector);
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
     }
 
-    // ---------- Hashing ----------
-    const supportsSubtle = !!(window.crypto && window.crypto.subtle);
-    async function sha256Hex(str){
-      if (supportsSubtle){
-        const enc=new TextEncoder();
-        const buf=enc.encode(str);
-        const h=await crypto.subtle.digest('SHA-256', buf);
-        return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('');
-      } else {
-        // Tiny non-crypto fallback to keep the demo running offline
-        let h=5381; for (let i=0;i<str.length;i++){ h=((h<<5)+h)+str.charCodeAt(i); h|=0; }
-        let hex=(h>>>0).toString(16); while(hex.length<64) hex='0'+hex; return hex;
+    function clear(node) {
+      while (node.firstChild) node.removeChild(node.firstChild);
+    }
+
+    function pct(value) {
+      return (value * 100).toFixed(1) + '%';
+    }
+
+    function rootFor(label) {
+      let h = 2166136261;
+      for (let i = 0; i < label.length; i++) {
+        h ^= label.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return '0x' + (h >>> 0).toString(16).padStart(8, '0') + label.replace(/[^a-zA-Z0-9]/g, '').slice(0, 8).padEnd(8, '0');
+    }
+
+    function timeLabel() {
+      return new Date().toLocaleTimeString();
+    }
+
+    let gasperTimer = null;
+
+    function stopGasperTimer() {
+      if (gasperTimer) {
+        clearInterval(gasperTimer);
+        gasperTimer = null;
       }
     }
-    const dsha = async (str)=> sha256Hex(await sha256Hex(str));
 
-    // ---------- Merkle ----------
-    async function merkleTree(leaves){
-      if (leaves.length===0){
-        const r = await dsha('');
-        return {levels:[[r]], root:r};
-      }
-      let level = [];
-      for (const it of leaves) level.push(await dsha(String(it)));
-      const levels=[level.slice()];
-      while (level.length>1){
-        const next=[];
-        for (let i=0;i<level.length;i+=2){
-          const a=level[i], b=(i+1<level.length)? level[i+1] : level[i];
-          next.push(await dsha(a+b));
+    function scheduleGasperTimer() {
+      stopGasperTimer();
+      gasperTimer = setInterval(() => {
+        if (app.scenario !== 'gasper' || (!app.gasper.running && !app.gasper.growing)) {
+          stopGasperTimer();
+          return;
         }
-        level=next; levels.push(level.slice());
-      }
-      return {levels, root: level[0]};
+        if (app.gasper.finalizedRoot) {
+          if (!app.gasper.growing || app.gasper.growthCount >= app.gasper.maxGrowthBlocks) {
+            app.gasper.growing = false;
+            app.gasper.actionNote = 'Post-finality growth paused after ' + app.gasper.growthCount + ' new blocks. Restart the scenario to try locking the other branch.';
+            stopGasperTimer();
+            renderControls();
+            render();
+            return;
+          }
+          growFinalizedBranch(app.gasper);
+          render();
+          return;
+        }
+        advanceGasperOscillation(app.gasper);
+        render();
+      }, 1600);
     }
-    function drawMerkle(canvas, tree){
-      const ctx=canvas.getContext('2d');
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.font='11px ui-monospace, monospace'; ctx.textBaseline='top';
-      const levels=tree.levels;
-      const boxW=180, boxH=24, vGap=60, padX=24;
-      const startY=Math.max(12, canvas.height - (levels.length*(boxH+vGap)));
-      function rrect(x,y,w,h,r){ if (ctx.roundRect){ ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill(); ctx.stroke(); } else { ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h); } }
-      function box(x,y,text){ ctx.fillStyle='#10193a'; ctx.strokeStyle='#2a3a7b'; ctx.lineWidth=1.5; rrect(x,y,boxW,boxH,6); ctx.fillStyle='#cfe0ff'; ctx.fillText(text.slice(0,22)+'…', x+6, y+5); }
-      const positions=[];
-      for (let li=0; li<levels.length; li++){
-        const level=levels[li]; const y=startY + li*(boxH+vGap);
-        const totalW=level.length*(boxW+padX) - padX;
-        const startX=(canvas.width-totalW)/2;
-        const row=[];
-        for (let i=0;i<level.length;i++){ const x=startX + i*(boxW+padX); row.push([x,y]); box(x,y,level[i]); }
-        positions.push(row);
+
+    function log(message, type = '') {
+      const item = el('div', 'log-item ' + type);
+      const stamp = el('strong', '', '[' + timeLabel() + '] ');
+      item.append(stamp, document.createTextNode(message));
+      $('#eventLog').appendChild(item);
+      $('#eventLog').scrollTop = $('#eventLog').scrollHeight;
+      const method = type === 'warn' ? 'warn' : 'log';
+      console[method](message);
+    }
+
+    function makeValidators() {
+      return Array.from({ length: ETH.validatorCount }, (_, index) => ({
+        id: index,
+        balance: ETH.effectiveBalance,
+        label: 'V' + index.toString().padStart(2, '0')
+      }));
+    }
+
+    function totalStake(validators) {
+      return validators.reduce((sum, validator) => sum + validator.balance, 0);
+    }
+
+    function descendantsOf(blocks, rootId) {
+      return blocks.filter((block) => isDescendant(blocks, block.id, rootId)).map((block) => block.id);
+    }
+
+    function isDescendant(blocks, candidateId, ancestorId) {
+      let current = blocks.find((block) => block.id === candidateId);
+      while (current) {
+        if (current.id === ancestorId) return true;
+        current = blocks.find((block) => block.id === current.parent);
       }
-      ctx.strokeStyle='#4256a5'; ctx.lineWidth=1.2;
-      for (let li=0; li<positions.length-1; li++){
-        const row=positions[li], next=positions[li+1];
-        for (let i=0;i<row.length;i+=2){
-          const a=row[i], b=(i+1<row.length)?row[i+1]:row[i], parent=next[Math.floor(i/2)];
-          const ay=a[1]+boxH, by=b[1]+boxH, py=parent[1];
-          const ax=a[0]+boxW/2, bx=b[0]+boxW/2, px=parent[0]+boxW/2;
-          ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(ax,py-6); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx,py-6); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(ax,py-6); ctx.lineTo(px,py-6); ctx.lineTo(px,py); ctx.stroke();
+      return false;
+    }
+
+    function childBlocks(blocks, parentId) {
+      return blocks.filter((block) => block.parent === parentId);
+    }
+
+    function voteWeightForSubtree(state, blockId) {
+      const ids = new Set(descendantsOf(state.blocks, blockId));
+      let weight = 0;
+      for (const [validatorId, latestBlock] of Object.entries(state.latestVotes)) {
+        if (ids.has(latestBlock)) {
+          const validator = state.validators[Number(validatorId)];
+          weight += validator ? validator.balance : 0;
         }
       }
+      return weight;
     }
-    function openMerkleModal(title, items){
-      (async ()=>{
-        const tree = await merkleTree(items);
-        $('#modalTitle').textContent = title + ' — root ' + tree.root.slice(0,16) + '…';
-        drawMerkle($('#modalCanvas'), tree);
-        $('#modalBg').style.display = 'flex';
-      })();
+
+    function voteWeightForBlock(state, blockId) {
+      let weight = 0;
+      for (const [validatorId, latestBlock] of Object.entries(state.latestVotes)) {
+        if (latestBlock === blockId) {
+          const validator = state.validators[Number(validatorId)];
+          weight += validator ? validator.balance : 0;
+        }
+      }
+      return weight;
     }
-    $('#modalClose').onclick = ()=> $('#modalBg').style.display='none';
-    $('#modalBg').onclick = (e)=> { if (e.target.id==='modalBg') $('#modalBg').style.display='none'; };
 
-    // ---------- Helpers ----------
-    function clearView(){ $('#labControls').innerHTML=''; $('#labView').innerHTML=''; }
-    function autoScrollX(el){ el.scrollLeft = el.scrollWidth; }
-    function capLog(n=600){ while (logEl.children.length>n) logEl.removeChild(logEl.firstChild); }
+    function computeLmdGhostHead(state) {
+      let cursor = state.justifiedRoot;
+      while (true) {
+        const children = childBlocks(state.blocks, cursor);
+        if (!children.length) return cursor;
+        let best = children[0];
+        let bestWeight = voteWeightForSubtree(state, best.id);
+        for (const child of children.slice(1)) {
+          const weight = voteWeightForSubtree(state, child.id);
+          if (weight > bestWeight || (weight === bestWeight && child.id < best.id)) {
+            best = child;
+            bestWeight = weight;
+          }
+        }
+        if (bestWeight === 0) return cursor;
+        cursor = best.id;
+      }
+    }
 
-    // ---------- Global UI ----------
-    $('#speed').addEventListener('input', (e)=>{ tickMs=sliderToTickMs(Number(e.target.value)); updateTick(); });
-    $('#pauseBtn').addEventListener('click', ()=>{ paused=!paused; $('#pauseBtn').textContent=paused?'Resume':'Pause'; $('#pauseBtn').classList.toggle('paused', paused); updateTick(); });
-    $('#resetBtn').addEventListener('click', ()=>{ if (currentLab && typeof currentLab.reset==='function') currentLab.reset(); log('Simulation reset.','info'); if (paused){ paused=false; $('#pauseBtn').textContent='Pause'; $('#pauseBtn').classList.remove('paused'); updateTick(); } });
-    $('#labSelect').addEventListener('change', (e)=>{ switchLab(e.target.value); });
+    function branchHead(state, branch) {
+      const branchBlocks = state.blocks.filter((block) => block.branch === branch);
+      return branchBlocks.reduce((head, block) => block.slot > head.slot ? block : head, branchBlocks[0]).id;
+    }
 
-    // ========== Lab 1: Block Anatomy ==========
-    const Lab1 = {
-      id:'lab1',
-      chain:[], building:[], mempool:[], stateRoot:'', selectedIndex:-1,
-      init(){
-        setTitle('Lab 1 — Anatomy of a Block', 'Build blocks from a live mempool, watch roots update, and mine to extend the chain.');
-        clearView();
-        const ctrl=$('#labControls'), view=$('#labView');
-        const memDiv=$el('div','panel resizable'); memDiv.innerHTML='<h3>Mempool</h3>';
-        const memList=$el('div','list panel-body'); memDiv.appendChild(memList);
-        const buildDiv=$el('div','panel resizable'); buildDiv.innerHTML='<h3>Building Block</h3>';
-        const buildList=$el('div','list panel-body'); buildDiv.appendChild(buildList);
-        const mineBtn=$el('button','btn success','Mine Block'); buildDiv.appendChild(mineBtn);
-        const left=$el('div','split2'); left.appendChild(memDiv); left.appendChild(buildDiv); view.appendChild(left);
-        const chainTitle=$el('div','rowlabel','Blockchain'); view.appendChild(chainTitle);
-        const chainDiv=$el('div','hchain'); view.appendChild(chainDiv);
-        const insp=$el('div','panel resizable'); insp.innerHTML='<h3>Inspector</h3>';
-        const inspBody=$el('div','inspector panel-body'); insp.appendChild(inspBody);
-        view.appendChild(insp);
+    function voteCountForBlock(state, blockId) {
+      return Math.round(voteWeightForBlock(state, blockId) / ETH.effectiveBalance);
+    }
 
-        this.els={memList, buildList, chainDiv, inspBody};
-        this.reset();
-        mineBtn.onclick = ()=> this.mineBlock();
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function assignVoteSplit(state, aCount, bCount, aBlockId = branchHead(state, 'A'), bBlockId = branchHead(state, 'B')) {
+      state.latestVotes = {};
+      const total = state.validators.length;
+      for (let i = 0; i < total; i++) {
+        if (i < aCount) state.latestVotes[i] = aBlockId;
+        else if (i < aCount + bCount) state.latestVotes[i] = bBlockId;
+        else state.latestVotes[i] = 'J0';
+      }
+    }
+
+    function resetGasperCheckpointState(state, message = 'No finality lock has happened yet.') {
+      state.justifiedEpoch = 0;
+      state.finalizedEpoch = -1;
+      state.justifiedRoot = 'J0';
+      state.finalizedRoot = null;
+      state.finalizedBranch = null;
+      state.targetRoot = null;
+      state.checkpointProcessed = false;
+      state.checkpointMessage = message;
+    }
+
+    function makeGasperState() {
+      const validators = makeValidators();
+      const state = {
+        validators,
+        blocks: [
+          { id: 'J0', parent: null, label: 'Epoch 0 checkpoint', slot: 0, epoch: 0, branch: 'checkpoint', root: rootFor('J0') },
+          { id: 'A1', parent: 'J0', label: 'Branch A slot 1', slot: 1, epoch: 1, branch: 'A', root: rootFor('A1') },
+          { id: 'A2', parent: 'A1', label: 'Branch A head', slot: 9, epoch: 1, branch: 'A', root: rootFor('A2') },
+          { id: 'B1', parent: 'J0', label: 'Branch B slot 2', slot: 2, epoch: 1, branch: 'B', root: rootFor('B1') },
+          { id: 'B2', parent: 'B1', label: 'Branch B head', slot: 10, epoch: 1, branch: 'B', root: rootFor('B2') }
+        ],
+        latestVotes: {},
+        justifiedEpoch: 0,
+        finalizedEpoch: -1,
+        justifiedRoot: 'J0',
+        finalizedRoot: null,
+        finalizedBranch: null,
+        targetEpoch: 1,
+        targetRoot: null,
+        checkpointProcessed: false,
+        running: false,
+        growing: false,
+        bounceCount: 0,
+        growthCount: 0,
+        maxGrowthBlocks: 5,
+        actionNote: 'Click Start Scenario. Latest votes will drift between the branches until you lock finality.',
+        checkpointMessage: 'No finality lock has happened yet.'
+      };
+      assignVoteSplit(state, 32, 32);
+      state.actionNote = 'Ready to start. The running scenario will keep shifting latest vote weight between A and B, and the branch you lock depends on the state at that instant.';
+      return state;
+    }
+
+    function processGasperCheckpoint(state, forceLock = false) {
+      const targetRoot = computeLmdGhostHead(state);
+      const support = voteWeightForSubtree(state, targetRoot);
+      const needed = totalStake(state.validators) * ETH.threshold;
+      const supportCount = Math.round(support / ETH.effectiveBalance);
+      const neededCount = Math.ceil(needed / ETH.effectiveBalance);
+      const target = state.blocks.find((block) => block.id === targetRoot);
+      state.targetRoot = targetRoot;
+      if (support >= needed || forceLock) {
+        state.justifiedEpoch = target.epoch;
+        state.justifiedRoot = targetRoot;
+        state.finalizedEpoch = target.epoch;
+        state.finalizedRoot = targetRoot;
+        state.finalizedBranch = target.branch;
+        state.checkpointProcessed = true;
+        state.checkpointMessage = support >= needed
+          ? 'Finality locked ' + targetRoot + ': it had ' + supportCount + ' validators, meeting the ' + neededCount + '-validator threshold. Future head choice starts from this finalized branch.'
+          : 'Finality locked ' + targetRoot + ' for this activity. The current head had ' + supportCount + ' latest votes; in real Ethereum, finality votes are a separate supermajority checkpoint vote, not just the latest-message head tally.';
+        return { ok: true, support, needed };
+      }
+      state.checkpointProcessed = true;
+      state.checkpointMessage = 'Finality did not lock: ' + targetRoot + ' has ' + supportCount + ' validators, but needs at least ' + neededCount + ' of ' + state.validators.length + '.';
+      return { ok: false, support, needed };
+    }
+
+    function growFinalizedBranch(state) {
+      const branch = state.finalizedBranch;
+      if (!branch) return null;
+      const parentId = branchHead(state, branch);
+      const parent = state.blocks.find((block) => block.id === parentId);
+      const nextIndex = state.blocks.filter((block) => block.branch === branch).length + 1;
+      const nextSlot = Math.max(...state.blocks.map((block) => block.slot)) + 1;
+      const id = branch + nextIndex;
+      const block = {
+        id,
+        parent: parentId,
+        label: 'Growth after finality',
+        slot: nextSlot,
+        epoch: parent.epoch + 1,
+        branch,
+        root: rootFor(id)
+      };
+      state.blocks.push(block);
+      state.growthCount += 1;
+      if (branch === 'A') assignVoteSplit(state, 50, 14, id, branchHead(state, 'B'));
+      else assignVoteSplit(state, 14, 50, branchHead(state, 'A'), id);
+      state.actionNote = 'A new block was added to finalized Branch ' + branch + '. Because the finalized root is ' + state.finalizedRoot + ', the old competing branch is no longer a valid place for this node to build.';
+      state.checkpointMessage = 'Finality remains locked on Branch ' + branch + '; growth now extends that branch.';
+      return block;
+    }
+
+    function advanceGasperOscillation(state, rng = Math.random) {
+      if (state.finalizedRoot) return 'finalized';
+      const aHead = branchHead(state, 'A');
+      const bHead = branchHead(state, 'B');
+      const aVotes = voteCountForBlock(state, aHead);
+      const bVotes = voteCountForBlock(state, bHead);
+      const totalVotes = aVotes + bVotes;
+      const magnitude = 1 + Math.floor(rng() * 5);
+      const skew = aVotes - bVotes;
+      const towardA = skew < -2 ? true : skew > 2 ? false : rng() < 0.5;
+      const direction = towardA ? 1 : -1;
+      let nextA = clamp(aVotes + direction * magnitude, 0, totalVotes);
+      if (nextA === aVotes) nextA = clamp(aVotes + (direction > 0 ? 1 : -1), 0, totalVotes);
+      const nextB = totalVotes - nextA;
+      assignVoteSplit(state, nextA, nextB, aHead, bHead);
+      state.running = true;
+      state.bounceCount += 1;
+      const head = computeLmdGhostHead(state);
+      const lead = head === aHead ? 'Branch A' : 'Branch B';
+      state.actionNote = 'Latest votes drifted by ' + Math.abs(nextA - aVotes) + ' validators toward ' + (nextA > aVotes ? 'Branch A' : 'Branch B') + '. ' + lead + ' is head right now.';
+      return head === aHead ? 'head_a' : 'head_b';
+    }
+
+    function lockGasperFinality(state) {
+      const result = processGasperCheckpoint(state, true);
+      if (!result.ok) {
+        state.actionNote = 'The current head did not have enough support to lock finality.';
+        return 'not_finalized';
+      }
+      state.running = false;
+      state.growing = true;
+      const lockedRoot = state.finalizedRoot;
+      const lockedBranch = state.finalizedBranch;
+      state.actionNote = 'You locked finality while ' + lockedRoot + ' on Branch ' + lockedBranch + ' was the head. New blocks will now start growing from that finalized branch.';
+      state.checkpointMessage = 'Finality locked ' + lockedRoot + '. Watch the next blocks extend Branch ' + lockedBranch + ' from that anchor.';
+      return lockedBranch === 'A' ? 'finalized_a' : 'finalized_b';
+    }
+
+    function makeDelayState(offlinePercent = 40) {
+      const total = ETH.validatorCount * ETH.effectiveBalance;
+      const offlineStake = total * offlinePercent / 100;
+      const onlineStake = total - offlineStake;
+      return {
+        epoch: 0,
+        producedBlocks: 0,
+        onlineStake,
+        offlineStake,
+        initialTotal: total,
+        justifiedEpoch: 0,
+        finalizedEpoch: -1,
+        finalityDelay: 0,
+        leakActive: false,
+        recoveryRate: 0.12,
+        history: [{ epoch: 0, status: 'finalized', note: 'Starting checkpoint', participation: onlineStake / total }],
+        lastAction: 'Ready'
+      };
+    }
+
+    function delayParticipation(state) {
+      return state.onlineStake / (state.onlineStake + state.offlineStake);
+    }
+
+    function stepDelayEpoch(state) {
+      state.epoch += 1;
+      state.producedBlocks += ETH.slotsPerEpoch;
+      const participation = delayParticipation(state);
+      if (participation >= ETH.threshold) {
+        state.justifiedEpoch = state.epoch;
+        if (state.epoch > 0) state.finalizedEpoch = state.epoch - 1;
+        state.finalityDelay = 0;
+        state.leakActive = false;
+        state.lastAction = 'Checkpoint justified and previous checkpoint finalized.';
+        state.history.push({ epoch: state.epoch, status: 'finalized', note: 'Finality resumed', participation });
+        return 'finalized';
+      }
+      state.finalityDelay += 1;
+      const recoveredStake = state.offlineStake * state.recoveryRate;
+      state.onlineStake += recoveredStake;
+      state.offlineStake -= recoveredStake;
+      if (state.finalityDelay >= 4) {
+        state.leakActive = true;
+        state.offlineStake *= 0.96;
+      }
+      const nextParticipation = delayParticipation(state);
+      if (nextParticipation >= ETH.threshold) {
+        state.lastAction = 'Blocks continued without finality. Some validators recovered, so the next epoch can finalize.';
+        state.history.push({ epoch: state.epoch, status: 'ready', note: 'Recovered; next epoch can finalize', participation: nextParticipation });
+        return 'ready';
+      }
+      state.lastAction = 'Blocks continued, but participation stayed below two-thirds. This scenario assumes some offline validators recover before the next epoch.';
+      state.history.push({ epoch: state.epoch, status: state.leakActive ? 'recovering' : 'delayed', note: state.leakActive ? 'Delay plus inactivity leak' : 'Finality delayed', participation: nextParticipation });
+      return state.leakActive ? 'leak' : 'delayed';
+    }
+
+    const evidenceCases = {
+      doubleProposal: {
+        expected: 'double_proposal',
+        messages: [
+          { kind: 'proposal', validator: 12, slot: 96, blockRoot: '0xa10f...', signingRoot: '0x91aa...' },
+          { kind: 'proposal', validator: 12, slot: 96, blockRoot: '0xb90c...', signingRoot: '0x77cf...' }
+        ],
+        explanation: 'Both messages are proposals from the same validator for the same slot, but they point to different block roots.'
       },
-      reset(){ this.chain=[]; this.building=[]; this.mempool=[]; this.stateRoot=''; this.selectedIndex=-1; this.render(); log('Lab 1 reset.','info'); },
-      genTx(){ const types=['transfer','contract_call','nft_mint','approve']; const t=types[Math.floor(Math.random()*types.length)]; const v=(Math.random()*2).toFixed(3); const to='0x'+Math.random().toString(16).slice(2,8); const from='0x'+Math.random().toString(16).slice(2,8); return {id:'tx'+Math.random().toString(16).slice(2,10), type:t, from, to, value:v}; },
-      async computeRoots(txs){
-        const txStrs=txs.map(tx=> JSON.stringify(tx));
-        const txTree = await merkleTree(txStrs);
-        const receipts = txs.map(tx=> ({status:'OK', id:tx.id}));
-        const rcTree = await merkleTree(receipts.map(r=> JSON.stringify(r)));
-        const stateRoot = await dsha((this.stateRoot||'genesis') + txTree.root + rcTree.root);
-        return { transactionsRoot: txTree.root, receiptsRoot: rcTree.root, stateRoot };
+      doubleAttestation: {
+        expected: 'double_attestation',
+        messages: [
+          { kind: 'attestation', validator: 7, sourceEpoch: 4, targetEpoch: 5, headRoot: '0xaaa1...', signingRoot: '0x21ad...' },
+          { kind: 'attestation', validator: 7, sourceEpoch: 4, targetEpoch: 5, headRoot: '0xbbb2...', signingRoot: '0x45de...' }
+        ],
+        explanation: 'Both messages are attestations from the same validator with the same target epoch, but the signed data differs.'
       },
-      async mineBlock(){
-        const number=this.chain.length;
-        const parentHash = this.chain.length? this.chain[this.chain.length-1].hash : '0xgenesis';
-        const roots = await this.computeRoots(this.building);
-        const header = { number, parentHash, transactions_root:roots.transactionsRoot, receipts_root:roots.receiptsRoot, state_root:roots.stateRoot, timestamp:Date.now() };
-        const hash = await dsha(Object.values(header).join('|'));
-        const block = { header, hash, txs: this.building.slice() };
-        this.chain.push(block); this.stateRoot=roots.stateRoot; this.building=[];
-        this.render(); log(`Mined block #${number} hash ${hash.slice(0,10)}…`,'success'); capLog();
+      surround: {
+        expected: 'surround_vote',
+        messages: [
+          { kind: 'attestation', validator: 19, sourceEpoch: 2, targetEpoch: 8, headRoot: '0x1919...', signingRoot: '0x8899...' },
+          { kind: 'attestation', validator: 19, sourceEpoch: 3, targetEpoch: 7, headRoot: '0x2020...', signingRoot: '0xaa33...' }
+        ],
+        explanation: 'The first attestation source-target range strictly contains the second range.'
       },
-      selectBlock(i){ this.selectedIndex=i; this.render(); },
-      render(){
-        const {memList, buildList, chainDiv, inspBody} = this.els || {};
-        if (!memList) return;
-        // mempool
-        memList.innerHTML='';
-        this.mempool.forEach((tx, idx)=>{
-          const it=$el('div','item'); it.innerHTML=`<div><strong>${tx.type}</strong> <span class="tiny">${tx.id}</span></div><div class="tiny">${tx.from} → ${tx.to} (${tx.value} ETH)</div>`;
-          it.onclick=()=>{ this.building.push(tx); this.mempool.splice(idx,1); this.render(); };
-          memList.appendChild(it);
+      safe: {
+        expected: 'not_slashable',
+        messages: [
+          { kind: 'attestation', validator: 22, sourceEpoch: 5, targetEpoch: 6, headRoot: '0x5555...', signingRoot: '0x1212...' },
+          { kind: 'attestation', validator: 22, sourceEpoch: 6, targetEpoch: 7, headRoot: '0x6666...', signingRoot: '0x3434...' }
+        ],
+        explanation: 'These are sequential attestations. The target epochs differ, and neither source-target range surrounds the other.'
+      }
+    };
+
+    function shuffled(array) {
+      const copy = [...array];
+      for (let index = copy.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+      }
+      return copy;
+    }
+
+    function randomizedEvidenceOrder() {
+      const original = Object.keys(evidenceCases);
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const order = shuffled(original);
+        if (order.every((id, index) => id !== original[index])) return order;
+      }
+      return [...original.slice(1), original[0]];
+    }
+
+    function makeSlashingState() {
+      const caseOrder = randomizedEvidenceOrder();
+      return {
+        caseOrder,
+        caseId: caseOrder[0],
+        lastAnswer: null
+      };
+    }
+
+    function slashingCaseLabel(state, id) {
+      const index = Math.max(0, state.caseOrder.indexOf(id));
+      return 'Evidence Set ' + String.fromCharCode(65 + index);
+    }
+
+    function classifyEvidence(messages) {
+      const [a, b] = messages;
+      if (!a || !b || a.validator !== b.validator) return 'not_slashable';
+      if (a.kind === 'proposal' && b.kind === 'proposal') {
+        if (a.slot === b.slot && a.blockRoot !== b.blockRoot) return 'double_proposal';
+      }
+      if (a.kind === 'attestation' && b.kind === 'attestation') {
+        const differentData = a.headRoot !== b.headRoot || a.signingRoot !== b.signingRoot;
+        if (a.targetEpoch === b.targetEpoch && differentData) return 'double_attestation';
+        const aSurroundsB = a.sourceEpoch < b.sourceEpoch && b.targetEpoch < a.targetEpoch;
+        const bSurroundsA = b.sourceEpoch < a.sourceEpoch && a.targetEpoch < b.targetEpoch;
+        if (aSurroundsB || bSurroundsA) return 'surround_vote';
+      }
+      return 'not_slashable';
+    }
+
+    function makeWeakState() {
+      const honest = Array.from({ length: 11 }, (_, epoch) => ({
+        id: 'H' + epoch,
+        epoch,
+        root: rootFor('honest-' + epoch),
+        checkpoint: epoch === 6
+      }));
+      const fake = Array.from({ length: 13 }, (_, epoch) => ({
+        id: 'F' + epoch,
+        epoch,
+        root: rootFor('fake-' + epoch),
+        checkpoint: false
+      }));
+      return {
+        honest,
+        fake,
+        trustedEpoch: 6,
+        trustedRoot: honest[6].root,
+        syncedChain: null,
+        rejectedChain: null,
+        result: 'No sync attempt yet.',
+        conclusion: 'Choose a sync method to see what this node would believe.'
+      };
+    }
+
+    function syncWeakSubjectivity(state, useCheckpoint) {
+      if (!useCheckpoint) {
+        const chosen = state.fake.length > state.honest.length ? 'fake' : 'honest';
+        state.syncedChain = chosen;
+        state.rejectedChain = null;
+        state.result = chosen === 'fake'
+          ? 'Unsafe sync accepted the longer-looking fake history as this node\'s local view.'
+          : 'Unsafe sync followed the honest history.';
+        state.conclusion = chosen === 'fake'
+          ? 'Wrong conclusion: this node now serves the fake finalized root and fake execution state. A wallet, bridge monitor, or exchange dashboard using only this node could trust deposits, balances, or contract state that canonical Ethereum does not recognize.'
+          : 'The node happened to choose the honest history, but it still had no trusted finalized root to prove that choice.';
+        return chosen;
+      }
+      const fakeCheckpoint = state.fake.find((block) => block.epoch === state.trustedEpoch);
+      if (!fakeCheckpoint || fakeCheckpoint.root !== state.trustedRoot) {
+        state.syncedChain = 'honest';
+        state.rejectedChain = 'fake';
+        state.result = 'Checkpoint sync rejected the fake history at epoch ' + state.trustedEpoch + ' and continued from the trusted finalized root.';
+        state.conclusion = 'Protected conclusion: the node anchors on the expected finalized root, rejects the conflicting history, and serves the canonical state from that checkpoint forward.';
+        return 'rejected';
+      }
+      state.syncedChain = 'fake';
+      state.rejectedChain = null;
+      state.result = 'Checkpoint matched; node can continue normal validation.';
+      state.conclusion = 'The supplied checkpoint matched this history, so the node can continue normal validation from that anchor.';
+      return 'accepted';
+    }
+
+    const app = {
+      scenario: 'gasper',
+      gasper: makeGasperState(),
+      delay: makeDelayState(40),
+      slashing: makeSlashingState(),
+      weak: makeWeakState()
+    };
+
+    const scenarioMeta = {
+      gasper: {
+        title: 'Gasper: Head and Finality',
+        desc: 'A short fork appears after the last justified checkpoint. Start the scenario and latest attestation weight will move between branches; lock finality whenever you want to freeze the branch that is currently head.',
+        outcome: 'See that LMD-GHOST can move the head with latest votes, while finality anchors the branch future blocks build from.',
+        reminder: 'Gasper combines LMD-GHOST head choice with Casper-FFG checkpoint finality. This is a classroom simplification: the running scenario oscillates latest attestation weight, and the lock button represents a checkpoint on the current head receiving at least two-thirds support.',
+        steps: [
+          'Click Start Scenario and watch the head move as latest vote weight bounces between branches.',
+          'Click Lock Finality Now at any moment.',
+          'Observe whether Branch A or Branch B was finalized, then see the next block grow from that branch.'
+        ]
+      },
+      delay: {
+        title: 'Finality Delay',
+        desc: 'A client or network problem knocks some validators offline. Blocks can still be proposed, but checkpoints need enough active stake to finalize.',
+        outcome: 'Separate liveness from finality during an Ethereum outage.',
+        reminder: 'Finality requires at least two-thirds of effective stake voting for checkpoints. In this simplified scenario, we assume some affected validators come back online each epoch as operators recover their nodes.',
+        steps: [
+          'Set how much stake is offline.',
+          'Step through epochs and watch blocks continue while finality is delayed.',
+          'Keep stepping until the timeline turns blue, then step once more to process the checkpoint and finalize.'
+        ]
+      },
+      slashing: {
+        title: 'Slashing Evidence',
+        desc: 'You are given two signed messages from one validator. Your job is to decide whether the pair proves a slashable offense.',
+        outcome: 'Recognize slashable proof-of-stake behavior from objective evidence.',
+        reminder: 'Slashing is not about guessing intent. Ethereum clients can punish a validator only when signed messages prove a specific conflict, such as two proposals for one slot or conflicting attestations.',
+        steps: [
+          'Read both signed messages.',
+          'Compare the fields that matter: validator, slot, source epoch, and target epoch.',
+          'Choose the slashable offense, or mark the pair not slashable.'
+        ]
+      },
+      weak: {
+        title: 'Weak Subjectivity',
+        desc: 'A new node sees an honest history and a longer-looking fake history. You will decide whether it syncs from old signatures alone or anchors on a recent finalized checkpoint.',
+        outcome: 'Explain why new Ethereum PoS nodes need a recent trusted checkpoint.',
+        reminder: 'Long-range attackers can use old validator keys to build a fake finalized-looking history after those validators have exited. A weak-subjectivity checkpoint gives a new node a recent finalized root to compare against before it trusts the state it is serving.',
+        steps: [
+          'Try syncing from genesis only and inspect which chain the node serves.',
+          'Reset and sync again with the trusted checkpoint.',
+          'Compare the local outcome: unsafe fake state versus checkpoint-protected state.'
+        ]
+      }
+    };
+
+    function setScenario(id) {
+      stopGasperTimer();
+      app.scenario = id;
+      const meta = scenarioMeta[id];
+      $('#scenarioTitle').textContent = meta.title;
+      $('#scenarioDesc').textContent = meta.desc;
+      $('#scenarioOutcome').textContent = meta.outcome;
+      $('#scenarioReminder').textContent = meta.reminder;
+      $('#scenarioStatus').textContent = 'Ready';
+      $('#scenarioStatus').className = 'status-pill';
+      clear($('#scenarioSteps'));
+      for (const [index, step] of meta.steps.entries()) {
+        const item = el('li');
+        item.append(el('span', 'num', String(index + 1)), el('span', '', step));
+        $('#scenarioSteps').appendChild(item);
+      }
+      renderControls();
+      render();
+      if (id === 'gasper' && (app.gasper.running || app.gasper.growing)) scheduleGasperTimer();
+      log('Loaded scenario: ' + meta.title);
+    }
+
+    function setStatus(text, type = '') {
+      $('#scenarioStatus').textContent = text;
+      $('#scenarioStatus').className = 'status-pill ' + type;
+    }
+
+    function actionControl(label, description, className, onClick, actionId = '') {
+      const card = el('div', 'action-card');
+      const button = el('button', 'btn ' + (className || ''), label);
+      button.type = 'button';
+      if (actionId) button.dataset.action = actionId;
+      button.onclick = onClick;
+      card.appendChild(button);
+      if (description) card.appendChild(el('p', '', description));
+      return card;
+    }
+
+    function renderControls() {
+      const controls = $('#scenarioControls');
+      clear(controls);
+
+      if (app.scenario === 'gasper') {
+        const state = app.gasper;
+        if (state.finalizedRoot) {
+          const restart = actionControl('Restart scenario', 'Reset the fork, latest votes, and finality anchor.', 'primary', () => {
+            stopGasperTimer();
+            app.gasper = makeGasperState();
+            log('Head and finality scenario restarted.');
+            renderControls();
+            render();
+          }, 'gasper-restart');
+          controls.appendChild(restart);
+          return;
+        }
+        if (!state.running) {
+          const start = actionControl('Start scenario', 'Begin the running scenario. Latest attestation weight will drift between Branch A and Branch B until you stop it by locking finality.', 'primary', () => {
+            app.gasper.running = true;
+            log('Scenario started: latest votes will now drift organically between Branch A and Branch B.', 'good');
+            scheduleGasperTimer();
+            renderControls();
+            render();
+          }, 'gasper-start');
+          controls.appendChild(start);
+          return;
+        }
+        const lock = actionControl('Lock finality now', 'Freeze the current head as the finalized checkpoint. The selected branch depends on where the latest vote weight is right now.', 'success', () => {
+          const result = lockGasperFinality(app.gasper);
+          log(result === 'finalized_a' ? 'Finality locked Branch A.' : 'Finality locked Branch B.', 'good');
+          scheduleGasperTimer();
+          renderControls();
+          render();
+        }, 'gasper-lock');
+        controls.appendChild(lock);
+      }
+
+      if (app.scenario === 'delay') {
+        const wrapper = el('div', 'stack');
+        const label = el('div', 'label', 'Offline stake: ');
+        const value = el('span', '', Math.round(app.delay.offlineStake / (app.delay.onlineStake + app.delay.offlineStake) * 100) + '%');
+        label.appendChild(value);
+        const range = el('input', 'range');
+        range.type = 'range';
+        range.min = '0';
+        range.max = '70';
+        range.value = String(Math.round(app.delay.offlineStake / (app.delay.onlineStake + app.delay.offlineStake) * 100));
+        range.oninput = () => {
+          app.delay = makeDelayState(Number(range.value));
+          value.textContent = range.value + '%';
+          render();
+        };
+        wrapper.append(label, range);
+
+        const actions = el('div', 'action-grid');
+        const step = actionControl('Step one epoch', 'Move time forward. If participation is below two-thirds, blocks keep appearing and some offline validators recover. If participation is already back above two-thirds, the next checkpoint can finalize.', 'primary', () => {
+          const result = stepDelayEpoch(app.delay);
+          if (result === 'finalized') log('Epoch ' + app.delay.epoch + ': finality resumed.', 'good');
+          else if (result === 'ready') log('Epoch ' + app.delay.epoch + ': validators recovered enough for the next epoch to finalize.', 'good');
+          else if (result === 'leak') log('Epoch ' + app.delay.epoch + ': inactivity leak applied.', 'warn');
+          else log('Epoch ' + app.delay.epoch + ': finality delayed; blocks still produced.', 'warn');
+          render();
         });
-        // building
-        buildList.innerHTML='';
-        this.building.forEach((tx, idx)=>{
-          const it=$el('div','item'); it.innerHTML=`<div><strong>${tx.type}</strong> <span class="tiny">${tx.id}</span></div><div class="tiny">${tx.from} → ${tx.to} (${tx.value} ETH)</div>`;
-          it.onclick=()=>{ this.mempool.push(tx); this.building.splice(idx,1); this.render(); };
-          buildList.appendChild(it);
+        const run = actionControl('Run to recovery', 'Advance through recovery epochs until participation is high enough, then run one more epoch to finalize.', 'success', () => {
+          let guard = 0;
+          while (delayParticipation(app.delay) < ETH.threshold && guard < 80) {
+            stepDelayEpoch(app.delay);
+            guard += 1;
+          }
+          if (delayParticipation(app.delay) >= ETH.threshold) stepDelayEpoch(app.delay);
+          log('Ran finality-delay scenario for ' + guard + ' epochs.', app.delay.finalizedEpoch >= 0 ? 'good' : 'warn');
+          render();
         });
-        // chain
-        chainDiv.innerHTML='';
-        this.chain.forEach((b,i)=>{
-          const div=$el('div','block'+(this.selectedIndex===i?' selected':''));
-          div.innerHTML=`<div class="num">#${b.header.number}</div><div class="hash mono">${b.hash.slice(0,24)}…</div>`;
-          div.onclick=()=> this.selectBlock(i);
-          chainDiv.appendChild(div);
-        });
-        autoScrollX(chainDiv);
-        // inspector
-        (async ()=>{
-          inspBody.innerHTML='';
-          if (this.selectedIndex>=0){
-            const b=this.chain[this.selectedIndex];
-            const kv=$el('div','kv');
-            function row(k,v){ const kd=$el('div','muted',k), vd=$el('div','mono'); vd.textContent=v; kv.appendChild(kd); kv.appendChild(vd); }
-            row('number', b.header.number); row('parentHash', b.header.parentHash);
-            const tr=$el('span','clickable-hash mono', b.header.transactions_root.slice(0,28)+'…'); tr.onclick=()=> openMerkleModal('Transactions Merkle Tree', b.txs.map(t=>JSON.stringify(t)));
-            const rr=$el('span','clickable-hash mono', b.header.receipts_root.slice(0,28)+'…'); rr.onclick=()=> openMerkleModal('Receipts Merkle Tree', b.txs.map(t=>JSON.stringify({status:'OK', id:t.id})));
-            const sr=$el('span','mono', b.header.state_root.slice(0,28)+'…');
-            kv.appendChild($el('div','muted','transactions_root')); const trc=$el('div'); trc.appendChild(tr); kv.appendChild(trc);
-            kv.appendChild($el('div','muted','receipts_root')); const rrc=$el('div'); rrc.appendChild(rr); kv.appendChild(rrc);
-            kv.appendChild($el('div','muted','state_root')); kv.appendChild(sr);
-            const txlist=$el('div','list'); b.txs.forEach(tx=>{ const it=$el('div','item'); it.innerHTML=`<div><strong>${tx.type}</strong> <span class="tiny">${tx.id}</span></div><div class="tiny">${tx.from} → ${tx.to} (${tx.value} ETH)</div>`; txlist.appendChild(it); });
-            const left=$el('div','panel resizable'); left.innerHTML='<h3>Header</h3>'; const leftBody=$el('div','panel-body'); leftBody.appendChild(kv); left.appendChild(leftBody);
-            const right=$el('div','panel resizable'); right.innerHTML='<h3>Transactions</h3>'; const rightBody=$el('div','panel-body'); rightBody.appendChild(txlist); right.appendChild(rightBody);
-            inspBody.appendChild(left); inspBody.appendChild(right);
+        actions.append(step, run);
+        const reset = el('button', 'btn', 'Reset Scenario');
+        reset.onclick = () => {
+          app.delay = makeDelayState(40);
+          log('Finality delay scenario reset.');
+          renderControls();
+          render();
+        };
+        controls.append(wrapper, actions, reset);
+      }
+
+      if (app.scenario === 'slashing') {
+        const selector = el('select', 'select');
+        for (const id of app.slashing.caseOrder) {
+          const option = el('option', '', slashingCaseLabel(app.slashing, id));
+          option.value = id;
+          selector.appendChild(option);
+        }
+        selector.value = app.slashing.caseId;
+        selector.onchange = () => {
+          app.slashing.caseId = selector.value;
+          app.slashing.lastAnswer = null;
+          render();
+        };
+        controls.appendChild(selector);
+
+        const actions = el('div', 'action-grid');
+
+        const answer = (kind) => {
+          app.slashing.lastAnswer = kind;
+          const expected = evidenceCases[app.slashing.caseId].expected;
+          if (kind === expected) {
+            log('Correct classification: ' + kind.replace(/_/g, ' ') + '.', 'good');
           } else {
-            const roots = await this.computeRoots(this.building);
-            const kv=$el('div','kv');
-            function row(k,v){ const kd=$el('div','muted',k), vd=$el('div','mono'); vd.textContent=(v && v.slice)? v.slice(0,28)+'…' : String(v); kv.appendChild(kd); kv.appendChild(vd); }
-            row('transactions_root', roots.transactionsRoot); row('receipts_root', roots.receiptsRoot); row('state_root (preview)', roots.stateRoot);
-            const left=$el('div','panel resizable'); left.innerHTML='<h3>Live Header Preview</h3>'; const lb=$el('div','panel-body'); lb.appendChild(kv); left.appendChild(lb);
-            const right=$el('div','panel resizable'); right.innerHTML='<h3>Selected Block</h3><div class="tiny">Click a block above to inspect.</div>'; const rb=$el('div','panel-body'); right.appendChild(rb);
-            inspBody.appendChild(left); inspBody.appendChild(right);
+            log('Incorrect classification. Expected ' + expected.replace(/_/g, ' ') + '.', 'bad');
           }
-        })();
-      },
-      tick(){ if (Math.random()<0.55) this.mempool.push(this.genTx()); if (this.mempool.length>60) this.mempool.shift(); this.render(); }
-    };
+          render();
+        };
+        actions.append(
+          actionControl('Double proposal', '', '', () => answer('double_proposal')),
+          actionControl('Double attestation', '', '', () => answer('double_attestation')),
+          actionControl('Surround vote', '', '', () => answer('surround_vote')),
+          actionControl('Not slashable', '', '', () => answer('not_slashable'))
+        );
+        controls.append(actions);
+      }
 
-    // ========== Lab 2: RANDAO ==========
-    const Lab2 = {
-      id:'lab2',
-      epoch:0, phase:'Commit', validators:[], randaoMix:'seed', withhold:false, proposer:null, committee:[], phaseTicks:0,
-      init(){
-        setTitle('Lab 2 — Validator Shuffle (RANDAO)','Commit → Reveal → Assign. Toggle withhold to see why grinding fails.');
-        clearView();
-        const ctrl=$('#labControls');
-        this.ctrlRoot = ctrl;
-        this.modeControls = $el('div','controls');
-        ctrl.appendChild(this.modeControls);
-
-        const phaseEl=$el('div','label','Phase: Commit'); this.modeControls.appendChild(phaseEl);
-        const epochEl=$el('div','label','Epoch: 0'); this.modeControls.appendChild(epochEl);
-        const toggle=$el('button','btn warn','Withhold Reveal (Grind): OFF');
-        toggle.onclick=()=>{ this.withhold=!this.withhold; toggle.textContent='Withhold Reveal (Grind): '+(this.withhold?'ON':'OFF'); log('User validator set to '+(this.withhold?'withhold':'reveal')+' during Reveal.', this.withhold?'warn':'info'); };
-        this.modeControls.appendChild(toggle);
-        const roles=$el('div','group'); roles.innerHTML='<div class="label">Assignments</div><div class="tiny" id="assignDisplay">—</div>'; this.modeControls.appendChild(roles);
-
-        const canvasWrap=$el('div','circle resizable'); $('#labView').appendChild(canvasWrap);
-        this.els = { phaseEl, epochEl, canvasWrap, assign: roles.querySelector('#assignDisplay') };
-        this.reset();
-      },
-      reset(){
-        this.epoch=0; this.phase='Commit'; this.randaoMix='seed'; this.phaseTicks=0;
-        this.validators = Array.from({length:16}, (_,i)=> ({ id:i, secret: Math.random().toString(36).slice(2,10), committed:'', revealed:false, penalty:0 }));
-        this.proposer=null; this.committee=[]; this.render(); log('Lab 2 reset.','info');
-      },
-      // PRNG seeded from mix (xorshift32-ish), for deterministic but simple shuffle
-      rng(seedHex){
-        let s = 0x9e3779b9 ^ parseInt(seedHex.slice(0,8), 16);
-        return ()=>{ s ^= s<<13; s ^= s>>>17; s ^= s<<5; s = (s>>>0); return (s % 100000)/100000; };
-      },
-      shuffleDet(arr, seed){
-        const rnd = this.rng(seed);
-        for (let i=arr.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-        return arr;
-      },
-      async advancePhase(){
-        if (this.phase==='Commit'){
-          for (const v of this.validators){ v.committed = await dsha(v.secret); v.revealed=false; }
-          this.phase='Reveal'; this.phaseTicks=0; log(`Epoch ${this.epoch}: Commit → Reveal`,'info');
-        } else if (this.phase==='Reveal'){
-          let mix=this.randaoMix;
-          for (const v of this.validators){
-            const isUser=(v.id===15);
-            const willReveal = !(isUser && this.withhold);
-            if (willReveal){ v.revealed=true; mix = await dsha(mix + v.secret); log(`V${v.id} revealed.`, 'info'); }
-            else { v.revealed=false; v.penalty+=1; log(`V${v.id} withheld reveal. Penalty applied.`, 'warn'); }
-          }
-          this.randaoMix=mix; this.phase='Assign'; this.phaseTicks=0; log(`Epoch ${this.epoch}: Reveal → Assign (mix ${this.randaoMix.slice(0,8)}…)`,'success');
-        } else if (this.phase==='Assign'){
-          const order = this.shuffleDet(Array.from(this.validators, v=>v.id), this.randaoMix);
-          this.proposer = order[0]; this.committee = order.slice(1, 1+4);
-          log(`Assignments: Proposer V${this.proposer}, Committee [${this.committee.join(', ')}]`,'info');
-          this.epoch++; this.phase='Commit'; this.phaseTicks=0;
-        }
-        this.render(); capLog();
-      },
-      layout(){
-        const R=150; const c=this.els.canvasWrap; const cx=c.clientWidth/2, cy=c.clientHeight/2;
-        return this.validators.map((v,i)=>{ const ang=(i/this.validators.length)*Math.PI*2; return { x: cx + R*Math.cos(ang) - 21, y: cy + R*Math.sin(ang) - 21 }; });
-      },
-      render(){
-        if (!this.els) return; const {phaseEl, epochEl, canvasWrap, assign} = this.els;
-        phaseEl.textContent = 'Phase: '+this.phase; epochEl.textContent = 'Epoch: '+this.epoch;
-        assign.textContent = this.proposer===null? '—' : `Proposer: V${this.proposer}; Committee: ${this.committee.join(', ')}`;
-        canvasWrap.innerHTML=''; const pos=this.layout();
-        this.validators.forEach((v,i)=>{
-          const d=$el('div','val', 'V'+v.id);
-          if (v.id===15) d.classList.add('user');
-          if (this.proposer===v.id) d.classList.add('proposer');
-          if (this.committee.includes(v.id)) d.classList.add('committee');
-          if (v.revealed) d.classList.add('revealed');
-          d.style.left=pos[i].x+'px'; d.style.top=pos[i].y+'px';
-          canvasWrap.appendChild(d);
+      if (app.scenario === 'weak') {
+        const actions = el('div', 'action-grid');
+        const unsafe = actionControl('Sync from genesis only', 'Unsafe path: this node evaluates the old histories without a recent finalized checkpoint anchor.', 'warn', () => {
+          const result = syncWeakSubjectivity(app.weak, false);
+          log('Genesis-only sync result: ' + result + '.', result === 'fake' ? 'bad' : 'good');
+          render();
         });
-      },
-      tick(){
-        this.phaseTicks++;
-        if (this.phase==='Commit' && this.phaseTicks>=3) this.advancePhase();
-        if (this.phase==='Reveal' && this.phaseTicks>=3) this.advancePhase();
-        if (this.phase==='Assign' && this.phaseTicks>=2) this.advancePhase();
+        const checkpoint = actionControl('Sync with checkpoint', 'Protected path: the node checks candidate histories against the trusted finalized root before serving state.', 'success', () => {
+          const result = syncWeakSubjectivity(app.weak, true);
+          log('Checkpoint sync result: ' + result + '.', result === 'rejected' ? 'good' : 'warn');
+          render();
+        });
+        actions.append(unsafe, checkpoint);
+        const reset = el('button', 'btn', 'Reset Scenario');
+        reset.onclick = () => {
+          app.weak = makeWeakState();
+          log('Weak subjectivity scenario reset.');
+          render();
+        };
+        controls.append(actions, reset);
       }
-    };
-
-    // ========== Lab 3: Gasper ==========
-    const Lab3 = {
-      id:'lab3', mode:'lmd',
-      init(){
-        setTitle('Lab 3 — Consensus in Action (Gasper)','Switch between LMD-GHOST, Casper-FFG, and Finality Delay.');
-        clearView();
-        const ctrl=$('#labControls');
-        this.modeControls = $el('div','controls');
-        ctrl.appendChild(this.modeControls);
-        const modeSel=$el('select','select'); modeSel.innerHTML='<option value="lmd">LMD-GHOST</option><option value="ffg">Casper-FFG</option><option value="delay">Finality Delay</option>';
-        modeSel.value=this.mode;
-        modeSel.onchange = ()=>{ this.mode = modeSel.value; this.reset(); };
-        this.modeControls.appendChild(modeSel);
-        this.view=$('#labView');
-        this.reset();
-      },
-      reset(){
-        if (this.subCtrl) this.subCtrl.remove();
-        this.view.innerHTML='';
-        if (this.mode==='lmd') this.initLMD();
-        if (this.mode==='ffg') this.initFFG();
-        if (this.mode==='delay') this.initDelay();
-        log('Lab 3 reset ('+this.mode+').','info');
-      },
-      tick(){ if (this.mode==='lmd') this.tickLMD(); if (this.mode==='ffg') this.tickFFG(); if (this.mode==='delay') this.tickDelay(); },
-
-      // LMD-GHOST
-      lA:[], lB:[], head:'A', nextId:0, elLmdRow:null,
-      initLMD(){
-        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
-        const voteA=$el('button','btn','Vote for Fork A'); const voteB=$el('button','btn','Vote for Fork B');
-        this.subCtrl.appendChild(voteA); this.subCtrl.appendChild(voteB);
-        const row=$el('div','hchain'); this.view.appendChild(row); this.elLmdRow=row;
-        this.lA=[{id:this.nextId++, weight:0, parent:null, branch:'A'}]; this.lB=[{id:this.nextId++, weight:0, parent:null, branch:'B'}];
-        this.renderLMD();
-        voteA.onclick=()=> this.vote('A'); voteB.onclick=()=> this.vote('B');
-      },
-      vote(branch){
-        const arr = (branch==='A'? this.lA : this.lB); const head=arr[arr.length-1]; head.weight+=10;
-        log('Added votes to Fork '+branch+' head (weight now '+head.weight+').','info');
-        const aHead=this.lA[this.lA.length-1], bHead=this.lB[this.lB.length-1];
-        this.head = (aHead.weight>=bHead.weight)? 'A':'B';
-        const parent=(this.head==='A'? aHead : bHead);
-        const newBlock={id:this.nextId++, weight:0, parent:parent.id, branch:this.head};
-        if (this.head==='A') this.lA.push(newBlock); else this.lB.push(newBlock);
-        this.renderLMD();
-      },
-      renderLMD(){
-        this.elLmdRow.innerHTML='';
-        const drawChain=(arr)=>{ arr.forEach((b,i)=>{ const d=$el('div','block '+(b.branch==='A'?'honest':'attacker')); const isHead=(arr===(this.head==='A'? this.lA : this.lB) && i===arr.length-1); d.style.outline = isHead? '2px solid #3b82f6' : '1px solid #2a2f57'; d.innerHTML = `<div class="num">${b.branch} #${b.id}</div><div class="tiny">weight ${b.weight}</div>`; this.elLmdRow.appendChild(d); }); };
-        drawChain(this.lA); drawChain(this.lB);
-        autoScrollX(this.elLmdRow);
-      },
-      tickLMD(){},
-
-      // Casper-FFG
-      epochs:[], ffgEl:null,
-      initFFG(){ const tl=$el('div','timeline'); this.view.appendChild(tl); this.ffgEl=tl; this.epochs=[]; },
-      tickFFG(){ const i=this.epochs.length; const state=(i===0)? 'proposed' : (i%3===1? 'justified':'proposed'); const e={id:i, state}; this.epochs.push(e); if (state==='justified' && i>=2){ this.epochs[i-2].state='finalized'; log('Epoch '+(i-2)+' finalized (grandparent of '+i+').','success'); } this.renderFFG(); },
-      renderFFG(){ this.ffgEl.innerHTML=''; this.epochs.forEach(e=>{ const d=$el('div','epoch state-'+e.state); d.innerHTML=`<div class="id">Epoch ${e.id}</div><div class="tiny">${e.state.toUpperCase()}</div>`; this.ffgEl.appendChild(d); }); autoScrollX(this.ffgEl); },
-
-      // Finality Delay
-      offlinePct:30, leakStep:0.4, halted:false, barsEl:null, activeBar:null, inactiveBar:null, livePctEl:null,
-      initDelay(){
-        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
-        const label=$el('div','label',`Offline: <span id="offVal">${this.offlinePct}</span>%`); this.subCtrl.appendChild(label);
-        const slider=$el('input','slider'); slider.type='range'; slider.min=0; slider.max=90; slider.value=this.offlinePct; slider.oninput=()=>{ this.offlinePct=Number(slider.value); $('#offVal').textContent=String(this.offlinePct); this.renderDelay(); }; this.subCtrl.appendChild(slider);
-        this.livePctEl=$el('div','tiny',`Live participation: <span id="livePct">${(100 - this.offlinePct).toFixed(1)}</span>%`); this.subCtrl.appendChild(this.livePctEl);
-        const bars=$el('div','bars resizable'); bars.innerHTML = '<div class="threshold"></div>'; this.view.appendChild(bars); this.barsEl=bars;
-        this.activeBar=$el('div','bar active'); this.inactiveBar=$el('div','bar inactive'); bars.appendChild(this.activeBar); bars.appendChild(this.inactiveBar);
-        this.renderDelay();
-      },
-      renderDelay(){
-        const activePct = 100 - this.offlinePct;
-        const inactivePct = 100 - activePct;
-        const lp = $('#livePct'); if (lp) lp.textContent = activePct.toFixed(1);
-        this.halted = activePct < 66.7;
-        this.activeBar.style.width = activePct+'%';
-        this.inactiveBar.style.width = inactivePct+'%';
-        const existing = this.barsEl.querySelector('.halted');
-        if (this.halted && !existing){ const h=$el('div','halted','FINALITY HALTED'); this.barsEl.appendChild(h); }
-        if (!this.halted && existing) existing.remove();
-      },
-      tickDelay(){ if (this.halted){ this.offlinePct = Math.max(0, this.offlinePct - this.leakStep); const wasH=this.halted; this.renderDelay(); if (wasH && !this.halted) log('Finality resumed after inactivity leak.','success'); } }
-    };
-
-    // ========== Lab 4: Attack Vectors ==========
-    const Lab4 = {
-      id:'lab4', mode:'double', forging:false,
-      init(){
-        setTitle('Lab 4 — Attack Vectors', 'Explore Double Spend & Slashing, and a Long-Range Attack with checkpoint sync.');
-        clearView();
-        const ctrl=$('#labControls');
-        this.modeControls = $el('div','controls'); ctrl.appendChild(this.modeControls);
-        const modeSel=$el('select','select'); modeSel.innerHTML='<option value="double">PoS Double Spend & Slashing</option><option value="lra">Long-Range Attack</option>';
-        modeSel.value=this.mode;
-        modeSel.onchange = ()=>{ this.mode=modeSel.value; this.reset(); };
-        this.modeControls.appendChild(modeSel);
-        this.view=$('#labView');
-        this.reset();
-      },
-      reset(){
-        if (this.subCtrl) this.subCtrl.remove();
-        this.view.innerHTML='';
-        if (this.mode==='double') this.initDouble();
-        if (this.mode==='lra') this.initLRA();
-        log('Lab 4 reset ('+this.mode+').','info');
-      },
-      tick(){ if (this.mode==='double') this.tickDouble(); if (this.mode==='lra') this.tickLRA(); },
-
-      // --- Double Spend & Slashing ---
-      honest:[], attacker:[], attackStake:32, nextId:0, slashed:false, el:{},
-      initDouble(){
-        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
-        const propose=$el('button','btn','Propose Secret Block'); const broadcast=$el('button','btn error','Broadcast Fork');
-        this.subCtrl.appendChild(propose); this.subCtrl.appendChild(broadcast);
-        propose.onclick=()=> this.proposeSecret(); broadcast.onclick=()=> this.broadcastFork();
-
-        const wrap=$el('div','chains resizable');
-        const honestRow=$el('div'); honestRow.innerHTML='<div class="rowlabel">Honest Chain</div>'; const honest=$el('div','hchain slim'); honestRow.appendChild(honest);
-        const atkRow=$el('div'); atkRow.innerHTML='<div class="rowlabel">Attacker\'s Secret Chain</div>'; const atk=$el('div','hchain slim'); atkRow.appendChild(atk);
-        wrap.appendChild(honestRow); wrap.appendChild(atkRow); this.view.appendChild(wrap);
-
-        const stakeBox=$el('div','group'); stakeBox.innerHTML='<div class="label">Attacker Stake</div><div id="stakeDisp" class="lab-title">32 ETH</div>'; this.view.appendChild(stakeBox);
-        this.el={honest, atk, stakeDisp: stakeBox.querySelector('#stakeDisp')};
-        this.honest=[]; this.attacker=[]; this.attackStake=32; this.slashed=false; this.nextId=0;
-        for (let i=0;i<3;i++) this.honest.push({id:this.nextId++});
-        this.renderDouble();
-      },
-      proposeSecret(){ this.attacker.push({id:this.nextId++}); this.renderDouble(); log('Secret block proposed on attacker chain (no penalty yet).','info'); },
-      broadcastFork(){
-        if (this.slashed){ log('Attacker already slashed. Further broadcasts ignored.','warn'); return; }
-        if (this.attacker.length===0){ log('No secret blocks to broadcast. Nothing to slash.','warn'); return; }
-        this.slashed=true; this.attackStake = Math.max(0, Math.floor(this.attackStake/2));
-        this.el.stakeDisp.textContent = this.attackStake+' ETH';
-        const splash=$el('div','halted','SLASHED!'); splash.style.fontSize='48px'; splash.style.color='#ffd1d1'; splash.style.textShadow='0 0 20px rgba(255,0,0,0.6)';
-        this.view.appendChild(splash); setTimeout(()=> splash.remove(), 1500);
-        log('Attacker broadcasted conflicting fork → SLASHED! Stake halved.','error');
-      },
-      renderDouble(){
-        const {honest, atk} = this.el;
-        honest.innerHTML=''; atk.innerHTML='';
-        const draw=(arr, el, cls)=>{ arr.forEach(b=>{ const d=$el('div','block '+cls); d.innerHTML=`<div class="num">#${b.id}</div>`; el.appendChild(d); }); };
-        draw(this.honest, honest, 'honest'); draw(this.attacker, atk, 'attacker');
-        this.el.stakeDisp.textContent = this.attackStake+' ETH';
-        autoScrollX(honest); autoScrollX(atk);
-      },
-      tickDouble(){ if (Math.random()<0.7){ this.honest.push({id:this.nextId++}); this.renderDouble(); } },
-
-      // --- Long-Range Attack ---
-      honest2:[], fake:[], checkpointIndex:3, node1:'honest', node2:'honest', elLra:null,
-      initLRA(){
-        this.subCtrl=$el('div','controls'); this.modeControls.appendChild(this.subCtrl);
-        const forge=$el('button','btn','Forge Historical Block'); this.subCtrl.appendChild(forge);
-        forge.onclick=()=> this.forgeFake();
-
-        const wrap=$el('div','chains resizable');
-        const honestRow=$el('div'); honestRow.innerHTML='<div class="rowlabel">Honest Chain</div>'; const honest=$el('div','hchain slim'); honestRow.appendChild(honest);
-        const fakeRow=$el('div'); fakeRow.innerHTML='<div class="rowlabel">Fake Fork</div>'; const fake=$el('div','hchain slim'); fakeRow.appendChild(fake);
-        wrap.appendChild(honestRow); wrap.appendChild(fakeRow); this.view.appendChild(wrap);
-
-        const nodes=$el('div','row');
-        nodes.innerHTML = '<div class="group" style="flex:1"><div class="label">Syncing Node 1 (Genesis)</div><div id="n1" class="lab-title">Honest</div></div><div class="group" style="flex:1"><div class="label">Syncing Node 2 (Checkpoint)</div><div id="n2" class="lab-title">Honest</div></div>';
-        this.view.appendChild(nodes);
-
-        this.elLra={honest, fake, n1: nodes.querySelector('#n1'), n2: nodes.querySelector('#n2')};
-        this.honest2=[]; this.fake=[]; this.node1='honest'; this.node2='honest'; this.forging=false;
-        for (let i=0;i<8;i++){ const b={id:i}; if (i===this.checkpointIndex) b.checkpoint=true; this.honest2.push(b); }
-        this.renderLRA();
-      },
-      forgeFake(){
-        // Start forging campaign; each tick will extend the fake fork.
-        this.fake.push({id: 'f'+(this.fake.length+1)});
-        this.forging = true;
-        this.renderLRA();
-        log('Forged a historical block on fake fork (attacker continues forging).','warn');
-      },
-      renderLRA(){
-        const draw=(arr, el, cls)=>{ el.innerHTML=''; arr.forEach(b=>{ const d=$el('div','block '+cls); d.innerHTML=`<div class="num">#${b.id}</div>`; if (b.checkpoint) d.classList.add('checkpoint'); el.appendChild(d); }); };
-        draw(this.honest2, this.elLra.honest, 'honest'); draw(this.fake, this.elLra.fake, 'attacker');
-        const honestLen=this.honest2.length; const fakeLen=this.fake.length + 2;
-        const prevNode1 = this.node1;
-        this.node1 = (fakeLen > honestLen)? 'fake' : 'honest';
-        this.elLra.n1.textContent = (this.node1==='fake'? 'Fake (deceived)':'Honest');
-        this.elLra.n1.style.color = this.node1==='fake'? '#ffb3b3':'#9ef1c9';
-        this.node2 = 'honest'; this.elLra.n2.textContent = 'Honest (checkpoint)'; this.elLra.n2.style.color = '#9ef1c9';
-        if (prevNode1!==this.node1 && this.node1==='fake'){ log('Node 1 switched to the fake fork (longest).','error'); }
-        autoScrollX(this.elLra.honest); autoScrollX(this.elLra.fake);
-      },
-      tickLRA(){
-        // Honest chain grows slowly; if forging campaign is active, fake grows too.
-        if (Math.random()<0.5){ this.honest2.push({id:this.honest2.length}); }
-        if (this.forging && Math.random()<0.8){ this.fake.push({id:'f'+(this.fake.length+1)}); }
-        this.renderLRA();
-      }
-    };
-
-    // ========== Self Tests ==========
-    async function runSelfTests(){
-      const results=[];
-      const pass=(n)=>{ log('✅ '+n,'success'); results.push(true); };
-      const fail=(n,why)=>{ log('❌ '+n+(why? ' — '+why:''),'error'); results.push(false); };
-      const origLab=$('#labSelect').value;
-
-      // Reset check
-      switchLab('lab1'); Lab1.mempool=[]; Lab1.building=[]; Lab1.chain=[]; Lab1.tick(); const before=Lab1.mempool.length; switchLab('lab2'); switchLab('lab1'); const after=Lab1.mempool.length;
-      (after===0 && Lab1.chain.length===0)? pass('Reset on lab switch cleans state') : fail('Reset on lab switch');
-
-      // Lab1 mempool + mining
-      switchLab('lab1'); Lab1.mempool=[]; for (let i=0;i<5;i++) Lab1.tick();
-      (Lab1.mempool.length>0)? pass('Lab1 mempool generates transactions'): fail('Lab1 mempool generation');
-      Lab1.building.push(...Lab1.mempool.splice(0,2)); await Lab1.mineBlock(); (Lab1.chain.length>=1)? pass('Lab1 mining adds a block'): fail('Lab1 mining failed');
-      const prev = await Lab1.computeRoots([]), next = await Lab1.computeRoots([{a:1}]); (prev.transactionsRoot!==next.transactionsRoot)? pass('Merkle root changes with content') : fail('Merkle root unchanged');
-
-      // Lab2 deterministic shuffle
-      switchLab('lab2'); const sh1=Lab2.shuffleDet([0,1,2,3,4,5],'a1b2c3d4').join(','), sh2=Lab2.shuffleDet([0,1,2,3,4,5],'a1b2c3d4').join(',');
-      (sh1===sh2)? pass('Deterministic shuffle stable') : fail('Shuffle nondeterminism');
-
-      // Lab3 finality delay
-      switchLab('lab3'); Lab3.mode='delay'; Lab3.reset(); Lab3.offlinePct=80; Lab3.renderDelay();
-      (Lab3.halted)? pass('Finality halts below threshold') : fail('Finality not halted');
-      let guard=0; while (Lab3.halted && guard<400){ Lab3.tickDelay(); guard++; }
-      (!Lab3.halted)? pass('Inactivity leak eventually restores finality'): fail('Inactivity leak did not restore');
-
-      // Lab4 slashing via methods & LRA forging
-      switchLab('lab4'); Lab4.mode='double'; Lab4.reset(); const pre=Lab4.attackStake; Lab4.proposeSecret(); Lab4.broadcastFork();
-      (Lab4.slashed && Lab4.attackStake===Math.floor(pre/2))? pass('Slashing halves stake after broadcast'): fail('Slashing did not trigger');
-      Lab4.mode='lra'; Lab4.reset(); Lab4.forgeFake(); // start forging
-      let flips=0, steps=0;
-      while (steps++<300 && flips===0){ Lab4.tickLRA(); if (Lab4.node1==='fake') flips=1; }
-      (flips===1)? pass('Node 1 switches to fake when fake becomes longest'): fail('LRA detection did not switch');
-
-      switchLab(origLab);
-      log('Self-tests complete: '+(results.filter(Boolean).length)+' / '+results.length+' passed.', results.every(Boolean)? 'success':'warn');
-    }
-    $('#selfTestBtn').onclick = runSelfTests;
-
-    // ========== Switcher & Boot ==========
-    function switchLab(id){
-      if (paused){ paused=false; $('#pauseBtn').textContent='Pause'; $('#pauseBtn').classList.remove('paused'); }
-      if (currentLab && currentLab.id===id){ currentLab.reset?.(); return; }
-      if (id==='lab1') currentLab=Lab1;
-      else if (id==='lab2') currentLab=Lab2;
-      else if (id==='lab3') currentLab=Lab3;
-      else if (id==='lab4') currentLab=Lab4;
-      else currentLab=Lab1;
-      clearView(); currentLab.init(); $('#labSelect').value=id;
     }
 
-    (function boot(){ tickMs = sliderToTickMs(Number($('#speed').value)); updateTick(); switchLab('lab1'); log('Microlab Suite loaded. Hashing uses SHA-256 (teaching-only).','info'); })();
+    function render() {
+      clear($('#primaryView'));
+      clear($('#sideView'));
+      if (app.scenario === 'gasper') renderGasper();
+      if (app.scenario === 'delay') renderDelay();
+      if (app.scenario === 'slashing') renderSlashing();
+      if (app.scenario === 'weak') renderWeakSubjectivity();
+    }
+
+    function renderGasper() {
+      const state = app.gasper;
+      const head = computeLmdGhostHead(state);
+      const total = totalStake(state.validators);
+      const aWeight = voteWeightForSubtree(state, 'A1');
+      const bWeight = voteWeightForSubtree(state, 'B1');
+      const headWeight = voteWeightForSubtree(state, head);
+      const aValidators = Math.round(aWeight / ETH.effectiveBalance);
+      const bValidators = Math.round(bWeight / ETH.effectiveBalance);
+      const headValidators = Math.round(headWeight / ETH.effectiveBalance);
+      const headBlock = state.blocks.find((block) => block.id === head);
+      const headReason = aValidators === bValidators
+        ? 'The latest-message tally is tied right now, so this simplified model breaks ties toward Branch A.'
+        : headBlock.branch === 'A'
+          ? 'Branch A has the heavier latest-message subtree right now.'
+          : 'Branch B has the heavier latest-message subtree right now.';
+
+      const metrics = el('section', 'metric-grid');
+      metrics.append(
+        metric('LMD-GHOST head', head, aValidators === bValidators
+          ? 'Tie: A latest votes ' + aValidators + ', B latest votes ' + bValidators
+          : headBlock.branch === 'A'
+            ? 'A latest votes ' + aValidators + ' vs B ' + bValidators
+            : 'B latest votes ' + bValidators + ' vs A ' + aValidators),
+        metric('Current head votes', headValidators + ' validators', 'Live latest-message weight for the head branch'),
+        metric('Finality anchor', state.finalizedRoot || 'Not locked', state.finalizedRoot ? 'Growth starts from Branch ' + state.finalizedBranch : 'Last justified root: J0')
+      );
+      $('#primaryView').appendChild(metrics);
+
+      const treePanel = el('section', 'panel stack');
+      treePanel.appendChild(el('h3', '', 'Fork and Growth View'));
+      treePanel.appendChild(gasperForkView(state, head));
+      $('#primaryView').appendChild(treePanel);
+
+      const votePanel = el('section', 'panel stack');
+      votePanel.appendChild(el('h3', '', 'Head Choice and Finality'));
+      const barStack = el('div', 'bar-stack');
+      barStack.append(weightBar('Branch A subtree', aWeight, total), weightBar('Branch B subtree', bWeight, total));
+      votePanel.appendChild(barStack);
+      votePanel.appendChild(statusLine('Current step', state.actionNote, state.finalizedRoot ? 'good' : headBlock.branch === 'B' ? 'warn' : ''));
+      votePanel.appendChild(statusLine(
+        state.finalizedRoot ? 'Finality effect' : state.running ? 'Lock option' : 'Before start',
+        state.finalizedRoot
+          ? state.checkpointMessage
+          : state.running
+            ? 'If you lock now, the current head is ' + head + '. The activity treats your click as the checkpoint finality event for that head, then future blocks grow from that branch.'
+            : 'Click Start Scenario to begin the oscillation. Lock Finality Now appears while the latest votes are moving.',
+        state.finalizedRoot || state.running ? 'good' : 'warn'
+      ));
+      const summary = el('ul', 'plain-list');
+      summary.append(
+        el('li', '', 'Head choice uses the latest-message tally. Branch A has ' + aValidators + ' validators and Branch B has ' + bValidators + '.'),
+        el('li', '', 'Finality locks the branch that is head at the moment you click. In Ethereum, that lock comes from checkpoint votes; here the click triggers that event so you can see the consequence.'),
+        el('li', '', state.finalizedRoot ? 'After finality, new growth slowly extends Branch ' + state.finalizedBranch + '.' : state.running ? 'While the scenario is running, the head can still jump as latest votes drift.' : 'The scenario has not started yet. Click Start Scenario to begin the drift.')
+      );
+      votePanel.appendChild(summary);
+      $('#sideView').appendChild(votePanel);
+
+      const notes = el('section', 'panel quiet stack');
+      notes.append(
+        el('h3', '', 'Plain-language readout'),
+        el('p', 'small', 'Current head: ' + head + ' on Branch ' + headBlock.branch + '. ' + headReason),
+        el('p', 'small', state.finalizedRoot
+          ? 'Finality locked Branch ' + state.finalizedBranch + '. The competing branch can still be displayed, but it is no longer the branch this node builds from.'
+          : !state.running
+            ? 'Click Start Scenario to let latest vote weight drift between A and B. Then lock finality when the current head looks right.'
+            : 'Click Lock Finality Now to finalize whichever branch is head at this instant. The next blocks will grow from that branch.')
+      );
+      $('#sideView').appendChild(notes);
+
+      setStatus(state.finalizedRoot ? state.growing ? 'Growing' : 'Finalized' : state.running ? 'Running' : 'Ready', state.finalizedRoot ? 'good' : state.running ? 'warn' : '');
+    }
+
+    function gasperForkView(state, head) {
+      const wrap = el('div', 'gasper-tree');
+      const left = el('div', 'gasper-side stack');
+      left.append(
+        el('h3', '', 'Branch A'),
+        el('p', 'micro', 'Fork from J0'),
+        ...state.blocks.filter((block) => block.branch === 'A').sort((a, b) => a.slot - b.slot).map((block) => blockCard(state, block.id, head))
+      );
+      const center = el('div', 'gasper-center stack');
+      center.append(
+        el('h3', '', 'J0'),
+        blockCard(state, 'J0', head),
+        el('p', 'micro', 'Last justified checkpoint')
+      );
+      const right = el('div', 'gasper-side stack');
+      right.append(
+        el('h3', '', 'Branch B'),
+        el('p', 'micro', 'Fork from J0'),
+        ...state.blocks.filter((block) => block.branch === 'B').sort((a, b) => a.slot - b.slot).map((block) => blockCard(state, block.id, head))
+      );
+      wrap.append(left, center, right);
+      return wrap;
+    }
+
+    function blockCard(state, blockId, head) {
+      const block = state.blocks.find((item) => item.id === blockId);
+      const card = el('div', 'block');
+      const weight = voteWeightForSubtree(state, blockId);
+      if (blockId === head) card.classList.add('head');
+      if (state.finalizedRoot === blockId) card.classList.add('finalized');
+      else if (state.justifiedRoot === blockId) card.classList.add('justified');
+      card.append(
+        el('div', 'name', block.id + ' - ' + block.label),
+        el('div', 'root', block.root),
+        el('div', 'small', 'slot ' + block.slot + ', epoch ' + block.epoch),
+        weightBar('subtree support', weight, totalStake(state.validators))
+      );
+      return card;
+    }
+
+    function metric(label, value, note) {
+      const item = el('div', 'metric');
+      item.append(el('div', 'small', label), el('div', 'value', value), el('div', 'micro', note));
+      return item;
+    }
+
+    function weightBar(label, value, max) {
+      const wrapper = el('div', 'stack');
+      wrapper.style.gap = '4px';
+      const top = el('div', 'bar-label');
+      top.append(el('span', '', label), el('span', '', Math.round(value) + ' / ' + Math.round(max) + ' ETH'));
+      const bar = el('div', 'weight-bar');
+      const fill = el('div', 'weight-fill');
+      fill.style.width = Math.max(0, Math.min(100, value / max * 100)).toFixed(1) + '%';
+      bar.appendChild(fill);
+      wrapper.append(top, bar);
+      return wrapper;
+    }
+
+    function renderDelay() {
+      const state = app.delay;
+      const participation = delayParticipation(state);
+      const onlinePct = participation * 100;
+      const offlinePct = 100 - onlinePct;
+      const finalityLabel = state.finalizedEpoch >= 0
+        ? 'Finalized E' + state.finalizedEpoch
+        : participation >= ETH.threshold
+          ? 'Ready next epoch'
+          : 'Delayed';
+      const metrics = el('section', 'metric-grid');
+      metrics.append(
+        metric('Epoch', String(state.epoch), state.producedBlocks + ' slot windows elapsed'),
+        metric('Participation', pct(participation), participation >= ETH.threshold ? 'Enough to finalize' : 'Below two-thirds'),
+        metric('Finality', finalityLabel, 'Delay counter: ' + state.finalityDelay)
+      );
+      $('#primaryView').appendChild(metrics);
+
+      const panel = el('section', 'panel stack');
+      panel.appendChild(el('h3', '', 'Participation and Finality Threshold'));
+      const labels = el('div', 'bar-label');
+      labels.append(el('span', '', 'Online effective balance'), el('span', '', onlinePct.toFixed(1) + '% online / ' + offlinePct.toFixed(1) + '% offline'));
+      const part = el('div', 'participation');
+      const online = el('div', 'part-online');
+      const offline = el('div', 'part-offline');
+      online.style.width = onlinePct + '%';
+      offline.style.width = offlinePct + '%';
+      part.append(online, offline);
+      const threshold = el('div', 'threshold-line');
+      threshold.appendChild(el('span', '', '2/3 threshold'));
+      panel.append(labels, part, threshold);
+      panel.appendChild(el('p', 'small', state.lastAction));
+      panel.appendChild(el('p', 'small', 'Classroom assumption: each step represents another epoch of operators restoring affected validator nodes. Real incidents can recover through operators fixing clients, restarting nodes, and, during prolonged outages, inactivity leak changing effective balances.'));
+      $('#primaryView').appendChild(panel);
+
+      const timelinePanel = el('section', 'panel stack');
+      timelinePanel.appendChild(el('h3', '', 'Epoch Recovery Timeline'));
+      const track = el('div', 'epoch-track');
+      const displayHistory = state.history.slice(-8);
+      const latestEntry = displayHistory[displayHistory.length - 1];
+      if (state.finalizedEpoch < 0 && participation >= ETH.threshold && latestEntry?.status !== 'ready') {
+        displayHistory.push({
+          epoch: state.epoch + 1,
+          status: 'ready',
+          note: 'Enough online now; step once to finalize',
+          participation
+        });
+      }
+      for (const entry of displayHistory.slice(-8)) {
+        const marker = el('div', 'epoch-marker ' + entry.status);
+        const label = entry.status === 'finalized'
+          ? 'Finalized'
+          : entry.status === 'ready'
+            ? 'Ready next'
+            : entry.status === 'recovering'
+              ? 'Recovering'
+              : 'Delayed';
+        marker.append(
+          el('strong', '', 'Epoch ' + entry.epoch),
+          el('span', '', label),
+          el('span', '', pct(entry.participation) + ' online'),
+          el('span', '', entry.note)
+        );
+        track.appendChild(marker);
+      }
+      timelinePanel.appendChild(track);
+      const timelineHint = state.finalizedEpoch >= 0
+        ? 'The green marker shows the epoch where the next checkpoint vote finalized the previous checkpoint.'
+        : participation >= ETH.threshold
+          ? 'The blue marker means finality is now available: click "Step one epoch" to process the next checkpoint.'
+          : 'Red means blocks continued but checkpoints could not finalize. Yellow appears after a sustained delay when the inactivity-leak simplification is also active.';
+      timelinePanel.appendChild(el('p', 'small', timelineHint));
+      $('#primaryView').appendChild(timelinePanel);
+
+      const side = el('section', 'panel stack');
+      side.append(
+        el('h3', '', 'Operational Reading'),
+        statusLine('Liveness', 'Blocks continue while proposers are online.', 'good'),
+        statusLine('Finality', state.finalizedEpoch >= 0 ? 'A checkpoint finalized.' : participation >= ETH.threshold ? 'Recovered enough; the next epoch can finalize.' : 'Checkpoint cannot finalize yet.', participation >= ETH.threshold ? 'good' : 'bad'),
+        statusLine('Recovery assumption', 'Each step slowly moves some offline stake back online so students can see finality resume.', participation >= ETH.threshold ? 'good' : 'warn'),
+        statusLine('Inactivity leak', state.leakActive ? 'Also active after sustained delay.' : 'Not active yet in this simplified run.', state.leakActive ? 'warn' : '')
+      );
+      $('#sideView').appendChild(side);
+      setStatus(state.finalizedEpoch >= 0 ? 'Finalized' : participation >= ETH.threshold ? 'Can finalize' : 'Finality delayed', participation >= ETH.threshold ? 'good' : 'bad');
+    }
+
+    function statusLine(label, text, type) {
+      const row = el('div', 'result-box ' + type);
+      row.append(el('strong', '', label), el('p', 'small', text));
+      return row;
+    }
+
+    function renderSlashing() {
+      const current = evidenceCases[app.slashing.caseId];
+      const detected = classifyEvidence(current.messages);
+      const panel = el('section', 'panel stack');
+      panel.append(
+        el('h3', '', slashingCaseLabel(app.slashing, app.slashing.caseId)),
+        el('p', 'small', 'Compare the two signed messages. Use validator, slot, source epoch, target epoch, and roots to decide whether this is slashable evidence.')
+      );
+      const evidence = el('div', 'evidence');
+      evidence.append(messageCard('Message 1', current.messages[0]), messageCard('Message 2', current.messages[1]));
+      panel.appendChild(evidence);
+      $('#primaryView').appendChild(panel);
+
+      const answerBox = el('section', 'panel stack');
+      answerBox.appendChild(el('h3', '', 'Classification Result'));
+      if (app.slashing.lastAnswer) {
+        const correct = app.slashing.lastAnswer === current.expected;
+        answerBox.appendChild(statusLine(correct ? 'Correct' : 'Incorrect', 'Selected: ' + app.slashing.lastAnswer.replace(/_/g, ' ') + '. Expected: ' + current.expected.replace(/_/g, ' ') + '.', correct ? 'good' : 'bad'));
+        answerBox.appendChild(el('p', 'small', 'Why: ' + current.explanation));
+        answerBox.appendChild(el('p', 'small', 'Rule result: ' + detected.replace(/_/g, ' ') + '.'));
+      } else {
+        answerBox.appendChild(statusLine('Awaiting answer', 'Choose the classification that the message fields prove. The answer is not shown until after you submit.', ''));
+      }
+      $('#primaryView').appendChild(answerBox);
+
+      const side = el('section', 'panel stack');
+      side.append(
+        el('h3', '', 'Rule Guide'),
+        statusLine('Double proposal', 'A proposer gets one block for a slot. Signing two different block roots for that same slot helps create competing histories, and the two signed headers are objective evidence.', ''),
+        statusLine('Double attestation', 'An attestation is a vote used by head choice and finality. Two conflicting attestations for the same target epoch let one validator support incompatible views of the same checkpoint.', ''),
+        statusLine('Surround vote', 'Casper-FFG needs validators to move checkpoints forward consistently. A vote whose source-target range surrounds another can help finalize conflicting checkpoint histories, so signed surround evidence is slashable.', ''),
+        statusLine('Not slashable', 'Validators normally sign many messages over time. Use this when the pair can both be valid, such as sequential attestations that move from one target epoch to the next.', '')
+      );
+      $('#sideView').appendChild(side);
+      setStatus(app.slashing.lastAnswer ? (app.slashing.lastAnswer === current.expected ? 'Correct' : 'Review') : 'Classify', app.slashing.lastAnswer === current.expected ? 'good' : app.slashing.lastAnswer ? 'bad' : '');
+    }
+
+    function messageCard(title, message) {
+      const card = el('div', 'message-card');
+      card.appendChild(el('h3', '', title));
+      const kv = el('div', 'kv');
+      for (const [key, value] of Object.entries(message)) {
+        kv.append(el('div', '', key), el('div', key.toLowerCase().includes('root') ? 'mono' : '', String(value)));
+      }
+      card.appendChild(kv);
+      return card;
+    }
+
+    function renderWeakSubjectivity() {
+      const state = app.weak;
+      const syncedBlocks = state.syncedChain === 'fake' ? state.fake : state.syncedChain === 'honest' ? state.honest : null;
+      const metrics = el('section', 'metric-grid');
+      metrics.append(
+        metric('Trusted checkpoint', 'Epoch ' + state.trustedEpoch, state.trustedRoot),
+        metric('Honest history', String(state.honest.length) + ' blocks', 'Contains the trusted checkpoint root'),
+        metric('Fake history', String(state.fake.length) + ' blocks', 'Longer-looking but checkpoint mismatch')
+      );
+      $('#primaryView').appendChild(metrics);
+
+      const chainPanel = el('section', 'panel stack');
+      chainPanel.appendChild(el('h3', '', 'Candidate Histories'));
+      chainPanel.appendChild(el('p', 'small', 'Both histories can look internally signed to a new node. The trusted checkpoint root is the external fact that lets the node reject the wrong history.'));
+      chainPanel.appendChild(chainView('Honest history', state.honest, 'honest', state.trustedRoot, state.syncedChain, state.rejectedChain));
+      chainPanel.appendChild(chainView('Fake long-range history', state.fake, 'fake', state.trustedRoot, state.syncedChain, state.rejectedChain));
+      $('#primaryView').appendChild(chainPanel);
+
+      if (syncedBlocks) {
+        const syncedPanel = el('section', 'panel stack');
+        syncedPanel.append(
+          el('h3', '', 'Node Local View After Sync'),
+          el('p', 'small', state.syncedChain === 'fake'
+            ? 'This is the harmful path: the node is now serving a fake history as if it were finalized Ethereum.'
+            : 'This is the protected path: the node serves the history that contains the trusted finalized checkpoint.'),
+          chainView(state.syncedChain === 'fake' ? 'Synced fake chain' : 'Synced honest chain', syncedBlocks, state.syncedChain, state.trustedRoot, state.syncedChain, null)
+        );
+        $('#primaryView').appendChild(syncedPanel);
+      }
+
+      const result = el('section', 'panel stack');
+      const resultType = state.result.includes('rejected') ? 'good' : state.result.includes('fake') ? 'bad' : '';
+      result.append(
+        el('h3', '', 'Sync Decision'),
+        statusLine('Current result', state.result, resultType),
+        statusLine(state.syncedChain === 'fake' ? 'Harmful outcome' : state.syncedChain === 'honest' ? 'Protected outcome' : 'Awaiting choice', state.conclusion, resultType)
+      );
+      $('#sideView').appendChild(result);
+
+      const side = el('section', 'panel quiet stack');
+      side.append(
+        el('h3', '', 'Reality Check'),
+        el('p', 'small', 'This does not rewrite canonical Ethereum. It shows a local failure mode: a node without a recent trusted finalized root can follow a fake long-range history and give downstream users or systems a false view of finalized state.')
+      );
+      $('#sideView').appendChild(side);
+      setStatus(state.result.includes('rejected') ? 'Protected' : state.result.includes('fake') ? 'Unsafe sync' : 'Ready', state.result.includes('rejected') ? 'good' : state.result.includes('fake') ? 'bad' : '');
+    }
+
+    function chainView(title, blocks, kind, trustedRoot, syncedKind = null, rejectedKind = null) {
+      const wrapper = el('div', 'stack');
+      wrapper.appendChild(el('h3', '', title));
+      const row = el('div', 'chain-row');
+      for (const block of blocks) {
+        const card = el('div', 'block ' + (kind === 'fake' ? 'fake' : ''));
+        if (syncedKind === kind && block === blocks[blocks.length - 1]) card.classList.add('synced');
+        if (block.root === trustedRoot) card.classList.add('finalized');
+        const note = block.root === trustedRoot
+          ? 'trusted checkpoint'
+          : syncedKind === kind && block === blocks[blocks.length - 1]
+            ? 'node local head'
+            : rejectedKind === kind && block.epoch === 6
+              ? 'checkpoint mismatch'
+              : '';
+        card.append(
+          el('div', 'name', block.id),
+          el('div', 'small', 'epoch ' + block.epoch),
+          el('div', 'root', block.root),
+          el('div', 'micro', note)
+        );
+        row.appendChild(card);
+      }
+      wrapper.appendChild(row);
+      return wrapper;
+    }
+
+    function sourceList() {
+      const list = el('ul', 'source-list');
+      for (const [title, href] of SOURCES) {
+        const li = el('li', '');
+        const a = el('a', '', title);
+        a.href = href;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        li.appendChild(a);
+        list.appendChild(li);
+      }
+      return list;
+    }
+
+    async function runSelfTests() {
+      const results = [];
+      const check = (name, condition) => {
+        results.push(Boolean(condition));
+        log((condition ? 'PASS ' : 'FAIL ') + name, condition ? 'good' : 'bad');
+      };
+
+      const gasper = makeGasperState();
+      check('LMD-GHOST starts from justified root and selects Branch A', computeLmdGhostHead(gasper) === 'A2');
+      lockGasperFinality(gasper);
+      check('Finality locks the current head even from a balanced live tally', gasper.finalizedRoot === 'A2' && gasper.growing && gasper.growthCount === 0);
+      growFinalizedBranch(gasper);
+      check('Post-finality growth adds a block after the lock event', computeLmdGhostHead(gasper) === 'A3' && gasper.growthCount === 1);
+      const gasperDrift = makeGasperState();
+      advanceGasperOscillation(gasperDrift, (() => {
+        const values = [0.9, 0.9];
+        let index = 0;
+        return () => values[index++];
+      })());
+      check('Running scenario can move head to Branch B', computeLmdGhostHead(gasperDrift) === 'B2');
+      const gasperB = makeGasperState();
+      assignVoteSplit(gasperB, 30, 34);
+      check('Manual state can make Branch B the current head without supermajority support', computeLmdGhostHead(gasperB) === 'B2' && voteCountForBlock(gasperB, 'B2') < 43);
+      lockGasperFinality(gasperB);
+      check('Finality can lock Branch B when B is current head', gasperB.finalizedRoot === 'B2' && gasperB.finalizedBranch === 'B' && gasperB.growing);
+      growFinalizedBranch(gasperB);
+      check('Post-finality growth extends locked Branch B', computeLmdGhostHead(gasperB) === 'B3');
+      const gasperA = makeGasperState();
+      advanceGasperOscillation(gasperA, (() => {
+        const values = [0.9, 0.1];
+        let index = 0;
+        return () => values[index++];
+      })());
+      check('Running scenario can move head to Branch A', computeLmdGhostHead(gasperA) === 'A2');
+      assignVoteSplit(gasperA, 34, 30);
+      check('Manual state can make Branch A the current head without supermajority support', computeLmdGhostHead(gasperA) === 'A2' && voteCountForBlock(gasperA, 'A2') < 43);
+      lockGasperFinality(gasperA);
+      check('Finality can lock Branch A when A is current head', gasperA.finalizedRoot === 'A2' && gasperA.finalizedBranch === 'A' && gasperA.growing);
+      growFinalizedBranch(gasperA);
+      check('Post-finality growth extends locked Branch A', computeLmdGhostHead(gasperA) === 'A3');
+
+      const delayLow = makeDelayState(40);
+      stepDelayEpoch(delayLow);
+      check('Finality pauses below two-thirds participation', delayLow.finalizedEpoch === -1);
+      const delayHigh = makeDelayState(25);
+      stepDelayEpoch(delayHigh);
+      check('Finality resumes above two-thirds participation', delayHigh.finalizedEpoch === 0);
+      const leak = makeDelayState(45);
+      let guard = 0;
+      while (delayParticipation(leak) < ETH.threshold && guard < 80) {
+        stepDelayEpoch(leak);
+        guard += 1;
+      }
+      check('Slow recovery can restore supermajority share', delayParticipation(leak) >= ETH.threshold);
+
+      for (const [id, item] of Object.entries(evidenceCases)) {
+        check('Slashing classifier: ' + id, classifyEvidence(item.messages) === item.expected);
+      }
+      const slashingOrder = makeSlashingState().caseOrder;
+      const originalOrder = Object.keys(evidenceCases);
+      check('Slashing evidence order is not the answer order', slashingOrder.every((id, index) => id !== originalOrder[index]));
+
+      const weak = makeWeakState();
+      check('Genesis-only sync can be deceived by longer fake history', syncWeakSubjectivity(weak, false) === 'fake');
+      check('Unsafe weak-subjectivity path serves fake local view', weak.syncedChain === 'fake' && weak.conclusion.includes('Wrong conclusion'));
+      const weak2 = makeWeakState();
+      check('Weak-subjectivity checkpoint rejects fake history', syncWeakSubjectivity(weak2, true) === 'rejected');
+      check('Checkpoint path serves honest local view', weak2.syncedChain === 'honest' && weak2.conclusion.includes('Protected conclusion'));
+
+      const text = document.body.innerText || '';
+      check('Deprecated mining cue removed', !text.includes('Mine Block'));
+      check('Learning tips panel removed', !text.includes('Tips to maximize'));
+
+      const passed = results.filter(Boolean).length;
+      const total = results.length;
+      log('Self-tests complete: ' + passed + ' / ' + total + ' passed.', passed === total ? 'good' : 'warn');
+      return { passed, total, ok: passed === total };
+    }
+
+    $('#scenarioSelect').addEventListener('change', (event) => {
+      setScenario(event.target.value);
+    });
+
+    if (new URLSearchParams(window.location.search).has('run_self_checks')) {
+      $('#selfTestPanel').classList.remove('hidden');
+      $('#logWrap').open = true;
+    }
+
+    $('#selfTestBtn').addEventListener('click', () => {
+      runSelfTests();
+    });
+
+    window.runSelfTests = runSelfTests;
+    window.__ethLab = {
+      ETH,
+      makeGasperState,
+      computeLmdGhostHead,
+      processGasperCheckpoint,
+      advanceGasperOscillation,
+      lockGasperFinality,
+      growFinalizedBranch,
+      makeDelayState,
+      stepDelayEpoch,
+      delayParticipation,
+      classifyEvidence,
+      makeSlashingState,
+      makeWeakState,
+      syncWeakSubjectivity
+    };
+
+    setScenario('gasper');
   </script>
 </body>
 </html>

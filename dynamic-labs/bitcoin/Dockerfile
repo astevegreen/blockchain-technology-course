@@ -1,7 +1,7 @@
 # Thin wrapper over the upstream bitcoin-lab image that replaces the
 # stock CMD with ttyd-bind-mgmt.sh so ttyd listens only on the
 # management-network interface (see Phase 8.4 network split).
-ARG BITCOIN_LAB_BASE=ghcr.io/bja2142/bitcoin-lab:latest
+ARG BITCOIN_LAB_BASE=ghcr.io/blockchain-course-2026/bitcoin-lab:latest
 FROM ${BITCOIN_LAB_BASE}
 
 USER root

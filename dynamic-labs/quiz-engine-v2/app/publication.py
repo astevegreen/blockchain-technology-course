@@ -195,10 +195,8 @@ def list_student_quiz_listings(*, now=None, conn=None):
             WHEN version.available_from IS NOT NULL AND version.available_from > ? THEN 1
             ELSE 0
           END,
-          version.available_from IS NULL,
-          version.available_from,
-          version.created_at,
-          version.id
+          version.created_at DESC,
+          version.id DESC
         """,
         (now_iso, now_iso),
     ).fetchall()

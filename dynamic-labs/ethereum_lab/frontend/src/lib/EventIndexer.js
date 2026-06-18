@@ -11,8 +11,8 @@ export class EventIndexer {
    * Create a new EventIndexer
    * @param {Object} options - Configuration options
    * @param {number} options.maxEventsPerType - Maximum events to keep per type (default: 1000)
-   * @param {boolean} options.persistToStorage - Whether to persist to localStorage (default: false)
-   * @param {string} options.storageKey - Key for localStorage (default: 'event_index')
+   * @param {boolean} options.persistToStorage - Deprecated no-op; session state is backend-owned.
+   * @param {string} options.storageKey - Deprecated no-op.
    */
   constructor(options = {}) {
     this.maxEventsPerType = options.maxEventsPerType ?? 1000;
@@ -22,10 +22,7 @@ export class EventIndexer {
     // Map of eventName -> { lastBlock: number, events: Array }
     this.cache = new Map();
     
-    // Load from storage if persistence is enabled
-    if (this.persistToStorage) {
-      this._loadFromStorage();
-    }
+    // Browser-persistent storage is intentionally disabled for managed labs.
   }
 
   /**
@@ -132,13 +129,7 @@ export class EventIndexer {
   clear() {
     this.cache.clear();
     
-    if (this.persistToStorage) {
-      try {
-        localStorage.removeItem(this.storageKey);
-      } catch (e) {
-        // localStorage may not be available
-      }
-    }
+    // Persistence is disabled; clearing memory is sufficient.
   }
 
   /**
@@ -176,33 +167,18 @@ export class EventIndexer {
   }
 
   /**
-   * Load cache from localStorage
+   * Deprecated no-op storage loader.
    * @private
    */
   _loadFromStorage() {
-    try {
-      const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        const data = JSON.parse(stored);
-        for (const [name, cacheData] of Object.entries(data)) {
-          this.cache.set(name, cacheData);
-        }
-      }
-    } catch (e) {
-      console.warn("EventIndexer: Failed to load from storage", e);
-    }
+    return false;
   }
 
   /**
-   * Save cache to localStorage
+   * Deprecated no-op storage saver.
    * @private
    */
   _saveToStorage() {
-    try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.toJSON()));
-    } catch (e) {
-      console.warn("EventIndexer: Failed to save to storage", e);
-    }
+    return false;
   }
 }
-

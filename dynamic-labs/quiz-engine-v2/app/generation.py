@@ -53,6 +53,117 @@ def generate_quiz_version_from_template(
     template = get_template(int(template_id), include_archived=False, conn=conn)
     if template is None:
         raise GenerationError("template not found")
+    payload = _template_generation_payload(template, overrides)
+    return generate_quiz_version(payload, actor_sub=actor_sub, conn=conn)
+
+
+def generate_quiz_version_from_template_manual(
+    template_id,
+    source_question_ids,
+    *,
+    overrides=None,
+    actor_sub=None,
+    conn=None,
+):
+    conn = conn or get_db()
+    template = get_template(int(template_id), include_archived=False, conn=conn)
+    if template is None:
+        raise GenerationError("template not found")
+    fields = normalize_generation_fields(
+        _template_generation_payload(template, overrides)
+    )
+    selected_ids = _manual_selected_question_ids(
+        source_question_ids,
+        fields.question_count,
+    )
+    (
+        rows,
+        selected_rows,
+        quota_allocations,
+        coverage_allocations,
+        source_allocations,
+    ) = _select_manual_template_questions(fields, selected_ids, conn)
+    selected_rows = _ordered_selected_rows(selected_rows, fields)
+    selected_question_ids = [row["id"] for row in selected_rows]
+    snapshot = _generation_snapshot(
+        fields,
+        rows,
+        selected_rows,
+        quota_allocations,
+        coverage_allocations,
+        source_allocations,
+    )
+    snapshot["selection_mode"] = "manual"
+    snapshot["manual_selected_question_ids"] = selected_ids
+    try:
+        return create_quiz_version_snapshot(
+            template_id=fields.template_id,
+            title=fields.title,
+            description=fields.description,
+            generation_snapshot=snapshot,
+            source_question_ids=selected_question_ids,
+            timer_minutes=fields.timer_minutes,
+            attempt_limit=fields.attempt_limit,
+            result_policy=fields.result_policy,
+            question_order_policy=fields.question_order_policy,
+            option_order_policy=fields.option_order_policy,
+            option_order_mode=fields.option_order_mode,
+            option_order_seed=fields.random_seed,
+            actor_sub=actor_sub,
+            conn=conn,
+        )
+    except ValueError as exc:
+        raise GenerationError(str(exc)) from exc
+
+
+def manual_template_question_candidates(template_id, *, conn=None):
+    conn = conn or get_db()
+    template = get_template(int(template_id), include_archived=False, conn=conn)
+    if template is None:
+        raise GenerationError("template not found")
+    criteria = normalize_criteria(template["criteria"])
+    groups = []
+    all_rows = []
+    if has_source_rules(criteria):
+        for rule in criteria["source_rules"]:
+            effective = source_rule_effective_criteria(criteria, rule)
+            rows = _eligible_rows(effective, conn)
+            groups.append(
+                {
+                    "label": rule["lesson_id"],
+                    "lesson_id": rule["lesson_id"],
+                    "question_count": rule["question_count"],
+                    "filter_mode": rule["filter_mode"],
+                    "selection_policy": rule.get("selection_policy")
+                    or template["selection_policy"],
+                    "criteria": effective,
+                    "questions": rows,
+                }
+            )
+            all_rows.extend(rows)
+    else:
+        rows = _eligible_rows(criteria, conn)
+        groups.append(
+            {
+                "label": "Eligible questions",
+                "lesson_id": None,
+                "question_count": template["question_count"],
+                "filter_mode": None,
+                "selection_policy": template["selection_policy"],
+                "criteria": criteria,
+                "questions": rows,
+            }
+        )
+        all_rows = rows
+    return {
+        "template": template,
+        "question_count": template["question_count"],
+        "groups": groups,
+        "questions": _dedupe_rows_by_id(all_rows),
+    }
+
+
+def _template_generation_payload(template, overrides=None):
     payload = dict(overrides or {})
     payload.setdefault("title", template["title"])
     payload.setdefault("description", template["description"])
@@ -73,7 +184,7 @@ def generate_quiz_version_from_template(
             "random_per_attempt",
         )
     payload["template_id"] = template["id"]
-    return generate_quiz_version(payload, actor_sub=actor_sub, conn=conn)
+    return payload
 
 
 def generate_quiz_version(payload, *, actor_sub=None, conn=None):
@@ -135,6 +246,199 @@ def generate_quiz_version(payload, *, actor_sub=None, conn=None):
         )
     except ValueError as exc:
         raise GenerationError(str(exc)) from exc
+
+
+def _manual_selected_question_ids(source_question_ids, question_count):
+    if not isinstance(source_question_ids, (list, tuple)):
+        raise GenerationError("selected_question_ids must be a list")
+    selected_ids = []
+    for value in source_question_ids:
+        try:
+            question_id = int(value)
+        except (TypeError, ValueError) as exc:
+            raise GenerationError("selected_question_ids must be integers") from exc
+        if question_id <= 0:
+            raise GenerationError("selected_question_ids must be positive integers")
+        selected_ids.append(question_id)
+    if len(selected_ids) != len(set(selected_ids)):
+        raise GenerationError("selected_question_ids must be unique")
+    if len(selected_ids) != question_count:
+        raise GenerationError(
+            f"manual selection must include exactly {question_count} questions"
+        )
+    return selected_ids
+
+
+def _select_manual_template_questions(fields, selected_ids, conn):
+    if has_source_rules(fields.criteria):
+        return _select_manual_source_rule_questions(fields, selected_ids, conn)
+
+    rows = _eligible_rows(fields.criteria, conn)
+    rows_by_id = {row["id"]: row for row in rows}
+    missing_ids = [
+        question_id for question_id in selected_ids if question_id not in rows_by_id
+    ]
+    if missing_ids:
+        raise GenerationError(
+            "selected questions must all be eligible for the template"
+        )
+    selected_rows = [rows_by_id[question_id] for question_id in selected_ids]
+    quota_allocations, coverage_allocations = _manual_selection_allocations(
+        selected_rows,
+        rows,
+        fields.criteria,
+        fields.question_count,
+        "overall quiz",
+    )
+    return rows, selected_rows, quota_allocations, coverage_allocations, []
+
+
+def _select_manual_source_rule_questions(fields, selected_ids, conn):
+    all_rows = []
+    selected_rows = []
+    membership_by_id = {}
+    source_allocations = []
+    quota_allocations = {"source_rules": []}
+    coverage_allocations = {"source_rules": []}
+
+    for rule in fields.criteria["source_rules"]:
+        effective = source_rule_effective_criteria(fields.criteria, rule)
+        rows = _eligible_rows(effective, conn)
+        all_rows.extend(rows)
+        for row in rows:
+            membership_by_id.setdefault(
+                row["id"],
+                {
+                    "row": row,
+                    "rule": rule,
+                    "criteria": effective,
+                    "eligible_rows": rows,
+                },
+            )
+
+    missing_ids = [
+        question_id
+        for question_id in selected_ids
+        if question_id not in membership_by_id
+    ]
+    if missing_ids:
+        raise GenerationError(
+            "selected questions must all be eligible for the template source rules"
+        )
+
+    for question_id in selected_ids:
+        selected_rows.append(membership_by_id[question_id]["row"])
+
+    for rule in fields.criteria["source_rules"]:
+        rule_selected_rows = [
+            membership_by_id[question_id]["row"]
+            for question_id in selected_ids
+            if membership_by_id[question_id]["rule"]["lesson_id"] == rule["lesson_id"]
+        ]
+        if len(rule_selected_rows) != rule["question_count"]:
+            raise GenerationError(
+                f"source rule {rule['lesson_id']} requires "
+                f"{rule['question_count']} selected questions"
+            )
+        effective = source_rule_effective_criteria(fields.criteria, rule)
+        eligible_rows = _eligible_rows(effective, conn)
+        source_quotas, source_coverage = _manual_selection_allocations(
+            rule_selected_rows,
+            eligible_rows,
+            effective,
+            rule["question_count"],
+            f"source rule {rule['lesson_id']}",
+        )
+        source_policy = rule["selection_policy"] or fields.selection_policy
+        quota_allocations["source_rules"].append(
+            {
+                "lesson_id": rule["lesson_id"],
+                "allocations": source_quotas,
+            }
+        )
+        coverage_allocations["source_rules"].append(
+            {
+                "lesson_id": rule["lesson_id"],
+                "allocations": source_coverage,
+            }
+        )
+        source_allocations.append(
+            {
+                "lesson_id": rule["lesson_id"],
+                "filter_mode": rule["filter_mode"],
+                "question_count": rule["question_count"],
+                "eligible_pool_size": len(eligible_rows),
+                "selection_policy": source_policy,
+                "selection_mode": "manual",
+                "selected_question_ids": [row["id"] for row in rule_selected_rows],
+                "quota_allocations": source_quotas,
+                "coverage_allocations": source_coverage,
+                "criteria": effective,
+            }
+        )
+
+    return (
+        _dedupe_rows_by_id(all_rows),
+        selected_rows,
+        quota_allocations,
+        coverage_allocations,
+        source_allocations,
+    )
+
+
+def _manual_selection_allocations(
+    selected_rows,
+    eligible_rows,
+    criteria,
+    question_count,
+    label,
+):
+    quota_total = sum(sum(quota.values()) for quota in criteria["quotas"].values())
+    if quota_total > question_count:
+        raise GenerationError(
+            f"{label}: quota total {quota_total} exceeds requested "
+            f"question_count {question_count}"
+        )
+
+    quota_allocations = {}
+    for quota_type in ("topics", "tags", "lesson_ids"):
+        quota = criteria["quotas"].get(quota_type, {})
+        if not quota:
+            continue
+        quota_allocations[quota_type] = {}
+        for key in sorted(quota):
+            required = quota[key]
+            matched_ids = [
+                row["id"]
+                for row in selected_rows
+                if _matches_quota(row, quota_type, key)
+            ]
+            if len(matched_ids) < required:
+                raise GenerationError(
+                    f"{label}: selected questions do not satisfy quota "
+                    f"{quota_type}.{key}: required {required}, selected {len(matched_ids)}"
+                )
+            quota_allocations[quota_type][key] = matched_ids
+
+    coverage_allocations = {}
+    if criteria["require_topic_coverage"]:
+        required_topics = criteria["topics"] or sorted(
+            {row["topic"] for row in eligible_rows}
+        )
+        if len(required_topics) > question_count:
+            raise GenerationError(
+                f"{label}: topic coverage requires {len(required_topics)} "
+                f"questions but question_count is {question_count}"
+            )
+        for topic in sorted(required_topics):
+            match = next((row for row in selected_rows if row["topic"] == topic), None)
+            if match is None:
+                raise GenerationError(
+                    f"{label}: selected questions do not satisfy topic coverage: {topic}"
+                )
+            coverage_allocations[topic] = match["id"]
+
+    return quota_allocations, coverage_allocations
 
 
 def normalize_generation_fields(payload):
@@ -377,6 +681,17 @@ def _eligible_rows(criteria, conn):
             effective_tags(row["bank_tags"], row["question_tags"])
         )
     return rows
+
+
+def _dedupe_rows_by_id(rows):
+    result = []
+    seen = set()
+    for row in rows:
+        if row["id"] in seen:
+            continue
+        result.append(row)
+        seen.add(row["id"])
+    return result
 
 
 def _select_source_rule_questions(fields, conn):

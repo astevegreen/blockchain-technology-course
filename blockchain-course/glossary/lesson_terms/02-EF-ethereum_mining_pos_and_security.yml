@@ -1,0 +1,668 @@
+lesson_id: "02-EF"
+lesson_title: "Ethereum \"Mining\", PoS, and Security"
+source_path: "lessons/ethereum/02-EF-ethereum_mining_pos_and_security.qmd"
+terms:
+  - term: "Append-only state machine"
+    modifier: "Ethereum"
+    aliases: ["global state machine", "shared state machine"]
+    definition: "A model of Ethereum where valid transactions advance a shared global state and accepted history is extended rather than rewritten."
+    context: "The lesson uses this model to connect users, validators, attestations, and canonical chain history."
+    slide_heading: "The Ethereum Operational Framework"
+    tags: ["ethereum", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Canonical history"
+    modifier: "Ethereum"
+    aliases: ["canonical chain", "canonical head", "authoritative history"]
+    definition: "The branch of Ethereum history that nodes currently treat as authoritative under the fork-choice and finality rules."
+    context: "Students need this term to understand how attestations determine which proposed blocks become the recognized chain."
+    slide_heading: "The Ethereum Operational Framework"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Attestation weight"
+    modifier: "Ethereum"
+    aliases: ["stake-weighted votes", "attested stake weight"]
+    definition: "The total validator voting power represented by attestations supporting a block or branch."
+    context: "The lesson explains canonical history as the branch with the strongest recent stake-weighted support."
+    slide_heading: "The Ethereum Operational Framework"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Attester"
+    modifier: "Ethereum PoS role"
+    aliases: ["attesters", "committee attester"]
+    definition: "A validator assigned to vote on block validity, chain head, or checkpoint relationships."
+    context: "Attesters help turn a proposed block into a network-recognized part of Ethereum history."
+    slide_heading: "The Ethereum Operational Framework"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Externally Owned Account"
+    modifier: "Ethereum"
+    aliases: ["EOA", "EOAs"]
+    definition: "An Ethereum account controlled by a private key rather than by smart contract code."
+    context: "The lesson distinguishes ownership by private keys from contract accounts while describing Ethereum state."
+    slide_heading: "The Ethereum Operational Framework"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Contract account"
+    modifier: "Ethereum"
+    aliases: ["contract accounts", "smart contract account"]
+    definition: "An Ethereum account controlled by on-chain code that executes according to protocol rules."
+    context: "Contract accounts are part of the state that validators execute and commit to through block roots."
+    slide_heading: "The Ethereum Operational Framework"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Execution payload"
+    modifier: "Ethereum"
+    aliases: ["execution block", "payload"]
+    definition: "The execution-layer block data inside a post-Merge beacon block, including the header, ordered transactions, and execution data."
+    context: "The lesson separates execution payload contents from the outer consensus-layer beacon block validators propose."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Execution payload header"
+    modifier: "Ethereum"
+    aliases: ["header", "payload header"]
+    definition: "The compact portion of an execution payload containing commitments and metadata for verifying transactions, receipts, and resulting state."
+    context: "Header roots let nodes check what a block commits to without treating the whole body as opaque data."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Execution payload body"
+    modifier: "Ethereum"
+    aliases: ["body", "payload body"]
+    definition: "The variable-size portion of an execution payload that carries ordered transactions and execution-layer data."
+    context: "The body is what the header's roots cryptographically summarize."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Merkle-Patricia trie"
+    modifier: "Ethereum"
+    aliases: ["Merkle Patricia trie", "MPT", "trie"]
+    definition: "Ethereum's hash-linked key-value data structure used to commit compactly to ordered protocol data such as state, transactions, and receipts."
+    context: "The lesson uses trie roots to explain how a small header can commit to large execution-layer contents."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "state_root"
+    modifier: "Ethereum execution payload"
+    aliases: ["state root"]
+    definition: "The header commitment to Ethereum's global state after the block's transactions execute."
+    context: "Students use this root to connect transaction execution with the resulting world state."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "transactions_root"
+    modifier: "Ethereum execution payload"
+    aliases: ["transactions root", "transaction root"]
+    definition: "The header commitment to the exact ordered list of transactions included in an execution payload."
+    context: "The lesson uses this root to show how block ordering is made verifiable."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "receipts_root"
+    modifier: "Ethereum execution payload"
+    aliases: ["receipts root"]
+    definition: "The header commitment to execution results such as status, gas used, and emitted logs."
+    context: "Receipts connect the block's transactions to their observable execution outcomes."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Keccak-256"
+    modifier: "Ethereum"
+    aliases: ["Keccak", "Keccak sponge construction"]
+    definition: "Ethereum's main cryptographic hash function used in its hash-linked commitments."
+    context: "The lesson calls out Keccak-256 because Ethereum's commitments differ from Bitcoin's SHA-256-based design."
+    slide_heading: "Execution Payload: Header Structure"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Beacon block"
+    modifier: "Ethereum consensus layer"
+    aliases: ["beacon blocks"]
+    definition: "The outer consensus-layer block container that validators propose and attest to in post-Merge Ethereum."
+    context: "Students need this term to distinguish what validators gossip from the execution payload nested inside it."
+    slide_heading: "Beacon Blocks and Execution Payloads"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "slot"
+    modifier: "beacon block field"
+    aliases: ["slot field"]
+    definition: "A beacon-block field identifying the protocol time slot for which the block is proposed."
+    context: "The field anchors the block to Ethereum's 12-second consensus schedule."
+    slide_heading: "Beacon Blocks and Execution Payloads"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "proposer_index"
+    modifier: "beacon block field"
+    aliases: ["proposer index"]
+    definition: "A beacon-block field identifying the validator selected to propose that block."
+    context: "The lesson uses this field to show how block data records the selected proposer."
+    slide_heading: "Beacon Blocks and Execution Payloads"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "parent_root"
+    modifier: "beacon block field"
+    aliases: ["parent root"]
+    definition: "A beacon-block field committing to the parent block that the current beacon block extends."
+    context: "Parent roots connect beacon blocks into a verifiable consensus-layer chain."
+    slide_heading: "Beacon Blocks and Execution Payloads"
+    tags: ["ethereum", "cryptography", "consensus"]
+    confidence: "high"
+  - term: "randao_reveal"
+    modifier: "beacon block field"
+    aliases: ["RANDAO reveal", "randao reveal"]
+    definition: "A proposer's BLS signature included in a beacon block and mixed into Ethereum's rolling randomness state."
+    context: "The lesson later uses this field to explain how Ethereum builds shared randomness for validator assignments."
+    slide_heading: "Beacon Blocks and Execution Payloads"
+    tags: ["ethereum", "cryptography", "consensus"]
+    confidence: "high"
+  - term: "graffiti"
+    modifier: "beacon block field"
+    aliases: ["graffiti field"]
+    definition: "An optional 32-byte metadata field in a beacon block."
+    context: "The field appears as part of the beacon block body layout students inspect before moving to PoS duties."
+    slide_heading: "Beacon Blocks and Execution Payloads"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Slashing evidence"
+    modifier: "Ethereum"
+    aliases: ["slashings", "proposer slashings", "attester slashings"]
+    definition: "Cryptographic proof included in consensus-layer data that a validator committed slashable behavior."
+    context: "Beacon blocks can carry slashing data, linking validator accountability to the consensus-layer object."
+    slide_heading: "Beacon Blocks and Execution Payloads"
+    tags: ["ethereum", "consensus", "cryptography"]
+    confidence: "high"
+  - term: "The Merge"
+    modifier: "Ethereum"
+    aliases: ["Merge", "Beacon Chain merge"]
+    definition: "Ethereum's transition to a two-layer design where Proof of Stake consensus from the Beacon Chain secures execution-layer activity."
+    context: "The lesson uses the Merge to orient students before discussing validators, attestations, fork choice, and finality."
+    slide_heading: "The Merge: Beacon Chain to PoS"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Execution layer"
+    modifier: "Ethereum"
+    aliases: ["EL"]
+    definition: "The Ethereum layer responsible for transactions, accounts, smart contracts, and state updates."
+    context: "The lesson separates the execution layer from the consensus layer so students can place payload execution and validator coordination correctly."
+    slide_heading: "The Merge: Beacon Chain to PoS"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Consensus layer"
+    modifier: "Ethereum"
+    aliases: ["CL"]
+    definition: "The Ethereum layer responsible for validators, attestations, fork choice, and finality."
+    context: "The remaining PoS mechanics in the lesson happen primarily in the consensus layer."
+    slide_heading: "The Merge: Beacon Chain to PoS"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Proof of Stake"
+    modifier: "Ethereum consensus"
+    aliases: ["PoS", "proof-of-stake"]
+    definition: "Ethereum's consensus approach where validators stake ETH and risk rewards or penalties while proposing, attesting to, and finalizing blocks."
+    context: "The lesson explains how PoS replaced mining with validator duties and economic accountability."
+    slide_heading: "The Merge: Beacon Chain to PoS"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Validator"
+    modifier: "Ethereum PoS role"
+    aliases: ["validators"]
+    definition: "A staked participant assigned consensus duties such as proposing blocks, attesting, and participating in finality."
+    context: "Validators are the main actors in Ethereum's post-Merge security model."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Deposit contract"
+    modifier: "Ethereum staking"
+    aliases: ["staking deposit contract", "validator deposit contract"]
+    definition: "The execution-layer contract where a participant deposits 32 ETH to join the validator set."
+    context: "The lesson identifies the deposit contract as the entry point for validator participation."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Execution client"
+    modifier: "Ethereum client"
+    aliases: ["EL client"]
+    definition: "Software that handles Ethereum transactions, state, and EVM execution."
+    context: "The lesson distinguishes execution clients from consensus clients and validator processes."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Consensus client"
+    modifier: "Ethereum client"
+    aliases: ["CL client", "beacon node"]
+    definition: "Software that runs consensus-layer logic such as duty assignment, block verification, committees, and finality."
+    context: "Students need this distinction to understand how validator duties are coordinated in practice."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Validator process"
+    modifier: "Ethereum client"
+    aliases: ["validator client"]
+    definition: "Software that signs the validator duties assigned by the consensus client."
+    context: "The lesson separates signing duties from the broader execution and consensus client responsibilities."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus", "cryptography"]
+    confidence: "high"
+  - term: "Block proposer"
+    modifier: "Ethereum PoS role"
+    aliases: ["proposer", "slot proposer"]
+    definition: "The validator selected for a slot to build and broadcast a candidate block."
+    context: "Block proposers assemble execution payloads, while attesters evaluate and vote on the resulting block."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Committee"
+    modifier: "Ethereum PoS"
+    aliases: ["validator committee", "committees"]
+    definition: "A randomly assigned group of validators that attests to block validity, chain head, and checkpoints."
+    context: "Committees distribute attestation work across the validator set during each epoch."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Attestation"
+    modifier: "Ethereum PoS vote"
+    aliases: ["attestations", "validator vote"]
+    definition: "A validator's signed vote about the block or checkpoint it believes should be supported."
+    context: "Attestations are the stake-weighted signals that drive fork choice, rewards, penalties, and finality."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus", "cryptography"]
+    confidence: "high"
+  - term: "Slashing"
+    modifier: "Ethereum PoS penalty"
+    aliases: ["slash", "slashed"]
+    definition: "A protocol penalty that burns validator stake when cryptographic evidence proves severe consensus misbehavior."
+    context: "Slashing is the economic threat that discourages equivocation, surround voting, and post-finality rewrites."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Client diversity"
+    modifier: "Ethereum operations"
+    aliases: ["diverse clients"]
+    definition: "The practice of using multiple independent client implementations so one software bug does not disable too much validator stake."
+    context: "The lesson treats client diversity as an operational defense against outages and finality delays."
+    slide_heading: "PoS Overview: Validators, Committees, and Clients"
+    tags: ["ethereum", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Slot"
+    modifier: "Ethereum PoS time unit"
+    aliases: ["slots"]
+    definition: "A 12-second Ethereum consensus time window in which at most one block may be proposed and a committee may attest."
+    context: "Slots provide the basic cadence for block proposal, attestation, and aggregation."
+    slide_heading: "Slots and Epochs"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Epoch"
+    modifier: "Ethereum PoS time unit"
+    aliases: ["epochs"]
+    definition: "A group of 32 slots used to reshuffle committees and evaluate finality checkpoints."
+    context: "Epochs organize validator duties and finality logic above the per-slot timeline."
+    slide_heading: "Slots and Epochs"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "BLS signature"
+    modifier: "Ethereum"
+    aliases: ["Boneh-Lynn-Shacham signature", "BLS"]
+    definition: "A signature scheme Ethereum uses because many validator signatures can be aggregated into one compact proof."
+    context: "The lesson uses BLS aggregation to explain how Ethereum handles many attestations efficiently."
+    slide_heading: "Slots and Epochs"
+    tags: ["ethereum", "cryptography", "consensus"]
+    confidence: "high"
+  - term: "Validator selection"
+    modifier: "Ethereum PoS"
+    aliases: ["validator assignment", "duty assignment"]
+    definition: "The consensus-layer process that assigns validators to proposer and committee duties for slots and epochs."
+    context: "The lesson emphasizes that assignments must be hard to predict and hard to bias."
+    slide_heading: "Validator Selection & Randomness"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "RANDAO"
+    modifier: "Ethereum randomness"
+    aliases: ["rolling randomness", "RANDAO seed"]
+    definition: "Ethereum's production mechanism for building shared randomness from proposer reveals over time."
+    context: "RANDAO supplies the seed used to select future proposers and shuffle validators into committees."
+    slide_heading: "Validator Selection & Randomness"
+    tags: ["ethereum", "cryptography", "consensus"]
+    confidence: "high"
+  - term: "Effective balance"
+    modifier: "Ethereum staking"
+    aliases: ["effective validator balance"]
+    definition: "The capped validator balance used by the consensus layer to weight selection probability and voting influence."
+    context: "The lesson notes that RANDAO-based selection is weighted by effective balance up to 32 ETH per key."
+    slide_heading: "Validator Selection & Randomness"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Shared randomness"
+    modifier: "Ethereum consensus"
+    aliases: ["global randomness", "deterministic seed"]
+    definition: "A common random seed that all honest consensus participants can compute and use for validator assignments."
+    context: "Shared randomness lets Ethereum coordinate proposer and committee selection without trusting a central party."
+    slide_heading: "Global Randomness: RANDAO + VDF Beacons"
+    tags: ["ethereum", "cryptography", "consensus"]
+    confidence: "high"
+  - term: "Last-revealer bias"
+    modifier: "RANDAO"
+    aliases: ["last revealer advantage"]
+    definition: "The small ability of the final randomness contributor to withhold its reveal and marginally influence the resulting seed."
+    context: "The lesson presents this as RANDAO's main limitation and a reason researchers discuss VDFs."
+    slide_heading: "Global Randomness: RANDAO + VDF Beacons"
+    tags: ["ethereum", "cryptography", "consensus"]
+    confidence: "high"
+  - term: "Verifiable Delay Function"
+    modifier: "Ethereum randomness proposal"
+    aliases: ["VDF", "VDF beacon"]
+    definition: "A proposed time-locked computation that is slow to produce but easy to verify, reducing the ability to compute randomness outcomes early."
+    context: "VDFs are discussed as a possible mitigation for RANDAO bias, not as a current Ethereum mainnet feature."
+    slide_heading: "Global Randomness: RANDAO + VDF Beacons"
+    tags: ["ethereum", "cryptography", "consensus"]
+    confidence: "high"
+  - term: "Fork"
+    modifier: "Ethereum PoS"
+    aliases: ["short-term fork", "temporary fork", "competing branch"]
+    definition: "A temporary divergence where different nodes track different candidate histories."
+    context: "The lesson explains that PoS still has forks, but resolves routine ones with attestations and fork choice."
+    slide_heading: "Forks in Proof of Stake — Causes and Resolution"
+    tags: ["ethereum", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "LMD-GHOST"
+    modifier: "Ethereum fork choice"
+    aliases: ["Latest-Message-Driven Greedy Heaviest-Observed SubTree", "fork-choice rule"]
+    definition: "Ethereum's fork-choice rule that follows the branch with the greatest weight from validators' latest attestations."
+    context: "Students use LMD-GHOST to understand how honest nodes converge on a current head before finality."
+    slide_heading: "Forks in Proof of Stake — Causes and Resolution"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Fork choice"
+    modifier: "Ethereum"
+    aliases: ["fork-choice rule", "head selection"]
+    definition: "The protocol logic nodes use to choose the current best chain head among competing valid branches."
+    context: "Fork choice handles short-term disagreement before checkpoint finality locks history more strongly."
+    slide_heading: "Forks in Proof of Stake — Causes and Resolution"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Gasper"
+    modifier: "Ethereum consensus"
+    aliases: ["Ethereum full consensus protocol"]
+    definition: "Ethereum's consensus protocol combining LMD-GHOST fork choice with Casper-FFG finality."
+    context: "The lesson uses Gasper to connect immediate head selection with stronger checkpoint finalization."
+    slide_heading: "Gasper: Fork Choice + Finality"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Casper-FFG"
+    modifier: "Ethereum finality"
+    aliases: ["Casper Friendly Finality Gadget", "Friendly Finality Gadget", "FFG"]
+    definition: "Ethereum's finality gadget that justifies and finalizes checkpoints when enough total stake votes consistently across epochs."
+    context: "Casper-FFG explains how Ethereum moves from a best current head to economically irreversible history."
+    slide_heading: "Gasper: Fork Choice + Finality"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Checkpoint"
+    modifier: "Ethereum finality"
+    aliases: ["epoch checkpoint", "checkpoint link"]
+    definition: "An epoch-boundary block used as a target for finality votes."
+    context: "The lesson describes finality as votes across checkpoint links rather than individual block confirmations."
+    slide_heading: "Gasper: Fork Choice + Finality"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Justified checkpoint"
+    modifier: "Ethereum finality"
+    aliases: ["justified", "justification"]
+    definition: "A checkpoint that has received at least two-thirds of total stake voting for the required source-to-target link."
+    context: "Justification is the step before finalization in Ethereum's epoch-level finality sequence."
+    slide_heading: "Gasper: Fork Choice + Finality"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Finalized checkpoint"
+    modifier: "Ethereum finality"
+    aliases: ["finalized", "finality", "finalized history"]
+    definition: "A checkpoint treated as economically irreversible because reverting it would require large-scale slashable validator behavior."
+    context: "The lesson contrasts settlement on finalized checkpoints with proof-of-work confirmation counting."
+    slide_heading: "Gasper: Fork Choice + Finality"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Inactivity leak"
+    modifier: "Ethereum finality recovery"
+    aliases: ["inactivity leak penalty"]
+    definition: "A penalty mechanism that gradually reduces offline validators' weight so the remaining online validators can regain a supermajority."
+    context: "The lesson uses inactivity leak to explain how Ethereum recovers finality after major participation drops."
+    slide_heading: "Gasper: Fork Choice + Finality"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Double spending"
+    modifier: "Ethereum threat model"
+    aliases: ["double-spend", "double-spend attack"]
+    definition: "An attack goal where a payment is accepted and then a conflicting history is published to erase or reverse it."
+    context: "The lesson compares PoW and PoS costs for rewriting history after a transaction appears accepted."
+    slide_heading: "Double Spending (Threat Model)"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Settlement policy"
+    modifier: "Ethereum operations"
+    aliases: ["settlement rule", "finality-based settlement"]
+    definition: "An operational rule for deciding when a service treats a transaction as settled, based in this lesson on finalized checkpoints."
+    context: "The lesson advises services to wait for finality in PoS rather than relying on raw block counts."
+    slide_heading: "Double Spending (Threat Model)"
+    tags: ["ethereum", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Balance attack"
+    modifier: "Ethereum PoS"
+    aliases: ["balancing attack"]
+    definition: "A network-layer attack that partitions or delays validators so competing branches gain roughly balanced attestation weight."
+    context: "The lesson uses balance attacks to show that consensus security depends on network visibility as well as cryptography."
+    slide_heading: "Balance Attack"
+    tags: ["ethereum", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Partition"
+    modifier: "distributed network"
+    aliases: ["network partition", "sub-partition"]
+    definition: "A condition where groups of nodes cannot reliably exchange messages with each other."
+    context: "Partitions can make honest validators see different chain views and attest to different branches."
+    slide_heading: "Balance Attack"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Propagation asymmetry"
+    modifier: "Ethereum network"
+    aliases: ["attestation delay", "message delay"]
+    definition: "Uneven message delivery that gives different validators different views of blocks or attestations at the same time."
+    context: "The balance attack slide treats propagation asymmetry as an attack surface even without majority stake."
+    slide_heading: "Balance Attack"
+    tags: ["ethereum", "distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Reorganization"
+    modifier: "blockchain"
+    aliases: ["reorg", "reorgs"]
+    definition: "A chain change where nodes replace part of their current branch with another valid branch."
+    context: "Balance attacks can force one side of a partition to reorg when a heavier branch is revealed."
+    slide_heading: "Balance Attack"
+    tags: ["ethereum", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Proposer boost"
+    modifier: "Ethereum fork choice"
+    aliases: ["proposer boost timing"]
+    definition: "A fork-choice weight bonus for the current slot's block when validators see it on time."
+    context: "The lesson presents proposer boost as a mitigation that raises the cost of balancing-style attacks."
+    slide_heading: "Balance Attack"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Smart contract code reuse"
+    modifier: "Ethereum security"
+    aliases: ["contract code reuse", "template reuse"]
+    definition: "The deployment of many contracts from the same or closely related code patterns."
+    context: "The lesson warns that reused code can multiply the impact of one vulnerability across many deployments."
+    slide_heading: "Security Risk: Smart Contract Code Reuse"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Bytecode"
+    modifier: "Ethereum"
+    aliases: ["contract bytecode", "unique bytecode"]
+    definition: "The compiled on-chain instructions executed by the Ethereum Virtual Machine for a smart contract."
+    context: "Attackers can fingerprint bytecode families to find repeated vulnerable contract patterns."
+    slide_heading: "Security Risk: Smart Contract Code Reuse"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Parity multisig"
+    modifier: "Ethereum incident"
+    aliases: ["Parity multisig wallet", "Parity multisig library"]
+    definition: "A widely used multisignature wallet system whose 2017 bugs caused major ETH theft and later froze funds."
+    context: "The lesson uses Parity as an example of how shared libraries and code reuse can amplify smart contract risk."
+    slide_heading: "Security Risk: Smart Contract Code Reuse"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Reentrancy vulnerability"
+    modifier: "smart contract security"
+    aliases: ["reentrancy", "recursive withdraw bug"]
+    definition: "A bug where external calls let an attacker reenter contract logic before state such as balances is safely updated."
+    context: "The DAO Hack example shows how reentrancy can turn contract logic order into a large financial loss."
+    slide_heading: "Real-World Ethereum Security Examples"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Hard fork"
+    modifier: "Ethereum governance"
+    aliases: ["chain split"]
+    definition: "A protocol change that is not backward-compatible and can split a chain if participants do not all follow the new rules."
+    context: "The lesson mentions Ethereum's DAO response as a hard fork that separated Ethereum from Ethereum Classic."
+    slide_heading: "Real-World Ethereum Security Examples"
+    tags: ["ethereum", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Finality delay"
+    modifier: "Ethereum operations"
+    aliases: ["finality stall", "delayed finality"]
+    definition: "A condition where Ethereum continues producing blocks but lacks enough validator participation to finalize checkpoints."
+    context: "The lesson uses the May 2023 incidents to distinguish continued liveness from paused finality."
+    slide_heading: "Real-World Ethereum Security Examples"
+    tags: ["ethereum", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Nothing-at-stake"
+    modifier: "PoS risk"
+    aliases: ["nothing at stake"]
+    definition: "The concern that validators in a naive PoS system could cheaply sign multiple competing forks."
+    context: "The lesson explains how Ethereum counters this risk with objective slashing rules."
+    slide_heading: "Nothing-at-Stake"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Equivocation"
+    modifier: "Ethereum PoS"
+    aliases: ["conflicting signatures", "equivocating"]
+    definition: "Signing conflicting consensus messages that should be mutually exclusive."
+    context: "Equivocation is provable from signatures and is one of the behaviors Ethereum makes slashable."
+    slide_heading: "Nothing-at-Stake"
+    tags: ["ethereum", "consensus", "cryptography"]
+    confidence: "high"
+  - term: "Double proposal"
+    modifier: "Ethereum slashing"
+    aliases: ["proposer equivocation"]
+    definition: "A slashable offense where a validator signs two different blocks for the same slot."
+    context: "The lesson lists double proposal as one of Ethereum's objective slashing conditions."
+    slide_heading: "Nothing-at-Stake"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Double attestation"
+    modifier: "Ethereum slashing"
+    aliases: ["attester equivocation"]
+    definition: "A slashable offense where a validator signs two conflicting attestations for the same target epoch."
+    context: "Double attestation prevents validators from cheaply supporting multiple competing histories."
+    slide_heading: "Nothing-at-Stake"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Surround vote"
+    modifier: "Ethereum slashing"
+    aliases: ["surround voting"]
+    definition: "A slashable attestation whose source-to-target range encloses or is enclosed by the validator's prior vote."
+    context: "Surround vote rules protect checkpoint finality by forbidding inconsistent finality votes."
+    slide_heading: "Nothing-at-Stake"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Correlation penalty"
+    modifier: "Ethereum slashing"
+    aliases: ["correlated slashing penalty"]
+    definition: "A slashing penalty that increases when many validators are slashed in the same period."
+    context: "The lesson uses correlation penalty to show why coordinated attacks can lose far more stake than isolated mistakes."
+    slide_heading: "Nothing-at-Stake"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Liveness"
+    modifier: "Ethereum consensus"
+    aliases: ["block-production liveness"]
+    definition: "The property that the network can keep proposing blocks and processing transactions."
+    context: "The finality delay discussion separates liveness from finality so students can reason about degraded-but-running operation."
+    slide_heading: "Finality Delay"
+    tags: ["ethereum", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Censorship"
+    modifier: "Ethereum"
+    aliases: ["transaction censorship", "soft censorship"]
+    definition: "Deliberate exclusion or delay of certain transactions from blocks or relay pathways."
+    context: "The lesson shows that censorship pressure can arise from infrastructure and policy even when the base protocol remains permissionless."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "policy", "real-world"]
+    confidence: "high"
+  - term: "Tornado Cash"
+    modifier: "Ethereum policy case"
+    aliases: []
+    definition: "An Ethereum privacy protocol whose 2022 sanctions became a major case study in relay and builder censorship pressure."
+    context: "The lesson uses Tornado Cash to show how policy actions can affect transaction inclusion infrastructure."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "policy", "real-world"]
+    confidence: "high"
+  - term: "OFAC"
+    modifier: "policy"
+    aliases: ["Office of Foreign Assets Control"]
+    definition: "The U.S. Treasury office whose sanctions list shaped the Tornado Cash censorship episode discussed in the lesson."
+    context: "Students need OFAC context to understand why some relays filtered sanctioned transactions."
+    slide_heading: "Censorship"
+    tags: ["policy", "ethereum", "real-world"]
+    confidence: "high"
+  - term: "Relay"
+    modifier: "Ethereum block building"
+    aliases: ["MEV relay", "relays"]
+    definition: "Infrastructure that passes builder-created candidate blocks to validators, often through MEV-Boost."
+    context: "Relays are central to the censorship example because relay concentration made filtering policies more visible."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Builder"
+    modifier: "Ethereum block building"
+    aliases: ["block builder", "builders"]
+    definition: "A participant that assembles candidate blocks from pending transactions for possible proposal by validators."
+    context: "The lesson identifies builders as part of the infrastructure where transaction inclusion choices can concentrate."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "consensus", "real-world"]
+    confidence: "high"
+  - term: "MEV-Boost"
+    modifier: "Ethereum block building"
+    aliases: ["maximal extractable value boost"]
+    definition: "Middleware that lets validators receive builder-created blocks through relays without directly building every block themselves."
+    context: "MEV-Boost explains why relay and builder behavior can influence what transactions appear in proposed blocks."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Maximal Extractable Value"
+    modifier: "Ethereum block building"
+    aliases: ["MEV", "maximal extractable value"]
+    definition: "Value that can be gained from transaction ordering, inclusion, or exclusion choices during block construction."
+    context: "The censorship notes spell out MEV because builder and relay infrastructure is tied to MEV-driven block construction."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Infrastructure centralization"
+    modifier: "Ethereum security"
+    aliases: ["relay centralization", "builder centralization"]
+    definition: "A concentration of important network services in a small number of operators or implementations."
+    context: "The lesson treats infrastructure centralization as a security risk because it can enable soft censorship or amplify outages."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "distributed-systems", "real-world"]
+    confidence: "high"
+  - term: "Inclusion list"
+    modifier: "Ethereum censorship mitigation"
+    aliases: ["inclusion lists"]
+    definition: "A proposed mechanism for requiring proposers to include specified pending transactions."
+    context: "The lesson lists inclusion lists as a mitigation for sustained transaction censorship."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "policy", "consensus"]
+    confidence: "high"
+  - term: "Encrypted mempool"
+    modifier: "Ethereum censorship mitigation"
+    aliases: ["encrypted mempools"]
+    definition: "A proposed transaction pool design that hides transaction contents until ordering or inclusion decisions are harder to censor or exploit."
+    context: "The lesson names encrypted mempools as one possible response to builder and relay censorship pressure."
+    slide_heading: "Censorship"
+    tags: ["ethereum", "cryptography", "policy"]
+    confidence: "high"

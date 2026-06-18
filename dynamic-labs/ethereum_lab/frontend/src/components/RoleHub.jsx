@@ -30,7 +30,7 @@ export function RoleHub({
 
   if (!content || !role) return null;
 
-  const ransomAddrVal = ransomAddr || localStorage.getItem('ransom_addr') || '';
+  const ransomAddrVal = ransomAddr || '';
 
   /** Load script into console, injecting ransomware contract address if available */
   const loadScript = (code, opts = {}) => {
@@ -43,7 +43,7 @@ export function RoleHub({
     if (onLoadScript) onLoadScript(finalCode);
     if (onExpandConsole) onExpandConsole(true);
     if (setStatusMsg) {
-      setStatusMsg('Script pasted into Hardhat console. Wait for the > prompt, then press Enter to run.');
+      setStatusMsg('Script copied. Open Lab Terminal from the sidebar and paste it at the Hardhat prompt.');
       setTimeout(() => setStatusMsg?.(''), 4000);
     }
   };

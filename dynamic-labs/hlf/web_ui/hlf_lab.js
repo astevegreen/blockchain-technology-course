@@ -536,6 +536,56 @@ window.jumpToExercise = jumpToExercise;
   const detail = document.getElementById('term-detail');
   if (!termWrap || !term) return;
 
+  let terminalResizeTimer = null;
+  function notifyTerminalResize() {
+    const child = term && term.contentWindow;
+    if (!child) return;
+    try {
+      const EventCtor = child.Event || Event;
+      child.dispatchEvent(new EventCtor('resize'));
+    } catch (_) {}
+  }
+
+  function installTerminalResizeBridge() {
+    const child = term && term.contentWindow;
+    if (!child) return;
+    try {
+      if (child.__labTerminalResizeBridgeInstalled) return;
+      const doc = child.document;
+      const target = doc && (doc.documentElement || doc.body);
+      if (!target || !child.ResizeObserver) return;
+      child.__labTerminalResizeBridgeInstalled = true;
+      child.__labTerminalResizeBridge = new child.ResizeObserver(function () {
+        try {
+          child.dispatchEvent(new child.Event('resize'));
+        } catch (_) {}
+      });
+      child.__labTerminalResizeBridge.observe(target);
+    } catch (_) {}
+  }
+
+  function forceTerminalResize() {
+    installTerminalResizeBridge();
+    notifyTerminalResize();
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () {
+        installTerminalResizeBridge();
+        notifyTerminalResize();
+      });
+    }
+    setTimeout(notifyTerminalResize, 120);
+    setTimeout(notifyTerminalResize, 300);
+  }
+
+  function scheduleTerminalResize(delay) {
+    if (terminalResizeTimer) clearTimeout(terminalResizeTimer);
+    terminalResizeTimer = setTimeout(function () {
+      terminalResizeTimer = null;
+      forceTerminalResize();
+    }, typeof delay === 'number' ? delay : 80);
+  }
+  term.addEventListener('load', scheduleTerminalResize);
+
   termWrap.classList.add('active');
   splitHandle.classList.add('active');
 
@@ -561,6 +611,8 @@ window.jumpToExercise = jumpToExercise;
   // not strand an otherwise-valid session.
   const base = (window.HLFBase && window.HLFBase.resolve()) || '';
   let consoleBootToken = 0;
+  let popoutWin = null;
+  let ttydUrlForPopout = '';
 
   function showConsoleSplash(message) {
     if (detail) detail.textContent = message;
@@ -578,6 +630,66 @@ window.jumpToExercise = jumpToExercise;
     showConsoleSplash(message || 'Console unavailable.');
   }
 
+  function unloadInlineTerminal() {
+    consoleBootToken += 1;
+    term.style.display = 'none';
+    if (term.getAttribute('src')) {
+      term.src = 'about:blank';
+    }
+  }
+
+  function unloadInlineTerminalThen(next) {
+    if (!term.getAttribute('src') || term.getAttribute('src') === 'about:blank') {
+      next();
+      return;
+    }
+    let done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      term.removeEventListener('load', finish);
+      next();
+    }
+    term.addEventListener('load', finish);
+    unloadInlineTerminal();
+    setTimeout(finish, 250);
+  }
+
+  function closePopoutTerminal() {
+    if (popoutWin && !popoutWin.closed) {
+      try { popoutWin.close(); } catch (_) {}
+    }
+    popoutWin = null;
+  }
+
+  function createPopoutWindow() {
+    if (!ttydUrlForPopout) return false;
+    if (!popoutWin || popoutWin.closed) {
+      popoutWin = window.open('about:blank', 'hlf-console-' + window.location.pathname.slice(0, 20),
+        'width=900,height=640');
+      try {
+        if (popoutWin && popoutWin.document) {
+          popoutWin.document.title = 'Loading console';
+          popoutWin.document.body.textContent = 'Loading console...';
+        }
+      } catch (_) {}
+    } else {
+      popoutWin.focus();
+    }
+    return !!popoutWin;
+  }
+
+  function navigatePopoutTerminal() {
+    if (!popoutWin || popoutWin.closed || !ttydUrlForPopout) return false;
+    try {
+      popoutWin.location.href = ttydUrlForPopout;
+      popoutWin.focus();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function bootConsole(statusMessage) {
     const bootToken = ++consoleBootToken;
     const start = Date.now();
@@ -589,6 +701,7 @@ window.jumpToExercise = jumpToExercise;
       .then(function (data) {
         if (bootToken !== consoleBootToken) return;
         const ttydUrl = data.url;
+        ttydUrlForPopout = ttydUrl;
         const tokenUrl = ttydUrl + 'token';
         detail.textContent = 'Waiting for console...';
         (function probe() {
@@ -601,11 +714,13 @@ window.jumpToExercise = jumpToExercise;
               if (term.getAttribute('src') !== ttydUrl) {
                 term.addEventListener('load', function () {
                   hideConsoleSplash();
+                  scheduleTerminalResize();
                   if (window.HLFProgress) window.HLFProgress.recordStep('surface:term');
                 }, { once: true });
                 term.src = ttydUrl;
               } else {
                 hideConsoleSplash();
+                scheduleTerminalResize();
               }
             })
             .catch(function () {
@@ -643,6 +758,7 @@ window.jumpToExercise = jumpToExercise;
     const max = layout ? layout.clientHeight - 120 : window.innerHeight - 200;
     const clamped = Math.max(80, Math.min(max, px));
     termWrap.style.flex = '0 0 ' + clamped + 'px';
+    scheduleTerminalResize();
     return clamped;
   }
 
@@ -663,48 +779,57 @@ window.jumpToExercise = jumpToExercise;
     dragging = false;
     document.body.classList.remove('resizing');
     saveConsoleState({ heightPx: Math.round(termWrap.getBoundingClientRect().height) });
+    scheduleTerminalResize(0);
   });
   window.addEventListener('resize', function () {
     applyHeight(termWrap.getBoundingClientRect().height);
   });
+  if (window.ResizeObserver) {
+    const resizeObserver = new ResizeObserver(scheduleTerminalResize);
+    resizeObserver.observe(termWrap);
+  }
 
   // Hide / Popout console buttons
-  let popoutWin = null;
-  let ttydUrlForPopout = '';
-
-  // Capture the ttyd URL once it's resolved
-  const origFetch = window.fetch;
-  const myTermUrl = base + '/api/hlf/my-term';
-
   function applyConsoleMode(mode) {
     document.body.classList.remove('console-hidden', 'console-popout');
     const btn = document.getElementById('hide-console-btn');
     if (mode === 'hidden') {
+      closePopoutTerminal();
+      unloadInlineTerminal();
       document.body.classList.add('console-hidden');
       if (btn) btn.textContent = 'Show Console';
     } else if (mode === 'popout') {
+      if (!ttydUrlForPopout && term.src && term.src !== 'about:blank') {
+        ttydUrlForPopout = term.src;
+      }
+      if (!createPopoutWindow()) {
+        mode = 'inline';
+        bootConsole('Reconnecting console...');
+        if (btn) btn.textContent = 'Hide Console';
+        saveConsoleState({ consoleMode: mode });
+        scheduleTerminalResize();
+        return;
+      }
       document.body.classList.add('console-popout');
       if (btn) btn.textContent = 'Show Console';
-      if (ttydUrlForPopout && (!popoutWin || popoutWin.closed)) {
-        popoutWin = window.open(ttydUrlForPopout, 'hlf-console-' + window.location.pathname.slice(0, 20),
-          'noopener,width=900,height=640');
-      } else if (popoutWin && !popoutWin.closed) {
-        popoutWin.focus();
-      }
+      unloadInlineTerminalThen(function () {
+        if (!navigatePopoutTerminal()) {
+          document.body.classList.remove('console-popout');
+          closePopoutTerminal();
+          mode = 'inline';
+          bootConsole('Reconnecting console...');
+          if (btn) btn.textContent = 'Hide Console';
+          saveConsoleState({ consoleMode: mode });
+          scheduleTerminalResize();
+        }
+      });
     } else {
+      closePopoutTerminal();
+      bootConsole('Reconnecting console...');
       if (btn) btn.textContent = 'Hide Console';
     }
     saveConsoleState({ consoleMode: mode });
-  }
-
-  // Store the ttyd URL when we discover it
-  const origTermSrc = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'src');
-  const termEl = document.getElementById('term');
-  if (termEl) {
-    const observer = new MutationObserver(function () {
-      if (termEl.src && termEl.src.startsWith('http')) ttydUrlForPopout = termEl.src;
-    });
-    observer.observe(termEl, { attributes: true, attributeFilter: ['src'] });
+    scheduleTerminalResize();
   }
 
   const hideBtn = document.getElementById('hide-console-btn');

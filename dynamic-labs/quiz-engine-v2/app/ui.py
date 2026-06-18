@@ -1,3 +1,4 @@
+from .attempts import attempt_usage, effective_attempt_allowance
 from .db import get_db
 from .grading import list_written_grading_queue
 from .metrics.filters import parse_metrics_filters
@@ -44,18 +45,38 @@ def build_student_quiz_list(student, *, conn=None):
     )
 
     cards = []
+    current_cards = []
+    completed_cards = []
     for quiz in quizzes:
         active_attempt = active_attempts.get(quiz["id"])
         result_attempt = result_attempts.get(quiz["id"])
+        allowance = effective_attempt_allowance(quiz["id"], student.id, conn=conn)
+        usage = attempt_usage(quiz["id"], student.id, conn=conn)
+        attempts_remaining = max(allowance["allowance"] - usage["total_attempts"], 0)
         card = dict(quiz)
         card["active_attempt"] = active_attempt
         card["result_attempt"] = result_attempt
-        card["primary_action"] = "resume" if active_attempt else "start"
+        card["attempt_allowance"] = allowance
+        card["attempt_usage"] = usage
+        card["attempts_remaining"] = attempts_remaining
+        card["primary_action"] = (
+            "resume"
+            if active_attempt
+            else "limit_reached"
+            if attempts_remaining == 0
+            else "start"
+        )
         cards.append(card)
+        if _is_completed_quiz_card(card):
+            completed_cards.append(card)
+        else:
+            current_cards.append(card)
 
     return {
         "student_identifier": student.identifier,
         "quizzes": cards,
+        "current_quizzes": current_cards,
+        "completed_quizzes": completed_cards,
     }
 
 
@@ -150,6 +171,14 @@ def _attempts_by_quiz(conn, student_id, quiz_ids, *, statuses, latest_only=False
             continue
         attempts[quiz_id] = dict(row)
     return attempts
+
+
+def _is_completed_quiz_card(card):
+    return (
+        card["active_attempt"] is None
+        and card["result_attempt"] is not None
+        and card["attempts_remaining"] == 0
+    )
 
 
 def _confusing_questions(items):

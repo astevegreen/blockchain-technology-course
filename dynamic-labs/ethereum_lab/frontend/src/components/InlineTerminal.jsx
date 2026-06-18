@@ -195,7 +195,7 @@ export default function InlineTerminal({ loadCode, onLoadCodeConsumed, rpcUrl = 
           }
         } else {
           term.writeln('\x1b[32m✓ Lab Terminal — shell (project root)\x1b[0m');
-          term.writeln('\x1b[90mClick "Start Hardhat" below to launch the console, or type commands manually.\x1b[0m');
+          term.writeln('\x1b[90mExpert users only: use "Start Hardhat" for manual console work. Most students should use the normal hands-on labs.\x1b[0m');
           term.writeln('');
           term.focus();
           const pending = pendingLoadRef.current;
@@ -386,7 +386,7 @@ export default function InlineTerminal({ loadCode, onLoadCodeConsumed, rpcUrl = 
           )}
         </div>
         <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-          {status === 'error' ? 'Terminal not available. The host may need npm run terminal, or use your class-provided shell with Hardhat and RPC_URL.' : 'Shell at project root. Click "Start Hardhat" to launch the console, or type commands manually.'}
+          {status === 'error' ? 'Terminal not available. The host may need npm run terminal, or use your class-provided shell with Hardhat and RPC_URL.' : 'Expert users only. Most students should use the normal hands-on labs.'}
         </span>
       </div>
 

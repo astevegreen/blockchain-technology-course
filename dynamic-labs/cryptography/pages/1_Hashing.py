@@ -2,12 +2,26 @@ import streamlit as st
 from lab_core import LabCore
 from lesson_loader import load_lesson
 from progress_beacon import fire as _fire_progress
+from terminal_ui import (
+    install_terminal_keyboard_shortcuts,
+    render_hint,
+    render_terminal_history,
+)
 
 _SCENARIO_BEACONS = {
     "1. Weak Hash Collisions": "exercise:crypto-hashing-s1",
     "2. The Avalanche Effect": "exercise:crypto-hashing-s2",
     "3. Entropy & Ransomware": "exercise:crypto-hashing-s3",
 }
+
+TERMINAL_COMMANDS = [
+    "cat",
+    "hash_and_decrypt",
+    "help",
+    "sha256",
+    "toy_check",
+    "toy_hash",
+]
 
 # --- SETUP & STATE ---
 if "lab_core" not in st.session_state:
@@ -43,23 +57,91 @@ st.markdown(
 
 
 # --- COMMAND PROCESSOR ---
+def command_payload(raw_input, cmd):
+    payload = raw_input.lstrip()[len(cmd) :]
+    if payload.startswith(" "):
+        return payload[1:]
+    return payload
+
+
+def hashing_help(topic, active_scenario):
+    topic = topic.lower()
+    if topic == "weak":
+        return """Weak-hash commands:
+  toy_hash <text>
+      Show the 4-bit toy hash for any text.
+  toy_check <text>
+      Submit a changed transaction and check whether it spoofs the target hash.
+
+Examples:
+  toy_hash PAY: ALICE | AMT: $100
+  toy_check PAY: BOB | AMT: $900
+
+Tip: In this scenario, spaces and punctuation are part of the message."""
+
+    if topic == "avalanche":
+        return """Avalanche commands:
+  sha256 <text>
+      Generate a SHA-256 hash for the exact text after the command.
+
+Examples:
+  sha256 Deployment Alpha
+  sha256 Deployment alpha
+
+Compare the two full hashes. A one-character change should change the whole output."""
+
+    if topic == "ransomware":
+        return """Ransomware commands:
+  cat /root/README_FOR_DECRYPT.txt
+      Read the ransom note.
+  hash_and_decrypt <start_val> <end_val>
+      Test a 10-value seed window.
+
+Examples:
+  cat /root/README_FOR_DECRYPT.txt
+  hash_and_decrypt 1736670470 1736670480
+
+Use the file modified time from the telemetry to estimate the malware start time."""
+
+    topic_by_scenario = {
+        "1. Weak Hash Collisions": "weak",
+        "2. The Avalanche Effect": "avalanche",
+        "3. Entropy & Ransomware": "ransomware",
+    }
+    default_topic = topic_by_scenario.get(active_scenario, "weak")
+    return f"""Available help topics:
+  help weak
+  help avalanche
+  help ransomware
+
+Current scenario quick start:
+{hashing_help(default_topic, active_scenario)}"""
+
+
 def process_command():
-    user_input = st.session_state.input_box1
-    if not user_input:
+    user_input = st.session_state.input_box1 or ""
+    stripped_input = user_input.strip()
+    if not stripped_input:
+        st.session_state.input_box1 = ""
         return
-    parts = user_input.strip().split()
+
+    command_input = user_input.lstrip()
+    parts = command_input.split()
     cmd = parts[0].lower()
     args = parts[1:]
     lab = st.session_state.lab_core
+    active_scenario = st.session_state.get(
+        "hashing_scenario", "1. Weak Hash Collisions"
+    )
     output = ""
 
     if cmd == "toy_hash":
-        output = f"Hash: {lab.toy_hash_4bit(' '.join(args))}"
+        output = f"Hash: {lab.toy_hash_4bit(command_payload(user_input, parts[0]))}"
     elif cmd == "toy_check":
-        s, h = lab.check_toy_collision(" ".join(args))
+        s, h = lab.check_toy_collision(command_payload(user_input, parts[0]))
         output = f"Hash: {h} " + ("[SUCCESS: SPOOFED!]" if s else "[FAIL]")
     elif cmd == "sha256":
-        text = " ".join(args)
+        text = command_payload(user_input, parts[0])
         output = f"SHA-256: {lab.sha256_hash(text)}"
 
     elif cmd == "cat":
@@ -89,11 +171,11 @@ def process_command():
             except ValueError:
                 output = "[ERROR]: Bounds must be integers."
     elif cmd == "help":
-        output = "Available commands vary by scenario. Check the scenario description on the right."
+        output = hashing_help(args[0] if args else "", active_scenario)
     else:
         output = f"Unknown command: {cmd}\nType 'help' for assistance."
 
-    st.session_state.history1.insert(0, (user_input, output))
+    st.session_state.history1.insert(0, (stripped_input, output))
     st.session_state.input_box1 = ""
 
 
@@ -134,6 +216,7 @@ scenario = st.sidebar.radio(
         "2. The Avalanche Effect",
         "3. Entropy & Ransomware",
     ],
+    key="hashing_scenario",
 )
 _fire_progress(_SCENARIO_BEACONS.get(scenario, ""))
 
@@ -142,14 +225,12 @@ col_term, col_vis = st.columns([1, 1])
 with col_term:
     st.subheader("Terminal")
     st.text_input("Enter Command", key="input_box1", on_change=process_command)
+    install_terminal_keyboard_shortcuts(
+        "Enter Command", TERMINAL_COMMANDS, st.session_state.history1
+    )
     st.caption("Type a command and press Enter.")
 
-    log_box = st.container(height=600)
-    for c, o in st.session_state.history1:
-        log_box.markdown(
-            f"<div class='log-cmd'>>> {c}</div><div class='log-out'>{o}</div><hr style='margin:5px 0'>",
-            unsafe_allow_html=True,
-        )
+    render_terminal_history(st.session_state.history1)
 
 with col_vis:
     lab = st.session_state.lab_core
@@ -162,22 +243,13 @@ with col_vis:
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Hint 1", key="h1_1"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 1:</div>{show_hint('h1', 1)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 1:", show_hint("h1", 1))
         with col2:
             if st.button("Hint 2", key="h1_2"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 2:</div>{show_hint('h1', 2)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 2:", show_hint("h1", 2))
         with col3:
             if st.button("Hint 3", key="h1_3"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 3:</div>{show_hint('h1', 3)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 3:", show_hint("h1", 3))
 
     elif scenario == "2. The Avalanche Effect":
         st.markdown("### Scenario 2: The Avalanche Effect")
@@ -187,22 +259,13 @@ with col_vis:
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Hint 1", key="h2_1"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 1:</div>{show_hint('h2', 1)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 1:", show_hint("h2", 1))
         with col2:
             if st.button("Hint 2", key="h2_2"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 2:</div>{show_hint('h2', 2)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 2:", show_hint("h2", 2))
         with col3:
             if st.button("Hint 3", key="h2_3"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 3:</div>{show_hint('h2', 3)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 3:", show_hint("h2", 3))
 
     elif scenario == "3. Entropy & Ransomware":
         st.markdown("### Scenario 3: Entropy & Ransomware")
@@ -211,19 +274,10 @@ with col_vis:
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Hint 1", key="h3_1"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 1:</div>{show_hint('h3', 1)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 1:", show_hint("h3", 1))
         with col2:
             if st.button("Hint 2", key="h3_2"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 2:</div>{show_hint('h3', 2)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 2:", show_hint("h3", 2))
         with col3:
             if st.button("Hint 3", key="h3_3"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 3:</div>{show_hint('h3', 3)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 3:", show_hint("h3", 3))

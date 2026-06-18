@@ -2,7 +2,7 @@
 // Installed to /etc/zellij/config.kdl by each Dockerfile.
 
 // Skip the session manager and welcome screen — students land in a shell.
-on_force_close "quit"
+on_force_close "detach"
 default_shell "bash"
 
 // Disable the session manager so attach --create goes straight to a session.
@@ -11,11 +11,19 @@ session_serialization true
 // Simple default layout: single pane, status bar at bottom.
 default_layout "default"
 
+// Start in locked mode so shell/editor shortcuts are passed through. Students
+// press Ctrl+G when they intentionally want zellij controls.
+default_mode "locked"
+
 // Use 256-color mode (ncurses-term is installed in all images).
 simplified_ui false
 
 // Mouse support works through ttyd's xterm.js.
 mouse_mode true
+
+// Keep mouse scrolling, but do not let zellij write selections to the browser
+// clipboard automatically.
+copy_on_select false
 
 // Keep pane frames visible so splits are obvious to students.
 pane_frames true
@@ -26,3 +34,75 @@ theme "default"
 // Suppress popups on new sessions.
 show_startup_tips false
 show_release_notes false
+
+// Non-colliding student keymap. Ctrl+G unlocks zellij controls for the next
+// operation; commands return to locked mode so nano/readline shortcuts keep
+// working in normal shell use.
+keybinds clear-defaults=true {
+    locked {
+        bind "Ctrl g" { SwitchToMode "normal"; }
+        bind "Alt n" { NewPane; SwitchToMode "locked"; }
+        bind "Alt h" "Alt Left" { MoveFocusOrTab "Left"; SwitchToMode "locked"; }
+        bind "Alt l" "Alt Right" { MoveFocusOrTab "Right"; SwitchToMode "locked"; }
+        bind "Alt j" "Alt Down" { MoveFocus "Down"; SwitchToMode "locked"; }
+        bind "Alt k" "Alt Up" { MoveFocus "Up"; SwitchToMode "locked"; }
+    }
+
+    normal {
+        bind "Ctrl g" "Esc" { SwitchToMode "locked"; }
+        bind "p" { SwitchToMode "pane"; }
+        bind "t" { SwitchToMode "tab"; }
+        bind "s" { SwitchToMode "scroll"; }
+        bind "n" { SwitchToMode "resize"; }
+    }
+
+    pane {
+        bind "Ctrl g" "Esc" { SwitchToMode "locked"; }
+        bind "n" { NewPane; SwitchToMode "locked"; }
+        bind "r" { NewPane "Right"; SwitchToMode "locked"; }
+        bind "d" { NewPane "Down"; SwitchToMode "locked"; }
+        bind "x" { CloseFocus; SwitchToMode "locked"; }
+        bind "f" { ToggleFocusFullscreen; SwitchToMode "locked"; }
+        bind "h" "Left" { MoveFocus "Left"; SwitchToMode "locked"; }
+        bind "l" "Right" { MoveFocus "Right"; SwitchToMode "locked"; }
+        bind "j" "Down" { MoveFocus "Down"; SwitchToMode "locked"; }
+        bind "k" "Up" { MoveFocus "Up"; SwitchToMode "locked"; }
+    }
+
+    tab {
+        bind "Ctrl g" "Esc" { SwitchToMode "locked"; }
+        bind "n" { NewTab; SwitchToMode "locked"; }
+        bind "x" { CloseTab; SwitchToMode "locked"; }
+        bind "Left" "h" { GoToPreviousTab; SwitchToMode "locked"; }
+        bind "Right" "l" { GoToNextTab; SwitchToMode "locked"; }
+        bind "1" { GoToTab 1; SwitchToMode "locked"; }
+        bind "2" { GoToTab 2; SwitchToMode "locked"; }
+        bind "3" { GoToTab 3; SwitchToMode "locked"; }
+        bind "4" { GoToTab 4; SwitchToMode "locked"; }
+        bind "5" { GoToTab 5; SwitchToMode "locked"; }
+        bind "6" { GoToTab 6; SwitchToMode "locked"; }
+        bind "7" { GoToTab 7; SwitchToMode "locked"; }
+        bind "8" { GoToTab 8; SwitchToMode "locked"; }
+        bind "9" { GoToTab 9; SwitchToMode "locked"; }
+    }
+
+    scroll {
+        bind "Ctrl g" "Esc" { ScrollToBottom; SwitchToMode "locked"; }
+        bind "j" "Down" { ScrollDown; }
+        bind "k" "Up" { ScrollUp; }
+        bind "PageDown" "Right" "l" { PageScrollDown; }
+        bind "PageUp" "Left" "h" { PageScrollUp; }
+        bind "Ctrl d" { HalfPageScrollDown; }
+        bind "Ctrl u" { HalfPageScrollUp; }
+    }
+
+    resize {
+        bind "Ctrl g" "Esc" { SwitchToMode "locked"; }
+        bind "h" "Left" { Resize "Left"; }
+        bind "l" "Right" { Resize "Right"; }
+        bind "j" "Down" { Resize "Down"; }
+        bind "k" "Up" { Resize "Up"; }
+        bind "+" "=" { Resize "Increase"; }
+        bind "-" { Resize "Decrease"; }
+    }
+}

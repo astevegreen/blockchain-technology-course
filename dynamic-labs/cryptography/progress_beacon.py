@@ -2,7 +2,7 @@
 Fire-and-forget progress beacon for the cryptography Streamlit app.
 
 Each page calls `fire("<route_id>")` once at render time. The helper
-renders a zero-height `st.components.v1.html` iframe whose script
+renders a zero-height `st.iframe` whose script
 reads the `crypto_lab_session` cookie from the parent document and
 POSTs `{route_id, session}` to `/api/cryptography/progress/touch`.
 
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 
-import streamlit.components.v1 as components
+import streamlit as st
 
 
 _BEACON_TEMPLATE = """
@@ -56,7 +56,7 @@ def fire(route_id: str) -> None:
     if not route_id:
         return
     snippet = _BEACON_TEMPLATE.replace("__ROUTE__", json.dumps(str(route_id)))
-    components.html(snippet, height=0, width=0)
+    st.iframe(snippet, height=1, width=1)
 
 
 __all__ = ["fire"]

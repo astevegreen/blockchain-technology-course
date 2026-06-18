@@ -69,7 +69,7 @@ RUN sed -i 's/} else if (global.activeBlockchain == "regtest") {/} else if (getb
 # STAGE 3: Final Runtime
 # ==========================================
 # Assuming this is your locally built optimized image
-FROM ghcr.io/bja2142/bitcoin-lab:latest
+FROM ghcr.io/blockchain-course-2026/bitcoin-lab:latest
 
 USER root
 

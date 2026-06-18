@@ -187,6 +187,38 @@ def test_visibility_transitions_and_student_visible_filter(app):
     assert audit_count == 5
 
 
+def test_student_quiz_listings_order_newest_current_before_scheduled(app):
+    with app.app_context():
+        older = _generate_version("Older Current Quiz")
+        newer = _generate_version("Newer Current Quiz")
+        scheduled = _generate_version("Newest Scheduled Quiz")
+
+        set_quiz_version_visibility(older["id"], "published", actor_sub="teacher")
+        set_quiz_version_visibility(newer["id"], "published", actor_sub="teacher")
+        set_quiz_version_visibility(
+            scheduled["id"],
+            "published",
+            actor_sub="teacher",
+        )
+        update_quiz_version_metadata(
+            scheduled["id"],
+            {"available_from": "2026-05-20T13:00:00+00:00"},
+            actor_sub="teacher",
+        )
+
+        listed_quizzes = list_student_quiz_listings(
+            now="2026-05-20T12:00:00+00:00"
+        )
+
+    assert [quiz["title"] for quiz in listed_quizzes] == [
+        "Newer Current Quiz",
+        "Older Current Quiz",
+        "Newest Scheduled Quiz",
+    ]
+    assert listed_quizzes[0]["availability_status"] == "available"
+    assert listed_quizzes[2]["availability_status"] == "scheduled"
+
+
 def test_availability_start_helper_and_timestamp_normalization():
     version = {
         "visibility": "published",

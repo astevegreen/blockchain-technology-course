@@ -1,0 +1,524 @@
+lesson_id: "04-DS"
+lesson_title: "Distributed Ledgers"
+source_path: "lessons/distributed_primitives/04-DS-distributed_ledgers.qmd"
+terms:
+  - term: "Shared record"
+    modifier: "distributed ledgers"
+    aliases: ["shared notebook", "shared log"]
+    definition: "A common record that multiple organizations or participants rely on without assigning one party as the sole owner of truth."
+    context: "The lesson starts with agencies needing one incident log to motivate why distributed ledgers are coordination systems, not just storage systems."
+    slide_heading: "The Shared Notebook Problem"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Independent verification"
+    modifier: "distributed ledgers"
+    aliases: ["independently verifiable", "verification"]
+    definition: "The ability for participants to check the record and its changes for themselves rather than trusting another party's private assertion."
+    context: "Independent verification is one of the requirements that turns a shared record into a ledger suitable for multi-organization use."
+    slide_heading: "The Shared Notebook Problem"
+    tags: ["distributed-systems", "cryptography"]
+    confidence: "high"
+  - term: "Distributed ledger"
+    modifier: null
+    aliases: ["distributed ledgers", "DLT", "distributed ledger technology"]
+    definition: "A shared, append-only record replicated across participants, with entries accepted and ordered by consensus and protected by tamper-evident cryptographic links."
+    context: "This is the central concept of the lesson and the basis for comparing permissioned, permissionless, public-sector, and Bitcoin examples."
+    slide_heading: "The Shared Notebook Problem"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Log"
+    modifier: "distributed ledgers"
+    aliases: ["logs", "event log", "audit trail"]
+    definition: "A time-ordered record of events or actions that preserves history by adding new entries rather than rewriting old ones."
+    context: "The lesson uses ordinary logs as the familiar starting point before adding replication, hash-linking, and consensus."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Append-only"
+    modifier: null
+    aliases: ["append-only history", "append-only record"]
+    definition: "A record design where new entries are added to the end and past entries are not silently edited in place."
+    context: "Append-only behavior explains why ledger history is treated as accumulated evidence rather than a mutable database table."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Consistency"
+    modifier: "distributed ledgers"
+    aliases: []
+    definition: "The property that participants converge on the same correct version of the record despite simultaneous writes or failures."
+    context: "Consistency is one of the problems created when a log is distributed across multiple nodes."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Integrity"
+    modifier: "distributed ledgers"
+    aliases: ["data integrity"]
+    definition: "The property that unauthorized or silent changes to ledger history can be detected."
+    context: "Integrity is why the lesson introduces hash-linking, tamper-evidence, and later privacy-preserving proof techniques."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["distributed-systems", "cryptography"]
+    confidence: "high"
+  - term: "Ordering"
+    modifier: "distributed ledgers"
+    aliases: ["event ordering", "shared ordering"]
+    definition: "The agreed sequence in which ledger entries are placed, especially when conflicting or simultaneous actions depend on who went first."
+    context: "The lesson repeatedly treats ordering as a core ledger problem for transactions, access records, and incident logs."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Ledger"
+    modifier: null
+    aliases: ["ledgers"]
+    definition: "An append-only record with added mechanisms for maintaining integrity, ordering, and agreement across participants."
+    context: "The lesson distinguishes a ledger from a simple log by the machinery needed to make a shared record dependable."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Replication"
+    modifier: "distributed ledgers"
+    aliases: ["replicated state", "replicated copy"]
+    definition: "The practice of keeping copies of the ledger across multiple participants so no single node controls the only record."
+    context: "Replication supports resilience and shared control, but it also creates the need for consensus about updates."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Hash-linking"
+    modifier: "distributed ledgers"
+    aliases: ["hash linking", "cryptographic linking", "cryptographic links"]
+    definition: "A structure where each entry commits to the previous entry with a hash so later history depends on earlier contents."
+    context: "Hash-linking is the lesson's main mechanism for making retroactive ledger edits detectable."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Consensus"
+    modifier: "distributed ledger ordering"
+    aliases: ["consensus process", "agreement process"]
+    definition: "The process distributed nodes use to agree which entries are accepted and what order they occupy in the shared history."
+    context: "Consensus is introduced as the mechanism that turns replicated copies and competing writes into one accepted ledger history."
+    slide_heading: "From Logs to Ledgers"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Centralized database"
+    modifier: null
+    aliases: ["central database", "admin-trusted database"]
+    definition: "A database controlled by a trusted owner or administrator who can define, update, and manage the authoritative record."
+    context: "The lesson contrasts centralized databases with ledgers to show that governance and trust assumptions should drive tool choice."
+    slide_heading: "Distributed Ledger vs. Centralized Database (Compare/Contrast)"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Trust model"
+    modifier: "system design"
+    aliases: ["trust assumption", "trust assumptions"]
+    definition: "The explicit answer to who or what participants must trust for the system's record to remain correct."
+    context: "The comparison table frames ledgers as adversarial-tolerant and centralized databases as admin-trusted."
+    slide_heading: "Distributed Ledger vs. Centralized Database (Compare/Contrast)"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Governance"
+    modifier: "distributed ledgers"
+    aliases: ["ledger governance", "decision rights"]
+    definition: "The rules and institutions that decide membership, upgrades, dispute handling, and who can change the system."
+    context: "The lesson emphasizes that many ledger decisions are governance problems before they are storage or performance problems."
+    slide_heading: "Distributed Ledger vs. Centralized Database (Compare/Contrast)"
+    tags: ["policy", "permissioned-ledgers"]
+    confidence: "high"
+  - term: "Hash-chaining"
+    modifier: "immutability source"
+    aliases: ["hash chain", "hash-chained history"]
+    definition: "A chain of hashes where each later entry depends on earlier data, causing past edits to break later links."
+    context: "Hash-chaining explains the technical source of tamper-evidence behind claims of ledger immutability."
+    slide_heading: "Immutability Source"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Immutability"
+    modifier: "distributed ledgers"
+    aliases: ["immutable history"]
+    definition: "The practical property that changing accepted ledger history is detectable, ineffective without agreement, or costly under the system's rules."
+    context: "The lesson warns students that ledger immutability is not magic; it comes from hash chains, replication, and finality assumptions."
+    slide_heading: "Immutability Source"
+    tags: ["cryptography", "consensus"]
+    confidence: "high"
+  - term: "Finality"
+    modifier: "distributed ledgers"
+    aliases: ["transaction finality", "ledger finality"]
+    definition: "The point at which a ledger entry can reasonably be treated as permanent under the consensus model."
+    context: "Finality is the lesson's answer to when a participant can treat a ledger update as done."
+    slide_heading: "Immutability Source"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Transparency"
+    modifier: "distributed ledgers"
+    aliases: ["verifiability"]
+    definition: "The ability for participants or permitted members to verify state changes and rule compliance."
+    context: "The lesson separates transparency from public data exposure so students focus on verifiable correctness."
+    slide_heading: "Transparency vs. Privacy"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Privacy"
+    modifier: "distributed ledgers"
+    aliases: ["confidentiality"]
+    definition: "Controls that limit who can see sensitive ledger data while still preserving appropriate verification."
+    context: "Privacy is presented as a design tension with transparency, handled through access control, encryption, partitioning, and proof systems."
+    slide_heading: "Transparency vs. Privacy"
+    tags: ["cryptography", "policy"]
+    confidence: "high"
+  - term: "Access control"
+    modifier: "distributed ledgers"
+    aliases: ["access-control policy", "authorization policy"]
+    definition: "Rules that determine who may read data, propose transactions, endorse updates, order entries, or administer the ledger."
+    context: "Access control is one of the key ways permissioned ledgers tune privacy and operational authority."
+    slide_heading: "Transparency vs. Privacy"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Zero-knowledge proof"
+    modifier: null
+    aliases: ["ZKP", "zero-knowledge proofs"]
+    definition: "A proof that a claim is true without revealing all of the underlying private data."
+    context: "The lesson uses zero-knowledge proofs as one way to reduce the tension between verification and privacy."
+    slide_heading: "Transparency vs. Privacy"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Homomorphic encryption"
+    modifier: null
+    aliases: ["FHE", "fully homomorphic encryption"]
+    definition: "Encryption that allows computation on encrypted data without first decrypting it."
+    context: "The lesson names homomorphic encryption as a privacy technique for preserving useful computation while limiting data exposure."
+    slide_heading: "Transparency vs. Privacy"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Permissioned ledger"
+    modifier: null
+    aliases: ["permissioned ledgers", "permissioned blockchain", "consortium ledger"]
+    definition: "A distributed ledger where participation is restricted to known, authenticated entities admitted through a governance process."
+    context: "Permissioned ledgers are the lesson's model for controlled collaboration among organizations that need identity, confidentiality, and policy."
+    slide_heading: "Permissioned Ledgers"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Membership Service Provider"
+    modifier: "Hyperledger Fabric"
+    aliases: ["MSP", "membership service provider"]
+    definition: "A Fabric component or role that connects participants to verifiable organizational identities, often using certificates."
+    context: "MSP appears as the concrete identity mechanism behind permissioned ledger membership."
+    slide_heading: "Permissioned Ledgers"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Private data channel"
+    modifier: "permissioned ledgers"
+    aliases: ["private channel", "private channels"]
+    definition: "A permissioned-ledger mechanism that limits sensitive data visibility to selected participants."
+    context: "The lesson uses private channels to show how known membership enables targeted privacy controls."
+    slide_heading: "Permissioned Ledgers"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Hyperledger Fabric"
+    modifier: null
+    aliases: ["Fabric"]
+    definition: "A permissioned ledger platform that separates execution, ordering, and validation for enterprise inter-organizational workflows."
+    context: "Fabric is the lesson's main concrete example of a permissioned ledger architecture."
+    slide_heading: "Permissioned Ledgers"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Permissionless ledger"
+    modifier: null
+    aliases: ["permissionless ledgers", "public blockchain", "open ledger"]
+    definition: "A distributed ledger where anyone can participate under protocol rules without approval from a central authority."
+    context: "Permissionless ledgers are contrasted with permissioned systems to show how open participation changes identity, security, and finality."
+    slide_heading: "Permissionless Ledgers"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Key pair"
+    modifier: "permissionless identity"
+    aliases: ["key pairs", "public-private key pair"]
+    definition: "A matched public and private key used to express identity and authorize actions without real-world vetting."
+    context: "The lesson explains that permissionless identity is usually based on keys rather than certificates or organizational admission."
+    slide_heading: "Permissionless Ledgers"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Sybil resistance"
+    modifier: null
+    aliases: ["Sybil resistance through economics"]
+    definition: "Mechanisms that make it expensive for one actor to create many identities and overwhelm an open network."
+    context: "Sybil resistance is required because permissionless systems allow anyone to join."
+    slide_heading: "Permissionless Ledgers"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Proof of Work"
+    modifier: "consensus cost"
+    aliases: ["PoW", "proof-of-work"]
+    definition: "A Sybil-resistance mechanism where participants must spend computational effort to earn influence in ledger ordering."
+    context: "The lesson introduces proof of work as one economic cost used by permissionless ledgers such as Bitcoin."
+    slide_heading: "Permissionless Ledgers"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Proof of Stake"
+    modifier: "consensus cost"
+    aliases: ["PoS", "proof-of-stake"]
+    definition: "A Sybil-resistance mechanism where participants must put economic stake at risk to earn influence in ledger validation."
+    context: "The lesson introduces proof of stake as another economic defense used in permissionless systems."
+    slide_heading: "Permissionless Ledgers"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Probabilistic finality"
+    modifier: null
+    aliases: ["probabilistic confirmation"]
+    definition: "A finality model where confidence in an entry grows as more later work or votes build on top of it."
+    context: "The lesson uses probabilistic finality to explain why open ledgers such as Bitcoin become harder to reverse over time rather than instantly final."
+    slide_heading: "Permissionless Ledgers"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Pseudonymous identity"
+    modifier: "permissionless ledgers"
+    aliases: ["pseudonymity", "pseudonymous keys"]
+    definition: "Identity represented by cryptographic keys rather than verified real-world names."
+    context: "The comparison slide contrasts pseudonymous key-based identity with certificate-backed real-world identity."
+    slide_heading: "Permissioned vs. Permissionless: Comparison"
+    tags: ["cryptography", "policy"]
+    confidence: "high"
+  - term: "Deterministic finality"
+    modifier: null
+    aliases: ["declared finality"]
+    definition: "A finality model where a protocol step or ordering service declares an entry final once required conditions are met."
+    context: "The lesson contrasts deterministic finality in permissioned or BFT-style systems with probabilistic finality in open ledgers."
+    slide_heading: "Permissioned vs. Permissionless: Comparison"
+    tags: ["consensus", "permissioned-ledgers"]
+    confidence: "high"
+  - term: "Selective disclosure"
+    modifier: "ledger privacy"
+    aliases: []
+    definition: "A privacy pattern where only authorized parties see sensitive payloads while others can still check required proofs or commitments."
+    context: "Selective disclosure helps students see that ledger transparency does not require exposing all underlying data."
+    slide_heading: "Permissioned vs. Permissionless: Comparison"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Improvement proposal"
+    modifier: "permissionless governance"
+    aliases: ["BIP", "BIPs", "EIP", "EIPs"]
+    definition: "A formal proposal for changing a permissionless protocol, such as a Bitcoin Improvement Proposal or Ethereum Improvement Proposal."
+    context: "Improvement proposals are the lesson's example of how open networks coordinate rule changes without one upgrade authority."
+    slide_heading: "Governance Models"
+    tags: ["policy", "bitcoin", "ethereum"]
+    confidence: "high"
+  - term: "Rough consensus"
+    modifier: "permissionless governance"
+    aliases: ["operator consensus"]
+    definition: "An informal adoption process where independent operators converge on a protocol change without being forced by a central authority."
+    context: "Rough consensus explains why permissionless upgrades depend on social coordination among node operators and users."
+    slide_heading: "Governance Models"
+    tags: ["policy", "distributed-systems"]
+    confidence: "high"
+  - term: "Hard fork"
+    modifier: "blockchain governance"
+    aliases: ["network split", "fork"]
+    definition: "An incompatible protocol change that can split a network into separate chains if different groups keep following different rules."
+    context: "The lesson uses hard forks to show how unresolved permissionless governance disputes can become technical splits."
+    slide_heading: "Governance Models"
+    tags: ["policy", "consensus"]
+    confidence: "high"
+  - term: "Network partition"
+    modifier: "distributed ledgers"
+    aliases: ["partition", "partitioned network"]
+    definition: "A failure or attack condition where some nodes cannot communicate with the wider ledger network."
+    context: "Partitions threaten both permissioned and permissionless ledgers by giving separated participants incomplete or stale views."
+    slide_heading: "Threats to Distributed Ledgers"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Eclipse attack"
+    modifier: null
+    aliases: ["eclipsed node", "node isolation attack"]
+    definition: "An attack that isolates a node or group of nodes and feeds them a false view of the network."
+    context: "The lesson presents eclipse attacks as a network-level threat that can mislead miners, validators, or organizations."
+    slide_heading: "Threats to Distributed Ledgers"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Majority attack"
+    modifier: "distributed ledgers"
+    aliases: ["collusion attack", "51% attack", "majority hash attack"]
+    definition: "An attack where one actor or coalition gains enough validating influence to control recent ledger history or approve fraudulent activity."
+    context: "The lesson contrasts permissionless 51% attacks with permissioned collusion under weak endorsement policies."
+    slide_heading: "Threats to Distributed Ledgers"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Long-range attack"
+    modifier: "distributed ledgers"
+    aliases: ["history rewrite attack", "long-range history rewrite"]
+    definition: "An attack that uses old credentials or stake to construct an alternative version of distant ledger history."
+    context: "The lesson uses long-range attacks to distinguish deep-history rewriting from attacks on recent blocks."
+    slide_heading: "Threats to Distributed Ledgers (cont.)"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Key compromise"
+    modifier: "ledger operations"
+    aliases: ["compromised keys", "credential compromise"]
+    definition: "A failure where an attacker gains control of private keys or administrator credentials used to authorize ledger actions."
+    context: "The lesson warns that operational security failures can damage ledgers as much as protocol-level attacks."
+    slide_heading: "Threats to Distributed Ledgers (cont.)"
+    tags: ["cryptography", "policy"]
+    confidence: "high"
+  - term: "Safety"
+    modifier: "consensus"
+    aliases: ["consensus safety"]
+    definition: "A consensus property that the system should not accept conflicting histories as valid."
+    context: "Safety is one of the core questions students should ask when evaluating any consensus family."
+    slide_heading: "Consensus"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Liveness"
+    modifier: "consensus"
+    aliases: ["consensus liveness"]
+    definition: "A consensus property that the system should continue making progress despite faults, delays, or malicious nodes within its assumptions."
+    context: "Liveness complements safety by asking whether the ledger can keep accepting new entries."
+    slide_heading: "Consensus"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Byzantine Fault Tolerance"
+    modifier: "consensus"
+    aliases: ["BFT", "BFT-based systems"]
+    definition: "A consensus approach designed to keep agreement despite some nodes behaving maliciously or arbitrarily."
+    context: "The lesson mentions BFT as a family that can provide deterministic finality under different assumptions than PoW or PoS."
+    slide_heading: "Consensus"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Decentralization"
+    modifier: "ledger design"
+    aliases: ["decentralized design"]
+    definition: "The distribution of verification, control, and operation across more participants instead of concentrating them in one authority."
+    context: "The trade-offs slide explains that more decentralization often increases overhead and lowers throughput."
+    slide_heading: "Trade‑offs"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Centralization"
+    modifier: "ledger design"
+    aliases: ["centralized design"]
+    definition: "The concentration of control, speed, or privacy decisions in fewer hands or a single owner."
+    context: "The lesson treats centralization as faster and simpler in many cases, but riskier when shared control is needed."
+    slide_heading: "Trade‑offs"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Trust boundary"
+    modifier: "ledger design"
+    aliases: ["boundary of trust"]
+    definition: "The line around the people, institutions, or mechanisms that the system assumes are trustworthy enough."
+    context: "The lesson frames architecture as a choice about where the trust boundary should lie."
+    slide_heading: "Trade‑offs"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Throughput"
+    modifier: "ledger performance"
+    aliases: ["write throughput", "transaction throughput"]
+    definition: "The rate at which a ledger or database can process accepted writes or transactions."
+    context: "Throughput is one of the performance costs students must weigh against openness, verification, and decentralization."
+    slide_heading: "Permissioned Ledgers"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Latency"
+    modifier: "ledger performance"
+    aliases: ["transaction latency"]
+    definition: "The time delay between proposing an update and being able to rely on it as accepted or final."
+    context: "The lesson uses latency as a design constraint that can favor centralized databases or more controlled ledger designs."
+    slide_heading: "Trade‑offs"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Execute-Order-Validate"
+    modifier: "Hyperledger Fabric"
+    aliases: ["execute-order-validate architecture"]
+    definition: "A Fabric architecture that separates transaction simulation, ordering, and validation into distinct stages."
+    context: "This pattern shows how Fabric modularizes responsibilities instead of treating consensus as one monolithic step."
+    slide_heading: "Case Study A — Hyperledger Fabric (Permissioned)"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Endorsement policy"
+    modifier: "Hyperledger Fabric"
+    aliases: ["endorsement policies"]
+    definition: "A rule specifying which peers or organizations must approve a transaction before it can be committed."
+    context: "Endorsement policies are the lesson's concrete example of policy-driven trust logic in a permissioned ledger."
+    slide_heading: "Case Study A — Hyperledger Fabric (Permissioned)"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Private data collection"
+    modifier: "Hyperledger Fabric"
+    aliases: ["collections", "private collections"]
+    definition: "A Fabric privacy mechanism that restricts sensitive transaction data to a defined subset of participants."
+    context: "Private collections extend the privacy theme by showing that not all Fabric participants need to see every payload."
+    slide_heading: "Case Study A — Hyperledger Fabric (Permissioned)"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "European Blockchain Services Infrastructure"
+    modifier: null
+    aliases: ["EBSI"]
+    definition: "An EU initiative using shared permissioned ledger infrastructure for trusted cross-border services such as credentials and notarization."
+    context: "EBSI is a public-sector case showing institutional federation rather than mining as the basis of trust."
+    slide_heading: "Case Study B — Public Sector: EBSI & Estonia (KSI){.smaller}"
+    tags: ["permissioned-ledgers", "policy", "real-world"]
+    confidence: "high"
+  - term: "Verifiable credential"
+    modifier: "public-sector ledgers"
+    aliases: ["VC", "verifiable credentials"]
+    definition: "A digitally checkable claim, such as a diploma or identity attribute, whose authenticity can be verified across organizations."
+    context: "Verifiable credentials are one of the lesson's examples of ledger-friendly cross-border services."
+    slide_heading: "Case Study B — Public Sector: EBSI & Estonia (KSI){.smaller}"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Keyless Signature Infrastructure"
+    modifier: null
+    aliases: ["KSI", "Estonia KSI"]
+    definition: "Estonia's hash-linked integrity infrastructure for proving that government and healthcare records have not been altered."
+    context: "KSI shows how ledger-style proofs can provide nation-scale auditability without exposing the underlying data."
+    slide_heading: "Case Study B — Public Sector: EBSI & Estonia (KSI){.smaller}"
+    tags: ["permissioned-ledgers", "real-world", "cryptography"]
+    confidence: "high"
+  - term: "Auditability"
+    modifier: "distributed ledgers"
+    aliases: ["auditable history", "public auditability"]
+    definition: "The ability to inspect evidence that records or transactions followed expected rules and were not silently altered."
+    context: "Auditability connects the public-sector examples, Bitcoin, and the lesson's broader emphasis on verifiable records."
+    slide_heading: "Case Study B — Public Sector: EBSI & Estonia (KSI){.smaller}"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Bitcoin ledger"
+    modifier: null
+    aliases: ["Bitcoin's ledger"]
+    definition: "Bitcoin's public permissionless record of payments, authorized by digital signatures and validated by nodes following common rules."
+    context: "The Bitcoin case study grounds the permissionless model in a real ledger with open validation and probabilistic finality."
+    slide_heading: "Case Study C — Bitcoin Ledger (Permissionless)"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Public auditability"
+    modifier: "Bitcoin"
+    aliases: ["publicly auditable transactions"]
+    definition: "The property that anyone can inspect the public ledger history to check recorded transactions and validation outcomes."
+    context: "The Bitcoin case uses public auditability to show the transparency side of permissionless ledger design."
+    slide_heading: "Case Study C — Bitcoin Ledger (Permissionless)"
+    tags: ["bitcoin", "distributed-systems"]
+    confidence: "high"
+  - term: "Interoperability"
+    modifier: "ledger design"
+    aliases: ["external interoperability"]
+    definition: "The ability of a ledger system to work with external systems, institutions, or standards."
+    context: "The lesson uses interoperability as a design question and as a reason public-sector credential systems can benefit from shared standards."
+    slide_heading: "Case Study B — Public Sector: EBSI & Estonia (KSI){.smaller}"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Public Key Infrastructure"
+    modifier: "permissioned ledgers"
+    aliases: ["PKI"]
+    definition: "The certificate and identity-management infrastructure used to bind participants or organizations to cryptographic credentials."
+    context: "The lesson warns that PKI, membership services, and endorsement policies are core to permissioned ledger design, not afterthoughts."
+    slide_heading: "Common Pitfalls"
+    tags: ["cryptography", "permissioned-ledgers"]
+    confidence: "high"
+  - term: "Operational complexity"
+    modifier: "distributed ledgers"
+    aliases: ["operational burden"]
+    definition: "The coordination, monitoring, key rotation, upgrade, and incident-response work required to run a ledger across organizations."
+    context: "The lesson closes by stressing that many ledger failures arise from operations and governance, not only protocol design."
+    slide_heading: "Common Pitfalls (cont.)"
+    tags: ["distributed-systems", "policy"]
+    confidence: "high"
+  - term: "Tamper-evident ledger"
+    modifier: null
+    aliases: ["tamper-evident history", "tamper evidence"]
+    definition: "A ledger whose structure makes historical edits detectable by breaking hash links or other verification checks."
+    context: "The micro lab gives students hands-on practice seeing how editing old data breaks later ledger links."
+    slide_heading: "Micro Lab: Tamper-Evident Ledger"
+    tags: ["cryptography", "labs"]
+    confidence: "high"

@@ -29,7 +29,7 @@ services:
       context: .
       network: ${DOCKER_BUILD_NETWORK:-default}
       args:
-        BITCOIN_LAB_BASE: "${BITCOIN_LAB_IMAGE:-ghcr.io/bja2142/bitcoin-lab:latest}"
+        BITCOIN_LAB_BASE: "${BITCOIN_LAB_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-lab:latest}"
     image: bitcoin-lab-student
     profiles: ["build-only"]
     networks:
@@ -46,7 +46,7 @@ services:
       context: .
       network: ${DOCKER_BUILD_NETWORK:-default}
       args:
-        BITCOIN_LAB_BASE: "${BITCOIN_LAB_IMAGE:-ghcr.io/bja2142/bitcoin-lab:latest}"
+        BITCOIN_LAB_BASE: "${BITCOIN_LAB_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-lab:latest}"
     networks:
       - p2p-net
       - instructor-mgmt-net
@@ -62,7 +62,36 @@ services:
     environment:
       BTCEXP_BASEURL: "/labs/bitcoin/btc-explorer/"
       MEMPOOL_BASE_PATH: "/labs/bitcoin/mempool"
-    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/bja2142/bitcoin-mempool:latest}"
+      # Static forensics chains age past bitcoind's 24h maxtipage, pinning
+      # the node in IBD forever so mempool-electrs never indexes and every
+      # esplora /api/* route 502s. Keep it out of IBD. addnode points this
+      # node's bitcoind at the instructor hub so a freshly-recreated mempool
+      # (no persistent datadir) re-syncs the chain — without it the new node
+      # sits at height 0 / 0 peers and electrs has nothing to index. Same
+      # hub-and-spoke pattern the graph node uses. Works with the pulled
+      # image (entrypoint appends $BITCOIN_EXTRA_ARGS); maxtipage is also
+      # baked into the rebuilt image's entrypoint.
+      BITCOIN_EXTRA_ARGS: "-maxtipage=9999999999 -addnode=bitcoin-instructor-1"
+    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-mempool:latest}"
+    networks:
+      - p2p-net
+      - student-mgmt-net
+
+  # Chain Graph: Breadcrumbs-style tx-graph explorer (bitcoin-graph/DESIGN.md).
+  # Own bitcoind syncs via p2p-net; Neo4j + web UI on :8082 reached through
+  # the router at /labs/bitcoin/graph/. Deliberately NO named volumes: the
+  # node holds a full chain copy, so nuke's docker rm must discard it or it
+  # would gossip the old chain back into a reseeded instructor. The graph
+  # store rebuilds itself on boot (GRAPH_AUTOBUILD) or via the admin button.
+  graph:
+    build:
+      context: ../bitcoin-graph
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: "${BITCOIN_GRAPH_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-graph:latest}"
+    # 4g: neo4j (1g heap + 512m pagecache + JVM overhead) + bitcoind +
+    # the ETL's address/cluster tables during a rebuild of the ~1.7M-tx
+    # forensics chain. Cap, not reservation — idle usage is ~1.2g.
+    mem_limit: 4g
     networks:
       - p2p-net
       - student-mgmt-net

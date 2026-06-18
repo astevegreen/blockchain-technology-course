@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# graph-rebuild [--if-empty] [--wait-sync] [--queue]
+#
+# Rebuild the Neo4j transaction graph from the local bitcoind's current
+# chain. In-place rebuild (Neo4j community has no multi-db staging):
+# stop neo4j, wipe the store, restart, re-ingest. The graph-app serves
+# a "rebuilding" status meanwhile (status.json is updated by etl.py).
+#
+# Invoked three ways:
+#   - instructor button: lane-service `docker exec -d bitcoin-graph-1 graph-rebuild --wait-sync`
+#   - forensics deploy auto-trigger: `--wait-sync --queue`, fire-and-forget
+#   - first-boot autobuild: supervisord one-shot with --if-empty --wait-sync
+set -uo pipefail
+
+: "${BITCOIN_DATADIR:=/home/user/.bitcoin}"
+: "${GRAPH_RUN_DIR:=/run/graph}"
+STATUS="${GRAPH_RUN_DIR}/status.json"
+NEO4J_DATA="/var/lib/neo4j/data"
+PY="/opt/graph-venv/bin/python"
+
+IF_EMPTY=0
+WAIT_SYNC=0
+QUEUE=0
+for arg in "$@"; do
+  case "$arg" in
+    --if-empty)  IF_EMPTY=1 ;;
+    --wait-sync) WAIT_SYNC=1 ;;
+    --queue)     QUEUE=1 ;;
+    *) echo "usage: graph-rebuild [--if-empty] [--wait-sync] [--queue]" >&2; exit 2 ;;
+  esac
+done
+
+mkdir -p "${GRAPH_RUN_DIR}"
+
+# Rebuild lock. Default (autobuild / manual button): a second trigger while a
+# rebuild is running is a no-op. With --queue (forensics deploy): WAIT for the
+# in-flight rebuild to finish, then rebuild again — so a deploy that lands while
+# a just-prior reset's first-boot autobuild still holds the lock is not dropped,
+# and the deployed chain is always reflected (fixes the rapid reset->deploy race).
+exec 9>"${GRAPH_RUN_DIR}/rebuild.lock"
+if [[ "$QUEUE" == "1" ]]; then
+  if ! flock -w 900 9; then
+    echo "rebuild lock still busy after 15min; giving up" >&2
+    exit 1
+  fi
+else
+  if ! flock -n 9; then
+    echo "rebuild already in progress" >&2
+    exit 1
+  fi
+fi
+
+set_status() {
+  printf '{"state": "%s", "detail": "%s"}\n' "$1" "${2:-}" > "${STATUS}.tmp" \
+    && mv "${STATUS}.tmp" "${STATUS}"
+  chmod 644 "${STATUS}" 2>/dev/null || true
+}
+
+if [[ "$IF_EMPTY" == "1" ]]; then
+  state=$(jq -r '.state // "empty"' "${STATUS}" 2>/dev/null || echo empty)
+  if [[ "$state" == "ready" ]]; then
+    echo "graph already built (state=ready); skipping autobuild"
+    exit 0
+  fi
+fi
+
+# Wait for our bitcoind to be reachable and (optionally) synced to the
+# classroom chain. The chain mines every ~10s forever, so "synced" means
+# IBD finished — etl.py snapshots the tip height when it starts.
+bitcoin-cli -rpcwait -datadir="${BITCOIN_DATADIR}" getblockcount >/dev/null 2>&1
+if [[ "$WAIT_SYNC" == "1" ]]; then
+  set_status building "waiting for chain sync"
+  # NOTE: do NOT gate on initialblockdownload — it stays true forever on
+  # a static chain whose tip is older than ~24h (nMaxTipAge), which is
+  # exactly what a pre-built forensics chain looks like. headers==blocks
+  # plus the tip-stability loop below is the reliable signal here.
+  for _ in $(seq 1 120); do
+    synced=$(bitcoin-cli -datadir="${BITCOIN_DATADIR}" getblockchaininfo 2>/dev/null \
+               | jq -r '(.blocks > 0) and (.blocks == .headers)' || echo false)
+    [[ "$synced" == "true" ]] && break
+    sleep 5
+  done
+  # A forensics deploy reaches us as a reorg, not IBD — wait until the
+  # tip stops moving (3 consecutive stable 10s checks, max ~10 min).
+  # If the classroom is actively mining the tip never settles; we then
+  # proceed and the status banner reports the as-of height honestly.
+  stable=0 last=-1
+  for _ in $(seq 1 60); do
+    tip=$(bitcoin-cli -datadir="${BITCOIN_DATADIR}" getblockcount 2>/dev/null || echo -1)
+    if [[ "$tip" == "$last" && "$tip" != "-1" ]]; then
+      stable=$((stable + 1))
+      [[ "$stable" -ge 3 ]] && break
+    else
+      stable=0
+    fi
+    last="$tip"
+    sleep 10
+  done
+fi
+
+set_status building "resetting graph store"
+
+# Wipe the store while neo4j is down, then bring it back empty.
+supervisorctl stop neo4j >/dev/null
+rm -rf "${NEO4J_DATA}/databases" "${NEO4J_DATA}/transactions"
+chown -R neo4j:neo4j "${NEO4J_DATA}"
+supervisorctl start neo4j >/dev/null
+
+# etl.py retries bolt connections while neo4j boots, owns status.json
+# for the rest of the run (building progress -> ready / error).
+if ! "${PY}" /opt/graph-etl/etl.py; then
+  set_status error "etl failed — see /var/log/graph-autobuild.err or rerun graph-rebuild"
+  exit 1
+fi
+
+echo "graph rebuild complete"

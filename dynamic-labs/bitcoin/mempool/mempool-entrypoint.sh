@@ -15,8 +15,18 @@ txindex=1
 fallbackfee=0.0001
 rpcbind=0.0.0.0
 rpcallowip=0.0.0.0/0
+# Course forensics chains are static snapshots; once their tip ages past
+# bitcoind's 24h default the node is pinned in initialblockdownload (IBD)
+# forever. mempool-electrs waits for IBD to clear before it indexes, so it
+# never binds :3000 and every esplora route (/api/address, /api/tx, …)
+# 502s. A huge maxtipage keeps the node out of IBD so electrs always
+# indexes and the explorer's tx/address/click-to-trace pages work.
+maxtipage=9999999999
 EOF
 fi
+# Belt-and-suspenders if the conf pre-exists (e.g. a mounted datadir):
+# guarantee maxtipage is set so electrs never stalls on an aged tip.
+grep -q '^maxtipage=' "$CONF" || echo 'maxtipage=9999999999' >> "$CONF"
 
 # Start bitcoind if it isn't already
 if ! pgrep -x bitcoind >/dev/null 2>&1; then

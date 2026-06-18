@@ -54,6 +54,9 @@ ROOM_MIN_SIZE = 4
 RECOMMENDED_GROUP_SIZE = 5
 DEFAULT_DISCONNECT_GRACE_SECONDS = 15
 ACTION_TIMEOUT_SECONDS = 60
+DEFAULT_RETENTION_MINUTES = 60
+MIN_RETENTION_MINUTES = 1
+MAX_RETENTION_MINUTES = 1440
 INSTRUCTOR_DASHBOARD_ROOM = "instructors"
 
 # Phase 7.7: auth verification + issuance lives in the shared
@@ -93,11 +96,12 @@ GENERIC_CLUES = [
 ]
 
 GAME_SETTINGS = {
-    "mode": "standalone",
     "game_enabled": True,
     "disconnect_grace_seconds": DEFAULT_DISCONNECT_GRACE_SECONDS,
     "action_timeout_seconds": ACTION_TIMEOUT_SECONDS,
-    "agents_enabled": False,
+    "retention_minutes": DEFAULT_RETENTION_MINUTES,
+    "agents_enabled": True,
+    "private_rooms_enabled": True,
     "reveal_mode": "random",
     "context": "A group shares a secret word. One Insider does not know it and must blend in.",
     "custom_words": "",
@@ -162,6 +166,13 @@ def action_timeout_seconds():
     return max(15, int(GAME_SETTINGS["action_timeout_seconds"]))
 
 
+def retention_minutes():
+    return max(
+        MIN_RETENTION_MINUTES,
+        min(MAX_RETENTION_MINUTES, int(GAME_SETTINGS["retention_minutes"])),
+    )
+
+
 def normalized_name(text):
     return " ".join(text.strip().lower().split())
 
@@ -195,8 +206,6 @@ def create_room(private_room=False):
     room_id = generate_room_id()
     rooms[room_id] = {
         "players": {},
-        "host_sid": None,
-        "fill_with_agents": False,
         "private_room": private_room,
         "roster_locked": False,
         "state": "lobby",
@@ -222,6 +231,7 @@ def get_or_create_room():
     for room_id, room in rooms.items():
         if (
             room["state"] == "lobby"
+            and not room.get("archived")
             and not room["private_room"]
             and not room["roster_locked"]
             and active_player_count(room) < ROOM_MAX_SIZE
@@ -235,7 +245,12 @@ def get_requested_room(room_id):
         return None
     room_id = room_id.strip().upper()
     room = rooms.get(room_id)
-    if not room or room["state"] != "lobby" or active_player_count(room) >= ROOM_MAX_SIZE:
+    if (
+        not room
+        or room.get("archived")
+        or room["state"] != "lobby"
+        or active_player_count(room) >= ROOM_MAX_SIZE
+    ):
         return None
     return room_id
 
@@ -256,7 +271,6 @@ def player_payload(room, sid):
         "name": player["name"],
         "connected": player["connected"],
         "active": player["active"],
-        "is_host": sid == room["host_sid"],
         "has_voted": sid in room["votes"],
         "has_committed_clue": sid in room["clues"],
         "is_agent": player["is_agent"],
@@ -309,7 +323,6 @@ def room_payload(room_id):
         "round": room["round"],
         "max_size": ROOM_MAX_SIZE,
         "min_size": ROOM_MIN_SIZE,
-        "host_sid": room["host_sid"],
         "players": [player_payload(room, sid) for sid in room["players"]],
         "player_count": active_player_count(room),
         "game_over": room["game_over"],
@@ -317,7 +330,6 @@ def room_payload(room_id):
         "clues_committed": len([sid for sid in room["clues"] if room["players"].get(sid, {}).get("active")]),
         "revealed_clues": room["revealed_clues"],
         "result": room["result"],
-        "fill_with_agents": room["fill_with_agents"],
         "private_room": room["private_room"],
         "current_turn_sid": current_turn_sid,
         "current_turn_name": room["players"][current_turn_sid]["name"] if current_turn_sid else None,
@@ -335,8 +347,10 @@ def instructor_payload():
             "round": room["round"],
             "word": room["word"],
             "player_count": active_player_count(room),
-            "fill_with_agents": room["fill_with_agents"],
             "private_room": room["private_room"],
+            "archived": bool(room.get("archived")),
+            "archived_at": room.get("archived_at"),
+            "retention_deadline": room.get("retention_deadline"),
             "clues_committed": len([sid for sid in room["clues"] if room["players"].get(sid, {}).get("active")]),
             "revealed_clues": room["revealed_clues"],
             "current_turn_name": room["players"][active_turn_sid(room)]["name"]
@@ -348,7 +362,6 @@ def instructor_payload():
                     "name": player["name"],
                     "connected": player["connected"],
                     "active": player["active"],
-                    "is_host": sid == room["host_sid"],
                     "is_insider": sid == room["insider_sid"],
                     "has_voted": sid in room["votes"],
                     "has_committed_clue": sid in room["clues"],
@@ -411,10 +424,7 @@ def insider_survival_threshold_reached(room, active_ids=None):
 
 
 def agent_count_for_room(room):
-    if GAME_SETTINGS["mode"] == "classroom":
-        if not GAME_SETTINGS["agents_enabled"]:
-            return 0
-    elif not room["fill_with_agents"]:
+    if not GAME_SETTINGS["agents_enabled"]:
         return 0
     target_size = min(RECOMMENDED_GROUP_SIZE, ROOM_MAX_SIZE)
     missing = max(0, target_size - active_player_count(room))
@@ -937,7 +947,38 @@ def cleanup_room(room_id):
     room = rooms.get(room_id)
     if not room or active_player_count(room):
         return
-    rooms.pop(room_id, None)
+    if room.get("archived"):
+        return
+    if room["round"] == 0:
+        rooms.pop(room_id, None)
+        return
+    archive_room(room_id)
+
+
+def archive_room(room_id):
+    room = rooms.get(room_id)
+    if not room:
+        return
+    now = time.time()
+    deadline = now + retention_minutes() * 60
+    room["archived"] = True
+    room["archived_at"] = now
+    room["retention_deadline"] = deadline
+    clear_phase_timer(room)
+
+    def discard_after_retention():
+        socketio.sleep(max(0, deadline - time.time()))
+        current = rooms.get(room_id)
+        if not current:
+            return
+        if not current.get("archived"):
+            return
+        if current.get("retention_deadline") != deadline:
+            return
+        rooms.pop(room_id, None)
+        emit_instructor_update()
+
+    socketio.start_background_task(discard_after_retention)
 
 
 def schedule_disconnect_deadline(room_id, player_id, deadline):
@@ -1021,7 +1062,6 @@ def eliminate_player(room_id, player_id, disconnected=False, timed_out=False, br
         sid_to_player.pop(old_sid, None)
         player_to_room.pop(old_sid, None)
 
-    was_host = room["host_sid"] == player_id
     player["sid"] = None
     player["connected"] = False
     player["active"] = False
@@ -1049,14 +1089,6 @@ def eliminate_player(room_id, player_id, disconnected=False, timed_out=False, br
     for voter_sid, target_sid in list(room["votes"].items()):
         if target_sid == player_id:
             room["votes"].pop(voter_sid, None)
-
-    if was_host:
-        human_ids = [
-            other_id
-            for other_id, other in room["players"].items()
-            if other["active"] and not other["is_agent"]
-        ]
-        room["host_sid"] = human_ids[0] if human_ids else next(iter(active_player_ids(room)), None)
 
     if not active_player_count(room) and room["state"] in {"lobby", "results"}:
         cleanup_room(room_id)
@@ -1091,7 +1123,6 @@ def remove_player_from_room(room_id, player_id):
         sid_to_player.pop(old_sid, None)
         player_to_room.pop(old_sid, None)
 
-    was_host = room["host_sid"] == player_id
     room["players"].pop(player_id, None)
     room["votes"].pop(player_id, None)
     room["clues"].pop(player_id, None)
@@ -1107,9 +1138,6 @@ def remove_player_from_room(room_id, player_id):
     for voter_sid, target_sid in list(room["votes"].items()):
         if target_sid == player_id:
             room["votes"].pop(voter_sid, None)
-
-    if was_host:
-        room["host_sid"] = next(iter(active_human_ids(room)), None)
 
     if not active_player_count(room):
         cleanup_room(room_id)
@@ -1160,7 +1188,7 @@ def index():
         script_root=script_root,
         requested_room=requested_room,
         requested_player_token=requested_player_token,
-        current_mode=GAME_SETTINGS["mode"],
+        current_private_rooms_enabled=GAME_SETTINGS["private_rooms_enabled"],
         current_game_enabled=GAME_SETTINGS["game_enabled"],
     )
 
@@ -1227,26 +1255,29 @@ def handle_join(data):
         emit("error_message", {"message": "That room is unavailable. Ask the host for a fresh join link."})
         return
 
-    if GAME_SETTINGS["mode"] == "standalone":
-        if join_mode == "create_private":
-            room_id = create_room(private_room=True)
-        elif join_mode == "room_link":
-            if not requested_room_id:
-                emit("error_message", {"message": "That room is unavailable. Ask the host for a fresh join link."})
-                return
-            room_id = requested_room_id
-        elif join_mode == "join_private":
-            if not requested_room_id:
-                emit("error_message", {"message": "Enter a valid private room code."})
-                return
-            if not rooms[requested_room_id]["private_room"]:
-                emit("error_message", {"message": "That room is not a private game."})
-                return
-            room_id = requested_room_id
-        else:
-            room_id = get_or_create_room()
+    if join_mode == "create_private":
+        if not GAME_SETTINGS["private_rooms_enabled"]:
+            emit("error_message", {"message": "Private rooms are disabled by the instructor."})
+            return
+        room_id = create_room(private_room=True)
+    elif join_mode == "join_private":
+        if not GAME_SETTINGS["private_rooms_enabled"]:
+            emit("error_message", {"message": "Private rooms are disabled by the instructor."})
+            return
+        if not requested_room_id:
+            emit("error_message", {"message": "Enter a valid private room code."})
+            return
+        if not rooms[requested_room_id]["private_room"]:
+            emit("error_message", {"message": "That room is not a private game."})
+            return
+        room_id = requested_room_id
+    elif join_mode == "room_link":
+        if not requested_room_id:
+            emit("error_message", {"message": "That room is unavailable. Ask the host for a fresh join link."})
+            return
+        room_id = requested_room_id
     else:
-        room_id = requested_room_id or get_or_create_room()
+        room_id = get_or_create_room()
 
     room = rooms[room_id]
     if room["state"] != "lobby" or active_player_count(room) >= ROOM_MAX_SIZE:
@@ -1263,8 +1294,6 @@ def handle_join(data):
     player_id = generate_player_id()
     room["players"][player_id] = create_player(name[:40])
     attach_socket_to_player(room_id, player_id, request.sid)
-    if room["host_sid"] is None:
-        room["host_sid"] = player_id
 
     emit("joined", {"room_id": room_id, "sid": player_id, "player_token": player_id})
     broadcast_room_state(room_id)
@@ -1315,13 +1344,10 @@ def handle_submit_clue(data):
 def handle_start_game():
     room_id, room = current_room()
     player_id = current_player_id()
-    if not room:
+    if not room or not player_id:
         return
     if not game_is_online():
         emit("error_message", {"message": "The game is currently offline during instruction."})
-        return
-    if player_id != room["host_sid"]:
-        emit("error_message", {"message": "Only the host can start the round."})
         return
     if room["state"] != "lobby":
         emit("error_message", {"message": "This room is already mid-round."})
@@ -1339,40 +1365,14 @@ def handle_start_game():
     broadcast_room_state(room_id)
 
 
-@socketio.on("set_fill_with_agents")
-def handle_set_fill_with_agents(data):
-    room_id, room = current_room()
-    player_id = current_player_id()
-    if not room:
-        return
-    if not game_is_online():
-        emit("error_message", {"message": "The game is currently offline during instruction."})
-        return
-    if player_id != room["host_sid"]:
-        emit("error_message", {"message": "Only the host can change agent fill settings."})
-        return
-    if room["state"] != "lobby":
-        emit("error_message", {"message": "Change agent fill settings before the round starts."})
-        return
-    if GAME_SETTINGS["mode"] != "standalone":
-        emit("error_message", {"message": "Standalone agent fill is only available in standalone mode."})
-        return
-
-    room["fill_with_agents"] = bool(data.get("enabled"))
-    broadcast_room_state(room_id)
-
-
 @socketio.on("reveal_next")
 def handle_reveal_next():
     room_id, room = current_room()
     player_id = current_player_id()
-    if not room or room["state"] != "reveal":
+    if not room or not player_id or room["state"] != "reveal":
         return
     if not game_is_online():
         emit("error_message", {"message": "The game is currently offline during instruction."})
-        return
-    if player_id != room["host_sid"]:
-        emit("error_message", {"message": "Only the host can reveal the next clue."})
         return
     if not reveal_next_clue(room):
         emit("error_message", {"message": "There are no clues left to reveal."})
@@ -1438,13 +1438,10 @@ def handle_submit_guess(data):
 def handle_start_next_round_request():
     room_id, room = current_room()
     player_id = current_player_id()
-    if not room:
+    if not room or not player_id:
         return
     if not game_is_online():
         emit("error_message", {"message": "The game is currently offline during instruction."})
-        return
-    if player_id != room["host_sid"]:
-        emit("error_message", {"message": "Only the host can start the next round."})
         return
     if not can_start_next_round(room):
         emit("error_message", {"message": "This game is not waiting to begin the next round."})
@@ -1481,33 +1478,38 @@ def handle_update_settings(data):
         emit("error_message", {"message": "Instructor authentication required."})
         return
 
-    mode = data.get("mode", GAME_SETTINGS["mode"])
     game_enabled = bool(data.get("game_enabled", True))
     disconnect_seconds = int(data.get("disconnect_grace_seconds", GAME_SETTINGS["disconnect_grace_seconds"]))
     action_timeout = int(data.get("action_timeout_seconds", GAME_SETTINGS["action_timeout_seconds"]))
-    agents_enabled = bool(data.get("agents_enabled", False))
+    retention_value = int(data.get("retention_minutes", GAME_SETTINGS["retention_minutes"]))
+    agents_enabled = bool(data.get("agents_enabled", GAME_SETTINGS["agents_enabled"]))
+    private_rooms_enabled = bool(data.get("private_rooms_enabled", GAME_SETTINGS["private_rooms_enabled"]))
     reveal_mode = data.get("reveal_mode", GAME_SETTINGS["reveal_mode"])
     context = (data.get("context") or "").strip()
     custom_words = (data.get("custom_words") or "").strip()
 
-    if mode not in {"standalone", "classroom"}:
-        emit("error_message", {"message": "Unsupported mode."})
-        return
     if disconnect_seconds < 0 or disconnect_seconds > 120:
         emit("error_message", {"message": "Disconnect grace must be between 0 and 120 seconds."})
         return
     if action_timeout < 15 or action_timeout > 300:
         emit("error_message", {"message": "Action timeout must be between 15 and 300 seconds."})
         return
+    if retention_value < MIN_RETENTION_MINUTES or retention_value > MAX_RETENTION_MINUTES:
+        emit(
+            "error_message",
+            {"message": f"Game retention must be between {MIN_RETENTION_MINUTES} and {MAX_RETENTION_MINUTES} minutes."},
+        )
+        return
     if reveal_mode not in {"simultaneous", "random"}:
         emit("error_message", {"message": "Unsupported reveal mode."})
         return
 
-    GAME_SETTINGS["mode"] = mode
     GAME_SETTINGS["game_enabled"] = game_enabled
     GAME_SETTINGS["disconnect_grace_seconds"] = disconnect_seconds
     GAME_SETTINGS["action_timeout_seconds"] = action_timeout
-    GAME_SETTINGS["agents_enabled"] = agents_enabled if mode == "classroom" else False
+    GAME_SETTINGS["retention_minutes"] = retention_value
+    GAME_SETTINGS["agents_enabled"] = agents_enabled
+    GAME_SETTINGS["private_rooms_enabled"] = private_rooms_enabled
     GAME_SETTINGS["reveal_mode"] = reveal_mode
     GAME_SETTINGS["context"] = context
     GAME_SETTINGS["custom_words"] = custom_words

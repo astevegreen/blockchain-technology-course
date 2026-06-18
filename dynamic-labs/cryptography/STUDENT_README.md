@@ -8,6 +8,7 @@ Welcome. In this lab you'll work hands-on with the cryptographic primitives that
 - Each part loads an interactive terminal. Type commands into the input box and press **Enter** to run them.
 - Your **progress bar** at the top of each page tracks completion of that part's phases. Aim for 100% before moving to the next part.
 - Output history scrolls below the input box. Re-read it whenever you get stuck — earlier output usually contains the data you need next.
+- Type `help` for examples, press **Up Arrow** to recall previous commands, press **Tab** to complete command names, and click highlighted hashes to copy them.
 
 ---
 
@@ -41,8 +42,8 @@ Open **2. Merkle Trees** in the sidebar.
 To scale the network, the organization is implementing Merkle Trees to batch transactions.
 **Task:** Manually construct a 3-level Merkle Tree.
 1. Use `list_tx` to see the base data.
-2. Hash the transactions and use `fill_leaf <idx> <hash>` to populate the bottom layer.
-3. Use the `combine <hash_L> <hash_R>` command to iteratively build the tree up to the Root.
+2. Hash the transactions and use `fill_leaf <Leaf-0..Leaf-7> <hash>` to populate the bottom layer.
+3. Use `combine <target_node> <hash_L> <hash_R>` to build each parent node, for example `combine L1-0 <Leaf-0 hash> <Leaf-1 hash>`.
 
 ### Phase 5: Verifying a Merkle Proof
 Two transactions have been flagged for review. One is valid, and one is a forgery that shares the same Merkle Root.

@@ -21,9 +21,12 @@ ENV ZELLIJ_CONFIG_DIR="/etc/zellij"
 COPY scripts/hlf_ttyd_wrapper.sh /opt/hlf-scripts/hlf_ttyd_wrapper.sh
 COPY scripts/hlf_peer_shell.sh   /opt/hlf-scripts/hlf_peer_shell.sh
 COPY scripts/hlf_cli_helpers.sh  /opt/hlf-scripts/hlf_cli_helpers.sh
-RUN if ! getent group hlf >/dev/null 2>&1; then groupadd --gid 1000 hlf; fi \
-    && if ! id -u hlf >/dev/null 2>&1; then useradd --uid 1000 --gid 1000 --home-dir /home/student --shell /bin/bash --no-create-home hlf; fi \
-    && mkdir -p /home/student /opt/student-home-seed /var/hyperledger/production \
-    && chown -R 1000:1000 /home/student /var/hyperledger/production \
-    && (cp -a /home/student/. /opt/student-home-seed/ 2>/dev/null || true) \
-    && chmod 755 /opt/hlf-scripts/*.sh
+COPY scripts/hlf_bashrc_hook.sh /etc/hlf_bashrc_hook.sh
+
+RUN if ! getent group hlf >/dev/null 2>&1; then groupadd --gid 1000 hlf; fi
+RUN if ! id -u hlf >/dev/null 2>&1; then useradd --uid 1000 --gid 1000 --home-dir /home/student --shell /bin/bash --no-create-home hlf; fi
+RUN mkdir -p /home/student /opt/student-home-seed /var/hyperledger/production
+RUN chown -R 1000:1000 /home/student /var/hyperledger/production
+RUN cp -a /home/student/. /opt/student-home-seed/ 2>/dev/null || true
+RUN cat /etc/hlf_bashrc_hook.sh >> /etc/bash.bashrc
+RUN chmod 755 /opt/hlf-scripts/*.sh

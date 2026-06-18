@@ -1,0 +1,436 @@
+lesson_id: "03-DS"
+lesson_title: "Trust and P2P"
+source_path: "lessons/distributed_primitives/03-DS-trust_and_p2p.qmd"
+terms:
+  - term: "Peer"
+    modifier: "P2P network"
+    aliases: ["node", "participant"]
+    definition: "A participant in a peer-to-peer network that can request, provide, rate, or verify resources without relying on a central server."
+    context: "The opening scenario asks students to choose between peers with different histories, making peer behavior the object of trust decisions."
+    slide_heading: "Intro: “The Bad Download”"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Peer-to-peer network"
+    modifier: null
+    aliases: ["P2P", "P2P network", "peer-to-peer file sharing network"]
+    definition: "A network design where participants communicate and exchange resources directly rather than through one central authority."
+    context: "The lesson studies how peers decide whom to trust when they must cooperate with strangers in an open P2P setting."
+    slide_heading: "Intro: “The Bad Download”"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Trust mechanism"
+    modifier: null
+    aliases: ["trust mechanisms"]
+    definition: "A system feature that turns uncertain peer behavior into signals, scores, or rules that help participants choose safer partners."
+    context: "The opening notes frame trust mechanisms as necessary because open P2P networks lack a referee who can vouch for strangers."
+    slide_heading: "Intro: “The Bad Download”"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Trust"
+    modifier: "P2P reputation"
+    aliases: []
+    definition: "An expectation that a peer will behave as promised in a future interaction."
+    context: "Trust is the lesson's core prediction problem: students distinguish expectations about future behavior from evidence about past behavior."
+    slide_heading: "Intro: “The Bad Download”"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Reputation"
+    modifier: "P2P trust"
+    aliases: []
+    definition: "A summary of a peer's past behavior used to estimate whether that peer is likely to behave correctly in the future."
+    context: "Reputation is the evidence base that PeerTrust, EigenTrust, and later defenses use to guide trust decisions."
+    slide_heading: "What Is “Trust” in P2P?"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Central authority"
+    modifier: "P2P trust"
+    aliases: ["central referee"]
+    definition: "A single organization or service that can vouch for participants, enforce rules, or resolve disputes for the network."
+    context: "The lesson emphasizes that P2P trust is hard because peers often need to cooperate without this kind of central authority."
+    slide_heading: "What Is “Trust” in P2P?"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Cryptographic trust"
+    modifier: null
+    aliases: ["crypto trust layer"]
+    definition: "Trust grounded in cryptographic checks that verify identity, authenticity, and message integrity."
+    context: "The lesson separates cryptographic proof from behavioral trust so students do not assume signatures guarantee honest conduct."
+    slide_heading: "Cryptographic vs. Social Trust"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Social trust"
+    modifier: null
+    aliases: ["behavioral trust", "social (behavioral) trust"]
+    definition: "Trust based on observed honesty and reliability over time rather than on cryptographic identity alone."
+    context: "Social trust explains why reputation systems remain necessary even when messages and identities can be cryptographically verified."
+    slide_heading: "Cryptographic vs. Social Trust"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Message integrity"
+    modifier: null
+    aliases: ["integrity", "data integrity"]
+    definition: "The property that data has not been altered in transit or storage."
+    context: "Integrity is one of the things cryptography can verify before reputation is used to judge whether the peer behaved honestly."
+    slide_heading: "Cryptographic vs. Social Trust"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Direct trust"
+    modifier: null
+    aliases: ["first-hand trust", "direct experience"]
+    definition: "Trust based on a participant's own prior interactions with a peer."
+    context: "Direct trust is the strongest evidence source in the lesson, but it only covers peers a participant has already encountered."
+    slide_heading: "Direct vs. Indirect Trust"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Indirect trust"
+    modifier: null
+    aliases: ["recommendation-based trust", "hearsay"]
+    definition: "Trust extended through recommendations from other peers rather than through personal experience."
+    context: "Indirect trust expands reach to strangers, but the lesson stresses that it must be discounted by recommender credibility."
+    slide_heading: "Direct vs. Indirect Trust"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Recommender credibility"
+    modifier: null
+    aliases: ["recommender quality"]
+    definition: "A measure of how much weight to give a peer's recommendation based on that peer's own trustworthiness."
+    context: "The lesson uses recommender credibility to explain why indirect trust should not treat every recommendation equally."
+    slide_heading: "Direct vs. Indirect Trust"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Reputation system"
+    modifier: null
+    aliases: ["trust system"]
+    definition: "A scoring system that aggregates evidence about peer behavior so participants can choose whom to trust."
+    context: "The lesson evaluates reputation systems by accuracy, scalability, robustness, and how they handle newcomers."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Accuracy"
+    modifier: "reputation systems"
+    aliases: []
+    definition: "The degree to which reputation scores correlate with actual future peer behavior."
+    context: "Accuracy matters because scores should reflect verified outcomes, not just rating volume or popularity."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Scalability"
+    modifier: "reputation systems"
+    aliases: []
+    definition: "The ability of a reputation system to keep computation, storage, and communication costs manageable as the network grows."
+    context: "Scalability is one of the design constraints students use to compare local and global trust models."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Robustness"
+    modifier: "reputation systems"
+    aliases: []
+    definition: "The ability of a reputation system to resist manipulation by fake identities, collusion, slander, and other attacks."
+    context: "Robustness becomes the bridge from scoring models to the threat slides later in the lesson."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Bootstrap"
+    modifier: "reputation systems"
+    aliases: ["bootstrapping", "newcomer handling"]
+    definition: "The process by which new participants enter a trust system and begin earning reputation from low or neutral starting trust."
+    context: "Bootstrap choices determine whether honest newcomers can join while attackers are prevented from gaining instant influence."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "PeerTrust"
+    modifier: null
+    aliases: []
+    definition: "A context-aware reputation model that calculates trust from weighted feedback, rater credibility, transaction scope, and contextual factors."
+    context: "PeerTrust is the lesson's concrete example of a local, personalized trust-scoring approach."
+    slide_heading: "PeerTrust: How Trust Is Calculated"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Feedback score"
+    modifier: null
+    aliases: ["satisfaction score", "satisfaction"]
+    definition: "A measure of how satisfied peers were with past interactions with a participant."
+    context: "PeerTrust starts with satisfaction evidence but does not treat raw feedback as equally reliable."
+    slide_heading: "PeerTrust: How Trust Is Calculated"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Feedback scope"
+    modifier: null
+    aliases: ["transaction scope", "evidence depth"]
+    definition: "The amount of interaction history behind a rating or reputation score."
+    context: "Feedback scope helps PeerTrust avoid overconfidence when a peer has only a thin history."
+    slide_heading: "PeerTrust: How Trust Is Calculated"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Rater credibility"
+    modifier: null
+    aliases: ["reviewer credibility"]
+    definition: "The trustworthiness of the peer providing a rating, used to decide how much that rating should affect the final score."
+    context: "Rater credibility lets PeerTrust discount ratings from untrusted or newly created accounts."
+    slide_heading: "PeerTrust: How Trust Is Calculated"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Context factor"
+    modifier: null
+    aliases: ["context factors", "context weight", "transaction context"]
+    definition: "A weighting factor that accounts for the type, stakes, and norms of the transaction being rated."
+    context: "Context factors keep many low-stakes successes from hiding an important failure in a high-stakes task."
+    slide_heading: "PeerTrust: How Trust Is Calculated"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Credibility weighting"
+    modifier: null
+    aliases: []
+    definition: "A defense that scales ratings by the rater's own credibility so untrusted raters have little influence."
+    context: "The lesson uses credibility weighting to show how PeerTrust resists fake accounts and coordinated rating manipulation."
+    slide_heading: "PeerTrust: Handling Manipulation"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Ballot stuffing"
+    modifier: "reputation attack"
+    aliases: ["vote flooding", "rating inflation"]
+    definition: "A manipulation tactic where fake or coordinated accounts give each other high ratings to inflate reputation scores."
+    context: "PeerTrust's credibility weighting is presented as a way to make ballot stuffing by low-credibility accounts ineffective."
+    slide_heading: "PeerTrust: Handling Manipulation"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Reputation milking"
+    modifier: null
+    aliases: ["milking reputation"]
+    definition: "A strategy where a peer builds a good track record on low-risk actions and then exploits that reputation for a more damaging failure."
+    context: "The lesson uses reputation milking to explain why context weighting and later recency defenses are needed."
+    slide_heading: "PeerTrust: Handling Manipulation"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Thin history"
+    modifier: null
+    aliases: ["low feedback scope"]
+    definition: "A small amount of interaction evidence that is not yet enough to support high confidence in a peer's reputation."
+    context: "PeerTrust treats thin histories cautiously so newcomers or attackers cannot gain strong scores from only a few positive ratings."
+    slide_heading: "PeerTrust: Handling Manipulation"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "EigenTrust"
+    modifier: null
+    aliases: []
+    definition: "A global reputation algorithm that normalizes local trust values and iteratively propagates them through the network to produce shared trust scores."
+    context: "EigenTrust is the lesson's main example of moving from personalized local opinions to network-wide reputation."
+    slide_heading: "EigenTrust: From Local Opinions to Global Scores"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Local satisfaction ratio"
+    modifier: null
+    aliases: ["local satisfaction ratios", "net satisfaction"]
+    definition: "A peer's direct record of successful versus failed interactions with another peer."
+    context: "EigenTrust begins with local satisfaction ratios before normalizing them into values that can propagate through the network."
+    slide_heading: "EigenTrust: From Local Opinions to Global Scores"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Normalization"
+    modifier: "EigenTrust"
+    aliases: ["normalized local trust"]
+    definition: "The step that converts a peer's positive local experiences into bounded trust values whose total influence is limited."
+    context: "Normalization prevents a peer from amplifying influence simply by rating many other peers highly."
+    slide_heading: "EigenTrust: From Local Opinions to Global Scores"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Trust matrix"
+    modifier: null
+    aliases: ["C matrix"]
+    definition: "A structured table of normalized trust values showing how much each peer trusts other peers."
+    context: "EigenTrust uses the trust matrix as the data structure for propagating local trust into global scores."
+    slide_heading: "EigenTrust: From Local Opinions to Global Scores"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Iterative propagation"
+    modifier: null
+    aliases: ["trust propagation"]
+    definition: "Repeatedly passing trust values through the network until the scores converge and stabilize."
+    context: "EigenTrust uses iterative propagation to turn many local judgments into a shared global reputation vector."
+    slide_heading: "EigenTrust: From Local Opinions to Global Scores"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Global trust vector"
+    modifier: null
+    aliases: ["trust vector", "global reputation vector"]
+    definition: "The final EigenTrust score set in which each entry represents a peer's global reputation."
+    context: "The global trust vector is the output students should associate with EigenTrust's normalization and propagation process."
+    slide_heading: "EigenTrust: From Local Opinions to Global Scores"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Pre-trusted anchor"
+    modifier: null
+    aliases: ["anchor", "anchor node", "pre-trusted peer", "trusted reference point"]
+    definition: "A trusted starting peer used to ground a global reputation calculation and constrain how trust propagates."
+    context: "EigenTrust uses anchors to keep colluding clusters from becoming globally trusted without outside endorsement."
+    slide_heading: "EigenTrust: Anchors and Collusion Resistance"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Collusion resistance"
+    modifier: null
+    aliases: []
+    definition: "A trust system's ability to limit the effect of peers that coordinate ratings to boost themselves or harm others."
+    context: "The anchor slide shows how EigenTrust contains mutual praise inside clusters unless it connects to trusted anchors."
+    slide_heading: "EigenTrust: Anchors and Collusion Resistance"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Damping"
+    modifier: "trust propagation"
+    aliases: []
+    definition: "A control on iterative trust propagation that limits drift and keeps global scores tied to trusted reference points."
+    context: "The PeerTrust and EigenTrust comparison notes that global reputation needs careful anchoring and damping."
+    slide_heading: "PeerTrust vs. EigenTrust: Summary"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Hybrid trust system"
+    modifier: null
+    aliases: ["hybrid design"]
+    definition: "A design that combines a global reputation baseline with local, context-aware personalization."
+    context: "The lesson presents hybrid systems as a practical way to use EigenTrust-style safety among strangers and PeerTrust-style evidence over time."
+    slide_heading: "PeerTrust vs. EigenTrust: Summary"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Trust but verify"
+    modifier: null
+    aliases: ["trust but verify pattern", "complete trust loop"]
+    definition: "A workflow that uses reputation to choose peers, cryptographic checks to verify results, and verified outcomes to update reputation."
+    context: "This pattern ties the lesson's cryptographic and social trust layers into one operational loop."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Cryptographic verification"
+    modifier: null
+    aliases: []
+    definition: "The use of hashes, signatures, and related checks to confirm data integrity and sender identity."
+    context: "Cryptographic verification answers whether data was tampered with before reputation updates are made."
+    slide_heading: "Trust but Verify: The Complete Trust Loop"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Reputation-based selection"
+    modifier: null
+    aliases: []
+    definition: "Choosing peers for an interaction based on established track records and trust scores."
+    context: "The trust loop uses reputation-based selection before interaction, then verification after interaction."
+    slide_heading: "Trust but Verify: The Complete Trust Loop"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Verified outcome"
+    modifier: null
+    aliases: ["verified result", "verified outcomes"]
+    definition: "An interaction result that has been checked with evidence such as hashes, signatures, or successful task completion."
+    context: "The lesson argues that verified outcomes should carry more weight than unverified opinions when updating reputation."
+    slide_heading: "Trust but Verify: The Complete Trust Loop"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Sybil attack"
+    modifier: null
+    aliases: ["Sybils", "Sybil flood"]
+    definition: "An attack where one adversary creates many fake identities to gain more influence than one participant should have."
+    context: "The Sybil slide shows why trust systems must make influence earned rather than manufactured through cheap identities."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Neighbor capture"
+    modifier: null
+    aliases: ["capturing neighbor slots"]
+    definition: "A Sybil tactic in which fake identities occupy a target's peer connections so the attacker can shape what the target sees."
+    context: "Neighbor capture appears as one way fake identities can convert scale into influence in P2P trust systems."
+    slide_heading: "Threats: Sybil Attacks"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Rebranding attack"
+    modifier: null
+    aliases: ["identity reset", "clean slate attack"]
+    definition: "An attack where a peer with a bad reputation abandons its identity and rejoins as a new participant."
+    context: "The lesson treats rebranding as a serial identity attack that is discouraged by low initial trust and reputation rebuilding costs."
+    slide_heading: "Threats: Rebranding Attacks"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Serial identity strategy"
+    modifier: null
+    aliases: ["serial strategy"]
+    definition: "An identity attack pattern where an adversary uses one identity at a time and discards it when its reputation is damaged."
+    context: "The rebranding slide contrasts this serial approach with Sybil attacks that use many identities at once."
+    slide_heading: "Threats: Rebranding Attacks"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Collusion"
+    modifier: "P2P reputation threat"
+    aliases: ["collusion ring", "coordinated praise"]
+    definition: "A coordinated attack where peers rate each other positively, or rate competitors negatively, to distort reputation scores."
+    context: "The lesson uses collusion to show why raw averaging is weak and why credibility or anchor-traced trust matters."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Slander"
+    modifier: "P2P reputation threat"
+    aliases: ["false negative feedback", "smear campaign"]
+    definition: "A coordinated attack that floods an honest peer with false negative ratings to damage its reputation."
+    context: "The slander slide shows why direct experience and low influence for untrusted raters should outweigh distant accusations."
+    slide_heading: "Properties of Reputation Systems"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Verification-weighted feedback"
+    modifier: null
+    aliases: []
+    definition: "Feedback that is weighted more heavily when it is backed by checked outcomes rather than unsupported claims."
+    context: "The notes use verification-weighted feedback to explain how honest peers resist unsubstantiated slander."
+    slide_heading: "Threats: Slander"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "On-off attack"
+    modifier: null
+    aliases: ["on-off exploitation", "reputation milking attack"]
+    definition: "An attack pattern where a participant behaves well long enough to gain trust, then switches to harmful behavior before disappearing."
+    context: "The on-off slide explains why reputation must be renewed rather than treated as a permanent asset."
+    slide_heading: "Threats: On–Off (Reputation Milking)"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Recency weighting"
+    modifier: null
+    aliases: ["recency decay"]
+    definition: "A scoring method that gives recent behavior more influence than older behavior."
+    context: "Recency weighting is presented as a mitigation for on-off attacks because stale good behavior should not shield current abuse."
+    slide_heading: "Threats: On–Off (Reputation Milking)"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Anomaly detection"
+    modifier: "trust systems"
+    aliases: []
+    definition: "A monitoring technique that flags sudden behavior changes that may indicate reputation exploitation."
+    context: "The lesson lists anomaly detection alongside recency weighting as a mitigation for abrupt shifts from good behavior to abuse."
+    slide_heading: "Threats: On–Off (Reputation Milking)"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Self-policing"
+    modifier: null
+    aliases: []
+    definition: "A design approach where decentralized participants and mechanisms provide moderation, storage, or computation without central enforcement."
+    context: "Self-policing appears in the final design checklist as a requirement for P2P systems that cannot rely on a central moderator."
+    slide_heading: "Key Considerations in System Design"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Privacy-aware design"
+    modifier: null
+    aliases: ["privacy-aware"]
+    definition: "A system design goal that protects user anonymity and data while still preserving enough accountability for trust decisions."
+    context: "The lesson frames privacy and accountability as simultaneous constraints for operational trust systems."
+    slide_heading: "Key Considerations in System Design"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "State overhead"
+    modifier: null
+    aliases: []
+    definition: "The storage burden created by the trust data a system must keep, such as ratings, scores, histories, or matrices."
+    context: "The design checklist includes state overhead as part of keeping reputation systems efficient at scale."
+    slide_heading: "Key Considerations in System Design"
+    tags: ["distributed-systems"]
+    confidence: "high"
+  - term: "Welcoming bootstrap"
+    modifier: null
+    aliases: ["safe onboarding", "fair onboarding"]
+    definition: "An onboarding approach that lets honest newcomers build reputation gradually without giving attackers immediate influence."
+    context: "The final design checklist highlights welcoming bootstrap as the balance between openness and resistance to cheap-identity abuse."
+    slide_heading: "Key Considerations in System Design"
+    tags: ["distributed-systems"]
+    confidence: "high"

@@ -23,12 +23,18 @@ def test_parse_metrics_filters_defaults_and_explicit_controls():
     assert explicit_filters.mode == "all"
     assert explicit_filters.include_voided is True
     assert explicit_filters.quiz_version_id == 7
+    assert explicit_filters.quiz_version_ids == (7,)
     assert explicit_filters.statuses == (
         "expired",
         "voided",
         "needs_grading",
         "graded",
     )
+    multi_quiz_filters = parse_metrics_filters(
+        {"quiz_version_id": ["7", "9"], "statuses": "graded"}
+    )
+    assert multi_quiz_filters.quiz_version_id is None
+    assert multi_quiz_filters.quiz_version_ids == (7, 9)
 
 
 def test_parse_metrics_filters_rejects_unknown_status():
@@ -90,6 +96,8 @@ def test_item_topic_tag_source_rollups_and_student_detail(app):
         "difficulty-core",
     }
     assert metrics["source_rollups"]["lesson_blocks"][0]["lesson_block"] == "Block A"
+    assert metrics["strengths_weaknesses"]["dimension_groups"]
+    assert metrics["strengths_weaknesses"]["item_weaknesses"]
     assert metrics["visualizations"]["completion_funnel"][0]["stage"] == "assigned"
     assert metrics["visualizations"]["score_distribution"]["70-79"] == 1
     assert metrics["visualizations"]["written_grading_status"]["expired_ungraded_count"] == 1
@@ -99,8 +107,26 @@ def test_item_topic_tag_source_rollups_and_student_detail(app):
     assert metrics["metric_catalog"]["operational"]["expired_ungraded_written_answers"] == 1
     assert detail["student_identifier"] == fixture["student_one"]
     assert detail["attempt_count"] == 3
+    assert detail["strengths_weaknesses"]["dimension_groups"]
     assert detail["attempts"][0]["quiz_archived"] is True
     assert detail["attempts"][0]["questions"][0]["source_question_id"] == fixture["mc_source_question_id"]
+
+
+def test_item_analysis_sorts_worst_first_and_scatter_includes_preview_payload(app):
+    with app.app_context():
+        _seed_item_sorting_fixture(get_db())
+        metrics = build_dashboard_metrics(parse_metrics_filters({}))
+
+    assert [item["snapshot_source_qid"] for item in metrics["item_analysis"]] == [
+        "hard",
+        "easy",
+    ]
+    assert [item["percent_correct"] for item in metrics["item_analysis"]] == [0.0, 100.0]
+    scatter = metrics["visualizations"]["item_difficulty_scatter"]
+    assert [row["source_qid"] for row in scatter] == ["hard", "easy"]
+    assert scatter[0]["question_stem"] == "Hard sorting question."
+    assert scatter[0]["options"][1]["option_text"] == "Tempting miss"
+    assert scatter[0]["options"][1]["selected_count"] == 2
 
 
 def _seed_metrics_fixture(conn):
@@ -320,6 +346,180 @@ def _seed_metrics_fixture(conn):
         "student_three": student_three,
         "mc_source_question_id": mc_source_question_id,
     }
+
+
+def _seed_item_sorting_fixture(conn):
+    now = "2026-05-20T00:00:00+00:00"
+    student_ids = {}
+    for identifier in ("QZ-SORT-0001", "QZ-SORT-0002"):
+        student_ids[identifier] = conn.execute(
+            """
+            INSERT INTO students (identifier, status, source, created_at)
+            VALUES (?, 'active', 'open_registration', ?)
+            """,
+            (identifier, now),
+        ).lastrowid
+
+    bank_id = conn.execute(
+        """
+        INSERT INTO quiz_banks (
+            lesson_id,
+            lesson_title,
+            topic,
+            created_at,
+            updated_at
+        )
+        VALUES ('sorting_lesson', 'Sorting Lesson', 'bitcoin', ?, ?)
+        """,
+        (now, now),
+    ).lastrowid
+    revision_id = conn.execute(
+        """
+        INSERT INTO quiz_bank_revisions (
+            quiz_bank_id,
+            lesson_title,
+            topic,
+            hierarchy_json,
+            status,
+            created_at
+        )
+        VALUES (?, 'Sorting Lesson', 'bitcoin', ?, 'active', ?)
+        """,
+        (bank_id, json.dumps({"schema_version": 1, "sections": []}), now),
+    ).lastrowid
+    conn.execute(
+        "UPDATE quiz_banks SET latest_revision_id = ? WHERE id = ?",
+        (revision_id, bank_id),
+    )
+    hard_source_question_id = _insert_source_question(
+        conn,
+        bank_id,
+        revision_id,
+        "hard",
+        "multiple_choice",
+        "Hard sorting question.",
+        now,
+    )
+    easy_source_question_id = _insert_source_question(
+        conn,
+        bank_id,
+        revision_id,
+        "easy",
+        "multiple_choice",
+        "Easy sorting question.",
+        now,
+    )
+
+    version_id = conn.execute(
+        """
+        INSERT INTO quiz_versions (
+            title,
+            generation_snapshot_json,
+            visibility,
+            result_policy,
+            question_order_policy,
+            option_order_policy,
+            created_at
+        )
+        VALUES ('Sorting Fixture Quiz', ?, 'published', 'score_after_grading', 'fixed', 'fixed', ?)
+        """,
+        (json.dumps({"schema_version": 1}), now),
+    ).lastrowid
+    tags_json = json.dumps({"schema_version": 1, "tags": ["sorting"]})
+    hard_question_id = _insert_version_question(
+        conn,
+        version_id,
+        hard_source_question_id,
+        1,
+        "hard",
+        "multiple_choice",
+        "Hard sorting question.",
+        tags_json,
+    )
+    easy_question_id = _insert_version_question(
+        conn,
+        version_id,
+        easy_source_question_id,
+        2,
+        "easy",
+        "multiple_choice",
+        "Easy sorting question.",
+        tags_json,
+    )
+    hard_correct_id = conn.execute(
+        """
+        INSERT INTO quiz_version_options (
+            quiz_version_question_id,
+            option_text,
+            is_correct,
+            snapshot_order
+        )
+        VALUES (?, 'Hard correct', 1, 1)
+        """,
+        (hard_question_id,),
+    ).lastrowid
+    hard_wrong_id = conn.execute(
+        """
+        INSERT INTO quiz_version_options (
+            quiz_version_question_id,
+            option_text,
+            is_correct,
+            snapshot_order
+        )
+        VALUES (?, 'Tempting miss', 0, 2)
+        """,
+        (hard_question_id,),
+    ).lastrowid
+    easy_correct_id = conn.execute(
+        """
+        INSERT INTO quiz_version_options (
+            quiz_version_question_id,
+            option_text,
+            is_correct,
+            snapshot_order
+        )
+        VALUES (?, 'Easy correct', 1, 1)
+        """,
+        (easy_question_id,),
+    ).lastrowid
+    easy_wrong_id = conn.execute(
+        """
+        INSERT INTO quiz_version_options (
+            quiz_version_question_id,
+            option_text,
+            is_correct,
+            snapshot_order
+        )
+        VALUES (?, 'Easy miss', 0, 2)
+        """,
+        (easy_question_id,),
+    ).lastrowid
+
+    question_order_json = json.dumps(
+        {"schema_version": 1, "order": [hard_question_id, easy_question_id]}
+    )
+    option_order_json = json.dumps(
+        {
+            "schema_version": 1,
+            "order": [hard_correct_id, hard_wrong_id, easy_correct_id, easy_wrong_id],
+        }
+    )
+    for student_id in student_ids.values():
+        attempt_id = _insert_attempt(
+            conn,
+            version_id,
+            student_id,
+            1,
+            "graded",
+            1,
+            2,
+            question_order_json,
+            option_order_json,
+            now,
+        )
+        _insert_mc_answer(conn, attempt_id, hard_question_id, hard_wrong_id, 0, 0)
+        _insert_mc_answer(conn, attempt_id, easy_question_id, easy_correct_id, 1, 1)
+    conn.commit()
 
 
 def _insert_source_question(

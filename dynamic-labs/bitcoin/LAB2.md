@@ -8,14 +8,14 @@ Join the "ClassNet" shared blockchain. You will use automated tools (`curl`) to 
 #### Infrastructure 
 
 
-* **Terminal:** [https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/](https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/) — claims a station and redirects to `/labs/bitcoin/c/<your-uuid>/`.
+* **Terminal:** [https://blockchain.training-as-code.com/labs/bitcoin/](https://blockchain.training-as-code.com/labs/bitcoin/) — claims a station and redirects to `/labs/bitcoin/c/<your-uuid>/`.
 
 * **Your share folder:** Files in `~/share` are served at `/labs/bitcoin/c/<your-uuid>/static/`. Use the **My Static** button in the panel bar to open your own page.
 
 * **Your peers:** Use the **Peers** dropdown in the panel bar to see which other stations are online. Each peer link opens their share folder at `/labs/bitcoin/peer/<8-hex>/` in a new tab — a short identifier that exposes only the static web, never the peer's terminal.
 
-* **Mempool Explorer:** [https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/mempool/](https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/mempool/) (also linked from the panel bar)
-* **BTC Explorer:** [https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/btc-explorer/](https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/btc-explorer/) (also linked from the panel bar)
+* **Mempool Explorer:** [https://blockchain.training-as-code.com/labs/bitcoin/mempool/](https://blockchain.training-as-code.com/labs/bitcoin/mempool/) (also linked from the panel bar)
+* **BTC Explorer:** [https://blockchain.training-as-code.com/labs/bitcoin/btc-explorer/](https://blockchain.training-as-code.com/labs/bitcoin/btc-explorer/) (also linked from the panel bar)
 
 
 
@@ -50,7 +50,7 @@ echo $MY_ADDR > ~/share/address.txt
 
 As a reminder, anything in the `~/share` folder is served at:
 
-`https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/c/<your-uuid>/static/`
+`https://blockchain.training-as-code.com/labs/bitcoin/c/<your-uuid>/static/`
 
 from outside the environment. Classmates reach the same folder at
 `/labs/bitcoin/peer/<8-hex>/`, where `<8-hex>` is the short identifier
@@ -133,7 +133,7 @@ python3 ~/scripts/agent.py --wallet student_wallet --verbose
 
 
 2. **Observe the Fee Market:**
-* Go to the [Mempool Explorer](https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/mempool/).
+* Go to the [Mempool Explorer](https://blockchain.training-as-code.com/labs/bitcoin/mempool/).
 * You will see the mempool filling up with transactions.
 * **Concept Check:** If you wanted to send a transaction *right now* and ensure it gets mined in the next block despite this spam, what would you have to do? (Hint: Look at the "Fee Rate" of the unconfirmed transactions).
 
@@ -189,8 +189,8 @@ What happened?
 
 Go to btc-explorer and mempool and explore your and your classmate's transactions:
 
-* **Mempool Explorer:** [https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/mempool/](https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/mempool/)
-* **BTC Explorer:** [https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/btc-explorer/](https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/btc-explorer/)
+* **Mempool Explorer:** [https://blockchain.training-as-code.com/labs/bitcoin/mempool/](https://blockchain.training-as-code.com/labs/bitcoin/mempool/)
+* **BTC Explorer:** [https://blockchain.training-as-code.com/labs/bitcoin/btc-explorer/](https://blockchain.training-as-code.com/labs/bitcoin/btc-explorer/)
 
 
 -------

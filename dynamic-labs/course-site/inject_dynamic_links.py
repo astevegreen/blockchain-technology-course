@@ -7,26 +7,28 @@ PLACEHOLDER = "<!-- DYNAMIC_RUNTIME_LINKS -->"
 
 BLOCK = """## Dynamic Labs
 
-These links are available in the packaged VM and cloud deployment paths where the shared router is running at the site root.
+Use this section when the packaged VM or cloud lab stack is running.
 
-### Dynamic Lab Routes
+### Student Starting Point
 
-* [Ethereum Lab](/labs/ethereum_lab/)
-* [Bitcoin Lab Student Terminal](/labs/bitcoin/)
-* [Bitcoin Mempool](/labs/bitcoin/mempool/)
-* [Bitcoin Explorer](/labs/bitcoin/btc-explorer/)
-* [Consensus Lab Student Terminal](/labs/consensus/)
-* [Consensus Lab Instructor Terminal](/labs/consensus/instructor/)
+* [Student lab and quiz login](/quiz/student/) - start here to get or enter a student identifier and access assigned dynamic work.
+
+### Student Lab Workspaces
+
+Use these links after the instructor tells the class which lab is active.
+
+* [Social Trust Lab: The Insider](/exercises/insider/)
+* [Byzantine Generals Lab](/exercises/bgp/)
 * [Cryptography Lab](/labs/cryptography/)
-* [P2P Trust Lab Student Terminal](/labs/p2p_trust/)
-* [P2P Trust Lab Instructor Terminal](/labs/p2p_trust/instructor/)
-* [Hyperledger Fabric Lab](/labs/hlf/claim)
+* [P2P Trust Lab](/labs/p2p_trust/)
+* [Consensus Lab](/labs/consensus/)
+* [Bitcoin Lab](/labs/bitcoin/)
+* [Ethereum Lab](/labs/ethereum_lab/)
+* [Hyperledger Fabric Lab](/labs/hlf/)
 
-### Exercises and Quiz
+### Instructor Access
 
-* [Byzantine Generals Exercise](/exercises/bgp/)
-* [The Insider Exercise](/exercises/insider/)
-* [Quiz Engine](/quiz/)
+* [Instructor login](/instructor/) - single shared instructor login for dynamic lab controls, progress views, and instructor-only quiz management.
 """
 
 

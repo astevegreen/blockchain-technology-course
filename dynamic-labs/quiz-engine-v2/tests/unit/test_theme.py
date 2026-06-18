@@ -57,6 +57,7 @@ def test_render_themed_template_adds_instructor_chrome(app):
     assert "/instructor/registration" in html
     assert "/instructor/roster-codes" in html
     assert "Student View" in html
+    assert "quiz_engine_question_font_scale" not in html
 
 
 def test_render_themed_template_adds_student_chrome(app):
@@ -71,6 +72,48 @@ def test_render_themed_template_adds_student_chrome(app):
     assert 'href="/student/quizzes" aria-current="page"' in html
     assert "Quizzes" in html
     assert 'href="/instructor/' not in html
+    assert "quiz_engine_question_font_scale" in html
+    assert "--quiz-font-scale" in html
+
+
+def test_render_themed_template_adds_student_quiz_font_toolbar(app):
+    source = """
+    <!doctype html>
+    <title>Attempt</title>
+    <main>{{ dynamic_labs_quiz_font_toolbar }}</main>
+    """
+
+    with app.test_request_context("/student/attempts/1"):
+        student_html = render_themed_template(source)
+    with app.test_request_context("/instructor/quiz-versions"):
+        instructor_html = render_themed_template(source)
+
+    assert 'class="quiz-font-toolbar"' in student_html
+    assert 'data-quiz-font-decrease' in student_html
+    assert 'data-quiz-font-increase' in student_html
+    assert 'data-quiz-font-reset' in student_html
+    assert "Display size" in student_html
+    assert 'class="quiz-font-toolbar"' not in instructor_html
+
+
+def test_dynamic_labs_time_formats_by_page_role(app):
+    source = """
+    <!doctype html>
+    <title>Time</title>
+    <main>{{ dynamic_labs_time("2026-05-20T12:00:00+00:00") }}</main>
+    """
+
+    with app.test_request_context("/student/quizzes"):
+        student_html = render_themed_template(source)
+    with app.test_request_context("/instructor/quiz-versions"):
+        instructor_html = render_themed_template(source)
+
+    assert 'datetime="2026-05-20T12:00:00+00:00"' in student_html
+    assert 'data-dynamic-labs-time="student"' in student_html
+    assert ">Local time</time>" in student_html
+    assert 'data-dynamic-labs-time="instructor"' in instructor_html
+    assert ">2026-05-20 12:00 UTC</time>" in instructor_html
+    assert 'formatUtc(date) + " (" + localLabel + ")"' in instructor_html
 
 
 def test_render_themed_template_puts_authenticated_student_logout_in_nav(app):

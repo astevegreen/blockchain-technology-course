@@ -6,10 +6,13 @@ async function main() {
   const signers = await hre.ethers.getSigners();
   const deployer = signers[0];
 
-  // Smaller defaults to avoid fillBotsAndStart gas exhaustion. Override via env for larger pools.
-  const committeesPerEpoch = parseInt(process.env.COMMITTEES_PER_EPOCH || "8", 10);
-  const validatorsPerCommittee = parseInt(process.env.VALIDATORS_PER_COMMITTEE || "8", 10);
-  const blocksPerEpoch = parseInt(process.env.BLOCKS_PER_EPOCH || "32", 10);
+  // Defaults are tuned for a working classroom sim: committeesPerEpoch MUST be 1 so
+  // the whole pool attests each slot and blocks can reach the 2/3 justification
+  // quorum (justification is per-block vs total stake). Short epochs keep finality
+  // observable in ~20-30s. Override via env only if you know what you're doing.
+  const committeesPerEpoch = parseInt(process.env.COMMITTEES_PER_EPOCH || "1", 10);
+  const validatorsPerCommittee = parseInt(process.env.VALIDATORS_PER_COMMITTEE || "32", 10);
+  const blocksPerEpoch = parseInt(process.env.BLOCKS_PER_EPOCH || "4", 10);
   const poolSize = committeesPerEpoch * validatorsPerCommittee;
 
   console.log(`\nDeploying Beacon Chain Lab with instructor: ${deployer.address}`);

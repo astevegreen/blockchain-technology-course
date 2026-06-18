@@ -192,6 +192,17 @@
         .state-guess { color: var(--danger); }
         .state-results { color: var(--ok); }
 
+        .pill-archived {
+            background: rgba(196, 113, 0, 0.15);
+            color: var(--warn);
+            font-weight: 600;
+        }
+
+        .room.archived {
+            opacity: 0.78;
+            border-style: dashed;
+        }
+
         ul {
             list-style: none;
             padding: 0;
@@ -307,14 +318,6 @@
         <section class="card clean" id="settings-card">
             <h2>Lesson Controls</h2>
             <form class="settings-form" id="settings-form">
-                <div>
-                    <label for="mode-select">Mode</label>
-                    <select id="mode-select">
-                        <option value="standalone">Standalone</option>
-                        <option value="classroom">Classroom</option>
-                    </select>
-                </div>
-
                 <div class="toggle-row">
                     <input id="game-enabled-toggle" type="checkbox" checked>
                     <label for="game-enabled-toggle">Game is online for students</label>
@@ -322,7 +325,12 @@
 
                 <div class="toggle-row">
                     <input id="agents-toggle" type="checkbox">
-                    <label for="agents-toggle">Enable agents in classroom mode</label>
+                    <label for="agents-toggle">Backfill empty seats with bots</label>
+                </div>
+
+                <div class="toggle-row">
+                    <input id="private-rooms-toggle" type="checkbox">
+                    <label for="private-rooms-toggle">Allow private rooms</label>
                 </div>
 
                 <div>
@@ -358,6 +366,21 @@
                 </div>
 
                 <div>
+                    <label for="retention-minutes">Old game retention (minutes)</label>
+                    <select id="retention-minutes">
+                        <option value="5">5</option>
+                        <option value="15">15</option>
+                        <option value="30">30</option>
+                        <option value="60">60</option>
+                        <option value="120">120</option>
+                        <option value="240">240</option>
+                        <option value="480">480</option>
+                        <option value="1440">1440</option>
+                    </select>
+                    <p class="helper">How long finished games stay visible here after everyone leaves. Applies to newly archived rooms.</p>
+                </div>
+
+                <div>
                     <label for="context-input">Context shown to students</label>
                     <textarea id="context-input" placeholder="Explain the scenario for this class run."></textarea>
                 </div>
@@ -387,24 +410,27 @@
         const settingsCard = document.getElementById("settings-card");
         const settingsForm = document.getElementById("settings-form");
         const saveSettingsBtn = document.getElementById("save-settings-btn");
-        const modeSelect = document.getElementById("mode-select");
         const gameEnabledToggle = document.getElementById("game-enabled-toggle");
         const agentsToggle = document.getElementById("agents-toggle");
+        const privateRoomsToggle = document.getElementById("private-rooms-toggle");
         const revealSelect = document.getElementById("reveal-select");
         const disconnectSeconds = document.getElementById("disconnect-seconds");
         const actionTimeoutSeconds = document.getElementById("action-timeout-seconds");
+        const retentionMinutes = document.getElementById("retention-minutes");
         const contextInput = document.getElementById("context-input");
         const wordsInput = document.getElementById("words-input");
         let lastSavedSettings = null;
+        let lastRoomsPayload = {};
 
         function currentSettingsPayload() {
             return {
-                mode: modeSelect.value,
                 game_enabled: gameEnabledToggle.checked,
                 agents_enabled: agentsToggle.checked,
+                private_rooms_enabled: privateRoomsToggle.checked,
                 reveal_mode: revealSelect.value,
                 disconnect_grace_seconds: Number(disconnectSeconds.value),
                 action_timeout_seconds: Number(actionTimeoutSeconds.value),
+                retention_minutes: Number(retentionMinutes.value),
                 context: contextInput.value.trim(),
                 custom_words: wordsInput.value.trim()
             };
@@ -412,12 +438,13 @@
 
         function normalizeSettings(settings) {
             return {
-                mode: settings.mode || "standalone",
                 game_enabled: settings.game_enabled !== false,
-                agents_enabled: Boolean(settings.agents_enabled),
+                agents_enabled: settings.agents_enabled !== false,
+                private_rooms_enabled: settings.private_rooms_enabled !== false,
                 reveal_mode: settings.reveal_mode || "random",
                 disconnect_grace_seconds: Number(settings.disconnect_grace_seconds ?? 15),
                 action_timeout_seconds: Number(settings.action_timeout_seconds ?? 60),
+                retention_minutes: Number(settings.retention_minutes ?? 60),
                 context: settings.context || "",
                 custom_words: settings.custom_words || ""
             };
@@ -431,26 +458,37 @@
 
         function applySettings(settings) {
             const normalized = normalizeSettings(settings);
-            modeSelect.value = normalized.mode;
             gameEnabledToggle.checked = normalized.game_enabled;
             agentsToggle.checked = normalized.agents_enabled;
-            agentsToggle.disabled = modeSelect.value !== "classroom";
+            privateRoomsToggle.checked = normalized.private_rooms_enabled;
             revealSelect.value = normalized.reveal_mode;
             disconnectSeconds.value = String(normalized.disconnect_grace_seconds);
             actionTimeoutSeconds.value = String(normalized.action_timeout_seconds);
+            retentionMinutes.value = String(normalized.retention_minutes);
             contextInput.value = normalized.context;
             wordsInput.value = normalized.custom_words;
             lastSavedSettings = currentSettingsPayload();
             updateDirtyState();
         }
 
+        function formatRemainingSeconds(seconds) {
+            const total = Math.max(0, Math.round(seconds));
+            if (total < 60) return `${total}s`;
+            const minutes = Math.floor(total / 60);
+            const rem = total % 60;
+            if (minutes < 60) return rem ? `${minutes}m ${rem}s` : `${minutes}m`;
+            const hours = Math.floor(minutes / 60);
+            const minRem = minutes % 60;
+            return minRem ? `${hours}h ${minRem}m` : `${hours}h`;
+        }
+
         function renderRoom(roomId, room) {
             const card = document.createElement("section");
             card.className = "room";
+            if (room.archived) card.classList.add("archived");
 
             const players = room.players.map((player) => {
                 const tags = [];
-                if (player.is_host) tags.push("Host");
                 if (player.has_committed_clue) tags.push("Clue");
                 if (player.has_voted) tags.push("Voted");
                 if (player.role) tags.push(`Role: ${player.role}`);
@@ -473,7 +511,7 @@
                 <li>${entry.player_name}: ${entry.clue}</li>
             `).join("");
 
-            const revealButton = room.state === "reveal"
+            const revealButton = !room.archived && room.state === "reveal"
                 ? `<button type="button" data-room="${roomId}" class="advance-btn">Reveal next clue</button>`
                 : "";
 
@@ -481,6 +519,11 @@
             const resultsStatus = room.state === "results"
                 ? `<span class="pill">${room.game_over ? "Game over" : "Waiting for next round"}</span>`
                 : "";
+            let archivedPill = "";
+            if (room.archived) {
+                const remaining = (room.retention_deadline || 0) - (Date.now() / 1000);
+                archivedPill = `<span class="pill pill-archived">Archived · discards in ${formatRemainingSeconds(remaining)}</span>`;
+            }
             const word = room.word || "Not assigned";
             const turnLine = room.current_turn_name
                 ? `<p class="meta">Current turn: ${room.current_turn_name}</p>`
@@ -492,6 +535,7 @@
                     <span class="meta">${room.player_count}/{{ room_max_size }} players</span>
                 </div>
                 <div class="pill-row">
+                    ${archivedPill}
                     <span class="pill state-${room.state}">State: ${room.state}</span>
                     <span class="pill">Round ${room.round}</span>
                     ${resultsStatus}
@@ -509,25 +553,31 @@
             return card;
         }
 
+        function renderRooms() {
+            const entries = Object.entries(lastRoomsPayload || {});
+            container.innerHTML = "";
+            if (!entries.length) {
+                container.innerHTML = '<div class="empty">No rooms are active right now.</div>';
+                return;
+            }
+            entries.forEach(([roomId, room]) => {
+                container.appendChild(renderRoom(roomId, room));
+            });
+        }
+
         settingsForm.addEventListener("submit", (event) => {
             event.preventDefault();
             socket.emit("update_settings", currentSettingsPayload());
         });
 
-        modeSelect.addEventListener("change", () => {
-            agentsToggle.disabled = modeSelect.value !== "classroom";
-            if (modeSelect.value !== "classroom") {
-                agentsToggle.checked = false;
-            }
-            updateDirtyState();
-        });
-
         [
             gameEnabledToggle,
             agentsToggle,
+            privateRoomsToggle,
             revealSelect,
             disconnectSeconds,
             actionTimeoutSeconds,
+            retentionMinutes,
             contextInput,
             wordsInput
         ].forEach((element) => {
@@ -546,18 +596,14 @@
 
         socket.on("instructor_update", (payload) => {
             applySettings(payload.settings || {});
-            const entries = Object.entries(payload.rooms || {});
-            container.innerHTML = "";
-
-            if (!entries.length) {
-                container.innerHTML = '<div class="empty">No rooms are active right now.</div>';
-                return;
-            }
-
-            entries.forEach(([roomId, room]) => {
-                container.appendChild(renderRoom(roomId, room));
-            });
+            lastRoomsPayload = payload.rooms || {};
+            renderRooms();
         });
+
+        setInterval(() => {
+            const hasArchived = Object.values(lastRoomsPayload).some((room) => room && room.archived);
+            if (hasArchived) renderRooms();
+        }, 15000);
     </script>
 </body>
 </html>

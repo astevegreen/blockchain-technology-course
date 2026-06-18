@@ -133,7 +133,10 @@ if command -v ttyd >/dev/null 2>&1 && [ -f "${SHELL_SCRIPT}" ]; then
     [ -n "${ttyd_home}" ] && export HOME="${ttyd_home}"
 
     if [ -n "${ZELLIJ_BIN}" ] && [ -x "${ZELLIJ_BIN}" ]; then
-        export SHELL="${SHELL_SCRIPT}"
+        if ! HLF_SHELL_RC_ONLY=1 bash "${SHELL_SCRIPT}"; then
+            echo "[hlf ttyd] WARNING: failed to prepare HLF shell rc; helpers may be unavailable" >&2
+        fi
+        export SHELL="/bin/bash"
         if [ "$(id -u)" = "0" ] && command -v runuser >/dev/null 2>&1 && id "${TTYD_USER}" >/dev/null 2>&1; then
             exec ttyd -i "${bind_ip:-0.0.0.0}" -W -p "${TTYD_PORT}" \
                 runuser -u "${TTYD_USER}" -m -- \

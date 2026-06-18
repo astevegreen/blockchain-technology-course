@@ -1,0 +1,788 @@
+lesson_id: "04-EF"
+lesson_title: "Smart Contracts: From Concept to Ethereum"
+source_path: "lessons/ethereum/04-EF-smart_contracts.qmd"
+terms:
+  - term: "Smart contract"
+    modifier: null
+    aliases: ["smart contracts", "on-chain program", "on-chain programs"]
+    definition: "A program plus persistent state at a blockchain address that executes automatically when it receives a transaction or call."
+    context: "The lesson uses smart contracts as the bridge from Ethereum transactions to programmable, deterministic application behavior."
+    slide_heading: "Smart Contracts: Concept and Scope"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Persistent state"
+    modifier: "smart contract"
+    aliases: ["contract state", "on-chain state"]
+    definition: "Data stored by a contract that remains available after one transaction finishes and can be read or updated by later calls."
+    context: "Persistent state is what makes Ethereum contracts more than isolated scripts; they can remember balances, owners, and other long-lived facts."
+    slide_heading: "Smart Contracts: Concept and Scope"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Deterministic execution"
+    modifier: "smart contracts"
+    aliases: ["determinism", "deterministic behavior"]
+    definition: "Execution where the same inputs and prior state produce the same output and state transition on every validating node."
+    context: "Determinism lets Ethereum nodes independently reproduce contract behavior under shared consensus rules."
+    slide_heading: "Smart Contracts: Concept and Scope"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Bitcoin Script"
+    modifier: null
+    aliases: ["Script"]
+    definition: "Bitcoin's constrained stack-based language for defining the conditions required to spend a specific UTXO."
+    context: "The lesson contrasts Bitcoin Script with Solidity to show how Ethereum trades simplicity for richer stateful programs."
+    slide_heading: "From Bitcoin Script to Solidity"
+    tags: ["bitcoin", "ethereum"]
+    confidence: "high"
+  - term: "Unspent transaction output"
+    modifier: null
+    aliases: ["UTXO", "UTXOs"]
+    definition: "A discrete output from a prior transaction that has not yet been spent and can be consumed by a later transaction."
+    context: "UTXOs explain why Bitcoin Script mainly checks spending conditions instead of maintaining contract-wide persistent storage."
+    slide_heading: "From Bitcoin Script to Solidity"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "Solidity"
+    modifier: "Ethereum"
+    aliases: []
+    definition: "A high-level smart contract language that compiles into EVM bytecode for deployment on Ethereum-compatible chains."
+    context: "Solidity is the course's main language for reading contract structure, state, functions, and security patterns."
+    slide_heading: "From Bitcoin Script to Solidity"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Turing complete"
+    modifier: "smart contract language"
+    aliases: ["Turing completeness"]
+    definition: "A language property that supports general computation with control flow such as loops, branching, and function calls."
+    context: "Ethereum gains expressive application logic from Turing completeness, while gas metering keeps execution bounded."
+    slide_heading: "From Bitcoin Script to Solidity"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Gas metering"
+    modifier: "Ethereum"
+    aliases: ["gas-metered computation"]
+    definition: "Ethereum's mechanism for charging execution costs and stopping computation when the supplied gas runs out."
+    context: "Gas metering is the practical bound that makes expressive Solidity programs safe to replicate across many nodes."
+    slide_heading: "From Bitcoin Script to Solidity"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Attack surface"
+    modifier: "smart contracts"
+    aliases: []
+    definition: "The set of code paths, inputs, calls, and assumptions through which a contract can be misused or exploited."
+    context: "The lesson stresses that Solidity's expressiveness increases both flexibility and the number of ways bugs can appear."
+    slide_heading: "From Bitcoin Script to Solidity"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Extended UTXO"
+    modifier: "smart contract model"
+    aliases: ["eUTXO", "Cardano eUTXO"]
+    definition: "A smart contract model that adds richer validation logic while preserving a UTXO-style transaction structure."
+    context: "The lesson uses eUTXO to show that Ethereum's account-based model is only one way to design smart contract execution."
+    slide_heading: "Beyond Ethereum: Other Smart Contract Models"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Formal verification"
+    modifier: "smart contracts"
+    aliases: []
+    definition: "The use of mathematical methods to prove that code satisfies specified properties or rules."
+    context: "Formal verification appears as a strength of some UTXO-style models but comes with programming tradeoffs."
+    slide_heading: "Beyond Ethereum: Other Smart Contract Models"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Account-centric model"
+    modifier: "smart contracts"
+    aliases: ["account model", "account-based model"]
+    definition: "A contract model where accounts hold state and programs operate by reading or writing those accounts during execution."
+    context: "The lesson contrasts Ethereum-like account models with UTXO variants and non-EVM systems such as Solana."
+    slide_heading: "Beyond Ethereum: Other Smart Contract Models"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "WebAssembly"
+    modifier: "smart contracts"
+    aliases: ["WASM", "Wasm"]
+    definition: "A portable low-level runtime target used by some smart contract platforms to run code compiled from languages such as Rust or Go."
+    context: "WASM-based contracts show another way platforms balance familiar languages, sandboxing, and ecosystem maturity."
+    slide_heading: "Beyond Ethereum: Other Smart Contract Models"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Chaincode"
+    modifier: "permissioned ledgers"
+    aliases: ["private chaincode", "permissioned chaincode"]
+    definition: "Smart contract logic used in permissioned ledger systems where known participants control access and execution."
+    context: "The lesson names Hyperledger Fabric chaincode to separate enterprise contract models from permissionless Ethereum composability."
+    slide_heading: "Beyond Ethereum: Other Smart Contract Models"
+    tags: ["permissioned-ledgers", "ethereum"]
+    confidence: "high"
+  - term: "Ethereum Virtual Machine"
+    modifier: "Ethereum execution"
+    aliases: ["EVM"]
+    definition: "The deterministic execution environment that runs compiled contract bytecode and computes Ethereum state transitions."
+    context: "The EVM is the common target that lets every Ethereum node execute the same contract logic the same way."
+    slide_heading: "Ethereum's Advantage for Smart Contracts"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Bytecode"
+    modifier: "Ethereum"
+    aliases: ["EVM bytecode", "compiled bytecode"]
+    definition: "The low-level instructions produced by compilation and executed by the EVM rather than the human-readable Solidity source."
+    context: "Students need the bytecode distinction to understand deployment, verification, and what actually lives on-chain."
+    slide_heading: "Ethereum's Advantage for Smart Contracts"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Ethereum Request for Comments"
+    modifier: "Ethereum standard"
+    aliases: ["ERC", "ERCs", "ERC standard", "ERC standards"]
+    definition: "An Ethereum application-level standard that defines shared interfaces such as token contracts and other reusable conventions."
+    context: "ERC standards support composability by letting contracts and applications assume predictable interfaces."
+    slide_heading: "Ethereum's Advantage for Smart Contracts"
+    tags: ["ethereum", "tokenization"]
+    confidence: "high"
+  - term: "Composability"
+    modifier: "Ethereum"
+    aliases: ["permissionless composability"]
+    definition: "The ability for contracts and applications to build on, call, and integrate with existing on-chain code and standards."
+    context: "Composability is presented as an Ethereum advantage, but it also increases dependency and security review needs."
+    slide_heading: "Ethereum's Advantage for Smart Contracts"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Externally owned account"
+    modifier: "Ethereum"
+    aliases: ["EOA", "EOAs", "user account"]
+    definition: "An Ethereum account controlled by a private key that can sign and initiate transactions."
+    context: "The lesson distinguishes EOAs from contract accounts because every on-chain action ultimately traces back to an EOA signature."
+    slide_heading: "Ethereum Accounts and Contract Review"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Contract account"
+    modifier: "Ethereum"
+    aliases: ["contract", "contract address"]
+    definition: "An Ethereum account that holds code and storage and executes only when invoked by a transaction or message call."
+    context: "Contract accounts are reactive execution targets; they cannot sign transactions or self-initiate on-chain actions."
+    slide_heading: "Ethereum Accounts and Contract Review"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Message call"
+    modifier: "EVM"
+    aliases: ["call", "contract call"]
+    definition: "An invocation that asks an account or contract function to execute with specific input data, value, gas, and caller context."
+    context: "Message calls are how contracts run after deployment and how nested control flow forms across contracts."
+    slide_heading: "Ethereum Accounts and Contract Review"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "msg.sender"
+    modifier: "Solidity"
+    aliases: ["immediate caller"]
+    definition: "The Solidity context variable that identifies the immediate caller of the current call frame."
+    context: "The lesson emphasizes msg.sender because access control can fail when developers assume it is always the original user."
+    slide_heading: "Ethereum Accounts and Contract Review"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "msg.value"
+    modifier: "Solidity"
+    aliases: []
+    definition: "The Solidity context variable that reports how much ETH was attached to the current call."
+    context: "msg.value shapes payment logic and changes from frame to frame as contracts call one another."
+    slide_heading: "Ethereum Accounts and Contract Review"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Access control"
+    modifier: "smart contracts"
+    aliases: ["authorization logic"]
+    definition: "Contract logic that restricts which callers may execute privileged functions or change protected state."
+    context: "Access control appears throughout the lesson in examples such as minters, msg.sender checks, and upgrade governance."
+    slide_heading: "Ethereum Accounts and Contract Review"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Contract deployment"
+    modifier: "Ethereum"
+    aliases: ["deployment"]
+    definition: "The process of creating a contract account by sending creation code that runs once and returns runtime bytecode."
+    context: "Deployment explains how human-readable source becomes an on-chain address with bytecode and initialized storage."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Deployment bytecode"
+    modifier: "Ethereum"
+    aliases: ["creation code", "creation bytecode"]
+    definition: "The bytecode sent in a deployment transaction that the EVM executes to initialize a contract and produce runtime bytecode."
+    context: "The lesson separates deployment bytecode from runtime bytecode so students know constructors do not remain as ordinary callable code."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Initcode"
+    modifier: "Ethereum"
+    aliases: ["init code", "initialization code"]
+    definition: "The contract creation code executed during deployment, including constructor logic, before returning runtime bytecode."
+    context: "Initcode is the short-lived code path that creates the final contract account and initializes its storage."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Constructor"
+    modifier: "Solidity"
+    aliases: ["constructor logic"]
+    definition: "A deployment-time function that runs once to initialize contract state before the runtime bytecode is stored on-chain."
+    context: "The Coin example uses a constructor to set the minter to the deploying account."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Runtime bytecode"
+    modifier: "Ethereum"
+    aliases: ["runtime code"]
+    definition: "The bytecode that remains stored at a contract address after deployment and is executed by future calls."
+    context: "Runtime bytecode is what Ethereum nodes execute after creation, while source-code verification is a later transparency step."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "CREATE"
+    modifier: "EVM opcode"
+    aliases: []
+    definition: "The standard EVM deployment opcode that derives a new contract address from the creator address and nonce."
+    context: "CREATE is the baseline contract deployment rule before the lesson introduces predictable CREATE2 addresses."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "CREATE2"
+    modifier: "EVM opcode"
+    aliases: []
+    definition: "An EVM deployment opcode that derives a contract address from the creator address, a salt, and the initcode hash."
+    context: "CREATE2 matters for factories and coordinated deployments because the address can be predicted before deployment."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Source-code verification"
+    modifier: "Ethereum"
+    aliases: ["verified source", "contract verification"]
+    definition: "The off-chain process of matching published source code and compiler settings to deployed contract bytecode."
+    context: "The lesson separates source-code verification from deployment because blockchains store bytecode, not the readable Solidity file."
+    slide_heading: "Contract Deployment"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "External call"
+    modifier: "smart contracts"
+    aliases: ["external interaction"]
+    definition: "A call from one contract to another account that hands control to code outside the caller's direct control."
+    context: "External calls are the core trust boundary behind reentrancy, gas forwarding, and cascading failures."
+    slide_heading: "Calls and Control Flow in the EVM"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Call frame"
+    modifier: "EVM"
+    aliases: ["stack frame", "execution frame"]
+    definition: "The EVM execution context for one call, including its own caller, value, gas budget, memory, and return data."
+    context: "Call frames explain why msg.sender and msg.value change as control passes across nested calls."
+    slide_heading: "Calls and Control Flow in the EVM"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Revert"
+    modifier: "EVM"
+    aliases: ["reversion", "transaction revert"]
+    definition: "A failure outcome that rolls back state changes for the current frame and may unwind the whole transaction if not handled."
+    context: "Reverts matter because failures can cascade through nested contract calls unless a caller catches or handles them."
+    slide_heading: "Calls and Control Flow in the EVM"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Gas budget"
+    modifier: "EVM call frame"
+    aliases: ["available gas"]
+    definition: "The amount of gas available to a call frame before execution fails from running out of gas."
+    context: "The gas budget bounds loops, nested calls, and callee behavior inside EVM control flow."
+    slide_heading: "Calls and Control Flow in the EVM"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Pragma"
+    modifier: "Solidity"
+    aliases: ["compiler directive", "pragma solidity"]
+    definition: "A source-code directive that constrains the Solidity compiler version and expected language behavior."
+    context: "Reading the pragma first helps students understand which compiler rules and safety checks the contract assumes."
+    slide_heading: "Solidity: File Structure, From Top to Bottom"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Contract declaration"
+    modifier: "Solidity"
+    aliases: ["contract Name", "contract block"]
+    definition: "The Solidity syntax that names the deployable unit of code and state."
+    context: "The contract declaration tells reviewers which code and state will live together at one deployed address."
+    slide_heading: "Solidity: File Structure, From Top to Bottom"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "State variable"
+    modifier: "Solidity"
+    aliases: ["state variables"]
+    definition: "A variable stored in contract storage whose value can persist between calls."
+    context: "The lesson recommends reading state variables before functions so reviewers know what the contract protects and changes."
+    slide_heading: "Solidity: File Structure, From Top to Bottom"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Function modifier"
+    modifier: "Solidity"
+    aliases: ["modifier", "modifiers"]
+    definition: "A Solidity construct used to add reusable checks or behavior around function execution."
+    context: "Modifiers are part of the callable surface reviewers inspect for privilege checks and state-changing behavior."
+    slide_heading: "Solidity: File Structure, From Top to Bottom"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Event"
+    modifier: "Solidity"
+    aliases: ["events", "event emission"]
+    definition: "A contract-declared log format that lets successful transactions emit structured data for off-chain consumers."
+    context: "Events connect contract execution to wallets, explorers, indexers, and audit trails without changing contract storage."
+    slide_heading: "Solidity: File Structure, From Top to Bottom"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Value type"
+    modifier: "Solidity"
+    aliases: ["value types"]
+    definition: "A Solidity type category whose values are copied when assigned or passed to functions."
+    context: "Value types help students distinguish copy-by-value behavior from reference types that depend on data location."
+    slide_heading: "Types: Value Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Unsigned integer"
+    modifier: "Solidity"
+    aliases: ["uint", "uint256", "unsigned int"]
+    definition: "A nonnegative integer type commonly used for balances, counters, timestamps, and range checks."
+    context: "Unsigned integers are central to token-style accounting and require correct checks when moving value."
+    slide_heading: "Types: Value Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Address"
+    modifier: "Ethereum"
+    aliases: ["address"]
+    definition: "A 20-byte account identifier used to refer to EOAs, contract accounts, owners, recipients, and callers."
+    context: "Address values drive ownership and access-control decisions in the Solidity examples."
+    slide_heading: "Types: Value Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Address payable"
+    modifier: "Solidity"
+    aliases: ["payable address", "address payable"]
+    definition: "A Solidity address type that is allowed to receive ETH through value-transfer operations."
+    context: "The distinction between address and address payable connects type choice to whether ETH can be sent safely."
+    slide_heading: "Types: Value Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Enum"
+    modifier: "Solidity"
+    aliases: ["enumeration"]
+    definition: "A value type that restricts a variable to a fixed set of named states."
+    context: "Enums help model state machines by keeping contract state inside valid named options."
+    slide_heading: "Types: Value Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Reference type"
+    modifier: "Solidity"
+    aliases: ["reference types"]
+    definition: "A Solidity type category for larger data structures whose behavior depends on where the data is stored."
+    context: "Reference types make storage, memory, calldata, copying behavior, and gas cost explicit design concerns."
+    slide_heading: "Types: Reference Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Array"
+    modifier: "Solidity"
+    aliases: ["arrays", "dynamic array", "fixed-size array"]
+    definition: "An ordered collection of values that may have fixed or dynamic length."
+    context: "Arrays are the simplest collection type for lists, histories, and batched data in contracts."
+    slide_heading: "Types: Reference Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Struct"
+    modifier: "Solidity"
+    aliases: ["structs"]
+    definition: "A custom grouped record type that combines multiple fields into one named data structure."
+    context: "Structs help contracts model richer state such as users, proposals, or assets."
+    slide_heading: "Types: Reference Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Mapping"
+    modifier: "Solidity"
+    aliases: ["mapping(Key => Value)", "key-value lookup"]
+    definition: "A key-value lookup table commonly used for balances, permissions, registries, and other sparse associations."
+    context: "The Coin example uses a mapping from addresses to balances, showing a core Solidity storage pattern."
+    slide_heading: "Types: Reference Types"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Function visibility"
+    modifier: "Solidity"
+    aliases: ["visibility", "public", "external", "internal", "private"]
+    definition: "A function or variable annotation that controls whether code can be accessed externally, internally, by derived contracts, or only within the same contract."
+    context: "Visibility is one of the first annotations auditors inspect when reasoning about a contract's callable surface."
+    slide_heading: "Visibility, Mutability, and Payable"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Function mutability"
+    modifier: "Solidity"
+    aliases: ["mutability", "view", "pure"]
+    definition: "A function annotation that communicates whether a function may read contract state, write contract state, or avoid state entirely."
+    context: "Mutability tells students which functions are read-only and which may change persistent state."
+    slide_heading: "Visibility, Mutability, and Payable"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Payable"
+    modifier: "Solidity"
+    aliases: ["payable function"]
+    definition: "A Solidity annotation that permits a function or address to receive ETH."
+    context: "Payable marks the boundary between calls that may carry ETH and default nonpayable calls that reject attached ETH."
+    slide_heading: "Visibility, Mutability, and Payable"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Nonpayable"
+    modifier: "Solidity"
+    aliases: ["nonpayable function"]
+    definition: "The default Solidity behavior where a function reverts if ETH is attached to the call."
+    context: "The contrast with payable helps students see how function declarations constrain payment behavior."
+    slide_heading: "Visibility, Mutability, and Payable"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Data location"
+    modifier: "Solidity"
+    aliases: ["data locations"]
+    definition: "A label that specifies where reference-type data lives during execution, such as storage, memory, or calldata."
+    context: "Data location choices affect persistence, copying behavior, gas cost, and whether updates change on-chain state."
+    slide_heading: "Data Locations: Storage, Memory, Calldata"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Storage"
+    modifier: "Solidity data location"
+    aliases: ["contract storage", "persistent storage"]
+    definition: "The persistent on-chain data area where contract state remains across transactions."
+    context: "Storage is where balances, owners, and mappings live, and writing to it is expensive because the global state changes."
+    slide_heading: "Data Locations: Storage, Memory, Calldata"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Memory"
+    modifier: "Solidity data location"
+    aliases: ["temporary memory"]
+    definition: "The temporary workspace available during one call and cleared afterward."
+    context: "Memory supports local arrays, decoded values, and ABI encoding buffers without persisting after the call."
+    slide_heading: "Data Locations: Storage, Memory, Calldata"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Calldata"
+    modifier: "Solidity data location"
+    aliases: ["call data", "transaction input payload"]
+    definition: "The read-only input bytes supplied by the caller, including encoded function arguments."
+    context: "Calldata is often cheaper than copying inputs into memory and is central to ABI-based contract calls."
+    slide_heading: "Data Locations: Storage, Memory, Calldata"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Getter"
+    modifier: "Solidity"
+    aliases: ["getter function", "auto-generated getter"]
+    definition: "A read function that returns contract state, sometimes generated automatically for public state variables."
+    context: "Getters in the SimpleStorage and Coin examples show how callers inspect state without modifying it."
+    slide_heading: "Example: SimpleStorage (Code)"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Setter"
+    modifier: "Solidity"
+    aliases: ["setter function"]
+    definition: "A function that updates contract state."
+    context: "The SimpleStorage set function illustrates the difference between a state-changing write path and a read-only getter."
+    slide_heading: "Example: SimpleStorage (Code)"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Minter"
+    modifier: "token contract"
+    aliases: []
+    definition: "An authorized account that can create new token-like units in the example contract."
+    context: "The Coin example uses a minter to introduce access control around value creation."
+    slide_heading: "Example: Coin (Code, Part 1)"
+    tags: ["ethereum", "tokenization"]
+    confidence: "high"
+  - term: "Require check"
+    modifier: "Solidity"
+    aliases: ["require", "precondition check"]
+    definition: "A Solidity guard that stops execution and reverts when a required condition is not true."
+    context: "Require checks protect minting and transfers by enforcing authorization or balance conditions before state changes proceed."
+    slide_heading: "Example: Coin (Code, Part 1)"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Invariant"
+    modifier: "smart contracts"
+    aliases: ["contract invariant", "accounting invariant"]
+    definition: "A condition that should remain true after every valid contract call."
+    context: "The Coin example introduces invariants through balance accounting, where transfers should preserve the intended value rules."
+    slide_heading: "Example: Coin (Code, Part 1)"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Custom error"
+    modifier: "Solidity"
+    aliases: ["error"]
+    definition: "A named Solidity failure type that can return structured information when a call reverts."
+    context: "The Coin transfer example uses a custom error to report requested and available balances on failure."
+    slide_heading: "Example: Coin (Code, Part 2)"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Balance-transfer invariant"
+    modifier: "token contract"
+    aliases: ["conservation of balances"]
+    definition: "The accounting rule that a valid transfer subtracts from one balance and adds to another without creating or losing units unexpectedly."
+    context: "The Coin send function demonstrates the storage updates that must preserve token-style accounting."
+    slide_heading: "Example: Coin (Code, Part 2)"
+    tags: ["ethereum", "tokenization"]
+    confidence: "high"
+  - term: "Log"
+    modifier: "Ethereum"
+    aliases: ["log entry", "event log"]
+    definition: "An append-only record emitted during a transaction and stored in the transaction receipt for off-chain systems to read."
+    context: "Logs are how contracts communicate successful activity to wallets, explorers, indexers, and proof systems."
+    slide_heading: "Events and Logs"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Transaction receipt"
+    modifier: "Ethereum"
+    aliases: ["receipt"]
+    definition: "The transaction result record that includes status, gas use, and emitted logs."
+    context: "Events are stored in receipts rather than contract storage, so they are visible off-chain but not readable by other contracts."
+    slide_heading: "Events and Logs"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Topic"
+    modifier: "Ethereum log"
+    aliases: ["log topic", "indexed topic"]
+    definition: "A 32-byte indexed field in an Ethereum log used by clients to filter events efficiently."
+    context: "Topics make event logs searchable without scanning every unindexed data blob."
+    slide_heading: "Events and Logs"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Indexed field"
+    modifier: "Solidity event"
+    aliases: ["indexed parameter", "indexed"]
+    definition: "An event parameter stored as a log topic so off-chain clients can search or filter by it."
+    context: "Indexed fields are an event design choice that improves observability and integration with indexing tools."
+    slide_heading: "Events and Logs"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Event signature hash"
+    modifier: "Ethereum log"
+    aliases: ["topic 0", "event selector"]
+    definition: "The keccak-256 hash of an event signature that appears as the first topic for ordinary Solidity events."
+    context: "The event signature hash lets clients identify which event type a log entry represents."
+    slide_heading: "Events and Logs"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Application Binary Interface"
+    modifier: "Ethereum"
+    aliases: ["ABI"]
+    definition: "The byte-level interface that specifies how callers encode function calls, return values, and event data for a contract."
+    context: "The ABI is what lets wallets, apps, and other contracts interact with deployed bytecode without needing source code on-chain."
+    slide_heading: "ABI, Encoding, and Function Selectors"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "ABI encoding"
+    modifier: "Ethereum"
+    aliases: ["ABI-encoded", "encoded arguments"]
+    definition: "The Ethereum convention for packing function arguments, return values, and event data into byte sequences."
+    context: "ABI encoding explains how human-readable calls become calldata that the EVM can dispatch and interpret."
+    slide_heading: "ABI, Encoding, and Function Selectors"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Function selector"
+    modifier: "Ethereum ABI"
+    aliases: ["selector", "4-byte selector"]
+    definition: "The first four bytes of the keccak-256 hash of a function signature, used to route calldata to the intended function."
+    context: "Function selectors are compact dispatch codes, not memory addresses, and they make ABI calls work at the byte level."
+    slide_heading: "ABI, Encoding, and Function Selectors"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Function signature"
+    modifier: "Ethereum ABI"
+    aliases: ["name(types)"]
+    definition: "The canonical function name and parameter-type string that is hashed to derive a function selector."
+    context: "The ABI call format depends on signatures such as name(types) to identify the intended entry point."
+    slide_heading: "ABI, Encoding, and Function Selectors"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Receive function"
+    modifier: "Solidity"
+    aliases: ["receive"]
+    definition: "A special Solidity function that handles plain ETH transfers sent without calldata."
+    context: "The lesson connects receive functions to ETH transfer behavior and later to reentrancy attack paths."
+    slide_heading: "ABI, Encoding, and Function Selectors"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Fallback function"
+    modifier: "Solidity"
+    aliases: ["fallback"]
+    definition: "A special Solidity function that can run when calldata does not match a known selector or when ETH is received in certain cases."
+    context: "Fallback logic is important because malicious fallback behavior can reenter vulnerable contracts during ETH transfers."
+    slide_heading: "ABI, Encoding, and Function Selectors"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Reentrancy"
+    modifier: "smart contract security"
+    aliases: ["reentrant call", "reentry"]
+    definition: "A vulnerability pattern where an external call lets another contract call back into the original contract before the first execution finishes safely."
+    context: "Reentrancy is the lesson's central security example for why external calls must be treated as adversarial control flow."
+    slide_heading: "Reentrancy: Anatomy and Defenses"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Withdrawal pattern"
+    modifier: "reentrancy"
+    aliases: ["withdraw pattern"]
+    definition: "A contract flow where users claim funds from recorded balances, commonly vulnerable if payment happens before accounting updates."
+    context: "The classic reentrancy bug appears when a withdrawal sends ETH before setting the withdrawer's balance to zero."
+    slide_heading: "Reentrancy: Anatomy and Defenses"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Checks-Effects-Interactions"
+    modifier: "smart contract security"
+    aliases: ["CEI", "CEI pattern"]
+    definition: "A defensive ordering pattern that checks preconditions, updates internal state, and performs external calls last."
+    context: "CEI breaks the classic reentrancy loop by making reentrant attempts see already-updated state."
+    slide_heading: "Reentrancy: Anatomy and Defenses"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "ReentrancyGuard"
+    modifier: "smart contract security"
+    aliases: ["reentry lock", "mutex", "nonReentrant"]
+    definition: "A library-style guard that blocks a protected function from being entered again before the first call finishes."
+    context: "The lesson presents ReentrancyGuard as a second layer of defense alongside CEI ordering."
+    slide_heading: "Reentrancy: Anatomy and Defenses"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Pull payment"
+    modifier: "smart contract security"
+    aliases: ["pull over push payments", "withdrawal-based payment"]
+    definition: "A payment design where recipients withdraw funds themselves instead of the contract pushing funds during unrelated logic."
+    context: "Pull payments reduce unexpected external-call risk by isolating value transfer into explicit withdrawal flows."
+    slide_heading: "Reentrancy: Anatomy and Defenses"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "The DAO hack"
+    modifier: "Ethereum history"
+    aliases: ["DAO attack", "The DAO exploit"]
+    definition: "A 2016 Ethereum exploit that abused an external-call-before-state-update bug to drain funds from The DAO."
+    context: "The DAO hack anchors the reentrancy pattern in a real incident with technical and governance consequences."
+    slide_heading: "Case Study: The DAO Hack (2016)"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Hard fork"
+    modifier: "Ethereum governance"
+    aliases: ["protocol fork"]
+    definition: "A protocol change that requires participants to adopt new rules and can split the chain if some refuse."
+    context: "The response to The DAO hack used a hard fork to revert the exploit, leading dissenters to continue as Ethereum Classic."
+    slide_heading: "Case Study: The DAO Hack (2016)"
+    tags: ["ethereum", "policy", "consensus"]
+    confidence: "high"
+  - term: "Ethereum Classic"
+    modifier: "Ethereum history"
+    aliases: ["ETC"]
+    definition: "The chain that continued without the DAO-reversal fork after the Ethereum community split in 2016."
+    context: "Ethereum Classic illustrates how social disagreement over history and rules can produce separate chains."
+    slide_heading: "Case Study: The DAO Hack (2016)"
+    tags: ["ethereum", "policy"]
+    confidence: "high"
+  - term: "Immutability"
+    modifier: "Ethereum contracts"
+    aliases: ["immutable contract", "contract immutability"]
+    definition: "The default property that deployed contract code cannot be directly patched in place."
+    context: "Immutability gives predictability but makes bugs permanent unless contracts use migration or upgrade patterns."
+    slide_heading: "Upgradeability and Proxy Patterns"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Proxy pattern"
+    modifier: "smart contract upgradeability"
+    aliases: ["upgradeable proxy", "proxy contract"]
+    definition: "An upgrade design that keeps state and the user-facing address in a proxy while delegating execution to replaceable logic code."
+    context: "Proxy patterns trade default immutability for upgradeability while adding storage and governance risks."
+    slide_heading: "Upgradeability and Proxy Patterns"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Delegatecall"
+    modifier: "EVM"
+    aliases: ["delegatecall"]
+    definition: "An EVM operation that executes another contract's code while using the caller's storage and execution context."
+    context: "Delegatecall is what allows proxy contracts to run new logic against the proxy's existing state."
+    slide_heading: "Upgradeability and Proxy Patterns"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Logic contract"
+    modifier: "proxy pattern"
+    aliases: ["implementation contract", "implementation", "logic"]
+    definition: "The contract that contains executable code used by a proxy while the proxy keeps the persistent state."
+    context: "Changing the logic contract lets an upgradeable system alter behavior without changing the proxy address."
+    slide_heading: "Upgradeability and Proxy Patterns"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Storage layout"
+    modifier: "proxy pattern"
+    aliases: ["storage layout discipline"]
+    definition: "The ordered arrangement of state variables in storage that upgradeable contracts must preserve across logic versions."
+    context: "Storage layout mistakes can corrupt proxy state because delegatecall runs new code against existing storage slots."
+    slide_heading: "Upgradeability and Proxy Patterns"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Multi-signature wallet"
+    modifier: "upgrade governance"
+    aliases: ["multi-sig", "multisig"]
+    definition: "A control mechanism requiring multiple approved signers before an administrative action can execute."
+    context: "The lesson names multi-sigs as a governance control for reducing malicious or unilateral contract upgrades."
+    slide_heading: "Upgradeability and Proxy Patterns"
+    tags: ["ethereum", "policy"]
+    confidence: "high"
+  - term: "Timelock"
+    modifier: "upgrade governance"
+    aliases: ["time lock"]
+    definition: "A delay mechanism that forces an upgrade or administrative action to wait before it can take effect."
+    context: "Timelocks give users and reviewers time to detect or respond to harmful upgrades."
+    slide_heading: "Upgradeability and Proxy Patterns"
+    tags: ["ethereum", "policy"]
+    confidence: "high"
+  - term: "Oracle"
+    modifier: "smart contracts"
+    aliases: ["oracles"]
+    definition: "A mechanism that brings off-chain facts into an on-chain execution environment by posting data for contracts to use."
+    context: "Oracles are necessary because deterministic contracts cannot directly call external APIs or observe real-world facts."
+    slide_heading: "Randomness, Oracles, and External Data"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "On-chain randomness"
+    modifier: "smart contracts"
+    aliases: ["blockchain randomness"]
+    definition: "Random-looking values generated or consumed by contracts inside the blockchain execution environment."
+    context: "The lesson warns that naive on-chain randomness from block hashes or timestamps can be manipulated by proposers."
+    slide_heading: "Randomness, Oracles, and External Data"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Commit-reveal scheme"
+    modifier: "smart contract randomness"
+    aliases: ["commit-reveal"]
+    definition: "A protocol where participants first commit to hidden values and later reveal them, reducing opportunities to change inputs after seeing others."
+    context: "Commit-reveal is presented as one safer approach to randomness when contracts cannot generate true random values directly."
+    slide_heading: "Randomness, Oracles, and External Data"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Verifiable Random Function"
+    modifier: "smart contract randomness"
+    aliases: ["VRF", "VRFs"]
+    definition: "A cryptographic method that produces randomness with a proof that the output was generated correctly."
+    context: "VRFs help contracts use externally supplied randomness while giving users evidence that the value was not simply invented."
+    slide_heading: "Randomness, Oracles, and External Data"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Staleness check"
+    modifier: "oracle defense"
+    aliases: ["freshness check"]
+    definition: "A validation rule that rejects oracle data older than an acceptable time or block threshold."
+    context: "Staleness checks are one defensive pattern for preventing contracts from acting on outdated external data."
+    slide_heading: "Randomness, Oracles, and External Data"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Circuit breaker"
+    modifier: "oracle defense"
+    aliases: ["pause mechanism", "emergency pause"]
+    definition: "A safety mechanism that pauses critical operations when data feeds or assumptions appear to fail."
+    context: "Circuit breakers help limit damage when oracles go offline, behave unexpectedly, or report implausible values."
+    slide_heading: "Randomness, Oracles, and External Data"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Multi-source aggregation"
+    modifier: "oracle defense"
+    aliases: ["oracle aggregation", "multi-source oracle"]
+    definition: "Combining data from multiple sources to reduce reliance on one reporter or feed."
+    context: "The lesson names aggregation as a way to make external data assumptions more explicit and harder to manipulate."
+    slide_heading: "Randomness, Oracles, and External Data"
+    tags: ["ethereum"]
+    confidence: "high"

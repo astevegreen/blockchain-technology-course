@@ -9,6 +9,54 @@ import { disassemble, formatDisassembly } from '../lib/evmOpcodes';
 
 // ERC-721 Transfer event: Transfer(address,address,uint256)
 const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+const MAX_ADDRESS_SCAN_BLOCKS = 1000;
+const MAX_ADDRESS_ACTIVITY = 80;
+const MAX_ADDRESS_LOGS = 80;
+
+function sameAddress(a, b) {
+  return !!a && !!b && String(a).toLowerCase() === String(b).toLowerCase();
+}
+
+function formatEthValue(value) {
+  try {
+    const v = typeof value === 'bigint' ? value : BigInt(value ?? 0);
+    if (v === 0n) return '0 ETH';
+    const whole = v / 1000000000000000000n;
+    const frac = (v % 1000000000000000000n).toString().padStart(18, '0').slice(0, 6);
+    return `${whole}.${frac} ETH`;
+  } catch {
+    return '—';
+  }
+}
+
+function topicToAddress(topic) {
+  const t = String(topic || '').toLowerCase();
+  if (!/^0x[a-f0-9]{64}$/.test(t)) return null;
+  return `0x${t.slice(26)}`;
+}
+
+function decodeTransferLog(log) {
+  const topics = log?.topics || [];
+  if (String(topics[0] || '').toLowerCase() !== TRANSFER_TOPIC.toLowerCase() || topics.length < 4) return null;
+  let tokenId = '—';
+  try {
+    tokenId = BigInt(topics[3]).toString();
+  } catch (_) {}
+  return {
+    contract: log.address,
+    from: topicToAddress(topics[1]),
+    to: topicToAddress(topics[2]),
+    tokenId,
+  };
+}
+
+function txDirection(tx, address) {
+  if (tx.contractAddress && sameAddress(tx.contractAddress, address)) return 'contract created';
+  if (sameAddress(tx.from, address) && sameAddress(tx.to, address)) return 'self';
+  if (sameAddress(tx.from, address)) return 'out';
+  if (sameAddress(tx.to, address)) return 'in';
+  return 'event';
+}
 
 function buildBlockResult(blockByHash, transactions) {
   return {
@@ -87,11 +135,27 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
   const [blockNumber, setBlockNumber] = useState(null);
   const [viewOpcodes, setViewOpcodes] = useState(false);
 
+  // Keep the head block number fresh from the instructor's shared chain cache (/chain-state) so
+  // every student's search box doesn't poll the node directly; fall back to RPC when absent.
   useEffect(() => {
-    if (!provider) return;
-    provider.getBlockNumber().then(setBlockNumber).catch(() => setBlockNumber(null));
-    const iv = setInterval(() => provider.getBlockNumber().then(setBlockNumber).catch(() => {}), 5000);
-    return () => clearInterval(iv);
+    let cancelled = false;
+    const base = ((typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/').replace(/\/$/, '');
+    const readHead = async () => {
+      for (const url of [base + '/chain-state', base + '/lab-api/chain/state']) {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (j && j.ok && typeof j.head === 'number') return j.head;
+        } catch { /* try next url */ }
+      }
+      if (provider) { try { return await provider.getBlockNumber(); } catch { return null; } }
+      return null;
+    };
+    const tick = async () => { const h = await readHead(); if (!cancelled) setBlockNumber(h); };
+    tick();
+    const iv = setInterval(tick, 5000);
+    return () => { cancelled = true; clearInterval(iv); };
   }, [provider]);
 
   const search = useCallback(async () => {
@@ -155,6 +219,9 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
           from: tx.from,
           to: tx.to,
           value: tx.value,
+          status: receipt?.status,
+          gasUsed: receipt?.gasUsed,
+          input: tx.data,
           contractAddress: receipt?.contractAddress,
           logs: receipt?.logs ?? [],
         });
@@ -163,18 +230,28 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
 
       if (isAddress) {
         const code = await provider.getCode(normalized);
-        if (!code || code === '0x' || code === '0x0') {
-          setError('Address has no code (not a contract or not deployed)');
-          return;
-        }
+        const isContract = !!code && code !== '0x' && code !== '0x0';
+        let balance = null;
+        let nonce = null;
+        try {
+          [balance, nonce] = await Promise.all([
+            provider.getBalance(normalized),
+            provider.getTransactionCount(normalized),
+          ]);
+        } catch (_) {}
+
         const currentBlock = await provider.getBlockNumber();
         const currentBlockNum = Number(currentBlock);
-        const maxBlocks = 500;
-        const startBlock = Math.max(0, currentBlockNum - maxBlocks + 1);
+        const startBlock = Math.max(0, currentBlockNum - MAX_ADDRESS_SCAN_BLOCKS + 1);
         let deploymentBlock = null;
         let deploymentTxHash = null;
         let deploymentFrom = null;
         let deploymentBlockHash = null;
+        const seenBlocks = new Set();
+        const allBlocks = [];
+        const activity = [];
+        const matchingLogs = [];
+        const tokenTransfers = [];
 
         const getBlockTxs = (block) => block?.prefetchedTransactions ?? block?.transactions ?? [];
 
@@ -186,68 +263,115 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
             if (!tx) continue;
             const txHash = typeof tx === 'string' ? tx : tx.hash;
             if (!txHash) continue;
+            const txObj = typeof tx === 'object' ? tx : null;
+            const to = txObj?.to ?? null;
+            const from = txObj?.from ?? null;
+            let receipt = null;
             try {
-              const receipt = await provider.getTransactionReceipt(txHash);
+              receipt = await provider.getTransactionReceipt(txHash);
               const created = receipt?.contractAddress;
-              if (created && String(created).toLowerCase() === normalized) {
-                const txObj = typeof tx === 'object' ? tx : null;
+              if (isContract && created && String(created).toLowerCase() === normalized && deploymentBlock == null) {
                 deploymentBlock = Number(block.number);
                 deploymentTxHash = txHash;
                 deploymentFrom = txObj?.from ?? receipt?.from;
                 deploymentBlockHash = block.hash;
-                break;
               }
             } catch (_) {}
-          }
-          if (deploymentBlock != null) break;
-        }
 
-        if (deploymentBlock == null) {
-          setError('Contract deployment transaction not found (searched last ' + (currentBlockNum - startBlock + 1) + ' blocks)');
-          return;
-        }
-
-        const seenBlocks = new Set([deploymentBlock]);
-        const allBlocks = [
-          { blockNumber: deploymentBlock, blockHash: deploymentBlockHash, txHash: deploymentTxHash, from: deploymentFrom, isDeployment: true },
-        ];
-
-        const scanEndBlock = Math.min(currentBlockNum, deploymentBlock + 2000);
-        for (let b = deploymentBlock; b <= scanEndBlock; b++) {
-          if (seenBlocks.has(b)) continue;
-          const block = await provider.getBlock(b, true);
-          const scanTxs = getBlockTxs(block);
-          if (!scanTxs.length) continue;
-          for (const tx of scanTxs) {
-            if (!tx) continue;
-            const txObj = typeof tx === 'object' ? tx : null;
-            const to = txObj?.to;
-            if (to && String(to).toLowerCase() === normalized) {
-              const txHash = typeof tx === 'string' ? tx : tx.hash;
-              seenBlocks.add(b);
-              allBlocks.push({
+            const receiptFrom = receipt?.from ?? from;
+            const receiptTo = receipt?.to ?? to;
+            const directMatch = sameAddress(receiptFrom, normalized) || sameAddress(receiptTo, normalized) || sameAddress(receipt?.contractAddress, normalized);
+            const txLogMatches = [];
+            for (const log of receipt?.logs ?? []) {
+              const transfer = decodeTransferLog(log);
+              const transferInvolves = transfer && (
+                sameAddress(transfer.from, normalized) ||
+                sameAddress(transfer.to, normalized) ||
+                sameAddress(transfer.contract, normalized)
+              );
+              const topicInvolves = (log.topics || []).some((topic) => sameAddress(topicToAddress(topic), normalized));
+              const logInvolves = sameAddress(log.address, normalized) || topicInvolves || transferInvolves;
+              if (!logInvolves) continue;
+              const logItem = {
                 blockNumber: Number(block.number),
                 blockHash: block.hash,
                 txHash,
-                from: txObj?.from ?? null,
-                isDeployment: false,
-              });
-              break;
+                address: log.address,
+                topic0: log.topics?.[0] ?? null,
+                transfer,
+              };
+              txLogMatches.push(logItem);
+              if (matchingLogs.length < MAX_ADDRESS_LOGS) matchingLogs.push(logItem);
+              if (transfer && tokenTransfers.length < MAX_ADDRESS_LOGS) {
+                tokenTransfers.push({ blockNumber: Number(block.number), txHash, ...transfer });
+              }
+            }
+
+            if (directMatch || txLogMatches.length > 0) {
+              if (activity.length < MAX_ADDRESS_ACTIVITY) {
+                activity.push({
+                  blockNumber: Number(block.number),
+                  blockHash: block.hash,
+                  hash: txHash,
+                  from: receiptFrom ?? null,
+                  to: receiptTo ?? null,
+                  value: txObj?.value ?? null,
+                  status: receipt?.status,
+                  gasUsed: receipt?.gasUsed,
+                  contractAddress: receipt?.contractAddress ?? null,
+                  logsMatched: txLogMatches.length,
+                });
+              }
+              if (!seenBlocks.has(Number(block.number))) {
+                seenBlocks.add(Number(block.number));
+                allBlocks.push({
+                  blockNumber: Number(block.number),
+                  blockHash: block.hash,
+                  txHash,
+                  from: receiptFrom ?? null,
+                  isDeployment: !!receipt?.contractAddress && sameAddress(receipt.contractAddress, normalized),
+                });
+              }
             }
           }
         }
 
-        allBlocks.sort((a, b) => a.blockNumber - b.blockNumber);
+        if (isContract && deploymentBlock != null && !seenBlocks.has(deploymentBlock)) {
+          seenBlocks.add(deploymentBlock);
+          allBlocks.push({
+            blockNumber: deploymentBlock,
+            blockHash: deploymentBlockHash,
+            txHash: deploymentTxHash,
+            from: deploymentFrom,
+            isDeployment: true,
+          });
+        }
+
+        allBlocks.sort((a, b) => b.blockNumber - a.blockNumber);
 
         setResult({
-          type: 'contract',
+          type: isContract ? 'contract' : 'address',
+          address: normalized,
+          addressKind: isContract ? 'contract' : 'EOA / wallet',
           blockNumber: deploymentBlock,
           blockHash: deploymentBlockHash,
           txHash: deploymentTxHash,
           from: deploymentFrom,
-          contractAddress: normalized,
+          contractAddress: isContract ? normalized : null,
+          balance,
+          nonce,
           allBlocks,
-          bytecode: code,
+          bytecode: isContract ? code : null,
+          scan: {
+            fromBlock: startBlock,
+            toBlock: currentBlockNum,
+            blocksScanned: currentBlockNum - startBlock + 1,
+          },
+          addressActivity: {
+            transactions: activity,
+            logs: matchingLogs,
+            tokenTransfers,
+          },
         });
         return;
       }
@@ -308,7 +432,7 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
         {result && (
           <div style={{ padding: '0.6rem', background: 'rgba(34,197,94,0.1)', borderRadius: '0.35rem', border: '1px solid rgba(34,197,94,0.3)', fontSize: '0.8rem' }}>
             <div style={{ fontWeight: 600, color: '#86efac', marginBottom: '0.35rem' }}>
-              {result.type === 'block' ? 'Block found' : result.type === 'contract' ? 'Contract found' : 'Transaction found'}
+              {result.type === 'block' ? 'Block found' : result.type === 'contract' ? 'Contract found' : result.type === 'address' ? 'Address found' : 'Transaction found'}
             </div>
             {result.type === 'block' ? (
               <>
@@ -334,10 +458,13 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
                   </button>
                 )}
               </>
-            ) : result.type === 'contract' && result.allBlocks?.length > 0 ? (
+            ) : (result.type === 'contract' || result.type === 'address') ? (
               <>
-                <div style={{ fontFamily: 'monospace', color: '#e2e8f0', marginBottom: '0.35rem' }}>
-                  Found in {result.allBlocks.length} block{result.allBlocks.length !== 1 ? 's' : ''}
+                <div style={{ fontFamily: 'monospace', color: '#e2e8f0', marginBottom: '0.35rem', wordBreak: 'break-all' }}>
+                  {result.address || result.contractAddress}
+                </div>
+                <div style={{ color: '#94a3b8', marginBottom: '0.35rem' }}>
+                  {result.addressKind || 'contract'} · {formatEthValue(result.balance)} · {result.addressActivity?.transactions?.length || 0} recent tx{(result.addressActivity?.transactions?.length || 0) !== 1 ? 's' : ''}
                 </div>
                 {result.bytecode && (
                   <button type="button" onClick={() => copyToClipboard(result.bytecode)} style={{ marginBottom: '0.35rem', padding: '0.1rem 0.3rem', background: '#334155', border: 'none', borderRadius: '0.2rem', color: '#94a3b8', fontSize: '0.7rem', cursor: 'pointer' }}>
@@ -345,7 +472,7 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
                   </button>
                 )}
                 <div style={{ maxHeight: '120px', overflowY: 'auto', fontSize: '0.75rem' }}>
-                  {result.allBlocks.map((blk, i) => (
+                  {(result.allBlocks || []).slice(0, 12).map((blk, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
                       <span style={{ color: '#e2e8f0' }}>#{blk.blockNumber}</span>
                       {blk.isDeployment && <span style={{ background: '#334155', padding: '0.05rem 0.25rem', borderRadius: '0.2rem', fontSize: '0.65rem', color: '#94a3b8' }}>deployment</span>}
@@ -379,7 +506,7 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
   return (
     <details style={{ marginBottom: compact ? 0 : '1rem', background: 'var(--card)', borderRadius: '0.75rem', border: '1px solid #475569' }}>
       <summary style={{ padding: '1rem', cursor: 'pointer', color: 'var(--primary)', fontWeight: 600 }}>
-        🔍 Search Chain — Look up contracts & transactions
+        🔍 Chain Explorer — blocks, transactions, addresses, events
       </summary>
       <div style={{ padding: '1rem', borderTop: '1px solid #334155' }}>
         <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.35rem' }}>
@@ -389,7 +516,7 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
           </div>
         </div>
         <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.75rem' }}>
-          Search by contract address, block number, block hash, or transaction hash. View bytecode for reverse-engineering exercises.
+          Search by wallet address, contract address, block number, block hash, or transaction hash. Address search scans recent blocks for transactions, event logs, and token transfers.
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
           <input
@@ -435,7 +562,7 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
         {result && (
           <div style={{ padding: '1rem', background: 'rgba(34,197,94,0.1)', borderRadius: '0.5rem', border: '1px solid rgba(34,197,94,0.3)', fontSize: '0.9rem' }}>
             <div style={{ fontWeight: 600, color: '#86efac', marginBottom: '0.5rem' }}>
-              {result.type === 'block' ? 'Block found' : result.type === 'contract' ? 'Contract deployment found' : 'Transaction found'}
+              {result.type === 'block' ? 'Block found' : result.type === 'contract' ? 'Contract found' : result.type === 'address' ? 'Address found' : 'Transaction found'}
             </div>
             {result.type === 'block' ? (
               <>
@@ -468,13 +595,11 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
                   {result.to && <div>To: {result.to}</div>}
                   {result.contractAddress && <div>Contract created: {result.contractAddress}</div>}
                   {result.value != null && (
-                    <div>Value: {(() => {
-                      try {
-                        const v = typeof result.value === 'bigint' ? result.value : BigInt(result.value);
-                        return v === 0n ? '0 ETH' : (Number(v) / 1e18).toFixed(6) + ' ETH';
-                      } catch { return '—'; }
-                    })()}</div>
+                    <div>Value: {formatEthValue(result.value)}</div>
                   )}
+                  {result.status != null && <div>Status: {Number(result.status) === 1 ? 'success' : 'failed'}</div>}
+                  {result.gasUsed != null && <div>Gas used: {String(result.gasUsed)}</div>}
+                  {result.input && result.input !== '0x' && <div>Input: <span style={{ wordBreak: 'break-all' }}>{String(result.input).slice(0, 140)}{String(result.input).length > 140 ? '...' : ''}</span></div>}
                 </div>
                 {result.logs?.length > 0 && (
                   <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(34,197,94,0.3)' }}>
@@ -483,15 +608,18 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '150px', overflowY: 'auto', fontSize: '0.75rem' }}>
                       {result.logs.map((log, i) => {
-                        const isTransfer = String(log.topics?.[0] ?? '').toLowerCase() === TRANSFER_TOPIC.toLowerCase();
+                        const transfer = decodeTransferLog(log);
                         return (
                           <div key={i} style={{ padding: '0.35rem 0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.35rem', fontFamily: 'monospace', color: '#94a3b8' }}>
-                            {isTransfer ? (
-                              <div style={{ color: '#86efac', fontWeight: 600 }}>Transfer(from, to, tokenId)</div>
+                            {transfer ? (
+                              <>
+                                <div style={{ color: '#86efac', fontWeight: 600 }}>ERC-721 Transfer · token #{transfer.tokenId}</div>
+                                <div style={{ fontSize: '0.7rem', marginTop: '0.2rem', wordBreak: 'break-all' }}>From: {transfer.from}</div>
+                                <div style={{ fontSize: '0.7rem', wordBreak: 'break-all' }}>To: {transfer.to}</div>
+                              </>
                             ) : (
                               <div>Topic0: {String(log.topics?.[0] ?? '').slice(0, 20)}...</div>
                             )}
-                            {log.topics?.length > 1 && <div style={{ fontSize: '0.7rem', marginTop: '0.2rem' }}>Topics 1–3: from, to, tokenId</div>}
                           </div>
                         );
                       })}
@@ -502,13 +630,77 @@ export function ChainSearch({ provider, rpcUrl, onCopy, compact = false }) {
                   Copy tx hash
                 </button>
               </>
-            ) : (
+            ) : (result.type === 'contract' || result.type === 'address') ? (
               <div style={{ display: 'grid', gap: '0.35rem', fontFamily: 'monospace', fontSize: '0.8rem', color: '#e2e8f0' }}>
-                <div>Block: #{result.blockNumber} {result.blockHash && <span style={{ color: '#94a3b8' }}>· {String(result.blockHash).slice(0, 22)}...</span>}</div>
-                <div>Tx: <span style={{ wordBreak: 'break-all' }}>{result.txHash}</span></div>
-                <div>From: {result.from}</div>
-                {result.contractAddress && <div>Contract: {result.contractAddress}</div>}
-                {result.to && <div>To: {result.to}</div>}
+                <div>Address: <span style={{ wordBreak: 'break-all' }}>{result.address || result.contractAddress}</span></div>
+                <div>Type: {result.addressKind || 'contract'}</div>
+                <div>Balance: {formatEthValue(result.balance)}</div>
+                {result.nonce != null && <div>Nonce: {String(result.nonce)}</div>}
+                {result.scan && <div>Scanned blocks: #{result.scan.fromBlock} to #{result.scan.toBlock}</div>}
+                {result.type === 'contract' && (
+                  <>
+                    <div>Deployment block: {result.blockNumber != null ? `#${result.blockNumber}` : 'not found in scanned range'}</div>
+                    {result.txHash && <div>Deployment tx: <span style={{ wordBreak: 'break-all' }}>{result.txHash}</span></div>}
+                  </>
+                )}
+              </div>
+            ) : (
+              <div style={{ color: '#94a3b8' }}>No details available for this result.</div>
+            )}
+            {(result.type === 'contract' || result.type === 'address') && result.addressActivity && (
+              <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(34,197,94,0.3)' }}>
+                <div style={{ fontWeight: 600, color: '#86efac', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                  Recent address activity ({result.addressActivity.transactions.length})
+                </div>
+                {result.addressActivity.transactions.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', maxHeight: '220px', overflowY: 'auto' }}>
+                    {result.addressActivity.transactions.map((tx, i) => (
+                      <div key={`${tx.hash}-${i}`} style={{ padding: '0.45rem 0.55rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.35rem', fontSize: '0.78rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ color: '#86efac', fontWeight: 600 }}>#{tx.blockNumber}</span>
+                          <span style={{ color: '#cbd5e1' }}>{txDirection(tx, result.address || result.contractAddress)}</span>
+                          <span style={{ color: '#94a3b8', fontFamily: 'monospace', wordBreak: 'break-all' }}>{String(tx.hash).slice(0, 18)}...{String(tx.hash).slice(-8)}</span>
+                          <button type="button" onClick={() => copyToClipboard(tx.hash)} style={{ padding: '0.1rem 0.3rem', background: '#334155', border: 'none', borderRadius: '0.25rem', color: '#94a3b8', fontSize: '0.7rem', cursor: 'pointer' }}>
+                            Copy tx
+                          </button>
+                        </div>
+                        <div style={{ marginTop: '0.25rem', color: '#94a3b8', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                          From {tx.from || '—'} → {tx.to || tx.contractAddress || 'contract creation'} · {formatEthValue(tx.value)} · logs {tx.logsMatched}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ color: '#64748b', fontSize: '0.85rem' }}>No matching transactions in the scanned block range.</div>
+                )}
+                {result.addressActivity.tokenTransfers.length > 0 && (
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(34,197,94,0.2)' }}>
+                    <div style={{ fontWeight: 600, color: '#86efac', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      Decoded ERC-721 transfers ({result.addressActivity.tokenTransfers.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', maxHeight: '160px', overflowY: 'auto' }}>
+                      {result.addressActivity.tokenTransfers.map((t, i) => (
+                        <div key={`${t.txHash}-${i}`} style={{ padding: '0.35rem 0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.35rem', fontSize: '0.75rem', fontFamily: 'monospace', color: '#94a3b8', wordBreak: 'break-all' }}>
+                          <span style={{ color: '#86efac' }}>Token #{t.tokenId}</span> · {t.from || '—'} → {t.to || '—'} · contract {t.contract}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {result.addressActivity.logs.length > 0 && (
+                  <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(34,197,94,0.2)' }}>
+                    <div style={{ fontWeight: 600, color: '#86efac', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+                      Matching event logs ({result.addressActivity.logs.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', maxHeight: '160px', overflowY: 'auto' }}>
+                      {result.addressActivity.logs.slice(0, 24).map((log, i) => (
+                        <div key={`${log.txHash}-${i}`} style={{ padding: '0.35rem 0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '0.35rem', fontSize: '0.75rem', fontFamily: 'monospace', color: '#94a3b8', wordBreak: 'break-all' }}>
+                          #{log.blockNumber} · {log.transfer ? `Transfer token ${log.transfer.tokenId}` : `Topic0 ${String(log.topic0 || '').slice(0, 22)}...`} · {String(log.txHash).slice(0, 18)}...
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             {result.type === 'contract' && result.bytecode && (

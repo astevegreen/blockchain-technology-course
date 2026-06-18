@@ -1,5 +1,5 @@
 """
-Blueprint factory — generates a full set of claim/lane/resolve routes
+Blueprint factory -- generates a full set of claim/lane/resolve routes
 for any lab given its LaneConfig + managers.
 
 Usage in a lab module:
@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from typing import Optional
+from urllib.parse import urlencode
 
 from flask import Blueprint, Response, jsonify, make_response, redirect, request
 
@@ -33,7 +34,7 @@ _SHORT_RE = re.compile(r"^[0-9a-f]{8}$")
 
 _STAGING_HTML = """\
 <!doctype html><meta charset=utf-8>
-<title>Starting lab…</title>
+<title>Starting lab...</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#0f172a;color:#e2e8f0;font:16px/1.5 system-ui,sans-serif;
@@ -47,23 +48,30 @@ p{color:#94a3b8;font-size:.9rem}
 .fail{color:#fca5a5;margin-top:1rem;display:none}
 </style>
 <div class="spinner" id="sp"></div>
-<h1>Preparing your lab environment…</h1>
+<h1>Preparing your lab environment...</h1>
 <p id="msg">Launching container</p>
-<p class="fail" id="fail">Taking longer than expected — <a href="" style="color:#60a5fa">retry</a></p>
+<p class="fail" id="fail">Taking longer than expected -- <a href="" style="color:#60a5fa">retry</a></p>
 <script>
 (function(){
   var dest = "LANDING_URL";
   var attempts = 0, max = 30, delay = 1000;
+  var navigated = false;
+  function go(){
+    if (navigated) return;
+    navigated = true;
+    location.replace(dest);
+  }
   function poll(){
     attempts++;
     document.getElementById("msg").textContent =
       attempts <= 3 ? "Launching container" :
-      attempts <= 10 ? "Waiting for services…" : "Almost there…";
+      attempts <= 10 ? "Waiting for services..." : "Almost there...";
     fetch(dest, {method:"HEAD", redirect:"manual"}).then(function(r){
-      if(r.status < 500){location.href = dest; return}
+      if(r.status < 500){go(); return}
       if(attempts >= max){
         document.getElementById("fail").style.display = "block";
         document.querySelector("#fail a").href = dest;
+        go();
         return;
       }
       setTimeout(poll, delay);
@@ -71,12 +79,14 @@ p{color:#94a3b8;font-size:.9rem}
       if(attempts >= max){
         document.getElementById("fail").style.display = "block";
         document.querySelector("#fail a").href = dest;
+        go();
         return;
       }
       setTimeout(poll, delay);
     });
   }
   setTimeout(poll, 800);
+  setTimeout(go, 5000);
 })();
 </script>
 """
@@ -243,6 +253,14 @@ def make_lab_blueprint(
         if uuid is None:
             return _claim_unavailable_response(name.replace("_", " ").title(), message, claim_manager)
         landing = landing_tpl.format(uuid=uuid, station=station)
+        forwarded_args = [
+            (key, value)
+            for key, values in request.args.lists()
+            if key != "session"
+            for value in values
+        ]
+        if forwarded_args:
+            landing += ("&" if "?" in landing else "?") + urlencode(forwarded_args)
         html = _STAGING_HTML.replace("LANDING_URL", landing)
         resp = make_response(html)
         resp.headers["Content-Type"] = "text/html; charset=utf-8"
@@ -344,7 +362,7 @@ def make_lab_blueprint(
     def admin_page():
         html = _ADMIN_TEMPLATE_PATH.read_text(encoding="utf-8")
         html = html.replace("{{LAB_NAME}}", name)
-        html = html.replace("{{TITLE}}", f"{name.title()} — Instructor Console")
+        html = html.replace("{{TITLE}}", f"{name.title()} -- Instructor Console")
         href = admin_instructor_href or f"/labs/{name}/instructor/"
         html = html.replace("{{INSTRUCTOR_HREF}}", href)
         resp = make_response(html)

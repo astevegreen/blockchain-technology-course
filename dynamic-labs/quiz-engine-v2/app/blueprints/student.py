@@ -79,44 +79,83 @@ CONFIRM_TEMPLATE = """
 QUIZ_LIST_TEMPLATE = """
 <!doctype html>
 <title>Quizzes</title>
-<main>
+{% macro quiz_items(quizzes) -%}
+  {% for quiz in quizzes %}
+    <li class="student-quiz-list-item">
+      <h2 class="student-quiz-title">{{ quiz.title }}</h2>
+      {% if quiz.description %}<p class="student-quiz-description">{{ quiz.description }}</p>{% endif %}
+      <p class="student-quiz-meta">{{ quiz.question_count }} questions{% if quiz.timer_minutes %} · {{ quiz.timer_minutes }} minutes{% endif %}</p>
+      {% if quiz.availability_status == 'scheduled' %}
+        <p class="quiz-availability-scheduled student-quiz-meta" aria-label="Scheduled quiz">Scheduled · opens {{ dynamic_labs_time(quiz.available_from) }}</p>
+      {% elif quiz.available_from %}
+        <p class="student-quiz-meta">Available from {{ dynamic_labs_time(quiz.available_from) }}</p>
+      {% endif %}
+      {% if quiz.available_until %}<p class="student-quiz-meta">Available until {{ dynamic_labs_time(quiz.available_until) }}</p>{% endif %}
+      {% if quiz.active_attempt %}
+        <p class="student-quiz-status" role="status">Attempt {{ quiz.active_attempt.attempt_number }} is in progress.</p>
+        <p class="student-quiz-action"><a href="{{ url_for('student.attempt_detail', attempt_id=quiz.active_attempt.id) }}">Resume quiz</a></p>
+      {% elif quiz.availability_status == 'scheduled' %}
+        <p class="student-quiz-status" role="status">Locked until the scheduled start time.</p>
+        <button type="button" disabled>Locked</button>
+      {% elif quiz.primary_action == 'limit_reached' %}
+        <p class="student-quiz-status" role="status">Attempt limit reached.</p>
+      {% else %}
+        <form method="post" action="{{ url_for('student.start_quiz', version_id=quiz.id) }}">
+          <button type="submit">Start quiz</button>
+        </form>
+      {% endif %}
+      {% if quiz.result_attempt %}
+        <p class="student-quiz-action"><a href="{{ url_for('student.attempt_results', attempt_id=quiz.result_attempt.id) }}">View results</a></p>
+      {% endif %}
+    </li>
+  {% endfor %}
+{%- endmacro %}
+<main class="quiz-font-scaled">
   <h1>Available Quizzes</h1>
   <p id="current-student">Signed in as <code>{{ identifier }}</code></p>
+  {{ dynamic_labs_quiz_font_toolbar }}
   {% if message %}<p role="alert">{{ message }}</p>{% endif %}
-  {% if quizzes %}
-    <ul>
-      {% for quiz in quizzes %}
-        <li>
-          <h2>{{ quiz.title }}</h2>
-          {% if quiz.description %}<p>{{ quiz.description }}</p>{% endif %}
-          <p>{{ quiz.question_count }} questions{% if quiz.timer_minutes %} · {{ quiz.timer_minutes }} minutes{% endif %}</p>
-          {% if quiz.availability_status == 'scheduled' %}
-            <p class="quiz-availability-scheduled" aria-label="Scheduled quiz">Scheduled · opens {{ quiz.available_from }}</p>
-          {% elif quiz.available_from %}
-            <p>Available from {{ quiz.available_from }}</p>
-          {% endif %}
-          {% if quiz.available_until %}<p>Available until {{ quiz.available_until }}</p>{% endif %}
-          {% if quiz.active_attempt %}
-            <p role="status">Attempt {{ quiz.active_attempt.attempt_number }} is in progress.</p>
-            <p><a href="{{ url_for('student.attempt_detail', attempt_id=quiz.active_attempt.id) }}">Resume quiz</a></p>
-          {% elif quiz.availability_status == 'scheduled' %}
-            <p role="status">Locked until the scheduled start time.</p>
-            <button type="button" disabled>Locked</button>
-          {% else %}
-            <form method="post" action="{{ url_for('student.start_quiz', version_id=quiz.id) }}">
-              <button type="submit">Start quiz</button>
-            </form>
-          {% endif %}
-          {% if quiz.result_attempt %}
-            <p><a href="{{ url_for('student.attempt_results', attempt_id=quiz.result_attempt.id) }}">View results</a></p>
-          {% endif %}
-        </li>
-      {% endfor %}
+  {% if current_quizzes %}
+    <ul class="student-quiz-list">
+      {{ quiz_items(current_quizzes) }}
     </ul>
-  {% else %}
+  {% elif not completed_quizzes %}
     <p role="status">No published quizzes are available.</p>
   {% endif %}
+  {% if completed_quizzes %}
+    <section>
+      <button
+        type="button"
+        data-completed-quizzes-toggle
+        data-show-label="Show completed quizzes ({{ completed_quizzes|length }})"
+        data-hide-label="Hide completed quizzes ({{ completed_quizzes|length }})"
+        aria-expanded="false"
+        aria-controls="completed-quizzes-list">Show completed quizzes ({{ completed_quizzes|length }})</button>
+      <div id="completed-quizzes-list" data-completed-quizzes-panel hidden>
+        <ul class="student-quiz-list">
+          {{ quiz_items(completed_quizzes) }}
+        </ul>
+      </div>
+    </section>
+  {% endif %}
 </main>
+{% if completed_quizzes %}
+<script>
+(() => {
+  const toggle = document.querySelector("[data-completed-quizzes-toggle]");
+  const panel = document.querySelector("[data-completed-quizzes-panel]");
+  if (!toggle || !panel) {
+    return;
+  }
+  toggle.addEventListener("click", () => {
+    const expanded = toggle.getAttribute("aria-expanded") === "true";
+    toggle.setAttribute("aria-expanded", expanded ? "false" : "true");
+    panel.hidden = expanded;
+    toggle.textContent = expanded ? toggle.dataset.showLabel : toggle.dataset.hideLabel;
+  });
+})();
+</script>
+{% endif %}
 """
 
 ATTEMPT_TEMPLATE = """
@@ -128,6 +167,7 @@ ATTEMPT_TEMPLATE = """
   <h1>{{ attempt.quiz.title }}</h1>
   <p id="attempt-status">{{ status_label }}</p>
   {% if message %}<p role="alert">{{ message }}</p>{% endif %}
+  {% set attempt_locked = attempt.status != 'in_progress' %}
   {% if attempt.deadline_at %}
     <section
       class="quiz-timer quiz-timer-topbar"
@@ -138,63 +178,69 @@ ATTEMPT_TEMPLATE = """
       aria-labelledby="quiz-time-remaining-heading">
       <h2 id="quiz-time-remaining-heading">Time Remaining</h2>
       <output id="quiz-time-remaining-value" aria-live="polite">Calculating...</output>
-      <p>Deadline <time datetime="{{ attempt.deadline_at }}">{{ attempt.deadline_at }}</time></p>
+      <p>Deadline {{ dynamic_labs_time(attempt.deadline_at) }}</p>
     </section>
   {% endif %}
   {% if attempt.status != 'in_progress' %}
     <p><a href="{{ url_for('student.attempt_results', attempt_id=attempt.id) }}">View results</a></p>
   {% endif %}
-  <form
-    id="quiz-attempt-form"
-    method="post"
-    action="{{ url_for('student.submit_attempt_form', attempt_id=attempt.id) }}"
-    {% if attempt.status == 'in_progress' %}data-auto-save-attempt="{{ attempt.id }}"{% endif %}>
-    <ol>
-      {% for question in attempt.questions %}
-        <li
-          id="question-{{ question.id }}"
-          data-question-id="{{ question.id }}"
-          {% if attempt.status == 'in_progress' %}
-            data-save-url="{{ url_for('student.save_answer_api', attempt_id=attempt.id, question_id=question.id) }}"
-          {% endif %}
-          class="quiz-question-item{% if question.id in incomplete_question_ids %} quiz-question-incomplete{% endif %}">
-          <h2 id="question-{{ question.id }}-heading">{{ question.question_stem }}</h2>
-          {% if question.id in incomplete_question_ids %}
-            <p class="quiz-question-error">Answer required.</p>
-          {% endif %}
-          {% if question.question_type == 'multiple_choice' %}
-            <div class="quiz-answer-options" role="radiogroup" aria-labelledby="question-{{ question.id }}-heading">
-              {% for option in question.options %}
-                <label class="quiz-answer-option-row">
-                  <input
-                    class="quiz-answer-option-input"
-                    type="radio"
-                    name="question_{{ question.id }}_option"
-                    value="{{ option.id }}"
-                    data-question-input
-                    {% if question.id in incomplete_question_ids %}aria-invalid="true"{% endif %}
-                    {% if question.answer and question.answer.selected_option_id == option.id %}checked{% endif %}>
-                  <span class="quiz-answer-option-text">{{ option.option_text }}</span>
-                </label>
-              {% endfor %}
-            </div>
-          {% else %}
-            <label>Response
-              <textarea
-                class="quiz-written-response"
-                name="question_{{ question.id }}_written"
-                data-question-input
-                {% if question.id in incomplete_question_ids %}aria-invalid="true"{% endif %}>{{ question.answer.written_response if question.answer else '' }}</textarea>
-            </label>
-          {% endif %}
-        </li>
-      {% endfor %}
-    </ol>
-    {% if attempt.status == 'in_progress' %}
-      <button type="submit">Submit quiz</button>
-    {% endif %}
-  </form>
-  {% if attempt.status == 'in_progress' %}
+  {{ dynamic_labs_quiz_font_toolbar }}
+  <div class="quiz-font-scaled">
+    <form
+      id="quiz-attempt-form"
+      {% if attempt_locked %}class="quiz-attempt-readonly" aria-label="Locked quiz response"{% endif %}
+      method="post"
+      action="{{ url_for('student.submit_attempt_form', attempt_id=attempt.id) }}"
+      {% if not attempt_locked %}data-auto-save-attempt="{{ attempt.id }}"{% endif %}>
+      <ol>
+        {% for question in attempt.questions %}
+          <li
+            id="question-{{ question.id }}"
+            data-question-id="{{ question.id }}"
+            {% if attempt.status == 'in_progress' %}
+              data-save-url="{{ url_for('student.save_answer_api', attempt_id=attempt.id, question_id=question.id) }}"
+            {% endif %}
+            class="quiz-question-item{% if question.id in incomplete_question_ids %} quiz-question-incomplete{% endif %}">
+            <h2 id="question-{{ question.id }}-heading">{{ question.question_stem }}</h2>
+            {% if question.id in incomplete_question_ids %}
+              <p class="quiz-question-error">Answer required.</p>
+            {% endif %}
+            {% if question.question_type == 'multiple_choice' %}
+              <div class="quiz-answer-options" role="radiogroup" aria-labelledby="question-{{ question.id }}-heading">
+                {% for option in question.options %}
+                  <label class="quiz-answer-option-row">
+                    <input
+                      class="quiz-answer-option-input"
+                      type="radio"
+                      name="question_{{ question.id }}_option"
+                      value="{{ option.id }}"
+                      data-question-input
+                      {% if attempt_locked %}disabled{% endif %}
+                      {% if question.id in incomplete_question_ids %}aria-invalid="true"{% endif %}
+                      {% if question.answer and question.answer.selected_option_id == option.id %}checked{% endif %}>
+                    <span class="quiz-answer-option-text">{{ option.option_text }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            {% else %}
+              <label>Response
+                <textarea
+                  class="quiz-written-response"
+                  name="question_{{ question.id }}_written"
+                  data-question-input
+                  {% if attempt_locked %}readonly aria-readonly="true"{% endif %}
+                  {% if question.id in incomplete_question_ids %}aria-invalid="true"{% endif %}>{{ question.answer.written_response if question.answer else '' }}</textarea>
+              </label>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+      {% if not attempt_locked %}
+        <button type="submit">Submit quiz</button>
+      {% endif %}
+    </form>
+  </div>
+  {% if not attempt_locked %}
     <div
       id="quiz-save-toast"
       class="quiz-save-toast"
@@ -411,36 +457,39 @@ RESULT_TEMPLATE = """
     <p role="status">Results are not available.</p>
   {% endif %}
   {% if result.review_visible %}
-    <ol>
-      {% for question in result.questions %}
-        <li>
-          <h2>{{ question.question_stem }}</h2>
-          {% if question.question_type == 'multiple_choice' %}
-            <ul class="quiz-result-options">
-              {% for option in question.options %}
-                {% set selected = question.selected_option_id == option.id %}
-                <li class="quiz-result-option{% if option.is_correct %} quiz-result-option-correct{% endif %}{% if selected and not option.is_correct %} quiz-result-option-selected-incorrect{% endif %}">
-                  <span class="quiz-result-option-text">{{ option.option_text }}</span>
-                  {% if selected and option.is_correct %}
-                    <span class="quiz-result-option-label quiz-result-correct-label">Your answer - correct</span>
-                  {% elif selected %}
-                    <span class="quiz-result-option-label quiz-result-incorrect-label">Your answer</span>
-                  {% elif option.is_correct %}
-                    <span class="quiz-result-option-label quiz-result-correct-label">Correct answer</span>
-                  {% endif %}
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <div class="quiz-result-response{% if question.points_awarded == question.points_possible %} quiz-result-response-correct{% elif question.points_awarded == 0 %} quiz-result-response-incorrect{% endif %}">
-              <span>{{ question.written_response or '' }}</span>
-            </div>
-          {% endif %}
-          <p>Points: {{ question.points_awarded }} / {{ question.points_possible }}</p>
-          {% if question.explanation %}<p>{{ question.explanation }}</p>{% endif %}
-        </li>
-      {% endfor %}
-    </ol>
+    {{ dynamic_labs_quiz_font_toolbar }}
+    <div class="quiz-font-scaled">
+      <ol class="quiz-result-question-list">
+        {% for question in result.questions %}
+          <li class="quiz-result-question">
+            <h2>{{ question.question_stem }}</h2>
+            {% if question.question_type == 'multiple_choice' %}
+              <ul class="quiz-result-options">
+                {% for option in question.options %}
+                  {% set selected = question.selected_option_id == option.id %}
+                  <li class="quiz-result-option{% if option.is_correct %} quiz-result-option-correct{% endif %}{% if selected and not option.is_correct %} quiz-result-option-selected-incorrect{% endif %}">
+                    <span class="quiz-result-option-text">{{ option.option_text }}</span>
+                    {% if selected and option.is_correct %}
+                      <span class="quiz-result-option-label quiz-result-correct-label">Your answer - correct</span>
+                    {% elif selected %}
+                      <span class="quiz-result-option-label quiz-result-incorrect-label">Your answer</span>
+                    {% elif option.is_correct %}
+                      <span class="quiz-result-option-label quiz-result-correct-label">Correct answer</span>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div class="quiz-result-response{% if question.points_awarded == question.points_possible %} quiz-result-response-correct{% elif question.points_awarded == 0 %} quiz-result-response-incorrect{% endif %}">
+                <span>{{ question.written_response or '' }}</span>
+              </div>
+            {% endif %}
+            <p class="quiz-result-points">Points: {{ question.points_awarded }} / {{ question.points_possible }}</p>
+            {% if question.explanation %}<p class="quiz-result-explanation">{{ question.explanation }}</p>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
   {% endif %}
 </main>
 """
@@ -517,6 +566,8 @@ def quiz_list():
         QUIZ_LIST_TEMPLATE,
         identifier=view_model["student_identifier"],
         quizzes=view_model["quizzes"],
+        current_quizzes=view_model["current_quizzes"],
+        completed_quizzes=view_model["completed_quizzes"],
         message=request.args.get("message"),
     )
 

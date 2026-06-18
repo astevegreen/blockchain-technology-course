@@ -5,7 +5,7 @@ import math
 import random
 
 
-def print_ring(ids, cur, fingers, target, radius=20):
+def print_ring(ids, cur, fingers, target, bits=16, radius=20):
     """
     ASCII circular diagram with:
       C  = current node
@@ -61,10 +61,13 @@ def print_ring(ids, cur, fingers, target, radius=20):
 
     # Numeric legend
     print("\nLabels:")
+    goal = successor(ids, target)
     print(f"  C  = {cur}")
     for i, fid in enumerate(fingers.get(cur, [])):
-        print(f"  f{i+1} = {fid}")
-    print(f"  T  = {target}")
+        owner_note = "  (owner of T)" if fid == goal else ""
+        print(f"  f{i+1} = {fid}{owner_note}")
+    print(f"  T  = key {target} (file hash, not usually a node)")
+    print(f"  owner(T) = {goal} (first node clockwise at or after T)")
     print()
 
 
@@ -74,21 +77,18 @@ def make_ring(n=100, bits=16):
 
 
 def build_fingers(ids, bits, min_f=5, max_f=8):
-    # each node has 5-8 random successors within 1/2 ring distance
-    n = len(ids)
+    # Chord finger i points to the successor of node_id + 2**i.
     fingers = {}
+    ring_size = 2**bits
 
-    for idx, idv in enumerate(ids):
+    for idv in ids:
         fingers[idv] = []
-        succs = set()
         seen = set()
 
         for i in range(bits):
             offset = 2**i
-            target = (idv + offset) % (2**bits)
-            if target > ids[-1]:
-                target = -1
-            bisect_idx = bisect.bisect_right(ids, target)
+            target = (idv + offset) % ring_size
+            bisect_idx = bisect.bisect_left(ids, target)
             if bisect_idx >= len(ids):
                 bisect_idx = 0
             f_idx = ids[bisect_idx]
@@ -111,6 +111,25 @@ def ring_distance(start, end, bits):
     return (end - start) % (2**bits)
 
 
+def choose_next(ids, fingers, cur, key, bits=16):
+    goal = successor(ids, key)
+    options = fingers[cur]
+    target_dist = ring_distance(cur, key, bits)
+    nxt = options[0]
+    best_dist = 0
+
+    for candidate in options:
+        if candidate == goal:
+            return candidate
+
+        candidate_dist = ring_distance(cur, candidate, bits)
+        if 0 < candidate_dist <= target_dist and candidate_dist > best_dist:
+            nxt = candidate
+            best_dist = candidate_dist
+
+    return nxt
+
+
 def greedy_route(ids, fingers, start, key, bits=16):
     goal = successor(ids, key)
     path = [start]
@@ -119,19 +138,7 @@ def greedy_route(ids, fingers, start, key, bits=16):
     max_hops = len(ids)
 
     while cur != goal and len(path) <= max_hops:
-        options = fingers[cur]
-        goal_dist = ring_distance(cur, goal, bits)
-        nxt = options[0]
-
-        for candidate in options:
-            if candidate == goal:
-                nxt = candidate
-                break
-
-            candidate_dist = ring_distance(cur, candidate, bits)
-            if 0 < candidate_dist < goal_dist:
-                nxt = candidate
-
+        nxt = choose_next(ids, fingers, cur, key, bits)
         if nxt in seen:
             break
 
@@ -142,28 +149,46 @@ def greedy_route(ids, fingers, start, key, bits=16):
     return path
 
 
+def print_finger_table(ids, fingers, cur, target, bits=16):
+    goal = successor(ids, target)
+    target_dist = ring_distance(cur, target, bits)
+    print(f"Finger table ({len(fingers[cur])} entries):")
+    for fid in fingers[cur]:
+        dist = ring_distance(cur, fid, bits)
+        if fid == goal:
+            if fid == target:
+                note = "exact T node"
+            else:
+                note = "owner of T (successor of key)"
+        elif 0 < dist <= target_dist:
+            note = "before T"
+        else:
+            note = "past T"
+        print(f"  -> {fid}  ({note}, +{dist} clockwise)")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--setup", default="small")
     ap.add_argument("--auto", action="store_true")
+    ap.add_argument("--seed", type=int, help="Set a random seed for replaying a route")
     args = ap.parse_args()
+
+    if args.seed is not None:
+        random.seed(args.seed)
 
     ids, bits = make_ring(100, 16)
     fingers = build_fingers(ids, bits)
     start = random.choice(ids)
-    # pick target at least 3 hops away
-    idx = ids.index(start)
-    target = random.randint(
-        0, 2**bits
-    )  # ids[(idx + random.randint(10, 20)) % len(ids)]
+    target = random.randrange(2**bits)
     print("ReliefLedger DHT (field network)")
-    print_ring(ids, start, fingers, target)
+    print_ring(ids, start, fingers, target, bits)
     print(f"You are node {start}.")
-    print(f"Your finger table ({len(fingers[start])} entries):")
-    for f in fingers[start]:
-        print(f"  -> {f}")
-    print(f"Target file hash (key): {target}\n")
+    print_finger_table(ids, fingers, start, target, bits)
     goal = successor(ids, target)
+    print(f"Target file hash (T key): {target}")
+    print(f"Responsible owner node: {goal}")
+    print("Route to owner(T), the first node clockwise at or after T.\n")
 
     if args.auto:
         path = greedy_route(ids, fingers, start, target, bits)
@@ -175,7 +200,7 @@ def main():
             return
         print(f"Reached responsible node {goal} in {hops} hops.")
         print(f"Your path: ({hops} hops) {' -> '.join(map(str,path))}")
-        print(f"Optimal path: ({hops} hops) {' -> '.join(map(str,path))}")
+        print(f"Greedy reference path: ({hops} hops) {' -> '.join(map(str,path))}")
         return
 
     cur = start
@@ -186,7 +211,7 @@ def main():
             print(f"Reached responsible node {goal} in {hops} hops.")
             opt = greedy_route(ids, fingers, start, target, bits)
             print(f"Your path: ({len(path) - 1} hops) {' -> '.join(map(str,path))}")
-            print(f"Optimal path: ({len(opt) - 1} hops) {' -> '.join(map(str,opt))}")
+            print(f"Greedy reference path: ({len(opt) - 1} hops) {' -> '.join(map(str,opt))}")
             break
         print("Enter next node ID (from your finger table): ", end="")
         try:
@@ -201,11 +226,10 @@ def main():
         path.append(cur)
         hops += 1
         print(f"Hop {hops} -> Node {cur}")
-        print_ring(ids, cur, fingers, target)
-        print(f"Finger table ({len(fingers[cur])} entries):")
-        for f in fingers[cur]:
-            print(f"  -> {f}")
-        print(f"Target still {target}\n")
+        print_ring(ids, cur, fingers, target, bits)
+        print_finger_table(ids, fingers, cur, target, bits)
+        print(f"Target still {target}")
+        print("Choose the furthest clockwise finger before T; if none exists, use the first finger.\n")
         if hops > 15:
             print("Too many hops; giving up.")
             break

@@ -1,5 +1,6 @@
 import json
 import secrets
+from urllib.parse import urlencode
 
 from flask import (
     Blueprint,
@@ -37,6 +38,8 @@ from ..generation import (
     GenerationError,
     generate_quiz_version,
     generate_quiz_version_from_template,
+    generate_quiz_version_from_template_manual,
+    manual_template_question_candidates,
 )
 from ..grading import (
     GradingError,
@@ -71,7 +74,12 @@ from ..question_editing import (
     edit_question,
     get_question_edit_context,
 )
-from ..metrics.filters import METRIC_STATUSES, MetricsFilterError, parse_metrics_filters
+from ..metrics.filters import (
+    METRIC_STATUSES,
+    MetricsFilterError,
+    MetricsFilters,
+    parse_metrics_filters,
+)
 from ..metrics.rollups import build_dashboard_metrics, get_student_detail
 from ..migrate import (
     MigrationError,
@@ -98,10 +106,20 @@ from ..publication import (
     update_quiz_version_metadata,
 )
 from ..quiz_versions import (
+    add_hidden_quiz_version_question,
+    add_question_candidates,
     QuizVersionError,
     get_quiz_version,
     list_quiz_versions,
+    latest_active_question_revision,
+    quiz_version_question_mutation_status,
+    quiz_version_timer_mutation_status,
     refresh_hidden_quiz_version_questions,
+    replacement_question_candidates,
+    remove_hidden_quiz_version_question,
+    swap_hidden_quiz_version_question,
+    update_hidden_quiz_version_question_count,
+    update_hidden_quiz_version_timer_minutes,
 )
 from ..students import (
     IdentifierImportError,
@@ -469,7 +487,7 @@ INSTRUCTOR_DASHBOARD_TEMPLATE = """
               <td><a href="{{ url_for('instructor.quiz_version_detail', version_id=quiz.id) }}">{{ quiz.title }}</a></td>
               <td>{{ quiz.visibility }}</td>
               <td>{{ quiz.question_count }}</td>
-              <td>{{ quiz.created_at }}</td>
+              <td>{{ dynamic_labs_time(quiz.created_at) }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -598,10 +616,10 @@ ROSTER_TEMPLATE = """
               <td><code>{{ record.identifier }}</code></td>
               <td class="table-column-compact">{{ record.status }}</td>
               <td>{{ record.activation_mode or '' }}</td>
-              <td class="roster-time-column">{{ record.created_at or '' }}</td>
-              <td class="roster-time-column">{{ record.first_used_at or '' }}</td>
-              <td class="roster-time-column">{{ record.last_seen_at or '' }}</td>
-              <td class="roster-time-column">{{ record.revoked_at or '' }}</td>
+              <td class="roster-time-column">{{ dynamic_labs_time(record.created_at) }}</td>
+              <td class="roster-time-column">{{ dynamic_labs_time(record.first_used_at) }}</td>
+              <td class="roster-time-column">{{ dynamic_labs_time(record.last_seen_at) }}</td>
+              <td class="roster-time-column">{{ dynamic_labs_time(record.revoked_at) }}</td>
               <td class="table-column-compact">
                 {% if record.status != 'revoked' %}
                   <form class="roster-inline-form" method="post" action="{{ url_for('instructor.delete_roster_code') }}">
@@ -2845,11 +2863,53 @@ TEMPLATE_DETAIL_TEMPLATE = """
       });
     }());
   </script>
+  <p><a href="{{ url_for('instructor.manual_template_generation_form', template_id=template.id) }}">Choose questions manually</a></p>
   <form method="post" action="{{ url_for('instructor.duplicate_template_route', template_id=template.id) }}">
     <button type="submit">Duplicate</button>
   </form>
   <form method="post" action="{{ url_for('instructor.archive_template_route', template_id=template.id) }}">
     <button type="submit">Archive</button>
+  </form>
+</main>
+"""
+
+MANUAL_TEMPLATE_GENERATION_TEMPLATE = """
+<!doctype html>
+<title>Choose Questions Manually</title>
+<main>
+  <p><a href="{{ url_for('instructor.template_detail', template_id=candidates.template.id) }}">Template</a></p>
+  <h1>Choose Questions Manually</h1>
+  <p>{{ candidates.template.title }}</p>
+  {% if message %}<p role="alert">{{ message }}</p>{% endif %}
+  <p role="status">Select exactly {{ candidates.question_count }} questions from this template.</p>
+  <form method="post" action="{{ url_for('instructor.manual_template_generation_route', template_id=candidates.template.id) }}">
+    <label>Seed <input name="random_seed" value="{{ generation_seed }}" autocomplete="off"></label>
+    {% for group in candidates.groups %}
+      <section>
+        <h2>{{ group.label }}</h2>
+        <p role="status">Choose {{ group.question_count }} question{{ '' if group.question_count == 1 else 's' }} from this group.</p>
+        {% if group.questions %}
+          <ol>
+            {% for question in group.questions %}
+              <li>
+                <label>
+                  <input type="checkbox" name="selected_question_ids" value="{{ question.id }}" {% if question.id in selected_question_ids %}checked{% endif %}>
+                  {{ question.lesson_id }} / {{ question.source_qid }}
+                </label>
+                <p>{{ question.question_stem }}</p>
+                <p>
+                  {{ question.topic }} · difficulty {{ question.difficulty_level }} · {{ question.question_type }}
+                  {% if question.effective_tags %}· {{ question.effective_tags|join(', ') }}{% endif %}
+                </p>
+              </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p role="status">No eligible questions matched this group.</p>
+        {% endif %}
+      </section>
+    {% endfor %}
+    <button type="submit">Generate hidden quiz</button>
   </form>
 </main>
 """
@@ -2880,7 +2940,7 @@ QUIZ_VERSION_LIST_TEMPLATE = """
             <td>{{ version.visibility }}</td>
             <td>{{ version.question_count }}</td>
             <td>{{ version.template_id or '' }}</td>
-            <td>{{ version.created_at }}</td>
+            <td>{{ dynamic_labs_time(version.created_at) }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -2903,7 +2963,7 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
   <p><a href="{{ url_for('instructor.metrics_dashboard', quiz_version_id=version.id) }}">Metrics for this quiz</a></p>
   <dl>
     <dt>Visibility</dt><dd>{{ version.visibility }}</dd>
-    <dt>Availability</dt><dd>{{ version.available_from or 'now' }} to {{ version.available_until or 'open' }}</dd>
+    <dt>Availability</dt><dd>{{ dynamic_labs_time(version.available_from, 'now') }} to {{ dynamic_labs_time(version.available_until, 'open') }}</dd>
     <dt>Questions</dt><dd>{{ version.question_count }}</dd>
     <dt>Template</dt><dd>{{ version.template_id or '' }}</dd>
     <dt>Selection policy</dt><dd>{{ version.generation_snapshot.selection_policy }}</dd>
@@ -2914,11 +2974,41 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
     <dt>Attempt limit</dt><dd>{{ version.attempt_limit }}</dd>
     <dt>Timer</dt><dd>{{ version.timer_minutes or '' }}</dd>
     <dt>Result policy</dt><dd>{{ version.result_policy }}</dd>
-    <dt>Results released</dt><dd>{{ version.results_released_at or 'no' }}</dd>
-    <dt>Per-question review released</dt><dd>{{ version.review_released_at or 'no' }}</dd>
+    <dt>Results released</dt><dd>{{ dynamic_labs_time(version.results_released_at, 'no') }}</dd>
+    <dt>Per-question review released</dt><dd>{{ dynamic_labs_time(version.review_released_at, 'no') }}</dd>
     <dt>Instructor notes</dt><dd>{{ version.instructor_notes or '' }}</dd>
   </dl>
   <p><a href="{{ url_for('instructor.quiz_version_preview', version_id=version.id) }}">Preview</a></p>
+  {% if not mutation_status.can_mutate %}
+    <p class="quiz-mutation-disabled" role="status">{{ mutation_status.reason }}</p>
+  {% endif %}
+  <section>
+    <h2>Quiz Timing</h2>
+    <form method="post" action="{{ url_for('instructor.update_quiz_version_timer_route', version_id=version.id) }}">
+      <label>Timer minutes
+        <input name="timer_minutes" inputmode="numeric" value="{{ version.timer_minutes if version.timer_minutes is not none else '' }}" {% if not timer_mutation_status.can_mutate %}disabled{% endif %}>
+      </label>
+      <button type="submit" {% if not timer_mutation_status.can_mutate %}disabled{% endif %}>Update timer</button>
+      {% if not timer_mutation_status.can_mutate %}
+        <p>{{ timer_mutation_status.reason }}</p>
+      {% endif %}
+    </form>
+  </section>
+  <section>
+    <h2>Quiz Questions</h2>
+    {% if mutation_status.can_mutate %}
+      <form method="post" action="{{ url_for('instructor.auto_add_quiz_version_question_route', version_id=version.id) }}">
+        <button type="submit">Auto add question</button>
+      </form>
+      <p><a href="{{ url_for('instructor.add_quiz_version_question_form', version_id=version.id) }}">Choose question to add</a></p>
+    {% else %}
+      <button type="button" disabled>Auto add question</button>
+      <button type="button" disabled>Choose question to add</button>
+      {% if not mutation_status.can_mutate %}
+        <p>{{ mutation_status.reason }}</p>
+      {% endif %}
+    {% endif %}
+  </section>
   <form method="post" action="{{ url_for('instructor.update_quiz_version_metadata_route', version_id=version.id) }}" data-availability-form>
     <label>Title <input name="title" value="{{ version.title }}" required></label>
     <label>Description <textarea name="description">{{ version.description or '' }}</textarea></label>
@@ -2992,7 +3082,7 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
   </form>
   {% if version.visibility == 'hidden' %}
     <form method="post" action="{{ url_for('instructor.refresh_hidden_quiz_version_route', version_id=version.id) }}">
-      <button type="submit">Refresh question revisions</button>
+      <button type="submit" {% if not mutation_status.can_mutate %}disabled{% endif %}>Refresh question revisions</button>
     </form>
   {% endif %}
   <form method="post" action="{{ url_for('instructor.archive_quiz_version_route', version_id=version.id) }}">
@@ -3035,8 +3125,8 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
               <td>{{ attempt.attempt_number }}</td>
               <td>{{ attempt.status }}</td>
               <td>{% if attempt.score is not none %}{{ attempt.score }} / {{ attempt.max_score }}{% endif %}</td>
-              <td>{{ attempt.started_at }}</td>
-              <td>{{ attempt.submitted_at or attempt.expired_at or attempt.voided_at or '' }}</td>
+              <td>{{ dynamic_labs_time(attempt.started_at) }}</td>
+              <td>{{ dynamic_labs_time(attempt.submitted_at or attempt.expired_at or attempt.voided_at) }}</td>
               <td>
                 {% if attempt.status != 'voided' %}
                   <form method="post" action="{{ url_for('instructor.void_attempt_route', attempt_id=attempt.id) }}">
@@ -3072,10 +3162,42 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
               {% endfor %}
             </ol>
           {% endif %}
+          <div class="snapshot-question-actions">
+            {% if mutation_status.can_mutate %}
+              <p><a href="{{ url_for('instructor.edit_quiz_version_question_source', version_id=version.id, quiz_version_question_id=question.id) }}">Edit source</a></p>
+              <form method="post" action="{{ url_for('instructor.auto_swap_quiz_version_question_route', version_id=version.id, quiz_version_question_id=question.id) }}">
+                <button type="submit">Auto swap</button>
+              </form>
+              <p><a href="{{ url_for('instructor.swap_quiz_version_question_form', version_id=version.id, quiz_version_question_id=question.id) }}">Swap manually</a></p>
+              <form method="post" action="{{ url_for('instructor.remove_quiz_version_question_route', version_id=version.id, quiz_version_question_id=question.id) }}" data-confirm="Remove this question from the quiz?">
+                <button type="submit" {% if version.question_count <= 1 %}disabled{% endif %}>Remove from quiz</button>
+              </form>
+              {% if version.question_count <= 1 %}
+                <p>A quiz must keep at least one question.</p>
+              {% endif %}
+            {% else %}
+              <button type="button" disabled>Edit source</button>
+              <button type="button" disabled>Auto swap</button>
+              <button type="button" disabled>Swap manually</button>
+              <button type="button" disabled>Remove from quiz</button>
+              <p>{{ mutation_status.reason }}</p>
+            {% endif %}
+          </div>
         </li>
       {% endfor %}
     </ol>
   {% endif %}
+  <script>
+  (function () {
+    document.querySelectorAll("form[data-confirm]").forEach(function (form) {
+      form.addEventListener("submit", function (event) {
+        if (!window.confirm(form.getAttribute("data-confirm"))) {
+          event.preventDefault();
+        }
+      });
+    });
+  }());
+  </script>
   <script>
   (function () {
     var form = document.querySelector("[data-availability-form]");
@@ -3102,11 +3224,21 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
     }
 
     function formatClock(date) {
-      return formatDate(date) + " " + [
+      var utcLabel = formatDate(date) + " " + [
         pad(date.getUTCHours()),
         pad(date.getUTCMinutes()),
         pad(date.getUTCSeconds())
       ].join(":") + " UTC";
+      var localLabel = date.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZoneName: "short"
+      });
+      return utcLabel + " (" + localLabel + ")";
     }
 
     function renderClock() {
@@ -3260,6 +3392,9 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
       panel.className = "availability-calendar";
       panel.setAttribute("role", "dialog");
       panel.setAttribute("aria-label", "UTC date selector");
+      panel.addEventListener("click", function (event) {
+        event.stopPropagation();
+      });
 
       function render() {
         panel.textContent = "";
@@ -3387,6 +3522,107 @@ QUIZ_VERSION_DETAIL_TEMPLATE = """
 </main>
 """
 
+QUIZ_QUESTION_SWAP_TEMPLATE = """
+<!doctype html>
+<title>Swap Question</title>
+<main>
+  <p><a href="{{ url_for('instructor.quiz_version_detail', version_id=version.id) }}">Generated quiz</a></p>
+  <h1>Swap Question</h1>
+  {% if message %}<p role="alert">{{ message }}</p>{% endif %}
+  <section>
+    <h2>Current Question</h2>
+    <p>{{ question.snapshot_source_qid }}</p>
+    <p>{{ question.snapshot_question_stem }}</p>
+  </section>
+  <p role="status">
+    {% if candidates.override %}
+      Override is enabled. Candidates may come from outside the template slot constraints.
+    {% else %}
+      Candidates match this question's template slot constraints.
+    {% endif %}
+  </p>
+  <p>
+    {% if candidates.override %}
+      <a href="{{ url_for('instructor.swap_quiz_version_question_form', version_id=version.id, quiz_version_question_id=question.id) }}">Use template constraints</a>
+    {% else %}
+      <a href="{{ url_for('instructor.swap_quiz_version_question_form', version_id=version.id, quiz_version_question_id=question.id, override=1) }}">Allow override</a>
+    {% endif %}
+  </p>
+  <form method="post" action="{{ url_for('instructor.swap_quiz_version_question_route', version_id=version.id, quiz_version_question_id=question.id) }}">
+    <input type="hidden" name="override" value="{{ '1' if candidates.override else '0' }}">
+    {% if candidates.candidates %}
+      <ol>
+        {% for candidate in candidates.candidates %}
+          <li>
+            <label>
+              <input type="radio" name="replacement_question_id" value="{{ candidate.id }}" required>
+              {{ candidate.lesson_id }} / {{ candidate.source_qid }}
+            </label>
+            <p>{{ candidate.question_stem }}</p>
+            <p>
+              {{ candidate.topic }} · difficulty {{ candidate.difficulty_level }} · {{ candidate.question_type }}
+              {% if candidate.effective_tags %}· {{ candidate.effective_tags|join(', ') }}{% endif %}
+            </p>
+          </li>
+        {% endfor %}
+      </ol>
+      <button type="submit">Swap question</button>
+    {% else %}
+      <p role="status">No replacement question exists for this quiz slot.</p>
+    {% endif %}
+  </form>
+</main>
+"""
+
+QUIZ_QUESTION_ADD_TEMPLATE = """
+<!doctype html>
+<title>Add Question</title>
+<main>
+  <p><a href="{{ url_for('instructor.quiz_version_detail', version_id=version.id) }}">Generated quiz</a></p>
+  <h1>Add Question</h1>
+  {% if message %}<p role="alert">{{ message }}</p>{% endif %}
+  <p role="status">
+    {% if candidates.override %}
+      Override is enabled. Candidates may come from outside the template constraints.
+    {% elif candidates.scope.source_lesson_id %}
+      Candidates fill the template source rule for {{ candidates.scope.source_lesson_id }}.
+    {% else %}
+      Candidates match this quiz's template constraints.
+    {% endif %}
+  </p>
+  <p>
+    {% if candidates.override %}
+      <a href="{{ url_for('instructor.add_quiz_version_question_form', version_id=version.id) }}">Use template constraints</a>
+    {% else %}
+      <a href="{{ url_for('instructor.add_quiz_version_question_form', version_id=version.id, override=1) }}">Allow override</a>
+    {% endif %}
+  </p>
+  <form method="post" action="{{ url_for('instructor.add_quiz_version_question_route', version_id=version.id) }}">
+    <input type="hidden" name="override" value="{{ '1' if candidates.override else '0' }}">
+    {% if candidates.candidates %}
+      <ol>
+        {% for candidate in candidates.candidates %}
+          <li>
+            <label>
+              <input type="radio" name="source_question_id" value="{{ candidate.id }}" required>
+              {{ candidate.lesson_id }} / {{ candidate.source_qid }}
+            </label>
+            <p>{{ candidate.question_stem }}</p>
+            <p>
+              {{ candidate.topic }} · difficulty {{ candidate.difficulty_level }} · {{ candidate.question_type }}
+              {% if candidate.effective_tags %}· {{ candidate.effective_tags|join(', ') }}{% endif %}
+            </p>
+          </li>
+        {% endfor %}
+      </ol>
+      <button type="submit">Add question</button>
+    {% else %}
+      <p role="status">No question exists to add to this quiz.</p>
+    {% endif %}
+  </form>
+</main>
+"""
+
 GRADING_QUEUE_TEMPLATE = """
 <!doctype html>
 <title>Written Grading Queue</title>
@@ -3426,6 +3662,7 @@ METRICS_TEMPLATE = """
   <nav aria-label="Metrics report sections">
     <a href="#metrics-filters">Filters</a>
     <a href="#class-summary">Class Summary</a>
+    <a href="#strengths-weaknesses">Strengths And Weaknesses</a>
     <a href="#quiz-summary">Quiz Summary</a>
     <a href="#student-summary">Student Summary</a>
     <a href="#topics">Topics</a>
@@ -3444,16 +3681,16 @@ METRICS_TEMPLATE = """
         <option value="all" {% if metrics.filters.mode == 'all' %}selected{% endif %}>All attempts</option>
       </select>
     </label>
-    <label>Quiz version
-      <select name="quiz_version_id">
-        <option value="" {% if not metrics.filters.quiz_version_id %}selected{% endif %}>All quiz versions</option>
-        {% for version in quiz_versions %}
-          <option value="{{ version.id }}" {% if metrics.filters.quiz_version_id == version.id %}selected{% endif %}>
-            #{{ version.id }} · {{ version.title }} · {{ version.visibility }} · {{ version.question_count }} questions
-          </option>
-        {% endfor %}
-      </select>
-    </label>
+    <input type="hidden" name="quiz_filter_applied" value="1">
+    <fieldset class="metrics-quiz-filter">
+      <legend>Quiz versions</legend>
+      {% for version in quiz_versions %}
+        <label>
+          <input type="checkbox" name="quiz_version_id" value="{{ version.id }}" {% if not metrics.filters.quiz_version_ids or version.id in metrics.filters.quiz_version_ids %}checked{% endif %}>
+          <span>#{{ version.id }} · {{ version.title }} · {{ version.visibility }} · {{ version.question_count }} questions</span>
+        </label>
+      {% endfor %}
+    </fieldset>
     <label>
       <input type="checkbox" name="include_voided" value="1" {% if metrics.filters.include_voided %}checked{% endif %}>
       Include voided
@@ -3492,6 +3729,60 @@ METRICS_TEMPLATE = """
     </ul>
   </section>
 
+  <details id="strengths-weaknesses" class="metrics-collapsible-section">
+    <summary>Strengths And Weaknesses</summary>
+    <div class="strengths-weaknesses-grid">
+      <article>
+        <h3>Weakest Trends</h3>
+        {% for group in metrics.strengths_weaknesses.dimension_groups %}
+          {% if group.weaknesses %}
+            <h4>{{ group.label }}</h4>
+            <table>
+              <thead><tr><th>Trend</th><th>Average</th><th>Answers</th></tr></thead>
+              <tbody>
+                {% for row in group.weaknesses %}
+                  <tr><td>{{ row[group.value_key] }}</td><td>{{ row.average_percent if row.average_percent is not none else '' }}</td><td>{{ row.answer_count }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        {% endfor %}
+        {% if metrics.strengths_weaknesses.item_weaknesses %}
+          <h4>Questions</h4>
+          <ol class="compact-analysis-list">
+            {% for item in metrics.strengths_weaknesses.item_weaknesses %}
+              <li><strong>{{ item.quiz_title }} / {{ item.snapshot_source_qid }}</strong> · {{ item.percent_correct if item.percent_correct is not none else '' }}% · {{ item.question_stem }}</li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </article>
+      <article>
+        <h3>Strongest Trends</h3>
+        {% for group in metrics.strengths_weaknesses.dimension_groups %}
+          {% if group.strengths %}
+            <h4>{{ group.label }}</h4>
+            <table>
+              <thead><tr><th>Trend</th><th>Average</th><th>Answers</th></tr></thead>
+              <tbody>
+                {% for row in group.strengths %}
+                  <tr><td>{{ row[group.value_key] }}</td><td>{{ row.average_percent if row.average_percent is not none else '' }}</td><td>{{ row.answer_count }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        {% endfor %}
+        {% if metrics.strengths_weaknesses.item_strengths %}
+          <h4>Questions</h4>
+          <ol class="compact-analysis-list">
+            {% for item in metrics.strengths_weaknesses.item_strengths %}
+              <li><strong>{{ item.quiz_title }} / {{ item.snapshot_source_qid }}</strong> · {{ item.percent_correct if item.percent_correct is not none else '' }}% · {{ item.question_stem }}</li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </article>
+    </div>
+  </details>
+
   <section id="quiz-summary">
     <h2>Quiz Summary</h2>
     <table>
@@ -3512,12 +3803,16 @@ METRICS_TEMPLATE = """
 
   <section id="student-summary">
     <h2>Student Summary</h2>
-    <table>
+    <div class="student-summary-sort-controls">
+      <button type="button" data-student-summary-sort="desc">Average high to low</button>
+      <button type="button" data-student-summary-sort="asc">Average low to high</button>
+    </div>
+    <table data-student-summary-table>
       <thead><tr><th>Student</th><th>Attempts</th><th>Completed</th><th>Missing</th><th>Average</th></tr></thead>
       <tbody>
         {% for student in metrics.student_summary %}
-          <tr>
-            <td><a href="{{ url_for('instructor.metrics_student_detail', identifier=student.student_identifier, mode='all', include_voided=1) }}"><code>{{ student.student_identifier }}</code></a></td>
+          <tr data-average-score="{{ student.average_score_percent if student.average_score_percent is not none else '' }}">
+            <td><a href="{{ url_for('instructor.metrics_student_detail', identifier=student.student_identifier) }}{% if student_query_string %}?{{ student_query_string }}{% endif %}"><code>{{ student.student_identifier }}</code></a></td>
             <td>{{ student.attempt_count }}</td>
             <td>{{ student.completion_count }}</td>
             <td>{{ student.missing_count }}</td>
@@ -3526,6 +3821,44 @@ METRICS_TEMPLATE = """
         {% endfor %}
       </tbody>
     </table>
+    <script>
+    (function () {
+      var table = document.querySelector("[data-student-summary-table]");
+      if (!table) {
+        return;
+      }
+      var body = table.querySelector("tbody");
+      function average(row) {
+        var value = parseFloat(row.getAttribute("data-average-score"));
+        return Number.isFinite(value) ? value : null;
+      }
+      function sortRows(direction) {
+        var rows = Array.prototype.slice.call(body.querySelectorAll("tr"));
+        rows.sort(function (left, right) {
+          var leftAverage = average(left);
+          var rightAverage = average(right);
+          if (leftAverage === null && rightAverage === null) {
+            return 0;
+          }
+          if (leftAverage === null) {
+            return 1;
+          }
+          if (rightAverage === null) {
+            return -1;
+          }
+          return direction === "asc"
+            ? leftAverage - rightAverage
+            : rightAverage - leftAverage;
+        });
+        rows.forEach(function (row) { body.appendChild(row); });
+      }
+      document.querySelectorAll("[data-student-summary-sort]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          sortRows(button.getAttribute("data-student-summary-sort"));
+        });
+      });
+    }());
+    </script>
   </section>
 
   <section id="topics">
@@ -3537,17 +3870,17 @@ METRICS_TEMPLATE = """
     </ul>
   </section>
 
-  <section id="tags">
-    <h2>Tags</h2>
+  <details id="tags" class="metrics-collapsible-section">
+    <summary>Tags</summary>
     <ul>
       {% for tag in metrics.tag_rollups %}
         <li>{{ tag.tag }}: {{ tag.average_percent }} over {{ tag.answer_count }} answers</li>
       {% endfor %}
     </ul>
-  </section>
+  </details>
 
-  <section id="dimensions">
-    <h2>Difficulty And Question Type</h2>
+  <details id="dimensions" class="metrics-collapsible-section">
+    <summary>Difficulty And Question Type</summary>
     <h3>Difficulty Levels</h3>
     <table>
       <thead><tr><th>Difficulty</th><th>Answers</th><th>Average</th><th>Points</th></tr></thead>
@@ -3589,20 +3922,31 @@ METRICS_TEMPLATE = """
         {% endfor %}
       </tbody>
     </table>
-  </section>
+  </details>
 
-  <section id="item-analysis">
-    <h2>Item Analysis</h2>
-    <ol>
+  <details id="item-analysis" class="metrics-collapsible-section">
+    <summary>Item Analysis</summary>
+    <div class="item-analysis-controls">
+      <label>
+        <input type="checkbox" data-hide-perfect-items>
+        Hide 100% correct questions
+      </label>
+    </div>
+    <ol class="quiz-result-question-list item-analysis-list">
       {% for item in metrics.item_analysis %}
-        <li>
+        <li class="quiz-result-question item-analysis-item" data-item-analysis-row data-percent-correct="{{ item.percent_correct if item.percent_correct is not none else '' }}">
           <strong>{{ item.quiz_title }} / {{ item.snapshot_source_qid }}</strong>
           <p>{{ item.question_stem }}</p>
-          <p>{{ item.question_type }} · attempts {{ item.attempt_count }} · correct {{ item.correct_count }} · percent correct {{ item.percent_correct if item.percent_correct is not none else '' }}</p>
+          <p class="quiz-result-metadata">{{ item.question_type }} · attempts {{ item.attempt_count }} · correct {{ item.correct_count }} · percent correct {{ item.percent_correct if item.percent_correct is not none else '' }} · unanswered {{ item.unanswered_count }}</p>
           {% if item.distractor_counts %}
-            <ul>
+            <ul class="quiz-result-options item-analysis-options">
               {% for option in item.distractor_counts %}
-                <li>{{ option.option_text }}: {{ option.selected_count }}{% if option.is_correct %} correct{% endif %}</li>
+                <li class="quiz-result-option{% if option.is_correct %} quiz-result-option-correct{% if option.selected_count > 0 %} item-analysis-option-weighted{% endif %}{% elif option.selected_count > 0 %} quiz-result-option-selected-incorrect item-analysis-option-missed item-analysis-option-weighted{% endif %}"{% if option.selected_count > 0 %} style="--item-analysis-answer-border-width: {{ option.selected_count }}px"{% endif %}>
+                  <span class="quiz-result-option-text">{{ option.option_text }}</span>
+                  <span class="quiz-result-option-label {% if option.is_correct %}quiz-result-correct-label{% else %}quiz-result-incorrect-label{% endif %} item-analysis-answer-count">
+                    {% if option.is_correct %}Correct answer{% else %}Wrong answer{% endif %} · <strong>{{ option.selected_count }}</strong> selected
+                  </span>
+                </li>
               {% endfor %}
             </ul>
           {% endif %}
@@ -3612,7 +3956,24 @@ METRICS_TEMPLATE = """
         </li>
       {% endfor %}
     </ol>
-  </section>
+    <script>
+    (function () {
+      var toggle = document.querySelector("[data-hide-perfect-items]");
+      if (!toggle) {
+        return;
+      }
+      var rows = Array.prototype.slice.call(document.querySelectorAll("[data-item-analysis-row]"));
+      function applyFilter() {
+        rows.forEach(function (row) {
+          var percentCorrect = parseFloat(row.getAttribute("data-percent-correct"));
+          row.hidden = toggle.checked && Number.isFinite(percentCorrect) && Math.abs(percentCorrect - 100) < 0.001;
+        });
+      }
+      toggle.addEventListener("change", applyFilter);
+      applyFilter();
+    }());
+    </script>
+  </details>
   <section id="visualizations">
     <h2>Visualizations</h2>
     <h3>Status By Quiz</h3>
@@ -3654,12 +4015,33 @@ METRICS_TEMPLATE = """
       </tbody>
     </table>
     <h3>Item Difficulty Scatter Data</h3>
-    <table>
+    <table data-item-difficulty-table>
       <thead><tr><th>Item</th><th>Type</th><th>Attempts</th><th>Percent correct</th><th>Unanswered</th></tr></thead>
       <tbody>
         {% for row in metrics.visualizations.item_difficulty_scatter %}
-          <tr>
-            <td>{{ row.quiz_title }} / {{ row.source_qid }}</td>
+          <tr class="item-difficulty-row" tabindex="0">
+            <td class="item-difficulty-item-cell">
+              {{ row.quiz_title }} / {{ row.source_qid }}
+              <div class="item-difficulty-preview" hidden>
+                <strong>{{ row.quiz_title }} / {{ row.source_qid }}</strong>
+                <p class="item-difficulty-preview-stem">{{ row.question_stem }}</p>
+                <p class="quiz-result-metadata">{{ row.question_type }} · attempts {{ row.attempt_count }} · percent correct {{ row.percent_correct if row.percent_correct is not none else '' }} · unanswered {{ row.unanswered_count }}</p>
+                {% if row.options %}
+                  <ul class="quiz-result-options item-difficulty-preview-options">
+                    {% for option in row.options %}
+                      <li class="quiz-result-option{% if option.is_correct %} quiz-result-option-correct{% if option.selected_count > 0 %} item-analysis-option-weighted{% endif %}{% elif option.selected_count > 0 %} quiz-result-option-selected-incorrect item-analysis-option-missed item-analysis-option-weighted{% endif %}"{% if option.selected_count > 0 %} style="--item-analysis-answer-border-width: {{ option.selected_count }}px"{% endif %}>
+                        <span class="quiz-result-option-text">{{ option.option_text }}</span>
+                        <span class="quiz-result-option-label {% if option.is_correct %}quiz-result-correct-label{% else %}quiz-result-incorrect-label{% endif %} item-analysis-answer-count">
+                          {% if option.is_correct %}Correct answer{% else %}Wrong answer{% endif %} · <strong>{{ option.selected_count }}</strong> selected
+                        </span>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% elif row.question_type == 'written' %}
+                  <p class="quiz-result-metadata">Written grading: {{ row.written_grading_status.graded_count }} graded, {{ row.written_grading_status.ungraded_count }} ungraded, {{ row.written_grading_status.expired_ungraded_count }} expired ungraded</p>
+                {% endif %}
+              </div>
+            </td>
             <td>{{ row.question_type }}</td>
             <td>{{ row.attempt_count }}</td>
             <td>{{ row.percent_correct if row.percent_correct is not none else '' }}</td>
@@ -3668,6 +4050,124 @@ METRICS_TEMPLATE = """
         {% endfor %}
       </tbody>
     </table>
+    <script>
+    (function () {
+      var table = document.querySelector("[data-item-difficulty-table]");
+      if (!table) {
+        return;
+      }
+      var popup = document.createElement("div");
+      popup.className = "item-difficulty-hover-popup";
+      popup.setAttribute("role", "tooltip");
+      popup.hidden = true;
+      document.body.appendChild(popup);
+      var activeRow = null;
+      var pinned = false;
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(value, max));
+      }
+
+      function position(row) {
+        var rect = row.getBoundingClientRect();
+        var margin = 12;
+        var width = popup.offsetWidth || 360;
+        var height = popup.offsetHeight || 220;
+        var maxLeft = Math.max(margin, window.innerWidth - width - margin);
+        var maxTop = Math.max(margin, window.innerHeight - height - margin);
+        var left = clamp(rect.left + 18, margin, maxLeft);
+        var below = rect.bottom + 8;
+        var above = rect.top - height - 8;
+        var top = below;
+        if (below + height > window.innerHeight - margin && above >= margin) {
+          top = above;
+        } else {
+          top = clamp(below, margin, maxTop);
+        }
+        popup.style.left = left + "px";
+        popup.style.top = top + "px";
+      }
+
+      function renderPreview(row, pin) {
+        var preview = row.querySelector(".item-difficulty-preview");
+        if (!preview) {
+          return false;
+        }
+        activeRow = row;
+        popup.innerHTML = "";
+        if (pin) {
+          var closeButton = document.createElement("button");
+          closeButton.type = "button";
+          closeButton.className = "item-difficulty-popup-close";
+          closeButton.setAttribute("aria-label", "Close item preview");
+          closeButton.textContent = "x";
+          closeButton.addEventListener("click", function () {
+            hide(true);
+          });
+          popup.appendChild(closeButton);
+        }
+        var content = document.createElement("div");
+        content.className = "item-difficulty-popup-content";
+        content.innerHTML = preview.innerHTML;
+        popup.appendChild(content);
+        popup.hidden = false;
+        popup.scrollTop = 0;
+        popup.setAttribute("role", pin ? "dialog" : "tooltip");
+        position(row);
+        return true;
+      }
+
+      function show(row) {
+        if (pinned) {
+          return;
+        }
+        renderPreview(row, false);
+      }
+
+      function pin(row) {
+        pinned = true;
+        renderPreview(row, true);
+      }
+
+      function hide(force) {
+        if (pinned && !force) {
+          return;
+        }
+        pinned = false;
+        activeRow = null;
+        popup.hidden = true;
+      }
+
+      table.querySelectorAll(".item-difficulty-row").forEach(function (row) {
+        row.addEventListener("mouseenter", function () { show(row); });
+        row.addEventListener("focus", function () { show(row); });
+        row.addEventListener("mousemove", function () { position(row); });
+        row.addEventListener("mouseleave", function () { hide(false); });
+        row.addEventListener("blur", function () { hide(false); });
+        row.addEventListener("click", function (event) {
+          event.stopPropagation();
+          pin(row);
+        });
+      });
+      popup.addEventListener("click", function (event) {
+        event.stopPropagation();
+      });
+      document.addEventListener("click", function () {
+        hide(true);
+      });
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          hide(true);
+        }
+      });
+      window.addEventListener("resize", function () { hide(true); });
+      window.addEventListener("scroll", function () {
+        if (activeRow) {
+          position(activeRow);
+        }
+      }, true);
+    }());
+    </script>
     <h3>Student Progress Matrix</h3>
     <table>
       <thead><tr><th>Student</th><th>Completion</th><th>Average</th><th>Status counts</th></tr></thead>
@@ -3730,31 +4230,106 @@ STUDENT_METRICS_TEMPLATE = """
 <!doctype html>
 <title>Student Metrics</title>
 <main>
-  <p><a href="{{ url_for('instructor.metrics_dashboard') }}">Metrics</a></p>
+  <p><a href="{{ url_for('instructor.metrics_dashboard') }}{% if metrics_query_string %}?{{ metrics_query_string }}{% endif %}">Metrics</a></p>
   <h1>Student Metrics</h1>
   <p><code>{{ detail.student_identifier }}</code> · {{ detail.student_status }}</p>
   <p>{{ detail.attempt_count }} attempts shown.</p>
-  <ol>
+  <section id="student-strengths-weaknesses">
+    <h2>Strengths And Weaknesses</h2>
+    <div class="strengths-weaknesses-grid">
+      <article>
+        <h3>Weakest Trends</h3>
+        {% for group in detail.strengths_weaknesses.dimension_groups %}
+          {% if group.weaknesses %}
+            <h4>{{ group.label }}</h4>
+            <table>
+              <thead><tr><th>Trend</th><th>Average</th><th>Answers</th></tr></thead>
+              <tbody>
+                {% for row in group.weaknesses %}
+                  <tr><td>{{ row[group.value_key] }}</td><td>{{ row.average_percent if row.average_percent is not none else '' }}</td><td>{{ row.answer_count }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        {% endfor %}
+        {% if detail.strengths_weaknesses.item_weaknesses %}
+          <h4>Questions</h4>
+          <ol class="compact-analysis-list">
+            {% for item in detail.strengths_weaknesses.item_weaknesses %}
+              <li><strong>{{ item.quiz_title }} / {{ item.snapshot_source_qid }}</strong> · {{ item.percent_correct if item.percent_correct is not none else '' }}% · {{ item.question_stem }}</li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </article>
+      <article>
+        <h3>Strongest Trends</h3>
+        {% for group in detail.strengths_weaknesses.dimension_groups %}
+          {% if group.strengths %}
+            <h4>{{ group.label }}</h4>
+            <table>
+              <thead><tr><th>Trend</th><th>Average</th><th>Answers</th></tr></thead>
+              <tbody>
+                {% for row in group.strengths %}
+                  <tr><td>{{ row[group.value_key] }}</td><td>{{ row.average_percent if row.average_percent is not none else '' }}</td><td>{{ row.answer_count }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        {% endfor %}
+        {% if detail.strengths_weaknesses.item_strengths %}
+          <h4>Questions</h4>
+          <ol class="compact-analysis-list">
+            {% for item in detail.strengths_weaknesses.item_strengths %}
+              <li><strong>{{ item.quiz_title }} / {{ item.snapshot_source_qid }}</strong> · {{ item.percent_correct if item.percent_correct is not none else '' }}% · {{ item.question_stem }}</li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </article>
+    </div>
+  </section>
+  <ol class="quiz-result-question-list">
     {% for attempt in detail.attempts %}
-      <li>
-        <h2>{{ attempt.quiz_title }}</h2>
-        <p>Attempt {{ attempt.attempt_number }} · {{ attempt.status }} · score {% if attempt.score is not none %}{{ attempt.score }} / {{ attempt.max_score }}{% endif %}</p>
-        <ol>
+      <li class="student-attempt-list-item">
+        <details class="quiz-result-question student-attempt-detail">
+        <summary class="student-attempt-summary">
+          <span>{{ attempt.quiz_title }}</span>
+          <span>Attempt {{ attempt.attempt_number }} · {{ attempt.status }} · score {% if attempt.score is not none %}{{ attempt.score }} / {{ attempt.max_score }}{% endif %}</span>
+        </summary>
+        <ol class="quiz-result-question-list quiz-result-question-list-nested">
           {% for question in attempt.questions %}
-            <li>
-              <p>{{ question.question_stem }}</p>
-              <p>{{ question.question_type }} · {{ question.topic }} · {{ question.tags|join(', ') }}</p>
-              <p>{{ question.lesson_block or '' }} · {{ question.specific_source_lesson or '' }} · {{ question.specific_source_reading or '' }}</p>
-              {% if question.answer.selected_option_text %}
-                <p>Selected: {{ question.answer.selected_option_text }} · correct: {{ question.answer.is_correct }}</p>
+            <li class="quiz-result-question quiz-result-question-nested">
+              <h3>{{ question.question_stem }}</h3>
+              <p class="quiz-result-metadata">{{ question.question_type }} · {{ question.topic }} · {{ question.tags|join(', ') }}</p>
+              <p class="quiz-result-metadata">{{ question.lesson_block or '' }} · {{ question.specific_source_lesson or '' }} · {{ question.specific_source_reading or '' }}</p>
+              {% if question.question_type == 'multiple_choice' and question.options %}
+                <ul class="quiz-result-options">
+                  {% for option in question.options %}
+                    {% set selected = question.answer.selected_option_id == option.id %}
+                    <li class="quiz-result-option{% if option.is_correct %} quiz-result-option-correct{% endif %}{% if selected and not option.is_correct %} quiz-result-option-selected-incorrect{% endif %}">
+                      <span class="quiz-result-option-text">{{ option.option_text }}</span>
+                      {% if selected and option.is_correct %}
+                        <span class="quiz-result-option-label quiz-result-correct-label">Your answer - correct</span>
+                      {% elif selected %}
+                        <span class="quiz-result-option-label quiz-result-incorrect-label">Your answer</span>
+                      {% elif option.is_correct %}
+                        <span class="quiz-result-option-label quiz-result-correct-label">Correct answer</span>
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% elif question.answer.selected_option_text %}
+                <div class="quiz-result-response{% if question.answer.is_correct %} quiz-result-response-correct{% elif question.answer.is_correct == false %} quiz-result-response-incorrect{% endif %}">
+                  <span>{{ question.answer.selected_option_text }}</span>
+                </div>
               {% endif %}
               {% if question.answer.written_response %}
-                <blockquote>{{ question.answer.written_response }}</blockquote>
+                <blockquote class="quiz-result-response{% if question.answer.points_awarded == question.answer.points_possible %} quiz-result-response-correct{% elif question.answer.points_awarded == 0 %} quiz-result-response-incorrect{% endif %}">{{ question.answer.written_response }}</blockquote>
               {% endif %}
-              <p>Points: {{ question.answer.points_awarded if question.answer.points_awarded is not none else '' }} / {{ question.answer.points_possible if question.answer.points_possible is not none else '' }}</p>
+              <p class="quiz-result-points">Points: {{ question.answer.points_awarded if question.answer.points_awarded is not none else '' }} / {{ question.answer.points_possible if question.answer.points_possible is not none else '' }}</p>
             </li>
           {% endfor %}
         </ol>
+        </details>
       </li>
     {% endfor %}
   </ol>
@@ -3950,7 +4525,7 @@ QUIZ_VERSION_PREVIEW_TEMPLATE = """
   <h1>Preview {{ version.title }}</h1>
   <dl>
     <dt>Visibility</dt><dd>{{ version.visibility }}</dd>
-    <dt>Availability</dt><dd>{{ version.available_from or 'now' }} to {{ version.available_until or 'open' }}</dd>
+    <dt>Availability</dt><dd>{{ dynamic_labs_time(version.available_from, 'now') }} to {{ dynamic_labs_time(version.available_until, 'open') }}</dd>
     <dt>Questions</dt><dd>{{ version.question_count }}</dd>
   </dl>
   <ol>
@@ -4402,6 +4977,54 @@ def generate_from_template_route(template_id):
         )
     except GenerationError as exc:
         return jsonify(error=str(exc)), 400
+    return redirect(
+        url_for("instructor.quiz_version_detail", version_id=version["id"])
+    )
+
+
+@bp.get("/templates/<int:template_id>/manual-generate")
+@instructor_required
+def manual_template_generation_form(template_id):
+    try:
+        candidates = manual_template_question_candidates(template_id)
+    except GenerationError as exc:
+        return jsonify(error=str(exc)), 404
+    return render_template_string(
+        MANUAL_TEMPLATE_GENERATION_TEMPLATE,
+        candidates=candidates,
+        selected_question_ids=set(),
+        generation_seed=_random_generation_seed(),
+        message=None,
+    )
+
+
+@bp.post("/templates/<int:template_id>/manual-generate")
+@instructor_required
+def manual_template_generation_route(template_id):
+    selected_ids = _selected_question_ids_from_request()
+    try:
+        version = generate_quiz_version_from_template_manual(
+            template_id,
+            selected_ids,
+            overrides=_generation_payload_from_request(),
+            actor_sub=current_instructor().subject,
+        )
+    except GenerationError as exc:
+        try:
+            candidates = manual_template_question_candidates(template_id)
+        except GenerationError:
+            return jsonify(error=str(exc)), 404
+        return render_template_string(
+            MANUAL_TEMPLATE_GENERATION_TEMPLATE,
+            candidates=candidates,
+            selected_question_ids={
+                int(value) for value in selected_ids if str(value).isdigit()
+            },
+            generation_seed=(
+                request.form.get("random_seed") or _random_generation_seed()
+            ),
+            message=str(exc),
+        ), 400
     return redirect(url_for("instructor.quiz_version_detail", version_id=version["id"]))
 
 
@@ -4572,6 +5195,14 @@ def quiz_version_detail(version_id):
     return render_template_string(
         QUIZ_VERSION_DETAIL_TEMPLATE,
         version=version,
+        mutation_status=quiz_version_question_mutation_status(
+            version_id,
+            version=version,
+        ),
+        timer_mutation_status=quiz_version_timer_mutation_status(
+            version_id,
+            version=version,
+        ),
         attempts=list_quiz_version_attempts(version_id),
         message=request.args.get("message"),
         server_utc_now=utc_now_iso(),
@@ -4588,6 +5219,266 @@ def quiz_version_preview(version_id):
     except PublicationError as exc:
         return jsonify(error=str(exc)), 404
     return render_template_string(QUIZ_VERSION_PREVIEW_TEMPLATE, version=version)
+
+
+@bp.get("/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/edit-source")
+@instructor_required
+def edit_quiz_version_question_source(version_id, quiz_version_question_id):
+    version = get_quiz_version(version_id)
+    if version is None:
+        return jsonify(error="not_found"), 404
+    mutation_status = quiz_version_question_mutation_status(
+        version_id,
+        version=version,
+    )
+    if not mutation_status["can_mutate"]:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=mutation_status["reason"],
+            )
+        )
+    question = _quiz_version_question_from_version(version, quiz_version_question_id)
+    if question is None:
+        return jsonify(error="not_found"), 404
+    latest = latest_active_question_revision(question["source_question_id"])
+    if latest is None:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message="The source question is no longer editable",
+            )
+        )
+    return redirect(
+        url_for("instructor.edit_question_form", question_id=latest["id"])
+    )
+
+
+@bp.get("/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/swap")
+@instructor_required
+def swap_quiz_version_question_form(version_id, quiz_version_question_id):
+    version = get_quiz_version(version_id)
+    if version is None:
+        return jsonify(error="not_found"), 404
+    mutation_status = quiz_version_question_mutation_status(
+        version_id,
+        version=version,
+    )
+    if not mutation_status["can_mutate"]:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=mutation_status["reason"],
+            )
+        )
+    question = _quiz_version_question_from_version(version, quiz_version_question_id)
+    if question is None:
+        return jsonify(error="not_found"), 404
+    try:
+        candidates = replacement_question_candidates(
+            version_id,
+            quiz_version_question_id,
+            override=_truthy_request_value(request.args.get("override")),
+        )
+    except QuizVersionError as exc:
+        return jsonify(error=str(exc)), 400
+    return render_template_string(
+        QUIZ_QUESTION_SWAP_TEMPLATE,
+        version=version,
+        question=question,
+        candidates=candidates,
+        message=None,
+    )
+
+
+@bp.post("/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/swap")
+@instructor_required
+def swap_quiz_version_question_route(version_id, quiz_version_question_id):
+    override = _truthy_request_value(request.form.get("override"))
+    try:
+        result = swap_hidden_quiz_version_question(
+            version_id,
+            quiz_version_question_id,
+            replacement_question_id=request.form.get("replacement_question_id"),
+            override=override,
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        version = get_quiz_version(version_id)
+        question = (
+            _quiz_version_question_from_version(version, quiz_version_question_id)
+            if version
+            else None
+        )
+        if version is None or question is None:
+            return jsonify(error=str(exc)), 404
+        candidates = replacement_question_candidates(
+            version_id,
+            quiz_version_question_id,
+            override=override,
+        )
+        return render_template_string(
+            QUIZ_QUESTION_SWAP_TEMPLATE,
+            version=version,
+            question=question,
+            candidates=candidates,
+            message=str(exc),
+        ), 400
+    return redirect(
+        url_for(
+            "instructor.quiz_version_detail",
+            version_id=result["quiz_version"]["id"],
+            message="Question swapped",
+        )
+    )
+
+
+@bp.post("/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/swap-auto")
+@instructor_required
+def auto_swap_quiz_version_question_route(version_id, quiz_version_question_id):
+    try:
+        result = swap_hidden_quiz_version_question(
+            version_id,
+            quiz_version_question_id,
+            automatic=True,
+            override=_truthy_request_value(request.form.get("override")),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=str(exc),
+            )
+        )
+    return redirect(
+        url_for(
+            "instructor.quiz_version_detail",
+            version_id=result["quiz_version"]["id"],
+            message="Question swapped",
+        )
+    )
+
+
+@bp.get("/quiz-versions/<int:version_id>/questions/add")
+@instructor_required
+def add_quiz_version_question_form(version_id):
+    version = get_quiz_version(version_id)
+    if version is None:
+        return jsonify(error="not_found"), 404
+    mutation_status = quiz_version_question_mutation_status(
+        version_id,
+        version=version,
+    )
+    if not mutation_status["can_mutate"]:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=mutation_status["reason"],
+            )
+        )
+    try:
+        candidates = add_question_candidates(
+            version_id,
+            override=_truthy_request_value(request.args.get("override")),
+        )
+    except QuizVersionError as exc:
+        return jsonify(error=str(exc)), 400
+    return render_template_string(
+        QUIZ_QUESTION_ADD_TEMPLATE,
+        version=version,
+        candidates=candidates,
+        message=None,
+    )
+
+
+@bp.post("/quiz-versions/<int:version_id>/questions/add")
+@instructor_required
+def add_quiz_version_question_route(version_id):
+    override = _truthy_request_value(request.form.get("override"))
+    try:
+        result = add_hidden_quiz_version_question(
+            version_id,
+            source_question_id=request.form.get("source_question_id"),
+            override=override,
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        version = get_quiz_version(version_id)
+        if version is None:
+            return jsonify(error=str(exc)), 404
+        candidates = add_question_candidates(version_id, override=override)
+        return render_template_string(
+            QUIZ_QUESTION_ADD_TEMPLATE,
+            version=version,
+            candidates=candidates,
+            message=str(exc),
+        ), 400
+    return redirect(
+        url_for(
+            "instructor.quiz_version_detail",
+            version_id=result["quiz_version"]["id"],
+            message="Question added",
+        )
+    )
+
+
+@bp.post("/quiz-versions/<int:version_id>/questions/add-auto")
+@instructor_required
+def auto_add_quiz_version_question_route(version_id):
+    try:
+        result = add_hidden_quiz_version_question(
+            version_id,
+            automatic=True,
+            override=_truthy_request_value(request.form.get("override")),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=str(exc),
+            )
+        )
+    return redirect(
+        url_for(
+            "instructor.quiz_version_detail",
+            version_id=result["quiz_version"]["id"],
+            message="Question added",
+        )
+    )
+
+
+@bp.post("/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/remove")
+@instructor_required
+def remove_quiz_version_question_route(version_id, quiz_version_question_id):
+    try:
+        result = remove_hidden_quiz_version_question(
+            version_id,
+            quiz_version_question_id,
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=str(exc),
+            )
+        )
+    return redirect(
+        url_for(
+            "instructor.quiz_version_detail",
+            version_id=result["quiz_version"]["id"],
+            message="Question removed",
+        )
+    )
 
 
 @bp.post("/quiz-versions/<int:version_id>/metadata")
@@ -4620,6 +5511,70 @@ def publish_quiz_version_route(version_id):
 @instructor_required
 def hide_quiz_version_route(version_id):
     return _visibility_redirect(version_id, "hidden", "Quiz hidden")
+
+
+@bp.post("/quiz-versions/<int:version_id>/question-count")
+@instructor_required
+def update_quiz_version_question_count_route(version_id):
+    try:
+        result = update_hidden_quiz_version_question_count(
+            version_id,
+            request.form.get("question_count"),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=str(exc),
+            )
+        )
+    return redirect(
+        url_for(
+            "instructor.quiz_version_detail",
+            version_id=version_id,
+            message=(
+                "Quiz question count unchanged"
+                if result["old_question_count"] == result["new_question_count"]
+                else (
+                    "Updated quiz from "
+                    f"{result['old_question_count']} to "
+                    f"{result['new_question_count']} questions"
+                )
+            ),
+        )
+    )
+
+
+@bp.post("/quiz-versions/<int:version_id>/timer")
+@instructor_required
+def update_quiz_version_timer_route(version_id):
+    try:
+        result = update_hidden_quiz_version_timer_minutes(
+            version_id,
+            request.form.get("timer_minutes"),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        return redirect(
+            url_for(
+                "instructor.quiz_version_detail",
+                version_id=version_id,
+                message=str(exc),
+            )
+        )
+    return redirect(
+        url_for(
+            "instructor.quiz_version_detail",
+            version_id=version_id,
+            message=(
+                "Quiz timer unchanged"
+                if result["old_timer_minutes"] == result["new_timer_minutes"]
+                else "Updated quiz timer"
+            ),
+        )
+    )
 
 
 @bp.post("/quiz-versions/<int:version_id>/refresh-question-revisions")
@@ -4760,25 +5715,85 @@ def grade_written_answer_route(answer_id):
     )
 
 
+def _metrics_dashboard_filters(args, quiz_versions):
+    filters = parse_metrics_filters(args)
+    if _has_explicit_quiz_filter(args):
+        return filters
+    published_ids = [
+        version["id"]
+        for version in quiz_versions
+        if version.get("visibility") == "published"
+    ]
+    if not published_ids:
+        return filters
+    return _filters_with_quiz_version_ids(filters, published_ids)
+
+
+def _has_explicit_quiz_filter(args):
+    return bool(
+        _request_arg_values(args, "quiz_version_id")
+        or _request_arg_values(args, "quiz_version_ids")
+        or _request_arg_values(args, "quiz_filter_applied")
+    )
+
+
+def _request_arg_values(args, key):
+    getter = getattr(args, "getlist", None)
+    if getter is not None:
+        return [value for value in getter(key) if str(value).strip()]
+    value = args.get(key) if isinstance(args, dict) else None
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        return [item for item in value if str(item).strip()]
+    return [value] if str(value).strip() else []
+
+
+def _filters_with_quiz_version_ids(filters, quiz_version_ids):
+    return MetricsFilters(
+        mode=filters.mode,
+        statuses=filters.statuses,
+        include_voided=filters.include_voided,
+        quiz_version_ids=tuple(quiz_version_ids),
+    )
+
+
+def _metrics_query_string(filters):
+    params = [("mode", filters.mode)]
+    if filters.include_voided:
+        params.append(("include_voided", "1"))
+    for status in filters.statuses:
+        params.append(("status", status))
+    for quiz_version_id in filters.quiz_version_ids:
+        params.append(("quiz_version_id", str(quiz_version_id)))
+    if filters.quiz_version_ids:
+        params.append(("quiz_filter_applied", "1"))
+    return urlencode(params)
+
+
 @bp.get("/metrics")
 @instructor_required
 def metrics_dashboard():
+    quiz_versions = list_quiz_versions()
     try:
-        filters = parse_metrics_filters(request.args)
+        filters = _metrics_dashboard_filters(request.args, quiz_versions)
         metrics = build_dashboard_metrics(filters)
     except MetricsFilterError as exc:
+        fallback_filters = _metrics_dashboard_filters({}, quiz_versions)
         return render_template_string(
             METRICS_TEMPLATE,
-            metrics=build_dashboard_metrics(parse_metrics_filters({})),
+            metrics=build_dashboard_metrics(fallback_filters),
             all_statuses=METRIC_STATUSES,
-            quiz_versions=list_quiz_versions(),
+            quiz_versions=quiz_versions,
+            student_query_string=_metrics_query_string(fallback_filters),
             message=str(exc),
         ), 400
     return render_template_string(
         METRICS_TEMPLATE,
         metrics=metrics,
         all_statuses=METRIC_STATUSES,
-        quiz_versions=list_quiz_versions(),
+        quiz_versions=quiz_versions,
+        student_query_string=_metrics_query_string(filters),
         message=None,
     )
 
@@ -4793,7 +5808,11 @@ def metrics_student_detail(identifier):
     detail = get_student_detail(identifier, filters)
     if detail is None:
         return jsonify(error="not_found"), 404
-    return render_template_string(STUDENT_METRICS_TEMPLATE, detail=detail)
+    return render_template_string(
+        STUDENT_METRICS_TEMPLATE,
+        detail=detail,
+        metrics_query_string=_metrics_query_string(filters),
+    )
 
 
 @bp.get("/exports")
@@ -4866,6 +5885,31 @@ def generate_template_quiz_version_api(template_id):
     return jsonify(quiz_version=version), 201
 
 
+@bp.get("/api/templates/<int:template_id>/manual-candidates")
+@instructor_required
+def manual_template_candidates_api(template_id):
+    try:
+        candidates = manual_template_question_candidates(template_id)
+    except GenerationError as exc:
+        return jsonify(error=str(exc)), 404
+    return jsonify(candidates=candidates)
+
+
+@bp.post("/api/templates/<int:template_id>/generate-manual")
+@instructor_required
+def generate_manual_template_quiz_version_api(template_id):
+    try:
+        version = generate_quiz_version_from_template_manual(
+            template_id,
+            _selected_question_ids_from_request(),
+            overrides=_generation_payload_from_request(),
+            actor_sub=current_instructor().subject,
+        )
+    except GenerationError as exc:
+        return jsonify(error=str(exc)), 400
+    return jsonify(quiz_version=version), 201
+
+
 @bp.get("/api/quiz-versions/<int:version_id>")
 @instructor_required
 def quiz_version_detail_api(version_id):
@@ -4873,6 +5917,124 @@ def quiz_version_detail_api(version_id):
     if version is None:
         return jsonify(error="not_found"), 404
     return jsonify(quiz_version=version)
+
+
+@bp.get(
+    "/api/quiz-versions/<int:version_id>/questions/"
+    "<int:quiz_version_question_id>/swap-candidates"
+)
+@instructor_required
+def replacement_question_candidates_api(version_id, quiz_version_question_id):
+    try:
+        candidates = replacement_question_candidates(
+            version_id,
+            quiz_version_question_id,
+            override=_truthy_request_value(request.args.get("override")),
+        )
+    except QuizVersionError as exc:
+        status = 404 if "not found" in str(exc) else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(candidates=candidates)
+
+
+@bp.post("/api/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/swap")
+@instructor_required
+def swap_quiz_version_question_api(version_id, quiz_version_question_id):
+    payload = _json_or_form_payload()
+    try:
+        result = swap_hidden_quiz_version_question(
+            version_id,
+            quiz_version_question_id,
+            replacement_question_id=payload.get("replacement_question_id"),
+            override=_truthy_request_value(payload.get("override")),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        status = 404 if "not found" in str(exc) else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(result=result)
+
+
+@bp.post("/api/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/swap-auto")
+@instructor_required
+def auto_swap_quiz_version_question_api(version_id, quiz_version_question_id):
+    payload = _json_or_form_payload()
+    try:
+        result = swap_hidden_quiz_version_question(
+            version_id,
+            quiz_version_question_id,
+            automatic=True,
+            override=_truthy_request_value(payload.get("override")),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        status = 404 if "not found" in str(exc) else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(result=result)
+
+
+@bp.get("/api/quiz-versions/<int:version_id>/questions/add-candidates")
+@instructor_required
+def add_question_candidates_api(version_id):
+    try:
+        candidates = add_question_candidates(
+            version_id,
+            override=_truthy_request_value(request.args.get("override")),
+        )
+    except QuizVersionError as exc:
+        status = 404 if "not found" in str(exc) else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(candidates=candidates)
+
+
+@bp.post("/api/quiz-versions/<int:version_id>/questions/add")
+@instructor_required
+def add_quiz_version_question_api(version_id):
+    payload = _json_or_form_payload()
+    try:
+        result = add_hidden_quiz_version_question(
+            version_id,
+            source_question_id=payload.get("source_question_id"),
+            override=_truthy_request_value(payload.get("override")),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        status = 404 if "not found" in str(exc) else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(result=result)
+
+
+@bp.post("/api/quiz-versions/<int:version_id>/questions/add-auto")
+@instructor_required
+def auto_add_quiz_version_question_api(version_id):
+    payload = _json_or_form_payload()
+    try:
+        result = add_hidden_quiz_version_question(
+            version_id,
+            automatic=True,
+            override=_truthy_request_value(payload.get("override")),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        status = 404 if "not found" in str(exc) else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(result=result)
+
+
+@bp.post("/api/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>/remove")
+@bp.delete("/api/quiz-versions/<int:version_id>/questions/<int:quiz_version_question_id>")
+@instructor_required
+def remove_quiz_version_question_api(version_id, quiz_version_question_id):
+    try:
+        result = remove_hidden_quiz_version_question(
+            version_id,
+            quiz_version_question_id,
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        status = 404 if "not found" in str(exc) else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(result=result)
 
 
 @bp.get("/api/quiz-versions/<int:version_id>/preview")
@@ -4911,6 +6073,38 @@ def publish_quiz_version_api(version_id):
 @instructor_required
 def hide_quiz_version_api(version_id):
     return _visibility_json(version_id, "hidden")
+
+
+@bp.post("/api/quiz-versions/<int:version_id>/question-count")
+@instructor_required
+def update_quiz_version_question_count_api(version_id):
+    payload = _json_or_form_payload()
+    try:
+        result = update_hidden_quiz_version_question_count(
+            version_id,
+            payload.get("question_count"),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        status = 404 if str(exc) == "quiz version not found" else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(result=result)
+
+
+@bp.post("/api/quiz-versions/<int:version_id>/timer")
+@instructor_required
+def update_quiz_version_timer_api(version_id):
+    payload = _json_or_form_payload()
+    try:
+        result = update_hidden_quiz_version_timer_minutes(
+            version_id,
+            payload.get("timer_minutes"),
+            actor_sub=current_instructor().subject,
+        )
+    except QuizVersionError as exc:
+        status = 404 if str(exc) == "quiz version not found" else 400
+        return jsonify(error=str(exc)), status
+    return jsonify(result=result)
 
 
 @bp.post("/api/quiz-versions/<int:version_id>/refresh-question-revisions")
@@ -5371,6 +6565,40 @@ def _generation_payload_from_request():
         except json.JSONDecodeError as exc:
             raise GenerationError("criteria must be valid JSON") from exc
     return payload
+
+
+def _selected_question_ids_from_request():
+    if request.is_json:
+        payload = request.get_json(silent=True)
+        if payload is None:
+            raise GenerationError("Malformed JSON")
+        if not isinstance(payload, dict):
+            raise GenerationError("generation payload must be an object")
+        return payload.get("selected_question_ids", [])
+    return request.form.getlist("selected_question_ids")
+
+
+def _json_or_form_payload():
+    if request.is_json:
+        payload = request.get_json(silent=True)
+        if payload is None:
+            return {}
+        if not isinstance(payload, dict):
+            return {}
+        return payload
+    return request.form
+
+
+def _truthy_request_value(value):
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _quiz_version_question_from_version(version, quiz_version_question_id):
+    question_id = int(quiz_version_question_id)
+    for question in version["questions"]:
+        if int(question["id"]) == question_id:
+            return question
+    return None
 
 
 def _quiz_version_metadata_payload_from_request():

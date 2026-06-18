@@ -117,7 +117,7 @@ export default function TerminalPopup({ open, onClose, rpcUrl = '', terminalRpcU
         const { cols, rows } = term;
         sock.send(`resize:${cols}:${rows}`);
         term.writeln('\x1b[32m✓ Lab Terminal — shell (project root)\x1b[0m');
-        term.writeln('\x1b[90mClick "Start Hardhat" below to launch the console, or type commands manually.\x1b[0m');
+        term.writeln('\x1b[90mExpert users only: use "Start Hardhat" for manual console work. Most students should use the normal hands-on labs.\x1b[0m');
         term.writeln('');
         term.focus();
         const isWin = typeof navigator !== 'undefined' && /Win/i.test(navigator.platform || navigator.userAgent || '');
@@ -297,6 +297,11 @@ export default function TerminalPopup({ open, onClose, rpcUrl = '', terminalRpcU
             </button>
           )}
           {status === 'connected' && (
+            <span style={{ fontSize: '0.75rem', color: '#fbbf24' }}>
+              Expert users only
+            </span>
+          )}
+          {status === 'connected' && (
             <button
               onClick={() => manualBootRef.current?.()}
               style={{
@@ -308,7 +313,7 @@ export default function TerminalPopup({ open, onClose, rpcUrl = '', terminalRpcU
                 cursor: 'pointer',
                 fontSize: '0.75rem',
               }}
-              title="If Hardhat did not start automatically (e.g. in Docker), click to send the command manually"
+              title="Expert users only: start the Hardhat console for manual checks"
             >
               Start Hardhat
             </button>

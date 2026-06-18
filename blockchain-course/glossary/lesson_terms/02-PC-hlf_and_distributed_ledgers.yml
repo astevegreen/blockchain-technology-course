@@ -1,0 +1,380 @@
+lesson_id: "02-PC"
+lesson_title: "Hyperledger Fabric"
+source_path: "lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.qmd"
+terms:
+  - term: "Hyperledger Fabric"
+    modifier: null
+    aliases: ["Fabric", "HLF"]
+    definition: "A permissioned distributed ledger platform that separates identity, execution, ordering, validation, and governance into distinct components."
+    context: "The lesson uses Fabric as the concrete platform for translating generic permissioned-ledger concepts into operational architecture."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Certificate Authority"
+    modifier: "Hyperledger Fabric"
+    aliases: ["CA", "Fabric CA"]
+    definition: "The identity service that enrolls users, peers, admins, and organizations by issuing certificates and keys."
+    context: "Students need the CA role to distinguish credential issuance from the later decision about whether those credentials are trusted."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Membership Service Provider"
+    modifier: "Hyperledger Fabric"
+    aliases: ["MSP", "membership service provider"]
+    definition: "Fabric's structured trust definition for an organization, including trusted certificate roots, roles, admin material, and signature rules."
+    context: "MSP explains whose signatures count for proposals, endorsements, channel participation, and administrative actions."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Endorsement policy"
+    modifier: "Hyperledger Fabric"
+    aliases: ["endorsement policies", "approval policy"]
+    definition: "A channel and chaincode rule that states which organizations or roles must sign a transaction result before it can move forward."
+    context: "Endorsement policy is Fabric's concrete expression of approval logic in a permissioned ledger."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Orderer cluster"
+    modifier: "Hyperledger Fabric"
+    aliases: ["ordering service", "orderers", "orderer"]
+    definition: "The Fabric service that establishes one agreed transaction sequence for a channel and delivers ordered blocks to peers."
+    context: "The orderer cluster separates sequencing from chaincode execution and business-rule validation."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Block log"
+    modifier: "Hyperledger Fabric"
+    aliases: ["block history", "ledger history"]
+    definition: "The durable ordered ledger history that records accepted blocks, including transactions later marked valid or invalid."
+    context: "The block log provides audit evidence and distinguishes Fabric's ledger model from a simple current-state database."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "World state"
+    modifier: "Hyperledger Fabric"
+    aliases: ["current-value snapshot", "current state"]
+    definition: "A query-friendly snapshot of the latest valid ledger values derived from the block log."
+    context: "World state explains why Fabric queries can feel database-like while still depending on an ordered ledger history."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Channel configuration"
+    modifier: "Hyperledger Fabric"
+    aliases: ["channel config", "channel policy configuration"]
+    definition: "The governance data that defines channel membership, policies, administrative rules, and related configuration for a Fabric channel."
+    context: "Channel configuration is where Fabric turns governance choices into enforceable network rules."
+    slide_heading: "From Permissioned Concepts to Fabric Terms"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Execute-order-validate"
+    modifier: "Hyperledger Fabric"
+    aliases: ["execute order validate", "EOV"]
+    definition: "Fabric's transaction pattern in which endorsing peers execute and sign first, orderers sequence second, and committing peers validate at commit time."
+    context: "This pattern is the core mental model for locating Fabric components and understanding why approval, ordering, and commit are separate."
+    slide_heading: "The Big Picture: End-to-End Fabric Path"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Endorsing peer"
+    modifier: "Hyperledger Fabric"
+    aliases: ["endorser", "endorsers", "endorsing peers"]
+    definition: "A peer acting in the approval role by simulating chaincode, producing a read-write set, and signing the proposed result."
+    context: "Endorsing peers show that execution in Fabric happens before ordering and does not by itself commit state."
+    slide_heading: "The Big Picture: End-to-End Fabric Path"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Committing peer"
+    modifier: "Hyperledger Fabric"
+    aliases: ["committer", "committers", "committing peers"]
+    definition: "A peer acting in the commit role by receiving ordered blocks, rechecking policy and state-version rules, and updating ledger state."
+    context: "Committing peers make the final validation decision after the orderer has sequenced transactions."
+    slide_heading: "The Big Picture: End-to-End Fabric Path"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Identity verification"
+    modifier: "Hyperledger Fabric"
+    aliases: ["identity check", "signature verification"]
+    definition: "The repeated process of checking that a Fabric action is backed by a valid identity and a signature that satisfies the relevant policy."
+    context: "The lesson stresses that identity is checked at every stage rather than only when a client first joins the network."
+    slide_heading: "The Big Picture: End-to-End Fabric Path"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Channel"
+    modifier: "Hyperledger Fabric"
+    aliases: ["channels"]
+    definition: "A separate Fabric ledger, membership, and policy boundary used to partition governance and visibility."
+    context: "Channels are one of Fabric's main tools for separating participants and data within the same broader network."
+    slide_heading: "Fabric-Specific Concepts To Watch For"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Chaincode"
+    modifier: null
+    aliases: ["smart contract", "Fabric smart contract"]
+    definition: "Fabric's term for application code that implements business rules and proposes ledger updates during transaction simulation."
+    context: "Chaincode is where asset rules and update logic live, but its output becomes trusted only through endorsement, ordering, and validation."
+    slide_heading: "Fabric-Specific Concepts To Watch For"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Local MSP configuration"
+    modifier: "Hyperledger Fabric"
+    aliases: ["local MSP", "local trust material"]
+    definition: "The MSP material a peer, orderer, or client uses locally to identify itself and verify trusted identities."
+    context: "Local MSP configuration helps explain why Fabric nodes can evaluate signatures without asking a central MSP server for every action."
+    slide_heading: "What is an MSP?"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Channel MSP definition"
+    modifier: "Hyperledger Fabric"
+    aliases: ["channel MSP", "channel MSP definitions"]
+    definition: "The channel-level MSP information that tells a channel which organizations exist and which signatures satisfy their trust rules."
+    context: "Channel MSP definitions connect organizational identity to channel-specific policy enforcement."
+    slide_heading: "What is an MSP?"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Peer"
+    modifier: "Hyperledger Fabric"
+    aliases: ["peers"]
+    definition: "A Fabric node type that can endorse transactions, commit ordered blocks, or perform both roles depending on configuration and workflow."
+    context: "The lesson uses peers to show that one node type can perform distinct execution and commit responsibilities."
+    slide_heading: "Peers: Two Jobs, One Node Type"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Multi-version concurrency control"
+    modifier: "Hyperledger Fabric"
+    aliases: ["MVCC", "MVCC check", "state-version check"]
+    definition: "A commit-time check that asks whether the keys read during simulation still have the same versions when the transaction is validated."
+    context: "MVCC explains why a transaction can be endorsed successfully but later invalidated because another transaction changed a key first."
+    slide_heading: "Peers: Two Jobs, One Node Type"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Proposal simulation"
+    modifier: "Hyperledger Fabric"
+    aliases: ["simulation", "chaincode simulation"]
+    definition: "The pre-order execution step where endorsers run chaincode against current state to compute a proposed result without committing it."
+    context: "Proposal simulation is where Fabric gets executable business results before the ordering service sees the transaction."
+    slide_heading: "Chaincode: What It Is and How It Runs"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Read-write set"
+    modifier: "Hyperledger Fabric"
+    aliases: ["RW set", "read write set", "read-write set"]
+    definition: "The proposed transaction output listing which ledger keys were read, which versions were observed, and which values should be written."
+    context: "The read-write set is the evidence endorsers sign and committing peers later validate."
+    slide_heading: "Chaincode: What It Is and How It Runs"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Chaincode event"
+    modifier: "Hyperledger Fabric"
+    aliases: ["event", "Fabric event"]
+    definition: "A notification emitted by chaincode so external observers can react to a business action after the transaction is processed."
+    context: "The CreateAsset example uses an event to show how ordinary application logic connects to downstream observers."
+    slide_heading: "Chaincode Example: CreateAsset"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Chaincode lifecycle"
+    modifier: "Hyperledger Fabric"
+    aliases: ["Fabric chaincode lifecycle", "lifecycle"]
+    definition: "The governance process for installing a chaincode package, approving a channel definition, and committing that definition before invocation."
+    context: "The lifecycle separates contract rollout decisions from ordinary business transactions."
+    slide_heading: "Chaincode Lifecycle"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Chaincode package"
+    modifier: "Hyperledger Fabric"
+    aliases: ["package", "deployable chaincode artifact"]
+    definition: "The deployable artifact containing smart-contract code and metadata needed to run chaincode on endorsing peers."
+    context: "The package is the first object organizations install before they approve and commit a channel-level chaincode definition."
+    slide_heading: "Chaincode Lifecycle"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Chaincode definition"
+    modifier: "Hyperledger Fabric"
+    aliases: ["contract definition", "chaincode approval definition"]
+    definition: "The channel-level agreement on a chaincode's name, version, sequence number, endorsement policy, and related settings."
+    context: "The definition turns an installed package into an agreed contract version usable on a channel."
+    slide_heading: "Chaincode Lifecycle"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Determinism"
+    modifier: "chaincode"
+    aliases: ["deterministic execution"]
+    definition: "The requirement that required endorsers produce matching results when they simulate the same proposal."
+    context: "Determinism protects Fabric from accepting inconsistent outcomes caused by local time, randomness, external APIs, or divergent environments."
+    slide_heading: "Determinism and Safety"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Endorsement mismatch"
+    modifier: "Hyperledger Fabric"
+    aliases: ["mismatched endorsements"]
+    definition: "A failure where endorsers return different results for the same proposal, preventing the client from satisfying endorsement policy."
+    context: "The lesson presents endorsement mismatch as a protective failure mode when chaincode execution is not deterministic."
+    slide_heading: "Determinism and Safety"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Policy threshold"
+    modifier: "endorsement"
+    aliases: ["threshold policy", "OutOf policy", "OutOf"]
+    definition: "An endorsement rule requiring a specified number of organizations or roles from a larger set to sign a transaction result."
+    context: "Threshold policies let Fabric balance assurance and availability when one participant may be unavailable."
+    slide_heading: "Endorsement Policies as Trust Logic"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Confidentiality boundary"
+    modifier: "Hyperledger Fabric"
+    aliases: ["visibility boundary", "data-separation boundary"]
+    definition: "A Fabric design boundary that limits which members can see ledger data, policies, or private payloads."
+    context: "The lesson uses channels and private data collections to show different ways Fabric controls visibility."
+    slide_heading: "Channels: Confidentiality Boundary"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Private data collection"
+    modifier: "Hyperledger Fabric"
+    aliases: ["private data collections", "PDC"]
+    definition: "A Fabric confidentiality mechanism where authorized peers receive plaintext private data while the wider channel records a hash for integrity checking."
+    context: "Private data collections offer a lighter-weight alternative to creating a separate channel for every sensitive workflow."
+    slide_heading: "Private Data Collections"
+    tags: ["permissioned-ledgers", "cryptography"]
+    confidence: "high"
+  - term: "Hash anchor"
+    modifier: "private data"
+    aliases: ["hash anchoring", "integrity anchor"]
+    definition: "A hash recorded on the shared channel so peers can verify that private data has not been silently changed."
+    context: "Hash anchors preserve shared integrity evidence even when only authorized peers see the private payload."
+    slide_heading: "Private Data Collections"
+    tags: ["permissioned-ledgers", "cryptography"]
+    confidence: "high"
+  - term: "Raft"
+    modifier: "Hyperledger Fabric ordering"
+    aliases: ["Raft ordering", "Raft consensus"]
+    definition: "A crash-fault-tolerant consensus protocol commonly used by Fabric orderers to agree on block sequence under known membership."
+    context: "Raft explains the usual fault model for Fabric ordering and why it handles crashes rather than malicious orderers."
+    slide_heading: "Orderer Cluster and Raft Quorum"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Crash-fault tolerance"
+    modifier: "Hyperledger Fabric ordering"
+    aliases: ["CFT", "crash-fault-tolerant"]
+    definition: "A fault model where the ordering service can tolerate nodes stopping or crashing but does not assume those nodes act maliciously."
+    context: "CFT is the assumption behind common Raft-based Fabric ordering deployments."
+    slide_heading: "Orderer Cluster and Raft Quorum"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Byzantine-fault tolerance"
+    modifier: "Hyperledger Fabric ordering"
+    aliases: ["BFT", "BFT orderer"]
+    definition: "A stronger fault-tolerance model for ordering services that accounts for actively faulty or malicious nodes."
+    context: "The lesson mentions BFT as the option to consider when Raft's crash-only assumptions are not enough."
+    slide_heading: "Orderer Cluster and Raft Quorum"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Sequencing"
+    modifier: "Hyperledger Fabric ordering"
+    aliases: ["transaction sequence", "block sequence", "ordering"]
+    definition: "The act of placing endorsed transactions into one agreed order for a specific channel."
+    context: "Sequencing is the orderer cluster's critical job, separate from deciding whether the business action is valid."
+    slide_heading: "Orderer Cluster and Raft Quorum"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Invoke"
+    modifier: "Hyperledger Fabric"
+    aliases: ["Fabric invoke", "transaction invoke"]
+    definition: "A client-requested transaction flow that proposes a chaincode action, gathers endorsements, submits for ordering, and reaches validation and commit."
+    context: "The lesson traces one invoke end to end so students can locate each trust decision and failure point."
+    slide_heading: "One Invoke: Proposal to Commit"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Proposal"
+    modifier: "Hyperledger Fabric"
+    aliases: ["transaction proposal", "signed proposal"]
+    definition: "A signed client request sent to endorsing peers asking them to simulate a chaincode action."
+    context: "The proposal is the first decision point in the invoke path and must be backed by a valid MSP identity."
+    slide_heading: "One Invoke: Proposal to Commit"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Endorsement"
+    modifier: "Hyperledger Fabric"
+    aliases: ["endorsements", "signed endorsement"]
+    definition: "An endorser's signed approval of a simulated chaincode result and its read-write set."
+    context: "Endorsements prove which organizations approved the proposed state change before the client submits it to ordering."
+    slide_heading: "One Invoke: Proposal to Commit"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Validation"
+    modifier: "Hyperledger Fabric"
+    aliases: ["commit-time validation", "transaction validation"]
+    definition: "The peer-side process that rechecks endorsement policy, MVCC constraints, and transaction well-formedness after ordering."
+    context: "Validation explains why an ordered transaction can still be marked invalid before world state changes."
+    slide_heading: "One Invoke: Proposal to Commit"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Commit"
+    modifier: "Hyperledger Fabric"
+    aliases: ["committing", "valid commit"]
+    definition: "The step where a valid ordered transaction is written to the ledger and its effects update world state."
+    context: "Commit is the point where a proposed and ordered transaction becomes effective shared state."
+    slide_heading: "One Invoke: Proposal to Commit"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Invalid transaction"
+    modifier: "Hyperledger Fabric"
+    aliases: ["invalidated transaction", "marked invalid"]
+    definition: "A transaction that remains in the block log for audit but does not update world state because validation failed."
+    context: "Invalid transactions are central to diagnosing cases where ordering happened but the expected state change did not."
+    slide_heading: "Phase B: Ordering, Validation, and Commit"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Operational finality"
+    modifier: "Hyperledger Fabric"
+    aliases: ["immediate finality", "Fabric finality"]
+    definition: "The practical finality Fabric gives after a valid commit under normal managed-membership and crash-fault assumptions."
+    context: "Operational finality contrasts Fabric's policy-backed commit with public-chain reliance on probabilistic depth."
+    slide_heading: "How Fabric Avoids Public-Chain Consensus Costs"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Managed membership"
+    modifier: "permissioned ledgers"
+    aliases: ["known identities", "curated membership"]
+    definition: "A participation model where admitted identities are known and governed instead of allowing open anonymous entry."
+    context: "Managed membership is why Fabric can avoid proof-of-work races or open validator competition."
+    slide_heading: "How Fabric Avoids Public-Chain Consensus Costs"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Pre-order rejection"
+    modifier: "Hyperledger Fabric"
+    aliases: ["pre-order failure"]
+    definition: "A transaction failure before ordering caused by issues such as insufficient endorsements, invalid identity, or policy mismatch."
+    context: "Pre-order rejection helps students categorize failures that never reach the orderer."
+    slide_heading: "Where Consensus Can Still Fail"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Post-order invalidation"
+    modifier: "Hyperledger Fabric"
+    aliases: ["post-order failure", "commit-time invalidation"]
+    definition: "A transaction failure after ordering when committing peers mark the transaction invalid during validation."
+    context: "Post-order invalidation explains why a block can contain a transaction even though world state did not change."
+    slide_heading: "Where Consensus Can Still Fail"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Liveness failure"
+    modifier: "Hyperledger Fabric"
+    aliases: ["liveness", "ordering-service stall"]
+    definition: "A failure mode where the network cannot make progress, often because the ordering service stalls or loses quorum."
+    context: "Liveness failures are distinct from invalid transactions because blocks may stop being produced at all."
+    slide_heading: "Where Consensus Can Still Fail"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Observability"
+    modifier: "Hyperledger Fabric"
+    aliases: ["live observation", "troubleshooting evidence"]
+    definition: "The practice of using logs, block history, and world-state queries to determine which Fabric transaction stage succeeded or failed."
+    context: "Observability turns Fabric's architecture into a practical troubleshooting checklist for labs and deployments."
+    slide_heading: "Observability: What to Watch Live"
+    tags: ["permissioned-ledgers", "labs"]
+    confidence: "high"
+  - term: "Peer and orderer logs"
+    modifier: "Hyperledger Fabric"
+    aliases: ["Fabric logs", "container logs"]
+    definition: "Runtime records from peers and orderers that show which transaction stage is happening and where a failure occurred."
+    context: "The lesson tells students to use logs alongside block history and world-state queries when debugging Fabric behavior."
+    slide_heading: "Observability: What to Watch Live"
+    tags: ["permissioned-ledgers", "labs"]
+    confidence: "high"

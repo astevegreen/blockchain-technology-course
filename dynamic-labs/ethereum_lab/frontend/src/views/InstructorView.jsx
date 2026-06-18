@@ -12,7 +12,62 @@
 import { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { rpcClient } from '../lib/RpcClient';
+import { MempoolTable } from '../components/MempoolTable';
 import PoSABI from '../PoS.json';
+
+// Scenario/role assignment belongs to the cut CRUD/forensics labs. Disabled so
+// the instructor can't broadcast roles students can't use.
+const SCENARIO_ROLES_ENABLED = false;
+const LEGACY_INSTRUCTOR_RPC_POLL_ENABLED = false;
+const ARCADE_GAME_NAMES = { 1: 'Block Breaker', 2: 'Mempool Invaders', 3: 'Gas Climber' };
+
+const cacheBase = () => ((typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/').replace(/\/$/, '');
+const safeArcadeFormatEth = (wei) => {
+  try {
+    return `${Number(ethers.formatEther(BigInt(wei || 0))).toLocaleString(undefined, { maximumFractionDigits: 4 })} ETH`;
+  } catch (_) {
+    return '0 ETH';
+  }
+};
+const shortAddress = (address) => (address ? `${String(address).slice(0, 8)}...${String(address).slice(-6)}` : '-');
+const safeScore = (score) => Number(score || 0).toLocaleString();
+const safeElapsed = (ms) => {
+  const n = Number(ms || 0);
+  if (!Number.isFinite(n) || n <= 0) return '-';
+  return n < 1000 ? `${Math.round(n)}ms` : `${(n / 1000).toFixed(1)}s`;
+};
+const arcadeErrorMessage = (error) => error?.shortMessage || error?.reason || error?.message || String(error);
+
+async function fetchInstructorArcadeState() {
+  const base = cacheBase();
+  for (const url of [`${base}/arcade-state`, `${base}/lab-api/arcade/state`]) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (data && (data.ok || data.reason)) return data;
+    } catch (_) {
+      // Try the alternate route.
+    }
+  }
+  return null;
+}
+
+async function fetchInstructorDefiRiskState() {
+  const base = cacheBase();
+  for (const url of [`${base}/lab-api/defi-risk/state`, `${base}/defi-risk/state`]) {
+    try {
+      const r = await fetch(url, { cache: 'no-store' });
+      if (!r.ok) continue;
+      const data = await r.json();
+      if (data && (data.ok || data.reason || data.error)) return data;
+    } catch (_) {
+      // Try the alternate route.
+    }
+  }
+  return null;
+}
+
 export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTerminal }) {
   // Initialize rpcClient with the RPC URL
   useEffect(() => {
@@ -48,11 +103,22 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
   const [isActionInProgress, setIsActionInProgress] = useState(false);
   const [activeScenario, setActiveScenario] = useState('House Sale');
   const [fundAddress, setFundAddress] = useState('');
+  const [autoBeaconActivity, setAutoBeaconActivity] = useState(true);
+  const [miningState, setMiningState] = useState(null);
   const [fundAmount, setFundAmount] = useState('5');
   const [artifactInput, setArtifactInput] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterHasContract, setFilterHasContract] = useState('');
   const [fundRequests, setFundRequests] = useState([]);
+  const [beaconCacheHealth, setBeaconCacheHealth] = useState(null);
+  const [arcadeState, setArcadeState] = useState(null);
+  const [arcadePriceInput, setArcadePriceInput] = useState('');
+  const [arcadePriceDirty, setArcadePriceDirty] = useState(false);
+  const [defiRiskState, setDefiRiskState] = useState(null);
+  const [timelockFeeInput, setTimelockFeeInput] = useState('');
+  const [timelockDelayInput, setTimelockDelayInput] = useState('');
+  const [timelockTreasuryInput, setTimelockTreasuryInput] = useState('');
+  const [timelockFormDirty, setTimelockFormDirty] = useState(false);
 
   // Poll student fund requests from Lab API
   useEffect(() => {
@@ -68,6 +134,93 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
     const id = setInterval(poll, 3000);
     return () => clearInterval(id);
   }, []);
+
+  // Beacon cache health: HTTP-only, no direct RPC from the instructor browser.
+  useEffect(() => {
+    let cancelled = false;
+    const poll = async () => {
+      const base = ((typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/').replace(/\/$/, '');
+      for (const url of [base + '/beacon-state', base + '/lab-api/beacon/state']) {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) continue;
+          const snapshot = await r.json();
+          if (!cancelled) setBeaconCacheHealth({ snapshot, fetchedAt: Date.now(), error: null });
+          return;
+        } catch (_) {}
+      }
+      if (!cancelled) {
+        setBeaconCacheHealth((prev) => ({ ...(prev || {}), fetchedAt: Date.now(), error: 'Beacon cache endpoint unavailable' }));
+      }
+    };
+    poll();
+    const id = setInterval(poll, 5000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  useEffect(() => {
+    const snapshot = beaconCacheHealth?.snapshot;
+    if (!snapshot?.ok) return;
+
+    setTotalStaked(snapshot.totalStaked || '0');
+    setContractBalance(snapshot.totalStaked || '0');
+    setValidatorCount(Number(snapshot.committeeSize || snapshot.committee?.length || 0));
+    setCurrentAPY(0);
+    setCurrentEpoch(Number(snapshot.currentEpoch || 0));
+    setCurrentSlot(Number(snapshot.currentSlot || 0));
+    setTimeUntilNextEpoch(0);
+
+    const committee = snapshot.committee || [];
+    const attestedMap = snapshot.committeeAttestedLast || {};
+    const attested = committee.filter((address) => attestedMap[String(address).toLowerCase()]).length;
+    setParticipationRate(committee.length ? Math.round((attested / committee.length) * 100) : 0);
+
+    const validatorStats = snapshot.validatorStats || {};
+    const slashCounts = snapshot.validatorSlashEvents || {};
+    const validatorAttestations = snapshot.validatorAttestations || {};
+    const rows = Object.values(validatorStats)
+      .filter((entry) => entry && !entry.isBot)
+      .map((entry) => {
+        const key = String(entry.address || '').toLowerCase();
+        return {
+          address: entry.address,
+          balance: '0',
+          stake: entry.stake || '0',
+          reward: '0',
+          slashCount: (slashCounts[key] || []).length || (entry.slashed ? 1 : 0),
+          blocksProposed: 0,
+          missedAttestations: 0,
+          unbondingTime: entry.exited ? 1 : 0,
+          hasAttestedThisEpoch: !!attestedMap[key],
+          role: '',
+          roleContract: null,
+          stakes: parseFloat(entry.stake || '0') > 0 ? 1 : 0,
+          messages: 0,
+          withdrawals: entry.exited ? 1 : 0,
+          slashes: (slashCounts[key] || []).length || (entry.slashed ? 1 : 0),
+          blocks: (validatorAttestations[key] || []).length,
+        };
+      });
+    setStudents(rows);
+
+    const recent = (snapshot.recentActivity || []).slice(-20).reverse().map((item) => {
+      const msg = String(item.msg || '');
+      const address = msg.match(/0x[0-9a-fA-F]{40}/)?.[0] || '0x0000000000000000000000000000000000000000';
+      const type = /slash/i.test(msg) ? 'slash' : /proposed|block/i.test(msg) ? 'block' : /joined|stake/i.test(msg) ? 'stake' : 'message';
+      return {
+        type,
+        address,
+        amount: '0',
+        reward: '0',
+        reason: msg,
+        message: msg,
+        blockNumber: Number(item.blockNumber || 0),
+        block: Number(item.blockNumber || 0),
+      };
+    });
+    setRecentActivity(recent);
+    setBlockProposals((snapshot.blocks || []).slice(-10).reverse());
+  }, [beaconCacheHealth]);
 
   // Role options per scenario (plan: Part Z)
   const SCENARIO_ROLES = {
@@ -91,6 +244,7 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
 
   // Main data fetching effect
   useEffect(() => {
+    if (!LEGACY_INSTRUCTOR_RPC_POLL_ENABLED) return;
     if (!provider || !posAddress || posAddress.length !== 42) {
       console.log("InstructorView: Waiting for valid contract address...");
       return;
@@ -356,24 +510,14 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
   // Format address for display
   const formatAddress = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
-  // Filter students by role and contract status
-  const filteredStudents = students.filter((s) => {
-    if (filterRole && (s.role || '') !== filterRole) return false;
-    if (filterHasContract === 'yes' && !s.roleContract) return false;
-    if (filterHasContract === 'no' && s.roleContract) return false;
-    return true;
-  });
+  const filteredStudents = students;
 
   // Export progress to CSV
   const exportProgressCSV = () => {
-    const headers = ['Address', 'Role', 'Balance', 'Staked', 'Rewards', 'Role Contract', 'Blocks', 'Slashes', 'Attested'];
+    const headers = ['Address', 'Staked', 'Blocks', 'Slashes', 'Attested'];
     const rows = filteredStudents.map((s) => [
       s.address,
-      s.role || '',
-      s.balance,
       s.stake,
-      s.reward,
-      s.roleContract || '',
       s.blocksProposed || 0,
       s.slashCount || 0,
       s.hasAttestedThisEpoch ? 'Yes' : 'No',
@@ -413,6 +557,46 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
     const entry = { timestamp, action, status, details };
     console.log(`[Instructor ${timestamp}] ${action}: ${status}${details ? ' - ' + details : ''}`);
     setActionLog(prev => [entry, ...prev.slice(0, 19)]); // Keep last 20 entries
+  };
+
+  const formatCacheMs = (ms) => {
+    if (ms == null || Number.isNaN(Number(ms))) return 'n/a';
+    return `${(Number(ms) / 1000).toFixed(1)}s`;
+  };
+
+  const depositToWallet = async (address, amountEth, requestId = null) => {
+    if (!address || !ethers.isAddress(address)) {
+      showStatus('❌ Enter valid address');
+      return;
+    }
+    const amt = parseFloat(amountEth);
+    if (Number.isNaN(amt) || amt <= 0) {
+      showStatus('❌ Enter valid amount');
+      return;
+    }
+    setIsActionInProgress(true);
+    showStatus(`💰 Depositing ${amt} ETH...`);
+    try {
+      const r = await fetch(import.meta.env.BASE_URL + 'lab-api/faucet/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, amountEth: String(amt) }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`);
+      if (requestId) {
+        await fetch(import.meta.env.BASE_URL + `lab-api/fund-request/${requestId}`, { method: 'DELETE' });
+        setFundRequests(prev => prev.filter(req => req.id !== requestId));
+      }
+      showStatus(`✅ Deposited ${amt} ETH to ${formatAddress(address)}`, 5000);
+      logAction('Deposit', '✅ SUCCESS', `${amt} ETH → ${formatAddress(address)}${j.txHash ? ` (${j.txHash.slice(0, 10)}...)` : ''}`);
+      if (!requestId) setFundAddress('');
+    } catch (e) {
+      showStatus('❌ Deposit failed: ' + (e.message || e), 6000);
+      logAction('Deposit', '❌ FAILED', e.message || String(e));
+    } finally {
+      setIsActionInProgress(false);
+    }
   };
 
   // ==================== INSTRUCTOR ACTIONS ====================
@@ -458,6 +642,223 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
       console.error('Slash error:', e);
       showStatus('❌ Slash failed: ' + (e.reason || e.message));
       logAction('Slash', '❌ FAILED', e.reason || e.message);
+    } finally {
+      setIsActionInProgress(false);
+    }
+  };
+
+  // Reflect whether the conductor is generating synthetic Beacon activity.
+  useEffect(() => {
+    let cancelled = false;
+    fetch(import.meta.env.BASE_URL + 'lab-api/beacon/auto-activity', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (!cancelled && j) setAutoBeaconActivity(j.enabled !== false); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const r = await fetch(import.meta.env.BASE_URL + 'lab-api/mining/state', { cache: 'no-store' });
+        if (!r.ok) return;
+        const j = await r.json();
+        if (!cancelled) setMiningState(j);
+      } catch (_) {}
+    };
+    load();
+    const id = setInterval(load, 2000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const data = await fetchInstructorArcadeState();
+      if (cancelled) return;
+      setArcadeState(data);
+      if (!arcadePriceDirty && data?.tokenPriceWei) {
+        try {
+          setArcadePriceInput(ethers.formatEther(BigInt(data.tokenPriceWei)));
+        } catch (_) {
+          setArcadePriceInput('');
+        }
+      }
+    };
+    load();
+    const id = setInterval(load, 5000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [arcadePriceDirty]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const data = await fetchInstructorDefiRiskState();
+      if (cancelled) return;
+      setDefiRiskState(data);
+      const timelock = data?.timelock;
+      if (!timelockFormDirty && timelock?.address) {
+        setTimelockFeeInput(timelock.withdrawFeeBps || '0');
+        setTimelockDelayInput(timelock.unlockDelaySeconds || '0');
+        setTimelockTreasuryInput(timelock.treasury || '');
+      }
+    };
+    load();
+    const id = setInterval(load, 10000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [timelockFormDirty]);
+
+  const handleToggleAutoBeaconActivity = async () => {
+    const next = !autoBeaconActivity;
+    setIsActionInProgress(true);
+    showStatus(next ? '▶ Enabling auto Beacon activity…' : '⏸ Pausing auto Beacon activity…');
+    try {
+      const r = await fetch(import.meta.env.BASE_URL + 'lab-api/beacon/auto-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: next }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || `HTTP ${r.status}`);
+      }
+      const j = await r.json().catch(() => ({}));
+      setAutoBeaconActivity(j.enabled !== false);
+      showStatus(next ? '✅ Auto Beacon activity ON.' : '✅ Auto Beacon activity OFF — Beacon remains available for student transactions.', 6000);
+    } catch (e) {
+      showStatus('❌ Auto activity toggle failed: ' + (e.message || e), 6000);
+    } finally {
+      setIsActionInProgress(false);
+    }
+  };
+
+  const handleSetAutomine = async (automine) => {
+    setIsActionInProgress(true);
+    showStatus(automine ? '⚡ Enabling automine…' : '⏱ Enabling delayed mining…');
+    try {
+      const r = await fetch(import.meta.env.BASE_URL + 'lab-api/mining/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ automine }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`);
+      setMiningState(j);
+      showStatus(automine ? '✅ Automine enabled.' : `✅ Delayed mining enabled (${j.delayMs ?? 500}ms).`, 5000);
+    } catch (e) {
+      showStatus('❌ Mining mode update failed: ' + (e.message || e), 6000);
+    } finally {
+      setIsActionInProgress(false);
+    }
+  };
+
+  const handleSetArcadePrice = async () => {
+    const raw = String(arcadePriceInput || '').trim();
+    if (!raw || Number(raw) <= 0) {
+      showStatus('❌ Enter a positive ARC price.', 5000);
+      return;
+    }
+    setIsActionInProgress(true);
+    showStatus(`Updating ARC price to ${raw} ETH...`);
+    try {
+      const r = await fetch(import.meta.env.BASE_URL + 'lab-api/arcade/price', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceEth: raw }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`);
+      setArcadeState(j.state || await fetchInstructorArcadeState());
+      setArcadePriceDirty(false);
+      showStatus(`✅ ARC price updated to ${raw} ETH.`, 5000);
+      logAction('Arcade Price', '✅ SUCCESS', `${raw} ETH${j.txHash ? ` (${j.txHash.slice(0, 10)}...)` : ''}`);
+    } catch (e) {
+      showStatus('❌ ARC price update failed: ' + arcadeErrorMessage(e), 6000);
+      logAction('Arcade Price', '❌ FAILED', arcadeErrorMessage(e));
+    } finally {
+      setIsActionInProgress(false);
+    }
+  };
+
+  const postTimelockUpdate = async (payload, label) => {
+    setIsActionInProgress(true);
+    showStatus(`Updating TimelockRugVault ${label}...`);
+    try {
+      const r = await fetch(import.meta.env.BASE_URL + 'lab-api/defi-risk/timelock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || j.ok === false) throw new Error(j.error || `HTTP ${r.status}`);
+      const nextState = j.state || await fetchInstructorDefiRiskState();
+      setDefiRiskState(nextState);
+      const timelock = nextState?.timelock;
+      if (timelock?.address) {
+        setTimelockFeeInput(timelock.withdrawFeeBps || '0');
+        setTimelockDelayInput(timelock.unlockDelaySeconds || '0');
+        setTimelockTreasuryInput(timelock.treasury || '');
+      }
+      setTimelockFormDirty(false);
+      const hash = Array.isArray(j.txHashes) && j.txHashes.length > 0 ? ` (${j.txHashes[0].slice(0, 10)}...)` : '';
+      showStatus(`✅ TimelockRugVault ${label} updated.`, 5000);
+      logAction('DeFi Timelock', '✅ SUCCESS', `${label}${hash}`);
+    } catch (e) {
+      showStatus('❌ Timelock update failed: ' + arcadeErrorMessage(e), 6000);
+      logAction('DeFi Timelock', '❌ FAILED', `${label}: ${arcadeErrorMessage(e)}`);
+    } finally {
+      setIsActionInProgress(false);
+    }
+  };
+
+  const handleSaveTimelockSettings = async () => {
+    const fee = String(timelockFeeInput || '').trim();
+    const delay = String(timelockDelayInput || '').trim();
+    const treasury = String(timelockTreasuryInput || '').trim();
+    if (!/^\d+$/.test(fee) || Number(fee) > 9000) {
+      showStatus('❌ Withdrawal fee must be an integer from 0 to 9000 bps.', 5000);
+      return;
+    }
+    if (!/^\d+$/.test(delay)) {
+      showStatus('❌ Unlock delay must be a non-negative integer number of seconds.', 5000);
+      return;
+    }
+    if (!ethers.isAddress(treasury)) {
+      showStatus('❌ Treasury must be a valid Ethereum address.', 5000);
+      return;
+    }
+    await postTimelockUpdate({
+      withdrawFeeBps: fee,
+      unlockDelaySeconds: delay,
+      treasury,
+    }, 'settings');
+  };
+
+  // Reset the beacon chain. Signals the conductor (account #0, which owns the
+  // chain) to evm_revert to its clean snapshot — clears blocks, reseats bots,
+  // and reclaims node memory without changing any contract addresses.
+  const handleResetChain = async () => {
+    const typed = window.prompt('Reset the Beacon chain? This reverts Beacon/class activity to the conductor snapshot. Type RESET BEACON CHAIN to confirm.');
+    if (typed !== 'RESET BEACON CHAIN') {
+      showStatus('Reset cancelled.');
+      return;
+    }
+    setIsActionInProgress(true);
+    showStatus('🔄 Requesting chain reset...');
+    try {
+      const r = await fetch(import.meta.env.BASE_URL + 'lab-api/beacon/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'RESET BEACON CHAIN' }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        throw new Error(j.error || `HTTP ${r.status}`);
+      }
+      showStatus('✅ Reset requested — chain will prune within a few seconds.', 6000);
+    } catch (e) {
+      showStatus('❌ Reset failed: ' + (e.message || e), 6000);
     } finally {
       setIsActionInProgress(false);
     }
@@ -756,6 +1157,31 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
   };
 
   // ==================== RENDER ====================
+  const beaconSnapshot = beaconCacheHealth?.snapshot || null;
+  const beaconHealth = beaconSnapshot?.cache || {};
+  const beaconCacheAge = beaconSnapshot?.ageMs;
+  const beaconCacheStale = !!beaconHealth.stale;
+  const beaconStatus = beaconCacheHealth?.error
+    ? 'unreachable'
+    : beaconSnapshot?.ok
+      ? (beaconCacheStale ? 'stale' : 'online')
+      : 'starting';
+  const beaconPool = beaconSnapshot?.pool || {};
+  const poolValidators = Array.isArray(beaconPool.validators) ? beaconPool.validators : [];
+  const recentHumans = poolValidators.filter((v) => v.kind === 'human').slice(-8).reverse();
+  const miningAutomine = miningState?.automine !== false;
+  const arcadeOk = arcadeState?.ok === true;
+  const arcadeAge = arcadeState?.ageMs == null ? 'not ready' : `${Math.round(Number(arcadeState.ageMs) / 1000)}s`;
+  const arcadeCurrentPrice = arcadeState?.tokenPriceWei ? safeArcadeFormatEth(arcadeState.tokenPriceWei) : 'not configured';
+  const arcadeHighScores = Object.values(arcadeState?.highScores || {})
+    .filter((row) => row?.score)
+    .sort((a, b) => Number(a.gameId || 0) - Number(b.gameId || 0));
+  const defiRiskOk = defiRiskState?.ok === true;
+  const defiRiskAge = defiRiskState?.ageMs == null ? 'not ready' : `${Math.round(Number(defiRiskState.ageMs) / 1000)}s`;
+  const timelock = defiRiskState?.timelock || null;
+  const defiContractCount = Object.entries(defiRiskState?.config || {})
+    .filter(([key, value]) => key.endsWith('Address') && ethers.isAddress(String(value || '')))
+    .length;
 
   return (
     <div className="instructor-dashboard">
@@ -808,68 +1234,332 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
               🖥️ Lab Terminal
             </button>
           )}
-          <button 
-            onClick={handleSimulateBlock}
+          <button
+            onClick={handleResetChain}
+            disabled={isActionInProgress}
             style={{
-              padding: '12px 20px', 
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '8px', 
-              cursor: 'pointer',
+              padding: '12px 20px',
+              background: 'linear-gradient(135deg, #ef4444 0%, #f87171 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isActionInProgress ? 'not-allowed' : 'pointer',
               fontWeight: 'bold',
               fontSize: '0.9rem'
             }}
           >
-            📦 Propose Block
+            🔄 Reset Beacon Chain
           </button>
-          <button 
-            onClick={handleCheckAttestations}
+          <button
+            onClick={handleToggleAutoBeaconActivity}
+            disabled={isActionInProgress}
+            title="Controls synthetic bot/demo Beacon traffic. Student transactions still work when paused."
             style={{
-              padding: '12px 20px', 
-              background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '8px', 
-              cursor: 'pointer',
+              padding: '12px 20px',
+              background: autoBeaconActivity
+                ? 'linear-gradient(135deg, #10b981 0%, #34d399 100%)'
+                : 'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: isActionInProgress ? 'not-allowed' : 'pointer',
               fontWeight: 'bold',
               fontSize: '0.9rem'
             }}
           >
-            🔍 Check Attestations
+            {autoBeaconActivity ? '▶ Auto Beacon Activity: ON' : '⏸ Auto Beacon Activity: OFF'}
           </button>
-          <button 
-            onClick={handleAdvanceEpoch}
-            disabled={timeUntilNextEpoch > 0}
+          <button
+            onClick={() => handleSetAutomine(!(miningState?.automine !== false))}
+            disabled={isActionInProgress || !miningState}
             style={{
-              padding: '12px 20px', 
-              background: timeUntilNextEpoch > 0 ? '#94a3b8' : 'linear-gradient(135deg, #06b6d4 0%, #22d3ee 100%)', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '8px', 
-              cursor: timeUntilNextEpoch > 0 ? 'not-allowed' : 'pointer',
+              padding: '12px 20px',
+              background: miningState?.automine !== false
+                ? 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)'
+                : 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: (isActionInProgress || !miningState) ? 'not-allowed' : 'pointer',
               fontWeight: 'bold',
               fontSize: '0.9rem'
             }}
           >
-            ⏰ Advance Epoch {timeUntilNextEpoch > 0 ? `(${timeUntilNextEpoch}s)` : ''}
-          </button>
-          <button 
-            onClick={resetStudentBalances}
-            style={{
-              padding: '12px 20px', 
-              background: 'linear-gradient(135deg, #10b981 0%, #34d399 100%)', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '8px', 
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              fontSize: '0.9rem'
-            }}
-          >
-            💰 Fund All Students
+            {miningState?.automine !== false ? '⚡ Automine: ON' : `⏱ Delayed Mining: ${miningState?.delayMs ?? 500}ms`}
           </button>
         </div>
+
+        {/* Beacon cache health - confirms browsers are reading the shared cache instead of RPC */}
+        <div style={{
+          marginTop: '12px',
+          padding: '12px 15px',
+          background: beaconStatus === 'online' ? 'rgba(16, 185, 129, 0.16)' : beaconStatus === 'stale' ? 'rgba(245, 158, 11, 0.18)' : 'rgba(239, 68, 68, 0.16)',
+          borderRadius: '8px',
+          border: `1px solid ${beaconStatus === 'online' ? '#10b981' : beaconStatus === 'stale' ? '#f59e0b' : '#ef4444'}`
+        }}>
+          <div style={{display: 'flex', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', alignItems: 'center'}}>
+            <div>
+              <div style={{fontSize: '0.85rem', fontWeight: 'bold', color: '#1e293b'}}>
+                Beacon cache: {beaconStatus}
+              </div>
+              <div style={{fontSize: '0.78rem', color: '#475569', marginTop: '3px'}}>
+                Age {formatCacheMs(beaconCacheAge)} · poll every {formatCacheMs(beaconHealth.pollMs)} · last poll {formatCacheMs(beaconHealth.lastPollDurationMs)}
+              </div>
+            </div>
+            <div style={{fontSize: '0.78rem', color: '#475569', textAlign: 'right'}}>
+              Blocks {beaconSnapshot?.blocks?.length ?? 0} · errors {beaconHealth.errorCount ?? 0}
+              {beaconHealth.lastError && (
+                <div style={{color: '#991b1b', maxWidth: '420px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                  {beaconHealth.lastError}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          marginTop: '12px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '12px'
+        }}>
+          <div style={{
+            padding: '12px 15px',
+            background: 'rgba(14, 165, 233, 0.14)',
+            borderRadius: '8px',
+            border: '1px solid #0ea5e9'
+          }}>
+            <div style={{fontSize: '0.85rem', fontWeight: 'bold', color: '#1e293b'}}>
+              ⛏ Mining / mempool
+            </div>
+            <div style={{fontSize: '0.8rem', color: '#475569', marginTop: '6px', display: 'grid', gap: '3px'}}>
+              <div>Mode: <strong>{miningState ? (miningAutomine ? 'automine' : `delayed ${miningState.delayMs ?? 500}ms`) : 'loading'}</strong></div>
+              <div>Pending txs: <strong>{miningState?.pendingTransactionCount ?? 'n/a'}</strong></div>
+              <div>Write queue: <strong>{miningState?.queue?.queuedMessages ?? 0}</strong> queued · <strong>{miningState?.queue?.activeMessages ?? 0}</strong> active</div>
+              <div>Last mined: <strong>{miningState?.lastMinedBlock ?? 'n/a'}</strong> ({miningState?.lastMinedTxCount ?? 0} tx)</div>
+              {miningState?.nextMineEtaMs != null && (
+                <div>Next mine in: <strong>{Math.ceil(miningState.nextMineEtaMs)}ms</strong></div>
+              )}
+              {miningState?.lastPollError && (
+                <div style={{color: '#991b1b'}}>Miner: {miningState.lastPollError}</div>
+              )}
+            </div>
+          </div>
+
+          <div style={{
+            padding: '12px 15px',
+            background: 'rgba(16, 185, 129, 0.14)',
+            borderRadius: '8px',
+            border: '1px solid #10b981'
+          }}>
+            <div style={{fontSize: '0.85rem', fontWeight: 'bold', color: '#1e293b'}}>
+              🧭 Beacon validator pool
+            </div>
+            <div style={{fontSize: '0.8rem', color: '#475569', marginTop: '6px', display: 'grid', gap: '3px'}}>
+              <div>Pool: <strong>{beaconPool.size ?? 0}</strong> / {beaconPool.capacity ?? 0}</div>
+              <div>Humans: <strong>{beaconPool.humans ?? 0}</strong> · Bots: <strong>{beaconPool.bots ?? 0}</strong></div>
+              <div>Active: <strong>{beaconPool.active ?? 0}</strong> · Slashed: <strong>{beaconPool.slashed ?? 0}</strong> · Pending slash: <strong>{beaconPool.pendingSlashes ?? 0}</strong></div>
+              {recentHumans.length > 0 ? (
+                <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '5px'}}>
+                  {recentHumans.map((v) => (
+                    <span key={v.address} style={{fontFamily: 'monospace', background: 'rgba(255,255,255,0.55)', padding: '2px 6px', borderRadius: '4px'}}>
+                      {formatAddress(v.address)} · {Number(v.stake || 0).toFixed(1)} ETH
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div>No human validators seated yet.</div>
+              )}
+            </div>
+          </div>
+
+          <div style={{
+            padding: '12px 15px',
+            background: 'rgba(20, 83, 45, 0.14)',
+            borderRadius: '8px',
+            border: arcadeOk ? '1px solid #22c55e' : '1px solid #ef4444'
+          }}>
+            <div style={{fontSize: '0.85rem', fontWeight: 'bold', color: '#1e293b'}}>
+              🕹 FT Arcade token sale
+            </div>
+            <div style={{fontSize: '0.8rem', color: '#475569', marginTop: '6px', display: 'grid', gap: '5px'}}>
+              <div>Cache: <strong>{arcadeOk ? 'online' : (arcadeState?.reason || 'loading')}</strong> · age <strong>{arcadeAge}</strong></div>
+              <div>Price: <strong>{arcadeCurrentPrice}</strong> per ARC</div>
+              <div>Total supply: <strong>{safeArcadeFormatEth(arcadeState?.totalSupply).replace(' ETH', ' ARC')}</strong></div>
+              <div>Treasury: <strong style={{fontFamily: 'monospace'}}>{shortAddress(arcadeState?.treasury)}</strong></div>
+              <div>Recent buys: <strong>{arcadeState?.recentBuys?.length || 0}</strong> · recent burns: <strong>{arcadeState?.recentSessions?.length || 0}</strong> · recent scores: <strong>{arcadeState?.recentScores?.length || 0}</strong></div>
+              <div style={{marginTop: '3px'}}>
+                <strong>High scores:</strong>
+                {arcadeHighScores.length === 0 ? (
+                  <span> none yet</span>
+                ) : (
+                  <div style={{display: 'grid', gap: '4px', marginTop: '4px'}}>
+                    {arcadeHighScores.map((row) => (
+                      <div key={`${row.gameId}-${row.player}-${row.nonce}`} style={{display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', padding: '5px 7px', background: 'rgba(255,255,255,0.5)', borderRadius: '6px'}}>
+                        <span>{ARCADE_GAME_NAMES[row.gameId] || `Game ${row.gameId}`} · {shortAddress(row.player)}</span>
+                        <strong>{safeScore(row.score)} / {safeElapsed(row.elapsedMs)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '4px'}}>
+                <input
+                  type="number"
+                  min="0.0001"
+                  step="0.1"
+                  value={arcadePriceInput}
+                  onChange={(event) => {
+                    setArcadePriceInput(event.target.value);
+                    setArcadePriceDirty(true);
+                  }}
+                  placeholder="50"
+                  style={{
+                    width: '90px',
+                    padding: '7px 9px',
+                    borderRadius: '6px',
+                    border: '1px solid #334155',
+                    fontSize: '0.85rem'
+                  }}
+                />
+                <span>ETH per ARC</span>
+                <button
+                  onClick={handleSetArcadePrice}
+                  disabled={isActionInProgress || !arcadePriceInput}
+                  style={{
+                    padding: '7px 12px',
+                    background: (isActionInProgress || !arcadePriceInput) ? '#94a3b8' : '#16a34a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: (isActionInProgress || !arcadePriceInput) ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  Update price
+                </button>
+	              </div>
+	            </div>
+	          </div>
+
+	          <div style={{
+	            padding: '12px 15px',
+	            background: 'rgba(127, 29, 29, 0.12)',
+	            borderRadius: '8px',
+	            border: defiRiskOk ? '1px solid #dc2626' : '1px solid #ef4444'
+	          }}>
+	            <div style={{fontSize: '0.85rem', fontWeight: 'bold', color: '#1e293b'}}>
+	              🧪 DeFi Risk Garden
+	            </div>
+	            <div style={{fontSize: '0.8rem', color: '#475569', marginTop: '6px', display: 'grid', gap: '5px'}}>
+	              <div>Cache: <strong>{defiRiskOk ? 'online' : (defiRiskState?.reason || defiRiskState?.error || 'loading')}</strong> · age <strong>{defiRiskAge}</strong></div>
+	              <div>Known contracts: <strong>{defiContractCount}</strong> / 7</div>
+	              {timelock?.address ? (
+	                <>
+	                  <div>TimelockRugVault: <strong style={{fontFamily: 'monospace'}}>{shortAddress(timelock.address)}</strong></div>
+	                  <div>Owner: <strong style={{fontFamily: 'monospace'}}>{shortAddress(timelock.owner)}</strong></div>
+	                  <div>Total assets: <strong>{safeArcadeFormatEth(timelock.totalAssets)}</strong></div>
+	                  <div>Status: <strong>{timelock.paused ? 'paused' : 'withdrawals enabled'}</strong></div>
+	                  <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '4px'}}>
+	                    <button
+	                      onClick={() => postTimelockUpdate({ paused: !timelock.paused }, timelock.paused ? 'unpause' : 'pause')}
+	                      disabled={isActionInProgress}
+	                      style={{
+	                        padding: '7px 12px',
+	                        background: isActionInProgress ? '#94a3b8' : (timelock.paused ? '#16a34a' : '#dc2626'),
+	                        color: 'white',
+	                        border: 'none',
+	                        borderRadius: '6px',
+	                        cursor: isActionInProgress ? 'not-allowed' : 'pointer',
+	                        fontWeight: 'bold',
+	                        fontSize: '0.8rem'
+	                      }}
+	                    >
+	                      {timelock.paused ? 'Unpause withdrawals' : 'Pause withdrawals'}
+	                    </button>
+	                  </div>
+	                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '8px', marginTop: '5px'}}>
+	                    <label style={{display: 'grid', gap: '3px'}}>
+	                      <span>Fee bps</span>
+	                      <input
+	                        type="number"
+	                        min="0"
+	                        max="9000"
+	                        step="1"
+	                        value={timelockFeeInput}
+	                        onChange={(event) => {
+	                          setTimelockFeeInput(event.target.value);
+	                          setTimelockFormDirty(true);
+	                        }}
+	                        style={{padding: '7px 9px', borderRadius: '6px', border: '1px solid #334155'}}
+	                      />
+	                    </label>
+	                    <label style={{display: 'grid', gap: '3px'}}>
+	                      <span>Unlock delay seconds</span>
+	                      <input
+	                        type="number"
+	                        min="0"
+	                        step="1"
+	                        value={timelockDelayInput}
+	                        onChange={(event) => {
+	                          setTimelockDelayInput(event.target.value);
+	                          setTimelockFormDirty(true);
+	                        }}
+	                        style={{padding: '7px 9px', borderRadius: '6px', border: '1px solid #334155'}}
+	                      />
+	                    </label>
+	                  </div>
+	                  <label style={{display: 'grid', gap: '3px', marginTop: '5px'}}>
+	                    <span>Treasury</span>
+	                    <input
+	                      value={timelockTreasuryInput}
+	                      onChange={(event) => {
+	                        setTimelockTreasuryInput(event.target.value);
+	                        setTimelockFormDirty(true);
+	                      }}
+	                      placeholder="0x..."
+	                      style={{
+	                        padding: '7px 9px',
+	                        borderRadius: '6px',
+	                        border: '1px solid #334155',
+	                        fontFamily: 'monospace',
+	                        fontSize: '0.78rem'
+	                      }}
+	                    />
+	                  </label>
+	                  <button
+	                    onClick={handleSaveTimelockSettings}
+	                    disabled={isActionInProgress || !timelockFormDirty}
+	                    style={{
+	                      width: 'fit-content',
+	                      padding: '7px 12px',
+	                      background: (isActionInProgress || !timelockFormDirty) ? '#94a3b8' : '#7f1d1d',
+	                      color: 'white',
+	                      border: 'none',
+	                      borderRadius: '6px',
+	                      cursor: (isActionInProgress || !timelockFormDirty) ? 'not-allowed' : 'pointer',
+	                      fontWeight: 'bold',
+	                      fontSize: '0.8rem'
+	                    }}
+	                  >
+	                    Save timelock settings
+	                  </button>
+	                </>
+	              ) : (
+	                <div>{defiRiskState?.reason || 'TimelockRugVault is not configured yet.'}</div>
+	              )}
+	            </div>
+	          </div>
+	        </div>
+
+        <MempoolTable
+          title="Pending transaction pool"
+          subtitle="Instructor view of the cached mempool mirror. Browser reads never touch the RPC port."
+          tone="light"
+          maxPendingRows={16}
+          maxRecentRows={10}
+        />
         
         {/* Student fund requests - students click "Request funds" to notify instructor */}
         {fundRequests.length > 0 && (
@@ -900,24 +1590,7 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
                     <button
                       onClick={async () => {
                         setFundAddress(req.address);
-                        try {
-                          setIsActionInProgress(true);
-                          const bankSigner = rpcClient.getBankSigner();
-                          if (!bankSigner) return;
-                          const amt = parseFloat(fundAmount) || 5;
-                          const tx = await bankSigner.sendTransaction({
-                            to: req.address,
-                            value: ethers.parseEther(String(amt))
-                          });
-                          await tx.wait();
-                          showStatus(`✅ Sent ${amt} ETH to ${req.nickname || req.address.slice(0, 10)}...`);
-                          await fetch(import.meta.env.BASE_URL + `lab-api/fund-request/${req.id}`, { method: 'DELETE' });
-                          setFundRequests(prev => prev.filter(r => r.id !== req.id));
-                        } catch (e) {
-                          showStatus('❌ ' + (e.message || e.reason));
-                        } finally {
-                          setIsActionInProgress(false);
-                        }
+                        await depositToWallet(req.address, fundAmount || '5', req.id);
                       }}
                       disabled={isActionInProgress}
                       style={{
@@ -1003,37 +1676,7 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
               }}
             />
             <button
-              onClick={async () => {
-                if (!fundAddress || !ethers.isAddress(fundAddress)) {
-                  showStatus('❌ Enter valid address');
-                  return;
-                }
-                const amt = parseFloat(fundAmount);
-                if (isNaN(amt) || amt <= 0) {
-                  showStatus('❌ Enter valid amount');
-                  return;
-                }
-                try {
-                  setIsActionInProgress(true);
-                  const bankSigner = rpcClient.getBankSigner();
-                  if (!bankSigner) {
-                    showStatus('❌ Bank signer not initialized');
-                    return;
-                  }
-                  const tx = await bankSigner.sendTransaction({
-                    to: fundAddress,
-                    value: ethers.parseEther(String(amt))
-                  });
-                  await tx.wait();
-                  showStatus(`✅ Sent ${amt} ETH to ${formatAddress(fundAddress)}`);
-                  setFundAddress('');
-                  logAction('Fund by Address', '✅ SUCCESS', `${amt} ETH → ${formatAddress(fundAddress)}`);
-                } catch (e) {
-                  showStatus('❌ ' + (e.message || e.reason));
-                } finally {
-                  setIsActionInProgress(false);
-                }
-              }}
+              onClick={() => depositToWallet(fundAddress, fundAmount)}
               disabled={isActionInProgress || !fundAddress}
               style={{
                 padding: '8px 16px',
@@ -1172,160 +1815,11 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
         </div>
       </div>
       
-      {/* Scenario & Role Assignment */}
-      <div style={{marginBottom: '15px', padding: '12px 15px', background: 'rgba(30, 41, 59, 0.8)', borderRadius: '8px', border: '1px solid #475569'}}>
-        <div style={{fontSize: '0.85rem', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px'}}>
-          🎭 Scenario & Auto-Assign
-        </div>
-        <div style={{display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap'}}>
-          <label style={{color: '#94a3b8', fontSize: '0.9rem'}}>
-            Scenario:
-            <select
-              value={activeScenario}
-              onChange={e => setActiveScenario(e.target.value)}
-              style={{
-                marginLeft: '8px',
-                padding: '8px 12px',
-                background: '#1e293b',
-                border: '1px solid #475569',
-                borderRadius: '6px',
-                color: '#e2e8f0',
-                fontSize: '0.9rem'
-              }}
-            >
-              {Object.keys(SCENARIO_ROLES).map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </label>
-          <button
-            onClick={handleStartScenario}
-            disabled={isActionInProgress}
-            style={{
-              padding: '8px 16px',
-              background: isActionInProgress ? '#475569' : 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: isActionInProgress ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              fontSize: '0.85rem'
-            }}
-          >
-            ▶ Start Scenario
-          </button>
-          <button
-            onClick={handleAssignRandomRoles}
-            disabled={isActionInProgress || students.length === 0}
-            style={{
-              padding: '8px 16px',
-              background: (isActionInProgress || students.length === 0) ? '#475569' : 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: (isActionInProgress || students.length === 0) ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              fontSize: '0.85rem'
-            }}
-          >
-            🎲 Assign Unassigned
-          </button>
-        </div>
-        <div style={{fontSize: '0.8rem', color: '#64748b', marginTop: '8px'}}>
-          <strong>Start Scenario</strong> broadcasts roles; new joiners get roles automatically by sorted address (key roles first for even distribution). <strong>Assign Unassigned</strong> assigns roles to current participants who joined before you started. Students join by connecting wallet (auto) or sending a chat message.
-        </div>
-      </div>
-      
-      {/* Post scenario artifact (clues for students to investigate) */}
-      <div style={{
-        marginBottom: '15px',
-        padding: '12px 15px',
-        background: 'rgba(30, 41, 59, 0.8)',
-        borderRadius: '8px',
-        border: '1px solid #475569'
-      }}>
-        <div style={{fontSize: '0.85rem', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px'}}>
-          📂 Post artifact (clue for scenario)
-        </div>
-        <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-          <input
-            placeholder="e.g. Ledger excerpt: payment 0.5 ETH to 0x… at block 42."
-            value={artifactInput}
-            onChange={e => setArtifactInput(e.target.value)}
-            style={{
-              flex: 1,
-              minWidth: '250px',
-              padding: '8px 12px',
-              background: '#0f172a',
-              border: '1px solid #475569',
-              borderRadius: '6px',
-              color: '#e2e8f0',
-              fontSize: '0.9rem'
-            }}
-          />
-          <button
-            onClick={async () => {
-              if (!artifactInput.trim()) return;
-              const msg = `[ARTIFACT:${artifactInput.trim()}]`;
-              try {
-                setIsActionInProgress(true);
-                const bankSigner = rpcClient.getBankSigner();
-                if (!bankSigner) { showStatus('❌ Bank signer not initialized'); return; }
-                const contract = new ethers.Contract(posAddress, PoSABI, bankSigner);
-                const tx = await contract.sendMessage(msg);
-                await tx.wait();
-                showStatus('✅ Artifact posted. Students see it in Evidence section.');
-                setArtifactInput('');
-              } catch (e) {
-                showStatus('❌ ' + (e.reason || e.message));
-              } finally {
-                setIsActionInProgress(false);
-              }
-            }}
-            disabled={isActionInProgress || !artifactInput.trim()}
-            style={{
-              padding: '8px 16px',
-              background: (isActionInProgress || !artifactInput.trim()) ? '#475569' : '#6366f1',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: (isActionInProgress || !artifactInput.trim()) ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              fontSize: '0.85rem'
-            }}
-          >
-            Post
-          </button>
-        </div>
-        <div style={{fontSize: '0.75rem', color: '#64748b', marginTop: '6px'}}>
-          Students see artifacts in Evidence section. Make clues tricky—inconsistencies help buyers/investigators.
-        </div>
-      </div>
-      
       {/* Student Table */}
       <div style={{marginBottom: '20px', overflowX: 'auto'}}>
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '15px'}}>
           <h3 style={{margin: 0}}>📊 Validator Activity</h3>
           <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap'}}>
-            <select
-              value={filterRole}
-              onChange={(e) => setFilterRole(e.target.value)}
-              style={{padding: '6px 10px', background: '#1e293b', border: '1px solid #475569', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.85rem'}}
-            >
-              <option value="">All roles</option>
-              {Object.values(SCENARIO_ROLES).flat().filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-            <select
-              value={filterHasContract}
-              onChange={(e) => setFilterHasContract(e.target.value)}
-              style={{padding: '6px 10px', background: '#1e293b', border: '1px solid #475569', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.85rem'}}
-            >
-              <option value="">All</option>
-              <option value="yes">Has contract</option>
-              <option value="no">No contract</option>
-            </select>
             <button
               onClick={exportProgressCSV}
               style={{padding: '6px 12px', background: '#10b981', border: 'none', borderRadius: '6px', color: 'white', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold'}}
@@ -1345,16 +1839,10 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
             <tr style={{background: '#334155'}}>
               <th style={{padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem'}}>#</th>
               <th style={{padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem'}}>Address</th>
-              <th style={{padding: '12px', textAlign: 'right', color: '#94a3b8', fontSize: '0.8rem'}}>Balance</th>
               <th style={{padding: '12px', textAlign: 'right', color: '#94a3b8', fontSize: '0.8rem'}}>Staked</th>
-              <th style={{padding: '12px', textAlign: 'right', color: '#94a3b8', fontSize: '0.8rem'}}>Rewards</th>
               <th style={{padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem'}}>Blocks</th>
               <th style={{padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem'}}>Slashes</th>
               <th style={{padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem'}}>Missed</th>
-              <th style={{padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem'}}>Role</th>
-              <th style={{padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem'}}>Contract</th>
-              <th style={{padding: '12px', textAlign: 'left', color: '#94a3b8', fontSize: '0.8rem'}}>Progress</th>
-              <th style={{padding: '12px', textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -1380,9 +1868,6 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
                     </span>
                   )}
                 </td>
-                <td style={{padding: '12px', textAlign: 'right', color: '#e2e8f0'}}>
-                  {parseFloat(student.balance).toFixed(3)}
-                </td>
                 <td style={{
                   padding: '12px', 
                   textAlign: 'right', 
@@ -1390,9 +1875,6 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
                   fontWeight: parseFloat(student.stake) > 0 ? 'bold' : 'normal'
                 }}>
                   {parseFloat(student.stake).toFixed(3)}
-                </td>
-                <td style={{padding: '12px', textAlign: 'right', color: '#34d399'}}>
-                  +{parseFloat(student.reward).toFixed(6)}
                 </td>
                 <td style={{padding: '12px', textAlign: 'center', color: '#8b5cf6', fontWeight: 'bold'}}>
                   {student.blocksProposed}
@@ -1412,150 +1894,17 @@ export function InstructorView({ provider, posAddress, rpcUrl, wallet, onOpenTer
                 }}>
                   {student.missedAttestations}
                 </td>
-                <td style={{padding: '12px'}}>
-                  <select
-                    value={student.role || ''}
-                    onChange={async (e) => {
-                      const role = e.target.value;
-                      if (!role) return;
-                      try {
-                        setIsActionInProgress(true);
-                        const bankSigner = rpcClient.getBankSigner();
-                        if (!bankSigner) return;
-                        const contract = new ethers.Contract(posAddress, PoSABI, bankSigner);
-                        const tx = await contract.setRole(student.address, role);
-                        await tx.wait();
-                        setStatusMessage(`✅ Role "${role}" assigned`);
-                        setTimeout(() => setStatusMessage(''), 3000);
-                      } catch (err) {
-                        setStatusMessage('❌ ' + (err.reason || err.message));
-                      } finally {
-                        setIsActionInProgress(false);
-                      }
-                    }}
-                    style={{
-                      padding: '4px 8px',
-                      background: '#1e293b',
-                      border: '1px solid #475569',
-                      borderRadius: '4px',
-                      color: '#e2e8f0',
-                      fontSize: '0.8rem',
-                      minWidth: '140px'
-                    }}
-                  >
-                    {SCENARIO_ROLES[activeScenario].map(r => (
-                      <option key={r || 'none'} value={r}>{r || '(none)'}</option>
-                    ))}
-                  </select>
-                </td>
-                <td style={{padding: '12px', fontSize: '0.8rem'}}>
-                  {student.roleContract ? (
-                    <span 
-                      style={{color: '#34d399', fontFamily: 'monospace', cursor: 'pointer'}}
-                      onClick={() => navigator.clipboard.writeText(student.roleContract)}
-                      title={student.roleContract}
-                    >
-                      ✓ {student.roleContract.slice(0, 10)}...
-                    </span>
-                  ) : (
-                    <span style={{color: '#64748b'}}>—</span>
-                  )}
-                </td>
-                <td style={{padding: '12px', fontSize: '0.8rem'}}>
-                  {student.roleContract ? (
-                    <span style={{color: '#34d399'}}>✓ Deployed</span>
-                  ) : (
-                    <span style={{color: '#64748b'}}>—</span>
-                  )}
-                </td>
-                <td style={{padding: '12px', textAlign: 'center'}}>
-                  {parseFloat(student.stake) > 0 && (
-                    <button
-                      onClick={() => setSelectedStudent(selectedStudent === student.address ? null : student.address)}
-                      style={{
-                        padding: '6px 12px',
-                        background: selectedStudent === student.address ? '#ef4444' : '#475569',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '0.8rem'
-                      }}
-                    >
-                      ⚡ Slash
-                    </button>
-                  )}
-                </td>
               </tr>
             ))}
             {filteredStudents.length === 0 && (
               <tr>
-                <td colSpan="12" style={{padding: '30px', textAlign: 'center', color: '#64748b'}}>
+                <td colSpan="6" style={{padding: '30px', textAlign: 'center', color: '#64748b'}}>
                   {students.length === 0 ? 'Waiting for students to stake...' : 'No students match filter'}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-        
-        {/* Slash Input Panel */}
-        {selectedStudent && (
-          <div style={{
-            marginTop: '15px',
-            padding: '15px',
-            background: 'linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%)',
-            borderRadius: '10px',
-            border: '2px solid #ef4444'
-          }}>
-            <div style={{marginBottom: '10px', color: '#fecaca'}}>
-              ⚡ Slashing {formatAddress(selectedStudent)} - Enter reason:
-            </div>
-            <div style={{display: 'flex', gap: '10px'}}>
-              <input
-                type="text"
-                value={slashReason}
-                onChange={(e) => setSlashReason(e.target.value)}
-                placeholder="e.g., Double signing, being offline, misbehavior..."
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  background: '#1e293b',
-                  border: '1px solid #475569',
-                  borderRadius: '6px',
-                  color: '#e2e8f0',
-                  fontSize: '0.9rem'
-                }}
-              />
-              <button
-                onClick={() => handleSlash(selectedStudent)}
-                style={{
-                  padding: '10px 20px',
-                  background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                Confirm Slash
-              </button>
-              <button
-                onClick={() => { setSelectedStudent(null); setSlashReason(''); }}
-                style={{
-                  padding: '10px 20px',
-                  background: '#475569',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
       </div>
       
       {/* Recent Activity Feed */}

@@ -1,0 +1,81 @@
+# Local full-stack integration harness for browser/MCP validation.
+#
+# This uses the same production image and docker-entrypoint.sh as the
+# build-manager/instructor stack, but removes the external platform network
+# requirement and publishes nginx on a host port. Access the app through the
+# all-in-one nginx URL so /rpc-write, /lab-api, and /ws/terminal are exercised in the
+# same origin as the frontend.
+#
+# Usage:
+#   docker compose -f docker-compose.fullstack-local.yml up --build
+#   open http://localhost:8080
+#
+# On ARM hosts, the default linux/amd64 platform runs through Docker/QEMU so it
+# matches the classroom/browser validation target and avoids host esbuild issues.
+
+name: ethereum-lab-fullstack-local
+
+services:
+  ethereum-trainer-fullstack:
+    platform: ${ETHEREUM_HARNESS_PLATFORM:-linux/amd64}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      args:
+        VITE_BASE_PATH: /
+    image: ethereum-trainer:fullstack-local
+    container_name: ethereum-trainer-fullstack-local
+    init: true
+    ports:
+      - "${ETHEREUM_HARNESS_HTTP_PORT:-8080}:8080"
+      - "${ETHEREUM_HARNESS_FRONTEND_PORT:-5173}:5173"
+      - "${ETHEREUM_HARNESS_RPC_BIND:-127.0.0.1}:${ETHEREUM_HARNESS_RPC_PORT:-8545}:8545"
+      - "${ETHEREUM_HARNESS_TERMINAL_PORT_1:-3002}:3002"
+      - "${ETHEREUM_HARNESS_TERMINAL_PORT_2:-3003}:3003"
+      - "${ETHEREUM_HARNESS_TERMINAL_PORT_3:-3004}:3004"
+    environment:
+      MODE: instructor
+      RPC_PORT: 8545
+      FRONTEND_PORT: 5173
+      HEALTHCHECK_PORT: 8080
+      INSTRUCTOR_IP: "*"
+      TERMINAL_PORTS: 3002,3003,3004
+      TERMINAL_CWD: /app
+      LAB_TERMINAL_ENABLED: "1"
+      NGINX_ENABLED: "1"
+      RPC_URL_PUBLIC: /rpc-write
+      DEPLOY_BEACON_LAB: "1"
+      # Keep the class-bank faucet from being drainable in classroom exercises.
+      CLASS_FAUCET_BALANCE_ETH: ${CLASS_FAUCET_BALANCE_ETH:-1000000000000}
+      FAUCET_MAX_TOP_OFF_ETH: ${FAUCET_MAX_TOP_OFF_ETH:-100}
+      FAUCET_QUEUE_MAX_REQUESTS: ${FAUCET_QUEUE_MAX_REQUESTS:-200}
+      RPC_WRITE_QUEUE_MAX_MESSAGES: ${RPC_WRITE_QUEUE_MAX_MESSAGES:-200}
+      RPC_WRITE_QUEUE_CONCURRENCY: ${RPC_WRITE_QUEUE_CONCURRENCY:-1}
+      # One committee = the whole pool attests every slot, so a block reaches the 2/3
+      # quorum (justification is per-block vs total stake). Short epochs keep finality
+      # observable in ~20-30s and seat joiners within seconds.
+      COMMITTEES_PER_EPOCH: 1
+      VALIDATORS_PER_COMMITTEE: 32
+      BLOCKS_PER_EPOCH: 4
+      # Self-running PoS conductor: keeps the simulation live and the pool full of bots.
+      BEACON_CONDUCTOR: "1"
+      BEACON_BLOCK_MS: 6000
+      MAX_STUDENT_CAPACITY: ${MAX_STUDENT_CAPACITY:-8}
+      ETHEREUM_STUDENT_CAPACITY: ${ETHEREUM_STUDENT_CAPACITY:-}
+    volumes:
+      - ethereum-fullstack-local-chain:/app/.hardhat
+      - ethereum-fullstack-local-student-contracts:/app/contracts/student
+    restart: unless-stopped
+    networks:
+      - ethereum-fullstack-local-net
+
+volumes:
+  ethereum-fullstack-local-chain:
+    driver: local
+  ethereum-fullstack-local-student-contracts:
+    driver: local
+
+networks:
+  ethereum-fullstack-local-net:
+    driver: bridge

@@ -4,9 +4,8 @@
 
 This app supports:
 
-- Standalone play with open games, private games, and QR/link-based joining
-- Classroom mode with instructor controls
-- Human and agent players
+- Open games, optional private games, and QR/link-based joining
+- Human and agent players, with the instructor controlling whether bots backfill empty seats
 - Sequential or simultaneous clue reveal
 - Live timers, reconnect grace periods, and instructor moderation
 
@@ -98,13 +97,14 @@ Most gameplay behavior is configured live from `/instructor`.
 
 Available controls:
 
-- `Mode`
-  - `standalone`: players self-organize into open or private rooms
-  - `classroom`: instructor-led classroom flow
 - `Game is online for students`
   - Turns the student game on or off during instruction
-- `Agents enabled`
-  - Adds AI players in classroom mode when enabled
+- `Backfill empty seats with bots`
+  - When on, any player can start the round and bots fill the remaining seats up to the recommended group size
+- `Allow private rooms`
+  - When on, students can create or join private rooms by code; turn off to force everyone into open rooms
+- `Old game retention`
+  - How long finished rooms stay visible in the instructor dashboard after everyone leaves
 - `Reveal mode`
   - `simultaneous`: all clues are committed, then revealed together
   - `random`: clues are revealed one at a time in random order
@@ -151,7 +151,7 @@ When deployed behind a reverse proxy prefix, these routes move under that prefix
 ### Room modes
 
 - `Open game`
-  - Any player can join the next available open room in standalone mode
+  - Any player can join the next available open room
 - `Private game`
   - Room is created privately and joined by room code or link
 - `Linked room`

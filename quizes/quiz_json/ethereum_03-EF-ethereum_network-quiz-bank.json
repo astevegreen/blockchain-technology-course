@@ -84,9 +84,9 @@
       "question_stem": "A user signs a transaction in a wallet and later sees a receipt with logs. Which path best describes what happened between those events?",
       "correct_answer": "The signed transaction entered local mempools through gossip, was selected for a block, re-executed by nodes, and produced a receipt recording status, gas used, and logs.",
       "incorrect_answers": [
-        "The signed transaction was executed locally on the client's wallet, was approved by the consensus layer, verified by builders, and created a block updating the global account state.",
-        "The signed transaction bypassed the peer-to-peer network entirely, was instantly processed by validator hardware, executed across the network, and generated a state change log.",
-        "The signed transaction waited in a global consensus queue, was serialized by execution clients, committed to the database, and returned an instant notification to the user wallet."
+        "The wallet executed the signed transaction locally, broadcast a completed receipt to peers, and validators only checked the user's signature before accepting the state change.",
+        "The transaction entered a consensus-layer queue, was finalized for ordering before EVM execution, and produced logs after validators agreed on the queued result as canonical.",
+        "The transaction was sent directly to one proposer, included in an execution payload, and trusted by other nodes without re-execution because the block was already signed by the proposer."
       ],
       "explanation": "The lesson frames Ethereum networking as an operational pipeline: signed intent propagates through local mempools, block builders select transactions, nodes re-execute included transactions, and receipts/logs record execution outcomes for off-chain consumers.",
       "difficulty_level": 2,
@@ -108,12 +108,12 @@
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "A transaction is signed with the right private key but with the wrong chainId for the network where it is submitted. What should students infer from the lesson?",
+      "question_stem": "A transaction is signed with the right private key but with the wrong chainId for the network where it is submitted. What should students infer?",
       "correct_answer": "The signature does not validly authorize that transaction on the target network because chainId binds the signed payload to a specific chain.",
       "incorrect_answers": [
-        "The signature remains executable on the target network because public keys authorize payloads without checking the destination chain.",
-        "The wallet rewrites the transaction type at submission time, converting the signed payload into a cross-chain execution request.",
-        "Execution nodes refresh the signature during propagation because validators reconstruct payload fields before accepting it as valid."
+        "The transaction can still execute if nonce and gas fields are valid, because chainId only labels the user's intended network in the payload.",
+        "A receiving execution node can replace the chainId during gossip as long as the recovered sender address matches the account that signed it.",
+        "The transaction stays valid but is routed after inclusion, because the signature names the source chain for later settlement by validators."
       ],
       "explanation": "Transaction signatures commit to the encoded payload, and chainId is part of replay resistance. A correct private key is not enough if the signed transaction is bound to another network.",
       "difficulty_level": 3,
@@ -138,9 +138,9 @@
       "question_stem": "Alice has pending transactions with nonces 7 and 9, but nonce 8 is missing. The nonce 9 transaction offers a much higher effective gas price. What can a builder validly do with Alice's transactions?",
       "correct_answer": "Hold or ignore the nonce 9 transaction until nonce 8 is available and executable, because Alice's transactions must execute in nonce order.",
       "incorrect_answers": [
-        "Execute the nonce 9 transaction immediately to capture the high gas fee, because builders prioritize profitable state changes over local sequence.",
-        "Process both transactions and generate a blank transaction for nonce 8, because the public protocol automatically resolves any sequence gaps.",
-        "Permanently reject the nonce 7 transaction because the high-fee transaction for nonce 9 demonstrates that Alice has replaced her earlier pending intent."
+        "Include nonce 9 before nonce 8 when its fee is high enough, because builders can reorder one sender's pending transactions for block profit.",
+        "Include nonce 7 and nonce 9 in the same block while leaving nonce 8 pending, because the missing sequence number matters only across separate blocks.",
+        "Treat nonce 9 as a replacement for nonce 7 because the later transaction pays more, even though replacement only works for the same account nonce."
       ],
       "explanation": "Builders may prioritize profitable transactions across the mempool, but transactions from the same account must respect the account's nonce sequence. Nonce gaps can leave later transactions pending even when their fees are attractive.",
       "difficulty_level": 4,
@@ -165,9 +165,9 @@
       "question_stem": "A transaction sets maxFeePerGas to 50 gwei and maxPriorityFeePerGas to 2 gwei. If the current base fee is 30 gwei, which outcome best reflects EIP-1559 fee mechanics?",
       "correct_answer": "The effective gas price is 32 gwei, the 30 gwei base fee is burned, the 2 gwei priority fee compensates the proposer, and unused max fee headroom is not paid.",
       "incorrect_answers": [
-        "The effective gas price is 50 gwei, the entire cap is paid to the proposer, no refund is returned, and the protocol burns zero transaction fees from this payment.",
-        "The effective gas price is 30 gwei, the 30 gwei base fee compensates the proposer, the 2 gwei priority fee is burned, and the remaining 18 gwei is locked.",
-        "The effective gas price is 52 gwei, the base fee is calculated as the sum of max fees, and the excess headroom is forfeited to validator rewards."
+        "The effective gas price is 50 gwei, the 30 gwei base fee is burned, and the remaining 20 gwei is treated as an added proposer tip rather than refunded to the sender.",
+        "The effective gas price is 30 gwei, the base fee is burned, and no proposer tip is paid because the priority fee applies only when the cap is exceeded.",
+        "The transaction is invalid until the base fee reaches 48 gwei, because maxFeePerGas must equal the current base fee plus the stated priority fee."
       ],
       "explanation": "EIP-1559 separates the burned base fee from the priority fee. The user caps total price with maxFeePerGas, but overpayment above the current base fee plus priority fee is refunded rather than automatically spent.",
       "difficulty_level": 3,
@@ -193,9 +193,9 @@
       "question_stem": "A wallet simulation estimates that a contract call will succeed, but before inclusion another transaction changes the contract's state. The user's transaction then reverts. What is the best explanation?",
       "correct_answer": "Gas estimation is based on simulated execution against a state snapshot, so state-dependent logic can change before inclusion; a revert still consumes gas up to the failure point.",
       "incorrect_answers": [
-        "Gas estimation guarantees protocol success after block inclusion, so validators must enforce the simulation result; any reverted transaction receives a full refund.",
-        "Gas estimation executes the transaction in real time across the consensus layer, so the state is locked against updates; a failed transaction is free since no state writes occurred.",
-        "Gas estimation errors arise solely when the user specifies an excessive gas limit, so execution clients reject the transaction early; a revert incurs no gas fee on execution nodes."
+        "Gas estimation is binding once the wallet signs, so a later state change should delay inclusion until the simulated branch is true again and refund all gas to the sender.",
+        "The revert means the transaction failed before EVM execution began, so nodes should remove it from the block, produce no receipt, and refund the gas because no state change was committed.",
+        "The builder must recompute the estimate and raise the user's gas limit before inclusion, because simulations transfer fee-setting authority from the wallet to the selected block builder."
       ],
       "explanation": "The lesson distinguishes gas estimation from guaranteed success. Ethereum execution is state dependent, and failed execution still uses network resources that are charged as gas.",
       "difficulty_level": 4,
@@ -217,12 +217,12 @@
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A student says, \"MEV searchers watch the Ethereum mempool, so there must be one official global queue of pending transactions.\" Which correction best matches the lesson?",
+      "question_stem": "A student says, \"MEV searchers watch the Ethereum mempool, so there must be one official global queue of pending transactions.\" Which correction is most accurate?",
       "correct_answer": "Ethereum nodes maintain local mempools that often converge through gossip but can differ, and public visibility of those local pending views creates ordering opportunities.",
       "incorrect_answers": [
-        "Ethereum nodes synchronize a single global transaction queue through block headers, ensuring every participant observes identical order, and preventing searcher exploitation entirely.",
-        "Ethereum nodes reserve mempool visibility exclusively for consensus-layer validators, preventing external actors from viewing pending payloads before transaction finality is achieved.",
-        "Ethereum nodes utilize private submission relays to eliminate transaction ordering incentives, legally prohibiting builders from rearranging bundles or execution sequences on the chain."
+        "Ethereum nodes deterministically sort one shared pending set by effective gas price, so searchers see the same queue that builders must include in that exact order before every slot begins.",
+        "Ethereum mempools belong to consensus clients and stay hidden until attestations, so searchers learn pending intent only after finalized Beacon-chain receipts are available to users.",
+        "Private submission removes transactions from ordering games because relays must include private transactions in arrival order once a user bypasses public gossip for all builders in a slot."
       ],
       "explanation": "The lesson stresses that the mempool is not a single global queue. Public gossip makes user intent visible before inclusion, while private or direct submission changes the path through builders and relays rather than removing ordering power.",
       "difficulty_level": 4,
@@ -247,9 +247,9 @@
       "question_stem": "A consensus client receives a proposed Beacon block and asks its local execution client to evaluate the execution payload. The execution client returns INVALID. What should this mean for block acceptance?",
       "correct_answer": "The consensus client should treat the block as unacceptable for fork choice because the execution payload failed local execution validation.",
       "incorrect_answers": [
-        "The consensus client must accept the block because consensus-layer validator signatures automatically override execution-layer validation results.",
-        "The execution client must unilaterally finalize the local chain because returning INVALID indicates that the consensus client is offline.",
-        "The consensus client must accept the block temporarily because validation occurs only after execution receipts are queried by off-chain users."
+        "The consensus client can keep the block in fork choice if enough attestations arrive, because validator votes override local execution invalidity.",
+        "The consensus client should treat INVALID like SYNCING and keep the block viable while the execution client downloads more state locally.",
+        "The execution client should repair the payload by dropping invalid transactions and return a modified block body for the consensus client to accept."
       ],
       "explanation": "The Engine API is the local seam between consensus and execution clients. The execution client returns statuses such as VALID, INVALID, or SYNCING, and those results inform the consensus client's block acceptance and fork-choice behavior.",
       "difficulty_level": 3,
@@ -272,12 +272,12 @@
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "During a slot, which sequence best fits the lesson's description of block production?",
+      "question_stem": "During a slot, which sequence best describes block production?",
       "correct_answer": "A proposer is selected, an execution payload is assembled, the payload is wrapped in a signed Beacon block, peers receive it, validators re-execute the payload, and attestations move the chain toward finality.",
       "incorrect_answers": [
-        "Every validator builds an independent execution payload, the highest-fee block becomes final instantly, consensus messages are skipped, execution clients broadcast results, and wallets update records.",
-        "The execution client selects the proposer, broadcasts local attestations first, instructs the consensus client to run the virtual machine, validators approve the state, and the slot is closed immediately.",
-        "User wallets select a proposer, searchers assemble and finalize the block, validators download completed receipts without re-executing transactions, and the consensus client broadcasts the final state."
+        "A proposer is selected, the slot is finalized before execution, the execution client builds receipts from the finalized order, and validators accept without re-running the payload in the slot.",
+        "The execution client chooses the proposer, broadcasts attestations over devp2p, asks the consensus client to run the EVM, and then signs the Beacon block for peer gossip during the current slot.",
+        "Every validator builds a competing payload for the slot, the highest-priority-fee block wins immediately, and consensus attestations are added only after the finalized state is first chosen."
       ],
       "explanation": "The lesson connects proposer selection, payload assembly, Beacon block broadcast, execution validation, attestation, and finalization as one slot-level pipeline across the execution and consensus layers.",
       "difficulty_level": 3,
@@ -301,12 +301,12 @@
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "An operator wants independent verification of the current chain but does not need arbitrary historical state queries from years ago. Which choice best fits the lesson's node-type tradeoff?",
+      "question_stem": "An operator wants independent verification of the current chain but does not need arbitrary historical state queries from years ago. Which node-type choice best fits this tradeoff?",
       "correct_answer": "Run a full node, because it independently verifies current chain data without retaining all historical state like an archive node.",
       "incorrect_answers": [
-        "Use a remote wallet, because local signing alone provides the same current-chain verification guarantees as operating a full node.",
-        "Run an archive node, because standard full nodes cannot verify current execution payloads or follow the canonical chain.",
-        "Use a light client, because compact proofs automatically download and verify every historical storage slot without local state costs."
+        "Use a remote wallet or hosted API, because local key custody provides current-chain verification equivalent to a local full node.",
+        "Run an archive node, because a standard full node's pruning prevents it from verifying current execution payloads at the chain head.",
+        "Use a light client, because header and proof checks provide old storage queries with minimal local state and no remote trust tradeoff."
       ],
       "explanation": "The lesson distinguishes full, archive, and light access by verification independence, historical availability, storage cost, and trust assumptions. Archive nodes are for historical state retention, not a requirement for ordinary current-chain validation.",
       "difficulty_level": 3,
@@ -329,12 +329,12 @@
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "In the lesson's MEV-Boost supply chain, what role separation is most accurate?",
+      "question_stem": "In the MEV-Boost supply chain, what role separation is most accurate?",
       "correct_answer": "Searchers find opportunities and submit bundles, builders assemble profitable blocks, relays validate and forward blinded bids, and validators choose a bid before receiving the full block body.",
       "incorrect_answers": [
-        "Validators share private keys with searchers, builders execute transactions on remote client systems, relays record final receipt histories, and users confirm block inclusion before gas fees are charged.",
-        "Searchers finalize execution sequences, builders select consensus validator committees, relays burn base fee payments to secure networks, and validators examine mempools before confirming block bids.",
-        "MEV-Boost removes outside builders, relays authenticate user wallets directly, searchers verify consensus signatures, and validators build full execution payloads before bids are shared."
+        "Searchers send bundles directly to validators, validators assemble the profitable block, relays only broadcast finalized receipts, and builders observe after inclusion from the network rather than bidding.",
+        "Builders choose the validator committee and sign bids for proposers, relays execute the winning block, and searchers receive priority fees from included users after the slot closes.",
+        "Relays choose the canonical block and reveal it to the network, validators only verify receipts afterward, and builders are paid for hiding transactions from searchers during block construction."
       ],
       "explanation": "Proposer-builder separation manages specialized block-building incentives by separating opportunity discovery, block assembly, bid relay, and proposer selection. It does not eliminate MEV or ordering discretion.",
       "difficulty_level": 4,
@@ -358,12 +358,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "The reading says a current Ethereum node is not just one program. Which architecture best reflects Chapter 3's model?",
+      "question_stem": "A current Ethereum node is not just one program. Which architecture best reflects how a modern node is structured?",
       "correct_answer": "A node coordinates an execution client and a consensus client, with separate responsibilities and authenticated local communication between them.",
       "incorrect_answers": [
-        "A node operates as a browser-based user wallet, signing individual state transitions while trusting external validators to maintain local chain databases.",
-        "A node comprises a single execution client instance, executing all transaction validations and performing consensus duties without external coordination.",
-        "A node is just a hosted JSON-RPC endpoint, supplying query service without peer communication or transaction validation duties at all."
+        "A node is a browser wallet plus a hosted RPC endpoint, where local signing replaces peer communication and the remote service performs validation.",
+        "A node is one execution client with a consensus plug-in, so the same process runs the EVM and finalizes blocks without a separate consensus client.",
+        "A node is two consensus clients paired for redundancy, with one of them exposing JSON-RPC while the other stores the EVM state database."
       ],
       "explanation": "The reading emphasizes post-Merge two-client architecture: consensus software handles agreement over chain history, execution software processes blocks and transactions, and the two coordinate locally, such as through an authenticated endpoint.",
       "difficulty_level": 2,
@@ -387,12 +387,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A researcher needs to query old contract storage at many historical blocks. A developer only needs convenient transaction submission through a hosted API. Which distinction from the reading matters most?",
+      "question_stem": "A researcher needs to query old contract storage at many historical blocks. A developer only needs convenient transaction submission through a hosted API. Which distinction between node access models matters most?",
       "correct_answer": "The researcher likely needs archive-node data, while the developer can use remote access but accepts trust and privacy tradeoffs relative to operating a full node.",
       "incorrect_answers": [
-        "Both individuals require only standard browser wallets, because client interfaces locally archive complete historical state once keys validate signed transactions.",
-        "Both individuals need consensus client installations only, because historical contract storage access and transaction broadcasting represent consensus-layer duties.",
-        "The researcher should use a public testnet node, because testnets automatically replicate mainnet history while eliminating local server costs entirely."
+        "Both can use a default full node, because full nodes retain all historical storage while hosted APIs provide the same trust model as local validation.",
+        "The researcher can use a light client for arbitrary old storage, while the developer needs an archive node because transaction submission requires history.",
+        "A public testnet node fits both needs, because testnets mirror mainnet contract history and hosted access removes privacy tradeoffs for transactions and state queries."
       ],
       "explanation": "Chapter 3 separates full nodes, archive nodes, remote clients, and wallets by storage, verification, convenience, privacy, and trust. Archive access is about retaining historical state, while hosted APIs shift blockchain access to another node.",
       "difficulty_level": 4,
@@ -417,12 +417,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "A team tests a trading bot only on a local blockchain simulation and a low-cost public testnet. Which limitation from the reading should they keep in mind before assuming mainnet behavior?",
+      "question_stem": "A team tests a trading bot only on a local blockchain simulation and a low-cost public testnet. Which limitation should they keep in mind before assuming mainnet behavior?",
       "correct_answer": "Those environments are useful for development but may not reproduce mainnet congestion, real economic incentives, adversarial competition, or transaction sequencing pressure.",
       "incorrect_answers": [
-        "Local simulations exhibit superior accuracy compared to mainnet execution because simulated environments automate and synchronize independent block producers by default.",
-        "Public testnets guarantee identical gas price behaviors as mainnet because test ether carries equivalent market value and enforces identical economic risk for validation.",
-        "Hosted JSON-RPC gateways standardize all network queues, ensuring that automated trading bot behavior remains identical across local, testnet, and mainnet network states."
+        "Local simulations are the strongest model for MEV behavior because deterministic blocks recreate other searchers and independent producers at mainnet scale in each slot.",
+        "Public testnets reproduce mainnet fee markets because test ether has equivalent economic value and creates the same liquidation competition for trading bots.",
+        "Hosted JSON-RPC access makes environments equivalent by standardizing one mempool view and one transaction ordering policy across local, testnet, and mainnet."
       ],
       "explanation": "The reading treats testnets and local simulations as valuable but limited development environments. They reduce cost and friction, yet they do not fully model mainnet incentives, congestion, adversarial behavior, or organic transaction ordering.",
       "difficulty_level": 3,

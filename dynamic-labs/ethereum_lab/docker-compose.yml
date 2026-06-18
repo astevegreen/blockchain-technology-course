@@ -5,7 +5,7 @@
 #
 # Networks (bitcoin-style split, all --internal, created by
 # lab-manager.sh ensure_networks):
-#   ethereum-instructor-mgmt-net — router ↔ instructor for /labs/ethereum_lab/rpc
+#   ethereum-instructor-mgmt-net — router ↔ instructor for /labs/ethereum_lab/rpc-write
 #                                  and /labs/ethereum_lab/instructor.
 #                                  Also joined by lane-service so it can
 #                                  fetch the pool/config that get injected
@@ -25,7 +25,7 @@ services:
     image: ethereum-trainer
     container_name: ethereum-trainer-instructor
     ports:
-      - "8545:8545"
+      - "127.0.0.1:8545:8545"
       - "5173:5173"
       - "3002:3002"
       - "3003:3003"
@@ -43,17 +43,55 @@ services:
       - TERMINAL_CWD=/app
       - LAB_TERMINAL_ENABLED=1
       - NGINX_ENABLED=1
-      # Public RPC path the student SPA dials when fronted by the platform router.
-      - RPC_URL_PUBLIC=/rpc
+      # Public write-only RPC path the student SPA dials when fronted by the platform router.
+      - RPC_URL_PUBLIC=/rpc-write
       - DEPLOY_BEACON_LAB=1
-      - COMMITTEES_PER_EPOCH=8
-      - VALIDATORS_PER_COMMITTEE=8
+      # The server-side top-off faucet uses one class-bank account. Hardhat's
+      # default is only 10,000 ETH; make the classroom bank intentionally huge.
+      - CLASS_FAUCET_BALANCE_ETH=${CLASS_FAUCET_BALANCE_ETH:-1000000000000}
+      - FAUCET_MAX_TOP_OFF_ETH=${FAUCET_MAX_TOP_OFF_ETH:-100}
+      - FAUCET_QUEUE_MAX_REQUESTS=${FAUCET_QUEUE_MAX_REQUESTS:-200}
+      - RPC_WRITE_QUEUE_MAX_MESSAGES=${RPC_WRITE_QUEUE_MAX_MESSAGES:-200}
+      - RPC_WRITE_QUEUE_CONCURRENCY=${RPC_WRITE_QUEUE_CONCURRENCY:-1}
+      - ARCADE_TOKEN_PRICE_ETH=${ARCADE_TOKEN_PRICE_ETH:-50}
+      - ARCADE_TREASURY_ADDRESS=${ARCADE_TREASURY_ADDRESS:-}
+      - CLASSROOM_AUTOMINE_DEFAULT=${CLASSROOM_AUTOMINE_DEFAULT:-0}
+      - CLASSROOM_MINING_DELAY_MS=${CLASSROOM_MINING_DELAY_MS:-3000}
+      # One committee = whole pool attests each slot (required to reach the 2/3
+      # justification quorum). Short epochs + self-running conductor make the PoS
+      # sim live and joinable. These match the code defaults; keep them in sync.
+      - COMMITTEES_PER_EPOCH=1
+      - VALIDATORS_PER_COMMITTEE=32
+      - BLOCKS_PER_EPOCH=4
+      - BEACON_CONDUCTOR=1
+      # Real Ethereum slots are 12s; classroom cadence is 6s so the lab stays responsive.
+      - BEACON_BLOCK_MS=6000
+      - BEACON_PROPOSAL_WINDOW_MS=15000
+      - BEACON_PROPOSAL_PENDING_GRACE_MS=9000
+      - BEACON_PROPOSAL_BUNDLES_PATH=/tmp/beacon-proposal-bundles.json
+      - BEACON_MEMPOOL_STATE_URL=http://127.0.0.1:5173/mempool-state
+      - BEACON_BUNDLE_MAX_TXS=12
+      - BEACON_BUNDLE_GAS_TARGET=30000000
+      - CHAIN_STATE_DEPTH=120
       - MAX_STUDENT_CAPACITY=${MAX_STUDENT_CAPACITY:-20}
       - ETHEREUM_STUDENT_CAPACITY=${ETHEREUM_STUDENT_CAPACITY:-}
     volumes:
       - blockchain-data:/app/.hardhat
       - student-contracts:/app/contracts/student
     restart: unless-stopped
+    # The Hardhat node keeps the whole chain in memory and grows over long runs. Cap it
+    # so a runaway is a CONTAINED restart (cgroup OOM -> restart: unless-stopped re-deploys
+    # at the same addresses) instead of a host-wide OOM that took the backend fully down.
+    # Conductor idle-pause + pruning keep normal usage well under this.
+    mem_limit: ${ETHEREUM_NODE_MEM_LIMIT:-4g}
+    mem_reservation: 512m
+    # Cap container logs so a chatty process can't fill disk or overload the shared
+    # dockerd log pipeline (the Hardhat node's per-RPC logging is already silenced).
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
     networks:
       - instructor-mgmt-net
 

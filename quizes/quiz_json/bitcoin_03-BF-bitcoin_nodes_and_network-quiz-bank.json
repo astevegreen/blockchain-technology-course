@@ -60,12 +60,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A student says a Bitcoin full node is mainly a backup copy of the blockchain. Which correction best matches the lesson?",
+      "question_stem": "A student says a Bitcoin full node is mainly a backup copy of the blockchain. Which correction is best?",
       "correct_answer": "A full node actively validates transactions and blocks, relays accepted data, stores ledger state, manages peers, and enforces local rules.",
       "incorrect_answers": [
-        "A full node only archives historical blocks, delegating the active block validation and consensus enforcement to specialized mining pools.",
-        "A full node connects to the DNS seed servers to download the pre-validated block summaries and updates the local transaction signatures.",
-        "A full node filters transactions based on dynamic miner preferences, executing script operations only after blocks are fully confirmed."
+        "A full node mainly stores and forwards block data, while miners and wallet software perform the consensus checks before it receives them.",
+        "A full node keeps a local copy of blocks and mempool data by trusting the peer that reports the most work for the current chain tip.",
+        "A full node's active role is mostly peer discovery and bandwidth relay, with script execution handled later by block-producing miners."
       ],
       "explanation": "The lesson frames nodes as independent rule enforcers, not passive databases. Their validation, relay, storage, and peer-management behavior is what makes decentralized consensus meaningful.",
       "difficulty_level": 2,
@@ -95,9 +95,9 @@
       "question_stem": "A miner produces a block that includes high-fee transactions but violates a consensus rule. What should independently validating full nodes do?",
       "correct_answer": "Reject the block locally, because miners propose blocks but full nodes decide what they accept under the rules they enforce.",
       "incorrect_answers": [
-        "Accept that block temporarily, because Proof-of-Work consensus rules allow miners to override standard transaction validations.",
-        "Relay blocks conditionally, because nodes should defer to the mining pool's fee-rate policy before rejecting invalid transactions.",
-        "Consult the DNS seed servers, because bootstrap peers serve as the final authority for resolving invalid block conflicts between nodes."
+        "Accept the block if it extends the heaviest chain, because accumulated Proof-of-Work is checked before transaction validity matters.",
+        "Relay the block until most peers object, because invalidity is decided by network agreement after miners publish candidate blocks.",
+        "Treat it as a fee-policy exception, because high-fee transactions let the miner override the node's normal validation checks."
       ],
       "explanation": "Mining and validation are distinct roles. Proof-of-Work proposes an ordering, but full nodes independently check whether proposed blocks and transactions satisfy consensus rules.",
       "difficulty_level": 3,
@@ -127,9 +127,9 @@
       "question_stem": "A mobile wallet uses SPV because it cannot store and validate the whole blockchain. What tradeoff is it making?",
       "correct_answer": "It lowers storage and bandwidth needs by using headers and Merkle proofs, but relies more on connected full nodes for a complete and honest view.",
       "incorrect_answers": [
-        "It increases local cryptographic privacy by completely hiding transaction histories, but requires active peer communication with the DNS seeds.",
-        "It bypasses the decentralized P2P gossip networks by establishing direct connections to miners, but loses the ability to verify block headers.",
-        "It eliminates the initial block download by validating transactions in real time, but completely skips historical block header checks."
+        "It gets full-node-level validation from Merkle proofs while storing only recent headers, so its trust assumptions stay essentially unchanged.",
+        "It reduces storage by asking miners for confirmed transactions directly, but gives up header-based proof-of-work checks for its own wallet entirely.",
+        "It improves wallet privacy by querying fewer peers for relevant payments, while taking on nearly the same validation work as a full node."
       ],
       "explanation": "SPV/light clients improve accessibility by reducing local resource demands, but they do not independently validate all transaction and block data like full nodes do.",
       "difficulty_level": 3,
@@ -159,9 +159,9 @@
       "question_stem": "How can a new Bitcoin node join the network without depending on a permanent central directory?",
       "correct_answer": "It can use bootstrap aids such as DNS seeds or fallback peers, then learn more peers through address gossip and maintain rotating peer connections.",
       "incorrect_answers": [
-        "It must register with a centralized membership server, then query coordinating nodes to receive official entitlements and permanent IP addresses.",
-        "It connects exclusively to the active mining pools, then downloads authenticated routing tables and relays transactions only to selected miners.",
-        "It downloads transaction history from a commercial block explorer, then validates incoming data locally without standard peer discovery gossip."
+        "It can use DNS seeds for its first peers, then continue treating those seeds as routing authorities for every future connection and address update decision.",
+        "It can ask a wallet server for current chain tips, then keep the returned peers as its permanent connection set for later validation.",
+        "It can connect to several known peers once, then rely on miners' block announcements instead of exchanging addresses with other nodes."
       ],
       "explanation": "Bootstrap mechanisms help a node find initial peers, but ongoing participation depends on peer exchange, diverse connections, and local validation rather than a central coordinator.",
       "difficulty_level": 3,
@@ -191,9 +191,9 @@
       "question_stem": "Why does transaction relay use an announce-request-transmit pattern such as inv, getdata, and tx instead of always sending every full transaction immediately?",
       "correct_answer": "It lets peers advertise what they know first, so receiving nodes request only data they need and avoid redundant bandwidth use.",
       "incorrect_answers": [
-        "It proves any transaction is fully confirmed first, so receiving nodes only download blocks and skip verifying signatures in full.",
-        "It lets miners privately approve transactions before nodes can inspect them, reducing propagation delay for larger mining pools.",
-        "It encrypts transaction data so selected peers alone validate signatures, preventing relay nodes from logging wallet-link patterns."
+        "It lets nodes compare inventories with their mempools first, then request full transactions only after a miner confirms them.",
+        "It shifts signature validation to the announcing peer, so requesting nodes can relay the transaction without checking it locally.",
+        "It hides wallet activity by sending hashes before transaction data, so peers cannot link the later transaction to its announcement."
       ],
       "explanation": "The lesson emphasizes bandwidth-aware propagation. Relay spreads unconfirmed transaction data efficiently; it is not the same as confirmation in a block.",
       "difficulty_level": 3,
@@ -225,9 +225,9 @@
       "question_stem": "Two mining nodes already have many of the same transactions in their mempools. Why can compact block relay matter for Bitcoin's security and decentralization, not just its bandwidth bill?",
       "correct_answer": "By sending short transaction identifiers and requesting only missing data, peers can learn new blocks faster, reducing stale-block races and helping miners converge on the same tip.",
       "incorrect_answers": [
-        "By compressing block validity rules, compact block relay lets nodes bypass standard validation checks entirely, reducing CPU validation overhead during node synchronization for initial peers.",
-        "By reducing maximum block sizes, compact block relay lowers the transaction count miners can pack into each block, forcing high-fee payments onto off-chain settlement layers during congestion.",
-        "By routing blocks through a central high-speed relay server, compact block relay makes propagation deterministic and removes local validation duties from all connected peers after each fork."
+        "By shrinking the consensus block size, compact block relay makes every valid block contain fewer transactions and therefore reach miners with less delay during normal relay.",
+        "By reusing mempool transactions, compact block relay lets nodes skip transaction validation, so stale-block risk falls mainly because checking work is removed from relay.",
+        "By moving block relay onto trusted fast routes, compact block relay avoids ordinary peer gossip and makes public peer diversity less important for mining coordination."
       ],
       "explanation": "Fast block propagation reduces the time miners spend working on outdated tips. The lesson connects this performance improvement to coordination and lower competing-fork risk.",
       "difficulty_level": 4,
@@ -258,9 +258,9 @@
       "question_stem": "A victim node's peers are all controlled by an attacker, so the node receives a distorted view of transactions and blocks even though signatures and hashes still work. What kind of threat does this describe?",
       "correct_answer": "An eclipse-style network attack that targets the node's visibility and timing by controlling its connections.",
       "incorrect_answers": [
-        "A signature-forgery attack that lets an attacker spend coins without keys by bypassing cryptographic validation.",
-        "A hash-collision attack that makes two blocks share proofs of work, forcing nodes to accept invalid chains.",
-        "A script-execution attack that makes nodes accept unlocking scripts that fail, bypassing validation rules."
+        "A stale-block race caused by honest miners finding competing blocks before the rest of the network hears about them.",
+        "A relay-policy disagreement where fee filters hide low-fee transactions while peer diversity remains mostly intact.",
+        "A transaction-malleability issue where wallets see changed transaction IDs but the node keeps independent peers."
       ],
       "explanation": "Eclipse and partitioning attacks target network connectivity and information flow, not the cryptographic validity of signatures, hashes, or scripts directly.",
       "difficulty_level": 4,
@@ -291,9 +291,9 @@
       "question_stem": "A node operator raises the minimum fee rate for transactions the node will relay, but still accepts valid blocks that include lower-fee transactions. How should this choice be classified?",
       "correct_answer": "It is a local relay policy choice that affects propagation behavior without changing the consensus validity of blocks.",
       "incorrect_answers": [
-        "It is a consensus rule change because any relay preference directly changes which blocks are deemed valid by other peers.",
-        "It is a mining rule modification because only some mining pools are allowed to determine how transactions propagate.",
-        "It is a peer discovery rule because fee filters determine which bootstrap servers a node is entitled to peer with."
+        "It is a local consensus change, because low-fee transactions become invalid for peers the node connects to.",
+        "It is a miner-selection rule, because accepted blocks inherit each full node's minimum relay fee before they can be mined.",
+        "It is a peer-management rule, because fee filters primarily determine which peers the node can discover and connect to."
       ],
       "explanation": "Consensus rules determine validity. Relay policies, fee filters, peer choices, and connection limits shape local and emergent network behavior without necessarily changing validity.",
       "difficulty_level": 4,
@@ -320,12 +320,12 @@
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "Suppose blockchain growth makes it much more expensive for ordinary users to run full nodes. What is the main decentralization concern raised by the lesson?",
+      "question_stem": "Suppose blockchain growth makes it much more expensive for ordinary users to run full nodes. What is the main decentralization concern this raises?",
       "correct_answer": "Fewer independent full-node operators may reduce validation diversity and push more users toward trusted third parties.",
       "incorrect_answers": [
-        "Mining pools would abandon Proof-of-Work because independent full nodes represent their only source of difficulty updates.",
-        "SPV clients would transform into fully validating clients, because fewer nodes cause block headers to hold more data.",
-        "The DNS seeds would become authorities because heavy storage costs transfer block validation rules to seed servers."
+        "Mining hash rate would become the only decentralization metric, because full-node diversity affects relay but not validation.",
+        "More users would rely on lightweight clients, but Merkle proofs would let them reject invalid blocks under the same rules.",
+        "Higher storage costs would improve security by leaving full validation to professional operators with stable infrastructure."
       ],
       "explanation": "The lesson connects resource demands to who can participate independently. Rising costs can weaken decentralization if they reduce full-node diversity and increase reliance on intermediaries.",
       "difficulty_level": 4,
@@ -355,9 +355,9 @@
       "question_stem": "In a P2PKH-style spend, a transaction supplies a public key and signature to unlock an output. Which result should a validating node require?",
       "correct_answer": "The supplied public key must hash to the locked public-key hash, and the signature must be valid for that public key.",
       "incorrect_answers": [
-        "The supplied public key alone is sufficient, because the locking script directly validates ownership of standard formats.",
-        "The signature alone is sufficient, because a valid signature permits the node to bypass the locked public-key hash.",
-        "The miner's signature is sufficient, because transaction script execution is done by mining pools before relaying."
+        "The supplied public key must match the address format, and the miner who includes the transaction confirms ownership.",
+        "The signature must verify for some public key in the transaction, while the locked hash only identifies which UTXO is spent.",
+        "The public-key-hash match is enough, because P2PKH treats the signature as local relay evidence, not consensus."
       ],
       "explanation": "Bitcoin Script combines unlocking data with the locking script. In the P2PKH example, both the public-key-hash match and valid signature are required for the spend to evaluate true.",
       "difficulty_level": 3,
@@ -385,12 +385,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "According to the reading, why is full-node synchronization more than downloading the longest-looking chain from a peer?",
+      "question_stem": "Why is full-node synchronization more than downloading the longest-looking chain from a peer?",
       "correct_answer": "A full node requests headers and blocks, validates blocks and transactions in order, and updates its own UTXO view only after verification.",
       "incorrect_answers": [
-        "A full node accepts the peer's chain summary automatically, updates its local block heights, and entirely trusts the announced consensus view.",
-        "A full node downloads only block headers sequentially, delegates verification to connected light clients, and minimizes local disk space.",
-        "A full node asks a gateway server to authenticate the latest UTXO set, skips historical block verification, and updates its state quickly."
+        "A full node follows the peer with the most headers first, then checks only a sample of transactions after it reaches the chain tip.",
+        "A full node downloads the header chain only, because proof of work on headers is sufficient to validate all transaction effects.",
+        "A full node delegates block verification to archival peers while it keeps local mempool, wallet state, and a peer-reported UTXO summary at the tip."
       ],
       "explanation": "The reading stresses that full-node security comes from validation, not blind download. Headers, block requests, ordered validation, and UTXO updates are part of that synchronization process.",
       "difficulty_level": 3,
@@ -419,12 +419,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A lightweight client has a Merkle proof that a payment transaction is included in a block with several confirmations. What important limitation from the reading still applies?",
+      "question_stem": "A lightweight client has a Merkle proof that a payment transaction is included in a block with several confirmations. What important limitation still applies?",
       "correct_answer": "It can verify inclusion under headers, but it may not be able to prove that no conflicting or missing relevant transaction exists outside its partial view.",
       "incorrect_answers": [
-        "It cannot ever verify transaction inclusion at all, because Merkle proofs are restricted to archival full nodes that maintain the complete blockchain history.",
-        "It has fully reconstructed the validated UTXO set, so it now enjoys the same level of independent validation and consensus rules as a standard full node.",
-        "It proves that the payments were successfully relayed by each peer node, so network-level isolation or eclipse attacks are no longer an active concern."
+        "It has proven that every connected peer saw the same transaction before confirmation, so eclipse resistance becomes equivalent to a full node.",
+        "It can now reconstruct the complete UTXO history for that payment, because confirmations turn the Merkle proof into full validation across all consensus rules.",
+        "It still must reject the payment until it downloads the entire block body and validates every transaction, because Merkle proofs cannot establish inclusion."
       ],
       "explanation": "The reading highlights the difference between proving existence and proving absence. SPV clients can reason about inclusion and work depth, but their partial view creates trust exposure.",
       "difficulty_level": 4,
@@ -454,12 +454,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "A wallet designer is comparing BIP37-style bloom filters with compact block filters. Which comparison best reflects the reading's privacy and DoS tradeoff?",
+      "question_stem": "A wallet designer is comparing BIP37-style bloom filters with compact block filters. Which comparison best reflects their privacy and DoS tradeoffs?",
       "correct_answer": "Bloom filters are client-generated queries that can leak wallet patterns and burden full nodes; compact block filters let clients check reusable per-block filters locally, improving privacy and DoS resistance with bandwidth tradeoffs.",
       "incorrect_answers": [
-        "Bloom filters and compact block filters are both forms of compact block relay that reduce miner propagation delay and prevent stale-block forks; however, they require client trust in centralized nodes, creating heavy bandwidth tradeoffs.",
-        "Bloom filters provide cryptographic wallet privacy while minimizing peer verification tasks; compact block filters are used only to validate unconfirmed mempool transactions, forcing clients to download blocks and leak key patterns.",
-        "Compact block filters require clients to reveal their exact addresses directly to nodes, while bloom filters use probabilistic arrays that never reveal relationship information, allowing fast header sync with minimal DoS exposure."
+        "Bloom filters let clients ask peers for probabilistic matches and therefore eliminate address leakage; compact block filters move matching to clients but require full nodes to answer custom wallet queries over time.",
+        "Bloom filters and compact block filters both solve the compact-block relay problem: they shorten miner block propagation while leaving lightweight-wallet privacy mostly unchanged and shifting bandwidth mainly onto miners.",
+        "Compact block filters make clients reveal exact addresses so peers can build filters on demand; bloom filters avoid DoS issues by shifting all matching work to wallets and substantially limiting wallet-cluster leakage."
       ],
       "explanation": "The reading distinguishes lightweight-client privacy filters from compact block relay. Filter design changes who does the matching work and what query patterns reveal.",
       "difficulty_level": 4,

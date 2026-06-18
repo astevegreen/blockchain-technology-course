@@ -3,123 +3,143 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Ethereum Smart Contracts — Interactive Micro‑Lab (Offline)</title>
+<title>Smart Contract Execution Lab</title>
 <style>
   :root{
-    --bg:#0b1020; --panel:#121932; --muted:#a9b2d6; --fg:#e9ecff;
-    --accent:#7aa2ff; --accent2:#11c27f; --warn:#ffb454; --danger:#ff6b6b;
-    --code:#0e1430; --border:#1d264a;
+    --bg:#f4f6f8; --panel:#ffffff; --panel2:#f9fafb; --muted:#667085; --fg:#111827;
+    --accent:#2563eb; --accent2:#047857; --warn:#b45309; --danger:#b42318;
+    --code:#0f172a; --codefg:#dbeafe; --border:#d9dee7; --soft:#eef2f7;
   }
   *{box-sizing:border-box}
-  body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji"; background:var(--bg); color:var(--fg);} 
-  header{padding:16px 20px; border-bottom:1px solid var(--border); background:linear-gradient(90deg,#0b1020,#0c1330); position:sticky; top:0; z-index:5;}
-  header h1{margin:0; font-size:20px; letter-spacing:.2px}
-  header .sub{opacity:.8; font-size:13px}
-  #app{display:grid; grid-template-columns: 320px 1fr; min-height:calc(100vh - 64px);} 
-  aside{border-right:1px solid var(--border); padding:14px; background:var(--panel);} 
-  main{padding:14px; display:flex; flex-direction:column; gap:12px;} 
-  h2,h3{margin:10px 0 6px 0; font-size:16px}
-  .card{background:#0d1530; border:1px solid var(--border); border-radius:12px; padding:12px; box-shadow:0 2px 0 rgba(0,0,0,.2)}
+  body{margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--fg);}
+  header{padding:14px 20px; border-bottom:1px solid var(--border); background:#fff; position:sticky; top:0; z-index:5;}
+  header h1{margin:0; font-size:19px; font-weight:700}
+  header .sub{color:var(--muted); font-size:13px}
+  #app{display:grid; grid-template-columns: 300px 1fr; min-height:calc(100vh - 58px);}
+  aside{border-right:1px solid var(--border); padding:12px; background:#fff;}
+  main{padding:12px; display:flex; flex-direction:column; gap:10px;}
+  h2,h3{margin:0 0 8px 0; font-size:14px; letter-spacing:.02em; text-transform:uppercase; color:#374151}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:12px;}
   label{font-size:12px; color:var(--muted); display:block; margin-bottom:6px}
-  input,select,button,textarea{background:#0c1430; color:#fff; border:1px solid var(--border); border-radius:8px; padding:8px; font-size:14px}
-  button{cursor:pointer; transition: .15s transform ease, .15s background ease; }
-  button:hover{transform:translateY(-1px)}
-  .btn{padding:8px 10px; border-radius:10px; border:1px solid var(--border); background:#101a3e}
-  .btn.primary{background:linear-gradient(180deg,#1a2a66,#162458); border-color:#263a84}
-  .btn.success{background:linear-gradient(180deg,#0e6f45,#0f5a3a); border-color:#0f7e4f}
-  .btn.warn{background:linear-gradient(180deg,#7a4d10,#633c0a); border-color:#8a5b1d}
-  .btn.danger{background:linear-gradient(180deg,#7a1020,#60101b); border-color:#9e2436}
+  input,select,button,textarea{background:#fff; color:var(--fg); border:1px solid var(--border); border-radius:5px; padding:8px; font-size:14px}
+  input:focus,select:focus,button:focus{outline:2px solid #bfdbfe; outline-offset:1px}
+  button{cursor:pointer;}
+  .btn{padding:8px 10px; border-radius:5px; border:1px solid var(--border); background:#fff}
+  .btn:hover{background:var(--soft)}
+  .btn.primary{background:#1f2937; color:#fff; border-color:#1f2937}
+  .btn.primary:hover{background:#111827}
+  .btn.success{background:#047857; color:#fff; border-color:#047857}
+  .btn.success:hover{background:#065f46}
+  .btn.danger{background:#fef2f2; color:#991b1b; border-color:#fecaca}
   .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
   .col{display:flex; flex-direction:column; gap:8px}
+  .hint{color:var(--muted); font-size:12px; line-height:1.35; margin-top:-4px}
   .muted{color:var(--muted)}
   .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace}
   .small{font-size:12px}
-  .pill{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#0b1330; font-size:12px}
+  .pill{display:inline-block; padding:2px 7px; border-radius:999px; border:1px solid var(--border); background:var(--panel2); font-size:12px; color:#344054}
   .grid{display:grid; gap:12px}
   .g-2{grid-template-columns: 1fr 1fr}
   .g-3{grid-template-columns: 1.3fr 1fr 1fr}
-  pre.code{background:var(--code); color:#d4dcff; padding:12px; border-radius:12px; overflow:auto; border:1px solid var(--border);} 
-  .kv{display:grid; grid-template-columns:auto 1fr; gap:6px 10px; align-items:center}
-  .kv b{color:#c9d3ff}
-  .trace{max-height:260px; overflow:auto; background:#0b1330; border-radius:10px; border:1px solid var(--border); padding:8px}
-  .trace .line{padding:4px 6px; border-bottom:1px dotted #203063}
+  pre.code{background:var(--code); color:var(--codefg); padding:12px; border-radius:6px; overflow:auto; border:1px solid #1e293b;}
+  .kv{display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 10px; align-items:center}
+  .kv b{color:#374151}
+  .kv span{min-width:0; overflow:hidden; text-overflow:ellipsis}
+  .trace{max-height:260px; overflow:auto; overflow-wrap:anywhere; background:#fff; border-radius:5px; border:1px solid var(--border); padding:8px}
+  #blockDetail{white-space:pre-wrap; tab-size:2}
+  #debugNarration{white-space:pre-wrap}
+  .trace .line{padding:4px 6px; border-bottom:1px solid var(--soft)}
   .trace .line:last-child{border-bottom:none}
-  .stack{max-height:160px; overflow:auto; background:#0e1536; border:1px solid var(--border); border-radius:10px; padding:8px}
+  .trace .line.hot{background:#eff6ff; box-shadow:inset 3px 0 0 var(--accent)}
+  .stack{max-height:160px; overflow:auto; background:#fff; border:1px solid var(--border); border-radius:5px; padding:8px}
   .tbl{width:100%; border-collapse: collapse; font-size:13px}
   .tbl th,.tbl td{border-bottom:1px solid var(--border); padding:6px 8px; text-align:left}
-  .tbl th{color:#b7c3ff; font-weight:600}
-  .tag{border:1px solid var(--border); background:#0a1230; border-radius:8px; padding:2px 6px; margin-right:6px; font-size:12px}
+  .tbl th{color:#475467; font-weight:600}
   .footer{font-size:12px; color:var(--muted); margin-top:4px}
-  details summary{cursor:pointer}
-  .callout{border-left:4px solid var(--accent); padding:8px 10px; background:#0a1230; border-radius:8px}
-  .callout h4{margin:0 0 4px 0; font-size:13px}
   .ok{color:var(--accent2)} .bad{color:var(--danger)} .warnText{color:var(--warn)}
   .sep{height:1px; background:var(--border); margin:6px 0}
-  .tabbar{display:flex; gap:6px; border-bottom:1px solid var(--border);} 
-  .tabbar button{border-radius:10px 10px 0 0; border-bottom:none; padding:6px 10px}
-  .tabbar button.active{background:#0e1536}
+  .tabbar{display:flex; gap:4px; border-bottom:1px solid var(--border);}
+  .tabbar button{border-radius:5px 5px 0 0; border-bottom:none; padding:6px 10px}
+  .tabbar button.active{background:#1f2937; color:#fff; border-color:#1f2937}
   .tab{display:none}
   .tab.active{display:block}
   .list{max-height:180px; overflow:auto}
   .codeHeader{display:flex; align-items:center; justify-content:space-between; gap:8px}
-  .badge{background:#132258; border:1px solid var(--border); color:#cfe1ff; padding:2px 8px; border-radius:999px; font-size:12px}
+  .badge{background:var(--panel2); border:1px solid var(--border); color:#344054; padding:2px 8px; border-radius:999px; font-size:12px}
   .test-pass{color:#11c27f}
   .test-fail{color:#ff6b6b}
+  .status{border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:5px; margin:10px 0; min-height:34px}
+  .status.ok{background:#ecfdf3; border-color:#abefc6; color:#067647}
+  .status.bad{background:#fef3f2; border-color:#fecdca; color:#b42318}
+  .status.warnText{background:#fffaeb; border-color:#fedf89; color:#b54708}
+  .instance{justify-content:space-between; align-items:center; margin-bottom:6px; border:1px solid var(--border); padding:8px; border-radius:5px; background:#fff}
+  .instance > div{min-width:0}
+  .instance.selected{border-color:#1f2937; box-shadow:inset 3px 0 0 #1f2937}
+  .addr{display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; vertical-align:bottom}
+  .stepList{margin:0; padding-left:18px}
+  .stepList li{margin:5px 0}
+  .panelSection{border:1px solid var(--border); border-radius:6px; padding:12px; background:#fff}
+  .scenarioBtn{justify-content:space-between; text-align:left; width:100%}
+  .scenarioBtn span{color:var(--muted); font-size:12px; font-weight:400}
+  .scenarioBtn.active{background:#1f2937; color:#fff; border-color:#1f2937}
+  .scenarioBtn.active span{color:#d1d5db}
+  .attackSteps{margin:8px 0 10px 0}
+  .attackSteps li{padding:4px 6px; border-radius:5px}
+  .attackSteps li.active{background:#eff6ff; color:#1d4ed8; font-weight:600}
+  .debugGrid{display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:10px}
+  .attackGrid{display:grid; grid-template-columns:minmax(180px,.85fr) minmax(260px,1.2fr) minmax(220px,1fr); gap:12px; margin-top:10px}
+  .debugStep{border:1px solid var(--border); border-radius:6px; padding:10px; background:#fff}
+  .debugStep.active{border-color:#2563eb; box-shadow:inset 3px 0 0 #2563eb}
+  .metricGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px}
+  .metric{border:1px solid var(--border); border-radius:6px; padding:8px; background:var(--panel2)}
+  .metric b{display:block; font-size:12px; color:var(--muted); font-weight:600}
+  [hidden]{display:none!important}
+  @media (max-width: 860px){
+    #app{grid-template-columns:1fr}
+    aside{border-right:none; border-bottom:1px solid var(--border)}
+    .g-2,.g-3,.debugGrid,.attackGrid{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>Ethereum Smart Contracts — Interactive Micro‑Lab <span class="sub">/ offline, single‑file</span></h1>
+  <h1>Smart Contract Execution Lab <span class="sub">/ local simulator</span></h1>
 </header>
 
 <div id="app">
   <aside class="col">
-    <div class="card col">
-      <h3>Accounts</h3>
-      <label for="acctSel">Active Caller (EOA)</label>
-      <select id="acctSel"></select>
-      <div id="acctInfo" class="kv small"></div>
+	    <div class="card col">
+	      <h3>1. Caller</h3>
+	      <div class="hint">The active EOA is the sender for ordinary calls. The attack scenario sets its own roles.</div>
+	      <label for="acctSel">Active Caller (EOA)</label>
+	      <select id="acctSel"></select>
+	      <div id="acctInfo" class="kv small"></div>
       <div class="row">
-        <button class="btn" id="faucetBtn">💧 Faucet +10 ETH</button>
-        <button class="btn" id="resetBtn">♻️ Reset Lab</button>
+        <button class="btn" id="faucetBtn">Faucet +10 ETH</button>
+        <button class="btn danger" id="resetBtn">Reset</button>
       </div>
-    </div>
-
-    <div class="card col">
-      <h3>Deploy Contract</h3>
-      <label for="contractType">Example</label>
-      <select id="contractType">
-        <option value="SimpleStorage">SimpleStorage</option>
-        <option value="Coin">Coin (toy token)</option>
-        <option value="VulnVault">VulnerableVault (reentrancy bug)</option>
-        <option value="SafeVault">SafeVault (CEI fix)</option>
-        <option value="Attack">ReentrancyAttacker</option>
-      </select>
-      <div class="col small"></div>
-      <button id="deployBtn" class="btn primary">🚀 Deploy</button>
-      <div class="sep"></div>
-      <h3>Deployed</h3>
-      <div id="deployedList" class="list"></div>
-    </div>
-
-    <div class="card col">
-      <h3>How to Use</h3>
-      <ol class="small">
-        <li>Pick an example and <b>Deploy</b>. Select a deployed instance.</li>
-        <li>Open the <b>Interact</b> tab to call a function. Provide inputs and optional <span class="pill">msg.value</span>.</li>
-        <li>Click <b>Call</b>. The transaction is executed and immediately <b>committed as a new block</b>.</li>
-        <li>Open the <b>Chain</b> tab → click a block to inspect header, inputs, receipts, and outputs.</li>
-      </ol>
-      <div class="callout small">
-        <h4>Concepts reinforced</h4>
-        EOAs vs contracts, deployment, calldata & state, events/logs, gas intuition, CEI and reentrancy, and contract–to–contract calls.
-      </div>
-    </div>
-
-    <div class="card col">
-      <h3>Self‑Tests</h3>
+	    </div>
+	
+	    <div class="card col">
+	      <h3>2. Scenario</h3>
+	      <div class="hint">Start with one exercise. Each scenario resets the local ledger and deploys only what it needs.</div>
+	      <button id="scenarioStorage" class="btn scenarioBtn">SimpleStorage <span>write, read, receipt</span></button>
+	      <button id="scenarioCoin" class="btn scenarioBtn">Coin <span>roles and balances</span></button>
+	      <button id="scenarioAttack" class="btn scenarioBtn">Reentrancy Attack <span>nested withdraw calls</span></button>
+	      <div class="sep"></div>
+	      <h3>Contracts</h3>
+	      <div id="deployedList" class="list"></div>
+	    </div>
+	
+	    <div class="card col">
+	      <h3>3. Lab Path</h3>
+	      <ol id="lessonSteps" class="small stepList"></ol>
+	    </div>
+	
+	    <div id="debugCard" class="card col" hidden>
+	      <h3>Diagnostics</h3>
       <div class="row">
-        <button id="runTests" class="btn">✅ Run Built‑in Self‑Tests</button>
+        <button id="runTests" class="btn">Run self-tests</button>
       </div>
       <div id="testResults" class="small mono" style="margin-top:8px; max-height:180px; overflow:auto"></div>
     </div>
@@ -132,21 +152,60 @@
         <span class="badge" id="contractMeta"></span>
       </div>
       <div class="tabbar">
-        <button class="btn small active" data-tab="codeTab">Code</button>
-        <button class="btn small" data-tab="interactTab">Interact</button>
-        <button class="btn small" data-tab="stateTab">Trace &amp; State</button>
-        <button class="btn small" data-tab="chainTab">Chain</button>
+	        <button class="btn small active" data-tab="codeTab">Code</button>
+	        <button class="btn small" data-tab="interactTab">Interact</button>
+	        <button class="btn small" data-tab="debugTab" id="debugTabBtn" hidden>Attack Debugger</button>
+	        <button class="btn small" data-tab="stateTab">Trace &amp; State</button>
+	        <button class="btn small" data-tab="chainTab">Chain</button>
       </div>
+      <div id="statusLine" class="status small muted" aria-live="polite">Deploy a contract or select an instance to begin.</div>
       <div id="codeTab" class="tab active">
         <pre class="code mono small" id="codeView">// Select or deploy a contract to view its code here.</pre>
-        <div class="footer small muted">Note: This lab simulates EVM behavior at a high level for teaching. It is not a full EVM and omits many details (true opcodes, precise gas, ABI encoding nuances).</div>
+        <div class="footer small muted">Teaching simulator: traces state, calls, value transfer, rollback, and logs. It is not a full opcode-level EVM.</div>
       </div>
 
-      <div id="interactTab" class="tab">
-        <div id="fnList" class="col"></div>
-      </div>
+	      <div id="interactTab" class="tab">
+	        <div id="fnList" class="col"></div>
+	      </div>
 
-      <div id="stateTab" class="tab">
+	      <div id="debugTab" class="tab">
+	        <div class="panelSection">
+	          <div class="row" style="justify-content:space-between; align-items:center">
+	            <h3>Reentrancy Attack Trace</h3>
+	            <span class="badge">one transaction, nested calls</span>
+	          </div>
+	          <div id="debugSetup" class="status small muted">Choose Reentrancy Attack to load Bob and Carol's deposits, Eve's attacker contract, and the vulnerable vault.</div>
+	          <ol id="attackSteps" class="attackSteps small stepList"></ol>
+	          <div class="row">
+	            <button id="resetAttackDebug" class="btn">Reset Attack</button>
+	            <button id="stepAttackDebug" class="btn primary">Step</button>
+	            <button id="runAttackDebug" class="btn">Play Trace</button>
+	          </div>
+	          <div class="attackGrid">
+	            <div>
+	              <h3>Live Ledger</h3>
+	              <div id="debugLedger" class="metricGrid"></div>
+	            </div>
+	            <div>
+	              <h3>Execution Trace</h3>
+	              <div id="debugTrace" class="trace mono small">Press Step to start the attack transaction.</div>
+	            </div>
+	            <div>
+	              <h3>Active Frames</h3>
+	              <div id="debugFrames" class="trace mono small"></div>
+	              <div class="sep"></div>
+	              <h3>Block Receipt</h3>
+	              <div id="debugReceipt" class="trace mono small">The receipt appears after the attack transaction commits.</div>
+	            </div>
+	          </div>
+	          <div style="margin-top:10px">
+	            <h3>Current Step</h3>
+	            <div id="debugNarration" class="trace small">No attack transaction is running.</div>
+	          </div>
+	        </div>
+	      </div>
+	
+	      <div id="stateTab" class="tab">
         <div class="grid g-3">
           <div>
             <h3>Trace</h3>
@@ -171,10 +230,10 @@
 
       <div id="chainTab" class="tab">
         <div class="grid g-2">
-          <div class="card">
+          <div class="panelSection">
             <div class="row" style="justify-content:space-between; align-items:center">
               <h3>Blocks</h3>
-              <button id="mineBtn" class="btn primary">⛏️ New empty block</button>
+              <button id="mineBtn" class="btn">Mine empty block</button>
             </div>
             <table class="tbl small" id="blocksTbl">
               <thead><tr><th>#</th><th>Txs</th><th>Gas</th><th>Time</th></tr></thead>
@@ -182,29 +241,17 @@
             </table>
             <div class="small muted">Click a block to inspect its header and contents.</div>
           </div>
-          <div class="card">
+          <div class="panelSection">
             <h3>Block Detail</h3>
-            <div id="blockDetail" class="trace mono small">— click a block to view header, inputs, receipts, and outputs —</div>
+            <div id="blockDetail" class="trace mono small">Click a block to view header, inputs, receipts, and outputs.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="card small muted">
-      <details>
-        <summary><b>Instructor Tips</b> • prompts to use during the lab</summary>
-        <ul>
-          <li>Ask students to predict the <i>next</i> state change before executing a call.</li>
-          <li>Switch callers to show <span class="pill">msg.sender</span> authorization effects (e.g., Coin.mint).</li>
-          <li>Trigger the reentrancy attack on VulnerableVault, then repeat on SafeVault to contrast CEI.</li>
-          <li>Have students read emitted <b>Events</b> and explain how off‑chain indexers could react.</li>
-          <li>Discuss gas intuition: each operation adds a small “gas” count (rough proxy) shown in traces and per‑block totals.</li>
-        </ul>
-      </details>
-    </div>
+    <div class="small muted">Read the code, run one call, then use the trace and receipt as evidence for what changed.</div>
   </main>
 </div>
-
 <script>
 window.addEventListener('DOMContentLoaded', () => {
 // ---------- Utility ----------
@@ -212,6 +259,7 @@ const fmt = (x)=> typeof x==='number' ? (Math.round(x*100)/100).toString() : x;
 const eth = (n)=> Number(n);
 function short(addr){ return addr.length>12 ? addr.slice(0,8)+'…'+addr.slice(-4) : addr; }
 function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+const isDebugMode = new URLSearchParams(window.location.search).has('debug');
 
 // ---------- Lab State ----------
 const Lab = {
@@ -219,23 +267,28 @@ const Lab = {
   accounts:[],
   contracts:{},
   nextAddr:1,
-  current:{ selectedAddr:null, pendingCall:null, trace:[], events:[], gas:0, stack:[] },
+  activeScenario:null,
+  attack:{ vault:null, attacker:null, loaded:false, started:false, finished:false, playing:false },
+  current:{ selectedAddr:null, pendingCall:null, trace:[], events:[], gas:0, stack:[], returnValue:undefined, session:null },
 };
 
 function newEOA(name,balance){
-  const addr = '0x' + (1000 + Lab.accounts.length).toString(16).padStart(4,'0') + name.slice(0,2).toUpperCase();
+  const addr = '0x' + (0x1000n + BigInt(Lab.accounts.length)).toString(16).padStart(40,'0');
   Lab.accounts.push({addr, name, balance:eth(balance)});
 }
 
-function makeAddress(){ return '0xC' + (Lab.nextAddr++).toString(16).padStart(7,'0'); }
+function makeAddress(){ return '0x' + (0xc0000n + BigInt(Lab.nextAddr++)).toString(16).padStart(40,'0'); }
 
 function resetLab(){
   Lab.chain={ blocks:[], nextBlock:0 };
   Lab.accounts=[];
   Lab.contracts={};
   Lab.nextAddr=1;
-  Lab.current={ selectedAddr:null, pendingCall:null, trace:[], events:[], gas:0, stack:[] };
+  Lab.activeScenario=null;
+  Lab.attack={ vault:null, attacker:null, loaded:false, started:false, finished:false, playing:false };
+  Lab.current={ selectedAddr:null, pendingCall:null, trace:[], events:[], gas:0, stack:[], returnValue:undefined, session:null };
   newEOA('Alice', 60); newEOA('Bob', 60); newEOA('Carol', 20); newEOA('Eve', 0);
+  setScenarioButtonActive(null);
   renderAll();
 }
 
@@ -289,7 +342,7 @@ const Examples = {
   VulnVault:{
     name:'VulnerableVault',
     code:
-`// Vulnerable: external call before state update enables reentrancy\ncontract VulnerableVault {\n    mapping(address=>uint) public balances;\n    receive() external payable { balances[msg.sender] += msg.value; }\n    function deposit() public payable { balances[msg.sender] += msg.value; }\n    function withdraw() public {\n        uint amount = balances[msg.sender];\n        require(amount > 0, \"no funds\");\n        (bool ok,) = payable(msg.sender).call{value: amount}(\"\");\n        require(ok, \"send failed\");\n        balances[msg.sender] = 0; // ❌ too late\n    }\n}`,
+`// Vulnerable: external call before state update enables reentrancy\ncontract VulnerableVault {\n    mapping(address=>uint) public balances;\n    receive() external payable { balances[msg.sender] += msg.value; }\n    function deposit() public payable { balances[msg.sender] += msg.value; }\n    function withdraw() public {\n        uint amount = balances[msg.sender];\n        require(amount > 0, \"no funds\");\n        (bool ok,) = payable(msg.sender).call{value: amount}(\"\");\n        require(ok, \"send failed\");\n        balances[msg.sender] = 0; // too late\n    }\n}`,
     abi:[
       {name:'deposit', inputs:[], payable:true, view:false},
       {name:'withdraw', inputs:[], payable:false, view:false}
@@ -297,14 +350,14 @@ const Examples = {
     init:()=> ({ balances:{}, ethBalance:0 }),
     handlers:{
       deposit:(ctx)=>[
-        {desc:()=>`balances[msg.sender] += msg.value (${ctx.msg.value})`, run:()=>{
+        {desc:()=>`RECORD deposit: balances[msg.sender] += msg.value (${ctx.msg.value} ETH)`, run:()=>{
           ctx.storage.balances[ctx.msg.sender]=(ctx.storage.balances[ctx.msg.sender]||0)+ctx.msg.value; ctx.gas+=12;
         }}
       ],
       withdraw:(ctx)=>[
-        {desc:()=>`LOAD amount = balances[msg.sender]`, run:()=>{ ctx.locals.amount = (ctx.storage.balances[ctx.msg.sender]||0); ctx.gas+=6; }},
-        {desc:()=>`REQUIRE amount > 0`, run:()=>{ if(!(ctx.locals.amount>0)) throw 'revert: no funds'; ctx.gas+=6; }},
-        {desc:()=>`CALL msg.sender with value amount (${ctx.locals.amount})`, run:()=>{
+        {desc:()=>`LOAD amount = balances[msg.sender] (${ctx.storage.balances[ctx.msg.sender]||0} ETH)`, run:()=>{ ctx.locals.amount = (ctx.storage.balances[ctx.msg.sender]||0); ctx.gas+=6; }},
+        {desc:()=>`REQUIRE amount > 0 (${ctx.locals.amount} ETH)`, run:()=>{ if(!(ctx.locals.amount>0)) throw 'revert: no funds'; ctx.gas+=6; }},
+        {desc:()=>`SEND ${ctx.locals.amount} ETH to msg.sender before clearing the balance`, run:()=>{
           const amount = ctx.locals.amount;
           if(Lab.current.stack.length>24) throw 'stack overflow';
           if(ctx.storage.ethBalance<amount) throw 'revert: insufficient vault ETH';
@@ -317,43 +370,8 @@ const Examples = {
           }
           ctx.gas+=25;
         }},
-        {desc:()=>`balances[msg.sender] = 0`, run:()=>{
+        {desc:()=>`WRITE balances[msg.sender] = 0 after external calls return`, run:()=>{
           ctx.storage.balances[ctx.msg.sender]=0; ctx.gas+=8;
-        }}
-      ]
-    }
-  },
-
-  SafeVault:{
-    name:'SafeVault',
-    code:
-`// Safe: Checks-Effects-Interactions (CEI)\ncontract SafeVault {\n    mapping(address=>uint) public balances;\n    receive() external payable { balances[msg.sender] += msg.value; }\n    function deposit() public payable { balances[msg.sender] += msg.value; }\n    function withdraw() public {\n        uint amount = balances[msg.sender];\n        require(amount > 0, \"no funds\");\n        balances[msg.sender] = 0;            // ✅ effects first\n        (bool ok,) = payable(msg.sender).call{value: amount}(\"\");\n        require(ok, \"send failed\");\n    }\n}`,
-    abi:[
-      {name:'deposit', inputs:[], payable:true, view:false},
-      {name:'withdraw', inputs:[], payable:false, view:false}
-    ],
-    init:()=> ({ balances:{}, ethBalance:0 }),
-    handlers:{
-      deposit:(ctx)=>[
-        {desc:()=>`balances[msg.sender] += msg.value (${ctx.msg.value})`, run:()=>{
-          ctx.storage.balances[ctx.msg.sender]=(ctx.storage.balances[ctx.msg.sender]||0)+ctx.msg.value; ctx.gas+=12;
-        }}
-      ],
-      withdraw:(ctx)=>[
-        {desc:()=>`LOAD amount = balances[msg.sender]`, run:()=>{ ctx.locals.amount=(ctx.storage.balances[ctx.msg.sender]||0); ctx.gas+=6; }},
-        {desc:()=>`REQUIRE amount > 0`, run:()=>{ if(!(ctx.locals.amount>0)) throw 'revert: no funds'; ctx.gas+=6; }},
-        {desc:()=>`balances[msg.sender] = 0`, run:()=>{ ctx.storage.balances[ctx.msg.sender]=0; ctx.gas+=8; }},
-        {desc:()=>`CALL msg.sender with value amount (${ctx.locals.amount})`, run:()=>{
-          const amount = ctx.locals.amount;
-          if(ctx.storage.ethBalance<amount) throw 'revert: insufficient vault ETH';
-          const target = findContractByAddr(ctx.msg.sender);
-          ctx.storage.ethBalance -= amount;
-          creditETH(ctx.msg.sender, amount);
-          logEvent({event:'ETHTransfer', args:{from:ctx.addr, to:ctx.msg.sender, amount}});
-          if(target && target.handlers && target.handlers.__receive){
-            pushFrame({ addr:target.addr, type:target.type, name:'__receive', fn:target.handlers.__receive, args:[], msg:{ sender: ctx.addr, value: amount } });
-          }
-          ctx.gas+=25;
         }}
       ]
     }
@@ -362,7 +380,7 @@ const Examples = {
   Attack:{
     name:'ReentrancyAttacker',
     code:
-`// Attacker that reenters VulnerableVault on receive()\ncontract ReentrancyAttacker {\n    VulnerableVault public target;\n    constructor(address _target){ target = VulnerableVault(_target); }\n    function attack() public payable {\n        target.deposit{value: msg.value}();\n        target.withdraw(); // triggers first send, then we reenter in receive()\n    }\n    receive() external payable {\n        if(target.balances[address(this)] > 0 && address(target).balance >= target.balances[address(this)]){\n            target.withdraw(); // reenter while victim balance not yet zeroed\n        }\n    }\n}`,
+`// Attacker that reenters a vault on receive()\ninterface IVault {\n    function deposit() external payable;\n    function withdraw() external;\n    function balances(address who) external view returns (uint);\n}\ncontract ReentrancyAttacker {\n    IVault public target;\n    function setTarget(address _target) public { target = IVault(_target); }\n    function attack() public payable {\n        target.deposit{value: msg.value}();\n        target.withdraw();\n    }\n    receive() external payable {\n        uint owed = target.balances(address(this));\n        if(owed > 0 && address(target).balance >= owed){\n            target.withdraw();\n        }\n    }\n}`,
     abi:[
       {name:'setTarget', inputs:[{name:'target', type:'address'}], payable:false, view:false},
       {name:'attack', inputs:[], payable:true, view:false},
@@ -374,7 +392,7 @@ const Examples = {
       ],
       attack:(ctx)=>[
         {desc:()=>`REQUIRE target set`, run:()=>{ if(!ctx.storage.target) throw 'revert: target not set'; ctx.gas+=3; }},
-        {desc:()=>`CALL target.deposit{value: msg.value}`, run:()=>{
+        {desc:()=>`CALL target.deposit{value: ${ctx.msg.value} ETH}`, run:()=>{
           const victim = Lab.contracts[ctx.storage.target];
           if(!victim) throw 'revert: bad target';
           ctx.storage.ethBalance -= ctx.msg.value; // move ETH out of attacker
@@ -382,14 +400,19 @@ const Examples = {
           pushFrame({ addr:victim.addr, type:victim.type, name:'deposit', fn:victim.handlers.deposit, args:[], msg:{ sender: ctx.addr, value: ctx.msg.value } });
           ctx.gas+=15;
         }},
-        {desc:()=>`CALL target.withdraw()`, run:()=>{
+        {desc:()=>`CALL target.withdraw() once the attacker has a recorded vault balance`, run:()=>{
           const victim = Lab.contracts[ctx.storage.target];
           pushFrame({ addr:victim.addr, type:victim.type, name:'withdraw', fn:victim.handlers.withdraw, args:[], msg:{ sender: ctx.addr, value: 0 } });
           ctx.gas+=15;
         }}
       ],
       __receive:(ctx)=>[
-        {desc:()=>`IF target.balances[this] > 0 AND target.ethBalance >= balance then CALL withdraw()`, run:()=>{
+        {desc:()=>{
+          const victim = Lab.contracts[ctx.storage.target];
+          const bal = victim && victim.storage && victim.storage.balances ? (victim.storage.balances[ctx.addr]||0) : 0;
+          const vaultEth = victim && victim.storage ? (victim.storage.ethBalance||0) : 0;
+          return `RECEIVE ${ctx.msg.value} ETH; recorded balance is still ${bal} ETH, vault has ${vaultEth} ETH`;
+        }, run:()=>{
           const victim = Lab.contracts[ctx.storage.target];
           const bal = victim && victim.storage && victim.storage.balances ? (victim.storage.balances[ctx.addr]||0) : 0;
           if(bal > 0 && (victim && victim.storage && (victim.storage.ethBalance||0)) >= bal){
@@ -417,6 +440,29 @@ function debitETH(addr, amt){
   if(c){ if((c.storage.ethBalance||0)<amt) throw 'insufficient contract ETH'; c.storage.ethBalance -= amt; }
 }
 
+function ethBalanceOf(addr){
+  const account = Lab.accounts.find(x=>x.addr===addr);
+  if(account) return account.balance;
+  const contract = Lab.contracts[addr];
+  return contract ? (contract.storage.ethBalance||0) : 0;
+}
+
+function snapshotWorld(){
+  return {
+    accounts: Lab.accounts.map(a=>({ ...a })),
+    contractStorage: Object.fromEntries(Object.values(Lab.contracts).map(c=>[c.addr, deepClone(c.storage)]))
+  };
+}
+
+function restoreWorld(snapshot){
+  Lab.accounts.forEach((account, ix)=>{
+    if(snapshot.accounts[ix]) Object.assign(account, snapshot.accounts[ix]);
+  });
+  Object.entries(snapshot.contractStorage).forEach(([addr, storage])=>{
+    if(Lab.contracts[addr]) Lab.contracts[addr].storage = deepClone(storage);
+  });
+}
+
 function pushFrame({addr,type,name,fn,args,msg}){
   const ctx = {
     addr, type, name, fn, args, ip:0,
@@ -430,11 +476,14 @@ function pushFrame({addr,type,name,fn,args,msg}){
 }
 
 function appendTrace(msg, cls){
-  const line = document.createElement('div');
-  line.className = 'line ' + (cls||'');
-  line.textContent = msg;
-  document.getElementById('trace').appendChild(line);
-  document.getElementById('trace').scrollTop = document.getElementById('trace').scrollHeight;
+  [document.getElementById('trace'), document.getElementById('debugTrace')].filter(Boolean).forEach(target=>{
+    target.querySelectorAll('.line.hot').forEach(el=>el.classList.remove('hot'));
+    const line = document.createElement('div');
+    line.className = `line hot ${cls||''}`.trim();
+    line.textContent = msg;
+    target.appendChild(line);
+    target.scrollTop = target.scrollHeight;
+  });
 }
 
 function stepOnce(){
@@ -443,6 +492,7 @@ function stepOnce(){
   const step = frame.steps[frame.ip];
   if(!step){ // returning
     Lab.current.stack.pop();
+    if(Object.prototype.hasOwnProperty.call(frame.locals, 'ret')) Lab.current.returnValue = frame.locals.ret;
     appendTrace(`RETURN from ${short(frame.addr)}.${frame.name}; gas+=${frame.gas}`);
     Lab.current.gas += frame.gas;
     renderStack();
@@ -455,18 +505,7 @@ function stepOnce(){
     frame.ip++;
   }catch(e){
     appendTrace(`✖ REVERT: ${e}`, 'bad');
-    // On revert: refund msg.value if any
-    try{
-      const tx = Lab.current.pendingCall;
-      if(tx && tx.value>0){
-        const callee = Lab.contracts[tx.to];
-        if(callee){ callee.storage.ethBalance = (callee.storage.ethBalance||0) - tx.value; }
-        const caller = Lab.accounts.find(x=>x.addr===tx.from);
-        if(caller){ caller.balance += tx.value; }
-        renderBalances();
-      }
-    }catch(_){}
-    // unwind stack
+    Lab.current.gas += Lab.current.stack.reduce((sum, f)=> sum + f.gas, 0);
     Lab.current.stack.length = 0;
     Lab.current.pendingCall.status='reverted';
   }
@@ -479,45 +518,81 @@ function runAll(){
     stepOnce();
     safety++;
   }
-  if(safety>=1000) appendTrace('✖ Halted due to step limit (possible infinite loop).','bad');
+  if(safety>=1000){
+    appendTrace('✖ Halted due to step limit (possible infinite loop).','bad');
+    Lab.current.stack.length = 0;
+    Lab.current.pendingCall.status = 'reverted';
+  }
 }
 
-// Execute and immediately commit as a new block
-function executeAndCommit(addr, fnName, args, msg, meta){
-  Lab.current.trace = []; Lab.current.events=[]; Lab.current.stack=[]; Lab.current.gas=0;
-  const c = Lab.contracts[addr]; if(!c) return alert('Select a deployed contract first');
-  const fn = c.handlers[fnName]; if(!fn) return alert('Function not found in example');
-  // Snapshot storage
-  const preStorage = deepClone(c.storage);
-  // Create pending tx context
+function beginExecution(addr, fnName, args, msg, options={}){
+  const commit = options.commit !== false;
+  Lab.current.trace = []; Lab.current.events=[]; Lab.current.stack=[]; Lab.current.gas=0; Lab.current.returnValue=undefined;
+  const c = Lab.contracts[addr]; if(!c) throw new Error('Select a deployed contract first');
+  const fn = c.handlers[fnName]; if(!fn) throw new Error('Function not found in example');
+  if(msg.value>0 && ethBalanceOf(msg.sender)<msg.value) throw new Error('Caller lacks ETH for msg.value');
+  const worldBefore = snapshotWorld();
+
   Lab.current.pendingCall = { from: msg.sender, to: addr, fn: fnName, args: deepClone(args), value: msg.value, status:'pending' };
-  pushFrame({ addr, type:c.type, name:fnName, fn, args, msg });
-  runAll();
-  // If finished naturally and not marked reverted, mark executed
+  Lab.current.session = { worldBefore, commit, finalized:false };
+  try{
+    if(msg.value>0){
+      debitETH(msg.sender, msg.value);
+      c.storage.ethBalance = (c.storage.ethBalance||0) + msg.value;
+    }
+    pushFrame({ addr, type:c.type, name:fnName, fn, args, msg });
+  }catch(e){
+    appendTrace(`✖ REVERT: ${e}`, 'bad');
+    Lab.current.stack.length = 0;
+    Lab.current.pendingCall.status = 'reverted';
+  }
+  return Lab.current.session;
+}
+
+function finalizeExecution(){
+  const session = Lab.current.session;
+  if(!session || session.finalized) return null;
   if(Lab.current.stack.length===0 && Lab.current.pendingCall.status==='pending'){
     Lab.current.pendingCall.status='executed';
   }
   const status = Lab.current.pendingCall.status;
+  if(status === 'reverted' || !session.commit){
+    restoreWorld(session.worldBefore);
+    if(status === 'reverted') Lab.current.events = [];
+  }
   const gasUsed = Lab.current.gas;
-  const events = deepClone(Lab.current.events);
-  const postStorage = deepClone(c.storage);
-  // Build tx record
+  const events = status === 'executed' ? deepClone(Lab.current.events) : [];
+  const worldAfter = snapshotWorld();
+  const tx = Lab.current.pendingCall;
   const txRecord = {
-    inputs:{ from: msg.sender, to: addr, fn: fnName, args: deepClone(args), value: msg.value },
-    receipt:{ status, gasUsed, events },
-    outputs:{ storageBefore: preStorage, storageAfter: postStorage }
+    inputs:{ from: tx.from, to: tx.to, fn: tx.fn, args: deepClone(tx.args), value: tx.value },
+    receipt:{ status, gasUsed, events, returnValue: Lab.current.returnValue },
+    outputs:{ storageBefore: session.worldBefore.contractStorage, storageAfter: worldAfter.contractStorage }
   };
-  // Build block header
-  const block = {
-    number: Lab.chain.nextBlock++,
-    timestamp: Date.now(),
-    miner: '0xB10C000000000000000000000000000000000000',
-    gasUsed,
-    txs: [txRecord]
-  };
-  Lab.chain.blocks.push(block);
-  renderBlocks();
-  showBlockDetail(Lab.chain.blocks.length-1);
+
+  if(session.commit){
+    const block = {
+      number: Lab.chain.nextBlock++,
+      timestamp: Date.now(),
+      miner: '0xB10C000000000000000000000000000000000000',
+      gasUsed,
+      txs: [txRecord]
+    };
+    Lab.chain.blocks.push(block);
+    renderBlocks();
+    showBlockDetail(Lab.chain.blocks.length-1);
+  }else{
+    blockDetail.textContent = `READ RESULT\n${JSON.stringify(txRecord,null,2)}`;
+  }
+  session.finalized = true;
+  Lab.current.session = null;
+  return txRecord;
+}
+
+function executeAndCommit(addr, fnName, args, msg, options={}){
+  beginExecution(addr, fnName, args, msg, options);
+  runAll();
+  return finalizeExecution();
 }
 
 // ---------- UI Wiring ----------
@@ -535,26 +610,169 @@ const balancesEl = document.getElementById('balances');
 const stackEl = document.getElementById('stack');
 const blocksTbl = document.querySelector('#blocksTbl tbody');
 const blockDetail = document.getElementById('blockDetail');
+const statusLine = document.getElementById('statusLine');
+const lessonSteps = document.getElementById('lessonSteps');
+const debugCard = document.getElementById('debugCard');
+const debugSetup = document.getElementById('debugSetup');
+const debugLedger = document.getElementById('debugLedger');
+const debugTrace = document.getElementById('debugTrace');
+const debugFrames = document.getElementById('debugFrames');
+const debugReceipt = document.getElementById('debugReceipt');
+const debugNarration = document.getElementById('debugNarration');
+const attackSteps = document.getElementById('attackSteps');
+const stepAttackDebug = document.getElementById('stepAttackDebug');
+const runAttackDebug = document.getElementById('runAttackDebug');
+const resetAttackDebug = document.getElementById('resetAttackDebug');
 
 // Tabs
 Array.from(document.querySelectorAll('.tabbar button')).forEach(btn=>{
   btn.addEventListener('click',()=>{
-    Array.from(document.querySelectorAll('.tabbar button')).forEach(b=>b.classList.remove('active'));
-    Array.from(document.querySelectorAll('.tab')).forEach(t=>t.classList.remove('active'));
-    btn.classList.add('active'); document.getElementById(btn.dataset.tab).classList.add('active');
+    selectTab(btn.dataset.tab);
   });
 });
 
+function selectTab(tabId){
+  Array.from(document.querySelectorAll('.tabbar button')).forEach(b=>b.classList.toggle('active', b.dataset.tab === tabId));
+  Array.from(document.querySelectorAll('.tab')).forEach(t=>t.classList.toggle('active', t.id === tabId));
+}
+
+function setStatus(message, tone=''){
+  statusLine.className = `status small ${tone}`;
+  statusLine.textContent = message;
+}
+
+const LESSON_STEPS = {
+  attack:[
+    'Start with the loaded Reentrancy Attack scenario.',
+    'Bob and Carol have normal deposits in the vulnerable vault.',
+    'Press Step to run Eve\'s attack transaction.',
+    'Watch the attacker deposit 10 ETH, then call withdraw().',
+    'Stop when multiple withdraw() frames are active in the same call stack.',
+    'Run the trace to the end and compare vault ETH with recorded balances.',
+    'Use the receipt to confirm what the block committed.'
+  ],
+  storage:[
+    'Read the SimpleStorage code.',
+    'Send set(x) from the active caller.',
+    'Read get() and confirm view calls do not mine a block.',
+    'Open the receipt to connect code, trace, and committed storage.'
+  ],
+  coin:[
+    'Roles: Alice is the minter (set in the constructor). Bob, Carol, and Eve are ordinary users.',
+    'mint(receiver, amount) creates new tokens out of thin air — only the minter can call it.',
+    'send(receiver, amount) transfers existing tokens — anyone with a balance can call it.',
+    'As Alice, mint 100 tokens to Bob. Watch balances[Bob] go from 0 to 100.',
+    'Switch the active caller to Bob and try mint() — the require check reverts the tx.',
+    'Still as Bob, send 30 tokens to Carol and compare balances before and after the block.'
+  ],
+  none:[
+    'Choose a scenario from the section above.',
+    'Read the contract code before sending a call.',
+    'Use the trace and receipt as evidence for the state change.'
+  ]
+};
+
+const ATTACK_STEPS = [
+  'Setup: Bob deposits 50 ETH and Carol deposits 40 ETH into the vault.',
+  'Eve sends 10 ETH into the attacker contract to start the attack.',
+  'The attacker deposits that 10 ETH into the vault.',
+  'The vault sends 10 ETH out before it clears the attacker balance.',
+  'The attacker receive() function reenters withdraw() while the balance is still 10.',
+  'Nested withdraw() frames drain the vault in 10 ETH chunks.',
+  'The transaction unwinds, late balance writes run, and the block receipt is mined.'
+];
+
+function renderStepList(target, steps, activeIx=-1){
+  if(!target) return;
+  target.innerHTML = steps.map((step, ix)=>`<li class="${ix===activeIx ? 'active' : ''}">${step}</li>`).join('');
+}
+
+function renderLessonSteps(activeIx=-1){
+  const scenario = Lab.activeScenario || 'none';
+  renderStepList(lessonSteps, LESSON_STEPS[scenario] || LESSON_STEPS.none, activeIx);
+}
+
+function setScenarioButtonActive(name){
+  [
+    ['storage','scenarioStorage'],
+    ['coin','scenarioCoin'],
+    ['attack','scenarioAttack']
+  ].forEach(([scenario,id])=>{
+    const btn = document.getElementById(id);
+    if(btn) btn.classList.toggle('active', scenario === name);
+  });
+  const debugBtn = document.getElementById('debugTabBtn');
+  if(debugBtn){
+    const showDebug = name === 'attack';
+    debugBtn.hidden = !showDebug;
+    if(!showDebug && debugBtn.classList.contains('active')) selectTab('codeTab');
+  }
+}
+
+function parseUintValue(value, name){
+  const raw = String(value ?? '').trim();
+  if(!/^(0|[1-9]\d*)$/.test(raw)) throw new Error(`${name} must be a whole number >= 0`);
+  const n = Number(raw);
+  if(!Number.isSafeInteger(n)) throw new Error(`${name} is too large for this simulator`);
+  return n;
+}
+
+function parseEthValue(value){
+  const raw = String(value ?? '').trim();
+  if(raw === '') return 0;
+  if(!/^(0|[1-9]\d*)(\.\d+)?$/.test(raw)) throw new Error('msg.value must be a non-negative ETH amount');
+  const n = Number(raw);
+  if(!Number.isFinite(n) || n < 0) throw new Error('msg.value must be a non-negative ETH amount');
+  return n;
+}
+
+function parseAddressValue(value, name){
+  const raw = String(value ?? '').trim();
+  if(!/^0x[a-fA-F0-9]{40}$/.test(raw)) throw new Error(`${name} must be a 20-byte hex address`);
+  return raw.toLowerCase();
+}
+
+function knownAddressEntries(){
+  return [
+    ...Lab.accounts.map(a=>({ label:a.name, addr:a.addr, kind:'account' })),
+    ...Object.values(Lab.contracts).map(c=>({ label:c.type, addr:c.addr, kind:'contract' }))
+  ];
+}
+
+function addressOptionsFor(inputName){
+  let entries = knownAddressEntries();
+  if(inputName === 'receiver') entries = entries.filter(x=>x.kind === 'account');
+  if(inputName === 'target') entries = entries.filter(x=>x.kind === 'contract');
+  return entries.map(x=>`<option value="${x.addr}">${x.label} - ${short(x.addr)}</option>`).join('');
+}
+
+function normalizeCallInputs(addr, fnName, rawArgs, rawValue=0){
+  const c = Lab.contracts[addr];
+  if(!c) throw new Error('Select a deployed contract first');
+  const ex = Examples[c.type];
+  const fn = ex.abi.find(f=>f.name===fnName);
+  if(!fn) throw new Error('Function not found in example');
+  const args = fn.inputs.map((inp, ix)=>{
+    const value = rawArgs[ix];
+    if(inp.type === 'uint') return parseUintValue(value, inp.name);
+    if(inp.type === 'address') return parseAddressValue(value, inp.name);
+    return String(value ?? '').trim();
+  });
+  const msgValue = fn.payable ? parseEthValue(rawValue) : 0;
+  return { fn, args, msgValue };
+}
+
 // Renderers
-function renderAccounts(){ acctSel.innerHTML = Lab.accounts.map((a,i)=> `<option value="${i}">${a.name} — ${short(a.addr)}</option>`).join(''); acctSel.value = '0'; refreshAcctInfo(); }
-function refreshAcctInfo(){ const a = Lab.accounts[acctSel.value|0]; acctInfo.innerHTML = `<b>Address</b><span class="mono">${a.addr}</span><b>Balance</b><span>${fmt(a.balance)} ETH</span>`; }
+function renderAccounts(){ acctSel.innerHTML = Lab.accounts.map((a,i)=> `<option value="${i}">${a.name}</option>`).join(''); acctSel.value = '0'; refreshAcctInfo(); }
+function refreshAcctInfo(){ const a = Lab.accounts[acctSel.value|0]; acctInfo.innerHTML = `<b>Address</b><span class="mono addr" title="${a.addr}">${short(a.addr)}</span><b>Balance</b><span>${fmt(a.balance)} ETH</span>`; }
 
 function renderDeployed(){
-  deployedList.innerHTML = Object.values(Lab.contracts).length ? '' : '<div class="small muted">Nothing yet — deploy an example above.</div>';
+  deployedList.innerHTML = Object.values(Lab.contracts).length ? '' : '<div class="small muted">Choose a scenario to load contracts.</div>';
   Object.values(Lab.contracts).forEach(c=>{
     const div = document.createElement('div');
-    div.className='row'; div.style='justify-content:space-between; align-items:center; margin-bottom:6px; border:1px solid var(--border); padding:6px; border-radius:10px;';
-    div.innerHTML = `<div><div><b>${c.type}</b> <span class=\"muted small\">at</span> <span class=\"mono small\">${c.addr}</span></div><div class=\"small muted\">ETH balance: ${fmt(c.storage.ethBalance||0)} | owner/minter: ${c.storage.minter||'-'}</div></div><div class=\"row\"><button class=\"btn small\" data-act=\"select\" data-addr=\"${c.addr}\">Select</button></div>`;
+    div.className = `row instance ${Lab.current.selectedAddr === c.addr ? 'selected' : ''}`;
+    const owner = c.storage.minter ? short(c.storage.minter) : '-';
+    div.innerHTML = `<div><div><b>${c.type}</b> <span class=\"muted small\">at</span> <span class=\"mono small addr\" title=\"${c.addr}\">${short(c.addr)}</span></div><div class=\"small muted\">ETH ${fmt(c.storage.ethBalance||0)} | owner/minter: ${owner}</div></div><div class=\"row\"><button class=\"btn small\" data-act=\"select\" data-addr=\"${c.addr}\">Select</button></div>`;
     deployedList.appendChild(div);
   });
   Array.from(deployedList.querySelectorAll('button[data-act="select"]')).forEach(btn=>{ btn.onclick = ()=> { Lab.current.selectedAddr = btn.dataset.addr; loadSelectedIntoPanels(); renderDeployed(); }; });
@@ -567,29 +785,49 @@ function loadSelectedIntoPanels(){
   fnList.innerHTML=''; const e = Examples[c.type];
   e.abi.forEach(fn=>{
     const card = document.createElement('div'); card.className='card'; const id = c.addr+fn.name;
-    const inputs = fn.inputs.map((inp,ix)=>{ const placeholder = inp.type==='address' ? '0x...' : (inp.type==='uint' ? '0' : ''); return `<div class=\"col\"><label>${inp.name} <span class=\"muted\">(${inp.type})</span></label><input id=\"${id}-arg${ix}\" placeholder=\"${placeholder}\"/></div>`; }).join('');
-    const valueField = fn.payable ? `<div class=\"col\"><label>msg.value (ETH)</label><input id=\"${id}-val\" placeholder=\"0\"/></div>` : '';
-    card.innerHTML = `<div class=\"row\" style=\"justify-content:space-between;align-items:center\"><b>${fn.name}</b><span class=\"pill\">${fn.view ? 'view' : (fn.payable ? 'payable' : 'nonpayable')}</span></div><div class=\"grid g-2\" style=\"margin-top:8px\">${inputs} ${valueField}</div><div class=\"row\" style=\"margin-top:8px\"><button class=\"btn success\" data-call=\"${fn.name}\" data-addr=\"${c.addr}\">Call</button></div>`;
+    const inputs = fn.inputs.map((inp,ix)=>{
+      if(inp.type === 'address'){
+        return `<div class=\"col\"><label>${inp.name} <span class=\"muted\">(${inp.type})</span></label><select id=\"${id}-arg${ix}\">${addressOptionsFor(inp.name)}</select></div>`;
+      }
+      const placeholder = inp.type==='uint' ? '0' : '';
+      const inputType = inp.type==='uint' ? 'number' : 'text';
+      const attrs = inp.type==='uint' ? 'min="0" step="1"' : 'spellcheck="false"';
+      return `<div class=\"col\"><label>${inp.name} <span class=\"muted\">(${inp.type})</span></label><input id=\"${id}-arg${ix}\" type=\"${inputType}\" ${attrs} placeholder=\"${placeholder}\"/></div>`;
+    }).join('');
+    const valueField = fn.payable ? `<div class=\"col\"><label>msg.value (ETH)</label><input id=\"${id}-val\" type=\"number\" min=\"0\" step=\"0.01\" placeholder=\"0\"/></div>` : '';
+    const actionLabel = fn.view ? 'Read' : 'Send';
+    card.innerHTML = `<div class=\"row\" style=\"justify-content:space-between;align-items:center\"><b>${fn.name}</b><span class=\"pill\">${fn.view ? 'view' : (fn.payable ? 'payable' : 'nonpayable')}</span></div><div class=\"grid g-2\" style=\"margin-top:8px\">${inputs} ${valueField}</div><div class=\"row\" style=\"margin-top:8px\"><button class=\"btn ${fn.view ? '' : 'success'}\" data-call=\"${fn.name}\" data-addr=\"${c.addr}\">${actionLabel}</button></div>`;
     fnList.appendChild(card);
   });
   Array.from(fnList.querySelectorAll('button[data-call]')).forEach(btn=>{
     btn.onclick = ()=>{
-      const addr = btn.dataset.addr; const e = Lab.contracts[addr]; const ex = Examples[e.type]; const fn = ex.abi.find(f=>f.name===btn.dataset.call);
-      const args = fn.inputs.map((inp,ix)=>{ const v = document.getElementById(addr+fn.name+`-arg${ix}`).value.trim(); return inp.type==='uint' ? Number(v||0) : v; });
-      const msgValue = fn.payable ? Number(document.getElementById(addr+fn.name+'-val').value||0) : 0;
-      const caller = Lab.accounts[acctSel.value|0];
-      // debit msg.value from caller and credit callee (contract) before execution
-      if(msgValue>0){ if(caller.balance<msgValue) { alert('Caller lacks ETH for msg.value'); return; } caller.balance -= msgValue; Lab.contracts[addr].storage.ethBalance = (Lab.contracts[addr].storage.ethBalance||0) + msgValue; }
-      clearTrace();
-      executeAndCommit(addr, fn.name, args, { sender: caller.addr, value: msgValue });
-      // jump to chain tab and focus newest block
-      document.querySelector('[data-tab="chainTab"]').click();
+      try{
+        const addr = btn.dataset.addr; const e = Lab.contracts[addr]; const ex = Examples[e.type]; const fn = ex.abi.find(f=>f.name===btn.dataset.call);
+        const rawArgs = fn.inputs.map((inp,ix)=> document.getElementById(addr+fn.name+`-arg${ix}`).value);
+        const rawValue = fn.payable ? document.getElementById(addr+fn.name+'-val').value : 0;
+        const prepared = normalizeCallInputs(addr, fn.name, rawArgs, rawValue);
+        const caller = Lab.accounts[acctSel.value|0];
+        clearTrace();
+        const tx = executeAndCommit(addr, fn.name, prepared.args, { sender: caller.addr, value: prepared.msgValue }, { commit: !prepared.fn.view });
+        renderAllPanels();
+        refreshAcctInfo();
+        renderDeployed();
+        if(prepared.fn.view){
+          document.querySelector('[data-tab="stateTab"]').click();
+          setStatus(`${e.type}.${fn.name} read returned ${fmt(tx.receipt.returnValue)}. No block was mined.`, 'ok');
+        }else{
+          document.querySelector('[data-tab="chainTab"]').click();
+          setStatus(`${e.type}.${fn.name} ${tx.receipt.status}; block #${Lab.chain.blocks[Lab.chain.blocks.length-1].number} recorded.`, tx.receipt.status === 'executed' ? 'ok' : 'bad');
+        }
+      }catch(err){
+        setStatus(err.message || String(err), 'bad');
+      }
     };
   });
   renderAllPanels();
 }
 
-function clearTrace(){ traceEl.innerHTML=''; eventsEl.innerHTML=''; }
+function clearTrace(){ traceEl.innerHTML=''; eventsEl.innerHTML=''; if(debugTrace) debugTrace.innerHTML=''; }
 function renderEvents(){ eventsEl.innerHTML = Lab.current.events.map(e=>{ const args = Object.entries(e.args||{}).map(([k,v])=> `${k}:${v}`).join(', '); return `<div class=\"line\">event <b>${e.event}</b> (${args})</div>`; }).join(''); }
 function logEvent(e){ Lab.current.events.push(e); renderEvents(); }
 
@@ -604,22 +842,244 @@ function renderBlocks(){
 function showBlockDetail(ix){ const b = Lab.chain.blocks[ix]; if(!b){ blockDetail.textContent='(block not found)'; return; } const header = { number:b.number, timestamp:new Date(b.timestamp).toISOString(), miner:b.miner, gasUsed:b.gasUsed, txs:b.txs.length }; const rendered = `HEADER\n${JSON.stringify(header,null,2)}\n\nTXS\n${JSON.stringify(b.txs,null,2)}`; blockDetail.textContent = rendered; }
 
 function renderAllPanels(){ renderEvents(); renderStorage(); renderBalances(); renderStack(); }
-function renderAll(){ renderAccounts(); renderDeployed(); renderBlocks(); loadSelectedIntoPanels(); }
+function renderAll(){ renderAccounts(); renderDeployed(); renderBlocks(); loadSelectedIntoPanels(); renderLessonSteps(); }
 
 // ---------- Helpers (for tests & UI) ----------
 function deployExample(type, deployerIndex=0){ const ex = Examples[type]; const addr = makeAddress(); const deployer = Lab.accounts[deployerIndex].addr; const storage = ex.init(ex.name==='Coin' ? deployer : undefined); Lab.contracts[addr] = { addr, type, deployer, storage, handlers: ex.handlers }; return addr; }
-function callContract(addr, fnName, args, senderIndex=0, value=0){ const sender = Lab.accounts[senderIndex]; if(value>0){ if(sender.balance<value) throw new Error('insufficient ETH in test'); sender.balance -= value; Lab.contracts[addr].storage.ethBalance = (Lab.contracts[addr].storage.ethBalance||0)+value; } executeAndCommit(addr, fnName, args, { sender: sender.addr, value }); }
+function callContract(addr, fnName, args, senderIndex=0, value=0, options={}){ const sender = Lab.accounts[senderIndex]; const prepared = normalizeCallInputs(addr, fnName, args, value); return executeAndCommit(addr, fnName, prepared.args, { sender: sender.addr, value: prepared.msgValue }, { commit: options.commit ?? !prepared.fn.view }); }
+
+function seedVaultDeposit(vaultAddr, accountIndex, amount){
+  const vault = Lab.contracts[vaultAddr];
+  const account = Lab.accounts[accountIndex];
+  if(!vault || vault.type !== 'VulnVault') throw new Error('Seed target must be a VulnerableVault');
+  if(account.balance < amount) throw new Error(`${account.name} lacks ETH for setup`);
+  account.balance -= amount;
+  vault.storage.ethBalance = (vault.storage.ethBalance || 0) + amount;
+  vault.storage.balances[account.addr] = (vault.storage.balances[account.addr] || 0) + amount;
+}
+
+function setActiveContract(addr){
+  Lab.current.selectedAddr = addr;
+  renderDeployed();
+  loadSelectedIntoPanels();
+}
+
+let attackPlayTimer = null;
+
+function stopAttackPlayback(render=true){
+  if(attackPlayTimer){
+    window.clearInterval(attackPlayTimer);
+    attackPlayTimer = null;
+  }
+  if(Lab.attack) Lab.attack.playing = false;
+  if(render) renderAttackDebugger();
+}
+
+function startStorageScenario(){
+  stopAttackPlayback(false);
+  resetLab();
+  Lab.activeScenario = 'storage';
+  setScenarioButtonActive('storage');
+  const addr = deployExample('SimpleStorage',0);
+  setActiveContract(addr);
+  renderLessonSteps();
+  selectTab('interactTab');
+  setStatus('SimpleStorage is ready. Send set(x), then Read get() and compare block count.', 'ok');
+}
+
+function startCoinScenario(){
+  stopAttackPlayback(false);
+  resetLab();
+  Lab.activeScenario = 'coin';
+  setScenarioButtonActive('coin');
+  const addr = deployExample('Coin',0);
+  setActiveContract(addr);
+  renderLessonSteps();
+  selectTab('interactTab');
+  setStatus('Coin is ready. Alice is the minter — only she can mint (create) new tokens. Anyone holding tokens can send (transfer) them. Try mint() as Alice, then switch the caller to Bob and try mint() again to see the revert.', 'ok');
+}
+
+function startAttackScenario(){
+  stopAttackPlayback(false);
+  resetLab();
+  Lab.activeScenario = 'attack';
+  setScenarioButtonActive('attack');
+  Lab.accounts[2].balance = 60;
+  Lab.accounts[3].balance = 10;
+  const vault = deployExample('VulnVault',0);
+  const attacker = deployExample('Attack',3);
+  seedVaultDeposit(vault,1,50);
+  seedVaultDeposit(vault,2,40);
+  Lab.contracts[attacker].storage.target = vault;
+  Lab.attack = { vault, attacker, loaded:true, started:false, finished:false, playing:false };
+  setActiveContract(vault);
+  acctSel.value = '3';
+  refreshAcctInfo();
+  clearTrace();
+  blockDetail.textContent = 'Step through Eve\'s attack transaction. The receipt appears here after the transaction commits.';
+  renderLessonSteps(0);
+  selectTab('debugTab');
+  setStatus('Attack scenario loaded: Bob deposited 50 ETH, Carol deposited 40 ETH, and Eve will attack with 10 ETH in one transaction.', 'warnText');
+  renderAttackDebugger('Start here: press Step to begin Eve\'s attack transaction, or Play Trace to watch it advance automatically.');
+}
+
+function attackContracts(){
+  return {
+    vault: Lab.attack.vault ? Lab.contracts[Lab.attack.vault] : null,
+    attacker: Lab.attack.attacker ? Lab.contracts[Lab.attack.attacker] : null,
+    bob: Lab.accounts[1],
+    carol: Lab.accounts[2],
+    eve: Lab.accounts[3]
+  };
+}
+
+function currentAttackStepIndex(){
+  const { vault, attacker } = attackContracts();
+  if(!vault || !attacker) return -1;
+  if(Lab.attack.finished) return 6;
+  if(!Lab.attack.started) return 0;
+  const vaultEth = vault.storage.ethBalance || 0;
+  const attackerRecorded = vault.storage.balances[attacker.addr] || 0;
+  const withdrawFrames = Lab.current.stack.filter(f=>f.name === 'withdraw').length;
+  const receiveFrames = Lab.current.stack.filter(f=>f.name === '__receive').length;
+  if(vaultEth < 90) return 5;
+  if(withdrawFrames > 1 || receiveFrames > 0) return 4;
+  if(withdrawFrames === 1) return 3;
+  if(attackerRecorded > 0) return 2;
+  return 1;
+}
+
+function renderAttackDebugger(message){
+  const { vault, attacker, bob, carol, eve } = attackContracts();
+  if(!vault || !attacker){
+    debugSetup.textContent = 'Choose Reentrancy Attack to load the vulnerable vault and attacker contract.';
+    renderStepList(attackSteps, ATTACK_STEPS, -1);
+    debugLedger.innerHTML = '';
+    debugTrace.textContent = 'Press Step to start the attack transaction.';
+    debugFrames.textContent = 'No attack transaction is loaded.';
+    debugReceipt.textContent = 'The receipt appears after the attack transaction commits.';
+    debugNarration.textContent = message || 'No attack transaction is running.';
+    stepAttackDebug.disabled = true;
+    runAttackDebug.disabled = true;
+    resetAttackDebug.disabled = true;
+    return;
+  }
+
+  const attackerRecorded = vault.storage.balances[attacker.addr] || 0;
+  const bobRecorded = vault.storage.balances[bob.addr] || 0;
+  const carolRecorded = vault.storage.balances[carol.addr] || 0;
+  const vaultEth = vault.storage.ethBalance || 0;
+  const claimGap = Math.max(0, bobRecorded + carolRecorded + attackerRecorded - vaultEth);
+  const activeStep = currentAttackStepIndex();
+  renderStepList(attackSteps, ATTACK_STEPS, activeStep);
+  renderLessonSteps(activeStep);
+  debugSetup.textContent = 'Bob and Carol deposited normally. Eve\'s contract calls withdraw(), and its receive() hook re-enters withdraw() before the vault zeros out the recorded balance — so the same balance gets paid out over and over.';
+  debugLedger.innerHTML = [
+    ['Vault ETH', `${fmt(vaultEth)} ETH`],
+    ['Bob recorded claim', `${fmt(bobRecorded)} ETH`],
+    ['Carol recorded claim', `${fmt(carolRecorded)} ETH`],
+    ['Attacker recorded claim', `${fmt(attackerRecorded)} ETH`],
+    ['Attacker contract ETH', `${fmt(attacker.storage.ethBalance||0)} ETH`],
+    ['Eve EOA ETH', `${fmt(eve.balance)} ETH`],
+    ['Unpayable claim gap', `${fmt(claimGap)} ETH`]
+  ].map(([k,v])=>`<div class="metric"><b>${k}</b><span>${v}</span></div>`).join('');
+
+  if(Lab.current.stack.length){
+    debugFrames.innerHTML = Lab.current.stack.map((f,i)=>{
+      const sender = f.msg && f.msg.sender ? short(f.msg.sender) : '-';
+      const marker = i === Lab.current.stack.length-1 ? ' ← executing' : '';
+      return `<div class="line${marker ? ' hot' : ''}">#${i+1} ${f.type}.${f.name} sender=${sender} nextStep=${f.ip+1}${marker}</div>`;
+    }).join('');
+  }else{
+    debugFrames.textContent = Lab.attack.finished ? 'No active frames. Transaction finalized.' : 'No active frames yet.';
+  }
+
+  const withdrawFrames = Lab.current.stack.filter(f=>f.name === 'withdraw').length;
+  const lastTraceEl = traceEl.querySelector('.line:last-child');
+  const lastTrace = lastTraceEl ? lastTraceEl.textContent : '';
+  let text = message || lastTrace || 'Press Step to begin.';
+  if(withdrawFrames > 1){
+    text = `${text}\n\nKey point: ${withdrawFrames} withdraw() frames are active in one transaction. The newer frame still sees attacker balance = ${fmt(attackerRecorded)} because the older frame has not reached balances[msg.sender] = 0.`;
+  }
+  if(Lab.attack.finished){
+    text = `${text}\n\nCommitted result: the attacker contract holds ${fmt(attacker.storage.ethBalance||0)} ETH. Bob and Carol still have recorded claims of ${fmt(bobRecorded)} ETH and ${fmt(carolRecorded)} ETH, but the vault has ${fmt(vaultEth)} ETH left to pay them.`;
+  }
+  if(debugTrace && !debugTrace.querySelector('.line')){
+    debugTrace.textContent = Lab.attack.started ? 'Trace is running.' : 'Press Step to start the attack transaction.';
+  }
+  if(debugReceipt){
+    if(Lab.attack.finished){
+      const block = Lab.chain.blocks[Lab.chain.blocks.length-1];
+      const tx = lastTx();
+      debugReceipt.textContent = JSON.stringify({ block:block ? block.number : null, inputs:tx ? tx.inputs : null, receipt:tx ? tx.receipt : null }, null, 2);
+    }else{
+      debugReceipt.textContent = 'The receipt appears after the attack transaction commits.';
+    }
+  }
+  debugNarration.textContent = text;
+  stepAttackDebug.disabled = Lab.attack.finished || Lab.attack.playing;
+  runAttackDebug.disabled = Lab.attack.finished && !Lab.attack.playing;
+  runAttackDebug.textContent = Lab.attack.playing ? 'Pause' : 'Play Trace';
+  resetAttackDebug.disabled = false;
+}
+
+function stepAttackDebugger(){
+  if(!Lab.attack.loaded) startAttackScenario();
+  const { attacker, eve } = attackContracts();
+  if(!attacker) return;
+  if(!Lab.attack.started){
+    clearTrace();
+    beginExecution(attacker.addr, 'attack', [], { sender:eve.addr, value:10 }, { commit:true });
+    Lab.attack.started = true;
+  }
+  if(Lab.current.stack.length>0){
+    stepOnce();
+  }
+  if(Lab.current.stack.length===0 && Lab.current.session){
+    const tx = finalizeExecution();
+    Lab.attack.finished = true;
+    stopAttackPlayback(false);
+    renderAllPanels();
+    renderDeployed();
+    renderAttackDebugger(`Transaction ${tx.receipt.status}; block #${Lab.chain.blocks[Lab.chain.blocks.length-1].number} recorded.`);
+    return;
+  }
+  renderAttackDebugger();
+}
+
+function runAttackDebugger(){
+  if(Lab.attack.playing){
+    stopAttackPlayback();
+    return;
+  }
+  if(!Lab.attack.loaded) startAttackScenario();
+  Lab.attack.playing = true;
+  renderAttackDebugger('Playing one execution step every half second. Use Pause to stop on a frame.');
+  attackPlayTimer = window.setInterval(()=>{
+    if(!Lab.attack.loaded || Lab.attack.finished){
+      stopAttackPlayback();
+      return;
+    }
+    stepAttackDebugger();
+    if(Lab.attack.finished) stopAttackPlayback();
+  }, 550);
+}
 
 // ---------- Controls ----------
-document.getElementById('faucetBtn').onclick = ()=>{ const a = Lab.accounts[acctSel.value|0]; a.balance += 10; refreshAcctInfo(); renderBalances(); };
-document.getElementById('resetBtn').onclick = ()=>{ resetLab(); };
-document.getElementById('deployBtn').onclick = ()=>{ const type = document.getElementById('contractType').value; const addr = deployExample(type, acctSel.value|0); Lab.current.selectedAddr = addr; renderDeployed(); loadSelectedIntoPanels(); renderBalances(); };
-document.getElementById('mineBtn').onclick = ()=>{ const blk = { number: Lab.chain.nextBlock++, timestamp: Date.now(), miner:'0xB10C000000000000000000000000000000000000', gasUsed: 0, txs: [] }; Lab.chain.blocks.push(blk); renderBlocks(); showBlockDetail(Lab.chain.blocks.length-1); };
+document.getElementById('faucetBtn').onclick = ()=>{ const a = Lab.accounts[acctSel.value|0]; a.balance += 10; refreshAcctInfo(); renderBalances(); setStatus(`${a.name} funded with 10 ETH.`, 'ok'); };
+document.getElementById('resetBtn').onclick = ()=>{ stopAttackPlayback(false); resetLab(); renderAttackDebugger(); setStatus('Lab reset. Choose a scenario to begin.', 'warnText'); };
+document.getElementById('scenarioStorage').onclick = startStorageScenario;
+document.getElementById('scenarioCoin').onclick = startCoinScenario;
+document.getElementById('scenarioAttack').onclick = startAttackScenario;
+stepAttackDebug.onclick = stepAttackDebugger;
+runAttackDebug.onclick = runAttackDebugger;
+resetAttackDebug.onclick = startAttackScenario;
+document.getElementById('mineBtn').onclick = ()=>{ const blk = { number: Lab.chain.nextBlock++, timestamp: Date.now(), miner:'0xB10C000000000000000000000000000000000000', gasUsed: 0, txs: [] }; Lab.chain.blocks.push(blk); renderBlocks(); showBlockDetail(Lab.chain.blocks.length-1); setStatus(`Empty block #${blk.number} mined.`, 'ok'); };
 acctSel.onchange = refreshAcctInfo;
 
 // ---------- Self‑Tests ----------
 const testResults = document.getElementById('testResults');
-function logTest(name, passed, detail=''){ const div = document.createElement('div'); div.innerHTML = `${passed? '✅' : '❌'} <b>${name}</b> <span class="${passed?'test-pass':'test-fail'}">${passed? 'passed' : 'failed'}</span> ${detail? '— '+detail:''}`; testResults.appendChild(div); }
+function logTest(name, passed, detail=''){ const div = document.createElement('div'); div.innerHTML = `<b class="${passed?'test-pass':'test-fail'}">${passed? 'PASS' : 'FAIL'}</b> ${name}${detail? ' - '+detail:''}`; testResults.appendChild(div); }
 function lastTx(){ const b = Lab.chain.blocks[Lab.chain.blocks.length-1]; return b && b.txs[b.txs.length-1]; }
 function runSelfTests(){
   testResults.innerHTML='';
@@ -627,19 +1087,28 @@ function runSelfTests(){
 
   try{ resetLab(); if(Lab.accounts.length!==4) throw new Error(`expected 4 accounts, got ${Lab.accounts.length}`); logTest('resetLab seeds 4 EOAs', true); } catch(e){ logTest('resetLab seeds 4 EOAs', false, e.message); }
 
-  try{ const sAddr = deployExample('SimpleStorage',0); Lab.current.selectedAddr = sAddr; callContract(sAddr,'set',[7],0,0); if(Lab.contracts[sAddr].storage.stored!==7) throw new Error('stored != 7'); logTest('SimpleStorage.set/get roundtrip', true); } catch(e){ logTest('SimpleStorage.set/get roundtrip', false, e.message); }
+	  try{ const sAddr = deployExample('SimpleStorage',0); Lab.current.selectedAddr = sAddr; callContract(sAddr,'set',[7],0,0); const beforeReadBlocks = Lab.chain.blocks.length; const readTx = callContract(sAddr,'get',[],0,0); if(Lab.contracts[sAddr].storage.stored!==7) throw new Error('stored != 7'); if(readTx.receipt.returnValue!==7) throw new Error('get did not return 7'); if(Lab.chain.blocks.length!==beforeReadBlocks) throw new Error('view call mined a block'); logTest('SimpleStorage write/read behavior', true); } catch(e){ logTest('SimpleStorage write/read behavior', false, e.message); }
 
-  try{ const cAddr = deployExample('Coin',0); callContract(cAddr,'mint',[Lab.accounts[1].addr,100],0,0); const balBob = Lab.contracts[cAddr].storage.balances[Lab.accounts[1].addr]||0; if(balBob!==100) throw new Error(`Bob bal = ${balBob}`); callContract(cAddr,'mint',[Lab.accounts[2].addr,50],1,0); const ltx = lastTx(); if(!ltx || ltx.receipt.status!=='reverted') throw new Error('unauthorized mint should revert'); const after = Lab.contracts[cAddr].storage.balances[Lab.accounts[2].addr]||0; if(after!==0) throw new Error('Carol bal changed on revert'); logTest('Coin auth + revert refund', true); } catch(e){ logTest('Coin auth + revert refund', false, e.message); }
+	  try{ const cAddr = deployExample('Coin',0); callContract(cAddr,'mint',[Lab.accounts[1].addr,100],0,0); const balBob = Lab.contracts[cAddr].storage.balances[Lab.accounts[1].addr]||0; if(balBob!==100) throw new Error(`Bob bal = ${balBob}`); callContract(cAddr,'mint',[Lab.accounts[2].addr,50],1,0); const ltx = lastTx(); if(!ltx || ltx.receipt.status!=='reverted') throw new Error('unauthorized mint should revert'); const after = Lab.contracts[cAddr].storage.balances[Lab.accounts[2].addr]||0; if(after!==0) throw new Error('Carol bal changed on revert'); logTest('Coin authorization rollback', true); } catch(e){ logTest('Coin authorization rollback', false, e.message); }
 
-  try{ const vAddr = deployExample('VulnVault',0); const aAddr = deployExample('Attack',0); callContract(vAddr,'deposit',[],1,50); callContract(aAddr,'setTarget',[vAddr],0,0); callContract(aAddr,'attack',[],0,10); const vault = Lab.contracts[vAddr]; const attackerC = Lab.contracts[aAddr]; if(!(vault.storage.ethBalance===0)) throw new Error(`vault ethBalance not drained: ${vault.storage.ethBalance}`); if(!((attackerC.storage.ethBalance||0) >= 60)) throw new Error('attacker did not gain >= 60'); logTest('VulnerableVault reentrancy drains funds', true); } catch(e){ logTest('VulnerableVault reentrancy drains funds', false, e.message); }
+	  try{ const cAddr = deployExample('Coin',0); const blocksBefore = Lab.chain.blocks.length; let rejected = false; try{ callContract(cAddr,'mint',[Lab.accounts[1].addr,-100],0,0); }catch(e){ rejected = true; } if(!rejected) throw new Error('negative uint was accepted'); if(Lab.chain.blocks.length!==blocksBefore) throw new Error('invalid input created a block'); const balBob = Lab.contracts[cAddr].storage.balances[Lab.accounts[1].addr]||0; if(balBob!==0) throw new Error('invalid input changed storage'); logTest('ABI input validation rejects negative uint', true); } catch(e){ logTest('ABI input validation rejects negative uint', false, e.message); }
 
-  try{ resetLab(); const sAddr = deployExample('SafeVault',0); const aAddr = deployExample('Attack',0); callContract(sAddr,'deposit',[],1,50); callContract(aAddr,'setTarget',[sAddr],0,0); callContract(aAddr,'attack',[],0,10); const safe = Lab.contracts[sAddr]; const attackerC = Lab.contracts[aAddr]; if(safe.storage.ethBalance!==50) throw new Error(`safe ethBalance expected 50, got ${safe.storage.ethBalance}`); if(!((attackerC.storage.ethBalance||0) === 10)) throw new Error('attacker gained more than own 10'); logTest('SafeVault CEI prevents draining others', true); } catch(e){ logTest('SafeVault CEI prevents draining others', false, e.message); }
+	  try{ resetLab(); const vAddr = deployExample('VulnVault',0); const blocksBefore = Lab.chain.blocks.length; let rejected = false; try{ callContract(vAddr,'deposit',[],3,1); }catch(e){ rejected = true; } if(!rejected) throw new Error('unfunded payable call was accepted'); if(Lab.chain.blocks.length!==blocksBefore) throw new Error('unfunded call created a block'); if((Lab.contracts[vAddr].storage.ethBalance||0)!==0) throw new Error('unfunded call changed ETH balance'); logTest('Unfunded msg.value is rejected before execution', true); } catch(e){ logTest('Unfunded msg.value is rejected before execution', false, e.message); }
+
+	  try{ resetLab(); const aAddr = deployExample('Attack',0); const badTarget = '0x000000000000000000000000000000000000dead'; callContract(aAddr,'setTarget',[badTarget],0,0); const aliceBefore = Lab.accounts[0].balance; callContract(aAddr,'attack',[],0,10); const ltx = lastTx(); if(!ltx || ltx.receipt.status!=='reverted') throw new Error('bad target attack should revert'); if(Lab.accounts[0].balance!==aliceBefore) throw new Error('msg.value was not refunded on revert'); if((Lab.contracts[aAddr].storage.ethBalance||0)!==0) throw new Error('attacker kept ETH after revert'); logTest('Revert restores value and storage', true); } catch(e){ logTest('Revert restores value and storage', false, e.message); }
+
+  try{ startAttackScenario(); const vault = Lab.contracts[Lab.attack.vault]; const attackerC = Lab.contracts[Lab.attack.attacker]; if((vault.storage.ethBalance||0)!==90) throw new Error(`vault setup ETH = ${vault.storage.ethBalance}`); if((vault.storage.balances[Lab.accounts[1].addr]||0)!==50) throw new Error('Bob deposit missing'); if((vault.storage.balances[Lab.accounts[2].addr]||0)!==40) throw new Error('Carol deposit missing'); if(attackerC.storage.target!==vault.addr) throw new Error('attacker target not set'); logTest('Attack scenario setup', true); } catch(e){ logTest('Attack scenario setup', false, e.message); }
+
+  try{ const vault = Lab.contracts[Lab.attack.vault]; const attackerC = Lab.contracts[Lab.attack.attacker]; callContract(attackerC.addr,'attack',[],3,10); if(!(vault.storage.ethBalance===0)) throw new Error(`vault ethBalance not drained: ${vault.storage.ethBalance}`); if((attackerC.storage.ethBalance||0)!==100) throw new Error(`attacker contract ETH = ${attackerC.storage.ethBalance}`); if((vault.storage.balances[Lab.accounts[1].addr]||0)!==50) throw new Error('Bob recorded claim should remain unpaid'); if((vault.storage.balances[Lab.accounts[2].addr]||0)!==40) throw new Error('Carol recorded claim should remain unpaid'); logTest('VulnerableVault reentrancy drains all depositor ETH', true); } catch(e){ logTest('VulnerableVault reentrancy drains all depositor ETH', false, e.message); }
+
+  startAttackScenario();
 }
 
 document.getElementById('runTests').onclick = runSelfTests;
 
 // ---------- Boot ----------
-resetLab();
+debugCard.hidden = !isDebugMode;
+startAttackScenario();
 });
 </script>
 </body>

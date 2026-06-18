@@ -28,16 +28,16 @@ def build_dashboard_metrics(filters: MetricsFilters, *, conn=None):
     quiz_versions = [_dict(row) for row in fetch_quiz_versions(conn=conn)]
     active_students = [_dict(row) for row in fetch_active_students(conn=conn)]
 
-    if filters.quiz_version_id is not None:
+    if filters.quiz_version_ids:
         attempts = [
             attempt
             for attempt in attempts
-            if attempt["quiz_version_id"] == filters.quiz_version_id
+            if attempt["quiz_version_id"] in filters.quiz_version_ids
         ]
         quiz_versions = [
             version
             for version in quiz_versions
-            if version["id"] == filters.quiz_version_id
+            if version["id"] in filters.quiz_version_ids
         ]
 
     rollup_attempts = _rollup_attempts(attempts, filters)
@@ -108,6 +108,14 @@ def build_dashboard_metrics(filters: MetricsFilters, *, conn=None):
         "strongest_tags": _strongest_dimensions(tag_rollups),
         "weakest_tags": _weakest_dimensions(tag_rollups),
         "source_rollups": source_rollups,
+        "strengths_weaknesses": _strengths_weaknesses(
+            topic_rollups,
+            tag_rollups,
+            source_rollups,
+            difficulty_rollups,
+            question_type_rollups,
+            item_analysis,
+        ),
         "item_analysis": item_analysis,
         "visualizations": _visualization_metrics(
             class_summary,
@@ -145,11 +153,11 @@ def get_student_detail(identifier, filters: MetricsFilters, *, conn=None):
         for row in fetch_attempt_rows(conn=conn)
         if row["student_id"] == student["id"]
     ]
-    if filters.quiz_version_id is not None:
+    if filters.quiz_version_ids:
         attempts = [
             attempt
             for attempt in attempts
-            if attempt["quiz_version_id"] == filters.quiz_version_id
+            if attempt["quiz_version_id"] in filters.quiz_version_ids
         ]
     attempts = _rollup_attempts(attempts, filters)
     attempts = [
@@ -161,15 +169,48 @@ def get_student_detail(identifier, filters: MetricsFilters, *, conn=None):
         _dict(row)
         for row in fetch_question_rows([attempt["id"] for attempt in attempts], conn=conn)
     ]
+    option_rows = [
+        _dict(row)
+        for row in fetch_option_rows(
+            [row["quiz_version_question_id"] for row in question_rows],
+            conn=conn,
+        )
+    ]
+    options_by_question = defaultdict(list)
+    for option in option_rows:
+        options_by_question[option["quiz_version_question_id"]].append(option)
+
+    (
+        topic_rollups,
+        tag_rollups,
+        source_rollups,
+        difficulty_rollups,
+        question_type_rollups,
+    ) = _answer_dimension_rollups(question_rows)
+    item_analysis = _item_analysis(question_rows, option_rows)
+
     questions_by_attempt = defaultdict(list)
     for row in question_rows:
-        questions_by_attempt[row["attempt_id"]].append(_student_detail_question(row))
+        questions_by_attempt[row["attempt_id"]].append(
+            _student_detail_question(
+                row,
+                options_by_question.get(row["quiz_version_question_id"], []),
+            )
+        )
 
     return {
         "student_identifier": student["identifier"],
         "student_status": student["status"],
         "filters": filters.to_payload(),
         "attempt_count": len(attempts),
+        "strengths_weaknesses": _strengths_weaknesses(
+            topic_rollups,
+            tag_rollups,
+            source_rollups,
+            difficulty_rollups,
+            question_type_rollups,
+            item_analysis,
+        ),
         "attempts": [
             _student_detail_attempt(
                 attempt,
@@ -398,7 +439,19 @@ def _item_analysis(question_rows, option_rows):
 
     return sorted(
         items.values(),
-        key=lambda item: (item["quiz_version_id"], item["position"]),
+        key=_item_performance_sort_key,
+    )
+
+
+def _item_performance_sort_key(item):
+    percent_correct = item["percent_correct"]
+    return (
+        percent_correct is None,
+        percent_correct if percent_correct is not None else 101,
+        -item["unanswered_count"],
+        -item["attempt_count"],
+        item["quiz_title"],
+        item["position"],
     )
 
 
@@ -510,6 +563,77 @@ def _weakest_dimensions(rows):
     )[:5]
 
 
+def _strengths_weaknesses(
+    topic_rollups,
+    tag_rollups,
+    source_rollups,
+    difficulty_rollups,
+    question_type_rollups,
+    item_analysis,
+):
+    return {
+        "dimension_groups": [
+            _dimension_strength_group("Topics", "topic", topic_rollups),
+            _dimension_strength_group("Tags", "tag", tag_rollups),
+            _dimension_strength_group(
+                "Source lessons",
+                "specific_source_lesson",
+                source_rollups["specific_source_lessons"],
+            ),
+            _dimension_strength_group(
+                "Source readings",
+                "specific_source_reading",
+                source_rollups["specific_source_readings"],
+            ),
+            _dimension_strength_group(
+                "Difficulty levels",
+                "difficulty_level",
+                difficulty_rollups,
+            ),
+            _dimension_strength_group(
+                "Question types",
+                "question_type",
+                question_type_rollups,
+            ),
+        ],
+        "item_strengths": _strongest_items(item_analysis),
+        "item_weaknesses": _weakest_items(item_analysis),
+    }
+
+
+def _dimension_strength_group(label, value_key, rows):
+    return {
+        "label": label,
+        "value_key": value_key,
+        "strengths": _strongest_dimensions(rows),
+        "weaknesses": _weakest_dimensions(rows),
+    }
+
+
+def _strongest_items(items):
+    return sorted(
+        items,
+        key=lambda item: (
+            item["percent_correct"] is not None,
+            item["percent_correct"] or -1,
+            item["attempt_count"],
+        ),
+        reverse=True,
+    )[:5]
+
+
+def _weakest_items(items):
+    return sorted(
+        items,
+        key=lambda item: (
+            item["percent_correct"] if item["percent_correct"] is not None else -1,
+            -item["attempt_count"],
+            item["quiz_title"],
+            item["position"],
+        ),
+    )[:5]
+
+
 def _strongest_students(summaries):
     return sorted(
         summaries,
@@ -589,9 +713,12 @@ def _visualization_metrics(
                 "quiz_title": item["quiz_title"],
                 "source_qid": item["snapshot_source_qid"],
                 "question_type": item["question_type"],
+                "question_stem": item["question_stem"],
                 "attempt_count": item["attempt_count"],
                 "percent_correct": item["percent_correct"],
                 "unanswered_count": item["unanswered_count"],
+                "options": item["distractor_counts"],
+                "written_grading_status": item["written_grading_status"],
             }
             for item in item_analysis
         ],
@@ -752,10 +879,7 @@ def _retake_metrics(attempts, filters):
         attempt
         for attempt in attempts
         if (filters.include_voided or attempt["status"] != "voided")
-        and (
-            filters.quiz_version_id is None
-            or attempt["quiz_version_id"] == filters.quiz_version_id
-        )
+        and (not filters.quiz_version_ids or attempt["quiz_version_id"] in filters.quiz_version_ids)
     ]
     grouped = defaultdict(list)
     for attempt in candidates:
@@ -964,11 +1088,26 @@ def _student_detail_attempt(attempt, questions):
     }
 
 
-def _student_detail_question(row):
+def _student_detail_question(row, options=None):
+    options = options or []
+    answer_options = [
+        {
+            "id": option["id"],
+            "option_text": option["option_text"],
+            "is_correct": bool(option["is_correct"]),
+        }
+        for option in options
+    ]
+    correct_option = next(
+        (option for option in answer_options if option["is_correct"]),
+        None,
+    )
     answer = {
         "answer_id": row["answer_id"],
         "selected_option_id": row["selected_quiz_version_option_id"],
         "selected_option_text": row["selected_option_text"],
+        "correct_option_id": correct_option["id"] if correct_option else None,
+        "correct_option_text": correct_option["option_text"] if correct_option else None,
         "is_correct": bool(row["is_correct"]) if row["is_correct"] is not None else None,
         "written_response": row["written_response"],
         "points_awarded": row["points_awarded"],
@@ -989,6 +1128,7 @@ def _student_detail_question(row):
         "lesson_block": row["snapshot_lesson_block"],
         "specific_source_lesson": row["snapshot_specific_source_lesson"],
         "specific_source_reading": row["snapshot_specific_source_reading"],
+        "options": answer_options,
         "answer": answer,
     }
 

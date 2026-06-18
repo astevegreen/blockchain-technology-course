@@ -44,6 +44,7 @@ WORKDIR /home/student/lab
 COPY --chown=student:student scripts/ ./scripts/
 COPY --chown=student:student data/ ./data/
 COPY --chown=student:student README.md ./
+COPY --chown=student:student scripts/pastry.py /home/student/pastry.py.original
 
 # If you end up using a custom entrypoint script later, you can uncomment this:
 # COPY --chmod=755 entrypoint.sh /usr/local/bin/
@@ -65,5 +66,6 @@ EXPOSE 7681
 # Note: If you use the entrypoint.sh from your other lab, uncomment this:
 # ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
-# Start ttyd on port 7681, launching zellij
-CMD ["ttyd", "-p", "7681", "-W", "setsid", "-w", "zellij", "attach", "--create", "s0"]
+# Start ttyd on port 7681, launching zellij directly so resize signals from
+# ttyd reach zellij.
+CMD ["ttyd", "-p", "7681", "-W", "zellij", "attach", "--create", "s0"]

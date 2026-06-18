@@ -9,14 +9,16 @@ jobs:
     permissions:
       contents: write
     env:
-      BITCOIN_LAB_IMAGE: ghcr.io/bja2142/bitcoin-lab:latest
-      BITCOIN_MEMPOOL_IMAGE: ghcr.io/bja2142/bitcoin-mempool:latest
+      BITCOIN_LAB_IMAGE: ghcr.io/blockchain-course-2026/bitcoin-lab:latest
+      BITCOIN_MEMPOOL_IMAGE: ghcr.io/blockchain-course-2026/bitcoin-mempool:latest
       HLF_IMAGE_TAG: 2.5.15
       HLF_CA_IMAGE_TAG: 1.5.17
       HLF_COUCHDB_IMAGE: couchdb:3.4.2
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          lfs: true   # pull the forensics chain snapshot (blocks/*.dat) — not pointers
       - name: Fix Script Permissions
         run: find . -type f -name "*.sh" -exec chmod +x {} \;
       - name: Remove Unused Repo Payload
@@ -51,6 +53,15 @@ jobs:
           large-packages: true
           docker-images: false
           swap-storage: false
+      - name: Stage build scratch on /mnt
+        run: |
+          set -euo pipefail
+          # The runner root disk is small; /mnt is the large scratch disk.
+          # Put the packer qcow2 output + the qcow2/vmdk conversion staging there.
+          sudo mkdir -p /mnt/build/ci-artifacts
+          sudo chown -R "$(id -u):$(id -g)" /mnt/build
+          ln -sfn /mnt/build/ci-artifacts vm-build/ci-artifacts
+          echo "Scratch staged on /mnt:"; df -h / /mnt
       - name: Setup Packer
         uses: hashicorp/setup-packer@v3
       - name: Init Packer
@@ -76,7 +87,7 @@ jobs:
             echo "== Disk snapshot: $1 =="
             df -h "$GITHUB_WORKSPACE"
             du -sh vm-build/docker-image-bundles 2>/dev/null || true
-            du -sh output-qemu 2>/dev/null || true
+            du -sh /mnt/build/output-qemu 2>/dev/null || true
             du -sh dynamic-labs/hlf/runtime/fabric-samples 2>/dev/null || true
             du -sh vm-build/packer-debug.log 2>/dev/null || true
             du -sh vm-build/packer-serial.log 2>/dev/null || true
@@ -97,8 +108,8 @@ jobs:
           if [ "$PACKER_STATUS" -ne 0 ]; then
             exit "$PACKER_STATUS"
           fi
-          mv output-qemu/blockchain-lab.qcow2 vm-build/ci-artifacts/blockchain-lab.qcow2
-          rm -rf output-qemu
+          mv /mnt/build/output-qemu/blockchain-lab.qcow2 vm-build/ci-artifacts/blockchain-lab.qcow2
+          rm -rf /mnt/build/output-qemu
           rm -rf vm-build/docker-image-bundles
           rm -rf dynamic-labs/hlf/runtime/fabric-samples
           rm -f vm-build/packer-debug.log vm-build/packer-serial.log /tmp/docker-bundles-http.log

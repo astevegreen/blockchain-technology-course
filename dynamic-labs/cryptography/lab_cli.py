@@ -1,5 +1,5 @@
 import sys
-from lab_core import HashLabCore
+from lab_core import LabCore
 
 
 def run_ex1(lab):
@@ -130,8 +130,8 @@ def run_part2(lab):
 
     print("\nCOMMANDS:")
     print("  hash <text>              : Get SHA-256 of text")
-    print("  set_leaf <idx> <hash>    : Fill a leaf slot (0-7)")
-    print("  combine <L_hash> <R_hash>: Hash two strings together")
+    print("  fill_leaf <Leaf-N> <hash>          : Fill a leaf slot (Leaf-0 through Leaf-7)")
+    print("  combine <target> <L_hash> <R_hash> : Fill L1-N, L2-N, or ROOT")
     print("  show_tree                : View your progress")
     print("  verify_proof <valid|bad> : Load a proof to analyze (Part 2.2)")
     print("  exit")
@@ -150,23 +150,18 @@ def run_part2(lab):
             text = i.split(maxsplit=1)[1] if len(parts) > 1 else ""
             print(f"Hash: {lab.sha256_hash(text)}")
 
-        elif cmd == "set_leaf":
-            # Usage: set_leaf 0 <hash>
+        elif cmd in ("fill_leaf", "set_leaf"):
+            # Usage: fill_leaf Leaf-0 <hash>
             if len(parts) == 3:
-                try:
-                    idx = int(parts[1])
-                    val = parts[2]
-                    success, msg = lab.fill_leaf(idx, val)
-                    print(f"[{'OK' if success else 'FAIL'}] {msg}")
-                except ValueError:
-                    print("Index must be integer.")
+                success, msg = lab.fill_leaf(parts[1], parts[2])
+                print(f"[{'OK' if success else 'FAIL'}] {msg}")
 
         elif cmd == "combine":
-            if len(parts) == 3:
-                l_h, r_h = parts[1], parts[2]
-                new_h = lab.sha256_hash(l_h + r_h)
-                print(f"Combined Hash: {new_h}")
-                print("Check 'show_tree' to see if you can plug this into a slot.")
+            if len(parts) == 4:
+                success, msg = lab.combine_into(parts[1], parts[2], parts[3])
+                print(f"[{'OK' if success else 'FAIL'}] {msg}")
+            else:
+                print("Usage: combine <target> <L_hash> <R_hash>")
 
         elif cmd == "show_tree":
             print("\n--- CURRENT TREE STATE ---")
@@ -178,21 +173,10 @@ def run_part2(lab):
             # Simple "Next Step" Hint logic
             if None in lab.student_leaves:
                 print(
-                    "\n[NEXT STEP] Fill all 8 leaves. Remember to duplicate Tx7 for the 8th slot."
+                    "\n[NEXT STEP] Fill all 8 leaves. Remember to duplicate Tx6 into Leaf-7."
                 )
             elif None in lab.student_level1:
-                print("\n[NEXT STEP] Combine leaves to fill Level 1 (Indices 0-3).")
-                print("Use hidden command: 'fill_lvl1 <idx> <hash>' to save your work.")
-            # (In a real CLI, we'd make this smoother, but for brevity...)
-
-        # Hidden commands to actually fill the upper levels for the "Builder" feel
-        elif cmd == "fill_lvl1" and len(parts) == 3:
-            success, msg = lab.fill_leaf(
-                int(parts[1]), parts[2]
-            )  # Reusing fill logic? No, need specific logic.
-            # Actually, for CLI simplicity, let's just let them compute the root
-            # and check it against the answer, rather than filling slots painstakingly.
-            pass
+                print("\n[NEXT STEP] Combine leaves to fill Level 1 targets L1-0 through L1-3.")
 
         elif cmd == "verify_proof":
             mode = parts[1] if len(parts) > 1 else "valid"
@@ -212,7 +196,7 @@ def run_part2(lab):
 
 
 def main():
-    lab = HashLabCore()
+    lab = LabCore()
     print("=== BLOCKCHAIN LAB: PART 1 ===")
     if len(sys.argv) < 2:
         print("Please specify exercise number: 1, 2, or 3")
@@ -227,7 +211,7 @@ def main():
     elif mode == "3":
         run_ex3(lab)
     elif mode == "p2":
-        run_part2()
+        run_part2(lab)
 
     else:
         print("Unknown exercise.")

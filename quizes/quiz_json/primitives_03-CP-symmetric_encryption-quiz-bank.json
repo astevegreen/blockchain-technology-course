@@ -35,12 +35,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A student says symmetric encryption and hashing are basically the same because both turn readable data into unreadable-looking output. Which correction best captures the lesson distinction?",
+      "question_stem": "A student says symmetric encryption and hashing are basically the same because both turn readable data into unreadable-looking output. Which correction best captures the distinction?",
       "correct_answer": "Symmetric encryption is reversible with the shared secret key, while hashing is intended as a one-way commitment or digest.",
       "incorrect_answers": [
-        "Symmetric encryption is one-way masking for storage, while hashing uses a shared secret key to recover every original message exactly.",
-        "Symmetric encryption only proves integrity, while hashing is the standard reversible way to conceal private messages.",
-        "Symmetric encryption needs public/private key pairs, while hashing restores data from a fixed-size digest value later."
+        "Symmetric encryption and hashing are reversible transformations, but encryption uses a secret key while hashing uses a public salt.",
+        "Symmetric encryption mainly proves data was not changed, while hashing is decrypted with the stored salt value.",
+        "Symmetric encryption hides data after public-key exchange, while hashing recovers data when the original key is known."
       ],
       "explanation": "The lesson frames symmetric encryption as a two-way mechanism controlled by one shared secret key. Hashing is one-way and is not meant to recover the original message.",
       "difficulty_level": 2,
@@ -63,9 +63,9 @@
       "question_stem": "In a stream-cipher-style construction, Alice computes ciphertext by XORing plaintext with a keystream. Why can Bob recover the plaintext by XORing the ciphertext with the same keystream?",
       "correct_answer": "XORing with the same value twice cancels the keystream and leaves the original plaintext bits.",
       "incorrect_answers": [
-        "XOR reverses a fixed bit rotation, so Bob shifts the ciphertext back using the same keystream value.",
-        "XOR stores plaintext as parity data, letting Bob recover it by checking each ciphertext bit twice.",
-        "XOR hashes the message reversibly, so repeating the key expands the original plaintext bits again."
+        "The keystream carries a compressed copy of the plaintext, so XORing reveals that copy at decryption.",
+        "XOR compares each ciphertext bit to the keystream bit and chooses whichever bit occurred most often.",
+        "The keystream functions as a substitution table, so applying it again runs the table backward for Bob."
       ],
       "explanation": "XOR is reversible in this setting: plaintext XOR keystream produces ciphertext, and ciphertext XOR the same keystream restores the plaintext.",
       "difficulty_level": 2,
@@ -88,9 +88,9 @@
       "question_stem": "Two different messages are encrypted with the same one-time-pad bytes. What is the main security problem?",
       "correct_answer": "The reused pad creates relationships between the two plaintexts that an attacker can exploit.",
       "incorrect_answers": [
-        "Reusing the pad only slows decryption because XOR must rebuild truth tables for both messages.",
-        "The pad becomes public only when the ciphertext files share exactly the same byte length value.",
-        "Pad reuse is safe for text because language patterns cancel under XOR encryption in natural writing."
+        "It matters only if one plaintext is known; otherwise the ciphertexts reveal no structure to compare.",
+        "Reuse is safe when pad bytes were truly random, since randomness survives multiple messages later.",
+        "The failure is mainly coordinating the same pad offset before both receivers can decrypt their copies."
       ],
       "explanation": "A one-time pad depends on truly random pad material that is never reused. Reuse cancels the shared pad relationship and exposes structure between the messages.",
       "difficulty_level": 3,
@@ -110,12 +110,12 @@
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "Why does the lesson introduce pseudorandom generators after the one-time pad?",
+      "question_stem": "Why are pseudorandom generators useful as a follow-on to the one-time pad?",
       "correct_answer": "A PRG lets a short shared seed generate a long keystream, making stream-cipher use practical when an infinite one-time pad cannot be pre-shared.",
       "incorrect_answers": [
-        "A PRG removes the shared secret entirely because any observer can regenerate the keystream from public algorithm parameters and decrypt messages.",
-        "A PRG converts the stream cipher into a block cipher, so padding replaces synchronized secret seed material during every encryption session afterward.",
-        "A PRG gives perfect secrecy even when a short deterministic seed expands into a longer keystream that senders safely reuse across sessions later."
+        "A PRG lets parties publish the seed and regenerate the same keystream later, preserving one-time-pad secrecy for long messages without a private setup step.",
+        "A PRG turns a short deterministic seed into true random pad material, so the expanded stream can be reused across sessions without exposing relationships.",
+        "A PRG mostly helps by converting variable-length messages into fixed-size blocks, replacing the need to share secret seed material during communication."
       ],
       "explanation": "The one-time pad is impractical because the pad must be as long as the message and never reused. The lesson introduces PRGs as a way to expand a short shared seed into a keystream for practical stream-cipher use.",
       "difficulty_level": 3,
@@ -135,12 +135,12 @@
     {
       "id": "q5",
       "question_type": "multiple_choice",
-      "question_stem": "A block cipher design uses substitution boxes to obscure simple relationships with the key, then permutation boxes to spread each input bit's influence across many positions. Which lesson principles are being applied?",
+      "question_stem": "A block cipher design uses substitution boxes to obscure simple relationships with the key, then permutation boxes to spread each input bit's influence across many positions. Which principles are being applied?",
       "correct_answer": "Confusion through substitution and diffusion through permutation.",
       "incorrect_answers": [
-        "Padding by substitution and signing through permutation rounds.",
-        "Nonce hiding with S-boxes and key sharing via P-box maps only.",
-        "Preimage lookup tables and signing through permutation steps."
+        "Diffusion by substitution and confusion through permutation.",
+        "Key whitening by substitution and padding through permutation.",
+        "Randomness from S-box mixing and compression via P-box rounds."
       ],
       "explanation": "The lesson connects Shannon's confusion to obscuring key-ciphertext relationships, often via S-boxes, and diffusion to spreading influence widely, often via P-boxes.",
       "difficulty_level": 3,
@@ -160,12 +160,12 @@
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "A system needs to encrypt low-latency media data as it arrives byte by byte, rather than waiting for fixed-size chunks. Which lesson comparison is most relevant?",
+      "question_stem": "A system needs to encrypt low-latency media data as it arrives byte by byte, rather than waiting for fixed-size chunks. Which comparison between cipher types is most relevant?",
       "correct_answer": "A stream cipher naturally processes a continuous stream, while a block cipher works on fixed-size blocks and needs a mode for longer data.",
       "incorrect_answers": [
-        "A block cipher is best here because fixed blocks avoid all buffering and do not require padding, modes, or latency tradeoffs in live media.",
-        "Stream ciphers require full message files first, while block ciphers encrypt each arriving byte without a mode or padding step.",
-        "Both designs behave the same because modes and block boundaries cannot affect latency or byte-by-byte processing in this setting."
+        "A block cipher is preferable because fixed blocks let the sender encrypt each byte independently as live media arrives in sequence.",
+        "A stream cipher must buffer the media file before padding, while a block cipher emits each byte directly online during playback.",
+        "The comparison is not important because modes remove block-boundary effects, making block and stream designs identical for live latency and buffering."
       ],
       "explanation": "The lesson contrasts stream ciphers, which combine a keystream with data as it flows, with block ciphers, which operate on fixed-size chunks and require modes of operation for larger messages.",
       "difficulty_level": 3,
@@ -188,9 +188,9 @@
       "question_stem": "A developer encrypts a highly repetitive bitmap image with AES in ECB mode. The ciphertext image still reveals the outline of the original picture. Why did this happen?",
       "correct_answer": "ECB encrypts identical plaintext blocks into identical ciphertext blocks under the same key, so repeated structure remains visible.",
       "incorrect_answers": [
-        "AES itself leaks bitmap outlines whenever image files include repeated headers, even if the mode randomizes every block independently.",
-        "ECB leaked patterns because its secret IV was hidden from the receiver, causing repeated blocks to form outlines in the file.",
-        "The leak occurred because block ciphers cannot encrypt raw pixel bytes unless the file is compressed losslessly first."
+        "AES leaked because bitmap headers and pixel values repeat, so the primitive itself exposes image structure under randomized modes.",
+        "The leak came from missing authentication, since unauthenticated ciphertext can reveal visual outlines before checks run.",
+        "ECB would have hidden the image if the IV had been encrypted with the file, letting the receiver randomize repeated blocks later on display."
       ],
       "explanation": "The lesson's ECB pitfall is that each block is encrypted independently. Strong primitives can still fail when the mode preserves repeated block patterns.",
       "difficulty_level": 3,
@@ -213,9 +213,9 @@
       "question_stem": "A protocol sends a fresh nonce next to each ciphertext in plaintext. A reviewer objects that this leaks the nonce. What is the best response?",
       "correct_answer": "That is usually acceptable because the nonce's critical requirement is uniqueness with the key, not secrecy.",
       "incorrect_answers": [
-        "The reviewer is correct because each nonce is a secret password that must be encrypted before sending.",
-        "The nonce is unnecessary because repeated plaintexts should create the same ciphertext for auditing.",
-        "Reuse the nonce with the same key whenever one sender transmits related messages over a channel safely."
+        "The reviewer is right because nonce secrecy, not uniqueness, keeps repeated plaintexts from matching later.",
+        "Send the nonce encrypted under the same key, then reuse it for related messages until key rotation.",
+        "Omit the nonce and rely on padding bytes to make repeated plaintext encryptions look different each time."
       ],
       "explanation": "The lesson emphasizes that IVs and nonces are commonly public. They protect semantic security by ensuring fresh encryption behavior, but reuse with the same key can be dangerous.",
       "difficulty_level": 3,
@@ -238,9 +238,9 @@
       "question_stem": "A message is not an exact multiple of a block cipher's block size. What problem does padding solve?",
       "correct_answer": "It formats the final partial block so the block cipher mode can process the whole message unambiguously.",
       "incorrect_answers": [
-        "It hides the secret key by inserting random pad bytes directly into the cipher schedule before each block.",
-        "It replaces the IV by making repeated equal messages produce different ciphertexts by itself each time.",
-        "It authenticates every block so modified ciphertext is rejected before decryption begins safely."
+        "It adds per-message randomness to the final block so repeated plaintexts differ without using a fresh IV or nonce.",
+        "It carries authentication data in the final block so tampered ciphertext is rejected by the receiver.",
+        "It changes the key schedule for short messages so variable-length plaintexts can use smaller keys."
       ],
       "explanation": "Padding is an operational mechanism for fitting variable-length data into fixed-size block processing. It is not a substitute for nonces, IVs, or authentication.",
       "difficulty_level": 2,
@@ -260,12 +260,12 @@
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "An attacker cannot understand an encrypted command but can flip bits in transit so the decrypted command changes. Which lesson recommendation addresses this failure?",
+      "question_stem": "An attacker cannot understand an encrypted command but can flip bits in transit so the decrypted command changes. Which recommendation addresses this failure?",
       "correct_answer": "Use authenticated encryption so the receiver gets confidentiality and detects tampering before accepting the plaintext.",
       "incorrect_answers": [
-        "Use ECB mode so repeated command blocks stay recognizable, preventing attacker bit flips automatically every time.",
-        "Keep the IV secret so the attacker cannot see public metadata and therefore cannot alter command contents safely.",
-        "Use encryption alone, because strong confidentiality automatically implies integrity for decrypted command data."
+        "Use a confidentiality-only mode with a fresh nonce, since hiding the command prevents accepted bit edits in transit.",
+        "Switch to ECB mode so each command block decrypts independently, limiting an attacker edit to one block after transit.",
+        "Keep the IV secret and rotate it often, because hidden metadata prevents targeted changes to encrypted commands."
       ],
       "explanation": "The lesson distinguishes confidentiality from integrity. AEAD constructions are recommended because encryption alone can hide data without detecting malicious modification.",
       "difficulty_level": 4,
@@ -285,12 +285,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "A generator produces about as many zeros as ones and has a very long period, but an efficient attacker can still distinguish its output from uniform randomness. According to the reading, what is missing?",
+      "question_stem": "A generator produces about as many zeros as ones and has a very long period, but an efficient attacker can still distinguish its output from uniform randomness. What property is missing?",
       "correct_answer": "Cryptographic pseudorandomness against efficient distinguishers.",
       "incorrect_answers": [
-        "A public proof that the generator outputs exactly half zeros forever.",
-        "A secret description of the generator algorithm wiring rules.",
-        "Long period certificates from statistical tests and samples."
+        "A hidden generator design so attackers cannot inspect the update rule.",
+        "A longer cycle certified by ordinary statistical sampling.",
+        "A test showing each sample has exactly half zeros and ones."
       ],
       "explanation": "Barak's chapter emphasizes that superficial statistical properties are not enough. A PRG must be computationally indistinguishable from true randomness to efficient adversaries.",
       "difficulty_level": 3,
@@ -310,12 +310,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "Why does the reading say PRG security is defined against efficient attackers rather than attackers with unlimited computation?",
+      "question_stem": "Why is PRG security defined against efficient attackers rather than attackers with unlimited computation?",
       "correct_answer": "Because a length-expanding deterministic generator maps short seeds into only a subset of all longer strings, so exhaustive search could distinguish its image.",
       "incorrect_answers": [
-        "Because unlimited computation still cannot enumerate candidate seeds when the algorithm is public, so the output's long period is the only practical security condition.",
-        "Because generated output becomes truly uniform once expansion exceeds the seed by more than one security parameter without any distinguisher needed.",
-        "Because only efficient attackers may read public algorithms, while unbounded attackers lack oracle access to the generator source code details anyway."
+        "Because unlimited computation is outside deployment budgets, so the definition treats deterministic expansion as truly uniform once the seed has enough entropy.",
+        "Because only efficient attackers know the public generator; unbounded attackers are modeled without algorithm details or output-length access at all.",
+        "Because long-period generators become information-theoretically random after enough rounds, leaving no useful seed test for unlimited attackers."
       ],
       "explanation": "The reading distinguishes computational pseudorandomness from information-theoretic randomness. With unlimited work, an attacker could test whether an output belongs to the generator's smaller image.",
       "difficulty_level": 4,
@@ -336,12 +336,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "A proposed stream cipher uses a linear feedback shift register because it is fast, balanced, and has a long cycle. What is the reading-grounded concern?",
+      "question_stem": "A proposed stream cipher uses a linear feedback shift register because it is fast, balanced, and has a long cycle. What is the cryptographic concern?",
       "correct_answer": "Linearity can turn observed output bits into equations about the hidden state, enabling prediction or state recovery.",
       "incorrect_answers": [
-        "Long cycles are impossible in deterministic generators, so the stream stops before producing enough keystream bytes for use.",
-        "Efficiency proves insecurity because cryptographic generators must run slowly to hide internal transitions.",
-        "Balanced bits disable XOR cancellation, so the receiver cannot decrypt even with the correct keystream bytes."
+        "The concern is only that the LFSR state may be public, because a hidden linear update rule would make the long cycle secure.",
+        "The main issue is efficiency: a fast generator leaves too little time for receivers to authenticate blocks online.",
+        "Balanced output bits make XOR decryption unreliable because zeros and ones cancel plaintext bits unevenly."
       ],
       "explanation": "The reading uses linear generators such as LFSRs to show that long period and balanced bits do not imply cryptographic security. Linear structure can be exploited by efficient attacks.",
       "difficulty_level": 4,

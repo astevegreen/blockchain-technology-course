@@ -1,19 +1,18 @@
 /**
  * RpcClient - Centralized RPC provider and signer management
  * 
- * This module manages a single provider instance for the entire app,
- * eliminating redundant provider instantiation and centralizing the
- * "bank" account used for classroom faucet operations.
+ * This module manages the optional write provider for instructor-only
+ * actions. Student faucet/top-off requests go through lab-api so browsers do
+ * not perform direct RPC reads for balance, nonce, fee, or receipt polling.
  * 
- * ⚠️ CLASSROOM USE ONLY ⚠️
- * The bank private key is a well-known test account.
- * NEVER use this pattern with real funds or on mainnet.
+ * Faucet transfers are intentionally server-side. Do not put faucet private
+ * keys in the browser bundle.
  */
 
 import { ethers } from 'ethers';
 
 /**
- * Resolve RPC URL to a full URL. Relative paths like /rpc-proxy must be
+ * Resolve RPC URL to a full URL. Relative paths like /rpc-write must be
  * converted to same-origin URLs for ethers.JsonRpcProvider (which requires
  * http/https protocol).
  */
@@ -28,15 +27,11 @@ export function resolveRpcUrl(url) {
   return sanitized;
 }
 
-// Account 0 = deployer = bank/faucet (Hardhat's first test account).
-// Same address deploys the PoS contract and sends test ETH to students.
-const BANK_PRIVATE_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-
 class RpcClient {
   constructor() {
     this.provider = null;
     this.rpcUrl = null;
-    this.bankSigner = null;
+    this.bankAddress = null;
   }
 
   /**
@@ -53,7 +48,7 @@ class RpcClient {
     // Clear provider if URL is empty
     if (!sanitized) {
       this.provider = null;
-      this.bankSigner = null;
+      this.bankAddress = null;
       this.rpcUrl = null;
       return true;
     }
@@ -61,13 +56,13 @@ class RpcClient {
     try {
       this.rpcUrl = sanitized;
       const resolved = resolveRpcUrl(sanitized);
-      this.provider = new ethers.JsonRpcProvider(resolved);
-      this.bankSigner = new ethers.Wallet(BANK_PRIVATE_KEY, this.provider);
+      const network = ethers.Network.from(31337);
+      this.provider = new ethers.JsonRpcProvider(resolved, network, { staticNetwork: network });
       return true;
     } catch (e) {
       console.error("Failed to create provider:", e);
       this.provider = null;
-      this.bankSigner = null;
+      this.bankAddress = null;
       this.rpcUrl = null;
       return false;
     }
@@ -90,12 +85,11 @@ class RpcClient {
   }
 
   /**
-   * Get the bank signer for faucet operations
-   * ⚠️ CLASSROOM USE ONLY - This is a test account
-   * @returns {ethers.Wallet|null}
+   * Get the bank address reported by the server-side faucet.
+   * @returns {{address: string}|null}
    */
   getBankSigner() {
-    return this.bankSigner;
+    return this.bankAddress ? { address: this.bankAddress } : null;
   }
 
   /**
@@ -142,16 +136,41 @@ class RpcClient {
    * @returns {Promise<ethers.TransactionReceipt>}
    */
   async sendFromBank(toAddress, amountEth) {
-    if (!this.bankSigner) {
-      throw new Error("Bank signer not initialized. Call setRpcUrl first.");
-    }
-    
-    const tx = await this.bankSigner.sendTransaction({
-      to: toAddress,
-      value: ethers.parseEther(amountEth)
+    const result = await this.requestFaucetTopOff(toAddress, { amountEth });
+    if (result.bankAddress) this.bankAddress = result.bankAddress;
+    return result;
+  }
+
+  /**
+   * Ensure a wallet has at least targetBalanceEth using the server-side faucet.
+   * @param {string} toAddress
+   * @param {string} targetBalanceEth
+   */
+  async ensureBankBalance(toAddress, targetBalanceEth) {
+    const result = await this.requestFaucetTopOff(toAddress, { targetBalanceEth });
+    if (result.bankAddress) this.bankAddress = result.bankAddress;
+    return result;
+  }
+
+  async requestFaucetTopOff(toAddress, payload) {
+    const base = (import.meta.env.BASE_URL || '/');
+    const url = base.endsWith('/') ? `${base}lab-api/faucet/topoff` : `${base}/lab-api/faucet/topoff`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: toAddress, ...payload }),
     });
-    
-    return tx.wait();
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result?.ok === false) {
+      const err = new Error(result?.error || `Faucet top-off failed (${response.status})`);
+      err.code = result?.code || null;
+      err.retryable = result?.retryable !== false;
+      err.queue = result?.queue || null;
+      err.status = response.status;
+      throw err;
+    }
+    if (result.txHash && !result.hash) result.hash = result.txHash;
+    return result;
   }
 }
 
@@ -160,4 +179,3 @@ export const rpcClient = new RpcClient();
 
 // Also export the class for testing purposes
 export { RpcClient };
-

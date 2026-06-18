@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ethers } from 'ethers'
-import { connectWallet, checkNodeStatus, getGuestWallet, getWalletInfo, importWallet, generateNewWallet, setWalletNickname, getWalletList, setActiveWallet, addWallet } from './web3'
+import { applySessionWalletState, checkNodeStatus, getGuestWallet, getWalletInfo, generateNewWallet, getWalletList, setActiveWallet } from './web3'
+import { fetchSessionState, fetchSessionWalletBalance, patchSessionNamespace, resetSessionState } from './lib/sessionState'
 import PoSABI from './PoS.json'
 import { InstructorView } from './views/InstructorView'
 import { DiagnosticsView } from './views/DiagnosticsView'
@@ -9,20 +10,21 @@ import { TokenConceptsView } from './views/TokenConceptsView'
 import { BeaconChainLabView } from './views/BeaconChainLabView'
 import { ContractBuilderLabView } from './views/ContractBuilderLabView'
 import { TokenizationLabView } from './views/TokenizationLabView'
+import { ArcadeLabView } from './views/ArcadeLabView'
+import { MarketplaceView } from './views/MarketplaceView'
 import { LABS, INITIAL_SETUP, getLabById } from './constants/labs'
 import { ROLE_CONTRACT_TEMPLATES } from './constants/roleContractTemplates'
 import LabDetailView from './components/LabDetailView'
-import ContractLab from './components/ContractLab'
 import { blockchainSync } from './lib/BlockchainSync'
 import { copyToClipboard } from './lib/clipboard'
 import { resolveRpcUrl, rpcClient } from './lib/RpcClient'
-import AccountManager from './components/AccountManager'
-import InlineTerminal from './components/InlineTerminal'
-import NodeGraph from './components/NodeGraph'
-import { ChainSearch } from './components/ChainSearch'
+import { applyContractSourcesState } from './lib/contractSources'
+import { ChainExplorer } from './components/ChainExplorer'
 import { RoleHub } from './components/RoleHub'
 import { PoSLeaderboard } from './components/PoSLeaderboard'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import ArcadeTokenArtifact from './contracts/ArcadeToken.json'
+import LabNFTArtifact from './contracts/LabNFT.json'
 import {
   BlockchainVisualizer,
   AddressDecoder,
@@ -33,7 +35,7 @@ import {
 } from './components/mini-labs'
 import './index.css'
 
-// Open Lab Terminal in new window/tab (each call opens a new one for multiple terminals).
+// Open Lab Terminal in a new window/tab.
 // rpcUrl is browser-facing; terminalRpcUrl is an optional shell-only override.
 function openLabTerminal(rpcUrl, terminalRpcUrl = '') {
   const base = (typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/';
@@ -53,7 +55,106 @@ const SHAREABLE_QUERY_VIEWS = new Set([
   'beacon-lab',
   'contract-builder-lab',
   'tokenization-lab',
+  'arcade-lab',
+  'nft-marketplace',
+  'forensics-lab',
 ])
+
+const DASHBOARD_WRITE_GAS_PRICE = ethers.parseUnits('2', 'gwei')
+const DASHBOARD_WRITE_TX_OPTIONS = {
+  eth: { gasLimit: 21000n, gasPrice: DASHBOARD_WRITE_GAS_PRICE },
+  arc: { gasLimit: 120000n, gasPrice: DASHBOARD_WRITE_GAS_PRICE },
+  nft: { gasLimit: 160000n, gasPrice: DASHBOARD_WRITE_GAS_PRICE },
+}
+const WALLET_BALANCE_POLL_MS = 5000
+
+const dashboardShort = (value, left = 6) => (
+  value ? `${String(value).slice(0, left)}...${String(value).slice(-4)}` : '-'
+)
+
+function dashboardLabUrl(path) {
+  const base = import.meta.env.BASE_URL || '/'
+  return base.endsWith('/') ? `${base}${path}` : `${base}/${path}`
+}
+
+function dashboardSafeBigInt(value, fallback = 0n) {
+  try {
+    if (value == null || value === '') return fallback
+    return BigInt(value)
+  } catch (_) {
+    return fallback
+  }
+}
+
+async function dashboardSafeJson(response) {
+  if (!response || !response.ok) return {}
+  try {
+    return await response.json()
+  } catch (_) {
+    return {}
+  }
+}
+
+function dashboardErrorMessage(error) {
+  const seen = new Set()
+  const collect = (value) => {
+    if (!value) return []
+    if (typeof value === 'string') return [value]
+    if (typeof value !== 'object' || seen.has(value)) return []
+    seen.add(value)
+
+    const messages = []
+    const push = (item) => {
+      for (const msg of collect(item)) {
+        if (msg && !messages.includes(msg)) messages.push(msg)
+      }
+    }
+
+    push(value.shortMessage && value.shortMessage !== 'could not coalesce error' ? value.shortMessage : null)
+    push(value.reason)
+    push(value.error?.message)
+    push(value.info?.error?.message)
+    push(value.data?.message)
+    push(value.cause)
+
+    if (typeof value.body === 'string') {
+      try { push(JSON.parse(value.body)) } catch (_) { push(value.body) }
+    }
+
+    push(value.message && value.message !== 'could not coalesce error' ? value.message : null)
+    return messages
+  }
+
+  return collect(error)[0] || error?.message || String(error)
+}
+
+async function waitForDashboardTransactionReceipt(tx, providerLike, { timeoutMs = 90000, intervalMs = 1000 } = {}) {
+  const hash = typeof tx === 'string' ? tx : tx?.hash
+  if (!hash) throw new Error('Missing transaction hash.')
+  const rpcProvider = tx?.provider || providerLike
+  if (!rpcProvider?.send) throw new Error('Wallet provider cannot poll transaction receipts.')
+  const deadline = Date.now() + timeoutMs
+  let lastError = null
+  while (Date.now() < deadline) {
+    try {
+      const receipt = await rpcProvider.send('eth_getTransactionReceipt', [hash])
+      if (receipt) return { ...receipt, hash: receipt.transactionHash || hash }
+    } catch (err) {
+      lastError = err
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs))
+  }
+  throw new Error(`Timed out waiting for transaction ${dashboardShort(hash)}${lastError ? `: ${dashboardErrorMessage(lastError)}` : ''}`)
+}
+
+function dashboardReceiptBlockNumber(receipt) {
+  const raw = receipt?.blockNumber
+  if (typeof raw === 'number') return raw
+  if (typeof raw === 'bigint') return Number(raw)
+  if (typeof raw === 'string' && raw.startsWith('0x')) return parseInt(raw, 16)
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) ? parsed : null
+}
 
 // Account 0 = deployer = bank/faucet (Hardhat's first test account).
 // The deployer holds onlyInstructor privileges; the bank sends test ETH to students.
@@ -95,198 +196,10 @@ const ProvenanceBadge = ({ showFull = false }) => (
     </div>
 );
 
-// Feedback Component
-const FeedbackButton = ({ section, onFeedback }) => {
-    const [showForm, setShowForm] = useState(false);
-    const [feedback, setFeedback] = useState('');
-    const [rating, setRating] = useState(0);
-    const [submitted, setSubmitted] = useState(false);
-    
-    const handleSubmit = () => {
-        // Save feedback to localStorage
-        let existingFeedback = [];
-        try {
-            existingFeedback = JSON.parse(localStorage.getItem('lab_feedback') || '[]');
-            if (!Array.isArray(existingFeedback)) existingFeedback = [];
-        } catch {
-            existingFeedback = [];
-        }
-        existingFeedback.push({
-            section,
-            rating,
-            feedback,
-            timestamp: Date.now()
-        });
-        localStorage.setItem('lab_feedback', JSON.stringify(existingFeedback));
-        setSubmitted(true);
-        setTimeout(() => {
-            setShowForm(false);
-            setSubmitted(false);
-            setFeedback('');
-            setRating(0);
-        }, 2000);
-    };
-    
-    if (submitted) {
-        return (
-            <div style={{
-                padding: '12px 16px',
-                background: 'rgba(34, 197, 94, 0.2)',
-                borderRadius: '8px',
-                color: '#86efac',
-                fontSize: '0.9rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-            }}>
-                ✅ Thank you for your feedback!
-            </div>
-        );
-    }
-    
-    if (!showForm) {
-        return (
-            <button
-                onClick={() => setShowForm(true)}
-                style={{
-                    padding: '8px 16px',
-                    background: 'transparent',
-                    border: '1px solid #475569',
-                    borderRadius: '6px',
-                    color: '#94a3b8',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                    e.target.style.borderColor = '#3b82f6';
-                    e.target.style.color = '#93c5fd';
-                }}
-                onMouseOut={(e) => {
-                    e.target.style.borderColor = '#475569';
-                    e.target.style.color = '#94a3b8';
-                }}
-            >
-                💬 Give Feedback
-            </button>
-        );
-    }
-    
-    return (
-        <div style={{
-            padding: '16px',
-            background: '#1e293b',
-            borderRadius: '12px',
-            border: '1px solid #334155'
-        }}>
-            <div style={{marginBottom: '12px', color: '#e2e8f0', fontWeight: '600'}}>
-                How helpful was this section?
-            </div>
-            <div style={{display: 'flex', gap: '8px', marginBottom: '12px'}}>
-                {[1, 2, 3, 4, 5].map(star => (
-                    <button
-                        key={star}
-                        onClick={() => setRating(star)}
-                        style={{
-                            background: 'transparent',
-                            border: 'none',
-                            fontSize: '1.5rem',
-                            cursor: 'pointer',
-                            opacity: star <= rating ? 1 : 0.3,
-                            transition: 'opacity 0.2s'
-                        }}
-                    >
-                        ⭐
-                    </button>
-                ))}
-            </div>
-            <textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="What could be improved? (optional)"
-                style={{
-                    width: '100%',
-                    padding: '10px',
-                    background: '#0f172a',
-                    border: '1px solid #334155',
-                    borderRadius: '6px',
-                    color: '#e2e8f0',
-                    fontSize: '0.9rem',
-                    minHeight: '60px',
-                    resize: 'vertical',
-                    marginBottom: '12px'
-                }}
-            />
-            <div style={{display: 'flex', gap: '8px'}}>
-                <button
-                    onClick={handleSubmit}
-                    disabled={rating === 0}
-                    style={{
-                        padding: '8px 16px',
-                        background: rating > 0 ? '#3b82f6' : '#374151',
-                        border: 'none',
-                        borderRadius: '6px',
-                        color: 'white',
-                        cursor: rating > 0 ? 'pointer' : 'not-allowed',
-                        fontWeight: '600',
-                        fontSize: '0.85rem'
-                    }}
-                >
-                    Submit
-                </button>
-                <button
-                    onClick={() => setShowForm(false)}
-                    style={{
-                        padding: '8px 16px',
-                        background: 'transparent',
-                        border: '1px solid #475569',
-                        borderRadius: '6px',
-                        color: '#94a3b8',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem'
-                    }}
-                >
-                    Cancel
-                </button>
-            </div>
-        </div>
-    );
-};
-
 // Social Proof Component - Shows community activity (compact, expandable)
 const SocialProof = ({ validators, messages, stakersCount }) => {
     const [expanded, setExpanded] = useState(false);
-    const [localStats, setLocalStats] = useState({ quizzes: 0, sessions: 0 });
-    
-    useEffect(() => {
-        // Get aggregated local stats
-        let feedback = [];
-        let savedScores = {};
-        try {
-            feedback = JSON.parse(localStorage.getItem('lab_feedback') || '[]');
-            if (!Array.isArray(feedback)) feedback = [];
-        } catch {
-            feedback = [];
-        }
-        try {
-            savedScores = JSON.parse(localStorage.getItem('quiz_scores') || '{}') || {};
-            if (savedScores === null || typeof savedScores !== 'object' || Array.isArray(savedScores)) {
-                savedScores = {};
-            }
-        } catch {
-            savedScores = {};
-        }
-        const sessionStart = localStorage.getItem('session_start');
-        
-        setLocalStats({
-            quizzes: Object.keys(savedScores).length,
-            sessions: sessionStart ? 1 : 0,
-            feedbackCount: feedback.length
-        });
-    }, []);
+    const localStats = { quizzes: 0, sessions: 0, feedbackCount: 0 };
     
     const activeStudents = validators?.length || 0;
     const totalMessages = messages?.length || 0;
@@ -871,43 +784,6 @@ function CLILabsView({ isInstructor = false, rpcUrl = '', terminalRpcUrl = '' })
                 <p style={{color: '#94a3b8', fontSize: '1.1rem', margin: 0}}>
                     Interactive tools for blockchain analysis and investigation
                 </p>
-                <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '1rem', flexWrap: 'wrap'}}>
-                    <button
-                        onClick={() => openLabTerminal(rpcUrl, terminalRpcUrl)}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            background: 'linear-gradient(135deg, #334155, #1e293b)',
-                            border: '1px solid #475569',
-                            borderRadius: '0.5rem',
-                            color: '#e2e8f0',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                        }}
-                    >
-                        <span>🖥️</span>
-                        <span>Open Lab Terminal</span>
-                    </button>
-                    <button
-                        onClick={() => openLabTerminal(rpcUrl, terminalRpcUrl)}
-                        style={{
-                            padding: '0.35rem 0.65rem',
-                            background: 'rgba(139, 92, 246, 0.15)',
-                            border: '1px solid rgba(139, 92, 246, 0.35)',
-                            borderRadius: '0.35rem',
-                            color: '#c4b5fd',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        + Another
-                    </button>
-                    <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-                        Run interactive.js, Contract Builder, labs — each opens a new terminal
-                    </span>
-                </div>
             </div>
 
             {/* ====== STICKY SEARCH + NAV BAR ====== */}
@@ -1152,7 +1028,7 @@ function CLILabsView({ isInstructor = false, rpcUrl = '', terminalRpcUrl = '' })
                 </div>
 
                 <p style={{color: '#94a3b8', margin: '1rem 0 0 0', fontSize: '0.85rem'}}>
-                    Multi-role labs need separate shells—use <strong>Open Lab Terminal</strong> in the header for an extra window. Pick labs from <strong>Available Labs</strong> or from the menu after <code style={{background: '#0f172a', padding: '2px 6px', borderRadius: '4px'}}>npm start</code>.
+                    Multi-role labs need separate shells. Use the <strong>Lab Terminal</strong> button at the bottom of the sidebar when you need a shell. Pick labs from <strong>Available Labs</strong> or from the menu after <code style={{background: '#0f172a', padding: '2px 6px', borderRadius: '4px'}}>npm start</code>.
                 </p>
 
                 {/* Optional env for instructor-hosted chain */}
@@ -6554,13 +6430,53 @@ function SimulationMode({ onComplete }) {
     )
 }
 
+// Which hands-on labs students can open. Tokenization and Forensics are off by default.
+// BACKLOG: let the instructor toggle these at runtime (e.g. via instructor config /
+// api/config.json) instead of this hardcoded map. See hand-off.md "Backlog".
+const LAB_ENABLED = {
+  'contract-builder-lab': true,
+  'beacon-lab': true,
+  'tokenization-lab': true,
+  'arcade-lab': true,
+  'nft-marketplace': true,
+  'forensics-lab': false,
+};
+
+const CACHE_BACKED_NODE_STATUS_VIEWS = new Set([
+  'live',
+  'tokens',
+  'beacon-lab',
+  'contract-builder-lab',
+  'tokenization-lab',
+  'arcade-lab',
+  'nft-marketplace',
+]);
+
+// The old Live dashboard predates the instructor cache fan-in model and polls the
+// shared node directly. Keep writes/manual actions available, but do not start its
+// automatic RPC sync in managed classroom mode.
+const LEGACY_LIVE_RPC_SYNC_ENABLED = false;
+
+// The scenario/role system (Victim/Attacker, Seller/Buyer, etc. assigned via chat
+// [SCENARIO:]/[ROLES:] messages) belongs to the CRUD/forensics labs that are cut
+// from the active surface. Off by default so students aren't handed roles for
+// labs that don't exist. Flip to true if those scenario labs are re-enabled.
+const SCENARIO_ROLES_ENABLED = false;
+
 // --- MAIN APP COMPONENT ---
 function App() {
-  const navigate = useNavigate()
   // Check URL params for instructor mode and student (live) view
   const urlParams = new URLSearchParams(window.location.search)
   const urlWantsInstructor = urlParams.get('mode') === 'instructor'
   const viewFromUrl = urlParams.get('view')
+  const sessionHydratedRef = useRef(false)
+  const progressBeaconLastRef = useRef({})
+  const patchSession = useCallback((namespace, patch) => {
+    if (!sessionHydratedRef.current) return
+    patchSessionNamespace(namespace, patch).catch((err) => {
+      console.warn('[SessionState] persist failed:', namespace, err?.message || err)
+    })
+  }, [])
 
   // Session from Lab API: isInstructor (IP-checked), hasCreatedWallet (per-IP)
   const [session, setSession] = useState({ isInstructor: false, hasCreatedWallet: true, loading: true })
@@ -6573,6 +6489,12 @@ function App() {
 
   // Only allow instructor view if URL has mode=instructor AND session confirms instructor IP
   const isInstructor = urlWantsInstructor && session.isInstructor && !session.loading
+  const [theme, setTheme] = useState('dark')
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    patchSession('ui', { theme });
+  }, [theme, patchSession])
 
   const [view, setView] = useState(
     urlWantsInstructor ? 'instructor'
@@ -6581,9 +6503,17 @@ function App() {
       : viewFromUrl === 'beacon-lab' ? 'beacon-lab'
       : viewFromUrl === 'contract-builder-lab' ? 'contract-builder-lab'
       : viewFromUrl === 'tokenization-lab' ? 'tokenization-lab'
-      : 'intro'
-  ); // intro -> concepts -> explore -> sim -> live -> diagnostics -> beacon-lab -> contract-builder-lab -> tokenization-lab -> cli | instructor
-  const [appMode, setAppMode] = useState('learning'); // 'learning' | 'live' | 'cli' | 'instructor' - top-level mode separation
+      : viewFromUrl === 'arcade-lab' ? 'arcade-lab'
+      : viewFromUrl === 'nft-marketplace' ? 'nft-marketplace'
+      : viewFromUrl === 'forensics-lab' ? 'forensics-lab'
+      : 'live'
+  ); // intro -> concepts -> explore -> sim -> live -> diagnostics -> beacon-lab -> contract-builder-lab -> tokenization-lab -> arcade-lab -> forensics-lab -> cli | instructor
+  const [appMode, setAppMode] = useState('live'); // 'learning' | 'live' | 'cli' | 'instructor' - top-level mode separation
+
+  // Guard: a disabled lab can't be opened (even via deep link); fall back to the dashboard.
+  useEffect(() => {
+    if (LAB_ENABLED[view] === false) setView('live');
+  }, [view]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -6613,7 +6543,10 @@ function App() {
           : viewFromUrl === 'beacon-lab' ? 'beacon-lab'
           : viewFromUrl === 'contract-builder-lab' ? 'contract-builder-lab'
           : viewFromUrl === 'tokenization-lab' ? 'tokenization-lab'
-          : 'intro'
+          : viewFromUrl === 'arcade-lab' ? 'arcade-lab'
+          : viewFromUrl === 'nft-marketplace' ? 'nft-marketplace'
+          : viewFromUrl === 'forensics-lab' ? 'forensics-lab'
+          : 'live'
       )
     }
   }, [session.loading, session.isInstructor, urlWantsInstructor, viewFromUrl])
@@ -6621,96 +6554,93 @@ function App() {
   // --- LIVE MODE STATE ---
   const isRemote = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')
   const port = typeof window !== 'undefined' ? window.location.port : ''
+  const normalizeBrowserRpcUrl = (value) => {
+    const raw = (value || '').trim();
+    if (!raw) return raw;
+    return raw.replace(/\/(?:rpc|rpc-proxy)([?#].*)?$/, '/rpc-write$1');
+  };
   const defaultRpcUrl = port === '5173'
-    ? resolveRpcUrl('/rpc-proxy')
-    : resolveRpcUrl('/rpc')
+    ? resolveRpcUrl('/rpc-write')
+    : resolveRpcUrl('/rpc-write')
   
-  // Check for student mode and auto-load config
-  const isStudentMode = localStorage.getItem('student_mode') === 'true'
-  const customRpc = localStorage.getItem('custom_rpc')
+  // Check for student mode and auto-load config. Student mode is now driven by
+  // runtime config/session state rather than browser-persisted flags.
+  const isStudentMode = false
+  const customRpc = ''
 
-  const [trail, setTrail] = useState(() => {
-    try {
-        return JSON.parse(localStorage.getItem('learning_trail')) || { intro: false, concepts: false, explore: false }
-    } catch {
-        return { intro: false, concepts: false, explore: false }
-    }
-  })
+  const [trail, setTrail] = useState({ intro: false, concepts: false, explore: false })
 
-  const [exploreProgress, setExploreProgress] = useState(() => {
-    try {
-        return JSON.parse(localStorage.getItem('explore_progress')) || [false, false, false]
-    } catch {
-        return [false, false, false]
-    }
-  })
+  const [exploreProgress, setExploreProgress] = useState([false, false, false])
 
   const [navHint, setNavHint] = useState('')
   
   const [rpcUrl, setRpcUrl] = useState(customRpc || defaultRpcUrl)
   const [terminalRpcUrl, setTerminalRpcUrl] = useState('')
+  const [runtimeConfigLoaded, setRuntimeConfigLoaded] = useState(false)
+  // Whether the in-browser Lab Terminal exists for this lane. Student lanes set this
+  // false (no terminal-server.js running) so we hide every terminal entry point and
+  // don't leave dead buttons that fail to connect. Default true → instructor/standalone
+  // and any legacy config without the field keep the terminal.
+  const [labTerminalEnabled, setLabTerminalEnabled] = useState(true)
   const [showRpcConfig, setShowRpcConfig] = useState(isRemote || isStudentMode) // Show config for remote users and students
   const [provider, setProvider] = useState(null)
   const [nodeStatus, setNodeStatus] = useState({ connected: false, blockNumber: 0 })
   const [wallet, setWallet] = useState({ address: null, signer: null, balance: '0', mode: null, nickname: 'My Wallet' })
-  const [showAccountManager, setShowAccountManager] = useState(false)
+  const [walletBalanceMeta, setWalletBalanceMeta] = useState({ status: 'idle', ageMs: null, cached: false, error: '' })
   const [showLiveHelp, setShowLiveHelp] = useState(false)
   const [newWalletModal, setNewWalletModal] = useState(null) // { address, privateKey } when showing new wallet credentials
-  const [posAddress, setPosAddress] = useState(() => {
-    const stored = localStorage.getItem("pos_addr");
-    if (stored && stored.length === 42) return stored;
-    return "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e";
-  })
+  const [accountModal, setAccountModal] = useState(null) // { address, nickname } when showing copyable account details
+  const [topOffMiningOpen, setTopOffMiningOpen] = useState(false)
+  const [topOffMiningAwarding, setTopOffMiningAwarding] = useState(false)
+  const topOffAwardingRef = useRef(false)
+  const [posAddress, setPosAddress] = useState("0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e")
   
   // Auto-load contract address and RPC URL from deploy config under the current base path.
   useEffect(() => {
     const loadConfig = async () => {
-      // Try Docker/sandbox config first (has rpcUrl + mode), then deploy-generated
-      for (const url of [
-        import.meta.env.BASE_URL + 'api/config.json',
-        import.meta.env.BASE_URL + 'contract-config.json',
-      ]) {
-        try {
-          const response = await fetch(url);
-          if (!response.ok) continue;
-          const config = await response.json();
-          const isStudent = config.mode === 'student' || config.role === 'student';
-          const isInstructor = config.mode === 'instructor' || config.role === 'instructor';
-          // Auto-set contract address
-          if (config.contractAddress && config.contractAddress.length === 42) {
-            const current = localStorage.getItem("pos_addr");
-            if (current !== config.contractAddress) {
-              console.log('[Config] Updating contract address:', current, '->', config.contractAddress);
-              setPosAddress(config.contractAddress);
-              localStorage.setItem("pos_addr", config.contractAddress);
+      try {
+        // Try Docker/sandbox config first (has rpcUrl + mode), then deploy-generated
+        for (const url of [
+          import.meta.env.BASE_URL + 'api/config.json',
+          import.meta.env.BASE_URL + 'contract-config.json',
+        ]) {
+          try {
+            const response = await fetch(url);
+            if (!response.ok) continue;
+            const config = await response.json();
+            const isStudent = config.mode === 'student' || config.role === 'student';
+            const isInstructor = config.mode === 'instructor' || config.role === 'instructor';
+            // Auto-set contract address
+            if (config.contractAddress && config.contractAddress.length === 42) {
+              if (posAddress !== config.contractAddress) {
+                console.log('[Config] Updating contract address:', posAddress, '->', config.contractAddress);
+                setPosAddress(config.contractAddress);
+              }
             }
-          }
-          // Auto-set RPC URL for both student and instructor (virtualized sandbox auto-config)
-          if (config.rpcUrl && (isStudent || isInstructor)) {
-            setRpcUrl(config.rpcUrl);
-            localStorage.setItem("custom_rpc", config.rpcUrl);
-            console.log('[Config] RPC URL set from config:', config.rpcUrl, 'mode:', config.mode || config.role);
-          }
-          if (config.terminalRpcUrl && (isStudent || isInstructor)) {
-            setTerminalRpcUrl(config.terminalRpcUrl);
-            console.log('[Config] Terminal RPC URL set from config:', config.terminalRpcUrl);
-          }
-          // Auto-import pre-assigned wallet (lane containers inject a
-          // per-station funded address so students skip manual wallet
-          // creation and the Live Network badge shows "Connected").
-          if (config.assignedPrivateKey && config.assignedPrivateKey.length === 66) {
-            const nickname = config.station ? `Station ${config.station}` : 'Assigned Wallet';
-            const result = addWallet(config.assignedPrivateKey, nickname);
-            if (result.success) {
-              fetch(import.meta.env.BASE_URL + 'lab-api/register-wallet', { method: 'POST' }).catch(() => {});
-              setSession(prev => ({ ...prev, hasCreatedWallet: true }));
-              console.log('[Config] Auto-imported assigned wallet:', result.address);
+            // Auto-set RPC URL for both student and instructor (virtualized sandbox auto-config)
+            if (config.rpcUrl && (isStudent || isInstructor)) {
+              const nextRpcUrl = normalizeBrowserRpcUrl(config.rpcUrl);
+              setRpcUrl(nextRpcUrl);
+              console.log('[Config] RPC URL set from config:', nextRpcUrl, 'mode:', config.mode || config.role);
             }
-          }
-          if (config.contractAddress && config.contractAddress.length === 42) return;
-        } catch (e) { /* config not available */ }
+            if (config.terminalRpcUrl && (isStudent || isInstructor)) {
+              setTerminalRpcUrl(config.terminalRpcUrl);
+              console.log('[Config] Terminal RPC URL set from config:', config.terminalRpcUrl);
+            }
+            // Hide all terminal entry points when the lane reports no terminal (student lanes).
+            if (typeof config.labTerminalEnabled === 'boolean') {
+              setLabTerminalEnabled(config.labTerminalEnabled);
+              console.log('[Config] Lab Terminal enabled:', config.labTerminalEnabled);
+            }
+            // Wallets are now loaded from /api/ethereum/session/state so keys are
+            // scoped to the claimed UUID instead of persisted in browser storage.
+            if (config.contractAddress && config.contractAddress.length === 42) return;
+          } catch (e) { /* config not available */ }
+        }
+        console.log('[Config] No deploy config found (using session state or fallback)');
+      } finally {
+        setRuntimeConfigLoaded(true);
       }
-      console.log('[Config] No deploy config found (using localStorage or fallback)');
     };
     loadConfig();
   }, [])
@@ -6721,30 +6651,24 @@ function App() {
   const [statusMsg, setStatusMsg] = useState('')
   const [isSyncing, setIsSyncing] = useState(false)
   const hasAutoJoined = useRef(false) // Track if we've auto-joined this session
+  const joiningClassRef = useRef(false) // Shared in-flight guard: prevents the auto-join and the manual "Join Class List" button from sending duplicate join txs (same nonce)
   
   // Nickname system - store nicknames for classmates
-  const [nicknames, setNicknames] = useState(() => {
-    try {
-      const stored = localStorage.getItem("classmate_nicknames");
-      return stored ? JSON.parse(stored) : {};
-    } catch { return {}; }
-  });
-  const [myNickname, setMyNickname] = useState(() => localStorage.getItem("my_nickname") || "");
+  const [nicknames, setNicknames] = useState({});
+  const [myNickname, setMyNickname] = useState("");
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameInput, setNicknameInput] = useState("");
-  const [sessionStart] = useState(() => {
-      const stored = localStorage.getItem("session_start")
-      if (!stored) {
-          const now = Date.now()
-          localStorage.setItem("session_start", now.toString())
-          return now
-      }
-      return parseInt(stored)
-  })
+  const [sessionStart, setSessionStart] = useState(() => Date.now())
 
   // Peer To Peer Send State
   const [recipient, setRecipient] = useState("")
   const [sendAmount, setSendAmount] = useState("")
+  const [sendAssetType, setSendAssetType] = useState("eth")
+  const [sendNftTokenId, setSendNftTokenId] = useState("")
+  const [dashboardAssetConfig, setDashboardAssetConfig] = useState({
+    arcadeTokenAddress: "",
+    nftAddress: "",
+  })
   
   // Staking State (32 ETH = Ethereum mainnet validator minimum)
   const [stakeAmount, setStakeAmount] = useState("32")
@@ -6752,7 +6676,6 @@ function App() {
   // Transaction History
   const [txHistory, setTxHistory] = useState([])
   const [myStake, setMyStake] = useState(() => {
-    const storedRole = localStorage.getItem('scenario_role') || '';
     return {
       amount: '0',
       reward: '0',
@@ -6764,7 +6687,7 @@ function App() {
       hasAttestedThisEpoch: false,
       unbondingStartTime: 0,
       lastProposedBlockNumber: 0,
-      role: storedRole
+      role: ''
     };
   })
   
@@ -6785,50 +6708,95 @@ function App() {
   const [roleTemplateExpanded, setRoleTemplateExpanded] = useState(false)
 
   // Ransomware scenario (Phase 7)
-  const [ransomContractAddress, setRansomContractAddress] = useState(localStorage.getItem('ransom_addr') || '')
-  const [ransomAmount, setRansomAmount] = useState('0.1')
+  const [ransomContractAddress, setRansomContractAddress] = useState('')
   const [artifactsOpen, setArtifactsOpen] = useState(true)
 
-  // Script Playground (Phase 6: Web Playground)
-  const [scriptPlaygroundOpen, setScriptPlaygroundOpen] = useState(false)
   const [livePageBlocksOpen, setLivePageBlocksOpen] = useState({
     yourWalletBanner: true,
-    roleAssigned: true,
+    roleAssigned: false,
     identityStrip: true,
-    socialProof: true,
+    socialProof: false,
     createWalletBanner: true,
-    walletAndRole: true,
-    quickActions: true,
-    assetsCard: true,
-    sendCard: true,
-    beaconPromoCard: true,
-    contractPromoCard: true,
-    tokenPromoCard: true,
-    connectionCard: true,
-    txHistoryCard: true,
+    walletAndRole: false,
+    assetsCard: false,
+    sendCard: false,
+    connectionCard: false,
+    txHistoryCard: false,
     classChat: true,
-    evidenceSection: true,
-    ransomSection: true,
-    embeddedContractLab: true,
-    labTerminalSection: true,
-    labProgress: true,
+    evidenceSection: false,
   })
   const toggleLivePageBlock = (key) => {
     setLivePageBlocksOpen((prev) => ({ ...prev, [key]: !prev[key] }))
   }
-  const [loadCodeForConsole, setLoadCodeForConsole] = useState('')
-  const [scriptCode, setScriptCode] = useState(`// Run ethers.js against PoS and contracts
-// Available: provider, ethers, wallet, posAddress, PoSABI
-const c = new ethers.Contract(posAddress, PoSABI, wallet.signer);
-const total = await c.totalStaked();
-return ethers.formatEther(total) + ' ETH staked';`)
-  const [scriptOutput, setScriptOutput] = useState('')
-  const [scriptRunning, setScriptRunning] = useState(false)
 
   const saveTrail = (next) => {
     setTrail(next)
-    localStorage.setItem('learning_trail', JSON.stringify(next))
+    patchSession('ui', { trail: next })
   }
+
+  useEffect(() => {
+    let cancelled = false
+    const hydrateBackendSession = async () => {
+      try {
+        const data = await fetchSessionState()
+        if (cancelled) return
+        const ui = data?.state?.ui || {}
+        const live = data?.state?.live || {}
+        applySessionWalletState(data?.state?.wallets || {})
+        applyContractSourcesState(data?.state?.['contract-sources'] || {})
+        if (ui.theme === 'dark' || ui.theme === 'light') setTheme(ui.theme)
+        if (ui.trail && typeof ui.trail === 'object') setTrail({
+          intro: !!ui.trail.intro,
+          concepts: !!ui.trail.concepts,
+          explore: !!ui.trail.explore,
+        })
+        if (Array.isArray(ui.exploreProgress)) setExploreProgress(ui.exploreProgress.slice(0, 3).map(Boolean))
+        if (typeof ui.nickname === 'string') setMyNickname(ui.nickname)
+        if (ui.nicknames && typeof ui.nicknames === 'object' && !Array.isArray(ui.nicknames)) setNicknames(ui.nicknames)
+        if (Number.isFinite(Number(ui.sessionStart))) setSessionStart(Number(ui.sessionStart))
+        if (typeof ui.rpcUrl === 'string' && ui.rpcUrl.trim()) setRpcUrl(normalizeBrowserRpcUrl(ui.rpcUrl))
+        if (typeof ui.posAddress === 'string' && ui.posAddress.length === 42) setPosAddress(ui.posAddress)
+        if (typeof live.ransomContractAddress === 'string') setRansomContractAddress(live.ransomContractAddress)
+        if (live.myStake && typeof live.myStake === 'object') {
+          setMyStake((prev) => ({ ...prev, ...live.myStake }))
+        }
+        setSession((prev) => ({ ...prev, hasCreatedWallet: true }))
+        sessionHydratedRef.current = true
+      } catch (err) {
+        console.warn('[SessionState] hydrate failed:', err?.message || err)
+      }
+    }
+    hydrateBackendSession()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    patchSession('ui', { exploreProgress })
+  }, [exploreProgress, patchSession])
+
+  useEffect(() => {
+    patchSession('ui', { nickname: myNickname, nicknames })
+  }, [myNickname, nicknames, patchSession])
+
+  useEffect(() => {
+    patchSession('ui', { sessionStart })
+  }, [sessionStart, patchSession])
+
+  useEffect(() => {
+    if (posAddress && posAddress.length === 42) patchSession('ui', { posAddress })
+  }, [posAddress, patchSession])
+
+  useEffect(() => {
+    if (rpcUrl?.trim()) patchSession('ui', { rpcUrl: normalizeBrowserRpcUrl(rpcUrl) })
+  }, [rpcUrl, patchSession])
+
+  useEffect(() => {
+    patchSession('live', { ransomContractAddress })
+  }, [ransomContractAddress, patchSession])
+
+  useEffect(() => {
+    patchSession('live', { myStake: { role: myStake.role || '' } })
+  }, [myStake.role, patchSession])
 
   // Notify when role is newly assigned
   useEffect(() => {
@@ -6846,6 +6814,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
 
   // Shared helper: parse messages for role assignment
   const parseRoleFromMessages = useCallback((msgList, address, validatorList) => {
+    if (!SCENARIO_ROLES_ENABLED) return null; // scenario roles disabled for the active lab surface
     if (!msgList?.length || !address) return null;
     const myAddr = address.toLowerCase();
     let assignedRole = null;
@@ -6898,7 +6867,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
     if (!messages?.length || !wallet.address) return;
     const assignedRole = parseRoleFromMessages(messages, wallet.address, validators);
     if (assignedRole) {
-      localStorage.setItem('scenario_role', assignedRole);
       setMyStake(prev => ({ ...prev, role: assignedRole }));
       console.log('[Role] useEffect assigned:', assignedRole);
     } else {
@@ -6906,53 +6874,19 @@ return ethers.formatEther(total) + ' ETH staked';`)
     }
   }, [messages, wallet.address, validators, parseRoleFromMessages])
 
-  // Run script in Playground (Phase 6)
-  const runScript = useCallback(async () => {
-    if (!provider || !wallet?.signer || !posAddress) {
-      setScriptOutput('❌ Need provider, wallet, and PoS address. Connect first.')
-      return
-    }
-    setScriptRunning(true)
-    setScriptOutput('⏳ Running...')
-    try {
-      const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor
-      const fn = new AsyncFunction('provider', 'ethers', 'wallet', 'posAddress', 'PoSABI', scriptCode)
-      const result = await fn(provider, ethers, wallet, posAddress, PoSABI)
-      setScriptOutput(result !== undefined ? String(result) : '✓ (no return value)')
-    } catch (e) {
-      setScriptOutput('❌ ' + (e.reason || e.message || String(e)))
-    } finally {
-      setScriptRunning(false)
-    }
-  }, [provider, wallet, posAddress, scriptCode])
-
   // Reset entire session - clears all user data and creates fresh start
-  const resetSession = () => {
+  const resetSession = async () => {
     if (!window.confirm('🔄 Reset your session?\n\nThis will:\n• Create a new wallet identity\n• Clear all progress\n• Clear chat nickname\n\nYour test ETH will be lost. Continue?')) {
       return;
     }
-    
-    // Clear all localStorage keys
-    const keysToRemove = [
-      'eth_lab_wallet_pk',      // Wallet private key
-      'learning_trail',         // Learning progress
-      'explore_progress',       // Explore section progress
-      'lab_feedback',           // Feedback data
-      'quiz_scores',            // Quiz scores
-      'session_start',          // Session start time
-      'classmate_nicknames',    // Classmate nicknames
-      'pos_addr',               // Contract address (will reload default)
-      'my_nickname',            // User's own nickname
-      'scenario_role',          // Frontend-only role assignment
-      'ransom_addr',
-      'car_sale_addr',
-      'marketplace_addr',
-    ];
-    
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    
-    // Clear sessionStorage too
-    sessionStorage.removeItem('guest_sk');
+
+    try {
+      await resetSessionState();
+    } catch (err) {
+      setStatusMsg('❌ Session reset failed: ' + (err?.message || err));
+      setTimeout(() => setStatusMsg(''), 4000);
+      return;
+    }
     
     // Reset React state
     setTrail({ intro: false, concepts: false, explore: false });
@@ -6979,8 +6913,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
     setWithdrawalRequested(false);
     hasAutoJoined.current = false;
     
-    // Record new session start
-    localStorage.setItem('session_start', Date.now().toString());
+    setSessionStart(Date.now());
     
     // Reload the page to ensure clean state
     setStatusMsg('🔄 Session reset! Reloading...');
@@ -6995,10 +6928,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
     saveTrail(updated)
   }
 
-  useEffect(() => {
-    localStorage.setItem('explore_progress', JSON.stringify(exploreProgress))
-  }, [exploreProgress])
-
   const unlocks = {
     intro: true,
     concepts: true, // Always unlocked
@@ -7012,9 +6941,9 @@ return ethers.formatEther(total) + ' ETH staked';`)
     if (!routeId) return;
     const key = `eth_progress_${routeId}`;
     const now = Date.now();
-    const last = parseInt(sessionStorage.getItem(key) || '0', 10);
+    const last = progressBeaconLastRef.current[key] || 0;
     if (now - last < 5000) return;
-    sessionStorage.setItem(key, String(now));
+    progressBeaconLastRef.current[key] = now;
     fetch('/api/ethereum/progress/touch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -7035,32 +6964,17 @@ return ethers.formatEther(total) + ' ETH staked';`)
     'beacon-lab': 'eth-beacon-lab',
     'contract-builder-lab': 'eth-contract-write',
     'tokenization-lab': 'eth-token-erc721',
+    'arcade-lab': 'eth-ft-load',
   };
 
   useEffect(() => {
     fireProgressBeacon(VIEW_BEACON_MAP[view]);
   }, [view]);
 
-  useEffect(() => {
-    fetch('/api/ethereum/progress/touch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ route_id: 'home' }),
-      keepalive: true,
-    }).catch(() => {});
-  }, []);
-
   const requestView = (target) => {
         setView(target)
         setNavHint('')
   }
-
-  // 0. Save default contract address to localStorage if not already saved
-  useEffect(() => {
-    if (posAddress && posAddress.length === 42 && !localStorage.getItem("pos_addr")) {
-      localStorage.setItem("pos_addr", posAddress);
-    }
-  }, [posAddress]);
 
   // 1. Initialize Provider (use staticNetwork to avoid "network does not support ENS" on local/custom chains)
   useEffect(() => {
@@ -7074,15 +6988,19 @@ return ethers.formatEther(total) + ' ETH staked';`)
     let cancelled = false
     const init = async () => {
       try {
-        const temp = new ethers.JsonRpcProvider(resolvedUrl)
         let chainId = 31337
-        try {
-          const network = await temp.getNetwork()
-          if (cancelled) return
-          chainId = Number(network.chainId)
-        } catch (_) {
-          // RPC may not be ready; use 31337 for local Hardhat
-          if (/localhost|127\.0\.0\.1|8545|\/rpc-proxy|\/rpc/.test(sanitizedUrl)) chainId = 31337
+        const sameOriginLabRpc = /^\/(rpc-write|rpc|rpc-proxy)(?:$|[?#])/.test(sanitizedUrl)
+          || /\/labs\/ethereum_lab\/(rpc-write|rpc|rpc-proxy)(?:$|[?#])/.test(sanitizedUrl)
+        if (!sameOriginLabRpc) {
+          const temp = new ethers.JsonRpcProvider(resolvedUrl)
+          try {
+            const network = await temp.getNetwork()
+            if (cancelled) return
+            chainId = Number(network.chainId)
+          } catch (_) {
+            // RPC may not be ready; use 31337 for local Hardhat
+            if (/localhost|127\.0\.0\.1|8545|\/rpc-write|\/rpc-proxy|\/rpc/.test(sanitizedUrl)) chainId = 31337
+          }
         }
         if (cancelled) return
         const staticNet = ethers.Network.from(chainId)
@@ -7110,33 +7028,141 @@ return ethers.formatEther(total) + ' ETH staked';`)
   const hasLocalWallet = getWalletList().length > 0
   const mustCreateWalletFirst = !session.hasCreatedWallet && !hasLocalWallet && !session.loading
 
+  // Owned NFTs for the "Your Assets" dashboard panel (from the shared marketplace cache; no RPC).
+  const [myNftAssets, setMyNftAssets] = useState([]);
+  const [myArcAsset, setMyArcAsset] = useState({ balanceWei: '0', ok: false });
+  const navAssetImg = (src) => {
+    if (!src || /^(data:|https?:)/.test(src)) return src;
+    const path = String(src).replace(/^\/+/, '');
+    const b = (import.meta.env.BASE_URL || '/');
+    const base = b.endsWith('/') ? b : b + '/';
+    return path.startsWith('labs/ethereum_lab/') ? base + path : src;
+  };
+  const formatArcAssetBalance = (wei) => {
+    try {
+      return `${Number(ethers.formatEther(BigInt(wei || '0'))).toLocaleString(undefined, { maximumFractionDigits: 4 })} ARC`;
+    } catch (_) {
+      return '0 ARC';
+    }
+  };
+  const formatEthWalletBalance = (value) => {
+    const n = Number(value || 0);
+    if (!Number.isFinite(n)) return '0.0000 ETH';
+    return `${n.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} ETH`;
+  };
+  const mergeDashboardAssetConfig = useCallback((next = {}) => {
+    setDashboardAssetConfig((prev) => {
+      const arcadeTokenAddress = ethers.isAddress(next.arcadeTokenAddress || '') ? next.arcadeTokenAddress : prev.arcadeTokenAddress;
+      const nftAddress = ethers.isAddress(next.nftAddress || '') ? next.nftAddress : prev.nftAddress;
+      if (arcadeTokenAddress === prev.arcadeTokenAddress && nftAddress === prev.nftAddress) return prev;
+      return { arcadeTokenAddress, nftAddress };
+    });
+  }, []);
+
   useEffect(() => {
-    if ((view !== 'live' && view !== 'tokens') || !provider || wallet.mode === 'metamask') return;
+    let cancelled = false;
+    const loadDashboardAssetConfig = async () => {
+      const [runtime, statik] = await Promise.all([
+        fetch(dashboardLabUrl('api/config.json'), { cache: 'no-store' }).then(dashboardSafeJson).catch(() => ({})),
+        fetch(dashboardLabUrl('labs/ethereum_lab/tokenization-config.json'), { cache: 'no-store' }).then(dashboardSafeJson).catch(() => ({})),
+      ]);
+      if (cancelled) return;
+      mergeDashboardAssetConfig({
+        arcadeTokenAddress: runtime.arcadeTokenAddress || statik.arcadeTokenAddress || '',
+        nftAddress: runtime.tokenizationNftAddress || statik.nftAddress || '',
+      });
+    };
+    loadDashboardAssetConfig();
+    return () => { cancelled = true; };
+  }, [mergeDashboardAssetConfig]);
+
+  useEffect(() => {
+    const me = (wallet?.address || '').toLowerCase();
+    if (!me) { setMyNftAssets([]); return; }
+    let cancelled = false;
+    const cbase = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const load = async () => {
+      for (const url of [cbase + '/marketplace-state', cbase + '/lab-api/marketplace/state']) {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (!j || !j.ok) continue;
+          if (!cancelled) {
+            if (ethers.isAddress(j.nft || '')) mergeDashboardAssetConfig({ nftAddress: j.nft });
+            const ids = (j.tokensByOwner && j.tokensByOwner[me]) || [];
+            setMyNftAssets(ids.map((tid) => ({ tokenId: tid, ...(j.tokens?.[tid] || {}) })));
+          }
+          return;
+        } catch { /* try next url */ }
+      }
+    };
+    load();
+    const iv = setInterval(load, 5000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [wallet?.address, mergeDashboardAssetConfig]);
+
+  useEffect(() => {
+    const me = (wallet?.address || '').toLowerCase();
+    if (!me) { setMyArcAsset({ balanceWei: '0', ok: false }); return; }
+    let cancelled = false;
+    const cbase = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const load = async () => {
+      for (const url of [cbase + '/arcade-state', cbase + '/lab-api/arcade/state']) {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (!j || !j.ok) continue;
+          if (!cancelled) {
+            if (ethers.isAddress(j.token || '')) mergeDashboardAssetConfig({ arcadeTokenAddress: j.token });
+            setMyArcAsset({
+              balanceWei: String((j.balances && j.balances[me]) || '0'),
+              ok: true,
+            });
+          }
+          return;
+        } catch { /* try next url */ }
+      }
+      if (!cancelled) setMyArcAsset({ balanceWei: '0', ok: false });
+    };
+    load();
+    const iv = setInterval(load, 5000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [wallet?.address, mergeDashboardAssetConfig]);
+
+  useEffect(() => {
+    if (sendAssetType !== 'nft') return;
+    const stillOwned = sendNftTokenId && myNftAssets.some((n) => String(n.tokenId) === String(sendNftTokenId));
+    if (!stillOwned) setSendNftTokenId(myNftAssets[0]?.tokenId ? String(myNftAssets[0].tokenId) : '');
+  }, [sendAssetType, sendNftTokenId, myNftAssets]);
+
+  const arcBalanceWei = dashboardSafeBigInt(myArcAsset.balanceWei);
+  const canSendArc = myArcAsset.ok && arcBalanceWei > 0n;
+  const canSendNft = myNftAssets.length > 0;
+  const isSendingDashboardAsset = statusMsg.includes("Sending ETH") || statusMsg.includes("Sending ARC") || statusMsg.includes("Sending NFT");
+  const openSendCardForAsset = (assetType, tokenId = '') => {
+    setSendAssetType(assetType);
+    if (tokenId) setSendNftTokenId(String(tokenId));
+    setLivePageBlocksOpen((prev) => ({ ...prev, sendCard: true }));
+    setTimeout(() => {
+      document.getElementById('send-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+  };
+
+  useEffect(() => {
+    const needsAutoWallet = view === 'live' || view === 'tokens' || view === 'beacon-lab' || view === 'contract-builder-lab' || view === 'tokenization-lab' || view === 'arcade-lab' || view === 'nft-marketplace';
+    if (!needsAutoWallet || !provider || wallet.mode === 'metamask') return;
+    if ((view === 'tokenization-lab' || view === 'arcade-lab' || view === 'nft-marketplace') && !runtimeConfigLoaded) return;
     if (mustCreateWalletFirst) return; // Show create flow, don't auto-create
 
     let cancelled = false
 
-    const check = async () => {
-      try {
-        const bn = await provider.getBlockNumber()
-        if (!cancelled) {
-        setNodeStatus({ connected: true, blockNumber: bn })
-        }
-      } catch (e) { 
-        if (!cancelled) {
-            setNodeStatus({ connected: false, blockNumber: 0 })
-        }
-      }
-    }
-    check();
-    const interval = setInterval(check, 2000);
-
     const hydrateGuestWallet = async () => {
         try {
-        const { mode, signer } = getGuestWallet()
+        const { mode, signer } = await getGuestWallet()
             const addr = await signer.getAddress()
              const connectedSigner = signer.connect(provider)
-             const bal = await provider.getBalance(addr).catch(() => 0n)
              // Get wallet nickname from storage
              const walletInfo = getWalletInfo()
              const nickname = walletInfo?.nickname || 'My Wallet'
@@ -7145,7 +7171,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                     ...prev,
                     address: addr,
                     signer: connectedSigner,
-                    balance: ethers.formatEther(bal),
+                    balance: prev.balance,
                     mode: mode || 'guest',
                     nickname: nickname
                 }))
@@ -7167,13 +7193,113 @@ return ethers.formatEther(total) + ' ETH staked';`)
 
     return () => {
         cancelled = true
-        clearInterval(interval)
         window.removeEventListener('walletSwitched', onWalletSwitched)
     }
-  }, [provider, view, wallet.mode, mustCreateWalletFirst, session.hasCreatedWallet]);
+  }, [provider, view, wallet.mode, mustCreateWalletFirst, session.hasCreatedWallet, runtimeConfigLoaded]);
+
+  useEffect(() => {
+    if (!wallet.address) {
+      setWalletBalanceMeta({ status: 'idle', ageMs: null, cached: false, error: '' });
+      return;
+    }
+
+    let cancelled = false;
+    const activeAddress = wallet.address.toLowerCase();
+
+    const loadWalletBalance = async () => {
+      try {
+        const data = await fetchSessionWalletBalance();
+        if (cancelled) return;
+        const returnedAddress = String(data?.address || '').toLowerCase();
+        if (returnedAddress && returnedAddress !== activeAddress) return;
+        if (data?.balanceEth != null) {
+          setWallet(prev => {
+            if (prev.address && prev.address.toLowerCase() !== activeAddress) return prev;
+            return { ...prev, balance: data.balanceEth };
+          });
+        }
+        setWalletBalanceMeta({
+          status: 'ok',
+          ageMs: Number.isFinite(Number(data?.ageMs)) ? Number(data.ageMs) : null,
+          cached: !!data?.cached,
+          error: '',
+        });
+      } catch (e) {
+        if (cancelled) return;
+        setWalletBalanceMeta({
+          status: 'error',
+          ageMs: null,
+          cached: false,
+          error: e?.message || 'Balance unavailable',
+        });
+      }
+    };
+
+    const refreshVisibleWalletBalance = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      loadWalletBalance();
+    };
+
+    loadWalletBalance();
+    const interval = setInterval(refreshVisibleWalletBalance, WALLET_BALANCE_POLL_MS);
+    const refreshOnFocus = () => refreshVisibleWalletBalance();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', refreshOnFocus);
+    }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', refreshOnFocus);
+    }
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', refreshOnFocus);
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', refreshOnFocus);
+      }
+    };
+  }, [wallet.address]);
+
+  useEffect(() => {
+    if (!CACHE_BACKED_NODE_STATUS_VIEWS.has(view)) return;
+    let cancelled = false;
+    const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+    const urls = [base + '/chain-state', base + '/lab-api/chain/state'];
+
+    const readCachedHead = async () => {
+      for (const url of urls) {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (typeof j?.head === 'number') return j.head;
+          if (Array.isArray(j?.blocks) && j.blocks.length) {
+            const n = Number(j.blocks[0]?.number ?? j.blocks[j.blocks.length - 1]?.number);
+            if (Number.isFinite(n)) return n;
+          }
+        } catch (_) {}
+      }
+      return null;
+    };
+
+    const tick = async () => {
+      const head = await readCachedHead();
+      if (cancelled) return;
+      setNodeStatus(head == null
+        ? { connected: false, blockNumber: 0 }
+        : { connected: true, blockNumber: head });
+    };
+
+    tick();
+    const interval = setInterval(tick, 4000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [view]);
 
   // 3. Auto-Join Class List when wallet is ready
   useEffect(() => {
+    if (!LEGACY_LIVE_RPC_SYNC_ENABLED) return;
     // Reset auto-join flag when leaving live view
     if (view !== 'live') {
       hasAutoJoined.current = false;
@@ -7186,9 +7312,10 @@ return ethers.formatEther(total) + ' ETH staked';`)
     if (validators.includes(wallet.address) || hasAutoJoined.current) return;
     
     const autoJoinClass = async () => {
+      if (joiningClassRef.current) return; // Another join (manual or auto) is already in flight
       hasAutoJoined.current = true; // Mark as attempted
       console.log("[AutoJoin] Joining class as:", wallet.address);
-      
+
       try {
         // Check if wallet has funds - can't join without gas
         const balance = await provider.getBalance(wallet.address);
@@ -7197,7 +7324,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
           hasAutoJoined.current = false; // Allow retry after they get funds
           return;
         }
-        
+
         // Verify contract exists before trying to join
         const code = await provider.getCode(posAddress);
         if (code === '0x' || code === '0x0') {
@@ -7205,22 +7332,25 @@ return ethers.formatEther(total) + ' ETH staked';`)
           hasAutoJoined.current = false; // Allow retry when contract is ready
           return;
         }
-        
+
+        joiningClassRef.current = true;
         setStatusMsg("👋 Joining class...");
         const contract = new ethers.Contract(posAddress, PoSABI, wallet.signer);
         const tx = await contract.sendMessage("👋 Joined the class!");
         await tx.wait();
         console.log("[AutoJoin] Successfully joined class");
         setStatusMsg("✅ Joined class!");
-        
-        // Refresh data to show in classmates list  
-        blockchainSync.forceRefresh();
-        
+
+        // Refresh data to show in classmates list
+        if (LEGACY_LIVE_RPC_SYNC_ENABLED) blockchainSync.forceRefresh();
+
         setTimeout(() => setStatusMsg(""), 2000);
       } catch (err) {
         console.error("[AutoJoin] Failed:", err);
         // Don't show error to user - they can manually join if needed
         hasAutoJoined.current = false; // Allow retry on next attempt
+      } finally {
+        joiningClassRef.current = false;
       }
     };
     
@@ -7229,191 +7359,319 @@ return ethers.formatEther(total) + ' ETH staked';`)
     return () => clearTimeout(timer);
   }, [view, wallet.address, wallet.signer, posAddress, validators]);
 
-  // Real-time balance updates and transaction history
+  // Legacy Live dashboard reads the shared chain cache. Do not poll the RPC node
+  // from each student browser for balance/history/role data.
   useEffect(() => {
-    if (!provider || !wallet.address || view !== 'live') return;
-    
-    const updateBalance = async () => {
-      try {
-        const bal = await provider.getBalance(wallet.address)
-        setWallet(prev => ({ ...prev, balance: ethers.formatEther(bal) }))
-      } catch (e) {
-        console.error("Balance update error:", e)
-      }
-    }
-    
-    const fetchTxHistory = async () => {
-      try {
-        const currentBlock = await provider.getBlockNumber()
-        const history = []
-        
-        // Get last 50 blocks of transactions (reduced for performance)
-        const startBlock = Math.max(0, currentBlock - 50);
-        for (let i = startBlock; i <= currentBlock; i++) {
-          try {
-            const block = await provider.getBlock(i, true) // true = prefetchedTransactions
-            if (block && block.prefetchedTransactions) {
-              // Ethers v6 uses prefetchedTransactions
-              for (const tx of block.prefetchedTransactions) {
-                const fromAddr = tx.from?.toLowerCase();
-                const toAddr = tx.to?.toLowerCase();
-                const myAddr = wallet.address?.toLowerCase();
-                
-                if (fromAddr === myAddr || toAddr === myAddr) {
-                  history.push({
-                    hash: tx.hash,
-                    from: tx.from,
-                    to: tx.to || 'Contract Creation',
-                    value: ethers.formatEther(tx.value || 0n),
-                    blockNumber: i,
-                    timestamp: Number(block.timestamp),
-                    type: fromAddr === myAddr ? 'sent' : 'received'
-                  })
-                }
-              }
-            }
-          } catch (blockErr) {
-            // Skip individual block errors
-            console.debug(`Skipping block ${i}:`, blockErr.message);
-          }
-        }
-        
-        if (history.length > 0) {
-          setTxHistory(history.sort((a, b) => b.timestamp - a.timestamp).slice(0, 20))
-        }
-      } catch (e) {
-        console.error("Transaction history error:", e)
-      }
-    }
-    
-    // Live tab: only fetch role/roleContract (staking is in Beacon Lab)
-    const fetchRoleInfo = async () => {
-      if (!posAddress || posAddress.length !== 42) return
-      try {
-        const code = await provider.getCode(posAddress)
-        if (code === '0x' || code === '0x0') return
-        const contract = new ethers.Contract(posAddress, PoSABI, provider)
-        const roleContract = await contract.roleContractAddress(wallet.address)
-        const role = localStorage.getItem('scenario_role') || ''
-        setMyStake(prev => ({
-          ...prev,
-          role: role || prev.role || '',
-          roleContract: roleContract && roleContract !== ethers.ZeroAddress ? roleContract : prev.roleContract || null
-        }))
-        lastSyncRef.current = Date.now()
-        setLastSyncTime(Date.now())
-      } catch (e) {
-        if (!e.message?.includes('BAD_DATA') && !e.message?.includes('could not decode')) {
-          console.error("Role info error:", e)
-        }
-      }
-    }
-    
-    // Initial updates
-    updateBalance()
-    fetchTxHistory()
-    fetchRoleInfo()
-    
-    // Fast polling for balance, role, tx history (no stake data on Live)
-    let pollCount = 0;
-    const interval = setInterval(() => {
-      pollCount++;
-      updateBalance();
-      if (pollCount % 2 === 0) fetchRoleInfo();
-      if (pollCount % 5 === 0) fetchTxHistory();
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [provider, wallet.address, view, posAddress])
+    if (!wallet.address || view !== 'live') return;
 
-  // Handle account change from AccountManager
-  const handleAccountChange = async (newWalletInfo) => {
-    // Handle logout case - user logged out, refresh to get new guest wallet
-    if (!newWalletInfo) {
-      setStatusMsg('🔄 Logging out... Creating new wallet');
-      setShowAccountManager(false);
-      
-      // Trigger re-initialization of guest wallet by resetting wallet state
-      setWallet({ address: null, signer: null, balance: '0', mode: null, nickname: 'My Wallet' });
-      hasAutoJoined.current = false;
-      
-      // The useEffect that runs hydrateGuestWallet will create a new wallet
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-      return;
-    }
-    
-    if (!newWalletInfo.address) return;
-    
+    let cancelled = false;
+    const me = wallet.address.toLowerCase();
+    const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+
+    const formatCachedWei = (value) => {
+      try { return ethers.formatEther(BigInt(value ?? 0)); }
+      catch (_) { return '0'; }
+    };
+
+    const loadFromChainCache = async () => {
+      for (const url of [base + '/chain-state', base + '/lab-api/chain/state']) {
+        try {
+          const r = await fetch(url, { cache: 'no-store' });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (!j?.ok || !Array.isArray(j.blocks)) continue;
+          const history = [];
+          for (const block of j.blocks) {
+            for (const tx of block.transactions || []) {
+              const fromAddr = tx.from?.toLowerCase?.();
+              const toAddr = tx.to?.toLowerCase?.();
+              if (fromAddr !== me && toAddr !== me) continue;
+              history.push({
+                hash: tx.hash,
+                from: tx.from,
+                to: tx.to || 'Contract Creation',
+                value: formatCachedWei(tx.value),
+                blockNumber: block.number,
+                timestamp: Number(block.timestamp || 0),
+                type: fromAddr === me ? 'sent' : 'received',
+              });
+            }
+          }
+          if (!cancelled) {
+            setTxHistory(history.sort((a, b) => b.timestamp - a.timestamp).slice(0, 20));
+            lastSyncRef.current = Date.now();
+            setLastSyncTime(Date.now());
+          }
+          return;
+        } catch (_) {}
+      }
+    };
+
+    loadFromChainCache();
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      loadFromChainCache();
+    }, 5000);
+
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [wallet.address, view])
+
+  const createNamedWallet = async () => {
+    const entered = window.prompt('Enter a nickname for your new wallet:');
+    if (entered === null) return;
+    const nickname = entered.trim() || 'My Wallet';
     try {
-      // Create a new signer from the private key
-      const newWallet = new ethers.Wallet(newWalletInfo.privateKey);
-      const connectedSigner = newWallet.connect(provider);
-      const bal = await provider.getBalance(newWalletInfo.address).catch(() => 0n);
-      
-      setWallet({
-        address: newWalletInfo.address,
-        signer: connectedSigner,
-        balance: ethers.formatEther(bal),
-        mode: 'imported',
-        nickname: newWalletInfo.nickname || 'My Wallet'
-      });
-      
-      // Reset auto-join flag so the new wallet can join the class
-      hasAutoJoined.current = false;
-      
-      setStatusMsg(`✅ Account switched to ${newWalletInfo.nickname || newWalletInfo.address.slice(0,8)}`);
+      const newWallet = await generateNewWallet(nickname);
+      setNewWalletModal({ address: newWallet.address, privateKey: newWallet.privateKey });
+      setStatusMsg(`✅ New wallet created: ${nickname}`);
       setTimeout(() => setStatusMsg(''), 3000);
-      setShowAccountManager(false);
-    } catch (err) {
-      console.error("Account switch failed:", err);
-      setStatusMsg("❌ Failed to switch account: " + err.message);
+    } catch (e) {
+      setStatusMsg('❌ Could not create wallet: ' + (e?.message || e));
+      setTimeout(() => setStatusMsg(''), 4000);
     }
   };
 
-  // Helpers - No faucet; instructor funds students via Instructor dashboard
-
-  const sendEthToPeer = async () => {
-      if(!ethers.isAddress(recipient)) return setStatusMsg("Invalid Recipient Address")
-      if(!sendAmount) return setStatusMsg("Enter amount")
-      
-      // Prevent double-sending
-      if (statusMsg.includes("Sending ETH")) {
-          return setStatusMsg("Transaction already in progress...")
+  const switchWallet = async (id) => {
+    try {
+      // Persist the selection in the backend session store.
+      await setActiveWallet(id);
+      if (!provider) {
+        // No chain connection yet: at least reflect the chosen identity in the UI.
+        const info = getWalletInfo();
+        if (info) setWallet(prev => ({ ...prev, address: info.address, nickname: info.nickname }));
+        return;
       }
-      
+      // Rebuild the active signer directly so the UI updates without relying on the
+      // walletSwitched listener (which only runs while the live/tokens effect is mounted).
+      const { mode, signer } = await getGuestWallet();
+      const addr = await signer.getAddress();
+      const connectedSigner = signer.connect(provider);
+      const info = getWalletInfo();
+      setWallet(prev => ({
+        ...prev,
+        address: addr,
+        signer: connectedSigner,
+        balance: prev.balance,
+        mode: mode || 'guest',
+        nickname: info?.nickname || 'My Wallet'
+      }));
+    } catch (e) {
+      console.error('Wallet switch failed:', e);
+      setStatusMsg('❌ Could not switch wallet: ' + (e.reason || e.message));
+      setTimeout(() => setStatusMsg(''), 4000);
+    }
+  };
+
+  const grantTopOffAfterMining = useCallback(async ({ preserveWinMessage = false } = {}) => {
+    if (!wallet.address) {
+      setStatusMsg('❌ Create a wallet first.');
+      setTimeout(() => setStatusMsg(''), 3000);
+      return;
+    }
+    if (statusMsg.includes('Topping off') || statusMsg.includes('Mining reward')) return;
+
+    try {
+      if (!preserveWinMessage) {
+        setStatusMsg('Mining reward accepted. Topping off wallet...');
+      }
+      // Add a fixed grant from the class bank through lab-api. The server handles
+      // balance/nonce/receipt reads so browsers do not use read-capable RPC.
+      const amountEth = '100';
+      const receipt = await rpcClient.sendFromBank(wallet.address, amountEth);
+      if (receipt?.balanceEth) {
+        setWallet(prev => ({ ...prev, balance: receipt.balanceEth }));
+        setWalletBalanceMeta({ status: 'ok', ageMs: 0, cached: false, error: '' });
+      }
+      setTxHistory(prev => [{
+        hash: receipt?.hash || receipt?.transactionHash || '',
+        from: receipt?.bankAddress || rpcClient.getBankSigner()?.address,
+        to: wallet.address,
+        value: receipt?.amountEth || amountEth,
+        blockNumber: receipt?.blockNumber,
+        timestamp: Math.floor(Date.now() / 1000),
+        type: 'received',
+        label: 'Wallet top-off'
+      }, ...prev].slice(0, 20));
+      if (receipt?.pending) {
+        setStatusMsg(`⏳ Top-off submitted (${receipt?.amountEth || amountEth} ETH). Balance will update shortly.`);
+        setTimeout(() => setStatusMsg(''), 5000);
+        return;
+      }
+      const balanceLabel = receipt?.balanceEth ? ` — balance now ${parseFloat(receipt.balanceEth).toFixed(4)} ETH` : '';
+      setStatusMsg(`✅ Added ${receipt?.amountEth || amountEth} ETH${balanceLabel}.`);
+      setTimeout(() => setStatusMsg(''), 3000);
+    } catch (e) {
+      console.warn('[TopOff] failed:', e?.shortMessage || e?.message || e);
+      const retryHint = e?.retryable === false ? '' : ' Please try again in a moment.';
+      setStatusMsg(`❌ Top-off failed: ${e?.message || 'class faucet is busy.'}${retryHint}`);
+      setTimeout(() => setStatusMsg(''), 5000);
+    }
+  }, [statusMsg, wallet.address]);
+
+  const topOffWallet = () => {
+    if (!wallet.address) {
+      setStatusMsg('❌ Create a wallet first.');
+      setTimeout(() => setStatusMsg(''), 3000);
+      return;
+    }
+    if (statusMsg.includes('Topping off') || statusMsg.includes('Mining reward')) return;
+    setTopOffMiningAwarding(false);
+    topOffAwardingRef.current = false;
+    setTopOffMiningOpen(true);
+    setStatusMsg('⛏️ Win the mining race to unlock a 100 ETH top-off.');
+  };
+
+  const closeTopOffMining = () => {
+    if (topOffAwardingRef.current) return;
+    setTopOffMiningOpen(false);
+    setTopOffMiningAwarding(false);
+    setStatusMsg(prev => prev.includes('Win the mining race') ? '' : prev);
+  };
+
+  useEffect(() => {
+    const handleMiningWin = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'pow-mining-topoff-win' || event.data?.source !== 'ethereum_lab') return;
+      if (topOffAwardingRef.current) return;
+      topOffAwardingRef.current = true;
+      setTopOffMiningAwarding(true);
+      setStatusMsg('🏆 You won! Awarding 100 ETH now...');
+      const startedAt = Date.now();
+      Promise.resolve(grantTopOffAfterMining({ preserveWinMessage: true })).finally(() => {
+        const remainingMs = Math.max(2000 - (Date.now() - startedAt), 0);
+        setTimeout(() => {
+          setTopOffMiningAwarding(false);
+          topOffAwardingRef.current = false;
+          setTopOffMiningOpen(false);
+        }, remainingMs);
+      });
+    };
+    window.addEventListener('message', handleMiningWin);
+    return () => window.removeEventListener('message', handleMiningWin);
+  }, [grantTopOffAfterMining]);
+
+  // Helpers
+
+  const refreshDashboardAssetCache = async (assetType, txHash = '') => {
+      const cbase = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+      const targets = assetType === 'arc'
+        ? [cbase + '/arcade-state', cbase + '/lab-api/arcade/state']
+        : [cbase + '/marketplace-state', cbase + '/lab-api/marketplace/state'];
+      for (const url of targets) {
+        try {
+          const response = await fetch(url, {
+            method: assetType === 'arc' ? 'POST' : 'GET',
+            headers: assetType === 'arc' ? { 'Content-Type': 'application/json' } : undefined,
+            body: assetType === 'arc' ? JSON.stringify({ area: 'dashboard-asset-transfer', txHash }) : undefined,
+            cache: 'no-store',
+          });
+          if (response.ok) return;
+        } catch (_) {
+          // Try the alternate route.
+        }
+      }
+  }
+
+  const sendAssetToPeer = async () => {
+      if(!ethers.isAddress(recipient)) return setStatusMsg("Invalid Recipient Address")
+      if(!wallet.signer) return setStatusMsg("Wallet not ready")
+      if(isSendingDashboardAsset) return setStatusMsg("Transaction already in progress...")
+
       try {
-          setStatusMsg("Sending ETH...")
-          const tx = await wallet.signer.sendTransaction({
-              to: recipient,
-              value: ethers.parseEther(sendAmount)
-          })
-          const receipt = await tx.wait()
-          setStatusMsg(`Sent ${sendAmount} ETH to ${recipient.slice(0,6)}!`)
-          
-          // Immediately add to transaction history
-          setTxHistory(prev => [{
-            hash: tx.hash,
-            from: wallet.address,
-            to: recipient,
-            value: sendAmount,
-            blockNumber: receipt.blockNumber,
-            timestamp: Math.floor(Date.now() / 1000),
-            type: 'sent'
-          }, ...prev].slice(0, 20))
-          
+          let tx
+          let receipt
+          let historyEntry
+          const now = Math.floor(Date.now() / 1000)
+
+          if (sendAssetType === 'arc') {
+              if (!sendAmount) return setStatusMsg("Enter ARC amount")
+              if (!ethers.isAddress(dashboardAssetConfig.arcadeTokenAddress)) return setStatusMsg("ARC token contract is not configured yet")
+              if (!/^[1-9]\d*$/.test(String(sendAmount).trim())) return setStatusMsg("ARC transfers must be whole tokens: 1, 2, 3, ...")
+              const amountWei = ethers.parseEther(sendAmount)
+              if (amountWei <= 0n) return setStatusMsg("Enter an ARC amount greater than 0")
+              if (amountWei > arcBalanceWei) return setStatusMsg("Not enough ARC in your wallet")
+
+              setStatusMsg("Sending ARC...")
+              const token = new ethers.Contract(dashboardAssetConfig.arcadeTokenAddress, ArcadeTokenArtifact.abi, wallet.signer)
+              tx = await token.transfer(recipient, amountWei, DASHBOARD_WRITE_TX_OPTIONS.arc)
+              receipt = await waitForDashboardTransactionReceipt(tx, wallet.signer.provider || provider)
+              historyEntry = {
+                hash: tx.hash,
+                from: wallet.address,
+                to: recipient,
+                value: sendAmount,
+                assetSymbol: 'ARC',
+                assetType: 'erc20',
+                blockNumber: dashboardReceiptBlockNumber(receipt),
+                timestamp: now,
+                type: 'sent',
+                label: 'Sent ARC',
+              }
+              setMyArcAsset((prev) => {
+                const next = dashboardSafeBigInt(prev.balanceWei) - amountWei
+                return { ...prev, balanceWei: next > 0n ? next.toString() : '0' }
+              })
+              await refreshDashboardAssetCache('arc', tx.hash)
+              setStatusMsg(`Sent ${sendAmount} ARC to ${dashboardShort(recipient)}!`)
+          } else if (sendAssetType === 'nft') {
+              if (!sendNftTokenId) return setStatusMsg("Choose an NFT to send")
+              if (!ethers.isAddress(dashboardAssetConfig.nftAddress)) return setStatusMsg("NFT contract is not configured yet")
+              const owned = myNftAssets.some((n) => String(n.tokenId) === String(sendNftTokenId))
+              if (!owned) return setStatusMsg("That NFT is not in your cached asset list")
+
+              setStatusMsg("Sending NFT...")
+              const nft = new ethers.Contract(dashboardAssetConfig.nftAddress, LabNFTArtifact.abi, wallet.signer)
+              tx = await nft.transferFrom(wallet.address, recipient, sendNftTokenId, DASHBOARD_WRITE_TX_OPTIONS.nft)
+              receipt = await waitForDashboardTransactionReceipt(tx, wallet.signer.provider || provider)
+              historyEntry = {
+                hash: tx.hash,
+                from: wallet.address,
+                to: recipient,
+                value: '1',
+                assetSymbol: 'NFT',
+                assetType: 'erc721',
+                tokenId: sendNftTokenId,
+                blockNumber: dashboardReceiptBlockNumber(receipt),
+                timestamp: now,
+                type: 'sent',
+                label: `Sent NFT #${sendNftTokenId}`,
+              }
+              setMyNftAssets((prev) => prev.filter((n) => String(n.tokenId) !== String(sendNftTokenId)))
+              await refreshDashboardAssetCache('nft', tx.hash)
+              setStatusMsg(`Sent NFT #${sendNftTokenId} to ${dashboardShort(recipient)}!`)
+          } else {
+              if(!sendAmount) return setStatusMsg("Enter amount")
+              const amountWei = ethers.parseEther(sendAmount)
+              if (amountWei <= 0n) return setStatusMsg("Enter an ETH amount greater than 0")
+
+              setStatusMsg("Sending ETH...")
+              tx = await wallet.signer.sendTransaction({
+                  to: recipient,
+                  value: amountWei,
+                  ...DASHBOARD_WRITE_TX_OPTIONS.eth,
+              })
+              receipt = await waitForDashboardTransactionReceipt(tx, wallet.signer.provider || provider)
+              historyEntry = {
+                hash: tx.hash,
+                from: wallet.address,
+                to: recipient,
+                value: sendAmount,
+                assetSymbol: 'ETH',
+                assetType: 'eth',
+                blockNumber: dashboardReceiptBlockNumber(receipt),
+                timestamp: now,
+                type: 'sent',
+                label: 'Sent ETH',
+              }
+              setStatusMsg(`Sent ${sendAmount} ETH to ${dashboardShort(recipient)}!`)
+          }
+
+          if (historyEntry) setTxHistory(prev => [historyEntry, ...prev].slice(0, 20))
           setSendAmount("")
-          setRecipient("") // Clear recipient after successful send
-          
-          // Update balance immediately
-          const bal = await provider.getBalance(wallet.address)
-          setWallet(prev => ({ ...prev, balance: ethers.formatEther(bal) }))
-          
-          // Clear status after 3 seconds
+          setRecipient("")
           setTimeout(() => setStatusMsg(""), 3000)
-      } catch (e) { 
-          setStatusMsg("Transfer Failed: " + e.message)
+      } catch (e) {
+          setStatusMsg("Transfer Failed: " + dashboardErrorMessage(e))
           setTimeout(() => setStatusMsg(""), 5000)
       }
   }
@@ -7449,7 +7707,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
           const role = parseRoleFromMessages(formattedChat, wallet.address, validators);
           if (role) {
             console.log('[syncBlockchainData] Inline role found:', role);
-            localStorage.setItem('scenario_role', role);
             setMyStake(prev => ({ ...prev, role }));
           }
         }
@@ -7503,13 +7760,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
       }
       
       try {
-          // Verify contract exists
-          const code = await provider.getCode(posAddress);
-          if (code === '0x' || code === '0x0') {
-              setStatusMsg("❌ Contract not deployed. Is the instructor's node running?");
-              return false;
-          }
-          
           setStatusMsg("📤 Sending message...");
           
           // Use the user's wallet to send the message (so sender is correctly recorded)
@@ -7529,9 +7779,19 @@ return ethers.formatEther(total) + ' ETH staked';`)
           console.log("[Chat] Message confirmed");
           setStatusMsg("✅ Message sent!");
           
-          // Trigger sync to update classmates list
-          syncBlockchainData();
-          blockchainSync.forceRefresh();
+          const sender = wallet.address;
+          if (sender) {
+              const lower = sender.toLowerCase();
+              const nickMatch = messageToSend.match?.(/\[NICK:([^\]]+)\]/);
+              if (nickMatch) {
+                  setNicknames(prev => ({ ...prev, [lower]: nickMatch[1].trim() }));
+              }
+              setValidators(prev => [...new Set([...prev, sender])]);
+              setMessages(prev => [
+                  ...prev,
+                  { sender, text: messageToSend, timestamp: Math.floor(Date.now() / 1000) },
+              ]);
+          }
           
           setTimeout(() => setStatusMsg(""), 2000);
           return true;
@@ -7546,51 +7806,49 @@ return ethers.formatEther(total) + ' ETH staked';`)
 
   // "I am Here" Button - joins the class by sending a message
   const broadcastPresence = async () => {
-      // Pass message directly to avoid React state race condition
-      const nickname = myNickname ? ` [NICK:${myNickname}]` : "";
-      const success = await sendChatMessage(`👋 Joined the class!${nickname}`);
-      if (success) {
-          // Force immediate refresh of validators list
-          setTimeout(() => {
-              syncBlockchainData();
-              blockchainSync.forceRefresh();
-          }, 500);
+      // Already joined? Nothing to do — avoids a duplicate tx (and a nonce clash).
+      if (wallet.address && validators.includes(wallet.address)) {
+          setStatusMsg("✅ You're already in the class!");
+          setTimeout(() => setStatusMsg(""), 2000);
+          return;
+      }
+      // Don't race the auto-join (or a previous click): only one join tx in flight.
+      if (joiningClassRef.current) return;
+      joiningClassRef.current = true;
+      hasAutoJoined.current = true; // Suppress the auto-join effect; this click covers it
+      try {
+          // Pass message directly to avoid React state race condition
+          const nickname = myNickname ? ` [NICK:${myNickname}]` : "";
+          const success = await sendChatMessage(`👋 Joined the class!${nickname}`);
+          if (success) {
+              setStatusMsg("✅ Joined class!");
+              setTimeout(() => setStatusMsg(""), 2000);
+          } else {
+              hasAutoJoined.current = false; // Let auto-join retry if the manual send failed
+          }
+      } finally {
+          joiningClassRef.current = false;
       }
   }
   
-  // Set and broadcast nickname
+  // Set nickname locally; Join Class includes it in the single on-chain join message.
   const saveNickname = async (newNickname) => {
     const trimmed = newNickname.trim().slice(0, 20); // Max 20 chars
     if (!trimmed) return;
     
     setMyNickname(trimmed);
-    localStorage.setItem("my_nickname", trimmed);
     setEditingNickname(false);
     
     // Also save to local nicknames map for own address
     if (wallet.address) {
       setNicknames(prev => {
         const updated = { ...prev, [wallet.address.toLowerCase()]: trimmed };
-        localStorage.setItem("classmate_nicknames", JSON.stringify(updated));
         return updated;
       });
     }
     
-    // Broadcast to blockchain if connected
-    if (wallet.signer && posAddress) {
-      try {
-        const success = await sendChatMessage(`📛 Set nickname: ${trimmed} [NICK:${trimmed}]`);
-        if (success) {
-          setStatusMsg(`✅ Nickname "${trimmed}" saved & broadcast!`);
-          setTimeout(() => setStatusMsg(""), 3000);
-        }
-      } catch (err) {
-        console.error("Failed to broadcast nickname:", err);
-        // Still saved locally, just not broadcast
-        setStatusMsg(`✅ Nickname saved locally`);
-        setTimeout(() => setStatusMsg(""), 2000);
-      }
-    }
+    setStatusMsg(`✅ Nickname "${trimmed}" saved`);
+    setTimeout(() => setStatusMsg(""), 2000);
   };
   
   // Helper to get display name for an address
@@ -7623,7 +7881,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
 
   // Enhanced blockchain sync using centralized service
   useEffect(() => {
-    if (view === 'live' && posAddress.length === 42 && provider) {
+    if (LEGACY_LIVE_RPC_SYNC_ENABLED && view === 'live' && posAddress.length === 42 && provider) {
       // Initialize the sync service
       blockchainSync.init(provider, posAddress);
       
@@ -7643,7 +7901,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
             const role = parseRoleFromMessages(data.messages, wallet.address, data.validators || []);
             if (role) {
               console.log('[App] Subscriber: inline role =', role);
-              localStorage.setItem('scenario_role', role);
               setMyStake(prev => ({ ...prev, role }));
             }
           }
@@ -7660,7 +7917,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
           if (Object.keys(newNicknames).length > 0) {
             setNicknames(prev => {
               const merged = { ...prev, ...newNicknames };
-              localStorage.setItem("classmate_nicknames", JSON.stringify(merged));
               return merged;
             });
           }
@@ -7695,49 +7951,152 @@ return ethers.formatEther(total) + ' ETH staked';`)
   // Compute current mode from view
   const currentMode = ['intro', 'concepts', 'explore', 'sim', 'tokens'].includes(view) 
     ? 'learning' 
-    : ['live', 'diagnostics', 'beacon-lab', 'contract-builder-lab', 'tokenization-lab'].includes(view)
+    : ['live', 'diagnostics', 'beacon-lab', 'contract-builder-lab', 'tokenization-lab', 'arcade-lab', 'nft-marketplace', 'forensics-lab'].includes(view)
       ? 'live' 
       : view === 'cli' 
         ? 'cli' 
         : 'instructor';
+  const appBasePath = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  // This asset intentionally lives under public/labs/ethereum_lab. In deployed
+  // lane mode, nginx strips the first /labs/ethereum_lab prefix before proxying
+  // to the student container, so the URL must include the public asset prefix.
+  const topOffMiningUrl = `${appBasePath}/labs/ethereum_lab/pow-mining-topoff/index.html?mode=topoff&v=20260605-topoff-10hs`;
+
+  const topOffMiningModal = topOffMiningOpen ? (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(2,6,23,0.88)',
+        zIndex: 10002,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem'
+      }}
+      onClick={topOffMiningAwarding ? undefined : closeTopOffMining}
+    >
+      <div
+        style={{
+          width: 'min(1120px, 96vw)',
+          height: 'min(780px, 92vh)',
+          background: '#0f172a',
+          borderRadius: '1rem',
+          border: '1px solid rgba(45,212,191,0.45)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
+          overflow: 'hidden',
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.85rem 1rem',
+          borderBottom: '1px solid rgba(148,163,184,0.22)',
+          background: 'linear-gradient(135deg, rgba(20,184,166,0.18), rgba(15,23,42,0.92))'
+        }}>
+          <div>
+            <div style={{ color: '#f8fafc', fontWeight: 900, fontSize: '1rem' }}>Mine to top off</div>
+            <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Win one Level 1 race against 6 robot miners at 10H/s to receive 100 ETH.</div>
+          </div>
+          <button
+            onClick={closeTopOffMining}
+            disabled={topOffMiningAwarding}
+            style={{
+              width: '2rem',
+              height: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              borderRadius: '999px',
+              border: '1px solid rgba(148,163,184,0.35)',
+              background: 'rgba(15,23,42,0.9)',
+              color: '#e2e8f0',
+              cursor: topOffMiningAwarding ? 'not-allowed' : 'pointer',
+              fontWeight: 900,
+              fontSize: '1rem',
+              lineHeight: 1,
+              opacity: topOffMiningAwarding ? 0.5 : 1
+            }}
+            aria-label="Close mining challenge"
+          >
+            X
+          </button>
+        </div>
+        <iframe
+          title="Proof-of-work top-off mining challenge"
+          src={topOffMiningUrl}
+          sandbox="allow-scripts allow-same-origin"
+          style={{
+            border: 0,
+            width: '100%',
+            flex: 1,
+            background: '#0e1117'
+          }}
+        />
+        {topOffMiningAwarding && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 2,
+            background: 'radial-gradient(circle at 50% 20%, rgba(34,197,94,0.22), rgba(2,6,23,0.94) 62%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              maxWidth: '460px',
+              padding: '1.5rem',
+              borderRadius: '1rem',
+              border: '1px solid rgba(34,197,94,0.45)',
+              background: 'rgba(15,23,42,0.92)',
+              boxShadow: '0 18px 60px rgba(0,0,0,0.45)'
+            }}>
+              <div style={{ fontSize: '2.35rem', marginBottom: '0.65rem' }}>🏆</div>
+              <div style={{ color: '#f8fafc', fontWeight: 900, fontSize: '1.45rem' }}>You won!</div>
+              <div style={{ color: '#86efac', fontWeight: 800, marginTop: '0.45rem' }}>Awarding 100 ETH now...</div>
+              <div style={{ color: '#94a3b8', marginTop: '0.45rem', lineHeight: 1.45 }}>The top-off request has started. This window will close automatically.</div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="app-layout">
         {/* NAVIGATION SIDEBAR */}
         <aside className="nav-sidebar">
             <h1>Ethereum Trainer</h1>
+            <button
+                type="button"
+                className="theme-toggle"
+                onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+                title="Switch between the light workshop theme and square-corner dark theme"
+            >
+                Theme: {theme === 'dark' ? 'Dark' : 'Light'}
+            </button>
             
             {/* ============= MODE SWITCHER (TOP-LEVEL TABS) ============= */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
+                gridTemplateColumns: isInstructor ? '1fr 1fr' : '1fr',
                 gap: '8px',
                 marginBottom: '1.5rem',
                 background: 'rgba(0,0,0,0.3)',
                 padding: '8px',
                 borderRadius: '12px'
             }}>
-                <button 
-                    onClick={() => { setView('intro'); }}
-                    style={{
-                        padding: '12px 8px',
-                        background: currentMode === 'learning' ? 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)' : 'transparent',
-                        border: currentMode === 'learning' ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '8px',
-                        color: currentMode === 'learning' ? 'white' : '#94a3b8',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        fontWeight: currentMode === 'learning' ? 'bold' : 'normal',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    <span style={{fontSize: '1.2rem'}}>📚</span>
-                    Learn
-                </button>
                 <button 
                     onClick={() => { setView('live'); }}
                     style={{
@@ -7757,28 +8116,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                     }}
                 >
                     <span style={{fontSize: '1.2rem'}}>🌐</span>
-                    Live
-                </button>
-                <button 
-                    onClick={() => { setView('cli'); }}
-                    style={{
-                        padding: '12px 8px',
-                        background: currentMode === 'cli' ? 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)' : 'transparent',
-                        border: currentMode === 'cli' ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '8px',
-                        color: currentMode === 'cli' ? '#1e293b' : '#94a3b8',
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        fontWeight: currentMode === 'cli' ? 'bold' : 'normal',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    <span style={{fontSize: '1.2rem'}}>💻</span>
-                    CLI
+                    Dashboard
                 </button>
                 {isInstructor && (
                     <button 
@@ -7925,10 +8263,10 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                 if (wallets.length === 0) return <span style={{fontFamily: 'monospace', color: '#64748b'}}>No wallet</span>;
                                 return (
                                     <select
-                                        value={activeInfo?.address || ''}
+                                        value={wallet?.address || activeInfo?.address || ''}
                                         onChange={(e) => {
                                             const w = wallets.find(x => x.address === e.target.value);
-                                            if (w) setActiveWallet(w.id);
+                                            if (w) switchWallet(w.id);
                                         }}
                                         style={{
                                             width: '100%',
@@ -7952,43 +8290,41 @@ return ethers.formatEther(total) + ' ETH staked';`)
                         </div>
                         <div style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
                             <button
-                                onClick={() => {
-                                    let key = prompt('Enter private key (0x...) to import:');
-                                    if (!key) return;
-                                    key = key.trim();
-                                    if (!key.startsWith('0x') && key.length === 64) key = '0x' + key;
-                                    if (key.startsWith('0x') && key.length === 66) {
-                                        const result = importWallet(key, 'Imported Wallet');
-                                        if (result.success) {
-                                            window.dispatchEvent(new CustomEvent('walletSwitched'));
-                                        } else {
-                                            alert('Import failed. Please check your private key.');
-                                        }
-                                    } else {
-                                        alert(`Invalid key format. Expected: 66 chars starting with 0x. Got: ${key.length}`);
-                                    }
-                                }}
+                                onClick={() => wallet.address && setAccountModal({ address: wallet.address, nickname: wallet.nickname })}
+                                disabled={!wallet.address}
                                 style={{
                                     flex: 1,
                                     padding: '0.5rem',
-                                    background: 'rgba(34, 197, 94, 0.2)',
-                                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                                    background: wallet.address ? 'rgba(59, 130, 246, 0.2)' : 'rgba(71, 85, 105, 0.25)',
+                                    border: '1px solid rgba(59, 130, 246, 0.4)',
                                     borderRadius: '0.35rem',
-                                    color: '#86efac',
-                                    cursor: 'pointer',
+                                    color: wallet.address ? '#93c5fd' : '#64748b',
+                                    cursor: wallet.address ? 'pointer' : 'not-allowed',
                                     fontSize: '0.75rem',
                                     fontWeight: '600'
                                 }}
                             >
-                                📥 Import
+                                📋 Copy
                             </button>
                             <button
-                                onClick={() => {
-                                    const nickname = prompt('Enter a nickname for your new wallet:') || 'My Wallet';
-                                    const newWallet = generateNewWallet(nickname);
-                                    setNewWalletModal({ address: newWallet.address, privateKey: newWallet.privateKey });
-                                    window.dispatchEvent(new CustomEvent('walletSwitched'));
+                                onClick={topOffWallet}
+                                disabled={!wallet.address || !provider || statusMsg.includes('Topping off') || statusMsg.includes('Mining reward')}
+                                style={{
+                                    flex: 1,
+                                    padding: '0.5rem',
+                                    background: (!wallet.address || !provider) ? 'rgba(71, 85, 105, 0.25)' : 'rgba(34, 197, 94, 0.2)',
+                                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                                    borderRadius: '0.35rem',
+                                    color: (!wallet.address || !provider) ? '#64748b' : '#86efac',
+                                    cursor: (!wallet.address || !provider) ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.75rem',
+                                    fontWeight: '600'
                                 }}
+                            >
+                                💰 Top off
+                            </button>
+                            <button
+                                onClick={createNamedWallet}
                                 style={{
                                     flex: 1,
                                     padding: '0.5rem',
@@ -8003,33 +8339,20 @@ return ethers.formatEther(total) + ' ETH staked';`)
                             >
                                 🔑 New
                             </button>
-                            <button
-                                onClick={() => {
-                                    const walletInfo = getWalletInfo();
-                                    if (walletInfo) {
-                                        const show = confirm(`Your Private Key:\n\n${walletInfo.privateKey}\n\nClick OK to copy to clipboard`);
-                                        if (show) {
-                                            navigator.clipboard.writeText(walletInfo.privateKey);
-                                            alert('Private key copied to clipboard!\n\n⚠️ Keep it safe and never share it!');
-                                        }
-                                    } else {
-                                        alert('No wallet found');
-                                    }
-                                }}
-                                style={{
-                                    flex: 1,
-                                    padding: '0.5rem',
-                                    background: 'rgba(251, 191, 36, 0.2)',
-                                    border: '1px solid rgba(251, 191, 36, 0.4)',
-                                    borderRadius: '0.35rem',
-                                    color: '#fcd34d',
-                                    cursor: 'pointer',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '600'
-                                }}
-                            >
-                                🔐 Export
-                            </button>
+                        </div>
+                        <div style={{
+                            marginTop: '0.75rem',
+                            padding: '0.65rem 0.75rem',
+                            background: 'rgba(15, 23, 42, 0.45)',
+                            border: '1px solid rgba(148, 163, 184, 0.22)',
+                            borderRadius: '0.5rem'
+                        }}>
+                            <div style={{fontSize: '0.68rem', color: '#93c5fd', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.04em'}}>
+                                Live ETH balance
+                            </div>
+                            <div style={{fontSize: '1rem', color: '#f8fafc', fontWeight: '700', fontVariantNumeric: 'tabular-nums'}}>
+                                {wallet.address ? formatEthWalletBalance(wallet.balance) : 'No wallet'}
+                            </div>
                         </div>
                     </div>
 
@@ -8086,6 +8409,23 @@ return ethers.formatEther(total) + ' ETH staked';`)
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
                         <button
+                            onClick={() => setView('contract-builder-lab')}
+                            style={{
+                                width: '100%',
+                                padding: '0.7rem',
+                                background: view === 'contract-builder-lab' ? 'rgba(14,165,233,0.3)' : 'rgba(14,165,233,0.12)',
+                                border: view === 'contract-builder-lab' ? '1px solid rgba(14,165,233,0.6)' : '1px solid rgba(14,165,233,0.3)',
+                                borderRadius: '0.5rem',
+                                color: '#7dd3fc',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: view === 'contract-builder-lab' ? 'bold' : 'normal',
+                                textAlign: 'left'
+                            }}
+                        >
+                            🏗 Smart Contract Lab
+                        </button>
+                        <button
                             onClick={() => setView('beacon-lab')}
                             style={{
                                 width: '100%',
@@ -8102,23 +8442,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                         >
                             ⛓ Beacon Chain Lab
                         </button>
-                        <button
-                            onClick={() => setView('contract-builder-lab')}
-                            style={{
-                                width: '100%',
-                                padding: '0.7rem',
-                                background: view === 'contract-builder-lab' ? 'rgba(14,165,233,0.3)' : 'rgba(14,165,233,0.12)',
-                                border: view === 'contract-builder-lab' ? '1px solid rgba(14,165,233,0.6)' : '1px solid rgba(14,165,233,0.3)',
-                                borderRadius: '0.5rem',
-                                color: '#7dd3fc',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem',
-                                fontWeight: view === 'contract-builder-lab' ? 'bold' : 'normal',
-                                textAlign: 'left'
-                            }}
-                        >
-                            🏗 Contract Builder Lab
-                        </button>
+                        {LAB_ENABLED['tokenization-lab'] && (
                         <button
                             onClick={() => setView('tokenization-lab')}
                             style={{
@@ -8136,27 +8460,65 @@ return ethers.formatEther(total) + ' ETH staked';`)
                         >
                             🪙 Tokenization Lab
                         </button>
+                        )}
+                        {LAB_ENABLED['arcade-lab'] && (
+                        <button
+                            onClick={() => setView('arcade-lab')}
+                            style={{
+                                width: '100%',
+                                padding: '0.7rem',
+                                background: view === 'arcade-lab' ? 'rgba(34,197,94,0.3)' : 'rgba(34,197,94,0.12)',
+                                border: view === 'arcade-lab' ? '1px solid rgba(34,197,94,0.6)' : '1px solid rgba(34,197,94,0.3)',
+                                borderRadius: '0.5rem',
+                                color: '#86efac',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: view === 'arcade-lab' ? 'bold' : 'normal',
+                                textAlign: 'left'
+                            }}
+                        >
+                            🕹 FT Arcade Lab
+                        </button>
+                        )}
+                        {LAB_ENABLED['nft-marketplace'] && (
+                        <button
+                            onClick={() => setView('nft-marketplace')}
+                            style={{
+                                width: '100%',
+                                padding: '0.7rem',
+                                background: view === 'nft-marketplace' ? 'rgba(168,85,247,0.3)' : 'rgba(168,85,247,0.12)',
+                                border: view === 'nft-marketplace' ? '1px solid rgba(168,85,247,0.6)' : '1px solid rgba(168,85,247,0.3)',
+                                borderRadius: '0.5rem',
+                                color: '#d8b4fe',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: view === 'nft-marketplace' ? 'bold' : 'normal',
+                                textAlign: 'left'
+                            }}
+                        >
+                            🛒 NFT Marketplace
+                        </button>
+                        )}
+                        {LAB_ENABLED['forensics-lab'] && (
+                        <button
+                            onClick={() => setView('forensics-lab')}
+                            style={{
+                                width: '100%',
+                                padding: '0.7rem',
+                                background: view === 'forensics-lab' ? 'rgba(34,197,94,0.3)' : 'rgba(34,197,94,0.12)',
+                                border: view === 'forensics-lab' ? '1px solid rgba(34,197,94,0.6)' : '1px solid rgba(34,197,94,0.3)',
+                                borderRadius: '0.5rem',
+                                color: '#86efac',
+                                cursor: 'pointer',
+                                fontSize: '0.85rem',
+                                fontWeight: view === 'forensics-lab' ? 'bold' : 'normal',
+                                textAlign: 'left'
+                            }}
+                        >
+                            🔎 Forensics Lab
+                        </button>
+                        )}
                     </div>
-
-                    {/* 3D Chain Explorer */}
-                    <button
-                        onClick={() => navigate('/chain-3d')}
-                        style={{
-                            width: '100%',
-                            padding: '0.75rem',
-                            marginBottom: '1rem',
-                            background: 'rgba(34,255,136,0.15)',
-                            border: '1px solid rgba(34,255,136,0.35)',
-                            borderRadius: '0.5rem',
-                            color: '#22ff88',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                            fontWeight: 'bold'
-                        }}
-                        title="3D Gibson-style blockchain visualization"
-                    >
-                        🎮 3D Chain Explorer
-                    </button>
 
                     {/* Classmates Roster */}
                     <div className="roster-panel" style={{flex: 1}}>
@@ -8296,34 +8658,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
                         </div>
                     </div>
                     
-                    {/* Back to Learning Link */}
-                    <div style={{
-                        marginTop: 'auto',
-                        padding: '1rem',
-                        background: 'rgba(139,92,246,0.1)',
-                        borderRadius: '0.75rem',
-                        border: '1px solid rgba(139,92,246,0.3)'
-                    }}>
-                        <div style={{fontSize: '0.8rem', color: '#a78bfa', marginBottom: '0.5rem'}}>
-                            📚 Need to review concepts?
-                        </div>
-                        <button 
-                            onClick={() => setView('explore')}
-                            style={{
-                                width: '100%',
-                                padding: '0.75rem',
-                                background: 'transparent',
-                                border: '1px solid #8b5cf6',
-                                borderRadius: '0.5rem',
-                                color: '#a78bfa',
-                                fontWeight: 'bold',
-                                cursor: 'pointer',
-                                fontSize: '0.85rem'
-                            }}
-                        >
-                            ← Back to Learning
-                        </button>
-                    </div>
                 </div>
             )}
             
@@ -8432,6 +8766,29 @@ return ethers.formatEther(total) + ' ETH staked';`)
                 padding: '1rem',
                 borderTop: '1px solid rgba(255,255,255,0.1)'
             }}>
+                {labTerminalEnabled && (
+                <button
+                    onClick={() => openLabTerminal(rpcUrl, terminalRpcUrl)}
+                    style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        marginBottom: '0.75rem',
+                        background: 'rgba(139, 92, 246, 0.18)',
+                        border: '1px solid rgba(139, 92, 246, 0.45)',
+                        borderRadius: '0.5rem',
+                        color: '#c4b5fd',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        fontWeight: 700
+                    }}
+                >
+                    🖥️ Lab Terminal
+                </button>
+                )}
                 <button
                     onClick={resetSession}
                     style={{
@@ -8467,59 +8824,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
 
         {/* MAIN CONTENT AREA */}
         <main className="main-content">
-            {/* ========== LAB TERMINAL - TOP BAR (always visible) ========== */}
-            <div style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 100,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.5rem 0',
-                marginBottom: '1rem',
-                background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(15, 23, 42, 0.95) 100%)',
-                borderBottom: '1px solid rgba(71, 85, 105, 0.5)',
-                flexWrap: 'wrap'
-            }}>
-                <button
-                    onClick={() => openLabTerminal(rpcUrl, terminalRpcUrl)}
-                    style={{
-                        padding: '0.5rem 1rem',
-                        background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-                        border: 'none',
-                        borderRadius: '0.5rem',
-                        color: 'white',
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        boxShadow: '0 2px 8px rgba(139, 92, 246, 0.3)'
-                    }}
-                >
-                    <span>🖥️</span>
-                    <span>Lab Terminal</span>
-                </button>
-                <button
-                    onClick={() => openLabTerminal(rpcUrl, terminalRpcUrl)}
-                    style={{
-                        padding: '0.35rem 0.65rem',
-                        background: 'rgba(139, 92, 246, 0.25)',
-                        border: '1px solid rgba(139, 92, 246, 0.5)',
-                        borderRadius: '0.35rem',
-                        color: '#c4b5fd',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer'
-                    }}
-                >
-                    + New
-                </button>
-                <span style={{ fontSize: '0.85rem', color: '#64748b', marginLeft: '0.25rem' }}>
-                    Deploy contracts, run CLI — opens in new window
-                </span>
-            </div>
-            
             {/* 0. ORIENTATION VIEW */}
             {view === 'intro' && (
                 <div className="intro-view" style={{maxWidth: '1200px', margin: '0 auto'}}>
@@ -8883,7 +9187,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                         <button 
                             onClick={() => {
                                 // Track session start for analytics
-                                localStorage.setItem('session_start', Date.now().toString());
+                                setSessionStart(Date.now());
                                 markStageComplete('intro')
                                 setView('concepts')
                             }}
@@ -8933,7 +9237,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                 Your feedback shapes future versions
                             </div>
                         </div>
-                        <FeedbackButton section="orientation" />
                     </div>
                 </div>
             )}
@@ -9080,49 +9383,20 @@ return ethers.formatEther(total) + ' ETH staked';`)
                         {livePageBlocksOpen.yourWalletBanner && (
                         <>
                         <p style={{ fontSize: '0.9rem', color: '#cbd5e1', margin: '0 0 0.75rem 0' }}>
-                            Connect, get test ETH, send transactions. Use Beacon Chain Lab for staking and Smart Contract Lab for building and deploying.
+                            Check your wallet, top off test ETH, send transactions, inspect chain state, and use on-chain chat with classmates.
                         </p>
                         <details style={{ fontSize: '0.85rem', color: '#94a3b8' }} open>
                             <summary style={{ cursor: 'pointer', color: '#93c5fd' }}>Do This First</summary>
                             <ul style={{ margin: '0.5rem 0 0 1rem', paddingLeft: 0, listStyle: 'none' }}>
-                                <li>{wallet?.address ? '✅' : '☐'} Connect wallet</li>
-                                <li>{parseFloat(wallet?.balance || 0) > 0 ? '✅' : '☐'} Get test ETH (from instructor)</li>
+                                <li>{wallet?.address ? '✅' : '☐'} Wallet created</li>
                                 <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => setView('beacon-lab')}
-                                        style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            padding: 0,
-                                            color: '#93c5fd',
-                                            cursor: 'pointer',
-                                            fontSize: 'inherit',
-                                            textDecoration: 'underline',
-                                            textAlign: 'left'
-                                        }}
-                                    >
-                                        ☐ Stake & attest → Beacon Chain Lab
-                                    </button>
+                                    {parseFloat(wallet?.balance || 0) > 0 ? '✅' : '☐'} Wallet funded
+                                    {parseFloat(wallet?.balance || 0) > 0 ? null : (
+                                        <span style={{ color: '#94a3b8' }}> — click <strong>💰 Top off</strong> in the left panel</span>
+                                    )}
                                 </li>
-                                <li>
-                                    <button
-                                        type="button"
-                                        onClick={() => setView('contract-builder-lab')}
-                                        style={{
-                                            background: 'none',
-                                            border: 'none',
-                                            padding: 0,
-                                            color: '#93c5fd',
-                                            cursor: 'pointer',
-                                            fontSize: 'inherit',
-                                            textDecoration: 'underline',
-                                            textAlign: 'left'
-                                        }}
-                                    >
-                                        ☐ Build & deploy → Smart Contract Lab
-                                    </button>
-                                </li>
+                                <li>{txHistory.some(tx => tx.type === 'sent') ? '✅' : '☐'} Sent a transaction</li>
+                                <li>{messages.some(m => m.sender === wallet.address) ? '✅' : '☐'} Posted in class chat</li>
                             </ul>
                         </details>
                         </>
@@ -9272,7 +9546,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                             </p>
                             <div style={{display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap'}}>
                                 <button
-                                    onClick={() => setShowAccountManager(true)}
+                                    onClick={createNamedWallet}
                                     style={{
                                         padding: '0.6rem 1.25rem',
                                         background: '#3b82f6',
@@ -9284,7 +9558,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                         fontSize: '0.95rem'
                                     }}
                                 >
-                                    Create or import wallet
+                                    Create wallet
                                 </button>
                             </div>
                             </>
@@ -9373,7 +9647,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                     onClick={() => {
                                         const walletInfo = getWalletInfo();
                                         if (walletInfo) {
-                                            alert(`Your Account:\n\nNickname: ${walletInfo.nickname}\nAddress: ${walletInfo.address}\n\nUse the sidebar buttons to Import/Export/Create accounts.`);
+                                            alert(`Your Account:\n\nNickname: ${walletInfo.nickname}\nAddress: ${walletInfo.address}\n\nUse the sidebar buttons to copy the address, top off test ETH, or create wallets.`);
                                         }
                                     }}
                                     style={{padding: '0.4rem 0.65rem', fontSize: '0.8rem', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '0.35rem', color: 'white', cursor: 'pointer'}}
@@ -9398,7 +9672,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                             </div>
                         </div>
                         
-                        {!myStake.role && (
+                        {SCENARIO_ROLES_ENABLED && !myStake.role && (
                             <div style={{
                                 marginTop: '0.75rem',
                                 padding: '0.75rem 1rem',
@@ -9410,7 +9684,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                             }}>
                                 <div style={{fontWeight: '600', color: '#cbd5e1', marginBottom: '0.35rem'}}>🎭 No role yet</div>
                                 <p style={{margin: 0, lineHeight: 1.5}}>
-                                    Your instructor assigns roles via chat. Stake or send a message so you appear in the list, then wait for a line like <code style={{background: 'rgba(0,0,0,0.3)', padding: '0.1rem 0.3rem', borderRadius: 3}}>[ROLES:your-address:Victim]</code> (role depends on the scenario).
+                                    Your instructor assigns roles via chat. Send a message so you appear in the list, then wait for a line like <code style={{background: 'rgba(0,0,0,0.3)', padding: '0.1rem 0.3rem', borderRadius: 3}}>[ROLES:your-address:Victim]</code> (role depends on the scenario).
                                 </p>
                             </div>
                         )}
@@ -9421,16 +9695,16 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                     myStake={myStake}
                                     wallet={wallet}
                                     ransomAddr={ransomContractAddress}
-                                    onRansomAddrChange={(v) => { localStorage.setItem('ransom_addr', v); setRansomContractAddress(v); }}
-                                    onLoadScript={(code) => {
-                                      setScriptCode(code);
-                                      setLoadCodeForConsole(code);
-                                      setScriptPlaygroundOpen(true);
-                                      setStatusMsg('✓ Script loaded! Lab Terminal expanded below — code will appear when the Hardhat prompt is ready.');
+                                    onRansomAddrChange={(v) => { setRansomContractAddress(v); }}
+                                    onLoadScript={async (code) => {
+                                      const ok = await copyToClipboard(code);
+                                      setStatusMsg(ok
+                                        ? '✓ Script copied. Open Lab Terminal from the sidebar and paste it at the Hardhat prompt.'
+                                        : 'Script ready. Copy it manually, then paste it in the Lab Terminal at the Hardhat prompt.'
+                                      );
                                       setTimeout(() => setStatusMsg(''), 4000);
-                                      setTimeout(() => document.getElementById('lab-terminal-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
                                     }}
-                                    onExpandConsole={setScriptPlaygroundOpen}
+                                    onExpandConsole={labTerminalEnabled ? (() => openLabTerminal(rpcUrl, terminalRpcUrl)) : undefined}
                                     setStatusMsg={setStatusMsg}
                                 />
                                 {/* Deploy & Register section */}
@@ -9633,176 +9907,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
                     </div>
                     )}
 
-                    {/* Quick Actions - No faucet; instructor funds students (hidden when must create wallet first) */}
-                    {!mustCreateWalletFirst && (
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <button
-                            type="button"
-                            className="live-page-block-header"
-                            onClick={() => toggleLivePageBlock('quickActions')}
-                            style={{
-                                marginBottom: livePageBlocksOpen.quickActions ? '0.75rem' : 0,
-                                padding: '0.5rem 0.75rem',
-                                background: 'rgba(30, 41, 59, 0.85)',
-                                borderRadius: '0.5rem',
-                                border: '1px solid rgba(71, 85, 105, 0.6)',
-                            }}
-                        >
-                            <span style={{ fontWeight: 700, color: '#e2e8f0' }}>⚡ Quick actions</span>
-                            <span style={{ color: '#94a3b8' }}>{livePageBlocksOpen.quickActions ? '▼' : '▶'}</span>
-                        </button>
-                        {livePageBlocksOpen.quickActions && (
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(2, 1fr)',
-                        gap: '1rem',
-                    }}>
-                        <div style={{
-                            gridColumn: '1 / -1',
-                            padding: '1rem 1.25rem',
-                            background: parseFloat(wallet.balance || 0) === 0 ? 'rgba(251, 191, 36, 0.25)' : 'rgba(251, 191, 36, 0.15)',
-                            borderRadius: '0.75rem',
-                            border: '1px solid rgba(251, 191, 36, 0.4)',
-                            color: '#fcd34d',
-                            fontSize: '0.95rem'
-                        }}>
-                            <strong>💰 Test ETH:</strong> Only the instructor can issue funds.
-                            {parseFloat(wallet.balance || 0) === 0 && wallet.address && (
-                                <div style={{marginTop: '0.75rem', fontSize: '0.9rem'}}>
-                                    <span style={{opacity: 0.95}}>No gas yet? Copy your address and share with your instructor:</span>
-                                    <div style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        marginTop: '0.5rem',
-                                        background: 'rgba(0,0,0,0.2)',
-                                        padding: '0.5rem 0.75rem',
-                                        borderRadius: '0.5rem',
-                                        fontFamily: 'monospace',
-                                        fontSize: '0.8rem',
-                                        wordBreak: 'break-all'
-                                    }}>
-                                        <span style={{color: '#e2e8f0'}}>{wallet.address}</span>
-                                        <button
-                                            onClick={async () => {
-                                                const ok = await copyToClipboard(wallet.address);
-                                                setStatusMsg(ok ? '✅ Address copied! Share with instructor.' : 'Copy failed — select address manually');
-                                                setTimeout(() => setStatusMsg(''), 2000);
-                                            }}
-                                            style={{
-                                                padding: '0.25rem 0.5rem',
-                                                background: '#3b82f6',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '0.25rem',
-                                                cursor: 'pointer',
-                                                fontSize: '0.75rem',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                        >
-                                            📋 Copy
-                                        </button>
-                                        <button
-                                            onClick={async () => {
-                                                try {
-                                                    const r = await fetch(import.meta.env.BASE_URL + 'lab-api/fund-request', {
-                                                        method: 'POST',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({ address: wallet.address, nickname: wallet.nickname || myNickname })
-                                                    });
-                                                    if (r.ok) {
-                                                        setStatusMsg('✅ Fund request sent! Instructor will be notified.');
-                                                    } else {
-                                                        setStatusMsg('Request failed — try copying your address.');
-                                                    }
-                                                } catch {
-                                                    setStatusMsg('Request failed — Lab API may be offline.');
-                                                }
-                                                setTimeout(() => setStatusMsg(''), 3000);
-                                            }}
-                                            style={{
-                                                padding: '0.25rem 0.5rem',
-                                                background: '#10b981',
-                                                color: 'white',
-                                                border: 'none',
-                                                borderRadius: '0.25rem',
-                                                cursor: 'pointer',
-                                                fontSize: '0.75rem',
-                                                whiteSpace: 'nowrap'
-                                            }}
-                                        >
-                                            📤 Request funds
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <button
-                            onClick={() => document.getElementById('send-section').scrollIntoView({behavior: 'smooth'})}
-                            style={{
-                                background: '#3b82f6',
-                                color: 'white',
-                                border: 'none',
-                                padding: '1.25rem',
-                                borderRadius: '0.75rem',
-                                cursor: 'pointer',
-                                fontSize: '1rem',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}
-                        >
-                            <span style={{fontSize: '2rem'}}>📤</span>
-                            Send
-                        </button>
-                        
-                        <button
-                            onClick={() => setView('beacon-lab')}
-                            style={{
-                                background: '#8b5cf6',
-                                color: 'white',
-                                border: 'none',
-                                padding: '1.25rem',
-                                borderRadius: '0.75rem',
-                                cursor: 'pointer',
-                                fontSize: '1rem',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}
-                        >
-                            <span style={{fontSize: '2rem'}}>⛓️</span>
-                            Beacon Lab
-                        </button>
-                        <button
-                            onClick={() => setView('contract-builder-lab')}
-                            style={{
-                                background: '#0ea5e9',
-                                color: 'white',
-                                border: 'none',
-                                padding: '1.25rem',
-                                borderRadius: '0.75rem',
-                                cursor: 'pointer',
-                                fontSize: '1rem',
-                                fontWeight: 'bold',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}
-                        >
-                            <span style={{fontSize: '2rem'}}>📜</span>
-                            Contract Lab
-                        </button>
-                    </div>
-                        )}
-                    </div>
-                    )}
-
                     <div className="live-grid">
                         {/* Assets / Portfolio */}
                         <section className="card">
@@ -9845,6 +9949,92 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                         <div style={{fontSize: '0.85rem', color: '#94a3b8'}}>${(parseFloat(wallet.balance || 0) * 3000).toFixed(2)}</div>
                                     </div>
                                 </div>
+                                {myArcAsset.ok && (
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    padding: '1rem',
+                                    background: 'rgba(34,197,94,0.1)',
+                                    borderRadius: '0.5rem',
+                                    border: '1px solid rgba(34,197,94,0.3)'
+                                }}>
+                                    <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            background: 'linear-gradient(135deg, #22c55e 0%, #14b8a6 100%)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '0.9rem',
+                                            fontWeight: 900,
+                                            color: '#052e16'
+                                        }}>
+                                            ARC
+                                        </div>
+                                        <div>
+                                            <div style={{fontWeight: 'bold', color: '#f8fafc'}}>Arcade Token</div>
+                                            <div style={{fontSize: '0.85rem', color: '#94a3b8'}}>ERC-20 ARC</div>
+                                        </div>
+                                    </div>
+                                    <div style={{textAlign: 'right'}}>
+                                        <div style={{fontWeight: 'bold', color: '#f8fafc'}}>{formatArcAssetBalance(myArcAsset.balanceWei)}</div>
+                                        <div style={{fontSize: '0.85rem', color: '#94a3b8'}}>Fungible lab token</div>
+                                        <button
+                                            type="button"
+                                            onClick={() => openSendCardForAsset('arc')}
+                                            disabled={!canSendArc}
+                                            style={{
+                                                marginTop: '0.5rem',
+                                                padding: '0.3rem 0.55rem',
+                                                background: canSendArc ? '#16a34a' : '#475569',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '0.35rem',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 700,
+                                                cursor: canSendArc ? 'pointer' : 'not-allowed'
+                                            }}
+                                        >
+                                            Send ARC
+                                        </button>
+                                    </div>
+                                </div>
+                                )}
+                                {myNftAssets.length > 0 && (
+                                <div>
+                                    <div style={{fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem'}}>NFTs ({myNftAssets.length})</div>
+                                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(74px, 1fr))', gap: '0.5rem'}}>
+                                        {myNftAssets.map((n) => (
+                                            <div key={n.tokenId} title={n.name || ('Token #' + n.tokenId)} style={{textAlign: 'center'}}>
+                                                {n.image
+                                                    ? <img src={navAssetImg(n.image)} alt={n.name || ''} style={{width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: '0.4rem', background: '#0f172a', border: '1px solid #334155'}} />
+                                                    : <div style={{width: '100%', aspectRatio: '1', borderRadius: '0.4rem', background: '#0f172a', border: '1px solid #334155'}} />}
+                                                <div style={{fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.2rem'}}>#{n.tokenId}</div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openSendCardForAsset('nft', n.tokenId)}
+                                                    style={{
+                                                        marginTop: '0.25rem',
+                                                        width: '100%',
+                                                        padding: '0.22rem 0.3rem',
+                                                        background: '#334155',
+                                                        color: '#e2e8f0',
+                                                        border: '1px solid #475569',
+                                                        borderRadius: '0.3rem',
+                                                        fontSize: '0.65rem',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    Send
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                )}
                             </div>
                             )}
                         </section>
@@ -9861,198 +10051,117 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                     <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1'}}>
                                         Recipient Address
                                     </label>
-                                <input 
-                                        placeholder="0x... or click classmate in sidebar" 
+                                    {(() => {
+                                        const classmates = validators.filter(v => v && typeof v === 'string' && v.toLowerCase() !== (wallet.address || '').toLowerCase());
+                                        return classmates.length > 0 ? (
+                                            <select
+                                                value=""
+                                                onChange={e => { if (e.target.value) setRecipient(e.target.value); }}
+                                                style={{width: '100%', marginBottom: '0.5rem'}}
+                                            >
+                                                <option value="">📇 Send to a classmate ({classmates.length} active)…</option>
+                                                {classmates.map(v => {
+                                                    const nick = nicknames[v.toLowerCase()];
+                                                    return <option key={v} value={v}>{nick ? `${nick} — ` : ''}{v.slice(0,6)}…{v.slice(-4)}</option>;
+                                                })}
+                                            </select>
+                                        ) : null;
+                                    })()}
+                                <input
+                                        placeholder="0x... or pick a classmate above"
                                     value={recipient}
                                     onChange={e => setRecipient(e.target.value)}
+                                        list="classmate-addrs"
                                         style={{width: '100%'}}
                                     />
+                                    <datalist id="classmate-addrs">
+                                        {validators.filter(v => v && typeof v === 'string' && v.toLowerCase() !== (wallet.address || '').toLowerCase()).map(v => {
+                                            const nick = nicknames[v.toLowerCase()];
+                                            return <option key={v} value={v}>{nick || ''}</option>;
+                                        })}
+                                    </datalist>
                                 </div>
                                 
                                 <div>
                                     <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1'}}>
-                                        Amount (ETH)
+                                        Asset
                                     </label>
-                                <input 
-                                        placeholder="0.0" 
-                                    type="number"
-                                        step="0.01"
-                                    value={sendAmount}
-                                    onChange={e => setSendAmount(e.target.value)}
+                                    <select
+                                        value={sendAssetType}
+                                        onChange={e => {
+                                            setSendAssetType(e.target.value);
+                                            if (e.target.value === 'nft' && !sendNftTokenId && myNftAssets[0]?.tokenId) {
+                                                setSendNftTokenId(String(myNftAssets[0].tokenId));
+                                            }
+                                        }}
                                         style={{width: '100%'}}
-                                />
+                                    >
+                                        <option value="eth">Ethereum (ETH)</option>
+                                        <option value="arc" disabled={!canSendArc}>Arcade Token (ARC){canSendArc ? ` — ${formatArcAssetBalance(myArcAsset.balanceWei)}` : ''}</option>
+                                        <option value="nft" disabled={!canSendNft}>Lab NFT{canSendNft ? ` — ${myNftAssets.length} owned` : ''}</option>
+                                    </select>
                                 </div>
+
+                                {sendAssetType === 'nft' ? (
+                                <div>
+                                    <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1'}}>
+                                        NFT
+                                    </label>
+                                    <select
+                                        value={sendNftTokenId}
+                                        onChange={e => setSendNftTokenId(e.target.value)}
+                                        style={{width: '100%'}}
+                                    >
+                                        {myNftAssets.map((n) => (
+                                            <option key={n.tokenId} value={n.tokenId}>
+                                                #{n.tokenId}{n.name ? ` — ${n.name}` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <div style={{fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.4rem'}}>
+                                        Sends exactly one ERC-721 token from your cached asset list.
+                                    </div>
+                                </div>
+                                ) : (
+                                <div>
+                                    <label style={{display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1'}}>
+                                        Amount ({sendAssetType === 'arc' ? 'ARC' : 'ETH'})
+                                    </label>
+                                    <input
+                                        placeholder={sendAssetType === 'arc' ? '1' : '0.0'}
+                                        type="number"
+                                        min={sendAssetType === 'arc' ? '1' : '0'}
+                                        step={sendAssetType === 'arc' ? '1' : '0.01'}
+                                        value={sendAmount}
+                                        onChange={e => setSendAmount(e.target.value)}
+                                        style={{width: '100%'}}
+                                    />
+                                    <div style={{fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.4rem'}}>
+                                        {sendAssetType === 'arc'
+                                            ? `Available: ${formatArcAssetBalance(myArcAsset.balanceWei)}. ARC sends must be whole tokens.`
+                                            : `Available: ${parseFloat(wallet.balance || 0).toFixed(4)} ETH`}
+                                    </div>
+                                </div>
+                                )}
                                 
                                 <button 
-                                    onClick={sendEthToPeer}
-                                    disabled={statusMsg.includes("Sending ETH") || !recipient || !sendAmount}
+                                    onClick={sendAssetToPeer}
+                                    disabled={isSendingDashboardAsset || !recipient || (sendAssetType !== 'nft' && !sendAmount) || (sendAssetType === 'nft' && !sendNftTokenId) || (sendAssetType === 'arc' && !canSendArc) || (sendAssetType === 'nft' && !canSendNft)}
                                     style={{
                                         width: '100%',
                                         padding: '1rem',
-                                        background: (statusMsg.includes("Sending ETH") || !recipient || !sendAmount) ? '#64748b' : '#3b82f6',
+                                        background: (isSendingDashboardAsset || !recipient || (sendAssetType !== 'nft' && !sendAmount) || (sendAssetType === 'nft' && !sendNftTokenId) || (sendAssetType === 'arc' && !canSendArc) || (sendAssetType === 'nft' && !canSendNft)) ? '#64748b' : '#3b82f6',
                                         color: 'white',
                                         border: 'none',
                                         borderRadius: '0.5rem',
                                         fontSize: '1rem',
                                         fontWeight: 'bold',
-                                        cursor: (statusMsg.includes("Sending ETH") || !recipient || !sendAmount) ? 'not-allowed' : 'pointer'
+                                        cursor: (isSendingDashboardAsset || !recipient || (sendAssetType !== 'nft' && !sendAmount) || (sendAssetType === 'nft' && !sendNftTokenId) || (sendAssetType === 'arc' && !canSendArc) || (sendAssetType === 'nft' && !canSendNft)) ? 'not-allowed' : 'pointer'
                                     }}
                                 >
-                                    {statusMsg.includes("Sending ETH") ? "⏳ Sending..." : "📤 Send Transaction"}
+                                    {isSendingDashboardAsset ? "⏳ Sending..." : `📤 Send ${sendAssetType === 'arc' ? 'ARC' : sendAssetType === 'nft' ? 'NFT' : 'ETH'}`}
                                 </button>
                             </div>
-                            )}
-                        </section>
-
-                        {/* Beacon Chain Lab - staking moved here */}
-                        <section className="card" id="stake-section">
-                            <button type="button" className="live-page-block-header" onClick={() => toggleLivePageBlock('beaconPromoCard')}>
-                                <h3>⛓️ Beacon Chain Lab</h3>
-                                <span style={{ fontSize: '0.9rem', color: '#94a3b8' }}>{livePageBlocksOpen.beaconPromoCard ? '▼' : '▶'}</span>
-                            </button>
-                            {livePageBlocksOpen.beaconPromoCard && (
-                            <>
-                            <p style={{fontSize: '14px', color: '#cbd5e1', marginBottom: '15px'}}>
-                                Stake, attest, and experience consensus. Use the Beacon Chain Lab for validator activities.
-                            </p>
-                            <button
-                                onClick={() => setView('beacon-lab')}
-                                style={{
-                                    width: '100%',
-                                    padding: '1rem',
-                                    background: 'linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%)',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '0.5rem',
-                                    fontSize: '1rem',
-                                    fontWeight: 'bold',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Open Beacon Chain Lab →
-                            </button>
-                            </>
-                            )}
-                        </section>
-
-                        {/* Smart Contract Lab */}
-                        <section className="card">
-                            <button type="button" className="live-page-block-header" onClick={() => toggleLivePageBlock('contractPromoCard')}>
-                                <h3>📜 Smart Contract Lab</h3>
-                                <span style={{ fontSize: '0.9rem', color: '#94a3b8' }}>{livePageBlocksOpen.contractPromoCard ? '▼' : '▶'}</span>
-                            </button>
-                            {livePageBlocksOpen.contractPromoCard && (
-                            <>
-                            <p style={{fontSize: '14px', color: '#cbd5e1', marginBottom: '15px'}}>
-                                Build, compile, and deploy smart contracts from templates. Deploy and share with classmates.
-                            </p>
-                            <button
-                                onClick={() => setView('contract-builder-lab')}
-                                style={{
-                                    width: '100%',
-                                    padding: '1rem',
-                                    background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '0.5rem',
-                                    fontSize: '1rem',
-                                    fontWeight: 'bold',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Open Smart Contract Lab →
-                            </button>
-                            </>
-                            )}
-                        </section>
-
-                        {/* Tokenization Lab */}
-                        <section className="card">
-                            <button type="button" className="live-page-block-header" onClick={() => toggleLivePageBlock('tokenPromoCard')}>
-                                <h3>🪙 Tokenization Lab</h3>
-                                <span style={{ fontSize: '0.9rem', color: '#94a3b8' }}>{livePageBlocksOpen.tokenPromoCard ? '▼' : '▶'}</span>
-                            </button>
-                            {livePageBlocksOpen.tokenPromoCard && (
-                            <>
-                            <p style={{fontSize: '14px', color: '#cbd5e1', marginBottom: '15px'}}>
-                                Learn ERC-721 NFTs end to end (mint, metadata, transfer), then sell an NFT for native ETH — fungible payment for a non-fungible asset.
-                            </p>
-                            <button
-                                onClick={() => setView('tokenization-lab')}
-                                style={{
-                                    width: '100%',
-                                    padding: '1rem',
-                                    background: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%)',
-                                    color: '#1e293b',
-                                    border: 'none',
-                                    borderRadius: '0.5rem',
-                                    fontSize: '1rem',
-                                    fontWeight: 'bold',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Open Tokenization Lab →
-                            </button>
-                            </>
-                            )}
-                        </section>
-
-                        {/* Contract Config */}
-                        <section className="card">
-                            <button type="button" className="live-page-block-header" onClick={() => toggleLivePageBlock('connectionCard')}>
-                                <h3>⚙️ Connection Setup</h3>
-                                <span style={{ fontSize: '0.9rem', color: '#94a3b8' }}>{livePageBlocksOpen.connectionCard ? '▼' : '▶'}</span>
-                            </button>
-                            {livePageBlocksOpen.connectionCard && (
-                            <>
-                            {isRemote && (
-                                <div className="remote-warning">
-                                    📡 Remote Access Detected - Configure your connection below
-                                </div>
-                            )}
-                            <div className="config-field">
-                                <label>Contract Address (from instructor):</label>
-                                <input 
-                                    placeholder="0x..." 
-                                    value={posAddress}
-                                    onChange={e => {
-                                        setPosAddress(e.target.value);
-                                        localStorage.setItem("pos_addr", e.target.value);
-                                    }}
-                                />
-                            </div>
-                            <div className="config-field">
-                                <label>Blockchain RPC URL:</label>
-                                <input 
-                                    placeholder={defaultRpcUrl}
-                                    value={rpcUrl}
-                                    onChange={e => {
-                                        const v = e.target.value;
-                                        setRpcUrl(v);
-                                        if (v?.trim()) localStorage.setItem("custom_rpc", v);
-                                        else localStorage.removeItem("custom_rpc");
-                                    }}
-                                />
-                                {isRemote && (
-                                    <small className="config-hint">
-                                        💡 Ask instructor for the RPC URL if the auto-detected same-origin proxy does not work. Common values are the shared app path ending in <code>/rpc</code> or a direct <code>http://[instructor-ip]:8545</code>.
-                                    </small>
-                                )}
-                            </div>
-                            <div className="connection-status">
-                                {nodeStatus.connected ? (
-                                    <span className="status-ok">✅ Connected to blockchain</span>
-                                ) : (
-                                    <span className="status-error">❌ Not connected - check RPC URL</span>
-                                )}
-                            </div>
-                            <NodeGraph
-                                validators={validators}
-                                myAddress={wallet?.address}
-                                rpcUrl={rpcUrl}
-                            />
-                            <ChainSearch provider={provider} rpcUrl={rpcUrl} />
-                            </>
                             )}
                         </section>
 
@@ -10117,7 +10226,9 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                                         fontSize: '1.1rem',
                                                         color: tx.type === 'sent' ? '#fca5a5' : '#86efac'
                                                     }}>
-                                                        {tx.type === 'sent' ? '-' : '+'}{parseFloat(tx.value).toFixed(4)} ETH
+                                                        {tx.assetType === 'erc721'
+                                                            ? `NFT #${tx.tokenId || ''}`
+                                                            : `${tx.type === 'sent' ? '-' : '+'}${parseFloat(tx.value || 0).toFixed(4)} ${tx.assetSymbol || 'ETH'}`}
                                                     </div>
                                                     <button
                                                         onClick={() => {
@@ -10216,6 +10327,65 @@ return ethers.formatEther(total) + ' ETH staked';`)
                             </>
                             )}
                         </section>
+
+                        {/* Chain Explorer — kept visible so students can explore the chain */}
+                        <section className="card full-width">
+                            <h3 style={{ marginBottom: '0.6rem' }}>🔎 Chain Explorer</h3>
+                            <ChainExplorer provider={provider} rpcUrl={rpcUrl} signer={wallet?.signer} cacheOnly />
+                        </section>
+
+                        {/* Connection Setup — config only, collapsed at the very bottom */}
+                        <section className="card">
+                            <button type="button" className="live-page-block-header" onClick={() => toggleLivePageBlock('connectionCard')}>
+                                <h3>⚙️ Connection Setup</h3>
+                                <span style={{ fontSize: '0.9rem', color: '#94a3b8' }}>{livePageBlocksOpen.connectionCard ? '▼' : '▶'}</span>
+                            </button>
+                            {livePageBlocksOpen.connectionCard && (
+                            <>
+                            <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '0 0 0.75rem 0' }}>
+                                These auto-configure — you normally don’t need to change them.
+                            </p>
+                            {isRemote && (
+                                <div className="remote-warning">
+                                    📡 Remote Access Detected - Configure your connection below
+                                </div>
+                            )}
+                            <div className="config-field">
+                                <label>Class chat contract (PoS Simulator — not a wallet):</label>
+                                <input
+                                    placeholder="0x..."
+                                    value={posAddress}
+                                    onChange={e => {
+                                        setPosAddress(e.target.value);
+                                    }}
+                                />
+                            </div>
+                            <div className="config-field">
+                                <label>Blockchain RPC URL:</label>
+                                <input
+                                    placeholder={defaultRpcUrl}
+                                    value={rpcUrl}
+                                    onChange={e => {
+                                        const v = normalizeBrowserRpcUrl(e.target.value);
+                                        setRpcUrl(v);
+                                    }}
+                                />
+                                {isRemote && (
+                                    <small className="config-hint">
+                                        💡 Ask instructor for the write RPC URL if the auto-detected same-origin proxy does not work. Classroom browsers should use the shared app path ending in <code>/rpc-write</code>; reads come from the cache endpoints.
+                                    </small>
+                                )}
+                            </div>
+                            <div className="connection-status">
+                                {nodeStatus.connected ? (
+                                    <span className="status-ok">✅ Connected to blockchain</span>
+                                ) : (
+                                    <span className="status-error">❌ Not connected - check RPC URL</span>
+                                )}
+                            </div>
+                            </>
+                            )}
+                        </section>
                     </div>
                     
                     {/* ========== EVIDENCE / ARTIFACTS (scenario clues) ========== */}
@@ -10301,274 +10471,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
                     </div>
                     )}
 
-                    {/* ========== RANSOMWARE SCENARIO (Phase 7) ========== */}
-                    <div style={{
-                        marginTop: '2rem',
-                        padding: '1.5rem',
-                        background: '#1e293b',
-                        borderRadius: '1rem',
-                        border: '1px solid #334155'
-                    }}>
-                        <button
-                            type="button"
-                            className="live-page-block-header"
-                            onClick={() => toggleLivePageBlock('ransomSection')}
-                            style={{ marginBottom: livePageBlocksOpen.ransomSection ? '0.5rem' : 0, color: '#f8fafc' }}
-                        >
-                            <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>🔐 Ransomware Forensics Scenario</span>
-                            <span style={{ color: '#94a3b8' }}>{livePageBlocksOpen.ransomSection ? '▼' : '▶'}</span>
-                        </button>
-                        {livePageBlocksOpen.ransomSection && (
-                            <div style={{marginTop: '1rem'}}>
-                                <p style={{fontSize: '0.9rem', color: '#94a3b8', marginBottom: '0.75rem'}}>
-                                    Victims pay ETH through the Ransom contract. Investigators trace the flow. Instructor deploys via Contract Builder and shares the address.
-                                </p>
-                                <div style={{display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap'}}>
-                                    <input
-                                        placeholder="Ransom contract address (0x...)"
-                                        value={ransomContractAddress}
-                                        onChange={e => {
-                                            setRansomContractAddress(e.target.value);
-                                            localStorage.setItem('ransom_addr', e.target.value);
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            minWidth: '200px',
-                                            padding: '0.5rem',
-                                            background: '#0f172a',
-                                            border: '1px solid #475569',
-                                            borderRadius: '0.5rem',
-                                            color: '#e2e8f0',
-                                            fontFamily: 'monospace',
-                                            fontSize: '0.85rem'
-                                        }}
-                                    />
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        placeholder="ETH"
-                                        value={ransomAmount}
-                                        onChange={e => setRansomAmount(e.target.value)}
-                                        style={{
-                                            width: '80px',
-                                            padding: '0.5rem',
-                                            background: '#0f172a',
-                                            border: '1px solid #475569',
-                                            borderRadius: '0.5rem',
-                                            color: '#e2e8f0'
-                                        }}
-                                    />
-                                    <button
-                                        onClick={async () => {
-                                            if (!ransomContractAddress || ransomContractAddress.length !== 42) {
-                                                setStatusMsg('❌ Enter valid Ransom contract address');
-                                                return;
-                                            }
-                                            if (!wallet.signer) {
-                                                setStatusMsg('❌ Wallet not ready');
-                                                return;
-                                            }
-                                            try {
-                                                const RansomABI = [{ inputs: [], name: 'payRansom', outputs: [], stateMutability: 'payable', type: 'function' }];
-                                                const c = new ethers.Contract(ransomContractAddress, RansomABI, wallet.signer);
-                                                const tx = await c.payRansom({ value: ethers.parseEther(ransomAmount) });
-                                                await tx.wait();
-                                                setStatusMsg('✅ Ransom paid. Investigators trace the flow!');
-                                                setTimeout(() => setStatusMsg(''), 3000);
-                                            } catch (e) {
-                                                setStatusMsg('❌ ' + (e.reason || e.message));
-                                            }
-                                        }}
-                                        disabled={!wallet.signer || !ransomContractAddress}
-                                        style={{
-                                            padding: '0.5rem 1rem',
-                                            background: (!wallet.signer || !ransomContractAddress) ? '#475569' : '#ef4444',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '0.5rem',
-                                            cursor: (!wallet.signer || !ransomContractAddress) ? 'not-allowed' : 'pointer',
-                                            fontWeight: 'bold'
-                                        }}
-                                    >
-                                        💸 Pay Ransom
-                                    </button>
-                                </div>
-                                <p style={{fontSize: '0.75rem', color: '#64748b'}}>
-                                    Instructor: Deploy via Contract Builder → Ransomware Payment. Set attacker address. Share contract address with class.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* ========== CONTRACT LAB ========== */}
-                    <div style={{
-                        marginTop: '2rem',
-                        padding: '1.5rem',
-                        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(99, 102, 241, 0.1))',
-                        borderRadius: '1rem',
-                        border: '1px solid rgba(139, 92, 246, 0.3)'
-                    }}>
-                        <button
-                            type="button"
-                            className="live-page-block-header"
-                            onClick={() => toggleLivePageBlock('embeddedContractLab')}
-                            style={{ marginBottom: livePageBlocksOpen.embeddedContractLab ? '0.5rem' : 0, color: '#f8fafc' }}
-                        >
-                            <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>🏗️ Contract Lab</span>
-                            <span style={{ color: '#94a3b8' }}>{livePageBlocksOpen.embeddedContractLab ? '▼' : '▶'}</span>
-                        </button>
-                        {livePageBlocksOpen.embeddedContractLab && (
-                            <div style={{marginTop: '1rem'}}>
-                                <ContractLab
-                                    provider={provider}
-                                    rpcUrl={rpcUrl}
-                                    wallet={wallet}
-                                    posAddress={posAddress}
-                                    onLoadScript={(code) => {
-                                      setScriptCode(code);
-                                      setLoadCodeForConsole(code);
-                                      setScriptPlaygroundOpen(true);
-                                      setStatusMsg('✓ Script loaded! Lab Terminal expanded below — code will appear when the Hardhat prompt is ready.');
-                                      setTimeout(() => setStatusMsg(''), 4000);
-                                      setTimeout(() => document.getElementById('lab-terminal-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-                                    }}
-                                    setStatusMsg={setStatusMsg}
-                                />
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* ========== SCRIPT PLAYGROUND (Phase 6) ========== */}
-                    {/* ========== BLOCKCHAIN CONSOLE (REPL) ========== */}
-                    <div
-                        id="lab-terminal-section"
-                        style={{
-                            marginTop: '2rem',
-                            padding: '1rem 1.25rem',
-                            background: '#1a1a2e',
-                            borderRadius: '0.75rem',
-                            border: '1px solid #1e293b',
-                        }}
-                    >
-                        <button
-                            type="button"
-                            className="live-page-block-header"
-                            onClick={() => toggleLivePageBlock('labTerminalSection')}
-                            style={{ marginBottom: livePageBlocksOpen.labTerminalSection ? '0.5rem' : 0, color: '#f8fafc' }}
-                        >
-                            <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>🖥️ Lab Terminal</span>
-                            <span style={{ color: '#94a3b8' }}>{livePageBlocksOpen.labTerminalSection ? '▼' : '▶'}</span>
-                        </button>
-                        {livePageBlocksOpen.labTerminalSection && (
-                        <>
-                        <button
-                            type="button"
-                            onClick={() => setScriptPlaygroundOpen(!scriptPlaygroundOpen)}
-                            style={{
-                                width: '100%',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                background: 'rgba(0,0,0,0.25)',
-                                border: '1px solid #334155',
-                                borderRadius: scriptPlaygroundOpen ? '0.5rem 0.5rem 0 0' : '0.5rem',
-                                color: '#f8fafc',
-                                fontSize: '0.95rem',
-                                cursor: 'pointer',
-                                padding: '0.65rem 1rem'
-                            }}
-                        >
-                            <span>Terminal session</span>
-                            <span style={{fontSize: '0.8rem', color: '#64748b'}}>{scriptPlaygroundOpen ? '▼ collapse' : '▶ expand'}</span>
-                        </button>
-                        {scriptPlaygroundOpen && (
-                            <InlineTerminal
-                                loadCode={loadCodeForConsole}
-                                onLoadCodeConsumed={() => setLoadCodeForConsole('')}
-                                rpcUrl={rpcUrl}
-                                terminalRpcUrl={terminalRpcUrl}
-                                autoStartHardhat={false}
-                            />
-                        )}
-                        </>
-                        )}
-                    </div>
-                    
-                    {/* ========== LAB COMPLETION & FEEDBACK SECTION ========== */}
-                    <div style={{
-                        marginTop: '2rem',
-                        padding: '1.5rem',
-                        background: '#1e293b',
-                        borderRadius: '1rem',
-                        border: '1px solid #334155'
-                    }}>
-                        <button
-                            type="button"
-                            className="live-page-block-header"
-                            onClick={() => toggleLivePageBlock('labProgress')}
-                            style={{ marginBottom: livePageBlocksOpen.labProgress ? '0.75rem' : 0, color: '#f8fafc', alignItems: 'flex-start' }}
-                        >
-                            <div style={{ flex: 1 }}>
-                                <h3 style={{margin: 0, color: '#f8fafc'}}>🎯 Lab Progress</h3>
-                                <p style={{margin: '0.5rem 0 0 0', fontSize: '0.9rem', color: '#94a3b8'}}>
-                                    Complete hands-on activities to finish the lab
-                                </p>
-                            </div>
-                            <span style={{ color: '#94a3b8', flexShrink: 0 }}>{livePageBlocksOpen.labProgress ? '▼' : '▶'}</span>
-                        </button>
-                        {livePageBlocksOpen.labProgress && (
-                        <>
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            marginBottom: '1rem',
-                            flexWrap: 'wrap',
-                            gap: '1rem'
-                        }}>
-                            <FeedbackButton section="live-network" />
-                        </div>
-                        
-                        {/* Progress Checklist */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '0.75rem',
-                            marginTop: 0
-                        }}>
-                            {[
-                                { label: 'Received funds from instructor', done: parseFloat(wallet.balance) > 0 },
-                                { label: 'Sent a transaction', done: txHistory.some(tx => tx.type === 'sent') },
-                                { label: 'Posted in class chat', done: messages.some(m => m.sender === wallet.address) },
-                            ].map((item, idx) => (
-                                <div key={idx} style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '0.75rem',
-                                    background: item.done ? 'rgba(34, 197, 94, 0.1)' : 'rgba(0,0,0,0.2)',
-                                    borderRadius: '0.5rem',
-                                    border: item.done ? '1px solid rgba(34, 197, 94, 0.3)' : '1px solid transparent'
-                                }}>
-                                    <span style={{
-                                        fontSize: '1.2rem',
-                                        color: item.done ? '#22c55e' : '#64748b'
-                                    }}>
-                                        {item.done ? '✅' : '⬜'}
-                                    </span>
-                                    <span style={{
-                                        color: item.done ? '#86efac' : '#94a3b8',
-                                        fontSize: '0.9rem'
-                                    }}>
-                                        {item.label}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                        </>
-                        )}
-                    </div>
-                    
                     {statusMsg && (
                         <div className="status-footer" style={{
                             background: statusMsg.includes('❌') ? 'rgba(239, 68, 68, 0.2)' : 
@@ -10583,7 +10485,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
                             {statusMsg}
                         </div>
                     )}
-                    
+
                     {/* New Wallet Credentials Modal - copyable address & private key */}
                     {newWalletModal && (
                         <div
@@ -10704,6 +10606,93 @@ return ethers.formatEther(total) + ' ETH staked';`)
                         </div>
                     )}
 
+                    {accountModal && (
+                        <div
+                            style={{
+                                position: 'fixed',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(0,0,0,0.85)',
+                                zIndex: 10001,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '2rem'
+                            }}
+                            onClick={() => setAccountModal(null)}
+                        >
+                            <div
+                                style={{
+                                    background: '#1e293b',
+                                    borderRadius: '1rem',
+                                    padding: '1.5rem 2rem',
+                                    border: '2px solid #3b82f6',
+                                    maxWidth: '500px',
+                                    width: '100%'
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <h3 style={{ margin: '0 0 1rem 0', color: '#f8fafc', fontSize: '1.25rem' }}>
+                                    📋 Your Account
+                                </h3>
+                                <p style={{ color: '#94a3b8', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                                    {accountModal.nickname ? `${accountModal.nickname} — share` : 'Share'} this address with classmates so they can send you ETH or interact with you on-chain.
+                                </p>
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{display: 'block', color: '#94a3b8', fontSize: '0.8rem', marginBottom: '0.35rem'}}>Address</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <input
+                                            readOnly
+                                            value={accountModal.address}
+                                            onFocus={(e) => e.target.select()}
+                                            style={{
+                                                flex: 1,
+                                                padding: '0.5rem',
+                                                background: 'rgba(0,0,0,0.3)',
+                                                border: '1px solid rgba(59, 130, 246, 0.4)',
+                                                borderRadius: '0.35rem',
+                                                color: '#f1f5f9',
+                                                fontFamily: 'monospace',
+                                                fontSize: '0.85rem'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => copyAddress(accountModal.address)}
+                                            style={{
+                                                padding: '0.5rem 1rem',
+                                                background: 'rgba(59, 130, 246, 0.3)',
+                                                border: '1px solid rgba(59, 130, 246, 0.5)',
+                                                borderRadius: '0.35rem',
+                                                color: '#93c5fd',
+                                                cursor: 'pointer',
+                                                fontSize: '0.85rem'
+                                            }}
+                                        >
+                                            📋 Copy
+                                        </button>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setAccountModal(null)}
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.6rem',
+                                        background: 'rgba(34, 197, 94, 0.2)',
+                                        border: '1px solid rgba(34, 197, 94, 0.5)',
+                                        borderRadius: '0.35rem',
+                                        color: '#86efac',
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Help Guide Overlay */}
                     {showLiveHelp && (
                         <div 
@@ -10770,13 +10759,13 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                         </ul>
                                     </div>
                                     
-                                    {/* Quick Actions */}
+                                    {/* Wallet Funding */}
                                     <div style={{background: 'rgba(16, 185, 129, 0.1)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid rgba(16, 185, 129, 0.3)'}}>
-                                        <h3 style={{color: '#34d399', margin: '0 0 0.75rem 0', fontSize: '1.1rem'}}>⚡ Quick Action Buttons</h3>
+                                        <h3 style={{color: '#34d399', margin: '0 0 0.75rem 0', fontSize: '1.1rem'}}>💰 Wallet Funding</h3>
                                         <ul style={{color: '#cbd5e1', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8}}>
-                                            <li><strong>💰 Test ETH:</strong> Ask your instructor for test ETH. Only the instructor can issue funds.</li>
-                                            <li><strong>📤 Send:</strong> Jump to the Send ETH section to transfer funds</li>
-                                            <li><strong>📥 Stake:</strong> Jump to the Staking section to participate in staking</li>
+                                            <li><strong>Top off:</strong> Add test ETH to your active wallet from the class bank.</li>
+                                            <li><strong>Copy:</strong> Copy your wallet address to share with classmates.</li>
+                                            <li><strong>New:</strong> Create another local wallet. Cancel closes the prompt without creating one.</li>
                                         </ul>
                                     </div>
                                     
@@ -10786,22 +10775,8 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                         <ul style={{color: '#cbd5e1', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8}}>
                                             <li><strong>Recipient Address:</strong> Paste the address of who you want to send ETH to</li>
                                             <li><strong>Amount:</strong> Enter how much ETH to send</li>
-                                            <li><strong>Quick Amounts:</strong> Click preset amounts (0.1, 0.5, 1.0 ETH) for convenience</li>
                                             <li><strong>Send Button:</strong> Executes the transaction on the blockchain</li>
                                             <li><em>Tip: Click a classmate's name in the sidebar to auto-fill their address!</em></li>
-                                        </ul>
-                                    </div>
-                                    
-                                    {/* Staking */}
-                                    <div style={{background: 'rgba(251, 191, 36, 0.1)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid rgba(251, 191, 36, 0.3)'}}>
-                                        <h3 style={{color: '#fbbf24', margin: '0 0 0.75rem 0', fontSize: '1.1rem'}}>🥩 Staking Pool Section</h3>
-                                        <ul style={{color: '#cbd5e1', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8}}>
-                                            <li><strong>Pool Stats:</strong> Shows total ETH staked and number of participants</li>
-                                            <li><strong>Your Stake:</strong> How much you've staked and rewards earned</li>
-                                            <li><strong>Stake Button:</strong> Lock up ETH to earn rewards (like a savings account)</li>
-                                            <li><strong>Unstake:</strong> Request to withdraw your staked ETH (has unbonding period)</li>
-                                            <li><strong>Claim Rewards:</strong> Collect your earned staking rewards</li>
-                                            <li><em>Staking demonstrates how Proof of Stake consensus works!</em></li>
                                         </ul>
                                     </div>
                                     
@@ -10832,20 +10807,10 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                         <h3 style={{color: '#94a3b8', margin: '0 0 0.75rem 0', fontSize: '1.1rem'}}>📋 Left Sidebar</h3>
                                         <ul style={{color: '#cbd5e1', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8}}>
                                             <li><strong>Connection Status:</strong> Green = connected, Red = disconnected</li>
-                                            <li><strong>Your Account:</strong> Import/Export/Create wallets</li>
+                                            <li><strong>Your Account:</strong> Copy address, top off test ETH, or create wallets</li>
                                             <li><strong>Your Nickname:</strong> Set how you appear to classmates</li>
                                             <li><strong>Classmates List:</strong> See who's in the class - click to send them ETH</li>
                                             <li><strong>🧪 Diagnostics:</strong> Troubleshoot connection issues</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    {/* Lab Progress */}
-                                    <div style={{background: 'rgba(34, 197, 94, 0.1)', padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid rgba(34, 197, 94, 0.3)'}}>
-                                        <h3 style={{color: '#22c55e', margin: '0 0 0.75rem 0', fontSize: '1.1rem'}}>🎯 Lab Progress (Bottom)</h3>
-                                        <ul style={{color: '#cbd5e1', margin: 0, paddingLeft: '1.25rem', lineHeight: 1.8}}>
-                                            <li><strong>Progress Checklist:</strong> Track what activities you've completed</li>
-                                            <li><strong>Checkmarks:</strong> ✅ = completed, ⬜ = not yet done</li>
-                                            <li><em>Complete activities to finish the lab!</em></li>
                                         </ul>
                                     </div>
                                     
@@ -10875,7 +10840,7 @@ return ethers.formatEther(total) + ' ETH staked';`)
             
             {/* CLI LABS VIEW */}
             {view === 'cli' && (
-                <CLILabsView isInstructor={isInstructor} rpcUrl={rpcUrl} terminalRpcUrl={terminalRpcUrl} />
+                <CLILabsView isInstructor={isInstructor} rpcUrl={rpcUrl} terminalRpcUrl={terminalRpcUrl} terminalEnabled={labTerminalEnabled} />
             )}
             
             {/* INSTRUCTOR VIEW */}
@@ -10891,7 +10856,6 @@ return ethers.formatEther(total) + ' ETH staked';`)
                                     value={posAddress}
                                     onChange={e => {
                                         setPosAddress(e.target.value);
-                                        localStorage.setItem("pos_addr", e.target.value);
                                     }}
                                 />
                                 <small>This address was displayed when you ran the deployment script</small>
@@ -10919,15 +10883,36 @@ return ethers.formatEther(total) + ' ETH staked';`)
             )}
             {view === 'contract-builder-lab' && (
                 <ErrorBoundary>
-                    <ContractBuilderLabView provider={provider} wallet={wallet} rpcUrl={rpcUrl} terminalRpcUrl={terminalRpcUrl} fireProgressBeacon={fireProgressBeacon} />
+                    <ContractBuilderLabView provider={provider} wallet={wallet} rpcUrl={rpcUrl} terminalRpcUrl={terminalRpcUrl} terminalEnabled={labTerminalEnabled} fireProgressBeacon={fireProgressBeacon} />
                 </ErrorBoundary>
             )}
             {view === 'tokenization-lab' && (
                 <ErrorBoundary>
-                    <TokenizationLabView provider={provider} wallet={wallet} rpcUrl={rpcUrl} terminalRpcUrl={terminalRpcUrl} fireProgressBeacon={fireProgressBeacon} />
+                    <TokenizationLabView provider={provider} wallet={wallet} rpcUrl={rpcUrl} fireProgressBeacon={fireProgressBeacon} />
+                </ErrorBoundary>
+            )}
+            {view === 'arcade-lab' && (
+                <ErrorBoundary>
+                    <ArcadeLabView provider={provider} wallet={wallet} rpcUrl={rpcUrl} fireProgressBeacon={fireProgressBeacon} />
+                </ErrorBoundary>
+            )}
+            {view === 'nft-marketplace' && (
+                <ErrorBoundary>
+                    <MarketplaceView provider={provider} wallet={wallet} rpcUrl={rpcUrl} />
+                </ErrorBoundary>
+            )}
+            {view === 'forensics-lab' && (
+                <ErrorBoundary>
+                    <LabDetailView
+                        lab={getLabById('ransomware-investigation')}
+                        onBack={() => setView('live')}
+                        basePath={typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL ? import.meta.env.BASE_URL.replace(/\/$/, '') : ''}
+                        studentOnly={!isInstructor}
+                    />
                 </ErrorBoundary>
             )}
         </main>
+        {topOffMiningModal}
     </div>
   )
 }

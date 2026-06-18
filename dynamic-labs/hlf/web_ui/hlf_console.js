@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const helpBtn = document.getElementById('helpBtn');
   const helpClose = document.getElementById('helpClose');
   const helpBackdrop = document.getElementById('helpBackdrop');
+  const terminalFrame = document.getElementById('terminalFrame');
 
   if (helpBtn) helpBtn.addEventListener('click', openHelpModal);
   if (helpClose) helpClose.addEventListener('click', closeHelpModal);
@@ -122,6 +123,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('title').textContent = `HLF Node Console: ${currentNodeLabel()}`;
   document.getElementById('subtitle').textContent = `Real zellij-backed shell access for ${currentNodeLabel()}`;
-  document.getElementById('terminalFrame').src = currentTerminalPath();
+  let resizeTimer = null;
+  function notifyTerminalResize() {
+    const child = terminalFrame && terminalFrame.contentWindow;
+    if (!child) return;
+    try {
+      const EventCtor = child.Event || Event;
+      child.dispatchEvent(new EventCtor('resize'));
+    } catch (_) {}
+  }
+
+  function installTerminalResizeBridge() {
+    const child = terminalFrame && terminalFrame.contentWindow;
+    if (!child) return;
+    try {
+      if (child.__labTerminalResizeBridgeInstalled) return;
+      const doc = child.document;
+      const target = doc && (doc.documentElement || doc.body);
+      if (!target || !child.ResizeObserver) return;
+      child.__labTerminalResizeBridgeInstalled = true;
+      child.__labTerminalResizeBridge = new child.ResizeObserver(function () {
+        try {
+          child.dispatchEvent(new child.Event('resize'));
+        } catch (_) {}
+      });
+      child.__labTerminalResizeBridge.observe(target);
+    } catch (_) {}
+  }
+
+  function forceTerminalResize() {
+    installTerminalResizeBridge();
+    notifyTerminalResize();
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () {
+        installTerminalResizeBridge();
+        notifyTerminalResize();
+      });
+    }
+    setTimeout(notifyTerminalResize, 120);
+    setTimeout(notifyTerminalResize, 300);
+  }
+
+  function scheduleTerminalResize(delay) {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      resizeTimer = null;
+      forceTerminalResize();
+    }, typeof delay === 'number' ? delay : 80);
+  }
+  if (terminalFrame) {
+    terminalFrame.addEventListener('load', scheduleTerminalResize);
+    terminalFrame.src = currentTerminalPath();
+    window.addEventListener('resize', scheduleTerminalResize);
+    if (window.ResizeObserver) {
+      const observer = new ResizeObserver(scheduleTerminalResize);
+      observer.observe(terminalFrame);
+    }
+  }
   renderContext();
 });

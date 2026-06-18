@@ -2,8 +2,8 @@
 
 Use this guide to prompt agents to synthesize the assigned reading for a single
 lesson before quiz generation. This is parallel to `LESSON_SYNTHESIS_GUIDE.md`,
-but the source of truth is the reading assigned in
-`../blockchain-course/assets/syllabus.pdf`, not the lesson `.qmd` file itself.
+but the source of truth is the reading assigned in the course materials, not
+quiz-bank text.
 
 The guide filename is `READINGS_SYNTHESIS_GUIDE.md`.
 
@@ -14,15 +14,16 @@ or synthesize readings for multiple lessons in one context.
 
 Use two contexts:
 
-- Context 1: locate the assigned reading for the lesson from the syllabus and
-  acquire the reading content or a usable excerpt packet.
+- Context 1: locate the assigned reading for the lesson from the lesson source,
+  course references, and local readings, then acquire the reading content or a
+  usable excerpt packet.
 - Context 2: synthesize the acquired reading content into a reading synthesis
   file.
 
 This split matters. The first context can spend attention on matching the lesson
-to the syllabus and acquiring source material. The second context should see only
-the lesson identity, reading metadata, and the acquired reading content needed
-for synthesis.
+to assigned-reading evidence and acquiring source material. The second context
+should see only the lesson identity, reading metadata, and the acquired reading
+content needed for synthesis.
 
 ## Inputs
 
@@ -30,7 +31,7 @@ Each run starts with:
 
 ```text
 LESSON_PATH=../blockchain-course/lessons/<module>/<lesson-file>.qmd
-SYLLABUS_PATH=../blockchain-course/assets/syllabus.pdf
+READINGS_DIR=../blockchain-course/assets/readings
 OUTPUT_PATH=lesson_synthesis/<module>_<lesson_file_stem>-reading-synthesis.md
 ```
 
@@ -43,7 +44,7 @@ Example:
 
 ```text
 LESSON_PATH=../blockchain-course/lessons/primitives/02-CP-hashing_and_merkle_trees.qmd
-SYLLABUS_PATH=../blockchain-course/assets/syllabus.pdf
+READINGS_DIR=../blockchain-course/assets/readings
 OUTPUT_PATH=lesson_synthesis/primitives_02-CP-hashing_and_merkle_trees-reading-synthesis.md
 ```
 
@@ -62,7 +63,7 @@ reading-synthesis agent.
 Inputs:
 
 - LESSON_PATH: `{{LESSON_PATH}}`
-- SYLLABUS_PATH: `{{SYLLABUS_PATH}}`
+- READINGS_DIR: `{{READINGS_DIR}}`
 - OUTPUT_PATH expected from the next synthesis stage: `{{OUTPUT_PATH}}`
 
 Do not write the final synthesis. Produce a reading packet only.
@@ -71,18 +72,18 @@ Process:
 
 1. Read the assigned lesson file enough to identify its title, module, sequence,
    lesson file stem, and any explicit reading references inside the lesson.
-2. Read the syllabus PDF at `{{SYLLABUS_PATH}}` using whatever local method is
-   available in the environment. Do not assume a specific PDF tool; use local
-   text extraction, PDF readers, or repository-accessible text as available.
-3. Match the lesson to its syllabus entry. Use lesson sequence, module, title,
-   date/order, and topic. If the lesson filename and syllabus use different
-   wording, explain the matching rationale.
+2. Inspect lesson front matter, reading/reference slides, speaker notes,
+   citations, and nearby course reference files for assigned-reading evidence.
+3. Match the lesson to the best reading evidence. Use lesson sequence, module,
+   title, topic, citations, and local file names. If the reading assignment is
+   ambiguous, explain the ambiguity instead of guessing silently.
 4. Identify required readings first. Optional/supplemental readings may be
-   listed, but do not let them dominate the synthesis packet unless the syllabus
-   indicates they are central.
-5. Acquire the assigned reading content. Prefer local course copies if present.
-   If the reading is referenced by URL, DOI, title, or citation, retrieve the
-   public/source version that corresponds to the syllabus entry.
+   listed, but do not let them dominate the synthesis packet unless course
+   materials indicate they are central.
+5. Acquire the assigned reading content. Prefer local course copies under
+   `{{READINGS_DIR}}` if present. If the reading is referenced by URL, DOI,
+   title, or citation, retrieve the public/source version that corresponds to
+   the assigned-reading evidence.
 6. If the reading is long, provide a relevant excerpt packet rather than dumping
    the entire text. Preserve headings, abstracts, introductions, conclusions,
    diagrams/captions, definitions, examples, and sections that explain mechanisms
@@ -106,12 +107,12 @@ Output a reading packet in Markdown with this exact structure:
 - `lesson_title`: `<lesson title inferred from the lesson file>`
 - `expected_output_path`: `{{OUTPUT_PATH}}`
 
-## Syllabus Match
+## Reading Match
 
-- `syllabus_path`: `{{SYLLABUS_PATH}}`
-- `matched_syllabus_entry`: `<date/week/module/title/row text or concise paraphrase>`
+- `readings_dir`: `{{READINGS_DIR}}`
+- `matched_reading_evidence`: `<lesson/reference/local-file evidence or concise paraphrase>`
 - `match_confidence`: `<high|medium|low>`
-- `match_rationale`: `<why this syllabus entry belongs to this lesson>`
+- `match_rationale`: `<why this reading evidence belongs to this lesson>`
 
 ## Assigned Reading Metadata
 
@@ -137,7 +138,7 @@ For each acquired reading, include:
 
 ## Acquisition Notes
 
-- Tools or paths used to access the syllabus and reading.
+- Tools or paths used to inspect the lesson and acquire the reading.
 - Any ambiguity in matching the lesson to the reading.
 - Any access, copyright, extraction, or quality limitations.
 
@@ -172,7 +173,7 @@ Write exactly one output file:
 
 {{OUTPUT_PATH}}
 
-You have been given a reading packet prepared from the course syllabus and the
+You have been given a reading packet prepared from the course materials and the
 assigned reading. Use that packet as your source of truth for the reading.
 
 Do not generate quiz questions. Your job is to synthesize the assigned reading
@@ -293,7 +294,7 @@ standalone quiz questions unless tied to a larger concept.
 
 ## Acquisition And Grounding Notes
 
-Summarize any acquisition limitations, ambiguity in the syllabus match, partial
+Summarize any acquisition limitations, ambiguity in the reading match, partial
 reading coverage, or places where the reading packet was insufficient.
 
 ## Readiness Check
@@ -339,8 +340,8 @@ For each lesson:
 1. Compute `LESSON_PATH` from `../blockchain-course/lessons`.
 2. Compute `OUTPUT_PATH` as
    `lesson_synthesis/<module>_<lesson_file_stem>-reading-synthesis.md`.
-3. Run Stage 1 in a fresh context to locate and acquire the assigned reading from
-   `../blockchain-course/assets/syllabus.pdf`.
+3. Run Stage 1 in a fresh context to locate and acquire the assigned reading
+   from the lesson source, course references, and local readings.
 4. Start a new context for Stage 2. Provide the Stage 1 reading packet and the
    exact output path.
 5. Require Stage 2 to write the reading synthesis file directly.
@@ -355,7 +356,7 @@ Use this checklist before passing a reading synthesis to a quiz-generation agent
 - The file exists at the expected `lesson_synthesis/...-reading-synthesis.md`
   path.
 - The synthesis names exactly one lesson.
-- The assigned reading was identified from the syllabus or the ambiguity is
+- The assigned reading was identified from course materials or the ambiguity is
   documented.
 - The synthesis is based on acquired reading content, not guessed citation
   metadata.

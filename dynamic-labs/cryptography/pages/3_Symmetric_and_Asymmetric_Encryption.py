@@ -2,6 +2,11 @@ import streamlit as st
 from lab_core import LabCore
 from lesson_loader import load_lesson
 from progress_beacon import fire as _fire_progress
+from terminal_ui import (
+    install_terminal_keyboard_shortcuts,
+    render_hint,
+    render_terminal_history,
+)
 
 # --- SETUP & STATE ---
 st.set_page_config(layout="wide", page_title="Module 3: Cryptography")
@@ -12,6 +17,20 @@ _SCENARIO_BEACONS = {
     "3. Forged Ambassador Cables": "exercise:crypto-symasym-s3",
     "4. The 1GB ISR Video": "exercise:crypto-symasym-s4",
 }
+
+TERMINAL_COMMANDS = [
+    "encrypt_record",
+    "help",
+    "send_file",
+    "send_key_encrypted",
+    "send_key_plaintext",
+    "status",
+    "verify_cable",
+    "verify_signature",
+    "view_cables",
+    "view_intercept",
+    "view_record",
+]
 
 if "lab3" not in st.session_state:
     st.session_state.lab3 = LabCore()
@@ -51,14 +70,94 @@ st.markdown(
 
 
 # --- COMMAND PROCESSOR ---
+def crypto_help(topic, active_scenario):
+    topic = topic.lower()
+    if topic in ("s1", "record"):
+        return """Leaked S1 record commands:
+  view_record
+      Show the signed personnel record.
+  verify_signature
+      Check whether the signature is authentic.
+  encrypt_record <symmetric|asymmetric|hybrid>
+      Apply an encryption architecture.
+
+Examples:
+  view_record
+  verify_signature
+  encrypt_record asymmetric"""
+
+    if topic in ("s2", "collaborator"):
+        return """Embassy collaborator commands:
+  view_intercept
+      Show the encrypted message situation.
+  send_key_plaintext
+      Try sending the symmetric key without protection.
+  send_key_encrypted
+      Encrypt the symmetric key with the collaborator's public key.
+
+Examples:
+  view_intercept
+  send_key_plaintext
+  send_key_encrypted"""
+
+    if topic in ("s3", "cables"):
+        return """Forged cable commands:
+  view_cables
+      Show all received cables.
+  verify_cable <A|B|C> <public_key_reference>
+      Verify one cable against a named public key.
+
+Examples:
+  view_cables
+  verify_cable A amb_public_key
+  verify_cable B amb_public_key"""
+
+    if topic in ("s4", "video"):
+        return """ISR video commands:
+  send_file <symmetric|asymmetric|hybrid>
+      Try a file-transfer encryption architecture.
+
+Examples:
+  send_file symmetric
+  send_file asymmetric
+  send_file hybrid"""
+
+    if topic == "status":
+        return """Utility command:
+  status
+      Show completion state for all Module 3 scenarios."""
+
+    topic_by_scenario = {
+        "1. The Leaked S1 Record": "s1",
+        "2. The Embassy Collaborator": "s2",
+        "3. Forged Ambassador Cables": "s3",
+        "4. The 1GB ISR Video": "s4",
+    }
+    default_topic = topic_by_scenario.get(active_scenario, "s1")
+    return f"""Available help topics:
+  help s1
+  help s2
+  help s3
+  help s4
+  help status
+
+Current scenario quick start:
+{crypto_help(default_topic, active_scenario)}"""
+
+
 def process_command():
-    user_input = st.session_state.input_box
-    if not user_input:
+    user_input = st.session_state.input_box or ""
+    stripped_input = user_input.strip()
+    if not stripped_input:
+        st.session_state.input_box = ""
         return
-    parts = user_input.strip().split()
+    parts = stripped_input.split()
     cmd = parts[0].lower()
     args = parts[1:]
     lab = st.session_state.lab3
+    active_scenario = st.session_state.get(
+        "crypto_scenario", "1. The Leaked S1 Record"
+    )
     output = ""
 
     # ==========================================
@@ -69,8 +168,9 @@ def process_command():
     elif cmd == "verify_signature":
         output = lab.s1_verify_signature()
     elif cmd == "encrypt_record":
-        if len(args) == 1 and args[0] in ["symmetric", "asymmetric", "hybrid"]:
-            output = lab.s1_encrypt_record(args[0])
+        method = args[0].lower() if len(args) == 1 else ""
+        if method in ["symmetric", "asymmetric", "hybrid"]:
+            output = lab.s1_encrypt_record(method)
         else:
             output = "Usage: encrypt_record <symmetric|asymmetric|hybrid>"
 
@@ -91,7 +191,7 @@ def process_command():
         output = lab.s3_view_cables()
     elif cmd == "verify_cable":
         if len(args) == 2:
-            output = lab.s3_verify_cable(args[0], args[1])
+            output = lab.s3_verify_cable(args[0].upper(), args[1].lower())
         else:
             output = "Usage: verify_cable <A|B|C> <public_key_reference>"
 
@@ -99,8 +199,9 @@ def process_command():
     # SCENARIO 4 COMMANDS
     # ==========================================
     elif cmd == "send_file":
-        if len(args) == 1 and args[0] in ["symmetric", "asymmetric", "hybrid"]:
-            output = lab.s4_send_file(args[0])
+        method = args[0].lower() if len(args) == 1 else ""
+        if method in ["symmetric", "asymmetric", "hybrid"]:
+            output = lab.s4_send_file(method)
         else:
             output = "Usage: send_file <symmetric|asymmetric|hybrid>"
 
@@ -115,12 +216,12 @@ def process_command():
         output += f"4. The 1GB ISR Video: {'[COMPLETE]' if lab.scenario_state['s4_completed'] else '[INCOMPLETE]'}\n"
 
     elif cmd == "help":
-        output = "Available commands vary by scenario. Check the scenario description on the right for specific commands."
+        output = crypto_help(args[0] if args else "", active_scenario)
 
     else:
         output = f"Unknown command: {cmd}\nType 'help' for assistance."
 
-    st.session_state.history3.insert(0, (user_input, output))
+    st.session_state.history3.insert(0, (stripped_input, output))
     st.session_state.input_box = ""
 
 
@@ -173,6 +274,7 @@ scenario = st.sidebar.radio(
         "3. Forged Ambassador Cables",
         "4. The 1GB ISR Video",
     ],
+    key="crypto_scenario",
 )
 _fire_progress(_SCENARIO_BEACONS.get(scenario, ""))
 
@@ -182,14 +284,12 @@ with col_term:
     st.subheader("Terminal")
     # Using on_change instead of a form to mimic a real terminal feel
     st.text_input("Enter Command", key="input_box", on_change=process_command)
+    install_terminal_keyboard_shortcuts(
+        "Enter Command", TERMINAL_COMMANDS, st.session_state.history3
+    )
     st.caption("Type a command and press Enter.")
 
-    log_box = st.container(height=600)
-    for c, o in st.session_state.history3:
-        log_box.markdown(
-            f"<div class='log-cmd'>>> {c}</div><div class='log-out'>{o}</div><hr style='margin:5px 0'>",
-            unsafe_allow_html=True,
-        )
+    render_terminal_history(st.session_state.history3)
 
 with col_vis:
     lab = st.session_state.lab3
@@ -217,22 +317,13 @@ with col_vis:
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Hint 1", key="h1_s1"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 1:</div>{show_hint('s1', 1)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 1:", show_hint("s1", 1))
         with col2:
             if st.button("Hint 2", key="h2_s1"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 2:</div>{show_hint('s1', 2)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 2:", show_hint("s1", 2))
         with col3:
             if st.button("Hint 3", key="h3_s1"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 3:</div>{show_hint('s1', 3)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 3:", show_hint("s1", 3))
 
     # ==========================================
     # SCENARIO 2: THE EMBASSY COLLABORATOR
@@ -257,22 +348,13 @@ with col_vis:
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Hint 1", key="h1_s2"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 1:</div>{show_hint('s2', 1)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 1:", show_hint("s2", 1))
         with col2:
             if st.button("Hint 2", key="h2_s2"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 2:</div>{show_hint('s2', 2)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 2:", show_hint("s2", 2))
         with col3:
             if st.button("Hint 3", key="h3_s2"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 3:</div>{show_hint('s2', 3)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 3:", show_hint("s2", 3))
 
     # ==========================================
     # SCENARIO 3: FORGED AMBASSADOR CABLES
@@ -297,22 +379,13 @@ with col_vis:
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Hint 1", key="h1_s3"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 1:</div>{show_hint('s3', 1)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 1:", show_hint("s3", 1))
         with col2:
             if st.button("Hint 2", key="h2_s3"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 2:</div>{show_hint('s3', 2)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 2:", show_hint("s3", 2))
         with col3:
             if st.button("Hint 3", key="h3_s3"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 3:</div>{show_hint('s3', 3)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 3:", show_hint("s3", 3))
 
     # ==========================================
     # SCENARIO 4: THE 1GB ISR VIDEO
@@ -337,22 +410,13 @@ with col_vis:
         col1, col2, col3 = st.columns(3)
         with col1:
             if st.button("Hint 1", key="h1_s4"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 1:</div>{show_hint('s4', 1)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 1:", show_hint("s4", 1))
         with col2:
             if st.button("Hint 2", key="h2_s4"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 2:</div>{show_hint('s4', 2)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 2:", show_hint("s4", 2))
         with col3:
             if st.button("Hint 3", key="h3_s4"):
-                st.markdown(
-                    f"<div class='hint-box'><div class='hint-title'>HINT 3:</div>{show_hint('s4', 3)}</div>",
-                    unsafe_allow_html=True,
-                )
+                render_hint("HINT 3:", show_hint("s4", 3))
 
 
 # --- SIDEBAR STATUS ---

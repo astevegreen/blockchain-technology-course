@@ -19,12 +19,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A wallet service depends on a hosted API to report balances accurately. In the lesson's engineering sense, what is the system doing?",
+      "question_stem": "A wallet service depends on a hosted API to report balances accurately. In an engineering sense, what is the system doing?",
       "correct_answer": "It is making an explicit trust assumption about the hosted API's behavior.",
       "incorrect_answers": [
-        "It is removing trust since a server can report each balance by itself.",
-        "It proves balances are accurate because hosted APIs always audit data.",
-        "It decentralizes control because many wallets can call the same API."
+        "It is avoiding trust because an API response is only a technical interface.",
+        "It verifies balances independently because the hosted API response uses HTTPS.",
+        "It distributes trust because many wallets query the same hosted API endpoint."
       ],
       "explanation": "The lesson defines trust as a concrete dependency on some entity behaving as expected, not as a feeling of personal confidence.",
       "difficulty_level": 2,
@@ -43,12 +43,12 @@
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "A payment network removes its central database and lets peers maintain replicated state under shared rules. Which tradeoff best matches the lesson's comparison of architectures?",
+      "question_stem": "A payment network removes its central database and lets peers maintain replicated state under shared rules. Which tradeoff best characterizes this architectural shift?",
       "correct_answer": "It reduces reliance on one central authority but increases coordination and verification complexity.",
       "incorrect_answers": [
-        "It removes every internal trust assumption while relying on peers never being compromised.",
-        "It simplifies coordination while making each peer trust every other node unconditionally always.",
-        "It guarantees hardware uptime and stops any participant from lying about shared states forever."
+        "It eliminates institutional trust by treating each peer replica as authoritative in practice.",
+        "It reduces coordination work because each replica only checks nearby peer updates before syncing.",
+        "It shifts the single point of failure to the peer that first receives each transaction request."
       ],
       "explanation": "Distributed architectures relocate trust into mechanisms such as cryptography, consensus rules, and peer assumptions; they do not remove the need for trust or coordination.",
       "difficulty_level": 3,
@@ -67,12 +67,12 @@
     {
       "id": "q3",
       "question_type": "multiple_choice",
-      "question_stem": "In a mutually suspicious network, a peer receives a transaction claim from another peer. What response best reflects the lesson's design posture?",
+      "question_stem": "In a mutually suspicious network, a peer receives a transaction claim from another peer. What response best reflects the correct design posture?",
       "correct_answer": "Verify the claim against protocol rules before relying on it.",
       "incorrect_answers": [
-        "Accept the claim if the sender has a strong reputation already.",
-        "Reject the claim first because every external peer is malicious.",
-        "Forward the claim to other nodes before checking all local rules."
+        "Weight the claim by sender reputation before applying local checks.",
+        "Quarantine the claim until a central operator approves the sender.",
+        "Forward the claim so peer consensus runs before local validation."
       ],
       "explanation": "Mutual suspicion means participants are designed to verify behavior rather than assume that other participants are benign or correct.",
       "difficulty_level": 2,
@@ -94,9 +94,9 @@
       "question_stem": "A node stays online and replies promptly, but it returns corrupted account data while claiming the data is valid. Which fault type does this best illustrate?",
       "correct_answer": "Commission fault",
       "incorrect_answers": [
+        "Omission faults",
         "Crash-stop fault",
-        "Omission failures",
-        "Clock-drift bug"
+        "Late timing fault"
       ],
       "explanation": "A commission fault involves an active node returning incorrect data. It is more serious than simply going silent, dropping a message, or replying late.",
       "difficulty_level": 2,
@@ -119,7 +119,7 @@
       "correct_answer": "Byzantine fault",
       "incorrect_answers": [
         "Crash-stop fault",
-        "Timer-drift bug",
+        "Late timing bug",
         "Omission fault"
       ],
       "explanation": "Byzantine faults include arbitrary, malicious, and adaptive behavior, especially active deception that can create inconsistent views across honest nodes.",
@@ -142,9 +142,9 @@
       "question_stem": "Why is a crash fault usually easier to handle than Byzantine behavior?",
       "correct_answer": "A crashed node stops responding, while a Byzantine node may remain active and mislead different peers in different ways.",
       "incorrect_answers": [
-        "A crashed node rewrites protocol rules for all peers, while a Byzantine node just stops sending any messages.",
-        "A crashed node is impossible to detect by monitors, while a Byzantine node always announces its attack publicly.",
-        "A crashed node corrupts every replica at once, while a Byzantine node only changes its own local disk state."
+        "A crashed node usually means its stored data is wrong, while Byzantine behavior mostly means messages arrive late.",
+        "A crashed node can be handled by trusting its last known state, while Byzantine behavior only needs duplicate paths.",
+        "A crashed node creates conflicting reports for peers, while Byzantine behavior is limited to one visible outage."
       ],
       "explanation": "Simple redundancy and timeouts can often handle silence. Active deception is harder because the node still participates and can manipulate honest participants' local views.",
       "difficulty_level": 3,
@@ -164,11 +164,11 @@
     {
       "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "A network sees several nodes stop responding. Operators cannot tell whether hardware failed, packets are being dropped, or an attacker is causing a denial-of-service condition. What lesson concept explains why the defense should focus on observable behavior?",
+      "question_stem": "A network sees several nodes stop responding. Operators cannot tell whether hardware failed, packets are being dropped, or an attacker is causing a denial-of-service condition. What concept explains why the defense should focus on observable behavior?",
       "correct_answer": "Ambiguity of intent",
       "incorrect_answers": [
-        "Centralized reliance",
-        "Central trust base",
+        "Timing fault model",
+        "Fault threshold rule",
         "Classical consensus"
       ],
       "explanation": "The lesson emphasizes that benign faults and malicious attacks can look the same from a node's perspective, so systems must defend against behaviors rather than wait to prove intent.",
@@ -192,8 +192,8 @@
       "correct_answer": "Safety (consistency)",
       "incorrect_answers": [
         "Liveness (progress)",
-        "Latency & throughput",
-        "Security (encryption)"
+        "Throughput (capacity)",
+        "Identity trust model"
       ],
       "explanation": "Safety is the requirement that the system not contradict itself by allowing honest participants to settle on inconsistent states.",
       "difficulty_level": 3,
@@ -215,9 +215,9 @@
       "question_stem": "A consensus protocol never finalizes conflicting histories, but it stops confirming new transactions indefinitely after a network disruption. Which goal is failing?",
       "correct_answer": "Liveness (availability)",
       "incorrect_answers": [
-        "Safety (state agreement)",
-        "Omission message drops",
-        "Validation (signatures)"
+        "Safety state agreement",
+        "Validity condition check",
+        "Authentication rule set"
       ],
       "explanation": "Liveness is the requirement that the system continue making progress. A stalled but non-contradictory protocol preserves safety while losing liveness.",
       "difficulty_level": 3,
@@ -239,9 +239,9 @@
       "question_stem": "Why can simple majority voting break down in the Byzantine Generals Problem?",
       "correct_answer": "A traitor can give different honest participants different evidence, so they may each compute a majority over different inputs.",
       "incorrect_answers": [
-        "Majority voting fails because honest participants decline to exchange messages, leaving them unable to aggregate votes correctly at all.",
-        "A single central referee always alters the ledger tip during transmission, so participants cannot trust a shared final tally in practice.",
-        "Oral messages force every honest participant to receive identical evidence, so simple majority voting cannot count any inputs at all."
+        "Majority voting fails because honest participants are required to ignore relayed reports and use only direct messages from the sender.",
+        "The issue is that honest participants use different majority rules, so one shared tie breaker would restore agreement.",
+        "Oral messages make reports publicly verifiable, so conflicting inputs are discarded before any majority vote begins."
       ],
       "explanation": "The core challenge is not voting itself but ensuring honest participants share a consistent view before applying a decision rule.",
       "difficulty_level": 4,
@@ -260,12 +260,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "Classical protocols such as two-phase commit, Paxos, and Raft are useful context in this lesson mainly because they show what contrast?",
+      "question_stem": "What contrast do classical protocols such as two-phase commit, Paxos, and Raft illustrate when compared with blockchain consensus?",
       "correct_answer": "Benign crash or omission faults are easier to address than open adversarial Byzantine behavior.",
       "incorrect_answers": [
-        "Classical consensus is always more secure than public blockchains under every threat model.",
-        "Blockchains reuse classical protocols directly, without changing open threat assumptions.",
-        "Centralized databases cannot recover from routine crash failures without blockchain tools."
+        "Replicated databases can skip adversary assumptions because leader election prevents lying nodes.",
+        "Public blockchains mainly solve routine crash recovery rather than malicious equivocation.",
+        "Once replicas use quorums, the difference between benign and malicious faults disappears."
       ],
       "explanation": "The lesson uses classical consensus to show that distributed systems had tools for benign environments, while blockchains face harder open-network adversaries.",
       "difficulty_level": 3,
@@ -285,12 +285,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A designer says a blockchain removes trust because users no longer rely on a bank. Which response best matches the lesson?",
+      "question_stem": "A designer says a blockchain removes trust because users no longer rely on a bank. Which response is correct?",
       "correct_answer": "The system has relocated trust into cryptographic proofs, consensus rules, and assumptions about enough honest participation.",
       "incorrect_answers": [
-        "The system has removed every trust assumption because signatures make dishonest behavior mathematically impossible.",
-        "The system trusts only the fastest node because it sees transactions first and has the most synchronized clock in the network.",
-        "The system avoids trust assumptions entirely by blocking users from verifying one another's transaction records directly."
+        "The system eliminates trust because a valid signature is enough to make any proposed ledger state correct by itself.",
+        "The system shifts trust from the bank to whichever peer reports the newest transaction history to each user first.",
+        "The system avoids trust by letting users download records while preventing them from checking consensus rules directly."
       ],
       "explanation": "The visible slides frame trust in digital systems as explicit assumptions and dependencies. Distributed architectures shift trust away from a central institution toward cryptographic proofs, consensus rules, and participant behavior assumptions.",
       "difficulty_level": 4,
@@ -310,12 +310,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "In the reading's interactive consistency framing, what must loyal participants achieve when the source of an input is loyal?",
+      "question_stem": "In the interactive consistency framing of Byzantine agreement, what must loyal participants achieve when the source of an input is loyal?",
       "correct_answer": "They must agree with one another and use the loyal source's value.",
       "incorrect_answers": [
-        "They must choose any value as long as it came from majority voting.",
-        "They must wait until every faulty participant identifies itself first.",
-        "They must accept the value from the participant with the shortest path."
+        "They may choose a default even when the original source node is loyal.",
+        "They may keep local values as long as a majority vote was computed.",
+        "They should prefer the value sent through the shortest network path."
       ],
       "explanation": "The reading separates agreement among loyal participants from validity: when the original source is loyal, loyal participants should follow that source's value.",
       "difficulty_level": 3,
@@ -334,12 +334,12 @@
     {
       "id": "q14",
       "question_type": "multiple_choice",
-      "question_stem": "An unauthenticated distributed system wants to tolerate one malicious participant using ordinary oral messages. Why does the reading reject a tiny three-participant design as structurally unsafe?",
+      "question_stem": "An unauthenticated distributed system wants to tolerate one malicious participant using ordinary oral messages. Why is a tiny three-participant design structurally unsafe?",
       "correct_answer": "With one traitor, honest participants can be left unable to distinguish which local story is true, so the loyal majority is not large enough.",
       "incorrect_answers": [
-        "Without signatures, three participants cannot exchange any ordinary messages at all, so no local stories can ever be compared by the protocol.",
-        "A three-participant design always violates liveness even when every node is loyal, causing the whole network to stall under no fault.",
-        "Oral messages cannot carry verifiable sender identity or missing-message data, so receivers must accept all reported claims unchanged."
+        "The design is unsafe because oral messages hide sender identity, so honest nodes cannot attribute reported values reliably in the protocol.",
+        "The design is unsafe because one missing timeout proves the other participants are malicious and forces a protocol halt before agreement.",
+        "The design is unsafe because three participants can form a reliable majority only when signatures are attached to all messages."
       ],
       "explanation": "The reading's threshold result for oral messages follows from indistinguishability: to tolerate m traitors, loyal participants must overwhelmingly outnumber the traitors.",
       "difficulty_level": 4,
@@ -359,12 +359,12 @@
     {
       "id": "q15",
       "question_type": "multiple_choice",
-      "question_stem": "How do signed messages change the Byzantine agreement problem in the reading?",
+      "question_stem": "How do signed messages change the Byzantine agreement problem?",
       "correct_answer": "They make a participant's claims transferable and verifiable, limiting forgery and making equivocation visible.",
       "incorrect_answers": [
-        "They make network latency irrelevant by adding delivery guarantees and removing every timing anomaly.",
-        "They remove recursive message propagation, enabling local decisions and avoiding consensus overhead entirely.",
-        "They force faulty participants to send identical values, preventing equivocation and simplifying the vote process."
+        "They let each participant decide from the first signed value received, without comparing later reports from peers.",
+        "They prove the signer is loyal, so honest nodes no longer need to handle conflicting signed orders from that signer.",
+        "They remove timeout and connectivity assumptions by treating signed messages as delivered, timely, and unblockable."
       ],
       "explanation": "Signed messages do not make consensus trivial, but they constrain what faulty participants can credibly claim and allow honest participants to share evidence.",
       "difficulty_level": 3,
@@ -384,12 +384,12 @@
     {
       "id": "q16",
       "question_type": "multiple_choice",
-      "question_stem": "A protocol declares a message absent after a timeout. According to the reading, what assumption is hidden inside that design choice?",
+      "question_stem": "A protocol declares a message absent after a timeout. What assumption is hidden inside that design choice?",
       "correct_answer": "Message delays and clock behavior are bounded well enough for absence to be detectable.",
       "incorrect_answers": [
-        "Every sender has authenticated all future messages in advance, so forgery is fully ruled out.",
-        "Majority voting has solved interactive consistency well enough for every input to be right.",
-        "Faulty nodes are limited to crash failures only, so equivocation is impossible by design."
+        "The network can identify each sender but makes no bounded claim about delivery time.",
+        "Signatures make late messages invalid without a network delay bound or clock assumption.",
+        "A majority has already agreed on the missing value before the timeout rule is applied."
       ],
       "explanation": "The reading treats timeouts as part of the trusted system model: detecting missing messages depends on bounded delays and sufficiently synchronized clocks.",
       "difficulty_level": 4,

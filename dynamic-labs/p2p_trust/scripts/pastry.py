@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import random, sys, time
+import argparse
+import random
 
 ###############################################################################
 # CONFIGURATION
@@ -93,14 +94,19 @@ class PastryNode:
         shl = common_prefix_len(self.node_id, key)
         next_digit = key[shl]
 
+        # STUDENT PATCH AREA START
+        # Replace everything from this line through STUDENT PATCH AREA END
+        # with the exact code block shown in the lesson.
         # Check Routing Table
         if shl in self.routing_table and next_digit in self.routing_table[shl]:
             return self.routing_table[shl][next_digit]
 
         # 2. If no Routing Table entry...
-        # BUG: The correct logic should fall back to the Leaf Set here.
-        # Currently, it just gives up.
+        # BUG: A correct router should choose the closest known candidate from
+        # both the prefix-table entry and the leaf set, then only forward if
+        # that candidate moves closer to the key.
         return None
+        # STUDENT PATCH AREA END
 
 
 ###############################################################################
@@ -184,6 +190,82 @@ def print_failure_report(mode, src, key, path, current_node):
         #     f"The Routing Table missed (Red False), but the Leaf Set had a better candidate (Green True)."
         # )
         # print(f"Your code didn't check the Leaf Set!{C_RESET}")
+    elif mode == "INFINITE LOOP":
+        print(f"\n{C_YELLOW}HINT: A next hop must make monotonic progress toward the key.")
+        print(
+            "Treat the routing-table entry and leaf set as candidates, then only "
+            f"return a candidate whose distance to the key is lower than this node's.{C_RESET}"
+        )
+
+
+def explain_next_hop(node, target_key, next_hop):
+    if next_hop is None:
+        return "dropped: no next hop returned"
+    if next_hop == node.node_id:
+        return "stop: no known neighbor is closer"
+
+    shl = common_prefix_len(node.node_id, target_key)
+    needed_digit = target_key[shl]
+    table_candidate = node.routing_table.get(shl, {}).get(needed_digit)
+
+    sources = []
+    if table_candidate == next_hop:
+        sources.append(f"routing table row {shl}, digit '{needed_digit}'")
+    if next_hop in node.leaf_set:
+        sources.append("leaf set")
+
+    if sources:
+        return "via " + " and ".join(sources)
+    return "via closest-known fallback"
+
+
+def print_success_trace(nodes, src, target_key, example_no, max_hops=20):
+    print(f"\n{C_BLUE}Example successful lookup #{example_no}{C_RESET}")
+    print("=" * 60)
+    print(f"Task: Route from Node {src} -> Key {target_key}")
+
+    current = src
+    visited = {current}
+    path = [current]
+
+    for hop in range(max_hops):
+        node = nodes[current]
+        next_hop = node.get_next_hop(target_key)
+        current_dist = diff(current, target_key)
+        shl = common_prefix_len(current, target_key)
+        needed_digit = target_key[shl] if shl < ID_DIGITS else "-"
+        decision = explain_next_hop(node, target_key, next_hop)
+
+        if next_hop is None:
+            print(
+                f"  Hop {hop:02d}: {current} dist={current_dist:<8} "
+                f"prefix={shl} need row {shl} digit '{needed_digit}' -> DROP"
+            )
+            break
+
+        next_dist = diff(next_hop, target_key)
+        print(
+            f"  Hop {hop:02d}: {current} dist={current_dist:<8} "
+            f"prefix={shl} need row {shl} digit '{needed_digit}' "
+            f"-> {next_hop} dist={next_dist:<8} ({decision})"
+        )
+
+        if next_hop == current:
+            print(
+                f"Delivered: {current} is the closest known owner for key "
+                f"{target_key}."
+            )
+            break
+
+        if next_hop in visited:
+            print(f"Stopped: loop detected at {next_hop}.")
+            break
+
+        current = next_hop
+        visited.add(current)
+        path.append(current)
+
+    print("Path: " + " -> ".join(path))
 
 
 ###############################################################################
@@ -191,7 +273,7 @@ def print_failure_report(mode, src, key, path, current_node):
 ###############################################################################
 
 
-def find_broken_route(nodes, sorted_ids):
+def find_broken_route(nodes, sorted_ids, max_attempts=500):
     print(f"Stress testing network ({NUM_NODES} nodes in {16**ID_DIGITS} ID space)...")
     # print(
     #     "Searching for a SPECIFIC failure case (Table Miss + Leaf Hit)",
@@ -201,14 +283,15 @@ def find_broken_route(nodes, sorted_ids):
 
     attempts = 0
     max_hops = 20
+    success_examples = []
 
-    while True:
+    while attempts < max_attempts:
         attempts += 1
         if attempts % 20 == 0:
             print(".", end="", flush=True)
 
         src_id = random.choice(sorted_ids)
-        target_key = f"{random.randint(0, 16**ID_DIGITS):06X}"
+        target_key = f"{random.randrange(16**ID_DIGITS):06X}"
 
         current = src_id
         path = [current]
@@ -219,9 +302,11 @@ def find_broken_route(nodes, sorted_ids):
         temp_curr = current
         temp_hops = 0
         temp_visited = {current}
+        temp_path = [current]
 
         failure_found = False
         failure_mode = ""
+        route_succeeded = False
 
         while temp_hops < max_hops:
             node_obj = nodes[temp_curr]
@@ -249,6 +334,7 @@ def find_broken_route(nodes, sorted_ids):
                     break
 
             if next_hop == temp_curr:
+                route_succeeded = True
                 break  # Succeeded (or stuck at self)
 
             if next_hop in temp_visited:
@@ -259,11 +345,20 @@ def find_broken_route(nodes, sorted_ids):
 
             temp_curr = next_hop
             temp_visited.add(temp_curr)
+            temp_path.append(temp_curr)
             temp_hops += 1
 
         if temp_hops >= max_hops:
             failure_found = True
             failure_mode = "HOP LIMIT EXCEEDED"
+
+        if (
+            route_succeeded
+            and not failure_found
+            and len(success_examples) < 2
+            and len(temp_path) > 1
+        ):
+            success_examples.append((src_id, target_key))
 
         # --- PHASE 2: VERBOSE REPLAY (Only if Interesting Failure Found) ---
         if failure_found:
@@ -314,15 +409,37 @@ def find_broken_route(nodes, sorted_ids):
             )
             return
 
+    print(
+        f"\n{C_GREEN}No delivery failures found in {attempts} sampled routes.{C_RESET}"
+    )
+    print("The router did not drop, loop, or exceed the hop limit during this stress test.")
+    if success_examples:
+        print("\nHere are example Pastry lookups from the successful run:")
+        for i, (src_id, target_key) in enumerate(success_examples, start=1):
+            print_success_trace(nodes, src_id, target_key, i, max_hops=max_hops)
+
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seed", type=int, help="Set a random seed for replaying a run")
+    ap.add_argument(
+        "--attempts",
+        type=int,
+        default=500,
+        help="Number of random routes to test before reporting success",
+    )
+    args = ap.parse_args()
+
+    if args.seed is not None:
+        random.seed(args.seed)
+
     ids = set()
     while len(ids) < NUM_NODES:
-        ids.add(f"{random.randint(0, 16**ID_DIGITS):06X}")
+        ids.add(f"{random.randrange(16**ID_DIGITS):06X}")
     sorted_ids = sorted(list(ids))
     nodes = {nid: PastryNode(nid, sorted_ids) for nid in sorted_ids}
 
-    find_broken_route(nodes, sorted_ids)
+    find_broken_route(nodes, sorted_ids, max_attempts=args.attempts)
 
 
 if __name__ == "__main__":

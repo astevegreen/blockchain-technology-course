@@ -77,7 +77,7 @@ COPY frontend/src/PoS.json ./abi/PoS.json
 
 # Pre-download the Solidity compiler so students can compile offline
 RUN mkdir -p "${HARDHAT_USER_HOME}" \
- && npx hardhat compile \
+ && npx hardhat compile --force \
  && chmod -R a+rX "${HARDHAT_USER_HOME}"
 
 # Copy CLI labs with pre-installed dependencies

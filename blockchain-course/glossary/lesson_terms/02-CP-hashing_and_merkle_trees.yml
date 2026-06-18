@@ -1,0 +1,372 @@
+lesson_id: "02-CP"
+lesson_title: "Hashing and Merkle Trees"
+source_path: "lessons/primitives/02-CP-hashing_and_merkle_trees.qmd"
+terms:
+  - term: "Cryptographic hash function"
+    modifier: null
+    aliases: ["hash function", "cryptographic hash"]
+    definition: "A deterministic algorithm that maps data of any length to a fixed-length digest used for integrity, commitments, and verification."
+    context: "The lesson starts with this primitive because Merkle trees and blockchain commitments depend on strong hash behavior."
+    slide_heading: "What Is a Cryptographic Hash Function?"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Digest"
+    modifier: null
+    aliases: ["hash", "hash value", "hash output"]
+    definition: "The fixed-length output of a hash function that acts as a compact fingerprint of the input data."
+    context: "Students use digests to compare data, build parent nodes, and verify Merkle roots without resending full inputs."
+    slide_heading: "What Is a Cryptographic Hash Function?"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Determinism"
+    modifier: "hashing"
+    aliases: ["deterministic"]
+    definition: "The property that the same input to a hash function always produces the same digest."
+    context: "Determinism lets independent verifiers recompute hashes and check whether they match a claimed commitment."
+    slide_heading: "What Is a Cryptographic Hash Function?"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Hash collision"
+    modifier: null
+    aliases: ["collision", "collisions"]
+    definition: "A case where two distinct inputs produce the same hash digest."
+    context: "The lesson uses collisions to explain why broken hash families can undermine signatures, certificates, and Merkle commitments."
+    slide_heading: "What Is a Cryptographic Hash Function?"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Pre-image resistance"
+    modifier: null
+    aliases: ["preimage resistance", "one-way property"]
+    definition: "The property that, given a digest, it should be computationally infeasible to find any input that hashes to it."
+    context: "This property supports password storage, commitment schemes, and proof-of-work style blockchain puzzles."
+    slide_heading: "Hash Function Properties"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Second pre-image resistance"
+    modifier: null
+    aliases: ["second-preimage resistance"]
+    definition: "The property that, given one known input, it should be infeasible to find a different input with the same digest."
+    context: "The lesson connects this property to preventing document or transaction substitution attacks."
+    slide_heading: "Hash Function Properties"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Collision resistance"
+    modifier: null
+    aliases: []
+    definition: "The property that it should be infeasible to find any two distinct inputs with the same digest."
+    context: "Merkle trees and many blockchain structures rely on collision resistance so attackers cannot swap data while preserving a root."
+    slide_heading: "Hash Function Properties"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Avalanche effect"
+    modifier: null
+    aliases: ["avalanche"]
+    definition: "The property that a tiny input change causes a large and unpredictable change in the hash output."
+    context: "The lesson uses avalanche behavior to make diffusion and tamper detection visible to students."
+    slide_heading: "Hash Function Properties"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Uniform distribution"
+    modifier: "hashing"
+    aliases: ["uniform output", "uniform distribution of output"]
+    definition: "The expectation that hash outputs are spread evenly across the output space without useful patterns or biases."
+    context: "Uniform-looking outputs help prevent structural shortcuts and support fair random-like behavior in protocols such as mining."
+    slide_heading: "Hash Function Properties"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Computationally infeasible"
+    modifier: null
+    aliases: ["infeasible"]
+    definition: "A security claim that an attack is possible in theory but too expensive for realistic attackers using known methods."
+    context: "The lesson repeatedly uses this idea to distinguish mathematical possibility from practical hash security."
+    slide_heading: "Pre-Image Resistance"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Birthday paradox"
+    modifier: "hashing"
+    aliases: ["birthday bound", "birthday attack"]
+    definition: "The principle that collisions among random-looking hash outputs become likely after about 2^(n/2) trials for an n-bit digest."
+    context: "This explains why collision security is roughly half the digest length and why 256-bit hashes are common."
+    slide_heading: "Math Spotlight: Birthday Paradox and Work Factors"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Work factor"
+    modifier: null
+    aliases: ["attack cost"]
+    definition: "The amount of computation an attacker is expected to need to succeed against a cryptographic property."
+    context: "The lesson compares work factors for collision search versus pre-image and second pre-image search."
+    slide_heading: "Math Spotlight: Birthday Paradox and Work Factors"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "SHA-1"
+    modifier: null
+    aliases: []
+    definition: "An older Secure Hash Algorithm with 160-bit outputs that is deprecated because practical collisions have been found."
+    context: "SHA-1 appears as a cautionary example showing that hash families can become unsafe as attacks improve."
+    slide_heading: "Collision Resistance"
+    tags: ["cryptography", "real-world"]
+    confidence: "high"
+  - term: "SHA-256"
+    modifier: null
+    aliases: []
+    definition: "A 256-bit member of the SHA-2 family widely used for integrity checks and Bitcoin hashing."
+    context: "The lesson uses SHA-256 as the practical example for secure hash outputs and Merkle-Damgard construction."
+    slide_heading: "What Is a Cryptographic Hash Function?"
+    tags: ["bitcoin", "cryptography"]
+    confidence: "high"
+  - term: "SHA-3"
+    modifier: null
+    aliases: ["SHA3"]
+    definition: "A modern Secure Hash Algorithm family based on a sponge construction rather than Merkle-Damgard iteration."
+    context: "The lesson contrasts SHA-3 with SHA-2 to show how construction choices affect length-extension behavior."
+    slide_heading: "Collision Resistance"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Merkle-Damgard construction"
+    modifier: null
+    aliases: ["Merkle-Damgård", "Merkle–Damgård", "Merkle–Damgård construction"]
+    definition: "An iterative hash design that processes message blocks through a compression function and carries the resulting state forward."
+    context: "The lesson uses this construction to explain how SHA-256 is built and why some naive MAC designs are vulnerable."
+    slide_heading: "Merkle–Damgård: How SHA-256 is Built"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Compression function"
+    modifier: "hashing"
+    aliases: ["compress"]
+    definition: "A fixed-size function that mixes one message block with the current hash state to produce the next state."
+    context: "Compression functions are the repeated local step that turns many message blocks into one final digest in Merkle-Damgard hashes."
+    slide_heading: "Merkle–Damgård: How SHA-256 is Built"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Chaining state"
+    modifier: "hashing"
+    aliases: ["internal state", "final internal state"]
+    definition: "The intermediate hash state that is passed from one compression round to the next."
+    context: "The lesson highlights chaining state because exposing it as the digest is what enables length-extension attacks."
+    slide_heading: "Merkle–Damgård: How SHA-256 is Built"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Length-extension attack"
+    modifier: null
+    aliases: ["length extension"]
+    definition: "An attack on some Merkle-Damgard-based constructions where a known digest can be used as a starting state to append data."
+    context: "Students see this attack to understand why a secure hash can still be unsafe inside a poorly designed authentication scheme."
+    slide_heading: "Aside: Length-Extension Attack"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Message authentication code"
+    modifier: null
+    aliases: ["MAC"]
+    definition: "A keyed tag used to verify both message integrity and knowledge of a shared secret."
+    context: "The length-extension example shows why naive hash-based MAC constructions such as H(secret || data) are unsafe."
+    slide_heading: "Aside: Length-Extension Attack"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "HMAC"
+    modifier: null
+    aliases: ["Hash-based Message Authentication Code"]
+    definition: "A standard hash-based MAC construction that uses inner and outer keyed hashes to authenticate messages safely."
+    context: "The lesson presents HMAC as the disciplined replacement for rolling a custom secret-prefix hash token."
+    slide_heading: "Aside: HMAC"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Sponge construction"
+    modifier: null
+    aliases: ["sponge"]
+    definition: "A hash design that absorbs input into a larger internal state and then squeezes output while keeping part of the state hidden."
+    context: "The lesson uses sponge construction to explain SHA-3 and contrast it with Merkle-Damgard hashes."
+    slide_heading: "Sponge Construction: How SHA-3 is Built"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Sponge rate"
+    modifier: null
+    aliases: ["rate", "rate bits"]
+    definition: "The portion of a sponge hash state that receives message blocks and from which output bits are extracted."
+    context: "Rate helps students understand which part of the sponge state is exposed during absorption and squeezing."
+    slide_heading: "Sponge Construction: How SHA-3 is Built"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Sponge capacity"
+    modifier: null
+    aliases: ["capacity", "capacity bits"]
+    definition: "The hidden portion of a sponge hash state that provides the construction's security margin."
+    context: "The lesson stresses capacity because hiding it prevents reconstructing the full internal state from the digest."
+    slide_heading: "Sponge Construction: How SHA-3 is Built"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Keccak-256"
+    modifier: null
+    aliases: []
+    definition: "Ethereum's SHA-3-related hash function using pre-standardization Keccak padding rather than standardized SHA3-256 padding."
+    context: "The lesson calls out Keccak-256 so students do not treat Ethereum's hash as identical to SHA3-256."
+    slide_heading: "Sponge Construction: How SHA-3 is Built"
+    tags: ["cryptography", "ethereum"]
+    confidence: "high"
+  - term: "Salt"
+    modifier: "hashing"
+    aliases: ["hash salting", "salting"]
+    definition: "A unique random value added to an input before hashing so identical inputs do not produce identical stored hashes."
+    context: "The lesson uses salting to show that public uniqueness, not secrecy, defeats many password-hash precomputation attacks."
+    slide_heading: "Aside: Hash Salting"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Rainbow table"
+    modifier: null
+    aliases: ["rainbow table attack", "precomputed lookup table"]
+    definition: "A precomputed table of candidate inputs and hashes used to speed up guessing against unsalted hashes."
+    context: "Rainbow tables motivate why salts force attackers to recompute guesses separately for each stored hash."
+    slide_heading: "Aside: Hash Salting"
+    tags: ["cryptography", "real-world"]
+    confidence: "high"
+  - term: "Hash commitment"
+    modifier: null
+    aliases: ["commitment", "hashing as commitment"]
+    definition: "A published digest that binds someone to underlying data while allowing the data to remain hidden until later disclosure."
+    context: "The lesson uses document ownership to show how a hash can prove prior existence without revealing the document up front."
+    slide_heading: "Hashing as Commitment"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Binding"
+    modifier: "commitment"
+    aliases: ["binding commitment"]
+    definition: "The property that it should be infeasible to open one commitment as two different underlying messages."
+    context: "Binding is the reason a later document reveal can be checked against the earlier published hash."
+    slide_heading: "Hashing as Commitment"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Merkle tree"
+    modifier: null
+    aliases: ["Merkle trees", "hash tree"]
+    definition: "A tree of hashes whose root commits to a collection of data items and supports compact membership verification."
+    context: "The lesson scales single-document hash commitments into a structure used for blockchain blocks and other large datasets."
+    slide_heading: "Merkle Trees: Motivation"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Merkle root"
+    modifier: null
+    aliases: ["root hash", "root"]
+    definition: "The top hash in a Merkle tree that commits to all leaves below it."
+    context: "Verifiers compare a recomputed root to the claimed root to decide whether an item belongs to the committed dataset."
+    slide_heading: "Merkle Trees: Motivation"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Tamper evidence"
+    modifier: "Merkle tree"
+    aliases: ["tamper-evident"]
+    definition: "The property that changing any committed item changes hashes along its path and therefore changes the Merkle root."
+    context: "Tamper evidence is one of the main payoffs of using Merkle roots for datasets and block contents."
+    slide_heading: "Merkle Trees: Motivation"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Merkle leaf"
+    modifier: null
+    aliases: ["leaf", "leaves", "leaf hash"]
+    definition: "A hash of an individual data item at the bottom layer of a Merkle tree."
+    context: "Leaves are the starting point for building parents, roots, and membership proofs."
+    slide_heading: "What Is a Merkle Tree?"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Merkle internal node"
+    modifier: null
+    aliases: ["internal node", "parent node"]
+    definition: "A non-leaf hash computed from child hashes inside a Merkle tree."
+    context: "Internal nodes let local pairwise hashes combine upward until a single root remains."
+    slide_heading: "What Is a Merkle Tree?"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Concatenation"
+    modifier: "hash input"
+    aliases: ["||", "parallel operator"]
+    definition: "The operation of joining byte strings in order before hashing them together."
+    context: "The lesson emphasizes concatenation because H(left || right) generally differs from H(right || left)."
+    slide_heading: "What Is a Merkle Tree?"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Domain separation"
+    modifier: null
+    aliases: ["tags", "LeafTag", "NodeTag"]
+    definition: "The practice of marking different kinds of hash inputs with distinct constants so they cannot be confused."
+    context: "Merkle tree construction uses leaf and node tags to avoid ambiguity between data leaves and internal nodes."
+    slide_heading: "Building a Merkle Tree"
+    tags: ["cryptography"]
+    confidence: "high"
+  - term: "Odd-leaf rule"
+    modifier: "Merkle tree"
+    aliases: ["odd number of leaves", "duplicate last hash", "carry it up"]
+    definition: "A published convention for handling a tree level with an odd number of hashes."
+    context: "The lesson treats this rule as part of the construction because verifiers must apply it consistently to reach the same root."
+    slide_heading: "Building a Merkle Tree"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Merkle proof"
+    modifier: null
+    aliases: ["membership proof", "inclusion proof"]
+    definition: "A compact proof that a data item is included in a Merkle tree with a particular root."
+    context: "Merkle proofs let blockchains and transparency systems verify one item without sending the whole dataset."
+    slide_heading: "Merkle Proofs (Membership)"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Authentication path"
+    modifier: "Merkle proof"
+    aliases: ["path"]
+    definition: "The ordered list of sibling hashes needed to recompute a Merkle root from a target item."
+    context: "The verifier uses the authentication path and left-right positions to rebuild the claimed root."
+    slide_heading: "Merkle Proofs (Membership)"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Sibling hash"
+    modifier: "Merkle proof"
+    aliases: ["sibling hashes"]
+    definition: "A neighboring hash supplied at each tree level so a verifier can hash upward toward the Merkle root."
+    context: "Sibling hashes are the compact data that make membership proofs much smaller than the full tree."
+    slide_heading: "Merkle Proofs (Membership)"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Logarithmic verification"
+    modifier: "Merkle proof"
+    aliases: ["O(log n) verification", "logarithmic proof size"]
+    definition: "The scaling pattern where Merkle proof length and verification work grow with tree depth rather than total dataset size."
+    context: "This efficiency explains why Merkle proofs remain practical for thousands or millions of leaves."
+    slide_heading: "Why Proofs Are Efficient"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Branching factor"
+    modifier: "Merkle tree"
+    aliases: ["binary tree", "k-ary tree"]
+    definition: "The number of child hashes combined at each internal node of a Merkle tree."
+    context: "The lesson presents branching factor as a design choice that trades tree depth against node size."
+    slide_heading: "Design Choices & Variants"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Sparse tree"
+    modifier: "Merkle tree"
+    aliases: ["sparse Merkle tree", "sparse trees"]
+    definition: "A Merkle tree design for very large key spaces where most possible leaves are empty."
+    context: "Sparse trees appear as a variant useful when positions or indices matter in addition to item values."
+    slide_heading: "Design Choices & Variants"
+    tags: ["cryptography", "distributed-systems"]
+    confidence: "high"
+  - term: "Content-addressed data system"
+    modifier: null
+    aliases: ["content-addressed storage", "content-addressed data systems"]
+    definition: "A system that identifies stored content by hashes of the content rather than only by location or filename."
+    context: "The lesson lists content-addressed systems to show that Merkle-style hash links are useful beyond blockchains."
+    slide_heading: "Where You’ll See Them (Non‑Exhaustive)"
+    tags: ["cryptography", "real-world"]
+    confidence: "high"
+  - term: "Transparency log"
+    modifier: null
+    aliases: ["transparency logs", "append-only log"]
+    definition: "A public append-only record that uses Merkle roots and proofs to support auditing of inclusion and history."
+    context: "Transparency logs are presented as a real-world use case for compact commitments and inclusion proofs."
+    slide_heading: "Where You’ll See Them (Non‑Exhaustive)"
+    tags: ["cryptography", "real-world"]
+    confidence: "high"
+  - term: "Block header"
+    modifier: "blockchain"
+    aliases: ["block headers"]
+    definition: "The compact metadata portion of a blockchain block that can include a Merkle root committing to the block's transactions."
+    context: "The lesson connects Merkle trees back to blockchain by noting that block headers commit to all transactions in a block."
+    slide_heading: "Where You’ll See Them (Non‑Exhaustive)"
+    tags: ["bitcoin", "ethereum", "distributed-systems"]
+    confidence: "high"

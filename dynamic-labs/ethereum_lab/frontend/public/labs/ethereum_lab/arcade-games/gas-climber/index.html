@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gas Climber | Ethereum FT Arcade</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050812;
+      --panel: rgba(8, 16, 34, 0.78);
+      --panel-strong: rgba(12, 25, 52, 0.94);
+      --cyan: #5df6ff;
+      --green: #77ff9b;
+      --amber: #ffd166;
+      --red: #ff5577;
+      --violet: #98a2ff;
+      --text: #eff7ff;
+      --muted: #93a7c3;
+      --line: rgba(93, 246, 255, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(93, 246, 255, 0.18), transparent 30%),
+        radial-gradient(circle at 82% 8%, rgba(119, 255, 155, 0.12), transparent 24%),
+        linear-gradient(180deg, #040711 0%, #071021 52%, #02040b 100%);
+      color: var(--text);
+      font-family: "Trebuchet MS", "Verdana", sans-serif;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      content: "";
+      background-image:
+        linear-gradient(rgba(93, 246, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(93, 246, 255, 0.05) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.18));
+    }
+
+    .shell {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      width: min(1180px, 100vw);
+      height: 100vh;
+      margin: 0 auto;
+      padding: 12px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .title-card,
+    .status-strip,
+    .hud,
+    .instructions {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 0 26px rgba(93, 246, 255, 0.12), inset 0 0 24px rgba(93, 246, 255, 0.05);
+      backdrop-filter: blur(10px);
+    }
+
+    .title-card {
+      padding: 12px 16px;
+    }
+
+    h1 {
+      margin: 0;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      text-shadow: 0 0 18px rgba(93, 246, 255, 0.5);
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .status-strip {
+      min-width: min(430px, 42vw);
+      padding: 10px 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 12px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.25;
+    }
+
+    .status-strip span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-strip b {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .game-wrap {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid rgba(93, 246, 255, 0.34);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(5, 12, 26, 0.9), rgba(1, 5, 14, 0.96));
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42), 0 0 36px rgba(93, 246, 255, 0.13);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 360px;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      display: grid;
+      grid-template-columns: repeat(6, auto);
+      gap: 10px;
+      padding: 8px;
+      pointer-events: none;
+    }
+
+    .metric {
+      min-width: 96px;
+      padding: 8px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 13px;
+      background: rgba(0, 0, 0, 0.24);
+    }
+
+    .metric small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.68rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      color: var(--text);
+      font-size: 1.02rem;
+      white-space: nowrap;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(1, 4, 12, 0.66);
+    }
+
+    .overlay.show {
+      display: grid;
+    }
+
+    .result-card {
+      width: min(520px, 94vw);
+      border: 1px solid rgba(93, 246, 255, 0.46);
+      border-radius: 24px;
+      padding: 26px;
+      text-align: center;
+      background: var(--panel-strong);
+      box-shadow: 0 0 50px rgba(93, 246, 255, 0.18);
+    }
+
+    .result-card h2 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .result-card p {
+      margin: 8px 0;
+      color: var(--muted);
+    }
+
+    button {
+      margin-top: 16px;
+      border: 1px solid rgba(93, 246, 255, 0.55);
+      border-radius: 999px;
+      padding: 11px 18px;
+      background: linear-gradient(135deg, rgba(93, 246, 255, 0.18), rgba(119, 255, 155, 0.18));
+      color: var(--text);
+      font: inherit;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 0 22px rgba(93, 246, 255, 0.18);
+    }
+
+    button:hover,
+    button:focus-visible {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 30px rgba(119, 255, 155, 0.24);
+    }
+
+    .instructions {
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+
+    .instructions b {
+      color: var(--text);
+    }
+
+    @media (max-width: 820px) {
+      body {
+        overflow: auto;
+      }
+
+      .shell {
+        height: auto;
+        min-height: 100vh;
+        padding: 8px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .status-strip {
+        min-width: 0;
+        grid-template-columns: 1fr;
+      }
+
+      .game-wrap {
+        height: 68vh;
+        min-height: 430px;
+      }
+
+      .hud {
+        grid-template-columns: repeat(2, auto);
+        gap: 6px;
+      }
+
+      .metric {
+        min-width: 82px;
+        padding: 6px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <section class="title-card" aria-label="Game title">
+        <h1>Gas Climber</h1>
+        <div class="subtitle">Scale the execution stack. Land on efficient transaction choices before your gas runs out.</div>
+      </section>
+      <aside class="status-strip" aria-label="Session status">
+        <span>Pass: <b id="passStatus">standalone</b></span>
+        <span>Session: <b id="sidStatus">local</b></span>
+        <span>Player: <b id="playerStatus">guest</b></span>
+        <span>Tx: <b id="txStatus">none</b></span>
+        <span>Game: <b id="gameStatus">Gas Climber</b></span>
+      </aside>
+    </header>
+
+    <section class="game-wrap" aria-label="Gas Climber game area">
+      <canvas id="game" width="960" height="640"></canvas>
+      <div class="hud" aria-live="polite">
+        <div class="metric"><small>Gas</small><strong id="gasValue">100</strong></div>
+        <div class="metric"><small>Score</small><strong id="scoreValue">0</strong></div>
+        <div class="metric"><small>World</small><strong id="worldValue">1/10</strong></div>
+        <div class="metric"><small>Cycle</small><strong id="cycleValue">1</strong></div>
+        <div class="metric"><small>Savings</small><strong id="savingsValue">0</strong></div>
+        <div class="metric"><small>Height</small><strong id="heightValue">0%</strong></div>
+      </div>
+      <div id="overlay" class="overlay">
+        <article class="result-card">
+          <h2 id="resultTitle">Ready</h2>
+          <p id="resultText">Jump upward, choose efficient ledges, and reach the compiler beacon.</p>
+          <p id="resultStats"></p>
+          <button id="resetButton" type="button">Play Again</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="instructions">
+      <b>Controls:</b> ArrowLeft/ArrowRight or A/D to move. W, ArrowUp, or Space jumps and climbs.
+      Mouse/touch can click or drag toward a target ledge. Green choices save gas; red choices and visible hazards drain it.
+      Play Again resets only this local run and does not create a new on-chain session.
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var GAME_ID = 3;
+      var GAME_NAME = "Gas Climber";
+      var SOURCE = "ethereum_lab_arcade";
+      var WORLD_WIDTH = 960;
+      var WORLD_HEIGHT = 4300;
+      var TOP_Y = 170;
+      var START_Y = 3980;
+      var params = new URLSearchParams(window.location.search);
+      var session = {
+        token: params.get("token") || "",
+        sid: params.get("sid") || "",
+        player: params.get("player") || "",
+        tx: params.get("tx") || "",
+        game: params.get("game") || ""
+      };
+
+      var canvas = document.getElementById("game");
+      var ctx = canvas.getContext("2d");
+      var wrap = canvas.parentElement;
+      var overlay = document.getElementById("overlay");
+      var resultTitle = document.getElementById("resultTitle");
+      var resultText = document.getElementById("resultText");
+      var resultStats = document.getElementById("resultStats");
+      var resetButton = document.getElementById("resetButton");
+      var gasValue = document.getElementById("gasValue");
+      var scoreValue = document.getElementById("scoreValue");
+      var worldValue = document.getElementById("worldValue");
+      var cycleValue = document.getElementById("cycleValue");
+      var savingsValue = document.getElementById("savingsValue");
+      var heightValue = document.getElementById("heightValue");
+      var keys = Object.create(null);
+      var ledges = [];
+      var hazards = [];
+      var particles = [];
+      var player;
+      var cameraY;
+      var gas;
+      var score;
+      var savings;
+      var startTime;
+      var lastTime;
+      var ended;
+      var completePosted;
+      var targetX = null;
+      var pointerDown = false;
+      var bestY;
+      var levelIndex;
+      var cycle;
+      var levelBanner;
+      var levelFlash;
+
+      var LEVELS = [
+        {
+          name: "Calldata Canyon",
+          short: "Calldata",
+          finish: "calldata arch",
+          accent: "#5df6ff",
+          glow: "#77ff9b",
+          bg: "#071225",
+          good: ["packed args", "short selector", "bytes slice", "tight calldata"],
+          bad: ["bloated ABI", "copy to memory", "unused arg"],
+          hazards: ["MEV bot", "calldata shredder", "gas leak"],
+          motif: "CANYON"
+        },
+        {
+          name: "Storage Caverns",
+          short: "Storage",
+          finish: "warm slot lift",
+          accent: "#77ff9b",
+          glow: "#ffd166",
+          bg: "#07180f",
+          good: ["warm slot", "bit packed", "single SLOAD", "slot cache"],
+          bad: ["cold SSTORE", "storage loop", "wide mapping"],
+          hazards: ["SSTORE spikes", "cold slot bat", "refund sink"],
+          motif: "SLOTS"
+        },
+        {
+          name: "Nonce Bridge",
+          short: "Nonce",
+          finish: "ordered nonce",
+          accent: "#ffd166",
+          glow: "#5df6ff",
+          bg: "#171107",
+          good: ["queued tx", "replace by fee", "safe nonce", "mempool lane"],
+          bad: ["stale nonce", "gap tx", "dropped tx"],
+          hazards: ["nonce goblin", "replacement snare", "mempool gust"],
+          motif: "NONCE"
+        },
+        {
+          name: "Blobspace Sky",
+          short: "Blobspace",
+          finish: "data gas jet",
+          accent: "#98a2ff",
+          glow: "#5df6ff",
+          bg: "#090d27",
+          good: ["cheap blob", "sidecar lift", "KZG draft", "data lane"],
+          bad: ["blob storm", "fee spike", "missing sidecar"],
+          hazards: ["blob storm", "data squall", "KZG wisp"],
+          motif: "BLOBS"
+        },
+        {
+          name: "Revert Ruins",
+          short: "Revert",
+          finish: "checked path",
+          accent: "#ff5577",
+          glow: "#ffd166",
+          bg: "#1a0710",
+          good: ["custom error", "precheck", "safe require", "early return"],
+          bad: ["panic trap", "silent revert", "string error"],
+          hazards: ["revert ghost", "panic pit", "error shade"],
+          motif: "REVERT"
+        },
+        {
+          name: "Opcode Factory",
+          short: "Opcode",
+          finish: "efficient loop",
+          accent: "#5df6ff",
+          glow: "#98a2ff",
+          bg: "#071622",
+          good: ["unchecked add", "stack reuse", "JUMPDEST", "minimal loop"],
+          bad: ["EXP furnace", "LOG spam", "dead jump"],
+          hazards: ["opcode press", "LOG saw", "EXP furnace"],
+          motif: "OPCODES"
+        },
+        {
+          name: "Liquidity Pipes",
+          short: "Liquidity",
+          finish: "route outlet",
+          accent: "#35e0a1",
+          glow: "#5df6ff",
+          bg: "#061915",
+          good: ["tight swap", "netted route", "pool cache", "slip guard"],
+          bad: ["sandwich lane", "dust hop", "thin pool"],
+          hazards: ["MEV bot", "slippage valve", "liquidity drain"],
+          motif: "PIPES"
+        },
+        {
+          name: "Precompile Ridge",
+          short: "Precompile",
+          finish: "native call",
+          accent: "#ffd166",
+          glow: "#98a2ff",
+          bg: "#181505",
+          good: ["ecrecover", "sha lift", "modexp gate", "native hash"],
+          bad: ["manual crypto", "bad input", "copy storm"],
+          hazards: ["precompile hawk", "copy cliff", "crypto boulder"],
+          motif: "RIDGE"
+        },
+        {
+          name: "Finality Tower",
+          short: "Finality",
+          finish: "safe head",
+          accent: "#98a2ff",
+          glow: "#77ff9b",
+          bg: "#0c0b24",
+          good: ["safe block", "checkpoint", "attestation", "epoch lift"],
+          bad: ["reorg edge", "late vote", "orphan block"],
+          hazards: ["reorg phantom", "attester gust", "fork shard"],
+          motif: "FINALITY"
+        },
+        {
+          name: "Gas Summit",
+          short: "Summit",
+          finish: "gas summit",
+          accent: "#eff7ff",
+          glow: "#77ff9b",
+          bg: "#101724",
+          good: ["basefee read", "tip trim", "bundle save", "summit cache"],
+          bad: ["gas auction", "priority burn", "wasteful call"],
+          hazards: ["basefee avalanche", "tip thief", "gas geyser"],
+          motif: "SUMMIT"
+        }
+      ];
+
+      function shortForm(value) {
+        if (!value) return "none";
+        if (value.length <= 12) return value;
+        return value.slice(0, 6) + "..." + value.slice(-4);
+      }
+
+      function setStatusText(id, value) {
+        document.getElementById(id).textContent = value;
+      }
+
+      function postToParent(message) {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(message, "*");
+        }
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(message, "*");
+        }
+      }
+
+      function readyMessage() {
+        postToParent({
+          source: SOURCE,
+          type: "arcade-game-ready",
+          gameId: GAME_ID,
+          name: GAME_NAME
+        });
+      }
+
+      function completeMessage(outcome) {
+        if (completePosted) return;
+        completePosted = true;
+        postToParent({
+          source: SOURCE,
+          type: "arcade-game-complete",
+          gameId: GAME_ID,
+          name: GAME_NAME,
+          outcome: outcome,
+          score: Math.max(0, Math.round(score)),
+          elapsedMs: Math.round(performance.now() - startTime),
+          txHash: session.tx,
+          sessionId: session.sid
+        });
+      }
+
+      function resize() {
+        var rect = wrap.getBoundingClientRect();
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.max(320, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(320, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function currentLevel() {
+        return LEVELS[levelIndex];
+      }
+
+      function seededChoice(index) {
+        var n = Math.sin(index * 999 + levelIndex * 131 + cycle * 47 + 17) * 10000;
+        return n - Math.floor(n);
+      }
+
+      function buildLedges() {
+        var level = currentLevel();
+        var difficulty = Math.max(0, cycle - 1);
+        ledges = [];
+        ledges.push({
+          x: 360,
+          y: 4090,
+          w: 250,
+          h: 22,
+          label: level.short.toLowerCase() + " base",
+          type: "start",
+          gas: 0,
+          points: 0,
+          savings: 0,
+          used: true
+        });
+
+        var y = 3840;
+        var i = 0;
+        while (y > 260) {
+          var good = seededChoice(i + 3) > Math.min(0.46, 0.24 + levelIndex * 0.015 + difficulty * 0.035);
+          var labels = good ? level.good : level.bad;
+          var label = labels[Math.floor(seededChoice(i + 5) * labels.length)];
+          var wBase = good ? 178 : 148;
+          var w = Math.max(118, wBase + seededChoice(i + 9) * 70 - difficulty * 7 - levelIndex * 1.5);
+          var x = 58 + seededChoice(i + 21) * (WORLD_WIDTH - w - 116);
+          ledges.push({
+            x: x,
+            y: y,
+            w: w,
+            h: 20,
+            label: label,
+            type: good ? "good" : "bad",
+            gas: good ? 6 + Math.floor(seededChoice(i + 12) * 6) : -(12 + levelIndex + Math.floor(seededChoice(i + 13) * 9) + difficulty * 2),
+            points: good ? 95 + levelIndex * 10 + Math.floor(seededChoice(i + 14) * 55) : -(35 + Math.floor(seededChoice(i + 15) * 55)),
+            savings: good ? 11 + levelIndex + Math.floor(seededChoice(i + 16) * 10) : -(8 + Math.floor(seededChoice(i + 17) * 8)),
+            used: false
+          });
+          y -= 138 + seededChoice(i + 31) * 74 + Math.min(34, difficulty * 6);
+          i += 1;
+        }
+
+        ledges.push({
+          x: 320,
+          y: TOP_Y + 90,
+          w: 320,
+          h: 22,
+          label: level.finish,
+          type: "finish",
+          gas: 0,
+          points: 520 + levelIndex * 60 + difficulty * 90,
+          savings: 25 + levelIndex * 2,
+          used: false
+        });
+      }
+
+      function buildHazards() {
+        var level = currentLevel();
+        var count = 5 + levelIndex + Math.min(10, cycle * 2);
+        var kinds = ["spike", "bot", "ghost", "leak", "storm"];
+        var usableTop = TOP_Y + 360;
+        var usableBottom = START_Y - 360;
+        var step = (usableBottom - usableTop) / (count + 1);
+        hazards = [];
+        for (var i = 0; i < count; i += 1) {
+          var kind = kinds[(i + levelIndex) % kinds.length];
+          var label = level.hazards[i % level.hazards.length];
+          var y = usableBottom - (i + 1) * step + (seededChoice(i + 44) - 0.5) * 130;
+          var wide = kind === "leak" ? 30 : kind === "storm" ? 54 : 48;
+          hazards.push({
+            x: 70 + seededChoice(i + 51) * (WORLD_WIDTH - wide - 140),
+            y: y,
+            w: wide,
+            h: kind === "leak" ? 118 : kind === "spike" ? 36 : 46,
+            kind: kind,
+            label: label,
+            damage: 7 + levelIndex + Math.min(18, cycle * 2) + Math.floor(seededChoice(i + 57) * 5),
+            phase: seededChoice(i + 61) * Math.PI * 2,
+            speed: 0.8 + seededChoice(i + 67) * 0.9 + cycle * 0.08,
+            range: kind === "spike" ? 0 : 70 + seededChoice(i + 71) * 105 + Math.min(80, cycle * 12),
+            cooldown: 0
+          });
+        }
+      }
+
+      function startLevel() {
+        buildLedges();
+        buildHazards();
+        player = {
+          x: 470,
+          y: START_Y,
+          w: 34,
+          h: 48,
+          vx: 0,
+          vy: 0,
+          grounded: false,
+          face: 1,
+          glow: 0,
+          hurt: 0
+        };
+        bestY = START_Y;
+        cameraY = START_Y - 460;
+        targetX = null;
+        pointerDown = false;
+        levelBanner = 2.4;
+        levelFlash = 0.7;
+        overlay.classList.remove("show");
+        updateHud();
+      }
+
+      function resetGame() {
+        levelIndex = 0;
+        cycle = 1;
+        gas = 112;
+        score = 0;
+        savings = 0;
+        particles = [];
+        startTime = performance.now();
+        lastTime = startTime;
+        ended = false;
+        completePosted = false;
+        startLevel();
+      }
+
+      function endGame(outcome) {
+        if (ended) return;
+        ended = true;
+        completeMessage(outcome);
+        resultTitle.textContent = outcome === "win" ? "Run Complete" : "Out of Gas";
+        resultText.textContent = outcome === "win"
+          ? "The optimized route compiled cleanly."
+          : "Hazards and costly choices burned the remaining gas before the next ascent.";
+        resultStats.textContent = "Score " + Math.max(0, Math.round(score)) + " | Savings " + Math.round(savings) + " | Gas " + Math.max(0, Math.round(gas)) + " | World " + (levelIndex + 1) + "/10 | Cycle " + cycle;
+        overlay.classList.add("show");
+      }
+
+      function advanceLevel() {
+        var finishedLastWorld = levelIndex === LEVELS.length - 1;
+        score += Math.max(0, gas) * (finishedLastWorld ? 9 : 5);
+        gas = Math.min(150, gas + (finishedLastWorld ? 18 : 10));
+        levelIndex += 1;
+        if (levelIndex >= LEVELS.length) {
+          levelIndex = 0;
+          cycle += 1;
+          savings += 40;
+        }
+        particles = [];
+        startLevel();
+      }
+
+      function updateHud() {
+        var progress = Math.max(0, Math.min(1, (START_Y - bestY) / (START_Y - TOP_Y)));
+        gasValue.textContent = Math.max(0, Math.round(gas));
+        scoreValue.textContent = Math.max(0, Math.round(score));
+        worldValue.textContent = (levelIndex + 1) + "/10";
+        cycleValue.textContent = cycle;
+        savingsValue.textContent = Math.round(savings);
+        heightValue.textContent = Math.round(progress * 100) + "%";
+      }
+
+      function jump() {
+        if (player.grounded || player.vy > -2 && player.vy < 90) {
+          player.vy = -545;
+          player.grounded = false;
+          addParticles(player.x + player.w / 2, player.y + player.h, "#5df6ff", 8);
+        }
+      }
+
+      function addParticles(x, y, color, count) {
+        for (var i = 0; i < count; i += 1) {
+          particles.push({
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 180,
+            vy: (Math.random() - 0.7) * 190,
+            life: 0.45 + Math.random() * 0.35,
+            color: color
+          });
+        }
+      }
+
+      function applyLedge(ledge) {
+        if (ledge.used) return;
+        ledge.used = true;
+        gas = Math.max(0, Math.min(150, gas + ledge.gas));
+        score += ledge.points;
+        savings += ledge.savings;
+        player.glow = 0.45;
+        addParticles(player.x + player.w / 2, player.y + player.h, ledge.type === "bad" ? "#ff5577" : "#77ff9b", 14);
+        if (ledge.type === "finish" || player.y <= TOP_Y + 120) {
+          advanceLevel();
+        }
+      }
+
+      function screenToWorld(clientX, clientY) {
+        var rect = canvas.getBoundingClientRect();
+        var sx = (clientX - rect.left) / rect.width;
+        var sy = (clientY - rect.top) / rect.height;
+        return {
+          x: sx * rect.width,
+          y: cameraY + sy * rect.height
+        };
+      }
+
+      function pointerAim(event) {
+        var point = event.touches && event.touches.length
+          ? screenToWorld(event.touches[0].clientX, event.touches[0].clientY)
+          : screenToWorld(event.clientX, event.clientY);
+        targetX = Math.max(18, Math.min(WORLD_WIDTH - 18, point.x));
+        var dx = Math.abs(targetX - (player.x + player.w / 2));
+        if (point.y < player.y + 80 && dx < 260) {
+          jump();
+        }
+      }
+
+      function hazardBounds(hazard, time) {
+        var wave = Math.sin(time * hazard.speed + hazard.phase);
+        var bob = Math.cos(time * hazard.speed * 0.8 + hazard.phase);
+        var x = hazard.x;
+        var y = hazard.y;
+        if (hazard.kind === "bot" || hazard.kind === "storm") {
+          x += wave * hazard.range;
+        }
+        if (hazard.kind === "ghost") {
+          x += wave * hazard.range * 0.75;
+          y += bob * 34;
+        }
+        if (hazard.kind === "leak") {
+          y += bob * 22;
+        }
+        x = Math.max(18, Math.min(WORLD_WIDTH - hazard.w - 18, x));
+        return {
+          x: x,
+          y: y,
+          w: hazard.w,
+          h: hazard.h
+        };
+      }
+
+      function overlaps(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+      }
+
+      function updateHazards(dt, time) {
+        player.hurt = Math.max(0, player.hurt - dt);
+        var body = {
+          x: player.x + 4,
+          y: player.y + 4,
+          w: player.w - 8,
+          h: player.h - 8
+        };
+        for (var i = 0; i < hazards.length; i += 1) {
+          var hazard = hazards[i];
+          hazard.cooldown = Math.max(0, hazard.cooldown - dt);
+          if (player.hurt > 0 || hazard.cooldown > 0) continue;
+          var bounds = hazardBounds(hazard, time);
+          if (overlaps(body, bounds)) {
+            gas = Math.max(0, gas - hazard.damage);
+            score -= hazard.damage * 9;
+            savings -= Math.ceil(hazard.damage / 4);
+            player.hurt = 0.85;
+            hazard.cooldown = 1.2;
+            player.glow = 0.35;
+            player.vx += (player.x + player.w / 2 < bounds.x + bounds.w / 2 ? -260 : 260);
+            player.vy = Math.min(player.vy, -210);
+            targetX = null;
+            addParticles(player.x + player.w / 2, player.y + player.h / 2, "#ff5577", 18);
+          }
+        }
+      }
+
+      function update(dt) {
+        if (ended) return;
+        levelBanner = Math.max(0, levelBanner - dt);
+        levelFlash = Math.max(0, levelFlash - dt);
+
+        var move = 0;
+        if (keys.ArrowLeft || keys.KeyA) move -= 1;
+        if (keys.ArrowRight || keys.KeyD) move += 1;
+        if (targetX !== null) {
+          var center = player.x + player.w / 2;
+          var delta = targetX - center;
+          if (Math.abs(delta) > 9) move += delta > 0 ? 0.85 : -0.85;
+        }
+
+        player.vx += move * 1850 * dt;
+        player.vx *= Math.pow(0.0018, dt);
+        player.vx = Math.max(-315, Math.min(315, player.vx));
+        if (move !== 0) player.face = move > 0 ? 1 : -1;
+
+        var oldY = player.y;
+        player.vy += 1180 * dt;
+        player.vy = Math.min(player.vy, 820);
+        player.x += player.vx * dt;
+        player.y += player.vy * dt;
+        player.x = Math.max(10, Math.min(WORLD_WIDTH - player.w - 10, player.x));
+        player.grounded = false;
+
+        if (player.vy >= 0) {
+          for (var i = 0; i < ledges.length; i += 1) {
+            var ledge = ledges[i];
+            var crossed = oldY + player.h <= ledge.y + 6 && player.y + player.h >= ledge.y;
+            var insideX = player.x + player.w > ledge.x + 4 && player.x < ledge.x + ledge.w - 4;
+            if (crossed && insideX) {
+              player.y = ledge.y - player.h;
+              player.vy = 0;
+              player.grounded = true;
+              applyLedge(ledge);
+              break;
+            }
+          }
+        }
+
+        if (keys.Space || keys.ArrowUp || keys.KeyW) {
+          jump();
+          keys.Space = false;
+          keys.ArrowUp = false;
+          keys.KeyW = false;
+        }
+
+        bestY = Math.min(bestY, player.y);
+        cameraY += ((player.y - 390) - cameraY) * Math.min(1, dt * 4.5);
+        cameraY = Math.max(0, Math.min(WORLD_HEIGHT - canvas.getBoundingClientRect().height, cameraY));
+
+        updateHazards(dt, lastTime / 1000);
+
+        var drain = 0.68 + levelIndex * 0.018 + (cycle - 1) * 0.09;
+        gas -= dt * (player.grounded ? drain : drain * 1.48);
+        if (player.y > cameraY + canvas.getBoundingClientRect().height + 160 || gas <= 0) {
+          gas = Math.max(0, gas);
+          endGame("loss");
+        }
+        if (player.y <= TOP_Y) {
+          advanceLevel();
+        }
+
+        for (var p = particles.length - 1; p >= 0; p -= 1) {
+          particles[p].life -= dt;
+          particles[p].x += particles[p].vx * dt;
+          particles[p].y += particles[p].vy * dt;
+          particles[p].vy += 320 * dt;
+          if (particles[p].life <= 0) particles.splice(p, 1);
+        }
+        player.glow = Math.max(0, player.glow - dt);
+        updateHud();
+      }
+
+      function drawBackground(width, height) {
+        var level = currentLevel();
+        var grd = ctx.createLinearGradient(0, 0, 0, height);
+        grd.addColorStop(0, level.bg);
+        grd.addColorStop(0.62, "#050812");
+        grd.addColorStop(1, "#02040b");
+        ctx.fillStyle = grd;
+        ctx.fillRect(0, 0, width, height);
+
+        var gridY = -((cameraY * 0.5) % 48);
+        ctx.strokeStyle = hexToRgba(level.accent, 0.08);
+        ctx.lineWidth = 1;
+        for (var y = gridY; y < height; y += 48) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+          ctx.stroke();
+        }
+        for (var x = 0; x < width; x += 64) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x + Math.sin(cameraY * 0.002 + x) * 16, height);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = hexToRgba(level.accent, 0.06);
+        for (var i = 0; i < 7; i += 1) {
+          var px = (i * 147 + 20) % WORLD_WIDTH;
+          var py = ((i * 531) - cameraY * 0.32) % (height + 220) - 120;
+          ctx.fillRect(px, py, 18 + i * 3, 120 + i * 18);
+        }
+
+        ctx.save();
+        ctx.globalAlpha = 0.11;
+        ctx.fillStyle = level.glow;
+        ctx.font = "900 76px Trebuchet MS, sans-serif";
+        ctx.textAlign = "center";
+        for (var m = -1; m < 4; m += 1) {
+          ctx.fillText(level.motif, WORLD_WIDTH / 2, ((m * 520) - cameraY * 0.18) % (height + 360) + 140);
+        }
+        ctx.restore();
+      }
+
+      function drawBeacon() {
+        var level = currentLevel();
+        var sy = TOP_Y - cameraY;
+        ctx.save();
+        ctx.translate(WORLD_WIDTH / 2, sy);
+        ctx.shadowColor = level.glow;
+        ctx.shadowBlur = 28;
+        ctx.strokeStyle = level.glow;
+        ctx.fillStyle = hexToRgba(level.glow, 0.18);
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, -54);
+        ctx.lineTo(46, 0);
+        ctx.lineTo(0, 54);
+        ctx.lineTo(-46, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#eff7ff";
+        ctx.font = "bold 15px Trebuchet MS, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(level.finish.toUpperCase(), 0, 86);
+        ctx.restore();
+      }
+
+      function drawLedge(ledge) {
+        var y = ledge.y - cameraY;
+        if (y < -60 || y > canvas.getBoundingClientRect().height + 60) return;
+        var good = ledge.type === "good" || ledge.type === "finish";
+        var bad = ledge.type === "bad";
+        var color = good ? "#77ff9b" : bad ? "#ff5577" : "#5df6ff";
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = ledge.used ? 5 : 15;
+        ctx.fillStyle = ledge.used ? "rgba(70,85,105,0.72)" : good ? "rgba(22,96,70,0.86)" : bad ? "rgba(115,27,52,0.88)" : "rgba(36,81,112,0.9)";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        roundRect(ledge.x, y, ledge.w, ledge.h, 9);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = ledge.used ? "rgba(239,247,255,0.62)" : "#eff7ff";
+        ctx.font = "bold 14px Trebuchet MS, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(ledge.label, ledge.x + ledge.w / 2, y - 9);
+
+        if (!ledge.used && ledge.type !== "start") {
+          ctx.fillStyle = good ? "#77ff9b" : "#ff8aa1";
+          ctx.font = "12px Trebuchet MS, sans-serif";
+          var prefix = good ? "+" : "";
+          ctx.fillText(prefix + ledge.savings + " gas save", ledge.x + ledge.w / 2, y + ledge.h + 17);
+        }
+        ctx.restore();
+      }
+
+      function drawHazard(hazard, time) {
+        var bounds = hazardBounds(hazard, time);
+        var y = bounds.y - cameraY;
+        if (y < -90 || y > canvas.getBoundingClientRect().height + 90) return;
+        var level = currentLevel();
+        ctx.save();
+        ctx.translate(bounds.x, y);
+        ctx.shadowColor = "#ff5577";
+        ctx.shadowBlur = hazard.cooldown > 0 ? 5 : 18;
+        ctx.strokeStyle = "#ff5577";
+        ctx.fillStyle = hazard.cooldown > 0 ? "rgba(90,45,58,0.62)" : "rgba(126,26,52,0.86)";
+        ctx.lineWidth = 2;
+
+        if (hazard.kind === "spike") {
+          ctx.beginPath();
+          ctx.moveTo(0, bounds.h);
+          ctx.lineTo(bounds.w * 0.25, 0);
+          ctx.lineTo(bounds.w * 0.5, bounds.h);
+          ctx.lineTo(bounds.w * 0.75, 0);
+          ctx.lineTo(bounds.w, bounds.h);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else if (hazard.kind === "bot") {
+          roundRect(0, 0, bounds.w, bounds.h, 10);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = level.accent;
+          ctx.fillRect(11, 13, 9, 7);
+          ctx.fillRect(bounds.w - 20, 13, 9, 7);
+        } else if (hazard.kind === "ghost") {
+          ctx.fillStyle = "rgba(255,85,119,0.72)";
+          ctx.beginPath();
+          ctx.arc(bounds.w / 2, bounds.h / 2, bounds.w / 2, Math.PI, 0);
+          ctx.lineTo(bounds.w, bounds.h);
+          ctx.lineTo(bounds.w * 0.68, bounds.h * 0.78);
+          ctx.lineTo(bounds.w * 0.45, bounds.h);
+          ctx.lineTo(bounds.w * 0.2, bounds.h * 0.78);
+          ctx.lineTo(0, bounds.h);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        } else if (hazard.kind === "leak") {
+          ctx.fillStyle = "rgba(255,209,102,0.2)";
+          ctx.strokeStyle = "#ffd166";
+          roundRect(0, 0, bounds.w, bounds.h, 13);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#ffd166";
+          for (var i = 8; i < bounds.h; i += 22) {
+            ctx.fillRect(8, i, bounds.w - 16, 5);
+          }
+        } else {
+          ctx.fillStyle = "rgba(152,162,255,0.28)";
+          ctx.strokeStyle = "#98a2ff";
+          ctx.beginPath();
+          ctx.arc(bounds.w / 2, bounds.h / 2, bounds.w / 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#eff7ff";
+          ctx.fillRect(bounds.w * 0.34, bounds.h * 0.28, bounds.w * 0.32, bounds.h * 0.44);
+        }
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#ffb3c1";
+        ctx.font = "bold 12px Trebuchet MS, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(hazard.label, bounds.w / 2, -8);
+        ctx.restore();
+      }
+
+      function drawPlayer() {
+        var x = player.x;
+        var y = player.y - cameraY;
+        ctx.save();
+        ctx.translate(x + player.w / 2, y + player.h / 2);
+        ctx.shadowColor = player.hurt > 0 ? "#ff5577" : player.glow > 0 ? "#77ff9b" : "#5df6ff";
+        ctx.shadowBlur = player.glow > 0 ? 28 : 13;
+        ctx.fillStyle = player.hurt > 0 ? "#321326" : "#101d36";
+        ctx.strokeStyle = player.hurt > 0 ? "#ff5577" : "#5df6ff";
+        ctx.lineWidth = 2;
+        roundRect(-player.w / 2, -player.h / 2, player.w, player.h, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#5df6ff";
+        ctx.fillRect(player.face > 0 ? 3 : -13, -12, 10, 7);
+        ctx.strokeStyle = "#77ff9b";
+        ctx.beginPath();
+        ctx.moveTo(-12, 15);
+        ctx.lineTo(0, 24);
+        ctx.lineTo(12, 15);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawParticles() {
+        for (var i = 0; i < particles.length; i += 1) {
+          var p = particles[i];
+          ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 1.7));
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x - 2, p.y - cameraY - 2, 4, 4);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawLevelBanner(width) {
+        if (levelBanner <= 0) return;
+        var level = currentLevel();
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, levelBanner / 0.7);
+        ctx.translate(width / 2, 92);
+        ctx.fillStyle = "rgba(1,4,12,0.72)";
+        ctx.strokeStyle = hexToRgba(level.accent, 0.56);
+        ctx.lineWidth = 2;
+        roundRect(-245, -42, 490, 84, 20);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = level.accent;
+        ctx.font = "900 21px Trebuchet MS, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("WORLD " + (levelIndex + 1) + "/10 - " + level.name.toUpperCase(), 0, -4);
+        ctx.fillStyle = "#eff7ff";
+        ctx.font = "bold 13px Trebuchet MS, sans-serif";
+        ctx.fillText("Cycle " + cycle + " | hazards intensify after Gas Summit", 0, 22);
+        ctx.restore();
+      }
+
+      function hexToRgba(hex, alpha) {
+        var clean = hex.replace("#", "");
+        var value = parseInt(clean, 16);
+        var r = (value >> 16) & 255;
+        var g = (value >> 8) & 255;
+        var b = value & 255;
+        return "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+      }
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function render() {
+        var rect = canvas.getBoundingClientRect();
+        var width = rect.width;
+        var height = rect.height;
+        drawBackground(width, height);
+        drawBeacon();
+        for (var i = 0; i < ledges.length; i += 1) {
+          drawLedge(ledges[i]);
+        }
+        for (var h = 0; h < hazards.length; h += 1) {
+          drawHazard(hazards[h], lastTime / 1000);
+        }
+        drawParticles();
+        drawPlayer();
+        drawLevelBanner(width);
+
+        if (targetX !== null && !ended) {
+          ctx.save();
+          ctx.strokeStyle = "rgba(93,246,255,0.42)";
+          ctx.setLineDash([8, 8]);
+          ctx.beginPath();
+          ctx.moveTo(player.x + player.w / 2, player.y - cameraY + 8);
+          ctx.lineTo(targetX, player.y - cameraY - 82);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      function loop(now) {
+        var dt = Math.min(0.032, (now - lastTime) / 1000 || 0);
+        lastTime = now;
+        update(dt);
+        render();
+        requestAnimationFrame(loop);
+      }
+
+      window.addEventListener("resize", resize);
+      window.addEventListener("keydown", function (event) {
+        if (event.code === "Space" || event.code === "ArrowUp" || event.code === "ArrowDown" || event.code === "ArrowLeft" || event.code === "ArrowRight") {
+          event.preventDefault();
+        }
+        keys[event.code] = true;
+      });
+      window.addEventListener("keyup", function (event) {
+        keys[event.code] = false;
+      });
+
+      canvas.addEventListener("pointerdown", function (event) {
+        pointerDown = true;
+        canvas.setPointerCapture(event.pointerId);
+        pointerAim(event);
+      });
+      canvas.addEventListener("pointermove", function (event) {
+        if (pointerDown) pointerAim(event);
+      });
+      canvas.addEventListener("pointerup", function (event) {
+        pointerDown = false;
+        pointerAim(event);
+      });
+      canvas.addEventListener("pointercancel", function () {
+        pointerDown = false;
+      });
+      canvas.addEventListener("touchstart", function (event) {
+        event.preventDefault();
+      }, { passive: false });
+
+      resetButton.addEventListener("click", resetGame);
+
+      setStatusText("passStatus", session.token ? "signed " + shortForm(session.token) : "standalone");
+      setStatusText("sidStatus", session.sid ? shortForm(session.sid) : "local");
+      setStatusText("playerStatus", session.player || "guest");
+      setStatusText("txStatus", session.tx ? shortForm(session.tx) : "none");
+      setStatusText("gameStatus", session.game ? shortForm(session.game) : GAME_NAME);
+
+      resize();
+      resetGame();
+      readyMessage();
+      requestAnimationFrame(loop);
+    }());
+  </script>
+</body>
+</html>

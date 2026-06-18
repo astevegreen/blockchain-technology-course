@@ -153,7 +153,6 @@ The final discussion prompts ask students to state what they think blockchain is
 - Learning Objectives
 - Course Overview
 - Course Structure
-- Course Schedule
 - Daily Schedule
 - Student Expectations
 - Tools and Setup
@@ -165,7 +164,7 @@ The final discussion prompts ask students to state what they think blockchain is
 ## Anti-Trivia Guidance
 
 - Do not ask for the exact ecosystem counts, such as the number of cryptocurrencies, dapps, blockchains, or countries exploring digital currencies, unless the question uses them to support reasoning about ecosystem scale.
-- Do not ask which image appears on the "Why Blockchain?" or "Course Schedule" slides.
+- Do not ask which image appears on the "Why Blockchain?" slide.
 - Do not ask for exact daily schedule times unless the question tests the broader learning rhythm of instruction, application, reading, and preparation.
 - Do not ask for the placeholder course link, placeholder GitHub link, or pre-test registration link.
 - Do not ask students to recite every course section in order unless the item assesses how the course progresses from foundations to systems and applications.

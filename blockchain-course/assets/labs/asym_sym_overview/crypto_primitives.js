@@ -15,19 +15,8 @@ let cryptoState = {
 async function initPyodide() {
     try {
         pyodide = await loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
+            indexURL: "../../vendor/pyodide/v0.24.1/full/"
         });
-        
-        // Load required packages
-        await pyodide.loadPackage(['micropip']);
-        const micropip = pyodide.pyimport('micropip');
-        
-        // Install cryptography (if available) or use built-in alternatives
-        try {
-            await micropip.install('cryptography');
-        } catch (e) {
-            console.log('Cryptography package not available, using simplified implementation');
-        }
         
         // Load crypto implementation
         await pyodide.runPythonAsync(`

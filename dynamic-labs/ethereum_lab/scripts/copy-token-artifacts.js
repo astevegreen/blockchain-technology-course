@@ -16,6 +16,10 @@ const tokens = [
   { name: 'SimpleNFT', artifact: 'SimpleNFT.sol/SimpleNFT.json' },
   { name: 'LabNFT', artifact: 'LabNFT.sol/LabNFT.json' },
   { name: 'LabNFTSale', artifact: 'LabNFTSale.sol/LabNFTSale.json' },
+  { name: 'LabNFTMarketplace', artifact: 'LabNFTMarketplace.sol/LabNFTMarketplace.json' },
+  { name: 'ArcadeToken', artifact: 'ArcadeToken.sol/ArcadeToken.json' },
+  { name: 'TokenVendor', artifact: 'TokenVendor.sol/TokenVendor.json' },
+  { name: 'ArcadeVault', artifact: 'ArcadeVault.sol/ArcadeVault.json' },
   { name: 'SimpleStorage', artifact: 'SimpleStorage.sol/SimpleStorage.json' },
   { name: 'CarSale', artifact: 'student/CarSale_000001.sol/CarSale.json' },
   { name: 'ClassVote', artifact: 'ClassVote.sol/ClassVote.json' }

@@ -9,7 +9,7 @@ Your lab environment is already running a "ClassNet" Bitcoin node in the backgro
 
 **Infrastructure Links:**
 
-* **Terminal:** [https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/](https://blockchain-6dd63ebf.training-as-code.com/labs/bitcoin/)
+* **Terminal:** [https://blockchain.training-as-code.com/labs/bitcoin/](https://blockchain.training-as-code.com/labs/bitcoin/)
 
   Click the link to claim a station. You'll be redirected to your personal
   session URL (`/labs/bitcoin/c/<your-uuid>/`) — bookmark it so you can
@@ -553,4 +553,3 @@ Stop the private node:
 btc-lab1 stop
 
 ```
-

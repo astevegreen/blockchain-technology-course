@@ -14,7 +14,7 @@ export const INITIAL_SETUP = {
   ],
 };
 
-export const LABS = [
+export const ALL_LABS = [
   {
     id: 'ransomware-investigation',
     title: 'Ransomware Investigation',
@@ -185,7 +185,7 @@ export const LABS = [
     roles: 'Deployer, Partner (two students)',
     description: 'Build a smart contract, deploy it to the chain, and use it with another student. Step-through flow with Lab Terminal and Hardhat console snippets.',
     steps: [
-      { terminal: 1, title: 'Open Contract Builder Lab', instruction: 'Go to Learning mode → Contract Builder Lab in sidebar.', code: 'http://localhost:5173/?view=contract-builder-lab' },
+      { terminal: 1, title: 'Open Contract Builder Lab', instruction: 'Live tab → Contract Builder Lab in sidebar.', code: 'http://localhost:5173/?view=contract-builder-lab' },
       { terminal: 1, title: 'Write & save', instruction: 'Step 1: Edit contract, Save loads write script; run it, then npx hardhat compile in shell.', code: 'Step 1: Save → run script → npx hardhat compile' },
       { terminal: 1, title: 'Prerequisites', instruction: 'Step 2: Confirm RPC, wallet, ETH; optional Hardhat console balance check.', code: 'Step 2: Connection + verify signer script' },
       { terminal: 1, title: 'Deploy', instruction: 'Step 3: Copy deploy snippet from lab, paste into Hardhat console once; copy contract address.', code: 'Step 3: Paste deploy snippet → copy address' },
@@ -205,7 +205,7 @@ export const LABS = [
     roles: 'Student (learner), Partner (for transfer/sale)',
     description: 'Read and explain ERC-721, deploy LabNFT, mint, trace, create metadata, transfer to a partner, and build an NFT-for-ETH sale contract.',
     steps: [
-      { terminal: 1, title: 'Open Tokenization Lab', instruction: 'Go to Learning mode → Tokenization Lab in sidebar.', code: 'http://localhost:5173/?view=tokenization-lab' },
+      { terminal: 1, title: 'Open Tokenization Lab', instruction: 'Live tab → Tokenization Lab in sidebar.', code: 'http://localhost:5173/?view=tokenization-lab' },
       { terminal: 1, title: 'Read & Explain', instruction: 'Step 1: Study the annotated ERC-721 contract and identify each function.', code: 'Step 1: Expand "What does this do?" for each function' },
       { terminal: 1, title: 'EVM Deep Dive', instruction: 'Step 2: Understand storage writes, gas costs, and event emission when mint() is called.', code: 'Step 2: Review EVM explanation panel' },
       { terminal: 1, title: 'Deploy & Mint', instruction: 'Load deploy script, run in Lab Terminal, then load mint script. Copy tx hash.', code: 'Step 3: Load deploy → mint → copy tx hash' },
@@ -217,5 +217,14 @@ export const LABS = [
     nuance: 'Payment in the sale step is native ETH (fungible), not an ERC-20. Uses embedded Lab Terminal and ChainSearch. No 3rd party services. Transfer and sale require a partner (share addresses via Class Chat).',
   },
 ];
+
+const ACTIVE_LAB_IDS = new Set([
+  'ransomware-investigation',
+  'beacon-chain',
+  'contract-builder',
+  'tokenization-lab',
+]);
+
+export const LABS = ALL_LABS.filter((lab) => ACTIVE_LAB_IDS.has(lab.id));
 
 export const getLabById = (id) => LABS.find((l) => l.id === id);

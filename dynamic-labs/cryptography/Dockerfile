@@ -13,7 +13,7 @@ RUN useradd -m student
 USER student
 WORKDIR /home/student/lab
 
-COPY --chown=student:student Lab_2_Home.py lab_core.py lesson_loader.py progress_beacon.py STUDENT_README.md ./
+COPY --chown=student:student Lab_2_Home.py lab_core.py lesson_loader.py progress_beacon.py terminal_ui.py STUDENT_README.md ./
 COPY --chown=student:student pages/ ./pages/
 COPY --chown=student:student lessons/ ./lessons/
 COPY --chown=student:student .streamlit/ ./.streamlit/

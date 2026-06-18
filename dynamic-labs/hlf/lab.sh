@@ -1848,7 +1848,11 @@ prepare_ttyd_build_context() {
   cp -f "${HERE}/scripts/hlf_ttyd_wrapper.sh" "${ctx_dir}/scripts/hlf_ttyd_wrapper.sh"
   cp -f "${HERE}/scripts/hlf_peer_shell.sh" "${ctx_dir}/scripts/hlf_peer_shell.sh"
   cp -f "${HERE}/scripts/hlf_cli_helpers.sh" "${ctx_dir}/scripts/hlf_cli_helpers.sh"
-  local zellij_config="${HERE}/../zellij-config.kdl"
+  cp -f "${HERE}/scripts/hlf_bashrc_hook.sh" "${ctx_dir}/scripts/hlf_bashrc_hook.sh"
+  local zellij_config="${HERE}/zellij-config.kdl"
+  if [[ ! -f "${zellij_config}" ]]; then
+    zellij_config="${HERE}/../zellij-config.kdl"
+  fi
   if [[ -f "${zellij_config}" ]]; then
     cp -f "${zellij_config}" "${ctx_dir}/zellij-config.kdl"
   fi

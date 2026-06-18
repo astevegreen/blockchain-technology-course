@@ -30,6 +30,19 @@ class MetricsFilters:
     statuses: tuple[str, ...] = DEFAULT_STATUSES
     include_voided: bool = False
     quiz_version_id: int | None = None
+    quiz_version_ids: tuple[int, ...] = ()
+
+    def __post_init__(self):
+        quiz_ids = tuple(int(value) for value in self.quiz_version_ids)
+        if self.quiz_version_id is not None:
+            quiz_ids = (int(self.quiz_version_id), *quiz_ids)
+        quiz_ids = tuple(dict.fromkeys(quiz_ids))
+        object.__setattr__(self, "quiz_version_ids", quiz_ids)
+        object.__setattr__(
+            self,
+            "quiz_version_id",
+            quiz_ids[0] if len(quiz_ids) == 1 else None,
+        )
 
     @property
     def attempt_statuses(self):
@@ -45,6 +58,7 @@ class MetricsFilters:
             "statuses": list(self.statuses),
             "include_voided": self.include_voided,
             "quiz_version_id": self.quiz_version_id,
+            "quiz_version_ids": list(self.quiz_version_ids),
             "included_statuses": {
                 "missing": self.includes_missing,
                 "in_progress": "in_progress" in self.statuses,
@@ -93,12 +107,13 @@ def parse_metrics_filters(args):
     if not statuses:
         raise MetricsFilterError("at least one status must be included")
 
-    quiz_version_id = _optional_positive_int_arg(args, "quiz_version_id")
+    quiz_version_ids = _positive_int_values(args, "quiz_version_id")
+    quiz_version_ids += _positive_int_values(args, "quiz_version_ids")
     return MetricsFilters(
         mode=mode,
         statuses=statuses,
         include_voided=include_voided,
-        quiz_version_id=quiz_version_id,
+        quiz_version_ids=tuple(dict.fromkeys(quiz_version_ids)),
     )
 
 
@@ -168,3 +183,19 @@ def _optional_positive_int_arg(args, key):
         raise MetricsFilterError(f"{key} must be positive")
     return parsed
 
+
+def _positive_int_values(args, key):
+    parsed_values = []
+    for raw_value in _list_arg(args, key):
+        for part in str(raw_value).split(","):
+            value = part.strip()
+            if not value:
+                continue
+            try:
+                parsed = int(value)
+            except ValueError as exc:
+                raise MetricsFilterError(f"{key} must be an integer") from exc
+            if parsed <= 0:
+                raise MetricsFilterError(f"{key} must be positive")
+            parsed_values.append(parsed)
+    return parsed_values

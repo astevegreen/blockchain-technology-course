@@ -353,9 +353,14 @@ class LaneManager:
                 "bash",
                 "-lc",
                 (
+                    "for _ in 1 2 3 4 5; do "
+                    "test -r /tmp/hlf-shell-rc && break; "
+                    "sleep 1; "
+                    "done; "
+                    "test -r /tmp/hlf-shell-rc && "
                     "test -r /opt/hlf-scripts/hlf_peer_shell.sh && "
                     "test -r /opt/hlf-scripts/hlf_cli_helpers.sh && "
-                    "source /opt/hlf-scripts/hlf_cli_helpers.sh && "
+                    "source /tmp/hlf-shell-rc && "
                     "declare -F hlf-help >/dev/null && "
                     "declare -F query >/dev/null && "
                     "declare -F invoke >/dev/null"

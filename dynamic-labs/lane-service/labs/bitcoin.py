@@ -9,13 +9,14 @@ and discoverable by peers via a short-uuid path.
 
 from __future__ import annotations
 
+import copy
 import os
 import subprocess
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from flask import jsonify
+from flask import jsonify, request
 
 from exercises import register_catalog
 from generic_claims import ClaimManager
@@ -47,15 +48,21 @@ COMPOSE_FILE = os.environ.get(
     "BITCOIN_COMPOSE_FILE",
     "/app/bitcoin-compose/docker-compose.yml",
 )
-CORE_CONTAINERS = ("bitcoin-instructor-1", "bitcoin-mempool-1")
-CORE_SERVICES = ("instructor", "mempool")
+# bitcoin-graph runs a full node on the p2p net, so nuke must rm it like
+# any student node or it gossips the old chain back into a reseeded
+# instructor. It keeps no volumes; its graph store self-rebuilds on boot.
+CORE_CONTAINERS = ("bitcoin-instructor-1", "bitcoin-mempool-1", "bitcoin-graph-1")
+CORE_SERVICES = ("instructor", "mempool", "graph")
+GRAPH_CONTAINER = os.environ.get("BITCOIN_GRAPH_CONTAINER", "bitcoin-graph-1")
 
-# Phase 9.3g: forensics-deploy copies a pre-built chain snapshot into
-# the instructor-data named volume, then restarts the core services so
-# the classroom picks up the 275-block forensics chain.
-FORENSICS_SNAPSHOT = os.environ.get(
-    "BITCOIN_FORENSICS_SNAPSHOT",
-    "/app/bitcoin-forensics/instructor-bitcoindir-success-backup-little-longer",
+# Phase 9.3g: forensics-deploy copies the current pre-built chain snapshot
+# into the instructor-data named volume, then restarts the core services so
+# the classroom picks up the shared forensics chain.
+# v3: the 3-part lab chain (jittered v34 + v35 + v36 "Forensics 3"). Built 2026-06-10.
+# This is the current canonical forensics chain the deploy button serves.
+FORENSICS_V3_SNAPSHOT = os.environ.get(
+    "BITCOIN_FORENSICS_V3_SNAPSHOT",
+    "/app/bitcoin-forensics/forensics-lab-v3-instructor-dir",
 )
 INSTRUCTOR_VOLUME = os.environ.get(
     "BITCOIN_INSTRUCTOR_VOLUME",
@@ -117,6 +124,8 @@ PANEL_HTML = (
     '<span class="grow"></span>'
     '<a class="pbtn" href="/labs/bitcoin/mempool/" target="_blank" rel="noopener">Mempool</a>'
     '<a class="pbtn" href="/labs/bitcoin/btc-explorer/" target="_blank" rel="noopener">Explorer</a>'
+    '<a class="pbtn" id="graph-btn" href="/labs/bitcoin/graph/" target="_blank" rel="noopener"'
+    ' style="display:none">Graph</a>'
     '<a class="pbtn" id="my-static-btn" target="_blank" rel="noopener">My Static</a>'
     '<div class="peers-wrap">'
     '  <button class="pbtn" id="peers-toggle">Peers &#9662;</button>'
@@ -132,23 +141,84 @@ PANEL_SCRIPT = """
   var myStatic = document.getElementById("my-static-btn");
   if (myStatic) myStatic.href = "/labs/bitcoin/c/" + uuid + "/static/";
 
+  // Graph tool button: only shown while the instructor has the tool
+  // enabled (Forensics 2). Polled so it appears/disappears mid-session.
+  var graphBtn = document.getElementById("graph-btn");
+  function refreshGraphBtn() {
+    fetch("/labs/bitcoin/graph/api/status", {credentials: "same-origin"})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if (graphBtn) graphBtn.style.display = j.enabled ? "" : "none"; })
+      .catch(function(){ if (graphBtn) graphBtn.style.display = "none"; });
+  }
+  if (graphBtn) { refreshGraphBtn(); setInterval(refreshGraphBtn, 60000); }
+
   var toggle = document.getElementById("peers-toggle");
   var dropdown = document.getElementById("peers-dropdown");
   var open = false;
   var refreshTimer = null;
+
+  // A peer "has a published address" iff their static folder serves a
+  // non-empty address.txt (lab convention: echo $ADDR > ~/share/address.txt).
+  // Checked client-side, per peer — the browser already reaches the peer
+  // static path, so this adds no lane-service load beyond the cheap short-id
+  // resolve, and only runs while the dropdown is open. State is encoded by
+  // BOTH a symbol (check / cross) and color so it reads for colorblind users.
+  function badgeSpan(short) {
+    return '<span class="peer-badge peer-badge-checking" data-badge="' + short
+         + '" title="Checking for a published address…"'
+         + ' aria-label="checking for a published address">…</span>';
+  }
 
   function render(peers) {
     if (!peers || !peers.length) {
       dropdown.innerHTML = '<div class="peer-empty">No other peers online.</div>';
       return;
     }
-    dropdown.innerHTML = peers.map(function(p){
+    var rows = peers.map(function(p){
       var href = "/labs/bitcoin/peer/" + p.short_id + "/";
       return '<a class="peer-row" href="' + href + '" target="_blank" rel="noopener">'
-             + '<span>' + p.station + '</span>'
-             + '<span style="color:var(--muted); font-family:monospace">' + p.short_id + '</span>'
-             + '</a>';
+           + '<span class="peer-id">' + badgeSpan(p.short_id)
+           +   '<span class="peer-station">' + p.station + '</span></span>'
+           + '<span class="peer-short">' + p.short_id + '</span>'
+           + '</a>';
     }).join("");
+    dropdown.innerHTML = rows
+      + '<div class="peer-legend">'
+      +   '<span><span class="peer-badge peer-badge-yes">✓</span>&nbsp;published</span>'
+      +   '<span><span class="peer-badge peer-badge-no">✗</span>&nbsp;none yet</span>'
+      + '</div>';
+    peers.forEach(function(p){ checkAddress(p.short_id); });
+  }
+
+  function checkAddress(short) {
+    fetch("/labs/bitcoin/peer/" + short + "/address.txt",
+          {credentials: "same-origin", cache: "no-store"})
+      .then(function(r){ return r.ok ? r.text() : null; })
+      .then(function(txt){
+        setBadge(short, txt === null ? false : (txt.trim().length > 0));
+      })
+      .catch(function(){ setBadge(short, null); });
+  }
+
+  function setBadge(short, state) {
+    var b = dropdown.querySelector('[data-badge="' + short + '"]');
+    if (!b) return;
+    if (state === true) {
+      b.className = "peer-badge peer-badge-yes";
+      b.textContent = "✓";
+      b.title = "Has published a wallet address";
+      b.setAttribute("aria-label", "has published a wallet address");
+    } else if (state === false) {
+      b.className = "peer-badge peer-badge-no";
+      b.textContent = "✗";
+      b.title = "No wallet address published yet";
+      b.setAttribute("aria-label", "no wallet address published yet");
+    } else {
+      b.className = "peer-badge peer-badge-unknown";
+      b.textContent = "?";
+      b.title = "Couldn't check this peer right now";
+      b.setAttribute("aria-label", "could not check this peer");
+    }
   }
 
   function refresh() {
@@ -182,7 +252,44 @@ PANEL_SCRIPT = """
 """
 
 
-register_catalog("bitcoin", BITCOIN_CATALOG)
+# --- per-step solution gating (independent instructor toggles for Forensics 1 / 2) ---
+_SHOW_SOLUTION_FLAGS = {"f1": STATE_DIR / "show_solutions_f1", "f2": STATE_DIR / "show_solutions_f2",
+                        "f3": STATE_DIR / "show_solutions_f3"}
+
+
+def _solutions_on(part: str) -> bool:
+    try:
+        return _SHOW_SOLUTION_FLAGS[part].read_text(encoding="utf-8").strip() == "1"
+    except OSError:
+        return False
+
+
+def _exercise_part(ex: dict):
+    ch = (ex.get("chapter") or "")
+    if ch.startswith("lab3"):
+        return "f1"          # Bitcoin Forensics 1 (jittered v34)
+    if ch.startswith("lab4"):
+        return "f2"          # Bitcoin Forensics 2 (v35)
+    if ch.startswith("lab5"):
+        return "f3"          # Bitcoin Forensics 3 (v36)
+    return None
+
+
+def build_catalog():
+    """Re-evaluated per /exercises fetch. A per-exercise ``solution`` field reaches the client ONLY
+    when the matching instructor toggle is on (F1 -> lab3-*, F2 -> lab4-*, F3 -> lab5-*); otherwise
+    it's stripped, so with 'show solutions' off the answer never leaves the server."""
+    cat = copy.deepcopy(BITCOIN_CATALOG)
+    on = {"f1": _solutions_on("f1"), "f2": _solutions_on("f2"), "f3": _solutions_on("f3")}
+    for ex in cat.get("exercises", []):
+        if "solution" in ex:
+            part = _exercise_part(ex)
+            if not (part and on.get(part)):
+                ex.pop("solution", None)
+    return cat
+
+
+register_catalog("bitcoin", build_catalog)
 
 blueprint = make_lab_blueprint(
     config, lane_manager, claim_manager,
@@ -322,9 +429,10 @@ def bitcoin_nuke():
 _forensics_lock = threading.Lock()
 
 
-def _deploy_forensics():
+def _deploy_forensics(snapshot: str = FORENSICS_V3_SNAPSHOT):
     """Replace the instructor's bitcoin datadir with the pre-built
-    forensics snapshot, leaving student lanes and mempool running.
+    forensics snapshot. Default is v3 — the current 3-part lab
+    (jittered v34 + v35 + v36). Leaves student lanes and mempool running.
 
     Unlike nuke, this deliberately does not touch student containers:
     the snapshot's greater height means student nodes will reorg to
@@ -365,7 +473,7 @@ def _deploy_forensics():
 
         # Stream snapshot contents into the volume.
         cp = subprocess.run(
-            ["docker", "cp", f"{FORENSICS_SNAPSHOT}/.", f"{loader}:/dst/"],
+            ["docker", "cp", f"{snapshot}/.", f"{loader}:/dst/"],
             capture_output=True, text=True, timeout=300,
         )
         if cp.returncode != 0:
@@ -382,14 +490,37 @@ def _deploy_forensics():
         _docker_rm_force([loader])
 
     # 3. Bring instructor back on the populated datadir. Students
-    # discover the 275-block chain via P2P gossip and reorg locally.
-    # Seed wrapper skips because getblockcount == 275 > 0.
+    # discover the deployed forensics chain via P2P gossip and reorg
+    # locally. Seed wrapper skips because getblockcount is nonzero.
     up = subprocess.run(
         ["docker", "compose", "-f", COMPOSE_FILE, "up", "-d", "instructor"],
         capture_output=True, text=True, timeout=180,
     )
 
+    # 4. Fire-and-forget graph rebuild: the graph node reorgs to the
+    # forensics chain like everyone else; graph-rebuild's --wait-sync
+    # loop waits for that before ingesting. Failure is non-fatal —
+    # the instructor can rebuild from the admin console.
+    if up.returncode == 0:
+        _trigger_graph_rebuild()
+
     return ("compose-up", up)
+
+
+def _trigger_graph_rebuild() -> subprocess.CompletedProcess | None:
+    """Detached `graph-rebuild` in the graph container. `--queue` makes it WAIT
+    for any in-flight rebuild (e.g. a first-boot autobuild from a just-prior
+    reset) to finish and then rebuild against the freshly-deployed chain,
+    instead of no-op'ing on the lock — so a rapid reset->deploy still ends with
+    the graph reflecting the deployed chain rather than the reset's empty one."""
+    try:
+        return subprocess.run(
+            ["docker", "exec", "-d", GRAPH_CONTAINER,
+             "graph-rebuild", "--wait-sync", "--queue"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return None
 
 
 @blueprint.route("/api/bitcoin/forensics/deploy", methods=["POST"])
@@ -401,7 +532,7 @@ def bitcoin_forensics_deploy():
             "message": "forensics deploy already in progress",
         }), 409
     try:
-        stage, result = _deploy_forensics()
+        stage, result = _deploy_forensics(FORENSICS_V3_SNAPSHOT)
     finally:
         _forensics_lock.release()
     if result.returncode != 0:
@@ -412,8 +543,49 @@ def bitcoin_forensics_deploy():
         }), 500
     return jsonify({
         "success": True,
-        "message": "forensics chain deployed — instructor serves 275-block chain",
+        "message": "forensics chain deployed — instructor serves the 3-part (v34 + v35 + v36) chain",
     })
+
+
+# --- Chain Graph controls (bitcoin-graph/DESIGN.md) ---
+# Read-side state (enabled, build status, height) is fetched by browsers
+# straight from /labs/bitcoin/graph/api/status; lane-service only hosts
+# the mutating, instructor-gated actions, which need the docker socket.
+
+
+@blueprint.route("/api/bitcoin/graph/rebuild", methods=["POST"])
+@require_instructor
+def bitcoin_graph_rebuild():
+    result = _trigger_graph_rebuild()
+    if result is None or result.returncode != 0:
+        tail = "" if result is None else (result.stderr or result.stdout or "").strip()
+        return jsonify({
+            "success": False,
+            "message": f"could not start rebuild: {tail or 'docker exec failed'}",
+        }), 500
+    return jsonify({
+        "success": True,
+        "message": "graph rebuild started — progress shows on the graph page",
+    })
+
+
+@blueprint.route("/api/bitcoin/graph/enable", methods=["POST"])
+@require_instructor
+def bitcoin_graph_enable():
+    body = request.get_json(silent=True) or {}
+    on = bool(body.get("on"))
+    try:
+        result = subprocess.run(
+            ["docker", "exec", GRAPH_CONTAINER, "graph-gate", "on" if on else "off"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
+        return jsonify({"success": False, "message": f"toggle failed: {exc}"}), 500
+    if result.returncode != 0:
+        tail = (result.stderr or result.stdout or "").strip()
+        return jsonify({"success": False, "message": f"toggle failed: {tail}"}), 500
+    return jsonify({"success": True, "on": on,
+                    "message": f"graph tool {'enabled' if on else 'disabled'}"})
 
 
 FORENSICS_LAB_MD = os.environ.get(
@@ -434,6 +606,31 @@ def bitcoin_forensics_solution():
     if idx < 0:
         return jsonify({"success": False, "message": "solution marker not found"}), 500
     return jsonify({"success": True, "markdown": text[idx:]})
+
+
+@blueprint.route("/api/bitcoin/forensics/show-solutions", methods=["GET"])
+@require_instructor
+def bitcoin_show_solutions_state():
+    return jsonify({"success": True, "f1": _solutions_on("f1"), "f2": _solutions_on("f2"),
+                    "f3": _solutions_on("f3")})
+
+
+@blueprint.route("/api/bitcoin/forensics/show-solutions", methods=["POST"])
+@require_instructor
+def bitcoin_show_solutions_set():
+    body = request.get_json(silent=True) or {}
+    part = str(body.get("part", "")).lower()
+    if part not in ("f1", "f2", "f3"):
+        return jsonify({"success": False, "message": "part must be 'f1', 'f2', or 'f3'"}), 400
+    on = bool(body.get("on"))
+    path = _SHOW_SOLUTION_FLAGS[part]
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("1" if on else "0", encoding="utf-8")
+    except OSError as exc:
+        return jsonify({"success": False, "message": f"write failed: {exc}"}), 500
+    return jsonify({"success": True, "part": part, "on": on,
+                    "message": f"{part.upper()} solutions {'shown' if on else 'hidden'}"})
 
 
 def start():

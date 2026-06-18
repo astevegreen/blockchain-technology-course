@@ -1,5 +1,5 @@
 """
-Generic lane manager — on-demand student container lifecycle.
+Generic lane manager -- on-demand student container lifecycle.
 
 A "lane" is one student's container, identified by "s01".."sNN".
 The manager starts/stops containers, tracks state in a JSON file,
@@ -53,7 +53,7 @@ class _DockerUnixConn(http.client.HTTPConnection):
 
 class _ContainerStateCache:
     """Background poller that caches running/existing container names.
-    All lane manager reads go through this — no user request hits Docker directly.
+    All lane manager reads go through this -- no user request hits Docker directly.
     """
     _instance: "_ContainerStateCache | None" = None
     _init_lock = threading.Lock()
@@ -141,6 +141,11 @@ class LaneConfig:
     student_home_gid: int = 1000
     readiness_probe: Optional[Callable[[str, str], tuple[bool, str]]] = None
     readiness_timeout_seconds: float = 0.0
+    # Optional per-lab hook for docker-run lanes that should recreate an
+    # existing container before start, for example after its image is rebuilt.
+    # Called with (lane_id, container_name). Return (True, reason) to remove
+    # only that lane container and start it from the current image.
+    stale_container_probe: Optional[Callable[[str, str], tuple[bool, str]]] = None
     # Per-lane env hook. Called at start time with the lane id; the
     # returned dict is merged on top of the static `env` map. Use this
     # when each lane needs unique values (e.g. ASSIGNED_ADDRESS from a
@@ -329,6 +334,26 @@ class LaneManager:
     def _container_exists_direct(self, name: str) -> bool:
         return self._container_state_direct(name) is not None
 
+    def _remove_existing_container(self, container: str) -> tuple[bool, str]:
+        rm = self._run(["docker", "rm", "-f", container], timeout=30)
+        if rm.returncode != 0:
+            err = (rm.stderr or rm.stdout).strip()
+            err_lower = err.lower()
+            if "no such container" in err_lower or "no such object" in err_lower:
+                return True, "already removed"
+            return False, err[:500] or "docker rm failed"
+        return True, "removed"
+
+    def _stale_existing_container(self, lane_id: str, container: str) -> tuple[bool, str]:
+        probe = self.config.stale_container_probe
+        if probe is None or not self._container_exists_direct(container):
+            return False, ""
+        try:
+            stale, detail = probe(lane_id, container)
+        except Exception as exc:
+            return False, f"stale probe error: {exc}"
+        return bool(stale), (detail or "stale container")[:500]
+
     def _wait_container_running_direct(
         self,
         name: str,
@@ -401,6 +426,10 @@ class LaneManager:
             status = entry.get("status", STATUS_STOPPED)
             if status == STATUS_ERROR:
                 return False, entry.get("last_message", "") or "lane error"
+
+            stale, stale_detail = self._stale_existing_container(lane_id, container)
+            if stale:
+                return False, f"stale container: {stale_detail}"
 
             if self._container_running_direct(container):
                 if status == STATUS_RUNNING:
@@ -555,6 +584,13 @@ class LaneManager:
 
     def _start_locked(self, lane_id: str) -> tuple[bool, str]:
         container = self.config.container_name_fn(lane_id)
+        stale, detail = self._stale_existing_container(lane_id, container)
+        if stale:
+            self._set(lane_id, status=STATUS_STARTING, last_message=f"recreating existing container: {detail}"[:500])
+            ok, msg = self._remove_existing_container(container)
+            if not ok:
+                self._set(lane_id, status=STATUS_ERROR, last_message=msg[:500])
+                return False, msg
         if self._container_running_direct(container):
             ready, detail = self._wait_readiness_probe(
                 lane_id,
@@ -643,6 +679,10 @@ class LaneManager:
             r = self._run(["docker", "stop", container], timeout=30)
             if r.returncode != 0:
                 err = (r.stderr or r.stdout).strip()[:500]
+                err_lower = err.lower()
+                if "no such container" in err_lower or "no such object" in err_lower:
+                    self._set(lane_id, status=STATUS_STOPPED, last_message="already stopped")
+                    return True, "already stopped"
                 self._set(lane_id, status=STATUS_ERROR, last_message=err)
                 return False, err or "docker stop failed"
             self._set(lane_id, status=STATUS_STOPPED, last_message="stopped")

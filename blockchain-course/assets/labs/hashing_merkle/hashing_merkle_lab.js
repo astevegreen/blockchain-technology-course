@@ -11,7 +11,7 @@ let leafData = [];
 async function initPyodide() {
     try {
         pyodide = await loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.24.1/full/"
+            indexURL: "../../vendor/pyodide/v0.24.1/full/"
         });
         
         // Load hashlib for SHA-256
@@ -919,4 +919,3 @@ json.dumps(result)
         wrongDiv.innerHTML = '<div class="text-red-400 text-xs">Error computing hash</div>';
     }
 }
-

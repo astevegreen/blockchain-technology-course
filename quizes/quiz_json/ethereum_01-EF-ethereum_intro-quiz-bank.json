@@ -74,12 +74,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A developer says Ethereum is mainly Bitcoin with a different native coin. Which response best reflects the lesson's framing?",
+      "question_stem": "A developer says Ethereum is mainly Bitcoin with a different native coin. Which response best reflects how Ethereum is actually designed?",
       "correct_answer": "Ethereum uses a blockchain as a shared execution platform where smart contracts can hold value, update state, and enforce application logic.",
       "incorrect_answers": [
-        "Ethereum is a decentralized database that runs smart contracts in complete isolation without maintaining any shared global consensus state.",
-        "Ethereum is a payment network limiting smart contracts to narrow scripts, preventing complex applications from sharing persistent state.",
-        "Ethereum is a registry where each new application must launch its own blockchain and consensus rules before users can interact with it."
+        "Ethereum mainly records ether payments while smart contract rules run as wallet-side scripts outside the shared consensus process.",
+        "Ethereum gives each application its own isolated ledger so contract rules can differ without being verified by the wider network.",
+        "Ethereum extends Bitcoin with richer transaction templates, while persistent contract state is managed by separate off-chain services."
       ],
       "explanation": "The lesson frames Ethereum as a shift from blockchain-as-digital-money to blockchain-as-shared-computer: common execution semantics let many applications share one replicated state machine.",
       "difficulty_level": 2,
@@ -101,12 +101,12 @@
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "An ERC standard has been publicly specified and discussed, but major wallets and applications have not adopted it. What does the lesson imply about its practical effect?",
+      "question_stem": "An ERC standard has been publicly specified and discussed, but major wallets and applications have not adopted it. What is its practical effect?",
       "correct_answer": "The specification alone does not make it binding; practical impact depends on implementation, testing, and opt-in adoption by ecosystem participants.",
       "incorrect_answers": [
-        "The specification becomes immediately binding across the network; execution is unilaterally mandated by the Ethereum Foundation via client updates.",
-        "The specification is merged into consensus automatically, so validators must reject every token transfer that ignores the new interface.",
-        "The specification stays legally pending until ether holders approve an on-chain vote that rewrites core state structures before activation."
+        "The ERC becomes a de facto protocol rule once the proposal number is assigned, requiring wallets to support the interface before testing.",
+        "Core developers can activate the ERC through client releases, so application teams must treat it as consensus immediately after publication.",
+        "Validators enforce the ERC as part of block validity, so tokens using older interfaces are rejected even if their contract code has not changed."
       ],
       "explanation": "Ethereum governance is social and operational. EIPs and ERCs matter when client teams, validators, node operators, applications, wallets, exchanges, and users coordinate around them.",
       "difficulty_level": 3,
@@ -132,9 +132,9 @@
       "question_stem": "Why would a smart contract that directly reads a validator's local clock or fetches a website during execution threaten Ethereum consensus?",
       "correct_answer": "Different nodes could observe different values, causing them to compute different state transitions from the same transaction.",
       "incorrect_answers": [
-        "The EVM cannot process high-precision numbers, causing transactions to exceed their stack limit and crash validating nodes.",
-        "Validator nodes under proof-of-stake require identical network delay, causing minor clock deviations to halt block execution permanently.",
-        "External networks charge completely different fees, causing gas prices to be calculated in standard ether instead of protocol gwei."
+        "Those values would make signatures invalid, because validators sign a transaction only after the contract has finished running.",
+        "The contract would spend extra gas for the website request, but consensus would still agree as long as the response is cached.",
+        "The issue is mainly privacy: a validator clock reveals metadata, while the state transition remains identical everywhere."
       ],
       "explanation": "Ethereum requires deterministic execution: the same prior state and transaction input must produce the same result everywhere. Local clocks, network calls, and OS randomness break that property.",
       "difficulty_level": 3,
@@ -160,9 +160,9 @@
       "question_stem": "What is the best explanation for why Ethereum uses gas instead of trying to prove ahead of time that every contract execution will finish?",
       "correct_answer": "Because general halt prediction is undecidable, Ethereum meters execution and stops computation when the transaction's gas budget is exhausted.",
       "incorrect_answers": [
-        "Because standard EVM bytecode prohibits all loops and recursive functions, Ethereum guarantees that every program completes execution within five seconds.",
-        "Because local validators rely on cryptographic signatures to verify intent, Ethereum assumes authors optimize contracts and avoid infinite execution loops.",
-        "Because execution fees must remain perfectly static, Ethereum introduces gas purely to adjust standard token decimals so wallets display simple balances."
+        "Because contract authors can usually estimate loop bounds, Ethereum verifies source code during deployment and uses gas mainly to recover validator costs.",
+        "Because validators can simulate every possible branch before inclusion, Ethereum uses gas chiefly to divide execution fees among network participants.",
+        "Because Turing-complete code is converted into fixed-length bytecode, Ethereum uses gas to schedule execution order rather than to bound computation."
       ],
       "explanation": "The lesson connects expressive smart-contract code to the Halting Problem. Gas bounds computation, prices resource use, and protects the network from unbounded execution.",
       "difficulty_level": 3,
@@ -188,9 +188,9 @@
       "question_stem": "A transaction calls a contract, updates storage temporarily, then runs out of gas before completion. What outcome should a student expect?",
       "correct_answer": "The storage changes from that execution are reverted, but the sender still pays for computation already consumed.",
       "incorrect_answers": [
-        "The storage changes from that execution are preserved, and the sender receives a full refund for transaction failure.",
-        "The storage changes from that execution are deleted, and the transaction records are removed from the block history.",
-        "The storage changes from that execution are finalized, and the validator processes the remaining steps free of charge."
+        "The contract's earlier storage writes remain in state, and unused gas is refunded once execution stops at the limit.",
+        "The contract returns the last successful intermediate state, while the sender loses only the unused gas for execution.",
+        "The failed call is excluded from the block, but the sender still pays a fixed fee for the attempted contract execution."
       ],
       "explanation": "Out-of-gas execution reverts state changes to preserve atomicity, but gas consumed before failure is still charged because the network spent resources executing the transaction.",
       "difficulty_level": 4,
@@ -216,9 +216,9 @@
       "question_stem": "A crop-insurance contract needs to pay out when rainfall falls below a threshold. What new issue appears when an oracle supplies the rainfall data?",
       "correct_answer": "The contract now depends on assumptions about the oracle's data quality, honesty, manipulation resistance, and availability.",
       "incorrect_answers": [
-        "The contract now obtains direct cryptographic validation from local weather stations, eliminating all downstream trust assumptions.",
-        "The contract now executes off-chain on a single validator's local clock, removing the requirement for shared deterministic execution.",
-        "The contract now operates as an externally owned account, delegating total key management and signature validation to the data provider."
+        "The oracle makes the rainfall fact deterministic on-chain, so the remaining risk is whether users accept the payout schedule.",
+        "The contract can verify sensor signatures, so it no longer needs assumptions about who selected and maintained the weather stations.",
+        "The data feed moves execution off Ethereum, so validators no longer re-run the contract payout logic before accepting a block."
       ],
       "explanation": "Oracles bridge the gap between deterministic on-chain execution and off-chain facts, but they do not make external reality trustless. They shift trust to data providers and reporting mechanisms.",
       "difficulty_level": 4,
@@ -244,9 +244,9 @@
       "question_stem": "Which scenario correctly distinguishes externally owned accounts from contract accounts in Ethereum?",
       "correct_answer": "An EOA is controlled by a private key and initiates a transaction, while a contract account contains code and storage that execute only when called.",
       "incorrect_answers": [
-        "A contract account is controlled by a private key and initiates transactions, while an EOA stores code and storage that execute when called.",
-        "An EOA is controlled by consensus rules and pays transaction fees automatically, while a contract account requires a private key to manage global storage.",
-        "An EOA is controlled by contract code and stores persistent program state, while a contract account is controlled by a private key and holds only balances."
+        "An EOA has no contract code and signs transactions with a private key, while a contract account can initiate transactions whenever its code schedules them.",
+        "A contract account stores bytecode and persistent storage, while an EOA stores no code but can be triggered only by another contract call.",
+        "An EOA pays gas through a wallet signature, while a contract account must be controlled by a validator-selected private key before its code can run."
       ],
       "explanation": "EOAs initiate transactions and pay gas through private-key control. Contract accounts are code and storage at addresses and run when invoked by transactions or other contract calls.",
       "difficulty_level": 2,
@@ -269,12 +269,12 @@
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "Why does Ethereum's account model fit persistent smart-contract applications better than Bitcoin's UTXO model in the lesson's comparison?",
+      "question_stem": "Why does Ethereum's account model fit persistent smart-contract applications better than Bitcoin's UTXO model?",
       "correct_answer": "Ethereum can update mutable account balances and contract storage directly, which supports repeated interaction with long-lived program state.",
       "incorrect_answers": [
-        "Ethereum eliminates global state transitions, allowing contracts to run in isolated local memory without preserving prior storage details.",
-        "Ethereum requires each transaction to reference unspent transaction outputs, forcing multi-party contracts to rely on off-chain channel routing.",
-        "Ethereum can execute smart contracts continuously as background daemons, which removes the requirement of sending external transactions to alter state."
+        "Ethereum turns each contract call into a fresh UTXO record, which makes prior contract state easier to reconstruct from spent outputs.",
+        "Ethereum accounts keep contract code and storage under addresses, but each update still consumes one-time outputs like Bitcoin payments.",
+        "Ethereum avoids storing long-lived program state on-chain, so applications rebuild balances from event logs instead of updating contract storage directly."
       ],
       "explanation": "The lesson contrasts Ethereum's mutable account balances and contract storage with Bitcoin's UTXO model. Persistent storage makes repeated stateful application logic more natural.",
       "difficulty_level": 3,
@@ -300,9 +300,9 @@
       "question_stem": "A user worries that The Merge restarted Ethereum and reset deployed contracts. Which answer best corrects that misconception?",
       "correct_answer": "The Merge changed block production from proof-of-work mining to proof-of-stake validation while preserving users, balances, contracts, and application state.",
       "incorrect_answers": [
-        "The Merge deleted all pre-existing contract code and required decentralized applications to completely redeploy on an entirely new consensus network.",
-        "The Merge replaced the Ethereum Virtual Machine with a Bitcoin-style transaction model, which stopped the execution of existing stateful smart contracts.",
-        "The Merge increased Ethereum's block size limit to directly resolve the scaling bottleneck, which eliminated the need for layered rollup scaling solutions."
+        "The Merge kept user balances but moved contract storage into PoS addresses, so applications had to migrate state through upgrade scripts after activation.",
+        "The Merge changed the EVM and consensus together, preserving ether balances while requiring deployed contracts to recompile under proof-of-stake.",
+        "The Merge left deployed contracts readable but paused state-changing calls until validators re-created application state under proof-of-stake checkpoints."
       ],
       "explanation": "The lesson treats The Merge as a consensus-layer transition, not an application-layer restart. It changed how blocks are produced and finalized while preserving the application state.",
       "difficulty_level": 3,
@@ -328,9 +328,9 @@
       "question_stem": "In Ethereum's modular scaling roadmap, why is simply making L1 blocks much larger treated as a risky solution?",
       "correct_answer": "Larger blocks can raise hardware, bandwidth, storage, and sync requirements, reducing broad verifiability and pressuring decentralization.",
       "incorrect_answers": [
-        "Larger blocks can prevent validating nodes from compiling code in the EVM environment, stopping transaction execution and halting consensus.",
-        "Larger blocks can disable rollup architecture by blocking L2 messages and stopping rollups from posting transaction data to L1.",
-        "Larger blocks can bypass the scalability trilemma by shifting validator checks to light clients, eliminating data availability needs."
+        "Larger blocks would make gas metering unnecessary for contract execution, so the protocol would lose its normal resource bound during validation.",
+        "Larger blocks mainly weaken rollups by making L2 data unavailable, even when ordinary nodes can still verify L1 cheaply from home.",
+        "Larger blocks would let the EVM execute rollup data directly, replacing the need for separate L2 execution, settlement, and data availability layers."
       ],
       "explanation": "The lesson's scaling argument emphasizes verifiability. Ethereum keeps L1 focused on consensus, ordering, settlement, and data availability while L2s move much execution off L1.",
       "difficulty_level": 4,
@@ -357,9 +357,9 @@
       "question_stem": "According to the Ethereum whitepaper, what is the key design motivation for Ethereum compared with launching a separate blockchain for each application?",
       "correct_answer": "Ethereum provides a shared general-purpose state transition platform so applications can define logic without bootstrapping separate consensus and networking.",
       "incorrect_answers": [
-        "Ethereum requires each decentralized application to bootstrap its own independent consensus layer and networking parameters before deploying any user balances.",
-        "Ethereum enforces strict UTXO transaction constraints so developers are restricted to writing simple, non-programmable scripts that prevent double-spending.",
-        "Ethereum implements private off-chain databases so individual node operators cannot inspect or execute an application's internal logic themselves."
+        "Ethereum was designed to make each application inherit Bitcoin UTXO validation rules, avoiding separate consensus while keeping contract logic off-chain.",
+        "Ethereum offered a common scripting layer for application-specific chains, so developers could reuse EVM code while still launching independent consensus networks.",
+        "Ethereum treated the blockchain mostly as a payments ledger and expected complex applications to run through external meta-protocol clients instead of shared execution."
       ],
       "explanation": "The whitepaper argues that once blockchains provide decentralized ordering, a generalized execution layer can host many applications instead of forcing every application to create a new chain or constrained meta-protocol.",
       "difficulty_level": 3,
@@ -383,12 +383,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "An EOA sends a transaction to a contract, and that contract calls a second contract before returning a result. Which reading concept does this best illustrate?",
+      "question_stem": "An EOA sends a transaction to a contract, and that contract calls a second contract before returning a result. Which Ethereum concept does this best illustrate?",
       "correct_answer": "Messages allow contracts to interact with other contracts, making contract accounts composable actors in Ethereum applications.",
       "incorrect_answers": [
-        "Transactions restrict smart contracts from calling external addresses, forcing secondary execution to happen off-chain.",
-        "Daemons allow contracts to execute continuously in the background, making external activation or contract-to-contract triggers unnecessary.",
-        "Signatures require contract accounts to identify if counterparties are private key holders, limiting automated trust interactions."
+        "Internal messages can move ether, but they cannot carry call data or invoke another contract during the same transaction.",
+        "Contract accounts can run background loops between blocks, which lets the second contract respond without being triggered by a call.",
+        "The first contract temporarily becomes an EOA, signing a nested transaction to authorize the second contract call before returning."
       ],
       "explanation": "The reading distinguishes signed external transactions from messages generated during execution. Contract-to-contract messages can carry value and data, return responses, and compose applications.",
       "difficulty_level": 3,
@@ -412,12 +412,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "The reading argues that transaction fees are not merely a private payment from sender to block producer. Why?",
+      "question_stem": "Transaction fees on Ethereum are not merely a private payment from sender to block producer. Why?",
       "correct_answer": "Every included transaction imposes verification, processing, and download costs on the wider network, so fees help regulate shared resource use.",
       "incorrect_answers": [
-        "Only the sender wallet validates the signature and state parameters, so fees compensate the local client application for its work.",
-        "Only proof-of-work mining rigs incur operational costs for transactions, so fees were completely removed from the protocol after Ethereum transitioned to PoS.",
-        "Only EVM execution clients are impacted by transaction computations, so fees are kept independent of state storage costs or network transmission limits."
+        "The block proposer is the main actor that executes transactions, so fees chiefly compensate proposer hardware and bandwidth costs.",
+        "Fees are set by wallet policy after execution, so they mainly measure payment priority rather than validation and download work imposed on nodes.",
+        "Gas prices reimburse validator opportunity cost for failed transactions, while successful transfers are verified locally by wallets."
       ],
       "explanation": "The reading treats fees and gas as network-resource regulation. Transaction inclusion creates costs for validating nodes, which creates abuse and tragedy-of-the-commons concerns if costs are not priced.",
       "difficulty_level": 4,

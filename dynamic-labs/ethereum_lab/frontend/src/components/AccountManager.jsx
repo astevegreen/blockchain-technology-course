@@ -15,6 +15,7 @@ import {
   generateNewWallet, 
   importWallet, 
   getWalletInfo, 
+  hydrateSessionWallets,
   resetWallet,
   exportWalletKey,
   setWalletNickname 
@@ -34,11 +35,18 @@ export default function AccountManager({ provider, onAccountChange, compact = fa
 
   // Load wallet on mount
   useEffect(() => {
-    const info = getWalletInfo();
-    if (info) {
-      setWalletInfo(info);
-      onAccountChange?.(info);
-    }
+    let cancelled = false;
+    hydrateSessionWallets()
+      .then(() => {
+        if (cancelled) return;
+        const info = getWalletInfo();
+        if (info) {
+          setWalletInfo(info);
+          onAccountChange?.(info);
+        }
+      })
+      .catch((err) => setError(err?.message || 'Could not load session wallet'));
+    return () => { cancelled = true; };
   }, []);
 
   // Fetch balance when wallet or provider changes
@@ -58,16 +66,20 @@ export default function AccountManager({ provider, onAccountChange, compact = fa
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const nickname = newNickname.trim() || 'My Wallet';
-    const result = generateNewWallet(nickname);
-    setWalletInfo(result);
-    setNewNickname('');
-    onAccountChange?.(result);
-    setNewWalletCreds({ address: result.address, privateKey: result.privateKey });
+    try {
+      const result = await generateNewWallet(nickname);
+      setWalletInfo(result);
+      setNewNickname('');
+      onAccountChange?.(result);
+      setNewWalletCreds({ address: result.address, privateKey: result.privateKey });
+    } catch (err) {
+      setError(err?.message || 'Could not generate wallet');
+    }
   };
 
-  const handleImport = () => {
+  const handleImport = async () => {
     setError('');
     const key = importKey.trim();
     
@@ -76,7 +88,7 @@ export default function AccountManager({ provider, onAccountChange, compact = fa
       return;
     }
     
-    const result = importWallet(key, importNickname.trim() || 'Imported Wallet');
+    const result = await importWallet(key, importNickname.trim() || 'Imported Wallet');
     if (result.success) {
       const info = getWalletInfo();
       setWalletInfo(info);
@@ -89,12 +101,17 @@ export default function AccountManager({ provider, onAccountChange, compact = fa
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (!confirm('Are you sure? Make sure you saved your private key!')) return;
-    resetWallet();
-    setWalletInfo(null);
-    setBalance(null);
-    onAccountChange?.(null);
+    try {
+      await resetWallet();
+      const info = getWalletInfo();
+      setWalletInfo(info);
+      setBalance(null);
+      onAccountChange?.(info);
+    } catch (err) {
+      setError(err?.message || 'Could not reset wallet');
+    }
   };
 
   const copyPrivateKey = async () => {

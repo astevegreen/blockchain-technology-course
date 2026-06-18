@@ -1,0 +1,1239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mempool Invaders</title>
+  <style>
+    :root {
+      --bg: #040713;
+      --panel: rgba(7, 15, 34, 0.82);
+      --cyan: #45f4ff;
+      --green: #80ff9f;
+      --gold: #ffd166;
+      --red: #ff4f7b;
+      --blue: #7ea7ff;
+      --ink: #e8f7ff;
+      --muted: #88a1bc;
+      --line: rgba(69, 244, 255, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(69, 244, 255, 0.18), transparent 34rem),
+        radial-gradient(circle at 80% 0%, rgba(126, 167, 255, 0.18), transparent 32rem),
+        linear-gradient(145deg, #040713 0%, #081122 48%, #02040b 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Lucida Grande", Verdana, sans-serif;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .shell {
+      width: min(1120px, 100%);
+      display: grid;
+      gap: 12px;
+    }
+
+    .topbar,
+    .session-strip,
+    .game-wrap {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: 0 0 34px rgba(69, 244, 255, 0.12), inset 0 0 22px rgba(126, 167, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar {
+      border-radius: 24px;
+      padding: 16px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .topbar::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, transparent 0 34%, rgba(69, 244, 255, 0.08) 34% 35%, transparent 35% 100%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 24px);
+      pointer-events: none;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--cyan);
+      font-size: clamp(2rem, 5vw, 4.4rem);
+      letter-spacing: 0.08em;
+      line-height: 0.95;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(69, 244, 255, 0.9), 0 0 30px rgba(69, 244, 255, 0.38);
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      max-width: 760px;
+    }
+
+    .badge {
+      border: 1px solid rgba(128, 255, 159, 0.46);
+      border-radius: 999px;
+      color: var(--green);
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: inset 0 0 14px rgba(128, 255, 159, 0.12);
+    }
+
+    .session-strip {
+      border-radius: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .chip {
+      border: 1px solid rgba(126, 167, 255, 0.3);
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(4, 7, 19, 0.55);
+    }
+
+    .chip strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .game-wrap {
+      border-radius: 26px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 280px;
+      gap: 14px;
+    }
+
+    .stage {
+      position: relative;
+      min-height: 540px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #02040b;
+      touch-action: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 540px;
+      display: block;
+      cursor: crosshair;
+      background:
+        radial-gradient(circle at 50% 110%, rgba(69, 244, 255, 0.15), transparent 28rem),
+        linear-gradient(180deg, rgba(8, 17, 34, 0.7), rgba(2, 4, 11, 0.98));
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: radial-gradient(circle, rgba(4, 7, 19, 0.72), rgba(4, 7, 19, 0.92));
+      text-align: center;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .modal {
+      width: min(560px, 100%);
+      border: 1px solid rgba(69, 244, 255, 0.35);
+      border-radius: 22px;
+      background: rgba(7, 15, 34, 0.9);
+      padding: 24px;
+      box-shadow: 0 0 50px rgba(69, 244, 255, 0.2);
+    }
+
+    .modal h2 {
+      margin: 0 0 10px;
+      color: var(--cyan);
+      font-size: clamp(1.7rem, 5vw, 3rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .modal p {
+      margin: 10px 0;
+      color: #bfd0e4;
+      line-height: 1.5;
+    }
+
+    .side {
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid rgba(69, 244, 255, 0.22);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(4, 7, 19, 0.54);
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stat {
+      border-radius: 14px;
+      padding: 11px;
+      background: rgba(126, 167, 255, 0.08);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--ink);
+      font-size: 1.35rem;
+    }
+
+    .meter {
+      height: 12px;
+      border: 1px solid rgba(128, 255, 159, 0.4);
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(128, 255, 159, 0.08);
+    }
+
+    .meter > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      box-shadow: 0 0 12px rgba(128, 255, 159, 0.8);
+      transition: width 120ms linear;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      color: #c3d6e9;
+      font-size: 0.9rem;
+      line-height: 1.35;
+    }
+
+    .legend b {
+      color: var(--ink);
+    }
+
+    .keys {
+      display: grid;
+      gap: 7px;
+      color: #c3d6e9;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .key {
+      display: inline-block;
+      min-width: 28px;
+      border: 1px solid rgba(69, 244, 255, 0.35);
+      border-radius: 7px;
+      padding: 2px 7px;
+      color: var(--cyan);
+      text-align: center;
+      background: rgba(69, 244, 255, 0.08);
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      color: #03101a;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      box-shadow: 0 0 22px rgba(69, 244, 255, 0.34);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    button.secondary {
+      color: var(--cyan);
+      border: 1px solid rgba(69, 244, 255, 0.4);
+      background: rgba(69, 244, 255, 0.08);
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 16px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 880px) {
+      body {
+        padding: 10px;
+      }
+
+      .topbar,
+      .game-wrap {
+        grid-template-columns: 1fr;
+      }
+
+      .badge {
+        width: fit-content;
+      }
+
+      .stage,
+      canvas {
+        min-height: 60vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar" aria-label="Game title">
+      <div>
+        <h1>Mempool Invaders</h1>
+        <p class="subtitle">Sort the pending transaction swarm. Capture valuable fees, prioritize urgent tx, and stop spam before it crosses the block boundary.</p>
+      </div>
+      <div class="badge">Ethereum FT Arcade</div>
+    </section>
+
+    <section class="session-strip" aria-label="Signed pass and session status" id="sessionStrip"></section>
+
+    <section class="game-wrap">
+      <div class="stage" id="stage">
+        <canvas id="game" width="960" height="640" aria-label="Mempool Invaders game canvas"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="modal">
+            <h2 id="overlayTitle">Clear the Mempool</h2>
+            <p id="overlayText">Move the validator ship, shoot transaction invaders, and use Fee Boost when charged. If spam tx reach the block boundary, the mempool is polluted.</p>
+            <div class="buttons">
+              <button id="startBtn" type="button">Start Game</button>
+              <button class="secondary" id="playAgainBtn" type="button">Play Again</button>
+            </div>
+            <p class="small">Play Again resets this local arcade round only. It does not start or request a new on-chain session.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side" aria-label="Game information">
+        <div class="card">
+          <div class="stat-grid">
+            <div class="stat"><span>Score</span><strong id="score">0</strong></div>
+            <div class="stat"><span>Health</span><strong id="health">100</strong></div>
+            <div class="stat"><span>Level</span><strong id="level">1/10</strong></div>
+            <div class="stat"><span>Cycle</span><strong id="cycle">1</strong></div>
+            <div class="stat"><span>Mempool</span><strong id="remaining">0</strong></div>
+            <div class="stat"><span>Spam Leaks</span><strong id="leaks">0</strong></div>
+            <div class="stat"><span>Elapsed</span><strong id="elapsed">0s</strong></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="legend">
+            <b>Validator Health</b>
+            <div class="meter" aria-label="Validator health"><i id="healthMeter"></i></div>
+            <span id="healthText">Spam leaks and adversarial packets damage the validator.</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="legend">
+            <b>Fee Boost</b>
+            <div class="meter" aria-label="Fee boost charge"><i id="boostMeter"></i></div>
+            <span id="boostText">Build charge by confirming tx. Press Shift at 100%.</span>
+          </div>
+        </div>
+
+        <div class="card keys">
+          <b>Controls</b>
+          <span><span class="key">←</span> <span class="key">→</span> or <span class="key">A</span> <span class="key">D</span> move validator ship</span>
+          <span><span class="key">Space</span> fires validator pulses</span>
+          <span><span class="key">Shift</span> activates Fee Boost when charged</span>
+          <span>Mouse/touch: move horizontally, click or tap to fire</span>
+        </div>
+
+        <div class="card legend">
+          <b>Scoring</b>
+          <span><b style="color: var(--gold)">HIGH</b> +70, <b style="color: var(--blue)">PRIO</b> +90, MED +45, LOW +25</span>
+          <span><b style="color: var(--red)">SPAM</b> +5 if cleared, damages health if it reaches the block boundary.</span>
+          <span>Clear 10 levels to loop into a faster cycle. Score continues until defeat.</span>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const GAME_ID = 2;
+      const GAME_NAME = "Mempool Invaders";
+      const SOURCE = "ethereum_lab_arcade";
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token") || "";
+      const sid = params.get("sid") || "";
+      const player = params.get("player") || "";
+      const tx = params.get("tx") || "";
+      const game = params.get("game") || "";
+
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const stage = document.getElementById("stage");
+      const overlay = document.getElementById("overlay");
+      const overlayTitle = document.getElementById("overlayTitle");
+      const overlayText = document.getElementById("overlayText");
+      const startBtn = document.getElementById("startBtn");
+      const playAgainBtn = document.getElementById("playAgainBtn");
+      const scoreEl = document.getElementById("score");
+      const healthEl = document.getElementById("health");
+      const levelEl = document.getElementById("level");
+      const cycleEl = document.getElementById("cycle");
+      const remainingEl = document.getElementById("remaining");
+      const leaksEl = document.getElementById("leaks");
+      const elapsedEl = document.getElementById("elapsed");
+      const healthMeter = document.getElementById("healthMeter");
+      const healthText = document.getElementById("healthText");
+      const boostMeter = document.getElementById("boostMeter");
+      const boostText = document.getElementById("boostText");
+      const sessionStrip = document.getElementById("sessionStrip");
+
+      const state = {
+        running: false,
+        complete: false,
+        lastTime: 0,
+        startedAt: 0,
+        elapsedMs: 0,
+        score: 0,
+        leaks: 0,
+        level: 1,
+        cycle: 1,
+        maxLevel: 10,
+        maxHealth: 100,
+        health: 100,
+        invaders: [],
+        bullets: [],
+        enemyBullets: [],
+        particles: [],
+        stars: [],
+        keys: new Set(),
+        shotCooldown: 0,
+        boostCharge: 0,
+        boostTimer: 0,
+        waveTime: 0,
+        levelBanner: "",
+        levelBannerTimer: 0,
+        ship: { x: 480, y: 584, w: 58, h: 42, speed: 520 }
+      };
+
+      const feeTypes = {
+        low: { label: "LOW", color: "#7ea7ff", hp: 1, points: 25, charge: 8 },
+        med: { label: "MED", color: "#45f4ff", hp: 1, points: 45, charge: 12 },
+        high: { label: "HIGH", color: "#ffd166", hp: 2, points: 70, charge: 18 },
+        priority: { label: "PRIO", color: "#80ff9f", hp: 2, points: 90, charge: 24 },
+        spam: { label: "SPAM", color: "#ff4f7b", hp: 1, points: 5, charge: 4 },
+        adversary: { label: "NODE", color: "#ff9f1c", hp: 2, points: 115, charge: 20 }
+      };
+
+      const levelNames = [
+        "Genesis Drip",
+        "Pending Wall",
+        "Priority Split",
+        "Spam Lattice",
+        "Fee Surge",
+        "Adversary Arc",
+        "Nonce Storm",
+        "MEV Crossfire",
+        "Finality Crush",
+        "Blockspace Siege"
+      ];
+
+      function shortValue(value, keepStart = 6, keepEnd = 4) {
+        if (!value) return "none";
+        const clean = String(value);
+        if (clean.length <= keepStart + keepEnd + 3) return clean;
+        return clean.slice(0, keepStart) + "..." + clean.slice(-keepEnd);
+      }
+
+      function shortToken(value) {
+        if (!value) return "not provided";
+        const clean = String(value);
+        if (clean.length < 9) return "present, masked";
+        return clean.slice(0, 5) + "..." + clean.slice(-4);
+      }
+
+      function escapeText(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "\"": "&quot;",
+          "'": "&#39;"
+        })[char]);
+      }
+
+      function renderSessionStrip() {
+        const passStatus = token ? "signed pass detected" : "standalone practice";
+        const items = [
+          ["Pass", passStatus],
+          ["Token", shortToken(token)],
+          ["Session", sid ? shortValue(sid, 8, 5) : "local"],
+          ["Player", player ? shortValue(player, 8, 5) : "guest"],
+          ["Tx", tx ? shortValue(tx, 8, 6) : "pending"],
+          ["Game", game || String(GAME_ID)]
+        ];
+        sessionStrip.innerHTML = items.map(([label, value]) => (
+          '<span class="chip"><strong>' + escapeText(label) + ':</strong> ' + escapeText(value) + '</span>'
+        )).join("");
+      }
+
+      function postToParent(type, extra = {}) {
+        const message = {
+          source: SOURCE,
+          type,
+          gameId: GAME_ID,
+          name: GAME_NAME,
+          ...extra
+        };
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage(message, "*");
+        }
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(message, "*");
+        }
+      }
+
+      function resizeCanvas() {
+        const rect = stage.getBoundingClientRect();
+        const ratio = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+        canvas.width = Math.max(720, Math.floor(rect.width * ratio));
+        canvas.height = Math.max(520, Math.floor(rect.height * ratio));
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        canvas.logicalWidth = canvas.width / ratio;
+        canvas.logicalHeight = canvas.height / ratio;
+        state.ship.y = canvas.logicalHeight - 56;
+        state.ship.x = Math.max(40, Math.min(canvas.logicalWidth - 40, state.ship.x));
+      }
+
+      function makeStars() {
+        state.stars = [];
+        const count = 86;
+        for (let i = 0; i < count; i++) {
+          state.stars.push({
+            x: Math.random(),
+            y: Math.random(),
+            r: Math.random() * 1.8 + 0.4,
+            s: Math.random() * 28 + 10,
+            a: Math.random() * 0.5 + 0.25
+          });
+        }
+      }
+
+      function difficulty() {
+        const levelIndex = state.level - 1;
+        const cycleIndex = state.cycle - 1;
+        return {
+          descent: 17 + levelIndex * 2.7 + cycleIndex * 8,
+          sway: 28 + levelIndex * 1.7,
+          swaySpeed: 1.35 + levelIndex * 0.08 + cycleIndex * 0.16,
+          attackInterval: Math.max(0.58, 2.45 - levelIndex * 0.13 - cycleIndex * 0.24),
+          enemyShotSpeed: 185 + levelIndex * 18 + cycleIndex * 42,
+          attackDamage: 10 + Math.floor(levelIndex / 3) * 2 + cycleIndex * 3,
+          leakDamage: 14 + Math.floor(levelIndex / 2) * 2 + cycleIndex * 4
+        };
+      }
+
+      function pickInvaderType(row, col, rows, cols) {
+        const level = state.level;
+        const signature = (row * 13 + col * 7 + level * 5 + state.cycle * 3) % 20;
+        const isTopThreat = row === 0 && ((col + level + state.cycle) % Math.max(2, 5 - Math.floor(level / 3)) === 0);
+        if (isTopThreat) return "adversary";
+        if (level >= 8 && row <= 1 && signature < 4) return "adversary";
+        if (level >= 5 && row === 1 && signature < 2) return "priority";
+        if (row === rows - 1 && signature < 7 + Math.floor(level / 3)) return "spam";
+        if (signature < 3) return "spam";
+        if (signature < 7) return "low";
+        if (signature < 13) return "med";
+        if (signature < 17) return "high";
+        return "priority";
+      }
+
+      function makeInvaders() {
+        const invaders = [];
+        const levelIndex = state.level - 1;
+        const cycleIndex = state.cycle - 1;
+        const cols = Math.min(11, 7 + Math.floor(levelIndex / 2));
+        const rows = Math.min(6, 3 + Math.floor((levelIndex + 1) / 2));
+        const gapX = 72;
+        const gapY = 52;
+        const formationWidth = (cols - 1) * gapX;
+        const startX = 380 - formationWidth / 2;
+        const startY = 70;
+
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            const typeName = pickInvaderType(row, col, rows, cols);
+            const fee = feeTypes[typeName];
+            const hpBoost = typeName === "adversary" ? Math.floor(levelIndex / 3) + cycleIndex : typeName === "priority" ? Math.floor(levelIndex / 5) : 0;
+            invaders.push({
+              type: typeName,
+              label: fee.label,
+              color: fee.color,
+              hp: fee.hp + hpBoost,
+              maxHp: fee.hp + hpBoost,
+              points: fee.points,
+              charge: fee.charge,
+              baseX: startX + col * gapX,
+              baseY: startY + row * gapY,
+              x: startX + col * gapX,
+              y: startY + row * gapY,
+              w: typeName === "priority" || typeName === "adversary" ? 62 : 54,
+              h: typeName === "adversary" ? 36 : 32,
+              phase: Math.random() * Math.PI * 2,
+              attackTimer: Math.random() * 1.8 + 0.4,
+              swoop: typeName === "adversary" ? Math.random() * Math.PI * 2 : 0,
+              reached: false
+            });
+          }
+        }
+        return invaders;
+      }
+
+      function resetGame(autostart = false) {
+        resizeCanvas();
+        state.running = false;
+        state.complete = false;
+        state.lastTime = 0;
+        state.startedAt = performance.now();
+        state.elapsedMs = 0;
+        state.score = 0;
+        state.leaks = 0;
+        state.level = 1;
+        state.cycle = 1;
+        state.health = state.maxHealth;
+        state.bullets = [];
+        state.enemyBullets = [];
+        state.particles = [];
+        state.keys.clear();
+        state.shotCooldown = 0;
+        state.boostCharge = 0;
+        state.boostTimer = 0;
+        state.ship.x = canvas.logicalWidth / 2;
+        startLevel("Level 1: " + levelNames[0]);
+        updateHud();
+        if (autostart) {
+          hideOverlay();
+          state.running = true;
+          state.startedAt = performance.now();
+          requestAnimationFrame(loop);
+        } else {
+          showOverlay("Clear the Mempool", "Clear 10 escalating levels, survive adversarial nodes, and roll into faster cycles. Score continues until validator health reaches zero.", false);
+          draw(0);
+        }
+      }
+
+      function startLevel(message) {
+        state.waveTime = 0;
+        state.invaders = makeInvaders();
+        state.bullets = [];
+        state.enemyBullets = [];
+        state.levelBanner = message || ("Level " + state.level + ": " + levelNames[state.level - 1]);
+        state.levelBannerTimer = 2.2;
+      }
+
+      function advanceLevel() {
+        const clearedLevel = state.level;
+        const cycleBonus = clearedLevel === state.maxLevel ? 1000 * state.cycle : 300 + clearedLevel * 60 + state.cycle * 90;
+        state.score += cycleBonus;
+        if (clearedLevel >= state.maxLevel) {
+          state.level = 1;
+          state.cycle += 1;
+          startLevel("Cycle " + state.cycle + ": level 1 re-enters hotter mempool");
+        } else {
+          state.level += 1;
+          startLevel("Level " + state.level + ": " + levelNames[state.level - 1]);
+        }
+        burst(state.ship.x, state.ship.y - 20, "#80ff9f", 30);
+        updateHud();
+      }
+
+      function showOverlay(title, text, finished) {
+        overlayTitle.textContent = title;
+        overlayText.textContent = text;
+        startBtn.style.display = finished ? "none" : "";
+        playAgainBtn.style.display = finished ? "" : "none";
+        overlay.classList.remove("hidden");
+      }
+
+      function hideOverlay() {
+        overlay.classList.add("hidden");
+      }
+
+      function updateHud() {
+        const remaining = state.invaders.length;
+        scoreEl.textContent = String(state.score);
+        healthEl.textContent = Math.max(0, Math.ceil(state.health)) + "/" + state.maxHealth;
+        levelEl.textContent = state.level + "/" + state.maxLevel;
+        cycleEl.textContent = String(state.cycle);
+        remainingEl.textContent = String(remaining);
+        leaksEl.textContent = String(state.leaks);
+        elapsedEl.textContent = Math.floor(state.elapsedMs / 1000) + "s";
+        const healthPct = Math.max(0, Math.min(100, (state.health / state.maxHealth) * 100));
+        healthMeter.style.width = Math.round(healthPct) + "%";
+        healthMeter.style.background = healthPct <= 30
+          ? "linear-gradient(90deg, #ff4f7b, #ffd166)"
+          : "linear-gradient(90deg, var(--green), var(--cyan))";
+        if (healthPct <= 30) {
+          healthText.textContent = "Critical health. Avoid spam leaks and adversarial packets.";
+        } else {
+          healthText.textContent = "Spam leaks and adversarial packets damage the validator.";
+        }
+        boostMeter.style.width = Math.round(state.boostCharge) + "%";
+        if (state.boostTimer > 0) {
+          boostText.textContent = "Fee Boost active: faster pulses and wider validation beams.";
+        } else if (state.boostCharge >= 100) {
+          boostText.textContent = "Fee Boost charged. Press Shift to activate.";
+        } else {
+          boostText.textContent = "Build charge by confirming tx. Press Shift at 100%.";
+        }
+      }
+
+      function fire() {
+        if (!state.running || state.shotCooldown > 0) return;
+        const boosted = state.boostTimer > 0;
+        const base = {
+          x: state.ship.x,
+          y: state.ship.y - 28,
+          vy: boosted ? -780 : -620,
+          r: boosted ? 6 : 4,
+          damage: boosted ? 2 : 1,
+          color: boosted ? "#80ff9f" : "#45f4ff"
+        };
+        state.bullets.push(base);
+        if (boosted) {
+          state.bullets.push({ ...base, x: base.x - 18, vy: -720 });
+          state.bullets.push({ ...base, x: base.x + 18, vy: -720 });
+        }
+        state.shotCooldown = boosted ? 0.12 : 0.22;
+      }
+
+      function activateBoost() {
+        if (!state.running || state.boostCharge < 100 || state.boostTimer > 0) return;
+        state.boostCharge = 0;
+        state.boostTimer = 4.2;
+        burst(state.ship.x, state.ship.y - 18, "#80ff9f", 26);
+      }
+
+      function damageHealth(amount, x, y) {
+        if (state.complete) return;
+        state.health = Math.max(0, state.health - amount);
+        burst(x, y, "#ff4f7b", 22);
+        if (state.health <= 0) {
+          endGame("loss");
+        }
+      }
+
+      function enemyFire(invader) {
+        const diff = difficulty();
+        const angle = Math.atan2(state.ship.y - invader.y, state.ship.x - invader.x);
+        const spread = (Math.random() - 0.5) * (0.26 + state.level * 0.008);
+        state.enemyBullets.push({
+          x: invader.x,
+          y: invader.y + invader.h / 2,
+          vx: Math.cos(angle + spread) * diff.enemyShotSpeed * 0.36,
+          vy: Math.max(120, Math.sin(angle + spread) * diff.enemyShotSpeed),
+          r: invader.type === "adversary" ? 5 : 4,
+          damage: diff.attackDamage,
+          color: invader.type === "adversary" ? "#ff9f1c" : "#ff4f7b"
+        });
+      }
+
+      function burst(x, y, color, count = 12) {
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 140 + 40;
+          state.particles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: Math.random() * 0.45 + 0.25,
+            maxLife: 0.7,
+            color,
+            r: Math.random() * 3 + 1
+          });
+        }
+      }
+
+      function endGame(outcome) {
+        if (state.complete) return;
+        state.running = false;
+        state.complete = true;
+        const elapsedMs = Math.max(0, Math.round(performance.now() - state.startedAt));
+        state.elapsedMs = elapsedMs;
+        updateHud();
+        const win = outcome === "win";
+        showOverlay(
+          win ? "Mempool Cleared" : "Validator Defeated",
+          win
+            ? "The validator ship cleared every pending tx before spam crossed the boundary."
+            : "Validator health reached zero after level " + state.level + ", cycle " + state.cycle + ". Replay this local round for practice.",
+          true
+        );
+        postToParent("arcade-game-complete", {
+          outcome,
+          score: state.score,
+          elapsedMs,
+          level: state.level,
+          cycle: state.cycle,
+          health: Math.max(0, Math.round(state.health)),
+          txHash: tx,
+          sessionId: sid
+        });
+      }
+
+      function update(dt) {
+        state.elapsedMs = performance.now() - state.startedAt;
+        state.waveTime += dt;
+        state.levelBannerTimer = Math.max(0, state.levelBannerTimer - dt);
+        state.shotCooldown = Math.max(0, state.shotCooldown - dt);
+        state.boostTimer = Math.max(0, state.boostTimer - dt);
+
+        const moveLeft = state.keys.has("ArrowLeft") || state.keys.has("a") || state.keys.has("A");
+        const moveRight = state.keys.has("ArrowRight") || state.keys.has("d") || state.keys.has("D");
+        const speed = state.ship.speed * (state.boostTimer > 0 ? 1.16 : 1);
+        if (moveLeft) state.ship.x -= speed * dt;
+        if (moveRight) state.ship.x += speed * dt;
+        state.ship.x = Math.max(34, Math.min(canvas.logicalWidth - 34, state.ship.x));
+        if (state.keys.has(" ")) fire();
+
+        for (const bullet of state.bullets) {
+          bullet.y += bullet.vy * dt;
+        }
+        state.bullets = state.bullets.filter((bullet) => bullet.y > -20);
+
+        for (const bullet of state.enemyBullets) {
+          bullet.x += bullet.vx * dt;
+          bullet.y += bullet.vy * dt;
+        }
+        state.enemyBullets = state.enemyBullets.filter((bullet) => (
+          bullet.y < canvas.logicalHeight + 30 &&
+          bullet.x > -30 &&
+          bullet.x < canvas.logicalWidth + 30 &&
+          !bullet.hit
+        ));
+
+        const width = canvas.logicalWidth;
+        const boundary = canvas.logicalHeight - 118;
+        const diff = difficulty();
+        const drop = state.waveTime * diff.descent * (state.boostTimer > 0 ? 0.9 : 1);
+        const sway = Math.sin(state.waveTime * diff.swaySpeed) * diff.sway;
+        const scaleX = Math.min(1.18, Math.max(0.74, width / 850));
+        const offsetX = (width - 760 * scaleX) / 2;
+
+        for (const invader of state.invaders) {
+          invader.x = offsetX + invader.baseX * scaleX + sway + Math.sin(state.waveTime * 2.5 + invader.phase) * 7;
+          invader.y = invader.baseY + drop + Math.sin(state.waveTime * 2 + invader.phase) * 4;
+          if (invader.type === "adversary") {
+            invader.x += Math.sin(state.waveTime * (2.2 + state.cycle * 0.15) + invader.swoop) * (16 + state.level * 1.2);
+            invader.y += Math.sin(state.waveTime * 3.1 + invader.swoop) * 5;
+          }
+
+          const canAttack = invader.type === "adversary" ||
+            (state.level >= 8 && invader.type === "priority") ||
+            (state.cycle >= 2 && invader.type === "high");
+          if (canAttack) {
+            invader.attackTimer -= dt;
+            if (invader.attackTimer <= 0) {
+              enemyFire(invader);
+              const cadenceJitter = 0.72 + Math.random() * 0.78;
+              invader.attackTimer = diff.attackInterval * cadenceJitter * (invader.type === "adversary" ? 0.82 : 1.25);
+            }
+          }
+
+          if (!invader.reached && invader.y + invader.h / 2 >= boundary) {
+            invader.reached = true;
+            invader.dead = true;
+            if (invader.type === "spam") state.leaks += 1;
+            state.score = Math.max(0, state.score - (invader.type === "spam" ? 80 : 45));
+            damageHealth(diff.leakDamage + (invader.type === "adversary" ? 8 : 0), invader.x, invader.y);
+            if (state.complete) return;
+          }
+        }
+
+        for (const bullet of state.bullets) {
+          if (bullet.hit) continue;
+          for (const invader of state.invaders) {
+            if (
+              bullet.x > invader.x - invader.w / 2 &&
+              bullet.x < invader.x + invader.w / 2 &&
+              bullet.y > invader.y - invader.h / 2 &&
+              bullet.y < invader.y + invader.h / 2
+            ) {
+              bullet.hit = true;
+              invader.hp -= bullet.damage;
+              burst(bullet.x, bullet.y, invader.color, invader.hp <= 0 ? 16 : 6);
+              if (invader.hp <= 0) {
+                state.score += invader.points;
+                state.boostCharge = Math.min(100, state.boostCharge + invader.charge);
+                invader.dead = true;
+              }
+              break;
+            }
+          }
+        }
+
+        state.bullets = state.bullets.filter((bullet) => !bullet.hit);
+        state.invaders = state.invaders.filter((invader) => !invader.dead);
+
+        for (const bullet of state.enemyBullets) {
+          const hitShip = bullet.x > state.ship.x - state.ship.w / 2 &&
+            bullet.x < state.ship.x + state.ship.w / 2 &&
+            bullet.y > state.ship.y - state.ship.h / 2 &&
+            bullet.y < state.ship.y + state.ship.h / 2;
+          if (hitShip) {
+            bullet.hit = true;
+            damageHealth(bullet.damage, bullet.x, bullet.y);
+            if (state.complete) return;
+          }
+        }
+        state.enemyBullets = state.enemyBullets.filter((bullet) => !bullet.hit);
+
+        for (const particle of state.particles) {
+          particle.x += particle.vx * dt;
+          particle.y += particle.vy * dt;
+          particle.vx *= 0.98;
+          particle.vy *= 0.98;
+          particle.life -= dt;
+        }
+        state.particles = state.particles.filter((particle) => particle.life > 0);
+
+        if (state.invaders.length === 0) {
+          state.score += Math.max(0, 500 - Math.floor(state.elapsedMs / 120));
+          advanceLevel();
+          return;
+        }
+
+        updateHud();
+      }
+
+      function drawShip(x, y) {
+        ctx.save();
+        ctx.translate(x, y);
+        const boostGlow = state.boostTimer > 0;
+        ctx.shadowColor = boostGlow ? "#80ff9f" : "#45f4ff";
+        ctx.shadowBlur = boostGlow ? 24 : 14;
+        ctx.fillStyle = boostGlow ? "#80ff9f" : "#45f4ff";
+        ctx.beginPath();
+        ctx.moveTo(0, -30);
+        ctx.lineTo(34, 22);
+        ctx.lineTo(11, 14);
+        ctx.lineTo(0, 28);
+        ctx.lineTo(-11, 14);
+        ctx.lineTo(-34, 22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#071326";
+        ctx.fillRect(-11, -2, 22, 20);
+        ctx.strokeStyle = "#e8f7ff";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawInvader(invader) {
+        const x = invader.x;
+        const y = invader.y;
+        const halfW = invader.w / 2;
+        const halfH = invader.h / 2;
+        ctx.save();
+        ctx.shadowColor = invader.color;
+        ctx.shadowBlur = invader.type === "priority" ? 18 : 10;
+        ctx.strokeStyle = invader.color;
+        ctx.fillStyle = invader.type === "spam"
+          ? "rgba(255,79,123,0.2)"
+          : invader.type === "adversary"
+            ? "rgba(255,159,28,0.2)"
+            : "rgba(69,244,255,0.12)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - halfW + 8, y - halfH);
+        ctx.lineTo(x + halfW - 8, y - halfH);
+        ctx.lineTo(x + halfW, y);
+        ctx.lineTo(x + halfW - 8, y + halfH);
+        ctx.lineTo(x - halfW + 8, y + halfH);
+        ctx.lineTo(x - halfW, y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        if (invader.type === "adversary") {
+          ctx.beginPath();
+          ctx.moveTo(x - 18, y - halfH - 5);
+          ctx.lineTo(x - 7, y - halfH);
+          ctx.moveTo(x + 18, y - halfH - 5);
+          ctx.lineTo(x + 7, y - halfH);
+          ctx.stroke();
+          ctx.fillRect(x - 5, y + halfH - 2, 10, 8);
+        }
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = invader.color;
+        ctx.font = "700 12px Trebuchet MS, Verdana, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(invader.label, x, y + 1);
+        if (invader.maxHp > 1) {
+          ctx.fillStyle = invader.hp < invader.maxHp ? "#ff4f7b" : "#ffd166";
+          ctx.fillRect(x - 14, y + halfH + 7, 28 * (invader.hp / invader.maxHp), 3);
+        }
+        ctx.restore();
+      }
+
+      function roundedRect(x, y, width, height, radius) {
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+      }
+
+      function draw(dt) {
+        const width = canvas.logicalWidth || canvas.width;
+        const height = canvas.logicalHeight || canvas.height;
+        ctx.clearRect(0, 0, width, height);
+
+        ctx.save();
+        for (const star of state.stars) {
+          const y = ((star.y * height) + state.waveTime * star.s) % height;
+          ctx.globalAlpha = star.a;
+          ctx.fillStyle = "#e8f7ff";
+          ctx.beginPath();
+          ctx.arc(star.x * width, y, star.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        const boundary = height - 118;
+        ctx.save();
+        ctx.strokeStyle = "rgba(255, 79, 123, 0.85)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([12, 10]);
+        ctx.shadowColor = "#ff4f7b";
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.moveTo(18, boundary);
+        ctx.lineTo(width - 18, boundary);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(255, 79, 123, 0.86)";
+        ctx.font = "700 13px Trebuchet MS, Verdana, sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText("BLOCK BOUNDARY: stop spam above this line", width - 22, boundary - 10);
+        ctx.restore();
+
+        ctx.save();
+        ctx.strokeStyle = "rgba(69, 244, 255, 0.08)";
+        ctx.lineWidth = 1;
+        for (let x = 0; x < width; x += 42) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < height; y += 42) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(width, y);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        for (const invader of state.invaders) drawInvader(invader);
+
+        ctx.save();
+        for (const bullet of state.bullets) {
+          ctx.shadowColor = bullet.color;
+          ctx.shadowBlur = 18;
+          ctx.fillStyle = bullet.color;
+          ctx.beginPath();
+          ctx.arc(bullet.x, bullet.y, bullet.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(bullet.x - 1.5, bullet.y, 3, 18);
+        }
+        ctx.restore();
+
+        ctx.save();
+        for (const bullet of state.enemyBullets) {
+          ctx.shadowColor = bullet.color;
+          ctx.shadowBlur = 16;
+          ctx.strokeStyle = bullet.color;
+          ctx.fillStyle = "rgba(255, 79, 123, 0.2)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(bullet.x, bullet.y, bullet.r + 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(bullet.x, bullet.y - 10);
+          ctx.lineTo(bullet.x, bullet.y + 12);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        for (const particle of state.particles) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, particle.life / particle.maxLife);
+          ctx.fillStyle = particle.color;
+          ctx.shadowColor = particle.color;
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        drawShip(state.ship.x, state.ship.y);
+
+        if (state.boostTimer > 0) {
+          ctx.save();
+          ctx.globalAlpha = 0.25 + Math.sin(state.waveTime * 16) * 0.08;
+          ctx.strokeStyle = "#80ff9f";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(state.ship.x, state.ship.y - 8, 58, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (state.levelBannerTimer > 0) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(1, state.levelBannerTimer / 0.6);
+          ctx.fillStyle = "rgba(4, 7, 19, 0.76)";
+          ctx.strokeStyle = "rgba(69, 244, 255, 0.44)";
+          ctx.lineWidth = 1;
+          const bannerWidth = Math.min(520, width - 44);
+          const bannerX = (width - bannerWidth) / 2;
+          ctx.beginPath();
+          roundedRect(bannerX, 24, bannerWidth, 58, 16);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = "#45f4ff";
+          ctx.font = "900 18px Trebuchet MS, Verdana, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(state.levelBanner, width / 2, 53);
+          ctx.restore();
+        }
+      }
+
+      function loop(now) {
+        if (!state.running) return;
+        if (!state.lastTime) state.lastTime = now;
+        const dt = Math.min(0.033, (now - state.lastTime) / 1000);
+        state.lastTime = now;
+        update(dt);
+        draw(dt);
+        if (state.running) requestAnimationFrame(loop);
+      }
+
+      function pointerX(event) {
+        const point = event.touches ? event.touches[0] : event;
+        const rect = canvas.getBoundingClientRect();
+        return ((point.clientX - rect.left) / rect.width) * canvas.logicalWidth;
+      }
+
+      window.addEventListener("keydown", (event) => {
+        if (["ArrowLeft", "ArrowRight", " ", "Shift", "a", "A", "d", "D"].includes(event.key)) {
+          event.preventDefault();
+        }
+        state.keys.add(event.key);
+        if (event.key === "Shift") activateBoost();
+      });
+
+      window.addEventListener("keyup", (event) => {
+        state.keys.delete(event.key);
+      });
+
+      canvas.addEventListener("pointermove", (event) => {
+        if (!state.running) return;
+        state.ship.x = Math.max(34, Math.min(canvas.logicalWidth - 34, pointerX(event)));
+      });
+
+      canvas.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        if (!state.running) return;
+        state.ship.x = Math.max(34, Math.min(canvas.logicalWidth - 34, pointerX(event)));
+        fire();
+      });
+
+      startBtn.addEventListener("click", () => resetGame(true));
+      playAgainBtn.addEventListener("click", () => resetGame(true));
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+        draw(0);
+      });
+
+      renderSessionStrip();
+      resizeCanvas();
+      makeStars();
+      resetGame(false);
+      postToParent("arcade-game-ready");
+    })();
+  </script>
+</body>
+</html>

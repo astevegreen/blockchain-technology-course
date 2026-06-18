@@ -1,0 +1,396 @@
+lesson_id: "03-CM"
+lesson_title: "Proof of Stake (PoS): Selection, Security, and Finality"
+source_path: "lessons/consensus_primitives/03-CM-pos.qmd"
+terms:
+  - term: "Proof of Work"
+    modifier: "consensus"
+    aliases: ["PoW"]
+    definition: "A consensus approach where security comes from costly computation that attackers must redo to rewrite history."
+    context: "The lesson uses PoW as the comparison point for understanding what PoS changes and what consensus requirements remain."
+    slide_heading: "Orientation: Proof of Work vs Proof of Stake"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Proof of Stake"
+    modifier: "consensus"
+    aliases: ["PoS"]
+    definition: "A consensus approach where validators lock capital and risk penalties while proposing, voting on, and finalizing blocks."
+    context: "The entire lesson explains how PoS replaces energy-based leader election with stake-weighted selection, duties, and punishments."
+    slide_heading: "Orientation: Proof of Work vs Proof of Stake"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Security budget"
+    modifier: "PoS"
+    aliases: []
+    definition: "The economic resources that make attacking the network expensive, measured in PoS by the stake and rewards at risk."
+    context: "The lesson contrasts PoW energy costs with PoS capital exposure as different ways to buy consensus honesty."
+    slide_heading: "Orientation: Proof of Work vs Proof of Stake"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Capital at risk"
+    modifier: "PoS"
+    aliases: ["staked capital", "bonded capital", "locked collateral"]
+    definition: "Validator funds locked under protocol rules that can be lost or delayed if the validator misbehaves or fails duties."
+    context: "Capital at risk is the economic pressure that makes PoS security different from proof-of-work energy expenditure."
+    slide_heading: "Orientation: Proof of Work vs Proof of Stake"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Public verifiability"
+    modifier: "PoS"
+    aliases: ["publicly verifiable"]
+    definition: "The property that validator assignments, votes, and punishment evidence can be checked by other participants from public protocol data."
+    context: "The lesson highlights public verifiability because stake-based selection and penalties only work if others can audit them."
+    slide_heading: "Orientation: Proof of Work vs Proof of Stake"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Validator"
+    modifier: "PoS role"
+    aliases: ["validators"]
+    definition: "A participant that has staked capital and performs PoS duties such as proposing blocks, attesting, and voting on checkpoints."
+    context: "Validators replace miners as the active consensus participants in the lesson's PoS model."
+    slide_heading: "Orientation: Proof of Work vs Proof of Stake"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Stake"
+    modifier: "PoS"
+    aliases: ["staked collateral", "staked capital"]
+    definition: "Locked value that gives a validator weight in consensus and can be reduced if the validator violates protocol rules."
+    context: "Stake determines both selection probability and the financial exposure that makes validator behavior accountable."
+    slide_heading: "Orientation: Proof of Work vs Proof of Stake"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Slot"
+    modifier: "PoS time unit"
+    aliases: ["slots"]
+    definition: "The basic PoS time unit in which a block proposer may be selected and a committee may attest to the proposed block."
+    context: "Slots structure validator work before those short-term decisions are grouped into epoch-level finality."
+    slide_heading: "Proof of Stake: The Full Lifecycle"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Epoch"
+    modifier: "PoS time unit"
+    aliases: ["epochs"]
+    definition: "A group of consecutive slots used to organize validator selection, checkpoints, and finality updates."
+    context: "Epochs let the protocol reason about batches of slots instead of finalizing every individual block separately."
+    slide_heading: "Proof of Stake: The Full Lifecycle"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Activation queue"
+    modifier: "PoS validator lifecycle"
+    aliases: ["activation epoch"]
+    definition: "The waiting process a staked node passes through before becoming an active validator."
+    context: "The activation queue helps the protocol manage validator churn rather than allowing unlimited instant entry."
+    slide_heading: "Proof of Stake: The Full Lifecycle"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Stake deposit"
+    modifier: "PoS validator lifecycle"
+    aliases: ["deposit stake", "validator deposit"]
+    definition: "The locked funds a participant provides to enter the validator set and become economically accountable."
+    context: "The lifecycle begins with a stake deposit, tying validator participation to capital that can be rewarded or penalized."
+    slide_heading: "Proof of Stake: The Full Lifecycle"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Unbonding period"
+    modifier: "PoS validator lifecycle"
+    aliases: ["unbonding", "cooldown"]
+    definition: "A delay after validator exit during which stake remains locked before withdrawal is allowed."
+    context: "Unbonding gives the system time to detect and punish old-key or exit-related misbehavior before funds leave."
+    slide_heading: "Proof of Stake: The Full Lifecycle"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Block proposer"
+    modifier: "PoS role"
+    aliases: ["proposer", "leader"]
+    definition: "The validator selected for a slot to choose transactions, build a candidate block, and propose it to the network."
+    context: "The proposer role explains who gets temporary control over block construction and transaction ordering in PoS."
+    slide_heading: "The Block Proposer: Selection and Building"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Stake-weighted selection"
+    modifier: "PoS"
+    aliases: ["stake-weighted randomness", "stake-weighted lottery"]
+    definition: "A selection process where validator assignment is random but the chance of selection is proportional to stake."
+    context: "Stake-weighted selection replaces the live proof-of-work race with a deterministic assignment derived from verifiable randomness."
+    slide_heading: "The Block Proposer: Selection and Building"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Transaction ordering"
+    modifier: "block proposal"
+    aliases: ["ordering power", "transaction inclusion"]
+    definition: "The proposer's ability to decide which pending transactions appear in a block and in what order."
+    context: "The lesson flags transaction ordering because proposer discretion creates performance, fairness, censorship, and MEV concerns."
+    slide_heading: "The Block Proposer: Selection and Building"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Maximal Extractable Value"
+    modifier: "block proposal"
+    aliases: ["MEV", "maximal extractable value"]
+    definition: "Value a block builder or proposer can gain from transaction ordering, inclusion, or exclusion choices."
+    context: "The speaker notes connect MEV to the proposer's control over block contents and ordering."
+    slide_heading: "The Block Proposer: Selection and Building"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Committee"
+    modifier: "PoS validator group"
+    aliases: ["validator committee", "committees"]
+    definition: "A randomly assigned subset of validators that checks a proposed block and votes on it for a slot or epoch."
+    context: "Committees make PoS scalable by letting smaller random groups stand in for the whole validator set."
+    slide_heading: "The Committee: Attestation and Validation"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Attestation"
+    modifier: "PoS vote"
+    aliases: ["attestations", "attest", "validator vote"]
+    definition: "A stake-weighted validator vote about a block, chain head, or checkpoint relationship."
+    context: "Attestations are the evidence committees produce to show that validators have independently checked and endorsed protocol state."
+    slide_heading: "The Committee: Attestation and Validation"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Quorum Certificate"
+    modifier: "PoS vote aggregation"
+    aliases: ["QC", "quorum certificate", "aggregate signature", "aggregated signatures"]
+    definition: "A compact proof formed by aggregating enough validator attestations to show that a quorum approved a block or checkpoint."
+    context: "Quorum certificates turn many individual votes into evidence the rest of the protocol can verify efficiently."
+    slide_heading: "The Committee: Attestation and Validation"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Canonical block"
+    modifier: "PoS"
+    aliases: ["canonical acceptance"]
+    definition: "A block treated as the accepted branch by the protocol after receiving enough stake-weighted support."
+    context: "The committee slide distinguishes a proposed block from one that has sufficient validator endorsement to be considered canonical."
+    slide_heading: "The Committee: Attestation and Validation"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Checkpoint"
+    modifier: "PoS finality"
+    aliases: ["epoch checkpoint", "finality anchor"]
+    definition: "A block at an epoch boundary used as an anchor for finality votes."
+    context: "Checkpoints let the protocol make finality decisions at epoch granularity instead of treating every slot as a separate finality target."
+    slide_heading: "Epochs and Checkpoints: Organizing Slots"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Justification"
+    modifier: "PoS finality"
+    aliases: ["justified link", "supermajority vote link"]
+    definition: "The state reached when a supermajority of total stake votes for a link between checkpoint epochs."
+    context: "Justification is the intermediate endorsement step that precedes irreversible finalization."
+    slide_heading: "Justification: Supermajority Vote Links"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Source checkpoint"
+    modifier: "PoS finality vote"
+    aliases: ["source epoch"]
+    definition: "The earlier checkpoint named in a validator vote that links one epoch boundary to another."
+    context: "Students need source and target checkpoint vocabulary to understand how justification votes are structured."
+    slide_heading: "Justification: Supermajority Vote Links"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Target checkpoint"
+    modifier: "PoS finality vote"
+    aliases: ["target epoch"]
+    definition: "The later checkpoint named in a validator vote that a source checkpoint is being linked to."
+    context: "Target checkpoints complete the source-to-target vote structure used to justify epoch links."
+    slide_heading: "Justification: Supermajority Vote Links"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Finalization"
+    modifier: "PoS finality"
+    aliases: ["finality", "finalized checkpoint"]
+    definition: "The protocol step that makes a checkpoint and its prior history economically irreversible under the stated assumptions."
+    context: "Finalization is the lesson's main bridge from short-term block acceptance to long-term consensus safety."
+    slide_heading: "Finalization: Irreversible History"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Irreversible history"
+    modifier: "PoS finality"
+    aliases: ["irreversibility", "finalized history"]
+    definition: "Blockchain history that cannot be reverted without large-scale slashable validator misconduct."
+    context: "The finalization slides explain why reverting finalized PoS history requires provable conflicting votes from a large amount of stake."
+    slide_heading: "Finalization: Irreversible History"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Slashing"
+    modifier: "PoS penalty"
+    aliases: ["slash", "slashed"]
+    definition: "A protocol penalty that removes validator stake when cryptographic evidence proves misbehavior."
+    context: "Slashing is the enforcement mechanism that turns cheap signatures and validator discretion into financially accountable behavior."
+    slide_heading: "Slashing — Making Misbehavior Expensive"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Cryptoeconomic penalty"
+    modifier: "PoS"
+    aliases: ["economic penalty", "protocol penalty"]
+    definition: "A punishment that combines cryptographic proof of a rule violation with an economic loss imposed by the protocol."
+    context: "The lesson uses cryptoeconomic penalties to show how PoS converts observable misconduct into financial consequences."
+    slide_heading: "Slashing — Making Misbehavior Expensive"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Equivocation"
+    modifier: "PoS offense"
+    aliases: ["double vote", "double proposal", "conflicting votes"]
+    definition: "Signing conflicting blocks or votes for the same slot, height, or consensus decision."
+    context: "Equivocation is the core slashable behavior that would otherwise let validators support multiple competing histories."
+    slide_heading: "Slashing — Making Misbehavior Expensive"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Surround vote"
+    modifier: "PoS offense"
+    aliases: ["surround votes", "protocol-violating vote pattern"]
+    definition: "A slashable voting pattern where one checkpoint vote improperly surrounds or wraps around a prior vote."
+    context: "Surround votes matter because finality rules need to prevent validators from creating conflicting checkpoint histories."
+    slide_heading: "Slashing — Making Misbehavior Expensive"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Correlated slashing"
+    modifier: "PoS penalty"
+    aliases: ["correlation penalty"]
+    definition: "A penalty design where validators lose more stake when many validators misbehave in the same period or pattern."
+    context: "Correlated slashing raises the cost of cartel behavior and coordinated attacks beyond isolated operator mistakes."
+    slide_heading: "Slashing — Making Misbehavior Expensive"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Signing key"
+    modifier: "PoS validator operations"
+    aliases: ["validator signing key"]
+    definition: "The online key a validator uses to sign block proposals, attestations, and other consensus messages."
+    context: "The lesson separates signing keys from withdrawal keys because operational keys must be online and therefore carry different risks."
+    slide_heading: "Becoming a Validator"
+    tags: ["consensus", "cryptography", "ethereum"]
+    confidence: "high"
+  - term: "Withdrawal key"
+    modifier: "PoS validator operations"
+    aliases: ["withdrawal credential"]
+    definition: "The offline key or credential used to control validator fund withdrawal and recovery."
+    context: "Withdrawal keys show that validator operations separate day-to-day consensus signing from custody of staked funds."
+    slide_heading: "Becoming a Validator"
+    tags: ["consensus", "cryptography", "ethereum"]
+    confidence: "high"
+  - term: "Fork choice rule"
+    modifier: "PoS consensus"
+    aliases: ["fork choice", "fork-choice rule", "fork-choice rules"]
+    definition: "The deterministic rule nodes use to choose the current chain head among competing viable branches."
+    context: "Fork choice handles temporary divergence before or alongside the stronger commitment provided by finality."
+    slide_heading: "Fork Choice Rules"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Chain head"
+    modifier: "PoS fork choice"
+    aliases: ["head", "current head"]
+    definition: "The block a node currently treats as the tip of the best chain to extend."
+    context: "The fork choice slide uses chain head selection to distinguish live branch choice from irreversible finality."
+    slide_heading: "Fork Choice Rules"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Safety"
+    modifier: "consensus"
+    aliases: ["consensus safety"]
+    definition: "The property that the protocol should not finalize conflicting checkpoints or later roll back committed history."
+    context: "The lesson frames PoS safety as an invariant supported by quorum thresholds, slashing, and honest-stake assumptions."
+    slide_heading: "Safety and Liveness — PoS Invariants"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Liveness"
+    modifier: "consensus"
+    aliases: ["consensus liveness"]
+    definition: "The property that the protocol eventually continues making progress and finalizing new checkpoints."
+    context: "The lesson contrasts liveness with safety to show why PoS may pause under bad network conditions instead of finalizing conflicting history."
+    slide_heading: "Safety and Liveness — PoS Invariants"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Eventual synchrony"
+    modifier: "distributed-systems assumption"
+    aliases: ["eventually synchronous network"]
+    definition: "A timing assumption that the network may be unreliable for a while but eventually delivers messages within usable bounds."
+    context: "PoS liveness depends on eventual synchrony because validators need a sufficiently healthy network to keep finalizing checkpoints."
+    slide_heading: "Safety and Liveness — PoS Invariants"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Honest supermajority"
+    modifier: "PoS assumption"
+    aliases: ["honest majority", "honest 2/3 stake"]
+    definition: "An assumption that enough stake follows the protocol, commonly two-thirds or more for finality decisions."
+    context: "The lesson uses the honest-supermajority assumption to explain when safety and liveness claims hold."
+    slide_heading: "Safety and Liveness — PoS Invariants"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Nothing-at-stake"
+    modifier: "PoS attack incentive"
+    aliases: ["nothing at stake"]
+    definition: "The incentive problem where validators can cheaply sign multiple competing forks unless penalties make that behavior costly."
+    context: "Nothing-at-stake motivates slashing as a necessary economic countermeasure in cheap-signature consensus."
+    slide_heading: "Nothing-at-Stake"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Staking rewards"
+    modifier: "PoS incentives"
+    aliases: ["validator rewards"]
+    definition: "Protocol payments that compensate validators for participating honestly and performing assigned duties."
+    context: "Rewards are one side of the lesson's economic security model, paired with penalties for misbehavior or inactivity."
+    slide_heading: "Nothing-at-Stake and Economic Security"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Inactivity leak"
+    modifier: "PoS penalty"
+    aliases: ["inactivity penalty"]
+    definition: "A mechanism that gradually reduces the balances of offline validators during extended non-participation so the chain can recover liveness."
+    context: "The lesson presents inactivity leaks as a way to restore progress when many validators are offline during partitions or failures."
+    slide_heading: "Nothing-at-Stake and Economic Security"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Penalty calibration"
+    modifier: "PoS protocol design"
+    aliases: ["penalty tuning"]
+    definition: "The process of setting rewards and punishments strong enough to deter attacks without making honest operation too risky."
+    context: "Penalty calibration shows that PoS security depends on parameter choices, not just the existence of slashing."
+    slide_heading: "Nothing-at-Stake and Economic Security"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Weak subjectivity"
+    modifier: "PoS bootstrapping"
+    aliases: []
+    definition: "The PoS property that new or long-offline nodes need a recent trusted checkpoint to identify the canonical chain safely."
+    context: "Weak subjectivity explains why PoS nodes cannot always choose the right history from genesis using cryptography alone."
+    slide_heading: "Weak Subjectivity"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Long-range attack"
+    modifier: "PoS"
+    aliases: ["fabricated alternative history", "old-key attack"]
+    definition: "An attack where old validator keys are used to sign an alternative chain history after those validators have exited."
+    context: "Long-range attacks are the concrete threat behind weak subjectivity and the need for recent checkpoints."
+    slide_heading: "Weak Subjectivity"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Trusted checkpoint"
+    modifier: "PoS bootstrapping"
+    aliases: ["recent trusted checkpoint", "checkpoint hash"]
+    definition: "A recent finalized block reference obtained from trusted or diverse sources before syncing a PoS node."
+    context: "Trusted checkpoints are the practical anchor that lets new or returning nodes avoid attacker-supplied alternative histories."
+    slide_heading: "Weak Subjectivity"
+    tags: ["consensus", "ethereum"]
+    confidence: "high"
+  - term: "Censorship"
+    modifier: "PoS attack"
+    aliases: ["transaction censorship"]
+    definition: "A proposer or validator strategy that deliberately omits or delays selected transactions from the chain."
+    context: "The lesson treats censorship as a risk created by temporary proposer discretion over transaction inclusion."
+    slide_heading: "Censorship, Bribery, and Eclipse"
+    tags: ["consensus", "policy"]
+    confidence: "high"
+  - term: "Bribery"
+    modifier: "PoS attack"
+    aliases: ["validator bribery"]
+    definition: "An attack where an adversary pays validators to vote for, build, or support a chosen block or chain."
+    context: "Bribery tests whether the protocol's stake at risk, reputation pressure, and slashing penalties outweigh external incentives."
+    slide_heading: "Censorship, Bribery, and Eclipse"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Eclipse attack"
+    modifier: "network attack"
+    aliases: ["eclipse", "network isolation"]
+    definition: "An attack that controls or hijacks a validator's network connections so it sees an attacker-shaped view of the chain."
+    context: "Eclipse attacks show that PoS security still depends on network hygiene and diverse communication paths, not only on-chain rules."
+    slide_heading: "Censorship, Bribery, and Eclipse"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"

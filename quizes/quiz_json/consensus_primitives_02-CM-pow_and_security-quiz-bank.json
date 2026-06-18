@@ -33,12 +33,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A student says PoW is secure because everyone has to redo the miner's work to check a block. Which correction best matches the lesson?",
+      "question_stem": "A student says PoW is secure because everyone has to redo the miner's work to check a block. Which correction is right?",
       "correct_answer": "Finding a valid header requires many trials, but verification needs one header hash and a comparison to the target.",
       "incorrect_answers": [
-        "Checking a candidate block requires solving a minor puzzle, while verification needs multiple recursive Merkle root checks.",
-        "Solving the puzzle requires extensive memory overhead, but verification needs only the block's transaction signature.",
-        "Hashing the entire block body requires repeated iterations, but verification needs matching the parent block's target level."
+        "Validators recompute the candidate header across many nonce values, then accept the first hash that matches the Merkle root.",
+        "Verification is cheap because miners attach a signed receipt proving how many hash attempts were made for the block.",
+        "Nodes check the transactions first; if every signature is valid, the nonce is assumed to represent enough work overall."
       ],
       "explanation": "The lesson frames PoW as costly production and cheap verification. A miner searches over many independent header hashes, while a validating node hashes the candidate header once and checks whether it is below the current target.",
       "difficulty_level": 2,
@@ -61,9 +61,9 @@
       "question_stem": "A miner has already found a block whose header hash is below target. If someone changes one transaction in the block body before relaying it, what should validators expect?",
       "correct_answer": "The transaction modification changes the Merkle root, which changes the header hash and invalidates the previously found work.",
       "incorrect_answers": [
-        "The changed transaction merely updates a wallet signature, so validators keep the old header hash and accept the nonce proof.",
-        "The block remains valid because PoW commits only to the previous block hash, leaving the changed body proof intact.",
-        "The fee edit triggers an automatic target recalculation, so the header difficulty changes and preserves the original mining work."
+        "Validators update the Merkle root while keeping the same nonce, so the old proof usually carries over to the edited block.",
+        "The block remains valid because PoW checks the previous block hash and target, not the transaction commitment in the header.",
+        "The transaction edit changes only fee accounting, so nodes recalculate miner revenue without changing the header being verified."
       ],
       "explanation": "The lesson emphasizes that miners hash the block header, and the Merkle root links the header to the transaction set. Changing a transaction changes the body commitment and therefore the header hash being tested against the target.",
       "difficulty_level": 3,
@@ -87,9 +87,9 @@
       "question_stem": "A protocol update lowers the PoW target while total network hash rate stays the same. What is the direct effect on mining?",
       "correct_answer": "A smaller fraction of hashes qualify, so valid blocks become rarer and expected work per block increases.",
       "incorrect_answers": [
-        "A larger proportion of nonces succeed, so block times become shorter and overall mining difficulty decreases.",
-        "The target value determines block sizes, so validation latency rises while expected block times stay constant.",
-        "Individual hash operations require more steps, so miner energy consumption surges while hashrate drops sharply."
+        "A smaller target gives miners fewer header values to search, so blocks arrive with less expected work overall.",
+        "Only compact target encoding changes, so block timing stays fixed until a separate difficulty update occurs.",
+        "Each hash operation becomes slower, so difficulty rises by making individual trials more computationally complex."
       ],
       "explanation": "The target defines the acceptable part of the hash-output space. Lowering the target shrinks that acceptable region, reducing success probability for each independent hash attempt.",
       "difficulty_level": 2,
@@ -112,9 +112,9 @@
       "question_stem": "Suppose the total network hash rate doubles but the target has not yet adjusted. What should happen before the next retarget?",
       "correct_answer": "Blocks should be found faster on average because the network is sampling the hash space more quickly.",
       "incorrect_answers": [
-        "Blocks should keep the same average interval because each miner's success probability automatically drops.",
-        "Blocks should be found more slowly because higher network hash power makes nonce attempts much harder.",
-        "The network should reject the extra hash rate because blocks must be verified by a manual retarget mechanism."
+        "Average timing stays fixed because each miner's success chance drops as more miners join before the retarget.",
+        "Blocks slow because miners collide in the same nonce space and cancel each other's attempts before retarget.",
+        "The target rises in each new block header immediately, preserving timing before the retarget rule runs."
       ],
       "explanation": "At a fixed target, each hash trial has the same success probability. More network hash rate means more trials per second, so the expected time to a valid block falls until difficulty adjustment responds.",
       "difficulty_level": 3,
@@ -135,12 +135,12 @@
     {
       "id": "q5",
       "question_type": "multiple_choice",
-      "question_stem": "Why does the lesson describe difficulty adjustment as a control loop rather than an exact scheduling mechanism?",
+      "question_stem": "Why is difficulty adjustment best described as a control loop rather than an exact scheduling mechanism?",
       "correct_answer": "It adjusts the target from observed block timing to stabilize the long-run average, but mining remains probabilistic and noisy.",
       "incorrect_answers": [
-        "It enables miners to coordinate on the next block's exact timestamp so that the pre-planned schedule is strictly enforced.",
-        "It computes precisely which mining pool must solve each subsequent block based on their historical hash contributions.",
-        "It eliminates all temporary forks by instructing all network nodes to discover the subsequent block at the exact same moment."
+        "It uses miner timestamps to set exact arrival times for the next window, so each block is scheduled once retargeting finishes.",
+        "It assigns lower difficulty to miners with less recent hash power, making discovery rotate predictably across participants.",
+        "It recomputes difficulty from pending transaction volume, so busier mempools produce precisely spaced blocks for users."
       ],
       "explanation": "Retargeting responds to observed production rates by making the target harder or easier. It can steer average block timing, but it cannot make individual block arrivals deterministic.",
       "difficulty_level": 3,
@@ -160,12 +160,12 @@
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "Two honest miners find valid blocks at nearly the same time, and different parts of the network hear about different blocks first. Which outcome best fits the lesson?",
+      "question_stem": "Two honest miners find valid blocks at nearly the same time, and different parts of the network hear about different blocks first. Which outcome is expected?",
       "correct_answer": "A temporary fork can form; one valid block may later become stale when the network converges on the heavier valid branch.",
       "incorrect_answers": [
-        "One block is automatically marked malicious because honest miners cannot create competing valid blocks at the same height.",
-        "Both blocks stay permanently final on the ledger, since each contains an independently verified proof of work.",
-        "Nodes merge both competing block bodies into one shared header, preserving every transaction without a stale block."
+        "Nodes keep the first block they saw forever, so different peers can settle into permanent valid histories at the same height.",
+        "Both blocks are rejected because two valid proofs at one height show that the target was set too easy for the network.",
+        "Nodes merge the two block bodies under a shared header, preserving both discoveries without leaving either branch stale."
       ],
       "explanation": "Because mining is decentralized and propagation is not instantaneous, honest simultaneous discoveries can create temporary forks. Fork choice resolves the competition, and valid work on the losing branch becomes stale.",
       "difficulty_level": 3,
@@ -189,9 +189,9 @@
       "question_stem": "A team proposes cutting the block interval sharply to make payments feel faster, while leaving network propagation unchanged. What security tradeoff should they expect?",
       "correct_answer": "More frequent competing discoveries can raise stale rates, wasting honest work and weakening effective security.",
       "incorrect_answers": [
-        "Shorter block intervals always improve security because every confirmation represents equal cumulative work as before.",
-        "Shorter block intervals eliminate double-spend risk because transactions achieve absolute settlement finality sooner.",
-        "Shorter intervals have no effect on fork rates because chain branch selection depends solely on total transaction fees."
+        "Security improves in proportion to block count because each shorter block carries the same expected work per confirmation.",
+        "The main tradeoff is larger miner rewards per hour, which increases the security budget while fork rates stay similar.",
+        "Fork rates stay mostly unchanged because propagation delay matters only when nodes perform a difficulty retarget."
       ],
       "explanation": "The lesson warns that block interval, block size, and network performance interact. Faster block targets may reduce apparent latency, but if propagation does not improve, stale rates and wasted honest work can rise.",
       "difficulty_level": 4,
@@ -212,12 +212,12 @@
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "A merchant accepts a high-value payment after one confirmation because a colleague says confirmations make PoW transactions final. Which response best reflects the lesson?",
+      "question_stem": "A merchant accepts a high-value payment after one confirmation because a colleague says confirmations make PoW transactions final. Which response is correct?",
       "correct_answer": "Confirmations reduce reversal probability as more work builds on the transaction, but they do not make reversal risk literally zero.",
       "incorrect_answers": [
-        "One confirmation is completely final because any subsequent chain reorganization would require breaking the signature scheme.",
-        "Confirmations are irrelevant because only the block header that directly contains the transaction establishes network security.",
-        "A transaction achieves full irreversibility the instant it propagates to miners' mempools, long before block inclusion occurs."
+        "One confirmation is final unless an attacker can forge the payer's signature, since valid blocks cannot be reorganized later.",
+        "Only the block containing the transaction matters; additional work on later blocks does not meaningfully change reversal cost.",
+        "Mempool relay gives practical finality, while block inclusion mainly adds a timestamp for wallets and explorers to display."
       ],
       "explanation": "PoW provides probabilistic finality. More confirmations make successful replacement increasingly expensive and unlikely under normal assumptions, but the model does not create absolute finality.",
       "difficulty_level": 3,
@@ -241,9 +241,9 @@
       "question_stem": "An attacker gains majority hash power for a short period. Which action is still blocked by ordinary validation rules?",
       "correct_answer": "Creating coins beyond the allowed rules or spending someone else's coins without valid signatures.",
       "incorrect_answers": [
-        "Reordering and reversing recent valid transactions by publishing a stronger alternative chain.",
-        "Censoring specific target transactions completely while the attacker controls candidate blocks.",
-        "Executing a successful double spend of the majority attacker's own previously confirmed payment."
+        "Mining a private branch that replaces the attacker's recent payment with another valid spend.",
+        "Omitting selected transactions from their blocks and extending branches that also omit them.",
+        "Releasing a valid branch with more cumulative work to trigger a short chain reorganization."
       ],
       "explanation": "The lesson distinguishes majority-hash capabilities from validation limits. Hash power can affect ordering, censorship, and recent history, but nodes still enforce signatures and monetary rules.",
       "difficulty_level": 3,
@@ -267,9 +267,9 @@
       "question_stem": "How does selfish mining differ from an ordinary stale block caused by propagation delay?",
       "correct_answer": "Selfish mining strategically withholds found blocks to gain a revenue advantage, often relying on propagation advantage and fork timing.",
       "incorrect_answers": [
-        "Selfish mining occurs when a miner accidentally loses a valid block because an honest peer propagated faster across the network.",
-        "Selfish mining requires forged transactions and custom coinbase outputs that honest validating nodes are forced to accept as valid.",
-        "Selfish mining is feasible only when one attacker controls every active pool and all ASIC supply contracts worldwide at once."
+        "Selfish mining is the accidental stale-block case where a miner loses a valid block because a peer propagated faster to the network.",
+        "Selfish mining is when a pool participant submits ordinary shares but hides a network-valid block within pool accounting records.",
+        "Selfish mining requires a strict majority and simply uses that power to outpace honest miners with a private chain for revenue."
       ],
       "explanation": "Stale blocks can arise naturally from honest timing races. Selfish mining is a strategic withholding attack that tries to exploit fork-choice dynamics and network advantage, and the lesson notes it need not require majority control.",
       "difficulty_level": 4,
@@ -290,12 +290,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "A node is surrounded only by attacker-controlled peers that feed it a locally plausible but incomplete view of blocks and transactions. What kind of attack is this lesson describing?",
+      "question_stem": "A node is surrounded only by attacker-controlled peers that feed it a locally plausible but incomplete view of blocks and transactions. What kind of attack is this?",
       "correct_answer": "An eclipse attack, because the attacker isolates the node's network view without breaking the cryptography.",
       "incorrect_answers": [
-        "A collision attack, because the attacker computes distinct headers that yield the same hash value.",
-        "A block-withholding attack, because the node submits pool shares while hiding a valid block from its operator.",
-        "A timestamp attack, because miners alter the node clock remotely through consensus and change its local time."
+        "A selfish-mining attack, because the attacker withholds blocks until the victim follows a private branch.",
+        "A block-withholding attack, because pool miners hide valid blocks while continuing to submit low-difficulty shares.",
+        "A majority-hash attack, because the attacker must control more work than the network before any peer view can change."
       ],
       "explanation": "The lesson treats eclipse attacks as network-layer attacks. They do not require breaking hash functions or signatures; they manipulate what the victim can see and therefore how it interprets consensus state.",
       "difficulty_level": 4,
@@ -319,9 +319,9 @@
       "question_stem": "Why can miner-supplied timestamps be security-relevant rather than harmless block metadata?",
       "correct_answer": "They feed validity checks and difficulty retargeting, so manipulation can influence the protocol's timing control loop.",
       "incorrect_answers": [
-        "They are the sole consensus field for deciding whether a block transaction set is cryptographically valid at every node.",
-        "They let miners bypass the target threshold entirely when the timestamp matches wall-clock time within five seconds.",
-        "They replace the parent header hash when nodes choose which chain has accumulated the most total work overall."
+        "They directly authenticate transaction signatures, so changing a timestamp invalidates every spend in the block.",
+        "They determine which nonce values are legal, so a close wall-clock time lets miners skip the target comparison.",
+        "They make the newest timestamped branch win fork choice, replacing cumulative-work comparisons between competing branches."
       ],
       "explanation": "The lesson highlights timestamp manipulation and time-warp attacks because timestamps are inputs to consensus checks and retargeting logic. Defenses constrain them, but they remain part of the attack surface.",
       "difficulty_level": 4,
@@ -342,12 +342,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "The reading says mining is not primarily about creating new coins. What is the best interpretation of that claim?",
+      "question_stem": "Mining is not primarily about creating new coins. What is the best interpretation of that claim?",
       "correct_answer": "Issuance and fees are incentives that pay miners to perform decentralized transaction validation, block construction, and chain security work.",
       "incorrect_answers": [
-        "New coin creation is fully decoupled from mining, since the maximum supply is generated before transaction validation starts and fees are ignored.",
-        "Mining's only real purpose is distributing new coins, while full nodes manage emergent consensus without proof of work in parallel.",
-        "Subsidies and fees are internal ledger labels only, so they cannot affect miner behavior or long-run chain security incentives at all."
+        "Rewards are bookkeeping side effects; full nodes reach consensus through validation alone without miners competing for new blocks or chain security.",
+        "Mining only orders transactions after they are already final, while issuance follows a separate premined monetary schedule outside mining.",
+        "Fees and subsidies mainly affect wallet balances, but they do not materially change miner incentives or long-run chain attack cost."
       ],
       "explanation": "The reading reframes mining as an incentive-supported consensus and security mechanism. Rewards motivate miners to build valid blocks and extend the most-work chain, rather than being the system's sole purpose.",
       "difficulty_level": 3,
@@ -369,12 +369,12 @@
     {
       "id": "q14",
       "question_type": "multiple_choice",
-      "question_stem": "In the reading, a miner creates a block with a coinbase reward above the allowed amount and also finds valid proof of work. What should happen?",
+      "question_stem": "A miner creates a block with a coinbase reward above the allowed amount and also finds valid proof of work. What should happen?",
       "correct_answer": "Full nodes reject the block as invalid, so the miner wastes the work despite solving the PoW puzzle.",
       "incorrect_answers": [
-        "The block is accepted because valid proof of work overrides coinbase inflation rules for that height.",
-        "Peers strip the excess reward and then validate the remaining block normally after rewriting coinbase output.",
-        "The block stays valid if most mining pools build on it before clients notice the reward error."
+        "Nodes accept the header but prune the excess output, preserving the block and its proof of work.",
+        "The block can become valid if enough later blocks build on it before the inflated reward is widely noticed.",
+        "The excess reward is treated as a high transaction fee and folded into the next miner payout."
       ],
       "explanation": "The reading emphasizes independent validation by full nodes. PoW does not give miners authority to violate transaction, coinbase, or monetary rules; invalid blocks are rejected.",
       "difficulty_level": 3,
@@ -396,12 +396,12 @@
     {
       "id": "q15",
       "question_type": "multiple_choice",
-      "question_stem": "A wallet sees two competing branches: one has more blocks, but the other represents more cumulative proof of work. According to the reading, which branch should be selected?",
+      "question_stem": "A wallet sees two competing branches: one has more blocks, but the other represents more cumulative proof of work. Which branch should be selected?",
       "correct_answer": "The valid branch with the most cumulative work, because security is based on accumulated PoW rather than raw block count alone.",
       "incorrect_answers": [
-        "The branch containing more blocks, because every block always represents exactly the same amount of hash work by consensus rule.",
-        "The branch first seen by the wallet, because physical arrival order is the consensus rule used to resolve competing forks.",
-        "The branch with more transactions, because transaction throughput determines ledger settlement strength for all nodes."
+        "The branch containing more blocks, because each valid block contributes equal work once difficulty has adjusted for the network.",
+        "The branch first seen by the wallet, because first-seen ordering prevents reorganizations after confirmations appear.",
+        "The branch with more total transaction fees, because fee revenue is the protocol's measure of settlement strength here."
       ],
       "explanation": "The reading adds the important nuance that chain selection is by valid chain with the most cumulative proof of work. This explains reorganizations and why confirmations are risk management rather than absolute finality.",
       "difficulty_level": 4,
@@ -426,9 +426,9 @@
       "question_stem": "Why do mining pools ask participants to submit shares that are easier than the network PoW target?",
       "correct_answer": "Shares provide statistical evidence of each participant's contributed hash work so the pool can allocate payouts even when it rarely finds a real block.",
       "incorrect_answers": [
-        "Shares represent lower-difficulty blocks that the wider Bitcoin protocol accepts as partial confirmations to reduce settlement times for merchant transactions.",
-        "Shares enable pool participants to bypass local transaction validation rules because the central pool operator has already verified and approved their work headers.",
-        "Shares permanently reduce the global consensus-level difficulty target for individual miners who coordinate within certified, managed pools."
+        "Shares are partial blocks that the wider Bitcoin network treats as weaker confirmations for pending transactions before a real block is mined.",
+        "Shares let the pool verify each miner's hardware identity, replacing proof-of-work checks with account credentials and pool-side trust records.",
+        "Shares reduce the global network target for pool members, giving pooled miners easier consensus blocks than solo miners can find under the same public rules."
       ],
       "explanation": "The reading explains pool shares as lower-difficulty PoW targets used for accounting. They measure contribution and smooth reward variance, but only a hash meeting the network target creates a valid block.",
       "difficulty_level": 3,

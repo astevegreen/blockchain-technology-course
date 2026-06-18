@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chain Graph — Bitcoin Lab</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">Chain Graph</div>
+    <div class="search-wrap">
+      <input id="search" type="text" spellcheck="false"
+             placeholder="Address or txid&hellip;">
+      <div id="search-results"></div>
+    </div>
+    <div class="filters">
+      <div class="seg" role="group" aria-label="View mode">
+        <button id="view-force" class="seg-btn active"
+                title="Force-directed investigation board">Force</button>
+        <button id="view-timeline" class="seg-btn"
+                title="Chronological — block height left to right, scrolls right">Timeline</button>
+      </div>
+      <label>From <input id="f-from" type="datetime-local"></label>
+      <label>To <input id="f-to" type="datetime-local"></label>
+      <label>Min value <input id="f-minv" type="number" min="0" step="0.001"
+             value="0" title="Hide counterparty flows below this value (BTC)"></label>
+      <span class="divider"></span>
+      <input id="path-from" class="addr-in" spellcheck="false"
+             placeholder="Path: from addr" title="Trace flows starting here">
+      <input id="path-to" class="addr-in" spellcheck="false"
+             placeholder="to addr" title="…to here">
+      <label class="hops">hops <input id="path-hops" type="number" min="1" max="50" value="5"></label>
+      <button id="btn-paths" title="Show money-flow paths between the two addresses">Find paths</button>
+      <button id="btn-into-graph" title="Find a path from the 'from' address into the nodes already on the graph (attach a second source wallet)">→ into graph</button>
+      <span class="divider"></span>
+      <button id="btn-fit">Fit</button>
+      <button id="btn-clear">Clear</button>
+      <button id="btn-png" title="Export the whole graph as a PNG image">PNG</button>
+      <button id="btn-csv" title="Export the visible nodes and flows as CSV">CSV</button>
+      <button id="btn-fullscreen" title="Toggle full screen">Full screen</button>
+    </div>
+    <div class="status" id="status-chip">loading&hellip;</div>
+  </header>
+
+  <main>
+    <div id="cy-wrap"><div id="cy"></div></div>
+    <aside id="panel">
+      <div id="panel-empty" class="muted">
+        <p><strong>Investigate the classroom chain.</strong></p>
+        <p>Search an address to plot its money flows. Circles are addresses
+           (colored by co-spend cluster), squares are transactions.
+           Double-click any address to expand one hop; click anything for
+           details, then <em>Expand flows</em> (set <em>hops</em>) to follow a
+           trail several steps at once. Right-click a node to trim it and
+           everything downstream.</p>
+        <p>Switch to <em>Timeline</em> to lay transactions out by block height,
+           oldest to newest. Or enter a <em>from</em> and <em>to</em> address
+           and <em>Find paths</em> to see the flows between them.</p>
+      </div>
+      <div id="panel-body" style="display:none"></div>
+    </aside>
+  </main>
+
+  <div id="banner" style="display:none"></div>
+
+  <script src="static/vendor/cytoscape.min.js"></script>
+  <script src="static/app.js"></script>
+</body>
+</html>

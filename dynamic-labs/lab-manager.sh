@@ -907,6 +907,7 @@ start_shared_infra() {
 
 build_lane_images() {
     local dir="$1"
+    local include_default_services="${2:-false}"
     local zellij_config="${BASE_DIR}/zellij-config.kdl"
     if [[ -f "${zellij_config}" ]] && [[ ! -f "${dir}/zellij-config.kdl" ]]; then
         cp -f "${zellij_config}" "${dir}/zellij-config.kdl"
@@ -925,6 +926,22 @@ build_lane_images() {
                 export HLF_ALLOW_RUNTIME_DOWNLOADS="${HLF_ALLOW_RUNTIME_DOWNLOADS:-1}"
             fi
             bash ./lab.sh prepare-build-assets
+        fi
+        if [[ "${include_default_services}" == "true" ]]; then
+            local -a _default_build_services=()
+            mapfile -t _default_build_services < <(docker compose config --format json 2>/dev/null \
+                | python3 -c 'import json,sys; data=json.load(sys.stdin); print("\n".join(name for name, svc in data.get("services", {}).items() if svc.get("build")))' 2>/dev/null) || true
+            if [[ ${#_default_build_services[@]} -gt 0 ]]; then
+                echo "  Building compose images: ${_default_build_services[*]}"
+                local default_build_output default_build_rc=0
+                default_build_output="$(docker compose build "${_default_build_services[@]}" 2>&1)" || default_build_rc=$?
+                echo "${default_build_output}" | tail -12
+                if [[ ${default_build_rc} -ne 0 ]]; then
+                    echo "  ERROR: Compose image build failed (exit code ${default_build_rc})." >&2
+                    echo "${default_build_output}" | tail -30 | sed 's/^/    /' >&2
+                    exit "${default_build_rc}"
+                fi
+            fi
         fi
         local -a _profile_services _default_services _lane_only_services
         mapfile -t _profile_services < <(docker compose --profile build-only config --services 2>/dev/null)
@@ -1307,13 +1324,13 @@ parse_build_images_args() {
     if [[ "${#targets[@]}" -eq 1 && "${targets[0]}" == "all" ]]; then
         while read -r target; do
             [[ "${target}" == "router" || "${target}" == "course-site" || "${target}" == "lane-service" || "${target}" == "instructor-auth-service" ]] && continue
-            build_lane_images "$(target_dir "${target}")"
+            build_lane_images "$(target_dir "${target}")" true
         done < <(list_targets)
         return
     fi
 
     for target in "${targets[@]}"; do
-        build_lane_images "$(target_dir "${target}")"
+        build_lane_images "$(target_dir "${target}")" true
     done
 }
 

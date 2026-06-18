@@ -196,7 +196,9 @@ def test_availability_windows_filter_student_visible_quizzes(app, client):
     expired_html = client.get("/student/quizzes").get_data(as_text=True)
 
     assert "Scheduled Quiz" in future_html
-    assert "Scheduled · opens 2999-01-01T00:00:00+00:00" in future_html
+    assert "Scheduled · opens" in future_html
+    assert 'datetime="2999-01-01T00:00:00+00:00"' in future_html
+    assert 'data-dynamic-labs-time="student">Local time</time>' in future_html
     assert "Locked until the scheduled start time." in future_html
     assert "Start quiz" not in future_html
     assert future_api["quizzes"][0]["title"] == "Scheduled Quiz"
@@ -235,7 +237,10 @@ def test_quiz_version_detail_uses_utc_picker_and_correct_answer_highlight(app, c
     )
 
     assert "data-availability-form" in detail_html
-    assert "<dt>Availability</dt><dd>2000-01-01T00:00:00+00:00 to 2999-01-01T00:00:00+00:00</dd>" in detail_html
+    assert "<dt>Availability</dt><dd>" in detail_html
+    assert 'datetime="2000-01-01T00:00:00+00:00"' in detail_html
+    assert 'datetime="2999-01-01T00:00:00+00:00"' in detail_html
+    assert 'data-dynamic-labs-time="instructor">2000-01-01 00:00 UTC</time>' in detail_html
     assert "data-server-utc-clock" in detail_html
     assert 'data-availability-calendar-button="from"' in detail_html
     assert 'data-availability-calendar-button="until"' in detail_html

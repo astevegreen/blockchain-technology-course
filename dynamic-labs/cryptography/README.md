@@ -12,7 +12,7 @@ You are analyzing the foundational cryptographic primitives that secure distribu
 ---
 
 ## Part 1: Hashing & Entropy 
-**Launch the App:** `streamlit run lab_app_p2.py` (Select "1. Hashing & Entropy" in the sidebar).
+**Launch the App:** `streamlit run Lab_2_Home.py` (Select "1. Hashing & Entropy" in the sidebar).
 
 ### Phase 1: Weak Hash Collisions
 You are analyzing a legacy financial system that relies on a weak 4-bit hash. 
@@ -35,14 +35,14 @@ An endpoint was encrypted by 'TimeLock' ransomware, which seeds its encryption k
 ---
 
 ## Part 2: Merkle Trees (Data Verification)
-**Launch the App:** `streamlit run lab_app_p2.py` (Select "2. Merkle Trees" in the sidebar).
+**Launch the App:** `streamlit run Lab_2_Home.py` (Select "2. Merkle Trees" in the sidebar).
 
 ### Phase 4: Building the Tree
 To scale the network, the organization is implementing Merkle Trees to batch transactions. 
 **Task:** Manually construct a 3-level Merkle Tree. 
 1. Use `list_tx` to see the base data.
-2. Hash the transactions and use `fill_leaf <idx> <hash>` to populate the bottom layer.
-3. Use the `combine <hash_L> <hash_R>` command to iteratively build the tree up to the Root.
+2. Hash the transactions and use `fill_leaf <Leaf-0..Leaf-7> <hash>` to populate the bottom layer.
+3. Use `combine <target_node> <hash_L> <hash_R>` to build each parent node, for example `combine L1-0 <Leaf-0 hash> <Leaf-1 hash>`.
 
 ### Phase 5: Verifying a Merkle Proof
 Two transactions have been flagged for review. One is valid, and one is a forgery that shares the same Merkle Root. 
@@ -55,7 +55,7 @@ Two transactions have been flagged for review. One is valid, and one is a forger
 ---
 
 ## Part 3: Symmetric vs Asymmetric Cryptography
-**Launch the App:** `streamlit run lab_app_p3.py`
+**Launch the App:** `streamlit run Lab_2_Home.py`
 
 ### Phase 6: Confidentiality vs Authentication
 Work through Scenarios 1 through 4 in the interactive terminal. You will manage public/private keypairs, orchestrate secure key distribution, identify forged organizational announcements, and analyze network scaling constraints.

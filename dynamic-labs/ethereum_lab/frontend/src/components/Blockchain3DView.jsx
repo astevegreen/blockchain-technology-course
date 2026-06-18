@@ -18,6 +18,7 @@ const HELIX_VERTICAL_STEP = 0.5;
 const FILTER_TRANSITION_DURATION = 1.4;
 const FILTER_LERP_SPEED = 0.065;
 const FILTER_DRIFT_AMOUNT = 8;
+const CHAIN_CACHE_POLL_MS = 4000;
 
 function getLayoutPosition(index, layout, yOffset = 0) {
   if (layout === 'helix') {
@@ -543,16 +544,76 @@ function ChainScene({ blocks, unclesMap, selectedBlock, onSelectBlock, layout, b
 
 function blockToRecord(block) {
   const txs = block.prefetchedTransactions ?? block.transactions ?? [];
+  const txCount = block.txCount != null
+    ? Number(block.txCount)
+    : Array.isArray(txs) ? txs.length : 0;
   return {
     number: Number(block.number),
     hash: block.hash,
     parentHash: block.parentHash,
     timestamp: block.timestamp,
-    txCount: Array.isArray(txs) ? txs.length : 0,
+    txCount,
     uncles: [],
     layer: block.layer || 'L1',
     isNewBlock: false,
   };
+}
+
+function getLabBasePath() {
+  return (((typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL) || '/').replace(/\/$/, ''));
+}
+
+async function readCachedChainState() {
+  const base = getLabBasePath();
+  for (const url of [base + '/chain-state', base + '/lab-api/chain/state']) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const snapshot = await res.json();
+      if (snapshot?.ok && Array.isArray(snapshot.blocks)) return snapshot;
+    } catch (_) {}
+  }
+  return null;
+}
+
+function selectCachedBlocks(snapshot, blockRange, previousHead = null) {
+  const latest = Number(snapshot?.head ?? 0);
+  const cached = (snapshot?.blocks || [])
+    .map((block) => {
+      const record = blockToRecord(block);
+      record.layer = 'L1';
+      record.isNewBlock = previousHead != null && record.number > previousHead;
+      return record;
+    })
+    .filter((block) => Number.isFinite(block.number))
+    .sort((a, b) => a.number - b.number);
+
+  let selected = cached;
+  if (blockRange.mode === 'last') {
+    selected = cached.slice(-(blockRange.count || 500));
+  } else if (blockRange.mode === 'custom') {
+    const from = Math.max(0, blockRange.from ?? 0);
+    const to = Math.min(latest, blockRange.to ?? latest);
+    selected = cached.filter((block) => block.number >= from && block.number <= to);
+  }
+  return selected.slice(-RENDER_CAP);
+}
+
+function buildDemoL2Blocks() {
+  const demo = [];
+  for (let i = 0; i < 8; i++) {
+    demo.push({
+      number: 9000 + i,
+      hash: '0x' + '0'.repeat(63) + i.toString(16),
+      parentHash: '0x' + '0'.repeat(63) + (i ? (i - 1).toString(16) : '0'),
+      timestamp: Math.floor(Date.now() / 1000) - (8 - i) * 12,
+      txCount: 5 + i,
+      uncles: [],
+      layer: 'L2',
+      isNewBlock: false,
+    });
+  }
+  return demo;
 }
 
 export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2Prop = false, l2Mode = false, showL2Info = false }) {
@@ -575,46 +636,50 @@ export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2P
   const [contractSearchLoading, setContractSearchLoading] = useState(false);
   const [contractSearchError, setContractSearchError] = useState(null);
   const lastKnownRef = useRef(null);
-  const blockSubscriptionRef = useRef(null);
   const pollIntervalRef = useRef(null);
   const scanAbortRef = useRef(false);
 
-  const fetchBlockRange = useCallback(
-    async (start, end, append = false) => {
-      if (!provider) return [];
-      const fetched = [];
-      const cap = Math.min(end - start + 1, RENDER_CAP);
-      for (let i = start; i <= end && fetched.length < cap; i++) {
-        try {
-          const block = await provider.getBlock(i, true);
+  const loadL2Blocks = useCallback(async () => {
+    if (l2Provider) {
+      try {
+        const l2Latest = Number(await l2Provider.getBlockNumber());
+        const l2Start = Math.max(0, l2Latest - 30);
+        const l2Blocks = [];
+        for (let i = l2Start; i <= l2Latest && l2Blocks.length < 31; i++) {
+          const block = await l2Provider.getBlock(i, true);
           if (block) {
             const rec = blockToRecord(block);
-            rec.layer = 'L1';
-            fetched.push(rec);
+            rec.layer = 'L2';
+            l2Blocks.push(rec);
           }
-        } catch (_) {}
+        }
+        return l2Blocks;
+      } catch (_) {
+        return [];
       }
-      if (append) {
-        setBlocks((prev) => {
-          const next = [...prev, ...fetched];
-          if (blockRange.mode === 'last' && blockRange.count && next.length > blockRange.count) {
-            return next.slice(-blockRange.count);
-          }
-          return next.slice(-RENDER_CAP);
-        });
-      } else {
-        setBlocks(fetched);
-      }
-      return fetched;
-    },
-    [provider, blockRange.mode, blockRange.count]
-  );
+    }
+    return demoL2 ? buildDemoL2Blocks() : [];
+  }, [l2Provider, demoL2]);
 
   const initialFetch = useCallback(async () => {
-    if (!provider) return;
     setLoading(true);
     setError(null);
     try {
+      const cached = await readCachedChainState();
+      if (cached) {
+        const latest = Number(cached.head ?? 0);
+        const previous = lastKnownRef.current;
+        const fetched = selectCachedBlocks(cached, blockRange, previous);
+        const l2Blocks = await loadL2Blocks();
+        setBlocks([...fetched, ...l2Blocks].slice(-RENDER_CAP));
+        setUnclesMap(new Map());
+        setLastKnownBlock(latest);
+        lastKnownRef.current = latest;
+        return;
+      }
+
+      if (!provider) throw new Error('Chain cache unavailable and no direct RPC provider connected.');
+
       const latest = Number(await provider.getBlockNumber());
       lastKnownRef.current = latest;
 
@@ -639,7 +704,6 @@ export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2P
           fetched.push(rec);
         }
       }
-      setBlocks(fetched);
       setLastKnownBlock(latest);
 
       const unclesMapNext = new Map();
@@ -662,110 +726,54 @@ export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2P
       }
       setUnclesMap(unclesMapNext);
 
-      if (l2Provider) {
-        try {
-          const l2Latest = Number(await l2Provider.getBlockNumber());
-          const l2Start = Math.max(0, l2Latest - 30);
-          const l2Blocks = [];
-          for (let i = l2Start; i <= l2Latest && l2Blocks.length < 31; i++) {
-            const block = await l2Provider.getBlock(i, true);
-            if (block) {
-              const rec = blockToRecord(block);
-              rec.layer = 'L2';
-              l2Blocks.push(rec);
-            }
-          }
-          setBlocks((prev) => [...prev, ...l2Blocks]);
-        } catch (_) {}
-      } else if (demoL2) {
-        const demo = [];
-        for (let i = 0; i < 8; i++) {
-          demo.push({
-            number: 9000 + i,
-            hash: '0x' + '0'.repeat(63) + i.toString(16),
-            parentHash: '0x' + '0'.repeat(63) + (i ? (i - 1).toString(16) : '0'),
-            timestamp: Math.floor(Date.now() / 1000) - (8 - i) * 12,
-            txCount: 5 + i,
-            uncles: [],
-            layer: 'L2',
-            isNewBlock: false,
-          });
-        }
-        setBlocks((prev) => [...prev, ...demo]);
-      }
+      const l2Blocks = await loadL2Blocks();
+      setBlocks([...fetched, ...l2Blocks].slice(-RENDER_CAP));
     } catch (err) {
       setError(err.message || 'Failed to fetch blocks');
       setBlocks([]);
     } finally {
       setLoading(false);
     }
-  }, [provider, l2Provider, demoL2, blockRange.mode, blockRange.count, blockRange.from, blockRange.to]);
-
-  const appendNewBlocks = useCallback(
-    async (fromBlock, toBlock) => {
-      if (!provider || fromBlock > toBlock) return;
-      const newBlocks = [];
-      for (let i = fromBlock; i <= toBlock; i++) {
-        try {
-          const block = await provider.getBlock(i, true);
-          if (block) {
-            const rec = blockToRecord(block);
-            rec.layer = 'L1';
-            rec.isNewBlock = true;
-            newBlocks.push(rec);
-          }
-        } catch (_) {}
-      }
-      if (newBlocks.length > 0) {
-        setBlocks((prev) => {
-          let next = [...prev, ...newBlocks];
-          if (blockRange.mode === 'last' && blockRange.count && next.length > blockRange.count) {
-            next = next.slice(-blockRange.count);
-          }
-          return next.slice(-RENDER_CAP);
-        });
-        setTimeout(() => {
-          setBlocks((p) =>
-            p.map((b) => (b.isNewBlock ? { ...b, isNewBlock: false } : b))
-          );
-        }, 2000);
-      }
-      setLastKnownBlock(toBlock);
-      lastKnownRef.current = toBlock;
-    },
-    [provider, blockRange.mode, blockRange.count]
-  );
+  }, [provider, loadL2Blocks, blockRange.mode, blockRange.count, blockRange.from, blockRange.to]);
 
   useEffect(() => {
     initialFetch();
   }, [initialFetch]);
 
   useEffect(() => {
-    if (!provider) return;
+    let cancelled = false;
     const poll = async () => {
       try {
-        const latest = Number(await provider.getBlockNumber());
-        const last = lastKnownRef.current ?? 0;
-        if (latest > last) {
-          await appendNewBlocks(last + 1, latest);
+        const cached = await readCachedChainState();
+        if (!cached || cancelled) return;
+        const latest = Number(cached.head ?? 0);
+        const previous = lastKnownRef.current;
+        const fetched = selectCachedBlocks(cached, blockRange, previous);
+        setBlocks((prev) => {
+          const l2Blocks = prev.filter((block) => block.layer === 'L2');
+          return [...fetched, ...l2Blocks].slice(-RENDER_CAP);
+        });
+        setUnclesMap(new Map());
+        setLastKnownBlock(latest);
+        lastKnownRef.current = latest;
+        setError(null);
+        setLoading(false);
+        if (previous != null && latest > previous) {
+          setTimeout(() => {
+            setBlocks((p) =>
+              p.map((b) => (b.isNewBlock ? { ...b, isNewBlock: false } : b))
+            );
+          }, 2000);
         }
       } catch (_) {}
     };
-    if (typeof provider.on === 'function') {
-      const handler = (blockNumber) => {
-        const n = Number(blockNumber);
-        const last = lastKnownRef.current ?? 0;
-        if (n > last) appendNewBlocks(last + 1, n);
-      };
-      provider.on('block', handler);
-      blockSubscriptionRef.current = () => provider.off?.('block', handler);
-    }
-    pollIntervalRef.current = setInterval(poll, 2500);
+    poll();
+    pollIntervalRef.current = setInterval(poll, CHAIN_CACHE_POLL_MS);
     return () => {
-      if (blockSubscriptionRef.current) blockSubscriptionRef.current();
+      cancelled = true;
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
     };
-  }, [provider, appendNewBlocks]);
+  }, [blockRange.mode, blockRange.count, blockRange.from, blockRange.to]);
 
   const refetchForRange = useCallback(() => {
     initialFetch();
@@ -774,7 +782,11 @@ export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2P
   const scanContract = useCallback(
     async (addressInput) => {
       const raw = (addressInput || contractSearchInput || contractFilter || '').trim();
-      if (!raw || !provider) return;
+      if (!raw) return;
+      if (!provider) {
+        setContractSearchError('Contract search requires a direct RPC URL. Add ?rpc=... to use this on demand.');
+        return;
+      }
       const normalized = raw.startsWith('0x') ? raw.toLowerCase() : '0x' + raw.toLowerCase();
       if (!/^0x[a-f0-9]{40}$/.test(normalized)) {
         setContractSearchError('Enter a valid address (0x + 40 hex chars)');
@@ -893,14 +905,6 @@ export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2P
           : `Blocks 0–${blocks[blocks.length - 1]?.number ?? 0}`
       : '';
 
-  if (!provider) {
-    return (
-      <div style={{ padding: '2rem', background: '#0a0a0f', color: '#64748b', borderRadius: '0.5rem', textAlign: 'center' }}>
-        No provider. Connect to a chain first.
-      </div>
-    );
-  }
-
   if (loading && blocks.length === 0) {
     return (
       <div style={{ padding: '2rem', background: '#0a0a0f', color: '#22ff88', borderRadius: '0.5rem', textAlign: 'center', fontFamily: 'monospace' }}>
@@ -968,7 +972,7 @@ export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2P
             Live
           </span>
         </div>
-        <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '0.5rem' }}>{rpcUrl || 'localhost:8545'}</div>
+        <div style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '0.5rem' }}>{provider ? (rpcUrl || 'localhost:8545') : 'classroom cache: /chain-state'}</div>
         <div style={{ color: '#94a3b8', fontSize: '0.8rem', marginBottom: '1rem' }}>{blockRangeLabel} · {blocks.length} blocks</div>
 
         <div style={{ marginBottom: '1rem' }}>
@@ -1058,6 +1062,7 @@ export function Blockchain3DView({ provider, rpcUrl, l2Provider, demoL2: demoL2P
               Clear
             </button>
           </div>
+          {!provider && <div style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>Contract search is disabled in cache-only classroom mode.</div>}
           {contractSearchError && <div style={{ color: '#f87171', fontSize: '0.75rem', marginTop: '0.25rem' }}>{contractSearchError}</div>}
         </div>
 

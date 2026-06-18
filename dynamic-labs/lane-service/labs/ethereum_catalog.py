@@ -12,55 +12,48 @@ CATALOG = {
     "intro": {
         "title": "Ethereum Immersive",
         "summary": (
-            "A multi-view SPA covering Proof-of-Stake fundamentals, "
-            "smart contract development, ERC-721 tokenization, forensics, "
-            "and a live beacon-chain simulator — all against a shared "
-            "Hardhat node."
+            "A live Proof-of-Stake beacon-chain simulator and a GUI smart-contract "
+            "workshop (compile, deploy, and interact — no CLI), all against a shared "
+            "Hardhat node with an on-chain explorer."
         ),
     },
     "exercises": [
-        # --- Learn Trail ---
-        {"id": "eth-trail-intro", "chapter": "learn-trail", "title": "Orientation"},
-        {"id": "eth-trail-concepts", "chapter": "learn-trail", "title": "Concepts"},
-        {"id": "eth-trail-explore", "chapter": "learn-trail", "title": "Explore Missions"},
+        # Active course surface only. Keep this catalog aligned with the
+        # learner-accessible flows so the instructor progress panel stays accurate.
+        # Re-add exercise IDs here if additional surfaces are enabled in App.jsx.
 
-        # --- Explore Missions (quiz / mini-lab) ---
-        {"id": "eth-explore-staking", "chapter": "explore", "title": "Understanding Staking"},
-        {"id": "eth-explore-validators", "chapter": "explore", "title": "Validator Responsibilities"},
-        {"id": "eth-explore-slashing", "chapter": "explore", "title": "Slashing: The Penalty System"},
-        {"id": "eth-explore-defi", "chapter": "explore", "title": "DeFi: Staking Beyond Validation"},
-        {"id": "eth-explore-rewards", "chapter": "explore", "title": "Staking Rewards Economics"},
-        {"id": "eth-explore-attack-cost", "chapter": "explore", "title": "Attack Cost Scenario"},
-        {"id": "eth-explore-chain", "chapter": "explore", "title": "Observe the Chain"},
-        {"id": "eth-explore-address", "chapter": "explore", "title": "Decode an Address"},
-
-        # --- Simulator / Live / Tokens ---
-        {"id": "eth-sim", "chapter": "core", "title": "PoS Validator Simulator"},
+        # --- Live dashboard ---
         {"id": "eth-live", "chapter": "core", "title": "Live Network"},
-        {"id": "eth-tokens", "chapter": "core", "title": "Token Gallery"},
-
-        # --- CLI & Diagnostics ---
-        {"id": "eth-cli", "chapter": "cli", "title": "CLI Labs Reference"},
-        {"id": "eth-diagnostics", "chapter": "cli", "title": "Diagnostics"},
 
         # --- Beacon Chain Lab ---
         {"id": "eth-beacon-lab", "chapter": "beacon", "title": "Beacon Chain Lab"},
 
-        # --- Contract Builder Lab (6 steps) ---
-        {"id": "eth-contract-write", "chapter": "contract-builder", "title": "Write Your Contract"},
-        {"id": "eth-contract-prereqs", "chapter": "contract-builder", "title": "Prerequisites"},
-        {"id": "eth-contract-deploy", "chapter": "contract-builder", "title": "Deploy"},
-        {"id": "eth-contract-share", "chapter": "contract-builder", "title": "Share"},
-        {"id": "eth-contract-interact", "chapter": "contract-builder", "title": "Interact (Partner)"},
-        {"id": "eth-contract-verify", "chapter": "contract-builder", "title": "Verify"},
+        # --- Smart Contract Lab (GUI: write -> deploy -> interact) ---
+        {"id": "eth-contract-write", "chapter": "contract-builder", "title": "Write / Choose a Contract"},
+        {"id": "eth-contract-compile", "chapter": "contract-builder", "title": "Compile Contract"},
+        {"id": "eth-contract-deploy", "chapter": "contract-builder", "title": "Deploy from Wallet"},
+        {"id": "eth-contract-review-class-contracts", "chapter": "contract-builder", "title": "Review Class Contracts"},
+        {"id": "eth-contract-interact", "chapter": "contract-builder", "title": "Interact On-Chain"},
+        {"id": "eth-contract-peer-open", "chapter": "contract-builder", "title": "Find a Peer Contract"},
+        {"id": "eth-contract-peer-interact", "chapter": "contract-builder", "title": "Interact with Peer Contract"},
+        {"id": "eth-contract-event-receipt", "chapter": "contract-builder", "title": "Inspect Event Receipt"},
+        {"id": "eth-contract-bytecode", "chapter": "contract-builder", "title": "Inspect Contract Bytecode"},
+        {"id": "eth-contract-disasm", "chapter": "contract-builder", "title": "Inspect Contract Disassembly"},
 
-        # --- Tokenization Lab (6 steps) ---
-        {"id": "eth-token-erc721", "chapter": "tokenization", "title": "Read & Explain ERC-721"},
-        {"id": "eth-token-evm", "chapter": "tokenization", "title": "EVM Deep Dive: mint()"},
-        {"id": "eth-token-deploy", "chapter": "tokenization", "title": "Deploy & Trace"},
-        {"id": "eth-token-metadata", "chapter": "tokenization", "title": "Metadata & Data URI"},
-        {"id": "eth-token-transfer", "chapter": "tokenization", "title": "Transfer to Another Student"},
-        {"id": "eth-token-sale", "chapter": "tokenization", "title": "Build a Sale Contract"},
+        # --- Tokenization Lab ---
+        {"id": "eth-token-erc721", "chapter": "tokenization", "title": "Load ERC-721 Classroom Contracts"},
+        {"id": "eth-token-metadata", "chapter": "tokenization", "title": "Claim Static-Art Theme"},
+        {"id": "eth-token-deploy", "chapter": "tokenization", "title": "Mint Five NFT Variants"},
+        {"id": "eth-token-evm", "chapter": "tokenization", "title": "Verify Ownership and Metadata"},
+        {"id": "eth-token-transfer", "chapter": "tokenization", "title": "Transfer an NFT"},
+        {"id": "eth-token-sale", "chapter": "tokenization", "title": "List or Buy an NFT"},
+
+        # --- Fungible Token Arcade Lab ---
+        {"id": "eth-ft-load", "chapter": "tokenization", "title": "Load ERC-20 Arcade Contracts"},
+        {"id": "eth-ft-buy", "chapter": "tokenization", "title": "Buy 1 ARC"},
+        {"id": "eth-ft-approve", "chapter": "tokenization", "title": "Approve Arcade Vault"},
+        {"id": "eth-ft-play", "chapter": "tokenization", "title": "Spend ARC to Start a Game"},
+        {"id": "eth-ft-burn-verify", "chapter": "tokenization", "title": "Verify Burn and Session"},
     ],
 }
 

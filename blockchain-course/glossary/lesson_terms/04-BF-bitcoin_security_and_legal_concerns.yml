@@ -1,0 +1,532 @@
+lesson_id: "04-BF"
+lesson_title: "Bitcoin Security and Legal Concerns"
+source_path: "lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd"
+terms:
+  - term: "Double-spend"
+    modifier: "Bitcoin"
+    aliases: ["double-spending", "double spend"]
+    definition: "An attack attempt that uses the same bitcoin value in conflicting payments by reversing, delaying, or replacing a recent transaction."
+    context: "The lesson uses double-spends as the clearest fraud goal behind consensus, network, and smaller-chain attacks."
+    slide_heading: "Why Attack Bitcoin?"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Transaction censorship"
+    modifier: "Bitcoin"
+    aliases: ["censorship", "selective censorship"]
+    definition: "The deliberate delay or exclusion of selected transactions from relay or confirmation."
+    context: "Censorship is framed as a possible attacker objective for states, institutions, or miners seeking policy control rather than immediate theft."
+    slide_heading: "Why Attack Bitcoin?"
+    tags: ["bitcoin", "policy"]
+    confidence: "high"
+  - term: "Strategic disruption"
+    modifier: null
+    aliases: ["economic disruption", "price dislocation"]
+    definition: "An attack goal focused on causing instability, fear, or market movement rather than directly stealing coins."
+    context: "The lesson broadens adversary motivation beyond profit to include trust erosion and political or economic leverage."
+    slide_heading: "Why Attack Bitcoin?"
+    tags: ["bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Consensus attack"
+    modifier: "Bitcoin"
+    aliases: ["consensus-layer attack"]
+    definition: "An attack that tries to manipulate which recent ledger history honest nodes accept as the valid chain."
+    context: "Students use this category to connect double-spends, censorship, reorganizations, and ledger splits to Bitcoin's fork-choice behavior."
+    slide_heading: "What Can Consensus Attacks Achieve?"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Chain reorganization"
+    modifier: "Bitcoin"
+    aliases: ["reorg", "block reorganization", "ledger rewrite"]
+    definition: "A change in which a competing branch replaces recent blocks that were previously treated as part of the accepted chain."
+    context: "The lesson treats short and deep reorganizations as the mechanism that can reverse payments and weaken settlement confidence."
+    slide_heading: "What Can Consensus Attacks Achieve?"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Ledger split"
+    modifier: "Bitcoin"
+    aliases: ["network split", "conflicting ledger views"]
+    definition: "A condition where different parts of the network temporarily see incompatible versions of the ledger."
+    context: "Ledger splits matter because they create confusion about payment status and undermine confidence in the shared history."
+    slide_heading: "What Can Consensus Attacks Achieve?"
+    tags: ["bitcoin", "distributed-systems"]
+    confidence: "high"
+  - term: "Sybil attack"
+    modifier: "Bitcoin network"
+    aliases: ["Sybil pressure", "fake peer attack"]
+    definition: "A network attack where one adversary creates many attacker-controlled identities so a victim is more likely to connect to them."
+    context: "The lesson frames Sybil pressure as a way to distort a target node's Bitcoin network view without controlling global hash power."
+    slide_heading: "Sybil Attacks"
+    tags: ["bitcoin", "distributed-systems"]
+    confidence: "high"
+  - term: "Eclipse attack"
+    modifier: "Bitcoin network"
+    aliases: ["eclipse-style isolation"]
+    definition: "A targeted attack that surrounds a wallet, merchant, or full node with attacker-controlled peers so it sees a distorted network view."
+    context: "Eclipse attacks are the practical goal of many Sybil-style efforts because they enable delayed relay, bad fee estimates, and targeted double-spends."
+    slide_heading: "Sybil Attacks"
+    tags: ["bitcoin", "distributed-systems"]
+    confidence: "high"
+  - term: "Peer table"
+    modifier: "Bitcoin network"
+    aliases: ["peer list", "address table"]
+    definition: "A node's local record of known or connected peers used to decide which network connections to maintain."
+    context: "Attackers try to fill or bias peer tables so a target reconnects mostly to adversarial peers."
+    slide_heading: "Sybil Attacks"
+    tags: ["bitcoin", "distributed-systems"]
+    confidence: "high"
+  - term: "Peer diversity"
+    modifier: "Bitcoin network"
+    aliases: ["address diversity", "connection diversity"]
+    definition: "The practice of connecting across different subnets, providers, regions, and discovery sources so one attacker or network domain cannot dominate a node's view."
+    context: "The lesson presents weak peer diversity as an eclipse risk and diverse connectivity as a core mitigation."
+    slide_heading: "Sybil Attacks"
+    tags: ["bitcoin", "distributed-systems"]
+    confidence: "high"
+  - term: "51% attack"
+    modifier: "proof of work"
+    aliases: ["majority attack", "majority hash attack"]
+    definition: "A proof-of-work attack where an adversary controls enough mining power to outpace honest miners and influence recent chain history."
+    context: "The lesson contrasts this global block-production threat with local network-view attacks and later grounds it in the Bitcoin Gold case study."
+    slide_heading: "Sybil Attacks"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Partitioning attack"
+    modifier: "Bitcoin network"
+    aliases: ["network partition attack", "routing partition"]
+    definition: "An attack that splits nodes or miners into different network views so they stop learning about the same blocks at the same time."
+    context: "Partitioning shows that Bitcoin security also depends on ordinary Internet routing and topology, not only consensus rules."
+    slide_heading: "Partitioning Attacks"
+    tags: ["bitcoin", "distributed-systems"]
+    confidence: "high"
+  - term: "BGP hijack"
+    modifier: null
+    aliases: ["Border Gateway Protocol hijack", "route hijack"]
+    definition: "An Internet routing attack where traffic is redirected by falsely announcing network paths."
+    context: "The lesson uses BGP hijacks as a real-world mechanism that could isolate or delay Bitcoin traffic."
+    slide_heading: "Partitioning Attacks"
+    tags: ["distributed-systems", "real-world"]
+    confidence: "high"
+  - term: "Route leak"
+    modifier: null
+    aliases: ["routing leak"]
+    definition: "An Internet routing incident where routes are incorrectly propagated, causing traffic to take unintended paths."
+    context: "Route leaks illustrate that Bitcoin can be affected by infrastructure failures even when its cryptography remains intact."
+    slide_heading: "Partitioning Attacks"
+    tags: ["distributed-systems", "real-world"]
+    confidence: "high"
+  - term: "Autonomous system"
+    modifier: "Internet routing"
+    aliases: ["AS", "ASN", "autonomous system number"]
+    definition: "A routing domain on the Internet, usually controlled by one organization, that announces paths for reaching networks."
+    context: "The lesson mentions AS-level attackers because mining and relay traffic can concentrate around routing domains that matter disproportionately."
+    slide_heading: "Partitioning Attacks"
+    tags: ["distributed-systems", "real-world"]
+    confidence: "high"
+  - term: "Block relay"
+    modifier: "Bitcoin network"
+    aliases: ["block propagation", "block broadcast"]
+    definition: "The process by which newly found blocks spread among Bitcoin nodes and miners."
+    context: "Delays in block relay can waste mining effort, create temporary competing tips, and support targeted fraud."
+    slide_heading: "Partitioning Attacks"
+    tags: ["bitcoin", "distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Timing attack"
+    modifier: "Bitcoin network"
+    aliases: ["latency attack", "timing and latency attack"]
+    definition: "An attack that exploits when transactions or blocks are first observed to infer origin, gain advantage, or affect confidence."
+    context: "The lesson emphasizes that milliseconds and seconds of propagation advantage can matter for privacy, stale-block risk, and settlement confidence."
+    slide_heading: "Timing & Latency Attacks"
+    tags: ["bitcoin", "distributed-systems", "forensics"]
+    confidence: "high"
+  - term: "First-spy heuristic"
+    modifier: "Bitcoin forensics"
+    aliases: ["first spy", "first-spy"]
+    definition: "A deanonymization method that treats the first peer observed relaying a transaction as the best guess for its source."
+    context: "Students use this heuristic to understand how network observation can weaken Bitcoin privacy even without breaking signatures."
+    slide_heading: "Timing & Latency Attacks"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Inventory message"
+    modifier: "Bitcoin network"
+    aliases: ["inv", "inv(tx)"]
+    definition: "A peer-to-peer relay message that announces known transaction or block identifiers to other nodes."
+    context: "The lesson uses inv(tx) sightings to show how observers can timestamp relay events and infer likely transaction origin."
+    slide_heading: "Timing & Latency Attacks"
+    tags: ["bitcoin", "distributed-systems", "forensics"]
+    confidence: "high"
+  - term: "Network deanonymization"
+    modifier: "Bitcoin"
+    aliases: ["deanonymization", "transaction-origin deanonymization"]
+    definition: "The process of linking a Bitcoin transaction to the node, IP address, user, or service that likely created it."
+    context: "The lesson distinguishes network-level metadata leaks from on-chain address pseudonymity."
+    slide_heading: "Mitigating Network Deanonymization"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Dandelion-style relay"
+    modifier: "Bitcoin privacy"
+    aliases: ["Dandelion relay", "stem-and-fluff relay"]
+    definition: "A transaction relay approach that first sends a transaction along a short random path before broadcasting it widely."
+    context: "The lesson presents Dandelion-style relay as a way to hide the apparent origin of a transaction from timing observers."
+    slide_heading: "Mitigating Network Deanonymization"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Anonymity layer"
+    modifier: "network privacy"
+    aliases: ["anonymity network", "privacy routing layer"]
+    definition: "A network routing tool or service that obscures a user's real network address from the peers they contact."
+    context: "Tor and VPN routing are presented as partial mitigations for peers learning a user's real network location."
+    slide_heading: "Mitigating Network Deanonymization"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "CoinJoin"
+    modifier: null
+    aliases: []
+    definition: "A collaborative transaction technique that combines multiple users' inputs and outputs to make ownership links harder to trace."
+    context: "The lesson mentions CoinJoin because network privacy is weaker if the transaction graph remains easy to analyze."
+    slide_heading: "Mitigating Network Deanonymization"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "On-chain linkability"
+    modifier: "Bitcoin"
+    aliases: ["linkability"]
+    definition: "The ability to connect addresses, inputs, outputs, or transactions using patterns visible on the public ledger."
+    context: "The lesson links on-chain linkability to deanonymization because traffic privacy alone does not hide traceable transaction behavior."
+    slide_heading: "Mitigating Network Deanonymization"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Transaction graph"
+    modifier: "Bitcoin"
+    aliases: ["on-chain graph", "payment graph"]
+    definition: "The network of relationships among transactions, inputs, outputs, and addresses visible from blockchain data."
+    context: "The lesson uses the transaction graph to explain why privacy tools and compliance analytics both focus on traceability."
+    slide_heading: "Mitigating Network Deanonymization"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Pseudonymity"
+    modifier: "Bitcoin"
+    aliases: ["pseudonymous"]
+    definition: "A privacy property where activity is linked to addresses or identifiers that are not automatically legal names."
+    context: "The lesson stresses that Bitcoin's pseudonymity can be weakened by timing analysis, transaction graphs, and exchange records."
+    slide_heading: "Mitigating Network Deanonymization"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Selfish mining"
+    modifier: null
+    aliases: []
+    definition: "A mining strategy where a miner withholds found blocks and releases them strategically to earn more than its honest hash share would suggest."
+    context: "Selfish mining shows that Bitcoin can be attacked at the incentive layer while still producing formally valid blocks."
+    slide_heading: "Selfish Mining"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Hash power"
+    modifier: "proof of work"
+    aliases: ["hash share", "hash rate", "mining power"]
+    definition: "The amount or share of proof-of-work computation controlled by a miner, pool, or network."
+    context: "The lesson uses hash power to reason about selfish mining thresholds and the feasibility of majority attacks."
+    slide_heading: "Selfish Mining"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Mining pool"
+    modifier: "Bitcoin"
+    aliases: ["pool"]
+    definition: "A coordination service where miners combine hash power and share rewards according to contributed work."
+    context: "Mining pools matter because concentration can approach incentive-attack thresholds even without proving malicious behavior."
+    slide_heading: "Selfish Mining"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Fork race"
+    modifier: "proof of work"
+    aliases: ["fork-race win", "race between branches"]
+    definition: "A competition between competing valid branches where whichever branch spreads and gains work faster becomes the accepted history."
+    context: "Selfish mining profitability depends partly on how often the attacker wins these races against honest miners."
+    slide_heading: "Selfish Mining"
+    tags: ["bitcoin", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Bitcoin overflow bug"
+    modifier: null
+    aliases: ["2010 overflow bug", "block 74638 overflow bug"]
+    definition: "A 2010 Bitcoin implementation flaw that allowed a transaction in block 74638 to create about 184 billion BTC."
+    context: "The incident is the lesson's main example of a software failure temporarily violating Bitcoin's intended monetary rules."
+    slide_heading: "Bitcoin Overflow Bug"
+    tags: ["bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Integer overflow"
+    modifier: "software implementation"
+    aliases: ["overflow"]
+    definition: "A programming error where a number exceeds the range a field can represent and wraps into an unintended value."
+    context: "The overflow bug depended on transaction outputs wrapping around so validation treated an impossible transaction as valid."
+    slide_heading: "Bitcoin Overflow Bug"
+    tags: ["bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Transaction validation"
+    modifier: "Bitcoin"
+    aliases: ["validation logic", "transaction checks"]
+    definition: "The software process nodes use to check whether a transaction follows Bitcoin's rules before accepting it."
+    context: "The overflow case shows that protocol rules only protect Bitcoin when validation code enforces them correctly."
+    slide_heading: "Bitcoin Overflow Bug"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Fixed-supply rule"
+    modifier: "Bitcoin"
+    aliases: ["supply cap", "capped supply"]
+    definition: "Bitcoin's monetary rule that the protocol should not permit creation beyond its capped supply schedule."
+    context: "The overflow bug mattered because it directly threatened trust in Bitcoin's monetary integrity."
+    slide_heading: "Bitcoin Overflow Bug"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Public ledger"
+    modifier: "Bitcoin"
+    aliases: ["transparent ledger", "shared ledger"]
+    definition: "The openly visible record of Bitcoin transactions and blocks replicated across the network."
+    context: "The lesson credits Bitcoin's public ledger with helping the community notice the overflow anomaly quickly."
+    slide_heading: "Bitcoin Overflow Bug"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Rollback"
+    modifier: "blockchain incident response"
+    aliases: ["chain rollback", "rollback past a block"]
+    definition: "A coordinated move to abandon a chain segment and reorganize onto an earlier valid branch."
+    context: "Bitcoin's response to the overflow bug required more than a patch because the invalid coins were already recorded on-chain."
+    slide_heading: "Emergency Response to the Overflow Bug"
+    tags: ["bitcoin", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Immutability"
+    modifier: "blockchain"
+    aliases: ["strict immutability"]
+    definition: "The expectation that confirmed blockchain history should not be changed after the fact."
+    context: "The overflow response is presented as a rare case where the community prioritized security and rule integrity over strict immutability."
+    slide_heading: "Emergency Response to the Overflow Bug"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Implementation bug"
+    modifier: null
+    aliases: ["software bug", "implementation flaw"]
+    definition: "A flaw in the code that enforces a protocol, even when the abstract design rule is sound."
+    context: "The lesson uses the overflow incident to separate Bitcoin's intended supply rule from the faulty validation code that enforced it."
+    slide_heading: "Implementation vs. Design"
+    tags: ["bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Open-source review"
+    modifier: null
+    aliases: ["open review", "public code review"]
+    definition: "The practice of publicly inspecting source code so flaws can be found, discussed, and fixed by a broader community."
+    context: "The lesson treats open-source review, audits, and disclosure as part of Bitcoin's practical security model."
+    slide_heading: "Implementation vs. Design"
+    tags: ["bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Bitcoin Gold"
+    modifier: null
+    aliases: ["BTG"]
+    definition: "A 2017 fork of Bitcoin that changed its mining algorithm but kept far less hash rate and economic scale than Bitcoin."
+    context: "Bitcoin Gold is the lesson's case study for why smaller proof-of-work networks can face feasible deep reorganization attacks."
+    slide_heading: "Bitcoin Gold 51% Attack Discovery"
+    tags: ["bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Bitcoin fork"
+    modifier: null
+    aliases: ["forked chain", "Bitcoin-derived chain"]
+    definition: "A chain derived from Bitcoin's code or history that follows different rules or community choices after a split."
+    context: "The lesson uses Bitcoin Gold to show that copying Bitcoin's code does not copy Bitcoin's hash rate, liquidity, or security posture."
+    slide_heading: "Bitcoin Gold 51% Attack Discovery"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "ASIC concentration"
+    modifier: "mining"
+    aliases: ["ASIC centralization", "specialized hardware concentration"]
+    definition: "The concentration of mining power among operators with specialized application-specific mining hardware."
+    context: "Bitcoin Gold changed its mining algorithm in an attempt to resist ASIC concentration, but that did not give it Bitcoin-scale security."
+    slide_heading: "Bitcoin Gold 51% Attack Discovery"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Security budget"
+    modifier: "proof of work"
+    aliases: ["chain security budget"]
+    definition: "The economic resources spent to secure a proof-of-work chain, including miner incentives and the cost of matching its hash power."
+    context: "The lesson explains that Bitcoin Gold's lower security budget made temporary majority control more plausible than on Bitcoin."
+    slide_heading: "Bitcoin Gold 51% Attack Discovery"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Deep reorganization"
+    modifier: "proof of work"
+    aliases: ["deep reorg", "multi-block reorganization"]
+    definition: "A chain reorganization that replaces many recent blocks rather than only one or two competing tips."
+    context: "The Bitcoin Gold attack replaced about 29 blocks, showing why services raise confirmation requirements on weaker chains."
+    slide_heading: "Bitcoin Gold 51% Attack Discovery"
+    tags: ["bitcoin", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Confirmation requirement"
+    modifier: "Bitcoin services"
+    aliases: ["confirmation depth", "required confirmations"]
+    definition: "The number of blocks a service waits after a transaction before treating it as sufficiently settled."
+    context: "Exchanges responded to Bitcoin Gold's attack by pausing activity and requiring deeper confirmations to reduce double-spend risk."
+    slide_heading: "Bitcoin Gold 51% Attack Discovery"
+    tags: ["bitcoin", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Hard fork"
+    modifier: "blockchain protocol"
+    aliases: ["hard-fork split"]
+    definition: "A rule change that can split a chain if enough participants do not upgrade together."
+    context: "The lesson warns that hard forks can create smaller communities with less hash power, liquidity, and defense capacity."
+    slide_heading: "Lessons: Small Community Risks"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Soft fork"
+    modifier: "blockchain protocol"
+    aliases: ["soft-fork tightening"]
+    definition: "A rule change that tightens what counts as valid without forcing the same kind of chain split as a hard fork."
+    context: "The hard fork versus soft fork note emphasizes that protocol changes still depend on miners, nodes, businesses, and users coordinating around rules."
+    slide_heading: "Lessons: Small Community Risks"
+    tags: ["bitcoin", "consensus"]
+    confidence: "high"
+  - term: "Liquidity"
+    modifier: "crypto markets"
+    aliases: ["market liquidity"]
+    definition: "The availability of buyers, sellers, and trading depth that lets an asset be exchanged without large price disruption."
+    context: "The lesson treats low liquidity as one reason smaller fork communities are economically easier to overwhelm."
+    slide_heading: "Lessons: Small Community Risks"
+    tags: ["bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Merged mining"
+    modifier: "proof of work"
+    aliases: ["merge mining", "merged-mined", "auxiliary proof of work", "AuxPoW"]
+    definition: "A proof-of-work arrangement where miners can reuse the same mining work to try to secure more than one compatible chain."
+    context: "The lesson uses Dogecoin and Litecoin to show that shared mining can help a smaller chain, but its security still depends on actual miner and pool participation."
+    slide_heading: "Bitcoin-Like PoW Chains"
+    tags: ["bitcoin", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Know Your Customer"
+    modifier: null
+    aliases: ["KYC"]
+    definition: "A compliance process that identifies a customer and, when required, the beneficial owner before or during service."
+    context: "The lesson emphasizes that KYC is applied by regulated intermediaries around Bitcoin, not by the Bitcoin protocol itself."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "Anti-Money Laundering"
+    modifier: null
+    aliases: ["AML"]
+    definition: "Risk-based controls for monitoring, recordkeeping, sanctions screening, suspicious-activity review, and required reporting."
+    context: "AML explains why exchanges and custodians monitor Bitcoin flows even though base-layer Bitcoin remains permissionless."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "Regulated intermediary"
+    modifier: "Bitcoin"
+    aliases: ["regulated gateway", "covered intermediary"]
+    definition: "A business such as an exchange, custodian, broker, or payment processor that must apply legal compliance controls around Bitcoin activity."
+    context: "The lesson distinguishes regulated intermediaries from people simply holding keys and transacting peer-to-peer."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["bitcoin", "policy", "real-world"]
+    confidence: "high"
+  - term: "Beneficial owner"
+    modifier: "KYC"
+    aliases: ["ultimate beneficial owner", "UBO"]
+    definition: "The real person who ultimately owns or controls an account, customer, or legal entity."
+    context: "KYC obligations may require identifying beneficial owners so regulated services can connect account activity to real-world control."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "Bank Secrecy Act"
+    modifier: "United States"
+    aliases: ["BSA"]
+    definition: "A U.S. financial-crime law framework requiring covered businesses to maintain records and help detect illicit finance."
+    context: "The lesson names the Bank Secrecy Act as one legal anchor for KYC and AML obligations around Bitcoin services."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "FinCEN guidance"
+    modifier: "United States"
+    aliases: ["Financial Crimes Enforcement Network guidance"]
+    definition: "U.S. regulatory guidance explaining how financial-crime rules apply to money services and virtual-asset business models."
+    context: "FinCEN guidance is used as a policy anchor for how U.S. intermediaries treat Bitcoin activity."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "FATF standards"
+    modifier: "virtual assets"
+    aliases: ["Financial Action Task Force standards", "FATF guidance"]
+    definition: "International recommendations for applying anti-money-laundering and counter-terrorist-financing controls to virtual assets and their service providers."
+    context: "The lesson uses FATF standards to connect Bitcoin compliance to global expectations for virtual-asset service providers."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "Virtual-asset service provider"
+    modifier: "FATF"
+    aliases: ["VASP", "virtual asset service provider"]
+    definition: "A business that provides covered virtual-asset services such as exchange, transfer, custody, or administration for customers."
+    context: "VASP language helps explain why exchanges and custodians are covered while ordinary peer-to-peer Bitcoin users usually are not."
+    slide_heading: "Off-Chain Controls: KYC and AML"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "Exchange onboarding"
+    modifier: "Bitcoin"
+    aliases: ["customer onboarding", "account onboarding"]
+    definition: "The process by which an exchange collects identity and account information before allowing a customer to use its services."
+    context: "The lesson shows that onboarding links real-world identity to Bitcoin deposits and withdrawals at common entry points."
+    slide_heading: "How KYC/AML Apply to Bitcoin"
+    tags: ["bitcoin", "policy", "real-world"]
+    confidence: "high"
+  - term: "Sanctions screening"
+    modifier: "AML"
+    aliases: ["sanctions exposure screening"]
+    definition: "The process of checking customers, counterparties, or transaction exposure against sanctions restrictions and risk lists."
+    context: "Sanctions screening is one way compliance teams monitor Bitcoin activity around regulated services."
+    slide_heading: "How KYC/AML Apply to Bitcoin"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "Blockchain analytics"
+    modifier: "Bitcoin compliance"
+    aliases: ["chain analytics", "blockchain analysis"]
+    definition: "The use of ledger data, clustering, and risk scoring to help assess counterparties and transaction flows."
+    context: "The lesson treats analytics as a compliance aid that informs but does not replace human judgment."
+    slide_heading: "How KYC/AML Apply to Bitcoin"
+    tags: ["bitcoin", "forensics", "policy"]
+    confidence: "high"
+  - term: "Regulated perimeter"
+    modifier: "Bitcoin"
+    aliases: ["compliance perimeter", "regulated edge"]
+    definition: "The boundary where activity enters services subject to identity, monitoring, and reporting obligations."
+    context: "The lesson explains that Bitcoin remains peer-to-peer capable, but fiat conversion and custody usually pull users into this perimeter."
+    slide_heading: "How KYC/AML Apply to Bitcoin"
+    tags: ["bitcoin", "policy", "real-world"]
+    confidence: "high"
+  - term: "On/off ramp"
+    modifier: "Bitcoin"
+    aliases: ["on-ramp", "off-ramp", "fiat gateway"]
+    definition: "A service or process that moves users between fiat money and Bitcoin or back again."
+    context: "The lesson highlights ramps as places where pseudonymous on-chain activity often becomes linked to real-world identity."
+    slide_heading: "How KYC/AML Apply to Bitcoin"
+    tags: ["bitcoin", "policy", "real-world"]
+    confidence: "high"
+  - term: "Centralized digital money system"
+    modifier: null
+    aliases: ["centralized digital currency system"]
+    definition: "A digital money arrangement controlled by identifiable operators who can be directly regulated, prosecuted, or shut down."
+    context: "E-gold and Liberty Reserve are used to contrast centralized operator risk with Bitcoin's protocol-level resilience."
+    slide_heading: "Regulatory Pressure Beyond Bitcoin"
+    tags: ["policy", "real-world"]
+    confidence: "high"
+  - term: "Privacy-enhancing asset"
+    modifier: "cryptoasset"
+    aliases: ["privacy asset", "privacy coin"]
+    definition: "A cryptoasset designed to make transaction tracing, screening, or identity linkage harder than on transparent ledgers."
+    context: "The lesson explains that opaque transaction graphs can create more exchange pressure for privacy-focused assets than for Bitcoin."
+    slide_heading: "Regulatory Pressure Beyond Bitcoin"
+    tags: ["policy", "forensics", "real-world"]
+    confidence: "high"
+  - term: "Opaque transaction graph"
+    modifier: "privacy assets"
+    aliases: ["opaque ledger graph", "hard-to-trace transaction graph"]
+    definition: "A transaction structure that hides or obscures relationships among senders, recipients, and amounts."
+    context: "Opaque graphs make screening, traceability, and transfer-information compliance harder for regulated exchanges."
+    slide_heading: "Regulatory Pressure Beyond Bitcoin"
+    tags: ["forensics", "policy"]
+    confidence: "high"
+  - term: "Gateway control"
+    modifier: "regulation"
+    aliases: ["gateway constraint", "access constraint"]
+    definition: "A regulatory strategy that shapes use by constraining exchanges, custodians, liquidity, or access points rather than changing a protocol."
+    context: "The lesson's final point is that regulation often works through gateways around Bitcoin instead of rewriting Bitcoin's consensus rules."
+    slide_heading: "Regulatory Pressure Beyond Bitcoin"
+    tags: ["bitcoin", "policy", "real-world"]
+    confidence: "high"

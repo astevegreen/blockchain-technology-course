@@ -44,4 +44,4 @@ ENV HOME="/home/student" TERM="xterm-256color" USER="student" SHELL="/bin/bash" 
 
 EXPOSE 7681
 
-CMD ["ttyd", "-p", "7681", "-W", "setsid", "-w", "zellij", "attach", "--create", "s0"]
+CMD ["ttyd", "-p", "7681", "-W", "zellij", "attach", "--create", "s0"]

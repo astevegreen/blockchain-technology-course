@@ -11,6 +11,8 @@
     --muted: #97a4b2;
     --accent: #d7e6f7;
     --accent-bg: #1a2734;
+    --ok: #3fb950;
+    --err: #f85149;
   }
   html, body { margin:0; padding:0; height:100%; }
   body {
@@ -51,10 +53,33 @@
   #panel #peers-dropdown .peer-empty {
     padding:8px; color:var(--muted); font-size:12px; text-align:center;
   }
+  /* Published-address indicator: symbol + color (colorblind-safe). */
+  #panel #peers-dropdown .peer-id {
+    display:flex; align-items:center; gap:6px; min-width:0;
+  }
+  #panel #peers-dropdown .peer-station {
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  #panel #peers-dropdown .peer-short {
+    color:var(--muted); font-family:monospace; flex:none;
+  }
+  #panel #peers-dropdown .peer-badge {
+    flex:none; display:inline-block; width:15px; text-align:center;
+    font-weight:700; font-size:12px; line-height:1;
+  }
+  #panel #peers-dropdown .peer-badge-yes { color:var(--ok); }
+  #panel #peers-dropdown .peer-badge-no { color:var(--err); }
+  #panel #peers-dropdown .peer-badge-checking,
+  #panel #peers-dropdown .peer-badge-unknown { color:var(--muted); }
+  #panel #peers-dropdown .peer-legend {
+    display:flex; gap:14px; justify-content:center;
+    padding:6px 8px 3px; margin-top:2px;
+    border-top:1px solid var(--border); color:var(--muted); font-size:11px;
+  }
 
   #main { flex:1; display:flex; flex-direction:column; min-height:0; }
 
-  /* Default: no guide — ttyd fills everything. */
+  /* Default: no guide -- ttyd fills everything. */
   #term-wrap { flex:1; position:relative; min-height:0; }
   #guide-wrap { display:none; }
 
@@ -177,6 +202,18 @@
   }
   #guide-body .transition {
     color:var(--muted); font-style:italic; margin-top:6px;
+  }
+  #guide-body .sol-details, #guide-body .obs-details {
+    margin:14px 0; border:1px solid var(--border-strong);
+    border-radius:6px; background:var(--accent-bg); padding:8px 12px;
+  }
+  #guide-body .sol-details > summary, #guide-body .obs-details > summary {
+    cursor:pointer; color:var(--accent); font-weight:600;
+    list-style:none; user-select:none;
+  }
+  #guide-body .sol-details[open] > summary, #guide-body .obs-details[open] > summary { margin-bottom:8px; }
+  #guide-body .sol-details .sol-body, #guide-body .obs-details .obs-body {
+    border-top:1px solid var(--border); padding-top:8px;
   }
   #guide-body code {
     background:var(--accent-bg); border:1px solid var(--border);
@@ -329,20 +366,20 @@
           <li><code>ls</code> or <code>ls -a</code> lists files in the current directory.</li>
           <li><code>cd &lt;dir&gt;</code>, <code>cd ..</code>, and <code>cd ~</code> move around the filesystem.</li>
           <li><code>cat &lt;file&gt;</code> prints a short file, and <code>less &lt;file&gt;</code> opens a scrollable viewer.</li>
-          <li><code>nano &lt;file&gt;</code> opens a simple editor. Save with <code>Ctrl+O</code>, then exit with <code>Ctrl+X</code>.</li>
+          <li>Before opening <code>nano</code>, press <code>Ctrl+G</code> to lock zellij controls. In nano, save with <code>Ctrl+O</code>, then exit with <code>Ctrl+X</code>.</li>
           <li><code>grep "text" &lt;file&gt;</code> searches for a string inside a file.</li>
           <li><code>exit</code> closes the current shell or pane.</li>
         </ul>
       </div>
       <div class="help-card">
         <h3>Zellij Basics</h3>
-        <p>These labs run inside zellij so you can keep multiple terminal views alive in one browser session. Available keys are shown in the status bar at the bottom.</p>
+        <p>These labs run inside zellij so you can keep multiple terminal views alive in one browser session. Use <code>Ctrl+G</code> to switch between zellij controls and locked shell input.</p>
         <ul>
-          <li><code>Alt+n</code> opens a new pane. On Mac use <code>Ctrl+p</code> then <code>n</code>.</li>
-          <li><code>Alt+Arrow</code> moves between panes (crosses to the next tab at the edge). On Mac use <code>Ctrl+p</code> then arrow keys.</li>
-          <li><code>Ctrl+p</code> enters pane mode: <code>r</code> splits right, <code>d</code> splits down, <code>x</code> closes the pane.</li>
-          <li><code>Ctrl+t</code> enters tab mode: <code>n</code> creates a new tab, <code>Left/Right</code> switches tabs.</li>
-          <li><code>Ctrl+s</code> enters scroll mode. Use arrows or Page Up/Down, then press <code>Esc</code> to return.</li>
+          <li><code>Ctrl+G</code> toggles zellij controls. Before using nano, press <code>Ctrl+G</code> to lock controls so editor shortcuts work.</li>
+          <li><code>Alt+n</code> opens a new pane. <code>Alt+Arrow</code> moves between panes.</li>
+          <li><code>Ctrl+G</code> then <code>p</code> enters pane mode: <code>r</code> splits right, <code>d</code> splits down, <code>x</code> closes the pane.</li>
+          <li><code>Ctrl+G</code> then <code>t</code> enters tab mode: <code>n</code> creates a new tab, <code>Left/Right</code> switches tabs.</li>
+          <li><code>Ctrl+G</code> then <code>s</code> enters scroll mode. Use arrows or Page Up/Down, then press <code>Ctrl+G</code> to return to the shell.</li>
         </ul>
       </div>
     </div>
@@ -364,6 +401,88 @@
   var helpClose = document.getElementById("help-modal-close");
 
   window.__lab = {uuid: uuid, lab: lab, station: station, ttydUrl: ttydUrl};
+
+  var terminalResizeTimer = null;
+  function loadInlineTerminal() {
+    if (term.getAttribute("src") !== ttydUrl) {
+      term.style.display = "block";
+      term.src = ttydUrl;
+    } else {
+      scheduleTerminalResize();
+    }
+  }
+
+  function unloadInlineTerminal() {
+    if (term.getAttribute("src")) {
+      term.src = "about:blank";
+    }
+  }
+
+  function unloadInlineTerminalThen(next) {
+    if (!term.getAttribute("src") || term.getAttribute("src") === "about:blank") {
+      next();
+      return;
+    }
+    var done = false;
+    function finish() {
+      if (done) return;
+      done = true;
+      term.removeEventListener("load", finish);
+      next();
+    }
+    term.addEventListener("load", finish);
+    unloadInlineTerminal();
+    setTimeout(finish, 250);
+  }
+
+  function notifyTerminalResize() {
+    var child = term && term.contentWindow;
+    if (!child) return;
+    try {
+      var EventCtor = child.Event || Event;
+      child.dispatchEvent(new EventCtor("resize"));
+    } catch (_e) {}
+  }
+
+  function installTerminalResizeBridge() {
+    var child = term && term.contentWindow;
+    if (!child) return;
+    try {
+      if (child.__labTerminalResizeBridgeInstalled) return;
+      var doc = child.document;
+      var target = doc && (doc.documentElement || doc.body);
+      if (!target || !child.ResizeObserver) return;
+      child.__labTerminalResizeBridgeInstalled = true;
+      child.__labTerminalResizeBridge = new child.ResizeObserver(function(){
+        try {
+          child.dispatchEvent(new child.Event("resize"));
+        } catch (_e) {}
+      });
+      child.__labTerminalResizeBridge.observe(target);
+    } catch (_e) {}
+  }
+
+  function forceTerminalResize() {
+    installTerminalResizeBridge();
+    notifyTerminalResize();
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function(){
+        installTerminalResizeBridge();
+        notifyTerminalResize();
+      });
+    }
+    setTimeout(notifyTerminalResize, 120);
+    setTimeout(notifyTerminalResize, 300);
+  }
+
+  function scheduleTerminalResize(delay) {
+    if (terminalResizeTimer) clearTimeout(terminalResizeTimer);
+    terminalResizeTimer = setTimeout(function(){
+      terminalResizeTimer = null;
+      forceTerminalResize();
+    }, typeof delay === "number" ? delay : 80);
+  }
+  term.addEventListener("load", scheduleTerminalResize);
 
   function closeHelp() {
     if (!helpBackdrop) return;
@@ -395,7 +514,7 @@
   });
 
   // --------------------------------------------------------------
-  // ttyd boot probe — unchanged
+  // ttyd boot probe -- unchanged
   // --------------------------------------------------------------
   var start = Date.now();
   var deadline = start + 60000;
@@ -403,8 +522,7 @@
     fetch(tokenUrl, {cache: "no-store"})
       .then(function(r){
         if (r.ok) {
-          term.style.display = "block";
-          term.src = ttydUrl;
+          loadInlineTerminal();
           term.addEventListener("load", function(){ splash.remove(); }, {once: true});
           setTimeout(function(){ if (splash.isConnected) splash.remove(); }, 3000);
           return;
@@ -414,7 +532,7 @@
       .catch(function(){
         var elapsed = Math.round((Date.now() - start) / 1000);
         if (Date.now() > deadline) {
-          detail.textContent = "Lab didn't come up in time — try reloading.";
+          detail.textContent = "Lab didn't come up in time -- try reloading.";
           return;
         }
         detail.textContent = "Booting container (" + elapsed + "s)";
@@ -436,7 +554,7 @@
   if (!guideEnabled) return;
 
   // --------------------------------------------------------------
-  // progress beacon — fire-and-forget, dedup within 1500ms
+  // progress beacon -- fire-and-forget, dedup within 1500ms
   // --------------------------------------------------------------
   var lastSent = null, lastSentAt = 0;
   function beacon(routeId) {
@@ -474,27 +592,78 @@
   // console modes: inline (default), hidden, popout
   // --------------------------------------------------------------
   var popoutWin = null;
+  function closePopoutTerminal() {
+    if (popoutWin && !popoutWin.closed) {
+      try { popoutWin.close(); } catch (_e) {}
+    }
+    popoutWin = null;
+  }
+
+  function createPopoutWindow() {
+    if (!popoutWin || popoutWin.closed) {
+      popoutWin = window.open("about:blank", lab + "-console-" + uuid.slice(0, 8),
+        "width=900,height=640");
+      try {
+        if (popoutWin && popoutWin.document) {
+          popoutWin.document.title = "Loading console";
+          popoutWin.document.body.textContent = "Loading console...";
+        }
+      } catch (_e) {}
+    } else {
+      popoutWin.focus();
+    }
+    return !!popoutWin;
+  }
+
+  function navigatePopoutTerminal() {
+    if (!popoutWin || popoutWin.closed) return false;
+    try {
+      popoutWin.location.href = ttydUrl;
+      popoutWin.focus();
+      return true;
+    } catch (_e) {
+      return false;
+    }
+  }
+
   function applyConsoleMode(mode) {
     document.body.classList.remove("console-hidden", "console-popout");
     var btn = document.getElementById("hide-console-btn");
     // Inline console is hidden in both "hidden" and "popout" modes, so the
     // toggle should read "Show Console" in either case.
     if (mode === "hidden") {
+      closePopoutTerminal();
+      unloadInlineTerminal();
       document.body.classList.add("console-hidden");
       btn.textContent = "Show Console";
     } else if (mode === "popout") {
+      if (!createPopoutWindow()) {
+        mode = "inline";
+        loadInlineTerminal();
+        btn.textContent = "Hide Console";
+        saveState({consoleMode: mode});
+        scheduleTerminalResize();
+        return;
+      }
       document.body.classList.add("console-popout");
       btn.textContent = "Show Console";
-      if (!popoutWin || popoutWin.closed) {
-        popoutWin = window.open(ttydUrl, lab + "-console-" + uuid.slice(0, 8),
-          "noopener,width=900,height=640");
-      } else {
-        popoutWin.focus();
-      }
+      unloadInlineTerminalThen(function(){
+        if (!navigatePopoutTerminal()) {
+          document.body.classList.remove("console-popout");
+          mode = "inline";
+          loadInlineTerminal();
+          btn.textContent = "Hide Console";
+          saveState({consoleMode: mode});
+          scheduleTerminalResize();
+        }
+      });
     } else {
+      closePopoutTerminal();
+      loadInlineTerminal();
       btn.textContent = "Hide Console";
     }
     saveState({consoleMode: mode});
+    scheduleTerminalResize();
   }
 
   document.getElementById("hide-console-btn").addEventListener("click", function(){
@@ -577,11 +746,13 @@
     }).join("") + "</div>";
   }
 
-  function renderCurrent() {
+  function renderCurrent(opts) {
+    opts = opts || {};
+    var guideBody = document.getElementById("guide-body");
     var ex = exercises[currentIndex];
     if (!ex) {
-      document.getElementById("guide-body").innerHTML =
-        '<div class="muted">No exercises registered for this lab.</div>';
+      guideBody.innerHTML = '<div class="muted">No exercises registered for this lab.</div>';
+      if (opts.resetScroll) guideBody.scrollTop = 0;
       return;
     }
     var chapter = chapterById[ex.chapter] || {};
@@ -600,13 +771,17 @@
     if (ex.student_steps && ex.student_steps.length)
       html += section("Your Steps", renderList(ex.student_steps));
     if (ex.expected_observations && ex.expected_observations.length)
-      html += section("Expected Observations", renderList(ex.expected_observations));
+      html += '<details class="obs-details"><summary>🔍 Reveal expected observations</summary>' +
+              '<div class="obs-body">' + renderList(ex.expected_observations) + '</div></details>';
     if (ex.meaning && ex.meaning.length)
       html += section("Why This Matters", renderList(ex.meaning));
     if (ex.surfaces && ex.surfaces.length)
       html += section("Where To Work", renderSurfaces(ex.surfaces));
     if (ex.transition)
       html += '<div class="transition">Next: ' + renderRichInline(ex.transition) + "</div>";
+    if (ex.solution)
+      html += '<details class="sol-details"><summary>💡 Show solution for this step</summary>' +
+              '<div class="sol-body">' + renderRich(ex.solution) + '</div></details>';
     html +=
       '<div class="nav-row">' +
       '  <button class="gbtn" id="prev-btn" ' + prevDisabled + '>&larr; Previous</button>' +
@@ -614,8 +789,8 @@
       '  <button class="gbtn" id="next-btn" ' + nextDisabled + '>Next &rarr;</button>' +
       '</div>';
 
-    // Preserve scroll: only change innerHTML, don't scrollTo.
-    document.getElementById("guide-body").innerHTML = html;
+    guideBody.innerHTML = html;
+    if (opts.resetScroll) guideBody.scrollTop = 0;
     document.getElementById("prev-btn").addEventListener("click", function(){ go(currentIndex - 1); });
     document.getElementById("next-btn").addEventListener("click", function(){ go(currentIndex + 1); });
     document.getElementById("progress-text").textContent =
@@ -663,7 +838,7 @@
       patch.exerciseIndexByLab = perLab;
     }
     saveState(patch);
-    renderCurrent();
+    renderCurrent({resetScroll: true});
   }
 
   function buildChapterSelect() {
@@ -721,7 +896,7 @@
       perLab[labId] = idx;
       saveState({activeLab: labId, exerciseIndexByLab: perLab});
     }
-    renderCurrent();
+    renderCurrent({resetScroll: !opts.skipSave});
   }
 
   document.getElementById("chapter-select").addEventListener("change", function(){
@@ -785,6 +960,7 @@
       var max = main ? main.clientHeight - 120 : window.innerHeight - 200;
       var clamped = Math.max(80, Math.min(max, px));
       termWrap.style.flex = "0 0 " + clamped + "px";
+      scheduleTerminalResize();
       return clamped;
     }
 
@@ -810,6 +986,7 @@
       document.body.classList.remove("resizing");
       var h = termWrap.getBoundingClientRect().height;
       saveState({consoleHeightPx: Math.round(h)});
+      scheduleTerminalResize(0);
     });
 
     // Reclamp on window resize so the saved pixel value doesn't blow past
@@ -818,6 +995,11 @@
       var h = termWrap.getBoundingClientRect().height;
       applyHeight(h);
     });
+
+    if (window.ResizeObserver) {
+      var observer = new ResizeObserver(scheduleTerminalResize);
+      observer.observe(termWrap);
+    }
   })();
 
   fetch("/api/" + lab + "/exercises", {cache: "no-store"})

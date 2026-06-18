@@ -4,46 +4,214 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asymmetric Encryption & Digital Signatures Lab</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script defer src="./mathjax/tex-svg.js"></script>
     <style>
-        .hero-pattern {
-            background-color: #0f172a;
-            background-image:
-                radial-gradient(at 47% 33%, hsl(264, 70%, 20%) 0, transparent 59%),
-                radial-gradient(at 82% 65%, hsl(218, 70%, 20%) 0, transparent 55%);
+        :root {
+            --fg: #0f172a;
+            --muted: #475569;
+            --bg: #ffffff;
+            --soft: #f8fafc;
+            --line: #dbe3ef;
+            --accent: #2563eb;
+            --danger: #b91c1c;
+            --ok: #15803d;
+            --warn: #92400e;
+            --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
         }
-        .card { transition: transform .2s ease; }
-        .card:hover { transform: translateY(-4px); }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, " Monospace", monospace; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--sans); }
+        body.hero-pattern { min-height: 100vh; background: var(--bg); }
+        nav { display: none; }
+        i.fas { display: none; }
+        .container { max-width: 1040px; margin-left: auto; margin-right: auto; padding-left: 16px; padding-right: 16px; }
+        main.container { margin-top: 32px; padding-top: 0; padding-bottom: 32px; }
+        main > header { margin-bottom: 18px; }
+        main > header.text-center { text-align: left; }
+        main > header .mx-auto { margin-left: 0; margin-right: 0; }
+        main > section {
+            background: var(--soft);
+            border: 1px solid #eef2f7;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        h1 { font-size: 1.35rem; line-height: 1.25; margin: 0 0 6px; }
+        h2 { font-size: 1.12rem; line-height: 1.25; margin: 0 0 14px; }
+        h3 { font-size: 1.05rem; line-height: 1.25; margin: 0 0 10px; }
+        p { line-height: 1.45; margin-top: 0; }
+        code, .mono { font-family: var(--mono); }
+        label, .font-semibold, .font-bold { font-weight: 700; }
+        select, input, textarea {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
+            color: var(--fg);
+            font: inherit;
         }
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 5px rgba(20, 184, 166, 0.3); }
-            50% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.6); }
+        textarea { min-height: 112px; resize: vertical; font-family: var(--mono); font-size: .92rem; line-height: 1.35; }
+        textarea[readonly] { resize: vertical; }
+        select:focus, input:focus, textarea:focus, button:focus-visible {
+            outline: 2px solid color-mix(in srgb, var(--accent), white 35%);
+            outline-offset: 2px;
         }
-        .animate-fadeIn {
-            animation: fadeIn 0.5s ease-out;
+        button {
+            font: inherit;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 12px;
+            background: #fff;
+            color: var(--fg);
+            cursor: pointer;
+            line-height: 1.2;
+            white-space: normal;
         }
-        .animate-pulse-slow {
-            animation: pulse 2s ease-in-out infinite;
+        button:hover { border-color: #bfdbfe; background: #eff6ff; }
+        button[class*="bg-red"], button[class*="bg-rose"] { border-color: #fecaca; color: var(--danger); background: #fff7f7; }
+        button[class*="bg-green"], button[class*="bg-emerald"], button[class*="bg-teal"] { border-color: #bbf7d0; color: var(--ok); background: #f7fff9; }
+        button[class*="bg-yellow"], button[class*="bg-amber"] { border-color: #fde68a; color: var(--warn); background: #fffbeb; }
+        button[class*="bg-blue"], button[class*="bg-sky"], button[class*="bg-indigo"], button[class*="bg-purple"], button[class*="bg-slate"] { border-color: #bfdbfe; color: var(--accent); background: #fff; }
+        canvas { background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+        footer { color: var(--muted); }
+        .math-display {
+            overflow-x: auto;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 8px 0;
         }
-        .animate-glow {
-            animation: glow 2s ease-in-out infinite;
+        .math-display mjx-container[jax="SVG"][display="true"] {
+            margin: 0;
         }
-        #mathExplanation > div {
-            animation: fadeIn 0.5s ease-out backwards;
+
+        [class*="bg-white/10"],
+        [class*="bg-black/"],
+        [class*="bg-gradient"],
+        [class*="900/20"],
+        [class*="900/30"],
+        [class*="900/50"] {
+            background: #fff;
+            border-color: var(--line);
         }
-        #mathExplanation > div:nth-child(1) { animation-delay: 0.1s; }
-        #mathExplanation > div:nth-child(2) { animation-delay: 0.2s; }
-        #mathExplanation > div:nth-child(3) { animation-delay: 0.3s; }
-        #mathExplanation > div:nth-child(4) { animation-delay: 0.4s; }
+        #nonceWarning {
+            background: #fff7f7;
+            border-color: #fecaca;
+            color: var(--danger);
+        }
+        #recoveryMath {
+            background: #fff;
+            border-color: #fecaca;
+            color: var(--fg);
+        }
+        #warn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: var(--warn);
+        }
+        [class*="border-"] { border-color: var(--line); }
+        [class*="text-gray-"] { color: var(--muted); }
+        [class*="text-blue-"], [class*="text-sky-"], [class*="text-indigo-"], [class*="text-purple-"], [class*="text-teal-"] { color: var(--accent); }
+        [class*="text-green-"], [class*="text-emerald-"] { color: var(--ok); }
+        [class*="text-yellow-"], [class*="text-amber-"] { color: var(--warn); }
+        [class*="text-red-"], [class*="text-rose-"] { color: var(--danger); }
+        .text-white, .text-gray-200 { color: var(--fg); }
+        .hidden { display: none !important; }
+        .block { display: block; }
+        .inline-block { display: inline-block; }
+        .grid { display: grid; grid-template-columns: 1fr; }
+        .flex { display: flex; }
+        .flex-wrap { flex-wrap: wrap; }
+        .flex-1 { flex: 1 1 0%; }
+        .items-center { align-items: center; }
+        .items-end { align-items: flex-end; }
+        .items-start { align-items: flex-start; }
+        .justify-between { justify-content: space-between; }
+        .justify-end { justify-content: flex-end; }
+        .gap-2 { gap: 8px; }
+        .gap-4 { gap: 16px; }
+        .space-x-2 > * + * { margin-left: 8px; }
+        .space-x-3 > * + * { margin-left: 12px; }
+        .space-y-1 > * + * { margin-top: 4px; }
+        .space-y-2 > * + * { margin-top: 8px; }
+        .space-y-3 > * + * { margin-top: 12px; }
+        .space-y-4 > * + * { margin-top: 16px; }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .action-grid { grid-template-columns: repeat(auto-fit, minmax(124px, 1fr)); }
+        .action-grid button { min-width: 0; width: 100%; }
+        .w-full { width: 100%; }
+        .h-16 { min-height: 64px; }
+        .h-20 { min-height: 80px; }
+        .h-24 { min-height: 96px; }
+        .h-32 { min-height: 128px; }
+        .min-h-screen { min-height: 100vh; }
+        .max-w-3xl { max-width: 768px; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .mx-2 { margin-left: 8px; margin-right: 8px; }
+        .mt-1 { margin-top: 4px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mt-4 { margin-top: 16px; }
+        .mt-10 { margin-top: 40px; }
+        .mb-1 { margin-bottom: 4px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-6 { margin-bottom: 24px; }
+        .mb-8 { margin-bottom: 32px; }
+        .ml-5 { margin-left: 20px; }
+        .mr-2 { margin-right: 8px; }
+        .p-2 { padding: 8px; }
+        .p-3 { padding: 12px; }
+        .p-4 { padding: 16px; }
+        .p-6 { padding: 16px; }
+        .px-2 { padding-left: 8px; padding-right: 8px; }
+        .px-3 { padding-left: 12px; padding-right: 12px; }
+        .px-4 { padding-left: 16px; padding-right: 16px; }
+        .py-1 { padding-top: 4px; padding-bottom: 4px; }
+        .py-2 { padding-top: 8px; padding-bottom: 8px; }
+        .py-4 { padding-top: 16px; padding-bottom: 16px; }
+        .py-8 { padding-top: 32px; padding-bottom: 32px; }
+        .rounded, .rounded-lg, .rounded-xl { border-radius: 8px; }
+        .border, .border-2 { border-style: solid; border-width: 1px; }
+        .text-xs { font-size: .8rem; line-height: 1.35; }
+        .text-sm { font-size: .92rem; line-height: 1.35; }
+        .text-base { font-size: 1rem; }
+        .text-lg { font-size: 1.05rem; }
+        .text-2xl { font-size: 1.12rem; }
+        .text-3xl, .text-4xl { font-size: 1.35rem; }
+        .text-center { text-align: center; }
+        .break-all { word-break: break-all; }
+        .list-disc { list-style-type: disc; }
+        .list-decimal { list-style-type: decimal; }
+        .animate-pulse-slow, .animate-fadeIn, .animate-glow { animation: none; }
+
+        @media (min-width: 760px) {
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1024px) {
+            .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+        @media (max-width: 760px) {
+            main.container { margin-top: 20px; }
+            .grid-cols-2, .grid-cols-3 { grid-template-columns: 1fr; }
+            .flex { flex-wrap: wrap; }
+        }
     </style>
 </head>
 <body class="hero-pattern min-h-screen text-white">
@@ -60,9 +228,9 @@
         </header>
 
         <!-- Key Pair Generation -->
-        <section class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-purple-500/30 mb-6">
+        <section id="keyPairSection" class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-purple-500/30 mb-6">
             <h2 class="text-2xl font-bold mb-4"><i class="fas fa-fingerprint text-purple-400 mr-2"></i>Key Pair Generation</h2>
-            <div class="grid md:grid-cols-3 gap-4 mb-4">
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
                 <div>
                     <label for="sigAlg" class="block text-sm text-gray-300 mb-1">Signature Algorithm</label>
                     <select id="sigAlg" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2" aria-label="Signature Algorithm" title="Signature Algorithm">
@@ -74,9 +242,6 @@
                 <div class="flex items-end">
                     <button id="btnGenKeyPair" class="w-full bg-purple-600 hover:bg-purple-700 rounded px-4 py-2">Generate Key Pair</button>
                 </div>
-                <div class="flex items-end">
-                    <button id="btnExportKeyPair" class="w-full bg-purple-600/60 hover:bg-purple-700/60 rounded px-4 py-2">Export Keys</button>
-                </div>
             </div>
             <div id="keyPreviewRow" class="mt-4 bg-black/30 border border-white/10 rounded p-4">
                 <div class="flex items-center justify-between mb-2">
@@ -86,7 +251,7 @@
                         <button id="btnCopyPubKey" class="text-xs bg-slate-600 hover:bg-slate-700 rounded px-2 py-1">Copy Public</button>
                     </div>
                 </div>
-                <div class="text-xs text-gray-400 mb-2">In real systems, private keys must remain secret. This lab shows both keys by default so students can compare the signing key and the verification key side by side.</div>
+                <div class="text-xs text-gray-400 mb-2">This lab shows both key values so students can compare the signing key and the verification key side by side.</div>
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
                         <label for="pubKeyHex" class="block text-xs text-gray-300 mb-1">Public Key Preview</label>
@@ -101,7 +266,7 @@
         </section>
 
         <!-- Signing & Verification -->
-        <section class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-blue-500/30 mb-6">
+        <section id="signatureWorkflowSection" class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-blue-500/30 mb-6">
             <h2 class="text-2xl font-bold mb-4"><i class="fas fa-signature text-blue-400 mr-2"></i>Digital Signature Workflow</h2>
             <div class="text-sm text-gray-300 mb-3">This workflow makes the hashing step explicit, then shows the private/public key split. The signer uses the private key to create a signature; the verifier uses only a public key to check it.</div>
             <div class="grid md:grid-cols-2 gap-4">
@@ -116,7 +281,7 @@
                     <label class="block text-sm text-gray-300 mb-1">Context / Domain Tag (optional)</label>
                     <input id="domain" class="w-full bg-black/40 border border-white/20 rounded px-3 py-2 mb-3" placeholder="e.g., blockchain_v1 or payment_system" value="blockchain_v1" />
                     <div class="text-xs text-gray-400 mb-3">The lab length-prefixes this tag before hashing/signing so the input is unambiguous and students can see how context changes the digest.</div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div class="grid action-grid gap-2">
                         <button id="btnSign" class="bg-green-600 hover:bg-green-700 rounded px-4 py-2">Sign with Private Key</button>
                         <button id="btnVerify" class="bg-amber-600 hover:bg-amber-700 rounded px-4 py-2">Verify with Public Key</button>
                     </div>
@@ -140,7 +305,7 @@
                     <div class="text-xs text-gray-400">The signature field is editable on purpose so students can tamper with it and force a failed verification.</div>
                     <label class="block text-xs text-gray-400 mt-3 mb-1">Signature (hex)</label>
                     <textarea id="signature" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" placeholder="Signature will appear here after signing..."></textarea>
-                    <div class="grid grid-cols-3 gap-2 mt-2">
+                    <div class="grid action-grid gap-2 mt-2">
                         <button id="btnFlipSig" class="bg-slate-600 hover:bg-slate-700 rounded px-3 py-2 text-xs">Flip 1 Hex Digit</button>
                         <button id="btnRestoreSig" class="bg-slate-600 hover:bg-slate-700 rounded px-3 py-2 text-xs">Restore</button>
                         <button id="btnClearSig" class="bg-slate-600 hover:bg-slate-700 rounded px-3 py-2 text-xs">Clear</button>
@@ -148,7 +313,7 @@
                     <div class="text-xs text-gray-400 mt-3">Digest snapshot when the current signature was created</div>
                     <div id="signedHashValue" class="mono text-xs break-all bg-black/40 border border-white/10 rounded p-3 mt-1">-</div>
                     <div id="signingState" class="text-xs text-gray-400 mt-2">Sign a message to capture a signature and digest snapshot.</div>
-                    <div id="signatureFormatNote" class="text-xs text-gray-400 mt-2">Format: RSA and Ed25519 produce fixed-length signatures; ECDSA uses DER-encoded <span class="mono">(r,s)</span>.</div>
+                    <div id="signatureFormatNote" class="text-xs text-gray-400 mt-2">Format: RSA and Ed25519 produce fixed-length signatures; browser ECDSA P-256 returns raw <span class="mono">r || s</span>.</div>
                 </div>
                 <div class="bg-black/30 border border-white/10 rounded p-4">
                     <div class="text-sm font-semibold text-sky-200 mb-2">3. Verify with a Public Key</div>
@@ -158,28 +323,28 @@
                         <div id="verifyKeyLabel" class="text-xs text-sky-300">Signer public key</div>
                     </div>
                     <textarea id="verifyPubKeyHex" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs mt-1" readonly placeholder="Generate a keypair to load a verifier public key..."></textarea>
-                    <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="grid action-grid gap-2 mt-2">
                         <button id="btnUseSignerKey" class="bg-sky-700 hover:bg-sky-800 rounded px-3 py-2 text-xs">Use Signer's Key</button>
                         <button id="btnWrongKey" class="bg-rose-700 hover:bg-rose-800 rounded px-3 py-2 text-xs">Generate Wrong Key</button>
                     </div>
                     <div class="text-xs text-gray-400 mt-3">Verifier recomputed SHA-256</div>
                     <div id="verifyHashValue" class="mono text-xs break-all bg-black/40 border border-white/10 rounded p-3 mt-1">-</div>
                     <label class="block text-xs text-gray-400 mt-3 mb-1">Verification Result</label>
-                    <textarea id="verifyResult" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2" readonly placeholder="Click Verify with Public Key to check the current inputs..."></textarea>
+                    <textarea id="verifyResult" class="w-full h-24 bg-black/40 border border-white/20 rounded px-3 py-2" readonly placeholder="Verification result appears here."></textarea>
                 </div>
             </div>
             <div id="hashDetail" class="mt-3 text-xs text-gray-400 bg-black/30 rounded p-3">
                 <div><strong>Conceptual flow:</strong> <span id="hashFlow">Message → Hash → Sign with private key → Verify with public key</span></div>
                 <div class="mt-1">Key roles: <span class="text-emerald-300">Private key = sign</span> · <span class="text-sky-300">Public key = verify</span></div>
-                <div class="mt-2 text-gray-300">Browser note: WebCrypto signs the framed message bytes using the selected algorithm. The SHA-256 panels are shown explicitly so you can watch the fingerprint change when the message, context, signature, or public key no longer match.</div>
+                <div class="mt-2 text-gray-300">Browser note: WebCrypto signs the framed message bytes when the page is served from HTTPS or localhost. On this HTTP lab URL, the controls use a visible toy signature fallback so students can still test the hash, sign, tamper, wrong-key, and verify flow.</div>
                 <div id="algorithmNote" class="mt-2 text-gray-300">Algorithm note: <strong>RSA-2048</strong> mirrors the classic RSA sign/verify story from the lesson. <strong>ECDSA P-256</strong> pairs well with the curve intuition panel, and <strong>Ed25519</strong> offers deterministic modern signing behavior.</div>
             </div>
         </section>
 
         <!-- Key Agreement (ECDH) -->
-        <section class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-teal-500/30 mb-6">
+        <section id="keyAgreementSection" class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-teal-500/30 mb-6">
             <h2 class="text-2xl font-bold mb-4"><i class="fas fa-handshake text-teal-400 mr-2"></i>Key Agreement (ECDH)</h2>
-            <p class="text-sm text-gray-300 mb-4">Generate a shared secret using elliptic-curve Diffie–Hellman (ECDH). Real world: TLS, P2P handshakes, and wallets derive AEAD keys from ECDH via a KDF.</p>
+            <p class="text-sm text-gray-300 mb-4">Generate a shared secret using elliptic-curve Diffie–Hellman (ECDH). Real world: TLS, P2P handshakes, and wallets derive AEAD keys from ECDH via a KDF. On the HTTP lab URL, this panel uses a toy key-agreement fallback so the exchange remains interactive.</p>
             
             <!-- Math Explanation -->
             <div class="bg-gradient-to-r from-teal-900/30 via-purple-900/30 to-teal-900/30 rounded-xl p-6 mb-6 border border-teal-500/40">
@@ -195,12 +360,12 @@
                         <div class="space-y-2 text-sm mono">
                             <div class="flex items-center space-x-2">
                                 <span class="text-teal-400">Alice</span>
-                                <span class="text-gray-400">chooses secret:</span>
+                                <span class="text-gray-400">chooses private scalar:</span>
                                 <span class="text-yellow-300 font-bold">a</span>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <span class="text-purple-400">Bob</span>
-                                <span class="text-gray-400">chooses secret:</span>
+                                <span class="text-gray-400">chooses private scalar:</span>
                                 <span class="text-yellow-300 font-bold">b</span>
                             </div>
                             <div class="text-gray-400 mt-2">Both parties agree on a public point <span class="text-green-400 font-bold">G</span> (generator) on an elliptic curve</div>
@@ -222,7 +387,7 @@
                                 <span class="text-gray-400">=</span>
                                 <span class="text-green-400">b · G</span>
                             </div>
-                            <div class="text-gray-400 mt-2"><span class="text-teal-400">A</span> and <span class="text-purple-400">B</span> are exchanged publicly (no secrets leaked!)</div>
+                            <div class="text-gray-400 mt-2"><span class="text-teal-400">A</span> and <span class="text-purple-400">B</span> are the public values exchanged by Alice and Bob.</div>
                         </div>
                     </div>
                     
@@ -232,54 +397,21 @@
                             <div class="bg-teal-900/30 rounded p-3 border border-teal-500/30">
                                 <div class="text-teal-300 font-semibold mb-2">Alice's calculation:</div>
                                 <div class="flex flex-wrap items-center gap-2 text-sm">
-                                    <span class="text-yellow-300 font-bold">Shared</span>
-                                    <span class="text-gray-400">=</span>
-                                    <span class="text-teal-400">a</span>
-                                    <span class="text-gray-400">·</span>
-                                    <span class="text-purple-400">B</span>
-                                    <span class="text-gray-400">=</span>
-                                    <span class="text-teal-400">a</span>
-                                    <span class="text-gray-400">·</span>
-                                    <span class="text-purple-400">(</span>
-                                    <span class="text-purple-400">b</span>
-                                    <span class="text-gray-400">·</span>
-                                    <span class="text-green-400">G</span>
-                                    <span class="text-purple-400">)</span>
-                                    <span class="text-gray-400">=</span>
-                                    <span class="text-yellow-300 font-bold">a·b·G</span>
+                                    <div class="math-display">\( S_A = aB = a(bG) = abG \)</div>
                                 </div>
                             </div>
                             <div class="bg-purple-900/30 rounded p-3 border border-purple-500/30">
                                 <div class="text-purple-300 font-semibold mb-2">Bob's calculation:</div>
                                 <div class="flex flex-wrap items-center gap-2 text-sm">
-                                    <span class="text-yellow-300 font-bold">Shared</span>
-                                    <span class="text-gray-400">=</span>
-                                    <span class="text-purple-400">b</span>
-                                    <span class="text-gray-400">·</span>
-                                    <span class="text-teal-400">A</span>
-                                    <span class="text-gray-400">=</span>
-                                    <span class="text-purple-400">b</span>
-                                    <span class="text-gray-400">·</span>
-                                    <span class="text-teal-400">(</span>
-                                    <span class="text-teal-400">a</span>
-                                    <span class="text-gray-400">·</span>
-                                    <span class="text-green-400">G</span>
-                                    <span class="text-teal-400">)</span>
-                                    <span class="text-gray-400">=</span>
-                                    <span class="text-yellow-300 font-bold">b·a·G</span>
+                                    <div class="math-display">\( S_B = bA = b(aG) = baG \)</div>
                                 </div>
                             </div>
-                            <div class="bg-gradient-to-r from-yellow-900/30 to-green-900/30 rounded p-4 border-2 border-yellow-500/50 mt-3 animate-pulse-slow">
+                            <div class="bg-gradient-to-r from-yellow-900/30 to-green-900/30 rounded p-4 border-2 border-yellow-500/50 mt-3">
                                 <div class="flex items-center space-x-3">
-                                    <span class="text-3xl animate-pulse-slow">✨</span>
                                     <div class="flex-1">
                                         <div class="text-yellow-300 font-bold text-lg mb-2">The Key Property</div>
                                         <div class="text-sm text-gray-300 mb-2">Because scalar multiplication composes consistently on the same generator point,</div>
-                                        <div class="text-base mono text-yellow-200 mt-2 mb-2 bg-black/30 px-3 py-2 rounded border border-yellow-500/30 inline-block">
-                                            <span class="text-teal-400">a</span>·<span class="text-purple-400">b</span>·<span class="text-green-400">G</span> 
-                                            <span class="text-gray-500 mx-2">=</span> 
-                                            <span class="text-purple-400">b</span>·<span class="text-teal-400">a</span>·<span class="text-green-400">G</span>
-                                        </div>
+                                        <div class="math-display">\( abG = baG \)</div>
                                         <div class="text-sm text-gray-300 mt-3">Both parties arrive at the <span class="text-green-400 font-bold">same shared secret</span> without ever sharing their private keys.</div>
                                     </div>
                                 </div>
@@ -300,7 +432,7 @@
                 <div class="bg-black/30 border border-white/10 rounded p-4">
                     <h3 class="font-semibold mb-2">Alice</h3>
                     <button id="btnGenAlice" class="w-full bg-teal-600 hover:bg-teal-700 rounded px-4 py-2 mb-3">Generate Alice's Keys</button>
-                    <div class="text-xs text-gray-400 mb-1">Private Key (secret)</div>
+                    <div class="text-xs text-gray-400 mb-1">Alice private key preview</div>
                     <textarea id="alicePriv" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs mb-2" readonly></textarea>
                     <div class="text-xs text-gray-400 mb-1">Public Key (sent to Bob)</div>
                     <textarea id="alicePub" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs" readonly></textarea>
@@ -308,7 +440,7 @@
                 <div class="bg-black/30 border border-white/10 rounded p-4">
                     <h3 class="font-semibold mb-2">Bob</h3>
                     <button id="btnGenBob" class="w-full bg-teal-600 hover:bg-teal-700 rounded px-4 py-2 mb-3">Generate Bob's Keys</button>
-                    <div class="text-xs text-gray-400 mb-1">Private Key (secret)</div>
+                    <div class="text-xs text-gray-400 mb-1">Bob private key preview</div>
                     <textarea id="bobPriv" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs mb-2" readonly></textarea>
                     <div class="text-xs text-gray-400 mb-1">Public Key (sent to Alice)</div>
                     <textarea id="bobPub" class="w-full h-16 bg-black/40 border border-white/20 rounded px-2 py-1 mono text-xs" readonly></textarea>
@@ -317,7 +449,7 @@
             <div class="mt-4">
                 <button id="btnDeriveShared" class="bg-teal-600 hover:bg-teal-700 rounded px-4 py-2">Derive Shared Secret</button>
                 <div class="mt-3">
-                    <div class="text-xs text-gray-400 mb-1">Shared Secret (KDF output, hex)</div>
+                    <div class="text-xs text-gray-400 mb-1">Shared Secret (Alice/Bob KDF output, hex)</div>
                     <textarea id="sharedSecret" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2 mono text-xs" readonly placeholder="Both parties compute the same secret from their private key and the other's public key..."></textarea>
                     <div class="text-xs text-gray-400 mt-1">This secret feeds into a KDF to derive symmetric keys for AEAD.</div>
                 </div>
@@ -341,7 +473,9 @@
                     <div class="bg-indigo-900/20 border border-indigo-500/30 rounded-lg p-4">
                         <div class="text-lg font-bold text-indigo-300 mb-2">Step 1: Why does it have to be a curve?</div>
                         <div class="text-gray-200 text-sm space-y-2">
-                            <p>The formula <span class="mono text-yellow-300">y² = x³ + a·x + b</span> creates a special curve because:</p>
+                            <p>The curve equation is:</p>
+                            <div class="math-display">\[ y^2 = x^3 + ax + b \]</div>
+                            <p>It creates a special curve because:</p>
                             <ul class="list-disc ml-5 space-y-1">
                                 <li><strong>For each x</strong>, you solve for y → get <span class="mono">y = ±√(x³ + a·x + b)</span></li>
                                 <li>If the stuff under the square root is positive, you get <strong>two possible y values</strong> (one positive, one negative)</li>
@@ -360,7 +494,7 @@
                                 <li><strong>Bad curve parameters (a, b):</strong> If chosen wrong → curve has sharp corners or self-intersects → point addition doesn't work → <span class="text-red-400">can't do cryptography</span></li>
                                 <li><strong>G not on the curve:</strong> The generator point must be on the curve → if it's not → adding it doesn't follow the rules → <span class="text-red-400">public keys are invalid</span></li>
                                 <li><strong>d = 0 or too big:</strong> Private key must be in valid range → if d = 0 → Q = 0·G = nothing → <span class="text-red-400">can't create signatures</span></li>
-                                <li><strong>Predictable or reused randomness:</strong> If you use the same random number twice → attacker solves equations → <span class="text-red-400">private key gets stolen</span></li>
+                                <li><strong>Predictable or reused randomness:</strong> If you use the same random number twice → attacker solves equations → <span class="text-red-400">the signing key can be recovered</span></li>
                             </ul>
                             <p class="mt-2 font-semibold">Bottom line: Math has rules. Break them and the security disappears.</p>
                         </div>
@@ -377,7 +511,9 @@
                                 <li>If d is biased (favors certain numbers) → attacker exploits the pattern → <span class="text-red-400">your crypto is broken</span></li>
                                 <li>If multiple people reuse the same d → their public keys are identical → <span class="text-red-400">easy to track/attack</span></li>
                             </ul>
-                            <p class="mt-2"><strong>Public key Q:</strong> Computed from d and G using point addition: <span class="mono text-yellow-300">Q = d·G</span>. Because d is random, Q appears random too — but it's mathematically linked to d through the curve.</p>
+                            <p class="mt-2"><strong>Public key Q:</strong> Computed from d and G using point addition:</p>
+                            <div class="math-display">\[ Q = dG \]</div>
+                            <p>Because d is random, Q appears random too — but it is mathematically linked to d through the curve.</p>
                         </div>
                     </div>
 
@@ -413,39 +549,68 @@
             </div>
         </section>
 
-        <!-- Nonce Reuse Warning (ECDSA) -->
+        <!-- Nonce Reuse Demo (ECDSA) -->
         <section id="nonceSection" class="bg-yellow-900/20 border border-yellow-700/30 rounded-xl p-6 mb-6">
-            <h2 class="text-2xl font-bold mb-2"><i class="fas fa-triangle-exclamation text-yellow-400 mr-2"></i>ECDSA Nonce Reuse Concept Demo</h2>
-            <p class="text-gray-300 mb-4">ECDSA requires a unique random nonce per signature. If two signatures from the same key reuse the nonce (same <span class="mono">r</span>), the private key can be recovered. This section is a conceptual math walkthrough: WebCrypto does not let the browser force a real reused nonce with your live key, so the same-<span class="mono">r</span> failure is simulated to show why it is dangerous.</p>
+            <h2 class="text-2xl font-bold mb-2"><i class="fas fa-triangle-exclamation text-yellow-400 mr-2"></i>ECDSA Nonce Reuse Toy Demo</h2>
+            <p class="text-gray-300 mb-4">ECDSA signature math uses a per-signature nonce <span class="mono">k</span>. This toy panel exposes the private scalar <span class="mono">d</span>, the message hash <span class="mono">h</span>, the nonce <span class="mono">k</span>, and the signature values <span class="mono">r</span> and <span class="mono">s</span> so the reuse failure is visible.</p>
+            <div class="grid md:grid-cols-3 gap-4 mb-4">
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <div class="text-sm font-semibold mb-2">Toy private key</div>
+                    <div id="toyD" class="mono text-xs break-all">Click "Sign Message 1" to create d.</div>
+                    <button id="btnResetNonceDemo" class="w-full mt-3 bg-slate-600 hover:bg-slate-700 rounded px-3 py-2 text-xs">New Toy Key</button>
+                </div>
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <div class="text-sm font-semibold mb-2">Where k fits</div>
+                    <div class="math-display">\[ R = kG \]</div>
+                    <div class="math-display">\[ r = x_R \bmod n \]</div>
+                    <div class="math-display">\[ s = k^{-1}(h + rd) \bmod n \]</div>
+                    <div class="text-xs text-gray-400 mt-2">This panel uses a deterministic toy stand-in for <span class="mono">r = x(k*G)</span> so the browser can show the algebra without implementing full P-256 point multiplication.</div>
+                </div>
+                <div class="bg-black/30 border border-white/10 rounded p-4">
+                    <div class="text-sm font-semibold mb-2">Reuse attack</div>
+                    <div class="math-display">\[ k = (h_1 - h_2)(s_1 - s_2)^{-1} \bmod n \]</div>
+                    <div class="math-display">\[ d = (s_1k - h_1)r^{-1} \bmod n \]</div>
+                    <div class="text-xs text-gray-400 mt-2">Two different messages with the same <span class="mono">k</span> expose enough equations to recover both <span class="mono">k</span> and <span class="mono">d</span>.</div>
+                </div>
+            </div>
             <div class="grid md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm text-gray-300 mb-1">Message 1</label>
                     <textarea id="msg1" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2 mb-2" placeholder="First message">Payment: 50 tokens</textarea>
-                    <button id="btnSign1" class="w-full bg-yellow-600 hover:bg-yellow-700 rounded px-4 py-2 mb-2">Sign (with fresh nonce)</button>
-                    <div class="text-xs text-gray-400">r: <span id="r1" class="mono"></span> &nbsp; s: <span id="s1" class="mono"></span></div>
+                    <button id="btnSign1" class="w-full bg-yellow-600 hover:bg-yellow-700 rounded px-4 py-2 mb-2">Sign Message 1 (fresh visible k)</button>
+                    <div class="text-xs text-gray-400">h1: <span id="h1" class="mono break-all"></span></div>
+                    <div class="text-xs text-gray-400">k1: <span id="k1" class="mono break-all"></span></div>
+                    <div class="text-xs text-gray-400">r1: <span id="r1" class="mono break-all"></span></div>
+                    <div class="text-xs text-gray-400">s1: <span id="s1" class="mono break-all"></span></div>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-300 mb-1">Message 2</label>
                     <textarea id="msg2" class="w-full h-20 bg-black/40 border border-white/20 rounded px-3 py-2 mb-2" placeholder="Second message">Payment: 100 tokens</textarea>
                     <div class="flex space-x-2 mb-2">
-                        <button id="btnSign2Fresh" class="flex-1 bg-yellow-600 hover:bg-yellow-700 rounded px-3 py-2">Sign (fresh)</button>
-                        <button id="btnSign2Reuse" class="flex-1 bg-red-600 hover:bg-red-700 rounded px-3 py-2">Simulate Reused Nonce</button>
+                        <button id="btnSign2Fresh" class="flex-1 bg-yellow-600 hover:bg-yellow-700 rounded px-3 py-2">Sign Message 2 (fresh k)</button>
+                        <button id="btnSign2Reuse" class="flex-1 bg-red-600 hover:bg-red-700 rounded px-3 py-2">Reuse Message 1 k</button>
                     </div>
-                    <div class="text-xs text-gray-400">r: <span id="r2" class="mono"></span> &nbsp; s: <span id="s2" class="mono"></span></div>
+                    <div class="text-xs text-gray-400">h2: <span id="h2" class="mono break-all"></span></div>
+                    <div class="text-xs text-gray-400">k2: <span id="k2" class="mono break-all"></span></div>
+                    <div class="text-xs text-gray-400">r2: <span id="r2" class="mono break-all"></span></div>
+                    <div class="text-xs text-gray-400">s2: <span id="s2" class="mono break-all"></span></div>
                 </div>
             </div>
             <div id="nonceWarning" class="mt-4 hidden bg-red-900/50 border border-red-600/40 rounded p-3 text-sm">
-                <strong>Warning:</strong> <span id="nonceWarningText"></span>
+                <strong>Reuse result:</strong> <span id="nonceWarningText"></span>
             </div>
             <div id="recoveryMath" class="mt-3 hidden text-xs text-gray-200 bg-black/30 border border-red-600/30 rounded p-3">
-                <div class="mb-1"><strong>Recovering d from nonce reuse (concept):</strong></div>
-                <div class="mono">d = (s1·h2 − s2·h1) · (r·(s2 − s1))^{-1} mod n</div>
-                <div class="mt-1">Computed d (hex, toy demo): <span id="recoveredD" class="mono"></span></div>
-                <div class="mt-1 text-gray-400">Note: This is a math demonstration of the same-<span class="mono">r</span> attack pattern. We do not access or reveal the real private key from your browser’s key store.</div>
+                <div class="mb-1"><strong>Recovered from the two signatures:</strong></div>
+                <div class="math-display">\[ k = (h_1 - h_2)(s_1 - s_2)^{-1} \bmod n \]</div>
+                <div class="math-display">\[ d = (s_1k - h_1)r^{-1} \bmod n \]</div>
+                <div class="mt-1">Recovered k: <span id="recoveredK" class="mono break-all"></span></div>
+                <div class="mt-1">Original k1: <span id="originalK" class="mono break-all"></span></div>
+                <div class="mt-1">Recovered d: <span id="recoveredD" class="mono break-all"></span></div>
+                <div class="mt-1">Original d: <span id="originalD" class="mono break-all"></span></div>
+                <div class="mt-1">Matches: <span id="nonceReuseMatch" class="mono"></span></div>
             </div>
             <div class="mt-3 text-xs text-gray-400">
-                <strong>Lesson:</strong> If the same <span class="mono">r</span> appears in two ECDSA signatures from the same keypair, an attacker can compute the private key. 
-                Ed25519 derives its signing randomness deterministically from the secret key and message, which avoids this specific operational mistake.
+                <strong>Lesson:</strong> Fresh signatures use different <span class="mono">k</span> values, which also produces different <span class="mono">r</span> values. Reusing <span class="mono">k</span> makes <span class="mono">r</span> repeat and lets an observer recover the signing key from public signature data.
             </div>
         </section>
 
@@ -499,6 +664,9 @@
             for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
             return out;
         }
+        function hasSubtleCrypto() {
+            return Boolean(globalThis.crypto && crypto.subtle);
+        }
         function encodeUint32(value) {
             const out = new Uint8Array(4);
             out[0] = (value >>> 24) & 0xff;
@@ -518,7 +686,88 @@
             return { domainBytes, msgBytes, framed };
         }
         async function sha256(bytes) {
-            return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+            if (hasSubtleCrypto()) {
+                return new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+            }
+            return sha256Fallback(bytes);
+        }
+        const SHA256_K = [
+            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+        ];
+        function rotr(value, amount) {
+            return (value >>> amount) | (value << (32 - amount));
+        }
+        function sha256Fallback(input) {
+            const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+            const bitLength = bytes.length * 8;
+            const paddedLength = bytes.length + 1 + ((64 - ((bytes.length + 1 + 8) % 64)) % 64) + 8;
+            const data = new Uint8Array(paddedLength);
+            data.set(bytes);
+            data[bytes.length] = 0x80;
+            const bitHigh = Math.floor(bitLength / 0x100000000);
+            const bitLow = bitLength >>> 0;
+            data[paddedLength - 8] = (bitHigh >>> 24) & 0xff;
+            data[paddedLength - 7] = (bitHigh >>> 16) & 0xff;
+            data[paddedLength - 6] = (bitHigh >>> 8) & 0xff;
+            data[paddedLength - 5] = bitHigh & 0xff;
+            data[paddedLength - 4] = (bitLow >>> 24) & 0xff;
+            data[paddedLength - 3] = (bitLow >>> 16) & 0xff;
+            data[paddedLength - 2] = (bitLow >>> 8) & 0xff;
+            data[paddedLength - 1] = bitLow & 0xff;
+
+            const h = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+            const w = new Uint32Array(64);
+            for (let offset = 0; offset < data.length; offset += 64) {
+                for (let i = 0; i < 16; i++) {
+                    const j = offset + i * 4;
+                    w[i] = ((data[j] << 24) | (data[j + 1] << 16) | (data[j + 2] << 8) | data[j + 3]) >>> 0;
+                }
+                for (let i = 16; i < 64; i++) {
+                    const s0 = (rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3)) >>> 0;
+                    const s1 = (rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10)) >>> 0;
+                    w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+                }
+                let [a, b, c, d, e, f, g, hh] = h;
+                for (let i = 0; i < 64; i++) {
+                    const s1 = (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) >>> 0;
+                    const ch = ((e & f) ^ (~e & g)) >>> 0;
+                    const temp1 = (hh + s1 + ch + SHA256_K[i] + w[i]) >>> 0;
+                    const s0 = (rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) >>> 0;
+                    const maj = ((a & b) ^ (a & c) ^ (b & c)) >>> 0;
+                    const temp2 = (s0 + maj) >>> 0;
+                    hh = g;
+                    g = f;
+                    f = e;
+                    e = (d + temp1) >>> 0;
+                    d = c;
+                    c = b;
+                    b = a;
+                    a = (temp1 + temp2) >>> 0;
+                }
+                h[0] = (h[0] + a) >>> 0;
+                h[1] = (h[1] + b) >>> 0;
+                h[2] = (h[2] + c) >>> 0;
+                h[3] = (h[3] + d) >>> 0;
+                h[4] = (h[4] + e) >>> 0;
+                h[5] = (h[5] + f) >>> 0;
+                h[6] = (h[6] + g) >>> 0;
+                h[7] = (h[7] + hh) >>> 0;
+            }
+            const out = new Uint8Array(32);
+            h.forEach((word, i) => {
+                out[i * 4] = (word >>> 24) & 0xff;
+                out[i * 4 + 1] = (word >>> 16) & 0xff;
+                out[i * 4 + 2] = (word >>> 8) & 0xff;
+                out[i * 4 + 3] = word & 0xff;
+            });
+            return out;
         }
         function previewHex(bytes, maxBytes = 48) {
             const hex = toHex(bytes);
@@ -538,12 +787,13 @@
             el.style.color = color;
         }
         function resetSignatureStatus() {
-            setVerifyResult('Click Verify with Public Key to check the current message, signature, and verifying key.');
+            setVerifyResult('Click Verify to check the message, signature, and public key.');
             const verifyHash = document.getElementById('verifyHashValue');
             if (verifyHash) verifyHash.textContent = '-';
         }
         async function exportPublicKeyHex(key) {
             if (!key) return '';
+            if (key.toyPublic) return `q=${bigToHex(key.q, 64)}\nmode=toy ${key.algName} verifier`;
             try {
                 const jwk = await crypto.subtle.exportKey('jwk', key);
                 if (jwk.kty === 'RSA') {
@@ -564,6 +814,7 @@
         }
         async function exportPrivateKeyPreview(key) {
             if (!key) return '';
+            if (key.toyPrivate) return `d=${bigToHex(key.d, 64)}\nmode=toy ${key.algName} signer`;
             try {
                 const jwk = await crypto.subtle.exportKey('jwk', key);
                 if (jwk.kty === 'RSA') return `d=${jwkMemberToHex(jwk.d)}`;
@@ -578,6 +829,7 @@
         }
         async function exportAddressCompatiblePublicKeyHex(key) {
             if (!key) return '';
+            if (key.toyPublic) return bigToHex(key.q, 64);
             const jwk = await crypto.subtle.exportKey('jwk', key);
             if (jwk.kty === 'RSA') return '';
             if (jwk.kty === 'EC') return `${jwkMemberToHex(jwk.x)}${jwkMemberToHex(jwk.y)}`;
@@ -600,10 +852,13 @@
         let activeVerifyKeyLabel = 'Generate a keypair first';
         let lastSignedSignatureHex = '';
         let lastSignedDigestHex = '';
-        let lastNonce = null;
-        let lastR = null;
-        let s1Big = null, rBig = null, h1Big = null; // for reuse demo
+        let nonceDemoPrivate = null;
+        let nonceDemoSig1 = null;
+        let nonceDemoSig2 = null;
         const P256_N = BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551');
+        const TOY_P = BigInt('0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2f');
+        const TOY_G = 5n;
+        const TOY_N = TOY_P - 1n;
 
         function hexToBig(hex) { return BigInt('0x' + hex); }
         function bigToHex(b, padTo = 0) {
@@ -614,6 +869,90 @@
         function mod(a, n) { const r = a % n; return r >= 0n ? r : r + n; }
         function egcd(a, b) { if (b === 0n) return [a, 1n, 0n]; const [g, x1, y1] = egcd(b, a % b); return [g, y1, x1 - (a / b) * y1]; }
         function invMod(a, n) { const [g, x] = egcd(mod(a, n), n); if (g !== 1n) throw new Error('No inverse'); return mod(x, n); }
+        function modPow(base, exponent, modulus) {
+            let result = 1n;
+            let b = mod(base, modulus);
+            let e = exponent;
+            while (e > 0n) {
+                if (e & 1n) result = mod(result * b, modulus);
+                b = mod(b * b, modulus);
+                e >>= 1n;
+            }
+            return result;
+        }
+        function formatScalar(value) { return '0x' + bigToHex(value, 64); }
+        function randomScalar() {
+            const bytes = new Uint8Array(32);
+            let value = 0n;
+            while (value === 0n) {
+                crypto.getRandomValues(bytes);
+                value = mod(hexToBig(toHex(bytes)), P256_N);
+            }
+            return value;
+        }
+        function randomToyExponent() {
+            const value = mod(randomScalar(), TOY_N);
+            return value === 0n ? 1n : value;
+        }
+        function makeToySignatureKeyPair(algName = currentAlgName()) {
+            const d = randomToyExponent();
+            const q = modPow(TOY_G, d, TOY_P);
+            return {
+                toy: true,
+                algName,
+                privateKey: { toyPrivate: true, algName, d },
+                publicKey: { toyPublic: true, algName, q }
+            };
+        }
+        function makeToyEcdhKeyPair() {
+            const d = randomToyExponent();
+            const q = modPow(TOY_G, d, TOY_P);
+            return {
+                toyEcdh: true,
+                privateKey: { toyEcdhPrivate: true, d },
+                publicKey: { toyEcdhPublic: true, q }
+            };
+        }
+        function setScalarText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value === null || value === undefined ? '' : formatScalar(value);
+        }
+        async function hashMessageScalar(message) {
+            const digest = await sha256(te.encode(message || ''));
+            return mod(hexToBig(toHex(digest)), P256_N);
+        }
+        async function toyNonceToR(k) {
+            const digest = await sha256(te.encode('toy-r|' + bigToHex(k, 64)));
+            const r = mod(hexToBig(toHex(digest)), P256_N);
+            return r === 0n ? 1n : r;
+        }
+        function typesetMath(target) {
+            if (window.MathJax && MathJax.typesetPromise) {
+                MathJax.typesetPromise(target ? [target] : undefined).catch(() => {});
+            }
+        }
+        async function toySignatureChallenge(r, q, digest, algName) {
+            const material = `${algName}|${bigToHex(r, 64)}|${bigToHex(q, 64)}|${toHex(digest)}`;
+            return mod(hexToBig(toHex(await sha256(te.encode(material)))), TOY_N);
+        }
+        async function toySignSignature(privateKey, ctx) {
+            const k = randomToyExponent();
+            const r = modPow(TOY_G, k, TOY_P);
+            const q = modPow(TOY_G, privateKey.d, TOY_P);
+            const e = await toySignatureChallenge(r, q, ctx.digest, privateKey.algName);
+            const s = mod(k + e * privateKey.d, TOY_N);
+            return bigToHex(r, 64) + bigToHex(s, 64);
+        }
+        async function toyVerifySignature(publicKey, signatureHex, ctx) {
+            if (!/^[0-9a-fA-F]+$/.test(signatureHex) || signatureHex.length !== 128) return false;
+            const r = hexToBig(signatureHex.slice(0, 64));
+            const s = hexToBig(signatureHex.slice(64));
+            if (r <= 0n || r >= TOY_P || s <= 0n || s >= TOY_N) return false;
+            const e = await toySignatureChallenge(r, publicKey.q, ctx.digest, publicKey.algName);
+            const left = modPow(TOY_G, s, TOY_P);
+            const right = mod(r * modPow(publicKey.q, e, TOY_P), TOY_P);
+            return left === right;
+        }
 
         function parseDerEcdsaSignature(bytes) {
             // Minimal DER parser for ECDSA (SEQUENCE of two INTEGERs)
@@ -715,8 +1054,8 @@
                 if (formatNote) formatNote.innerHTML = 'Format: Ed25519 signatures appear as raw 64-byte hex values.';
                 return;
             }
-            if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>ECDSA P-256</strong> pairs well with the curve intuition panel below and shows why nonce handling matters. <strong>RSA-2048</strong> and <strong>Ed25519</strong> remain available in the selector when you want a different signature family.';
-            if (formatNote) formatNote.innerHTML = 'Format: ECDSA signatures are DER-encoded <span class="mono">(r,s)</span> values with variable byte length.';
+            if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>ECDSA P-256</strong> pairs well with the curve intuition panel below and the visible nonce-reuse toy demo. <strong>RSA-2048</strong> and <strong>Ed25519</strong> remain available in the selector when you want a different signature family.';
+            if (formatNote) formatNote.innerHTML = 'Format: browser ECDSA P-256 signatures appear as raw <span class="mono">r || s</span> values: 32 bytes of <span class="mono">r</span> followed by 32 bytes of <span class="mono">s</span>.';
         }
         async function updateVerifierKeyPreview() {
             const labelEl = document.getElementById('verifyKeyLabel');
@@ -739,6 +1078,16 @@
             if (!currentKeyPair) {
                 await generateKeyPair();
             }
+            if (!currentKeyPair) return;
+            if (currentKeyPair.toy || !hasSubtleCrypto()) {
+                alternateVerifyKeyPair = makeToySignatureKeyPair(currentAlgName());
+                activeVerifyKey = alternateVerifyKeyPair.publicKey;
+                activeVerifyKeyLabel = 'Wrong toy public key';
+                await updateVerifierKeyPreview();
+                resetSignatureStatus();
+                showWarn('Loaded a different toy public key for verification.');
+                return;
+            }
             try {
                 alternateVerifyKeyPair = await crypto.subtle.generateKey(currentAlg(), true, ['sign', 'verify']);
                 activeVerifyKey = alternateVerifyKeyPair.publicKey;
@@ -748,33 +1097,6 @@
                 showWarn('Loaded a different public key for verification.');
             } catch (e) {
                 showWarn('Failed to generate an alternate verifier key: ' + e.message);
-            }
-        }
-        async function exportCurrentKeyPair() {
-            if (!currentKeyPair) {
-                showWarn('Generate a keypair first.');
-                return;
-            }
-            try {
-                const pubJwk = await crypto.subtle.exportKey('jwk', currentKeyPair.publicKey);
-                const privJwk = await crypto.subtle.exportKey('jwk', currentKeyPair.privateKey);
-                const payload = {
-                    algorithm: document.getElementById('sigAlg').value,
-                    exportedAt: new Date().toISOString(),
-                    note: 'Educational export. Do not share private keys in real systems.',
-                    publicKeyJwk: pubJwk,
-                    privateKeyJwk: privJwk
-                };
-                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'signature-lab-keypair.json';
-                a.click();
-                URL.revokeObjectURL(url);
-                showWarn('Keypair exported as JSON.');
-            } catch (e) {
-                showWarn('Export failed: ' + e.message);
             }
         }
         async function buildSignatureInputs() {
@@ -821,6 +1143,28 @@
         }
 
         async function generateKeyPair() {
+            if (!hasSubtleCrypto()) {
+                const algName = currentAlgName();
+                currentKeyPair = makeToySignatureKeyPair(algName);
+                alternateVerifyKeyPair = null;
+                activeVerifyKey = currentKeyPair.publicKey;
+                activeVerifyKeyLabel = 'Signer toy public key';
+                lastSignedSignatureHex = '';
+                lastSignedDigestHex = '';
+                document.getElementById('signature').value = '';
+                document.getElementById('signedHashValue').textContent = '-';
+                await updateKeyPreview();
+                await updateVerifierKeyPreview();
+                await refreshHashWorkspace();
+                updateAlgorithmMessaging();
+                refreshAlgorithmSpecificSections();
+                resetSignatureStatus();
+                showWarn(`Generated toy ${algName} keypair for this HTTP view.`);
+                if (isEcdsaSelection() && document.getElementById('eccCanvas')) {
+                    setTimeout(() => animateECCKeyGen({ silent: true }), 300);
+                }
+                return;
+            }
             const alg = currentAlg();
             const algName = currentAlgName();
             const usages = typeof alg === 'string' 
@@ -890,7 +1234,18 @@
             if (!currentKeyPair) {
                 await generateKeyPair();
             }
+            if (!currentKeyPair) return;
             const ctx = await refreshHashWorkspace();
+            if (currentKeyPair.toy) {
+                lastSignedSignatureHex = await toySignSignature(currentKeyPair.privateKey, ctx);
+                lastSignedDigestHex = toHex(ctx.digest);
+                document.getElementById('signature').value = lastSignedSignatureHex;
+                document.getElementById('signedHashValue').textContent = lastSignedDigestHex;
+                updateSigningState(lastSignedDigestHex);
+                resetSignatureStatus();
+                showWarn('Message signed with the toy private key.');
+                return;
+            }
             try {
                 const sig = await crypto.subtle.sign(
                     currentSignVerifyAlgorithm(),
@@ -904,13 +1259,6 @@
                 document.getElementById('signedHashValue').textContent = lastSignedDigestHex;
                 updateSigningState(lastSignedDigestHex);
                 resetSignatureStatus();
-                // Extract r for ECDSA nonce tracking
-                if (typeof currentAlg() === 'object' && currentAlg().name === 'ECDSA') {
-                    try {
-                        const { rHex } = parseDerEcdsaSignature(sigBytes);
-                        lastR = rHex; lastNonce = rHex;
-                    } catch (_) {}
-                }
                 showWarn('Message signed with the private key.');
             } catch (e) {
                 showWarn('Signing failed: ' + e.message);
@@ -941,12 +1289,14 @@
                 return;
             }
             try {
-                const valid = await crypto.subtle.verify(
-                    currentSignVerifyAlgorithm(),
-                    activeVerifyKey,
-                    sig,
-                    ctx.framed
-                );
+                const valid = activeVerifyKey?.toyPublic
+                    ? await toyVerifySignature(activeVerifyKey, sigHex, ctx)
+                    : await crypto.subtle.verify(
+                        currentSignVerifyAlgorithm(),
+                        activeVerifyKey,
+                        sig,
+                        ctx.framed
+                    );
                 setVerifyResult(
                     valid
                         ? 'VALID: the current message, signature, and public key all match.'
@@ -984,6 +1334,13 @@
         }
 
         async function generateAlice() {
+            if (!hasSubtleCrypto()) {
+                aliceKeyPair = makeToyEcdhKeyPair();
+                document.getElementById('alicePub').value = 'q=' + bigToHex(aliceKeyPair.publicKey.q, 64);
+                document.getElementById('alicePriv').value = 'd=' + bigToHex(aliceKeyPair.privateKey.d, 64);
+                showWarn("Generated Alice's toy ECDH keys for this HTTP view.");
+                return;
+            }
             const alg = { name: 'ECDH', namedCurve: 'P-256' };
             aliceKeyPair = await crypto.subtle.generateKey(alg, true, ['deriveBits', 'deriveKey']);
             const pub = await crypto.subtle.exportKey('raw', aliceKeyPair.publicKey);
@@ -998,6 +1355,13 @@
         }
 
         async function generateBob() {
+            if (!hasSubtleCrypto()) {
+                bobKeyPair = makeToyEcdhKeyPair();
+                document.getElementById('bobPub').value = 'q=' + bigToHex(bobKeyPair.publicKey.q, 64);
+                document.getElementById('bobPriv').value = 'd=' + bigToHex(bobKeyPair.privateKey.d, 64);
+                showWarn("Generated Bob's toy ECDH keys for this HTTP view.");
+                return;
+            }
             const alg = { name: 'ECDH', namedCurve: 'P-256' };
             bobKeyPair = await crypto.subtle.generateKey(alg, true, ['deriveBits', 'deriveKey']);
             const pub = await crypto.subtle.exportKey('raw', bobKeyPair.publicKey);
@@ -1017,71 +1381,129 @@
                 return;
             }
             try {
+                if (aliceKeyPair.toyEcdh || bobKeyPair.toyEcdh) {
+                    if (!aliceKeyPair.toyEcdh || !bobKeyPair.toyEcdh) {
+                        showWarn('Regenerate both ECDH keypairs so they use the same mode.');
+                        return;
+                    }
+                    const aliceShared = modPow(bobKeyPair.publicKey.q, aliceKeyPair.privateKey.d, TOY_P);
+                    const bobShared = modPow(aliceKeyPair.publicKey.q, bobKeyPair.privateKey.d, TOY_P);
+                    const aliceKdf = await sha256(te.encode(bigToHex(aliceShared, 64)));
+                    const bobKdf = await sha256(te.encode(bigToHex(bobShared, 64)));
+                    const aliceHex = toHex(aliceKdf);
+                    const bobHex = toHex(bobKdf);
+                    document.getElementById('sharedSecret').value =
+                        `Alice toy KDF: ${aliceHex}\nBob toy KDF:   ${bobHex}\nMatch:         ${aliceHex === bobHex ? 'yes' : 'no'}`;
+                    showWarn('Toy shared secret derived. Both parties compute the same value.');
+                    return;
+                }
                 // Alice computes: shared = deriveBits(alicePriv, bobPub)
-                const alg = { name: 'ECDH', public: bobKeyPair.publicKey };
-                const shared = await crypto.subtle.deriveBits(alg, aliceKeyPair.privateKey, 256);
-                const sharedBytes = new Uint8Array(shared);
+                const aliceAlg = { name: 'ECDH', public: bobKeyPair.publicKey };
+                const bobAlg = { name: 'ECDH', public: aliceKeyPair.publicKey };
+                const aliceShared = new Uint8Array(await crypto.subtle.deriveBits(aliceAlg, aliceKeyPair.privateKey, 256));
+                const bobShared = new Uint8Array(await crypto.subtle.deriveBits(bobAlg, bobKeyPair.privateKey, 256));
                 // Feed through a KDF simulation (here just hash)
-                const kdfOutput = await crypto.subtle.digest('SHA-256', sharedBytes);
-                document.getElementById('sharedSecret').value = toHex(new Uint8Array(kdfOutput));
+                const aliceKdf = await sha256(aliceShared);
+                const bobKdf = await sha256(bobShared);
+                const aliceHex = toHex(aliceKdf);
+                const bobHex = toHex(bobKdf);
+                document.getElementById('sharedSecret').value =
+                    `Alice KDF: ${aliceHex}\nBob KDF:   ${bobHex}\nMatch:     ${aliceHex === bobHex ? 'yes' : 'no'}`;
                 showWarn('Shared secret derived. Both parties compute the same value.');
             } catch (e) {
                 showWarn('Derivation failed: ' + e.message);
             }
         }
 
+        function resetNonceDemo() {
+            nonceDemoPrivate = randomScalar();
+            nonceDemoSig1 = null;
+            nonceDemoSig2 = null;
+            setScalarText('toyD', nonceDemoPrivate);
+            ['h1', 'k1', 'r1', 's1', 'h2', 'k2', 'r2', 's2', 'recoveredK', 'originalK', 'recoveredD', 'originalD'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '';
+            });
+            const match = document.getElementById('nonceReuseMatch');
+            if (match) match.textContent = '';
+            const warning = document.getElementById('nonceWarning');
+            if (warning) warning.classList.add('hidden');
+            const math = document.getElementById('recoveryMath');
+            if (math) math.classList.add('hidden');
+            showWarn('New toy ECDSA private key generated.');
+        }
+
+        async function ensureNonceDemoPrivate() {
+            if (!nonceDemoPrivate) {
+                nonceDemoPrivate = randomScalar();
+                setScalarText('toyD', nonceDemoPrivate);
+            }
+        }
+
+        async function toyEcdsaSign(message, nonce) {
+            await ensureNonceDemoPrivate();
+            const h = await hashMessageScalar(message);
+            const k = nonce || randomScalar();
+            const r = await toyNonceToR(k);
+            const s = mod(invMod(k, P256_N) * mod(h + r * nonceDemoPrivate, P256_N), P256_N);
+            if (s === 0n) {
+                if (nonce) throw new Error('Toy signature produced s = 0. Change the message and try again.');
+                return toyEcdsaSign(message, randomScalar());
+            }
+            return { h, k, r, s };
+        }
+
+        function renderNonceSignature(prefix, sig) {
+            setScalarText('h' + prefix, sig.h);
+            setScalarText('k' + prefix, sig.k);
+            setScalarText('r' + prefix, sig.r);
+            setScalarText('s' + prefix, sig.s);
+        }
+
         async function signMsg1() {
             try {
-                if (!currentKeyPair) await generateKeyPair();
-                const alg = currentAlg();
-                if (typeof alg !== 'object' || alg.name !== 'ECDSA') {
-                    // Auto-switch to ECDSA for this demo
-                    const sel = document.getElementById('sigAlg');
-                    if (sel) sel.value = 'ECDSA-P256';
-                    await generateKeyPair();
-                }
                 const msg = document.getElementById('msg1').value;
                 if (!msg || msg.trim() === '') {
-                    showWarn('Please enter a message to sign.');
+                    showWarn('Please enter Message 1 to sign.');
                     return;
                 }
-                const { framed } = buildFramedPayload(msg, '');
-                const digest = await sha256(framed);
-                const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, currentKeyPair.privateKey, framed);
-                const sigBytes = new Uint8Array(sig);
-                try {
-                    const { rHex, sHex } = parseDerEcdsaSignature(sigBytes);
-                    lastR = rHex; lastNonce = rHex;
-                    rBig = hexToBig(rHex);
-                    s1Big = hexToBig(sHex);
-                    h1Big = hexToBig(toHex(digest));
-                    document.getElementById('r1').textContent = rHex.slice(0, 16) + '...';
-                    document.getElementById('s1').textContent = sHex.slice(0, 16) + '...';
-                    showWarn('Message 1 signed successfully. Now sign Message 2.');
-                } catch (e) {
-                    showWarn('Failed to parse signature: ' + e.message);
-                }
+                await ensureNonceDemoPrivate();
+                nonceDemoSig1 = await toyEcdsaSign(msg);
+                nonceDemoSig2 = null;
+                renderNonceSignature('1', nonceDemoSig1);
+                ['h2', 'k2', 'r2', 's2'].forEach(id => setScalarText(id, null));
+                document.getElementById('nonceWarning').classList.add('hidden');
+                document.getElementById('recoveryMath').classList.add('hidden');
+                showWarn('Message 1 signed with a visible fresh nonce k.');
             } catch (e) {
-                showWarn('Signing failed: ' + e.message);
+                showWarn('Toy signing failed: ' + e.message);
+            }
+        }
+
+        async function signMsg2Fresh() {
+            try {
+                const msg = document.getElementById('msg2').value;
+                if (!msg || msg.trim() === '') {
+                    showWarn('Please enter Message 2 to sign.');
+                    return;
+                }
+                await ensureNonceDemoPrivate();
+                let k = randomScalar();
+                while (nonceDemoSig1 && k === nonceDemoSig1.k) k = randomScalar();
+                nonceDemoSig2 = await toyEcdsaSign(msg, k);
+                renderNonceSignature('2', nonceDemoSig2);
+                document.getElementById('nonceWarning').classList.add('hidden');
+                document.getElementById('recoveryMath').classList.add('hidden');
+                showWarn('Message 2 signed with a fresh nonce. Compare k1/r1 with k2/r2.');
+            } catch (e) {
+                showWarn('Toy signing failed: ' + e.message);
             }
         }
 
         async function signMsg2Reuse() {
             try {
-                if (!currentKeyPair) {
-                    // Ensure ECDSA key
-                    const sel = document.getElementById('sigAlg');
-                    if (sel) sel.value = 'ECDSA-P256';
-                    await generateKeyPair();
-                }
-                const alg = currentAlg();
-                if (typeof alg !== 'object' || alg.name !== 'ECDSA') {
-                    const sel = document.getElementById('sigAlg');
-                    if (sel) sel.value = 'ECDSA-P256';
-                    await generateKeyPair();
-                }
-                if (!lastNonce || !rBig || !s1Big || !h1Big) {
-                    showWarn('Sign message 1 first to establish a nonce.');
+                if (!nonceDemoSig1) {
+                    showWarn('Sign Message 1 first so there is a nonce k to reuse.');
                     return;
                 }
                 const msg2 = document.getElementById('msg2').value;
@@ -1089,72 +1511,34 @@
                     showWarn('Please enter Message 2 to sign.');
                     return;
                 }
-                const warnEl = document.getElementById('nonceWarning');
-                warnEl.classList.remove('hidden');
-                document.getElementById('nonceWarningText').textContent = 
-                    'Simulated same-r reuse scenario loaded. In real ECDSA, reusing the same nonce k with the same keypair lets an attacker compute the private key from two signatures. Ed25519 avoids this specific foot-gun with deterministic nonce derivation.';
-                try {
-                    const { framed } = buildFramedPayload(msg2, '');
-                    const h2 = hexToBig(toHex(await sha256(framed)));
-                    const s2 = mod(s1Big + 1n, P256_N);
-                    const numerator = mod(s1Big * h2 - s2 * h1Big, P256_N);
-                    const denom = mod(rBig * mod(s2 - s1Big, P256_N), P256_N);
-                    if (denom === 0n) {
-                        showWarn('Cannot compute private key: denominator is zero. Try signing Message 1 again.');
-                        return;
-                    }
-                    const d = mod(numerator * invMod(denom, P256_N), P256_N);
-                    document.getElementById('r2').textContent = lastR.slice(0, 16) + '...';
-                    document.getElementById('r2').style.color = '#ef4444';
-                    document.getElementById('s2').textContent = bigToHex(s2).slice(0, 16) + '...';
-                    const rec = document.getElementById('recoveredD');
-                    if (rec) rec.textContent = bigToHex(d);
-                    const math = document.getElementById('recoveryMath');
-                    if (math) math.classList.remove('hidden');
-                    showWarn('Toy demo complete: the same-r equations recover a private-key value, illustrating the nonce-reuse vulnerability.');
-                } catch (e) {
-                    showWarn('Failed to compute private key: ' + e.message);
-                }
-            } catch (e) {
-                showWarn('Signing failed: ' + e.message);
-            }
-        }
-
-        async function signMsg2Fresh() {
-            try {
-                if (!currentKeyPair) {
-                    const sel = document.getElementById('sigAlg');
-                    if (sel) sel.value = 'ECDSA-P256';
-                    await generateKeyPair();
-                }
-                const alg = currentAlg();
-                if (typeof alg !== 'object' || alg.name !== 'ECDSA') {
-                    const sel = document.getElementById('sigAlg');
-                    if (sel) sel.value = 'ECDSA-P256';
-                    await generateKeyPair();
-                }
-                const msg = document.getElementById('msg2').value;
-                if (!msg || msg.trim() === '') {
-                    showWarn('Please enter a message to sign.');
+                nonceDemoSig2 = await toyEcdsaSign(msg2, nonceDemoSig1.k);
+                renderNonceSignature('2', nonceDemoSig2);
+                const denom = mod(nonceDemoSig1.s - nonceDemoSig2.s, P256_N);
+                if (denom === 0n) {
+                    showWarn('The two toy signatures are identical. Change Message 2 so the hashes differ.');
                     return;
                 }
-                const { framed } = buildFramedPayload(msg, '');
-                const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, currentKeyPair.privateKey, framed);
-                const sigBytes = new Uint8Array(sig);
-                try {
-                    const { rHex, sHex } = parseDerEcdsaSignature(sigBytes);
-                    document.getElementById('r2').textContent = rHex.slice(0, 16) + '... (fresh)';
-                    document.getElementById('r2').style.color = '#10b981';
-                    document.getElementById('s2').textContent = sHex.slice(0, 16) + '...';
-                    document.getElementById('nonceWarning').classList.add('hidden');
-                    const math = document.getElementById('recoveryMath');
-                    if (math) math.classList.add('hidden');
-                    showWarn('Message 2 signed with fresh nonce. Notice r is different from Message 1.');
-                } catch (e) {
-                    showWarn('Failed to parse signature: ' + e.message);
+                const recoveredK = mod((nonceDemoSig1.h - nonceDemoSig2.h) * invMod(denom, P256_N), P256_N);
+                const recoveredD = mod((nonceDemoSig1.s * recoveredK - nonceDemoSig1.h) * invMod(nonceDemoSig1.r, P256_N), P256_N);
+                setScalarText('recoveredK', recoveredK);
+                setScalarText('originalK', nonceDemoSig1.k);
+                setScalarText('recoveredD', recoveredD);
+                setScalarText('originalD', nonceDemoPrivate);
+                const match = document.getElementById('nonceReuseMatch');
+                if (match) {
+                    match.textContent = recoveredK === nonceDemoSig1.k && recoveredD === nonceDemoPrivate
+                        ? 'yes, recovered k and d match the originals'
+                        : 'no, recovery did not match';
                 }
+                const warning = document.getElementById('nonceWarning');
+                warning.classList.remove('hidden');
+                document.getElementById('nonceWarningText').textContent = 'Message 2 reused k1, so r2 repeats r1. The public values h1, h2, r, s1, and s2 are enough to recover k and then d.';
+                const recoveryMath = document.getElementById('recoveryMath');
+                recoveryMath.classList.remove('hidden');
+                typesetMath(recoveryMath);
+                showWarn('Nonce reuse attack complete: recovered k and d are shown.');
             } catch (e) {
-                showWarn('Signing failed: ' + e.message);
+                showWarn('Toy recovery failed: ' + e.message);
             }
         }
 
@@ -1172,20 +1556,25 @@
                 showWarn('Provide a public key or generate a keypair.');
                 return;
             }
-            const pubBytes = fromHex(pubHex);
-            const hash1 = await crypto.subtle.digest('SHA-256', pubBytes);
-            document.getElementById('addrHash').textContent = toHex(new Uint8Array(hash1)).slice(0, 32) + '...';
+            let pubBytes;
+            try {
+                pubBytes = fromHex(pubHex);
+            } catch (e) {
+                showWarn('Public key hex is invalid: ' + e.message);
+                return;
+            }
+            const hash1 = await sha256(pubBytes);
+            document.getElementById('addrHash').textContent = toHex(hash1).slice(0, 32) + '...';
             // Simulate RIPEMD-160: hash again and truncate
-            const hash2 = await crypto.subtle.digest('SHA-256', hash1);
-            const hash160 = new Uint8Array(hash2).slice(0, 20);
+            const hash2 = await sha256(hash1);
+            const hash160 = hash2.slice(0, 20);
             document.getElementById('addrHash160').textContent = toHex(hash160);
             // Simple address: version byte + hash160 + checksum
             const version = new Uint8Array([0x00]);
             const withVersion = new Uint8Array(version.length + hash160.length);
             withVersion.set(version, 0);
             withVersion.set(hash160, version.length);
-            const checksum = new Uint8Array((await crypto.subtle.digest('SHA-256', 
-                await crypto.subtle.digest('SHA-256', withVersion)))).slice(0, 4);
+            const checksum = (await sha256(await sha256(withVersion))).slice(0, 4);
             const final = new Uint8Array(withVersion.length + checksum.length);
             final.set(withVersion, 0);
             final.set(checksum, withVersion.length);
@@ -1210,7 +1599,7 @@
             ctx.clearRect(0, 0, width, height);
 
             // Axes
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.strokeStyle = '#dbe3ef';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(padding, height / 2);
@@ -1282,9 +1671,9 @@
                 ctx.arc(px, py, size, 0, Math.PI * 2);
                 ctx.fill();
                 if (label) {
-                    ctx.fillStyle = '#ffffff';
+                    ctx.fillStyle = '#0f172a';
                     ctx.font = 'bold 14px sans-serif';
-                    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+                    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
                     ctx.lineWidth = 3;
                     ctx.strokeText(label, px + 10, py - 8);
                     ctx.fillText(label, px + 10, py - 8);
@@ -1321,8 +1710,9 @@
             }
         }
 
-        async function animateECCKeyGen() {
+        async function animateECCKeyGen(options = {}) {
             try {
+                const silent = options && options.silent === true;
                 const canvas = document.getElementById('eccCanvas');
                 if (!canvas) {
                     console.error('Canvas not found');
@@ -1373,7 +1763,11 @@
                 let Q = null;
 
                 // Get current keypair if available
-                if (currentKeyPair) {
+                if (currentKeyPair?.toy) {
+                    privHex = bigToHex(currentKeyPair.privateKey.d, 64);
+                    pubHex = bigToHex(currentKeyPair.publicKey.q, 64);
+                    dVis = Number(mod(currentKeyPair.privateKey.d, 13n)) + 3;
+                } else if (currentKeyPair) {
                     try {
                         const privJwk = await crypto.subtle.exportKey('jwk', currentKeyPair.privateKey);
                         const privBytes = privJwk.d ? fromBase64(privJwk.d.replace(/-/g, '+').replace(/_/g, '/')) : null;
@@ -1413,7 +1807,7 @@
                 // Draw curve and points G, Q that lie on the curve
                 drawEllipticCurve(canvas, { a, b, curveColor: '#6366f1', G, Q, drawChord: true });
                 
-                if (!currentKeyPair) {
+                if (!currentKeyPair && !silent) {
                     showWarn('Drawing with demo values. Generate a keypair to load real exported key bytes into the labels.');
                 }
             } catch (e) {
@@ -1527,7 +1921,6 @@
         }
 
         onClick('btnGenKeyPair', generateKeyPair);
-        onClick('btnExportKeyPair', exportCurrentKeyPair);
         onClick('btnToggleKeys', async () => { keysVisible = !keysVisible; await updateKeyPreview(); });
         onClick('btnCopyPubKey', async () => {
             const hex = document.getElementById('pubKeyHex')?.value || '';
@@ -1556,6 +1949,7 @@
         onClick('btnSign1', signMsg1);
         onClick('btnSign2Reuse', signMsg2Reuse);
         onClick('btnSign2Fresh', signMsg2Fresh);
+        onClick('btnResetNonceDemo', resetNonceDemo);
         onClick('btnDeriveAddr', deriveAddress);
         onChange('sigAlg', async () => {
             currentKeyPair = null;
@@ -1593,6 +1987,7 @@
                         el.style.animation = `fadeIn 0.5s ease-out ${idx * 0.1 + 0.1}s backwards`;
                     }, 10);
                 });
+                typesetMath(mathDiv);
             } else {
                 mathDiv.classList.add('hidden');
                 icon.classList.remove('fa-chevron-up');
@@ -1602,7 +1997,7 @@
         });
 
         // Wire up ECC visualization buttons
-        onClick('btnAnimateECC', animateECCKeyGen);
+        onClick('btnAnimateECC', () => animateECCKeyGen());
         onClick('btnAnimateECDH', animateECDH);
         
 
@@ -1614,6 +2009,7 @@
         refreshHashWorkspace();
         updateVerifierKeyPreview();
         resetSignatureStatus();
+        animateECCKeyGen({ silent: true });
     </script>
 </body>
 </html>

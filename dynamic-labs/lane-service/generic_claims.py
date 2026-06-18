@@ -16,7 +16,7 @@ import threading
 import time
 import uuid as uuid_lib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 log = logging.getLogger(__name__)
 
@@ -52,6 +52,8 @@ class ClaimManager:
         self._paused = False
         self._policy = POLICY_STICKY
         self._pool_size = 0
+        self.on_claim: Optional[Callable[[str, str, bool], None]] = None
+        self.on_release: Optional[Callable[[str, str, bool], None]] = None
         self._sweeper_thread: Optional[threading.Thread] = None
         self._sweeper_stop = threading.Event()
         self._claims_dir.mkdir(parents=True, exist_ok=True)
@@ -192,27 +194,44 @@ class ClaimManager:
 
     def claim(self, existing_uuid: Optional[str] = None) -> Tuple[Optional[str], Optional[str], str]:
         now = time.time()
+        resumed: Optional[Tuple[str, str]] = None
         with self._lock:
             if existing_uuid and is_valid_uuid(existing_uuid):
                 entry = self._claims.get(existing_uuid)
                 if entry is not None:
                     entry["last_active"] = now
                     station = entry["station"]
-                    # Ensure container is running (may have been swept or restarted)
-                    self._kick_start_lane(station)
-                    return existing_uuid, station, "resumed"
-            station = self._pick_free_station()
-            if station is None:
-                return None, None, "no free stations"
-            new_uuid = str(uuid_lib.uuid4())
-            self._claims[new_uuid] = {
-                "station": station,
-                "claimed_at": now,
-                "last_active": now,
-            }
-            self._by_station[station] = new_uuid
-            self._persist_claim(new_uuid)
+                    resumed = (existing_uuid, station)
+            if resumed is not None:
+                pass
+            else:
+                station = self._pick_free_station()
+                if station is None:
+                    return None, None, "no free stations"
+                new_uuid = str(uuid_lib.uuid4())
+                self._claims[new_uuid] = {
+                    "station": station,
+                    "claimed_at": now,
+                    "last_active": now,
+                }
+                self._by_station[station] = new_uuid
+                self._persist_claim(new_uuid)
+        if resumed is not None:
+            uuid, station = resumed
+            # Ensure container is running (may have been swept or restarted)
+            self._kick_start_lane(station)
+            if self.on_claim is not None:
+                try:
+                    self.on_claim(uuid, station, True)
+                except Exception:
+                    log.warning("claim resume hook failed for %s session %s", self.config.lab_name, uuid, exc_info=True)
+            return uuid, station, "resumed"
         self._kick_start_lane(station)
+        if self.on_claim is not None:
+            try:
+                self.on_claim(new_uuid, station, False)
+            except Exception:
+                log.warning("claim hook failed for %s session %s", self.config.lab_name, new_uuid, exc_info=True)
         self._refill_warm_pool()
         return new_uuid, station, "claimed"
 
@@ -297,6 +316,12 @@ class ClaimManager:
             self._claims.pop(uuid, None)
             self._by_station.pop(station, None)
             self._delete_claim_file(uuid)
+
+        if self.on_release is not None:
+            try:
+                self.on_release(uuid, station, effective_wipe)
+            except Exception:
+                log.warning("release hook failed for %s session %s", self.config.lab_name, uuid, exc_info=True)
 
         if effective_wipe:
             try:

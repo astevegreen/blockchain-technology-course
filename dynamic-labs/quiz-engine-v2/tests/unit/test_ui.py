@@ -68,9 +68,53 @@ def test_student_quiz_list_links_latest_result_attempt(app):
 
         view_model = build_student_quiz_list(student)
 
-    assert view_model["quizzes"][0]["primary_action"] == "start"
+    assert view_model["quizzes"][0]["primary_action"] == "limit_reached"
     assert view_model["quizzes"][0]["active_attempt"] is None
     assert view_model["quizzes"][0]["result_attempt"]["id"] == attempt["id"]
+    assert view_model["quizzes"][0]["attempts_remaining"] == 0
+    assert view_model["current_quizzes"] == []
+    assert view_model["completed_quizzes"][0]["id"] == version["id"]
+
+
+def test_student_quiz_list_partitions_completed_quizzes(app):
+    with app.app_context():
+        _seed_bank()
+        current = _published_version(
+            ["multiple_choice"],
+            title="Current UI Test Quiz",
+            random_seed="ui-current-quiz",
+        )
+        completed = _published_version(
+            ["multiple_choice"],
+            title="Completed UI Test Quiz",
+            random_seed="ui-completed-quiz",
+        )
+        student = enroll_open_student()
+        attempt = start_or_resume_attempt(completed["id"], student)
+        question = attempt["questions"][0]
+        submit_attempt(
+            attempt["id"],
+            student,
+            answers=[
+                {
+                    "question_id": question["id"],
+                    "selected_option_id": question["options"][0]["id"],
+                }
+            ],
+        )
+
+        view_model = build_student_quiz_list(student)
+
+    assert [quiz["title"] for quiz in view_model["current_quizzes"]] == [
+        "Current UI Test Quiz"
+    ]
+    assert [quiz["title"] for quiz in view_model["completed_quizzes"]] == [
+        "Completed UI Test Quiz"
+    ]
+    assert [quiz["title"] for quiz in view_model["quizzes"]] == [
+        "Completed UI Test Quiz",
+        "Current UI Test Quiz",
+    ]
 
 
 def test_instructor_dashboard_summarizes_operational_attention(app):

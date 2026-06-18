@@ -208,28 +208,105 @@ Your personal decryption ID is: 84a9b2c7-f12a-4b9e-9d21-3f8c2b7a9e10
             return True, self.secret_data
         return False, "[DECRYPTION FAILED]"
 
-    def fill_leaf(self, i, v):
-        if i < 0 or i > 7:
-            return False, "Index Error"
-        if v == self.leaves[i]:
-            self.student_leaves[i] = v
-            return True, "Leaf Validated."
-        return False, "Incorrect Hash."
+    def _parse_leaf_target(self, target):
+        if isinstance(target, int):
+            idx_text = str(target)
+        else:
+            idx_text = str(target).strip().lower().replace("_", "-")
+            if idx_text.startswith("leaf-"):
+                idx_text = idx_text[5:]
+            elif idx_text.startswith("leaf"):
+                idx_text = idx_text[4:]
+
+        if not idx_text.isdigit():
+            return None
+
+        idx = int(idx_text)
+        if 0 <= idx <= 7:
+            return idx
+        return None
+
+    def _parse_internal_target(self, target):
+        target_text = str(target).strip().upper().replace("_", "-")
+        if target_text == "ROOT":
+            return "ROOT", None, self.root
+
+        if "-" not in target_text:
+            return None
+
+        level, idx_text = target_text.split("-", 1)
+        if not idx_text.isdigit():
+            return None
+
+        idx = int(idx_text)
+        if level == "L1" and 0 <= idx <= 3:
+            return "L1", idx, self.level1[idx]
+        if level == "L2" and 0 <= idx <= 1:
+            return "L2", idx, self.level2[idx]
+        return None
+
+    def _find_internal_node(self, node_hash):
+        for i, expected in enumerate(self.level1):
+            if node_hash == expected:
+                return f"L1-{i}"
+        for i, expected in enumerate(self.level2):
+            if node_hash == expected:
+                return f"L2-{i}"
+        if node_hash == self.root:
+            return "ROOT"
+        return None
+
+    def fill_leaf(self, target, v):
+        idx = self._parse_leaf_target(target)
+        if idx is None:
+            return False, "[ERROR]: Unknown leaf. Use Leaf-0 through Leaf-7."
+
+        value = str(v).strip().lower()
+        label = f"Leaf-{idx}"
+        if value == self.leaves[idx]:
+            self.student_leaves[idx] = value
+            return True, f"{label} validated: {value}"
+        return False, f"[ERROR]: Incorrect hash for {label}."
+
+    def combine_into(self, target, l, r):
+        parsed_target = self._parse_internal_target(target)
+        if parsed_target is None:
+            return (
+                False,
+                "[ERROR]: Unknown target. Use L1-0 through L1-3, L2-0 through L2-1, or ROOT.",
+            )
+
+        level, idx, expected = parsed_target
+        label = "ROOT" if level == "ROOT" else f"{level}-{idx}"
+        computed = self.sha256_hash(str(l).strip().lower() + str(r).strip().lower())
+
+        if computed != expected:
+            actual_label = self._find_internal_node(computed)
+            if actual_label:
+                return (
+                    False,
+                    f"[ERROR]: That pair creates {actual_label}, not {label}. Target the correct node or check the child hashes.",
+                )
+            return (
+                False,
+                f"[ERROR]: {computed[:6]}... does not match {label}. Check the left/right order and target.",
+            )
+
+        if level == "L1":
+            self.student_level1[idx] = computed
+        elif level == "L2":
+            self.student_level2[idx] = computed
+        else:
+            self.student_root = computed
+
+        return True, f"{label} validated: {computed}"
 
     def smart_combine(self, l, r):
-        c = self.sha256_hash(l + r)
-        for i in range(4):
-            if c == self.level1[i]:
-                self.student_level1[i] = c
-                return True, f"Created L1 Node {i}"
-        for i in range(2):
-            if c == self.level2[i]:
-                self.student_level2[i] = c
-                return True, f"Created L2 Node {i}"
-        if c == self.root:
-            self.student_root = c
-            return True, "ROOT CALCULATED!"
-        return False, f"Hash {c[:6]}... matches no empty slots."
+        c = self.sha256_hash(str(l).strip().lower() + str(r).strip().lower())
+        node_label = self._find_internal_node(c)
+        if node_label is None:
+            return False, f"Hash {c[:6]}... matches no empty slots."
+        return False, f"That pair creates {node_label}. Use: combine {node_label} <left_hash> <right_hash>"
 
     def _symmetric_encrypt(self, plaintext, key):
         nonce = os.urandom(16)

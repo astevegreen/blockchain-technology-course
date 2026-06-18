@@ -30,9 +30,10 @@ variable "accelerator" {
 source "qemu" "ubuntu" {
   iso_url           = var.base_image_url
   iso_checksum      = var.base_image_checksum
-  output_directory  = "output-qemu"
+  output_directory  = "/mnt/build/output-qemu"
   vm_name           = "blockchain-lab.qcow2"
   format            = "qcow2"
+  skip_compaction   = true
   disk_size         = var.disk_size
   disk_image        = true
   use_backing_file  = false

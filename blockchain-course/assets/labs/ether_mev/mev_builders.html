@@ -105,13 +105,131 @@
   #metricsPanel{grid-area:metrics}
   .modal{
     position:fixed; inset:0; background:rgba(0,0,0,0.55); display:none; align-items:center; justify-content:center; padding:20px;
+    z-index:1000;
   }
   .modal .content{
+    position:relative; z-index:1001;
     width:min(980px, 96vw); max-height:90vh; overflow:auto;
     background:linear-gradient(180deg,#0b1220,#0a0f1b); border:1px solid var(--border); border-radius:12px; padding:14px; color:var(--text);
   }
-  canvas{background:#0b1220; border:1px solid var(--border); border-radius:8px}
+  canvas{background:#0b1220; border:1px solid var(--border); border-radius:8px; max-width:100%; height:auto}
   .disabled{opacity:0.55; pointer-events:none}
+
+  /* "How this works" explainer */
+  .explainer{
+    margin:10px 12px 0 12px; border:1px solid var(--border); border-radius:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  }
+  .explainer summary{
+    cursor:pointer; padding:10px 12px; font-size:13px; font-weight:600; color:var(--accent-2); list-style:none;
+  }
+  .explainer summary::-webkit-details-marker{display:none}
+  .explainer summary::before{content:"▸ "; color:var(--muted)}
+  .explainer[open] summary::before{content:"▾ "}
+  .explainer-body{padding:0 14px 12px 14px; font-size:13px; color:var(--muted)}
+  .explainer-body p{margin:8px 0}
+  .explainer-body ul{margin:8px 0; padding-left:18px}
+  .explainer-body li{margin:5px 0}
+  .explainer-body strong{color:var(--text)}
+  /* one-line role subtitle under each panel heading */
+  .subtitle{margin:-4px 0 10px 0; color:var(--muted); font-size:12px}
+
+  /* Tag legend */
+  .taglegend{margin-top:10px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.02)}
+  .taglegend summary{cursor:pointer; padding:8px 10px; font-size:12px; font-weight:600; color:var(--accent-2); list-style:none}
+  .taglegend summary::-webkit-details-marker{display:none}
+  .taglegend summary::before{content:"▸ "; color:var(--muted)}
+  .taglegend[open] summary::before{content:"▾ "}
+  .taglegend-body{padding:2px 10px 10px 10px; display:flex; flex-direction:column; gap:7px; font-size:12px; color:var(--muted)}
+  .taglegend-body .line{display:flex; gap:8px; align-items:baseline; flex-wrap:wrap}
+  .taglegend-body .line > .tag, .taglegend-body .line > .good, .taglegend-body .line > .bad{flex:0 0 auto}
+  .taglegend-body strong{color:var(--text)}
+
+  /* Bundle capture state (reflects your local build) */
+  .card.captured{border-color:#14532d; box-shadow: inset 0 0 0 1px rgba(34,197,94,0.45), 0 0 0 1px rgba(34,197,94,0.15)}
+  .bstat{font-size:11px; padding:1px 7px; border-radius:999px; border:1px solid var(--chip-border); white-space:nowrap}
+  .bstat.bs-cap{color:var(--accent); border-color:#14532d; background:rgba(34,197,94,0.1)}
+  .bstat.bs-reorder{color:var(--warn); border-color:#7c5e16; background:rgba(245,158,11,0.08)}
+  .bstat.bs-add{color:var(--muted)}
+  .bstat.bs-none{color:var(--muted)}
+
+  /* Drag-and-drop reordering in the local block */
+  #localTable tbody tr[draggable="true"]{cursor:grab}
+  #localTable tbody tr.dragging{opacity:0.4; cursor:grabbing}
+  /* insertion-line "ghost" showing where the row will drop */
+  #localTable tbody tr.drop-before td{box-shadow: inset 0 3px 0 0 var(--accent-2)}
+  #localTable tbody tr.drop-after td{box-shadow: inset 0 -3px 0 0 var(--accent-2)}
+  .grip{cursor:grab; color:var(--muted); user-select:none; margin-right:4px}
+
+  /* Local-build MEV capture coaching */
+  .mevhint{margin:8px 0; display:flex; flex-direction:column; gap:4px; min-width:0}
+  .mevhint .line{display:flex; gap:8px; align-items:baseline; min-width:0}
+  .mevhint .line .desc{flex:1 1 auto; min-width:0; white-space:normal; overflow-wrap:anywhere}
+  .mevhint .st{flex:0 0 auto; border-radius:6px; padding:1px 6px; font-size:11px; border:1px solid var(--chip-border)}
+  .mevhint .st-cap{color:var(--accent); border-color:#14532d}
+  .mevhint .st-reorder{color:var(--warn); border-color:#7c5e16}
+  .mevhint .st-add{color:var(--muted)}
+  .mevhint .total{color:var(--text); font-weight:600; margin-top:2px}
+
+  /* Locked slot: freeze inputs after lock-in & reveal until Next Slot */
+  body.locked #mempoolTable,
+  body.locked #bidsList,
+  body.locked #localTable,
+  body.locked #localControls,
+  body.locked #policyControls{ opacity:0.55; pointer-events:none; }
+  .lockbanner{display:none; margin:8px 0; padding:6px 10px; border-radius:8px;
+    border:1px solid #7c5e16; background:rgba(245,158,11,0.12); color:#fcd34d; font-size:12px}
+  body.locked .lockbanner{display:block}
+
+  /* Slot Decision workflow strip */
+  .workflow{
+    display:flex; gap:10px; flex-wrap:wrap; padding:10px 12px; margin:12px 12px 0 12px;
+    border:1px solid var(--border); border-radius:12px;
+    background:linear-gradient(180deg, rgba(96,165,250,0.08), rgba(255,255,255,0.02));
+  }
+  .workflow .step{display:flex; gap:8px; align-items:flex-start; flex:1; min-width:180px}
+  .workflow .num{
+    flex:0 0 auto; width:22px; height:22px; border-radius:999px; background:#0b1220; border:1px solid var(--accent-2);
+    color:var(--accent-2); font-size:12px; font-weight:600; display:flex; align-items:center; justify-content:center;
+  }
+  .workflow .step .label{font-size:12px}
+  .workflow .step .label strong{display:block; font-size:13px}
+
+  /* Tablet: collapse to two columns, keep workflow order readable */
+  @media (max-width: 1100px){
+    .wrap{
+      grid-template-columns: 1fr 1fr;
+      grid-template-areas:
+        "mempool mempool"
+        "bids bundles"
+        "local policy"
+        "metrics metrics";
+    }
+  }
+  /* Phone: single column in the order students should act */
+  @media (max-width: 760px){
+    .wrap{
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto;
+      grid-template-areas:
+        "mempool"
+        "bundles"
+        "local"
+        "bids"
+        "policy"
+        "metrics";
+      min-height:0;
+    }
+    /* Let grid items shrink below content width; wide tables scroll inside their panel
+       instead of stretching the whole page. */
+    .wrap > .panel{min-width:0; overflow-x:auto; overflow-y:visible}
+    input[type="range"]{width:100%}
+    .kv{grid-template-columns: 120px 1fr}
+  }
+  /* Tablet items must also be allowed to shrink so tables don't widen the page. */
+  @media (max-width: 1100px){
+    .wrap > .panel{min-width:0}
+  }
 </style>
 </head>
 <body>
@@ -121,6 +239,28 @@
       You are the proposer for each slot. Builders send sealed bids via relays. Now you can also build a block locally by <strong>selecting and ordering transactions</strong> from the mempool, then compare your local block to the builders’ bids.
     </p>
   </header>
+
+  <div class="workflow" aria-label="Slot decision workflow">
+    <div class="step"><span class="num">1</span><span class="label"><strong>Inspect</strong>Read the mempool, bundles, bids, and per‑slot relay risk.</span></div>
+    <div class="step"><span class="num">2</span><span class="label"><strong>Build (optional)</strong>Order txs in Local Builder to make your own block.</span></div>
+    <div class="step"><span class="num">3</span><span class="label"><strong>Select</strong>Click a builder bid or your Local Build in the Bids panel.</span></div>
+    <div class="step"><span class="num">4</span><span class="label"><strong>Lock in</strong>Press “Lock in &amp; reveal” to propose it, then Next Slot.</span></div>
+  </div>
+
+  <details class="explainer">
+    <summary>How this works — the pieces and how they connect</summary>
+    <div class="explainer-body">
+      <p>You are the <strong>proposer</strong>. You don't write transactions — you choose which <em>block</em> gets proposed for your slot. There are two ways to get a block, and this lab lets you do both and compare:</p>
+      <ul>
+        <li><strong>Mempool</strong> — the pool of public pending transactions. Everyone (you and every builder) draws from here. Each transaction pays a tip; that tip is revenue for whoever includes it.</li>
+        <li><strong>Searcher bundles</strong> — these are <em>not</em> blocks. A searcher spots an MEV opportunity (an arbitrage, a liquidation, a sandwich) and packages the exact transactions, in a required order, that capture it. A bundle pays its extra MEV <em>only</em> if those transactions end up in the block in that order — whether a builder places them, or you place them yourself.</li>
+        <li><strong>Builder bids</strong> — competing builders each assemble a <em>complete block</em> from the mempool + bundles and submit it (sealed) through a relay, advertising the total value it would pay you. You only see the value, not the contents, until you reveal.</li>
+        <li><strong>Local Build</strong> — instead of taking a builder's block, you can be your own builder: add and order mempool transactions in the <em>Local Builder</em> panel. Order a bundle's transactions correctly and your block captures that MEV too.</li>
+      </ul>
+      <p><strong>Comparing &amp; locking in:</strong> your Local Build appears as a card in <em>Builder Bids</em> right next to the builders' bids, each showing its value to you (the highest is tagged <span class="pill">best</span>, and every card shows how it compares). Click the one you want, then press <strong>Lock in &amp; reveal</strong> to propose it and settle the slot. That's the proposer's real decision: take the most valuable bid, or build it yourself — while watching censorship, inclusion rules, and relay reliability.</p>
+      <p><strong>How do you beat the best bid?</strong> A builder pays you only a cut of the block it builds (each bid card shows <em>builder keeps 8–16%</em>); when you build locally you keep <strong>100%</strong>. So to win, make your local block's total value rival a builder's: press <strong>Fill by tips</strong> to pack the highest-fee txs, then <strong>capture the MEV</strong> by ordering each bundle's transactions correctly (the Local Builder lists exactly what to add or reorder). Match their value and your 100% payout beats their discounted bid — just mind the censorship penalty if you grab toxic MEV.</p>
+    </div>
+  </details>
 
   <div class="wrap">
     <!-- Mempool -->
@@ -133,48 +273,65 @@
           <button class="btn" id="btnNewSlot">Next Slot</button>
         </div>
       </div>
+      <p class="subtitle">Public pending transactions. You and every builder draw from here; each tx pays a tip to whoever includes it. Click <strong>add</strong> to move one into your local block.</p>
       <table class="table" id="mempoolTable">
         <thead><tr>
           <th>tx</th><th>gasLimit</th><th>maxFee</th><th>priority</th><th>value</th><th>tag</th><th>incl?</th><th>add</th>
         </tr></thead>
         <tbody></tbody>
       </table>
+      <details class="taglegend">
+        <summary>What do the tags mean?</summary>
+        <div class="taglegend-body">
+          <div class="line"><span class="tag">user swap</span><span>An ordinary user trade (e.g. a DEX swap). Pays a tip; often the thing MEV is extracted around.</span></div>
+          <div class="line"><span class="tag">oracle update</span><span>A price-feed update. Its position in the block can enable or spoil MEV that depends on the price.</span></div>
+          <div class="line"><span class="tag">arb leg 1/2</span><span class="tag">arb leg 2/2</span><span>The two halves of an arbitrage. Both must be included with <strong>leg 1 before leg 2</strong> to capture the arb (a <em>safe</em> bundle).</span></div>
+          <div class="line"><span class="tag">liquidation target</span><span>An underwater position eligible for liquidation. Including it lets a liquidation bundle pay out (a <em>safe</em> bundle).</span></div>
+          <div class="line"><span class="tag">sandwich victim</span><span>A user swap an attacker can sandwich. Profitable to exploit, but harms the user — <em>toxic</em> MEV.</span></div>
+          <div class="line"><span class="tag">sandwich frontrun</span><span class="tag">sandwich backrun</span><span>The attacker's trades placed <strong>before</strong> and <strong>after</strong> the victim. Order frontrun → victim → backrun to capture the sandwich.</span></div>
+          <div class="line"><span class="tag">inclusion</span><span>On the inclusion list. When the inclusion mandate is on, this tx <strong>must</strong> be in your block or you pay a compliance penalty.</span></div>
+          <div class="line"><span class="bad">toxic</span><span class="good">safe</span><span>On bundles: <em>toxic</em> = profit that harms a user (sandwiches) and raises your censorship score; <em>safe</em> = MEV that doesn't target a victim (arbitrage, liquidation).</span></div>
+        </div>
+      </details>
     </section>
 
     <!-- Bundles -->
     <section class="panel" id="bundlesPanel">
       <h2>Searcher Bundles</h2>
+      <p class="subtitle">MEV opportunities, not blocks. Each pays extra ETH <strong>only</strong> if its listed txs are included in the shown order — by a builder, or by you in your local block.</p>
       <div id="bundlesList" class="list"></div>
     </section>
 
     <!-- Bids -->
     <section class="panel" id="bidsPanel">
       <h2>Builder Bids (via Relays)</h2>
+      <p class="subtitle">Complete blocks from competing builders, plus your own <strong>Local Build</strong>, each showing its value to you. Click one to select it, then lock in.</p>
       <div id="bidsList" class="list"></div>
       <div class="divider"></div>
       <div class="row">
-        <button class="btn btn-accent" id="btnReveal">Reveal Selection</button>
-        <span id="selectionInfo" class="muted">No bid selected.</span>
+        <button class="btn btn-accent" id="btnReveal">Lock in &amp; reveal</button>
+        <span id="selectionInfo" class="muted">Click a bid or your Local Build above to select it.</span>
       </div>
     </section>
 
     <!-- Local Builder -->
     <section class="panel" id="localPanel">
       <div class="header">
-        <h2>Local Builder (select and order txs)</h2>
+        <h2>Local Builder — be your own builder</h2>
         <div class="chips">
-          <span class="chip">gas limit <span class="mono">15,000,000</span></span>
+          <span class="chip" title="Simulated gas budget for this lab — not the on-chain block gas limit">gas budget <span class="mono">15,000,000</span></span>
           <span class="chip">gas used <span id="localGasUsed" class="mono">0</span></span>
           <span class="chip">value <span id="localValue" class="mono">0.000</span> ETH</span>
           <span class="chip">bundles <span id="localBundlesCount" class="mono">0</span></span>
         </div>
       </div>
-      <div class="row">
+      <div class="row" id="localControls">
         <button class="btn" id="btnLocalSelectAllInclusion">Include required</button>
         <button class="btn" id="btnLocalFillTips">Fill by tips</button>
         <button class="btn btn-danger" id="btnLocalClear">Clear</button>
-        <span class="muted">Build a block under the gas limit. Then select “Local Build” in Bids to compare.</span>
+        <span class="muted">Add &amp; reorder txs under the gas budget. To capture a bundle's MEV, include its required txs in the order each bundle shows (arrows = required order). Your block shows up as “Local Build” in Builder Bids to compare and lock in.</span>
       </div>
+      <div id="localMevHint" class="mevhint small"></div>
       <table class="table" id="localTable">
         <thead><tr>
           <th>#</th><th>tx</th><th>gas</th><th>tag</th><th>incl?</th><th>up</th><th>down</th><th>remove</th>
@@ -185,30 +342,50 @@
 
     <!-- Policy -->
     <section class="panel" id="policyPanel">
-      <h2>Policy & Scenario</h2>
-      <div class="row">
-        <label><input type="checkbox" id="toggleInclusion"/> Inclusion list ON</label>
-        <label><input type="checkbox" id="toggleRelayOutage"/> Relay outage</label>
-        <label>Scenario:</label>
-        <select id="scenario">
-          <option value="happy">Happy path</option>
-          <option value="outage">Relay outage</option>
-          <option value="inclusion">Inclusion mandate</option>
-          <option value="toxic">Toxic MEV</option>
-          <option value="latency">Latency trap</option>
-        </select>
-      </div>
-      <div class="row">
-        <label>Censorship sensitivity</label>
-        <input type="range" id="censorSensitivity" min="0" max="100" value="40"/>
-        <span id="censorSensitivityLabel" class="muted">40</span>
-        <span class="muted">penalty scales with builder censorship score</span>
-      </div>
-      <div class="row">
-        <label>Slot time (seconds)</label>
-        <input type="range" id="slotTime" min="8" max="14" value="12"/>
-        <span id="slotTimeLabel" class="muted">12</span>
-        <span class="muted">late reveal can miss the slot</span>
+      <h2>Policy &amp; Scenario</h2>
+      <p class="subtitle"><strong>Scenario</strong> = a preset situation to practice — picking one switches on the matching rules below. <strong>Policy</strong> = the rules actually in force this slot, which you can also set by hand.</p>
+      <div class="lockbanner">🔒 Slot locked — you've already revealed this slot. Press <strong>Next Slot</strong> to play another.</div>
+      <div id="policyControls">
+        <div class="row">
+          <label for="scenario"><strong>Practice scenario</strong></label>
+          <select id="scenario">
+            <option value="happy">Happy path</option>
+            <option value="outage">Relay outage</option>
+            <option value="inclusion">Inclusion mandate</option>
+            <option value="toxic">Toxic MEV</option>
+            <option value="latency">Latency trap</option>
+          </select>
+        </div>
+        <div id="scenarioDesc" class="card small" style="margin:8px 0"></div>
+
+        <div class="divider"></div>
+        <div class="muted small" style="margin-bottom:6px">Rules in force this slot:</div>
+
+        <div class="row">
+          <label><input type="checkbox" id="toggleInclusion"/> Inclusion list enforced</label>
+          <span id="inclusionDriver" class="pill" style="display:none">set by scenario</span>
+        </div>
+        <div class="muted small" style="margin:-2px 0 8px 4px">↳ Transactions flagged <span class="tag">inclusion</span> must be in your block, or you pay a compliance penalty.</div>
+
+        <div class="row">
+          <label><input type="checkbox" id="toggleRelayOutage"/> Relay outage active</label>
+          <span id="outageDriver" class="pill" style="display:none">set by scenario</span>
+        </div>
+        <div class="muted small" style="margin:-2px 0 8px 4px">↳ One relay (marked <em>at risk</em>) may fail to reveal in time — selecting a bid via it can miss the slot.</div>
+
+        <div class="row">
+          <label>Censorship sensitivity</label>
+          <input type="range" id="censorSensitivity" min="0" max="100" value="40"/>
+          <span id="censorSensitivityLabel" class="muted">40</span>
+        </div>
+        <div class="muted small" style="margin:-2px 0 8px 4px">↳ How hard the network penalizes high-censorship blocks (e.g. toxic MEV). Penalty grows with censorship score × this value.</div>
+
+        <div class="row">
+          <label>Slot time (seconds)</label>
+          <input type="range" id="slotTime" min="8" max="14" value="12"/>
+          <span id="slotTimeLabel" class="muted">12</span>
+        </div>
+        <div class="muted small" style="margin:-2px 0 0 4px">↳ Your deadline to reveal. If a block's reveal latency exceeds this, the slot is missed (0 revenue).</div>
       </div>
     </section>
 
@@ -239,11 +416,11 @@
   </div>
 
   <!-- Reveal Modal -->
-  <div class="modal" id="revealModal">
+  <div class="modal" id="revealModal" role="dialog" aria-modal="true" aria-labelledby="revealTitle" aria-hidden="true">
     <div class="content">
       <div class="header">
-        <h2>Reveal & Settlement</h2>
-        <button class="btn btn-danger" id="btnCloseModal">Close</button>
+        <h2 id="revealTitle">Reveal & Settlement</h2>
+        <button class="btn btn-danger" id="btnCloseModal" aria-label="Close reveal dialog">Close</button>
       </div>
       <div id="revealBody"></div>
     </div>
@@ -267,6 +444,7 @@
   const MAX_FEE_MAX = 180;     // gwei cap for random generation
   const ETH_PER_GWEI = 1/1e9;
   const BLOCK_GAS_LIMIT = 15_000_000;
+  const RELAY_NAMES = ["Relay Alpha","Relay Beacon","Relay Delta"];
 
   /* Scoring knobs */
   const PENALTY_INCLUSION = 0.03;    // ETH penalty for failing inclusion when ON
@@ -280,10 +458,17 @@
   let bundles = [];
   let bids = [];        // sealed bids for this slot
   let selection = null; // {type:'bid'|'local', index?}
+  let slotSettled = false;   // true once this slot's reveal has been settled
+  let dragSrcHash = null;    // tx hash currently being drag-reordered in the local block
+  let outageRelay = null;    // the single relay at risk this slot (stable per slot)
+  let lastFocusedBeforeModal = null; // for restoring focus on modal close
 
   // Local builder state: ordered array of tx hashes
   let localOrder = [];
   let localLatencyMs = 160; // typical local execution latency
+  // Stable per-slot identity for the local block so it doesn't churn on every re-render/click.
+  let localHeader = hex(16);
+  let localRevealDelayMs = localLatencyMs + 120;
 
   // Metrics
   const metrics = {
@@ -348,6 +533,85 @@
 
   function txByHash(h){ return mempool.find(t=> t.hash===h); }
 
+  /* Effective priority fee per gas (gwei) — the value blocks are ordered by. */
+  function effTipPerGasGwei(tx){ return Math.max(0, Math.min(tx.maxPrio, tx.maxFee - baseFee)); }
+
+  /* Inclusion enforcement is active if the toggle is on OR the inclusion mandate scenario is selected. */
+  function inclusionActive(){ return toggleInclusion.checked || scenarioSel.value==="inclusion"; }
+  /* Relay outage is active if the toggle is on OR a scenario that knocks out a relay is selected. */
+  function outageActive(){ return toggleRelayOutage.checked || scenarioSel.value==="outage"; }
+  /* Structured, accurate explanations of what each scenario actually changes in the sim. */
+  const SCENARIO_INFO = {
+    happy: {
+      title:"Happy path",
+      situation:"A normal, calm slot.",
+      changes:"Nothing special: builders bid competitively, every relay is healthy, no inclusion mandate.",
+      goal:"Get comfortable — compare the bids to your Local Build, pick the highest value, and lock in."
+    },
+    outage: {
+      title:"Relay outage",
+      situation:"One relay is flaky this slot.",
+      changes:"Switches on <em>Relay outage</em>. One relay is marked <em>at risk</em>; the greedy builder also gets a big reveal delay. A bid sent via the at-risk relay may reveal after the deadline.",
+      goal:"Don't just chase the top bid — if it routes through the at-risk relay you can miss the slot (0 revenue). Prefer a safe relay or build locally."
+    },
+    inclusion: {
+      title:"Inclusion mandate",
+      situation:"Regulators/protocol require certain txs to be included.",
+      changes:"Switches on <em>Inclusion list enforced</em>. Txs tagged <span class=\"tag\">inclusion</span> must appear in the block; the greedy builder often drops them for more MEV, so its bid becomes non-compliant.",
+      goal:"Pick a compliant block (or use <em>Include required</em> when building locally) to avoid the compliance penalty — even if it pays a little less."
+    },
+    toxic: {
+      title:"Toxic MEV",
+      situation:"A juicy sandwich opportunity appears.",
+      changes:"The sandwich bundle's expected MEV is boosted (~1.8×). Capturing it (greedy builder, or ordering frontrun→victim→backrun yourself) raises your <em>censorship score</em>.",
+      goal:"Decide if the extra ETH is worth it: the censorship penalty grows with the <em>Censorship sensitivity</em> slider. Try raising sensitivity and watch the trade-off flip."
+    },
+    latency: {
+      title:"Latency trap",
+      situation:"The best-paying builder is slow.",
+      changes:"The greedy builder gets a large extra reveal delay, so its high-value bid often can't reveal before the <em>Slot time</em> deadline.",
+      goal:"Read each bid's latency, not just its value. If the top bid's reveal exceeds the slot time it misses entirely — a slightly lower, faster bid (or your Local Build) wins."
+    }
+  };
+  function updateScenarioDesc(){
+    const el = document.getElementById("scenarioDesc");
+    const info = SCENARIO_INFO[scenarioSel.value];
+    if (el && info){
+      el.innerHTML =
+        `<div><strong>${info.title}</strong></div>` +
+        `<div style="margin-top:4px"><span class="warn">Situation:</span> ${info.situation}</div>` +
+        `<div><span class="warn">What changes:</span> ${info.changes}</div>` +
+        `<div><span class="warn">Your goal:</span> ${info.goal}</div>`;
+    }
+    updatePolicyDrivers();
+  }
+  /* Show "(set by scenario)" badges so it's clear when a toggle is being driven by the scenario. */
+  function updatePolicyDrivers(){
+    const inc = document.getElementById("inclusionDriver");
+    const out = document.getElementById("outageDriver");
+    if (inc) inc.style.display = scenarioSel.value==="inclusion" ? "" : "none";
+    if (out) out.style.display = scenarioSel.value==="outage" ? "" : "none";
+  }
+
+  /* The "Toxic MEV" scenario makes the sandwich opportunity unusually lucrative, sharpening
+     the revenue-vs-censorship trade-off. Applied in place so it tracks mid-slot scenario changes. */
+  function applyScenarioToBundles(){
+    const mult = scenarioSel.value==="toxic" ? 1.8 : 1;
+    for (const b of bundles){
+      if (b.type==="sandwich" && typeof b.baseExpectsEth==="number"){
+        b.expectsEth = b.baseExpectsEth * mult;
+      }
+    }
+  }
+  /* Keep a single at-risk relay for the whole slot so the displayed risk matches settlement. */
+  function refreshOutageRelay(){
+    if (outageActive()){
+      if (!outageRelay) outageRelay = pick(RELAY_NAMES);
+    } else {
+      outageRelay = null;
+    }
+  }
+
   /* ===== Mempool & Bundles Generation ===== */
   const TAGS = ["user swap","oracle update","arb leg 1/2","arb leg 2/2","liquidation target","sandwich victim"];
   function genTx(id){
@@ -360,6 +624,13 @@
     const inclusion = Math.random()<0.2;
     return { id, hash: hex(8), gas, maxFee, maxPrio, value: valEth, tag, inclusion };
   }
+  function genAttackerTx(id, tag){
+    const tx = genTx(id);
+    tx.tag = tag;
+    tx.inclusion = false;
+    tx.value = 0;
+    return tx;
+  }
   function genMempool(){
     const n = rnd(10, MAX_TXS);
     const arr = [];
@@ -368,6 +639,10 @@
     const hasLeg2 = arr.some(t=>t.tag==="arb leg 2/2");
     if (!hasLeg1) { const tx = genTx(arr.length); tx.tag="arb leg 1/2"; arr.push(tx); }
     if (!hasLeg2) { const tx = genTx(arr.length); tx.tag="arb leg 2/2"; arr.push(tx); }
+    // Guarantee dedicated liquidation targets so liquidation bundles reference clearly-tagged
+    // txs (never a plain "user swap"), keeping which-tx-satisfies-which-bundle unambiguous.
+    let liqTargets = arr.filter(t=>t.tag==="liquidation target").length;
+    while (liqTargets < 2){ const tx = genTx(arr.length); tx.tag="liquidation target"; arr.push(tx); liqTargets++; }
     return arr;
   }
 
@@ -385,35 +660,45 @@
         toxic:false
       });
     }
-    const liqTx = mem.find(t=>t.tag==="liquidation target") || mem.find(t=>t.tag==="user swap");
-    if (liqTx){
+    // Each liquidation bundle targets its own distinct "liquidation target" tx and is
+    // captured independently — include that tx and the bundle pays out.
+    const liqTargets = mem.filter(t=>t.tag==="liquidation target");
+    if (liqTargets[0]){
       out.push({
         id: "B-"+hex(6),
         type:"liquidation",
-        requires:[liqTx.hash],
+        requires:[liqTargets[0].hash],
         expectsEth: 0.02 + Math.random()*0.02,
-        conflicts:["other_liq"],
+        conflicts:[],
         toxic:false
       });
     }
-    const liqTx2 = mem.find(t=>t!==liqTx && (t.tag==="liquidation target" || t.tag==="user swap"));
-    if (liqTx2){
+    if (liqTargets[1]){
       out.push({
         id: "B-"+hex(6),
         type:"liquidation",
-        requires:[liqTx2.hash],
+        requires:[liqTargets[1].hash],
         expectsEth: 0.018 + Math.random()*0.02,
-        conflicts:["other_liq"],
+        conflicts:[],
         toxic:false
       });
     }
-    const victim = mem.find(t=>t.tag==="sandwich victim" || t.tag==="user swap");
+    // Sandwich: attacker front-runs the victim swap and back-runs it. MEV is only
+    // realized when the order is frontrun → victim → backrun, so the bundle carries
+    // its own attacker transactions and requires that exact ordering.
+    const victim = mem.find(t=>t.tag==="sandwich victim") || mem.find(t=>t.tag==="user swap");
     if (victim){
+      const front = genAttackerTx(mem.length, "sandwich frontrun");
+      mem.push(front);
+      const back = genAttackerTx(mem.length, "sandwich backrun");
+      mem.push(back);
+      const baseMev = 0.025 + Math.random()*0.02;
       out.push({
         id: "B-"+hex(6),
         type:"sandwich",
-        requires:[victim.hash],
-        expectsEth: 0.025 + Math.random()*0.02,
+        requires:[front.hash, victim.hash, back.hash],
+        expectsEth: baseMev,
+        baseExpectsEth: baseMev,
         conflicts:[],
         toxic:true
       });
@@ -445,18 +730,19 @@
       }
     }
 
-    // Liquidations: at most one (pick highest value among those whose requires are met)
+    // Liquidations: each independent target pays out if its tx is included.
     const liqs = bundlesAll.filter(b=> b.type==="liquidation" && b.requires.every(h=> hashPos.has(h)));
-    if (liqs.length){
-      liqs.sort((a,b)=> b.expectsEth - a.expectsEth);
-      chosen.push(liqs[0]);
-    }
+    for (const b of liqs) chosen.push(b);
 
-    // Sandwich: include any present, but mark toxic
+    // Sandwich: only realized if attacker frontrun precedes the victim, which precedes
+    // the attacker backrun. Merely including the victim is NOT a sandwich.
     const sands = bundlesAll.filter(b=> b.type==="sandwich" && b.requires.every(h=> hashPos.has(h)));
-    if (sands.length){
-      chosen.push(sands[0]);
-      toxicIncluded = true;
+    for (const b of sands){
+      const [front, vict, back] = b.requires;
+      if (hashPos.get(front) < hashPos.get(vict) && hashPos.get(vict) < hashPos.get(back)){
+        chosen.push(b);
+        toxicIncluded = true;
+      }
     }
 
     const mevEth = chosen.reduce((acc,b)=> acc + b.expectsEth, 0);
@@ -477,14 +763,15 @@
     const { bundlesIncluded, mevEth, toxicIncluded } = analyzeBundlesForIncluded(included, bundles);
     const tipsEth = included.reduce((acc,tx)=> acc + computeTipEthForTx(tx), 0);
     const valueEth = tipsEth + mevEth;
-    const inclusionOk = !toggleInclusion.checked || mempool.filter(t=>t.inclusion).every(tx => included.some(y=>y.hash===tx.hash));
+    const inclusionOk = !inclusionActive() || mempool.filter(t=>t.inclusion).every(tx => included.some(y=>y.hash===tx.hash));
     const censorScore = Math.min(1, 0.2 + (toxicIncluded ? 0.5 : 0));
     return {
       includedTxs: included,
       gasUsed, tipsEth, mevEth, valueEth,
       bundlesIncluded, toxicIncluded, inclusionOk, censorScore,
-      latencyMs: localLatencyMs, revealDelayMs: localLatencyMs + rnd(50,200),
-      header: hex(16), relayName: "Local", strategy: "local"
+      payoutRatio: 1.00, grossValueEth: valueEth,
+      latencyMs: localLatencyMs, revealDelayMs: localRevealDelayMs,
+      header: localHeader, relayName: "Local", strategy: "local"
     };
   }
 
@@ -495,7 +782,9 @@
     const censorScore = strategy==="greedy" ? 0.9 : strategy==="neutral" ? 0.4 : strategy==="safe" ? 0.1 : 0.2;
 
     const txs = [...mem];
-    txs.sort((a,b)=> computeTipEthForTx(b)-computeTipEthForTx(a));
+    // Order by effective priority fee per gas (effective gas price above base), the
+    // standard greedy block-building heuristic the lesson describes.
+    txs.sort((a,b)=> effTipPerGasGwei(b)-effTipPerGasGwei(a));
 
     const included = [];
     let gasUsed = 0;
@@ -553,7 +842,9 @@
 
     const latencyMs = strategy==="greedy" ? rnd(400,900) : strategy==="neutral" ? rnd(300,700) : strategy==="safe" ? rnd(250,600) : rnd(100,300);
     let revealDelayMs = latencyMs + rnd(50,250);
-    if (opts.scenario==="latency" && strategy==="greedy") revealDelayMs += rnd(3000,6000);
+    // Latency trap: the greedy builder reveals late enough to risk blowing past the slot-time
+    // budget (8–14 s). Magnitude must be able to exceed that window for the scenario to bite.
+    if (opts.scenario==="latency" && strategy==="greedy") revealDelayMs += rnd(7000,13000);
     if (opts.scenario==="outage" && strategy==="greedy") revealDelayMs += rnd(5000,9000);
 
     const header = hex(16);
@@ -561,7 +852,8 @@
 
     return {
       header, relayName, strategy, censorScore,
-      bidValueEth, latencyMs, revealDelayMs,
+      bidValueEth, payoutRatio, grossValueEth: tipsEth + mevEth,
+      latencyMs, revealDelayMs,
       includedTxs: included, bundlesIncluded,
       tipsEth, mevEth, compliant
     };
@@ -582,8 +874,15 @@
     baseFeeEl.textContent = baseFee;
     slotNumEl.textContent = slot;
     mempoolTable.innerHTML = "";
-    for (const tx of mempool){
-      const already = localOrder.includes(tx.hash);
+    // Transactions added to the local block leave the mempool (they move down into the
+    // Local Builder list). Removing one there returns it here.
+    const pending = mempool.filter(tx=> !localOrder.includes(tx.hash));
+    if (!pending.length){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="8" class="muted">All transactions added to your local block.</td>`;
+      mempoolTable.appendChild(tr);
+    }
+    for (const tx of pending){
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="mono">${tx.hash.slice(0,10)}…</td>
@@ -593,29 +892,61 @@
         <td class="mono">${fmtEth(tx.value)} ETH</td>
         <td>${tx.tag}${tx.tag==="sandwich victim" ? ' <span class="tag">victim</span>' : ''}</td>
         <td>${tx.inclusion ? '<span class="tag">inclusion</span>' : ''}</td>
-        <td><button class="btn ${already?'disabled':''}" data-h="${tx.hash}">add</button></td>
+        <td><button class="btn" data-h="${tx.hash}">add</button></td>
       `;
       tr.querySelector("button").addEventListener("click", (e)=>{
+        if (slotSettled) return;
         const h = e.target.getAttribute("data-h");
-        if (!localOrder.includes(h)){ localOrder.push(h); renderLocal(); }
+        if (!localOrder.includes(h)){ localOrder.push(h); renderLocal(); renderMempool(); }
       });
       mempoolTable.appendChild(tr);
     }
   }
 
+  // Label a required hash by its role (its mempool tag) plus a short hash, so it's clear
+  // which transaction each position in the bundle refers to.
+  function reqLabel(h){
+    const tx = txByHash(h);
+    return `${tx ? tx.tag : "tx"} <span class="mono">${h.slice(0,6)}…</span>`;
+  }
+  // Plain-language "what counts as correct order" for each bundle type.
+  function captureRule(b){
+    if (b.type==="arb")
+      return 'include <strong>both</strong> legs, with <span class="tag">arb leg 1/2</span> placed <strong>before</strong> <span class="tag">arb leg 2/2</span>.';
+    if (b.type==="sandwich")
+      return 'place <span class="tag">sandwich frontrun</span> <strong>before</strong> the victim and <span class="tag">sandwich backrun</span> <strong>after</strong> it (frontrun → victim → backrun).';
+    if (b.type==="liquidation")
+      return 'include the target transaction — order doesn\'t matter for this one.';
+    return 'include its required transactions.';
+  }
+
+  // Capture state of a bundle against the current local block — shared by the bundle
+  // cards and the Local Builder hint so they always agree.
+  function bundleStatus(b, block){
+    const pos = new Map(); block.includedTxs.forEach((t,i)=> pos.set(t.hash, i));
+    if (block.bundlesIncluded.some(x=> x.id===b.id)) return {key:"captured", label:"✓ captured", cls:"bs-cap"};
+    const missing = b.requires.filter(h=> !pos.has(h));
+    if (missing.length) return {key:"add", label:"add txs", cls:"bs-add", missing};
+    if (b.type==="arb" || b.type==="sandwich") return {key:"reorder", label:"reorder", cls:"bs-reorder"};
+    return {key:"none", label:"not captured", cls:"bs-none"};
+  }
+
   function renderBundles(){
+    const block = localBlockFromOrder();
     bundlesList.innerHTML = "";
     bundles.forEach((b, i)=>{
       const div = document.createElement("div");
-      div.className = "card";
-      const req = b.requires.map(h=> h.slice(0,8)+"…").join(" → ");
+      const status = bundleStatus(b, block);
+      div.className = "card" + (status.key==="captured" ? " captured" : "");
+      const req = b.requires.map(reqLabel).join(' <span class="muted">→</span> ');
       const tox = b.toxic ? '<span class="bad">toxic</span>' : '<span class="good">safe</span>';
       const conf = b.conflicts.length ? b.conflicts.join(",") : "none";
       div.innerHTML = `
-        <div class="header"><strong>Bundle ${i+1}</strong> <span class="mono">${b.id}</span></div>
+        <div class="header"><strong>Bundle ${i+1}</strong> <span class="bstat ${status.cls}">${status.label}</span></div>
         <div class="kv">
           <div class="k">type</div><div>${b.type}</div>
-          <div class="k">requires</div><div class="mono">${req}</div>
+          <div class="k">requires (in order)</div><div>${req}</div>
+          <div class="k">to capture</div><div class="small">${captureRule(b)}</div>
           <div class="k">expected MEV</div><div class="mono">${fmtEth(b.expectsEth)} ETH</div>
           <div class="k">conflicts</div><div>${conf}</div>
           <div class="k">toxicity</div><div>${tox}</div>
@@ -625,19 +956,72 @@
     });
   }
 
+  function renderLocalMevHint(block){
+    const el = document.getElementById("localMevHint");
+    if (!el) return;
+    if (!bundles.length){ el.innerHTML = ""; return; }
+    const pos = new Map(); block.includedTxs.forEach((t,i)=> pos.set(t.hash, i));
+    const capturedIds = new Set(block.bundlesIncluded.map(b=> b.id));
+    const lines = bundles.map((b,i)=>{
+      const captured = capturedIds.has(b.id);
+      const missing = b.requires.filter(h=> !pos.has(h));
+      const ordered = (b.type==="arb" || b.type==="sandwich"); // these care about ordering
+      let st, cls, advice="";
+      if (captured){
+        st="captured ✓"; cls="st-cap";
+      } else if (missing.length){
+        st="add txs"; cls="st-add";
+        advice = " — add "+missing.map(reqLabel).join(", ")+" from the mempool";
+      } else if (ordered){
+        st="reorder"; cls="st-reorder";
+        advice = " — put them in order: "+b.requires.map(reqLabel).join(" → ");
+      } else {
+        // all required txs present but not captured (shouldn't normally happen)
+        st="not captured"; cls="st-reorder";
+        advice = " — check this bundle's required txs are all in your block";
+      }
+      const name = b.type + (b.toxic ? " (toxic)" : "");
+      return `<div class="line"><span class="st ${cls}">${st}</span><span class="desc">Bundle ${i+1} · ${name} · ${fmtEth(b.expectsEth)} ETH${advice}</span></div>`;
+    });
+    el.innerHTML =
+      `<div class="total">MEV captured ${fmtEth(block.mevEth)} ETH + tips ${fmtEth(block.tipsEth)} ETH = ${fmtEth(block.valueEth)} ETH — and you keep 100% (no builder cut).</div>` +
+      lines.join("");
+  }
+
+  // Drop the dragged tx relative to a target row (before or after it), then re-render.
+  function clearDropMarkers(){
+    localTable.querySelectorAll("tr").forEach(r=> r.classList.remove("drop-before","drop-after"));
+  }
+  function reorderLocalDrop(srcHash, targetHash, placeAfter){
+    if (!srcHash || srcHash===targetHash) return;
+    const displayed = [...localTable.querySelectorAll("tr")].map(r=> r.dataset.hash).filter(Boolean);
+    const without = displayed.filter(h=> h!==srcHash);
+    let idx = without.indexOf(targetHash);
+    if (idx===-1) idx = without.length; else if (placeAfter) idx += 1;
+    without.splice(idx, 0, srcHash);
+    // preserve any localOrder entries that aren't currently displayed (e.g. over gas budget)
+    const shown = new Set(displayed);
+    const tail = localOrder.filter(h=> !shown.has(h));
+    localOrder = without.concat(tail);
+    renderLocal(); renderMempool(); renderBids();
+  }
+
   function renderLocal(){
     // Build the block and update stats
     const block = localBlockFromOrder();
     localGasUsedEl.textContent = block.gasUsed.toLocaleString();
     localValueEl.textContent = fmtEth(block.valueEth);
     localBundlesCountEl.textContent = block.bundlesIncluded.length;
+    renderLocalMevHint(block);
 
     // Render table
     localTable.innerHTML = "";
     block.includedTxs.forEach((tx, idx)=>{
       const tr = document.createElement("tr");
+      tr.dataset.hash = tx.hash;
+      tr.draggable = !slotSettled;
       tr.innerHTML = `
-        <td class="mono">${idx+1}</td>
+        <td class="mono"><span class="grip" title="Drag to reorder">⠿</span>${idx+1}</td>
         <td class="mono">${tx.hash.slice(0,10)}…</td>
         <td class="mono">${tx.gas}</td>
         <td>${tx.tag}</td>
@@ -646,8 +1030,38 @@
         <td><button class="btn" data-idx="${idx}">down</button></td>
         <td><button class="btn btn-danger" data-idx="${idx}">remove</button></td>
       `;
+
+      // ----- drag-and-drop reordering -----
+      tr.addEventListener("dragstart", (e)=>{
+        if (slotSettled){ e.preventDefault(); return; }
+        dragSrcHash = tx.hash;
+        e.dataTransfer.effectAllowed = "move";
+        try { e.dataTransfer.setData("text/plain", tx.hash); } catch(_){}
+        tr.classList.add("dragging");
+      });
+      tr.addEventListener("dragend", ()=>{ tr.classList.remove("dragging"); clearDropMarkers(); dragSrcHash = null; });
+      tr.addEventListener("dragover", (e)=>{
+        if (!dragSrcHash || dragSrcHash===tx.hash) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        const rect = tr.getBoundingClientRect();
+        const after = (e.clientY - rect.top) > rect.height/2;
+        clearDropMarkers();
+        tr.classList.add(after ? "drop-after" : "drop-before");
+      });
+      tr.addEventListener("dragleave", ()=>{ tr.classList.remove("drop-before","drop-after"); });
+      tr.addEventListener("drop", (e)=>{
+        e.preventDefault();
+        const rect = tr.getBoundingClientRect();
+        const after = (e.clientY - rect.top) > rect.height/2;
+        const src = dragSrcHash;
+        clearDropMarkers();
+        reorderLocalDrop(src, tx.hash, after);
+      });
+
       const [btnUp, btnDown, btnRem] = tr.querySelectorAll("button");
       btnUp.addEventListener("click", (e)=>{
+        if (slotSettled) return;
         const i = Number(e.target.getAttribute("data-idx"));
         if (i>0){
           const h = block.includedTxs[i].hash;
@@ -659,6 +1073,7 @@
         }
       });
       btnDown.addEventListener("click", (e)=>{
+        if (slotSettled) return;
         const i = Number(e.target.getAttribute("data-idx"));
         if (i<block.includedTxs.length-1){
           const h = block.includedTxs[i].hash;
@@ -669,6 +1084,7 @@
         }
       });
       btnRem.addEventListener("click", (e)=>{
+        if (slotSettled) return;
         const i = Number(e.target.getAttribute("data-idx"));
         const h = block.includedTxs[i].hash;
         localOrder = localOrder.filter(x=> x!==h);
@@ -677,89 +1093,103 @@
       localTable.appendChild(tr);
     });
 
-    renderBids(); // update Local card in bids panel
+    renderBundles(); // refresh bundle capture badges as the block changes
+    renderBids();    // update Local card in bids panel
   }
 
   function renderBids(){
     bidsList.innerHTML = "";
-    // First, show Local Build card
+    refreshOutageRelay();
+
+    // Build one comparable list: your Local Build plus every builder bid.
+    const slotTimeMs = Number(slotTimeRange.value)*1000;
     const localBlock = localBlockFromOrder();
-    const localCard = document.createElement("div");
-    localCard.className = "card bidCard";
-    localCard.dataset.index = "local";
-    const censorPct = Math.round(localBlock.censorScore*100);
-    const compliantTxt = localBlock.inclusionOk ? '<span class="good">yes</span>' : '<span class="bad">no</span>';
-    localCard.innerHTML = `
-      <div class="header"><strong>Local Build</strong> <span class="mono">${localBlock.header.slice(0,10)}…</span></div>
-      <div class="kv">
-        <div class="k">relay</div><div>${localBlock.relayName}</div>
-        <div class="k">bid value to proposer</div><div class="mono">${fmtEth(localBlock.valueEth)} ETH</div>
-        <div class="k">latency</div><div class="mono">${fmtMs(localBlock.latencyMs)} ms</div>
-        <div class="k">censorship score</div><div class="mono">${censorPct}/100</div>
-        <div class="k">compliant (if inclusion ON)</div><div>${compliantTxt}</div>
-      </div>
-    `;
-    localCard.addEventListener("click", ()=> selectLocal());
-    bidsList.appendChild(localCard);
-
-    // Then sealed bids from relays
-    const outageEnabled = toggleRelayOutage.checked || scenarioSel.value==="outage";
-    const outageRelay = outageEnabled ? pick(["Relay Alpha","Relay Beacon","Relay Delta"]) : null;
-
+    const options = [{
+      key:"local", title:"Local Build (your block)", header:localBlock.header,
+      relay:localBlock.relayName, value:localBlock.valueEth, gross:localBlock.grossValueEth,
+      payoutRatio:1.00, latency:localBlock.revealDelayMs,
+      censor:localBlock.censorScore, atRisk:false, onClick:selectLocal
+    }];
     bids.forEach((b, idx)=>{
+      options.push({
+        key:idx, title:`Bid ${String.fromCharCode(65+idx)}`, header:b.header,
+        relay:b.relayName, value:b.bidValueEth, gross:b.grossValueEth, payoutRatio:b.payoutRatio,
+        latency:b.revealDelayMs,
+        censor:b.censorScore, atRisk:!!(outageRelay && b.relayName===outageRelay),
+        onClick:()=> selectBid(idx)
+      });
+    });
+
+    // Highest value is the "best" reference everything compares against.
+    const bestVal = Math.max(...options.map(o=> o.value));
+
+    options.forEach(o=>{
       const card = document.createElement("div");
       card.className = "card bidCard";
-      card.dataset.index = idx;
-      const censorPctB = Math.round(b.censorScore*100);
+      card.dataset.index = o.key;
+      const isBest = o.value >= bestVal - 1e-12;
+      const diff = o.value - bestVal;
+      const cmp = isBest
+        ? '<span class="good">best value</span>'
+        : `<span class="warn">${fmtEth(diff)} ETH vs best</span>`;
+      const bestPill = isBest ? ' <span class="pill">best</span>' : '';
+      const riskPill = o.atRisk ? ' <span class="tag" style="color:#fca5a5;border-color:#7f1d1d">at risk</span>' : '';
+      const cut = Math.round((1 - o.payoutRatio) * 100);
+      const payoutLine = o.key==="local"
+        ? '<span class="good">you keep 100%</span>'
+        : `block value ${fmtEth(o.gross)} ETH, <span class="warn">builder keeps ${cut}%</span>`;
       card.innerHTML = `
-        <div class="header"><strong>Bid ${String.fromCharCode(65+idx)}</strong> <span class="mono">${b.header.slice(0,10)}…</span></div>
+        <div class="header"><strong>${o.title}</strong>${bestPill} <span class="mono">${o.header.slice(0,10)}…</span></div>
         <div class="kv">
-          <div class="k">relay</div><div>${b.relayName}${(outageRelay && b.relayName===outageRelay)?' (at risk)': ''}</div>
-          <div class="k">bid value to proposer</div><div class="mono">${fmtEth(b.bidValueEth)} ETH</div>
-          <div class="k">latency</div><div class="mono">${fmtMs(b.latencyMs)} ms</div>
-          <div class="k">censorship score</div><div class="mono">${censorPctB}/100</div>
+          <div class="k">relay</div><div>${o.relay}${riskPill}</div>
+          <div class="k">value to you</div><div class="mono">${fmtEth(o.value)} ETH</div>
+          <div class="k">payout</div><div class="small">${payoutLine}</div>
+          <div class="k">vs best bid</div><div>${cmp}</div>
+          <div class="k">reveal latency</div><div class="mono">${o.latency > slotTimeMs ? `<span class="bad">${fmtMs(o.latency)} ms &gt; slot</span>` : `${fmtMs(o.latency)} ms`}</div>
+          <div class="k">censorship score</div><div class="mono">${Math.round(o.censor*100)}/100</div>
         </div>
       `;
-      card.addEventListener("click", ()=> selectBid(idx));
+      card.addEventListener("click", o.onClick);
       bidsList.appendChild(card);
     });
 
-    // Selection marker
-    const cards = bidsList.querySelectorAll(".bidCard");
-    cards.forEach(c=> c.classList.remove("selected"));
+    // Selection marker + prompt
     if (selection){
       if (selection.type==="local"){
-        localCard.classList.add("selected");
-        selectionInfo.textContent = "Selected Local Build (no relay)";
+        const c = bidsList.querySelector('.bidCard[data-index="local"]');
+        if (c) c.classList.add("selected");
+        selectionInfo.textContent = "Selected: your Local Build. Press “Lock in & reveal”.";
       } else if (selection.type==="bid"){
         const chosen = bidsList.querySelector(`.bidCard[data-index="${selection.index}"]`);
         if (chosen) chosen.classList.add("selected");
         const b = bids[selection.index];
-        selectionInfo.textContent = `Selected Bid ${String.fromCharCode(65+selection.index)} via ${b.relayName}`;
+        selectionInfo.textContent = `Selected: Bid ${String.fromCharCode(65+selection.index)} via ${b.relayName}. Press “Lock in & reveal”.`;
       }
     } else {
-      selectionInfo.textContent = "No bid selected.";
+      selectionInfo.textContent = "Click a bid or your Local Build above to select it.";
     }
   }
 
   function selectBid(index){
+    if (slotSettled) return;
     selection = { type:"bid", index };
     renderBids();
   }
 
   function selectLocal(){
+    if (slotSettled) return;
     selection = { type:"local" };
     renderBids();
   }
 
   /* ===== Reveal ===== */
   function reveal(){
-    if (!selection){ alert("Select a bid or choose Local Build before reveal."); return; }
+    if (slotSettled){ alert("This slot is already settled. Click “Next Slot” to play another."); return; }
+    if (!selection){ alert("Click a builder bid or your Local Build to select it, then lock in."); return; }
     const slotTimeMs = Number(slotTimeRange.value)*1000;
 
-    const outageEnabled = toggleRelayOutage.checked || scenarioSel.value==="outage";
-    let outageRelay = null;
-    if (outageEnabled) outageRelay = pick(["Relay Alpha","Relay Beacon","Relay Delta"]);
+    refreshOutageRelay();
+    const outageEnabled = outageActive();
 
     let block;
     if (selection.type==="local"){
@@ -775,7 +1205,7 @@
     let inclusionRequiredThisSlot = 0, inclusionCompliantThisSlot = 1;
 
     const required = mempool.filter(t=>t.inclusion);
-    if (toggleInclusion.checked){
+    if (inclusionActive()){
       inclusionRequiredThisSlot = required.length>0 ? 1 : 0;
       const compliant = selection.type==="local" ? localBlockFromOrder().inclusionOk : block.compliant;
       if (!compliant && inclusionRequiredThisSlot){
@@ -885,10 +1315,39 @@
       <div>${outcomeText}</div>
       <div class="muted">${compareText}</div>
     `;
-    modal.style.display = "flex";
+
+    // Settle the slot: prevent replaying the same slot to inflate metrics, and freeze
+    // all inputs until the player advances to the next slot.
+    slotSettled = true;
+    setRevealEnabled(false);
+    setSlotLocked(true);
+    selectionInfo.textContent = "Slot locked. Click “Next Slot” to continue.";
+
+    openModal();
   }
 
-  function closeModal(){ modal.style.display = "none"; }
+  function setRevealEnabled(enabled){
+    btnReveal.disabled = !enabled;
+    btnReveal.classList.toggle("disabled", !enabled);
+  }
+  function setSlotLocked(locked){
+    document.body.classList.toggle("locked", locked);
+    localTable.querySelectorAll("tr").forEach(r=>{ r.draggable = !locked; });
+  }
+  function modalOpen(){ return modal.style.display === "flex"; }
+  function openModal(){
+    lastFocusedBeforeModal = document.activeElement;
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden","false");
+    btnCloseModal.focus();
+  }
+  function closeModal(){
+    modal.style.display = "none";
+    modal.setAttribute("aria-hidden","true");
+    if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === "function"){
+      lastFocusedBeforeModal.focus();
+    }
+  }
 
   /* ===== Metrics UI ===== */
   function relayDiversityText(){
@@ -962,8 +1421,16 @@
     baseFee = Math.max(5, baseFee + pick(BASE_FEE_JITTER));
     mempool = genMempool();
     bundles = genBundles(mempool);
-    bids = genBids(mempool, bundles, scenarioSel.value, toggleInclusion.checked);
+    applyScenarioToBundles();
+    bids = genBids(mempool, bundles, scenarioSel.value, inclusionActive());
     selection = null;
+    slotSettled = false;
+    setRevealEnabled(true);
+    setSlotLocked(false);
+    outageRelay = null;
+    refreshOutageRelay();
+    localHeader = hex(16);
+    localRevealDelayMs = localLatencyMs + rnd(50,200);
     clearLocal();
     renderMempool();
     renderBundles();
@@ -977,15 +1444,33 @@
   btnNewSlot.addEventListener("click", ()=>{ slot++; newSlot(); });
   btnReveal.addEventListener("click", reveal);
 
-  slotTimeRange.addEventListener("input", ()=>{ slotTimeLabel.textContent = slotTimeRange.value; });
+  slotTimeRange.addEventListener("input", ()=>{ slotTimeLabel.textContent = slotTimeRange.value; if (!slotSettled) renderBids(); });
   censorSensitivity.addEventListener("input", ()=>{ censorSensitivityLabel.textContent = censorSensitivity.value; });
 
-  document.getElementById("scenario").addEventListener("change", ()=>{ bids = genBids(mempool, bundles, scenarioSel.value, toggleInclusion.checked); renderBids(); });
-  toggleInclusion.addEventListener("change", ()=>{ bids = genBids(mempool, bundles, scenarioSel.value, toggleInclusion.checked); renderBids(); });
+  function regenBids(){
+    applyScenarioToBundles();
+    bids = genBids(mempool, bundles, scenarioSel.value, inclusionActive());
+    refreshOutageRelay();
+    renderBundles();
+    renderLocal();
+    renderBids();
+  }
+  scenarioSel.addEventListener("change", ()=>{
+    if (slotSettled) return;
+    // Make scenarios actually drive their policy toggles so the UI reflects enforcement.
+    if (scenarioSel.value==="inclusion") toggleInclusion.checked = true;
+    if (scenarioSel.value==="outage") toggleRelayOutage.checked = true;
+    outageRelay = null; // re-roll the at-risk relay for the new scenario
+    updateScenarioDesc();
+    regenBids();
+  });
+  toggleInclusion.addEventListener("change", ()=>{ if (slotSettled) return; regenBids(); });
+  toggleRelayOutage.addEventListener("change", ()=>{ if (slotSettled) return; outageRelay = null; regenBids(); });
 
   btnLocalFillTips.addEventListener("click", ()=>{
-    // Fill local with highest tip txs not already included until gas limit
-    const sorted = [...mempool].sort((a,b)=> computeTipEthForTx(b)-computeTipEthForTx(a));
+    if (slotSettled) return;
+    // Fill local with highest effective-priority-fee txs until the gas budget is full.
+    const sorted = [...mempool].sort((a,b)=> effTipPerGasGwei(b)-effTipPerGasGwei(a));
     let gas = 0;
     localOrder = [];
     for (const tx of sorted){
@@ -995,8 +1480,9 @@
     }
     renderLocal(); renderMempool();
   });
-  btnLocalClear.addEventListener("click", ()=>{ clearLocal(); renderLocal(); renderMempool(); });
+  btnLocalClear.addEventListener("click", ()=>{ if (slotSettled) return; clearLocal(); renderLocal(); renderMempool(); });
   btnLocalSelectAllInclusion.addEventListener("click", ()=>{
+    if (slotSettled) return;
     const required = mempool.filter(t=>t.inclusion);
     for (const tx of required){
       if (!localOrder.includes(tx.hash)) localOrder.push(tx.hash);
@@ -1004,9 +1490,38 @@
     renderLocal(); renderMempool();
   });
 
+  document.getElementById("btnEndLab").addEventListener("click", ()=>{
+    const compl = metrics.inclusionRequired ? Math.round(100*metrics.inclusionCompliant/metrics.inclusionRequired) : 100;
+    const avgLat = metrics.latencyCount ? (metrics.latencySumMs/metrics.latencyCount) : 0;
+    const missRate = metrics.slotsPlayed ? Math.round(100*metrics.missedSlots/metrics.slotsPlayed) : 0;
+    revealBody.innerHTML = `
+      <strong>Lab summary</strong>
+      <div class="kv">
+        <div class="k">Slots played</div><div class="mono">${metrics.slotsPlayed}</div>
+        <div class="k">Cumulative net revenue</div><div class="mono">${fmtEth(metrics.revenueEth)} ETH</div>
+        <div class="k">Missed slots</div><div class="mono">${metrics.missedSlots} (${missRate}%)</div>
+        <div class="k">Inclusion compliance</div><div class="mono">${compl}%</div>
+        <div class="k">Censorship penalty paid</div><div class="mono">${fmtEth(metrics.censorPenaltyEth)} ETH</div>
+        <div class="k">Average reveal latency</div><div class="mono">${fmtMs(avgLat)} ms</div>
+        <div class="k">Relay diversity (last 5)</div><div class="mono">${relayDiversityText()}</div>
+      </div>
+      <div class="divider"></div>
+      <div class="muted">Reflect: did chasing the highest bid cost you in missed slots, censorship penalties, or inclusion compliance? The radar chart on the dashboard shows the trade-off across revenue, compliance, reliability, and diversity.</div>
+    `;
+    openModal();
+  });
+
   btnCloseModal.addEventListener("click", ()=>{ closeModal(); });
+  // Click outside the dialog content closes it.
+  modal.addEventListener("click", (e)=>{ if (e.target===modal) closeModal(); });
 
   window.addEventListener("keydown", (e)=>{
+    if (modalOpen()){
+      if (e.key==="Escape"){ closeModal(); }
+      return; // don't trigger slot hotkeys while the dialog is open
+    }
+    const t = e.target;
+    if (t && (t.tagName==="INPUT" || t.tagName==="SELECT" || t.tagName==="TEXTAREA")) return;
     if (e.key==='n' || e.key==='N'){ slot++; newSlot(); }
     if (e.key==='r' || e.key==='R'){ reveal(); }
   });
@@ -1014,6 +1529,7 @@
   /* Init */
   slotTimeLabel.textContent = slotTimeRange.value;
   censorSensitivityLabel.textContent = censorSensitivity.value;
+  updateScenarioDesc();
   newSlot();
 })();
 </script>

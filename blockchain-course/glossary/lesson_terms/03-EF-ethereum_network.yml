@@ -1,0 +1,668 @@
+lesson_id: "03-EF"
+lesson_title: "The Ethereum Network"
+source_path: "lessons/ethereum/03-EF-ethereum_network.qmd"
+terms:
+  - term: "Ethereum transaction"
+    modifier: "Ethereum"
+    aliases: ["transaction"]
+    definition: "A signed message from an account that requests a state change on Ethereum."
+    context: "The lesson follows transactions from wallet signing through gossip, block inclusion, execution, and receipt creation."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Externally owned account"
+    modifier: "Ethereum"
+    aliases: ["EOA"]
+    definition: "An Ethereum account controlled by a private key rather than contract code."
+    context: "EOAs originate the signed transactions that enter the network and request state changes."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Peer-to-peer gossip"
+    modifier: "Ethereum"
+    aliases: ["P2P gossip", "gossip"]
+    definition: "A propagation pattern where Ethereum nodes forward transactions or blocks through direct peer connections."
+    context: "Gossip explains how a signed transaction spreads from one node to many local mempools without a central broadcaster."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Mempool"
+    modifier: "Ethereum"
+    aliases: ["memory pool", "pending transaction pool"]
+    definition: "A node's local collection of pending Ethereum transactions that may be selected for future block inclusion."
+    context: "The mempool is where networking visibility, transaction fees, and MEV opportunities first meet."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Validator"
+    modifier: "Ethereum PoS"
+    aliases: ["validators"]
+    definition: "A staked Ethereum participant that can propose blocks, verify blocks, and attest to consensus decisions."
+    context: "Validators are the consensus actors that include pending transactions and help finalize blocks."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Block builder"
+    modifier: "Ethereum"
+    aliases: ["builder"]
+    definition: "An actor or component that assembles transactions into a candidate execution payload or block."
+    context: "The lesson uses builders to connect fee ordering, transaction selection, and the later MEV supply chain."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Ethereum Virtual Machine"
+    modifier: null
+    aliases: ["EVM"]
+    definition: "The execution environment that runs Ethereum transactions and computes the resulting state changes."
+    context: "Every node re-executes transactions in the EVM to verify that a proposed block produces the same post-state."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Transaction receipt"
+    modifier: "Ethereum"
+    aliases: ["receipt"]
+    definition: "The record produced after Ethereum transaction execution that reports status, gas used, and emitted logs."
+    context: "Receipts let students connect execution outcomes to what wallets, applications, and observers can inspect afterward."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Event log"
+    modifier: "Ethereum"
+    aliases: ["logs", "emitted logs"]
+    definition: "Structured output emitted during transaction execution and recorded in the transaction receipt."
+    context: "Logs are part of the lesson's account of how off-chain systems learn what happened on-chain."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Off-chain consumer"
+    modifier: "Ethereum"
+    aliases: ["off-chain observer"]
+    definition: "A system outside Ethereum consensus that reads receipts, logs, or state to react to on-chain activity."
+    context: "The lesson mentions off-chain consumers to show why transaction outcomes matter beyond validator verification."
+    slide_heading: "Review: The Life of an Ethereum Transaction"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Nonce"
+    modifier: "Ethereum account"
+    aliases: ["account nonce", "sequence number"]
+    definition: "A per-account counter that orders Ethereum transactions and prevents replay or skipped execution."
+    context: "Nonce handling explains why nodes hold transactions with gaps and why replacement transactions must reuse the same nonce."
+    slide_heading: "Transactions: Structure and Flow"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Gas limit"
+    modifier: "Ethereum transaction"
+    aliases: ["gasLimit", "gas_limit"]
+    definition: "The maximum amount of gas a sender authorizes a transaction to consume during execution."
+    context: "Students need gas limits to understand resource bounds, failed execution, and why unused gas can be refunded."
+    slide_heading: "Transactions: Structure and Flow"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Max fee per gas"
+    modifier: "Ethereum fee market"
+    aliases: ["maxFeePerGas", "max_fee_per_gas", "max fee"]
+    definition: "The sender's ceiling on the total per-gas price they are willing to pay for a transaction."
+    context: "This field caps fee exposure while still allowing the actual fee to adapt to the current base fee and tip."
+    slide_heading: "Transactions: Structure and Flow"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Max priority fee per gas"
+    modifier: "Ethereum fee market"
+    aliases: ["maxPriorityFeePerGas", "max_priority_fee_per_gas", "priority fee", "tip"]
+    definition: "The sender's maximum per-gas tip offered to the block proposer for including the transaction."
+    context: "Priority fee settings help explain why builders prefer some pending transactions over others."
+    slide_heading: "Transactions: Structure and Flow"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Effective gas price"
+    modifier: "Ethereum fee market"
+    aliases: ["actual per-unit fee"]
+    definition: "The actual per-gas price paid after applying the sender's fee ceiling, the base fee, and the priority fee."
+    context: "Builders use effective gas price to order many ordinary pending transactions by expected revenue."
+    slide_heading: "Transactions: Structure and Flow"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Access list"
+    modifier: "Ethereum transaction"
+    aliases: ["access lists"]
+    definition: "An optional transaction field that predeclares accounts or storage slots a transaction expects to access."
+    context: "Access lists appear in the lesson as part of the newer typed transaction formats that refine fee and execution behavior."
+    slide_heading: "Transactions: Structure and Flow"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "devp2p"
+    modifier: "Ethereum execution layer"
+    aliases: ["devp2p stack"]
+    definition: "Ethereum's peer-to-peer networking framework for discovery, encrypted transport, and execution-layer subprotocols."
+    context: "devp2p is the execution network path used to exchange transactions, blocks, and state-sync messages."
+    slide_heading: "ETH Execution-Network Message"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "RLPx"
+    modifier: "Ethereum execution layer"
+    aliases: ["RLPx transport"]
+    definition: "The encrypted session layer used by devp2p peers to authenticate, frame, and multiplex execution-layer traffic."
+    context: "RLPx sits between TCP/IP and ETH subprotocol messages in the lesson's execution-network stack."
+    slide_heading: "ETH Execution-Network Message"
+    tags: ["ethereum", "distributed-systems", "cryptography"]
+    confidence: "high"
+  - term: "ETH subprotocol"
+    modifier: "Ethereum execution layer"
+    aliases: ["eth subprotocol", "eth/68", "ETH"]
+    definition: "The execution-layer devp2p protocol family that defines messages for exchanging transactions, blocks, and chain data."
+    context: "The lesson uses the ETH subprotocol to show how message codes distinguish requests such as transactions or block headers."
+    slide_heading: "ETH Execution-Network Message"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Recursive Length Prefix"
+    modifier: "Ethereum encoding"
+    aliases: ["RLP", "RLP encoding"]
+    definition: "Ethereum's legacy byte encoding format for deterministic serialization of nested lists and byte strings."
+    context: "RLP matters because peers must encode transaction and message payloads in a form every client can parse consistently."
+    slide_heading: "ETH Execution-Network Message"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Capability negotiation"
+    modifier: "Ethereum networking"
+    aliases: ["capabilities"]
+    definition: "The peer handshake step where Ethereum nodes advertise which subprotocol versions and features they support."
+    context: "Capability negotiation determines whether peers can exchange ETH, snap, or other protocol-specific messages."
+    slide_heading: "ETH Execution-Network Message"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Digital signature"
+    modifier: "Ethereum transaction"
+    aliases: ["signature", "signed payload"]
+    definition: "Cryptographic evidence that the holder of an account's private key authorized a specific transaction payload."
+    context: "Signatures are the first validation check that lets nodes reject forged or altered transactions before gossiping them."
+    slide_heading: "Transaction Fields and Signatures"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Chain ID"
+    modifier: "Ethereum transaction"
+    aliases: ["chainId"]
+    definition: "A network identifier included in a transaction signature to bind the transaction to one Ethereum chain."
+    context: "Chain IDs prevent cross-chain replay by making the signature valid only for the intended network."
+    slide_heading: "Transaction Fields and Signatures"
+    tags: ["ethereum", "cryptography"]
+    confidence: "high"
+  - term: "Simple Serialize"
+    modifier: "Ethereum encoding"
+    aliases: ["SSZ"]
+    definition: "A deterministic serialization format used in newer Ethereum contexts to encode structured data."
+    context: "The lesson contrasts SSZ with RLP to show that transaction and protocol data must have a stable byte layout before signing or exchange."
+    slide_heading: "Transaction Fields and Signatures"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Contract creation transaction"
+    modifier: "Ethereum"
+    aliases: ["contract creation", "to = null"]
+    definition: "A transaction with no destination address that deploys new contract code using data carried in the transaction."
+    context: "This field pattern helps students distinguish ordinary calls from transactions that create new on-chain programs."
+    slide_heading: "Transaction Fields and Signatures"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "EIP-1559 fee mechanism"
+    modifier: "Ethereum fee market"
+    aliases: ["EIP-1559", "Ethereum Improvement Proposal 1559"]
+    definition: "Ethereum's fee model that combines an automatically adjusted base fee with a user-selected priority tip and fee ceiling."
+    context: "EIP-1559 is central to the lesson's explanation of transaction pricing, inclusion incentives, and fee refunds."
+    slide_heading: "EIP-1559 Fee Mechanics"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Base fee"
+    modifier: "Ethereum fee market"
+    aliases: ["base_fee"]
+    definition: "The protocol-set per-gas fee that adjusts with block demand and is burned rather than paid to the proposer."
+    context: "Base fee behavior explains why transaction cost changes by block and why the fee market separates burn from proposer reward."
+    slide_heading: "EIP-1559 Fee Mechanics"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Priority fee"
+    modifier: "Ethereum fee market"
+    aliases: ["tip", "max priority fee"]
+    definition: "The per-gas amount paid to the proposer as an incentive to include a transaction."
+    context: "Priority fees connect wallet fee choices to builder and proposer incentives during block construction."
+    slide_heading: "EIP-1559 Fee Mechanics"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Gas estimation"
+    modifier: "Ethereum"
+    aliases: ["estimated gas"]
+    definition: "Simulated execution used to predict how much gas a transaction is likely to consume."
+    context: "The lesson treats gas estimation as useful but imperfect because contract state can change before inclusion."
+    slide_heading: "Gas Strategy and UX"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Revert"
+    modifier: "Ethereum execution"
+    aliases: ["transaction revert", "reverted transaction"]
+    definition: "An execution failure that undoes the intended state change while still charging gas consumed up to the failure point."
+    context: "Reverts matter for user experience because failed transactions are not necessarily free."
+    slide_heading: "Gas Strategy and UX"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Maximal Extractable Value"
+    modifier: "Ethereum block production"
+    aliases: ["MEV"]
+    definition: "Extra profit a builder or validator can earn by choosing how to order, include, or exclude transactions in a block."
+    context: "MEV ties together public mempool visibility, transaction ordering discretion, and the specialized builder-relay workflow."
+    slide_heading: "Gas Strategy and UX"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Public mempool"
+    modifier: "Ethereum"
+    aliases: ["public pending transaction pool"]
+    definition: "The default state in which pending Ethereum transactions can be observed by anyone running appropriate node infrastructure."
+    context: "Public visibility lets searchers detect arbitrage, liquidation, and sandwich opportunities before transactions are included."
+    slide_heading: "The Mempool"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Private transaction submission"
+    modifier: "Ethereum"
+    aliases: ["direct submission", "private submission"]
+    definition: "Sending a transaction directly to a builder or private service instead of broadcasting it through the public mempool."
+    context: "Private submission is presented as a way to hide user intent until block construction and reduce some MEV exposure."
+    slide_heading: "The Mempool"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Replacement transaction"
+    modifier: "Ethereum"
+    aliases: ["transaction replacement", "replace-by-fee"]
+    definition: "A transaction that reuses the same account nonce with a higher fee to supersede an earlier pending transaction."
+    context: "Replacement explains how users can try to unstick transactions that remain pending in local mempools."
+    slide_heading: "The Mempool"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Searcher"
+    modifier: "MEV"
+    aliases: ["MEV searcher", "searchers"]
+    definition: "An off-chain actor that scans pending transactions and market state for profitable MEV opportunities."
+    context: "Searchers are the first role in the MEV supply chain that transforms mempool visibility into transaction bundles."
+    slide_heading: "The Mempool"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Consensus layer"
+    modifier: "Ethereum"
+    aliases: ["CL"]
+    definition: "The Ethereum layer that runs Beacon Chain consensus, validator duties, fork choice, and finality."
+    context: "The lesson separates the consensus layer from the execution layer to explain post-Merge node architecture."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Execution layer"
+    modifier: "Ethereum"
+    aliases: ["EL"]
+    definition: "The Ethereum layer that runs EVM execution, maintains world state, and manages execution-network transaction gossip."
+    context: "The execution layer is where transaction validation, mempool behavior, and state transition occur."
+    slide_heading: "ETH Execution-Network Message"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Beacon Chain"
+    modifier: "Ethereum"
+    aliases: ["beacon chain"]
+    definition: "Ethereum's proof-of-stake consensus chain that coordinates validators, fork choice, and finality."
+    context: "The Beacon Chain is the consensus-side network that must coordinate locally with execution clients."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Engine API"
+    modifier: "Ethereum"
+    aliases: []
+    definition: "The local JSON-RPC interface that lets a consensus client ask an execution client to build or validate payloads."
+    context: "Engine API calls are the handoff point between Ethereum's two networks during block production and validation."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "JSON-RPC"
+    modifier: "Ethereum client"
+    aliases: []
+    definition: "A remote procedure call format used by Ethereum clients for structured requests and responses."
+    context: "The lesson names JSON-RPC because the Engine API uses it to coordinate consensus and execution clients locally."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Execution payload"
+    modifier: "Ethereum"
+    aliases: ["payload"]
+    definition: "The execution-layer block contents, including the block header and transactions, passed between CL and EL clients."
+    context: "Execution payloads are what consensus clients request, wrap into Beacon blocks, broadcast, and ask execution clients to verify."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Fork-choice state"
+    modifier: "Ethereum consensus"
+    aliases: ["fork choice"]
+    definition: "The consensus client's view of the current head, safe, and finalized blocks used to guide chain selection."
+    context: "Fork-choice state is passed through the Engine API so the execution client builds or validates against the correct chain view."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Payload validation status"
+    modifier: "Ethereum Engine API"
+    aliases: ["VALID", "INVALID", "SYNCING"]
+    definition: "The execution client's response indicating whether a payload executed correctly, failed validation, or cannot yet be checked."
+    context: "These statuses determine whether the consensus client can accept a proposed block for fork-choice processing."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Finality"
+    modifier: "Ethereum consensus"
+    aliases: ["finalized", "finalized block"]
+    definition: "The consensus property that makes a block and its prior history extremely costly to revert under proof-of-stake rules."
+    context: "Finality is one of the consensus-layer responsibilities that the lesson connects to validator attestations and fork choice."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Slot"
+    modifier: "Ethereum PoS"
+    aliases: ["slots"]
+    definition: "A 12-second Ethereum proof-of-stake time window in which one validator may propose a block."
+    context: "The slot gives the lesson a timeline for proposer selection, payload building, broadcast, re-execution, and attestation."
+    slide_heading: "Block Production: Anatomy of a Slot"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Block proposer"
+    modifier: "Ethereum PoS"
+    aliases: ["proposer"]
+    definition: "The validator selected for a slot to request a payload, sign a block, and broadcast it to the network."
+    context: "The block proposer is the consensus role that initiates the 12-second block production sequence."
+    slide_heading: "Block Production: Anatomy of a Slot"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "RANDAO"
+    modifier: "Ethereum PoS"
+    aliases: []
+    definition: "The randomness mechanism Ethereum uses as part of validator shuffling and proposer selection."
+    context: "RANDAO appears in the lesson as the basis for selecting the validator assigned to a slot."
+    slide_heading: "Block Production: Anatomy of a Slot"
+    tags: ["ethereum", "consensus", "cryptography"]
+    confidence: "high"
+  - term: "Beacon block"
+    modifier: "Ethereum"
+    aliases: []
+    definition: "A consensus-layer block that wraps an execution payload together with consensus data such as attestations and slashings."
+    context: "Beacon blocks show how execution payloads become part of consensus messages broadcast across the Beacon Chain."
+    slide_heading: "Block Production: Anatomy of a Slot"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Attestation"
+    modifier: "Ethereum PoS"
+    aliases: ["attestations", "attest"]
+    definition: "A validator vote that endorses a block or checkpoint after local validation."
+    context: "Attestations are how receiving validators signal that a proposed block is valid and help move it toward finality."
+    slide_heading: "Block Production: Anatomy of a Slot"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Execution client"
+    modifier: "Ethereum"
+    aliases: ["EL client"]
+    definition: "Ethereum client software that runs the EVM, validates state transitions, and participates in execution-layer networking."
+    context: "Execution clients handle the transaction and state side of node operation in the lesson's two-client architecture."
+    slide_heading: "ETH Execution-Network Message"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Consensus client"
+    modifier: "Ethereum"
+    aliases: ["CL client"]
+    definition: "Ethereum client software that runs Beacon Chain logic, validator coordination, fork choice, and consensus networking."
+    context: "Consensus clients handle validator duties and consensus messages while coordinating with execution clients through the Engine API."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Full node"
+    modifier: "Ethereum"
+    aliases: ["full node"]
+    definition: "An Ethereum node that runs execution and consensus clients, stores current state, and verifies every new block."
+    context: "Full nodes are the baseline for independent verification whether or not the operator is also validating."
+    slide_heading: "Nodes and Clients"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Archive node"
+    modifier: "Ethereum"
+    aliases: ["archive mode node"]
+    definition: "A full Ethereum node that also retains historical state for past blocks."
+    context: "Archive nodes are needed when applications or analysts must query old contract storage without recomputing history."
+    slide_heading: "Nodes and Clients"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Light client"
+    modifier: "Ethereum"
+    aliases: ["light clients"]
+    definition: "A resource-minimized client that tracks headers and requests proofs instead of storing and validating all state locally."
+    context: "Light clients show the storage and trust trade-off between minimal operation and dependence on honest full-node peers."
+    slide_heading: "Nodes and Clients"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Client diversity"
+    modifier: "Ethereum"
+    aliases: ["client diversity"]
+    definition: "The practice of running varied execution and consensus client implementations across the validator and node ecosystem."
+    context: "Client diversity reduces the chance that one implementation bug causes a network-wide finality or liveness failure."
+    slide_heading: "Client Diversity & Pairing Practices"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Correlated client bug"
+    modifier: "Ethereum"
+    aliases: ["correlated bug", "client monoculture risk"]
+    definition: "A defect that affects many nodes or validators at once because they run the same client implementation or version."
+    context: "The lesson's Prysm examples show why correlated failures are operational security risks for Ethereum."
+    slide_heading: "Client Diversity & Pairing Practices"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Inactivity leak"
+    modifier: "Ethereum PoS"
+    aliases: ["inactivity leak mechanism"]
+    definition: "A proof-of-stake recovery mechanism that penalizes inactive validators so the chain can regain finality."
+    context: "The lesson cites the inactivity leak to show how client failures can threaten finality and trigger protocol-level recovery behavior."
+    slide_heading: "Client Diversity & Pairing Practices"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Canary validator"
+    modifier: "Ethereum operations"
+    aliases: ["canary validators"]
+    definition: "A limited validator deployment used to test upgrades before rolling them out to a larger production fleet."
+    context: "Canary validators are an operational practice for reducing upgrade risk in client-pairing decisions."
+    slide_heading: "Client Diversity & Pairing Practices"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Full sync"
+    modifier: "Ethereum"
+    aliases: ["full synchronization"]
+    definition: "A synchronization mode that replays blocks from genesis to independently derive current chain state."
+    context: "Full sync is the trust-minimized but resource-intensive comparison point for faster sync modes."
+    slide_heading: "Sync Modes & Data Availability"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Snap sync"
+    modifier: "Ethereum"
+    aliases: ["snapshot sync"]
+    definition: "A faster sync mode that downloads state snapshots and verifies them with Merkle proofs."
+    context: "Snap sync illustrates how clients trade time-to-usable-node against additional proof and data assumptions."
+    slide_heading: "Sync Modes & Data Availability"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Archive mode"
+    modifier: "Ethereum"
+    aliases: ["archive sync"]
+    definition: "A storage mode that retains historical state for each block instead of only the current working state."
+    context: "Archive mode supports historical analytics and past-state queries at a much higher storage cost."
+    slide_heading: "Sync Modes & Data Availability"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Checkpoint sync"
+    modifier: "Ethereum PoS"
+    aliases: ["checkpoint synchronization"]
+    definition: "A synchronization approach that starts from a recent finalized checkpoint instead of replaying the entire chain from genesis."
+    context: "Checkpoint sync is the post-Merge default pattern that depends on starting from a trusted recent view."
+    slide_heading: "Sync Modes & Data Availability"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Data availability"
+    modifier: "Ethereum"
+    aliases: []
+    definition: "The condition that the data needed to verify blocks or state is obtainable by the clients that depend on it."
+    context: "Data availability frames sync modes as trust and operations decisions rather than only performance settings."
+    slide_heading: "Sync Modes & Data Availability"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Weak subjectivity"
+    modifier: "Ethereum PoS"
+    aliases: ["weak subjectivity checkpoint"]
+    definition: "The proof-of-stake requirement to begin validation from a reasonably recent trusted checkpoint."
+    context: "Weak subjectivity explains the trust assumption behind checkpoint sync and other fast-start approaches."
+    slide_heading: "Sync Modes & Data Availability"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Ethereum Node Record"
+    modifier: "Ethereum networking"
+    aliases: ["ENR", "Ethereum Node Records"]
+    definition: "Signed node metadata used by Ethereum peers during discovery."
+    context: "ENRs help execution-layer nodes find and evaluate peers before exchanging protocol messages."
+    slide_heading: "Execution-Layer Networking (devp2p / RLPx)"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Peer discovery"
+    modifier: "Ethereum networking"
+    aliases: ["Discovery v4", "Discovery v5", "node discovery"]
+    definition: "The process Ethereum nodes use to locate peers they can connect to and exchange network data with."
+    context: "Peer discovery is the entry point for execution-layer connectivity before transaction or state messages can flow."
+    slide_heading: "Execution-Layer Networking (devp2p / RLPx)"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Peer scoring"
+    modifier: "Ethereum networking"
+    aliases: ["peer reputation", "reputation score"]
+    definition: "A local heuristic for rewarding useful peers and penalizing peers that send bad data, spam, or fail to respond."
+    context: "Peer scoring is the practical trust mechanism Ethereum clients use to decide which connections to keep or drop."
+    slide_heading: "Execution-Layer Networking (devp2p / RLPx)"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Eclipse attack"
+    modifier: "Ethereum networking"
+    aliases: ["eclipse pressure"]
+    definition: "An attack that tries to isolate a node by controlling or dominating the peers it connects to."
+    context: "The lesson names eclipse attacks as one reason clients enforce peer limits, scoring, and diversity."
+    slide_heading: "Execution-Layer Networking (devp2p / RLPx)"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Permissionless network"
+    modifier: "Ethereum"
+    aliases: ["open permissionless network"]
+    definition: "A network where peers can join without central approval, so each node must locally evaluate peer behavior."
+    context: "The trust aside connects Ethereum's open participation model to the need for scoring and reputation mechanisms."
+    slide_heading: "Aside: Trust Mechanisms in Ethereum Networking"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "libp2p"
+    modifier: "Ethereum consensus layer"
+    aliases: []
+    definition: "The modular peer-to-peer networking framework used by Ethereum consensus clients."
+    context: "libp2p is the consensus-layer counterpart to devp2p and carries Beacon Chain messages such as blocks and attestations."
+    slide_heading: "Two Networks, One Chain"
+    tags: ["ethereum", "distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "GossipSub"
+    modifier: "Ethereum consensus layer"
+    aliases: ["gossipsub"]
+    definition: "A topic-based gossip protocol used by Ethereum consensus clients to disseminate blocks, attestations, and other messages."
+    context: "GossipSub is how signed Beacon blocks and validator messages spread quickly across the consensus network."
+    slide_heading: "Block Production: Anatomy of a Slot"
+    tags: ["ethereum", "distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Pub/Sub overlay"
+    modifier: "Ethereum consensus layer"
+    aliases: ["publish-subscribe overlay", "pub/sub"]
+    definition: "A networking layer where peers subscribe to message topics and receive broadcasts relevant to those topics."
+    context: "The consensus layer uses a pub/sub overlay so Beacon blocks, attestations, and committee messages can be disseminated by topic."
+    slide_heading: "Consensus-Layer Networking (libp2p / GossipSub)"
+    tags: ["ethereum", "distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Gossip topic"
+    modifier: "Ethereum consensus layer"
+    aliases: ["topic", "topics"]
+    definition: "A named message channel in GossipSub for a class of consensus messages such as blocks or attestations."
+    context: "Topics let the network organize traffic so peers receive the kinds of consensus messages they need."
+    slide_heading: "Consensus-Layer Networking (libp2p / GossipSub)"
+    tags: ["ethereum", "distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Mesh"
+    modifier: "GossipSub"
+    aliases: ["rotating mesh"]
+    definition: "The changing set of peers that relay a GossipSub topic to balance bandwidth, diversity, and resilience."
+    context: "The mesh explains how consensus messages spread broadly without every peer directly connecting to every other peer."
+    slide_heading: "Consensus-Layer Networking (libp2p / GossipSub)"
+    tags: ["ethereum", "distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Arbitrage"
+    modifier: "MEV"
+    aliases: []
+    definition: "An MEV strategy that profits from price differences for the same asset across venues such as decentralized exchanges."
+    context: "Arbitrage is one of the main examples showing why searchers watch pending transactions and market state."
+    slide_heading: "The Mempool"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Liquidation"
+    modifier: "DeFi"
+    aliases: ["liquidations"]
+    definition: "The closing of an undercollateralized loan position, often with a reward or discount for the liquidator."
+    context: "Liquidations are presented as MEV opportunities that can be detected and acted on during block construction."
+    slide_heading: "The Mempool"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Sandwich attack"
+    modifier: "MEV"
+    aliases: ["sandwiching", "front/back-run"]
+    definition: "An MEV strategy that places transactions before and after a user's swap to profit from the induced price movement."
+    context: "Sandwich attacks make the lesson's abstract ordering power concrete as a user-facing harm."
+    slide_heading: "The Mempool"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Decentralized exchange"
+    modifier: "DeFi"
+    aliases: ["DEX", "DEXes"]
+    definition: "An on-chain marketplace where users trade tokens through smart contracts rather than a centralized exchange operator."
+    context: "DEXes provide the price venues used in the lesson's arbitrage and sandwich attack examples."
+    slide_heading: "Maximal Extractable Value (MEV)"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Proposer-builder separation"
+    modifier: "Ethereum MEV"
+    aliases: ["PBS"]
+    definition: "A block production design that separates the validator duty of proposing a block from the specialized work of building it."
+    context: "PBS is the lesson's response to MEV specialization because validators can select high-value blocks without doing all search and ordering themselves."
+    slide_heading: "Builder / Relay Stack and MEV"
+    tags: ["ethereum", "consensus", "real-world"]
+    confidence: "high"
+  - term: "Transaction bundle"
+    modifier: "MEV"
+    aliases: ["bundle", "bundles"]
+    definition: "A group of ordered transactions submitted together to a builder with an associated bid or value estimate."
+    context: "Bundles are how searchers package MEV strategies for builders to include in candidate blocks."
+    slide_heading: "Builder / Relay Stack and MEV"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "MEV relay"
+    modifier: "Ethereum MEV"
+    aliases: ["relay", "relays"]
+    definition: "An off-chain coordination service that checks built blocks and forwards blinded bids from builders to validators."
+    context: "Relays let validators compare block bids while delaying disclosure of full block contents until after signing."
+    slide_heading: "Builder / Relay Stack and MEV"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "MEV-Boost"
+    modifier: "Ethereum MEV"
+    aliases: []
+    definition: "Validator-side software commonly used to receive builder bids through relays in the MEV block-building workflow."
+    context: "MEV-Boost is the tooling layer that connects validator proposers to off-chain builders and relays."
+    slide_heading: "Builder / Relay Stack and MEV"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Blinded block header"
+    modifier: "Ethereum MEV"
+    aliases: ["blinded bid", "blinded header"]
+    definition: "A block header and bid value forwarded without revealing the full transaction body before validator selection."
+    context: "Blinded headers allow validators to choose profitable bids while keeping a builder's transaction ordering private until commitment."
+    slide_heading: "Builder / Relay Stack and MEV"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"

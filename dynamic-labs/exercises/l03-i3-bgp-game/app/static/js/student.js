@@ -3,17 +3,16 @@
     snapshot: null,
     error: "",
     connected: false,
-    desiredMode: "collab",
     graphStage: 1,
     stage3ShowHonestEdges: false,
     stage3ShowMaliciousEdges: false,
     graphSelection: null,
     graphRoomId: null,
-    soloDraft: {
+    roomDraft: {
       size: 8,
       numTraitors: 2,
     },
-    pendingSelfServiceConflict: null,
+    pendingRoomConflict: null,
   };
 
   const refs = {
@@ -47,31 +46,7 @@
     return created;
   }
 
-  function getDesiredMode() {
-    const url = new URL(window.location.href);
-    const raw = url.searchParams.get("mode");
-    const mode = raw === "single" ? "single" : "collab";
-    if (raw !== mode) {
-      url.searchParams.set("mode", mode);
-      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-    }
-    return mode;
-  }
-
-  function setDesiredMode(mode) {
-    const normalizedMode = mode === "single" ? "single" : "collab";
-    const url = new URL(window.location.href);
-    url.searchParams.set("mode", normalizedMode);
-    window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-    state.desiredMode = normalizedMode;
-    if (state.connected) {
-      socket.emit("register", { uuid: playerUuid, mode: normalizedMode });
-    }
-    render();
-  }
-
   const playerUuid = getPlayerUuid();
-  state.desiredMode = getDesiredMode();
   let studentGraphNetwork = null;
   let currentGraphData = null;
   const socket = io({
@@ -239,20 +214,6 @@
     });
   }
 
-  function graphZoom(multiplier) {
-    if (!studentGraphNetwork) {
-      return;
-    }
-    const scale = studentGraphNetwork.getScale();
-    studentGraphNetwork.moveTo({
-      scale: Math.max(0.35, Math.min(scale * multiplier, 2.6)),
-      animation: {
-        duration: 180,
-        easingFunction: "easeInOutQuad",
-      },
-    });
-  }
-
   function nodeColor(player, stage, correctConsensus) {
     if (stage >= 3 && player.role !== "traitor") {
       return player.survived ? "#20654a" : "#a53a2f";
@@ -394,13 +355,13 @@
     if (!state.graphSelection || !currentGraphData) {
       refs.graphDetails.innerHTML = `
         <h3>Inspector</h3>
-        <p>Use the mouse wheel or trackpad to zoom, drag to pan, and click a node or edge for details.</p>
+        <p>Drag to pan and click a node or edge for details.</p>
         <div class="graph-detail-card">
           <div class="graph-detail-row"><strong>Room</strong> ${escapeHtml(debrief.room_id)}</div>
           <div class="graph-detail-row"><strong>View</strong> ${escapeHtml(graphStageLabel(state.graphStage))}</div>
           <div class="graph-detail-row"><strong>Consensus</strong> ${escapeHtml(debrief.correct_consensus)}</div>
         </div>
-        <p class="graph-caption">Fit View recenters the room after stage changes or manual zooming.</p>
+        <p class="graph-caption">Fit View recenters the room after stage changes or manual panning.</p>
       `;
       return;
     }
@@ -416,13 +377,7 @@
         return;
       }
 
-      const controller = player.origin === "bot"
-        ? "Server bot"
-        : player.was_disconnect_takeover
-          ? "Human — bot took over after disconnect"
-          : player.was_taken_over
-            ? "Human — bot took over by instructor"
-            : "Human player";
+      const controller = player.origin === "bot" ? "Server bot" : "Human player";
       const outcome = player.role === "traitor"
         ? "Malicious node"
         : player.final_vote === debrief.correct_consensus
@@ -480,7 +435,6 @@
         <div class="graph-detail-row"><strong>Value Sent</strong> ${escapeHtml(message.value)}</div>
         <div class="graph-detail-row"><strong>Sender Role</strong> ${escapeHtml(roleLabel(message.sender_role))}</div>
         <div class="graph-detail-row"><strong>Style</strong> ${escapeHtml(deliveryStyle)}</div>
-        <div class="graph-detail-row"><strong>Bot Routed</strong> ${escapeHtml(message.via_bot ? "Yes" : "No")}</div>
       </div>
       <p class="graph-caption">Malicious edges are dashed and color-coded so conflicting orders stand out immediately.</p>
     `;
@@ -497,7 +451,7 @@
       }
       currentGraphData = null;
       refs.graphRoomPill.textContent = "No Room Selected";
-      refs.graphSummary.textContent = "Finish a self-service room to unlock the full debrief explorer.";
+      refs.graphSummary.textContent = "Finish a room to unlock the full debrief explorer.";
       refs.graphCanvas.innerHTML = "";
       renderGraphDetails(null);
       return;
@@ -556,7 +510,7 @@
         interaction: {
           dragNodes: false,
           dragView: true,
-          zoomView: true,
+          zoomView: false,
           hover: true,
           hoverConnectedEdges: true,
           selectConnectedEdges: false,
@@ -605,23 +559,6 @@
     });
   }
 
-  function selfServiceEnabled(snapshot) {
-    return Boolean(snapshot && snapshot.settings && snapshot.settings.self_service_enabled);
-  }
-
-  function renderModeSwitch(snapshot) {
-    const enabled = selfServiceEnabled(snapshot);
-    if (!enabled) {
-      return "";
-    }
-    return `
-      <div class="button-row">
-        <button id="switch-collab-button" class="button ${state.desiredMode === "collab" ? "button-strong" : ""}" type="button">Collaborative Lobby</button>
-        <button id="switch-single-button" class="button ${state.desiredMode === "single" ? "button-strong" : ""}" type="button">Self-Service Mode</button>
-      </div>
-    `;
-  }
-
   function renderProgress(current, total) {
     const percentage = total ? Math.round((current / total) * 100) : 0;
     return `
@@ -635,59 +572,41 @@
     `;
   }
 
-  function renderQueue(snapshot) {
-    if (selfServiceEnabled(snapshot) && snapshot.player.lobby_mode === "single") {
-      const size = state.soloDraft.size;
-      const numTraitors = Math.min(state.soloDraft.numTraitors, Math.max(size - 1, 0));
-      const status = mathStatus(size, numTraitors);
-      const conflictNotice = state.pendingSelfServiceConflict
-        ? `
-          <div class="alert">
-            <p><strong>Active self-service room:</strong> ${state.pendingSelfServiceConflict.room_id}</p>
-            <p>Your current self-service room is still active in phase ${state.pendingSelfServiceConflict.phase_label}. You can abandon it and start this new room, or cancel and keep the current room.</p>
-            <div class="button-row">
-              <button id="abandon-current-room-button" class="button button-strong" type="button">Abandon Current Room</button>
-              <button id="cancel-abandon-room-button" class="button" type="button">Cancel</button>
-            </div>
-          </div>
-        `
-        : "";
-      return `
-        <div class="stage-card">
-          <div class="summary-row">
-            <h3>Lobby</h3>
-            <span class="pill pill-muted">${snapshot.player.label}</span>
-          </div>
-          ${renderModeSwitch(snapshot)}
-          <p>Self-Service Mode is configured from within the lobby. Pick your room size and malicious node count, then start immediately.</p>
-          ${conflictNotice}
-          <div class="form-field">
-            <span>Nodes in your room (n)</span>
-            <input id="solo-room-size-input" type="number" min="1" max="26" value="${size}">
-          </div>
-          <div class="form-field">
-            <span>Number of malicious nodes (m)</span>
-            <input id="solo-traitor-input" type="number" min="0" max="${Math.max(size - 1, 0)}" value="${numTraitors}">
-          </div>
-          <div id="solo-math-badge" class="${status.className}">${status.text}</div>
+  function renderLobby(snapshot) {
+    const size = state.roomDraft.size;
+    const numTraitors = Math.min(state.roomDraft.numTraitors, Math.max(size - 1, 0));
+    const status = mathStatus(size, numTraitors);
+    const conflictNotice = state.pendingRoomConflict
+      ? `
+        <div class="alert">
+          <p><strong>Active room:</strong> ${state.pendingRoomConflict.room_id}</p>
+          <p>Your current room is still in phase ${state.pendingRoomConflict.phase_label}. You can abandon it and start this new room, or cancel and keep the current room.</p>
           <div class="button-row">
-            <button id="create-single-room-button" class="button button-strong" type="button">Start Self-Service Session</button>
+            <button id="abandon-current-room-button" class="button button-strong" type="button">Abandon Current Room</button>
+            <button id="cancel-abandon-room-button" class="button" type="button">Cancel</button>
           </div>
         </div>
-      `;
-    }
-
+      `
+      : "";
     return `
       <div class="stage-card">
         <div class="summary-row">
           <h3>Lobby</h3>
-          <span class="pill pill-muted">Position ${snapshot.queue_position || "-"}</span>
+          <span class="pill pill-muted">${snapshot.player.label}</span>
         </div>
-        ${renderModeSwitch(snapshot)}
-        <p>You are checked in. Keep this tab open while the instructor assigns rooms.</p>
-        <div class="info-card">
-          <p><strong>Students waiting:</strong> ${snapshot.queue_count}</p>
-          <p class="code-note">Your session UUID is stored in the URL so refreshes and reconnects restore your place.</p>
+        <p>Pick your room size and malicious node count, then start. Bots fill the remaining seats and you play the human node.</p>
+        ${conflictNotice}
+        <div class="form-field">
+          <span>Nodes in your room (n)</span>
+          <input id="room-size-input" type="number" min="1" max="26" value="${size}">
+        </div>
+        <div class="form-field">
+          <span>Number of malicious nodes (m)</span>
+          <input id="room-traitor-input" type="number" min="0" max="${Math.max(size - 1, 0)}" value="${numTraitors}">
+        </div>
+        <div id="room-math-badge" class="${status.className}">${status.text}</div>
+        <div class="button-row">
+          <button id="create-room-button" class="button button-strong" type="button">Start Session</button>
         </div>
       </div>
     `;
@@ -711,19 +630,6 @@
         </label>
       </div>
     `).join("");
-
-    if (snapshot.control_locked) {
-      return `
-        <div class="stage-card">
-          <div class="summary-row">
-            <h3>Bot Takeover Active</h3>
-            <span class="pill pill-bad">Node ${player.node_id}</span>
-          </div>
-          <p>The instructor transferred your node to bot control so the room could keep moving. You are now observing this round.</p>
-          ${renderProgress(room.broadcast_complete, room.total_players)}
-        </div>
-      `;
-    }
 
     if (player.role === "honest") {
       return `
@@ -785,19 +691,6 @@
           </div>
         `).join("")
       : '<div class="message-card">No peer messages arrived.</div>';
-
-    if (snapshot.control_locked) {
-      return `
-        <div class="stage-card">
-          <div class="summary-row">
-            <h3>Tally Locked</h3>
-            <span class="pill pill-bad">Bot Controlled</span>
-          </div>
-          <p>A bot is finishing the vote for this node. You can still watch the room state below.</p>
-          ${messageList}
-        </div>
-      `;
-    }
 
     if (snapshot.player.role === "honest") {
       if (consensusState.isTie) {
@@ -894,7 +787,7 @@
           <h3>Vote Submitted</h3>
           <span class="pill pill-muted">${snapshot.player.final_vote || "Awaiting Bot Vote"}</span>
         </div>
-        <p>Your node is locked. The instructor will reveal the room debrief after everyone is tallied.</p>
+        <p>Your node is locked. Reveal the debrief once every node is tallied.</p>
         ${renderProgress(snapshot.room.vote_complete, snapshot.room.total_players)}
       </div>
     `;
@@ -907,7 +800,7 @@
           <h3>Awaiting Debrief</h3>
           <span class="pill pill-muted">Room ${snapshot.room.room_id}</span>
         </div>
-        <p>All final votes are in. Any student in the room can reveal the debrief for everyone. Use the explorer below to step through the full message graph.</p>
+        <p>All final votes are in. Reveal the debrief to step through the full message graph.</p>
         <div class="info-card">
           <p><strong>Your final vote:</strong> ${snapshot.player.final_vote || "Pending bot decision"}</p>
         </div>
@@ -1012,19 +905,12 @@
   }
 
   function renderSide(snapshot) {
-    if (!snapshot || snapshot.view === "queue") {
-      if (snapshot && selfServiceEnabled(snapshot) && snapshot.player.lobby_mode === "single") {
-        return `
-          <div class="info-card">
-            <h3>Self-Service Lobby</h3>
-            <p>You are not in the collaborative queue. Design your own room here, and the server will start it immediately with bots filling the remaining seats.</p>
-          </div>
-        `;
-      }
+    if (!snapshot || snapshot.view === "lobby") {
       return `
         <div class="info-card">
-          <h3>What happens next?</h3>
-          <p>The instructor groups students into rooms and sets the number of malicious nodes.</p>
+          <h3>How it works</h3>
+          <p>You play a single human node. Bots play every other seat. The malicious bots try to fracture consensus by sending conflicting orders.</p>
+          <p>Your URL carries your session UUID, so refreshes restore your place.</p>
         </div>
       `;
     }
@@ -1042,7 +928,6 @@
       <div class="info-card">
         <h3>Node Status</h3>
         <p><strong>Room:</strong> ${room.room_id}</p>
-        <p><strong>Mode:</strong> ${room.mode === "single" ? "Self-Service" : "Collaborative"}</p>
         <p><strong>Your node:</strong> ${player.node_id}</p>
       </div>
       <div class="info-card">
@@ -1067,14 +952,12 @@
       return;
     }
 
-    if (snapshot.view === "queue") {
+    if (snapshot.view === "lobby") {
       refs.roomPill.textContent = "Lobby";
       refs.playerPill.textContent = snapshot.player.label;
       refs.phasePill.textContent = "Lobby";
-      refs.subtitle.textContent = snapshot.player.lobby_mode === "single"
-        ? "Self-Service Mode is selected. Configure your room here from the lobby and the server will start it immediately."
-        : "The lobby is live. Your URL carries your student identity so the server can restore your state after refresh.";
-      refs.stage.innerHTML = renderQueue(snapshot);
+      refs.subtitle.textContent = "Configure your room and start whenever you're ready.";
+      refs.stage.innerHTML = renderLobby(snapshot);
       refs.side.innerHTML = renderSide(snapshot);
       wireActions(snapshot);
       renderStudentGraph(snapshot);
@@ -1105,45 +988,31 @@
   }
 
   function wireActions(snapshot) {
-    const switchCollabButton = document.getElementById("switch-collab-button");
-    if (switchCollabButton) {
-      switchCollabButton.addEventListener("click", function () {
-        setDesiredMode("collab");
-      });
-    }
-
-    const switchSingleButton = document.getElementById("switch-single-button");
-    if (switchSingleButton) {
-      switchSingleButton.addEventListener("click", function () {
-        setDesiredMode("single");
-      });
-    }
-
-    const soloRoomSizeInput = document.getElementById("solo-room-size-input");
-    const soloTraitorInput = document.getElementById("solo-traitor-input");
-    const soloMathBadge = document.getElementById("solo-math-badge");
-    if (soloRoomSizeInput && soloTraitorInput && soloMathBadge) {
-      const updateSoloMath = function () {
-        state.soloDraft.size = Math.max(1, Math.min(26, Number(soloRoomSizeInput.value || 8)));
-        soloRoomSizeInput.value = String(state.soloDraft.size);
-        soloTraitorInput.max = String(Math.max(state.soloDraft.size - 1, 0));
-        state.soloDraft.numTraitors = Math.max(0, Math.min(Math.max(state.soloDraft.size - 1, 0), Number(soloTraitorInput.value || 0)));
-        soloTraitorInput.value = String(state.soloDraft.numTraitors);
-        const status = mathStatus(state.soloDraft.size, state.soloDraft.numTraitors);
-        soloMathBadge.className = status.className;
-        soloMathBadge.textContent = status.text;
+    const roomSizeInput = document.getElementById("room-size-input");
+    const traitorInput = document.getElementById("room-traitor-input");
+    const mathBadge = document.getElementById("room-math-badge");
+    if (roomSizeInput && traitorInput && mathBadge) {
+      const updateMath = function () {
+        state.roomDraft.size = Math.max(1, Math.min(26, Number(roomSizeInput.value || 8)));
+        roomSizeInput.value = String(state.roomDraft.size);
+        traitorInput.max = String(Math.max(state.roomDraft.size - 1, 0));
+        state.roomDraft.numTraitors = Math.max(0, Math.min(Math.max(state.roomDraft.size - 1, 0), Number(traitorInput.value || 0)));
+        traitorInput.value = String(state.roomDraft.numTraitors);
+        const status = mathStatus(state.roomDraft.size, state.roomDraft.numTraitors);
+        mathBadge.className = status.className;
+        mathBadge.textContent = status.text;
       };
-      soloRoomSizeInput.addEventListener("input", updateSoloMath);
-      soloTraitorInput.addEventListener("input", updateSoloMath);
-      updateSoloMath();
+      roomSizeInput.addEventListener("input", updateMath);
+      traitorInput.addEventListener("input", updateMath);
+      updateMath();
     }
 
-    const createSingleRoomButton = document.getElementById("create-single-room-button");
-    if (createSingleRoomButton) {
-      createSingleRoomButton.addEventListener("click", function () {
-        socket.emit("create_single_player_room", {
-          size: state.soloDraft.size,
-          num_traitors: state.soloDraft.numTraitors,
+    const createRoomButton = document.getElementById("create-room-button");
+    if (createRoomButton) {
+      createRoomButton.addEventListener("click", function () {
+        socket.emit("create_room", {
+          size: state.roomDraft.size,
+          num_traitors: state.roomDraft.numTraitors,
           abandon_existing: false,
         });
       });
@@ -1152,9 +1021,9 @@
     const abandonCurrentRoomButton = document.getElementById("abandon-current-room-button");
     if (abandonCurrentRoomButton) {
       abandonCurrentRoomButton.addEventListener("click", function () {
-        socket.emit("create_single_player_room", {
-          size: state.soloDraft.size,
-          num_traitors: state.soloDraft.numTraitors,
+        socket.emit("create_room", {
+          size: state.roomDraft.size,
+          num_traitors: state.roomDraft.numTraitors,
           abandon_existing: true,
         });
       });
@@ -1163,7 +1032,7 @@
     const cancelAbandonRoomButton = document.getElementById("cancel-abandon-room-button");
     if (cancelAbandonRoomButton) {
       cancelAbandonRoomButton.addEventListener("click", function () {
-        state.pendingSelfServiceConflict = null;
+        state.pendingRoomConflict = null;
         render();
       });
     }
@@ -1177,10 +1046,7 @@
 
     document.querySelectorAll("[data-student-reset]").forEach((button) => {
       button.addEventListener("click", function () {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("uuid");
-        url.searchParams.delete("mode");
-        window.location.assign(`${url.pathname}${url.search}${url.hash}`);
+        socket.emit("restart_to_lobby");
       });
     });
 
@@ -1233,8 +1099,8 @@
     }
     state.snapshot = snapshot;
     state.error = "";
-    if (snapshot.view !== "queue" || snapshot.player.lobby_mode !== "single") {
-      state.pendingSelfServiceConflict = null;
+    if (snapshot.view !== "lobby") {
+      state.pendingRoomConflict = null;
     }
     render();
   }
@@ -1245,10 +1111,6 @@
       const action = actionButton.dataset.graphAction;
       if (action === "fit") {
         graphFit();
-      } else if (action === "zoom-in") {
-        graphZoom(1.2);
-      } else if (action === "zoom-out") {
-        graphZoom(0.82);
       } else if (action === "clear-selection") {
         state.graphSelection = null;
         if (studentGraphNetwork) {
@@ -1283,7 +1145,7 @@
   socket.on("connect", function () {
     state.connected = true;
     render();
-    socket.emit("register", { uuid: playerUuid, mode: state.desiredMode });
+    socket.emit("register", { uuid: playerUuid });
   });
 
   socket.on("disconnect", function () {
@@ -1303,8 +1165,8 @@
     setAlert(payload.message || "An unexpected server error occurred.");
   });
 
-  socket.on("self_service_room_conflict", function (payload) {
-    state.pendingSelfServiceConflict = payload || null;
+  socket.on("room_conflict", function (payload) {
+    state.pendingRoomConflict = payload || null;
     state.error = "";
     render();
   });

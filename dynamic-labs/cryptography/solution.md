@@ -39,10 +39,10 @@ This lab strips away the abstraction of "crypto magic" and forces students to in
 **Execution & Solutions:**
 1. *Command:* `list_tx` (to view the 7 transactions).
 2. Hash Tx0: `sha256 Tx0: Payroll -> Alice` -> Returns `Hash_A`.
-3. Fill Leaf 0: `fill_leaf 0 <Hash_A>`.
+3. Fill Leaf 0: `fill_leaf Leaf-0 <Hash_A>`.
 4. Repeat for leaves 1 through 6. For leaf 7, they must duplicate Tx6 (standard Merkle tree balancing for odd numbers of leaves).
-5. Combine L1: `combine <Hash_A> <Hash_B>` -> Returns `L1_Hash_0`.
-6. Repeat `combine` moving up the tree until the `student_root` slot is filled.
+5. Combine L1: `combine L1-0 <Hash_A> <Hash_B>` -> Fills `L1-0`.
+6. Repeat `combine <target_node> <hash_L> <hash_R>` moving up the tree until `ROOT` is filled.
 
 ### Phase 5: Merkle Proofs
 * **The Forgery (Proof B):** The student is given a fake transaction string with an inflated payout ($50,000 instead of $5,000). However, the simulation provides them with the *real* sibling hashes from the valid tree. When they combine the fake transaction hash with the valid sibling hashes, the calculations will proceed smoothly until the final step, where it will completely fail to match the Official Root. 

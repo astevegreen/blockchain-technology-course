@@ -147,8 +147,8 @@
       </div>
       <div class="row">
         <label>Target x:</label>
-        <input type="number" id="targetX" value="10000" step="1" />
-        <button class="btn" id="btnRandom10k" title="Pick a random ~10k target">🎯 Random (~10k)</button>
+        <input type="number" id="targetX" value="—" step="1" readonly />
+        <span class="muted">🔒 Randomly assigned &amp; locked for this challenge.</span>
       </div>
       <div class="row">
         <label>Nodes:</label>
@@ -158,10 +158,6 @@
       <div class="row">
         <label>Gas price (gwei):</label>
         <input type="number" id="gasPrice" value="30" step="1" />
-      </div>
-      <div class="row">
-        <input type="checkbox" id="faultyToggle" />
-        <label for="faultyToggle"> Inject a faulty node (to illustrate consensus rejection)</label>
       </div>
       <div class="divider"></div>
       <h2>2) Contract Calls</h2>
@@ -223,7 +219,7 @@
         <span class="spacer"></span>
         <button class="btn" id="autoSolve">🧠 Best‑Gas (search)</button>
       </div>
-      <p class="muted small">Each node independently executes the same call sequence. Honest nodes must match exactly. A faulty node (if injected) will diverge and be rejected.</p>
+      <p class="muted small">Each node independently executes the same call sequence. Because the EVM is deterministic, every honest node lands on the exact same final state — and the network reaches consensus on it.</p>
       <div class="nodes" id="nodes"></div>
       <div class="divider"></div>
       <details>
@@ -293,6 +289,8 @@
   let running = false;
   let friendEstimateGas = null; // best (or near-best) gas estimate
   let friendBudgetGwei = null;  // estimate * gasPrice + 100000
+  let lockedTarget = null;      // randomly assigned & validated target, fixed for the session
+  let lockedEstimate = null;    // cached estimateBestGas result for lockedTarget
 
   /* DOM */
   const startXEl   = document.getElementById("startX");
@@ -300,7 +298,6 @@
   const nodesRange = document.getElementById("nodesRange");
   const nodesCount = document.getElementById("nodesCount");
   const gasPriceEl = document.getElementById("gasPrice");
-  const faultyToggle = document.getElementById("faultyToggle");
 
   const opPalette = document.getElementById("opPalette");
   const programEl = document.getElementById("program");
@@ -314,7 +311,6 @@
   const undoBtn   = document.getElementById("undo");
   const clearBtn  = document.getElementById("clear");
   const demoBtn   = document.getElementById("demo");
-  const random10kBtn = document.getElementById("btnRandom10k");
   const autoSolveBtn = document.getElementById("autoSolve");
 
   const nodesEl   = document.getElementById("nodes");
@@ -404,8 +400,16 @@
           </div>
         `;
         const timesEl = row.querySelector(".timesInput");
+        const titleEl = row.querySelector(".title");
+        const metaEl  = row.querySelector(".meta");
         const [up,down,del] = row.querySelectorAll("button");
-        timesEl.addEventListener("input", (e)=> updateTimes(idx, e.target.value));
+        timesEl.addEventListener("input", (e)=>{
+          updateTimes(idx, e.target.value);
+          // refresh this row's display in place (full re-render would steal focus mid-typing)
+          const op2 = getOpById(program[idx].opId);
+          titleEl.innerHTML = `#${idx+1} — CALL ${op2.label} <span class="muted">×</span> <span class="mono">${program[idx].times}</span>`;
+          metaEl.textContent = `Gas: ${fmt(op2.cost)} each • Total for step: ${fmt(op2.cost*program[idx].times)}`;
+        });
         up.addEventListener("click", ()=> moveStep(idx,-1));
         down.addEventListener("click", ()=> moveStep(idx,+1));
         del.addEventListener("click", ()=> removeStep(idx));
@@ -448,13 +452,8 @@
     return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
   }
 
-  /* Expand program steps into a count of primitive operations for fault injection placement */
-  function expandedOpCount(){
-    return program.reduce((acc,step)=> acc + step.times, 0);
-  }
-
-  /* Execute program on a node (with optional fault injection) */
-  async function executeOnNode(nodeIdx, start, progSteps, injectFault=false){
+  /* Execute program on a node */
+  async function executeOnNode(nodeIdx, start, progSteps){
     const logEl = document.getElementById("nodeLog"+nodeIdx);
     const startEl = document.getElementById("nodeStart"+nodeIdx);
     const finalEl = document.getElementById("nodeFinal"+nodeIdx);
@@ -470,12 +469,6 @@
     let gas = 0;
     badgeEl.textContent = "executing…";
 
-    // Choose an injection point around the middle of total primitive ops
-    const totalOps = expandedOpCount();
-    const injectIndex = injectFault ? Math.floor(totalOps/2) : -1;
-    let globalOpCounter = 0;
-    let injectedOnce = false;
-
     for (let i=0; i<progSteps.length; i++){
       await new Promise(r=>setTimeout(r, STEP_DELAY_MS));
       const { opId, times } = progSteps[i];
@@ -485,25 +478,18 @@
       let localTimes = Math.max(1, Math.min(9999, Number(times) || 1));
       let localGas = spec.cost * localTimes;
 
-      // Apply op 'times' times; inject a single fault on first eligible 'square' after injectIndex
+      // Apply op 'times' times
       for (let t=0; t<localTimes; t++){
-        let after;
-        if (injectFault && !injectedOnce && globalOpCounter>=injectIndex && spec.id==="square"){
-          after = before*before + 1; // faulty square
-          injectedOnce = true;
-        } else {
-          after = spec.fn(before);
-        }
+        const after = spec.fn(before);
         if (!Number.isFinite(after) || Math.abs(after) > MAX_ABS){
           logEl.textContent += `#${i+1}: CALL ${spec.label} × ${localTimes} → ❌ overflow/out-of-bounds\n`;
           badgeEl.textContent = "error";
-          finalEl.textContent = "NaN";
+          finalEl.textContent = "revert";
           gas += spec.cost * (t+1); // charge gas up to failure
           gasEl.textContent = fmt(gas);
           return { ok:false, final: NaN, gas };
         }
         before = after;
-        globalOpCounter++;
       }
       x = before;
       gas += localGas;
@@ -523,40 +509,39 @@
     if (running) return;
     const n = Number(nodesRange.value)||5;
     const start = Number(startXEl.value)||0;
-    const target = Number(targetXEl.value)||0;
+    const target = lockedTarget;
     const ops = program.map(p=>({opId:p.opId, times: p.times}));
     if (ops.length===0){ alert("Add at least one CALL to your sequence."); return; }
-    if (!Number.isInteger(start) || !Number.isInteger(target)){
-      alert("Start and Target must be integers.");
-      return;
-    }
     running = true;
     setConsensus(null,"— executing —");
     renderNodes(n);
 
-    const faultyIndex = faultyToggle.checked ? Math.floor(Math.random()*n) : -1;
     const results = [];
     for (let i=0;i<n;i++){
-      const inject = (i===faultyIndex);
       /* stagger starts to simulate network timing */
       await new Promise(r=>setTimeout(r, 80));
-      results.push(executeOnNode(i, start, ops, inject));
+      results.push(executeOnNode(i, start, ops));
     }
     const settled = await Promise.all(results);
     running = false;
 
-    // Check consensus: all results identical and all ok
-    const finals = settled.map(r=>r.final);
-    const allEqual = finals.every(v => v===finals[0]);
     const allOk = settled.every(r=>r.ok);
     const gasTotals = settled.map(r=>r.gas);
 
-    if (allOk && allEqual){
-      const success = (finals[0]===target);
-      const msg = `All ${settled.length} nodes agree: x = ${finals[0]}  •  Gas: ${fmt(gasTotals[0])}  •  ${success ? "✅ target reached" : "⚠️ target not reached"}`;
-      setConsensus("good", msg);
+    if (allOk){
+      const finals = settled.map(r=>r.final);
+      const allEqual = finals.every(v => v===finals[0]);
+      if (allEqual){
+        const success = (finals[0]===target);
+        const msg = `All ${settled.length} nodes agree: x = ${finals[0]}  •  Gas: ${fmt(gasTotals[0])}  •  ${success ? "✅ target reached" : "⚠️ target not reached"}`;
+        setConsensus(success ? "good" : "bad", msg);
+      } else {
+        setConsensus("bad", `Divergence detected: ${JSON.stringify(finals)} • Block/result would be rejected by honest nodes.`);
+      }
     } else {
-      setConsensus("bad", `Divergence detected: ${JSON.stringify(finals)} • Block/result would be rejected by honest nodes.`);
+      // Deterministic EVM: every node hits the same overflow/revert. Identical failure
+      // is still consensus — just on a failed transaction, not a divergence.
+      setConsensus("bad", `All ${settled.length} nodes deterministically revert (overflow / out-of-bounds). Identical failure is still consensus — but you didn't reach the target. Try a cheaper path.`);
     }
   }
 
@@ -564,9 +549,7 @@
    * Search: Uniform-cost (Dijkstra) to estimate best gas (can be near-optimal).
    * We keep it synchronous; tuned bounds for ~10k targets.
    * ------- */
-  function estimateBestGas(){
-    const start = Number(startXEl.value)||0;
-    const target = Number(targetXEl.value)||0;
+  function estimateBestGas(start, target){
     const LIMIT_STEPS = 22;    // allow deeper sequences for ~10k targets
     const VISIT_CAP  = 220000; // exploration cap
 
@@ -617,40 +600,72 @@
         }
       }
     }
-    // Fallback: compute minimal gas using only ± ops (exact and fast)
-    const fallbackGas = plusMinusOnlyGas(target - start);
-    return {cost: fallbackGas, stepsCompressed: [{opId: (target-start)>=0 ? "add5":"sub4", times: Math.abs(target-start)}], visits};
+    // Fallback: exact, fast solution using only ± ops (always reachable since gcd(5,4)=1).
+    const pm = plusMinusOnly(target - start);
+    const steps = [];
+    if (pm.a > 0) steps.push({opId:"add5", times: pm.a});
+    if (pm.b > 0) steps.push({opId:"sub4", times: pm.b});
+    return {cost: pm.gas, stepsCompressed: steps, visits};
   }
 
-  /* Minimal gas using only +5 and -4 to reach delta d = target-start.
-     Solve 5a - 4b = d with a,b >= 0 minimizing a+b. Returns gas = 5*(a+b). */
-  function plusMinusOnlyGas(d){
-    // Try b from 0..(4) to find a solution with minimal a+b pattern (mod 5 trick)
-    let bestSteps = Infinity;
-    let best = null;
+  /* Minimal solution using only +5 and -4 to reach delta d = target-start.
+     Solve 5a - 4b = d with a,b >= 0 minimizing a+b. Since a+b = (d+9b)/5 is
+     strictly increasing in b, the first valid b is optimal. Gas = 5*(a+b). */
+  function plusMinusOnly(d){
     const MAX_B = 100000; // safety cap
     for (let b=0; b<=MAX_B; b++){
       const num = d + 4*b;
       if (num % 5 !== 0) continue;
       const a = num / 5;
       if (a < 0) continue;
-      const steps = a + b;
-      if (steps < bestSteps){
-        bestSteps = steps;
-        best = {a, b};
-        // early exit heuristic: small b often optimal
-        if (b>5 && steps < 2000) break;
-      }
+      return { a, b, gas: (a + b) * 5 };
     }
-    if (!best) return Math.abs(d)*5; // fallback worst case
-    return (best.a + best.b) * 5;
+    // Practically unreachable for our integer deltas; worst-case +5-only guess.
+    const a = Math.max(0, Math.ceil(d / 5));
+    return { a, b: 0, gas: a * 5 };
   }
 
+  /* Replay a program to verify it deterministically lands on target within bounds. */
+  function programReaches(steps, start, target){
+    let x = start;
+    for (const s of steps){
+      const op = getOpById(s.opId);
+      const times = Math.max(1, Math.min(9999, Number(s.times)||1));
+      for (let t=0;t<times;t++){
+        x = op.fn(x);
+        if (!Number.isFinite(x) || Math.abs(x) > MAX_ABS) return false;
+      }
+    }
+    return x === target;
+  }
+
+  /* Pick a random target, validate that it's solvable (without surfacing the solution),
+     and lock it in. Retries with fresh targets until a validated one is found. */
+  function lockChallenge(){
+    const start = Number(startXEl.value)||1;
+    for (let attempt=0; attempt<64; attempt++){
+      const candidate = Math.floor(8000 + Math.random()*4001); // 8,000–12,000
+      const est = estimateBestGas(start, candidate);
+      if (est && est.stepsCompressed.length && programReaches(est.stepsCompressed, start, candidate)){
+        lockedTarget = candidate;
+        lockedEstimate = est;
+        targetXEl.value = String(candidate);
+        return;
+      }
+    }
+    // Guaranteed-solvable fallback (±5/∓4 always works since gcd(5,4)=1).
+    lockedTarget = 10000;
+    lockedEstimate = estimateBestGas(start, 10000);
+    targetXEl.value = "10000";
+  }
+
+  /* Recompute the friend's bet budget from the cached estimate + current gas price.
+     The expensive search runs only when the target is locked, not on every keystroke. */
   function updateFriendBet(){
-    const res = estimateBestGas();
-    friendEstimateGas = res.cost;
+    if (!lockedEstimate){ friendBudgetEl.textContent = "—"; return; }
+    friendEstimateGas = lockedEstimate.cost;
     const gasPrice = Number(gasPriceEl.value)||0;
-    friendBudgetGwei = (friendEstimateGas * gasPrice) + 100000; // +100000 gwei over estimate
+    friendBudgetGwei = (friendEstimateGas * gasPrice) + 100000; // +100000 gwei headroom over best estimate
     friendBudgetEl.textContent = isFinite(friendBudgetGwei) ? fmt(friendBudgetGwei) : "—";
     updateBetOutcome();
   }
@@ -670,11 +685,12 @@
 
   /* Auto-solve button uses same estimator and loads compressed program */
   function autoSolveAndLoad(){
-    const res = estimateBestGas();
-    if (!res){ alert("No estimate found within search limits."); return; }
-    program = res.stepsCompressed;
+    const res = lockedEstimate || estimateBestGas(Number(startXEl.value)||1, lockedTarget);
+    if (!res || !res.stepsCompressed.length){ alert("No estimate found within search limits."); return; }
+    // Copy so editing the loaded program can't mutate the cached estimate.
+    program = res.stepsCompressed.map(s=>({opId:s.opId, times:s.times}));
     renderProgram();
-    alert("Estimate found: best gas ≈ " + res.cost + " (expanded steps grouped; explored ~" + res.visits + " states).");
+    alert("Estimate found: best gas ≈ " + res.cost + " (grouped steps; explored ~" + res.visits + " states).");
   }
 
   /* Demo sequence (simple illustration, not necessarily optimal) */
@@ -688,15 +704,10 @@
     nodesCount.textContent = nodesRange.value;
   });
   gasPriceEl.addEventListener("input", ()=>{ updateGasSummary(); updateFriendBet(); });
-  targetXEl.addEventListener("input", ()=>{ updateFriendBet(); });
   undoBtn.addEventListener("click", undo);
   clearBtn.addEventListener("click", clear);
   demoBtn.addEventListener("click", loadDemo);
   runBtn.addEventListener("click", runAll);
-  random10kBtn.addEventListener("click", ()=>{
-    targetXEl.value = String(Math.floor(8000 + Math.random()*12001));
-    updateFriendBet();
-  });
   autoSolveBtn.addEventListener("click", autoSolveAndLoad);
 
   /* Hotkeys */
@@ -712,8 +723,8 @@
   renderPalette();
   renderProgram();
   renderNodes(Number(nodesRange.value));
-  document.getElementById("targetX").value = String(Math.floor(8000 + Math.random()*12001));
-  updateFriendBet();
+  lockChallenge();   // randomly pick + validate + lock the target for this session
+  updateFriendBet(); // budget derived from the cached estimate
   // initial message
   setConsensus(null, "— not executed yet —");
 })();

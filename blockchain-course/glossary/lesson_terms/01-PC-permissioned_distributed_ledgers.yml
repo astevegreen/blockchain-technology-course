@@ -1,0 +1,540 @@
+lesson_id: "01-PC"
+lesson_title: "Permissioned Distributed Ledgers For Blockchain"
+source_path: "lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd"
+terms:
+  - term: "Permissioned ledger"
+    modifier: null
+    aliases: ["permissioned blockchain", "permissioned distributed ledger", "permissioned system", "consortium blockchain"]
+    definition: "A shared ledger system where known, approved participants operate under explicit identity, access, and governance rules."
+    context: "The lesson uses permissioned ledgers to solve cross-organization record sharing when no single company should control the authoritative history."
+    slide_heading: "Scenario"
+    tags: ["permissioned-ledgers", "policy", "distributed-systems"]
+    confidence: "high"
+  - term: "Shared handoff record"
+    modifier: null
+    aliases: ["shared record", "shared custody record"]
+    definition: "A common record of custody transfers, approvals, and related documents that multiple organizations can rely on."
+    context: "The cargo scenario motivates why competing and regulating parties may need one shared source of operational truth."
+    slide_heading: "Scenario"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Shared database"
+    modifier: "permissioned-ledger contrast"
+    aliases: ["central shared database"]
+    definition: "A database shared across organizations but still controlled by one administrator or broad admin access model."
+    context: "The lesson contrasts shared databases with permissioned ledgers to show why replication alone does not solve authority, visibility, or finality."
+    slide_heading: "Why Not A Shared Database?"
+    tags: ["distributed-systems", "permissioned-ledgers"]
+    confidence: "high"
+  - term: "Append-only shared ledger"
+    modifier: null
+    aliases: ["append-only ledger", "append-only shared record"]
+    definition: "A shared record where new entries are added without silently overwriting prior history."
+    context: "Append-only history supports auditability across organizations while avoiding normal database edits that can hide disputes."
+    slide_heading: "Why Not A Shared Database?"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Off-chain data"
+    modifier: null
+    aliases: ["off-chain sensitive data"]
+    definition: "Data kept outside the ledger while hashes or commitments on the ledger support later verification."
+    context: "The lesson notes that sensitive business data can remain private while the ledger preserves evidence that a record existed."
+    slide_heading: "Why Not A Shared Database?"
+    tags: ["permissioned-ledgers", "privacy", "cryptography"]
+    confidence: "high"
+  - term: "Commitment"
+    modifier: "ledger verification"
+    aliases: ["hash commitment", "commitments"]
+    definition: "A compact cryptographic reference that can later prove whether a specific piece of data matches what was recorded."
+    context: "Commitments let permissioned systems support audit and verification without exposing every sensitive payload on-chain."
+    slide_heading: "Why Not A Shared Database?"
+    tags: ["cryptography", "permissioned-ledgers", "privacy"]
+    confidence: "high"
+  - term: "Permissionless ledger"
+    modifier: null
+    aliases: ["permissionless blockchain", "permissionless system", "public blockchain"]
+    definition: "A ledger design where participation is open and security must handle unknown or pseudonymous participants."
+    context: "The lesson compares permissionless and permissioned designs to show how the trust model changes when membership is controlled."
+    slide_heading: "What Changes"
+    tags: ["permissioned-ledgers", "consensus", "policy"]
+    confidence: "high"
+  - term: "Curated participation"
+    modifier: null
+    aliases: ["curated admission", "controlled participation"]
+    definition: "A participation model where membership is granted only to approved entities instead of anyone who connects."
+    context: "Curated participation is the core tradeoff that lets permissioned systems rely on identity and policy instead of open-entry economics."
+    slide_heading: "What Changes"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Admission control"
+    modifier: "permissioned ledger"
+    aliases: ["membership admission", "access admission"]
+    definition: "The process for deciding who may join or act in the network before they receive credentials or roles."
+    context: "Admission control replaces resource-cost Sybil defenses with organizational vetting and approval."
+    slide_heading: "What Changes"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Named identity"
+    modifier: "permissioned ledger"
+    aliases: ["authenticated identity", "recognized identity"]
+    definition: "An identity tied to a known participant rather than only to a pseudonymous key or economic stake."
+    context: "Named identity makes approvals, roles, revocation, and accountability possible in permissioned networks."
+    slide_heading: "What Changes"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Failure concentration"
+    modifier: "permissioned ledger"
+    aliases: ["control-plane concentration", "control-plane failure"]
+    definition: "The risk that a small number of powerful administrative, ordering, or governance components can disrupt the whole network."
+    context: "The lesson warns that permissioned systems reduce open-entry uncertainty but create high-impact control-plane dependencies."
+    slide_heading: "What Changes"
+    tags: ["permissioned-ledgers", "distributed-systems", "security"]
+    confidence: "high"
+  - term: "Identity and membership"
+    modifier: null
+    aliases: ["membership identity"]
+    definition: "The mechanisms that establish who a participant is and what standing they have in the network."
+    context: "The lesson treats identity and membership as a pillar because every permissioned action depends on recognized actors and roles."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Policy and governance"
+    modifier: null
+    aliases: ["governance policy"]
+    definition: "The rules and decision processes that define who may act, approve, administer, and change the network."
+    context: "The lesson emphasizes that consensus cannot compensate for weak rules about authority and approval."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Core operation"
+    modifier: "permissioned ledger"
+    aliases: ["transaction operation", "transaction path"]
+    definition: "The day-to-day flow that moves a request from submission and approval to ordered, validated ledger history."
+    context: "Core operation connects identity and policy to the actual processing steps that produce shared committed records."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Credential"
+    modifier: "permissioned ledger"
+    aliases: ["credentials", "operational certificate"]
+    definition: "Cryptographic proof that ties an action to a recognized participant, organization, and role."
+    context: "Credentials make messages, approvals, and administrative actions meaningful because policy checks need verifiable identity."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "cryptography", "security"]
+    confidence: "high"
+  - term: "Credential revocation"
+    modifier: null
+    aliases: ["revocation", "revoke credentials"]
+    definition: "The removal of credentials or access so a participant can no longer act under a prior role."
+    context: "Fast revocation is critical because stale access can let former or compromised actors keep using the network."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Role-based trust"
+    modifier: null
+    aliases: ["role-based trust model"]
+    definition: "A trust model where participants are allowed to perform only the actions assigned to their verified roles."
+    context: "Curated admission is valuable because vetting, credential issuance, and role assignment support accountability later."
+    slide_heading: "Open vs Curated Admission"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Organization"
+    modifier: "permissioned ledger identity"
+    aliases: ["consortium member", "member organization"]
+    definition: "A recognized consortium member, such as a carrier, port, regulator, or insurer, that participates in the network."
+    context: "The identity slide distinguishes organizations from individual users, nodes, and credentials."
+    slide_heading: "Identity"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "User / Operator"
+    modifier: "permissioned ledger identity"
+    aliases: ["operator", "user", "service operator"]
+    definition: "A person or service acting on behalf of an organization inside the permissioned network."
+    context: "Students need this distinction to understand why an organization's node, human operator, and admin role are not interchangeable."
+    slide_heading: "Identity"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Node"
+    modifier: "permissioned ledger"
+    aliases: ["software instance", "network node"]
+    definition: "A software instance run by an organization to submit, approve, order, validate, or store ledger activity."
+    context: "The lesson separates nodes from organizations and users so students can reason about who is acting and what software is doing."
+    slide_heading: "Identity"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Membership lifecycle"
+    modifier: null
+    aliases: ["membership management"]
+    definition: "The ongoing process of verifying, issuing, using, reviewing, renewing, rotating, and revoking participant access."
+    context: "The lesson stresses that membership security is continuous and can fail if credentials or roles are not maintained."
+    slide_heading: "Membership Lifecycle"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Credential expiration"
+    modifier: null
+    aliases: ["certificate expiration", "expired credentials"]
+    definition: "The point when a credential is no longer valid and must be renewed or replaced before it can authorize actions."
+    context: "Credential expiration is a normal control, but poor renewal planning can disable critical administrative functions."
+    slide_heading: "Membership Lifecycle"
+    tags: ["permissioned-ledgers", "security", "real-world"]
+    confidence: "high"
+  - term: "Separation of duties"
+    modifier: "permissioned ledger"
+    aliases: ["role separation"]
+    definition: "A design practice that assigns submission, approval, ordering, administration, and audit responsibilities to distinct roles."
+    context: "Role separation limits the damage from one compromised identity or team gaining too much authority."
+    slide_heading: "Roles and Duties"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Validator / endorser"
+    modifier: "permissioned ledger role"
+    aliases: ["validator", "endorser", "approver"]
+    definition: "A participant role that approves transactions according to the network's policy."
+    context: "The role exists so business requesters cannot simply approve their own transactions into shared history."
+    slide_heading: "Roles and Duties"
+    tags: ["permissioned-ledgers", "consensus", "policy"]
+    confidence: "high"
+  - term: "Orderer / sequencer"
+    modifier: "permissioned ledger role"
+    aliases: ["orderer", "sequencer", "ordering role"]
+    definition: "A participant or service role that establishes a consistent order for accepted transactions."
+    context: "The lesson separates sequencing from business approval so students can see why ordering power is a distinct control point."
+    slide_heading: "Roles and Duties"
+    tags: ["permissioned-ledgers", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Administrator"
+    modifier: "permissioned ledger role"
+    aliases: ["admin", "network administrator"]
+    definition: "A role with authority to manage configuration, membership, or other network control-plane settings."
+    context: "Administrator power is highlighted as high impact because it can change the rules rather than just submit records."
+    slide_heading: "Roles and Duties"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Auditor / observer"
+    modifier: "permissioned ledger role"
+    aliases: ["auditor", "observer", "audit-only participant"]
+    definition: "A role that reviews history or compliance without directly controlling transaction submission or approval."
+    context: "Independent audit roles preserve oversight while limiting operational power."
+    slide_heading: "Roles and Duties"
+    tags: ["permissioned-ledgers", "policy", "real-world"]
+    confidence: "high"
+  - term: "Permissioned consensus"
+    modifier: null
+    aliases: ["known-membership consensus"]
+    definition: "A consensus model where known participants use roles, signatures, quorums, and policy to agree on ledger updates."
+    context: "The lesson explains permissioned consensus as a coordination problem among identified members rather than an open mining or staking contest."
+    slide_heading: "Consensus"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Crash fault tolerance"
+    modifier: "consensus"
+    aliases: ["CFT"]
+    definition: "A consensus fault model that handles nodes stopping or becoming unavailable without assuming malicious behavior."
+    context: "Known membership lets some permissioned systems use classical CFT techniques when crash failures are the main concern."
+    slide_heading: "Consensus"
+    tags: ["consensus", "distributed-systems", "permissioned-ledgers"]
+    confidence: "high"
+  - term: "Byzantine fault tolerance"
+    modifier: "consensus"
+    aliases: ["BFT"]
+    definition: "A consensus fault model that can tolerate a limited number of participants behaving incorrectly or maliciously."
+    context: "The lesson mentions BFT as a classical technique available to permissioned systems with known participants."
+    slide_heading: "Consensus"
+    tags: ["consensus", "distributed-systems", "permissioned-ledgers"]
+    confidence: "high"
+  - term: "Quorum"
+    modifier: "permissioned consensus"
+    aliases: ["quorum rule", "threshold"]
+    definition: "The required number or proportion of authorized participants whose approvals are needed for an action to proceed."
+    context: "Quorum rules determine when signed approvals are enough to commit or govern in a permissioned network."
+    slide_heading: "Consensus"
+    tags: ["permissioned-ledgers", "consensus", "policy"]
+    confidence: "high"
+  - term: "Signed approval"
+    modifier: "permissioned consensus"
+    aliases: ["signed approvals", "approved signature"]
+    definition: "A cryptographically signed authorization from a known member that counts toward policy or consensus requirements."
+    context: "Signed approvals replace mining or staking signals when the system can verify which members are authorized to approve."
+    slide_heading: "Consensus"
+    tags: ["permissioned-ledgers", "consensus", "cryptography"]
+    confidence: "high"
+  - term: "Deterministic finality"
+    modifier: null
+    aliases: ["deterministic commit", "final commit"]
+    definition: "A finality model where a transaction is final once required signatures and quorum rules are satisfied."
+    context: "Deterministic finality is one of the main practical differences between permissioned ledgers and public-chain designs."
+    slide_heading: "Deterministic Finality"
+    tags: ["permissioned-ledgers", "consensus"]
+    confidence: "high"
+  - term: "Probabilistic finality"
+    modifier: null
+    aliases: ["probabilistic confirmation"]
+    definition: "A finality model where confidence increases over time but reordering remains theoretically possible."
+    context: "The lesson contrasts probabilistic PoW finality with permissioned systems that avoid mining races and longest-chain competition."
+    slide_heading: "Deterministic Finality"
+    tags: ["consensus", "permissioned-ledgers"]
+    confidence: "high"
+  - term: "Ordering service"
+    modifier: "permissioned ledger"
+    aliases: ["ordering cluster", "leader-based cluster"]
+    definition: "A service or small cluster that places accepted requests into one consistent sequence for validation and commit."
+    context: "Ordering services are a central operational control point because they shape the shared order without deciding every business rule."
+    slide_heading: "What Changes"
+    tags: ["permissioned-ledgers", "consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Transaction path"
+    modifier: "permissioned ledger"
+    aliases: ["transaction pipeline", "generic path"]
+    definition: "The sequence from identity check through proposal, approval, ordering, validation, and commit."
+    context: "The transaction path shows students how permissioned-ledger policy becomes concrete operational processing."
+    slide_heading: "Transaction Path"
+    tags: ["permissioned-ledgers", "distributed-systems"]
+    confidence: "high"
+  - term: "Identity check"
+    modifier: "transaction path"
+    aliases: ["role check", "credential check"]
+    definition: "The step that verifies a requester has a valid credential and role before a request can proceed."
+    context: "Identity checks are the first gate in the transaction path and enforce the membership model."
+    slide_heading: "Transaction Path"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Required approvals"
+    modifier: "transaction policy"
+    aliases: ["organizational signoffs", "approval requirements"]
+    definition: "The policy-defined set of organizations or nodes that must approve a proposed action."
+    context: "Required approvals turn business rules into enforceable constraints before ordering and commit."
+    slide_heading: "Transaction Path"
+    tags: ["permissioned-ledgers", "policy", "consensus"]
+    confidence: "high"
+  - term: "Validation against policy"
+    modifier: "transaction path"
+    aliases: ["policy validation"]
+    definition: "The check that an ordered request still satisfies the relevant policy and state rules before commit."
+    context: "Validation keeps approval and ordering from bypassing the rules that define valid ledger updates."
+    slide_heading: "Transaction Path"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Policy layer"
+    modifier: "permissioned ledger"
+    aliases: ["policy layers", "policy controls"]
+    definition: "A set of explicit rules that define who may read, submit, approve, govern, or change the network."
+    context: "The lesson frames policy as part of the effective trust model, not as external paperwork."
+    slide_heading: "Policy Layers"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Access policy"
+    modifier: null
+    aliases: ["access control policy"]
+    definition: "Rules that determine which participants may read, write, submit, approve, or administer specific resources."
+    context: "Access policy lets a participant read without writing or submit without controlling governance."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "policy", "privacy"]
+    confidence: "high"
+  - term: "Transaction policy"
+    modifier: null
+    aliases: ["endorsement policy", "approval policy"]
+    definition: "Rules that determine which organizations or roles must approve a transaction before it can be committed."
+    context: "Transaction policy is the mechanism that prevents one requester from unilaterally inserting business events."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "policy", "consensus"]
+    confidence: "high"
+  - term: "Membership policy"
+    modifier: null
+    aliases: ["member policy"]
+    definition: "Rules that determine who may add, remove, renew, or revoke participants and credentials."
+    context: "Membership policy controls the gate into the network and is therefore part of the security boundary."
+    slide_heading: "Key Components"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Governance boundary"
+    modifier: null
+    aliases: ["governance security boundary"]
+    definition: "The line around decisions that can change members, rules, thresholds, configuration, or upgrade behavior."
+    context: "The lesson makes governance visible as an attack surface because weak governance can break an otherwise sound transaction path."
+    slide_heading: "Governance Boundary"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Attack surface"
+    modifier: "permissioned governance"
+    aliases: ["system attack surface"]
+    definition: "The set of roles, services, credentials, and processes attackers can target to influence or disrupt the network."
+    context: "Governance, identity, ordering, and administration become especially important attack surfaces in permissioned systems."
+    slide_heading: "Governance Boundary"
+    tags: ["permissioned-ledgers", "security"]
+    confidence: "high"
+  - term: "Hard fork"
+    modifier: "governance"
+    aliases: ["chain split", "fork"]
+    definition: "A split into separate ledgers or blockchains when participants adopt incompatible rules or upgrades."
+    context: "The lesson contrasts permissionless hard forks with permissioned governance processes that try to coordinate one managed outcome."
+    slide_heading: "Governance Actions"
+    tags: ["permissioned-ledgers", "policy", "consensus"]
+    confidence: "high"
+  - term: "Governance committee"
+    modifier: "permissioned ledger"
+    aliases: ["authorized governance members"]
+    definition: "The authorized group that votes or decides on network changes according to the permissioned system's policy."
+    context: "Governance committee decisions show how administrative authority propagates through managed network members."
+    slide_heading: "Governance Actions"
+    tags: ["permissioned-ledgers", "policy"]
+    confidence: "high"
+  - term: "Credential compromise"
+    modifier: null
+    aliases: ["admin compromise", "key theft", "credential theft"]
+    definition: "The loss of control over a credential that lets an attacker act as an authorized participant or administrator."
+    context: "Credential compromise is a leading permissioned-system threat because stolen roles can change data, policy, membership, or ordering."
+    slide_heading: "Threats to Permissioned Systems"
+    tags: ["permissioned-ledgers", "security"]
+    confidence: "high"
+  - term: "DDoS"
+    modifier: "permissioned ledger risk"
+    aliases: ["distributed denial of service", "denial-of-service attack"]
+    definition: "An attack that floods or disrupts critical services so they cannot perform their network role."
+    context: "The lesson highlights DDoS against orderers, membership providers, and governance voters as high-impact permissioned-ledger risks."
+    slide_heading: "Threats to Permissioned Systems"
+    tags: ["permissioned-ledgers", "security", "distributed-systems"]
+    confidence: "high"
+  - term: "Quorum disruption"
+    modifier: null
+    aliases: ["preventing quorum", "approval disruption"]
+    definition: "An attack or outage that prevents enough authorized approvers from participating to meet a quorum rule."
+    context: "Small approval sets can make targeted disruption of a few members enough to block transaction flow."
+    slide_heading: "Threats to Permissioned Systems"
+    tags: ["permissioned-ledgers", "consensus", "security"]
+    confidence: "high"
+  - term: "Redundancy"
+    modifier: "permissioned ledger operations"
+    aliases: ["redundant services"]
+    definition: "The use of multiple components or service instances so one failure does not halt a critical function."
+    context: "The lesson lists redundancy as a defense for concentrated orderer, membership, and governance dependencies."
+    slide_heading: "Threats to Permissioned Systems"
+    tags: ["permissioned-ledgers", "distributed-systems", "security"]
+    confidence: "high"
+  - term: "Failover"
+    modifier: "permissioned ledger operations"
+    aliases: ["failover plan", "planned failover"]
+    definition: "The process of shifting a critical function to a backup service or path when the primary one fails."
+    context: "Permissioned systems need failover planning because a few critical services can dominate network availability."
+    slide_heading: "Threats to Permissioned Systems"
+    tags: ["permissioned-ledgers", "distributed-systems", "security"]
+    confidence: "high"
+  - term: "Identity theft risk"
+    modifier: "permissioned ledger"
+    aliases: ["identity compromise risk"]
+    definition: "The risk created when a stolen identity grants an attacker the permissions attached to that role."
+    context: "The lesson ranks stolen identities by impact, from read-only confidentiality loss to admin-level control of the network."
+    slide_heading: "Identity Theft Risks"
+    tags: ["permissioned-ledgers", "security"]
+    confidence: "high"
+  - term: "Membership / Admin identity"
+    modifier: "permissioned ledger role"
+    aliases: ["membership identity", "admin identity", "configuration identity"]
+    definition: "A high-authority identity that can add members, change policy, or alter network configuration."
+    context: "The lesson treats membership and admin identities as the highest-value targets because they can change the system's rules."
+    slide_heading: "Identity Theft Risks"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Sybil resistance"
+    modifier: "permissioned ledger"
+    aliases: ["Sybil defense", "anti-Sybil control"]
+    definition: "The prevention of one real actor cheaply gaining disproportionate influence through many effective identities."
+    context: "The lesson shows that permissioned systems still solve the Sybil problem, but through admission, sponsorship, and revocation."
+    slide_heading: "Sybil Resistance"
+    tags: ["permissioned-ledgers", "security", "consensus"]
+    confidence: "high"
+  - term: "Organizational sponsorship"
+    modifier: null
+    aliases: ["sponsorship"]
+    definition: "A model where known organizations are accountable for the representatives who participate under their name."
+    context: "Organizational sponsorship helps permissioned networks control Sybil risk by tying participants back to responsible members."
+    slide_heading: "Sybil Resistance"
+    tags: ["permissioned-ledgers", "policy", "security"]
+    confidence: "high"
+  - term: "Privacy controls"
+    modifier: "permissioned ledger"
+    aliases: ["selective visibility", "selective disclosure"]
+    definition: "Mechanisms that separate who can participate from who can see particular data or proofs."
+    context: "The privacy slide corrects the misconception that permissioned automatically means everything is private."
+    slide_heading: "Privacy"
+    tags: ["permissioned-ledgers", "privacy", "policy"]
+    confidence: "high"
+  - term: "Channel"
+    modifier: "permissioned ledger privacy"
+    aliases: ["channels", "partition", "partitions"]
+    definition: "A ledger or communication partition that limits which participants can see or interact with a subset of data."
+    context: "Channels and partitions are listed as mechanisms for giving different organizations different visibility."
+    slide_heading: "Privacy"
+    tags: ["permissioned-ledgers", "privacy"]
+    confidence: "high"
+  - term: "Private data collection"
+    modifier: null
+    aliases: ["private data collections"]
+    definition: "A mechanism for restricting sensitive payloads to authorized participants while preserving verification or audit evidence."
+    context: "Private data collections support business confidentiality in networks where not every member should see every payload."
+    slide_heading: "Privacy"
+    tags: ["permissioned-ledgers", "privacy"]
+    confidence: "high"
+  - term: "Role-based access control"
+    modifier: null
+    aliases: ["RBAC"]
+    definition: "An access-control method where permissions are assigned to roles rather than individually to every action."
+    context: "Role-based access control is one way permissioned systems separate reading, submitting, approving, and governing."
+    slide_heading: "Privacy"
+    tags: ["permissioned-ledgers", "policy", "privacy"]
+    confidence: "high"
+  - term: "Audit-visible metadata"
+    modifier: null
+    aliases: ["restricted payload metadata", "audit metadata"]
+    definition: "Information visible enough for auditing while the underlying sensitive payload remains restricted."
+    context: "The lesson uses audit-visible metadata to show that verification and confidentiality can coexist."
+    slide_heading: "Privacy"
+    tags: ["permissioned-ledgers", "privacy", "real-world"]
+    confidence: "high"
+  - term: "Hyperledger Fabric"
+    modifier: null
+    aliases: ["Fabric"]
+    definition: "A permissioned blockchain platform used in the lesson's lockout case study."
+    context: "The case study previews how the lesson's identity, credential, and governance concerns appear in a real platform."
+    slide_heading: "Case Study: Fabric Lockout"
+    tags: ["permissioned-ledgers", "real-world"]
+    confidence: "high"
+  - term: "Admin certificate"
+    modifier: "Hyperledger Fabric"
+    aliases: ["admin certificates", "administrator certificate"]
+    definition: "A credential that authenticates administrative authority for managing a Fabric organization or network component."
+    context: "Expired admin certificates in the case study prevented normal configuration and channel-management actions."
+    slide_heading: "Case Study: Fabric Lockout"
+    tags: ["permissioned-ledgers", "security", "real-world"]
+    confidence: "high"
+  - term: "Lockout"
+    modifier: "permissioned ledger operations"
+    aliases: ["network lockout", "lockout situation"]
+    definition: "An operational failure where required credentials or authority are unavailable, preventing normal management actions."
+    context: "The Fabric case study shows that a permissioned network can fail hard from credential lifecycle mistakes without a cryptographic break."
+    slide_heading: "Case Study: Fabric Lockout"
+    tags: ["permissioned-ledgers", "security", "real-world"]
+    confidence: "high"
+  - term: "Out-of-band fix"
+    modifier: "permissioned ledger recovery"
+    aliases: ["out-of-band recovery", "manual recovery"]
+    definition: "A recovery action performed outside the normal on-ledger or policy-controlled management path."
+    context: "The lockout case shows that weak credential lifecycle management can force recovery outside normal governance processes."
+    slide_heading: "Case Study: Fabric Lockout"
+    tags: ["permissioned-ledgers", "security", "real-world"]
+    confidence: "high"
+  - term: "Mutable database"
+    modifier: "system choice"
+    aliases: ["mutable DB", "traditional database"]
+    definition: "A database whose owning organization can directly update or overwrite records under normal administrative control."
+    context: "The recap and scenario exercise use mutable databases as the right fit when one owner is trusted and performance dominates."
+    slide_heading: "Recap: Three Approaches Compared"
+    tags: ["distributed-systems", "real-world"]
+    confidence: "high"
+  - term: "Problem fit"
+    modifier: "ledger design"
+    aliases: ["tool choice", "best fit"]
+    definition: "The match between a system design and the scenario's trust boundary, governance needs, performance demands, and verification requirements."
+    context: "The final exercise asks students to choose permissioned ledgers, permissionless ledgers, or mutable databases based on the actual coordination problem."
+    slide_heading: "When To Use What?"
+    tags: ["permissioned-ledgers", "policy", "real-world"]
+    confidence: "high"

@@ -407,10 +407,11 @@ None
 
 | Mode | Description | Strengths | Weaknesses |
 |------|--------------|------------|-------------|
-| **ECB** | Encrypts each block independently. | Simple, parallelizable. | Reveals patterns (insecure). |
-| **CBC** | Chains each block to the previous via XOR with IV. | Hides patterns, strong diffusion. | Sequential; needs IV. |
-| **CFB** | Turns block cipher into self-synchronizing stream. | Handles short data streams. | Bit errors propagate. |
-| **CTR** | Encrypts counter values to generate keystream. | Parallelizable, random access. | Requires unique nonce. |
+| [**GCM**]{style="color: green;"} | CTR-style encryption plus authentication tag. | Best practice AEAD; parallelizable. | Requires unique nonce. |
+| [**CBC**]{style="color: green;"} | Chains each block to the previous via XOR with IV. | Hides patterns, strong diffusion. | Sequential; needs unpredictable IV and authentication. |
+| [**CTR**]{style="color: green;"} | Encrypts counter values to generate keystream. | Parallelizable, random access. | Requires unique nonce and authentication. |
+| [**ECB**]{style="color: red;"} | Encrypts each block independently. | Simple, parallelizable. | Reveals patterns (insecure). |
+| [**CFB**]{style="color: red;"} | Turns block cipher into self-synchronizing stream. | Handles short data streams. | Legacy mode; bit errors propagate. |
 
 
 
@@ -420,15 +421,16 @@ None
 This slide establishes the main block-cipher modes students are likely to hear referenced in practice and why they differ operationally. It matters here because misuse often comes from picking a familiar name without understanding nonce, IV, or chaining assumptions. Emphasize that the mode changes the security story even when the underlying cipher stays the same.
 
 **Key Points**
-- ECB is structurally insecure for patterned data, while CBC and CTR address that in different ways.
-- CTR is parallelizable and random-access friendly, but nonce reuse is dangerous.
+- GCM is the modern best-practice default because it combines confidentiality with authentication.
+- ECB is structurally insecure for patterned data, while CBC and CTR address that in different ways when used correctly.
+- CTR and GCM are parallelizable and random-access friendly, but nonce reuse is dangerous.
 - An IV is an initialization vector; a nonce is a value that must not repeat under the same key.
 
 **Walkthrough**
 None
 
 **Sources**
-NIST SP 800-38A, *Recommendation for Block Cipher Modes of Operation*, 2001; @menezes_handbookappliedcryptography_2011; @katz_introductionmoderncryptography_2020
+NIST SP 800-38A, *Recommendation for Block Cipher Modes of Operation*, 2001; NIST SP 800-38D, *Recommendation for Galois/Counter Mode (GCM) and GMAC*, 2007; @menezes_handbookappliedcryptography_2011; @katz_introductionmoderncryptography_2020
 
 :::
 

@@ -158,7 +158,7 @@ console.log("Available:", info[4].toString(), "tickets");
 ║                                                                ║
 ║  🎟️  Ticket Price: 0.1 ETH                                     ║
 ║  📊 Total Supply: 100 tickets                                  ║
-║  📅 Event Date: June 15, 2026                                  ║
+║  📅 Event Date: TBD                                            ║
 ║                                                                ║
 ║  To buy: call buyTicket() with 0.1 ETH                        ║
 ║                                                                ║

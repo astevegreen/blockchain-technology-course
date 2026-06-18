@@ -1,514 +1,877 @@
 /**
- * TokenizationLabView - Lesson: ERC-721 NFTs (mint, metadata, transfer) then sale for native ETH (fungible).
- * Uses local Hardhat node and ChainSearch. No 3rd party services. Metadata via data URIs.
+ * TokenizationLabView - ERC-721 classroom workflow backed by the static NFT bank.
+ *
+ * Rules:
+ * - A wallet may claim one art theme.
+ * - A wallet mints exactly one five-token batch from its claimed theme.
+ * - After all art themes are claimed, late wallets mint five plain color NFTs.
+ * - Theme reservation is API state; ERC-721 ownership and sale state are on-chain.
  */
-import { useState, useEffect } from 'react';
-import InlineTerminal from '../components/InlineTerminal';
-import { ChainSearch } from '../components/ChainSearch';
+import { useEffect, useMemo, useState } from 'react';
+import { ethers } from 'ethers';
+import { ChainExplorer } from '../components/ChainExplorer';
+import LabNFTArtifact from '../contracts/LabNFT.json';
+import LabNFTSaleArtifact from '../contracts/LabNFTSale.json';
+import { registerKnownContract } from '../lib/abiRegistry';
+import { fetchSessionState } from '../lib/sessionState';
 
-const ERC721_ANNOTATIONS = [
-  { fn: 'balanceOf(address owner)', desc: 'Returns how many tokens the given address owns. ERC-721: each owner has 0 or more unique token IDs.' },
-  { fn: 'ownerOf(uint256 tokenId)', desc: 'Returns the address that owns the token with the given ID. Reverts if the token does not exist.' },
-  { fn: 'approve(address to, uint256 tokenId)', desc: 'Gives permission for another address to transfer your token. Only the owner can approve.' },
-  { fn: 'getApproved(uint256 tokenId)', desc: 'Returns the address approved to transfer this token, or zero if none.' },
-  { fn: 'setApprovalForAll(address operator, bool approved)', desc: 'Approves or revokes an operator for all of your tokens. Used by marketplaces.' },
-  { fn: 'isApprovedForAll(address owner, address operator)', desc: 'Returns true if the operator is approved to manage all tokens of the owner.' },
-  { fn: 'transferFrom(address from, address to, uint256 tokenId)', desc: 'Transfers a token. Caller must be owner, approved, or approved operator.' },
-  { fn: 'safeTransferFrom(...)', desc: 'Same as transferFrom but checks the recipient can receive NFTs (ERC721Receiver).' },
-  { fn: 'tokenURI(uint256 tokenId)', desc: 'Returns a URI (URL or data URI) pointing to JSON metadata: name, description, image.' },
-  { fn: 'mint(address to, string tokenURI_)', desc: 'LabNFT-specific: mints a new token to `to` with the given metadata URI. Only minter can call.' },
-];
-
-const STEPS = [
-  {
-    id: 1,
-    title: 'Read & Explain ERC-721',
-    description: 'Study the LabNFT contract. For each function below, expand "What does this do?" and identify its purpose. Do not copy-paste — understand each one.',
-    code: null,
-    loadLabel: null,
-  },
-  {
-    id: 2,
-    title: 'EVM Deep Dive: mint()',
-    description: 'When mint() is called, understand what happens at the EVM level.',
-    code: null,
-    loadLabel: null,
-  },
-  {
-    id: 3,
-    title: 'Deploy & Trace',
-    description: 'Deploy LabNFT, mint a token, then paste the transaction hash into Search Chain to trace: sender, value, and Transfer event.',
-    code: `// 1. Deploy LabNFT (run in Lab Terminal - npx hardhat console --network localhost)
-const contract = await ethers.deployContract("LabNFT", ["LabNFT", "LAB"]);
-await contract.waitForDeployment();
-const addr = await contract.getAddress();  // This is the LabNFT CONTRACT address — save it as nftAddr for Steps 5 and 6
-console.log("Deployed to:", addr);
-
-// 2. Mint a token (replace tokenURI with data URI from Step 4, or use "" for empty)
-const tx = await contract.mint(await (await ethers.getSigners())[0].getAddress(), "");
-const receipt = await tx.wait();
-console.log("Mint tx hash:", receipt.hash);
-console.log("Paste this hash into Search Chain to trace!");`,
-    loadLabel: 'Load deploy & mint script',
-  },
-  {
-    id: 4,
-    title: 'Metadata & Data URI',
-    description: 'Create EIP-721 metadata JSON. Generate a data URI and use it as tokenURI when minting.',
-    code: null,
-    loadLabel: null,
-  },
-  {
-    id: 5,
-    title: 'Transfer to Another Student',
-    description: 'Get your partner\'s EOA address (Class Chat or share). Connect to the same LabNFT contract, then call transferFrom to send your token to them. Verify with ownerOf.',
-    code: `// REPLACE "0x..." with real 42-char addresses. Run the ENTIRE script.
-const nftAddr = "0x...";      // LabNFT CONTRACT address (Step 3 "Deployed to:" — where the ERC-721 contract lives)
-const partnerAddr = "0x...";  // Partner's WALLET address (EOA, e.g. 0x70997970...)
-const tokenId = 1;            // Token ID you own (Step 3 first mint = 1)
-
-if (!/^0x[a-fA-F0-9]{40}$/.test(nftAddr) || !/^0x[a-fA-F0-9]{40}$/.test(partnerAddr)) {
-  throw new Error("Replace 0x... with real addresses (42 chars: 0x + 40 hex). Invalid addresses trigger resolveName errors.");
-}
-const c = await ethers.getContractAt("LabNFT", nftAddr);
-const [me] = await ethers.getSigners();
-console.log("Owner of token", tokenId, ":", await c.ownerOf(tokenId));
-await c.transferFrom(me.address, partnerAddr, tokenId);
-console.log("Done. New owner:", await c.ownerOf(tokenId));`,
-    loadLabel: 'Load transfer script',
-  },
-  {
-    id: 6,
-    title: 'Build a Sale Contract',
-    description: 'Exchange your unique NFT for fungible native ETH: one person deploys LabNFTSale; the seller lists; the buyer pays. The sale contract atomically moves the NFT to the buyer and ETH to the seller.',
-    code: null,
-    loadLabel: null,
-  },
-];
-
-function CodeBlock({ code, onLoad, loadLabel }) {
-  const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard?.writeText(code).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-  return (
-    <div style={{ position: 'relative', marginTop: '0.75rem' }}>
-      <pre
-        style={{
-          margin: 0,
-          padding: '1rem',
-          background: '#0c0c0c',
-          border: '1px solid #334155',
-          borderRadius: '0.5rem',
-          color: '#86efac',
-          fontSize: '0.85rem',
-          overflow: 'auto',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-all',
-        }}
-      >
-        {code}
-      </pre>
-      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-        <button type="button" onClick={copy} style={{ padding: '0.35rem 0.75rem', background: '#334155', border: 'none', borderRadius: '0.35rem', color: '#94a3b8', fontSize: '0.8rem', cursor: 'pointer' }}>
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
-        {onLoad && loadLabel && (
-          <button type="button" onClick={() => onLoad(code)} style={{ padding: '0.35rem 0.75rem', background: 'var(--primary)', border: 'none', borderRadius: '0.35rem', color: '#fff', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}>
-            {loadLabel}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Expandable({ title, children }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ marginBottom: '0.5rem', border: '1px solid #334155', borderRadius: '0.35rem', overflow: 'hidden' }}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        style={{
-          width: '100%',
-          padding: '0.5rem 0.75rem',
-          background: open ? 'rgba(245,158,11,0.15)' : '#1e293b',
-          border: 'none',
-          color: '#fcd34d',
-          fontSize: '0.85rem',
-          textAlign: 'left',
-          cursor: 'pointer',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <code style={{ fontFamily: 'monospace' }}>{title}</code>
-        <span>{open ? '▼' : '▶'}</span>
-      </button>
-      {open && <div style={{ padding: '0.75rem 1rem', background: '#0f172a', color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.6 }}>{children}</div>}
-    </div>
-  );
-}
-
-const DEFAULT_METADATA = {
-  name: 'My Lab NFT',
-  description: 'Created in the Tokenization Lab',
-  image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzEwYjk4MSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPkxhYk5GVDwvdGV4dD48L3N2Zz4=',
+const NFT_API = '/api/ethereum/nft/';
+const LAB_BASE_URL = import.meta.env.BASE_URL || '/';
+const LAB_STATIC_ROOT = 'labs/ethereum_lab/';
+const MANIFEST_URL = labStaticUrl('labs/ethereum_lab/nft-bank/manifest.json');
+const CONFIG_URL = labStaticUrl('labs/ethereum_lab/tokenization-config.json');
+const RUNTIME_CONFIG_URL = (import.meta.env.BASE_URL || '/') + 'api/config.json';
+const CACHE_BASE = (LAB_BASE_URL || '/').replace(/\/$/, '');
+const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+const WRITE_GAS_PRICE = ethers.parseUnits('2', 'gwei');
+const WRITE_TX_OPTIONS = {
+  mint: { gasLimit: 2000000n, gasPrice: WRITE_GAS_PRICE },
+  transfer: { gasLimit: 150000n, gasPrice: WRITE_GAS_PRICE },
+  approve: { gasLimit: 120000n, gasPrice: WRITE_GAS_PRICE },
+  list: { gasLimit: 250000n, gasPrice: WRITE_GAS_PRICE },
+  buy: { gasLimit: 250000n, gasPrice: WRITE_GAS_PRICE },
 };
-
 const TOKEN_BEACON_IDS = {
-  1: 'eth-token-erc721',
-  2: 'eth-token-evm',
-  3: 'eth-token-deploy',
-  4: 'eth-token-metadata',
-  5: 'eth-token-transfer',
-  6: 'eth-token-sale',
+  setup: 'eth-token-erc721',
+  claim: 'eth-token-metadata',
+  mint: 'eth-token-deploy',
+  verify: 'eth-token-evm',
+  transfer: 'eth-token-transfer',
+  sale: 'eth-token-sale',
 };
 
-export function TokenizationLabView({ provider, wallet, rpcUrl, terminalRpcUrl = '', fireProgressBeacon }) {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [terminalOpen, setTerminalOpen] = useState(true);
-  const [loadCode, setLoadCode] = useState('');
-  const [loadFeedback, setLoadFeedback] = useState('');
-  const [metadataJson, setMetadataJson] = useState(JSON.stringify(DEFAULT_METADATA, null, 2));
-  const [metadataError, setMetadataError] = useState('');
-  const [dataUri, setDataUri] = useState('');
+const short = (s) => (s ? `${String(s).slice(0, 6)}…${String(s).slice(-4)}` : '—');
+const isAddress = (s) => /^0x[0-9a-fA-F]{40}$/.test(String(s || ''));
+const card = { background: 'var(--card)', border: '1px solid #334155', borderRadius: '0.75rem', padding: '1rem' };
+const muted = { color: '#94a3b8' };
+const mono = { fontFamily: 'monospace', wordBreak: 'break-all' };
+const button = (primary = false, disabled = false) => ({
+  padding: '0.5rem 0.85rem',
+  background: primary ? 'var(--primary)' : '#334155',
+  color: '#fff',
+  border: 'none',
+  borderRadius: '0.45rem',
+  cursor: disabled ? 'not-allowed' : 'pointer',
+  fontWeight: primary ? 700 : 500,
+  opacity: disabled ? 0.58 : 1,
+});
+
+function getErrorMessage(error) {
+  const seen = new Set();
+  const collect = (value) => {
+    if (!value) return [];
+    if (typeof value === 'string') return [value];
+    if (typeof value !== 'object' || seen.has(value)) return [];
+    seen.add(value);
+
+    const messages = [];
+    const push = (item) => {
+      for (const msg of collect(item)) {
+        if (msg && !messages.includes(msg)) messages.push(msg);
+      }
+    };
+
+    push(value.shortMessage && value.shortMessage !== 'could not coalesce error' ? value.shortMessage : null);
+    push(value.reason);
+    push(value.error?.message);
+    push(value.info?.error?.message);
+    push(value.data?.message);
+    push(value.cause);
+
+    if (typeof value.body === 'string') {
+      try { push(JSON.parse(value.body)); } catch (_) { push(value.body); }
+    }
+
+    push(value.message && value.message !== 'could not coalesce error' ? value.message : null);
+    return messages;
+  };
+
+  return collect(error)[0] || error?.message || String(error);
+}
+
+function parseMintedTokenIds(receipt, nftAddress) {
+  const iface = new ethers.Interface(LabNFTArtifact.abi);
+  const ids = [];
+  for (const log of receipt?.logs || []) {
+    if (String(log.address).toLowerCase() !== String(nftAddress).toLowerCase()) continue;
+    try {
+      const parsed = iface.parseLog(log);
+      if (parsed?.name === 'Transfer' && String(parsed.args.from).toLowerCase() === ZERO_ADDR) {
+        ids.push(parsed.args.tokenId.toString());
+      }
+    } catch (_) {
+      // Ignore non-LabNFT logs.
+    }
+  }
+  return ids;
+}
+
+async function waitForTransactionReceipt(tx, providerLike, { timeoutMs = 90000, intervalMs = 1000 } = {}) {
+  const hash = typeof tx === 'string' ? tx : tx?.hash;
+  if (!hash) throw new Error('Missing transaction hash.');
+  const rpcProvider = tx?.provider || providerLike;
+  if (!rpcProvider?.send) throw new Error('Wallet provider cannot poll transaction receipts.');
+  const deadline = Date.now() + timeoutMs;
+  let lastError = null;
+  while (Date.now() < deadline) {
+    try {
+      const receipt = await rpcProvider.send('eth_getTransactionReceipt', [hash]);
+      if (receipt) return { ...receipt, hash: receipt.transactionHash || hash };
+    } catch (err) {
+      lastError = err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error(`Timed out waiting for transaction ${short(hash)}${lastError ? `: ${getErrorMessage(lastError)}` : ''}`);
+}
+
+function randomColorBatch() {
+  const seed = Math.floor(Math.random() * 360);
+  return Array.from({ length: 5 }, (_, i) => {
+    const hue = (seed + i * 47) % 360;
+    const sat = 62 + ((seed + i * 11) % 24);
+    const light = 44 + ((seed + i * 7) % 18);
+    return {
+      slug: `color-${i + 1}`,
+      name: `Fallback Color ${i + 1}`,
+      color: `hsl(${hue} ${sat}% ${light}%)`,
+      hex: hslToHex(hue, sat, light),
+    };
+  });
+}
+
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return `#${[f(0), f(8), f(4)].map((x) => Math.round(255 * x).toString(16).padStart(2, '0')).join('')}`;
+}
+
+function labStaticUrl(value) {
+  if (!value || /^(data:|https?:)/.test(String(value))) return value;
+  const path = String(value).replace(/^\/+/, '');
+  if (!path.startsWith(LAB_STATIC_ROOT)) return value;
+  const base = LAB_BASE_URL.endsWith('/') ? LAB_BASE_URL : `${LAB_BASE_URL}/`;
+  return `${base}${path}`;
+}
+
+function normalizeManifestPaths(manifest) {
+  return {
+    ...manifest,
+    imageBasePath: labStaticUrl(manifest?.imageBasePath || ''),
+    metadataBasePath: labStaticUrl(manifest?.metadataBasePath || ''),
+    themes: (manifest?.themes || []).map((theme) => ({
+      ...theme,
+      variants: (theme.variants || []).map((variant) => ({
+        ...variant,
+        image: labStaticUrl(variant.image),
+        metadata: labStaticUrl(variant.metadata),
+      })),
+    })),
+  };
+}
+
+function colorMetadataUri(item) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" fill="${item.hex}"/></svg>`;
+  const metadata = {
+    name: item.name,
+    description: 'Fallback color NFT for the Tokenization Lab after all art themes were claimed.',
+    image: `data:image/svg+xml;base64,${btoa(svg)}`,
+    attributes: [
+      { trait_type: 'Mode', value: 'Fallback Color' },
+      { trait_type: 'Color', value: item.hex },
+      { trait_type: 'Lab', value: 'Tokenization Lab' },
+    ],
+  };
+  return `data:application/json;base64,${btoa(unescape(encodeURIComponent(JSON.stringify(metadata))))}`;
+}
+
+function Status({ children, tone = 'info' }) {
+  const color = tone === 'error' ? '#fca5a5' : tone === 'ok' ? '#86efac' : '#93c5fd';
+  const border = tone === 'error' ? 'rgba(248,113,113,0.45)' : tone === 'ok' ? 'rgba(34,197,94,0.45)' : 'rgba(59,130,246,0.35)';
+  const bg = tone === 'error' ? 'rgba(127,29,29,0.25)' : tone === 'ok' ? 'rgba(20,83,45,0.25)' : 'rgba(30,64,175,0.16)';
+  return <div style={{ padding: '0.75rem 1rem', background: bg, border: `1px solid ${border}`, borderRadius: '0.55rem', color, fontSize: '0.9rem', lineHeight: 1.5 }}>{children}</div>;
+}
+
+function tokenizationConfigFrom(runtimeConfig = {}, staticConfig = {}) {
+  return {
+    nftAddress: runtimeConfig.tokenizationNftAddress || staticConfig.nftAddress || '',
+    saleAddress: runtimeConfig.tokenizationSaleAddress || staticConfig.saleAddress || '',
+    updatedAt: runtimeConfig.tokenizationUpdatedAt || staticConfig.updatedAt || '',
+  };
+}
+
+async function safeJson(res) {
+  if (!res?.ok) return {};
+  try {
+    return await res.json();
+  } catch (_) {
+    return {};
+  }
+}
+
+async function fetchMarketplaceSnapshot() {
+  for (const url of [`${CACHE_BASE}/marketplace-state`, `${CACHE_BASE}/lab-api/marketplace/state`]) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data?.ok) return data;
+    } catch (_) {
+      // Try the alternate route.
+    }
+  }
+  throw new Error('Classroom ownership cache is not ready yet. Try again in a few seconds.');
+}
+
+export function TokenizationLabView({ provider, wallet, rpcUrl, fireProgressBeacon }) {
+  const [manifest, setManifest] = useState(null);
+  const [nftState, setNftState] = useState({ claims: [], mintedBatches: [] });
+  const [selectedThemeSlug, setSelectedThemeSlug] = useState('');
+  const [nftAddress, setNftAddress] = useState('');
+  const [saleAddress, setSaleAddress] = useState('');
+  const [configUpdatedAt, setConfigUpdatedAt] = useState('');
+  const [ownedTokens, setOwnedTokens] = useState([]);
+  const [selectedTokenId, setSelectedTokenId] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [salePrice, setSalePrice] = useState('0.01');
+  const [fallbackColors, setFallbackColors] = useState(() => randomColorBatch());
+  const [hoverPreview, setHoverPreview] = useState(null);
+  const [explorerOpen, setExplorerOpen] = useState(false);
+  const [explorerQuery, setExplorerQuery] = useState('');
+  const openExplorer = (query) => { setExplorerQuery(String(query || '')); setExplorerOpen(true); };
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState('');
+  const [lastReceipt, setLastReceipt] = useState(null);
+  const [saleState, setSaleState] = useState(null);
+  const [sessionUuid, setSessionUuid] = useState('');
+
+  const signer = wallet?.signer;
+  const walletAddress = wallet?.address || wallet?.signer?.address || '';
+  const walletKey = walletAddress.toLowerCase();
+  const themes = manifest?.themes || [];
+  const claimsByTheme = useMemo(() => new Map((nftState.claims || []).map((c) => [c.themeSlug, c])), [nftState.claims]);
+  const ownsSessionRecord = (record) => sessionUuid
+    ? record?.sessionUuid === sessionUuid
+    : record?.address === walletKey;
+  const ownClaim = useMemo(() => (nftState.claims || []).find(ownsSessionRecord), [nftState.claims, sessionUuid, walletKey]);
+  const ownBatch = useMemo(() => (nftState.mintedBatches || []).find(ownsSessionRecord), [nftState.mintedBatches, sessionUuid, walletKey]);
+  const allThemesClaimed = themes.length > 0 && (nftState.claims || []).length >= themes.length;
+  const selectedTheme = themes.find((t) => t.slug === selectedThemeSlug) || themes[0];
+  const claimedTheme = ownClaim ? themes.find((t) => t.slug === ownClaim.themeSlug) : null;
+  const mintTheme = claimedTheme || selectedTheme;
+  const canUseColorFallback = allThemesClaimed && !ownClaim && !ownBatch;
+  const contractsReady = isAddress(nftAddress) && isAddress(saleAddress);
+  const claimDisabledReason = !walletAddress
+    ? 'Wallet is still loading.'
+    : !contractsReady
+      ? 'Classroom contracts are not loaded yet.'
+      : busy
+        ? 'Another tokenization action is running.'
+        : ownBatch
+          ? 'This wallet already minted its one allowed batch.'
+          : ownClaim
+            ? 'This wallet already claimed a theme.'
+            : '';
+  const themeMintDisabledReason = !signer
+    ? 'Wallet is still loading.'
+    : !contractsReady
+      ? 'Classroom contracts are not loaded yet.'
+      : busy
+        ? 'Another tokenization action is running.'
+        : ownBatch
+          ? 'This wallet already minted its one allowed batch.'
+          : !ownClaim
+            ? 'Claim one theme before minting.'
+            : ownClaim?.themeSlug !== mintTheme?.slug
+              ? `Your wallet is locked to ${ownClaim.themeSlug}.`
+              : (mintTheme?.variants || []).length !== 5
+                ? 'The selected theme does not have exactly five variants.'
+                : '';
+  const colorMintDisabledReason = !signer
+    ? 'Wallet is still loading.'
+    : !contractsReady
+      ? 'Classroom contracts are not loaded yet.'
+      : busy
+        ? 'Another tokenization action is running.'
+        : ownBatch
+          ? 'This wallet already minted its one allowed batch.'
+          : !canUseColorFallback
+            ? 'Color fallback unlocks only after every art theme is claimed.'
+            : fallbackColors.length !== 5
+              ? 'A color batch must contain exactly five colors.'
+              : '';
+
+  const tokenUriForBatchIndex = (index) => {
+    if (!ownBatch) return '';
+    if (ownBatch.tokenUris?.[index]) return ownBatch.tokenUris[index];
+    if (ownBatch.mode === 'theme') {
+      const theme = themes.find((item) => item.slug === ownBatch.themeSlug);
+      return theme?.variants?.[index]?.metadata || '';
+    }
+    return '';
+  };
+  const displayedTokens = ownedTokens.length > 0
+    ? ownedTokens
+    : (ownBatch?.tokenIds || []).map((tokenId, index) => ({
+        tokenId,
+        owner: ownBatch.address,
+        tokenURI: tokenUriForBatchIndex(index),
+        mine: ownBatch.address === walletKey,
+        cached: true,
+      }));
 
   useEffect(() => {
-    if (fireProgressBeacon) fireProgressBeacon(TOKEN_BEACON_IDS[currentStep]);
-  }, [currentStep]);
+    fireProgressBeacon?.(TOKEN_BEACON_IDS.setup);
+  }, [fireProgressBeacon]);
 
-  const step = STEPS.find((s) => s.id === currentStep);
-
-  const handleLoadCode = (code) => {
-    setLoadCode(code);
-    setTerminalOpen(true);
-    setLoadFeedback('Code loaded! Run in Lab Terminal. If terminal shows an error, run: npm run terminal');
-    setTimeout(() => setLoadFeedback(''), 5000);
-    setTimeout(() => document.querySelector('[data-lab-terminal]')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
-  };
-
-  const handleGenerateDataUri = () => {
-    setMetadataError('');
-    try {
-      const parsed = JSON.parse(metadataJson);
-      if (!parsed.name || typeof parsed.name !== 'string') {
-        setMetadataError('Missing or invalid "name" field');
-        return;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [manifestRes, stateRes, sessionRes, configRes] = await Promise.all([
+          fetch(MANIFEST_URL, { cache: 'no-store' }),
+          fetch(NFT_API + 'state', { cache: 'no-store' }),
+          fetchSessionState().catch(() => null),
+          Promise.all([
+            fetch(RUNTIME_CONFIG_URL, { cache: 'no-store' }).catch(() => null),
+            fetch(CONFIG_URL, { cache: 'no-store' }).catch(() => null),
+          ]),
+        ]);
+        const nextManifest = normalizeManifestPaths(await manifestRes.json());
+        const nextState = stateRes.ok ? await stateRes.json() : { claims: [], mintedBatches: [] };
+        const [runtimeConfigRes, staticConfigRes] = configRes;
+        const runtimeConfig = await safeJson(runtimeConfigRes);
+        const staticConfig = await safeJson(staticConfigRes);
+        const config = tokenizationConfigFrom(runtimeConfig, staticConfig);
+        if (cancelled) return;
+        setManifest(nextManifest);
+        setSessionUuid(sessionRes?.uuid || '');
+        setNftState({ claims: nextState.claims || [], mintedBatches: nextState.mintedBatches || [] });
+        setNftAddress(config.nftAddress || '');
+        setSaleAddress(config.saleAddress || '');
+        setConfigUpdatedAt(config.updatedAt || '');
+        if (nextManifest.themes?.[0]) setSelectedThemeSlug((prev) => prev || nextManifest.themes[0].slug);
+      } catch (e) {
+        if (!cancelled) setError(`Could not load NFT bank: ${getErrorMessage(e)}`);
       }
-      const str = JSON.stringify(parsed);
-      const uri = 'data:application/json;base64,' + btoa(unescape(encodeURIComponent(str)));
-      setDataUri(uri);
-    } catch (e) {
-      setMetadataError('Invalid JSON: ' + (e?.message || 'parse error'));
     }
-  };
+    load();
+    const id = setInterval(load, 8000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
-  const copyDataUri = () => {
-    if (dataUri) navigator.clipboard?.writeText(dataUri);
-  };
+  useEffect(() => {
+    if (isAddress(nftAddress)) {
+      registerKnownContract(nftAddress, LabNFTArtifact.abi, 'LabNFT');
+    }
+    if (isAddress(saleAddress)) {
+      registerKnownContract(saleAddress, LabNFTSaleArtifact.abi, 'LabNFTSale');
+    }
+  }, [nftAddress, saleAddress]);
+
+  useEffect(() => {
+    if (!ownClaim && selectedThemeSlug) return;
+    if (ownClaim?.themeSlug) setSelectedThemeSlug(ownClaim.themeSlug);
+  }, [ownClaim?.themeSlug]);
+
+  async function refreshNftState() {
+    const res = await fetch(NFT_API + 'state', { cache: 'no-store' });
+    const data = await res.json();
+    setNftState({ claims: data.claims || [], mintedBatches: data.mintedBatches || [] });
+  }
+
+  async function refreshOwnedTokens() {
+    if (!ownBatch?.tokenIds?.length) return;
+    setError('');
+    setBusy('verify');
+    try {
+      const snap = await fetchMarketplaceSnapshot();
+      const tokens = snap.tokens || {};
+      const rows = ownBatch.tokenIds.map((id, index) => {
+        const token = tokens[String(id)] || {};
+        const owner = token.owner || ownBatch.address || '';
+        const txs = Array.isArray(token.txs) ? token.txs.filter(Boolean) : [];
+        return {
+          tokenId: id,
+          owner,
+          tokenURI: token.uri || tokenUriForBatchIndex(index),
+          mine: owner.toLowerCase() === walletKey,
+          txs,
+          txHash: token.txHash || txs[txs.length - 1] || ownBatch.txHash || null,
+          cached: true,
+        };
+      });
+      setOwnedTokens(rows);
+      const firstMine = rows.find((r) => r.mine)?.tokenId || rows[0]?.tokenId || '';
+      setSelectedTokenId((prev) => prev || firstMine);
+      setStatus('Verified ownership and metadata from the classroom chain cache. Click a token to view its latest transfer in the explorer.');
+      fireProgressBeacon?.(TOKEN_BEACON_IDS.verify);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  useEffect(() => {
+    setOwnedTokens([]);
+    setSelectedTokenId((prev) => prev || ownBatch?.tokenIds?.[0] || '');
+  }, [ownBatch?.tokenIds?.join(',')]);
+
+  async function refreshSaleState() {
+    if (!provider || !isAddress(saleAddress)) return;
+    setError('');
+    setBusy((current) => current || 'sale-refresh');
+    try {
+      const sale = new ethers.Contract(saleAddress, LabNFTSaleArtifact.abi, provider);
+      const [seller, tokenId, price, nft] = await Promise.all([
+        sale.seller(),
+        sale.tokenId(),
+        sale.price(),
+        sale.nft(),
+      ]);
+      setSaleState({ seller, tokenId: tokenId.toString(), price, nft, listed: seller.toLowerCase() !== ZERO_ADDR });
+      setStatus(seller.toLowerCase() !== ZERO_ADDR ? 'Sale state refreshed from chain.' : 'No NFT is currently listed in the sale contract.');
+    } catch (e) {
+      setSaleState(null);
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy((current) => (current === 'sale-refresh' ? '' : current));
+    }
+  }
+
+  async function reloadClassroomContracts() {
+    setError('');
+    setBusy('reload-config');
+    try {
+      const res = await fetch(CONFIG_URL, { cache: 'no-store' }).catch(() => null);
+      const runtimeRes = await fetch(RUNTIME_CONFIG_URL, { cache: 'no-store' }).catch(() => null);
+      const runtimeConfig = await safeJson(runtimeRes);
+      const staticConfig = await safeJson(res);
+      const config = tokenizationConfigFrom(runtimeConfig, staticConfig);
+      if (!config.nftAddress || !config.saleAddress) throw new Error(`Could not load tokenization contract addresses from ${RUNTIME_CONFIG_URL} or ${CONFIG_URL}`);
+      setNftAddress(config.nftAddress || '');
+      setSaleAddress(config.saleAddress || '');
+      setConfigUpdatedAt(config.updatedAt || '');
+      setStatus('Classroom contract configuration reloaded.');
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function claimTheme(themeSlug) {
+    setError('');
+    if (claimDisabledReason) {
+      setError(claimDisabledReason);
+      return;
+    }
+    setBusy(`claim-${themeSlug}`);
+    try {
+      if (!walletAddress) throw new Error('Connect a wallet first.');
+      const res = await fetch(NFT_API + 'claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themeSlug, address: walletAddress, nickname: wallet?.nickname || '' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Claim failed');
+      setNftState({ claims: data.claims || [], mintedBatches: data.mintedBatches || [] });
+      setSelectedThemeSlug(themeSlug);
+      setHoverPreview(null);
+      setStatus('Theme claimed. You can now mint all five variants as one batch.');
+      fireProgressBeacon?.(TOKEN_BEACON_IDS.claim);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function recordMintedBatch({ mode, themeSlug, tokenIds, tokenUris, txHash, color }) {
+    const res = await fetch(NFT_API + 'minted-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: walletAddress, mode, themeSlug, tokenIds, tokenUris, txHash, color }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not record minted batch');
+    setNftState({ claims: data.claims || [], mintedBatches: data.mintedBatches || [] });
+  }
+
+  async function mintBatch(mode = 'theme') {
+    setError('');
+    const disabledReason = mode === 'color' ? colorMintDisabledReason : themeMintDisabledReason;
+    if (disabledReason) {
+      setError(disabledReason);
+      return;
+    }
+    setBusy('mint');
+    try {
+      if (!signer) throw new Error('Connect a wallet first.');
+      if (!isAddress(nftAddress)) throw new Error('Classroom LabNFT is not configured yet. Ask the instructor to run tokenization setup.');
+      if (ownBatch) throw new Error('This wallet already minted its one allowed batch.');
+      const nft = new ethers.Contract(nftAddress, LabNFTArtifact.abi, signer);
+      const variants = mode === 'color'
+        ? fallbackColors.map((c) => ({ ...c, metadata: colorMetadataUri(c) }))
+        : mintTheme?.variants || [];
+      if (variants.length !== 5) throw new Error('A batch must contain exactly five variants.');
+      if (mode === 'theme' && ownClaim?.themeSlug !== mintTheme?.slug) throw new Error('Claim this theme before minting.');
+      if (mode === 'color' && !canUseColorFallback) throw new Error('Color fallback is only available after all themes are claimed.');
+
+      const tokenUris = variants.map((variant) => variant.metadata);
+      setStatus('Submitting batch mint: 5 NFTs in one transaction...');
+      const tx = await nft.mintBatch(walletAddress, tokenUris, WRITE_TX_OPTIONS.mint);
+      setStatus(`Confirming batch mint: ${short(tx.hash)}`);
+      const last = await waitForTransactionReceipt(tx, signer.provider || provider);
+      const tokenIds = parseMintedTokenIds(last, nftAddress);
+      if (tokenIds.length !== 5) throw new Error(`Expected 5 minted token IDs, found ${tokenIds.length}.`);
+      await recordMintedBatch({
+        mode,
+        themeSlug: mode === 'theme' ? mintTheme.slug : null,
+        tokenIds,
+        tokenUris,
+        txHash: last?.hash,
+        color: mode === 'color' ? fallbackColors.map((c) => c.hex).join(',') : '',
+      });
+      setLastReceipt(last);
+      setOwnedTokens(tokenIds.map((tokenId, index) => ({
+        tokenId,
+        owner: walletAddress,
+        tokenURI: variants[index]?.metadata || '',
+        mine: true,
+        cached: true,
+      })));
+      setSelectedTokenId((prev) => prev || tokenIds[0] || '');
+      setStatus(`Minted batch: token IDs ${tokenIds.join(', ')}`);
+      fireProgressBeacon?.(TOKEN_BEACON_IDS.mint);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function transferToken() {
+    setError('');
+    setBusy('transfer');
+    try {
+      if (!signer) throw new Error('Connect a wallet first.');
+      if (!isAddress(recipient)) throw new Error('Enter a valid recipient address.');
+      const nft = new ethers.Contract(nftAddress, LabNFTArtifact.abi, signer);
+      const tx = await nft.transferFrom(walletAddress, recipient, selectedTokenId, WRITE_TX_OPTIONS.transfer);
+      const receipt = await waitForTransactionReceipt(tx, signer.provider || provider);
+      setLastReceipt(receipt);
+      setStatus(`Transferred token ${selectedTokenId} to ${recipient}`);
+      fireProgressBeacon?.(TOKEN_BEACON_IDS.transfer);
+      await refreshOwnedTokens();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function approveAndList() {
+    setError('');
+    setBusy('list');
+    try {
+      if (!signer) throw new Error('Connect a wallet first.');
+      if (!isAddress(saleAddress)) throw new Error('Classroom LabNFTSale is not configured yet. Ask the instructor to run tokenization setup.');
+      const nft = new ethers.Contract(nftAddress, LabNFTArtifact.abi, signer);
+      const sale = new ethers.Contract(saleAddress, LabNFTSaleArtifact.abi, signer);
+      const price = ethers.parseEther(salePrice || '0');
+      const approveTx = await nft.approve(saleAddress, selectedTokenId, WRITE_TX_OPTIONS.approve);
+      await waitForTransactionReceipt(approveTx, signer.provider || provider);
+      const listTx = await sale.list(nftAddress, selectedTokenId, price, WRITE_TX_OPTIONS.list);
+      const receipt = await waitForTransactionReceipt(listTx, signer.provider || provider);
+      setLastReceipt(receipt);
+      setStatus(`Listed token ${selectedTokenId} for ${salePrice} ETH`);
+      fireProgressBeacon?.(TOKEN_BEACON_IDS.sale);
+      await refreshOwnedTokens();
+      await refreshSaleState();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy('');
+    }
+  }
+
+  async function buyListed() {
+    setError('');
+    setBusy('buy');
+    try {
+      if (!signer) throw new Error('Connect a wallet first.');
+      const sale = new ethers.Contract(saleAddress, LabNFTSaleArtifact.abi, signer);
+      const price = saleState?.price ?? ethers.parseEther(salePrice || '0');
+      const tx = await sale.buy({ value: price, ...WRITE_TX_OPTIONS.buy });
+      const receipt = await waitForTransactionReceipt(tx, signer.provider || provider);
+      setLastReceipt(receipt);
+      setStatus(`Bought token ${saleState?.tokenId || ''}`);
+      fireProgressBeacon?.(TOKEN_BEACON_IDS.sale);
+      await refreshOwnedTokens();
+      await refreshSaleState();
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setBusy('');
+    }
+  }
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
-      <h1 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Tokenization Lab</h1>
-      {!provider && (
-        <div style={{ padding: '1rem', background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.4)', borderRadius: '0.5rem', color: '#fde047', marginBottom: '1rem' }}>
-          Connect to the chain first: go to <strong>Live</strong> tab, set RPC URL, and connect your wallet.
+    <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '1.5rem' }}>
+      <h1 style={{ color: 'var(--primary)', marginBottom: '0.35rem' }}>Tokenization Lab</h1>
+      <p style={{ ...muted, lineHeight: 1.6, marginTop: 0 }}>
+        Claim one static-art theme, mint its five ERC-721 tokens as a batch, inspect the chain, then transfer or sell one token for native ETH.
+      </p>
+
+      {!provider && <Status tone="error">Connect to the chain first from the Live tab.</Status>}
+      {error && <div style={{ marginTop: '0.75rem' }}><Status tone="error">{error}</Status></div>}
+      {status && <div style={{ marginTop: '0.75rem' }}><Status tone="ok">{status}</Status></div>}
+
+      <section style={{ ...card, marginTop: '1rem' }}>
+        <h2 style={{ marginTop: 0, color: '#e2e8f0' }}>1. Classroom Contract Setup</h2>
+        <p style={muted}>
+          The instructor/lab startup deploys these contracts once for the shared class chain. Students should not deploy contracts for this lab; they use the addresses loaded from the lab runtime config.
+        </p>
+        <div style={{ marginBottom: '0.75rem' }}>
+          <Status tone={contractsReady ? 'ok' : 'error'}>
+            {contractsReady
+              ? 'Classroom contracts are loaded. Continue by claiming exactly one theme.'
+              : 'Classroom contracts are not configured yet. Ask the instructor to run tokenization setup inside the lab container.'}
+          </Status>
         </div>
-      )}
-      <div
-        style={{
-          padding: '1rem 1.25rem',
-          background: 'rgba(245,158,11,0.08)',
-          border: '1px solid rgba(245,158,11,0.35)',
-          borderRadius: '0.75rem',
-          marginBottom: '1.25rem',
-          fontSize: '0.9rem',
-          lineHeight: 1.65,
-          color: '#cbd5e1',
-        }}
-      >
-        <strong style={{ color: '#fcd34d', display: 'block', marginBottom: '0.5rem' }}>Lesson overview — what you should understand</strong>
-        <ul style={{ margin: '0 0 0.75rem 1.1rem', padding: 0 }}>
-          <li style={{ marginBottom: '0.35rem' }}>
-            <strong style={{ color: '#e2e8f0' }}>Non-fungible (NFT, ERC-721):</strong> each <code style={{ background: '#1e293b', padding: '0.05rem 0.25rem', borderRadius: '0.2rem' }}>tokenId</code> is a distinct asset. You track <strong>who owns which ID</strong> and optional metadata via <code style={{ background: '#1e293b', padding: '0.05rem 0.25rem', borderRadius: '0.2rem' }}>tokenURI</code>. Steps 1–5 are about creating and moving that unique record.
-          </li>
-          <li>
-            <strong style={{ color: '#e2e8f0' }}>Fungible (here: native ETH):</strong> balances are divisible and interchangeable — one wei is the same as any other. In Step 6 the <strong>buyer spends ETH</strong> and receives the <strong>unique NFT</strong>; the seller does the opposite. Two different token &quot;shapes&quot; show up in one sale flow.
-          </li>
-        </ul>
-        <p style={{ margin: '0 0 0.5rem 0', color: '#94a3b8', fontSize: '0.85rem' }}>
-          <strong style={{ color: '#e2e8f0' }}>How the steps map:</strong> Steps 1–5 build NFT intuition (standard → EVM mint → deploy / trace → metadata → peer transfer). Step 6 is <strong>exchange</strong>: list the NFT, pay with ETH, atomic swap via <code style={{ background: '#1e293b', padding: '0.05rem 0.25rem', borderRadius: '0.2rem' }}>LabNFTSale</code>.
-        </p>
-        <p style={{ margin: 0, fontSize: '0.85rem', color: '#fde68a', fontStyle: 'italic' }}>
-          Takeaway: when you read a transaction, ask — is this an interchangeable balance (fungible, like ETH) or a unique ID (non-fungible, like an ERC-721 token)?
-        </p>
-      </div>
-      <p style={{ color: '#94a3b8', fontSize: '0.95rem', marginBottom: '1rem' }}>
-        Hands-on: deploy LabNFT, mint, trace in ChainSearch, attach metadata, transfer to a partner, then sell an NFT for ETH.
-      </p>
-      <a href="/docs/labs/gui/TOKENIZATION_LAB.md" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', fontSize: '0.9rem', marginBottom: '1rem', display: 'inline-block' }}>
-        Read: Tokenization Lab guide
-      </a>
-
-      <p style={{ color: '#64748b', fontSize: '0.8rem', marginBottom: '0.5rem', lineHeight: 1.5 }}>
-        <strong style={{ color: '#94a3b8' }}>Phase 1 — NFT:</strong> Steps 1–5 &nbsp;·&nbsp; <strong style={{ color: '#94a3b8' }}>Phase 2 — Sale with fungible ETH:</strong> Step 6
-      </p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {STEPS.map((s) => (
-          <button
-            key={s.id}
-            type="button"
-            onClick={() => setCurrentStep(s.id)}
-            style={{
-              padding: '0.4rem 0.8rem',
-              background: currentStep === s.id ? 'var(--primary)' : '#334155',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '0.5rem',
-              fontSize: '0.85rem',
-              cursor: 'pointer',
-            }}
-          >
-            {s.id}. {s.title}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '0.75rem' }}>
+          <div style={{ display: 'grid', gap: '0.3rem', color: '#cbd5e1' }}>
+            <span>LabNFT address</span>
+            <code style={{ ...mono, display: 'block', padding: '0.55rem', background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: '0.4rem', minHeight: '1.2rem' }}>
+              {nftAddress || 'not configured'}
+            </code>
+          </div>
+          <div style={{ display: 'grid', gap: '0.3rem', color: '#cbd5e1' }}>
+            <span>LabNFTSale address</span>
+            <code style={{ ...mono, display: 'block', padding: '0.55rem', background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: '0.4rem', minHeight: '1.2rem' }}>
+              {saleAddress || 'not configured'}
+            </code>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginTop: '0.75rem' }}>
+          <button type="button" style={button()} onClick={reloadClassroomContracts} disabled={!!busy}>
+            {busy === 'reload-config' ? 'Reloading…' : 'Reload classroom config'}
           </button>
-        ))}
-      </div>
+          {configUpdatedAt && <span style={{ ...muted, fontSize: '0.85rem' }}>Config updated: {new Date(configUpdatedAt).toLocaleString()}</span>}
+        </div>
+      </section>
 
-      <div style={{ padding: '1.5rem', background: 'var(--card)', borderRadius: '0.75rem', border: '1px solid #475569', marginBottom: '1.5rem' }}>
-        <h2 style={{ color: '#e2e8f0', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Step {step.id}: {step.title}</h2>
-        <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6 }}>{step.description}</p>
-
-        {currentStep === 1 && (
-          <div style={{ marginTop: '1rem' }}>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.65, marginBottom: '0.75rem' }}>
-              <strong style={{ color: '#e2e8f0' }}>Fungible vs non-fungible.</strong> A <strong>fungible</strong> asset is interchangeable: units are treated as identical (e.g. ETH balances). A <strong>non-fungible</strong> token (NFT) is not: each <code style={{ background: '#1e293b', padding: '0.05rem 0.25rem', borderRadius: '0.2rem' }}>tokenId</code> refers to one specific owned item. ERC-721 is the standard interface for NFTs on Ethereum — the functions below implement that model.
-            </p>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.75rem' }}>Identify what each function does:</p>
-            {ERC721_ANNOTATIONS.map((a, i) => (
-              <Expandable key={i} title={a.fn}>
-                {a.desc}
-              </Expandable>
-            ))}
-          </div>
+      <section style={{ ...card, marginTop: '1rem' }}>
+        <h2 style={{ marginTop: 0, color: '#e2e8f0' }}>2. Claim One Theme</h2>
+        <p style={muted}>One wallet may claim one theme. After you mint a five-token batch, this wallet is done minting for this lab.</p>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
+          <span style={{ color: '#cbd5e1' }}>Themes claimed: {(nftState.claims || []).length}/{themes.length || 40}</span>
+          {ownClaim && <span style={{ color: '#86efac' }}>Your claim: {ownClaim.themeSlug}</span>}
+          {ownBatch && <span style={{ color: '#fcd34d' }}>Your batch minted: {ownBatch.tokenIds?.join(', ')}</span>}
+          {canUseColorFallback && <span style={{ color: '#fcd34d' }}>All themes are gone. Color fallback is available.</span>}
+        </div>
+        {!ownClaim && claimDisabledReason && (
+          <div style={{ marginBottom: '0.85rem' }}><Status>{claimDisabledReason}</Status></div>
         )}
-
-        {currentStep === 2 && (
-          <div style={{ marginTop: '1rem', color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.7 }}>
-            <h3 style={{ color: '#fcd34d', fontSize: '0.95rem', marginBottom: '0.5rem' }}>Storage writes</h3>
-            <ul style={{ marginLeft: '1.25rem', marginBottom: '1rem' }}>
-              <li><code>_owners[tokenId] = to</code> — records the new owner</li>
-              <li><code>_balances[to]++</code> — increments the recipient&apos;s token count</li>
-              <li><code>_nextTokenId++</code> — advances the counter for the next mint</li>
-              <li><code>_tokenURIs[tokenId] = tokenURI_</code> — stores metadata URI</li>
-            </ul>
-            <h3 style={{ color: '#fcd34d', fontSize: '0.95rem', marginBottom: '0.5rem' }}>Gas costs</h3>
-            <p style={{ marginBottom: '1rem' }}>SSTORE to cold slot: ~20,000 gas each. Event emission: ~375 gas per topic + ~8 gas per byte of data. First mint to an address costs more (cold storage).</p>
-            <h3 style={{ color: '#fcd34d', fontSize: '0.95rem', marginBottom: '0.5rem' }}>Event emission</h3>
-            <p><code>Transfer(address(0), to, tokenId)</code> — indexed: from (zero for mint), to, tokenId. This is the standard ERC-721 Transfer event that block explorers and wallets use.</p>
-          </div>
-        )}
-
-        {currentStep === 3 && step.code && (
-          <CodeBlock code={step.code} onLoad={handleLoadCode} loadLabel={step.loadLabel} />
-        )}
-
-        {currentStep === 5 && step.code && (
-          <>
-            <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '0.35rem', fontSize: '0.85rem', color: '#93c5fd' }}>
-              Replace every <code>0x...</code> with real 42-char addresses (0x + 40 hex digits). Run the <strong>entire script at once</strong>. Leaving placeholders causes &quot;resolveName is not implemented&quot; or &quot;transferFrom undefined&quot; errors.
-            </div>
-            <CodeBlock code={step.code} onLoad={handleLoadCode} loadLabel={step.loadLabel} />
-          </>
-        )}
-
-        {currentStep === 6 && (
-          <div style={{ marginTop: '1rem' }}>
-            <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.6 }}>
-              Follow these steps in order in the Hardhat console. One person deploys LabNFTSale; seller lists; buyer pays.
-            </p>
-            <div style={{ marginTop: '0.75rem', marginBottom: '1rem', padding: '0.75rem 1rem', background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.35)', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#fde68a', lineHeight: 1.65 }}>
-              <strong style={{ color: '#fcd34d' }}>Why this step uses two kinds of tokens</strong>
-              <p style={{ margin: '0.45rem 0 0 0', color: '#cbd5e1' }}>
-                The <strong>NFT</strong> is unique — the buyer ends up owning one specific <code style={{ background: '#1e293b', padding: '0.05rem 0.25rem', borderRadius: '0.2rem' }}>tokenId</code>. The <strong>payment</strong> is in native ETH: fungible units deducted from the buyer and credited to the seller. <code style={{ background: '#1e293b', padding: '0.05rem 0.25rem', borderRadius: '0.2rem' }}>LabNFTSale</code> coordinates both legs so neither party has to trust the other to send their side afterward.
+        {ownClaim ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 1fr) auto', gap: '1rem', alignItems: 'center', background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.45)', borderRadius: '0.75rem', padding: '1rem' }}>
+            <div>
+              <div style={{ color: '#86efac', fontWeight: 700, marginBottom: '0.25rem' }}>Theme locked</div>
+              <strong style={{ color: '#e2e8f0', fontSize: '1.05rem' }}>{claimedTheme?.name || ownClaim.themeSlug}</strong>
+              <p style={{ ...muted, margin: '0.35rem 0 0 0', lineHeight: 1.5 }}>
+                {claimedTheme?.description || 'This wallet has already claimed a theme. Other themes are no longer selectable for this wallet.'}
               </p>
             </div>
-            <ol style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.7, marginLeft: '1.25rem', marginBottom: '1rem' }}>
-              <li><strong>Deploy LabNFTSale</strong> (one person) — paste the deploy script below into the console. Save the printed <strong>saleAddr</strong>.</li>
-              <li><strong>Seller:</strong> Approve and list your NFT. Use nftAddr (Step 3), saleAddr (from step 1), tokenId (Step 3 mint = 1).</li>
-              <li><strong>Buyer:</strong> Pay ETH to buy. Use saleAddr (seller shares it) and the agreed price.</li>
-            </ol>
-            <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#93c5fd', lineHeight: 1.6 }}>
-              <strong style={{ color: '#e2e8f0' }}>Where each value comes from</strong>
-              <p style={{ margin: '0.5rem 0 0.35rem 0', color: '#cbd5e1' }}><strong>Seller:</strong> nftAddr = LabNFT <strong>contract address</strong> (Step 3). saleAddr = LabNFTSale <strong>contract address</strong> (step 1 below). tokenId = NFT ID you own (first mint = 1).</p>
-              <p style={{ margin: '0.35rem 0 0 0', color: '#cbd5e1' }}><strong>Buyer:</strong> saleAddr = LabNFTSale <strong>contract address</strong> (seller shares it). price = must match seller&apos;s listed price.</p>
-            </div>
-            <h3 style={{ color: '#fcd34d', fontSize: '0.95rem', marginBottom: '0.35rem' }}>Step 1: Deploy LabNFTSale (in Hardhat console)</h3>
-            <CodeBlock
-              code={`// Deploy LabNFTSale — paste into Hardhat console. Save the printed address as saleAddr.
-const saleContract = await ethers.deployContract("LabNFTSale");
-await saleContract.waitForDeployment();
-const saleAddr = await saleContract.getAddress();
-console.log("LabNFTSale deployed to:", saleAddr);
-console.log("saleAddr =", saleAddr, "— use this for seller and buyer scripts.");`}
-              onLoad={handleLoadCode}
-              loadLabel="Load deploy script"
-            />
-            <h3 style={{ color: '#fcd34d', fontSize: '0.95rem', marginTop: '1rem', marginBottom: '0.35rem' }}>Step 2: Seller (you own the NFT)</h3>
-            <CodeBlock
-              code={`// Replace 0x... with real 42-char addresses.
-const nftAddr = "0x...";   // LabNFT CONTRACT address (Step 3 "Deployed to:")
-const saleAddr = "0x...";  // LabNFTSale CONTRACT address (Step 1 deploy in console — printed saleAddr)
-const tokenId = 1;         // NFT token ID you own (Step 3 first mint = 1)
-const price = ethers.parseEther("0.01");
-if (!/^0x[a-fA-F0-9]{40}$/.test(nftAddr) || !/^0x[a-fA-F0-9]{40}$/.test(saleAddr)) throw new Error("Replace with real addresses — placeholders cause resolveName errors.");
-
-const nft = await ethers.getContractAt("LabNFT", nftAddr);
-const sale = await ethers.getContractAt("LabNFTSale", saleAddr);
-await nft.approve(saleAddr, tokenId);
-await sale.list(nftAddr, tokenId, price);
-console.log("Listed! Share sale address and price with buyer.");`}
-              onLoad={handleLoadCode}
-              loadLabel="Load seller script"
-            />
-            <h3 style={{ color: '#fcd34d', fontSize: '0.95rem', marginTop: '1rem', marginBottom: '0.35rem' }}>Step 3: Buyer (you pay ETH)</h3>
-            <CodeBlock
-              code={`// saleAddr = LabNFTSale CONTRACT address (seller shares this)
-const saleAddr = "0x...";
-const price = ethers.parseEther("0.01");
-if (!/^0x[a-fA-F0-9]{40}$/.test(saleAddr)) throw new Error("Replace saleAddr with real address — placeholder causes resolveName errors.");
-
-const sale = await ethers.getContractAt("LabNFTSale", saleAddr);
-await sale.buy({ value: price });
-console.log("Bought! Check ownerOf on the NFT contract.");`}
-              onLoad={handleLoadCode}
-              loadLabel="Load buyer script"
-            />
-            <p style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', lineHeight: 1.6 }}>
-              After a successful sale: the seller&apos;s ETH balance went up (fungible); the buyer&apos;s <code style={{ background: '#1e293b', padding: '0.05rem 0.25rem', borderRadius: '0.2rem' }}>ownerOf(tokenId)</code> is now their address (non-fungible). Same chain, two different notions of &quot;what changed.&quot;
-            </p>
+            {claimedTheme?.variants?.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 54px)', gap: '0.35rem' }}>
+                {claimedTheme.variants.map((variant) => (
+                  <img key={variant.slug} src={variant.image} alt="" style={{ width: 54, height: 54, objectFit: 'cover', borderRadius: '0.4rem', border: '1px solid rgba(255,255,255,0.22)', background: '#111827' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-
-        {currentStep === 4 && (
-          <div style={{ marginTop: '1rem' }}>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem' }}>EIP-721 metadata schema: name, description, image (required). Image can be a data URI.</p>
-            <textarea
-              value={metadataJson}
-              onChange={(e) => setMetadataJson(e.target.value)}
-              style={{
-                width: '100%',
-                minHeight: '120px',
-                padding: '0.75rem',
-                background: '#0c0c0c',
-                border: '1px solid #334155',
-                borderRadius: '0.5rem',
-                color: '#86efac',
-                fontSize: '0.85rem',
-                fontFamily: 'monospace',
-              }}
-              placeholder='{"name":"...","description":"...","image":"..."}'
-            />
-            {metadataError && <div style={{ color: '#fca5a5', fontSize: '0.85rem', marginTop: '0.35rem' }}>{metadataError}</div>}
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-              <button type="button" onClick={handleGenerateDataUri} style={{ padding: '0.4rem 0.8rem', background: 'var(--primary)', border: 'none', borderRadius: '0.35rem', color: '#fff', fontSize: '0.85rem', cursor: 'pointer' }}>
-                Generate Data URI
-              </button>
-              {dataUri && (
-                <>
-                  <button type="button" onClick={copyDataUri} style={{ padding: '0.4rem 0.8rem', background: '#334155', border: 'none', borderRadius: '0.35rem', color: '#94a3b8', fontSize: '0.85rem', cursor: 'pointer' }}>
-                    Copy Data URI
-                  </button>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', wordBreak: 'break-all', maxWidth: '100%' }}>
-                    {dataUri.slice(0, 60)}...
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.75rem', maxHeight: '460px', overflow: 'auto', paddingRight: '0.25rem' }}>
+            {themes.map((theme) => {
+              const claim = claimsByTheme.get(theme.slug);
+              const mine = sessionUuid ? claim?.sessionUuid === sessionUuid : claim?.address === walletKey;
+              const locked = !!claim && !mine;
+              const activeSlug = selectedThemeSlug;
+              return (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  key={theme.slug}
+                  onClick={() => { setHoverPreview(null); setSelectedThemeSlug(theme.slug); }}
+                  onMouseEnter={(e) => setHoverPreview({ theme, x: e.clientX, y: e.clientY })}
+                  onMouseMove={(e) => setHoverPreview({ theme, x: e.clientX, y: e.clientY })}
+                  onMouseLeave={() => setHoverPreview(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setHoverPreview(null);
+                      setSelectedThemeSlug(theme.slug);
+                    }
+                  }}
+                  style={{
+                    textAlign: 'left',
+                    border: activeSlug === theme.slug ? '2px solid var(--primary)' : '1px solid #334155',
+                    background: mine ? 'rgba(34,197,94,0.12)' : locked ? 'rgba(71,85,105,0.25)' : '#0f172a',
+                    borderRadius: '0.65rem',
+                    padding: '0.75rem',
+                    color: '#e2e8f0',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <strong>{theme.name}</strong>
+                  <div style={{ ...muted, fontSize: '0.8rem', marginTop: '0.25rem' }}>{theme.description}</div>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: mine ? '#86efac' : locked ? '#fca5a5' : '#93c5fd' }}>
+                    {mine ? 'Claimed by you' : locked ? `Claimed by ${short(claim.address)}` : 'Available'}
                   </div>
-                </>
-              )}
+                  {!claim && !ownBatch && (
+                    <button type="button" style={{ ...button(true, !!claimDisabledReason), marginTop: '0.55rem' }} onClick={(e) => { e.stopPropagation(); setHoverPreview(null); claimTheme(theme.slug); }} disabled={!!claimDisabledReason}>
+                      {busy === `claim-${theme.slug}` ? 'Claiming…' : 'Claim'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {hoverPreview?.theme && !ownClaim && (
+          <div
+            style={{
+              position: 'fixed',
+              left: Math.min(hoverPreview.x + 18, window.innerWidth - 330),
+              top: Math.min(hoverPreview.y + 18, window.innerHeight - 260),
+              width: 300,
+              zIndex: 1000,
+              pointerEvents: 'none',
+              background: 'rgba(2,6,23,0.96)',
+              border: '1px solid rgba(148,163,184,0.45)',
+              borderRadius: '0.75rem',
+              boxShadow: '0 18px 48px rgba(0,0,0,0.45)',
+              padding: '0.75rem',
+              color: '#e2e8f0',
+            }}
+          >
+            <strong>{hoverPreview.theme.name}</strong>
+            <div style={{ ...muted, fontSize: '0.78rem', marginTop: '0.25rem', lineHeight: 1.4 }}>{hoverPreview.theme.description}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0.35rem', marginTop: '0.65rem' }}>
+              {(hoverPreview.theme.variants || []).slice(0, 3).map((variant, index) => (
+                <img
+                  key={variant.slug}
+                  src={variant.image}
+                  alt=""
+                  style={{ width: '100%', aspectRatio: index === 0 ? '1 / 1' : '1 / 1', objectFit: 'cover', borderRadius: '0.45rem', border: '1px solid rgba(255,255,255,0.16)', background: '#111827' }}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
+              ))}
             </div>
-            <p style={{ color: '#94a3b8', fontSize: '0.8rem', marginTop: '0.75rem' }}>
-              Use the data URI as the second argument to <code>mint(to, tokenURI)</code> in Step 3.
+          </div>
+        )}
+      </section>
+
+      <section style={{ ...card, marginTop: '1rem' }}>
+        <h2 style={{ marginTop: 0, color: '#e2e8f0' }}>3. Mint Exactly Five</h2>
+        {ownBatch ? (
+          <p style={{ ...muted, color: '#86efac', margin: 0 }}>✓ You minted your batch of 5 NFTs. Verify them in section 4 below, or list them for sale in the NFT Marketplace.</p>
+        ) : canUseColorFallback ? (
+          <>
+            <p style={muted}>Fallback mode: mint five plain color NFTs because every art theme has been claimed.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(90px, 1fr))', gap: '0.6rem' }}>
+              {fallbackColors.map((item) => <div key={item.slug} style={{ height: 110, borderRadius: '0.55rem', background: item.hex, border: '1px solid rgba(255,255,255,0.25)' }} title={item.hex} />)}
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.8rem', flexWrap: 'wrap' }}>
+              <button type="button" style={button(false, !!busy)} onClick={() => setFallbackColors(randomColorBatch())} disabled={!!busy}>Randomize colors</button>
+              <button type="button" style={button(true, !!colorMintDisabledReason)} onClick={() => mintBatch('color')} disabled={!!colorMintDisabledReason}>{busy === 'mint' ? 'Minting…' : 'Mint 5 Color NFTs'}</button>
+            </div>
+          </>
+        ) : mintTheme ? (
+          <>
+            <p style={muted}>
+              {ownClaim ? 'Your claimed theme' : 'Selected theme'}: <strong style={{ color: '#e2e8f0' }}>{mintTheme.name}</strong>.
+              {' '}{ownClaim ? 'Mint all five variants as one batch.' : 'You must claim a theme before minting.'}
             </p>
-          </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+              {mintTheme.variants.map((variant) => (
+                <div key={variant.slug} style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: '0.65rem', overflow: 'hidden' }}>
+                  <img src={variant.image} alt={variant.name} style={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', display: 'block', background: '#111827' }} onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  <div style={{ padding: '0.55rem' }}>
+                    <strong style={{ color: '#e2e8f0' }}>{variant.name}</strong>
+                    <div style={{ ...muted, ...mono, fontSize: '0.72rem', marginTop: '0.25rem' }}>{variant.metadata}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button type="button" style={{ ...button(true, !!themeMintDisabledReason), marginTop: '0.85rem' }} onClick={() => mintBatch('theme')} disabled={!!themeMintDisabledReason}>
+              {busy === 'mint' ? 'Minting 5 transactions…' : 'Mint All 5 Variants'}
+            </button>
+          </>
+        ) : <p style={muted}>Loading themes…</p>}
+      </section>
+
+      <section style={{ ...card, marginTop: '1rem' }}>
+        <h2 style={{ marginTop: 0, color: '#e2e8f0' }}>4. Verify Ownership and Metadata</h2>
+        {!ownBatch ? <p style={muted}>Mint a batch first.</p> : (
+          <>
+            <p style={muted}>
+              Confirm on-chain that you own each token and where its metadata lives. Click a token to open it in the chain explorer.
+            </p>
+            <button
+              type="button"
+              style={{ ...button(false, !!busy || !ownBatch?.tokenIds?.length), marginBottom: '0.75rem' }}
+              onClick={refreshOwnedTokens}
+              disabled={!!busy || !ownBatch?.tokenIds?.length}
+            >
+              {busy === 'verify' ? 'Verifying…' : 'Verify ownership'}
+            </button>
+            <div style={{ display: 'grid', gap: '0.45rem' }}>
+              {displayedTokens.map((row) => (
+                <div
+                  key={row.tokenId}
+                  onClick={() => openExplorer(row.txHash || nftAddress)}
+                  title={row.txHash ? "View this NFT's transfer transaction in the chain explorer" : "Click 'Verify ownership' to load this NFT's transfer, then click to view it"}
+                  style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: '0.75rem', padding: '0.6rem', background: '#0f172a', border: '1px solid #334155', borderRadius: '0.5rem', cursor: 'pointer' }}
+                >
+                  <strong style={{ color: row.mine ? '#86efac' : '#fcd34d' }}>#{row.tokenId}</strong>
+                  {row.error ? <span style={{ color: '#fca5a5' }}>{row.error}</span> : (
+                    <span style={{ ...mono, color: '#93c5fd' }}>
+                      ownerOf: {row.owner} · tokenURI: {row.tokenURI || 'not recorded'}
+                      {row.txHash ? ` · transfer tx: ${short(row.txHash)}${row.txs && row.txs.length > 1 ? ` (+${row.txs.length - 1} more)` : ''}` : ''}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {lastReceipt?.hash && <p style={{ ...muted, marginBottom: 0 }}>Last tx: <span onClick={() => openExplorer(lastReceipt.hash)} title="View transaction on the chain explorer" style={{ ...mono, color: '#93c5fd', cursor: 'pointer' }}>{lastReceipt.hash}</span></p>}
+          </>
         )}
-      </div>
+      </section>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        <button type="button" onClick={() => setCurrentStep((p) => Math.max(1, p - 1))} disabled={currentStep <= 1} style={{ padding: '0.5rem 1rem', background: currentStep <= 1 ? '#334155' : '#475569', color: '#fff', border: 'none', borderRadius: '0.5rem', cursor: currentStep <= 1 ? 'not-allowed' : 'pointer', fontSize: '0.9rem' }}>
-          Previous
-        </button>
-        <button type="button" onClick={() => setCurrentStep((p) => Math.min(STEPS.length, p + 1))} disabled={currentStep >= STEPS.length} style={{ padding: '0.5rem 1rem', background: currentStep >= STEPS.length ? '#334155' : 'var(--primary)', color: '#fff', border: 'none', borderRadius: '0.5rem', cursor: currentStep >= STEPS.length ? 'not-allowed' : 'pointer', fontSize: '0.9rem' }}>
-          Next
-        </button>
-      </div>
-
-      <ChainSearch provider={provider} rpcUrl={rpcUrl} />
-
-      {loadFeedback && (
-        <div style={{ padding: '0.75rem 1rem', background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.4)', borderRadius: '0.5rem', color: '#86efac', marginBottom: '1rem', fontSize: '0.9rem' }}>
-          {loadFeedback}
-        </div>
-      )}
-
-      <div style={{
-        padding: '1rem',
-        background: 'rgba(59,130,246,0.1)',
-        border: '1px solid rgba(59,130,246,0.3)',
-        borderRadius: '0.5rem',
-        marginTop: '1.5rem',
-        marginBottom: '0.75rem',
-        fontSize: '0.9rem',
-        color: '#93c5fd',
-      }}>
-        <strong style={{ color: '#e2e8f0' }}>Lab Terminal instructions</strong>
-        <p style={{ margin: '0.5rem 0 0.5rem 0', color: '#cbd5e1', fontSize: '0.85rem', lineHeight: 1.6 }}>
-          <strong>If you&apos;re new to the terminal:</strong> 1) Expand the Lab Terminal below. 2) Click the <strong>Start Hardhat</strong> button (or type <code style={{ background: '#1e293b', padding: '0.1rem 0.3rem', borderRadius: '0.2rem' }}>npx hardhat console --network localhost</code> and press Enter). 3) Wait for the <code>&gt;</code> prompt. 4) Click <strong>Load</strong> on any script, then paste it into the terminal and press Enter. 5) Type <code>.exit</code> when done to return to the shell.
-        </p>
-        <ul style={{ margin: '0.5rem 0 0 1.25rem', padding: 0, lineHeight: 1.7 }}>
-          <li><strong>Compile:</strong> <code style={{ background: '#1e293b', padding: '0.15rem 0.4rem', borderRadius: '0.25rem' }}>npx hardhat compile</code> — run this in the shell before deploying.</li>
-          <li><strong>Enter Hardhat console (local):</strong> <code style={{ background: '#1e293b', padding: '0.15rem 0.4rem', borderRadius: '0.25rem' }}>npx hardhat console --network localhost</code></li>
-          <li><strong>Enter Hardhat console (remote):</strong> <code style={{ background: '#1e293b', padding: '0.15rem 0.4rem', borderRadius: '0.25rem' }}>npx hardhat console --network instructor</code></li>
-          <li><strong>Exit Hardhat console:</strong> Type <code>.exit</code> or press <code>Ctrl+C</code> twice to return to the shell.</li>
-        </ul>
-        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.25)', borderRadius: '0.375rem' }}>
-          <strong style={{ color: '#fde047', fontSize: '0.85rem' }}>Connecting to a remote / instructor-hosted RPC</strong>
-          <p style={{ color: '#cbd5e1', fontSize: '0.85rem', margin: '0.4rem 0 0.4rem 0', lineHeight: 1.6 }}>
-            If the blockchain is running on a different machine, set <code style={{ background: '#1e293b', padding: '0.1rem 0.3rem', borderRadius: '0.2rem' }}>RPC_URL</code> before starting the Hardhat console. Windows: <code>$env:RPC_URL=&quot;http://INSTRUCTOR_IP:8545&quot;</code>. Mac/Linux: <code>RPC_URL=&quot;http://INSTRUCTOR_IP:8545&quot; npx hardhat console --network instructor</code>.
+      <section style={{ marginTop: '1rem' }}>
+        <div style={card}>
+          <h2 style={{ marginTop: 0, color: '#e2e8f0' }}>5. Chain Explorer</h2>
+          <p style={muted}>
+            Inspect blocks, transactions, and accounts. Clicking a token or transaction above opens it here.
           </p>
+          <button type="button" style={button(false, !provider)} onClick={() => setExplorerOpen((open) => !open)} disabled={!provider}>
+            {explorerOpen ? 'Hide chain explorer' : 'Open chain explorer'}
+          </button>
+          {explorerOpen && (
+            <div style={{ marginTop: '1rem' }}>
+              <ChainExplorer provider={provider} rpcUrl={rpcUrl} signer={wallet?.signer} initialQuery={explorerQuery} cacheOnly />
+            </div>
+          )}
         </div>
-      </div>
-
-      <div style={{ marginTop: '0' }} data-lab-terminal>
-        <button
-          type="button"
-          onClick={() => setTerminalOpen(!terminalOpen)}
-          style={{
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0.75rem 1rem',
-            background: '#1a1a2e',
-            border: '1px solid #1e293b',
-            borderRadius: terminalOpen ? '0.75rem 0.75rem 0 0' : '0.75rem',
-            color: '#f8fafc',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-          }}
-        >
-          <span>Lab Terminal</span>
-          <span>{terminalOpen ? '▼' : '▶'}</span>
-        </button>
-        {terminalOpen && (
-          <div style={{ border: '1px solid #1e293b', borderTop: 'none', borderRadius: '0 0 0.75rem 0.75rem', overflow: 'hidden' }}>
-            <InlineTerminal loadCode={loadCode} onLoadCodeConsumed={() => setLoadCode('')} rpcUrl={rpcUrl} terminalRpcUrl={terminalRpcUrl} />
-          </div>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

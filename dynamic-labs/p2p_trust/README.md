@@ -33,7 +33,7 @@ You have been given a snapshot of the system files taken *just before* these ano
 
 * `python3 ngo_sim.py score`
 * `python3 ngo_sim.py register`
-* `python3 ngo_sim.py endorse`
+* `python3 ngo_sim.py endorse` (opens a keyboard selector for endorser and endorsee)
 
 **Discussion Questions:**
 
@@ -90,9 +90,9 @@ In an unstructured network, nodes don't know exactly where files live. They must
 **Your Task:** 1. **Explore Unstructured Routing:** Run the gossip simulation. Observe how many messages are required to find a target file or broadcast information across the network.
    * `python3 gossip_demo.py --mode lookup`
    * `python3 gossip_demo.py --mode broadcast`
-2. **Master Structured Routing (Chord):** Run the DHT simulation. You will be placed at a random node on the ring. Using *only* your node's finger table, manually select the next hop to successfully route a request to a target file's hash. 
+2. **Master Structured Routing (Chord):** Run the DHT simulation. You will be placed at a random node on the ring. Using *only* your node's finger table, manually select the next hop to successfully route a request to the node responsible for a target file hash. The target `T` is a key, not usually a node address; the destination is the first node clockwise at or after `T`.
    * `python3 dht_demo.py`
-   * Can you beat the "optimal" path? Try to reach the target in the fewest hops possible by intelligently selecting the furthest valid node in your finger table that does not overshoot the target.
+   * Can you match the greedy reference path? Try to reach the target in the fewest hops possible by selecting the finger with the greatest clockwise distance from your current node that still lands before `T`. If every finger would pass `T`, take the first finger; that is your immediate successor.
 
 **Discussion Questions:**
 
@@ -119,7 +119,9 @@ The simulation will stress-test the network until it finds a scenario where a no
 
 **The Bug:** The implementation successfully checks the Routing Table for a prefix match. However, when routing to a key that does not correspond exactly to known prefixes, the logic hits a "hole" in the routing table and simply returns `None`, dropping the message.
 
-**The Fix:** Based on your understanding of the Pastry protocol's fallback mechanisms, implement the correct logic to ensure the message continues moving toward the target key even when the prefix table misses. Update the code so the network passes the stress test.
+**The Fix:** Open `pastry.py`, find `def get_next_hop(self, key)`, and replace the marked block from `# STUDENT PATCH AREA START` through `# STUDENT PATCH AREA END` with the exact code from the lab instructions. The replacement must choose the closest candidate from both the routing table and the leaf set; replacing only the final `return None` can cause an infinite loop.
+
+If editing in the terminal is painful, the lab keeps a clean backup at `~/pastry.py.original`; use the one-command patch block in the browser instructions to restore and patch it automatically.
 
 **Discussion Questions:**
 

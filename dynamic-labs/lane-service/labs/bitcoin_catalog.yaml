@@ -12,8 +12,14 @@ intro:
     title: Lab 2 · ClassNet
     summary: Join the ClassNet shared blockchain. You will publish a wallet address on your personal static site, discover peers, transact on a live network, use an automated agent to simulate congestion, and try to break the rules with a double-spend.
   - id: lab-3
-    title: Forensics Lab
-    summary: Trace a ransomware payment through layering, a CoinJoin mixer, and a peeling chain to its final cold-storage wallet. The instructor deploys a pre-built 275-block chain so the whole class investigates the same evidence. You work from the block explorer — no mining, no cli wizardry, just reading what the chain already says.
+    title: Bitcoin Forensics 1
+    summary: Trace a ransomware payment through layering, a CoinJoin mixer, and a peel-off to its final cold-storage wallet. The instructor deploys a pre-built 275-block chain so the whole class investigates the same evidence. You work from the block explorer — no mining, no cli wizardry, just reading what the chain already says.
+  - id: lab-4
+    title: Bitcoin Forensics 2
+    summary: A second ransom and a more careful operator. Combine heuristics under ambiguity — CIOH-leaky CoinJoins, smurfing, churn, unrelated-coin touches, and lookalike decoy flows — then use the headline skill, temporal analysis, to separate the batched decoys from the held-back real exit on the same pre-built chain. The Graph tool is available alongside the mempool and btc-explorer surfaces — paste an address or txid and use Expand flows, the pathfinder, and the Timeline view to trace the money visually.
+  - id: lab-5
+    title: Bitcoin Forensics 3
+    summary: 'The hardest case. Two victims, two ransoms, merged into one stake — then through two *real* multi-party CoinJoins where common-input clustering actively lies to you. The headline skill is amount-conservation against a real mix: only the conserved quantity Q threads both joins, and among one true trail and five near-identical decoy cash-outs only the trail that conserves Q is real. The decoys batch into one block; the real exit is held back. Same pre-built chain. The Graph tool is the recommended surface for this graph-centric case — use its pathfinder, "→ into graph" attach, Expand flows, the node detail panel, and the Timeline view to walk the merge, the two real mixes, the branch, and the held-back exit; the explorer and bitcoin-cli remain as fallbacks.'
   chapters:
   - id: primer-basics
     lab: lab-primer
@@ -63,26 +69,66 @@ intro:
     lab: lab-2
     title: Lab 2 · Bonus
     summary: 'Optional stretch exercises: replace-by-fee, censorship via a malicious miner, and the difficulty adjustment.'
-  - id: lab3-deploy
-    lab: lab-3
-    title: Forensics · Chain Deploy
-    summary: Watch the forensics chain arrive on your node and see why some transactions survive a reorg and others don't.
   - id: lab3-layering
     lab: lab-3
-    title: Forensics · Phase 1 · Layering
-    summary: Find the 1,000 BTC ransom transaction, follow the first hops, and identify the fan-out split.
+    title: Forensics 1 · Layering
+    summary: From the lead address, identify the CIOH-funded ransom credit — the root of the investigation.
   - id: lab3-mixer
     lab: lab-3
-    title: Forensics · Phase 2 · CoinJoin Mixer
-    summary: Spot the mixing transaction and separate equal-denomination mixed outputs from change.
+    title: Forensics 1 · The Mixer
+    summary: Spot the five-output equal-value CoinJoin, then re-link the attacker by behavior and watch the fan-out into five jittered chunks.
   - id: lab3-peeling
     lab: lab-3
-    title: Forensics · Phase 3 · Peeling Chain
-    summary: Pick the correct mixer output, then follow the peeling chain hop by hop to the consolidation wallet.
+    title: Forensics 1 · The Peel
+    summary: Trace the three-hop peel chains that shed small change at each hop while the bulk continues forward.
   - id: lab3-endline
     lab: lab-3
-    title: Forensics · Phase 4 · End of the Line
-    summary: Total the fees, explain the dust outputs, and decode the attackers' OP_RETURN taunt.
+    title: Forensics 1 · End of the Line
+    summary: Watch the five peel tips reunite into one vault, do the fee math, then decode the OP_RETURN taunt and the dust.
+  - id: lab4-layering
+    lab: lab-4
+    title: Forensics 2 · Layering
+    summary: From the new lead, find the non-round CIOH ransom and its first layering hop, then the six-way fan-out that pre-sizes the coins for the joins.
+  - id: lab4-mixer
+    lab: lab-4
+    title: Forensics 2 · The Mixer
+    summary: Defeat three 3-way CoinJoins using CIOH — the co-spent attacker inputs leak ownership despite equal outputs.
+  - id: lab4-tangle
+    lab: lab-4
+    title: Forensics 2 · The Tangle
+    summary: See through smurfing, A→B→A churn, and unrelated-coin touches with amount-conservation, then watch the pieces recombine and peel toward the cashout.
+  - id: lab4-decoys
+    lab: lab-4
+    title: Forensics 2 · The Decoys
+    summary: Surface three decoy flows that look exactly like the cashout path by value and structure.
+  - id: lab4-temporal
+    lab: lab-4
+    title: Forensics 2 · Temporal Analysis
+    summary: Use confirmation time to separate the batched decoys from the held-back real exit.
+  - id: lab4-endline
+    lab: lab-4
+    title: Forensics 2 · End of the Line
+    summary: Confirm the co-mingled cashout, recover the trace-only amount, and decode the single taunt.
+  - id: lab5-merge
+    lab: lab-5
+    title: Forensics 3 · Two Victims, One Stake
+    summary: Two CIOH ransoms land on two leads; the attacker merges both into one stake Q. Discover the second lead through the merge's inputs and fix Q as the quantity you'll conserve.
+  - id: lab5-mixer
+    lab: lab-5
+    title: Forensics 3 · Two Real Mixes
+    summary: Thread an 8-party and then a nested 7-party real CoinJoin where naive common-input clustering over-clusters honest strangers and lies. Only amount-conservation carries Q across both joins; thirteen honest peers dead-end.
+  - id: lab5-branch
+    lab: lab-5
+    title: Forensics 3 · The Branch
+    summary: After the second mix the trail layers once and then branches into the true peel-chain plus five lookalike decoy cash-out trails seeded from a separate, smaller pool.
+  - id: lab5-conservation
+    lab: lab-5
+    title: Forensics 3 · Amount-Conservation
+    summary: Use value-conservation and timing to disambiguate. Each decoy endpoint is far too small to be Q, the true cash-out re-gathers a 3-hop peel chain, and the five decoys all confirm in one block while the real exit is held back.
+  - id: lab5-endline
+    lab: lab-5
+    title: Forensics 3 · End of the Line
+    summary: Confirm the held-back real cash-out conserves Q, read the HACKY HACK HACK signature on it and the DEAD END marker on every decoy, and recover Q.
 exercises:
 - id: primer-shell-and-tmux
   chapter: primer-basics
@@ -104,9 +150,10 @@ exercises:
     ls
     cd ~
     ```
-  - Press `Ctrl+t` then `n` to open a new tab. Press `Ctrl+t` then `Left` to return to the previous one.
-  - Press `Ctrl+p` then `r` to split the screen left/right. Use `Alt+Arrow` to move between panes (on Mac use `Ctrl+p` then arrow keys). Type `exit` in the extra pane when you are done.
-  - Press `Ctrl+s` to enter scroll mode. Use the arrow keys or Page Up/Page Down, then press `Esc` to return to the live shell.
+  - Press `Ctrl+G`, then `t`, then `n` to open a new tab. Press `Ctrl+G`, then `t`, then `Left` to return to the previous one.
+  - Press `Ctrl+G`, then `p`, then `r` to split the screen left/right. Use `Alt+Arrow` to move between panes. Type `exit` in the extra pane when you are done.
+  - Press `Ctrl+G`, then `s` to enter scroll mode. Use the arrow keys or Page Up/Page Down, then press `Ctrl+G` to return to the live shell.
+  - Before opening `nano`, press `Ctrl+G` to lock zellij controls so nano shortcuts work.
   expected_observations:
   - '`pwd` reports your home directory, and `ls -a` shows normal files plus dotfiles.'
   - Zellij lets you create new tabs and panes without leaving the browser tab.
@@ -887,125 +934,700 @@ exercises:
   meaning:
   - Difficulty is Bitcoin's thermostat. Too-fast blocks raise difficulty; too-slow blocks lower it. The target block time stays roughly constant regardless of the network's total hash power.
   - On mainnet this happens every 2016 blocks with much larger swings. The mechanism — compare actual vs. expected time, scale target accordingly — is the same.
-- id: lab3-chain-arrives
-  chapter: lab3-deploy
-  title: Watch the Forensics Chain Arrive
-  goal: The instructor has deployed a pre-built 275-block chain for this exercise. Your node will discover it and reorg to it. Before you start investigating, watch that transition happen so you understand what reorg actually looks like on a node.
-  student_steps:
-  - |-
-    Tail bitcoind's debug log to watch peer gossip in real time:
-
-    ```
-    tail -f ~/.bitcoin/debug.log
-    ```
-  - |-
-    In another pane, poll the chain tip:
-
-    ```
-    watch -n 2 bitcoin-cli getblockcount
-    ```
-  - Open your mempool or btc-explorer tab — you'll see the tip jump as the new chain propagates.
-  expected_observations:
-  - The log shows `UpdateTip` lines climbing toward block 275 as peers feed you headers and blocks.
-  - '`getblockcount` ticks upward and settles at 275.'
-  - Some transactions that were in your mempool are gone — they weren't included on the new chain.
-  meaning:
-  - A reorg isn't some exotic failure mode — it's just nodes agreeing that a longer chain is the truth. Your node drops the old tip and rebuilds from the fork point.
-  - Transactions that survive a reorg are ones whose inputs are still unspent on the new chain. Anything that conflicted with a tx on the heavier chain is evicted.
-  transition: Now you have evidence. Start from the intelligence brief's starting address and follow the money.
 - id: lab3-identify-ransom
   chapter: lab3-layering
   title: Identify the Ransom TX
-  goal: 'Your intelligence brief gives you one address: `bc1qfqxlwxrpj5krtuaz9mkspvt7xrgjt3nfdvcljk`. Find the transaction where the 1,000 BTC ransom landed on it.'
+  goal: 'Your intelligence brief gives you one address: `bc1qpxa098jvglpcy82u43lpyc66h8674ztxqtcf2k`. Find the transaction where the ransom landed on it, establish the exact amount, and note *how* the transaction was funded — that funding pattern is your first piece of attribution. Work this investigation in the **mempool explorer** or **btc-explorer** from the lab toolbar: clicking through a transaction''s inputs and outputs is far faster and clearer than the command line for following the money. The `bitcoin-cli` commands shown throughout are an optional fallback for when you want to see the raw bytes.'
   student_steps:
-  - Open the btc-explorer from the lab toolbar.
-  - Search for the starting address. Read the incoming transactions until you find one that credits it with **exactly 1,000 BTC**.
-  - Record the TXID — you'll use it as the root of the investigation.
+  - Open the **btc-explorer** (or **mempool** explorer) from the lab toolbar and search for the lead address `bc1qpxa098jvglpcy82u43lpyc66h8674ztxqtcf2k`.
+  - Read the incoming transactions until you find the one large credit. Open it in the explorer and record its amount to the satoshi and record the txid — this is the root of the investigation.
+  - |-
+    In the explorer, look at the transaction's **inputs**, not just the output: click through to see how many separate coins were spent to fund it.
+
+    *(Optional — to see the raw bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction ff808f8495336f9f8c1cff121ae607813dc0e9e3e5111ef23aaa6b974d355bce 1
+    ```
+  - Count the inputs and note where they come from. Ask yourself what it means that one transaction pulls together many separate coins into a single payment.
   expected_observations:
-  - Exactly one incoming transaction matches the 1,000 BTC amount. Smaller credits are unrelated noise.
-  - The starting address has very few transactions — attackers don't reuse addresses heavily early in the flow because they want the trail to be hard to spot, not hard to read.
+  - Exactly one incoming transaction credits the lead address with **768.76397251 BTC**. Smaller credits are unrelated noise.
+  - The ransom transaction has **many inputs** co-spent into one transaction — the victim funded the payment from a pile of separate coinbase UTXOs.
+  - The lead address itself has very little history. The attacker doesn't reuse it.
   meaning:
   - 'This is how chain analysis starts in the real world: one lead address, one amount, one fingerprint on the ledger.'
-  transition: The funds won't stay. Follow the next hop.
-- id: lab3-fanout
-  chapter: lab3-layering
-  title: The Handoff and the Fan-out
-  goal: Trace the 1,000 BTC through the first hops and find the fan-out transaction that breaks the pile into smaller chunks.
-  student_steps:
-  - From the ransom TX, click through the output to the next address. Follow it until the chain splits.
-  - Record the TXID of the fan-out transaction — the one whose outputs are suddenly many small amounts instead of one large one.
-  - Count the outputs and note whether amounts are round-number equal or randomized.
-  expected_observations:
-  - The funds hop through one or two single-output wallets before fanning out — that's the classic layering pattern.
-  - The fan-out splits into ~15 chunks of roughly equal size, not random amounts. Equal chunks are a tell for automated batching.
-  meaning:
-  - Layering moves funds through enough single-use addresses to make naive address-clustering break down. Each hop is cheap but compounds the analyst's work.
-  - Equal-amount outputs are a signature of scripted cash-out tooling — humans doing this by hand would pick messier numbers.
-  transition: Follow one of those chunks until the transaction structure looks different from a normal send.
+  - Many inputs spent together in one transaction is **common-input-ownership (CIOH)** — the strongest on-chain clustering heuristic. Whoever signed this transaction controlled *every* one of those input coins. The ransom payment itself is a CIOH cluster of the victim's coins.
+  transition: The funds won't sit still. Follow the first hop into the mixer.
+  solution: |-
+    Ransom txid `ff808f8495336f9f8c1cff121ae607813dc0e9e3e5111ef23aaa6b974d355bce`, amount
+    **768.76397251 BTC** to `bc1qpxa098jvglpcy82u43lpyc66h8674ztxqtcf2k`. It is the only credit that
+    size. It is multi-input (CIOH) — many victim coinbase UTXOs co-spent into one payment, which is
+    why we can say one party funded it.
 - id: lab3-coinjoin
   chapter: lab3-mixer
   title: Spot the CoinJoin
-  goal: One of the fan-out chunks eventually enters a transaction that merges many inputs from unrelated addresses and pays out a row of identical amounts. That's a CoinJoin. Identify it, and separate the mixed outputs from the change.
+  goal: Follow the ransom forward. It enters a transaction that pays out a row of **five identical amounts**. That's a CoinJoin. Identify it and understand why it breaks your trail — and why you can't yet say which output is the attacker's.
   student_steps:
-  - Follow a fan-out output forward until you find a transaction with many inputs from different prior addresses.
-  - Look at the outputs. Several will share one identical BTC amount — those are the mixed outputs. The rest are change.
-  - Record the mixed denomination and the count of mixed vs. change outputs.
+  - In the explorer, from the ransom transaction click the output forward, hop by hop, until you reach a transaction whose outputs are several *bit-for-bit identical* amounts.
+  - |-
+    Read the output side in the explorer — the row of equal amounts is easy to spot at a glance.
+
+    *(Optional — to see the raw bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction 5738c1b5ddce04a65b76fa2871d0acc87edda70835d7607b7d6c6ce774402c22 1
+    ```
+  - Count the equal-value outputs and record the shared denomination. Note that each equal output pays a different, fresh address.
+  - 'Ask yourself: of these identical outputs, which one is the attacker''s? What on-chain fact could possibly tell you?'
   expected_observations:
-  - Inputs come from clearly different source addresses that have no prior relationship to each other on the chain.
-  - Outputs cluster around one standard denomination (e.g. 10 BTC exactly). Anything not matching that denomination is change going back to the participants.
+  - The mix has **five equal outputs of 768.76397251 BTC each** — identical to the satoshi.
+  - 'Each equal output goes to a distinct fresh address. The deterministic input→output link is gone: you know the attacker put one coin *in*, but you cannot tell which coin came *out*.'
+  - The five outputs look interchangeable on paper. Anonymity set = 5.
   meaning:
-  - CoinJoin breaks the deterministic input→output link that normal transactions have. After a CoinJoin, you can't say which input funded which mixed output from on-chain data alone.
-  - 'Change outputs still leak information: they''re the non-standard amounts, and they typically return to an address the spender controls.'
-  transition: The attackers don't cash out all mixed outputs the same way. Find the one they singled out.
+  - A CoinJoin merges inputs from (supposedly) unrelated participants and pays out a row of identical amounts, so an analyst can no longer map a given input to a given output by value or position.
+  - 'The equal-value design is the whole point: it severs the *cryptographic* link. To re-link the attacker''s coin you''ll need a different angle entirely — not the math of this transaction, but the *behavior* of the five outputs afterward.'
+  transition: Four of those five outputs are decoys. Find the one that doesn't hold still.
+  solution: |-
+    CoinJoin txid `5738c1b5ddce04a65b76fa2871d0acc87edda70835d7607b7d6c6ce774402c22`: five equal
+    outputs of **768.76397251 BTC** each. The ransom (`ff808f84…5bce`) is one of the inputs, so the
+    attacker owns exactly one of the five outputs — but value alone can't say which. Anonymity set 5.
+- id: lab3-fanout
+  chapter: lab3-mixer
+  title: Follow the Output That Won't Hold Still
+  goal: 'The CoinJoin gave you five identical outputs. Four are decoys — whale wallets that take their mixed coins to cold storage and go dormant. Only one keeps moving: the attacker''s. Find it by behavior, then identify the fan-out transaction that splits it into chunks.'
+  student_steps:
+  - In the explorer, for each of the five CoinJoin outputs, click through to its address and check what happened next. Four of them are spent **once** into cold storage and then never move again.
+  - Find the **one** output that is spent into a transaction with **many** outputs. That continuation is the attacker. Open it in the explorer and record the fan-out txid.
+  - |-
+    Read the fan-out's output amounts in the explorer.
+
+    *(Optional — to see the raw bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction 6c2feac4e9a3da08fb2e98892ae9433bc4dfb1aa310c86c8f028e64991a79cfb 1
+    ```
+  - Note whether the chunk amounts are round/equal or messy/unequal.
+  expected_observations:
+  - Four of the five mixed outputs **dead-end** (one spend to cold storage, then dormant). Exactly one continues — that's the attacker's coin, address `bc1qemlv5k5mrky8fqn5gskmqtr923qndyps4ptjgl`.
+  - The continuation is spent by a fan-out that splits into **five unequal chunks** of roughly **78.27, 145.37, 97.84, 232.03, and 215.25 BTC**.
+  - The chunk amounts are deliberately *non-round and unequal* — not a clean five-way split.
+  meaning:
+  - 'The CoinJoin broke the cryptographic link, so we re-link by **behavior**: legitimate participants park mixed coins and go quiet; a launderer can''t sit still. "Follow the output that won''t hold still" is the marquee heuristic of this lab.'
+  - The fan-out amounts are jittered on purpose. Round numbers (e.g. five clean 153.75-BTC chunks) would scream "automated split"; uneven amounts are an attempt to defeat round-number heuristics — but the *structure* (one coin in, many out) still gives the fan-out away.
+  transition: Each chunk now runs its own laundering line. Trace one to see the pattern.
+  solution: |-
+    Attacker output continues at `bc1qemlv5k5mrky8fqn5gskmqtr923qndyps4ptjgl`; the other four
+    CoinJoin outputs are spent once to cold storage and go dormant (the decoys). Fan-out txid
+    `6c2feac4e9a3da08fb2e98892ae9433bc4dfb1aa310c86c8f028e64991a79cfb` splits it into five unequal
+    chunks (~78.27, ~145.37, ~97.84, ~232.03, ~215.25 BTC). You pick the real output by motion, not
+    by value, and the jittered chunk sizes are the round-number-defeat tell.
 - id: lab3-peel-trace
   chapter: lab3-peeling
-  title: Follow the Peeling Chain
-  goal: The attackers picked exactly one of the CoinJoin outputs to feed into an automated peeling chain. Find which output, then follow the chain hop by hop, noting the peel amount and how many peels happen.
+  title: Trace the Peel Chains
+  goal: 'Each of the five fan-out chunks runs a **peel chain**: a long single-line sequence where at each hop a small amount is shaved off to a side address while the bulk continues to the next hop. Follow one chunk through its hops, identify the peels, and confirm the bulk keeps flowing forward.'
   student_steps:
-  - Investigate each CoinJoin mixed output. Most lead to simple consolidation or dead ends. One leads into a long chain of two-output transactions.
-  - 'On that chain, note that each transaction has two outputs: a small fixed ''peel'' amount and a large ''remainder'' that feeds the next hop.'
-  - Count the hops. Record the peel amount.
-  - 'At each hop decide: which output pays the miner fee — the peel address or the remainder?'
+  - 'Pick one fan-out chunk and click it forward hop by hop in the explorer. At each hop you''ll see a **two-output** transaction: a small "peel" to a fresh side address, and a large "remainder" that continues — the explorer makes the two-output shape obvious at a glance.'
+  - |-
+    Worked example — chunk 0 starts at `bc1qewhamkx46gxepc08xhf04lnh0vc279wx7scf83` (78.27404813 BTC)
+    and runs three hops. Open the first hop in the explorer and identify which output is the peel and
+    which is the remainder.
+
+    *(Optional — to see the raw bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction fbff1b588c6f24119c793c091fcc9205027fbf9dd575c2dc8204ea60eb5dab67 1
+    ```
+
+    - hop1 `fbff1b588c6f24119c793c091fcc9205027fbf9dd575c2dc8204ea60eb5dab67` peels **0.73383683 BTC**
+      to `bc1q7e45n6362j0quxry2j30yme6r55q7trpl0dkzz`; the remainder **77.53921130 BTC** continues to
+      `bc1qvvfg5eew009l6rsej38xmntgut7luj8239scmq`.
+    - hop2 `1e01734d7539e7b2e6667f04050ec7bff6f2783457a6652652ab66409834ab44` peels **0.60951092 BTC**
+      to `bc1qv68pajjdla8esnvuac0xd8wz2laytdeudy9rjd`; remainder **76.92870038 BTC** to
+      `bc1qrq9s4hvk33n3wwtsykd86mzvmavx8wr6hj46fd`.
+    - hop3 `06be16ffa22e032e684f8d7c1416f2edc909e82a4f0f2ef313dc55c0ed370e76` peels **0.38179657 BTC**
+      to `bc1qmq6fd8fvl4pvqwf9tc2kdlz42etzu5u7myskd7`; remainder **76.54590381 BTC** to
+      `bc1qf33lzgm96jg2v47364dlprlqj3vgza7zm2jw9r` — chunk 0's tip.
+  - |-
+    Count the hops. Confirm the remainder of hop *h* is the input spent by hop *h+1* — i.e. the chain
+    actually chains. Then repeat the trace on the other four chunks in the explorer (search each hop
+    txid below and click the remainder forward):
+    - chunk1 (145.36608934 BTC): `beef610803259c15b8e01e6019021755f68e27ae6badcb41f18d8b33a10fd44f`
+      → `f843f836e450c91b3fb83c35f3d9154946fa27a576057dc02469119d72835167`
+      → `e7ad195449bde691c49cbd3021414767fd816d2d06cac0830af2e299c34a32dc`
+    - chunk2 (97.84256013 BTC): `5703489a727addf95ec897b7c7c08c20e7e83b0828c7c3955793096a75effbae`
+      → `38ee39bd8653c64d882e4dc8bd51905b367e6d81965f10608eefb6e4907c7ba1`
+      → `b522a889ec4482a95ac5091fa9617e4b3bc04f2a5663b11b7cbd8714ddb5440f`
+    - chunk3 (232.02664261 BTC): `c0bd1cd1a079f84c2f9aecbdc35ac22daaaf7af317a120bc4d2adac227816e8b`
+      → `9fee52efe824691fc5cda7fb30c0702a7932668ba2ab90ff1ae049963455c44d`
+      → `d0fa4668db84c03707c79613e0c59cf1f2c57aa8dc06f50c700e84c5634d53f4`
+    - chunk4 (215.25363230 BTC): `7c1f68850372cf1f49f6a6e2f491c3c8023fc5426871fc4ba2d556eb76441a08`
+      → `dda8fbe574c100e84a63bec0b5dda836d4095f6cd9012b23b720456bcc34dda0`
+      → `53361971c9f9a3da84ba2e5f886e3fa0d910f68ddd27bd0ea2ac17e2164abce6`
+  - 'Note which output carries the miner fee: the small peel, or the large remainder.'
   expected_observations:
-  - Only one of the five-ish mixed outputs starts a peeling chain. The rest consolidate quickly.
-  - The peel amount is constant at every hop — that's the automation signature.
-  - 'The remainder output carries the fee burden: its size is `input − peel − fee`, while the peel output is always exactly the fixed amount.'
+  - Each chunk runs a **three-hop** peel chain. At every hop a small amount is peeled to a side address and the remainder continues.
+  - The remainder of one hop is the sole input to the next hop — a clean single-line chain, not a tree.
+  - The remainder output carries the fee burden; the peel amounts are small and consistent.
+  - |-
+    The five chunks start at **78.27404813, 145.36608934, 97.84256013, 232.02664261, 215.25363230 BTC**
+    and end at five tips that all feed the consolidation:
+    - `bc1qf33lzgm96jg2v47364dlprlqj3vgza7zm2jw9r` (76.54590381 BTC) — chunk 0
+    - `bc1q4drfqcnfs793te047gm5tlq34dhrfaycmxam9j` (144.24427569 BTC) — chunk 1
+    - `bc1qpe2ygendduy3p83z9t0nzwdcrau0z43fzv8lhk` (96.43269080 BTC) — chunk 2
+    - `bc1qplt2k26aqkpwtk0tp75fz8an6czd4fcvgchrr7` (230.46135177 BTC) — chunk 3
+    - `bc1q5g3gvqsg4luy8du23uc3xqtf3mn0fk5d8kqn5n` (213.59394580 BTC) — chunk 4
   meaning:
-  - Peeling chains launder behind volume thresholds. Each peel is small enough to stay under automated monitoring limits, while the 'train' keeps moving.
-  - 'The remainder-pays-fee pattern is useful for tracking: the peel output size is stable, so the chain is visually identifiable even without prior knowledge.'
-  transition: Follow the remainder to the end of the line.
+  - A long single-line chain that sheds a small amount at each hop is the classic **peeling** pattern. Each small peel is designed to stay under automated monitoring thresholds while the bulk slides onward.
+  - 'Because the bulk-pays-the-fee and the peels stay small, a peel chain is visually identifiable even before you know who''s behind it: it looks like a string of beads, each hop dropping one bead.'
+  transition: Five peel chains, five tips. Find out where they go.
+  solution: |-
+    Each of the five fan-out chunks runs its own three-hop peel chain; the continuing remainder is
+    always the input to the next hop, and the remainder pays the fee. Chunk 0 worked fully: starts at
+    `bc1qewhamkx46gxepc08xhf04lnh0vc279wx7scf83` (78.27404813 BTC) and runs hop1
+    `fbff1b588c6f24119c793c091fcc9205027fbf9dd575c2dc8204ea60eb5dab67` (peel 0.73383683 →
+    `bc1q7e45n6362j0quxry2j30yme6r55q7trpl0dkzz`, remainder 77.53921130 →
+    `bc1qvvfg5eew009l6rsej38xmntgut7luj8239scmq`) → hop2
+    `1e01734d7539e7b2e6667f04050ec7bff6f2783457a6652652ab66409834ab44` (peel 0.60951092 →
+    `bc1qv68pajjdla8esnvuac0xd8wz2laytdeudy9rjd`, remainder 76.92870038 →
+    `bc1qrq9s4hvk33n3wwtsykd86mzvmavx8wr6hj46fd`) → hop3
+    `06be16ffa22e032e684f8d7c1416f2edc909e82a4f0f2ef313dc55c0ed370e76` (peel 0.38179657 →
+    `bc1qmq6fd8fvl4pvqwf9tc2kdlz42etzu5u7myskd7`, remainder 76.54590381 →
+    `bc1qf33lzgm96jg2v47364dlprlqj3vgza7zm2jw9r`, chunk 0's tip).
+
+    The other four chains' hop txids:
+    - chunk1: `beef610803259c15b8e01e6019021755f68e27ae6badcb41f18d8b33a10fd44f` →
+      `f843f836e450c91b3fb83c35f3d9154946fa27a576057dc02469119d72835167` →
+      `e7ad195449bde691c49cbd3021414767fd816d2d06cac0830af2e299c34a32dc`
+    - chunk2: `5703489a727addf95ec897b7c7c08c20e7e83b0828c7c3955793096a75effbae` →
+      `38ee39bd8653c64d882e4dc8bd51905b367e6d81965f10608eefb6e4907c7ba1` →
+      `b522a889ec4482a95ac5091fa9617e4b3bc04f2a5663b11b7cbd8714ddb5440f`
+    - chunk3: `c0bd1cd1a079f84c2f9aecbdc35ac22daaaf7af317a120bc4d2adac227816e8b` →
+      `9fee52efe824691fc5cda7fb30c0702a7932668ba2ab90ff1ae049963455c44d` →
+      `d0fa4668db84c03707c79613e0c59cf1f2c57aa8dc06f50c700e84c5634d53f4`
+    - chunk4: `7c1f68850372cf1f49f6a6e2f491c3c8023fc5426871fc4ba2d556eb76441a08` →
+      `dda8fbe574c100e84a63bec0b5dda836d4095f6cd9012b23b720456bcc34dda0` →
+      `53361971c9f9a3da84ba2e5f886e3fa0d910f68ddd27bd0ea2ac17e2164abce6`
+
+    The five chunk starting amounts are 78.27404813, 145.36608934, 97.84256013, 232.02664261,
+    215.25363230 BTC; the five tips that feed consolidation are
+    `bc1qf33lzgm96jg2v47364dlprlqj3vgza7zm2jw9r` (76.54590381),
+    `bc1q4drfqcnfs793te047gm5tlq34dhrfaycmxam9j` (144.24427569),
+    `bc1qpe2ygendduy3p83z9t0nzwdcrau0z43fzv8lhk` (96.43269080),
+    `bc1qplt2k26aqkpwtk0tp75fz8an6czd4fcvgchrr7` (230.46135177),
+    `bc1q5g3gvqsg4luy8du23uc3xqtf3mn0fk5d8kqn5n` (213.59394580).
 - id: lab3-consolidation
   chapter: lab3-endline
-  title: Reach the Final Wallet
-  goal: The remainder ends in a consolidation wallet at `bc1qkuge49qpnsf2supeda35a3734jsqfjnnhqq72r`. Total what's there and compare to the original 1,000 BTC to back out the operation's total fees.
+  title: Reach the Vault
+  goal: The five peel chains don't stay separate. Their tips **reunite** into a single vault address. Find the consolidation transaction, confirm all five chains land there, and read what the vault holds — then do the fee math.
   student_steps:
-  - Look up the final consolidation address in the explorer.
-  - Read its total balance (or sum its incoming outputs).
-  - Compute `1000 BTC − final_balance` to derive the total fees the attackers paid across the whole operation.
+  - In the explorer, follow each of the five peel-chain tips forward by clicking the remainder output. They converge into one transaction. Record the consolidation txid.
+  - |-
+    Open it in the explorer and confirm it pulls multiple trace inputs into one address — the input list shows all five tips arriving together.
+
+    *(Optional — to see the raw bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction 9ca9c8d7f52fdade568c5c0892cfd9959e66f1a56e7e35693d98c39137c1e436 1
+    ```
+  - Search the vault address in the explorer and read its balance.
+  - Subtract the vault balance from the original ransom amount. What does the difference represent?
   expected_observations:
-  - The final balance is close to but less than 1,000 BTC.
-  - The delta is the cumulative fee cost of layering + mixing + peeling — measurable discipline tax on the launder.
+  - 'All five peel-chain tips are spent into one consolidation transaction, `9ca9c8d7f52fdade568c5c0892cfd9959e66f1a56e7e35693d98c39137c1e436`, paying the vault `bc1qe8hxxjwhwcy57mt2p5q7srkmw6j2x7yf5n6v6d`. The five inputs are exactly the five peel tips from the previous step: `bc1qf33lzgm96jg2v47364dlprlqj3vgza7zm2jw9r` (76.54590381), `bc1q4drfqcnfs793te047gm5tlq34dhrfaycmxam9j` (144.24427569), `bc1qpe2ygendduy3p83z9t0nzwdcrau0z43fzv8lhk` (96.43269080), `bc1qplt2k26aqkpwtk0tp75fz8an6czd4fcvgchrr7` (230.46135177), and `bc1q5g3gvqsg4luy8du23uc3xqtf3mn0fk5d8kqn5n` (213.59394580).'
+  - The vault holds **768.73797251 BTC** — almost exactly the ransom amount, short by about 0.026 BTC.
+  - The difference between the ransom (768.76397251) and the vault (768.73797251) is roughly 0.026 BTC.
   meaning:
-  - 'Laundering has a known cost: every hop costs a fee. Analysts can estimate operation sophistication by how much fee budget the attackers were willing to burn.'
+  - Split flows that **re-merge** into a single address betray common ownership. The CoinJoin tried to fan the trail into five indistinguishable strands; consolidating them all back into one wallet undoes that and re-clusters the attacker — fan-in / common-input-ownership again.
+  - 'The ~0.026 BTC gap is the **total fee** the attacker burned across every hop to launder the coins. Because nothing else was added or co-mingled along this trail, `ransom − vault = laundering cost` produces a clean, positive number.'
   transition: One last piece of evidence — the attackers left a message.
+  solution: |-
+    Consolidation txid `9ca9c8d7f52fdade568c5c0892cfd9959e66f1a56e7e35693d98c39137c1e436` reunites all
+    five peel tips into vault `bc1qe8hxxjwhwcy57mt2p5q7srkmw6j2x7yf5n6v6d`, balance **768.73797251
+    BTC**. The five inputs are precisely the five peel-chain tips:
+    `bc1qf33lzgm96jg2v47364dlprlqj3vgza7zm2jw9r` (76.54590381),
+    `bc1q4drfqcnfs793te047gm5tlq34dhrfaycmxam9j` (144.24427569),
+    `bc1qpe2ygendduy3p83z9t0nzwdcrau0z43fzv8lhk` (96.43269080),
+    `bc1qplt2k26aqkpwtk0tp75fz8an6czd4fcvgchrr7` (230.46135177), and
+    `bc1q5g3gvqsg4luy8du23uc3xqtf3mn0fk5d8kqn5n` (213.59394580). The balance is the ransom
+    (768.76397251) minus ~0.026 BTC of cumulative fees — the cost of the launder.
 - id: lab3-taunt
   chapter: lab3-endline
   title: Decode the OP_RETURN Taunt
-  goal: The final wallet's last outbound transaction contains an OP_RETURN message. Identify the opcode, pull the hex payload, and decode it to ASCII.
+  goal: The vault's last outbound transaction carries an OP_RETURN message and a spray of dust. Identify the opcode, pull the hex payload, decode it to ASCII, and explain the dust.
   student_steps:
-  - Open the last outbound transaction from the consolidation wallet.
-  - Among the outputs you'll see several `0.00000546 BTC` dust outputs plus one output with a zero BTC value and a script starting with an opcode.
-  - 'Record the opcode (hint: it starts with `OP_` and is the standard way to embed arbitrary data).'
+  - In the explorer, open the last outbound transaction from the vault (txid `1b7e209d16596609c68fcf482a31d09135a359858ba3e8b4566ca7b010468e02`).
+  - Among the outputs you'll see a zero-value output whose script starts with an opcode, plus several `0.00000546 BTC` dust outputs. Identify the opcode (it's the standard data-carrier opcode). The explorer renders the decoded OP_RETURN message directly, so you read the taunt right there in the explorer.
   - |-
-    Take the hex payload after the opcode and decode it:
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
 
     ```
-    echo -n <HEX> | xxd -r -p
+    bitcoin-cli getrawtransaction 1b7e209d16596609c68fcf482a31d09135a359858ba3e8b4566ca7b010468e02 1
+    ```
+  - Note the final destination address the remaining funds move to.
+  expected_observations:
+  - The opcode is `OP_RETURN`. The decoded ASCII payload is **`HACKY HACK HACK`**.
+  - There are **four 546-sat dust outputs** — the network's dust threshold, sent to wallets that didn't ask for them.
+  - The remaining funds move on to the final address `bc1qes52mtttw3ue29qgehrgm53mnpunh9d4kxtw8z`.
+  meaning:
+  - '`OP_RETURN` outputs are unspendable by design — a data-carrier opcode that writes arbitrary bytes into the chain forever. Burning a little BTC buys permanent publication; here it buys a taunt.'
+  - 'The 546-sat dust outputs are a **dusting attack**: unsolicited tiny outputs sprayed at wallets so the attacker can later watch how those wallets consolidate and cluster them by co-spend. It''s the mirror image of what you just did — using the chain''s permanence to deanonymize others.'
+  transition: Forensics 1 is closed. Forensics 2 starts from a different ransom — and the trail won't be this clean.
+  solution: |-
+    Taunt txid `1b7e209d16596609c68fcf482a31d09135a359858ba3e8b4566ca7b010468e02`, spent from the
+    vault. `OP_RETURN` payload decodes to ASCII **`HACKY HACK HACK`**; four 546-sat dust outputs are a
+    dusting attack; remaining funds land at `bc1qes52mtttw3ue29qgehrgm53mnpunh9d4kxtw8z`.
+- id: lab4-identify-ransom
+  chapter: lab4-layering
+  title: Identify the Ransom and First Hop
+  goal: 'Your brief gives you a single lead: the address `bc1qgavytp7u2kqyffefv3p0rvu2gtj02ka2hlleet`. From there you have to find everything yourself — this case does not hand you the answers. Search the lead address, find the ransom credit (note the amount is *not* a round number this time), confirm it''s CIOH-funded, and follow it through its first layering hop. As in Forensics 1, run this investigation in the **mempool explorer** or **btc-explorer** — or the **Graph tool** — from the lab toolbar: clicking through a transaction''s inputs and outputs (or plotting them on the graph) is far faster and clearer than the command line for following the money. The `bitcoin-cli` commands shown throughout are an optional fallback for when you want to see the raw bytes.'
+  student_steps:
+  - In the **Graph tool**, paste the lead address you were given into the search box to plot it and open its detail panel — or search it in **btc-explorer** (or the **mempool** explorer). Find the large incoming credit, open it, and record its amount and txid for yourself.
+  - |-
+    Confirm the ransom is multi-input by reading its input list — many separate coins co-spent into one payment. Click the ransom node in the **Graph tool** for the detail panel showing inputs/outputs, or read the input list in the explorer.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
+    ```
+  - In the **Graph tool**, use **Expand flows** (direction = forward, one hop) from the ransom — or click the output one hop forward in the explorer. The attacker moves the full amount through a single layering transaction before doing anything interesting.
+  - Record the layering hop txid for yourself.
+  expected_observations:
+  - The ransom credit is a deliberately *non-round* amount (jittered) — there is no clean round number to spot.
+  - 'The ransom transaction is multi-input (CIOH): many victim coins co-spent into one payment.'
+  - The funds move forward through exactly one layering hop before fanning out.
+  meaning:
+  - 'Jitter is the operator''s first defense: a non-round amount won''t match a "look for clean round numbers" filter. But the *amount still conserves down a flow*, so value-tracking the jittered figure you found is a precise tool later.'
+  - 'The single layering hop is textbook: move once through a fresh address to put one degree of separation between the deposit and whatever comes next.'
+  transition: The next move pre-sizes the coins for mixing. Find the split.
+  solution: |-
+    Ransom txid `e95d48d859ca53e6e2d666276e2c486923e9c0c4173924abbcb90cdead07fd0a`, amount
+    **728.12292303 BTC** (non-round, CIOH multi-input) to `bc1qgavytp7u2kqyffefv3p0rvu2gtj02ka2hlleet`.
+    First layering hop is `42a3ab0eba94f243b81450ff863f3b70e4aa8af0fb53cdc58eb69bdceb1c8972`.
+- id: lab4-fanout
+  chapter: lab4-layering
+  title: Fan-out to Six
+  goal: After the layering hop the attacker splits the coins into six chunks, sized so each pair can enter a mixing round at a common denomination. Find the fan-out and record its six outputs.
+  student_steps:
+  - In the **Graph tool**, **Expand flows** forward from the layering hop to draw the next move — or in the explorer click forward — to the transaction that splits the funds into multiple chunks. Record its txid for yourself.
+  - |-
+    Count the outputs — you're looking for the six-way fan-out. The Graph tool's expanded subtree shows the six branches at a glance; in the explorer, read the output list.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
+    ```
+  - Note the approximate chunk size. Why would an operator pre-size chunks before a CoinJoin?
+  expected_observations:
+  - The fan-out splits the layered funds into **six chunks**.
+  - The six chunk sizes all cluster near a common CoinJoin denomination that you'll meet in the next step — they're pre-sized for the joins.
+  meaning:
+  - 'Fanning out *before* the joins keeps each CoinJoin denomination small and cheap to fund, and lets the operator feed two attacker chunks into each three-way join. Pre-sizing is a planning tell: the chunks aren''t arbitrary, they''re cut to fit the mixer.'
+  transition: Six chunks, three joins. Two attacker chunks per join — and that's a mistake.
+  solution: |-
+    Fan-out txid `55cec00737582f5bb74971e0bbf033f764133d0e6d3060acf54f361ae1f24379` splits the layered
+    ransom into six chunks (~121.35 BTC each), pre-sized to the CoinJoin denomination so two attacker
+    chunks can feed each of the three joins.
+- id: lab4-coinjoins
+  chapter: lab4-mixer
+  title: Defeat Three Leaky CoinJoins
+  goal: The six chunks feed **three** 3-way CoinJoins. Each join mixes two attacker chunks with one unrelated decoy and pays out three equal outputs. Because two of the three inputs are *already attributable to the attacker*, CIOH leaks which output is the decoy. Work each join.
+  student_steps:
+  - |-
+    In the **Graph tool**, **Expand flows** forward from the six fan-out chunks (or follow them forward in the explorer) and find the three CoinJoins they feed.
+    Each join pays three equal outputs at the common denomination. Click one join node for its detail panel and look at the inputs —
+    in the graph, expand each input backward (or click each input back in the explorer) to see where it came from.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
+    ```
+  - For each join, in the **Graph tool** or the explorer check which inputs trace back to the fan-out (the attacker) and which one is unrelated. Two inputs should be attacker chunks; one is a decoy.
+  - Work all three joins the same way — locate each one, then read its inputs back to the fan-out.
+  - 'Note: the equal outputs still hide *which* output is whose within the attacker''s two — but you can discard the decoy''s share and keep tracking the attacker''s value forward.'
+  expected_observations:
+  - You find **three** 3-way CoinJoins, each fed by the six fan-out chunks.
+  - Each is 3-way with three **equal** outputs at the common denomination. In each, **two** of the three inputs trace back to the attacker's fan-out (the CIOH leak); **one** is an unrelated decoy.
+  meaning:
+  - A CoinJoin only protects you if your inputs come from *different* owners. Here the attacker co-spends two of their own chunks into each join — that's a **CIOH leak**. The two co-spent inputs reveal common ownership *despite* the equal outputs, so an analyst can attribute the attacker's share and write off the lone decoy. A weak join with self-co-spent inputs is no protection at all.
+  transition: The attacker's mixed outputs now disappear into a deliberate tangle. Don't get lost.
+  solution: |-
+    Three 3-way joins, all with three equal ~121.35 BTC outputs:
+    `a8fa0783b54db97cecaa36231ad64e1e1f6e969b7860e7a0015aaaf5f1e798fd`,
+    `77ee00e29a0e53e13ec7a019f76bb5042448566163582ed88dc674f0d55ad3db`,
+    `7f45aef83af17a968bc7ba0cb06a7c55c793c7932fa029baacc835de9fad3733`. Each co-spends **two** attacker
+    fan-out chunks plus **one** unrelated decoy input — the two co-spent attacker inputs are the CIOH
+    leak that lets you keep the attacker's value and drop the decoy's output.
+- id: lab4-tangle
+  chapter: lab4-tangle
+  title: See Through the Tangle (Smurf, Churn, Touches)
+  goal: After the joins the attacker's mixed outputs fan out into many tiny pieces (smurfing), bounce back and forth between their own wallets with no economic purpose (churn), and deliberately co-spend with unrelated coins to bait false clustering (touches). Recognize each tactic and don't chase the red herrings. Amount-conservation is your guide.
+  student_steps:
+  - |-
+    In the **Graph tool**, **Expand flows** forward from a mixed output into the **smurf** transaction (or click it forward in the explorer) — it fans out into
+    dozens of tiny ~1–10 BTC UTXOs, which the graph's expanded subtree (and the explorer's output list) shows at a glance.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
+    ```
+  - |-
+    In the **Graph tool** or the explorer, find the **churn** round-trips: a transaction that moves coins from A to B, then
+    another that moves the *same* value back B to A, netting to nothing. Look for two such loops, each
+    an out-hop followed by a return-hop that brings the same value home.
+  - In the **Graph tool** or the explorer, find the **unrelated-coin touches** — transactions that co-spend a trace UTXO alongside off-trail coins to manufacture a false cluster (a node's detail panel shows the off-trail inputs). Look for two such touches. Note them as dead ends — do not follow the off-trail inputs.
+  - Keep a running total of trace value. The churn nets to zero; the smurf preserves the sum; the touches add nothing of yours.
+  expected_observations:
+  - The smurf transaction fans out into **24+** tiny UTXOs.
+  - Two **churn** round-trips net to zero — each is an out-hop paired with a return-hop that moves the same value straight back, so nothing changed hands.
+  - Two **unrelated-coin touches** co-spend a trace UTXO next to off-trail coins to bait false clustering.
+  meaning:
+  - '**Smurfing** shatters one balance into many small UTXOs to bury the trail in volume.'
+  - '**Churn** (A→B→A with no economic purpose) is pure obfuscation; **amount-conservation** sees through it — value that leaves and comes straight back nets to zero and tells you nothing changed hands.'
+  - '**Touches** are the trap: by co-spending your trace coin next to unrelated coins, the operator invites you to mis-cluster the unrelated coins as theirs. Recognize the bait and refuse to follow the off-trail inputs.'
+  transition: The tangle recombines. Watch the pieces gather back up.
+  solution: |-
+    Smurf `ddab32a595c3e7f859dcfad09d0e576b2d3628e984042ec95c8de759d6c0081e` (24+ tiny UTXOs). Churn
+    loops net to zero:
+    `15135de008852ab3a1d2918f4d0745758def82d0d42b3932a01bea3913b8724e` ↔
+    `76666562dd528a465186139fa83288d555f6c7dc8b3f73380e4ade8a9dfe1cb2` and
+    `7935033dd4a336711d71f29215de0f2cada0390fd4e6fb77e17f7a8250e64e39` ↔
+    `aa2cefb8661a3d306ce6a9269b55a1cb81488797cb13c472b48cc21c00f6554b`. Touches
+    `ead0e60f5a7374df8c6c12ca463ec2454ed8088da94099a3fcbe5686a54bcc3e` and
+    `f9dd0a3010ee80d28a8d8ab7f4615c442c3fa22ff318496e4af0582f2feeb34c` are false-cluster bait — note
+    and ignore the unrelated inputs. Trace value is conserved across the whole tangle; only fees leak.
+- id: lab4-recombine-peel
+  chapter: lab4-tangle
+  title: Recombine and Peel
+  goal: The smurfed pieces are pulled back together, then peeled toward a cashout. Find the recombination and the peel hops, and keep your value total intact.
+  student_steps:
+  - |-
+    In the **Graph tool** or the explorer, find the **recombine** transaction that gathers the smurfed UTXOs back into a
+    consolidated amount — the node detail panel (and the explorer's input list) shows the many small pieces arriving together.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
+    ```
+  - In the **Graph tool**, **Expand flows** forward from the recombined funds and follow the **peel** hops toward the cashout (or click forward in the explorer) — at each hop a small amount is shed while the bulk continues. The pathfinder can also draw the route from the recombine to a known peel tip.
+  - Note that the recombination is itself a CIOH event — many inputs, one owner.
+  expected_observations:
+  - The recombine transaction pulls the smurf pieces back together into one consolidated amount.
+  - From the recombination the trail peels forward through its hops toward the cashout, shedding a small amount at each hop while the bulk continues.
+  meaning:
+  - Pulling the smurfed pieces back into one place is another **common-input-ownership** event — every input spent together is the same entity, which re-clusters everything the smurf tried to scatter.
+  - The peel that follows is the run-up to the exit. You're now close to the cashout — but so are three decoy flows that look just like it.
+  transition: Three flows now look identical to the real cashout path. Surface all three.
+  solution: |-
+    Recombine txid `acde5901314b60ecc090944568c42457aa7814f9b1b67b806be658643c37024a` gathers the
+    smurf pieces (CIOH). Peel continues through `b8f38798…a8880` then `65373373…5338` toward the
+    cashout.
+- id: lab4-decoys
+  chapter: lab4-decoys
+  title: Three Lookalike Flows
+  goal: There are three decoy flows that each look exactly like the real cashout path — same ~121.35 BTC size, same shape. Surface all three endpoints. You cannot yet tell which is real by structure alone; that's the point.
+  student_steps:
+  - |-
+    In the **Graph tool**, **Expand flows** forward from the peel and surface the **three lookalike flows of equal
+    size** (or work forward in the explorer). Each one ends in a final "move" transaction to a distinct endpoint address. Find all three
+    endpoints and their final-move txids for yourself.
+  - |-
+    Open each endpoint move — click the node in the **Graph tool** for its detail panel, or open it in the explorer — and read its amount and shape — all three should be the
+    same size and the same structure.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
+    ```
+  - Compare them by amount and structure. Note that nothing in the *shape* distinguishes them — you'll need a different signal in the next step.
+  expected_observations:
+  - You surface **three** decoy flows, each ending at the **same** value (equal to the CoinJoin denomination) and each landing on its own distinct endpoint address.
+  - Each decoy flow ends in a final "move" transaction; the three are paired one-to-one with the three endpoints.
+  - By value and structure the three are indistinguishable from the real cashout path.
+  meaning:
+  - Good decoys don't look like decoys — they're built to mirror the real flow exactly so that structural and value heuristics return three (or four) equally plausible candidates. When *where the money went* can't break the tie, you have to ask a different question.
+  transition: Stop asking *where* and start asking *when*. That's how you separate them.
+  solution: |-
+    Three lookalike decoy flows each end at **121.35148717 BTC**:
+    - `bc1qug47crvzmlva2k6qycymjglxjt2thfaxxvnuj9`, final move
+      `42f5f55f733caaecb442fd2b460e5c14dd794e239f5dfa33f46c40c5d3aa5c37`
+    - `bc1qrv5n3474xkry99fag26gdul7n7ct8sx6kcxkdl`, final move
+      `c7315bc2aa501d0fa8e0c6d62dd69b742adb5347dc91dcd2ed48be18247bb897`
+    - `bc1q075p27hs086nwwjw3zaaqy09vwp8ggdt50palu`, final move
+      `0f9bb38c3f2f317a03ab0b7e0ecd42893a96b2af0618d148dcb721e5486fa729`
+
+    They are structurally identical to the real cashout — value/structure can't pick the real one,
+    which sets up the temporal step.
+- id: lab4-temporal
+  chapter: lab4-temporal
+  title: The Temporal Tell
+  goal: This is the headline skill. The three decoy endpoint moves all confirm **together in one block**. The real cashout was deliberately **held** and confirms several blocks later. Read the confirming block height of each candidate and let *time* break the tie — compare the confirming block heights yourself. The **Graph tool's Timeline view** (toggle) lays the transactions out by block height left→right, which makes the batched decoys vs. the held-back exit jump out visually.
+  student_steps:
+  - 'For each of the three decoy final-move txids from the previous step, read the block height it confirmed in — toggle the **Graph tool''s Timeline view** to see the moves laid out by block height, or open each in the explorer (which shows the confirming block right on the transaction). *(Optional fallback: read `"blockhash"` from `bitcoin-cli getrawtransaction <txid> 1` and look up its height.)*'
+  - Note that all three confirm in the **same** block.
+  - Now look at the real cashout candidate's confirmation height (you'll identify the cashout txid in the next step). Compare its confirming block height to the decoys' block.
+  - 'Ask: which is more suspicious — three "different" flows that all settle in the exact same block, or one flow that waits and settles alone several blocks later?'
+  expected_observations:
+  - All three decoy endpoint moves confirm together in **one** block — batch-confirmed, clustered in time.
+  - The real cashout is held back and confirms **several blocks later** — it sits alone, off the decoy cluster.
+  - Three identical-looking flows landing in one block is itself a tell; the one that stands apart in time is the outlier.
+  meaning:
+  - '**Temporal analysis** asks *when*, not just *where*. Scripted decoys are cheap to batch, so they tend to confirm together; a careful operator deliberately delays the real exit to break it out of any cluster. Here that backfires: the three decoys cluster in one block and the real cashout sits alone several blocks later. The off-cluster delay is the giveaway — patient launderer vs. scripted decoys.'
+  - 'This is the skill that separates Forensics 2 from Forensics 1: when structure and value tie, time is the discriminator.'
+  transition: Confirm the held-back flow is the real exit, recover the amount, and read the taunt.
+  solution: |-
+    The three decoy moves
+    (`42f5f55f733caaecb442fd2b460e5c14dd794e239f5dfa33f46c40c5d3aa5c37`,
+    `c7315bc2aa501d0fa8e0c6d62dd69b742adb5347dc91dcd2ed48be18247bb897`,
+    `0f9bb38c3f2f317a03ab0b7e0ecd42893a96b2af0618d148dcb721e5486fa729`) all confirm in **block 245**.
+    The real cashout (`7e5b2ef93556e25855f3aa92aa3481a30ad597b1d4d0ab0082aca1d3611a2a06`) confirms in
+    **block 257** — a 12-block hold. The real exit is the one that stands apart in time; the batched
+    trio are the decoys.
+- id: lab4-cashout-taunt
+  chapter: lab4-endline
+  title: Cash-out, Recover the Amount, Decode the Taunt
+  goal: Confirm the held-back cashout (the one that stood apart in time) is the real exit, account for the small off-trail co-mingle so you can recover the *trace-only* amount, then decode the single OP_RETURN taunt that confirms your pick.
+  student_steps:
+  - |-
+    Open the held-back cashout candidate — click its node in the **Graph tool** for the detail panel, or open it in the explorer — and confirm it's the transaction that
+    confirmed several blocks after the decoy batch, with exactly **two** inputs — the trace tip plus
+    one small off-trail input.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
+    ```
+  - In the **Graph tool**, expand the small co-mingle input backward to its prep transaction (or click back in the explorer). Subtract that off-trail amount to recover the trace-only amount (ransom minus fees).
+  - Search the vault address — in the **Graph tool** or the explorer — that the cashout pays into and read its balance — note it's slightly *above* the ransom because of the co-mingled input you just backed out.
+  - |-
+    Open the vault's taunt transaction — click its node in the **Graph tool** and read the decoded **OP_RETURN** text in the detail panel, or open it in the explorer (which renders the decoded OP_RETURN message directly) — so you read the taunt right there.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction <txid> 1
     ```
   expected_observations:
-  - The opcode is `OP_RETURN`.
-  - The decoded ASCII is the string `Catch me if you can!`.
-  - The 546-sat dust outputs are a separate trick — a dusting attack that sends unsolicited tiny outputs to random wallets to tag them for later clustering analysis.
+  - The real cashout is the held-back transaction that confirms several blocks after the decoy batch, and it pays a single vault address.
+  - 'The cashout co-mingles exactly **two** inputs: the trace tip plus **one** small off-trail input (reached via its prep transaction). The vault total comes out slightly *above* the ransom because of that add — the trace-only amount is the ransom minus fees, which you get by backing the off-trail input out.'
+  - Funds ultimately rest at one final address.
+  - The taunt transaction carries a single `OP_RETURN` decoding to ASCII **`HACKY HACK HACK`**.
   meaning:
-  - '`OP_RETURN` outputs are unspendable by design — they''re a data-carrying opcode that lets you write arbitrary bytes into the chain forever. Burning a small amount of BTC buys permanent publication.'
-  - 'Dusting attacks are the mirror image of forensics: they pollute the chain with identifiable markers so the attacker can watch how targets consolidate and deanonymize them via co-spend heuristics.'
+  - 'The **light co-mingle** is the last subtlety: by folding in one small unrelated input the operator makes the recovered balance *almost* clean, so you must notice the off-trail add and back it out to state the true trace amount. Recovering "ransom − fees" means computing the trace-only figure, not reading the vault balance at face value.'
+  - There's exactly **one** OP_RETURN taunt, at the real cashout — no red-herring taunt on the decoys. It's the final confirmation that the time-delayed flow you picked is the right one.
+  transition: Case closed. Both ransoms trace to a vault and a `HACKY HACK HACK` taunt — Forensics 1 by structure, Forensics 2 by time.
+  solution: |-
+    Cashout txid `7e5b2ef93556e25855f3aa92aa3481a30ad597b1d4d0ab0082aca1d3611a2a06` (block 257) into
+    vault `bc1qq4llyczrmrcddxrpnsv7a0rguuj3k4endpc096`, balance **730.45740649 BTC**. Two inputs: trace
+    tip + one ~3.17 BTC off-trail input (prep `63be9456…16a32`); back that out for the trace-only
+    recovered amount (ransom 728.12292303 − fees). Final address
+    `bc1q6x0fm2kje5vp3pp3x5dzqukgh574982mhl8v8p`. Taunt txid
+    `a4ac7576fcd703f259fc738a373a4938f6c947cd8df13c72e7ed281c238ab0b5`, OP_RETURN ASCII
+    **`HACKY HACK HACK`** — the single confirming marker.
+- id: lab5-two-victims
+  chapter: lab5-merge
+  title: Two Ransoms, One Merge
+  goal: 'This case opens with a twist: there are *two* victims. Your brief gives you one lead — address `bc1qs3achyr4wxmxklw6wus29ky3wtdkflyztwethc`, where victim A''s ransom landed. The attacker did not stop there. They collected a second ransom on a different lead and then **merged both** into a single staking wallet. Find the merge, recover the hidden second lead from its inputs, and fix the merged total — call it **Q** — as the quantity you will conserve through everything that follows. This case is graph-centric: work primarily in the **Graph tool** from the lab toolbar — paste an address or txid to plot it, use **Expand flows** and the **pathfinder** to follow the money, and the **"→ into graph"** button to attach a second source wallet to what is already on the canvas. The **mempool explorer** / **btc-explorer** and the `bitcoin-cli` commands remain as secondary fallbacks.'
+  student_steps:
+  - In the **Graph tool**, paste the lead you were given, `bc1qs3achyr4wxmxklw6wus29ky3wtdkflyztwethc`, into the search box to plot it (or search it in btc-explorer / the mempool explorer). Find the one large incoming credit — victim A's ransom — and confirm via the node detail panel that it is multi-input (CIOH). Record its amount and txid.
+  - |-
+    In the **Graph tool**, **Expand flows** forward one hop from that credit (or click it forward in the explorer). It is spent into a **merge** transaction that co-spends *two* leads at once. Click the merge node for its detail panel and look at its **input** side — there are two funding inputs, not one.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction 7a07919b3cfe58469d65de5c757dd27aca059071141a8d99614f237443dc541e 1
+    ```
+  - In the **Graph tool**, expand the merge's *second* input backward to discover **lead B** — the second ransom you were never told about (or use **"→ into graph"** with lead B's address to attach it to the merge already on the canvas). Confirm via its detail panel it too is a CIOH credit, on a distinct address.
+  - Read the merge's single output in its detail panel (value in BTC). Its value is **Q = ransom A + ransom B − fee**. Record Q to the satoshi; it is the number you will follow.
+  expected_observations:
+  - 'Victim A''s ransom lands on `bc1qs3achyr4wxmxklw6wus29ky3wtdkflyztwethc` (**67.79542917 BTC**, CIOH multi-input). The merge co-spends it together with **lead B** `bc1qlh5cxjmas0ys3hsw9c8qeaz6paf9gv9dcxnljy` (**57.17505052 BTC**).'
+  - 'The merge has **two** inputs (the two leads) and **one** output, the stake `bc1q09u2llhc9p9gdwszskl69hu9un4pa9hh2wnu3u` holding **Q = 124.96947969 BTC**. The attacker has pooled both ransom payments into a single coin.'
+  - Q is non-round and is the conserved quantity for the rest of the investigation.
+  meaning:
+  - 'Two CIOH ransoms feeding one merge is itself the strongest possible attribution: the same party signed for both leads when co-spending them. The second lead was invisible from the brief alone — you only recover it by reading the merge''s inputs backward.'
+  - 'Fixing **Q** now matters because the trail is about to enter two *real* mixes where clustering will fail. Q is the one fact that survives the mixes — value is conserved (minus fees) no matter how the coins are shuffled, so Q is your thread.'
+  transition: The stake now enters a real CoinJoin — and this time the mixer does not leak.
+  solution: |-
+    Victim A's ransom is on lead A `bc1qs3achyr4wxmxklw6wus29ky3wtdkflyztwethc` (**67.79542917 BTC**, CIOH). The merge txid
+    `7a07919b3cfe58469d65de5c757dd27aca059071141a8d99614f237443dc541e` co-spends lead A with the hidden **lead B** `bc1qlh5cxjmas0ys3hsw9c8qeaz6paf9gv9dcxnljy`
+    (**57.17505052 BTC**, also CIOH) into one stake `bc1q09u2llhc9p9gdwszskl69hu9un4pa9hh2wnu3u` of
+    **Q = 124.96947969 BTC** (= 67.79542917 + 57.17505052 − 0.001 fee). The two co-spent leads attribute both
+    ransoms to one party; Q is the quantity you conserve from here on.
+- id: lab5-coinjoin1
+  chapter: lab5-mixer
+  title: The First Real CoinJoin (8-Party)
+  goal: 'The merged stake feeds an **8-party CoinJoin**: the attacker plus seven genuinely independent peer wallets, eight inputs from eight distinct owners, eight bit-for-bit equal outputs. This is a *real* mix — and that is exactly what makes it dangerous. Naive common-input clustering (CIOH) will lump all eight participants into one false entity. Resist that. Use **amount-conservation** to carry Q forward instead, and watch the seven honest peers dead-end.'
+  student_steps:
+  - |-
+    In the **Graph tool**, **Expand flows** forward from the stake into the CoinJoin (or click forward in the explorer). The expanded subtree shows the join's full shape at a glance: **eight inputs** and **eight equal outputs** at one denomination near Q.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction 05da0aaa06f45705285c7049a9f7f9bf5266ef54d1b756503669f6b56cb5988d 1
+    ```
+  - In the **Graph tool**, expand each of the eight inputs backward (or click them back in the explorer). Unlike Forensics 2's leaky joins, **every input traces to a different owner** — there is no self-co-spend to exploit. Note that **common-input clustering (CIOH) over-clusters** all eight strangers into one false entity here; do not let it.
+  - 'Identify the attacker''s output by *value-conservation*: read each equal output''s value (BTC) in the **Graph tool** detail panel — the output that continues to carry Q (minus the join fee) is the one you follow. Record the attacker''s mixed output address.'
+  - In the **Graph tool**, **Expand flows** forward from each of the other seven equal outputs (or click them forward in the explorer). Each peer spends its mixed coin **once** to cold storage and then goes dormant — seven dead-ends.
+  expected_observations:
+  - 'The join has **8 inputs from 8 distinct owners** and **8 equal outputs of 124.96847969 BTC** each. This is a true mix: there is no CIOH leak to separate attacker from peers.'
+  - The attacker's mixed output continues at `bc1q7gev63ghngw82l04ytsmuq6u58sa8xzq4f6hqe` (**124.96847969 BTC**) — picked by amount-conservation against Q, not by clustering.
+  - 'The seven honest peers each move once to cold storage and dead-end — e.g. peer 1 at `0059844567366c8a8be564187f0a02981eb9c0d2b6ad0959435e1c70c5d1ef4d` and peer 7 at `65f1060130d1aab16c52c39ffbd661bf622c0b2a802e6bc9b61c61603eaa4de9`. Following them is a CIOH false positive.'
+  meaning:
+  - '**Clustering lies on a real mix.** CIOH assumes co-spent inputs share an owner — true for an ordinary transaction, but a CoinJoin co-spends inputs from *different* owners by design. Apply CIOH here and you fabricate one eight-member entity that does not exist.'
+  - 'The only honest tool left is **amount-conservation**: Q (minus fees) must come out of the join in exactly one of the equal outputs. That conserved value is the thread; the seven peers carry their own coins off to cold storage and tell you nothing.'
+  transition: One real mix is not enough for this operator. The mixed coin feeds a second, nested join.
+  solution: |-
+    CoinJoin txid `05da0aaa06f45705285c7049a9f7f9bf5266ef54d1b756503669f6b56cb5988d` — **8 inputs / 8 distinct owners / 8 equal outputs of
+    124.96847969 BTC**. A real mix, so CIOH falsely over-clusters all eight. By amount-conservation
+    against Q the attacker's output is `bc1q7gev63ghngw82l04ytsmuq6u58sa8xzq4f6hqe` (124.96847969 BTC). The seven honest peers each
+    spend once to cold storage and dead-end (e.g. peer-1 move `0059844567366c8a8be564187f0a02981eb9c0d2b6ad0959435e1c70c5d1ef4d`,
+    peer-7 move `65f1060130d1aab16c52c39ffbd661bf622c0b2a802e6bc9b61c61603eaa4de9`).
+- id: lab5-coinjoin2
+  chapter: lab5-mixer
+  title: The Nested CoinJoin (7-Party)
+  goal: The attacker's output from the first mix is immediately fed into a **second real CoinJoin** — this one with six fresh, distinct peer wallets (seven inputs, seven equal outputs). Nesting one real mix inside another compounds the anonymity set. Only amount-conservation threads both joins; clustering remains useless. Carry Q through and watch six more peers dead-end.
+  student_steps:
+  - |-
+    In the **Graph tool**, **Expand flows** forward from the attacker's first-mix output `bc1q7gev63ghngw82l04ytsmuq6u58sa8xzq4f6hqe` into the **second** CoinJoin (or click forward in the explorer). The expanded subtree confirms its shape: **seven inputs** from seven distinct owners and **seven equal outputs**.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction 423013791b34d0f0fc2d0e26b78e36a9ca833ea411c7d4b67f89a86d51516608 1
+    ```
+  - In the **Graph tool**, expand the inputs backward (or click them back in the explorer) to verify one input is the attacker's first-mix output and the other six trace to **fresh** peer wallets — a different peer set from the first join. As with the first mix, CIOH would over-cluster all seven; ignore it.
+  - 'Pick the attacker''s output again by **amount-conservation**: read each equal output''s value in the **Graph tool** detail panel and take the one that still carries Q (minus the second join fee). Record it.'
+  - In the **Graph tool**, **Expand flows** forward from the other six equal outputs (or click them forward in the explorer); each fresh peer spends once and dead-ends — six more dead-ends.
+  expected_observations:
+  - 'The nested join has **7 inputs / 7 distinct owners / 7 equal outputs of 124.96747969 BTC** each. The attacker''s mixed output continues at `bc1qfmrzysxc95hwvtcsztgu9jx3h0vm88zpvxu8wd`.'
+  - The six peers are a fresh set (not the first join's seven); each moves once and dead-ends — e.g. peer 1 at `94969f9cf236b24d06ad1c6feeab18ee43cf4c768c2d28cb33b032e47b5485f4` and peer 6 at `3c6ee4c0af894e6a9fd9754bd1e02070769c9ee7abe3fefc3468e303568e9146`.
+  - Across both joins, **thirteen** honest peers dead-end; only the value-conserving output carries Q forward.
+  meaning:
+  - 'Nesting real mixes is a force multiplier: the anonymity set is now the product of both joins'' participants, and clustering is doubly wrong. A student who tried CIOH would now be holding a fictitious fifteen-member super-cluster.'
+  - 'Amount-conservation is unbothered by nesting. Q leaves the second join (minus one more small fee) in exactly one output. The lesson of Forensics 3 is here in full: against a *real* mix, follow the value, not the co-spends.'
+  transition: Twice mixed, the attacker's coin layers once and the trail splits into look-alikes.
+  solution: |-
+    Nested CoinJoin txid `423013791b34d0f0fc2d0e26b78e36a9ca833ea411c7d4b67f89a86d51516608` — **7 inputs / 7 distinct owners / 7 equal outputs of
+    124.96747969 BTC**. Input set is the attacker's first-mix output plus six *fresh* peers. By
+    amount-conservation the attacker's output is `bc1qfmrzysxc95hwvtcsztgu9jx3h0vm88zpvxu8wd` (124.96747969 BTC); the six peers
+    dead-end (e.g. peer-1 `94969f9cf236b24d06ad1c6feeab18ee43cf4c768c2d28cb33b032e47b5485f4`, peer-6 `3c6ee4c0af894e6a9fd9754bd1e02070769c9ee7abe3fefc3468e303568e9146`). Thirteen honest peers
+    dead-end across the two joins.
+- id: lab5-branch
+  chapter: lab5-branch
+  title: The Branch — One True Trail, Five Decoys
+  goal: After the second mix the twice-mixed coin layers once (still ≈ Q) to become the **true trail**. Independently, an off-trail funder seeds **five decoy cash-out trails** from a *separate, smaller* pool. Surface the layering hop and all five decoy endpoints. By structure the six candidates look alike — that is the trap; you will break the tie in the next chapter.
+  student_steps:
+  - |-
+    In the **Graph tool**, **Expand flows** forward from the attacker's second-mix output `bc1qfmrzysxc95hwvtcsztgu9jx3h0vm88zpvxu8wd` to the **layering** hop (or click forward in the explorer) — a single clean move that still carries ≈ Q. Record it; this is the head of the true trail.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction bdcbfb1f8e9d19cd753303dd09ebb98b5402fa574f0b73661952aac49686b3ae 1
+    ```
+  - Now survey the neighbourhood. In the **Graph tool**, keep using **Expand flows** (forward, a few hops) to surface the five **decoy cash-out trails** running in parallel — the branching subtree draws them all out — each ending in a final "move" to a distinct exchange-deposit-style endpoint. Find all five endpoints and their final-move txids.
+  - 'Note where the decoys'' value comes from: in the **Graph tool**, expand a decoy backward (or click back in the explorer) and you reach a *separate, smaller* funding pool — not the mixes, not Q. The decoys were never part of the ransom flow.'
+  - Compare the six candidates (true layer vs. five decoy endpoints) by shape alone. Note that shape does not yet separate them.
+  expected_observations:
+  - 'The true trail''s layering hop is `bdcbfb1f8e9d19cd753303dd09ebb98b5402fa574f0b73661952aac49686b3ae`, output `bc1qhlyj6uhmq37v8nnxh5cdy80ddz3jm70p39g846` holding **124.96647969 BTC** — still ≈ Q.'
+  - 'There are **five** decoy endpoints, each a final-move to its own address: `bc1qfk9wsa6kjdm2v9kmljh4963j34k6ka895w3mp2`, `bc1q70ckxysr4m2vxyec5z9q8mr8cpt77e3za6syue`, `bc1q4sn9cqmxy42nc700er0wt0237nhl2z8z3l7s06`, `bc1q2lkzxdl7h3d4tn6n6hcxmc98vv9cunv9txelzv`, `bc1qrv4wj4a5swn5legf4my7n8vzqwv53twcultesq`.'
+  - The decoys trace back to a separate, smaller pool — they are not fed by the mixes and never carried Q.
+  meaning:
+  - 'A good decoy is sourced *independently* so it cannot be excluded by provenance alone — the analyst is forced to evaluate six plausible-looking exits. This is deliberately harder than Forensics 2''s three decoys.'
+  - 'The branch is where over-eager clustering finally punishes you: if you had merged the mix participants you would now have dozens of false leads. Holding only Q keeps the search honest.'
+  transition: Stop trusting shape. Q and the clock will tell you which exit is real.
+  solution: |-
+    True trail layering hop `bdcbfb1f8e9d19cd753303dd09ebb98b5402fa574f0b73661952aac49686b3ae` → `bc1qhlyj6uhmq37v8nnxh5cdy80ddz3jm70p39g846` (**124.96647969 BTC**, ≈ Q). Five decoy
+    endpoints, each fed from a separate smaller pool: `bc1qfk9wsa6kjdm2v9kmljh4963j34k6ka895w3mp2`, `bc1q70ckxysr4m2vxyec5z9q8mr8cpt77e3za6syue`,
+    `bc1q4sn9cqmxy42nc700er0wt0237nhl2z8z3l7s06`, `bc1q2lkzxdl7h3d4tn6n6hcxmc98vv9cunv9txelzv`, `bc1qrv4wj4a5swn5legf4my7n8vzqwv53twcultesq` (final moves
+    `25f64ce218965fffd8cc800027fa3829cb91c6569228ad8170f10e3c505fc177`, `46d10211cd6287c6833696e23b9c18a14ad3a5188f7ae10f08a503bd5b86e0cc`, `b9e9bbd98b69562c0bcd11f0eb9261ced42b88cd4814bb40fbe0adfb0b7945d5`,
+    `a018a7ff1e9dd653fbebdc7059faf443f5e3e8be3d08693ab448ae658bcc4d66`, `209cb8e0ac83f70aee8b34b423ff327947c65c2c0b92511ce0662d2ae42ecb22`). Structure ties them; value and time break the tie.
+- id: lab5-conservation
+  chapter: lab5-conservation
+  title: Conserve Q and Read the Clock
+  goal: 'This is the headline skill. Two independent signals pick the real exit out of six look-alikes. First, **amount-conservation**: the true cash-out must conserve Q (≈ 124.95347969 BTC), while every decoy endpoint is only ~8.00000000 BTC — far too small to ever be Q. Second, **the clock**: the five decoys all confirm together in one block; the real cash-out is held back several blocks. The **Graph tool** carries both signals — read values in the node detail panel for conservation, and toggle the **Timeline view** (transactions laid out by block height left→right) to see the batched decoys vs. the held-back exit. Use both.'
+  student_steps:
+  - In the **Graph tool**, click each of the five decoy endpoint nodes and read the value (BTC) in the detail panel (or read the amount in the explorer). Each holds only ~**8.00000000 BTC** — an order of magnitude below Q. No decoy can conserve Q, so by value alone all five are excluded.
+  - |-
+    Find the true cash-out and read *how* it conserves Q. Its detail panel in the **Graph tool** shows it does **not** simply forward one big output — it **re-gathers a 3-hop peel chain**: the cash-out has **four inputs**, the train tip plus three peels that were shed earlier along the trail (expand them backward to see where they branched off).
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536 1
+    ```
+  - 'Add the four cash-out inputs: train tip **122.75106393** + peels **0.59654541** + **0.73626388** + **0.87960647** = **124.96347969 BTC**. Following the *largest single output* alone would have undercounted by the three peels — you must re-gather them to land back on Q.'
+  - 'For each of the five decoy final-moves, read its confirming block height — toggle the **Graph tool''s Timeline view** to lay the moves out by block height left→right (or read the block on each transaction in the explorer). All five share **one** block (323). Then read the real cash-out''s height (332) and compare: the real exit was deliberately **held back nine blocks**, off the decoy cluster — and on the Timeline it sits visibly apart from the batch.'
+  expected_observations:
+  - 'Each of the five decoy endpoints holds only ~**8.00000000 BTC**; none can conserve **Q ≈ 124.95347969 BTC**. Value alone eliminates all five.'
+  - 'The true cash-out `dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536` re-gathers a 3-hop peel chain: **four inputs** summing to **124.96347969 BTC** (train tip 122.75106393 + peels 0.59654541/0.73626388/0.87960647); minus a 0.01 fee that conserves to the vault.'
+  - 'All five decoy moves confirm in **block 323**; the real cash-out confirms in **block 332** — a **9-block hold** that sets it apart in time.'
+  meaning:
+  - '**Amount-conservation beats clustering on a real mix.** The decoys are cheap to seed but cannot be made worth Q without funding them with Q — so size alone betrays them. And re-gathering the peel chain is the subtlety: the operator shed three small peels earlier and pulls them back at the exit, so chasing only the biggest output undercounts the recovery.'
+  - '**Temporal analysis** confirms it: scripted decoys batch into one block, while the patient operator delays the real exit to break it out of the cluster. Conservation says *which value*; the clock says *which exit* — together they are decisive.'
+  transition: Confirm the held-back, Q-conserving cash-out and read the markers that close the case.
+  solution: |-
+    Each decoy endpoint holds only ~8.00000000 BTC, so none can be **Q ≈ 124.95347969 BTC** —
+    value excludes all five. The true cash-out `dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536` re-gathers a 3-hop peel chain: four inputs
+    (train tip 122.75106393 + peels 0.59654541/0.73626388/0.87960647 = 124.96347969 BTC) less a 0.01
+    fee → the vault. The five decoy moves all confirm in **block 323**; the real cash-out is held to
+    **block 332** (9-block hold).
+- id: lab5-temporal
+  chapter: lab5-conservation
+  title: Cross-Check — Time vs. Value Agree
+  goal: 'You now have two independent discriminators that must agree. Confirm explicitly that the *same* candidate wins on both: the only exit that conserves Q is also the only one held off the block-323 decoy batch. The **Graph tool** lets you check both at once — node detail panels for value, the **Timeline view** for confirmation block. When value and time point at the same transaction, your attribution is solid.'
+  student_steps:
+  - 'List your six candidates: the five decoy endpoints and the true cash-out. Tag each with (a) does it conserve Q? (read the value in the **Graph tool** detail panel) and (b) what block did it confirm in? (toggle the **Graph tool''s Timeline view**, or read the block in the explorer).'
+  - Confirm the five decoys all fail the value test (~8.00000000 BTC each) **and** all confirm together in block 323.
+  - Confirm the real cash-out is the unique candidate that both conserves Q (≈ 124.95347969 BTC after the peel re-gather) **and** sits alone in block 332.
+  - 'Ask: if value and time *disagreed*, what would that tell you? (That you mis-identified a trail — go back and recheck the conservation sum.)'
+  expected_observations:
+  - 'The five decoys fail on both axes: each is ~8.00000000 BTC (not Q) and each confirms in block 323 (batched).'
+  - 'The real cash-out passes on both axes: it conserves Q (≈ 124.95347969 BTC) and confirms alone in block 332.'
+  - Value and time agree on a single transaction — that agreement is the confirmation.
+  meaning:
+  - Two independent signals converging on one transaction is far stronger than either alone. Conservation could in principle be gamed by funding a decoy with Q; timing could in principle be coincidence. Requiring *both* makes the attribution robust.
+  - 'This is the Forensics 3 thesis in one line: when a real mix has destroyed clustering, conserved value plus confirmation time still pin the exit.'
+  transition: Both signals agree. Open the cash-out and read the operator's signature.
+  solution: |-
+    Only one candidate satisfies both tests. The five decoys each hold ~8.00000000 BTC (fail
+    conservation) and all confirm in block 323 (batched). The real cash-out `dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536` conserves
+    **Q ≈ 124.95347969 BTC** and confirms alone in block 332 — value and time agree on the same
+    transaction.
+- id: lab5-endline
+  chapter: lab5-endline
+  title: End of the Line — Recover Q and Read the Markers
+  goal: 'Close the case. Confirm the held-back, Q-conserving cash-out lands in the vault, read the operator''s **`HACKY HACK HACK`** signature riding the real exit, and verify every decoy endpoint is stamped **`DEAD END`** so reaching one is an unambiguous "not the solution". State the recovered amount Q.'
+  student_steps:
+  - |-
+    Open the real cash-out `dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536` — click its node in the **Graph tool**, or open it in the explorer — and confirm it pays the vault `bc1qp24fx94ndlzq8yy73jajxk30hxfth7nzmtsypt`. Read the vault balance — it should be **≈ 124.95347969 BTC**, i.e. Q minus the cumulative laundering fees.
+
+    *(Optional — to view the raw transaction bytes, drop to the terminal:)*
+
+    ```
+    bitcoin-cli getrawtransaction dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536 1
+    ```
+  - Read the cash-out's `OP_RETURN` output — the **Graph tool** node detail panel shows the decoded OP_RETURN text directly (or read it in the explorer) — it decodes to ASCII **`HACKY HACK HACK`**, the same signature you learned in Forensics 1 and 2. Its presence on *this* exit (and on none of the decoys) is the final confirmation.
+  - In the **Graph tool**, click one or two of the five decoy endpoint nodes and read the decoded **OP_RETURN** in the detail panel (or open them in the explorer) — confirm each carries a **`DEAD END`** marker — the operator's own label that you have *not* found the loot.
+  - 'State the recovered figure: **Q = 124.96947969 BTC** received across the two ransoms; ≈ **124.95347969 BTC** survives to the vault after fees.'
+  expected_observations:
+  - 'The real cash-out `dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536` (block 332) pays the vault `bc1qp24fx94ndlzq8yy73jajxk30hxfth7nzmtsypt`, balance **≈ 124.95347969 BTC** — Q less cumulative fees.'
+  - The cash-out carries the **`HACKY HACK HACK`** OP_RETURN signature; no decoy does.
+  - 'Every one of the five decoy endpoints (`bc1qfk9wsa6kjdm2v9kmljh4963j34k6ka895w3mp2` … `bc1qrv4wj4a5swn5legf4my7n8vzqwv53twcultesq`) is marked **`DEAD END`**.'
+  meaning:
+  - The markers are the closing handshake. After two real mixes, six look-alike exits, and a 9-block delay, the signature confirms the value-and-time pick is right, while the DEAD END stamps make every wrong turn explicit rather than a cruel trap.
+  - 'Forensics 3''s lesson, complete: clustering *lies* on a real mix, so amount-conservation (carry Q) plus temporal analysis (the held-back exit) are what recover the loot. The hard part was getting through the mixes; Q and the clock did the rest.'
+  transition: Case closed. All three ransoms trace to a vault and a `HACKY HACK HACK` taunt — Forensics 1 by structure, Forensics 2 by time, Forensics 3 by conserved value through a real mix.
+  solution: |-
+    Real cash-out txid `dbdb1eecadfe1ab420839163028cbe54f0546277b0256685c11354cbcad9e536` (block 332) → vault `bc1qp24fx94ndlzq8yy73jajxk30hxfth7nzmtsypt`, balance **≈ 124.95347969 BTC**
+    (Q minus cumulative fees). It carries the `OP_RETURN` ASCII **`HACKY HACK HACK`** signature; none
+    of the decoys do. All five decoy endpoints (`bc1qfk9wsa6kjdm2v9kmljh4963j34k6ka895w3mp2`, `bc1q70ckxysr4m2vxyec5z9q8mr8cpt77e3za6syue`,
+    `bc1q4sn9cqmxy42nc700er0wt0237nhl2z8z3l7s06`, `bc1q2lkzxdl7h3d4tn6n6hcxmc98vv9cunv9txelzv`, `bc1qrv4wj4a5swn5legf4my7n8vzqwv53twcultesq`) are stamped **`DEAD END`**. Recovered:
+    **Q = 124.96947969 BTC** across two ransoms, ≈ 124.95347969 BTC to the vault.

@@ -78,5 +78,9 @@ hlf-peerenv() {
 echo "Connected to ${HLF_TITLE}"
 RC
 
+if [[ "${HLF_SHELL_RC_ONLY:-0}" == "1" ]]; then
+  exit 0
+fi
+
 cd "${HLF_HOME_DIR}" 2>/dev/null || cd /
 exec bash --rcfile /tmp/hlf-shell-rc -i

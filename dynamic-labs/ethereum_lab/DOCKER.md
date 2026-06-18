@@ -25,6 +25,31 @@ Or with `NGINX_ENABLED=0`:
 - **Frontend**: http://localhost:5173
 - **Blockchain RPC**: http://localhost:8545
 
+## Local Full-Stack Harness
+
+Use this when validating the browser UI locally with MCP or another external browser. It runs the same Docker image and instructor entrypoint as the full stack, but uses a local bridge network instead of the platform-managed external network.
+
+```bash
+npm run harness:fullstack
+# open http://localhost:8080
+```
+
+Services exposed by the harness:
+
+- `http://localhost:8080` - all-in-one nginx route for frontend, `/rpc`, `/lab-api`, and `/ws/terminal`
+- `http://localhost:5173` - direct frontend server, useful for debugging only
+- `http://localhost:8545` - direct Hardhat RPC, useful for shell/debugging only
+- `3002-3004` - direct terminal websocket ports, normally accessed through `/ws/terminal`
+
+For browser validation, use the nginx URL, not direct `5173`. The generated Docker config points the app at `/rpc`, and that route exists on the nginx port.
+
+On ARM hosts, the harness defaults to `linux/amd64` via Docker/QEMU. Override with `ETHEREUM_HARNESS_PLATFORM=linux/arm64` only when you are intentionally validating an ARM image.
+
+```bash
+npm run harness:fullstack:down
+npm run harness:fullstack:reset  # removes harness volumes and starts fresh
+```
+
 ## Deployment Modes
 
 ### 1. Instructor Mode (Default)

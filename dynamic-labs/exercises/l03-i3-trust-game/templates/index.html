@@ -404,10 +404,10 @@
                 <div class="panel">
                     <label class="label" for="username">Your name</label>
                     <input id="username" type="text" maxlength="40" placeholder="Enter your name to join">
-                    <div class="button-row" id="standalone-menu">
+                    <div class="button-row" id="join-menu">
                         <button class="secondary" id="join-open-btn" type="button">Join open game</button>
-                        <button class="secondary" id="create-private-btn" type="button">Create private game</button>
-                        <button class="secondary" id="join-private-btn" type="button">Join private game</button>
+                        <button class="secondary hidden" id="create-private-btn" type="button">Create private game</button>
+                        <button class="secondary hidden" id="join-private-btn" type="button">Join private game</button>
                     </div>
                     <div class="field-stack hidden" id="private-room-fields">
                         <div id="private-room-code-block">
@@ -418,7 +418,7 @@
                             <button class="primary" id="join-btn">Join game</button>
                         </div>
                     </div>
-                    <p class="callout status" id="login-copy">Recommended group size is 5 to 6. In classroom mode, the instructor can optionally add agents to help a room get started.</p>
+                    <p class="callout status" id="login-copy">Recommended group size is 5 to 6. If the instructor allows it, bots can fill empty seats so you can start without waiting.</p>
                 </div>
             </div>
 
@@ -428,7 +428,6 @@
                     <div class="meta">
                         <span class="badge">Round <span id="round-number">0</span></span>
                         <span class="badge"><span id="player-count">0</span> / {{ room_max_size }} players</span>
-                        <span class="badge">Mode: <span id="mode-label">standalone</span></span>
                         <span class="badge">Reveal: <span id="reveal-label">simultaneous</span></span>
                     </div>
                     <p class="callout status" id="context-copy"></p>
@@ -438,9 +437,6 @@
                 <div class="panel">
                     <h3>Players</h3>
                     <ul class="player-list" id="player-list"></ul>
-                    <div class="button-row hidden" id="agent-fill-controls">
-                        <button class="secondary" id="agent-fill-btn" type="button">Fill empty seats with agents</button>
-                    </div>
                     <div class="button-row">
                         <button class="primary" id="start-btn" disabled>Start round</button>
                     </div>
@@ -481,7 +477,7 @@
             <div id="reveal-view" class="hidden">
                 <div class="panel">
                     <h2>Clues are being revealed</h2>
-                    <p class="status">This room is using random reveal mode. The host or instructor can reveal clues one at a time.</p>
+                    <p class="status">This room is using random reveal mode. Any player can reveal clues one at a time.</p>
                     <ul class="clue-list" id="revealed-clue-list"></ul>
                     <div class="button-row">
                         <button class="primary" id="reveal-next-btn">Reveal next clue</button>
@@ -561,7 +557,7 @@
         let resultPayload = null;
         let myRole = null;
         let latestRoomState = null;
-        let latestSettings = { mode: {{ current_mode|tojson }}, game_enabled: {{ current_game_enabled|tojson }}, reveal_mode: "random", context: "" };
+        let latestSettings = { game_enabled: {{ current_game_enabled|tojson }}, private_rooms_enabled: {{ current_private_rooms_enabled|tojson }}, agents_enabled: true, reveal_mode: "random", context: "" };
         let joinMode = requestedRoom ? "room_link" : "open";
         let playerToken = requestedPlayerToken || "";
         let attemptedResume = false;
@@ -574,8 +570,6 @@
             playerList: document.getElementById("player-list"),
             lobbyStatus: document.getElementById("lobby-status"),
             startBtn: document.getElementById("start-btn"),
-            agentFillControls: document.getElementById("agent-fill-controls"),
-            agentFillBtn: document.getElementById("agent-fill-btn"),
             qrPanel: document.getElementById("qr-panel"),
             qrImage: document.getElementById("qr-image"),
             joinLink: document.getElementById("join-link"),
@@ -605,7 +599,7 @@
             joinBtn: document.getElementById("join-btn"),
             rulesToggleBtn: document.getElementById("rules-toggle-btn"),
             rulesPanel: document.getElementById("rules-panel"),
-            standaloneMenu: document.getElementById("standalone-menu"),
+            joinMenu: document.getElementById("join-menu"),
             joinOpenBtn: document.getElementById("join-open-btn"),
             createPrivateBtn: document.getElementById("create-private-btn"),
             joinPrivateBtn: document.getElementById("join-private-btn"),
@@ -622,7 +616,6 @@
             revealNextBtn: document.getElementById("reveal-next-btn"),
             revealedClueList: document.getElementById("revealed-clue-list"),
             voteClueList: document.getElementById("vote-clue-list"),
-            modeLabel: document.getElementById("mode-label"),
             revealLabel: document.getElementById("reveal-label"),
             contextCopy: document.getElementById("context-copy")
         };
@@ -650,10 +643,6 @@
         function setRulesOpen(open) {
             els.rulesPanel.classList.toggle("hidden", !open);
             els.rulesToggleBtn.textContent = open ? "Hide rules" : "View rules";
-        }
-
-        function isHost() {
-            return players.some((player) => player.id === mySid && player.is_host);
         }
 
         function roleLabel(player) {
@@ -735,25 +724,24 @@
 
         function updateSettings(settings) {
             latestSettings = settings || latestSettings;
-            els.modeLabel.textContent = latestSettings.mode || "standalone";
             els.revealLabel.textContent = latestSettings.reveal_mode || "simultaneous";
             els.contextCopy.textContent = latestSettings.context || "";
             updateJoinModeUI();
         }
 
         function updateJoinModeUI() {
-            const standalone = latestSettings.mode === "standalone";
-            const needsJoinAction = !standalone || joinMode === "room_link" || joinMode === "join_private";
-            const needsPrivateCode = standalone && joinMode === "join_private";
-            els.standaloneMenu.classList.toggle("hidden", !standalone || joinMode === "room_link");
+            const privateRoomsAllowed = latestSettings.private_rooms_enabled !== false;
+            if (!privateRoomsAllowed && (joinMode === "create_private" || joinMode === "join_private")) {
+                joinMode = "open";
+            }
+            els.createPrivateBtn.classList.toggle("hidden", !privateRoomsAllowed);
+            els.joinPrivateBtn.classList.toggle("hidden", !privateRoomsAllowed);
+            els.joinMenu.classList.toggle("hidden", joinMode === "room_link");
+
+            const needsJoinAction = joinMode === "room_link" || joinMode === "join_private";
+            const needsPrivateCode = joinMode === "join_private";
             els.privateRoomFields.classList.toggle("hidden", !needsJoinAction);
             els.privateRoomCodeBlock.classList.toggle("hidden", !needsPrivateCode);
-
-            if (!standalone) {
-                els.joinBtn.textContent = "Join game";
-                els.loginCopy.textContent = "Recommended group size is 5 to 6. In classroom mode, the instructor can optionally add agents to help a room get started.";
-                return;
-            }
 
             els.joinOpenBtn.classList.toggle("primary", joinMode === "open");
             els.joinOpenBtn.classList.toggle("secondary", joinMode !== "open");
@@ -775,7 +763,9 @@
                 els.loginCopy.textContent = "Enter the private room code to join a specific game.";
             } else {
                 els.joinBtn.hidden = true;
-                els.loginCopy.textContent = "Join the next available open game.";
+                els.loginCopy.textContent = latestSettings.agents_enabled !== false
+                    ? "Join the next available open game. Bots can fill empty seats so you can start without waiting."
+                    : "Join the next available open game.";
             }
         }
 
@@ -803,7 +793,6 @@
                 const li = document.createElement("li");
                 const identity = player.id === mySid ? "You" : player.name;
                 const tags = [];
-                if (player.is_host) tags.push("Host");
                 if (player.is_agent) tags.push("Agent");
                 const role = roleLabel(player);
                 const status = statusLabel(player);
@@ -819,31 +808,21 @@
                 els.playerList.appendChild(li);
             });
 
-            const canToggleAgents = latestSettings.mode === "standalone" && isHost();
-            els.agentFillControls.classList.toggle("hidden", !canToggleAgents);
-            if (canToggleAgents) {
-                els.agentFillBtn.textContent = room.fill_with_agents
-                    ? "Start with only human players"
-                    : "Fill empty seats with agents";
-            }
-
-            const enoughPlayers = room.player_count >= room.min_size;
-            const projectedPlayers = room.fill_with_agents
+            const botsAllowed = latestSettings.agents_enabled !== false;
+            const projectedPlayers = botsAllowed
                 ? Math.max(room.player_count, recommendedGroupSize)
                 : room.player_count;
-            els.startBtn.disabled = projectedPlayers < room.min_size || !isHost();
+            els.startBtn.disabled = projectedPlayers < room.min_size;
             if (projectedPlayers < room.min_size) {
                 els.lobbyStatus.textContent = `Waiting for at least ${room.min_size} total players to begin.`;
-            } else if (isHost()) {
-                els.lobbyStatus.textContent = room.fill_with_agents
-                    ? "Your room is ready. Agents will fill the empty seats when the round starts."
-                    : "Your room is ready. Start the round when everyone is set.";
+            } else if (botsAllowed && room.player_count < recommendedGroupSize) {
+                els.lobbyStatus.textContent = "Ready when you are. Bots will fill the empty seats when the round starts.";
             } else {
-                els.lobbyStatus.textContent = "Your room is ready. Waiting for the host to begin.";
+                els.lobbyStatus.textContent = "Your room is ready. Start the round when everyone is set.";
             }
 
             const humanPlayers = room.players.filter((player) => player.active && !player.is_agent).length;
-            const showQr = latestSettings.mode === "standalone" && isHost() && humanPlayers === 1;
+            const showQr = humanPlayers === 1;
             els.qrPanel.classList.toggle("hidden", !showQr);
             if (showQr) {
                 const joinUrl = new URL(`${appBasePath || ""}/`, window.location.origin);
@@ -896,7 +875,7 @@
 
         function updateReveal(room) {
             renderClueList(els.revealedClueList, room.revealed_clues);
-            els.revealNextBtn.disabled = !isHost();
+            els.revealNextBtn.disabled = false;
         }
 
         function updateVoting(room) {
@@ -960,12 +939,9 @@
             if (resultIsTerminal(result)) {
                 els.playAgainBtn.textContent = "Return to main menu";
                 els.playAgainBtn.disabled = false;
-            } else if (isHost()) {
+            } else {
                 els.playAgainBtn.textContent = "Start next round";
                 els.playAgainBtn.disabled = false;
-            } else {
-                els.playAgainBtn.textContent = "Waiting for host to start next round";
-                els.playAgainBtn.disabled = true;
             }
             showView("results-view");
         }
@@ -1059,12 +1035,6 @@
             socket.emit("start_game");
         });
 
-        els.agentFillBtn.addEventListener("click", () => {
-            clearMessage();
-            const enableAgents = els.agentFillBtn.textContent === "Fill empty seats with agents";
-            socket.emit("set_fill_with_agents", { enabled: enableAgents });
-        });
-
         els.submitClueBtn.addEventListener("click", () => {
             clearMessage();
             socket.emit("submit_clue", { clue: els.clueInput.value.trim() });
@@ -1096,9 +1066,6 @@
             clearMessage();
             const activeResult = resultPayload || (latestRoomState && latestRoomState.result ? latestRoomState.result : null);
             if (activeResult && !resultIsTerminal(activeResult)) {
-                if (!isHost()) {
-                    return;
-                }
                 els.playAgainBtn.disabled = true;
                 socket.emit("start_next_round");
                 return;

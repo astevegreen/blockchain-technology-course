@@ -26,12 +26,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A team proposes a payment protocol whose algorithm is secret, but whose user keys are short and easy to guess. Which critique best reflects the lesson's shift from obscurity to modern cryptography?",
+      "question_stem": "A team proposes a payment protocol whose algorithm is secret, but whose user keys are short and easy to guess. Which critique best reflects the modern shift from security-by-obscurity to Kerckhoffs's principle?",
       "correct_answer": "The protocol should not depend on hiding the algorithm; security should rest on strong keys and public, analyzable assumptions.",
       "incorrect_answers": [
-        "The protocol is secure because the custom algorithms are hidden from the public, preventing any unauthorized reverse-engineering.",
-        "The protocol primarily depends on the secrecy of its source code and the hope that attackers cannot inspect the private binaries.",
-        "The protocol avoids mathematical validation because publishing the specification would actively assist potential network adversaries."
+        "The protocol is acceptable if reverse engineering the hidden algorithm is difficult, even though user keys are easy to guess.",
+        "The main fix is to keep the algorithm private and rotate the private binaries whenever outsiders learn implementation details.",
+        "Publishing the algorithm would be the critical risk because attackers could study validation before attempting key guesses."
       ],
       "explanation": "Modern cryptography follows the idea that algorithms can be public while security depends on secret keys, rigorous analysis, and computational hardness rather than hidden methods.",
       "difficulty_level": 3,
@@ -54,9 +54,9 @@
       "question_stem": "An attacker cannot read Alice's transaction message, but can silently change the destination address before it is processed. Which cryptographic goal is most directly violated?",
       "correct_answer": "Integrity, because the message can be altered without detection.",
       "incorrect_answers": [
-        "Confidentiality, because the observer reads the full transaction fee.",
-        "Availability, because the network continues to relay all block data.",
-        "Pseudorandomness, because the secret seed value is generated biased."
+        "Confidentiality, because the address should be hidden from outsiders.",
+        "Availability, because the network still accepts the altered payment.",
+        "Authenticity, because valid payments must reveal Alice's identity."
       ],
       "explanation": "Confidentiality concerns secrecy. The scenario is primarily about detecting unauthorized modification, which is the role of integrity.",
       "difficulty_level": 2,
@@ -79,9 +79,9 @@
       "question_stem": "A blockchain node receives a transaction claiming to spend funds from a user's account. What cryptographic property lets the node check that the transaction was authorized by the claimed account holder?",
       "correct_answer": "Authenticity, because the node must verify that the message came from the claimed source.",
       "incorrect_answers": [
-        "Confidentiality, because the node must encrypt all transactions to hide them from peers.",
-        "Compression, because the node must shrink transaction data to fit inside each block.",
-        "Obscurity, because the node must keep validation rules hidden from outside peers."
+        "Confidentiality, because peers should hide transaction details before accepting the spend.",
+        "Obscurity, because private validation rules identify which account spends are legitimate now.",
+        "Anonymity, because the node must learn the user's legal identity before checking signatures."
       ],
       "explanation": "Authenticity is about verifying the source or authority behind a message. In blockchain systems, signatures commonly support this kind of verification.",
       "difficulty_level": 3,
@@ -101,12 +101,12 @@
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "Why does the lesson treat human-generated randomness as unsafe for keys or nonces, even when the person tries to be unpredictable?",
+      "question_stem": "Why is human-generated randomness considered unsafe for keys or nonces, even when the person tries to be unpredictable?",
       "correct_answer": "Human choices tend to contain patterns and biases, so they provide less entropy than secure cryptographic use requires.",
       "incorrect_answers": [
-        "Human choices are unsafe because people usually choose strings too long for cryptographic hash functions to process.",
-        "Human choices become secure when users avoid dictionary words and append several random-looking digits to phrases.",
-        "Human choices match physical entropy sources if their selection method remains hidden from outside observers."
+        "Human choices become safe when the chooser keeps the selection strategy hidden from attackers and rotates it often.",
+        "Human choices provide enough entropy when they combine a memorable phrase with several random-looking digits.",
+        "Human choices fail because cryptographic software should treat user-selected seeds as unusable before estimating entropy."
       ],
       "explanation": "The lesson emphasizes that human intuition is not a reliable source of entropy. Secure systems need strong physical entropy and carefully designed generation processes.",
       "difficulty_level": 2,
@@ -129,9 +129,9 @@
       "question_stem": "A software component takes a short truly random seed and deterministically expands it into a long stream that attackers cannot distinguish from random output. What role is this component playing?",
       "correct_answer": "It is acting as a pseudorandom generator that stretches limited entropy into usable cryptographic randomness.",
       "incorrect_answers": [
-        "It is creating true physical randomness from deterministic calculations without requiring any external state input.",
-        "It is proving that no initial entropy is needed if the expansion algorithm is published and reviewed by the public.",
-        "It is replacing computational hardness assumptions with the security guarantees of administrative secret algorithms."
+        "It is acting as a physical entropy source that turns deterministic computation into fresh true randomness.",
+        "It is acting as a compression function that reduces the seed to a shorter digest before key generation.",
+        "It is acting as an obscurity mechanism whose security would decrease if the expansion algorithm were public."
       ],
       "explanation": "A PRG is deterministic, but when seeded with sufficient entropy it can expand that seed into output that is computationally indistinguishable from random to efficient attackers.",
       "difficulty_level": 2,
@@ -154,9 +154,9 @@
       "question_stem": "A proposed PRG is fast and expands its seed, but after observing the first few outputs an attacker can predict the rest. Which required property is missing?",
       "correct_answer": "Unpredictability, because observed outputs should not let an efficient attacker infer future outputs.",
       "incorrect_answers": [
-        "Efficiency, because the generator stretches a small seed into large output sequences extremely quickly.",
-        "Expansion, because the generator outputs more bits than the original seed value every time.",
-        "Non-repudiation, because the generator records which account requested each specific random output sequence."
+        "Fresh entropy per output, because deterministic expansion should be reseeded for each stream.",
+        "Algorithm secrecy, because public generator designs let attackers reproduce future streams from outputs.",
+        "Low throughput, because a secure generator must be slow enough to prevent attackers from sampling many streams."
       ],
       "explanation": "A secure PRG needs more than speed and expansion. Its output must remain unpredictable and indistinguishable from random to an efficient adversary.",
       "difficulty_level": 3,
@@ -179,9 +179,9 @@
       "question_stem": "A wallet uses a mathematically sound signature scheme, but its nonce generator sometimes repeats values. Why can this still be catastrophic?",
       "correct_answer": "Repeated or low-entropy nonces can reveal relationships that let attackers recover secrets despite the strength of the signature scheme.",
       "incorrect_answers": [
-        "Repeated nonces make each signature much larger, keeping otherwise valid transactions from fitting inside ordinary block size limits.",
-        "Repeated nonces only matter when the signing algorithm is kept secret from public network nodes and cannot be audited openly.",
-        "Repeated nonces are harmless because public signatures verify visible data and never depend on private signing key material."
+        "Repeated nonces mainly make signatures linkable to each other, but they do not expose information about the signing key itself.",
+        "Repeated nonces are acceptable when the messages are different, because verification checks each signature independently on its own.",
+        "Repeated nonces can be repaired by encrypting the published signatures before broadcasting the transaction to peers for validation and storage."
       ],
       "explanation": "The lesson uses randomness failures to show that weak entropy can break otherwise sound cryptographic algorithms. Security depends on correct randomness as well as correct mathematics.",
       "difficulty_level": 4,
@@ -202,12 +202,12 @@
     {
       "id": "q8",
       "question_type": "multiple_choice",
-      "question_stem": "What does it mean, in the lesson's practical framing, to say a cryptographic problem is computationally hard?",
+      "question_stem": "In practical terms, what does it mean to say a cryptographic problem is computationally hard?",
       "correct_answer": "No efficient algorithm is known for solving the problem within the assumed attacker model and available resources.",
       "incorrect_answers": [
-        "The underlying mathematical problem is logically impossible to solve under any physical circumstances or models.",
-        "The underlying problem can be solved by an attacker only if the mathematical description is kept secret from them.",
-        "The problem is hard because its input values are guaranteed to be derived from physical atmospheric random sources."
+        "The problem has a proof ruling out solutions for every input size under current and future computation models and hardware.",
+        "The problem remains hard only while its mathematical description and best known algorithms stay unpublished.",
+        "The problem is hard because honest users derive every input from physical entropy rather than software state."
       ],
       "explanation": "Computational hardness is an assumption about efficient computation, not an absolute proof that no solution can ever exist. Cryptographic security depends on those assumptions holding.",
       "difficulty_level": 3,
@@ -227,12 +227,12 @@
     {
       "id": "q9",
       "question_type": "multiple_choice",
-      "question_stem": "A student says a trustless blockchain means users do not have to trust anything at all. Which correction best matches the lesson?",
+      "question_stem": "A student says a trustless blockchain means users do not have to trust anything at all. Which correction best characterizes what 'trustless' actually means?",
       "correct_answer": "Trust is shifted from central authorities to public rules, cryptographic proofs, and computational assumptions.",
       "incorrect_answers": [
-        "Trustless means all network participants are fully anonymous, which removes any need to trust transaction senders.",
-        "Trustless means transactions are valid when most users believe the ledger history is fair and correct.",
-        "Trustless means public-key cryptography removes every assumption and operational risk from the network."
+        "Trustless means users can rely on any full node because consensus makes dishonest validation harmless.",
+        "Trustless means cryptography removes assumptions about software behavior, incentives, and network conditions.",
+        "Trustless means participant identities are hidden, so counterparties no longer need reputations or institutions."
       ],
       "explanation": "The lesson frames trustless systems as replacing institutional trust with verifiable mechanisms and assumptions. Trust is relocated, not eliminated.",
       "difficulty_level": 3,
@@ -252,12 +252,12 @@
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "In the lesson's double-spend framing, why are cryptographic primitives not enough by themselves unless nodes can independently verify the system state?",
+      "question_stem": "In the context of double spending, why are cryptographic primitives not enough by themselves unless nodes can independently verify the system state?",
       "correct_answer": "Preventing double spending requires verifiable evidence and agreement rules so independent nodes can reject conflicting histories without asking a central ledger.",
       "incorrect_answers": [
-        "Preventing double spending requires hiding transaction details until a central administrative operator reviews the signature and approves the block.",
-        "Preventing double spending requires encrypting each digital coin so that no peer node can inspect its complete history or verify the identity of its previous owner.",
-        "Preventing double spending requires users to generate unique random passwords and exchange them securely before they submit any transaction to the public network."
+        "Preventing double spending can be handled by spender signatures alone, because authorization determines which conflicting history wins without comparing ledgers.",
+        "Preventing double spending works by encrypting coin histories so peers cannot see or copy the same digital coin record when transactions relay between nodes.",
+        "Preventing double spending depends on a payment server selecting the valid history while hashes merely compress records for independent nodes to store, relay, and audit later."
       ],
       "explanation": "The double-spend problem shows why blockchain combines cryptographic evidence with consensus rules. Nodes must be able to validate authorization and history without relying on a central authority.",
       "difficulty_level": 4,
@@ -277,12 +277,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "A developer argues that a cryptographic library is secure because its unit tests cover every line of code. Based on the Boneh-Shoup preface, what is the best response?",
+      "question_stem": "A developer argues that a cryptographic library is secure because its unit tests cover every line of code. What is the best response?",
       "correct_answer": "Tests can catch implementation mistakes, but cryptographic security also requires precise models, goals, proofs, and assumptions.",
       "incorrect_answers": [
-        "Unit tests are inherently stronger than mathematical proofs because they validate the system behavior against real-world executable code.",
-        "Cryptographic software does not require active testing if it strictly implements widely known and publicly audited standard algorithms.",
-        "Security follows automatically when the protocol code is written in a modern, memory-safe programming language like Rust or Go."
+        "Full line coverage is enough if the tests include standard vectors, invalid ciphertexts, and edge cases for each primitive.",
+        "A published proof is enough for deployment, so libraries can skip tests when they implement a known primitive exactly as specified.",
+        "A memory-safe implementation language makes explicit attacker models unnecessary for cryptographic library code in production deployments."
       ],
       "explanation": "The available Boneh-Shoup preface emphasizes that ordinary testing is insufficient for cryptosystem security; assurance depends on mathematical modeling, proofs, and plausible assumptions. The assigned Chapter 1 body was not available, so this question is limited to that preface-grounded target.",
       "difficulty_level": 3,
@@ -304,12 +304,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A system uses a strong encryption primitive, but the protocol specification accidentally reuses values in a way the proof never allowed. Which reading-grounded lesson does this illustrate?",
+      "question_stem": "A system uses a strong encryption primitive, but the protocol specification accidentally reuses values in a way the proof never allowed. Which principle about cryptographic security does this illustrate?",
       "correct_answer": "Cryptography is brittle because a specification or implementation mistake can invalidate the security argument.",
       "incorrect_answers": [
-        "Cryptography is robust because strong primitives automatically secure any complex distributed protocol that uses them.",
-        "Cryptography is mainly secrecy, so protocol details matter only when the transaction database is public.",
-        "Cryptography is secure if implementation tests pass, regardless of the underlying formal proof model."
+        "Using a strong primitive is enough when the protocol calls it in a consistent format across messages.",
+        "Protocol details matter mainly for confidentiality, while proofs handle integrity failures separately.",
+        "Conformance tests can substitute for the proof model when the implementation matches the written spec."
       ],
       "explanation": "The Boneh-Shoup preface highlights brittleness: even strong cryptographic ideas can fail when specification, implementation, or usage diverges from the model being analyzed.",
       "difficulty_level": 3,
@@ -330,12 +330,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "Two proposals both claim to be secure. Proposal A says only that it is secure; Proposal B states the goal, attacker model, construction, proof sketch, and assumptions. Why is Proposal B closer to the reading's method?",
+      "question_stem": "Two proposals both claim to be secure. Proposal A says only that it is secure; Proposal B states the goal, attacker model, construction, proof sketch, and assumptions. Why is Proposal B closer to a rigorous cryptographic methodology?",
       "correct_answer": "It makes the security claim precise enough to analyze and ties the claim to explicit assumptions.",
       "incorrect_answers": [
-        "It avoids relying on assumptions by presenting a simplified formal proof sketch for review.",
-        "It is secure because longer mathematical descriptions are much harder for attackers to compromise.",
-        "It replaces implementation correctness by establishing a formal security statement for analysis."
+        "It is stronger because the proof sketch removes the need to name any computational assumptions separately.",
+        "It is stronger because notation by itself prevents attackers from finding implementation weaknesses.",
+        "It is stronger because implementation errors are outside the security claim once the model is written."
       ],
       "explanation": "The reading's method is to define precise security goals, present constructions, and analyze them with proofs under plausible assumptions. The available preface supports this source-grounded target.",
       "difficulty_level": 4,

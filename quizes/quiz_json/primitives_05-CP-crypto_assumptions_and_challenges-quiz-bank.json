@@ -39,9 +39,9 @@
       "question_stem": "A blockchain protocol hardcodes one hash function into every address, transaction, and smart-contract verification rule. Years later, practical collision attacks appear against that hash. Which design failure does this best illustrate?",
       "correct_answer": "The protocol lacked cryptographic agility, so replacing a weakened primitive became a consensus and migration problem.",
       "incorrect_answers": [
-        "The protocol lacked zero-knowledge proofs, so validating a private transaction became a computational and storage problem.",
-        "The protocol neglected symmetric key entropy, so generating a secure address became a mathematical and search space problem.",
-        "The protocol ignored formal security bounds, so decapsulating a stolen ciphertext became a decryption and leakage problem."
+        "The protocol exposed hash outputs in addresses, so the failure was mainly confidentiality leakage rather than migration planning.",
+        "The protocol omitted zero-knowledge proofs, so collision resistance needed to be hidden from verifiers rather than upgraded.",
+        "The protocol tied validation to consensus, so the weakened hash could be fixed by rotating wallet private keys instead."
       ],
       "explanation": "The lesson emphasizes that cryptographic assumptions decay over time. Systems should be designed to deprecate and migrate away from weakened primitives rather than assuming one algorithm will remain safe forever.",
       "difficulty_level": 3,
@@ -61,12 +61,12 @@
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "A security review considers quantum risk for two systems: one uses RSA signatures, and the other uses AES with a longer key. Which lesson-grounded comparison is most accurate?",
+      "question_stem": "A security review considers quantum risk for two systems: one uses RSA signatures, and the other uses AES with a longer key. Which comparison is most accurate?",
       "correct_answer": "Shor's algorithm threatens RSA's underlying math and requires replacement, while Grover's algorithm weakens symmetric keys in a way that can be mitigated with larger parameters.",
       "incorrect_answers": [
-        "Grover's algorithm threatens RSA's underlying math and requires full replacement, while Shor's algorithm weakens symmetric keys in a way that can be fixed with larger parameters.",
-        "Shor's algorithm weakens symmetric keys and requires replacement, while Grover's algorithm attacks RSA math in a way that can be mitigated with larger parameters.",
-        "Shor's algorithm threatens FHE noise budgets and requires bootstrapping, while Grover's algorithm weakens asymmetric keys in a way mitigated with hybrid signatures."
+        "Grover's algorithm is the main threat to RSA signatures and calls for new public-key math, while Shor's algorithm gives a quadratic search speedup against AES keys.",
+        "Shor's algorithm only reduces AES's effective key length, while Grover's algorithm breaks RSA signatures by exploiting number-theoretic structure in public keys.",
+        "Both RSA signatures and AES with longer keys are mainly threatened by Shor's period finding, so each system needs replacement with post-quantum assumptions instead of parameter tuning."
       ],
       "explanation": "The lesson distinguishes targeted quantum impacts: Shor's algorithm breaks factoring and discrete-log assumptions used by RSA/ECC-style public-key systems, while Grover's algorithm gives a quadratic search speedup against symmetric keys and hashes.",
       "difficulty_level": 3,
@@ -90,9 +90,9 @@
       "question_stem": "A blockchain team plans to move from current elliptic-curve signatures to a lattice-based post-quantum signature scheme. What practical consequence should they expect to evaluate?",
       "correct_answer": "Larger public keys or signatures may increase transaction size, bandwidth pressure, fees, and verification costs.",
       "incorrect_answers": [
-        "Weaker random seeds or generators may decrease address entropy, brute-force pressure, keys, and validation rounds.",
-        "Faster cryptographic hashes or encryptions may reduce execution time, computational pressure, size, and storage costs.",
-        "Longer classical hashes or parameters may eliminate collision risk, dictionary pressure, seeds, and decryption costs."
+        "Smaller lattice signatures may cut transaction size, bandwidth, fees, and validator verification work during migration.",
+        "Replacing ECC may remove signatures from transactions, lowering block-space use and validation overhead for nodes.",
+        "Switching to lattices may let old wallets verify new signatures directly, avoiding consensus coordination during a rollout."
       ],
       "explanation": "The lesson frames PQC migration as an engineering tradeoff, not just an algorithm swap. Larger keys/signatures and verification overhead can affect block space, network traffic, fees, and validation performance.",
       "difficulty_level": 4,
@@ -116,9 +116,9 @@
       "question_stem": "Why might a blockchain migration plan use hybrid signatures that require both a classical signature and a post-quantum signature during a transition period?",
       "correct_answer": "They let systems preserve compatibility with existing trust assumptions while adding protection against future quantum attacks.",
       "incorrect_answers": [
-        "They let nodes bypass verification with standard block validation while storing transactions against potential network delays.",
-        "They force wallets to encrypt addresses with symmetric cipher functions while sending proofs against future decryption risks.",
-        "They allow miners to generate blocks with constant proof requirements while checking hashes against potential double spends."
+        "They let nodes accept either signature, so transactions remain valid if one signature scheme breaks under quantum pressure.",
+        "They compress post-quantum signatures by wrapping them with ECDSA, reducing block space while preserving legacy wallets.",
+        "They put quantum protection in wallet seed rotation, leaving consensus rules and signature checks unchanged for nodes."
       ],
       "explanation": "Hybrid signatures are presented as a gradual migration strategy. They reduce transition risk by combining current deployment compatibility with a post-quantum protection path.",
       "difficulty_level": 3,
@@ -142,9 +142,9 @@
       "question_stem": "A cloud service wants to compute a risk score over encrypted customer records without ever seeing the plaintext records. Which primitive matches that goal?",
       "correct_answer": "Fully homomorphic encryption, because it allows computation directly on ciphertexts and returns an encrypted result.",
       "incorrect_answers": [
-        "A zero-knowledge proof, because it verifies validity directly on inputs and generates a non-interactive proof.",
-        "A digital signature, because it validates identity directly on messages and creates a cryptographically secure tag.",
-        "A cryptographic hash, because it compresses data directly on blocks and produces a fixed-size deterministic string."
+        "A zero-knowledge proof, because it lets the server derive the score from a proof without reading plaintext.",
+        "A standard encryption scheme, because the server can decrypt records briefly, compute the score, then re-encrypt.",
+        "A cryptographic hash, because the service can score fixed digests while preserving enough data for comparison."
       ],
       "explanation": "The lesson distinguishes FHE from ordinary encryption and from ZKPs. FHE enables an untrusted party to compute on encrypted data, while only the key holder can decrypt the final result.",
       "difficulty_level": 3,
@@ -165,12 +165,12 @@
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "In an FHE system, repeated operations on ciphertext introduce noise. What is bootstrapping meant to accomplish in the lesson's high-level framing?",
+      "question_stem": "In an FHE system, repeated operations on ciphertext introduce noise. At a high level, what is bootstrapping meant to accomplish?",
       "correct_answer": "It refreshes or cleans noisy ciphertexts so more homomorphic operations can be performed.",
       "incorrect_answers": [
-        "It converts normal signatures so post-quantum verifications can be skipped later.",
-        "It shrinks large public keys so less communication bandwidth gets consumed by nodes.",
-        "It hides weak seed entropy so deterministic wallet addresses cannot be guessed later."
+        "It decrypts ciphertexts briefly so the server can reset errors before continuing.",
+        "It converts noisy ciphertexts into hashes so later operations are easier to verify.",
+        "It replaces the secret key whenever ciphertext noise grows beyond the circuit limit."
       ],
       "explanation": "The lesson identifies bootstrapping as a mechanism that cleans accumulated noise from FHE ciphertexts, supporting continued computation over encrypted data.",
       "difficulty_level": 2,
@@ -193,9 +193,9 @@
       "question_stem": "A user proves to a verifier that they know a valid password for a system, but the verifier learns nothing about the password itself. Which zero-knowledge property is being highlighted?",
       "correct_answer": "Zero-knowledge, because the verifier is convinced without learning the secret witness.",
       "incorrect_answers": [
-        "Completeness, because the verifier is satisfied without verifying the entire statement.",
-        "Soundness, because the verifier is protected without exposing the underlying signature.",
-        "Agility, because the verifier is optimized without changing the underlying cryptographic hash."
+        "Completeness, because it limits what the verifier learns while accepting a valid proof.",
+        "Soundness, because it stops a dishonest verifier from extracting the password witness alone.",
+        "Authorization, because the verifier grants access after receiving a reused password proof."
       ],
       "explanation": "The zero-knowledge property says the proof reveals no underlying secret beyond the truth of the statement. Completeness and soundness address acceptance of true claims and rejection of false ones.",
       "difficulty_level": 2,
@@ -218,9 +218,9 @@
       "question_stem": "A prover repeatedly convinces a verifier of a true statement when both follow the protocol, but a dishonest prover should not be able to convince the verifier of a false statement except with negligible probability. Which pair of ZKP properties is described?",
       "correct_answer": "Completeness for true statements and soundness against false statements.",
       "incorrect_answers": [
-        "Zero-knowledge for true statements and anonymity against false statements.",
-        "Bootstrapping for true statements and agility against false statements.",
-        "Collision resistance for true statements and entropy against false statements."
+        "Zero-knowledge for hidden witnesses and privacy against false claims.",
+        "Soundness for true statements and completeness against false claims.",
+        "Completeness for hidden witnesses and zero-knowledge against false claims."
       ],
       "explanation": "Completeness means honest proofs of true statements verify. Soundness means false statements cannot be successfully proven except with very small probability.",
       "difficulty_level": 3,
@@ -244,9 +244,9 @@
       "question_stem": "A blockchain application wants users to prove their transactions obey validity rules without revealing sender, receiver, or amount. Another application wants to bundle many transactions and publish a compact proof that the batch was processed correctly. How should these use cases be classified?",
       "correct_answer": "The first is a privacy use of ZKPs, and the second is a scalability use such as a ZK rollup.",
       "incorrect_answers": [
-        "The first is a storage use of CSPRNGs, and the second is a key-recovery use like a seed phrase.",
-        "The first is a network use of lattices, and the second is an AES encryption task for nodes.",
-        "The first is a routing use of hybrids, and the second is an agility use such as SHA migration."
+        "The first is a scalability use of ZKPs, and the second is a privacy use such as shielded payments.",
+        "The first is an FHE use for encrypted computation, and the second is data availability.",
+        "Both are confidentiality uses of FHE, since each keeps transaction data encrypted during validation."
       ],
       "explanation": "The lesson gives two blockchain-facing ZKP applications: shielded transactions use proofs for privacy, while ZK rollups use proofs to support scalable verification of off-chain computation.",
       "difficulty_level": 3,
@@ -270,9 +270,9 @@
       "question_stem": "A wallet generates private keys by seeding a normal programming-language PRNG with the current timestamp, then hashing the output several times. What is the best diagnosis?",
       "correct_answer": "The key generation is still weak because hashing a predictable seed does not create the missing entropy.",
       "incorrect_answers": [
-        "The key generation is safe because hashing a predictable seed hides the original timestamp value.",
-        "The key generation is robust because hashing a predictable seed repairs the weak CSPRNG state.",
-        "The key generation is optimal because hashing a predictable seed protects the post-quantum signature key."
+        "The key generation is secure if the hash function is collision resistant, because the timestamp is hidden.",
+        "The key generation mainly fails because repeated hashing shortens keys below the wallet's target size.",
+        "The key generation can be repaired by adding hash rounds after the predictable PRNG output before key derivation."
       ],
       "explanation": "The lesson stresses that entropy must come from the initial source. Hashing can obscure a weak seed, but it does not make a timestamp-sized search space resistant to brute force.",
       "difficulty_level": 4,
@@ -293,12 +293,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "According to the reading, why is Shor's algorithm a different kind of threat from Grover's algorithm?",
+      "question_stem": "Why is Shor's algorithm a different kind of threat from Grover's algorithm?",
       "correct_answer": "Shor's algorithm exploits structure in factoring and discrete-log problems, while Grover's algorithm gives a square-root speedup for exhaustive search.",
       "incorrect_answers": [
-        "Grover's algorithm exploits structure in factoring and discrete-log problems, while Shor's algorithm gives a square-root speedup for exhaustive searches.",
-        "Shor's algorithm weakens margins in symmetric systems, while Grover's algorithm provides an exponential speedup for public-key signature generation.",
-        "Shor's algorithm bypasses key storage in cloud environments, while Grover's algorithm introduces an asymmetric speedup for key verification checks."
+        "Grover's algorithm exploits structure in factoring and discrete-log problems, while Shor's algorithm gives a square-root speedup against symmetric keys and hashes.",
+        "Shor's algorithm gives a quadratic brute-force speedup, while Grover's algorithm breaks RSA and ECC through period finding on public parameters.",
+        "Both algorithms are generic search methods; Shor mainly affects block-cipher keys, while Grover mainly affects public signatures and key exchange."
       ],
       "explanation": "The reading supports the conceptual contrast: Grover reduces exhaustive-search cost, while Shor uses period-finding ideas to attack factoring and discrete logarithms.",
       "difficulty_level": 3,
@@ -319,12 +319,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "An organization encrypts records today that must remain confidential for decades. According to the reading, why can this create post-quantum urgency even before large quantum computers exist?",
+      "question_stem": "An organization encrypts records today that must remain confidential for decades. Why can this create post-quantum urgency even before large quantum computers exist?",
       "correct_answer": "An adversary can store ciphertext now and try to decrypt it later if future quantum capabilities break the assumptions used today.",
       "incorrect_answers": [
-        "An administrator can update keys now and try to rotate them later if new cryptanalytic attacks compromise the protocols used today.",
-        "An implementer can change software now and try to patch it later if weak entropy generators undermine the seeds used today.",
-        "An observer can capture signatures now and try to forge them later if future network protocols discard the validations used today."
+        "Future quantum machines would speed up key rotation, so the urgency is operational planning rather than protecting stored ciphertext.",
+        "Old ciphertexts may lose integrity metadata over decades, so the concern is auditability rather than future decryption attacks.",
+        "Archived records become risky only after users publish post-quantum keys, because old encrypted data is otherwise isolated."
       ],
       "explanation": "The reading highlights long-lived confidentiality: ciphertext captured today may still be valuable when future quantum attacks become practical, so long-horizon secrets may need post-quantum protection before those machines exist.",
       "difficulty_level": 3,
@@ -345,12 +345,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "A protocol designer says, \"If a post-quantum key exchange is mathematically stronger against quantum attacks, deployment should be a drop-in upgrade.\" Which reading-grounded response is best?",
+      "question_stem": "A protocol designer says, \"If a post-quantum key exchange is mathematically stronger against quantum attacks, deployment should be a drop-in upgrade.\" Which response is best?",
       "correct_answer": "The reading notes that post-quantum key exchange can require more traffic than Diffie-Hellman, so migration has deployment costs as well as security benefits.",
       "incorrect_answers": [
-        "The reading states that post-quantum signatures can require more computation than elliptic curves, so transition has integration costs as well as storage benefits.",
-        "The reading assumes that post-quantum key exchange needs less coordination than classical systems, so implementation mainly has compatibility gains.",
-        "The reading explains that post-quantum key exchange can require less bandwidth than Diffie-Hellman, so migration has zero deployment costs and maximum benefits."
+        "The reading says post-quantum key exchange reduces traffic compared with Diffie-Hellman, so deployment costs are mostly bandwidth savings for clients.",
+        "The reading treats stronger quantum assumptions as enough for compatibility, so migration mainly swaps labels on existing Diffie-Hellman messages in deployed protocols.",
+        "The reading's traffic concern applies only after large quantum computers exist, so early migration has no bandwidth or operational tradeoff for implementers."
       ],
       "explanation": "The reading supports a general deployment tradeoff: post-quantum key exchange can require more traffic than efficient classical Diffie-Hellman, so migration has bandwidth and operational costs as well as security benefits.",
       "difficulty_level": 4,

@@ -41,7 +41,7 @@ user@container:~$ pwd
 
 * **`cat <file>`**: Dumps the entire content of a file to the screen. Good for short files.
 * **`less <file>`**: Opens a file in a scrollable viewer. Press `q` to exit.
-* **`nano <file>`**: A beginner-friendly text editor.
+* **`nano <file>`**: A beginner-friendly text editor. Before opening nano, press `Ctrl+G` to lock zellij controls so nano shortcuts work.
 * To save: Press `Ctrl+O`, then `Enter`.
 * To exit: Press `Ctrl+X`.
 
@@ -59,31 +59,32 @@ Because you are accessing this lab through a single browser tab, we use **zellij
 
 ### **What is zellij?**
 
-Zellij manages multiple terminal views in one window. Unlike other multiplexers, it shows available keybindings in a **status bar** at the bottom of the screen — you do not need to memorize commands.
+Zellij manages multiple terminal views in one window. Press **`Ctrl + G`** to switch between zellij controls and locked shell input. Before opening nano, press **`Ctrl + G`** to lock zellij controls so nano shortcuts work.
 
 ### **Cheatsheet**
 
 | Action | Shortcut | Description |
 | --- | --- | --- |
-| **New pane** | **`Alt + n`** | Opens a new pane next to the current one. On Mac use **`Ctrl + p`** then **`n`**. |
-| **Navigate panes** | **`Alt + Arrow Keys`** | Moves focus between panes (crosses to the next tab at the edge). On Mac use **`Ctrl + p`** then arrow keys. |
-| **Pane mode** | **`Ctrl + p`** | Enters pane mode: **`r`** splits right, **`d`** splits down, **`x`** closes the pane. |
-| **Tab mode** | **`Ctrl + t`** | Enters tab mode: **`n`** creates a new tab, **`Left/Right`** switches tabs. |
-| **Scroll mode** | **`Ctrl + s`** | Enters scroll mode. Use arrows or Page Up/Down to read history. Press `Esc` to return. |
+| **Toggle controls** | **`Ctrl + G`** | Switches between zellij controls and locked shell input. Use this before nano so editor shortcuts work. |
+| **New pane** | **`Alt + n`** | Opens a new pane next to the current one. |
+| **Navigate panes** | **`Alt + Arrow Keys`** | Moves focus between panes. |
+| **Pane mode** | **`Ctrl + G`**, then **`p`** | Enters pane mode: **`r`** splits right, **`d`** splits down, **`x`** closes the pane. |
+| **Tab mode** | **`Ctrl + G`**, then **`t`** | Enters tab mode: **`n`** creates a new tab, **`Left/Right`** switches tabs. |
+| **Scroll mode** | **`Ctrl + G`**, then **`s`** | Enters scroll mode. Use arrows or Page Up/Down to read history. Press `Ctrl + G` to return to the shell. |
 
 ### **Example: Splitting and Merging**
 
-1. **Split:** Press `Ctrl + p` then `r`. You now have a left and right pane.
+1. **Split:** Press `Ctrl + G`, then `p`, then `r`. You now have a left and right pane.
 2. **Work:** Run `tail -f ~/.bitcoin/debug.log` in the right pane to watch logs while you type commands in the left.
-3. **Merge (Unsplit):** When finished with the logs, type `exit` in the right pane (or press `Ctrl + p` then `x`). The pane will disappear, and your left pane will expand to fill the screen again.
+3. **Merge (Unsplit):** When finished with the logs, type `exit` in the right pane (or press `Ctrl + G`, then `p`, then `x`). The pane will disappear, and your left pane will expand to fill the screen again.
 
 ### **Scrolling**
 
 Terminals don't scroll like web pages. To scroll up in zellij:
 
-1. Press **`Ctrl + s`** to enter scroll mode.
+1. Press **`Ctrl + G`**, then **`s`** to enter scroll mode.
 2. Use **Arrow Keys** or **Page Up/Down** to scroll through history.
-3. Press **`Esc`** to leave scroll mode and start typing again.
+3. Press **`Ctrl + G`** to return to the shell.
 
 ---
 

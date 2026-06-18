@@ -1,8 +1,12 @@
 #!/usr/bin/env node
-// Derive the configured deterministic student account pool from the canonical hardhat
-// mnemonic, fund any with low balance from accounts[0], and write the
+// Derive the configured student account pool, fund any with low balance from
+// accounts[0], and write the
 // pool to /app/frontend/dist/api/student-pool.json so lane-service
 // can fetch it over HTTP on first claim.
+//
+// By default the pool mnemonic is generated fresh on each instructor chain boot
+// so station wallets do not carry on-chain history across classroom resets. Set
+// POOL_MNEMONIC only when reproducible addresses are explicitly needed.
 //
 // The hardhat node funds accounts 0-19 by default. We re-fund any
 // pool address whose balance is below TARGET_FUND_ETH so that
@@ -10,6 +14,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { ethers } = require("hardhat");
 const { HDNodeWallet, Mnemonic } = require("ethers");
 
@@ -20,15 +25,23 @@ const POOL_SIZE = parseInt(
     "20",
   10
 );
+// Derive student accounts from a HIGH base index so they never collide with the
+// reserved accounts: #0 = instructor/deployer/conductor, #9 = bank/faucet, and
+// #10..#41 = initial beacon bots. Without this, a capacity of >9 would hand
+// students the bank/bot/instructor accounts (the wallet auto-imports the assigned
+// key — App.jsx). Students get funded regardless of index, so the base is free.
+const POOL_BASE = parseInt(process.env.STUDENT_POOL_BASE || "100", 10);
 // Funder is hardhat accounts[0] (10k ETH at boot, but the existing deploy
 // step burns a sizable chunk on contracts + reward pool funding). Keep
 // the per-station target modest so the configured lanes fit comfortably in what's
 // left over.
 const TARGET_FUND_ETH = process.env.TARGET_FUND_ETH || "10";
 const MIN_BALANCE_ETH = process.env.MIN_BALANCE_ETH || "1";
+const CONFIGURED_MNEMONIC = (process.env.POOL_MNEMONIC || "").trim();
 const MNEMONIC =
-  process.env.POOL_MNEMONIC ||
-  "test test test test test test test test test test test junk";
+  CONFIGURED_MNEMONIC || Mnemonic.fromEntropy(crypto.randomBytes(16)).phrase;
+const MNEMONIC_SOURCE = CONFIGURED_MNEMONIC ? "env" : "generated";
+const POOL_ID = process.env.POOL_ID || crypto.randomUUID();
 const OUT_PATH =
   process.env.STUDENT_POOL_PATH ||
   "/app/frontend/dist/api/student-pool.json";
@@ -43,7 +56,7 @@ async function main() {
 
   const pool = [];
   for (let i = 0; i < POOL_SIZE; i++) {
-    const w = HDNodeWallet.fromMnemonic(m, `m/44'/60'/0'/0/${i}`);
+    const w = HDNodeWallet.fromMnemonic(m, `m/44'/60'/0'/0/${POOL_BASE + i}`);
     const station = `s${String(i + 1).padStart(2, "0")}`;
     const balance = await provider.getBalance(w.address);
     let funded = false;
@@ -73,7 +86,8 @@ async function main() {
     OUT_PATH,
     JSON.stringify(
       {
-        mnemonic: MNEMONIC,
+        mnemonicSource: MNEMONIC_SOURCE,
+        poolId: POOL_ID,
         targetEth: TARGET_FUND_ETH,
         generatedAt: new Date().toISOString(),
         pool,

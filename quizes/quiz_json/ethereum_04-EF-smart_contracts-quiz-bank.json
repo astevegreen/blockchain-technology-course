@@ -74,12 +74,12 @@
     {
       "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "A student says a smart contract is mainly a legal agreement uploaded to Ethereum. Which correction best matches the lesson's framing?",
+      "question_stem": "A student says a smart contract is mainly a legal agreement uploaded to Ethereum. Which correction best describes what a smart contract actually is?",
       "correct_answer": "A smart contract is deterministic code plus persistent state that executes under blockchain consensus rules.",
       "incorrect_answers": [
-        "A smart contract is a natural-language legal document that validators execute during dispute resolution.",
-        "A smart contract is an off-chain automated database that replicates transaction signatures across servers.",
-        "A smart contract is a client-side wallet script that authorizes user account transitions via private keys."
+        "A smart contract is a signed legal agreement whose clauses Ethereum clients interpret during settlement.",
+        "A smart contract is an off-chain service that mirrors blockchain events and submits transactions on demand.",
+        "A smart contract is wallet-side software that signs preset transfers after a user approves a dApp request."
       ],
       "explanation": "The lesson separates smart contracts from legal contracts. Their technical force comes from deterministic bytecode execution and persistent on-chain state, not from interpretation of intent.",
       "difficulty_level": 2,
@@ -101,12 +101,12 @@
     {
       "id": "q2",
       "question_type": "multiple_choice",
-      "question_stem": "A team wants rich lending logic, shared token standards, and composability with other on-chain applications. What tradeoff does the lesson suggest they accept by choosing Solidity/EVM contracts over a constrained Script-like model?",
+      "question_stem": "A team wants rich lending logic, shared token standards, and composability with other on-chain applications. What tradeoff do they accept by choosing Solidity/EVM contracts over a constrained Script-like model?",
       "correct_answer": "They gain stateful expressiveness and interoperability while increasing the attack surface and security complexity.",
       "incorrect_answers": [
-        "They gain absolute transactional privacy and off-chain execution speed while eliminating gas fees entirely.",
-        "They obtain compile-time formal verification and execution safety while sacrificing multi-asset integration.",
-        "They establish automatic bug-free operation and faster confirmations while removing the need for validator fees."
+        "They gain richer state transitions and token interfaces while reducing concern about adversarial call paths.",
+        "They keep Script-like limits on state changes while still supporting complex lending and governance logic.",
+        "They gain composability and high-level tooling while making gas limits mostly irrelevant to dApp execution."
       ],
       "explanation": "The lesson uses Bitcoin Script versus Solidity to show the expressiveness-versus-safety tradeoff. Ethereum's flexibility enables richer applications, but more expressive stateful code creates more ways to fail.",
       "difficulty_level": 3,
@@ -132,9 +132,9 @@
       "question_stem": "A contract contains logic that should run every hour. Why can it not simply wake itself up and execute on Ethereum?",
       "correct_answer": "Contract accounts cannot self-initiate execution; on-chain actions must trace back to an EOA-signed transaction or an existing call chain.",
       "incorrect_answers": [
-        "Contract accounts cannot hold ether balances to pay gas; all scheduled functions require external funding from validator nodes.",
-        "Contract accounts are automatically archived after transaction execution; they must be redeployed to restore their code and state.",
-        "Contract accounts only permit code execution during their deployment phase; they function as read-only data registries thereafter."
+        "Contract accounts can store schedules, but validators must voluntarily execute each stored timer during block production rounds.",
+        "Contract accounts can sign their own scheduled transactions after enough ETH is locked to prepay hourly gas costs for every call.",
+        "Contract accounts can include timestamp checks, but reaching the timestamp itself commits the scheduled state transition on-chain."
       ],
       "explanation": "The lesson distinguishes EOAs from contract accounts. Contracts contain code and storage and can react to calls, but they do not sign or initiate transactions on their own.",
       "difficulty_level": 3,
@@ -160,9 +160,9 @@
       "question_stem": "A user calls Contract A, and Contract A calls Contract B. Inside Contract B, which interpretation of `msg.sender` is correct for ordinary calls?",
       "correct_answer": "`msg.sender` is Contract A, because it is the immediate caller in B's current call frame.",
       "incorrect_answers": [
-        "`msg.sender` is the original user, because authorization always follows the transaction signer.",
-        "`msg.sender` is Contract B, because the variable always references the executing contract.",
-        "`msg.sender` is the validator, because validators evaluate the call route during consensus."
+        "`msg.sender` is the original EOA, because calls preserve the transaction signer across frames.",
+        "`msg.sender` is Contract B, because context belongs to the contract whose code is running.",
+        "`msg.sender` is `tx.origin`, because both values track who started this transaction chain."
       ],
       "explanation": "`msg.sender` is local to the current call frame and identifies the immediate caller. Confusing it with the original user is a common access-control mistake.",
       "difficulty_level": 3,
@@ -188,9 +188,9 @@
       "question_stem": "After a Solidity contract is deployed, what best describes the role of the constructor and deployed runtime bytecode?",
       "correct_answer": "The constructor runs during deployment to initialize state, while the runtime bytecode is what remains at the contract address for later calls.",
       "incorrect_answers": [
-        "The constructor can be called later to reset initialized state, while deployed runtime bytecode is erased after deployment setup is complete.",
-        "The constructor generates a contract-specific private key for signing, while the runtime bytecode functions as an off-chain data storage container.",
-        "The constructor executes dynamically before every incoming transaction, while the runtime bytecode is accessed only when generating client event logs."
+        "The constructor can be called after deployment to refresh state, while runtime bytecode handles later user transactions after setup.",
+        "The constructor returns fresh runtime bytecode before each call, while deployed code stores the original deployment arguments for later callers.",
+        "The constructor remains at the address as privileged setup logic, while runtime bytecode is fetched only by off-chain clients during reads."
       ],
       "explanation": "The lesson's deployment model distinguishes initialization from later execution. Deployment creates a contract account whose persistent state and runtime code are used after the constructor has finished.",
       "difficulty_level": 3,
@@ -216,9 +216,9 @@
       "question_stem": "During a code review, a function copies a large input array into storage even though it only needs to inspect the values during that call. What is the best diagnosis?",
       "correct_answer": "It likely wastes gas and changes persistence unnecessarily; calldata or memory would better match temporary read-only inspection.",
       "incorrect_answers": [
-        "It is mandatory because EVM reference types must be copied into persistent storage before any loop can inspect their values.",
-        "It secures input parameter privacy against public block observers because writing variables to storage encrypts the data by default.",
-        "It successfully blocks all potential reentrancy attacks because writing variables to storage freezes the calling contract state."
+        "It saves gas because storage references avoid copying costs, and the array remains available to later transactions without extra work.",
+        "It improves privacy because temporary call data becomes less visible once the values are committed to contract storage.",
+        "It is needed when a loop reads values more than once, because calldata arrays cannot be indexed repeatedly in Solidity code."
       ],
       "explanation": "The lesson treats storage, memory, and calldata as design choices with persistence, cost, copying, and mutation consequences. Storage is persistent and expensive, while calldata and memory are temporary.",
       "difficulty_level": 4,
@@ -244,9 +244,9 @@
       "question_stem": "A contract emits an event whenever a transfer occurs. An on-chain function later tries to read those event logs to calculate the current balance. Why is this design flawed?",
       "correct_answer": "Events are receipt logs for off-chain consumers, not contract storage that on-chain logic can query as persistent state.",
       "incorrect_answers": [
-        "Events are restricted to EOA authorization signatures, not internal mechanisms that contract logic can emit independently.",
-        "Events are temporary variables stored inside calldata, not persistent records that external applications can track over time.",
-        "Events are direct instructions that overwrite storage slots, not separate entities that contract logic can execute in parallel."
+        "Events can be read by later contract calls, but only if the emitting function marks the balance fields as indexed for filtering.",
+        "Events are cheaper than storage variables, so balances derived from logs remain available to on-chain accounting logic later.",
+        "Events update transaction receipts after execution, so later functions can read them through ABI-decoded return data afterward."
       ],
       "explanation": "The lesson distinguishes logs from storage. Events are useful for UIs, wallets, indexers, and monitoring, but contract logic should rely on stored state for values it must later read.",
       "difficulty_level": 3,
@@ -272,9 +272,9 @@
       "question_stem": "A withdrawal function sends ETH to the caller before reducing the caller's recorded balance. Why is this sequence dangerous?",
       "correct_answer": "The external transfer can hand control to untrusted code that reenters before the balance has been updated.",
       "incorrect_answers": [
-        "The external transfer will trigger an automatic EVM hard fork that reverts the caller contract storage status.",
-        "The external transfer makes the caller's internal balance ledger immutable once the transfer transaction starts.",
-        "The external transfer forces the EVM to reject subsequent state updates after a payable function is triggered."
+        "The ETH send finalizes the withdrawal before storage changes, so later balance updates are ignored by clients.",
+        "The caller's fallback can consume gas and make the withdrawal fail, but it cannot observe intermediate state.",
+        "The transfer changes `msg.sender` to the original EOA, which lets the caller bypass internal access checks too."
       ],
       "explanation": "Reentrancy arises when a contract yields control while its internal state is still inconsistent. Checks-Effects-Interactions mitigates this by updating internal accounting before interacting externally.",
       "difficulty_level": 4,
@@ -300,9 +300,9 @@
       "question_stem": "Why might a project use a proxy pattern instead of deploying only an immutable contract, and what new risk does that introduce?",
       "correct_answer": "A proxy can preserve a stable address and storage while changing logic, but it adds governance complexity and malicious-upgrade risk.",
       "incorrect_answers": [
-        "A proxy lets validators patch deployed bytecode directly while preserving storage, but it disables admin controls after each approved upgrade.",
-        "A proxy allows contracts to execute external API queries while maintaining logic, but it disables future custom event emission.",
-        "A proxy eliminates the requirement to deploy raw bytecode while preserving execution, but it renders all state variables temporary."
+        "A proxy can preserve a public address while routing calls to new logic, but it removes the need for upgrade governance process.",
+        "A proxy can make bytecode editable at the same address, but it adds the risk that validators disagree on current code during upgrades.",
+        "A proxy can isolate storage in the logic contract while users call the proxy, but it avoids storage-layout concerns later."
       ],
       "explanation": "The lesson frames proxy upgradeability as a tradeoff. `delegatecall` lets replaceable logic operate over stable proxy storage, which helps with upgrades but creates operational and authorization risks around governance controls.",
       "difficulty_level": 4,
@@ -328,9 +328,9 @@
       "question_stem": "A lottery contract chooses a winner by directly fetching a random number from a web API during EVM execution. What is the core problem with this design?",
       "correct_answer": "Validators must execute deterministically, so external data and randomness need mediated designs such as oracles, commit-reveal, or VRFs with explicit trust assumptions.",
       "incorrect_answers": [
-        "The EVM requires identical gas prices across all nodes, so external API links are limited to validator windows that synchronize network latency before execution can safely begin.",
-        "Randomness remains physically impossible on decentralized networks, so lottery designs must rely on pre-computed hardware arrays deployed by validating institutions.",
-        "Web APIs are inherently vulnerable to transaction reordering, so contracts must emit structured event logs to establish secure callback routes before reading data."
+        "The web API can be contacted if the contract marks the function payable, but the result is unsafe because the caller might underpay the gas for the response.",
+        "A direct API call becomes deterministic once the sender signs it, but it weakens privacy because the random seed appears in event logs before the lottery payout is settled.",
+        "The design mainly fails because web APIs charge off-chain fees, so the contract must escrow tokens and route callback receipts before requesting a number."
       ],
       "explanation": "The lesson emphasizes the boundary between deterministic on-chain execution and external data. Oracles and randomness schemes bridge that boundary, but they add assumptions about data sources, freshness, manipulation resistance, and failure handling.",
       "difficulty_level": 4,
@@ -353,12 +353,12 @@
     {
       "id": "q11",
       "question_type": "multiple_choice",
-      "question_stem": "A transaction calls Contract A, which calls Contract B. Contract B reverts after Contract A has already updated some state. According to the reading, what is the usual effect if the failure is not handled?",
+      "question_stem": "A transaction calls Contract A, which calls Contract B. Contract B reverts after Contract A has already updated some state. What is the usual effect if the failure is not handled?",
       "correct_answer": "The state effects of the call chain revert atomically, but gas already spent is still charged and the attempted transaction is recorded.",
       "incorrect_answers": [
-        "Only Contract B state is reversed after its revert, while Contract A updates remain permanently committed in the same transaction history.",
-        "The entire transaction is erased from the block history, but a penalty fee is deducted from the block validator's security deposit.",
-        "The EVM halts execution and prompts the sender for manual input, but all preceding state writes remain frozen until resolved."
+        "Only Contract B's storage rolls back, while Contract A's earlier writes stay committed because each contract has a separate transaction record.",
+        "A's state update remains pending until the sender submits a second transaction that decides whether to keep or reverse it later.",
+        "The block records the failed transaction and charges gas, but successful writes before the nested revert remain committed locally."
       ],
       "explanation": "The reading stresses transaction atomicity and gas. Failed execution rolls back state effects across the execution path unless failure is caught or handled, but the work already performed still consumes gas.",
       "difficulty_level": 3,
@@ -382,12 +382,12 @@
     {
       "id": "q12",
       "question_type": "multiple_choice",
-      "question_stem": "A developer marks a Solidity variable `private` because it contains information they do not want blockchain observers to see. What does the reading imply?",
+      "question_stem": "A developer marks a Solidity variable `private` because it contains information they do not want blockchain observers to see. What is the issue with this approach?",
       "correct_answer": "`private` limits Solidity-level access from other contracts and derived contracts, but it does not make public-chain data secret.",
       "incorrect_answers": [
-        "`private` automatically encrypts the variable value using the creator's key, but it permits decryption during transactions.",
-        "`private` prevents network validators from verifying the state variable directly, but it exposes variable values to client wallets.",
-        "`private` reroutes the variable's storage path into off-chain transaction logs, but it increases the gas cost of subsequent reads."
+        "`private` hides the variable from Solidity getters and block explorers, but validators can still inspect it while executing.",
+        "`private` encrypts reads from other contracts at runtime, but transaction calldata can still reveal values passed into it during calls.",
+        "`private` keeps other contracts from calling the variable directly, so it is sufficient for user secrets stored on-chain."
       ],
       "explanation": "The reading distinguishes visibility from privacy. Solidity visibility controls callability and inheritance access; it does not hide data from observers of a public blockchain.",
       "difficulty_level": 3,
@@ -411,12 +411,12 @@
     {
       "id": "q13",
       "question_type": "multiple_choice",
-      "question_stem": "A contract accepts an arbitrary address from a user, casts it to an expected contract type, then calls it without additional checks. What risk from the reading is most relevant?",
+      "question_stem": "A contract accepts an arbitrary address from a user, casts it to an expected contract type, then calls it without additional checks. What is the most relevant risk?",
       "correct_answer": "The cast assumes an interface but does not prove the address has the expected code or behavior, so the callee may fail or act maliciously.",
       "incorrect_answers": [
-        "The cast automatically transfers administrative ownership of the calling contract to the target address, so future state modifications are restricted.",
-        "The EVM rejects execution when calling any external address not deployed using `new`, so the transaction reverts without wasting gas.",
-        "The cast establishes a compiler-verified connection that validates the target's bytecode, so the execution runs with safety guarantees."
+        "The cast checks that the target exposes the named functions, but it cannot verify whether those functions enforce the expected policy.",
+        "The cast is safe for view calls but dangerous for state-changing calls, because only writes can execute unexpected callee code.",
+        "The cast binds the target to the compiled interface for future calls, but it bypasses return-data decoding and revert handling checks in the caller."
       ],
       "explanation": "The reading compares contract-calling patterns. Creating a known instance gives stronger assumptions, while casting an arbitrary address and low-level calls rely on assumptions that must be checked and handled defensively.",
       "difficulty_level": 4,

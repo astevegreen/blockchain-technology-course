@@ -3,8 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${1:-$ROOT_DIR/vm-build/docker-image-bundles}"
-BITCOIN_LAB_IMAGE="${BITCOIN_LAB_IMAGE:-ghcr.io/bja2142/bitcoin-lab:latest}"
-BITCOIN_MEMPOOL_IMAGE="${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/bja2142/bitcoin-mempool:latest}"
+BITCOIN_LAB_IMAGE="${BITCOIN_LAB_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-lab:latest}"
+BITCOIN_MEMPOOL_IMAGE="${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-mempool:latest}"
 HLF_IMAGE_TAG="${HLF_IMAGE_TAG:-2.5.15}"
 HLF_CA_IMAGE_TAG="${HLF_CA_IMAGE_TAG:-1.5.17}"
 HLF_COUCHDB_IMAGE="${HLF_COUCHDB_IMAGE:-couchdb:3.4.2}"

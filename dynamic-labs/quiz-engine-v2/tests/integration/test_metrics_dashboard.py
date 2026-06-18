@@ -30,6 +30,14 @@ def test_instructor_metrics_dashboard_routes_cover_latest_all_and_detail(app, cl
         headers=HEADERS,
     )
     html_response = client.get("/instructor/metrics", headers=HEADERS)
+    all_html_response = client.get(
+        "/instructor/metrics?mode=all&include_voided=1",
+        headers=HEADERS,
+    )
+    detail_html_response = client.get(
+        f"/instructor/metrics/students/{seeded['student_one']}?mode=all&include_voided=1",
+        headers=HEADERS,
+    )
 
     default_metrics = default_response.get_json()["metrics"]
     all_metrics = all_response.get_json()["metrics"]
@@ -64,7 +72,13 @@ def test_instructor_metrics_dashboard_routes_cover_latest_all_and_detail(app, cl
     assert detail["student_identifier"] == seeded["student_one"]
     assert detail["attempt_count"] == 2
     assert detail["attempts"][0]["quiz_archived"] is True
-    assert detail["attempts"][0]["questions"][0]["specific_source_lesson"] == "Metrics Lesson"
+    first_detail_mc = next(
+        question
+        for question in detail["attempts"][0]["questions"]
+        if question["question_type"] == "multiple_choice"
+    )
+    assert first_detail_mc["specific_source_lesson"] == "Metrics Lesson"
+    assert first_detail_mc["answer"]["correct_option_text"] == "The block with valid proof of work"
     assert html_response.status_code == 200
     html = html_response.get_data(as_text=True)
     assert "Instructor Metrics" in html
@@ -78,9 +92,44 @@ def test_instructor_metrics_dashboard_routes_cover_latest_all_and_detail(app, cl
     assert "Template Metrics" in html
     assert "Metric Ideas" not in html
     assert "Visualization Ideas" not in html
-    assert '<select name="quiz_version_id">' in html
+    assert 'class="metrics-quiz-filter"' in html
+    assert 'name="quiz_filter_applied" value="1"' in html
+    assert 'type="checkbox" name="quiz_version_id"' in html
     assert f'value="{seeded["version_id"]}"' in html
     assert "Metrics Integration Quiz" in html
+    assert "Strengths And Weaknesses" in html
+    assert '<details id="strengths-weaknesses" class="metrics-collapsible-section">' in html
+    assert '<details id="tags" class="metrics-collapsible-section">' in html
+    assert '<details id="dimensions" class="metrics-collapsible-section">' in html
+    assert '<details id="item-analysis" class="metrics-collapsible-section">' in html
+    assert "Average high to low" in html
+    assert "data-student-summary-table" in html
+    assert all_html_response.status_code == 200
+    all_html = all_html_response.get_data(as_text=True)
+    assert "item-analysis-list" in all_html
+    assert "item-analysis-controls" in all_html
+    assert "data-hide-perfect-items" in all_html
+    assert "data-item-analysis-row" in all_html
+    assert "quiz-result-option-correct" in all_html
+    assert "item-analysis-option-missed" in all_html
+    assert "item-analysis-option-weighted" in all_html
+    assert "item-analysis-answer-count" in all_html
+    assert "--item-analysis-answer-border-width: 1px" in all_html
+    assert "data-item-difficulty-table" in all_html
+    assert "item-difficulty-preview" in all_html
+    assert "item-difficulty-hover-popup" in all_html
+    assert "item-difficulty-popup-close" in all_html
+    assert "Close item preview" in all_html
+    assert detail_html_response.status_code == 200
+    detail_html = detail_html_response.get_data(as_text=True)
+    assert "quiz-result-options" in detail_html
+    assert "quiz-result-option-correct" in detail_html
+    assert "quiz-result-option-selected-incorrect" in detail_html
+    assert "Correct answer" in detail_html
+    assert "Your answer" in detail_html
+    assert "student-attempt-detail" in detail_html
+    assert "<summary" in detail_html
+    assert "Weakest Trends" in detail_html
 
 
 def _seed_metrics_workflow():
@@ -152,7 +201,7 @@ def _seed_metrics_workflow():
         answers=[
             {
                 "question_id": voided_mc["id"],
-                "selected_option_id": voided_mc["options"][0]["id"],
+                "selected_option_id": voided_mc["options"][1]["id"],
             },
             {
                 "question_id": voided_written["id"],

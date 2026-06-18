@@ -20,7 +20,7 @@ This lab is designed to simulate a degraded, decentralized operational environme
 1. Student runs `python3 ngo_sim.py score` and notes the current median is low.
 2. Student runs `python3 ngo_sim.py register` to create a fake node (e.g., `BadActor`). The system assigns a random 6-digit ID.
 3. Student runs `python3 ngo_sim.py register` again to create a burner node (e.g., `Fake1`).
-4. Student runs `python3 ngo_sim.py endorse`, inputs the ID for `Fake1`, and targets `BadActor`.
+4. Student runs `python3 ngo_sim.py endorse`, selects `Fake1` as the endorser, and selects `BadActor` as the target.
 5. Repeating this inflates the naive score, simulating a Sybil flood.
 
 **Discussion Points:**
@@ -33,12 +33,12 @@ This lab is designed to simulate a degraded, decentralized operational environme
 
 1. The instructor/student runs `python3 ngo_sim.py patch`.
 2. Student runs `python3 ngo_sim.py score` to find a highly active, verified node (e.g., `NGO_04`). Note its ID.
-3. Student runs `python3 ngo_sim.py endorse`, blindly inputs the ID of `NGO_04`, and targets their own malicious node.
+3. Student runs `python3 ngo_sim.py endorse`, selects `NGO_04` as the endorser, and selects their own malicious node as the target.
 4. The system accepts it because the backend only checks if `NGO_04` *is allowed* to endorse, not if `NGO_04` *actually sent* the request.
 
 **Discussion Points:**
 
-* *Authorization vs. Authentication:* The patch authorized the ID, but the protocol failed to authenticate the packet. 
+* *Authorization vs. Authentication:* The patch authorized the selected sender identity, but the protocol failed to authenticate the packet.
 * *Missing Crypto:* The solution is Public Key Infrastructure (PKI). Endorsements must be signed by the sender's private key. The ledger verifies the signature against the sender's known public key. 
 
 
@@ -68,22 +68,45 @@ Students run `python3 ngo_sim.py score` to recover the numeric ID for their susp
 
 ### Phase 5: Pastry Fix (Advanced)
 **The Bug:**
-When `get_next_hop` encounters a prefix that it does not have an entry for, it currently returns `None`. 
+`get_next_hop` treats a prefix-table hit as an unconditional next hop, and when the prefix table misses it returns `None`. A partial patch that only replaces the final `return None` with a leaf-set check can still loop, because the table entry might not be closer to the target than the current node.
 
 **The Solution:**
-Students need to edit `pastry.py` and replace the `return None` at the bottom of the `get_next_hop` function with a check against the `leaf_set`. 
+Students should not infer the patch location. Have them open `pastry.py`, find `def get_next_hop(self, key)`, and replace the entire marked area from `# STUDENT PATCH AREA START` through `# STUDENT PATCH AREA END` with the block below. The corrected router considers the matching prefix-table entry and the leaf set together, forwards only to a node closer to the key, and otherwise returns itself as the closest known owner.
+
+After students paste the replacement, the marker comments, `return self.routing_table[shl][next_digit]`, and `return None` should no longer appear in `get_next_hop`.
+
+If terminal editing becomes the blocker, the student image includes a clean backup at `~/pastry.py.original`. Students can restore it and apply the exact patch with:
+
+```bash
+cd ~/lab
+cp ~/pastry.py.original scripts/pastry.py
+sed -i '/# STUDENT PATCH AREA START/,/# STUDENT PATCH AREA END/c\
+        candidates = []\
+        if shl in self.routing_table and next_digit in self.routing_table[shl]:\
+            candidates.append(self.routing_table[shl][next_digit])\
+\
+        candidates.extend(self.leaf_set)\
+        best = min(candidates, key=lambda x: diff(x, key), default=self.node_id)\
+        if diff(best, key) < diff(self.node_id, key):\
+            return best\
+\
+        # No known neighbor is closer; this node is the closest known owner.\
+        return self.node_id' scripts/pastry.py
+```
 
 ```python
 # --- Correct Solution for pastry.py ---
-# 2. If no Routing Table entry, check the Leaf Set
-if self.leaf_set:
-    best_leaf = min(self.leaf_set, key=lambda x: diff(x, target_key))
-    if diff(best_leaf, target_key) < diff(self.node_id, target_key):
-        return best_leaf
+        candidates = []
+        if shl in self.routing_table and next_digit in self.routing_table[shl]:
+            candidates.append(self.routing_table[shl][next_digit])
 
-# If even the leaf set doesn't have a closer node, 
-# we are the closest node to the key.
-return self.node_id
+        candidates.extend(self.leaf_set)
+        best = min(candidates, key=lambda x: diff(x, key), default=self.node_id)
+        if diff(best, key) < diff(self.node_id, key):
+            return best
+
+        # No known neighbor is closer; this node is the closest known owner.
+        return self.node_id
 ```
 
 **Discussion Points:**

@@ -120,7 +120,23 @@ class QuartoAxeChecker {
     this.options = opts;
   }
   async init() {
-    const axe = (await import("https://cdn.skypack.dev/pin/axe-core@v4.10.3-aVOFXWsJaCpVrtv89pCa/mode=imports,min/optimized/axe-core.js")).default;
+    const axe = await new Promise((resolve, reject) => {
+      if (globalThis.axe) {
+        resolve(globalThis.axe);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = new URL("./axe.min.js", import.meta.url).href;
+      script.onload = () => {
+        if (globalThis.axe) {
+          resolve(globalThis.axe);
+        } else {
+          reject(new Error("Local axe-core did not initialize"));
+        }
+      };
+      script.onerror = () => reject(new Error("Unable to load local axe-core"));
+      document.head.appendChild(script);
+    });
     const result = await axe.run({
       exclude: [
        // https://github.com/microsoft/tabster/issues/288

@@ -1,0 +1,404 @@
+lesson_id: "02-CM"
+lesson_title: "Proof of Work & Security: Mechanics, Incentives, and Risks"
+source_path: "lessons/consensus_primitives/02-CM-pow_and_security.qmd"
+terms:
+  - term: "Proof of Work"
+    modifier: null
+    aliases: ["PoW", "proof-of-work"]
+    definition: "A consensus mechanism that makes block proposal influence depend on costly computation that anyone can cheaply verify."
+    context: "The lesson frames PoW as both leader election and history protection through real-world resource cost."
+    slide_heading: "Proof of Work: Purpose and Agenda"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Sybil-resistant leader election"
+    modifier: null
+    aliases: ["Sybil resistant leader election"]
+    definition: "A method for choosing who may propose a block that limits fake identities by requiring an expensive scarce resource."
+    context: "PoW uses computation rather than identity counts to decide who earns the next block proposal opportunity."
+    slide_heading: "Proof of Work: Purpose and Agenda"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Block body"
+    modifier: null
+    aliases: ["body", "block transactions"]
+    definition: "The part of a block that contains the transactions or state updates being recorded in the ledger."
+    context: "Students need the block body concept to understand what the Merkle root commits to and what PoW ultimately protects."
+    slide_heading: "Block Body Anatomy"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Merkle root"
+    modifier: null
+    aliases: ["transaction root"]
+    definition: "A single hash commitment derived from the transactions in a block, so changing any transaction changes the committed root."
+    context: "The lesson uses the Merkle root to connect transaction data in the block body to the hash-protected block header."
+    slide_heading: "Block Body Anatomy"
+    tags: ["cryptography", "consensus"]
+    confidence: "high"
+  - term: "Block header"
+    modifier: null
+    aliases: ["header"]
+    definition: "The compact set of block metadata that miners hash, including the previous block hash, Merkle root, timestamp, target, and nonce."
+    context: "PoW validation depends on every node hashing the same header bytes and comparing the result to the target."
+    slide_heading: "The PoW Rule at a Glance"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Difficulty target"
+    modifier: "proof of work"
+    aliases: ["target", "target threshold"]
+    definition: "The threshold a block hash must fall below for the block to satisfy the PoW validity rule."
+    context: "The target determines how rare valid blocks are and therefore how much work miners are expected to perform."
+    slide_heading: "The PoW Rule at a Glance"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Nonce"
+    modifier: "block header"
+    aliases: ["nonce field", "extra-nonce"]
+    definition: "An adjustable value miners vary in or around the block header to search for a hash below the difficulty target."
+    context: "Nonce variation is the basic mechanism miners use to explore new candidate hashes without changing the whole block design."
+    slide_heading: "The PoW Rule at a Glance"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Longest valid chain"
+    modifier: "proof of work"
+    aliases: ["heaviest valid chain", "longest chain", "heaviest chain"]
+    definition: "The protocol-selected branch of valid blocks that represents the most accepted accumulated work under the chain-selection rule."
+    context: "Fork choice, stale blocks, confirmations, and many attacks all depend on which branch nodes treat as canonical."
+    slide_heading: "The PoW Rule at a Glance"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Proof-of-work puzzle"
+    modifier: null
+    aliases: ["PoW puzzle"]
+    definition: "A computational challenge that is expensive to solve but quick for other nodes to verify."
+    context: "The lesson broadens PoW beyond Bitcoin by showing that the security pattern is hard production and cheap verification."
+    slide_heading: "Proof-of-work Puzzles"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Hash puzzle"
+    modifier: null
+    aliases: ["hash-based puzzle"]
+    definition: "A PoW puzzle where miners search for a nonce so the hash of candidate data falls below a target."
+    context: "The course focuses on hash-based puzzles as the main model for Bitcoin-style mining."
+    slide_heading: "Proof-of-work Puzzles"
+    tags: ["consensus", "cryptography", "bitcoin"]
+    confidence: "high"
+  - term: "Memory-hard puzzle"
+    modifier: null
+    aliases: ["memory-hard PoW"]
+    definition: "A PoW puzzle designed to require substantial memory as well as computation, making some hardware specialization harder."
+    context: "Memory-hard puzzles show that PoW can bind influence to resources other than raw hash throughput."
+    slide_heading: "Proof-of-work Puzzles"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Proof-of-space puzzle"
+    modifier: null
+    aliases: ["proof of space", "storage-based puzzle"]
+    definition: "A resource-binding puzzle where participants prove they have committed storage rather than repeatedly burning computation."
+    context: "The lesson mentions proof-of-space to compare alternative scarce-resource designs with hash-based PoW."
+    slide_heading: "Proof-of-work Puzzles"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Proof-of-useful-work"
+    modifier: null
+    aliases: ["useful proof of work"]
+    definition: "A PoW design goal where the expensive computation also produces externally useful scientific or computational output."
+    context: "This term marks a design response to the concern that ordinary mining work has no purpose beyond security."
+    slide_heading: "Proof-of-work Puzzles"
+    tags: ["consensus", "real-world"]
+    confidence: "high"
+  - term: "Byte-exact hashing"
+    modifier: null
+    aliases: ["bit-for-bit deterministic hashing"]
+    definition: "Hashing that depends on the exact serialized bytes, field order, and encoding specified by the protocol."
+    context: "Implementation mistakes in serialization or byte order can make nodes disagree about whether a block is valid."
+    slide_heading: "Block Header Anatomy: What Gets Hashed"
+    tags: ["cryptography", "consensus"]
+    confidence: "high"
+  - term: "Endianness"
+    modifier: "block serialization"
+    aliases: ["byte order"]
+    definition: "The convention for ordering bytes when serializing numbers or fields before hashing or validation."
+    context: "The lesson calls out endianness because even tiny encoding differences change the resulting block hash."
+    slide_heading: "Block Header Anatomy: What Gets Hashed"
+    tags: ["cryptography", "consensus"]
+    confidence: "high"
+  - term: "Expected work"
+    modifier: "proof of work"
+    aliases: ["expected trials", "expected hashes"]
+    definition: "The average number of hash attempts needed before finding a valid block at a given target."
+    context: "Expected work connects probability, target difficulty, and the economic cost of producing valid blocks."
+    slide_heading: "Difficulty, Hash Rate, and Expected Work"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Hash rate"
+    modifier: null
+    aliases: ["network hash rate", "H"]
+    definition: "The number of hash attempts miners can perform per second, either individually or across the whole network."
+    context: "Hash rate determines how quickly valid blocks are found at a fixed target and how much work an attacker must rival."
+    slide_heading: "Difficulty, Hash Rate, and Expected Work"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Difficulty adjustment"
+    modifier: "proof of work"
+    aliases: ["difficulty retargeting", "retargeting"]
+    definition: "A protocol rule that adjusts the target based on recent block timing so average block intervals stay near the design goal."
+    context: "Difficulty adjustment keeps the system usable and stable as total hash rate rises or falls."
+    slide_heading: "Difficulty Adjustment: Control-Loop Intuition"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Control loop"
+    modifier: "difficulty adjustment"
+    aliases: ["feedback loop"]
+    definition: "A mechanism that observes actual output and changes an input to steer the system toward a target behavior."
+    context: "The lesson uses a control-loop model to explain why PoW protocols compare observed block times against desired intervals."
+    slide_heading: "Difficulty Adjustment: Control-Loop Intuition"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Block interval"
+    modifier: null
+    aliases: ["block time", "target interval"]
+    definition: "The intended average time between new blocks in a chain."
+    context: "Block interval affects latency, fork risk, stale rates, and how aggressively difficulty must respond to hash-rate changes."
+    slide_heading: "Difficulty Adjustment: Control-Loop Intuition"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Target rule"
+    modifier: "proof of work"
+    aliases: ["hash-below-target rule", "hash < target"]
+    definition: "The validity rule that a candidate block's hash must be numerically below the current target threshold."
+    context: "Visualizing this rule helps students see why lower targets make valid hashes rarer but not harder to verify."
+    slide_heading: "Visualizing the Target Rule"
+    tags: ["consensus", "cryptography"]
+    confidence: "high"
+  - term: "Median-time-past"
+    modifier: "blockchain timestamps"
+    aliases: ["MTP"]
+    definition: "A timestamp rule that compares a new block's time against the median of recent block times to limit manipulation."
+    context: "Median-time-past appears as an implementation defense for retargeting and timestamp-based attacks."
+    slide_heading: "Retargeting: Technical Implementation"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Block size"
+    modifier: null
+    aliases: ["block capacity"]
+    definition: "The amount of transaction data a block can carry under the protocol's limits."
+    context: "Block size is a parameter tradeoff because larger blocks can improve throughput while increasing propagation and validation time."
+    slide_heading: "Parameter Choices and Tradeoffs"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Block propagation"
+    modifier: null
+    aliases: ["block relay"]
+    definition: "The process by which newly found blocks spread across the peer-to-peer network."
+    context: "Propagation speed shapes fork risk, stale rates, and the advantage of well-connected miners."
+    slide_heading: "Block Propagation and Stale/Orphan Blocks"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Temporary fork"
+    modifier: "proof of work"
+    aliases: ["competing branch", "short-lived fork"]
+    definition: "A short-lived split where different valid blocks at the same height are seen by different parts of the network."
+    context: "Temporary forks can happen honestly when miners find blocks nearly simultaneously and propagation takes time."
+    slide_heading: "Block Propagation and Stale/Orphan Blocks"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Stale block"
+    modifier: null
+    aliases: ["orphan block", "stale/orphan block"]
+    definition: "A valid block that is not included in the ultimately canonical chain after a competing branch wins."
+    context: "Stale blocks waste honest work and can reduce effective security by lowering the fraction of work securing the canonical chain."
+    slide_heading: "Block Propagation and Stale/Orphan Blocks"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Canonical chain"
+    modifier: null
+    aliases: ["canonical branch", "main chain"]
+    definition: "The branch of valid blocks that nodes currently treat as the accepted ledger history under the fork-choice rule."
+    context: "Many lesson examples ask which blocks end up canonical after temporary forks, private branches, or attacks resolve."
+    slide_heading: "Block Propagation and Stale/Orphan Blocks"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "ASIC"
+    modifier: "mining hardware"
+    aliases: ["Application-Specific Integrated Circuit", "purpose-built ASIC"]
+    definition: "Specialized hardware built to perform mining computations far more efficiently than general-purpose devices."
+    context: "ASICs illustrate how mining efficiency gains can raise capital barriers and concentrate hash power."
+    slide_heading: "Hardware Evolution and Centralization Pressures"
+    tags: ["consensus", "real-world"]
+    confidence: "high"
+  - term: "Mining pool"
+    modifier: null
+    aliases: ["pool", "pooled mining"]
+    definition: "A group of miners who combine hash power and share rewards according to a payout rule."
+    context: "Mining pools reduce individual payout variance but create operator control, censorship, and withholding risks."
+    slide_heading: "Mining Pools, Variance, and Payouts"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Solo mining"
+    modifier: null
+    aliases: ["independent mining"]
+    definition: "Mining independently without pooling hash power or sharing rewards with other miners."
+    context: "Solo mining has fair long-run expectations but high short-term variance because block rewards arrive rarely."
+    slide_heading: "Mining Pools, Variance, and Payouts"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Variance"
+    modifier: "mining payouts"
+    aliases: ["payout variance", "reward variance"]
+    definition: "The unpredictability of mining income caused by the lottery-like timing of finding valid blocks."
+    context: "Variance explains why miners join pools even when pooling introduces centralization and governance risks."
+    slide_heading: "Mining Pools, Variance, and Payouts"
+    tags: ["consensus", "real-world"]
+    confidence: "high"
+  - term: "Share"
+    modifier: "mining pool"
+    aliases: ["pool share", "valid share"]
+    definition: "A partial proof of work meeting an easier pool-set difficulty, used to measure a miner's contributed work."
+    context: "Pool payout models rely on shares to pay miners before or without each miner finding a full valid block."
+    slide_heading: "Pool Payout Model: Pay-Per-Share (PPS)"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Pay-Per-Share"
+    modifier: null
+    aliases: ["PPS"]
+    definition: "A pool payout model where miners receive a fixed payment for each valid share regardless of when the pool finds blocks."
+    context: "PPS gives miners predictable income while shifting block-finding variance and reserve risk to the pool operator."
+    slide_heading: "Pool Payout Model: Pay-Per-Share (PPS)"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Pay-Per-Last-N-Shares"
+    modifier: null
+    aliases: ["PPLNS"]
+    definition: "A pool payout model where block rewards are distributed across the recent window of submitted shares when a block is found."
+    context: "PPLNS leaves miners with more variance but reduces the pool operator's need to insure unlucky streaks."
+    slide_heading: "Pool Payout Model: Pay-Per-Last-N-Shares (PPLNS)"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Security budget"
+    modifier: "proof of work"
+    aliases: ["PoW security budget"]
+    definition: "The ongoing rewards that sustain honest mining, mainly block subsidies and transaction fees."
+    context: "The lesson ties attack resistance to whether honest miners are sufficiently paid to keep contributing hash power."
+    slide_heading: "Security Model and Economics"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Block subsidy"
+    modifier: null
+    aliases: ["subsidy", "mining subsidy"]
+    definition: "Newly issued coins paid to the miner of a valid block as part of the block reward."
+    context: "Block subsidy is one side of the security budget that supports honest participation before fees alone must carry more weight."
+    slide_heading: "Security Model and Economics"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Transaction fee"
+    modifier: "mining incentives"
+    aliases: ["fees", "miner fees"]
+    definition: "A payment attached to a transaction that incentivizes miners to include it in a block."
+    context: "Fees shape miner selection behavior, censorship pressure, and the long-run security budget."
+    slide_heading: "Security Model and Economics"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Double spend"
+    modifier: null
+    aliases: ["double-spend attack"]
+    definition: "An attack where an adversary tries to replace an accepted payment with a conflicting history that excludes or redirects it."
+    context: "The lesson uses double spends to explain probabilistic finality, private forks, and why confirmation depth matters."
+    slide_heading: "Attacks: Double Spend"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Confirmation"
+    modifier: "proof of work"
+    aliases: ["confirmations", "confirmation depth"]
+    definition: "A measure of how many blocks have been added on top of the block containing a transaction."
+    context: "More confirmations make a double-spend reorganization harder, though they never reduce the risk to exactly zero."
+    slide_heading: "Attacks: Double Spend"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Reorganization"
+    modifier: "blockchain"
+    aliases: ["reorg", "chain reorg"]
+    definition: "A change in the canonical chain where nodes replace one recent branch with a longer or heavier competing branch."
+    context: "Reorgs are the mechanism by which stale blocks, double spends, and selfish mining outcomes become visible."
+    slide_heading: "Attacks: Double Spend"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "51% attack"
+    modifier: null
+    aliases: ["majority hash attack", "majority hash power attack"]
+    definition: "An attack scenario where an entity with more than half of total hash power can outpace honest miners on competing valid branches."
+    context: "The lesson distinguishes what majority hash power enables, such as censorship and reordering, from what validation still forbids."
+    slide_heading: "51% (Majority Hash) Attacks"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Transaction selection"
+    modifier: "mining"
+    aliases: ["block assembly policy", "miner discretion"]
+    definition: "The miner's choice of which valid transactions to include when assembling a block."
+    context: "Transaction selection links fee incentives, policy pressure, and censorship risk before transactions are finalized."
+    slide_heading: "Censorship and Transaction Selection"
+    tags: ["consensus", "policy"]
+    confidence: "high"
+  - term: "Censorship"
+    modifier: "blockchain"
+    aliases: ["transaction censorship"]
+    definition: "The deliberate delay or exclusion of otherwise valid transactions from blocks or relay paths."
+    context: "The lesson treats censorship as both a miner selection problem and a network reachability problem."
+    slide_heading: "Censorship and Transaction Selection"
+    tags: ["consensus", "policy"]
+    confidence: "high"
+  - term: "Selfish mining"
+    modifier: null
+    aliases: ["strategic withholding"]
+    definition: "A mining strategy where a coalition withholds found blocks and releases them strategically to earn more than its fair share."
+    context: "Selfish mining shows that sub-majority attackers can harm incentives and increase stale rates under favorable network conditions."
+    slide_heading: "Selfish Mining: Strategic Withholding"
+    tags: ["consensus", "distributed-systems"]
+    confidence: "high"
+  - term: "Eclipse attack"
+    modifier: null
+    aliases: ["eclipse", "network-level eclipse"]
+    definition: "A network attack that isolates a target node by controlling all of its peer connections."
+    context: "Eclipse attacks show that local consensus rules are not enough if a node receives a distorted view of the network."
+    slide_heading: "Eclipse and Network-Level Attacks"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Trusted bootstrap paradox"
+    modifier: null
+    aliases: ["bootstrap dependency"]
+    definition: "The tension that a decentralized node still needs some initial peer-discovery source that may be centralized or compromisable."
+    context: "The lesson highlights DNS seeds and hardcoded peer lists as overlooked dependencies that can enable eclipse attacks."
+    slide_heading: "Eclipse and Network-Level Attacks"
+    tags: ["distributed-systems", "consensus"]
+    confidence: "high"
+  - term: "Timestamp manipulation"
+    modifier: null
+    aliases: ["timestamp games"]
+    definition: "Miner behavior that sets block timestamps within allowed limits to influence how the protocol measures elapsed time."
+    context: "Timestamp manipulation matters because timestamps feed difficulty retargeting and block validity checks."
+    slide_heading: "Timestamp Manipulation and Time-Warp Attacks"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Time-warp attack"
+    modifier: null
+    aliases: ["time warp"]
+    definition: "A coordinated timestamp manipulation attack that tricks the difficulty control loop into lowering difficulty or mismeasuring time."
+    context: "The lesson uses time-warp attacks to show that weakly constrained control-loop inputs can become security vulnerabilities."
+    slide_heading: "Timestamp Manipulation and Time-Warp Attacks"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Block withholding"
+    modifier: "mining pool"
+    aliases: ["pool block withholding"]
+    definition: "A pool attack where a miner submits valid shares but hides full valid blocks, reducing the pool's rewards."
+    context: "Block withholding shows how pools create internal trust and agency problems beyond the public chain rules."
+    slide_heading: "Block Withholding in Poolsv{.smaller}"
+    tags: ["consensus", "bitcoin"]
+    confidence: "high"
+  - term: "Energy externality"
+    modifier: "proof of work"
+    aliases: ["externality", "environmental externality"]
+    definition: "A cost or impact of mining energy use that falls outside the protocol's direct accounting, such as grid or emissions effects."
+    context: "The lesson evaluates PoW energy use as part of the security budget, miner geography, and long-term legitimacy tradeoff."
+    slide_heading: "Energy, Externalities, and Design Responses"
+    tags: ["consensus", "policy", "real-world"]
+    confidence: "high"

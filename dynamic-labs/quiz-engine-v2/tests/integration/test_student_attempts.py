@@ -267,6 +267,9 @@ def test_student_results_highlight_correct_and_incorrect_answers(app, client):
     result_html = client.get(
         f"/student/attempts/{attempt['id']}/results"
     ).get_data(as_text=True)
+    locked_attempt_html = client.get(
+        f"/student/attempts/{attempt['id']}"
+    ).get_data(as_text=True)
 
     assert submit_response.status_code == 200
     assert submit_response.get_json()["attempt"]["status"] == "graded"
@@ -276,6 +279,11 @@ def test_student_results_highlight_correct_and_incorrect_answers(app, client):
     assert "quiz-result-option-correct" in result_html
     assert "quiz-result-option-selected-incorrect" in result_html
     assert "Your answer - correct" in result_html
+    assert 'class="quiz-attempt-readonly" aria-label="Locked quiz response"' in locked_attempt_html
+    assert 'class="quiz-answer-option-input"' in locked_attempt_html
+    assert " disabled" in locked_attempt_html
+    assert "quiz-result-option-correct" not in locked_attempt_html
+    assert "quiz-result-option-selected-incorrect" not in locked_attempt_html
 
 
 def test_incomplete_submit_keeps_attempt_open_and_marks_questions(app, client):
@@ -397,6 +405,7 @@ def test_attempt_limit_grant_and_void_routes(app, client):
             ]
         },
     )
+    limit_html = client.get("/student/quizzes").get_data(as_text=True)
     blocked_response = client.post(f"/student/api/quizzes/{version['id']}/start")
     grant_response = client.post(
         f"/instructor/api/quiz-versions/{version['id']}/attempt-grants",
@@ -429,6 +438,12 @@ def test_attempt_limit_grant_and_void_routes(app, client):
         ).fetchone()
 
     assert submit_response.status_code == 200
+    assert 'data-completed-quizzes-toggle' in limit_html
+    assert 'aria-expanded="false"' in limit_html
+    assert "Show completed quizzes (1)" in limit_html
+    assert 'data-completed-quizzes-panel hidden' in limit_html
+    assert "Attempt limit reached." in limit_html
+    assert "Start quiz" not in limit_html
     assert blocked_response.status_code == 400
     assert blocked_response.get_json()["error"] == "attempt limit reached"
     assert grant_response.status_code == 201

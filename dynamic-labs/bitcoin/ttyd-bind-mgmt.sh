@@ -23,4 +23,4 @@ if [ -n "$router_ip" ] && command -v ip >/dev/null 2>&1; then
 fi
 
 exec ttyd -i "${mgmt_ip:-0.0.0.0}" -W \
-    setsid -w zellij attach --create s0
+    zellij attach --create s0

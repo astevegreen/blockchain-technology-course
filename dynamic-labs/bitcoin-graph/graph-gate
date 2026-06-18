@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# graph-gate on|off|status — instructor toggle for the whole graph tool.
+# Invoked by lane-service via `docker exec`. The app checks the flag on
+# every request, so this is authoritative regardless of access path
+# (router or direct curl from a student lane).
+set -euo pipefail
+
+RUN_DIR="${GRAPH_RUN_DIR:-/run/graph}"
+FLAG="${RUN_DIR}/enabled"
+mkdir -p "${RUN_DIR}"
+
+case "${1:-status}" in
+  on)  echo "on"  > "${FLAG}"; echo "graph tool enabled" ;;
+  off) echo "off" > "${FLAG}"; echo "graph tool disabled" ;;
+  status) cat "${FLAG}" 2>/dev/null || echo "off" ;;
+  *) echo "usage: graph-gate on|off|status" >&2; exit 2 ;;
+esac

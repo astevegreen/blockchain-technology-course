@@ -18,7 +18,9 @@ aci-mermaid: true
 
 - In the last lesson we traced how transactions flow through the network. Now we look at what those transactions actually execute.
 
-- A smart contract is the combination of code and state that enforces rules autonomously on a blockchain.
+- A smart contract is a program and its state at an address on the blockchain.
+
+- Its functions run automatically when a transaction or call reaches that contract.
 
 - Different from ‘legal contracts’: execution is automatic and deterministic, not interpretive.
 
@@ -31,11 +33,18 @@ This opening slide establishes what the lesson means by "smart contract" and set
 
 **Key Points**
 - A smart contract is code plus persistent state that executes under shared consensus rules.
-- Smart contracts differ from legal contracts because execution is automatic and bounded by bytecode behavior.
+- Smart contracts differ from legal contracts because execution is automatic and bounded by deployed bytecode behavior.
 - Define deterministic briefly as producing the same result for the same inputs on every validating node.
 
 **Walkthrough**
-None
+1. Start with the public state variables that define long-lived contract state.
+2. Show the constructor as the one-time deployment step that assigns the minter.
+3. End with the `mint` function, where access control and balance updates begin.
+4. If using slide-local code numbering, treat file line 585 as code line 1:
+   - public state variables: code lines 3-4
+   - constructor: code line 6
+   - mapping declaration: code line 4
+   - mapping's default zero behavior is visible when `balances` is declared on code line 4 and later updated on code line 9 without prior initialization
 
 **Sources**
 - @buterin_ethereumnextgenerationsmart_2014
@@ -52,7 +61,7 @@ None
 | **State Model** | Stateless: no memory of prior executions. | Stateful: contracts maintain persistent storage between calls. |
 | **Execution Context** | Runs only when spending an output. | Invoked via transactions or calls; read/write storage, call contracts. |
 | **Control Flow** | No loops or recursion; limited branching. | Full control flow (loops, branching, function calls, libraries). |
-| **Resource Control** | Bounded by design. | Bounded by gas metering. |
+| **Resource Control** | Bounded by design. | Bounded by gas metering; execution stops when gas runs out. |
 | **Security Model** | Simplicity and determinism reduce attack surface. | Expressiveness increases flexibility *and* vulnerability (reentrancy, etc.). |
 
 ::: {.notes}
@@ -78,13 +87,13 @@ None
 ## Beyond Ethereum: Other Smart Contract Models {.smaller}
 
 - UTXO-plus models (e.g., **Cardano eUTXO**): richer logic while keeping UTXO structure.
-  - Tradeoff: stronger formal verification, but stateless contracts are harder to program.
+  - Stronger formal verification, but stateless contracts are harder to program.
 - Account-centric but non-EVM (e.g., **Solana**): program-owned accounts with explicit parallelism.
-  - Tradeoff: high throughput, but developers must declare all touched accounts upfront.
+  - High throughput, but developers must declare all touched accounts upfront.
 - WebAssembly-based contracts (e.g., **CosmWasm**, **Near**): compile Rust/Go to a WASM sandbox.
-  - Tradeoff: familiar languages and memory safety, but smaller ecosystem and tooling.
+  - Familiar languages and memory safety, but smaller ecosystem and tooling.
 - Private/permissioned chaincode (e.g., **Hyperledger Fabric**): enterprise settings with known participants.
-  - Tradeoff: fine-grained access control, but sacrifices permissionless composability.
+  - Fine-grained access control, but sacrifices permissionless composability.
 
 ::: {.notes}
 
@@ -107,11 +116,16 @@ None
 
 ## Ethereum's Advantage for Smart Contracts
 
+::: {style="font-size: 0.88em;"}
+
 - Largest and most mature ecosystem for contract development and deployment.  
 - Clear execution environment (EVM) with deterministic outcomes and gas-metered computation.  
-- Shared standards (ERC-20, ERC-721, ERC-1155, etc.) enable composability and predictable interfaces.  
-- Rich tooling and libraries (Hardhat, Foundry, OpenZeppelin) lower barriers to safe experimentation.  
+- Contracts compile to bytecode that every EVM node executes in the same way.  
+- Shared standards enable composability and predictable interfaces.  
+- Rich tooling and libraries lower barriers to safe experimentation.  
 - Open participation model: anyone can verify, deploy, or compose with existing code.  
+
+:::
 
 ::: {.notes}
 
@@ -120,6 +134,9 @@ This slide establishes why Ethereum is a practical focal platform for learning a
 
 **Key Points**
 - Ethereum combines deterministic execution, broad tooling, and widely adopted standards that make experimentation easier.
+- The EVM executes compiled bytecode, which gives every node the same low-level program to run.
+- Examples of shared standards include ERC-20, ERC-721, and ERC-1155.
+- Examples of common development tooling include Hardhat, Foundry, and OpenZeppelin.
 - Shared standards such as ERC interfaces create composability across contracts and applications.
 - Spell out ERC as Ethereum Request for Comments and EVM as Ethereum Virtual Machine.
 
@@ -139,7 +156,7 @@ None
   - Both share the same address format and can hold ETH, but only EOAs can sign transactions.
 - Contracts execute on message calls; they cannot self-initiate.
   - Every on-chain action traces back to an EOA signature, preserving explicit causality.
-- State lives in storage (persistent) vs memory (ephemeral).
+- Contract state lives in storage (persistent), while each call gets temporary working memory.
 - Each call executes with `msg.sender`, `msg.value`, available gas, calldata (function inputs), block context, etc.
   - `msg.sender` is the *immediate* caller, not necessarily the original user. This matters for access control.
 
@@ -151,7 +168,7 @@ This slide establishes the account and execution context students need before re
 **Key Points**
 - EOAs can sign and initiate transactions, while contract accounts hold code and state but cannot self-start.
 - Context variables such as `msg.sender` and `msg.value` shape authorization and payment logic.
-- Define calldata as the read-only input payload for a call and storage as persistent contract state.
+- Define calldata as the read-only input payload for a call, storage as persistent contract state, and memory as temporary per-call workspace.
 
 **Walkthrough**
 None
@@ -162,29 +179,68 @@ None
 
 :::
 
-## Contract Deployment
+## Contract Deployment {.smaller}
 
-- Deployment sends initcode that runs once to produce runtime bytecode.
+:::: {.columns}
+::: {.column width="56%"}
 
-- Constructor logic initializes storage; only runtime code persists on chain.
+::: {style="font-size: 0.84em;"}
 
-- Contract address is derived deterministically (nonce or CREATE2 with salt).
-  - Deployment fails if a contract already exists at that address.  
+Deployment happens in a short sequence:
 
-- Deployment costs gas; large code and heavy initialization are expensive.
+1. A developer writes Solidity and compiles it into deployment bytecode.
+2. The deployment transaction carries compiled creation code (`initcode`).
+3. The EVM runs that code, including constructor logic, and charges gas while it executes.
+4. The result is a new contract address with runtime bytecode and initialized storage on-chain.
+
+The contract address is derived deterministically from the deployment rule in use.
+
+Source-code verification on explorers is separate from deployment.
+
+:::
+
+:::
+::: {.column width="44%"}
+
+```{dot}
+//| fig-width: 5.2
+//| fig-height: 4.8
+digraph deployflow {
+  bgcolor="transparent"; rankdir=TB;
+  node [fontname="Helvetica" fontsize=11 style="filled,rounded" shape=box];
+  edge [fontname="Helvetica" fontsize=9];
+
+  src   [label="Solidity source" fillcolor="#dbeafe"];
+  comp  [label="Compile" fillcolor="#dcfce7"];
+  tx    [label="Deployment tx\nwith initcode" fillcolor="#fef3c7"];
+  exec  [label="Initcode + constructor\nrun in the EVM" fillcolor="#fde68a"];
+  out   [label="Contract address\nruntime bytecode + storage" fillcolor="#bbf7d0"];
+
+  src -> comp -> tx -> exec -> out;
+}
+```
+
+:::
+::::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes deployment as a one-time execution step that turns initialization logic into persistent runtime code. It matters here because deployment choices affect address predictability, gas cost, and upgrade planning. Emphasize that constructors run once, but only the resulting runtime bytecode remains on-chain.
+This slide establishes deployment as a short workflow that turns source code into a live contract account. It matters here because students often understand contracts as code in the abstract, but not the actual sequence that creates an address with runtime bytecode and storage. Emphasize that constructors run once, but only the resulting runtime bytecode remains on-chain.
 
 **Key Points**
 - Deployment executes initcode, initializes storage, and returns the runtime code that will persist.
+- The EVM stores runtime bytecode on-chain; verified Solidity source shown by explorers is matched to that bytecode later.
 - Contract addresses are derived deterministically, which supports factories and predictable coordination patterns.
-- Define CREATE2 as the deployment opcode that uses a salt and bytecode hash to precompute addresses.
+- `CREATE` is the standard deployment opcode; it derives the new contract address from the creator address and nonce.
+- `CREATE2` derives the address from the creator address, a salt, and the initcode hash, which allows a contract address to be predicted before deployment.
+- Students should care about `CREATE2` because factories, precomputed addresses, and coordinated deployments use it.
 
 **Walkthrough**
-None
+1. Start with the Solidity source and compilation step, making clear that source code is not what the chain stores.
+2. Follow the deployment transaction as it carries initcode into the EVM.
+3. Explain that constructor logic runs during this one-time execution and consumes gas.
+4. End with the final result: a contract address holding runtime bytecode and initialized storage.
 
 **Sources**
 - @ethereum.org_smartcontractsdeveloper_2025
@@ -200,6 +256,8 @@ None
   - If contract B reverts and A does not handle it (try/catch), A reverts too and the whole transaction unwinds.
 - `msg.sender` and `msg.value` are per-frame; gas forwarding is explicit.
   - When A calls B, B sees A as `msg.sender`, not the original user. This is critical for access control.
+- Each call frame has a gas budget.
+  - If a loop runs too long or the callee uses too much gas, that frame fails when its gas is exhausted.
 
 ```{dot}
 //| fig-width: 7
@@ -230,6 +288,7 @@ This slide establishes that contract execution is really nested control flow acr
 **Key Points**
 - EVM execution is synchronous: a contract waits for a called contract to finish before its own frame completes.
 - External calls can succeed, fail, revert, or consume gas in ways that affect the caller's logic.
+- Gas is the practical bound on general control flow, including loops and nested calls.
 - Define stack frame briefly as the current execution context for one call in the call chain.
 
 **Walkthrough**
@@ -243,27 +302,38 @@ This slide establishes that contract execution is really nested control flow acr
 
 :::
 
-## Solidity: File and Contract Structure
+## Solidity: File Structure, From Top to Bottom
 
-- **Version pragma:** compiler compatibility (e.g., `pragma solidity ^0.8.26;`).
-- **Contract declaration:** `contract Name { ... }`.
-- **State variables:** persist in storage across transactions.
-- **Functions:** visibility, mutability (view/pure), and payable.
-- **Constructor:** one-time initialization at deployment.
-- **Events:** logs that external apps can subscribe to.
+::: {style="font-size: 0.88em;"}
+
+Each section in a Solidity file explains its behavior:
+
+- **`pragma solidity ...`** sets compiler expectations, so readers know which language rules and safety checks apply.
+- **`contract Name { ... }`** identifies the unit of code and state that will be deployed at one address.
+- **State variables** show which data persists between calls.
+- **Functions and modifiers** show how callers interact with the contract and whether state can change.
+- **Constructor and events** show what happens at deployment and what off-chain systems can observe afterward.
+- The source file is what humans review; the deployed contract is compiled runtime bytecode.
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes the basic organizational shape of Solidity source files so students can orient themselves before reading more detailed syntax. It matters here because secure development starts with understanding how contracts, imports, and declarations are laid out. Emphasize that file structure communicates intent and helps reviewers reason about code.
+This slide establishes Solidity file structure as a reading strategy rather than just a list of syntax elements. It matters here because students need to learn how to inspect a contract in the same order a reviewer or auditor would: compiler assumptions first, then deployed unit, then persistent state, then entry points, then deployment-time and off-chain behavior. Emphasize that structure is part of how developers reason about safety and intent.
 
 **Key Points**
-- Solidity files typically contain version pragmas, imports, contract declarations, and supporting definitions.
-- Clear organization makes inheritance, library use, and deployment relationships easier to review.
+- The file order helps readers separate compiler expectations, storage layout, callable behavior, and observability.
+- Solidity source is compiled before deployment; the EVM executes the resulting bytecode, not the `.sol` text file.
+- Reading state variables before functions helps students see what data the contract is protecting or changing.
 - Define pragma briefly as a compiler directive that constrains expected language version behavior.
 
 **Walkthrough**
-None
+1. Start at the pragma to establish compiler expectations.
+2. Move to the contract declaration to identify the deployed unit of code and state.
+3. Read state variables to understand persistent storage.
+4. Read functions and modifiers to understand the callable surface and state transitions.
+5. End with constructor and events to separate deployment-time setup from runtime observability.
 
 **Sources**
 - @solidityteam_solidityexample_2025
@@ -273,24 +343,38 @@ None
 
 ## Types: Value Types 
 
-- Integers: `uint`, `int` (default 256-bit); smaller sizes available.
-- `bool` - true/false
-- `address` (20 bytes) identifies accounts; `address payable` can receive ETH.
-- `enum` for finite sets of named constants.
-- Literals: `1 ether` (wei), time units (`seconds`, `minutes`), etc.
+::: {style="font-size: 0.70em;"}
+
+Solidity groups types into **value types** and **reference types**. Value types are copied when assigned or passed around, so they do not use a data-location label like `storage`, `memory`, or `calldata`.
+
+| **Type** | **Represents** | **Uses** |
+|---|---|---|
+| `uint` / `int` | Signed and unsigned integers for arithmetic | Balances, counters, timestamps, and range checks |
+| `bool` | `true` / `false` values | Flags, checks, and branching logic |
+| `address` / `address payable` | Account identifiers; `payable` can receive ETH | Ownership, recipients, and access-control decisions |
+| `enum` | A limited set of named states | Helps constrain contract state to valid options |
+
+Literal suffixes like `1 ether` and time units are syntax conveniences, not a separate datatype family.
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes the small, copy-by-value data types Solidity uses for arithmetic, flags, and addresses. It matters here because many security mistakes begin with misunderstandings about type range, signedness, or implicit assumptions around addresses. Emphasize that types are part of the contract's safety boundary.
+This slide establishes Solidity value types as an official language category rather than just a list of common examples. It matters here because students need to understand both what these types represent and why copy-by-value behavior differs from the reference types on the next slide. Emphasize that type choice shapes arithmetic safety, authorization logic, and state-machine clarity.
 
 **Key Points**
-- Value types such as integers, booleans, and addresses are copied directly rather than referenced through shared storage.
+- These are Solidity value types, meaning they are copied when used in assignments or function arguments.
+- “Value type” refers to copy behavior, not importance or frequency.
 - Choosing the right type helps constrain invalid states and clarify developer intent.
 - Define signed versus unsigned briefly and note that an address is the 20-byte identifier for an Ethereum account.
 
 **Walkthrough**
-None
+1. Start with integers because they drive balances, counters, and arithmetic.
+2. Move to booleans as control and state flags.
+3. Cover addresses as account identifiers and the gateway to ETH transfer logic.
+4. End with enums as a way to constrain contract state to named options.
+5. Clarify that literal suffixes like `1 ether` are syntax around values, not a standalone type category.
 
 **Sources**
 - @solidityteam_solidityexample_2025
@@ -300,26 +384,39 @@ None
 
 ## Types: Reference Types 
 
-- Arrays: fixed or dynamic; `bytes` and `string` are dynamic.
-   - fixed-size example `bytes1`…`bytes32`
-   - fixed arrays fit into a single 32-byte EVM storage slot.
-- `struct`: custom composite types for grouping fields.
-- `mapping(Key => Value)`: hash table; not iterable.
-- Data locations: `storage`, `memory`, `calldata` control where data lives.
-- Copy semantics differ by location; storage writes cost gas.
+::: {style="font-size: 0.70em;"}
+**Reference types** types refer to larger data structures--their behavior depends on where the data lives: `storage`, `memory`, or `calldata`.
+
+
+| **Type** | **Represents** | **Uses** |
+|---|---|---|
+| Arrays | Ordered collections of values, fixed-size or dynamic | Lists of items, histories, and batched data |
+| `bytes` / `string` | Dynamic byte arrays and text data | Raw data/metadata |
+| `struct` | A custom grouped record with multiple fields | Models richer state such as users, proposals, or assets |
+| `mapping(Key => Value)` | Key-value lookup table | Balances, permissions, and registries |
+
+Reference types often need an explicit data location, and copying them can change both gas cost and behavior.
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes the larger reference-based structures Solidity uses for collections and more complex state. It matters here because copying versus referencing changes both gas cost and bug risk. Emphasize that arrays, mappings, and structs can be powerful but require careful reasoning about where data lives.
+This slide establishes Solidity reference types as the language category used for larger, structured data. It matters here because these types behave differently from value types: students need to reason about data location, copying, and persistence, not just the shape of the data itself. Emphasize that arrays, mappings, and structs are powerful, but they are also where storage, memory, and calldata start to matter directly.
 
 **Key Points**
-- Reference types point to data structures such as arrays, structs, and mappings rather than copying a small primitive value.
-- Their behavior depends heavily on whether they are stored in storage, memory, or calldata.
+- These are Solidity reference types, meaning their behavior depends on where the underlying data is stored.
+- Unlike value types, reference types often require an explicit data-location label.
+- Choosing among arrays, structs, mappings, `bytes`, and `string` shapes both contract design and gas cost.
+- Clarify that dynamic `bytes` and `string` are reference types, while fixed-size `bytes1`…`bytes32` belong to the value-type family.
 - Define mapping briefly as a key-value lookup structure commonly used for balances, permissions, and registries.
 
 **Walkthrough**
-None
+1. Start with arrays as the simplest collection type.
+2. Move to `bytes` and `string` as common dynamic data containers.
+3. Cover structs as a way to group related fields into one record.
+4. End with mappings as the standard lookup structure for balances and permissions.
+5. Close by tying all of them to data location and gas cost.
 
 **Sources**
 - @solidityteam_solidityexample_2025
@@ -329,11 +426,23 @@ None
 
 ## Visibility, Mutability, and Payable
 
-- Visibility: `public`, `external`, `internal`, `private`.
-- Function Mutability: `view` (reads), `pure` (no reads/writes), default (writes allowed).
-- `payable` functions can receive ETH; others reject attached ETH.
+::: {style="font-size: 0.70em;"}
+
+These are **function-level modifiers**. They tell readers who can call a function, whether it may read or change state, and whether it may receive ETH.
+
+- **Visibility** controls who can call or access the function:
+  - `public`: callable from inside the contract and from outside
+  - `external`: callable from outside the contract
+  - `internal`: callable only inside the contract or derived contracts
+  - `private`: callable only inside the same contract
+- **Mutability** describes how the function interacts with state:
+  - `view`: may read state, but not write it
+  - `pure`: does not read or write contract state
+  - default: may change state
+- **`payable`** means the function can receive ETH with the call.
+  - **`nonpayable`** is the contrasting default: attached ETH causes the call to revert.
 - Public state variables get auto-generated getters.
-- External functions are cheaper to call from outside than public.
+:::
 
 ::: {.notes}
 
@@ -342,11 +451,15 @@ This slide establishes the function-level modifiers that communicate who can cal
 
 **Key Points**
 - Visibility controls who may access a function or state variable, while mutability communicates whether a function reads or writes state.
-- `payable` explicitly marks functions that are allowed to receive ETH.
+- `payable` explicitly marks functions that are allowed to receive ETH, while the default `nonpayable` behavior rejects attached ETH.
 - Define `view` and `pure` briefly as functions that read state without writing, or avoid state entirely.
+- Public and external are often confused; emphasize that both are externally callable, but `external` is only for outside callers.
 
 **Walkthrough**
-None
+1. Start by framing these as function-level modifiers rather than standalone keywords.
+2. Walk through visibility from broadest external access to most restricted internal use.
+3. Move to mutability so students can distinguish read-only behavior from state-changing behavior.
+4. End with `payable` versus `nonpayable` to connect function declarations to ETH transfers.
 
 **Sources**
 - @solidityteam_solidityexample_2025
@@ -360,14 +473,14 @@ None
 ::: {.column width="50%"}
 - **Storage**: persistent across transactions
   - Balances, owners, mappings
-  - Most expensive to write (~20k gas per new slot)
-- **Memory**: ephemeral scratch pad per call
-  - Local arrays, ABI encoding buffers
+  - Most expensive to write because the new state must be recorded on-chain
+- **Memory**: temp workspace for one call
+  - Local arrays, decoded values, ABI encoding buffers
   - Zeroed between calls
 - **Calldata**: read-only transaction inputs
   - Function arguments from the caller
-  - Cheapest; no copy needed for `external` functions
-- Wrong location choices waste gas or cause bugs.
+  - Often cheapest; `external` functions can read it without making a copy
+- Wrong location choices can waste gas, trigger unnecessary copies, or change how updates behave.
 :::
 ::: {.column width="50%"}
 ```{dot}
@@ -407,7 +520,7 @@ This slide establishes the three main places Solidity stores or references data 
 **Key Points**
 - Storage persists on-chain, memory exists only during execution, and calldata is the immutable input payload for a call.
 - Choosing data location affects both performance and how changes propagate through a function.
-- Define aliasing briefly as two references unexpectedly pointing at the same underlying data.
+- Storage is the long-lived contract state; memory and calldata support one call at a time.
 
 **Walkthrough**
 None
@@ -435,11 +548,15 @@ contract SimpleStorage {
     }
 }
 ```
+::: {style="font-size: 0.70em;"}
 
 - One state variable; one setter, one getter, one event.
+- `stored` is a storage variable; `x` exists only for the duration of the call.
 - Demonstrates state write vs view read.
 - Events record history clients can subscribe to.
-- Extend: add access control or input validation.
+- *What about access control or input validation?*
+
+:::
 
 ::: {.notes}
 
@@ -449,12 +566,20 @@ This code slide establishes a minimal example students can use to connect Solidi
 **Key Points**
 - The example demonstrates state declaration, one write path, and one read path in a minimal contract.
 - Even simple contracts rely on the same deployment, gas, and state rules as larger applications.
+- The `set` function is cheap to read but more expensive to write because it changes persistent storage.
 - Define persistent state here as data that remains after one transaction finishes and is available to later calls.
 
 **Walkthrough**
 1. Identify the stored variable that lives in contract state.
 2. Show the function that changes that value.
 3. End with the function that reads the value back for later callers.
+4. If using slide-local code numbering, treat file line 529 as code line 1:
+   - state variable: code line 3
+   - event declaration: code line 4
+   - setter: code lines 6-9
+   - state write: code line 8
+   - getter: code lines 11-13
+   - state read: code line 12
 
 **Sources**
 - @solidityteam_solidityexample_2025
@@ -476,6 +601,7 @@ contract Coin {
     }
 ```
 - Public state vars auto-generate getters.
+- `minter` and `balances` live in storage.
 - Constructor initializes the minter to deployer.
 - `mint` restricts access to minter via `require`.
 - Mapping initializes to zero.
@@ -487,6 +613,7 @@ This slide establishes a richer example where a token-like contract introduces b
 
 **Key Points**
 - Token-style contracts track balances and define the rules for creating or moving units.
+- The function arguments arrive as calldata, while the balance updates change persistent storage.
 - Access control and accounting correctness become much more important once the contract manages value.
 - Define invariant briefly as a condition, such as conservation of balances, that should remain true after every valid call.
 
@@ -512,10 +639,16 @@ None
     }
 }
 ```
-- Custom error improves gas vs string messages.
-- Transfers adjust balances and emit an event.
-- Pattern mirrors ERC‑20 internals (without allowances).
-- Extend: add burn/mint caps; pause; owner role.
+
+::: {style="font-size: 0.70em;"}
+
+- The custom error function names the failure case and returns the requested and available amounts.
+- The `require` check stops the transfer unless the sender has enough balance.
+- Lines 6-7 move value by subtracting from the sender and adding to the receiver in storage.
+- The event on line 8 gives wallets, explorers, and indexers a record of the transfer.
+- This is the core accounting pattern behind token transfers, even though this example does not include allowances.
+
+:::
 
 ::: {.notes}
 
@@ -525,10 +658,14 @@ This continuation slide establishes how token logic is completed through additio
 **Key Points**
 - Additional functions often add transfers, permission checks, and logging needed for real-world use.
 - As a contract grows, consistency between state updates and emitted events becomes more important.
+- Poor code can still be correct in principle but fail operationally if it consumes too much gas or reverts late.
 - Define event briefly as a log record emitted by the contract for off-chain consumers and tools.
 
 **Walkthrough**
-None
+1. Start with the custom error and explain what information it returns on failure.
+2. Show the `require` check as the gate that prevents overspending.
+3. Walk through the two storage updates that preserve the balance-transfer invariant.
+4. End with the event emission as the off-chain record of the successful transfer.
 
 **Sources**
 - @ethereum.org_smartcontractsdeveloper_2025
@@ -569,12 +706,14 @@ None
 
 :::
 
-## ABI, Encoding, and Function Selectors
+## ABI, Encoding, and Function Selectors {.smaller}
 
-- **ABI (Application Binary Interface)** defines how function calls, return values, and events are serialized into bytes.  
-- Function call format:
+- **ABI (Application Binary Interface)** is the byte-level interface that tells wallets, apps, and other contracts how to call a contract and interpret what comes back.  
+- Defines the format for: function calls, return values, event data
+- ABI Function call format:
   - 4-byte selector = `keccak256("name(types)")[:4]`
   - Followed by arguments, each encoded per ABI rules (32-byte words, offsets for dynamic types).  
+- Callers interact with deployed bytecode without needing the Solidity source on-chain.
 - Return data and event logs follow ABI conventions.  
 - `receive` handles plain ETH transfers; `fallback` handles unknown selectors or bad calldata.
 
@@ -584,22 +723,29 @@ None
 This slide establishes how external callers know what bytes to send and how contracts know which function to run. It matters here because interoperability, tooling, and low-level debugging all depend on ABI conventions. Emphasize that human-readable function names become structured encodings and selectors on the wire.
 
 **Key Points**
-- The ABI defines how function calls and return values are encoded for external interaction.
+- The ABI is the contract's external byte-level interface, not just a serialization detail.
+- The selector-plus-arguments layout is the ABI-defined format for a function call.
 - Function selectors route incoming calldata to the intended entry point.
 - Spell out ABI as Application Binary Interface and define selector as the short identifier derived from a function signature.
+- Clarify that the selector uses the **first** 4 bytes of the `keccak256` hash.
+- The selector is **not** a memory address; it is a compact dispatch code that gives a low-collision way to identify which function the caller wants.
 
 **Walkthrough**
-None
+1. Define the ABI as the external interface format used by off-chain tools and other contracts.
+2. Show the function-call layout: selector first, encoded arguments after it.
+3. End by connecting selectors to dispatch, where the contract chooses which function body to run.
+4. If students ask why only 4 bytes are used, explain that 32-byte hashes are reduced to a short identifier to save calldata space while still keeping collisions rare enough for practical interface dispatch.
 
 **Sources**
 None
 
 :::
 
-## Reentrancy: Anatomy and Defenses
+## Reentrancy: Anatomy and Defenses {.smaller}
 
 - Occurs when an external call **reenters** before your function finishes.
-
+- Here, the victim contract is trying to **pay the attacker a withdrawal** from the attacker's recorded balance.
+- The bug is that the contract sends ETH **before** it updates that balance to zero.
 - Classics: withdraw pattern before balance update; ERC-777 hooks misused.
 
 ```{dot}
@@ -614,8 +760,8 @@ digraph reentrancy {
   subgraph cluster_victim {
     label="Victim Contract"; labeljust=l; fontname="Helvetica"; fontsize=11;
     style="rounded"; color="#93c5fd"; fillcolor="#dbeafe"; style="filled,rounded";
-    v1 [label="1. check balance\nbalance[attacker] = 10" fillcolor="#bfdbfe"];
-    v2 [label="2. send ETH\n(balance NOT yet updated)" fillcolor="#fee2e2"];
+    v1 [label="1. attacker calls\nwithdraw()" fillcolor="#bfdbfe"];
+    v2 [label="2. victim sends ETH\nbefore balance update" fillcolor="#fee2e2"];
     v3 [label="5. balance[attacker] = 0\n(too late!)" fillcolor="#fecaca" style="filled,rounded,dashed"];
     v1 -> v2; v2 -> v3 [style=dashed label="never\nreached" fontcolor="#991b1b"];
   }
@@ -642,11 +788,17 @@ This slide establishes reentrancy as the canonical example of why external calls
 
 **Key Points**
 - Reentrancy occurs when an external call lets a callee invoke the vulnerable contract again before the first execution has completed safely.
+- In the classic case, the vulnerable contract is processing a withdrawal and sends ETH out before fixing its own internal accounting.
 - Safe design requires treating every external call as an adversarial boundary.
 - Define reentrant briefly as entering the same or related logic again before the earlier invocation has finished.
+- If students ask about ERC-777 misuse: ERC-777 token transfers can trigger recipient hooks such as `tokensReceived`, which means a contract handling the token transfer may unexpectedly hand control to external code in the middle of its own logic. If state is not updated first, that hook can be abused the same way a malicious fallback can.
 
 **Walkthrough**
-None
+1. Start with the attacker calling a withdrawal function on the victim contract.
+2. Show that the victim is trying to send the attacker ETH that the attacker is allowed to withdraw.
+3. Emphasize that the send happens before the balance is updated to zero.
+4. When the attacker's `receive()` function runs, it calls `withdraw()` again while the old balance is still visible.
+5. The loop continues until funds are drained or gas runs out.
 
 **Sources**
 - @ethereum.org_smartcontractsdeveloper_2025
@@ -685,6 +837,10 @@ This code slide establishes the classic vulnerable ordering pattern that made re
 1. Read the user's balance and confirm it is nonzero.
 2. Notice the external call that transfers ETH before state is updated.
 3. Show how a malicious callee can call back in and repeat the withdrawal before the balance is cleared.
+4. If using slide-local code numbering, treat file line 812 as code line 1:
+   - external call before state update: code lines 6-8, followed by the delayed state update on code line 9
+   - attacker re-calls `withdraw()` before zeroing balance: the reentry window opens at code line 6 and stays open until code line 9
+   - multiple withdrawals from one balance: code lines 4-9 can repeat while the old balance remains visible
 
 **Sources**
 solidityteam_solidityexample_2025
@@ -703,7 +859,7 @@ The fix is disciplined ordering:
 
 A reentrant call now sees zero balance and fails the check. The attack loop from the previous slide is broken.
 
-For belt-and-suspenders safety, add a mutex via OpenZeppelin's **ReentrancyGuard**: the `nonReentrant` modifier locks the function so recursive entry reverts immediately.
+Some contracts add a second protection: a reentry lock. That pattern blocks the same function from being entered again before the first call finishes.
 :::
 ::: {.column width="58%"}
 **CEI pattern:**
@@ -742,13 +898,14 @@ This slide establishes the standard defensive ordering that breaks the classic r
 
 **Key Points**
 - Checks-Effects-Interactions reorders logic so state changes happen before external calls.
-- Reentrancy guards add a second line of defense by rejecting recursive entry while a function is active.
+- Reentry locks add a second line of defense by rejecting recursive entry while a function is active.
 - Define CEI as Checks-Effects-Interactions, a coding pattern for safer state transitions.
 
 **Walkthrough**
 1. Check the preconditions before doing any mutation or external interaction.
 2. Apply the internal state change so the balance or permission state is already updated.
 3. Perform the external call last, when a reentrant attempt will see the hardened state.
+4. If students ask about `nonReentrant` in real code, explain that it is a common library modifier that implements this reentry-lock idea.
 
 **Sources**
 solidityteam_solidityexample_2025
@@ -884,36 +1041,13 @@ https://ethereum.org/en/developers/docs/; https://ethereum.org/en/whitepaper/
 
 :::
 
-## Micro Lab
-
-Use the following smart contract lab to explore EVM:
-
-[/assets/labs/ether-smart-contract-micro/](/assets/labs/ether-smart-contract-micro/)
-
-::: {.notes}
-
-**Overall Slide Concept**
-This lab slide establishes the transition from conceptual understanding to hands-on experimentation with the EVM. It matters here because smart contract safety becomes clearer when students inspect behavior in code and traces. Emphasize that the lab is where theory about execution, state, and security becomes concrete.
-
-**Key Points**
-- The lab is intended to reinforce execution flow, storage behavior, and smart-contract risk patterns through direct interaction.
-- Students should connect what they observe back to the lesson's concepts about determinism, gas, and call safety.
-- Define lab goal here as applying concepts with evidence rather than merely recalling terms.
-
-**Walkthrough**
-None
-
-**Sources**
-- @ellis_chainlinkdecentralizedoracle_2017
-- @eskandari_sokoraclesground_2021
-
-:::
-
 ## Key Takeaways {.smaller}
 
 - A smart contract is code + persistent state that executes deterministically on every node.
 
-- Ethereum’s EVM provides the execution environment: accounts, gas metering, and a shared state trie.
+- Ethereum’s EVM provides the execution environment: accounts, gas metering, runtime bytecode, and a shared state trie.
+
+- Solidity source is compiled into bytecode for deployment; after creation, the contract account stores runtime bytecode on-chain.
 
 - External calls transfer control to untrusted code; the **Checks-Effects-Interactions** pattern and reentrancy guards are the primary defenses.
 
@@ -930,6 +1064,7 @@ This final slide establishes the durable mental model students should retain aft
 
 **Key Points**
 - Smart contracts combine code, persistent state, and shared execution under EVM rules.
+- Deployed contracts are represented on-chain as runtime bytecode, while verified source code is an off-chain transparency layer.
 - Defensive patterns such as CEI, careful access control, and explicit oracle assumptions are core habits, not optional extras.
 - Immutability, upgradeability, and external calls each involve tradeoffs that should be stated and reviewed explicitly.
 

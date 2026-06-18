@@ -23,36 +23,13 @@ from live_support import (
     wait_for_http,
 )
 
+# Active course surface only; must match lane-service/labs/ethereum_catalog.py.
 EXPECTED_EXERCISE_IDS = [
-    "eth-trail-intro",
-    "eth-trail-concepts",
-    "eth-trail-explore",
-    "eth-explore-staking",
-    "eth-explore-validators",
-    "eth-explore-slashing",
-    "eth-explore-defi",
-    "eth-explore-rewards",
-    "eth-explore-attack-cost",
-    "eth-explore-chain",
-    "eth-explore-address",
-    "eth-sim",
     "eth-live",
-    "eth-tokens",
-    "eth-cli",
-    "eth-diagnostics",
     "eth-beacon-lab",
     "eth-contract-write",
-    "eth-contract-prereqs",
     "eth-contract-deploy",
-    "eth-contract-share",
     "eth-contract-interact",
-    "eth-contract-verify",
-    "eth-token-erc721",
-    "eth-token-evm",
-    "eth-token-deploy",
-    "eth-token-metadata",
-    "eth-token-transfer",
-    "eth-token-sale",
 ]
 
 
