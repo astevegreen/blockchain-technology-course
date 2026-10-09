@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blockchain Course Curriculum Mind Map</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --background: #090d16;
+      --card: #111827;
+      --border: #1f293d;
+      --foreground: #f1f5f9;
+      --muted-foreground: #94a3b8;
+      --primary: #38bdf8;
+      --primary-foreground: #02131e;
+      --accent: #6366f1;
+    }
+    body {
+      background: var(--background);
+      color: var(--foreground);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+    .grid-bg {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    }
+    /* Stable, flicker-free node styles */
+    .node-group {
+      cursor: pointer;
+      pointer-events: bounding-box;
+    }
+    .node-bg {
+      transition: fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease, filter 0.15s ease;
+      pointer-events: all;
+    }
+    .node-group:hover .node-bg {
+      fill: #1e293b !important;
+      stroke-width: 2.5px !important;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.35));
+    }
+    .connection-line {
+      fill: none;
+      transition: stroke-opacity 0.2s ease, stroke-width 0.2s ease;
+    }
+    .toggle-circle {
+      transition: transform 0.15s ease, fill-opacity 0.15s ease;
+    }
+    .toggle-group:hover .toggle-circle {
+      fill-opacity: 0.5;
+    }
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 999px; }
+  </style>
+</head>
+<body class="w-screen h-screen m-0 p-0 flex flex-col relative grid-bg">
+  <!-- Top Navigation / Search / Controls Bar -->
+  <header class="h-14 bg-[var(--card)] border-b border-[var(--border)] px-4 flex items-center justify-between z-20 shadow-md">
+    <div class="flex items-center gap-3">
+      <a href="../index.html" title="Back to Portal" class="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-400 font-black text-sm hover:bg-sky-500/30 transition">
+        &larr;
+      </a>
+      <div>
+        <h1 class="text-sm font-bold tracking-tight text-[var(--foreground)] flex items-center gap-2">
+          Blockchain Course <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30">Vertical Mind Map</span>
+        </h1>
+        <p class="text-[11px] text-[var(--muted-foreground)]">9 Modules &bull; 36 Lessons &bull; 17 Interactive Labs (Top-to-Bottom Flow)</p>
+      </div>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <div class="flex items-center gap-2 flex-1 max-w-md mx-6">
+      <div class="relative w-full">
+        <input 
+          id="searchInput" 
+          type="text" 
+          placeholder="Search lessons, concepts, or labs (e.g. MEV, Merkle, PoW)..." 
+          class="w-full bg-slate-900/90 text-xs text-[var(--foreground)] border border-[var(--border)] rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-sky-400 transition"
+        />
+        <svg class="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Zoom & Layout Controls -->
+    <div class="flex items-center gap-1.5">
+      <button id="btnZoomIn" title="Zoom In" class="px-2 py-1 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-[var(--border)] rounded-md transition">+</button>
+      <button id="btnZoomOut" title="Zoom Out" class="px-2 py-1 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-[var(--border)] rounded-md transition">&minus;</button>
+      <button id="btnFit" title="Reset & Fit View" class="px-2.5 py-1 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-[var(--border)] rounded-md transition">Reset Fit</button>
+      <div class="w-px h-5 bg-slate-700 mx-1"></div>
+      <button id="btnExpandAll" class="px-2.5 py-1 text-xs font-semibold bg-sky-600/30 hover:bg-sky-600/40 text-sky-300 border border-sky-500/40 rounded-md transition">Expand All</button>
+      <button id="btnCollapseAll" class="px-2.5 py-1 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-[var(--border)] rounded-md transition">Collapse</button>
+      <div class="w-px h-5 bg-slate-700 mx-1"></div>
+      <button id="btnSlideServerSettings" onclick="openServerSettingsModal()" title="Configure Slide Server Base URL" class="px-2.5 py-1 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 border border-slate-700 hover:border-sky-500/50 rounded-md transition flex items-center gap-1.5 shadow-sm">
+        <span>⚙️</span>
+        <span class="hidden sm:inline">Slide Server</span>
+      </button>
+    </div>
+  </header>
+  <!-- Local File Notice Banner -->
+  <div id="localFileNotice" class="hidden bg-amber-950/90 border-b border-amber-500/40 px-4 py-2 flex flex-wrap items-center justify-between text-xs text-amber-200 z-20 transition-all shadow-md">
+    <div class="flex items-center gap-2.5">
+      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/40 shrink-0">ℹ</span>
+      <span class="font-bold text-amber-300">Local File Mode:</span>
+      <span class="text-amber-200/90">Quarto presentations (<code class="bg-amber-900/60 text-amber-300 px-1 py-0.5 rounded text-[11px] font-mono">.qmd</code>) require a server or render step to view interactively.</span>
+    </div>
+    <div class="flex items-center gap-2 mt-1 sm:mt-0">
+      <button id="btnBannerSettings" onclick="openServerSettingsModal()" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 rounded-md text-[11px] font-semibold transition">
+        ⚙️ Slide Server
+      </button>
+      <button id="btnBannerGuide" onclick="openGuideModal()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-md text-[11px] transition">
+        💡 How to View Slides
+      </button>
+      <button id="btnCloseBanner" title="Dismiss notice" class="p-1 text-amber-300/70 hover:text-white rounded hover:bg-amber-900/50 transition text-base leading-none ml-1">
+        &times;
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Interactive Mind Map Stage -->
+  <div id="stageContainer" class="flex-1 w-full h-full relative overflow-hidden cursor-grab active:cursor-grabbing">
+    <svg id="mindmapSvg" class="w-full h-full block">
+      <defs>
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      <g id="viewportGroup">
+        <g id="linksLayer"></g>
+        <g id="nodesLayer"></g>
+      </g>
+    </svg>
+
+    <!-- Legend Overlay (Bottom Left) -->
+    <div class="absolute bottom-4 left-4 z-10 bg-slate-900/90 backdrop-blur-md border border-[var(--border)] rounded-xl p-3 shadow-xl text-xs space-y-1.5 max-w-xs pointer-events-auto">
+      <div class="font-bold text-slate-200 text-[11px] uppercase tracking-wider mb-1 flex items-center justify-between">
+        <span>Curriculum Modules</span>
+        <span class="text-[10px] text-slate-400 font-normal">Click node to inspect</span>
+      </div>
+      <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> 1. Introduction</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> 2. Cryptography</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 3. Distributed Sys</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 4. Consensus</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> 5. Bitcoin Core</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> 6. Ethereum/EVM</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> 7. Permissioned</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> 8. Forensics</div>
+        <div class="flex items-center gap-1.5 col-span-2"><span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span> 9. Synthesis & Horizons</div>
+      </div>
+      <div class="pt-2 border-t border-slate-800 text-[10px] text-slate-400 flex items-center gap-3">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded bg-sky-400"></span> 🧪 Hands-On Lab</span>
+        <span class="flex items-center gap-1">⬇️ Branches open downwards</span>
+      </div>
+    </div>
+
+    <!-- Inspector / Detail Drawer (Right Side) -->
+    <aside id="detailDrawer" class="absolute top-4 right-4 bottom-4 w-96 max-w-[90vw] z-20 bg-slate-900/95 backdrop-blur-md border border-[var(--border)] rounded-2xl p-5 shadow-2xl flex flex-col justify-between transform translate-x-[110%] transition-transform duration-300 ease-in-out pointer-events-auto">
+      <div class="flex-1 overflow-y-auto pr-1">
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <span id="drawerBadge" class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">Module</span>
+          <button id="btnCloseDrawer" class="text-slate-400 hover:text-white p-1 rounded-md transition text-sm">&times;</button>
+        </div>
+        <h2 id="drawerTitle" class="text-base font-bold text-white mb-1.5 leading-snug">Node Title</h2>
+        <p id="drawerDesc" class="text-xs text-slate-300 mb-4 leading-relaxed">Description goes here.</p>
+
+        <!-- Slide Deck Link for Lesson -->
+        <div id="drawerSlidesSection" class="mb-4 hidden">
+          <div class="flex items-center gap-1.5 w-full">
+            <button id="drawerSlidesBtn" type="button" class="flex-1 inline-flex items-center gap-1.5 text-xs font-semibold text-sky-300 hover:text-white bg-sky-950/60 hover:bg-sky-900/80 border border-sky-500/40 px-3 py-1.5 rounded-lg transition shadow-sm justify-center cursor-pointer">
+              <span>🖥️ Open Full Slide Deck</span> &rarr;
+            </button>
+            <button id="drawerDeckInfoBtn" type="button" title="View Deck Details & Server Info" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition cursor-pointer text-xs">
+              ℹ️
+            </button>
+          </div>
+        </div>
+
+        <div id="drawerConceptsSection" class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Key Concepts & Mechanics</h4>
+            <span class="text-[10px] text-sky-400/90 font-medium lowercase">click term to open slide &rarr;</span>
+          </div>
+          <div id="drawerConceptsList" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <div id="drawerLabSection" class="mb-4 hidden">
+          <h4 class="text-[11px] font-bold uppercase tracking-wider text-sky-400 mb-2 flex items-center gap-1.5">
+            <span>🧪 Associated Hands-On Lab</span>
+          </h4>
+          <div id="drawerLabContainer" class="p-3 bg-sky-950/40 border border-sky-500/30 rounded-xl">
+            <h5 id="drawerLabTitle" class="text-xs font-bold text-sky-200 mb-1">Lab Name</h5>
+            <p id="drawerLabDesc" class="text-[11px] text-slate-300 mb-2">Lab summary.</p>
+            <a id="drawerLabLink" href="#" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-semibold text-white bg-sky-600 hover:bg-sky-500 px-3 py-1.5 rounded-lg transition shadow-sm">
+              <span>Launch Interactive Lab</span> &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+        <span id="drawerFooterModule">Module 01</span>
+        <button id="btnFocusNode" class="text-sky-400 hover:underline">Center on Map</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Slide Server Settings Modal -->
+  <div id="serverSettingsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden p-4">
+    <div class="bg-slate-900 border border-[var(--border)] rounded-2xl w-full max-w-lg shadow-2xl p-6 text-slate-200 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>⚙️</span> Slide Deck Server Settings
+        </h3>
+        <button id="btnCloseSettingsModal" onclick="closeServerSettingsModal()" class="text-slate-400 hover:text-white text-xl p-1 leading-none">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Choose where slide links navigate to. When browsing locally via <code class="text-sky-300 bg-slate-800 px-1 py-0.5 rounded font-mono">file:///</code>, slide files are not generated until compiled or served via HTTP.
+      </p>
+
+      <div class="space-y-2 text-xs">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Target Host</label>
+
+        <label class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+          <input type="radio" name="serverPreset" value="https://astevegreen.github.io/blockchain-course/" class="text-sky-500 focus:ring-sky-500" />
+          <div class="flex-1">
+            <div class="font-semibold text-slate-100 flex items-center gap-1.5">
+              <span>🌐</span> GitHub Pages (Published Site)
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono">https://astevegreen.github.io/blockchain-course/</div>
+          </div>
+        </label>
+
+        <label class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+          <input type="radio" name="serverPreset" value="http://localhost:9001/" class="text-sky-500 focus:ring-sky-500" />
+          <div class="flex-1">
+            <div class="font-semibold text-slate-100 flex items-center gap-1.5">
+              <span>💻</span> Local Quarto Dev Server (<code class="text-sky-300">quarto preview</code>)
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono">http://localhost:9001/</div>
+          </div>
+        </label>
+
+        <label class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+          <input type="radio" name="serverPreset" value="http://localhost:8000/" class="text-sky-500 focus:ring-sky-500" />
+          <div class="flex-1">
+            <div class="font-semibold text-slate-100 flex items-center gap-1.5">
+              <span>🖥️</span> Local Python Server (<code class="text-sky-300">python -m http.server</code>)
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono">http://localhost:8000/</div>
+          </div>
+        </label>
+
+        <label class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+          <input type="radio" name="serverPreset" value="../" class="text-sky-500 focus:ring-sky-500" />
+          <div class="flex-1">
+            <div class="font-semibold text-slate-100 flex items-center gap-1.5">
+              <span>📁</span> Relative Path (<code class="text-sky-300">../</code>)
+            </div>
+            <div class="text-[10px] text-slate-400">Standard for rendered <code class="text-slate-300">_site/assets/mindmap.html</code></div>
+          </div>
+        </label>
+
+        <label class="flex items-center gap-3 p-2.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 cursor-pointer transition">
+          <input type="radio" name="serverPreset" value="custom" class="text-sky-500 focus:ring-sky-500" />
+          <div class="flex-1">
+            <div class="font-semibold text-slate-100">Custom Base URL</div>
+            <div class="text-[10px] text-slate-400">Specify custom host and port</div>
+          </div>
+        </label>
+      </div>
+
+      <div>
+        <label for="customBaseUrlInput" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Active Base URL</label>
+        <input id="customBaseUrlInput" type="text" placeholder="../ or https://example.com/course/" class="w-full bg-slate-950 text-xs text-white border border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:border-sky-400 font-mono" />
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+        <button id="btnResetDefaultServer" class="text-xs text-slate-400 hover:text-slate-200 underline">Reset to Default</button>
+        <div class="flex items-center gap-2">
+          <button id="btnCancelSettings" onclick="closeServerSettingsModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition">Cancel</button>
+          <button id="btnSaveServerSettings" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs text-white font-bold transition shadow-md">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide Concept Inspector Modal -->
+  <div id="conceptModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden p-4">
+    <div class="bg-slate-900 border border-[var(--border)] rounded-2xl w-full max-w-lg shadow-2xl p-6 text-slate-200 flex flex-col gap-4">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span id="modalConceptBadge" class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">Concept</span>
+          <h3 id="modalConceptTitle" class="text-lg font-bold text-white mt-1 leading-snug">Concept Name</h3>
+        </div>
+        <button id="btnCloseConceptModal" onclick="closeConceptModal()" class="text-slate-400 hover:text-white text-xl p-1 leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <!-- Target Slide Details -->
+        <div class="p-3 rounded-xl bg-slate-800/70 border border-slate-700/60">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Slide Target</div>
+          <div class="flex items-center justify-between text-sm font-semibold text-sky-300 gap-2">
+            <span id="modalSlideHeading">Slide Heading</span>
+            <span id="modalSlideAnchor" class="text-xs font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded shrink-0">#anchor</span>
+          </div>
+          <div id="modalLessonInfo" class="text-[11px] text-slate-400 mt-1">Lesson: 01-IN Blockchain Course Welcome</div>
+        </div>
+
+        <!-- Glossary Definition (if available) -->
+        <div id="modalDefSection" class="p-3 rounded-xl bg-sky-950/30 border border-sky-500/30">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-sky-400 mb-1">Glossary Definition</div>
+          <p id="modalDefText" class="text-xs text-slate-200 leading-relaxed">Definition goes here.</p>
+        </div>
+
+        <!-- Local Mode Explanation Notice -->
+        <div id="modalLocalNotice" class="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-200/90 text-[11px] leading-relaxed">
+          <div class="font-bold text-amber-300 flex items-center gap-1.5 mb-1">
+            <span>📁 Viewing Local Mind Map</span>
+          </div>
+          <div>
+            Presentation slides are authored in Quarto markdown (<code class="bg-amber-900/60 text-amber-200 px-1 py-0.2 rounded font-mono text-[10px]">.qmd</code>).
+            When opened as <code class="text-amber-200 font-mono text-[10px]">file:///</code>, HTML slide files do not exist until rendered or previewed on an HTTP server.
+          </div>
+        </div>
+
+        <!-- Source File Info -->
+        <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+          <span>Source File:</span>
+          <code id="modalSourcePath" class="text-[11px] font-mono text-slate-300 bg-slate-950 px-1.5 py-0.5 rounded">lessons/...qmd</code>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
+        <button id="btnCopyConceptLink" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition flex items-center gap-1.5">
+          <span>📋</span> <span>Copy Anchor Link</span>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button id="btnModalOpenServerSettings" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-sky-400 font-medium transition">
+            ⚙️ Server
+          </button>
+          <a id="btnModalLaunchSlide" href="#" target="_blank" rel="noopener noreferrer" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs text-white font-bold transition shadow-md flex items-center gap-1.5">
+            <span>🖥️ Open Slide</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How to View Slides Guide Modal -->
+  <div id="guideModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden p-4">
+    <div class="bg-slate-900 border border-[var(--border)] rounded-2xl w-full max-w-xl shadow-2xl p-6 text-slate-200 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span>💡</span> How to View & Render Slide Decks
+        </h3>
+        <button id="btnCloseGuideModal" onclick="closeGuideModal()" class="text-slate-400 hover:text-white text-xl p-1 leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-4 text-xs leading-relaxed text-slate-300">
+        <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80">
+          <div class="font-bold text-slate-100 text-sm mb-1">Why did "ERR_FILE_NOT_FOUND" occur?</div>
+          <p>
+            When you open <code class="text-sky-300">mindmap.html</code> directly from your file manager (<code class="text-slate-200">file:///</code>),
+            the links look for compiled <code class="text-sky-300">.html</code> files.
+            However, this curriculum is authored in <strong>Quarto Markdown (<code class="text-sky-300">.qmd</code>)</strong>.
+            Quarto compiles them into interactive RevealJS presentations only when rendered or served via HTTP.
+          </p>
+        </div>
+
+        <div>
+          <div class="font-bold text-sky-400 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>🌐</span> Option 1: View Online via GitHub Pages (Recommended)
+          </div>
+          <ol class="list-decimal list-inside space-y-1.5 pl-1 text-slate-300">
+            <li>Open your GitHub repository (<a href="https://github.com/astevegreen/blockchain-course" target="_blank" class="text-sky-400 underline">astevegreen/blockchain-course</a>).</li>
+            <li>Go to <strong>Settings &rarr; Pages</strong> and set the Source to <strong>GitHub Actions</strong>.</li>
+            <li>Go to the <strong>Actions</strong> tab, click <strong>Publish Course to GitHub Pages (Manual)</strong>, and click <strong>Run workflow</strong>.</li>
+            <li>Once built, the entire course and all slides are live at <code class="text-sky-300">https://astevegreen.github.io/blockchain-course/</code>.</li>
+            <li>In this mind map, set <strong>Slide Server</strong> to GitHub Pages to jump directly to any slide.</li>
+          </ol>
+        </div>
+
+        <div>
+          <div class="font-bold text-emerald-400 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>💻</span> Option 2: Live Local Dev Server with Quarto
+          </div>
+          <ol class="list-decimal list-inside space-y-1.5 pl-1 text-slate-300">
+            <li>Install Quarto via terminal: <code class="bg-slate-950 text-emerald-300 px-1.5 py-0.5 rounded font-mono">winget install Posit.Quarto</code> or download from <a href="https://quarto.org" target="_blank" class="text-sky-400 underline">quarto.org</a>.</li>
+            <li>In your terminal inside this repository, run:
+              <div class="mt-1 bg-slate-950 text-slate-200 p-2 rounded-lg font-mono text-[11px] border border-slate-800">
+                quarto preview blockchain-course
+              </div>
+            </li>
+            <li>Quarto automatically renders all lessons and serves them at <code class="text-sky-300">http://localhost:9001/</code>.</li>
+            <li>In this mind map, set <strong>Slide Server</strong> to <code class="text-sky-300">http://localhost:9001/</code>.</li>
+          </ol>
+        </div>
+
+        <div class="pt-2">
+          <div class="font-bold text-purple-400 text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <span>🖥️</span> Option 3: Local Python HTTP Server
+          </div>
+          <p class="mb-1.5">If the site has been rendered to <code class="text-sky-300">blockchain-course/_site</code>:</p>
+          <div class="bg-slate-950 text-slate-200 p-2 rounded-lg font-mono text-[11px] border border-slate-800">
+            python -m http.server 8000 --directory blockchain-course/_site
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+        <button id="btnGuideConfigureServer" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs text-white font-bold transition shadow-md">
+          ⚙️ Configure Slide Server Now
+        </button>
+        <button id="btnCloseGuideBottom" onclick="closeGuideModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Lesson Slide Deck Modal -->
+  <div id="deckModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm hidden p-4">
+    <div class="bg-slate-900 border border-[var(--border)] rounded-2xl w-full max-w-lg shadow-2xl p-6 text-slate-200 flex flex-col gap-4">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div>
+          <span id="modalDeckBadge" class="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30">Lesson Deck</span>
+          <h3 id="modalDeckTitle" class="text-lg font-bold text-white mt-1 leading-snug">01-IN Course Welcome</h3>
+        </div>
+        <button id="btnCloseDeckModal" onclick="closeDeckModal()" class="text-slate-400 hover:text-white text-xl p-1 leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p id="modalDeckDesc" class="text-xs text-slate-300 leading-relaxed">Lesson overview goes here.</p>
+
+        <!-- Concepts covered in this deck -->
+        <div class="p-3 rounded-xl bg-slate-800/70 border border-slate-700/60">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Key Concepts Covered In This Deck</div>
+          <div id="modalDeckConceptsList" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- Server & URL Preview -->
+        <div class="p-3 rounded-xl bg-sky-950/30 border border-sky-500/30 space-y-1.5">
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="text-slate-400 font-semibold">Slide Server Target:</span>
+            <span id="modalDeckServerHost" class="font-mono text-sky-300 bg-slate-950 px-2 py-0.5 rounded">http://localhost:9001/</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] gap-2">
+            <span class="text-slate-400 font-semibold shrink-0">Deck URL:</span>
+            <span id="modalDeckUrlPreview" class="font-mono text-slate-300 bg-slate-950 px-2 py-0.5 rounded truncate max-w-[280px]">...</span>
+          </div>
+        </div>
+
+        <!-- Local file note -->
+        <div id="modalDeckLocalNotice" class="p-3 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-200/90 text-[11px] leading-relaxed">
+          <div class="font-bold text-amber-300 flex items-center gap-1.5 mb-1">
+            <span>ℹ️ RevealJS Presentation Notice</span>
+          </div>
+          <div>
+            Quarto compiles <code class="bg-amber-900/60 text-amber-200 px-1 py-0.2 rounded font-mono text-[10px]">.qmd</code> presentations to interactive HTML decks.
+            When viewing locally, ensure your server is active (<code class="text-sky-300 font-mono text-[10px]">quarto preview</code> at <code class="text-sky-300 font-mono text-[10px]">http://localhost:9001</code>) or published to GitHub Pages.
+          </div>
+        </div>
+
+        <!-- Source File Info -->
+        <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+          <span>Source File:</span>
+          <code id="modalDeckSourcePath" class="text-[11px] font-mono text-slate-300 bg-slate-950 px-1.5 py-0.5 rounded">lessons/...qmd</code>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-slate-800">
+        <button id="btnDeckOpenServerSettings" onclick="openServerSettingsModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-sky-400 font-medium transition flex items-center gap-1.5">
+          <span>⚙️</span> <span>Slide Server</span>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button id="btnCloseDeckModalBottom" onclick="closeDeckModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition">
+            Close
+          </button>
+          <a id="btnModalLaunchDeck" href="#" target="_blank" rel="noopener noreferrer" class="px-4 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-xs text-white font-bold transition shadow-md flex items-center gap-1.5">
+            <span>🖥️ Open Full Slide Deck</span> &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotice" class="fixed bottom-6 right-6 z-50 bg-slate-900 border border-sky-500/50 text-sky-200 px-4 py-2 rounded-xl text-xs font-semibold shadow-2xl flex items-center gap-2 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+    <span id="toastIcon">📋</span>
+    <span id="toastMessage">Copied!</span>
+  </div>
+
+  <script>
+    // --- Lesson Slide Deck URLs ---
+    const lessonDeckUrls = {
+      "01-IN": "../lessons/introduction/01-IN-course_welcome.html",
+      "02-IN": "../lessons/introduction/02-IN-blockchain_at_a_glance.html",
+      "03-IN": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html",
+      "04-IN": "../lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.html",
+      "05-IN": "../lessons/introduction/05-IN-trust_and_distributed_systems_foundations_for_blockchain.html",
+      "01-CP": "../lessons/primitives/01-CP-cryptography_intro.html",
+      "02-CP": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html",
+      "03-CP": "../lessons/primitives/03-CP-symmetric_encryption.html",
+      "04-CP": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html",
+      "05-CP": "../lessons/primitives/05-CP-crypto_assumptions_and_challenges.html",
+      "01-DS": "../lessons/distributed_primitives/01-DS-distributed_systems.html",
+      "02-DS": "../lessons/distributed_primitives/02-DS-p2p_design.html",
+      "03-DS": "../lessons/distributed_primitives/03-DS-trust_and_p2p.html",
+      "04-DS": "../lessons/distributed_primitives/04-DS-distributed_ledgers.html",
+      "01-CM": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html",
+      "02-CM": "../lessons/consensus_primitives/02-CM-pow_and_security.html",
+      "03-CM": "../lessons/consensus_primitives/03-CM-pos.html",
+      "01-BF": "../lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.html",
+      "02-BF": "../lessons/bitcoin/02-BF-transactions_and_mining.html",
+      "03-BF": "../lessons/bitcoin/03-BF-bitcoin_nodes_and_network.html",
+      "04-BF": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html",
+      "01-EF": "../lessons/ethereum/01-EF-ethereum_intro.html",
+      "02-EF": "../lessons/ethereum/02-EF-ethereum_mining_pos_and_security.html",
+      "03-EF": "../lessons/ethereum/03-EF-ethereum_network.html",
+      "04-EF": "../lessons/ethereum/04-EF-smart_contracts.html",
+      "05-EF": "../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html",
+      "06-EF": "../lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.html",
+      "01-PC": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html",
+      "02-PC": "../lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.html",
+      "01-FO": "../lessons/forensics/01-FO-illicit_finance_regulation_case_studies.html",
+      "02-FO": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html",
+      "01-AS": "../lessons/conclusion/01-AS-blockchain_in_the_real_world.html",
+      "02-AS": "../lessons/conclusion/02-AS-cbdcs_stablecoins.html",
+      "03-AS": "../lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.html",
+      "04-AS": "../lessons/conclusion/04-AS-final_technical_review.html",
+      "05-AS": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html"
+    };
+
+    // --- Key Concept Slide Mappings ---
+    
+    // --- Glossary Definitions for Slide Concepts ---
+    const conceptDefinitions = {
+  "Cypherpunk Ethos": "A community of activists, computer scientists, and cryptographers who argued that strong cryptography could protect privacy and individual autonomy online.",
+  "Double-Spending Problem": "The attempt to spend the same digital asset more than once.",
+  "Sound Money": "Money that reliably holds value over time, especially because its supply is predictable or difficult to manipulate.",
+  "Distributed Ledger": "A record-keeping system replicated across multiple participants rather than maintained only by one central database.",
+  "SHA-256": "A 256-bit member of the SHA-2 family widely used for integrity checks and Bitcoin hashing.",
+  "AES-GCM": "A modern mode that combines CTR-style encryption with an authentication tag.",
+  "One-Time Pad": "An encryption method that XORs plaintext with truly random key material of equal length that is never reused.",
+  "Hybrid Cryptosystem": "A design that uses asymmetric cryptography to establish trust or keys and symmetric cryptography for fast bulk encryption.",
+  "Key Distribution": "The operational practice of securely distributing, storing, using, and replacing symmetric keys.",
+  "Avalanche Effect": "The property that a tiny input change causes a large and unpredictable change in the hash output.",
+  "Collision Resistance": "The property that it should be infeasible to find any two distinct inputs with the same digest.",
+  "Merkle Root": "The top hash in a Merkle tree that commits to all leaves below it.",
+  "ECDSA (secp256k1)": "A digital signature scheme used by major blockchains to authorize transactions and prove control of keys.",
+  "Computational Hardness": "The assumption that some problems are so difficult that no efficient known algorithm can solve them at relevant sizes.",
+  "Post-Quantum Cryptography (PQC)": "Cryptography designed around hard problems believed to resist attacks by both classical and quantum computers.",
+  "EigenTrust": "A global reputation algorithm that normalizes local trust values and iteratively propagates them through the network to produce shared trust scores.",
+  "Single Point of Failure": "A concentrated institution, server, or process whose compromise or shutdown can disrupt the whole system.",
+  "Mesh Topology": "A network shape where nodes maintain multiple overlapping peer connections rather than relying on one central hub.",
+  "Distributed Hash Table (DHT)": "A structured P2P system that maps keys to responsible peers so data can be found through efficient routing.",
+  "Sybil Attacks": "An attack where one adversary creates many fake peer identities to distort peer selection, routing, or consensus influence.",
+  "Transitive Trust": "Trust extended through another trusted relationship rather than verified directly.",
+  "Nakamoto Consensus": "A permissionless consensus style where scarce work and the heaviest valid chain guide nodes toward one history over time.",
+  "Difficulty Retargeting": "A protocol rule that adjusts the target based on recent block timing so average block intervals stay near the design goal.",
+  "Crash Fault Tolerance": "A consensus fault model that handles nodes stopping or becoming unavailable without assuming malicious behavior.",
+  "Byzantine Fault Tolerance": "A consensus family designed to remain safe when some known participants may lie, equivocate, or act maliciously.",
+  "Leader Election": "The process of selecting one node to coordinate a round or period of consensus activity.",
+  "Quorums": "A protocol rule requiring a minimum number of consistent responses before treating a decision as authoritative.",
+  "Proof of Work": "A consensus approach where participants prove eligibility to add a block by performing computational work.",
+  "Longest Chain Rule": "The convention that nodes accept the valid chain with the most cumulative proof-of-work as the current ledger history.",
+  "Proof of Stake": "A consensus approach where participants prove eligibility to help add or confirm blocks by staking assets under protocol rules.",
+  "Script (Forth-like)": "Bitcoin's stack-based scripting language for defining and validating the conditions required to spend transaction outputs.",
+  "51% Attack": "An attack where one actor or coalition gains enough validating influence to control recent ledger history or approve fraudulent activity.",
+  "Selfish Mining": "A mining strategy where a coalition withholds found blocks and releases them strategically to earn more than its fair share.",
+  "Difficulty Adjustment": "A protocol rule that adjusts the target based on recent block timing so average block intervals stay near the design goal.",
+  "Gossip Protocol": "A propagation method where each node forwards valid messages to neighboring peers until information spreads through the network.",
+  "Compact Blocks (BIP 152)": "A block propagation protocol that sends compact block information and only transmits full transactions the peer is missing.",
+  "Double-Spending": "The attempt to spend the same digital asset more than once.",
+  "Account Model": "A ledger model, used by systems such as Ethereum, that tracks mutable account balances instead of discrete spendable outputs.",
+  "Deterministic Execution": "Execution where the same input and prior state always produce the same result on every node.",
+  "The Merge": "The September 15, 2022 Ethereum upgrade that moved block production from Proof of Work to Proof of Stake while preserving existing state.",
+  "Beacon Chain": "Ethereum's proof-of-stake consensus chain that coordinates validators, fork choice, and finality.",
+  "Proposer-Builder Separation (PBS)": "A block production design that separates the validator duty of proposing a block from the specialized work of building it.",
+  "Checks-Effects-Interactions": "A defensive ordering pattern that checks preconditions, updates internal state, and performs external calls last.",
+  "Hyperledger Fabric": "A permissioned blockchain framework named as an example of restricted enterprise or consortium participation.",
+  "Execute-Order-Validate": "A Fabric architecture that separates transaction simulation, ordering, and validation into distinct stages.",
+  "Private Channels": "A permissioned-ledger mechanism that limits sensitive data visibility to selected participants.",
+  "Regulatory Compliance": "The legal rules and required controls that shape who may build, issue, custody, transact, or scale blockchain systems.",
+  "Membership Service Provider": "A Fabric component or role that connects participants to verifiable organizational identities, often using certificates.",
+  "Chaincode Lifecycle": "The governance process for installing a chaincode package, approving a channel definition, and committing that definition before invocation.",
+  "Private Data Collections": "A Fabric privacy mechanism that restricts sensitive transaction data to a defined subset of participants.",
+  "Channels": "A ledger or communication partition that limits which participants can see or interact with a subset of data.",
+  "Peel Chains": "A laundering pattern where small amounts are peeled off through a sequence of transactions while the remaining balance continues onward.",
+  "Common Input Ownership": "A tracing rule of thumb that assumes inputs spent together in one transaction are likely controlled by the same entity.",
+  "Zero-Knowledge Proofs": "A proof that convinces a verifier a statement is true without revealing the secret witness or other private information behind it.",
+  "Sanctions Evasion": "The use of financial paths or infrastructure to bypass formal economic restrictions on designated actors, entities, or jurisdictions.",
+  "Cross-Chain Interoperability": "The ability of a ledger system to work with external systems, institutions, or standards."
+};
+
+    const conceptSlideLinks = {
+  "mod-intro": {
+    "Decentralized Trust": {
+      "href": "../lessons/introduction/01-IN-course_welcome.html#/learning-objectives-i",
+      "slide": "Learning Objectives I"
+    },
+    "Cypherpunk Ethos": {
+      "href": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html#/the-cypherpunk-movement",
+      "slide": "The Cypherpunk Movement"
+    },
+    "Double-Spending Problem": {
+      "href": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html#/the-synthesis-bitcoin",
+      "slide": "The Synthesis: Bitcoin"
+    },
+    "Sound Money": {
+      "href": "../lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.html#/the-bitcoin-standard-a-digital-return-to-hard-money",
+      "slide": "The Bitcoin Standard: A Digital Return to \"Hard Money\""
+    },
+    "State Machine Replication": {
+      "href": "../lessons/introduction/02-IN-blockchain_at_a_glance.html#/what-is-a-blockchain",
+      "slide": "What is a Blockchain?"
+    }
+  },
+  "01-IN": {
+    "Courseware-as-Code": {
+      "href": "../lessons/introduction/01-IN-course_welcome.html#/course-structure",
+      "slide": "Course Structure"
+    },
+    "Reproducible Pedagogy": {
+      "href": "../lessons/introduction/01-IN-course_welcome.html#/course-overview",
+      "slide": "Course Overview"
+    },
+    "ACI Framework": {
+      "href": "../lessons/introduction/01-IN-course_welcome.html#/why-a-blockchain-course",
+      "slide": "Why A Blockchain Course?"
+    },
+    "Static vs Dynamic Labs": {
+      "href": "../lessons/introduction/01-IN-course_welcome.html#/tools-and-setup",
+      "slide": "Tools and Setup"
+    }
+  },
+  "02-IN": {
+    "Distributed Ledger": {
+      "href": "../lessons/introduction/02-IN-blockchain_at_a_glance.html#/what-is-a-blockchain",
+      "slide": "What is a Blockchain?"
+    },
+    "Chained Blocks": {
+      "href": "../lessons/introduction/02-IN-blockchain_at_a_glance.html#/the-block-in-blockchain",
+      "slide": "The \"Block\" in Blockchain"
+    },
+    "Consensus Trilemma": {
+      "href": "../lessons/introduction/02-IN-blockchain_at_a_glance.html#/pillar-3-consensus",
+      "slide": "Pillar 3: Consensus"
+    },
+    "Cryptographic Signatures": {
+      "href": "../lessons/introduction/02-IN-blockchain_at_a_glance.html#/pillar-1-cryptography",
+      "slide": "Pillar 1: Cryptography"
+    }
+  },
+  "03-IN": {
+    "Privacy by Design": {
+      "href": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html#/privacy-as-a-prerequisite-for-open-society",
+      "slide": "Privacy as a Prerequisite for Open Society"
+    },
+    "David Chaum": {
+      "href": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html#/early-attempts-at-digital-money",
+      "slide": "Early Attempts at Digital Money"
+    },
+    "Hashcash / Adam Back": {
+      "href": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html#/the-crypto-wars-u.s.-gov-position-1990s",
+      "slide": "The Crypto Wars: U.S. Gov Position (1990s)"
+    },
+    "Nick Szabo": {
+      "href": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html#/the-synthesis-bitcoin",
+      "slide": "The Synthesis: Bitcoin"
+    },
+    "Wei Dai": {
+      "href": "../lessons/introduction/03-IN-cypherpunk_ethos_and_decentralized_trust.html#/the-synthesis-bitcoin",
+      "slide": "The Synthesis: Bitcoin"
+    }
+  },
+  "04-IN": {
+    "Fiat vs Commodity Money": {
+      "href": "../lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.html#/a-brief-history-of-moneys-form",
+      "slide": "A Brief History of Money's Form"
+    },
+    "Central Banking": {
+      "href": "../lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.html#/the-modern-financial-architect-central-banks",
+      "slide": "The Modern Financial Architect: Central Banks"
+    },
+    "Fractional Reserve": {
+      "href": "../lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.html#/the-modern-financial-architect-central-banks",
+      "slide": "The Modern Financial Architect: Central Banks"
+    },
+    "Inflationary Pressures": {
+      "href": "../lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.html#/the-problem-of-value-the-specter-of-inflation",
+      "slide": "The Problem of Value: The Specter of Inflation"
+    },
+    "Trust Deficits": {
+      "href": "../lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.html#/the-market-for-lemons-when-trust-breaks-down",
+      "slide": "The \"Market for Lemons\": When Trust Breaks Down"
+    }
+  },
+  "05-IN": {
+    "Byzantine Generals": {
+      "href": "../lessons/introduction/05-IN-trust_and_distributed_systems_foundations_for_blockchain.html#/byzantine-generals-problem",
+      "slide": "Byzantine Generals Problem"
+    },
+    "Crash Fault vs Byzantine Fault": {
+      "href": "../lessons/introduction/05-IN-trust_and_distributed_systems_foundations_for_blockchain.html#/byzantine-faults",
+      "slide": "Byzantine Faults"
+    },
+    "State Machine Replication": {
+      "href": "../lessons/introduction/05-IN-trust_and_distributed_systems_foundations_for_blockchain.html#/commission-faults",
+      "slide": "Commission Faults"
+    },
+    "Asynchronous Delivery": {
+      "href": "../lessons/introduction/05-IN-trust_and_distributed_systems_foundations_for_blockchain.html#/timing-faults",
+      "slide": "Timing Faults"
+    }
+  },
+  "mod-crypto": {
+    "SHA-256": {
+      "href": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html#/what-is-a-cryptographic-hash-function",
+      "slide": "What Is a Cryptographic Hash Function?"
+    },
+    "Merkle Proofs": {
+      "href": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html#/merkle-proofs-membership",
+      "slide": "Merkle Proofs: Membership Verification"
+    },
+    "AES-GCM": {
+      "href": "../lessons/primitives/03-CP-symmetric_encryption.html#/modes-of-operation-overview",
+      "slide": "Modes of Operation Overview"
+    },
+    "One-Time Pad": {
+      "href": "../lessons/primitives/03-CP-symmetric_encryption.html#/infinite-length-one-time-pad",
+      "slide": "Infinite-length One Time Pad"
+    },
+    "ECDSA secp256k1": {
+      "href": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/elliptic-curve-cryptography-ecc",
+      "slide": "Elliptic Curve Cryptography (ECC)"
+    },
+    "Address Derivation": {
+      "href": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/public-keys-as-blockchain-addresses",
+      "slide": "Public Keys as Blockchain Addresses"
+    }
+  },
+  "01-CP": {
+    "Kerckhoffs's Principle": {
+      "href": "../lessons/primitives/01-CP-cryptography_intro.html#/cryptography-from-obscurity-to-mathematical-security",
+      "slide": "Cryptography: From Obscurity to Mathematical Security"
+    },
+    "Symmetric vs Asymmetric": {
+      "href": "../lessons/primitives/01-CP-cryptography_intro.html#/what-is-cryptography",
+      "slide": "What Is Cryptography?"
+    },
+    "Hybrid Cryptosystem": {
+      "href": "../lessons/primitives/01-CP-cryptography_intro.html#/how-blockchain-uses-cryptography",
+      "slide": "How Blockchain Uses Cryptography"
+    },
+    "Key Distribution": {
+      "href": "../lessons/primitives/01-CP-cryptography_intro.html#/cryptography-and-trustless-systems",
+      "slide": "Cryptography and Trustless Systems"
+    }
+  },
+  "02-CP": {
+    "SHA-256": {
+      "href": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html#/what-is-a-cryptographic-hash-function",
+      "slide": "What Is a Cryptographic Hash Function?"
+    },
+    "Avalanche Effect": {
+      "href": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html#/avalanche-effect",
+      "slide": "Avalanche Effect"
+    },
+    "Collision Resistance": {
+      "href": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html#/collision-resistance",
+      "slide": "Collision Resistance"
+    },
+    "Merkle Root": {
+      "href": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html#/merkle-trees-motivation",
+      "slide": "Merkle Trees: Motivation"
+    },
+    "Merkle Audit Paths": {
+      "href": "../lessons/primitives/02-CP-hashing_and_merkle_trees.html#/merkle-proofs-membership",
+      "slide": "Merkle Proofs (Membership)"
+    }
+  },
+  "03-CP": {
+    "Shannon's Perfect Secrecy": {
+      "href": "../lessons/primitives/03-CP-symmetric_encryption.html#/infinite-length-one-time-pad",
+      "slide": "Infinite-length One Time Pad"
+    },
+    "XOR Operation": {
+      "href": "../lessons/primitives/03-CP-symmetric_encryption.html#/exclusive-or-xor-logic",
+      "slide": "Exclusive OR (XOR) Logic"
+    },
+    "PRG Counter Mode": {
+      "href": "../lessons/primitives/03-CP-symmetric_encryption.html#/counter-mode-pseudorandom-generator-prg",
+      "slide": "Counter-Mode Pseudorandom Generator (PRG)"
+    },
+    "ECB Tux Pattern Leakage": {
+      "href": "../lessons/primitives/03-CP-symmetric_encryption.html#/ecb-mode-pitfall",
+      "slide": "ECB Mode Pitfall"
+    },
+    "AES-CBC & IV": {
+      "href": "../lessons/primitives/03-CP-symmetric_encryption.html#/what-is-symmetric-cryptography",
+      "slide": "What Is Symmetric Cryptography?"
+    }
+  },
+  "04-CP": {
+    "Elliptic Curve Points": {
+      "href": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/elliptic-curve-cryptography-ecc",
+      "slide": "Elliptic Curve Cryptography (ECC)"
+    },
+    "ECDSA (secp256k1)": {
+      "href": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/elliptic-curve-cryptography-ecc",
+      "slide": "Elliptic Curve Cryptography (ECC)"
+    },
+    "ECDH Key Agreement": {
+      "href": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/diffiehellman-key-exchange-analogy",
+      "slide": "Diffie–Hellman Key Exchange Analogy"
+    },
+    "Catastrophic Nonce Reuse": {
+      "href": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/digital-signatures-microlab",
+      "slide": "Digital Signatures Microlab"
+    },
+    "Address Hashing": {
+      "href": "../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/public-keys-as-blockchain-addresses",
+      "slide": "Public Keys as Blockchain Addresses"
+    }
+  },
+  "05-CP": {
+    "Computational Hardness": {
+      "href": "../lessons/primitives/05-CP-crypto_assumptions_and_challenges.html#/shors-algorithm-1994-breaking-rsa-and-ecc",
+      "slide": "Shor’s Algorithm (1994): Breaking RSA and ECC"
+    },
+    "Discrete Log Problem": {
+      "href": "../lessons/primitives/05-CP-crypto_assumptions_and_challenges.html#/post-quantum-cryptography-the-new-toolbox",
+      "slide": "Post-Quantum Cryptography: The New Toolbox"
+    },
+    "Side Channels": {
+      "href": "../lessons/primitives/05-CP-crypto_assumptions_and_challenges.html#/when-good-crypto-goes-bad-milk-sad-cve-2023-39910",
+      "slide": "When Good Crypto Goes Bad: Milk Sad"
+    },
+    "Post-Quantum Cryptography (PQC)": {
+      "href": "../lessons/primitives/05-CP-crypto_assumptions_and_challenges.html#/shors-algorithm-1994-breaking-rsa-and-ecc",
+      "slide": "Shor’s Algorithm (1994): Breaking RSA and ECC"
+    },
+    "Lattice Crypto": {
+      "href": "../lessons/primitives/05-CP-crypto_assumptions_and_challenges.html#/lattices-intuition-without-the-math",
+      "slide": "Lattices: Intuition Without the Math"
+    }
+  },
+  "mod-distributed": {
+    "Client-Server vs P2P": {
+      "href": "../lessons/distributed_primitives/01-DS-distributed_systems.html#/clientserver-centralized-index-and-control",
+      "slide": "Client–Server: Centralized Index and Control"
+    },
+    "Gossip Protocols": {
+      "href": "../lessons/distributed_primitives/01-DS-distributed_systems.html#/gossip-in-a-blockchain-network",
+      "slide": "Gossip in a Blockchain Network"
+    },
+    "DHT & Chord": {
+      "href": "../lessons/distributed_primitives/02-DS-p2p_design.html#/dht-example-chord",
+      "slide": "DHT Example: Chord"
+    },
+    "EigenTrust": {
+      "href": "../lessons/distributed_primitives/03-DS-trust_and_p2p.html#/eigentrust-from-local-opinions-to-global-scores",
+      "slide": "EigenTrust: From Local Opinions to Global Scores"
+    },
+    "Tamper-Evident Ledgers": {
+      "href": "../lessons/distributed_primitives/04-DS-distributed_ledgers.html#/from-logs-to-ledgers",
+      "slide": "From Logs to Ledgers"
+    }
+  },
+  "01-DS": {
+    "Single Point of Failure": {
+      "href": "../lessons/distributed_primitives/01-DS-distributed_systems.html#/clientserver-centralized-index-and-control",
+      "slide": "Client–Server: Centralized Index and Control"
+    },
+    "Mesh Topology": {
+      "href": "../lessons/distributed_primitives/01-DS-distributed_systems.html#/fallacy-5-topology-doesnt-change",
+      "slide": "Fallacy #5: Topology Doesn''t Change"
+    },
+    "Failure Domains": {
+      "href": "../lessons/distributed_primitives/01-DS-distributed_systems.html#/distributed-failures",
+      "slide": "Distributed Failures"
+    },
+    "Partition Tolerance": {
+      "href": "../lessons/distributed_primitives/01-DS-distributed_systems.html#/fallacy-1-the-network-is-reliable",
+      "slide": "Fallacy #1: The Network Is Reliable"
+    }
+  },
+  "02-DS": {
+    "Unstructured Flooding": {
+      "href": "../lessons/distributed_primitives/02-DS-p2p_design.html#/unstructured-overlay-networks",
+      "slide": "Unstructured Overlay Networks"
+    },
+    "Message TTL & Storms": {
+      "href": "../lessons/distributed_primitives/02-DS-p2p_design.html#/unstructured-overlay-networks",
+      "slide": "Unstructured Overlay Networks"
+    },
+    "Distributed Hash Table (DHT)": {
+      "href": "../lessons/distributed_primitives/02-DS-p2p_design.html#/structured-overlay-networks",
+      "slide": "Structured Overlay Networks"
+    },
+    "Chord Finger Tables": {
+      "href": "../lessons/distributed_primitives/02-DS-p2p_design.html#/dht-example-chord",
+      "slide": "DHT Example: Chord"
+    },
+    "Logarithmic Routing": {
+      "href": "../lessons/distributed_primitives/02-DS-p2p_design.html#/the-blockchain-link-efficient-routing",
+      "slide": "The Blockchain Link: Efficient Routing"
+    }
+  },
+  "03-DS": {
+    "Sybil Attacks": {
+      "href": "../lessons/distributed_primitives/03-DS-trust_and_p2p.html#/threats-sybil-attacks",
+      "slide": "Threats: Sybil Attacks"
+    },
+    "Collusion Cliques": {
+      "href": "../lessons/distributed_primitives/03-DS-trust_and_p2p.html#/properties-of-reputation-systems",
+      "slide": "Properties of Reputation Systems"
+    },
+    "Transitive Trust": {
+      "href": "../lessons/distributed_primitives/03-DS-trust_and_p2p.html#/what-is-trust-in-p2p",
+      "slide": "What Is “Trust” in P2P?"
+    },
+    "EigenTrust Algorithm": {
+      "href": "../lessons/distributed_primitives/03-DS-trust_and_p2p.html#/eigentrust-from-local-opinions-to-global-scores",
+      "slide": "EigenTrust: From Local Opinions to Global Scores"
+    },
+    "Pre-Trusted Anchors": {
+      "href": "../lessons/distributed_primitives/03-DS-trust_and_p2p.html#/eigentrust-anchors-and-collusion-resistance",
+      "slide": "EigenTrust: Anchors and Collusion Resistance"
+    }
+  },
+  "04-DS": {
+    "Cryptographic Hash Pointers": {
+      "href": "../lessons/distributed_primitives/04-DS-distributed_ledgers.html#/immutability-source",
+      "slide": "Immutability Source"
+    },
+    "Tamper-Evidence": {
+      "href": "../lessons/distributed_primitives/04-DS-distributed_ledgers.html#/micro-lab-tamper-evident-ledger",
+      "slide": "Micro Lab: Tamper-Evident Ledger"
+    },
+    "Ledger Invariants": {
+      "href": "../lessons/distributed_primitives/04-DS-distributed_ledgers.html#/from-logs-to-ledgers",
+      "slide": "From Logs to Ledgers"
+    },
+    "Chain Integrity": {
+      "href": "../lessons/distributed_primitives/04-DS-distributed_ledgers.html#/from-logs-to-ledgers",
+      "slide": "From Logs to Ledgers"
+    }
+  },
+  "mod-consensus": {
+    "Nakamoto Consensus": {
+      "href": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/nakamoto-proof-of-work-consensus",
+      "slide": "Nakamoto (Proof-of-Work) Consensus"
+    },
+    "PoW Hash Target": {
+      "href": "../lessons/consensus_primitives/02-CM-pow_and_security.html#/the-pow-rule-at-a-glance",
+      "slide": "The PoW Rule at a Glance"
+    },
+    "Difficulty Retargeting": {
+      "href": "../lessons/consensus_primitives/02-CM-pow_and_security.html#/difficulty-adjustment-control-loop-intuition",
+      "slide": "Difficulty Adjustment: Control-Loop Intuition"
+    },
+    "PoS Staking & Slashing": {
+      "href": "../lessons/consensus_primitives/03-CM-pos.html#/pos-networks-in-practice",
+      "slide": "PoS Networks in Practice"
+    },
+    "Casper FFG Finality": {
+      "href": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/traditional-bft-style-finality",
+      "slide": "Traditional BFT-Style Finality"
+    }
+  },
+  "01-CM": {
+    "Crash Fault Tolerance": {
+      "href": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/crash-fault-tolerance-cft",
+      "slide": "Crash-Fault Tolerance (CFT)"
+    },
+    "Byzantine Fault Tolerance": {
+      "href": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/byzantine-fault-tolerance-bft",
+      "slide": "Byzantine-Fault Tolerance (BFT)"
+    },
+    "PBFT": {
+      "href": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/traditional-bft-style-finality",
+      "slide": "Traditional BFT-Style Finality"
+    },
+    "Leader Election": {
+      "href": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/consensus-in-the-real-world",
+      "slide": "Consensus in the Real World"
+    },
+    "Quorums": {
+      "href": "../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/consensus-in-the-real-world",
+      "slide": "Consensus in the Real World"
+    }
+  },
+  "02-CM": {
+    "Proof of Work": {
+      "href": "../lessons/consensus_primitives/02-CM-pow_and_security.html#/proof-of-work-purpose-and-agenda",
+      "slide": "Proof of Work: Purpose and Agenda"
+    },
+    "Hash Target & Nonce": {
+      "href": "../lessons/consensus_primitives/02-CM-pow_and_security.html#/block-header-anatomy-what-gets-hashed",
+      "slide": "Block Header Anatomy: What Gets Hashed"
+    },
+    "Difficulty Epochs": {
+      "href": "../lessons/consensus_primitives/02-CM-pow_and_security.html#/difficulty-hash-rate-and-expected-work",
+      "slide": "Difficulty, Hash Rate, and Expected Work"
+    },
+    "Longest Chain Rule": {
+      "href": "../lessons/consensus_primitives/02-CM-pow_and_security.html#/the-pow-rule-at-a-glance",
+      "slide": "The PoW Rule at a Glance"
+    },
+    "Chain Reorganizations": {
+      "href": "../lessons/consensus_primitives/02-CM-pow_and_security.html#/attacks-double-spend",
+      "slide": "Attacks: Double Spend"
+    }
+  },
+  "03-CM": {
+    "Proof of Stake": {
+      "href": "../lessons/consensus_primitives/03-CM-pos.html#/the-committee-attestation-and-validation",
+      "slide": "The Committee: Attestation and Validation"
+    },
+    "Validator Lotteries": {
+      "href": "../lessons/consensus_primitives/03-CM-pos.html#/becoming-a-validator",
+      "slide": "Becoming a Validator"
+    },
+    "Nothing-at-Stake Problem": {
+      "href": "../lessons/consensus_primitives/03-CM-pos.html#/nothing-at-stake",
+      "slide": "Nothing-at-Stake"
+    },
+    "Slashing Penalties": {
+      "href": "../lessons/consensus_primitives/03-CM-pos.html#/slashing-making-misbehavior-expensive",
+      "slide": "Slashing — Making Misbehavior Expensive"
+    },
+    "Casper FFG Epochs": {
+      "href": "../lessons/consensus_primitives/03-CM-pos.html#/epochs-and-checkpoints-organizing-slots",
+      "slide": "Epochs and Checkpoints: Organizing Slots"
+    }
+  },
+  "mod-bitcoin": {
+    "UTXO Model": {
+      "href": "../lessons/bitcoin/02-BF-transactions_and_mining.html#/what-are-wallets",
+      "slide": "What Are Wallets?"
+    },
+    "Script (Forth-like)": {
+      "href": "../lessons/bitcoin/03-BF-bitcoin_nodes_and_network.html#/why-bitcoin-script-exists",
+      "slide": "Why Bitcoin Script Exists"
+    },
+    "Coinbase & Mempool": {
+      "href": "../lessons/bitcoin/02-BF-transactions_and_mining.html#/mining-a-candidate-block",
+      "slide": "Mining a Candidate Block"
+    },
+    "Halving & Fees": {
+      "href": "../lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.html#/monetary-policy",
+      "slide": "Monetary Policy"
+    },
+    "51% Attack": {
+      "href": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html#/what-can-consensus-attacks-achieve",
+      "slide": "What Can Consensus Attacks Achieve?"
+    },
+    "Selfish Mining": {
+      "href": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html#/selfish-mining",
+      "slide": "Selfish Mining"
+    }
+  },
+  "01-BF": {
+    "Satoshi Whitepaper": {
+      "href": "../lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.html#/satoshi-nakamotos-whitepaper",
+      "slide": "Satoshi Nakamoto's Whitepaper"
+    },
+    "UTXO Graph": {
+      "href": "../lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.html#/bitcoin-simplified",
+      "slide": "Bitcoin, Simplified"
+    },
+    "P2PKH Scripts": {
+      "href": "../lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.html#/primitive-1-ownership-via-digital-signatures",
+      "slide": "Primitive 1: Ownership via Digital Signatures"
+    },
+    "Input/Output Verification": {
+      "href": "../lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.html#/a-practical-solution-to-byzantine-generals",
+      "slide": "A Practical Solution to Byzantine Generals"
+    },
+    "Coinbase Genesis": {
+      "href": "../lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.html#/the-network-comes-alive-the-first-blocks",
+      "slide": "The Network Comes Alive: The First Blocks"
+    }
+  },
+  "02-BF": {
+    "Mempool Dynamics": {
+      "href": "../lessons/bitcoin/02-BF-transactions_and_mining.html#/where-does-a-transaction-go",
+      "slide": "Where Does a Transaction Go?"
+    },
+    "Fee Prioritization": {
+      "href": "../lessons/bitcoin/02-BF-transactions_and_mining.html#/change-addresses-and-fees",
+      "slide": "Change Addresses and Fees"
+    },
+    "Mining Pools & Stratum": {
+      "href": "../lessons/bitcoin/02-BF-transactions_and_mining.html#/mining-a-candidate-block",
+      "slide": "Mining a Candidate Block"
+    },
+    "Block Subsidy Halving": {
+      "href": "../lessons/bitcoin/02-BF-transactions_and_mining.html#/mining-a-candidate-block",
+      "slide": "Mining a Candidate Block"
+    },
+    "Difficulty Adjustment": {
+      "href": "../lessons/bitcoin/02-BF-transactions_and_mining.html#/mining-a-candidate-block",
+      "slide": "Mining a Candidate Block"
+    }
+  },
+  "03-BF": {
+    "Full vs SPV Nodes": {
+      "href": "../lessons/bitcoin/03-BF-bitcoin_nodes_and_network.html#/types-of-nodes",
+      "slide": "Types of Nodes"
+    },
+    "Gossip Protocol": {
+      "href": "../lessons/bitcoin/03-BF-bitcoin_nodes_and_network.html#/gossip-and-peer-connections",
+      "slide": "Gossip and Peer Connections"
+    },
+    "Bloom Filters & BIP 37": {
+      "href": "../lessons/bitcoin/03-BF-bitcoin_nodes_and_network.html#/setting-up-a-light-client",
+      "slide": "Setting Up a Light Client"
+    },
+    "Compact Blocks (BIP 152)": {
+      "href": "../lessons/bitcoin/03-BF-bitcoin_nodes_and_network.html#/block-propagation",
+      "slide": "Block Propagation"
+    },
+    "Soft vs Hard Forks": {
+      "href": "../lessons/bitcoin/03-BF-bitcoin_nodes_and_network.html#/node-operator-responsibilities",
+      "slide": "Node Operator Responsibilities"
+    }
+  },
+  "04-BF": {
+    "51% Hash Attack": {
+      "href": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html#/sybil-attacks",
+      "slide": "Sybil Attacks"
+    },
+    "Double-Spending": {
+      "href": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html#/why-attack-bitcoin",
+      "slide": "Why Attack Bitcoin?"
+    },
+    "Selfish Mining Strategy": {
+      "href": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html#/selfish-mining",
+      "slide": "Selfish Mining"
+    },
+    "Block Orphaning": {
+      "href": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html#/selfish-mining",
+      "slide": "Selfish Mining"
+    },
+    "Regulatory Posture": {
+      "href": "../lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.html#/regulatory-pressure-beyond-bitcoin",
+      "slide": "Regulatory Pressure Beyond Bitcoin"
+    }
+  },
+  "mod-ethereum": {
+    "EVM World Computer": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/the-ethereum-virtual-machine-evm",
+      "slide": "The Ethereum Virtual Machine (EVM)"
+    },
+    "Account Model": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/transaction-models-utxo-vs-accounts",
+      "slide": "Transaction Models: UTXO vs Accounts"
+    },
+    "Gas & EIP-1559": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/governance-ethereum-improvement-proposals-eips",
+      "slide": "Governance & Ethereum Improvement Proposals (EIPs)"
+    },
+    "MEV-Boost & PBS": {
+      "href": "../lessons/ethereum/02-EF-ethereum_mining_pos_and_security.html#/censorship",
+      "slide": "Censorship"
+    },
+    "Solidity & Reentrancy": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/from-evm-to-programs-smart-contracts",
+      "slide": "From EVM to Programs — Smart Contracts"
+    },
+    "ERC-20 & ERC-721": {
+      "href": "../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/a-taxonomy-of-digital-assets",
+      "slide": "A Taxonomy of Digital Assets"
+    }
+  },
+  "01-EF": {
+    "EVM Architecture": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/the-ethereum-virtual-machine-evm",
+      "slide": "The Ethereum Virtual Machine (EVM)"
+    },
+    "World State Trie": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/accounts-global-state-eoa-vs-contract",
+      "slide": "Accounts & Global State (EOA vs Contract)"
+    },
+    "EOA vs Contract Account": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/accounts-global-state-eoa-vs-contract",
+      "slide": "Accounts & Global State (EOA vs Contract)"
+    },
+    "Deterministic Execution": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/beyond-cryptocurrency-buterins-vision",
+      "slide": "Beyond Cryptocurrency: Buterin's Vision"
+    },
+    "Gas Accounting": {
+      "href": "../lessons/ethereum/01-EF-ethereum_intro.html#/gas-metering-computation-and-storage",
+      "slide": "Gas: Metering Computation and Storage"
+    }
+  },
+  "02-EF": {
+    "The Merge": {
+      "href": "../lessons/ethereum/02-EF-ethereum_mining_pos_and_security.html#/the-merge-beacon-chain-to-pos",
+      "slide": "The Merge: Beacon Chain to PoS"
+    },
+    "Beacon Chain": {
+      "href": "../lessons/ethereum/02-EF-ethereum_mining_pos_and_security.html#/the-merge-beacon-chain-to-pos",
+      "slide": "The Merge: Beacon Chain to PoS"
+    },
+    "Slots & Epochs": {
+      "href": "../lessons/ethereum/02-EF-ethereum_mining_pos_and_security.html#/slots-and-epochs",
+      "slide": "Slots and Epochs"
+    },
+    "Attestation Subnets": {
+      "href": "../lessons/ethereum/02-EF-ethereum_mining_pos_and_security.html#/pos-overview-validators-committees-and-clients",
+      "slide": "PoS Overview: Validators, Committees, and Clients"
+    },
+    "Inactivity Leaks": {
+      "href": "../lessons/ethereum/02-EF-ethereum_mining_pos_and_security.html#/finality-delay",
+      "slide": "Finality Delay"
+    }
+  },
+  "03-EF": {
+    "EIP-1559 Fee Market": {
+      "href": "../lessons/ethereum/03-EF-ethereum_network.html#/eip-1559-fee-mechanics",
+      "slide": "EIP-1559 Fee Mechanics"
+    },
+    "MEV & Frontrunning": {
+      "href": "../lessons/ethereum/03-EF-ethereum_network.html#/maximal-extractable-value-mev",
+      "slide": "Maximal Extractable Value (MEV)"
+    },
+    "Sandwich Attacks": {
+      "href": "../lessons/ethereum/03-EF-ethereum_network.html#/the-mempool",
+      "slide": "The Mempool"
+    },
+    "Proposer-Builder Separation (PBS)": {
+      "href": "../lessons/ethereum/03-EF-ethereum_network.html#/builder-relay-stack-and-mev",
+      "slide": "Builder / Relay Stack and MEV"
+    },
+    "MEV-Boost Relays": {
+      "href": "../lessons/ethereum/03-EF-ethereum_network.html#/builder-relay-stack-and-mev",
+      "slide": "Builder / Relay Stack and MEV"
+    }
+  },
+  "04-EF": {
+    "Solidity Syntax": {
+      "href": "../lessons/ethereum/04-EF-smart_contracts.html#/example-simplestorage-code",
+      "slide": "Example: SimpleStorage (Code)"
+    },
+    "Storage Slots vs Memory": {
+      "href": "../lessons/ethereum/04-EF-smart_contracts.html#/data-locations-storage-memory-calldata",
+      "slide": "Data Locations: Storage, Memory, Calldata"
+    },
+    "Reentrancy Exploit": {
+      "href": "../lessons/ethereum/04-EF-smart_contracts.html#/reentrancy-anatomy-and-defenses",
+      "slide": "Reentrancy: Anatomy and Defenses"
+    },
+    "The DAO Fork": {
+      "href": "../lessons/ethereum/04-EF-smart_contracts.html#/case-study-the-dao-hack-2016",
+      "slide": "Case Study: The DAO Hack (2016)"
+    },
+    "Checks-Effects-Interactions": {
+      "href": "../lessons/ethereum/04-EF-smart_contracts.html#/reentrancy-anatomy-and-defenses",
+      "slide": "Reentrancy: Anatomy and Defenses"
+    }
+  },
+  "05-EF": {
+    "ERC-20 Interface": {
+      "href": "../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/a-taxonomy-of-digital-assets",
+      "slide": "A Taxonomy of Digital Assets"
+    },
+    "ERC-721 NFTs": {
+      "href": "../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/a-taxonomy-of-digital-assets",
+      "slide": "A Taxonomy of Digital Assets"
+    },
+    "ERC-1155 Multi-Token": {
+      "href": "../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/a-taxonomy-of-digital-assets",
+      "slide": "A Taxonomy of Digital Assets"
+    },
+    "Token URIs & IPFS": {
+      "href": "../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/realworld-assets-rwas-and-tokenization",
+      "slide": "Real‑World Assets (RWAs) and Tokenization"
+    },
+    "On-Chain Royalties": {
+      "href": "../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/royalties-economics-and-marketplace-realities",
+      "slide": "Royalties, Economics, and Marketplace Realities"
+    }
+  },
+  "06-EF": {
+    "DAO Governance": {
+      "href": "../lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.html#/case-study-bored-ape-yacht-club",
+      "slide": "Case Study: Bored Ape Yacht Club"
+    },
+    "Timelocks & Multi-Sig": {
+      "href": "../lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.html#/token-standard-design-considerations",
+      "slide": "Token Standard Design Considerations"
+    },
+    "Quadratic Voting": {
+      "href": "../lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.html#/case-study-gitcoin",
+      "slide": "Case Study: Gitcoin"
+    },
+    "Tokenomics": {
+      "href": "../lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.html#/token-standard-design-considerations",
+      "slide": "Token Standard Design Considerations"
+    },
+    "Treasury Management": {
+      "href": "../lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.html#/case-study-ens-dao",
+      "slide": "Case Study: ENS DAO"
+    }
+  },
+  "mod-permissioned": {
+    "Permissioned vs Permissionless": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/threats-to-permissioned-systems",
+      "slide": "Threats to Permissioned Systems"
+    },
+    "Identity & PKI": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/identity",
+      "slide": "Identity"
+    },
+    "Hyperledger Fabric": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/case-study-fabric-lockout",
+      "slide": "Case Study: Fabric Lockout"
+    },
+    "Execute-Order-Validate": {
+      "href": "../lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.html#/learning-goals",
+      "slide": "Learning Goals"
+    },
+    "Private Channels": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/privacy",
+      "slide": "Privacy"
+    }
+  },
+  "01-PC": {
+    "Consortium Governance": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/governance-boundary",
+      "slide": "Governance Boundary"
+    },
+    "Regulatory Compliance": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/roles-and-duties",
+      "slide": "Roles and Duties"
+    },
+    "Access Control Lists": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/scenario",
+      "slide": "Scenario"
+    },
+    "Confidentiality Guarantees": {
+      "href": "../lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.html#/privacy",
+      "slide": "Privacy"
+    }
+  },
+  "02-PC": {
+    "Membership Service Provider": {
+      "href": "../lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.html#/from-permissioned-concepts-to-fabric-terms",
+      "slide": "From Permissioned Concepts to Fabric Terms"
+    },
+    "Execute-Order-Validate": {
+      "href": "../lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.html#/learning-goals",
+      "slide": "Learning Goals"
+    },
+    "Chaincode Lifecycle": {
+      "href": "../lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.html#/chaincode-lifecycle",
+      "slide": "Chaincode Lifecycle"
+    },
+    "Private Data Collections": {
+      "href": "../lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.html#/private-data-collections",
+      "slide": "Private Data Collections"
+    },
+    "Channels": {
+      "href": "../lessons/permissioned_ledger/02-PC-hlf_and_distributed_ledgers.html#/channels-confidentiality-boundary",
+      "slide": "Channels: Confidentiality Boundary"
+    }
+  },
+  "mod-forensics": {
+    "UTXO Graph Analysis": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/the-analysts-mindset-graph-thinking",
+      "slide": "The Analyst's Mindset: Graph Thinking"
+    },
+    "Peel Chains": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/heuristic-3-peeling-chains",
+      "slide": "Heuristic #3: Peeling Chains"
+    },
+    "Mixers & Tornado Cash": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/obfuscation-service-mixers-tumblers",
+      "slide": "Obfuscation Service: Mixers & Tumblers"
+    },
+    "Silk Road & BTC-e": {
+      "href": "../lessons/forensics/01-FO-illicit_finance_regulation_case_studies.html#/case-study-silk-road",
+      "slide": "Case Study: Silk Road"
+    },
+    "Clustering Heuristics": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/address-clustering",
+      "slide": "Address Clustering"
+    }
+  },
+  "01-FO": {
+    "Silk Road Seizure": {
+      "href": "../lessons/forensics/01-FO-illicit_finance_regulation_case_studies.html#/case-study-silk-road",
+      "slide": "Case Study: Silk Road"
+    },
+    "Alexander Vinnik / BTC-e": {
+      "href": "../lessons/forensics/01-FO-illicit_finance_regulation_case_studies.html#/case-study-btc-e",
+      "slide": "Case Study: BTC-e"
+    },
+    "Colonial Pipeline Recovery": {
+      "href": "../lessons/forensics/01-FO-illicit_finance_regulation_case_studies.html#/case-study-colonial-pipeline",
+      "slide": "Case Study: Colonial Pipeline"
+    },
+    "OFAC Sanctions": {
+      "href": "../lessons/forensics/01-FO-illicit_finance_regulation_case_studies.html#/policy-regulatory-response",
+      "slide": "Policy & Regulatory Response"
+    },
+    "FATF Travel Rule": {
+      "href": "../lessons/forensics/01-FO-illicit_finance_regulation_case_studies.html#/policy-regulatory-response",
+      "slide": "Policy & Regulatory Response"
+    }
+  },
+  "02-FO": {
+    "Common Input Ownership": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/address-clustering",
+      "slide": "Address Clustering"
+    },
+    "Change Address Heuristics": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/heuristic-2-change-address-detection",
+      "slide": "Heuristic #2: Change Address Detection"
+    },
+    "Peel Chains": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/heuristic-3-peeling-chains",
+      "slide": "Heuristic #3: Peeling Chains"
+    },
+    "CoinJoin & Wasabi": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/counter-heuristic-1-coinjoin",
+      "slide": "Counter-Heuristic #1: CoinJoin"
+    },
+    "Bridge Hopping": {
+      "href": "../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/the-modern-launderer-chain-hopping",
+      "slide": "The Modern Launderer: \"Chain Hopping\""
+    }
+  },
+  "mod-synthesis": {
+    "CBDCs & Stablecoins": {
+      "href": "../lessons/conclusion/02-AS-cbdcs_stablecoins.html#/central-bank-digital-currencies-cbdcs",
+      "slide": "Central Bank Digital Currencies (CBDCs)"
+    },
+    "Cross-Border Settlement": {
+      "href": "../lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.html#/financial-rails-are-power",
+      "slide": "Financial Rails Are Power"
+    },
+    "Geopolitics & Sanctions": {
+      "href": "../lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.html#/how-blockchain-changes-state-power",
+      "slide": "How Blockchain Changes State Power"
+    },
+    "Zero-Knowledge Proofs": {
+      "href": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html#/opportunities",
+      "slide": "Opportunities"
+    },
+    "Layer 2 Rollups": {
+      "href": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html#/future-1-global-settlement-layer",
+      "slide": "Future 1: Global Settlement Layer"
+    }
+  },
+  "01-AS": {
+    "Supply Chain Provenance": {
+      "href": "../lessons/conclusion/01-AS-blockchain_in_the_real_world.html#/supply-chain-case",
+      "slide": "Supply Chain Case"
+    },
+    "Decentralized Identifiers (DID)": {
+      "href": "../lessons/conclusion/01-AS-blockchain_in_the_real_world.html#/identity-case-verifiable-credentials",
+      "slide": "Identity Case: Verifiable Credentials"
+    },
+    "Oracle Problem": {
+      "href": "../lessons/conclusion/01-AS-blockchain_in_the_real_world.html#/oracles-connecting-to-the-real-world",
+      "slide": "Oracles: Connecting to the Real World"
+    },
+    "Blockchain vs Relational DB": {
+      "href": "../lessons/conclusion/01-AS-blockchain_in_the_real_world.html#/the-full-blockchain-system",
+      "slide": "The Full Blockchain System"
+    }
+  },
+  "02-AS": {
+    "Wholesale vs Retail CBDC": {
+      "href": "../lessons/conclusion/02-AS-cbdcs_stablecoins.html#/central-bank-digital-currencies-cbdcs",
+      "slide": "Central Bank Digital Currencies (CBDCs)"
+    },
+    "Fiat-Backed Stablecoins": {
+      "href": "../lessons/conclusion/02-AS-cbdcs_stablecoins.html#/stablecoins-types-and-mechanisms",
+      "slide": "Stablecoins: Types and Mechanisms"
+    },
+    "Algorithmic Stablecoins (Terra/Luna)": {
+      "href": "../lessons/conclusion/02-AS-cbdcs_stablecoins.html#/stablecoins-types-and-mechanisms",
+      "slide": "Stablecoins: Types and Mechanisms"
+    },
+    "Dollar Hegemony": {
+      "href": "../lessons/conclusion/02-AS-cbdcs_stablecoins.html#/global-payment-infrastructure-overview",
+      "slide": "Global Payment Infrastructure: Overview"
+    }
+  },
+  "03-AS": {
+    "Sanctions Evasion": {
+      "href": "../lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.html#/north-korea-impact-signals",
+      "slide": "North Korea: Impact Signals"
+    },
+    "Cross-Border Settlement Rails": {
+      "href": "../lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.html#/financial-rails-are-power",
+      "slide": "Financial Rails Are Power"
+    },
+    "National Security Strategies": {
+      "href": "../lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.html#/strategic-approaches-to-cryptocurrency",
+      "slide": "Strategic Approaches to Cryptocurrency"
+    },
+    "Strategic Reserves": {
+      "href": "../lessons/conclusion/03-AS-blockchain_in_geopolitical_competition.html#/strategic-approaches-to-cryptocurrency",
+      "slide": "Strategic Approaches to Cryptocurrency"
+    }
+  },
+  "04-AS": {
+    "Consensus Trade-offs": {
+      "href": "../lessons/conclusion/04-AS-final_technical_review.html#/consensus-families",
+      "slide": "Consensus Families"
+    },
+    "State Model Contrasts": {
+      "href": "../lessons/conclusion/04-AS-final_technical_review.html#/bitcoin-transactions-and-the-utxo-model",
+      "slide": "Bitcoin Transactions and the UTXO Model"
+    },
+    "Security Assumptions": {
+      "href": "../lessons/conclusion/04-AS-final_technical_review.html#/why-cryptography-matters-in-blockchain",
+      "slide": "Why Cryptography Matters in Blockchain"
+    },
+    "Scalability Limits": {
+      "href": "../lessons/conclusion/04-AS-final_technical_review.html#/gossip-vs-dhts",
+      "slide": "Gossip vs DHTs"
+    }
+  },
+  "05-AS": {
+    "Zero-Knowledge Proofs": {
+      "href": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html#/opportunities",
+      "slide": "Opportunities"
+    },
+    "Layer 2 Rollups": {
+      "href": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html#/future-1-global-settlement-layer",
+      "slide": "Future 1: Global Settlement Layer"
+    },
+    "Cross-Chain Interoperability": {
+      "href": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html#/future-2-specialized-crypto-ecosystem",
+      "slide": "Future 2: Specialized Crypto Ecosystem"
+    },
+    "Account Abstraction (ERC-4337)": {
+      "href": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html#/what-does-the-future-hold",
+      "slide": "What Does the Future Hold?"
+    },
+    "Modular Blockchains": {
+      "href": "../lessons/conclusion/05-AS-future_trajectories_and_synthesis.html#/technical-constraints",
+      "slide": "Technical Constraints"
+    }
+  }
+};
+
+    // --- Curriculum Mind Map Data ---
+    const curriculumData = {
+      id: "root",
+      title: "Blockchain Course (Curriculum Hub)",
+      badge: "Core Framework",
+      desc: "Courseware-as-Code curriculum developed by the Army Cyber Institute at West Point.",
+      color: "#38bdf8",
+      children: [
+        {
+          id: "mod-intro",
+          title: "1. Introduction & Trust",
+          badge: "Module 01",
+          color: "#3b82f6",
+          desc: "Foundations of decentralized trust, money as an institution, and the historical cypherpunk lineage.",
+          concepts: ["Decentralized Trust", "Cypherpunk Ethos", "Double-Spending Problem", "Sound Money", "State Machine Replication"],
+          children: [
+            {
+              id: "01-IN",
+              title: "01-IN: Course Welcome",
+              code: "01-IN",
+              desc: "Pedagogy, Courseware-as-Code philosophy, course expectations, and computing environment overview.",
+              concepts: ["Courseware-as-Code", "Reproducible Pedagogy", "ACI Framework", "Static vs Dynamic Labs"]
+            },
+            {
+              id: "02-IN",
+              title: "02-IN: Blockchain at a Glance",
+              code: "02-IN",
+              desc: "High-level overview of distributed ledgers, blocks, cryptographic hashing, and peer-to-peer consensus.",
+              concepts: ["Distributed Ledger", "Chained Blocks", "Consensus Trilemma", "Cryptographic Signatures"]
+            },
+            {
+              id: "03-IN",
+              title: "03-IN: Cypherpunk Ethos",
+              code: "03-IN",
+              desc: "The crypto wars, privacy advocacy, electronic cash precursors (DigiCash, Hashcash, B-Money), and decentralization.",
+              concepts: ["Privacy by Design", "David Chaum", "Hashcash / Adam Back", "Nick Szabo", "Wei Dai"]
+            },
+            {
+              id: "04-IN",
+              title: "04-IN: Money & Institutions",
+              code: "04-IN",
+              desc: "Functions of money (unit of account, medium of exchange, store of value), gold standards, and institutional limits.",
+              concepts: ["Fiat vs Commodity Money", "Central Banking", "Fractional Reserve", "Inflationary Pressures", "Trust Deficits"]
+            },
+            {
+              id: "05-IN",
+              title: "05-IN: Distributed Foundations",
+              code: "05-IN",
+              desc: "Byzantine Generals Problem, asynchronous networks, FLP impossibility result, and distributed state machines.",
+              concepts: ["Byzantine Generals", "Crash Fault vs Byzantine Fault", "State Machine Replication", "Asynchronous Delivery"]
+            }
+          ]
+        },
+        {
+          id: "mod-crypto",
+          title: "2. Cryptography Primitives",
+          badge: "Module 02",
+          color: "#6366f1",
+          desc: "Mathematical and algorithmic foundations: hashing, Merkle trees, symmetric/asymmetric encryption, and ECDSA signatures.",
+          concepts: ["SHA-256", "Merkle Proofs", "AES-GCM", "One-Time Pad", "ECDSA secp256k1", "Address Derivation"],
+          children: [
+            {
+              id: "01-CP",
+              title: "01-CP: Cryptography Intro",
+              code: "01-CP",
+              desc: "Symmetric vs asymmetric ciphers, Kerckhoffs's principle, and hybrid encryption key exchange.",
+              concepts: ["Kerckhoffs's Principle", "Symmetric vs Asymmetric", "Hybrid Cryptosystem", "Key Distribution"],
+              lab: {
+                title: "Crypto Primitives Overview Lab",
+                url: "labs/asym_sym_overview/crypto_primitives.html",
+                desc: "Interactive Alice and Bob public-key envelope exchange and symmetric session key decryption."
+              }
+            },
+            {
+              id: "02-CP",
+              title: "02-CP: Hashing & Merkle Trees",
+              code: "02-CP",
+              desc: "Cryptographic hash properties (pre-image, second pre-image, collision resistance), avalanche effect, and Merkle tree roots.",
+              concepts: ["SHA-256", "Avalanche Effect", "Collision Resistance", "Merkle Root", "Merkle Audit Paths"],
+              lab: {
+                title: "Interactive Hash & Merkle Microlabs",
+                url: "labs/merkle-trees/index.html",
+                desc: "Real-time Merkle Tree builder with interactive tamper propagation and proof verification."
+              }
+            },
+            {
+              id: "03-CP",
+              title: "03-CP: Symmetric Encryption",
+              code: "03-CP",
+              desc: "One-Time Pad bitwise XOR, pseudorandom generators (PRG), block ciphers, and ECB vs CBC vs GCM modes.",
+              concepts: ["Shannon's Perfect Secrecy", "XOR Operation", "PRG Counter Mode", "ECB Tux Pattern Leakage", "AES-CBC & IV"],
+              lab: {
+                title: "Symmetric Encryption & Block Explorer Lab",
+                url: "labs/symmetric_encryption/symmetric_encryption_lab.html",
+                desc: "Interactive 16-byte block division, PKCS#7 padding, and ECB vs CBC vs GCM vulnerability visualizer."
+              }
+            },
+            {
+              id: "04-CP",
+              title: "04-CP: Asymmetric & Signatures",
+              code: "04-CP",
+              desc: "Elliptic curve arithmetic, ECDSA signing and verification, ECDH key agreement, and address derivation pipeline.",
+              concepts: ["Elliptic Curve Points", "ECDSA (secp256k1)", "ECDH Key Agreement", "Catastrophic Nonce Reuse", "Address Hashing"],
+              lab: {
+                title: "Digital Signatures & ECC Microlab",
+                url: "labs/signatures/index.html",
+                desc: "Interactive curve point addition, message signing/verification, ECDSA nonce reuse exploit, and address generator."
+              }
+            },
+            {
+              id: "05-CP",
+              title: "05-CP: Crypto Assumptions",
+              code: "05-CP",
+              desc: "Computational hardness assumptions, discrete log, side-channel attacks, implementation pitfalls, and post-quantum cryptography.",
+              concepts: ["Computational Hardness", "Discrete Log Problem", "Side Channels", "Post-Quantum Cryptography (PQC)", "Lattice Crypto"]
+            }
+          ]
+        },
+        {
+          id: "mod-distributed",
+          title: "3. Distributed Systems",
+          badge: "Module 03",
+          color: "#10b981",
+          desc: "Peer-to-peer network topologies, message dissemination, unstructured vs structured routing, and decentralized reputation.",
+          concepts: ["Client-Server vs P2P", "Gossip Protocols", "DHT & Chord", "EigenTrust", "Tamper-Evident Ledgers"],
+          children: [
+            {
+              id: "01-DS",
+              title: "01-DS: Distributed Systems",
+              code: "01-DS",
+              desc: "Centralized client-server hub-and-spoke vs decentralized peer-to-peer networks, latency, and fault tolerance.",
+              concepts: ["Single Point of Failure", "Mesh Topology", "Failure Domains", "Partition Tolerance"],
+              lab: {
+                title: "Centralized vs P2P Network Lab",
+                url: "labs/distributed%20systems/distributed_systems_lab.html",
+                desc: "Animated side-by-side transaction propagation waves and node failure resilience simulator."
+              }
+            },
+            {
+              id: "02-DS",
+              title: "02-DS: P2P Design",
+              code: "02-DS",
+              desc: "Unstructured flooding networks (Gnutella) vs structured Distributed Hash Tables (DHT, Chord, Kademlia).",
+              concepts: ["Unstructured Flooding", "Message TTL & Storms", "Distributed Hash Table (DHT)", "Chord Finger Tables", "Logarithmic Routing"],
+              lab: {
+                title: "P2P Routing: Flooding vs DHT Lab",
+                url: "labs/p2p-routing/p2p_routing_lab.html",
+                desc: "Packet propagation comparison on canvas measuring hop counts, message overhead, and network bandwidth."
+              }
+            },
+            {
+              id: "03-DS",
+              title: "03-DS: Trust & P2P Networks",
+              code: "03-DS",
+              desc: "Decentralized reputation, Sybil attacks, collusion, slander, and the EigenTrust matrix convergence algorithm.",
+              concepts: ["Sybil Attacks", "Collusion Cliques", "Transitive Trust", "EigenTrust Algorithm", "Pre-Trusted Anchors"],
+              lab: {
+                title: "Peer-to-Peer Trust (EigenTrust) Simulation",
+                url: "labs/trust-simulation/trust_simulation_lab.html",
+                desc: "Iterative reputation convergence simulator isolating malicious colluders and slanderers."
+              }
+            },
+            {
+              id: "04-DS",
+              title: "04-DS: Distributed Ledgers",
+              code: "04-DS",
+              desc: "Hash-chained linked lists, cryptographic pointers, immutability, and state transition histories.",
+              concepts: ["Cryptographic Hash Pointers", "Tamper-Evidence", "Ledger Invariants", "Chain Integrity"],
+              lab: {
+                title: "Tamper-Evident Ledger Lab",
+                url: "labs/tamper-ledger/tamper_ledger_lab.html",
+                desc: "Live ledger with wallet accounts where editing past records immediately breaks all subsequent block hashes."
+              }
+            }
+          ]
+        },
+        {
+          id: "mod-consensus",
+          title: "4. Consensus Mechanisms",
+          badge: "Module 04",
+          color: "#f59e0b",
+          desc: "How distributed participants reach agreement without a central authority: PoW, PoS, and finality.",
+          concepts: ["Nakamoto Consensus", "PoW Hash Target", "Difficulty Retargeting", "PoS Staking & Slashing", "Casper FFG Finality"],
+          children: [
+            {
+              id: "01-CM",
+              title: "01-CM: Consensus Intro",
+              code: "01-CM",
+              desc: "Crash fault tolerance (CFT: Paxos, Raft) vs Byzantine fault tolerance (BFT: PBFT), and the blockchain revolution.",
+              concepts: ["Crash Fault Tolerance", "Byzantine Fault Tolerance", "PBFT", "Leader Election", "Quorums"]
+            },
+            {
+              id: "02-CM",
+              title: "02-CM: Proof of Work",
+              code: "02-CM",
+              desc: "Nakamoto consensus, Poisson block arrival processes, hash difficulty adjustment, and the longest chain rule.",
+              concepts: ["Proof of Work", "Hash Target & Nonce", "Difficulty Epochs", "Longest Chain Rule", "Chain Reorganizations"],
+              lab: {
+                title: "Proof-of-Work Coin Mining Simulator",
+                url: "labs/POW_mining_micro/index.html",
+                desc: "Coin-flip mining race against automated nodes with difficulty adjustments and multi-block chain reorganizations."
+              }
+            },
+            {
+              id: "03-CM",
+              title: "03-CM: Proof of Stake",
+              code: "03-CM",
+              desc: "Capital-at-stake consensus, validator selection lotteries, nothing-at-stake problem, slashing conditions, and finality.",
+              concepts: ["Proof of Stake", "Validator Lotteries", "Nothing-at-Stake Problem", "Slashing Penalties", "Casper FFG Epochs"],
+              lab: {
+                title: "Proof-of-Stake Validator Simulator",
+                url: "labs/pos-micro/index.html",
+                desc: "Simulates validator selection weighted by stake, double-signing slashing, and Proposed -> Justified -> Finalized epochs."
+              }
+            }
+          ]
+        },
+        {
+          id: "mod-bitcoin",
+          title: "5. Bitcoin Framework",
+          badge: "Module 05",
+          color: "#f97316",
+          desc: "Architecture of Bitcoin: the UTXO state model, transaction scripts, P2P network, and game-theoretic attack vectors.",
+          concepts: ["UTXO Model", "Script (Forth-like)", "Coinbase & Mempool", "Halving & Fees", "51% Attack", "Selfish Mining"],
+          children: [
+            {
+              id: "01-BF",
+              title: "01-BF: Bitcoin Origins",
+              code: "01-BF",
+              desc: "Satoshi Nakamoto's 2008 whitepaper, genesis block, UTXO transaction model, and the Forth-like Bitcoin Script language.",
+              concepts: ["Satoshi Whitepaper", "UTXO Graph", "P2PKH Scripts", "Input/Output Verification", "Coinbase Genesis"]
+            },
+            {
+              id: "02-BF",
+              title: "02-BF: Transactions & Mining",
+              code: "02-BF",
+              desc: "Transaction lifecycle, mempool fee markets, mining pools, block rewards, and the 4-year halving cycle.",
+              concepts: ["Mempool Dynamics", "Fee Prioritization", "Mining Pools & Stratum", "Block Subsidy Halving", "Difficulty Adjustment"]
+            },
+            {
+              id: "03-BF",
+              title: "03-BF: Nodes & Network",
+              code: "03-BF",
+              desc: "Node classifications (Archival, Pruned, SPV), gossip message propagation, and Bitcoin Improvement Proposals (BIPs).",
+              concepts: ["Full vs SPV Nodes", "Gossip Protocol", "Bloom Filters & BIP 37", "Compact Blocks (BIP 152)", "Soft vs Hard Forks"]
+            },
+            {
+              id: "04-BF",
+              title: "04-BF: Security & Attacks",
+              code: "04-BF",
+              desc: "Major attack vectors: 51% majority hash attacks, double-spending, selfish mining (Eyal & Sirer), and legal implications.",
+              concepts: ["51% Hash Attack", "Double-Spending", "Selfish Mining Strategy", "Block Orphaning", "Regulatory Posture"],
+              lab: {
+                title: "Blockchain Attack Simulator",
+                url: "labs/bitcoin-attacks/index.html",
+                desc: "Visualizes competing honest vs attacker chains, selfish mining withhold tactics, and 51% reorganization depths."
+              }
+            }
+          ]
+        },
+        {
+          id: "mod-ethereum",
+          title: "6. Ethereum & Smart Contracts",
+          badge: "Module 06",
+          color: "#a855f7",
+          desc: "Turing-complete decentralized computing: the EVM, Solidity, gas markets, MEV-Boost, token standards, and DeFi.",
+          concepts: ["EVM World Computer", "Account Model", "Gas & EIP-1559", "MEV-Boost & PBS", "Solidity & Reentrancy", "ERC-20 & ERC-721"],
+          children: [
+            {
+              id: "01-EF",
+              title: "01-EF: Ethereum as Computer",
+              code: "01-EF",
+              desc: "Ethereum Virtual Machine (EVM) architecture, global state transition function, and account model (EOAs vs Contracts).",
+              concepts: ["EVM Architecture", "World State Trie", "EOA vs Contract Account", "Deterministic Execution", "Gas Accounting"],
+              lab: {
+                title: "EVM Replicated Computer Lab",
+                url: "labs/ether_evm/index.html",
+                desc: "Execute contract bytecode sequences across replicated nodes with gas optimization solvers."
+              }
+            },
+            {
+              id: "02-EF",
+              title: "02-EF: The Merge & PoS",
+              code: "02-EF",
+              desc: "Transition from PoW to PoS (The Merge), Beacon Chain architecture, slot/epoch timing, and attestation subnets.",
+              concepts: ["The Merge", "Beacon Chain", "Slots & Epochs", "Attestation Subnets", "Inactivity Leaks"],
+              lab: {
+                title: "Ethereum PoS Security Console",
+                url: "labs/ether-sec-micro/index.html",
+                desc: "Explore Gasper fork choice, inactivity leak under network partitions, and slashing evidence proofs."
+              }
+            },
+            {
+              id: "03-EF",
+              title: "03-EF: Ethereum Network & MEV",
+              code: "03-EF",
+              desc: "EIP-1559 base fee burning, Maximal Extractable Value (MEV), searchers, builders, relays, and Proposer-Builder Separation.",
+              concepts: ["EIP-1559 Fee Market", "MEV & Frontrunning", "Sandwich Attacks", "Proposer-Builder Separation (PBS)", "MEV-Boost Relays"],
+              lab: {
+                title: "MEV Builders, Relays & Proposer Strategy Lab",
+                url: "labs/ether_mev/mev_builders.html",
+                desc: "Full interactive simulation of mempool frontrunning, bundle building, relay bidding, and validator revenue policies."
+              }
+            },
+            {
+              id: "04-EF",
+              title: "04-EF: Smart Contracts",
+              code: "04-EF",
+              desc: "Solidity programming, storage layouts, reentrancy vulnerabilities (The DAO hack), and checks-effects-interactions pattern.",
+              concepts: ["Solidity Syntax", "Storage Slots vs Memory", "Reentrancy Exploit", "The DAO Fork", "Checks-Effects-Interactions"],
+              lab: {
+                title: "Smart Contract Execution Lab",
+                url: "labs/ether-smart-contract-micro/index.html",
+                desc: "Interactive step-through of reentrancy attack traces, call stacks, storage slots, and event receipts."
+              }
+            },
+            {
+              id: "05-EF",
+              title: "05-EF: Token Standards & NFTs",
+              code: "05-EF",
+              desc: "Fungible tokens (ERC-20), non-fungible tokens (ERC-721), semi-fungibles (ERC-1155), and metadata on IPFS.",
+              concepts: ["ERC-20 Interface", "ERC-721 NFTs", "ERC-1155 Multi-Token", "Token URIs & IPFS", "On-Chain Royalties"]
+            },
+            {
+              id: "06-EF",
+              title: "06-EF: Token Communities",
+              code: "06-EF",
+              desc: "Decentralized Autonomous Organizations (DAOs), on-chain governance, quadratic voting, and tokenomic models.",
+              concepts: ["DAO Governance", "Timelocks & Multi-Sig", "Quadratic Voting", "Tokenomics", "Treasury Management"]
+            }
+          ]
+        },
+        {
+          id: "mod-permissioned",
+          title: "7. Permissioned Chains",
+          badge: "Module 07",
+          color: "#06b6d4",
+          desc: "Enterprise blockchain architectures, consortium governance, identity systems, and Hyperledger Fabric.",
+          concepts: ["Permissioned vs Permissionless", "Identity & PKI", "Hyperledger Fabric", "Execute-Order-Validate", "Private Channels"],
+          children: [
+            {
+              id: "01-PC",
+              title: "01-PC: Permissioned Ledgers",
+              code: "01-PC",
+              desc: "Enterprise consortia, legal compliance, access control, and comparing public chains with permissioned ledgers.",
+              concepts: ["Consortium Governance", "Regulatory Compliance", "Access Control Lists", "Confidentiality Guarantees"]
+            },
+            {
+              id: "02-PC",
+              title: "02-PC: Hyperledger Fabric",
+              code: "02-PC",
+              desc: "Hyperledger Fabric architecture: Membership Service Providers (MSP), Endorsing Peers, Orderers, and Private Data Collections.",
+              concepts: ["Membership Service Provider", "Execute-Order-Validate", "Chaincode Lifecycle", "Private Data Collections", "Channels"]
+            }
+          ]
+        },
+        {
+          id: "mod-forensics",
+          title: "8. Forensics & Investigation",
+          badge: "Module 08",
+          color: "#f43f5e",
+          desc: "On-chain intelligence, blockchain analytics, illicit finance, mixer obfuscation, and criminal enforcement case studies.",
+          concepts: ["UTXO Graph Analysis", "Peel Chains", "Mixers & Tornado Cash", "Silk Road & BTC-e", "Clustering Heuristics"],
+          children: [
+            {
+              id: "01-FO",
+              title: "01-FO: Illicit Finance Cases",
+              code: "01-FO",
+              desc: "High-profile case studies: Silk Road takedown, BTC-e laundering network, Colonial Pipeline ransomware, and Tornado Cash sanctions.",
+              concepts: ["Silk Road Seizure", "Alexander Vinnik / BTC-e", "Colonial Pipeline Recovery", "OFAC Sanctions", "FATF Travel Rule"]
+            },
+            {
+              id: "02-FO",
+              title: "02-FO: Obfuscation & Tracing",
+              code: "02-FO",
+              desc: "Graph analysis heuristics: common input ownership, change address detection, peel chains, CoinJoin mixers, and cross-chain hops.",
+              concepts: ["Common Input Ownership", "Change Address Heuristics", "Peel Chains", "CoinJoin & Wasabi", "Bridge Hopping"]
+            }
+          ]
+        },
+        {
+          id: "mod-synthesis",
+          title: "9. Applications & Synthesis",
+          badge: "Module 09",
+          color: "#14b8a6",
+          desc: "Real-world trade-offs, Central Bank Digital Currencies (CBDCs), geopolitical competition, and future frontiers.",
+          concepts: ["CBDCs & Stablecoins", "Cross-Border Settlement", "Geopolitics & Sanctions", "Zero-Knowledge Proofs", "Layer 2 Rollups"],
+          children: [
+            {
+              id: "01-AS",
+              title: "01-AS: Real-World Blockchain",
+              code: "01-AS",
+              desc: "Evaluating enterprise blockchain claims: supply chain tracking, digital identity, provenance, and when NOT to use a blockchain.",
+              concepts: ["Supply Chain Provenance", "Decentralized Identifiers (DID)", "Oracle Problem", "Blockchain vs Relational DB"]
+            },
+            {
+              id: "02-AS",
+              title: "02-AS: CBDCs & Stablecoins",
+              code: "02-AS",
+              desc: "Retail vs wholesale CBDCs, algorithmic vs collateralized stablecoins, dollar dominance, and financial privacy implications.",
+              concepts: ["Wholesale vs Retail CBDC", "Fiat-Backed Stablecoins", "Algorithmic Stablecoins (Terra/Luna)", "Dollar Hegemony"]
+            },
+            {
+              id: "03-AS",
+              title: "03-AS: Geopolitics & Defense",
+              code: "03-AS",
+              desc: "Cryptocurrencies in strategic national competition, sanctions evasion, national reserves, and military cyber operations.",
+              concepts: ["Sanctions Evasion", "Cross-Border Settlement Rails", "National Security Strategies", "Strategic Reserves"]
+            },
+            {
+              id: "04-AS",
+              title: "04-AS: Final Technical Review",
+              code: "04-AS",
+              desc: "Comprehensive cross-paradigm technical synthesis comparing PoW vs PoS, UTXO vs Account, and Public vs Permissioned.",
+              concepts: ["Consensus Trade-offs", "State Model Contrasts", "Security Assumptions", "Scalability Limits"]
+            },
+            {
+              id: "05-AS",
+              title: "05-AS: Future Trajectories",
+              code: "05-AS",
+              desc: "Next-generation cryptographic horizons: Zero-Knowledge proofs (zk-SNARKs/STARKs), optimistic and ZK-rollups, account abstraction, and cross-chain bridges.",
+              concepts: ["Zero-Knowledge Proofs", "Layer 2 Rollups", "Cross-Chain Interoperability", "Account Abstraction (ERC-4337)", "Modular Blockchains"]
+            }
+          ]
+        }
+      ]
+    };
+
+    // --- State Variables ---
+    let expandedNodeIds = new Set(["root", "mod-intro", "mod-crypto", "mod-distributed", "mod-consensus", "mod-bitcoin", "mod-ethereum", "mod-permissioned", "mod-forensics", "mod-synthesis"]);
+    let selectedNode = null;
+    let zoomLevel = 0.85;
+    let panX = 100;
+    let panY = 50;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    const svg = document.getElementById("mindmapSvg");
+    const viewportGroup = document.getElementById("viewportGroup");
+    const linksLayer = document.getElementById("linksLayer");
+    const nodesLayer = document.getElementById("nodesLayer");
+    const searchInput = document.getElementById("searchInput");
+
+    // Drawer Elements
+    const detailDrawer = document.getElementById("detailDrawer");
+    const drawerBadge = document.getElementById("drawerBadge");
+    const drawerTitle = document.getElementById("drawerTitle");
+    const drawerDesc = document.getElementById("drawerDesc");
+    const drawerSlidesSection = document.getElementById("drawerSlidesSection");
+    const drawerSlidesLink = document.getElementById("drawerSlidesLink");
+    const drawerConceptsSection = document.getElementById("drawerConceptsSection");
+    const drawerConceptsList = document.getElementById("drawerConceptsList");
+    const drawerLabSection = document.getElementById("drawerLabSection");
+    const drawerLabTitle = document.getElementById("drawerLabTitle");
+    const drawerLabDesc = document.getElementById("drawerLabDesc");
+    const drawerLabLink = document.getElementById("drawerLabLink");
+    const drawerFooterModule = document.getElementById("drawerFooterModule");
+
+    // --- Top-to-Bottom Vertical Layout Computation ---
+    function calculateVerticalLayout(root) {
+      const nodes = [];
+      const links = [];
+
+      const colWidth = 260;
+      const colGap = 35;
+      const rootY = 80;
+      const modY = 220;
+      const lessonStartY = 330;
+      const lessonRowHeight = 64;
+
+      const numModules = root.children.length;
+      const totalWidth = numModules * colWidth + (numModules - 1) * colGap;
+      const startX = 80;
+
+      // Root node at top center
+      const rootNode = {
+        ...root,
+        depth: 0,
+        x: startX + totalWidth / 2 - 130,
+        y: rootY,
+        w: 260,
+        h: 52,
+        hasChildren: true,
+        isExpanded: expandedNodeIds.has("root")
+      };
+      nodes.push(rootNode);
+
+      if (rootNode.isExpanded) {
+        root.children.forEach((mod, modIdx) => {
+          const modX = startX + modIdx * (colWidth + colGap);
+          const isModExpanded = expandedNodeIds.has(mod.id);
+
+          const modNode = {
+            ...mod,
+            depth: 1,
+            x: modX,
+            y: modY,
+            w: colWidth,
+            h: 48,
+            hasChildren: mod.children && mod.children.length > 0,
+            isExpanded: isModExpanded
+          };
+          nodes.push(modNode);
+
+          // Link from Root (bottom center) to Module (top center)
+          const rootBottomX = rootNode.x + rootNode.w / 2;
+          const rootBottomY = rootNode.y + rootNode.h;
+          const modTopX = modNode.x + modNode.w / 2;
+          const modTopY = modNode.y;
+          
+          links.push({
+            type: "curve",
+            d: createVerticalCurve(rootBottomX, rootBottomY, modTopX, modTopY),
+            color: mod.color || "#38bdf8"
+          });
+
+          // If module is expanded, render lessons cascading down in its column
+          if (isModExpanded && mod.children && mod.children.length > 0) {
+            const trunkX = modX + 16;
+            const trunkStartY = modY + modNode.h;
+            const lastLessonY = lessonStartY + (mod.children.length - 1) * lessonRowHeight + 20;
+
+            // Vertical spine line
+            links.push({
+              type: "spine",
+              d: `M ${trunkX} ${trunkStartY} L ${trunkX} ${lastLessonY}`,
+              color: mod.color || "#38bdf8"
+            });
+
+            mod.children.forEach((lesson, lessonIdx) => {
+              const lessonX = modX + 32;
+              const lessonY = lessonStartY + lessonIdx * lessonRowHeight;
+
+              const lessonNode = {
+                ...lesson,
+                depth: 2,
+                x: lessonX,
+                y: lessonY,
+                w: colWidth - 32,
+                h: 44,
+                hasChildren: false,
+                isExpanded: false
+              };
+              nodes.push(lessonNode);
+
+              // Horizontal spur from vertical spine to lesson card
+              const spurY = lessonY + lessonNode.h / 2;
+              links.push({
+                type: "spur",
+                d: `M ${trunkX} ${spurY} L ${lessonX} ${spurY}`,
+                color: mod.color || "#38bdf8"
+              });
+            });
+          }
+        });
+      }
+
+      return { nodes, links };
+    }
+
+    function createVerticalCurve(x1, y1, x2, y2) {
+      const dy = (y2 - y1) / 2;
+      return `M ${x1} ${y1} C ${x1} ${y1 + dy}, ${x2} ${y2 - dy}, ${x2} ${y2}`;
+    }
+
+    // --- Render Graph ---
+    function renderGraph() {
+      const { nodes, links } = calculateVerticalLayout(curriculumData);
+      const searchTerm = searchInput.value.trim().toLowerCase();
+
+      // Render Links
+      linksLayer.innerHTML = links.map(link => {
+        const opacity = link.type === "spine" ? "0.45" : (link.type === "spur" ? "0.6" : "0.35");
+        const strokeWidth = link.type === "spine" ? "2.5" : "2";
+        return `<path d="${link.d}" class="connection-line" stroke="${link.color}" stroke-opacity="${opacity}" stroke-width="${strokeWidth}" />`;
+      }).join("");
+
+      // Render Nodes (rock-solid, zero transform scaling on hover)
+      nodesLayer.innerHTML = nodes.map(node => {
+        const w = node.w;
+        const h = node.h;
+        const x = node.x;
+        const y = node.y;
+        const color = node.color || "#38bdf8";
+        const isSelected = selectedNode && selectedNode.id === node.id;
+        
+        // Search Matching
+        let isMatch = false;
+        if (searchTerm) {
+          const matchTitle = node.title.toLowerCase().includes(searchTerm);
+          const matchDesc = node.desc && node.desc.toLowerCase().includes(searchTerm);
+          const matchCode = node.code && node.code.toLowerCase().includes(searchTerm);
+          const matchConcepts = node.concepts && node.concepts.some(c => c.toLowerCase().includes(searchTerm));
+          const matchLab = node.lab && (node.lab.title.toLowerCase().includes(searchTerm) || node.lab.desc.toLowerCase().includes(searchTerm));
+          isMatch = matchTitle || matchDesc || matchCode || matchConcepts || matchLab;
+        }
+
+        const borderStroke = isSelected 
+          ? color 
+          : (isMatch ? "#facc15" : `${color}60`);
+        const borderWidth = isSelected ? "3" : (isMatch ? "2.5" : "1.5");
+        const bgFill = isSelected ? "#1e293b" : (isMatch ? "#2a2818" : "#0f172a");
+
+        // Toggle Expand/Collapse Button
+        const toggleBtn = node.hasChildren ? `
+          <g class="toggle-group cursor-pointer" onclick="event.stopPropagation(); toggleNode('${node.id}')" transform="translate(${w - 18}, ${h / 2})">
+            <circle class="toggle-circle" r="9" fill="${color}" fill-opacity="0.2" stroke="${color}" stroke-width="1.5" />
+            <text text-anchor="middle" dy="3.5" fill="#fff" font-size="11" font-weight="bold">${node.isExpanded ? "−" : "+"}</text>
+          </g>
+        ` : "";
+
+        // Lab Indicator
+        const labIndicator = node.lab ? `
+          <g transform="translate(14, ${h / 2})">
+            <rect x="-8" y="-8" width="16" height="16" rx="4" fill="#0284c7" fill-opacity="0.3" stroke="#38bdf8" stroke-width="1" />
+            <text text-anchor="middle" dy="3.5" font-size="9" fill="#7dd3fc">🧪</text>
+          </g>
+        ` : "";
+
+        const textOffset = node.lab ? 30 : 14;
+        const titleFontSize = node.depth === 0 ? "13" : (node.depth === 1 ? "12" : "11");
+        const titleFontWeight = node.depth < 2 ? "700" : "600";
+
+        return `
+          <g class="node-group" transform="translate(${x}, ${y})" onclick="selectNode('${node.id}')">
+            <!-- Node Card Background -->
+            <rect class="node-bg" width="${w}" height="${h}" rx="10" fill="${bgFill}" stroke="${borderStroke}" stroke-width="${borderWidth}" />
+            <rect x="0" y="0" width="4" height="${h}" rx="2" fill="${color}" />
+
+            <!-- Lab Indicator -->
+            ${labIndicator}
+
+            <!-- Node Label Text -->
+            <text x="${textOffset}" y="${h / 2 + 4}" fill="#f8fafc" font-size="${titleFontSize}" font-weight="${titleFontWeight}" font-family="system-ui, sans-serif" pointer-events="none">
+              ${escapeHtml(node.title)}
+            </text>
+
+            <!-- Toggle Button -->
+            ${toggleBtn}
+          </g>
+        `;
+      }).join("");
+
+      updateTransform();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function updateTransform() {
+      viewportGroup.setAttribute("transform", `translate(${panX}, ${panY}) scale(${zoomLevel})`);
+    }
+
+    // --- Node Lookup Helper ---
+    function findNodeById(root, id) {
+      if (root.id === id) return root;
+      if (root.children) {
+        for (const child of root.children) {
+          const res = findNodeById(child, id);
+          if (res) return res;
+        }
+      }
+      return null;
+    }
+
+    // --- Interactive Actions ---
+    window.toggleNode = function(id) {
+      if (expandedNodeIds.has(id)) {
+        expandedNodeIds.delete(id);
+      } else {
+        expandedNodeIds.add(id);
+      }
+      renderGraph();
+    };
+
+    window.selectNode = function(id) {
+      const node = findNodeById(curriculumData, id);
+      if (!node) return;
+      selectedNode = node;
+      openDrawer(node);
+      renderGraph();
+    };
+
+    
+    // --- Slide Server Base URL Management ---
+    const STORAGE_KEY_SLIDE_BASE = "blockchain_slide_base_url";
+    const DEFAULT_LOCAL_BASE = "../";
+    const GITHUB_PAGES_BASE = "https://astevegreen.github.io/blockchain-course/";
+    const QUARTO_PREVIEW_BASE = "http://localhost:9001/";
+
+    function getSlideBaseUrl() {
+      const saved = localStorage.getItem(STORAGE_KEY_SLIDE_BASE);
+      if (saved) return saved;
+      if (window.location.protocol === 'file:') {
+        return DEFAULT_LOCAL_BASE;
+      }
+      return "../";
+    }
+
+    function setSlideBaseUrl(url) {
+      if (!url || url === '../') {
+        localStorage.removeItem(STORAGE_KEY_SLIDE_BASE);
+      } else {
+        let clean = url.trim();
+        if (!clean.endsWith('/')) clean += '/';
+        localStorage.setItem(STORAGE_KEY_SLIDE_BASE, clean);
+      }
+      // Once configured, dismiss banner
+      localStorage.setItem("blockchain_slide_banner_dismissed", "true");
+      showToast("⚙️ Slide Server updated", "Settings saved!");
+      updateServerButtonsUI();
+    }
+
+    function resolveSlideUrl(relativeHref) {
+      if (!relativeHref) return '#';
+      const base = getSlideBaseUrl();
+      if (base === '../') return relativeHref;
+      const cleanPath = relativeHref.replace(/^\.\.\//, '');
+      return base.replace(/\/+$/, '') + '/' + cleanPath;
+    }
+
+    function showToast(title, msg) {
+      const toast = document.getElementById("toastNotice");
+      const toastMsg = document.getElementById("toastMessage");
+      if (!toast || !toastMsg) return;
+      toastMsg.textContent = `${title} ${msg ? ' - ' + msg : ''}`;
+      toast.classList.remove("translate-y-20", "opacity-0");
+      setTimeout(() => {
+        toast.classList.add("translate-y-20", "opacity-0");
+      }, 2500);
+    }
+
+    // Modal Controls with Dynamic DOM Resolution
+    function openServerSettingsModal() {
+      const modal = document.getElementById("serverSettingsModal");
+      const input = document.getElementById("customBaseUrlInput");
+      if (!modal) return;
+
+      const current = getSlideBaseUrl();
+      if (input) input.value = current;
+
+      const radios = document.querySelectorAll('input[name="serverPreset"]');
+      let matched = false;
+      radios.forEach(r => {
+        if (r.value === current || (r.value.replace(/\/+$/, '') === current.replace(/\/+$/, ''))) {
+          r.checked = true;
+          matched = true;
+        } else {
+          r.checked = false;
+        }
+      });
+      if (!matched) {
+        const customRadio = document.querySelector('input[name="serverPreset"][value="custom"]');
+        if (customRadio) customRadio.checked = true;
+      }
+
+      modal.classList.remove("hidden");
+    }
+
+    function closeServerSettingsModal() {
+      const modal = document.getElementById("serverSettingsModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function openGuideModal() {
+      const modal = document.getElementById("guideModal");
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    function closeGuideModal() {
+      const modal = document.getElementById("guideModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    let activeModalInfo = null;
+
+    function openConceptModal(nodeId, conceptName) {
+      const modal = document.getElementById("conceptModal");
+      if (!modal) return;
+
+      const info = conceptSlideLinks[nodeId] && conceptSlideLinks[nodeId][conceptName];
+      if (!info) return;
+
+      activeModalInfo = { nodeId, conceptName, info };
+
+      const titleEl = document.getElementById("modalConceptTitle");
+      if (titleEl) titleEl.textContent = conceptName;
+
+      const headingEl = document.getElementById("modalSlideHeading");
+      if (headingEl) headingEl.textContent = info.slide || conceptName;
+      
+      const anchorMatch = info.href.match(/#(.*)$/);
+      const anchor = anchorMatch ? '#' + anchorMatch[1] : '';
+      const anchorEl = document.getElementById("modalSlideAnchor");
+      if (anchorEl) anchorEl.textContent = anchor || '#top';
+
+      // Find node info
+      const { nodes } = calculateVerticalLayout(curriculumData);
+      const node = nodes.find(n => n.id === nodeId);
+      const lessonTitle = node ? (node.code ? `${node.code} ${node.title}` : node.title) : 'Curriculum Lesson';
+      const lessonEl = document.getElementById("modalLessonInfo");
+      if (lessonEl) lessonEl.textContent = `Module / Lesson: ${lessonTitle}`;
+
+      // Source path
+      const relPath = info.href.replace(/^\.\.\//, '').replace(/#.*$/, '');
+      const qmdPath = relPath.replace(/\.html$/, '.qmd');
+      const sourceEl = document.getElementById("modalSourcePath");
+      if (sourceEl) sourceEl.textContent = qmdPath;
+
+      // Definition
+      const defSection = document.getElementById("modalDefSection");
+      const defText = document.getElementById("modalDefText");
+      const def = conceptDefinitions[conceptName];
+      if (defSection && defText) {
+        if (def) {
+          defSection.classList.remove("hidden");
+          defText.textContent = def;
+        } else {
+          defSection.classList.add("hidden");
+        }
+      }
+
+      // Local file notice
+      const isLocal = window.location.protocol === 'file:' && getSlideBaseUrl() === '../';
+      const localNotice = document.getElementById("modalLocalNotice");
+      if (localNotice) {
+        if (isLocal) {
+          localNotice.classList.remove("hidden");
+        } else {
+          localNotice.classList.add("hidden");
+        }
+      }
+
+      // Launch button
+      const launchBtn = document.getElementById("btnModalLaunchSlide");
+      if (launchBtn) {
+        const resolvedUrl = resolveSlideUrl(info.href);
+        launchBtn.href = resolvedUrl;
+      }
+
+      modal.classList.remove("hidden");
+    }
+
+    function closeConceptModal() {
+      const modal = document.getElementById("conceptModal");
+      if (modal) modal.classList.add("hidden");
+      activeModalInfo = null;
+    }
+
+    function handleConceptClick(event, nodeId, conceptName) {
+      if (event) event.preventDefault();
+      const info = conceptSlideLinks[nodeId] && conceptSlideLinks[nodeId][conceptName];
+      if (!info) return;
+
+      const isLocal = window.location.protocol === 'file:';
+      const base = getSlideBaseUrl();
+
+      // If viewing local file without configured server, show the concept modal with clear options
+      if (isLocal && base === '../') {
+        openConceptModal(nodeId, conceptName);
+        return;
+      }
+
+      // Otherwise, open the resolved slide deck URL
+      const targetUrl = resolveSlideUrl(info.href);
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    }
+
+    // Expose explicitly to window
+    
+    function openDeckModal(node, deckUrl) {
+      const modal = document.getElementById("deckModal");
+      if (!modal || !node) return;
+
+      const titleEl = document.getElementById("modalDeckTitle");
+      if (titleEl) titleEl.textContent = `${node.code ? node.code + ': ' : ''}${node.title}`;
+
+      const descEl = document.getElementById("modalDeckDesc");
+      if (descEl) descEl.textContent = node.desc || "Fundamental topic presentation within the curriculum.";
+
+      const serverHostEl = document.getElementById("modalDeckServerHost");
+      const currentBase = getSlideBaseUrl();
+      if (serverHostEl) serverHostEl.textContent = currentBase;
+
+      const resolvedUrl = resolveSlideUrl(deckUrl);
+      const urlPreviewEl = document.getElementById("modalDeckUrlPreview");
+      if (urlPreviewEl) urlPreviewEl.textContent = resolvedUrl;
+
+      // Source path
+      const relPath = deckUrl ? deckUrl.replace(/^\.\.\//, '') : '';
+      const qmdPath = relPath.replace(/\.html$/, '.qmd');
+      const sourceEl = document.getElementById("modalDeckSourcePath");
+      if (sourceEl) sourceEl.textContent = qmdPath;
+
+      // Concepts covered
+      const conceptsList = document.getElementById("modalDeckConceptsList");
+      if (conceptsList) {
+        if (node.concepts && node.concepts.length > 0) {
+          conceptsList.innerHTML = node.concepts.map(c => `
+            <button type="button"
+               data-node-id="${escapeHtml(node.id)}"
+               data-concept="${escapeHtml(c)}"
+               class="group inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded bg-slate-800 hover:bg-sky-500/20 text-slate-200 hover:text-sky-300 border border-slate-700 hover:border-sky-500/40 font-medium transition cursor-pointer">
+              <span>${escapeHtml(c)}</span>
+              <span class="text-slate-500 group-hover:text-sky-400">&rarr;</span>
+            </button>
+          `).join("");
+        } else {
+          conceptsList.innerHTML = '<span class="text-slate-400 text-[11px]">No concepts listed for this unit.</span>';
+        }
+      }
+
+      // Local file notice
+      const localNotice = document.getElementById("modalDeckLocalNotice");
+      if (localNotice) {
+        if (window.location.protocol === 'file:' && currentBase === '../') {
+          localNotice.classList.remove("hidden");
+        } else {
+          localNotice.classList.add("hidden");
+        }
+      }
+
+      // Launch button
+      const launchBtn = document.getElementById("btnModalLaunchDeck");
+      if (launchBtn) launchBtn.href = resolvedUrl;
+
+      modal.classList.remove("hidden");
+    }
+
+    function closeDeckModal() {
+      const modal = document.getElementById("deckModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function handleDeckClick(node, deckUrl) {
+      if (!node || !deckUrl) return;
+      const isLocal = window.location.protocol === 'file:';
+      const base = getSlideBaseUrl();
+
+      // If viewing local file without configured server (relative path), show the deck modal
+      if (isLocal && base === '../') {
+        openDeckModal(node, deckUrl);
+        return;
+      }
+
+      // If user has configured a slide server, launch the deck
+      const targetUrl = resolveSlideUrl(deckUrl);
+      window.open(targetUrl, "_blank", "noopener,noreferrer");
+    }
+
+    window.openDeckModal = openDeckModal;
+    window.closeDeckModal = closeDeckModal;
+    window.handleDeckClick = handleDeckClick;
+
+    window.openServerSettingsModal = openServerSettingsModal;
+    window.closeServerSettingsModal = closeServerSettingsModal;
+    window.openGuideModal = openGuideModal;
+    window.closeGuideModal = closeGuideModal;
+    window.openConceptModal = openConceptModal;
+    window.closeConceptModal = closeConceptModal;
+    window.handleConceptClick = handleConceptClick;
+
+    function openDrawer(node) {
+      drawerBadge.textContent = node.badge || (node.code ? `Lesson ${node.code}` : "Curriculum Unit");
+      drawerBadge.style.borderColor = node.color ? `${node.color}50` : "#38bdf850";
+      drawerBadge.style.color = node.color || "#38bdf8";
+
+      drawerTitle.textContent = node.title;
+      drawerDesc.textContent = node.desc || "Fundamental topic within the blockchain curriculum.";
+
+      // Lesson slides link
+      const deckUrl = node.code ? lessonDeckUrls[node.code] : null;
+      if (deckUrl) {
+        drawerSlidesSection.classList.remove("hidden");
+        const slidesBtn = document.getElementById("drawerSlidesBtn");
+        const infoBtn = document.getElementById("drawerDeckInfoBtn");
+        
+        if (slidesBtn) {
+          slidesBtn.onclick = (e) => {
+            e.preventDefault();
+            handleDeckClick(node, deckUrl);
+          };
+        }
+        if (infoBtn) {
+          infoBtn.onclick = (e) => {
+            e.preventDefault();
+            openDeckModal(node, deckUrl);
+          };
+        }
+      } else {
+        drawerSlidesSection.classList.add("hidden");
+      }
+
+      // Concepts hyperlinked to slides
+      if (node.concepts && node.concepts.length > 0) {
+        drawerConceptsSection.classList.remove("hidden");
+        drawerConceptsList.innerHTML = node.concepts.map(c => {
+          const info = conceptSlideLinks[node.id] && conceptSlideLinks[node.id][c];
+          if (info && info.href) {
+            const slideTip = info.slide ? `Slide: ${info.slide}` : `Slide for ${c}`;
+            return `
+              <button type="button"
+                 data-node-id="${escapeHtml(node.id)}"
+                 data-concept="${escapeHtml(c)}"
+                 title="${escapeHtml(slideTip)}"
+                 class="concept-chip-btn group inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-md bg-slate-800/90 hover:bg-sky-500/20 text-slate-200 hover:text-sky-300 border border-slate-700 hover:border-sky-500/50 font-medium transition duration-150 shadow-sm cursor-pointer text-left">
+                <span>${escapeHtml(c)}</span>
+                <svg class="w-3 h-3 text-slate-400 group-hover:text-sky-400 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
+            `;
+          } else {
+            return `
+              <span class="text-[11px] px-2.5 py-1 rounded-md bg-slate-800 text-slate-200 border border-slate-700 font-medium">
+                ${escapeHtml(c)}
+              </span>
+            `;
+          }
+        }).join("");
+      } else {
+        drawerConceptsSection.classList.add("hidden");
+      }
+
+      // Labs
+      if (node.lab) {
+        drawerLabSection.classList.remove("hidden");
+        drawerLabTitle.textContent = node.lab.title;
+        drawerLabDesc.textContent = node.lab.desc;
+        drawerLabLink.href = node.lab.url;
+      } else {
+        drawerLabSection.classList.add("hidden");
+      }
+
+      drawerFooterModule.textContent = node.code ? `Course Reference: ${node.code}` : "Curriculum Unit";
+
+      detailDrawer.style.transform = "translateX(0)";
+    }
+
+
+    document.getElementById("btnCloseDrawer").addEventListener("click", () => {
+      detailDrawer.style.transform = "translateX(110%)";
+      selectedNode = null;
+      renderGraph();
+    });
+
+    document.getElementById("btnFocusNode").addEventListener("click", () => {
+      if (!selectedNode) return;
+      const { nodes } = calculateVerticalLayout(curriculumData);
+      const target = nodes.find(n => n.id === selectedNode.id);
+      if (target) {
+        const svgRect = svg.getBoundingClientRect();
+        panX = (svgRect.width / 2) - (target.x * zoomLevel) - (target.w / 2 * zoomLevel);
+        panY = (svgRect.height / 2) - (target.y * zoomLevel) - (target.h / 2 * zoomLevel);
+        updateTransform();
+      }
+    });
+
+    // --- Search Handling ---
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.trim().toLowerCase();
+      if (term.length > 1) {
+        function expandMatches(n) {
+          let hasMatchingChild = false;
+          if (n.children) {
+            n.children.forEach(child => {
+              if (expandMatches(child)) hasMatchingChild = true;
+            });
+          }
+          const matchesSelf = n.title.toLowerCase().includes(term) || 
+            (n.code && n.code.toLowerCase().includes(term)) ||
+            (n.concepts && n.concepts.some(c => c.toLowerCase().includes(term)));
+          
+          if (hasMatchingChild || matchesSelf) {
+            expandedNodeIds.add(n.id);
+            return true;
+          }
+          return false;
+        }
+        expandMatches(curriculumData);
+      }
+      renderGraph();
+    });
+
+    // --- Zoom & Pan Event Listeners ---
+    document.getElementById("btnZoomIn").addEventListener("click", () => {
+      zoomLevel = Math.min(zoomLevel * 1.25, 2.5);
+      updateTransform();
+    });
+
+    document.getElementById("btnZoomOut").addEventListener("click", () => {
+      zoomLevel = Math.max(zoomLevel / 1.25, 0.25);
+      updateTransform();
+    });
+
+    document.getElementById("btnFit").addEventListener("click", () => {
+      fitToScreen();
+    });
+
+    function fitToScreen() {
+      const svgRect = svg.getBoundingClientRect();
+      zoomLevel = Math.min(svgRect.width / 2800, 0.7);
+      panX = (svgRect.width - 2700 * zoomLevel) / 2;
+      panY = 40;
+      updateTransform();
+    }
+
+    document.getElementById("btnExpandAll").addEventListener("click", () => {
+      function addAll(node) {
+        expandedNodeIds.add(node.id);
+        if (node.children) node.children.forEach(addAll);
+      }
+      addAll(curriculumData);
+      renderGraph();
+    });
+
+    document.getElementById("btnCollapseAll").addEventListener("click", () => {
+      expandedNodeIds.clear();
+      expandedNodeIds.add("root");
+      renderGraph();
+    });
+
+    // Drag to pan
+    svg.addEventListener("mousedown", (e) => {
+      if (e.target.closest(".toggle-group") || e.target.closest("button") || e.target.closest("input")) return;
+      isDragging = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+
+    // Wheel zoom
+    svg.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      const newZoom = Math.min(Math.max(zoomLevel * zoomFactor, 0.25), 2.5);
+      panX = mouseX - (mouseX - panX) * (newZoom / zoomLevel);
+      panY = mouseY - (mouseY - panY) * (newZoom / zoomLevel);
+      zoomLevel = newZoom;
+      updateTransform();
+    }, { passive: false });
+
+    window.addEventListener("resize", () => {
+      renderGraph();
+    });
+
+    // Initial load
+    
+    // --- Server Settings Event Listeners ---
+    // Delegated click listener on concepts list
+    drawerConceptsList?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-concept]");
+      if (!btn) return;
+      const nodeId = btn.getAttribute("data-node-id");
+      const conceptName = btn.getAttribute("data-concept");
+      handleConceptClick(e, nodeId, conceptName);
+    });
+
+    // Dismiss banner button
+    document.getElementById("btnCloseBanner")?.addEventListener("click", () => {
+      localStorage.setItem("blockchain_slide_banner_dismissed", "true");
+      updateServerButtonsUI();
+    });
+
+    // Deck Modal concept chip clicks
+    document.getElementById("modalDeckConceptsList")?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-concept]");
+      if (!btn) return;
+      const nodeId = btn.getAttribute("data-node-id");
+      const conceptName = btn.getAttribute("data-concept");
+      closeDeckModal();
+      openConceptModal(nodeId, conceptName);
+    });
+
+    document.getElementById("btnSlideServerSettings")?.addEventListener("click", openServerSettingsModal);
+    document.getElementById("btnBannerSettings")?.addEventListener("click", openServerSettingsModal);
+    document.getElementById("btnBannerGuide")?.addEventListener("click", openGuideModal);
+    document.getElementById("btnCloseSettingsModal")?.addEventListener("click", closeServerSettingsModal);
+    document.getElementById("btnCancelSettings")?.addEventListener("click", closeServerSettingsModal);
+
+    document.querySelectorAll('input[name="serverPreset"]').forEach(radio => {
+      radio.addEventListener("change", (e) => {
+        if (e.target.value !== "custom") {
+          customBaseUrlInput.value = e.target.value;
+        }
+      });
+    });
+
+    document.getElementById("btnSaveServerSettings")?.addEventListener("click", () => {
+      const val = customBaseUrlInput.value.trim();
+      setSlideBaseUrl(val);
+      closeServerSettingsModal();
+    });
+
+    document.getElementById("btnResetDefaultServer")?.addEventListener("click", () => {
+      setSlideBaseUrl("../");
+      customBaseUrlInput.value = "../";
+      document.querySelector('input[name="serverPreset"][value="../"]').checked = true;
+    });
+
+    // Guide Modal Listeners
+    document.getElementById("btnCloseGuideModal")?.addEventListener("click", closeGuideModal);
+    document.getElementById("btnCloseGuideBottom")?.addEventListener("click", closeGuideModal);
+    document.getElementById("btnGuideConfigureServer")?.addEventListener("click", () => {
+      closeGuideModal();
+      openServerSettingsModal();
+    });
+
+    // Concept Modal Listeners
+    document.getElementById("btnCloseConceptModal")?.addEventListener("click", closeConceptModal);
+    document.getElementById("btnModalOpenServerSettings")?.addEventListener("click", () => {
+      closeConceptModal();
+      openServerSettingsModal();
+    });
+
+    document.getElementById("btnCopyConceptLink")?.addEventListener("click", () => {
+      if (!activeModalInfo) return;
+      const resolved = resolveSlideUrl(activeModalInfo.info.href);
+      navigator.clipboard.writeText(resolved).then(() => {
+        showToast("📋 Link Copied", resolved);
+      }).catch(() => {
+        showToast("📋 Anchor Copied", activeModalInfo.info.href);
+      });
+    });
+
+    // Close modals on Backdrop or Escape
+    [document.getElementById("serverSettingsModal"), document.getElementById("conceptModal"), document.getElementById("guideModal"), document.getElementById("deckModal")].forEach(modal => {
+      if (!modal) return;
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) modal.classList.add("hidden");
+      });
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        document.getElementById("serverSettingsModal")?.classList.add("hidden");
+        document.getElementById("conceptModal")?.classList.add("hidden");
+        document.getElementById("guideModal")?.classList.add("hidden");
+        document.getElementById("deckModal")?.classList.add("hidden");
+      }
+    });
+
+    function updateServerButtonsUI() {
+      const isLocal = window.location.protocol === 'file:';
+      const notice = document.getElementById("localFileNotice");
+      if (!notice) return;
+
+      const isConfigured = !!localStorage.getItem(STORAGE_KEY_SLIDE_BASE);
+      const isDismissed = localStorage.getItem("blockchain_slide_banner_dismissed") === "true";
+
+      // Show banner ONLY if opened as local file AND neither configured nor dismissed
+      if (isLocal && !isConfigured && !isDismissed) {
+        notice.classList.remove("hidden");
+      } else {
+        notice.classList.add("hidden");
+      }
+    }
+
+    // Initial check on load
+    updateServerButtonsUI();
+
+    fitToScreen();
+    renderGraph();
+  </script>
+
+  </body>
+</html>

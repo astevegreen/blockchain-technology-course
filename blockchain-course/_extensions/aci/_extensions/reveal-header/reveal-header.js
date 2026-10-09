@@ -19,6 +19,8 @@
       logo:               meta("reveal-header-logo") || "",
       logoLink:           meta("reveal-header-logo-link") || "",
       footerLogoLink:     meta("reveal-header-footer-logo-link") || "",
+      homeLink:           meta("reveal-header-home-link") || "../../index.html",
+      homeText:           meta("reveal-header-home-text") || "Course Portal",
       titleAsDefault:     truthy("reveal-header-title-as-default"),
       subtitleAsDefault:  truthy("reveal-header-subtitle-as-default"),
       hideFromTitleSlide: meta("reveal-header-hide-from-titleslide") || "",
@@ -36,6 +38,24 @@
 
     bar = document.createElement("div");
     bar.className = "reveal-header";
+
+    if (cfg.homeLink !== "none" && cfg.homeLink !== "false") {
+      const homeBtn = document.createElement("a");
+      homeBtn.className = "course-portal-back-btn";
+      homeBtn.href = cfg.homeLink;
+      homeBtn.title = "Return to Course Home Portal";
+      homeBtn.setAttribute("aria-label", "Return to Course Home Portal");
+      homeBtn.innerHTML =
+        '<svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        '<line x1="19" y1="12" x2="5" y2="12"></line>' +
+        '<polyline points="12 19 5 12 12 5"></polyline>' +
+        '</svg>' +
+        '<span>' + (cfg.homeText || "Course Portal") + '</span>';
+      homeBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+      bar.appendChild(homeBtn);
+    }
 
     const text = document.createElement("div");
     text.className = "header-text";

@@ -22,6 +22,8 @@ function Meta(m)
         ["reveal-header-logo"]                 = S(m["header-logo"]),
         ["reveal-header-logo-link"]            = S(m["header-logo-link"]),
         ["reveal-header-footer-logo-link"]     = S(m["footer-logo-link"]),
+        ["reveal-header-home-link"]            = S(m["header-home-link"]),
+        ["reveal-header-home-text"]            = S(m["header-home-text"]),
         ["reveal-header-title-as-default"]     = tostring(m["title-as-header"] == true),
         ["reveal-header-subtitle-as-default"]  = tostring(m["subtitle-as-header"] == true),
         ["reveal-header-hide-from-titleslide"] = S(m["hide-from-titleSlide"]),
