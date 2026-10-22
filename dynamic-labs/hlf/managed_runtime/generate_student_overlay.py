@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import platform
 from pathlib import Path
 from textwrap import dedent
 
@@ -35,8 +36,8 @@ FABRIC_VERSION = "2.5.15"
 
 
 def _default_hlf_platform() -> str:
-    arch = os.uname().machine.lower()
-    if arch == "x86_64":
+    arch = platform.machine().lower()
+    if arch in ("x86_64", "amd64"):
         return "linux/amd64"
     if arch in ("aarch64", "arm64"):
         return "linux/arm64"
