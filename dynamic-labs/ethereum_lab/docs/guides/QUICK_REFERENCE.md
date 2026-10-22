@@ -161,4 +161,4 @@ cat CONTRACT_ADDRESS.txt
 
 ---
 
-*Full guide: [INSTRUCTOR_FACILITATION_GUIDE.md](../instructor/INSTRUCTOR_FACILITATION_GUIDE.md)*
+*Full guide: `docs/instructor/INSTRUCTOR_FACILITATION_GUIDE.md` (instructor copy of the repo only; not in student downloads)*

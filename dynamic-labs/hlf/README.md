@@ -185,7 +185,7 @@ compose files are rendered from repo-owned templates under
 ## Guides
 
 - [STUDENT_GUIDE.md](docs/STUDENT_GUIDE.md) — what students need to know
-- [INSTRUCTOR_GUIDE.md](docs/INSTRUCTOR_GUIDE.md) — pedagogical plan + instructor controls
+- `docs/INSTRUCTOR_GUIDE.md` — pedagogical plan + instructor controls (instructor copy of the repo only; not in student downloads)
 - [CLASSROOM_OPERATIONS.md](docs/CLASSROOM_OPERATIONS.md) — end-to-end operational runbook
 - [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — common issues
 
