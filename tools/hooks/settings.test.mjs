@@ -40,6 +40,12 @@ test("generated and vendored folders can't be read; pushes to main need no promp
   for (const rule of ["Bash(git push --force *)", "Bash(git reset --hard *)"]) assert.ok(deny.includes(rule), rule);
 });
 
+test("the setup itself, CI and GitHub credentials need the owner's yes", () => {
+  const { ask } = settings().permissions;
+  for (const rule of ["Edit(/.claude/**)", "Edit(/CLAUDE.md)", "Edit(/.github/**)", "Edit(/tools/hooks/**)",
+                      "Bash(gh secret *)", "Bash(gh auth *)"]) assert.ok(ask.includes(rule), rule);
+});
+
 test("the model is left to the owner: no model pin, no subagent model", () => {
   const s = settings();
   assert.equal(s.model, undefined);
