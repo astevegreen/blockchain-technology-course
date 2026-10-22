@@ -10,7 +10,8 @@ The owner judges results, not code: explain every change in plain English and pr
   Design is in progress: change course content only when the task asks.
 - Open-source or in-house tools only: never feature commercial analytics platforms (Chainalysis, TRM, Elliptic);
   citing their research is fine. Blockscout is not open source from v11: ask before adding it.
-- Students read code but never write it. Legal process (warrants, subpoenas, seizure, testimony) is out of scope.
+- Students read code but never write it. Out of scope: legal process (warrants, subpoenas, seizure, chain of custody,
+  testimony) and data engineering (Python, SQL, GraphQL).
 - Facts that change (laws, figures, upgrades, licences) carry an "as of" date beside the citation.
 
 ## Commands
