@@ -64,7 +64,7 @@ class AppConfig:
     def from_env(cls, env=None):
         env = env or os.environ
         instructor_auth_mode = env.get(
-            "QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE", "test-header"
+            "QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE", "standalone"
         )
         if instructor_auth_mode not in INSTRUCTOR_AUTH_MODES:
             raise ValueError(
