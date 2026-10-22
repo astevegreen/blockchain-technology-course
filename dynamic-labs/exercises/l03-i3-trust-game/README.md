@@ -76,8 +76,11 @@ The included `Dockerfile` already:
 The app supports these environment variables:
 
 - `SECRET_KEY`
-  - Flask session secret
-  - Default: `blockchain-course-secret`
+  - Flask session secret. Required: the app refuses to start without it
+  - In a full deployment, `./lab-manager.sh deploy` generates a different value for each deployment
+    (as `TRUST_GAME_SECRET_KEY`) into `dynamic-labs/.runtime/runtime-secrets.env`
+    (owner-readable only, git-ignored, not in the student download)
+  - Running the container on its own: pass your own value with `-e SECRET_KEY=...`
 - `HLF_INSTRUCTOR_COOKIE_SECRET`
   - Preferred shared-cookie verification secret in shared mode
 - `HLF_WEB_SECRET_KEY`

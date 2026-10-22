@@ -45,7 +45,13 @@ def validate_socketio_stack():
 validate_socketio_stack()
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "blockchain-course-secret")
+_secret_key = os.environ.get("SECRET_KEY")
+if not _secret_key:
+    raise RuntimeError(
+        "SECRET_KEY is not set. Run ./lab-manager.sh deploy, which generates it "
+        "(as TRUST_GAME_SECRET_KEY) into .runtime/runtime-secrets.env, or set SECRET_KEY yourself."
+    )
+app.config["SECRET_KEY"] = _secret_key
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 

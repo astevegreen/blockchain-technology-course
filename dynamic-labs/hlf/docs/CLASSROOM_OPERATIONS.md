@@ -33,19 +33,20 @@ No student peers are running yet. They come up on demand.
 
 ### Instructor credentials
 
-Default in development is `admin` / `admin`. Override for real classroom
-deployments — the dedicated instructor auth service should be given:
+There is no default login. `./lab-manager.sh deploy` generates a username
+and password for this deployment the first time it runs and keeps them in
+`dynamic-labs/.runtime/instructor-credentials.txt` (readable by its owner
+only, git-ignored, and left out of the student download). Read them with:
 
 ```bash
-INSTRUCTOR_AUTH_USER=ms-rogers
-INSTRUCTOR_AUTH_KEY='…something-you-actually-rotate…'
+cat dynamic-labs/.runtime/instructor-credentials.txt
 ```
 
-Wire these into the VM provisioning step or the auth-service runtime
-environment. `HLF_INSTRUCTOR_USER` and `HLF_INSTRUCTOR_KEY` still work
-as compatibility fallbacks, but they should not be the primary names in
-new deployments. Leaving the credentials on the defaults shows a yellow
-"Default credentials active" banner on `/instructor/` as a reminder.
+To choose your own, set `INSTRUCTOR_AUTH_USER` and `INSTRUCTOR_AUTH_KEY` in
+`dynamic-labs/.runtime/runtime-secrets.env`. To get fresh generated ones,
+redeploy with `ROTATE_RUNTIME_CREDENTIALS=1`. If neither is set, the auth
+service refuses to start. `HLF_INSTRUCTOR_USER` and `HLF_INSTRUCTOR_KEY` still
+work as compatibility fallbacks, but should not be used in new deployments.
 
 ### Capacity
 
@@ -211,12 +212,13 @@ Check:
 - If the student's peer was recently reset, the world state is temporarily
   empty while it replays blocks. It'll catch up.
 
-### "Default credentials active" banner won't go away
+### The instructor auth service won't start
 
-You haven't set non-default instructor credentials on the centralized
-auth service. Set `INSTRUCTOR_AUTH_USER` and `INSTRUCTOR_AUTH_KEY`
-(or, temporarily, the legacy `HLF_INSTRUCTOR_USER` and
-`HLF_INSTRUCTOR_KEY` fallbacks) and restart the auth service.
+It has no built-in password and stops if `INSTRUCTOR_AUTH_KEY` is empty.
+Run `./lab-manager.sh deploy` (it generates the value into
+`dynamic-labs/.runtime/runtime-secrets.env`), or set `INSTRUCTOR_AUTH_USER`
+and `INSTRUCTOR_AUTH_KEY` there yourself, then restart the auth service.
+Do not start it with a bare `docker compose` that skips that file.
 
 ```bash
 docker compose -f dynamic-labs/instructor_auth_service/docker-compose.yml restart instructor-auth-service
