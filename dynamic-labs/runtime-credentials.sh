@@ -100,7 +100,7 @@ Notes
 - One login gates all instructor surfaces routed through nginx.
 - The quiz engine also issues per-student access codes inside the app; those are not listed here.
 EOF
-    chmod 644 "${INSTRUCTOR_CREDENTIALS_FILE}"
+    chmod 600 "${INSTRUCTOR_CREDENTIALS_FILE}"
     umask "${old_umask}"
     runtime_fix_path_ownership "${RUNTIME_DIR}"
 }
