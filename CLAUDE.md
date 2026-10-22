@@ -4,6 +4,15 @@ Courseware as code: a Quarto site of RevealJS lessons (`blockchain-course/`), Do
 instructor quiz banks (`quizes/`) and a Packer VM build (`vm-build/`). README.md describes each layer.
 The owner judges results, not code: explain every change in plain English and prove it with the check.
 
+## Course direction (owner's charter: Notion "Blockchain Course Prep")
+- Redesign for US government analysts who characterise on-chain activity and explain it to agents and prosecutors;
+  target: every concept in the Notion "Role Concepts" list. First run January 2027; later runs add depth.
+  Design is in progress: change course content only when the task asks.
+- Open-source or in-house tools only: never feature commercial analytics platforms (Chainalysis, TRM, Elliptic);
+  citing their research is fine. Blockscout is not open source from v11: ask before adding it.
+- Students read code but never write it. Legal process (warrants, subpoenas, seizure, testimony) is out of scope.
+- Facts that change (laws, figures, upgrades, licences) carry an "as of" date beside the citation.
+
 ## Commands
 - `python tools/check.py` - checks what you changed (it renders changed lessons); prints failures only; must pass
   before you finish. `--all` checks everything; `--all --render` re-renders the whole site first (minutes: run it
