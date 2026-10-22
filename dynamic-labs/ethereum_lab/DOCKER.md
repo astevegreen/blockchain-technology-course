@@ -143,7 +143,7 @@ Two setups:
 | Opens instructor's URL (`http://<instructor-ip>:5173`) | Instructor's container | `npm run console` or `npx hardhat console --network localhost` |
 | Runs own student container (`localhost:5173`) | Student's container | `npx hardhat console --network instructor` (RPC_URL auto-injected) |
 
-**For students using the instructor's URL:** With nginx (default), Lab Terminal uses `ws://<your-ip>:8080/ws/terminal` — only port 8080 needed. Without nginx, ensure ports **3002, 3003, 3004** are open; students connect to `ws://<your-ip>:3002`.
+**For students using the instructor's URL:** With nginx (default), Lab Terminal uses `ws://<your-ip>:8080/ws/terminal` — only port 8080 needed. The shared instructor container (`docker-compose.yml`) does not publish ports 3002-3004, so the terminal is reachable only through that route.
 
 **For students running their own container:** The student container includes the Lab Terminal. RPC_URL is injected from the Connection Setup (instructor's RPC). Use `--network instructor` for Hardhat console.
 
