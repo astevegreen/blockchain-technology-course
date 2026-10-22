@@ -131,6 +131,10 @@ class Planning(unittest.TestCase):
         self.assertTrue(any("--all --render" in line for line in info))
         self.assertTrue(any("Docker is unavailable" in line for line in info))
 
+    def test_lesson_change_reports_its_slide_count(self) -> None:
+        _, info = self.names(["blockchain-course/lessons/introduction/01-IN-course_welcome.qmd"])
+        self.assertTrue(any(line.startswith("01-IN-course_welcome.qmd: ") and " slides " in line for line in info))
+
     def test_unrelated_change_runs_nothing(self) -> None:
         self.assertEqual(self.names(["README.md"]), ([], []))
 
@@ -191,6 +195,31 @@ class AnswerFiles(unittest.TestCase):
         for changed in (".github/workflows/pages.yml", "dynamic-labs/x/new_answer_key.json"):
             plan = check.plan_checks([changed], added=[])
             self.assertIn("answer files", [c.name for c in plan.checks])
+
+
+class SlideCount(unittest.TestCase):
+    def test_hidden_slides_code_and_comments_do_not_count(self) -> None:
+        text = ("---\ntitle: x\n---\n# Part\n## One\n::: {.notes}\n## not a slide\n:::\n"
+                ":::: {.content-hidden}\n## Hidden\n::: {.notes}\n:::\n::::\n"
+                "```python\n## comment\n```\n<!--\n## commented out\n-->\n## Two\n### Sub\n")
+        self.assertEqual(check.slide_count(text), 3)
+
+    def test_slide_level_3_counts_third_level_headings(self) -> None:
+        self.assertEqual(check.slide_count("---\nformat:\n  aci-revealjs:\n    slide-level: 3\n---\n## A\n### B\n"), 2)
+
+
+class BibDates(unittest.TestCase):
+    BIB = ("@online{old_page,\n  url = {https://a.example/}\n}\n\n"
+           "@online{dated_page,\n  url = {https://b.example/},\n  urldate = {2026-10-22}\n}\n\n"
+           "@online{undated_page,\n  title = {X},\n  url = {https://c.example/}\n}\n\n"
+           "@book{no_url,\n  title = {Y}\n}\n")
+
+    def test_only_new_entries_with_a_url_need_a_urldate(self) -> None:
+        self.assertEqual(check.undated_web_sources(self.BIB, {"old_page"}), [(10, "undated_page")])
+
+    def test_a_bib_change_runs_the_check(self) -> None:
+        plan = check.plan_checks(["blockchain-course/lessons/references/Blockchain.bib"], added=[])
+        self.assertIn("bib dates", [c.name for c in plan.checks])
 
 
 class Helpers(unittest.TestCase):

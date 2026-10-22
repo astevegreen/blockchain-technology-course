@@ -179,6 +179,57 @@ def slide_index_check() -> list[str]:
     return lines or tail(out)
 
 
+def slide_count(text: str) -> int:
+    """Slides a lesson shows: headings at or above its slide level, outside divs (hidden or not), code and comments."""
+    front = re.match(r"---\n(.*?)\n---\n", text, re.S)
+    level = re.search(r"^\s*slide-level:\s*(\d)", front.group(1), re.M) if front else None
+    level = int(level.group(1)) if level else 2
+    divs = 0  # fenced divs open; a heading inside one starts no slide
+    fence, comment, count = "", False, 0
+    for line in text[front.end() if front else 0:].splitlines():
+        if fence:
+            fence = "" if line.startswith(fence) else fence
+        elif comment:
+            comment = "-->" not in line
+        elif line.startswith(("```", "~~~")):
+            fence = line[:3]
+        elif line.lstrip().startswith("<!--"):
+            comment = "-->" not in line
+        elif re.match(r":{3,}\s*$", line):
+            divs = max(divs - 1, 0)
+        elif re.match(r":{3,}\s*\S", line):
+            divs += 1
+        elif (m := re.match(r"(#{1,6})\s+\S", line)) and len(m.group(1)) <= level and not divs:
+            count += 1
+    return count
+
+
+def bib_entries(text: str) -> dict[str, tuple[int, str]]:
+    """Each entry's key, mapped to its line number and its text."""
+    starts = list(re.finditer(r"^@\w+\s*\{\s*([^,\s]+)\s*,", text, re.M))
+    ends = [m.start() for m in starts[1:]] + [len(text)]
+    return {m.group(1): (text.count("\n", 0, m.start()) + 1, text[m.start():end]) for m, end in zip(starts, ends)}
+
+
+def undated_web_sources(text: str, old_keys: set[str]) -> list[tuple[int, str]]:
+    """New entries with a `url` and no `urldate`: the "as of" date a web source carries (CLAUDE.md)."""
+    return [(line, key) for key, (line, body) in bib_entries(text).items()
+            if key not in old_keys and re.search(r"^\s*url\s*=", body, re.M)
+            and not re.search(r"^\s*urldate\s*=\s*[{\"]\d{4}-\d{2}-\d{2}[}\"]", body, re.M)]
+
+
+def bib_dates(rel: str) -> list[str]:
+    base = next((b for b in ("origin/main", "main") if git(REPO, "rev-parse", "--verify", "-q", b)), None)
+    merge_base = git(REPO, "merge-base", base, "HEAD") if base else None
+    old = git(REPO, "show", f"{merge_base}:{rel}") if merge_base else None
+    text = (REPO / rel).read_text(encoding="utf-8")
+    failures = [f"{rel}:{line}: @{key} has a url but no urldate"
+                for line, key in undated_web_sources(text, set(bib_entries(old or "")))]
+    if failures:
+        failures.append("fix: add `urldate = {YYYY-MM-DD}`, the day the source was read (the /source skill)")
+    return failures
+
+
 def validate_glossary() -> list[str]:
     code, out = run([sys.executable, str(GLOSSARY_SCRIPTS / "validate_glossary.py")], cwd=COURSE)
     if code == 0:
@@ -362,6 +413,9 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     elif not everything:
         for rel in lessons:
             plan.checks.append(Check(f"render {Path(rel).name}", lambda rel=rel: render_lesson(rel)))
+    for rel in lessons:
+        plan.info.append(f"{Path(rel).name}: {slide_count((REPO / rel).read_text(encoding='utf-8'))} slides "
+                         "(a lesson fills one 50-minute slot)")
 
     lessons_changed = everything or any(is_lesson(f) for f in files)
     if lessons_changed or touched("blockchain-course/glossary/"):
@@ -370,6 +424,11 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
         plan.checks.append(Check("glossary", validate_glossary))
     if lessons_changed or touched("blockchain-course/assets/mindmap.html"):
         plan.checks.append(Check("mind-map links", mindmap_links))
+
+    bibs = sorted(f.relative_to(REPO).as_posix() for f in (COURSE / "lessons" / "references").glob("*.bib"))
+    bibs = bibs if everything else [f for f in present if f in bibs]
+    if bibs:
+        plan.checks.append(Check("bib dates", lambda: [line for b in bibs for line in bib_dates(b)]))
 
     if not everything and any(f.startswith(SITE_WIDE) for f in files):
         plan.info.append("site-wide change: run `python tools/check.py --all --render` (renders the whole site)")
