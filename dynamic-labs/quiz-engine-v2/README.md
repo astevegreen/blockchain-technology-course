@@ -20,10 +20,10 @@ docker compose run --rm test
 The app service stores SQLite data in the `quiz_engine_data` named volume at
 `/data/quiz-engine.sqlite`. The app service defaults to `standalone`
 instructor auth: instructors sign in with `INSTRUCTOR_PASSWORD`, and
-`INSTRUCTOR_AUTH_SECRET` signs the session cookie. When either is unset and
-`FLASK_ENV` is `development` (the compose default), the engine falls back to
-the development password `admin` and a built-in secret, so set both for
-anything beyond a local check.
+`INSTRUCTOR_AUTH_SECRET` signs the session cookie. `FLASK_ENV` defaults to
+`production` in the compose file, so the engine refuses to start while either
+is unset. For a quick local check only, set `FLASK_ENV=development`: the engine
+then falls back to the development password `admin` and a built-in secret.
 
 The app also signs its own session cookie with `QUIZ_ENGINE_SECRET_KEY`, which
 has no built-in value: the app refuses to start while it is empty.
