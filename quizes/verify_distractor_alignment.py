@@ -202,7 +202,7 @@ def main() -> int:
         "--margin",
         type=float,
         default=0.10,
-        help="Allowed length deviation margin as a fraction (e.g. 0.10 for 10%).",
+        help="Allowed length deviation margin as a fraction (e.g. 0.10 for 10%%).",
     )
     args = parser.parse_args()
     return check_alignment(args.quiz_dir.resolve(), args.margin)
