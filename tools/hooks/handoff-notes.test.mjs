@@ -109,6 +109,52 @@ test("a note another session claimed can't be claimed again", () => {
   assert.equal(readdirSync(path.join(repo, ".handoff", "done")).length, 1);
 });
 
+test("claim takes a slug for the open note saved under it, with or without .md or the timestamp", () => {
+  const repo = repoWithNotes();
+  saveDraft(repo, "kickoff-applied", NOW);
+  saveDraft(repo, "glossary", NOW);
+  saveDraft(repo, "slide-edit", NOW);
+  const done = (name) => existsSync(path.join(repo, ".handoff", "done", name));
+
+  const r = claim("kickoff-applied", { cwd: repo, now: LATER });
+  assert.equal(r.code, 0, r.out);
+  assert.match(r.out, /^# Handoff: slide edit\n/);
+  assert.ok(done("2026-10-17-1405-kickoff-applied.md"));
+  assert.equal(claim("glossary.md", { cwd: repo }).code, 0);
+  assert.ok(done("2026-10-17-1405-glossary.md"));
+  assert.equal(claim("2026-10-17-1405-slide-edit", { cwd: repo }).code, 0);
+  assert.ok(done("2026-10-17-1405-slide-edit.md"));
+
+  const none = claim("budget", { cwd: repo });
+  assert.equal(none.code, 1);
+  assert.match(none.out, /no open note named budget/);
+});
+
+test("a slug saved twice claims nothing and lists both for the owner to pick", () => {
+  const repo = repoWithNotes();
+  saveDraft(repo, "slide-edit", NOW);
+  saveDraft(repo, "slide-edit", LATER);
+  saveDraft(repo, "glossary", LATER);
+  const r = claim("slide-edit", { cwd: repo });
+  assert.equal(r.code, 4);
+  assert.match(r.out, /^2 open notes named slide-edit; ask the owner which one/);
+  assert.match(r.out, /1530-slide-edit\.md[\s\S]*1405-slide-edit\.md/);
+  assert.doesNotMatch(r.out, /glossary/);
+  assert.equal(list({ cwd: repo }).out.split("\n").length, 3);
+});
+
+test("a full file name claims only that note, never a newer one saved under the same slug", () => {
+  const repo = repoWithNotes();
+  saveDraft(repo, "slide-edit", NOW);
+  const first = "2026-10-17-1405-slide-edit.md";
+  assert.equal(claim(first, { cwd: repo }).code, 0);
+  saveDraft(repo, "slide-edit", LATER);
+  const again = claim(first, { cwd: repo });
+  assert.equal(again.code, 3);
+  assert.match(again.out, /already claimed/);
+  assert.match(list({ cwd: repo }).out, /^2026-10-17-1530-slide-edit\.md/);
+});
+
 test("since the note sends the next session to the folder or branch that holds the work", () => {
   const repo = repoWithNotes();
   const wt = path.join(repo, "..", `${path.basename(repo)}-wt2`);

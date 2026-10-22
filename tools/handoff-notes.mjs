@@ -2,7 +2,8 @@
 // every worktree share them; the folder is git-ignored, so notes are never committed or pushed.
 //   node tools/handoff-notes.mjs save <file>    stamp line 2 (time, branch, HEAD, tree, folder) and file the note
 //   node tools/handoff-notes.mjs list           open notes, newest first
-//   node tools/handoff-notes.mjs claim [name]   move a note to .handoff/done/, print it and what changed since
+//   node tools/handoff-notes.mjs claim [name]   move a note to .handoff/done/, print it and what changed since;
+//                                               name is the note's file name or the slug it was saved under
 // Exit codes: 0 done, 1 error, 3 another session claimed the note first, 4 several notes are open: name one.
 import {
   appendFileSync,
@@ -18,6 +19,7 @@ import path from "node:path";
 import { canonical, git, toPosix } from "./hooks/shared.mjs";
 
 const MAX_LINES = 40;
+const STAMP = /^\d{4}-\d{2}-\d{2}-\d{4}-/;
 const SAVED = /^\d{4}-\d{2}-\d{2}-\d{4}-.+\.md$/;
 const HEADER = /· branch (\S+) · HEAD (\S+) · (clean|\d+ uncommitted) · (.+)$/;
 const caseless = process.platform === "win32" || process.platform === "darwin";
@@ -65,6 +67,15 @@ export function openNotes(store) {
 
 const format = (notes) => notes.map((n) => `${n.name}  ${n.header}`).join("\n");
 
+// A note's name without its timestamp and .md, in the form save files it under.
+const slugOf = (name) =>
+  path
+    .basename(name, ".md")
+    .replace(STAMP, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
 export function save(file, { cwd = process.cwd(), now = new Date() } = {}) {
   const source = path.resolve(cwd, file);
   if (!existsSync(source)) return { code: 1, out: `not saved: no such file: ${file}` };
@@ -90,13 +101,7 @@ export function save(file, { cwd = process.cwd(), now = new Date() } = {}) {
   if (note.length > MAX_LINES) problems.push(`it is ${note.length} lines; keep it to ${MAX_LINES}`);
   if (problems.length) return { code: 1, out: `not saved: ${problems.join("; ")}.` };
 
-  const slug =
-    path
-      .basename(source, ".md")
-      .replace(/^\d{4}-\d{2}-\d{2}-\d{4}-/, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || "note";
+  const slug = slugOf(source) || "note";
   const name = `${stamp(now).file}-${slug}.md`;
   const dest = path.join(store, name);
   mkdirSync(store, { recursive: true });
@@ -123,6 +128,18 @@ export function claim(name, { cwd = process.cwd(), now = new Date() } = {}) {
     name = notes[0].name;
   }
   name = path.basename(name);
+  if (!name.endsWith(".md") && SAVED.test(`${name}.md`)) name += ".md";
+  // A slug ("kickoff-applied") names the open note saved under it; a full file name names only that note.
+  if (!SAVED.test(name)) {
+    const slug = slugOf(name);
+    const matches = openNotes(store).filter((n) => slugOf(n.name) === slug);
+    if (matches.length > 1)
+      return {
+        code: 4,
+        out: `${matches.length} open notes named ${slug}; ask the owner which one, then run claim <name>:\n${format(matches)}`,
+      };
+    if (matches.length === 1) name = matches[0].name;
+  }
   const done = path.join(store, "done");
   mkdirSync(done, { recursive: true });
   // A rename is atomic, so when two sessions claim the same note only one of them gets it.
