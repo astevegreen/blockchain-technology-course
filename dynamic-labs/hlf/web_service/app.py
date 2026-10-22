@@ -33,7 +33,13 @@ app = Flask(
     static_folder=str(WEB_UI_DIR),
     static_url_path="",
 )
-app.config["SECRET_KEY"] = os.environ.get("HLF_WEB_SECRET_KEY", os.environ.get("SECRET_KEY", "hlf_lab_secret"))
+_secret_key = os.environ.get("HLF_WEB_SECRET_KEY") or os.environ.get("SECRET_KEY")
+if not _secret_key:
+    raise RuntimeError(
+        "HLF_WEB_SECRET_KEY is not set. Run ./lab-manager.sh deploy, which "
+        "generates it into .runtime/runtime-secrets.env."
+    )
+app.config["SECRET_KEY"] = _secret_key
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)  # type: ignore[assignment]
 
 init_shared_auth(app)

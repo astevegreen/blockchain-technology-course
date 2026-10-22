@@ -32,7 +32,6 @@ from . import sessions  # noqa: E402
 
 UI_DIR = ROOT / "hlf" / "web_ui"
 DEFAULT_USER = "admin"
-DEFAULT_KEY = "admin"
 RETURN_TO_COOKIE_NAME = "hlf_instructor_return_to"
 RETURN_TO_COOKIE_SALT = "hlf-instructor-return-to-v1"
 RETURN_TO_COOKIE_MAX_AGE = 5 * 60
@@ -51,17 +50,13 @@ def _configured_key() -> str:
     return (
         os.environ.get("INSTRUCTOR_AUTH_KEY")
         or os.environ.get("HLF_INSTRUCTOR_KEY")
-        or DEFAULT_KEY
+        or ""
     )
 
 
 def _using_default_credentials() -> bool:
-    return (
-        os.environ.get("INSTRUCTOR_AUTH_USER") in (None, "")
-        and os.environ.get("INSTRUCTOR_AUTH_KEY") in (None, "")
-        and os.environ.get("HLF_INSTRUCTOR_USER") in (None, "")
-        and os.environ.get("HLF_INSTRUCTOR_KEY") in (None, "")
-    )
+    # There is no built-in password any more; create_app() refuses to start without one.
+    return False
 
 
 def _auth_bypassed(config: AuthConfig) -> bool:
@@ -85,6 +80,8 @@ def _ct_equals(a: str, b: str) -> bool:
 
 
 def _check_credentials(user: str, key: str) -> bool:
+    if not _configured_key():
+        return False
     return _ct_equals(user or "", _configured_user()) and _ct_equals(key or "", _configured_key())
 
 
@@ -200,6 +197,11 @@ def create_app() -> Flask:
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)  # type: ignore[assignment]
 
     config = AuthConfig.from_env()
+    if config.mode is not AuthMode.DISABLED and not _configured_key():
+        raise RuntimeError(
+            "INSTRUCTOR_AUTH_KEY is not set. Run ./lab-manager.sh deploy, which "
+            "generates it into .runtime/runtime-secrets.env, or set it yourself."
+        )
     app.config["INSTRUCTOR_AUTH"] = config
 
     app.register_blueprint(csrf_blueprint(config))

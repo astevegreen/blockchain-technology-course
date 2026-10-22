@@ -50,7 +50,7 @@ moves on top of these atoms; every build re-derives the truth from the chain via
   ~3 flooding nodes.
 
 ### Deployable assets
-- `forensics-lab-v2-instructor-dir/` — the **wallet-free chain snapshot** (~485M: blocks + chainstate
+- `forensics-lab-v3-instructor-dir/` — the **wallet-free chain snapshot** (~485M: blocks + chainstate
   + indexes + config, NO scenario wallets) that the instructor panel "Deploy Forensics Chain" button
   installs. Uncompressed dir (matches the deploy's `docker cp` path).
 - `v34j_answer_LIVE.json` — **Forensics 1** live answer key (jittered v34, lead `bc1q7arnhm7…`, ransom
