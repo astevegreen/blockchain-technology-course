@@ -21,6 +21,12 @@ def create_app(config_overrides=None):
     if config_overrides:
         app.config.update(config_overrides)
 
+    if not app.config.get("SECRET_KEY"):
+        raise RuntimeError(
+            "QUIZ_ENGINE_SECRET_KEY is not set. Run ./lab-manager.sh deploy, which "
+            "generates it into .runtime/runtime-secrets.env, or set it yourself."
+        )
+
     database_path = app.config["DATABASE_PATH"]
     if database_path != ":memory:":
         Path(database_path).expanduser().parent.mkdir(parents=True, exist_ok=True)

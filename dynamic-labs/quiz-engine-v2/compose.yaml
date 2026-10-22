@@ -12,10 +12,13 @@ services:
       INSTRUCTOR_PASSWORD: ${INSTRUCTOR_PASSWORD:-}
       INSTRUCTOR_AUTH_SECRET: ${INSTRUCTOR_AUTH_SECRET:-}
       HLF_INSTRUCTOR_COOKIE_SECRET: ${HLF_INSTRUCTOR_COOKIE_SECRET:-}
-      HLF_WEB_SECRET_KEY: ${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
+      HLF_WEB_SECRET_KEY: ${HLF_WEB_SECRET_KEY:-}
       FLASK_ENV: ${FLASK_ENV:-development}
       QUIZ_ENGINE_TEST_INSTRUCTOR_HEADER: X-Test-Instructor
-      QUIZ_ENGINE_SECRET_KEY: local-dev-only-change-before-deploy
+      # No built-in value: the app refuses to start while this is empty.
+      # ./lab-manager.sh deploy generates it into .runtime/runtime-secrets.env.
+      # (Not ":?" here: that would also break `docker compose run --rm test`.)
+      QUIZ_ENGINE_SECRET_KEY: ${QUIZ_ENGINE_SECRET_KEY:-}
     ports:
       - "${QUIZ_ENGINE_HOST:-127.0.0.1}:${QUIZ_ENGINE_PORT:-8050}:8000"
     volumes:

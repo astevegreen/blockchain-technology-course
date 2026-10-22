@@ -92,9 +92,7 @@ class AppConfig:
 
         return cls(
             database_path=env.get("QUIZ_ENGINE_DB_PATH", DEFAULT_DATABASE_PATH),
-            secret_key=env.get(
-                "QUIZ_ENGINE_SECRET_KEY", "dev-only-change-before-deploy"
-            ),
+            secret_key=env.get("QUIZ_ENGINE_SECRET_KEY", ""),
             testing=_as_bool(env.get("TESTING", "0")),
             sqlite_busy_timeout_ms=_as_positive_int(
                 env.get("QUIZ_ENGINE_SQLITE_BUSY_TIMEOUT_MS", "5000"),

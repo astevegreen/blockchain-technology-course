@@ -23,10 +23,15 @@ instructor auth: instructors sign in with `INSTRUCTOR_PASSWORD`, and
 `INSTRUCTOR_AUTH_SECRET` signs the session cookie. When either is unset and
 `FLASK_ENV` is `development` (the compose default), the engine falls back to
 the development password `admin` and a built-in secret, so set both for
-anything beyond a local check:
+anything beyond a local check.
+
+The app also signs its own session cookie with `QUIZ_ENGINE_SECRET_KEY`, which
+has no built-in value: the app refuses to start while it is empty.
+`./lab-manager.sh deploy` generates one into `.runtime/runtime-secrets.env`;
+for a standalone run, set it yourself:
 
 ```sh
-INSTRUCTOR_PASSWORD='<password>' INSTRUCTOR_AUTH_SECRET='<random string>' docker compose up --build app
+QUIZ_ENGINE_SECRET_KEY='<random string>' INSTRUCTOR_PASSWORD='<password>' INSTRUCTOR_AUTH_SECRET='<random string>' docker compose up --build app
 ```
 
 The `test-header` adapter, which trusts an `X-Test-Instructor` request header,

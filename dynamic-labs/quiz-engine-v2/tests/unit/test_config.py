@@ -57,6 +57,21 @@ def test_load_config_reads_environment_mapping():
     assert config["TESTING"] is True
 
 
+def test_load_config_has_no_built_in_secret_key():
+    config = load_config({"QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE": "test-header"})
+
+    assert config["SECRET_KEY"] == ""
+
+
+def test_create_app_refuses_to_start_without_secret_key(tmp_path, monkeypatch):
+    from app import create_app
+
+    monkeypatch.delenv("QUIZ_ENGINE_SECRET_KEY", raising=False)
+
+    with pytest.raises(RuntimeError, match="QUIZ_ENGINE_SECRET_KEY is not set"):
+        create_app({"DATABASE_PATH": str(tmp_path / "quiz-engine-test.sqlite")})
+
+
 def test_load_config_rejects_invalid_registration_mode():
     with pytest.raises(ValueError, match="REGISTRATION_MODE"):
         load_config({"QUIZ_ENGINE_REGISTRATION_MODE": "invite-only"})
