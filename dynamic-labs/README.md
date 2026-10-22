@@ -347,6 +347,11 @@ One login gates all instructor surfaces across labs. To rotate credentials:
 ROTATE_RUNTIME_CREDENTIALS=1 ./lab-manager.sh deploy --mode instructor --max-student-capacity 20
 ```
 
+The same file holds the Hyperledger Fabric lab's Certificate Authority admin password and CouchDB password
+(`HLF_CA_ADMIN_PASSWORD`, `HLF_COUCHDB_PASSWORD`). The lab will not start without them, and a plain redeploy keeps
+the ones already saved. The Certificate Authority stores its admin password the first time it starts, so after a
+rotation also run `hlf/lab.sh reset` to make it use the new one.
+
 ## WiFi Access Point (instructor mode)
 
 Turn a wireless interface into a classroom hotspot. Requires `sudo`, `hostapd`, and `dnsmasq`.

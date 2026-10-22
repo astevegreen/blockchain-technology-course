@@ -207,6 +207,27 @@ need_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
 }
 
+# The Fabric CA bootstrap admin and the peers' CouchDB take their passwords from the
+# environment. dynamic-labs/runtime-credentials.sh generates them and hlf/docker-compose.yml
+# passes them to the runner; nothing in this repo carries a built-in value.
+require_fabric_secrets() {
+  [[ -n "${HLF_CA_ADMIN_PASSWORD:-}" ]] || \
+    die "HLF_CA_ADMIN_PASSWORD is not set. Run ./lab-manager.sh deploy, which generates it into .runtime/runtime-secrets.env."
+  if [[ "${USE_COUCHDB}" == "1" && -z "${HLF_COUCHDB_PASSWORD:-}" ]]; then
+    die "HLF_COUCHDB_PASSWORD is not set. Run ./lab-manager.sh deploy, which generates it into .runtime/runtime-secrets.env."
+  fi
+}
+
+# Compose reads every ${VAR} in a file, even for `down` and `logs`, which never use the two
+# passwords. Run those calls as `with_teardown_placeholders <command...>` so a missing password
+# cannot block a teardown. The placeholder is not a credential, and `up` never gets it
+# (require_fabric_secrets runs first).
+with_teardown_placeholders() {
+  HLF_CA_ADMIN_PASSWORD="${HLF_CA_ADMIN_PASSWORD:-teardown-placeholder}" \
+  HLF_COUCHDB_PASSWORD="${HLF_COUCHDB_PASSWORD:-teardown-placeholder}" \
+  "$@"
+}
+
 # --- Input validation / hardening ---
 
 is_safe_token() {
@@ -1528,7 +1549,13 @@ patch_managed_test_network() {
     -e 's@cacerts/localhost-8054-ca-org2.pem@cacerts/ca_org2-8054-ca-org2.pem@g' \
     -e 's#@localhost:9054#@ca_orderer:9054#g' \
     -e 's@cacerts/localhost-9054-ca-orderer.pem@cacerts/ca_orderer-9054-ca-orderer.pem@g' \
+    -e 's#//admin:adminpw@#//admin:${HLF_CA_ADMIN_PASSWORD}@#g' \
     "${register_enroll}"
+  # The CAs now start with a generated admin password; a script still enrolling with the
+  # upstream default would fail late and confusingly, so stop here instead.
+  if grep -q 'admin:adminpw@' "${register_enroll}"; then
+    die "Staged registerEnroll.sh still enrolls with the upstream CA admin password; update the CA password patch in patch_managed_test_network for this fabric-samples version."
+  fi
 
   if [[ -f "${compose_ca}" ]]; then
     info "Rendering managed Fabric CA compose file from repo template"
@@ -1549,6 +1576,7 @@ patch_managed_test_network() {
     info "Patching staged Fabric network readiness probe for managed-container networking"
     sed -i \
       -e 's#@localhost:7054#@ca_org1:7054#g' \
+      -e 's#//admin:adminpw@#//admin:${HLF_CA_ADMIN_PASSWORD}@#g' \
       "${network_script}"
   fi
 
@@ -1950,6 +1978,7 @@ runtime_compose() {
 }
 
 start_runtime_ca() {
+  require_fabric_secrets
   info "Starting Fabric CA containers..."
   runtime_compose -f compose/compose-ca.yaml up -d
 }
@@ -1958,6 +1987,7 @@ generate_crypto_material_via_containers() {
   info "Generating org and orderer materials via Fabric CA container..."
   docker run --rm --platform ${TOOLS_PLATFORM} \
     --network fabric_test \
+    -e HLF_CA_ADMIN_PASSWORD \
     -v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-ca:${CA_IMAGE_TAG}" \
@@ -1971,7 +2001,7 @@ generate_crypto_material_via_containers() {
       rc=1
       while [ $rc -ne 0 ] && [ $COUNTER -lt 10 ]; do
         sleep 1
-        if fabric-ca-client getcainfo -u https://admin:adminpw@ca_org1:7054 --caname ca-org1 --tls.certfiles "${PWD}/organizations/fabric-ca/org1/ca-cert.pem" >/dev/null 2>&1; then
+        if fabric-ca-client getcainfo -u https://admin:${HLF_CA_ADMIN_PASSWORD}@ca_org1:7054 --caname ca-org1 --tls.certfiles "${PWD}/organizations/fabric-ca/org1/ca-cert.pem" >/dev/null 2>&1; then
           rc=0
           break
         fi
@@ -2007,6 +2037,7 @@ generate_crypto_material_via_containers() {
 }
 
 start_runtime_network_containers() {
+  require_fabric_secrets
   info "Starting Fabric orderer, peers, and optional CouchDB..."
   local -a compose_args=(-f compose/compose-test-net.yaml)
   if [[ "${USE_COUCHDB}" == "1" ]]; then
@@ -2888,7 +2919,7 @@ up() {
     # Stop CAs so we can wipe their on-disk state safely. Otherwise a
     # previous run's registrations survive and re-registering peer0/user1
     # fails with Fabric CA error code 74 ("Identity is already registered").
-    runtime_compose -f compose/compose-ca.yaml down -v >/dev/null 2>&1 || true
+    with_teardown_placeholders runtime_compose -f compose/compose-ca.yaml down -v >/dev/null 2>&1 || true
     rm -rf \
       "${TEST_NETWORK}/organizations/peerOrganizations" \
       "${TEST_NETWORK}/organizations/ordererOrganizations" \
@@ -3120,7 +3151,7 @@ down() {
     [[ -f "${TEST_NETWORK}/compose/compose-couch.yaml" ]] && managed_args+=(-f compose/compose-couch.yaml)
     [[ -f "${TEST_NETWORK}/compose/compose-ca.yaml" ]] && managed_args+=(-f compose/compose-ca.yaml)
     if [[ ${#managed_args[@]} -gt 0 ]]; then
-      (cd "${TEST_NETWORK}" && docker compose "${managed_args[@]}" down --volumes --remove-orphans) || true
+      (cd "${TEST_NETWORK}" && with_teardown_placeholders docker compose "${managed_args[@]}" down --volumes --remove-orphans) || true
     fi
     # Remove dev-peer chaincode images so new peers rebuild from scratch.
     local -a dev_imgs
@@ -3364,7 +3395,7 @@ watch_logs() {
   cd - >/dev/null
 
   if (( ${#compose_args[@]} > 0 )); then
-    if (cd "${TEST_NETWORK}" && docker compose "${compose_args[@]}" logs -f --tail=200); then
+    if (cd "${TEST_NETWORK}" && with_teardown_placeholders docker compose "${compose_args[@]}" logs -f --tail=200); then
       return 0
     fi
     info "docker compose logs failed; falling back to multiplexed docker logs."

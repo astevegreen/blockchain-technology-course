@@ -51,9 +51,13 @@ Run these steps from the repo root.
 
 ```bash
 cd hlf
-docker compose down -v --remove-orphans || true
+docker compose --env-file ../.runtime/runtime-secrets.env down -v --remove-orphans || true
 cd ..
 ```
+
+The compose file refuses to read without the generated secrets, so the
+`--env-file` is needed here; without it the command fails and the `|| true`
+hides that nothing was torn down.
 
 ### 3. Clear generated HLF runtime state
 
@@ -92,3 +96,25 @@ shared router:
 - `/labs/hlf/peer/org5/`
 
 The automated suite should prefer Python `requests` for these checks.
+
+## Generated Secrets Smoke
+
+The Fabric Certificate Authority admin password and the peers' CouchDB
+password are generated, not built in. After a fresh start, on the Docker
+host:
+
+- `dynamic-labs/.runtime/runtime-secrets.env` contains both
+  `HLF_CA_ADMIN_PASSWORD` and `HLF_COUCHDB_PASSWORD` (check the names only;
+  do not print the values).
+- Enrollment finished: the test network's `organizations/peerOrganizations`
+  and `organizations/ordererOrganizations` folders hold the generated MSP
+  material. This proves `registerEnroll.sh` signed in to each Certificate
+  Authority with the generated password.
+- The peers reached CouchDB: the peer logs show no `401` or authentication
+  errors from the state database.
+- The upstream default no longer works: enrolling against a Certificate
+  Authority with the old built-in admin password is rejected.
+- `hlf/lab.sh down` and `hlf/lab.sh watch logs` work even in a shell where
+  the two variables are unset.
+- Unsetting either variable and running `hlf/lab.sh up` stops at once with a
+  message naming the missing variable.

@@ -224,6 +224,24 @@ Do not start it with a bare `docker compose` that skips that file.
 docker compose -f dynamic-labs/instructor_auth_service/docker-compose.yml restart instructor-auth-service
 ```
 
+### The Fabric network won't start, or fails to enroll
+
+The Certificate Authority's admin password and the peers' CouchDB password are
+not built in. `./lab-manager.sh deploy` generates them into
+`dynamic-labs/.runtime/runtime-secrets.env` as `HLF_CA_ADMIN_PASSWORD` and
+`HLF_COUCHDB_PASSWORD`, and the lab refuses to start if either is missing.
+Run `./lab-manager.sh deploy`; do not start the lab with a bare
+`docker compose` that skips that file.
+
+The Certificate Authority keeps its admin password from the first time it
+started. If you rotated credentials (`ROTATE_RUNTIME_CREDENTIALS=1`) and the
+enroll step now fails with an authentication error, wipe the old Certificate
+Authority state so it starts again with the new password:
+
+```bash
+dynamic-labs/hlf/lab.sh reset
+```
+
 ### The whole instructor console is gone / you're staring at a login loop
 
 Check the nginx `auth_request` wiring at
