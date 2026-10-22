@@ -54,12 +54,10 @@ class BgpExerciseSharedAuthContractTests(unittest.TestCase):
         os.environ.update(cls._old_env)
 
     def setUp(self) -> None:
-        self.game_state.queue.clear()
         self.game_state.rooms.clear()
         self.game_state.players.clear()
         self.game_state.uuid_to_sid.clear()
         self.game_state.sid_to_uuid.clear()
-        self.game_state.instructor_sids.clear()
         self.game_state.next_student_number = 1
         self.game_state.next_room_number = 1
 
