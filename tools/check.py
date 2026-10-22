@@ -16,6 +16,7 @@ a green run of changed files leaves a stamp in .git/check-stamps/ for --stamped.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import os
 import re
 import shutil
@@ -48,6 +49,9 @@ GIT_HOOK_VARS = {"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX", "GI
 ENV = {k: v for k, v in os.environ.items() if k not in GIT_HOOK_VARS}
 ENV |= {"NO_COLOR": "1", "FORCE_COLOR": "0", "PYTHONIOENCODING": "utf-8"}
 NOTE = "note: "
+STUDENT_TREES = ("blockchain-course/", "dynamic-labs/")  # what students receive (CLAUDE.md rule 1)
+PAGES_WORKFLOW = ".github/workflows/pages.yml"
+VM_WORKFLOW = ".github/workflows/vm-build.yml"
 
 
 @dataclass
@@ -270,6 +274,55 @@ def file_names(files: list[str]) -> list[str]:
     return [f"{rel}: use only letters, digits, '-', '_' and '.' in file and folder names" for rel in bad]
 
 
+def zip_exclusions(workflow: str) -> list[str]:
+    """The `-x "<pattern>"` entries of the src.zip step in pages.yml."""
+    return re.findall(r'-x\s+"([^"]+)"', workflow)
+
+
+def vm_removals(workflow: str) -> list[str]:
+    """The paths the "Remove Unused Repo Payload" step of vm-build.yml deletes (`rm` lines, backslash continuations)."""
+    step = re.search(r"- name: Remove Unused Repo Payload\n(.*?)(?=\n\s*- name:|\Z)", workflow, re.S)
+    removed, deleting = [], False
+    for line in (step.group(1) if step else "").splitlines():
+        if re.match(r"\s*rm\s+-", line):
+            deleting = True
+        if deleting:
+            removed += [t for t in line.split() if t.startswith("dynamic-labs/")]
+            deleting = line.rstrip().endswith("\\")
+    return removed
+
+
+def matches_any(path: str, patterns: list[str], whole_folders: bool) -> bool:
+    """zip and shell patterns: `*` crosses `/`; `whole_folders` also counts a folder name for what is inside it."""
+    for pattern in patterns:
+        pattern = pattern.replace("**", "*")
+        if fnmatch.fnmatchcase(path, pattern):
+            return True
+        if whole_folders and fnmatch.fnmatchcase(path, pattern.rstrip("/") + "/*"):
+            return True
+    return False
+
+
+def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
+    """Tracked `*answer*` files under the student trees that src.zip still holds or the VM image still bakes in."""
+    zip_x, vm_rm = zip_exclusions(pages), vm_removals(vm)
+    problems = []
+    for rel in tracked:
+        if not rel.startswith(STUDENT_TREES) or "answer" not in Path(rel).name.lower():
+            continue
+        if not matches_any(rel, zip_x, whole_folders=False):
+            problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}')
+        if not matches_any(rel, vm_rm, whole_folders=True):
+            problems.append(f"{rel}: baked into the VM: add it to the rm list of {VM_WORKFLOW}")
+    return problems
+
+
+def answer_files() -> list[str]:
+    """CLAUDE.md rule 1: an answer key must not reach students through src.zip or the VM image."""
+    texts = [(REPO / wf).read_text(encoding="utf-8") if (REPO / wf).is_file() else "" for wf in (PAGES_WORKFLOW, VM_WORKFLOW)]
+    return unfenced_answer_files((git(REPO, "ls-files") or "").splitlines(), *texts)
+
+
 def tool_tests() -> list[str]:
     failures = []
     if (REPO / "tools" / "tests").is_dir():
@@ -338,6 +391,9 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     new = added if added is not None else ([] if everything else [f for f in files if f in present])
     if new:
         plan.checks.append(Check("file names", lambda: file_names(new)))
+
+    if touched(".github/workflows/") or any("answer" in Path(f).name.lower() for f in files):
+        plan.checks.append(Check("answer files", answer_files))
 
     if touched("tools/") or touched(".claude/"):
         plan.checks.append(Check("tool tests", tool_tests))

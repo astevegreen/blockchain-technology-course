@@ -135,6 +135,64 @@ class Planning(unittest.TestCase):
         self.assertEqual(self.names(["README.md"]), ([], []))
 
 
+PAGES_FENCED = '''
+          zip -r blockchain-course/assets/src.zip blockchain-course dynamic-labs \\
+            -x "quizes/**" \\
+            -x "dynamic-labs/bitcoin-forensics/*_answer_LIVE.json" \\
+            -x "dynamic-labs/bitcoin-forensics/malicious_seed_v*.py"
+'''
+VM_FENCED = '''
+      - name: Remove Unused Repo Payload
+        run: |
+          du -sh dynamic-labs/bitcoin-forensics 2>/dev/null || true
+          rm -rf \\
+            dynamic-labs/bitcoin-forensics/instructor.zip \\
+            dynamic-labs/bitcoin-forensics/*_answer_LIVE.json \\
+            || true
+      - name: Free Disk Space
+        run: rm -rf dynamic-labs/bitcoin-forensics
+'''
+KEYS = ["dynamic-labs/bitcoin-forensics/v34_answer_LIVE.json", "dynamic-labs/bitcoin-forensics/v36_answer_LIVE.json"]
+
+
+class AnswerFiles(unittest.TestCase):
+    def test_fenced_keys_pass(self) -> None:
+        self.assertEqual(check.unfenced_answer_files(KEYS, PAGES_FENCED, VM_FENCED), [])
+
+    def test_key_missing_from_the_zip_fence_is_named(self) -> None:
+        pages = PAGES_FENCED.replace('-x "dynamic-labs/bitcoin-forensics/*_answer_LIVE.json" \\\n', "")
+        problems = check.unfenced_answer_files(KEYS, pages, VM_FENCED)
+        self.assertEqual(len(problems), 2)
+        self.assertIn("v34_answer_LIVE.json: ships in src.zip", problems[0])
+
+    def test_key_missing_from_the_vm_cleanup_is_named(self) -> None:
+        vm = VM_FENCED.replace("            dynamic-labs/bitcoin-forensics/*_answer_LIVE.json \\\n", "")
+        problems = check.unfenced_answer_files(KEYS, PAGES_FENCED, vm)
+        self.assertEqual(len(problems), 2)
+        self.assertIn("baked into the VM", problems[0])
+
+    def test_a_delete_outside_the_cleanup_step_does_not_count(self) -> None:
+        # the Free Disk Space step above deletes the whole folder, but not in the payload cleanup
+        vm = VM_FENCED.replace("            dynamic-labs/bitcoin-forensics/*_answer_LIVE.json \\\n", "")
+        self.assertEqual(len(check.unfenced_answer_files(KEYS[:1], PAGES_FENCED, vm)), 1)
+
+    def test_deleting_the_folder_covers_what_is_inside_it(self) -> None:
+        vm = VM_FENCED.replace("dynamic-labs/bitcoin-forensics/*_answer_LIVE.json", "dynamic-labs/bitcoin-forensics")
+        self.assertEqual(check.unfenced_answer_files(KEYS, PAGES_FENCED, vm), [])
+
+    def test_other_files_and_instructor_trees_are_ignored(self) -> None:
+        files = ["quizes/answer_sheet.json", "dynamic-labs/bitcoin-forensics/lab.md", "tools/answer_probe.py"]
+        self.assertEqual(check.unfenced_answer_files(files, "", ""), [])
+
+    def test_this_repository_fences_every_answer_file(self) -> None:
+        self.assertEqual(check.answer_files(), [])
+
+    def test_workflow_or_answer_file_changes_run_the_check(self) -> None:
+        for changed in (".github/workflows/pages.yml", "dynamic-labs/x/new_answer_key.json"):
+            plan = check.plan_checks([changed], added=[])
+            self.assertIn("answer files", [c.name for c in plan.checks])
+
+
 class Helpers(unittest.TestCase):
     def test_quarto_warning_blocks(self) -> None:
         out = "Rendering\nWARNING (x.qmd:3): problem with a fenced div\n  near line 3\n\nOutput created\n"
