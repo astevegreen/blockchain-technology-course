@@ -107,6 +107,16 @@ Forgery verification (from the "Try to Forge a Diploma" exercise):
   substitute a different student school name for the peer-to-peer test
 - record PASS only if all three scenarios behave as expected
 
+Delete verification (issuer check on `DeleteAsset`):
+
+- run `invoke delete <assetId>` on a record the student's own org created
+  (for example the freeform-issuer record from scenario 3) — must succeed,
+  and a following `query` of that id must say the asset does not exist
+- run `invoke delete <assetId>` on a record issued by a different org (a
+  seeded consortium record) — must be rejected with an "Issuer mismatch"
+  error, and a following `query` must still return the record
+- record PASS only if both behave as expected
+
 ## Instructor Flow
 
 1. In a fresh unauthenticated context, open

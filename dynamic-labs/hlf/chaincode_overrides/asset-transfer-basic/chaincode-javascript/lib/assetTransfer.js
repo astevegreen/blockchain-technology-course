@@ -216,11 +216,11 @@ class AssetTransfer extends Contract {
         }
     }
 
+    // Same rule as UpdateAsset and TransferAsset: only the issuing org may remove
+    // its own credential. _readAssetObject still throws "does not exist" for a missing id.
     async DeleteAsset(ctx, id) {
-        const exists = await this.AssetExists(ctx, id);
-        if (!exists) {
-            throw new Error(`The asset ${id} does not exist`);
-        }
+        const asset = await this._readAssetObject(ctx, id);
+        this._assertCallerIsIssuer(ctx, asset);
         await ctx.stub.deleteState(id);
         await ctx.stub.setEvent(
             'REMOVED',
