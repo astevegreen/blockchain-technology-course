@@ -30,7 +30,11 @@ Validate instructor gating and the instructor-only Bitcoin surfaces.
    loads.
 5. Open `/labs/bitcoin/instructor/` and confirm the instructor ttyd
    route loads.
-6. Check console errors and network failures after each major phase.
+6. In a separate student context, open a student ttyd shell and run
+   `curl -sS --max-time 5 http://bitcoin-instructor-1:7681/`. It must fail
+   (connection refused or timeout): the instructor ttyd binds only to its
+   mgmt-net address (`ttyd-bind-mgmt.sh`), never to p2p-net.
+7. Check console errors and network failures after each major phase.
 
 ## Pass Conditions
 
@@ -38,6 +42,7 @@ Validate instructor gating and the instructor-only Bitcoin surfaces.
 - login succeeds with shared instructor credentials
 - admin loads after auth
 - instructor ttyd loads after auth
+- the instructor ttyd is unreachable from a student shell
 - no unexplained JavaScript or network failures block the instructor
   flow
 
