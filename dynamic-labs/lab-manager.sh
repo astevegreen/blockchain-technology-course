@@ -93,7 +93,7 @@ Examples:
   ./lab-manager.sh deploy --mode instructor --max-student-capacity 20
   ./lab-manager.sh deploy --mode student --no-tls
   ./lab-manager.sh deploy --mode student --bitcoin-student-capacity 2 --consensus-student-capacity 8
-  sudo ./lab-manager.sh deploy --mode instructor --wifi-bridge wlan0 --wifi-ssid CourseLabs --wifi-passphrase changeme123
+  sudo ./lab-manager.sh deploy --mode instructor --wifi-bridge wlan0 --wifi-ssid CourseLabs --wifi-passphrase YOUR_PASSPHRASE
   sudo ./lab-manager.sh deploy --mode instructor --ethernet-lan enp2s0 --uplink-iface wlan0
   ./lab-manager.sh start bitcoin
   ./lab-manager.sh start hlf

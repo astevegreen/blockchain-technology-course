@@ -106,7 +106,7 @@ Examples:
   sudo ./scripts/classroom-network-helper.sh apply \
     --wifi-iface wlan0 \
     --wifi-ssid CourseLabs \
-    --wifi-passphrase changeme123
+    --wifi-passphrase YOUR_PASSPHRASE
 
   sudo ./scripts/classroom-network-helper.sh apply \
     --ethernet-iface enp2s0 \

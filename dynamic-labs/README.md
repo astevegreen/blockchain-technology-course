@@ -361,8 +361,10 @@ sudo ./lab-manager.sh deploy \
   --mode instructor \
   --wifi-bridge wlan0 \
   --wifi-ssid CourseLabs \
-  --wifi-passphrase changeme123
+  --wifi-passphrase YOUR_PASSPHRASE
 ```
+
+Replace `YOUR_PASSPHRASE` with your own passphrase of 8 to 63 characters; do not reuse an example value.
 
 Add `--uplink-iface eth0` to enable NAT for internet access through a wired connection.
 
