@@ -39,7 +39,9 @@ local function scale(original, pixel_size, rounded)
 end
 
 local function qrimg(str, options)
-  local basename = quarto.base64.encode(str .. pandoc.utils.stringify(options))
+  -- hash rather than base64 so long URLs stay under the Windows MAX_PATH limit
+  -- and the name never contains '/' or '+'
+  local basename = "qr-" .. pandoc.utils.sha1(str .. pandoc.utils.stringify(options))
   local img_name = basename..".png"
   -- don't recreate qr codes if they already exist
   if pandoc.mediabag.lookup(img_name) then 
