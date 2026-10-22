@@ -53,6 +53,30 @@ class ChangedFiles(unittest.TestCase):
             self.assertIsNone(check.changed_files(Path(tmp)))
 
 
+class Stamps(unittest.TestCase):
+    def test_tree_key_follows_untracked_edits_and_leaves_the_index_alone(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            git(root, "init", "-q", "-b", "main")
+            (root / "a.txt").write_text("a\n")
+            git(root, "add", ".")
+            git(root, "commit", "-q", "-m", "base")
+            (root / "new.txt").write_text("v1\n")
+            first = check.tree_key(root)
+            self.assertEqual(check.tree_key(root), first)
+            (root / "new.txt").write_text("v2\n")
+            self.assertNotEqual(check.tree_key(root), first)
+            status = subprocess.run(["git", "status", "--short"], cwd=root, capture_output=True, text=True).stdout
+            self.assertEqual(status, "?? new.txt\n")
+
+    def test_git_hook_variables_are_not_passed_on(self) -> None:
+        env = {**check.os.environ, "GIT_INDEX_FILE": "elsewhere/index", "GIT_DIR": "elsewhere"}
+        probe = "import check; print(sorted(check.GIT_HOOK_VARS & check.ENV.keys()))"
+        out = subprocess.run([sys.executable, "-c", probe], cwd=Path(check.__file__).parent, env=env,
+                             capture_output=True, text=True, check=True).stdout
+        self.assertEqual(out.strip(), "[]")
+
+
 class Report(unittest.TestCase):
     def test_success_is_one_line(self) -> None:
         text, code = check.report([("a", []), ("b", [])], [], 1.234)

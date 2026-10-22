@@ -6,9 +6,11 @@ Usage:
                                         staged, unstaged and untracked)
   python tools/check.py --all           everything; rendered HTML only where _site already has it
   python tools/check.py --all --render  render the whole site first (minutes)
+  python tools/check.py --stamped       pass at once if this exact tree already passed
 
 On success prints one line: `check: passed (<n> checks, <s>s)`. On failure prints at most
-40 lines grouped by check, then `check: FAILED`, and exits 1. Never modifies tracked files.
+40 lines grouped by check, then `check: FAILED`, and exits 1. Never modifies tracked files;
+a green run of changed files leaves a stamp in .git/check-stamps/ for --stamped.
 """
 
 from __future__ import annotations
@@ -40,7 +42,11 @@ SITE_WIDE = (
 )
 ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 SAFE_PART = re.compile(r"^[A-Za-z0-9._-]+$")
-ENV = {**os.environ, "NO_COLOR": "1", "FORCE_COLOR": "0", "PYTHONIOENCODING": "utf-8"}
+# Git exports these to its hooks; without them every command finds its repository from its own folder,
+# so the tool tests' throwaway repositories don't write to this repository's index during a commit.
+GIT_HOOK_VARS = {"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_PREFIX", "GIT_OBJECT_DIRECTORY", "GIT_COMMON_DIR"}
+ENV = {k: v for k, v in os.environ.items() if k not in GIT_HOOK_VARS}
+ENV |= {"NO_COLOR": "1", "FORCE_COLOR": "0", "PYTHONIOENCODING": "utf-8"}
 NOTE = "note: "
 
 
@@ -355,19 +361,67 @@ def report(results: list[tuple[str, list[str]]], info: list[str], seconds: float
     return "\n".join([*body, "check: FAILED"]), 1
 
 
+def tree_key(root: Path = REPO) -> str | None:
+    """Content hash of the working tree (tracked and untracked, ignored files excluded) plus its merge base.
+
+    Built in a copy of the index, so the real index and the working tree are untouched. None when git can't tell.
+    """
+    git_dir = git(root, "rev-parse", "--absolute-git-dir")
+    if not git_dir:
+        return None
+    base = next((b for b in ("origin/main", "main") if git(root, "rev-parse", "--verify", "-q", b)), None)
+    merge_base = (git(root, "merge-base", base, "HEAD") if base else None) or "none"
+    with tempfile.TemporaryDirectory(prefix="check-index.") as tmp:
+        index = Path(tmp) / "index"
+        if (Path(git_dir) / "index").exists():
+            shutil.copy2(Path(git_dir) / "index", index)
+        env = {**ENV, "GIT_INDEX_FILE": str(index)}
+        if subprocess.run(["git", "add", "-A"], cwd=root, env=env, capture_output=True).returncode:
+            return None
+        tree = subprocess.run(["git", "write-tree"], cwd=root, env=env, capture_output=True)
+    if tree.returncode:
+        return None
+    return f"{tree.stdout.decode().strip()}-{merge_base[:12]}"
+
+
+def stamp_path(key: str, root: Path = REPO) -> Path:
+    return Path(git(root, "rev-parse", "--absolute-git-dir") or root / ".git") / "check-stamps" / key
+
+
+def write_stamp(key: str, root: Path = REPO, keep: int = 50) -> None:
+    """Record that this tree passed; keep only the newest `keep` stamps."""
+    path = stamp_path(key, root)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(time.strftime("%Y-%m-%d %H:%M:%S\n"), encoding="utf-8")
+    stamps = sorted(path.parent.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+    for old in stamps[keep:]:
+        old.unlink(missing_ok=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check what changed; print failures only.")
     parser.add_argument("--all", action="store_true", help="check everything, not just changed files")
     parser.add_argument("--render", action="store_true", help="with --all: render the whole site first")
+    parser.add_argument("--stamped", action="store_true",
+                        help="pass at once when this exact tree already passed (the git pre-commit hook uses it)")
     args = parser.parse_args(argv)
+    sys.stdout.reconfigure(errors="replace")  # test output can hold characters a cp1252 console can't show
     if args.render and not args.all:
         parser.error("--render needs --all")
+    if args.stamped and args.all:
+        parser.error("--stamped checks changed files only")
 
     start = time.monotonic()
+    key = None if args.all else tree_key()
+    if args.stamped and key and stamp_path(key).exists():
+        print("check: passed (this tree already passed)")
+        return 0
     files = None if args.all else changed_files()
     plan = plan_checks(files, render=args.render, added=None if files is None else added_files())
     results = [(check.name, check.run()) for check in plan.checks]
     text, code = report(results, plan.info, time.monotonic() - start)
+    if code == 0 and key:
+        write_stamp(key)
     print(text)
     return code
 

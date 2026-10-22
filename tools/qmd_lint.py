@@ -167,6 +167,7 @@ def lint_file(path: Path, found: Findings, bib_cache: dict[Path, set[str]]) -> N
             if divs:
                 found.error(2, rel, num, f"slide heading inside the div opened at line {divs[-1][0]} "
                             f"({divs[-1][1]}); close the div before the heading")
+                divs.clear()  # report the unclosed div once, not again at every later slide
                 continue
             if len(heading.group(1)) == slide_level or (len(heading.group(1)) == 2 and slide_level == 3):
                 slides.append({"line": num, "heading": clean_heading(heading.group(2)), "notes": None})

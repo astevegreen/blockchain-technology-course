@@ -45,6 +45,8 @@ The owner judges results, not code: explain every change in plain English and pr
 
 ## Commits and pushing
 - Subject line, up to three lines of why, and `Requested: "<the owner's words>"`. One request per commit.
+- `.githooks/pre-commit` runs the check on every commit (once per clone: `git config core.hooksPath .githooks`).
+  A refused commit means the change is wrong: fix it and commit again.
 - Push each finished task to `main` without asking (`git push`). A push deploys nothing: the site updates only
   when the owner runs the Publish workflow. Force-pushes and history rewrites need the owner's yes.
 
