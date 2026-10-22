@@ -12,7 +12,13 @@ from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("LANE_SERVICE_SECRET", "lane-service-dev")
+_secret = os.environ.get("LANE_SERVICE_SECRET", "").strip()
+if not _secret:
+    raise RuntimeError(
+        "LANE_SERVICE_SECRET is not set. Run ./lab-manager.sh deploy, which generates it "
+        "into .runtime/runtime-secrets.env."
+    )
+app.config["SECRET_KEY"] = _secret
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)
 
 from labs import bitcoin, consensus, cryptography, ethereum, p2p_trust
