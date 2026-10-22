@@ -56,12 +56,16 @@ Build and run:
 cd dynamic-labs/exercises/l03-i3-trust-game
 docker build -t insider-game .
 docker run --rm -p 5000:5000 \
-  -e SECRET_KEY="change-me" \
+  -e SECRET_KEY="$(openssl rand -hex 32)" \
   -e INSTRUCTOR_AUTH_MODE=standalone \
-  -e INSTRUCTOR_AUTH_SECRET="change-me" \
-  -e INSTRUCTOR_PASSWORD="change-me" \
+  -e INSTRUCTOR_AUTH_SECRET="$(openssl rand -hex 32)" \
+  -e INSTRUCTOR_PASSWORD="<choose-a-password>" \
   insider-game
 ```
+
+The two secrets are generated fresh on each run, so every run gets its own.
+Replace `<choose-a-password>` with the password you will type on the instructor
+login page; there is no built-in password to fall back on.
 
 The included `Dockerfile` already:
 
@@ -349,9 +353,10 @@ In the full dynamic-labs deployment, instructors log in once at `/instructor/` a
 For a direct local run without the shared router, enable standalone mode first:
 
 ```bash
+SECRET_KEY="$(openssl rand -hex 32)" \
 INSTRUCTOR_AUTH_MODE=standalone \
-INSTRUCTOR_AUTH_SECRET=dev-secret \
-INSTRUCTOR_PASSWORD=admin \
+INSTRUCTOR_AUTH_SECRET="$(openssl rand -hex 32)" \
+INSTRUCTOR_PASSWORD="<choose-a-password>" \
 python app.py
 ```
 
