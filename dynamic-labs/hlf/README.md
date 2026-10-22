@@ -168,6 +168,18 @@ access never hits third-party CDNs. Fabric CA material + peer/orderer
 compose files are rendered from repo-owned templates under
 [`managed_runtime/`](managed_runtime).
 
+## Docker socket access
+
+`hlf-runner` mounts `/var/run/docker.sock`: it builds images, starts the
+Fabric, CA and ttyd containers with host-path mounts, and edits Docker
+networks. Whoever controls the runner therefore has root-equivalent access to
+the host. This is accepted only because HLF is an instructor-run demo: run it
+on a dedicated machine or VM that holds nothing else, never beside other
+services or on a shared host. Replacing the mount with a socket proxy or
+rootless Docker-in-Docker was considered and not done (a proxy must still allow
+container creation, and Docker-in-Docker breaks the host-path mounts and the
+router's route to student containers). The corpus analysis tracks it as REM-02.
+
 ## Environment variables
 
 | Var | Default | Purpose |
