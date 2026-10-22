@@ -16,8 +16,9 @@ The rules (front matter, notes parts, citations, hiding, anchors) are in `.claud
 4. **Cite every fact** with a `@key` from `lessons/references/Blockchain.bib`: grep the bib for the author, title or
    topic. When no entry supports the claim, ask the owner for a source and leave the claim out until one exists.
 5. **Hide rather than delete** a slide the owner wants out of view: `:::: {.content-hidden}` around it.
-6. **A heading added, renamed or hidden** moves anchors: repoint `assets/mindmap.html` and rerun the glossary
-   pipeline (`/glossary`, or `glossary/README.md`) in the same change.
+6. **A heading added, renamed or hidden** moves anchors: list each moved anchor and each new glossary term in the
+   session's notes. The phase's one mind-map pass and glossary run fix them (`docs/build-spec.md`, "During the
+   build"); until then the check reports them as notes.
 7. **Check**: `python tools/check.py` renders the changed lesson and checks it. Fix what it reports.
 
 Done when the check passes and, for new or reworked slides, the `reviewer` agent returns PASS (CLAUDE.md, Finishing).

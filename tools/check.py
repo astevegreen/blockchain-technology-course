@@ -230,6 +230,12 @@ def bib_dates(rel: str) -> list[str]:
     return failures
 
 
+def as_notes(lines: list[str]) -> list[str]:
+    """Report without failing. Until the Site cleanup build item, a stale glossary or mind map is fixed once per
+    phase, not in every change (Stage G call 2; docs/build-spec.md, "During the build")."""
+    return [line if line.startswith(NOTE) else f"{NOTE}{line}" for line in lines]
+
+
 def validate_glossary() -> list[str]:
     code, out = run([sys.executable, str(GLOSSARY_SCRIPTS / "validate_glossary.py")], cwd=COURSE)
     if code == 0:
@@ -419,11 +425,11 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
 
     lessons_changed = everything or any(is_lesson(f) for f in files)
     if lessons_changed or touched("blockchain-course/glossary/"):
-        plan.checks.append(Check("glossary slide index", slide_index_check))
+        plan.checks.append(Check("glossary slide index", lambda: as_notes(slide_index_check())))
     if touched("blockchain-course/glossary/"):
         plan.checks.append(Check("glossary", validate_glossary))
     if lessons_changed or touched("blockchain-course/assets/mindmap.html"):
-        plan.checks.append(Check("mind-map links", mindmap_links))
+        plan.checks.append(Check("mind-map links", lambda: as_notes(mindmap_links())))
 
     bibs = sorted(f.relative_to(REPO).as_posix() for f in (COURSE / "lessons" / "references").glob("*.bib"))
     bibs = bibs if everything else [f for f in present if f in bibs]

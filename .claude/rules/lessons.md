@@ -10,6 +10,6 @@ paths:
 - Cite with `@key` from `../references/Blockchain.bib`; `python tools/qmd_lint.py <file>` flags unknown keys.
 - Hide a slide by wrapping it in `:::: {.content-hidden}` and `::::`. Quarto still runs code cells inside HTML comments.
 - Slide headings sit outside every div: close `.columns` and callouts first.
-- A slide heading is its anchor (`## How Token Gating Works` is `#/how-token-gating-works`). Renaming one means, in
-  the same change:
-  repoint its links in `assets/mindmap.html`, then rerun the glossary pipeline (`glossary/README.md`).
+- A slide heading is its anchor (`## How Token Gating Works` is `#/how-token-gating-works`). A renamed one leaves
+  links in `assets/mindmap.html` and the glossary slide index stale: list it in the session's notes for the phase's
+  mind-map pass and glossary run (`docs/build-spec.md`, "During the build").

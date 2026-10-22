@@ -197,6 +197,13 @@ class AnswerFiles(unittest.TestCase):
             self.assertIn("answer files", [c.name for c in plan.checks])
 
 
+class AsNotes(unittest.TestCase):
+    def test_failures_become_notes(self) -> None:
+        lines = check.as_notes(["a.qmd: stale", "note: unrendered"])
+        self.assertEqual(lines, ["note: a.qmd: stale", "note: unrendered"])
+        self.assertEqual(check.report([("mind-map links", lines)], [], 1.0)[1], 0)
+
+
 class SlideCount(unittest.TestCase):
     def test_hidden_slides_code_and_comments_do_not_count(self) -> None:
         text = ("---\ntitle: x\n---\n# Part\n## One\n::: {.notes}\n## not a slide\n:::\n"
