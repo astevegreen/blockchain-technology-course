@@ -75,8 +75,12 @@ def run(cmd: list[str], cwd: Path = REPO, timeout: int = 1800) -> tuple[int, str
 
 
 def git(root: Path, *args: str) -> str | None:
-    code, out = run(["git", *args], cwd=root)
-    return out.strip() if code == 0 else None
+    """Git's stdout only: its warnings (such as "LF will be replaced by CRLF") go to stderr and are not file names."""
+    try:
+        proc = subprocess.run(["git", *args], cwd=root, env=ENV, capture_output=True)
+    except FileNotFoundError:
+        return None
+    return proc.stdout.decode("utf-8", "replace").replace("\r", "").strip() if proc.returncode == 0 else None
 
 
 def changed_files(root: Path = REPO) -> list[str] | None:

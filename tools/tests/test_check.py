@@ -48,6 +48,17 @@ class ChangedFiles(unittest.TestCase):
             git(root, "commit", "-q", "-m", "base")
             self.assertEqual(check.changed_files(root), [])
 
+    def test_line_ending_warnings_are_not_file_names(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            git(root, "init", "-q", "-b", "main")
+            git(root, "config", "core.autocrlf", "true")
+            (root / "edited.txt").write_bytes(b"v1\n")
+            git(root, "add", ".")
+            git(root, "commit", "-q", "-m", "base")
+            (root / "edited.txt").write_bytes(b"v2\n")  # LF in a CRLF checkout: git warns on stderr
+            self.assertEqual(check.changed_files(root), ["edited.txt"])
+
     def test_outside_a_repo_means_everything(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self.assertIsNone(check.changed_files(Path(tmp)))
