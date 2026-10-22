@@ -15,8 +15,10 @@ Set via `INSTRUCTOR_AUTH_MODE`:
 | `disabled` | Bypass. Dev only — refuses to run unless `FLASK_ENV=development`. | — |
 
 Production runs (`FLASK_ENV` unset or not `development`/`dev`/`local`) fail
-fast when the required env is missing. The dev fallback (`hlf_lab_secret`)
-is only used in dev.
+fast when the required env is missing. The dev fallback (`hlf_lab_secret`,
+and the password `admin` in standalone mode) is used only when `FLASK_ENV` is
+explicitly set to `development`, `dev` or `local`; an unset `FLASK_ENV` never
+enables it.
 
 In shared mode, use neutral `INSTRUCTOR_AUTH_*` names in new deployments.
 The `HLF_*` names remain supported only so older lab configs continue to

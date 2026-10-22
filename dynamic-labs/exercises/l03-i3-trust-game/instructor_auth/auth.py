@@ -115,8 +115,10 @@ class AuthConfig:
 
 
 def _is_production() -> bool:
+    # Fail closed: only an explicit development value turns the dev fallbacks on,
+    # so a deployment that forgets FLASK_ENV is treated as production.
     env = os.environ.get("FLASK_ENV", "").strip().lower()
-    return env not in ("development", "dev", "local", "")
+    return env not in ("development", "dev", "local")
 
 
 def _serializer(config: AuthConfig) -> URLSafeTimedSerializer:

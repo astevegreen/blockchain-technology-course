@@ -4,6 +4,7 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from flask import Flask, jsonify
 
@@ -93,6 +94,56 @@ class SharedInstructorAuthContractTests(unittest.TestCase):
             resp = client.post("/mutate", headers={"X-CSRFToken": token})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.get_json(), {"ok": True})
+
+
+class DevFallbackIsOptInTests(unittest.TestCase):
+    """The public dev fallbacks apply only when FLASK_ENV is explicitly a dev value."""
+
+    def _env(self, **overrides: str):
+        keys = (
+            "FLASK_ENV",
+            "INSTRUCTOR_AUTH_MODE",
+            "INSTRUCTOR_AUTH_SECRET",
+            "INSTRUCTOR_PASSWORD",
+            "INSTRUCTOR_AUTH_COOKIE_SECRET",
+            "HLF_INSTRUCTOR_COOKIE_SECRET",
+            "HLF_WEB_SECRET_KEY",
+        )
+        env = {k: v for k, v in os.environ.items() if k not in keys}
+        env.update(overrides)
+        return mock.patch.dict(os.environ, env, clear=True)
+
+    def test_unset_flask_env_refuses_shared_mode_without_a_secret(self) -> None:
+        with self._env():
+            with self.assertRaisesRegex(RuntimeError, "shared requires"):
+                AuthConfig.from_env()
+
+    def test_unset_flask_env_refuses_standalone_mode_without_secret_and_password(self) -> None:
+        with self._env(INSTRUCTOR_AUTH_MODE="standalone"):
+            with self.assertRaisesRegex(RuntimeError, "INSTRUCTOR_AUTH_SECRET"):
+                AuthConfig.from_env()
+        with self._env(INSTRUCTOR_AUTH_MODE="standalone", INSTRUCTOR_AUTH_SECRET="s"):
+            with self.assertRaisesRegex(RuntimeError, "INSTRUCTOR_PASSWORD"):
+                AuthConfig.from_env()
+
+    def test_unset_flask_env_refuses_disabled_mode(self) -> None:
+        with self._env(INSTRUCTOR_AUTH_MODE="disabled"):
+            with self.assertRaisesRegex(RuntimeError, "disabled"):
+                AuthConfig.from_env()
+
+    def test_explicit_development_still_uses_the_dev_fallback(self) -> None:
+        with self._env(FLASK_ENV="development"):
+            self.assertEqual(AuthConfig.from_env().mode, AuthMode.SHARED)
+
+    def test_every_copy_of_the_auth_module_matches_the_shared_one(self) -> None:
+        shared = (ROOT / "shared" / "instructor_auth" / "auth.py").read_bytes()
+        for rel in (
+            "hlf/shared_instructor_auth/auth.py",
+            "quiz-engine-v2/instructor_auth/auth.py",
+            "exercises/l03-i3-trust-game/instructor_auth/auth.py",
+        ):
+            with self.subTest(copy=rel):
+                self.assertEqual((ROOT / rel).read_bytes(), shared)
 
 
 if __name__ == "__main__":
