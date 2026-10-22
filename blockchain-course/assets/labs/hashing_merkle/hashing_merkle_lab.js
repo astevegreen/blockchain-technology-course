@@ -7,6 +7,14 @@ let currentStep = 0;
 let merkleTree = null;
 let leafData = [];
 
+// Text the student types is shown back through innerHTML; escape it so a
+// "<" or "&" in the input is displayed as typed and never parsed as markup.
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+}
+
 // Initialize Pyodide
 async function initPyodide() {
     try {
@@ -215,7 +223,7 @@ sha256_hash(${JSON.stringify(message)})
             <div class="text-green-400 font-bold mb-1"><i class="fas fa-check-circle"></i> SHA-256 Hash:</div>
             <div class="text-blue-300 break-all font-mono text-xs">${hash}</div>
             <div class="text-xs text-gray-400 mt-2">
-                <div>Input: "${message}" (${inputLength} characters)</div>
+                <div>Input: "${escapeHtml(message)}" (${inputLength} characters)</div>
                 <div>Output: ${hashLength} hex characters = ${bitLength} bits (fixed size!)</div>
                 <div class="text-yellow-300 mt-1"><strong>Note:</strong> Output is always 256 bits, regardless of input size</div>
             </div>
@@ -475,7 +483,7 @@ function visualizeMerkleTree() {
             } else if (isLeaf) {
                 node.classList.add('leaf');
                 node.innerHTML = `
-                    <div class="text-green-400 font-bold mb-1">${leafData[idx] || 'Leaf'}</div>
+                    <div class="text-green-400 font-bold mb-1">${escapeHtml(leafData[idx] || 'Leaf')}</div>
                     <div class="text-xs">${hash.substring(0, 16)}...</div>
                     <div class="text-xs text-gray-400 mt-1">Index: ${idx}</div>
                 `;
@@ -547,7 +555,7 @@ async function generateProof() {
         proofContainer.innerHTML = `
             <div class="text-center py-10">
                 <div class="text-purple-400 mb-2"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
-                <div class="text-sm">Generating inclusion proof for "${leafData[leafIndex]}"...</div>
+                <div class="text-sm">Generating inclusion proof for "${escapeHtml(leafData[leafIndex])}"...</div>
                 <div class="text-xs text-gray-400 mt-2">
                     <div>Collecting sibling hashes from each level</div>
                     <div>Preparing verification path...</div>
@@ -735,7 +743,7 @@ function visualizeProof(leafIndex, proof) {
                 const highlight = idx === leafIndex ? 'border-4 border-purple-400' : '';
                 node.className += ' ' + highlight;
                 node.innerHTML = `
-                    <div class="text-green-400 font-bold mb-1">${leafData[idx] || 'Leaf'}</div>
+                    <div class="text-green-400 font-bold mb-1">${escapeHtml(leafData[idx] || 'Leaf')}</div>
                     <div class="text-xs">${hash.substring(0, 16)}...</div>
                     <div class="text-xs text-gray-400 mt-1">Index: ${idx}</div>
                     ${idx === leafIndex ? '<div class="text-xs text-purple-400 font-bold mt-1">← Target</div>' : ''}
