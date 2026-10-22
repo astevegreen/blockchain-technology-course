@@ -4,8 +4,13 @@ services:
     image: quiz-engine-v2:local
     environment:
       QUIZ_ENGINE_DB_PATH: /data/quiz-engine.sqlite
-      QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE: ${QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE:-test-header}
-      INSTRUCTOR_AUTH_MODE: ${INSTRUCTOR_AUTH_MODE:-test-header}
+      # Secure by default: test-header trusts a request header, so it is for
+      # the `test` service below, never for a running app. Both mode variables
+      # must match (app/auth.py refuses to start otherwise).
+      QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE: ${QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE:-standalone}
+      INSTRUCTOR_AUTH_MODE: ${INSTRUCTOR_AUTH_MODE:-standalone}
+      INSTRUCTOR_PASSWORD: ${INSTRUCTOR_PASSWORD:-}
+      INSTRUCTOR_AUTH_SECRET: ${INSTRUCTOR_AUTH_SECRET:-}
       HLF_INSTRUCTOR_COOKIE_SECRET: ${HLF_INSTRUCTOR_COOKIE_SECRET:-}
       HLF_WEB_SECRET_KEY: ${HLF_WEB_SECRET_KEY:-hlf_lab_secret}
       FLASK_ENV: ${FLASK_ENV:-development}
