@@ -15,15 +15,20 @@ This folder contains the working files and final Quarto source for the course gl
 
 ## Build
 
-Run these from the repository root:
+Run these from `blockchain-course/` (on Windows use `python`; `python3` is the Microsoft Store stub). The slide index
+reads anchors from `_site`, so render the changed lessons first (`quarto render`).
 
 ```bash
-python3 glossary/scripts/build_slide_index.py
-python3 glossary/scripts/merge_terms.py
-python3 glossary/scripts/render_glossary_qmd.py
-python3 glossary/scripts/validate_glossary.py
-python3 glossary/scripts/render_outputs.py
+python glossary/scripts/build_slide_index.py
+python glossary/scripts/merge_terms.py
+python glossary/scripts/render_glossary_qmd.py
+python glossary/scripts/validate_glossary.py
+python glossary/scripts/render_outputs.py
 ```
+
+`python glossary/scripts/build_slide_index.py --check` compares a fresh index with `slide-index.yml` without writing
+it and exits 1 when they differ. `render_outputs.py` renders the PDF and needs TinyTeX (`quarto install tinytex`); skip
+it when only slide numbers changed, since the PDF shows headings and links, not numbers.
 
 The HTML page is published at `glossary/index.html` in the rendered site. The web page is intentionally lightweight and loads `terms.json` in the browser so the full course-site render does not force Pandoc to process every glossary row inline. The PDF render is `glossary/index.pdf`.
 
