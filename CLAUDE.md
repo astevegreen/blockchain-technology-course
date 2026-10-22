@@ -51,7 +51,8 @@ The owner judges results, not code: explain every change in plain English and pr
   when the owner runs the Publish workflow. Force-pushes and history rewrites need the owner's yes.
 
 ## Finishing
-- New or reworked slides, or any quiz-bank edit: run the `reviewer` agent and fix its blockers before finishing.
+- New or reworked slides, or any quiz-bank edit: give the `reviewer` agent the owner's request and fix its blockers
+  before finishing.
   Typos and tooling skip it.
 
 End every task with:
