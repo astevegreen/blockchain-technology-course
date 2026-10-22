@@ -6,7 +6,7 @@ The owner judges results, not code: explain every change in plain English and pr
 
 ## Course direction (owner's charter: Notion "Blockchain Course Prep")
 - Redesign for US government analysts who characterise on-chain activity and explain it to agents and prosecutors;
-  target: every concept in the Notion "Role Concepts" list. Ready to offer by January 2027 (a target date; no class booked); later runs add depth.
+  target: every concept in the Notion "Role Concepts" list. Ready to offer by 26 Feb 2027 (a target date; no class booked); later runs add depth.
   Design is in progress: change course content only when the task asks.
 - Open-source or in-house tools only: never feature commercial analytics platforms (Chainalysis, TRM, Elliptic);
   citing their research is fine. Blockscout is not open source from v11: ask before adding it.
