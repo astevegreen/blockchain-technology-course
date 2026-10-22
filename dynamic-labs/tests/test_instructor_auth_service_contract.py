@@ -43,6 +43,13 @@ class InstructorAuthServiceContractTests(unittest.TestCase):
         os.environ.update(self._old_env)
         self._tmpdir.cleanup()
 
+    def test_create_app_refuses_to_start_without_session_secret(self) -> None:
+        from instructor_auth_service.app import create_app
+
+        del os.environ["SECRET_KEY"]
+        with self.assertRaisesRegex(RuntimeError, "SECRET_KEY is not set"):
+            create_app()
+
     def test_instructor_root_redirects_to_trailing_slash(self) -> None:
         with self.app.test_client() as client:
             resp = client.get("/instructor")

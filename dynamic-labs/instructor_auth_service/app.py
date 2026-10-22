@@ -193,7 +193,14 @@ def _serve_gated_page(config: AuthConfig, filename: str):
 
 def create_app() -> Flask:
     app = Flask(__name__)
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "instructor-auth-service-secret")
+    secret_key = os.environ.get("SECRET_KEY")
+    if not secret_key:
+        raise RuntimeError(
+            "SECRET_KEY is not set. Run ./lab-manager.sh deploy, which generates it "
+            "(as INSTRUCTOR_AUTH_SERVICE_SECRET_KEY) into .runtime/runtime-secrets.env, "
+            "or set SECRET_KEY yourself."
+        )
+    app.config["SECRET_KEY"] = secret_key
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)  # type: ignore[assignment]
 
     config = AuthConfig.from_env()

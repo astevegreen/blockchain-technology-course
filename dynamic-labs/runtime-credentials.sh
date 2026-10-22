@@ -76,6 +76,7 @@ TRUST_GAME_INSTRUCTOR_USERNAME=${TRUST_GAME_INSTRUCTOR_USERNAME}
 TRUST_GAME_INSTRUCTOR_PASSWORD=${TRUST_GAME_INSTRUCTOR_PASSWORD}
 INSTRUCTOR_AUTH_USER=${INSTRUCTOR_AUTH_USER}
 INSTRUCTOR_AUTH_KEY=${INSTRUCTOR_AUTH_KEY}
+INSTRUCTOR_AUTH_SERVICE_SECRET_KEY=${INSTRUCTOR_AUTH_SERVICE_SECRET_KEY}
 HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY}
 EOF
     chmod 600 "${RUNTIME_ENV_FILE}"
@@ -105,6 +106,14 @@ EOF
     runtime_fix_path_ownership "${RUNTIME_DIR}"
 }
 
+# An env file written by an older release lacks the secrets added since. Generate only the
+# missing ones so a plain redeploy keeps every existing login and still starts.
+fill_missing_runtime_secrets() {
+    if [[ -z "${INSTRUCTOR_AUTH_SERVICE_SECRET_KEY:-}" ]]; then
+        INSTRUCTOR_AUTH_SERVICE_SECRET_KEY="$(runtime_random_hex 32)"
+    fi
+}
+
 ensure_runtime_credentials() {
     local rotate="${1:-${ROTATE_RUNTIME_CREDENTIALS:-0}}"
 
@@ -119,6 +128,7 @@ ensure_runtime_credentials() {
         if [[ -z "${INSTRUCTOR_AUTH_KEY:-}" ]]; then
             INSTRUCTOR_AUTH_KEY="${TRUST_GAME_INSTRUCTOR_PASSWORD:-$(runtime_random_alnum 20)}"
         fi
+        fill_missing_runtime_secrets
         write_runtime_credentials_files
         return 0
     fi
@@ -133,6 +143,7 @@ ensure_runtime_credentials() {
     TRUST_GAME_INSTRUCTOR_PASSWORD="$(runtime_random_alnum 20)"
     INSTRUCTOR_AUTH_USER="${TRUST_GAME_INSTRUCTOR_USERNAME}"
     INSTRUCTOR_AUTH_KEY="${TRUST_GAME_INSTRUCTOR_PASSWORD}"
+    INSTRUCTOR_AUTH_SERVICE_SECRET_KEY="$(runtime_random_hex 32)"
     HLF_WEB_SECRET_KEY="$(runtime_random_hex 32)"
 
     write_runtime_credentials_files
