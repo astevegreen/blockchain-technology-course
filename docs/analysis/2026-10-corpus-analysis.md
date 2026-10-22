@@ -698,7 +698,7 @@ The remediation roadmap is structured into four actionable priority tiers, mappe
 | **REM-27** | `quizes` | `quizes/quiz_json/` | Author 1–2 written-response synthesis questions per module utilizing `quiz-engine-v2` manual grading queue to test upper-tier Bloom's taxonomy. | High |
 | **REM-28** | `quizes` | `quizes/verify_distractor_alignment.py` | Loosen distractor length tolerance margin from ±10% to ±20% to eliminate artificial grammatical padding words. | Low |
 | **REM-29** | `blockchain-course` | `assets/mindmap.html:7` | Eliminate airgap boundary leak: replace `gstatic.com` remote Tailwind JS with local vendor bundle in `assets/vendor/`. | Low |
-| **REM-30** | `blockchain-course` | `assets/labs/distributed systems/` | Rename folder to `assets/labs/distributed-systems/` to remove filesystem space and update references in `index.qmd`. | Low |
+| **REM-30** | `blockchain-course` | `assets/labs/distributed systems/` | Rename folder to `assets/labs/distributed-systems/` to remove filesystem space and update references in `index.qmd`. **Done 22 Oct 2026** (also fixed the lab's dead Back link). | Low |
 | **REM-31** | `dynamic-labs/adv` | `hlf/managed_runtime/generate_student_overlay.py` | Introduce a "Lite Consortium" mode for memory-constrained environments where student organizations share peer instances via separate channel namespaces, reducing active containers from 25+ down to under 8. | High |
 | **REM-34** | `.github` | `.github/workflows/vm-build.yml` | Introduce automated cryptographic release attestations: generate Sigstore / Cosign or GPG digital signatures for all distributed split OVA release chunks. | Medium |
 
