@@ -50,13 +50,16 @@ The included Dockerfile enforces a single Gunicorn worker for this reason.
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and adjust values as needed.
+Copy `.env.example` to `.env` and set `SECRET_KEY` to your own long random value.
+In a full deployment, `./lab-manager.sh deploy` generates a different value for each deployment
+(as `BGP_GAME_SECRET_KEY`) into `dynamic-labs/.runtime/runtime-secrets.env` (owner-readable only,
+git-ignored, not in the student download).
 
 Supported variables:
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `SECRET_KEY` | No | `byzantine-generals-secret` | Flask session signing key |
+| `SECRET_KEY` | Yes | none | Flask session signing key. The app refuses to start without it |
 | `FLASK_DEBUG` | No | `0` | Enables Flask debug mode for local development |
 | `HOST` | No | `0.0.0.0` | Host binding for `run.py` |
 | `PORT` | No | `5000` | Port for local or container runs |

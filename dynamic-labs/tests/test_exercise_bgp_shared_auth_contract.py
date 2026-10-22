@@ -6,6 +6,7 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -96,6 +97,29 @@ class BgpExerciseSharedAuthContractTests(unittest.TestCase):
 
         names = [event["name"] for event in received]
         self.assertIn("dashboard_state", names)
+
+
+class BgpSessionSecretTests(unittest.TestCase):
+    def setUp(self) -> None:
+        if importlib.util.find_spec("flask_socketio") is None:
+            self.skipTest("flask_socketio is not installed in the host test environment")
+        self._old_env = os.environ.copy()
+        self._old_path = list(sys.path)
+        sys.path.insert(0, str(BGP_DIR))
+        _purge_bgp_modules()
+
+    def tearDown(self) -> None:
+        sys.path[:] = self._old_path
+        _purge_bgp_modules()
+        os.environ.clear()
+        os.environ.update(self._old_env)
+
+    def test_create_app_refuses_to_start_without_session_secret(self) -> None:
+        os.environ["FLASK_ENV"] = "development"
+        bgp_module = importlib.import_module("app.app")
+        with mock.patch.object(bgp_module.Config, "SECRET_KEY", None):
+            with self.assertRaisesRegex(RuntimeError, "SECRET_KEY is not set"):
+                bgp_module.create_app()
 
 
 if __name__ == "__main__":

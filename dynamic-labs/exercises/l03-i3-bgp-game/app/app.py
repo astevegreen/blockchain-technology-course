@@ -13,6 +13,11 @@ socketio = SocketIO(async_mode=Config.SOCKETIO_ASYNC_MODE, cors_allowed_origins=
 def create_app() -> Flask:
     app = Flask(__name__)
     app.config.from_object(Config)
+    if not app.config.get("SECRET_KEY"):
+        raise RuntimeError(
+            "SECRET_KEY is not set. Run ./lab-manager.sh deploy, which generates it "
+            "(as BGP_GAME_SECRET_KEY) into .runtime/runtime-secrets.env, or set SECRET_KEY yourself."
+        )
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     socketio.init_app(app, manage_session=True)
