@@ -10,7 +10,7 @@ A comprehensive educational platform that teaches Ethereum, smart contracts, and
 - [Deployment Options](#deployment-options)
 - [Docker Deployment](#docker-deployment)
 - [Local Development (No Docker)](#local-development-no-docker)
-- [For Instructors](#for-instructors) — start with [Instructor Getting Started](docs/instructor/INSTRUCTOR_GETTING_STARTED.md)
+- [For Instructors](#for-instructors)
 - [For Students](#for-students)
 - [Running the Lab](#running-the-lab)
 - [Lab Exercises](#lab-exercises)
@@ -260,7 +260,7 @@ On Windows you can use **`.\start-lab.ps1 -Mode instructor`** to start the chain
 
 ## For Instructors
 
-> **New instructor?** Start with **[Instructor Getting Started](docs/instructor/INSTRUCTOR_GETTING_STARTED.md)** (what to run, what to share, day-of checklist). Then use **[Instructor Setup Guide](docs/instructor/INSTRUCTOR_SETUP.md)** for a detailed Docker walkthrough. For lesson plans (Beginner, Intermediate, Expert), see **[Instructor Lab Scenarios](docs/instructor/INSTRUCTOR_LAB_SCENARIOS.md)**.
+> **New instructor?** The instructor guides are in `docs/instructor/` in the course repository (not in student downloads). Start with `INSTRUCTOR_GETTING_STARTED.md` (what to run, what to share, day-of checklist). Then use `INSTRUCTOR_SETUP.md` for a detailed Docker walkthrough. For lesson plans (Beginner, Intermediate, Expert), see `INSTRUCTOR_LAB_SCENARIOS.md`.
 
 **Two ways to host the lab:**
 

@@ -1,6 +1,6 @@
 # On-chain role scenarios: rules & deploy scripts
 
-> **Not** the same as [INSTRUCTOR_LAB_SCENARIOS.md](../instructor/INSTRUCTOR_LAB_SCENARIOS.md). That document is the **curriculum** (beginner/intermediate blocks and which labs to run). **This** document is for **role-play scenarios** on the chain (car sale, ransomware): roles, flow, win conditions, and how to deploy role contracts with Hardhat.
+> This document is for **role-play scenarios** on the chain (car sale, ransomware): roles, flow, win conditions, and how to deploy role contracts with Hardhat.
 
 ---
 
