@@ -1,0 +1,15 @@
+---
+paths:
+  - "blockchain-course/lessons/**"
+---
+# Lesson rules
+- Front matter: copy a sibling lesson's. It sets `title`, `lesson`, `bibliography: ../references/Blockchain.bib` and
+  `format: aci-revealjs` (`slide-level: 2`; 02-IN, 03-IN and 05-IN use 3).
+- Each substantive slide ends with a `::: {.notes}` block in four parts: `**Overall Slide Concept**`,
+  `**Key Points**`, `**Walkthrough**` (`None` when there is nothing to walk through) and `**Sources**` (`- @key` lines).
+- Cite with `@key` from `../references/Blockchain.bib`; `python tools/qmd_lint.py <file>` flags unknown keys.
+- Hide a slide by wrapping it in `:::: {.content-hidden}` and `::::`. Quarto still runs code cells inside HTML comments.
+- Slide headings sit outside every div: close `.columns` and callouts first.
+- A slide heading is its anchor (`## How Token Gating Works` is `#/how-token-gating-works`). Renaming one means, in
+  the same change:
+  repoint its links in `assets/mindmap.html`, then rerun the glossary pipeline (`glossary/README.md`).
