@@ -32,47 +32,53 @@ class SimpleCrypto:
     def __init__(self):
         pass
     
+    # Public-key encryption is hashed ElGamal over the 2048-bit RFC 3526 group 14.
+    # The public key is G^x mod P, so only the holder of the private x can decrypt.
+    P = int(
+        "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74"
+        "020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F1437"
+        "4FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
+        "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF05"
+        "98DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB"
+        "9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3B"
+        "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF695581718"
+        "3995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF", 16)
+    G = 2
+
+    def _random_exponent(self):
+        return secrets.randbits(256) | (1 << 255)
+
+    def _keystream_xor(self, shared, data):
+        """XOR data with SHA-256(shared || counter) blocks"""
+        shared_bytes = shared.to_bytes(256, 'big')
+        out = bytearray()
+        for block in range(0, len(data), 32):
+            pad = hashlib.sha256(shared_bytes + block.to_bytes(4, 'big')).digest()
+            out.extend(b ^ k for b, k in zip(data[block:block + 32], pad))
+        return bytes(out)
+
     def generate_key_pair(self):
-        """Generate a simple key pair for demonstration"""
-        # In real crypto, this would be a proper RSA/DH key pair
-        # Here we use simplified approach for education
-        private_key = secrets.token_hex(32)
-        public_key = hashlib.sha256(private_key.encode()).hexdigest()
-        return private_key, public_key
-    
+        """Generate an ElGamal key pair: private x, public G^x mod P"""
+        x = self._random_exponent()
+        return format(x, '064x'), format(pow(self.G, x, self.P), '0512x')
+
     def encrypt_with_public_key(self, message, public_key):
-        """Encrypt message using public key (simplified)"""
-        # In real crypto, this would use RSA encryption
-        # For demo, we use XOR encryption with a derived key
-        message_bytes = message.encode('utf-8')
-        # Derive encryption key from public key
-        key_bytes = hashlib.sha256(public_key.encode()).digest()
-        
-        # XOR encryption (NOT secure, just for demo!)
-        ciphertext = bytearray()
-        for i, byte in enumerate(message_bytes):
-            ciphertext.append(byte ^ key_bytes[i % len(key_bytes)])
-        
-        # Return as base64 for display
+        """Encrypt to a public key: a fresh k gives G^k and the shared value y^k"""
+        y = int(public_key, 16)
+        k = self._random_exponent()
+        ciphertext = self._keystream_xor(pow(y, k, self.P), message.encode('utf-8'))
         result = {
-            'ciphertext': base64.b64encode(bytes(ciphertext)).decode('utf-8'),
-            'method': 'public_key_encryption'
+            'ephemeral': format(pow(self.G, k, self.P), '0512x'),
+            'ciphertext': base64.b64encode(ciphertext).decode('utf-8'),
+            'method': 'hashed_elgamal'
         }
         return json.dumps(result)
-    
+
     def decrypt_with_private_key(self, encrypted_data, private_key, public_key):
-        """Decrypt message using private key (simplified)"""
+        """Decrypt with the private key: (G^k)^x equals the sender's y^k"""
         data = json.loads(encrypted_data)
-        ciphertext = base64.b64decode(data['ciphertext'])
-        
-        # Reconstruct key from public key (which comes from private key)
-        key_bytes = hashlib.sha256(public_key.encode()).digest()
-        
-        # Decrypt using XOR
-        plaintext = bytearray()
-        for i, byte in enumerate(ciphertext):
-            plaintext.append(byte ^ key_bytes[i % len(key_bytes)])
-        
+        shared = pow(int(data['ephemeral'], 16), int(private_key, 16), self.P)
+        plaintext = self._keystream_xor(shared, base64.b64decode(data['ciphertext']))
         return plaintext.decode('utf-8')
     
     def generate_shared_secret(self):
