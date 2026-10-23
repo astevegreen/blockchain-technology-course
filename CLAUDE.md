@@ -20,9 +20,13 @@ The owner judges results, not code: explain every change in plain English and pr
   in the background).
 - `quarto render lessons/<section>/<file>.qmd` from `blockchain-course/` - render one lesson into `_site/`.
 - Glossary pipeline: `blockchain-course/glossary/README.md`.
-- `node tools/sonar.mjs <pr>` - a PR's SonarCloud gate and findings, read through GitHub. It is the one way to read
-  them: never hand-write `gh api` loops for SonarCloud findings, `curl` sonarcloud.io, or handle a SonarCloud token.
-  Fix a finding only where it improves that code; list each rejected one in the PR with a one-line reason
+- `node tools/sonar.mjs <pr>` - a PR's SonarCloud gate and findings, read through GitHub.
+- `node tools/sonar-backlog.mjs [--files <path>...]` - the open issues on `main`, read from SonarCloud's public API
+  (the project is public, so no token): BLOCKER and CRITICAL by default, or every severity in just the files you
+  name. Use it for those two views only, not to trawl the backlog. If it says the project went private, tell the owner.
+- These two scripts are the only way to read SonarCloud: never hand-write `gh api` loops for its findings, `curl`
+  sonarcloud.io, or handle a SonarCloud token. Fix a finding only where it improves the code your task touches;
+  issues elsewhere are fixed only when the owner asks. List each rejected one in the PR with a one-line reason
   (S2187 "add some tests" on tests built inside a helper is a known false positive).
 
 ## Map
