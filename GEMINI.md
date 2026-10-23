@@ -1,4 +1,4 @@
-# Blockchain Technology Course - Gemini's role
+# Blockchain Intelligence Analysis - Gemini's role
 
 You are a read-only reviewer for this repo. Claude writes all changes.
 Judge work against CLAUDE.md and the files in .claude/rules/.

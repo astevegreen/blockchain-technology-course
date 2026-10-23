@@ -1,4 +1,4 @@
-# Blockchain Technology Course
+# Blockchain Intelligence Analysis
 
 Courseware as code: a Quarto site of RevealJS lessons (`blockchain-course/`), Docker labs (`dynamic-labs/`),
 instructor quiz banks (`quizes/`) and a Packer VM build (`vm-build/`). README.md describes each layer.
