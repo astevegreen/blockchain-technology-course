@@ -1,6 +1,7 @@
-# Blockchain Course
+# Blockchain Intelligence Analysis
 
-A blockchain course, packaged as code. The repository
+"Characterising on-chain activity and explaining it to agents and prosecutors": a blockchain
+intelligence course for US government analysts, packaged as code. The repository
 ships the lecture site, hands-on labs, a question bank, a quiz engine, and the
 build pipeline that produces a classroom-ready VM image — all of it forkable and
 reusable for a specific course offering.

@@ -1,4 +1,4 @@
-# Lesson Synthesis: Blockchain Course Welcome
+# Lesson Synthesis: Welcome to Blockchain Intelligence Analysis
 
 ## Source
 

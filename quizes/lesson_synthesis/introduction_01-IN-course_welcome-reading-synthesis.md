@@ -1,4 +1,4 @@
-# Reading Synthesis: Blockchain Course Welcome
+# Reading Synthesis: Welcome to Blockchain Intelligence Analysis
 
 ## Source
 
@@ -72,7 +72,7 @@ No reading-based difficulty distribution is recommended because no reading-based
 
 - Syllabus entry: `01-IN Course Welcome and Pretest`, listing `Concepts: Course orientation`
 - Syllabus boundary note: the first explicit reading in the introduction schedule appears under `02-IN Blockchain At A Glance`, not `01-IN`
-- Lesson identity anchor: `01-IN-course_welcome.qmd`, titled `Blockchain Course Welcome`
+- Lesson identity anchor: `01-IN-course_welcome.qmd`, titled `Welcome to Blockchain Intelligence Analysis`
 
 ## Anti-Trivia Guidance
 
