@@ -1,6 +1,7 @@
 # Build spec
 
-The approved design (Notion "Blockchain Course Prep": Stage E, design; Stage F, build plan; both approved 22 Oct 2026)
+The approved design (Notion "Blockchain Course Prep": Stage E, design; Stage F, build plan; both approved 22 Oct 2026,
+revised 23 Oct by the owner's answers to the adversarial review, P1-P13)
 restated as the rules every build item is checked against. Notion wins where this file and Notion disagree; tell
 the owner. Build items, their sizes and their status live in the Notion "Build Tracker (Stage F)" database.
 
@@ -18,8 +19,8 @@ the owner. Build items, their sizes and their status live in the Notion "Build T
 | 2 | Following Bitcoin | Annotated trace |
 | 3 | Hiding, naming and saying how sure | First memo |
 | 4-5 | Ethereum, contracts, DeFi and its exploits | Code-reading worksheet (two halves) |
-| 6 | Crossing chains | Cross-chain flow diagram (Bybit, Kelp DAO) |
-| 7 | Stablecoins and Tron | Exposure summary (deposit address and transaction, told apart from the hot-wallet sweep) |
+| 6 | Crossing chains | Cross-chain flow diagram (Bybit, Kelp DAO), through at least one swap and one bridge |
+| 7 | Stablecoins and Tron | Exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
 | 8 | Where tracing stops | Limits-of-tracing note |
 | 9 | The threat picture and the capstone | Capstone trace (Prince Group) |
 | 10 | Capstone: memo, two briefings, post-test | none; no lessons |
@@ -28,6 +29,7 @@ The lessons in each slot are in Stage F's Lessons table and on each item's track
 
 ## A lesson
 - Fits one 50-minute slot; three a day. A lesson that won't fit after trimming goes back to the owner with a split.
+- A day may carry up to one extra hour of work or assignments when it needs it (owner, 23 Oct).
 - The analyst's voice: bottom line first, plain English, confidence on the course scale, every claim sourced.
 - Slide titles state the point ("Co-spending links inputs, unless it's a CoinJoin"), never just the topic.
 
@@ -50,6 +52,11 @@ The lessons in each slot are in Stage F's Lessons table and on each item's track
 
 ## Marking and assessment
 - Memo and briefing points are each Not yet, Meets or Strong; a piece passes when every point is at least Meets.
+- Four lab products carry one graded Meets point each; the rest of every lab is feedback. Day 2's trace follows the
+  ransom to the first service, naming each hop's heuristic; the code-reading worksheet says what a function does,
+  who may call it and what it changed; day 6's diagram names each contract, the assets in and out and the far-side
+  address; day 7's summary names the stablecoin and its issuer and says whether it can be frozen. A Not yet can be
+  redone before day 10; after that the remote retry applies.
 - Post-test and pretest share one blueprint: one item per in-scope concept (42), multiple choice for familiarity
   concepts, a short written answer for working-skill concepts. 80% to pass.
 - Daily quizzes are ungraded practice: about five recall questions on the previous day.
