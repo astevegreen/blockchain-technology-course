@@ -653,7 +653,7 @@ The remediation roadmap is structured into four actionable priority tiers, mappe
 | Task ID | Component | Defect Target | Remediation Action | LOE |
 |---|---|---|---|:---:|
 | **REM-01** | `dynamic-labs/adv` | `ethereum_lab/docker-compose.yml:30-32` | Remove external host port bindings (`3002:3002`, `3003:3003`, `3004:3004`). Route all terminal traffic exclusively through the internal Docker network via Nginx router's authenticated subrequest proxy (`/labs/ethereum_lab/ws/terminal`). | Low |
-| **REM-02** | `dynamic-labs/adv` | `hlf/docker-compose.yml:45` | Remove `/var/run/docker.sock` host mount. Replace with a rootless Docker-in-Docker daemon or an authenticated socket proxy with an explicit API method allowlist. | Medium |
+| **REM-02** | `dynamic-labs/adv` | `hlf/docker-compose.yml:45` | Remove `/var/run/docker.sock` host mount. Replace with a rootless Docker-in-Docker daemon or an authenticated socket proxy with an explicit API method allowlist. **Not done: accepted risk, 22 Oct 2026** (ef597b0: the runner needs the socket to start Fabric containers with host-path mounts; the compose file and HLF README say it is fit only for an instructor-run demo on a dedicated machine). | Medium |
 | **REM-03** | `dynamic-labs/core` | `bitcoin/ttyd-bind-mgmt.sh:20-26` | Remove `0.0.0.0` fallback. If `mgmt_ip` cannot be resolved, exit with error instead of binding across all public network interfaces. | Low |
 | **REM-04** | `vm-build` & CI | `.github/workflows/vm-build.yml:33-41` | Add `rm -rf dynamic-labs/bitcoin-forensics/*answer*.json dynamic-labs/bitcoin-forensics/forensics-lab-v*-instructor-dir` to workflow line 33 to prevent baking answer keys into student VM images. | Low |
 | **REM-05** | `vm-build` | `vm-build/network-fallback.sh:7-9, 51-56` | Remove hardcoded `192.168.1.33` static fallback. In fallback mode, assign link-local `169.254.0.0/16` or host-only DHCP request to prevent classroom ARP broadcast collisions. | Low |
@@ -662,7 +662,7 @@ The remediation roadmap is structured into four actionable priority tiers, mappe
 | **REM-08** | `dynamic-labs` | `quiz-engine-v2/compose.yaml:7-12` | Change default authentication mode to secure: `QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE: ${QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE:-standalone}`. | Low |
 | **REM-09** | `dynamic-labs` | `runtime-credentials.sh:103` | Change line 103 to `chmod 600 "${INSTRUCTOR_CREDENTIALS_FILE}"` and restrict `/opt/dynamic-labs/.runtime/` to root/student only. | Low |
 | **REM-10** | `blockchain-course` | `assets/labs/hashing_merkle/hashing_merkle_lab.js:175, 217` | Introduce an HTML entity escaping helper (`function escapeHtml(str) { return str.replace(/[&<>'"]/g, ...); }`) and sanitize user input before interpolating into `innerHTML`. | Low |
-| **REM-11** | `dynamic-labs/adv` | `hlf/.../assetTransfer.js:219-230` | **Escalated from P1 to P0.** Add `this._assertCallerIsIssuer(ctx, asset);` to `DeleteAsset` in `assetTransfer.js`, closing the authorization bypass and ensuring only the issuing university can remove credentials from the world state ledger. | Low |
+| **REM-11** | `dynamic-labs/adv` | `hlf/.../assetTransfer.js:219-230` | **Escalated from P1 to P0.** Add `this._assertCallerIsIssuer(ctx, asset);` to `DeleteAsset` in `assetTransfer.js`, closing the authorization bypass and ensuring only the issuing university can remove credentials from the world state ledger. **Done 22 Oct 2026** (98f3c09; the HLF playbook gained a delete check). | Low |
 
 ### Priority 1: High-Priority Architectural & Curricular Fixes (Urgency: High | Timeline: 1–2 Weeks)
 
