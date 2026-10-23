@@ -25,6 +25,19 @@ async function httpGet(url) {
   return { status: res.status, body };
 }
 
+// The value after --limit, or null when it isn't a number from 1 to MAX_LIMIT.
+function limitValue(value) {
+  const n = /^\d+$/.test(value ?? "") ? Number(value) : 0;
+  return n >= 1 && n <= MAX_LIMIT ? n : null;
+}
+
+// --files needs at least one path and at most MAX_FILES; null when the list is fine or absent.
+function filesError(files) {
+  if (!files) return null;
+  if (files.length === 0) return { error: USAGE };
+  return files.length > MAX_FILES ? { error: `--files takes at most ${MAX_FILES} paths` } : null;
+}
+
 function parse(argv) {
   const opts = { files: null, limit: DEFAULT_LIMIT };
   for (let i = 0; i < argv.length; i++) {
@@ -32,18 +45,15 @@ function parse(argv) {
     if (arg === "--files") {
       opts.files = [];
     } else if (arg === "--limit") {
-      const n = /^\d+$/.test(argv[i + 1] ?? "") ? Number(argv[++i]) : 0;
-      if (n < 1 || n > MAX_LIMIT) return { error: `--limit takes a number from 1 to ${MAX_LIMIT}` };
-      opts.limit = n;
+      opts.limit = limitValue(argv[++i]);
+      if (opts.limit === null) return { error: `--limit takes a number from 1 to ${MAX_LIMIT}` };
     } else if (opts.files && !arg.startsWith("--")) {
       opts.files.push(arg);
     } else {
       return { error: USAGE };
     }
   }
-  if (opts.files && (opts.files.length === 0 || opts.files.length > MAX_FILES))
-    return { error: opts.files.length ? `--files takes at most ${MAX_FILES} paths` : USAGE };
-  return opts;
+  return filesError(opts.files) ?? opts;
 }
 
 // SonarCloud names a file `<project>:<path from the repository root>`, with forward slashes.
@@ -95,7 +105,8 @@ export async function backlog(argv, { get = httpGet } = {}) {
     const found = await get(`${API}/issues/search?${query}`);
     if (found.status !== 200 || !Array.isArray(found.body?.issues)) {
       const msg = found.body?.errors?.map((e) => e.msg).join("; ");
-      return { code: 1, out: `sonar-backlog: SonarCloud answered ${found.status}${msg ? `: ${msg}` : ""}` };
+      const detail = msg ? `: ${msg}` : "";
+      return { code: 1, out: `sonar-backlog: SonarCloud answered ${found.status}${detail}` };
     }
 
     const { total, issues } = found.body;
