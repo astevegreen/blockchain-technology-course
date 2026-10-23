@@ -7,7 +7,7 @@ the owner. Build items, their sizes and their status live in the Notion "Build T
 
 ## The course
 - **Blockchain Intelligence Analysis**: "Characterising on-chain activity and explaining it to agents and
-  prosecutors". Ten days, 0905-1600, for US government analysts. Ready to offer by 26 Feb 2027.
+  prosecutors". Ten days, 0845-1600, for US government analysts. Ready to offer by 26 Feb 2027.
 - One running case: Bitcoin (days 1-3), Ethereum and its contracts (4-5), a bridge (6), stablecoins and Tron (7),
   where tracing stops (8), the capstone (9-10).
 - Every lab ends in a product an analyst would hand over, and every judgement carries a confidence.
@@ -29,7 +29,10 @@ The lessons in each slot are in Stage F's Lessons table and on each item's track
 
 ## A lesson
 - Fits one 50-minute slot; three a day. A lesson that won't fit after trimming goes back to the owner with a split.
-- A day may carry up to one extra hour of work or assignments when it needs it (owner, 23 Oct).
+- The day (owner, 23 Oct): 0845 quiz, discussion, the three lessons with a break between each, lunch 1210-1325,
+  then a 2 h 35 min lab. A lesson that overruns takes its time from the lab.
+- Nightly reading is at most 45 minutes and is the lighter side of the subject: origins and history, landmark
+  events, vignettes, new developments. It gives students a break from the lessons and labs (owner, 23 Oct).
 - The analyst's voice: bottom line first, plain English, confidence on the course scale, every claim sourced.
 - Slide titles state the point ("Co-spending links inputs, unless it's a CoinJoin"), never just the topic.
 
