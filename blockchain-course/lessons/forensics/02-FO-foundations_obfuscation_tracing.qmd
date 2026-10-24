@@ -1,20 +1,585 @@
 ---
 title: "Blockchain Forensics: Foundations, Obfuscation, and Tracing"
 subtitle: 'Section VIII: Forensics'
-author: Army Cyber Institute
+author: CATS
 lesson: 02-FO
-institute: U.S. Military Academy
 date: last-modified
 bibliography: ../references/Blockchain.bib
 csl: ../references/ieee.csl
 link-citations: true
 skip-title-lift: true
-smaller: true
 format:
   aci-revealjs:
-    scrolling: true
     slide-level: 2
 ---
+
+## Every hop in your trace names its heuristic {.smaller}
+
+**Bottom line:** this afternoon's trace follows the ransom to the first service. At every hop you write which heuristic took you there, what could make it wrong, and how sure you are. This lesson teaches the heuristics and how they fail.
+
+| For every hop, write | Example |
+| --- | --- |
+| Where the money went | `T4`, output 1, to a fresh `bc1q...` address |
+| The heuristic that says so | Change: fresh address, same script type as the inputs |
+| What could make it wrong | Both outputs are fresh and of the same type |
+| How sure, on the course scale | Moderate |
+
+: {tbl-colwidths="[40,60]"}
+
+Two Bitcoin heuristics, **co-spending** and **change**, are the base of Bitcoin tracing [@meiklejohn_fistfulbitcoinscharacterizing_2013; @kappos_howpeelmillion_2022].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens lesson ② by tying it to the afternoon's lab product, the annotated trace. It matters here because the trace's graded point is that each hop names its heuristic. Emphasize that the four columns are the habit: destination, heuristic, failure, confidence.
+
+**Key Points**
+- The trace runs from the ransom payment to the first service.
+- Every hop records the heuristic, what could break it, and a confidence on the course scale (High, Moderate, Low; never a percentage).
+- Co-spending and change come from Meiklejohn et al. (2013); Kappos et al. (2022) describe the co-spend heuristic as the one now widely used for tracing.
+- New glossary terms this lesson: cluster, co-spend heuristic, change output, super-cluster, peel chain, peel, payment batching, backward trace.
+
+**Walkthrough**
+1. Read the bottom line.
+2. Walk the four rows using the example hop.
+3. Say: by the end of the lesson you can fill every row for any hop.
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Co-spending links inputs, unless it's a CoinJoin {.smaller}
+
+**Bottom line:** addresses spent together as inputs to one transaction most likely belong to one owner. That holds by habit, not by rule, and a CoinJoin breaks it on purpose.
+
+:::: {.columns}
+::: {.column width="55%"}
+- **The heuristic:** all inputs to one transaction are controlled by the same user [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **Why it works:** each input needs its own key's signature, so multi-input transactions "necessarily reveal that their inputs were owned by the same owner" [@nakamoto_bitcoinpeertopeerelectronic_2008].
+- **Why it fails:** a CoinJoin puts several people's inputs into one transaction [@gmaxwell_coinjoinbitcoinprivacy_2013]; spotting one is day 3. A 2022 test set counts every cluster holding a CoinJoin as merging owners: 60 of its 120 [@kappos_howpeelmillion_2022].
+- **How sure:** co-spending alone is **Moderate**.
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 3.4
+digraph CoSpend {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  A1 [label="A1", fillcolor="#fef3c7", color="#f59e0b"];
+  A2 [label="A2", fillcolor="#fef3c7", color="#f59e0b"];
+  T1 [label="Ordinary spend:\none wallet", fillcolor="#dcfce7", color="#22c55e"];
+  X [label="Alice", fillcolor="#fef3c7", color="#f59e0b"];
+  Y [label="Bob", fillcolor="#e0f2fe", color="#38bdf8"];
+  Z [label="Carol", fillcolor="#fce7f3", color="#ec4899"];
+  T2 [label="CoinJoin:\nthree owners", fillcolor="#fee2e2", color="#ef4444"];
+
+  A1 -> T1; A2 -> T1;
+  X -> T2; Y -> T2; Z -> T2;
+  {rank=same; A1; A2; X; Y; Z;}
+  {rank=same; T1; T2;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the co-spend (common-input-ownership) heuristic and its main failure. It matters here because co-spending is how a trace grows from one address to a cluster, and the lab asks for a confidence on every co-spend link. Emphasize that the heuristic rests on how wallets usually behave; a CoinJoin is built to defeat it.
+
+**Key Points**
+- Meiklejohn et al.'s Heuristic 1: the inputs of one transaction are controlled by one user.
+- Nakamoto's paper names the leak: multi-input transactions reveal a common owner.
+- A CoinJoin combines several users' inputs; applying co-spending to it merges strangers.
+- Kappos et al.'s ground-truth set held 120 clusters; the 60 false positives each contained one or more CoinJoins.
+- Co-spending alone rates Moderate: one strong line, with a known false positive.
+- Define cluster briefly: a set of addresses the analyst believes one entity controls.
+
+**Walkthrough**
+1. Left: A1 and A2 signed by one wallet. One owner, most likely.
+2. Right: three people sign one transaction. The same shape, three owners.
+3. Ask: from the inputs alone, can you always tell the two apart? (No; day 3 shows the clues.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## One false link merges two actors into one {.smaller}
+
+**Bottom line:** clusters grow by chaining: if A and B co-spend, and B and C co-spend, all three join. So one wrong link joins two whole clusters.
+
+:::: {.columns}
+::: {.column width="58%"}
+- **Super-cluster:** false change links merged Mt. Gox, Instawallet, BitPay and Silk Road into one cluster of 1.6 million keys [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **A huge cluster is usually a service:** 20 ransomware addresses sat in clusters averaging 2.9 million addresses, all exchanges, wallets, mixers or markets [@kappos_howpeelmillion_2022].
+- **So:** write down the heuristic behind every link, so a reader can find and cut a bad one.
+:::
+::: {.column width="42%"}
+```{dot}
+//| fig-width: 4
+//| fig-height: 3.8
+digraph Merge {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11, dir=none];
+
+  subgraph cluster_x {
+    label="Actor X"; fontname="Helvetica"; fontsize=12; color="#f59e0b"; style="rounded";
+    A [label="A"]; B [label="B"]; C [label="C"];
+  }
+  subgraph cluster_y {
+    label="Actor Y"; fontname="Helvetica"; fontsize=12; color="#38bdf8"; style="rounded";
+    D [label="D"]; E [label="E"];
+  }
+  A -> B [label="co-spend"];
+  B -> C [label="co-spend"];
+  D -> E [label="co-spend"];
+  C -> D [label="one false\nchange link", color="#ef4444", fontcolor="#b91c1c", style=dashed];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows why clustering errors are expensive: links are transitive, so one false link merges two entities. It matters here because the lab's trace and day 3's memo both depend on clusters a reader can audit. Emphasize recording the heuristic behind each link.
+
+**Key Points**
+- Clustering chains links; a single false link merges two clusters.
+- Meiklejohn et al. warn that falsely linking even a few change addresses can collapse the graph into super-clusters, and they hit one of 1.6 million public keys.
+- Kappos et al.: of their ransomware addresses, 20 sat in clusters averaging 2.9 million addresses, all tagged as exchanges, hosted wallets, mixers or darknet markets; size suggests a custodial service, not one person.
+- Kappos et al. add that nested services (services operating through accounts at an exchange) appear as the exchange under co-spending alone.
+- Define super-cluster briefly: a cluster that has wrongly merged many unrelated entities.
+
+**Walkthrough**
+1. A, B and C join by co-spending: actor X. D and E: actor Y.
+2. One false change link from C to D.
+3. Now X and Y look like one actor, and every conclusion about "them" mixes two people.
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Change is a guess from several weak clues {.smaller}
+
+**Bottom line:** the change output returns money to the payer and moves the trace on. Every clue below is a wallet habit, so none is proof [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+
+| Clue | Points to change when | Fails when |
+| --- | --- | --- |
+| Fresh address | Only this output's address is new [@meiklejohn_fistfulbitcoinscharacterizing_2013] | Both are new |
+| Script type | Its type matches the inputs' [@kappos_howpeelmillion_2022] | Payee's wallet is the same type |
+| Un-round amount | 0.2937 beside a round 1.00 [@kappos_howpeelmillion_2022] | Both are un-round |
+| Output position | The wallet always puts change first, or last [@kappos_howpeelmillion_2022] | The wallet varies it |
+| Next hop alike | Later spent with the same transaction settings [@kappos_howpeelmillion_2022] | Both are spent alike |
+
+: {tbl-colwidths="[20,52,28]"}
+
+**How sure:** one clue alone is **Low**; several agreeing are **Moderate**, because all come from the same transaction. On a rough reuse test, 13% of Meiklejohn's first change labels looked wrong [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns 02-BF's change clues into a method: list the clues, say when each points to change and when it fails. It matters here because change detection decides where every hop of the trace goes next. Emphasize that agreeing clues raise confidence only to Moderate: they are one kind of evidence, the transaction's own shape.
+
+**Key Points**
+- Meiklejohn et al.'s Heuristic 2: a one-time change address is controlled by the inputs' owner. They note it rests on an idiom of use, not on the protocol, so it is less robust than co-spending.
+- Kappos et al. use address type, output index and the transaction features of the next hop ("the same transaction settings": version, SegWit, locktime, replaceability); they note earlier change heuristics relied on address freshness and output values, including a rule that the change value is significant to at least the fourth decimal place (Ermilov et al.).
+- Meiklejohn et al.'s first attempt flagged over 4 million change addresses; to estimate false positives they counted labelled addresses later reused, 13%. They judged many of those (such as Satoshi Dice payouts) not truly false, so the figure is rough. Refinements cut it, but the super-cluster still formed.
+- Course scale: amount or behaviour alone is Low; weaker lines that agree are Moderate; independent means a different kind of evidence, so more clues from the same transaction do not make High.
+- Define change output briefly: the output that returns the unspent remainder of the inputs to the payer.
+
+**Walkthrough**
+1. Take 02-BF's example: Alice pays Bob 1.00 and A3, new, gets 0.29.
+2. Run down the table: fresh, same type, un-round. Three clues agree.
+3. Rate it: Moderate. Ask: what would raise it to High? (A different kind of evidence, such as off-chain information; day 3.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Two outputs aren't always payment and change {.smaller}
+
+**Bottom line:** when the clues don't tell the outputs apart, don't pick one. Write "change undetermined" and keep both as leads.
+
+:::: {.columns}
+::: {.column width="55%"}
+- **Two payees, no change:** mining pools and gambling sites often pay two people at once [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **Look-alike outputs:** in the Bitcoin Fog case, both outputs of one hop were fresh, of one type and spent alike; no change rule could follow it [@kappos_howpeelmillion_2022].
+- **Wallets that break the habit:** some let the user choose or reuse the change address [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **What to do:** follow both outputs, or trace backward from where the money ended.
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 3.6
+digraph Undetermined {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  I [label="Input: 1.2441 BTC", fillcolor="#fef3c7", color="#f59e0b"];
+  T [label="One transaction\nfee 0.0002 BTC", fillcolor="#e0f2fe", color="#38bdf8"];
+  O1 [label="0.5317 BTC\nfresh, bc1q"];
+  O2 [label="0.7122 BTC\nfresh, bc1q"];
+  Q [label="Which is change?\nUndetermined", shape=note, fillcolor="#fee2e2", color="#ef4444"];
+
+  I -> T; T -> O1; T -> O2;
+  {rank=same; O1; O2;}
+  O1 -> Q [style=dashed, arrowhead=none];
+  O2 -> Q [style=dashed, arrowhead=none];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches when change detection should stop: the two outputs look alike, or there is no change at all. It matters here because a forced change call is the false link of the previous slide. Emphasize that "undetermined" is a correct answer in the trace.
+
+**Key Points**
+- Meiklejohn et al. note that payments to two different users are frequent (mining pool payouts, bets on gambling sites), so a two-output transaction need not have change.
+- Kappos et al.'s Bitcoin Fog trace stalled forward after one hop: both outputs had the same address features, were spent in transactions with the same features, and were both fresh.
+- Meiklejohn et al. found that wallets letting users specify change addresses, and change addresses used twice, produced false change labels; they excluded those cases.
+- Recording "change undetermined" and keeping both outputs as candidates is better than a confident wrong hop.
+
+**Walkthrough**
+1. One input, two outputs, both fresh, both `bc1q`, neither round.
+2. Run the table from the last slide: no clue separates them.
+3. Write: change undetermined; candidates 0.5317 and 0.7122.
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## A peel chain: a small peel, the rest rolls on {.smaller}
+
+**Bottom line:** a peel chain starts with a large amount. Each hop pays a small amount (the **peel**) to one address and sends the rest to a fresh change address, which does it again, for hundreds or thousands of hops [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+
+:::: {.columns}
+::: {.column width="45%"}
+- **Ordinary users and services make them:** exchange withdrawals and mining-pool payouts run as peel chains [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- Services run scripts, so their chains are long and regular, which makes them easier to follow [@kappos_howpeelmillion_2022].
+- **Thieves use them too:** stolen coins were gathered into one address, then peeled; some thieves peeled, re-gathered and peeled again [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+:::
+::: {.column width="55%"}
+```{dot}
+//| fig-width: 5.5
+//| fig-height: 3.6
+digraph Peel {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=12];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  S [label="Start\n20.000", fillcolor="#fef3c7", color="#f59e0b"];
+  C1 [label="Change\n19.249", fillcolor="#dcfce7", color="#22c55e"];
+  C2 [label="Change\n18.048", fillcolor="#dcfce7", color="#22c55e"];
+  C3 [label="Change\n17.647", fillcolor="#dcfce7", color="#22c55e"];
+  M [label="...", shape=plaintext, style=""];
+  P1 [label="Peel 0.750"];
+  P2 [label="Peel 1.200"];
+  P3 [label="Peel 0.400"];
+
+  S -> C1 -> C2 -> C3 -> M;
+  S -> P1; C1 -> P2; C2 -> P3;
+  {rank=same; S; P1;}
+  {rank=same; C1; P2;}
+  {rank=same; C2; P3;}
+}
+```
+
+Each hop also pays a 0.001 BTC fee.
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines the peel chain, the most common pattern students will follow in the lab. It matters here because a peel chain is a run of change calls, so each hop inherits the change slide's clues and failures. Emphasize that peel chains are ordinary: services make them all day, so the pattern alone says nothing about crime.
+
+**Key Points**
+- Meiklejohn et al. define the peeling chain: a large starting amount, a small peel to one address per hop, the remainder to a one-time change address, repeated potentially for hundreds or thousands of hops; leftovers may be aggregated and peeled again.
+- They observed the pattern in withdrawals from banks and exchanges and in mining-pool payouts.
+- Kappos et al.: peel chains are fundamental to UTXO coins (outputs cannot be partly spent), and big services' scripted payments create long, patterned chains that are easier to follow.
+- Meiklejohn et al.'s theft cases: aggregation then peeling (Betcoin), and peel-and-aggregate repeated (Bitfloor).
+- Define peel briefly: the small output at each hop, paid away from the chain.
+
+**Walkthrough**
+1. Start: 20.000 BTC.
+2. Hop 1: 0.750 peeled; 0.001 fee; 19.249 rolls on as change.
+3. Hop 2: 1.200 peeled; 18.048 rolls on. Hop 3: 0.400 peeled; 17.647 rolls on.
+4. Ask: which output carries the chain forward? (The large change.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Follow the remainder; the peels are your leads {.smaller}
+
+**Bottom line:** at each hop, the change output takes you to the next hop and the other output is the peel: the money's real recipient. Record every peel; the first one that lands at a service is where your trace ends [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+
+- **Betcoin, 2012:** 3,171 BTC stolen in April 2012 sat unmoved until March 2013. It was then gathered into one address and peeled. After 10 hops a peel went to the Bitcoin-24 exchange; 10 hops later, one went to Mt. Gox. In all, 374.49 BTC reached known exchanges straight off the chain [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **Ransomware, 2022:** 96% of the peels from ransomware peel chains went to one-time addresses. That fits exchange deposit addresses, but the authors say it "does not clearly imply this" [@kappos_howpeelmillion_2022].
+- **For each peel, record:** amount, address, hop number and what that address does next.
+- **Naming the service** that owns a deposit address is attribution: day 3.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the tracing method for a peel chain: follow the change, collect the peels. It matters here because the lab's trace ends at the first service, and that is almost always a peel landing in a deposit address. Emphasize that a one-time recipient address suggests a service but does not prove it.
+
+**Key Points**
+- Meiklejohn et al.'s method: at each hop, follow the change address to the next transaction; the other output is the meaningful recipient (the peel).
+- Betcoin: hacked 11 April 2012, 3,171 BTC stolen in four installments; aggregated 15 March 2013 and peeled; peels to Bitcoin-24 after 10 hops and to Mt. Gox 10 hops later; 374.49 BTC to known exchanges directly off the main chain.
+- Kappos et al. collected 91,493 counterparty addresses from ransomware peel chains; 96% were one-time addresses, consistent with exchange deposit addresses, which the authors stress is not proof.
+- Attribution, linking a deposit address to a named service, is day 3.
+
+**Walkthrough**
+1. Return to the previous slide's chain: the green boxes are the path, the white boxes are the leads.
+2. Tell the Betcoin story: wait, gather, peel, and peels reaching exchanges within 20 hops.
+3. Ask: the 96% figure, is it evidence that the recipients are exchanges? (Weak and consistent, not proof: Low.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Batched payouts look busy but aren't a peel {.smaller}
+
+**Bottom line:** services, "mainly exchanges", often pay many customers in one transaction, a **batch** [@bitcoinoptech_paymentbatching_2021]. A batch most often means a service paying out, so your trace has likely reached one: **Low** until attribution (day 3).
+
+| | Peel-chain hop | Batched payout |
+| --- | --- | --- |
+| Outputs | Two: one peel, one change [@meiklejohn_fistfulbitcoinscharacterizing_2013] | Many: one per customer, often plus change [@bitcoinoptech_paymentbatching_2021] |
+| Inputs | The previous hop's change [@meiklejohn_fistfulbitcoinscharacterizing_2013] | The service's own, ideally just one [@bitcoinoptech_paymentbatching_2021] |
+| What co-spending links | The inputs to the payer | The inputs to the service, never the customers to each other |
+| What you write | Follow the change; record the peel | Likely a service (Low); your subject's output is the lead |
+
+: {tbl-colwidths="[22,36,42]"}
+
+- **Why only Low:** any wallet can pay many outputs at once, and thieves split funds too [@meiklejohn_fistfulbitcoinscharacterizing_2013]; the shape alone is behaviour.
+- **Watch for:** exchanges also pay withdrawals as peel chains [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets an exchange's batched payouts beside a peel chain (adversarial review P1). It matters here because a batch's many outputs can look like a suspect fanning money out, and misreading it sends the trace into dozens of unrelated customers. Emphasize the reading: a batch most often means the money is inside a service, and the output that matters is the one your subject received; but the shape alone is behaviour, so it rates Low until attribution.
+
+**Key Points**
+- Optech: payment batching includes multiple payments in one transaction; it is used mainly by exchanges; an unbatched payment typically has one input and two outputs (receiver and change), while a batch adds an output per receiver, ideally from a single input.
+- Optech lists reduced privacy as a cost: recipients of one batch can assume a common sender.
+- Co-spending links inputs only, so a batch says nothing about whether its recipients know each other.
+- Optech says services batch, not that only services do: any wallet can pay several outputs, and Meiklejohn et al.'s theft cases include thieves splitting funds. Shape alone is Low.
+- Meiklejohn et al. saw peel chains in exchange withdrawals too; both shapes can be a service paying customers.
+- Define payment batching briefly: paying many recipients in one transaction to save fees.
+
+**Walkthrough**
+1. Read the two columns row by row.
+2. Ask: your subject's address is one of 40 outputs of a batch from an exchange. What do you write? (Funds likely came from a service, Low until attribution; if so, the subject withdrew from it and the other 39 are other customers.)
+
+**Sources**
+- @bitcoinoptech_paymentbatching_2021
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+
+:::
+
+## When forward fails, trace backward {.smaller}
+
+**Bottom line:** a trace can run either way. When change is undetermined going forward, start from where the money ended and work back. As described by Kappos et al. in 2022 [@kappos_howpeelmillion_2022]:
+
+:::: {.columns}
+::: {.column width="55%"}
+- **The question:** did a 2011 Mt. Gox withdrawal fund a deposit into the Bitcoin Fog mixer? Roman Sterlingov had a Mt. Gox account in his real name.
+- **Forward:** every change rule stopped after one hop, at two look-alike outputs.
+- **Backward:** from the deposit, the trace reached the withdrawal in seven hops.
+- **Backward can mislead:** it gives more false positives than forward; in 2011 every transaction looked alike.
+- **Record** the direction you traced and where forward stopped.
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 3.8
+digraph Backward {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  W [label="tx1: Mt. Gox withdrawal\n(he held an account there)", fillcolor="#fef3c7", color="#f59e0b"];
+  H [label="tx2: two look-alike outputs\nforward stops", fillcolor="#fee2e2", color="#ef4444"];
+  M [label="intermediate hops", shape=plaintext, style=""];
+  D [label="tx3: Bitcoin Fog deposit", fillcolor="#e0f2fe", color="#38bdf8"];
+
+  W -> H [label="forward"];
+  W -> M [dir=back, label="backward:\n7 hops in all", color="#22c55e", fontcolor="#15803d"];
+  M -> D [dir=back, color="#22c55e"];
+  {rank=same; H; M;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the backward trace through a real case. It matters here because the lab's ransom trace may stall at an undetermined hop, and working back from a known endpoint is the way through. Emphasize the method, not the case's legal outcome, which is outside the course.
+
+**Key Points**
+- Kappos et al., section 7.3.1: an IRS special agent's affidavit linked a 2011 deposit to the Bitcoin Fog cluster with a withdrawal from the Mt. Gox cluster where Sterlingov had an account in his real name.
+- The receiving and sending clusters were different, so co-spending alone could not link them; the IRS affidavit said the withdrawal funded the deposit.
+- Forward following failed after one hop: tx2's two outputs had the same address features, were spent in transactions with the same features, and were both fresh.
+- Following backward from the deposit reached the withdrawal after seven hops; the authors note the agent likely did this by hand.
+- They warn that backward following is more prone to false positives than forward: in 2011 all transactions had the same features, so it could run back indefinitely without noticing a change of owner. Here three deposit paths led to the same origin, which made them more sure.
+- Describe the case as the 2022 paper does; its later court history is not taught here.
+- Define backward trace briefly: following funds from where they ended to where they came from.
+
+**Walkthrough**
+1. Top: the withdrawal. Forward, the trace stops at tx2.
+2. Bottom: the deposit. Backward, hop by hop, the trace reaches tx1 in seven hops.
+3. Ask: in your trace, which endpoints do you know? (The ransom address, and possibly a service's deposit.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Same-transaction clues never reach High alone {.smaller}
+
+**Bottom line:** confidence rises with independent evidence, not more clues: clues from the same transactions stop at Moderate.
+
+| Hop rests on | Confidence | Why, on the course scale |
+| --- | --- | --- |
+| Change from one clue, such as a round amount | **Low** | Amount or behaviour alone |
+| Co-spending, no sign of a CoinJoin | **Moderate** | One strong line; CoinJoin is a known false positive |
+| Several change clues that agree | **Moderate** | Weaker lines, all from the same transaction |
+| A long peel chain with a steady pattern | **Moderate** | One kind of evidence: the pattern |
+| Any of these, plus another kind of evidence (day 3) | **High** | Independent lines agree; no known failure applies |
+
+: {tbl-colwidths="[42,16,42]"}
+
+Investigators "should not rely on" these heuristics "as definitive evidence": a careful actor defeats them [@kappos_howpeelmillion_2022].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide applies the course confidence scale to the heuristics taught so far. It matters here because every hop in the lab trace carries a confidence, and the common mistake is to count clues instead of kinds of evidence. Emphasize the definition: independent means a different kind of evidence, not a second heuristic over the same transactions.
+
+**Key Points**
+- Low: timing, amount or behaviour alone, or one unverified label.
+- Moderate: one strong line, or weaker lines that agree, with a known false positive possible.
+- High: two or more independent lines agree and no known failure applies; on-chain heuristics alone do not get there.
+- Kappos et al. warn that randomizing transaction and address features defeats their heuristics and that investigators should not rely on them as definitive evidence; they add that all clustering heuristics share these limits but still work because many entities do not evade them.
+- Never give a percentage.
+
+**Walkthrough**
+1. Read each row and its reason.
+2. Ask: three change clues agree; is that High? (No: Moderate. Same transaction, same kind of evidence.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+
+:::
+
+## A worked trace: four steps, four judgements {.smaller}
+
+**Bottom line:** your lab product looks like this: one row per judgement, with its heuristic, its failure and its confidence. (Invented data.)
+
+| Step | What you see | Heuristic | Could be wrong if | Confidence |
+| --- | --- | --- | --- | --- |
+| 1 | Ransom R1 and R2 spent together in `T1` | Co-spend: one wallet | `T1` is a CoinJoin | Moderate |
+| 2 | `T1` pays 0.5000 to P, 2.4137 to C1 | Change is C1: fresh, same type, un-round | C1 is the payment | Moderate |
+| 3 | C1 peels 0.1 to 0.6 over hops `T2` to `T6` | Peel chain: follow the change | A peel was the change | Moderate |
+| 4 | `T6`'s peel to D; D's cluster: 2 million addresses | Huge cluster: likely a service | It is not a service | Low |
+
+: {tbl-colwidths="[7,30,26,22,15]"}
+
+Stop at step 4: the money has reached what looks like a service. Naming it, and raising that Low, is day 3.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide models the annotated trace the lab asks for, on invented data. It matters here because students see a finished product before they build one. Emphasize that every row names a heuristic and a failure, and that the trace stops at the first service.
+
+**Key Points**
+- Step 1: co-spending of two ransom addresses in one transaction; Moderate because a CoinJoin would break it.
+- Step 2: the same transaction's outputs; three change clues agree; Moderate, since they are one kind of evidence.
+- Step 3: a peel chain of five transactions followed by its change; each hop inherits the change rule's failure.
+- Step 4: the last peel lands in address D, later co-spent into a cluster of about 2 million addresses (service-sized, like the 2.9 million average on the false-link slide); a huge cluster is usually a service, but size alone is behaviour, so Low until attribution.
+- A row is one judgement, so one transaction can give two rows (steps 1 and 2) and a peel chain one row (step 3).
+- The data are invented for illustration; the lab uses its own captured data.
+
+**Walkthrough**
+1. Read each row left to right: what moved, why you think so, what would make you wrong, how sure.
+2. Ask: why does the trace stop at step 4? (It has reached the first service.)
+3. Ask: which row would you check first if the conclusion were challenged? (The weakest: step 4.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Recap: every hop, a heuristic and a confidence {.smaller}
+
+- **Co-spending** links a transaction's inputs to one owner; a CoinJoin breaks it. Alone: Moderate.
+- **One false link** merges two actors; a huge cluster is usually a service.
+- **Change** is a guess from weak clues; when they don't separate the outputs, write "undetermined".
+- **Peel chains:** follow the change; the peels are the leads, and the first peel at a service ends the trace.
+- **Batches** most often mean a service paying customers: likely a service, Low until day 3.
+- **Backward** works when forward stalls; record the direction.
+- **Confidence** rises with independent evidence, not with more clues.
+- **This afternoon:** the annotated trace. **Day 3:** CoinJoin and mixers, attribution, and the first memo.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the heuristics and their failures and hands over to the lab. It matters here because the annotated trace uses every line. Emphasize the habit: heuristic, failure, confidence, for every hop.
+
+**Key Points**
+- Co-spending and its CoinJoin failure.
+- False links, super-clusters and service-sized clusters.
+- Change clues and the undetermined case.
+- Peel chains, peels as leads, batches as likely services.
+- Backward tracing.
+- Confidence by kinds of evidence.
+
+**Walkthrough**
+None
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+- @bitcoinoptech_paymentbatching_2021
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+
+:::
+
+<!-- Hidden 24 Oct 2026 when this lesson was rebuilt as clustering, change and peel chains for the day 2 trace (Build Tracker D2 ②): kept for reuse, not shown; mixers, attribution, chain hopping and privacy coins return in later parts. -->
+
+:::: {.content-hidden}
 
 ## Recall: UTXO vs. Account Model {.smaller}
 
@@ -43,6 +608,10 @@ None
 @gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Reminder: Bitcoin's UTXO Model
 
@@ -96,6 +665,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Reminder: Ethereum's Account Model
 
 Accounts **persist**. Transactions update balances — and trigger contract code, which may move value through many more contracts in a single block.
@@ -145,6 +718,10 @@ None
 @gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## The Analyst's Mindset: Graph Thinking {.smaller}
 
@@ -202,6 +779,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Graph Motif: The "Fan-Out"
 
 A **Fan-Out** occurs when a single source sends to many destinations.
@@ -246,6 +827,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Graph Motif: The "Fan-In"
 
 A **Fan-In** consolidates many inputs into a single destination.
@@ -287,6 +872,10 @@ None
 @gjorgjev_blockchainforensicsunmasking_2025; @frowis_safeguardingevidentialvalue_2020
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Ethereum Forensics: Where the Evidence Hides
 
@@ -349,6 +938,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Following Token Flows: ERC-20 Transfers
 
 ERC-20 tokens (USDT, USDC, WETH, etc.) are the dominant form of value in DeFi. Their transfers are **invisible in the main transaction record**.
@@ -403,6 +996,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Smart Contract Forensics
 
 Three patterns every Ethereum forensics analyst must recognize:
@@ -437,6 +1034,10 @@ None
 @gjorgjev_blockchainforensicsunmasking_2025; @salisu_blockchainforensicsmodern_2023
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Address Clustering {.smaller}
 
@@ -500,6 +1101,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Heuristic #2: Change Address Detection 
 
 In the UTXO model, transactions often have two outputs: one to the payee, one back to the sender as **change**. Identifying the change output expands an entity's cluster.
@@ -529,6 +1134,10 @@ None
 @frowis_safeguardingevidentialvalue_2020
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Heuristic #3: Peeling Chains {.smaller}
 
@@ -589,6 +1198,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Pitfalls & Counter-Heuristics
 
 Heuristics are educated guesses, not ground truth. Blind reliance leads to errors.
@@ -619,6 +1232,10 @@ None
 @frowis_safeguardingevidentialvalue_2020; @atlam_blockchainforensicssystematic_2024
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Counter-Heuristic #1: CoinJoin
 
@@ -680,6 +1297,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Obfuscation Service: Mixers & Tumblers
 
 A **mixer** breaks the chain of custody by pooling funds and redistributing them.
@@ -739,6 +1360,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Breaking Mixers: Investigative Countermeasures
 
 Despite their obfuscation, mixers have exploitable weaknesses:
@@ -769,6 +1394,10 @@ None
 @frowis_safeguardingevidentialvalue_2020; @sykes_virtualcurrenciesmoney_2019; @atlam_blockchainforensicssystematic_2024; @l35_privacy_pools_docs_2026; @boneh_zeroknowledgeproofs_2020
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## The Next Generation: Privacy Pools
 
@@ -801,6 +1430,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## The Shift in Strategy: Privacy-Preserving Blockchains
 
 While CoinJoin and mixing add obfuscation *on top of* transparent ledgers, some cryptocurrencies are designed with privacy as their default, primary feature.
@@ -825,6 +1458,10 @@ None
 @koe_zeromonerosecond_2020; @electriccoincompany_zcashbasicszcash_2019
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Monero (XMR): Privacy by Default
 
@@ -851,6 +1488,10 @@ None
 @koe_zeromonerosecond_2020; @monero_stealthaddress_2025; @monerocommunityundermit_moneroprivatekey_2025
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Monero: Known Forensic Weaknesses
 
@@ -898,6 +1539,10 @@ None
 @koe_zeromonerosecond_2020; @chainalysis_reports_2025; @trmlabs_trmlabsreports_2025; @l35_ciphertrace_monero_2020
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Monero's Ring Signature, Visualized
 
@@ -952,6 +1597,10 @@ This slide establishes ring signatures visually so students can understand what 
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Zcash (ZEC): Optional Privacy
 
 Zcash supports both transparent and fully shielded transactions in the same chain.
@@ -986,6 +1635,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Forensic Limitations & Voluntary Disclosure
 
 On-chain analysis of privacy coins is often a dead end. Investigations pivot to:
@@ -1012,6 +1665,10 @@ None
 @frowis_safeguardingevidentialvalue_2020; @avice_linkingcryptoassetattribution_2025
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Quantum Computing: Future Impact on Privacy Coin Forensics {.smaller}
 
@@ -1042,6 +1699,10 @@ None
 @koe_zeromonerosecond_2020; @hopwood_zcashnu5protocol_2024
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## The Modern Launderer: "Chain Hopping"
 
@@ -1077,6 +1738,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Mechanisms for Chain Hopping
 
 Two primary technologies enable chain hopping:
@@ -1101,6 +1766,10 @@ None
 @lin_tracktraceautomatically_2025; @salisu_blockchainforensicsmodern_2023
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Following the Hop: Cross-Chain Forensics
 
@@ -1163,6 +1832,10 @@ This slide establishes what cross-chain tracing looks like in practice: correlat
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Not All Hops Are Equally Opaque
 
 | Hop Type | Traceability |
@@ -1194,6 +1867,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## The Final Step: Attribution
 
 **Attribution** links a pseudonymous on-chain cluster to a real-world entity.
@@ -1220,6 +1897,10 @@ None
 @avice_linkingcryptoassetattribution_2025; @chainalysis_reports_2025; @trmlabs_trmlabsreports_2025
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Attribution: Standards of Evidence and Known Pitfalls
 
@@ -1249,6 +1930,10 @@ None
 @frowis_safeguardingevidentialvalue_2020; @avice_linkingcryptoassetattribution_2025
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Attribution: From Cluster to Identity
 
@@ -1303,6 +1988,10 @@ This slide establishes intelligence fusion as the bridge from anonymous cluster 
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Conclusion: A Cat-and-Mouse Game {.smaller}
 
 Blockchain forensics is a dynamic, adversarial field.
@@ -1336,6 +2025,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Case Study: The Bitfinex Hack (2016)
 
 In August 2016, a hacker breached the Bitfinex cryptocurrency exchange, stealing approximately **119,754 BTC** (worth ~$71 million at the time, but billions later).
@@ -1366,6 +2059,10 @@ None
 @departmentofjustice_bitfinexhackerwife_2023
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Live Trace: Following the Peeling Chains {.smaller}
 
@@ -1398,6 +2095,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Breaking the Obfuscation: Account Clustering {.smaller}
 
 The launderers sent thousands of "peels" into virtual currency exchanges (VCEs) using dozens of different user accounts, hoping to look like many unrelated users. 
@@ -1429,6 +2130,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## The Fatal Flaw: KYC Subpoenas {.smaller}
 
 Once investigators traced the funds exiting the mixers and entering legitimate exchanges, they hit the **chokepoint**. They served legal subpoenas to the exchanges.
@@ -1457,6 +2162,10 @@ None
 @departmentofjustice_bitfinexhackerwife_2023
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## OSINT: "The Crocodile of Wall Street" {.smaller}
 
@@ -1489,6 +2198,10 @@ None
 @departmentofjustice_bitfinexhackerwife_2023; @avice_linkingcryptoassetattribution_2025
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## The Takedown and The Cloud Seizure {.smaller}
 
@@ -1524,3 +2237,7 @@ None
 ::: {.callout-note appearance="minimal"}
 **Key Lesson:** Six years of sophisticated laundering — peeling chains, privacy coin hops, DeFi layering — ultimately failed because of a single KYC link at an exchange, a Walmart gift card, and a cloud storage account. OpSec fails before cryptography does.
 :::
+
+::::
+
+## References
