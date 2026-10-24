@@ -69,6 +69,12 @@ The lessons in each slot are in Stage F's Lessons table and on each item's track
 - Every fact cites a `Blockchain.bib` key. A fact that changes (a law, a figure, an upgrade, a case still in
   court) carries an "as of" date beside its citation; web sources record it as `urldate`.
 - Prince Group is live litigation: every capstone fact carries an "as of" date.
+- Settled 23 Oct: Ethereum finality is "about 15 minutes" (`ethereumorg_ssf_2026`), best case 12.8 minutes as two
+  6.4-minute epochs (`ethereumorg_glossary_2026`). Day 7's deposit-versus-sweep cites `victor_clustering_2020`
+  (Ethereum's account model, which Tron shares) and the lab's own Tron data; no Tron-specific source was found.
+- Kelp DAO (18 Apr 2026): a forged LayerZero message claiming to come from Unichain released rsETH on Ethereum;
+  Arbitrum later froze 30,766 ETH (`blockaid_kelpdao_2026`, `arbitrum_kelpfreeze_2026`). It was not an
+  Ethereum-to-Arbitrum exploit.
 - Open-source or in-house tools only (Otterscan, java-tron, Hyperledger Fabric, cryo, DuckDB). Commercial
   analytics platforms appear only as a category; their research may be cited. A tool enters a lesson only after its
   spike and its bib entry exist.
