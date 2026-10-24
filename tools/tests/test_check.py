@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import subprocess
 import sys
 import tempfile
@@ -214,6 +216,20 @@ class SlideCount(unittest.TestCase):
     def test_slide_level_3_counts_third_level_headings(self) -> None:
         self.assertEqual(check.slide_count("---\nformat:\n  aci-revealjs:\n    slide-level: 3\n---\n## A\n### B\n"), 2)
 
+    def test_slides_mode_counts_a_commit_without_checking(self) -> None:
+        rel = "blockchain-course/lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.qmd"
+        want = check.slide_count(subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=check.REPO, check=True,
+                                                capture_output=True, text=True, encoding="utf-8").stdout)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(check.print_slides([rel], "HEAD"), 0)
+            self.assertEqual(check.print_slides([str(check.REPO / rel)], None), 0)
+            self.assertEqual(check.print_slides(["lessons/none.qmd"], "HEAD"), 1)
+        self.assertEqual(out.getvalue().splitlines(), [f"Slides: {rel} {want}"] * 2
+                         + ["Slides: lessons/none.qmd not found at HEAD"])
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            check.main(["--at", "HEAD"])
+
 
 class BibDates(unittest.TestCase):
     BIB = ("@online{old_page,\n  url = {https://a.example/}\n}\n\n"
@@ -227,6 +243,12 @@ class BibDates(unittest.TestCase):
     def test_a_bib_change_runs_the_check(self) -> None:
         plan = check.plan_checks(["blockchain-course/lessons/references/Blockchain.bib"], added=[])
         self.assertIn("bib dates", [c.name for c in plan.checks])
+        self.assertIn("bib keys", [c.name for c in plan.checks])
+
+    def test_a_repeated_key_is_named_whatever_its_case(self) -> None:
+        bib = "@book{Nakamoto_2008,\n  title = {A}\n}\n\n@misc{other,\n  title = {B}\n}\n\n@book{nakamoto_2008,\n  title = {A}\n}\n"
+        self.assertEqual(check.duplicate_bib_keys(bib), [(9, "nakamoto_2008", 1)])
+        self.assertEqual(check.duplicate_bib_keys(self.BIB), [])
 
 
 class Helpers(unittest.TestCase):

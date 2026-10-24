@@ -47,6 +47,15 @@ test("asks again after a compaction brings the context back under the line", () 
   assert.equal(stop([owner("c"), said(125_000)], { session }).status, 2);
 });
 
+test("a sprint session is never sent to write a handoff: it reports on its issues", () => {
+  assert.equal(stop([owner("/sprint-lane lessons"), said(125_000)]).status, 0);
+  const expanded = "<command-message>sprint-integrate</command-message>\n<command-name>/sprint-integrate</command-name>";
+  const r = stop([owner(expanded), said(125_000)]);
+  assert.equal(r.status, 0);
+  assert.equal(r.stderr, "");
+  assert.equal(stop([owner("Run /sprint-status for me."), said(125_000)]).status, 2, "the owner's own session still is");
+});
+
 test("the line follows the auto-compact window setting", () => {
   assert.equal(stop([owner("a"), said(59_000)], { window: "100000" }).status, 0);
   assert.equal(stop([owner("a"), said(61_000)], { window: "100000" }).status, 2);
@@ -104,6 +113,36 @@ test("at session start, tells the owner about open notes and how to resume them"
 
   writeFiles(repo, { ".handoff/2026-10-17-1530-glossary.md": "# Handoff: glossary\nheader\n" });
   assert.match(sessionStart(repo).json?.systemMessage, /^2 open handoff notes, newest 2026-10-17-1530-glossary\.md\. Type \/handoff resume/);
+});
+
+test("at session start, tells Claude the sprint file overrides CLAUDE.md only inside its window", () => {
+  const HOUR = 60 * 60 * 1000;
+  const stamp = (ms) => new Date(Date.now() + ms).toISOString().slice(0, 16).replace(/[-:]/g, "");
+  const repo = tempRepo({ ".gitignore": ".handoff/\n" });
+  const context = () => sessionStart(repo).json?.hookSpecificOutput?.additionalContext;
+  const sprint = (line) => writeFiles(repo, { "docs/sprint.md": `# Sprint\n\n${line}\n` });
+  const window = (from, to) => `**Window (UTC):** \`${stamp(from)}\` to \`${stamp(to)}\` (the owner's).`;
+
+  assert.equal(context(), undefined, "no docs/sprint.md");
+  sprint("No window line here.");
+  assert.equal(context(), undefined);
+  const end = stamp(HOUR);
+  sprint(`**Window (UTC):** \`${stamp(-HOUR)}\` to \`${end}\` (the owner's).`);
+  assert.equal(context(), `Sprint window open until ${end} UTC: \`docs/sprint.md\` overrides CLAUDE.md where ` +
+    "they conflict. Lab tests and Docker run only in the labs lane's worktree: `--fresh-start` here would wipe its containers.");
+  assert.equal(sessionStart(path.join(repo, "docs")).json?.hookSpecificOutput?.hookEventName, "SessionStart", "from a subfolder");
+  sprint(window(-2 * HOUR, -HOUR));
+  assert.equal(context(), undefined, "closed");
+  sprint(window(HOUR, 2 * HOUR));
+  assert.equal(context(), undefined, "not open yet");
+  sprint("**Window (UTC):** `20260101T0000` to `20260101T0000` (placeholder).");
+  assert.equal(context(), undefined, "the placeholder");
+
+  sprint(window(-HOUR, HOUR));
+  writeFiles(repo, { ".handoff/2026-10-17-1405-slide-edit.md": "# Handoff: slide edit\nheader\n" });
+  const both = sessionStart(repo).json;
+  assert.match(both.systemMessage, /^Open handoff note/);
+  assert.match(both.hookSpecificOutput.additionalContext, /^Sprint window open/);
 });
 
 test("at session start outside a git repository, says nothing", () => {

@@ -7,6 +7,8 @@ Usage:
   python tools/check.py --all           everything; rendered HTML only where _site already has it
   python tools/check.py --all --render  render the whole site first (minutes)
   python tools/check.py --stamped       pass at once if this exact tree already passed
+  python tools/check.py --slides L.qmd [--at REV]
+                                        only print each lesson's slide count, from REV if given
 
 On success prints one line: `check: passed (<n> checks, <s>s)`. On failure prints at most
 40 lines grouped by check, then `check: FAILED`, and exits 1. Never modifies tracked files;
@@ -230,6 +232,28 @@ def bib_dates(rel: str) -> list[str]:
     return failures
 
 
+def duplicate_bib_keys(text: str) -> list[tuple[int, str, int]]:
+    """Each key used again: its line, the key and the line that first used it. BibTeX reads keys without regard to
+    case, and two branches that add the same source merge into two entries (tools/sprint/bib-merge.mjs)."""
+    first: dict[str, int] = {}
+    repeats = []
+    for m in re.finditer(r"^@\w+\s*\{\s*([^,\s]+)\s*,", text, re.M):
+        line = text.count("\n", 0, m.start()) + 1
+        if (key := m.group(1).lower()) in first:
+            repeats.append((line, m.group(1), first[key]))
+        else:
+            first[key] = line
+    return repeats
+
+
+def bib_keys(rel: str) -> list[str]:
+    text = (REPO / rel).read_text(encoding="utf-8")
+    failures = [f"{rel}:{line}: @{key} repeats the key at line {at}" for line, key, at in duplicate_bib_keys(text)]
+    if failures:
+        failures.append("fix: keep one entry per source, and cite that entry's key everywhere")
+    return failures
+
+
 def as_notes(lines: list[str]) -> list[str]:
     """Report without failing. Until the Site cleanup build item, a stale glossary or mind map is fixed once per
     phase, not in every change (Stage G call 2; docs/build-spec.md, "During the build")."""
@@ -387,11 +411,13 @@ def tool_tests() -> list[str]:
         if code:
             keep = [line for line in out.splitlines() if re.match(r"^(FAIL|ERROR):|^\w*Error|File \"", line)]
             failures += ["python unit tests failed (python -m unittest discover -s tools/tests)", *(keep or tail(out))[:12]]
-    if list((REPO / "tools" / "hooks").glob("*.test.mjs")):
-        code, out = run(["node", "--test", "tools/hooks/*.test.mjs"], timeout=600)
+    for folder in ("hooks", "sprint"):
+        if not list((REPO / "tools" / folder).glob("*.test.mjs")):
+            continue
+        code, out = run(["node", "--test", f"tools/{folder}/*.test.mjs"], timeout=600)
         if code:
             keep = [line for line in out.splitlines() if re.match(r"^\s*not ok\b|^\s*error:|^\s*✖", line)]
-            failures += ["hook tests failed (node --test tools/hooks/*.test.mjs)", *(keep or tail(out))[:12]]
+            failures += [f"{folder} tests failed (node --test tools/{folder}/*.test.mjs)", *(keep or tail(out))[:12]]
     return failures
 
 
@@ -435,6 +461,7 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     bibs = bibs if everything else [f for f in present if f in bibs]
     if bibs:
         plan.checks.append(Check("bib dates", lambda: [line for b in bibs for line in bib_dates(b)]))
+        plan.checks.append(Check("bib keys", lambda: [line for b in bibs for line in bib_keys(b)]))
 
     if not everything and any(f.startswith(SITE_WIDE) for f in files):
         plan.info.append("site-wide change: run `python tools/check.py --all --render` (renders the whole site)")
@@ -524,14 +551,42 @@ def write_stamp(key: str, root: Path = REPO, keep: int = 50) -> None:
         old.unlink(missing_ok=True)
 
 
+def print_slides(lessons: list[str], at: str | None) -> int:
+    """`Slides: <lesson> <count>` for each lesson, read from the working tree or, with `at`, from that commit
+    (`git show`), so the read-only reviewer can count a sprint branch it has not checked out. Writes nothing."""
+    code = 0
+    for arg in lessons:
+        path = Path(arg)
+        rel = (path.resolve().relative_to(REPO) if path.is_absolute() else path).as_posix()
+        if at:
+            text = git(REPO, "show", f"{at}:{rel}")
+        else:
+            text = (REPO / rel).read_text(encoding="utf-8") if (REPO / rel).is_file() else None
+        if text is None:
+            print(f"Slides: {rel} not found{f' at {at}' if at else ''}")
+            code = 1
+        else:
+            print(f"Slides: {rel} {slide_count(text)}")
+    return code
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check what changed; print failures only.")
     parser.add_argument("--all", action="store_true", help="check everything, not just changed files")
     parser.add_argument("--render", action="store_true", help="with --all: render the whole site first")
     parser.add_argument("--stamped", action="store_true",
                         help="pass at once when this exact tree already passed (the git pre-commit hook uses it)")
+    parser.add_argument("--slides", nargs="+", metavar="LESSON",
+                        help="only print each lesson's slide count (repo-relative paths); checks nothing")
+    parser.add_argument("--at", metavar="REV", help="with --slides: count the lessons as committed at REV")
     args = parser.parse_args(argv)
     sys.stdout.reconfigure(errors="replace")  # test output can hold characters a cp1252 console can't show
+    if args.at and not args.slides:
+        parser.error("--at needs --slides")
+    if args.slides:
+        if args.all or args.render or args.stamped:
+            parser.error("--slides runs on its own")
+        return print_slides(args.slides, args.at)
     if args.render and not args.all:
         parser.error("--render needs --all")
     if args.stamped and args.all:

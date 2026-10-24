@@ -43,7 +43,27 @@ test("generated and vendored folders can't be read; pushes to main need no promp
 test("the setup itself, CI and GitHub credentials need the owner's yes", () => {
   const { ask } = settings().permissions;
   for (const rule of ["Edit(/.claude/**)", "Edit(/CLAUDE.md)", "Edit(/.github/**)", "Edit(/tools/hooks/**)",
-                      "Bash(gh secret *)", "Bash(gh auth *)"]) assert.ok(ask.includes(rule), rule);
+                      "Edit(/tools/sprint/**)", "Bash(gh secret *)", "Bash(gh auth *)"]) assert.ok(ask.includes(rule), rule);
+});
+
+test("unattended sprint sessions run the queue, ci-watch and the integrator's push without a prompt", () => {
+  const { allow } = settings().permissions;
+  for (const tool of ["Bash", "PowerShell"]) {
+    for (const script of ["queue", "ci-watch"]) {
+      const rule = `${tool}(node C:/Antigravity/blockchain-technology-course/tools/sprint/${script}.mjs *)`;
+      assert.ok(allow.includes(rule), rule);
+    }
+  }
+  assert.ok(allow.includes("Bash(git -C C:/Antigravity/bc-integrate push origin HEAD:main)"));
+});
+
+test("history-rewriting git commands are refused in the git -C form the sprint uses, as in the plain form", () => {
+  const { deny } = settings().permissions;
+  for (const tool of ["Bash", "PowerShell"]) {
+    for (const cmd of ["push *--force*", "push -f*", "push * -f*", "push *+*", "reset --hard*", "clean *", "branch -D *", "tag -d *"]) {
+      assert.ok(deny.includes(`${tool}(git -C * ${cmd})`), `${tool}(git -C * ${cmd})`);
+    }
+  }
 });
 
 test("the lab tests run in WSL and their CI runs can be watched without a prompt", () => {

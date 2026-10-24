@@ -3,7 +3,11 @@
 // before the turn ends (exit 2). Fires once per session, and again only after the context drops below the
 // line (a compaction) and climbs past it again. Held while background work runs, so a note never says
 // "still running".
+// A sprint session (docs/sprint.md) runs unattended and reports on its issues, never in a handoff: no nudge.
 // SessionStart (startup, clear): tell the owner about open notes. Shown to the owner only, never to Claude.
+// While the clock is inside the `Window (UTC)` line of docs/sprint.md, also tell Claude that file overrides
+// CLAUDE.md, and that lab runs belong to the labs lane: in YODC a banner in CLAUDE.md said so in every session,
+// sprint or not, long after its window closed.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -17,18 +21,50 @@ if (input.hook_event_name === "SessionStart") sessionStart();
 else stop();
 
 function sessionStart() {
+  const cwd = input.cwd ?? process.cwd();
+  const out = {};
   let notes = [];
   try {
-    notes = openNotes(storeDir(input.cwd ?? process.cwd()));
+    notes = openNotes(storeDir(cwd));
   } catch {
-    process.exit(0);
+    notes = [];
   }
-  if (notes.length === 0) process.exit(0);
-  const message = notes.length === 1
-    ? `Open handoff note: ${notes[0].name}. Type /handoff resume to continue it.`
-    : `${notes.length} open handoff notes, newest ${notes[0].name}. Type /handoff resume to pick one.`;
-  process.stdout.write(JSON.stringify({ systemMessage: message }));
+  if (notes.length > 0) {
+    out.systemMessage = notes.length === 1
+      ? `Open handoff note: ${notes[0].name}. Type /handoff resume to continue it.`
+      : `${notes.length} open handoff notes, newest ${notes[0].name}. Type /handoff resume to pick one.`;
+  }
+  const end = sprintWindowEnd(cwd);
+  if (end) {
+    out.hookSpecificOutput = {
+      hookEventName: "SessionStart",
+      additionalContext: `Sprint window open until ${end} UTC: \`docs/sprint.md\` overrides CLAUDE.md where they ` +
+        `conflict. Lab tests and Docker run only in the labs lane's worktree: \`--fresh-start\` here would wipe its ` +
+        `containers.`,
+    };
+  }
+  if (Object.keys(out).length > 0) process.stdout.write(JSON.stringify(out));
   process.exit(0);
+}
+
+// The window's end (YYYYMMDDTHHMM) while now is inside the `Window (UTC)` line of the repo's docs/sprint.md;
+// otherwise null. Walks up to the folder holding `.git` (a directory, or a worktree's file).
+function sprintWindowEnd(dir) {
+  let root = path.resolve(dir);
+  while (!existsSync(path.join(root, ".git"))) {
+    const up = path.dirname(root);
+    if (up === root) return null;
+    root = up;
+  }
+  let text;
+  try {
+    text = readFileSync(path.join(root, "docs", "sprint.md"), "utf8");
+  } catch {
+    return null;
+  }
+  const m = /Window \(UTC\):\**\s*`(\d{8}T\d{4})`\s*to\s*`(\d{8}T\d{4})`/.exec(text);
+  const now = new Date().toISOString().slice(0, 16).replace(/[-:]/g, "");
+  return m && m[1] <= now && now <= m[2] ? m[2] : null;
 }
 
 function stop() {
@@ -41,6 +77,7 @@ function stop() {
   } catch {
     process.exit(0);
   }
+  if (sprintSession(entries)) process.exit(0);
 
   const window = Number(process.env.CLAUDE_CODE_AUTO_COMPACT_WINDOW) || 200_000;
   const line = Math.round(window * SHARE);
@@ -73,6 +110,13 @@ function contextSize(entries) {
     if (usage) return (usage.input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0);
   }
   return 0;
+}
+
+// The session was started with a /sprint-* skill (the supervisor's prompt, typed or expanded).
+function sprintSession(entries) {
+  const first = entries.find((e) => e.type === "user");
+  const text = textOf(first?.message?.content).trimStart();
+  return text.startsWith("/sprint-") || text.includes("<command-name>/sprint-");
 }
 
 function textOf(content) {

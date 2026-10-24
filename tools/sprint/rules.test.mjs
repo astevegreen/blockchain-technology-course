@@ -1,0 +1,481 @@
+// The sprint queue (tools/sprint/queue.mjs) on synthetic issues. The cases come from YODC's October sprint,
+// where the same rules ran: each test names the failure it stops happening again.
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import {
+  bodyRefs,
+  hasWork,
+  heldRetry,
+  laneQueue,
+  matchesId,
+  nextJob,
+  normalizeIssues,
+  parseSprintDoc,
+  planMove,
+  recordStarted,
+  run,
+  sessionTitles,
+  sessionTriggers,
+  statusBlock,
+} from "./rules.mjs";
+
+const SPRINT_MD = `# Sprint
+
+**Window (UTC):** \`20261102T0800\` to \`20261106T1800\`
+
+Sprint log: #40 "Sprint log". Tag before the sprint: \`pre-sprint-2026-11-02\`.
+
+- **Environment:** \`env_01AbC\`: the computer sessions start on.
+
+| Lane | Label | Worktree |
+| --- | --- | --- |
+| \`wk\` | \`lane:wk\` | \`C:/Antigravity/bc-lane-wk\` |
+| \`labs\` | \`lane:labs\` | \`C:/Antigravity/bc-lane-labs\` |
+
+## Backlog
+
+### wk
+
+- **L1** 03-BF mempool lesson.
+- **L2** 03-FO tracing lesson,
+  continued on a second line. Waits for: L1.
+- **L3** 04-BF. Waits for: none.
+
+### labs
+
+- **X1** Memo lab. Waits for: L2–L3 and #12.
+
+## Machinery
+
+- **Z9** not a backlog item.
+`;
+const doc = parseSprintDoc(SPRINT_MD);
+
+const issue = (number, title, labels, { body = "", comments = [], state = "OPEN", closedAt = null } = {}) => ({
+  number,
+  title,
+  body,
+  state,
+  createdAt: "2026-11-01T00:00:00Z",
+  closedAt,
+  labels: labels.map((name) => ({ name })),
+  comments: comments.map(([login, createdAt, text]) => ({ author: { login }, createdAt, body: text })),
+});
+const world = (issues, over = {}) => ({
+  doc,
+  issues: normalizeIssues(issues),
+  now: new Date("2026-11-03T12:00:00Z"),
+  freeMb: 20_000,
+  branchAhead: () => 0,
+  mainHead: { sha: "abcdef0123456789", subject: "Add 03-BF" },
+  lastLabTests: null,
+  ...over,
+});
+const throwsWith = (f, pattern) => assert.throws(f, (e) => pattern.test(e.message));
+
+// --- docs/sprint.md ------------------------------------------------------------------------------------------------
+
+test("reads the window, lanes, sprint log, tag and each lane's backlog", () => {
+  assert.equal(doc.window.start.toISOString(), "2026-11-02T08:00:00.000Z");
+  assert.equal(doc.window.end.toISOString(), "2026-11-06T18:00:00.000Z");
+  assert.deepEqual(doc.lanes, [
+    { name: "wk", worktree: "C:/Antigravity/bc-lane-wk" },
+    { name: "labs", worktree: "C:/Antigravity/bc-lane-labs" },
+  ]);
+  assert.equal(doc.logIssue, 40);
+  assert.equal(doc.preSprintTag, "pre-sprint-2026-11-02");
+  assert.deepEqual(doc.backlog.wk.map((i) => i.id), ["L1", "L2", "L3"]);
+  assert.deepEqual(Object.keys(doc.backlog), ["wk", "labs"], "the backlog ends at the next ## heading");
+});
+
+test("reads each item's Waits for, ranges and continuation lines included; none names nothing", () => {
+  const [l1, l2, l3] = doc.backlog.wk;
+  assert.deepEqual(l1.waits, []);
+  assert.deepEqual(l2.waits, [{ id: "L1" }]);
+  assert.deepEqual(l3.waits, []);
+  assert.deepEqual(doc.backlog.labs[0].waits, [{ id: "L2" }, { id: "L3" }, { issue: 12 }]);
+});
+
+test("reads this checkout's docs/sprint.md, the template the sprint fills in", () => {
+  const current = parseSprintDoc(readFileSync(path.join(import.meta.dirname, "../../docs/sprint.md"), "utf8"));
+  assert.ok(current.lanes.length > 0);
+  assert.ok(current.lanes.some((l) => l.name === "labs" && l.worktree === "C:/Antigravity/bc-lane-labs"), "the labs lane alone runs lab tests");
+  assert.ok(sessionTitles(current).includes("Course integrate"));
+  for (const lane of current.lanes) assert.ok(current.backlog[lane.name], `the backlog has a ### ${lane.name} list`);
+});
+
+test("fails, saying what is missing, rather than guess", () => {
+  throwsWith(() => parseSprintDoc(SPRINT_MD.replace("**Window (UTC):**", "Window:")), /Window \(UTC\)/);
+  throwsWith(() => parseSprintDoc(SPRINT_MD.replace('#40 "Sprint log"', "the log")), /sprint log issue/);
+  throwsWith(() => parseSprintDoc(SPRINT_MD.replace("## Backlog", "## Later")), /## Backlog/);
+});
+
+// --- what an issue waits for ---------------------------------------------------------------------------------------
+
+test("reads every Depends on and Waits for form, up to the first full stop", () => {
+  assert.deepEqual(bodyRefs("**Depends on**: #27 and #48 (the lesson it extends)."), [27, 48]);
+  assert.deepEqual(bodyRefs("## Depends on\n\nL1a (issue #58)."), [58]);
+  assert.deepEqual(bodyRefs("Depends on: #28. Independent of #35, which can land in any order."), [28]);
+  assert.deepEqual(bodyRefs("**Waits for**: #57 and #64 to land."), [57, 64]);
+});
+
+test('reads "none" as nothing, whatever follows it', () => {
+  assert.deepEqual(bodyRefs("Depends on: none (see #46)."), []);
+  assert.deepEqual(bodyRefs("Depends on: none. If #30 lands first, rebase."), []);
+});
+
+test("a split counts for its item; a longer number does not", () => {
+  const [a, b] = normalizeIssues([issue(1, "[task] L1a: first half", []), issue(2, "[task] L10: other", [])]);
+  assert.equal(matchesId(a, "L1"), true);
+  assert.equal(matchesId(b, "L1"), false);
+  assert.equal(matchesId(b, "L10"), true);
+});
+
+test("an issue is not started while the issue it depends on is open (YODC T4b, 21 Oct)", () => {
+  const w = world([
+    issue(48, "[task] L1: mempool", ["lane:wk", "to-integrate"]),
+    issue(49, "[task] L2: tracing", ["lane:wk", "sprint-ready"], { body: "Depends on: #48." }),
+  ]);
+  const r = hasWork(w, "Course lane: wk");
+  assert.equal(r.start, false);
+  assert.match(r.reason, /#49 L2 waits for L1, #48 L1/);
+  assert.equal(nextJob(w, "wk"), null);
+  throwsWith(() => planMove(w, 49, "in-progress"), /#49 waits for/);
+  const landed = world([
+    issue(48, "[task] L1: mempool", ["lane:wk"], { state: "CLOSED", closedAt: "2026-11-03T00:00:00Z" }),
+    issue(49, "[task] L2: tracing", ["lane:wk", "sprint-ready"], { body: "Depends on: #48." }),
+  ]);
+  assert.deepEqual(nextJob(landed, "wk"), { mode: "build", issue: 49, concerns: null, reason: "#49 L2 is ready" });
+});
+
+test("a backlog wait on an ID with no issue yet is not over", () => {
+  const w = world([issue(50, "[task] X1: memo lab", ["lane:labs", "sprint-ready"])]);
+  assert.match(laneQueue(w, "labs").waiting[0], /#50 X1 waits for L2, L3, #12 \(no such issue\)/);
+});
+
+// --- held and blocked ------------------------------------------------------------------------------------------------
+
+test("held with the lane's own comment newest waits for the owner, and says so (YODC T5a, 22 Oct)", () => {
+  const w = world([
+    issue(58, "[task] L1: mempool", ["lane:wk", "held"], { comments: [["greenbeanbot", "2026-11-03T03:00:00Z", "Lane: held. The render failed twice."]] }),
+  ]);
+  assert.equal(hasWork(w, "Course lane: wk").start, false);
+  assert.deepEqual(statusBlock(w).needsYou, ['#58 [held] L1: waits for the owner; newest comment: "Lane: held. The render failed twice."']);
+});
+
+test("an answer relayed by the bot account does not count as the owner's (YODC U3, 21 Oct)", () => {
+  const w = world([
+    issue(37, "[task] L3: 04-BF", ["lane:wk", "blocked"], {
+      comments: [
+        ["astevegreen", "2026-11-03T01:00:00Z", "Which case study?"],
+        ["greenbeanbot", "2026-11-03T02:00:00Z", "Relayed: the owner says use Colonial."],
+      ],
+    }),
+  ]);
+  assert.ok(laneQueue(w, "wk").waiting.includes("#37 L3 is blocked: no owner reply yet"));
+  assert.ok(statusBlock(w).needsYou.includes("#37 [blocked] L3: waiting for your answer"));
+});
+
+test("held work is retried after an owner reply, with that reply as the concerns", () => {
+  const w = world([
+    issue(57, "[task] L1: mempool", ["lane:wk", "held"], {
+      comments: [["greenbeanbot", "2026-11-03T01:00:00Z", "Lane: held. Which source?"], ["astevegreen", "2026-11-03T02:00:00Z", "Use the BIP."]],
+    }),
+  ]);
+  assert.deepEqual(nextJob(w, "wk"), { mode: "fix", issue: 57, concerns: "Use the BIP.", reason: "#57 L1 is held and the owner replied" });
+});
+
+test("held work is retried when the integrator sent it back, and a stranger's comment changes nothing", () => {
+  const [i] = normalizeIssues([
+    issue(5, "[task] L1: x", ["lane:wk", "held"], {
+      comments: [["greenbeanbot", "2026-11-03T10:00:00Z", "Integrator: conflicts with main"], ["someone", "2026-11-03T11:00:00Z", "me too"]],
+    }),
+  ]);
+  assert.equal(heldRetry(i, 8000).retry, true);
+  assert.equal(heldRetry(i, 8000).why, "the integrator sent it back");
+});
+
+test("a machine failure is retried only over the memory floor", () => {
+  const [i] = normalizeIssues([
+    issue(5, "[task] L1: x", ["lane:wk", "held"], { comments: [["greenbeanbot", "2026-11-03T10:00:00Z", "Implementer: machine. Quarto ran out of memory"]] }),
+  ]);
+  assert.equal(heldRetry(i, 8000).retry, true);
+  assert.equal(heldRetry(i, 3000).retry, false);
+});
+
+// --- next ------------------------------------------------------------------------------------------------------------
+
+test("takes ready issues in backlog order, not issue number, and IDs not in the backlog last", () => {
+  const w = world([
+    issue(10, "[task] L9: extra", ["lane:wk", "sprint-ready"]),
+    issue(11, "[task] L3: x", ["lane:wk", "sprint-ready"]),
+    issue(12, "[task] L1: y", ["lane:wk", "sprint-ready"]),
+    issue(13, "[task] L1b: y, part 2", ["lane:wk", "sprint-ready"]),
+  ]);
+  assert.equal(nextJob(w, "wk").issue, 12);
+  assert.equal(nextJob(w, "wk", [12]).issue, 13);
+  assert.equal(nextJob(w, "wk", [12, 13]).issue, 11);
+  assert.equal(nextJob(w, "wk", [12, 13, 11]).issue, 10);
+});
+
+test("picks up a stopped session's work first: review it when its branch has commits, else build it again", () => {
+  const issues = [issue(11, "[task] L1: x", ["lane:wk", "sprint-ready"]), issue(12, "[task] L3: y", ["lane:wk", "in-progress"])];
+  assert.equal(nextJob(world(issues, { branchAhead: () => 2 }), "wk").mode, "resume");
+  assert.deepEqual(nextJob(world(issues), "wk"), {
+    mode: "build",
+    issue: 12,
+    concerns: null,
+    reason: "#12 L3 was in progress when its session stopped, with no commits on sprint/12",
+  });
+});
+
+test("builds a blocked issue the owner answered", () => {
+  const w = world([
+    issue(11, "[task] L1: x", ["lane:wk", "blocked"], {
+      comments: [["greenbeanbot", "2026-11-03T00:10:00Z", "Implementer: which case?"], ["astevegreen", "2026-11-03T00:20:00Z", "(a)"]],
+    }),
+  ]);
+  assert.deepEqual(nextJob(w, "wk"), { mode: "build", issue: 11, concerns: null, reason: "#11 L1: the owner answered its question" });
+});
+
+test("an unknown lane is refused, naming the lanes", () => {
+  throwsWith(() => nextJob(world([]), "art"), /unknown lane "art"/);
+});
+
+// --- has-work --------------------------------------------------------------------------------------------------------
+
+test("covers every session title the supervisor keeps, and refuses others", () => {
+  assert.deepEqual(sessionTitles(doc), ["Course lane: wk", "Course lane: labs", "Course plan: wk", "Course plan: labs", "Course integrate"]);
+  throwsWith(() => hasWork(world([]), "YODC lane: wk"), /unknown session title/);
+});
+
+test("starts nothing under the memory floor", () => {
+  const w = world([issue(1, "[task] L1: x", ["lane:wk", "to-integrate"])], { freeMb: 3000 });
+  for (const title of sessionTitles(doc)) {
+    assert.equal(hasWork(w, title).start, false, title);
+    assert.equal(hasWork(w, title).reason, "memory: 3000 MB free, under the 4096 MB floor");
+  }
+});
+
+test("integrate has work while an issue is labelled to-integrate", () => {
+  const w = world([issue(64, "[task] L3: x", ["lane:wk", "to-integrate"]), issue(57, "[task] L1: y", ["lane:wk", "to-integrate"])]);
+  assert.deepEqual(hasWork(w, "Course integrate"), { start: true, reason: "to integrate: #57, #64", issues: [57, 64] });
+  assert.equal(hasWork(world([]), "Course integrate").start, false);
+});
+
+test("plan has work while an item has no issue and the lane has under 3 ready", () => {
+  const w = world([issue(1, "[task] L1a: x", ["lane:wk", "to-integrate"])]);
+  assert.deepEqual(hasWork(w, "Course plan: wk"), {
+    start: true,
+    reason: "0 open sprint-ready, under 3; not yet filed: L2, L3",
+    ready: 0,
+    todo: ["L2", "L3"],
+  });
+  const filed = world(["L1", "L2", "L3"].map((id, k) => issue(k + 1, `[task] ${id}: x`, ["lane:wk", "sprint-ready"])));
+  assert.equal(hasWork(filed, "Course plan: wk").start, false);
+  assert.equal(hasWork(filed, "Course plan: wk").reason, "every backlog item has an issue");
+});
+
+// --- move ------------------------------------------------------------------------------------------------------------
+
+const one = (labels, over = {}) => world([issue(7, "[task] L1: x", ["lane:wk", ...labels])], over);
+
+test("claims a ready issue with no comment", () => {
+  assert.deepEqual(planMove(one(["sprint-ready"]), 7, "in-progress"), {
+    issue: 7,
+    from: "sprint-ready",
+    to: "in-progress",
+    comment: null,
+    add: ["in-progress"],
+    remove: ["sprint-ready"],
+  });
+});
+
+test("re-queues a stopped session's claim with the standard comment", () => {
+  assert.equal(planMove(one(["in-progress"]), 7, "in-progress").comment, "Lane: re-queued, the previous lane session stopped.");
+});
+
+test("hands over to the integrator with the standard comment, only with commits and a note", () => {
+  const ready = planMove(one(["in-progress"], { branchAhead: () => 1 }), 7, "to-integrate", "WHAT CHANGED: a\\nSTUDENT-VISIBLE: b");
+  assert.equal(ready.comment, "Lane: ready to integrate, branch sprint/7.\nWHAT CHANGED: a\nSTUDENT-VISIBLE: b");
+  throwsWith(() => planMove(one(["in-progress"]), 7, "to-integrate", "x"), /no commits ahead/);
+  throwsWith(() => planMove(one(["in-progress"], { branchAhead: () => 1 }), 7, "to-integrate"), /needs a note/);
+});
+
+test("refuses what the rules do not allow, saying what to do instead", () => {
+  throwsWith(() => planMove(one(["held"]), 7, "in-progress"), /held and/);
+  throwsWith(() => planMove(one(["to-integrate"]), 7, "held"), /integrator's/);
+  throwsWith(() => planMove(one(["sprint-ready"]), 7, "held"), /only work in progress/);
+  throwsWith(() => planMove(one(["held", "blocked"]), 7, "in-progress"), /state labels held and blocked/);
+  throwsWith(() => planMove(one(["blocked"]), 7, "in-progress"), /owner has not replied/);
+  throwsWith(() => planMove(one(["in-progress"]), 7, "sprint-ready"), /cannot move an issue to "sprint-ready"/);
+  throwsWith(() => planMove(one(["in-progress"]), 8, "held"), /no issue #8/);
+});
+
+test("a second move to the same state changes nothing", () => {
+  assert.deepEqual(planMove(one(["held"]), 7, "held"), { issue: 7, from: "held", to: "held", comment: null, add: [], remove: [] });
+});
+
+// --- status ----------------------------------------------------------------------------------------------------------
+
+test("the status block counts each lane, names main and the last Lab Tests run, and lists what needs the owner", () => {
+  const w = world(
+    [
+      issue(7, "[task] L1: x", ["lane:wk", "in-progress"]),
+      issue(8, "[task] L2: y", ["lane:wk"], { state: "CLOSED", closedAt: "2026-11-02T09:00:00Z" }),
+      issue(9, "[task] L3: z", ["lane:wk"], { state: "CLOSED", closedAt: "2026-10-30T09:00:00Z" }),
+    ],
+    { lastLabTests: { headSha: "1234567890ab", status: "completed", conclusion: "success", url: "https://github.com/x/runs/1" } },
+  );
+  const s = statusBlock(w, { also: ["stuck: Course lane: labs"] });
+  assert.match(s.body, /^Status at 2026-11-03 12:00Z\./);
+  assert.ok(s.body.includes("- wk: 0 sprint-ready, 1 in-progress, 0 to-integrate, 0 held, 0 blocked; closed: #8 L2"), "closed before the window opened is left out");
+  assert.ok(s.body.includes('**Main:** abcdef01 "Add 03-BF"'));
+  assert.ok(s.body.includes("**Lab Tests:** last run success at 12345678 https://github.com/x/runs/1"));
+  assert.ok(s.body.endsWith("**Needs you**\n- stuck: Course lane: labs"));
+  assert.ok(statusBlock(world([])).body.includes("**Lab Tests:** no run found\n"));
+  assert.ok(statusBlock(world([])).body.endsWith("- nothing"));
+});
+
+// --- the command line ------------------------------------------------------------------------------------------------
+
+function fakeIo(issues, over = {}) {
+  const calls = [];
+  const io = {
+    sprintDoc: () => SPRINT_MD,
+    gh: (args, input) => {
+      calls.push({ args, input });
+      if (args[0] === "issue" && args[1] === "list") return JSON.stringify(issues);
+      if (args[0] === "run") return JSON.stringify([{ headSha: "be34383f0", status: "completed", conclusion: "success", url: "https://x/1" }]);
+      return "";
+    },
+    branchAhead: () => 1,
+    mainHead: () => ({ sha: "be34383f0aa", subject: "Add 03-FO" }),
+    freeMb: () => 9000,
+    now: () => new Date("2026-11-03T02:00:00Z"),
+    ledger: [],
+    readTriggers: () => io.ledger,
+    writeTriggers: (records) => { io.ledger = records; },
+    ...over,
+  };
+  return { io, writes: () => calls.filter((c) => c.args[1] !== "list" && c.args[0] !== "run") };
+}
+const cli = [issue(7, "[task] L1: x", ["lane:wk", "in-progress"]), { ...issue(40, "Sprint log", []), body: "**Needs you**\n- #8 [held] L2: old" }];
+
+test("prints one line of JSON per command", () => {
+  const out = run(["next", "wk"], fakeIo(cli).io);
+  assert.equal(out.code, 0);
+  assert.match(out.line, /"mode":"resume","issue":7/);
+  assert.deepEqual(run(["next", "wk", "--taken", "7"], fakeIo(cli).io), { code: 0, line: "null" });
+  assert.equal(JSON.parse(run(["has-work", "Course integrate"], fakeIo(cli).io).line).start, false);
+});
+
+test("move comments first, then sets the labels", () => {
+  const { io, writes } = fakeIo(cli);
+  assert.equal(run(["move", "7", "to-integrate", "--note", "WHAT CHANGED: a"], io).code, 0);
+  assert.deepEqual(writes().map((c) => c.args), [
+    ["issue", "comment", "7", "--body", "Lane: ready to integrate, branch sprint/7.\nWHAT CHANGED: a"],
+    ["issue", "edit", "7", "--add-label", "to-integrate", "--remove-label", "in-progress"],
+  ]);
+});
+
+test("a refused move writes nothing and exits 2 with an error and a do line", () => {
+  const { io, writes } = fakeIo(cli);
+  const out = run(["move", "7", "sprint-ready"], io);
+  assert.equal(out.code, 2);
+  assert.match(JSON.parse(out.line).do, /Move it to one of/);
+  assert.deepEqual(writes(), []);
+});
+
+test("status writes the block to the sprint log and lists only the new Needs you items", () => {
+  const { io, writes } = fakeIo([...cli, issue(9, "[task] L3: y", ["lane:wk", "blocked"])]);
+  const out = JSON.parse(run(["status", "--write", "--also", "stuck: Course lane: labs"], io).line);
+  assert.deepEqual(out.new, ["#9 [blocked] L3: waiting for your answer", "stuck: Course lane: labs"]);
+  assert.deepEqual(writes(), [{ args: ["issue", "edit", "40", "--body-file", "-"], input: out.body }]);
+  assert.ok(out.body.includes("- wk: 0 sprint-ready, 1 in-progress, 0 to-integrate, 0 held, 1 blocked; closed: none"));
+  assert.ok(out.body.includes("**Lab Tests:** last run success at be34383f https://x/1"));
+});
+
+test("status --write is refused while docs/sprint.md names no log issue yet", () => {
+  const { io, writes } = fakeIo(cli, { sprintDoc: () => SPRINT_MD.replace("#40", "#0") });
+  const out = run(["status", "--write"], io);
+  assert.equal(out.code, 2);
+  assert.match(JSON.parse(out.line).do, /setup day/);
+  assert.deepEqual(writes(), []);
+  assert.equal(run(["status"], io).code, 0, "reading the status still works");
+});
+
+test("a failing gh is an error that says stop", () => {
+  const out = run(["next", "wk"], fakeIo(cli, { gh: () => { throw new Error("HTTP 502"); } }).io);
+  assert.equal(out.code, 1);
+  assert.match(JSON.parse(out.line).do, /^Stop and report/);
+});
+
+test("env prints the environment from the doc, and refuses while it is the placeholder", () => {
+  const { io, writes } = fakeIo(cli);
+  assert.deepEqual(run(["env"], io), { code: 0, line: '{"environment_id":"env_01AbC"}' });
+  assert.deepEqual(writes(), []);
+  const blank = run(["env"], fakeIo(cli, { sprintDoc: () => SPRINT_MD.replace("env_01AbC", "env_…") }).io);
+  assert.equal(blank.code, 2);
+  assert.match(JSON.parse(blank.line).do, /^Start nothing/);
+});
+
+// RemoteTrigger `list` returns only the account's newest 20 triggers, and three projects' sprints share the
+// account (24 Oct review), so the supervisor finds its sessions in this ledger instead.
+test("started records each trigger, and sessions reads back the last one per title since the window opened", () => {
+  const { io, writes } = fakeIo(cli);
+  io.ledger = [{ title: "Course lane: wk", id: "trig_01Old", at: "2026-11-01T09:00:00Z" }];
+  const out = run(["started", "Course lane: wk", "trig_01A"], io);
+  assert.equal(out.code, 0);
+  assert.deepEqual(JSON.parse(out.line), { recorded: { title: "Course lane: wk", id: "trig_01A", at: "2026-11-03T02:00:00.000Z" } });
+  io.now = () => new Date("2026-11-03T03:00:00Z");
+  run(["started", "Course integrate", "trig_01I"], io);
+  run(["started", "Course lane: wk", "trig_01B"], io);
+  assert.deepEqual(JSON.parse(run(["sessions"], io).line), {
+    "Course lane: wk": "trig_01B",
+    "Course lane: labs": null,
+    "Course plan: wk": null,
+    "Course plan: labs": null,
+    "Course integrate": "trig_01I",
+  });
+  // The record from before the window is left out; --all lists the rest, newest first.
+  assert.deepEqual(JSON.parse(run(["sessions", "--all"], io).line).map((r) => r.id), ["trig_01B", "trig_01I", "trig_01A"]);
+  assert.deepEqual(writes(), []);
+});
+
+test("started refuses an unknown title, a malformed id and a closed window, and records nothing", () => {
+  for (const [args, now, pattern] of [
+    [["Course lane: night", "trig_01A"], "2026-11-03T02:00:00Z", /unknown session title/],
+    [["Course lane: wk", "01A"], "2026-11-03T02:00:00Z", /not a trigger id/],
+    [["Course lane: wk", "trig_01A; x"], "2026-11-03T02:00:00Z", /not a trigger id/],
+    [["Course lane: wk", "trig_01A"], "2026-11-02T07:59:00Z", /no window is open/],
+    [["Course lane: wk", "trig_01A"], "2026-11-06T18:00:00Z", /no window is open/],
+  ]) {
+    const { io } = fakeIo(cli, { now: () => new Date(now) });
+    const out = run(["started", ...args], io);
+    assert.equal(out.code, 2, args.join(" "));
+    assert.match(JSON.parse(out.line).error, pattern);
+    assert.deepEqual(io.ledger, []);
+  }
+});
+
+test("the ledger keeps its newest 500 records and skips any it cannot read", () => {
+  const old = Array.from({ length: 500 }, (_, k) => ({ title: "Course lane: wk", id: `trig_${k}`, at: "2026-11-02T09:00:00Z" }));
+  const records = recordStarted(doc, old, "Course lane: wk", "trig_new", new Date("2026-11-03T02:00:00Z"));
+  assert.equal(records.length, 500);
+  assert.equal(records[0].id, "trig_1");
+  assert.equal(records.at(-1).id, "trig_new");
+  const messy = [null, { title: "Course lane: wk" }, { title: "Other: x", id: "trig_9", at: "2026-11-03T00:00:00Z" }, ...records];
+  assert.equal(sessionTriggers(doc, messy)["Course lane: wk"], "trig_new");
+});
+
+test("an unknown command reads nothing and shows the usage", () => {
+  let read = false;
+  const { io } = fakeIo(cli, { sprintDoc: () => { read = true; return SPRINT_MD; } });
+  const out = run(["nxt", "wk"], io);
+  assert.equal(out.code, 2);
+  assert.match(JSON.parse(out.line).do, /^Usage/);
+  assert.equal(read, false);
+});
