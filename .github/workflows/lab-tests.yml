@@ -1,0 +1,74 @@
+name: Lab Tests
+
+# Runs each changed lab's automated tests (dynamic-labs/regression-tests/automated/<lab>/run.sh) in Docker.
+# It builds and publishes nothing, so unlike the other workflows it also runs on a push to main.
+# tools/lab_tests.py picks the labs; its IN_CI list names the labs whose tests pass here.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dynamic-labs/**"
+      - ".github/workflows/lab-tests.yml"
+      - "tools/lab_tests.py"
+  workflow_dispatch:
+    inputs:
+      labs:
+        description: "Labs to test, space-separated, e.g. 'exercises hlf' (blank: every lab in CI)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    outputs:
+      labs: ${{ steps.pick.outputs.labs }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pick the labs to test
+        id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          LABS: ${{ inputs.labs }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = workflow_dispatch ]; then
+            labs=$(python3 tools/lab_tests.py --labs "$LABS")
+          else
+            labs=$(python3 tools/lab_tests.py --base "$BEFORE" --head "$GITHUB_SHA")
+          fi
+          echo "Labs to test: $labs"
+          echo "labs=$labs" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: pick
+    if: needs.pick.outputs.labs != '[]'
+    name: test (${{ matrix.lab }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        lab: ${{ fromJSON(needs.pick.outputs.labs) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run the lab's automated tests
+        run: bash dynamic-labs/regression-tests/automated/${{ matrix.lab }}/run.sh --fresh-start 2>&1 | tee lab-test.log
+      - name: Upload the output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lab-test-${{ matrix.lab }}
+          path: lab-test.log
+          retention-days: 14

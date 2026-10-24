@@ -129,7 +129,7 @@ class Planning(unittest.TestCase):
     def test_site_wide_and_lab_changes_inform(self) -> None:
         _, info = self.names(["blockchain-course/_quarto.yml", "dynamic-labs/README.md"])
         self.assertTrue(any("--all --render" in line for line in info))
-        self.assertTrue(any("Docker is unavailable" in line for line in info))
+        self.assertTrue(any("regression-tests/automated/<lab>/run.sh" in line for line in info))
 
     def test_lesson_change_reports_its_slide_count(self) -> None:
         _, info = self.names(["blockchain-course/lessons/introduction/01-IN-course_welcome.qmd"])

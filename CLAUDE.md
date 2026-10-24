@@ -49,7 +49,14 @@ The owner judges results, not code: explain every change in plain English and pr
 
 ## How to work
 - One task per session. Stay in scope; list other problems in your summary instead of fixing them.
-- Docker cannot run on this PC: say plainly that lab changes are unverified locally.
+- When compacting, keep word for word: the owner's request as it will be quoted in `Requested:`, the task, the
+  files changed, and each check run with its result.
+- Docker runs on the desktop: start Docker Desktop, then from the repo root run the changed lab's tests in WSL
+  (Git Bash breaks their Docker paths), `wsl -d Ubuntu -- bash dynamic-labs/regression-tests/automated/<lab>/run.sh
+  --fresh-start`, and paste the result. `--fresh-start` wipes every lab's containers, volumes and credentials on
+  that machine: if `docker ps` lists lab containers you didn't start, ask first. On the laptop, or for a lab with
+  no automated tests, say plainly that the change is unverified. After a push that changes `dynamic-labs/`, watch
+  the Lab Tests run (`gh run list --workflow lab-tests.yml`, then `gh run watch <id>`) and paste its result.
 - Model: Opus for content design, debugging and glossary-pipeline work; Sonnet for routine slide edits, quiz fixes
   and tooling with a clear spec. When the task changes kind, suggest a switch.
 

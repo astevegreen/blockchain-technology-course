@@ -1,6 +1,6 @@
 // SessionStart (startup): check this machine is set up the way the project expects.
 // Problems are shown to the owner (systemMessage), never added to Claude's context.
-// Docker is not checked: it cannot run on this PC, and CLAUDE.md says so.
+// Docker is not checked: only the desktop runs it, and CLAUDE.md says what to do without it.
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";

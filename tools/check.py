@@ -464,7 +464,8 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
         plan.checks.append(Check("tool tests", tool_tests))
 
     if not everything and touched("dynamic-labs/"):
-        plan.info.append("dynamic-labs changed: Docker is unavailable here, so lab behaviour is unverified")
+        plan.info.append("dynamic-labs changed: this check doesn't run labs; run the lab's "
+                         "regression-tests/automated/<lab>/run.sh on a Docker host (CLAUDE.md)")
     return plan
 
 

@@ -24,9 +24,12 @@ question with a recommendation before building.
 6. **Write or extend the playbook** in `dynamic-labs/regression-tests/agent/<lab>/`
    (`dynamic-labs/regression-tests/how-to-write-a-lab-regression-test.md`): it walks the worked example and the
    problem as a student would, through the browser, and checks the product's expected answers.
-7. **Check**: `python tools/check.py`. Docker cannot run on this PC, so the lab itself is unverified here: say so,
-   and list what the desktop run must cover.
-8. **Hand it to the desktop**: set the item's Build Tracker status to Desktop test. Only the owner marks Done.
+7. **Check**: `python tools/check.py`, then, where Docker runs (the desktop), the lab's automated tests as
+   CLAUDE.md says (`regression-tests/automated/<lab>/run.sh` in WSL) and paste the result. Where Docker doesn't
+   run, or the lab has no automated tests, say the lab is unverified here.
+8. **Hand to the desktop only what the tests don't cover**: if the playbook has steps the automated tests don't
+   (the browser walk, the product's answers), set the item's Build Tracker status to Desktop test and list those
+   steps. Only the owner marks Done.
 
-Done when the check passes, the `reviewer` agent returns PASS, and the summary names the playbook the desktop run
-uses.
+Done when the check passes, the `reviewer` agent returns PASS, and the summary pastes the lab tests' result or says
+why they couldn't run, and names the playbook steps left for the desktop.

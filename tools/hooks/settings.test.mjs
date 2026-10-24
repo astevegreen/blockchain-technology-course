@@ -46,6 +46,23 @@ test("the setup itself, CI and GitHub credentials need the owner's yes", () => {
                       "Bash(gh secret *)", "Bash(gh auth *)"]) assert.ok(ask.includes(rule), rule);
 });
 
+test("the lab tests run in WSL and their CI runs can be watched without a prompt", () => {
+  const { allow } = settings().permissions;
+  for (const rule of ["Bash(docker version)", "Bash(wsl -d Ubuntu -- bash dynamic-labs/regression-tests/automated/*)",
+                      "PowerShell(wsl -d Ubuntu -- bash dynamic-labs/regression-tests/automated/*)",
+                      "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh run watch *)"]) assert.ok(allow.includes(rule), rule);
+  assert.ok(settings().permissions.deny.includes("Bash(gh workflow run *)"), "agents still can't start a workflow");
+});
+
+test("skipping the pre-commit check needs the owner's yes, in Bash and PowerShell", () => {
+  const { ask } = settings().permissions;
+  for (const tool of ["Bash", "PowerShell"]) {
+    for (const cmd of ["git commit *--no-verify*", "git commit -n*", "git commit * -n*", "git push *--no-verify*",
+                       "git -C * commit *--no-verify*", "git -C * commit -n*", "git -C * push *--no-verify*",
+                       "git *core.hooksPath*"]) assert.ok(ask.includes(`${tool}(${cmd})`), `${tool}(${cmd})`);
+  }
+});
+
 test("the model is left to the owner: no model pin, no subagent model", () => {
   const s = settings();
   assert.equal(s.model, undefined);
