@@ -46,6 +46,17 @@ class LabsFor(unittest.TestCase):
             self.assertTrue((lab_tests.REPO / "dynamic-labs" / folder).is_dir(), folder)
 
 
+class Runners(unittest.TestCase):
+    def test_every_run_sh_calls_lab_manager_through_bash(self) -> None:
+        # lab-manager.sh isn't executable in git: `./lab-manager.sh` works on Windows and WSL, then fails on GitHub.
+        for lab in lab_tests.tested_labs():
+            run_sh = lab_tests.REPO / lab_tests.AUTOMATED / lab / "run.sh"
+            for n, line in enumerate(run_sh.read_text(encoding="utf-8").splitlines(), 1):
+                code = line.split("#", 1)[0].strip()
+                if code.startswith("./lab-manager.sh"):
+                    self.fail(f"{run_sh.relative_to(lab_tests.REPO)}:{n} runs ./lab-manager.sh; use bash ./lab-manager.sh")
+
+
 class Main(unittest.TestCase):
     def test_named_labs_must_have_a_run_sh(self) -> None:
         with mock.patch("sys.stdout"), mock.patch("sys.stderr"):

@@ -70,7 +70,7 @@ fresh_start() {
   echo "[cryptography-regression] performing optional fresh-start reset"
   (
     cd "${ROOT_DIR}"
-    ./lab-manager.sh stop all || true
+    bash ./lab-manager.sh stop all || true
   )
 
   local project
@@ -100,8 +100,8 @@ fresh_start() {
 
   (
     cd "${ROOT_DIR}"
-    ./lab-manager.sh deploy --mode instructor --no-tls --max-student-capacity 2
-    ./lab-manager.sh start cryptography
+    bash ./lab-manager.sh deploy --mode instructor --no-tls --max-student-capacity 2
+    bash ./lab-manager.sh start cryptography
   )
 }
 
@@ -109,7 +109,7 @@ ensure_live_stack() {
   echo "[cryptography-regression] ensuring cryptography stack is running"
   (
     cd "${ROOT_DIR}"
-    ./lab-manager.sh start cryptography
+    bash ./lab-manager.sh start cryptography
   )
 }
 

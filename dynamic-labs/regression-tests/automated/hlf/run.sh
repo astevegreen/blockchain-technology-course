@@ -82,7 +82,7 @@ fresh_start() {
   echo "[hlf-regression] performing optional fresh-start reset"
   (
     cd "${ROOT_DIR}"
-    ./lab-manager.sh stop hlf || true
+    bash ./lab-manager.sh stop hlf || true
   )
 
   (
@@ -95,7 +95,7 @@ fresh_start() {
 
   (
     cd "${ROOT_DIR}"
-    ./lab-manager.sh start hlf
+    bash ./lab-manager.sh start hlf
   )
 }
 
@@ -103,7 +103,7 @@ ensure_live_stack() {
   echo "[hlf-regression] ensuring hlf stack is running"
   (
     cd "${ROOT_DIR}"
-    ./lab-manager.sh start hlf
+    bash ./lab-manager.sh start hlf
   )
 }
 
