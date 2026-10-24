@@ -79,6 +79,10 @@ The owner judges results, not code: explain every change in plain English and pr
 - New or reworked slides, or any quiz-bank edit: give the `reviewer` agent the owner's request and fix its blockers
   before finishing.
   Typos and tooling skip it.
+- With the reviewer, start `node tools/second-look.mjs "<the owner's request>"` in the background: another model
+  reviews the same change through agy and picks itself by what changed. Its findings are inputs: check each against
+  the files, fix the valid blockers, and name any you rejected, with why, under **Unsure about**. A "skipped" line
+  is not a failure.
 
 End every task with:
 - **What changed** - in plain English, 2-5 bullets
