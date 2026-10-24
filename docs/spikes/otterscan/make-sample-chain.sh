@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Rebuilds course-chain-sample.json: two contracts, an ETH transfer, a token
-# transfer, an internal split and a failed transfer, on a fresh Anvil.
-# Needs Foundry (anvil, forge, cast) on PATH. Run from this folder.
+# transfer, an internal split and a failed transfer, on a fresh Anvil; and
+# sourcify/, the contracts' source for Otterscan to show offline.
+# Needs Foundry (anvil, forge, cast) and node on PATH. Run from this folder.
 set -euo pipefail
 R=http://127.0.0.1:8546
 PK=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80   # Anvil's public test key 0
@@ -28,4 +29,5 @@ cast send -q --rpc-url $R --private-key $PK "$tok" "transfer(address,uint256)" $
 
 sleep 3   # let the interval dump catch the last block
 cp "$work/chain.json" course-chain-sample.json
-echo "token $tok, forwarder $fwd, saved course-chain-sample.json"
+rm -rf sourcify && node make-sourcify-copy.mjs "$work" sourcify 31337 Token="$tok" Forwarder="$fwd"
+echo "token $tok, forwarder $fwd, saved course-chain-sample.json and sourcify/"
