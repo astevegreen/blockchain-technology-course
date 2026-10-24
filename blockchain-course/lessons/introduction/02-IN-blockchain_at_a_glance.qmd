@@ -8,11 +8,635 @@ bibliography: ../references/Blockchain.bib
 csl: ../references/ieee.csl
 link-citations: true
 skip-title-lift: true
+smaller: true
 format:
   aci-revealjs:
+    scrolling: true
     slide-level: 3
-aci-mermaid: true
 ---
+
+## The chain shows every payment, but no names {.smaller}
+
+:::: {.columns}
+::: {.column width="58%"}
+**Bottom line:** Bitcoin's blockchain is a public record of every payment since its first block in 2009. It shows amounts, addresses and times, never who stands behind an address [@nakamoto_bitcoinpeertopeerelectronic_2008; @antonopoulos_masteringbitcoinprogramming_2017].
+
+- Anyone can download the whole record and check it for themselves.
+- An address is a pseudonym. A name has to come from outside the chain, such as an exchange's customer records [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- This lesson follows one real payment from a wallet into the chain, then reads it the way an explorer shows it.
+:::
+::: {.column width="42%"}
+| Day 1 | The question |
+| --- | --- |
+| **① This lesson** | What does one payment look like? |
+| ② Keys and addresses | Who can spend it? |
+| ③ Ledger and finality | When is it settled? |
+| Lab | Read a chain in an explorer |
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets the day's frame: the chain is a public record of payments that shows everything except identity. It matters here because every later judgement in the course starts from what the chain does and does not show. Emphasize that names always come from outside the chain, which is why attribution is a separate step with its own evidence.
+
+**Key Points**
+- Bitcoin's chain is public and complete back to its first block in 2009, and anyone can verify it.
+- Addresses are pseudonyms; identity comes from off-chain records such as an exchange's customer data.
+- The lesson follows one real payment; lesson ② explains keys and addresses, lesson ③ explains when a payment is settled.
+
+**Walkthrough**
+1. Read the bottom line aloud and ask what is missing from the record (names).
+2. Walk the day-1 table so students see where this lesson sits.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+
+:::
+
+## One real payment: Alice buys a coffee {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+**Bottom line:** our case is a real payment used in *Mastering Bitcoin*. Alice paid Bob's Cafe 0.015 BTC for a coffee, and the payment still sits in block 277,316 [@antonopoulos_masteringbitcoinprogramming_2017].
+
+- Alice spent 0.1 BTC she had bought from a friend, Joe.
+- The **transaction ID** (txid) is the hash of the transaction. It is how you find the payment in any explorer or node [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+- Alice, Bob and Joe are the book's names. The chain itself shows only the addresses.
+- The next slides read this card line by line.
+:::
+::: {.column width="50%"}
+| Field | Value |
+| --- | --- |
+| Transaction | `0627052b...c2f2` |
+| Block | 277,316 |
+| Input | 0.1 BTC, from Joe's payment to Alice |
+| Output 0 | 0.015 BTC to Bob's Cafe, `1GdK9Uzp...` |
+| Output 1 | 0.0845 BTC back to Alice, `1Cdid9KF...` |
+| Fee | 0.0005 BTC |
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the lesson's one real transaction, laid out the way an explorer summarises it. It matters here because the rest of the lesson reads each line of this card, and the lab asks students to read the same fields for themselves. Emphasize that the names come from the book, not from the chain.
+
+**Key Points**
+- The transaction is Alice's payment to Bob's Cafe from Mastering Bitcoin (second edition), chapter 2: txid 0627052b6f28912f2703066a912ea577f2ce4da4caa5a5fbd8a57286c345c2f2, in block 277,316.
+- Alice's 0.1 BTC came from Joe; the payment sends 0.015 BTC to Bob and 0.0845 BTC back to Alice, and leaves 0.0005 BTC as the fee.
+- A txid is the transaction's hash and is the lookup key in every explorer and node.
+- Full addresses: Bob's Cafe 1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA; Alice 1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK.
+
+**Walkthrough**
+1. Point to the transaction ID and the block number: these locate the payment.
+2. Point to the input, the two outputs and the fee: the next three slides explain each.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## Bitcoin spends whole coins and makes change {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+**Bottom line:** Alice couldn't spend part of her 0.1 BTC. She spent it whole: 0.015 BTC to Bob, and 0.0845 BTC back to her as **change**.
+
+- Each output is an **unspent transaction output (UTXO)** until a later transaction spends it, whole and once.
+- An input names the output it spends by txid and output number, not by amount [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+- Few coins match the price, "so most transactions include a change output" [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+- Alice's change went back to the paying address, so it is easy to spot. The guide recommends a new address for change; finding change then takes judgement, on day 2 [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Change {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7];
+
+  J [label="Joe's payment, output 0\n0.1 BTC to Alice\n(now spent)", fillcolor="#e2e8f0", color="#94a3b8"];
+  A [label="Alice's transaction\n0627052b...c2f2", fillcolor="#e0f2fe", color="#38bdf8"];
+  B [label="Output 0: 0.015 BTC\nto Bob's Cafe", fillcolor="#dcfce7", color="#22c55e"];
+  C [label="Output 1: 0.0845 BTC\nchange to Alice", fillcolor="#fef3c7", color="#f59e0b"];
+  F [label="Fee: 0.0005 BTC\nto the miner", style="rounded,dashed"];
+
+  J -> A;
+  A -> B;
+  A -> C;
+  A -> F [style=dashed];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the UTXO model through Alice's payment: outputs are spent whole, and the surplus comes back as change. It matters here because tracing Bitcoin means following outputs into the transactions that later spend them, and spotting change is the first tracing judgement students will make on day 2. Emphasize that this example is the easy case, because the change returned to the paying address.
+
+**Key Points**
+- A UTXO is an output not yet spent; spending it consumes all of it, once.
+- An input refers to a previous output by its txid and output index (an outpoint), not by amount.
+- The developer guide says the full value of the included UTXOs must be spent or given to a miner as a fee, and that most transactions include a change output.
+- The developer guide recommends sending change to a new address; Alice's wallet did not, which is why her change is obvious.
+
+**Walkthrough**
+1. Joe's output 0 (0.1 BTC) is the coin Alice spends; once spent, it is gone.
+2. Alice's transaction creates two new outputs: 0.015 BTC for Bob and 0.0845 BTC change.
+3. The dashed box is not an output: it is the 0.0005 BTC left over, which the miner takes.
+
+**Sources**
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## The fee is the leftover, written nowhere {.smaller}
+
+:::: {.columns}
+::: {.column width="58%"}
+**Bottom line:** a Bitcoin transaction has no fee field. The fee is whatever the inputs hold that the outputs don't pay out: here 0.0005 BTC [@antonopoulos_masteringbitcoinprogramming_2017].
+
+- The value of the coins spent "must be spent or given to a miner as a transaction fee" [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+- Leave out the change output and the change becomes the fee: the miner keeps it.
+- Fees are priced by the transaction's size, and miners favour the highest fee for the space, so a higher fee buys an earlier place [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+- An explorer shows a fee only because it worked it out from the inputs' values.
+:::
+::: {.column width="42%"}
+| Alice's payment | BTC |
+| --- | ---: |
+| In: Joe's output 0 | 0.1000 |
+| Out 0: Bob's Cafe | −0.0150 |
+| Out 1: change to Alice | −0.0845 |
+| **Fee to the miner** | **0.0005** |
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that the fee is implied: inputs minus outputs. It matters here because analysts often check a fee by hand, and an unusually large fee can mean a mistake, such as a forgotten change output. Emphasize that the subtraction is the only way the fee exists.
+
+**Key Points**
+- There is no fee field; the fee is the sum of the inputs minus the sum of the outputs.
+- Mastering Bitcoin warns that forgetting the change output in a hand-built transaction pays the change to the miner.
+- Fees are priced by size, and miners prioritise by fee rate; fees rise as demand for block space rises. The developer guide counts size in bytes; since SegWit, signature data counts for less, a detail day 1 does not need.
+- An explorer's "fee" figure is derived, not read from the transaction.
+
+**Walkthrough**
+1. Start with the input: 0.1 BTC.
+2. Subtract Bob's 0.015 BTC and Alice's 0.0845 BTC change.
+3. The 0.0005 BTC left over is the fee.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## Bitcoin keeps no balances, only unspent coins {.smaller}
+
+**Bottom line:** "There are no accounts or balances in bitcoin; there are only unspent transaction outputs" [@antonopoulos_masteringbitcoinprogramming_2017]. Ethereum and the lab's course chain do keep balances, so read each explorer page with the right model.
+
+| | Bitcoin (UTXO model) | Ethereum and the course chain (account model) |
+| ------ | ----------------- | ----------------- |
+| The chain stores | Unspent outputs | Accounts: address, balance, nonce [@ethereumorg_glossary_2026] |
+| A payment | Spends whole outputs, makes change | Moves value from one balance to another |
+| A "balance" | Added up by a wallet or explorer | Read from the account |
+| You trace by | Following outputs into later inputs | Following transfers between addresses |
+
+- The account model has no change outputs, so Bitcoin's change clues don't carry over [@victor_clustering_2020].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide contrasts the two ledger models students will meet: Bitcoin's unspent outputs and Ethereum's accounts. It matters here because the lab's explorer reads an account-model chain and shows balances directly, while Bitcoin has no balances at all. Emphasize that "Alice's balance went down" is the wrong way to describe a Bitcoin payment: Alice's coin was spent and two new ones were made.
+
+**Key Points**
+- Bitcoin stores unspent outputs; a wallet's balance is the sum of the outputs its keys can spend.
+- Ethereum stores accounts with an address, balance and nonce; a transfer changes two balances.
+- Tracing differs: output to input on Bitcoin, address to address on account chains.
+- Change-output heuristics do not apply to account-model chains.
+
+**Walkthrough**
+1. Read across each row of the table, Bitcoin first.
+2. Ask students which column the lab's explorer will show (the account model).
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @ethereumorg_glossary_2026
+- @victor_clustering_2020
+
+:::
+
+## Every payment takes the same five steps {.smaller}
+
+**Bottom line:** every payment takes five steps, and what you can see changes at each [@antonopoulos_masteringbitcoinprogramming_2017].
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin: 0.5rem 0; font-family: sans-serif;">
+<div style="text-align: center;"><div style="width: 40px; height: 40px; border-radius: 50%; background: #0369a1; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">1</div><small>Sign</small></div>
+<div style="flex-grow: 1; height: 4px; background: #cbd5e1; margin: 0 10px; border-radius: 2px;"></div>
+<div style="text-align: center;"><div style="width: 40px; height: 40px; border-radius: 50%; background: #0369a1; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">2</div><small>Broadcast</small></div>
+<div style="flex-grow: 1; height: 4px; background: #cbd5e1; margin: 0 10px; border-radius: 2px;"></div>
+<div style="text-align: center;"><div style="width: 40px; height: 40px; border-radius: 50%; background: #0369a1; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">3</div><small>Mempool</small></div>
+<div style="flex-grow: 1; height: 4px; background: #cbd5e1; margin: 0 10px; border-radius: 2px;"></div>
+<div style="text-align: center;"><div style="width: 40px; height: 40px; border-radius: 50%; background: #0369a1; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">4</div><small>Block</small></div>
+<div style="flex-grow: 1; height: 4px; background: #cbd5e1; margin: 0 10px; border-radius: 2px;"></div>
+<div style="text-align: center;"><div style="width: 40px; height: 40px; border-radius: 50%; background: #0369a1; color: white; line-height: 40px; margin: 0 auto; font-weight: bold;">5</div><small>Confirmations</small></div>
+</div>
+
+| Step | Alice's payment | What an analyst can see |
+| -------- | ---------------- | ---------------- |
+| 1 Sign | Her wallet signs it with her key (lesson ②) | Nothing: it is still in her wallet |
+| 2 Broadcast | Nodes check it and pass it on | The first node to relay it: a weak clue [@biryukov_deanonymisationclientsbitcoin_2014] |
+| 3 Mempool | It waits, unconfirmed | "Unconfirmed" on a node or explorer |
+| 4 Block | A miner includes it in block 277,316 | The block and its time |
+| 5 Confirmations | Blocks pile on top | The confirmation count |
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide lays out the life of a transaction as the lesson's spine: sign, broadcast, mempool, block, confirmations. It matters here because each step leaves different evidence, and analysts need to know what can be observed at each one. Emphasize the right-hand column: before broadcast there is nothing on the network, and before a block there is nothing on the chain.
+
+**Key Points**
+- Signing happens in the wallet with the private key that controls the output being spent; lesson ② covers keys.
+- Broadcast and the mempool are network events, not chain events.
+- Inclusion in a block puts the payment on the chain; confirmations then accumulate.
+
+**Walkthrough**
+1. Follow Alice's payment along the five circles.
+2. For each row, read what an analyst could observe at that moment.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @biryukov_deanonymisationclientsbitcoin_2014
+
+:::
+
+## Nodes check a payment before passing it on {.smaller}
+
+:::: {.columns}
+::: {.column width="58%"}
+**Bottom line:** Alice's wallet handed her signed payment to a node. Each node checks it and relays it to its peers; there is no central server [@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024].
+
+- Each node checks that the signature unlocks the coin being spent, that the coin is still unspent, and that the outputs don't add up to more than the inputs [@antonopoulos_masteringbitcoinprogramming_2017].
+- A peer forwards a transaction only "given that it is a valid transaction" [@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024].
+- **For an analyst:** researchers have linked transactions to the IP address that sent them by watching which nodes relayed them first [@biryukov_deanonymisationclientsbitcoin_2014].
+- On its own that is **Low** confidence: many wallets send through someone else's node rather than their own, so the first relay may not be the sender [@bitcoin.orgdevelopers_operatingmodesdeveloper_2024].
+:::
+::: {.column width="42%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Relay {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7];
+
+  W  [label="Alice's\nwallet", fillcolor="#e0f2fe", color="#38bdf8"];
+  N1 [label="Node"];
+  N2 [label="Node"];
+  N3 [label="Node"];
+  N4 [label="Node"];
+  M  [label="Miner's\nnode", fillcolor="#dcfce7", color="#22c55e"];
+
+  W -> N1;
+  N1 -> N2;
+  N1 -> N3;
+  N2 -> N4;
+  N3 -> M;
+  N4 -> M;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows broadcast as peer-to-peer relay, with each node validating before it forwards. It matters here because the network, not a company, carries payments, and because watching the network is itself a source of evidence with known limits. Emphasize the confidence point: first-relay evidence alone rates Low on the course scale.
+
+**Key Points**
+- Nodes check signatures, that inputs exist and are unspent, and that outputs do not exceed inputs.
+- Valid transactions are forwarded peer to peer with inv, getdata and tx messages; invalid ones stop at the first honest node.
+- Biryukov, Khovratovich and Pustogarov (2014) linked transactions to IP addresses by observing relay.
+- Lightweight wallets connect to other people's full nodes, so the first node to relay may not be the sender's.
+
+**Walkthrough**
+1. Alice's wallet sends to one node.
+2. That node checks the payment and forwards it to its peers, which do the same.
+3. The payment reaches miners' nodes without any central point.
+
+**Sources**
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @biryukov_deanonymisationclientsbitcoin_2014
+- @bitcoin.orgdevelopers_operatingmodesdeveloper_2024
+
+:::
+
+## Unconfirmed is not paid: it can still vanish {.smaller}
+
+:::: {.columns}
+::: {.column width="58%"}
+**Bottom line:** until a miner includes it, Alice's payment only waits in the nodes' memory, and "unconfirmed transactions have no permanent status in Bitcoin" [@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024].
+
+- Nodes hold valid transactions that are waiting for a block in a **memory pool** (mempool).
+- It lives in memory: "When a peer shuts down, its memory pool is lost" [@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024].
+- A transaction that is never mined tends "to slowly disappear from the network as peers restart" [@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024].
+- So "unconfirmed" on an explorer means *seen*, not *settled*. Lesson ③ covers why a payment gets stuck and when one is final.
+:::
+::: {.column width="42%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Mempool {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7];
+
+  T [label="Alice's signed payment", fillcolor="#e0f2fe", color="#38bdf8"];
+  P [label="Mempool\n(in each node's memory)", fillcolor="#fef3c7", color="#f59e0b"];
+  B [label="Mined into a block\n(confirmed)", fillcolor="#dcfce7", color="#22c55e"];
+  D [label="Never mined:\nfades as nodes restart", fillcolor="#fee2e2", color="#f87171"];
+
+  T -> P;
+  P -> B;
+  P -> D [style=dashed];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the mempool as a temporary holding area, so that an unconfirmed transaction is not yet a payment. It matters here because explorers show unconfirmed transactions alongside confirmed ones, and an analyst who reports an unconfirmed payment as made can be wrong. Emphasize the difference between seen and settled; lesson ③ takes up stuck transactions and finality.
+
+**Key Points**
+- The mempool holds valid, unconfirmed transactions eligible for the next block.
+- Bitcoin Core keeps it in non-persistent memory, so a restart loses it, apart from the node's own wallet transactions.
+- Transactions that are never mined fade from the network as peers restart.
+- An explorer's "unconfirmed" label means the explorer's node has seen it.
+
+**Walkthrough**
+1. Alice's payment enters the mempool after broadcast.
+2. Most payments leave by being mined into a block.
+3. A payment that is never mined fades away, and the coin it tried to spend stays unspent.
+
+**Sources**
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+
+:::
+
+## A miner packs waiting payments into a block {.smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+**Bottom line:** block 277,316 holds Alice's payment among 419 transactions. Its miner paid itself 25.09094928 BTC: the 25 BTC subsidy of the time plus the fees [@antonopoulos_masteringbitcoinprogramming_2017].
+
+- The block's first transaction, the **coinbase**, collects "a block subsidy and any transaction fees" [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- The header "stores the hash of the previous block's header, chaining the blocks together", plus a Merkle root of the transactions. Edit one transaction and every later link breaks [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- Proof of work decides whose block the network accepts: lesson ③ [@nakamoto_bitcoinpeertopeerelectronic_2008].
+:::
+::: {.column width="48%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Block {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  P [label="Block 277,315"];
+  B [shape=plaintext, style="", label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="0" CELLPADDING="8" COLOR="#38bdf8">
+      <TR><TD BGCOLOR="#e0f2fe"><B>Block 277,316 header</B><BR/>previous block's hash<BR/>Merkle root, time, nonce</TD></TR>
+      <TR><TD BGCOLOR="#dcfce7">Coinbase: 25.09094928 BTC<BR/>to the miner</TD></TR>
+      <TR><TD BGCOLOR="#fef3c7">Alice pays Bob's Cafe<BR/>fee 0.0005 BTC</TD></TR>
+      <TR><TD BGCOLOR="#f8fafc">417 other transactions</TD></TR>
+    </TABLE>>];
+
+  P -> B [dir=back, label=" the header points back"];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows block assembly with the real block that holds Alice's payment. It matters here because analysts read blocks as well as transactions: the coinbase shows who was paid for the block, and the header links each block to the one before. Emphasize that the hash link is what makes an edit show, which lesson ③ builds on.
+
+**Key Points**
+- Block 277,316 contains 419 transactions; its coinbase pays 25.09094928 BTC, the 25 BTC subsidy of the time plus fees.
+- The coinbase transaction collects the block subsidy and the fees of every transaction in the block.
+- The header holds the previous block's hash and a Merkle root of the block's transactions.
+- Proof of work and how the network chooses between blocks are taught in lesson ③ and the consensus module.
+
+**Walkthrough**
+1. The header points back to block 277,315.
+2. Inside the block: the coinbase paying the miner, Alice's payment and 417 others.
+3. Alice's 0.0005 BTC fee is part of what the coinbase collects.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+## Each block on top adds one confirmation {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+**Bottom line:** a payment's confirmations count its own block and every block on top of it. When block 277,318 was mined, Alice's payment had three [@bitcoinorg_payment_2026].
+
+- Each new block adds one confirmation, so confirmations = latest block height − the payment's block height + 1 [@bitcoinorg_payment_2026].
+- The count keeps rising, so it is only true at the moment you read it.
+- Bitcoin never declares a payment final; each block on top makes reversal harder [@nakamoto_bitcoinpeertopeerelectronic_2008]. Lesson ③ covers how many are enough.
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Depth {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  B1 [label="Block 277,316: Alice's payment\n1 confirmation", fillcolor="#fef3c7", color="#f59e0b"];
+  B2 [label="Block 277,317\n2 confirmations"];
+  B3 [label="Block 277,318\n3 confirmations"];
+
+  B1 -> B2;
+  B2 -> B3;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches how to count confirmations, using Alice's block. It matters here because explorers display the count prominently and analysts must report it accurately and with a time. Emphasize that confirmations measure depth, not finality; lesson ③ explains what depth is enough.
+
+**Key Points**
+- A transaction in the latest block has one confirmation; each block on top adds one.
+- The count is the latest height minus the transaction's height, plus one.
+- The count changes every block, so it is only true when it was read; lesson ③ covers how a memo reports it.
+- Bitcoin finality is probabilistic: reversal becomes harder with depth but is never declared impossible.
+
+**Walkthrough**
+1. Block 277,316 holds the payment: one confirmation.
+2. Block 277,317 makes two.
+3. Block 277,318 makes three.
+
+**Sources**
+- @bitcoinorg_payment_2026
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+## An explorer is a node's record, plus extras {.smaller}
+
+**Bottom line:** an explorer shows what a node holds, plus figures it works out and labels it adds. Rely on the first; check the rest.
+
+:::: {.columns}
+::: {.column width="56%"}
+Bitcoin Core's answer for Alice's payment, trimmed and with hashes shortened [@antonopoulos_masteringbitcoinprogramming_2017]:
+
+```json
+{
+  "txid": "0627052b...c2f2",
+  "vin": [
+    { "txid": "7957a35f...6f18", "vout": 0 }
+  ],
+  "vout": [
+    { "value": 0.01500000, "n": 0,
+      "scriptPubKey": { "addresses": ["1GdK9Uzp..."] } },
+    { "value": 0.08450000, "n": 1,
+      "scriptPubKey": { "addresses": ["1Cdid9KF..."] } }
+  ]
+}
+```
+
+The input names Joe's transaction and output 0, but not its 0.1 BTC, so it shows no fee [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+:::
+::: {.column width="44%"}
+| On the page | Comes from |
+| --- | --- |
+| Txid, outputs, block | The chain |
+| Input amounts, fee, "balance" | Worked out from earlier transactions |
+| A tag, such as "Exchange" | Whoever runs the explorer |
+
+- A tag alone rates **Low** confidence: a lead, not a fact.
+- The lab's explorer, Otterscan, is open source (MIT licence, as of 23 Oct 2026) [@otterscan_otterscan_2025].
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates what an explorer reads from the chain from what it derives or adds. It matters here because analysts quote explorer pages in their work, and only part of each page is evidence from the chain itself. Emphasize that a direct node query returns the same record, and that tags and names are someone else's claim.
+
+**Key Points**
+- Mastering Bitcoin decodes this same transaction with Bitcoin Core's bitcoin-cli, the command-line tool in the Bitcoin lab's terminal. The slide shortens the hashes; in full, the txid is 0627052b6f28912f2703066a912ea577f2ce4da4caa5a5fbd8a57286c345c2f2, the input's txid is 7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18, and the addresses are 1GdK9UzpHBzqzX2A9JFP3Di4weBwqgmoQA (Bob's Cafe) and 1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK (Alice).
+- A transaction's input refers to a previous output by txid and index; its value and the fee must be looked up.
+- Explorers add derived figures (input values, fees, balances) and third-party labels.
+- On the course scale, one unverified label such as an explorer tag is Low confidence.
+- The lab's explorer, Otterscan (open source), reads the course chain, which uses the account model.
+
+**Walkthrough**
+1. In the JSON, find the txid, the one input (Joe's txid, output 0) and the two outputs with their values and addresses.
+2. Note what is missing: the input's 0.1 BTC and the fee.
+3. Read the table: chain data, derived figures, added labels.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @otterscan_otterscan_2025
+
+:::
+
+## Four beliefs to correct when you brief {.smaller}
+
+**Bottom line:** agents and prosecutors may arrive with these beliefs. Each has a short, sourced answer.
+
+| They may say | Tell them |
+| --- | --- |
+| "Bitcoin is anonymous." | It is pseudonymous. Every payment is public, and once one address is tied to a person, its history is exposed [@narayanan_bitcoincryptocurrencytechnologies_2016]. |
+| "An address is a person." | One person can hold many addresses, and one service's addresses can hold many people's money [@meiklejohn_fistfulbitcoinscharacterizing_2013]. |
+| "The coins are stored on the blockchain." | The chain holds unspent outputs. The keys that spend them sit in wallets, off the chain [@antonopoulos_masteringbitcoinprogramming_2017]. |
+| "It can't be hacked." | The cryptography is strong. Thefts happen at the endpoints: wallets and exchanges [@narayanan_bitcoincryptocurrencytechnologies_2016]. |
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns common misconceptions into the answers an analyst gives when briefing non-specialists. It matters here because explaining findings to agents and prosecutors is the students' core function, and these beliefs come up early in almost every case. Emphasize plain answers: pseudonymous rather than anonymous, addresses rather than people, keys rather than stored coins, endpoints rather than the cryptography.
+
+**Key Points**
+- Bitcoin is pseudonymous: linking one address to a person exposes its whole public history.
+- Addresses do not map one to one onto people; services pool many customers' funds.
+- Wallets hold keys; the chain holds outputs.
+- Most losses come from compromised endpoints, not broken cryptography.
+
+**Walkthrough**
+1. Read each belief, then ask a student to answer it before showing the right-hand column.
+
+**Sources**
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## Recap: a payment is inputs, outputs and a fee {.smaller}
+
+- A transaction spends earlier outputs whole and creates new ones; change returns the surplus.
+- The fee is inputs minus outputs; no field states it.
+- Bitcoin keeps no balances. Ethereum and the course chain do.
+- Every payment is signed, broadcast, held in a mempool, mined into a block and confirmed. Unconfirmed is not paid.
+- An explorer is a node's record plus figures it works out and labels it adds. Tags are leads, not facts.
+- **Next, lesson ②:** who can spend an output: keys, secp256k1 and addresses.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson and hands over to lesson ② on keys. It matters here because students now have the vocabulary (input, output, change, fee, mempool, block, confirmation) that the rest of day 1 and the lab use. Emphasize the reading habit: inputs, outputs, fee, block, count, and which parts of a page are chain data.
+
+**Key Points**
+- UTXO model: spend whole, make change.
+- The fee is implied.
+- Bitcoin uses unspent outputs; Ethereum uses accounts.
+- The five steps of a payment, and that unconfirmed is not settled.
+- Explorer pages mix chain data, derived figures and third-party labels.
+
+**Walkthrough**
+None
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+<!-- Hidden 24 Oct 2026 when this lesson was rebuilt around one real payment (Build Tracker D1 1): kept for reuse, not shown. -->
+
+:::: {.content-hidden}
 
 ## The Big Picture {.smaller}
 
@@ -50,6 +674,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## What is a Blockchain? {.smaller}
 
 - **A Shared Reality:** At its core, a blockchain is a system that allows multiple distributed participants to agree on a single, shared history of events without needing a central referee.
@@ -79,6 +707,10 @@ None
 - @bano_consensusageblockchains_2017
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## The "Block" in Blockchain {.smaller}
 
@@ -165,6 +797,10 @@ This slide establishes what a block contributes to the larger chain: batching ac
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## The Three Pillars {.smaller}
 
 A blockchain is not one single invention. It is the clever synthesis of three distinct technologies. 
@@ -192,6 +828,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Pillar 1: Cryptography {.smaller}
 
 - **Encryption (Symmetric & Asymmetric):** The math used to scramble data for confidentiality. While blockchains generally do not encrypt the ledger itself, these concepts are the fundamental building blocks for digital signatures and advanced privacy features.
@@ -218,6 +858,10 @@ None
 - @l31_r3_corda_enterprise_2026
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Pillar 2: Peer-to-Peer Networks {.smaller}
 
@@ -325,6 +969,10 @@ This slide establishes how blockchain networks move information without relying 
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Pillar 3: Consensus {.smaller}
 
 - **The Problem of Errors and Conflicts:** In a P2P network, some participants will broadcast invalid or conflicting information (e.g., spending money they don't have).
@@ -350,6 +998,10 @@ None
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Putting it Together: The Lifecycle of a Transaction
 
@@ -398,6 +1050,10 @@ None
 - @3blue1brown_howdoesbitcoin_2017
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Step 1: Creation and Signing {.smaller}
 
@@ -452,6 +1108,9 @@ This slide establishes that every blockchain transaction begins as an authorized
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Step 2: The Broadcast {.smaller}
 
@@ -500,6 +1159,9 @@ This slide establishes how a locally created transaction becomes network-visible
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Step 3: The Mempool {.smaller}
 
@@ -540,6 +1202,9 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Step 4: Block Assembly {.smaller}
 
@@ -605,6 +1270,10 @@ This slide establishes the moment when specialized participants select transacti
 - @3blue1brown_howdoesbitcoin_2017
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Step 5: Achieving Consensus {.smaller}
 
@@ -674,6 +1343,10 @@ This slide establishes how the network chooses one proposed block to become the 
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Step 6: Chaining the Block {.smaller}
 
 - **The Hash Link:** This is where the "chain" in blockchain comes in. The new block contains the "fingerprint" (cryptographic hash) of the *previous* block.
@@ -722,6 +1395,10 @@ This slide establishes why accepted blocks become difficult to alter after the f
 - @antonopoulos_masteringbitcoinprogramming_2017
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## The Result: A Shared Truth {.smaller}
 
@@ -774,6 +1451,9 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## The Spectrum of Decentralization {.smaller}
 
@@ -806,6 +1486,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Common Misconceptions: What a Blockchain is NOT {.smaller}
 
 - **It is NOT a cloud storage drive:** 
@@ -833,6 +1517,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Looking Ahead: Next Steps {.smaller}
 
 - You have now seen the assembled vehicle and watched it drive from Point A to Point B.
@@ -859,7 +1547,11 @@ None
 - @3blue1brown_howdoesbitcoin_2017
 
 :::
- 
+
+::::
+
+:::: {.content-hidden}
+
 ## Bitcoin Video (Optional)
 
 <div style="text-align:center;">
@@ -883,5 +1575,7 @@ None
 None
 
 :::
+
+::::
 
 ## References
