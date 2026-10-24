@@ -110,6 +110,10 @@ class SocketHarness:
             f"timed out waiting for socket event {event_name}: observed {len(seen)} payload(s)"
         )
 
+    def events(self, event_name: str) -> list[object]:
+        with self._condition:
+            return list(self._events.get(event_name, []))
+
     def disconnect(self) -> None:
         if self.client.connected:
             self.client.disconnect()

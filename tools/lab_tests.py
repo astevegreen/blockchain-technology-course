@@ -20,7 +20,7 @@ AUTOMATED = "dynamic-labs/regression-tests/automated"
 ALL = "*"
 
 # Labs whose run.sh passes on GitHub's runners. Add one at a time, as each passes.
-IN_CI = ["quiz-engine"]
+IN_CI = ["exercises", "quiz-engine"]
 
 # Lab folders under dynamic-labs/ whose test folder has another name.
 TEST_NAME = {"quiz-engine-v2": "quiz-engine"}

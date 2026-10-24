@@ -2,39 +2,35 @@
 
 ## Goal
 
-Validate the visible BGP exercise flow for both the student and the
-instructor.
+Validate the visible BGP exercise flow for a student. Since the June 2026
+pilot the BGP game is self-service: each student plays a room of bots, and
+there is no instructor dashboard.
 
 ## Context Ownership
 
-- use one fresh student context for the student room flow
-- use a separate fresh instructor context for instructor checks
-- do not reuse student cookies in the instructor context, or instructor
-  cookies in the student context
+- use one fresh student context for the whole room flow
 
 ## Steps
 
 1. Open `/exercises/bgp/` in a student context.
 2. Confirm the student page renders and the connection state settles.
-3. In a separate fresh instructor context, open
-   `/exercises/bgp/instructor` and confirm it redirects or blocks before
-   login.
-4. Log in through `/instructor/` in that instructor context and open
-   `/exercises/bgp/instructor`.
-5. Use the instructor UI to enable self-service mode.
-6. Return to the student context and create a single-player room.
-7. Confirm the student view advances into the simulation state.
-8. Check console and network failures after student page load,
-   instructor auth probe, instructor page load, self-service enable, and
-   room creation.
+3. In Mission Control, create a room with 4 nodes and 0 malicious nodes.
+4. Confirm the Network View shows the student's node and 3 bot peers, and
+   the student is asked to broadcast.
+5. Broadcast, then confirm the student receives 3 messages carrying the
+   same order and is asked for a final vote.
+6. Vote for that order, then reveal the debrief.
+7. Confirm the Self-Service Debrief Explorer shows the network, the
+   correct consensus, and the student's node as surviving.
+8. Check console and network failures after page load, room creation,
+   broadcast, vote, and debrief.
 
 ## Expected Results
 
 - the student shell loads
-- the instructor route blocks before login
-- the instructor dashboard loads behind shared auth
-- self-service can be enabled from the instructor UI
-- the student can create a room and enter the simulation
+- a room of bots opens without an instructor
+- the room advances from broadcast to vote to debrief
+- the debrief matches the order every node sent
 
 ## Failure Evidence
 

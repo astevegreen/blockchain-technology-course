@@ -42,6 +42,8 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
             probe.close()
 
     def test_http_smoke_and_auth_gates(self) -> None:
+        # Since the June 2026 pilot the BGP game is student-only (no instructor
+        # dashboard); only the Insider game keeps one behind shared auth.
         student = new_session()
         instructor = new_session()
         try:
@@ -59,23 +61,12 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
             self.assertEqual(insider.status_code, 200)
             self.assertIn("The Insider", insider.text)
 
-            unauth_bgp_instructor = student.get(
-                f"{self.base_url}/exercises/bgp/instructor",
-                timeout=10,
-                allow_redirects=False,
-            )
-            self.assertIn(unauth_bgp_instructor.status_code, (301, 302, 401, 403))
-
             unauth_insider_instructor = student.get(
                 f"{self.base_url}/exercises/insider/instructor",
                 timeout=10,
                 allow_redirects=False,
             )
             self.assertIn(unauth_insider_instructor.status_code, (301, 302, 401, 403))
-
-            bgp_instructor = instructor.get(f"{self.base_url}/exercises/bgp/instructor", timeout=10)
-            self.assertEqual(bgp_instructor.status_code, 200)
-            self.assertIn("Byzantine Generals Simulation Control", bgp_instructor.text)
 
             insider_instructor = instructor.get(
                 f"{self.base_url}/exercises/insider/instructor",
@@ -87,75 +78,71 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
             instructor.close()
             student.close()
 
-    def test_bgp_socket_self_service_flow(self) -> None:
-        instructor = new_session()
-        student = new_session()
-        instructor_socket = None
+    def test_bgp_solo_room_from_broadcast_to_debrief(self) -> None:
+        # One student and three honest bots: every message carries the same
+        # order, so the run is deterministic from room creation to debrief.
         student_socket = None
         try:
-            login_instructor(instructor, self.base_url)
-            instructor_page = instructor.get(
-                f"{self.base_url}/exercises/bgp/instructor",
-                timeout=10,
-            )
-            self.assertEqual(instructor_page.status_code, 200)
-
-            instructor_socket = SocketHarness(
-                self.base_url,
-                cookie_header=cookie_header(instructor),
-                socketio_path="exercises/bgp/socket.io",
-                event_names=("connected", "dashboard_state", "self_service_toggled", "server_error"),
-            )
-            instructor_socket.wait_for("connected")
-            instructor_socket.emit("join_instructor")
-            instructor_socket.wait_for("dashboard_state")
-            instructor_socket.emit("toggle_self_service", {"enabled": True})
-            toggled = instructor_socket.wait_for(
-                "self_service_toggled",
-                lambda payload: bool(payload and payload.get("self_service_enabled")),
-            )
-            self.assertTrue(toggled["self_service_enabled"])
-
             student_socket = SocketHarness(
                 self.base_url,
                 socketio_path="exercises/bgp/socket.io",
-                event_names=("connected", "restore_state", "phase_1_start", "server_error"),
+                event_names=(
+                    "connected",
+                    "restore_state",
+                    "phase_1_start",
+                    "phase_2_start",
+                    "room_update",
+                    "debrief_ready",
+                    "server_error",
+                ),
             )
             student_socket.wait_for("connected")
             student_uuid = f"bgp-regression-{uuid_lib.uuid4().hex[:10]}"
-            student_socket.emit("register", {"uuid": student_uuid, "mode": "single"})
-            restore = student_socket.wait_for(
+            student_socket.emit("register", {"uuid": student_uuid})
+            lobby = student_socket.wait_for(
                 "restore_state",
-                lambda payload: payload and payload.get("view") == "queue",
+                lambda payload: payload and payload.get("view") == "lobby",
             )
-            self.assertEqual(restore["player"]["uuid"], student_uuid)
+            self.assertEqual(lobby["player"]["uuid"], student_uuid)
 
-            student_socket.emit("create_single_player_room", {"size": 4, "num_traitors": 1})
-            phase_one = student_socket.wait_for(
-                "phase_1_start",
-                lambda payload: payload and payload.get("room", {}).get("session_started") is True,
-            )
-            self.assertEqual(phase_one["room"]["mode"], "single")
+            student_socket.emit("create_room", {"size": 4, "num_traitors": 0})
+            phase_one = student_socket.wait_for("phase_1_start")
+            self.assertEqual(phase_one["view"], "broadcast")
             self.assertEqual(phase_one["room"]["size"], 4)
-            self.assertIn(phase_one["view"], ("broadcast", "broadcast_wait"))
+            self.assertEqual(phase_one["room"]["num_traitors"], 0)
+            self.assertEqual(phase_one["room"]["total_players"], 4)
+            self.assertEqual(len(phase_one["room"]["peer_nodes"]), 3)
+            self.assertEqual(phase_one["room"]["broadcast_complete"], 3, "the bots broadcast as soon as the room opens")
+            self.assertEqual(phase_one["player"]["role"], "honest")
+            order = phase_one["player"]["initial_value"]
+            self.assertIn(order, ("Attack", "Retreat"))
+
+            student_socket.emit("submit_broadcast", {"messages": {}})
+            phase_two = student_socket.wait_for("phase_2_start")
+            self.assertEqual(phase_two["view"], "tally")
+            self.assertEqual(len(phase_two["messages"]), 3)
+            self.assertEqual({message["value"] for message in phase_two["messages"]}, {order})
+
+            student_socket.emit("submit_final_vote", {"value": order})
+            voted = student_socket.wait_for(
+                "room_update",
+                lambda payload: payload and payload.get("view") == "await_debrief",
+            )
+            self.assertEqual(voted["room"]["vote_complete"], 4)
+
+            student_socket.emit("reveal_room_debrief")
+            debrief = student_socket.wait_for("debrief_ready")["debrief"]
+            self.assertEqual(debrief["correct_consensus"], order)
+            self.assertEqual(len(debrief["edges"]), 12, "each of 4 nodes sends to 3 peers")
+            me = next(player for player in debrief["players"] if player["uuid"] == student_uuid)
+            self.assertEqual(me["final_vote"], order)
+            self.assertTrue(me["survived"])
+            self.assertEqual(student_socket.events("server_error"), [])
         finally:
-            if instructor_socket is not None:
-                try:
-                    instructor_socket.emit("toggle_self_service", {"enabled": False})
-                    instructor_socket.wait_for(
-                        "self_service_toggled",
-                        lambda payload: payload and payload.get("self_service_enabled") is False,
-                        timeout_seconds=5,
-                    )
-                except Exception:
-                    pass
-                instructor_socket.disconnect()
             if student_socket is not None:
                 student_socket.disconnect()
-            instructor.close()
-            student.close()
 
-    def test_insider_private_room_and_instructor_socket_flow(self) -> None:
+    def test_insider_private_room_fills_with_agents_and_instructor_sees_it(self) -> None:
         instructor = new_session()
         student = new_session()
         instructor_socket = None
@@ -182,7 +169,7 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
                 socketio_path="exercises/insider/socket.io",
                 event_names=("joined", "room_update", "role_assigned", "error_message"),
             )
-            student_socket.emit("join", {"name": "Regression Host", "join_mode": "create_private"})
+            student_socket.emit("join", {"name": "Regression Student", "join_mode": "create_private"})
             joined = student_socket.wait_for("joined")
             room_id = joined["room_id"]
             self.assertEqual(joined["player_token"], joined["sid"])
@@ -191,8 +178,10 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
                 "room_update",
                 lambda payload: payload and payload.get("room_id") == room_id and payload.get("state") == "lobby",
             )
-            self.assertEqual(lobby_state["host_sid"], joined["sid"])
+            self.assertTrue(lobby_state["private_room"])
             self.assertEqual(lobby_state["player_count"], 1)
+            self.assertEqual([player["name"] for player in lobby_state["players"]], ["Regression Student"])
+            self.assertTrue(lobby_state["settings"]["agents_enabled"])
 
             qr = student.get(
                 f"{self.base_url}/exercises/insider/room/{room_id}/qr.png",
@@ -207,26 +196,24 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
             )
             self.assertIn(room_id, instructor_room["rooms"])
 
-            student_socket.emit("set_fill_with_agents", {"enabled": True})
-            fill_enabled = student_socket.wait_for(
-                "room_update",
-                lambda payload: payload and payload.get("room_id") == room_id and payload.get("fill_with_agents") is True,
-            )
-            self.assertTrue(fill_enabled["fill_with_agents"])
-
+            # Below the minimum of 4, agents fill the room up to the recommended 5 when it starts.
             student_socket.emit("start_game")
             role = student_socket.wait_for(
                 "role_assigned",
                 lambda payload: payload and payload.get("role") in {"insider", "player"},
             )
-            self.assertIn(role["role"], {"insider", "player"})
+            if role["role"] == "insider":
+                self.assertIsNone(role["word"])
+            else:
+                self.assertTrue(role["word"])
 
             clue_state = student_socket.wait_for(
                 "room_update",
                 lambda payload: payload and payload.get("room_id") == room_id and payload.get("state") == "clue",
             )
-            self.assertEqual(clue_state["state"], "clue")
-            self.assertGreaterEqual(clue_state["player_count"], 1)
+            self.assertEqual(len(clue_state["players"]), 5)
+            self.assertEqual(sum(1 for player in clue_state["players"] if player["is_agent"]), 4)
+            self.assertEqual(student_socket.events("error_message"), [])
         finally:
             if instructor_socket is not None:
                 instructor_socket.disconnect()

@@ -55,16 +55,16 @@ For every failed step, capture:
 
 ## BGP Flow
 
+Since the June 2026 pilot the BGP game is student-only: no instructor
+dashboard, and each student plays a room of bots.
+
 1. Open `/exercises/bgp/`.
 2. Confirm the student shell loads without a blank page.
-3. In a separate fresh instructor context, confirm
-   `/exercises/bgp/instructor` redirects or blocks before login.
-4. Log in through `/instructor/` in that instructor context and open
-   `/exercises/bgp/instructor`.
-5. Use the instructor UI to enable self-service mode.
-6. Use the student UI to create a single-player room.
-7. Confirm the student view advances into the simulation state.
-8. Check console and network failures after each major state change.
+3. Create a room with 4 nodes and 0 malicious nodes.
+4. Broadcast, vote for the order received, and reveal the debrief.
+5. Confirm the debrief shows the correct consensus and the student's node
+   surviving.
+6. Check console and network failures after each major state change.
 
 ## Insider Flow
 
@@ -76,7 +76,7 @@ For every failed step, capture:
 5. Log in through `/instructor/` in that instructor context and open
    `/exercises/insider/instructor`.
 6. Confirm the room appears on the instructor dashboard.
-7. From the host UI, enable fill-with-agents and start the game.
+7. From the host UI, start the round; agents fill the room to 5 players.
 8. Confirm the role assignment and first live round state appear.
 9. Check console and network failures after each major state change.
 
@@ -85,8 +85,8 @@ For every failed step, capture:
 The dynamic L03 exercises browser regression is only complete when:
 
 - both student home pages load
-- both instructor dashboards load behind shared auth
-- both instructor dashboards block before login
-- the BGP self-service student path works visibly
+- the Insider instructor dashboard loads behind shared auth
+- the Insider instructor dashboard blocks before login
+- the BGP student path works visibly from room creation to debrief
 - the Insider private-room host path works visibly
 - no unexplained JavaScript or network failures remain

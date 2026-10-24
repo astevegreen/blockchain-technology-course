@@ -9,9 +9,12 @@ Target coverage:
 - optional fresh-start reset and boot
 - BGP and Insider student home smoke
 - BGP health endpoint
-- shared-auth gating for both instructor dashboards
-- bounded Socket.IO coverage for one isolated BGP self-service flow
-- bounded Socket.IO coverage for one isolated Insider private-room flow
+- shared-auth gating for the Insider instructor dashboard (the BGP game
+  has no instructor dashboard since the June 2026 pilot)
+- Socket.IO coverage for one BGP solo room of bots, from room creation
+  through broadcast and vote to the debrief
+- Socket.IO coverage for one Insider private room that agents fill on
+  start, seen from the instructor socket
 - QR route verification for the Insider room path
 
 Implemented files:
@@ -37,7 +40,7 @@ Default run:
 Single-test iteration:
 
 ```bash
-./regression-tests/automated/exercises/run.sh --skip-start --match test_bgp_socket_self_service_flow
+./regression-tests/automated/exercises/run.sh --skip-start --match test_bgp_solo_room_from_broadcast_to_debrief
 ```
 
 Optional fresh-start run:

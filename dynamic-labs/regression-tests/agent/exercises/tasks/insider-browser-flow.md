@@ -25,10 +25,11 @@ instructor dashboard.
 6. Log in through `/instructor/` in that instructor context and open
    `/exercises/insider/instructor`.
 7. Confirm the room appears on the instructor dashboard.
-8. Return to the host context, enable fill-with-agents, and start the
-   game.
-9. Confirm the host receives a role and the round advances into the
-   live game state.
+8. Return to the host context and start the round. Agents fill the room
+   to 5 players on their own (there is no fill-with-agents toggle since
+   the June 2026 pilot).
+9. Confirm the host receives a role, the roster shows 4 agents, and the
+   round advances into the live game state.
 10. Check console and network failures after each major phase.
 
 ## Expected Results
@@ -37,7 +38,7 @@ instructor dashboard.
 - the QR image route works
 - the instructor route blocks before login
 - the instructor dashboard sees the new room
-- the host can start a live round after enabling fill-with-agents
+- the host can start a live round alone, with agents filling the room
 
 ## Failure Evidence
 
