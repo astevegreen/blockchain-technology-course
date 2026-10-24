@@ -128,6 +128,7 @@ This slide extends day 1's address-prefix table into what each script type tells
 - P2WPKH and P2WSH are native SegWit version 0, told apart by program length: 20 bytes (42-character address) versus 32 bytes (62-character address).
 - P2TR (`bc1p...`) is SegWit version 1, Taproot.
 - OP_RETURN outputs carry data and are provably unspendable.
+- Their size is node policy, not a consensus rule. Bitcoin Core relayed and mined at most 83 bytes by default from 0.12.0 (Feb 2016); 30.0 (Oct 2025) raised the default to 100,000 bytes, "which effectively uncaps the limit", and allows several OP_RETURN outputs in one transaction (as of 24 Oct 2026).
 
 **Walkthrough**
 1. Read the first column: the type an explorer or bitcoin-cli shows.
@@ -141,6 +142,8 @@ This slide extends day 1's address-prefix table into what each script type tells
 - @wuille_bip173base32address_2017
 - @wuille_bip341taprootsegwit_2020
 - @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @bitcoincore_bitcoincore0120_2016
+- @bitcoincore_bitcoincore30_2025
 - @frowis_safeguardingevidentialvalue_2020
 
 :::
@@ -230,6 +233,8 @@ This slide corrects a common error in reports: treating the explorer's time as t
 - Bitcoin transactions carry no timestamp field; the time shown is the block's.
 - Block timestamps are set by miners and need not increase from block to block.
 - Locktime is a lower bound on when a transaction may be mined: a height if below 500 million, a Unix time otherwise.
+- "Anti-fee-sniping": since 0.11.0 (2015) Bitcoin Core's wallet sets locktime near the current height, and one time in ten a further 0 to 99 blocks back; today it uses the current height, or 0 when the wallet's copy of the chain lags (as of 24 Oct 2026). A wallet stuck at one height once gave all its transactions the same locktime, which "makes it easier for passive observers to cluster transactions by wallet".
+- The clue points to wallet software, not to a person: Low on its own.
 - Alice's payment: locktime 0; block 277,316's time is 1388185914, 27 Dec 2013 23:11:54 UTC.
 
 **Walkthrough**
@@ -239,6 +244,8 @@ This slide corrects a common error in reports: treating the explorer's time as t
 **Sources**
 - @kerin_bip113mediantimepast_2015
 - @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @todd_discouragefeesniping_2014
+- @falke_avoidleakingnlocktime_2019
 - @antonopoulos_masteringbitcoinprogramming_2017
 
 :::
@@ -333,6 +340,7 @@ This slide teaches replace-by-fee as the reason an unconfirmed transaction is no
 **Key Points**
 - BIP 125 opt-in signal: an input sequence number below 0xfffffffe.
 - The replacement pays at least the original's absolute fee; BIP 125 does not constrain its outputs.
+- Before full replace-by-fee, nodes kept the first version they saw unless it signalled, a policy "sometimes called first-seen"; Bitcoin Core 24.0.1 (Dec 2022) added an option to drop it, off by default.
 - Bitcoin Core 28.0 (Oct 2024) turned full replace-by-fee on by default and 29.0 (Apr 2025) removed the option, so nodes accept replacements whether or not the original signalled (as of 24 Oct 2026).
 - Two transactions spending the same output cannot both be mined.
 - Alice's input uses sequence 0xffffffff, so it did not signal; record the signal as wallet behaviour.
@@ -345,6 +353,8 @@ This slide teaches replace-by-fee as the reason an unconfirmed transaction is no
 
 **Sources**
 - @harding_bip125optinfull_2015
+- @bitcoincore_bitcoincore2401_2022
+- @bitcoincore_bitcoincore28_2024
 - @bitcoincore_bitcoincore29_2025
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 - @antonopoulos_masteringbitcoinprogramming_2017
