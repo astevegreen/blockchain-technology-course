@@ -1,5 +1,5 @@
 ---
-title: "Consensus in Distributed Systems & Blockchains — An Introduction"
+title: "Ledger and Finality"
 subtitle: 'Section IV: Consensus Mechanisms'
 author: Army Cyber Institute
 lesson: 01-CM
@@ -15,6 +15,541 @@ format:
     slide-level: 2
 ---
 
+## A ledger is a shared log no one can quietly edit {.smaller}
+
+**Bottom line:** a blockchain is a record you can read and check for yourself, because no single party owns it.
+
+- **Scenario:** three agencies keep one incident log, and none of them is in charge. Who decides the order of entries? How would anyone spot an edited one?
+- A **log** records events in order: you add to the end and never edit the past.
+- A **ledger** is that log kept by many parties at once, with three additions:
+  - **Replication:** every participant holds a full copy, so no one controls the record.
+  - **Hash-linking:** each entry commits to the one before it, so changing an old entry shows.
+  - **Consensus:** a rule for agreeing what is added next, and in what order.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines a ledger as an append-only log kept by many parties, using the three-agency scenario. It matters here because the rest of the lesson, and the explorer lab that follows, treat the chain as a record the analyst can check without asking anyone's permission. Emphasize that each of the three additions answers one question from the scenario: who holds the record, how an edit shows, and who decides the order.
+
+**Key Points**
+- A log is append-only: entries are added at the end and the past is not edited.
+- Replication means no single participant controls the record.
+- Hash-linking makes a changed entry visible to everyone who holds a copy.
+- Consensus decides what is added and in what order; the rest of the lesson is about when that decision becomes final.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @haber_howtimestampdigital_1991
+
+:::
+
+## "Immutable" means an edit would show {.smaller}
+
+**Bottom line:** write "tamper-evident", not "can never change". Hashes and copies protect old entries; only consensus protects the newest ones, and that takes time.
+
+- **Hash-chaining:** change an old entry and every later link stops matching, so anyone holding a copy can see it.
+- **Replication:** one party rewriting its own copy changes nothing for everyone else.
+- **But** the newest entries can still change, within the rules, while two valid versions compete. Consensus picks one, and **finality** is the point after which it won't change.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide replaces the loose word "immutable" with what a ledger actually guarantees. It matters here because analysts write "immutable" in memos, an agent or prosecutor may take it literally, and the next slides show that recent blocks do change. Emphasize that tamper-evidence comes from hashing and replication, while the stability of recent history comes from consensus and takes time.
+
+**Key Points**
+- Hash-chaining makes a retroactive edit detectable, not impossible.
+- Replication stops one party's rewrite from becoming everyone's record.
+- Finality depends on the consensus model, which is why the newest entries are the weak spot.
+
+**Walkthrough**
+None
+
+**Sources**
+- @haber_howtimestampdigital_1991
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## "Trustless" is wrong: the trust just moves {.smaller}
+
+**Bottom line:** for every chain, ask where the trust sits and what happens if it fails.
+
+- **Trust** is the set of assumptions a system's security relies on.
+- **Centralized trust** sits with one party, such as a bank or a certificate authority. If that party fails, the system fails.
+- **Distributed trust** moves to cryptography, the consensus rules and the assumption that most participants are honest.
+- **Where it sits differs by chain:**
+  - **Bitcoin:** on most of the mining power not working together to attack the network.
+  - **Tron:** on 27 Super Representatives, elected by stakers' votes, who produce the blocks [@tron_consensus_2026] (as of 23 Oct 2026).
+  - **Arbitrum:** on its sequencer, whose confirmation is "a semi-trusted promise" until the transactions are final on Ethereum.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide corrects the claim that blockchains are "trustless" by showing that trust is relocated rather than removed. It matters here because an analyst explaining a chain to an agent or prosecutor needs to say who or what the record depends on, and that answer differs from chain to chain. Emphasize the analytical question: where does the dependency sit, and what fails if it does?
+
+**Key Points**
+- Trust is a set of explicit assumptions, not a feeling.
+- Centralized systems concentrate trust in one party; distributed systems spread it across mechanisms and participants.
+- Bitcoin depends on an honest majority of mining power, Tron on 27 elected Super Representatives, and Arbitrum on its sequencer until Ethereum finalizes its transactions.
+- The Tron and Arbitrum examples return in days 6 and 7.
+
+**Walkthrough**
+None
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @tron_consensus_2026
+- @arbitrum_glossary_2026
+
+:::
+
+## Consensus decides which history we all accept {.smaller}
+
+**Bottom line:** when two valid transactions conflict, signatures and hashes can't choose between them; consensus does.
+
+- Alice signs two payments that spend the same coins: one to Carol, one to Dave. Each is valid on its own; both can't stand.
+- Different nodes may see a different one first. Without a rule, each copy of the ledger would tell a different story: a **double spend**.
+- Consensus makes every honest node accept the same history. It promises two things:
+  - **Safety:** once something is decided, honest nodes never disagree about it.
+  - **Liveness:** the ledger keeps growing, even when some nodes crash or lie.
+- Each chain balances these differently, which is why "final" means something different on each one.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide states the one problem consensus solves: choosing a single history when valid transactions conflict. It matters here because signatures and hashes prove that each transaction is well formed, but they cannot say which of two conflicting ones the ledger keeps. Emphasize safety and liveness as the two promises students will see traded off in the rest of the lesson.
+
+**Key Points**
+- A double spend is two valid transactions spending the same coins; only one can stay in the ledger.
+- Consensus makes honest nodes converge on one history.
+- Safety means honest nodes never contradict a decision; liveness means the ledger keeps making progress despite faults.
+- How a chain balances the two sets what "final" means on it.
+
+**Walkthrough**
+1. Alice signs a payment to Carol and a second payment of the same coins to Dave.
+2. Some nodes receive the Carol payment first, others the Dave payment.
+3. Consensus decides which one the shared ledger keeps; the other is rejected.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @chaum_computersystemsestablished_1982
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## Open chains buy openness with slower finality {.smaller}
+
+**Bottom line:** a system that knows its members can count their votes and finish at once. An open chain can't count strangers, so it finalizes more slowly.
+
+| Family | Who takes part | What it survives | When is it final? |
+|:---------------|:----------|:-----------------|:-----------------|
+| **Crash-fault tolerant** (Raft) | Known nodes | Nodes that crash, but not nodes that lie | At once, when the protocol commits |
+| **Byzantine-fault tolerant** (PBFT) | Known members | Fewer than a third of members lying | At once, when a quorum signs |
+| **Proof of work** (Bitcoin) | Anyone | Attackers with less than half the mining power | Gradually: each block makes reversal harder |
+| **Proof of stake** (Ethereum) | Anyone who locks up stake | Reversing a final block costs at least a third of all stake | After a vote of two-thirds of the stake |
+
+- Anyone can create a thousand identities on an open chain (a **Sybil attack**), so open chains make influence cost something instead: computing work or locked-up stake.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide compares the consensus families by who may take part, what they survive and when they call something final. It matters here because the analyst meets both kinds of system: permissioned ledgers with known members, and open chains such as Bitcoin and Ethereum. Emphasize that openness is the reason open chains cannot finalize at once: they cannot count votes from members they do not know.
+
+**Key Points**
+- Crash-fault-tolerant protocols such as Raft assume known nodes that may fail but not lie.
+- Byzantine-fault-tolerant protocols such as PBFT survive fewer than a third of members lying, and are final as soon as a quorum signs.
+- Proof of work is open to anyone and makes reversal harder with every block; it never declares anything final.
+- Proof of stake is open to anyone with stake and finalizes by a two-thirds vote; reversing a finalized block would cost at least a third of all staked ETH.
+- Sybil resistance comes from admission control in permissioned systems and from economic cost in open ones.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ongaro_searchunderstandableconsensus_2014
+- @castro_practicalbyzantinefault_1999
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @ethereumorg_pos_2026
+- @bano_consensusageblockchains_2017
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## A stale block is routine, not an attack {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+**Bottom line:** a transaction with one confirmation can drop out of the chain and come back in a later block, with no attacker involved.
+
+- Two miners can find a valid block at nearly the same time. Because of network delay, some nodes see one first and some the other.
+- Nodes follow the chain with the most work. When the next block extends one side, the other block becomes **stale** (older sources say "orphan").
+- The stale block's transactions go back into the mempool to wait for a later block.
+- **For your report:** cite the block hash as well as the height, because two blocks can share a height.
+:::
+::: {.column width="45%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Fork {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7];
+
+  N  [label="Block N"];
+  A1 [label="Block N+1\n(miner A)", fillcolor="#dcfce7", color="#22c55e"];
+  B1 [label="Block N+1\n(miner B)\nstale", fillcolor="#fee2e2", color="#f87171"];
+  A2 [label="Block N+2\nbuilt on A's block", fillcolor="#dcfce7", color="#22c55e"];
+  M  [label="B's transactions go\nback to the mempool", shape=note, fillcolor="#fff7ed", color="#fdba74"];
+
+  N -> A1 -> A2;
+  N -> B1 [style=dashed, color="#f87171"];
+  B1 -> M [style=dotted, arrowsize=0.5];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that short forks happen without any attacker, because blocks take time to reach every node. It matters here because an analyst who reads a transaction at one confirmation may find it in a different block later, and should not mistake a routine fork for an attack. Emphasize that the transaction usually survives; what changes is the block it sits in.
+
+**Key Points**
+- Two valid blocks at the same height can exist briefly when miners find them close together.
+- Nodes follow the chain with the most work; the losing block becomes stale.
+- Transactions in a stale block return to the mempool and can be mined again.
+- A block height alone can be ambiguous during a fork; the block hash is not.
+
+**Walkthrough**
+1. Block N is the agreed tip.
+2. Miners A and B each find a valid block N+1 at nearly the same time.
+3. The next block, N+2, extends A's block, so B's block becomes stale.
+4. The transactions in B's block go back to the mempool to wait for a later block.
+
+**Sources**
+- @decker_informationpropagationbitcoin_2013
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
+## Each confirmation makes reversal harder {.smaller}
+
+:::: {.columns}
+::: {.column width="62%"}
+**Bottom line:** Bitcoin never declares a payment final. Six confirmations, about an hour, is the usual wait for high-value payments [@bitcoinorg_payment_2026] (as of 23 Oct 2026).
+
+- A transaction's **confirmations** count its own block and every block on top of it.
+- **Double spend:** an attacker pays you, mines a private chain without the payment, and publishes it once it is longer.
+- An attacker with less than half the mining power sees its chance of catching up fall exponentially with each block it is behind, but never to zero.
+- Six is a convention: Bitcoin's developer guide calls the number "somewhat arbitrary".
+- A majority attacker can rewrite recent blocks, but can't forge a signature or spend coins it never held.
+:::
+::: {.column width="38%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Confirmations {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  P  [label="Block N"];
+  T  [label="Block N+1 pays the merchant\n1 confirmation", fillcolor="#fee2e2", color="#f87171"];
+  C2 [label="Block N+2\n2 confirmations", fillcolor="#fef3c7", color="#f59e0b"];
+  C6 [label="Block N+6\n6 confirmations", fillcolor="#dcfce7", color="#22c55e"];
+  X  [label="Attacker's private chain\nleaves the payment out", fillcolor="#e0f2fe", color="#38bdf8"];
+
+  P -> T -> C2;
+  C2 -> C6 [style=dotted, label=" 4 more blocks"];
+  P -> X [style=dashed, color="#38bdf8"];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains probabilistic finality through the double-spend race between the public chain and an attacker's private one. It matters here because Bitcoin gives the analyst no protocol moment called "final", only a depth that makes reversal unlikely, and the analyst must say which depth they relied on. Emphasize that confirmations lower the risk sharply but never to zero, and that six is a convention rather than a rule.
+
+**Key Points**
+- One confirmation means the transaction is in the latest block; each block on top adds one.
+- A double spend replaces an accepted payment with a private, longer chain that leaves it out.
+- For an attacker with less than half the mining power, the chance of catching up falls exponentially with each block it is behind; an attacker with more than half will catch up eventually.
+- Six confirmations, about an hour, is the usual wait for high-value payments, and the developer guide calls the number somewhat arbitrary.
+- Majority mining power can reorder or drop recent transactions but cannot forge signatures or create coins.
+
+**Walkthrough**
+1. Block N+1 contains the payment to the merchant: one confirmation.
+2. The attacker starts a private chain from block N that leaves the payment out.
+3. Each public block on top (N+2 up to N+6) adds a confirmation and widens the lead the attacker must overcome.
+4. Unless the attacker's chain becomes longer, the public chain and the payment stand.
+
+**Sources**
+- @bitcoinorg_payment_2026
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @rosenfeld_analysishashratebaseddouble_2014
+
+:::
+
+## Proof of stake finalizes by a two-thirds vote {.smaller}
+
+**Bottom line:** on Ethereum, "finalized" is a protocol state, not a guess. Reversing a finalized block would cost the attackers at least a third of all staked ETH [@ethereumorg_pos_2026] (as of 23 Oct 2026).
+
+- Time runs in **slots** of 12 seconds; 32 slots make an **epoch** of 6.4 minutes [@ethereumorg_glossary_2026] (as of 23 Oct 2026).
+- The first block of each epoch is a **checkpoint**, and validators vote for pairs of checkpoints.
+- When a pair gets votes from at least two-thirds of all staked ETH, the newer checkpoint is **justified** and the older one, already justified, is **finalized**, with every block before it.
+- If more than a third of the stake stops voting, blocks keep coming but stop being finalized, until the protocol drains the non-voters' stake (the "inactivity leak").
+
+```{dot}
+//| fig-width: 12
+//| fig-height: 1.6
+digraph Checkpoints {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  E0 [label="Epoch N checkpoint\nfinalized", fillcolor="#b45309", fontcolor="white", color="#b45309"];
+  E1 [label="Epoch N+1 checkpoint\njustified", fillcolor="#fde68a", color="#f59e0b"];
+  E2 [label="Epoch N+2 checkpoint\nnot yet justified", fillcolor="#f8fafc", color="#cbd5e1"];
+
+  E0 -> E1 [label=" votes from two-thirds\n of staked ETH"];
+  E1 -> E2 [style=dashed, label=" 32 slots later"];
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how Ethereum's proof of stake turns votes into a definite moment of finality. It matters here because an Ethereum explorer can report a block as finalized, and the analyst should know what that word means and what it would cost to undo. Emphasize the contrast with Bitcoin: Ethereum declares finality after a vote, whereas Bitcoin only grows harder to reverse.
+
+**Key Points**
+- A slot is 12 seconds and an epoch is 32 slots, or 6.4 minutes.
+- The first block of each epoch is a checkpoint; validators vote for pairs of checkpoints.
+- Votes from at least two-thirds of staked ETH justify the newer checkpoint and finalize the older one.
+- Reversing a finalized block would cost the attackers at least a third of all staked ETH.
+- If more than a third of the stake stops voting, finality stalls until the inactivity leak restores a two-thirds majority.
+
+**Walkthrough**
+1. The epoch N checkpoint is already justified.
+2. Validators holding at least two-thirds of staked ETH vote for the pair from epoch N to epoch N+1.
+3. Epoch N+1 becomes justified and epoch N, with every block before it, becomes finalized.
+4. Epoch N+2's checkpoint waits for the next round of votes.
+
+**Sources**
+- @ethereumorg_pos_2026
+- @ethereumorg_glossary_2026
+
+:::
+
+## Each chain puts a different number on "final" {.smaller}
+
+**Bottom line:** before you write "final", check what that chain means by it and how long it takes. These figures change with upgrades; all are as of 23 Oct 2026.
+
+| Chain | What "final" means | How long |
+|:-----------|:------------------------------------|:--------------------|
+| **Bitcoin** | Never declared; six confirmations is the usual wait for high-value payments [@bitcoinorg_payment_2026] | About an hour |
+| **Ethereum** | The block's checkpoint is finalized by votes from two-thirds of staked ETH [@ethereumorg_ssf_2026; @ethereumorg_glossary_2026] | About 15 minutes; 12.8 minutes at best |
+| **Tron** | "Solidified": at least 19 of the 27 Super Representatives have each produced a block at or above it, and it no longer rolls back [@tron_consensus_2026] | About a minute, with no fixed upper bound |
+| **Arbitrum One** | Soft: the sequencer's promise. Hard: the transactions' batch is posted to Ethereum and final there [@arbitrum_glossary_2026] | No single figure: hard finality waits on Ethereum |
+
+- Withdrawals from Arbitrum One to Ethereum also wait out a 6.4-day challenge period [@arbitrum_glossary_2026] (day 6).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide puts the course's four chains side by side so students can see that "final" is a different event, on a different clock, on each one. It matters here because the running case crosses Bitcoin, Ethereum, Arbitrum and Tron, and an analyst who applies one chain's rule to another will misstate what the record shows. Emphasize that each figure carries an "as of" date because upgrades change them.
+
+**Key Points**
+- Bitcoin never declares finality; six confirmations, about an hour, is a convention for high-value payments.
+- Ethereum finalizes in about 15 minutes; the best case is two 6.4-minute epochs, or 12.8 minutes.
+- Tron solidifies a block once 19 of its 27 Super Representatives have produced blocks at or above it, usually in about a minute, with no fixed upper bound; a solidified block does not roll back.
+- Arbitrum's soft confirmation is the sequencer's promise; hard finality comes when the batch is posted to Ethereum and final there.
+- Withdrawals from Arbitrum One to Ethereum wait for a 6.4-day challenge period, which matters for the day 6 bridge case.
+- The 12.8-minute figure is our own arithmetic from the glossary's 6.4-minute epoch.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoinorg_payment_2026
+- @ethereumorg_ssf_2026
+- @ethereumorg_glossary_2026
+- @tron_consensus_2026
+- @arbitrum_glossary_2026
+
+:::
+
+## Delay may mean congestion, not censorship {.smaller}
+
+:::: {.columns}
+::: {.column width="58%"}
+**Bottom line:** "it never confirmed" has more than one explanation. Name the ones you can't rule out.
+
+- There is no single mempool. Each full node keeps its own list of unconfirmed transactions, so your node's view, or an explorer's, is one view among many.
+- Miners choose what goes in a block, mostly by fee per byte. A transaction paying the minimum fee "should be prepared to wait a long time".
+- So a stuck transaction has at least three explanations (right), and only one is **censorship**.
+- From outside, a fault and an attack can look the same. Analytic standards ask you to set out the alternatives [@odni_icd203_2015].
+:::
+::: {.column width="42%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 3.5
+digraph Unconfirmed {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7];
+
+  T [label="Transaction\nnot confirmed", fillcolor="#fef3c7", color="#f59e0b"];
+  F [label="Fee too low for\na busy network"];
+  C [label="Miners leave it out\n(censorship)", fillcolor="#fee2e2", color="#f87171"];
+  R [label="Never reached miners\n(relay or routing)"];
+
+  T -> F;
+  T -> C;
+  T -> R;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that the mempool is a local view and that an unconfirmed transaction has several possible explanations. It matters here because an analyst may be asked whether a transaction was blocked on purpose, and congestion, censorship and relay failure can produce the same symptom. Emphasize that the analyst's job is to state which explanations the evidence cannot yet rule out.
+
+**Key Points**
+- Each full node keeps its own pool of unconfirmed transactions; there is no global mempool.
+- Miners choose transactions mostly by fee per byte, and a minimum-fee transaction may wait a long time.
+- Censorship, congestion and routing problems can look identical from outside.
+- ICD 203 asks analysts to incorporate analysis of alternatives (D.6.e(4)) and to express their uncertainties (D.6.e(2)).
+
+**Walkthrough**
+1. A transaction has not confirmed.
+2. It may be paying too low a fee for current demand.
+3. Miners may be leaving it out on purpose.
+4. It may never have reached the miners because of relay or routing trouble.
+
+**Sources**
+- @bitcoin.orgdevelopers_p2pnetworkdeveloper_2024
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @apostolaki_hijackingbitcoinrouting_2017
+- @lamport_byzantinegeneralsproblem_1982
+- @odni_icd203_2015
+
+:::
+
+## Finality says the record holds, not who did it {.smaller}
+
+**Bottom line:** report what the chain recorded, when you read it and whether it was final. Who controls an address is a separate judgement.
+
+- **Say what you saw and when:** the chain, the transaction hash, the block and the time you read it.
+- **Not final yet?** Say so, and check again before the memo goes out.
+- **Final, or six confirmations deep on Bitcoin?** You can state the transfer as a fact.
+- **Who did it?** That is a judgement. It needs its own evidence and a confidence: High, Moderate or Low, never a percentage (day 3).
+
+::: {.callout-note appearance="simple"}
+**Example:** "At 0930 on 23 Oct 2026, 10 ETH moved from address A to address B in Ethereum block N, which was finalized." Whether address A is the suspect's goes in a separate sentence, with its own confidence.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns finality into memo wording an agent or prosecutor can rely on. It matters here because finality tells the reader that the record will not change, but says nothing about who controls the addresses in it. Emphasize keeping the recorded fact and the analytic judgement in separate sentences.
+
+**Key Points**
+- A memo states the chain, the transaction hash, the block and the time the analyst read it.
+- A transaction that is not yet final is reported as such and checked again before the memo goes out.
+- A final (or, on Bitcoin, deeply confirmed) transfer can be stated as a fact.
+- Attribution is a judgement with its own evidence and a confidence on the course scale, which day 3 teaches.
+- ICD 203 asks analysts to express the uncertainties behind their judgements (D.6.e(2)).
+
+**Walkthrough**
+None
+
+**Sources**
+- @odni_icd203_2015
+- @bitcoinorg_payment_2026
+
+:::
+
+## Live data has costs, so we use captured data {.smaller}
+
+**Bottom line:** looking at a live chain through someone else's service tells them what you are interested in, and what you see can still change.
+
+- **The explorer sees you.** A public explorer or API sees each address you look up and the IP address you look it up from. With a node of your own, "you are not sending your IP address or queries to an external, third-party node" [@otterscan_otterscan_2025].
+- **Recent blocks can still change.** What you read at one confirmation may sit in a different block, or be gone, at the next.
+- **APIs ration requests.** TronGrid, TRON's hosted API, usually requires a key, and "rate limits and quota are configured per key" [@tron_api_2026] (as of 23 Oct 2026).
+- **In class:** captured data (snapshots, frozen extracts and the course's own chain), so everyone sees the same result and nothing leaks.
+- **On the job:** follow your agency's rules for touching live systems.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains what it costs to work on live chain data and why the course labs use captured data instead. It matters here because the lab that follows uses an explorer, and analysts should know that a third-party explorer learns what they are looking at. Emphasize the three costs: exposure of your interest, data that can still change, and rate limits.
+
+**Key Points**
+- A third-party explorer or API receives the addresses you query and your IP address; querying your own node avoids that.
+- Recent blocks can reorganize, so a live reading at shallow depth can change.
+- APIs limit request rates; TronGrid, TRON's hosted API, usually requires a key, with limits set per key.
+- Course labs run on captured data so results are repeatable and nothing reaches a live service.
+- Agency rules govern live access on the job.
+
+**Walkthrough**
+None
+
+**Sources**
+- @otterscan_otterscan_2025
+- @tron_api_2026
+- @bitcoinorg_payment_2026
+
+:::
+
+## Recap: "final" depends on the chain {.smaller}
+
+- A ledger is a shared, hash-linked log: edits show.
+- Trust moves rather than vanishes: ask where it sits on each chain.
+- Consensus picks one history. Open chains finalize gradually (proof of work) or by a vote of stake (proof of stake).
+- Forks at the tip are routine, and each confirmation makes a reversal harder.
+- The usual wait is about an hour on Bitcoin (six confirmations); "final" comes in about 15 minutes on Ethereum and about a minute on Tron (as of 23 Oct 2026).
+- A transaction that never confirmed has more than one explanation: say which you can't rule out.
+- In a memo, say what you saw, when, and whether it was final.
+- **Next, the lab:** the explorer worksheet, in Otterscan on the course chain.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson and points to the explorer lab. It matters here because the lab asks students to read blocks and transactions and say how settled each one is. Emphasize the habit to carry into the lab: record what you saw, when, and whether it was final.
+
+**Key Points**
+- Ledgers are tamper-evident, not unchangeable.
+- Finality is gradual on Bitcoin; Ethereum declares it after a vote of stake, and Tron once 19 of its 27 Super Representatives have built on a block, each on its own clock.
+- Unconfirmed transactions have several explanations.
+- Memos keep recorded facts apart from judgements, and labs use captured data.
+
+**Walkthrough**
+None
+
+**Sources**
+- @bitcoinorg_payment_2026
+- @ethereumorg_ssf_2026
+- @tron_consensus_2026
+
+:::
+
+<!-- Hidden 23 Oct 2026 when this lesson became Ledger and Finality (Build Tracker D1 3): kept for reuse, not shown. -->
+
+:::: {.content-hidden}
+
 ## Why Agreement Matters {.smaller}
 
 - In the previous lesson, we looked at ledgers in both permissionless and permissioned settings.
@@ -28,6 +563,9 @@ format:
   - A node validating a signature or hash on its own
 - In distributed systems, this problem of reaching agreement is called **consensus**.
 
+::::
+
+:::: {.content-hidden}
 
 ## Foundations of Consensus {.smaller}
 
@@ -41,7 +579,6 @@ format:
   - **Validity:** only rule-following values are committed.
   - **Agreement:** correct nodes converge on the same result.
 - Those four are often abbreviated as **SLVA**.
-
 
 ::: {.notes}
 
@@ -61,6 +598,10 @@ None
 - @fischer_impossibilitydistributedconsensus_1985
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Consensus in the Real World
 
@@ -92,6 +633,10 @@ None
 - @pease_reachingagreementpresence_1980
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Consensus Properties: SLVA and FPIC {.smaller}
 
@@ -127,6 +672,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Failure Models {.smaller}
 
 When nodes fail to reach agreement, the system experiences a **failure**. Consensus protocols don't prevent failures—they manage them. To design robust protocols, we must classify the types of failures we expect.
@@ -161,6 +710,9 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Timing Models on a Spectrum {.smaller}
 
@@ -207,6 +759,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## The Timing Limits — FLP and DLS Results {.smaller}
 
 - **FLP (Fischer, Lynch, Paterson 1985):** in a fully asynchronous system, a deterministic protocol cannot guarantee both safety and liveness if even one node may fail.
@@ -236,6 +792,9 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Practical Consensus Design {.smaller}
 
@@ -266,33 +825,9 @@ None
 
 :::
 
+::::
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+:::: {.content-hidden}
 
 ## Rounds and Phases {.smaller}
 
@@ -346,6 +881,9 @@ This slide explains the basic shape of a BFT round before the class looks at fin
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Traditional BFT-Style Finality
 
@@ -353,7 +891,6 @@ This slide explains the basic shape of a BFT round before the class looks at fin
 - Once a quorum certificate is formed for a value, a conflicting value at that same position should not also be able to gather a valid certificate.
 - Even if Byzantine nodes vote twice, the quorum overlap still includes honest nodes that carry forward the prior safe history.
 - Those honest overlap nodes will not sign a conflicting commit.
-
 
 **Key idea:** a quorum certificate is not just evidence that "many nodes agreed"; it is the reason a conflicting commit should no longer be possible for that slot or height.
 
@@ -376,6 +913,9 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Quorums {.smaller}
 
@@ -441,6 +981,9 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
 
 ## Timeouts and View Changes
 
@@ -451,8 +994,6 @@ None
 - This is how practical BFT protocols recover liveness once the network becomes timely enough again.
 
 **Key idea:** timeouts and leader rotation preserve **liveness** once timing stabilizes.
-
-
 
 ::: {.notes}
 
@@ -473,8 +1014,9 @@ None
 
 :::
 
+::::
 
-
+:::: {.content-hidden}
 
 ## Crash-Fault Tolerance (CFT) {.smaller}
 
@@ -503,6 +1045,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Byzantine-Fault Tolerance (BFT) {.smaller}
 
 - **Identity model:** known participants with governed membership
@@ -530,6 +1076,10 @@ None
 - @pease_reachingagreementpresence_1980
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Nakamoto (Proof-of-Work) Consensus {.smaller}
 
@@ -560,7 +1110,9 @@ None
 
 :::
 
+::::
 
+:::: {.content-hidden}
 
 ## Comparing Consensus Families {.smaller}
 
@@ -594,6 +1146,10 @@ None
 - @bano_consensusageblockchains_2017
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Why Consensus Matters in Blockchains {.smaller }
 
@@ -665,31 +1221,6 @@ None
 
 :::
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
+::::
 
 ## References
