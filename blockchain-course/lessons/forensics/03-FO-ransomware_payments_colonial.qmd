@@ -1,0 +1,443 @@
+---
+title: "Ransomware Payments: Colonial Pipeline"
+subtitle: 'Section VIII: Forensics'
+author: CATS
+lesson: 03-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## Ransom: a payment you can watch from the start {.smaller}
+
+**Bottom line:** the victim knows the address it paid, and the ledger is "visible online to everyone" [@fbi_colonialaffidavit_2021, para. 21]. So a ransom trace starts from a known payment. This lesson follows Colonial Pipeline's 2021 ransom hop by hop, the way your trace will this afternoon.
+
+| This lesson | What you take to the lab |
+| --- | --- |
+| How a ransom is demanded and paid | Where the start of your trace comes from |
+| Colonial, from the ransom note to the payment | A real case to set your trace beside |
+| The ransom on-chain, hop by hop | Each hop's heuristic and confidence |
+| Where the trace stopped | Not every trace reaches a service |
+| The developer's and affiliate's shares | Reading a split |
+| The portal and the chat as leads | What to ask the victim for |
+| Trends, as of February 2026 | Why each payment is worth tracing |
+
+: {tbl-colwidths="[50,50]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens lesson ③ of day 2 and ties it to the afternoon's annotated trace. It matters here because the lab's trace starts at a ransom payment, and this lesson shows a real one followed from the same start. Emphasize that ransomware gives the analyst an unusual gift: the starting address and transaction are known, not guessed.
+
+**Key Points**
+- The FBI affidavit defines the blockchain as a public ledger that is "visible online to everyone" (para. 21).
+- Colonial told the FBI the address it had been told to pay (para. 28), so the trace began from a known address.
+- The lesson uses the heuristics from lesson ② (co-spending, change, "change undetermined") on Colonial's real transfers.
+- New glossary terms this lesson: ransom note, payment portal, ransomware-as-a-service (RaaS), affiliate, digital forensics and incident response (DFIR) firm, anonymity-enhanced cryptocurrency (AEC), holding address.
+
+**Walkthrough**
+1. Read the bottom line.
+2. Run down the table: each row is a slide, and the right column is what it gives the lab.
+
+**Sources**
+- @fbi_colonialaffidavit_2021
+
+:::
+
+## A note leads to a portal, a price, an address {.smaller}
+
+**Bottom line:** the criminals' note leads to a Tor site and a price in cryptocurrency. The victim, or a firm acting for it, buys the coins and sends them to the address the criminals give.
+
+:::: {.columns}
+::: {.column width="58%"}
+- **The note:** on Colonial's screens, it gave a Tor site said to hold samples of stolen data, and demanded about 75 BTC [@fbi_colonialaffidavit_2021, para. 26].
+- **Two threats:** files stay encrypted, and stolen data may be published [@fbi_colonialaffidavit_2021, para. 24; @cisa_aa21131a_2021].
+- **The payment:** the victim buys the coin at an exchange and sends it, often from a wallet the exchange hosts [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 2].
+- **Who pays:** a DFIR firm may negotiate and pay for the victim [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 3].
+- **Which coin:** most often Bitcoin; increasingly privacy coins such as Monero, sometimes at a discount (as of November 2021) [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 5].
+:::
+::: {.column width="42%"}
+```{dot}
+//| fig-width: 4
+//| fig-height: 3.8
+digraph Ransom {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  N [label="Ransom note\non screen", fillcolor="#fee2e2", color="#ef4444"];
+  P [label="Tor site:\nstolen-data samples,\nprice, address", fillcolor="#fee2e2", color="#ef4444"];
+  E [label="Victim buys coins\nat an exchange", fillcolor="#e0f2fe", color="#38bdf8"];
+  R [label="Ransom address\n(your trace starts here)", fillcolor="#fef3c7", color="#f59e0b"];
+
+  N -> P -> E -> R;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches how a ransom is demanded and paid, from the note to the payment address. It matters here because each step leaves something an analyst can ask for, and the last step is where the trace starts. Emphasize that the victim side of the payment runs through regulated exchanges, while the criminal side starts at the ransom address.
+
+**Key Points**
+- Affidavit para. 26: employees saw a ransomware message; a Tor website address claimed links to samples of exfiltrated data; about 75 BTC was demanded.
+- Affidavit para. 24: actors typically breach a network, exfiltrate data, encrypt, demand a ransom, and threaten to publish the stolen data if unpaid. CISA's alert AA21-131A says DarkSide encrypts and steals data and threatens to publish it.
+- FinCEN (FIN-2021-A004, 8 Nov 2021, p. 2): the victim typically wires funds to a cryptocurrency exchange, buys the type and amount the perpetrator specifies, and sends it, often from a hosted wallet, to the perpetrator's address.
+- FinCEN p. 3: DFIR firms may negotiate with the criminals, facilitate payment and investigate the breach; cyber insurers may reimburse.
+- FinCEN p. 5: ransoms are most commonly in Bitcoin; criminals increasingly require or incentivize AECs, have offered discounts for them, and Monero is the one named.
+- Define payment portal briefly: the criminals' website, usually on Tor, where the victim sees the price and the address; FinCEN's red flags (p. 7) note victims using such a portal to communicate with the criminals.
+
+**Walkthrough**
+1. Follow the diagram top to bottom: note, portal, exchange, ransom address.
+2. Ask: which box does your trace start from? (The ransom address.)
+3. Ask: which boxes hold leads that are not on the blockchain? (The note and the portal: slide 8.)
+
+**Sources**
+- @fbi_colonialaffidavit_2021
+- @cisa_aa21131a_2021
+- @financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021
+
+:::
+
+## Colonial: shut down at dawn, paid the next day {.smaller}
+
+**Bottom line:** DarkSide's ransom note appeared before 5 am on Friday 7 May 2021. Colonial shut the pipeline down within the hour and paid about 75 BTC on 8 May [@blount_testimony_2021; @fbi_colonialaffidavit_2021].
+
+| When (2021) | What happened |
+| --- | --- |
+| 7 May, just before 5:00 am | An employee finds the ransom note on an IT-network system [@blount_testimony_2021, p. 2] |
+| 7 May, 6:10 am | All 5,500 miles of pipeline confirmed shut down [@blount_testimony_2021, p. 2] |
+| 7 May | Colonial reports the attack, by DarkSide, to the FBI [@fbi_colonialaffidavit_2021, para. 25] |
+| 8 May | Told to pay about 75 BTC, worth about \$4.3 million, to one address [@fbi_colonialaffidavit_2021, para. 28] |
+| 8-9 May | The ransom moves four times (next slide) [@fbi_colonialaffidavit_2021, paras. 29-32] |
+| 12 May, evening | Pipelines begin returning to service [@blount_testimony_2021, p. 3] |
+| 7 June | The Justice Department announces it has seized 63.7 of the bitcoins [@departmentofjustice_departmentjusticeseizes_2021] |
+
+: {tbl-colwidths="[24,76]"}
+
+The CEO: "I made the decision that Colonial Pipeline would pay the ransom" [@blount_testimony_2021, p. 4].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets out the Colonial case as a timeline, from the ransom note to the payment and the recovery. It matters here because the timeline shows how fast a ransom is paid and moved: the trace starts within a day of the attack. Emphasize the dates, since each hop on the next slides is dated.
+
+**Key Points**
+- Blount's Senate testimony (8 June 2021): the note was identified just before 5:00 am EDT on Friday 7 May; the shutdown began at about 5:55 am, and by 6:10 am all 5,500 miles were confirmed shut down, about fifteen minutes in all.
+- The pipeline serves about 260 delivery points across 13 states and Washington, D.C. (testimony p. 2); pipelines began returning to service on the evening of 12 May (p. 3).
+- Blount made the decision to pay, to have "every tool available" to restart quickly (p. 4).
+- Affidavit para. 25: on or about 7 May, Colonial (called "Victim X") reported the attack by DarkSide to the FBI. Para. 28: on or about 8 May it was told to pay about 75 BTC, worth about \$4.3 million that day.
+- The DOJ press release of 7 June 2021 announced the seizure of 63.7 BTC, then worth about \$2.3 million. How it was seized is legal process, which is out of scope.
+
+**Walkthrough**
+1. Read the rows top to bottom.
+2. Ask: how long between the note and the payment? (About a day.)
+3. Ask: how long did the ransom sit before it moved? (It moved the same day: next slide.)
+
+**Sources**
+- @blount_testimony_2021
+- @fbi_colonialaffidavit_2021
+- @departmentofjustice_departmentjusticeseizes_2021
+
+:::
+
+## The ransom moved four times in two days {.smaller}
+
+**Bottom line:** the ransom address received 75.0005 BTC in two payments on 8 May. By 9 May the money had moved four times, and on 27 May 63.7 BTC of it was gathered into one address [@fbi_colonialaffidavit_2021, paras. 29-33].
+
+```{dot}
+//| fig-width: 11
+//| fig-height: 4.4
+digraph Colonial {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=16];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=14];
+
+  R [label="...c9fr\nransom address\n75.0005 in", fillcolor="#fef3c7", color="#f59e0b"];
+  B [label="...7q5X"];
+  A [label="...tpsf", fillcolor="#dcfce7", color="#22c55e"];
+  V [label="...ycsm"];
+  D [label="...9zwt"];
+  J [label="...wg45", fillcolor="#dcfce7", color="#22c55e"];
+  U [label="...dNxB", fillcolor="#dcfce7", color="#22c55e"];
+  O [label="23+ other\naddresses"];
+  S [label="...segq\n69.6042\n27 May", fillcolor="#e0f2fe", color="#38bdf8"];
+
+  R -> B [label="1: 75.0003"];
+  R -> A [label="1: 0.00001693"];
+  B -> A [label="2: 74.99998"];
+  B -> V [label="2: 0.0000675"];
+  A -> D [label="3: 11.24962019"];
+  A -> J [label="3: 63.74998561"];
+  J -> J [label="4: 0.0498 back"];
+  J -> U [label="4: 63.7000"];
+  U -> S [label="5"];
+  O -> S [label="5"];
+}
+```
+
+Hops 1-3 on 8 May; hop 4 on 9 May; hop 5 on 27 May. Amounts in BTC; the affidavit hides each address's first 12 characters, so addresses here go by their last four.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide draws the ransom's path as the FBI affidavit describes it, from the ransom address to the address where 63.7 BTC was gathered. It matters here because this is the shape of the afternoon's trace: a chain of hops, each with outputs to judge. Emphasize the green boxes as the path the affidavit follows and the white boxes as leads.
+
+**Key Points**
+- Para. 29: the ransom address (ending L6qeMLgX5VEAFCbRXjc9fr) received two payments on 8 May totalling 75.0005 BTC, then sent 0.00001693 BTC to the address ending ...wfytpsf and 75.00034246 BTC to the address ending ...Bnujk6Xg7q5X.
+- Para. 30: on 8 May, ...7q5X sent 74.99998307 BTC to ...tpsf, the address that had already received the 0.00001693, and 0.00006748 BTC to the address ending ...NcwPhx6etKycsm.
+- Para. 31: on 8 May, ...tpsf sent the 74.99998307 together with the 0.00001693 in one transaction: 11.24962019 BTC to the address ending ...gfhz99zwt and 63.74998561 BTC to the address ending ...llfykeqwg45.
+- Para. 32: on 9 May, ...wg45 sent 0.04976631 BTC back to itself and 63.70000000 BTC to the address ending ...S2pKcdNxB.
+- Para. 33: "an online public blockchain explorer" identified at least 23 other addresses "collected together" with ...dNxB "in one wallet"; on 27 May funds from that collection, totalling 69.60422177 BTC, including the 63.7, went to the address ending ...hs6cfsegq.
+- Arithmetic from those figures: hop 3's two inputs sum to exactly 75.00000000 BTC.
+
+**Walkthrough**
+1. Start at the yellow ransom address on the left.
+2. Follow the numbered edges in order: 1 to 5.
+3. Point out the two places an address is used twice: ...tpsf receives in hops 1 and 2, and ...wg45 pays itself in hop 4.
+4. Ask: which white boxes would you want to follow next? (...9zwt, with 11.2496 BTC: slide 7.)
+
+**Sources**
+- @fbi_colonialaffidavit_2021
+
+:::
+
+## Each hop gets a heuristic and a confidence {.smaller}
+
+**Bottom line:** the affidavit's hops, written as your trace is. None reaches High: every clue comes from the ledger or an explorer [@fbi_colonialaffidavit_2021, paras. 29-33].
+
+| # | What you see | Heuristic | Could be wrong if | Confidence |
+| --- | --- | --- | --- | --- |
+| 1 | `c9fr` pays 75.0003 to `7q5X`, a sliver to `tpsf` | Change undetermined | n/a | No call: follow both |
+| 2 | `7q5X` pays 74.99998 to `tpsf` too | Branches meet at one address | `tpsf` is a service's | Moderate |
+| 3 | `tpsf` pays 11.24962019 and 63.74998561 | Change undetermined | n/a | No call: follow both |
+| 4 | `wg45` pays 63.7000 on, 0.0498 to itself | Change goes back to the payer | n/a: same address | Moderate |
+| 5 | An explorer lists `dNxB` + 23 as one wallet | Explorer's label | The label is wrong | Low |
+
+: {tbl-colwidths="[5,34,25,18,18]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns the affidavit's narrative into the annotated trace the lab asks for. It matters here because students see lesson ②'s heuristics working, and failing to decide, on a real ransom. Emphasize that "change undetermined" appears twice and is a correct answer: no confidence is given because no call is made, and both outputs stay leads.
+
+**Key Points**
+- Hop 1: two outputs, the larger and the smaller; from this transaction alone the clues do not show which is change.
+- Hop 2: the bulk goes to ...tpsf, the address that received hop 1's small output (para. 30). Both branches of hop 1 meet at one address, so one holder received both, and hop 3 spends them together (para. 31). It fails if ...tpsf belongs to a service that holds many customers' coins; lesson ② also notes some wallets reuse addresses.
+- Hop 3: ...tpsf spends both its coins in one transaction (para. 31); neither output is round and both addresses are new, so change is undetermined. The affidavit follows the 63.75; the 11.25 is a lead (slide 7).
+- Hop 4: 0.04976631 returns to the paying address itself (para. 32): change by the plainest clue there is, so follow the round 63.70000000. Rated Moderate because it is still a same-transaction clue. Whether the 63.70 paid someone else or moved to the same actor's own address does not change where the trace goes; the 27 May grouping suggests the latter.
+- Hop 5: an explorer grouped ...dNxB with at least 23 other addresses "in one wallet" (para. 33). The affidavit does not show the transactions behind the grouping, so it is one unverified label: Low on the course scale. Checking the 27 May transactions for co-spending yourself would make it your own judgement, still Moderate at best.
+- Course scale: same-transaction clues stop at Moderate; High needs a different kind of evidence (day 3).
+
+**Walkthrough**
+1. Read each row against the diagram on the last slide.
+2. Ask: why is hop 1 undetermined when hop 2 settles it? (Hop 2 is a different transaction; reading forward resolved hop 1.)
+3. Ask: how would you raise hop 5 from Low? (Read the 27 May transactions yourself: co-spending there is Moderate. High needs something off-chain, such as an exchange's records: day 3.)
+
+**Sources**
+- @fbi_colonialaffidavit_2021
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
+## This trace stopped at a wallet, not a service {.smaller}
+
+**Bottom line:** the affidavit's trace ends at `...segq`, an address holding 69.6 BTC that "has not moved since" (as of 7 June 2021) [@fbi_colonialaffidavit_2021, para. 33]. It never reached an exchange. Your trace ends at the first service *or* where the money stops: say which, and the date you checked.
+
+- **A holding address:** money gathered and left still. The trace has nowhere further to go until it moves.
+- **Leads the affidavit doesn't follow** [@fbi_colonialaffidavit_2021, paras. 30-33]:
+  - 11.2496 BTC to `...9zwt` at hop 3
+  - 0.0000675 BTC to `...ycsm` at hop 2
+  - about 5.9 BTC from the 23+ other addresses, gathered into `...segq` with the 63.7
+- **Where DarkSide's money usually went:** mostly to exchanges, many in places that don't enforce anti-money-laundering rules [@robinson_darkside_2021].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that a trace can end without reaching a service. It matters here because the lab's trace "follows the ransom to the first service", and a student whose money stops moving must say so rather than force a hop. Emphasize recording the date: "has not moved" is true only as of the date checked.
+
+**Key Points**
+- Para. 33: on 27 May, 69.60422177 BTC, including the 63.7, went to ...segq, and "it has not moved since" (the affidavit is dated 7 June 2021).
+- The leads come from paras. 30-31; the 5.9 BTC is arithmetic: 69.60422177 minus 63.70000000 is 5.90422177 BTC.
+- Elliptic (18 May 2021) found that most DarkSide funds went to cryptoasset exchanges, many in jurisdictions that do not enforce anti-money-laundering rules.
+- Define holding address briefly: an address where funds are gathered and then left unmoved.
+- Day 2's lab product: the trace ends at the first service; when it stops before that, write where and as of when.
+
+**Walkthrough**
+1. Read the bottom line; stress the date.
+2. Go down the leads: each is a branch a full investigation would follow.
+3. Ask: if `...9zwt` sent its 11.25 BTC to an exchange the next day, where would your trace end? (At that exchange: the first service on that branch.)
+
+**Sources**
+- @fbi_colonialaffidavit_2021
+- @robinson_darkside_2021
+
+:::
+
+## Developer and affiliate split it on-chain {.smaller}
+
+**Bottom line:** DarkSide was ransomware-as-a-service: its developers took a share of each ransom from the affiliates who ran the attacks [@cisa_aa21131a_2021]. The shares went to separate wallets, so the split shows on the blockchain [@robinson_darkside_2021].
+
+:::: {.columns}
+::: {.column width="55%"}
+- **The rate:** the developer reportedly took 25% of ransoms under \$500,000, falling to 10% above \$5 million [@robinson_darkside_2021].
+- **The total:** just over \$90 million from 47 victims, \$15.5 million (17%) of it to the developer (as of 18 May 2021) [@robinson_darkside_2021].
+- **A link between attacks:** the affiliate's shares of the Colonial and Brenntag ransoms went to one wallet, "suggesting" one party hit both [@robinson_darkside_2021].
+:::
+::: {.column width="45%"}
+**Exercise: hop 3**
+
+`...tpsf` spent exactly 75 BTC:
+
+| Output | BTC | To |
+| --- | --- | --- |
+| A | 11.24962019 | `...9zwt` |
+| B | 63.74998561 | `...wg45` |
+
+Which output looks like the developer's cut? How sure are you, and why?
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches how a ransomware-as-a-service split appears on-chain, and has students read one. It matters here because the split is the first place a ransom divides, and the two halves lead to different people. Emphasize that a share that fits a split is still a judgement from the amount alone.
+
+**Key Points**
+- CISA AA21-131A (11 May 2021, revised 8 July 2021): DarkSide is RaaS; the developers receive a share of the proceeds from the actors who deploy it, the affiliates.
+- Elliptic (Robinson, 18 May 2021): the developer reportedly takes 25% of ransoms under \$500,000, falling to 10% above \$5 million; the split "is very clear to see on the blockchain", with shares going to separate wallets.
+- Elliptic: just over \$90 million in ransoms from 47 victims; the developer received \$15.5 million (17%), the affiliates \$74.7 million (83%).
+- Elliptic: the affiliate's shares of the Colonial and Brenntag payments went to the same wallet, suggesting the same party infected both.
+- Exercise answer: A is 11.2496 of 75, almost exactly 15%; the smaller output fits a developer's cut. Elliptic gives no rate for a ransom of about \$4.3 million, between its two tiers, and the affidavit does not say which output was whose. Amount alone: **Low**.
+- Define affiliate briefly: the criminal who breaks in, deploys the ransomware and negotiates, paying the developer a share.
+
+**Walkthrough**
+1. Read the bottom line and the three facts.
+2. Run the exercise: two minutes in pairs.
+3. Take answers: the smaller output, about 15%. Ask how sure: Low, amount alone.
+4. Ask: what would raise it? (Seeing the same small share go to the same wallet from other DarkSide ransoms: a pattern across victims.)
+
+**Sources**
+- @cisa_aa21131a_2021
+- @robinson_darkside_2021
+- @fbi_colonialaffidavit_2021
+
+:::
+
+## The portal and chat are leads; ask for them {.smaller}
+
+**Bottom line:** the start of your trace comes from the victim's side, not the blockchain. Ask the victim, or the firm that paid for it, for everything the criminals sent.
+
+| Ask for | Why it matters |
+| --- | --- |
+| The ransom address and the payment transaction | Your trace starts there; Colonial gave the FBI the address it was told to pay [@fbi_colonialaffidavit_2021, para. 28] |
+| The ransom note and the Tor site's address | They name the group and the site [@fbi_colonialaffidavit_2021, para. 26] |
+| The chat on the portal | Where the criminals set the price and any discount [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, pp. 5, 7] |
+| Who bought the coins, and where | The exchange holds the victim's side of the payment [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 2] |
+
+: {tbl-colwidths="[38,62]"}
+
+A bank sees the victim's side too: FinCEN's red flags include a customer using "the onion router or an unidentified web portal" to talk to the person they pay in cryptocurrency [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 7].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide lists the off-chain artefacts of a ransom and why each is a lead. It matters here because the analyst's first request to the case agent is for these, and they are the different kind of evidence that can later lift a hop's confidence. Emphasize asking for the payment transaction itself, not just the address.
+
+**Key Points**
+- Affidavit para. 28: Colonial told the FBI the address it was instructed to pay; para. 26: the note gave a Tor website address.
+- The chat is where the criminals set the price and the address; a discount for paying in Monero (FinCEN p. 5) would show there.
+- FinCEN p. 2: the victim buys the coins at an exchange, often sending from a hosted wallet, so the exchange holds records of the victim's side.
+- FinCEN red flags (p. 7): use of "the onion router or an unidentified web portal" to communicate with the recipient of a cryptocurrency transaction; a customer with little cryptocurrency history buying or sending a large amount, which may mean a ransomware victim.
+- Off-chain artefacts are a different kind of evidence from the ledger: day 3 uses them for attribution and High confidence.
+
+**Walkthrough**
+1. Read each row: what to ask for and why.
+2. Ask: which row gives a different kind of evidence from the blockchain? (All four; the first also starts the trace.)
+
+**Sources**
+- @fbi_colonialaffidavit_2021
+- @financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021
+
+:::
+
+## Fewer victims pay, but each pays more {.smaller}
+
+**Bottom line:** ransomware still takes hundreds of millions of dollars a year on-chain. Fewer victims pay, but the median payment has risen (as of 26 February 2026) [@chainalysis_ransomware_2026].
+
+- **2025 total:** more than \$820 million in on-chain payments, 8% below the revised 2024 figure of \$892 million [@chainalysis_ransomware_2026].
+- **Still rising:** the 2025 total "is likely to approach or exceed \$900 million" as more payments are attributed [@chainalysis_ransomware_2026].
+- **Who pays:** the share of ransoms paid may have hit an all-time low, 28% [@chainalysis_ransomware_2026].
+- **How much:** the median payment rose 368%, from \$12,738 in 2024 to \$59,556 in 2025 [@chainalysis_ransomware_2026].
+- **For comparison:** DarkSide alone took just over \$90 million from 47 victims by May 2021 [@robinson_darkside_2021].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the current scale of ransomware payments, dated. It matters here because analysts brief agents and prosecutors on the threat, and a figure without a date and a source is not usable. Emphasize that these totals are estimates from attributed payments and go up as more are found.
+
+**Key Points**
+- Chainalysis, "Crypto Ransomware: 2026 Crypto Crime Report" (26 Feb 2026): more than \$820 million in on-chain payments in 2025, 8% below the updated 2024 estimate of \$892 million; the 2025 total is likely to approach or exceed \$900 million as more events and payments are attributed.
+- The share of ransoms paid "potentially reached an all-time low" at 28%; the median payment rose 368%, from \$12,738 to \$59,556.
+- Elliptic counted just over \$90 million paid to DarkSide from 47 victims (18 May 2021).
+- These are a commercial firm's published research figures; the course cites research but does not use the firm's platform.
+
+**Walkthrough**
+1. Read the bottom line and the date.
+2. Ask: why might the 2025 total still rise? (Payments are counted only once attributed to ransomware.)
+3. Ask: how would you cite this figure in a memo? (Source and "as of" date.)
+
+**Sources**
+- @chainalysis_ransomware_2026
+- @robinson_darkside_2021
+
+:::
+
+## Recap: start at the ransom address {.smaller}
+
+- **A ransom** is demanded by a note and a Tor portal, bought at an exchange, and paid to an address the victim knows.
+- **Colonial:** the note before 5 am on 7 May 2021; about 75 BTC paid on 8 May.
+- **The trace:** four hops by 9 May and a fifth on 27 May, each with its heuristic. Change was undetermined twice, and that is a correct answer.
+- **Where it stopped:** a holding address, not a service. Say which, and as of when.
+- **The split:** developer and affiliate shares go to separate wallets; a share read from the amount alone is Low.
+- **Leads off the chain:** the note, the portal, the chat, the payment transaction.
+- **This afternoon:** your annotated trace starts at a ransom address and follows it to the first service.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson and hands over to the lab. It matters here because the afternoon's trace uses every line: a known start, hop-by-hop judgements and a stated end. Emphasize the habit carried from lesson ②: heuristic, failure, confidence, for every hop.
+
+**Key Points**
+- How a ransom is demanded and paid, and where the trace starts.
+- Colonial's timeline and its five hops.
+- "Change undetermined" as a correct answer.
+- A trace ends at the first service or where the money stops, with the date checked.
+- The RaaS split and its confidence.
+- Off-chain leads to ask for.
+
+**Walkthrough**
+None
+
+**Sources**
+- @fbi_colonialaffidavit_2021
+- @blount_testimony_2021
+- @robinson_darkside_2021
+- @financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021
+
+:::
+
+## References {.smaller}
+
+::: {#refs}
+:::
