@@ -67,8 +67,9 @@ Each commit's trailer quotes the permission it rests on, the owner's words on se
 - **No Notion**: sprint sessions have no Notion connector. Each issue carries its full spec; the Build Tracker
   is updated by the owner's wrap-up session after the window.
 - Every hook and the check. Hooks are never skipped. Only the integrator pushes, and only
-  `git push origin HEAD:main`; never a force-push. Git config is read-only in every sprint session: the
-  worktrees share the main checkout's, and `--global` is the computer's.
+  `git push origin HEAD:main`; never a force-push. `.githooks/pre-push` refuses any push from a `bc-lane-*`
+  worktree, including one a script runs, which the guard can't see. Git config is read-only in every sprint
+  session: the worktrees share the main checkout's, and `--global` is the computer's.
 
 ## Lanes
 

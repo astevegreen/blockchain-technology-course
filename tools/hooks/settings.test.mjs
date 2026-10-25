@@ -1,7 +1,8 @@
-// Tests for .claude/settings.json and the git pre-commit hook wiring.
+// Tests for .claude/settings.json and the git pre-commit and pre-push hooks.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { copyFileSync, mkdirSync, readFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { sh, tempRepo, writeFiles } from "./test-helpers.mjs";
 import { spawnSync } from "node:child_process";
@@ -113,6 +114,40 @@ test("a commit runs `python tools/check.py --stamped` and is refused when it fai
   assert.equal(commit(repoWithHook(0)).status, 0);
 });
 
-test("the pre-commit hook is committed as executable", () => {
-  assert.match(sh("git", ["ls-files", "-s", ".githooks/pre-commit"], ROOT), /^100755 /);
+test("the pre-commit and pre-push hooks are committed as executable", () => {
+  for (const hook of ["pre-commit", "pre-push"]) assert.match(sh("git", ["ls-files", "-s", `.githooks/${hook}`], ROOT), /^100755 /);
+});
+
+test("a push from a sprint lane's worktree is refused, even one a script runs; the integrator and the main checkout push", () => {
+  const repo = tempRepo();
+  mkdirSync(path.join(repo, ".githooks"));
+  copyFileSync(path.join(ROOT, ".githooks", "pre-push"), path.join(repo, ".githooks", "pre-push"));
+  sh("git", ["add", "-A"], repo);
+  sh("git", ["commit", "-q", "-m", "hook"], repo);
+  sh("git", ["config", "core.hooksPath", ".githooks"], repo);
+  const origin = `${repo}-origin.git`;
+  sh("git", ["init", "-q", "--bare", origin], repo);
+  sh("git", ["remote", "add", "origin", origin], repo);
+  const trees = mkdtempSync(path.join(os.tmpdir(), "bc-hook-trees-"));
+  for (const name of ["bc-lane-lessons", "bc-integrate"]) sh("git", ["worktree", "add", "-q", "--detach", path.join(trees, name)], repo);
+  const push = (cwd, ref) => spawnSync("git", ["push", "-q", "origin", `HEAD:${ref}`], { cwd, encoding: "utf8", windowsHide: true });
+
+  const lane = path.join(trees, "bc-lane-lessons");
+  const refused = push(lane, "refs/heads/lane");
+  assert.notEqual(refused.status, 0);
+  assert.match(refused.stderr, /no push from a sprint lane's worktree/);
+  const script = spawnSync(process.execPath, ["-e", "require('child_process').execSync('git push -q origin HEAD:refs/heads/script')"],
+    { cwd: lane, encoding: "utf8", windowsHide: true });
+  assert.notEqual(script.status, 0);
+  assert.match(script.stderr, /no push from a sprint lane's worktree/);
+  assert.equal(spawnSync("git", ["ls-remote", "--heads", origin], { encoding: "utf8" }).stdout, "");
+
+  const integrate = path.join(trees, "bc-integrate");
+  writeFiles(integrate, { "landed.txt": "landed\n" });
+  sh("git", ["add", "-A"], integrate);
+  sh("git", ["commit", "-q", "-m", "landed"], integrate);
+  for (const [cwd, ref] of [[repo, "refs/heads/main"], [integrate, "main"]]) {
+    const pushed = push(cwd, ref);
+    assert.equal(pushed.status, 0, pushed.stderr);
+  }
 });

@@ -11,7 +11,7 @@
 // read (sh -c, pwsh -Command, cmd, eval), a command or git subcommand held in a variable or a substitution, and git
 // aliases. Every Bash mode also refuses what no unattended session may do: skip hooks, force or delete on the
 // remote, discard work, change gh auth, or fetch from the web. It reads commands, not programs: a script or
-// `node -e` that runs git itself is out of its sight.
+// `node -e` that runs git itself is out of its sight (.githooks/pre-push still refuses its push from a lane's worktree).
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
