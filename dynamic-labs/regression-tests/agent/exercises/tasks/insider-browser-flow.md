@@ -31,6 +31,12 @@ instructor dashboard.
 9. Confirm the host receives a role, the roster shows 4 agents, and the
    round advances into the live game state.
 10. Check console and network failures after each major phase.
+11. Compare the student pages with `dynamic-labs/exercises/l03-i3-trust-game/HANDOUT.md`: every
+    button the handout names in bold (**Join open game**, **Join private game**, **Invite more
+    players**, **Start round**, **Lock in clue**, **Guess now**, **Return to main menu**) appears
+    with that label, and the room badge shows a maximum of 6 players. **Join private game** shows
+    only while private rooms are allowed, and **Guess now** only to the Insider: check those two in
+    the page source (`templates/index.html`) when the run does not reach them.
 
 ## Expected Results
 
@@ -39,6 +45,7 @@ instructor dashboard.
 - the instructor route blocks before login
 - the instructor dashboard sees the new room
 - the host can start a live round alone, with agents filling the room
+- the student handout's button names and room size match the pages
 
 ## Failure Evidence
 

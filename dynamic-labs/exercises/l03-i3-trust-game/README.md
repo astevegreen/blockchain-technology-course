@@ -9,6 +9,12 @@ This app supports:
 - Sequential or simultaneous clue reveal
 - Live timers, reconnect grace periods, and instructor moderation
 
+## Classroom use
+
+The game opens the day 1 lab. `HANDOUT.md` is the one-page student handout (join, rules, what to notice) for
+the instructor to print or project; the app does not serve it. The instructor's room set-up and debrief are in
+the instructor-only `quizes/labs/d1-the-insider-debrief.md`.
+
 ## Requirements
 
 - Python 3.11+
