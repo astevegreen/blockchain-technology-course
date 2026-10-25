@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
+
+RUNNER_IMAGE="${EXPLORER_REGRESSION_RUNNER_IMAGE:-dynamic-labs-explorer-regression:local}"
+CONTAINER_BASE_URL="${EXPLORER_REGRESSION_CONTAINER_BASE_URL:-http://router-router-1}"
+HOST_BASE_URL="${EXPLORER_REGRESSION_HOST_BASE_URL:-http://127.0.0.1}"
+EXPLORER_HOST="${EXPLORER_REGRESSION_HOST:-explorer.lab}"
+
+FRESH_START=0
+SKIP_START=0
+DIRECT_HOST=0
+MATCH_PATTERN=""
+
+usage() {
+  cat <<'EOF'
+Usage:
+  regression-tests/automated/explorer/run.sh [options]
+
+Options:
+  --fresh-start  Wipe runtime state and recreate the stack before running tests.
+  --skip-start   Do not call lab-manager before running the suite.
+  --direct-host  Run the unittest suite directly on the host instead of in the router-net runner container.
+  --match TEXT   Run only tests whose unittest id/name contains TEXT.
+
+Default behavior:
+  - does not wipe the environment
+  - non-destructively runs ./lab-manager.sh start explorer
+  - builds the regression runner image
+  - runs the live suite in a container attached to router-net
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --fresh-start)
+      FRESH_START=1
+      ;;
+    --skip-start)
+      SKIP_START=1
+      ;;
+    --direct-host)
+      DIRECT_HOST=1
+      ;;
+    --match)
+      if [[ $# -lt 2 ]]; then
+        echo "--match requires an argument" >&2
+        usage >&2
+        exit 1
+      fi
+      MATCH_PATTERN="$2"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+fresh_start() {
+  echo "[explorer-regression] performing optional fresh-start reset"
+  (
+    cd "${ROOT_DIR}"
+    bash ./lab-manager.sh stop all || true
+  )
+
+  local project
+  for project in \
+    router \
+    course-site \
+    instructor_auth_service \
+    lane-service \
+    bitcoin \
+    consensus \
+    cryptography \
+    p2p_trust \
+    ethereum_lab \
+    exercises \
+    explorer \
+    quiz-engine-v2 \
+    hlf
+  do
+    (
+      cd "${ROOT_DIR}/${project}"
+      docker compose down -v --remove-orphans || true
+    )
+  done
+
+  find "${ROOT_DIR}/lane-service/runtime" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+  rm -rf "${ROOT_DIR}/.runtime"
+  rm -f "${ROOT_DIR}/.lab-manager.env"
+
+  (
+    cd "${ROOT_DIR}"
+    bash ./lab-manager.sh deploy --mode instructor --no-tls --max-student-capacity 2
+    bash ./lab-manager.sh start explorer
+  )
+}
+
+ensure_live_stack() {
+  echo "[explorer-regression] ensuring explorer stack is running"
+  (
+    cd "${ROOT_DIR}"
+    bash ./lab-manager.sh start explorer
+  )
+}
+
+# The chain folder the running Anvil loaded (chains/<name>), so the suite checks that chain's transactions.
+loaded_chain() {
+  local source
+  source="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/chain"}}{{.Source}}{{end}}{{end}}' \
+    explorer-anvil-1 2>/dev/null || true)"
+  if [[ -n "${source}" ]]; then
+    basename "${source}"
+  else
+    echo "sample"
+  fi
+}
+
+build_runner_image() {
+  echo "[explorer-regression] building runner image ${RUNNER_IMAGE}"
+  docker build \
+    --network "${DOCKER_BUILD_NETWORK:-default}" \
+    -t "${RUNNER_IMAGE}" \
+    -f "${SCRIPT_DIR}/runner.Dockerfile" \
+    "${SCRIPT_DIR}"
+}
+
+run_in_container() {
+  local chain="$1"
+  echo "[explorer-regression] running suite in router-net attached container (chain: ${chain})"
+  local -a cmd=(python -m unittest discover -s regression-tests/automated/explorer -p 'test_*.py' -v)
+  if [[ -n "${MATCH_PATTERN}" ]]; then
+    cmd+=(-k "${MATCH_PATTERN}")
+  fi
+  docker run --rm \
+    --network router-net \
+    -v "${ROOT_DIR}:/work:ro" \
+    -w /work \
+    -e EXPLORER_REGRESSION_BASE_URL="${CONTAINER_BASE_URL}" \
+    -e EXPLORER_REGRESSION_HOST="${EXPLORER_HOST}" \
+    -e EXPLORER_REGRESSION_CHAIN="${chain}" \
+    "${RUNNER_IMAGE}" \
+    "${cmd[@]}"
+}
+
+run_on_host() {
+  local chain="$1"
+  echo "[explorer-regression] running suite directly on host (chain: ${chain})"
+  local -a cmd=(python3 -m unittest discover -s regression-tests/automated/explorer -p 'test_*.py' -v)
+  if [[ -n "${MATCH_PATTERN}" ]]; then
+    cmd+=(-k "${MATCH_PATTERN}")
+  fi
+  (
+    cd "${ROOT_DIR}"
+    EXPLORER_REGRESSION_BASE_URL="${HOST_BASE_URL}" \
+    EXPLORER_REGRESSION_HOST="${EXPLORER_HOST}" \
+    EXPLORER_REGRESSION_CHAIN="${chain}" \
+    "${cmd[@]}"
+  )
+}
+
+if [[ "${SKIP_START}" != "1" ]]; then
+  if [[ "${FRESH_START}" == "1" ]]; then
+    fresh_start
+  else
+    ensure_live_stack
+  fi
+fi
+
+CHAIN="$(loaded_chain)"
+
+if [[ "${DIRECT_HOST}" == "1" ]]; then
+  run_on_host "${CHAIN}"
+else
+  build_runner_image
+  run_in_container "${CHAIN}"
+fi

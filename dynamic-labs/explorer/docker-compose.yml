@@ -1,0 +1,61 @@
+name: explorer
+
+# The course chain explorer: Otterscan in the browser, on a frozen chain that Anvil loads from a file.
+# The router serves it on its own name, explorer.<the lab's host name> (see README.md), because Otterscan
+# v2.11.0 cannot be served from a sub-folder. Students read the chain; the rpc filter stops them changing it.
+#
+# The chain is one setting: EXPLORER_CHAIN names a folder under chains/ holding chain.json (Anvil's saved
+# state) and sourcify/ (its contracts' source). Change the default below to swap in another chain.
+
+services:
+  # The node. Only the filter can reach it: the chain network is internal and the router is not on it.
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    entrypoint: ["anvil"]
+    command: ["--host", "0.0.0.0", "--port", "8545", "--load-state", "/chain/chain.json"]
+    volumes:
+      - ./chains/${EXPLORER_CHAIN:-sample}:/chain:ro
+    networks:
+      - chain
+    restart: unless-stopped
+
+  # Passes only Otterscan's read methods to Anvil; anvil_*, evm_* and every sending method are refused.
+  rpc:
+    image: python:3.11-slim
+    command: ["python", "/app/rpc_filter.py"]
+    environment:
+      - UPSTREAM_URL=http://anvil:8545
+      - PYTHONUNBUFFERED=1
+    user: "65534:65534"
+    read_only: true
+    volumes:
+      - ./rpc-filter/rpc_filter.py:/app/rpc_filter.py:ro
+    depends_on:
+      - anvil
+    networks:
+      - chain
+      - router-net
+    restart: unless-stopped
+
+  # Otterscan's web app, with every outside call turned off (otterscan-config.json) and the contracts'
+  # source served from the chain's own copy.
+  web:
+    image: otterscan/otterscan:v2.11.0
+    environment:
+      # Serve otterscan-config.json as it is; the image's start-up script would otherwise rewrite it.
+      - DISABLE_CONFIG_OVERWRITE=1
+    volumes:
+      - ./otterscan-config.json:/usr/share/nginx/html/config.json:ro
+      - ./web-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./chains/${EXPLORER_CHAIN:-sample}/sourcify:/usr/share/nginx/html/sourcify:ro
+    depends_on:
+      - rpc
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  chain:
+    internal: true
+  router-net:
+    external: true

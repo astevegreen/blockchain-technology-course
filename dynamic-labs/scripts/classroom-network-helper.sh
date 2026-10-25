@@ -367,7 +367,8 @@ write_dnsmasq_config() {
     cat > "${DNSMASQ_CONF}" <<EOF
 bind-interfaces
 # Scope DNS to classroom interfaces only. This avoids colliding with
-# systemd-resolved on loopback while still allowing students to use http://lab/.
+# systemd-resolved on loopback while still allowing students to use http://lab/
+# and the course chain explorer at http://explorer.lab/.
 except-interface=lo
 EOF
 
@@ -376,6 +377,7 @@ EOF
 interface=${WIFI_IFACE}
 listen-address=${WIFI_GATEWAY}
 host-record=lab,${WIFI_GATEWAY}
+host-record=explorer.lab,${WIFI_GATEWAY}
 dhcp-range=set:wifi,${WIFI_DHCP_START},${WIFI_DHCP_END},${WIFI_NETMASK},${WIFI_LEASE}
 dhcp-option=tag:wifi,option:router,${WIFI_GATEWAY}
 dhcp-option=tag:wifi,option:dns-server,${WIFI_GATEWAY}
@@ -387,6 +389,7 @@ EOF
 interface=${ETHERNET_IFACE}
 listen-address=${ETHERNET_GATEWAY}
 host-record=lab,${ETHERNET_GATEWAY}
+host-record=explorer.lab,${ETHERNET_GATEWAY}
 dhcp-range=set:ethernet,${ETHERNET_DHCP_START},${ETHERNET_DHCP_END},${ETHERNET_NETMASK},${ETHERNET_LEASE}
 dhcp-option=tag:ethernet,option:router,${ETHERNET_GATEWAY}
 dhcp-option=tag:ethernet,option:dns-server,${ETHERNET_GATEWAY}
