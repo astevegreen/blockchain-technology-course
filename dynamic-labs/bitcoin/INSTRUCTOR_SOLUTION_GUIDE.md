@@ -32,16 +32,22 @@ commands), EXPECTED OBSERVATIONS, and WHY THIS MATTERS.
 
 ---
 
-## 1. PRIMER — Navigate the workstation
+## 1. PRIMER — Get oriented in the terminal
+
+Ten minutes of ungraded practice; students hand nothing in. Step 1 is the worked example. Students read and
+never edit: no editor is taught.
 
 | Step | Solution | Expected |
 |---|---|---|
-| Orient | `pwd` ; `ls -a` | home dir + dotfiles |
-| Move around | `cd ~/scripts` ; `ls` ; `cd ~` | `miner.py`, `agent.py` present |
-| Zellij tabs | `Ctrl+G` then `t` then `n` (new tab); `Ctrl+G t Left` (prev) | new tab opens |
-| Zellij panes | `Ctrl+G` then `p` then `r` (split L/R); `Alt+Arrow` to move; `exit` to close | split pane |
-| Scrollback | `Ctrl+G` then `s` (scroll mode), arrows / PgUp-PgDn, `Ctrl+G` to return | scrollback works |
-| Before `nano` | press `Ctrl+G` first to lock zellij so nano shortcuts pass through | — |
+| 1. Worked example | `pwd` ; `ls` | `/home/user`; `scripts` and `share` listed |
+| 2. Move around | `cd ~/scripts` ; `ls` ; `cd ~` | `agent.py`, `miner.py` present |
+| 3. Read a file | `less ~/.bitcoin/bitcoin.conf`; Space, `b`, `q` | file paged, `q` returns to the shell |
+| 4. Search a file | `grep rpcallowip ~/.bitcoin/bitcoin.conf` | three lines, each `rpcallowip=` (written by the workstation's `entrypoint.sh` on first boot) |
+| 5. Zellij tabs | `Ctrl+G` then `t` then `n` (new tab); `Ctrl+G t Left` (prev) | new tab opens |
+| 6. Zellij panes | `Ctrl+G` then `p` then `r` (split L/R); `less ~/scripts/miner.py` in the new pane; `Alt+Arrow` to move; `q`, then `exit` to close | split pane with the script beside the shell |
+| 7. Scrollback | `ls /usr/bin`; `Ctrl+G` then `s` (scroll mode), arrows / PgUp, `Ctrl+G` to return | lines that scrolled off are visible again |
+
+The step's transition sends students on to the day 1 Explorer worksheet, not Lab 1.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Welcome to the Bitcoin Lab! This environment is a self-contained Linux workstation designed for experimenting with the Bitcoin protocol. You will access it through your web browser, which connects you to a terminal running inside the container.
 
-This guide covers the essentials of navigating the Linux command line, managing your workspace with `zellij`, sharing files, and using the pre-installed tools.
+This guide covers the essentials of navigating the Linux command line, reading files, managing your workspace with `zellij`, sharing files, and using the pre-installed tools. You type commands and read what they print; you never write or edit code.
 
 ---
 
@@ -31,22 +31,13 @@ user@container:~$ pwd
 * `cd ~`: Go back to your home folder (`/home/user`).
 
 
-* **`mkdir <name>`** (Make Directory): Creates a new folder.
-* **`rm <file>`**: Deletes a file **permanently**.
-* `rm -r <folder>`: Deletes a folder and everything inside it.
-
-
-
-### **Viewing & Editing Files**
+### **Reading Files**
 
 * **`cat <file>`**: Dumps the entire content of a file to the screen. Good for short files.
-* **`less <file>`**: Opens a file in a scrollable viewer. Press `q` to exit.
-* **`nano <file>`**: A beginner-friendly text editor. Before opening nano, press `Ctrl+G` to lock zellij controls so nano shortcuts work.
-* To save: Press `Ctrl+O`, then `Enter`.
-* To exit: Press `Ctrl+X`.
+* **`less <file>`**: Opens a file in a scrollable viewer. Press Space for the next page, `b` to go back, and `q` to exit.
 
 
-* **`grep "<text>" <file>`**: Searches for specific text inside a file.
+* **`grep "<text>" <file>`**: Prints only the lines of a file that contain the text.
 * *Example:* Find errors in the log: `grep "error" /home/user/.bitcoin/debug.log`
 
 
@@ -55,17 +46,17 @@ user@container:~$ pwd
 
 ## 2. 🖥️ Zellij Primer (Window Management)
 
-Because you are accessing this lab through a single browser tab, we use **zellij** (a terminal workspace) to give you tabs and split panes inside your terminal. This lets you run Bitcoin in one tab, edit code in another, and watch logs in a split pane.
+Because you are accessing this lab through a single browser tab, we use **zellij** (a terminal workspace) to give you tabs and split panes inside your terminal. This lets you run Bitcoin commands in one tab, read a file or script in another, and watch logs in a split pane.
 
 ### **What is zellij?**
 
-Zellij manages multiple terminal views in one window. Press **`Ctrl + G`** to switch between zellij controls and locked shell input. Before opening nano, press **`Ctrl + G`** to lock zellij controls so nano shortcuts work.
+Zellij manages multiple terminal views in one window. Press **`Ctrl + G`** to switch between zellij controls and locked shell input.
 
 ### **Cheatsheet**
 
 | Action | Shortcut | Description |
 | --- | --- | --- |
-| **Toggle controls** | **`Ctrl + G`** | Switches between zellij controls and locked shell input. Use this before nano so editor shortcuts work. |
+| **Toggle controls** | **`Ctrl + G`** | Switches between zellij controls and locked shell input. |
 | **New pane** | **`Alt + n`** | Opens a new pane next to the current one. |
 | **Navigate panes** | **`Alt + Arrow Keys`** | Moves focus between panes. |
 | **Pane mode** | **`Ctrl + G`**, then **`p`** | Enters pane mode: **`r`** splits right, **`d`** splits down, **`x`** closes the pane. |
@@ -124,7 +115,7 @@ by changing `/student1/` in the URL to `/static-web-student1/`
 
 ## 4. 🛠️ Workstation Overview
 
-Your environment comes pre-loaded with specialized tools for Bitcoin development and network analysis.
+Your environment comes pre-loaded with tools for querying your node, watching the network and reading the results.
 
 ### **Bitcoin Tools**
 
@@ -142,8 +133,8 @@ Your environment comes pre-loaded with specialized tools for Bitcoin development
 
 ### **Python Environment**
 
-* A Python virtual environment is active by default (`source /opt/venv/bin/activate`).
-* **`bitcoinlib`** is installed, allowing you to write Python scripts to create keys, transactions, and scripts easily.
+* A Python virtual environment is active by default, with **`bitcoinlib`** installed.
+* It runs the ready-made scripts in `~/scripts/` and the instructor's demonstrations. You run and read these scripts; you never write them.
 
 ### **Network Tools**
 
