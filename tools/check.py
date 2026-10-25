@@ -153,7 +153,8 @@ def render_lesson(rel: str) -> list[str]:
     if not quarto:
         return ["quarto is not on PATH: cannot render lessons"]
     target = Path(rel).relative_to("blockchain-course").as_posix()
-    code, out = run([quarto, "render", target], cwd=COURSE, timeout=900)
+    # Under the Stop hook's 570 s (tools/hooks/gate.mjs), so a slow render is reported here, not cut off there.
+    code, out = run([quarto, "render", target], cwd=COURSE, timeout=540)
     problems = quarto_warnings(out, rel)
     if code and not problems:
         problems = [f"{rel}: quarto render exited {code}", *tail(out)]

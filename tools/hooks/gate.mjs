@@ -2,7 +2,8 @@
 // 1. Skips at once when the session changed nothing, or nothing since the last green run.
 // 2. On failure, blocks finishing (exit 2) with at most 40 lines of failures.
 // 3. A stop retried with nothing changed since the last failure (stop_hook_active) reuses that failure
-//    instead of rerunning a check that renders lessons.
+//    instead of rerunning a check that renders lessons. A time-out is never reused: a busy computer, not the
+//    change, may have caused it, so the next stop runs the check again.
 // 4. After 5 blocks in a row it tells Claude to report the failure, then lets it stop.
 // It never changes files in the repository.
 import { createHash } from "node:crypto";
@@ -12,6 +13,7 @@ import path from "node:path";
 import { readInput, git, limitLines, runPython } from "./shared.mjs";
 
 const MAX_BLOCKS = 5;
+const TIMED_OUT = /timed out after \d+s/; // runPython's own time-out, or one inside check.py
 const input = await readInput();
 const cwd = input.cwd ?? process.cwd();
 const root = git(["rev-parse", "--show-toplevel"], cwd);
@@ -77,7 +79,7 @@ if (input.stop_hook_active && state.failed === fingerprint && state.output) {
 }
 
 state.blocks += 1;
-state.failed = fingerprint;
+state.failed = TIMED_OUT.test(output) ? null : fingerprint;
 state.output = output;
 save();
 const header = state.blocks >= MAX_BLOCKS

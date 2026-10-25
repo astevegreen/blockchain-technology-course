@@ -15,6 +15,9 @@ with open(${JSON.stringify(log)}, "a") as f:
 if os.environ.get("FAKE_CHECK") == "fail":
     print("[lesson lint]\\n  blockchain-course/lessons/a.qmd:12: div {.notes} is never closed\\ncheck: FAILED")
     sys.exit(1)
+if os.environ.get("FAKE_CHECK") == "timeout":
+    print("[render a.qmd]\\n  quarto render lessons/a.qmd: timed out after 540s\\ncheck: FAILED")
+    sys.exit(1)
 print("check: passed (1 checks, 0.1s)")
 `,
 };
@@ -93,6 +96,18 @@ test("a retried stop with nothing changed reuses the failure instead of rerunnin
   writeFiles(repo, { "blockchain-course/lessons/a.qmd": "fixed\n" });
   assert.equal(stop(repo, id, "pass", true).status, 0);
   assert.equal(runs(), before + 2, "the fix is checked");
+});
+
+test("a retried stop after a time-out runs the check again instead of reusing it", () => {
+  const repo = tempRepo(STUB);
+  const id = randomUUID();
+  writeFiles(repo, { "blockchain-course/lessons/a.qmd": "slow\n" });
+  const before = runs();
+  const first = stop(repo, id, "timeout");
+  assert.equal(first.status, 2);
+  assert.match(first.stderr, /timed out after 540s/);
+  assert.equal(stop(repo, id, "pass", true).status, 0, "the rerun passes on a quieter computer");
+  assert.equal(runs(), before + 2, "same tree, but a time-out is checked again");
 });
 
 test("a green run resets the block count", () => {
