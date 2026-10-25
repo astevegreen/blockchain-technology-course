@@ -7,9 +7,10 @@ import os from "node:os";
 import path from "node:path";
 import { runHook } from "./test-helpers.mjs";
 
-const guard = (mode, toolInput, cwd = process.cwd()) =>
-  runHook("sprint-guard.mjs", { tool_input: toolInput, cwd }, { args: [mode] }).status;
+const guard = (mode, toolInput, cwd = process.cwd(), tool = "Bash") =>
+  runHook("sprint-guard.mjs", { tool_name: tool, tool_input: toolInput, cwd }, { args: [mode] }).status;
 const bash = (mode, command, cwd) => guard(mode, { command }, cwd);
+const ps = (mode, command, cwd) => guard(mode, { command }, cwd, "PowerShell");
 const BOTH = ["--lane", "--integrator"];
 const LABS = "C:/Antigravity/bc-lane-labs";
 const LESSONS = "C:/Antigravity/bc-lane-lessons";
@@ -232,6 +233,47 @@ describe("commands run through a wrapper", () => {
   });
 });
 
+describe("commands a variable, a cast or split quotes hide", () => {
+  // YODC's 04ce6da6 cases, and the course's own: each runs git push or skips hooks without saying so in a word.
+  test("refuses them in PowerShell", () => {
+    for (const mode of BOTH) {
+      for (const command of [
+        "$x = git push origin HEAD:other", "$x=git push origin HEAD:other", "$x += git push origin HEAD:other",
+        "$env:X = git push origin HEAD:other", "[string]$x = git push origin HEAD:other", "$o.p = git push origin HEAD:other",
+        "$x = @(git push origin HEAD:other)", "[void](git push origin HEAD:other)", "[void] (git push origin HEAD:other)",
+        "@(git push origin HEAD:other)", '& "git" push origin HEAD:other',
+        "& 'C:\\Program Files\\Git\\bin\\git.exe' push origin HEAD:other", "& { git push origin HEAD:other }",
+        ". { git push origin HEAD:other }", '$g = "git"; & $g push origin HEAD:main', '& "$g" push origin HEAD:main',
+        "& (Get-Command git) push origin HEAD:main", ". $script", "echo hi & git push origin HEAD:other",
+        "git pu`sh origin HEAD:other", "git `\npush origin HEAD:other", "$a = 'push'; git @a origin HEAD:main",
+      ]) assert.equal(ps(mode, command), 2, `${mode} ${command}`);
+    }
+  });
+  test("refuses them in bash", () => {
+    for (const mode of BOTH) {
+      for (const command of [
+        "g=git; $g push origin HEAD:main", '"$g" push origin HEAD:main', "${g} push origin HEAD:main",
+        'x="git push origin HEAD:main"; $x', 'X="a b" git push origin HEAD:other', 'git "pu"sh origin HEAD:other',
+        "git pu''sh origin HEAD:other", "g\\it push origin HEAD:other", "git \\\npush origin HEAD:other",
+        "echo hi & git push origin HEAD:other", "p=push; git $p origin HEAD:main", "git $(echo push) origin HEAD:main",
+        "git `echo push` origin HEAD:main", "$(which git) push origin HEAD:main", "`which git` push origin HEAD:main",
+        '"$(which git)" push origin HEAD:main', 'echo hi; "`which git`" push origin HEAD:main',
+        'git -C "$d" commit -m x', 'git commit --no-ver""ify -m x',
+      ]) assert.equal(bash(mode, command), 2, `${mode} ${command}`);
+    }
+  });
+  test("lets plain values, saved output and backgrounding through", () => {
+    for (const command of ["$x = git status", "& git status", "$LASTEXITCODE",
+      "$files | Where-Object { $_.Length -gt 0 } | Select-Object -First 3", "$r = Get-Content x.txt; $r.Count",
+      ". ./tools/x.ps1"]) assert.equal(ps("--lane", command), 0, command);
+    for (const command of ["npm test > out.txt 2>&1 &", "ls . $HOME", 'x=$(git status) && echo "$x"',
+      'gh issue comment 12 --body "Fixed (\\`02-BF\\`); \\`check.py\\` passes & costs \\$0"']) {
+      assert.equal(bash("--lane", command), 0, command);
+    }
+    assert.equal(ps("--integrator", "$out = git -C C:/Antigravity/bc-integrate push origin HEAD:main"), 0);
+  });
+});
+
 describe("--integrator", () => {
   test("pushes only HEAD to main", () => {
     assert.equal(bash("--integrator", "git -C C:/Antigravity/bc-integrate push origin HEAD:main"), 0);
@@ -341,10 +383,10 @@ describe("--read-only", () => {
   });
   test("reads a PowerShell assignment as the command it saves", () => {
     for (const command of ["$x = git push", "$x=git push", "$x = (git push", "[string]$x += git push", "$env:X = git push",
-      "$null = git -C /w push origin HEAD:main"]) assert.equal(bash("--lane", command), 2, command);
-    assert.equal(bash("--integrator", "$r = git -C C:/Antigravity/bc-integrate push origin HEAD:main"), 0);
-    assert.equal(bash("--integrator", "$r = git push origin HEAD:other"), 2);
-    assert.equal(bash("--lane", "$r = gh issue view 12 --json labels"), 0);
+      "$null = git -C /w push origin HEAD:main"]) assert.equal(ps("--lane", command), 2, command);
+    assert.equal(ps("--integrator", "$r = git -C C:/Antigravity/bc-integrate push origin HEAD:main"), 0);
+    assert.equal(ps("--integrator", "$r = git push origin HEAD:other"), 2);
+    assert.equal(ps("--lane", "$r = gh issue view 12 --json labels"), 0);
   });
   test("reads a backslash-escaped ; or | outside quotes as text, as bash does", () => {
     // YODC's 22 Oct eval: this refusal hid a bug from the reviewer.
@@ -381,6 +423,8 @@ describe("--file-lock", () => {
   mkdirSync(lane, { recursive: true });
   writeFileSync(path.join(lane, ".git"), "gitdir: elsewhere\n");
   after(() => rmSync(tmp, { recursive: true, force: true }));
+  // Bash reads a backslash as an escape, so a command names these folders with forward slashes, as the skills do.
+  const [mainSh, laneSh] = [main, lane].map((p) => p.split(path.sep).join("/"));
   const edit = (file) => guard("--file-lock", { file_path: file }, lane);
 
   test("lets a lane edit its own worktree", () => {
@@ -393,18 +437,22 @@ describe("--file-lock", () => {
   test("keeps git writes out of the main checkout", () => {
     for (const mode of BOTH) {
       assert.equal(bash(mode, "git switch -C sprint/3 origin/main", main), 2);
-      assert.equal(bash(mode, `git -C ${main} cherry-pick abc..def`, lane), 2);
-      assert.equal(bash(mode, `cd ${main} && git commit -m x`, lane), 2);
+      assert.equal(bash(mode, `git -C ${mainSh} cherry-pick abc..def`, lane), 2);
+      assert.equal(bash(mode, `cd ${mainSh} && git commit -m x`, lane), 2);
       assert.equal(bash(mode, "git stash", main), 2);
       assert.equal(bash(mode, "git fetch origin --prune && git merge --ff-only origin/main", main), 0);
-      assert.equal(bash(mode, `git -C ${lane} switch --discard-changes -C sprint/3 origin/main`, main), 0);
+      assert.equal(bash(mode, `git -C ${laneSh} switch --discard-changes -C sprint/3 origin/main`, main), 0);
       assert.equal(bash(mode, "git commit -m x", lane), 0);
-      assert.equal(bash(mode, `git -C ${lane} stash push -m left`, main), 0);
-      assert.equal(bash(mode, `git -C ${main} stash push -m x`, lane), 2);
+      assert.equal(bash(mode, `git -C ${laneSh} stash push -m left`, main), 0);
+      assert.equal(bash(mode, `git -C ${mainSh} stash push -m x`, lane), 2);
       // Through a wrapper, and past a `-c` setting before the subcommand.
-      assert.equal(bash(mode, `env git -C ${main} commit -m x`, lane), 2);
-      assert.equal(bash(mode, `git -c user.name=x -C ${main} commit -m x`, lane), 2);
-      assert.equal(bash(mode, `find ${main} -maxdepth 0 -exec git -C {} commit -m x \\;`, lane), 2);
+      assert.equal(bash(mode, `env git -C ${mainSh} commit -m x`, lane), 2);
+      assert.equal(bash(mode, `git -c user.name=x -C ${mainSh} commit -m x`, lane), 2);
+      assert.equal(bash(mode, `find ${mainSh} -maxdepth 0 -exec git -C {} commit -m x \\;`, lane), 2);
+      // A backslash path stays whole in double quotes in bash, and anywhere in PowerShell.
+      assert.equal(bash(mode, `git -C "${main}" commit -m x`, lane), 2);
+      assert.equal(ps(mode, `git -C ${main} commit -m x`, lane), 2);
+      assert.equal(ps(mode, `git -C ${lane} commit -m x`, main), 0);
     }
   });
   test("refuses the main checkout, the sprint's machinery, the owner's files and generated files", () => {

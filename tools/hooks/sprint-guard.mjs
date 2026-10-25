@@ -8,8 +8,10 @@
 // --lane and --integrator refuse new dependencies and git writes to the main checkout (only fetch, worktree and
 // `merge --ff-only` touch it), and run the sprint queue (tools/sprint/queue.mjs) only on its own. Both read the
 // command a wrapper runs (env, nice, timeout, xargs, find -exec, wsl, ...) and refuse a command string they can't
-// read (sh -c, pwsh -Command, cmd, eval) and git aliases. Every Bash mode also refuses what no unattended session
-// may do: skip hooks, force or delete on the remote, discard work, change gh auth, or fetch from the web.
+// read (sh -c, pwsh -Command, cmd, eval), a command or git subcommand held in a variable or a substitution, and git
+// aliases. Every Bash mode also refuses what no unattended session may do: skip hooks, force or delete on the
+// remote, discard work, change gh auth, or fetch from the web. It reads commands, not programs: a script or
+// `node -e` that runs git itself is out of its sight.
 import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
@@ -47,8 +49,11 @@ if (MODE === "--file-lock") {
   process.exit(0);
 }
 
-// A backslash before a newline joins the two lines into one command, as bash does: `git \⏎push` pushes.
-const command = String(input.tool_input?.command ?? "").replace(/\\\r?\n/g, " ");
+// PowerShell's escape character is a backtick, where bash's is a backslash and a backtick runs a command.
+const PS = input.tool_name === "PowerShell";
+// An escape before a newline joins the two lines into one command: `git \⏎push` pushes in bash, `git `⏎push` in
+// PowerShell.
+const command = String(input.tool_input?.command ?? "").replace(PS ? /`\r?\n/g : /\\\r?\n/g, " ");
 // Simple commands: split on control operators, keeping the words of each. Inside quotes, |, ;, &, ), $ and a
 // backtick are text (a search pattern such as "a\|b", a note naming `a.qmd`), except in double quotes holding $
 // or a backtick, which can run a command there. So are |, ;, & and ) escaped with a backslash outside quotes
@@ -81,11 +86,31 @@ const literalsBlank = mapQuoted(command, (q) => (runsInside(q) ? q : "''"));
 // backtick runs that command: both are read as written.
 const TEXT_FLAG = /(^|\s)(--note|--also|--body|--comment|--title|--message|-m)(=|\s+)$/;
 const text = mapQuoted(command, (q, before) => (!runsInside(q) && TEXT_FLAG.test(before) ? "''" : q));
-const parts = maskQuoted(command)
-  .split(/&&|\|\||[;|\n`]|\$\(|\)/)
+const masked = maskQuoted(command);
+// A lone & ends a command (bash's background) or starts one (PowerShell's call operator); `2>&1` and `&>` are
+// redirects.
+const parts = masked
+  .split(PS ? /&&|\|\||(?<!>)&(?!>)|[;|\n]|\$\(|\)/ : /&&|\|\||(?<!>)&(?!>)|[;|\n`]|\$\(|\)/)
   .map((p) => p.replace(/[\u0001-\u0006]/g, (c) => UNMASK[c]).trim())
   .filter(Boolean);
-const words = (s) => s.match(/"[^"]*"|'[^']*'|\S+/g)?.map((w) => w.replace(/^(["'])(.*)\1$/, "$2")) ?? [];
+// A word as the shell reads it: its quoted and unquoted pieces joined (`git "pu"sh` is git push, and `X="a b"` is one
+// word), without the quotes, and without an escape character outside single quotes (bash's `\`, PowerShell's `).
+const unescape = (s, inDouble) => (PS ? s.replace(/`(.)/g, "$1") : s.replace(inDouble ? /\\([$`"\\])/g : /\\(.)/g, "$1"));
+const words = (s) => s.match(/(?:[^\s"']+|"(?:[^"\\]|\\.)*"|'[^']*'|["'])+/g)?.map((w) =>
+  w.replace(/"((?:[^"\\]|\\.)*)"|'([^']*)'|["']|[^"']+/g, (piece, dq, sq) =>
+    sq ?? (dq !== undefined ? unescape(dq, true) : /^["']$/.test(piece) ? "" : unescape(piece, false)))) ?? [];
+
+// Commands the guard can't read, in every mode. PowerShell's call operator and dot-source run what a variable or an
+// expression names (`& $g push`, `& (Get-Command git) push`, `. $x`); in bash, `& $g` backgrounds one command and
+// runs a variable's. `2>&1` and `&&` are not that &.
+if (/(?<![>&])&(?![&>])\s*([$(]|"[^"]*\$)|(^|[;|\n{(&])\s*\.\s+([$(]|"[^"]*\$)/.test(masked)) {
+  deny("`& $x`, `& (…)` and `. $x` run a command the guard can't read; run it by name");
+}
+// In bash, a command named by a substitution (`$(which git) push`, `"$(which git)" push`, `` `which git` push ``)
+// runs what it prints.
+if (!PS && /(^|[;|&\n({!]|\b(then|do|else)\s)\s*"?(\$\(|`)/.test(masked)) {
+  deny("a command named by `$(…)` or backticks runs what it prints, which the guard can't read; run it by name");
+}
 
 const ALWAYS = [
   [/--no-verify\b|\bSKIP_HOOKS\b|core\.hooksPath/, "hooks are never skipped"],
@@ -93,7 +118,9 @@ const ALWAYS = [
   [/\bgit\b[^\n]*\bpush\b[^\n]*(\s-f\b|--force|--delete|\s-d\b|\s\+\S|\s:\S)/, "no force-push or remote delete"],
   [/\bgit\b[^\n]*\b(reset\s+--hard|clean\s+-\S*f|branch\s+-D|tag\s+-[df]|update-ref\s+-d|filter-branch|filter-repo)\b/, "that discards work"],
 ];
-for (const [re, why] of ALWAYS) if (re.test(text)) deny(why);
+// Read as written and as the shell reads its words: `--no-ver""ify` skips hooks too.
+const textRead = words(text).join(" ");
+for (const [re, why] of ALWAYS) if (re.test(text) || re.test(textRead)) deny(why);
 // These two read only the command line outside text strings; --lane and --integrator also check each command's name.
 const DELETES = /\brm\s+-\S*r|\bremove-item\b[^\n]*-recurse|\brmdir\b|\brd\s+\/s/i;
 const WEB = new Set(["curl", "wget", "invoke-webrequest", "iwr", "invoke-restmethod", "irm"]);
@@ -119,18 +146,22 @@ const GIT_WRITES = new Set(["switch", "checkout", "commit", "rebase", "reset", "
 
 // A command's name as the shell runs it: `/usr/bin/git`, `git.exe` and `Git` are all git.
 const cmdName = (x) => path.posix.basename(String(x ?? "").replace(/\\/g, "/")).toLowerCase().replace(/\.(exe|cmd|bat)$/, "");
-// Words before the command itself: shell keywords, grouping and PowerShell's call operator (`then git push`,
-// `(git push`, `& git push`).
-const LEAD = new Set(["!", "{", "(", "&", "if", "then", "else", "elif", "do", "while", "until"]);
+// Words before the command itself: shell keywords, grouping, PowerShell's call operator and dot-source (`then git
+// push`, `(git push`, `& git push`, `. { git push }`).
+const LEAD = new Set(["!", "{", "(", "&", ".", "if", "then", "else", "elif", "do", "while", "until"]);
+// PowerShell's casts and arrays around a command: `[void](git push`, `@(git push`, `[void] (git push`.
+const PS_PREFIX = /^(?:\[[\w.]+\])*@?[({]+|^(?:\[[\w.]+\])+$/;
 const ASSIGN = /^[A-Za-z_]\w*=/;
-// PowerShell saves a command's output with `$x = git push`, `$x=git push` or `[string]$x += git push`.
-const PS_ASSIGN = /^(?:\[[^\]]*\])*\$(?:\{[^}]*\}|[\w:]+)(?:([-+*/%]?=)(.*))?$/;
+// PowerShell saves a command's output with `$x = git push`, `$x=git push`, `[string]$x += git push` or
+// `$o.p[0] = git push`.
+const PS_ASSIGN = /^(?:\[[^\]]*\])*\$(?:\{[^}]*\}|[\w:]+)(?:\.\w+|\[[^\]]*\])*(?:([-+*/%]?=)(.*))?$/;
 const PS_OP = /^[-+*/%]?=/;
 function leadStripped(raw) {
   const w = [...raw];
   for (;;) {
     while (w.length && LEAD.has(w[0])) w.shift();
-    if (w[0]) w[0] = w[0].replace(/^[({]+/, "");
+    if (w[0]) w[0] = w[0].replace(PS_PREFIX, "");
+    if (w.length && !w[0]) { w.shift(); continue; }
     if (w.length && ASSIGN.test(w[0])) { w.shift(); continue; }
     const ps = w[0]?.match(PS_ASSIGN);
     if (ps?.[1]) { w.splice(0, 1, ...(ps[2] ? [ps[2]] : [])); continue; }
@@ -165,6 +196,12 @@ function commandsIn(raw, fromArgs = false, repl = null, depth = 0) {
   if (depth > 4) deny("too many nested wrappers to read");
   const w = leadStripped(raw);
   if (!w.length || !w[0]) return [];
+  if (w[0].startsWith("$")) {
+    // PowerShell shows a value here (`$x`, `$x.Count`, `$x | …`) and runs one only through & or `.`, refused above;
+    // bash runs the command the variable holds (`$g push`, `"$g" push`, `${g} push`).
+    if (PS) return [];
+    deny(`\`${w[0]}\` runs a command held in a variable, which the guard can't read; run it by name`);
+  }
   const name = cmdName(w[0]);
   const self = { w: [name, ...w.slice(1)], at: w[0], fromArgs, repl };
   const inner = (rest, args = fromArgs, r = repl) => commandsIn(rest, args, r, depth + 1);
@@ -264,6 +301,11 @@ if (MODE === "--lane" || MODE === "--integrator") {
   let cwd = String(input.cwd ?? process.cwd());
   // Git config set from the environment can define an alias that runs any command.
   if (/\bGIT_CONFIG_(PARAMETERS|COUNT|KEY_\d+)\b/.test(text)) deny("no git config from the environment");
+  // Git's subcommand or checkout in a variable or a substitution (`git $p`, `git $(echo push)`, `git -C "$d" commit`,
+  // PowerShell's `git @a`) can't be read.
+  if (/(?<![\w.-])git(?:\.exe)?["']?(?:\s+(?:-C|-c|--git-dir|--work-tree|--namespace|--config-env)\s+\S+|\s+-\S+)*\s+["']?[$`@]/i.test(masked)) {
+    deny("git's subcommand and checkout are written out in the sprint, not held in a variable or a substitution");
+  }
   for (const p of parts) {
     const top = words(p);
     if (["cd", "set-location", "sl", "pushd"].includes(cmdName(top[0])) && top[1]) cwd = path.resolve(cwd, native(top[1]));
