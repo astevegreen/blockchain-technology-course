@@ -190,7 +190,8 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
   `/sprint-status` how it is going). Agents: `implementer` and `reviewer` (`.claude/agents/`). Guard:
   `tools/hooks/sprint-guard.mjs`, in the mode each skill and agent names: `--lane` for the cue, the supervisor,
   lane, plan, archiver and implementer, `--integrator`, `--file-lock` for the implementer's edits, and
-  `--read-only` for the reviewer.
+  `--read-only` for the reviewer. It reads command lines with `tools/hooks/shell-reader.mjs`, a byte-identical
+  copy of YODC's and Terminal Dusk's, tested by `shell-reader.cases.json`: change all three copies together.
 - The queue, `tools/sprint/queue.mjs`, holds the sprint's bookkeeping rules once (`tools/sprint/rules.mjs`):
   `window` and `identity` for the cue and every session's window check; `has-work "<session title>"`, `env`,
   `started`, `sessions`, `lock`, `unlock` and `resume` for the supervisor; `next <lane>` and `move <n> <state>`
@@ -318,8 +319,8 @@ Claude writes these on the sprint log, next to October's from Terminal Dusk and 
   line again). Sessions outside a sprint
   use these pieces, so they stay:
   - `.claude/agents/reviewer.md`: `CLAUDE.md` (Finishing) runs it;
-  - `tools/hooks/sprint-guard.mjs` and its tests: its `--read-only` mode is the reviewer's hook, and its other
-    modes do nothing once no skill calls them;
+  - `tools/hooks/sprint-guard.mjs`, `shell-reader.mjs` and their tests: its `--read-only` mode is the reviewer's
+    hook, and its other modes do nothing once no skill calls them;
   - `python tools/check.py --slides`, the reviewer's slide count, and the check's `bib keys` failure;
   - `tools/hooks/handoff-nudge.mjs`: its sprint-window line finds no file and stays quiet.
 
