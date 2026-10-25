@@ -25,7 +25,43 @@ the owner. Build items, their sizes and their status live in the Notion "Build T
 | 9 | The threat picture and the capstone | Capstone trace (Prince Group) |
 | 10 | Capstone: memo, two briefings, post-test | none; no lessons |
 
-The lessons in each slot are in Stage F's Lessons table and on each item's tracker row.
+The lessons in each slot are under Lessons by day, below.
+
+## Lessons by day
+Copied from Notion on 25 Oct 2026: Stage E's lesson-to-day map (approved 22 Oct) with Stage F's sizes (S ¼, M ½,
+L 1 owner-day). "From" names the lessons each is built from; a cut lesson gives up only the slides the audit names.
+Numbers in brackets are Course Audit rows. Stage F may move a boundary to fit a 50-minute slot.
+
+| Day | ① | ② | ③ | Concepts first taught |
+| --- | --- | --- | --- | --- |
+| 1 | One real Bitcoin transaction (02-IN), M | Keys, signatures and addresses, adding secp256k1 and address derivation (04-CP, with slides from 01, 03 and 05-CP; 02-CP's hash-property slides open it), L | How a public ledger agrees and when it is final (01-CM, absorbing 04-DS, 05-IN, 02-CM and 03-CM's comparison table and finality slides; per-chain finality), L | 1-5, 41, 42 |
+| 2 | Reading a Bitcoin transaction: scripts, address types, fees, change (02-BF, absorbing 01-BF and 03-BF's scripts; 02-CP's Merkle slides), L | Clustering heuristics and peel chains (02-FO part 1), L | Ransomware payments (Colonial Pipeline), M | 7, 8, 20 |
+| 3 | Mixers and CoinJoin (02-FO part 2), M | Attribution: OSINT, label sources, dark markets, commercial platforms as a category (01-FO recut; Hydra, Samourai, Bitcoin Fog), L | Confidence language and the one-page memo (ICD 203; 83, 84), new, L | 9, 25, 27, 28, 40, 45 |
+| 4 | Accounts, tokens and transactions (01-EF), M | Reading a contract, read only (04-EF), M | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | 18, 22, 24, 47 |
+| 5 | Mempool, MEV and DEX trades (03-EF; 64), M | Flash loans, reentrancy and oracle manipulation (04-EF extended; The DAO and Euler), L | Bytecode and decompiling (63); NFT wash trading (06-EF), L | 12-17, 19 |
+| 6 | Chain hopping and bridges (the bridge slides of 01-FO and 02-FO), M | Layer 2s (01-EF, with the trilemma from 04-IN), M | Ransomware-as-a-service and the cash-out (85), new, L | 6, 10, 21 |
+| 7 | Tokens and stablecoins; issuer freezes and blacklisting (02-AS, 06-EF), M | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Permissioned ledgers and CBDCs, about 20 minutes (01-PC, 02-AS), then the instructor's Fabric demo, about 30 minutes (55), M | 31, 38, 39, 46, 48, 49 |
+| 8 | Privacy coins: Monero and Zcash (02-FO, 04-BF), M | Cryptojacking, new, L | Fusing on-chain findings with other sources, new, L | 11, 23, 29 |
+| 9 | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organised with ATT&CK and the Diamond Model, new, L | Briefing agents and prosecutors (83), L | 26, 30, 37 |
+
+Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons.
+
+## Added by the adversarial review
+The owner's calls of 23 Oct (P1-P10; P9 declined, P11-P13 change no lesson), each in its day's existing lesson
+or lab. If time runs short, P4 is cut first, then P3, P5, P6, P8 and P10 one at a time.
+
+| Item | Where | What |
+| --- | --- | --- |
+| P1 Look-alikes beside the real thing | D2 ②, D5 ①, both code-reading worksheets, memo point 4 | D2 ②: an exchange's batched payouts beside a peel chain. D5 ①, about 15 minutes: routers, aggregators, MEV bots, paymasters and relayers are in the path, not the counterparty. Day-4 worksheet: proxy (ERC-1967) to implementation, and who received from internal transactions and Transfer logs in Otterscan. Day-5 worksheet: a 4-byte selector lookup. Memo point 4 adds routers and batched payouts as known false positives. |
+| P2 How well the heuristics have been measured | D3 ③; D9 ③ | About 15 minutes in D3 ③: Kappos et al. (USENIX Security 2022) and Möser and Narayanan (FC 2022) in words; why the Bitcoin Fog court admitted the tracing (United States v. Sterlingov, D.D.C., 2024; upheld 25 Sep 2026); the 2023 FRE 702 note. An instructor-only bank of 10 to 15 challenge questions in `quizes/` for D9 ③'s briefing point 5, starting with the router question (phase 3). No new test item. |
+| P3 Mixers update | D3 ① | PayJoin, dusting, and the 2024 end of the zkSNACKs and Samourai coordinators. |
+| P4 Solana, to recognise only | D6 ② | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
+| P5 Bridges by type | D6 ① | Lock-and-mint, message-verified, liquidity and intents, with the Bitget hack as the case. |
+| P6 Freezable stablecoins as a lead | D4 ②; D7 lab | D4 ②: reading Tether's blacklist functions. D7's exposure summary adds "Freezable? Which issuer, and how fast?" |
+| P7 One graded Meets point | D2 trace, code-reading worksheet, D6 diagram, D7 summary | See Marking and assessment. |
+| P8 Deposit-address heuristic | D7 lab | Victor, "Address Clustering Heuristics for Ethereum" (FC 2020). |
+| P9 (declined) | D5 ③; D7 | NFT wash trading keeps its full segment; the Fabric demo stays live. |
+| P10 A slide on live data | D1 ③ | Explorers see your queries and IP address, recent blocks can reorganise, APIs limit request rates; captured data in class, agency rules on the job. |
 
 ## A lesson
 - Fits one 50-minute slot; three a day. A lesson that won't fit after trimming goes back to the owner with a split.
