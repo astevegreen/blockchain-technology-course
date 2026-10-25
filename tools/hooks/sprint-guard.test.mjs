@@ -429,6 +429,19 @@ describe("--read-only", () => {
   });
 });
 
+describe("--github", () => {
+  const plugin = (name) => guard("--github", {}, process.cwd(), `mcp__plugin_github_github__${name}`);
+  test("refuses the GitHub plugin's writes, which sign in as the owner", () => {
+    for (const name of ["add_issue_comment", "issue_write", "update_issue_comment", "create_pull_request", "push_files",
+      "merge_pull_request", "sub_issue_write", "pull_request_review_write", "create_or_update_file", "delete_file"]) {
+      assert.equal(plugin(name), 2, name);
+    }
+  });
+  test("lets its reads through", () => {
+    for (const name of ["issue_read", "pull_request_read", "get_me", "list_issues", "search_issues"]) assert.equal(plugin(name), 0, name);
+  });
+});
+
 describe("--file-lock", () => {
   const tmp = mkdtempSync(path.join(os.tmpdir(), "bc-sprint-guard-"));
   const main = path.join(tmp, "blockchain-technology-course");

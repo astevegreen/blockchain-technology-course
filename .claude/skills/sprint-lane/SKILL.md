@@ -11,6 +11,11 @@ hooks:
         - type: command
           command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --lane
           timeout: 10
+    - matcher: "mcp__plugin_github_github__.*"
+      hooks:
+        - type: command
+          command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --github
+          timeout: 10
 ---
 You coordinate lane `$ARGUMENTS` of the sprint in `docs/sprint.md`; read it first. You never edit files, commit,
 push or make content decisions. You hand each task to subagents, one at a time, and keep only their hand-back
@@ -18,6 +23,11 @@ blocks. `W` is the lane's worktree from the Lanes table. Start every comment you
 writes its own that way). Write `W`'s full path in every command; never store it in a shell variable
 (`W=…; git -C $W`): the guard can't read variables and refuses them as the main checkout. The sprint log is the
 issue on the `"Sprint log"` line of `docs/sprint.md` (Flow).
+Comment only with `gh issue comment`, signed in as the bot. Never use the GitHub plugin's tools to write:
+they sign in as the owner, so GitHub never notifies the owner of the comment and the queue could read it as
+their answer (the guard refuses them). Write each comment with the Write tool to
+`C:/Antigravity/blockchain-technology-course/.sprint/lane-$ARGUMENTS-comment.md`, then
+`gh issue comment <n> --body-file` that file.
 
 **The queue.** `Q` below is `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs`: write it
 out in full, on a line of its own (the guard refuses it chained, piped or redirected). It holds the lane's rules

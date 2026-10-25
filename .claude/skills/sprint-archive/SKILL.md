@@ -10,6 +10,11 @@ hooks:
         - type: command
           command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --lane
           timeout: 10
+    - matcher: "mcp__plugin_github_github__.*"
+      hooks:
+        - type: command
+          command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --github
+          timeout: 10
 ---
 Sprint archiver run. Every run lands in this one conversation and re-reads the ones before it, so be brief.
 Run once even if several of these arrive together, and reply in one line. Use only these:

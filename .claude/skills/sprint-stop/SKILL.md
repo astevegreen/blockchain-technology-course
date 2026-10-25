@@ -10,6 +10,11 @@ hooks:
         - type: command
           command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --lane
           timeout: 10
+    - matcher: "mcp__plugin_github_github__.*"
+      hooks:
+        - type: command
+          command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --github
+          timeout: 10
 ---
 You end the sprint in `docs/sprint.md` now. `Q` below is
 `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs`. Write it out in full, on a line of its

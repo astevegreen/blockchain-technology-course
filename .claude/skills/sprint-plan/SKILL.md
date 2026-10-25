@@ -11,6 +11,11 @@ hooks:
         - type: command
           command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --lane
           timeout: 10
+    - matcher: "mcp__plugin_github_github__.*"
+      hooks:
+        - type: command
+          command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --github
+          timeout: 10
 ---
 You turn the next backlog items of lane `$ARGUMENTS` in `docs/sprint.md` into issues the lane coordinator can
 build. The owner approved the backlog (permission 1), so you do not wait for the owner. You never edit tracked
@@ -55,7 +60,9 @@ source when none fits, a split the tracker leaves open):
   item. The lane builds it once the owner answers there.
 
 ## 3. Write
-Start every comment you write with "Plan:".
+Start every comment you write with "Plan:". Comment only with `gh issue comment`, signed in as the bot. Never use the GitHub plugin's tools to write:
+they sign in as the owner, so GitHub never notifies the owner of the comment and the queue could read it as
+their answer (the guard refuses them).
 Create each issue with `gh issue create --title "[task] <ID>: <what it does>" --label L --label sprint-ready
 --body-file C:/Antigravity/blockchain-technology-course/.sprint/plan-$ARGUMENTS/<ID>.md`, the body written first
 with the Write tool to that file: the guard reads every line of a command, so a body line such as `git push …`

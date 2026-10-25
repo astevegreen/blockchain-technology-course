@@ -5,6 +5,9 @@
 //   --integrator  Bash|PowerShell: pushes only `git push origin HEAD:main`; never runs lab tests or Docker
 //   --read-only   Bash|PowerShell: inspection commands only (the reviewer)
 //   --file-lock   Edit|Write: the sprint never edits its own machinery, the owner's files or generated files
+//   --github      the GitHub plugin's tools: reads only. The plugin signs in as the owner, so a sprint comment made
+//                 through it would read as the owner's answer and never notify them; sprint sessions write with
+//                 `gh`, signed in as the bot (after-sprint fix 6, 25 Oct)
 // --lane and --integrator refuse new dependencies and git writes to the main checkout (only fetch, worktree and
 // `merge --ff-only` touch it), and run the sprint queue (tools/sprint/queue.mjs) only on its own. Both read the
 // command a wrapper runs (env, nice, timeout, xargs, find -exec, wsl, ...) and refuse a command string they can't
@@ -17,7 +20,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { cmdName, gitSub, readCommand, Unreadable } from "./shell-reader.mjs";
 
-const MODE = ["--lane", "--integrator", "--read-only", "--file-lock"].find((m) => process.argv.includes(m));
+const MODE = ["--lane", "--integrator", "--read-only", "--file-lock", "--github"].find((m) => process.argv.includes(m));
 const input = JSON.parse(readFileSync(0, "utf8") || "{}");
 
 function deny(reason) {
@@ -37,6 +40,13 @@ const LOCKED = [
   /^blockchain-course\/glossary\/(slide-index\.yml|terms\.yml|terms\.json|duplicates\.md|index\.qmd|index\.pdf)$/,
   /^quizes\/dist\//, /^blockchain-course\/_site\//,
 ];
+
+if (MODE === "--github") {
+  const tool = String(input.tool_name ?? "");
+  const name = tool.replace(/^mcp__plugin_github_github__/, "");
+  if (name === tool || /^(get|list|search)_|^(issue|pull_request)_read$/.test(name)) process.exit(0);
+  deny(`${tool} acts on GitHub as the owner; comment and edit only with gh, signed in as greenbeanbot (gh issue comment <n> --body-file <file>)`);
+}
 
 if (MODE === "--file-lock") {
   const file = path.resolve(String(input.cwd ?? process.cwd()), String(input.tool_input?.file_path ?? ""));

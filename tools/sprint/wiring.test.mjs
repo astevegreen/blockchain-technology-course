@@ -22,16 +22,18 @@ function guards(file) {
 }
 
 const SHELL = "Bash|PowerShell";
+// The GitHub plugin signs in as the owner: sprint skills may only read through it (after-sprint fix 6).
+const PLUGIN = ["mcp__plugin_github_github__.*", "--github"];
 
 test("each sprint skill and agent wires the guard in its own mode", () => {
   const want = {
-    ".claude/skills/sprint-supervisor/SKILL.md": [[SHELL, "--lane"]],
-    ".claude/skills/sprint-lane/SKILL.md": [[SHELL, "--lane"]],
-    ".claude/skills/sprint-plan/SKILL.md": [[SHELL, "--lane"]],
-    ".claude/skills/sprint-integrate/SKILL.md": [[SHELL, "--integrator"]],
-    ".claude/skills/sprint-start/SKILL.md": [[SHELL, "--lane"]],
-    ".claude/skills/sprint-stop/SKILL.md": [[SHELL, "--lane"]],
-    ".claude/skills/sprint-archive/SKILL.md": [[SHELL, "--lane"]],
+    ".claude/skills/sprint-supervisor/SKILL.md": [[SHELL, "--lane"], PLUGIN],
+    ".claude/skills/sprint-lane/SKILL.md": [[SHELL, "--lane"], PLUGIN],
+    ".claude/skills/sprint-plan/SKILL.md": [[SHELL, "--lane"], PLUGIN],
+    ".claude/skills/sprint-integrate/SKILL.md": [[SHELL, "--integrator"], PLUGIN],
+    ".claude/skills/sprint-start/SKILL.md": [[SHELL, "--lane"], PLUGIN],
+    ".claude/skills/sprint-stop/SKILL.md": [[SHELL, "--lane"], PLUGIN],
+    ".claude/skills/sprint-archive/SKILL.md": [[SHELL, "--lane"], PLUGIN],
     ".claude/agents/implementer.md": [["Edit|Write", "--file-lock"], [SHELL, "--lane"]],
     ".claude/agents/reviewer.md": [[SHELL, "--read-only"]],
   };

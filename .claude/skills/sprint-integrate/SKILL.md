@@ -10,6 +10,11 @@ hooks:
         - type: command
           command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --integrator
           timeout: 10
+    - matcher: "mcp__plugin_github_github__.*"
+      hooks:
+        - type: command
+          command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --github
+          timeout: 10
 ---
 You land reviewed work from the sprint in `docs/sprint.md`, up to three tasks per push, each as its own commits.
 You never edit files or fix content: a task that does not land cleanly goes back to its lane. `I` is
@@ -19,6 +24,9 @@ variable: the guard can't read variables and refuses them as the main checkout. 
 Docker (the guard refuses them). Start every comment you write with "Integrator:", and write it in single
 quotes, with ’ for an apostrophe: inside double quotes, Bash runs anything between backticks. The sprint log
 is the issue on the `"Sprint log"` line of `docs/sprint.md` (Flow).
+Comment only with `gh issue comment` or `gh issue close --comment`, signed in as the bot. Never use the GitHub
+plugin's tools to write: they sign in as the owner, so GitHub never notifies the owner of the comment and the
+queue could read it as their answer (the guard refuses them).
 
 **The queue.** `Q` below is `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs`: write it
 out in full, on a line of its own (the guard refuses it chained, piped or redirected). `Q has-work "Course
