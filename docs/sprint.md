@@ -17,23 +17,24 @@ little owner input as possible, without lowering quality: every change passes `p
 reviewer pass against `docs/build-spec.md`, cites a `Blockchain.bib` key for every fact, and lands through one
 integrator.
 
-This file is the plan, drafted 24 Oct 2026 from Terminal Dusk's and YODC's October sprints. Everything marked
-**Proposed** waits for the owner's answers under "Setup day".
+This file is the plan, drafted 24 Oct 2026 from Terminal Dusk's and YODC's October sprints. The owner held
+setup day the same evening: the answers are under "Setup day", and only the reserve backlog stays **Proposed**.
 
-## Owner's standing permissions (Proposed: none granted yet)
+## Owner's standing permissions (granted 24 Oct 2026)
 
 1. The backlog below is approved. `sprint-plan` writes and files its specs without asking.
 2. Sprint sessions may edit what their task needs, with the exceptions in "What still stops a task"; the
-   machinery is reverted afterwards (tag `pre-sprint-<date>`, set on setup day; see "Turning it off").
+   machinery is reverted afterwards (tag `pre-sprint-2026-10-24`, on `ccbeebc`, the last commit before the
+   machinery; see "Turning it off").
 3. Lanes commit on local branches; one integrator lands and pushes them to `main`. A push deploys nothing: the
    site changes only when the owner runs the Publish workflow, after reviewing the sprint.
 4. Sources: an implementer may add a `Blockchain.bib` entry for a source it has read itself, quoting on the
    issue the passage each fact rests on ("Implementer: source"). The reviewer checks each quote against the
    source. The owner approves the sprint's new keys before the next Publish
-   (`git diff pre-sprint-<date>..origin/main -- blockchain-course/lessons/references/Blockchain.bib`).
+   (`git diff pre-sprint-2026-10-24..origin/main -- blockchain-course/lessons/references/Blockchain.bib`).
 
-Each commit's trailer quotes the permission it rests on: `Requested: "<the owner's approval, word for word>"
-(sprint <ID>)`. Setup day fills in the quote.
+Each commit's trailer quotes the permission it rests on, the owner's words on setup day:
+`Requested: "Use your recommended answers to the six setup questions and approve the backlog as listed." (sprint <ID>)`.
 
 ## What still stops a task
 
@@ -101,13 +102,14 @@ The integrator works in `C:/Antigravity/bc-integrate`. The main checkout is only
 Labels: `lane:*`, `sprint-ready`, `in-progress`, `to-integrate`, `held`, `blocked`. Which issue is ready, whose
 comment counts, when held work is retried, whether a session has work and the status block are decided by the
 queue (`tools/sprint/queue.mjs`, Machinery), never by hand.
-Progress, questions and every push go to the pinned issue #0 "Sprint log" (placeholder: setup day creates it
-and puts its number here). Its body is the status block, which the supervisor rewrites every hour; comments
-hold the history.
+Progress, questions and every push go to the pinned issue #1 "Sprint log". Its body is the status block, which
+the supervisor rewrites every hour; comments hold the history. Design questions before a window go to #2
+"Sprint questions" (Planning day).
 
 ## Backlog
 
-**Proposed** from the Build Tracker's Phase 1 items not yet started (24 Oct). Work in this order inside a lane.
+**Approved** by the owner on 24 Oct 2026, from the Build Tracker's Phase 1 items not yet started that day. Work
+in this order inside a lane.
 Each item is one line `- **<ID>** <what>`, under a `### <lane>` heading; the queue reads the IDs and their order
 from here, as pushed to `origin/main`, so a change lands for every session at once. A line's `Waits for:` names
 backlog IDs or issue numbers (an ID waits until every issue of it is closed), or `none`. An item too big for one
@@ -210,9 +212,13 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
   (tried 24 Oct). `.gitattributes` names the driver, and setup day turns it on once in the main checkout (the
   worktrees share its config). An entry both tasks changed, or the same key added two ways, still stops the pick
   as a conflict, and the check fails a key used twice (`bib keys`).
-- One sprint per computer (owner, YODC, 22 Oct): no other project's sprint or soak runs on this computer during
-  the window. A sprint on another computer still shares the account's usage limit, so one usage-limit stop can
-  halt both at once (21 Oct, 02:10 UTC); the supervisor restarts the lanes after it.
+- Sprints may overlap (owner, 24 Oct 2026: "sprints may overlap on this desktop"): Terminal Dusk's and YODC's
+  may run here during the window. Their supervisors start at minutes 2 and 22, this one at 42; before each
+  start, the supervisor needs its memory floor plus about 1.5 GB for every session it has already started.
+  Docker is shared, but `--fresh-start` takes down only the lab folders' compose projects; port 5173 clashes
+  with YODC's Vite only while the `ethereum_lab` runs. Every sprint on the account shares one usage limit, so
+  one usage-limit stop can halt them all at once (21 Oct, 02:10 UTC); the supervisor restarts the lanes after
+  it.
 
 ## Planning day (the day before the window)
 
@@ -228,27 +234,28 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 - During the window, a new question goes on its task issue as usual, since lanes look for the answer there.
   The status block links it under "Needs you".
 
-## Setup day (the owner's answers this plan waits for)
+## Setup day (held 24 Oct 2026)
 
-1. When the owner will cue the window, for how long (38 hours unless the cue says), and whether the lanes start
+The owner: "Use your recommended answers to the six setup questions and approve the backlog as listed."
+
+1. **The window:** on the owner's cue (no date set), 38 hours unless the cue says otherwise; both lanes start
    together.
-2. The backlog and reserve above, approved or changed; the owner's words become the trailer quote.
-3. The two lanes, or a third (week two, or quiz banks).
-4. Source approval during the sprint (permission 4), and whether the implementer may use WebFetch and
-   WebSearch to read sources.
-5. Whether `second-look.mjs` runs during the sprint (it costs Gemini quota on every task) or once over the
-   sprint's changes before Publish.
-6. When the owner will check in (for example 07:00 and 19:00 local), written here, so the status block's
-   "Needs you" list can be cleared at those times and nothing waits on an answer at 03:00.
-7. Then Claude, in a session the owner started: creates the labels, the pinned "Sprint log" and "Sprint
-   questions" issues, the `pre-sprint-<date>` tag and the three worktrees, and fills the issue numbers in here.
-   In the main checkout it turns on the bibliography merge (Machinery):
+2. **The backlog:** approved as listed (L1 to L13, X1 to X6). The reserve stays unapproved until planning day.
+3. **Lanes:** the two above, `lessons` and `labs`.
+4. **Sources:** permission 4 stands as written. Sprint sessions have no web access (the implementer and the
+   reviewer have no WebFetch or WebSearch, and the guard refuses `curl` and its kin), so a source a task
+   needs comes from the repo, or from the issue's spec: the planning-day sessions the owner starts can read
+   the web and quote each passage there. A fact with neither is `blocked` with its question.
+5. **`second-look.mjs`:** once over the sprint's changes before Publish, not on every task.
+6. **Check-ins:** 07:00 and 19:00 local, when the owner clears the status block's "Needs you" list.
+7. Done the same evening: the labels, the pinned #1 "Sprint log", #2 "Sprint questions", the tag
+   `pre-sprint-2026-10-24`, the three worktrees, and the bibliography merge in the main checkout (Machinery):
    `git config merge.bib.driver "node tools/sprint/bib-merge.mjs %O %A %B"`. The scheduled tasks are not made
    on setup day: each cue makes its own.
 
 ## Preflight (Claude runs it the evening before; the owner fixes what it finds)
 
-`/sprint-start --dry-run` makes items 2, 3, 7 (the `claude` on PATH), 9 and 10 in one go, and every real cue
+`/sprint-start --dry-run` makes items 2, 3, 6 (the `claude` on PATH), 8 and 9 in one go, and every real cue
 makes them again: it refuses on the main checkout, the bot identity, the environment or a missing sprint log,
 and starts with anything else that is short named on the sprint log.
 
@@ -263,28 +270,27 @@ and starts with anything else that is short named on the sprint log.
 4. A test cue proved the scheduled tasks: `/sprint-start 1`, then `/sprint-stop`, then, after the archiver's
    next run, the supervisor and the archiver are both switched off by id, and `queue.mjs window` prints no
    archiver.
-5. No other project's sprint or soak runs on this computer during the window (Machinery).
-6. The "Sprint questions" issue is answered and the reserve backlog approved (Planning day).
-7. Claude Code is 2.1.304 or later, both the `claude` on PATH (`claude --version`) and the desktop app's bundled
+5. The "Sprint questions" issue is answered and the reserve backlog approved (Planning day).
+6. Claude Code is 2.1.304 or later, both the `claude` on PATH (`claude --version`) and the desktop app's bundled
    copy under `%APPDATA%\Claude\claude-code\`. A lane sends the reviewer's concerns back to the builder that
    wrote the change (`SendMessage`), and before 2.1.304 a resumed subagent could forget its latest work.
    Auto-update stays off on this computer for the window (`autoUpdates: false`; the desktop app sets
    `DISABLE_AUTOUPDATER=1`, as for Terminal Dusk): the owner updates both by hand, before it opens.
-8. In each worktree: `git lfs version` works (the hooks call it), `git config core.hooksPath` prints
+7. In each worktree: `git lfs version` works (the hooks call it), `git config core.hooksPath` prints
    `.githooks`, `git config merge.bib.driver` prints `node tools/sprint/bib-merge.mjs %O %A %B`,
    `quarto --version` works, and `python tools/check.py --all` passes.
-9. For the `labs` lane: Docker Desktop is running, `wsl -d Ubuntu -- docker ps` works, and
+8. For the `labs` lane: Docker Desktop is running, `wsl -d Ubuntu -- docker ps` works, and
    `docker ps --format '{{.Label "com.docker.compose.project"}}'` names none of the lab folders under
    `dynamic-labs/` (`router`, `bitcoin`, `hlf` and the rest). `--fresh-start` takes those compose projects down
    and wipes their volumes, whichever checkout started them; other projects' containers, such as Terminal
    Dusk's, it leaves alone. The cue checks Docker only once the `labs` worktree exists: the guard runs Docker
    nowhere else.
-10. `gh run list --workflow lab-tests.yml --branch main --limit 1` reads and shows the last run on `main`
-    passed: while it is red, lab tasks wait.
-11. A pinned-issue slot is free for the "Sprint log" (GitHub allows three pinned issues).
-12. No other scheduled task for this repo fires during the window, apart from the supervisor, the archiver and
+9. `gh run list --workflow lab-tests.yml --branch main --limit 1` reads and shows the last run on `main`
+   passed: while it is red, lab tasks wait.
+10. A pinned-issue slot is free for the "Sprint log" (GitHub allows three pinned issues).
+11. No other scheduled task for this repo fires during the window, apart from the supervisor, the archiver and
     the supervisor's own restarts after a usage limit.
-13. On the idle computer, `python tools/check.py --all --render` and the `exercises` lab's
+12. On the idle computer, `python tools/check.py --all --render` and the `exercises` lab's
     `run.sh --fresh-start` (in the `labs` worktree) finish, and their times are noted on the sprint log. A check
     or lab run that times out during the window can then be told apart: a busy computer, or slow work.
 
