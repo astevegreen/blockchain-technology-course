@@ -520,6 +520,9 @@ export function windowCommand(doc, local, words, f, now) {
     if (environment !== null && !ENVIRONMENT_ID.test(environment)) {
       throw refuse(`--environment "${environment}" is not an environment id`, "Run it again with the id list_environments gave (env_…).");
     }
+    // Every sprint session posts on the log, so a window without one would fail at its first comment. A dry run
+    // refuses too: the cue is only proved once the log exists.
+    if (!doc.logIssue) throw refuse("docs/sprint.md names no sprint log yet (#0); setup day makes it", "Start nothing; report it.");
     const start = toMinute(now);
     const w = { start: start.toISOString(), end: new Date(start.getTime() + h * HOUR_MS).toISOString(), environment, supervisor: null, archiver: null };
     return { out: state(w), write: f["dry-run"] ? null : w };

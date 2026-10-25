@@ -527,6 +527,18 @@ test("window start takes a whole number of hours from 1 to 96, and a broken wind
   }
 });
 
+// A fresh Sonnet dry run (25 Oct) read `"log": 0` and still printed DRY-RUN OK, so the queue refuses it itself.
+test("window start refuses while docs/sprint.md names no sprint log, dry run or not", () => {
+  const io = cue("2026-10-28T20:00:00Z", { sprintDoc: () => NO_WINDOW.replace('#40 "Sprint log"', '#0 "Sprint log"') });
+  assert.equal(json(run(["window"], io)).log, 0);
+  for (const args of [["window", "start", "--dry-run"], ["window", "start", "4"]]) {
+    const out = run(args, io);
+    assert.equal(out.code, 2, args.join(" "));
+    assert.match(json(out).error, /no sprint log yet \(#0\)/);
+  }
+  assert.equal(io.windowFile, null);
+});
+
 // An environment's id changes whenever `claude rc` restarts, so the cue names the one it found: no push first.
 test("window start keeps the environment /sprint-start found, which env then prefers to the doc's line", () => {
   const io = cue("2026-10-28T20:00:00Z");

@@ -28,7 +28,8 @@ ToolSearch.
 It proves the cue before the owner relies on it. In a dry run, a refusal check that fails goes on the FAIL line
 and the run carries on, so one dry run names every problem. Otherwise the first refusal ends the run.
 
-Your last message starts with exactly one of these lines, then at most 8 lines from step 6:
+Your last message's first line is exactly one of these, with nothing before it (no greeting, no summary), then
+at most 8 lines from step 6. The root `/sprint-cue` reads only that first line:
 - `STARTED course window <start>–<end>`, both from `Q window start` (they end in `Z`)
 - `REFUSED course: <reason>`
 - `DRY-RUN OK course`
@@ -62,7 +63,8 @@ sprint archives it: the archiver skips its own session, and the root cue never a
 4. **No window open, and a sprint log:** `Q window` prints a `state` that is not `open`, and a `log` that is not
    `0`. Note its `supervisor` and `archiver` for steps 2 and 3. Reasons:
    - when it is open: `a window is already open, until <end>`
-   - when `log` is 0: `docs/sprint.md names no sprint log yet (#0); setup day makes it`
+   - when `log` is 0: `docs/sprint.md names no sprint log yet (#0); setup day makes it`. A dry run fails on it
+     too: `Q window start` refuses it in step 3, so a dry run never ends OK without a log.
    - when it fails: its `error`
 
 ## 2. What is short
@@ -104,8 +106,8 @@ It may refuse because the last window's archiver is still on record. Then `Remot
   `update` it to `{"enabled": false}`, run `Q window archived`, start again, and note it.
 - **Enabled** otherwise: refuse with the `error`, since its sessions may still be running.
 
-Any other refusal or failure: refuse with its `error` (a dry run puts it on the FAIL line). From here on, a dry
-run stops and gives its report (step 6).
+Any other refusal or failure: refuse with its `error` (a dry run puts it on the FAIL line once, even when step
+1.4 named it already). From here on, a dry run stops and gives its report (step 6).
 
 ## 4. The scheduled tasks
 1. **Supervisor:**

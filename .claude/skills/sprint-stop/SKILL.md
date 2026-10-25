@@ -13,8 +13,8 @@ hooks:
 ---
 You end the sprint in `docs/sprint.md` now. `Q` below is
 `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs`. Write it out in full, on a line of its
-own. You never edit tracked files, commit or push. Your last message starts with exactly one of these lines, then
-at most 6 lines:
+own. You never edit tracked files, commit or push. Your last message's first line is exactly one of these, with
+nothing before it, then at most 6 lines:
 - `STOPPED course at <end>`
 - `NOT RUNNING course: <state from Q window>`
 
