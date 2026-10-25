@@ -70,9 +70,10 @@ Each of these is a line in step 6, never a refusal:
 - **Disk:** under 30 GB free, from `node -e "const s=require('fs').statfsSync('C:/');console.log(Math.round(s.bavail*s.bsize/2**30))"`.
 - **Memory:** under 8192 MB free, from `node -e "console.log(Math.round(require('os').freemem()/2**20))"`. The
   supervisor starts sessions only above its floor, so the sprint starts slowly, not wrongly.
-- **Sessions:** `list_sessions` with `mine: true` and `limit: 100` shows 10 or more whose `session_status` is not
-  `SESSION_STATUS_ARCHIVED` and whose `environment_id` is step 1.3's: "<n> course sessions are not archived;
-  archive some on the rc host". Other projects' sessions are theirs to count.
+- **Sessions:** `list_sessions` with `mine: true` and `limit: 10` (a page of 30 is too long to read), then again
+  with `after_id` set to the page's `last_id` while `has_more` is true, for at most 5 pages. When 10 or more of
+  them have a `session_status` other than `SESSION_STATUS_ARCHIVED` and step 1.3's `environment_id`: "<n> course
+  sessions are not archived; archive some on the rc host". Other projects' sessions are theirs to count.
 - **Claude Code:** `claude --version` is below 2.1.304: "update Claude Code (`claude update`)".
 - **Lab Tests:** `gh run list --workflow lab-tests.yml --branch main --limit 1 --json conclusion,status` shows a
   completed run whose conclusion is not `success`: "main's Lab Tests is <conclusion>; lab tasks wait until the
