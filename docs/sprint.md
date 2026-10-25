@@ -45,7 +45,8 @@ Each commit's trailer quotes the permission it rests on, the owner's words on se
   fits, the task is `blocked` with the question. Never feature Chainalysis, TRM or Elliptic (citing their
   research is fine); Blockscout needs the owner's yes.
 - **Students receive everything** under `blockchain-course/` and `dynamic-labs/`. Instructor-only files go in
-  `quizes/`, or in a lab's own `quizes/` folder, which `pages.yml` already leaves out of `src.zip`. A task that
+  `quizes/`. Lab answers go only in the top-level `quizes/labs/`, never in a lab's own `quizes/` folder: that
+  folder is left out of `src.zip` but a student VM would still hold it until `vm-build.yml` removes it. A task that
   needs a new `-x` entry in `pages.yml` is `blocked`: `.github/` is locked.
 - **Locked paths** (`tools/hooks/sprint-guard.mjs --file-lock`): `.claude/`, `.githooks/`, `.github/`,
   `.gitattributes`, `CLAUDE.md`, this file, `tools/sprint/`, `tools/hooks/`, `tools/check.py`, and the generated

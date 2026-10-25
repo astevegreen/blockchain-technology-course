@@ -186,6 +186,21 @@ class AnswerFiles(unittest.TestCase):
         vm = VM_FENCED.replace("dynamic-labs/bitcoin-forensics/*_answer_LIVE.json", "dynamic-labs/bitcoin-forensics")
         self.assertEqual(check.unfenced_answer_files(KEYS, PAGES_FENCED, vm), [])
 
+    def test_a_lab_quizes_folder_must_leave_the_vm(self) -> None:
+        pages = PAGES_FENCED + '-x "dynamic-labs/**/quizes/**"\n'
+        files = ["dynamic-labs/exercises/l03/quizes/keys.json"]
+        self.assertEqual(len(check.unfenced_answer_files(files, pages, VM_FENCED)), 1)
+        find = "          find dynamic-labs -type d -name quizes -prune -exec rm -rf {} + || true\n"
+        vm = VM_FENCED.replace("      - name: Free Disk Space", find + "      - name: Free Disk Space")
+        self.assertEqual(check.unfenced_answer_files(files, pages, vm), [])
+
+    def test_the_named_runtime_keys_may_stay_on_the_vm(self) -> None:
+        pages = PAGES_FENCED + '-x "dynamic-labs/bitcoin-forensics/lab.md"\n-x "dynamic-labs/p2p_trust/notes.md"\n'
+        files = ["dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/p2p_trust/notes.md"]
+        problems = check.unfenced_answer_files(files, pages, VM_FENCED)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("p2p_trust/notes.md: baked into the VM", problems[0])
+
     def test_other_files_and_instructor_trees_are_ignored(self) -> None:
         files = ["quizes/answer_sheet.json", "dynamic-labs/bitcoin-forensics/lab.md", "tools/answer_probe.py"]
         self.assertEqual(check.unfenced_answer_files(files, "", ""), [])

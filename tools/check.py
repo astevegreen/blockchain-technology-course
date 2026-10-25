@@ -54,6 +54,9 @@ NOTE = "note: "
 STUDENT_TREES = ("blockchain-course/", "dynamic-labs/")  # what students receive (CLAUDE.md rule 1)
 PAGES_WORKFLOW = ".github/workflows/pages.yml"
 VM_WORKFLOW = ".github/workflows/vm-build.yml"
+# Kept out of src.zip but deliberately left on the VM: the lab services read them at run time (a known gap).
+VM_RUNTIME_KEYS = ("dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/cryptography/solution.md",
+                   "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml")
 
 
 @dataclass
@@ -362,10 +365,14 @@ def zip_exclusions(workflow: str) -> list[str]:
 
 
 def vm_removals(workflow: str) -> list[str]:
-    """The paths the "Remove Unused Repo Payload" step of vm-build.yml deletes (`rm` lines, backslash continuations)."""
+    """The paths the "Remove Unused Repo Payload" step of vm-build.yml deletes: `rm` lines (backslash
+    continuations) and `find dynamic-labs... -name <pattern>` lines, which count as `dynamic-labs/**/<pattern>`."""
     step = re.search(r"- name: Remove Unused Repo Payload\n(.*?)(?=\n\s*- name:|\Z)", workflow, re.S)
     removed, deleting = [], False
     for line in (step.group(1) if step else "").splitlines():
+        found = re.match(r"\s*find\s+(dynamic-labs\S*)\s.*-name\s+'?\"?([^\s'\"]+)", line)
+        if found:
+            removed.append(f"{found.group(1)}/**/{found.group(2)}")
         if re.match(r"\s*rm\s+-", line):
             deleting = True
         if deleting:
@@ -386,15 +393,20 @@ def matches_any(path: str, patterns: list[str], whole_folders: bool) -> bool:
 
 
 def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
-    """Tracked `*answer*` files under the student trees that src.zip still holds or the VM image still bakes in."""
+    """Tracked files under the student trees that src.zip or the VM image still hold although they are instructor-only:
+    `*answer*` files, and anything under `dynamic-labs/` that pages.yml leaves out of src.zip (it must leave the VM too,
+    bar the named runtime keys)."""
     zip_x, vm_rm = zip_exclusions(pages), vm_removals(vm)
     problems = []
     for rel in tracked:
-        if not rel.startswith(STUDENT_TREES) or "answer" not in Path(rel).name.lower():
+        if not rel.startswith(STUDENT_TREES):
             continue
-        if not matches_any(rel, zip_x, whole_folders=False):
+        answer = "answer" in Path(rel).name.lower()
+        in_zip = matches_any(rel, zip_x, whole_folders=False)
+        if answer and not in_zip:
             problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}')
-        if not matches_any(rel, vm_rm, whole_folders=True):
+        instructor_only = answer or (in_zip and rel.startswith("dynamic-labs/"))
+        if instructor_only and rel not in VM_RUNTIME_KEYS and not matches_any(rel, vm_rm, whole_folders=True):
             problems.append(f"{rel}: baked into the VM: add it to the rm list of {VM_WORKFLOW}")
     return problems
 
