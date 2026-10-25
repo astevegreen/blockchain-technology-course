@@ -111,10 +111,18 @@ Any other refusal or failure: refuse with its `error` (a dry run puts it on the 
 
 ## 4. The scheduled tasks
 1. **Supervisor:**
-   1. `create_trigger` with name `Course sprint supervisor`, cron_expression `42 * * * *`, prompt
-      `/sprint-supervisor`, create_new_session_on_fire `true`, environment_id from step 1.3, connectors `[]`,
-      notifications `{}` and initiation `human_request`. The cron is minute 42: Terminal Dusk's supervisor keeps
-      minute 2 and YODC's minute 22.
+   1. `RemoteTrigger` `create` with this body, `<environment_id>` from step 1.3:
+      `{"name": "Course sprint supervisor", "cron_expression": "42 * * * *", "enabled": true, "job_config":
+      {"ccr": {"environment_id": "<environment_id>", "session_context": {"model": "claude-sonnet-5-5"},
+      "events": [{"data": {"type": "user", "uuid": "<new random UUID from node -e \"console.log(crypto.randomUUID())\">",
+      "parent_tool_use_id": null, "message": {"role": "user", "content": "/sprint-supervisor"}}}]}},
+      "mcp_connections": [{"connector_uuid": "bf7c680d-5fdc-5ef4-b4a0-abadb619bf0a", "name": "Claude_Code_Remote",
+      "url": "https://api.anthropic.com/v1/code/mcp/meta"}, {"connector_uuid": "31ab071e-7af4-450e-a530-43360c649956",
+      "name": "Context7", "url": "https://mcp.context7.com/mcp"}]}`.
+      The supervisor reads its own usage limit through Claude_Code_Remote to arm its wake; `create_trigger`
+      cannot give it that connector (the org refuses `connectors` there). The cron is minute 42: Terminal Dusk's
+      supervisor keeps minute 2 and YODC's minute 22. Any wake left from the last window stays on record: the
+      supervisor moves it.
    2. Then `Q window ids --supervisor <its trig_ id>`.
    3. When the create fails: `Q window stop`, and refuse with `could not create the supervisor: <error>`.
 2. **Archiver:**

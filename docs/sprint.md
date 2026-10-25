@@ -166,12 +166,18 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
   the one it finds with the window. The supervisor reads it with
   `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs env`, which falls back to this line,
   and starts nothing while it refuses.
-- `/sprint-start` makes two scheduled tasks with the remote `create_trigger` tool, so any agent can switch them
-  off by id (a trigger made through the HTTP API can be changed only by its own runs or by the owner):
-  - **"Course sprint supervisor"** runs `.claude/skills/sprint-supervisor` in a fresh session in this folder, in
-    the environment above, at minute 42 of every hour (Terminal Dusk's takes minute 2 and YODC's 22, so none
-    start at once). The cue fires it once at the start. A lock keeps one run at a time. After the window it
-    starts only the integrator, until the lanes' finished work has landed, then switches itself off.
+- `/sprint-start` makes two scheduled tasks. A trigger made through the HTTP API (`RemoteTrigger`) can be
+  changed with `RemoteTrigger`, but not with the remote `update_trigger` or `delete_trigger` tools; only the
+  owner deletes one:
+  - **"Course sprint supervisor"** (`RemoteTrigger`, so it carries the Claude_Code_Remote connector it needs
+    for its wake) runs `.claude/skills/sprint-supervisor` in a fresh session in this folder, in the environment
+    above, at minute 42 of every hour (Terminal Dusk's takes minute 2 and YODC's 22, so none start at once). The
+    cue fires it once at the start. A lock keeps one run at a time. After the window it starts only the
+    integrator, until the lanes' finished work has landed, then switches itself and its wake off.
+  - **"Course sprint supervisor wake"**: while a usage limit is on, a scheduled run fails before it starts, so
+    each supervisor run reads its own reset time (`get_session`) and moves this one standing one-shot to 2
+    minutes after it (`queue.mjs wake`), unless the minute-42 run covers it. It is made once, kept in
+    sprint-window.json across windows, and switched off by the window's end and by `/sprint-stop`.
   - **"Course sprint archiver"** runs `.claude/skills/sprint-archive` at minute 50 of every hour, in one session
     on Haiku that the cue makes (or the cue's own session, which then stays open). It archives the runs of the
     triggers the supervisor recorded: finished ones idle for an hour, and stuck ones silent for 60 minutes. After

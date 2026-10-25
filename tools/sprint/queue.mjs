@@ -9,12 +9,13 @@
 //   status [--write] [--also '<line>'] the sprint log's status block and its "Needs you" list
 //   env                                {environment_id}, the computer sessions start on: the window's, else the doc's
 //   window                             {state none|before|open|after, start, end, newYork, lanes, log, supervisor, archiver,
-//                                      stoppedBy}: stoppedBy is "sprint-stop" when /sprint-stop ended it
+//                                      wake, stoppedBy}: stoppedBy is "sprint-stop" when /sprint-stop ended it
 //   window start [hours] [--environment <env_…>] [--dry-run]   opens the window now, for 38 hours unless told (1-96),
 //                                      in sprint-window.json, with the environment /sprint-start found
-//   window ids --supervisor <trig_…> --archiver <trig_…>   records the scheduled tasks /sprint-start made
+//   window ids --supervisor <trig_…> --archiver <trig_…> --wake <trig_…>   records the scheduled tasks made
 //   window stop                        ends the open window now, as /sprint-stop's (stoppedBy: "sprint-stop")
 //   window archived                    clears the last window's archiver, once it is switched off
+//   wake [--resets-at <epoch s>]       {arm, runOnceAt, wake, reason, log?}: where the supervisor moves its wake
 //   started "<session title>" <trig_…> records a trigger the supervisor created, in sprint-triggers.json
 //   sessions [--all]                   the trigger recorded last for each title since the window opened
 //   lock | unlock                      one supervisor run at a time (sprint-supervisor.lock; stale after 20 minutes)

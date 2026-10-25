@@ -439,8 +439,8 @@ export function sessionTriggers(doc, records, { all = false } = {}) {
 
 // `/sprint-start [hours]` opens the window when the owner cues it, and `/sprint-stop` ends it early. The window
 // and the ids of the scheduled tasks /sprint-start makes are kept beside the ledger, in sprint-window.json:
-// {start, end, environment, supervisor, archiver, stoppedBy}. A cue never waits for a push, and a window left in
-// this file is never a fact a later sprint inherits. Terminal Dusk's design (24 Oct). The environment is the one
+// {start, end, environment, supervisor, archiver, wake, stoppedBy}. A cue never waits for a push, and a window left
+// in this file is never a fact a later sprint inherits. Terminal Dusk's design (24 Oct). The environment is the one
 // /sprint-start found in list_environments: its id changes whenever `claude rc` restarts, so the doc's line is only
 // a fallback.
 export const DEFAULT_HOURS = 38;
@@ -463,7 +463,7 @@ export function newYork(d) {
 // The doc's facts with this computer's window (sprint-window.json, or null) in place of any Window line, and its
 // environment, when the cue named one, in place of the doc's.
 export function withLocalWindow(doc, local) {
-  if (!local) return { ...doc, supervisor: null, archiver: null, stoppedBy: null };
+  if (!local) return { ...doc, supervisor: null, archiver: null, wake: null, stoppedBy: null };
   const start = new Date(local.start ?? Number.NaN);
   const end = new Date(local.end ?? Number.NaN);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
@@ -472,7 +472,7 @@ export function withLocalWindow(doc, local) {
   return {
     ...doc, window: { start, end }, environment: local.environment ?? doc.environment,
     supervisor: local.supervisor ?? null, archiver: local.archiver ?? null,
-    stoppedBy: local.stoppedBy ?? null,
+    wake: local.wake ?? null, stoppedBy: local.stoppedBy ?? null,
   };
 }
 
@@ -491,11 +491,12 @@ export function windowState(doc, now) {
     log: doc.logIssue,
     supervisor: doc.supervisor ?? null,
     archiver: doc.archiver ?? null,
+    wake: doc.wake ?? null,
     stoppedBy: doc.stoppedBy ?? null,
   };
 }
 
-const WINDOW_USAGE = "Use `window`, `window start [hours] [--environment <env_…>] [--dry-run]`, `window ids --supervisor <id> --archiver <id>`, `window stop` or `window archived`.";
+const WINDOW_USAGE = "Use `window`, `window start [hours] [--environment <env_…>] [--dry-run]`, `window ids --supervisor <id> --archiver <id> --wake <id>`, `window stop` or `window archived`.";
 
 // `window …`: { out, write }, `write` being the sprint-window.json to save, or null. `doc` holds the window the
 // file names already; `local` is the file as read.
@@ -528,22 +529,23 @@ export function windowCommand(doc, local, words, f, now) {
     // refuses too: the cue is only proved once the log exists.
     if (!doc.logIssue) throw refuse("docs/sprint.md names no sprint log yet (#0); setup day makes it", "Start nothing; report it.");
     const start = toMinute(now);
+    // The wake is one standing one-shot, moved rather than made again, so a new window keeps its id.
     const w = {
       start: start.toISOString(), end: new Date(start.getTime() + h * HOUR_MS).toISOString(), environment,
-      supervisor: null, archiver: null, stoppedBy: null,
+      supervisor: null, archiver: null, wake: local?.wake ?? null, stoppedBy: null,
     };
     return { out: state(w), write: f["dry-run"] ? null : w };
   }
   if (sub === "ids") {
     cued();
     const w = { ...local };
-    for (const task of ["supervisor", "archiver"]) {
+    for (const task of ["supervisor", "archiver", "wake"]) {
       const id = f[task]?.at(-1);
       if (id === undefined) continue;
       if (!TRIGGER_ID.test(id)) throw refuse(`--${task} "${id}" is not a trigger id`, "Run it again with the id create_trigger returned (trig_…).");
       w[task] = id;
     }
-    if (w.supervisor === local.supervisor && w.archiver === local.archiver) throw refuse("no new id given", WINDOW_USAGE);
+    if (w.supervisor === local.supervisor && w.archiver === local.archiver && w.wake === local.wake) throw refuse("no new id given", WINDOW_USAGE);
     return { out: state(w), write: w };
   }
   if (sub === "stop") {
@@ -558,6 +560,32 @@ export function windowCommand(doc, local, words, f, now) {
     return { out: state(w), write: w };
   }
   throw refuse(`unknown window command "${sub}"`, WINDOW_USAGE);
+}
+
+// --- the wake after a usage limit ------------------------------------------------------------------------------
+
+// While a usage limit is on, a scheduled supervisor run fails before it starts, so lanes a limit stopped would wait
+// for the next hourly run. Each supervisor run moves one standing one-shot of itself to the reset + 2 minutes, from
+// its own session's rate_limit_info.resetsAt (epoch seconds). Not when that falls in the 15 minutes up to the
+// hourly run at minute 42, which covers it: two supervisors at once could start a lane twice.
+export const SUPERVISOR_MINUTE = 42;
+const WAKE_AFTER_MS = 2 * 60000;
+
+export function wakePlan(doc, resetsAt, now) {
+  const base = { wake: doc.wake ?? null };
+  if (!inWindow(doc, now)) return { ...base, arm: false, reason: "no window is open" };
+  if (resetsAt === undefined || resetsAt === "" || !/^\d{9,11}$/.test(String(resetsAt))) {
+    return { ...base, arm: false, reason: "no resetsAt", log: "no usage-limit reset time in get_session, so no wake is armed this run" };
+  }
+  const at = new Date(Math.ceil((Number(resetsAt) * 1000 + WAKE_AFTER_MS) / 60000) * 60000);
+  const runOnceAt = isoMinute(at);
+  if (at <= now) return { ...base, arm: false, runOnceAt, reason: "the reset has passed" };
+  if (at >= doc.window.end) return { ...base, arm: false, runOnceAt, reason: "the reset falls after the window ends" };
+  const m = at.getUTCMinutes();
+  if (m >= SUPERVISOR_MINUTE - 15 && m <= SUPERVISOR_MINUTE) {
+    return { ...base, arm: false, runOnceAt, reason: `the hourly run at :${SUPERVISOR_MINUTE} covers ${runOnceAt}` };
+  }
+  return { ...base, arm: true, runOnceAt, reason: base.wake ? "move the wake" : "create the wake, then record it with window ids --wake" };
 }
 
 // --- the supervisor's lock ---------------------------------------------------------------------------------------
@@ -578,7 +606,7 @@ export function lockCommand(held, now) {
 
 // --- the command line --------------------------------------------------------------------------------------------
 
-const USAGE = "Usage: queue.mjs has-work \"<session title>\" [--started <k>] | next <lane> [--taken <n,n>] | move <n> <state> [--note '<text>'] | status [--write] [--also '<line>']... | env | window [start [hours] [--environment <env_…>] [--dry-run] | ids --supervisor <id> --archiver <id> | stop | archived] | started \"<session title>\" <trigger id> | sessions [--all] | lock | unlock | identity | resume --log <file> --last-event <ISO>";
+const USAGE = "Usage: queue.mjs has-work \"<session title>\" [--started <k>] | next <lane> [--taken <n,n>] | move <n> <state> [--note '<text>'] | status [--write] [--also '<line>']... | env | window [start [hours] [--environment <env_…>] [--dry-run] | ids --supervisor <id> --archiver <id> --wake <id> | stop | archived] | started \"<session title>\" <trigger id> | wake [--resets-at <epoch s>] | sessions [--all] | lock | unlock | identity | resume --log <file> --last-event <ISO>";
 const ISSUE_FIELDS = "number,title,body,labels,state,comments,closedAt,createdAt";
 
 // Flags after the positional words: `--name value`, repeatable.
@@ -617,6 +645,7 @@ export function run(argv, io) {
       lock: words.length === 0,
       unlock: words.length === 0,
       identity: words.length === 0,
+      wake: words.length === 0,
     };
     if (!shapes[command]) throw refuse(`unknown command: ${argv.join(" ") || "(none)"}`, USAGE);
     if (command === "lock") {
@@ -653,6 +682,7 @@ export function run(argv, io) {
       if (write) io.writeWindow(write);
       return { code: 0, line: JSON.stringify({ ...out, ...(words[0] === "start" && { dryRun: Boolean(f["dry-run"]) }) }) };
     }
+    if (command === "wake") return { code: 0, line: JSON.stringify(wakePlan(doc, f["resets-at"]?.at(-1), io.now())) };
     if (command === "started") {
       const records = recordStarted(doc, io.readTriggers(), words[0], words[1], io.now());
       io.writeTriggers(records);

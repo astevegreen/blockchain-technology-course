@@ -13,8 +13,8 @@ hooks:
           timeout: 10
 ---
 You keep the sprint in `docs/sprint.md` running. You never edit tracked files, commit, push or make content
-decisions. You only start and report on sessions, with the `RemoteTrigger` tool (load it with ToolSearch). You
-cannot archive: scheduled sessions have no `archive_session`. The sprint archiver (`docs/sprint.md`, Machinery)
+decisions. You only start and report on sessions, with the `RemoteTrigger` tool (load it with ToolSearch), and
+read your own usage limit with the Claude_Code_Remote `get_session` tool (step 3b). You cannot archive: scheduled sessions have no `archive_session`. The sprint archiver (`docs/sprint.md`, Machinery)
 archives finished and stuck sessions. Finish in a few minutes.
 
 **The queue.** `Q` below is `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs`: write it
@@ -48,7 +48,8 @@ task ids, from this computer's sprint state (/sprint-start writes it); never cop
   ask the owner to run `/sprint-start` again. A usage-limit restart due after `end` was meant to be cancelled. Do step 3, but start only `Course integrate`, so the tasks that lanes finish after
   the window still land, and never a lane or plan session.
   - When no title's session is running or stuck, and `Q has-work "Course integrate"` prints `"start": false`:
-    1. `RemoteTrigger` `update` the id `supervisor` names with `{"enabled": false}`;
+    1. `RemoteTrigger` `update` the id `supervisor` names with `{"enabled": false}`, and the id `wake` names,
+       when not null, with `{"enabled": false}`;
     2. comment "Sprint over" on the sprint log with the lane lines of `Q status`;
     3. stop.
   - When `supervisor` is null or the update is refused, start that comment "@astevegreen" and ask the owner to
@@ -111,6 +112,25 @@ trigger it does not record is one your next run cannot see. When it refuses or f
 | `Course integrate`     | `/sprint-integrate`    | `claude-sonnet-5-5` |
 
 Archiving is the sprint archiver's job; don't try it here.
+
+## 3b. Wake
+While a usage limit is on, a scheduled run fails before it starts, so lanes it stopped would wait for the next
+hourly run. So every run with `state` `open` moves one standing one-shot of this task, "Course sprint supervisor
+wake", to 2 minutes after the limit resets. Skip this step with any other `state`.
+1. Load `get_session` (Claude_Code_Remote) with ToolSearch and call it with no `session_id`: it describes this
+   session. `external_metadata.rate_limit_info.resetsAt` is the reset, in epoch seconds.
+2. Run `Q wake --resets-at <resetsAt>`, or `Q wake` when the tool, the session or `resetsAt` is missing. It
+   prints `arm`, `runOnceAt`, `wake` (the id on record, or null), `reason`, and sometimes `log`.
+3. `arm` true and `wake` not null: `RemoteTrigger` `update` that id with `{"run_once_at": "<runOnceAt>",
+   "enabled": true, "job_config": <the job_config below>}`: an update re-arms a one-shot that has fired, and
+   the job_config brings the environment up to date. When it says the trigger is not found, make it as below.
+4. `arm` true and `wake` null: `RemoteTrigger` `create` the body of step 3 with name
+   `Course sprint supervisor wake`, `run_once_at` `<runOnceAt>`, prompt `/sprint-supervisor` and model
+   `claude-sonnet-5-5`, with the same two `mcp_connections`. Straight after, `Q window ids --wake <its id>`.
+   When that refuses, `update` the new trigger to `{"enabled": false}` and put the error first in step 4.
+5. `arm` false: change nothing. When it printed `log`, add it as an `--also` line in step 4.
+The wake's job_config is step 3's, with `<environment_id>` from `Q env`, model `claude-sonnet-5-5` and the
+content `/sprint-supervisor`. In a dry run, only print what you would do.
 
 ## 4. Report
 **Status block.** Every run, `Q status --write`, with one `--also '<line>'` for each stuck session, each

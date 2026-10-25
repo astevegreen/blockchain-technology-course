@@ -492,16 +492,16 @@ const json = (out) => JSON.parse(out.line);
 
 test("window start opens the window on the minute, for 38 hours unless told; a dry run writes nothing", () => {
   const io = cue("2026-10-28T23:59:42.123Z");
-  assert.deepEqual(json(run(["window"], io)), { state: "none", lanes: doc.lanes, log: 40, supervisor: null, archiver: null, stoppedBy: null });
+  assert.deepEqual(json(run(["window"], io)), { state: "none", lanes: doc.lanes, log: 40, supervisor: null, archiver: null, wake: null, stoppedBy: null });
   const dry = run(["window", "start", "12", "--dry-run"], io);
   assert.equal(dry.code, 0);
   assert.deepEqual(json(dry), {
     state: "open", start: "2026-10-28T23:59Z", end: "2026-10-29T11:59Z", newYork: "Wed 28 Oct 19:59 to Thu 29 Oct 07:59",
-    lanes: doc.lanes, log: 40, supervisor: null, archiver: null, stoppedBy: null, dryRun: true,
+    lanes: doc.lanes, log: 40, supervisor: null, archiver: null, wake: null, stoppedBy: null, dryRun: true,
   });
   assert.equal(io.windowFile, null);
   assert.equal(run(["window", "start"], io).code, 0);
-  assert.deepEqual(io.windowFile, { start: "2026-10-28T23:59:00.000Z", end: "2026-10-30T13:59:00.000Z", environment: null, supervisor: null, archiver: null, stoppedBy: null });
+  assert.deepEqual(io.windowFile, { start: "2026-10-28T23:59:00.000Z", end: "2026-10-30T13:59:00.000Z", environment: null, supervisor: null, archiver: null, wake: null, stoppedBy: null });
   assert.equal(json(run(["window"], io)).newYork, "Wed 28 Oct 19:59 to Fri 30 Oct 09:59");
   const again = run(["window", "start", "4"], io);
   assert.equal(again.code, 2);
@@ -603,6 +603,40 @@ test("a window that simply runs out is not recorded as stopped", () => {
   io.now = () => new Date("2026-10-28T23:00:00Z");
   const out = json(run(["window"], io));
   assert.deepEqual([out.state, out.stoppedBy], ["after", null]);
+});
+
+// While a usage limit is on, a scheduled run fails before it starts, so the supervisor moves one standing one-shot of
+// itself to the reset + 2 minutes (after-sprint fix 1, 25 Oct).
+test("wake arms at the reset + 2 minutes, except near the :42 run, after the window or with no reset time", () => {
+  const io = cue("2026-10-28T20:00:00Z");
+  assert.equal(json(run(["wake", "--resets-at", "1793232000"], io)).reason, "no window is open");
+  run(["window", "start", "10"], io);
+  const at = (iso) => String(Date.parse(iso) / 1000);
+  const first = json(run(["wake", "--resets-at", at("2026-10-28T22:10:30Z")], io));
+  assert.deepEqual(first, { wake: null, arm: true, runOnceAt: "2026-10-28T22:13Z", reason: "create the wake, then record it with window ids --wake" });
+  assert.equal(json(run(["window", "ids", "--wake", "trig_01W"], io)).wake, "trig_01W");
+  const moved = json(run(["wake", "--resets-at", at("2026-10-28T23:00:00Z")], io));
+  assert.deepEqual([moved.arm, moved.wake, moved.runOnceAt], [true, "trig_01W", "2026-10-28T23:02Z"]);
+  for (const reset of ["2026-10-28T22:25:00Z", "2026-10-28T22:40:00Z"]) {
+    const near = json(run(["wake", "--resets-at", at(reset)], io));
+    assert.equal(near.arm, false, reset);
+    assert.match(near.reason, /:42 covers/);
+  }
+  assert.equal(json(run(["wake", "--resets-at", at("2026-10-28T22:41:00Z")], io)).arm, true, "22:43 is after the :42 run");
+  assert.match(json(run(["wake", "--resets-at", at("2026-10-29T06:00:00Z")], io)).reason, /after the window ends/);
+  assert.match(json(run(["wake", "--resets-at", at("2026-10-28T19:00:00Z")], io)).reason, /has passed/);
+  for (const args of [[], ["--resets-at", "soon"]]) {
+    const none = json(run(["wake", ...args], io));
+    assert.equal(none.arm, false);
+    assert.match(none.log, /no usage-limit reset time/);
+  }
+  io.now = () => new Date("2026-10-28T21:00:00Z");
+  run(["window", "stop"], io);
+  assert.equal(json(run(["wake", "--resets-at", at("2026-10-28T23:00:00Z")], io)).arm, false, "a stopped window arms nothing");
+  io.now = () => new Date("2026-10-29T21:00:00Z");
+  run(["window", "archived"], io);
+  run(["window", "start"], io);
+  assert.equal(io.windowFile.wake, "trig_01W", "the wake is one standing trigger, kept across windows");
 });
 
 test("a Window line in docs/sprint.md still counts, but the cue neither stops it nor opens a second", () => {
