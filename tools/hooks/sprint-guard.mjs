@@ -55,8 +55,8 @@ const PS = input.tool_name === "PowerShell";
 // PowerShell.
 const command = String(input.tool_input?.command ?? "").replace(PS ? /`\r?\n/g : /\\\r?\n/g, " ");
 // Simple commands: split on control operators, keeping the words of each. Inside quotes, |, ;, &, ), $ and a
-// backtick are text (a search pattern such as "a\|b", a note naming `a.qmd`), except in double quotes holding $
-// or a backtick, which can run a command there. So are |, ;, & and ) escaped with a backslash outside quotes
+// backtick are text (a search pattern such as "a\|b", a note naming `a.qmd`), except inside a `$(…)` or backticks
+// in double quotes, which run a command there. So are |, ;, & and ) escaped with a backslash outside quotes
 // (`sed -n 1p\;9p`, find's `\;`).
 const MASK = { "|": "\u0001", ";": "\u0002", "&": "\u0003", ")": "\u0004", "`": "\u0005", $: "\u0006" };
 const UNMASK = Object.fromEntries(Object.entries(MASK).map(([k, v]) => [v, k]));
@@ -76,7 +76,26 @@ function mapQuoted(s, quoted, escaped = (x) => `\\${x}`) {
   return out;
 }
 const runsInside = (q) => q[0] === '"' && /[$`]/.test(q);
-const maskQuoted = (s) => mapQuoted(s, (q) => (runsInside(q) ? q : q.replace(/[|;&)`$]/g, (x) => MASK[x])),
+// In double quotes that can run a command, only `$(…)` and bash's backticks hold one: |, ;, & and ) elsewhere in
+// them are text (`--body "Done; $n left"`), while `"a; $(echo hi; git push)"` still splits inside the substitution.
+function textOutsideRuns(q) {
+  const esc = PS ? "`" : "\\";
+  let out = "";
+  let depth = 0;
+  let tick = false;
+  for (let k = 0; k < q.length; k++) {
+    const c = q[k];
+    if (c === esc) { out += c + (q[k + 1] ?? ""); k++; continue; }
+    if (c === "$" && q[k + 1] === "(") { depth++; out += "$("; k++; continue; }
+    if (c === "(" && depth) depth++;
+    else if (c === ")" && depth) { depth--; out += c; continue; }
+    else if (c === "`" && !PS) tick = !tick;
+    out += !depth && !tick && "|;&)".includes(c) ? MASK[c] : c;
+  }
+  return out;
+}
+const maskQuoted = (s) => mapQuoted(s,
+  (q) => (runsInside(q) ? textOutsideRuns(q) : q.replace(/[|;&)`$]/g, (x) => MASK[x])),
   (x) => `\\${"|;&)".includes(x) && x ? MASK[x] : x}`);
 // The command line with its text strings emptied: a note or comment may name curl or `rm -r` without running it.
 const literalsBlank = mapQuoted(command, (q) => (runsInside(q) ? q : "''"));

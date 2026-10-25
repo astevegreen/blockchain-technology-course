@@ -272,6 +272,20 @@ describe("commands a variable, a cast or split quotes hide", () => {
     }
     assert.equal(ps("--integrator", "$out = git -C C:/Antigravity/bc-integrate push origin HEAD:main"), 0);
   });
+  test("reads |, ; and & in double quotes holding $ as text outside a $(…) or backticks (YODC 6d5eeed2)", () => {
+    for (const command of ['gh issue comment 5 --body "Done; $n left"',
+      'gh issue comment 5 --body "$n of 5 | next & X3"', 'gh issue comment 5 --body "Fixed (see $x); next"']) {
+      assert.equal(bash("--lane", command), 0, command);
+      assert.equal(ps("--lane", command), 0, command);
+    }
+    for (const mode of BOTH) {
+      for (const command of ['gh issue comment 5 --body "a; $(echo hi; git push)"', 'echo "a; `echo hi; git push`"',
+        'echo "$n; $((1 + 2)); $( (cd x); git push --force)"']) {
+        assert.equal(bash(mode, command), 2, `${mode} ${command}`);
+      }
+      assert.equal(ps(mode, 'gh issue comment 5 --body "a; $(echo hi; git push)"'), 2, mode);
+    }
+  });
 });
 
 describe("--integrator", () => {
