@@ -47,6 +47,10 @@ issue with a recommended answer, move it to `blocked`, and hand back STATUS: BLO
   `git -C W fetch origin`.
 - Issue mode: if `sprint/n` exists, it holds earlier work: `git -C W switch sprint/n` and continue it as in fix
   mode. Otherwise `git -C W switch -c sprint/n origin/main`.
+  Then restore this task's unsaved work: `git -C W stash list` lists every worktree's stashes; for each entry
+  reading `On sprint/n: left by a stopped session`, newest first, run `git -C W stash pop <its stash@{k}>`. If
+  a pop fails, the stash stays: run `git -C W restore --staged --worktree .`, build without it, and name the
+  stash in your hand-back. Another issue's stash is never yours.
   Fix mode: `git -C W switch sprint/n` first, since every hand-back (step 4) detaches it; when the concern is a
   conflict with main, rebase it: `git -C W fetch origin` then `git -C W rebase --reapply-cherry-picks origin/main`
   (main may hold this task and its revert, which a plain rebase would silently drop), resolving conflicts in the
