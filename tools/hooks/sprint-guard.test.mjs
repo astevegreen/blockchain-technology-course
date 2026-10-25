@@ -285,8 +285,15 @@ describe("--read-only", () => {
       "gh issue create --title 'X1' --body 'Run `python tools/check.py`; which `run.sh --fresh-start` proves it'",
     ]) assert.equal(bash("--lane", command, LESSONS), 0, command);
     assert.equal(bash("--integrator", "gh issue comment 12 --body 'Integrator: rebase with `git rebase --reapply-cherry-picks origin/main`'"), 0);
-    // In double quotes the backticks run: this comment would rebase the main checkout.
-    assert.equal(bash("--integrator", 'gh issue comment 12 --body "Integrator: rebase with `git rebase --reapply-cherry-picks origin/main`"'), 2);
+    // In double quotes the backticks run: this comment would rebase the main checkout. A stand-in main checkout
+    // (a `.git` folder), so the answer is the same when the tests run in a worktree.
+    const main = mkdtempSync(path.join(os.tmpdir(), "bc-sprint-guard-main-"));
+    mkdirSync(path.join(main, ".git"));
+    try {
+      assert.equal(bash("--integrator", 'gh issue comment 12 --body "Integrator: rebase with `git rebase --reapply-cherry-picks origin/main`"', main), 2);
+    } finally {
+      rmSync(main, { recursive: true, force: true });
+    }
     assert.equal(bash("--lane", "echo 'x' `git push`"), 2);
   });
   test("lets a note or comment name curl or a recursive delete, but runs neither", () => {
