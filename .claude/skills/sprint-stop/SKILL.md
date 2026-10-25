@@ -19,7 +19,8 @@ nothing before it, then at most 6 lines:
 - `NOT RUNNING course: <state from Q window>`
 
 1. Run `Q window`. Unless `state` is `open`, reply `NOT RUNNING` and stop.
-2. Run `Q window stop`: the window ends this minute.
+2. Run `Q window stop`: the window ends this minute, and the window records `stoppedBy: sprint-stop`, so the
+   supervisor reports the stop as the owner's, not as a fault.
    - Each lane and plan session finishes the task in hand, then stops at its window check.
    - The supervisor starts nothing more.
    - The integrator lands what is already `to-integrate`.

@@ -492,16 +492,16 @@ const json = (out) => JSON.parse(out.line);
 
 test("window start opens the window on the minute, for 38 hours unless told; a dry run writes nothing", () => {
   const io = cue("2026-10-28T23:59:42.123Z");
-  assert.deepEqual(json(run(["window"], io)), { state: "none", lanes: doc.lanes, log: 40, supervisor: null, archiver: null });
+  assert.deepEqual(json(run(["window"], io)), { state: "none", lanes: doc.lanes, log: 40, supervisor: null, archiver: null, stoppedBy: null });
   const dry = run(["window", "start", "12", "--dry-run"], io);
   assert.equal(dry.code, 0);
   assert.deepEqual(json(dry), {
     state: "open", start: "2026-10-28T23:59Z", end: "2026-10-29T11:59Z", newYork: "Wed 28 Oct 19:59 to Thu 29 Oct 07:59",
-    lanes: doc.lanes, log: 40, supervisor: null, archiver: null, dryRun: true,
+    lanes: doc.lanes, log: 40, supervisor: null, archiver: null, stoppedBy: null, dryRun: true,
   });
   assert.equal(io.windowFile, null);
   assert.equal(run(["window", "start"], io).code, 0);
-  assert.deepEqual(io.windowFile, { start: "2026-10-28T23:59:00.000Z", end: "2026-10-30T13:59:00.000Z", environment: null, supervisor: null, archiver: null });
+  assert.deepEqual(io.windowFile, { start: "2026-10-28T23:59:00.000Z", end: "2026-10-30T13:59:00.000Z", environment: null, supervisor: null, archiver: null, stoppedBy: null });
   assert.equal(json(run(["window"], io)).newYork, "Wed 28 Oct 19:59 to Fri 30 Oct 09:59");
   const again = run(["window", "start", "4"], io);
   assert.equal(again.code, 2);
@@ -584,6 +584,8 @@ test("window stop ends it now; the archiver stays on record until it is switched
   io.now = () => new Date("2026-10-29T09:30:59Z");
   const stopped = json(run(["window", "stop"], io));
   assert.deepEqual([stopped.state, stopped.end, stopped.archiver], ["after", "2026-10-29T09:30Z", "trig_01R"]);
+  assert.equal(stopped.stoppedBy, "sprint-stop", "the supervisor reads the owner's stop as a stop, not a fault");
+  assert.equal(json(run(["window"], io)).stoppedBy, "sprint-stop");
   assert.match(json(run(["window", "stop"], io)).do, /^Nothing to stop/);
   assert.match(json(run(["started", "Course lane: wk", "trig_01A"], io)).error, /no window is open/);
   const held = run(["window", "start"], io);
@@ -592,6 +594,15 @@ test("window stop ends it now; the archiver stays on record until it is switched
   assert.equal(json(run(["window", "archived"], io)).archiver, null);
   assert.equal(run(["window", "start", "2"], io).code, 0, "a new window once the archiver is off");
   assert.equal(io.windowFile.supervisor, null, "a new window starts with no scheduled tasks");
+  assert.equal(io.windowFile.stoppedBy, null, "and is not stopped");
+});
+
+test("a window that simply runs out is not recorded as stopped", () => {
+  const io = cue("2026-10-28T20:00:00Z");
+  run(["window", "start", "2"], io);
+  io.now = () => new Date("2026-10-28T23:00:00Z");
+  const out = json(run(["window"], io));
+  assert.deepEqual([out.state, out.stoppedBy], ["after", null]);
 });
 
 test("a Window line in docs/sprint.md still counts, but the cue neither stops it nor opens a second", () => {

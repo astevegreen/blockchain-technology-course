@@ -439,9 +439,10 @@ export function sessionTriggers(doc, records, { all = false } = {}) {
 
 // `/sprint-start [hours]` opens the window when the owner cues it, and `/sprint-stop` ends it early. The window
 // and the ids of the scheduled tasks /sprint-start makes are kept beside the ledger, in sprint-window.json:
-// {start, end, environment, supervisor, archiver}. A cue never waits for a push, and a window left in this file is
-// never a fact a later sprint inherits. Terminal Dusk's design (24 Oct). The environment is the one /sprint-start
-// found in list_environments: its id changes whenever `claude rc` restarts, so the doc's line is only a fallback.
+// {start, end, environment, supervisor, archiver, stoppedBy}. A cue never waits for a push, and a window left in
+// this file is never a fact a later sprint inherits. Terminal Dusk's design (24 Oct). The environment is the one
+// /sprint-start found in list_environments: its id changes whenever `claude rc` restarts, so the doc's line is only
+// a fallback.
 export const DEFAULT_HOURS = 38;
 export const MAX_HOURS = 96;
 const HOUR_MS = 3600000;
@@ -462,7 +463,7 @@ export function newYork(d) {
 // The doc's facts with this computer's window (sprint-window.json, or null) in place of any Window line, and its
 // environment, when the cue named one, in place of the doc's.
 export function withLocalWindow(doc, local) {
-  if (!local) return { ...doc, supervisor: null, archiver: null };
+  if (!local) return { ...doc, supervisor: null, archiver: null, stoppedBy: null };
   const start = new Date(local.start ?? Number.NaN);
   const end = new Date(local.end ?? Number.NaN);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
@@ -471,11 +472,13 @@ export function withLocalWindow(doc, local) {
   return {
     ...doc, window: { start, end }, environment: local.environment ?? doc.environment,
     supervisor: local.supervisor ?? null, archiver: local.archiver ?? null,
+    stoppedBy: local.stoppedBy ?? null,
   };
 }
 
 // Where now falls against the window, "none" (none opened yet), "before", "open" or "after", with the lanes, the
-// sprint log issue and the scheduled tasks' ids.
+// sprint log issue, the scheduled tasks' ids, and `stoppedBy`: "sprint-stop" when /sprint-stop ended the window
+// early, so a supervisor reports the owner's pause as a stop, never as a fault (YODC called one "a machinery bug").
 export function windowState(doc, now) {
   const w = doc.window;
   let state = "none";
@@ -488,6 +491,7 @@ export function windowState(doc, now) {
     log: doc.logIssue,
     supervisor: doc.supervisor ?? null,
     archiver: doc.archiver ?? null,
+    stoppedBy: doc.stoppedBy ?? null,
   };
 }
 
@@ -524,7 +528,10 @@ export function windowCommand(doc, local, words, f, now) {
     // refuses too: the cue is only proved once the log exists.
     if (!doc.logIssue) throw refuse("docs/sprint.md names no sprint log yet (#0); setup day makes it", "Start nothing; report it.");
     const start = toMinute(now);
-    const w = { start: start.toISOString(), end: new Date(start.getTime() + h * HOUR_MS).toISOString(), environment, supervisor: null, archiver: null };
+    const w = {
+      start: start.toISOString(), end: new Date(start.getTime() + h * HOUR_MS).toISOString(), environment,
+      supervisor: null, archiver: null, stoppedBy: null,
+    };
     return { out: state(w), write: f["dry-run"] ? null : w };
   }
   if (sub === "ids") {
@@ -541,7 +548,7 @@ export function windowCommand(doc, local, words, f, now) {
   }
   if (sub === "stop") {
     cued();
-    const w = { ...local, end: toMinute(now).toISOString() };
+    const w = { ...local, end: toMinute(now).toISOString(), stoppedBy: "sprint-stop" };
     return { out: state(w), write: w };
   }
   if (sub === "archived") {
