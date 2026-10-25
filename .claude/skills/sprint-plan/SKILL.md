@@ -13,8 +13,8 @@ hooks:
           timeout: 10
 ---
 You turn the next backlog items of lane `$ARGUMENTS` in `docs/sprint.md` into issues the lane coordinator can
-build. The owner approved the backlog (permission 1), so you do not wait for the owner. You never edit files,
-write slides or labs, or make content decisions (`CLAUDE.md`, hard rule 4). `L` below is the label
+build. The owner approved the backlog (permission 1), so you do not wait for the owner. You never edit tracked
+files, write slides or labs, or make content decisions (`CLAUDE.md`, hard rule 4). `L` below is the label
 `lane:$ARGUMENTS`. The sprint log is the issue on the `"Sprint log"` line of `docs/sprint.md` (Flow).
 
 **The queue.** `Q` below is `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs`: write it
@@ -24,9 +24,8 @@ $ARGUMENTS"` prints one line of JSON: `start`, `reason`, `ready` (the lane's ope
 `error`, do what its `do` line says; when it fails any other way, stop and report its output on the sprint log.
 Never match titles against the backlog by hand.
 
-Stop when `date -u +%Y%m%dT%H%M` is past the end of the window on the `Window (UTC)` line of `docs/sprint.md`,
-or `start` is false. Before the window (planning day), go on past 3 `ready` until it is 6, still stopping when
-`todo` is empty.
+Stop when `Q window` prints `state` `after`, or `start` is false. With `state` `none` or `before` (no sprint
+open yet: planning day), go on past 3 `ready` until it is 6, still stopping when `todo` is empty.
 
 ## 1. Pick
 Run `Q has-work "Course plan: $ARGUMENTS"` and read the lane's backlog in `docs/sprint.md`. Take the first
@@ -38,8 +37,9 @@ they run to 2,000 lines), and what the `scout` agent points you to.
 - **Planning day** (the owner started this session, so it has Notion): read the item's row in the Notion
   "Build Tracker (Stage F)" database and its slot in Stage F's Lessons table, found by name with Notion search.
   Quote what the spec needs from them in the issue: lanes have no Notion.
-- **During the window** (no Notion): file only an item whose spec `docs/sprint.md`, `docs/build-spec.md` and
-  the repo already hold, or a split of one already filed. Anything else is a question (step 2).
+- **In the window** (`state` `open`; no Notion): file only an item whose spec `docs/sprint.md`,
+  `docs/build-spec.md` and the repo already hold, or a split of one already filed. Anything else is a question
+  (step 2).
 
 ## 2. Check it can be specified
 First read the "Sprint questions" issue (`gh issue list --state all --search '"Sprint questions" in:title'`,
@@ -57,13 +57,11 @@ source when none fits, a split the tracker leaves open):
 ## 3. Write
 Start every comment you write with "Plan:".
 Create each issue with `gh issue create --title "[task] <ID>: <what it does>" --label L --label sprint-ready
---body '<body>'`. Write the body in single quotes, with ’ for an apostrophe; backticks are fine inside them.
-The guard reads each line of a command on its own, so no body line may start with a command name (`git`, `gh`,
-`node`, `python`, `rm`, `curl`): put such a command after a word, as in "Run `python tools/check.py`". It also
-refuses, anywhere in a command and even inside quotes, a hook bypass (`--no-verify`, `SKIP_HOOKS`,
-`core.hooksPath`), the owner's gh commands (`gh` followed by `auth`, `secret`, `api`, `workflow`, `release`,
-`repo`, `label delete` or `issue delete`), and git's force-push and discarding commands: describe those in other
-words ("the owner deletes the label"). The body:
+--body-file C:/Antigravity/blockchain-technology-course/.sprint/plan-$ARGUMENTS/<ID>.md`, the body written first
+with the Write tool to that file: the guard reads every line of a command, so a body line such as `git push …`
+passed inline is refused as a push. Write each comment the same way, to a file in that folder passed with
+`--body-file`. Every file you write goes in that folder: the other lane's plan session runs at the same time in
+this same checkout. The body:
 - **Goal**: what changes for the student or the instructor, in plain words.
 - **Read first**: exact `path:line`s; the Build Tracker row and Stage F slot, quoted (planning day).
 - **Acceptance criteria**: statements the reviewer can check against the diff: which slides or lab steps
@@ -85,4 +83,6 @@ into `<ID>a`, `<ID>b`, each reviewable on its own, with "Waits for" between them
 would touch (`docs/sprint.md`, "What still stops a task"); a task that needs one is a question, not an issue.
 
 Then go back to step 1. When you stop, comment once on the sprint log: the lane, the issues created (link, ID,
-ready or blocked), the questions asked, and every assumption you made. Under 10 lines.
+ready or blocked), the questions asked, and every assumption you made. Under 10 lines. Then, in the window, if
+you filed at least one ready issue and did not stop on a usage limit or an error, `RemoteTrigger` `run` the
+`supervisor` id `Q window` prints (load RemoteTrigger with ToolSearch), so the lane starts on it now.

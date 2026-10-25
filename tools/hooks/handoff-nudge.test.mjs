@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { runHook, tempRepo, writeFiles } from "./test-helpers.mjs";
+import { runHook, sh, tempRepo, writeFiles } from "./test-helpers.mjs";
 
 const owner = (text) => ({ type: "user", message: { content: text } });
 const said = (tokens, content = [{ type: "text", text: "Done." }]) => ({
@@ -143,6 +143,27 @@ test("at session start, tells Claude the sprint file overrides CLAUDE.md only in
   const both = sessionStart(repo).json;
   assert.match(both.systemMessage, /^Open handoff note/);
   assert.match(both.hookSpecificOutput.additionalContext, /^Sprint window open/);
+});
+
+test("at session start, the window /sprint-start opened counts in the main checkout and its worktrees, over any doc line", () => {
+  const HOUR = 60 * 60 * 1000;
+  const iso = (ms) => new Date(Date.now() + ms).toISOString();
+  const stamp = (ms) => iso(ms).slice(0, 16).replace(/[-:]/g, "");
+  const repo = tempRepo({ ".gitignore": ".handoff/\n", "docs/sprint.md": "# Sprint: not scheduled\n" });
+  const tree = `${repo}-lane`;
+  sh("git", ["worktree", "add", "-q", tree, "-b", "lane"], repo);
+  const context = (cwd) => sessionStart(cwd).json?.hookSpecificOutput?.additionalContext;
+  const cue = (from, to) => writeFiles(repo, { ".git/sprint-window.json": JSON.stringify({ start: iso(from), end: iso(to), supervisor: null, archiver: null }) });
+
+  cue(-HOUR, HOUR);
+  const end = stamp(HOUR);
+  assert.match(context(repo), new RegExp(`^Sprint window open until ${end} UTC`));
+  assert.match(context(tree), new RegExp(`^Sprint window open until ${end} UTC`), "from a lane's worktree");
+  cue(-2 * HOUR, -HOUR);
+  writeFiles(repo, { "docs/sprint.md": `**Window (UTC):** \`${stamp(-HOUR)}\` to \`${stamp(HOUR)}\`\n` });
+  assert.equal(context(repo), undefined, "a stopped window is not reopened by a doc line");
+  writeFiles(repo, { ".git/sprint-window.json": "not json" });
+  assert.match(context(repo), /^Sprint window open/, "an unreadable file falls back to the doc line");
 });
 
 test("at session start outside a git repository, says nothing", () => {

@@ -106,8 +106,8 @@ test("reads this checkout's docs/sprint.md, the template the sprint fills in", (
   for (const lane of current.lanes) assert.ok(current.backlog[lane.name], `the backlog has a ### ${lane.name} list`);
 });
 
-test("fails, saying what is missing, rather than guess", () => {
-  throwsWith(() => parseSprintDoc(SPRINT_MD.replace("**Window (UTC):**", "Window:")), /Window \(UTC\)/);
+test("fails, saying what is missing, rather than guess; a missing window is no window yet", () => {
+  assert.equal(parseSprintDoc(SPRINT_MD.replace("**Window (UTC):**", "Window:")).window, null, "/sprint-start opens it");
   throwsWith(() => parseSprintDoc(SPRINT_MD.replace('#40 "Sprint log"', "the log")), /sprint log issue/);
   throwsWith(() => parseSprintDoc(SPRINT_MD.replace("## Backlog", "## Later")), /## Backlog/);
 });
@@ -358,6 +358,9 @@ function fakeIo(issues, over = {}) {
     ledger: [],
     readTriggers: () => io.ledger,
     writeTriggers: (records) => { io.ledger = records; },
+    windowFile: null,
+    readWindow: () => io.windowFile,
+    writeWindow: (w) => { io.windowFile = w; },
     ...over,
   };
   return { io, writes: () => calls.filter((c) => c.args[1] !== "list" && c.args[0] !== "run") };
@@ -478,4 +481,178 @@ test("an unknown command reads nothing and shows the usage", () => {
   assert.equal(out.code, 2);
   assert.match(JSON.parse(out.line).do, /^Usage/);
   assert.equal(read, false);
+});
+
+// --- the window /sprint-start opens ----------------------------------------------------------------------------------
+
+// Terminal Dusk's cue (24 Oct): the owner says when, and the window lives in this computer's git folder.
+const NO_WINDOW = SPRINT_MD.replace(/\*\*Window \(UTC\):\*\*[^\n]*\n/, "");
+const cue = (now, over = {}) => fakeIo(cli, { sprintDoc: () => NO_WINDOW, now: () => new Date(now), ...over }).io;
+const json = (out) => JSON.parse(out.line);
+
+test("window start opens the window on the minute, for 38 hours unless told; a dry run writes nothing", () => {
+  const io = cue("2026-10-28T23:59:42.123Z");
+  assert.deepEqual(json(run(["window"], io)), { state: "none", lanes: doc.lanes, log: 40, supervisor: null, archiver: null });
+  const dry = run(["window", "start", "12", "--dry-run"], io);
+  assert.equal(dry.code, 0);
+  assert.deepEqual(json(dry), {
+    state: "open", start: "2026-10-28T23:59Z", end: "2026-10-29T11:59Z", newYork: "Wed 28 Oct 19:59 to Thu 29 Oct 07:59",
+    lanes: doc.lanes, log: 40, supervisor: null, archiver: null, dryRun: true,
+  });
+  assert.equal(io.windowFile, null);
+  assert.equal(run(["window", "start"], io).code, 0);
+  assert.deepEqual(io.windowFile, { start: "2026-10-28T23:59:00.000Z", end: "2026-10-30T13:59:00.000Z", environment: null, supervisor: null, archiver: null });
+  assert.equal(json(run(["window"], io)).newYork, "Wed 28 Oct 19:59 to Fri 30 Oct 09:59");
+  const again = run(["window", "start", "4"], io);
+  assert.equal(again.code, 2);
+  assert.match(json(again).error, /already open, until 2026-10-30T13:59Z/);
+  assert.equal(run(["started", "Course lane: wk", "trig_01A"], io).code, 0, "the supervisor may start sessions in it");
+});
+
+test("window start takes a whole number of hours from 1 to 96, and a broken window file stops every command", () => {
+  for (const hours of ["0", "97", "1.5", "x"]) {
+    const io = cue("2026-10-28T20:00:00Z");
+    const out = run(["window", "start", hours], io);
+    assert.equal(out.code, 2, hours);
+    assert.equal(io.windowFile, null, hours);
+  }
+  for (const file of [{ start: "x", end: "2026-10-30T13:59:00.000Z" }, { end: "2026-10-30T13:59:00.000Z" }]) {
+    const io = cue("2026-10-28T20:00:00Z", { windowFile: file });
+    io.windowFile = file;
+    for (const args of [["window"], ["sessions"], ["has-work", "Course integrate"]]) {
+      const out = run(args, io);
+      assert.equal(out.code, 1, args.join(" "));
+      assert.match(json(out).error, /sprint-window\.json/);
+    }
+  }
+});
+
+// An environment's id changes whenever `claude rc` restarts, so the cue names the one it found: no push first.
+test("window start keeps the environment /sprint-start found, which env then prefers to the doc's line", () => {
+  const io = cue("2026-10-28T20:00:00Z");
+  for (const bad of ["01Xy", "env_01Xy; rm -rf ."]) {
+    const out = run(["window", "start", "--environment", bad], io);
+    assert.equal(out.code, 2, bad);
+    assert.equal(io.windowFile, null, bad);
+  }
+  assert.equal(run(["window", "start", "--environment", "env_01Xy", "--dry-run"], io).code, 0);
+  assert.equal(io.windowFile, null, "a dry run writes nothing");
+  assert.equal(json(run(["env"], io)).environment_id, "env_01AbC", "until a window names one, the doc's line");
+  assert.equal(run(["window", "start", "--environment", "env_01Xy"], io).code, 0);
+  assert.equal(json(run(["env"], io)).environment_id, "env_01Xy");
+  run(["window", "ids", "--supervisor", "trig_01S"], io);
+  io.now = () => new Date("2026-10-28T21:00:00Z");
+  run(["window", "stop"], io);
+  assert.equal(io.windowFile.environment, "env_01Xy", "ids and stop keep it");
+  const blank = cue("2026-10-28T20:00:00Z", { sprintDoc: () => NO_WINDOW.replace("env_01AbC", "env_…") });
+  assert.match(json(run(["env"], blank)).do, /^Start nothing/);
+  run(["window", "start", "--environment", "env_01Xy"], blank);
+  assert.equal(json(run(["env"], blank)).environment_id, "env_01Xy", "the placeholder line no longer matters");
+});
+
+test("window ids records the scheduled tasks /sprint-start made, and refuses anything but a trigger id", () => {
+  const io = cue("2026-10-28T20:00:00Z");
+  assert.equal(run(["window", "ids", "--supervisor", "trig_01S"], io).code, 2, "no window is open yet");
+  run(["window", "start"], io);
+  assert.equal(json(run(["window", "ids", "--supervisor", "trig_01S"], io)).supervisor, "trig_01S");
+  const both = json(run(["window", "ids", "--archiver", "trig_01R"], io));
+  assert.deepEqual([both.supervisor, both.archiver], ["trig_01S", "trig_01R"]);
+  for (const args of [["--supervisor", "trig_01S; rm -rf ."], ["--archiver", "01R"], ["--supervisor", "trig_01S"]]) {
+    const out = run(["window", "ids", ...args], io);
+    assert.equal(out.code, 2, args.join(" "));
+  }
+  assert.deepEqual([io.windowFile.supervisor, io.windowFile.archiver], ["trig_01S", "trig_01R"]);
+});
+
+test("window stop ends it now; the archiver stays on record until it is switched off, and holds the next start", () => {
+  const io = cue("2026-10-28T20:00:00Z");
+  run(["window", "start"], io);
+  run(["window", "ids", "--supervisor", "trig_01S", "--archiver", "trig_01R"], io);
+  assert.match(json(run(["window", "archived"], io)).error, /still open/);
+  io.now = () => new Date("2026-10-29T09:30:59Z");
+  const stopped = json(run(["window", "stop"], io));
+  assert.deepEqual([stopped.state, stopped.end, stopped.archiver], ["after", "2026-10-29T09:30Z", "trig_01R"]);
+  assert.match(json(run(["window", "stop"], io)).do, /^Nothing to stop/);
+  assert.match(json(run(["started", "Course lane: wk", "trig_01A"], io)).error, /no window is open/);
+  const held = run(["window", "start"], io);
+  assert.equal(held.code, 2);
+  assert.match(json(held).error, /archiver trig_01R is still on record/);
+  assert.equal(json(run(["window", "archived"], io)).archiver, null);
+  assert.equal(run(["window", "start", "2"], io).code, 0, "a new window once the archiver is off");
+  assert.equal(io.windowFile.supervisor, null, "a new window starts with no scheduled tasks");
+});
+
+test("a Window line in docs/sprint.md still counts, but the cue neither stops it nor opens a second", () => {
+  const { io } = fakeIo(cli);
+  assert.equal(json(run(["window"], io)).state, "open");
+  assert.match(json(run(["window", "stop"], io)).error, /Window line of docs\/sprint\.md/);
+  assert.match(json(run(["window", "start"], io)).error, /already open/);
+  assert.equal(io.windowFile, null);
+});
+
+test("with no window, every title has no session yet and started is refused", () => {
+  const io = cue("2026-10-28T20:00:00Z");
+  assert.ok(Object.values(json(run(["sessions"], io))).every((id) => id === null));
+  assert.deepEqual(json(run(["sessions", "--all"], io)), []);
+  assert.equal(run(["started", "Course lane: wk", "trig_01A"], io).code, 2);
+});
+
+test("resume reads the run's log from the file it names, and needs the run's last event", () => {
+  const log = "You've hit your session limit · resets 12am (America/New_York) (error type rate_limit, HTTP 429)";
+  const read = [];
+  const io = cue("2026-10-21T03:02:00Z", { readLog: (f) => (read.push(f), log), sprintDoc: () => { throw new Error("read the doc"); } });
+  const out = run(["resume", "--log", ".sprint/run-trig_01A.txt", "--last-event", "2026-10-21T02:11:00Z"], io);
+  assert.equal(out.code, 0);
+  assert.deepEqual(json(out), { start: false, after: "2026-10-21T04:00Z", restartAt: "2026-10-21T04:02Z", reason: "usage limit; resets 2026-10-21T04:00Z" });
+  assert.deepEqual(read, [".sprint/run-trig_01A.txt"]);
+  const missing = run(["resume", "--log", "x.txt"], io);
+  assert.equal(missing.code, 2);
+  assert.match(json(missing).do, /last_event_at/);
+  const noLog = run(["resume", "--last-event", "2026-10-21T02:11:00Z"], io);
+  assert.equal(noLog.code, 2);
+  assert.match(json(noLog).do, /Write tool/);
+  assert.equal(run(["resume", "-", "--last-event", "2026-10-21T02:11:00Z"], io).code, 2, "no log on stdin");
+});
+
+test("lock lets one supervisor run in at a time, and takes over a lock a dead run left", () => {
+  let file = null;
+  let now = new Date("2026-10-28T20:42:00Z");
+  const io = cue(now, {
+    now: () => now,
+    claimLock: (v) => (file ? false : ((file = v), true)),
+    readLock: () => file,
+    writeLock: (v) => { file = v; },
+    removeLock: () => { file = null; },
+    sprintDoc: () => { throw new Error("read the doc"); },
+  });
+  assert.deepEqual(json(run(["lock"], io)), { ok: true });
+  now = new Date("2026-10-28T20:50:00Z");
+  const busy = run(["lock"], io);
+  assert.equal(busy.code, 2);
+  assert.equal(json(busy).error, "another supervisor run holds the lock, since 2026-10-28T20:42Z");
+  assert.match(json(busy).do, /start, update and comment nothing/);
+  assert.equal(file.at, "2026-10-28T20:42:00.000Z", "a refused run leaves the lock as it was");
+  now = new Date("2026-10-28T21:03:00Z");
+  assert.deepEqual(json(run(["lock"], io)), { ok: true, stale: "2026-10-28T20:42Z" });
+  assert.equal(file.at, "2026-10-28T21:03:00.000Z");
+  assert.deepEqual(json(run(["unlock"], io)), { ok: true });
+  assert.equal(file, null);
+  assert.deepEqual(json(run(["lock"], io)), { ok: true });
+  file = { at: "garbage" };
+  assert.deepEqual(json(run(["lock"], io)), { ok: true, stale: "garbage" }, "an unreadable lock counts as stale");
+});
+
+test("identity says whether gh is signed in as the bot", () => {
+  const as = (login) => json(run(["identity"], fakeIo([], { gh: () => `${login}\n` }).io));
+  assert.deepEqual(as("greenbeanbot"), { login: "greenbeanbot", ok: true });
+  assert.deepEqual(as("astevegreen"), { login: "astevegreen", ok: false });
+});
+
+test("has-work --started counts each session created this run against free memory", () => {
+  const io = fakeIo(cli).io; // 9000 MB free; #7 is in progress on wk
+  assert.equal(json(run(["has-work", "Course lane: wk", "--started", "3"], io)).start, true, "9000 - 3 x 1536 = 4392 MB");
+  const four = json(run(["has-work", "Course lane: wk", "--started", "4"], io));
+  assert.equal(four.start, false);
+  assert.equal(four.reason, "memory: 2856 MB free, under the 4096 MB floor, counting 1536 MB for each of the 4 sessions started this run");
+  for (const k of ["-1", "x", "1.5"]) assert.equal(run(["has-work", "Course lane: wk", "--started", k], io).code, 2, k);
 });

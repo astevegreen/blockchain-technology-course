@@ -35,9 +35,10 @@ with `run_in_background: true` and a timeout of 3000000, and read its output whe
 code. It gives up after 45 minutes, because a session silent for 60 minutes is archived: exit 1 says whether to
 run it again (up to 3 times) or stop and report.
 
-Stop when `date -u +%Y%m%dT%H%M` is outside the window on the `Window (UTC)` line of `docs/sprint.md`, when
-`Q has-work "Course integrate"` prints `"start": false`, when every issue left waits for main's labs (step 0)
-and no watch is running, after 15 pushes this session, or after a usage-limit error.
+Stop when `Q window` prints `state` `none` or `before`, when `Q has-work "Course integrate"` prints
+`"start": false`, when every issue left waits for main's labs (step 0) and no watch is running, after 15 pushes
+this session, or after a usage-limit error. After the window (`after`) you still land what the lanes finished;
+the supervisor starts no new integrator once none is needed.
 
 ## 0. Before anything
 - If `I` does not exist: `git worktree add --detach C:/Antigravity/bc-integrate origin/main`.
@@ -124,4 +125,6 @@ line first.
 Go back to step 1.
 
 When you stop, comment once on the sprint log: pushes made, tasks sent back and why, tasks left waiting for
-main's labs, and why you stopped. Under 10 lines.
+main's labs, and why you stopped. Under 10 lines. Then, if this session landed or sent back at least one task
+and did not stop on a usage limit or an error, `RemoteTrigger` `run` the `supervisor` id `Q window` prints
+(load RemoteTrigger with ToolSearch), so the lanes pick up what you sent back now rather than at the next hour.

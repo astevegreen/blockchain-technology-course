@@ -5,9 +5,9 @@
 // "still running".
 // A sprint session (docs/sprint.md) runs unattended and reports on its issues, never in a handoff: no nudge.
 // SessionStart (startup, clear): tell the owner about open notes. Shown to the owner only, never to Claude.
-// While the clock is inside the `Window (UTC)` line of docs/sprint.md, also tell Claude that file overrides
-// CLAUDE.md, and that lab runs belong to the labs lane: in YODC a banner in CLAUDE.md said so in every session,
-// sprint or not, long after its window closed.
+// While the sprint window is open (the one `/sprint-start` opened, or a `Window (UTC)` line in docs/sprint.md),
+// also tell Claude that docs/sprint.md overrides CLAUDE.md, and that lab runs belong to the labs lane: in YODC a
+// banner in CLAUDE.md said so in every session, sprint or not, long after its window closed.
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -47,7 +47,8 @@ function sessionStart() {
   process.exit(0);
 }
 
-// The window's end (YYYYMMDDTHHMM) while now is inside the `Window (UTC)` line of the repo's docs/sprint.md;
+// The window's end (YYYYMMDDTHHMM) while now is inside the window `/sprint-start` opened (sprint-window.json in
+// the main checkout's git folder), or, with no such file, the `Window (UTC)` line of the repo's docs/sprint.md;
 // otherwise null. Walks up to the folder holding `.git` (a directory, or a worktree's file).
 function sprintWindowEnd(dir) {
   let root = path.resolve(dir);
@@ -55,6 +56,11 @@ function sprintWindowEnd(dir) {
     const up = path.dirname(root);
     if (up === root) return null;
     root = up;
+  }
+  const cued = cuedWindow(root);
+  if (cued) {
+    const now = Date.now();
+    return cued.start <= now && now < cued.end ? new Date(cued.end).toISOString().slice(0, 16).replace(/[-:]/g, "") : null;
   }
   let text;
   try {
@@ -65,6 +71,34 @@ function sprintWindowEnd(dir) {
   const m = /Window \(UTC\):\**\s*`(\d{8}T\d{4})`\s*to\s*`(\d{8}T\d{4})`/.exec(text);
   const now = new Date().toISOString().slice(0, 16).replace(/[-:]/g, "");
   return m && m[1] <= now && now <= m[2] ? m[2] : null;
+}
+
+// {start, end} in ms from sprint-window.json, or null when there is none to read. A worktree's `.git` file names
+// its git folder, whose `commondir` leads back to the main checkout's.
+function cuedWindow(root) {
+  try {
+    let common = path.join(root, ".git");
+    const gitdir = /^gitdir:\s*(.+)$/m.exec(readFileSync(common, "utf8"));
+    if (gitdir) {
+      const own = path.resolve(root, gitdir[1].trim());
+      common = existsSync(path.join(own, "commondir")) ? path.resolve(own, readFileSync(path.join(own, "commondir"), "utf8").trim()) : own;
+    }
+    return parseWindow(path.join(common, "sprint-window.json"));
+  } catch {
+    // `.git` is a directory: the main checkout itself.
+    return parseWindow(path.join(root, ".git", "sprint-window.json"));
+  }
+}
+
+function parseWindow(file) {
+  try {
+    const w = JSON.parse(readFileSync(file, "utf8"));
+    const start = Date.parse(w.start);
+    const end = Date.parse(w.end);
+    return Number.isNaN(start) || Number.isNaN(end) ? null : { start, end };
+  } catch {
+    return null;
+  }
 }
 
 function stop() {

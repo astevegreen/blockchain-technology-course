@@ -1,8 +1,11 @@
-# Sprint: not scheduled
+# Sprint: on the owner's cue
 
-**Window (UTC):** `20260101T0000` to `20260101T0000` (placeholder: the owner sets the window on setup day).
-Check with `date -u +%Y%m%dT%H%M`. Every sprint skill reads the window from this line; with this placeholder
-the window has closed, so no sprint session does anything.
+**The window** opens when the owner cues it: `/sprint-start [hours]` (38 hours unless told, at most 96) in a
+session in this folder, or the root `/sprint-cue` for all three projects. `/sprint-start --dry-run` checks
+everything and starts nothing; `/sprint-stop` ends the window early. The window, the environment and the
+scheduled tasks' ids live in `sprint-window.json` in this checkout's git folder, never in this file, so a cue
+needs no push. `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs window` says whether it
+is open, and every sprint session asks it before each task.
 
 Inside the window this file overrides `CLAUDE.md` wherever they conflict: its "ask one question" step for the
 content its permissions cover, "push each finished task to `main`" (only the integrator pushes) and "explain
@@ -63,7 +66,8 @@ Each commit's trailer quotes the permission it rests on: `Requested: "<the owner
 - **No Notion**: sprint sessions have no Notion connector. Each issue carries its full spec; the Build Tracker
   is updated by the owner's wrap-up session after the window.
 - Every hook and the check. Hooks are never skipped. Only the integrator pushes, and only
-  `git push origin HEAD:main`; never a force-push.
+  `git push origin HEAD:main`; never a force-push. Git config is read-only in every sprint session: the
+  worktrees share the main checkout's, and `--global` is the computer's.
 
 ## Lanes
 
@@ -153,55 +157,46 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 
 ## Machinery
 
-- **Environment:** `env_…` (placeholder: setup day fills it in from `list_environments`). The supervisor and the
-  archiver read it with `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs env`, and start
-  or archive nothing while it refuses. October's laptop id had gone by 24 Oct, so preflight checks it again.
-- One supervisor trigger, "Course sprint supervisor", id `trig_…` (filled in at setup), runs
-  `.claude/skills/sprint-supervisor` in this folder, in the environment above, at minute 42 of every hour from
-  the evening before (Terminal Dusk's supervisor takes minute 2 and YODC's 22, so none start at once). Outside
-  the window its first step stops it; after the window it switches itself off by this id. It is created from a
-  session the owner started (desktop app or `claude rc`) with the remote `create_trigger` tool, so any agent can
-  edit it later: a trigger made through the HTTP API can be changed only by its own runs or by the owner.
-- It starts `Course lane: <lane>`, `Course plan: <lane>` and `Course integrate` sessions and restarts any that
-  stopped, for example after a usage limit. Lane and integrate sessions run on Sonnet, plan sessions on Opus;
-  the `implementer` and `reviewer` run on Opus.
-- The sprint archiver archives finished sessions after an hour, and stuck ones (no event in 60 minutes, or 30
-  minutes waiting for an answer). Scheduled sessions have no `archive_session`, so it runs in a session the
-  owner starts (`claude rc` or the desktop app), and a fresh one each sprint day: in October one YODC session
-  kept for the whole window re-read every earlier run and cost 12.9 M tokens. Each sprint day the owner:
-  1. starts a new session on Haiku 5.5, or Sonnet at low effort (archiving is a list, a filter and a call, and
-     `unarchive_session` undoes a mistake);
-  2. in it, sets up a scheduled task bound to that session, at minute 50 of every hour of that UTC day
-     (`50 * <day> <month> *`), with the prompt below;
-  3. deletes the previous day's task and archives its session.
-
-  It is on before the window opens, and the dry run proves it: one finished session archived, its process
-  gone. The prompt, to paste when setting the task up:
-  ```text
-  Sprint archiver run. Run once even if several of these arrive together, and reply in one line.
-  1. If `date -u +%Y%m%dT%H%M` is past the end of the Window (UTC) line in
-     C:/Antigravity/blockchain-technology-course/docs/sprint.md, reply "Window closed" and stop. Run
-     node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs env
-     If it does not exit 0, reply with its output and stop; otherwise its environment_id is the sprint's.
-  2. List this computer's Remote Control sessions (list_sessions leaves scheduled ones out). In PowerShell:
-     Get-CimInstance Win32_Process -Filter "Name='claude.exe'" | ForEach-Object { [regex]::Match($_.CommandLine, 'cse_\w+').Value } | Where-Object { $_ } | Sort-Object -Unique
-     For each cse_<id>, get_session session_<id>.
-  3. Archive with archive_session each session where all of these hold: environment_id is the sprint's;
-     its title starts with "Course "; its origin is a scheduled trigger; it is not this session; and either
-     its status_bucket is completed, review_ready or failed with updated_at over an hour old, or it is stuck:
-     session_status RUNNING with updated_at over 60 minutes old, or status_bucket blocked with updated_at over
-     30 minutes old. Archive nothing else.
-  4. Reply "Archived <n>: <titles, stuck ones marked>" or "Nothing to archive".
-  ```
-- Skills: `sprint-supervisor`, `sprint-lane`, `sprint-plan`, `sprint-integrate` and `sprint-status`
-  (`.claude/skills/`; the owner asks `/sprint-status` how it is going). Agents: `implementer` and `reviewer`
-  (`.claude/agents/`). Guard: `tools/hooks/sprint-guard.mjs`, in the mode each skill and agent names: `--lane`
-  for the supervisor, lane, plan and implementer, `--integrator`, `--file-lock` for the implementer's edits, and
+- **Environment:** `env_01GrRRzD52JMKQdY1jmraa8D`
+  (`DESKTOP-3G4FJO7:C:\Antigravity\blockchain-technology-course:cf07`, from `list_environments`, 24 Oct 2026).
+  The id changes whenever `claude rc` restarts in this folder, so `/sprint-start` looks it up again and records
+  the one it finds with the window. The supervisor reads it with
+  `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs env`, which falls back to this line,
+  and starts nothing while it refuses.
+- `/sprint-start` makes two scheduled tasks with the remote `create_trigger` tool, so any agent can switch them
+  off by id (a trigger made through the HTTP API can be changed only by its own runs or by the owner):
+  - **"Course sprint supervisor"** runs `.claude/skills/sprint-supervisor` in a fresh session in this folder, in
+    the environment above, at minute 42 of every hour (Terminal Dusk's takes minute 2 and YODC's 22, so none
+    start at once). The cue fires it once at the start. A lock keeps one run at a time. After the window it
+    starts only the integrator, until the lanes' finished work has landed, then switches itself off.
+  - **"Course sprint archiver"** runs `.claude/skills/sprint-archive` at minute 50 of every hour, in one session
+    on Haiku that the cue makes (or the cue's own session, which then stays open). It archives the runs of the
+    triggers the supervisor recorded: finished ones idle for an hour, and stuck ones silent for 60 minutes. After
+    the window, once none is left running, it switches itself off, and only then may a new window open, so one
+    sprint's sessions never mix with the next one's. Every run re-reads the ones before it (October's kept-open
+    YODC archiver used 12.9 M tokens in 25 hours), so each answers in one line.
+- The supervisor starts `Course lane: <lane>`, `Course plan: <lane>` and `Course integrate` sessions and
+  restarts any that stopped. Lane and integrate sessions run on Sonnet, plan sessions on Opus; the
+  `implementer` and `reviewer` run on Opus. A session idle for under 30 minutes is settling, not finished. A run
+  that stopped on a usage limit restarts 2 minutes after the reset its log names (`resume`,
+  `tools/sprint/usage-limit.mjs`): an expected pause, not a failure. A lane, plan or integrate session that ends
+  with work done fires the supervisor, so the integrator and the lane's next session start within minutes; the
+  hourly run is the safety net.
+- Skills (`.claude/skills/`): `sprint-start` and `sprint-stop` for the owner's cue, `sprint-supervisor`,
+  `sprint-lane`, `sprint-plan`, `sprint-integrate`, `sprint-archive`, and `sprint-status` (the owner asks
+  `/sprint-status` how it is going). Agents: `implementer` and `reviewer` (`.claude/agents/`). Guard:
+  `tools/hooks/sprint-guard.mjs`, in the mode each skill and agent names: `--lane` for the cue, the supervisor,
+  lane, plan, archiver and implementer, `--integrator`, `--file-lock` for the implementer's edits, and
   `--read-only` for the reviewer.
 - The queue, `tools/sprint/queue.mjs`, holds the sprint's bookkeeping rules once (`tools/sprint/rules.mjs`):
-  `has-work "<session title>"` and `env` for the supervisor, `next <lane>` and `move <n> <state>` for the
-  lanes, and `status` for the status block. It reads the issues with `gh` and this file as pushed to `origin/main`, and
-  prints one line of JSON. A session it gives an `error` does what its `do` line says; when it fails, the
+  `window` and `identity` for the cue and every session's window check; `has-work "<session title>"`, `env`,
+  `started`, `sessions`, `lock`, `unlock` and `resume` for the supervisor; `next <lane>` and `move <n> <state>`
+  for the lanes; and `status` for the status block. It reads the issues with `gh` and this file as pushed to
+  `origin/main`, and prints one line of JSON. What it keeps sits in this checkout's git folder, shared by the
+  worktrees and never committed: the window (`sprint-window.json`), every trigger the supervisor made
+  (`sprint-triggers.json`: RemoteTrigger `list` shows only the account's newest 20, and three projects share the
+  account) and the supervisor's lock. Files the sessions write for a command (run logs, issue and comment
+  bodies) go in `.sprint/`, which git ignores. A session it gives an `error` does what its `do` line says; when it fails, the
   session stops and reports, and never falls back to rules written in a skill. Changing a rule means changing
   the script and its tests (`tools/sprint/*.test.mjs`), outside the window.
 - `tools/sprint/ci-watch.mjs <sha>` waits for the Lab Tests run on a pushed commit and prints one line of JSON:
@@ -235,7 +230,8 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 
 ## Setup day (the owner's answers this plan waits for)
 
-1. The window's dates, and whether the lanes start together.
+1. When the owner will cue the window, for how long (38 hours unless the cue says), and whether the lanes start
+   together.
 2. The backlog and reserve above, approved or changed; the owner's words become the trailer quote.
 3. The two lanes, or a third (week two, or quiz banks).
 4. Source approval during the sprint (permission 4), and whether the implementer may use WebFetch and
@@ -245,19 +241,28 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 6. When the owner will check in (for example 07:00 and 19:00 local), written here, so the status block's
    "Needs you" list can be cleared at those times and nothing waits on an answer at 03:00.
 7. Then Claude, in a session the owner started: creates the labels, the pinned "Sprint log" and "Sprint
-   questions" issues, the `pre-sprint-<date>` tag, the three worktrees and the supervisor trigger, and fills
-   their numbers and ids, and the **Environment:** line, in here. In the main checkout it turns on the
-   bibliography merge (Machinery): `git config merge.bib.driver "node tools/sprint/bib-merge.mjs %O %A %B"`.
+   questions" issues, the `pre-sprint-<date>` tag and the three worktrees, and fills the issue numbers in here.
+   In the main checkout it turns on the bibliography merge (Machinery):
+   `git config merge.bib.driver "node tools/sprint/bib-merge.mjs %O %A %B"`. The scheduled tasks are not made
+   on setup day: each cue makes its own.
 
 ## Preflight (Claude runs it the evening before; the owner fixes what it finds)
+
+`/sprint-start --dry-run` makes items 2, 3, 7 (the `claude` on PATH), 9 and 10 in one go, and every real cue
+makes them again: it refuses on the main checkout, the bot identity, the environment or a missing sprint log,
+and starts with anything else that is short named on the sprint log.
 
 1. GitHub Actions: `gh repo view --json visibility` still says `PUBLIC`, so Lab Tests (on GitHub's standard
    `ubuntu-latest` runners) costs no Actions minutes. Were the repo private, the budget would need room for
    about 100 more Lab Tests runs.
 2. This computer: at least 30 GB of free disk and 8 GB of free memory; fewer than 10 sessions on the rc host
    (archive the rest).
-3. The sprint archiver is on, and the dry run proved it (Machinery).
-4. The supervisor trigger exists, its id is in Machinery, and the dry run showed an agent can switch it off.
+3. `/sprint-start --dry-run` ends `DRY-RUN OK course`: the main checkout is on a clean `main` level with
+   `origin/main`, gh is signed in as greenbeanbot, `list_environments` lists an active bridge environment for
+   this folder, and the sprint log exists.
+4. A test cue proved the scheduled tasks: `/sprint-start 1`, then `/sprint-stop`, then, after the archiver's
+   next run, the supervisor and the archiver are both switched off by id, and `queue.mjs window` prints no
+   archiver.
 5. No other project's sprint or soak runs on this computer during the window (Machinery).
 6. The "Sprint questions" issue is answered and the reserve backlog approved (Planning day).
 7. Claude Code is 2.1.304 or later, both the `claude` on PATH (`claude --version`) and the desktop app's bundled
@@ -272,14 +277,14 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
    `docker ps --format '{{.Label "com.docker.compose.project"}}'` names none of the lab folders under
    `dynamic-labs/` (`router`, `bitcoin`, `hlf` and the rest). `--fresh-start` takes those compose projects down
    and wipes their volumes, whichever checkout started them; other projects' containers, such as Terminal
-   Dusk's, it leaves alone.
-10. `gh auth status` shows greenbeanbot, and `gh run list --workflow lab-tests.yml --branch main --limit 1`
-    reads and shows the last run on `main` passed: the integrator pauses while it is red.
-11. The **Environment:** id in Machinery is listed by `list_environments`, and
-    `node tools/sprint/queue.mjs env` prints it.
-12. A pinned-issue slot is free for the "Sprint log" (GitHub allows three pinned issues).
-13. No other scheduled task for this repo fires during the window, apart from the supervisor and the archiver.
-14. On the idle computer, `python tools/check.py --all --render` and the `exercises` lab's
+   Dusk's, it leaves alone. The cue checks Docker only once the `labs` worktree exists: the guard runs Docker
+   nowhere else.
+10. `gh run list --workflow lab-tests.yml --branch main --limit 1` reads and shows the last run on `main`
+    passed: while it is red, lab tasks wait.
+11. A pinned-issue slot is free for the "Sprint log" (GitHub allows three pinned issues).
+12. No other scheduled task for this repo fires during the window, apart from the supervisor, the archiver and
+    the supervisor's own restarts after a usage limit.
+13. On the idle computer, `python tools/check.py --all --render` and the `exercises` lab's
     `run.sh --fresh-start` (in the `labs` worktree) finish, and their times are noted on the sprint log. A check
     or lab run that times out during the window can then be told apart: a busy computer, or slow work.
 
@@ -288,8 +293,8 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 Claude writes these on the sprint log, next to October's from Terminal Dusk and YODC where known:
 
 - **Empty starts:** lane sessions that started and found no job. Target 0.
-- **Supervisor tokens per run**, and **archiver tokens per day** (October's kept-open archiver: 12.9 M in 25
-  hours).
+- **Supervisor tokens per run**, and **archiver tokens per day** (October's kept-open YODC archiver: 12.9 M in
+  25 hours; this one keeps one Haiku session per window and answers in one line).
 - **Status requests:** how often the owner had to ask how it was going. The status block should answer it.
 - **Reviewer misses:** problems found after integration in a change the reviewer passed (a wrong fact, a
   broken anchor, student-visible instructor material). Each one becomes a case for testing the reviewer.
@@ -298,10 +303,12 @@ Claude writes these on the sprint log, next to October's from Terminal Dusk and 
 
 ## Turning it off
 
-- Pause: disable the supervisor trigger (its id is under Machinery). Running sessions finish their current task.
+- Pause: `/sprint-stop` ends the window now and switches the supervisor off. Running sessions finish their
+  current task, the integrator lands what is ready, and the archiver switches itself off once none is left.
 - Afterwards, `git config --unset merge.bib.driver` in the main checkout, then one commit deletes this file,
-  `.claude/skills/sprint-*`, `.claude/agents/implementer.md`, `tools/sprint/` and the `merge=bib` lines of
-  `.gitattributes` (with the driver unset, git merges the file line by line again). Sessions outside a sprint
+  `.claude/skills/sprint-*`, `.claude/agents/implementer.md`, `tools/sprint/`, the `.sprint/` line of
+  `.gitignore` and the `merge=bib` lines of `.gitattributes` (with the driver unset, git merges the file line by
+  line again). Sessions outside a sprint
   use these pieces, so they stay:
   - `.claude/agents/reviewer.md`: `CLAUDE.md` (Finishing) runs it;
   - `tools/hooks/sprint-guard.mjs` and its tests: its `--read-only` mode is the reviewer's hook, and its other

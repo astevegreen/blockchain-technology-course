@@ -1,8 +1,9 @@
 // The sprint's queue rules (docs/sprint.md), held in one place: which issue a lane works on next, whose comment
 // counts as the owner's, when held work is retried, what an issue waits for, whether a session has work, and the
-// sprint log's status block. The skills ask tools/sprint/queue.mjs, which gathers the world with gh and git and
-// calls `run` here; the rules read only what they are given. Ported from YODC's October sprint, without its
-// research lane.
+// sprint log's status block, and the window `/sprint-start` opens on cue. The skills ask tools/sprint/queue.mjs,
+// which gathers the world with gh and git and calls `run` here; the rules read only what they are given. Ported
+// from YODC's October sprint, without its research lane; the cue from Terminal Dusk's.
+import { resumeAfter } from "./usage-limit.mjs";
 
 // Sprint sessions comment as the bot; only the owner's own account answers for the owner.
 export const OWNER = "astevegreen";
@@ -10,6 +11,8 @@ export const BOT = "greenbeanbot";
 // Under this, the supervisor starts nothing; over it, a lane retries work the machine failed. Quarto renders are
 // the heavy part.
 export const MEMORY_FLOOR_MB = 4096;
+// What a session the supervisor started this run counts as using before it shows in free memory.
+export const SESSION_MB = 1536;
 // The labels that say where a sprint issue stands. `move` keeps one of them on each issue.
 export const STATES = ["sprint-ready", "in-progress", "to-integrate", "held", "blocked"];
 // Session titles start with this, so the supervisor never mistakes another project's sessions for the course's.
@@ -50,11 +53,11 @@ function firstSentence(text) {
   return end >= 0 ? text.slice(0, end) : text;
 }
 
-// The window, lanes, sprint log issue, pre-sprint tag, environment and backlog that docs/sprint.md declares. The
-// environment is null until setup day replaces its `env_…` placeholder.
+// The lanes, sprint log issue, pre-sprint tag, environment and backlog that docs/sprint.md declares. The
+// environment is null until setup day replaces its `env_…` placeholder. The window is null too: `/sprint-start`
+// opens it on this computer (withLocalWindow), unless the file names one on a `**Window (UTC):**` line.
 export function parseSprintDoc(text) {
   const window = /\*\*Window \(UTC\):\*\*\s*`(\d{8}T\d{4})`\s*to\s*`(\d{8}T\d{4})`/.exec(text);
-  if (!window) throw new QueueError('docs/sprint.md has no "**Window (UTC):** `<start>` to `<end>`" line');
   const lanes = [...text.matchAll(/^\|\s*`([a-z]+)`\s*\|\s*`lane:\1`\s*\|\s*`([^`]+)`/gm)].map((m) => ({ name: m[1], worktree: m[2] }));
   if (lanes.length === 0) throw new QueueError("docs/sprint.md has no Lanes table rows (| `<lane>` | `lane:<lane>` | `<worktree>` |)");
   const log = /#(\d+) "Sprint log"/.exec(text);
@@ -92,7 +95,7 @@ export function parseSprintDoc(text) {
     }
   }
   return {
-    window: { start: stamp(window[1]), end: stamp(window[2]) },
+    window: window ? { start: stamp(window[1]), end: stamp(window[2]) } : null,
     lanes,
     logIssue: Number(log[1]),
     preSprintTag: /`(pre-sprint-[\w-]+)`/.exec(text)?.[1] ?? null,
@@ -268,10 +271,13 @@ export function sessionTitles(doc) {
 }
 
 // Whether a fresh session with this title would find work. Extra fields: `todo` and `ready` for a plan, `issues`
-// to integrate.
-export function hasWork(world, title) {
+// to integrate. `started` sessions the supervisor created this run each count SESSION_MB against free memory:
+// they are not using it yet when it is read.
+export function hasWork(world, title, started = 0) {
   knownTitle(world.doc, title);
-  const floor = world.freeMb < MEMORY_FLOOR_MB ? `memory: ${world.freeMb} MB free, under the ${MEMORY_FLOOR_MB} MB floor` : null;
+  const free = world.freeMb - SESSION_MB * started;
+  const counting = started ? `, counting ${SESSION_MB} MB for each of the ${started} sessions started this run` : "";
+  const floor = free < MEMORY_FLOOR_MB ? `memory: ${free} MB free, under the ${MEMORY_FLOOR_MB} MB floor${counting}` : null;
   let answer;
   if (title === `${TITLE} integrate`) {
     const issues = world.issues.filter((i) => i.open && i.labels.includes("to-integrate")).map((i) => i.number).sort((a, b) => a - b);
@@ -361,7 +367,7 @@ export function statusBlock(world, { also = [], oldBody = "" } = {}) {
     const mine = world.issues.filter((i) => i.labels.includes(`lane:${lane}`));
     const counts = STATES.map((s) => `${mine.filter((i) => i.open && i.labels.includes(s)).length} ${s}`).join(", ");
     const closed = mine
-      .filter((i) => !i.open && i.closedAt && i.closedAt >= world.doc.window.start)
+      .filter((i) => !i.open && i.closedAt && world.doc.window && i.closedAt >= world.doc.window.start)
       .sort((a, b) => a.closedAt - b.closedAt)
       .map(name);
     lines.push(`- ${lane}: ${counts}; closed: ${closed.length ? closed.join(", ") : "none"}`);
@@ -398,6 +404,7 @@ export function statusBlock(world, { also = [], oldBody = "" } = {}) {
 // reads them back (`sessions`) from a file in the main checkout's git folder: never committed, shared by every
 // worktree, and kept to the newest 500 records.
 const TRIGGER_ID = /^trig_\w+$/;
+const ENVIRONMENT_ID = /^env_\w+$/;
 const KEEP_TRIGGERS = 500;
 
 function knownTitle(doc, title) {
@@ -410,7 +417,7 @@ function knownTitle(doc, title) {
 export function recordStarted(doc, records, title, id, now) {
   knownTitle(doc, title);
   if (!TRIGGER_ID.test(id ?? "")) throw refuse(`not a trigger id: "${id}"`, "Run it again with the id `create` returned (trig_…).");
-  if (now < doc.window.start || now >= doc.window.end) throw refuse("no window is open", "Start no sessions; report it.");
+  if (!inWindow(doc, now)) throw refuse("no window is open", "Start no sessions; report it.");
   return [...records, { title, id, at: now.toISOString() }].slice(-KEEP_TRIGGERS);
 }
 
@@ -418,18 +425,150 @@ export function recordStarted(doc, records, title, id, now) {
 // record since the window opened, newest first.
 export function sessionTriggers(doc, records, { all = false } = {}) {
   const titles = sessionTitles(doc);
+  const since = doc.window?.start.getTime() ?? Infinity;
   // Reversed first, so that of two records in the same second the later one counts as newer.
   const recent = records
-    .filter((r) => titles.includes(r?.title) && TRIGGER_ID.test(r?.id ?? "") && Date.parse(r?.at) >= doc.window.start.getTime())
+    .filter((r) => titles.includes(r?.title) && TRIGGER_ID.test(r?.id ?? "") && Date.parse(r?.at) >= since)
     .reverse()
     .sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
   if (all) return recent;
   return Object.fromEntries(titles.map((t) => [t, recent.find((r) => r.title === t)?.id ?? null]));
 }
 
+// --- the window --------------------------------------------------------------------------------------------------
+
+// `/sprint-start [hours]` opens the window when the owner cues it, and `/sprint-stop` ends it early. The window
+// and the ids of the scheduled tasks /sprint-start makes are kept beside the ledger, in sprint-window.json:
+// {start, end, environment, supervisor, archiver}. A cue never waits for a push, and a window left in this file is
+// never a fact a later sprint inherits. Terminal Dusk's design (24 Oct). The environment is the one /sprint-start
+// found in list_environments: its id changes whenever `claude rc` restarts, so the doc's line is only a fallback.
+export const DEFAULT_HOURS = 38;
+export const MAX_HOURS = 96;
+const HOUR_MS = 3600000;
+
+export const inWindow = (doc, now) => Boolean(doc.window) && now >= doc.window.start && now < doc.window.end;
+const toMinute = (d) => new Date(Math.floor(d.getTime() / 60000) * 60000);
+const isoMinute = (d) => d.toISOString().replace(/:\d{2}\.\d{3}Z$/, "Z");
+
+// "Wed 28 Oct 20:00": the owner's clock, on which usage limits reset too.
+export function newYork(d) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/New_York", hourCycle: "h23", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
+  }).formatToParts(d);
+  const get = (type) => parts.find((p) => p.type === type).value;
+  return `${get("weekday")} ${get("day")} ${get("month")} ${get("hour")}:${get("minute")}`;
+}
+
+// The doc's facts with this computer's window (sprint-window.json, or null) in place of any Window line, and its
+// environment, when the cue named one, in place of the doc's.
+export function withLocalWindow(doc, local) {
+  if (!local) return { ...doc, supervisor: null, archiver: null };
+  const start = new Date(local.start ?? Number.NaN);
+  const end = new Date(local.end ?? Number.NaN);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+    throw new QueueError("sprint-window.json has no start and end", "Stop and report it on the sprint log issue: the owner fixes or deletes the file.");
+  }
+  return {
+    ...doc, window: { start, end }, environment: local.environment ?? doc.environment,
+    supervisor: local.supervisor ?? null, archiver: local.archiver ?? null,
+  };
+}
+
+// Where now falls against the window, "none" (none opened yet), "before", "open" or "after", with the lanes, the
+// sprint log issue and the scheduled tasks' ids.
+export function windowState(doc, now) {
+  const w = doc.window;
+  let state = "none";
+  if (inWindow(doc, now)) state = "open";
+  else if (w) state = now < w.start ? "before" : "after";
+  return {
+    state,
+    ...(w && { start: isoMinute(w.start), end: isoMinute(w.end), newYork: `${newYork(w.start)} to ${newYork(w.end)}` }),
+    lanes: doc.lanes,
+    log: doc.logIssue,
+    supervisor: doc.supervisor ?? null,
+    archiver: doc.archiver ?? null,
+  };
+}
+
+const WINDOW_USAGE = "Use `window`, `window start [hours] [--environment <env_…>] [--dry-run]`, `window ids --supervisor <id> --archiver <id>`, `window stop` or `window archived`.";
+
+// `window …`: { out, write }, `write` being the sprint-window.json to save, or null. `doc` holds the window the
+// file names already; `local` is the file as read.
+export function windowCommand(doc, local, words, f, now) {
+  const [sub, hours] = words;
+  const state = (w) => windowState(withLocalWindow(doc, w), now);
+  const open = inWindow(doc, now);
+  // A Window line in docs/sprint.md is a fallback the cue never writes, so only the owner changes it.
+  const cued = () => {
+    if (!open) throw refuse("no window is open", sub === "stop" ? "Nothing to stop; report it." : "Run `window start` first.");
+    if (!local) throw refuse("the open window is the Window line of docs/sprint.md, not one /sprint-start opened", "Report it: the owner edits that line.");
+  };
+  if (sub === undefined) return { out: windowState(doc, now), write: null };
+  if (sub === "start") {
+    if (open) throw refuse(`a window is already open, until ${isoMinute(doc.window.end)}`, "Report it; /sprint-stop ends it.");
+    // The last window's archiver clears its id once it has switched itself off; until then its sessions may run.
+    if (local?.archiver) {
+      throw refuse(`the last window's archiver ${local.archiver} is still on record, so its sessions may still be running`,
+        "RemoteTrigger get it. Disabled: run `window archived`, then start again. Enabled: report it; it switches itself off once none of them runs.");
+    }
+    const h = Number(hours ?? DEFAULT_HOURS);
+    if (!Number.isInteger(h) || h < 1 || h > MAX_HOURS) {
+      throw refuse(`the window is a whole number of hours from 1 to ${MAX_HOURS}, not "${hours}"`, `Run it again with a number of hours, or none for ${DEFAULT_HOURS}.`);
+    }
+    const environment = f.environment?.at(-1) ?? null;
+    if (environment !== null && !ENVIRONMENT_ID.test(environment)) {
+      throw refuse(`--environment "${environment}" is not an environment id`, "Run it again with the id list_environments gave (env_…).");
+    }
+    const start = toMinute(now);
+    const w = { start: start.toISOString(), end: new Date(start.getTime() + h * HOUR_MS).toISOString(), environment, supervisor: null, archiver: null };
+    return { out: state(w), write: f["dry-run"] ? null : w };
+  }
+  if (sub === "ids") {
+    cued();
+    const w = { ...local };
+    for (const task of ["supervisor", "archiver"]) {
+      const id = f[task]?.at(-1);
+      if (id === undefined) continue;
+      if (!TRIGGER_ID.test(id)) throw refuse(`--${task} "${id}" is not a trigger id`, "Run it again with the id create_trigger returned (trig_…).");
+      w[task] = id;
+    }
+    if (w.supervisor === local.supervisor && w.archiver === local.archiver) throw refuse("no new id given", WINDOW_USAGE);
+    return { out: state(w), write: w };
+  }
+  if (sub === "stop") {
+    cued();
+    const w = { ...local, end: toMinute(now).toISOString() };
+    return { out: state(w), write: w };
+  }
+  if (sub === "archived") {
+    if (open) throw refuse("the window is still open", "Leave the archiver on until the window ends.");
+    if (!local?.archiver) return { out: windowState(doc, now), write: null };
+    const w = { ...local, archiver: null };
+    return { out: state(w), write: w };
+  }
+  throw refuse(`unknown window command "${sub}"`, WINDOW_USAGE);
+}
+
+// --- the supervisor's lock ---------------------------------------------------------------------------------------
+
+// One supervisor run at a time: the hourly one and one a stopping session fired would otherwise both start a
+// session for one title. A run takes minutes, so a lock older than this was left by a run that died.
+export const LOCK_STALE_MS = 20 * 60000;
+
+// `lock` once the atomic claim failed: `held` is the lock file's content.
+export function lockCommand(held, now) {
+  const at = new Date(held?.at ?? NaN);
+  if (!Number.isNaN(at.getTime()) && now - at < LOCK_STALE_MS) {
+    throw refuse(`another supervisor run holds the lock, since ${isoMinute(at)}`,
+      "Stop now: start, update and comment nothing, since that run covers this one.");
+  }
+  return { ok: true, stale: Number.isNaN(at.getTime()) ? String(held?.at ?? "unreadable") : isoMinute(at) };
+}
+
 // --- the command line --------------------------------------------------------------------------------------------
 
-const USAGE = "Usage: queue.mjs has-work \"<session title>\" | next <lane> [--taken <n,n>] | move <n> <state> [--note '<text>'] | status [--write] [--also '<line>']... | env | started \"<session title>\" <trigger id> | sessions [--all]";
+const USAGE = "Usage: queue.mjs has-work \"<session title>\" [--started <k>] | next <lane> [--taken <n,n>] | move <n> <state> [--note '<text>'] | status [--write] [--also '<line>']... | env | window [start [hours] [--environment <env_…>] [--dry-run] | ids --supervisor <id> --archiver <id> | stop | archived] | started \"<session title>\" <trigger id> | sessions [--all] | lock | unlock | identity | resume --log <file> --last-event <ISO>";
 const ISSUE_FIELDS = "number,title,body,labels,state,comments,closedAt,createdAt";
 
 // Flags after the positional words: `--name value`, repeatable.
@@ -440,6 +579,7 @@ function flags(args) {
     const a = args[k];
     if (a === "--write") out.write = true;
     else if (a === "--all") out.all = true;
+    else if (a === "--dry-run") out["dry-run"] = true;
     else if (a.startsWith("--")) {
       if (k + 1 >= args.length) throw refuse(`${a} needs a value`, USAGE);
       (out[a.slice(2)] ??= []).push(args[++k]);
@@ -460,11 +600,49 @@ export function run(argv, io) {
       move: words.length === 2 && /^\d+$/.test(words[0] ?? ""),
       status: words.length === 0,
       env: words.length === 0,
+      window: words.length <= 2,
       started: words.length === 2,
       sessions: words.length === 0,
+      resume: words.length === 0,
+      lock: words.length === 0,
+      unlock: words.length === 0,
+      identity: words.length === 0,
     };
     if (!shapes[command]) throw refuse(`unknown command: ${argv.join(" ") || "(none)"}`, USAGE);
-    const doc = parseSprintDoc(io.sprintDoc());
+    if (command === "lock") {
+      const mine = { at: io.now().toISOString() };
+      if (io.claimLock(mine)) return { code: 0, line: JSON.stringify({ ok: true }) };
+      const out = lockCommand(io.readLock(), io.now());
+      io.writeLock(mine);
+      return { code: 0, line: JSON.stringify(out) };
+    }
+    if (command === "unlock") {
+      io.removeLock();
+      return { code: 0, line: JSON.stringify({ ok: true }) };
+    }
+    // Sprint comments must come from the bot: the queue counts the owner's comments as answers.
+    if (command === "identity") {
+      const login = io.gh(["api", "user", "--jq", ".login"]).trim();
+      return { code: 0, line: JSON.stringify({ login, ok: login === BOT }) };
+    }
+    if (command === "resume") {
+      // The log comes in a file: the guard runs a queue call alone, so it cannot arrive on a pipe or heredoc.
+      const log = f.log?.at(-1);
+      if (!log) throw refuse("resume needs --log <file>", "Save the end of the run's log with the Write tool under .sprint/, then pass that file.");
+      const text = io.readLog(log);
+      try {
+        return { code: 0, line: JSON.stringify(resumeAfter(text, { lastEventAt: f["last-event"]?.at(-1), now: io.now() })) };
+      } catch (e) {
+        throw refuse(e.message, "Run it again with --last-event set to the run's last_event_at.");
+      }
+    }
+    const local = io.readWindow();
+    const doc = withLocalWindow(parseSprintDoc(io.sprintDoc()), local);
+    if (command === "window") {
+      const { out, write } = windowCommand(doc, local, words, f, io.now());
+      if (write) io.writeWindow(write);
+      return { code: 0, line: JSON.stringify({ ...out, ...(words[0] === "start" && { dryRun: Boolean(f["dry-run"]) }) }) };
+    }
     if (command === "started") {
       const records = recordStarted(doc, io.readTriggers(), words[0], words[1], io.now());
       io.writeTriggers(records);
@@ -473,8 +651,8 @@ export function run(argv, io) {
     if (command === "sessions") return { code: 0, line: JSON.stringify(sessionTriggers(doc, io.readTriggers(), { all: Boolean(f.all) })) };
     if (command === "env") {
       if (!doc.environment) {
-        throw refuse("docs/sprint.md names no environment yet (Machinery, the **Environment:** line)",
-          "Start nothing this run; setup day fills in the line from list_environments.");
+        throw refuse("no environment yet: the window has none from /sprint-start, and docs/sprint.md's **Environment:** line is the placeholder",
+          "Start nothing this run; report it. /sprint-start names the environment when it opens the window.");
       }
       return { code: 0, line: JSON.stringify({ environment_id: doc.environment }) };
     }
@@ -489,7 +667,9 @@ export function run(argv, io) {
     };
     let out;
     if (command === "has-work") {
-      out = hasWork(world, words[0]);
+      const started = Number(f.started?.at(-1) ?? 0);
+      if (!Number.isInteger(started) || started < 0) throw refuse("--started takes the number of sessions created this run (0 or more)", USAGE);
+      out = hasWork(world, words[0], started);
     } else if (command === "next") {
       const taken = (f.taken ?? []).flatMap((t) => t.split(",")).filter(Boolean).map(Number);
       if (taken.some((n) => !Number.isInteger(n))) throw refuse("--taken takes issue numbers, comma-separated", USAGE);

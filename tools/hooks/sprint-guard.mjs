@@ -65,7 +65,7 @@ function mapQuoted(s, quoted, escaped = (x) => `\\${x}`) {
     if (c !== '"' && c !== "'") { out += c; continue; }
     let j = i + 1;
     while (j < s.length && s[j] !== c) j += c === '"' && s[j] === "\\" ? 2 : 1;
-    out += quoted(s.slice(i, j + 1));
+    out += quoted(s.slice(i, j + 1), out);
     i = j;
   }
   return out;
@@ -75,6 +75,12 @@ const maskQuoted = (s) => mapQuoted(s, (q) => (runsInside(q) ? q : q.replace(/[|
   (x) => `\\${"|;&)".includes(x) && x ? MASK[x] : x}`);
 // The command line with its text strings emptied: a note or comment may name curl or `rm -r` without running it.
 const literalsBlank = mapQuoted(command, (q) => (runsInside(q) ? q : "''"));
+// The command line with only message values emptied: a commit message, an issue body or a queue note is text the
+// command stores and never runs, so one naming `git push --force` or --no-verify isn't read as one. A quoted word
+// anywhere else is an argument (`git push '--force'` forces), and a value in double quotes holding $ or a
+// backtick runs that command: both are read as written.
+const TEXT_FLAG = /(^|\s)(--note|--also|--body|--comment|--title|--message|-m)(=|\s+)$/;
+const text = mapQuoted(command, (q, before) => (!runsInside(q) && TEXT_FLAG.test(before) ? "''" : q));
 const parts = maskQuoted(command)
   .split(/&&|\|\||[;|\n`]|\$\(|\)/)
   .map((p) => p.replace(/[\u0001-\u0006]/g, (c) => UNMASK[c]).trim())
@@ -87,7 +93,7 @@ const ALWAYS = [
   [/\bgit\b[^\n]*\bpush\b[^\n]*(\s-f\b|--force|--delete|\s-d\b|\s\+\S|\s:\S)/, "no force-push or remote delete"],
   [/\bgit\b[^\n]*\b(reset\s+--hard|clean\s+-\S*f|branch\s+-D|tag\s+-[df]|update-ref\s+-d|filter-branch|filter-repo)\b/, "that discards work"],
 ];
-for (const [re, why] of ALWAYS) if (re.test(command)) deny(why);
+for (const [re, why] of ALWAYS) if (re.test(text)) deny(why);
 // These two read only the command line outside text strings; --lane and --integrator also check each command's name.
 const DELETES = /\brm\s+-\S*r|\bremove-item\b[^\n]*-recurse|\brmdir\b|\brd\s+\/s/i;
 const WEB = new Set(["curl", "wget", "invoke-webrequest", "iwr", "invoke-restmethod", "irm"]);
@@ -257,7 +263,7 @@ const PIP = (w) => (["pip", "pip3"].includes(w[0]) && /^(install|uninstall)$/.te
 if (MODE === "--lane" || MODE === "--integrator") {
   let cwd = String(input.cwd ?? process.cwd());
   // Git config set from the environment can define an alias that runs any command.
-  if (/\bGIT_CONFIG_(PARAMETERS|COUNT|KEY_\d+)\b/.test(command)) deny("no git config from the environment");
+  if (/\bGIT_CONFIG_(PARAMETERS|COUNT|KEY_\d+)\b/.test(text)) deny("no git config from the environment");
   for (const p of parts) {
     const top = words(p);
     if (["cd", "set-location", "sl", "pushd"].includes(cmdName(top[0])) && top[1]) cwd = path.resolve(cwd, native(top[1]));
@@ -290,6 +296,17 @@ if (MODE === "--lane" || MODE === "--integrator") {
       }
       // An alias (`-c alias.x='!git push'`, `git config alias.x`) runs any command under a new name.
       if (w.some((x) => /^(--config-env=)?alias\./i.test(x))) deny("no git aliases: run the git command itself");
+      // Git config is shared by the main checkout and every worktree, and --global is the computer's: the sprint
+      // reads it and never writes it.
+      if (sub === "config") {
+        const args = w.slice(w.indexOf("config") + 1);
+        const named = args.filter((x) => !x.startsWith("-"));
+        if (args.some((x) => /^(--(global|system|add|unset|unset-all|replace-all|rename-section|remove-section|edit)|-e)$/.test(x))
+          || /^(set|unset|edit|rename-section|remove-section)$/.test(named[0] ?? "")
+          || (named.length >= 2 && !/^(get|list)$/.test(named[0]))) {
+          deny("git config is read-only in the sprint: it is shared with the main checkout, and --global is the computer's");
+        }
+      }
       if ((sub === "rebase" && w.some((x) => /^(-x|--exec)(=|$)/.test(x)))
         || (sub === "submodule" && w.includes("foreach")) || (sub === "bisect" && w.includes("run"))) {
         deny(`\`git ${sub}\` would run a command string the guard can't read`);

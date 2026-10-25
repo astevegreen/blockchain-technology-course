@@ -29,14 +29,18 @@ test("each sprint skill and agent wires the guard in its own mode", () => {
     ".claude/skills/sprint-lane/SKILL.md": [[SHELL, "--lane"]],
     ".claude/skills/sprint-plan/SKILL.md": [[SHELL, "--lane"]],
     ".claude/skills/sprint-integrate/SKILL.md": [[SHELL, "--integrator"]],
+    ".claude/skills/sprint-start/SKILL.md": [[SHELL, "--lane"]],
+    ".claude/skills/sprint-stop/SKILL.md": [[SHELL, "--lane"]],
+    ".claude/skills/sprint-archive/SKILL.md": [[SHELL, "--lane"]],
     ".claude/agents/implementer.md": [["Edit|Write", "--file-lock"], [SHELL, "--lane"]],
     ".claude/agents/reviewer.md": [[SHELL, "--read-only"]],
   };
   for (const [file, hooks] of Object.entries(want)) assert.deepEqual(guards(file), hooks, file);
 });
 
-test("the four sprint session skills start only when typed, and run on the model the supervisor gives them", () => {
-  const want = { supervisor: "sonnet", lane: "sonnet", plan: "opus", integrate: "sonnet" };
+// The cue and its stop are typed by the owner or the root /sprint-cue; the archiver's trigger types /sprint-archive.
+test("the sprint skills start only when typed, and run on the model the supervisor or the cue gives them", () => {
+  const want = { supervisor: "sonnet", lane: "sonnet", plan: "opus", integrate: "sonnet", start: "sonnet", stop: "sonnet", archive: "haiku" };
   for (const [name, model] of Object.entries(want)) {
     const fm = frontmatter(`.claude/skills/sprint-${name}/SKILL.md`);
     assert.match(fm, /^disable-model-invocation: true$/m, name);

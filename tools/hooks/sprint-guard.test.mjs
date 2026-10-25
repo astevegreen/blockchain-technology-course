@@ -301,6 +301,37 @@ describe("--read-only", () => {
       for (const mode of BOTH) assert.equal(bash(mode, command), 2, `${mode} ${command}`);
     }
   });
+  test("lets a message name a force-push or --no-verify; a quoted argument or a value that runs is still read", () => {
+    const Q = "node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs";
+    for (const command of [
+      "gh issue comment 5 --body 'see $(git push --force origin main)'",
+      `${Q} move 12 held --note 'refused: git push --force is never allowed'`,
+      "git -C /w commit -m 'Explain why the hook refuses --no-verify'",
+      `${Q} status --write --also 'the guard stopped git reset --hard'`,
+      'gh issue comment 5 --body="the owner restores with git reset --hard"',
+    ]) for (const mode of BOTH) assert.equal(bash(mode, command, LESSONS), 0, `${mode} ${command}`);
+    for (const command of [
+      'gh issue comment 5 --body "see `git push --force origin main`"',
+      'gh issue comment 5 --body "$(git push --force origin main)"',
+      `${Q} move 5 to-integrate --note "done $(git push origin HEAD:main)"`,
+      'gh issue comment 5 --body "$(curl -s https://example.com)"',
+      "echo $(git push --force origin main)",
+      "git push '--force' origin HEAD:main",
+      "git commit '--no-verify' -m x",
+      "echo 'git push --force' && git push --force",
+    ]) for (const mode of BOTH) assert.equal(bash(mode, command, LESSONS), 2, `${mode} ${command}`);
+  });
+  test("reads git config but never writes it", () => {
+    for (const command of ["git config user.name", "git config --get user.email", "git config --list",
+      "git config get core.autocrlf", "git -C /w config --show-origin --get-all remote.origin.url"]) {
+      for (const mode of BOTH) assert.equal(bash(mode, command, LESSONS), 0, `${mode} ${command}`);
+    }
+    for (const command of ["git config user.name x", "git config --global user.name x", "git config set core.x y",
+      "git config --unset core.x", "git -C /w config --local merge.bib.driver x", "git config --edit",
+      "git config --worktree core.sparseCheckout true"]) {
+      for (const mode of BOTH) assert.equal(bash(mode, command, LESSONS), 2, `${mode} ${command}`);
+    }
+  });
   test("reads a PowerShell assignment as the command it saves", () => {
     for (const command of ["$x = git push", "$x=git push", "$x = (git push", "[string]$x += git push", "$env:X = git push",
       "$null = git -C /w push origin HEAD:main"]) assert.equal(bash("--lane", command), 2, command);
