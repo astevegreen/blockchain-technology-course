@@ -8,6 +8,9 @@ import { resumeAfter } from "./usage-limit.mjs";
 // Sprint sessions comment as the bot; only the owner's own account answers for the owner.
 export const OWNER = "astevegreen";
 export const BOT = "greenbeanbot";
+// tools/gemini-audit.mjs starts every comment with this. An audit is a note for the plan session and the
+// implementer, posted as the bot: never an answer, a send-back or a sprint step, so the rules skip it.
+export const AUDIT = "<!-- gemini-audit -->";
 // Under this, the supervisor starts nothing; over it, a lane retries work the machine failed. Quarto renders are
 // the heavy part.
 export const MEMORY_FLOOR_MB = 4096;
@@ -124,6 +127,7 @@ export function normalizeIssues(raw) {
     createdAt: i.createdAt ? new Date(i.createdAt) : null,
     comments: (i.comments ?? [])
       .map((c) => ({ author: c.author?.login ?? "", body: c.body ?? "", at: new Date(c.createdAt) }))
+      .filter((c) => !c.body.startsWith(AUDIT))
       .sort((a, b) => a.at - b.at),
   }));
 }

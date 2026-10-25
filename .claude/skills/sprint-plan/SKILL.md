@@ -33,6 +33,8 @@ Stop when `Q window` prints `state` `after`, or `start` is false. With `state` `
 open yet: planning day), go on past 3 `ready` until it is 6, still stopping when `todo` is empty.
 
 ## 1. Pick
+First, any open issue labelled `L` and `spec-review` is one a stopped session filed and never released
+(`gh issue list --label L --label spec-review --state open`): finish it with steps 4 and 5 before anything new.
 Run `Q has-work "Course plan: $ARGUMENTS"` and read the lane's backlog in `docs/sprint.md`. Take the first
 `todo` item. One with an unanswered question on "Sprint questions" (step 2): before the window, skip it; during
 the window, file it as step 2 says for a new question, with that question and a link to its comment, so it
@@ -63,7 +65,7 @@ source when none fits, a split the tracker leaves open):
 Start every comment you write with "Plan:". Comment only with `gh issue comment`, signed in as the bot. Never use the GitHub plugin's tools to write:
 they sign in as the owner, so GitHub never notifies the owner of the comment and the queue could read it as
 their answer (the guard refuses them).
-Create each issue with `gh issue create --title "[task] <ID>: <what it does>" --label L --label sprint-ready
+Create each issue with `gh issue create --title "[task] <ID>: <what it does>" --label L --label spec-review
 --body-file C:/Antigravity/blockchain-technology-course/.sprint/plan-$ARGUMENTS/<ID>.md`, the body written first
 with the Write tool to that file: the guard reads every line of a command, so a body line such as `git push …`
 passed inline is refused as a push. Write each comment the same way, to a file in that folder passed with
@@ -88,6 +90,19 @@ this same checkout. The body:
 Size each for one fresh session: one 50-minute lesson, or about 15 slides of change, at most. Split bigger items
 into `<ID>a`, `<ID>b`, each reviewable on its own, with "Waits for" between them. Name any locked path the task
 would touch (`docs/sprint.md`, "What still stops a task"); a task that needs one is a question, not an issue.
+
+## 4. Audit
+Once this round's issues are filed, run
+`node C:/Antigravity/blockchain-technology-course/tools/gemini-audit.mjs specs <issue numbers>` on a line of its
+own, with a timeout of 600000. It prints nothing; read its findings from each issue's comments. For each point:
+apply it by editing the issue body when it is valid and inside the backlog item (write the new body to a file in
+your folder, then `gh issue edit <n> --body-file` it); otherwise comment why not ("Plan: Gemini point <n> not
+applied: <why>"). A point that needs a content decision makes the issue a question (step 2). If the audit fails
+or prints a "skipped" line, comment that on the issue and continue.
+
+## 5. Release
+For each issue without `blocked`: `gh issue edit <n> --add-label sprint-ready --remove-label spec-review`.
+A blocked issue never gets `sprint-ready`; remove its `spec-review` too, so it is audited only once.
 
 Then go back to step 1. When you stop, comment once on the sprint log: the lane, the issues created (link, ID,
 ready or blocked), the questions asked, and every assumption you made. Under 10 lines. Then, in the window, if

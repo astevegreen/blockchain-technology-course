@@ -12,6 +12,7 @@ import {
   matchesId,
   nextJob,
   normalizeIssues,
+  ownerReply,
   parseSprintDoc,
   planMove,
   recordStarted,
@@ -195,6 +196,20 @@ test("held work is retried when the integrator sent it back, and a stranger's co
   ]);
   assert.equal(heldRetry(i, 8000).retry, true);
   assert.equal(heldRetry(i, 8000).why, "the integrator sent it back");
+});
+
+test("a Gemini audit posted after the owner's answer never hides it", () => {
+  const [i] = normalizeIssues([
+    issue(5, "[task] L1: x", ["lane:wk", "blocked"], {
+      comments: [
+        ["greenbeanbot", "2026-11-03T10:00:00Z", "Plan: which source?"],
+        ["astevegreen", "2026-11-03T11:00:00Z", "Use the BIP."],
+        ["greenbeanbot", "2026-11-03T12:00:00Z", "<!-- gemini-audit -->\n**Gemini audit: spec**\n\nNo findings."],
+      ],
+    }),
+  ]);
+  assert.equal(ownerReply(i)?.body, "Use the BIP.");
+  assert.deepEqual(heldRetry({ ...i, labels: ["lane:wk", "held"] }, 8000), { retry: true, why: "the owner replied", concerns: "Use the BIP." });
 });
 
 test("a machine failure is retried only over the memory floor", () => {
