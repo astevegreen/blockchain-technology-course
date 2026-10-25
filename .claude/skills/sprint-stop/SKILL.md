@@ -24,9 +24,10 @@ nothing before it, then at most 6 lines:
    - Each lane and plan session finishes the task in hand, then stops at its window check.
    - The supervisor starts nothing more.
    - The integrator lands what is already `to-integrate`.
-3. `RemoteTrigger` `update` the `supervisor` id with `{"enabled": false}` (load RemoteTrigger with ToolSearch).
-   When it is refused, add the line "switch the supervisor off at https://claude.ai/code/routines/<id>". Until
-   then its runs stop at their window check.
+3. `RemoteTrigger` `update` the `supervisor` id with `{"enabled": false}` (load RemoteTrigger with ToolSearch),
+   then the `wake` id the same way when it is not null: the wake is the supervisor's one-shot restart after a
+   usage limit. When either is refused, add the line "switch the <supervisor|wake> off at
+   https://claude.ai/code/routines/<id>". Until then their runs stop at their window check.
    Leave the archiver alone: it switches itself off once no sprint session is left running, and only then can a
    new `/sprint-start` open a window.
 4. `Q sessions` gives the last trigger for each session title. `RemoteTrigger` `get` each one that is not null:
