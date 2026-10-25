@@ -368,7 +368,8 @@ write_dnsmasq_config() {
 bind-interfaces
 # Scope DNS to classroom interfaces only. This avoids colliding with
 # systemd-resolved on loopback while still allowing students to use http://lab/
-# and the course chain explorer at http://explorer.lab/.
+# and the course chain explorer at http://explorer.lab/ (https:// works for both
+# too unless the lab was deployed with --no-tls).
 except-interface=lo
 EOF
 

@@ -8,13 +8,15 @@ source, and cannot change the chain.
 ./lab-manager.sh start explorer
 ```
 
-Then open `https://explorer.<the lab's host name>/`:
+Then open `explorer.` followed by the name the class already uses for the lab. The router answers that name the
+same way it answers the main site: on port 80 (`http://`) in every deploy, and on port 443 (`https://`) as well
+unless the lab was deployed with `--no-tls`.
 
-| How the class reaches the lab | Explorer address |
-| --- | --- |
-| Classroom network (`http://lab/`) | `https://explorer.lab/` (the classroom helper's DNS answers it) |
-| On the lab machine itself | `https://explorer.localhost/` (browsers send `*.localhost` to the machine itself) |
-| Cloud (`labs.my-course.com`) | `https://explorer.labs.my-course.com/`, which needs its own DNS record and a place on the certificate |
+| How the class reaches the lab | Deployed with TLS (the default) | Deployed with `--no-tls` |
+| --- | --- | --- |
+| Classroom network (`http://lab/`; the classroom helper's DNS also answers `explorer.lab`) | `https://explorer.lab/` (self-signed certificate: the same browser warning as the main site) | `http://explorer.lab/` |
+| On the lab machine itself (browsers send `*.localhost` to the machine itself) | `https://explorer.localhost/` | `http://explorer.localhost/` |
+| Cloud (`deploy-cloud.sh --domain labs.my-course.com`, always TLS) | `https://explorer.labs.my-course.com/`, once that name has its own DNS record and a place on the certificate. `deploy-cloud.sh` adds neither today: it asks Let's Encrypt for the main domain only. | not offered |
 
 ## Why it has its own name
 Otterscan cannot be served from a sub-folder such as `/labs/explorer/`: its links and its `config.json` path assume
