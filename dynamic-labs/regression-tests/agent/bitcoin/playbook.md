@@ -84,6 +84,29 @@ TTYD rule:
   those labs, record that as a documentation regression instead of
   falling back to `pwd`
 
+## Primer Orientation
+
+The primer step (`primer-shell-and-tmux`, "Get Oriented in the
+Terminal") is ungraded and has fixed answers, so check each one exactly.
+Run every command through ttyd, copied from the visible step text.
+
+1. Open the primer step in the wrapper and confirm it is the first step,
+   before Lab 1, and that its first item is the worked example.
+2. Worked example: run `pwd` and confirm it prints `/home/user`. Run
+   `ls` and confirm the listing includes `scripts` and `share`.
+3. Run `cd ~/scripts`, then `ls`, and confirm it shows `agent.py` and
+   `miner.py`. Run `cd ~` to return home.
+4. Run `less ~/.bitcoin/bitcoin.conf`, confirm the file opens a page at a
+   time, and press `q` to confirm it returns to the shell.
+5. Run `grep rpcallowip ~/.bitcoin/bitcoin.conf` and confirm it prints
+   exactly three lines, each starting `rpcallowip=`.
+6. Confirm the step text names no editor (`nano`) and asks for no code
+   to be written, and that its closing line leads to the day's Explorer
+   worksheet, not to Lab 1.
+
+Record any answer that differs as a documentation regression: the step
+promises students these exact results.
+
 ## Instructor Flow
 
 1. In a fresh unauthenticated context, open `/labs/bitcoin/admin` and
@@ -100,6 +123,9 @@ The Bitcoin browser regression is only complete when:
 
 - student claim and wrapper flow work
 - ttyd works through the real web route
+- the primer's fixed answers hold: `pwd` prints `/home/user`, `ls`
+  shows `scripts` and `share`, and the `grep rpcallowip` line prints
+  three lines
 - page-derived command coverage is proven for both Lab 1 and Lab 2
 - mempool, explorer, and static-share surfaces all load
 - a file written through ttyd is reachable through both `My Static` and
