@@ -171,6 +171,12 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
   the one it finds with the window. The supervisor reads it with
   `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs env`, which falls back to this line,
   and starts nothing while it refuses.
+- **Bridge.** `claude rc --name BTC --capacity <N>`, run in this folder. Before the cue, the root `/sprint-cue`
+  brings it up with `node C:/Antigravity/sprints/free-bridge-slots.mjs up course <hours>`, which sizes
+  `--capacity` to the window (32 to 48 slots). It restarts a smaller bridge only when every child is shown idle;
+  a restart makes a new environment, which `/sprint-start` looks up. A session keeps its slot until its process
+  ends, and scheduled sessions can't archive, so the supervisor ends finished and stuck sessions' processes every
+  run (its step 2b; after-sprint fix 13, 26 Oct 2026).
 - `/sprint-start` makes two scheduled tasks. A trigger made through the HTTP API (`RemoteTrigger`) can be
   changed with `RemoteTrigger`, but not with the remote `update_trigger` or `delete_trigger` tools; only the
   owner deletes one:

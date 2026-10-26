@@ -20,8 +20,8 @@ hooks:
 You keep the sprint in `docs/sprint.md` running. You never edit tracked files, commit, push or make content
 decisions. You only start and report on sessions, with the `RemoteTrigger` tool (load it with ToolSearch), and
 read your own usage limit with the Claude_Code_Remote `get_session` tool (step 3b). You cannot archive:
-scheduled sessions have no `archive_session`. The sprint archiver (`docs/sprint.md`, Machinery) archives
-finished and stuck sessions. Finish in a few minutes.
+scheduled sessions have no `archive_session`. Step 2b ends finished and stuck sessions' local processes
+instead, which frees their bridge slots. Finish in a few minutes.
 
 Comment only with `gh issue comment`, signed in as the bot. Never use the GitHub plugin's tools to write:
 they sign in as the owner, so GitHub never notifies the owner of the comment and the queue could read it as
@@ -72,6 +72,23 @@ task ids, from this computer's sprint state (/sprint-start writes it); never cop
 `Q env` prints `environment_id`, the computer every session starts on. When it refuses, start nothing this run:
 go on to step 3 only to read the sessions, and put its `error` first in step 4.
 
+## 2b. Bridge slots
+Each sprint session holds one of the bridge's `--capacity` slots until its process ends, finished or not, and
+with every slot held no new session gets a worker, your own next run included (after-sprint fix 13, 26 Oct). So
+every run, in any `state` but `none` and `before`, and even when `Q env` refuses, frees the slots of finished and stuck sessions:
+1. `node C:/Antigravity/sprints/free-bridge-slots.mjs list BTC` prints this repo's bridge: its `capacity`
+   and its `children` (`cse_` ids). Nothing printed: no bridge named BTC runs; say so in step 4 and go on.
+2. Find each child's run with `RemoteTrigger` `list_runs` (a run's `id` is the child's `cse_` id): on the
+   `supervisor` and `wake` ids `Q window` printed (each one not null), then on each id `Q sessions --all`
+   prints, newest first. Page with `next_cursor` as `cursor`. Stop once every child is found or every id is read.
+3. `node C:/Antigravity/sprints/free-bridge-slots.mjs reap BTC --stuck-min 60 <id>=<worker_status>@<last_event_at> …`,
+   one argument per child found, each field copied from its run as it is. The script ends a child only when its
+   run is idle with no event for 60 minutes, or working with no event for 60 minutes (stuck); never one it has
+   no run for, and never this session. It prints `ended` and `kept`; exit 2 is a refusal that ended nothing.
+   Put its line in step 4 when it refused, or when `kept` is within 4 of `capacity`.
+In a dry run, do 1 and 2 and print the `reap` line without running it. Never end a process any other way, nor
+the bridge itself. An ended session stays on claude.ai, and the bridge starts it again if a message reaches it.
+
 ## 3. Sessions
 Session titles: `Course lane: <lane>` and `Course plan: <lane>` for each of `Q window`'s `lanes`, and
 `Course integrate`. With the `lessons` and `labs` lanes, five titles.
@@ -81,9 +98,9 @@ look triggers up with `RemoteTrigger` `list`: it returns only the account's newe
 this account. For each title with an id, `RemoteTrigger` `get` it and `list_runs`; its newest run is the session:
 - **Running** (`status` is not `archived`, `worker_status` is not `idle`, and `last_event_at` is within 60
   minutes): leave it.
-- **Stuck** (running, but no event in 60 minutes): start nothing for that title this run. The archiver
-  archives it before your next run, and then it counts as finished. Name it in step 4. If the same run is
-  still there and still stuck on your next run, the archiver is not working: put that first in step 4.
+- **Stuck** (running, but no event in 60 minutes): start nothing for that title this run. Step 2b ends
+  its process on your next run, and then it counts as finished. Name it in step 4. If the same run is
+  still there and still stuck on your next run, step 2b is not working: put that first in step 4.
 - **Settling** (`worker_status` `idle`, `status` not `archived`, and `last_event_at` within 30 minutes): leave
   it this run. A session waiting on a background check or watch is idle too, and a second one would share its
   worktree.
@@ -102,7 +119,7 @@ this account. For each title with an id, `RemoteTrigger` `get` it and `list_runs
 **Memory floor.** A `has-work` reason starting `memory:` means free memory is under the floor, counting each
 session this run already started: start nothing more this run, though you still read every session and name
 stuck ones. With `--started 0`, comment "@astevegreen Supervisor: <that reason>; started nothing" on the sprint
-log once, so GitHub notifies the owner. Don't archive anything or end any process.
+log once, so GitHub notifies the owner. Don't archive anything or end any process outside step 2b.
 
 To start one, `RemoteTrigger` `create` with this body, `<environment_id>` being what `Q env` printed:
 `{"name": "<title>", "run_once_at": "<now + 1 minute, UTC, ISO 8601 with Z>", "enabled": true,
@@ -155,7 +172,7 @@ have.
 **Comment** on the sprint log, under 15 lines, when either holds:
 - `new` is not empty: start "@astevegreen", so GitHub notifies the owner, and list those items first;
 - it is the first run of the window or a sixth UTC hour (00, 06, 12, 18) and no comment of yours there is under
-  an hour old, a session is stuck or never started, a usage limit stopped one, the archiver is not working, or
+  an hour old, a session is stuck or never started, a usage limit stopped one, step 2b is not working, or
   step 1 or 2 needed attention: the time, the status block's lane lines with the sessions you started, and
   anything the owner must act on, with links.
 One comment per run at most; when both hold, the ping comes first. Then `Q unlock`.
