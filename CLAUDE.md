@@ -38,8 +38,9 @@ The owner judges results, not code: explain every change in plain English and pr
 
 ## Hard rules (the check enforces most; a failing check means the change is wrong)
 1. Students receive everything under `blockchain-course/` and `dynamic-labs/`: the Pages site, and the `src.zip`
-   that `.github/workflows/pages.yml` builds. Instructor-only material (quiz banks, answers, forensics solutions,
-   instructor seeds) lives in `quizes/`, or under `dynamic-labs/` with an `-x` entry in `pages.yml` in the same change.
+   that `.github/workflows/pages.yml` builds, and the student VM. Instructor-only material (quiz banks, answers,
+   forensics solutions, instructor seeds) lives in `quizes/`, or under `dynamic-labs/` with an `-x` entry in
+   `pages.yml` and a removal in `vm-build.yml`, in the same change.
 2. Generated files change only by running their script: `glossary/slide-index.yml`, `terms.yml`, `terms.json`,
    `duplicates.md`, `index.qmd`, `index.pdf`; `quizes/dist/`; `_site/`.
 3. File and folder names use letters, digits, `-`, `_` and `.` only.

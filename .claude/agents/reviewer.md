@@ -38,7 +38,7 @@ An optional "Base: <sha>" replaces `<base>`.
    - quiz items follow `quizes/QUIZ_ENGINE_JSON_SPEC.md` and the distractor rules in
      `quizes/DISTRACTOR_REWRITE_GUIDE.md`, and every correct answer traces to a line of the lesson
    - nothing instructor-only (quiz banks, answers, solutions, instructor seeds) reaches `blockchain-course/` or a
-     `dynamic-labs/` path that `.github/workflows/pages.yml` packs for students
+     `dynamic-labs/` path that `.github/workflows/pages.yml` packs for students or `vm-build.yml` leaves on the VM
    - the change's neighbours: grep at `<head>` for each changed or removed heading, anchor and term in the other
      lessons, lab worksheets and quiz banks. A link now broken, or a quiz answer that no longer traces to the
      lesson, is a `blocker`; a neighbour that now teaches it differently is `minor`. A moved anchor the mind map

@@ -57,8 +57,9 @@ task ids, from this computer's sprint state (/sprint-start writes it); never cop
 - `open`: go on.
 - `after`: the sprint drains. When `stoppedBy` is `sprint-stop`, the owner ended the window early with
   `/sprint-stop`: report it as "stopped by /sprint-stop at <end>", never as a fault or a machinery bug, and never
-  ask the owner to run `/sprint-start` again. A usage-limit restart due after `end` was meant to be cancelled. Do step 3, but start only `Course integrate`, so the tasks that lanes finish after
-  the window still land, and never a lane or plan session.
+  ask the owner to run `/sprint-start` again. A usage-limit restart still due after `end` should have been
+  cancelled by `/sprint-stop`: name it in the report. Do step 3, but start only `Course integrate`, so the tasks
+  that lanes finish after the window still land, and never a lane or plan session.
   - When no title's session is running or stuck, and `Q has-work "Course integrate"` prints `"start": false`:
     1. `RemoteTrigger` `update` the id `supervisor` names with `{"enabled": false}`, and the id `wake` names,
        when not null, with `{"enabled": false}`;
