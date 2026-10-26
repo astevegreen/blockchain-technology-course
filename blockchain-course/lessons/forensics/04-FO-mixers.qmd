@@ -1,0 +1,538 @@
+---
+title: "CoinJoin and Mixers: Getting Past the Break"
+subtitle: 'Section VIII: Forensics'
+author: CATS
+lesson: 04-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## A mixer cuts your trace; the ends still show {.smaller}
+
+**Bottom line:** a CoinJoin or a mixer is built to break the link your day-2 trace follows. Through one, the money can usually be narrowed to a set of candidates, not one address [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51]. Record where it went in, list what could have come out, and rate each candidate **Low** until a different kind of evidence, usually from the user's own ends, raises it.
+
+| This lesson | What you take to the trace and the memo |
+| --- | --- |
+| CoinJoin: what it is and how to spot one | Where co-spending stops |
+| Mixers: custodial and smart-contract | Which kind the money entered |
+| Mixer cases, dated | Official records that name mixers |
+| Timing and amount | Leads, each Low alone |
+| The mixer's own addresses | Where the money went in and came out |
+| The user's mistakes at either end | The evidence that can reach High |
+| A worked hop through a mixer | The rows your trace adds |
+
+: {tbl-colwidths="[50,50]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens lesson ① of day 3 and ties it to day 2's annotated trace. It matters here because a trace that meets a CoinJoin or a mixer must say so, say which heuristic it breaks, and rate what lies past it. Emphasize the shape of the lesson: what breaks the trace, then how analysts get past the break, then how sure they can be.
+
+**Key Points**
+- The UK Government Chief Scientific Adviser's 2016 report (p. 51) says mixing systems take coins from many users and pay out to unlinked addresses, but the anonymity "is not perfect: although a coin may be traced to one of a number of addresses", it is not hidden among all wallets.
+- A CoinJoin breaks co-spending; a mixer breaks the path itself, because what comes out is the pool's money.
+- The way past is rarely the mixer itself: it is timing, amount, the service's own addresses and the user's mistakes at either end.
+- Every judgement still carries a confidence on the course scale; a timing or amount match alone is Low.
+- New glossary terms this lesson: CoinJoin, mixer, tumbler, custodial mixer, smart-contract mixer, anonymity set, fixed denomination, timing analysis, amount correlation.
+
+**Walkthrough**
+1. Read the bottom line.
+2. Run down the table: each row is a slide or two, and the right column is what it adds to the trace or the memo.
+
+**Sources**
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+
+## A CoinJoin: many owners, equal outputs {.smaller}
+
+**Bottom line:** a CoinJoin is one transaction that several people put inputs into [@gmaxwell_coinjoinbitcoinprivacy_2013]. It has the shape of day 2's co-spend, but its inputs belong to several owners.
+
+:::: {.columns}
+::: {.column width="52%"}
+- **What it is:** several users' inputs combined in a single transaction [@gmaxwell_coinjoinbitcoinprivacy_2013].
+- **Why the outputs are equal:** when every participant takes out the same amount, no output can be matched to its input by value [@gmaxwell_coinjoinbitcoinprivacy_2013].
+- **What it breaks:** co-spending, day 2's first heuristic. Applied to a CoinJoin, it merges strangers into one cluster (day 2: [Co-spending links inputs, unless it's a CoinJoin](02-FO-foundations_obfuscation_tracing.qmd#/co-spending-links-inputs-unless-its-a-coinjoin)).
+- **Why it matters later:** CoinJoins are a source of "misinterpretation in algorithmic clustering heuristics" [@frowis_safeguardingevidentialvalue_2020].
+:::
+::: {.column width="48%"}
+```{dot}
+//| fig-width: 4.8
+//| fig-height: 3.8
+digraph CoinJoin {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  A [label="Alice\n0.1300", fillcolor="#fef3c7", color="#f59e0b"];
+  B [label="Bob\n0.2500", fillcolor="#e0f2fe", color="#38bdf8"];
+  C [label="Carol\n0.1100", fillcolor="#fce7f3", color="#ec4899"];
+  T [label="One\nCoinJoin", fillcolor="#fee2e2", color="#ef4444"];
+  O1 [label="0.1000"];
+  O2 [label="0.1000"];
+  O3 [label="0.1000"];
+  X [label="three unequal\nchange outputs", shape=plaintext, style=""];
+
+  A -> T; B -> T; C -> T;
+  T -> O1; T -> O2; T -> O3;
+  T -> X [style=dashed];
+}
+```
+
+Invented data, in BTC; fees left out.
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches what a CoinJoin is and why it defeats co-spending. It matters here because co-spending is the heuristic that grows a trace into a cluster, and a CoinJoin is the transaction built to make it lie. Emphasize the equal outputs: they are the point of the design, and they are also what gives a CoinJoin away (next slide).
+
+**Key Points**
+- gmaxwell's 2013 Bitcoin Forum post proposed CoinJoin: users join their payments into one transaction, so its inputs no longer imply a single owner.
+- When the joined outputs are of equal value, an observer cannot tell which output belongs to which input.
+- Day 2's slide "Co-spending links inputs, unless it's a CoinJoin" already gave the failure and Kappos et al.'s test set; this slide does not repeat it.
+- Fröwis et al. (2020) analyse CoinJoin transactions empirically to show how clustering heuristics can be misread.
+- In the diagram, the three 0.1000 outputs cannot be told apart; the change outputs are unequal, which is why the next slide calls the subject's output undetermined among the equal ones only.
+- Define CoinJoin briefly: one transaction built jointly by several users, usually with equal-value outputs, so its inputs do not share an owner.
+
+**Walkthrough**
+1. Three people, three inputs of different sizes.
+2. One transaction: three outputs of exactly 0.1000, plus change.
+3. Ask: run day 2's co-spending on this transaction. What does it say? (One owner: wrong, three owners.)
+4. Ask: which 0.1000 is Alice's? (Nothing in the transaction says.)
+
+**Sources**
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Spot a CoinJoin by its equal outputs {.smaller}
+
+**Bottom line:** many inputs and several outputs of exactly one value mark a likely CoinJoin [@gmaxwell_coinjoinbitcoinprivacy_2013]. Don't co-spend its inputs. Write "likely CoinJoin" and keep every equal output as a lead.
+
+| | Ordinary spend | Likely CoinJoin |
+| --- | --- | --- |
+| Inputs | One wallet's | Many, from several owners [@gmaxwell_coinjoinbitcoinprivacy_2013] |
+| Outputs | A payment and change | Several of one exact value, plus change |
+| Co-spending | Applies: **Moderate** | Not applied: the inputs stay unlinked |
+| Your next hop | Follow the change | Undetermined among the equal outputs |
+
+: {tbl-colwidths="[20,34,46]"}
+
+- **Not a batch:** a service's batched payout (day 2) also has many outputs, but it spends the service's own inputs, ideally just one [@bitcoinoptech_paymentbatching_2021].
+- **How sure:** picking one equal output as your subject's rests on amount alone: **Low**. Write all of them as candidates.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches how an analyst recognises a CoinJoin in a trace and what to write when one is found. It matters here because the day-2 trace applies co-spending by default, and the habit to build is checking for equal outputs before linking inputs. Emphasize that "likely CoinJoin" is a finding: it stops a false link, which is better than a confident wrong one.
+
+**Key Points**
+- The sign is the design: several users' inputs, and equal-value outputs so that none can be matched by value (gmaxwell, 2013).
+- A batch (Optech) is a service paying many customers from its own inputs, ideally one; a CoinJoin has many inputs from several owners.
+- Recognising a CoinJoin from its shape is a judgement from behaviour; what it changes is that co-spending is not applied.
+- Each equal output is a candidate; choosing one is amount alone, Low on the course scale.
+- Define anonymity set briefly: the candidates among which one participant is hidden; here, the equal outputs.
+
+**Walkthrough**
+1. Read the two columns row by row.
+2. Ask: a transaction has 20 inputs and 15 outputs of exactly 0.0500 BTC, plus 6 others. What do you write? (Likely CoinJoin; inputs not linked; the subject's output is one of the fifteen 0.0500 outputs, each a lead, Low.)
+3. Ask: one input and 30 outputs of different values. CoinJoin? (More likely a batch: one input, varied outputs.)
+
+**Sources**
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @bitcoinoptech_paymentbatching_2021
+
+:::
+
+## A mixer pools many users' coins, then pays out {.smaller}
+
+**Bottom line:** a mixer takes coins from many users and pays out to new addresses not linked to them [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51]. Your trace reaches the mixer and stops: what comes out is the pool's money, not your subject's coins.
+
+:::: {.columns}
+::: {.column width="52%"}
+- **What it breaks:** "the link between payer wallets and payee wallets" [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51]. Day 2's path through change and peels ends at the deposit.
+- **Not perfect:** a coin "may be traced to one of a number of addresses" [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51]. Those addresses are the anonymity set.
+- **A mixer is a service:** service-sized clusters around ransomware addresses were exchanges, hosted wallets, mixers or markets [@kappos_howpeelmillion_2022]. Your trace has reached its first service.
+- **Why it is used:** launderers are drawn to the anonymity virtual currency offers [@sykes_virtualcurrenciesmoney_2019].
+:::
+::: {.column width="48%"}
+```{dot}
+//| fig-width: 4.8
+//| fig-height: 3.8
+digraph Mixer {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  S [label="Your subject", fillcolor="#fef3c7", color="#f59e0b"];
+  U1 [label="Other user"];
+  U2 [label="Other user"];
+  P [label="Mixer's pool\n(your trace\nstops here)", fillcolor="#fee2e2", color="#ef4444"];
+  W1 [label="New address"];
+  W2 [label="New address"];
+  W3 [label="New address"];
+
+  S -> P; U1 -> P; U2 -> P;
+  P -> W1; P -> W2; P -> W3;
+}
+```
+
+Which new address is your subject's? That is the rest of this lesson.
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches what a mixer does to a trace. It matters here because the day-2 trace follows coins through change and peels, and a mixer ends that path: the payout comes from a pool, not from the subject's deposit. Emphasize that the mixer is a service, so the day-2 rule applies: the trace has reached its first service, and the work now is to find what came out.
+
+**Key Points**
+- UK Government Chief Scientific Adviser, Distributed Ledger Technology: Beyond Block Chain (2016), p. 51: mixing systems "take coins from a number of users, and output coins to different addresses that are not linked to the original users", breaking the link between payer and payee wallets.
+- The same page: the anonymity "is not perfect"; a coin may be traced to one of a number of addresses.
+- Kappos et al. (2022), as used on day 2: 20 ransomware addresses sat in clusters averaging 2.9 million addresses, all tagged as exchanges, hosted wallets, mixers or darknet markets.
+- Sykes and Vanatko (CRS, 2019): commentators note that money launderers are attracted to the anonymity of virtual currency transactions.
+- Define mixer (or tumbler) briefly: a service that pools many users' coins and pays them out to new addresses, to break the link between deposit and withdrawal.
+
+**Walkthrough**
+1. Left: three deposits, one of them your subject's.
+2. Middle: the pool. Your trace stops at the deposit.
+3. Right: three payouts. Ask: which is your subject's? (From the diagram alone, any of the three: the anonymity set.)
+
+**Sources**
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+- @kappos_howpeelmillion_2022
+- @sykes_virtualcurrenciesmoney_2019
+
+:::
+
+## Custodial or smart contract: who holds coins {.smaller}
+
+**Bottom line:** a custodial mixer is an operator who takes your coins and pays out others. A smart-contract mixer is a pool on the blockchain itself, such as Tornado Cash on Ethereum [@u.s.dept.oftreasury_ustreasurysanctions_2022]. Both leave their own addresses on the chain.
+
+| | Custodial (centralised) mixer | Smart-contract mixer |
+| --- | --- | --- |
+| Who holds the coins | The operator: users trust it to pay out, and "dishonest mixes" can keep the coins [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51] | The pool: Tornado Cash "operates on the Ethereum blockchain" [@u.s.dept.oftreasury_ustreasurysanctions_2022] |
+| A real case | Bitcoin Fog, a "darknet cryptocurrency mixer" on Bitcoin [@departmentofjustice_juryfindsrussianswedish_2024; @kappos_howpeelmillion_2022] | Tornado Cash: over \$7 billion laundered since 2019 (as of 8 Aug 2022) [@u.s.dept.oftreasury_ustreasurysanctions_2022] |
+| What you see | Deposits to, and payouts from, the operator's cluster [@kappos_howpeelmillion_2022] | Deposits to, and withdrawals from, the pool's addresses, which Treasury listed [@u.s.dept.oftreasury_ustreasurysanctions_2022] |
+| Who was pursued | The operator, convicted [@departmentofjustice_juryfindsrussianswedish_2024] | The pool, sanctioned; later its founder, convicted [@u.s.dept.oftreasury_ustreasurysanctions_2022; @departmentofjustice_foundertornadocash_2025] |
+
+: {tbl-colwidths="[18,41,41]"}
+
+Smart contracts, the code such a pool is built from, are day 4.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide tells the two kinds of mixer apart by who holds the coins. It matters here because the kind decides what the analyst can see and where records might exist: an operator's cluster on one side, a pool's public addresses on the other. Emphasize that both kinds still have addresses, and addresses can be watched.
+
+**Key Points**
+- UK GCSA (2016), p. 51: "dishonest mixes have the potential to accept coins but never pay out, effectively stealing them": the user hands the coins to the mix and trusts it.
+- Bitcoin Fog: the Justice Department calls it a "darknet cryptocurrency mixer" whose operator a jury found guilty of running it (12 Mar 2024). Kappos et al. trace a 2011 Mt. Gox withdrawal into a Bitcoin Fog deposit, on Bitcoin, and an IRS affidavit tied the deposit to "the Bitcoin Fog cluster".
+- Treasury (8 Aug 2022): Tornado Cash "operates on the Ethereum blockchain", "receives a variety of transactions and mixes them together before transmitting them to their individual recipients", and had been used to launder more than \$7 billion since its creation in 2019. The release points to the "associated virtual wallet addresses" of the entity sanctioned.
+- The Justice Department (6 Aug 2025) announced the founder of the Tornado Cash mixing service was convicted.
+- Define custodial mixer briefly: a mixer run by an operator who holds users' coins between deposit and payout. Define smart-contract mixer briefly: a mixer that is a pool on the blockchain, not an operator's wallet.
+
+**Walkthrough**
+1. Read the first row: who holds the coins.
+2. Read the rows below for each kind.
+3. Ask: on which side could an operator keep records of who deposited? (The custodial side; the legal route to them is outside this course.)
+
+**Sources**
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+- @u.s.dept.oftreasury_ustreasurysanctions_2022
+- @departmentofjustice_juryfindsrussianswedish_2024
+- @kappos_howpeelmillion_2022
+- @departmentofjustice_foundertornadocash_2025
+
+:::
+
+## Mixer cases: sanctions, verdicts, a delisting {.smaller}
+
+**Bottom line:** US authorities have sanctioned mixers, convicted their operators and, in one case, lifted the sanctions. Each date below is as of its source; cases may move on.
+
+| Date (as of the source) | Mixer | What happened |
+| --- | --- | --- |
+| 6 May 2022 | Blender.io | Treasury's first-ever sanctions on a mixer, aimed at North Korean cyber threats [@u.s.dept.oftreasury_ustreasuryissuesfirstever_2022] |
+| 8 Aug 2022 | Tornado Cash | Sanctioned; it had laundered over \$455 million stolen by North Korea's Lazarus Group [@u.s.dept.oftreasury_ustreasurysanctions_2022] |
+| 12 Mar 2024 | Bitcoin Fog | A jury finds its operator guilty of running the mixer [@departmentofjustice_juryfindsrussianswedish_2024] |
+| 12 Nov 2024 | Bitcoin Fog | The operator is sentenced to more than 12 years in prison [@departmentofjustice_operatorbitcoinfog_2024] |
+| 21 Mar 2025 | Tornado Cash | Treasury removes its sanctions [@u.s.dept.oftreasury_tornadocashdelisting_2025] |
+| 6 Aug 2025 | Tornado Cash | Its founder is convicted "of knowingly transmitting criminal proceeds" [@departmentofjustice_foundertornadocash_2025] |
+
+: {tbl-colwidths="[22,18,60]"}
+
+**For your memo:** an official record that names a mixer, or lists its addresses, is a different kind of evidence from your trace [@u.s.dept.oftreasury_ustreasurysanctions_2022].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the dated record of US action against mixers, one row per source. It matters here because analysts brief agents and prosecutors who will ask what is known about a mixer, and every such fact needs its date. Emphasize "as of": sanctions were imposed and lifted, and a conviction can still move on appeal.
+
+**Key Points**
+- Treasury (6 May 2022): "U.S. Treasury Issues First-Ever Sanctions on a Virtual Currency Mixer, Targets DPRK Cyber Threats"; the 8 Aug 2022 Tornado release confirms OFAC's 6 May designation of Blender.io.
+- Treasury (8 Aug 2022): OFAC sanctioned Tornado Cash, used to launder more than \$7 billion since 2019, including over \$455 million stolen by the Lazarus Group, more than \$96 million from the Harmony Bridge heist and at least \$7.8 million from the Nomad heist.
+- Justice Department (12 Mar 2024): a jury found the Russian-Swedish operator of Bitcoin Fog guilty of running the darknet mixer. Justice Department (12 Nov 2024): sentenced to more than 12 years.
+- Treasury (21 Mar 2025): "Tornado Cash Delisting".
+- Justice Department (6 Aug 2025): the founder of the Tornado Cash mixing service was convicted of knowingly transmitting criminal proceeds. Check for later rulings before quoting it in a memo.
+- Legal process (how sanctions or convictions are obtained) is outside the course; the rows are here as dated facts an analyst may cite.
+
+**Walkthrough**
+1. Read the rows in date order.
+2. Ask: a memo says "Tornado Cash is a sanctioned mixer". What is wrong with it? (As of 21 Mar 2025 the sanctions were removed: give the date.)
+
+**Sources**
+- @u.s.dept.oftreasury_ustreasuryissuesfirstever_2022
+- @u.s.dept.oftreasury_ustreasurysanctions_2022
+- @departmentofjustice_juryfindsrussianswedish_2024
+- @departmentofjustice_operatorbitcoinfog_2024
+- @u.s.dept.oftreasury_tornadocashdelisting_2025
+- @departmentofjustice_foundertornadocash_2025
+
+:::
+
+## Timing and amount give leads, not links {.smaller}
+
+**Bottom line:** match a withdrawal to your subject's deposit by when it came out and how much it was. Each match is a lead. Alone, either one is **Low**.
+
+:::: {.columns}
+::: {.column width="55%"}
+- **Timing:** a withdrawal soon after the deposit is a candidate. **Fails when** the pool is busy or the user waits: many withdrawals fit the window.
+- **Amount:** a withdrawal of the deposit less a fee is a candidate. **Fails when** amounts are fixed: if everyone takes out the same value, as in a CoinJoin's equal outputs, amount tells them apart no better than chance [@gmaxwell_coinjoinbitcoinprivacy_2013].
+- **Both agree:** weaker lines that agree are **Moderate** at best, and only when few others fit. Another user moving the same amount at the same time is the known false positive.
+- **Repeat users leak:** repeated use opens the way to statistical attacks; how well they work "is an open question" [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51].
+:::
+::: {.column width="45%"}
+**Exercise.** Your subject paid 2.5000 BTC into a mixer at 14:02. Payouts in the next six hours:
+
+| Time | BTC | To |
+| --- | --- | --- |
+| 14:40 | 0.8000 | `W1` |
+| 15:12 | 2.4750 | `W2` |
+| 16:55 | 2.4750 | `W3` |
+| 19:30 | 2.4800 | `W4` |
+
+Which is your lead? How sure? (Invented data.)
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the two oldest ways past a mixer, timing and amount, and how far each can go on the course scale. It matters here because these matches are what an analyst most often has, and the common mistake is to report one as a link. Emphasize that fixed or equal amounts are the designer's counter to amount matching, and a busy pool is the counter to timing.
+
+**Key Points**
+- Timing analysis: candidates are withdrawals close in time to the deposit; a busy pool or a long wait multiplies them.
+- Amount correlation: candidates are withdrawals near the deposit less a fee; equal outputs (gmaxwell's CoinJoin) or fixed denominations remove the clue.
+- Course scale: timing, amount or behaviour alone is Low; weaker lines that agree are Moderate, with a known false positive possible; High needs a different kind of evidence (slide 9).
+- UK GCSA (2016), p. 51: partial leakage "allows the application of statistical attacks to de-anonymise repeated transaction through so-called Statistical Disclosure Attacks. The extent to which these attacks are effective is an open question."
+- Exercise answer: W2, W3 and W4 all fit the amount (2.5000 less 0.025 or 0.020); W2 is first in time. All three are leads; on timing and amount with two others fitting, each is Low. W1 is not a candidate by amount, unless the mixer splits payouts.
+- Define fixed denomination briefly: a pool that takes and pays only set amounts, so amount cannot match a withdrawal to a deposit.
+
+**Walkthrough**
+1. Read timing and amount, and each one's failure.
+2. Run the exercise: two minutes in pairs.
+3. Take answers: W2, W3 and W4 all fit; W2 fits timing best. How sure? Low: others fit too.
+4. Ask: what would make W2 Moderate? (No other payout of that size in the window.) High? (A different kind of evidence: slide 9.)
+
+**Sources**
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+
+:::
+
+## The mixer's own addresses can be clustered {.smaller}
+
+**Bottom line:** a mixer receives and pays from its own addresses, and they cluster like any service's. Clustering them tells you that money went in or came out, not whose it was.
+
+- **Bitcoin Fog:** an IRS affidavit tied a 2011 deposit to "the Bitcoin Fog cluster", the case you traced backward on day 2 [@kappos_howpeelmillion_2022].
+- **Service-sized clusters:** ransomware addresses sat in clusters averaging 2.9 million addresses, among them mixers [@kappos_howpeelmillion_2022].
+- **Tornado Cash:** Treasury's sanctions release pointed to the pool's wallet addresses, an official label for its way in and out [@u.s.dept.oftreasury_ustreasurysanctions_2022].
+- **What it gives your trace:** a hop that reads "into the mixer" or "out of the mixer". Naming the service is attribution: lesson ②.
+- **How sure:** in the mixer's cluster by co-spending you checked, **Moderate**; by an explorer's tag alone, **Low**. Neither links a deposit to a withdrawal.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the third way past a mixer: study the service's own infrastructure. It matters here because the analyst can always say where money entered and left the mixer, even when the match between the two is unknown, and that bounds the search. Emphasize the limit: knowing the mixer's addresses finds the entry and exit points, not the link between them.
+
+**Key Points**
+- Kappos et al. (2022), section 7.3.1: an IRS special agent's affidavit linked a 2011 deposit to the Bitcoin Fog cluster with a withdrawal from the Mt. Gox cluster; day 2's backward-trace slide used the same case.
+- Kappos et al.: 20 ransomware addresses sat in clusters averaging 2.9 million addresses, all tagged as exchanges, hosted wallets, mixers or darknet markets.
+- Treasury (8 Aug 2022): the release links to identifying information on Tornado Cash "as well as associated virtual wallet addresses".
+- Co-spending into the cluster is the analyst's own link, Moderate; co-spending inside a mixer's cluster links the mixer's addresses, never its users to each other (day 2's batch slide makes the same point for services).
+- Attribution of the cluster to a named mixer is lesson ② of today.
+
+**Walkthrough**
+1. Read the three examples: a cluster from an affidavit, clusters by size, addresses from a sanctions release.
+2. Ask: you have the mixer's cluster. What can you now write? (Which deposits went in and which payouts came out, and when; that narrows the candidates for the next slide.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+- @u.s.dept.oftreasury_ustreasurysanctions_2022
+
+:::
+
+## Users slip at the ends, where records exist {.smaller}
+
+**Bottom line:** the mixer hides the middle, but the user still has to put money in and take it out. Mistakes at either end, and the records kept there, are a different kind of evidence: the only kind that lifts a mixer link to **High**.
+
+- **Funded from a named account:** the Bitcoin Fog deposit traced back to a Mt. Gox withdrawal, from an exchange where Roman Sterlingov had an account in his real name (day 2) [@kappos_howpeelmillion_2022].
+- **Cashed out where names are kept:** once an address "is identified and linked with a physical person, it is possible to uncover all of their transactions" [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51].
+- **Exits at exchanges:** stolen coins peeled off a chain reached known exchanges within 20 hops [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **Coming back:** a user who mixes again and again leaks more each time [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016, p. 51].
+- **How sure:** a timing or amount match stays Low or Moderate. An exchange record naming one customer at both ends is independent of the chain: **High**, when no known failure applies.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the fourth way past a mixer, and the one that most often works: the user's own mistakes where the money enters and leaves. It matters here because the records at those ends (an exchange account, a real name) are the different kind of evidence the course scale asks for. Emphasize that the analyst finds the ends on-chain and asks the agent for the records; how the agent obtains them is outside the course.
+
+**Key Points**
+- Kappos et al.: the IRS affidavit linked a Bitcoin Fog deposit to a withdrawal from the Mt. Gox cluster where Sterlingov had an account in his real name; the trace ran backward from the deposit in seven hops.
+- UK GCSA (2016), p. 51: once a wallet address is linked with a physical person, all of that person's transactions can be uncovered; the report notes this could support Know Your Customer rules.
+- Meiklejohn et al.: in the Betcoin theft, peels reached Bitcoin-24 after 10 hops and Mt. Gox 10 hops later (day 2).
+- UK GCSA, p. 51: partial leakage allows statistical attacks on repeated transactions.
+- Kappos et al. warn that heuristics should not be relied on "as definitive evidence"; the course scale's High needs two independent kinds of evidence and no known failure.
+- Example failures for the record: a shared or borrowed exchange account, or records that are wrong.
+
+**Walkthrough**
+1. Read the four slips.
+2. Ask: which of these can you see on-chain, and which need someone's records? (The deposit's source and the exit address are on-chain; the name behind them is in the exchange's records.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+
+:::
+
+## Each technique has a ceiling on the scale {.smaller}
+
+**Bottom line:** every way past a CoinJoin or a mixer fails somewhere, and each has a highest confidence it can support on its own. Only another kind of evidence reaches High.
+
+| Technique | Fails when | Highest, alone |
+| --- | --- | --- |
+| Equal outputs mark a CoinJoin | The equal outputs are a coincidence | No link across it; each equal output a lead, **Low** |
+| Timing match | The pool is busy, or the user waits | **Low** |
+| Amount match | Amounts are fixed or equal | **Low** |
+| Timing and amount agree | Another user's coins fit too | **Moderate** |
+| Mixer's cluster, by co-spending you checked | A co-spend was a CoinJoin | **Moderate**: in or out, not whose |
+| Explorer tag "mixer" | The tag is wrong | **Low** |
+| Exchange record at both ends, with the on-chain match | The account is shared, or the record wrong | **High** |
+
+: {tbl-colwidths="[34,34,32]"}
+
+No percentages: write the level and the reason [@kappos_howpeelmillion_2022].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide puts the lesson's techniques on the course confidence scale in one table. It matters here because the memo this afternoon gives each judgement a level and a reason, and the table is the reference for both. Emphasize the rule from day 2: confidence rises with a different kind of evidence, not with more clues from the same transactions.
+
+**Key Points**
+- Low: timing, amount or behaviour alone, or one unverified label such as an explorer tag.
+- Moderate: one strong line, or weaker lines that agree, with a known false positive possible.
+- High: two or more independent lines agree and no known failure applies; an exchange record is independent of the chain.
+- Kappos et al. warn that investigators should not rely on these heuristics as definitive evidence; the course never states a percentage.
+- A CoinJoin call stops a link rather than making one; its candidates are Low.
+
+**Walkthrough**
+1. Read each row: the technique, how it fails, its ceiling.
+2. Ask: timing, amount and a tag all agree. High? (No: all three come from the chain or an explorer; Moderate at best.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+
+:::
+
+## Worked hop: into a mixer and out again {.smaller}
+
+**Bottom line:** your trace writes a mixer hop as it writes any hop: what you see, the heuristic, what could make it wrong, and how sure. (Invented data.)
+
+| # | What you see | Heuristic | Could be wrong if | Confidence |
+| --- | --- | --- | --- | --- |
+| 1 | `T1` pays 2.5000 to `M1`; `M1` is later spent with addresses of a 40,000-address cluster | Co-spend: `M1` joined that cluster | That spend was a CoinJoin | Moderate |
+| 2 | An explorer tags the cluster "mixer" | Explorer's label | The tag is wrong | Low |
+| 3 | 70 minutes later the cluster pays 2.4750 to fresh `W2`; two other payouts fit | Timing and amount | `W3` or `W4` is your subject's | Low |
+| 4 | `T1` was funded from exchange X; `W2` pays into X. X's records show one customer at both | Exchange record, a different kind | The account is shared | High |
+
+: {tbl-colwidths="[5,37,22,20,16]"}
+
+Without row 4, the link from `T1` to `W2` is **Low**: write it as a lead, not a finding.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide models a mixer hop in the annotated-trace format from day 2, on invented data that continues the timing exercise. It matters here because students write these rows in today's memo, and the hop shows each technique at its ceiling. Emphasize that the High in row 4 comes from records off the chain, not from the chain.
+
+**Key Points**
+- Row 1: co-spending puts `M1` in a large cluster; Moderate, since a CoinJoin would break it.
+- Row 2: the cluster's identity rests on one unverified label: Low until attribution (lesson ②).
+- Row 3: the payout fits timing and amount, but two others fit as well: Low.
+- Row 4: the funding exchange's records place one customer at both ends: an independent kind of evidence that agrees with row 3, so High if no known failure applies; the failure to rule out is a shared account.
+- How the agent obtains the exchange's records is legal process, outside the course; the analyst's job is to name the ends and ask.
+- The data are invented; the lab uses its own captured data.
+
+**Walkthrough**
+1. Read each row left to right.
+2. Ask: drop row 4. What does the memo say about `W2`? (A lead, Low: one of three payouts that fit.)
+3. Ask: which row would you check first if challenged? (Row 2, the tag: then row 3.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+
+:::
+
+## Recap: name the break, then rate the link {.smaller}
+
+- **A CoinJoin** joins several owners' inputs and pays equal outputs: don't co-spend it; each equal output is a lead.
+- **A mixer** pools many users' coins and pays out others: your trace reaches a service and stops.
+- **Custodial or smart-contract:** an operator holds the coins (Bitcoin Fog), or a pool on the chain does (Tornado Cash).
+- **Dated record:** Blender.io and Tornado Cash sanctioned in 2022; Bitcoin Fog's operator convicted in 2024; Tornado delisted and its founder convicted in 2025.
+- **Ways past:** timing and amount (Low alone), the mixer's own addresses (in or out, not whose), and the user's ends.
+- **High** needs a different kind of evidence, such as an exchange's records at both ends.
+- **This afternoon:** your memo writes each mixer hop with its heuristic, failure and confidence.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson and hands over to the rest of day 3. It matters here because the memo uses every line: a named break, a hop written in the trace's four columns, and a confidence with its reason. Emphasize the habit carried from day 2: heuristic, failure, confidence, for every hop, including the hops through a mixer.
+
+**Key Points**
+- CoinJoin: equal outputs, unlinked inputs.
+- Mixers: the pool ends the path; custodial and smart-contract kinds.
+- The dated cases, each as of its source.
+- Timing, amount, infrastructure and endpoints, each with its ceiling.
+- High only with independent evidence.
+
+**Walkthrough**
+None
+
+**Sources**
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+- @u.s.dept.oftreasury_ustreasuryissuesfirstever_2022
+- @u.s.dept.oftreasury_ustreasurysanctions_2022
+- @departmentofjustice_juryfindsrussianswedish_2024
+- @u.s.dept.oftreasury_tornadocashdelisting_2025
+- @departmentofjustice_foundertornadocash_2025
+- @kappos_howpeelmillion_2022
+
+:::
+
+## References {.smaller}
+
+::: {#refs}
+:::
