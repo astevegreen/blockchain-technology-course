@@ -46,6 +46,10 @@ Numbers in brackets are Course Audit rows. Stage F may move a boundary to fit a 
 
 Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons.
 
+Day 9's second lesson also teaches MITRE AADAPT, MITRE's ATT&CK-style matrix of attacks on digital-asset payments
+(owner, 26 Oct). It has no sanctions-evasion technique, so sanctions stay with Day 7's second lesson and Day 9's
+first. Details are on the Build Tracker item.
+
 ## Added by the adversarial review
 The owner's calls of 23 Oct (P1-P10; P9 declined, P11-P13 change no lesson), each in its day's existing lesson
 or lab. If time runs short, P4 is cut first, then P3, P5, P6, P8 and P10 one at a time.
