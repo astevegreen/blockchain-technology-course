@@ -10,7 +10,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ORDER, TIMEOUT, askFirstAvailable, buildPrompt, byLine, diffStats, parseReply, pickDepth } from "./agy.mjs";
+import { ORDER, askFirstAvailable, askModel, buildPrompt, byLine, diffStats, pickDepth } from "./agy.mjs";
 import { RAILS, RAIL_MODELS, couldNotRun, railAction, railDiff, railFiles, railVerdict } from "./rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -52,20 +52,7 @@ function change() {
 function review(promptFile, material, models, tmp) {
   const prompt = buildPrompt(readFileSync(path.join(ROOT, "tools", promptFile), "utf8"), material);
   return askFirstAvailable(models, (model) =>
-    parseReply(
-      run("agy", [
-        "-p",
-        prompt,
-        "--output-format",
-        "json",
-        "--model",
-        model,
-        "--print-timeout",
-        TIMEOUT,
-        "--add-dir",
-        tmp,
-      ]),
-    ),
+    askModel((args) => run("agy", args), prompt, model, ["--add-dir", tmp]),
   );
 }
 
