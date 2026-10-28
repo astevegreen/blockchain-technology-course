@@ -41,10 +41,23 @@ test("generated and vendored folders can't be read; pushes to main need no promp
   for (const rule of ["Bash(git push --force *)", "Bash(git reset --hard *)"]) assert.ok(deny.includes(rule), rule);
 });
 
-test("the setup itself, CI and GitHub credentials need the owner's yes", () => {
+// Owner's policy, 28 Oct 2026: edits to skills, agents, rules, CLAUDE.md, docs and configs no longer need the owner.
+// A prompt stays only where an edit takes effect before any audit can run: the settings, and the hook scripts they
+// and the sprint skills wire, with what those import. Workflows and the rest are audited before they ship.
+test("only the settings, the hook scripts and GitHub credentials ask first", () => {
   const { ask } = settings().permissions;
-  for (const rule of ["Edit(/.claude/**)", "Edit(/CLAUDE.md)", "Edit(/.github/**)", "Edit(/tools/hooks/**)",
-                      "Edit(/tools/sprint/**)", "Bash(gh secret *)", "Bash(gh auth *)"]) assert.ok(ask.includes(rule), rule);
+  const hooks = ["env-check", "handoff-nudge", "quick-check", "gate", "shared", "sprint-guard", "shell-reader"];
+  for (const rule of ["Edit(/.claude/settings.json)", "Edit(/.claude/settings.local.json)",
+                      ...hooks.map((h) => `Edit(/tools/hooks/${h}.mjs)`), "Edit(/tools/handoff-notes.mjs)", "Bash(gh secret *)",
+                      "Bash(gh auth *)"]) {
+    assert.ok(ask.includes(rule), rule);
+  }
+  for (const rule of ["Edit(/.claude/**)", "Edit(/CLAUDE.md)", "Edit(/.github/**)", "Edit(/tools/hooks/**)", "Edit(/tools/sprint/**)"]) {
+    assert.ok(!ask.includes(rule), `${rule} no longer asks`);
+  }
+  for (const g of Object.values(settings().hooks).flat()) for (const h of g.hooks) {
+    assert.ok(ask.includes(`Edit(/${h.args[0].replace("${CLAUDE_PROJECT_DIR}/", "")})`), `${h.args[0]} asks before an edit`);
+  }
 });
 
 test("unattended sprint sessions run the queue, ci-watch and the integrator's push without a prompt", () => {
