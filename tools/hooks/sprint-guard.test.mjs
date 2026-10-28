@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { RAILS } from "../rail-audit.mjs";
 import { runHook } from "./test-helpers.mjs";
 
 const guard = (mode, toolInput, cwd = process.cwd(), tool = "Bash") =>
@@ -507,6 +508,27 @@ describe("--file-lock", () => {
       "blockchain-course/glossary/slide-index.yml", "blockchain-course/glossary/index.qmd", "quizes/dist/bundle.json",
       "blockchain-course/_site/index.html"]) {
       assert.equal(edit(path.join(lane, locked)), 2, locked);
+    }
+  });
+  // A lane runs its own worktree's second look, so an unlocked rail would let it loosen its own gate.
+  test("refuses every rail the rail audit names", () => {
+    const sample = {
+      "tools/hooks/": "tools/hooks/shell-reader.mjs", ".claude/settings": ".claude/settings.local.json",
+      ".claude/skills/sprint-": ".claude/skills/sprint-lane/SKILL.md", ".githooks/": ".githooks/pre-push",
+      ".github/": ".github/workflows/lab-tests.yml", "tools/check.py": "tools/check.py", "tools/qmd_lint.py": "tools/qmd_lint.py",
+      "tools/tests/test_check.py": "tools/tests/test_check.py", "tools/tests/test_qmd_lint.py": "tools/tests/test_qmd_lint.py",
+      "quizes/verify_single_quiz.py": "quizes/verify_single_quiz.py",
+      "blockchain-course/glossary/scripts/validate_glossary.py": "blockchain-course/glossary/scripts/validate_glossary.py",
+      "tools/sprint/": "tools/sprint/queue.mjs", "tools/agy.mjs": "tools/agy.mjs", "tools/second-look": "tools/second-look.md",
+      "tools/rail-audit": "tools/rail-audit.mjs", "GEMINI.md": "GEMINI.md",
+      ".claude/agents/implementer.md": ".claude/agents/implementer.md", ".claude/agents/reviewer.md": ".claude/agents/reviewer.md",
+    };
+    for (const rail of RAILS) {
+      assert.ok(sample[rail]?.startsWith(rail), `a sample file for the rail ${rail}`);
+      assert.equal(edit(path.join(lane, sample[rail])), 2, sample[rail]);
+    }
+    for (const free of ["tools/lab_tests.py", "tools/tests/test_lab_tests.py", "quizes/quiz_json/x-quiz-bank.json"]) {
+      assert.equal(edit(path.join(lane, free)), 0, free);
     }
   });
   test("refuses a file outside every checkout", () => {

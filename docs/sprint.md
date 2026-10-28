@@ -47,17 +47,19 @@ policy.
   `--fresh-start` wipe of containers this session didn't start.
 - **Automation decides the rest.** `held` is only for a `[blocker]`: a `[minor]` concern ships with a note, or a
   follow-up issue when it is real work. A machine failure (a time-out, an image pull, out of memory, host load)
-  retries by itself and never waits for the owner. A `[blocker]` from agy's second look holds like a reviewer's;
-  its notes never do.
+  retries by itself and never waits for the owner. A `[blocker]` from agy's second look holds like a reviewer's,
+  and the queue refuses a `to-integrate` note that carries one; its notes never hold. A second look no model
+  answered gave no verdict: the task is held as the machine's failure and retried, never handed over.
 - **Technical questions** (how to build a lab, tooling, tests, structure, naming, placement, which tool fits)
   are never asked: an Opus session decides as the architect and records "Decision (architect): …" on the issue.
 - **Content questions** wait on their own issue, labeled `blocked`, with options and a recommendation; work goes
   on around them. The supervisor's daily digest on the Decisions issue brings them to the owner at most once a
   day, with one @-mention.
-- **Rails** (`tools/hooks/`, `tools/check.py`'s checks, `.githooks/`, `.github/` workflows,
-  `.claude/settings*.json`) ship after a deep agy rail audit answers no to "does this loosen, bypass or disable
-  any check, guard, gate, hook or required review?"; a yes holds the change for the owner (`CLAUDE.md`,
-  Finishing). Lanes never edit them (Locked paths).
+- **Rails** (`RAILS` in `tools/rail-audit.mjs`: the hooks, settings, sprint skills and agents, `.githooks/`,
+  `.github/`, the check with the checks it runs, the sprint queue, and the second look with `GEMINI.md`) ship
+  after a deep agy rail audit, by Argon or Opus only, answers no to "does this loosen, bypass or disable any
+  check, guard, gate, hook or required review?"; a yes holds the change for the owner, and an audit no model
+  answered runs again (`CLAUDE.md`, Finishing). Lanes never edit them (Locked paths).
 
 ## What still stops a task
 
@@ -75,9 +77,12 @@ policy.
   folder is left out of `src.zip` but a student VM would still hold it until `vm-build.yml` removes it. A task that
   needs a new `-x` entry in `pages.yml` is `blocked`: `.github/` is locked.
 - **Locked paths** (`tools/hooks/sprint-guard.mjs --file-lock`): `.claude/`, `.githooks/`, `.github/`,
-  `.gitattributes`, `CLAUDE.md`, this file, `tools/sprint/`, `tools/hooks/`, `tools/check.py`, and the generated
-  files: `glossary/slide-index.yml`, `terms.yml`, `terms.json`, `duplicates.md`, `index.qmd`, `index.pdf`,
-  `quizes/dist/` and `blockchain-course/_site/`. No new dependencies.
+  `.gitattributes`, `CLAUDE.md`, this file, `tools/sprint/`, `tools/hooks/`, `tools/check.py`, the rest of the
+  rails (`tools/qmd_lint.py`, `tools/tests/test_check.py`, `tools/tests/test_qmd_lint.py`,
+  `quizes/verify_single_quiz.py`, `blockchain-course/glossary/scripts/validate_glossary.py`, `tools/agy.mjs`,
+  `tools/second-look*`, `tools/rail-audit*`, `GEMINI.md`), and the generated files: `glossary/slide-index.yml`,
+  `terms.yml`, `terms.json`, `duplicates.md`, `index.qmd`, `index.pdf`, `quizes/dist/` and
+  `blockchain-course/_site/`. No new dependencies.
 - **Glossary and mind map**: no lane runs the glossary pipeline or edits `assets/mindmap.html`. The check reports
   a stale slide index or a broken mind-map anchor as a note, not a failure; each hand-back lists its new terms
   and moved anchors, and one glossary run and one mind-map pass close the phase after the window
@@ -247,7 +252,8 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 - The queue, `tools/sprint/queue.mjs`, holds the sprint's bookkeeping rules once (`tools/sprint/rules.mjs`):
   `window` and `identity` for the cue and every session's window check; `has-work "<session title>"`, `env`,
   `started`, `sessions`, `lock`, `unlock` and `resume` for the supervisor; `next <lane>` and `move <n> <state>`
-  for the lanes; `status` for the status block and `digest` for the daily Decisions digest. It reads the issues
+  for the lanes; `status` for the status block, `digest` for the daily Decisions digest, and `answers` for the
+  owner's answers on the Decisions issue (plan sessions). It reads the issues
   with `gh` and this file as pushed to `origin/main`, and prints one line of JSON. What it keeps sits in this checkout's git folder, shared by the
   worktrees and never committed: the window (`sprint-window.json`), every trigger the supervisor made
   (`sprint-triggers.json`: RemoteTrigger `list` shows only the account's newest 20, and three projects share the
@@ -283,8 +289,10 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
   questions Notion already answered).
 - A content question goes on its task issue, labeled `blocked`, with options and a recommended answer, since
   lanes look for the answer there; #2 "Decisions" lists them all, and the supervisor's digest there @-mentions
-  the owner once a day when one is new. The owner may answer them in one sitting, on each issue. An `astevegreen`
-  comment on #2 that answers a question still settles it for the plan sessions.
+  the owner once a day when one is new. The owner may answer them in one sitting, on each issue. On #2, a line
+  of the owner's that starts with `#<n>` answers issue n for the plan sessions (`queue.mjs answers`): an issue
+  named later on that line stays open, and a digest is never an answer, even one gh posted under the owner's
+  name.
 - The reserve backlog is approved or changed the same day.
 
 ## Setup day (held 24 Oct 2026)
@@ -301,7 +309,8 @@ The owner: "Use your recommended answers to the six setup questions and approve 
    in place of the owner approving new keys. A fact no readable source states is `blocked` with its question.
    (Was: no web for sprint sessions, and no Notion by design.)
 5. **`second-look.mjs`:** on every task, after the reviewer, since 28 Oct 2026: a `[blocker]` from it holds like
-   a reviewer's, its notes never do. (Was: once over the sprint's changes before Publish.)
+   a reviewer's, its notes never do, and one that could not run is retried. (Was: once over the sprint's changes
+   before Publish.)
 6. **Check-ins:** none fixed: the daily Decisions digest on #2 brings the questions (28 Oct 2026; was 07:00
    and 19:00 local, clearing the status block's "Needs you" list).
 7. Done the same evening: the labels, the pinned #1 "Sprint log", #2 "Sprint questions" (now "Decisions"), the tag

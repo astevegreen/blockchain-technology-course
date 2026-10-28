@@ -5,7 +5,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  DIGEST,
   bodyRefs,
+  decisionAnswers,
   digestPlan,
   hasWork,
   heldRetry,
@@ -279,6 +281,40 @@ test("a hold with only minor concerns, from before the 28 Oct policy, is reviewe
   assert.deepEqual(statusBlock(world([blocker])).needsYou.length, 1);
 });
 
+test("a hold for agy's second-look blockers holds, minor concerns beside them or not", () => {
+  const held = issue(12, "[task] X4a: explorer", ["lane:labs", "held"], {
+    comments: [["greenbeanbot", "2026-11-03T05:00:00Z",
+      "Lane: held. Second look: 1. [blocker] lab.md:12 the answer is in the student worksheet\n2. [note] wording\n3. [minor] b.md:2 typo"]],
+  });
+  assert.equal(nextJob(world([held], { branchAhead: () => 2 }), "labs"), null);
+  assert.match(statusBlock(world([held])).needsYou[0], /^#12 \[held\] X4a: waits for the owner/);
+});
+
+// Owner's policy, 28 Oct 2026: only a [blocker] holds, and agy's second look gates. A note that still carries one
+// never reaches the integrator, whichever reviewer raised it.
+test("work whose note carries a [blocker] never moves to the integrator", () => {
+  const w = one(["in-progress"], { branchAhead: () => 1 });
+  throwsWith(() => planMove(w, 7, "to-integrate", "WHAT CHANGED: a\\nShips with: second look [blocker] x.qmd:4 no source"), /carries a \[blocker\]/);
+  throwsWith(() => planMove(w, 7, "to-integrate", "WHAT CHANGED: a\\nShips with: 1. [Blocker] y"), /carries a \[blocker\]/);
+  const ok = planMove(w, 7, "to-integrate", "WHAT CHANGED: a\\nShips with: [minor] b.md:2 typo; Second look, rejected: x.qmd:4 - the key is cited on line 3");
+  assert.equal(ok.to, "to-integrate");
+});
+
+// A second look or rail audit that no model answered gave no verdict: never a ship, never the owner's.
+test("a review that could not run is held as the machine's, and retried by review, not rebuilt", () => {
+  const w = one(["in-progress"], { branchAhead: () => 1 });
+  const m = planMove(w, 7, "held", "machine: second look could not run: no model answered");
+  assert.equal(m.comment, "Lane: machine. second look could not run: no model answered");
+  const [i] = normalizeIssues([issue(7, "[task] L1: x", ["lane:wk", "held"], { comments: [["greenbeanbot", "2026-11-03T05:00:00Z", m.comment]] })]);
+  assert.deepEqual(heldRetry(i, 8000), {
+    retry: true, mode: "review", why: "the machine failed it and 8000 MB is free now", concerns: "Lane: machine. second look could not run: no model answered",
+  });
+  assert.equal(nextJob(world([issue(7, "[task] L1: x", ["lane:wk", "held"], { comments: [["greenbeanbot", "2026-11-03T05:00:00Z", m.comment]] })], { branchAhead: () => 1 }), "wk").mode, "resume");
+  assert.deepEqual([heldRetry(i, 3000).retry, heldRetry(i, 3000).owner], [false, false]);
+  assert.equal(planMove(w, 7, "held", "[blocker] x").comment, "Lane: held. [blocker] x");
+  throwsWith(() => planMove(w, 7, "held", "machine: second look said [blocker] x"), /no machine failure/);
+});
+
 test("taking up held work starts a new attempt with a comment that says why", () => {
   const w = world([issue(10, "[task] X2: insider", ["lane:labs", "held"], { comments: masked })]);
   const m = planMove(w, 10, "in-progress");
@@ -464,6 +500,52 @@ test("the digest leaves out answered questions, and a new question on a listed i
   const d = digestPlan(world([posted, answered, question(3, "2026-11-03T01:00:00Z", "Plan: a second question")]));
   assert.deepEqual([d.post, d.open, d.new], [true, [3], [3]]);
   assert.equal(digestPlan(world([decisions(), answered])).reason, "no question is open");
+});
+
+// While the bot is suspended, gh signs in as the owner, so the digest carries the owner's name.
+test("a digest posted under the owner's account still sets the day's limit, and never answers", () => {
+  const first = digestPlan(world([decisions(), question(3, "2026-11-03T01:00:00Z")]));
+  const asOwner = decisions([["astevegreen", "2026-11-03T06:00:00Z", first.comment]]);
+  const soon = digestPlan(world([asOwner, question(3, "2026-11-03T01:00:00Z"), question(4, "2026-11-03T07:00:00Z")]));
+  assert.equal(soon.post, false);
+  assert.match(soon.reason, /under a day ago/);
+  assert.deepEqual(digestPlan(world([asOwner, question(3, "2026-11-03T01:00:00Z")])).reason, "no question is new since the last digest");
+  assert.deepEqual(decisionAnswers(world([asOwner, question(3, "2026-11-03T01:00:00Z")])), []);
+  // A stranger's comment in the digest's words is no digest of ours: the day's limit ignores it.
+  const stranger = decisions([["someone", "2026-11-03T06:00:00Z", first.comment]]);
+  assert.equal(digestPlan(world([stranger, question(3, "2026-11-03T01:00:00Z")])).post, true);
+  // A digest is never the owner's reply, on any issue.
+  const [held] = normalizeIssues([issue(9, "[task] L2: y", ["lane:wk", "held"], {
+    comments: [["greenbeanbot", "2026-11-03T01:00:00Z", "Lane: held. 1. [blocker] x"], ["astevegreen", "2026-11-03T02:00:00Z", `${DIGEST}, 2026-11-03 02:00Z: 1 content decision`]],
+  })]);
+  assert.equal(ownerReply(held), null);
+  assert.equal(heldRetry(held, 8000).retry, false);
+});
+
+test("a digest lists only its own - #n lines: an issue a question names in passing is not listed", () => {
+  const posted = decisions([["greenbeanbot", "2026-11-03T06:00:00Z", "@astevegreen Decisions digest, x\n\n- #3 L3: Plan: as in #5, which source?"]]);
+  // #5 was asked before that digest but only became blocked after it, so the digest never listed it.
+  const d = digestPlan(world([posted, question(3, "2026-11-03T01:00:00Z"), question(5, "2026-11-03T02:00:00Z")], { now: new Date("2026-11-04T07:00:00Z") }));
+  assert.deepEqual([d.post, d.new], [true, [5]]);
+});
+
+test("on the Decisions issue, only a line that starts with #n answers, and only issue n", () => {
+  const w = world([
+    decisions([
+      ["astevegreen", "2026-11-03T08:00:00Z", "#6 no, I prefer B. I need to think more about #5."],
+      ["astevegreen", "2026-11-03T09:00:00Z", "Thanks. On #5, still thinking.\n> #7 quoted from the digest\n- #8 a list item\n  #9: a\n#10B"],
+      ["greenbeanbot", "2026-11-03T10:00:00Z", "#11 the bot never answers"],
+      ["someone", "2026-11-03T10:00:00Z", "#12 nor does a stranger"],
+    ]),
+  ]);
+  assert.deepEqual(decisionAnswers(w), [
+    { issue: 6, answer: "no, I prefer B. I need to think more about #5.", at: "2026-11-03T08:00:00.000Z" },
+    { issue: 9, answer: "a", at: "2026-11-03T09:00:00.000Z" },
+  ]);
+  assert.ok(!decisionAnswers(w).some((a) => a.issue === 5), "#5 is named in passing, never answered");
+  const out = JSON.parse(run(["answers"], fakeIo([decisions([["astevegreen", "2026-11-03T08:00:00Z", "#6 B"]])]).io).line);
+  assert.deepEqual(out, { issue: 41, answers: [{ issue: 6, answer: "B", at: "2026-11-03T08:00:00.000Z" }] });
+  assert.deepEqual(decisionAnswers(world([])), [], "no Decisions issue: no answers");
 });
 
 test("digest --write rewrites the Decisions body and comments once; without a Decisions issue it refuses", () => {

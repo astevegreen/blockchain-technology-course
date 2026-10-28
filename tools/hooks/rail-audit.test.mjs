@@ -4,26 +4,31 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { pickDepth } from "../agy.mjs";
-import { RAILS, railAction, railDiff, railFiles, railVerdict } from "../rail-audit.mjs";
+import { ARGON, FLASH, OPUS, SONNET, askFirstAvailable, pickDepth } from "../agy.mjs";
+import { RAILS, RAIL_MODELS, couldNotRun, railAction, railDiff, railFiles, railVerdict } from "../rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..", "..");
 
-test("the rails are the hooks, the check, the git hooks, the workflows and the settings", () => {
-  assert.deepEqual(
-    railFiles([
-      "tools/hooks/sprint-guard.mjs", "tools/check.py", ".githooks/pre-commit", ".github/workflows/check.yml",
-      ".claude/settings.json", ".claude/settings.local.json",
-      ".claude/skills/lesson/SKILL.md", "tools/sprint/rules.mjs", "blockchain-course/lessons/x.qmd", "CLAUDE.md",
-    ]),
-    ["tools/hooks/sprint-guard.mjs", "tools/check.py", ".githooks/pre-commit", ".github/workflows/check.yml",
-     ".claude/settings.json", ".claude/settings.local.json"],
-  );
+test("the rails are the hooks, settings, sprint skills and agents, git hooks, workflows, the check, the queue and the review", () => {
+  const rails = [
+    "tools/hooks/sprint-guard.mjs", ".claude/settings.json", ".claude/settings.local.json", ".claude/skills/sprint-lane/SKILL.md",
+    ".claude/agents/implementer.md", ".claude/agents/reviewer.md", ".githooks/pre-commit", ".github/workflows/check.yml",
+    "tools/check.py", "tools/qmd_lint.py", "tools/tests/test_check.py", "tools/tests/test_qmd_lint.py",
+    "quizes/verify_single_quiz.py", "blockchain-course/glossary/scripts/validate_glossary.py", "tools/sprint/rules.mjs",
+    "tools/agy.mjs", "tools/second-look.mjs", "tools/second-look.md", "tools/rail-audit.mjs", "tools/rail-audit.md", "GEMINI.md",
+  ];
+  const others = [
+    ".claude/skills/lesson/SKILL.md", ".claude/agents/scout.md", ".claude/rules/ci.md", "blockchain-course/lessons/x.qmd",
+    "CLAUDE.md", "docs/sprint.md", "tools/lab_tests.py", "tools/tests/test_lab_tests.py", "tools/gemini-audit.mjs",
+    "quizes/quiz_json/x-quiz-bank.json", "blockchain-course/glossary/terms.yml",
+  ];
+  assert.deepEqual(railFiles([...rails, ...others]), rails);
+  for (const rail of RAILS) assert.ok(rails.some((f) => f.startsWith(rail)), `a sample for ${rail}`);
 });
 
 test("the audit reads only the rail files' part of the diff", () => {
   const part = (file) => `diff --git a/${file} b/${file}\nindex 1..2 100644\n--- a/${file}\n+++ b/${file}\n@@ -1 +1 @@\n-a\n+b\n`;
-  const diff = part("docs/sprint.md") + part(".claude/settings.json") + part("tools/sprint/rules.mjs") + part(".github/workflows/check.yml");
+  const diff = part("docs/sprint.md") + part(".claude/settings.json") + part("blockchain-course/lessons/x.qmd") + part(".github/workflows/check.yml");
   assert.equal(railDiff(diff), part(".claude/settings.json") + part(".github/workflows/check.yml"));
   assert.equal(railDiff(part("CLAUDE.md")), "");
 });
@@ -32,7 +37,7 @@ test("a rail change is always reviewed deep, whatever its size", () => {
   assert.equal(pickDepth({ kind: "change", files: [".githooks/pre-push"], lines: 2 }, RAILS).depth, "deep");
 });
 
-test("only a clear no ships; a yes or no verdict at all holds for the owner", () => {
+test("only a clear no ships; a yes, or an answer with no verdict, holds for the owner", () => {
   assert.equal(railVerdict("LOOSENS: no\nIt adds a CI job."), false);
   assert.equal(railVerdict("**LOOSENS: yes**\n.claude/settings.json:107 - edits no longer ask"), true);
   assert.equal(railVerdict("Here is my review.\n\nLOOSENS: Yes"), true);
@@ -41,6 +46,37 @@ test("only a clear no ships; a yes or no verdict at all holds for the owner", ()
   assert.match(railAction(false), /ships like any other/);
   assert.match(railAction(true), /^Rail audit: LOOSENS\. Hold .* for the owner/);
   assert.match(railAction(null), /no verdict\. Hold .* for the owner/);
+});
+
+// Owner's policy, 28 Oct 2026: a review no model answered is the machine's failure. It never ships the change, and
+// never holds it for the owner: it runs again.
+test("a second look or rail audit that could not run says retry: nothing ships on it, and the owner isn't asked", () => {
+  for (const [review, covers] of [["Second look", "The change"], ["Rail audit", "The rail change"]]) {
+    const line = couldNotRun(review, covers, "no model answered: Gemini 4 Argon (high) was too busy");
+    assert.match(line, new RegExp(`^${review}: retry\\. It could not run, so it gave no verdict`));
+    assert.match(line, new RegExp(`${covers} does not ship until it answers, and is not held for the owner`));
+    assert.doesNotMatch(line, /skipped|ships like any other/);
+  }
+  const script = readFileSync(path.join(ROOT, "tools", "second-look.mjs"), "utf8");
+  assert.match(script, /couldNotRun\("Second look"/);
+  assert.match(script, /couldNotRun\("Rail audit"/);
+  assert.doesNotMatch(script, /Second look skipped: \$\{err/, "a failed look is no skip");
+});
+
+// Only the two deepest readers may clear a rail; with both out, no model answered, and the audit is retried.
+test("the rail audit asks Argon, then Opus, and never Flash or Sonnet", () => {
+  assert.deepEqual(RAIL_MODELS, [ARGON, OPUS]);
+  const asked = [];
+  const busy = (model) => {
+    asked.push(model);
+    throw new Error("Quota exceeded for quota metric per minute");
+  };
+  const none = { outUntil: () => null, markOut: () => {} };
+  assert.throws(() => askFirstAvailable(RAIL_MODELS, busy, none, () => 0), /no model answered/);
+  assert.deepEqual(asked, [ARGON, OPUS]);
+  assert.ok(!asked.includes(FLASH) && !asked.includes(SONNET));
+  const script = readFileSync(path.join(ROOT, "tools", "second-look.mjs"), "utf8");
+  assert.match(script, /review\("rail-audit\.md", material, RAIL_MODELS, tmp\)/);
 });
 
 test("the second look runs the rail audit on a rail change, with the audit's own prompt", () => {

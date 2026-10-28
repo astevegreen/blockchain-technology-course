@@ -59,8 +59,8 @@ and `reason`:
 - `build`: `Q move <n> in-progress`, then run the implementer with "Mode: issue. Issue: <n>. Worktree: W."
 - `fix`: `Q move <n> in-progress`, then run the implementer with "Mode: fix. Issue: <n>. Worktree: W.
   Concerns: <concerns>".
-- `resume`: a stopped session built it, or it was held with only minor concerns; its branch holds the commits.
-  `Q move <n> in-progress`, then go straight to 2.1's reviewer run.
+- `resume`: a stopped session built it, it was held with only minor concerns, or its review could not run; its
+  branch holds the commits. `Q move <n> in-progress`, then go straight to 2.1's reviewer run.
 
 ## 2. Review and hand over
 Only a `[blocker]` holds work; a `[minor]` concern ships with a note (owner's policy, 28 Oct 2026).
@@ -77,11 +77,15 @@ Only a `[blocker]` holds work; a `[minor]` concern ships with a note (owner's po
    `[blocker]` findings are concerns like the reviewer's: send them to the implementer as in 2.1 ("Mode: fix.
    Concerns: second look: <list>"); it fixes each valid one and answers the rest with why. Then the reviewer
    once more, adding "Second look: <each blocker and the implementer's answer>". Its `[note]` findings never
-   hold. A "skipped" line or a time-out is no finding: say so in the note.
+   hold. Its first line `Second look: retry`, or the command timing out, means no model reviewed the change:
+   no verdict, so it never moves to `to-integrate` on that. `Q move <n> held --note 'machine: second look
+   could not run: <the reason in its brackets>'`: the queue retries it by itself, and never asks the owner.
 3. No `[blocker]` left: `Q move <n> to-integrate --note '<the hand-back lines, below>'`. The note holds the
    hand-back's LAB TESTS line first when a lab changed, then WHAT CHANGED, STUDENT-VISIBLE and GLOSSARY AND
    ANCHORS, the reviewer's `Slides:` and `Sources not read:` lines, then `Ships with:` and each `[minor]`
-   concern and second-look note left (or `Ships with: nothing`). A minor concern that is real work outside the
+   concern and second-look note left (or `Ships with: nothing`), and each second-look blocker the reviewer found
+   invalid, untagged: `Second look, rejected: <finding> - <why>`. The queue refuses a note that still carries a
+   `[blocker]`: that work is held. A minor concern that is real work outside the
    spec (another file to rework, a missing playbook): first file it with `gh issue create --title "Follow-up
    from #<n>: <what>" --body-file <a file written as for comments>`, no labels, and name it in the note.
    In the `lessons` lane, a diff that changes a lab path (`dynamic-labs/`, `tools/lab_tests.py` or

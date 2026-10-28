@@ -10,6 +10,8 @@
 //                                      held work that waits for the owner, the only kind the supervisor @-mentions
 //   digest [--write]                   {post, reason, open, new}: the daily Decisions digest of open content
 //                                      questions; --write posts it (at most one a day, only with a new question)
+//   answers                            {issue, answers: [{issue, answer, at}]}: the owner's answers on the Decisions
+//                                      issue, each from a line that starts with #<n>; a digest never answers
 //   env                                {environment_id}, the computer sessions start on: the window's, else the doc's
 //   window                             {state none|before|open|after, start, end, newYork, lanes, log, supervisor, archiver,
 //                                      wake, stoppedBy}: stoppedBy is "sprint-stop" when /sprint-stop ended it

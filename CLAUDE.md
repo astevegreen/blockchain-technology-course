@@ -86,12 +86,16 @@ The owner judges results, not code: explain every change in plain English and pr
 - With the reviewer, start `node tools/second-look.mjs "<the owner's request>"` in the background: another model
   reviews the same change through agy and picks itself by what changed. Its findings are inputs: check each against
   the files, fix the valid blockers (a valid one holds the push like a reviewer's blocker; notes never do), and
-  name any you rejected, with why, under **Unsure about**. A "skipped" line is not a failure.
-- A change to a rail (`tools/hooks/`, `tools/check.py`, `.githooks/`, `.github/`, `.claude/settings*.json`) runs
-  `second-look.mjs` too, tooling or not: it adds the rail audit, a deep review asking whether the change loosens
-  any check. Its first line decides: no loosening, it ships like any other change; "LOOSENS" or no verdict, push
-  the rest but not the rail change: hold it for the owner with the audit's reasons. Every push to `main` runs the
-  Check workflow (`check.yml`); a red run is fixed or reverted.
+  name any you rejected, with why, under **Unsure about**. A first line `Second look: retry` means no model
+  answered: the machine failed, so run it again later; the change it covers stays committed on a local branch,
+  unpushed, until a run answers. It never waits on the owner.
+- A change to a rail (`RAILS` in `tools/rail-audit.mjs`: the hooks, settings, sprint skills and agents, git hooks,
+  workflows, the check and the checks it runs, the sprint queue, the second look and `GEMINI.md`) runs
+  `second-look.mjs` too, tooling or not: it adds the rail audit, a deep review by Argon or Opus asking whether the
+  change loosens any check. Its first line decides: no loosening, it ships like any other change; "LOOSENS" or an
+  answer with no verdict, push the rest but not the rail change: hold it for the owner with the audit's reasons;
+  `Rail audit: retry`, push the rest and run the audit again later for the rail change. Every push to `main` runs
+  the Check workflow (`check.yml`); a red run is fixed or reverted.
 
 End every task with:
 - **What changed** - in plain English, 2-5 bullets

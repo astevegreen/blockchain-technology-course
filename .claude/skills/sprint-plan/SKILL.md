@@ -53,8 +53,10 @@ be reached, say so on the sprint log and file only items whose spec `docs/sprint
 the repo already hold; anything else waits for a session that can reach it.
 
 ## 2. Check it can be specified
-First read the Decisions issue (the `"Decisions"` line of `docs/sprint.md`; `gh issue view <n> --comments`): an
-`astevegreen` comment there that answers a question settles it, like a line of `docs/sprint.md`.
+First run `Q answers`: it prints the owner's answers on the Decisions issue, each with the issue it answers. Each
+settles that issue's question, like a line of `docs/sprint.md`. Only the queue reads them: an answer is a line of
+the owner's that starts with `#<n>`, for issue n alone, and the digest posted there (at times under the owner's
+name) answers nothing.
 **Sources** are never a question: for each fact no `Blockchain.bib` key supports, do a source pass. Find the
 primary source with WebSearch, read it with WebFetch (`.claude/skills/source/SKILL.md`), and put in the spec its
 URL and the passage that states the fact, word for word; the implementer adds the entry and the reviewer fetches

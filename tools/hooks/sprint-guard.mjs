@@ -34,10 +34,16 @@ function deny(reason) {
 // running them at once break each other.
 const LAB_WORKTREE = "bc-lane-labs";
 
-// Paths the sprint never edits, relative to the repo or worktree root.
+// Paths the sprint never edits, relative to the repo or worktree root. Every rail (tools/rail-audit.mjs, RAILS) is
+// among them: a lane's second look runs its own worktree's copy of the review, so a lane that could edit a rail
+// could loosen its own gate.
 const LOCKED = [
   /^\.claude\//, /^\.githooks\//, /^\.github\//, /^\.gitattributes$/, /^docs\/sprint\.md$/, /^CLAUDE\.md$/,
   /^tools\/sprint\//, /^tools\/hooks\//, /^tools\/check\.py$/,
+  // The checks tools/check.py runs and its tests, and the second look with its prompts and GEMINI.md.
+  /^tools\/qmd_lint\.py$/, /^tools\/tests\/test_(check|qmd_lint)\.py$/, /^quizes\/verify_single_quiz\.py$/,
+  /^blockchain-course\/glossary\/scripts\/validate_glossary\.py$/,
+  /^tools\/agy\.mjs$/, /^tools\/second-look/, /^tools\/rail-audit/, /^GEMINI\.md$/,
   // Generated: they change only by running their scripts (CLAUDE.md, hard rule 2).
   /^blockchain-course\/glossary\/(slide-index\.yml|terms\.yml|terms\.json|duplicates\.md|index\.qmd|index\.pdf)$/,
   /^quizes\/dist\//, /^blockchain-course\/_site\//,
