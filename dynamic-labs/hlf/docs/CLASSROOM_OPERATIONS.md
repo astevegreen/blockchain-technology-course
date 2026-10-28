@@ -100,14 +100,14 @@ incognito = new claim.
 
 The lane grid is the single-glance situational awareness surface.
 
-### Colour key
+### Color key
 
 | Color | Meaning |
 | --- | --- |
 | Green | Peer is running, healthy |
 | Amber | Peer is `starting` or `stopping` (transient state — wait) |
 | Red | Peer is in `error` — check `last_message` in the cell |
-| Grey | `stopped` — lane is idle or not yet claimed |
+| Gray | `stopped` — lane is idle or not yet claimed |
 
 Each cell shows:
 

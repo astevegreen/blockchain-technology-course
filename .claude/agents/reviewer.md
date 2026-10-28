@@ -39,9 +39,9 @@ An optional "Base: <sha>" replaces `<base>`.
      `quizes/DISTRACTOR_REWRITE_GUIDE.md`, and every correct answer traces to a line of the lesson
    - nothing instructor-only (quiz banks, answers, solutions, instructor seeds) reaches `blockchain-course/` or a
      `dynamic-labs/` path that `.github/workflows/pages.yml` packs for students or `vm-build.yml` leaves on the VM
-   - the change's neighbours: grep at `<head>` for each changed or removed heading, anchor and term in the other
+   - the change's neighbors: grep at `<head>` for each changed or removed heading, anchor and term in the other
      lessons, lab worksheets and quiz banks. A link now broken, or a quiz answer that no longer traces to the
-     lesson, is a `blocker`; a neighbour that now teaches it differently is `minor`. A moved anchor the mind map
+     lesson, is a `blocker`; a neighbor that now teaches it differently is `minor`. A moved anchor the mind map
      links to is no concern: the sprint lists it for the mind-map pass.
    - sprint form only:
      - `docs/sprint.md` holds: no content decision the spec leaves open was made, no locked path touched, and

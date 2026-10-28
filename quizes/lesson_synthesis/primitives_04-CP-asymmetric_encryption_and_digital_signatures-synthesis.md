@@ -105,7 +105,7 @@ This innovation, driven by mathematical trapdoor functions, underpins both tradi
 - Level 3 (Apply): 30% (Choosing the correct key for a given scenario, identifying appropriate use cases for ECC vs. RSA)
 - Level 4 (Analyze): 20% (Comparing PKI vs. Blockchain trust architectures, diagnosing certificate or validation failures)
 - Level 5 (Evaluate): 10% (Evaluating the systemic impact of implementation flaws or assessing the threat of quantum computing)
-Rationale: The lesson introduces foundational cryptographic concepts but heavily emphasizes how these mechanisms are applied in complex systems (PKI, blockchains) and where those systems typically break down (implementation flaws, key management). Therefore, the assessment should skew towards understanding workflows and applying concepts to specific scenarios rather than rote memorization.
+Rationale: The lesson introduces foundational cryptographic concepts but heavily emphasizes how these mechanisms are applied in complex systems (PKI, blockchains) and where those systems typically break down (implementation flaws, key management). Therefore, the assessment should skew toward understanding workflows and applying concepts to specific scenarios rather than rote memorization.
 
 ## Source Anchors
 - The Key-Distribution Crisis

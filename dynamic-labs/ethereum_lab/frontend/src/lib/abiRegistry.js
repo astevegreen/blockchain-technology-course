@@ -111,7 +111,7 @@ function ifaceFor(address) {
 const argList = (inputs, args) => (inputs || []).map((inp, i) => ({ name: inp.name || `arg${i}`, type: inp.type, value: args[i] }));
 
 // Decode a transaction's calldata → { name, signature, args:[{name,type,value}], known }
-// or { selector } when the function is unrecognised, or null for plain transfers.
+// or { selector } when the function is unrecognized, or null for plain transfers.
 export function decodeInput(to, data) {
   if (!data || data === '0x' || data.length < 10) return null;
   const own = ifaceFor(to);

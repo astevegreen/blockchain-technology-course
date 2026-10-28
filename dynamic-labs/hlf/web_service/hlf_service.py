@@ -287,7 +287,7 @@ class HLFLabService:
         self._governance_detail_ts: float = 0.0
         self._governance_detail_refreshing: bool = False
 
-        # Container name mapping — centralised so every method uses the same names.
+        # Container name mapping — centralized so every method uses the same names.
         # Org5 (Meridian) is a read-only channel member: shown in topology + node
         # overview, but excluded from endorsement/invoke paths.
         self._container_names = {
@@ -2494,7 +2494,7 @@ rm -rf "$tmpdir"
                     ],
                     "student_steps": [
                         "Open the Explorer and look at the Network section. You should see the four consortium peers, Meridian Industries' read-only observer peer, the orderer, and whichever student peers are currently running — including `{{peer}}` (that's you).",
-                        "Each participant shows a status indicator — green means running and connected. Meridian is labelled as a read-only observer; notice its role is different from the consortium peers.",
+                        "Each participant shows a status indicator — green means running and connected. Meridian is labeled as a read-only observer; notice its role is different from the consortium peers.",
                         "Open the Governance & Identity panel. Each organization has its own MSP (membership identity). The four consortium orgs plus Org5MSP (Meridian) are channel members; your org is listed alongside them. You'll dig into this in Chapter 4.",
                         "Ask yourself: why is it useful that four independent consortium institutions maintain this ledger, rather than just one or two? And why might you want a non-endorsing observer like Meridian on the same ledger?",
                     ],
@@ -2510,7 +2510,7 @@ rm -rf "$tmpdir"
                     "id": "issue-diploma",
                     "chapter": "chapter-1",
                     "title": "Issue Your First Diploma",
-                    "goal": "Time to write. You are going to issue a diploma from **{{school}}**'s peer (`{{peer}}`) — you are the registrar. Pick a recognisable name so you can find your record in the explorer among your classmates'. Imagine, say, that George Washington has just completed a Computer Science master's degree at {{school}}.\n\n"
+                    "goal": "Time to write. You are going to issue a diploma from **{{school}}**'s peer (`{{peer}}`) — you are the registrar. Pick a recognizable name so you can find your record in the explorer among your classmates'. Imagine, say, that George Washington has just completed a Computer Science master's degree at {{school}}.\n\n"
                         "Credentials are stored as 'assets' on the blockchain. Each asset has an ID, plus properties like owner, field of study, degree type, and graduation year. You will use your own console to create a new asset representing that diploma. Note the asset ID prefix: we include your student id (`{{student_id}}`) so it is easy to pick {{school}}'s records out of the shared explorer later.",
                     "question": "Once your org creates this record on the shared ledger, can you (or anyone else) later delete or alter it silently?",
                     "prediction_prompt": "Before running the command, predict: will the transaction succeed instantly, or will it need to go through some kind of approval process first? Who has to sign?",

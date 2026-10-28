@@ -33,7 +33,7 @@ Stop when `Q window` prints `state` `after`, or `start` is false. With `state` `
 open yet: planning day), go on past 3 `ready` until it is 6, still stopping when `todo` is empty.
 
 ## 1. Pick
-First, any open issue labelled `L` and `spec-review` is one a stopped session filed and never released
+First, any open issue labeled `L` and `spec-review` is one a stopped session filed and never released
 (`gh issue list --label L --label spec-review --state open`): finish it with steps 4 and 5 before anything new.
 Run `Q has-work "Course plan: $ARGUMENTS"` and read the lane's backlog in `docs/sprint.md`. Take the first
 `todo` item. One with an unanswered question on "Sprint questions" (step 2): before the window, skip it; during

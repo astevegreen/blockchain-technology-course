@@ -18,7 +18,7 @@ By the end of the lab students should be able to:
   outages**, and **endorsement policy violations**.
 - Describe how **MSP identity**, **endorsement policy**, and **channel
   governance** control who can do what, and why "permissioned" doesn't
-  mean "centralised".
+  mean "centralized".
 - Apply the same infrastructure to a consortium with **competing
   interests** (trade finance).
 
@@ -62,7 +62,7 @@ classmates' diplomas appear on the same ledger.
 ### 2. Chapter 1 — Issue & Verify a Diploma (25 min)
 
 - Students issue a diploma from their own peer. Have them use a name
-  they'll recognise so they can pick it out of the explorer.
+  they'll recognize so they can pick it out of the explorer.
 - Open the explorer as a class — watch diplomas stream in from every
   student.
 - Pair students: A's diploma is verified from B's explorer view as
@@ -97,7 +97,7 @@ a Cascadia State signature — you can't fake that from Chesapeake Canoe's peer.
 - Ask: "who could issue a diploma as Cascadia State?" Answer: only an
   identity signed by Cascadia's CA. That's the MSP doing its job.
 - Contrast with Bitcoin/Ethereum: there, anyone with the right signature
-  can write. Here, the signer must be a recognised member.
+  can write. Here, the signer must be a recognized member.
 - Use Meridian (Org5) as the pedagogical anchor: it is a channel member
   with a full ledger mirror but is deliberately *absent* from the
   Endorsement / LifecycleEndorsement policies. Every student org sits in
@@ -136,7 +136,7 @@ screen and show the endorsing peer's certificate fingerprint. It's the
 concrete "who signed this" anchor.
 
 **Chapter 3 (Faults).** If you trigger a consortium peer outage, expect
-the lane grid to _not_ change colour — student peers are still up. The
+the lane grid to _not_ change color — student peers are still up. The
 outage is on a consortium peer, visible in Node Overview and Scenario
 Controls. If you want to drop a specific student's peer to show local
 vs. global failure, use the per-lane **Stop** button on that lane.

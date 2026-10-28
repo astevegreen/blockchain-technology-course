@@ -287,7 +287,7 @@ export function hasWork(world, title, started = 0) {
     const issues = world.issues.filter((i) => i.open && i.labels.includes("to-integrate")).map((i) => i.number).sort((a, b) => a - b);
     answer = {
       start: issues.length > 0,
-      reason: issues.length ? `to integrate: ${issues.map((n) => `#${n}`).join(", ")}` : "no open issue is labelled to-integrate",
+      reason: issues.length ? `to integrate: ${issues.map((n) => `#${n}`).join(", ")}` : "no open issue is labeled to-integrate",
       issues,
     };
   } else if (title.startsWith(`${TITLE} plan: `)) {

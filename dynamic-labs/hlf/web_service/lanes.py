@@ -496,7 +496,7 @@ class LaneManager:
         the compose file existing for *read-only* status polls.
 
         Extra field `live` is exposed so the UI can distinguish live
-        container state from registry state when rendering (e.g., grey
+        container state from registry state when rendering (e.g., gray
         out a lane that's "starting" per registry but whose container
         hasn't shown up yet).
         """

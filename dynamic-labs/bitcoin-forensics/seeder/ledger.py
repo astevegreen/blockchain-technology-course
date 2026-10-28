@@ -3,7 +3,7 @@
 v33 thought in *wallet balances* and let Core pick coins (``sendtoaddress``/``sendmany``), which swept
 every UTXO a wallet held — that's what produced the 22–36-input "peels" and the co-mingled vault. Here
 the scenario spends **named, specific UTXOs**. The ledger is the authoritative record of every coin the
-build creates, keyed by outpoint and by a human label, so a step can say "spend the coin labelled
+build creates, keyed by outpoint and by a human label, so a step can say "spend the coin labeled
 ``peel.chunk3.hop2.remainder``" and get exactly that one.
 """
 from __future__ import annotations
@@ -48,7 +48,7 @@ class CoinLedger:
         """Fetch a coin by its unique label (raises if unknown or already spent)."""
         u = self._by_label.get(label)
         if u is None:
-            raise KeyError(f"no UTXO labelled {label!r}")
+            raise KeyError(f"no UTXO labeled {label!r}")
         if u.outpoint in self._spent:
             raise ValueError(f"UTXO {label!r} already spent")
         return u

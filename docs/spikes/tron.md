@@ -41,7 +41,7 @@ index on open-source terms.
 - **TronGrid** is a hosted service.
   - Its `/v1` calls are "the pre-indexed query layer that TronGrid provides in addition to standard node APIs"
     (developers.tron.network `docs/trongrid`, updated 20 Oct 2026).
-  - Its code is not published and has no licence (`tron-us/trongrid` README, 2019).
+  - Its code is not published and has no license (`tron-us/trongrid` README, 2019).
   - Free Basic plan: 100,000 requests a day with an API key (trongrid.io/price, read 23 Oct 2026). The rate-limit
     page gives no per-second figure (updated 14 Oct 2026).
   - The terms (24 Sep 2026) forbid reselling the service or giving third parties access to it or its keys. I found
@@ -61,14 +61,14 @@ index on open-source terms.
   - java-tron's `event-plugin` (v3.0.0, 3 Jul 2026), feeding MongoDB.
   - `tron-eventquery` (last commit Oct 2022).
 
-  Neither repo has a licence file, so neither is open source in the course's sense.
+  Neither repo has a license file, so neither is open source in the course's sense.
 - **USDT's freeze controls** (contract `TetherToken`; source read from Tronscan's code tab):
   - `addBlackList`, `removeBlackList` and `destroyBlackFunds` are `onlyOwner`. `destroyBlackFunds` zeroes the
     balance of an address already blacklisted.
   - A blacklisted address cannot send USDT: `transfer` and `transferFrom` both check it.
   - Its events are `AddedBlackList`, `RemovedBlackList` and `DestroyedBlackFunds`.
   - The owner is a MultiSigWallet contract, `TBPxhVAsuzoFnKyXtc1o2UySEydPHgATto` (read 24 Oct 2026 UTC).
-- **Licences:** java-tron LGPL-3.0 (v4.8.2.4); DuckDB MIT.
+- **Licenses:** java-tron LGPL-3.0 (v4.8.2.4); DuckDB MIT.
 
 ## What the lab build must solve
 1. **The case, its addresses and their labels.** These are content decisions.

@@ -6,11 +6,11 @@ restated as the rules every build item is checked against. Notion wins where thi
 the owner. Build items, their sizes and their status live in the Notion "Build Tracker (Stage F)" database.
 
 ## The course
-- **Blockchain Intelligence Analysis**: "Characterising on-chain activity and explaining it to agents and
+- **Blockchain Intelligence Analysis**: "Characterizing on-chain activity and explaining it to agents and
   prosecutors". Ten days, 0845-1600, for US government analysts. Ready to offer by 26 Feb 2027.
 - One running case: Bitcoin (days 1-3), Ethereum and its contracts (4-5), a bridge (6), stablecoins and Tron (7),
   where tracing stops (8), the capstone (9-10).
-- Every lab ends in a product an analyst would hand over, and every judgement carries a confidence.
+- Every lab ends in a product an analyst would hand over, and every judgment carries a confidence.
 
 ## The day map
 | Day | Theme | Lab product |
@@ -42,7 +42,7 @@ Numbers in brackets are Course Audit rows. Stage F may move a boundary to fit a 
 | 6 | Chain hopping and bridges (the bridge slides of 01-FO and 02-FO), M | Layer 2s (01-EF, with the trilemma from 04-IN), M | Ransomware-as-a-service and the cash-out (85), new, L | 6, 10, 21 |
 | 7 | Tokens and stablecoins; issuer freezes and blacklisting (02-AS, 06-EF), M | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Permissioned ledgers and CBDCs, about 20 minutes (01-PC, 02-AS), then the instructor's Fabric demo, about 30 minutes (55), M | 31, 38, 39, 46, 48, 49 |
 | 8 | Privacy coins: Monero and Zcash (02-FO, 04-BF), M | Cryptojacking, new, L | Fusing on-chain findings with other sources, new, L | 11, 23, 29 |
-| 9 | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organised with ATT&CK and the Diamond Model, new, L | Briefing agents and prosecutors (83), L | 26, 30, 37 |
+| 9 | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organized with ATT&CK and the Diamond Model, new, L | Briefing agents and prosecutors (83), L | 26, 30, 37 |
 
 Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons.
 
@@ -59,13 +59,13 @@ or lab. If time runs short, P4 is cut first, then P3, P5, P6, P8 and P10 one at 
 | P1 Look-alikes beside the real thing | D2 ②, D5 ①, both code-reading worksheets, memo point 4 | D2 ②: an exchange's batched payouts beside a peel chain. D5 ①, about 15 minutes: routers, aggregators, MEV bots, paymasters and relayers are in the path, not the counterparty. Day-4 worksheet: proxy (ERC-1967) to implementation, and who received from internal transactions and Transfer logs in Otterscan. Day-5 worksheet: a 4-byte selector lookup. Memo point 4 adds routers and batched payouts as known false positives. |
 | P2 How well the heuristics have been measured | D3 ③; D9 ③ | About 15 minutes in D3 ③: Kappos et al. (USENIX Security 2022) and Möser and Narayanan (FC 2022) in words; why the Bitcoin Fog court admitted the tracing (United States v. Sterlingov, D.D.C., 2024; upheld 25 Sep 2026); the 2023 FRE 702 note. An instructor-only bank of 10 to 15 challenge questions in `quizes/` for D9 ③'s briefing point 5, starting with the router question (phase 3). No new test item. |
 | P3 Mixers update | D3 ① | PayJoin, dusting, and the 2024 end of the zkSNACKs and Samourai coordinators. |
-| P4 Solana, to recognise only | D6 ② | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
+| P4 Solana, to recognize only | D6 ② | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
 | P5 Bridges by type | D6 ① | Lock-and-mint, message-verified, liquidity and intents, with the Bitget hack as the case. |
 | P6 Freezable stablecoins as a lead | D4 ②; D7 lab | D4 ②: reading Tether's blacklist functions. D7's exposure summary adds "Freezable? Which issuer, and how fast?" |
 | P7 One graded Meets point | D2 trace, code-reading worksheet, D6 diagram, D7 summary | See Marking and assessment. |
 | P8 Deposit-address heuristic | D7 lab | Victor, "Address Clustering Heuristics for Ethereum" (FC 2020). |
 | P9 (declined) | D5 ③; D7 | NFT wash trading keeps its full segment; the Fabric demo stays live. |
-| P10 A slide on live data | D1 ③ | Explorers see your queries and IP address, recent blocks can reorganise, APIs limit request rates; captured data in class, agency rules on the job. |
+| P10 A slide on live data | D1 ③ | Explorers see your queries and IP address, recent blocks can reorganize, APIs limit request rates; captured data in class, agency rules on the job. |
 
 ## A lesson
 - Fits one 50-minute slot; three a day. A lesson that won't fit after trimming goes back to the owner with a split.
@@ -89,7 +89,7 @@ or lab. If time runs short, P4 is cut first, then P3, P5, P6, P8 and P10 one at 
 ## Confidence scale
 - **High**: two or more independent lines of evidence agree, and no known failure of the heuristic applies.
 - **Moderate**: one strong line, or weaker lines that agree, but a known false positive could apply.
-- **Low**: timing, amount or behaviour alone, or one unverified label such as an explorer tag.
+- **Low**: timing, amount or behavior alone, or one unverified label such as an explorer tag.
 - Independent means a different kind of evidence, not a second heuristic over the same transactions.
   Never a percentage.
 

@@ -1015,7 +1015,7 @@ function TxView({ provider, id, go, Addr, setError, regVersion, onExplorerTask }
             </>
           ) : (
             <div style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-              Unrecognised function — selector <code style={mono}>{decodedCall?.selector || tx.data.slice(0, 10)}</code> ({(tx.data.length - 2) / 2} bytes).
+              Unrecognized function — selector <code style={mono}>{decodedCall?.selector || tx.data.slice(0, 10)}</code> ({(tx.data.length - 2) / 2} bytes).
               {' '}Deploy the contract from a lab (which records its ABI) to decode its calls.
             </div>
           )}
@@ -1108,7 +1108,7 @@ function CachedTxView({ tx, id, go, Addr, regVersion, onExplorerTask, onRequestR
             </>
           ) : (
             <div style={{ fontSize: '0.82rem', color: 'var(--muted)' }}>
-              Unrecognised function — selector <code style={mono}>{decodedCall?.selector || tx.data.slice(0, 10)}</code> ({(tx.data.length - 2) / 2} bytes).
+              Unrecognized function — selector <code style={mono}>{decodedCall?.selector || tx.data.slice(0, 10)}</code> ({(tx.data.length - 2) / 2} bytes).
               {' '}Deploy the contract from a lab (which records its ABI) to decode its calls.
             </div>
           )}

@@ -5,14 +5,14 @@ instructor quiz banks (`quizes/`) and a Packer VM build (`vm-build/`). README.md
 The owner judges results, not code: explain every change in plain English and prove it with the check.
 
 ## Course direction (owner's charter: Notion "Blockchain Course Prep")
-- Redesign for US government analysts who characterise on-chain activity and explain it to agents and prosecutors;
+- Redesign for US government analysts who characterize on-chain activity and explain it to agents and prosecutors;
   target: every concept in the Notion "Role Concepts" list. Ready to offer by 26 Feb 2027 (a target date; no class booked); later runs add depth.
   Design approved; build items come from the Build Tracker and docs/build-spec.md.
 - Open-source or in-house tools only: never feature commercial analytics platforms (Chainalysis, TRM, Elliptic);
   citing their research is fine. Blockscout is not open source from v11: ask before adding it.
 - Students read code but never write it. Out of scope: legal process (warrants, subpoenas, seizure, chain of custody,
   testimony) and data engineering (Python, SQL, GraphQL).
-- Facts that change (laws, figures, upgrades, licences) carry an "as of" date beside the citation.
+- Facts that change (laws, figures, upgrades, licenses) carry an "as of" date beside the citation.
 
 ## Commands
 - `python tools/check.py` - checks what you changed (it renders changed lessons); prints failures only; must pass
@@ -68,7 +68,7 @@ The owner judges results, not code: explain every change in plain English and pr
 - Keep the shell's working directory out of `blockchain-course/_site/`: it locks the folder and the full render
   fails with `os error 32`.
 - Generated paths over 260 characters fail to write on Windows; keep generated names short.
-- Quarto prints colour codes and spinner frames: send long output to a file and grep it.
+- Quarto prints color codes and spinner frames: send long output to a file and grep it.
 
 ## Commits and pushing
 - Subject line, up to three lines of why, and `Requested: "<the owner's words>"`. One request per commit.

@@ -50,7 +50,7 @@ test("by default it lists the BLOCKER and CRITICAL issues on main, worst first, 
   assert.equal(
     r.out,
     [
-      "SonarCloud, main branch, last analysed 2026-10-22 19:36 UTC: 390 open issues BLOCKER and CRITICAL",
+      "SonarCloud, main branch, last analyzed 2026-10-22 19:36 UTC: 390 open issues BLOCKER and CRITICAL",
       "BLOCKER  VULNERABILITY  secrets:S6706  dynamic-labs/a.pem:1  Remove this key.",
       "CRITICAL  CODE_SMELL  python:S1192  tools/check.py:52  Define a constant instead of duplicating this literal.",
       "CRITICAL  CODE_SMELL  python:S1192  tools/check.py  A file-level issue.",
@@ -122,12 +122,12 @@ test("when SonarCloud cannot be reached it says so and fails", async () => {
   assert.equal(r.out, "sonar-backlog: could not reach SonarCloud: fetch failed");
 });
 
-test("with nothing open it says 0, and for files it warns that an unanalysed file shows 0 too", async () => {
+test("with nothing open it says 0, and for files it warns that an unanalyzed file shows 0 too", async () => {
   const none = await backlog([], { get: fakeSonar().get });
   assert.equal(none.code, 0);
   assert.match(none.out, /^SonarCloud, main branch.*: 0 open issues BLOCKER and CRITICAL$/);
   const files = await backlog(["--files", "tools/new.mjs"], { get: fakeSonar().get });
-  assert.match(files.out, /: 0 open issues in tools\/new\.mjs\nA file SonarCloud has not analysed yet/);
+  assert.match(files.out, /: 0 open issues in tools\/new\.mjs\nA file SonarCloud has not analyzed yet/);
 });
 
 test("a long or multi-line message is cut to one short line", async () => {

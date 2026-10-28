@@ -58,7 +58,7 @@ What a student will see that the lab must explain or fix:
 - **Erigon on mainnet** (its v3.8.1 hardware page, measured 17 Sep 2026): archive 2.25 TB used, 4 TB and 32-64 GB of
   memory recommended, about 14 h to sync; full and minimal nodes keep only the last 36 or 14 days, so address search
   fails on older blocks. It also has to stay online and synced, which is live data, not captured.
-- **Licences:** Otterscan MIT (v2.11.0); Anvil MIT or Apache-2.0 (Foundry `Cargo.toml`); Erigon LGPL-3.0.
+- **Licenses:** Otterscan MIT (v2.11.0); Anvil MIT or Apache-2.0 (Foundry `Cargo.toml`); Erigon LGPL-3.0.
 - **Otterscan's maintenance:** last release v2.11.0, 6 Nov 2025; last push to the repo 2 Feb 2026.
 
 ## What the lab build must solve

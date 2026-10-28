@@ -206,7 +206,7 @@ The lesson supports a strong middle-to-upper difficulty emphasis because its val
 - Do not ask standalone questions about the exact dates of executive orders, legal packages, pilots, sanctions actions, or project milestones unless the date is used to reason about policy direction.
 - Do not ask students to identify flags, image sources, map overlays, captions, or slide artwork.
 - Do not turn country names into simple matching items unless students must infer the posture from policy evidence.
-- Do not ask for exact theft totals, adoption rankings, licence-application numbers, or dollar volumes unless the question tests scale as evidence for a broader model.
+- Do not ask for exact theft totals, adoption rankings, license-application numbers, or dollar volumes unless the question tests scale as evidence for a broader model.
 - Do not ask for acronym expansion alone, such as MiCA, VARA, VASP, CASP, RBI, PBOC, or CBDC, without testing why the institution or framework matters.
 - Do not ask whether a jurisdiction is "for" or "against" crypto without giving enough context to assess mixed posture and tradeoffs.
 - Do not ask students to memorize project names such as Aber, mBridge, Drex, Khokha, or e-CNY without tying them to settlement autonomy, state capacity, or formalization.

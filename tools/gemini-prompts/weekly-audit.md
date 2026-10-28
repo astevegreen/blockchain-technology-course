@@ -3,7 +3,7 @@ Start from README.md, CLAUDE.md and docs/build-spec.md.
 
 Look for:
 - claims with no `Blockchain.bib` key, or a key the bibliography doesn't hold
-- facts that change (laws, figures, upgrades, licences) with no "as of" date
+- facts that change (laws, figures, upgrades, licenses) with no "as of" date
 - instructor-only material on a student path: anything under `blockchain-course/` or `dynamic-labs/` that
   `.github/workflows/pages.yml` packs and that holds answers, solutions or instructor seeds
 - quiz answers the lessons don't support, or a distractor that is also correct

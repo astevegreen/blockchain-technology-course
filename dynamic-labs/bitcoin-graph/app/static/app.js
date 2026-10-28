@@ -478,7 +478,7 @@
             addElements(slice);
             // Advance the BFS through the chosen-direction counterparties —
             // INCLUDING any already on the canvas — so the trail keeps going
-            // instead of dead-ending the moment a neighbour is already drawn.
+            // instead of dead-ending the moment a neighbor is already drawn.
             slice.nodes.forEach(function (n) {
               if (n.kind === "address" && n.addr !== addr && !visited[n.addr]) {
                 visited[n.addr] = true; frontier.push(n.addr);

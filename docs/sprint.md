@@ -87,7 +87,7 @@ The integrator works in `C:/Antigravity/bc-integrate`. The main checkout is only
 
 ## Flow
 
-1. `sprint-plan <lane>` turns backlog items into issues titled `[task] <ID>: <what>`, labelled `lane:<lane>`
+1. `sprint-plan <lane>` turns backlog items into issues titled `[task] <ID>: <what>`, labeled `lane:<lane>`
    and `spec-review`. Each issue holds the full spec: the Build Tracker row, the slot in Stage F's Lessons
    table, the files, the sources to use, and how the reviewer will know it is done. Gemini then audits the
    specs (`node tools/gemini-audit.mjs specs <issues>`, as Terminal Dusk does); the plan session applies the

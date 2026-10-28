@@ -83,7 +83,7 @@ the title `[task] <ID>: ...`.
       sha the first command listed.
    4. Check what it brings: its list must not match a locked path from `docs/sprint.md` ("What still stops a
       task"), and every commit in `git -C I log --format=%B <base>..B` must carry a `Requested: ` line. Either
-      fails: send it back with `blocked` instead of `held`. An issue labelled `lane:lessons` whose list holds a
+      fails: send it back with `blocked` instead of `held`. An issue labeled `lane:lessons` whose list holds a
       lab path goes back the same way: its lab tests never ran.
    5. Note `git -C I rev-parse HEAD` as `p`, then `git -C I cherry-pick <base>..B`. A conflict:
       `git -C I cherry-pick --abort`, then send it back with 'conflicts with main in <files>; rebase B with

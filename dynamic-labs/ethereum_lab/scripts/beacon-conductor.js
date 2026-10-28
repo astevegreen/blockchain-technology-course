@@ -516,7 +516,7 @@ async function main() {
   // the backend offline. We snapshot the clean post-bootstrap state and evm_revert
   // back to it — reclaiming node RAM + resetting the contract while KEEPING the same
   // contract addresses. Triggers: idle (no students) every 5 min, a hard size cap,
-  // and an instructor "reset" button (signalled via a flag file the lab-api writes).
+  // and an instructor "reset" button (signaled via a flag file the lab-api writes).
   const RESET_FLAG = '/tmp/beacon-reset-request';
   const AUTO_ACTIVITY_PATH = process.env.BEACON_AUTO_ACTIVITY_PATH || '/tmp/beacon-auto-activity.json';
   const LEGACY_TOKENIZATION_MODE_FLAG = '/tmp/tokenization-mode';

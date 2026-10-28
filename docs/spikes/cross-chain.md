@@ -50,7 +50,7 @@ if they differ or one is empty: 8 RPC endpoints and 2 Bitcoin APIs in all.
   - Its Parquet reader is an extension, not part of the engine file, and the browser build downloads it from
     `extensions.duckdb.org` the first time a query reads Parquet. CSV needs no extension.
 - **Bybit** (Ethereum, 21 Feb 2025). No `Blockchain.bib` entry yet.
-  - The FBI's PSA I-022625-PSA (26 Feb 2025) lists 51 addresses. It includes the tranche receiver labelled in
+  - The FBI's PSA I-022625-PSA (26 Feb 2025) lists 51 addresses. It includes the tranche receiver labeled in
     `cases.json`, but not the address that took the 401,346 ETH, nor the signer.
   - The Safe statement (28 Feb 2025) and THORChain's memo documentation (dev.thorchain.org) were found, not cited.
   - THORChain's own index (Midgard) wrongly returned no deposits for addresses that made them. It is not needed: the

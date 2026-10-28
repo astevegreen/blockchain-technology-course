@@ -111,10 +111,10 @@ export async function backlog(argv, { get = httpGet } = {}) {
 
     const { total, issues } = found.body;
     const scope = paths ? `in ${paths.join(", ")}` : "BLOCKER and CRITICAL";
-    const analysed = String(project.body.component.analysisDate ?? "").slice(0, 16).replace("T", " ");
-    const out = [`SonarCloud, main branch, last analysed ${analysed || "(unknown)"} UTC: ${total} open issues ${scope}`];
+    const analyzed = String(project.body.component.analysisDate ?? "").slice(0, 16).replace("T", " ");
+    const out = [`SonarCloud, main branch, last analyzed ${analyzed || "(unknown)"} UTC: ${total} open issues ${scope}`];
     if (total === 0 && paths)
-      out.push("A file SonarCloud has not analysed yet (new, renamed or unpushed) also shows 0.");
+      out.push("A file SonarCloud has not analyzed yet (new, renamed or unpushed) also shows 0.");
     out.push(...issues.map(line));
     if (total > issues.length)
       out.push(`${total - issues.length} more not shown. Narrow it with --files, or raise --limit (up to ${MAX_LIMIT}).`);

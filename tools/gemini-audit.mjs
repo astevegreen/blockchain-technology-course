@@ -12,7 +12,7 @@ const ROOT = path.resolve(import.meta.dirname, "..");
 const USAGE = "usage: node tools/gemini-audit.mjs specs <issue numbers...> | weekly | narrative [--dry-run]";
 // The queue (tools/sprint/rules.mjs) skips comments that start with this, so an audit never reads as a sprint step.
 const MARKER = "<!-- gemini-audit -->";
-const PINNED = { weekly: "Gemini weekly audit", narrative: "How the course is organised" };
+const PINNED = { weekly: "Gemini weekly audit", narrative: "How the course is organized" };
 
 const argv = process.argv.slice(2);
 const DRY = argv.includes("--dry-run");
@@ -146,7 +146,7 @@ function repoWide(promptName, label) {
 try {
   if (mode === "specs") specs();
   else if (mode === "weekly") repoWide("weekly-audit", "weekly");
-  else if (mode === "narrative") repoWide("narrative", "how the course is organised,");
+  else if (mode === "narrative") repoWide("narrative", "how the course is organized,");
   else throw new Error(USAGE);
 } catch (err) {
   console.error(err.message);

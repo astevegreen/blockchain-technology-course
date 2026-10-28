@@ -58,7 +58,7 @@ issue with a recommended answer, move it to `blocked`, and hand back STATUS: BLO
   Fix mode: `git -C W switch sprint/n` first, since every hand-back (step 4) detaches it; when the concern is a
   conflict with main, rebase it: `git -C W fetch origin` then `git -C W rebase --reapply-cherry-picks origin/main`
   (main may hold this task and its revert, which a plain rebase would silently drop), resolving conflicts in the
-  task's favour only where the task owns the lines.
+  task's favor only where the task owns the lines.
 - Keep unfinished work as commits on `sprint/n`, never as a patch file: a later session applying a patch looks
   like running untrusted code, and the safety check refuses it.
 - Sources (`docs/sprint.md`, permission 4): cite a key already in `Blockchain.bib` where one supports the claim.

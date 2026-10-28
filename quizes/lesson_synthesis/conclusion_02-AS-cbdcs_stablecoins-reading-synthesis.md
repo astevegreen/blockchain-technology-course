@@ -14,7 +14,7 @@
 
 ## Executive Summary
 
-The BIS chapter argues that the future monetary system should preserve central bank money as the trust anchor while incorporating useful digital capabilities such as programmability, composability, tokenisation, fast payments, and cross-border interoperability. It contrasts this public-money-centered vision with crypto and stablecoin systems, which it argues are structurally unsuitable as the basis for a monetary system because they lack a stable nominal anchor, fragment across incompatible settlement layers, face incentive-driven scalability limits, and often depend on unregulated intermediaries despite decentralisation claims.
+The BIS chapter argues that the future monetary system should preserve central bank money as the trust anchor while incorporating useful digital capabilities such as programmability, composability, tokenization, fast payments, and cross-border interoperability. It contrasts this public-money-centered vision with crypto and stablecoin systems, which it argues are structurally unsuitable as the basis for a monetary system because they lack a stable nominal anchor, fragment across incompatible settlement layers, face incentive-driven scalability limits, and often depend on unregulated intermediaries despite decentralization claims.
 
 For the lesson, the reading deepens the distinction between digital money types by explaining why issuer, settlement asset, infrastructure, permission model, and public accountability matter. The lesson compares CBDCs, stablecoins, and cryptocurrencies as geopolitical and payment-rail architectures; the BIS reading supplies the institutional argument for why CBDCs and retail fast payment systems can be viewed as state-backed public infrastructure, while stablecoins represent private attempts to import central bank credibility without the same institutional protections.
 
@@ -24,7 +24,7 @@ The reading supports the lesson's currency-layer versus payment-infrastructure-l
 
 The reading contributes a central-bank perspective on trust architecture. Where the lesson contrasts hierarchical trust in CBDCs with distributed trust in permissionless systems, the reading explains why BIS sees central bank money as the foundation for stability, final settlement, liquidity provision, and payment-system integrity. It also clarifies that permissioned DLT, APIs, and smart-contract-like functions can exist without adopting permissionless crypto governance.
 
-The reading adds nuance beyond the lesson by making retail fast payment systems part of the same modernization agenda as CBDCs. It does not treat every digital monetary improvement as requiring a CBDC or blockchain. Instead, it argues that CBDCs, FPS, tokenised deposits, APIs, and multi-CBDC arrangements are alternative public-infrastructure tools for achieving efficiency, inclusion, privacy, integrity, adaptability, and openness.
+The reading adds nuance beyond the lesson by making retail fast payment systems part of the same modernization agenda as CBDCs. It does not treat every digital monetary improvement as requiring a CBDC or blockchain. Instead, it argues that CBDCs, FPS, tokenized deposits, APIs, and multi-CBDC arrangements are alternative public-infrastructure tools for achieving efficiency, inclusion, privacy, integrity, adaptability, and openness.
 
 The reading complicates simple pro- or anti-crypto narratives. BIS rejects crypto as a monetary foundation but still treats some crypto-originated capabilities as valuable if grounded in central bank money and regulated intermediaries. Future quiz questions should therefore test whether students can separate useful technical affordances from the institutional and incentive structures that BIS criticizes.
 
@@ -35,10 +35,10 @@ The reading complicates simple pro- or anti-crypto narratives. BIS rejects crypt
 - BIS argues that crypto's flaws are structural, not merely temporary implementation problems: permissionless incentives, congestion, high fees, fragmentation, and weak accountability prevent it from serving as a monetary-system base.
 - Stablecoins can be asset-backed or algorithmic, but both depend on confidence in mechanisms outside the token itself, such as reserve quality, redemption arrangements, arbitrage incentives, or continued speculative demand.
 - The TerraUSD collapse illustrates how an algorithmic stablecoin can fail when the confidence loop between the stablecoin and its supporting token breaks.
-- Programmability, composability, tokenisation, atomic settlement, and open-source protocols are not exclusive to permissionless crypto; BIS argues they can be built on CBDCs, tokenised deposits, FPS, and permissioned DLT.
+- Programmability, composability, tokenization, atomic settlement, and open-source protocols are not exclusive to permissionless crypto; BIS argues they can be built on CBDCs, tokenized deposits, FPS, and permissioned DLT.
 - Retail CBDCs and retail fast payment systems share many policy goals: near-real-time payments, interoperability, competition among payment service providers, inclusion, and stronger user data governance.
 - Wholesale CBDCs can support programmable settlement among financial institutions and other approved intermediaries, including payment-versus-payment and delivery-versus-payment mechanisms.
-- Multi-CBDC arrangements illustrate a constructive role for decentralisation when multiple central banks must share governance over cross-border, cross-currency settlement.
+- Multi-CBDC arrangements illustrate a constructive role for decentralization when multiple central banks must share governance over cross-border, cross-currency settlement.
 - Privacy and integrity are presented as design tensions: a real-name payment system needs legal accountability and anti-illicit-finance controls, while still protecting transactional privacy through governance and cryptographic techniques.
 
 ## Essential Concepts From The Reading
@@ -53,7 +53,7 @@ The reading complicates simple pro- or anti-crypto narratives. BIS rejects crypt
 | Permissionless incentive structure | Validators must be rewarded enough to maintain honest behavior, which creates pressure toward congestion and fees. | Helps assess why BIS views scalability and security problems as economic rather than purely technical. |
 | Fragmentation | Competing blockchains, bridges, and incompatible settlement layers undermine money's network effects. | Lets future questions compare monetary network effects with crypto's multi-chain fragmentation. |
 | Programmability | Conditional execution and smart-contract-like functions can automate settlement and bundled transactions. | Tests whether learners avoid equating programmability exclusively with permissionless chains. |
-| Atomic settlement | Payments and related asset transfers can be executed together or not at all. | Useful for reasoning about counterparty-risk reduction in wholesale CBDC or tokenised-deposit contexts. |
+| Atomic settlement | Payments and related asset transfers can be executed together or not at all. | Useful for reasoning about counterparty-risk reduction in wholesale CBDC or tokenized-deposit contexts. |
 | Retail FPS | Fast payment systems can provide near-real-time, low-cost payments without necessarily using CBDC or DLT. | Prevents the misconception that all digital payment modernization equals CBDC. |
 | Multi-CBDC arrangements | Cross-border CBDC systems can coordinate multiple central banks and currencies through standards, interlinking, or shared platforms. | Supports scenario questions about international payment rails and governance. |
 | Privacy-integrity tradeoff | The reading distinguishes pseudo-anonymous public ledgers from real-name systems with privacy-preserving architecture and legal safeguards. | Helps assess nuanced reasoning about surveillance, privacy, KYC, and illicit finance. |
@@ -68,9 +68,9 @@ The tradeoff is that stablecoins offer crypto-market convenience while introduci
 
 ### Permissionless Blockchains, Incentives, And Fragmentation
 
-BIS argues that permissionless blockchains face an incentive problem: validators with no legal identity or reputation at stake need monetary rewards high enough to deter cheating. Those rewards are sustained through fees and congestion, which limit throughput. Attempts to increase capacity can weaken decentralisation or security, producing the scalability trilemma.
+BIS argues that permissionless blockchains face an incentive problem: validators with no legal identity or reputation at stake need monetary rewards high enough to deter cheating. Those rewards are sustained through fees and congestion, which limit throughput. Attempts to increase capacity can weaken decentralization or security, producing the scalability trilemma.
 
-This causal chain supports a major reading claim: fragmentation is not an accidental bug but a predictable result of permissionless systems trying to escape congestion. New chains compete by offering more capacity or lower fees, but they may do so by cutting corners on security or decentralisation. Bridges then emerge to connect incompatible systems, creating additional trust and hacking risks.
+This causal chain supports a major reading claim: fragmentation is not an accidental bug but a predictable result of permissionless systems trying to escape congestion. New chains compete by offering more capacity or lower fees, but they may do so by cutting corners on security or decentralization. Bridges then emerge to connect incompatible systems, creating additional trust and hacking risks.
 
 ### Central Bank Public Goods And Network Effects
 
@@ -84,11 +84,11 @@ The reading does not collapse CBDCs and FPS into the same thing. Retail CBDC is 
 
 This distinction matters for assessment because learners should be able to reason about the instrument being transferred, the settlement asset, and the institutional claim behind the user's balance.
 
-### Wholesale CBDCs And Tokenised Deposits
+### Wholesale CBDCs And Tokenized Deposits
 
-Wholesale CBDCs can provide programmable settlement for approved intermediaries. BIS emphasizes atomic settlement, where payments, securities delivery, or other linked obligations settle together or not at all. Tokenised deposits can represent commercial bank deposits on a DLT platform while remaining convertible into central bank money at par and settling between institutions using wholesale CBDC.
+Wholesale CBDCs can provide programmable settlement for approved intermediaries. BIS emphasizes atomic settlement, where payments, securities delivery, or other linked obligations settle together or not at all. Tokenized deposits can represent commercial bank deposits on a DLT platform while remaining convertible into central bank money at par and settling between institutions using wholesale CBDC.
 
-The tradeoff is that decentralised or shared-ledger functionality can be useful, but BIS wants it inside a regulated, permissioned system where central bank money preserves finality and singleness.
+The tradeoff is that decentralized or shared-ledger functionality can be useful, but BIS wants it inside a regulated, permissioned system where central bank money preserves finality and singleness.
 
 ### Privacy, Identity, And Integrity
 
@@ -109,7 +109,7 @@ This supports the lesson's payment-rail theme by showing that alternative rails 
 - Stablecoin redemptions after TerraUSD: Shows that confidence shocks can affect even asset-backed stablecoins, especially when reserves are opaque. This example supports questions about reserve transparency and redemption risk.
 - Blockchain congestion and fragmentation graphs: Illustrate the BIS claim that higher use can create congestion and fees, encouraging migration to other chains and producing fragmentation. Use as conceptual evidence for incentive-driven scalability limits.
 - Cross-chain bridges and hacks: Illustrate how attempts to connect fragmented settlement layers can create new trusted chokepoints and security vulnerabilities.
-- DeFi governance tokens, oracles, and centralised exchanges: Support the reading's claim that crypto systems often rely on centralised actors despite decentralisation rhetoric.
+- DeFi governance tokens, oracles, and centralized exchanges: Support the reading's claim that crypto systems often rely on centralized actors despite decentralization rhetoric.
 - Project Hamilton: Illustrates that a high-performance retail CBDC architecture can use crypto-inspired ideas without using DLT. This supports the distinction between technical capability and blockchain ideology.
 - Pix in Brazil: Illustrates how retail FPS can lower costs and expand digital-payment access without being a CBDC. It is most useful for distinguishing payment modernization from CBDC issuance.
 - Box C on permissioned DLT and zero-knowledge proofs: Provides a concrete privacy-integrity mechanism for CBDC-like systems using real identities without exposing all transaction history.
@@ -123,9 +123,9 @@ This supports the lesson's payment-rail theme by showing that alternative rails 
 - Misconception: A dollar-pegged stablecoin creates a new independent monetary anchor. Corrected understanding: the peg imports credibility from the sovereign unit of account issued by a central bank.
 - Misconception: Crypto's scalability problems are just engineering limits that faster hardware will solve. Corrected understanding: BIS argues the limits arise from incentive and governance structures in permissionless validation.
 - Misconception: More blockchains automatically mean more monetary choice and resilience. Corrected understanding: BIS frames fragmentation as a weakness because money depends on network effects, interoperability, and singleness.
-- Misconception: DeFi is fully decentralised if it runs on smart contracts. Corrected understanding: governance-token concentration, oracles, bridges, validators, and centralised exchanges create centralized dependencies.
+- Misconception: DeFi is fully decentralized if it runs on smart contracts. Corrected understanding: governance-token concentration, oracles, bridges, validators, and centralized exchanges create centralized dependencies.
 - Misconception: CBDCs are simply government-run cryptocurrencies. Corrected understanding: the reading defines CBDCs as central bank liabilities denominated in the national unit of account, usually designed around permissioned infrastructure, public mandates, and regulated intermediaries.
-- Misconception: Programmability, composability, and tokenisation require permissionless crypto. Corrected understanding: BIS argues these functions can be implemented on CBDCs, tokenised deposits, FPS-linked architectures, and permissioned DLT.
+- Misconception: Programmability, composability, and tokenization require permissionless crypto. Corrected understanding: BIS argues these functions can be implemented on CBDCs, tokenized deposits, FPS-linked architectures, and permissioned DLT.
 - Misconception: A retail fast payment system and a retail CBDC are the same because both are fast digital payments. Corrected understanding: a CBDC is a direct claim on the central bank, while FPS normally transfers claims on private intermediaries.
 - Misconception: Public blockchains solve privacy because users are not named. Corrected understanding: pseudo-anonymity can become traceable once addresses are linked to identities, and public transaction histories are unsuitable for real-name payment systems.
 - Misconception: Strong KYC necessarily means the central bank sees every retail transaction. Corrected understanding: the reading allows architectures where PSPs hold identity data and privacy protections limit what central banks or other parties can see, subject to legal safeguards.
@@ -143,14 +143,14 @@ This supports the lesson's payment-rail theme by showing that alternative rails 
 
 - Target: Make students trace the TerraUSD failure mechanism at a conceptual level.
 - Good question shape: Mechanism tracing from confidence loss to arbitrage breakdown to death spiral.
-- Avoid: Asking for exact dates, market capitalisation, or the Anchor yield as isolated recall.
+- Avoid: Asking for exact dates, market capitalization, or the Anchor yield as isolated recall.
 
 - Target: Assess the reading's claim that permissionless crypto fragmentation follows from incentives and scalability constraints.
 - Good question shape: Argument evaluation using validator rewards, congestion, fees, and migration to newer chains.
 - Avoid: Asking students to memorize graph labels or specific chain shares.
 
 - Target: Test recognition of the difference between useful crypto-originated functionality and permissionless crypto as a monetary foundation.
-- Good question shape: Compare programmability or tokenisation implemented on a permissionless chain versus a CBDC or tokenised-deposit system.
+- Good question shape: Compare programmability or tokenization implemented on a permissionless chain versus a CBDC or tokenized-deposit system.
 - Avoid: Framing the issue as "blockchain good" versus "blockchain bad."
 
 - Target: Make students apply the reading's high-level monetary-system goals to CBDCs, stablecoins, and crypto.
@@ -165,7 +165,7 @@ This supports the lesson's payment-rail theme by showing that alternative rails 
 - Good question shape: Scenario involving delivery-versus-payment or payment-versus-payment settlement and counterparty-risk reduction.
 - Avoid: Asking for definitions of PvP or DvP without a settlement scenario.
 
-- Target: Assess whether students can explain how tokenised deposits differ from stablecoins in the BIS vision.
+- Target: Assess whether students can explain how tokenized deposits differ from stablecoins in the BIS vision.
 - Good question shape: Compare a regulated bank-deposit token convertible at par and settled in wholesale CBDC with a privately issued stablecoin.
 - Avoid: Treating every token pegged to money as the same kind of liability.
 
@@ -185,21 +185,21 @@ This supports the lesson's payment-rail theme by showing that alternative rails 
 - Good question shape: Scenario classifying a stablecoin, FPS, CBDC, or mCBDC as changing the unit of account, the payment rail, the settlement asset, or some combination.
 - Avoid: Asking for a memorized list of digital money categories.
 
-- Target: Test whether students can identify centralised dependencies inside supposedly decentralised crypto systems.
-- Good question shape: Diagnose the role of oracles, bridges, governance-token concentration, validators, or centralised exchanges in a DeFi scenario.
+- Target: Test whether students can identify centralized dependencies inside supposedly decentralized crypto systems.
+- Good question shape: Diagnose the role of oracles, bridges, governance-token concentration, validators, or centralized exchanges in a DeFi scenario.
 - Avoid: Asking only what the acronym DeFi means.
 
 ## High-Value Question Tags
 
 - `core_tags`: `cbdcs`, `stablecoins`, `central-bank-money`, `payment-infrastructure`, `nominal-anchor`, `monetary-system`, `permissioned-dlt`, `fast-payment-systems`, `cross-border-payments`
-- `supporting_tags`: `terrausd`, `tokenised-deposits`, `atomic-settlement`, `programmability`, `composability`, `tokenisation`, `zero-knowledge-proofs`, `financial-inclusion`, `defi`, `scalability-trilemma`, `m-cbdc`
+- `supporting_tags`: `terrausd`, `tokenized-deposits`, `atomic-settlement`, `programmability`, `composability`, `tokenization`, `zero-knowledge-proofs`, `financial-inclusion`, `defi`, `scalability-trilemma`, `m-cbdc`
 
 ## Suggested Difficulty Distribution
 
-- Level 1: 1 question for essential vocabulary such as CBDC, stablecoin, FPS, nominal anchor, or tokenised deposit.
+- Level 1: 1 question for essential vocabulary such as CBDC, stablecoin, FPS, nominal anchor, or tokenized deposit.
 - Level 2: 2 questions for basic distinctions among stablecoins, CBDCs, retail FPS, wholesale CBDCs, and permissionless crypto.
 - Level 3: 4-5 questions for explaining relationships such as stablecoins importing central bank credibility, CBDCs versus FPS claim structure, and programmability without permissionless crypto.
-- Level 4: 3-4 questions for scenario transfer, mechanism tracing, misconception diagnosis, or argument evaluation involving TerraUSD, fragmentation, privacy-integrity tradeoffs, tokenised deposits, or mCBDC settlement.
+- Level 4: 3-4 questions for scenario transfer, mechanism tracing, misconception diagnosis, or argument evaluation involving TerraUSD, fragmentation, privacy-integrity tradeoffs, tokenized deposits, or mCBDC settlement.
 - Level 5: 0-1 question for synthesizing the BIS institutional argument with the lesson's currency-layer versus payment-infrastructure-layer framework.
 
 Reading-based questions should emphasize Levels 3 and 4 because the chapter's value is not publication trivia but the ability to reason about monetary-system design, institutional trust, and payment infrastructure.
@@ -239,7 +239,7 @@ Reading-based questions should emphasize Levels 3 and 4 because the chapter's va
 ## Anti-Trivia Guidance
 
 - Do not ask for the publication year, chapter number, BIS office location, or report title except as citation context.
-- Do not turn exact transaction counts, user counts, market capitalisations, yield percentages, or survey percentages into standalone recall questions.
+- Do not turn exact transaction counts, user counts, market capitalizations, yield percentages, or survey percentages into standalone recall questions.
 - Do not ask students to identify graph numbers or reproduce graph captions unless the question uses the graph's concept, such as congestion leading to fragmentation.
 - Do not ask which specific stablecoin was third largest, which asset-backed stablecoin briefly lost its peg, or which stablecoin gained flows unless tied to reserve confidence and redemption pressure.
 - Do not ask for the names of every BIS Innovation Hub project unless the question assesses cross-border CBDC models or governance.

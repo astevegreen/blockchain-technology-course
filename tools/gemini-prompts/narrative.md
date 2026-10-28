@@ -1,4 +1,4 @@
-Write a plain-English tour of how this course repository is organised right now, for the owner, who judges
+Write a plain-English tour of how this course repository is organized right now, for the owner, who judges
 results but does not read code. Read the files on disk; don't rely on the docs being current.
 
 - Start with one paragraph: what happens, step by step, from a lesson being edited to students seeing it

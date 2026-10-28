@@ -274,7 +274,7 @@ test("starts nothing under the memory floor", () => {
   }
 });
 
-test("integrate has work while an issue is labelled to-integrate", () => {
+test("integrate has work while an issue is labeled to-integrate", () => {
   const w = world([issue(64, "[task] L3: x", ["lane:wk", "to-integrate"]), issue(57, "[task] L1: y", ["lane:wk", "to-integrate"])]);
   assert.deepEqual(hasWork(w, "Course integrate"), { start: true, reason: "to integrate: #57, #64", issues: [57, 64] });
   assert.equal(hasWork(world([]), "Course integrate").start, false);

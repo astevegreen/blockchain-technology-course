@@ -94,7 +94,7 @@ The lesson emphasizes that real-world P2P networks must constantly heal from "ch
 - Level 3 (Apply): 30%
 - Level 4 (Analyze): 20%
 - Level 5 (Evaluate): 10%
-- Rationale: This lesson is highly conceptual and architectural, requiring students to contrast network designs and reason about their failure modes. A bell-curve distribution leaning towards application and analysis ensures students can map these networking principles onto broader blockchain security scenarios.
+- Rationale: This lesson is highly conceptual and architectural, requiring students to contrast network designs and reason about their failure modes. A bell-curve distribution leaning toward application and analysis ensures students can map these networking principles onto broader blockchain security scenarios.
 
 ## Source Anchors
 - What is an "Overlay Network?"

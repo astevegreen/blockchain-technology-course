@@ -189,7 +189,7 @@ The reading also does not specifically teach blockchain consensus, incentives, l
 ## Suggested Difficulty Distribution
 
 - Level 1: 1-2 questions on recognizing the eight fallacies and basic terms such as latency, bandwidth, topology, transport cost, and heterogeneity.
-- Level 2: 2-3 questions on matching a simple failure or constraint to an appropriate mitigation such as retry, acknowledgement, discovery, monitoring, or standard protocols.
+- Level 2: 2-3 questions on matching a simple failure or constraint to an appropriate mitigation such as retry, acknowledgment, discovery, monitoring, or standard protocols.
 - Level 3: 4-6 questions on causal reasoning, such as why remote calls differ from local calls, why retries can duplicate operations, or why finite bandwidth changes P2P relay design.
 - Level 4: 3-4 questions on scenario transfer to blockchain gossip, multi-operator upgrades, adversarial peer networks, resource-based centralization, or production-vs-test mismatches.
 - Level 5: 0-1 questions only for integrated scenarios combining several fallacies, such as a blockchain upgrade under bandwidth limits, topology churn, heterogeneous clients, and independent administrators.
