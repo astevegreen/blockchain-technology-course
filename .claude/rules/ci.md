@@ -7,10 +7,14 @@ paths:
 - Every workflow that builds something runs on `workflow_dispatch` only, so the owner decides when the site, quiz
   bundle or VM is built. `lab-tests.yml` builds and publishes nothing, so it also runs on a push to `main` that
   changes `dynamic-labs/`; `tools/lab_tests.py` picks the labs, and its `IN_CI` list gains a lab only once that
-  lab's tests pass there.
+  lab's tests pass there. `check.yml` publishes nothing either: it runs `python tools/check.py --all --render` on
+  every push to `main`. After a push, `gh run list --workflow check.yml --limit 1` shows it; a red run is fixed
+  or reverted like a red check.
 - `pages.yml` builds the student `src.zip`; its `-x` list is the fence around instructor material (CLAUDE.md rule 1).
 - The VM build (`vm-build.yml`: Packer and QEMU) runs for hours on GitHub and cannot run here: say it is unverified.
-- Workflows run on Ubuntu, where the interpreter is `python3`.
+- Workflows run on Ubuntu, where the interpreter is `python3`; `check.yml` alone runs on Windows, like the
+  computers that commit, since the check and its tool tests are written for Git Bash there.
+- Workflows are rails: a change to one gets the rail audit (`tools/second-look.mjs` runs it; CLAUDE.md, Finishing).
 - Known gap: three instructor files reach the student VM because the lab services read them at run time:
   `dynamic-labs/bitcoin-forensics/lab.md`, `dynamic-labs/cryptography/solution.md` and
   `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` (`VM_RUNTIME_KEYS` in `tools/check.py`). Any other

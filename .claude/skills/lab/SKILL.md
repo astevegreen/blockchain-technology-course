@@ -8,7 +8,8 @@ paths:
 
 What a lab must be is in `docs/build-spec.md` ("A lab"); the lab rules are in `.claude/rules/labs.md`; this is the order.
 What a lab asks students to find (its scenario) is the owner's call: when the tracker row leaves it open, ask one
-question with a recommendation before building.
+question with a recommendation before building. How it is built (services, images, tests, structure, naming,
+placement, which tool fits) is never asked: decide, and say why in the summary.
 
 1. **Find it.** Read the item's Build Tracker row, then ask the `scout` agent where the lab, its compose target and
    its playbook live (`dynamic-labs/README.md`, "Managed targets").

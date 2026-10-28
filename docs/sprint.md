@@ -28,22 +28,48 @@ setup day the same evening: the answers are under "Setup day", and only the rese
    machinery; see "Turning it off").
 3. Lanes commit on local branches; one integrator lands and pushes them to `main`. A push deploys nothing: the
    site changes only when the owner runs the Publish workflow, after reviewing the sprint.
-4. Sources: an implementer may add a `Blockchain.bib` entry for a source it has read itself, quoting on the
-   issue the passage each fact rests on ("Implementer: source"). The reviewer checks each quote against the
-   source. The owner approves the sprint's new keys before the next Publish
-   (`git diff pre-sprint-2026-10-24..origin/main -- blockchain-course/lessons/references/Blockchain.bib`).
+4. Sources: an implementer may add a `Blockchain.bib` entry for a source it found and read itself on the web,
+   quoting on the issue the passage each fact rests on, with its URL ("Implementer: source"). The reviewer
+   fetches the URL and checks each quote. Since 28 Oct the owner no longer approves new keys before Publish.
 
 Each commit's trailer quotes the permission it rests on, the owner's words on setup day:
 `Requested: "Use your recommended answers to the six setup questions and approve the backlog as listed." (sprint <ID>)`.
 
+## What waits on the owner (owner's policy, 28 Oct 2026)
+
+The owner: "waiting on me significantly slows down the development process ... I want to rely on the double check
+of both Claude and Gemini (via agy) ... we can always safely revert. However, I acknowledge that my decisions are
+needed for certain things (design choices, development decisions, etc)." YODC and Terminal Dusk follow the same
+policy.
+- **The owner keeps** product and content design (what to teach, the memo rubric, scope, a slide cut the Course
+  Audit gives no verdict on); money, identity and the outside world (billing, secrets, the gh account,
+  visibility, DNS and hosting, Publish and the VM build, the sprint cue); and destruction, including a lab
+  `--fresh-start` wipe of containers this session didn't start.
+- **Automation decides the rest.** `held` is only for a `[blocker]`: a `[minor]` concern ships with a note, or a
+  follow-up issue when it is real work. A machine failure (a time-out, an image pull, out of memory, host load)
+  retries by itself and never waits for the owner. A `[blocker]` from agy's second look holds like a reviewer's;
+  its notes never do.
+- **Technical questions** (how to build a lab, tooling, tests, structure, naming, placement, which tool fits)
+  are never asked: an Opus session decides as the architect and records "Decision (architect): …" on the issue.
+- **Content questions** wait on their own issue, labeled `blocked`, with options and a recommendation; work goes
+  on around them. The supervisor's daily digest on the Decisions issue brings them to the owner at most once a
+  day, with one @-mention.
+- **Rails** (`tools/hooks/`, `tools/check.py`'s checks, `.githooks/`, `.github/` workflows,
+  `.claude/settings*.json`) ship after a deep agy rail audit answers no to "does this loosen, bypass or disable
+  any check, guard, gate, hook or required review?"; a yes holds the change for the owner (`CLAUDE.md`,
+  Finishing). Lanes never edit them (Locked paths).
+
 ## What still stops a task
 
 - **Content decisions are the owner's** (`CLAUDE.md`, hard rule 4): what a lesson teaches beyond its issue's
-  spec, cutting material, quiz difficulty, lab scenarios. A task that needs one: comment one question on the
-  issue with a recommendation, label it `blocked` (`move <n> blocked`), and move on. Never invent a fact.
-- **Sources**: every fact cites a `Blockchain.bib` key; facts that change carry an "as of" date. When no source
-  fits, the task is `blocked` with the question. Never feature Chainalysis, TRM or Elliptic (citing their
-  research is fine); Blockscout needs the owner's yes.
+  spec, a cut the Course Audit's verdicts leave open, quiz difficulty, lab scenarios. A task that needs one:
+  comment one question on the issue with options and a recommendation, label it `blocked` (`move <n> blocked`),
+  and move on. Never invent a fact. A technical question never stops a task: decide it as the architect and
+  comment "Decision (architect): …" on the issue.
+- **Sources**: every fact cites a `Blockchain.bib` key; facts that change carry an "as of" date. A fact no key
+  supports gets a source pass: WebSearch finds the primary source, WebFetch reads it, and the passage is quoted
+  with its URL; only a fact no readable source states is `blocked`. Never feature Chainalysis, TRM or Elliptic
+  (citing their research is fine); Blockscout needs the owner's yes.
 - **Students receive everything** under `blockchain-course/` and `dynamic-labs/`. Instructor-only files go in
   `quizes/`. Lab answers go only in the top-level `quizes/labs/`, never in a lab's own `quizes/` folder: that
   folder is left out of `src.zip` but a student VM would still hold it until `vm-build.yml` removes it. A task that
@@ -65,8 +91,11 @@ Each commit's trailer quotes the permission it rests on, the owner's words on se
   A hand-back, `to-integrate` note, close comment or sprint log line for a lab change says first whether its
   lab tests ran: in Terminal Dusk's October sprint, skipped tests hid behind passing summaries in eight pull
   requests.
-- **No Notion**: sprint sessions have no Notion connector. Each issue carries its full spec; the Build Tracker
-  is updated by the owner's wrap-up session after the window.
+- **Web and Notion, read only** (owner, 28 Oct 2026: "Web and Notion read"): sessions read the web with the
+  WebSearch and WebFetch tools; the guard still refuses `curl`, `wget` and their kin. Plan and lane sessions get
+  the Notion connector to read the Build Tracker, the Stage pages and the Course Audit's verdicts, never to write.
+  Each issue still carries its full spec, quoting what it needs from Notion; the Build Tracker is updated by the
+  owner's wrap-up session after the window.
 - Every hook and the check. Hooks are never skipped. Only the integrator pushes, and only
   `git push origin HEAD:main`; never a force-push. `.githooks/pre-push` refuses any push from a `bc-lane-*`
   worktree, including one a script runs, which the guard can't see. Git config is read-only in every sprint
@@ -88,16 +117,19 @@ The integrator works in `C:/Antigravity/bc-integrate`. The main checkout is only
 ## Flow
 
 1. `sprint-plan <lane>` turns backlog items into issues titled `[task] <ID>: <what>`, labeled `lane:<lane>`
-   and `spec-review`. Each issue holds the full spec: the Build Tracker row, the slot in Stage F's Lessons
-   table, the files, the sources to use, and how the reviewer will know it is done. Gemini then audits the
+   and `spec-review`. Each issue holds the full spec, read from Notion and the web: the Build Tracker row, the
+   slot in Stage F's Lessons table, the Course Audit's verdicts on the slides it draws on, the files, the sources
+   to use with their quoted passages, and how the reviewer will know it is done. Gemini then audits the
    specs (`node tools/gemini-audit.mjs specs <issues>`, as Terminal Dusk does); the plan session applies the
    valid points, answers the rest on the issue, and swaps `spec-review` for `sprint-ready` (the owner's
    request of 25 Oct: "I want Gemini/Agy to be used for YODC and the course in the same way they are used for
    terminal dusk"). An audit that fails or is skipped holds nothing up.
 2. `sprint-lane <lane>` takes one at a time: the `implementer` builds it on branch `sprint/<issue>` from
    `origin/main` in the lane's worktree and commits (the pre-commit hook runs the check on each commit); the
-   `reviewer` reads `git diff origin/main...sprint/<issue>`. PASS: `move <n> to-integrate`, with a note holding
-   the hand-back's WHAT CHANGED and STUDENT-VISIBLE lines, new glossary terms and moved anchors.
+   `reviewer` reads `git diff origin/main...sprint/<issue>`, then agy's second look (`tools/second-look.mjs`).
+   No `[blocker]` left: `move <n> to-integrate`, with a note holding the hand-back's WHAT CHANGED and
+   STUDENT-VISIBLE lines, new glossary terms and moved anchors, and the `[minor]` concerns it ships with. A
+   blocker left after two fix rounds: `held`.
 3. `sprint-integrate` takes up to three `to-integrate` issues per push, oldest first: cherry-picks each branch
    onto `origin/main` as its own commits, runs `python tools/check.py` once (a cherry-pick runs no pre-commit
    hook; two tasks' new sources at the end of `Blockchain.bib` merge entry by entry, Machinery), pushes, and, when the batch changed `dynamic-labs/`, `tools/lab_tests.py` or the Lab Tests workflow,
@@ -108,9 +140,12 @@ The integrator works in `C:/Antigravity/bc-integrate`. The main checkout is only
 Labels: `lane:*`, `spec-review`, `sprint-ready`, `in-progress`, `to-integrate`, `held`, `blocked`. Which issue is ready, whose
 comment counts, when held work is retried, whether a session has work and the status block are decided by the
 queue (`tools/sprint/queue.mjs`, Machinery), never by hand.
-Progress, questions and every push go to the pinned issue #1 "Sprint log". Its body is the status block, which
-the supervisor rewrites every hour; comments hold the history. Design questions before a window go to #2
-"Sprint questions" (Planning day).
+Progress and every push go to the pinned issue #1 "Sprint log". Its body is the status block, which the
+supervisor rewrites every hour without an @-mention; comments hold the history, and the owner is @-mentioned
+there only when held work newly waits for them (`queue.mjs status` prints it as `ping`). Content questions wait
+on their own issues, labeled `blocked`; #2 "Decisions" (named "Sprint questions" until 28 Oct) lists them, and
+the supervisor's daily digest there @-mentions the owner at most once a day, only when one is new
+(`queue.mjs digest`).
 
 ## Backlog
 
@@ -212,8 +247,8 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 - The queue, `tools/sprint/queue.mjs`, holds the sprint's bookkeeping rules once (`tools/sprint/rules.mjs`):
   `window` and `identity` for the cue and every session's window check; `has-work "<session title>"`, `env`,
   `started`, `sessions`, `lock`, `unlock` and `resume` for the supervisor; `next <lane>` and `move <n> <state>`
-  for the lanes; and `status` for the status block. It reads the issues with `gh` and this file as pushed to
-  `origin/main`, and prints one line of JSON. What it keeps sits in this checkout's git folder, shared by the
+  for the lanes; `status` for the status block and `digest` for the daily Decisions digest. It reads the issues
+  with `gh` and this file as pushed to `origin/main`, and prints one line of JSON. What it keeps sits in this checkout's git folder, shared by the
   worktrees and never committed: the window (`sprint-window.json`), every trigger the supervisor made
   (`sprint-triggers.json`: RemoteTrigger `list` shows only the account's newest 20, and three projects share the
   account) and the supervisor's lock. Files the sessions write for a command (run logs, issue and comment
@@ -241,17 +276,16 @@ P5 Bridges by type with the Bitget case, D7 ① Stablecoins. The owner approves 
 
 ## Planning day (the day before the window)
 
-- The owner runs `/sprint-plan <lane>` for each lane, one after another, in sessions the owner started, which
-  have Notion: they read each item's Build Tracker row and Stage F slot and spec each lane's first 6 issues.
-  Plan sessions the supervisor starts during the window have no Notion, so they file only splits and items
-  whose spec this file, `docs/build-spec.md` and the repo already hold; anything else they file as a `blocked`
-  issue carrying its question, as the last point below says.
-- Every design question goes in one issue, "Sprint questions": one numbered question per comment, with options
-  and a recommended answer. The owner answers them in one sitting before the window opens, by number; plan
-  sessions then file the items those answers settle.
+- `/sprint-plan <lane>` runs for each lane, one after another, and specs each lane's first 6 issues. Every plan
+  session, the owner's or the supervisor's, reads Notion (each item's Build Tracker row, Stage F slot and Course
+  Audit verdicts) and the web (a source pass for each fact no key supports), and decides technical questions as
+  the architect. Hold it on the day before the cue, not earlier (on 25 Oct the course planned twice and filed 13
+  questions Notion already answered).
+- A content question goes on its task issue, labeled `blocked`, with options and a recommended answer, since
+  lanes look for the answer there; #2 "Decisions" lists them all, and the supervisor's digest there @-mentions
+  the owner once a day when one is new. The owner may answer them in one sitting, on each issue. An `astevegreen`
+  comment on #2 that answers a question still settles it for the plan sessions.
 - The reserve backlog is approved or changed the same day.
-- During the window, a new question goes on its task issue as usual, since lanes look for the answer there.
-  The status block links it under "Needs you".
 
 ## Setup day (held 24 Oct 2026)
 
@@ -261,13 +295,16 @@ The owner: "Use your recommended answers to the six setup questions and approve 
    together.
 2. **The backlog:** approved as listed (L1 to L13, X1 to X6). The reserve stays unapproved until planning day.
 3. **Lanes:** the two above, `lessons` and `labs`.
-4. **Sources:** permission 4 stands as written. Sprint sessions have no web access (the implementer and the
-   reviewer have no WebFetch or WebSearch, and the guard refuses `curl` and its kin), so a source a task
-   needs comes from the repo, or from the issue's spec: the planning-day sessions the owner starts can read
-   the web and quote each passage there. A fact with neither is `blocked` with its question.
-5. **`second-look.mjs`:** once over the sprint's changes before Publish, not on every task.
-6. **Check-ins:** 07:00 and 19:00 local, when the owner clears the status block's "Needs you" list.
-7. Done the same evening: the labels, the pinned #1 "Sprint log", #2 "Sprint questions", the tag
+4. **Sources** (changed 28 Oct 2026; the owner: "Web and Notion read"): every sprint session may read the web
+   with WebSearch and WebFetch (the guard still refuses `curl` and its kin), and plan and lane sessions Notion,
+   read only. A source pass finds and quotes each new source, and the reviewer fetches it to check the quote,
+   in place of the owner approving new keys. A fact no readable source states is `blocked` with its question.
+   (Was: no web for sprint sessions, and no Notion by design.)
+5. **`second-look.mjs`:** on every task, after the reviewer, since 28 Oct 2026: a `[blocker]` from it holds like
+   a reviewer's, its notes never do. (Was: once over the sprint's changes before Publish.)
+6. **Check-ins:** none fixed: the daily Decisions digest on #2 brings the questions (28 Oct 2026; was 07:00
+   and 19:00 local, clearing the status block's "Needs you" list).
+7. Done the same evening: the labels, the pinned #1 "Sprint log", #2 "Sprint questions" (now "Decisions"), the tag
    `pre-sprint-2026-10-24`, the three worktrees, and the bibliography merge in the main checkout (Machinery):
    `git config merge.bib.driver "node tools/sprint/bib-merge.mjs %O %A %B"`. The scheduled tasks are not made
    on setup day: each cue makes its own.
@@ -289,7 +326,8 @@ and starts with anything else that is short named on the sprint log.
 4. A test cue proved the scheduled tasks: `/sprint-start 1`, then `/sprint-stop`, then, after the archiver's
    next run, the supervisor and the archiver are both switched off by id, and `queue.mjs window` prints no
    archiver.
-5. The "Sprint questions" issue is answered and the reserve backlog approved (Planning day).
+5. The reserve backlog is approved (Planning day). Open questions on #2 "Decisions" need not be answered: work
+   goes on around them.
 6. Claude Code is 2.1.304 or later, both the `claude` on PATH (`claude --version`) and the desktop app's bundled
    copy under `%APPDATA%\Claude\claude-code\`. A lane sends the reviewer's concerns back to the builder that
    wrote the change (`SendMessage`), and before 2.1.304 a resumed subagent could forget its latest work.
@@ -303,7 +341,10 @@ and starts with anything else that is short named on the sprint log.
    `dynamic-labs/` (`router`, `bitcoin`, `hlf` and the rest). `--fresh-start` takes those compose projects down
    and wipes their volumes, whichever checkout started them; other projects' containers, such as Terminal
    Dusk's, it leaves alone. The cue checks Docker only once the `labs` worktree exists: the guard runs Docker
-   nowhere else.
+   nowhere else. Then pull every lab image: `python tools/lab_images.py --pull` lists the images the labs and
+   their test runners pull (compose `image:` lines, Dockerfile `FROM` lines) and pulls each through WSL, three
+   tries each; it ends `lab images: all <n> pulled`. On 25 Oct, Docker Hub and ghcr pulls timed out inside lab
+   test runs and stalled #7 and #10 for about 3 hours.
 9. `gh run list --workflow lab-tests.yml --branch main --limit 1` reads and shows the last run on `main`
    passed: while it is red, lab tasks wait.
 10. A pinned-issue slot is free for the "Sprint log" (GitHub allows three pinned issues).
@@ -345,4 +386,4 @@ Claude writes these on the sprint log, next to October's from Terminal Dusk and 
   machinery's changes beside later ones that stay. The worktrees go with `git worktree remove`; the `lane:*`,
   `sprint-ready`, `in-progress`, `to-integrate`, `held` and `blocked` labels are deleted by the owner
   (`gh label delete` is the owner's). The wrap-up session updates the Build Tracker, runs the glossary pipeline
-  and the mind-map pass, and the owner reviews the new sources before running Publish.
+  and the mind-map pass; the owner runs Publish when ready.

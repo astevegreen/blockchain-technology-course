@@ -8,6 +8,8 @@
 //   --github      the GitHub plugin's tools: reads only. The plugin signs in as the owner, so a sprint comment made
 //                 through it would read as the owner's answer and never notify them; sprint sessions write with
 //                 `gh`, signed in as the bot (after-sprint fix 6, 25 Oct)
+//   --notion      the Notion connector's tools: reads only. Plan and lane sessions read the Build Tracker, the Stage
+//                 pages and the Course Audit's verdicts, and never write to Notion (owner, 28 Oct: "Web and Notion read")
 // --lane and --integrator refuse new dependencies and git writes to the main checkout (only fetch, worktree and
 // `merge --ff-only` touch it), and run the sprint queue (tools/sprint/queue.mjs) only on its own. Both read the
 // command a wrapper runs (env, nice, timeout, xargs, find -exec, wsl, ...) and refuse a command string they can't
@@ -20,7 +22,7 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { cmdName, gitSub, readCommand, Unreadable } from "./shell-reader.mjs";
 
-const MODE = ["--lane", "--integrator", "--read-only", "--file-lock", "--github"].find((m) => process.argv.includes(m));
+const MODE = ["--lane", "--integrator", "--read-only", "--file-lock", "--github", "--notion"].find((m) => process.argv.includes(m));
 const input = JSON.parse(readFileSync(0, "utf8") || "{}");
 
 function deny(reason) {
@@ -46,6 +48,13 @@ if (MODE === "--github") {
   const name = tool.replace(/^mcp__plugin_github_github__/, "");
   if (name === tool || /^(get|list|search)_|^(issue|pull_request)_read$/.test(name)) process.exit(0);
   deny(`${tool} acts on GitHub as the owner; comment and edit only with gh, signed in as greenbeanbot (gh issue comment <n> --body-file <file>)`);
+}
+
+if (MODE === "--notion") {
+  const tool = String(input.tool_name ?? "");
+  const name = tool.slice(tool.lastIndexOf("__") + 2);
+  if (/^notion-(fetch|search|memory-search|get-[\w-]+|list-[\w-]+|query-[\w-]+)$/.test(name)) process.exit(0);
+  deny(`${tool} would change Notion; sprint sessions only read it`);
 }
 
 if (MODE === "--file-lock") {

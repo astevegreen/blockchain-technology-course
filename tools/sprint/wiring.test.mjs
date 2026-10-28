@@ -24,12 +24,14 @@ function guards(file) {
 const SHELL = "Bash|PowerShell";
 // The GitHub plugin signs in as the owner: sprint skills may only read through it (after-sprint fix 6).
 const PLUGIN = ["mcp__plugin_github_github__.*", "--github"];
+// Plan and lane sessions read Notion and never write to it (owner, 28 Oct 2026: "Web and Notion read").
+const NOTION = ["mcp__.*__notion-.*", "--notion"];
 
 test("each sprint skill and agent wires the guard in its own mode", () => {
   const want = {
     ".claude/skills/sprint-supervisor/SKILL.md": [[SHELL, "--lane"], PLUGIN],
-    ".claude/skills/sprint-lane/SKILL.md": [[SHELL, "--lane"], PLUGIN],
-    ".claude/skills/sprint-plan/SKILL.md": [[SHELL, "--lane"], PLUGIN],
+    ".claude/skills/sprint-lane/SKILL.md": [[SHELL, "--lane"], PLUGIN, NOTION],
+    ".claude/skills/sprint-plan/SKILL.md": [[SHELL, "--lane"], PLUGIN, NOTION],
     ".claude/skills/sprint-integrate/SKILL.md": [[SHELL, "--integrator"], PLUGIN],
     ".claude/skills/sprint-start/SKILL.md": [[SHELL, "--lane"], PLUGIN],
     ".claude/skills/sprint-stop/SKILL.md": [[SHELL, "--lane"], PLUGIN],
@@ -50,4 +52,17 @@ test("the sprint skills start only when typed, and run on the model the supervis
   }
   assert.doesNotMatch(frontmatter(".claude/skills/sprint-status/SKILL.md"), /disable-model-invocation/,
     "the owner asks for status in plain words");
+});
+
+// Owner, 28 Oct 2026: "Web and Notion read". The implementer finds and reads sources; the reviewer fetches them to
+// check each quote. Neither may write a file outside the guard's reach.
+test("the implementer and the reviewer read the web; the reviewer still edits nothing", () => {
+  const tools = (file) => /^tools: (.*)$/m.exec(frontmatter(file))?.[1].split(/,\s*/) ?? [];
+  assert.ok(tools(".claude/agents/implementer.md").includes("WebFetch"));
+  assert.ok(tools(".claude/agents/implementer.md").includes("WebSearch"));
+  assert.ok(tools(".claude/agents/reviewer.md").includes("WebFetch"));
+  for (const file of [".claude/agents/implementer.md", ".claude/agents/reviewer.md"]) {
+    assert.doesNotMatch(frontmatter(file), /^disallowedTools:.*Web/m, file);
+  }
+  assert.match(frontmatter(".claude/agents/reviewer.md"), /^disallowedTools: Edit, Write$/m);
 });

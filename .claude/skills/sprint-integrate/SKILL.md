@@ -91,9 +91,10 @@ the title `[task] <ID>: ...`.
       from `p`; if not, send it back as above.
 3. `cd C:/Antigravity/bc-integrate && python tools/check.py` (a cherry-pick runs no pre-commit hook, so this is
    the batch's check; it renders the changed lessons). Red only by a time limit: run it once more, since the
-   lanes may be loading the computer. Red otherwise, or red again: with one issue in the batch, send it back
-   with the first failing lines; with more, `git -C I switch --detach --discard-changes origin/main` and land
-   them one at a time from 1.1.
+   lanes may be loading the computer; red by a time limit again is the machine: send it back with a comment
+   starting 'Integrator: machine.' and the first failing lines (the queue retries it by itself). Red otherwise:
+   with one issue in the batch, send it back with the first failing lines; with more,
+   `git -C I switch --detach --discard-changes origin/main` and land them one at a time from 1.1.
 4. Push with `run_in_background: true`: `git -C C:/Antigravity/bc-integrate push origin HEAD:main`, and wait
    for its notification. Rejected because `origin/main` moved: go back to 1.1, once. Rejected otherwise: comment
    the first lines on the sprint log and stop.
@@ -121,7 +122,8 @@ back that way.
 
 ## 3. Send it back
 Comment first: 'Integrator: <why, one or two lines>'. Then, if an earlier comment on this issue
-(`gh issue view <n> --json comments`) already starts "Integrator:" and sent it back, this is the second time:
+(`gh issue view <n> --json comments`) already starts "Integrator:" and sent it back for the same reason, and
+neither is 'Integrator: machine.', this is the second time:
 `gh issue edit <n> --add-label blocked --remove-label to-integrate` (the owner looks at it). Otherwise
 `gh issue edit <n> --add-label held --remove-label to-integrate`; the lane's next session fixes it on `B`.
 

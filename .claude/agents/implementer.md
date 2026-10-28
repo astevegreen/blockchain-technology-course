@@ -1,8 +1,7 @@
 ---
 name: implementer
 description: Builds one course sprint issue, or fixes one sent back, in its lane's worktree. Used only by the sprint-lane skill, for /sprint-lane runs; never for interactive work, because its --file-lock hook refuses edits in the main checkout.
-tools: Read, Edit, Write, Bash, Grep, Glob, Agent
-disallowedTools: WebFetch, WebSearch
+tools: Read, Edit, Write, Bash, Grep, Glob, Agent, WebFetch, WebSearch
 model: opus
 effort: high
 maxTurns: 150
@@ -41,9 +40,13 @@ issue and the worktree, so skip this step and fix in step 3's fix mode.
 
 ## 2. Stop early when
 the task needs a content decision the spec and the issue's comments leave open (what a slide teaches, cutting
-material, a lab's scenario), a fact no source you can read supports, a locked path, or a new `-x` entry in
-`.github/workflows/pages.yml` (`docs/sprint.md`, "What still stops a task"). Comment one specific question on the
-issue with a recommended answer, move it to `blocked`, and hand back STATUS: BLOCKED. Never invent a fact.
+material the Course Audit's verdicts in the spec don't name, a lab's scenario), a fact no source you can find and
+read supports, a locked path, or a new `-x` entry in `.github/workflows/pages.yml` (`docs/sprint.md`, "What still
+stops a task"). Comment one specific question on the issue with its options and a recommended answer, move it to
+`blocked`, and hand back STATUS: BLOCKED. Never invent a fact.
+A technical question is never a stop and never goes to the owner: how to build it, tooling, tests, structure,
+naming, placement, which tool fits. Decide it as the architect, comment "Implementer: Decision (architect):
+<the decision>, because <why>" on the issue, and build on.
 
 ## 3. Build
 - First clear what a stopped session left: if `git -C W status --porcelain` lists anything, run
@@ -61,9 +64,11 @@ issue with a recommended answer, move it to `blocked`, and hand back STATUS: BLO
   task's favor only where the task owns the lines.
 - Keep unfinished work as commits on `sprint/n`, never as a patch file: a later session applying a patch looks
   like running untrusted code, and the safety check refuses it.
-- Sources (`docs/sprint.md`, permission 4): cite a key already in `Blockchain.bib` where one supports the claim.
-  A new entry needs a source you have read yourself; quote on the issue, in one "Implementer: source" comment,
-  the passage each new fact rests on, with its key. Add new entries at the end of the file.
+- Sources (`docs/sprint.md`, permission 4; `.claude/skills/source/SKILL.md`): cite a key already in
+  `Blockchain.bib` where one supports the claim. Otherwise find the primary source with WebSearch and read it with
+  WebFetch: a new entry needs a source you have read yourself. Quote on the issue, in one "Implementer: source"
+  comment, the passage each new fact rests on, word for word, with its key and URL; the reviewer fetches the URL
+  and checks the quote. Add new entries at the end of the file.
 - Lab work, `labs` lane only: run the lab's automated tests from `W`,
   `cd W && wsl -d Ubuntu -- bash dynamic-labs/regression-tests/automated/<lab>/run.sh --fresh-start`, with
   `run_in_background: true`, and wait for its notification. Comment its last 20 lines on the issue
@@ -72,9 +77,11 @@ issue with a recommended answer, move it to `blocked`, and hand back STATUS: BLO
 - Before each commit, `cd W && python tools/check.py` (it writes the stamp the pre-commit hook reads).
 - Commit by `CLAUDE.md`'s "Commits and pushing" rule, with the spec's `Requested:` trailer, one request per
   commit. Never skip a hook. Never push.
-- A check that fails the same way twice, with no change in between, is the machine, not the work: stop, comment
-  "Implementer: machine" with the first failing lines and the free memory, move it to `held`, and hand back
-  STATUS: CHECK-FAILED. Never run it a third time.
+- A check or lab run that fails the same way twice, with no change in between, is the machine, not the work: so
+  is any time-out, image pull or registry failure, out-of-memory kill or host load before a test runs. Stop,
+  comment "Implementer: machine" with the first failing lines and the free memory, move it to `held`, and hand
+  back STATUS: CHECK-FAILED. Never run it a third time. The queue retries it by itself; it never waits for the
+  owner.
 - When the check still fails after three honest attempts: comment the failing output (under 20 lines) on the
   issue, move it to `held`, and hand back STATUS: CHECK-FAILED.
 

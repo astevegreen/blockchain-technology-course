@@ -1,11 +1,15 @@
 // `node tools/second-look.mjs "<the owner's request>"`: a second review of the current change by another model,
 // through agy (headless and read-only), run beside the reviewer agent. It reviews everything since origin/main:
-// commits, uncommitted edits and new files. It prints the findings, or one "skipped" line, and never fails the task.
+// commits, uncommitted edits and new files. It prints the findings, or one "skipped" line, and never fails the task:
+// a valid [blocker] it finds holds the change like a reviewer's blocker, and its notes never do. A change that
+// touches a rail also gets the rail audit (tools/rail-audit.mjs), a deep review of one question, whose first line
+// says whether the change ships or is held for the owner.
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { ORDER, TIMEOUT, askFirstAvailable, buildPrompt, byLine, diffStats, parseReply, pickDepth } from "./agy.mjs";
+import { RAILS, railAction, railDiff, railFiles, railVerdict } from "./rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const USAGE = 'usage: node tools/second-look.mjs "<the owner\'s request>"';
@@ -42,10 +46,59 @@ function change() {
   return { base, diff };
 }
 
+// One agy review of the material, with the prompt in tools/<promptFile>, at the depth `pick` chose.
+function review(promptFile, material, pick, tmp) {
+  const prompt = buildPrompt(readFileSync(path.join(ROOT, "tools", promptFile), "utf8"), material);
+  return askFirstAvailable(ORDER[pick.depth], (model) =>
+    parseReply(
+      run("agy", [
+        "-p",
+        prompt,
+        "--output-format",
+        "json",
+        "--model",
+        model,
+        "--print-timeout",
+        TIMEOUT,
+        "--add-dir",
+        tmp,
+      ]),
+    ),
+  );
+}
+
+function look(material, pick, tmp) {
+  try {
+    const answer = review("second-look.md", material, pick, tmp);
+    return `Second look by ${byLine({ ...answer, ...pick })}\n\n${answer.response}`;
+  } catch (err) {
+    return `Second look skipped: ${err.message}`;
+  }
+}
+
+// The rail files' diff alone, always deep, since every rail is a deep path. With no answer it holds: a rail ships
+// only on a clear no.
+function railAudit(request, diff, stats, rails, tmp) {
+  const pick = pickDepth({ kind: "change", ...stats }, RAILS);
+  const touches = `It touches ${rails.join(", ")}.`;
+  const material = path.join(tmp, "rails.md");
+  writeFileSync(
+    material,
+    `# The owner's request\n\n${request}\n\n# The change to the rails\n\n\`\`\`diff\n${railDiff(diff)}\`\`\`\n`,
+  );
+  try {
+    const answer = review("rail-audit.md", material, pick, tmp);
+    return `${railAction(railVerdict(answer.response))}\n${touches} Rail audit by ${byLine({ ...answer, ...pick })}\n\n${answer.response}`;
+  } catch (err) {
+    return `${railAction(null)}\n${touches} The audit could not run: ${err.message}`;
+  }
+}
+
 function secondLook(request, tmp) {
   const { base, diff } = change();
   if (!diff.trim()) return "Second look skipped: nothing has changed since origin/main.";
-  const pick = pickDepth({ kind: "change", ...diffStats(diff) }, DEEP_PATHS);
+  const stats = diffStats(diff);
+  const pick = pickDepth({ kind: "change", ...stats }, DEEP_PATHS);
   const shown =
     diff.length > MAX_DIFF ? `${diff.slice(0, MAX_DIFF)}\n... (diff truncated; read the rest from disk)\n` : diff;
   const material = path.join(tmp, "material.md");
@@ -53,28 +106,10 @@ function secondLook(request, tmp) {
     material,
     `# The owner's request\n\n${request}\n\n# The change since ${base.slice(0, 8)}, with uncommitted edits and new files\n\n\`\`\`diff\n${shown}\`\`\`\n`,
   );
-  const prompt = buildPrompt(readFileSync(path.join(ROOT, "tools", "second-look.md"), "utf8"), material);
-  try {
-    const answer = askFirstAvailable(ORDER[pick.depth], (model) =>
-      parseReply(
-        run("agy", [
-          "-p",
-          prompt,
-          "--output-format",
-          "json",
-          "--model",
-          model,
-          "--print-timeout",
-          TIMEOUT,
-          "--add-dir",
-          tmp,
-        ]),
-      ),
-    );
-    return `Second look by ${byLine({ ...answer, ...pick })}\n\n${answer.response}`;
-  } catch (err) {
-    return `Second look skipped: ${err.message}`;
-  }
+  const out = [look(material, pick, tmp)];
+  const rails = railFiles(stats.files);
+  if (rails.length > 0) out.push(railAudit(request, diff, stats, rails, tmp));
+  return out.join("\n\n");
 }
 
 const request = process.argv.slice(2).join(" ").trim();

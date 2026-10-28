@@ -442,6 +442,23 @@ describe("--github", () => {
   });
 });
 
+// Owner, 28 Oct 2026: "Web and Notion read". A trigger names the connector "Notion"; this desktop names it by id.
+describe("--notion", () => {
+  const notion = (name, server = "Notion") => guard("--notion", {}, process.cwd(), `mcp__${server}__${name}`);
+  test("lets the reads through, under either name", () => {
+    for (const name of ["notion-fetch", "notion-search", "notion-get-comments", "notion-list-page-backlinks",
+      "notion-query-data-sources", "notion-memory-search"]) {
+      assert.equal(notion(name), 0, name);
+      assert.equal(notion(name, "87a483d9-4e5a-43ab-9e93-d5787ad4a8b0"), 0, name);
+    }
+  });
+  test("refuses every write", () => {
+    for (const name of ["notion-create-pages", "notion-update-page", "notion-create-comment", "notion-move-pages",
+      "notion-delete-pages", "notion-duplicate-page", "notion-update-data-source", "notion-create-file-upload",
+      "notion-spawn-session", "notion-set-discussion-resolved"]) assert.equal(notion(name), 2, name);
+  });
+});
+
 describe("--file-lock", () => {
   const tmp = mkdtempSync(path.join(os.tmpdir(), "bc-sprint-guard-"));
   const main = path.join(tmp, "blockchain-technology-course");

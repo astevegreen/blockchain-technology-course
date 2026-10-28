@@ -118,8 +118,9 @@ this account. For each title with an id, `RemoteTrigger` `get` it and `list_runs
 
 **Memory floor.** A `has-work` reason starting `memory:` means free memory is under the floor, counting each
 session this run already started: start nothing more this run, though you still read every session and name
-stuck ones. With `--started 0`, comment "@astevegreen Supervisor: <that reason>; started nothing" on the sprint
-log once, so GitHub notifies the owner. Don't archive anything or end any process outside step 2b.
+stuck ones. With `--started 0`, add "<that reason>; started nothing" as an `--also` line in step 4: low memory is
+the machine's, so the next run tries again and the owner is not @-mentioned. Don't archive anything or end any
+process outside step 2b.
 
 To start one, `RemoteTrigger` `create` with this body, `<environment_id>` being what `Q env` printed:
 `{"name": "<title>", "run_once_at": "<now + 1 minute, UTC, ISO 8601 with Z>", "enabled": true,
@@ -128,9 +129,11 @@ To start one, `RemoteTrigger` `create` with this body, `<environment_id>` being 
 "parent_tool_use_id": null, "message": {"role": "user", "content": "<prompt>"}}}]}},
 "mcp_connections": [{"connector_uuid": "bf7c680d-5fdc-5ef4-b4a0-abadb619bf0a", "name": "Claude_Code_Remote",
 "url": "https://api.anthropic.com/v1/code/mcp/meta"}, {"connector_uuid": "31ab071e-7af4-450e-a530-43360c649956",
-"name": "Context7", "url": "https://mcp.context7.com/mcp"}]}`
-Sprint sessions get no Notion, mail, calendar or drive connector: without `mcp_connections` a trigger gets them
-all. Each issue carries its full spec instead (`docs/sprint.md`, "What still stops a task").
+"name": "Context7", "url": "https://mcp.context7.com/mcp"}<notion>]}`
+`<notion>` is empty for `Course integrate`; for a lane or plan session it adds Notion, which their skills' guard
+lets read only (owner, 28 Oct 2026: "Web and Notion read"): `, {"connector_uuid":
+"87a483d9-4e5a-43ab-9e93-d5787ad4a8b0", "name": "Notion", "url": "https://mcp.notion.com/mcp"}`. No session gets
+mail, calendar or drive: without `mcp_connections` a trigger gets them all.
 Straight after each `create`, before anything else, run `Q started "<title>" <the id create returned>`: a
 trigger it does not record is one your next run cannot see. When it refuses or fails, `update` that trigger to
 `{"enabled": false}` and put the error first in step 4.
@@ -166,13 +169,19 @@ content `/sprint-supervisor`. In a dry run, only print what you would do.
 **Status block.** Every run, `Q status --write`, with one `--also '<line>'` for each stuck session, each
 session that failed to start, each usage-limit wait (its title, what is wrong or its `restartAt`, its url) and
 an `env` refusal. It rewrites the body of the sprint log (the lane counts, main's head, the last Lab Tests run,
-free memory and "Needs you") and prints `body`, `needsYou`, and `new`: the "Needs you" items the old body didn't
-have.
+free memory and "Needs you") and prints `body`, `needsYou`, `new` (the issues in "Needs you" the old body didn't
+have) and `ping`: the new held work that waits for the owner.
+
+**Decisions digest.** Every run with `state` `open` or `after`, `Q digest --write`. It posts the daily digest of
+open content questions on the Decisions issue itself, at most once a day and only when one is new, with its one
+@-mention; it prints `post` and `reason`. Never mention the owner about a question anywhere else.
 
 **Comment** on the sprint log, under 15 lines, when either holds:
-- `new` is not empty: start "@astevegreen", so GitHub notifies the owner, and list those items first;
+- `ping` is not empty: start "@astevegreen", so GitHub notifies the owner, and list those items first. Only
+  `ping` is a reason to @-mention the owner here: never a question (the digest has it), an `also` line, a stuck
+  session, a usage limit or low memory, which the machinery retries by itself;
 - it is the first run of the window or a sixth UTC hour (00, 06, 12, 18) and no comment of yours there is under
   an hour old, a session is stuck or never started, a usage limit stopped one, step 2b is not working, or
   step 1 or 2 needed attention: the time, the status block's lane lines with the sessions you started, and
-  anything the owner must act on, with links.
+  anything the owner must act on, with links, without an @-mention.
 One comment per run at most; when both hold, the ping comes first. Then `Q unlock`.

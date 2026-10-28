@@ -44,9 +44,11 @@ The owner judges results, not code: explain every change in plain English and pr
 2. Generated files change only by running their script: `glossary/slide-index.yml`, `terms.yml`, `terms.json`,
    `duplicates.md`, `index.qmd`, `index.pdf`; `quizes/dist/`; `_site/`.
 3. File and folder names use letters, digits, `-`, `_` and `.` only.
-4. Content decisions are the owner's: what a lesson teaches, cutting material, quiz difficulty, lab scenarios.
-   Ask one question with a recommendation. Every fact you add cites a `Blockchain.bib` key, and every quiz answer
-   traces to the lesson; when no source fits, ask the owner for one.
+4. Content decisions are the owner's: what a lesson teaches, cutting material the Course Audit leaves open, quiz
+   difficulty, lab scenarios, the memo rubric. Ask one question with a recommendation. Technical choices (how to
+   build it, tooling, tests, structure, naming, placement, which tool fits) are never asked: decide, and say why.
+   Every fact you add cites a `Blockchain.bib` key, and every quiz answer traces to the lesson; when no key fits,
+   find a source on the web and quote its passage (`source` skill).
 
 ## How to work
 - One task per session. Stay in scope; list other problems in your summary instead of fixing them.
@@ -83,8 +85,13 @@ The owner judges results, not code: explain every change in plain English and pr
   Typos and tooling skip it.
 - With the reviewer, start `node tools/second-look.mjs "<the owner's request>"` in the background: another model
   reviews the same change through agy and picks itself by what changed. Its findings are inputs: check each against
-  the files, fix the valid blockers, and name any you rejected, with why, under **Unsure about**. A "skipped" line
-  is not a failure.
+  the files, fix the valid blockers (a valid one holds the push like a reviewer's blocker; notes never do), and
+  name any you rejected, with why, under **Unsure about**. A "skipped" line is not a failure.
+- A change to a rail (`tools/hooks/`, `tools/check.py`, `.githooks/`, `.github/`, `.claude/settings*.json`) runs
+  `second-look.mjs` too, tooling or not: it adds the rail audit, a deep review asking whether the change loosens
+  any check. Its first line decides: no loosening, it ships like any other change; "LOOSENS" or no verdict, push
+  the rest but not the rail change: hold it for the owner with the audit's reasons. Every push to `main` runs the
+  Check workflow (`check.yml`); a red run is fixed or reverted.
 
 End every task with:
 - **What changed** - in plain English, 2-5 bullets

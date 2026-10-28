@@ -101,6 +101,7 @@ export function parseSprintDoc(text) {
     window: window ? { start: stamp(window[1]), end: stamp(window[2]) } : null,
     lanes,
     logIssue: Number(log[1]),
+    decisionsIssue: Number(/#(\d+) "Decisions"/.exec(text)?.[1] ?? 0) || null,
     preSprintTag: /`(pre-sprint-[\w-]+)`/.exec(text)?.[1] ?? null,
     environment: /\*\*Environment:\*\*\s*`(env_\w+)`/.exec(text)?.[1] ?? null,
     backlog,
@@ -164,21 +165,41 @@ export function ownerReply(issue) {
   return findLast(issue.comments, (c) => c.author === OWNER && (!lastBot || c.at > lastBot.at));
 }
 
-// Whether a lane retries a held issue now. Only the owner's and the bot's comments count; the newest one decides:
-// an owner reply, the integrator sending it back, or a machine failure once memory is over the floor. Anything
-// else (the lane's own note, an answer relayed by the bot) waits for the owner.
+// A comment that starts an attempt at the task: the comments before it describe attempts already over.
+const ATTEMPT = /^Lane: (re-queued|unblocked|retrying)\b/;
+// A failure of the computer, not of the work (time-outs, image pulls, out of memory, host load): the lane retries it
+// by itself, and it never waits for the owner (owner's policy, 28 Oct 2026).
+const MACHINE = /^(Implementer|Integrator|Lane): machine\b/;
+// A held note whose concerns are all [minor]: the owner's 28 Oct policy ships those with a note, so held work from
+// before it is reviewed again and handed over.
+const minorOnly = (body) => /\bminor\b/i.test(body) && !/\bblocker/i.test(body);
+
+// Whether a lane retries a held issue now. Only the owner's and the bot's comments count. The owner's reply when it
+// is the newest; otherwise this attempt's comments (those after the newest re-queue, unblock or retry), so a
+// machine failure is never hidden by a note posted after it (#10, 25 Oct): a machine failure, once memory is over
+// the floor; the integrator sending it back; a held note with only minor concerns. Anything else (a blocker, the
+// lane's own note, an answer relayed by the bot) waits for the owner. `owner` says whether the owner is the one it
+// waits for, `mode` how the lane takes it up: `review` reviews the branch again, `fix` builds on it.
 export function heldRetry(issue, freeMb) {
-  const last = findLast(issue.comments, (c) => c.author === OWNER || c.author === BOT);
-  if (!last) return { retry: false, why: "no comment says why it is held" };
-  const concerns = oneLine(last.body);
-  if (last.author === OWNER) return { retry: true, why: "the owner replied", concerns };
-  if (last.body.startsWith("Integrator:")) return { retry: true, why: "the integrator sent it back", concerns };
-  if (last.body.startsWith("Implementer: machine")) {
+  const counted = issue.comments.filter((c) => c.author === OWNER || c.author === BOT);
+  const last = counted.at(-1);
+  if (!last) return { retry: false, owner: true, why: "no comment says why it is held" };
+  if (last.author === OWNER) return { retry: true, mode: "fix", why: "the owner replied", concerns: oneLine(last.body) };
+  let from = 0;
+  counted.forEach((c, k) => { if (c.author === BOT && ATTEMPT.test(c.body)) from = k + 1; });
+  const attempt = counted.slice(from).filter((c) => c.author === BOT);
+  const machine = findLast(attempt, (c) => MACHINE.test(c.body));
+  if (machine) {
     return freeMb > MEMORY_FLOOR_MB
-      ? { retry: true, why: `the machine failed it and ${freeMb} MB is free now`, concerns }
-      : { retry: false, why: `the machine failed it and ${freeMb} MB free is not over ${MEMORY_FLOOR_MB} MB` };
+      ? { retry: true, mode: "fix", why: `the machine failed it and ${freeMb} MB is free now`, concerns: oneLine(machine.body) }
+      : { retry: false, owner: false, why: `the machine failed it and ${freeMb} MB free is not over ${MEMORY_FLOOR_MB} MB` };
   }
-  return { retry: false, why: `waits for the owner; newest comment: "${oneLine(last.body, 100)}"` };
+  if (last.body.startsWith("Integrator:")) return { retry: true, mode: "fix", why: "the integrator sent it back", concerns: oneLine(last.body) };
+  const hold = findLast(attempt, (c) => c.body.startsWith("Lane: held"));
+  if (hold && minorOnly(hold.body)) {
+    return { retry: true, mode: "review", why: "its concerns are all minor, which ship with a note", concerns: oneLine(hold.body) };
+  }
+  return { retry: false, owner: true, why: `waits for the owner; newest comment: "${oneLine(last.body, 100)}"` };
 }
 
 const byNumber = (world, n) => world.issues.find((i) => i.number === n);
@@ -236,7 +257,9 @@ export function laneQueue(world, lane, taken = []) {
       waiting.push(`${name(i)} is the integrator's`);
     } else if (has("held")) {
       const r = heldRetry(i, world.freeMb);
-      if (r.retry) job(1, "fix", i, `${name(i)} is held and ${r.why}`, r.concerns);
+      // Reviewing again needs the branch; with none, the work is built again with the concerns.
+      const mode = r.mode === "review" && world.branchAhead(i.number) > 0 ? "resume" : "fix";
+      if (r.retry) job(1, mode, i, `${name(i)} is held and ${r.why}`, r.concerns);
       else waiting.push(`${name(i)} is held: ${r.why}`);
     } else if (has("in-progress") && !has("blocked")) {
       const ahead = world.branchAhead(i.number);
@@ -334,7 +357,8 @@ export function planMove(world, number, to, note = null) {
     if (from === "held") {
       const r = heldRetry(issue, world.freeMb);
       if (!r.retry) throw refuse(`#${number} is held and ${r.why}`, RETRY);
-      return plan(null);
+      // Starts a new attempt, so this one's machine failure or note never decides the next hold.
+      return plan(`Lane: retrying, since ${r.why}.`);
     }
     if (from === "blocked" && !ownerReply(issue)) throw refuse(`#${number} is blocked and the owner has not replied`, RETRY);
     const waits = unmet(world, issue, laneLabel(issue));
@@ -362,8 +386,11 @@ const needKey = (line) => /^#(\d+) \[(\w+)\]/.exec(line)?.[0] ?? line;
 
 // The sprint log's body: per lane, the open issues by state label and those closed since the window opened; main's
 // head and the last Lab Tests run (a push deploys nothing: the owner publishes); free memory; and "Needs you" (a
-// blocked question with no owner reply, held work the lanes won't retry, then `also`: stuck sessions, failed
-// starts). `new` lists the "Needs you" items the old body didn't have.
+// blocked question with no owner reply, held work that waits for the owner, then `also`: stuck sessions, failed
+// starts). Held work that waits for the machine is no owner's job, so it is left out. `new` lists the issues in
+// "Needs you" the old body didn't have; `also` lines are never new, since they change wording run to run and
+// pinged the owner hourly (25-26 Oct). `ping` is the new held ones: the supervisor @-mentions the owner only for
+// those, as new questions reach the owner in the daily Decisions digest (`digest`).
 export function statusBlock(world, { also = [], oldBody = "" } = {}) {
   const lines = [`Status at ${fmt(world.now)}. The supervisor rewrites this every hour; the comments hold the history.`, ""];
   lines.push("**Lanes** (open issues by label; closed since the window opened)");
@@ -389,16 +416,58 @@ export function statusBlock(world, { also = [], oldBody = "" } = {}) {
     if (i.labels.includes("blocked") && !ownerReply(i)) needs.push(`#${i.number} [blocked] ${short(i)}: waiting for your answer`);
     if (i.labels.includes("held")) {
       const r = heldRetry(i, world.freeMb);
-      if (!r.retry) needs.push(`#${i.number} [held] ${short(i)}: ${r.why}`);
+      if (!r.retry && r.owner) needs.push(`#${i.number} [held] ${short(i)}: ${r.why}`);
     }
   }
+  const issueNeeds = [...needs];
   needs.push(...also.map((a) => oneLine(a)));
   lines.push("", "**Needs you**", ...(needs.length ? needs.map((n) => `- ${n}`) : ["- nothing"]));
 
   const old = oldBody.split(/\r?\n/);
   const at = old.findIndex((l) => l.trim() === "**Needs you**");
-  const before = new Set(at < 0 ? [] : old.slice(at + 1).filter((l) => l.startsWith("- ")).map((l) => needKey(l.slice(2))));
-  return { body: lines.join("\n"), needsYou: needs, new: needs.filter((n) => !before.has(needKey(n))) };
+  const before = new Set(at < 0 ? [] : old.slice(at + 1).filter((l) => l.trim().startsWith("- ")).map((l) => needKey(l.trim().slice(2))));
+  const fresh = issueNeeds.filter((n) => !before.has(needKey(n)));
+  return { body: lines.join("\n"), needsYou: needs, new: fresh, ping: fresh.filter((n) => needKey(n).endsWith("[held]")) };
+}
+
+// --- the Decisions digest ----------------------------------------------------------------------------------------
+
+// Content-design questions wait on their own issues, labeled `blocked`, where the lanes read the owner's answer.
+// The owner reads them in one place: the Decisions issue (docs/sprint.md), whose body lists every open one and
+// which gets at most one comment a day, with one @-mention, when a question is new since the last (owner's
+// policy, 28 Oct 2026: "Design only, daily digest").
+export const DIGEST = "@astevegreen Decisions digest";
+const DAY_MS = 24 * 3600000;
+
+export function digestPlan(world) {
+  const n = world.doc.decisionsIssue;
+  if (!n) throw refuse('docs/sprint.md names no Decisions issue (#<n> "Decisions")', "Post no digest this run; report it.");
+  const decisions = byNumber(world, n);
+  if (!decisions) throw refuse(`no issue #${n}`, "Post no digest this run; report it.");
+  const open = world.issues
+    .filter((i) => i.open && i.labels.some((l) => l.startsWith("lane:")) && i.labels.includes("blocked") && !ownerReply(i))
+    .sort((a, b) => a.number - b.number);
+  // The question is the bot's newest comment on the issue; one asked after the last digest is new, even on an issue
+  // that digest listed.
+  const ask = (i) => findLast(i.comments, (c) => c.author === BOT);
+  const last = findLast(decisions.comments, (c) => c.author === BOT && c.body.startsWith(DIGEST));
+  const listed = new Set(last ? issueRefs(last.body) : []);
+  const isNew = (i) => !listed.has(i.number) || (ask(i)?.at ?? 0) > last.at;
+  const fresh = open.filter(isNew);
+  const item = (i) => `- #${i.number} ${short(i)}${isNew(i) ? " (new)" : ""}: ${oneLine(ask(i)?.body ?? i.body, 200)}`;
+  const list = open.length ? open.map(item) : ["- nothing is waiting for you"];
+  const body = [
+    `Open content decisions at ${fmt(world.now)}, rewritten with each daily digest. Each issue holds its question, the`,
+    "options and a recommendation; answer on that issue (the option's letter is enough, or \"use the recommendation\").",
+    "Work goes on around them meanwhile.",
+    "",
+    ...list,
+  ].join("\n");
+  const comment = `${DIGEST}, ${fmt(world.now)}: ${open.length} content decision${open.length === 1 ? "" : "s"} wait for you, ${fresh.length} new since the last digest. Answer on each issue.\n\n${list.join("\n")}`;
+  let reason;
+  if (fresh.length === 0) reason = open.length ? "no question is new since the last digest" : "no question is open";
+  else if (last && world.now - last.at < DAY_MS) reason = `the last digest was at ${fmt(last.at)}, under a day ago`;
+  return { post: !reason, reason: reason ?? `${fresh.length} new: ${fresh.map(name).join(", ")}`, issue: n, open: open.map((i) => i.number), new: fresh.map((i) => i.number), body, comment };
 }
 
 // --- the triggers the supervisor started -------------------------------------------------------------------------
@@ -610,7 +679,7 @@ export function lockCommand(held, now) {
 
 // --- the command line --------------------------------------------------------------------------------------------
 
-const USAGE = "Usage: queue.mjs has-work \"<session title>\" [--started <k>] | next <lane> [--taken <n,n>] | move <n> <state> [--note '<text>'] | status [--write] [--also '<line>']... | env | window [start [hours] [--environment <env_…>] [--dry-run] | ids --supervisor <id> --archiver <id> --wake <id> | stop | archived] | started \"<session title>\" <trigger id> | wake [--resets-at <epoch s>] | sessions [--all] | lock | unlock | identity | resume --log <file> --last-event <ISO>";
+const USAGE = "Usage: queue.mjs has-work \"<session title>\" [--started <k>] | next <lane> [--taken <n,n>] | move <n> <state> [--note '<text>'] | status [--write] [--also '<line>']... | digest [--write] | env | window [start [hours] [--environment <env_…>] [--dry-run] | ids --supervisor <id> --archiver <id> --wake <id> | stop | archived] | started \"<session title>\" <trigger id> | wake [--resets-at <epoch s>] | sessions [--all] | lock | unlock | identity | resume --log <file> --last-event <ISO>";
 const ISSUE_FIELDS = "number,title,body,labels,state,comments,closedAt,createdAt";
 
 // Flags after the positional words: `--name value`, repeatable.
@@ -641,6 +710,7 @@ export function run(argv, io) {
       next: words.length === 1,
       move: words.length === 2 && /^\d+$/.test(words[0] ?? ""),
       status: words.length === 0,
+      digest: words.length === 0,
       env: words.length === 0,
       window: words.length <= 2,
       started: words.length === 2,
@@ -725,6 +795,13 @@ export function run(argv, io) {
         io.gh(["issue", "edit", String(m.issue), ...m.add.flatMap((l) => ["--add-label", l]), ...(m.remove.length ? ["--remove-label", m.remove.join(",")] : [])]);
       }
       out = { ok: true, issue: m.issue, from: m.from, to: m.to, changed: Boolean(m.comment || m.add.length || m.remove.length), comment: m.comment };
+    } else if (command === "digest") {
+      const d = digestPlan(world);
+      if (f.write && d.post) {
+        io.gh(["issue", "edit", String(d.issue), "--body-file", "-"], d.body);
+        io.gh(["issue", "comment", String(d.issue), "--body-file", "-"], d.comment);
+      }
+      out = { ...d, written: Boolean(f.write && d.post) };
     } else {
       if (f.write && doc.logIssue === 0) {
         throw refuse("docs/sprint.md names no sprint log issue yet (#0)", "Create the Sprint log issue on setup day and put its number in docs/sprint.md; run `status` without --write until then.");

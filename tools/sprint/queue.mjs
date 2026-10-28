@@ -6,7 +6,10 @@
 //                                      k sessions created this run count against free memory
 //   next <lane> [--taken <n,n>]        {mode, issue, concerns, reason} or null
 //   move <n> <state> [--note '<text>'] the labels and the standard "Lane:" comment
-//   status [--write] [--also '<line>'] the sprint log's status block and its "Needs you" list
+//   status [--write] [--also '<line>'] the sprint log's status block, its "Needs you" list, and `ping`: the new
+//                                      held work that waits for the owner, the only kind the supervisor @-mentions
+//   digest [--write]                   {post, reason, open, new}: the daily Decisions digest of open content
+//                                      questions; --write posts it (at most one a day, only with a new question)
 //   env                                {environment_id}, the computer sessions start on: the window's, else the doc's
 //   window                             {state none|before|open|after, start, end, newYork, lanes, log, supervisor, archiver,
 //                                      wake, stoppedBy}: stoppedBy is "sprint-stop" when /sprint-stop ended it

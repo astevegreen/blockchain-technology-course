@@ -16,6 +16,11 @@ hooks:
         - type: command
           command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --github
           timeout: 10
+    - matcher: "mcp__.*__notion-.*"
+      hooks:
+        - type: command
+          command: node "$CLAUDE_PROJECT_DIR/tools/hooks/sprint-guard.mjs" --notion
+          timeout: 10
 ---
 You turn the next backlog items of lane `$ARGUMENTS` in `docs/sprint.md` into issues the lane coordinator can
 build. The owner approved the backlog (permission 1), so you do not wait for the owner. You never edit tracked
@@ -36,30 +41,33 @@ open yet: planning day), go on past 3 `ready` until it is 6, still stopping when
 First, any open issue labeled `L` and `spec-review` is one a stopped session filed and never released
 (`gh issue list --label L --label spec-review --state open`): finish it with steps 4 and 5 before anything new.
 Run `Q has-work "Course plan: $ARGUMENTS"` and read the lane's backlog in `docs/sprint.md`. Take the first
-`todo` item. One with an unanswered question on "Sprint questions" (step 2): before the window, skip it; during
-the window, file it as step 2 says for a new question, with that question and a link to its comment, so it
-shows under "Needs you". None left to take: stop.
+`todo` item. None left to take: stop.
 Read only what its spec needs: `docs/build-spec.md`, the backlog line, the files it names (lessons by offset:
-they run to 2,000 lines), and what the `scout` agent points you to.
-- **Planning day** (the owner started this session, so it has Notion): read the item's row in the Notion
-  "Build Tracker (Stage F)" database and its slot in Stage F's Lessons table, found by name with Notion search.
-  Quote what the spec needs from them in the issue: lanes have no Notion.
-- **In the window** (`state` `open`; no Notion): file only an item whose spec `docs/sprint.md`,
-  `docs/build-spec.md` and the repo already hold, or a split of one already filed. Anything else is a question
-  (step 2).
+they run to 2,000 lines), and what the `scout` agent points you to. Then, in Notion (read only; find each page by
+name with Notion search, in "Blockchain Course Prep"):
+- the item's row in the "Build Tracker (Stage F)" database and its slot in Stage F's Lessons table;
+- for a lesson built from existing ones, the Course Audit's verdict on each slide it draws on (keep, hide or
+  move, and where to): these settle its cuts. A cut the audit leaves open is a question (step 2).
+Quote what the spec needs from them in the issue: the implementer reads the issue, not Notion. When Notion can't
+be reached, say so on the sprint log and file only items whose spec `docs/sprint.md`, `docs/build-spec.md` and
+the repo already hold; anything else waits for a session that can reach it.
 
 ## 2. Check it can be specified
-First read the "Sprint questions" issue (`gh issue list --state all --search '"Sprint questions" in:title'`,
-then `gh issue view <n> --comments`): an `astevegreen` comment there that answers a question by number settles
-it, like a line of `docs/sprint.md`.
-If the item needs a content decision not written in `docs/sprint.md`, `docs/build-spec.md`, the tracker row or
-those answers (what a lesson teaches beyond its slot, cutting material, a lab's scenario, quiz difficulty, a
-source when none fits, a split the tracker leaves open):
-- before the window (planning day): comment it on "Sprint questions" as `Plan: Q<next number> <ID>:
-  <question>`, with options and a recommended answer. File nothing for the item yet, and go to the next item.
-- during the window: create the issue with the spec as far as it goes and the one question, label it `L` and
-  `blocked`, comment the question on it ("Plan: <question>", options and a recommendation), and go to the next
-  item. The lane builds it once the owner answers there.
+First read the Decisions issue (the `"Decisions"` line of `docs/sprint.md`; `gh issue view <n> --comments`): an
+`astevegreen` comment there that answers a question settles it, like a line of `docs/sprint.md`.
+**Sources** are never a question: for each fact no `Blockchain.bib` key supports, do a source pass. Find the
+primary source with WebSearch, read it with WebFetch (`.claude/skills/source/SKILL.md`), and put in the spec its
+URL and the passage that states the fact, word for word; the implementer adds the entry and the reviewer fetches
+the URL to check the quote. Only a fact no source you can read supports is a question.
+**Technical questions** are never asked (owner's policy, 28 Oct 2026): how to build it, tooling, tests,
+structure, naming, placement, which tool fits, how to split it. Decide each as the architect and write it in the
+spec as "Decision (architect): <the decision>, because <why>".
+**Content decisions** are the owner's: what a lesson teaches beyond its slot, a cut the Course Audit leaves
+open, a lab's scenario, quiz difficulty, a rubric. When the item needs one not written in `docs/sprint.md`,
+`docs/build-spec.md`, the tracker row, the audit or those answers: create the issue with the spec as far as it
+goes, label it `L` and `blocked`, comment the one question on it ("Plan: <question>", its options and a
+recommended answer), and go to the next item. The supervisor's daily Decisions digest brings it to the owner;
+the lane builds it once the owner answers on the issue.
 
 ## 3. Write
 Start every comment you write with "Plan:". Comment only with `gh issue comment`, signed in as the bot. Never use the GitHub plugin's tools to write:
@@ -72,17 +80,21 @@ passed inline is refused as a push. Write each comment the same way, to a file i
 `--body-file`. Every file you write goes in that folder: the other lane's plan session runs at the same time in
 this same checkout. The body:
 - **Goal**: what changes for the student or the instructor, in plain words.
-- **Read first**: exact `path:line`s; the Build Tracker row and Stage F slot, quoted (planning day).
+- **Read first**: exact `path:line`s; the Build Tracker row and Stage F slot, quoted.
+- **Slide verdicts** (a lesson built from existing ones): the Course Audit's keep, hide or move for each slide
+  it draws on, quoted, and the slide budget that fits one 50-minute slot; the reviewer's `Slides:` count checks it.
 - **Acceptance criteria**: statements the reviewer can check against the diff: which slides or lab steps
   exist, what each teaches, which `docs/build-spec.md` rules apply (confidence scale, notes block, worked
   example). Read them back once and remove any two that contradict each other.
 - **Sources**: the `Blockchain.bib` keys each claim rests on (grep the file for them); for a fact no key
-  supports, the source to read and its URL, so the implementer can add it (permission 4); an "as of" date for
-  each fact that changes. Never a commercial analytics platform as a tool (`CLAUDE.md`, Course direction).
+  supports, the source pass's URL and quoted passage (step 2), so the implementer can add it (permission 4); an
+  "as of" date for each fact that changes. Never a commercial analytics platform as a tool (`CLAUDE.md`, Course
+  direction).
 - **Check**: `python tools/check.py`; for a lab, which `run.sh --fresh-start` proves it, or "unverified: no
   automated tests" (`docs/sprint.md`, Lab tests and Docker).
-- **Out of scope**, **Size** (slides changed, or lab steps), and the line `Waits for: #<n>, #<m>.` (issue
-  numbers only, or `Waits for: none.`), as plain text on one line. The queue reads the issue numbers before
+- **Decisions (architect)**: the technical decisions step 2 made, or none.
+- **Out of scope**, **Size** (slides changed and the lesson's slide budget, or lab steps), and the line
+  `Waits for: #<n>, #<m>.` (issue numbers only, or `Waits for: none.`), as plain text on one line. The queue reads the issue numbers before
   its first full stop, so any note about other issues goes after it.
 - **Student-visible**: one line per change students will see, or "nothing student-visible".
 - **Trailer**: the `Requested:` line from Owner's standing permissions in `docs/sprint.md`, ending

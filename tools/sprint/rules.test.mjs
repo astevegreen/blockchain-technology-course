@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
   bodyRefs,
+  digestPlan,
   hasWork,
   heldRetry,
   laneQueue,
@@ -26,7 +27,7 @@ const SPRINT_MD = `# Sprint
 
 **Window (UTC):** \`20261102T0800\` to \`20261106T1800\`
 
-Sprint log: #40 "Sprint log". Tag before the sprint: \`pre-sprint-2026-11-02\`.
+Sprint log: #40 "Sprint log". Questions: #41 "Decisions". Tag before the sprint: \`pre-sprint-2026-11-02\`.
 
 - **Environment:** \`env_01AbC\`: the computer sessions start on.
 
@@ -86,6 +87,7 @@ test("reads the window, lanes, sprint log, tag and each lane's backlog", () => {
     { name: "labs", worktree: "C:/Antigravity/bc-lane-labs" },
   ]);
   assert.equal(doc.logIssue, 40);
+  assert.equal(doc.decisionsIssue, 41);
   assert.equal(doc.preSprintTag, "pre-sprint-2026-11-02");
   assert.deepEqual(doc.backlog.wk.map((i) => i.id), ["L1", "L2", "L3"]);
   assert.deepEqual(Object.keys(doc.backlog), ["wk", "labs"], "the backlog ends at the next ## heading");
@@ -209,7 +211,7 @@ test("a Gemini audit posted after the owner's answer never hides it", () => {
     }),
   ]);
   assert.equal(ownerReply(i)?.body, "Use the BIP.");
-  assert.deepEqual(heldRetry({ ...i, labels: ["lane:wk", "held"] }, 8000), { retry: true, why: "the owner replied", concerns: "Use the BIP." });
+  assert.deepEqual(heldRetry({ ...i, labels: ["lane:wk", "held"] }, 8000), { retry: true, mode: "fix", why: "the owner replied", concerns: "Use the BIP." });
 });
 
 test("a machine failure is retried only over the memory floor", () => {
@@ -218,6 +220,70 @@ test("a machine failure is retried only over the memory floor", () => {
   ]);
   assert.equal(heldRetry(i, 8000).retry, true);
   assert.equal(heldRetry(i, 3000).retry, false);
+});
+
+// #10 X2, 25 Oct: "Implementer: machine" (a Docker Hub pull timed out) was followed a second later by the
+// implementer's note on a spec departure, and the queue, reading only the newest comment, waited for the owner.
+const masked = [
+  ["greenbeanbot", "2026-10-25T21:15:07Z", "Lane: unblocked by the owner's answer; the implementer reads it as part of the spec."],
+  ["greenbeanbot", "2026-10-25T21:41:28Z", "Implementer: machine\n\nThe exercises lab tests could not pull python:3.11-slim."],
+  ["greenbeanbot", "2026-10-25T21:41:29Z", "Implementer: one departure from the spec, for the reviewer."],
+];
+
+test("a machine failure retries by itself even when a later note follows it (#10, 25 Oct)", () => {
+  const [i] = normalizeIssues([issue(10, "[task] X2: insider", ["lane:labs", "held"], { comments: masked })]);
+  const r = heldRetry(i, 8000);
+  assert.equal(r.retry, true);
+  assert.equal(r.mode, "fix");
+  assert.match(r.why, /the machine failed it/);
+  assert.match(r.concerns, /^Implementer: machine The exercises lab tests could not pull/);
+});
+
+test("work the machine failed waits for memory, never for the owner, and is not in Needs you", () => {
+  const w = world([issue(10, "[task] X2: insider", ["lane:labs", "held"], { comments: masked })], { freeMb: 3000 });
+  const r = heldRetry(w.issues[0], 3000);
+  assert.deepEqual([r.retry, r.owner], [false, false]);
+  assert.match(laneQueue(w, "labs").waiting[0], /#10 X2 is held: the machine failed it and 3000 MB free/);
+  assert.deepEqual(statusBlock(w).needsYou, []);
+});
+
+test("a machine failure from an attempt already retried does not decide the next hold", () => {
+  const [i] = normalizeIssues([
+    issue(10, "[task] X2: insider", ["lane:labs", "held"], {
+      comments: [
+        ...masked,
+        ["greenbeanbot", "2026-10-26T00:10:00Z", "Lane: retrying, since the machine failed it and 9000 MB is free now."],
+        ["greenbeanbot", "2026-10-26T01:00:00Z", "Lane: held. Blockers left after the second review: 1. [blocker] x.qmd:4 no source"],
+      ],
+    }),
+  ]);
+  const r = heldRetry(i, 8000);
+  assert.deepEqual([r.retry, r.owner], [false, true]);
+  assert.match(r.why, /^waits for the owner/);
+});
+
+test("a hold with only minor concerns, from before the 28 Oct policy, is reviewed again and handed over (#7, #12)", () => {
+  const minor = issue(12, "[task] X4a: explorer", ["lane:labs", "held"], {
+    comments: [["greenbeanbot", "2026-10-25T22:04:37Z", "Lane: held. Second review left one minor concern: no agent/explorer/ browser playbook."]],
+  });
+  const ahead = world([minor], { branchAhead: () => 2 });
+  assert.deepEqual(nextJob(ahead, "labs"), {
+    mode: "resume", issue: 12, concerns: "Lane: held. Second review left one minor concern: no agent/explorer/ browser playbook.",
+    reason: "#12 X4a is held and its concerns are all minor, which ship with a note",
+  });
+  assert.equal(nextJob(world([minor]), "labs").mode, "fix", "with no branch, it is built again");
+  const blocker = issue(12, "[task] X4a: explorer", ["lane:labs", "held"], {
+    comments: [["greenbeanbot", "2026-10-25T22:04:37Z", "Lane: held. 1. [blocker] a.md:1 leaks an answer 2. [minor] b.md:2 wording"]],
+  });
+  assert.equal(nextJob(world([blocker]), "labs"), null, "a blocker holds");
+  assert.deepEqual(statusBlock(world([blocker])).needsYou.length, 1);
+});
+
+test("taking up held work starts a new attempt with a comment that says why", () => {
+  const w = world([issue(10, "[task] X2: insider", ["lane:labs", "held"], { comments: masked })]);
+  const m = planMove(w, 10, "in-progress");
+  assert.equal(m.comment, "Lane: retrying, since the machine failed it and 20000 MB is free now.");
+  assert.deepEqual([m.add, m.remove], [["in-progress"], ["held"]]);
 });
 
 // --- next ------------------------------------------------------------------------------------------------------------
@@ -354,6 +420,62 @@ test("the status block counts each lane, names main and the last Lab Tests run, 
   assert.ok(statusBlock(world([])).body.endsWith("- nothing"));
 });
 
+// 25-26 Oct: an `also` line worded a little differently each run counted as new, so the owner was pinged hourly.
+test("only an issue newly needing the owner is new, and only new held work is a ping", () => {
+  const held = issue(8, "[task] L2: y", ["lane:wk", "held"], { comments: [["greenbeanbot", "2026-11-03T01:00:00Z", "Lane: held. 1. [blocker] x"]] });
+  const blocked = issue(9, "[task] L3: z", ["lane:wk", "blocked"]);
+  const first = statusBlock(world([held, blocked]), { also: ["wake not armed at 11:42Z"] });
+  assert.deepEqual(first.new, ['#8 [held] L2: waits for the owner; newest comment: "Lane: held. 1. [blocker] x"', "#9 [blocked] L3: waiting for your answer"]);
+  assert.deepEqual(first.ping, [first.new[0]]);
+  const again = statusBlock(world([held, blocked]), { also: ["wake not armed at 12:42Z"], oldBody: first.body });
+  assert.deepEqual([again.new, again.ping], [[], []]);
+});
+
+// --- the Decisions digest ----------------------------------------------------------------------------------------------
+
+const question = (n, at, text = "Plan: which source? a (recommended) or b") =>
+  issue(n, `[task] L${n}: x`, ["lane:wk", "blocked"], { comments: [["greenbeanbot", at, text]] });
+const decisions = (comments = []) => issue(41, "Decisions", [], { comments });
+
+test("the digest posts once a day, only when a question is new since the last one", () => {
+  const first = digestPlan(world([decisions(), question(3, "2026-11-03T01:00:00Z")]));
+  assert.equal(first.post, true);
+  assert.deepEqual([first.open, first.new], [[3], [3]]);
+  assert.match(first.comment, /^@astevegreen Decisions digest, 2026-11-03 12:00Z: 1 content decision wait/);
+  assert.ok(first.body.includes("- #3 L3 (new): Plan: which source? a (recommended) or b"));
+
+  const posted = decisions([["greenbeanbot", "2026-11-03T06:00:00Z", first.comment]]);
+  const same = digestPlan(world([posted, question(3, "2026-11-03T01:00:00Z")]));
+  assert.deepEqual([same.post, same.reason], [false, "no question is new since the last digest"]);
+  const soon = digestPlan(world([posted, question(3, "2026-11-03T01:00:00Z"), question(4, "2026-11-03T07:00:00Z")]));
+  assert.equal(soon.post, false);
+  assert.match(soon.reason, /under a day ago/);
+  const nextDay = digestPlan(world([posted, question(3, "2026-11-03T01:00:00Z"), question(4, "2026-11-03T07:00:00Z")], {
+    now: new Date("2026-11-04T06:30:00Z"),
+  }));
+  assert.deepEqual([nextDay.post, nextDay.new], [true, [4]]);
+});
+
+test("the digest leaves out answered questions, and a new question on a listed issue counts as new", () => {
+  const answered = issue(5, "[task] L5: x", ["lane:wk", "blocked"], {
+    comments: [["greenbeanbot", "2026-11-03T01:00:00Z", "Plan: which?"], ["astevegreen", "2026-11-03T02:00:00Z", "a"]],
+  });
+  const posted = decisions([["greenbeanbot", "2026-11-02T06:00:00Z", "@astevegreen Decisions digest\n- #3 L3: old question"]]);
+  const d = digestPlan(world([posted, answered, question(3, "2026-11-03T01:00:00Z", "Plan: a second question")]));
+  assert.deepEqual([d.post, d.open, d.new], [true, [3], [3]]);
+  assert.equal(digestPlan(world([decisions(), answered])).reason, "no question is open");
+});
+
+test("digest --write rewrites the Decisions body and comments once; without a Decisions issue it refuses", () => {
+  const { io, writes } = fakeIo([decisions(), question(3, "2026-11-03T01:00:00Z")]);
+  const out = JSON.parse(run(["digest", "--write"], io).line);
+  assert.equal(out.written, true);
+  assert.deepEqual(writes().map((c) => c.args), [["issue", "edit", "41", "--body-file", "-"], ["issue", "comment", "41", "--body-file", "-"]]);
+  assert.match(writes()[1].input, /^@astevegreen Decisions digest/);
+  const none = fakeIo([decisions()], { sprintDoc: () => SPRINT_MD.replace('#41 "Decisions"', "none") });
+  assert.equal(run(["digest"], none.io).code, 2);
+});
+
 // --- the command line ------------------------------------------------------------------------------------------------
 
 function fakeIo(issues, over = {}) {
@@ -410,7 +532,8 @@ test("a refused move writes nothing and exits 2 with an error and a do line", ()
 test("status writes the block to the sprint log and lists only the new Needs you items", () => {
   const { io, writes } = fakeIo([...cli, issue(9, "[task] L3: y", ["lane:wk", "blocked"])]);
   const out = JSON.parse(run(["status", "--write", "--also", "stuck: Course lane: labs"], io).line);
-  assert.deepEqual(out.new, ["#9 [blocked] L3: waiting for your answer", "stuck: Course lane: labs"]);
+  assert.deepEqual(out.new, ["#9 [blocked] L3: waiting for your answer"], "a stuck session is in the block, never new");
+  assert.deepEqual(out.ping, [], "a new question waits for the daily digest");
   assert.deepEqual(writes(), [{ args: ["issue", "edit", "40", "--body-file", "-"], input: out.body }]);
   assert.ok(out.body.includes("- wk: 0 sprint-ready, 1 in-progress, 0 to-integrate, 0 held, 1 blocked; closed: none"));
   assert.ok(out.body.includes("**Lab Tests:** last run success at be34383f https://x/1"));
