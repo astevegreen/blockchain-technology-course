@@ -4,8 +4,8 @@
 // reviewer's blocker, and its notes never do. When no model answers, its first line is "Second look: retry": no
 // verdict, so the change waits for a run that answers and never ships on it (owner's policy, 28 Oct 2026: machine
 // failures retry). A change that touches a rail also gets the rail audit (tools/rail-audit.mjs), a deep review of
-// one question by Argon or Opus alone, whose first line says whether the rail change ships, is held for the owner,
-// or runs again.
+// one question by Argon, Opus or Flash (never Sonnet), whose first line says whether the rail change ships, is held
+// for the owner, or runs again.
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -78,8 +78,9 @@ function look(material, pick, tmp) {
   }
 }
 
-// The rail files' diff alone, always deep, and only Argon or Opus may answer (RAIL_MODELS). A rail ships only on a
-// clear no; with neither answering, the audit runs again later, and the rail change waits unpushed.
+// The rail files' diff alone, always deep, answered by Argon, Opus or Flash, in that order (RAIL_MODELS). A rail
+// ships only on a clear no; with none of them answering, the audit runs again later, and the rail change waits
+// unpushed.
 function railAudit(request, diff, stats, rails, tmp) {
   const pick = pickDepth({ kind: "change", ...stats }, RAILS);
   const touches = `It touches ${rails.join(", ")}.`;

@@ -91,8 +91,8 @@ The owner judges results, not code: explain every change in plain English and pr
   unpushed, until a run answers. It never waits on the owner.
 - A change to a rail (`RAILS` in `tools/rail-audit.mjs`: the hooks, settings, sprint skills and agents, git hooks,
   workflows, the check and the checks it runs, the sprint queue, the second look and `GEMINI.md`) runs
-  `second-look.mjs` too, tooling or not: it adds the rail audit, a deep review by Argon or Opus asking whether the
-  change loosens any check. Its first line decides: no loosening, it ships like any other change; "LOOSENS" or an
+  `second-look.mjs` too, tooling or not: it adds the rail audit, a deep review by Argon, Opus or Flash (never
+  Sonnet) asking whether the change loosens any check. Its first line decides: no loosening, it ships like any other change; "LOOSENS" or an
   answer with no verdict, push the rest but not the rail change: hold it for the owner with the audit's reasons;
   `Rail audit: retry`, push the rest and run the audit again later for the rail change. Every push to `main` runs
   the Check workflow (`check.yml`); a red run is fixed or reverted.

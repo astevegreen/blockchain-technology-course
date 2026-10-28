@@ -57,7 +57,7 @@ policy.
   day, with one @-mention.
 - **Rails** (`RAILS` in `tools/rail-audit.mjs`: the hooks, settings, sprint skills and agents, `.githooks/`,
   `.github/`, the check with the checks it runs, the sprint queue, and the second look with `GEMINI.md`) ship
-  after a deep agy rail audit, by Argon or Opus only, answers no to "does this loosen, bypass or disable any
+  after a deep agy rail audit, by Argon, Opus or Flash, answers no to "does this loosen, bypass or disable any
   check, guard, gate, hook or required review?"; a yes holds the change for the owner, and an audit no model
   answered runs again (`CLAUDE.md`, Finishing). Lanes never edit them (Locked paths).
 

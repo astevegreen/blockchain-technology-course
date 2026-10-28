@@ -63,9 +63,16 @@ test("a second look or rail audit that could not run says retry: nothing ships o
   assert.doesNotMatch(script, /Second look skipped: \$\{err/, "a failed look is no skip");
 });
 
-// Only the two deepest readers may clear a rail; with both out, no model answered, and the audit is retried.
-test("the rail audit asks Argon, then Opus, and never Flash or Sonnet", () => {
-  assert.deepEqual(RAIL_MODELS, [ARGON, OPUS]);
+// Owner, 28 Oct 2026: the rail audit never waits on the deep models' usage, and never asks Sonnet (the Claude
+// reviewer covers that family). With all three out, no model answered, and the audit is retried.
+test("the rail audit asks Argon, then Opus, then Flash, and never Sonnet", () => {
+  assert.deepEqual(RAIL_MODELS, [ARGON, OPUS, FLASH]);
+  const flash = (model) => {
+    if (model !== FLASH) throw new Error("Individual quota reached. Resets in 2h0m0s.");
+    return "LOOSENS: no\nIt adds a check.";
+  };
+  const free = { outUntil: () => null, markOut: () => {} };
+  assert.deepEqual(askFirstAvailable(RAIL_MODELS, flash, free, () => 0).model, FLASH, "Flash answers when Argon and Opus are out");
   const asked = [];
   const busy = (model) => {
     asked.push(model);
@@ -73,8 +80,8 @@ test("the rail audit asks Argon, then Opus, and never Flash or Sonnet", () => {
   };
   const none = { outUntil: () => null, markOut: () => {} };
   assert.throws(() => askFirstAvailable(RAIL_MODELS, busy, none, () => 0), /no model answered/);
-  assert.deepEqual(asked, [ARGON, OPUS]);
-  assert.ok(!asked.includes(FLASH) && !asked.includes(SONNET));
+  assert.deepEqual(asked, [ARGON, OPUS, FLASH]);
+  assert.ok(!asked.includes(SONNET));
   const script = readFileSync(path.join(ROOT, "tools", "second-look.mjs"), "utf8");
   assert.match(script, /review\("rail-audit\.md", material, RAIL_MODELS, tmp\)/);
 });

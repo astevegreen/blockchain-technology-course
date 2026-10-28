@@ -4,7 +4,7 @@
 // failure, so only a "no" ships; a "yes", or an answer with no verdict, holds the change for the owner with the
 // reason. An audit no model answered is the machine's failure: it runs again, and the rail change waits unpushed.
 // tools/second-look.mjs runs it on every change that touches a rail. YODC and Terminal Dusk hold the same rule.
-import { ARGON, OPUS } from "./agy.mjs";
+import { ARGON, FLASH, OPUS } from "./agy.mjs";
 
 // The rails, as path prefixes: every file whose content decides whether a change ships. The Claude Code hooks and
 // the sprint guard; the settings that wire hooks and hold the permission rules; the sprint skills and agents, which
@@ -36,10 +36,11 @@ export const RAILS = [
 // The files of a change that are rails.
 export const railFiles = (files) => files.filter((f) => RAILS.some((r) => f.startsWith(r)));
 
-// The models that may audit a rail, in order: the two deepest readers. Flash and Sonnet never clear a rail; with
-// Argon and Opus both out, no model answered, and the audit runs again later. Its own order, not agy.mjs's ORDER,
-// whose deep list falls through to them (agy.mjs stays identical in the three repos).
-export const RAIL_MODELS = [ARGON, OPUS];
+// The models that may audit a rail, in order (owner, 28 Oct 2026): the two deepest readers, then Flash, so the audit
+// never waits on the deep models' usage. Never Sonnet: the Claude reviewer already covers that family. With all
+// three out, no model answered, and the audit runs again later. Its own order, not agy.mjs's ORDER, whose deep list
+// ends in Sonnet (agy.mjs stays identical in the three repos).
+export const RAIL_MODELS = [ARGON, OPUS, FLASH];
 
 // The parts of a unified diff that change a rail: the audit judges the rails alone, since the second look already
 // reviews the rest of the change.
