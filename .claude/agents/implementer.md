@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Builds one course sprint issue, or fixes one sent back, in its lane's worktree. Used only by the sprint-lane skill.
+description: Builds one course sprint issue, or fixes one sent back, in its lane's worktree. Used only by the sprint-lane skill, for /sprint-lane runs; never for interactive work, because its --file-lock hook refuses edits in the main checkout.
 tools: Read, Edit, Write, Bash, Grep, Glob, Agent
 disallowedTools: WebFetch, WebSearch
 model: opus
