@@ -260,7 +260,7 @@ def bib_keys(rel: str) -> list[str]:
 
 def as_notes(lines: list[str]) -> list[str]:
     """Report without failing. Until the Site cleanup build item, a stale glossary or mind map is fixed once per
-    phase, not in every change (Stage G call 2; docs/build-spec.md, "During the build")."""
+    phase, not in every change (docs/build-spec.md, "During the build")."""
     return [line if line.startswith(NOTE) else f"{NOTE}{line}" for line in lines]
 
 

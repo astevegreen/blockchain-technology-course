@@ -45,7 +45,7 @@ Run `Q has-work "Course plan: $ARGUMENTS"` and read the lane's backlog in `docs/
 Read only what its spec needs: `docs/build-spec.md`, the backlog line, the files it names (lessons by offset:
 they run to 2,000 lines), and what the `scout` agent points you to. Then, in Notion (read only; find each page by
 name with Notion search, in "Blockchain Course Prep"):
-- the item's row in the "Build Tracker (Stage F)" database and its slot in Stage F's Lessons table;
+- the item's row in the "Build Tracker" database and its slot in the Course Design page's lessons table;
 - for a lesson built from existing ones, the Course Audit's verdict on each slide it draws on (keep, hide or
   move, and where to): these settle its cuts. A cut the audit leaves open is a question (step 2).
 Quote what the spec needs from them in the issue: the implementer reads the issue, not Notion. When Notion can't
@@ -82,7 +82,7 @@ passed inline is refused as a push. Write each comment the same way, to a file i
 `--body-file`. Every file you write goes in that folder: the other lane's plan session runs at the same time in
 this same checkout. The body:
 - **Goal**: what changes for the student or the instructor, in plain words.
-- **Read first**: exact `path:line`s; the Build Tracker row and Stage F slot, quoted.
+- **Read first**: exact `path:line`s; the Build Tracker row and Course Design slot, quoted.
 - **Slide verdicts** (a lesson built from existing ones): the Course Audit's keep, hide or move for each slide
   it draws on, quoted, and the slide budget that fits one 50-minute slot; the reviewer's `Slides:` count checks it.
 - **Acceptance criteria**: statements the reviewer can check against the diff: which slides or lab steps
