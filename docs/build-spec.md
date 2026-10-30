@@ -135,8 +135,8 @@ NFT wash trading keeps its full segment (D5 ③) and the Fabric demo (D7 ③) is
   says what a function does, who may call it and what it changed; day 6's diagram names each contract, the assets
   in and out and the far-side address; day 7's summary names the stablecoin and its issuer and says whether it can
   be frozen.
-- Post-test and pretest share one blueprint: one item per in-scope concept (42 today; the list can change,
-  Direction 10), multiple choice for familiarity concepts, a short written answer for working-skill concepts.
+- Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the list can
+  change, Direction 10), multiple choice for familiarity concepts, a short written answer for working-skill concepts.
 - Daily quizzes are ungraded practice: about five recall questions on the previous day.
 - Every quiz and test answer traces to a lesson line.
 

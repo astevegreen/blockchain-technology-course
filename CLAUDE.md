@@ -6,9 +6,9 @@ The owner judges results, not code: explain every change in plain English and pr
 
 ## Course direction (owner's charter: Notion "Blockchain Course Prep")
 - Redesign for US government analysts who characterize on-chain activity and explain it to agents and prosecutors;
-  target: every concept in the Notion "Role Concepts" list (42 today; it changes with feedback and testing). Ready to
-  offer by 26 Feb 2027 (a target date; no class booked); later runs add depth. Build items come from the Notion
-  "Build Tracker", the Notion "Course Design" page and docs/build-spec.md.
+  target: every concept in the Notion "Role Concepts" list (42 as of 30 Oct 2026; it changes with feedback and
+  testing). Ready to offer by 26 Feb 2027 (a target date; no class booked); later runs add depth. Build items come
+  from the Notion "Build Tracker", the Notion "Course Design" page and docs/build-spec.md.
 - Direction (owner, 30 Oct 2026; docs/build-spec.md "Direction"): foundations first, lecture-led; students identify,
   understand, characterize and explain activity, and the analyst's job ends at the assessment. No formal memos or
   briefings; ICD 203 only standardizes confidence words. The day map is under review against this direction.
