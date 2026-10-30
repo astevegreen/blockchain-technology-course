@@ -47,15 +47,15 @@ additions go (wallets and custody, exchanges, OTC and P2P, CTFs, a bug bounty, a
 
 ## The day map
 Under review against the Direction above. The table is the old placement; it is being redrawn into the two halves
-(Direction 12), one day at a time. Settled so far: day 1 (owner, 30 Oct: "Basics first") and day 2 (owner, 30 Oct:
-"Bitcoin and wallets").
+(Direction 12), one day at a time. Settled so far: day 1 (owner, 30 Oct: "Basics first") day 2 (owner, 30 Oct:
+"Bitcoin and wallets") and day 3 (owner, 30 Oct: "Ethereum and tokens").
 
 | Day | Theme | Lab product |
 | --- | --- | --- |
 | 1 | Reading the ledger (settled) | Explorer worksheet (Otterscan; The Insider and terminal orientation open the lab), then a transaction signed and sent to a node on the course's own chain |
 | 2 | Bitcoin and wallets (settled) | Wallet walkthrough on the course's own chain: a wallet made from a seed phrase, its derived addresses and a 2-of-3 multi-sig spend, each step read in the explorer |
-| 3 | Hiding, naming and saying how sure | Under review (the memo is retired) |
-| 4-5 | Ethereum, contracts, DeFi and its exploits | Code-reading worksheet (two halves) |
+| 3 | Ethereum and tokens (settled) | A token contract read, then an NFT minted on the course's own chain (like the original NFT lab) and read in Otterscan |
+| 4-5 | DeFi and its exploits (Ethereum's accounts and reading a contract moved to day 3) | Code-reading worksheet (two halves) |
 | 6 | Crossing chains | Cross-chain flow diagram (Bybit, Kelp DAO), through at least one swap and one bridge |
 | 7 | Stablecoins and Tron | Exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
 | 8 | Where tracing stops | Limits-of-tracing note |
@@ -72,19 +72,21 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 | --- | --- | --- | --- | --- |
 | 1 (settled) | Blocks and chains, and why a blockchain is not the same thing as a cryptocurrency, new, with one real Bitcoin transaction as its worked example (02-IN), L | Keys, signatures and addresses, adding secp256k1 and address derivation, then signing a transaction and sending it to a node (04-CP, with slides from 01, 03 and 05-CP; 02-CP's hash-property slides open it), L | How a public ledger agrees and when it is final (01-CM, absorbing 04-DS, 05-IN, 02-CM and 03-CM's comparison table and finality slides; per-chain finality), L | 1-5, 41, 42 |
 | 2 (settled) | Reading a Bitcoin transaction: scripts, address types, fees, change (02-BF, absorbing 01-BF and 03-BF's scripts; 02-CP's Merkle slides), L | Wallet types: hot and cold, custodial and self-custody, seed phrases and derivation, new, bringing back 02-BF's derivation slides, L | Multi-sig and open-source wallet software, new, L | none in Role Concepts yet (wallets are a feedback addition) |
-| 3 | Mixers and CoinJoin (02-FO part 2), M | Attribution: OSINT, label sources, dark markets, commercial platforms as a category (01-FO recut; Hydra, Samourai, Bitcoin Fog), L | Confidence language (ICD 203's words; 83, 84), new, L; the rest of the slot is under review (the one-page memo is retired) | 9, 25, 27, 28, 40, 45 |
-| 4 | Accounts, tokens and transactions (01-EF), M | Reading a contract, read only (04-EF), M | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | 18, 22, 24, 47 |
+| 3 (settled) | Accounts, the EVM and transactions (01-EF, adding the EVM), M | Reading a contract, read only (04-EF), M | Tokens: ERC-20, stablecoins and NFTs; issuer freezes and blacklisting, with Tether's blacklist functions (02-AS, 06-EF), M | 18, 46 |
+| 4 | Moved to day 3 | Moved to day 3 | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | 22, 24, 47 |
 | 5 | Mempool, MEV and DEX trades (03-EF; 64), M | Flash loans, reentrancy and oracle manipulation (04-EF extended; The DAO and Euler), L | Bytecode and decompiling (63); NFT wash trading (06-EF), L | 12-17, 19 |
 | 6 | Chain hopping and bridges (the bridge slides of 01-FO and 02-FO), M | Layer 2s (01-EF, with the trilemma from 04-IN), M | Ransomware-as-a-service and the cash-out (85), new, L | 6, 10, 21 |
-| 7 | Tokens and stablecoins; issuer freezes and blacklisting (02-AS, 06-EF), M | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Permissioned ledgers and CBDCs, about 20 minutes (01-PC, 02-AS), then the instructor's Fabric demo, about 30 minutes (55), M | 31, 38, 39, 46, 48, 49 |
+| 7 | Moved to day 3 | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Permissioned ledgers and CBDCs, about 20 minutes (01-PC, 02-AS), then the instructor's Fabric demo, about 30 minutes (55), M | 31, 38, 39, 48, 49 |
 | 8 | Privacy coins: Monero and Zcash (02-FO, 04-BF), M | Cryptojacking, new, L | Fusing on-chain findings with other sources, new, L | 11, 23, 29 |
 | 9 | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organized with ATT&CK and the Diamond Model, new, L | Under review: formal briefing is retired (83), L | 26, 30, 37 |
 
 Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons.
 
-Moved out of day 2 by the two halves, to a week-2 day still open: clustering heuristics and peel chains (02-FO
-part 1), ransomware payments (Colonial Pipeline), and Forensics 1's annotated trace (40); concepts 7, 8 and 20 go
-with them.
+Moved out of week 1 by the two halves, to a week-2 day still open. From day 2: clustering heuristics and peel
+chains (02-FO part 1), ransomware payments (Colonial Pipeline), and Forensics 1's annotated trace (40), with
+concepts 7, 8 and 20. From day 3: mixers and CoinJoin (02-FO part 2), attribution (01-FO recut) and confidence
+language (83, 84), with concepts 9, 25, 27, 28, 40 and 45. Approvals, drainers and the DeFi exploits (days 4 and 5
+above) go to week 2 as tracing scenarios; their day is open.
 
 Day 9's second lesson also teaches MITRE AADAPT, MITRE's ATT&CK-style matrix of attacks on digital-asset payments.
 It has no sanctions-evasion technique, so sanctions stay with Day 7's second lesson and Day 9's first. Details are
