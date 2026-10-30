@@ -33,11 +33,11 @@ below; the day map and lessons by day are under review against them, and the ite
     mixers, cross-chain, Tron stablecoins, and a final unguided scenario on day 10). Pilot A, which runs week 1,
     tests no tracing.
 
-Open for the course-map review: the capstone and day 10; the certificate rule; the
+Open for the course-map review: the certificate rule; the
 post-test's size and pass mark; Not yet / Meets / Strong marking, resubmission and the graded lab points; outcome
-O9's wording; what replaces the memo and briefing work (the old map's D3 ③ memo, the D3 memo lab, D9 ③'s briefing lesson, the
-paired morning briefings and the D10 capstone); the instructor-only challenge bank; where the expert feedback's
-remaining additions go (CTFs, a bug bounty, an NFT for passing; wallets, exchanges, OTC and P2P sit on days 2 and 5).
+O9's wording; what replaces the paired morning briefings (the old map's memo lesson and lab, briefing lesson and
+capstone are gone, and day 10's informal explanation replaces the capstone); the instructor-only challenge bank;
+class size and assessors on day 10; where the expert feedback's remaining additions go (CTFs, a bug bounty, an NFT for passing; wallets, exchanges, OTC and P2P sit on days 2 and 5).
 
 ## The course
 - **Blockchain Intelligence Analysis**: "Characterizing on-chain activity and explaining it to agents and
@@ -46,9 +46,10 @@ remaining additions go (CTFs, a bug bounty, an NFT for passing; wallets, exchang
   confidence.
 
 ## The day map
-Redrawn into the two halves (Direction 12), one day at a time. Days 1 to 9 are settled (owner, 30 Oct): day 1
+Redrawn into the two halves (Direction 12), one day at a time, and settled (owner, 30 Oct): day 1
 ("Basics first"), day 2 ("Bitcoin and wallets"), day 3 ("Ethereum and tokens"), day 4 ("DEXs, L2s, bridges"),
-day 5 ("Exchanges and the rules") and days 6 to 9 ("Lessons match the lab"). Day 10 is still under review.
+day 5 ("Exchanges and the rules"), days 6 to 9 ("Lessons match the lab") and day 10 ("Post-test, then a final
+trace").
 
 | Day | Theme | Lab product |
 | --- | --- | --- |
@@ -61,7 +62,7 @@ day 5 ("Exchanges and the rules") and days 6 to 9 ("Lessons match the lab"). Day
 | 7 | Where the trace goes dark (settled) | CoinJoin and mixer trace (Forensics 2, then 3; 41, 42): limits-of-tracing note, saying where the trace stops and what still shows |
 | 8 | Ethereum attacks and the loot (settled) | Cross-chain trace (Bybit, Kelp DAO; 80), opening with one exploit contract read, through at least one swap and one bridge: cross-chain flow diagram |
 | 9 | The threat picture (settled) | Tron stablecoin trace (79): exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
-| 10 | Under review (the memo and briefings are retired); post-test | none; no lessons |
+| 10 | Post-test, then a final trace (settled) | Morning: a review session for open questions (50 minutes), then the post-test. Afternoon: one unguided tracing scenario mixing week 2's types (Prince Group by default: Bitcoin, Tron USDT and an exchange exit; no worked example), then each student explains what they found, and how confident they are, to an instructor, informally (about 5 minutes each). No memo, no briefing |
 
 The lessons in each slot are under Lessons by day, below.
 
@@ -81,7 +82,8 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 | 8 (settled) | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | Flash loans, reentrancy and oracle manipulation (04-EF extended; The DAO and Euler), L | Bytecode and decompiling (63); NFT wash trading (06-EF), L | 13-17, 19, 22, 24, 47 |
 | 9 (settled) | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organized with ATT&CK and the Diamond Model, new, L | Fusing on-chain findings with other sources, new, L | 26, 29, 30, 37 |
 
-Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons.
+Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons: its morning review answers
+students' questions and teaches nothing new.
 
 Week 2 places everything week 1 gave up, each day's lessons preparing that afternoon's trace. Colonial Pipeline's
 ransomware payments and ransomware-as-a-service merge into day 6's second lesson. The formal-briefing lesson (old
