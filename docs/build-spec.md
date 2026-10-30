@@ -33,11 +33,11 @@ below; the day map and lessons by day are under review against them, and the ite
     mixers, cross-chain, Tron stablecoins, and a final unguided scenario on day 10). Pilot A, which runs week 1,
     tests no tracing.
 
-Open for the course-map review: which lesson sits on which day within the two halves; the capstone and day 10; the certificate rule; the
+Open for the course-map review: the capstone and day 10; the certificate rule; the
 post-test's size and pass mark; Not yet / Meets / Strong marking, resubmission and the graded lab points; outcome
-O9's wording; what replaces the memo and briefing work (D3 ③'s memo, the D3 memo lab, D9 ③'s briefing lesson, the
+O9's wording; what replaces the memo and briefing work (the old map's D3 ③ memo, the D3 memo lab, D9 ③'s briefing lesson, the
 paired morning briefings and the D10 capstone); the instructor-only challenge bank; where the expert feedback's
-additions go (wallets and custody, exchanges, OTC and P2P, CTFs, a bug bounty, an NFT for passing).
+remaining additions go (CTFs, a bug bounty, an NFT for passing; wallets, exchanges, OTC and P2P sit on days 2 and 5).
 
 ## The course
 - **Blockchain Intelligence Analysis**: "Characterizing on-chain activity and explaining it to agents and
@@ -46,10 +46,9 @@ additions go (wallets and custody, exchanges, OTC and P2P, CTFs, a bug bounty, a
   confidence.
 
 ## The day map
-Under review against the Direction above. The table is the old placement; it is being redrawn into the two halves
-(Direction 12), one day at a time. Settled so far: day 1 (owner, 30 Oct: "Basics first"), day 2 (owner, 30 Oct:
-"Bitcoin and wallets"), day 3 (owner, 30 Oct: "Ethereum and tokens"), day 4 (owner, 30 Oct: "DEXs, L2s, bridges")
-and day 5 (owner, 30 Oct: "Exchanges and the rules").
+Redrawn into the two halves (Direction 12), one day at a time. Days 1 to 9 are settled (owner, 30 Oct): day 1
+("Basics first"), day 2 ("Bitcoin and wallets"), day 3 ("Ethereum and tokens"), day 4 ("DEXs, L2s, bridges"),
+day 5 ("Exchanges and the rules") and days 6 to 9 ("Lessons match the lab"). Day 10 is still under review.
 
 | Day | Theme | Lab product |
 | --- | --- | --- |
@@ -58,10 +57,10 @@ and day 5 (owner, 30 Oct: "Exchanges and the rules").
 | 3 | Ethereum and tokens (settled) | A token contract read, then an NFT minted on the course's own chain (like the original NFT lab) and read in Otterscan |
 | 4 | DEXs, Layer 2s and bridges (settled) | A DEX swap on the course's own chain, the pool's price read before and after, then a token bridged and both sides read |
 | 5 | Exchanges and the rules (settled) | Week-one check first; then, on a Tron snapshot, a USDT transfer, an exchange deposit and its sweep, and an issuer freeze read; then the instructor's Fabric demo, about 30 minutes |
-| 6 | Crossing chains | Cross-chain flow diagram (Bybit, Kelp DAO), through at least one swap and one bridge |
-| 7 | Stablecoins and Tron | Exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
-| 8 | Where tracing stops | Limits-of-tracing note |
-| 9 | The threat picture | Under review (was the Prince Group capstone trace) |
+| 6 | Tracing Bitcoin (settled) | Bitcoin trace (Forensics 1's annotated trace, 40): each link with its heuristic, its known false positives and a confidence |
+| 7 | Where the trace goes dark (settled) | CoinJoin and mixer trace (Forensics 2, then 3; 41, 42): limits-of-tracing note, saying where the trace stops and what still shows |
+| 8 | Ethereum attacks and the loot (settled) | Cross-chain trace (Bybit, Kelp DAO; 80), opening with one exploit contract read, through at least one swap and one bridge: cross-chain flow diagram |
+| 9 | The threat picture (settled) | Tron stablecoin trace (79): exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
 | 10 | Under review (the memo and briefings are retired); post-test | none; no lessons |
 
 The lessons in each slot are under Lessons by day, below.
@@ -77,24 +76,20 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 | 3 (settled) | Accounts, the EVM and transactions (01-EF, adding the EVM), M | Reading a contract, read only (04-EF), M | Tokens: ERC-20, stablecoins and NFTs; issuer freezes and blacklisting, with Tether's blacklist functions (02-AS, 06-EF), M | 18, 46 |
 | 4 (settled) | Mempool, MEV and DEX trades (03-EF; 64), M | Liquidity: pools, thin markets, and where funds can and can't exit, new, L | Layer 2s and bridges by type (01-EF's Layer 2 slides, with the trilemma from 04-IN; the bridge slides of 01-FO and 02-FO), L | 6, 10, 12 |
 | 5 (settled) | Exchanges, OTC and P2P: how an exchange holds funds (deposit addresses, sweeps to hot and cold wallets), OTC desks, P2P markets, new, L | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Ledgers with a gatekeeper: Tron and USDT on Tron, new, then permissioned ledgers and CBDCs (01-PC, 02-AS), L | 31, 38, 39, 48, 49 |
-| 6 | Moved to day 4 | Moved to day 4 | Ransomware-as-a-service and the cash-out (85), new, L | 21 |
-| 7 | Moved to day 3 | Moved to day 5 | Moved to day 5 (the Fabric demo, 55, to day 5's lab) | none left |
-| 8 | Privacy coins: Monero and Zcash (02-FO, 04-BF), M | Cryptojacking, new, L | Fusing on-chain findings with other sources, new, L | 11, 23, 29 |
-| 9 | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organized with ATT&CK and the Diamond Model, new, L | Under review: formal briefing is retired (83), L | 26, 30, 37 |
+| 6 (settled) | Clustering heuristics and peel chains (02-FO part 1), L | Ransomware: the payment and the cash-out (Colonial Pipeline; ransomware-as-a-service, 85), one lesson merged from two, L | Attribution and confidence: labels and their sources, how well the heuristics have been measured, confidence language (01-FO recut; 83, 84), L | 7, 8, 20, 21, 25, 27, 28, 40, 45 |
+| 7 (settled) | Mixers and CoinJoin (02-FO part 2, with the mixers update), M | Privacy coins: Monero and Zcash (02-FO, 04-BF), M | Cryptojacking, new, L | 9, 11, 23 |
+| 8 (settled) | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | Flash loans, reentrancy and oracle manipulation (04-EF extended; The DAO and Euler), L | Bytecode and decompiling (63); NFT wash trading (06-EF), L | 13-17, 19, 22, 24, 47 |
+| 9 (settled) | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organized with ATT&CK and the Diamond Model, new, L | Fusing on-chain findings with other sources, new, L | 26, 29, 30, 37 |
 
 Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons.
 
-Moved out of week 1 by the two halves, to a week-2 day still open. From day 2: clustering heuristics and peel
-chains (02-FO part 1), ransomware payments (Colonial Pipeline), and Forensics 1's annotated trace (40), with
-concepts 7, 8 and 20. From day 3: mixers and CoinJoin (02-FO part 2), attribution (01-FO recut) and confidence
-language (83, 84), with concepts 9, 25, 27, 28, 40 and 45. Approvals, wallet drainers, EIP-7702, clipboard hijackers
-and address poisoning, with North Korea through Ronin (82, 85; concepts 22, 24 and 47), and the DeFi exploits (flash loans,
-reentrancy and oracle manipulation, 04-EF extended, with The DAO and Euler; bytecode and decompiling, 63; NFT wash
-trading, 06-EF; concepts 13-17 and 19) with the code-reading worksheet (62, 54, 51, 63, 64) go to week 2 as tracing
-scenarios; their day is open.
+Week 2 places everything week 1 gave up, each day's lessons preparing that afternoon's trace. Colonial Pipeline's
+ransomware payments and ransomware-as-a-service merge into day 6's second lesson. The formal-briefing lesson (old
+day 9 ③) is gone, as Direction 4 retires it. Of the code-reading worksheet (62, 54, 51, 63, 64), only one exploit
+contract read, at the start of day 8's lab, has a place so far.
 
 Day 9's second lesson also teaches MITRE AADAPT, MITRE's ATT&CK-style matrix of attacks on digital-asset payments.
-It has no sanctions-evasion technique, so sanctions stay with Day 7's second lesson and Day 9's first. Details are
+It has no sanctions-evasion technique, so sanctions stay with Day 5's second lesson and Day 9's first. Details are
 on the Build Tracker item.
 
 ## Additions to existing lessons
@@ -103,17 +98,17 @@ bridges by type, freezable stablecoins, the deposit-address heuristic and the li
 
 | Item | Where | What |
 | --- | --- | --- |
-| Look-alikes beside the real thing | D2 ②, D5 ①, both code-reading worksheets | D2 ②: an exchange's batched payouts beside a peel chain. D5 ①, about 15 minutes: routers, aggregators, MEV bots, paymasters and relayers are in the path, not the counterparty. Day-4 worksheet: proxy (ERC-1967) to implementation, and who received from internal transactions and Transfer logs in Otterscan. Day-5 worksheet: a 4-byte selector lookup. Routers and batched payouts as known false positives in the memo guide: under review (the memo is retired). |
-| How well the heuristics have been measured | D3 ③ | About 15 minutes: Kappos et al. (USENIX Security 2022) and Möser and Narayanan (FC 2022) in words; why the Bitcoin Fog court admitted the tracing (United States v. Sterlingov, D.D.C., 2024; upheld 25 Sep 2026); the 2023 FRE 702 note. No new test item. Under review: an instructor-only bank of 10 to 15 challenge questions in `quizes/`, starting with the router question (it served the retired briefing). |
-| Mixers update | D3 ① | PayJoin, dusting, and the 2024 end of the zkSNACKs and Samourai coordinators. |
-| Solana, to recognize only | D6 ② | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
-| Bridges by type | D6 ① | Lock-and-mint, message-verified, liquidity and intents, with the Bitget hack as the case. |
-| Freezable stablecoins as a lead | D4 ②; D7 lab | D4 ②: reading Tether's blacklist functions. D7's exposure summary adds "Freezable? Which issuer, and how fast?" |
-| One graded Meets point | D2 trace, code-reading worksheet, D6 diagram, D7 summary | Under review; see Marking and assessment. |
-| Deposit-address heuristic | D7 lab | Victor, "Address Clustering Heuristics for Ethereum" (FC 2020). |
+| Look-alikes beside the real thing | D6 ①, D4 ①, D3 lab, D8 lab | D6 ①: an exchange's batched payouts beside a peel chain. D4 ①, about 15 minutes: routers, aggregators, MEV bots, paymasters and relayers are in the path, not the counterparty. D3 lab: proxy (ERC-1967) to implementation, and who received from internal transactions and Transfer logs in Otterscan. D8 lab's contract read: a 4-byte selector lookup. Routers and batched payouts as known false positives in the memo guide: under review (the memo is retired). |
+| How well the heuristics have been measured | D6 ③ | About 15 minutes: Kappos et al. (USENIX Security 2022) and Möser and Narayanan (FC 2022) in words; why the Bitcoin Fog court admitted the tracing (United States v. Sterlingov, D.D.C., 2024; upheld 25 Sep 2026); the 2023 FRE 702 note. No new test item. Under review: an instructor-only bank of 10 to 15 challenge questions in `quizes/`, starting with the router question (it served the retired briefing). |
+| Mixers update | D7 ① | PayJoin, dusting, and the 2024 end of the zkSNACKs and Samourai coordinators. |
+| Solana, to recognize only | D4 ③ | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
+| Bridges by type | D4 ③ | Lock-and-mint, message-verified, liquidity and intents, with the Bitget hack as the case. |
+| Freezable stablecoins as a lead | D3 ③; D9 lab | D3 ③: reading Tether's blacklist functions. D9's exposure summary adds "Freezable? Which issuer, and how fast?" |
+| One graded Meets point | D6 trace, D8 contract read, D8 diagram, D9 summary | Under review; see Marking and assessment. |
+| Deposit-address heuristic | D9 lab (D5 ① teaches deposit addresses and sweeps) | Victor, "Address Clustering Heuristics for Ethereum" (FC 2020). |
 | A slide on live data | D1 ③ | Explorers see your queries and IP address, recent blocks can reorganize, APIs limit request rates; captured data in class, agency rules on the job. |
 
-NFT wash trading keeps its full segment (D5 ③) and the Fabric demo (D7 ③) is live.
+NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is live.
 
 ## A lesson
 - Fits one 50-minute slot; three a day. A lesson that won't fit after trimming goes back to the owner with a split.
@@ -149,9 +144,9 @@ NFT wash trading keeps its full segment (D5 ③) and the Fabric demo (D7 ③) is
 - Under review (Direction 4 and 9): the certificate rule, the post-test's size and pass mark, Not yet / Meets /
   Strong marking, resubmission and the graded lab points. The memo and briefing guides are retired.
 - The design under review: four lab products carry one graded Meets point each; the rest of every lab is feedback.
-  Day 2's trace follows the ransom to the first service, naming each hop's heuristic; the code-reading worksheet
-  says what a function does, who may call it and what it changed; day 6's diagram names each contract, the assets
-  in and out and the far-side address; day 7's summary names the stablecoin and its issuer and says whether it can
+  Day 6's trace follows the ransom to the first service, naming each hop's heuristic; day 8's contract read
+  says what a function does, who may call it and what it changed; day 8's diagram names each contract, the assets
+  in and out and the far-side address; day 9's summary names the stablecoin and its issuer and says whether it can
   be frozen.
 - Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the list can
   change, Direction 10), multiple choice for familiarity concepts, a short written answer for working-skill concepts.
@@ -163,7 +158,7 @@ NFT wash trading keeps its full segment (D5 ③) and the Fabric demo (D7 ③) is
   court) carries an "as of" date beside its citation; web sources record it as `urldate`.
 - Prince Group is live litigation: every fact about it carries an "as of" date.
 - Ethereum finality is "about 15 minutes" (`ethereumorg_ssf_2026`), best case 12.8 minutes as two 6.4-minute epochs
-  (`ethereumorg_glossary_2026`). Day 7's deposit-versus-sweep cites `victor_clustering_2020` (Ethereum's account
+  (`ethereumorg_glossary_2026`). Day 9's deposit-versus-sweep cites `victor_clustering_2020` (Ethereum's account
   model, which Tron shares) and the lab's own Tron data; no Tron-specific source was found.
 - Kelp DAO (18 Apr 2026): a forged LayerZero message claiming to come from Unichain released rsETH on Ethereum;
   Arbitrum later froze 30,766 ETH (`blockaid_kelpdao_2026`, `arbitrum_kelpfreeze_2026`). It was not an
