@@ -27,8 +27,13 @@ below; the day map and lessons by day are under review against them, and the ite
     deem necessary based on feedback and testing."
 11. **Labs need not all be ready-made.** "some labs don't have to be ready-made only if we decide another format
     will work better."
+12. **Two halves** (owner, 30 Oct: "Yes, two halves"). Week 1 teaches how it works, with no tracing; its labs
+    explore or build (an explorer and a node, wallets on the course's own chain, reading code and minting a
+    token). Week 2 is analysis: every lab is a tracing exercise on a different scenario (Bitcoin, CoinJoin or
+    mixers, cross-chain, Tron stablecoins, and a final unguided scenario on day 10). Pilot A, which runs week 1,
+    tests no tracing.
 
-Open for the course-map review: the order of days and lessons; the capstone and day 10; the certificate rule; the
+Open for the course-map review: which lesson sits on which day within the two halves; the capstone and day 10; the certificate rule; the
 post-test's size and pass mark; Not yet / Meets / Strong marking, resubmission and the graded lab points; outcome
 O9's wording; what replaces the memo and briefing work (D3 ③'s memo, the D3 memo lab, D9 ③'s briefing lesson, the
 paired morning briefings and the D10 capstone); the instructor-only challenge bank; where the expert feedback's
@@ -41,7 +46,8 @@ additions go (wallets and custody, exchanges, OTC and P2P, CTFs, a bug bounty, a
   confidence.
 
 ## The day map
-Under review against the Direction above.
+Under review against the Direction above. The table is the old placement; it is being redrawn into the two halves
+(Direction 12).
 
 | Day | Theme | Lab product |
 | --- | --- | --- |
