@@ -5,14 +5,42 @@ revised 23 Oct by the owner's answers to the adversarial review, P1-P13)
 restated as the rules every build item is checked against. Notion wins where this file and Notion disagree; tell
 the owner. Build items, their sizes and their status live in the Notion "Build Tracker (Stage F)" database.
 
+## Direction (owner, 30 Oct 2026)
+The owner's decisions of 30 Oct, after two pieces of expert feedback, change the approach. They win over anything
+below; the day map and lessons by day are under review against them, and the items they affect are on hold.
+1. **Foundations first.** "feedback overwhelmingly favors teaching foundations first because this gives students a
+   foundation of understanding that makes future lessons and labs/exercises less intimidating"
+2. **A broad foundation before the case.** "Creating a comprehensive foundation of knowledge on everything
+   blockchain is more urgent than \"making a case\""
+3. **Lecture-led days stay**, so instructors can fill gaps in what students know before the lab.
+4. **The graduate identifies, understands, characterizes and explains on-chain activity.** "Formal briefing and
+   written memos are not a skill this course needs to teach."
+5. **The analyst's job ends at the assessment.**
+6. **ICD 203 only standardizes confidence words** (the scale below); "that's really just the extent of its
+   usefulness."
+7. **Students may build simple things** "in controlled, instructor-led environments like the original NFT lab",
+   when it helps them understand a concept, never as "an exercise in rote programming".
+8. **Tracing practice across varied scenarios** (CoinJoin, cross-chain, mixers and others) matters more than one
+   case followed end to end.
+9. **Lab products are short answers or informal explanations to an instructor** that confirm the student did the
+   task accurately.
+
+Open for the course-map review: the order of days and lessons; the certificate rule (the capstone memo and two
+briefings are gone); outcome O9's wording; what replaces D3 ③'s memo, the D3 Memo lab, D9 ③'s briefing lesson,
+the paired morning briefings and the D10 capstone; where the expert feedback's additions go (wallets and custody,
+exchanges, OTC and P2P, CTFs, a bug bounty).
+
 ## The course
 - **Blockchain Intelligence Analysis**: "Characterizing on-chain activity and explaining it to agents and
   prosecutors". Ten days, 0845-1600, for US government analysts. Ready to offer by 26 Feb 2027.
-- One running case: Bitcoin (days 1-3), Ethereum and its contracts (4-5), a bridge (6), stablecoins and Tron (7),
-  where tracing stops (8), the capstone (9-10).
-- Every lab ends in a product an analyst would hand over, and every judgment carries a confidence.
+- Under review (Direction): one running case: Bitcoin (days 1-3), Ethereum and its contracts (4-5), a bridge (6),
+  stablecoins and Tron (7), where tracing stops (8), the capstone (9-10).
+- Every lab ends in a short answer or an informal explanation to an instructor, and every judgment carries a
+  confidence.
 
 ## The day map
+The approved map of 22 Oct, under review against the Direction above; its memo and briefing products are on hold.
+
 | Day | Theme | Lab product |
 | --- | --- | --- |
 | 1 | Reading the ledger | Explorer worksheet (Otterscan; The Insider and terminal orientation open the lab) |
@@ -73,16 +101,19 @@ or lab. If time runs short, P4 is cut first, then P3, P5, P6, P8 and P10 one at 
   then a 2 h 35 min lab. A lesson that overruns takes its time from the lab.
 - Nightly reading is at most 45 minutes and is the lighter side of the subject: origins and history, landmark
   events, vignettes, new developments. It gives students a break from the lessons and labs (owner, 23 Oct).
-- The analyst's voice: bottom line first, plain English, confidence on the course scale, every claim sourced.
+- The analyst's voice: bottom line first, plain English, confidence on the course scale, every claim sourced. It is
+  how lessons speak, not a writing format students are taught or graded on (Direction 4).
 - Slide titles state the point ("Co-spending links inputs, unless it's a CoinJoin"), never just the topic.
 
 ## A lab
 - Browser only, over HTTPS on port 443: students install nothing.
-- Opens with the product the student hands in, then a worked example; a student whose pretest shows the basics
+- Opens with the questions the student answers (short answers, or an informal explanation to the instructor),
+  then a worked example; a student whose pretest shows the basics
   starts at the problem. Optional challenge steps go at the end. One version, two entry points.
 - Short steps addressed to the student.
-- Students read code and never write it. A query or script is handed over ready-made; only the reading of its
-  output is graded.
+- Students mostly read code. A query or script is handed over ready-made; only the reading of its output is
+  graded. An instructor-led build step (like the NFT lab) may have students write simple code when it teaches a
+  concept, never rote programming (Direction 7).
 - Runs on captured data (snapshots, frozen extracts, the course chain). Public chains are a live extra only.
 - Instructor answers stay out of what students receive (CLAUDE.md rule 1).
 
@@ -94,6 +125,8 @@ or lab. If time runs short, P4 is cut first, then P3, P5, P6, P8 and P10 one at 
   Never a percentage.
 
 ## Marking and assessment
+- On hold (Direction 4 and 9): the memo and briefing guides are retired, and the certificate rule and the graded
+  lab points below are for the course-map review to reset.
 - Memo and briefing points are each Not yet, Meets or Strong; a piece passes when every point is at least Meets.
 - Four lab products carry one graded Meets point each; the rest of every lab is feedback. Day 2's trace follows the
   ransom to the first service, naming each hop's heuristic; the code-reading worksheet says what a function does,

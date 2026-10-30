@@ -7,10 +7,14 @@ The owner judges results, not code: explain every change in plain English and pr
 ## Course direction (owner's charter: Notion "Blockchain Course Prep")
 - Redesign for US government analysts who characterize on-chain activity and explain it to agents and prosecutors;
   target: every concept in the Notion "Role Concepts" list. Ready to offer by 26 Feb 2027 (a target date; no class booked); later runs add depth.
-  Design approved; build items come from the Build Tracker and docs/build-spec.md.
+  Build items come from the Build Tracker and docs/build-spec.md.
+- Direction (owner, 30 Oct 2026; docs/build-spec.md "Direction"): foundations first, lecture-led; students identify,
+  understand, characterize and explain activity, and the analyst's job ends at the assessment. No formal memos or
+  briefings; ICD 203 only standardizes confidence words. The day map is under review against this direction.
 - Open-source or in-house tools only: never feature commercial analytics platforms (Chainalysis, TRM, Elliptic);
   citing their research is fine. Blockscout is not open source from v11: ask before adding it.
-- Students read code but never write it. Out of scope: legal process (warrants, subpoenas, seizure, chain of custody,
+- Students mostly read code; they may write simple code in an instructor-led lab (like the NFT lab) when it teaches a
+  concept, never as rote programming. Out of scope: legal process (warrants, subpoenas, seizure, chain of custody,
   testimony) and data engineering (Python, SQL, GraphQL).
 - Facts that change (laws, figures, upgrades, licenses) carry an "as of" date beside the citation.
 
@@ -45,7 +49,7 @@ The owner judges results, not code: explain every change in plain English and pr
    `duplicates.md`, `index.qmd`, `index.pdf`; `quizes/dist/`; `_site/`.
 3. File and folder names use letters, digits, `-`, `_` and `.` only.
 4. Content decisions are the owner's: what a lesson teaches, cutting material the Course Audit leaves open, quiz
-   difficulty, lab scenarios, the memo rubric. Ask one question with a recommendation. Technical choices (how to
+   difficulty, lab scenarios, how lab answers are checked. Ask one question with a recommendation. Technical choices (how to
    build it, tooling, tests, structure, naming, placement, which tool fits) are never asked: decide, and say why.
    Every fact you add cites a `Blockchain.bib` key, and every quiz answer traces to the lesson; when no key fits,
    find a source on the web and quote its passage (`source` skill).

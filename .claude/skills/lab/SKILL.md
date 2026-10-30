@@ -13,8 +13,9 @@ placement, which tool fits) is never asked: decide, and say why in the summary.
 
 1. **Find it.** Read the item's Build Tracker row, then ask the `scout` agent where the lab, its compose target and
    its playbook live (`dynamic-labs/README.md`, "Managed targets").
-2. **Write the product first**: the worksheet, memo, trace or diagram the student hands in, with the confidence it
-   must state. Every step that follows earns a line of that product.
+2. **Write the questions first**: the short answers, or the informal explanation to the instructor, that show the
+   student did the task accurately, with the confidence each must state (`docs/build-spec.md`, "Direction"). Every
+   step that follows earns one of those answers.
 3. **Write the worked example**, then the problem it prepares for. One version with two entry points: the worked
    example, or straight to the problem for a student whose pretest shows the basics. Optional challenge steps go
    last.

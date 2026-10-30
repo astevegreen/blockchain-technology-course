@@ -154,6 +154,10 @@ the supervisor's daily digest there @-mentions the owner at most once a day, onl
 
 ## Backlog
 
+**On hold, 30 Oct 2026**: the owner's new direction (`docs/build-spec.md`, "Direction") puts the course map under
+review. Don't cue a sprint on this backlog until that review has revised it; L4, L5, X3 and X6 rest on the memo,
+which the course no longer teaches.
+
 **Approved** by the owner on 24 Oct 2026, from the Build Tracker's Phase 1 items not yet started that day. Work
 in this order inside a lane.
 Each item is one line `- **<ID>** <what>`, under a `### <lane>` heading; the queue reads the IDs and their order
