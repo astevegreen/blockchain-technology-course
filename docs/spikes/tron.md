@@ -1,8 +1,8 @@
 # Spike: Tron
 
-Stage G's question: can the day-7 deposit and sweep transactions be pulled through java-tron's API into a small
+The question: can the stablecoin lab's deposit and sweep transactions be pulled through java-tron's API into a small
 file for ready-made SQL, or does the class need its own java-tron node? Disk and sync time if so.
-Feeds the D7 Tron lab (#79) and call 4 ("a frozen extract, as recommended"). Run on the laptop 23 Oct 2026.
+Feeds the Tron lab (audit row 79). Run on the laptop 23 Oct 2026.
 
 ## Answer
 **A small file; no node of our own.** Every value in the extract comes from java-tron's own API (`/walletsolidity/*`,

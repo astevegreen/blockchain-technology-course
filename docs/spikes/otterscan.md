@@ -1,7 +1,7 @@
 # Spike: Otterscan
 
-Stage G's question: which node can serve Otterscan to 20-30 browsers over HTTPS port 443, on captured data?
-Feeds the D1 explorer exercise (audit rows 81, 39, 53). Laptop half run 23 Oct 2026, desktop half 24 Oct 2026.
+The question: which node can serve Otterscan to 20-30 browsers over HTTPS port 443, on captured data?
+Feeds the explorer exercise (audit rows 81, 39, 53). Laptop half run 23 Oct 2026, desktop half 24 Oct 2026.
 
 ## Answer
 **Go, with Anvil (Foundry) as the node, on a frozen course chain.** Anvil speaks all of Otterscan's API, the

@@ -1,8 +1,8 @@
 # Spike: Cross-chain
 
-Stage G's question: can the Bybit and Kelp DAO flows be pulled into Parquet files with an open-source extractor
+The question: can the Bybit and Kelp DAO flows be pulled into Parquet files with an open-source extractor
 (cryo) and read through ready-made queries in the browser (DuckDB's browser build)? File sizes; which hops the lesson
-needs; whether every figure can carry an "as of" date. Feeds the D6 cross-chain lab (#80). Run on the laptop
+needs; whether every figure can carry an "as of" date. Feeds the cross-chain lab (audit row 80). Run on the laptop
 23-24 Oct 2026.
 
 ## Answer

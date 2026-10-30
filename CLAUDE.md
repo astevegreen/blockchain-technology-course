@@ -6,8 +6,9 @@ The owner judges results, not code: explain every change in plain English and pr
 
 ## Course direction (owner's charter: Notion "Blockchain Course Prep")
 - Redesign for US government analysts who characterize on-chain activity and explain it to agents and prosecutors;
-  target: every concept in the Notion "Role Concepts" list. Ready to offer by 26 Feb 2027 (a target date; no class booked); later runs add depth.
-  Build items come from the Build Tracker and docs/build-spec.md.
+  target: every concept in the Notion "Role Concepts" list (42 today; it changes with feedback and testing). Ready to
+  offer by 26 Feb 2027 (a target date; no class booked); later runs add depth. Build items come from the Notion
+  "Build Tracker", the Notion "Course Design" page and docs/build-spec.md.
 - Direction (owner, 30 Oct 2026; docs/build-spec.md "Direction"): foundations first, lecture-led; students identify,
   understand, characterize and explain activity, and the analyst's job ends at the assessment. No formal memos or
   briefings; ICD 203 only standardizes confidence words. The day map is under review against this direction.
@@ -37,7 +38,8 @@ The owner judges results, not code: explain every change in plain English and pr
 - Lessons `blockchain-course/lessons/<section>/<NN>-<XX>-<slug>.qmd`; citations `lessons/references/Blockchain.bib`.
 - Mind map `blockchain-course/assets/mindmap.html` links to slide anchors.
 - Labs: `dynamic-labs/README.md`. Quiz authoring: `quizes/*_GUIDE.md`, spec `quizes/QUIZ_ENGINE_JSON_SPEC.md`.
-- Content roadmap: `docs/analysis/2026-10-corpus-analysis.md` (93 KB: grep it).
+- Original-course audit (the March 2026 course): `docs/analysis/2026-10-corpus-analysis.md` (93 KB: grep it);
+  its ten days in one picture: `docs/analysis/original-course-day1-to-day10.png`.
 - "Where is X": the `scout` agent. Lessons run to 2,000 lines: read slides by offset.
 
 ## Hard rules (the check enforces most; a failing check means the change is wrong)
