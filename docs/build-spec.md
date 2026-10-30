@@ -47,11 +47,11 @@ additions go (wallets and custody, exchanges, OTC and P2P, CTFs, a bug bounty, a
 
 ## The day map
 Under review against the Direction above. The table is the old placement; it is being redrawn into the two halves
-(Direction 12).
+(Direction 12), one day at a time. Settled so far: day 1 (owner, 30 Oct: "Basics first").
 
 | Day | Theme | Lab product |
 | --- | --- | --- |
-| 1 | Reading the ledger | Explorer worksheet (Otterscan; The Insider and terminal orientation open the lab) |
+| 1 | Reading the ledger (settled) | Explorer worksheet (Otterscan; The Insider and terminal orientation open the lab), then a transaction signed and sent to a node on the course's own chain |
 | 2 | Following Bitcoin | Annotated trace |
 | 3 | Hiding, naming and saying how sure | Under review (the memo is retired) |
 | 4-5 | Ethereum, contracts, DeFi and its exploits | Code-reading worksheet (two halves) |
@@ -69,7 +69,7 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 
 | Day | ① | ② | ③ | Concepts first taught |
 | --- | --- | --- | --- | --- |
-| 1 | One real Bitcoin transaction (02-IN), M | Keys, signatures and addresses, adding secp256k1 and address derivation (04-CP, with slides from 01, 03 and 05-CP; 02-CP's hash-property slides open it), L | How a public ledger agrees and when it is final (01-CM, absorbing 04-DS, 05-IN, 02-CM and 03-CM's comparison table and finality slides; per-chain finality), L | 1-5, 41, 42 |
+| 1 (settled) | Blocks and chains, and why a blockchain is not the same thing as a cryptocurrency, new, with one real Bitcoin transaction as its worked example (02-IN), L | Keys, signatures and addresses, adding secp256k1 and address derivation, then signing a transaction and sending it to a node (04-CP, with slides from 01, 03 and 05-CP; 02-CP's hash-property slides open it), L | How a public ledger agrees and when it is final (01-CM, absorbing 04-DS, 05-IN, 02-CM and 03-CM's comparison table and finality slides; per-chain finality), L | 1-5, 41, 42 |
 | 2 | Reading a Bitcoin transaction: scripts, address types, fees, change (02-BF, absorbing 01-BF and 03-BF's scripts; 02-CP's Merkle slides), L | Clustering heuristics and peel chains (02-FO part 1), L | Ransomware payments (Colonial Pipeline), M | 7, 8, 20 |
 | 3 | Mixers and CoinJoin (02-FO part 2), M | Attribution: OSINT, label sources, dark markets, commercial platforms as a category (01-FO recut; Hydra, Samourai, Bitcoin Fog), L | Confidence language (ICD 203's words; 83, 84), new, L; the rest of the slot is under review (the one-page memo is retired) | 9, 25, 27, 28, 40, 45 |
 | 4 | Accounts, tokens and transactions (01-EF), M | Reading a contract, read only (04-EF), M | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | 18, 22, 24, 47 |
