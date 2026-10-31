@@ -21,6 +21,9 @@ slide index), which is never listed here.
 - 03-EF bank has no questions on the DEX, sandwich-attack or look-alike slides. (31 Oct 2026, rebuild `0504bcc`)
 - 04-EF bank has no questions on the Coin reading, the 4-byte function code, or Vyper and Rust; q2 leans on a
   slide that is now hidden. (31 Oct 2026, D3 ② rebuild)
+- 05-FO (VASPs and the Rules) has no quiz bank; 04-BF q9 and 01-FO q8 (KYC as a gateway duty, displacement to weak
+  jurisdictions) retired with the slides they tested and could seed it. The 04-BF and 01-FO syntheses in
+  `quizes/lesson_synthesis/` still describe the hidden slides. (31 Oct 2026, D5 ② build, grep of `quizes/`)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`
