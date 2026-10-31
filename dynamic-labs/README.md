@@ -13,6 +13,7 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 | `/labs/ethereum_lab/` | Ethereum lab |
 | `/labs/hlf/` | Hyperledger Fabric lab |
 | `/exercises/<name>/` | Exercises (trust-game, bgp-game) |
+| `/labs/explorer/` | Explorer lab (redirects to its own host, `explorer.<host>`) |
 | `/quiz/` | Quiz engine |
 
 ## Prerequisites
@@ -316,6 +317,7 @@ After initial deployment, use these commands. The deployment mode is saved in `.
 | `p2p_trust` | P2P Trust lab (ttyd) |
 | `ethereum_lab` | Ethereum lab (Vite SPA + Hardhat) |
 | `exercises` | Flask exercises (trust-game, bgp-game) |
+| `explorer` | Day-1 explorer lab (Otterscan on a frozen course chain); `explorer/README.md` |
 | `quiz-engine-v2` | Quiz engine |
 | `hlf` | Hyperledger Fabric lab |
 
@@ -325,7 +327,7 @@ Labs fall into two categories:
 
 **On-demand lanes** (bitcoin, consensus, p2p_trust, ethereum, hlf): Students claim a session via `/api/<lab>/claim`, and the lab control plane starts a lane-specific container from a pre-built image. `--max-student-capacity` is the base upper bound for how many claimable stations exist at once, and the per-lab capacity flags can override it for individual labs up to the 40-lane limit.
 
-**Shared singleton apps** (cryptography, exercises, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
+**Shared singleton apps** (cryptography, exercises, explorer, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
 
 That is why lane capacity only applies to the claim-based labs:
 

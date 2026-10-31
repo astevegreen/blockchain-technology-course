@@ -1,0 +1,55 @@
+name: explorer
+
+# The day-1 explorer lab: Otterscan on a frozen course chain, one copy for the whole class.
+# The router sends https://explorer.<host>/ here (router/routes/explorer-host.conf):
+#   /rpc, /config.json, /lab/, /sign/, /fallback/, /vendor/  -> gateway
+#   everything else                                           -> otterscan
+# Anvil is reachable only from the gateway, which passes read methods and signed transactions
+# and refuses Anvil's control methods. A restart reloads the frozen chain: the class's own
+# transactions (sign and send) are gone and blocks 0-10 are as built.
+
+services:
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json
+        --block-time ${EXPLORER_BLOCK_TIME:-12}
+    volumes:
+      - ./chain:/chain:ro
+    networks:
+      - explorer-net
+    restart: unless-stopped
+
+  gateway:
+    image: python:3.12-alpine
+    command: ["python", "-u", "/srv/gateway.py"]
+    environment:
+      - ANVIL_URL=http://anvil:8545
+      - STATIC_ROOT=/srv/static
+    volumes:
+      - ./gateway/gateway.py:/srv/gateway.py:ro
+      - ./gateway/static:/srv/static:ro
+    networks:
+      - explorer-net
+      - router-net
+    depends_on:
+      - anvil
+    restart: unless-stopped
+
+  otterscan:
+    image: otterscan/otterscan:v2.11.0
+    environment:
+      # The router serves /config.json from the gateway; this stops the image writing its own.
+      - DISABLE_CONFIG_OVERWRITE=1
+    volumes:
+      - ./otterscan/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./chain/sourcify:/usr/share/nginx/html/sourcify:ro
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  explorer-net:
+  router-net:
+    external: true

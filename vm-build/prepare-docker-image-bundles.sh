@@ -21,6 +21,7 @@ projects=(
   "dynamic-labs/p2p_trust"
   "dynamic-labs/quiz-engine-v2"
   "dynamic-labs/exercises"
+  "dynamic-labs/explorer"
   "dynamic-labs/ethereum_lab"
   "dynamic-labs/hlf"
 )

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 1 lab: read a chain in an explorer</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="/">Explorer</a> · <a href="../sign/">Signing page</a> ·
+<a href="../fallback/">Saved pages</a></p>
+<h1>Day 1 lab: read a chain in an explorer</h1>
+<p>The course runs a small chain of its own: ten blocks of history, built for this lab, that
+work the way Ethereum's do. You read it in Otterscan, an open-source block explorer
+<a href="#s1">[1]</a>. Then you sign a transaction yourself and watch the node add it to a block.</p>
+<p>Write your answers down as short notes. Your instructor checks them with you.</p>
+<p class="note">If the explorer or the chain is down, use the <a href="../fallback/">saved pages</a>.
+They show the same history, so every question below has the same answer there. For part 2,
+the saved pages hold a <a href="../fallback/sign-run.html">recorded run</a> of the signing page.</p>
+
+<h2>Where to start</h2>
+<ul>
+<li>Your instructor tells you where to start: the worked example, or straight at the problem.</li>
+<li>You may always do the worked example first.</li>
+<li>After the problem, part 2: you sign a transaction and send it to the node.</li>
+<li>The challenge at the end is optional.</li>
+</ul>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: a hash, a time, an amount. Others are judgments
+about what the facts mean. Give each judgment a confidence word <a href="#s13">[13]</a>:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the
+reasoning applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false
+positive could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same
+transaction.</p>
+<ol>
+<li>Block 5's parent hash is the hash of which block? What would happen to that link if someone
+changed a transaction in the earlier block?</li>
+<li>How many seconds apart are blocks 4 and 5? What decides when this chain makes a block?</li>
+<li>Is <code>0x5FbDB2315678afecb367f032d93F642f64180aa3</code> an account or a contract? Who
+created it, and in which block? Give your confidence and the evidence for it.</li>
+<li>In block 4, Account 0 sends tokens. Who receives them, how many, and how much ETH does the
+transaction carry? Why is the receiver not in the transaction's To field?</li>
+<li>In block 5, Account 1 sends 2 ETH to a contract. Where does the ETH end up? Give your
+confidence.</li>
+<li>Block 6 holds a transaction that failed. What did it try to do, why did it fail, and what did
+it still cost its sender?</li>
+<li>Block 7 holds two transactions. Who sent each one, and which came first in the block?</li>
+<li>How many transactions has Account 3 sent? Which field on its page says so?</li>
+<li>The worked example's transaction is in block 3. How many confirmations did it have when block
+10 was made? Why does the number in the live explorer keep rising? On Ethereum, would that many
+confirmations make it final?</li>
+<li>The saved pages call <code>0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc</code> "class drop box".
+What does the chain itself record about who controls that address? How confident can you be in
+the label?</li>
+</ol>
+
+<h2>Worked example: one transfer in block 3</h2>
+<p>This walks through one ordinary transfer, field by field. Question 1 onward use the same
+pages.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="/">explorer</a>.</li>
+<li>Type <code>3</code> in the search box and press Enter. You are on block 3's page.</li>
+<li>Note the block's timestamp: 14 Sep 2026, 14:00:36 UTC.</li>
+<li>Open the block's one transaction. Its hash is
+<code>0xaeff71f0c8f69a5dc00df35f2f754423568847cb550ad40121d6d13324aaa779</code>.</li>
+</ol>
+
+<h3>Read it</h3>
+<table>
+<tr><th>From / Nonce</th><td><code>0x70997970C51812dc3A010C7d01b50e0d17dc79C8</code> (Account 1),
+nonce 0</td></tr>
+<tr><th>Interacted With (To)</th><td><code>0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC</code>
+(Account 2)</td></tr>
+<tr><th>Value</th><td>1.5 ETH</td></tr>
+<tr><th>Transaction Fee</th><td>0.000016180715292 ETH</td></tr>
+<tr><th>Gas used</th><td>21,000</td></tr>
+</table>
+<ul>
+<li><b>Ledger.</b> Ethereum keeps a balance and a nonce for every account, the way a bank
+keeps a balance for each customer <a href="#s5">[5]</a>. Bitcoin, later in the course, works
+differently: it records unspent outputs and has no account balances <a href="#s14">[14]</a>.
+Here, 1.5 ETH left Account 1's balance and joined Account 2's.</li>
+<li><b>Nonce.</b> The nonce counts the transactions an account has sent <a href="#s5">[5]</a>.
+Nonce 0 means this was Account 1's first. Once a transaction with a given nonce is in a block,
+the node refuses any other from that account with the same nonce, so the same signed transaction
+cannot be run twice <a href="#s5">[5]</a> <a href="#s8">[8]</a>.</li>
+<li><b>Fee.</b> The fee is the gas used times the price paid per unit of gas
+<a href="#s6">[6]</a>. An ETH transfer to an ordinary account uses 21,000 gas
+<a href="#s6">[6]</a> (as of 31 Oct 2026); a call to a contract uses more.
+The price is the block's base fee, which is destroyed, plus a tip to whoever makes the block
+<a href="#s7">[7]</a>. Block 3's base fee was 0.770510251 Gwei, and the tip was 1 wei per gas.</li>
+<li><b>From.</b> A signed transaction holds no From field. The node recovers the sender's public
+key from the signature, and the address is the last 20 bytes of that key's Keccak-256 hash
+<a href="#s8">[8]</a> <a href="#s9">[9]</a>. So the explorer's From is a fact the signature
+proves, not a claim the sender made.</li>
+<li><b>Block.</b> Block 3's page lists its parent hash, which is block 2's hash. Each block names
+the one before it this way <a href="#s3">[3]</a>.</li>
+</ul>
+<p>A statement from this page: "Account 1 paid 1.5 ETH to Account 2 on 14 Sep 2026 at 14:00:36
+UTC." This is a fact the chain records, not a judgment: the signature proves Account 1 sent it,
+and the balances before and after block 3 show the 1.5 ETH moving. A judgment would be a claim
+the chain does not prove, such as who holds Account 1's key: that needs evidence from outside the
+chain.</p>
+
+<h2>The problem</h2>
+<p>Answer the questions above. These hints say where to look.</p>
+<ol>
+<li><b>Blocks 4 and 5.</b> Search for <code>5</code> and compare its parent hash with block 4's
+hash. A block's hash covers everything in it <a href="#s3">[3]</a>.</li>
+<li><b>Time.</b> Compare the timestamps on the two block pages. Ethereum divides time into
+12-second slots, and in each slot one validator proposes a block <a href="#s3">[3]</a> (as of
+31 Oct 2026). This
+course chain has a single node that seals a block on a timer instead.</li>
+<li><b>Account or contract.</b> Search for the address. A contract account holds code; an
+ordinary account is controlled by a private key and holds none <a href="#s5">[5]</a>
+<a href="#s12">[12]</a>. Look for the code (the Contract tab), and for the transaction that
+created it ("Contract creator").</li>
+<li><b>Tokens.</b> Open block 4's transaction. A token transfer is a call to the token's
+contract, which records the move in a <code>Transfer</code> log <a href="#s10">[10]</a>. Read
+"Tokens Transferred" and the Logs tab as well as "Interacted With (To)".</li>
+<li><b>Internal transfers.</b> Open block 5's transaction. A contract can pass ETH on as part of
+the same transaction. Those moves are not transactions of their own: the explorer finds them by
+asking the node to replay the transaction <a href="#s2">[2]</a>. Look for them on the
+transaction's page, under Value. The explorer's first TRANSFER line is the transaction's own
+2 ETH; the lines after it are what the contract passed on. The saved pages list only those.</li>
+<li><b>A failed transaction.</b> Open block 6's transaction. A failed transaction is still
+recorded in its block, still pays for the gas it used and still uses up its sender's nonce
+<a href="#s6">[6]</a> <a href="#s8">[8]</a>. Read its Status line, which gives the error.</li>
+<li><b>Two in one block.</b> Open block 7's transactions and open each one. "Block / Position"
+gives its place in the block: position 0 ran first. The block's list shows the newest first, so
+do not go by the list's order.</li>
+<li><b>Account 3.</b> Search for <code>0x90F79bf6EB2c4f870365E785982E1f101E93b906</code>. Its page
+lists the transactions that touch it. Count the ones it sent and compare with "Transactions
+sent", which is its nonce.</li>
+<li><b>Confirmations.</b> A transaction's confirmations are the blocks from its own block to the
+newest, counting its own. The explorer shows them beside "Block / Position"; the saved pages count up
+to block 10. The live chain keeps making blocks. On Ethereum, a block is final once two-thirds of
+staked ETH has voted for a later checkpoint, about 15 minutes after it is made
+<a href="#s15">[15]</a> (as of 23 Oct 2026); a count of confirmations does not make it final.</li>
+<li><b>Labels.</b> The chain records addresses, never names. A label on an explorer or on these
+saved pages is someone's note about an address.</li>
+</ol>
+
+<h2>Part 2: sign and send a transaction</h2>
+<p>You need the live chain and a seat number from your instructor. If the chain is down, answer
+from the <a href="../fallback/sign-run.html">recorded run</a> instead.</p>
+<ol>
+<li>Open the <a href="../sign/">signing page</a> and load your seat.</li>
+<li>Build a transaction of 0.01 ETH to Account 5, sign it, and send it.</li>
+<li>Watch the status line: your transaction waits in the node's pool of pending transactions
+until the next block includes it <a href="#s4">[4]</a>.</li>
+<li>Open your transaction in the explorer from the link the page gives you.</li>
+<li>Read the panel at the bottom of the signing page: it lists every question the page asked the
+node <a href="#s11">[11]</a>.</li>
+</ol>
+<p>Answer:</p>
+<ol type="a">
+<li>Your transaction's hash, its block, and about how long it waited.</li>
+<li>Which question did the page ask the node to learn your next nonce? Which one sent the signed
+transaction?</li>
+<li>The transaction you built had no From. What does the explorer show as From, and how sure are
+you that your seat sent it?</li>
+</ol>
+
+<h2>Challenge</h2>
+<p>Optional.</p>
+<ol type="a" start="4">
+<li>Account 2 held about 102.1 ETH at block 10. Using its page, list what came in and what went
+out. Its page shows the block-5 row at the whole 2 ETH the transaction carried: open the
+transaction to see how much reached Account 2. What is left unexplained, and where must it have come from?</li>
+</ol>
+
+<h2 id="sources">Sources</h2>
+<ol class="hint">
+<li id="s1">Otterscan contributors, <i>Otterscan</i>, 2025. github.com/otterscan/otterscan
+(read 23 Oct 2026). <code>otterscan_otterscan_2025</code></li>
+<li id="s2">Otterscan contributors, <i>Ots Namespace Spec</i>. docs.otterscan.io (read 31 Oct
+2026). <code>otterscan_otsnamespace_2026</code></li>
+<li id="s3">ethereum.org, <i>Blocks: Developer Docs</i>, 2025 (read 31 Oct 2026).
+<code>ethereum.org_blocksdeveloperdocs_2025</code></li>
+<li id="s4">ethereum.org, <i>Transactions: Developer Docs</i>, 2025.
+<code>ethereum.org_transactionsdeveloperdocs_2025</code></li>
+<li id="s5">ethereum.org, <i>Accounts: Developer Docs</i>, 2025.
+<code>ethereum.org_accountsdeveloperdocs_2025</code></li>
+<li id="s6">ethereum.org, <i>Gas and Fees: Developer Docs</i>, 2025 (read 31 Oct 2026).
+<code>ethereum.org_gasfeesdeveloper_2025</code></li>
+<li id="s7">Buterin et al., <i>EIP-1559: Fee market change for ETH 1.0 chain</i>, 2019.
+<code>buterin_eip1559feemarket_2019</code></li>
+<li id="s8">Wood, <i>Ethereum: A Secure Decentralised Generalised Transaction Ledger</i> (the
+Yellow Paper), 2016. <code>wood_ethereumsecuredecentralised_2016</code></li>
+<li id="s9">Bertoni et al., <i>The Keccak Reference</i>, version 3.0, 2011.
+<code>bertoni_keccakreferenceversion_2011</code></li>
+<li id="s10">Vogelsteller and Buterin, <i>EIP-20: Token Standard</i>, 2015.
+<code>vogelsteller_eip20tokenstandard_2015</code></li>
+<li id="s11">ethereum.org, <i>JSON-RPC API</i>, 2025 (read 31 Oct 2026).
+<code>ethereumorg_jsonrpcapi_2025</code></li>
+<li id="s12">ethereum.org, <i>Smart Contracts: Developer Docs</i>, 2025.
+<code>ethereum.org_smartcontractsdeveloper_2025</code></li>
+<li id="s13">Office of the Director of National Intelligence, <i>Intelligence Community Directive
+203: Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are
+the course's own scale. <code>odni_icd203_2015</code></li>
+<li id="s14">Antonopoulos, <i>Mastering Bitcoin: Programming the Open Blockchain</i>, 2017.
+<code>antonopoulos_masteringbitcoinprogramming_2017</code></li>
+<li id="s15">ethereum.org, <i>Single Slot Finality</i>, 2026 (read 23 Oct 2026). <code>ethereumorg_ssf_2026</code></li>
+</ol>
+</main>
+</body>
+</html>

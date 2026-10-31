@@ -19,6 +19,7 @@ Use these links after the instructor tells the class which lab is active.
 
 * [Social Trust Lab: The Insider](/exercises/insider/)
 * [Byzantine Generals Lab](/exercises/bgp/)
+* [Explorer Lab](/labs/explorer/)
 * [Cryptography Lab](/labs/cryptography/)
 * [P2P Trust Lab](/labs/p2p_trust/)
 * [Consensus Lab](/labs/consensus/)

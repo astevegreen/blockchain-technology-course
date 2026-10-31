@@ -41,6 +41,14 @@ slide index), which is never listed here.
 - `dynamic-labs/bitcoin/mempool/Dockerfile` lines 16 and 40 clone electrs and mempool at their latest commit, so a
   rebuild can change what students see; pin mempool to v3.3.2 (or a commit) and electrs to a commit.
   (31 Oct 2026, mempool spike, `docs/spikes/mempool.md`)
+- `lessons/consensus/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:525` says "In a memo"; the
+  direction drops memos. Reword as "In your assessment". (31 Oct 2026, D1 explorer lab build)
+- The explorer lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`): its stack
+  pulls about 4 GB of images. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D1 explorer lab build)
+- Cloud deploys need a DNS record and a certificate name for `explorer.<domain>` (`deploy-cloud.sh`, certbot); the
+  lab works on this machine and the classroom network only. (31 Oct 2026, D1 explorer lab build)
+- `/labs/explorer/` (`dynamic-labs/router/routes.conf:159`) redirects to `explorer.$http_host`, which fails when
+  students reach the course site by bare IP. (31 Oct 2026, D1 explorer lab build)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`
