@@ -30,14 +30,13 @@ slide index), which is never listed here.
 - 03-EF quiz bank q at line 97 and the synthesis (`lesson_synthesis/ethereum_03-EF-ethereum_network-synthesis.md`
   lines 39, 95, 117) say the tip "compensates the proposer"; 03-EF now says fee recipient. (31 Oct 2026, 03-EF tip fix)
 - 03-EF bank has no questions on the DEX, sandwich-attack or look-alike slides. (31 Oct 2026, rebuild `0504bcc`)
-- 05-FO (VASPs and the Rules) has no quiz bank; 04-BF q9 and 01-FO q8 (KYC as a gateway duty, displacement to weak
-  jurisdictions) retired with the slides they tested and could seed it. The 04-BF and 01-FO syntheses in
-  `quizes/lesson_synthesis/` still describe the hidden slides. (31 Oct 2026, D5 ② build, grep of `quizes/`)
-- 01-PC quiz bank has no questions on the rebuilt lesson (Tron, USDT on Tron, the operator's edge, CBDCs; concept
-  49), and its old questions lean on slides now hidden. (31 Oct 2026, D5 ③ rebuild)
 - 02-AS quiz bank may lean on the four slides hidden as moved to 01-PC (CBDC trust, landscape, platforms, USDT on
   Tron). (31 Oct 2026, D5 ③ rebuild)
-- 04-FO (exchanges, OTC, P2P) is new and has no quiz bank or lesson synthesis. (31 Oct 2026, D5 ① build)
+- The 04-BF and 01-FO syntheses in `quizes/lesson_synthesis/` still describe slides now hidden (their q9 and q8
+  were retired). (31 Oct 2026, D5 quiz banks)
+- The 04-FO, 05-FO and 01-PC quiz banks have no reading deck: none of the three lessons names an assigned reading.
+  `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
+  no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
 - 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
   address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 
