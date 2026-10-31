@@ -19,6 +19,10 @@ slide index), which is never listed here.
   D1 ①) are all hidden (`content-hidden`, from "What is a Blockchain?"), so no visible slide teaches it and the
   day 2 daily quiz cannot test it. (31 Oct 2026, daily quiz bank week 1)
 
+- `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd:95` speaker notes say "A's signature, C's signature";
+  with BIP 67 sorted keys the order depends on the keys (on the wallet lab's chain it is C's, then A's). Word it as
+  "the two signatures, in key order". (31 Oct 2026, D2 wallet lab build)
+
 ## Quizzes
 - 04-EF lesson bank (`ethereum_04-EF-smart_contracts-quiz-bank.json`) has no questions on the Coin reading, the
   4-byte function code, or Vyper and Rust; the day 4 daily bank covers them, the lesson bank does not. (31 Oct 2026,
@@ -49,6 +53,23 @@ slide index), which is never listed here.
   lab works on this machine and the classroom network only. (31 Oct 2026, D1 explorer lab build)
 - `/labs/explorer/` (`dynamic-labs/router/routes.conf:159`) redirects to `explorer.$http_host`, which fails when
   students reach the course site by bare IP. (31 Oct 2026, D1 explorer lab build)
+
+- The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
+  `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)
+- The wallet lab's automated suite has run only without `--fresh-start` (other labs' containers were up); run
+  `regression-tests/automated/wallet/run.sh --fresh-start` once on a quiet desktop. (31 Oct 2026, D2 wallet lab build)
+- The other labs' `run.sh` fresh-start lists (`regression-tests/automated/*/run.sh`) lack `explorer`, so a fresh start
+  from them leaves the explorer running. (31 Oct 2026, D2 wallet lab build)
+- No quiz questions test the wallet lab (`dynamic-labs/wallet/`): the day 3 daily bank could check its five ideas
+  (path levels, gap limit, change clues, xpub reach, reading a 2-of-3 witness). (31 Oct 2026, D2 wallet lab build)
+- Students still receive the labs' chain build scripts, the other labs' browser playbooks and the automated tests
+  (`dynamic-labs/{explorer,wallet}/chain/`, `dynamic-labs/regression-tests/`) in `src.zip` and on the VM; the
+  wallet's `chain/build-steps.sh` names the two keys that signed (worksheet question 8) and its tests hold the
+  fees and amounts. Only the wallet playbook and `wallet/quizes/facts.json` are fenced. Decide whether the rest
+  count as instructor seeds (rule 1) and fence them in `pages.yml` and `vm-build.yml`. (31 Oct 2026, D2 wallet lab
+  review)
+- `Blockchain.bib` has no BIP 48 key; the wallet worksheet gives the multisig path `m/48'/0'/0'/2'` uncited.
+  (31 Oct 2026, D2 wallet lab build)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`

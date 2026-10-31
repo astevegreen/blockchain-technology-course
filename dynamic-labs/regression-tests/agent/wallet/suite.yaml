@@ -1,0 +1,58 @@
+version: 1
+suite_id: day2-wallet-agent-regression
+lab: wallet
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/wallet/run.sh
+assumptions:
+  - MCP browser tooling is available.
+  - The wallet automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point; the chain is frozen, so no run changes it.
+shared_inputs:
+  lab_base: /labs/wallet/
+  viewport_min_width: 800
+observability:
+  required:
+    - console_logs
+    - network_failures
+shared_rules:
+  - Use a fresh browser context per task, with a window at least 800 pixels wide.
+  - Read facts from the rendered pages and compare them with the values in the playbook.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+parallelization:
+  recommended:
+    - Run all three tasks in parallel; they share no state and nothing writes to the chain.
+tasks:
+  - id: wallet-explorer-flow
+    title: The mempool explorer shows the worksheet's fields
+    file: tasks/explorer-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/wallet/mempool/
+      - /labs/wallet/mempool/tx/<txid>
+      - /labs/wallet/mempool/address/<address>
+    parallel_safe: true
+  - id: wallet-page-flow
+    title: The wallet page derives the lab's addresses and keys
+    file: tasks/wallet-page-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/wallet/wallet/
+    parallel_safe: true
+  - id: wallet-links-flow
+    title: Worksheet, saved pages and links
+    file: tasks/links-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/wallet/
+      - /labs/wallet/lab/
+      - /labs/wallet/fallback/
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.

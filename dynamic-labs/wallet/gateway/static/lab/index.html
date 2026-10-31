@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 2 lab: a wallet on the course chain</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../mempool/">Explorer</a> · <a href="../wallet/">Wallet page</a> ·
+<a href="../fallback/">Saved pages</a></p>
+<h1>Day 2 lab: a wallet on the course chain</h1>
+<p>The course runs a small Bitcoin chain of its own, built for this lab, with the same address
+formats as Bitcoin. You restore a wallet from its seed phrase on the <a href="../wallet/">wallet
+page</a>, then find its addresses in mempool, an open-source block explorer <a href="#s1">[1]</a>.
+In part 2 you read a payment that two of three people signed.</p>
+<p>Write your answers down as short notes. Your instructor checks them with you.</p>
+<p class="note">The seed phrases below are published test vectors. They guard nothing and work only
+on this training chain. Never type a real seed phrase into a web page. If the explorer or the chain
+is down, use the <a href="../fallback/">saved pages</a>: they show the same transactions, so every
+question has the same answer there. The wallet page needs no chain.</p>
+
+<h2>Where to start</h2>
+<ul>
+<li>Everyone starts with the worked example. It shows you both pages.</li>
+<li>Then part 1 (questions 1 to 5) and part 2 (questions 6 to 12).</li>
+<li>The challenge at the end is optional.</li>
+</ul>
+
+<h2>Reading this explorer</h2>
+<ul>
+<li>The explorer shows times in your computer's local time. Write them down in UTC.</li>
+<li>This explorer is offline, so its dollar figures, fee badges and "Accelerate" buttons mean
+nothing here. Ignore them.</li>
+<li>The lab's blocks were made seconds apart. Use block numbers, not times, to put events in
+order.</li>
+<li>The explorer shows no names, and it does not mark which output is change. Deciding that is your
+job.</li>
+<li>On a transaction's page, the "Details" button shows each input's nSequence and witness.</li>
+<li>Use a window at least 800 pixels wide. A narrower one shows a different, mobile page.</li>
+</ul>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments
+about what the facts mean. Give each judgment a confidence word <a href="#s17">[17]</a>:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the
+reasoning applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false
+positive could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same
+transaction.</p>
+
+<h3>Part 1: Dana's wallet</h3>
+<p>Dana's seed phrase is
+<code>abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about</code>,
+with no passphrase.</p>
+<ol>
+<li>What is the path of Dana's receiving address 0? What does each level of the path mean?</li>
+<li>Which of Dana's receiving addresses 0 to 3 have been used? How much did each receive, and in
+which block? What does the explorer show for address 3?</li>
+<li>In block 16, Dana pays a shop. Which output is the payment and which is her change? Answer
+twice: first from the explorer alone, with a confidence word; then with the wallet page.</li>
+<li>Does anything on the chain tie receiving addresses 0 and 1 and change address 0 to one owner?
+Give your confidence.</li>
+<li>Dana gives her account's xpub to an accountant. Which of her addresses can the accountant list?
+Can the accountant spend from them? Can the accountant find her key for the treasury in part 2?</li>
+</ol>
+
+<h3>Part 2: the treasury, a 2-of-3 multi-signature wallet</h3>
+<p>Dana, Eli and Fran share a treasury: any two of their three keys can spend it. Each holds a key
+from their own phrase, at path <code>m/48'/0'/0'/2'</code>. Key A is Dana's phrase above. Key B
+(Eli) is
+<code>legal winner thank year wave sausage worth useful legal winner thank yellow</code>; key C
+(Fran) is
+<code>letter advice cage absurd amount doctor acoustic avoid letter advice cage above</code>.
+The treasury pays a vendor in block 18.</p>
+<ol start="6">
+<li>What type of input does the block 18 transaction spend? From the witness alone, how many keys
+does the script hold, and how many signatures does it need? What is the witness's first, empty
+item?</li>
+<li>Match each of the three public keys in the witness script to key A, B or C. Why are they in that
+order?</li>
+<li>Which two keys signed? What can the explorer tell you, and what can it not?</li>
+<li>Which output is the vendor's payment and which is the treasury's change? Give your confidence
+from the explorer alone, then check with the wallet page.</li>
+<li>The change output has not been spent. What does the explorer show about the rule that will
+unlock it?</li>
+<li>Write one sentence an agent could read, saying what the block 18 transaction shows and what it
+does not.</li>
+<li>Is there anything on the chain that links Dana's wallet in part 1 to the treasury? Is there
+anything off the chain?</li>
+</ol>
+
+<h2>Worked example: Dana's first address</h2>
+<p>This restores Dana's wallet and follows her first address onto the chain. Question 1 onward use
+the same pages.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="../wallet/">wallet page</a>. Paste Dana's phrase into section 1, leave the
+passphrase empty, and press "Derive the wallet".</li>
+<li>The first receiving address, index 0, is
+<code>bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu</code>. This is the address the BIP 84 standard
+lists for this phrase as a test vector <a href="#s5">[5]</a>, so the page derives the same address
+as any standard wallet.</li>
+<li>Open the <a href="../mempool/">explorer</a>, paste the address into the search box and press
+Enter. Its page lists two transactions.</li>
+<li>Open the older one, in block 13 (31 Oct 2026, 18:04:09 UTC). Its ID is
+<code>f1716cc102e3a41b93b23527a1a23b8ebfd527fcf238c8e1451d5ab2a4193371</code>.</li>
+</ol>
+
+<h3>Read it</h3>
+<table>
+<tr><th>Input</th><td><code>bc1qkmyuwjwpxcqp82hfcqmphfvzyf7q4acajmthfw</code>, 50 BTC, type
+P2WPKH</td></tr>
+<tr><th>Output 0</th><td><code>bc1qlxhay94m94y9jx0meq64e75ld6ahj6tn88kj09</code>, 49.94999436 BTC</td></tr>
+<tr><th>Output 1</th><td><code>bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu</code> (Dana's receiving
+0), 0.05 BTC</td></tr>
+<tr><th>Fee</th><td>564 sats, for a transaction of 141 vB: 4 sats per vB</td></tr>
+<tr><th>Input's nSequence (Details)</th><td><code>0xfffffffd</code></td></tr>
+</table>
+<ul>
+<li><b>Outputs, not balances.</b> Bitcoin records outputs, each an amount locked to an address,
+and a transaction spends whole outputs <a href="#s12">[12]</a>. The input here was a 50 BTC output.
+0.05 BTC went to Dana; the rest, less the fee, went to a new address, which is likely the
+sender's change.</li>
+<li><b>The fee.</b> No output records the fee: it is what the inputs hold beyond the outputs,
+50 − 49.94999436 − 0.05 = 0.00000564 BTC <a href="#s12">[12]</a>.</li>
+<li><b>The witness.</b> The input's witness has two items, a 71-byte signature and a 33-byte public
+key. That is how a P2WPKH output is spent: the key must hash to the address, and the signature must
+match the key <a href="#s7">[7]</a>.</li>
+<li><b>nSequence.</b> <code>0xfffffffd</code> is below <code>0xfffffffe</code>, so the sender said
+the transaction could be replaced by one paying a higher fee while it waited
+<a href="#s16">[16]</a>. Once it is in a block, that no longer matters.</li>
+<li><b>The address.</b> A <code>bc1q</code> address with 42 characters holds a 20-byte hash of a
+public key <a href="#s6">[6]</a> <a href="#s7">[7]</a>. Nothing in it says which wallet or seed
+it came from.</li>
+</ul>
+<p>Back on the address page, the newer transaction (block 16) spends this 0.05 BTC. A fact from
+these pages: "Address <code>bc1qcr8te…306fyu</code> received 0.05 BTC in block 13 and spent it in
+block 16." That this address is Dana's is not on the chain: you know it because her phrase derives
+it. Without the phrase, an analyst would need other evidence to say who controls it.</p>
+
+<h2>The problem</h2>
+<p>Answer the questions above. These hints say where to look.</p>
+<ol>
+<li><b>The path.</b> The wallet page lists each address with its path. BIP 44 names the five levels
+after <code>m</code>: purpose, coin type, account, change and address index
+<a href="#s4">[4]</a>. BIP 84 uses purpose 84 for native SegWit addresses <a href="#s5">[5]</a>.
+A level written with <code>'</code> is hardened <a href="#s3">[3]</a>.</li>
+<li><b>Used addresses.</b> Search for each address from the wallet page. An address with no
+transactions shows none; the saved pages say "No transactions on this chain touch that address".
+A restoring wallet looks for used addresses down the list, and stops after 20 unused ones in a row:
+the gap limit <a href="#s4">[4]</a>.</li>
+<li><b>Payment or change.</b> Open the block 16 transaction. Analysts look for change by its
+clues: a new address, the same script type as the inputs, an amount that is not round
+<a href="#s13">[13]</a> <a href="#s14">[14]</a>. Check which clues tell the two outputs apart here.
+Then look for each output address among Dana's receiving and change addresses on the wallet
+page.</li>
+<li><b>One owner?</b> Spending two inputs in one transaction usually means one wallet holds both
+keys <a href="#s13">[13]</a>. A CoinJoin, where several people put inputs into one transaction, is
+the known false positive <a href="#s18">[18]</a>. Day 6 comes back to this.</li>
+<li><b>The xpub.</b> An extended public key derives every public key, and so every address, below
+it on its branch, but no private key <a href="#s3">[3]</a>. A hardened child cannot be derived from
+its parent's public key <a href="#s3">[3]</a>. Compare Dana's account path in section 1 with the
+treasury path in section 2.</li>
+<li><b>The witness.</b> Open the block 18 transaction and press "Details". A P2WSH output is spent
+with a witness whose last item is the script itself <a href="#s7">[7]</a>; the explorer decodes it
+as "P2WSH witness script". <code>OP_PUSHNUM_2</code>, three keys, <code>OP_PUSHNUM_3</code>,
+<code>OP_CHECKMULTISIG</code> reads "2 of these 3". <code>OP_CHECKMULTISIG</code> takes one
+item more than it needs, and that item must be empty <a href="#s8">[8]</a>.</li>
+<li><b>The key order.</b> In section 2 of the wallet page, paste the three phrases and press
+"Combine the keys" with index 0. Compare each key's receiving public key with the script.
+BIP 67 sorts the keys before they go into the script <a href="#s9">[9]</a>, and the descriptor's
+<code>sortedmulti</code> asks for that <a href="#s10">[10]</a>.</li>
+<li><b>Who signed.</b> The two signatures must appear in the same order as their keys in the
+script <a href="#s12">[12]</a>, but the explorer does not say which key each one matches. Ask
+whether that order rules out any pair of keys.</li>
+<li><b>Treasury change.</b> Compare each output's type with the input's. Change often goes back to
+an output of the same multi-signature type <a href="#s14">[14]</a>. The wallet page's change
+address (chain 1) at index 0 settles it.</li>
+<li><b>An unspent P2WSH output.</b> Search for the change address. A P2WSH output holds only a
+32-byte hash of its script <a href="#s7">[7]</a>; like P2SH, the script appears only when the
+output is spent <a href="#s15">[15]</a>.</li>
+<li><b>The sentence.</b> Say what the witness shows, and say plainly what it cannot show. Use the
+words "multi-sig" and "witness".</li>
+<li><b>A link?</b> Follow the money into each wallet: who paid Dana's addresses, and who paid the
+treasury? Then compare the master key fingerprint in section 1 with key A's fingerprint in section
+2 <a href="#s3">[3]</a>. The fingerprints appear in the descriptor <a href="#s11">[11]</a>; ask
+whether they appear in any transaction.</li>
+</ol>
+
+<h2>Challenge</h2>
+<p>Optional.</p>
+<ol type="a">
+<li>Dana also received a payment at receiving address 23. Find it with the wallet page's "Show 20
+more", and look it up. Would a wallet restored from Dana's phrase show this payment? Why not, and
+what would an analyst holding a recovered phrase need to do?</li>
+<li>Derive the wallet again with the passphrase <code>TREZOR</code>. What changes? Is the wallet you
+get "wrong"? <a href="#s2">[2]</a></li>
+<li>Suppose two of the holders signed their halves of the block 18 transaction separately and combined them
+<a href="#s11">[11]</a> <a href="#s19">[19]</a>. Does anything in the transaction show that two
+people, rather than one person holding two keys, signed?</li>
+</ol>
+
+<h2 id="sources">Sources</h2>
+<ol class="hint">
+<li id="s1">The Mempool Open Source Project contributors, <i>mempool</i>, version 3.3.2, AGPL-3.0
+(read 31 Oct 2026). <code>mempool_mempool_2026</code></li>
+<li id="s2">Palatinus et al., <i>BIP 39: Mnemonic Code for Generating Deterministic Keys</i>, 2013.
+<code>palatinus_bip39mnemoniccode_2013</code></li>
+<li id="s3">Wuille, <i>BIP 32: Hierarchical Deterministic Wallets</i>, 2012.
+<code>wuille_bip32hierarchicaldeterministic_2012</code></li>
+<li id="s4">Palatinus and Rusnak, <i>BIP 44: Multi-Account Hierarchy for Deterministic Wallets</i>,
+2014. <code>palatinus_bip44multiaccounthierarchy_2014</code></li>
+<li id="s5">Rusnak, <i>BIP 84: Derivation Scheme for P2WPKH Based Accounts</i>, 2017.
+<code>rusnak_bip84derivationscheme_2017</code></li>
+<li id="s6">Wuille and Maxwell, <i>BIP 173: Base32 Address Format for Native v0-16 Witness
+Outputs</i>, 2017. <code>wuille_bip173base32address_2017</code></li>
+<li id="s7">Lombrozo, Lau and Wuille, <i>BIP 141: Segregated Witness (Consensus Layer)</i>, 2015.
+<code>lombrozo_bip141segregatedwitness_2015</code></li>
+<li id="s8">Lau, <i>BIP 147: Dealing with Dummy Stack Element Malleability</i>, 2016.
+<code>lau_bip147dummy_2016</code></li>
+<li id="s9">Kerin, Rupp and de Vries, <i>BIP 67: Deterministic Pay-to-Script-Hash Multi-Signature
+Addresses through Public Key Sorting</i>, 2015. <code>kerin_bip67sortedmulti_2015</code></li>
+<li id="s10">Wuille and Chow, <i>BIP 383: Multisig Output Script Descriptors</i>, 2021.
+<code>wuille_bip383multisig_2021</code></li>
+<li id="s11">Bitcoin Core, <i>Multisig Tutorial</i> (doc/multisig-tutorial.md), 2026 (read 30 Oct
+2026). <code>bitcoincore_multisigtutorial_2026</code></li>
+<li id="s12">Bitcoin.org developers, <i>Transactions (Developer Guide)</i>, 2024.
+<code>bitcoin.orgdevelopers_transactionsdeveloperguide_2024</code></li>
+<li id="s13">Meiklejohn et al., <i>A Fistful of Bitcoins: Characterizing Payments among Men with
+No Names</i>, 2013. <code>meiklejohn_fistfulbitcoinscharacterizing_2013</code></li>
+<li id="s14">Fröwis et al., <i>Safeguarding the Evidential Value of Forensic Cryptocurrency
+Investigations</i>, 2020. <code>frowis_safeguardingevidentialvalue_2020</code></li>
+<li id="s15">Andresen, <i>BIP 16: Pay to Script Hash</i>, 2012.
+<code>andresen_bip16paytoscript_2012</code></li>
+<li id="s16">Harding and Todd, <i>BIP 125: Opt-in Full Replace-by-Fee Signaling</i>, 2015.
+<code>harding_bip125optinfull_2015</code></li>
+<li id="s17">Office of the Director of National Intelligence, <i>Intelligence Community Directive
+203: Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are
+the course's own scale. <code>odni_icd203_2015</code></li>
+<li id="s18">gmaxwell, <i>CoinJoin: Bitcoin Privacy for the Real World</i>, 2013.
+<code>gmaxwell_coinjoinbitcoinprivacy_2013</code></li>
+<li id="s19">Chow, <i>BIP 174: Partially Signed Bitcoin Transaction Format</i>, 2017.
+<code>chow_bip174psbt_2017</code></li>
+</ol>
+</main>
+</body>
+</html>

@@ -85,6 +85,7 @@ fresh_start() {
     p2p_trust \
     ethereum_lab \
     exercises \
+    wallet \
     quiz-engine-v2 \
     hlf
   do

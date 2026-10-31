@@ -67,7 +67,7 @@ Usage:
   ./lab-manager.sh list
 
 Managed targets:
-  router, course-site, instructor-auth-service, ethereum_lab, bitcoin, consensus, cryptography, p2p_trust, exercises, explorer, quiz-engine-v2, hlf
+  router, course-site, instructor-auth-service, ethereum_lab, bitcoin, consensus, cryptography, p2p_trust, exercises, explorer, wallet, quiz-engine-v2, hlf
 
 Deploy options:
   --mode <instructor|student>
@@ -682,6 +682,7 @@ target_dir() {
         p2p_trust|p2p-trust) echo "${BASE_DIR}/p2p_trust" ;;
         exercises) echo "${BASE_DIR}/exercises" ;;
         explorer) echo "${BASE_DIR}/explorer" ;;
+        wallet) echo "${BASE_DIR}/wallet" ;;
         quiz|quiz-engine-v2) echo "${BASE_DIR}/quiz-engine-v2" ;;
         hlf) echo "${BASE_DIR}/hlf" ;;
         lane-service|lane_service) echo "${BASE_DIR}/lane-service" ;;
@@ -705,6 +706,7 @@ cryptography
 p2p_trust
 exercises
 explorer
+wallet
 quiz-engine-v2
 hlf
 EOF

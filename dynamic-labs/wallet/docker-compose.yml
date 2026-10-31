@@ -1,0 +1,38 @@
+name: wallet
+
+# The day-2 wallet lab: one copy for the whole class, on the course chain.
+# The router sends (router/routes.conf):
+#   /labs/wallet/mempool/...  -> mempool (the explorer: bitcoind, electrs and the mempool UI in one image)
+#   /labs/wallet/...          -> gateway (worksheet, wallet page, saved pages)
+# The node has no volume and no peers: a restart reloads the frozen chain (chain/blocks.hex) and every
+# answer on the worksheet stays the same. chain/build-chain.sh rebuilds the chain.
+
+services:
+  mempool:
+    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-mempool:latest}"
+    entrypoint: ["bash", "/chain-loader/load-chain.sh"]
+    command: ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
+    environment:
+      MEMPOOL_BASE_PATH: "/labs/wallet/mempool"
+      # The frozen chain's tip ages past bitcoind's 24-hour limit; this keeps the node out of initial
+      # block download so electrs indexes it (bitcoin/mempool/mempool-entrypoint.sh says more).
+      BITCOIN_EXTRA_ARGS: "-maxtipage=9999999999 -connect=0"
+    volumes:
+      - ./mempool/load-chain.sh:/chain-loader/load-chain.sh:ro
+      - ./chain/blocks.hex:/chain/blocks.hex:ro
+    networks:
+      - router-net
+    restart: unless-stopped
+
+  gateway:
+    image: nginx:alpine
+    volumes:
+      - ./gateway/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./gateway/static:/usr/share/nginx/html:ro
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  router-net:
+    external: true

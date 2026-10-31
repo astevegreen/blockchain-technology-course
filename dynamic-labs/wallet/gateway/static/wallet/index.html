@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wallet page: seed phrase to addresses</title>
+<link rel="stylesheet" href="../lab/lab.css">
+<style>
+textarea { font: inherit; padding: .3rem .5rem; width: 100%; max-width: 40rem; box-sizing: border-box; }
+.err { color: #a00; font-weight: 600; }
+table.list th { width: auto; }
+table.list td, table.list th { padding-right: 1rem; }
+</style>
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../lab/">Worksheet</a> · <a href="../mempool/">Explorer</a> · <a href="../fallback/">Saved pages</a></p>
+<h1>Wallet page: seed phrase to addresses</h1>
+<p>This page does what a wallet does when you restore it from a seed phrase: it turns the phrase into a
+master key, derives keys down a path, and turns each public key into an address. Everything runs in your
+browser; the page sends nothing anywhere.</p>
+<p class="note">The phrases in this lab come from published test vectors. They guard nothing and exist
+only on this training chain. Never type a real seed phrase into a web page.</p>
+
+<section>
+<h2>1. A single-signature wallet (BIP 84)</h2>
+<label for="phrase">Seed phrase (12 words)</label>
+<textarea id="phrase" rows="2" autocomplete="off" spellcheck="false"></textarea>
+<label for="pass">Passphrase (optional; leave empty unless a question asks for one)</label>
+<input id="pass" autocomplete="off" spellcheck="false">
+<p><button id="go" type="button">Derive the wallet</button></p>
+<p id="err" class="err" hidden></p>
+<div id="out" hidden>
+<table>
+<tr><th>Master key fingerprint</th><td><code id="fp"></code></td></tr>
+<tr><th>Account path</th><td><code>m/84'/0'/0'</code></td></tr>
+<tr><th>Account public key (xpub)</th><td><code id="xpub"></code></td></tr>
+<tr><th>The same key as a zpub</th><td><code id="zpub"></code></td></tr>
+</table>
+<h3>Receiving addresses (chain 0)</h3>
+<table class="list"><thead><tr><th>Index</th><th>Path</th><th>Address</th></tr></thead><tbody id="recv"></tbody></table>
+<p><button id="more" type="button">Show 20 more</button></p>
+<h3>Change addresses (chain 1)</h3>
+<table class="list"><thead><tr><th>Index</th><th>Path</th><th>Address</th></tr></thead><tbody id="chg"></tbody></table>
+</div>
+</section>
+
+<section>
+<h2>2. A 2-of-3 multi-signature wallet (BIP 48)</h2>
+<p>Each of the three holders restores their own key from their own phrase. The wallet combines the three
+public keys into one script that needs any two signatures.</p>
+<div id="keys"></div>
+<p><label for="idx">Address index</label>
+<span class="inline"><input id="idx" type="number" min="0" max="99" value="0" inputmode="numeric">
+<button id="ms" type="button">Combine the keys</button></span></p>
+<p id="mserr" class="err" hidden></p>
+<div id="msout" hidden>
+<h3>Each key's public key at this index</h3>
+<table class="list"><thead><tr><th>Key</th><th>Receiving (chain 0)</th><th>Change (chain 1)</th></tr></thead><tbody id="pubs"></tbody></table>
+<h3>Receiving (chain 0)</h3>
+<table>
+<tr><th>Address (P2WSH)</th><td><code id="msaddr0"></code></td></tr>
+<tr><th>Witness script, keys sorted</th><td><code id="asm0"></code></td></tr>
+<tr><th>Descriptor</th><td><code id="desc0"></code></td></tr>
+</table>
+<h3>Change (chain 1)</h3>
+<table>
+<tr><th>Address (P2WSH)</th><td><code id="msaddr1"></code></td></tr>
+<tr><th>Witness script, keys sorted</th><td><code id="asm1"></code></td></tr>
+<tr><th>Descriptor</th><td><code id="desc1"></code></td></tr>
+</table>
+</div>
+</section>
+</main>
+<script src="../vendor/ethers/ethers.umd.min.js"></script>
+<script src="derive.js"></script>
+<script>
+const W = walletDerive(ethers);
+const $ = (id) => document.getElementById(id);
+const BAD = "That is not a valid seed phrase: a word is misspelled, missing or out of order.";
+let shown = 20;
+
+function rows(list) {
+  return list.map((a) => `<tr><td>${a.index}</td><td><code>${a.path}</code></td><td><code>${a.address}</code></td></tr>`).join("");
+}
+function derive() {
+  try {
+    const w = W.single($("phrase").value, $("pass").value, shown, 5);
+    $("fp").textContent = w.fingerprint;
+    $("xpub").textContent = w.xpub;
+    $("zpub").textContent = w.zpub;
+    $("recv").innerHTML = rows(w.receiving);
+    $("chg").innerHTML = rows(w.change);
+    $("err").hidden = true;
+    $("out").hidden = false;
+  } catch (e) {
+    $("err").textContent = BAD;
+    $("err").hidden = false;
+    $("out").hidden = true;
+  }
+}
+$("go").addEventListener("click", () => { shown = 20; derive(); });
+$("more").addEventListener("click", () => { shown += 20; derive(); });
+
+const NAMES = ["A", "B", "C"];
+$("keys").innerHTML = NAMES.map((k) => `
+<h3>Key ${k}</h3>
+<label for="p${k}">Key ${k}'s seed phrase</label>
+<textarea id="p${k}" rows="2" autocomplete="off" spellcheck="false"></textarea>
+<table>
+<tr><th>Master key fingerprint</th><td><code id="fp${k}"></code></td></tr>
+<tr><th>Path</th><td><code>m/48'/0'/0'/2'</code></td></tr>
+<tr><th>Extended public key (xpub)</th><td><code id="x${k}"></code></td></tr>
+</table>`).join("");
+
+$("ms").addEventListener("click", () => {
+  let keys;
+  try {
+    keys = NAMES.map((k) => {
+      const key = W.key48($("p" + k).value, "");
+      $("fp" + k).textContent = key.fingerprint;
+      $("x" + k).textContent = key.xpub;
+      return key;
+    });
+  } catch (e) {
+    $("mserr").textContent = BAD + " Check all three phrases.";
+    $("mserr").hidden = false;
+    $("msout").hidden = true;
+    return;
+  }
+  const i = Math.max(0, Math.min(99, parseInt($("idx").value, 10) || 0));
+  const m = [0, 1].map((chain) => W.multisig(keys, chain, i));
+  $("pubs").innerHTML = NAMES.map((k, n) => `<tr><td>${k}</td><td><code>${m[0].pubkeys[n]}</code></td><td><code>${m[1].pubkeys[n]}</code></td></tr>`).join("");
+  [0, 1].forEach((c) => {
+    $("msaddr" + c).textContent = m[c].address;
+    $("asm" + c).textContent = m[c].asm;
+    $("desc" + c).textContent = m[c].descriptor;
+  });
+  $("mserr").hidden = true;
+  $("msout").hidden = false;
+});
+</script>
+</body>
+</html>

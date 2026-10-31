@@ -86,6 +86,7 @@ fresh_start() {
     ethereum_lab \
     exercises \
     explorer \
+    wallet \
     quiz-engine-v2 \
     hlf
   do
