@@ -32,7 +32,7 @@ and a screenshot.
    (fund0, block 13). Confirm the worked example's table: input
    `bc1qkmyuwjwpxcqp82hfcqmphfvzyf7q4acajmthfw` 50 BTC; output 0
    `bc1qlxhay94m94y9jx0meq64e75ld6ahj6tn88kj09` 49.94999436 BTC; output 1 R0 0.05 BTC; fee 564 sat;
-   141 vB.
+   140.25 vB (the explorer does not round; the saved pages show BIP 141's 141 vB).
 4. Press "Details". Confirm the input shows nSequence `0xfffffffd`, a witness of two items (a
    71-byte signature and a 33-byte key) and the type P2WPKH.
 5. Open the spend, `6727f64849f26d210a7569edf9377a177d94638e4580fe707c362b52eae83e9e` (block 16).

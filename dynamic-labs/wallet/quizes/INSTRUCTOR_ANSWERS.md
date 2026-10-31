@@ -54,7 +54,8 @@ shows only its two 50 BTC spends; the live explorer also lists the 20 block rewa
 
 Receiving 0 is R0. fund0 (block 13) spends a 50 BTC faucet output: 0.05 BTC to R0 at output 1,
 49.94999436 BTC to a new address at output 0 (likely the faucet's change), fee 564 sats for 141 vB
-(4 sat/vB). The witness is a 71-byte signature and a 33-byte public key. R0 is spent in block 16.
+(4 sat/vB). The live explorer shows 140.25 vB and 4.02 sat/vB: it divides the weight by 4 without
+BIP 141's rounding up. The table's sizes are rounded; accept either. The witness is a 71-byte signature and a 33-byte public key. R0 is spent in block 16.
 "R0 received 0.05 BTC in block 13 and spent it in block 16" is a recorded fact and takes no
 confidence word; that R0 is Dana's comes from her phrase, not from the chain.
 
