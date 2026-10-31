@@ -192,7 +192,7 @@
       "sources": [
         {"lesson": "blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd", "slide": "Nodes check a payment before passing it on"}
       ],
-      "post_test": "Same concept, new question: ask what each node checks before relaying, or why there is no central server to subpoena for relay records."
+      "post_test": "Same concept, new question: ask what each node checks before relaying, or why there is no central server that holds relay records."
     },
     {
       "id": "q6",
@@ -254,7 +254,7 @@
       "day": 3,
       "concept": {"order": 18, "name": "Reading smart contracts", "skill": "working"},
       "question_type": "written",
-      "question_stem": "Read this simplified token contract and say what it lets each caller do: who can create tokens, who can move them, what limits that, and what it records.\n\n```solidity\nmapping (address => uint) public balances;\naddress public owner;\nbool public paused;\nevent Transfer(address from, address to, uint value);\n\nmodifier onlyOwner() { require(msg.sender == owner); _; }\n\nfunction transfer(address to, uint value) public {\n    require(!paused);\n    require(balances[msg.sender] >= value);\n    balances[msg.sender] -= value;\n    balances[to] += value;\n    emit Transfer(msg.sender, to, value);\n}\n\nfunction seize(address from, address to, uint value) public onlyOwner {\n    balances[from] -= value;\n    balances[to] += value;\n}\n\nfunction setPaused(bool p) public onlyOwner { paused = p; }\n```",
+      "question_stem": "Read this simplified token contract and, from the code shown alone, say what it lets each caller do: who can create tokens, who can move them, what limits that, and what it records.\n\n```solidity\nmapping (address => uint) public balances;\naddress public owner;\nbool public paused;\nevent Transfer(address from, address to, uint value);\n\nmodifier onlyOwner() { require(msg.sender == owner); _; }\n\nfunction transfer(address to, uint value) public {\n    require(!paused);\n    require(balances[msg.sender] >= value);\n    balances[msg.sender] -= value;\n    balances[to] += value;\n    emit Transfer(msg.sender, to, value);\n}\n\nfunction seize(address from, address to, uint value) public onlyOwner {\n    balances[from] -= value;\n    balances[to] += value;\n}\n\nfunction setPaused(bool p) public onlyOwner { paused = p; }\n```",
       "answer_key": [
         "Create: no function creates tokens, so no one can mint more.",
         "Move, holders: any holder can send their own tokens, up to their balance, only while the contract is not paused; each transfer emits Transfer.",
@@ -286,7 +286,7 @@
       "day": 3,
       "concept": {"order": 46, "name": "Stablecoins as a laundering rail", "skill": "working"},
       "question_type": "written",
-      "question_stem": "Stolen funds were swapped into 400,000 USDT on Ethereum and have sat at one address since block 21,000,000. The case agent asks what this means for the case. Write your answer to the agent.",
+      "question_stem": "Stolen funds were swapped into 400,000 USDT on Ethereum and have sat at one address since block 21,000,000. The case agent asks what this means for the case. Write your answer to the agent, covering: (a) can the funds be frozen where they sit, by whom, and for how long; (b) what happens to USDT sent to the address after a freeze; (c) what your answer states about the holding and how sure you are (High, Moderate or Low); (d) who decides whether to ask for a freeze.",
       "answer_key": [
         "Freezable in place: USDT has an issuer, Tether, whose key controls a blacklist in the token contract, so the address can be frozen.",
         "Only while the funds stay in USDT: swapped into ETH or a token with no issuer they are out of reach; swapped into another stablecoin or bridged, the question goes to that issuer. The window is the time before the next move.",
@@ -342,7 +342,7 @@
       "day": 4,
       "concept": {"order": 10, "name": "Cross-chain bridges and chain hopping", "skill": "working"},
       "question_type": "written",
-      "question_stem": "50 ETH goes into a bridge contract on Ethereum. Forty minutes later, 50 wrapped ETH is minted to a new address on another chain. (a) What kind of bridge is this, and what actually crossed? (b) How do you link the two sides? (c) Who could have stopped or frozen the funds?",
+      "question_stem": "50 ETH goes into a bridge contract on Ethereum. Forty minutes later, 50 wrapped ETH is minted to a new address on another chain. (a) What kind of bridge is this, and what actually crossed? (b) How do you link the two sides? (c) Who could have stopped or frozen the funds? (d) Does wrapping hide the funds from a trace?",
       "answer_key": [
         "Lock-and-mint: the ETH is locked in the bridge contract on Ethereum and a wrapped copy is minted on the other chain; a claim crossed, not the coin.",
         "Link the lock and the mint by amount, time and the bridge's own event.",
@@ -370,7 +370,7 @@
       "day": 4,
       "concept": {"order": 12, "name": "Decentralized exchanges", "skill": "working"},
       "question_type": "written",
-      "question_stem": "A wallet sends 1,000,000 of token X into a Uniswap v2-style pool and receives 4 ETH, in one transaction sent to the Uniswap router. (a) Who was on the other side of the trade? (b) Which logs show the trade, and what do they tell you? (c) The wallet holds 50,000,000 more of token X. What do you check before calling this pool its exit?",
+      "question_stem": "A wallet sends 1,000,000 of token X into a Uniswap v2-style pool and receives 4 ETH, in one transaction sent to the Uniswap router. (a) Who was on the other side of the trade? (b) Which logs show the trade, and what do they tell you? (c) The wallet holds 50,000,000 more of token X. What do you check before calling this pool its exit, and could the pool itself freeze the funds?",
       "answer_key": [
         "The other side was the pool contract, not a person: the trader swapped against its reserves, at a price its formula set.",
         "Logs: Transfer logs show token X going into the pool and ETH (WETH) leaving it; the pool's Swap log shows the amounts in and out and the recipient (to); Sync shows the reserves after the trade. The router is only in the path: follow the output to whoever received it.",
