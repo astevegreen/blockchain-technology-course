@@ -6,8 +6,8 @@ their status live in the Notion "Build Tracker" database.
 
 ## Direction (owner, 30 Oct 2026)
 The owner's decisions of 30 Oct, after two pieces of expert feedback, set the approach. They win over anything
-below; the day map and lessons by day were reviewed against them and settled (30 Oct), and the items they affect
-stay on hold until the Build Tracker is revised to the new map.
+below; the day map and lessons by day were reviewed against them and settled (30 Oct), and the Build Tracker was
+revised to the new map the same day (owner: "Apply it"): rows moved to their new days, six retired, P1 split.
 1. **Foundations first.** "feedback overwhelmingly favors teaching foundations first because this gives students a
    foundation of understanding that makes future lessons and labs/exercises less intimidating"
 2. **A broad foundation before the case.** "Creating a comprehensive foundation of knowledge on everything
@@ -166,6 +166,23 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the
   list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
   working-skill concepts.
+- **Pretest blueprint** (owner, 30 Oct: "Pretest blueprint"): the shared blueprint grouped by the day each concept
+  is first taught, so an instructor reads one day's items to set that day's lab entry. Numbers are Role Concepts
+  Order; **W** is working skill (short written answer), the rest familiarity (multiple choice). The items and their
+  answers are instructor-only and go in `quizes/` (CLAUDE.md rule 1).
+
+  | Day | Items | W | Concepts |
+  | --- | --- | --- | --- |
+  | 1 | 7 | 1 | 1, 2, 3, 4, 5, 41 W, 42 |
+  | 2 | 0 | 0 | none yet (wallets are a feedback addition) |
+  | 3 | 2 | 2 | 18 W, 46 W |
+  | 4 | 3 | 2 | 6, 10 W, 12 W |
+  | 5 | 5 | 0 | 31, 38, 39, 48, 49 |
+  | 6 | 9 | 5 | 7 W, 8 W, 20 W, 21, 25, 27, 28 W, 40, 45 W |
+  | 7 | 3 | 1 | 9 W, 11, 23 |
+  | 8 | 9 | 0 | 13, 14, 15, 16, 17, 19, 22, 24, 47 |
+  | 9 | 4 | 1 | 26, 29, 30, 37 W |
+  | All | 42 | 12 | |
 - **Outcome 9** (Course Design section 2) reads: "Explain findings plainly. Tell someone who is not a specialist,
   bottom line first, what the activity is, what the chain shows and what is inferred, how confident the judgement
   is, and what the evidence cannot show." Its evidence is the informal explanation behind each graded point and on
