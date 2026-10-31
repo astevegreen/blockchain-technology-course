@@ -1,0 +1,485 @@
+---
+title: Bitcoin — Wallet Types
+subtitle: 'Section VI: Bitcoin Framework'
+author: CATS
+lesson: 05-BF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## A wallet holds keys, not coins {.smaller}
+
+**Bottom line:** the coins stay on the blockchain. A wallet is software that stores the keys and addresses that control them [@yaga_blockchaintechnologyoverview_2018]. Each kind of wallet leaves the analyst different evidence, so this lesson sorts wallets by two questions and then shows where a wallet's addresses come from.
+
+| Question | The answer tells you | Slide |
+| --- | --- | --- |
+| Who holds the key? | Custodial or self-custody: whether a business holds records | Custody |
+| Where does the key live? | Hot or cold: online and quick, or offline and slow | Hot and cold |
+| Where do the addresses come from? | One seed phrase, one tree of keys | Seed, tree, path |
+| What can the analyst see? | What each type leaves on chain and off it | Analyst table |
+
+A wallet manages keys, signs spends, tracks the outputs it can spend and picks fees and change [@bitcoin.orgdevelopers_walletsdeveloperguide_2024]. This afternoon you build one on the course's own chain.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens the wallet lesson by correcting the most common misconception: coins do not live in a wallet. It matters here because every later slide sorts wallets by what they control, and the analyst's evidence follows from that. Emphasize the two sorting questions (who holds the key, where it lives) and the derivation question that sets up the lab.
+
+**Key Points**
+- The blockchain holds the coins; the wallet holds the keys and addresses that control them.
+- A wallet manages keys, signs, tracks spendable outputs and applies spending policy (fees, change).
+- Wallets are sorted by who holds the key and where the key lives.
+- Where the addresses come from (seed, tree, path) is what this afternoon's lab builds.
+
+**Walkthrough**
+1. Read the bottom line: coins on chain, keys in the wallet.
+2. Walk the table row by row and name the slide that answers each question.
+
+**Sources**
+- @yaga_blockchaintechnologyoverview_2018
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+
+:::
+
+## Whoever holds the key controls the coins {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+**Custodial (hosted)**
+
+- A third party, such as an exchange, holds the keys for the user [@scott_digitalwalletsselected_2022; @lesavre_blockchainnetworkstoken_2021].
+- FinCEN calls these **hosted wallets** [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
+- The platform executes transactions for the user and logs them on its own books, **off-chain** [@scott_digitalwalletsselected_2022].
+- Customers' coins sit together in **omnibus accounts** of the exchange, not one address per customer [@scott_digitalwalletsselected_2022].
+:::
+::: {.column width="50%"}
+**Self-custody (unhosted)**
+
+- The user holds the keys, on their own computer, phone or device [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
+- No third party is needed to transact [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
+- Also called non-custodial or self-hosted: "not your keys, not your coins" [@lesavre_blockchainnetworkstoken_2021].
+- Lose the keys and the coins cannot be recovered [@scott_digitalwalletsselected_2022].
+:::
+::::
+
+**For the analyst:** a payment between two customers of one exchange may never reach the chain; only the platform's books record it [@scott_digitalwalletsselected_2022]. How exchanges move funds between deposit, hot and cold wallets is day 5.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sorts wallets by who holds the private key. It matters here because custody decides where the evidence lives: on chain, or in a business's books. Emphasize that a custodial transfer between two customers can leave no on-chain trace at all.
+
+**Key Points**
+- Custodial (hosted): a third party holds the keys and acts for the user.
+- Self-custody (unhosted): the user holds the keys and needs no third party.
+- Custodial platforms record internal transfers off-chain and pool customer funds in omnibus accounts.
+- Losing a self-custody key loses the coins.
+
+**Walkthrough**
+1. Read the left column: the exchange holds the key, so the exchange's books are the record.
+2. Read the right column: the user holds the key, so the chain is the record.
+3. Close on the analyst line, and point forward to day 5 for how exchanges move funds.
+
+**Sources**
+- @scott_digitalwalletsselected_2022
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @lesavre_blockchainnetworkstoken_2021
+
+:::
+
+## Hot or cold says where the key lives {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+**Hot wallet**
+
+- Connected to the internet [@lesavre_blockchainnetworkstoken_2021].
+- Built to be highly accessible, so it holds low-value or in-transit funds [@lesavre_blockchainnetworkstoken_2021].
+:::
+::: {.column width="50%"}
+**Cold wallet**
+
+- Not connected to the internet: an air-gapped computer or a hardware wallet [@lesavre_blockchainnetworkstoken_2021].
+- Built to be highly secure, so it holds high-value funds at rest [@lesavre_blockchainnetworkstoken_2021].
+- A person must act, for example press a button on the device, to sign [@lesavre_blockchainnetworkstoken_2021].
+:::
+::::
+
+**Hot or cold is a separate question from custody.** A self-custody user can keep keys on a phone or on a dedicated hardware wallet [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019; @lesavre_blockchainnetworkstoken_2021].
+
+**For the analyst:** a transaction carries scripts and signatures, not the device that signed them [@antonopoulos_masteringbitcoinprogramming_2017]. One transaction cannot show hot or cold. Behaviour over time can suggest it: cold wallets hold high-value funds at rest [@lesavre_blockchainnetworkstoken_2021].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sorts wallets by where the key lives: online (hot) or offline (cold). It matters here because the terms appear constantly in exchange and incident reporting, and students must not confuse them with custody. Emphasize that the two questions are independent and that a single transaction does not reveal which kind signed it.
+
+**Key Points**
+- Hot: online, accessible, small or in-transit balances.
+- Cold: offline, secure, large balances at rest; signing needs a physical action.
+- Custody and hot/cold are separate questions: an exchange or an individual can run both.
+- A transaction records scripts and signatures, not the signing device; hot or cold is inferred from behaviour over time.
+
+**Walkthrough**
+1. Read the two columns side by side.
+2. Ask: can a self-custody wallet be hot? (Yes: a phone wallet.) Can a custodial one be cold? (Yes: an exchange's reserve.)
+3. Read the analyst line and say that "at rest" is an inference from behaviour, stated with a confidence word (low, on the course scale), not read from one transaction.
+
+**Sources**
+- @lesavre_blockchainnetworkstoken_2021
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## A wallet manages many keys and addresses
+
+:::: {.columns}
+
+::: {.column width="52%"}
+
+<div style="font-size: 0.84em; line-height: 1.16;">
+
+- A wallet usually manages **many keys and many addresses**, not just one [@bitcoin.orgdevelopers_walletsdeveloperguide_2024].
+
+- Each address comes from a **public key**; the matching **private key** spends what is sent to it [@bitcoin.orgdevelopers_walletsdeveloperguide_2024].
+
+- Wallets hand out a **fresh address** for each payment or customer [@wuille_bip32hierarchicaldeterministic_2012].
+
+- The balance is the sum of the **unspent** outputs locked to all of them [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+
+</div>
+
+:::
+
+::: {.column width="48%"}
+
+```{dot}
+digraph WalletModel {
+    bgcolor="transparent";
+    rankdir=TB;
+    splines=ortho;
+    nodesep=0.45;
+    ranksep=0.55;
+
+    node [shape=box, style="rounded,filled", color="#64748b", fillcolor="#f8fafc", fontname="Helvetica"];
+    edge [color="#64748b", penwidth=1.3, arrowsize=0.7];
+
+    wallet [label="Wallet\n(manages many keys)", fillcolor="#e0f2fe", color="#38bdf8"];
+
+    subgraph cluster_keys {
+        label="Keys";
+        color="#cbd5e1";
+        style="rounded";
+        k1 [label="Private Key A\n+\nPublic Key A"];
+        k2 [label="Private Key B\n+\nPublic Key B"];
+        k3 [label="Private Key C\n+\nPublic Key C"];
+    }
+
+    subgraph cluster_addresses {
+        label="Addresses";
+        color="#cbd5e1";
+        style="rounded";
+        a1 [label="Address 1"];
+        a2 [label="Address 2"];
+        a3 [label="Address 3"];
+    }
+
+    subgraph cluster_utxos {
+        label="UTXOs";
+        color="#cbd5e1";
+        style="rounded";
+        u1 [label="UTXO\n0.40 BTC", fillcolor="#ecfdf5", color="#34d399"];
+        u2 [label="UTXO\n0.15 BTC", fillcolor="#ecfdf5", color="#34d399"];
+        u3 [label="UTXO\n0.08 BTC", fillcolor="#ecfdf5", color="#34d399"];
+    }
+
+    wallet -> k1;
+    wallet -> k2;
+    wallet -> k3;
+
+    k1 -> a1 [label="derive"];
+    k2 -> a2 [label="derive"];
+    k3 -> a3 [label="derive"];
+
+    a1 -> u1 [label="locks value to"];
+    a2 -> u2 [label="locks value to"];
+    a3 -> u3 [label="locks value to"];
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that one wallet is many keys, many addresses and many outputs, so students stop treating "wallet" and "address" as the same thing. It matters here because an analyst sees addresses on chain, never the wallet; the next three slides explain how the wallet makes them. Emphasize that the balance is spread across outputs at several addresses.
+
+**Key Points**
+- A wallet manages many key pairs and addresses.
+- Addresses come from public keys; private keys authorize spending.
+- Wallets issue a fresh address per payment or customer.
+- The balance is the sum of the outputs the wallet can spend.
+
+**Walkthrough**
+Follow one row of the diagram: key A gives address 1, which locks the 0.40 BTC output. Then point out that the three addresses share nothing visible on chain.
+
+**Sources**
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+- @wuille_bip32hierarchicaldeterministic_2012
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## A seed phrase is the whole wallet as words {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+- The wallet picks 128 to 256 random bits and adds a short checksum [@palatinus_bip39mnemoniccode_2013].
+- It splits them into 11-bit groups; each picks one word from a list of 2048, giving **12 to 24 words** [@palatinus_bip39mnemoniccode_2013].
+- The words run through 2048 rounds of HMAC-SHA512 to make a 512-bit **seed** [@palatinus_bip39mnemoniccode_2013].
+- Anyone who finds the words can restore the wallet on any device of their choice [@lesavre_blockchainnetworkstoken_2021].
+- An optional **passphrase** changes the seed. Every passphrase opens a valid wallet, but only the right one opens the funded wallet [@palatinus_bip39mnemoniccode_2013].
+:::
+::: {.column width="45%"}
+BIP84's published test phrase [@rusnak_bip84derivationscheme_2017]; anyone who reads it can restore its wallet [@lesavre_blockchainnetworkstoken_2021]:
+
+```text
+abandon abandon abandon abandon
+abandon abandon abandon abandon
+abandon abandon abandon about
+```
+
+**For the analyst:** a written seed phrase is the wallet itself. A phrase that opens an empty wallet may need its passphrase [@palatinus_bip39mnemoniccode_2013].
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the seed phrase (BIP39 mnemonic): the backup words from which a wallet regenerates every key. It matters here because a seed phrase found on paper or a device is the wallet itself, and because the optional passphrase means one phrase can open many wallets. Emphasize that the words encode random numbers, not a password the user chose.
+
+**Key Points**
+- 128 to 256 bits of randomness plus a checksum become 12 to 24 words from a 2048-word list.
+- The words (and any passphrase) become a 512-bit seed through 2048 rounds of HMAC-SHA512.
+- Whoever has the words can restore the wallet anywhere.
+- Each passphrase opens a different valid wallet; the standard calls this plausible deniability.
+
+**Walkthrough**
+1. Count the test phrase: 12 words, so 128 bits of randomness.
+2. Say it is a published test value: anyone can restore its wallet, so it never holds real funds.
+3. Read the analyst line: an empty wallet from a found phrase is not the end of the question.
+
+**Sources**
+- @palatinus_bip39mnemoniccode_2013
+- @lesavre_blockchainnetworkstoken_2021
+- @rusnak_bip84derivationscheme_2017
+
+:::
+
+## One seed grows a whole tree of keys {.smaller}
+
+- A **hierarchical deterministic (HD) wallet** derives an unlimited number of key pairs from one seed [@lesavre_blockchainnetworkstoken_2021; @wuille_bip32hierarchicaldeterministic_2012].
+- The derivation happens in the wallet software, with no registry or issuer [@bitcoin.orgdevelopers_walletsdeveloperguide_2024].
+- One tree has two branches per account: the **external** chain for receiving addresses and the **internal** chain for change [@wuille_bip32hierarchicaldeterministic_2012].
+- Each public key is hashed and encoded as an address; `bc1q…` is the native SegWit format [@antonopoulos_masteringbitcoinprogramming_2017; @wuille_bip173base32address_2017].
+
+```{dot}
+//| fig-width: 13
+//| fig-height: 2.4
+digraph WalletKeyFlow {
+  graph [rankdir=LR, splines=ortho, nodesep=0.7, ranksep=0.8, bgcolor="transparent"];
+  node  [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
+         fontname="Helvetica", fontsize=18, margin=0.18];
+  edge  [fontname="Helvetica", fontsize=13, color="#64748b", penwidth=1.2, arrowsize=0.7];
+
+  Words [label="Seed phrase\n(12-24 words)"];
+  Seed  [label="Seed\n(512 bits)"];
+  Priv  [label="Private keys\n(a tree)"];
+  Pub   [label="Public keys"];
+  Addr  [label="Addresses\n(bc1q...)"];
+
+  Words -> Seed [label="BIP39"];
+  Seed  -> Priv [label="BIP32: derive many"];
+  Priv  -> Pub  [label="compute"];
+  Pub   -> Addr [label="hash, encode"];
+}
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how one seed becomes a tree of keys (BIP32 hierarchical deterministic wallets) and then addresses. It matters here because it explains how one backup restores every address a wallet ever used, and why a wallet's receiving and change addresses come from two separate branches. Emphasize that all of this happens locally; nothing on chain records the tree.
+
+**Key Points**
+- An HD wallet derives unlimited key pairs from one seed.
+- Derivation is local; no registry or issuer is involved.
+- Each account has an external (receiving) chain and an internal (change) chain.
+- Public keys are hashed and encoded as addresses; `bc1q` is native SegWit.
+
+**Walkthrough**
+Read the diagram left to right: words, seed, the key tree, public keys, addresses. Name the standard on each arrow; students meet these BIP numbers again in wallet settings this afternoon.
+
+**Sources**
+- @lesavre_blockchainnetworkstoken_2021
+- @wuille_bip32hierarchicaldeterministic_2012
+- @bitcoin.orgdevelopers_walletsdeveloperguide_2024
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @wuille_bip173base32address_2017
+
+:::
+
+## The path names coin, account, chain and index {.smaller}
+
+Every key has an address in the tree, its **derivation path** [@palatinus_bip44multiaccounthierarchy_2014]:
+
+```text
+m / purpose' / coin_type' / account' / change / address_index
+m /   84'    /     0'     /    0'    /   0    /      0
+```
+
+| Level | Example | Meaning |
+| --- | --- | --- |
+| purpose | `84'` | Native SegWit (P2WPKH) addresses [@rusnak_bip84derivationscheme_2017] |
+| coin_type | `0'` | Bitcoin (`1'` is testnet) [@palatinus_bip44multiaccounthierarchy_2014] |
+| account | `0'` | First account in the wallet [@palatinus_bip44multiaccounthierarchy_2014] |
+| change | `0` | `0` receiving, `1` change [@palatinus_bip44multiaccounthierarchy_2014] |
+| address_index | `0` | First address on that chain [@palatinus_bip44multiaccounthierarchy_2014] |
+
+From the test phrase, `m/84'/0'/0'/0/0` is `bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu` and the first change address `m/84'/0'/0'/1/0` is `bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el` [@rusnak_bip84derivationscheme_2017]. A restoring wallet stops after **20 unused addresses** in a row, the gap limit [@palatinus_bip44multiaccounthierarchy_2014].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads a derivation path level by level (BIP44, with BIP84's purpose for native SegWit). It matters here because the lab shows these paths, and because the same seed in two wallets that use different paths shows different addresses. Emphasize the change level: 0 for receiving, 1 for change.
+
+**Key Points**
+- The path is m / purpose' / coin_type' / account' / change / address_index.
+- Purpose 84' means native SegWit; coin type 0' is Bitcoin and 1' testnet.
+- Change 0 is the receiving chain, 1 the change chain.
+- A ' marks a hardened level: purpose, coin type and account are hardened, so no public key derives across them.
+- The published test vectors give the first receiving and first change addresses for the test phrase.
+- A restoring wallet stops looking after 20 unused addresses in a row.
+
+**Walkthrough**
+1. Read the example path against the table, one level at a time.
+2. Show that the two test addresses differ only in the change level, yet share nothing visible.
+3. Explain the gap limit: a wallet that skipped more than 20 addresses can look empty after a restore.
+
+**Sources**
+- @palatinus_bip44multiaccounthierarchy_2014
+- @rusnak_bip84derivationscheme_2017
+
+:::
+
+## An xpub reveals every address, past and future {.smaller}
+
+- An **extended public key** (xpub; `zpub` for native SegWit) derives a branch's public keys and addresses, but no private key [@wuille_bip32hierarchicaldeterministic_2012; @rusnak_bip84derivationscheme_2017].
+- A shop's web server can create a fresh address for each order without the keys to spend [@wuille_bip32hierarchicaldeterministic_2012].
+- An auditor given the account xpubs sees "all transactions from and to the wallet ... but not a single secret key" [@wuille_bip32hierarchicaldeterministic_2012].
+- An xpub plus one non-hardened child private key gives the parent private key, so xpubs need more care than ordinary public keys [@wuille_bip32hierarchicaldeterministic_2012].
+
+::: {.callout-important appearance="simple"}
+**For the analyst:** on chain, addresses from one seed cannot easily be tied to each other [@wuille_bip32hierarchicaldeterministic_2012]. An account's xpub links that account's addresses, including ones not used yet; it cannot reach the seed's other accounts or address types, which sit past **hardened** levels (the `'` in the path) [@wuille_bip32hierarchicaldeterministic_2012; @palatinus_bip44multiaccounthierarchy_2014]. The seed phrase links them all. Without either, linking them waits for how they are spent, week 2's subject.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the extended public key (xpub/zpub): the watch-only key that lists every address on a branch. It matters here because an xpub found in a wallet export, a merchant's settings or an accounting tool links a wallet's addresses in a way the chain alone cannot. Emphasize that it spends nothing but reveals everything, including future addresses.
+
+**Key Points**
+- An xpub derives public keys and addresses but not private keys.
+- Merchants and auditors use xpubs to watch or receive without spending.
+- An xpub plus one non-hardened child private key exposes the parent private key.
+- Addresses from one seed cannot easily be tied together on chain; an account xpub links one account's addresses, the seed links every account.
+
+**Walkthrough**
+1. Read the webshop and auditor cases: both watch, neither spends.
+2. Read the security warning in plain words: an xpub leaked with one child key is a lost wallet.
+3. Read the callout and point forward: week 2 links addresses by how they are spent.
+
+**Sources**
+- @wuille_bip32hierarchicaldeterministic_2012
+- @rusnak_bip84derivationscheme_2017
+- @palatinus_bip44multiaccounthierarchy_2014
+
+:::
+
+## What each wallet type leaves the analyst {.smaller}
+
+::: {style="font-size: 0.9em; line-height: 1.14;"}
+
+| Wallet | On chain | Off chain | Links its addresses |
+| --- | --- | --- | --- |
+| Custodial | Pooled deposits and withdrawals; internal transfers absent [@scott_digitalwalletsselected_2022] | The platform's books [@scott_digitalwalletsselected_2022] | The platform's books [@scott_digitalwalletsselected_2022] |
+| Self-custody, hot | Every spend, signed by the user's keys [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019] | The device that holds the keys [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019] | The seed phrase, or an xpub for one account [@wuille_bip32hierarchicaldeterministic_2012] |
+| Self-custody, cold | The same; spends are rarer [@lesavre_blockchainnetworkstoken_2021] | An air-gapped computer or hardware wallet [@lesavre_blockchainnetworkstoken_2021] | The seed phrase, or an xpub for one account [@wuille_bip32hierarchicaldeterministic_2012] |
+| Any HD wallet | Fresh receiving and change addresses [@wuille_bip32hierarchicaldeterministic_2012] | The seed phrase backup [@lesavre_blockchainnetworkstoken_2021] | The derivation path, from the seed [@palatinus_bip44multiaccounthierarchy_2014] |
+
+**The assessment:** name the custody and the likely storage, and state a confidence word. "Cold" is an inference from behaviour alone, so from the chain alone it is **low confidence** on the course scale.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide pulls the lesson into one table the analyst can use: what each wallet type leaves on chain, what it leaves off chain, and what links its addresses. It matters here because the analyst's job ends at the assessment, and the assessment must say how sure it is. Emphasize that custody and storage are characterized, not read directly, and the confidence word says so.
+
+**Key Points**
+- Custodial: pooled flows on chain, the real record in the platform's books.
+- Self-custody: every spend on chain; the keys are on the user's device.
+- Cold storage looks like hot storage on chain, with rarer spends.
+- HD wallets issue fresh addresses; the seed links them all, an account xpub one account's.
+- Hot or cold from the chain alone is an inference from behaviour: low confidence on the course scale.
+
+**Walkthrough**
+Read each row left to right. Then ask the class to characterize a large balance that has not moved in two years: self-custody or custodial, hot or cold, and with what confidence.
+
+**Sources**
+- @scott_digitalwalletsselected_2022
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @lesavre_blockchainnetworkstoken_2021
+- @wuille_bip32hierarchicaldeterministic_2012
+- @palatinus_bip44multiaccounthierarchy_2014
+
+:::
+
+## This afternoon you build one and read it {.smaller}
+
+**Bottom line:** in the lab you make a wallet on the course's own chain and read each step in the explorer.
+
+1. Make a wallet from a seed phrase [@palatinus_bip39mnemoniccode_2013].
+2. Read its derivation path and the addresses it derives [@palatinus_bip44multiaccounthierarchy_2014].
+3. Find those addresses in the explorer: nothing there ties them to one seed [@wuille_bip32hierarchicaldeterministic_2012].
+4. Spend from a 2-of-3 multi-sig: lesson ③ covers it next.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide bridges the lecture to day 2's lab: a wallet made from a seed phrase, its derived addresses and a 2-of-3 multi-sig spend, each step read in the explorer. It matters here because students see on the course chain what the slides described: words become keys, keys become addresses, and the chain does not show that the addresses belong together. Emphasize that the explorer shows addresses, never the wallet.
+
+**Key Points**
+- The lab builds a wallet from a seed phrase.
+- Students read the derivation path and the addresses it derives.
+- In the explorer, nothing ties those addresses to one seed.
+- The 2-of-3 multi-sig spend belongs to lesson ③.
+
+**Walkthrough**
+Read the four steps in order and say which slide each step comes from. Leave step 4 for lesson ③.
+
+**Sources**
+- @palatinus_bip39mnemoniccode_2013
+- @palatinus_bip44multiaccounthierarchy_2014
+- @wuille_bip32hierarchicaldeterministic_2012
+
+:::
+
+## References
