@@ -1,0 +1,23 @@
+name: tron
+
+# The day-5 Tron lab: one copy for the whole class. The router sends /labs/tron/<path> here as /<path>
+# (router/routes.conf). The snapshot is frozen in the image (Dockerfile), so every answer stays the same.
+#   /lab/        the worksheet
+#   /query/      the query page (?lab=d5): DuckDB in the student's browser, over the snapshot
+#   /fallback/   every query's saved output, for when the query page will not load
+#   /snapshot/   the snapshot's files and meta.json (row counts and SHA-256)
+# The day-9 lab reads the same snapshot.
+
+services:
+  page:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: tron-page:latest
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  router-net:
+    external: true

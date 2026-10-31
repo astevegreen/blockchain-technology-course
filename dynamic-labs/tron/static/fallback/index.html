@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saved query results: Tron lab</title>
+<style>
+body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 1rem; max-width: 110rem; color: #1b1b1b; }
+h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; border-top: 1px solid #ccc; padding-top: .8rem; margin-top: 1.5rem; }
+pre { background: #f4f4f4; padding: .6rem; overflow-x: auto; font-size: .85rem; }
+.table-wrap { overflow-x: auto; max-height: 30rem; }
+table { border-collapse: collapse; font-size: .85rem; }
+th, td { border: 1px solid #ccc; padding: .2rem .5rem; text-align: left; white-space: nowrap; }
+th { background: #eee; position: sticky; top: 0; }
+td.null { color: #999; }
+nav li { display: inline; margin-right: .75rem; }
+.note { background: #fff6dd; padding: .5rem 1rem; border-left: 4px solid #e0a800; }
+</style>
+</head>
+<body>
+<h1>Saved query results: Day 5 lab: a USDT transfer, a deposit and its sweep, an issuer freeze (Tron)</h1>
+<p class="note">Use this page when the query page will not load. It shows every query and the output it gives on
+the lab's snapshot, so your worksheet questions have the same answers here. Snapshot read from java-tron 4.8.2.4 on 31 Oct 2026: two windows, 9 Sep-17 Oct 2023 and 15 Sep-20 Oct 2026. Blacklist and balances as of block 87,600,650 (31 Oct 2026 19:36:21 UTC). Times are UTC.</p>
+<nav><ul><li><a href="#q1">1. One USDT transfer</a></li><li><a href="#q2">2. Deposits and sweeps</a></li><li><a href="#q3">3. Where the sweeps went, and what a published source says about that address</a></li><li><a href="#q4">4. Who paid for each sweep</a></li><li><a href="#q5">5. Tether&#x27;s blacklist events on 23 Apr 2026 (USDT contract on Tron)</a></li><li><a href="#q6">6. Freeze status as of the snapshot</a></li><li><a href="#q7">7. Challenge</a></li></ul></nav>
+<section id="q1"><h2>1. One USDT transfer: who sent it, who received it, how much, when, and what it cost</h2>
+<details><summary>The query</summary><pre>SELECT t.tx_id, t.block, t.time_utc, t.asset, t.from_addr, t.to_addr, t.amount, t.signer AS signed_by,
+       t.type, t.energy_used, t.energy_fee_sun / 1e6 AS trx_burned_for_energy, t.fee_sun / 1e6 AS fee_trx
+FROM tr t
+WHERE t.tx_id = &#x27;d11ff48c97d846c4a92a94ebdec4ce58bce04028e0c4c6c74d18236337d956bd&#x27;</pre></details>
+<p>1 rows</p>
+<div class="table-wrap"><table><thead><tr><th>tx_id</th><th>block</th><th>time_utc</th><th>asset</th><th>from_addr</th><th>to_addr</th><th>amount</th><th>signed_by</th><th>type</th><th>energy_used</th><th>trx_burned_for_energy</th><th>fee_trx</th></tr></thead><tbody>
+<tr><td>d11ff48c97d846c4a92a94ebdec4ce58bce04028e0c4c6c74d18236337d956bd</td><td>55612753</td><td>2023-10-16 15:21:15</td><td>USDT</td><td>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</td><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>400.000000</td><td>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</td><td>TriggerSmart</td><td>31895</td><td>13.3959</td><td>13.7409</td></tr>
+</tbody></table></div></section>
+<section id="q2"><h2>2. Deposits and sweeps: every USDT movement of the two deposit addresses, with the running balance</h2>
+<details><summary>The query</summary><pre>WITH moves AS (
+  SELECT p.address, t.time_utc, t.block, t.seq, t.tx_id,
+         CASE WHEN t.to_addr = p.address THEN t.amount ELSE -t.amount END AS signed,
+         CASE WHEN t.to_addr = p.address THEN t.from_addr ELSE t.to_addr END AS counterparty,
+         p.main_recipient
+  FROM usdt_profile p JOIN tr t ON p.address IN (t.from_addr, t.to_addr) AND t.asset = &#x27;USDT&#x27;),
+bal AS (
+  SELECT *, sum(signed) OVER (PARTITION BY address ORDER BY block, seq) AS balance_after FROM moves)
+SELECT address, time_utc,
+       CASE WHEN signed &gt; 0 THEN &#x27;deposit&#x27;
+            WHEN counterparty = main_recipient AND balance_after = 0 THEN &#x27;sweep: empties the address&#x27;
+            ELSE &#x27;other outflow&#x27; END AS kind,
+       counterparty, abs(signed) AS usdt, balance_after, block, tx_id
+FROM bal ORDER BY address, block, seq</pre></details>
+<p>41 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>time_utc</th><th>kind</th><th>counterparty</th><th>usdt</th><th>balance_after</th><th>block</th><th>tx_id</th></tr></thead><tbody>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-09-27 20:56:48</td><td>deposit</td><td>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</td><td>400.000000</td><td>400.000000</td><td>55072422</td><td>1e505931578c045117e660b3f58b59be582e54a5faadd764d8b01bd2d6fa952a</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-07 07:26:39</td><td>deposit</td><td>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</td><td>400.000000</td><td>800.000000</td><td>55344139</td><td>f353d138c2eec2422e827fcb9af1c29135f4d3896a526ad70bef4f639c3edcbb</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-07 12:56:12</td><td>sweep: empties the address</td><td>TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi</td><td>800.000000</td><td>0.000000</td><td>55350728</td><td>b0ebaf2e9f8e18107a34e2677a30098e3646b4002dfb622ffaa8063b91f413dd</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-08 18:26:09</td><td>deposit</td><td>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</td><td>600.000000</td><td>600.000000</td><td>55386117</td><td>b16d6a01f644d0e19afa387cf0de5f5425b52f2e354e85c493eb6212266e28e8</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-10 12:35:51</td><td>deposit</td><td>TMgC8C4kkmrh7SKjpkkqwNbK8eYQF3X8V4</td><td>55.000000</td><td>655.000000</td><td>55436696</td><td>30af28fdd52169b4102e8d855eca794b12d7520bf026335683ab4810585458e9</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-10 12:56:12</td><td>sweep: empties the address</td><td>TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi</td><td>655.000000</td><td>0.000000</td><td>55437103</td><td>a5ce812fe063f5db61b585977edfe833077e783f0166c9ecbb338c809e3ac8dd</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-12 10:10:06</td><td>deposit</td><td>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</td><td>600.000000</td><td>600.000000</td><td>55491367</td><td>29391bd4bae27c75abca0a4cf7ccbabc8ae1f0837680ce48346dacd220228e77</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-16 15:21:15</td><td>deposit</td><td>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</td><td>400.000000</td><td>1000.000000</td><td>55612753</td><td>d11ff48c97d846c4a92a94ebdec4ce58bce04028e0c4c6c74d18236337d956bd</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-16 15:46:09</td><td>sweep: empties the address</td><td>TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi</td><td>1000.000000</td><td>0.000000</td><td>55613251</td><td>a24b5c09cb2deed59e38020255ddb0e5c482d45d71db978616a95ba7a235e39b</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-15 05:20:51</td><td>deposit</td><td>TJq8utxe31bEcGE7zZ37UrsHfU9J9sFrtQ</td><td>100.024117</td><td>100.024117</td><td>86259174</td><td>db58bbedb432053baf85bd1be0dbdbd449f2ee4383c5de62c0fe5f86bd6d4688</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-15 05:40:12</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>100.024117</td><td>0.000000</td><td>86259561</td><td>2b97b8c15f9b4ee54a02105cf07146df0726838f2f344bd8c9b5c27da12f71a8</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-17 05:16:33</td><td>deposit</td><td>TN12qS4gM6qs3B2R4XjuT2zf6BomaDGdRY</td><td>88.567977</td><td>88.567977</td><td>86316672</td><td>bf075fc94f369e22a4c569ded8f59f9afe0fe2b962e91b7d6429dd5c749c08d3</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-17 05:34:18</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>88.567977</td><td>0.000000</td><td>86317027</td><td>b9f8f41b5ce60314a11edad180279ffcaa3aee3ac88d8b5b98ff6c1f3d7b6fbd</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-18 05:10:45</td><td>deposit</td><td>TLW916jGft6mLZ8ATSfnNMfRxBbQkqqcT6</td><td>85.000000</td><td>85.000000</td><td>86345348</td><td>a626b23f433d07a1c879cfadb42f786d9bce595c23c20e4a1f2306f467203e37</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-18 05:19:48</td><td>deposit</td><td>TEbDmHpvvWJJxjfPwRm7xGoahK4RZMjvKY</td><td>29.689932</td><td>114.689932</td><td>86345529</td><td>c3d79d7c955ca9af2e4d672cf1ebbdc11195e0390a1292a7be448fa8ed1aabd6</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-18 05:36:00</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>114.689932</td><td>0.000000</td><td>86345853</td><td>a35a0cfed447209c974e64c3675fad12d7c4e9343a1f692eca92963fab21aa0e</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-19 05:50:48</td><td>deposit</td><td>TVx5xgCRj7wFPnDLizec9pRe1yHVCY2ZMJ</td><td>85.837721</td><td>85.837721</td><td>86374941</td><td>099fe1da22924ac02b8c7353ef743df01c835ae105dec7ec6fc4b3b9073364b5</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-19 06:12:42</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>85.837721</td><td>0.000000</td><td>86375377</td><td>509a091fb37a4f8646e054ad3d0e06b93cfdecd56e3c6bb4055627e6da4a5e7f</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-23 07:35:51</td><td>deposit</td><td>TKmeR7EqnjHLvwGJDMaKrqPui8eR5EQFG2</td><td>87.000000</td><td>87.000000</td><td>86492208</td><td>edc55eab89d109bd13dce568bfbbc9383211232622b9144e2ad6c682e19ec1d9</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-23 18:31:39</td><td>deposit</td><td>TJq8utxe31bEcGE7zZ37UrsHfU9J9sFrtQ</td><td>0.623351</td><td>87.623351</td><td>86505320</td><td>0c96c3a5d265cd0cf6035e245db5256c9c8fbf01ac227b78305364d6af96370c</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-23 23:38:21</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>87.623351</td><td>0.000000</td><td>86511454</td><td>e9e3bd770d8f9b7d4cad76106e584f9a924469d73735e24466fb6820c4c79798</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-24 05:09:42</td><td>deposit</td><td>TATu34PFUE2vpnnNTt1HH8jc8DJX2ceA9G</td><td>85.769342</td><td>85.769342</td><td>86518079</td><td>2c1956a84e961588d6b44b88ff951a207c3b0b06e80dfc5cf90aaf4d9d5d6e67</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-24 05:44:54</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>85.769342</td><td>0.000000</td><td>86518783</td><td>4534c00d932806b759ab431d88fd340b88607167bc976240d7b675cf531feada</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-29 05:07:42</td><td>deposit</td><td>TVgXg14BRCQdCz1KKToaSdjZA8EWJhkUss</td><td>100.244863</td><td>100.244863</td><td>86661999</td><td>c86bfc297721394c8c9cac151b066da0e5f71a89649e7a0946030935740cdd77</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-30 03:18:00</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>100.244863</td><td>0.000000</td><td>86688595</td><td>54821ac986b1dc9e5130dc30f943d181746c85a3d9f77f744853700bf9e4ff40</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-02 11:42:42</td><td>deposit</td><td>TLW916jGft6mLZ8ATSfnNMfRxBbQkqqcT6</td><td>87.520625</td><td>87.520625</td><td>86756248</td><td>12bc071a350dbec4a0a33aaa51f445344c79ff2035bb3d71a62dd0b85e663b3c</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-03 05:25:33</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>87.520625</td><td>0.000000</td><td>86777499</td><td>ae150cb171417e5a13a155eef9b4051ec8414f0d9f051e530daa2deadf909da6</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-07 17:15:33</td><td>deposit</td><td>TSmjbCPTMB5261jEGExfMLL3oRyixQExQE</td><td>80.700000</td><td>80.700000</td><td>86906863</td><td>216a16247dc2e50c7370bb04774346847109e2c4ed4a11985b06e80b215e774c</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-08 05:53:48</td><td>deposit</td><td>TJq8utxe31bEcGE7zZ37UrsHfU9J9sFrtQ</td><td>72.848151</td><td>153.548151</td><td>86922024</td><td>2049fb70ad30721ae7c352a839e4ea7264c78b81fa071e594139bdeb0a2d6717</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-08 06:04:15</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>153.548151</td><td>0.000000</td><td>86922231</td><td>f167824ed6ce3fdc66b88fdd79a307dff800ff851d44b63a0e448da3402f4446</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-09 08:45:51</td><td>deposit</td><td>TFA3aNgK3hXX5gVaaKvkGLdBLaG383Hxzq</td><td>86.029925</td><td>86.029925</td><td>86954255</td><td>06a1815c7c045afa5bb512450f7a0a72941886ff6fb133470ca50badc3051a0b</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-10 05:22:51</td><td>deposit</td><td>TG7dQDCq7QFKvLQHy1gqcZNoMTjpu4CRSm</td><td>86.281658</td><td>172.311583</td><td>86978989</td><td>0ea2e76d9ae833e11d8db3be95b9a1a709b5b93294175a319d799f01abb6bea0</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-10 05:48:48</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>172.311583</td><td>0.000000</td><td>86979508</td><td>a6cc592a3711d92360a16f059f602ea482c441937c25e6f43c938df3cc00da32</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-13 05:11:42</td><td>deposit</td><td>TLW916jGft6mLZ8ATSfnNMfRxBbQkqqcT6</td><td>105.000000</td><td>105.000000</td><td>87065142</td><td>c002bca4a1ab185345122e420bc8d904e7c26cabb07c41820b47c5bb561347e8</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-13 05:34:21</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>105.000000</td><td>0.000000</td><td>87065595</td><td>9ac2c53399f175c0b254bdf0bff42ba9af4d9ffd5c505846b93054f14494bc91</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-13 11:57:42</td><td>deposit</td><td>TEbDmHpvvWJJxjfPwRm7xGoahK4RZMjvKY</td><td>23.600000</td><td>23.600000</td><td>87073260</td><td>7be7eeb0116e7f7301cb5f8ee0680d87fccd9927972869012c0a096cfdc33948</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-14 05:08:39</td><td>deposit</td><td>TVx5xgCRj7wFPnDLizec9pRe1yHVCY2ZMJ</td><td>117.031891</td><td>140.631891</td><td>87093873</td><td>40a613d2bf51f2b4a43ca456a95dc33afbfe56b960ae199bbb97720a474751c1</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-14 05:34:24</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>140.631891</td><td>0.000000</td><td>87094388</td><td>7d2162c563bfc0759b0d0841296400e5b8f565e9d8d9c13286fe93add184fa30</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-15 05:09:48</td><td>deposit</td><td>TPspK9k6EnhccYZBkYWDYEwbqRhERUjiox</td><td>87.428487</td><td>87.428487</td><td>87122688</td><td>affc43b8a352fc85f80d1a7bb02115c734b5dc4845127b890640681d872387d6</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-16 05:11:48</td><td>deposit</td><td>TLW916jGft6mLZ8ATSfnNMfRxBbQkqqcT6</td><td>87.497794</td><td>174.926281</td><td>87151520</td><td>d1e638ae9fe36a388cf2564b254128ebdab07ade8d9369d24e0b9a5c84919ee2</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-16 05:36:45</td><td>sweep: empties the address</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>174.926281</td><td>0.000000</td><td>87152019</td><td>d5f35c5a60720c90295583677370365cc8047a6fa93ac145c221ba2be1f24d22</td></tr>
+</tbody></table></div></section>
+<section id="q3"><h2>3. Where the sweeps went, and what a published source says about that address</h2>
+<details><summary>The query</summary><pre>SELECT s.address AS deposit_address, s.to_addr AS swept_to, count(*) AS sweeps, sum(s.amount) AS usdt_swept,
+       min(s.time_utc) AS first_sweep, max(s.time_utc) AS last_sweep,
+       coalesce(l.label, &#x27;no published source names this address&#x27;) AS what_a_source_says
+FROM sweeps s LEFT JOIN labels l ON l.address = s.to_addr
+GROUP BY s.address, s.to_addr, l.label
+ORDER BY first_sweep</pre></details>
+<p>2 rows</p>
+<div class="table-wrap"><table><thead><tr><th>deposit_address</th><th>swept_to</th><th>sweeps</th><th>usdt_swept</th><th>first_sweep</th><th>last_sweep</th><th>what_a_source_says</th></tr></thead><tbody>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi</td><td>3</td><td>2455.000000</td><td>2023-10-07 12:56:12</td><td>2023-10-16 15:46:09</td><td>Binance wallet, published by Binance (USDT and USDC on Tron) [binance_transparency_2023]</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa</td><td>13</td><td>1496.695834</td><td>2026-09-15 05:40:12</td><td>2026-10-16 05:36:45</td><td>no published source names this address</td></tr>
+</tbody></table></div></section>
+<section id="q4"><h2>4. Who paid for each sweep: Energy lent to the address, or TRX sent to it, in the 30 minutes before</h2>
+<details><summary>The query</summary><pre>WITH paid AS (
+  SELECT to_addr AS address, time_utc, from_addr AS payer,
+         CASE asset WHEN &#x27;ENERGY_DELEGATED&#x27; THEN &#x27;lent Energy (staked TRX behind it)&#x27; ELSE &#x27;sent TRX&#x27; END AS how,
+         amount AS trx
+  FROM tr WHERE asset IN (&#x27;ENERGY_DELEGATED&#x27;, &#x27;TRX&#x27;) AND amount &gt;= 1)
+SELECT s.address, s.time_utc AS sweep_time, s.amount AS usdt, s.energy_used,
+       s.energy_fee_sun / 1e6 AS trx_burned_for_energy, p.payer, p.how, p.trx,
+       date_diff(&#x27;second&#x27;, p.time_utc, s.time_utc) AS seconds_before_sweep
+FROM sweeps s LEFT JOIN paid p
+  ON p.address = s.address AND p.time_utc BETWEEN s.time_utc - INTERVAL 30 MINUTE AND s.time_utc
+ORDER BY s.address, s.time_utc</pre></details>
+<p>16 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>sweep_time</th><th>usdt</th><th>energy_used</th><th>trx_burned_for_energy</th><th>payer</th><th>how</th><th>trx</th><th>seconds_before_sweep</th></tr></thead><tbody>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-07 12:56:12</td><td>800.000000</td><td>31895</td><td>13.3959</td><td>TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh</td><td>sent TRX</td><td>14.536600</td><td>624</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-10 12:56:12</td><td>655.000000</td><td>31895</td><td>13.3959</td><td>TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh</td><td>sent TRX</td><td>14.536600</td><td>864</td></tr>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-16 15:46:09</td><td>1000.000000</td><td>31895</td><td>13.3959</td><td>TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh</td><td>sent TRX</td><td>14.536600</td><td>894</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-15 05:40:12</td><td>100.024117</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18887.000000</td><td>189</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-17 05:34:18</td><td>88.567977</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18908.000000</td><td>135</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-18 05:36:00</td><td>114.689932</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18915.000000</td><td>177</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-19 06:12:42</td><td>85.837721</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18917.000000</td><td>159</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-23 23:38:21</td><td>87.623351</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18907.000000</td><td>198</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-24 05:44:54</td><td>85.769342</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18907.000000</td><td>171</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-30 03:18:00</td><td>100.244863</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18489.000000</td><td>174</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-03 05:25:33</td><td>87.520625</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18656.000000</td><td>150</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-08 06:04:15</td><td>153.548151</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18689.000000</td><td>132</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-10 05:48:48</td><td>172.311583</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18702.000000</td><td>165</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-13 05:34:21</td><td>105.000000</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18730.000000</td><td>138</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-14 05:34:24</td><td>140.631891</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18725.000000</td><td>141</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-16 05:36:45</td><td>174.926281</td><td>64285</td><td>0.0</td><td>TJarPj5fLGXgQA8YpCP4uzVjeWekiv3YYW</td><td>lent Energy (staked TRX behind it)</td><td>18757.000000</td><td>162</td></tr>
+</tbody></table></div></section>
+<section id="q5"><h2>5. Tether&#x27;s blacklist events on 23 Apr 2026 (USDT contract on Tron)</h2>
+<details><summary>The query</summary><pre>SELECT b.time_utc, b.block, b.event, b.address, b.signed_by, b.tx_id,
+       coalesce(l.label, &#x27;&#x27;) AS what_a_source_says
+FROM blacklist b LEFT JOIN labels l USING (address)
+ORDER BY b.block, b.address</pre></details>
+<p>13 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>block</th><th>event</th><th>address</th><th>signed_by</th><th>tx_id</th><th>what_a_source_says</th></tr></thead><tbody>
+<tr><td>2026-04-23 12:02:36</td><td>82092618</td><td>AddedBlackList</td><td>TNiq9AXBp9EjUqhDhrwrfvAA8U3GUQZH81</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>ebe670f1518f67077d28ec4b54dd0d236a5f1edfa90651524aeb42a21e6975fe</td><td>On OFAC&#x27;s SDN list (TRX addresses) [b10c_ofacaddresses_2026]; Frozen by Tether on 23 Apr 2026, about $213M; named by PeckShield [theblock_tetherfreeze344m_2026]</td></tr>
+<tr><td>2026-04-23 12:02:36</td><td>82092618</td><td>AddedBlackList</td><td>TTiDLWE6fZK8okMJv6ijg42yrH6W2pjSr9</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>295cd606150289dc18d9e0e4d9503adb9d1b10bde9c314158f9cfa7c9928b09a</td><td>On OFAC&#x27;s SDN list (TRX addresses) [b10c_ofacaddresses_2026]; Frozen by Tether on 23 Apr 2026, about $131M; named by PeckShield [theblock_tetherfreeze344m_2026]</td></tr>
+<tr><td>2026-04-23 16:29:12</td><td>82097950</td><td>AddedBlackList</td><td>TFk3Y3Cxzno2zC8Ntgax4HVR5D1EFUmffA</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>f4cdc388235d06434671ddf41574d2c45922cad411107e8623632ac0f6269008</td><td></td></tr>
+<tr><td>2026-04-23 16:32:09</td><td>82098009</td><td>AddedBlackList</td><td>TA8nxHhnpSR42efdnPcC8jdfqESMwMPwey</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>e6d8e593ce9fc8e2bac567e754867f3e3c37c0291a1d5b82aa4b089ca2407ec5</td><td></td></tr>
+<tr><td>2026-04-23 19:55:06</td><td>82102066</td><td>AddedBlackList</td><td>TCte75V6p1eKxDGnYv9MdcVjWwvQxpsfM5</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>33d0ba99be1bf0469e6770d1ab7ccaa0be9b7f9c65a0f52b4d6248924017f950</td><td></td></tr>
+<tr><td>2026-04-23 19:55:09</td><td>82102067</td><td>AddedBlackList</td><td>TFPNEMBav71vWq2WmuRR5wQCqGZzZPJwCn</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>701673f7cc4dfdecfd5895a29988a1c33fad8b776816c4cf4da83f75c82440c9</td><td></td></tr>
+<tr><td>2026-04-23 19:55:09</td><td>82102067</td><td>AddedBlackList</td><td>TN2rhkdyf2FjABoZK9Xhx6C6y5moywXc8W</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>fff515231037a7fd6e45ac479e4dbe7375ea047972b9835979497affd8644c49</td><td></td></tr>
+<tr><td>2026-04-23 19:55:12</td><td>82102068</td><td>AddedBlackList</td><td>TAkyFUHBiPCjtkGdq7gDptYRgdfuNdt7W2</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>0c8c556f39d7e82630ee7dbef8668e602cdac63611ef09e550a81a42929f3920</td><td></td></tr>
+<tr><td>2026-04-23 19:55:15</td><td>82102069</td><td>AddedBlackList</td><td>TNJhiEBM8QPDYgUEvxVzEdD4d1aRx38fLi</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>68cfe85a1859b71a2d8538eb614844db845921853782bbf02c66c4644eadbf99</td><td></td></tr>
+<tr><td>2026-04-23 19:55:18</td><td>82102070</td><td>AddedBlackList</td><td>TTNkj5QJobLirxRPFE2FfrmZdZgtzvxFF9</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>84cc39b677a928d039a70eb29945d932e324982e05e8571bdba76d7178760f89</td><td></td></tr>
+<tr><td>2026-04-23 19:55:21</td><td>82102071</td><td>AddedBlackList</td><td>TWtXozRYZWf9LhbkNX9G9q9wES1gv5q6NA</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>de0cf4a1139cf2c9277277607e5fc5512ef92e234d2af82c34b6283527ccd666</td><td></td></tr>
+<tr><td>2026-04-23 19:55:24</td><td>82102072</td><td>AddedBlackList</td><td>TTJFGx7qRZZvA7YYuJMgQB9qyfdmJDXFTy</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>d264c755dbe7c60c4d4e1b4c5a8f254d54cebe62c547a763b65b01e5f9ac555f</td><td></td></tr>
+<tr><td>2026-04-23 19:55:39</td><td>82102077</td><td>AddedBlackList</td><td>TVU4JyweSvsS428UpVrKjdXuxxVxkCYc22</td><td>TRLi4KskHxfACnxKzLrf2wNHauWUQpwziN</td><td>00496126092592ddda181379f9ddcfe2a0a57f6ec21ffed5cf691df3a3677cfd</td><td></td></tr>
+</tbody></table></div></section>
+<section id="q6"><h2>6. Freeze status as of the snapshot: is the address on USDT&#x27;s blacklist, and what it holds</h2>
+<details><summary>The query</summary><pre>SELECT f.address, f.usdt_blacklisted, f.usdt_balance, f.as_of_block, f.as_of_time_utc,
+       coalesce(l.label, &#x27;&#x27;) AS what_a_source_says
+FROM freeze_status f LEFT JOIN labels l USING (address)
+WHERE f.usdt_blacklisted
+ORDER BY f.usdt_balance DESC</pre></details>
+<p>2 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>usdt_blacklisted</th><th>usdt_balance</th><th>as_of_block</th><th>as_of_time_utc</th><th>what_a_source_says</th></tr></thead><tbody>
+<tr><td>TNiq9AXBp9EjUqhDhrwrfvAA8U3GUQZH81</td><td>true</td><td>212922804.915554</td><td>87600650</td><td>2026-10-31 19:36:21</td><td>On OFAC&#x27;s SDN list (TRX addresses) [b10c_ofacaddresses_2026]; Frozen by Tether on 23 Apr 2026, about $213M; named by PeckShield [theblock_tetherfreeze344m_2026]</td></tr>
+<tr><td>TTiDLWE6fZK8okMJv6ijg42yrH6W2pjSr9</td><td>true</td><td>131288801.972952</td><td>87600650</td><td>2026-10-31 19:36:21</td><td>On OFAC&#x27;s SDN list (TRX addresses) [b10c_ofacaddresses_2026]; Frozen by Tether on 23 Apr 2026, about $131M; named by PeckShield [theblock_tetherfreeze344m_2026]</td></tr>
+</tbody></table></div></section>
+<section id="q7"><h2>7. Challenge: tokens and dust nobody asked for, sent to the deposit addresses</h2>
+<details><summary>The query</summary><pre>SELECT t.to_addr AS address, t.time_utc, t.asset, t.amount, t.from_addr AS sender
+FROM tr t JOIN usdt_profile p ON t.to_addr = p.address
+WHERE (t.asset = &#x27;TRX&#x27; AND t.amount &lt; 1) OR t.asset LIKE &#x27;TRC10:%&#x27; OR t.asset LIKE &#x27;TRC20:%&#x27;
+ORDER BY address, time_utc</pre></details>
+<p>9 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>time_utc</th><th>asset</th><th>amount</th><th>sender</th></tr></thead><tbody>
+<tr><td>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</td><td>2023-10-16 15:31:30</td><td>TRC10:1004977</td><td>8888880000.000000</td><td>TAgrCqM4x5TdvYUfBJzhhjLvTF988QsECK</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-18 05:10:57</td><td>TRX</td><td>0.000001</td><td>TPfQWJ139cbXtwViXRRVv99gRvDbXkz19a</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-23 07:36:03</td><td>TRX</td><td>0.000001</td><td>TA76FeyZ3pptoyvPsEALhPYwohivBJ38Fz</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-09-24 05:09:45</td><td>TRC10:1005190</td><td>85769342.000000</td><td>TFAyoeUwtE7V4pYFjoJdcrtEy7t4iqmT9G</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-08 06:04:21</td><td>TRC10:1005197</td><td>8888888.000000</td><td>TFAHu2LaVJ1QEzrQNaV1ipSQXZbWeEWi1Y</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-08 06:04:21</td><td>TRC10:1005193</td><td>4444444444.000000</td><td>TGF1iGw286XtTbEdwA6gLzrJooJJfPYrra</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-08 06:51:06</td><td>TRC10:1005210</td><td>9999999.000000</td><td>TKevFpDiBcujSStNmrQF8Nyzk1z5TRXcom</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-13 05:11:54</td><td>TRX</td><td>0.000001</td><td>TKrCwVNAaizwiedLqsZvCrKzoLQaQMFeiQ</td></tr>
+<tr><td>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</td><td>2026-10-13 05:34:33</td><td>TRX</td><td>0.000001</td><td>TT1PZb2JpgWswmqZszy5BGxGnSk7NrvhZf</td></tr>
+</tbody></table></div></section>
+<footer><p>Written by build/saved_results.py with DuckDB 1.4.3.</p></footer>
+</body>
+</html>

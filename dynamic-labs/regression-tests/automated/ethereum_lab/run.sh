@@ -97,6 +97,7 @@ fresh_start() {
     ethereum_lab \
     exercises \
     wallet \
+    tron \
     quiz-engine-v2 \
     hlf
   do

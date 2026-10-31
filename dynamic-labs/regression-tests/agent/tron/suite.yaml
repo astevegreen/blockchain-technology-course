@@ -1,0 +1,47 @@
+version: 1
+suite_id: day5-tron-agent-regression
+lab: tron
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/tron/run.sh
+assumptions:
+  - MCP browser tooling is available.
+  - The tron automated suite has already run against the same live environment.
+  - Reset is never needed; the snapshot is frozen and nothing the page does changes it.
+shared_inputs:
+  lab_base: /labs/tron/
+observability:
+  required:
+    - console_logs
+    - network_failures
+shared_rules:
+  - Use a fresh browser context per task.
+  - Read facts from the rendered pages and compare them with the values in the playbook.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+parallelization:
+  recommended:
+    - Run both tasks in parallel; they share no state.
+tasks:
+  - id: tron-query-flow
+    title: The query page answers the worksheet's questions
+    file: tasks/query-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/tron/query/?lab=d5
+    parallel_safe: true
+  - id: tron-links-flow
+    title: Worksheet, saved results and links
+    file: tasks/links-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/tron/
+      - /labs/tron/lab/
+      - /labs/tron/fallback/
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.

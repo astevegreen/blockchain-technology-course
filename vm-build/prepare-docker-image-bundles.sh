@@ -23,6 +23,7 @@ projects=(
   "dynamic-labs/exercises"
   "dynamic-labs/explorer"
   "dynamic-labs/wallet"
+  "dynamic-labs/tron"
   "dynamic-labs/ethereum_lab"
   "dynamic-labs/hlf"
 )

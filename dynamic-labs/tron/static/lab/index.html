@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 5 lab: a transfer, a sweep, a freeze (Tron)</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../query/?lab=d5">Query page</a> · <a href="../fallback/">Saved results</a></p>
+<h1>Day 5 lab: a transfer, a sweep, a freeze</h1>
+<p>About half of all USDT is on Tron: 92 billion of 180 billion, as of 31 Oct 2026 <a href="#s11">[11]</a>.
+This lab reads a snapshot of real
+Tron transactions, found through TronGrid's index and read from a java-tron node <a href="#s1">[1]</a>: one USDT transfer, two deposit
+addresses and the sweeps that empty them, and a freeze by Tether, USDT's issuer.</p>
+<p>Every query is written for you. On the <a href="../query/?lab=d5">query page</a>, press "Run" under a
+query, then read its output. You never edit the SQL. Write your answers down as short notes. Your
+instructor checks them with you.</p>
+<p class="note">The snapshot is frozen: every run gives the same answer. The freeze status and balances in
+queries 5 and 6 are as of block 87,600,650 (31 Oct 2026, 19:36:21 UTC), when they were read; the chain has
+moved on since. If the query page will not load, use the <a href="../fallback/">saved results</a>: they show
+every query's output, so every question has the same answer there.</p>
+
+<h2>Where to start</h2>
+<ul>
+<li>Most students start with the worked example (questions 1 to 5). It shows you the query page and the
+pattern you look for.</li>
+<li>If your pretest showed you can already read a Tron transfer, you may go straight to the problem
+(questions 6 to 10).</li>
+<li>Everyone then does the freeze (questions 11 to 14). The challenge at the end is optional.</li>
+</ul>
+
+<h2>Reading Tron</h2>
+<ul>
+<li>A Tron address starts with <code>T</code>. It is the Base58Check encoding of a key hash
+<a href="#s2">[2]</a>.</li>
+<li>USDT on Tron is a TRC-20 token: a smart contract that keeps every holder's balance, Tron's version of
+Ethereum's ERC-20 <a href="#s3">[3]</a>. Its contract is
+<code>TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</code> <a href="#s5">[5]</a>. A USDT transfer is a call to that
+contract.</li>
+<li>Calling a contract costs Energy. An account gets Energy by staking TRX, by having another account lend
+(delegate) it Energy, or by burning TRX from its own balance when it has no Energy
+<a href="#s4">[4]</a>. The query page shows the TRX burned as <code>trx_burned_for_energy</code>.</li>
+<li>An account with no TRX and no Energy cannot send its USDT. Who pays for a sweep is evidence of who
+controls the address.</li>
+<li>Times are UTC. Amounts are in USDT or TRX, to six decimals.</li>
+</ul>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments about what
+the facts mean. Give each judgment a confidence word <a href="#s10">[10]</a>:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the reasoning
+applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false positive
+could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same transaction.</p>
+
+<h3>Worked example: a deposit at an exchange (October 2023)</h3>
+<ol>
+<li>Query 1. Who sent the USDT, who received it, how much, and when? Who signed the transaction, and what
+did it cost them?</li>
+<li>Query 2, address <code>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</code>. What happens to its balance after
+deposits arrive? Where does it go?</li>
+<li>Query 3. What does a published source say about the address the sweeps went to? Who published it?</li>
+<li>Query 4. The address held no TRX of its own. Who paid for each sweep, how, and how long before it?</li>
+<li>What do you report: which address, which transaction, and which service? Give your confidence and the
+lines of evidence behind it.</li>
+</ol>
+
+<h3>The problem: a second deposit address (September to October 2026)</h3>
+<ol start="6">
+<li>Query 2, address <code>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</code>. How many sweeps, to which
+address, over what period? How many different senders paid in?</li>
+<li>Query 4. Who paid for these sweeps, and how is it different from the worked example? How much TRX did
+each sweep burn?</li>
+<li>Query 3. What does a published source say about the address the sweeps went to?</li>
+<li>Is <code>TY4zRA...</code> a deposit address at a custodial service? Give your confidence and why.</li>
+<li>Which service is it? What would you need before you could name one?</li>
+</ol>
+
+<h3>The freeze (23 April 2026)</h3>
+<ol start="11">
+<li>Query 5. What did USDT's contract record on 23 April 2026, for which addresses, and in which block?
+Which account signed the transactions?</li>
+<li>Query 6. As of the snapshot, are the two addresses still blacklisted? How much USDT does each
+hold?</li>
+<li>What do published sources say about these two addresses? Which facts come from the chain, and which
+from the sources?</li>
+<li>Write one sentence an agent could read, saying what the chain shows about the freeze and what it does
+not.</li>
+</ol>
+
+<h2>Worked example: a deposit at an exchange</h2>
+<p>This follows one USDT transfer into an address, then the address's money out to a wallet that its
+owner published. Questions 6 onward use the same queries.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="../query/?lab=d5">query page</a> and wait for "Ready". Press "Run" under query 1.
+Open "The query" to see what it asks.</li>
+<li>One row. On 16 Oct 2023 at 15:21:15 UTC, in block 55,612,753,
+<code>TKZsHBGCw8kA3PTkbq4fCt4NNvkrW9uRes</code> sent 400 USDT to
+<code>TXLhMxzterktHm9z27XamgXz2EL9EfoBnR</code>. The transaction ID is
+<code>d11ff48c97d846c4a92a94ebdec4ce58bce04028e0c4c6c74d18236337d956bd</code>.</li>
+<li>The sender signed it (<code>signed_by</code>), and the type is <code>TriggerSmart</code>: a call to the
+USDT contract. It used 31,895 Energy. The sender had none, so it burned 13.3959 TRX for it; the whole fee
+was 13.7409 TRX.</li>
+</ol>
+
+<h3>Follow the money</h3>
+<ol start="4">
+<li>Run query 2 and read the rows for <code>TXLhMx...</code>. Deposits come in from a few senders. Three
+times the balance goes to 0 in one outflow to the same address,
+<code>TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi</code>: 800 USDT on 7 Oct, 655 on 10 Oct and 1,000 on 16 Oct,
+25 minutes after our 400. An outflow that empties the address to the same place each time is a
+<b>sweep</b>.</li>
+<li>Run query 3. Binance publishes a list of its own wallets, and it lists <code>TV6Mu...</code> as its
+USDT wallet on Tron <a href="#s6">[6]</a> (list updated 9 Oct 2023, read 31 Oct 2026).</li>
+<li>Run query 4. Before each sweep, <code>TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh</code> sent the address
+14.5366 TRX, 10 to 15 minutes ahead. Each sweep then burned 13.3959 TRX for its Energy. Someone topped up
+the address with just enough TRX to move its USDT out.</li>
+</ol>
+
+<h3>What you report</h3>
+<p>Report the deposit, not the sweep. A deposit address belongs to one customer account at the exchange
+<a href="#s12">[12]</a>; the wallet it is swept into pools many customers' funds <a href="#s13">[13]</a>, so
+naming that wallet says only which exchange. The sweep is the evidence that ties the deposit address to the
+exchange. Here:</p>
+<ul>
+<li><code>TXLhMx...</code> is a deposit address at Binance, with <b>moderate</b> confidence. Two lines of
+evidence agree: its money is swept, whole, to a wallet that Binance itself publishes; and a third account
+pays for each sweep, as a service does for its own addresses. It is not high: both lines come from the
+same sweep transactions, so they are not independent kinds of evidence, and no source names
+<code>TXLhMx...</code> itself.</li>
+<li>The deposit is transaction <code>d11ff48c...</code>: 400 USDT from <code>TKZsHB...</code> on 16 Oct
+2023, 15:21:15 UTC.</li>
+<li>Binance, not the chain, knows who the account holder is.</li>
+</ul>
+
+<h2>The problem</h2>
+<p>Now do questions 6 to 10 for <code>TY4zRAJbq9ZEZvWDHQfJh2AcsiJRPKLeVt</code>. The pattern is the same;
+two things are not. Look at how the sweeps are paid for, and at what query 3 says.</p>
+
+<h2>The freeze</h2>
+<p>Tether can add an address to USDT's blacklist. In USDT's published code (its Ethereum contract), only the
+contract's owner can blacklist, and a blacklisted address cannot send its USDT <a href="#s14">[14]</a>. The
+Tron contract has the same blacklist functions and events: it records each addition as an
+<code>AddedBlackList</code> event, and anyone can ask it whether an address is blacklisted now and what it
+holds <a href="#s5">[5]</a>. Its owner is a multi-signature wallet, <code>TBPxhVAsuzoFnKyXtc1o2UySEydPHgATto</code>
+<a href="#s5">[5]</a> (read 31 Oct 2026).</p>
+<p>On 23 April 2026, Tether announced that it had frozen $344 million in USDT across two addresses, with the
+U.S. Government <a href="#s7">[7]</a>. Do questions 11 to 14 with queries 5 and 6. Query 6 is as of block
+87,600,650: write "blacklisted as of block 87,600,650, read on 31 Oct 2026", not "blacklisted".</p>
+<p class="hint">Query 5's <code>what_a_source_says</code> column names the sources the course found for each
+address: a news report naming the two wallets <a href="#s8">[8]</a>, and a list of the addresses on OFAC's
+sanctions list <a href="#s9">[9]</a> (read 31 Oct 2026). A blank means the course found no source.</p>
+
+<h2>Challenge (optional)</h2>
+<ol start="15">
+<li>Query 7. What else arrived at the two deposit addresses: which tokens, how much, from whom, and how soon
+after a deposit or a sweep? Did the owner ask for them? Do they tell you anything about who controls the
+address?</li>
+</ol>
+
+<h2>Sources</h2>
+<ol class="sources">
+<li id="s1">java-tron contributors, <i>java-tron</i> (the Tron node, LGPL-3.0), 2026 (read 23 Oct 2026).
+<code>tronprotocol_javatron_2026</code></li>
+<li id="s2">TRON Developer Hub, <i>Account</i>, 2026 (read 24 Oct 2026). <code>tron_accounts_2026</code></li>
+<li id="s3">TRON Developer Hub, <i>TRC-20</i>, 2026 (read 31 Oct 2026). <code>tron_trc20_2026</code></li>
+<li id="s4">TRON Developer Hub, <i>Resource Model</i>, 2026. <code>tron_resourcemodel_2026</code></li>
+<li id="s5">TetherToken (USDT) contract on Tron, <code>TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</code>, read
+through java-tron on 31 Oct 2026. <code>tether_usdttroncontract_2026</code></li>
+<li id="s6">Binance, <i>Our Commitment to Transparency</i>, 2022, updated 9 Oct 2023 (read 31 Oct 2026).
+<code>binance_transparency_2023</code></li>
+<li id="s7">Tether, <i>Tether Supports Freeze of More than $344 Million in USDT in Coordination with OFAC and
+U.S. Law Enforcement</i>, 23 Apr 2026. <code>tether_freeze344m_2026</code></li>
+<li id="s8">Avan-Nomayo, <i>Tether Freezes $344 Million in USDT on Tron after Wallets Flagged by US
+Authorities</i>, The Block, 23 Apr 2026 (read 31 Oct 2026). <code>theblock_tetherfreeze344m_2026</code></li>
+<li id="s9">0xB10C, <i>ofac-sanctioned-digital-currency-addresses</i> (lists drawn from OFAC's SDN list),
+read 31 Oct 2026. <code>b10c_ofacaddresses_2026</code></li>
+<li id="s10">Office of the Director of National Intelligence, <i>Intelligence Community Directive 203:
+Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are the course's own
+scale. <code>odni_icd203_2015</code></li>
+<li id="s11">DefiLlama, <i>Tether (USDT): Circulating Supply by Chain</i>, read 31 Oct 2026.
+<code>defillama_tetherbychain_2026</code></li>
+<li id="s12">Victor, <i>Address Clustering Heuristics for Ethereum</i>, 2020.
+<code>victor_clustering_2020</code></li>
+<li id="s13">Coinbase Global, <i>Annual Report for the Fiscal Year Ended December 31, 2025</i> (Form 10-K), 12 Feb 2026. <code>coinbase_10k_2026</code></li>
+<li id="s14">Tether, <i>TetherToken (USDT) verified source code, Ethereum mainnet</i>, 2017 (read 31 Oct 2026).
+<code>tether_tethertokensource_2017</code></li>
+</ol>
+</main>
+</body>
+</html>

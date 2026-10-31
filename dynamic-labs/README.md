@@ -16,6 +16,7 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 | `/labs/explorer/` | Explorer lab (redirects to its own host, `explorer.<host>`) |
 | `/labs/tokens/` | Token lab (redirects to its own host, `tokens.<host>`) |
 | `/labs/wallet/` | Wallet lab (worksheet, wallet page, saved pages; the explorer at `/labs/wallet/mempool/`) |
+| `/labs/tron/` | Tron lab (worksheet, query page, saved results) |
 | `/quiz/` | Quiz engine |
 
 ## Prerequisites
@@ -322,6 +323,7 @@ After initial deployment, use these commands. The deployment mode is saved in `.
 | `explorer` | Day-1 explorer lab (Otterscan on a frozen course chain); `explorer/README.md` |
 | `wallet` | Day-2 wallet lab (wallet page and mempool on a frozen Bitcoin chain); `wallet/README.md` |
 | `tokens` | Day-3 token lab (Otterscan on a frozen chain with a proxied dollar token and an NFT); `tokens/README.md` |
+| `tron` | Day-5 Tron lab (query page over a frozen Tron snapshot); `tron/README.md` |
 | `quiz-engine-v2` | Quiz engine |
 | `hlf` | Hyperledger Fabric lab |
 
@@ -331,7 +333,7 @@ Labs fall into two categories:
 
 **On-demand lanes** (bitcoin, consensus, p2p_trust, ethereum, hlf): Students claim a session via `/api/<lab>/claim`, and the lab control plane starts a lane-specific container from a pre-built image. `--max-student-capacity` is the base upper bound for how many claimable stations exist at once, and the per-lab capacity flags can override it for individual labs up to the 40-lane limit.
 
-**Shared singleton apps** (cryptography, exercises, explorer, wallet, tokens, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
+**Shared singleton apps** (cryptography, exercises, explorer, wallet, tokens, tron, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
 
 That is why lane capacity only applies to the claim-based labs:
 

@@ -72,6 +72,16 @@ slide index), which is never listed here.
   from them leaves the explorer running. (31 Oct 2026, D2 wallet lab build)
 - No quiz questions test the wallet lab (`dynamic-labs/wallet/`): the day 3 daily bank could check its five ideas
   (path levels, gap limit, change clues, xpub reach, reading a 2-of-3 witness). (31 Oct 2026, D2 wallet lab build)
+- `lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd:306` says students find "the account
+  that delegated Energy" for the exchange sweep; in the Tron lab the Binance sweeps are paid by a TRX top-up that is
+  burned, and only the unnamed 2026 address gets delegated Energy. Word it as "the account that paid for it".
+  (31 Oct 2026, D5 Tron lab build)
+- The Tron lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); its suite
+  needs only nginx and Python, so it could run there. The workflow is a rail. (31 Oct 2026, D5 Tron lab build)
+- No quiz questions test the Tron lab (`dynamic-labs/tron/`): who paid the Energy, a sweep's signature, what the
+  blacklist shows as of a block. (31 Oct 2026, D5 Tron lab build)
+- Most labs' `run.sh` fresh-start lists lack `tokens` (only explorer, wallet and tron have it), so a fresh start from
+  them leaves the token lab running. (31 Oct 2026, D5 Tron lab rebase onto the D3 token lab)
 - Students still receive the explorer lab's chain build scripts, the other labs' browser playbooks and the
   automated tests (`dynamic-labs/explorer/chain/`, `dynamic-labs/regression-tests/`) in `src.zip` and on the VM;
   the wallet tests hold the lab's fees and amounts. The wallet playbook, `wallet/quizes/facts.json` and
