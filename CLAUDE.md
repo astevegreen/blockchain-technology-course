@@ -54,11 +54,12 @@ The owner judges results, not code: explain every change in plain English and pr
 4. Content decisions are the owner's: what a lesson teaches, cutting material the Course Audit leaves open, quiz
    difficulty, lab scenarios, how lab answers are checked. Ask one question with a recommendation. Technical choices (how to
    build it, tooling, tests, structure, naming, placement, which tool fits) are never asked: decide, and say why.
-   Every fact you add cites a `Blockchain.bib` key, and every quiz answer traces to the lesson; when no key fits,
-   find a source on the web and quote its passage (`source` skill).
+   Every fact you add cites a `Blockchain.bib` key, and every quiz answer traces to the lesson. A fact with no key
+   that fits, or one a review disputes, goes through the `source` skill before you cut or change it: search, narrow
+   the claim to what a reputable source states, and cut only what no source supports.
 
 ## How to work
-- One task per session. Stay in scope; list other problems in your summary instead of fixing them.
+- One task per session. Stay in scope; add other problems to `docs/follow-ups.md` instead of fixing them.
 - When compacting, keep word for word: the owner's request as it will be quoted in `Requested:`, the task, the
   files changed, and each check run with its result.
 - Docker runs on the desktop: start Docker Desktop, then from the repo root run the changed lab's tests in WSL
@@ -106,7 +107,20 @@ The owner judges results, not code: explain every change in plain English and pr
   `Rail audit: retry`, push the rest and run the audit again later for the rail change. Every push to `main` runs
   the Check workflow (`check.yml`); a red run is fixed or reverted.
 
+Before the summary, settle whatever a few tool calls can: grep the repo, search the web (`source` skill), render
+the slide and look at it, read a diff rather than its summary, or ask the `reviewer`. Then sort what is left by
+who acts on it:
+- **Known follow-up work** (a quiz without questions on new slides, a stale page outside the task) goes on
+  `docs/follow-ups.md`, once: its "How to use" says how. Stale mind-map links and the glossary slide index are
+  computed by `python tools/follow_ups.py`; leave them to it.
+- **A decision only the owner can make** (rule 4) is the summary's closing question, with your recommendation.
+- **Leftovers you made** (a scratch folder, a handoff note whose work you finished): clean them up.
+
 End every task with:
 - **What changed** - in plain English, 2-5 bullets
-- **Verified** - the check result, pasted; what could not be verified and why
-- **Unsure about** - anything the owner should check, or "nothing"
+- **Verified** - the check result, pasted; what could not be verified and why. A machine failure (a quota, a
+  service that didn't answer) is named here with "retry later".
+- **Searched, then cut** - each fact cut for want of a source, with the searches tried (leave the line out when
+  none)
+- **Follow-ups** - what you added to `docs/follow-ups.md`, a few words each (leave the line out when none)
+- **Unsure about** - what you tried to settle and could not, each with what you tried; or "nothing"

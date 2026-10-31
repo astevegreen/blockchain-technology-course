@@ -38,6 +38,9 @@ holds as a `blocker` of yours.
      sprint, the one quoted on the issue under "Implementer: source"). A quote that is not there, or that doesn't
      state the claim, is a `blocker`; a page you can't fetch (refused, paywalled, gone) is a `minor` concern, named
      on the `Sources not read:` line
+   - each fact the diff cuts, hides or narrows that no spec line or Course Audit verdict asks for: the commit
+     message says why, and a cut for want of a source lists the searches tried (`.claude/skills/source/SKILL.md`,
+     step 5). A cut with no searches listed is a `blocker`; a cut or narrowing with no reason given is `minor`
    - every new or changed slide ends with a complete notes block (the four parts in `.claude/rules/lessons.md`)
    - a lab change follows the steps in `.claude/skills/lab/SKILL.md`: product first, worked example and a
      straight-to-the-problem entry, ready-made queries, and a test playbook in `dynamic-labs/regression-tests/agent/<lab>/`
