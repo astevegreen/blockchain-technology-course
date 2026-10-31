@@ -1023,8 +1023,8 @@ None
 
 - A deployed contract's code cannot change, but a **proxy** lets its owner change the code users run [@ethereumorg_upgradingsmartcontracts_2026].
 - The **proxy** address holds the state and balances; a separate **implementation** (logic) contract holds the code, run through `delegatecall` [@palladino_erc1967proxystorage_2019].
-- Under **ERC-1967** the implementation's address sits in a fixed storage slot, and each change emits `Upgraded(implementation)` [@palladino_erc1967proxystorage_2019].
-- For an analyst: the address you were given may hold no logic. Read the implementation, and ask who can upgrade it.
+- Under **ERC-1967** the implementation's address sits in a fixed storage slot, and each change should emit `Upgraded(implementation)` [@palladino_erc1967proxystorage_2019].
+- For an analyst: the address you were given may hold only forwarding code. Read the implementation, and ask who can upgrade it.
 
 :::: columns
 ::: {.column width="48%"}
@@ -1070,13 +1070,13 @@ digraph proxy {
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows why the contract at the address an analyst is given is often not the code that runs. Many token and protocol contracts sit behind a proxy: the proxy holds the balances, and a second contract holds the logic. It matters because the day 3 lab asks students to follow a proxy to its implementation, and because an upgrade can change every rule the students learned to read this morning. Emphasize the two addresses and the upgrade key, not how developers build proxies.
+This slide shows why the contract at the address an analyst is given is often not the code that runs. A contract may sit behind a proxy: the proxy holds the balances, and a second contract holds the logic. It matters because the day 3 lab asks students to follow a proxy to its implementation, and because an upgrade can change every rule the students learned to read this morning. Emphasize the two addresses and the upgrade key, not how developers build proxies.
 
 **Key Points**
 - Upgradeability is not mutability: the code at a deployed address still cannot change, but the code that runs when users call it can, through a proxy.
-- The proxy stores the implementation's address and forwards every call to it with `delegatecall`, an EVM operation that runs another contract's code against the caller's own storage. That is why the balances live at the proxy.
-- ERC-1967 fixes the storage slot that holds the implementation's address, so block explorers can read it and show it, and it says each change should emit `Upgraded`, which leaves a dated record of every swap.
-- The standard also defines an admin slot holding the address allowed to upgrade. Whoever holds that key can change minting, freezing or any other rule, so it belongs in the characterization.
+- The proxy stores the implementation's address and forwards every call to it with `delegatecall`, an EVM operation that runs another contract's code against the caller's own storage, keeping the original `msg.sender` and `msg.value`. That is why the balances live at the proxy, and why `msg.sender` inside the implementation is the user who called the proxy, not the proxy itself.
+- ERC-1967 fixes the storage slot that holds the implementation's address, so block explorers can read it and show it, and it says each change should emit `Upgraded`. That event is a strong lead to past swaps, but "should" is not "must": a proxy that skips the event can still swap its logic, so read the slot as well as the logs.
+- The standard also defines an optional admin slot for the address allowed to upgrade, so an empty slot does not by itself mean nobody can upgrade. Whoever holds the upgrade right can change minting, freezing or any other rule, so it belongs in the characterization.
 - Teams often put that key behind a multi-sig and a timelock, a delay before an approved change executes; the delay gives users time to exit, but it does not stop the change.
 
 **Walkthrough**
@@ -1088,6 +1088,7 @@ This slide shows why the contract at the address an analyst is given is often no
 **Sources**
 - @ethereumorg_upgradingsmartcontracts_2026
 - @palladino_erc1967proxystorage_2019
+- @solidity_introsmartcontracts_2026
 
 :::
 
@@ -1278,7 +1279,7 @@ This final slide gives students the reading habit they should leave with: find t
 - Smart contracts combine code, persistent state, and shared execution under EVM rules.
 - Reading order and access checks are how an analyst turns source code into plain statements of capability.
 - Logs are convenient but incomplete; transaction input and contract state complete the picture.
-- A proxy's address is not where its code lives; the implementation, and the key that can swap it, are part of what the contract lets each caller do.
+- A proxy's address holds forwarding code, not the contract's rules; the implementation, and the key that can swap it, are part of what the contract lets each caller do.
 - Vyper and Rust were shown for recognition only; the exploit contract students read closely comes on day 8.
 
 **Walkthrough**
