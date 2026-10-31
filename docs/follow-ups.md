@@ -12,11 +12,12 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- 03-EF fee slide says the priority fee (tip) goes to the block's proposer; a second look said that under
-  MEV-Boost it goes to the builder. Settle it with the `source` skill: `lessons/ethereum/03-EF-*.qmd:319`, and the
-  worked example at line 340. (31 Oct 2026, second look on `0504bcc`)
+- 01-EF gas slides (lines 397, 411, 976) still say the tip goes to "the block proposer"; 03-EF now says the block's
+  fee recipient (proposer, or the builder who pays the proposer). Align the wording. (31 Oct 2026, 03-EF tip fix)
 
 ## Quizzes
+- 03-EF quiz bank q at line 97 and the synthesis (`lesson_synthesis/ethereum_03-EF-ethereum_network-synthesis.md`
+  lines 39, 95, 117) say the tip "compensates the proposer"; 03-EF now says fee recipient. (31 Oct 2026, 03-EF tip fix)
 - 03-EF bank has no questions on the DEX, sandwich-attack or look-alike slides. (31 Oct 2026, rebuild `0504bcc`)
 - 04-EF bank has no questions on the Coin reading, the 4-byte function code, or Vyper and Rust; q2 leans on a
   slide that is now hidden. (31 Oct 2026, D3 ② rebuild)

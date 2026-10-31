@@ -316,7 +316,7 @@ This slide establishes the mempool as the public waiting room where pending trad
 ## Fees set the queue: base fee burned, tip paid {.smaller}
 
 - EIP-1559 sets a **base fee** for every block. It rises when blocks run above the target, half the block gas limit, and falls when they run below it, by at most one eighth per block [@buterin_eip1559feemarket_2019].
-- The base fee is **burned**. The **priority fee** (tip) goes to the block's proposer.
+- The base fee is **burned**. The **priority fee** (tip) goes to the block's fee recipient. That is the proposer's address, or, in a block built by an outside builder (covered later), the builder's, who pays the proposer in a last transaction (as of Oct 2026) [@buterin_eip1559feemarket_2019; @flashbots_builderpayments_2026].
 - The sender caps both: `maxFeePerGas` and `maxPriorityFeePerGas`.
 - Effective gas price = `min(maxFeePerGas, baseFee + maxPriorityFeePerGas)`; the unused headroom under the cap is not charged.
 - Builders favor the transactions that pay them most, keeping each account's transactions in nonce order.
@@ -331,19 +331,20 @@ This slide establishes EIP-1559 as the fee rule that orders the public queue. It
 
 **Key Points**
 - The base fee tracks demand against a target of half the block gas limit and moves at most one eighth per block.
-- The base fee is burned; the priority fee pays the proposer.
+- The base fee is burned; the priority fee goes to the block's fee recipient. Flashbots' MEV-Boost payment note says a builder may set the proposer's address as fee recipient, or set its own and add a last transaction paying the proposer's fee recipient. The note is a work in progress, so name it as Flashbots' proposal.
 - Effective gas price is the lower of the sender's cap and the base fee plus tip; the rest of the cap is not charged.
 - Bots competing for one opportunity bid up fees against each other: a priority gas auction.
 - Define effective gas price as the per-gas price actually paid after the cap and the current base fee are applied.
 
 **Walkthrough**
-1. Work one example: cap 50 gwei, tip 2 gwei, base fee 30 gwei gives an effective price of 32 gwei; 30 is burned, 2 goes to the proposer, 18 is never charged.
+1. Work one example: cap 50 gwei, tip 2 gwei, base fee 30 gwei gives an effective price of 32 gwei; 30 is burned, 2 goes to the block's fee recipient (the proposer, or an outside builder that pays the proposer in a last transaction), 18 is never charged.
 2. Show why a bot would raise its tip: position in the block is worth more than the fee.
 3. Close with the analyst sign: a high tip beside a large trade.
 
 **Sources**
 - @buterin_eip1559feemarket_2019
 - @daian_flashboys20_2019
+- @flashbots_builderpayments_2026
 
 :::
 
