@@ -1,5 +1,5 @@
 ---
-title: "Ethereum — A Distributed Computer"
+title: "Ethereum — Accounts, the EVM and Transactions"
 subtitle: 'Section VII: Ethereum Framework'
 author: Army Cyber Institute
 lesson: 01-EF
@@ -14,422 +14,97 @@ format:
 aci-mermaid: true
 ---
 
-## Beyond Cryptocurrency: Buterin's Vision {.smaller}
+## Ethereum keeps accounts, not coins {.smaller}
 
-::: {.columns}
-::: {.column width="62%"}
-- By 2013, Bitcoin had shown that a decentralized network could maintain digital money without a central bank, but its scripting model was intentionally narrow and not designed for general applications.
-- Vitalik Buterin envisioned something broader: *a blockchain that could run arbitrary application logic*, so developers would not need to build a new chain for every new use case.
+**Bottom line:** Bitcoin moves coins from one output to the next (day 2). Ethereum keeps one shared table of accounts and their balances, and a program that every node runs, the Ethereum Virtual Machine (EVM), changes that table [@wood_ethereumsecuredecentralised_2016; @ethereum.org_accountsdeveloperdocs_2025]. To read Ethereum activity, the analyst reads four things:
 
-:::
+| Question | Where the answer is | Slide |
+| --- | --- | --- |
+| Who or what holds the funds? | The account: a key or code controls it | Accounts |
+| What did the sender ask for? | The transaction: a signed, numbered message | Transaction |
+| What happened when it ran? | The receipt: success or failure, fee, logs | Receipt |
+| Where else did the value go? | Internal transfers, found by tracing the call | Internal transfers |
 
-::: {.column width="38%"}
-![](../images/vitalik-buterin-profile.jpg){fig-alt="Portrait of Vitalik Buterin" width="85%"}
-
-::: {style="font-size: 0.52em; margin-top: 0.35em;"}
-Photo: Romanpoet, *Vitalik Buterin Profile Photo*, Wikimedia Commons (CC BY-SA 4.0).
-:::
-:::
-:::
-- In the whitepaper, Ethereum aimed to provide a general-purpose platform for smart contracts and decentralized applications that could execute the same rules on every node.
-- Smart contracts are on-chain programs that can hold value, update state, and enforce rules automatically.
-- Deterministic execution across many nodes provides credible neutrality for all of those applications.
+This afternoon you read a token contract and mint an NFT on the course's own chain, then read both in Otterscan [@otterscan_otterscan_2025].
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This opening slide establishes Ethereum as an attempt to turn the blockchain from a specialized money system into a general-purpose execution platform. It matters here because students need to understand why Ethereum exists before they can make sense of the EVM, smart contracts, and later scaling choices. Emphasize that the key shift is from storing balances to running shared application logic under common rules.
+This slide opens the Ethereum day by setting the account model against the Bitcoin model students learned on day 2. It matters here because every later slide is one of the four things an analyst reads on Ethereum: the account, the transaction, the receipt and the internal transfers. Emphasize that Ethereum's record is a table of balances that a shared program updates, not a chain of coins.
 
 **Key Points**
-- Ethereum expands the blockchain model from digital cash to general-purpose computation.
-- Smart contracts are on-chain programs that can hold value and enforce rules.
-- Deterministic execution across many nodes is what gives those applications credible neutrality.
+- Bitcoin moves outputs; Ethereum keeps accounts with balances.
+- The EVM is the program every node runs to update those accounts.
+- The analyst reads four things: account, transaction, receipt, internal transfers.
+- This afternoon's lab reads a token contract and an NFT mint in Otterscan.
 
 **Walkthrough**
-None
-
-**Sources**
-- @nakamoto_bitcoinpeertopeerelectronic_2008
-- @buterin_ethereumnextgenerationsmart_2014
-- @romanpoet_vitalikbuterinprofile_2016
-
-:::
-
-## Ethereum's History
-
-::: {style="font-size: 0.76em;"}
-::: {style="background:#eaf4fb; color:#1f2937; border:1px solid #c7dceb; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
-**2013:** Buterin publishes the [*Ethereum Whitepaper*](https://ethereum.org/en/whitepaper/).
-:::
-
-::: {style="background:#deeff9; color:#1f2937; border:1px solid #b8d5e8; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
-**2014:** [Crowdsale raises ~31,000 BTC](https://blog.ethereum.org/2014/08/08/ether-sale-a-statistical-overview); Foundation established.
-:::
-
-::: {style="background:#d2e9f7; color:#1f2937; border:1px solid #a9cee3; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
-**2015:** [Mainnet launches](https://blog.ethereum.org/2015/07/22/frontier-is-coming-what-to-expect-and-how-to-prepare) with smart contracts and mining.
-:::
-
-::: {style="background:#c6e2f4; color:#1f2937; border:1px solid #9bc6dd; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
-**2016:** [DAO hack and hard fork](https://blog.ethereum.org/2016/07/20/hard-fork-completed) split ETH and ETC.
-:::
-
-::: {style="background:#b8daf1; color:#1f2937; border:1px solid #8cbcd6; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
-**2017–2021:** [Upgrades improve gas, tooling, and the ecosystem](https://ethereum.org/en/history/).
-:::
-
-::: {style="background:#a9d1ed; color:#1f2937; border:1px solid #7db2cf; border-radius:10px; padding:0.45em 0.7em;"}
-**2022:** [The Merge](https://ethereum.org/en/upgrades/merge/). Ethereum shifts from PoW to PoS.
-:::
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes Ethereum's historical arc from whitepaper vision to live network to major governance and consensus milestones. It matters here because the lesson needs to show that Ethereum's current design is the product of iterative upgrades and contested decisions rather than a fixed blueprint from the start. Emphasize that programmability brought both rapid ecosystem growth and a larger attack and governance surface.
-
-**Key Points**
-- The 2013 whitepaper introduced Ethereum as a programmable blockchain platform.
-- Mainnet launch, the DAO fork, and The Merge are pivotal moments in Ethereum's development.
-- Ethereum's history is a story of coordinated upgrades around a more ambitious design than Bitcoin's.
-
-**Walkthrough**
-None
-
-**Sources**
-- @buterin_ethereumnextgenerationsmart_2014
-- @buterin_ethersalestatistical_2014
-- @l34_ethereum_launches_2015
-- @l34_ethereum_hard_fork_completed_2016
-- @ethereumorg_history_2026
-- @l34_ethereumorg_merge_2022
-
-:::
-
-## Governance & Ethereum Improvement Proposals (EIPs) {.smaller}
-
-Bitcoin governance is relatively conservative and informal: changes emerge through rough social consensus among developers, node operators, miners, and users, with a strong bias against frequent protocol change. Ethereum is also governed socially, but it uses a more explicit proposal culture and public upgrade process to coordinate faster protocol and standards evolution.
-
-::: {style="font-size: 1.08em;"}
-- Ethereum changes through **Ethereum Improvement Proposals (EIPs)**, which are the public specifications for protocol and standards updates.
-- **Core EIPs** change protocol rules; **ERCs** define shared application standards such as token and wallet interfaces.
-- `ERC` stands for **Ethereum Request for Comment**.
-- Adoption still depends on **social consensus**: there is no binding on-chain vote that forces Ethereum L1 upgrades.
-:::
-
-::: {.callout-note appearance="simple"}
-**Examples:** `EIP-1559` changed the fee market; `ERC-20` standardized fungible tokens.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the EIP system as Ethereum's public change-management framework for both protocol changes and ecosystem standards. It matters here because the rest of Ethereum's technical evolution depends on how proposals are specified, debated, and adopted. Emphasize that even with a more explicit proposal culture, Ethereum still relies on social consensus and software adoption rather than binding on-chain votes.
-
-**Key Points**
-- EIPs are public specifications for Ethereum protocol and standards changes.
-- Core EIPs affect protocol rules, while ERCs define shared ecosystem interfaces.
-- Adoption depends on implementation and agreement across the ecosystem, not on automatic governance machinery.
-
-**Walkthrough**
-None
-
-**Sources**
-- @becze_eip1eippurpose_2015
-- @buterin_ethereumnextgenerationsmart_2014
-
-:::
-
-## EIP Workflow {.smaller}
-
-::: {style="font-size: 1.18em;"}
-- A proposal typically moves from **idea** to **draft**, then through **review** and, if accepted, toward a stable final form.
-- Editors check format and clarity, while developers and researchers debate feasibility, risks, and tradeoffs in public.
-- For protocol changes, client teams implement and test the change on devnets and testnets before mainnet activation.
-- The important point is that Ethereum upgrades are **specified, implemented, tested, and adopted** in stages rather than changed by decree.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes Ethereum upgrades as a staged process of specification, implementation, testing, and adoption. It matters here because students should see governance as an operational workflow rather than as a simple announcement from a central authority. Emphasize that drafts only matter once client teams implement them and the ecosystem coordinates around tested code.
-
-**Key Points**
-- EIPs move through public stages rather than appearing as instant protocol changes.
-- Review and testing are as important as proposing the original idea.
-- Mainnet adoption depends on client implementation and ecosystem coordination.
-
-**Walkthrough**
-None
-
-**Sources**
-- @becze_eip1eippurpose_2015
-
-:::
-
-## Stakeholders & Decision Making {.smaller}
-
-::: {.columns}
-::: {.column width="52%"}
-
-- **Client teams** implement software and therefore shape what is realistically deployable.
-- **Researchers and contributors** propose designs and analyze security, incentives, and tradeoffs.
-- The **Ethereum Foundation** helps coordinate, but it does not unilaterally command upgrades.
-- **Validators, node operators, exchanges, wallets, and application teams** all matter because they decide what software to run and support.
-- In the end, Ethereum governance is **opt-in**: if enough people disagree, they can refuse an upgrade or follow a different chain.
-
-:::
-::: {.column width="48%"}
-
-![](../images/eth_governance.png){fig-alt="Ethereum governance ecosystem graphic." width="90%"}
-
-:::
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes governance influence in Ethereum as distributed across researchers, client teams, operators, and economically important service providers. It matters here because students should avoid the false choice between imagining Ethereum as centrally controlled or magically leaderless. Emphasize that legitimacy comes from opt-in coordination around software, not from any single institution dictating outcomes.
-
-**Key Points**
-- Different stakeholders shape design, implementation, deployment readiness, and adoption.
-- The Ethereum Foundation is influential but not protocol-sovereign.
-- Social consensus remains real because participants can refuse to run unwanted software.
-
-**Walkthrough**
-None
-
-**Sources**
-- @becze_eip1eippurpose_2015
-- @buterin_ethereumnextgenerationsmart_2014
-
-:::
-
-## The Ethereum Virtual Machine (EVM) 
-
-::: {style="font-size: 0.82em;"}
-A **stack-based virtual machine** executed by every node for each transaction or contract call. Contracts are compiled from languages (such as Solidity) into bytecode that the EVM runs.
-
-- **Deterministic**: the same input and prior state must produce the same result.
-- **Isolation**: contracts run in a sandboxed environment with tightly limited external access.
-- **Gas metering**: opcodes charge gas to bound computation and prevent infinite loops.
-- **State updates** persist through Ethereum's account and contract-storage model.
-- **Native asset**: Ether (`ETH`); `gwei` is a common subunit, where `1 ETH = 1 billion gwei`.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the EVM as the execution environment that every Ethereum node uses to reproduce the same state transitions from the same inputs. It matters here because the EVM is the mechanism that turns Ethereum's vision of a shared computer into something nodes can actually verify. Emphasize determinism, gas metering, and the separation between temporary execution context and persistent state.
-
-**Key Points**
-- The EVM is a stack-based virtual machine that executes contract bytecode on every node.
-- Determinism and sandboxing are necessary for replicated execution across the network.
-- Gas meters execution so arbitrary programs can still run under bounded resource rules.
-
-**Walkthrough**
-None
+1. Read the bottom line and contrast it with day 2's outputs.
+2. Walk the table row by row and name the slide that answers each question.
+3. Point to this afternoon's lab.
 
 **Sources**
 - @wood_ethereumsecuredecentralised_2016
-- @ethereum.org_smartcontractsdeveloper_2025
-- @ethereum.org_gasfeesdeveloper_2025
+- @ethereum.org_accountsdeveloperdocs_2025
+- @otterscan_otterscan_2025
 
 :::
 
-## The Halting Problem
+## A key or code controls each account {.smaller}
 
-::: {.columns}
-::: {.column width="58%"}
+::::: {style="font-size: 0.88em;"}
 
-::: {style="font-size: 0.72em;"}
+:::: {.columns}
+::: {.column width="50%"}
+**Externally owned account (EOA)**
 
-Can an algorithm decide whether *any arbitrary program* will eventually halt or run forever?
-
-::: {.fragment}
-**No.** In the general case, the problem is undecidable.
+- Controlled by whoever holds its private key [@ethereum.org_accountsdeveloperdocs_2025].
+- Free to create, and the only kind that can start a transaction [@ethereum.org_accountsdeveloperdocs_2025].
+- Has no code of its own [@ethereum.org_accountsdeveloperdocs_2025]. Since EIP-7702, an EOA can delegate to a contract's code and act like one (day 8) [@ethereumorg_transactions_2025] (as of 31 Oct 2026).
 :::
+::: {.column width="50%"}
+**Contract account**
 
-::: {.fragment}
-“there can be no general process” that decides this for every possible program. 
-
-*--Alan Turing (1936)* 
+- A program deployed to the network, controlled by its code [@ethereum.org_accountsdeveloperdocs_2025].
+- Costs gas to create, because it uses storage, and acts only when a transaction reaches it [@ethereum.org_accountsdeveloperdocs_2025].
+- Its address comes from its creator: the creator's address and nonce (`CREATE`), or the creator, a salt and the code (`CREATE2`) [@ethereum.org_accountsdeveloperdocs_2025].
 :::
+::::
 
-::: {.fragment}
-Ethereum wants to run expressive programs, but every node must be able to stop and agree on the result. How can we solve this?
-:::
+Every account has four fields: **nonce**, **balance** (in wei; 10^18^ wei make 1 ETH), **code hash** and **storage root** [@ethereum.org_accountsdeveloperdocs_2025].
 
-::: {.fragment}
-**Solution:**
-*Gas metering charges for computation* and halt execution when prepaid gas runs out.
-:::
-
-:::
-
-:::
-::: {.column width="42%"}
-
-![](../images/halting_problem.png){fig-alt="Illustration for the halting problem used as a visual anchor across the slide builds." width="100%"}
-
-:::
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the Halting Problem as the theoretical reason Ethereum cannot simply ask whether arbitrary contract code will finish safely before executing it. It matters here because it motivates gas as a practical resource-bounding mechanism rather than an arbitrary fee design. Emphasize that Ethereum doesn't solve undecidability; it charges for computation and halts when prepaid gas is exhausted.
-
-**Key Points**
-- Arbitrary programs cannot be analyzed in general to decide whether they will halt.
-- Ethereum still needs a way to run expressive programs without allowing infinite computation.
-- Gas provides that practical bound by limiting how much execution can continue.
-
-**Walkthrough**
-None
-
-**Sources**
-- @turing_computablenumbersapplication_1937
-- @wood_ethereumsecuredecentralised_2016
-- @ethereum.org_gasfeesdeveloper_2025
-
-:::
-
-## Gas: Metering Computation and Storage  {.smaller}
-
-- **Every EVM operation has a gas cost**, and operations that write **permanent state** are priced especially high.
-- **Users choose** how much gas a transaction may consume and how much they are willing to pay for each unit of gas.
-  - **Total fee = gas used × effective gas price**, which combines the **base fee** and any **tip**.
-- **If execution runs out of gas**, Ethereum reverts the state changes but still charges for the computation nodes already performed.
-- **Each block has a gas limit**, which caps how much total computation and storage-changing activity can fit into that block.
-- Under **EIP-1559**, the **base fee is burned** and the **tip goes to the block proposer**.
-  - If part of every transaction fee is **permanently destroyed**, what does that imply about **ETH supply over time**?
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes gas as Ethereum's metering system for computation and state change. It matters here because students need to connect abstract halting concerns to concrete fee mechanics and execution limits. Emphasize that gas both bounds resource use and creates incentives around block space, while EIP-1559 changes how fees are split between burn and proposer tip.
-
-**Key Points**
-- Every EVM operation has a gas cost, with persistent state changes priced especially high.
-- Users set gas limits and effective gas prices, and out-of-gas execution reverts state but still burns spent computation.
-- Gas fees are part security mechanism, part congestion-pricing mechanism.
-
-**Walkthrough**
-None
-
-**Sources**
-- @wood_ethereumsecuredecentralised_2016
-- @ethereum.org_gasfeesdeveloper_2025
-- @buterin_eip1559feemarket_2019
-
-:::
-
-## Determinism & Execution Constraints {.smaller}
-
-- **Every node must reach the same result** when executing the same transactions.  
-  - Consensus depends on *identical state transitions* across all nodes.  
-- Contracts execute in a **sandboxed EVM**:
-  - No access to the file system, network, clock, or OS randomness.  
-  - Execution must be *purely deterministic* given on-chain state and input.  
-- **Implication:**  
-  - Smart contracts cannot directly query off-chain information or trigger external actions.  
-  - Randomness, time, and I/O require careful design (e.g., block hash entropy, commit–reveal schemes).
-
-::: {.callout-important}
-If even one node computes a different result, consensus breaks, so the EVM **forbids** nondeterministic behavior.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes determinism as a hard requirement for a replicated state machine: every honest node must compute the same result from the same transaction and prior state. It matters here because Ethereum's expressive contract model would break consensus if contracts could depend on local randomness, network calls, or non-reproducible inputs. Emphasize that execution constraints are what make general-purpose computation compatible with consensus.
-
-**Key Points**
-- Ethereum contracts must avoid hidden local dependencies so all nodes reach the same result.
-- Inputs come from transaction data and defined block fields, not from arbitrary external I/O.
-- Deterministic execution is a consensus requirement, not just a programming preference.
-
-**Walkthrough**
-None
-
-**Sources**
-- @wood_ethereumsecuredecentralised_2016
-- @ethereum.org_smartcontractsdeveloper_2025
-
-:::
-
-## Oracles: Bridging Blockchains and Reality {.smaller}
-
-::: {.columns}
-::: {.column width="44%"}
-
-![](../images/oracle_toon.png){fig-alt="Cartoon illustration for blockchain oracles." width="100%"}
-
-:::
-::: {.column width="56%"}
-
-- **Problem:** Smart contracts cannot directly observe off-chain facts such as prices, weather, or election outcomes.  
-- **Oracle:** an external system that brings outside data on-chain so contracts can use it in their logic.  
-- **Common models:** a single trusted data source, or a decentralized oracle network that aggregates multiple sources.  
-- **Trade-off:** oracles solve the information gap, but they add new trust assumptions around data quality, honesty, and liveness.
-
-:::
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes oracles as the mechanism Ethereum uses when contracts need facts about the outside world. It matters here because smart contracts cannot directly observe weather, prices, or real-world events while remaining deterministic. Emphasize that oracles bridge external reality into Ethereum but also introduce new trust and manipulation risks.
-
-**Key Points**
-- Smart contracts need oracles because they cannot directly query the outside world.
-- Oracles convert external facts into on-chain data that contracts can act on deterministically.
-- Oracle design reintroduces trust and adversarial considerations at the boundary between chain and world.
-
-**Walkthrough**
-None
-
-**Sources**
-- @ellis_chainlinkdecentralizedoracle_2017
-- @eskandari_sokoraclesground_2021
-
-:::
-
-## Accounts & Global State (EOA vs Contract)
-
-::: {style="font-size: 0.86em;"}
-- **Externally Owned Accounts (EOAs):** controlled by private keys; initiate transactions and pay gas. (wallet)  
-- **Contract accounts:** hold code and storage, and run only when another transaction or contract call activates them. (program)
-- Ethereum’s global state keeps track of each account’s balance, nonce, code, and storage.  
-- Contract addresses are deterministic: under `CREATE`, they come from the creator and nonce; under `CREATE2`, they come from the creator, a salt, and the bytecode hash.  
-- That predictability lets developers plan deployments, coordinate contracts, and support upgrade patterns.
-:::
+**For the analyst:** an address with no code moves funds only when its key signs, whether a person or an automated system holds that key; an address with code moves them by its program. An EIP-7702 account does both (day 8). An EOA's nonce counts the transactions it has sent [@ethereum.org_accountsdeveloperdocs_2025], so a high nonce marks a busy account.
 
 ::: {.callout-note appearance="simple"}
 [Interactive Ether EVM lab](/assets/labs/ether_evm/index.html).
 :::
 
+:::::
+
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes Ethereum's account-based state model and distinguishes externally owned accounts from contract accounts. It matters here because later slides on transactions, contracts, and state growth depend on students knowing what kinds of entities exist in Ethereum state. Emphasize that both account types live inside one shared global state, but only one is controlled by private keys directly.
+This slide sorts Ethereum accounts by what controls them: a private key or code. It matters here because the first question about any address in an investigation is whether a person's key or a program moved the funds. Emphasize that only an EOA can start a transaction, and that EIP-7702 now lets an EOA borrow a contract's code, which day 8 takes up.
 
 **Key Points**
-- EOAs are controlled by private keys, while contract accounts are controlled by code.
-- Both account types exist inside Ethereum's shared global state.
-- This model differs sharply from Bitcoin's UTXO accounting.
+- An EOA is controlled by a private key, costs nothing to create and is the only kind that can start a transaction.
+- A contract account is controlled by its code, costs gas to create and acts only when a transaction reaches it.
+- A contract's address is computed from its creator (CREATE: creator and nonce; CREATE2: creator, salt and code).
+- Every account has a nonce, a balance in wei, a code hash and a storage root.
+- EIP-7702 (Type 4 transactions) lets an EOA delegate to a contract's code; day 8 covers how drainers use it.
 
 **Walkthrough**
-None
+1. Read the two columns: key-controlled on the left, code-controlled on the right.
+2. Read the four fields and the wei conversion.
+3. Close on the analyst line: code or no code, and what the nonce says.
 
 **Sources**
 - @ethereum.org_accountsdeveloperdocs_2025
-- @wood_ethereumsecuredecentralised_2016
+- @ethereumorg_transactions_2025
 
 :::
 
-## Transaction Models: UTXO vs Accounts
+## Bitcoin spends outputs; Ethereum edits balances
 
 ::: {.columns}
 ::: {.column width="50%"}
@@ -509,18 +184,23 @@ digraph EthereumAccounts {
 :::
 :::
 
+::: {style="font-size: 0.6em;"}
+**For the analyst:** Bitcoin returns change as a new output [@nakamoto_bitcoinpeertopeerelectronic_2008]; Ethereum has no change output, and the sender's balance just goes down [@ethereum.org_accountsdeveloperdocs_2025; @garratt_tokenaccountbaseddigital_2020]. Day 6's change heuristic has nothing to work on here.
+:::
+
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes the conceptual difference between Bitcoin's UTXO accounting and Ethereum's account-based state machine. It matters here because students already know Bitcoin and need a direct contrast to understand why Ethereum feels more like a computer than like a set of spendable receipts. Emphasize that Ethereum updates mutable account state directly, which supports richer applications but changes validation and execution patterns.
+This slide sets Bitcoin's UTXO model beside Ethereum's account model, using the same 10-coin payment on each side. It matters here because students know Bitcoin from day 2, and the contrast tells them which Bitcoin reading habits carry over and which do not. Emphasize that an Ethereum payment leaves no change output: the sender's balance just goes down.
 
 **Key Points**
 - Bitcoin tracks value as discrete unspent outputs, while Ethereum tracks balances and storage inside accounts.
-- The account model is more natural for persistent program state and repeated contract interaction.
-- This difference helps explain why Ethereum supports richer applications but also more complex execution.
+- With no change output, Bitcoin's change heuristic (day 6) does not apply to Ethereum payments.
 
 **Walkthrough**
-None
+1. Left: two of Alice's outputs are spent whole, and 3 BTC comes back as change.
+2. Right: Alice's balance drops from 13 to 3 ETH and Bob's rises by 10; nothing comes back.
+3. Read the analyst line.
 
 **Sources**
 - @garratt_tokenaccountbaseddigital_2020
@@ -528,6 +208,913 @@ None
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 
 :::
+
+## Every node runs the same program: the EVM
+
+::: {style="font-size: 0.82em;"}
+A **stack-based virtual machine** that every node runs for each transaction or contract call. Contracts are compiled from languages such as Solidity into bytecode that the EVM runs [@wood_ethereumsecuredecentralised_2016; @ethereum.org_smartcontractsdeveloper_2025].
+
+- **Deterministic**: the same input and prior state must produce the same result.
+- **Isolated**: contracts run in a sandbox with tightly limited outside access.
+- **Metered**: each operation costs gas, which bounds computation and stops endless loops [@ethereum.org_gasfeesdeveloper_2025].
+- **State updates** persist in the accounts and in each contract's storage.
+
+**For the analyst:** every node reruns every transaction and must agree on the result [@wood_ethereumsecuredecentralised_2016], so balances, receipts and logs are the network's record, not one explorer's.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the EVM as the program every Ethereum node runs to reproduce the same changes from the same inputs. It matters here because the EVM is why an analyst can trust a balance or a log read from any full node: every node computed the same result. Emphasize determinism and gas metering; the next slide shows what determinism costs a contract.
+
+**Key Points**
+- The EVM is a stack-based virtual machine that runs contract bytecode on every node.
+- Determinism and sandboxing let thousands of nodes reach the same result.
+- Gas meters each operation, so even an endless loop stops.
+- Because every node agrees on the result, the state an explorer shows is the network's record.
+
+**Walkthrough**
+None
+
+**Sources**
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_smartcontractsdeveloper_2025
+- @ethereum.org_gasfeesdeveloper_2025
+
+:::
+
+## A contract sees only what is on chain {.smaller}
+
+- **Every node must reach the same result** from the same transactions; consensus depends on identical state changes [@wood_ethereumsecuredecentralised_2016].
+- So a contract runs in a **sandbox**: no file system, network, clock or operating-system randomness [@wood_ethereumsecuredecentralised_2016; @ethereum.org_smartcontractsdeveloper_2025].
+  - Its inputs are the transaction's data and defined block fields.
+  - It cannot query a website or trigger anything off chain.
+- Outside facts, such as an asset's price, arrive through an **oracle**: a system that puts outside data on chain, and adds trust in that data's source [@ellis_chainlinkdecentralizedoracle_2017; @eskandari_sokoraclesground_2021].
+
+**For the analyst:** a contract that acts on a price trusts its oracle. Day 8 shows attackers moving that price to drain a protocol.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the price of determinism: a contract can see only what is on chain. It matters here because it is why oracles exist, and an oracle is a point of trust an attacker can target. Emphasize that the oracle's trust assumption is the hook for day 8's oracle-manipulation lesson.
+
+**Key Points**
+- Every node must compute the same result, so contracts cannot use local clocks, files, networks or randomness.
+- A contract's inputs are transaction data and defined block fields.
+- Oracles bring outside facts on chain and add trust in their data sources.
+- Day 8 returns to oracles as an attack surface.
+
+**Walkthrough**
+None
+
+**Sources**
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_smartcontractsdeveloper_2025
+- @ellis_chainlinkdecentralizedoracle_2017
+- @eskandari_sokoraclesground_2021
+
+:::
+
+## A contract is code plus storage at an address
+
+::: {.columns}
+::: {.column width="47%"}
+
+::: {style="font-size: 0.74em;"}
+- Ethereum can deploy programs at their own contract addresses with **persistent state** [@ethereum.org_smartcontractsdeveloper_2025].  
+
+- These are **smart contracts**: code plus storage that follow on-chain rules [@wood_ethereumsecuredecentralised_2016].
+
+  - Once deployed, the code determines how calls are handled.
+
+- Contracts run only when called; there are **no background tasks** [@ethereum.org_accountsdeveloperdocs_2025].  
+
+- Contracts can call other contracts, enabling **composability** and atomic workflows [@ethereum.org_smartcontractsdeveloper_2025].
+:::
+
+:::
+::: {.column width="53%"}
+
+<div style="font-size:0.4em; line-height:1.18; color:#374151; font-family:SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
+<span style="color:#6b7280;">// SPDX-License-Identifier: MIT // License identifier</span><br>
+<span style="color:#7c3aed;">pragma</span> <span style="color:#1d4ed8;">solidity</span> <span style="color:#b45309;">^0.8.20</span>; <span style="color:#6b7280;">// Solidity version</span><br>
+<br>
+<span style="color:#7c3aed;">contract</span> <span style="color:#0f766e;">SimpleCounter</span> { <span style="color:#6b7280;">// Define contract</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1d4ed8;">uint256</span> <span style="color:#7c3aed;">private</span> count; <span style="color:#6b7280;">// Stored counter value</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1d4ed8;">address</span> <span style="color:#7c3aed;">public</span> owner; <span style="color:#6b7280;">// Address of deployer</span><br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">constructor</span>(<span style="color:#1d4ed8;">uint256</span> startingValue) { <span style="color:#6b7280;">// Runs once on deployment</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;owner = <span style="color:#be185d;">msg.sender</span>; <span style="color:#6b7280;">// Set deployer as owner</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count = startingValue; <span style="color:#6b7280;">// Initialize counter</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">function</span> <span style="color:#0f766e;">increment</span>() <span style="color:#7c3aed;">public</span> { <span style="color:#6b7280;">// Anyone can increase count</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count += <span style="color:#b45309;">1</span>; <span style="color:#6b7280;">// Add 1 to counter</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">function</span> <span style="color:#0f766e;">reset</span>() <span style="color:#7c3aed;">public</span> { <span style="color:#6b7280;">// Reset function</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#b45309;">require</span>(<span style="color:#be185d;">msg.sender</span> == owner, <span style="color:#047857;">"Only owner can reset"</span>); <span style="color:#6b7280;">// Access control</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count = <span style="color:#b45309;">0</span>; <span style="color:#6b7280;">// Reset counter to zero</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">function</span> <span style="color:#0f766e;">getCount</span>() <span style="color:#7c3aed;">public</span> <span style="color:#7c3aed;">view</span> <span style="color:#7c3aed;">returns</span> (<span style="color:#1d4ed8;">uint256</span>) { <span style="color:#6b7280;">// Read-only function</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">return</span> count; <span style="color:#6b7280;">// Return current value</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+}<br>
+</div>
+
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows a smart contract as code plus storage at its own address, with a short Solidity example to read, not write. It matters here because the next lesson reads contracts line by line, and students should first see the parts: stored values, a constructor and functions anyone or only the owner can call. Emphasize that a contract runs only when a transaction or another contract calls it.
+
+**Key Points**
+- Smart contracts are programs compiled to EVM bytecode and deployed on-chain.
+- They can store state, hold value, and expose callable functions.
+- This is how Ethereum turns a virtual machine into a platform for applications.
+- Students read this code, not write it; the next lesson reads contracts line by line.
+
+**Walkthrough**
+1. Point to the two stored values, `count` and `owner`.
+2. The constructor runs once, at deployment, and records the deployer as owner.
+3. `increment` is open to anyone; `reset` checks `msg.sender` against `owner` first.
+4. `getCount` only reads the stored value.
+
+**Sources**
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_smartcontractsdeveloper_2025
+
+- @ethereum.org_accountsdeveloperdocs_2025
+:::
+
+## A transaction is a signed, numbered message {.smaller}
+
+::: {style="font-size: 0.8em;"}
+| Field | What it holds [@ethereumorg_transactions_2025] | What it tells the analyst |
+| --- | --- | --- |
+| `from` | The sender, who signs it | Whose key authorized it |
+| `to` | The receiving address; empty when deploying a contract | The account or contract called; for a token transfer, the token contract, not the recipient |
+| `value` | ETH to send, in wei | How much ETH moved directly |
+| `data` | Optional; a contract call names its function here | Which function was called (next lesson) |
+| `nonce` | The sender's transaction counter | Where it falls in the sender's sequence |
+| gas fields | The most gas, the most per unit, and the tip | What the sender would pay |
+| signature | Made with the sender's private key | That the key holder signed |
+:::
+
+- Three kinds: a transfer, a contract deployment (no `to`; the code goes in `data`) and a contract call [@ethereumorg_transactions_2025].
+- A token moves by a contract call: `data` names a function such as `transfer(address,uint256)` [@ethereumorg_transactions_2025]. Lesson ③ reads it.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads an Ethereum transaction field by field, with what each field tells the analyst. It matters here because the transaction is the request the sender signed, and an analyst must know which fields carry ETH, which carry a contract call, and which fix its place in the sender's history. Emphasize that `value` carries only ETH; tokens move through a contract call in `data`.
+
+**Key Points**
+- A transaction carries from, to, value, data, nonce, three gas fields and a signature.
+- An empty `to` means a contract deployment; data with a function selector means a contract call.
+- The nonce orders the sender's transactions.
+- Token transfers are contract calls such as `transfer(address,uint256)`, not ETH value.
+
+**Walkthrough**
+1. Read the table top to bottom, stopping on `to`, `value` and `data`.
+2. Name the three kinds of transaction.
+3. Point forward: lesson ③ reads a token transfer's `data`.
+
+**Sources**
+- @ethereumorg_transactions_2025
+
+:::
+
+## Gas prices the work; a failed call still pays {.smaller}
+
+- **Every EVM operation has a gas cost**, and operations that write **permanent state** cost the most [@wood_ethereumsecuredecentralised_2016].
+- The sender sets the most gas the transaction may use and the most it will pay per unit [@ethereumorg_transactions_2025].
+  - **Fee = gas used × (base fee + tip)** [@ethereum.org_gasfeesdeveloper_2025].
+  - Fees are quoted in **gwei**: one billionth of an ETH [@ethereum.org_gasfeesdeveloper_2025].
+- Under **EIP-1559**, the **base fee is burned** and the **tip goes to the block proposer** [@buterin_eip1559feemarket_2019; @ethereum.org_gasfeesdeveloper_2025].
+- **Each block has a gas limit**, which caps how much work fits in it [@ethereum.org_gasfeesdeveloper_2025].
+- **The fee is paid whether the transaction succeeds or fails**; a call that runs out of gas has its changes reverted [@ethereum.org_gasfeesdeveloper_2025].
+
+**For the analyst:** a failed transaction still takes its fee, so the sender's balance falls even though nothing else moved.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains gas as the price of each step the EVM takes, and how the fee is split. It matters here because the fee is the one cost every transaction pays, even a failed one, and the analyst sees it in the sender's balance. Emphasize the fee formula, the burn of the base fee and that failure does not refund the fee.
+
+**Key Points**
+- Each EVM operation costs gas; writing permanent state costs the most.
+- Fee = gas used × (base fee + tip), quoted in gwei.
+- EIP-1559 burns the base fee and pays the tip to the block proposer.
+- A failed transaction still pays its fee.
+
+**Walkthrough**
+None
+
+**Sources**
+- @wood_ethereumsecuredecentralised_2016
+- @ethereumorg_transactions_2025
+- @ethereum.org_gasfeesdeveloper_2025
+- @buterin_eip1559feemarket_2019
+
+:::
+
+## Pending, then included, then final
+
+::: {style="font-size: 0.92em;"}
+- A wallet **creates and signs** the transaction, and peers relay it to the **pool of pending transactions** (the mempool, day 4) [@ethereumorg_transactions_2025].
+- A validator **includes** it in a block, and every node **re-executes** it in the EVM [@ethereumorg_transactions_2025; @ethereumdevelopers_blockproposal_2024].
+- **Inclusion is not finality**: the block is final only after validators' votes, about 15 minutes later (day 1) [@ethereumorg_transactions_2025; @ethereumorg_ssf_2026] (as of 31 Oct 2026).
+- Since **The Merge (15 Sep 2022)**, validators propose blocks; earlier blocks were mined. Execution carried on unchanged [@l34_ethereumorg_merge_2022].
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide follows a transaction from the wallet to finality in today's proof-of-stake Ethereum. It matters here because an analyst should say which stage a transaction has reached: pending, included or final. Emphasize that inclusion and finality are different events, and that blocks before 15 September 2022 were mined rather than proposed by validators.
+
+**Key Points**
+- A signed transaction waits in the pool of pending transactions until a validator includes it.
+- Every node re-executes it in the EVM.
+- Finality comes after validators' votes, about 15 minutes later (day 1).
+- The Merge on 15 September 2022 replaced miners with validators; execution did not change.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereumorg_transactions_2025
+- @ethereumdevelopers_blockproposal_2024
+- @ethereumorg_ssf_2026
+- @l34_ethereumorg_merge_2022
+
+:::
+
+## The receipt says what actually happened {.smaller}
+
+Once a transaction is in a block, a node returns its **receipt** [@ethereumorg_jsonrpcapi_2025]:
+
+| Receipt field | Meaning [@ethereumorg_jsonrpcapi_2025] |
+| --- | --- |
+| `status` | 1 for success, 0 for failure |
+| `gasUsed` | The gas this transaction used |
+| `effectiveGasPrice` | Base fee plus tip, per unit of gas |
+| `logs` | The events the transaction generated |
+| `contractAddress` | The new contract, if it deployed one |
+
+Each log names the contract that emitted it (`address`), up to four indexed `topics`, and other `data` [@ethereumorg_jsonrpcapi_2025].
+
+**For the analyst:** read `status` before anything else: a failed transaction is on the chain, but it moved nothing except its fee [@ethereum.org_gasfeesdeveloper_2025]. Token transfers show up in the logs, not in `value` (lesson ③).
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads the receipt, the node's record of what a transaction actually did. It matters here because the transaction says what the sender asked for, but the receipt says whether it worked, what it cost and which events it left. Emphasize reading `status` first, and that token movements are found in the logs.
+
+**Key Points**
+- A receipt gives status (1 success, 0 failure), gas used, the effective gas price, logs and any new contract address.
+- Each log names its emitting contract, up to four indexed topics, and other data.
+- A failed transaction is recorded on chain but moves nothing except its fee.
+- Token transfers appear as logs; lesson ③ reads them.
+
+**Walkthrough**
+1. Read the table, stopping on `status` and `logs`.
+2. Read the log's three parts.
+3. Close on the analyst line: status first, then logs for tokens.
+
+**Sources**
+- @ethereumorg_jsonrpcapi_2025
+- @ethereum.org_gasfeesdeveloper_2025
+
+:::
+
+## Contracts move value the transaction won't show {.smaller}
+
+:::: {.columns}
+::: {.column width="46%"}
+
+```{dot}
+//| echo: false
+digraph InternalTransfers {
+  rankdir=TB;
+  graph [fontsize=10, nodesep=0.3, ranksep=0.35, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, margin="0.10,0.06"];
+  edge [fontname="Helvetica", fontsize=9, arrowsize=0.7];
+
+  Alice [label="Alice (EOA)", fillcolor="#dcfce7"];
+  A     [label="Contract A", fillcolor="#fde68a"];
+  B     [label="Contract B", fillcolor="#fde68a"];
+  Bob   [label="Bob (EOA)", fillcolor="#dcfce7"];
+  Log   [label="Log: an event
+Contract A emits", shape=note, fillcolor="#f3e8ff"];
+
+  Alice -> A [label="transaction: 1 ETH", penwidth=2];
+  A -> B [label="internal call: 1 ETH", style=dashed];
+  B -> Bob [label="internal transfer: 1 ETH", style=dashed];
+  A -> Log [label="emits", style=dotted];
+}
+```
+
+:::
+::: {.column width="54%"}
+
+- A contract acts only when called, but once called it can call other contracts and send ETH [@ethereum.org_accountsdeveloperdocs_2025; @ethereum.org_smartcontractsdeveloper_2025].
+- Those calls are not new transactions: the transaction shows only Alice → Contract A.
+- Such an ETH send is "only unveiled by examining the internal calls" [@otterscan_otsnamespace_2026].
+- Otterscan traces the call and lists the internal transfers [@otterscan_otsnamespace_2026].
+
+:::
+::::
+
+**For the analyst:** when funds go into a contract, the trail goes on in the internal transfers (ETH) and the logs (tokens). Read both before saying where the funds went.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows value that moves inside a contract call, where the transaction itself does not show it. It matters here because an analyst who reads only transactions will lose funds the moment they enter a contract, as they do in swaps, bridges and mixers later in the course. Emphasize the two places the trail continues: internal transfers for ETH, logs for tokens.
+
+**Key Points**
+- A transaction reaches one contract; that contract may call others and send ETH.
+- Those internal calls and transfers are not separate transactions.
+- A trace of the call reveals them; Otterscan lists them as internal transfers.
+- Tokens moved inside the call show up as logs instead.
+
+**Walkthrough**
+1. Follow the solid arrow: the only part the transaction shows.
+2. Follow the dashed arrows: the internal call carries the 1 ETH on to Contract B, which sends it to Bob.
+3. Point to the log: an event the contract emits; a token transfer would appear as one, but a plain ETH send emits no log of its own.
+4. Tie to the lab: Otterscan's trace and logs.
+
+**Sources**
+- @ethereum.org_accountsdeveloperdocs_2025
+- @ethereum.org_smartcontractsdeveloper_2025
+- @otterscan_otsnamespace_2026
+
+:::
+
+## Most users reach the chain through a wallet {.smaller}
+
+<div style="font-size: 0.74em; margin-top: -0.35em;">
+
+```{dot}
+//| fig-height: 1.4
+digraph UserEthereumPath {
+  rankdir=LR;
+  graph [fontsize=10, nodesep=0.35, ranksep=0.45, bgcolor=transparent];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, margin="0.08,0.05"];
+  edge [fontname="Helvetica", fontsize=8, arrowsize=0.7];
+
+  OnRamp   [label="Exchange /\nOn-ramp", fillcolor="#dbeafe"];
+  Wallet   [label="Wallet\nkeys + signing", fillcolor="#dcfce7"];
+  DApp     [label="dApp\nUI + contracts", fillcolor="#fde68a"];
+  Data     [label="RPC /\nIndexer", fillcolor="#f3e8ff"];
+  Chain    [label="Ethereum\nor L2", fillcolor="#fecaca"];
+  Explorer [label="Explorer\nverify", fillcolor="#e5e7eb"];
+
+  OnRamp -> Wallet [label="buy / withdraw"];
+  Wallet -> DApp [label="connect + sign"];
+  DApp -> Data [label="read + submit"];
+  Data -> Chain [label="broadcast"];
+  Chain -> Explorer [label="inspect"];
+}
+```
+
+</div>
+
+::: {style="font-size: .72em;"}
+
+- Exchanges sell ETH for ordinary money and hold it until the buyer sends it to a wallet they control; examples include Coinbase, Kraken, Robinhood Crypto, and Binance.US [@ethereumorg_geteth_2026; @coinbase_10k_2026; @kraken_getverified_2026; @robinhood_crypto_2026; @binanceus_home_2026].
+- A wallet holds the user's keys; with it the user sends and receives tokens, connects to apps, swaps, bridges to a layer 2, and revokes a contract's access to funds [@ethereumorg_guides_2025]. Examples include MetaMask, Rabby, Rainbow, Trust Wallet, Coinbase Wallet, and Ledger [@ethereumorg_findwallet_2026] (as of 31 Oct 2026).
+- An app must connect to an Ethereum node to read the chain or send a transaction [@ethereumorg_jsonrpcapi_2025]; providers, indexers and explorers serve that data, but they are not the chain itself.
+- **For the analyst:** a withdrawal from an exchange ties the receiving address to a business that held the buyer's funds [@ethereumorg_geteth_2026]; day 6 follows funds to such services.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide follows the path most users take to the chain: an exchange, a wallet, then an app. It matters here because students often encounter Ethereum through exchanges, wallets, app frontends, RPC providers, indexers, and block explorers before they understand the underlying protocol. Emphasize that the examples are touchpoints, not endorsements or rankings, and that the exchange withdrawal is where an address often first meets a known service.
+
+**Key Points**
+- Most users enter through an exchange or on-ramp, move assets to a wallet, and then interact with a DApp.
+- Wallets hold keys and sign messages or transactions; they do not replace the chain.
+- DApps commonly depend on RPC endpoints, indexers, and explorers for reads, submission, search, and verification.
+- User actions such as approvals, swaps, bridges, and mints create distinct on-chain risk and evidence patterns.
+
+**Walkthrough**
+Follow the diagram left to right. A user may buy ETH on an exchange, withdraw to a wallet, connect the wallet to a DApp, sign an approval or transaction, and then inspect the result through an explorer. Point out that many failures and investigations occur at the boundaries: on-ramp custody, wallet signing, contract permissions, bridge routing, RPC availability, and explorer interpretation.
+
+**Sources**
+- @ethereumorg_geteth_2026
+- @coinbase_10k_2026
+- @kraken_getverified_2026
+- @robinhood_crypto_2026
+- @binanceus_home_2026
+- @ethereumorg_guides_2025
+- @ethereumorg_findwallet_2026
+- @ethereumorg_jsonrpcapi_2025
+
+:::
+
+## Recap: account, transaction, receipt
+
+::: {style="font-size: 0.86em;"}
+- Ethereum keeps **accounts** with balances: a key controls an EOA, and code controls a contract [@ethereum.org_accountsdeveloperdocs_2025].
+- A **transaction** is a signed, numbered message; `value` carries only ETH, and a contract call names its function in `data` [@ethereumorg_transactions_2025].
+- The **EVM** runs it the same way on every node; **gas** pays for the work, even when the call fails [@wood_ethereumsecuredecentralised_2016; @ethereum.org_gasfeesdeveloper_2025].
+- The **receipt** says whether it worked, what it cost and which events it logged; **internal transfers** need a trace [@ethereumorg_jsonrpcapi_2025; @otterscan_otsnamespace_2026].
+- Next: reading a contract (②), then tokens (③). This afternoon: a token contract and an NFT mint, read in Otterscan.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This closing slide gathers the four things an analyst reads on Ethereum. It matters here because the next two lessons and this afternoon's lab build on them: lesson ② reads a contract's code, lesson ③ reads token transfers in the logs. Emphasize the reading order: account, transaction, receipt, then internal transfers.
+
+**Key Points**
+- Accounts: key-controlled EOAs and code-controlled contracts.
+- Transactions: signed, numbered messages; ETH in `value`, calls in `data`.
+- The EVM and gas: the same result on every node, and a fee even on failure.
+- Receipts and traces: status, fee, logs and internal transfers.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereum.org_accountsdeveloperdocs_2025
+- @ethereumorg_transactions_2025
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_gasfeesdeveloper_2025
+- @ethereumorg_jsonrpcapi_2025
+- @otterscan_otsnamespace_2026
+
+:::
+
+<!-- Hidden for D3 (1) (docs/build-spec.md): off target in the Course Audit (vision, governance, halting problem), history (nightly reading), and slides the lesson above replaces or that day 1 already teaches. -->
+
+:::: {.content-hidden}
+
+## Beyond Cryptocurrency: Buterin's Vision {.smaller}
+
+::: {.columns}
+::: {.column width="62%"}
+- By 2013, Bitcoin had shown that a decentralized network could maintain digital money without a central bank, but its scripting model was intentionally narrow and not designed for general applications.
+- Vitalik Buterin envisioned something broader: *a blockchain that could run arbitrary application logic*, so developers would not need to build a new chain for every new use case.
+
+:::
+
+::: {.column width="38%"}
+![](../images/vitalik-buterin-profile.jpg){fig-alt="Portrait of Vitalik Buterin" width="85%"}
+
+::: {style="font-size: 0.52em; margin-top: 0.35em;"}
+Photo: Romanpoet, *Vitalik Buterin Profile Photo*, Wikimedia Commons (CC BY-SA 4.0).
+:::
+:::
+:::
+- In the whitepaper, Ethereum aimed to provide a general-purpose platform for smart contracts and decentralized applications that could execute the same rules on every node.
+- Smart contracts are on-chain programs that can hold value, update state, and enforce rules automatically.
+- Deterministic execution across many nodes provides credible neutrality for all of those applications.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This opening slide establishes Ethereum as an attempt to turn the blockchain from a specialized money system into a general-purpose execution platform. It matters here because students need to understand why Ethereum exists before they can make sense of the EVM, smart contracts, and later scaling choices. Emphasize that the key shift is from storing balances to running shared application logic under common rules.
+
+**Key Points**
+- Ethereum expands the blockchain model from digital cash to general-purpose computation.
+- Smart contracts are on-chain programs that can hold value and enforce rules.
+- Deterministic execution across many nodes is what gives those applications credible neutrality.
+
+**Walkthrough**
+None
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @buterin_ethereumnextgenerationsmart_2014
+- @romanpoet_vitalikbuterinprofile_2016
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## Ethereum's History
+
+::: {style="font-size: 0.76em;"}
+::: {style="background:#eaf4fb; color:#1f2937; border:1px solid #c7dceb; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
+**2013:** Buterin publishes the [*Ethereum Whitepaper*](https://ethereum.org/en/whitepaper/).
+:::
+
+::: {style="background:#deeff9; color:#1f2937; border:1px solid #b8d5e8; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
+**2014:** [Crowdsale raises ~31,000 BTC](https://blog.ethereum.org/2014/08/08/ether-sale-a-statistical-overview); Foundation established.
+:::
+
+::: {style="background:#d2e9f7; color:#1f2937; border:1px solid #a9cee3; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
+**2015:** [Mainnet launches](https://blog.ethereum.org/2015/07/22/frontier-is-coming-what-to-expect-and-how-to-prepare) with smart contracts and mining.
+:::
+
+::: {style="background:#c6e2f4; color:#1f2937; border:1px solid #9bc6dd; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
+**2016:** [DAO hack and hard fork](https://blog.ethereum.org/2016/07/20/hard-fork-completed) split ETH and ETC.
+:::
+
+::: {style="background:#b8daf1; color:#1f2937; border:1px solid #8cbcd6; border-radius:10px; padding:0.45em 0.7em; margin-bottom:0.38em;"}
+**2017–2021:** [Upgrades improve gas, tooling, and the ecosystem](https://ethereum.org/en/history/).
+:::
+
+::: {style="background:#a9d1ed; color:#1f2937; border:1px solid #7db2cf; border-radius:10px; padding:0.45em 0.7em;"}
+**2022:** [The Merge](https://ethereum.org/en/upgrades/merge/). Ethereum shifts from PoW to PoS.
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Ethereum's historical arc from whitepaper vision to live network to major governance and consensus milestones. It matters here because the lesson needs to show that Ethereum's current design is the product of iterative upgrades and contested decisions rather than a fixed blueprint from the start. Emphasize that programmability brought both rapid ecosystem growth and a larger attack and governance surface.
+
+**Key Points**
+- The 2013 whitepaper introduced Ethereum as a programmable blockchain platform.
+- Mainnet launch, the DAO fork, and The Merge are pivotal moments in Ethereum's development.
+- Ethereum's history is a story of coordinated upgrades around a more ambitious design than Bitcoin's.
+
+**Walkthrough**
+None
+
+**Sources**
+- @buterin_ethereumnextgenerationsmart_2014
+- @buterin_ethersalestatistical_2014
+- @l34_ethereum_launches_2015
+- @l34_ethereum_hard_fork_completed_2016
+- @ethereumorg_history_2026
+- @l34_ethereumorg_merge_2022
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## Governance & Ethereum Improvement Proposals (EIPs) {.smaller}
+
+Bitcoin governance is relatively conservative and informal: changes emerge through rough social consensus among developers, node operators, miners, and users, with a strong bias against frequent protocol change. Ethereum is also governed socially, but it uses a more explicit proposal culture and public upgrade process to coordinate faster protocol and standards evolution.
+
+::: {style="font-size: 1.08em;"}
+- Ethereum changes through **Ethereum Improvement Proposals (EIPs)**, which are the public specifications for protocol and standards updates.
+- **Core EIPs** change protocol rules; **ERCs** define shared application standards such as token and wallet interfaces.
+- `ERC` stands for **Ethereum Request for Comment**.
+- Adoption still depends on **social consensus**: there is no binding on-chain vote that forces Ethereum L1 upgrades.
+:::
+
+::: {.callout-note appearance="simple"}
+**Examples:** `EIP-1559` changed the fee market; `ERC-20` standardized fungible tokens.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the EIP system as Ethereum's public change-management framework for both protocol changes and ecosystem standards. It matters here because the rest of Ethereum's technical evolution depends on how proposals are specified, debated, and adopted. Emphasize that even with a more explicit proposal culture, Ethereum still relies on social consensus and software adoption rather than binding on-chain votes.
+
+**Key Points**
+- EIPs are public specifications for Ethereum protocol and standards changes.
+- Core EIPs affect protocol rules, while ERCs define shared ecosystem interfaces.
+- Adoption depends on implementation and agreement across the ecosystem, not on automatic governance machinery.
+
+**Walkthrough**
+None
+
+**Sources**
+- @becze_eip1eippurpose_2015
+- @buterin_ethereumnextgenerationsmart_2014
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## EIP Workflow {.smaller}
+
+::: {style="font-size: 1.18em;"}
+- A proposal typically moves from **idea** to **draft**, then through **review** and, if accepted, toward a stable final form.
+- Editors check format and clarity, while developers and researchers debate feasibility, risks, and tradeoffs in public.
+- For protocol changes, client teams implement and test the change on devnets and testnets before mainnet activation.
+- The important point is that Ethereum upgrades are **specified, implemented, tested, and adopted** in stages rather than changed by decree.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Ethereum upgrades as a staged process of specification, implementation, testing, and adoption. It matters here because students should see governance as an operational workflow rather than as a simple announcement from a central authority. Emphasize that drafts only matter once client teams implement them and the ecosystem coordinates around tested code.
+
+**Key Points**
+- EIPs move through public stages rather than appearing as instant protocol changes.
+- Review and testing are as important as proposing the original idea.
+- Mainnet adoption depends on client implementation and ecosystem coordination.
+
+**Walkthrough**
+None
+
+**Sources**
+- @becze_eip1eippurpose_2015
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## Stakeholders & Decision Making {.smaller}
+
+::: {.columns}
+::: {.column width="52%"}
+
+- **Client teams** implement software and therefore shape what is realistically deployable.
+- **Researchers and contributors** propose designs and analyze security, incentives, and tradeoffs.
+- The **Ethereum Foundation** helps coordinate, but it does not unilaterally command upgrades.
+- **Validators, node operators, exchanges, wallets, and application teams** all matter because they decide what software to run and support.
+- In the end, Ethereum governance is **opt-in**: if enough people disagree, they can refuse an upgrade or follow a different chain.
+
+:::
+::: {.column width="48%"}
+
+![](../images/eth_governance.png){fig-alt="Ethereum governance ecosystem graphic." width="90%"}
+
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes governance influence in Ethereum as distributed across researchers, client teams, operators, and economically important service providers. It matters here because students should avoid the false choice between imagining Ethereum as centrally controlled or magically leaderless. Emphasize that legitimacy comes from opt-in coordination around software, not from any single institution dictating outcomes.
+
+**Key Points**
+- Different stakeholders shape design, implementation, deployment readiness, and adoption.
+- The Ethereum Foundation is influential but not protocol-sovereign.
+- Social consensus remains real because participants can refuse to run unwanted software.
+
+**Walkthrough**
+None
+
+**Sources**
+- @becze_eip1eippurpose_2015
+- @buterin_ethereumnextgenerationsmart_2014
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## The Halting Problem
+
+::: {.columns}
+::: {.column width="58%"}
+
+::: {style="font-size: 0.72em;"}
+
+Can an algorithm decide whether *any arbitrary program* will eventually halt or run forever?
+
+::: {.fragment}
+**No.** In the general case, the problem is undecidable.
+:::
+
+::: {.fragment}
+“there can be no general process” that decides this for every possible program. 
+
+*--Alan Turing (1936)* 
+:::
+
+::: {.fragment}
+Ethereum wants to run expressive programs, but every node must be able to stop and agree on the result. How can we solve this?
+:::
+
+::: {.fragment}
+**Solution:**
+*Gas metering charges for computation* and halt execution when prepaid gas runs out.
+:::
+
+:::
+
+:::
+::: {.column width="42%"}
+
+![](../images/halting_problem.png){fig-alt="Illustration for the halting problem used as a visual anchor across the slide builds." width="100%"}
+
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the Halting Problem as the theoretical reason Ethereum cannot simply ask whether arbitrary contract code will finish safely before executing it. It matters here because it motivates gas as a practical resource-bounding mechanism rather than an arbitrary fee design. Emphasize that Ethereum doesn't solve undecidability; it charges for computation and halts when prepaid gas is exhausted.
+
+**Key Points**
+- Arbitrary programs cannot be analyzed in general to decide whether they will halt.
+- Ethereum still needs a way to run expressive programs without allowing infinite computation.
+- Gas provides that practical bound by limiting how much execution can continue.
+
+**Walkthrough**
+None
+
+**Sources**
+- @turing_computablenumbersapplication_1937
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_gasfeesdeveloper_2025
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## The Ethereum Virtual Machine (EVM) 
+
+::: {style="font-size: 0.82em;"}
+A **stack-based virtual machine** executed by every node for each transaction or contract call. Contracts are compiled from languages (such as Solidity) into bytecode that the EVM runs.
+
+- **Deterministic**: the same input and prior state must produce the same result.
+- **Isolation**: contracts run in a sandboxed environment with tightly limited external access.
+- **Gas metering**: opcodes charge gas to bound computation and prevent infinite loops.
+- **State updates** persist through Ethereum's account and contract-storage model.
+- **Native asset**: Ether (`ETH`); `gwei` is a common subunit, where `1 ETH = 1 billion gwei`.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes the EVM as the execution environment that every Ethereum node uses to reproduce the same state transitions from the same inputs. It matters here because the EVM is the mechanism that turns Ethereum's vision of a shared computer into something nodes can actually verify. Emphasize determinism, gas metering, and the separation between temporary execution context and persistent state.
+
+**Key Points**
+- The EVM is a stack-based virtual machine that executes contract bytecode on every node.
+- Determinism and sandboxing are necessary for replicated execution across the network.
+- Gas meters execution so arbitrary programs can still run under bounded resource rules.
+
+**Walkthrough**
+None
+
+**Sources**
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_smartcontractsdeveloper_2025
+- @ethereum.org_gasfeesdeveloper_2025
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## Gas: Metering Computation and Storage  {.smaller}
+
+- **Every EVM operation has a gas cost**, and operations that write **permanent state** are priced especially high.
+- **Users choose** how much gas a transaction may consume and how much they are willing to pay for each unit of gas.
+  - **Total fee = gas used × effective gas price**, which combines the **base fee** and any **tip**.
+- **If execution runs out of gas**, Ethereum reverts the state changes but still charges for the computation nodes already performed.
+- **Each block has a gas limit**, which caps how much total computation and storage-changing activity can fit into that block.
+- Under **EIP-1559**, the **base fee is burned** and the **tip goes to the block proposer**.
+  - If part of every transaction fee is **permanently destroyed**, what does that imply about **ETH supply over time**?
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes gas as Ethereum's metering system for computation and state change. It matters here because students need to connect abstract halting concerns to concrete fee mechanics and execution limits. Emphasize that gas both bounds resource use and creates incentives around block space, while EIP-1559 changes how fees are split between burn and proposer tip.
+
+**Key Points**
+- Every EVM operation has a gas cost, with persistent state changes priced especially high.
+- Users set gas limits and effective gas prices, and out-of-gas execution reverts state but still burns spent computation.
+- Gas fees are part security mechanism, part congestion-pricing mechanism.
+
+**Walkthrough**
+None
+
+**Sources**
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_gasfeesdeveloper_2025
+- @buterin_eip1559feemarket_2019
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## Determinism & Execution Constraints {.smaller}
+
+- **Every node must reach the same result** when executing the same transactions.  
+  - Consensus depends on *identical state transitions* across all nodes.  
+- Contracts execute in a **sandboxed EVM**:
+  - No access to the file system, network, clock, or OS randomness.  
+  - Execution must be *purely deterministic* given on-chain state and input.  
+- **Implication:**  
+  - Smart contracts cannot directly query off-chain information or trigger external actions.  
+  - Randomness, time, and I/O require careful design (e.g., block hash entropy, commit–reveal schemes).
+
+::: {.callout-important}
+If even one node computes a different result, consensus breaks, so the EVM **forbids** nondeterministic behavior.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes determinism as a hard requirement for a replicated state machine: every honest node must compute the same result from the same transaction and prior state. It matters here because Ethereum's expressive contract model would break consensus if contracts could depend on local randomness, network calls, or non-reproducible inputs. Emphasize that execution constraints are what make general-purpose computation compatible with consensus.
+
+**Key Points**
+- Ethereum contracts must avoid hidden local dependencies so all nodes reach the same result.
+- Inputs come from transaction data and defined block fields, not from arbitrary external I/O.
+- Deterministic execution is a consensus requirement, not just a programming preference.
+
+**Walkthrough**
+None
+
+**Sources**
+- @wood_ethereumsecuredecentralised_2016
+- @ethereum.org_smartcontractsdeveloper_2025
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## Oracles: Bridging Blockchains and Reality {.smaller}
+
+::: {.columns}
+::: {.column width="44%"}
+
+![](../images/oracle_toon.png){fig-alt="Cartoon illustration for blockchain oracles." width="100%"}
+
+:::
+::: {.column width="56%"}
+
+- **Problem:** Smart contracts cannot directly observe off-chain facts such as prices, weather, or election outcomes.  
+- **Oracle:** an external system that brings outside data on-chain so contracts can use it in their logic.  
+- **Common models:** a single trusted data source, or a decentralized oracle network that aggregates multiple sources.  
+- **Trade-off:** oracles solve the information gap, but they add new trust assumptions around data quality, honesty, and liveness.
+
+:::
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes oracles as the mechanism Ethereum uses when contracts need facts about the outside world. It matters here because smart contracts cannot directly observe weather, prices, or real-world events while remaining deterministic. Emphasize that oracles bridge external reality into Ethereum but also introduce new trust and manipulation risks.
+
+**Key Points**
+- Smart contracts need oracles because they cannot directly query the outside world.
+- Oracles convert external facts into on-chain data that contracts can act on deterministically.
+- Oracle design reintroduces trust and adversarial considerations at the boundary between chain and world.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ellis_chainlinkdecentralizedoracle_2017
+- @eskandari_sokoraclesground_2021
+
+:::
+
+::::
+
+:::: {.content-hidden}
+
+## Accounts & Global State (EOA vs Contract)
+
+::: {style="font-size: 0.86em;"}
+- **Externally Owned Accounts (EOAs):** controlled by private keys; initiate transactions and pay gas. (wallet)  
+- **Contract accounts:** hold code and storage, and run only when another transaction or contract call activates them. (program)
+- Ethereum’s global state keeps track of each account’s balance, nonce, code, and storage.  
+- Contract addresses are deterministic: under `CREATE`, they come from the creator and nonce; under `CREATE2`, they come from the creator, a salt, and the bytecode hash.  
+- That predictability lets developers plan deployments, coordinate contracts, and support upgrade patterns.
+:::
+
+::: {.callout-note appearance="simple"}
+[Interactive Ether EVM lab](/assets/labs/ether_evm/index.html).
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes Ethereum's account-based state model and distinguishes externally owned accounts from contract accounts. It matters here because later slides on transactions, contracts, and state growth depend on students knowing what kinds of entities exist in Ethereum state. Emphasize that both account types live inside one shared global state, but only one is controlled by private keys directly.
+
+**Key Points**
+- EOAs are controlled by private keys, while contract accounts are controlled by code.
+- Both account types exist inside Ethereum's shared global state.
+- This model differs sharply from Bitcoin's UTXO accounting.
+
+**Walkthrough**
+None
+
+**Sources**
+- @ethereum.org_accountsdeveloperdocs_2025
+- @wood_ethereumsecuredecentralised_2016
+
+:::
+
+::::
+
+:::: {.content-hidden}
 
 ## The Merge (Sept 15, 2022) 
 
@@ -554,6 +1141,10 @@ None
 - @ethereumorg_history_2026
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## PoW vs PoS: Security Model (Review) {.smaller}
 
@@ -585,6 +1176,10 @@ None
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Impact of The Merge {.smaller}
 
@@ -631,6 +1226,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Transaction Lifecycle (PoS Era)
 
 ::: {style="font-size: 0.92em;"}
@@ -661,75 +1260,9 @@ None
 
 :::
 
-## From EVM to Programs — Smart Contracts
+::::
 
-::: {.columns}
-::: {.column width="47%"}
-
-::: {style="font-size: 0.74em;"}
-- Ethereum can deploy programs at their own contract addresses with **persistent state**.  
-
-- These are **smart contracts**: code plus storage that follow on-chain rules.
-
-  - Once deployed, the code determines how calls are handled.
-
-- Contracts run only when called; there are **no background tasks**.  
-
-- Contracts can call other contracts, enabling **composability** and atomic workflows.  
-:::
-
-:::
-::: {.column width="53%"}
-
-<div style="font-size:0.4em; line-height:1.18; color:#374151; font-family:SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
-<span style="color:#6b7280;">// SPDX-License-Identifier: MIT // License identifier</span><br>
-<span style="color:#7c3aed;">pragma</span> <span style="color:#1d4ed8;">solidity</span> <span style="color:#b45309;">^0.8.20</span>; <span style="color:#6b7280;">// Solidity version</span><br>
-<br>
-<span style="color:#7c3aed;">contract</span> <span style="color:#0f766e;">SimpleCounter</span> { <span style="color:#6b7280;">// Define contract</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1d4ed8;">uint256</span> <span style="color:#7c3aed;">private</span> count; <span style="color:#6b7280;">// Stored counter value</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#1d4ed8;">address</span> <span style="color:#7c3aed;">public</span> owner; <span style="color:#6b7280;">// Address of deployer</span><br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">constructor</span>(<span style="color:#1d4ed8;">uint256</span> startingValue) { <span style="color:#6b7280;">// Runs once on deployment</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;owner = <span style="color:#be185d;">msg.sender</span>; <span style="color:#6b7280;">// Set deployer as owner</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count = startingValue; <span style="color:#6b7280;">// Initialize counter</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">function</span> <span style="color:#0f766e;">increment</span>() <span style="color:#7c3aed;">public</span> { <span style="color:#6b7280;">// Anyone can increase count</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count += <span style="color:#b45309;">1</span>; <span style="color:#6b7280;">// Add 1 to counter</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">function</span> <span style="color:#0f766e;">reset</span>() <span style="color:#7c3aed;">public</span> { <span style="color:#6b7280;">// Reset function</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#b45309;">require</span>(<span style="color:#be185d;">msg.sender</span> == owner, <span style="color:#047857;">"Only owner can reset"</span>); <span style="color:#6b7280;">// Access control</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count = <span style="color:#b45309;">0</span>; <span style="color:#6b7280;">// Reset counter to zero</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-<br>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">function</span> <span style="color:#0f766e;">getCount</span>() <span style="color:#7c3aed;">public</span> <span style="color:#7c3aed;">view</span> <span style="color:#7c3aed;">returns</span> (<span style="color:#1d4ed8;">uint256</span>) { <span style="color:#6b7280;">// Read-only function</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#7c3aed;">return</span> count; <span style="color:#6b7280;">// Return current value</span><br>
-&nbsp;&nbsp;&nbsp;&nbsp;}<br>
-}<br>
-</div>
-
-:::
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes smart contracts as the bridge from EVM bytecode to user-visible programs and applications. It matters here because the lesson has built the machine model and now needs to reconnect that machinery to what developers actually create. Emphasize that smart contracts are persistent, stateful programs deployed to addresses and invoked through transactions.
-
-**Key Points**
-- Smart contracts are programs compiled to EVM bytecode and deployed on-chain.
-- They can store state, hold value, and expose callable functions.
-- This is how Ethereum turns a virtual machine into a platform for applications.
-
-**Walkthrough**
-None
-
-**Sources**
-- @wood_ethereumsecuredecentralised_2016
-- @ethereum.org_smartcontractsdeveloper_2025
-
-:::
+:::: {.content-hidden}
 
 ## DApp Architecture
 
@@ -758,66 +1291,46 @@ None
 
 :::
 
-## How Most Users Touch Ethereum {.smaller}
+::::
 
-<div style="font-size: 0.74em; margin-top: -0.35em;">
+:::: {.content-hidden}
 
-```{dot}
-digraph UserEthereumPath {
-  rankdir=LR;
-  graph [fontsize=10, nodesep=0.35, ranksep=0.45, bgcolor=transparent];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, margin="0.08,0.05"];
-  edge [fontname="Helvetica", fontsize=8, arrowsize=0.7];
+## Summary
 
-  OnRamp   [label="Exchange /\nOn-ramp", fillcolor="#dbeafe"];
-  Wallet   [label="Wallet\nkeys + signing", fillcolor="#dcfce7"];
-  DApp     [label="dApp\nUI + contracts", fillcolor="#fde68a"];
-  Data     [label="RPC /\nIndexer", fillcolor="#f3e8ff"];
-  Chain    [label="Ethereum\nor L2", fillcolor="#fecaca"];
-  Explorer [label="Explorer\nverify", fillcolor="#e5e7eb"];
+::: {style="font-size: 0.86em;"}
+- Ethereum extends the blockchain idea from **digital money** to a **shared computer** that can run general-purpose programs.  
 
-  OnRamp -> Wallet [label="buy / withdraw"];
-  Wallet -> DApp [label="connect + sign"];
-  DApp -> Data [label="read + submit"];
-  Data -> Chain [label="broadcast"];
-  Chain -> Explorer [label="inspect"];
-}
-```
+- The EVM, **deterministic execution**, and **gas metering** are what make that shared computer verifiable across many nodes.  
 
-</div>
+- **Smart contracts** are on-chain programs with persistent state, which enables DApps, composability, and new trust assumptions around code and oracles.  
 
-::: {style="font-size: .72em;"}
-
-- Common actions: buy ETH for gas, hold or send stablecoins, mint, swap, bridge, and approve token spending.
-- Wallets are the user's signing layer; examples include MetaMask, Rabby, Rainbow, Trust Wallet, Coinbase Wallet, and Ledger.
-- Exchanges/on-ramps are entry and exit services; examples include Coinbase, Kraken, Robinhood Crypto, and Binance.US.
-- RPC providers, indexers, and explorers make apps usable, but they are not the chain itself.
-
+- Ethereum’s long-term scaling path keeps **L1 broadly verifiable** while moving more execution to **L2s** and improving **data availability**.  
 :::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide turns the abstract DApp architecture into the workflow most users actually experience. It matters here because students often encounter Ethereum through exchanges, wallets, app frontends, RPC providers, indexers, and block explorers before they understand the underlying protocol. Emphasize that the examples are touchpoints, not endorsements or rankings.
+This closing slide establishes Ethereum's overall mental model for the lesson: a shared computer secured by deterministic execution, gas, and a scaling strategy built around L2s and data availability. It matters here because students should leave with one coherent picture before later lessons zoom into mining history, networking, and smart contracts in more detail. Emphasize that Ethereum's ambition creates both its power and its complexity.
 
 **Key Points**
-- Most users enter through an exchange or on-ramp, move assets to a wallet, and then interact with a DApp.
-- Wallets hold keys and sign messages or transactions; they do not replace the chain.
-- DApps commonly depend on RPC endpoints, indexers, and explorers for reads, submission, search, and verification.
-- User actions such as approvals, swaps, bridges, and mints create distinct on-chain risk and evidence patterns.
+- Ethereum extends blockchains from digital money to shared execution of programs.
+- The EVM, gas, and deterministic execution are what make that shared computation verifiable.
+- Ethereum's long-run roadmap keeps L1 broadly verifiable while pushing more execution to L2s.
 
 **Walkthrough**
-Follow the diagram left to right. A user may buy ETH on an exchange, withdraw to a wallet, connect the wallet to a DApp, sign an approval or transaction, and then inspect the result through an explorer. Point out that many failures and investigations occur at the boundaries: on-ramp custody, wallet signing, contract permissions, bridge routing, RPC availability, and explorer interpretation.
+None
 
 **Sources**
-- @ethereumorg_guides_2025
-- @ethereum.org_smartcontractsdeveloper_2025
-- Ethereum.org, "JSON-RPC API": https://ethereum.org/developers/docs/apis/json-rpc/
-- MetaMask Support, "How to revoke smart contract allowances/token approvals": https://support.metamask.io/more-web3/learn/how-to-revoke-smart-contract-allowances-token-approvals/
-- Ledger Support, "Ethereum Token Approvals Explained": https://support.ledger.com/article/Ethereum-Token-Approvals-Explained
-- Product examples named for orientation only: MetaMask, Rabby, Rainbow, Trust Wallet, Coinbase Wallet, Ledger, Coinbase, Kraken, Robinhood Crypto, Binance.US.
+- @wood_ethereumsecuredecentralised_2016
+- @l34_ethereum_scaling_docs_2026
 
 :::
+
+::::
+
+<!-- Hidden here for D4 (3), Layer 2s and bridges, which takes these slides (docs/build-spec.md). -->
+
+:::: {.content-hidden}
 
 ## State Growth & Storage Pressure
 
@@ -847,6 +1360,10 @@ None
 - @l34_ethereum_scaling_docs_2026
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## The Scaling Problem
 
@@ -878,6 +1395,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Introducing L2
 
 - **Layer 1 (L1)** is the base blockchain, such as Ethereum itself, which provides consensus, ordering, and data availability, which you are familiar with.
@@ -902,6 +1423,10 @@ None
 - @l31_arbitrum_rollup_2026
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Modular Scaling
 
@@ -928,6 +1453,10 @@ None
 - @wood_ethereumsecuredecentralised_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## L2 Operator Models {.smaller}
 
@@ -960,6 +1489,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Rollups — Optimistic vs ZK{.smaller}
 
 | Feature / Tradeoff            | **Optimistic Rollups** | **ZK (Validity) Rollups** |
@@ -990,6 +1523,10 @@ None
 - @l34_ethereum_scaling_docs_2026
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Proto-Danksharding (EIP-4844) — Blob Data for L2s {.smaller}
 
@@ -1022,35 +1559,6 @@ None
 
 :::
 
-## Summary
-
-::: {style="font-size: 0.86em;"}
-- Ethereum extends the blockchain idea from **digital money** to a **shared computer** that can run general-purpose programs.  
-
-- The EVM, **deterministic execution**, and **gas metering** are what make that shared computer verifiable across many nodes.  
-
-- **Smart contracts** are on-chain programs with persistent state, which enables DApps, composability, and new trust assumptions around code and oracles.  
-
-- Ethereum’s long-term scaling path keeps **L1 broadly verifiable** while moving more execution to **L2s** and improving **data availability**.  
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This closing slide establishes Ethereum's overall mental model for the lesson: a shared computer secured by deterministic execution, gas, and a scaling strategy built around L2s and data availability. It matters here because students should leave with one coherent picture before later lessons zoom into mining history, networking, and smart contracts in more detail. Emphasize that Ethereum's ambition creates both its power and its complexity.
-
-**Key Points**
-- Ethereum extends blockchains from digital money to shared execution of programs.
-- The EVM, gas, and deterministic execution are what make that shared computation verifiable.
-- Ethereum's long-run roadmap keeps L1 broadly verifiable while pushing more execution to L2s.
-
-**Walkthrough**
-None
-
-**Sources**
-- @wood_ethereumsecuredecentralised_2016
-- @l34_ethereum_scaling_docs_2026
-
-:::
+::::
 
 ## References
