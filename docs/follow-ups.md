@@ -24,6 +24,10 @@ slide index), which is never listed here.
 - 05-FO (VASPs and the Rules) has no quiz bank; 04-BF q9 and 01-FO q8 (KYC as a gateway duty, displacement to weak
   jurisdictions) retired with the slides they tested and could seed it. The 04-BF and 01-FO syntheses in
   `quizes/lesson_synthesis/` still describe the hidden slides. (31 Oct 2026, D5 ② build, grep of `quizes/`)
+- 01-PC quiz bank has no questions on the rebuilt lesson (Tron, USDT on Tron, the operator's edge, CBDCs; concept
+  49), and its old questions lean on slides now hidden. (31 Oct 2026, D5 ③ rebuild)
+- 02-AS quiz bank may lean on the four slides hidden as moved to 01-PC (CBDC trust, landscape, platforms, USDT on
+  Tron). (31 Oct 2026, D5 ③ rebuild)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`

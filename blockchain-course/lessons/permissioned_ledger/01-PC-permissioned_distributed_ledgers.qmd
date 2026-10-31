@@ -1,6 +1,6 @@
 ---
-title: "Permissioned Distributed Ledgers For Blockchain"
-subtitle: 'Section V: Permissioned Chains'
+title: "Ledgers with a Gatekeeper"
+subtitle: 'Tron, USDT on Tron, permissioned ledgers and CBDCs'
 author: Army Cyber Institute
 lesson: 01-PC
 date: last-modified
@@ -13,6 +13,545 @@ format:
   aci-revealjs:
     slide-level: 2
 ---
+
+## Find the gatekeeper: who can stop or see it {.smaller}
+
+**Bottom line:** Anyone can read Tron, but USDT's issuer can freeze a balance on it [@tether_usdttroncontract_2026]. On a permissioned ledger, the operator admits every participant and holds every record, so an outsider sees nothing [@hyperledgerfabricdevelopers_privatedata_2022]. For any ledger, ask who the gatekeeper is, what it can do, and what you can see.
+
+::: {style="font-size: .8em;"}
+
+| Question | The answer tells you | Slide |
+| --- | --- | --- |
+| How is Tron like Ethereum? | Day 3's reading skills carry over | Tron works like Ethereum |
+| Who pays for a USDT transfer? | Why an empty address can still move USDT | Energy |
+| Why Tron? | Where most USDT sits | Half of all USDT |
+| Can Tether freeze USDT on Tron? | Who can stop the money | Same freeze, same owner |
+| Is this address frozen? | Only as of the block you read | As of the read |
+| What can an analyst see on a permissioned ledger? | Where the trace stops | The operator's edge |
+| Is a CBDC different? | The same edge, run by a central bank | CBDCs |
+
+:::
+
+This afternoon's lab reads a Tron snapshot, then the instructor runs a Fabric network in front of you.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens the lesson with its one idea: every ledger in this lesson has a gatekeeper, and the analyst's first job is to name it. It matters here because the morning's exchanges and rules lessons put gatekeepers off the chain; this lesson finds the ones on it. Emphasize the three questions: who is the gatekeeper, what can it do, and what can I see.
+
+**Key Points**
+- Tron is open to read, like Ethereum; the gatekeeper for USDT is Tether, through its contract.
+- A permissioned ledger is closed to outsiders; the gatekeeper is the operator, who holds the records.
+- The table is the lesson's map, slide by slide.
+- The lab reads a Tron snapshot; the instructor's Fabric demo closes the day.
+
+**Walkthrough**
+1. Read the bottom line aloud.
+2. Walk the table row by row, naming the slide that answers each question.
+3. Point at the last two rows: the second half of the lesson is about where a trace stops.
+
+**Sources**
+- @tether_usdttroncontract_2026
+- @hyperledgerfabricdevelopers_privatedata_2022
+
+:::
+
+## Tron works like Ethereum, with T-addresses {.smaller}
+
+:::: {.columns}
+
+::: {.column width="58%"}
+
+- **Accounts, not coins:** an address holds a balance, as on Ethereum. A Tron address comes from the same secp256k1 key and Keccak-256 hash, then a `0x41` prefix and Base58Check, so it starts with **T** [@tron_accounts_2026].
+- **Tokens are contracts:** TRC-20 is "fully compatible with Ethereum's ERC-20 at the interface level" [@tron_trc20_2026]. A USDT transfer is a contract call that emits a `Transfer` log, as on day 3.
+- **The node is open source:** java-tron (LGPL-3.0, **as of 23 Oct 2026**) answers the lab's queries [@tronprotocol_javatron_2026].
+- For the analyst: read Tron as you read Ethereum. Only the address format and the fee model are new.
+
+:::
+
+::: {.column width="42%"}
+
+| | Ethereum | Tron |
+| --- | --- | --- |
+| Model | Accounts | Accounts |
+| Address | `0x…` hex | `T…` Base58 |
+| Token standard | ERC-20 | TRC-20 |
+| Client | Geth and others | java-tron |
+
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that Tron is an account chain built on Ethereum's ideas. It matters here because students can reuse day 3's skills: a balance per address, tokens as contracts, transfers as logs. Emphasize that only the address format and the fee model are new.
+
+**Key Points**
+- A Tron address is derived from a secp256k1 key with Keccak-256, like Ethereum's, then given a 0x41 prefix and Base58Check encoding.
+- TRC-20 tokens implement the same functions and events as ERC-20.
+- java-tron is the open-source node the lab's data comes from.
+
+**Walkthrough**
+1. Put a T-address beside a 0x address and point out that the same key could produce both.
+2. Remind students of day 3's `Transfer` log: on Tron it is the same event.
+
+**Sources**
+- @tron_accounts_2026
+- @tron_trc20_2026
+- @tronprotocol_javatron_2026
+
+:::
+
+## 27 elected producers; final after 19 confirm {.smaller}
+
+- **Delegated proof of stake:** "Twenty-seven Super Representatives (SRs), elected by stakers' votes," produce Tron's blocks [@tron_consensus_2026].
+- **A block about every 3 seconds:** Tron "normally schedules one block-production slot every 3 seconds" [@tron_consensus_2026].
+- **Final, not probable:** a block is "solidified" once at least 19 distinct active SRs have each produced a block at or above its height [@tron_consensus_2026].
+- For the analyst: read **solidified** data only. java-tron serves it on its own endpoints, so an answer never rests on a block that could still change [@tron_api_2026].
+- The block producers are a short, public list. For USDT, the gatekeeper that matters is not them but the issuer, three slides on.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains who makes Tron's blocks and when a block is final. It matters here because an analyst's statement must rest on blocks that cannot change. Emphasize "solidified": Tron's word for final.
+
+**Key Points**
+- 27 Super Representatives, elected by stakers' votes, produce blocks under DPoS.
+- Slots come every 3 seconds.
+- A block is solidified once at least 19 distinct active SRs have produced a block at or above its height (its own producer counts).
+- The lab's extract reads solidified data only.
+
+**Walkthrough**
+1. Compare with Ethereum (day 3): many validators and checkpoints there; 27 elected producers here.
+2. Say plainly that the lesson does not claim the SRs freeze tokens: the issuer does that.
+
+**Sources**
+- @tron_consensus_2026
+- @tron_api_2026
+
+:::
+
+## Energy pays for a USDT move: who staked it? {.smaller}
+
+:::: {.columns}
+
+::: {.column width="58%"}
+
+- Tron charges in two resources [@tron_resourcemodel_2026]:
+  - **Bandwidth:** the bytes a transaction stores on chain.
+  - **Energy:** the computation a contract call uses. A USDT transfer is a contract call, so it needs Energy.
+- Energy has no free quota. An account must "stake (or receive delegated) TRX to obtain it, or rely on the TRX-burn fallback" [@tron_resourcemodel_2026].
+- So an address holding **no TRX** can still move USDT when another account delegates Energy to it.
+- For the analyst: the delegating account is a link. Note who paid for the move, not only who sent it.
+
+:::
+
+::: {.column width="42%"}
+
+```{dot}
+digraph Energy {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [color="#64748b", fontname="Helvetica", fontsize=9];
+  P [label="Account that\nstakes TRX", fillcolor="#fef3c7"];
+  A [label="Address with USDT\nand no TRX", fillcolor="#dbeafe"];
+  B [label="Next address", fillcolor="#dcfce7"];
+  P -> A [label="delegates Energy"];
+  A -> B [label="USDT transfer"];
+}
+```
+
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains Tron's fee model in the one way an analyst needs: who paid for a USDT transfer. It matters here because on Tron the sender and the payer can be different accounts. Emphasize that a delegation of Energy is itself an on-chain link between two accounts.
+
+**Key Points**
+- Bandwidth covers bytes; Energy covers contract computation.
+- A USDT transfer is a contract call, so it uses Energy.
+- Energy comes from staked TRX, delegated Energy, or burned TRX.
+- An address with no TRX can move USDT if another account delegates Energy to it.
+
+**Walkthrough**
+1. Walk the diagram top to bottom.
+2. Tell students the lab asks this of real data this afternoon: for each USDT move, did the sender stake for the Energy, receive it by delegation, or burn TRX?
+
+**Sources**
+- @tron_resourcemodel_2026
+
+:::
+
+## Half of all USDT sits on Tron {.smaller}
+
+- Of 180.1 billion USDT in circulation, **92.4 billion (51%)** is on Tron and **70.9 billion (39%)** on Ethereum [@defillama_tetherbychain_2026].
+- Day 3 showed that stablecoins carry most illicit volume (**as of January 2026**) [@chainalysis_2026cryptocrimereport_2026]. Tron carries most of the leading one.
+- For the analyst: a USDT case will often run through Tron, and the Day 9 and Day 10 traces do.
+
+::: {.callout-note}
+**As of 31 Oct 2026.** Supply by chain moves daily; read the current figure before you quote it.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why a US analyst needs Tron at all: it holds more USDT than any other chain. It matters here because students who know only Ethereum will meet Tron in most stablecoin cases. Emphasize the date: these figures change daily.
+
+**Key Points**
+- About half of circulating USDT is on Tron; about two-fifths is on Ethereum.
+- Day 3: stablecoins carry most illicit volume (Chainalysis, as of January 2026).
+- The day 9 trace and the day 10 scenario both include Tron USDT.
+
+**Walkthrough**
+None
+
+**Sources**
+- @defillama_tetherbychain_2026
+- @chainalysis_2026cryptocrimereport_2026
+
+:::
+
+## USDT on Tron: same freeze, same owner rule {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+
+- Same `TetherToken` design as on Ethereum, with the same owner-only blacklist functions and events [@tether_usdttroncontract_2026; @tether_tethertokensource_2017]: `addBlackList`, `removeBlackList`, `destroyBlackFunds`.
+- The **owner** is a multisignature wallet contract, `TBPxhVAsuzoFnKyXtc1o2UySEydPHgATto` (**as of 31 Oct 2026**; an owner can change) [@tether_usdttroncontract_2026].
+- For the analyst: Tether is the gatekeeper for USDT on Tron. The SRs make the blocks, but only the owner can freeze.
+
+:::
+
+::: {.column width="45%"}
+
+```{dot}
+digraph Freeze {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [color="#64748b", fontname="Helvetica", fontsize=9];
+  O [label="Owner\n(multisig wallet)", fillcolor="#fee2e2"];
+  C [label="USDT contract\nTR7NH…Lj6t", fillcolor="#dbeafe"];
+  L [label="AddedBlackList\nevent", fillcolor="#fef3c7"];
+  O -> C [label="addBlackList(addr)"];
+  C -> L [label="logs"];
+}
+```
+
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide carries day 3's freeze lesson onto Tron. It matters here because most USDT is on Tron, and the freeze controls are the same. Emphasize that the issuer, not the network, is the gatekeeper for the token.
+
+**Key Points**
+- Day 3 taught the three owner-only functions on Ethereum; Tron's USDT has the same functions and events.
+- The owner is a multisignature wallet contract.
+- A freeze shows up as an `AddedBlackList` event from the USDT contract.
+
+**Walkthrough**
+1. Ask a student to recall day 3: what does a frozen address still do? (It can still receive; it cannot send.)
+2. Point at the diagram: owner, contract, event. That event is what the lab looks for.
+
+**Sources**
+- @tether_usdttroncontract_2026
+- @tether_tethertokensource_2017
+
+:::
+
+## A freeze is true only as of the read {.smaller}
+
+- **Two questions, two answers** [@tether_usdttroncontract_2026]:
+  - *Is it frozen?* `isBlackListed(address)` answers for the block you read it at.
+  - *When was it frozen?* The `AddedBlackList` event gives the block and time.
+- Day 3 covered what a freeze leaves on chain. New here: a later `RemovedBlackList` undoes a freeze, so status read today may not be status then [@tether_tethertokensource_2017].
+- So write the block and time beside every freeze answer: "Blacklisted as of block N, read on date D."
+- Set the freeze time against the case's transfers to answer day 9's question: **Freezable? Which issuer, and how fast?**
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the analyst's habit for freeze status: date it. It matters here because a status read today may differ from the status on the day of the transfers, and both may differ next week. Emphasize the difference between state (now) and events (when).
+
+**Key Points**
+- `isBlackListed` gives the status at the block read.
+- `AddedBlackList` and `RemovedBlackList` events give the history.
+- Every freeze statement carries the block and the date it was read.
+- Day 9 asks how fast the issuer acted, which needs the event time.
+
+**Walkthrough**
+1. Write a sample line on the board: "Blacklisted as of block N, read on date D."
+2. Ask: if the event came two hours after the last outgoing transfer, what does that tell you? (The funds had already left.)
+
+**Sources**
+- @tether_usdttroncontract_2026
+- @tether_tethertokensource_2017
+
+:::
+
+## This afternoon: a transfer, a sweep, a freeze {.smaller}
+
+The lab gives you a snapshot of Tron data, read from java-tron [@tronprotocol_javatron_2026]. In it you will:
+
+1. Read a **USDT transfer**: sender, receiver, amount, block and time.
+2. Follow an **exchange deposit and its sweep**, and find the account that delegated Energy for it.
+3. Read an **issuer freeze**: the `AddedBlackList` event, and the address's status as of the snapshot.
+
+Then the instructor runs a live **Hyperledger Fabric** network: the second half of this lesson, in front of you.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide previews the afternoon lab so students know what to look for. It matters here because the lab applies the first half of this lesson to real data. Emphasize that the lab reads a fixed snapshot, so every answer is "as of" the snapshot.
+
+**Key Points**
+- The snapshot comes from java-tron, the open-source node.
+- Three reads: a transfer, a deposit and its sweep, a freeze.
+- The morning's exchanges lesson explains deposit addresses and sweeps; this lesson adds who paid the Energy.
+- The Fabric demo closes the day.
+
+**Walkthrough**
+None
+
+**Sources**
+- @tronprotocol_javatron_2026
+
+:::
+
+## Permissioned: the operator decides who writes {.smaller}
+
+- **Trust moves** [@androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023]:
+  - Bitcoin: costly work. Ethereum: stake and penalties.
+  - A permissioned ledger: **identity and policy**. Only admitted organizations take part.
+- **Everyone is known by certificate:** in Hyperledger Fabric, a membership service provider (MSP) maps each participant to a certificate from its organization's authority [@androulaki_hyperledgerfabricdistributed_2018].
+- **Final when the quorum signs:** known participants can agree without mining, so a committed transaction is final, with no waiting and no reorganization [@ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @yaga_blockchaintechnologyoverview_2018].
+- For the analyst: the gatekeeper is now the **operator** of the network. It admits members, writes the rules, and keeps the ledger.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns from an open ledger with a gatekeeping issuer to a ledger that is closed by design. It matters here because government and bank systems, including CBDCs, are built this way. Emphasize that trust rests on identity and policy, set by an operator.
+
+**Key Points**
+- PoW rests on cost, PoS on stake, a permissioned ledger on identity and policy.
+- In Fabric, the MSP ties every participant to a certificate.
+- Finality is deterministic once the required approvals are in.
+- The operator admits members and keeps the records.
+
+**Walkthrough**
+1. Ask: on Tron, who can join? (Anyone.) On a permissioned ledger? (Only who the operator admits.)
+
+**Sources**
+- @androulaki_hyperledgerfabricdistributed_2018
+- @hyperledger_blockchainplatformenterprise_2023
+- @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
+- @yaga_blockchaintechnologyoverview_2018
+
+:::
+
+## The trace stops at the operator's edge {.smaller}
+
+:::: {.columns}
+
+::: {.column width="58%"}
+
+- **An outsider sees nothing:** no public node, no explorer, no copy of the ledger.
+- **A member sees its channels:** a channel keeps whole transactions and ledgers "confidential within a set of organizations" [@hyperledgerfabricdevelopers_privatedata_2022].
+- **Some members see less:** a private data collection lets "a defined subset of organizations on a channel" read the data. Every other peer on the channel gets only a hash of it [@hyperledgerfabricdevelopers_privatedata_2022].
+- **The orderer** "does not see the private data" [@hyperledgerfabricdevelopers_privatedata_2022].
+- For the analyst: an on-chain trace **stops at the operator's edge**. The records are real, but they sit with the operator.
+
+:::
+
+::: {.column width="42%"}
+
+```{dot}
+digraph Edge {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=12];
+  edge [color="#64748b", fontname="Helvetica", fontsize=10];
+  subgraph cluster_net {
+    label="Operator's network"; fontname="Helvetica"; fontsize=10; style="rounded,dashed"; color="#e53e3e";
+    C [label="Channel members:\nfull transactions", fillcolor="#dcfce7"];
+    PD [label="Collection members:\nprivate data", fillcolor="#dbeafe"];
+    H [label="Other members:\nhash only", fillcolor="#fef3c7"];
+  }
+  X [label="Outside analyst:\nnothing", fillcolor="#e5e7eb"];
+  X -> C [style=dashed, color="#e53e3e", label="no access"];
+  C -> PD [style=invis];
+  PD -> H [style=invis];
+}
+```
+
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide is the core of the lesson (role concept 49): what an analyst can and cannot see on a permissioned ledger. It matters here because analysts will meet funds that enter a bank ledger, a CBDC or an enterprise network and vanish from public view. Emphasize the sentence "the trace stops at the operator's edge."
+
+**Key Points**
+- An outsider has no node and no explorer to read.
+- Channels keep transactions within their members.
+- Private data collections narrow it further: other channel peers hold only a hash.
+- The ordering service does not see private data.
+- The records exist and sit with the operator; obtaining them is a matter for agents and prosecutors, outside this course.
+
+**Walkthrough**
+1. Walk the diagram from the outside in.
+2. Ask: if funds leave Tron for a bank's permissioned ledger, what can you still say? (Everything up to the edge, and who the operator is.)
+
+**Sources**
+- @hyperledgerfabricdevelopers_privatedata_2022
+
+:::
+
+## What each reader can see {.smaller}
+
+::: {style="font-size: .85em;"}
+
+| Ledger | Who can read it | Who is named | Who can stop a payment |
+| --- | --- | --- | --- |
+| Bitcoin | Anyone | No one; addresses only | No one on chain |
+| Ethereum or Tron, USDT | Anyone | No one; addresses only | The issuer, by freezing [@tether_tethertokensource_2017; @tether_usdttroncontract_2026] |
+| Permissioned, as a member | Your channels; hashes of others' private data | Every member, by certificate | The operator and the policy [@androulaki_hyperledgerfabricdistributed_2018] |
+| Permissioned, as an outsider | Nothing | Unknown to you | The operator |
+
+:::
+
+For the analyst: on an open ledger you can trace to the edge of an exchange or an issuer. On a closed one, the edge is the network itself.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets every ledger met so far side by side by what an analyst can see. It matters here because students need one picture to say, for any case, where their view ends. Emphasize the last row: from outside, a permissioned ledger is blank.
+
+**Key Points**
+- Open ledgers: everyone reads, no one is named, and only a token issuer can stop a token.
+- Permissioned ledgers: members read what the policy allows, everyone is named, and the operator controls.
+- The outsider row is the analyst's usual seat.
+
+**Walkthrough**
+1. Read across each row.
+2. Ask: which row is a bank's internal ledger? (Permissioned, as an outsider.)
+
+**Sources**
+- @tether_tethertokensource_2017
+- @tether_usdttroncontract_2026
+- @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+
+## A CBDC is a ledger a central bank runs {.smaller}
+
+- **Status:** 146 countries and currency unions are exploring a central bank digital currency (CBDC); 3 have launched one (the Bahamas, Jamaica, Nigeria); there are 41 pilots. The US is the only G20 country not exploring one [@atlanticcouncil_cbdctracker_2026].
+- **mBridge, a shared CBDC ledger:** a platform "based on a new blockchain – the mBridge Ledger," compatible with the Ethereum Virtual Machine. Each founding central bank ran a validating node; the BIS handed the project to its partners in October 2024 [@l34_bis_mbridge_mvp_2024].
+- For the analyst: a CBDC on a ledger is a permissioned ledger. The central bank is the operator, and the trace stops at its edge.
+
+::: {.callout-note}
+**As of May 2026** (Atlantic Council's last update, read 31 Oct 2026). CBDC counts change often.
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide places CBDCs in the lesson's frame: a CBDC on a ledger is a permissioned ledger with a central bank as operator. It matters here because foreign CBDCs, and cross-border platforms like mBridge, are where a US analyst may see funds leave public view. Emphasize that the analyst can name the operator but cannot read the ledger.
+
+**Key Points**
+- Many countries are exploring CBDCs; only three have launched one.
+- The US is the only G20 country not exploring a CBDC (as of May 2026).
+- mBridge is a shared ledger whose validating nodes were run by central banks; the BIS left it in October 2024.
+
+**Walkthrough**
+None
+
+**Sources**
+- @atlanticcouncil_cbdctracker_2026
+- @l34_bis_mbridge_mvp_2024
+
+:::
+
+## Fabric demo: watch the gatekeeper work {.smaller}
+
+The instructor runs a live Hyperledger Fabric network: a shared channel where member organizations issue and check diplomas [@hyperledger_blockchainplatformenterprise_2023]. Watch for three things:
+
+1. **Who signed it?** Each transaction names the organization that endorsed it, by its MSP identity [@androulaki_hyperledgerfabricdistributed_2018].
+2. **Who decides?** Take peers offline and a write fails its endorsement policy; a member can read and propose but not endorse.
+3. **Who can see it?** You see it because the instructor admitted you. Without a certificate, there is nothing to read.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets up the instructor's Fabric demo that closes the day. It matters here because students see concept 49 working: identity, policy and access, controlled by an operator. Emphasize the three questions; the demo answers each one live.
+
+**Key Points**
+- Every transaction names its endorsing organization by MSP identity.
+- An endorsement policy decides which organizations must sign; with too few peers up, writes fail.
+- Membership and endorsement are separate: a member may read and propose without the right to endorse.
+- Access itself is the gatekeeper: no certificate, no view.
+
+**Walkthrough**
+1. Hand the three questions to students to answer during the demo.
+2. After the demo, ask each question aloud and take answers.
+
+**Sources**
+- @hyperledger_blockchainplatformenterprise_2023
+- @androulaki_hyperledgerfabricdistributed_2018
+
+:::
+
+## What to carry out of this lesson {.smaller}
+
+- Tron reads like Ethereum: accounts, T-addresses, TRC-20 tokens; blocks are final once solidified.
+- On Tron, whoever supplies the Energy pays for a USDT move, and that payer is a link.
+- About half of all USDT is on Tron (as of 31 Oct 2026); Tether can freeze it there as on Ethereum.
+- A freeze answer carries its block and date.
+- On a permissioned ledger the operator admits, names and keeps everyone; the trace stops at its edge.
+- A CBDC on a ledger is a permissioned ledger run by a central bank.
+
+::: {style="font-size: .8em;"}
+
+| Where it returns | What |
+| --- | --- |
+| Day 5 lab | Tron snapshot; Fabric demo |
+| Day 9 | Tron stablecoin trace: "Freezable? Which issuer, and how fast?" |
+| Day 10 | Final trace with Tron USDT |
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarises the lesson in six lines and says where each returns. It matters here because the afternoon lab and the day 9 and 10 traces build on it. Emphasize the two edges: the issuer's freeze and the operator's network.
+
+**Key Points**
+- Tron: an account chain with a different fee model.
+- USDT on Tron: the same freeze controls; date every status.
+- Permissioned ledgers and CBDCs: the trace stops at the operator's edge.
+
+**Walkthrough**
+1. Ask a student to say each line in their own words.
+
+**Sources**
+None
+
+:::
+
+<!-- Hidden 31 Oct 2026 when this lesson was rebuilt as D5 ③ ledgers with a gatekeeper (Build Tracker D5 ③; Course Audit 01-PC "Revise"): kept for reuse, not shown. -->
+
+:::: {.content-hidden}
 
 ## Scenario
 
@@ -76,7 +615,9 @@ None
 
 :::
 
+::::
 
+:::: {.content-hidden}
 
 ## Agenda
 
@@ -108,6 +649,11 @@ None
 @bano_consensusageblockchains_2017; @yaga_blockchaintechnologyoverview_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Why Not A Shared Database?
 
 - If one company runs the database, everyone else must trust that company not to:
@@ -142,6 +688,11 @@ None
 @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @androulaki_hyperledgerfabricdistributed_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## What Changes
 
 - The hard problem shifts from "how do we let anyone join safely?" to "how do we control participation and authority safely?"
@@ -174,6 +725,11 @@ None
 @yaga_blockchaintechnologyoverview_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Key Components {.smaller}
 
 :::: {.columns}
@@ -236,6 +792,11 @@ None
 @bano_consensusageblockchains_2017; @androulaki_hyperledgerfabricdistributed_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Open vs Curated Admission
 
 :::: {.columns}
@@ -299,6 +860,11 @@ None
 @androulaki_hyperledgerfabricdistributed_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Trust Shifts
 
 - In PoW, security relies on **costly work**: 
@@ -331,6 +897,11 @@ None
 @androulaki_hyperledgerfabricdistributed_2018; @hyperledger_blockchainplatformenterprise_2023
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Identity
 
 - Identity is not just convenience; it defines who the system recognizes and what their actions mean.
@@ -361,6 +932,11 @@ None
 @androulaki_hyperledgerfabricdistributed_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Membership Lifecycle
 
 :::: {.columns}
@@ -416,6 +992,11 @@ None
 @castro_practicalbyzantinefault_1999; @ongaro_searchunderstandableconsensus_2014
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Roles and Duties {.smaller}
 
 | Role | Responsibility | Why Separate? |
@@ -444,6 +1025,11 @@ None
 @androulaki_hyperledgerfabricdistributed_2018; @ongaro_searchunderstandableconsensus_2014
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Consensus
 
 - Because participants are known, permissioned systems can use classical CFT or BFT techniques.
@@ -478,6 +1064,11 @@ None
 @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @androulaki_hyperledgerfabricdistributed_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Deterministic Finality
 
 :::: {.columns}
@@ -524,6 +1115,11 @@ None
 @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @yaga_blockchaintechnologyoverview_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Transaction Path
 
 :::: {.columns}
@@ -584,6 +1180,11 @@ This slide turns the permissioned model into an operational transaction pipeline
 @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @yaga_blockchaintechnologyoverview_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Policy Layers
 
 :::: {.columns}
@@ -634,7 +1235,9 @@ None
 
 :::
 
+::::
 
+:::: {.content-hidden}
 
 ## Governance Boundary
 
@@ -671,6 +1274,11 @@ None
 @pishdar_denialofserviceattackspermissioned_2025; @androulaki_hyperledgerfabricdistributed_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Governance Actions
 
 :::: {.columns}
@@ -757,6 +1365,11 @@ None
 @yaga_blockchaintechnologyoverview_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Threats to Permissioned Systems
 
 - In **permissionless systems**, the biggest threats often target the consensus mechanism itself.
@@ -787,6 +1400,11 @@ None
 @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016; @androulaki_hyperledgerfabricdistributed_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Identity Theft Risks
 
 | Compromised Target | Ability | Impact |
@@ -816,6 +1434,11 @@ None
 @yaga_blockchaintechnologyoverview_2018; @androulaki_hyperledgerfabricdistributed_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Sybil Resistance
 
 - Permissioned systems do not ignore Sybil risk.
@@ -848,6 +1471,11 @@ None
 @yaga_blockchaintechnologyoverview_2018; @ukgovernmentchiefscientificadviser_distributedledgertechnology_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Privacy
 
 - Permissioned does **not** mean "everything is private."
@@ -882,6 +1510,11 @@ None
 @yaga_blockchaintechnologyoverview_2018; @androulaki_hyperledgerfabricdistributed_2018
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## Case Study: [Fabric Lockout](https://lists.lfdecentralizedtrust.org/g/fabric/topic/criticial_admin_certificate/71743922)
 
 
@@ -935,7 +1568,9 @@ None
 
 :::
 
+::::
 
+:::: {.content-hidden}
 
 ## Recap: Three Approaches Compared {.smaller}
 
@@ -1007,6 +1642,11 @@ None
 None
 
 :::
+
+::::
+
+:::: {.content-hidden}
+
 ## When To Use What? {.smaller}
 
 For each scenario, decide as a class: **permissioned ledger**, **permissionless ledger**, or **mutable database**?
@@ -1045,7 +1685,9 @@ None
 
 :::
 
+::::
 
+:::: {.content-hidden}
 
 ## Wrap-Up
 
@@ -1072,4 +1714,7 @@ None
 None
 
 :::
+
+::::
+
 ## References
