@@ -130,6 +130,8 @@
         [class*="text-red-"], [class*="text-rose-"] { color: var(--danger); }
         .text-white, .text-gray-200 { color: var(--fg); }
         .hidden { display: none !important; }
+        /* Primer cut (Course Audit, signatures): ECDH, the curve plot and nonce reuse are off target. Kept in the file; add ?full to the URL to show them. */
+        body:not(.show-all) .off-target { display: none !important; }
         .block { display: block; }
         .inline-block { display: inline-block; }
         .grid { display: grid; grid-template-columns: 1fr; }
@@ -215,6 +217,7 @@
     </style>
 </head>
 <body class="hero-pattern min-h-screen text-white">
+    <script>if (new URLSearchParams(location.search).has('full')) document.body.classList.add('show-all');</script>
     <nav class="bg-black/50 backdrop-blur-md">
         <div class="container mx-auto px-4 py-4 flex justify-end">
             <div class="font-semibold">Asymmetric Crypto & Signatures Lab</div>
@@ -224,7 +227,7 @@
     <main class="container mx-auto px-4 py-8">
         <header class="mb-8 text-center">
             <h1 class="text-4xl font-bold mb-2"><i class="fas fa-key text-purple-400"></i> Asymmetric Encryption & Digital Signatures</h1>
-            <p class="text-gray-300 max-w-3xl mx-auto">Generate keypairs, sign/verify messages with separate public/private keys, perform key agreement, and compare RSA, ECDSA, and Ed25519 workflows. ECC-specific enrichment stays available when the selected algorithm supports it.</p>
+            <p class="text-gray-300 max-w-3xl mx-auto">Generate keypairs, sign and verify messages with separate public and private keys, see why a tampered message or the wrong key fails verification, and derive a toy address from a public key. This lab signs with P-256 or Ed25519 (or RSA); Bitcoin, Ethereum and Tron use secp256k1, which day 1 teaches.</p>
         </header>
 
         <!-- Key Pair Generation -->
@@ -337,12 +340,12 @@
                 <div><strong>Conceptual flow:</strong> <span id="hashFlow">Message → Hash → Sign with private key → Verify with public key</span></div>
                 <div class="mt-1">Key roles: <span class="text-emerald-300">Private key = sign</span> · <span class="text-sky-300">Public key = verify</span></div>
                 <div class="mt-2 text-gray-300">Browser note: WebCrypto signs the framed message bytes when the page is served from HTTPS or localhost. On this HTTP lab URL, the controls use a visible toy signature fallback so students can still test the hash, sign, tamper, wrong-key, and verify flow.</div>
-                <div id="algorithmNote" class="mt-2 text-gray-300">Algorithm note: <strong>RSA-2048</strong> mirrors the classic RSA sign/verify story from the lesson. <strong>ECDSA P-256</strong> pairs well with the curve intuition panel, and <strong>Ed25519</strong> offers deterministic modern signing behavior.</div>
+                <div id="algorithmNote" class="mt-2 text-gray-300">Algorithm note: <strong>RSA-2048</strong> mirrors the classic RSA sign/verify story from the lesson. <strong>ECDSA P-256</strong> is the default here, and <strong>Ed25519</strong> offers deterministic modern signing behavior. Neither is the curve Bitcoin, Ethereum or Tron use (secp256k1).</div>
             </div>
         </section>
 
         <!-- Key Agreement (ECDH) -->
-        <section id="keyAgreementSection" class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-teal-500/30 mb-6">
+        <section id="keyAgreementSection" class="off-target bg-white/10 backdrop-blur-md rounded-xl p-6 border border-teal-500/30 mb-6">
             <h2 class="text-2xl font-bold mb-4"><i class="fas fa-handshake text-teal-400 mr-2"></i>Key Agreement (ECDH)</h2>
             <p class="text-sm text-gray-300 mb-4">Generate a shared secret using elliptic-curve Diffie–Hellman (ECDH). Real world: TLS, P2P handshakes, and wallets derive AEAD keys from ECDH via a KDF. On the HTTP lab URL, this panel uses a toy key-agreement fallback so the exchange remains interactive.</p>
             
@@ -457,7 +460,7 @@
         </section>
 
         <!-- ECC Curve Visualization (Single, step-by-step) -->
-        <section id="eccSection" class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-indigo-500/30 mb-6">
+        <section id="eccSection" class="off-target bg-white/10 backdrop-blur-md rounded-xl p-6 border border-indigo-500/30 mb-6">
             <h2 class="text-2xl font-bold mb-4"><i class="fas fa-project-diagram text-indigo-400 mr-2"></i>Elliptic Curve: One Picture, Full Story</h2>
             <p class="text-sm text-gray-300 mb-4">This graph is an intuition aid drawn over the real numbers. Real deployed curves such as P-256 work over finite fields, so the canvas illustrates point-addition ideas without claiming to be the literal production curve.</p>
 
@@ -550,7 +553,7 @@
         </section>
 
         <!-- Nonce Reuse Demo (ECDSA) -->
-        <section id="nonceSection" class="bg-yellow-900/20 border border-yellow-700/30 rounded-xl p-6 mb-6">
+        <section id="nonceSection" class="off-target bg-yellow-900/20 border border-yellow-700/30 rounded-xl p-6 mb-6">
             <h2 class="text-2xl font-bold mb-2"><i class="fas fa-triangle-exclamation text-yellow-400 mr-2"></i>ECDSA Nonce Reuse Toy Demo</h2>
             <p class="text-gray-300 mb-4">ECDSA signature math uses a per-signature nonce <span class="mono">k</span>. This toy panel exposes the private scalar <span class="mono">d</span>, the message hash <span class="mono">h</span>, the nonce <span class="mono">k</span>, and the signature values <span class="mono">r</span> and <span class="mono">s</span> so the reuse failure is visible.</p>
             <div class="grid md:grid-cols-3 gap-4 mb-4">
@@ -1045,16 +1048,16 @@
             const algorithmNote = document.getElementById('algorithmNote');
             const formatNote = document.getElementById('signatureFormatNote');
             if (isRSASelection()) {
-                if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>RSA-2048</strong> mirrors the classic RSA lesson flow: the private key signs and the public key verifies. The ECC-specific curve and nonce panels are hidden because they do not apply to RSA.';
+                if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>RSA-2048</strong> mirrors the classic RSA lesson flow: the private key signs and the public key verifies.';
                 if (formatNote) formatNote.innerHTML = 'Format: RSA signatures here use <span class="mono">RSASSA-PKCS1-v1_5</span> with SHA-256 and appear as fixed-length hex.';
                 return;
             }
             if (isEd25519Selection()) {
-                if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>Ed25519</strong> gives deterministic modern signing behavior. The ECC-specific P-256 panels stay hidden because Ed25519 does not use the same curve representation.';
+                if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>Ed25519</strong> gives deterministic modern signing behavior.';
                 if (formatNote) formatNote.innerHTML = 'Format: Ed25519 signatures appear as raw 64-byte hex values.';
                 return;
             }
-            if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>ECDSA P-256</strong> pairs well with the curve intuition panel below and the visible nonce-reuse toy demo. <strong>RSA-2048</strong> and <strong>Ed25519</strong> remain available in the selector when you want a different signature family.';
+            if (algorithmNote) algorithmNote.innerHTML = 'Algorithm note: <strong>ECDSA P-256</strong> is the default here, but Bitcoin, Ethereum and Tron use a different curve, secp256k1. <strong>RSA-2048</strong> and <strong>Ed25519</strong> remain available in the selector when you want a different signature family.';
             if (formatNote) formatNote.innerHTML = 'Format: browser ECDSA P-256 signatures appear as raw <span class="mono">r || s</span> values: 32 bytes of <span class="mono">r</span> followed by 32 bytes of <span class="mono">s</span>.';
         }
         async function updateVerifierKeyPreview() {

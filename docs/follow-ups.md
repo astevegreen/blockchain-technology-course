@@ -130,6 +130,14 @@ slide index), which is never listed here.
   `wallet/quizes/build-steps.sh` (it names the signers) are fenced. Decide whether the rest count as instructor
   seeds (rule 1) and fence them in `pages.yml` and `vm-build.yml`. (31 Oct 2026, D2 wallet lab review)
 
+- `blockchain-course/assets/labs/tamper-ledger/tamper_ledger_lab.html`: editing an entry's text re-renders the whole
+  chain on every keystroke, so the field loses focus after one character. The primer says "change one digit" to
+  work around it. Render the chain only on change or blur. (31 Oct 2026, primer page build)
+
+- `blockchain-course/assets/labs/signatures/index.html` (the "Browser note", about line 342) always says "On this HTTP
+  lab URL, the controls use a visible toy signature fallback", on HTTPS too. Make the note conditional on the
+  fallback actually running. (31 Oct 2026, primer page build)
+
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`
   step 2 now says questions first. The reviewer is a rail: the change runs the rail audit. (30 Oct 2026)
