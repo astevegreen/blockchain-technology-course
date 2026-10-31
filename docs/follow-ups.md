@@ -23,10 +23,14 @@ slide index), which is never listed here.
   spotting a CoinJoin and the memo (lines 61, 372, 475, 519, 551, 554, 555); attribution is now 01-FO the same
   day (D6 ③), CoinJoin is D7 and memos are retired. (31 Oct 2026, 01-FO recut as D6 ③)
 
+- 01-FO "BTC-e: Weak KYC Made the Cluster Actionable" now opens the BTC-e case, with the intro hidden: it never
+  says BTC-e was an exchange, or when it ran. Add one cited line of context. (31 Oct 2026, 01-FO unrated slides hidden)
+
 ## Quizzes
 - 01-FO bank (`quizes/quiz_json/`) and `lesson_synthesis/` 01-FO synthesis predate the recut as Attribution and
-  confidence: no questions on the nine new slides (q9, on the hidden provenance slides, was retired); q10 still
-  traces to Colonial Pipeline, hidden 24 Oct as moved to 03-FO. (31 Oct 2026, 01-FO recut as D6 ③)
+  confidence: no questions on the nine new slides (q9, and q1-q4 on the unrated slides hidden the same day, were
+  retired, leaving 4 slide questions); q10 still traces to Colonial Pipeline, hidden 24 Oct as moved to 03-FO.
+  (31 Oct 2026, 01-FO recut as D6 ③)
 - 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`) and the day 2 daily
   quiz have no question on the new slide "A blockchain is a record, not a currency" (one chain many assets, one
   asset many chains, a chain with no coin); q1 traces to the hidden "What is a Blockchain?" slide, so retrace it to
