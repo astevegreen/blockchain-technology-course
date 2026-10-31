@@ -1,0 +1,609 @@
+---
+title: "Exchanges, OTC Desks and P2P Markets"
+subtitle: 'Section VIII: Forensics'
+author: Army Cyber Institute
+lesson: 04-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## A deposit is the chain's last word on a customer {.smaller}
+
+**Bottom line:** at an exchange, the chain shows funds reaching a deposit address and then swept into the exchange's own wallets. Trades and transfers after that are entries in the exchange's books [@coinbase_10k_2026; @scott_digitalwalletsselected_2022]. The deposit is what an analyst can name; OTC desks and P2P markets leave even less on-chain.
+
+::: {style="font-size: .7em;"}
+
+| Question | The answer tells you | Slide |
+| --- | --- | --- |
+| Where does an exchange keep its customers' coins? | Deposit addresses, a hot wallet, cold wallets | An exchange's wallets |
+| What is a deposit address? | One customer's door into the exchange | One customer's door |
+| What does a sweep look like? | On Ethereum, a forward; on Bitcoin, many inputs gathered | Ethereum sweep, Bitcoin sweep |
+| Where do withdrawals come from? | The exchange's pooled funds, not the customer's deposit | Withdrawals |
+| What links two senders at an exchange? | Using the same deposit address | Shared deposit addresses |
+| Which address do you report? | The deposit, not the sweep | Name the deposit |
+| How do OTC desks and P2P markets differ? | Who holds the keys, and what the chain shows | OTC, P2P, the comparison |
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens day 5 with the question every trace to an exchange raises: what does the chain still show once funds arrive? It matters here because day 4 named exchanges, OTC desks and P2P markets as the exits that sit off-chain (07-EF), and this lesson shows where the on-chain trail stops at each one. Emphasize the bottom line: the deposit address is the last on-chain link to a customer.
+
+**Key Points**
+- Day 2 (05-BF) showed that an exchange holds its customers' keys, gives each customer a deposit address and keeps most funds in cold storage. This lesson reads those wallets on the chain.
+- After the sweep, the exchange keeps coins in shared (omnibus) wallets and records who owns what in its own ledger. Coinbase says so in its 10-K for 2025.
+- OTC desks and P2P markets are the other two off-chain exits; the table's last row compares all three.
+- Who the exchange knows its customers to be, and the rules that make it ask, is the next lesson (D5 ②).
+
+**Walkthrough**
+1. Read the bottom line.
+2. Walk the table, naming the slide that answers each question.
+3. Point at the last row: by the end, students can say which kind of exit funds reached and what the chain can and cannot show about it.
+
+**Sources**
+- @coinbase_10k_2026
+- @scott_digitalwalletsselected_2022
+
+:::
+
+## An exchange's wallets: deposit, hot and cold {.smaller}
+
+:::: {.columns}
+
+::: {.column width="45%"}
+
+```{mermaid}
+flowchart TB
+  A["Customer A"] --> DA["Deposit A"]
+  B["Customer B"] --> DB["Deposit B"]
+  DA -- sweep --> H["Hot wallet"]
+  DB -- sweep --> H
+  H <-- rebalance --> C["Cold wallets"]
+  H -- withdrawal --> W["Any customer"]
+```
+
+:::
+
+::: {.column width="55%"}
+::: {style="font-size: .8em;"}
+- Each customer gets **deposit addresses** whose keys the exchange holds (05-BF) [@victor_clustering_2020].
+- The exchange **sweeps** deposits into its own wallets, leaving the deposit address empty [@sendin_detectingcoldstorage_2018].
+- A **hot wallet** is online, to pay withdrawals; **cold wallets** are offline and hold most of the funds [@lesavre_blockchainnetworkstoken_2021; @sendin_detectingcoldstorage_2018].
+- **As of its 10-K for 2025**, Coinbase "generally seek[s] to hold no more than 2% of assets under custody in hot wallets" [@coinbase_10k_2026].
+- Coins sit "in an omnibus manner on the blockchain and separately recorded using a ledger system" [@coinbase_10k_2026].
+:::
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide draws the wallets one exchange runs and the flows between them. It matters here because every exchange trace passes through these boxes, and each box carries a different meaning: a deposit address belongs to one customer, a hot or cold wallet to thousands. Emphasize that the arrows in the diagram are on-chain, and what happens inside the ledger is not.
+
+**Key Points**
+- Deposit addresses are created per customer; the exchange holds their keys.
+- A sweep moves each deposit into the exchange's own wallets.
+- The hot wallet is online and pays withdrawals; cold wallets are offline and hold most funds. Coinbase, as of its 10-K for 2025 (filed February 2026), aims to keep no more than 2% of custodied assets in hot wallets.
+- Coins in the exchange's wallets are pooled ("omnibus"); the ledger, not the chain, says which customer owns what.
+
+**Walkthrough**
+1. Follow customer A's deposit from top to bottom: wallet, deposit address, sweep, hot wallet.
+2. Point at the rebalance arrow: the exchange moves funds between hot and cold on its own schedule.
+3. Point at the withdrawal arrow: it leaves from the hot wallet, not from deposit address A. A later slide comes back to this.
+
+**Sources**
+- @victor_clustering_2020
+- @sendin_detectingcoldstorage_2018
+- @lesavre_blockchainnetworkstoken_2021
+- @coinbase_10k_2026
+
+:::
+
+## A deposit address is one customer's door {.smaller}
+
+::: {style="font-size: .85em;"}
+
+- "Exchanges typically create so-called deposit addresses, which will then forward received funds to a main address" [@victor_clustering_2020].
+- "These deposit addresses are created per customer" [@victor_clustering_2020]. Whoever sends to one is paying into one exchange account.
+- The exchange holds the deposit address's key, so the customer never signs from it (05-BF) [@scott_digitalwalletsselected_2022].
+- At Kraken, **as of October 2026**, funds can be deposited only after the account is verified [@kraken_getverified_2026]. Who the exchange knows the customer to be, and why it must ask, is the next lesson (D5 ②).
+- In Ethereum data through September 2019, Victor found 6,670,392 deposit addresses forwarding to 186 exchange addresses on Ethereum [@victor_clustering_2020].
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains what a deposit address is: an address the exchange makes for one customer and controls itself. It matters here because the deposit address is the one exchange address that points at a single account; the hot and cold wallets point at everyone. Emphasize "per customer".
+
+**Key Points**
+- An exchange gives each customer deposit addresses and forwards what arrives to a main address of its own.
+- Because each deposit address belongs to one account, a payment into it is a payment into that account.
+- The customer never holds the deposit address's key; the exchange does.
+- Kraken lets funds be deposited only after verification; the next lesson covers what that verification is and the rules behind it.
+- The scale is large: millions of deposit addresses for fewer than two hundred exchange addresses, in Victor's data through September 2019.
+
+**Walkthrough**
+1. Read the Victor quote and underline "per customer".
+2. Ask: if two different wallets send to the same deposit address, whose account received the money? (The same account. A later slide uses this.)
+3. Read the scale figure and give its date: Ethereum data through September 2019.
+
+**Sources**
+- @victor_clustering_2020
+- @scott_digitalwalletsselected_2022
+- @kraken_getverified_2026
+
+:::
+
+## On Ethereum, a sweep forwards the deposit {.smaller}
+
+::: {style="font-size: .85em;"}
+
+| What the sweep shows | Why |
+| --- | --- |
+| The deposit address sends on almost all it received | "The forwarded amount is often slightly less than what was received, as the exchange has to pay for the transaction costs" [@victor_clustering_2020] |
+| A token deposit is forwarded in full | "Transaction fees cannot be paid with tokens" [@victor_clustering_2020] |
+| The forward comes within hours | 95% of forwards came within 3,185 blocks, "approximately 13 hours" [@victor_clustering_2020] |
+| A small deposit may wait | The exchange may wait for more deposits before paying the fee to forward [@victor_clustering_2020] |
+| The deposit address may be a contract | "In most cases, deposit addresses are EOAs, but they can also be smart contracts" [@victor_clustering_2020] |
+
+: {tbl-colwidths="[38,62]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how a sweep looks on Ethereum: the deposit address forwards what it received, less the fee, to the exchange's main address. It matters here because this pattern is how an analyst recognizes a deposit address before any label confirms it. Emphasize the three tells: nearly the same amount, a short wait, and one destination that receives thousands of such forwards.
+
+**Key Points**
+- For ETH, the forward is slightly smaller than the deposit, because the exchange pays the fee from it. At the 95th percentile the difference was under 0.0083 ETH in Victor's data.
+- For tokens, the forward is the full amount: the fee is paid in ETH, from elsewhere.
+- 95% of forwards came within about 13 hours (3,185 blocks).
+- A small deposit may sit until more arrive, so a slow forward is not proof of anything.
+- Some exchanges use contracts as deposit addresses; Victor names Kraken's, which forward automatically.
+
+**Walkthrough**
+1. Read each row: what the sweep shows, then why.
+2. Ask: a deposit of 2.0 ETH, and 40 minutes later 1.9996 ETH leaves to an address that has received 50,000 such forwards. What is the first address? (Probably a deposit address.)
+3. Point at the contract row: the pattern is the same; the forwarder is code.
+
+**Sources**
+- @victor_clustering_2020
+
+:::
+
+## On Bitcoin, a sweep gathers many deposits {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+::: {style="font-size: .8em;"}
+**What a sweep looks like**
+
+- Exchanges "periodically move the deposits made on client's addresses into an off line address, keeping a zero balance on client's addresses" [@sendin_detectingcoldstorage_2018].
+- One transaction, many inputs, each a recent customer deposit, and one or two outputs. Sendin tested 20 to 80 inputs, funded in the last 12 hours or so [@sendin_detectingcoldstorage_2018].
+- No standard: how often and how much is "defined by each exchange" [@sendin_detectingcoldstorage_2018].
+- In a 2017 survey cited by Sendin, 92% of exchanges used cold storage, for 87% of funds on average [@sendin_detectingcoldstorage_2018].
+:::
+:::
+
+::: {.column width="50%"}
+::: {style="font-size: .8em;"}
+**Why it fools the input heuristic**
+
+- The common-input heuristic says all inputs of a transaction share an owner (02-FO) [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- For a sweep that is true of the keys, and false of the coins: the exchange has "control over addresses but not ownership over Bitcoins" [@sendin_detectingcoldstorage_2018].
+- Applied blindly, "the clients of an exchange are considered as a unique entity" [@sendin_detectingcoldstorage_2018].
+- So: merge the sweep's inputs into the exchange's cluster, never into one customer.
+:::
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how a sweep looks on Bitcoin and why it misleads the common-input heuristic. It matters here because day 6 (02-FO) teaches that heuristic, and an exchange sweep is the textbook case where it links the wrong things. Emphasize the difference between who holds the keys and who owns the coins.
+
+**Key Points**
+- A Bitcoin sweep spends many recent deposits at once into one or two outputs, often cold storage.
+- Sendin's detector looked for many inputs funded recently and few outputs; each exchange sets its own schedule, so the numbers are a guide, not a rule.
+- The 92% and 87% figures come from a 2017 survey, cited in Sendin's 2018 paper.
+- The common-input heuristic links all the inputs to the exchange, correctly; it would be wrong to read them as one customer's coins.
+
+**Walkthrough**
+1. Draw a transaction with 60 inputs and 2 outputs; say each input was funded by a different sender in the last few hours.
+2. Ask: one owner? (One key holder, the exchange; sixty customers.)
+3. Read the Sendin quote on control and ownership.
+
+**Sources**
+- @sendin_detectingcoldstorage_2018
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+
+:::
+
+## Withdrawals come from the pool, not the deposit {.smaller}
+
+::: {style="font-size: .85em;"}
+
+- A withdrawal is paid from the exchange's pooled wallets, not from the customer's deposit address: coins are held "in an omnibus manner on the blockchain" [@coinbase_10k_2026].
+- On Bitcoin, withdrawals often form a **peeling chain**: one large balance pays a small amount out, sends the rest to change, and repeats. Meiklejohn et al. saw it "in the withdrawals for many banks and exchanges" [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- Trades inside the exchange match buyers and sellers on its order books; the exchange acts "as an agent in transactions between customers" and records the result in its ledger [@coinbase_10k_2026].
+- Transfers between two customers of one exchange can happen entirely in its books (05-BF) [@scott_digitalwalletsselected_2022].
+- So the chain cannot link a deposit to a later withdrawal. Only the exchange's records can.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why the trail breaks at an exchange: what comes out is paid from a shared pool, and what happened in between is in the exchange's books. It matters here because students will be tempted to match a deposit to a withdrawal of a similar amount, and the chain does not support that link. Emphasize the last bullet.
+
+**Key Points**
+- Withdrawals leave from the exchange's hot wallet, which holds everyone's coins. Coinbase describes its holdings as omnibus on-chain, with a ledger saying who owns what.
+- On Bitcoin, exchange withdrawals often look like peeling chains, which Meiklejohn et al. observed in 2013. Day 6 (02-FO) reads peeling chains in detail.
+- Trading happens on the exchange's order books and lands in its ledger, not on the chain.
+- Transfers between two customers of the same exchange can happen in the books alone.
+- Linking a deposit to a withdrawal needs the exchange's records; the next lesson covers what exchanges record about customers.
+
+**Walkthrough**
+1. Point back at the diagram's withdrawal arrow: from the hot wallet, not from deposit address A.
+2. Ask: customer A deposits 1 BTC; an hour later, 1 BTC leaves the hot wallet. Is that A's withdrawal? (The chain cannot say. Thousands of customers share the hot wallet.)
+3. Read the peeling-chain sentence and note that this pattern is common to legitimate exchange withdrawals.
+
+**Sources**
+- @coinbase_10k_2026
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @scott_digitalwalletsselected_2022
+
+:::
+
+## Shared deposit addresses link their senders {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+::: {style="font-size: .8em;"}
+**The heuristic**
+
+- "Multiple addresses that send funds to the same deposit address are highly likely to be controlled by the same entity" [@victor_clustering_2020].
+- The reason: a deposit address belongs to one exchange account.
+- In Victor's data through September 2019, "out of the 3,261,091 addresses that have used a deposit address, 1,446,715 (44.3%) have used the same deposit address with more than one account" [@victor_clustering_2020].
+:::
+:::
+
+::: {.column width="50%"}
+::: {style="font-size: .8em;"}
+**Where it fails**
+
+- An address that forwards the same amount to an exchange wallet looks like a deposit address, so an adversary can create false links [@victor_clustering_2020].
+- Victor examined one layer of forwarding only [@victor_clustering_2020].
+- A label is stronger than a pattern: confirm that the destination belongs to an exchange before calling anything a deposit address.
+- Say it with a confidence: "Moderate confidence that addresses A and B are controlled by one entity: both sent to deposit address D, which forwards to an address labelled as exchange X."
+:::
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the deposit-address heuristic: senders who share a deposit address are likely one entity. It matters here because it is one of the few Ethereum heuristics that links addresses across a whole account, and the day 5 lab reads an exchange deposit and its sweep. Emphasize the limits and the confidence word.
+
+**Key Points**
+- One deposit address means one account, so its senders likely share an owner.
+- In the data through September 2019, 44.3% of addresses that used a deposit address shared it with another; the heuristic links many addresses.
+- An adversary can fake the pattern by forwarding funds exactly; Victor looked at one layer of forwarding only.
+- A confirmed exchange label on the destination makes the reading stronger than the pattern alone.
+- The confidence words are High, Moderate and Low.
+
+**Walkthrough**
+1. Read the heuristic and its reason.
+2. Read the 44.3% figure and its date.
+3. Read the example sentence and point out its three parts: the confidence, the link, the evidence.
+4. Ask: what would lower the confidence? (No label on the destination; a forwarder that also sends elsewhere.)
+
+**Sources**
+- @victor_clustering_2020
+
+:::
+
+## Name the deposit, not the sweep {.smaller}
+
+::: {style="font-size: .85em;"}
+
+| Address | Whose funds it holds | What naming it tells the reader |
+| --- | --- | --- |
+| **Deposit address** | One customer account [@victor_clustering_2020] | Which account received the funds |
+| **Hot wallet** | Many customers' coins, pooled [@coinbase_10k_2026] | Only which exchange |
+| **Cold wallet** | Most of the exchange's funds [@sendin_detectingcoldstorage_2018] | Only which exchange |
+
+: {tbl-colwidths="[22,38,40]"}
+
+- Report the deposit address and the transaction that paid into it. Keep the sweep as the evidence that ties that address to the exchange; it says nothing more about the customer.
+- An exchange can freeze funds; Chainalysis links that to a decline in exchange cash-outs of pig-butchering scam proceeds, **as of January 2026** [@chainalysis_launderingnetworks_2026].
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns the lesson into the analyst's habit: when funds reach an exchange, the address worth naming is the deposit address. It matters here because the hot wallet is the address a trace lands on most visibly, and naming it says nothing about which customer received the funds. Emphasize the right-hand column.
+
+**Key Points**
+- A deposit address points at one account; the hot and cold wallets point at the whole exchange.
+- The finding is the deposit address and the deposit transaction, with time and amount.
+- Exchanges can freeze funds, which makes a deposit to one a lead. Chainalysis reported the decline in exchange use for one crime type, pig-butchering proceeds, as of January 2026.
+- What the exchange holds about the account holder is the next lesson.
+
+**Walkthrough**
+1. Read the table row by row, stressing the last column.
+2. Ask: a trace ends "funds reached Exchange X's hot wallet". What is missing? (The deposit address, and its transaction.)
+3. Read the Chainalysis line with its date and scope.
+
+**Sources**
+- @victor_clustering_2020
+- @coinbase_10k_2026
+- @sendin_detectingcoldstorage_2018
+- @chainalysis_launderingnetworks_2026
+
+:::
+
+## OTC desks trade large amounts off the order book {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+::: {style="font-size: .8em;"}
+**What an OTC desk is**
+
+- "OTC (Over The Counter) brokers facilitate trades between individual buyers and sellers" [@chainalysis_moneylaundering_2020].
+- Kraken's desk "allows traders to execute orders off the open Kraken exchange", with a "minimum order size" of \$100,000, **as of October 2026** [@kraken_otc_2026].
+- "Trade obligations must be settled within 24 hours"; crypto settles to the customer's Kraken account "or sent to the external wallet of your choice" [@kraken_otc_2026].
+- Eligibility "is subject to AML/KYC and other requirements" [@kraken_otc_2026].
+:::
+:::
+
+::: {.column width="50%"}
+::: {style="font-size: .8em;"}
+**What the chain shows**
+
+- The trade runs off the open exchange; only the settlement, if it goes to an outside wallet, appears on-chain [@kraken_otc_2026].
+- With orders from \$100,000 [@kraken_otc_2026], the trace to expect is a large transfer to or from a desk's address (an inference, not a rule).
+- "OTC brokers are typically associated with an exchange but operate independently" [@chainalysis_moneylaundering_2020]. A desk's address may sit inside an exchange's cluster.
+:::
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains what an OTC desk does: it arranges large trades directly between two parties, away from the exchange's public order book. It matters here because a desk is an exit for amounts too large for an order book or a DEX pool (07-EF), and its trace looks different from a retail deposit. Emphasize that the deal is off-chain and only the settlement can appear.
+
+**Key Points**
+- An OTC broker matches a buyer and a seller directly.
+- Kraken's desk, as of the date read, trades off the open exchange, starts at \$100,000 and settles within 24 hours, to a Kraken account or an outside wallet.
+- Kraken requires AML/KYC checks for OTC customers; the next lesson covers those rules.
+- On-chain, an OTC trade shows only its settlement. Given the order minimum, expect a large transfer; that is the analyst's inference, not a rule a source states.
+- Desks often sit beside an exchange, so their addresses may appear in its cluster.
+
+**Walkthrough**
+1. Read Chainalysis's definition, then Kraken's terms, with the date read.
+2. Ask: why use a desk instead of the order book? (A large order moves the price, as 07-EF showed for pools.)
+3. Read the right column: what an analyst would see.
+
+**Sources**
+- @chainalysis_moneylaundering_2020
+- @kraken_otc_2026
+
+:::
+
+## Some OTC desks launder: small in, large out {.smaller}
+
+::: {style="font-size: .85em;"}
+
+- "While most OTC brokers run a legitimate business, some of them specialize in providing money laundering services to criminals" [@chainalysis_moneylaundering_2020].
+- In January 2020, Chainalysis reported "a list of 100 major OTC brokers we believe provide money laundering services" [@chainalysis_moneylaundering_2020].
+- **As of January 2026**, Chinese-language laundering networks run OTC services by "collecting numerous small deposits into wholesale amounts suitable for reintroduction into legitimate financial systems" [@chainalysis_launderingnetworks_2026].
+- Some "offer swapping-as-a-service to enable clients to convert their crypto into multiple assets" [@chainalysis_launderingnetworks_2026].
+- The pattern to read: many small payments in from unrelated senders, then a few large transfers out, often to an exchange.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the OTC desk as a laundering exit. It matters here because the aggregation pattern (many small in, few large out) is one an analyst can see on-chain even when the deal itself is off-chain. Emphasize that most desks are legitimate, so the pattern raises a question; it does not answer it.
+
+**Key Points**
+- Most OTC brokers are legitimate; some specialize in laundering. Chainalysis named 100 suspects in January 2020.
+- As of January 2026, Chinese-language laundering networks run OTC services that gather small deposits into wholesale amounts.
+- Some also swap clients' crypto into other assets as a service.
+- The on-chain sign is aggregation: many small inputs from unrelated senders, a few large outputs.
+
+**Walkthrough**
+1. Read the legitimate-business quote first, so students do not assume every desk launders.
+2. Read the 2026 aggregation quote with its date.
+3. Sketch the pattern: twenty small arrows into one address, two large arrows out to an exchange.
+
+**Sources**
+- @chainalysis_moneylaundering_2020
+- @chainalysis_launderingnetworks_2026
+
+:::
+
+## P2P markets: two people trade, an escrow holds {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+::: {style="font-size: .78em;"}
+**What a P2P market is**
+
+- P2P exchangers are "(typically) natural persons engaged in the business of buying and selling" crypto, found through ads, forums, websites and word of mouth, online or in person [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
+- Once the seller confirms the buyer has paid, the seller sends the crypto [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019]. The payment leg (cash, bank transfer, gift card) is off-chain.
+- P2P trading platforms "enable buyers and sellers of CVC to find each other", and sometimes stand between them [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
+:::
+:::
+
+::: {.column width="50%"}
+::: {style="font-size: .78em;"}
+**Two kinds of escrow**
+
+- **A platform holds it.** Paxful kept "an escrow wallet to hold customers' virtual currency while a trade was pending" and controlled its key [@usdoj_paxfulplea_2025]. It was "an online peer-to-peer virtual currency platform" where customers traded crypto for "fiat currency, pre-paid cards and gift cards": 26.7 million trades, nearly \$3 billion, 2017 to 2019 [@doj_paxful_2025]. It "marketed Paxful as a platform that did not require know-your-customer (KYC) information" [@doj_paxful_2025].
+- **A multisig holds it.** Bisq, **as of v1.2 (2019)**, locks both traders' coins in "2-of-2 multisig escrow". A dispute goes to a mediator, then to arbitration once a trader publishes a time-locked transaction [@bisq_v12_2019].
+:::
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains P2P markets: people trading crypto with each other, with the payment made outside the chain, and an escrow holding the crypto until it is. It matters here because a P2P trade leaves only the crypto leg on-chain, and who holds that leg (a platform or a multisig) decides who can say anything about the trade later. Emphasize the off-chain payment leg.
+
+**Key Points**
+- FinCEN's 2019 guidance describes P2P exchangers as people who buy and sell crypto as a business, met online or in person; the seller releases the crypto once paid.
+- A P2P platform helps buyers and sellers find each other, and some also act as the middleman.
+- Paxful held the crypto itself: its plea's statement of facts says it kept an escrow wallet while a trade was pending, controlled the wallet's private key, and released the coins once customers confirmed the trade. DOJ says it handled 26.7 million trades, nearly \$3 billion, between 2017 and 2019, and marketed itself as not needing KYC. The plea and its legal terms are outside this course.
+- In Bisq (as of v1.2), both traders lock coins in a 2-of-2 multisig, so neither can take them alone. If they disagree, a mediator suggests a payout; if that fails, a trader publishes a time-locked transaction (after 10 or 20 days) that pays the escrow to a "donation" address, and asks for arbitration.
+- What rules apply to P2P exchangers is the next lesson (D5 ②).
+
+**Walkthrough**
+1. Read FinCEN's description and point at the off-chain payment.
+2. Contrast the two escrows: a company with records versus a multisig with no company.
+3. Ask: in a Bisq trade, what does the chain show? (A 2-of-2 multisig funded by two parties, then paid out; the bank transfer is invisible.)
+
+**Sources**
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @doj_paxful_2025
+- @usdoj_paxfulplea_2025
+- @bisq_v12_2019
+
+:::
+
+## Exchange, OTC or P2P: who holds the keys {.smaller}
+
+::: {style="font-size: .8em;"}
+
+| | Exchange | OTC desk | P2P market |
+| --- | --- | --- | --- |
+| **Who holds the crypto during the trade** | The exchange [@coinbase_10k_2026] | Each side until it settles, within a deadline; Kraken OTC "does not custody assets" for them [@kraken_otc_2026] | A platform's escrow [@usdoj_paxfulplea_2025], or a 2-of-2 multisig [@bisq_v12_2019] |
+| **Where the price is set** | Its order books [@coinbase_10k_2026] | With the desk, off the open exchange [@kraken_otc_2026] | Between the two traders [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019] |
+| **What the chain shows** | Deposit, sweep, withdrawal from a pool [@victor_clustering_2020; @coinbase_10k_2026] | The settlement, if it leaves the exchange [@kraken_otc_2026] | Bisq: the multisig and its payout [@bisq_v12_2019]. A platform: its deposits and withdrawals; the trade is in its books [@usdoj_paxfulplea_2025]. The payment is off-chain |
+| **Who can stop or freeze it** | The exchange [@chainalysis_launderingnetworks_2026] | The desk can refuse to settle (inference); it cannot freeze an outside wallet | The platform, which holds the escrow key [@usdoj_paxfulplea_2025]; with a multisig, neither trader alone [@bisq_v12_2019] |
+| **Who knows the customer** | The exchange (next lesson) | The desk, as KYC is required [@kraken_otc_2026] (next lesson) | The platform, if any; the counterparty |
+
+: {tbl-colwidths="[22,24,26,28]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide compares the three off-chain exits on the questions an analyst asks. It matters here because an assessment has to say which kind of exit the funds reached, and the answer changes what the chain shows and who else holds information. Emphasize the last two rows.
+
+**Key Points**
+- An exchange holds the crypto, sets prices on its order books and can freeze funds.
+- An OTC desk agrees a price and settles directly; at Kraken, within 24 hours.
+- A P2P trade's crypto is held by a platform's escrow or by a 2-of-2 multisig; the payment leg is off-chain.
+- Who can stop the trade, and who knows the customer, depends on whether a company sits in the middle. The rules that make companies know their customers are the next lesson.
+
+**Walkthrough**
+1. Read the table column by column.
+2. Ask: which exit leaves the least on-chain? (An OTC settlement: one transfer. A P2P trade adds the escrow, but not the payment.)
+3. Ask: which leaves nobody who can freeze it? (A multisig P2P trade.)
+
+**Sources**
+- @coinbase_10k_2026
+- @kraken_otc_2026
+- @doj_paxful_2025
+- @usdoj_paxfulplea_2025
+- @bisq_v12_2019
+- @victor_clustering_2020
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @chainalysis_launderingnetworks_2026
+
+:::
+
+## Practice: characterize three patterns {.smaller}
+
+::: {style="font-size: .85em;"}
+
+For each, say what it most likely is, what would raise or lower your confidence, and give a confidence word (High, Moderate or Low).
+
+1. **Ethereum.** Address X receives ETH from three different addresses over a week. Each time, within an hour, X sends on almost the same amount, about 0.0004 ETH less, to address H. H has received tens of thousands of such forwards and is labelled as an exchange.
+2. **Bitcoin.** One transaction spends 60 inputs, each funded by a different sender within the last six hours, into two outputs. One output goes to an address that holds a large balance and rarely spends.
+3. **Ethereum, a stablecoin.** Thirty unrelated addresses each send \$5,000 to \$9,000 of a stablecoin to address Y over two days. Y then sends \$220,000 in one transfer to an exchange's deposit address.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide has students apply the lesson to three patterns and attach a confidence word to each reading. It matters here because the analyst's job is to characterize activity and say how sure they are, and these three patterns recur in exchange traces. Emphasize that each answer names what would change the confidence.
+
+**Key Points**
+- Pattern 1 is the Ethereum deposit-address pattern: likely deposit address X at the exchange that controls H; the three senders likely fund one account (Victor). Moderate: one strong line, and a known false positive (a shared deposit address) could apply. High needs a second, independent kind of evidence; the exchange label on H is one unverified label. Lower if X also sends elsewhere.
+- Pattern 2 is the Bitcoin sweep pattern: likely an exchange sweeping customer deposits into cold storage (Sendin). The common-input heuristic links the 60 inputs, which share one key-holder, the exchange; it says nothing about the 60 senders who funded them, who are likely 60 customers. Low on behavior alone; Moderate once the large-balance output carries a verified exchange label.
+- Pattern 3 is consistent with OTC aggregation: many small deposits gathered into a wholesale amount (Chainalysis, January 2026). Low on this alone: a merchant or a payroll account can look the same. The deposit to the exchange is the lead to name.
+
+**Walkthrough**
+1. Give students five minutes in pairs to write one sentence for each pattern with a confidence word.
+2. Take answers for pattern 1, then reveal the reading above.
+3. For pattern 2, ask who owns the coins and who holds the keys.
+4. For pattern 3, ask for innocent explanations before revealing the reading.
+
+**Sources**
+- @victor_clustering_2020
+- @sendin_detectingcoldstorage_2018
+- @chainalysis_launderingnetworks_2026
+
+:::
+
+## Next: who the exchange knows, and why {.smaller}
+
+| Where | What you do with today's reading |
+| --- | --- |
+| **Next lesson (D5 ②)** | Exchanges and other VASPs: what they must know about customers, and the rules that make them ask |
+| **Then (D5 ③)** | Tron and USDT on Tron, permissioned ledgers and CBDCs: chains with gatekeepers |
+| **Day 5 lab** | Read an exchange deposit and its sweep |
+| Day 6 (02-FO) | The common-input heuristic, peeling chains and why exchange sweeps mislead them |
+| Week 2 | Every trace that reaches an exchange names the deposit address |
+
+: {tbl-colwidths="[24,76]"}
+
+**Bottom line:** at an exchange, the deposit address is the last on-chain link to a customer. Name it, and say what the chain cannot show past it.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide links the lesson to the rest of day 5 and to later traces. It matters here because the next lesson answers the question this one leaves open: what an exchange knows about the customer behind a deposit address. Emphasize the bottom line.
+
+**Key Points**
+- The next lesson covers what VASPs must know about customers and why.
+- The third lesson covers chains and tokens with gatekeepers: Tron, USDT on Tron, permissioned ledgers and CBDCs.
+- The day 5 lab reads an exchange deposit and its sweep.
+- Day 6 returns to the common-input heuristic and peeling chains.
+
+**Walkthrough**
+1. Walk the table.
+2. Close on the bottom line.
+
+**Sources**
+- @victor_clustering_2020
+
+:::
+
+## References

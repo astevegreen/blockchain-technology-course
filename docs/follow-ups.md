@@ -28,6 +28,7 @@ slide index), which is never listed here.
   49), and its old questions lean on slides now hidden. (31 Oct 2026, D5 ③ rebuild)
 - 02-AS quiz bank may lean on the four slides hidden as moved to 01-PC (CBDC trust, landscape, platforms, USDT on
   Tron). (31 Oct 2026, D5 ③ rebuild)
+- 04-FO (exchanges, OTC, P2P) is new and has no quiz bank or lesson synthesis. (31 Oct 2026, D5 ① build)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`
