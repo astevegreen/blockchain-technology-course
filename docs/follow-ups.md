@@ -51,6 +51,9 @@ slide index), which is never listed here.
 - 06-FO (`lessons/forensics/06-FO-mixers_and_coinjoin.qmd`, Mixers and CoinJoin) has no quiz bank or lesson
   synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026,
   D7 ① build)
+- 07-FO (`lessons/forensics/07-FO-privacy_coins.qmd`, Privacy Coins: Monero and Zcash) has no quiz bank or lesson
+  synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026,
+  D7 ② build)
 - 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
   address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 
