@@ -40,9 +40,9 @@ Marking and assessment. Wallets, exchanges, OTC and P2P sit on days 2 and 5; the
 ## Under review
 Gemini's adversarial audit of this spec: the technical fixes are applied below (the week-one check's slot,
 outcome 5 and 7 evidence, week 1's assessment written in Phase 1, lab fallbacks, darknet markets and a model
-explanation on day 6, day 2's lab entry). Four owner decisions are open: outcome 5's wording, concept 37 and a
-minimum on written items, concept 18's languages, and day 10's trace stop time and marking. See
-`docs/analysis/2026-10-gemini-audit-plan.md`.
+explanation on day 6, day 2's lab entry). Outcome 5's wording is settled (owner, 30 Oct; see Marking and
+assessment). Three owner decisions are open: concept 37 and a minimum on written items, concept 18's languages, and
+day 10's trace stop time and marking. See `docs/analysis/2026-10-gemini-audit-plan.md`.
 
 ## The course
 - **Blockchain Intelligence Analysis**: "Identifying, characterizing and explaining on-chain activity" (owner, 30
@@ -94,7 +94,8 @@ Week 2 places everything week 1 gave up, each day's lessons preparing that after
 ransomware payments and ransomware-as-a-service merge into day 6's second lesson. The formal-briefing lesson (old
 day 9 ③) is gone, as Direction 4 retires it, and nothing replaces the paired morning briefings, the memo or the
 capstone (owner, 30 Oct: "Nothing"). Of the code-reading worksheet (62, 54, 51, 63, 64), only one exploit
-contract read, at the start of day 8's lab, has a place so far.
+contract read, at the start of day 8's lab, is kept: outcome 5 has students recognize the other attack types from
+their transactions (owner, 30 Oct).
 
 Day 9's second lesson also teaches MITRE AADAPT, MITRE's ATT&CK-style matrix of attacks on digital-asset payments.
 It has no sanctions-evasion technique, so sanctions stay with Day 5's second lesson and Day 9's first. Details are
@@ -200,8 +201,13 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   day 10, and the post-test's written item (owner: "Plain explanation").
 - **Outcome 8's lab evidence** is day 6's point (a confidence for each link) and day 9's point (each label's source
   and date), written into those two rubrics, plus the post-test (owner: "Day 6 and day 9 points").
-- **Outcome 5's evidence** is day 3's token contract read, day 8's graded contract read and the post-test; the
-  week-one check comes before day 8 teaches the exploits. Outcome 5's wording is under review (above).
+- **Outcome 5** (Course Design section 2) reads: "Explain an exploit from its code and its transactions. Read the
+  short Solidity contract behind one exploit and the transactions that used it, and say in plain words what the
+  code let the attacker do. Recognize the other attack types (re-entering a contract, borrowing with a flash loan,
+  moving a price, draining a wallet through an approval or an EIP-7702 delegation) from their transaction patterns
+  and the case write-ups. Recognize when only bytecode exists and what a decompiler can and can't recover." (owner:
+  "Go with your recommendation for outcome 5"). Its evidence is day 3's token contract read, day 8's graded
+  contract read and the post-test; the week-one check comes before day 8 teaches the exploits.
 - **Outcome 7's evidence** is day 6's point (the ransom followed to the first service) and the post-test's
   scenario items: all ten of its concepts are taught in week 2, after the week-one check.
 - Daily quizzes are ungraded practice: about five recall questions on the previous day.

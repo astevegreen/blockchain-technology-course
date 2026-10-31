@@ -6,8 +6,8 @@ Course Design page and the Build Tracker, and discussed with the owner on 30 Oct
 held up. Owner: "Create a plan for addressing all the valid concern Gemini discovered and update the documentation
 files and Notion to reflect".
 
-Status: the technical fixes are applied (build spec, Course Design, Build Tracker). Four decisions wait on the owner,
-each with a recommendation; Notion's home page lists them under "Under review".
+Status: the technical fixes are applied (build spec, Course Design, Build Tracker). D1 is decided (30 Oct). Three
+decisions wait on the owner, each with a recommendation; Notion's home page lists them under "Under review".
 
 ## Set aside
 - **F2** (build size against the date): set aside by the owner, 30 Oct.
@@ -37,7 +37,10 @@ Technical fixes: consistency with what the owner already settled, placement, bui
 ## Owner decisions
 One at a time, in this order. Each names what changes once it is decided.
 
-### D1. Outcome 5's wording (F5, F17)
+### D1. Outcome 5's wording (F5, F17): decided 30 Oct
+Owner: "Go with your recommendation for outcome 5". Applied to Course Design outcome 5, the build spec (Marking and
+assessment), the welcome lesson's speaker note, and the D8 lab, D8 ① and D8 ② rows.
+
 Outcome 5 promises that students read code to explain four attack types (re-entry, flash loans, price moves, drains),
 but concepts 14-17 are familiarity, and only one exploit contract read is left (day 8's lab).
 - **Recommended:** "Explain an exploit from its code and its transactions. Read the short Solidity contract behind one
