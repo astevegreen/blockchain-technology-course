@@ -15,15 +15,15 @@ slide index), which is never listed here.
 - 01-EF gas slides (lines 397, 411, 976) still say the tip goes to "the block proposer"; 03-EF now says the block's
   fee recipient (proposer, or the builder who pays the proposer). Align the wording. (31 Oct 2026, 03-EF tip fix)
 
-- 02-IN: the slides that say what a blockchain is and that it is not the same thing as a cryptocurrency (build-spec
-  D1 ①) are all hidden (`content-hidden`, from "What is a Blockchain?"), so no visible slide teaches it and the
-  day 2 daily quiz cannot test it. (31 Oct 2026, daily quiz bank week 1)
-
 - `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd:95` speaker notes say "A's signature, C's signature";
   with BIP 67 sorted keys the order depends on the keys (on the wallet lab's chain it is C's, then A's). Word it as
   "the two signatures, in key order". (31 Oct 2026, D2 wallet lab build)
 
 ## Quizzes
+- 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`) and the day 2 daily
+  quiz have no question on the new slide "A blockchain is a record, not a currency" (one chain many assets, one
+  asset many chains, a chain with no coin); q1 traces to the hidden "What is a Blockchain?" slide, so retrace it to
+  "A blockchain is blocks, each linked to the last". (31 Oct 2026, 02-IN D1 ① slides)
 - 04-EF lesson bank (`ethereum_04-EF-smart_contracts-quiz-bank.json`) has no questions on the Coin reading, the
   4-byte function code, or Vyper and Rust; the day 4 daily bank covers them, the lesson bank does not. (31 Oct 2026,
   daily quiz bank week 1)

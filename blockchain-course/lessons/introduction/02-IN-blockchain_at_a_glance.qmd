@@ -23,12 +23,12 @@ format:
 
 - Anyone can download the whole record and check it for themselves.
 - An address is a pseudonym. A name has to come from outside the chain, such as an exchange's customer records [@meiklejohn_fistfulbitcoinscharacterizing_2013].
-- This lesson follows one real payment from a wallet into the chain, then reads it the way an explorer shows it.
+- This lesson says what a blockchain is, then follows one real payment from a wallet into the chain and reads it the way an explorer shows it.
 :::
 ::: {.column width="42%"}
 | Day 1 | The question |
 | --- | --- |
-| **① This lesson** | What does one payment look like? |
+| **① This lesson** | What is a chain, and one payment in it? |
 | ② Keys and addresses | Who can spend it? |
 | ③ Ledger and finality | When is it settled? |
 | Lab | Read a chain in an explorer |
@@ -43,7 +43,7 @@ This slide sets the day's frame: the chain is a public record of payments that s
 **Key Points**
 - Bitcoin's chain is public and complete back to its first block in 2009, and anyone can verify it.
 - Addresses are pseudonyms; identity comes from off-chain records such as an exchange's customer data.
-- The lesson follows one real payment; lesson ② explains keys and addresses, lesson ③ explains when a payment is settled.
+- The lesson first defines a blockchain and separates it from a cryptocurrency, then follows one real payment; lesson ② explains keys and addresses, lesson ③ explains when a payment is settled.
 
 **Walkthrough**
 1. Read the bottom line aloud and ask what is missing from the record (names).
@@ -53,6 +53,105 @@ This slide sets the day's frame: the chain is a public record of payments that s
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 - @antonopoulos_masteringbitcoinprogramming_2017
 - @meiklejohn_fistfulbitcoinscharacterizing_2013
+
+:::
+
+## A blockchain is blocks, each linked to the last {.smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+**Bottom line:** a blockchain is a record of transactions grouped into blocks. Each block's header holds the hash of the block before it, so the blocks form one chain back to the first [@nakamoto_bitcoinpeertopeerelectronic_2008; @bitcoin.orgdevelopers_blockchaindeveloper_2024].
+
+- A **hash** is a fingerprint of data: change one character and it changes completely [@narayanan_bitcoincryptocurrencytechnologies_2016]. Lesson ② shows how.
+- Edit an old block and its hash changes, so every later link breaks. Nodes reject the edited copy [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- Many full nodes each keep and check their own copy; new blocks only go on the end [@nakamoto_bitcoinpeertopeerelectronic_2008; @hyperledger_introductionfabric_2026].
+:::
+::: {.column width="40%"}
+```{dot}
+//| fig-width: 3.8
+//| fig-height: 4.2
+digraph Chain {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  B0 [label="Block 277,315\nheader + transactions"];
+  B1 [label="Block 277,316\nheader: hash of 277,315\nAlice's payment inside", fillcolor="#fef3c7", color="#f59e0b"];
+  B2 [label="Block 277,317\nheader: hash of 277,316"];
+
+  B0 -> B1 [dir=back, label=" points back"];
+  B1 -> B2 [dir=back, label=" points back"];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines a blockchain before the lesson follows a payment through one. It matters here because analysts must explain to agents and prosecutors why the record can be trusted as evidence: it is held by many independent copies, and any edit to old history breaks the hash links that every node checks. Emphasize the two ideas students carry forward: blocks linked by hashes, and many copies kept and checked by nodes.
+
+**Key Points**
+- A blockchain groups transactions into blocks; each block's header holds the previous block's hash, forming one chain back to the first block.
+- A hash is a fingerprint of data; any change to the data changes it, which lesson ② demonstrates.
+- Editing an old transaction changes that block's hash and breaks every later link, so nodes reject the edited copy.
+- Blocks are added at the end and old ones are not edited; Hyperledger calls a blockchain "an immutable transaction ledger, maintained within a distributed network of peer nodes".
+- Every full node keeps and checks its own copy; there is no central keeper of the record.
+
+**Walkthrough**
+1. Start at block 277,315 and note that it is a batch of transactions with a header.
+2. Move to block 277,316, the block that holds Alice's payment (the worked example that follows); its header holds the hash of 277,315.
+3. Ask what happens to block 277,317's link if someone edits a transaction in 277,316: it no longer matches, and nodes reject the change.
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @hyperledger_introductionfabric_2026
+- @antonopoulos_masteringbitcoinprogramming_2017
+
+:::
+
+## A blockchain is a record, not a currency {.smaller}
+
+**Bottom line:** a blockchain is the record and its rules; a cryptocurrency is one asset it records. Bitcoin's chain and its coin, BTC, share a name, hence the confusion [@antonopoulos_masteringbitcoinprogramming_2017; @narayanan_bitcoincryptocurrencytechnologies_2016].
+
+| | Blockchain | Cryptocurrency |
+| --- | --- | --- |
+| What it is | A shared, hash-linked record | A unit of value on a chain |
+| Examples | Bitcoin, Ethereum, Tron | BTC, ETH, USDT |
+
+- **One chain, many assets:** Ethereum records ETH and anyone's ERC-20 tokens [@antonopoulos_masteringethereum_2018; @vogelsteller_eip20tokenstandard_2015].
+- **One asset, many chains:** as of 31 Oct 2026, 51% of USDT was on Tron, 39% on Ethereum [@defillama_tetherbychain_2026].
+- **A chain with no coin:** permissioned Hyperledger Fabric needs no native cryptocurrency [@hyperledger_introductionfabric_2026; @androulaki_hyperledgerfabricdistributed_2018].
+- Name both when you explain: "USDT on Tron", not "crypto".
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates the record from the assets it carries. It matters here because agents and prosecutors often say "crypto" for both, and an analyst's finding depends on naming the right chain and the right asset: the same asset on two chains lives in two separate records with two different explorers. Emphasize the habit of naming both, such as "USDT on Tron".
+
+**Key Points**
+- A blockchain is the record and its rules; a cryptocurrency is a unit of value that a chain records.
+- Bitcoin is both a chain and a coin (BTC), which is the source of the confusion.
+- One chain can carry many assets: Ethereum carries ETH plus ERC-20 tokens that anyone can issue.
+- One asset can sit on many chains: as of 31 Oct 2026, 51% of USDT circulated on Tron and 39% on Ethereum (DefiLlama).
+- A chain needs no coin: Hyperledger Fabric, a permissioned blockchain, can run without a native cryptocurrency.
+
+**Walkthrough**
+1. Read the table row by row: what each is, then examples.
+2. Ask a student where they would look up a USDT payment if they only knew "USDT" (they cannot yet: they need the chain).
+3. Close on the habit of naming both the asset and the chain.
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @narayanan_bitcoincryptocurrencytechnologies_2016
+- @antonopoulos_masteringethereum_2018
+- @vogelsteller_eip20tokenstandard_2015
+- @defillama_tetherbychain_2026
+- @hyperledger_introductionfabric_2026
+- @androulaki_hyperledgerfabricdistributed_2018
 
 :::
 
@@ -606,6 +705,7 @@ This slide turns common misconceptions into the answers an analyst gives when br
 
 ## Recap: a payment is inputs, outputs and a fee {.smaller}
 
+- A blockchain is blocks linked by hashes, kept and checked by many nodes. A cryptocurrency is one asset it records: name the chain and the asset.
 - A transaction spends earlier outputs whole and creates new ones; change returns the surplus.
 - The fee is inputs minus outputs; no field states it.
 - Bitcoin keeps no balances. Ethereum and the course chain do.
@@ -619,6 +719,7 @@ This slide turns common misconceptions into the answers an analyst gives when br
 This slide summarizes the lesson and hands over to lesson ② on keys. It matters here because students now have the vocabulary (input, output, change, fee, mempool, block, confirmation) that the rest of day 1 and the lab use. Emphasize the reading habit: inputs, outputs, fee, block, count, and which parts of a page are chain data.
 
 **Key Points**
+- A blockchain is hash-linked blocks kept by many nodes; a cryptocurrency is one asset on it.
 - UTXO model: spend whole, make change.
 - The fee is implied.
 - Bitcoin uses unspent outputs; Ethereum uses accounts.
