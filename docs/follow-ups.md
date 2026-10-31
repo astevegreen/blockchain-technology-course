@@ -37,6 +37,9 @@ slide index), which is never listed here.
 - The 04-FO, 05-FO and 01-PC quiz banks have no reading deck: none of the three lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
+- 06-FO (`lessons/forensics/06-FO-mixers_and_coinjoin.qmd`, Mixers and CoinJoin) has no quiz bank or lesson
+  synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026,
+  D7 ① build)
 - 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
   address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 

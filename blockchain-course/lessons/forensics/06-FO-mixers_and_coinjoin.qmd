@@ -1,0 +1,454 @@
+---
+title: "Mixers and CoinJoin"
+subtitle: 'Section VIII: Forensics'
+author: Army Cyber Institute
+lesson: 06-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## Where the trace goes dark, and what still shows {.smaller}
+
+**Bottom line:** a CoinJoin or a mixer stops the co-spend and change rules from day 6 ①. It does not erase the chain: what went in, what came out, and what users did before and after are still on the ledger. Your job is to say where the trace stops and what still shows.
+
+::: {style="font-size: .8em;"}
+
+| Question | The answer tells you | Slide |
+| --- | --- | --- |
+| Is this transaction a CoinJoin? | Whether co-spending still means one owner | Many owners; equal outputs |
+| What leaks around a CoinJoin? | Which links survive the mix | Before and after the mix |
+| Is this a mixer? | That a service pooled the coins | A mixer pools coins |
+| Can a deposit be paired with a withdrawal? | Which user habits link the two | User habits |
+| Is this ordinary payment a PayJoin? | Why co-spending can lie with no sign | PayJoin |
+| Is this tiny input a link? | Why dust proves nothing about its sender | Dust |
+| Who still runs coordinators? | What changed in 2024 | Samourai, zkSNACKs |
+
+:::
+
+The lab's product is a limits-of-tracing note: where the trace stops and what still shows.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens day 7's first lesson: the tools built to break the day 6 heuristics, and what an analyst can still say once they are used. It matters here because the lab asks for a limits-of-tracing note, not a full trace. Emphasize that "the trace stops here" is a finding, as long as it says why and what still shows.
+
+**Key Points**
+- CoinJoin defeats the co-spend rule; a mixer replaces the coins you were following with other people's.
+- The ledger still records the inputs, the outputs and the users' later behavior.
+- The note names the stop point, the reason and the leads that remain.
+- Privacy coins (Monero, Zcash) are day 7 ②, not this lesson.
+
+**Walkthrough**
+1. Read the bottom line aloud.
+2. Walk the table; each row is one slide.
+
+**Sources**
+None
+
+:::
+
+## A CoinJoin is many owners in one transaction {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+
+- **The rule it breaks:** day 6 ① read inputs spent together as one owner. A CoinJoin is one transaction that several users build and each sign for their own inputs [@gmaxwell_coinjoinbitcoinprivacy_2013].
+- **The cost of missing it:** treating a CoinJoin's inputs as one wallet makes clustering "erroneously merge unrelated address groups" [@svenda_coinjoinecosystem_2026, p. 557].
+- **Anonymity set:** the equal outputs a coin could have become. The larger the set, the weaker any guess.
+- **Analyst move:** mark the transaction as a CoinJoin and do not cluster across it.
+
+:::
+::: {.column width="45%"}
+
+```{dot}
+#| echo: false
+#| fig-height: 1.8
+digraph CoinJoinTx {
+  graph [bgcolor="transparent", splines=ortho, nodesep=0.15, ranksep=0.4];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9];
+  edge [fontname="Helvetica", fontsize=8];
+  A_in [label="User A", fillcolor="#E6F7FF"];
+  B_in [label="User B", fillcolor="#FFF5CC"];
+  C_in [label="User C", fillcolor="#E8F5E9"];
+  TX [label="CoinJoin", shape=ellipse, fillcolor="#fdd"];
+  subgraph cluster_outs {
+    label="Anonymity set";
+    style=dashed;
+    fontname="Helvetica";
+    fontsize=9;
+    Out1 [label="0.1"];
+    Out2 [label="0.1"];
+    Out3 [label="0.1"];
+  }
+  {A_in, B_in, C_in} -> TX -> {Out1, Out2, Out3};
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines CoinJoin as the known false positive of the co-spend rule. It matters here because a missed CoinJoin merges strangers into one cluster, and every later hop inherits the error. Emphasize that the move is to stop clustering, not to guess.
+
+**Key Points**
+- Gregory Maxwell proposed CoinJoin in 2013: users combine their payments into one transaction, each signing only their own inputs.
+- Svenda et al. warn that missing a CoinJoin makes clustering merge unrelated address groups.
+- Anonymity set: the outputs among which one user's coin is hidden; three here, often far more.
+- The diagram's 0.1 outputs are illustrative.
+
+**Walkthrough**
+1. Point at the three inputs: three owners, one transaction.
+2. Ask: if you applied day 6 ①'s rule here, what would your cluster contain? (Users A, B and C as one wallet: wrong.)
+
+**Sources**
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @svenda_coinjoinecosystem_2026
+
+:::
+
+## Equal outputs mark a CoinJoin on sight {.smaller}
+
+**Bottom line:** the three main designs each leave a shape you can spot; researchers detected Wasabi 1.x and Samourai CoinJoins with "> 99%" accuracy [@stutz_adoptionprivacycoinjoin_2022].
+
+::: {style="font-size: .8em;"}
+
+| Design | Shape on the chain | Source |
+| --- | --- | --- |
+| Wasabi 1.x | Many outputs of about 0.1 BTC each, one denomination | [@svenda_coinjoinecosystem_2026, sec. 2.1] |
+| Wasabi 2.x (WabiSabi) | Many inputs and outputs; "arbitrary output denominations" | [@svenda_coinjoinecosystem_2026, sec. 2.1] |
+| Samourai Whirlpool | 5 inputs by 5 outputs, later up to 8 by 8, all one pool size: 0.001, 0.01, 0.05 or 0.5 BTC | [@svenda_coinjoinecosystem_2026, sec. 2.1] |
+
+: {tbl-colwidths="[22,50,28]"}
+
+:::
+
+- **Scale:** these three designs have mixed more than 391,000 BTC since 2018 [@svenda_coinjoinecosystem_2026] (as of 31 Oct 2026).
+- **A coordinator** is the server that gathers users into each round; the coordinator is what 2024's enforcement ended (later slide).
+- **For the analyst:** many equal outputs in one transaction is a CoinJoin until shown otherwise.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows that CoinJoins are easy to recognize: their equal outputs are the point of the design. It matters here because recognizing one is the analyst's first move, and the shapes differ by wallet. Emphasize that recognizing a CoinJoin is easy; seeing through it is not.
+
+**Key Points**
+- Wasabi 1.x: one denomination of about 0.1 BTC.
+- Wasabi 2.x: WabiSabi allows many denominations, so look for many inputs and outputs with repeated amounts.
+- Whirlpool: small fixed pools (5x5, later 8x8) at 0.001, 0.01, 0.05 or 0.5 BTC.
+- Stütz et al. detected 30,251 Wasabi and 223,597 Samourai CoinJoins with highly accurate (> 99%) algorithms.
+- Svenda et al. count more than 391,000 BTC mixed by the three designs since 2018.
+
+**Walkthrough**
+1. Draw a Whirlpool round: five inputs, five outputs of 0.01.
+2. Ask: one input is in your ransom cluster. Which output is the ransom's now? (Any of five: the anonymity set.)
+
+**Sources**
+- @stutz_adoptionprivacycoinjoin_2022
+- @svenda_coinjoinecosystem_2026
+
+:::
+
+## Before and after the mix still leak {.smaller}
+
+- **The mix is one transaction; the user's habits surround it.** "The traceability of addresses during the pre-mixing and post-mixing narrows down the anonymity set" [@stutz_adoptionprivacycoinjoin_2022].
+- **Pre-mix:** Whirlpool first splits "any fresh input" into pool-sized outputs in a TX0 transaction [@svenda_coinjoinecosystem_2026, sec. 2.1]; that transaction spends from the cluster you were tracing.
+- **Address reuse:** paying a mixed output to an address already seen "directly reveals ownership by the same entity"; CoinJoin wallets avoid it, so a reuse is a user's mistake [@svenda_coinjoinecosystem_2026, p. 564].
+- **Post-mix:** outputs spent together after the mix undo it, by the co-spend rule.
+- **Timing:** a large wallet that stays in the mix for many rounds stands out; knowing how long it mixes raises the odds that the outputs leaving at the end are its own [@svenda_coinjoinecosystem_2026, sec. 5.3].
+- **Confidence:** timing alone is Low; a reuse or post-mix co-spend is one strong line, Moderate.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows where CoinJoin users give themselves away: before the mix, after it, and by reusing addresses. It matters here because these are the leads a limits-of-tracing note lists under "what still shows". Emphasize that the leaks are behavior, so they carry the confidence of behavior.
+
+**Key Points**
+- Stütz et al.: pre-mix and post-mix traceability narrows the anonymity set.
+- Svenda et al.: reusing an address directly reveals the same owner; CoinJoin wallets are built to avoid it.
+- Two mixed outputs spent together later are co-spent like any other inputs.
+- Svenda et al. also show that how long a large wallet keeps mixing lets an analyst give a higher probability to the outputs it withdraws.
+- Course scale: timing alone is Low; a reuse or co-spend is Moderate; High needs another kind of evidence.
+
+**Walkthrough**
+1. Draw: cluster, then pre-mix split, then CoinJoin, then two outputs co-spent to one address.
+2. Ask: which link survives the mix? (The post-mix co-spend: Moderate.)
+
+**Sources**
+- @stutz_adoptionprivacycoinjoin_2022
+- @svenda_coinjoinecosystem_2026
+
+:::
+
+## A mixer pools coins and pays out others {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+
+- **What it is:** FinCEN calls mixers or tumblers persons that "accept CVCs and retransmit them in a manner designed to prevent others from tracing the transmission back to its source"; such a provider "is a money transmitter" [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019, sec. 4.5.1] (as of May 2019).
+- **Custodial, on Bitcoin:** Bitcoin Fog's operator was sentenced to more than 12 years [@departmentofjustice_operatorbitcoinfog_2024]; Sinbad, sanctioned in 2023, "is believed by some industry experts to be a successor to the Blender.io mixer" [@l33_u_s_treasury_u_s_treasury_treasury_sanctions_mixer_used_by_the_dprk__2023].
+- **A contract, on Ethereum:** Tornado Cash "operates on the Ethereum blockchain" [@u.s.dept.oftreasury_ustreasurysanctions_2022]. Its sanctions and delisting are day 5 ②.
+- **For the analyst:** the coins out are not the coins in. Label the mixer, and treat each withdrawal as a new start.
+
+:::
+::: {.column width="45%"}
+
+```{dot}
+#| echo: false
+#| fig-height: 2.6
+digraph Mixer {
+  graph [bgcolor="transparent"];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10];
+  edge [fontname="Helvetica"];
+  subgraph cluster_inputs {
+    label="Deposits";
+    style=dashed;
+    UserA [label="User A\n(illicit)", fillcolor="#fdd"];
+    UserB [label="User B", fillcolor="#e8f5e9"];
+    UserC [label="User C", fillcolor="#e8f5e9"];
+  }
+  Mixer [label="Mixer pool", shape=cylinder, fillcolor="#f5f7fb"];
+  subgraph cluster_outputs {
+    label="Withdrawals";
+    style=dashed;
+    NewA [label="A'", fillcolor="#fdd"];
+    NewB [label="B'", fillcolor="#e8f5e9"];
+    NewC [label="C'", fillcolor="#e8f5e9"];
+  }
+  {UserA, UserB, UserC} -> Mixer -> {NewA, NewB, NewC};
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates a mixer from a CoinJoin: a mixer takes the coins and pays out others, so the on-chain link is cut, not hidden. It matters here because a trace into a mixer ends at the deposit, and only behavior can pick it up again. Emphasize custodial services on Bitcoin and contracts on Ethereum.
+
+**Key Points**
+- FinCEN's 2019 guidance (sec. 4.5.1) defines an anonymizing services provider and calls it a money transmitter.
+- Bitcoin Fog (sentenced 12 Nov 2024), Blender.io and Sinbad are Bitcoin mixers; Treasury's release reports that some industry experts believe Sinbad succeeded Blender.io; that is the experts' view, not the reason for the sanction.
+- Tornado Cash is a set of Ethereum contracts; day 5 ② covered its 2022 sanctions and 2025 delisting.
+- Only User A's coloring is known; the diagram is illustrative.
+
+**Walkthrough**
+1. Point at A and A': nothing on the chain joins them.
+2. Ask: what can you still say about A? (That it deposited to a labeled mixer, with the date and amount.)
+
+**Sources**
+- @financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019
+- @departmentofjustice_operatorbitcoinfog_2024
+- @l33_u_s_treasury_u_s_treasury_treasury_sanctions_mixer_used_by_the_dprk__2023
+- @u.s.dept.oftreasury_ustreasurysanctions_2022
+
+:::
+
+## User habits link deposit to withdrawal {.smaller}
+
+**Bottom line:** mixers are rarely broken by their math. Wang et al. tested user habits on Tornado Cash and cut its anonymity sets by an average of 27.34% on Ethereum [@wang_zkpmixers_2023].
+
+::: {style="font-size: .8em;"}
+
+| Habit | What you see | Confidence alone |
+| --- | --- | --- |
+| Same address deposits and withdraws | One address on both sides of the pool | Moderate |
+| Deposit and withdrawal addresses linked | A direct transfer between the two addresses | Moderate |
+| Matching amounts across pools | One address's deposits in several pools match another's withdrawals, each deposit earlier | Low |
+| Timing | A withdrawal soon after a deposit, in a quiet pool | Low |
+
+: {tbl-colwidths="[30,50,20]"}
+
+:::
+
+The first three rows are Wang et al.'s heuristics 1, 3 and 5 [@wang_zkpmixers_2023, sec. 7.1]. Timing alone is behavior: Low on the course scale.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide lists the habits that pair a mixer deposit with a withdrawal. It matters here because these are the only routes past a mixer from the chain alone, and each carries its own confidence. Emphasize that every row is a user's mistake, not a flaw in the protocol.
+
+**Key Points**
+- Wang et al. (WWW 2023): five heuristics shrank Tornado Cash anonymity sets by 27.34% on average on Ethereum and 46.02% on BSC.
+- H1 address reuse; H3 deposit and withdrawal addresses linked by a transfer; H5 matching totals across fixed-size pools, deposits before withdrawals.
+- Timing is one of the lab's tells.
+- The confidence column is the course scale, not the paper's.
+
+**Walkthrough**
+1. Read each row; ask which kind of evidence it is.
+2. Ask: timing and matching amounts agree. High? (No: both are behavior from the same pool; Moderate at most.)
+
+**Sources**
+- @wang_zkpmixers_2023
+
+:::
+
+## PayJoin hides a co-spend inside a payment {.smaller}
+
+- **What it is:** a protocol "for two parties to negotiate a coinjoin transaction during a payment between them" [@dorier_bip78payjoin_2019] (BIP 78, Deployed, as of 31 Oct 2026). The receiver adds an input of their own.
+- **What it breaks:** the co-spend rule. "Because payjoin is mixing the inputs of the sender and receiver, this heuristic becomes unreliable" [@dorier_bip78payjoin_2019].
+- **Why it is hard:** a PayJoin "will look like a normal transaction" [@dorier_bip78payjoin_2019]. Unlike a CoinJoin, there are no equal outputs to warn you.
+- **Async PayJoin:** BIP 77 replaces the receiver's own server with an untrusted "directory server", so a receiver need not run one [@gould_bip77asyncpayjoin_2023] (Draft, as of 31 Oct 2026).
+- **For the analyst:** this is why co-spending with no sign of a CoinJoin stays Moderate, not High.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces PayJoin, a two-party CoinJoin that looks like an ordinary payment. It matters here because it breaks the co-spend rule without the warning sign of equal outputs. Emphasize that it is the reason day 6 ①'s co-spend row stops at Moderate.
+
+**Key Points**
+- BIP 78 (2019, Deployed): sender and receiver both contribute inputs to the payment.
+- The BIP itself says the common-input heuristic becomes unreliable, and the result looks like a normal transaction.
+- BIP 77 (Draft): an untrusted directory server lets a receiver take PayJoins without hosting an endpoint.
+- Check BIP status on the day you write.
+
+**Walkthrough**
+1. Draw a payment: two inputs, a payment output and change. Ask: one owner? (Probably; a PayJoin would make it two.)
+
+**Sources**
+- @dorier_bip78payjoin_2019
+- @gould_bip77asyncpayjoin_2023
+
+:::
+
+## Dust is bait: a dust input is not a link {.smaller}
+
+- **The attack:** someone sends a tiny amount to an address that has already been paid, waiting for the wallet to spend it together with the owner's other coins. Bitcoin Core calls this "a serious privacy issue where a malicious user can track spends by sending small payments to a previously-paid address" [@bitcoincore_release0190_2019].
+- **The defense:** Bitcoin Core 0.19 added a wallet flag, `avoid_reuse`, off by default [@bitcoincore_release0190_2019] (as of Nov 2019).
+- **For the analyst, two rules:**
+  - Anyone can pay any address. A tiny payment in says nothing about who sent it.
+  - If the owner later spends the dust with their own coins, that co-spend is about the owner's coins, not the duster's.
+- **Why it matters here:** a trace that runs through a dust input can jump to a stranger.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains dusting: small unsolicited payments used to track spends. It matters here because a dust input in a trace looks like a link and is not one. Emphasize that receiving is not consent and not evidence of a relationship.
+
+**Key Points**
+- The Bitcoin Core 0.19 release notes describe tracking spends with small payments to previously-paid addresses.
+- The `avoid_reuse` flag (default off) keeps such coins out of later spends.
+- Inbound payments prove nothing about the receiver; the receiver did not choose them.
+- When dust is co-spent, the link is between the owner's coins; never extend it to the sender.
+
+**Walkthrough**
+1. Ask: an address in your trace received 0.00000600 from a sanctioned address. Is it linked? (No: anyone can send to any address.)
+
+**Sources**
+- @bitcoincore_release0190_2019
+
+:::
+
+## 2024: Samourai shut down, zkSNACKs stopped {.smaller}
+
+- **24 April 2024:** FBI actions shut down Samourai's Whirlpool coordinator [@svenda_coinjoinecosystem_2026, sec. 2.1]. DOJ said Whirlpool and its Ricochet feature carried "more than 80,000 Bitcoin" and "over $237 million in illegal transactions" [@irs_samouraisentenced_2025].
+- **2025:** the founders pleaded guilty on 30 July [@irs_samouraiplea_2025] and were sentenced to five and four years in November [@irs_samouraisentenced_2025] (as of 19 Nov 2025).
+- **1 June 2024:** zkSNACKs stopped its Wasabi 2.x coordinator, "citing legal uncertainty" [@svenda_coinjoinecosystem_2026, sec. 2.1].
+- **After:** new coordinators took over. Wasabi 2.x mixing passed its pre-shutdown level; one coordinator, kruw.io, carries 99% of mixed inputs. A new Whirlpool coordinator started on 31 May 2025 [@svenda_coinjoinecosystem_2026] (as of 31 Oct 2026).
+- **For the analyst:** the operators ended; the technique did not. CoinJoins "are used by both lawful and unlawful actors" [@svenda_coinjoinecosystem_2026, p. 557]: a CoinJoin is a reason the trace stops, not evidence of a crime.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide brings the CoinJoin story up to date: the two big coordinators ended in 2024, and others replaced them. It matters here because analysts will still meet Wasabi- and Whirlpool-shaped transactions dated after 2024. Emphasize dating every claim about who runs a coordinator.
+
+**Key Points**
+- Samourai: coordinator shut down 24 Apr 2024; guilty pleas 30 Jul 2025; sentences of five years (Rodriguez, 6 Nov 2025) and four years (Hill, 19 Nov 2025).
+- DOJ figures: more than 80,000 BTC through Whirlpool and Ricochet; over $237 million in illegal transactions.
+- zkSNACKs (Wasabi): coordinator stopped voluntarily on 1 Jun 2024, citing legal uncertainty.
+- Svenda et al.: kruw.io carries 99% of Wasabi 2.x mixed inputs; Ashigaru restarted a Whirlpool coordinator on 31 May 2025.
+- A CoinJoin alone does not show criminal intent; say what it does to the trace.
+
+**Walkthrough**
+1. Ask: a Whirlpool-shaped transaction is dated 2025. Who ran the coordinator? (Not Samourai; check the date against the coordinators then running.)
+
+**Sources**
+- @svenda_coinjoinecosystem_2026
+- @irs_samouraisentenced_2025
+- @irs_samouraiplea_2025
+
+:::
+
+## A limits-of-tracing note: where it stops {.smaller}
+
+**Bottom line:** your lab product looks like this: where the trace stops, why, what still shows and how sure. (Invented data.)
+
+::: {style="font-size: .75em;"}
+
+| Step | What you see | The trace | Still shows | Confidence |
+| --- | --- | --- | --- | --- |
+| 1 | Ransom cluster splits 0.5 into five 0.1 inputs | Continues: pre-mix | The cluster entered the mix | Moderate |
+| 2 | `J1`: 50 inputs, 50 outputs of 0.1 | **Stops:** CoinJoin, set of 50 | Five of the 50 outputs are the ransom's; which five is undetermined | — |
+| 3 | One `J1` output pays address R7, already in the ransom cluster | Resumes for that output | Address reuse | Moderate |
+| 4 | Three `J1` outputs reach one exchange deposit 10 blocks later | Lead only | Timing | Low |
+
+: {tbl-colwidths="[7,33,22,23,15]"}
+
+:::
+
+The note ends at the first service, or at the stop, with the leads that remain.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide models the lab's limits-of-tracing note on invented data. It matters here because students see the finished product before they build one. Emphasize that "undetermined" is an answer, and that each lead after the stop carries its own confidence.
+
+**Key Points**
+- Step 1 inherits the cluster's Moderate from day 6.
+- Step 2 is the stop: the anonymity set is 50 and nothing in the transaction picks one output.
+- Step 3: address reuse is one strong line, Moderate.
+- Step 4: timing alone is behavior, Low; it names a lead for an agent, not a finding.
+- The data are invented; the lab uses its own captured data.
+
+**Walkthrough**
+1. Read each row left to right.
+2. Ask: how would you say row 4 to an agent? ("The exchange deposit is a lead, Low: only the timing matches.")
+
+**Sources**
+- @stutz_adoptionprivacycoinjoin_2022
+- @svenda_coinjoinecosystem_2026
+
+:::
+
+## What to carry out of this lesson {.smaller}
+
+- A CoinJoin is many owners in one transaction: mark it and stop clustering across it.
+- Equal outputs give a CoinJoin away; the anonymity set is how many outputs a coin could have become.
+- Leaks surround the mix: pre-mix splits, address reuse, post-mix co-spends, timing.
+- A mixer pays out other people's coins; only user habits pair a deposit with a withdrawal.
+- PayJoin breaks co-spending with no warning; dust is not a link.
+- Coordinators ended in 2024; the technique did not. Date every claim.
+- The note says where the trace stops, why, what still shows, and how sure.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson in seven lines and hands over to the lab. It matters here because the limits-of-tracing note uses every line. Emphasize the last one.
+
+**Key Points**
+- CoinJoin, anonymity set, coordinator, pre-mix and post-mix.
+- Mixer, deposit-withdrawal pairing.
+- PayJoin, dusting.
+- Day 7 ② turns to coins built for privacy: Monero and Zcash.
+
+**Walkthrough**
+1. Ask a student to say each line in their own words.
+
+**Sources**
+None
+
+:::
+
+## References
+
+::: {#refs}
+:::
