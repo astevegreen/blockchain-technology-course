@@ -87,6 +87,7 @@ fresh_start() {
     exercises \
     explorer \
     wallet \
+    bitcoin-trace \
     tokens \
     dex \
     tron \

@@ -104,6 +104,20 @@ slide index), which is never listed here.
   needs only nginx and Python, so it could run there. The workflow is a rail. (31 Oct 2026, D5 Tron lab build)
 - No quiz questions test the Tron lab (`dynamic-labs/tron/`): who paid the Energy, a sweep's signature, what the
   blacklist shows as of a block. (31 Oct 2026, D5 Tron lab build)
+- The Bitcoin trace lab (`dynamic-labs/bitcoin-trace/`) is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`,
+  `tools/lab_tests.py`); like the wallet lab it needs the `bitcoin-mempool` image. The workflow is a rail.
+  (31 Oct 2026, D6 Bitcoin trace lab build)
+- No quiz questions test the Bitcoin trace lab: naming the heuristic and its false positive, reading a peel chain,
+  why same-transaction clues stop at Moderate, a sweep versus a CoinJoin shape. (31 Oct 2026, D6 Bitcoin trace lab build)
+- The Bitcoin trace lab's students receive `regression-tests/automated/bitcoin-trace/` in `src.zip` and on the VM; its
+  shape tests spell out the trail's design (12-input sweep, 14-output batch). Same decision as the explorer and wallet
+  tests above. (31 Oct 2026, D6 Bitcoin trace lab build)
+- The Bitcoin trace lab's browser playbook (`regression-tests/agent/bitcoin-trace/`) has not been walked in a
+  browser; the automated suite passed (15 tests) without `--fresh-start`, since other labs' containers were
+  running. Walk the playbook on the desktop. (31 Oct 2026, D6 Bitcoin trace lab build)
+- `lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd` (about lines 61, 372, 554) still sends CoinJoin and
+  attribution to "day 3"; under the settled day map CoinJoin detection is day 7 and attribution is day 6 ③. The
+  Bitcoin trace worksheet uses the new map. (31 Oct 2026, D6 Bitcoin trace lab review)
 - Most labs' `run.sh` fresh-start lists lack `tokens` (only explorer, wallet and tron have it), so a fresh start from
   them leaves the token lab running. (31 Oct 2026, D5 Tron lab rebase onto the D3 token lab)
 - Students still receive the explorer lab's chain build scripts, the other labs' browser playbooks and the

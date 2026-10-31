@@ -86,6 +86,7 @@ fresh_start() {
     ethereum_lab \
     exercises \
     wallet \
+    bitcoin-trace \
     tron \
     quiz-engine-v2 \
     hlf
