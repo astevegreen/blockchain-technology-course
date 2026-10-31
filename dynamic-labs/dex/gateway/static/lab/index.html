@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 4 lab: a swap and a bridge</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="/">L1 explorer</a> · <a href="/" id="l2-link">L2 explorer</a> ·
+<a href="../sign/">Swap page</a> · <a href="../fallback/">Saved pages</a></p>
+<h1>Day 4 lab: a swap and a bridge</h1>
+<p>Day 4 has two course chains. The first, L1, holds an exchange built the way Uniswap v2 is: a
+dollar token (cUSD), wrapped ether (WETH), one pool that holds both, and a router people call to
+trade <a href="#s2">[2]</a> <a href="#s4">[4]</a>. It also holds one half of a bridge. The second chain, L2, holds the
+other half and the bridged dollar it creates. You read both in Otterscan, the open-source explorer
+you used on day 1 <a href="#s1">[1]</a>: this page's address opens L1, and the same address with
+<code>dex-l2</code> in place of <code>dex</code> opens L2. Then you make a swap of your own, bridge
+what you bought, and read both sides.</p>
+<p>Write your answers down as short notes. Your instructor checks them with you.</p>
+<p class="note">If the explorers or the chains are down, use the <a href="../fallback/">saved
+pages</a>. They show the same history, so every question below has the same answer there. For part
+2, the saved pages hold a <a href="../fallback/swap-run.html">recorded run</a> of the swap page.</p>
+
+<h2>Where to start</h2>
+<ul>
+<li>Your instructor tells you where to start: the worked example, or straight at the problem.</li>
+<li>You may always do the worked example first.</li>
+<li>After the problem, part 2: you swap ETH for cUSD, bridge it to L2, and read both chains.</li>
+<li>The challenge at the end is optional.</li>
+</ul>
+
+<h2>The names on these chains</h2>
+<p>An account is the same address on both chains: whoever holds its key can use it on either.</p>
+<table>
+<tr><th>Account 0 (the cUSD issuer)</th><td><code>0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266</code></td></tr>
+<tr><th>Account 1</th><td><code>0x70997970C51812dc3A010C7d01b50e0d17dc79C8</code></td></tr>
+<tr><th>Account 2</th><td><code>0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC</code></td></tr>
+<tr><th>Account 3</th><td><code>0x90F79bf6EB2c4f870365E785982E1f101E93b906</code></td></tr>
+<tr><th>Account 4</th><td><code>0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65</code></td></tr>
+<tr><th>Account 5</th><td><code>0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc</code></td></tr>
+<tr><th>Account 6</th><td><code>0x976EA74026E726554dB657fA54763abd0C3a0aa9</code></td></tr>
+<tr><th>Account 7</th><td><code>0x14dC79964da2C08b23698B3D3cc7Ca32193d9955</code></td></tr>
+<tr><th>Account 8</th><td><code>0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f</code></td></tr>
+<tr><th>L1: cUSD</th><td><code>0x5FbDB2315678afecb367f032d93F642f64180aa3</code></td></tr>
+<tr><th>L1: WETH</th><td><code>0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</code></td></tr>
+<tr><th>L1: the pool (pair)</th><td><code>0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0</code></td></tr>
+<tr><th>L1: the router</th><td><code>0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9</code></td></tr>
+<tr><th>L1 and L2: the bridge</th><td><code>0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B</code></td></tr>
+<tr><th>L2: bcUSD (bridged cUSD)</th><td><code>0x61Ab51bE7C866a54B0B442c149d7715367743EfD</code></td></tr>
+</table>
+<p class="hint">The first 4 bytes of a call's input data name the function it calls. The ones on
+these chains:</p>
+<table>
+<tr><th><code>0x40c10f19</code></th><td><code>mint(address,uint256)</code>: create new cUSD</td></tr>
+<tr><th><code>0xd0e30db0</code></th><td><code>deposit()</code>: wrap ETH into WETH</td></tr>
+<tr><th><code>0x095ea7b3</code></th><td><code>approve(address,uint256)</code>: let another address move your tokens</td></tr>
+<tr><th><code>0xe8e33700</code></th><td><code>addLiquidity(…)</code>: put both tokens into the pool</td></tr>
+<tr><th><code>0x38ed1739</code></th><td><code>swapExactTokensForTokens(…)</code>: sell an exact amount of one token</td></tr>
+<tr><th><code>0x7ff36ab5</code></th><td><code>swapExactETHForTokens(…)</code>: sell ETH</td></tr>
+<tr><th><code>0x4698c75f</code></th><td><code>depositERC20To(address,address,uint256)</code>: lock cUSD in the L1 bridge</td></tr>
+<tr><th><code>0x77077492</code></th><td><code>finalizeDeposit(uint256,address,address,uint256)</code>: create bcUSD on L2</td></tr>
+</table>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: a hash, an amount, a log. Others are judgments about
+what the facts mean. Give each judgment a confidence word <a href="#s11">[11]</a>:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the
+reasoning applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false
+positive could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same
+transaction.</p>
+<p>The swap, on L1:</p>
+<ol>
+<li>Block 11 holds a swap. Who sent it, which contract did they call, and which contract holds the
+pool's money?</li>
+<li>How much WETH went in, and how much cUSD came out? Name the logs you read it from.</li>
+<li>What did the pool hold just before the swap, and just after? Which of its two numbers is
+cUSD?</li>
+<li>What was the price of one WETH in cUSD before the swap, and after it? What price did the
+trader get? By how much did the swap move the price?</li>
+<li>Write one sentence an agent could read about block 11. Is Account 4 the trader, or could the
+router or the pool be? Give your confidence and the evidence for it.</li>
+</ol>
+<p>The bridge, L1 to L2:</p>
+<ol start="6">
+<li>L1 block 14 holds a bridge deposit. Who made it, how much, to which address on L2, and
+when?</li>
+<li>Find the L2 transaction that completed that deposit. Who sent it, who received the money, how
+much, and how long after the L1 deposit? What links the two transactions? Give your
+confidence.</li>
+<li>Where is Account 5's 3,000 cUSD now? What does Account 8 hold on L2, and which contract created
+that token?</li>
+<li>What kind of bridge is this? Give the evidence from each chain.</li>
+<li>Who could stop money crossing this bridge, or freeze it on either side? Give your confidence and
+say what it rests on.</li>
+</ol>
+
+<h2>Worked example: a swap in block 9</h2>
+<p>This walks through one swap, field by field. Questions 1 to 5 use the same pages for block
+11.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="/">L1 explorer</a>.</li>
+<li>Type <code>9</code> in the search box and press Enter. You are on block 9's page.</li>
+<li>Note the block's timestamp: 17 Sep 2026, 14:01:48 UTC.</li>
+<li>Open the block's one transaction. Its hash is
+<code>0x637c6489f69b169e81feba5895fc9c2f2f0752d2e44d98fe1470ad7838d46fd9</code>.</li>
+</ol>
+
+<h3>Read it</h3>
+<table>
+<tr><th>From / Nonce</th><td><code>0x90F79bf6EB2c4f870365E785982E1f101E93b906</code> (Account 3),
+nonce 1</td></tr>
+<tr><th>Interacted With (To)</th><td>CourseRouter: <code>0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9</code></td></tr>
+<tr><th>Value</th><td>0 ETH</td></tr>
+<tr><th>Transaction Fee</th><td>0.00003864323857377 ETH</td></tr>
+<tr><th>Input Data</th><td><code>0x38ed1739</code>, then the amount in
+(<code>0x12a05f200</code>, 5,000,000,000), the least it will accept (0), the token path (cUSD then
+WETH), who receives (Account 3) and a deadline</td></tr>
+</table>
+<ul>
+<li><b>The trader calls the router, not the pool.</b> The router works out the price, moves the
+trader's cUSD into the pool, and asks the pool to pay out <a href="#s4">[4]</a>. It holds nothing
+when the call ends. The pool is the contract that holds both tokens.</li>
+<li><b>The pool's two numbers.</b> A pool keeps one balance of each token, its reserves. Which is
+"0" and which is "1" is fixed when the pool is created: in this pool's code (the Contract tab) the token with the lower
+address is token 0. Here that is cUSD (<code>0x5FbD…</code> is lower than <code>0xe7f1…</code>), so
+reserve 0 is cUSD and reserve 1 is WETH.</li>
+<li><b>Four logs.</b> Open the Logs tab. Two <code>Transfer</code> logs: 5,000 cUSD from Account 3 to
+the pool, written by cUSD; 2.374148687907796351 WETH from the pool to Account 3, written by WETH.
+Then the pool writes <code>Sync</code>, its reserves after the trade, and <code>Swap</code>: what came
+in, what went out, and who received <a href="#s3">[3]</a>. Each amount is scaled by its token's
+decimals: cUSD has 6, WETH 18 <a href="#s6">[6]</a>.</li>
+<li><b>The price is the ratio of the reserves.</b> Before the swap the pool held 100,000 cUSD and
+50 WETH: 2,000 cUSD per WETH <a href="#s2">[2]</a>. <code>Sync</code> says it now holds 105,000 cUSD
+and 47.625851312092203649 WETH: about 2,204.69 cUSD per WETH. Buying WETH made WETH dearer.</li>
+<li><b>The trader's price is worse than either.</b> Account 3 paid 5,000 cUSD for 2.3741 WETH:
+about 2,106 cUSD per WETH. A pool keeps the product of its reserves from falling, and takes a 0.3%
+fee on what comes in <a href="#s2">[2]</a>, so a trade that is large next to the pool moves the price
+against the trader as it fills <a href="#s5">[5]</a>.</li>
+<li><b>Who the trader is.</b> The <code>Swap</code> log's <code>sender</code> is the router, not
+Account 3: the router called the pool. The trader is the address that signed the transaction and
+received the WETH <a href="#s3">[3]</a>.</li>
+</ul>
+<p>A statement from this page: "On 17 Sep 2026 at 14:01:48 UTC, Account 3 sold 5,000 cUSD for
+2.3741 WETH through the course exchange's router, moving the pool's price from 2,000 to about 2,205
+cUSD per WETH." The amounts and addresses are facts the chain records. That Account 3 traded for
+itself, rather than for someone else, is a judgment the chain alone cannot settle.</p>
+
+<h2>The problem</h2>
+<p>Answer the questions above. These hints say where to look.</p>
+<ol>
+<li><b>Who and what.</b> Open L1 block 11's transaction. Compare "Interacted With (To)" with the
+addresses in the Logs tab: which address sends and receives the tokens? The Trace tab lists the
+calls the router made inside the transaction; the explorer asks the node for the transaction's call
+tree <a href="#s12">[12]</a>.</li>
+<li><b>Amounts.</b> Read the two <code>Transfer</code> logs and the <code>Swap</code> log. Scale each
+amount by its token's decimals, as in the worked example.</li>
+<li><b>Reserves.</b> The pool's reserves before block 11 are the <code>Sync</code> log of the last
+trade before it: block 9's. After are block 11's own <code>Sync</code>. Reserve 0 is cUSD.</li>
+<li><b>Price.</b> Divide the cUSD reserve by the WETH reserve, before and after. The trader's price
+is cUSD out divided by WETH in. Give the change as a percentage of the price before
+<a href="#s5">[5]</a>.</li>
+<li><b>The trader.</b> Count the lines of evidence: who signed, who the WETH came from, who the cUSD
+went to, and the <code>Swap</code> log's <code>to</code>. Which of them are independent of each
+other? Remember what the <code>Swap</code> log's <code>sender</code> means.</li>
+<li><b>The deposit.</b> Open L1 block 14 and its second transaction. The bridge wrote a
+<code>DepositInitiated</code> log: it carries a deposit number, the sender, the address on the other
+chain and the amount. In a rollup, users deposit into a bridge contract on L1 and the same amount is
+created for them on L2 <a href="#s8">[8]</a>. This lab's bridge is simpler, a trusted bridge
+<a href="#s7">[7]</a>: one key, the relayer, carries each deposit to L2.</li>
+<li><b>The other side.</b> Open the <a href="/" id="l2-link-2">L2 explorer</a>. The bridge's address
+is the same on both chains: the address alone does not tell you which chain a page is about, so check
+the explorer's chain name. Search for the bridge on L2 and look for a <code>finalizeDeposit</code>
+whose <code>DepositFinalized</code> log has the same deposit number. L2 seals a block every 2 seconds
+and L1 every 12, so match by time, not by block number.</li>
+<li><b>Holdings.</b> Search for Account 8 on L2: its page lists no transactions. The explorer lists
+the transactions an address sent or was sent, not the token logs that name it. Read the bcUSD
+<code>Transfer</code> log in the L2 transaction instead. On the <a href="../sign/">swap page</a>,
+under "Ask the contracts", ask <code>balanceOf</code> on each chain. Then find the transaction that
+created bcUSD: open bcUSD's address page on L2 and look at who created it.</li>
+<li><b>The kind of bridge.</b> Bridges lock and mint, burn and mint, or swap with a party on the
+other side <a href="#s7">[7]</a>. Ask which one fits what you saw on L1 (where the cUSD went) and on
+L2 (where the bcUSD came from). Read both bridges' code on their Contract tabs.</li>
+<li><b>Who could stop it.</b> Read on the Contract tabs: <code>setPaused</code> on each bridge, who
+<code>finalizeDeposit</code> accepts calls from, and cUSD's <code>addBlackList</code>. Then ask who
+holds each role (the "Ask the contracts" panel reads <code>owner</code> and <code>relayer</code>).
+Real dollar tokens can be frozen by their issuer <a href="#s10">[10]</a>, and some rollups have
+councils that can act in an emergency <a href="#s9">[9]</a>.</li>
+</ol>
+
+<h2>Part 2: swap, then bridge</h2>
+<p>You need the live chains and a seat number from your instructor. If the chains are down, answer
+from the <a href="../fallback/swap-run.html">recorded run</a> instead.</p>
+<ol>
+<li>Open the <a href="../sign/">swap page</a> and load your seat.</li>
+<li>Ask the router for a quote: how much cUSD 0.1 ETH buys now.</li>
+<li>Build the swap, read the call the page shows you, then sign and send it. The page waits for the
+next L1 block and reads your cUSD balance back.</li>
+<li>Bridge what you bought: the page approves the bridge, then deposits your cUSD to your own
+address on L2. Each is a transaction of its own.</li>
+<li>Wait for the relayer. The page watches the L2 bridge until your deposit is done, then reads your
+bcUSD balance there.</li>
+<li>Read the panel at the bottom of the page: it lists every question the page asked each node
+<a href="#s13">[13]</a>.</li>
+</ol>
+<p>Answer:</p>
+<ol type="a">
+<li>Your swap's hash and block, the cUSD you received, and the pool's price before and after. Did
+you get the quote? If not, why might the price have moved?</li>
+<li>Your deposit's number, its L1 block, the L2 transaction that completed it, and the delay
+between them. Which account sent the L2 transaction?</li>
+<li>The L1 bridge now holds your cUSD, and L2 shows bcUSD at your address. If the relayer had sent
+a <code>finalizeDeposit</code> with no deposit behind it, what would L2 show, and how would you find
+out?</li>
+</ol>
+
+<h2>Challenge</h2>
+<p>Optional.</p>
+<ol type="a" start="4">
+<li>Under "Contract reads" on the <a href="../fallback/">saved pages</a>, compare the cUSD the L1
+bridge holds with bcUSD's total supply on L2. Should they match? What would it mean if L2's were
+larger?</li>
+<li>Account 2 put the pool's money in (block 7). Who owns the pool's shares now, and what are they
+worth in cUSD and WETH? Read the pool's <code>totalSupply</code> and <code>balanceOf</code>, and its
+reserves at block 18 <a href="#s5">[5]</a>.</li>
+</ol>
+
+<h2 id="sources">Sources</h2>
+<ol class="hint">
+<li id="s1">Otterscan contributors, <i>Otterscan</i>, 2025. github.com/otterscan/otterscan
+(read 23 Oct 2026). <code>otterscan_otterscan_2025</code></li>
+<li id="s2">Adams, Zinsmeister and Robinson, <i>Uniswap v2 Core</i>, 2020, sections 1 and 2.2 (read
+31 Oct 2026). <code>adams_uniswapv2core_2020</code></li>
+<li id="s3">Uniswap, <i>UniswapV2Pair.sol</i> (v2-core), 2020 (read 31 Oct 2026).
+<code>uniswap_v2pair_2020</code></li>
+<li id="s4">Uniswap Labs, <i>UniswapV2Router02.sol</i> (v2-periphery), 2020 (read 31 Oct 2026).
+<code>uniswaplabs_uniswapv2router02_2020</code></li>
+<li id="s5">Uniswap Labs, <i>How Uniswap Works</i>, 2026 (read 31 Oct 2026).
+<code>uniswap_howuniswapworks_2026</code></li>
+<li id="s6">Vogelsteller and Buterin, <i>EIP-20: Token Standard</i>, 2015.
+<code>vogelsteller_eip20tokenstandard_2015</code></li>
+<li id="s7">ethereum.org, <i>Bridges</i> (developer docs) (read 31 Oct 2026).
+<code>ethereumorg_bridgesdev_2026</code></li>
+<li id="s8">ethereum.org, <i>Optimistic Rollups</i> (read 31 Oct 2026).
+<code>ethereumorg_optimisticrollups_2026</code></li>
+<li id="s9">Arbitrum Security Council, <i>Security Council Emergency Action, 21/04/2026</i>, Arbitrum
+DAO Forum (read 23 Oct 2026). <code>arbitrum_kelpfreeze_2026</code></li>
+<li id="s10">Tether, <i>Tether Supports Freeze of More than $344 Million in USDT</i>, 23 Apr 2026
+(read 31 Oct 2026). <code>tether_freeze344m_2026</code></li>
+<li id="s11">Office of the Director of National Intelligence, <i>Intelligence Community Directive
+203: Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are
+the course's own scale. <code>odni_icd203_2015</code></li>
+<li id="s12">Otterscan contributors, <i>Ots Namespace Spec</i>. docs.otterscan.io (read 31 Oct
+2026). <code>otterscan_otsnamespace_2026</code></li>
+<li id="s13">ethereum.org, <i>JSON-RPC API</i>, 2025 (read 31 Oct 2026).
+<code>ethereumorg_jsonrpcapi_2025</code></li>
+</ol>
+</main>
+<script>
+// The L2 explorer is this page's host with "dex-l2" in place of "dex".
+for (const id of ["l2-link", "l2-link-2"]) {
+  document.getElementById(id).href = location.protocol + "//" + location.host.replace(/^dex\./, "dex-l2.") + "/";
+}
+</script>
+</body>
+</html>

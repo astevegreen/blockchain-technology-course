@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swap, bridge and ask the contracts</title>
+<link rel="stylesheet" href="../lab/lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../lab/">Worksheet</a> · <a href="/">L1 explorer</a> ·
+<a href="/" id="l2-home">L2 explorer</a></p>
+<h1>Swap, bridge and ask the contracts</h1>
+<p>This page plays the part of a wallet and an exchange site. It builds each call, signs it with
+your seat's key and hands it to a node: L1's for the swap and the deposit, L2's to watch the bridged
+money arrive. The panel at the bottom shows every question the page asks either node, and the
+answer.</p>
+<p class="note">Your seat's key comes from a test phrase printed in public software documentation.
+It guards nothing and exists only on these training chains.</p>
+
+<section>
+<h2>1. Your account</h2>
+<label for="seat">Seat number (your instructor gives you one, 1 to 40)</label>
+<div class="inline"><input id="seat" type="number" min="1" max="40" inputmode="numeric">
+<button id="load" type="button">Load my account</button></div>
+<table id="account" hidden></table>
+</section>
+
+<section>
+<h2>2. Ask for a quote</h2>
+<p>The router's <code>getAmountsOut</code> reads the pool's reserves and works out what 0.1 ETH
+buys now, after the pool's 0.3% fee.</p>
+<p><button id="quote" type="button" disabled>Quote 0.1 ETH</button></p>
+<table id="quoted" hidden></table>
+</section>
+
+<section>
+<h2>3. Swap 0.1 ETH for cUSD</h2>
+<p>The page asks for at least 99% of the quote. If the price moves further before your
+transaction is in a block, the router refuses it.</p>
+<p><button id="build" type="button" disabled>Build the swap</button></p>
+<table id="call" hidden></table>
+<p><button id="swap" type="button" disabled>Sign and send</button></p>
+<table id="swapped" hidden></table>
+</section>
+
+<section>
+<h2>4. Bridge your cUSD to L2</h2>
+<p>Two L1 transactions: <code>approve</code> lets the bridge take your cUSD, then
+<code>depositERC20To</code> locks it there and names your address on L2.</p>
+<p><button id="bridge" type="button" disabled>Approve and deposit</button></p>
+<table id="deposited" hidden></table>
+<p id="status" role="status"></p>
+<table id="arrived" hidden></table>
+</section>
+
+<section>
+<h2>5. Ask the contracts</h2>
+<p>These are the read-only questions the worksheet asks. The page sends them with
+<code>eth_call</code>: the node runs the contract's code and answers, and nothing is written to the
+chain.</p>
+<label for="question">Question</label>
+<select id="question"></select>
+<label for="arg">Address or number (if the question takes one)</label>
+<input id="arg" spellcheck="false" value="0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f">
+<p><button id="ask" type="button">Ask</button></p>
+<table id="answer" hidden></table>
+</section>
+
+<section>
+<h2>What this page asked the nodes</h2>
+<p class="hint">Each line is one JSON-RPC call: <code>/rpc</code> is L1, <code>/rpc-l2</code> is L2.
+The method, what was sent and what came back.</p>
+<ol id="log" class="log"></ol>
+</section>
+</main>
+<script src="../vendor/ethers/ethers.umd.min.js"></script>
+<script src="swap.js"></script>
+</body>
+</html>

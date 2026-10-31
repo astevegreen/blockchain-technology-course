@@ -67,7 +67,7 @@ Usage:
   ./lab-manager.sh list
 
 Managed targets:
-  router, course-site, instructor-auth-service, ethereum_lab, bitcoin, consensus, cryptography, p2p_trust, exercises, explorer, wallet, tokens, tron, quiz-engine-v2, hlf
+  router, course-site, instructor-auth-service, ethereum_lab, bitcoin, consensus, cryptography, p2p_trust, exercises, explorer, wallet, tokens, dex, tron, quiz-engine-v2, hlf
 
 Deploy options:
   --mode <instructor|student>
@@ -684,6 +684,7 @@ target_dir() {
         explorer) echo "${BASE_DIR}/explorer" ;;
         wallet) echo "${BASE_DIR}/wallet" ;;
         tokens) echo "${BASE_DIR}/tokens" ;;
+        dex) echo "${BASE_DIR}/dex" ;;
         tron) echo "${BASE_DIR}/tron" ;;
         quiz|quiz-engine-v2) echo "${BASE_DIR}/quiz-engine-v2" ;;
         hlf) echo "${BASE_DIR}/hlf" ;;
@@ -710,6 +711,7 @@ exercises
 explorer
 wallet
 tokens
+dex
 tron
 quiz-engine-v2
 hlf
@@ -759,7 +761,7 @@ configure_tls() {
                 -keyout "${certs_dir}/privkey.pem" \
                 -out "${certs_dir}/fullchain.pem" \
                 -subj "/C=US/ST=State/L=City/O=Courseware/CN=localhost" \
-                -addext "subjectAltName=DNS:localhost,DNS:explorer.localhost,DNS:lab,DNS:explorer.lab,DNS:tokens.localhost,DNS:tokens.lab"
+                -addext "subjectAltName=DNS:localhost,DNS:explorer.localhost,DNS:lab,DNS:explorer.lab,DNS:tokens.localhost,DNS:tokens.lab,DNS:dex.localhost,DNS:dex.lab,DNS:dex-l2.localhost,DNS:dex-l2.lab"
         fi
         if declare -F runtime_fix_path_ownership >/dev/null 2>&1; then
             runtime_fix_path_ownership "${certs_dir}"

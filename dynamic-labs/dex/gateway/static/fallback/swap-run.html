@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recorded run: a swap and a bridge</title>
+<link rel="stylesheet" href="../lab/lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../lab/">Worksheet</a> · <a href="./">Saved pages</a></p>
+<h1>Recorded run: a swap and a bridge</h1>
+<p class="note">Use this page when the course chains are down. It is one run of the
+<a href="../sign/">swap page</a>, recorded on 31 Oct 2026 with seat 39: what the page showed at each
+step, what the explorers showed for the three transactions, and the calls the page made to the two
+nodes. Answer part 2's questions from it, using this run's transactions in place of your own.</p>
+
+<h2>1. The account</h2>
+<table>
+<tr><th>Address (the same on both chains)</th><td><code>0x35304262b9E87C00c430149f28dD154995d01207</code></td></tr>
+<tr><th>L1: ETH</th><td>100.0 ETH</td></tr>
+<tr><th>L1: cUSD</th><td>0.0 cUSD</td></tr>
+<tr><th>L2: bcUSD</th><td>0.0 bcUSD</td></tr>
+</table>
+
+<h2>2. The quote</h2>
+<table>
+<tr><th>You pay</th><td>0.1 ETH (the router wraps it into WETH)</td></tr>
+<tr><th>The router says you get</th><td><code>202.065487 cUSD</code></td></tr>
+<tr><th>Your price</th><td>2020.65 cUSD per WETH</td></tr>
+<tr><th>The pool's price now (reserve ratio)</th><td>2030.81 cUSD per WETH</td></tr>
+</table>
+
+<h2>3. The swap, built</h2>
+<table>
+<tr><th>To (the router)</th><td><code>0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9</code></td></tr>
+<tr><th>Value</th><td>0.1 ETH</td></tr>
+<tr><th>Function</th><td><code>swapExactETHForTokens(amountOutMin, path, to, deadline)</code></td></tr>
+<tr><th>amountOutMin (99% of the quote)</th><td><code>200044832 (200.044832 cUSD)</code></td></tr>
+<tr><th>path</th><td><code>WETH 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512, then cUSD 0x5FbDB2315678afecb367f032d93F642f64180aa3</code></td></tr>
+<tr><th>to</th><td><code>0x35304262b9E87C00c430149f28dD154995d01207</code></td></tr>
+<tr><th>deadline</th><td><code>1789654464</code></td></tr>
+<tr><th>Input data (what the explorer shows)</th><td><code>0x7ff36ab5000000000000000000000000000000000000000000000000000000000bec7120000000000000000000000000000000000000000000000000000000000000008000000000000000000000000035304262b9e87c00c430149f28dd154995d01207000000000000000000000000000000000000000000000000000000006aabf5c00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000e7f1725e7734ce288f8367e1bb143e90bb3f05120000000000000000000000005fbdb2315678afecb367f032d93f642f64180aa3</code></td></tr>
+<tr><th>Function selector (first 4 bytes)</th><td><code>0x7ff36ab5</code></td></tr>
+</table>
+
+<h2>4. The swap, sent and read back</h2>
+<table>
+<tr><th>Transaction</th><td><code>0xda3cf5e327694529b14e8b0c94a4158a87f35ee6ee0aa8a4737286e4f004316f</code></td></tr>
+<tr><th>Block</th><td><code>24</code></td></tr>
+<tr><th>cUSD received (your balance after minus before)</th><td><code>202.065487 cUSD</code></td></tr>
+<tr><th>The pool's price before your block</th><td>2030.81 cUSD per WETH</td></tr>
+<tr><th>The pool's price now</th><td>2022.66 cUSD per WETH</td></tr>
+</table>
+<p>The same transaction in the L1 explorer:</p>
+<table>
+<tr><th>Status</th><td>Success</td></tr>
+<tr><th>Block / Position</th><td>24 / 0</td></tr>
+<tr><th>Timestamp</th><td>Sep-17-2026 02:04:48 PM +UTC</td></tr>
+<tr><th>From / Nonce</th><td><code>0x35304262b9E87C00c430149f28dD154995d01207 / 0</code></td></tr>
+<tr><th>Interacted With (To)</th><td>CourseRouter</td></tr>
+<tr><th>Transaction Action</th><td>swapExactETHForTokens</td></tr>
+<tr><th>Internal transfers</th><td>0.1 ETH from the account to CourseRouter; 0.1 ETH from CourseRouter to Wrapped Ether (WETH)</td></tr>
+<tr><th>Tokens Transferred (2)</th><td>0.1 WETH from CourseRouter to Course LP (CLP), the pool; 202.065487 cUSD from Course LP (CLP) to the account</td></tr>
+<tr><th>Value</th><td>0.1 ETH</td></tr>
+<tr><th>Gas Used / Limit</th><td>117,666 / 300,000</td></tr>
+<tr><th>Transaction Fee</th><td>0.00012346487876331 ETH</td></tr>
+<tr><th>Logs (5)</th><td>
+1. WETH <code>Deposit</code>: topic 1 (who) CourseRouter; data 0.1 WETH.<br>
+2. WETH <code>Transfer</code>: from CourseRouter to the pool; data 0.1 WETH.<br>
+3. cUSD <code>Transfer</code>: from the pool to the account; data 202065487 (202.065487 cUSD).<br>
+4. Pool <code>Sync</code>: reserves now 100578453913 (cUSD) and 49725851312092203649 (WETH).<br>
+5. Pool <code>Swap</code>: topic 1 (sender) CourseRouter; topic 2 (to) the account; data amount0In 0,
+amount1In 0.1 WETH, amount0Out 202065487, amount1Out 0.</td></tr>
+</table>
+
+<h2>5. The bridge deposit</h2>
+<p>The approval went into block 25 and the deposit into block 26.</p>
+<table>
+<tr><th>Approval transaction</th><td><code>0x2405aa8eebb09d71b1b27493011161dea061ad449b2d281f281f96c939dc640f</code></td></tr>
+<tr><th>Approval, read in the explorer</th><td>To Course Dollar (cUSD), <code>approve</code>, nonce 1; one log, <code>Approval</code>: owner the account, spender CourseBridgeL1, 202065487</td></tr>
+<tr><th>Deposit transaction</th><td><code>0x65793362e6187cb6d9e95712732adc8f73da9e3f00df72d1bcadb121a1a5b1c5</code></td></tr>
+<tr><th>L1 block</th><td><code>26</code></td></tr>
+<tr><th>Deposit number (from the DepositInitiated log)</th><td><code>2</code></td></tr>
+<tr><th>Locked in the L1 bridge</th><td><code>202.065487 cUSD</code></td></tr>
+<tr><th>To, on L2</th><td><code>0x35304262b9E87C00c430149f28dD154995d01207</code></td></tr>
+</table>
+<p>The deposit in the L1 explorer:</p>
+<table>
+<tr><th>Status</th><td>Success</td></tr>
+<tr><th>Block / Position</th><td>26 / 0</td></tr>
+<tr><th>Timestamp</th><td>Sep-17-2026 02:05:12 PM +UTC</td></tr>
+<tr><th>From / Nonce</th><td><code>0x35304262b9E87C00c430149f28dD154995d01207 / 2</code></td></tr>
+<tr><th>Interacted With (To)</th><td>CourseBridgeL1</td></tr>
+<tr><th>Transaction Action</th><td>depositERC20To</td></tr>
+<tr><th>Tokens Transferred (1)</th><td>202.065487 cUSD from the account to CourseBridgeL1</td></tr>
+<tr><th>Value</th><td>0 ETH</td></tr>
+<tr><th>Gas Used / Limit</th><td>48,785 / 200,000</td></tr>
+<tr><th>Transaction Fee</th><td>0.000050628634959485 ETH</td></tr>
+<tr><th>Logs (2)</th><td>
+1. cUSD <code>Transfer</code>: from the account to CourseBridgeL1; data 202065487.<br>
+2. CourseBridgeL1 <code>DepositInitiated</code>: topic 1 (depositId) 2; topic 2 (l1Token) cUSD;
+topic 3 (from) the account; data to <code>0x35304262b9E87C00c430149f28dD154995d01207</code>, amount
+202065487.</td></tr>
+</table>
+
+<h2>6. The money arrives on L2</h2>
+<p>The page waited 28 seconds after the deposit's block before L2's bridge said deposit 2 was
+processed.</p>
+<table>
+<tr><th>L2 transaction</th><td><code>0xe41e4feb1cf799f958885234fb614e8f6ba5a836fdc28ef9a46ce37b9b0aa62c</code></td></tr>
+<tr><th>L2 block</th><td><code>167</code></td></tr>
+<tr><th>Sent by (the relayer)</th><td><code>0x14dC79964da2C08b23698B3D3cc7Ca32193d9955</code></td></tr>
+<tr><th>Your bcUSD on L2 now</th><td><code>202.065487 bcUSD</code></td></tr>
+</table>
+<p>The same transaction in the L2 explorer:</p>
+<table>
+<tr><th>Status</th><td>Success</td></tr>
+<tr><th>Block / Position</th><td>167 / 0</td></tr>
+<tr><th>Timestamp</th><td>Sep-17-2026 02:05:34 PM +UTC</td></tr>
+<tr><th>From / Nonce</th><td><code>0x14dC79964da2C08b23698B3D3cc7Ca32193d9955 / 2</code></td></tr>
+<tr><th>Interacted With (To)</th><td>CourseBridgeL2</td></tr>
+<tr><th>Transaction Action</th><td>finalizeDeposit</td></tr>
+<tr><th>Tokens Transferred (1)</th><td>202.065487 bcUSD from 0x0000…0000 (a mint) to the account</td></tr>
+<tr><th>Value</th><td>0 ETH</td></tr>
+<tr><th>Gas Used / Limit</th><td>83,513 / 200,000</td></tr>
+<tr><th>Transaction Fee</th><td>0.000083513000584591 ETH</td></tr>
+<tr><th>Input data</th><td><code>0x77077492000000000000000000000000000000000000000000000000000000000000000200000000000000000000000035304262b9e87c00c430149f28dd154995d0120700000000000000000000000035304262b9e87c00c430149f28dd154995d01207000000000000000000000000000000000000000000000000000000000c0b464f</code></td></tr>
+<tr><th>Logs (2)</th><td>
+1. bcUSD <code>Transfer</code>: from 0x0000…0000 to the account; data 202065487.<br>
+2. CourseBridgeL2 <code>DepositFinalized</code>: topic 1 (depositId) 2; topic 2 (from) the account;
+topic 3 (to) the account; data 202065487.</td></tr>
+</table>
+
+<h2>7. Asked the contracts</h2>
+<table>
+<tr><th>Asked</th><td><code>L2 bcUSD: balanceOf(0x35304262b9E87C00c430149f28dD154995d01207)</code></td></tr>
+<tr><th>Input data</th><td><code>0x70a0823100000000000000000000000035304262b9e87c00c430149f28dd154995d01207</code></td></tr>
+<tr><th>Decoded</th><td><code>202065487 (202.065487 bcUSD)</code></td></tr>
+</table>
+<table>
+<tr><th>Asked</th><td><code>L2 bridge: processed(2)</code></td></tr>
+<tr><th>Input data</th><td><code>0x05a79e060000000000000000000000000000000000000000000000000000000000000002</code></td></tr>
+<tr><th>Decoded</th><td><code>true</code></td></tr>
+</table>
+<table>
+<tr><th>Asked</th><td><code>L2 bridge: relayer()</code></td></tr>
+<tr><th>Input data</th><td><code>0x8406c079</code></td></tr>
+<tr><th>Decoded</th><td><code>0x14dC79964da2C08b23698B3D3cc7Ca32193d9955</code></td></tr>
+</table>
+<table>
+<tr><th>Asked</th><td><code>L1 cUSD: isBlackListed(0x35304262b9E87C00c430149f28dD154995d01207)</code></td></tr>
+<tr><th>Input data</th><td><code>0xe47d606000000000000000000000000035304262b9e87c00c430149f28dd154995d01207</code></td></tr>
+<tr><th>Decoded</th><td><code>false</code></td></tr>
+</table>
+
+<h2>What the page asked the nodes</h2>
+<p class="hint">The run made 59 calls; these are the ones that sent something or found something.
+<code>/rpc</code> is L1, <code>/rpc-l2</code> is L2. "…" marks a cut.</p>
+<ol class="log">
+<li>→ /rpc eth_call [{&quot;to&quot;:&quot;0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9&quot;,&quot;data&quot;:&quot;0xd06ca61f…(getAmountsOut: 0.1 ETH, path WETH then cUSD)&quot;},&quot;latest&quot;]<div>← &quot;0x…000000000000000000000000000000000000000000000000016345785d8a0000…000000000000000000000000000000000000000000000000000000000c0b464f&quot;</div></li>
+<li>→ /rpc eth_sendRawTransaction [&quot;0x02f9…(the signed swap: the input data in section 3, plus nonce 0, fees and signature)&quot;]<div>← &quot;0xda3cf5e327694529b14e8b0c94a4158a87f35ee6ee0aa8a4737286e4f004316f&quot;</div></li>
+<li>→ /rpc eth_getTransactionReceipt [&quot;0xda3cf5e327694529b14e8b0c94a4158a87f35ee6ee0aa8a4737286e4f004316f&quot;]<div>← {&quot;status&quot;:&quot;0x1&quot;, … &quot;blockNumber&quot;:&quot;0x18&quot;, … (the five logs in section 4)}</div></li>
+<li>→ /rpc eth_sendRawTransaction [&quot;0x02f8…(the signed approve, nonce 1)&quot;]<div>← &quot;0x2405aa8eebb09d71b1b27493011161dea061ad449b2d281f281f96c939dc640f&quot;</div></li>
+<li>→ /rpc eth_sendRawTransaction [&quot;0x02f8…(the signed depositERC20To, nonce 2)&quot;]<div>← &quot;0x65793362e6187cb6d9e95712732adc8f73da9e3f00df72d1bcadb121a1a5b1c5&quot;</div></li>
+<li>→ /rpc eth_getTransactionReceipt [&quot;0x65793362e6187cb6d9e95712732adc8f73da9e3f00df72d1bcadb121a1a5b1c5&quot;]<div>← {&quot;status&quot;:&quot;0x1&quot;, … &quot;blockNumber&quot;:&quot;0x1a&quot;, … (the two logs in section 5)}</div></li>
+<li>→ /rpc-l2 eth_call [{&quot;to&quot;:&quot;0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B&quot;,&quot;data&quot;:&quot;0x05a79e060000000000000000000000000000000000000000000000000000000000000002&quot;},&quot;latest&quot;]<div>← &quot;0x0000000000000000000000000000000000000000000000000000000000000000&quot; (asked again every 2 seconds)</div></li>
+<li>→ /rpc-l2 eth_call [the same question, 28 seconds later]<div>← &quot;0x0000000000000000000000000000000000000000000000000000000000000001&quot;</div></li>
+<li>→ /rpc-l2 ots_searchTransactionsBefore [&quot;0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B&quot;,0,10]<div>← {&quot;txs&quot;:[{&quot;hash&quot;:&quot;0xe41e4feb1cf799f958885234fb614e8f6ba5a836fdc28ef9a46ce37b9b0aa62c&quot;, … &quot;from&quot;:&quot;0x14dc79964da2c08b23698b3d3cc7ca32193d9955&quot;, …}, … (the bridge's earlier transactions)]}</div></li>
+<li>→ /rpc-l2 eth_call [{&quot;to&quot;:&quot;0x61Ab51bE7C866a54B0B442c149d7715367743EfD&quot;,&quot;data&quot;:&quot;0x70a0823100000000000000000000000035304262b9e87c00c430149f28dd154995d01207&quot;},&quot;latest&quot;]<div>← &quot;0x000000000000000000000000000000000000000000000000000000000c0b464f&quot;</div></li>
+</ol>
+</main>
+</body>
+</html>

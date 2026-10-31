@@ -1,0 +1,115 @@
+name: dex
+
+# The day-4 exchange and bridge lab: two frozen course chains and Otterscan, one copy for the
+# whole class. L1 holds the exchange (a dollar token, wrapped ether, a pool and a router) and the
+# bridge's L1 half; L2 holds the bridge's L2 half and the bridged dollar. The relayer copies each
+# L1 deposit to L2.
+# The router sends https://dex.<host>/ (L1) and https://dex-l2.<host>/ (L2) here
+# (router/routes/dex-host.conf, dex-l2-host.conf):
+#   /rpc, /config.json, /lab/, /sign/, /fallback/, /vendor/  -> gateway (L1) or gateway-l2 (L2)
+#   everything else                                           -> otterscan (one copy serves both)
+# The gateway, Otterscan's nginx settings and ethers are the explorer lab's files, mounted
+# read-only, so the labs stay the same. Restart the whole lab, never one chain: a restart reloads
+# both frozen chains, and an L1 reloaded alone would reuse deposit numbers L2 has already minted.
+
+services:
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json
+        --block-time ${DEX_BLOCK_TIME:-12}
+    volumes:
+      - ./chain:/chain:ro
+    networks:
+      - dex-net
+    restart: unless-stopped
+
+  anvil-l2:
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --chain-id 31338 --load-state /chain/course-chain-l2.json
+        --block-time ${DEX_L2_BLOCK_TIME:-2}
+    volumes:
+      - ./chain:/chain:ro
+    networks:
+      - dex-net
+    restart: unless-stopped
+
+  relayer:
+    image: python:3.12-alpine
+    command: ["python", "-u", "/srv/relayer.py"]
+    environment:
+      - L1_URL=http://anvil:8545
+      - L2_URL=http://anvil-l2:8545
+      - ADDRESSES=/chain/addresses.env
+    volumes:
+      - ./relayer/relayer.py:/srv/relayer.py:ro
+      - ./chain/addresses.env:/chain/addresses.env:ro
+    networks:
+      - dex-net
+    depends_on:
+      - anvil
+      - anvil-l2
+    restart: unless-stopped
+
+  gateway:
+    image: python:3.12-alpine
+    command: ["python", "-u", "/srv/gateway.py"]
+    environment:
+      - ANVIL_URL=http://anvil:8545
+      - L2_ANVIL_URL=http://anvil-l2:8545  # /rpc-l2: the swap page reads L2 from this origin
+      - STATIC_ROOT=/srv/static
+      - CHAIN_NAME=Course L1 (training)
+    volumes:
+      - ../explorer/gateway/gateway.py:/srv/gateway.py:ro
+      # One mount per folder: Docker cannot nest the vendor mount inside a read-only one.
+      - ./gateway/static/lab:/srv/static/lab:ro
+      - ./gateway/static/sign:/srv/static/sign:ro
+      - ./gateway/static/fallback:/srv/static/fallback:ro
+      - ../explorer/gateway/static/vendor:/srv/static/vendor:ro
+    networks:
+      - dex-net
+      - router-net
+    depends_on:
+      - anvil
+    restart: unless-stopped
+
+  gateway-l2:
+    image: python:3.12-alpine
+    command: ["python", "-u", "/srv/gateway.py"]
+    environment:
+      - ANVIL_URL=http://anvil-l2:8545
+      - STATIC_ROOT=/srv/static
+      - CHAIN_NAME=Course L2 (training)
+    volumes:
+      - ../explorer/gateway/gateway.py:/srv/gateway.py:ro
+      - ./gateway/static/lab:/srv/static/lab:ro
+      - ./gateway/static/sign:/srv/static/sign:ro
+      - ./gateway/static/fallback:/srv/static/fallback:ro
+      - ../explorer/gateway/static/vendor:/srv/static/vendor:ro
+    networks:
+      - dex-net
+      - router-net
+    depends_on:
+      - anvil-l2
+    restart: unless-stopped
+
+  otterscan:
+    image: otterscan/otterscan:v2.11.0
+    environment:
+      # The router serves /config.json from a gateway; this stops the image writing its own.
+      - DISABLE_CONFIG_OVERWRITE=1
+    volumes:
+      - ../explorer/otterscan/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # One copy holds both chains' source: full_match/31337 and full_match/31338.
+      - ./chain/sourcify:/usr/share/nginx/html/sourcify:ro
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  dex-net:
+  router-net:
+    external: true

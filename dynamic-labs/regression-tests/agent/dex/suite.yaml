@@ -1,0 +1,52 @@
+version: 1
+suite_id: day4-dex-agent-regression
+lab: dex
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/dex/run.sh
+assumptions:
+  - MCP browser tooling is available.
+  - The dex automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  dex_host: dex.localhost
+  dex_l2_host: dex-l2.localhost
+  swap_seat: 39
+observability:
+  required:
+    - console_logs
+    - network_failures
+shared_rules:
+  - Use a fresh browser context per task.
+  - Read facts from the rendered pages and compare them with the values in the playbook.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+parallelization:
+  recommended:
+    - Run the read and swap tasks in parallel; the read task looks only at the frozen blocks.
+tasks:
+  - id: dex-read-flow
+    title: Otterscan shows the worksheet's swap and bridge fields on both chains
+    file: tasks/dex-read-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /
+      - /block/<number>
+      - /tx/<hash>
+      - /address/<address>
+    parallel_safe: true
+  - id: swap-flow
+    title: Swap, bridge and wait for L2 from the swap page
+    file: tasks/swap-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /sign/
+      - /lab/
+      - /fallback/
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.

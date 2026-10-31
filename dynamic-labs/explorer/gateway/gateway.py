@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Explorer lab gateway: the only door from the browser to the course chain. The day-3 token
-lab (../tokens) runs the same file against its own chain.
+lab (../tokens) and the day-4 exchange lab (../dex, once per chain) run the same file against
+their own chains.
 
 POST /rpc          JSON-RPC to Anvil, filtered to the read methods Otterscan uses plus
                    eth_sendRawTransaction (the sign-and-send step). Anvil's own control
                    methods (anvil_*, evm_*, eth_sendTransaction, ...) never reach it, so no
                    student can rewrite the chain the class reads.
+POST /rpc-l2       The same, to a second chain, when L2_ANVIL_URL is set: the day-4 swap page
+                   reads both of its chains from one origin.
 GET  /config.json  Otterscan's settings, built from the address the browser used, so one
                    copy works on explorer.localhost, explorer.lab and explorer.<cloud domain>.
 GET  /lab/ /sign/ /fallback/ /vendor/   static pages (worksheet, signing page, saved pages).
@@ -22,8 +25,10 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 UPSTREAM = os.environ.get("ANVIL_URL", "http://anvil:8545")
+UPSTREAM_L2 = os.environ.get("L2_ANVIL_URL", "")
 STATIC_ROOT = os.environ.get("STATIC_ROOT", "/srv/static")
 PORT = int(os.environ.get("PORT", "8080"))
+CHAIN_NAME = os.environ.get("CHAIN_NAME", "Course chain (training)")  # the name Otterscan shows
 MAX_BODY = 256 * 1024
 MAX_BATCH = 100
 
@@ -60,14 +65,14 @@ def refused(call):
     return None
 
 
-def forward(payload):
+def forward(payload, upstream):
     data = json.dumps(payload).encode()
-    req = urllib.request.Request(UPSTREAM, data=data, headers={"Content-Type": "application/json"})
+    req = urllib.request.Request(upstream, data=data, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read())
 
 
-def handle_rpc(body):
+def handle_rpc(body, upstream=UPSTREAM):
     """Filter one JSON-RPC body (single call or batch) and return the reply object."""
     try:
         payload = json.loads(body)
@@ -78,14 +83,14 @@ def handle_rpc(body):
             return rpc_error(None, -32600, "Invalid request")
         replies = [refused(call) for call in payload]
         passed = [call for call, reply in zip(payload, replies) if reply is None]
-        answers = forward(passed) if passed else []
+        answers = forward(passed, upstream) if passed else []
         if not isinstance(answers, list) or len(answers) != len(passed):
             return rpc_error(None, -32603, "The course chain gave an unexpected answer")
         # Anvil answers a batch in order, one reply per call.
         answers = iter(answers)
         return [reply if reply is not None else next(answers) for reply in replies]
     reply = refused(payload)
-    return reply if reply is not None else forward(payload)
+    return reply if reply is not None else forward(payload, upstream)
 
 
 def otterscan_config(scheme, host):
@@ -95,7 +100,7 @@ def otterscan_config(scheme, host):
         "assetsURLPrefix": "",
         "experimental": "",
         "chainInfo": {
-            "name": "Course chain (training)",
+            "name": CHAIN_NAME,
             "faucets": [],
             "nativeCurrency": {"name": "Ether", "symbol": "ETH", "decimals": 18},
         },
@@ -123,7 +128,9 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_POST(self):
-        if self.path.split("?")[0] != "/rpc":
+        path = self.path.split("?")[0]
+        upstream = {"/rpc": UPSTREAM, "/rpc-l2": UPSTREAM_L2}.get(path)
+        if not upstream:
             self.send_error(404)
             return
         try:
@@ -134,7 +141,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(413, rpc_error(None, -32600, "Request too large"))
             return
         try:
-            reply = handle_rpc(self.rfile.read(length))
+            reply = handle_rpc(self.rfile.read(length), upstream)
         except (urllib.error.URLError, OSError, ValueError):
             self.send_json(502, rpc_error(None, -32603, "The course chain did not answer"))
             return

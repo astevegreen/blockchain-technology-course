@@ -60,6 +60,21 @@ slide index), which is never listed here.
   (`das_understandingsecurityissues_2022`) supports "many". Students read it on the Contract tab. Reword at the next
   chain rebuild: a comment change alters the bytecode, so the deploy hashes and possibly every fee after them
   change. (31 Oct 2026, D3 token lab review)
+- The exchange and bridge lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`);
+  it shares the explorer's Otterscan and gateway images and adds Foundry's. Add it with the explorer, or note why
+  not. (31 Oct 2026, D4 exchange and bridge lab build)
+- Cloud deploys need DNS records and certificate names for `dex.<domain>` and `dex-l2.<domain>` (`deploy-cloud.sh`,
+  certbot); `/labs/dex/` has the explorer's bare-IP redirect problem too. (31 Oct 2026, D4 exchange and bridge lab
+  build)
+- The exchange and bridge lab has not been tried with a whole class: 40 seats swapping against one pool in one
+  12-second L1 block, and the relayer finalizing their deposits (`dynamic-labs/dex/relayer/relayer.py`). (31 Oct
+  2026, D4 exchange and bridge lab build)
+- In the exchange and bridge lab, the cUSD issuer (Account 0), bridge owner (Account 6) and relayer (Account 7) keys
+  come from Anvil's public test phrase like the seats', and the gateway passes signed transactions, so a student
+  could mint unbacked bcUSD, pause a bridge or take the relayer's nonces mid-class; the token lab's issuer has the
+  same exposure. Refuse those senders at the gateway, or say so to instructors. (31 Oct 2026, D4 lab review)
+- No quiz questions test the exchange and bridge lab (`dynamic-labs/dex/`): a swap's price impact, matching a
+  deposit to its finalize, lock and mint, who can pause a bridge. (31 Oct 2026, D4 exchange and bridge lab build)
 
 - The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
   `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)

@@ -88,6 +88,7 @@ fresh_start() {
     explorer \
     wallet \
     tokens \
+    dex \
     tron \
     quiz-engine-v2 \
     hlf
