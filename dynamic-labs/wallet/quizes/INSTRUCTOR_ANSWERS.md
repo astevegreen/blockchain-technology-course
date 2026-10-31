@@ -2,7 +2,7 @@
 
 Instructor only: `pages.yml` and `vm-build.yml` leave every lab's `quizes/` folder out of what
 students receive. The worksheet is `gateway/static/lab/index.html`; the numbers below come from
-the frozen chain (`quizes/facts.json`, built by `chain/build-steps.sh`) and match the saved pages
+the frozen chain (`quizes/facts.json`, built by `quizes/build-steps.sh`) and match the saved pages
 (`gateway/static/fallback/`). The automated suite checks the wallet page's addresses and the live
 explorer against `facts.json`.
 

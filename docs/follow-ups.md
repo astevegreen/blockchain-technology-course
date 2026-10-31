@@ -62,14 +62,11 @@ slide index), which is never listed here.
   from them leaves the explorer running. (31 Oct 2026, D2 wallet lab build)
 - No quiz questions test the wallet lab (`dynamic-labs/wallet/`): the day 3 daily bank could check its five ideas
   (path levels, gap limit, change clues, xpub reach, reading a 2-of-3 witness). (31 Oct 2026, D2 wallet lab build)
-- Students still receive the labs' chain build scripts, the other labs' browser playbooks and the automated tests
-  (`dynamic-labs/{explorer,wallet}/chain/`, `dynamic-labs/regression-tests/`) in `src.zip` and on the VM; the
-  wallet's `chain/build-steps.sh` names the two keys that signed (worksheet question 8) and its tests hold the
-  fees and amounts. Only the wallet playbook and `wallet/quizes/facts.json` are fenced. Decide whether the rest
-  count as instructor seeds (rule 1) and fence them in `pages.yml` and `vm-build.yml`. (31 Oct 2026, D2 wallet lab
-  review)
-- `Blockchain.bib` has no BIP 48 key; the wallet worksheet gives the multisig path `m/48'/0'/0'/2'` uncited.
-  (31 Oct 2026, D2 wallet lab build)
+- Students still receive the explorer lab's chain build scripts, the other labs' browser playbooks and the
+  automated tests (`dynamic-labs/explorer/chain/`, `dynamic-labs/regression-tests/`) in `src.zip` and on the VM;
+  the wallet tests hold the lab's fees and amounts. The wallet playbook, `wallet/quizes/facts.json` and
+  `wallet/quizes/build-steps.sh` (it names the signers) are fenced. Decide whether the rest count as instructor
+  seeds (rule 1) and fence them in `pages.yml` and `vm-build.yml`. (31 Oct 2026, D2 wallet lab review)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`

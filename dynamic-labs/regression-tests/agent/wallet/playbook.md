@@ -91,7 +91,7 @@ and a screenshot.
    wallet on the course chain".
 2. Follow the worksheet's links to the explorer, the wallet page and the saved pages, and back
    through each page's crumbs. Confirm every one loads under `/labs/wallet/`.
-3. Confirm the worksheet's source links (`[1]` to `[19]`) jump to entries under "Sources".
+3. Confirm the worksheet's source links (`[1]` to `[20]`) jump to entries under "Sources".
 4. Open `/labs/wallet/fallback/`. Search R0 and confirm the page jumps to R0's section (received
    0.05 in block 13, sent in block 16). Search the block 18 transaction ID and confirm its section,
    with the witness script. Search R3 and confirm "No transactions on this chain touch that

@@ -31,7 +31,7 @@ on), since the gateway's own redirect would drop the `/labs/wallet` prefix.
 
 Blocks 1-20 are frozen: `chain/blocks.hex`, with `quizes/facts.json` (every address, key and
 transaction ID the worksheet and tests use; it sits in `quizes/` because it maps the answers). `chain/build-chain.sh` rebuilds them with Docker
-only, from `chain/build-steps.sh` (what each block holds) and `chain/seedkeys.py` (the keys from
+only, from `quizes/build-steps.sh` (what each block holds; in `quizes/` because it names the signers) and `chain/seedkeys.py` (the keys from
 the published test phrases), and recaptures the saved pages with `chain/capture_pages.py`.
 A rebuild changes every transaction ID and time, so update the worksheet, the instructor answers
 and the tests from the new `facts.json`; the addresses stay the same. The instructor answers are

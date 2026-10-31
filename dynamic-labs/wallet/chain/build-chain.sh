@@ -9,10 +9,11 @@ export MSYS_NO_PATHCONV=1
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 IMAGE="${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-mempool:latest}"
 MOUNT="$HERE"
-command -v cygpath >/dev/null && MOUNT="$(cygpath -w "$HERE")"
+STEPS="$HERE/../quizes"
+command -v cygpath >/dev/null && MOUNT="$(cygpath -w "$HERE")" && STEPS="$(cygpath -w "$STEPS")"
 
 rm -rf "$HERE/out"
-docker run --rm --user root --entrypoint bash -v "$MOUNT:/chain" "$IMAGE" /chain/build-steps.sh
+docker run --rm --user root --entrypoint bash -v "$MOUNT:/chain" -v "$STEPS:/steps:ro" "$IMAGE" /steps/build-steps.sh
 cp "$HERE/out/blocks.hex" "$HERE/"
 cp "$HERE/out/facts.json" "$HERE/../quizes/"
 docker run --rm --user root --entrypoint python3 -v "$MOUNT:/chain" -v "$MOUNT/../gateway/static/fallback:/fallback" \
