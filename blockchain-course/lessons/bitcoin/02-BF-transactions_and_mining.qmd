@@ -520,29 +520,23 @@ This slide shows the Merkle proof: the payoff of the tree for anyone who must sh
 ## Reading Alice's payment, field by field {.smaller}
 
 :::: {.columns}
-::: {.column width="60%"}
-Bitcoin Core's decode of Alice's payment, trimmed, hashes shortened [@antonopoulos_masteringbitcoinprogramming_2017]:
+::: {.column width="57%"}
+Bitcoin Core's decode, trimmed [@antonopoulos_masteringbitcoinprogramming_2017]:
 
 ```json
-{
-  "version": 1,
-  "locktime": 0,
+{ "version": 1, "locktime": 0,
   "vin": [{ "txid": "7957a35f...6f18", "vout": 0,
             "sequence": 4294967295 }],
   "vout": [
   { "value": 0.01500000, "n": 0, "scriptPubKey": {
-    "asm": "OP_DUP OP_HASH160 ab68... OP_EQUALVERIFY OP_CHECKSIG",
-    "type": "pubkeyhash",
-    "addresses": ["1GdK9Uzp..."] } },
+   "type": "pubkeyhash", "addresses": ["1GdK9Uzp..."]}},
   { "value": 0.08450000, "n": 1, "scriptPubKey": {
-    "asm": "OP_DUP OP_HASH160 7f9b... OP_EQUALVERIFY OP_CHECKSIG",
-    "type": "pubkeyhash",
-    "addresses": ["1Cdid9KF..."] } }
-  ]
-}
+   "type": "pubkeyhash", "addresses": ["1Cdid9KF..."]}}
+  ] }
 ```
-:::
-::: {.column width="40%"}
+
+<div style="font-size: 0.8em;">
+
 | Field | What you record |
 | --- | --- |
 | `type`: pubkeyhash, both outputs | P2PKH: an older single-key wallet |
@@ -550,13 +544,20 @@ Bitcoin Core's decode of Alice's payment, trimmed, hashes shortened [@antonopoul
 | `locktime` 0 | No time restriction |
 | 258 bytes, 0.0005 BTC fee | ≈ 194 sat/vB |
 | Output 1 to `1Cdid9KF...` | The address the input came from: change |
+
+</div>
+:::
+::: {.column width="43%"}
+In mempool, an open-source explorer (31 Oct 2026) [@mempool_mempool_2026; @mempoolspace_transaction0627052b_2013]:
+
+![](../images/mempool-alice-payment.png){fig-alt="mempool's transaction page for Alice's payment: 696,684 confirmations, 194 sat/vB, one P2PKH input from 1Cdid9KF... with nSequence 0xffffffff, two P2PKH outputs" width="100%"}
 :::
 ::::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide reads day 1's payment again, this time for the fields a trace records. It matters here because it is the worked example for annotating a hop, in today's lab and in day 6's trace: every field on the right comes from the decode on the left or from an earlier slide. Emphasize that the change here is easy: Alice's change went back to the address that received Joe's payment.
+This slide reads day 1's payment again, this time for the fields a trace records, first in Bitcoin Core's decode and then in mempool, the explorer the course labs run. It matters here because it is the worked example for annotating a hop, in today's lab and in day 6's trace: every row of the table comes from the decode or from an earlier slide, and the explorer shows the same values. Emphasize that the change here is easy: Alice's change went back to the address that received Joe's payment.
 
 **Key Points**
 - In full: txid 0627052b6f28912f2703066a912ea577f2ce4da4caa5a5fbd8a57286c345c2f2; input 7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18 output 0; output hashes ab68025513c3dbd2f7b92a94e0581f5d50f654e7 and 7f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a8.
@@ -565,16 +566,24 @@ This slide reads day 1's payment again, this time for the fields a trace records
 - Sequence 0xffffffff: no BIP 125 signal. Locktime 0: no restriction.
 - Fee rate ≈ 194 sat/vB.
 - The second output pays 1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK, the address Joe paid: Alice reused her address for change.
-- The decode comes from Bitcoin Core's bitcoin-cli, as on day 1. No Bitcoin explorer has a course spike yet.
+- The decode comes from Bitcoin Core's bitcoin-cli, as on day 1. The screenshot is mempool (open source, AGPL-3.0, as of 31 Oct 2026) on the public site mempool.space; the course lab runs the same software on the course chain.
+- mempool does the lookup the decode leaves to you: it shows the input's address (1Cdid9KF…), amount (0.1 BTC) and previous output type (P2PKH) beside the input, and works out the fee rate (194 sat/vB) and confirmations (696,684 on 31 Oct 2026; the count grows with every block).
+- The "Details" button opens the nSequence and type rows; the screenshot hides the script rows, the miner row and the size, virtual size and weight rows lower down. The page gives confirmations, not a block-height row. Confirmed transactions get no RBF badge: read nSequence.
+- mempool shows times in the viewer's own time zone: the screenshot's 18:11:54 is 23:11:54 UTC, when block 277,316 was mined. Record times in UTC.
+- Ignore the dollar figure and the red "Overpaid" badge: they are mempool's own estimates, not fields of the transaction. The lab instance runs offline, so its dollar figures mean nothing at all.
+- mempool shows no owner names and does not mark change: the table's last row is the analyst's call.
 
 **Walkthrough**
-1. Find version, locktime and the input's sequence.
+1. Find version, locktime and the input's sequence in the decode.
 2. Find each output's type and address.
 3. Fill the table: wallet type, RBF, locktime, fee rate, change.
+4. Point to the same values in mempool: input address and type, nSequence, fee rate, confirmations.
 
 **Sources**
 - @antonopoulos_masteringbitcoinprogramming_2017
 - @harding_bip125optinfull_2015
+- @mempool_mempool_2026
+- @mempoolspace_transaction0627052b_2013
 
 :::
 

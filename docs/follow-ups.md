@@ -34,6 +34,13 @@ slide index), which is never listed here.
 - 02-AS quiz bank may lean on the four slides hidden as moved to 01-PC (CBDC trust, landscape, platforms, USDT on
   Tron). (31 Oct 2026, D5 ③ rebuild)
 - 04-FO (exchanges, OTC, P2P) is new and has no quiz bank or lesson synthesis. (31 Oct 2026, D5 ① build)
+- 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
+  address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
+
+## Labs
+- `dynamic-labs/bitcoin/mempool/Dockerfile` lines 16 and 40 clone electrs and mempool at their latest commit, so a
+  rebuild can change what students see; pin mempool to v3.3.2 (or a commit) and electrs to a commit.
+  (31 Oct 2026, mempool spike, `docs/spikes/mempool.md`)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`
