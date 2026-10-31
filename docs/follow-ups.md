@@ -56,8 +56,10 @@ slide index), which is never listed here.
 
 - The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
   `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)
-- The wallet lab's automated suite has run only without `--fresh-start` (other labs' containers were up); run
-  `regression-tests/automated/wallet/run.sh --fresh-start` once on a quiet desktop. (31 Oct 2026, D2 wallet lab build)
+- `./lab-manager.sh start course-site` reuses the built image, which bakes the rendered site
+  (`dynamic-labs/course-site/Dockerfile`), so new lessons and lab links do not show until
+  `./lab-manager.sh build-images course-site`. Rebuild on start when the lessons changed, or say so in
+  `dynamic-labs/README.md`. (31 Oct 2026, wallet playbook walk: no Wallet Lab link until rebuilt)
 - The other labs' `run.sh` fresh-start lists (`regression-tests/automated/*/run.sh`) lack `explorer`, so a fresh start
   from them leaves the explorer running. (31 Oct 2026, D2 wallet lab build)
 - No quiz questions test the wallet lab (`dynamic-labs/wallet/`): the day 3 daily bank could check its five ideas
