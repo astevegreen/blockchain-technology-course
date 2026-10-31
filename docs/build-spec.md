@@ -37,6 +37,13 @@ revised to the new map the same day (owner: "Apply it"): rows moved to their new
 The course-map review's open items are settled (owner, 30 Oct): see The day map, Additions to existing lessons and
 Marking and assessment. Wallets, exchanges, OTC and P2P sit on days 2 and 5; the bug bounty waits for a later run.
 
+## Under review
+Gemini's adversarial audit of this spec: the technical fixes are applied below (the week-one check's slot,
+outcome 5 and 7 evidence, week 1's assessment written in Phase 1, lab fallbacks, darknet markets and a model
+explanation on day 6, day 2's lab entry). Four owner decisions are open: outcome 5's wording, concept 37 and a
+minimum on written items, concept 18's languages, and day 10's trace stop time and marking. See
+`docs/analysis/2026-10-gemini-audit-plan.md`.
+
 ## The course
 - **Blockchain Intelligence Analysis**: "Identifying, characterizing and explaining on-chain activity" (owner, 30
   Oct: "Identify, characterize, explain"). Ten days, 0845-1600, for US government analysts. Ready to offer by 26 Feb 2027.
@@ -55,7 +62,7 @@ trace").
 | 2 | Bitcoin and wallets (settled) | Wallet walkthrough on the course's own chain: a wallet made from a seed phrase, its derived addresses and a 2-of-3 multi-sig spend, each step read in the explorer |
 | 3 | Ethereum and tokens (settled) | A token contract read, then an NFT minted on the course's own chain (like the original NFT lab) and read in Otterscan |
 | 4 | DEXs, Layer 2s and bridges (settled) | A DEX swap on the course's own chain, the pool's price read before and after, then a token bridged and both sides read |
-| 5 | Exchanges and the rules (settled) | Week-one check first; then, on a Tron snapshot, a USDT transfer, an exchange deposit and its sweep, and an issuer freeze read; then the instructor's Fabric demo, about 30 minutes |
+| 5 | Exchanges and the rules (settled) | On a Tron snapshot, a USDT transfer, an exchange deposit and its sweep, and an issuer freeze read; then the instructor's Fabric demo, about 30 minutes |
 | 6 | Tracing Bitcoin (settled) | Bitcoin trace (Forensics 1's annotated trace, 40): each link with its heuristic, its known false positives and a confidence |
 | 7 | Where the trace goes dark (settled) | CoinJoin and mixer trace (Forensics 2, then 3; 41, 42): limits-of-tracing note, saying where the trace stops and what still shows |
 | 8 | Ethereum attacks and the loot (settled) | Cross-chain trace (Bybit, Kelp DAO; 80), opening with one exploit contract read, through at least one swap and one bridge: cross-chain flow diagram |
@@ -75,12 +82,12 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 | 3 (settled) | Accounts, the EVM and transactions (01-EF, adding the EVM), M | Reading a contract, read only (04-EF), M | Tokens: ERC-20, stablecoins and NFTs; issuer freezes and blacklisting, with Tether's blacklist functions (02-AS, 06-EF), M | 18, 46 |
 | 4 (settled) | Mempool, MEV and DEX trades (03-EF; 64), M | Liquidity: pools, thin markets, and where funds can and can't exit, new, L | Layer 2s and bridges by type (01-EF's Layer 2 slides, with the trilemma from 04-IN; the bridge slides of 01-FO and 02-FO), L | 6, 10, 12 |
 | 5 (settled) | Exchanges, OTC and P2P: how an exchange holds funds (deposit addresses, sweeps to hot and cold wallets), OTC desks, P2P markets, new, L | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Ledgers with a gatekeeper: Tron and USDT on Tron, new, then permissioned ledgers and CBDCs (01-PC, 02-AS), L | 31, 38, 39, 48, 49 |
-| 6 (settled) | Clustering heuristics and peel chains (02-FO part 1), L | Ransomware: the payment and the cash-out (Colonial Pipeline; ransomware-as-a-service, 85), one lesson merged from two, L | Attribution and confidence: labels and their sources, how well the heuristics have been measured, confidence language (01-FO recut; 83, 84), L | 7, 8, 20, 21, 25, 27, 28, 40, 45 |
+| 6 (settled) | Clustering heuristics and peel chains (02-FO part 1), L | Ransomware: the payment and the cash-out (Colonial Pipeline; ransomware-as-a-service, 85), with darknet markets as a destination and a cash-out route (01-FO's Silk Road slides), one lesson merged from two, L | Attribution and confidence: labels and their sources, how well the heuristics have been measured, confidence language, ending with one model explanation in outcome 9's five parts (01-FO recut; 83, 84), L | 7, 8, 20, 21, 25, 27, 28, 40, 45 |
 | 7 (settled) | Mixers and CoinJoin (02-FO part 2, with the mixers update), M | Privacy coins: Monero and Zcash (02-FO, 04-BF), M | Cryptojacking, new, L | 9, 11, 23 |
 | 8 (settled) | Approvals, wallet drainers, EIP-7702, clipboard hijackers and address poisoning; North Korea introduced through Ronin (82, 85), new, L | Flash loans, reentrancy and oracle manipulation (04-EF extended; The DAO and Euler), L | Bytecode and decompiling (63); NFT wash trading (06-EF), L | 13-17, 19, 22, 24, 47 |
 | 9 (settled) | State actors and North Korea in depth (03-AS; Bybit, with Drift as a story), M | AML typologies, organized with ATT&CK and the Diamond Model, new, L | Fusing on-chain findings with other sources, new, L | 26, 29, 30, 37 |
 
-Day 1 also has the Welcome (01-IN), M. Day 5 opens with the week-one check. Day 10 has no lessons: its morning review answers
+Day 1 also has the Welcome (01-IN), M. Day 5's week-one check takes the 08:45 quiz's place. Day 10 has no lessons: its morning review answers
 students' questions and teaches nothing new.
 
 Week 2 places everything week 1 gave up, each day's lessons preparing that afternoon's trace. Colonial Pipeline's
@@ -131,13 +138,17 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
 - Entry is set per day, by the instructor (owner, 30 Oct: "Per day, instructor decides"). The instructor reads the
   pretest items for that day's concepts (the "Concepts first taught" column); a student who got them right is
   offered the problem, and everyone else, and anyone with no pretest, starts at the worked example. A student may
-  always choose the worked example. No overall cutoff score.
+  always choose the worked example. No overall cutoff score. Day 2 has no pretest items yet (see the blueprint),
+  so everyone starts day 2's lab at the worked example.
 - Short steps addressed to the student.
 - Students mostly read code. By default a query or script is handed over ready-made and only the reading of its
   output is checked; a lab may use another format when that works better (Direction 11). An instructor-led build
   step (like the NFT lab) may have students write simple code when it teaches a concept, never rote programming
   (Direction 7).
 - Runs on captured data (snapshots, frozen extracts, the course chain). Public chains are a live extra only.
+- Each lab ships a fallback for its live part (the course chain, a container, an explorer): the same questions
+  answered from captured output of that part (saved explorer pages, query results, a recorded run of a build
+  step), tested with the lab. A failure in class or in a pilot switches the lab to it.
 - Instructor answers stay out of what students receive (CLAUDE.md rule 1).
 
 ## Confidence scale
@@ -174,7 +185,7 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   | Day | Items | W | Concepts |
   | --- | --- | --- | --- |
   | 1 | 7 | 1 | 1, 2, 3, 4, 5, 41 W, 42 |
-  | 2 | 0 | 0 | none yet (wallets are a feedback addition) |
+  | 2 | 0 | 0 | none yet (wallets are a feedback addition), so day 2's lab starts everyone at the worked example |
   | 3 | 2 | 2 | 18 W, 46 W |
   | 4 | 3 | 2 | 6, 10 W, 12 W |
   | 5 | 5 | 0 | 31, 38, 39, 48, 49 |
@@ -189,6 +200,10 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   day 10, and the post-test's written item (owner: "Plain explanation").
 - **Outcome 8's lab evidence** is day 6's point (a confidence for each link) and day 9's point (each label's source
   and date), written into those two rubrics, plus the post-test (owner: "Day 6 and day 9 points").
+- **Outcome 5's evidence** is day 3's token contract read, day 8's graded contract read and the post-test; the
+  week-one check comes before day 8 teaches the exploits. Outcome 5's wording is under review (above).
+- **Outcome 7's evidence** is day 6's point (the ransom followed to the first service) and the post-test's
+  scenario items: all ten of its concepts are taught in week 2, after the week-one check.
 - Daily quizzes are ungraded practice: about five recall questions on the previous day.
 - Every quiz and test answer traces to a lesson line.
 
@@ -213,3 +228,6 @@ GraphQL as skills to learn).
 ## During the build
 - Each item's session lists new glossary terms and broken mind-map anchors in its notes; one glossary run and one
   mind-map pass close each phase.
+- Assessment follows the lessons a week at a time. Week 1's items (the pretest items for days 1 to 5, the quizzes
+  on days 2 to 4, the week-one check) are written in Phase 1, after week 1's lessons, so Pilot A tries them and
+  the lab-entry rule. Week 2's items and the post-test are written in Phase 4.
