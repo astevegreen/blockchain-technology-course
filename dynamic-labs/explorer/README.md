@@ -21,6 +21,7 @@ instead of a `/labs/` path. The router's `routes/explorer-host.conf` splits that
 | `/rpc` | gateway | the node, filtered: read methods and signed transactions only |
 | `/config.json` | gateway | Otterscan's settings, built from the address the browser used |
 | `/lab/` | gateway | the student worksheet |
+| `/lab/insider.html`, `/lab/terminal.html` | gateway | the two openers: The Insider game (on the main host's `exercises`) and terminal orientation (in the Bitcoin lab, adapted from `PRIMER.md`) |
 | `/sign/` | gateway | the signing page (a wallet in plain sight) |
 | `/fallback/` | gateway | the saved explorer pages, for when the explorer is down |
 | `/vendor/` | gateway | ethers.js 6.16.0 (MIT), for the signing page |

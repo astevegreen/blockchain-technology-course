@@ -112,6 +112,23 @@ class ExplorerLiveRegressionTests(unittest.TestCase):
             self.assertEqual(get(path).status_code, 200, path)
         self.assertEqual(get("/lab").status_code, 301)
 
+    def test_openers_are_served_and_linked_from_the_worksheet(self) -> None:
+        worksheet = get("/lab/").text
+        insider = get("/lab/insider.html")
+        terminal = get("/lab/terminal.html")
+        self.assertEqual(insider.status_code, 200)
+        self.assertEqual(terminal.status_code, 200)
+        self.assertIn('href="insider.html"', worksheet)
+        self.assertIn('href="terminal.html"', worksheet)
+        # Each opener sends the student to the course's main host (the game; the Bitcoin lab's terminal).
+        self.assertIn("/exercises/insider/", insider.text)
+        self.assertIn("/labs/bitcoin/", terminal.text)
+        # Each opener ends in questions the instructor checks, and the Insider asks for a confidence.
+        self.assertEqual(insider.text.count("<b>"), 3)
+        self.assertIn("confident", insider.text)
+        self.assertEqual(terminal.text.count("<b>"), 4)
+        self.assertIn("getblockchaininfo", terminal.text)
+
     def test_course_site_link_redirects_to_the_explorer_host(self) -> None:
         main_host = HOST.split(".", 1)[1]
         resp = requests.get(f"{BASE_URL}/labs/explorer/", headers={"Host": main_host}, timeout=30,

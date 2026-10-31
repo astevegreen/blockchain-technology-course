@@ -119,3 +119,41 @@ judgment is who holds Account 1's key, which the chain cannot show.
   The unexplained 100 ETH has no transaction: it was written into the chain's starting state
   (the genesis allocation). Otterscan's address page lists the block-5 row at the transaction's
   2 ETH; the transaction's page shows 1 ETH reached Account 2.
+
+## Openers (before the worksheet)
+
+Students do both openers first: `/lab/insider.html` (about 15 minutes), then `/lab/terminal.html`
+(about 10). Neither is scored; you check the notes with each student, as for the worksheet.
+
+### The Insider
+
+Before class, open `/exercises/insider/instructor` (log in at `/instructor/`) and check that the game is
+online. Leave bots backfilling empty seats on, so a small class still fills a room. Players are not told
+which seats are computer players. The "Context shown to students" setting can name today's theme
+(trust without a referee).
+
+1. *Who decided, and on what basis?* The players, by vote. There was no referee who knew the answer; the
+   evidence was one-word clues, which a skilled Insider can imitate.
+2. *Who did you vote for, and how confident?* Any player is acceptable if the student names their evidence
+   and a confidence word that fits the scale: clues alone, from a few players, support Low or Moderate,
+   never High. A student who says High on clues alone should be asked what a second, independent line of
+   evidence would be.
+3. *A way to fool the group while following the rules.* For example: a vague clue that fits many words; a
+   clue copied in meaning from an earlier player; or the group's vote being split. Any rule-following
+   deception is a good answer.
+
+Link to the day: the group can only judge by what players say, which is why a public record that anyone
+can check matters. Say it in one sentence; the lessons teach it.
+
+If the game is down, deal the card version described on the page.
+
+### Terminal orientation
+
+1. `pwd` prints `/home/user`; `.bitcoin` holds the node's data.
+2. The answer is whatever `getblockchaininfo` reports on that student's lab: it must be read from the
+   output, so check the student's screen against it, not against a number here.
+3. The pane is split, shows an `ls` listing, and is closed (with `exit` or `Ctrl+G`, `p`, `x`).
+4. Scroll mode: `Ctrl+G`, then `s`, then arrows or Page Up; `Ctrl+G` returns.
+
+If the Bitcoin lab will not start, the page's saved output covers questions 1 and 2's shape; do questions
+3 and 4 on the instructor's own screen.

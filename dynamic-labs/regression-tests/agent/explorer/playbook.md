@@ -65,6 +65,10 @@ and a screenshot.
    the seat's address.
 6. Check console errors and failed network requests.
 
+## Openers Flow
+
+Follow `tasks/openers-flow.md`. It needs the exercises and bitcoin labs running as well as the explorer.
+
 ## Links and Fallback
 
 1. Open `/lab/`. Confirm the worksheet renders and its links to the explorer, the signing page
