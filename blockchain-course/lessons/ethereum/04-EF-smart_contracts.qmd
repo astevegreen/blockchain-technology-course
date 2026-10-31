@@ -719,7 +719,7 @@ This practice slide turns the Coin walkthrough into the analyst's working skill:
 - Answer 1: only the address stored in `minter`, the deployer, can call `mint`; the `require(msg.sender == minter)` line enforces it.
 - Answer 2: no. The only function that lowers a balance is `send`, and it lowers the balance of `msg.sender`, the caller.
 - Answer 3: no supply cap in the contract's logic. Nothing in `mint` checks a total or a maximum, so the minter can create any amount; the only stop is Solidity 0.8's built-in overflow check, which reverts a mint that would push one balance past the largest `uint` value.
-- Answer 4: no event. `mint` changes `balances` but emits nothing, so a mint is visible only in the transaction's input and the changed balance, not in the logs; a reader who watches only `Sent` events misses every mint.
+- Answer 4: no event. `mint` changes `balances` but emits nothing, so a mint is visible only in the call to `mint` and the changed balance, not in the logs; a reader who watches only `Sent` events misses every mint.
 - The four questions carry straight into the token lessons, where students read the same kinds of lines in real token contracts.
 
 **Walkthrough**
@@ -792,7 +792,7 @@ This slide establishes how external callers know what bytes to send and how cont
 - Spell out ABI as Application Binary Interface and define selector as the short identifier derived from a function signature.
 - Clarify that the selector uses the **first** 4 bytes of the `keccak256` hash.
 - The selector is **not** a memory address; it is a compact dispatch code that gives a low-collision way to identify which function the caller wants.
-- For an analyst: the first 4 bytes of a transaction's input data are the selector of the function it called, so a mint with no event still shows up in the transaction itself. The input carries only those 4 bytes, not the name `mint`; an explorer shows the name only when it has the contract's verified ABI or a matching entry in a selector lookup table.
+- For an analyst: when a wallet calls a function directly, the first 4 bytes of the transaction's input data are that function's selector, so a direct call to `mint` with no event still shows up in the transaction itself. The input carries only those 4 bytes, not the name `mint`.
 
 **Walkthrough**
 1. Define the ABI as the external interface format used by off-chain tools and other contracts.
@@ -1264,7 +1264,7 @@ This slide shows one short Rust program so students can recognize Solana contrac
 
 - Ask four questions of any contract: who can create, who can move, what limits it, what it records.
 
-- Events record only what the author chose to emit; a transaction's input still identifies the function called, by its 4-byte selector.
+- Events record only what the author chose to emit; a direct call's input still identifies the function called, by its 4-byte selector.
 
 - Vyper (Python-like, on the EVM) and Rust (Solana, via Anchor): recognize them, then ask the same questions.
 
