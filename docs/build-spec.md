@@ -37,13 +37,13 @@ revised to the new map the same day (owner: "Apply it"): rows moved to their new
 The course-map review's open items are settled (owner, 30 Oct): see The day map, Additions to existing lessons and
 Marking and assessment. Wallets, exchanges, OTC and P2P sit on days 2 and 5; the bug bounty waits for a later run.
 
-## Under review
+## Gemini's audit (settled 30 Oct)
 Gemini's adversarial audit of this spec: the technical fixes are applied below (the week-one check's slot,
 outcome 5 and 7 evidence, week 1's assessment written in Phase 1, lab fallbacks, darknet markets and a model
-explanation on day 6, day 2's lab entry). Outcome 5's wording is settled (owner, 30 Oct; see Marking and
-assessment), and so are concept 37 and the written items (owner, 30 Oct; see Graded lab points) and concept 18's
-languages (owner, 30 Oct; see Lessons by day, day 3). One owner decision is open: day 10's trace stop time and
-marking. See `docs/analysis/2026-10-gemini-audit-plan.md`.
+explanation on day 6, day 2's lab entry). The owner settled its four decisions on 30 Oct: outcome 5's wording (see
+Marking and assessment), concept 37 and the written items (see Graded lab points), concept 18's languages (see
+Lessons by day, day 3), and day 10's trace stop time and marking (see The day map and Post-test). See
+`docs/analysis/2026-10-gemini-audit-plan.md`.
 
 ## The course
 - **Blockchain Intelligence Analysis**: "Identifying, characterizing and explaining on-chain activity" (owner, 30
@@ -68,7 +68,7 @@ trace").
 | 7 | Where the trace goes dark (settled) | CoinJoin and mixer trace (Forensics 2, then 3; 41, 42): limits-of-tracing note, saying where the trace stops and what still shows |
 | 8 | Ethereum attacks and the loot (settled) | Cross-chain trace (Bybit, Kelp DAO; 80), opening with one exploit contract read, through at least one swap and one bridge: cross-chain flow diagram |
 | 9 | The threat picture (settled) | Tron stablecoin trace (79): exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
-| 10 | Post-test, then a final trace (settled) | Morning: a review session for open questions (50 minutes), then the post-test. Afternoon: one unguided tracing scenario mixing week 2's types (Prince Group by default: Bitcoin, Tron USDT and an exchange exit; no worked example), then each student explains what they found, and how confident they are, to an instructor, informally (about 5 minutes each, as soon as they finish; a second instructor assesses for a class over 15, owner: "Two assessors, rolling"). No memo, no briefing |
+| 10 | Post-test, then a final trace (settled) | Morning: a review session for open questions (50 minutes), then the post-test. Afternoon: one unguided tracing scenario mixing week 2's types (Prince Group by default: Bitcoin, Tron USDT and an exchange exit; no worked example), then each student explains what they found, and how confident they are, to an instructor, informally (about 5 minutes each, as soon as they finish; a second instructor assesses for a class over 15, owner: "Two assessors, rolling"). The trace stops at 15:15 (Pilot B sets the final time), and a student still tracing then explains what they have so far (owner, 30 Oct: "15:15 stop, answer key"). No memo, no briefing |
 
 The lessons in each slot are under Lessons by day, below.
 
@@ -181,7 +181,9 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the
   list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
   working-skill concepts. No separate minimum on the written items (owner, 30 Oct: "Rubric line, no minimum"):
-  every working-skill concept also has a graded lab point.
+  every working-skill concept also has a graded lab point. Each written item has an answer key naming what the
+  answer must contain; the instructors mark against it over lunch and while the class traces, before the first
+  explanation, so certificates are given on day 10 (owner, 30 Oct: "15:15 stop, answer key").
 - **Pretest blueprint** (owner, 30 Oct: "Pretest blueprint"): the shared blueprint grouped by the day each concept
   is first taught, so an instructor reads one day's items to set that day's lab entry. Numbers are Role Concepts
   Order; **W** is working skill (short written answer), the rest familiarity (multiple choice). The items and their

@@ -6,8 +6,8 @@ Course Design page and the Build Tracker, and discussed with the owner on 30 Oct
 held up. Owner: "Create a plan for addressing all the valid concern Gemini discovered and update the documentation
 files and Notion to reflect".
 
-Status: the technical fixes are applied (build spec, Course Design, Build Tracker). D1, D2 and D3 are decided (30 Oct).
-One decision waits on the owner, each with a recommendation; Notion's home page lists it under "Under review".
+Status: the technical fixes are applied (build spec, Course Design, Build Tracker). All four owner decisions (D1-D4) are
+decided (30 Oct); Notion's Decision log records each in the owner's words.
 
 ## Set aside
 - **F2** (build size against the date): set aside by the owner, 30 Oct.
@@ -76,7 +76,10 @@ and Rust has one line (04-EF).
 - **Instead:** retitle concept 18 to Solidity only.
 - **Then:** Role Concepts row 18; the D3 ② row.
 
-### D4. Day 10's trace and post-test marking (F1)
+### D4. Day 10's trace and post-test marking (F1): decided 30 Oct
+Owner: "15:15 stop, answer key" (the recommendation). Applied to the build spec (day map and Post-test), Course
+Design sections 4 and 9, and the Post-test and D10 Lab rows.
+
 The day 10 trace is ungraded, so Gemini's worry about day 10 retries does not apply. The real pressure is that the
 trace has no stop time, and the post-test's written answers (12 per student, 360 for a class of 30) must be marked
 before the certificates while both instructors assess explanations.
