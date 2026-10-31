@@ -1,0 +1,50 @@
+version: 1
+suite_id: day3-tokens-agent-regression
+lab: tokens
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/tokens/run.sh
+assumptions:
+  - MCP browser tooling is available.
+  - The tokens automated suite has already run against the same live environment.
+  - Reset is optional and is not the default starting point.
+shared_inputs:
+  tokens_host: tokens.localhost
+  mint_seat: 39
+observability:
+  required:
+    - console_logs
+    - network_failures
+shared_rules:
+  - Use a fresh browser context per task.
+  - Read facts from the rendered pages and compare them with the values in the playbook.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+parallelization:
+  recommended:
+    - Run the token read and mint tasks in parallel; they share no state.
+tasks:
+  - id: token-read-flow
+    title: Otterscan shows the worksheet's token and badge fields
+    file: tasks/token-read-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /
+      - /tx/<hash>
+      - /address/<address>
+    parallel_safe: true
+  - id: mint-flow
+    title: Mint a badge from the mint page and read it back
+    file: tasks/mint-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /sign/
+      - /lab/
+      - /fallback/
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.

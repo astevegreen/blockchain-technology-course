@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 3 lab: read a token and an NFT</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="/">Explorer</a> · <a href="../sign/">Mint page</a> ·
+<a href="../fallback/">Saved pages</a></p>
+<h1>Day 3 lab: read a token and an NFT</h1>
+<p>The course chain for day 3 holds a dollar token, cUSD, built the way the big stablecoins are:
+an issuer who creates new money, a blacklist only the issuer controls, and code that sits behind a
+proxy. It also holds an NFT, the Course Badge, and a shop that sells badges for ETH. Seventeen blocks
+of history were built for this lab. You read them in Otterscan, the open-source explorer you used on
+day 1 <a href="#s1">[1]</a>. Then you mint a badge of your own and read it back.</p>
+<p>Write your answers down as short notes. Your instructor checks them with you.</p>
+<p class="note">If the explorer or the chain is down, use the <a href="../fallback/">saved pages</a>.
+They show the same history, so every question below has the same answer there. For part 2, the saved
+pages hold a <a href="../fallback/mint-run.html">recorded run</a> of the mint page.</p>
+
+<h2>Where to start</h2>
+<ul>
+<li>Your instructor tells you where to start: the worked example, or straight at the problem.</li>
+<li>You may always do the worked example first.</li>
+<li>After the problem, part 2: you mint a badge and read it in the explorer.</li>
+<li>The challenge at the end is optional.</li>
+</ul>
+
+<h2>The names on this chain</h2>
+<table>
+<tr><th>Account 0 (the issuer)</th><td><code>0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266</code></td></tr>
+<tr><th>Account 1</th><td><code>0x70997970C51812dc3A010C7d01b50e0d17dc79C8</code></td></tr>
+<tr><th>Account 2</th><td><code>0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC</code></td></tr>
+<tr><th>Account 3</th><td><code>0x90F79bf6EB2c4f870365E785982E1f101E93b906</code></td></tr>
+<tr><th>Account 4</th><td><code>0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65</code></td></tr>
+<tr><th>Account 5</th><td><code>0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc</code></td></tr>
+<tr><th>cUSD (the address people pay)</th><td><code>0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</code></td></tr>
+<tr><th>Course Badge contract</th><td><code>0x0116686E2291dbd5e317F47faDBFb43B599786Ef</code></td></tr>
+<tr><th>Badge shop contract</th><td><code>0x9bAaB117304f7D6517048e371025dB8f89a8DbE5</code></td></tr>
+</table>
+<p class="hint">The first 4 bytes of a call's input data name the function it calls. The ones on
+this chain:</p>
+<table>
+<tr><th><code>0x40c10f19</code></th><td><code>mint(address,uint256)</code>: create new cUSD</td></tr>
+<tr><th><code>0xa9059cbb</code></th><td><code>transfer(address,uint256)</code>: send cUSD</td></tr>
+<tr><th><code>0x0ecb93c0</code></th><td><code>addBlackList(address)</code>: freeze an address</td></tr>
+<tr><th><code>0xf3bdc228</code></th><td><code>destroyBlackFunds(address)</code>: wipe a frozen address's cUSD</td></tr>
+<tr><th><code>0xd0def521</code></th><td><code>mint(address,string)</code>: create a badge</td></tr>
+<tr><th><code>0x095ea7b3</code></th><td><code>approve(address,uint256)</code>: let another address move a badge</td></tr>
+<tr><th><code>0x50fd7367</code></th><td><code>list(uint256,uint256)</code>: offer a badge in the shop</td></tr>
+<tr><th><code>0xd96a094a</code></th><td><code>buy(uint256)</code>: buy a badge from the shop</td></tr>
+</table>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: a hash, an amount, a log. Others are judgments about
+what the facts mean. Give each judgment a confidence word <a href="#s11">[11]</a>:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the
+reasoning applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false
+positive could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same
+transaction.</p>
+<ol>
+<li>In block 4, Account 1 sends cUSD. Who receives it, and how much? Why is the receiver not in the
+transaction's To field?</li>
+<li>Block 4's Transfer log records the amount as <code>2500000000</code>. Why is that 2,500 cUSD and
+not 2.5 billion? Where on the chain does the explorer find out?</li>
+<li>People send their cUSD transactions to <code>0xe7f1…0512</code>. Where is the code that runs
+when they do? Who can swap that code for different code, and what would that change? Give your
+confidence and the evidence for it.</li>
+<li>Who can freeze an address's cUSD? Which block froze one, and which address?</li>
+<li>Block 7 holds a transaction that failed. What did it try to do, why did it fail, and what did
+it still cost its sender?</li>
+<li>In block 8, Account 1 sends cUSD to Account 3, which is frozen. Did it work? What does that tell
+you about what the freeze stops?</li>
+<li>Add up Account 3's cUSD from the Transfer logs alone. What does the contract say Account 3 holds
+at block 17? Explain the difference. How confident are you, and what would a tool that only reads
+Transfer logs report about Account 3?</li>
+<li>Block 11 creates badge 1. Who created it, who first held it, and how can you tell from the log
+that it is an NFT and not a cUSD transfer?</li>
+<li>Where is badge 1's name and picture kept? Is the name on the badge evidence of who made it?</li>
+<li>Block 15: who paid whom, how much, and who got badge 1? Account 4 received ETH but sent no
+transaction in that block: how did the ETH arrive? Give your confidence.</li>
+</ol>
+
+<h2>Worked example: new money in block 3</h2>
+<p>This walks through one token call, field by field. Question 1 onward use the same pages.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="/">explorer</a>.</li>
+<li>Type <code>3</code> in the search box and press Enter. You are on block 3's page.</li>
+<li>Note the block's timestamp: 16 Sep 2026, 14:00:36 UTC.</li>
+<li>Open the block's one transaction. Its hash is
+<code>0x8a26810f5f5f0c4701c72507945289bafca405635ed7bec1c93cea737d9b39a5</code>.</li>
+</ol>
+
+<h3>Read it</h3>
+<table>
+<tr><th>From / Nonce</th><td><code>0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266</code> (Account 0),
+nonce 2</td></tr>
+<tr><th>Interacted With (To)</th><td>Course Dollar (cUSD): click it to see its address,
+<code>0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</code></td></tr>
+<tr><th>Value</th><td>0 ETH</td></tr>
+<tr><th>Transaction Fee</th><td>0.000059038401873552 ETH</td></tr>
+<tr><th>Input Data</th><td><code>0x40c10f19</code><br>
+<code>00000000000000000000000070997970c51812dc3a010c7d01b50e0d17dc79c8</code><br>
+<code>00000000000000000000000000000000000000000000000000000002540be400</code></td></tr>
+</table>
+<ul>
+<li><b>A token is a contract.</b> The ETH value is 0: no ETH moved. cUSD is not a coin the chain
+itself keeps. It is a contract that keeps its own list of balances, and a transaction changes that
+list by calling one of the contract's functions <a href="#s8">[8]</a> <a href="#s10">[10]</a>.</li>
+<li><b>The input names the call.</b> Its first 4 bytes, <code>0x40c10f19</code>, are
+<code>mint(address,uint256)</code> in the table above. The next 32 bytes are the address,
+Account 1, padded with zeros. The last 32 bytes are the amount in hexadecimal:
+<code>0x2540be400</code> is 10,000,000,000.</li>
+<li><b>Decimals.</b> A token stores whole numbers only. Its <code>decimals</code> says where the
+decimal point goes <a href="#s8">[8]</a>. cUSD's is 6, so 10,000,000,000 is 10,000.000000 cUSD.
+The explorer asks the contract for this number and shows "10,000 cUSD".</li>
+<li><b>The log is the record.</b> Open the Logs tab. The contract wrote one <code>Transfer</code>
+log: from <code>0x0000…0000</code> to Account 1, 10,000 cUSD. A contract that creates tokens records
+it as a transfer from the zero address <a href="#s8">[8]</a>, so this is new money, not a payment
+from someone. The log was written by <code>0xe7f1…0512</code>, the cUSD address.</li>
+<li><b>Proxy.</b> Open the Trace tab. It has two lines: a <code>call</code> to Course Dollar
+(cUSD), then a <code>delegatecall</code> to Course Dollar (cUSD) again. Click each name: the first is
+<code>0xe7f1…0512</code>, the second <code>0x5FbDB2315678afecb367f032d93F642f64180aa3</code>. That is a
+proxy at work: the address people pay holds the balances, and it borrows another contract's code to
+change them <a href="#s4">[4]</a> <a href="#s5">[5]</a>. Both show the same name because the explorer
+asks each contract what it is called, and the code contract gives the name written in its code. A name
+on an explorer page is the contract's own claim; the address is what identifies it. Question 3 asks
+you to follow the proxy further.</li>
+</ul>
+<p>A statement from this page: "Account 0 created 10,000 new cUSD and credited it to Account 1 on
+16 Sep 2026 at 14:00:36 UTC." The call and the log are facts the chain records. Calling Account 0 "the
+issuer" is a judgment: the contract's code and its <code>owner</code> are the evidence for it
+(question 4).</p>
+
+<h2>The problem</h2>
+<p>Answer the questions above. These hints say where to look.</p>
+<ol>
+<li><b>Who received.</b> Open block 4's transaction. Read "Tokens Transferred" and the Logs tab as
+well as "Interacted With (To)". The To field is the contract called; the receiver is inside the call
+and the log <a href="#s8">[8]</a>.</li>
+<li><b>Decimals.</b> Search for the cUSD address and open its Contract tab: the code declares
+<code>decimals</code>. You can also check the arithmetic by hand, as in the worked example.</li>
+<li><b>Where the code is.</b> Open block 2's transaction, which created the cUSD address, and read
+its log: <code>Upgraded</code> names the address of the code. A standard proxy keeps that address in
+a fixed storage slot and announces each change with an <code>Upgraded</code> log, so explorers know
+where to look <a href="#s5">[5]</a>. This explorer does not show the slot on the cUSD address's
+page; some explorers do. Compare the <code>Upgraded</code> log with the <code>delegatecall</code> in
+block 3's Trace tab. Then read <code>upgradeTo</code> on the Contract tab: who may call it? On the saved pages,
+"Contract reads at block 17" gives the slot.</li>
+<li><b>Freezing.</b> Read <code>addBlackList</code> on the cUSD Contract tab, then find the block
+whose transaction calls it (selector <code>0x0ecb93c0</code>) and read its
+<code>AddedBlackList</code> log. USDT, a dollar stablecoin, has the same functions: only its owner
+can freeze an address or destroy a frozen address's balance <a href="#s3">[3]</a>.</li>
+<li><b>A failed transaction.</b> Open block 7's transaction and read its Status line, which gives
+the error. A failed transaction still pays for the gas it used <a href="#s6">[6]</a>.</li>
+<li><b>Sending to a frozen address.</b> Open block 8's transaction and its Transfer log. Then read
+<code>transfer</code> on the Contract tab: whose address does it check? USDT's checks the same
+one <a href="#s3">[3]</a>.</li>
+<li><b>Account 3's balance.</b> Search for Account 3's address: its page lists only block 7, the
+transaction it sent. The explorer lists the transactions an address sent or was sent, not the token
+logs that name it. Open the cUSD address's page instead, which lists every call to cUSD, and read the
+Transfer logs of blocks 5 and 8: both pay Account 3, and nothing goes out. Then open block 9's
+transaction: its log is
+<code>DestroyedBlackFunds</code>, and there is no Transfer log. On the <a href="../sign/">mint
+page</a>, under "Ask the contracts", ask <code>balanceOf</code> for Account 3. USDT's
+<code>destroyBlackFunds</code> writes no Transfer log either <a href="#s3">[3]</a>.</li>
+<li><b>The badge.</b> Open block 11's transaction and its Logs tab. A badge's Transfer log has the
+same name as a cUSD Transfer, but carries the badge number as an indexed topic and no amount
+<a href="#s2">[2]</a>. Compare the number of topics with block 4's log. A badge created out of
+nothing is a Transfer from the zero address <a href="#s2">[2]</a>.</li>
+<li><b>Metadata.</b> Block 11's input data holds a long text that starts
+<code>data:application/json,</code>. That is the badge's metadata: a name, a description and an
+image, in the shape the NFT standard describes <a href="#s2">[2]</a>. On the mint page, ask
+<code>tokenURI</code> for badge 1 to read what the contract stored. Many real NFTs store only a link
+here: the metadata and the picture sit outside the chain, often on a web server or on IPFS, a
+shared file network <a href="#s12">[12]</a>.</li>
+<li><b>Who paid whom.</b> Open block 15's transaction. Account 2 sent ETH to the shop. Read the
+Logs tab for the badge, and look under "Interacted With (To)" for the TRANSFER lines: the explorer finds them by
+asking the node to replay the transaction <a href="#s7">[7]</a>. The explorer's first TRANSFER line
+is the transaction's own 0.5 ETH; the lines after it are what the shop passed on. The saved pages list
+only those.</li>
+</ol>
+
+<h2>Part 2: mint a badge</h2>
+<p>You need the live chain and a seat number from your instructor. If the chain is down, answer from
+the <a href="../fallback/mint-run.html">recorded run</a> instead.</p>
+<ol>
+<li>Open the <a href="../sign/">mint page</a> and load your seat.</li>
+<li>Give your badge a name and a description, and build the mint. Read the call the page shows you
+before you send it.</li>
+<li>Sign it and send it. The page waits for the next block, then reads your badge back from the
+contract.</li>
+<li>Open your transaction in the explorer from the link the page gives you.</li>
+<li>Read the panel at the bottom of the mint page: it lists every question the page asked the node
+<a href="#s9">[9]</a>.</li>
+</ol>
+<p>Answer:</p>
+<ol type="a">
+<li>Your transaction's hash, its block, and your badge's number. Where did the page find the
+number?</li>
+<li>In the explorer, read your transaction's Transfer log. Who is it from, who is it to, and how
+does that match what you see for badge 1 in block 11?</li>
+<li>Anyone can call <code>mint</code> with any name and picture. If a badge named "Issued by the
+instructor" turned up, what would the chain prove about who made it, and what would it not?</li>
+</ol>
+
+<h2>Challenge</h2>
+<p>Optional.</p>
+<ol type="a" start="4">
+<li>cUSD's total supply was 10,000 after block 3. Read the supply at block 17 under "Contract
+reads at block 17" on the <a href="../fallback/">saved pages</a>, and account for the difference using only what the chain records. Which part
+would you miss with Transfer logs alone?</li>
+<li>Suppose the issuer swaps cUSD's code tomorrow. Which log would show it, which address would
+send the transaction, and why would every cUSD holder's balance still be there afterwards?</li>
+</ol>
+
+<h2 id="sources">Sources</h2>
+<ol class="hint">
+<li id="s1">Otterscan contributors, <i>Otterscan</i>, 2025. github.com/otterscan/otterscan
+(read 23 Oct 2026). <code>otterscan_otterscan_2025</code></li>
+<li id="s2">Entriken et al., <i>EIP-721: Non-Fungible Token Standard</i>, 2018 (read 31 Oct
+2026). <code>entriken_eip721nonfungibletoken_2018</code></li>
+<li id="s3">Tether, <i>TetherToken (USDT) verified source code</i>, Ethereum mainnet, 2017, read
+through Sourcify (read 31 Oct 2026). <code>tether_tethertokensource_2017</code></li>
+<li id="s4">ethereum.org, <i>Upgrading Smart Contracts</i>, 2026 (read 31 Oct 2026).
+<code>ethereumorg_upgradingsmartcontracts_2026</code></li>
+<li id="s5">Palladino et al., <i>ERC-1967: Proxy Storage Slots</i>, 2019 (read 31 Oct 2026).
+<code>palladino_erc1967proxystorage_2019</code></li>
+<li id="s6">ethereum.org, <i>Gas and Fees: Developer Docs</i>, 2025 (read 31 Oct 2026).
+<code>ethereum.org_gasfeesdeveloper_2025</code></li>
+<li id="s7">Otterscan contributors, <i>Ots Namespace Spec</i>. docs.otterscan.io (read 31 Oct
+2026). <code>otterscan_otsnamespace_2026</code></li>
+<li id="s8">Vogelsteller and Buterin, <i>EIP-20: Token Standard</i>, 2015.
+<code>vogelsteller_eip20tokenstandard_2015</code></li>
+<li id="s9">ethereum.org, <i>JSON-RPC API</i>, 2025 (read 31 Oct 2026).
+<code>ethereumorg_jsonrpcapi_2025</code></li>
+<li id="s10">ethereum.org, <i>Smart Contracts: Developer Docs</i>, 2025.
+<code>ethereum.org_smartcontractsdeveloper_2025</code></li>
+<li id="s11">Office of the Director of National Intelligence, <i>Intelligence Community Directive
+203: Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are
+the course's own scale. <code>odni_icd203_2015</code></li>
+<li id="s12">Das et al., <i>Understanding Security Issues in the NFT Ecosystem</i>, ACM CCS 2022,
+section 6 (read 31 Oct 2026). <code>das_understandingsecurityissues_2022</code></li>
+</ol>
+</main>
+</body>
+</html>

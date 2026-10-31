@@ -87,6 +87,7 @@ fresh_start() {
     exercises \
     explorer \
     wallet \
+    tokens \
     quiz-engine-v2 \
     hlf
   do

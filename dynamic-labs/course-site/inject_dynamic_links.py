@@ -21,6 +21,7 @@ Use these links after the instructor tells the class which lab is active.
 * [Byzantine Generals Lab](/exercises/bgp/)
 * [Explorer Lab](/labs/explorer/)
 * [Wallet Lab](/labs/wallet/)
+* [Token Lab](/labs/tokens/)
 * [Cryptography Lab](/labs/cryptography/)
 * [P2P Trust Lab](/labs/p2p_trust/)
 * [Consensus Lab](/labs/consensus/)

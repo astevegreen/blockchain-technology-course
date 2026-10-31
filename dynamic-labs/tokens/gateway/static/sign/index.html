@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mint a badge and ask the contracts</title>
+<link rel="stylesheet" href="../lab/lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../lab/">Worksheet</a> · <a href="/">Explorer</a></p>
+<h1>Mint a badge and ask the contracts</h1>
+<p>This page plays the part of a wallet and an NFT site. It builds a call to the badge contract's
+<code>mint</code> function, signs it with your seat's key and hands it to the course chain's node.
+The panel at the bottom shows every question the page asks the node, and the node's answer.</p>
+<p class="note">Your seat's key comes from a test phrase printed in public software documentation.
+It guards nothing and exists only on this training chain.</p>
+
+<section>
+<h2>1. Your account</h2>
+<label for="seat">Seat number (your instructor gives you one, 1 to 40)</label>
+<div class="inline"><input id="seat" type="number" min="1" max="40" inputmode="numeric">
+<button id="load" type="button">Load my account</button></div>
+<table id="account" hidden>
+<tr><th>Address</th><td><code id="addr"></code></td></tr>
+<tr><th>Balance</th><td id="balance"></td></tr>
+</table>
+</section>
+
+<section>
+<h2>2. Describe your badge</h2>
+<label for="name">Name</label>
+<input id="name" maxlength="40" value="Course Badge">
+<label for="description">Description</label>
+<input id="description" maxlength="140" value="Minted in the day-3 token lab.">
+<p><button id="build" type="button" disabled>Build the mint</button></p>
+<div id="preview" hidden>
+<p class="hint">The image, the metadata and the call, exactly as they will go into the transaction:</p>
+<p id="picture" class="badge"></p>
+<table id="call"></table>
+</div>
+</section>
+
+<section>
+<h2>3. Sign it and send it</h2>
+<p><button id="send" type="button" disabled>Sign and send</button></p>
+<p id="status" role="status"></p>
+<table id="minted" hidden></table>
+</section>
+
+<section>
+<h2>4. Ask the contracts</h2>
+<p>These are the read-only questions the worksheet asks. The page sends them with
+<code>eth_call</code>: the node runs the contract's code and answers, and nothing is written to the chain.</p>
+<label for="question">Question</label>
+<select id="question">
+<option value="balanceOf">Course Dollar: balanceOf(address), the cUSD an address holds</option>
+<option value="isBlackListed">Course Dollar: isBlackListed(address), whether the issuer froze it</option>
+<option value="ownerOf">Course Badge: ownerOf(badge number), who holds a badge</option>
+<option value="tokenURI">Course Badge: tokenURI(badge number), a badge's metadata</option>
+</select>
+<label for="arg">Address or badge number</label>
+<input id="arg" spellcheck="false" value="0x70997970C51812dc3A010C7d01b50e0d17dc79C8">
+<p><button id="ask" type="button">Ask</button></p>
+<table id="answer" hidden></table>
+</section>
+
+<section>
+<h2>What this page asked the node</h2>
+<p class="hint">Each line is one JSON-RPC call to <code>/rpc</code>: the method, what was sent and what came back.</p>
+<ol id="log" class="log"></ol>
+</section>
+</main>
+<script src="../vendor/ethers/ethers.umd.min.js"></script>
+<script src="mint.js"></script>
+</body>
+</html>

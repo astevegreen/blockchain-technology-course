@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Explorer lab gateway: the only door from the browser to the course chain.
+"""Explorer lab gateway: the only door from the browser to the course chain. The day-3 token
+lab (../tokens) runs the same file against its own chain.
 
 POST /rpc          JSON-RPC to Anvil, filtered to the read methods Otterscan uses plus
                    eth_sendRawTransaction (the sign-and-send step). Anvil's own control
@@ -27,7 +28,8 @@ MAX_BODY = 256 * 1024
 MAX_BATCH = 100
 
 # The 17 methods the Otterscan spike saw (docs/spikes/otterscan.md), the ones the day-1 chain's
-# pages add, the signing page's reads, and the one write students make.
+# pages add, the signing page's reads, the one write students make, and eth_getStorageAt, which
+# reads the token lab's ERC-1967 proxy slot (its saved-page builder and its tests).
 ALLOWED = frozenset({
     "eth_chainId", "eth_blockNumber", "eth_getBalance", "eth_getCode", "eth_getTransactionCount",
     "eth_getTransactionByHash", "eth_getTransactionReceipt", "eth_call", "erigon_getHeaderByNumber",
@@ -37,7 +39,7 @@ ALLOWED = frozenset({
     "ots_getBlockTransactions", "ots_searchTransactionsAfter", "ots_getBlockDetailsByHash",
     "ots_getTransactionBySenderAndNonce",
     "eth_getBlockByNumber", "eth_getBlockByHash", "net_version", "eth_gasPrice", "eth_feeHistory",
-    "eth_maxPriorityFeePerGas",
+    "eth_maxPriorityFeePerGas", "eth_getStorageAt",
     "eth_sendRawTransaction",
 })
 
