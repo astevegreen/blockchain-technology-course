@@ -16,7 +16,7 @@ aci-mermaid: true
 
 ## Smart Contracts: Concept and Scope
 
-- In the last lesson we traced how transactions flow through the network. Now we look at what those transactions actually execute.
+- The last lesson covered accounts and the EVM (01-EF). This one reads the code a contract account holds.
 
 - A smart contract is a program and its state at an address on the blockchain.
 
@@ -24,27 +24,24 @@ aci-mermaid: true
 
 - Different from ‘legal contracts’: execution is automatic and deterministic, not interpretive.
 
-- We will briefly survey non-Ethereum smart contract models to situate the landscape.
+- An analyst reads a contract to say **what it lets each caller do**: who can create value, who can move it, and what it records.
+
+- Today: Solidity read by hand, then one Vyper and one Rust snippet to recognize on sight.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This opening slide establishes what the lesson means by "smart contract" and sets the boundary between legal agreements and deterministic on-chain programs. It matters here because the rest of the lesson assumes students are reasoning about code, state, and execution guarantees rather than legal interpretation. Emphasize that autonomy and determinism create both the appeal and the safety burden of smart contracts.
+This opening slide sets the purpose of the lesson: reading a contract's source well enough to say, in plain words, what the code lets each caller do. It follows 01-EF, which introduced accounts and the EVM, and it sets up the token lessons that come next. Emphasize that students read code here; they are not asked to write it.
 
 **Key Points**
 - A smart contract is code plus persistent state that executes under shared consensus rules.
 - Smart contracts differ from legal contracts because execution is automatic and bounded by deployed bytecode behavior.
 - Define deterministic briefly as producing the same result for the same inputs on every validating node.
+- The analyst's questions are about capability: who can mint, who can move funds, who can change the rules, and what the contract records on-chain.
+- Solidity is read line by line today; Vyper and Rust are shown only so students recognize them when they meet them.
 
 **Walkthrough**
-1. Start with the public state variables that define long-lived contract state.
-2. Show the constructor as the one-time deployment step that assigns the minter.
-3. End with the `mint` function, where access control and balance updates begin.
-4. If using slide-local code numbering, treat file line 585 as code line 1:
-   - public state variables: code lines 3-4
-   - constructor: code line 6
-   - mapping declaration: code line 4
-   - mapping's default zero behavior is visible when `balances` is declared on code line 4 and later updated on code line 9 without prior initialization
+None
 
 **Sources**
 - @buterin_ethereumnextgenerationsmart_2014
@@ -84,6 +81,8 @@ None
 
 :::
 
+:::: {.content-hidden}
+
 ## Beyond Ethereum: Other Smart Contract Models {.smaller}
 
 - UTXO-plus models (e.g., **Cardano eUTXO**): richer logic while keeping UTXO structure.
@@ -113,6 +112,10 @@ None
 - @wood_ethereumsecuredecentralised_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Ethereum's Advantage for Smart Contracts
 
@@ -150,6 +153,10 @@ None
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Ethereum Accounts and Contract Review {.smaller}
 
 - Two account types: **EOA** (user, has private key) and **Contract** (code + storage).
@@ -178,6 +185,8 @@ None
 - @wood_ethereumsecuredecentralised_2016
 
 :::
+
+::::
 
 ## Contract Deployment {.smaller}
 
@@ -248,6 +257,8 @@ This slide establishes deployment as a short workflow that turns source code int
 
 :::
 
+:::: {.content-hidden}
+
 ## Calls and Control Flow in the EVM {.smaller}
 
 - External calls hand control to untrusted code; treat with care.
@@ -301,6 +312,8 @@ This slide establishes that contract execution is really nested control flow acr
 - @ethereum.org_smartcontractsdeveloper_2025
 
 :::
+
+::::
 
 ## Solidity: File Structure, From Top to Bottom
 
@@ -467,6 +480,8 @@ This slide establishes the function-level modifiers that communicate who can cal
 
 :::
 
+:::: {.content-hidden}
+
 ## Data Locations: Storage, Memory, Calldata {.smaller}
 
 :::: columns
@@ -530,6 +545,8 @@ None
 
 :::
 
+::::
+
 ## Example: SimpleStorage (Code)
 
 ```solidity
@@ -573,7 +590,7 @@ This code slide establishes a minimal example students can use to connect Solidi
 1. Identify the stored variable that lives in contract state.
 2. Show the function that changes that value.
 3. End with the function that reads the value back for later callers.
-4. If using slide-local code numbering, treat file line 529 as code line 1:
+4. Counting the `pragma` line as code line 1:
    - state variable: code line 3
    - event declaration: code line 4
    - setter: code lines 6-9
@@ -602,7 +619,7 @@ contract Coin {
 ```
 - Public state vars auto-generate getters.
 - `minter` and `balances` live in storage.
-- Constructor initializes the minter to deployer.
+- `msg.sender` is the address that made the current call; the constructor stores the deployer as `minter`.
 - `mint` restricts access to minter via `require`.
 - Mapping initializes to zero.
 
@@ -616,11 +633,14 @@ This slide establishes a richer example where a token-like contract introduces b
 - The function arguments arrive as calldata, while the balance updates change persistent storage.
 - Access control and accounting correctness become much more important once the contract manages value.
 - Define invariant briefly as a condition, such as conservation of balances, that should remain true after every valid call.
+- `msg.sender` is always the address the current external call came from; the `require` line is what makes `mint` the minter's alone.
+- This is the Solidity documentation's own subcurrency example, shortened.
 
 **Walkthrough**
 None
 
 **Sources**
+- @solidity_introsmartcontracts_2026
 - @ethereum.org_smartcontractsdeveloper_2025
 - @wood_ethereumsecuredecentralised_2016
 
@@ -644,8 +664,8 @@ None
 
 - The custom error function names the failure case and returns the requested and available amounts.
 - The `require` check stops the transfer unless the sender has enough balance.
-- Lines 6-7 move value by subtracting from the sender and adding to the receiver in storage.
-- The event on line 8 gives wallets, explorers, and indexers a record of the transfer.
+- Lines 5-6 move value by subtracting from the sender and adding to the receiver in storage.
+- The event on line 7 gives wallets, explorers, and indexers a record of the transfer.
 - This is the core accounting pattern behind token transfers, even though this example does not include allowances.
 
 :::
@@ -668,8 +688,47 @@ This continuation slide establishes how token logic is completed through additio
 4. End with the event emission as the off-chain record of the successful transfer.
 
 **Sources**
+- @solidity_introsmartcontracts_2026
 - @ethereum.org_smartcontractsdeveloper_2025
 - @wood_ethereumsecuredecentralised_2016
+
+:::
+
+## Your Turn: Read the Coin Contract
+
+::: {style="font-size: 0.80em;"}
+
+Use the two Coin slides. Answer each question from the code alone, and name the line that shows it.
+
+1. Who can create new coins, and which line enforces that?
+2. Can the minter take coins out of someone else's balance?
+3. Is there a limit on how many coins can be created?
+4. A transfer leaves a `Sent` event on-chain. What record does a mint leave?
+
+The same four questions (who can create, who can move, what limits, what is recorded) open any contract you are asked to characterize.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This practice slide turns the Coin walkthrough into the analyst's working skill: reading a contract by hand and stating what it lets each caller do. Give students about five minutes in pairs, then take answers line by line. Emphasize that every answer must point to a line of code, not to what the contract's name suggests.
+
+**Key Points**
+- Answer 1: only the address stored in `minter`, the deployer, can call `mint`; the `require(msg.sender == minter)` line enforces it.
+- Answer 2: no. The only function that lowers a balance is `send`, and it lowers the balance of `msg.sender`, the caller.
+- Answer 3: no. Nothing in `mint` checks a total or a maximum, so the minter can create any amount.
+- Answer 4: no event. `mint` changes `balances` but emits nothing, so a mint is visible only in the transaction's input and the changed balance, not in the logs; a reader who watches only `Sent` events misses every mint.
+- The four questions carry straight into the token lessons, where students read the same kinds of lines in real token contracts.
+
+**Walkthrough**
+1. Give students the four questions and five minutes.
+2. Take question 1 and have a student read the `require` line aloud.
+3. Take question 2 and trace every line that subtracts from `balances`.
+4. Take questions 3 and 4 and ask what an analyst would miss by trusting the events alone.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
 
 :::
 
@@ -697,12 +756,15 @@ This slide establishes events as Ethereum's main contract-to-off-chain communica
 - Events write structured log data that off-chain systems can monitor efficiently.
 - Good event design improves observability, auditing, and integration with wallets or indexers.
 - Define indexed field briefly as an event field optimized for filtering in log searches.
+- For an analyst, logs are the fastest record of what a contract did, but only of what its author chose to emit: the Coin's `mint` emits nothing.
 
 **Walkthrough**
 None
 
 **Sources**
-None
+- @solidity_abispec_2026
+- @solidity_introsmartcontracts_2026
+- @wood_ethereumsecuredecentralised_2016
 
 :::
 
@@ -729,6 +791,7 @@ This slide establishes how external callers know what bytes to send and how cont
 - Spell out ABI as Application Binary Interface and define selector as the short identifier derived from a function signature.
 - Clarify that the selector uses the **first** 4 bytes of the `keccak256` hash.
 - The selector is **not** a memory address; it is a compact dispatch code that gives a low-collision way to identify which function the caller wants.
+- For an analyst: the first 4 bytes of a transaction's input data name the function it called, so a mint with no event still shows up as a call to `mint` in the transaction itself.
 
 **Walkthrough**
 1. Define the ABI as the external interface format used by off-chain tools and other contracts.
@@ -737,9 +800,11 @@ This slide establishes how external callers know what bytes to send and how cont
 4. If students ask why only 4 bytes are used, explain that 32-byte hashes are reduced to a short identifier to save calldata space while still keeping collisions rare enough for practical interface dispatch.
 
 **Sources**
-None
+- @solidity_abispec_2026
 
 :::
+
+:::: {.content-hidden}
 
 ## Reentrancy: Anatomy and Defenses {.smaller}
 
@@ -806,6 +871,10 @@ This slide establishes reentrancy as the canonical example of why external calls
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Reentrancy: Vulnerable Pattern (Code)
 
 ```solidity
@@ -846,6 +915,10 @@ This code slide establishes the classic vulnerable ordering pattern that made re
 solidityteam_solidityexample_2025
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Reentrancy: Checks-Effects-Interactions (Fix) {.smaller}
 
@@ -912,6 +985,10 @@ solidityteam_solidityexample_2025
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Case Study: The DAO Hack (2016)
 
 - “The DAO,” a decentralized investment fund built on Ethereum, launched in 2016. It raised over 11 million ETH (≈ $150 million at the time, 14% of all ETH).
@@ -938,6 +1015,10 @@ None
 - @l34_ethereum_dao_vulnerability_2016
 
 :::
+
+::::
+
+:::: {.content-hidden}
 
 ## Upgradeability and Proxy Patterns {.smaller}
 
@@ -1010,6 +1091,10 @@ This slide establishes how Ethereum developers trade default immutability for co
 
 :::
 
+::::
+
+:::: {.content-hidden}
+
 ## Randomness, Oracles, and External Data {.smaller}
 
 - The EVM is deterministic: every node must compute the same result. That means contracts **cannot** reach outside the chain for data, generate true randomness, or call external APIs.
@@ -1041,40 +1126,168 @@ https://ethereum.org/en/developers/docs/; https://ethereum.org/en/whitepaper/
 
 :::
 
-## Key Takeaways {.smaller}
+::::
 
-- A smart contract is code + persistent state that executes deterministically on every node.
+## Recognize It: Vyper {.smaller}
 
-- Ethereum’s EVM provides the execution environment: accounts, gas metering, runtime bytecode, and a shared state trie.
+```python
+company: public(address)
+totalShares: public(uint256)
+price: public(uint256)
 
-- Solidity source is compiled into bytecode for deployment; after creation, the contract account stores runtime bytecode on-chain.
+# Store a ledger of stockholder holdings.
+holdings: HashMap[address, uint256]
 
-- External calls transfer control to untrusted code; the **Checks-Effects-Interactions** pattern and reentrancy guards are the primary defenses.
+@view
+@external
+def stockAvailable() -> uint256:
+    return self._stockAvailable()
+```
 
-- Contracts cannot reach outside the chain; oracles and VRFs bridge that gap, each with their own trust assumptions.
+::: {style="font-size: 0.85em;"}
 
-- Immutability is the default; proxy patterns trade it for upgradeability at the cost of added governance complexity.
+- **Vyper** is a contract language that looks like Python and compiles for the same EVM as Solidity.
+- Clues on sight: `def`, decorators such as `@external` and `@view`, `self.`, and no curly braces.
+- Same ideas, new spelling: `public(...)` makes a getter, as `public` does in Solidity; `HashMap` is Solidity's `mapping`; `@external` and `@view` play the role of Solidity's visibility and mutability words.
+- To recognize, not to read line by line: the same four questions still apply.
 
-- Next lesson: we apply these concepts to **digital assets, tokenization, and NFTs** (ERC-20, ERC-721, ERC-1155).
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This final slide establishes the durable mental model students should retain after the lesson: smart contracts are deterministic state machines that require disciplined defensive design. It matters here because the course is about to move into asset and token patterns that depend on these foundations. Emphasize that capability and risk scale together in Ethereum development.
+This slide shows one short Vyper snippet so students can recognize the language when an explorer shows verified Vyper source instead of Solidity. It matters because Vyper contracts run on the same EVM, so their transactions and logs look the same on-chain; only the source differs. Emphasize recognition, not reading: students are not expected to read Vyper line by line.
+
+**Key Points**
+- Vyper is a contract-oriented, Pythonic language that targets the EVM.
+- Declaring a variable `public` makes it callable by external contracts and creates a getter for it, as in Solidity.
+- `HashMap[address, uint256]` is the Vyper spelling of a Solidity `mapping(address => uint256)`.
+- The snippet is the start of the Vyper documentation's Company Stock example.
+- The code block is highlighted as Python because Vyper's syntax is close enough for the highlighter.
+
+**Walkthrough**
+1. Point to the three `public(...)` state variables at the top and compare them with Coin's `address public minter`.
+2. Point to `HashMap` as the ledger, the same role `balances` plays in Coin.
+3. End with the decorated `def`, Vyper's equivalent of a Solidity `function ... external view`.
+
+**Sources**
+- @vyper_docs_2026
+- @vyper_byexample_2026
+
+:::
+
+## Recognize It: Rust on Solana {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+
+::: {style="font-size: 0.85em;"}
+
+```rust
+use anchor_lang::prelude::*;
+declare_id!("11111111111111111111111111111111");
+
+#[program]
+mod hello_anchor {
+    use super::*;
+    pub fn initialize(ctx: Context<Initialize>,
+                      data: u64) -> Result<()> {
+        ctx.accounts.new_account.data = data;
+        msg!("Changed data to: {}!", data);
+        Ok(())
+    }
+}
+#[derive(Accounts)]
+pub struct Initialize<'info> {
+    #[account(init, payer = signer, space = 8 + 8)]
+    pub new_account: Account<'info, NewAccount>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+#[account]
+pub struct NewAccount { data: u64 }
+```
+
+:::
+
+:::
+::: {.column width="45%"}
+
+::: {style="font-size: 0.85em;"}
+
+- Solana programs are written in **Rust**, most often with the **Anchor** framework.
+- Clues on sight: `fn`, `pub`, `#[...]` attributes, `declare_id!`, `Result<()>`.
+- `declare_id!` is the program's on-chain address.
+- `#[program]` holds the instructions a caller can run.
+- `#[derive(Accounts)]` lists the accounts each instruction must be given, including the `Signer`.
+- `#[account]` defines the data kept in those accounts.
+
+:::
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows one short Rust program so students can recognize Solana contract code, which looks nothing like Solidity. It matters because the analyst's questions stay the same on Solana even though the code and the account model differ. Emphasize recognition only: students are not expected to read Rust.
+
+**Key Points**
+- Anchor is the most popular framework for Solana programs and provides Rust tools for writing them.
+- `declare_id!` specifies the program's on-chain address, its program ID.
+- The `#[program]` module contains the instruction logic; `initialize` here is the one instruction.
+- `#[derive(Accounts)]` specifies the accounts that must be provided when an instruction is invoked; the `Signer` in that list is the counterpart of Solidity's `msg.sender`.
+- `#[account]` defines the structure of the data stored in custom accounts.
+- The snippet is the Anchor documentation's own example program, shortened to fit: blank lines are removed, one long line is wrapped and the last struct sits on one line.
+
+**Walkthrough**
+1. Point to `declare_id!` as the program's address.
+2. Point to `initialize` inside `#[program]` as the function a caller runs.
+3. Point to the `Initialize` struct as the list of accounts the caller must pass in, and to `Signer` as who signed.
+4. End with `NewAccount`, the data the instruction writes.
+
+**Sources**
+- @anchor_readme_2026
+- @anchor_programstructure_2026
+
+:::
+
+## Key Takeaways {.smaller}
+
+- A smart contract is code + persistent state that executes deterministically on every node.
+
+- Read a Solidity contract top to bottom: state variables, then each function's visibility, its `require` gates and the storage it changes.
+
+- `msg.sender` is the caller; a `require` on it is what reserves a function to one address.
+
+- Ask four questions of any contract: who can create, who can move, what limits it, what it records.
+
+- Events record only what the author chose to emit; a transaction's input still names the function called.
+
+- Vyper (Python-like, on the EVM) and Rust (Solana, via Anchor): recognize them, then ask the same questions.
+
+- Next: tokens, stablecoins and NFTs (02-AS, 06-EF), where these questions meet real token contracts and issuer freezes.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This final slide gives students the reading habit they should leave with: find the state, find the gates, find what moves, and check what is recorded. It matters here because the token lessons that follow put real token contracts in front of them, including an issuer's freeze and blacklist functions. Emphasize that the four questions work in any language.
 
 **Key Points**
 - Smart contracts combine code, persistent state, and shared execution under EVM rules.
-- Deployed contracts are represented on-chain as runtime bytecode, while verified source code is an off-chain transparency layer.
-- Defensive patterns such as CEI, careful access control, and explicit oracle assumptions are core habits, not optional extras.
-- Immutability, upgradeability, and external calls each involve tradeoffs that should be stated and reviewed explicitly.
+- Reading order and access checks are how an analyst turns source code into plain statements of capability.
+- Logs are convenient but incomplete; transaction input and contract state complete the picture.
+- Vyper and Rust were shown for recognition only; the exploit contract students read closely comes on day 8.
 
 **Walkthrough**
 None
 
 **Sources**
-- @buterin_ethereumnextgenerationsmart_2014
-- @wood_ethereumsecuredecentralised_2016
-- @ethereum.org_smartcontractsdeveloper_2025
+- @solidity_introsmartcontracts_2026
+- @solidity_abispec_2026
+- @vyper_docs_2026
+- @anchor_readme_2026
 
 :::
 
