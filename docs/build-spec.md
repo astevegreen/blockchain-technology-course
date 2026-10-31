@@ -6,7 +6,8 @@ their status live in the Notion "Build Tracker" database.
 
 ## Direction (owner, 30 Oct 2026)
 The owner's decisions of 30 Oct, after two pieces of expert feedback, set the approach. They win over anything
-below; the day map and lessons by day are under review against them, and the items they affect are on hold.
+below; the day map and lessons by day were reviewed against them and settled (30 Oct), and the items they affect
+stay on hold until the Build Tracker is revised to the new map.
 1. **Foundations first.** "feedback overwhelmingly favors teaching foundations first because this gives students a
    foundation of understanding that makes future lessons and labs/exercises less intimidating"
 2. **A broad foundation before the case.** "Creating a comprehensive foundation of knowledge on everything
@@ -33,15 +34,12 @@ below; the day map and lessons by day are under review against them, and the ite
     mixers, cross-chain, Tron stablecoins, and a final unguided scenario on day 10). Pilot A, which runs week 1,
     tests no tracing.
 
-Open for the course-map review: the certificate rule; the
-post-test's size and pass mark; Not yet / Meets / Strong marking, resubmission and the graded lab points; outcome
-O9's wording; what replaces the paired morning briefings (the old map's memo lesson and lab, briefing lesson and
-capstone are gone, and day 10's informal explanation replaces the capstone); the instructor-only challenge bank;
-class size and assessors on day 10; where the expert feedback's remaining additions go (CTFs, a bug bounty, an NFT for passing; wallets, exchanges, OTC and P2P sit on days 2 and 5).
+The course-map review's open items are settled (owner, 30 Oct): see The day map, Additions to existing lessons and
+Marking and assessment. Wallets, exchanges, OTC and P2P sit on days 2 and 5; the bug bounty waits for a later run.
 
 ## The course
-- **Blockchain Intelligence Analysis**: "Characterizing on-chain activity and explaining it to agents and
-  prosecutors". Ten days, 0845-1600, for US government analysts. Ready to offer by 26 Feb 2027.
+- **Blockchain Intelligence Analysis**: "Identifying, characterizing and explaining on-chain activity" (owner, 30
+  Oct: "Identify, characterize, explain"). Ten days, 0845-1600, for US government analysts. Ready to offer by 26 Feb 2027.
 - Every lab ends in a short answer or an informal explanation to an instructor, and every judgment carries a
   confidence.
 
@@ -62,7 +60,7 @@ trace").
 | 7 | Where the trace goes dark (settled) | CoinJoin and mixer trace (Forensics 2, then 3; 41, 42): limits-of-tracing note, saying where the trace stops and what still shows |
 | 8 | Ethereum attacks and the loot (settled) | Cross-chain trace (Bybit, Kelp DAO; 80), opening with one exploit contract read, through at least one swap and one bridge: cross-chain flow diagram |
 | 9 | The threat picture (settled) | Tron stablecoin trace (79): exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
-| 10 | Post-test, then a final trace (settled) | Morning: a review session for open questions (50 minutes), then the post-test. Afternoon: one unguided tracing scenario mixing week 2's types (Prince Group by default: Bitcoin, Tron USDT and an exchange exit; no worked example), then each student explains what they found, and how confident they are, to an instructor, informally (about 5 minutes each). No memo, no briefing |
+| 10 | Post-test, then a final trace (settled) | Morning: a review session for open questions (50 minutes), then the post-test. Afternoon: one unguided tracing scenario mixing week 2's types (Prince Group by default: Bitcoin, Tron USDT and an exchange exit; no worked example), then each student explains what they found, and how confident they are, to an instructor, informally (about 5 minutes each, as soon as they finish; a second instructor assesses for a class over 15, owner: "Two assessors, rolling"). No memo, no briefing |
 
 The lessons in each slot are under Lessons by day, below.
 
@@ -87,7 +85,8 @@ students' questions and teaches nothing new.
 
 Week 2 places everything week 1 gave up, each day's lessons preparing that afternoon's trace. Colonial Pipeline's
 ransomware payments and ransomware-as-a-service merge into day 6's second lesson. The formal-briefing lesson (old
-day 9 ③) is gone, as Direction 4 retires it. Of the code-reading worksheet (62, 54, 51, 63, 64), only one exploit
+day 9 ③) is gone, as Direction 4 retires it, and nothing replaces the paired morning briefings, the memo or the
+capstone (owner, 30 Oct: "Nothing"). Of the code-reading worksheet (62, 54, 51, 63, 64), only one exploit
 contract read, at the start of day 8's lab, has a place so far.
 
 Day 9's second lesson also teaches MITRE AADAPT, MITRE's ATT&CK-style matrix of attacks on digital-asset payments.
@@ -100,14 +99,16 @@ bridges by type, freezable stablecoins, the deposit-address heuristic and the li
 
 | Item | Where | What |
 | --- | --- | --- |
-| Look-alikes beside the real thing | D6 ①, D4 ①, D3 lab, D8 lab | D6 ①: an exchange's batched payouts beside a peel chain. D4 ①, about 15 minutes: routers, aggregators, MEV bots, paymasters and relayers are in the path, not the counterparty. D3 lab: proxy (ERC-1967) to implementation, and who received from internal transactions and Transfer logs in Otterscan. D8 lab's contract read: a 4-byte selector lookup. Routers and batched payouts as known false positives in the memo guide: under review (the memo is retired). |
-| How well the heuristics have been measured | D6 ③ | About 15 minutes: Kappos et al. (USENIX Security 2022) and Möser and Narayanan (FC 2022) in words; why the Bitcoin Fog court admitted the tracing (United States v. Sterlingov, D.D.C., 2024; upheld 25 Sep 2026); the 2023 FRE 702 note. No new test item. Under review: an instructor-only bank of 10 to 15 challenge questions in `quizes/`, starting with the router question (it served the retired briefing). |
+| Look-alikes beside the real thing | D6 ①, D4 ①, D3 lab, D8 lab | D6 ①: an exchange's batched payouts beside a peel chain. D4 ①, about 15 minutes: routers, aggregators, MEV bots, paymasters and relayers are in the path, not the counterparty. D3 lab: proxy (ERC-1967) to implementation, and who received from internal transactions and Transfer logs in Otterscan. D8 lab's contract read: a 4-byte selector lookup. Routers and batched payouts as known false positives: the challenge bank's first questions (the memo guide is retired). |
+| How well the heuristics have been measured | D6 ③ | About 15 minutes: Kappos et al. (USENIX Security 2022) and Möser and Narayanan (FC 2022) in words; why the Bitcoin Fog court admitted the tracing (United States v. Sterlingov, D.D.C., 2024; upheld 25 Sep 2026); the 2023 FRE 702 note. No new test item. An instructor-only bank of 10 to 15 challenge questions in `quizes/`, starting with the router question, gives instructors follow-up questions for the informal explanations in week 2 and on day 10 (owner: "Assessors' follow-ups"). |
 | Mixers update | D7 ① | PayJoin, dusting, and the 2024 end of the zkSNACKs and Samourai coordinators. |
 | Solana, to recognize only | D4 ③ | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
 | Bridges by type | D4 ③ | Lock-and-mint, message-verified, liquidity and intents, with the Bitget hack as the case. |
 | Freezable stablecoins as a lead | D3 ③; D9 lab | D3 ③: reading Tether's blacklist functions. D9's exposure summary adds "Freezable? Which issuer, and how fast?" |
-| One graded Meets point | D6 trace, D8 contract read, D8 diagram, D9 summary | Under review; see Marking and assessment. |
+| One graded Meets point | D6 trace, D7 limits note, D8 cross-chain trace, D9 summary | See Marking and assessment. |
 | Deposit-address heuristic | D9 lab (D5 ① teaches deposit addresses and sweeps) | Victor, "Address Clustering Heuristics for Ethereum" (FC 2020). |
+| An NFT for passing | D10 | Certificate holders receive an NFT minted on the course's own chain at the end of day 10, echoing day 3's mint (owner: "NFT and CTF flags"). |
+| CTF-style flags | D6 to D9 labs | Week 2's optional challenge steps are flags to find (a hidden address or amount), for early finishers; ungraded. |
 | A slide on live data | D1 ③ | Explorers see your queries and IP address, recent blocks can reorganize, APIs limit request rates; captured data in class, agency rules on the job. |
 
 NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is live.
@@ -143,15 +144,30 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
   Never a percentage.
 
 ## Marking and assessment
-- Under review (Direction 4 and 9): the certificate rule, the post-test's size and pass mark, Not yet / Meets /
-  Strong marking, resubmission and the graded lab points. The memo and briefing guides are retired.
-- The design under review: four lab products carry one graded Meets point each; the rest of every lab is feedback.
-  Day 6's trace follows the ransom to the first service, naming each hop's heuristic; day 8's contract read
-  says what a function does, who may call it and what it changed; day 8's diagram names each contract, the assets
-  in and out and the far-side address; day 9's summary names the stablecoin and its issuer and says whether it can
-  be frozen.
-- Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the list can
-  change, Direction 10), multiple choice for familiarity concepts, a short written answer for working-skill concepts.
+Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
+- **Certificate:** attend all ten days, pass the post-test, and reach Meets on each graded lab point by the end of
+  day 10 (owner: "Test plus lab points").
+- **Graded lab points:** one per week-2 trace, four in all; the rest of every lab is feedback (owner: "One per
+  week-2 trace"). Day 6's Bitcoin trace follows the ransom to the first service, naming each hop's heuristic. Day
+  7's limits-of-tracing note says where the trace stops and what still shows. Day 8's cross-chain trace includes
+  its contract read (what a function does, who may call it and what it changed) and a diagram naming each contract,
+  the assets in and out and the far-side address. Day 9's exposure summary names the stablecoin and its issuer and
+  says whether it can be frozen.
+- **Marking:** each point is Meets or Not yet, against a one-line rubric saying what Meets looks like (owner:
+  "Meets or Not yet").
+- **Resubmission:** one retry per point after the instructor says what was missing, done in lab time or day 10's
+  review session, never as evening work; the end of day 10's review session is the last chance (owner: "Once, in
+  class time").
+- **Post-test:** about 2 hours on day 10's morning, after the review session; pass mark 70% overall (owner: "70%
+  overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the
+  list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
+  working-skill concepts.
+- **Outcome 9** (Course Design section 2) reads: "Explain findings plainly. Tell someone who is not a specialist,
+  bottom line first, what the activity is, what the chain shows and what is inferred, how confident the judgement
+  is, and what the evidence cannot show." Its evidence is the informal explanation behind each graded point and on
+  day 10, and the post-test's written item (owner: "Plain explanation").
+- **Outcome 8's lab evidence** is day 6's point (a confidence for each link) and day 9's point (each label's source
+  and date), written into those two rubrics, plus the post-test (owner: "Day 6 and day 9 points").
 - Daily quizzes are ungraded practice: about five recall questions on the previous day.
 - Every quiz and test answer traces to a lesson line.
 
