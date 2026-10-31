@@ -6,8 +6,8 @@ Course Design page and the Build Tracker, and discussed with the owner on 30 Oct
 held up. Owner: "Create a plan for addressing all the valid concern Gemini discovered and update the documentation
 files and Notion to reflect".
 
-Status: the technical fixes are applied (build spec, Course Design, Build Tracker). D1 and D2 are decided (30 Oct).
-Two decisions wait on the owner, each with a recommendation; Notion's home page lists them under "Under review".
+Status: the technical fixes are applied (build spec, Course Design, Build Tracker). D1, D2 and D3 are decided (30 Oct).
+One decision waits on the owner, each with a recommendation; Notion's home page lists it under "Under review".
 
 ## Set aside
 - **F2** (build size against the date): set aside by the owner, 30 Oct.
@@ -65,7 +65,10 @@ answer.
 - **Then:** Course Design outcome 7's evidence and section 4; build-spec Marking; the Meets rubrics and Post-test
   rows; Role Concepts row 37 if re-levelled.
 
-### D3. Concept 18's languages (F7)
+### D3. Concept 18's languages (F7): decided 30 Oct
+Owner: "Solidity by hand, others shown" (the recommendation). Applied to Role Concepts row 18 (Where in the course),
+the build spec (Lessons by day, day 3), Course Design's day map and the D3 ② row.
+
 Concept 18 reads "Reading and auditing smart contracts (Solidity, Vyper, Rust)" at working skill. Vyper is not taught
 and Rust has one line (04-EF).
 - **Recommended:** Solidity is the language read by hand; day 3 ② shows one short Vyper and one short Rust snippet to

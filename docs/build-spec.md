@@ -41,8 +41,9 @@ Marking and assessment. Wallets, exchanges, OTC and P2P sit on days 2 and 5; the
 Gemini's adversarial audit of this spec: the technical fixes are applied below (the week-one check's slot,
 outcome 5 and 7 evidence, week 1's assessment written in Phase 1, lab fallbacks, darknet markets and a model
 explanation on day 6, day 2's lab entry). Outcome 5's wording is settled (owner, 30 Oct; see Marking and
-assessment), and so are concept 37 and the written items (owner, 30 Oct; see Graded lab points). Two owner
-decisions are open: concept 18's languages, and day 10's trace stop time and marking. See `docs/analysis/2026-10-gemini-audit-plan.md`.
+assessment), and so are concept 37 and the written items (owner, 30 Oct; see Graded lab points) and concept 18's
+languages (owner, 30 Oct; see Lessons by day, day 3). One owner decision is open: day 10's trace stop time and
+marking. See `docs/analysis/2026-10-gemini-audit-plan.md`.
 
 ## The course
 - **Blockchain Intelligence Analysis**: "Identifying, characterizing and explaining on-chain activity" (owner, 30
@@ -79,7 +80,7 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 | --- | --- | --- | --- | --- |
 | 1 (settled) | Blocks and chains, and why a blockchain is not the same thing as a cryptocurrency, new, with one real Bitcoin transaction as its worked example (02-IN), L | Keys, signatures and addresses, adding secp256k1 and address derivation, then signing a transaction and sending it to a node (04-CP, with slides from 01, 03 and 05-CP; 02-CP's hash-property slides open it), L | How a public ledger agrees and when it is final (01-CM, absorbing 04-DS, 05-IN, 02-CM and 03-CM's comparison table and finality slides; per-chain finality), L | 1-5, 41, 42 |
 | 2 (settled) | Reading a Bitcoin transaction: scripts, address types, fees, change (02-BF, absorbing 01-BF and 03-BF's scripts; 02-CP's Merkle slides), L | Wallet types: hot and cold, custodial and self-custody, seed phrases and derivation, new, bringing back 02-BF's derivation slides, L | Multi-sig and open-source wallet software, new, L | none in Role Concepts yet (wallets are a feedback addition) |
-| 3 (settled) | Accounts, the EVM and transactions (01-EF, adding the EVM), M | Reading a contract, read only (04-EF), M | Tokens: ERC-20, stablecoins and NFTs; issuer freezes and blacklisting, with Tether's blacklist functions (02-AS, 06-EF), M | 18, 46 |
+| 3 (settled) | Accounts, the EVM and transactions (01-EF, adding the EVM), M | Reading a contract, read only (04-EF): Solidity read by hand, then one short Vyper and one short Rust snippet to recognise only (owner, 30 Oct: "Solidity by hand, others shown"), M | Tokens: ERC-20, stablecoins and NFTs; issuer freezes and blacklisting, with Tether's blacklist functions (02-AS, 06-EF), M | 18, 46 |
 | 4 (settled) | Mempool, MEV and DEX trades (03-EF; 64), M | Liquidity: pools, thin markets, and where funds can and can't exit, new, L | Layer 2s and bridges by type (01-EF's Layer 2 slides, with the trilemma from 04-IN; the bridge slides of 01-FO and 02-FO), L | 6, 10, 12 |
 | 5 (settled) | Exchanges, OTC and P2P: how an exchange holds funds (deposit addresses, sweeps to hot and cold wallets), OTC desks, P2P markets, new, L | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Ledgers with a gatekeeper: Tron and USDT on Tron, new, then permissioned ledgers and CBDCs (01-PC, 02-AS), L | 31, 38, 39, 48, 49 |
 | 6 (settled) | Clustering heuristics and peel chains (02-FO part 1), L | Ransomware: the payment and the cash-out (Colonial Pipeline; ransomware-as-a-service, 85), with darknet markets as a destination and a cash-out route (01-FO's Silk Road slides), one lesson merged from two, L | Attribution and confidence: labels and their sources, how well the heuristics have been measured, confidence language, ending with one model explanation in outcome 9's five parts (01-FO recut; 83, 84), L | 7, 8, 20, 21, 25, 27, 28, 40, 45 |
