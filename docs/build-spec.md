@@ -128,6 +128,10 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
 - Opens with the questions the student answers (short answers, or an informal explanation to the instructor),
   then a worked example; a student whose pretest shows the basics
   starts at the problem. Optional challenge steps go at the end. One version, two entry points.
+- Entry is set per day, by the instructor (owner, 30 Oct: "Per day, instructor decides"). The instructor reads the
+  pretest items for that day's concepts (the "Concepts first taught" column); a student who got them right is
+  offered the problem, and everyone else, and anyone with no pretest, starts at the worked example. A student may
+  always choose the worked example. No overall cutoff score.
 - Short steps addressed to the student.
 - Students mostly read code. By default a query or script is handed over ready-made and only the reading of its
   output is checked; a lab may use another format when that works better (Direction 11). An instructor-led build
