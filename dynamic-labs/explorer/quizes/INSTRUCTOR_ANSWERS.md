@@ -128,11 +128,11 @@ Students do both openers first: `/lab/insider.html` (about 15 minutes), then `/l
 ### The Insider
 
 Before class, open `/exercises/insider/instructor` (log in at `/instructor/`) and check that the game is
-online. Leave bots backfilling empty seats on, so a small class still fills a room. Players are not told
-which seats are computer players. The "Context shown to students" setting can name today's theme
+online. Leave bots backfilling empty seats on, so a small class still fills a room. The game marks computer
+players "Agent" in the player list and on the vote buttons. The "Context shown to students" setting can name today's theme
 (trust without a referee).
 
-1. *Who decided, and on what basis?* The players, by vote. There was no referee who knew the answer; the
+1. *How did the group decide, and on what evidence?* By vote of the players. There was no referee who knew the answer; the
    evidence was one-word clues, which a skilled Insider can imitate.
 2. *Who did you vote for, and how confident?* Any player is acceptable if the student names their evidence
    and a confidence word that fits the scale: clues alone, from a few players, support Low or Moderate,
