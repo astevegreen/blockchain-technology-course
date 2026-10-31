@@ -229,8 +229,9 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
 - Kelp DAO (18 Apr 2026): a forged LayerZero message claiming to come from Unichain released rsETH on Ethereum;
   Arbitrum later froze 30,766 ETH (`blockaid_kelpdao_2026`, `arbitrum_kelpfreeze_2026`). It was not an
   Ethereum-to-Arbitrum exploit.
-- Open-source or in-house tools only (Otterscan, java-tron, Hyperledger Fabric, cryo, DuckDB). Commercial
-  analytics platforms appear only as a category; their research may be cited. A tool enters a lesson only after its
+- Labs and exercises use open-source or in-house tools only (Otterscan, java-tron, Hyperledger Fabric, cryo,
+  DuckDB). Slides may name commercial firms (exchanges, wallets, analytics platforms) for awareness of the field,
+  with a bib entry, and cite their research (owner, 31 Oct 2026). A tool students use enters a lesson only after its
   spike and its bib entry exist.
 
 ## Out of scope
