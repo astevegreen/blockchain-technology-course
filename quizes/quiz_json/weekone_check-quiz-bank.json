@@ -172,12 +172,12 @@
     {
       "id": "q4",
       "question_type": "multiple_choice",
-      "question_stem": "An analyst holds the SHA-256 digest of a password. Why can the digest of a four-digit PIN be recovered but a long random string's digest cannot?",
-      "correct_answer": "Nobody can reverse a hash, so an attacker hashes every candidate until one fits.",
+      "question_stem": "An analyst holds the SHA-256 digest of a password. Why can a four-digit PIN be recovered from its digest but a long random string cannot?",
+      "correct_answer": "Nobody can reverse a hash; a PIN is a small set an attacker can hash in full.",
       "incorrect_answers": [
         "Hash functions keep a copy of short inputs and give them back on request.",
-        "Short inputs make weaker digests that a simple calculation can reverse them.",
-        "Digests of long inputs are encrypted, while the digests of short inputs are left bare."
+        "Short inputs make weaker digests that a simple calculation can then reverse.",
+        "Digests of long inputs are encrypted, while short-input digests are left bare."
       ],
       "explanation": "Pre-image resistance means the only way back is to guess inputs and hash each one. That works only when the input came from a small, guessable set.",
       "difficulty_level": 3,
@@ -229,7 +229,7 @@
       "correct_answer": "Newly mined coins from a block's coinbase, not someone's earlier payment.",
       "incorrect_answers": [
         "An exchange's hot wallet, since only exchanges make transactions with no inputs.",
-        "A CoinJoin, since the inputs of such a transaction are hidden by design.",
+        "A pool payout, since a mining pool pays its members in one transaction.",
         "A burned output, which destroys the coins and ends the trace for good."
       ],
       "explanation": "New bitcoin enters only through the coinbase, the block's first transaction, which collects the subsidy and the fees.",
@@ -253,10 +253,10 @@
       "id": "q7",
       "question_type": "multiple_choice",
       "question_stem": "An agent restores a seized 12-word seed phrase and the wallet is empty. Which explanation is consistent with how seed phrases work?",
-      "correct_answer": "A passphrase is in use; only the right one opens the funded wallet.",
+      "correct_answer": "A passphrase may be used; only the right one opens the funded wallet.",
       "incorrect_answers": [
         "The words are only a hint; funds come back only from the original device.",
-        "The phrase expired once the wallet that made it was closed for good.",
+        "The phrase expired once the wallet that made it was shut down for good.",
         "The words must be re-entered in a different order for every new address."
       ],
       "explanation": "An optional passphrase changes the seed, so a phrase that opens an empty wallet may need its passphrase, or a wallet that reads its address type.",
@@ -313,7 +313,7 @@
         "Prices change too slowly for the chain to record and keep them current.",
         "Contract languages have no way to store or compare numbers such as prices."
       ],
-      "explanation": "Because every node must compute identical state changes, a contract has no network or clock. An oracle puts outside data on chain and adds trust in its source.",
+      "explanation": "Because every node must compute identical state changes, a contract has no network and no outside data of its own. An oracle puts outside data on chain and adds trust in its source.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
@@ -332,14 +332,14 @@
     {
       "id": "q10",
       "question_type": "multiple_choice",
-      "question_stem": "A transaction receipt shows status 0. What does an analyst conclude?",
-      "correct_answer": "It is on the chain but failed, so it moved nothing except its fee.",
+      "question_stem": "A token transfer on Ethereum runs through the token's contract. Where does the transaction receipt show the tokens that moved?",
+      "correct_answer": "In the logs, as a Transfer event, not in the transaction's value field.",
       "incorrect_answers": [
-        "It was never broadcast, so it left no mark of any kind on the chain.",
-        "It succeeded but transferred zero ETH to the receiving address.",
-        "It is still pending in the mempool and has not been included yet."
+        "In the value field, as the token amount sent on to the receiving address.",
+        "In the gasUsed field, which counts the tokens moved with the fee.",
+        "In the contractAddress field, naming the new holder of the tokens."
       ],
-      "explanation": "Status 1 is success and 0 is failure. A failed transaction is recorded and its gas is paid, but it moved no value.",
+      "explanation": "Token transfers show up in a receipt's logs, not in the transaction's value, which carries ETH. The analyst reads the logs the token contract emitted.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
@@ -347,7 +347,8 @@
         "ethereum",
         "day-3",
         "receipt",
-        "transactions"
+        "logs",
+        "tokens"
       ],
       "lesson_block": "Receipts",
       "specific_source": {
@@ -391,7 +392,7 @@
         "Algorithmic ones, because the algorithm freezes any address that sells under $1.",
         "None of them, because nobody can stop a token once it is on a public blockchain."
       ],
-      "explanation": "The type decides who stands behind the dollar. A fiat-backed issuer controls its contract; crypto-backed and algorithmic coins can be frozen only if their contract has a freeze function.",
+      "explanation": "The type decides who stands behind the dollar. A fiat-backed issuer controls its contract; crypto-backed and algorithmic coins can be frozen only if their contract has a freeze function. (Issuer freeze powers as of Oct 2026.)",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": [
@@ -441,7 +442,7 @@
       "incorrect_answers": [
         "About 200 ETH, because the quoted price is the price every sale receives.",
         "About 100 ETH, because a pool never pays out more than half of its holdings.",
-        "Nothing at all, because a pool refuses any sale larger than the fee it takes, ever."
+        "About 10 ETH, the whole of the pool's ETH reserve, since a sale can empty the pool."
       ],
       "explanation": "Quoted value is not what can be sold. The pool's reserves are the limit, so the whole sale returns under 5% of the quoted figure.",
       "difficulty_level": 4,
@@ -463,14 +464,14 @@
     {
       "id": "q15",
       "question_type": "multiple_choice",
-      "question_stem": "A withdrawal from an optimistic rollup reaches Ethereum about a week after it started, but a ZK rollup's does not wait. Why?",
-      "correct_answer": "An optimistic rollup waits out a challenge window; a ZK proof finalizes at once.",
+      "question_stem": "A withdrawal from an optimistic rollup reaches Ethereum about a week after it started, but a ZK rollup's waits only for a proof. Why?",
+      "correct_answer": "An optimistic rollup waits out a challenge window; a ZK one waits for its proof.",
       "incorrect_answers": [
         "Optimistic rollups hold withdrawals during a weekly offline sequencer update window.",
         "ZK rollups run on faster hardware, so their withdrawals are always quick.",
         "Ethereum allows only one optimistic rollup withdrawal to land each week."
       ],
-      "explanation": "The challenge period lets anyone submit a fraud proof. A validity proof finalizes a ZK rollup's state change once it is accepted.",
+      "explanation": "The optimistic challenge window lets anyone submit a fraud proof. A ZK rollup's state change is finalized once its validity proof is accepted, with no challenge period. The challenge period is roughly seven days as of the 2026 lesson.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
