@@ -1,0 +1,548 @@
+---
+title: Bitcoin — Multi-sig and Wallet Software
+subtitle: 'Section VI: Bitcoin Framework'
+author: CATS
+lesson: 06-BF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## A multi-sig needs m of n keys to spend {.smaller}
+
+**Bottom line:** a multi-signature (multi-sig) output can be spent only when m of its n keys sign. Once it is spent, the chain shows m, n and all n public keys. It never shows who holds the keys.
+
+| Lesson | Teaches | Today |
+| --- | --- | --- |
+| ① Reading a transaction | Scripts, address types, P2SH reveals its rule on spend | Built on, not repeated |
+| ② Wallet types | Seed phrases, derivation, hot and cold, custody | Pointed to, not retaught |
+| ③ This lesson | The multi-sig rule, how to read its spend, the software that builds it | New |
+
+: {tbl-colwidths="[26,46,28]"}
+
+- Multi-sig exists for "secured wallets, escrow transactions, and other use cases where redeeming funds requires more than a single signature" [@andresen_bip11mofn_2011].
+- The lab ends with a 2-of-3 multi-sig spend on the course chain, read in the explorer. This lesson is how you read it.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens lesson ③ of day 2 by stating what a multi-sig is and what reading one can and cannot establish. It matters here because the day's lab ends with a 2-of-3 spend that students must recognize in the explorer and explain. Emphasize where this lesson sits: lesson ① taught scripts and address types, lesson ② taught seeds and derivation, and this lesson adds the multi-sig rule and the software that builds it.
+
+**Key Points**
+- m-of-n: m signatures from a set of n public keys.
+- BIP 11 gives the purpose: secured wallets, escrow, anything needing more than one signature.
+- The spend reveals m, n and the keys; it does not reveal the people behind them.
+- Seeds and derivation are lesson ②'s; this lesson does not reteach them.
+
+**Walkthrough**
+1. Read the bottom line.
+2. Walk the table: what each of today's three lessons owns.
+3. Name the lab's last step: a 2-of-3 spend, read in the explorer.
+
+**Sources**
+- @andresen_bip11mofn_2011
+
+:::
+
+## The rule is written in the script {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+**Bottom line:** a 2-of-3 rule is one line of script: the threshold, three public keys, the key count and `OP_CHECKMULTISIG`. Spending it supplies signatures, in key order, after an empty dummy item.
+
+- In "m-of-n, m is the minimum number of signatures which must match a public key" [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+- Signatures come "in the same order as the corresponding public keys" [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+- The leading `OP_0` is there "because of a bug in OP_CHECKMULTISIG; it pops one too many items off the execution stack" [@andresen_bip11mofn_2011].
+- Since SegWit, that dummy "MUST be the empty byte array" [@lau_bip147dummy_2016].
+:::
+::: {.column width="45%"}
+The rule, called the redeem script in P2SH [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024]:
+
+```text
+OP_2 <A pubkey> <B pubkey> <C pubkey>
+OP_3 OP_CHECKMULTISIG
+```
+
+A spend signed by A and C:
+
+```text
+OP_0 <A sig> <C sig> <redeemScript>
+```
+
+Read it: 2 of 3 keys, two signatures. A real explorer does not label which key made each signature.
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the multi-sig rule as script and the data that satisfies it. It matters here because students will see exactly these items in the explorer when they read the lab's spend. Emphasize reading: the numbers at each end are m and n, the keys sit between them, and the spend supplies m signatures.
+
+**Key Points**
+- `OP_2 ... OP_3 OP_CHECKMULTISIG`: threshold 2, three keys.
+- The spend supplies m signatures in the same order as their keys, so the order narrows which keys signed; the explorer does not label them.
+- The empty first item is a dummy forced by an old off-by-one bug; BIP 147 made it a consensus rule that it be empty.
+- This is the script lesson ① said a `3...` output reveals on spend.
+
+**Walkthrough**
+1. Point to `OP_2`: two signatures needed.
+2. Point to the three keys and `OP_3`: three keys in the set.
+3. Point to the spend: the dummy `OP_0`, A's signature, C's signature, then the script itself.
+4. Ask: in this labeled example, which key did not sign? (B.) Then warn: a real witness shows unlabeled signatures.
+
+**Sources**
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @andresen_bip11mofn_2011
+- @lau_bip147dummy_2016
+
+:::
+
+## One rule, three wrappers on chain {.smaller}
+
+**Bottom line:** the same 2-of-3 rule can sit in three address types. The explorer shows the rule in a different field for each, but the rule reads the same.
+
+| Wrapper | Address | Where the spend puts the rule | Source |
+| --- | --- | --- | --- |
+| P2SH | `3...` | In the input's `scriptSig`: `OP_0 <sig> <sig> <redeemScript>` | [@andresen_bip16paytoscript_2012] |
+| P2SH-P2WSH | `3...` | `scriptSig` holds a SegWit program; the witness holds the signatures and script | [@lombrozo_bip141segregatedwitness_2015] |
+| P2WSH | `bc1q`, 62 chars | In the witness: an empty item, the signatures, then the witness script | [@lombrozo_bip141segregatedwitness_2015] |
+
+: {tbl-colwidths="[16,16,50,18]"}
+
+- A P2WSH output locks to "0 <32-byte-hash>"; on spend, the "SHA256 of the witnessScript must match the 32-byte witness program" [@lombrozo_bip141segregatedwitness_2015].
+- Until it is spent, a `3...` or 62-character `bc1q` output says only "some script", as lesson ① showed.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide maps the multi-sig rule onto the three wrappers an analyst will meet: legacy P2SH, SegWit nested in P2SH, and native SegWit P2WSH. It matters here because the lab's spend and real cases use any of the three, and the explorer shows the rule in a different place for each. Emphasize that the wrapper changes where you look, not what the rule says.
+
+**Key Points**
+- P2SH: the redeem script and signatures are in the scriptSig.
+- P2SH-P2WSH: the scriptSig carries only the SegWit program; the multi-sig data is in the witness.
+- P2WSH: the output holds the SHA-256 hash of the witness script; the witness reveals it on spend.
+- The `3...` prefix alone cannot tell P2SH multi-sig from nested SegWit until the output is spent.
+
+**Walkthrough**
+1. Read each row: the address a payer sees, then where the rule appears on spend.
+2. Point out that two rows share the `3...` prefix.
+3. Point to the P2WSH row: this is the wrapper Bitcoin Core's multi-sig tutorial uses, so expect it in the lab.
+
+**Sources**
+- @andresen_bip16paytoscript_2012
+- @lombrozo_bip141segregatedwitness_2015
+- @bitcoincore_multisigtutorial_2026
+
+:::
+
+## Reading a multi-sig spend in the explorer {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+**Bottom line:** in a P2WSH 2-of-3 spend the input's witness has four items. The last one is the rule; the explorer decodes it.
+
+1. **Empty item**: the dummy [@lau_bip147dummy_2016].
+2. **Signature**: from the first signing key.
+3. **Signature**: from the second, in key order [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+4. **Witness script**: `OP_2`, three keys, `OP_3`, `OP_CHECKMULTISIG` [@lombrozo_bip141segregatedwitness_2015].
+
+Record: input type, m-of-n, the three public keys, how many signatures.
+:::
+::: {.column width="50%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph Witness {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  W0 [label="1. (empty)\ndummy", fillcolor="#f1f5f9"];
+  W1 [label="2. signature", fillcolor="#e0f2fe", color="#38bdf8"];
+  W2 [label="3. signature", fillcolor="#e0f2fe", color="#38bdf8"];
+  W3 [label="4. witness script\n2 of 3 keys", fillcolor="#dcfce7", color="#22c55e"];
+
+  W0 -> W1 -> W2 -> W3;
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide walks the exact witness students will open in the lab's explorer for a native SegWit 2-of-3 spend. It matters here because recognizing a multi-sig spend on chain is the lab's last step and the lesson's main skill. Emphasize the pattern: an empty first item, then m signatures, then a script ending in `OP_CHECKMULTISIG`.
+
+**Key Points**
+- Four witness items for 2-of-3: dummy, two signatures, witness script.
+- The signatures follow key order, so their order narrows which keys signed; matching a signature to a key exactly needs the transaction data, which the explorer does not do for you.
+- The witness script is what makes it multi-sig: m, the keys, n, `OP_CHECKMULTISIG`.
+- Record the same fields every time.
+
+**Walkthrough**
+1. Open the input; find the witness.
+2. Count the items: four.
+3. Read the last item as script: 2, three keys, 3, CHECKMULTISIG.
+4. Write "2-of-3 multi-sig, P2WSH, two signatures".
+
+**Sources**
+- @lau_bip147dummy_2016
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @lombrozo_bip141segregatedwitness_2015
+
+:::
+
+## What a multi-sig spend shows, and what not {.smaller}
+
+**Bottom line:** the spend proves the rule was met. It does not prove how many people were involved.
+
+:::: {.columns}
+::: {.column width="50%"}
+**The chain shows**
+
+- The threshold m and the key count n.
+- All n public keys, signers or not.
+- That m valid signatures were given.
+- The script type and the outputs it paid.
+:::
+::: {.column width="50%"}
+**The chain does not show**
+
+- Who holds each key, or whether one person holds all three.
+- Whether a company, custodian or family is behind it.
+- Where the keys are kept, or why the spend was made.
+:::
+::::
+
+| Don't write | Write |
+| --- | --- |
+| "The company's three directors approved the payment." | "Two of the three keys in a 2-of-3 multi-sig signed (read directly from the witness)." |
+| "Three people control this wallet." | "The output requires 2 of 3 keys; who holds them is not shown on chain." |
+
+: {tbl-colwidths="[45,55]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide draws the line between what a multi-sig spend proves and what an analyst might be tempted to say about it. It matters here because explaining a multi-sig to an agent or prosecutor means saying plainly what the chain shows and stopping there. Emphasize that "three keys" is a fact and "three people" is an inference that needs other evidence.
+
+**Key Points**
+- On chain: m, n, the keys, the signatures and the outputs.
+- Off chain: who holds the keys, how many people, where keys are stored, and why.
+- A reading taken straight from the witness is an observed fact, not a judgment, so it needs no confidence word. Confidence words are for inferences, such as who holds the keys.
+- Any statement about people needs separate evidence, and takes its own confidence.
+
+**Walkthrough**
+1. Read the left column: facts the witness proves.
+2. Read the right column: questions the chain cannot answer.
+3. Read each row of the table aloud, and ask why the left one overreaches.
+
+**Sources**
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## Key order in the script carries no meaning {.smaller}
+
+**Bottom line:** wallets usually sort the keys before building the script, so which key comes first says nothing about rank or role.
+
+- BIP 67 sorts the keys "so that the redeem script and corresponding P2SH address are always the same for a given set of keys" [@kerin_bip67sortedmulti_2015].
+- Wallets describe a multi-sig as a descriptor, such as `wsh(sortedmulti(2,K1,K2,K3))`; `sortedmulti` sorts the keys first [@wuille_bip383multisig_2021].
+- Limits on n: at most 3 keys bare, 15 inside P2SH, 20 otherwise [@wuille_bip383multisig_2021].
+- Bitcoin Core's own 2-of-3 tutorial builds a `wsh(sortedmulti(2,...))` wallet [@bitcoincore_multisigtutorial_2026].
+
+| Don't write | Write |
+| --- | --- |
+| "Key 1 is the lead signer." | "Three keys, sorted; order shows nothing about roles." |
+
+: {tbl-colwidths="[40,60]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide stops a common misreading: treating the first key in a multi-sig script as the most important. It matters here because students read a list of three keys in the lab and may assign roles by position. Emphasize that sorting is the default in modern wallets, so position is arithmetic, not hierarchy.
+
+**Key Points**
+- BIP 67 sorts public keys so the same set always gives the same address.
+- A descriptor is a short text that tells a wallet which scripts and addresses to make; `sortedmulti` is the sorted multi-sig form.
+- Key limits: 3 for bare multi-sig, 15 in P2SH, 20 in SegWit.
+- The same keys in the same order across many spends do link those outputs to one multi-sig setup; that is day 6's clustering, not today's skill.
+
+**Walkthrough**
+1. Read the BIP 67 quote: same keys, same address.
+2. Read the descriptor aloud: SegWit script hash, sorted, 2 of three keys.
+3. Read the table.
+
+**Sources**
+- @kerin_bip67sortedmulti_2015
+- @wuille_bip383multisig_2021
+- @bitcoincore_multisigtutorial_2026
+
+:::
+
+## Taproot multi-sig can look like one key {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+**Bottom line:** in Taproot, a multi-sig may leave no multi-sig trace at all. Absence of a multi-sig script is not evidence of one signer.
+
+- **Key path:** MuSig2 combines n keys into one; its outputs "are indistinguishable for a blockchain observer from regular, single-signer Taproot outputs" [@nick_bip327musig2_2022].
+- MuSig2 "is a n-of-n multi-signature scheme", so every key must sign [@nick_bip327musig2_2022].
+- **Script path:** a Taproot spend that reveals a script shows m-of-n as `OP_CHECKSIGADD`; `OP_CHECKMULTISIG` is disabled there [@wuille_bip342tapscript_2020].
+:::
+::: {.column width="45%"}
+A tapscript 2-of-3 [@wuille_bip342tapscript_2020]:
+
+```text
+<A pubkey> OP_CHECKSIG
+<B pubkey> OP_CHECKSIGADD
+<C pubkey> OP_CHECKSIGADD
+OP_2 OP_NUMEQUAL
+```
+
+| Don't write | Write |
+| --- | --- |
+| "A single-key wallet." | "A Taproot key-path spend; the number of signers is not shown." |
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the newest form of multi-sig and why it limits what an analyst can say. It matters here because lesson ① showed Taproot key-path spends hide their rule; this slide adds that the hidden rule can be a multi-sig. Emphasize that a missing multi-sig script proves nothing about the number of signers.
+
+**Key Points**
+- MuSig2 aggregates n keys into one Taproot key; on chain it looks like a single signer.
+- MuSig2 is n-of-n: all keys sign.
+- A Taproot script-path spend can show m-of-n with `OP_CHECKSIG`, `OP_CHECKSIGADD` and a final count.
+- `OP_CHECKMULTISIG` cannot appear in tapscript, so the old pattern is not what to look for in a `bc1p...` spend.
+
+**Walkthrough**
+1. Key path: one key, one signature, whatever stood behind it.
+2. Script path: read the tapscript; each key adds one if it signed; the total must equal 2.
+3. Read the table: describe the spend type, not the signer count.
+
+**Sources**
+- @nick_bip327musig2_2022
+- @wuille_bip342tapscript_2020
+- @wuille_bip341taprootsegwit_2020
+
+:::
+
+## Wallet software builds, signs and broadcasts {.smaller}
+
+**Bottom line:** a wallet program holds or reaches the keys, builds the transaction, signs it and sends it out. Three open-source examples follow (licenses as of 30 Oct 2026).
+
+| Program | What it is | Relevant feature | License |
+| --- | --- | --- | --- |
+| Bitcoin Core | A full node that "fully validate[s] blocks and transactions" and "also includes a wallet" [@bitcoincore_repository_2026] | Descriptor wallets; a 2-of-3 multi-sig tutorial [@bitcoincore_multisigtutorial_2026] | MIT [@bitcoincore_repository_2026] |
+| Electrum | "Lightweight Bitcoin client" that asks servers instead of running a node [@electrum_repository_2026; @electrum_faq_2026] | Multi-sig cosigners exchange master public keys [@electrum_multisig_2026] | MIT [@electrum_repository_2026] |
+| Sparrow | "Desktop Bitcoin wallet application supporting most hardware wallets" [@sparrow_repository_2026] | Connects to a public server, a Bitcoin Core node or a private Electrum server [@sparrow_quickstart_2026] | Apache 2.0 [@sparrow_repository_2026] |
+
+: {tbl-colwidths="[14,40,28,18]"}
+
+- None of these appear on chain by name: what you see is the script type and the transaction they built.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces wallet software as the tool that turns keys into transactions, using three open-source programs analysts are most likely to meet. It matters here because subjects use these programs, and analysts are asked what a program can do and what records it might hold. Emphasize that the lab uses the course chain's own tools in a browser; nobody installs these programs.
+
+**Key Points**
+- Bitcoin Core: the reference full node with an optional wallet; MIT license.
+- Electrum: lightweight; relies on Electrum servers rather than its own node; MIT license.
+- Sparrow: desktop wallet built around hardware wallets; can connect to a public server, a Bitcoin Core node or a private Electrum server; Apache 2.0 license. Its multi-sig support is not covered here.
+- Electrum multi-sig: each cosigner shares a master public key so every wallet can build the same addresses.
+- Licenses and features change; the "as of" date applies.
+
+**Walkthrough**
+1. Read each row: what it is, how it does multi-sig, its license.
+2. Ask: from a transaction alone, can you tell which of these built it? (Not by name; script type and other habits are clues only.)
+
+**Sources**
+- @bitcoincore_repository_2026
+- @bitcoincore_multisigtutorial_2026
+- @electrum_repository_2026
+- @electrum_faq_2026
+- @electrum_multisig_2026
+- @sparrow_repository_2026
+- @sparrow_quickstart_2026
+
+:::
+
+## A PSBT carries a half-signed spend {.smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+**Bottom line:** multi-sig signers pass a partially signed Bitcoin transaction (PSBT) between them. Nothing reaches the chain until the last step broadcasts it.
+
+- A PSBT holds "the information necessary for a signer to produce signatures", including for "air-gapped wallets and hardware wallets" [@chow_bip174psbt_2017].
+- Roles: creator, updater, signer, combiner, finalizer, extractor [@chow_bip174psbt_2017].
+- Files "should use the .psbt file extension" [@chow_bip174psbt_2017].
+- Bitcoin Core's 2-of-3 flow: create the PSBT, each signer processes it, combine, finalize, send [@bitcoincore_multisigtutorial_2026].
+:::
+::: {.column width="48%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.5
+digraph PSBT {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  C [label="Create PSBT\n(unsigned)", fillcolor="#fef3c7", color="#f59e0b"];
+  A [label="Signer A signs"];
+  B [label="Signer C signs"];
+  F [label="Combine, finalize", fillcolor="#e0f2fe", color="#38bdf8"];
+  X [label="Broadcast:\nnow on chain", fillcolor="#dcfce7", color="#22c55e"];
+
+  C -> A; C -> B; A -> F; B -> F; F -> X;
+  {rank=same; A; B;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how several signers on different machines produce one multi-sig transaction. It matters here because the lab's 2-of-3 spend is built this way, and because a `.psbt` file is something an analyst may be shown and asked to explain. Emphasize that a PSBT is off chain: a half-signed transaction is a file, not a payment.
+
+**Key Points**
+- BIP 174 defines the PSBT format and its roles.
+- Each signer adds a signature without seeing the others' private keys.
+- The combiner merges signatures; the finalizer builds the scriptSig or witness; the extractor produces the transaction to broadcast.
+- Bitcoin Core's RPCs follow these steps: `walletcreatefundedpsbt`, `walletprocesspsbt`, `combinepsbt`, `finalizepsbt`, `sendrawtransaction`.
+- A PSBT that was never broadcast leaves no trace on chain.
+
+**Walkthrough**
+1. Create: an unsigned transaction spending the multi-sig output.
+2. Two signers sign, in any order, on their own machines.
+3. Combine and finalize: the witness from the earlier slide is assembled here.
+4. Broadcast: only now does it reach the mempool and a block.
+
+**Sources**
+- @chow_bip174psbt_2017
+- @bitcoincore_multisigtutorial_2026
+
+:::
+
+## Servers learn which addresses a wallet has {.smaller}
+
+**Bottom line:** a lightweight wallet asks a server about its addresses, so the server can link them and see where the request came from.
+
+- Electrum "never sends private keys to the servers" [@electrum_faq_2026].
+- But a server sent many addresses "can now reasonably guess that all these addresses belong to the same entity", and it sees the client's IP address [@electrum_faq_2026].
+- "Anyone can run a server" [@electrum_faq_2026].
+- Sparrow on a public server means "sharing your public key information (and thus your privacy) with whoever is running the server" [@sparrow_quickstart_2026].
+
+- Sparrow can instead connect to "Bitcoin Core node" or "Private Electrum server" [@sparrow_quickstart_2026]; the sources quoted here make no privacy claim for those.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains what wallet software reveals off chain, to whatever server it relies on. It matters here because analysts explain to agents what third parties might know about a wallet, and the answer depends on how the software is set up. Emphasize that this is an off-chain record held by a server operator, not something the analyst reads on chain.
+
+**Key Points**
+- Lightweight wallets query servers for their addresses' history.
+- Private keys stay with the user; addresses and the IP address do not.
+- A server operator can link a wallet's addresses together.
+- Anyone can run an Electrum server, so the operator may be anyone.
+- Sparrow also offers a Bitcoin Core node or a private Electrum server; the sources here make no privacy claim for those, so neither does the slide.
+
+**Walkthrough**
+1. Read the Electrum quotes: keys stay, addresses and IP go.
+2. Read the Sparrow quote: the same for its public server.
+3. Read the last line: other connection choices exist, but these sources speak only to public servers.
+
+**Sources**
+- @electrum_faq_2026
+- @sparrow_quickstart_2026
+
+:::
+
+## Reading the lab's 2-of-3 spend {.smaller}
+
+**Bottom line:** read the spend field by field, then say what it is in one sentence with a confidence.
+
+| Record | Where to find it |
+| --- | --- |
+| Input script type | The input: P2WSH, P2SH-P2WSH or P2SH |
+| m-of-n and the public keys | The last witness item, or the redeem script |
+| Number of signatures | The items between the dummy and the script: in the witness, or the `scriptSig` for P2SH |
+| Outputs: payment and change | Change often goes back to a multi-sig output of the same type, a clue for day 6 [@frowis_safeguardingevidentialvalue_2020] |
+| What it does not show | Who holds the keys; which program built it |
+
+: {tbl-colwidths="[35,65]"}
+
+**Model sentence:** "This transaction spends a P2WSH 2-of-3 multi-sig output; two of its three keys signed (read from the witness). Who holds the keys is not shown on chain."
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns the lesson into the checklist students carry into the lab's last step. It matters here because the lab ends with this spend and asks students to recognize it and say what it does and doesn't show. Emphasize the one-sentence explanation: the fact, the confidence and the limit.
+
+**Key Points**
+- The input type tells which wrapper; the script tells m and n.
+- The signatures between the dummy and the script tell how many signed.
+- A change output with the same multi-sig script type as the input is a change clue, carried to day 6.
+- State what is not shown, every time.
+
+**Walkthrough**
+1. Find the multi-sig input; name its type.
+2. Read the script: m, n, the keys.
+3. Count the signatures.
+4. Read the outputs: which looks like payment, which like change.
+5. Write the model sentence with your own values.
+
+**Sources**
+- @lombrozo_bip141segregatedwitness_2015
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+- @frowis_safeguardingevidentialvalue_2020
+
+:::
+
+## Recap: read the rule, not the people {.smaller}
+
+- **Rule:** m-of-n with `OP_CHECKMULTISIG`; a dummy, then m signatures in key order.
+- **Wrappers:** P2SH, P2SH-P2WSH and P2WSH show the same rule in different fields.
+- **Limits:** the chain shows keys, not people; key order means nothing when keys are sorted.
+- **Taproot:** MuSig2 looks like one key; a script path shows `OP_CHECKSIGADD`.
+- **Software:** Bitcoin Core, Electrum and Sparrow build multi-sig spends; a PSBT passes between signers off chain.
+- **Off chain:** a public server can link a wallet's addresses.
+- **Next, the lab:** the wallet walkthrough ends with a 2-of-3 spend; read it with this lesson's checklist.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson and hands over to the day's lab. It matters here because the lab's final step uses every point on this list. Emphasize the habit: report the rule the chain shows, and say what it does not show.
+
+**Key Points**
+- The multi-sig rule and its spend data.
+- The three wrappers.
+- What the chain cannot show about people and roles.
+- Taproot's hiding of multi-sig.
+- Wallet software and PSBTs.
+- Server privacy.
+
+**Walkthrough**
+None
+
+**Sources**
+- @andresen_bip11mofn_2011
+- @lombrozo_bip141segregatedwitness_2015
+- @kerin_bip67sortedmulti_2015
+- @nick_bip327musig2_2022
+- @chow_bip174psbt_2017
+- @electrum_faq_2026
+
+:::
+
+## References
