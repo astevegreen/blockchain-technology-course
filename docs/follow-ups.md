@@ -19,7 +19,14 @@ slide index), which is never listed here.
   with BIP 67 sorted keys the order depends on the keys (on the wallet lab's chain it is C's, then A's). Word it as
   "the two signatures, in key order". (31 Oct 2026, D2 wallet lab build)
 
+- `lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd` part 1 still points to "day 3" for attribution,
+  spotting a CoinJoin and the memo (lines 61, 372, 475, 519, 551, 554, 555); attribution is now 01-FO the same
+  day (D6 ③), CoinJoin is D7 and memos are retired. (31 Oct 2026, 01-FO recut as D6 ③)
+
 ## Quizzes
+- 01-FO bank (`quizes/quiz_json/`) and `lesson_synthesis/` 01-FO synthesis predate the recut as Attribution and
+  confidence: no questions on the nine new slides (q9, on the hidden provenance slides, was retired); q10 still
+  traces to Colonial Pipeline, hidden 24 Oct as moved to 03-FO. (31 Oct 2026, 01-FO recut as D6 ③)
 - 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`) and the day 2 daily
   quiz have no question on the new slide "A blockchain is a record, not a currency" (one chain many assets, one
   asset many chains, a chain with no coin); q1 traces to the hidden "What is a Blockchain?" slide, so retrace it to

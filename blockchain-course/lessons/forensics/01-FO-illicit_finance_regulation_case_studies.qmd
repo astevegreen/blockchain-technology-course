@@ -1,5 +1,5 @@
 ---
-title: Illicit Finance, Regulation, and Case Studies
+title: Attribution and Confidence
 subtitle: 'Section VIII: Forensics'
 author: Army Cyber Institute
 lesson: 01-FO
@@ -15,6 +15,374 @@ format:
     scrolling: true
     slide-level: 2
 ---
+
+## Step 4 ended Low: now name the service {.smaller}
+
+**Bottom line:** a huge cluster is likely a service, but size is behavior, so it stays Low. Naming the service needs a label, and a label is only as good as its source.
+
+| Step | What you see | Heuristic | Could be wrong if | Confidence |
+| --- | --- | --- | --- | --- |
+| 4 | `T6`'s peel to D; D's cluster: 2 million addresses | Huge cluster: likely a service | It is not a service | Low |
+
+: {tbl-colwidths="[7,30,26,22,15]"}
+
+For every label, ask three questions:
+
+- **Who says so?** The owner, a government, a court, a forum post, a vendor's tag.
+- **How did they know?** They hold the keys, they seized the servers, they ran the heuristics.
+- **How could it be wrong?** A merged cluster, an old list, a guess passed on as fact.
+
+This lesson: where labels come from, what analytics platforms do, how well clustering has been tested, the confidence words, and one model explanation.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide picks up the worked trace from the clustering lesson, which stopped at step 4 with a Low. It matters here because the lab trace stops at the first service too, and the analyst must say which service and how sure. Emphasize that a label is a claim by someone, and its source decides how far it carries.
+
+**Key Points**
+- The row is step 4 of this morning's worked trace (invented data): the peel lands in a cluster of about 2 million addresses.
+- A cluster that size is usually a service: in Kappos et al., ransomware addresses sat in clusters averaging 2.9 million addresses, all exchanges, wallets, mixers or markets.
+- Size alone is behavior, so the course scale gives Low until a label of another kind agrees.
+- The three questions apply to every label in the rest of the lesson.
+- Define label briefly: a claim that an address or cluster belongs to a named service or actor; vendors and explorers call them tags.
+- Define attribution briefly: linking on-chain activity to the service or actor behind it.
+
+**Walkthrough**
+1. Read the row: why is it Low? (Cluster size is behavior alone.)
+2. Ask: what would raise it? (A label from a source of another kind.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+
+:::
+
+## A label is only as good as its source {.smaller}
+
+**Bottom line:** say where each label came from and how far to trust it; one label with an unknown basis is Low.
+
+::: {style="font-size: .8em;"}
+
+| Source | Example | How far it carries alone |
+| --- | --- | --- |
+| The owner itself | An exchange publishes its own wallet addresses [@binance_transparency_2023] | Strong for the addresses listed; silent on the rest |
+| A government listing | OFAC named over 100 addresses for the Hydra market [@u.s.dept.oftreasury_hydragarantex_2022] | Strong, for the exact address and the listing's date |
+| A court record | The Bitcoin Fog rulings [@sterlingov_dcd_2024] | Strong for what the court found; read the finding |
+| OSINT | An alias, forum posts, IP addresses (Bitcoin Fog) [@sterlingov_cadc_2026] | A lead to a person or service; needs another line |
+| An open label set | An open copy of OFAC's addresses [@b10c_ofacaddresses_2026] | As good as the list it copies, as of its last update |
+| A platform or explorer tag | "Exchange" on a cluster | As far as its basis is shown; unknown basis is Low |
+
+: {tbl-colwidths="[20,44,36]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sorts labels by where they come from. It matters here because outcome 8 asks the analyst to tie every label to its source and say how far to trust it. Emphasize that the question is how the source knew, not how official it sounds.
+
+**Key Points**
+- The owner's own list: Binance publishes a list of its wallet addresses with links to view them. The owner holds the keys, so it is strong for what it lists and says nothing about deposit addresses it leaves out.
+- A government listing: on 5 April 2022 Treasury said OFAC was "identifying over 100 virtual currency addresses" tied to Hydra. Check the exact address and the date; lists change.
+- A court record: the Bitcoin Fog district ruling of 29 February 2024 sets out how the cluster was tested; the next slides read it.
+- OSINT: in Bitcoin Fog the person came from an alias, forum activity and an IP analysis, all off-chain.
+- An open label set: b10c's repository copies the sanctioned addresses out of OFAC's list; it is only as current as its last update.
+- A tag on an explorer or analytics platform, with no basis shown, is one unverified label: Low on the course scale.
+- Define OSINT briefly: open-source intelligence, information anyone can read, such as forum posts and websites.
+
+**Walkthrough**
+1. Read each row: who knew, and how.
+2. Ask: an explorer tags D's cluster "Exchange X". What confidence? (Low: one label, basis unknown.)
+3. Ask: Exchange X's own published list includes D. Now? (Moderate: one strong line; see the confidence slide.)
+
+**Sources**
+- @binance_transparency_2023
+- @u.s.dept.oftreasury_hydragarantex_2022
+- @sterlingov_dcd_2024
+- @sterlingov_cadc_2026
+- @b10c_ofacaddresses_2026
+
+:::
+
+## Platforms run your heuristics at scale {.smaller}
+
+**Bottom line:** commercial platforms run the heuristics you run by hand, at scale, and add labels from sources you cannot see. Their errors show as missed addresses and as merged clusters.
+
+| What it does | As a court described one platform | You met it |
+| --- | --- | --- |
+| Co-spend clustering | The "co-spend" heuristic | This morning |
+| Behavioral clustering | Can include "the change address analysis" | This morning |
+| Intelligence-based clustering | Uses "data leaks, court documents, and data partnerships" | This lesson: labels |
+
+: {tbl-colwidths="[30,45,25]"}
+
+The three heuristics are Chainalysis Reactor's, from the Bitcoin Fog appeal [@sterlingov_cadc_2026].
+
+- **Too few addresses:** Reactor left out one of five test deposit addresses because it is "deliberately conservative" [@sterlingov_dcd_2024].
+- **Too many:** merging on careless change guesses can build one supercluster of about 224 million addresses [@moser_resurrectingaddressclustering_2022].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide treats commercial analytics platforms as a category: what they automate and how their errors show. It matters here because analysts receive platform output and must explain it without overstating it. Emphasize that a platform's cluster and tag are the same heuristics and labels as the last two slides, run at scale with less of the basis shown.
+
+**Key Points**
+- The D.C. Circuit described Reactor's clustering as three heuristics: co-spend; a behavioral heuristic, a proprietary algorithm whose factors can include change address analysis; and intelligence-based clustering from data leaks, court documents and data partnerships.
+- Other firms (TRM Labs, Elliptic, Ciphertrace) sell similar platforms; the course labs use open-source tools only, and this slide names firms for awareness.
+- Underinclusion: in the district ruling, investigators' sting deposits identified five Bitcoin Fog addresses; Reactor had four. The court called it "deliberately conservative and thus underinclusive".
+- Over-merging: Möser and Narayanan show that naive change merging produced one supercluster of 223.9 million addresses, containing the old Mt. Gox supercluster.
+- Read a platform cluster as a floor for what it includes and a risk for what it merges.
+- Define underinclusive briefly: leaving out addresses that do belong.
+
+**Walkthrough**
+1. Read the three rows: each is something students did by hand this morning, or the labels of the last slide.
+2. Ask: a platform says a cluster has 900,000 addresses. Is that all of them? (Likely not: conservative clustering leaves some out.)
+
+**Sources**
+- @sterlingov_cadc_2026
+- @sterlingov_dcd_2024
+- @moser_resurrectingaddressclustering_2022
+
+:::
+
+## Clustering works for most, fails in known ways {.smaller}
+
+**Bottom line:** few studies test clustering against known answers. They show it works for most users and fails in known ways, and their error rates describe a method, not your hop.
+
+| Study | What it tested against | What it found |
+| --- | --- | --- |
+| Kappos et al. 2022 (this morning) | Clusters with known owners | 60 of 120 clusters holding a CoinJoin merged owners; investigators "should not rely on" heuristics "as definitive evidence" |
+| Möser and Narayanan 2022 | Transactions whose change output is known | Earlier change heuristics "have not been rigorously evaluated"; a trained model reached a false-positive rate of 0.044%; careless merging collapses clusters |
+
+: {tbl-colwidths="[24,26,50]"}
+
+A study's 0.044% is for its method on its test set. Your link still gets a word: Low, Moderate or High.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how well the clustering heuristics have been measured. It matters here because an analyst asked "how do you know?" must be able to say what testing exists and what it shows. Emphasize the gap between a published error rate for a method and a confidence for one link.
+
+**Key Points**
+- Kappos et al. (USENIX Security 2022) was taught this morning: their test set counts clusters holding a CoinJoin as merging owners, 60 of 120, and they warn against treating the heuristics as definitive.
+- Möser and Narayanan (Financial Cryptography 2022) say current techniques "rely on heuristics that have not been rigorously evaluated or optimized". They built a ground-truth set of transactions with known change, trained a model to predict change with low false positives (0.044% at their strictest threshold) and showed ways to detect and prevent cluster collapse.
+- Their naive merging produced one supercluster of 223.9 million addresses: one false link merges everything behind it.
+- A false-positive rate measured on a study's data says how the method did there; it is not the probability that this hop is right. The course never puts a percentage on a judgment.
+- Define ground truth briefly: a test set where the right answer is known in advance.
+- Define false-positive rate briefly: how often a method says yes when the answer is no.
+
+**Walkthrough**
+1. Read each study: what it compared against, and what it found.
+2. Ask: can you write "99.956% confident" on a change hop? (No: that number is the study's, on its data; give a word and the reason.)
+
+**Sources**
+- @kappos_howpeelmillion_2022
+- @moser_resurrectingaddressclustering_2022
+
+:::
+
+## Bitcoin Fog: why the court trusted the trace {.smaller}
+
+**Bottom line:** the platform had no peer review and no known error rate. The court accepted its clustering because independent checks agreed, and the appeals court upheld that on 25 Sep 2026 [@sterlingov_cadc_2026] (as of 31 Oct 2026).
+
+:::: {.columns}
+::: {.column width="35%"}
+**What was missing**
+
+- Peer review of the platform
+- A known error rate
+
+Both experts admitted both [@sterlingov_cadc_2026].
+:::
+::: {.column width="65%"}
+**What agreed with it** [@sterlingov_dcd_2024]
+
+- Investigators' deposits: 4 of 5 addresses in the cluster
+- A second platform agreed on all 144 addresses that paid the defendant
+- The defense's own tool confirmed almost 400,000 addresses, no false positive
+- The defendant testified his bitcoin had been mixed in Bitcoin Fog
+- Anyone can recheck a cluster from the public chain by hand
+:::
+::::
+
+The federal rule on expert evidence, amended in 2023, asks the same of any analyst: stay within what the method supports, and claim no certainty [@lii_fre702_2023].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads one court's test of blockchain tracing as evidence of how well the heuristics hold up. It matters here because the analyst's assessment rests on the same heuristics, and corroboration is what made them credible. Emphasize the reasoning, not the legal procedure, which is outside the course.
+
+**Key Points**
+- United States v. Sterlingov: the district court (29 February 2024) found that not all the heuristics had been peer reviewed and that Chainalysis kept no central error rate, yet that substantial evidence showed the software reliable and, if anything, conservative.
+- The checks: FBI and IRS sting deposits identified five Bitcoin Fog addresses, and Reactor had four; TRM Labs corroborated all 144 Bitcoin Fog addresses that sent funds to Sterlingov's accounts; Ciphertrace, the defense's witness, confirmed almost 400,000 of the over 900,000 addresses and found no false positive; Sterlingov's own pretrial testimony said his Kraken bitcoin had been mixed in Bitcoin Fog.
+- The court noted that results for particular clusters can be checked "with the public blockchain data, a pad of paper, a pencil, and hours of work."
+- The court limited its finding to Reactor "as used in this case and as confirmed by the other evidence before the Court".
+- The D.C. Circuit affirmed on 25 September 2026 (No. 24-3161): both experts admitted no peer review and no known error rate, and the court relied on other markers of reliability. As of 31 October 2026.
+- The 2023 Committee Note to Rule 702 says each expert opinion "must stay within the bounds" of what a reliable application of the method supports and that forensic experts should avoid claims of absolute certainty.
+- The lesson for the analyst: corroboration of another kind is what moves a cluster from plausible to trusted; say what corroborates it and what does not.
+
+**Walkthrough**
+1. Read the left column: what the method lacked.
+2. Read the right column and sort each line: same kind of evidence, or another kind? (Second platform: same kind, clustering; deposits, testimony: another kind.)
+3. Ask: what does "4 of 5" show, and what does it not? (It finds known addresses; it is a small test, as the court itself said.)
+
+**Sources**
+- @sterlingov_dcd_2024
+- @sterlingov_cadc_2026
+- @lii_fre702_2023
+
+:::
+
+## The chain shows a service; records show who {.smaller}
+
+**Bottom line:** on-chain analysis can find a service and size it. Who ran it, and what they knew, came from records off the chain.
+
+| Case | What the chain showed | What came from off the chain |
+| --- | --- | --- |
+| Bitcoin Fog | A cluster of over 900,000 addresses [@sterlingov_cadc_2026] | The alias that launched it in 2011, IP addresses tied to the defendant; it stopped two days after his arrest |
+| Samourai Wallet | Whirlpool's batched CoinJoins and Ricochet's extra hops: over 80,000 BTC [@departmentofjustice_samouraisentenced_2025] | The founders marketed it to criminals on a darknet forum and called it "money laundering for bitcoin" |
+| Hydra market | About 86% of the illicit bitcoin Russian exchanges received directly in 2019 [@u.s.dept.oftreasury_hydragarantex_2022] | German police shut its servers and seized $25 million in bitcoin; OFAC named over 100 of its addresses |
+
+: {tbl-colwidths="[16,40,44]"}
+
+Your assessment says what the chain shows and names the service; the people come from someone else's records.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates what the chain shows from what attribution to people needs. It matters here because outcome 8 asks the analyst to keep what the chain shows apart from what is assumed, and the analyst's job ends at the assessment. Emphasize that every case here named its people from off-chain records.
+
+**Key Points**
+- Bitcoin Fog: the clustering tied it to over 900,000 addresses; it was launched in 2011 by someone calling himself "Akemashite Omedetou", an IP analysis tied addresses connected to Sterlingov to the service, and it stopped two days after his arrest (D.C. Circuit, 25 September 2026).
+- Samourai Wallet: per the SDNY release of 19 November 2025, Whirlpool "coordinated batches of Bitcoin exchanges between groups of Samourai users" and Ricochet added unneeded hops; more than 80,000 BTC passed through them. Hill marketed it on Dread; Rodriguez called it "money laundering for bitcoin". Rodriguez received five years and Hill four. As of 31 October 2026. Day 7 reads CoinJoin on the chain.
+- Hydra: Treasury's release of 5 April 2022 says Hydra took about 86% of the illicit bitcoin received directly by Russian exchanges in 2019, that German police shut its servers in Germany and seized $25 million in bitcoin, and that OFAC identified over 100 addresses.
+- On-chain work found and sized each service; names, intent and control came from forum posts, records, servers and testimony.
+- Day 9 fuses on-chain findings with other sources.
+
+**Walkthrough**
+1. Read across each row: chain, then records.
+2. Ask: which column can your lab trace fill? (The middle one: the service, and how money reached it.)
+
+**Sources**
+- @sterlingov_cadc_2026
+- @departmentofjustice_samouraisentenced_2025
+- @u.s.dept.oftreasury_hydragarantex_2022
+
+:::
+
+## Attribution confidence: count kinds of evidence {.smaller}
+
+**Bottom line:** the same scale as the hops: count kinds of evidence, not labels or tools. Never a percentage.
+
+| Attribution rests on | Confidence | Why, on the course scale |
+| --- | --- | --- |
+| One tag, basis unknown | **Low** | One unverified label |
+| A huge cluster, no label | **Low** | Behavior alone |
+| A label from the owner's list or a government listing, for the exact address | **Moderate** | One strong line |
+| Two platforms' clusters agree | **Moderate** | One kind of evidence: clustering heuristics |
+| A cluster and a label of another kind agree, no known failure | **High** | Independent lines agree |
+
+: {tbl-colwidths="[50,15,35]"}
+
+ICD 203 asks analysts to state their confidence; the course scale gives the words [@odni_icd203_2015]. A platform's "99.9%" from another case describes the platform there, not your link [@sterlingov_cadc_2026].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide applies the course confidence scale to attribution. It matters here because every service named in the lab carries a confidence and its reason. Emphasize that two tools running the same kind of heuristic are not independent.
+
+**Key Points**
+- Low: timing, amount or behavior alone, or one unverified label.
+- Moderate: one strong line, or weaker lines that agree.
+- High: independent lines agree and no known failure applies. Independent means a different kind of evidence.
+- Two platforms agreeing raises nothing above Moderate: both cluster with similar heuristics over the same transactions.
+- A cluster plus a label of another kind, such as the service's own address list, a known test deposit or a record, can reach High.
+- The D.C. Circuit noted a government contractor's finding that Reactor correctly clustered and attributed 99.9% of a large number of addresses in a different case: a figure about the tool elsewhere, never a confidence for this link.
+- ICD 203 standardizes the confidence words only; the course defines the scale.
+
+**Walkthrough**
+1. Read each row and its reason.
+2. Ask: TRM and Chainalysis both tag D's cluster "Exchange X". Confidence? (Moderate: one kind of evidence.)
+3. Ask: and Exchange X's own list includes D? (High, if no known failure applies.)
+
+**Sources**
+- @odni_icd203_2015
+- @sterlingov_cadc_2026
+
+:::
+
+## A model explanation: Bitcoin Fog {.smaller}
+
+**Bottom line:** five parts, in plain words, for a reader who is not a specialist.
+
+| Part | The explanation |
+| --- | --- |
+| **1. Bottom line** | Bitcoin Fog was a bitcoin mixer: a service that took in bitcoin and paid out other bitcoin, to hide where it came from [@departmentofjustice_operatorbitcoinfog_2024]. |
+| **2. What the chain shows** | Over 900,000 addresses tied together by how their bitcoin was spent; investigators' own test deposits landed in the group [@sterlingov_dcd_2024]. |
+| **3. What is inferred** | That the whole group is one service, Bitcoin Fog. Each address joined by a rule of thumb that can be wrong. |
+| **4. How confident** | High that the group is Bitcoin Fog: deposits made to the service itself agree with the clustering, and no tool that checked found a wrong address. |
+| **5. What it cannot show** | Who ran it: that came from records off the chain [@sterlingov_cadc_2026]. Nor every address: the group missed one of five test deposits, so 900,000 is a floor. |
+
+: {tbl-colwidths="[22,78]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide models the explanation outcome 9 asks for, on the case this lesson has read. It matters here because students explain their own trace the same way in the lab and the final exercise. Emphasize the plain words: no "co-spend", no "heuristic" in the text a non-specialist reads.
+
+**Key Points**
+- Part 1: the DOJ called Bitcoin Fog a notorious darknet cryptocurrency mixer.
+- Part 2: Chainalysis attributed over 900,000 addresses to the cluster; FBI and IRS sting deposits identified five addresses and Reactor had four.
+- Part 3: "rule of thumb" is the plain word for heuristic.
+- Part 4: High because two kinds of evidence agree, the clustering and deposits made to the service itself; Ciphertrace confirmed almost 400,000 addresses and found no false positive, and TRM agreed on the 144 it checked (both are the same kind as the clustering, so they support but do not make it High).
+- Part 5: the person came from the alias, the IP analysis and forum activity; the cluster is conservative, so the count is a floor. Stopping here is the analyst's job: the assessment ends at what the evidence shows.
+
+**Walkthrough**
+1. Read the five parts aloud as if to an agent.
+2. Ask: which part does a reader need if they read only one line? (Part 1.)
+3. Ask: which word in part 4 would change if the test deposits had not been made? (High falls to Moderate.)
+
+**Sources**
+- @departmentofjustice_operatorbitcoinfog_2024
+- @sterlingov_dcd_2024
+- @sterlingov_cadc_2026
+
+:::
+
+## Recap: every label, a source and a confidence {.smaller}
+
+- **Labels** carry their source: who said so, how they knew, how it could be wrong.
+- **Platforms** automate the heuristics and add labels you cannot see; their errors show as missed addresses and merged clusters.
+- **Testing** shows clustering works for most users and fails in known ways; a study's error rate is not your confidence.
+- **Bitcoin Fog:** no peer review, no known error rate; checks of another kind carried it.
+- **The chain** shows the service; records show the people.
+- **Confidence** counts kinds of evidence; two tools are one kind.
+- **Explain** in five parts: bottom line, what the chain shows, what is inferred, how confident, what it cannot show.
+- **This afternoon:** the Bitcoin trace lab, from the ransom to the first service.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson and hands over to the lab. It matters here because the lab ends at the first service, named with a source and a confidence. Emphasize the habit: label, source, confidence, for every service named.
+
+**Key Points**
+- Label sources and how far each carries.
+- Platform automation and its two kinds of error.
+- What testing has measured.
+- Corroboration in Bitcoin Fog.
+- Chain versus records.
+- The confidence scale for attribution.
+- The five-part explanation.
+
+**Walkthrough**
+None
+
+**Sources**
+- @sterlingov_dcd_2024
+- @sterlingov_cadc_2026
+- @moser_resurrectingaddressclustering_2022
+- @kappos_howpeelmillion_2022
+
+:::
 
 ## Permissionless Finance {.smaller}
 
@@ -479,6 +847,10 @@ None
 
 :::
 
+<!-- Hidden 31 Oct 2026 when this lesson was recut as Attribution and confidence (Build Tracker D6 ③): the AI attribution slide gave a percentage confidence, and the provenance slides are off the analyst's task. -->
+
+:::: {.content-hidden}
+
 ## Future of Forensics: AI-Powered Attribution {.smaller}
 
 Even with a perfect transaction graph, analysts still face **Attribution Uncertainty**. To link a wallet to a real-world entity, analysts must scour the internet for open-source intelligence (OSINT). AI is revolutionizing this step.
@@ -605,6 +977,8 @@ None
 @akbarfam_securecrosschainprovenance_2024; @akbarfam_forensiblockprovenancedrivenblockchain_2023
 
 :::
+
+::::
 
 ## Case Study: Silk Road  {.smaller}
 
@@ -856,6 +1230,10 @@ None
 
 :::
 
+<!-- Hidden 31 Oct 2026 when this lesson was recut as Attribution and confidence (Build Tracker D6 ③): indictment and extradition are legal process, outside the course. -->
+
+:::: {.content-hidden}
+
 ## BTC-e: Indictment
 
 :::: {.columns}
@@ -892,7 +1270,7 @@ None
 
 :::
 
-
+::::
 
 <!-- Hidden 24 Oct 2026: Colonial Pipeline moved to 03-FO (Build Tracker D2 ③). -->
 :::: {.content-hidden}
@@ -1134,6 +1512,10 @@ None
 
 :::
 
+<!-- Hidden 31 Oct 2026 when this lesson was recut as Attribution and confidence (Build Tracker D6 ③): sanctions litigation and prosecution are legal process, outside the course. -->
+
+:::: {.content-hidden}
+
 ## Ronin: Legal Battles
 
 - **Sanctioning Code vs. Creators:** Initially, the U.S. Treasury sanctioned the Tornado Cash smart contracts. However, following legal challenges, the sanctions were dropped in 2025 because immutable code is not a "person" or "entity."
@@ -1156,5 +1538,7 @@ None
 @u.s.dept.oftreasury_tornadocashdelisting_2025; @departmentofjustice_foundertornadocash_2025
 
 :::
+
+::::
 
 ## References {.smaller}
