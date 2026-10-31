@@ -24,7 +24,7 @@ aci-mermaid: true
 
 - Different from ‘legal contracts’: execution is automatic and deterministic, not interpretive.
 
-- An analyst reads a contract to say **what it lets each caller do**: who can create value, who can move it, and what it records.
+- An analyst reads a contract to say **what it lets each caller do**: who can create value, who can move it, what limits it, and what it records.
 
 - Today: Solidity read by hand, then one Vyper and one Rust snippet to recognize on sight.
 
@@ -37,7 +37,7 @@ This opening slide sets the purpose of the lesson: reading a contract's source w
 - A smart contract is code plus persistent state that executes under shared consensus rules.
 - Smart contracts differ from legal contracts because execution is automatic and bounded by deployed bytecode behavior.
 - Define deterministic briefly as producing the same result for the same inputs on every validating node.
-- The analyst's questions are about capability: who can mint, who can move funds, who can change the rules, and what the contract records on-chain.
+- The analyst's four questions are about capability: who can create value, who can move it, what limits it, and what the contract records on-chain.
 - Solidity is read line by line today; Vyper and Rust are shown only so students recognize them when they meet them.
 
 **Walkthrough**
@@ -423,6 +423,7 @@ This slide establishes Solidity reference types as the language category used fo
 - Choosing among arrays, structs, mappings, `bytes`, and `string` shapes both contract design and gas cost.
 - Clarify that dynamic `bytes` and `string` are reference types, while fixed-size `bytes1`…`bytes32` belong to the value-type family.
 - Define mapping briefly as a key-value lookup structure commonly used for balances, permissions, and registries.
+- Define the three data locations in one line each: `storage` is the contract's persistent state, `memory` is temporary space that lasts only for the current call, and `calldata` is the read-only input the caller sent.
 
 **Walkthrough**
 1. Start with arrays as the simplest collection type.
@@ -633,7 +634,7 @@ This slide establishes a richer example where a token-like contract introduces b
 - The function arguments arrive as calldata, while the balance updates change persistent storage.
 - Access control and accounting correctness become much more important once the contract manages value.
 - Define invariant briefly as a condition, such as conservation of balances, that should remain true after every valid call.
-- `msg.sender` is always the address the current external call came from; the `require` line is what makes `mint` the minter's alone.
+- `msg.sender` is the immediate caller of the current call: the wallet when a person calls `Coin` directly, but the intermediary contract when `Coin` is called through a router or another contract. The `require` line is what makes `mint` the minter's alone.
 - This is the Solidity documentation's own subcurrency example, shortened.
 
 **Walkthrough**
@@ -717,7 +718,7 @@ This practice slide turns the Coin walkthrough into the analyst's working skill:
 **Key Points**
 - Answer 1: only the address stored in `minter`, the deployer, can call `mint`; the `require(msg.sender == minter)` line enforces it.
 - Answer 2: no. The only function that lowers a balance is `send`, and it lowers the balance of `msg.sender`, the caller.
-- Answer 3: no. Nothing in `mint` checks a total or a maximum, so the minter can create any amount.
+- Answer 3: no supply cap in the contract's logic. Nothing in `mint` checks a total or a maximum, so the minter can create any amount; the only stop is Solidity 0.8's built-in overflow check, which reverts a mint that would push one balance past the largest `uint` value.
 - Answer 4: no event. `mint` changes `balances` but emits nothing, so a mint is visible only in the transaction's input and the changed balance, not in the logs; a reader who watches only `Sent` events misses every mint.
 - The four questions carry straight into the token lessons, where students read the same kinds of lines in real token contracts.
 
@@ -791,7 +792,7 @@ This slide establishes how external callers know what bytes to send and how cont
 - Spell out ABI as Application Binary Interface and define selector as the short identifier derived from a function signature.
 - Clarify that the selector uses the **first** 4 bytes of the `keccak256` hash.
 - The selector is **not** a memory address; it is a compact dispatch code that gives a low-collision way to identify which function the caller wants.
-- For an analyst: the first 4 bytes of a transaction's input data name the function it called, so a mint with no event still shows up as a call to `mint` in the transaction itself.
+- For an analyst: the first 4 bytes of a transaction's input data are the selector of the function it called, so a mint with no event still shows up in the transaction itself. The input carries only those 4 bytes, not the name `mint`; an explorer shows the name only when it has the contract's verified ABI or a matching entry in a selector lookup table.
 
 **Walkthrough**
 1. Define the ABI as the external interface format used by off-chain tools and other contracts.
@@ -1235,10 +1236,10 @@ This slide shows one short Rust program so students can recognize Solana contrac
 
 **Key Points**
 - Anchor is the most popular framework for Solana programs and provides Rust tools for writing them.
-- `declare_id!` specifies the program's on-chain address, its program ID.
+- `declare_id!` specifies the program's on-chain address, its program ID. The all-ones value in this example is not a real deployment: by default the program ID is the public key of the keypair Anchor generates for the program, so a deployed program carries its own value here.
 - The `#[program]` module contains the instruction logic; `initialize` here is the one instruction.
 - `#[derive(Accounts)]` specifies the accounts that must be provided when an instruction is invoked; the `Signer` in that list is the counterpart of Solidity's `msg.sender`.
-- `#[account]` defines the structure of the data stored in custom accounts.
+- `#[account]` on a struct (`NewAccount`) defines the structure of the data stored in custom accounts; `#[account(...)]` on a field inside `Initialize` is different, a constraint on that account (here: create it, the signer pays).
 - The snippet is the Anchor documentation's own example program, shortened to fit: blank lines are removed, one long line is wrapped and the last struct sits on one line.
 
 **Walkthrough**
@@ -1259,11 +1260,11 @@ This slide shows one short Rust program so students can recognize Solana contrac
 
 - Read a Solidity contract top to bottom: state variables, then each function's visibility, its `require` gates and the storage it changes.
 
-- `msg.sender` is the caller; a `require` on it is what reserves a function to one address.
+- `msg.sender` is the immediate caller; a `require` on it is what reserves a function to one address.
 
 - Ask four questions of any contract: who can create, who can move, what limits it, what it records.
 
-- Events record only what the author chose to emit; a transaction's input still names the function called.
+- Events record only what the author chose to emit; a transaction's input still identifies the function called, by its 4-byte selector.
 
 - Vyper (Python-like, on the EVM) and Rust (Solana, via Anchor): recognize them, then ask the same questions.
 
