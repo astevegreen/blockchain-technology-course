@@ -12,8 +12,9 @@ The owner judges results, not code: explain every change in plain English and pr
 - Direction (owner, 30 Oct 2026; docs/build-spec.md "Direction"): foundations first, lecture-led; students identify,
   understand, characterize and explain activity, and the analyst's job ends at the assessment. No formal memos or
   briefings; ICD 203 only standardizes confidence words. The day map is under review against this direction.
-- Open-source or in-house tools only: never feature commercial analytics platforms (Chainalysis, TRM, Elliptic);
-  citing their research is fine. Blockscout is not open source from v11: ask before adding it.
+- Labs and exercises use open-source or in-house tools only. Slides may name commercial firms (exchanges, wallets,
+  Chainalysis, TRM, Elliptic) for awareness of the field and cite their research; never cut a slide for naming one.
+  Blockscout is not open source from v11: ask before adding it.
 - Students mostly read code; they may write simple code in an instructor-led lab (like the NFT lab) when it teaches a
   concept, never as rote programming. Out of scope: legal process (warrants, subpoenas, seizure, chain of custody,
   testimony) and data engineering (Python, SQL, GraphQL).
