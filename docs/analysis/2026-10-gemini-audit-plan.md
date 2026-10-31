@@ -6,8 +6,8 @@ Course Design page and the Build Tracker, and discussed with the owner on 30 Oct
 held up. Owner: "Create a plan for addressing all the valid concern Gemini discovered and update the documentation
 files and Notion to reflect".
 
-Status: the technical fixes are applied (build spec, Course Design, Build Tracker). D1 is decided (30 Oct). Three
-decisions wait on the owner, each with a recommendation; Notion's home page lists them under "Under review".
+Status: the technical fixes are applied (build spec, Course Design, Build Tracker). D1 and D2 are decided (30 Oct).
+Two decisions wait on the owner, each with a recommendation; Notion's home page lists them under "Under review".
 
 ## Set aside
 - **F2** (build size against the date): set aside by the owner, 30 Oct.
@@ -51,7 +51,10 @@ but concepts 14-17 are familiarity, and only one exploit contract read is left (
 - **Instead:** restore code-reading items for the other attack types (in day 8's lab or a worksheet).
 - **Then:** Course Design outcome 5; the D8 lab and D8 ② rows.
 
-### D2. Concept 37 at working skill, and a minimum on written items (F4, F3)
+### D2. Concept 37 at working skill, and a minimum on written items (F4, F3): decided 30 Oct
+Owner: "Rubric line, no minimum" (the recommendation). Applied to the build spec (Graded lab points, Post-test,
+outcome 7's evidence), Course Design outcome 7's evidence and section 4, and the Meets rubrics and Post-test rows.
+
 AML typologies (37) is working skill, but no lab practises it and no graded point checks it. Separately, the
 post-test's 30 multiple-choice items are 71% of its 42, so a student can pass at 70% without one correct written
 answer.

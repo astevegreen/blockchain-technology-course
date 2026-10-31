@@ -41,8 +41,8 @@ Marking and assessment. Wallets, exchanges, OTC and P2P sit on days 2 and 5; the
 Gemini's adversarial audit of this spec: the technical fixes are applied below (the week-one check's slot,
 outcome 5 and 7 evidence, week 1's assessment written in Phase 1, lab fallbacks, darknet markets and a model
 explanation on day 6, day 2's lab entry). Outcome 5's wording is settled (owner, 30 Oct; see Marking and
-assessment). Three owner decisions are open: concept 37 and a minimum on written items, concept 18's languages, and
-day 10's trace stop time and marking. See `docs/analysis/2026-10-gemini-audit-plan.md`.
+assessment), and so are concept 37 and the written items (owner, 30 Oct; see Graded lab points). Two owner
+decisions are open: concept 18's languages, and day 10's trace stop time and marking. See `docs/analysis/2026-10-gemini-audit-plan.md`.
 
 ## The course
 - **Blockchain Intelligence Analysis**: "Identifying, characterizing and explaining on-chain activity" (owner, 30
@@ -167,8 +167,10 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   week-2 trace"). Day 6's Bitcoin trace follows the ransom to the first service, naming each hop's heuristic. Day
   7's limits-of-tracing note says where the trace stops and what still shows. Day 8's cross-chain trace includes
   its contract read (what a function does, who may call it and what it changed) and a diagram naming each contract,
-  the assets in and out and the far-side address. Day 9's exposure summary names the stablecoin and its issuer and
-  says whether it can be frozen.
+  the assets in and out and the far-side address. Day 9's exposure summary names the stablecoin and its issuer,
+  says whether it can be frozen, and names the most likely AML typology, with one indicator for it and one against
+  (owner, 30 Oct: "Rubric line, no minimum"), so concept 37 has a graded point behind it like every working-skill
+  concept.
 - **Marking:** each point is Meets or Not yet, against a one-line rubric saying what Meets looks like (owner:
   "Meets or Not yet").
 - **Resubmission:** one retry per point after the instructor says what was missing, done in lab time or day 10's
@@ -177,7 +179,8 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
 - **Post-test:** about 2 hours on day 10's morning, after the review session; pass mark 70% overall (owner: "70%
   overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the
   list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
-  working-skill concepts.
+  working-skill concepts. No separate minimum on the written items (owner, 30 Oct: "Rubric line, no minimum"):
+  every working-skill concept also has a graded lab point.
 - **Pretest blueprint** (owner, 30 Oct: "Pretest blueprint"): the shared blueprint grouped by the day each concept
   is first taught, so an instructor reads one day's items to set that day's lab entry. Numbers are Role Concepts
   Order; **W** is working skill (short written answer), the rest familiarity (multiple choice). The items and their
@@ -208,8 +211,8 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   and the case write-ups. Recognize when only bytecode exists and what a decompiler can and can't recover." (owner:
   "Go with your recommendation for outcome 5"). Its evidence is day 3's token contract read, day 8's graded
   contract read and the post-test; the week-one check comes before day 8 teaches the exploits.
-- **Outcome 7's evidence** is day 6's point (the ransom followed to the first service) and the post-test's
-  scenario items: all ten of its concepts are taught in week 2, after the week-one check.
+- **Outcome 7's evidence** is day 6's point (the ransom followed to the first service), day 9's point (the most
+  likely typology, with one indicator for it and one against) and the post-test's scenario items: all ten of its concepts are taught in week 2, after the week-one check.
 - Daily quizzes are ungraded practice: about five recall questions on the previous day.
 - Every quiz and test answer traces to a lesson line.
 
