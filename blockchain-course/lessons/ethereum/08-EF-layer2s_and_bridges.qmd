@@ -1,0 +1,666 @@
+---
+title: "Layer 2s and Bridges by Type"
+subtitle: 'Section VII: Ethereum Framework'
+author: Army Cyber Institute
+lesson: 08-EF
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+aci-mermaid: true
+---
+
+## An L2 runs trades; Ethereum keeps the record {.smaller}
+
+**Bottom line:** A Layer 2 (L2) runs transactions away from Ethereum, then posts them back to Ethereum [@ethereumorg_optimisticrollups_2026]. A bridge moves value between two chains. Both leave records on more than one chain. The analyst who knows which type is in use knows where each record sits and who can stop the money.
+
+::: {style="font-size: .8em;"}
+
+| Question | The answer tells you | Slide |
+| --- | --- | --- |
+| Why not make Ethereum bigger? | Why L2s exist at all | Ethereum stays small |
+| Where does an L2 transaction end up? | Which chain holds which record | Rollup batches, sequencer |
+| Optimistic or ZK? | How long a withdrawal takes | Optimistic waits a week |
+| Who can still change an L2's rules? | Who could freeze or censor | L2BEAT stages |
+| What does Solana look like? | Enough to recognise it | Solana (first to cut) |
+| Which kind of bridge is it? | Where the evidence sits, who can freeze | Bridge types, Bitget |
+
+:::
+
+This afternoon's lab bridges a token and reads both sides.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens the lesson with its one idea: Layer 2s and bridges both spread one movement of value across more than one chain. It matters here because students who read only one chain will miss half the record. Emphasize that the type of L2 or bridge tells the analyst where to look and who could stop the funds.
+
+**Key Points**
+- An L2 executes transactions off Ethereum and posts the data back to Ethereum.
+- A bridge moves value, or a claim on value, from one chain to another.
+- The table is the lesson's map: why L2s exist, where records sit, withdrawal times, who controls an L2, Solana, and bridge types.
+- The afternoon lab bridges a token and reads both sides. This week teaches no tracing: students read and characterize.
+
+**Walkthrough**
+1. Read the bottom line aloud.
+2. Walk the table row by row, naming the slide that answers each question.
+3. Point at the last row: by the end, students can say which kind of bridge moved funds and who could have frozen them.
+
+**Sources**
+- @ethereumorg_optimisticrollups_2026
+
+:::
+
+## Ethereum stays small so anyone can check it {.smaller}
+
+:::: {.columns}
+
+::: {.column width="55%"}
+
+- The **trilemma**: decentralization, security and scalability pull against each other [@l35_bis_crypto_beyond_hype_2018].
+- **Bigger blocks** would raise the hardware and bandwidth needed to check the chain, pushing validation toward data centres [@l34_ethereum_scaling_docs_2026].
+- Ethereum keeps its base layer (**L1**) small, so that many people can verify it, and moves most execution to **Layer 2s** [@l34_ethereum_scaling_docs_2026].
+- For the analyst: the busy activity is often on an L2, while the final record sits on Ethereum.
+
+:::
+
+::: {.column width="45%"}
+
+```{mermaid}
+%%{init: {"theme":"neutral", "fontFamily": "Segoe UI, Roboto, Helvetica, Arial, sans-serif"}}%%
+graph TD
+    A(Decentralization) --- B(Security)
+    B --- C(Scalability)
+    C --- A
+    L1(Ethereum L1) -. keeps .-> A
+    L1 -. keeps .-> B
+    L2(Layer 2s) -. add .-> C
+```
+
+:::
+
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why Layer 2s exist. Day 1 met the trilemma as an idea; here it explains a design choice students will see in the data. It matters here because without it an L2 looks like a needless extra chain. Emphasize that Ethereum chose to stay small and checkable, and pushed volume to L2s.
+
+**Key Points**
+- The trilemma: decentralization, security and scalability pull against each other.
+- Bigger blocks would make Ethereum harder to verify on ordinary hardware.
+- Ethereum keeps L1 small and moves execution to L2s.
+- The analyst should expect activity on an L2 and settlement on Ethereum.
+
+**Walkthrough**
+1. Recall day 1's triangle: you can favour two corners.
+2. Ask why Ethereum does not just raise its block size; take answers, then read the second bullet.
+3. Read the last bullet: the trade happens on one chain, the final record on another.
+
+**Sources**
+- @l35_bis_crypto_beyond_hype_2018
+- @l34_ethereum_scaling_docs_2026
+
+:::
+
+## A rollup posts its batches to Ethereum {.smaller}
+
+- A **rollup** executes transactions outside Ethereum, then posts the transaction data to Ethereum [@ethereumorg_optimisticrollups_2026].
+- The data goes to Ethereum as calldata or in **blobs**, a cheaper data space added by EIP-4844 [@ethereumorg_zkrollups_2026; @eip4844_shardblobtransactions_2024].
+- To use a rollup, a user deposits ETH or tokens into the rollup's **bridge contract on L1**; the same amount is then minted to the user's address on the rollup [@ethereumorg_optimisticrollups_2026].
+- So one user's activity shows up as an L1 deposit, many L2 transactions, and batches on L1.
+
+```{mermaid}
+%%{init: {"theme":"neutral", "fontFamily": "Segoe UI, Roboto, Helvetica, Arial, sans-serif"}}%%
+graph LR
+    U(User) -->|deposit| BC[Bridge contract on L1]
+    BC -->|same amount minted| L2(Rollup: transactions run here)
+    L2 -->|batches of data| L1[(Ethereum L1)]
+```
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows where a rollup's records sit. Execution happens on the rollup; data and the bridge contract sit on Ethereum. It matters here because the afternoon lab reads both sides of a bridge, and a rollup deposit is the simplest bridge there is. Emphasize the three places a record appears: the L1 deposit, the L2 transactions, and the batches posted to L1.
+
+**Key Points**
+- A rollup runs transactions off Ethereum and posts their data back to Ethereum.
+- Blobs (EIP-4844) are cheaper space on Ethereum for that data.
+- Deposits lock assets in an L1 bridge contract; the rollup mints the same amount to the user.
+- An analyst can find the deposit on Ethereum and the matching credit on the rollup.
+
+**Walkthrough**
+1. Follow the diagram top to bottom: deposit, mint, transactions, batches.
+2. Name blobs briefly; students do not need their internals.
+3. Ask: if a suspect used a rollup, which chain shows the deposit? (Ethereum.) Which shows the trades? (The rollup.)
+
+**Sources**
+- @ethereumorg_optimisticrollups_2026
+- @ethereumorg_zkrollups_2026
+- @eip4844_shardblobtransactions_2024
+
+:::
+
+## One sequencer orders each rollup's trades {.smaller}
+
+- A rollup's **sequencer** collects users' transactions, puts them in order, and posts the batches to Ethereum [@ethereumorg_optimisticrollups_2026].
+- On an optimistic rollup it "is the only entity authorized to submit transactions to the onchain contract" [@ethereumorg_optimisticrollups_2026]. On ZK rollups, too, "in some cases, the operator is a centralized entity" [@ethereumorg_zkrollups_2026].
+- One operator means one party that can delay or refuse a transaction.
+- Some rollups also have councils that can act in an emergency. On 21 April 2026 Arbitrum's Security Council froze 30,766 ETH tied to the Kelp DAO exploit [@arbitrum_kelpfreeze_2026] (as of 31 Oct 2026).
+- For the analyst: on an L2, "who can stop this?" has an answer, and it is not only the token issuer.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the sequencer, the single operator that orders a rollup's transactions. It matters here because a central operator, and an emergency council above it, are points of control that an analyst can name when asked whether funds can be stopped. Emphasize the Arbitrum freeze as a real example of an L2 acting on stolen funds.
+
+**Key Points**
+- A sequencer orders transactions and posts the batches to Ethereum.
+- On many rollups one operator does this job.
+- A single operator can delay or refuse transactions.
+- Arbitrum's Security Council froze 30,766 ETH after the Kelp DAO exploit in April 2026.
+
+**Walkthrough**
+1. Define the sequencer in one sentence.
+2. Read the quote: one entity submits the batches.
+3. Tell the Arbitrum freeze briefly; the Kelp exploit itself comes on the message-bridge slide.
+4. Ask students to list who can stop funds so far: issuers (day 3), and now sequencers and councils.
+
+**Sources**
+- @ethereumorg_optimisticrollups_2026
+- @ethereumorg_zkrollups_2026
+- @arbitrum_kelpfreeze_2026
+
+:::
+
+## Optimistic waits a week; ZK waits for a proof {.smaller}
+
+::: {style="font-size: .85em;"}
+
+| | Optimistic rollup | ZK rollup |
+| --- | --- | --- |
+| How Ethereum accepts the batch | Assumes it is valid; anyone may challenge it with a fraud proof [@ethereumorg_optimisticrollups_2026] | A validity proof finalizes the state change [@ethereumorg_zkrollups_2026] |
+| Withdrawal back to Ethereum | Waits for a challenge period of "roughly seven days" [@ethereumorg_optimisticrollups_2026] | No delay once the proof is accepted [@ethereumorg_zkrollups_2026] |
+| Examples | Arbitrum [@l31_arbitrum_rollup_2026]; OP Stack chains such as OP Mainnet [@l31_optimism_stack_explainer_2026] | zkSync, Starknet, Scroll [@l2beat_l2beat_2025] |
+
+:::
+
+- For the analyst: a withdrawal from an optimistic rollup leaves a start on the rollup and a finish on Ethereum about a week later.
+- Users who will not wait often use a third-party bridge instead; that is the liquidity type, later in this lesson.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide separates the two rollup types by one question: how Ethereum comes to accept the rollup's result. It matters here because the answer sets how long a withdrawal takes, and so how the records on Ethereum are spaced in time. Emphasize the seven-day wait for optimistic rollups.
+
+**Key Points**
+- Optimistic rollups assume batches are valid and allow a challenge window.
+- ZK rollups post a validity proof, so withdrawals wait only until Ethereum accepts the proof.
+- Optimistic withdrawals take about seven days and leave a start on the rollup and a finish on Ethereum about a week later.
+- Many users skip the wait through third-party liquidity bridges.
+
+**Walkthrough**
+1. Read the first row: trust then check, or prove first.
+2. Read the second row and stress "roughly seven days".
+3. Name the examples; students will see Arbitrum and Base-style chains most.
+4. Ask: if funds left an optimistic rollup within minutes, what does that suggest? (A third-party bridge, not the native one.)
+
+**Sources**
+- @ethereumorg_optimisticrollups_2026
+- @ethereumorg_zkrollups_2026
+- @l31_arbitrum_rollup_2026
+- @l31_optimism_stack_explainer_2026
+- @l2beat_l2beat_2025
+
+:::
+
+## A deposit and a withdrawal touch both chains {.smaller}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+**Deposit (Ethereum to rollup)**
+
+1. On Ethereum: the user sends assets to the rollup's bridge contract.
+2. On the rollup: the same amount is minted to the user's chosen address.
+
+[@ethereumorg_optimisticrollups_2026]
+
+:::
+
+::: {.column width="50%"}
+
+**Withdrawal (optimistic rollup to Ethereum)**
+
+1. On the rollup: the user starts the withdrawal.
+2. About seven days pass.
+3. On Ethereum: the withdrawal is completed from the bridge contract.
+
+[@ethereumorg_optimisticrollups_2026]
+
+:::
+
+::::
+
+- The rollup's own bridge is the **native** bridge. It is a lock-and-mint bridge, the first type on the bridge slides.
+- This is what the lab does: one movement, read on each chain.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide lays out the records a native rollup bridge leaves, step by step. It matters here because it is exactly what students read in this afternoon's lab. Emphasize that every step names the chain where its record sits.
+
+**Key Points**
+- A deposit is an Ethereum transaction to the bridge contract, then a mint on the rollup.
+- An optimistic withdrawal starts on the rollup and finishes on Ethereum about seven days later.
+- The native bridge is lock-and-mint.
+- Reading both sides is description, not tracing.
+
+**Walkthrough**
+1. Walk the deposit: Ethereum first, rollup second.
+2. Walk the withdrawal: rollup first, a wait, Ethereum last.
+3. Tie it to the lab: students will see each of these records themselves.
+
+**Sources**
+- @ethereumorg_optimisticrollups_2026
+
+:::
+
+## L2BEAT stages: who can still change the rules {.smaller}
+
+- **L2BEAT** rates rollups by how far they depend on people rather than code [@l2beat_stages_2026] (as of 31 Oct 2026):
+
+::: {style="font-size: .85em;"}
+
+| Stage | What it means |
+| --- | --- |
+| Stage 0 | "fully controlled by few entities" |
+| Stage 1 | Mostly code; a Security Council (at least 75% of it) can still block or forge a message to Ethereum |
+| Stage 2 | "fully controlled by code" |
+
+:::
+
+- A low stage means a small group could upgrade the rollup, censor users or freeze funds.
+- For the analyst: the stage tells you whether "who could have stopped this?" has a named answer.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students one public reference for judging how much control a rollup's operators keep. It matters here because the question "could anyone have frozen this?" depends on who still controls the rollup. Emphasize that a stage is a rating at a date and changes over time.
+
+**Key Points**
+- L2BEAT's Stages rate rollups from 0 (few entities in control) to 2 (code in control).
+- At Stage 1 a Security Council keeps limited emergency power.
+- Lower stages mean more human power to upgrade, censor or freeze.
+- Ratings change; always note the date read.
+
+**Walkthrough**
+1. Read the three rows.
+2. Link back to the Arbitrum freeze: that was a council using its power.
+3. Remind students that a stage, like a figure, carries an "as of" date.
+
+**Sources**
+- @l2beat_stages_2026
+
+:::
+
+## Solana: programs own the accounts {.smaller}
+
+*Solana, to recognise only: no lab, tool or test item. First to cut if time runs short.*
+
+- Solana is a separate Layer 1, not an Ethereum L2.
+- Everything is an **account** with a 32-byte address [@solana_accounts_2026].
+- Code lives in **programs**. Each account has an owner program, and "Only the account's owner program can modify its data or debit lamports" [@solana_accounts_2026]. Lamports are SOL's smallest unit.
+- Contrast with Ethereum: there, a contract keeps its own storage; on Solana, data sits in separate accounts that a program owns.
+- Confirmation: a block is **confirmed** once more than two-thirds of the network's active stake has voted on it, and **finalized** at the strongest level [@solana_rpc_2026].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide lets students recognise Solana's account model when it appears in a case. It matters here because Solana carries real stablecoin and memecoin volume, and its records look different from Ethereum's. Emphasize that this is recognition only: no lab, tool or test item, and the instructor may skip the Solana slides.
+
+**Key Points**
+- Solana is its own Layer 1.
+- Everything is an account; programs own accounts and alone can change them.
+- Ethereum keeps a contract's data inside the contract; Solana keeps data in accounts a program owns.
+- Confirmed means voted on by more than two-thirds of stake; finalized is the strongest level.
+
+**Walkthrough**
+1. Say plainly that the next three slides are for recognition.
+2. Read the owner rule and compare it with an Ethereum contract.
+3. Mention the two confirmation levels; analysts quote finalized data.
+
+**Sources**
+- @solana_accounts_2026
+- @solana_rpc_2026
+
+:::
+
+## Solana keeps each token in its own account {.smaller}
+
+- "All tokens on Solana are effectively data accounts owned by a Token Program" [@solana_tokens_2026].
+- Each token type has a **mint account**. A wallet holds that token in a separate **token account**: "A wallet needs a token account for each token (mint) it wants to hold" [@solana_tokens_2026].
+- The usual one is the **associated token account**, whose address is derived from the owner's address and the mint's address [@solana_tokens_2026].
+- The mint can name a **freeze authority**, the account "authorized to freeze tokens in a Token Account" [@solana_tokens_2026].
+- For the analyst: a USDC balance on Solana sits at a token account address, not at the wallet address. Read the owner field inside the token account to find the wallet; the Token Program that owns the account is not the holder.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the one Solana detail most likely to confuse an analyst: tokens sit in token accounts, not in the wallet's own address. It matters here because a report may quote either address. Emphasize the freeze authority, which parallels the issuer freeze students met on day 3.
+
+**Key Points**
+- Tokens on Solana are accounts owned by a token program.
+- A wallet holds each token in its own token account.
+- The associated token account's address comes from the owner and the mint.
+- A mint may name a freeze authority.
+
+**Walkthrough**
+1. Read the first quote.
+2. Draw on the board: wallet, then one token account per token.
+3. Link the freeze authority back to day 3's issuer freezes.
+
+**Sources**
+- @solana_tokens_2026
+
+:::
+
+## Cheap Solana tokens draw pump-and-dumps {.smaller}
+
+- **Solidus Labs** studied tokens launched on Solana between January 2024 and March 2025 [@soliduslabs_solanarugpulls_2025]:
+  - over 7 million tokens launched on Pump.fun with at least five trades;
+  - about 98% of them showed pump-and-dump patterns;
+  - about 93% of Raydium liquidity pools showed signs of a quiet "soft rug" pull.
+- Sanctions screening covers Solana too: the open-source OFAC address extractor added SOL in May 2026 [@b10c_ofacaddresses_2026] (as of 31 Oct 2026).
+- For the analyst: on Solana, a new Pump.fun token is far more often a scheme than a business.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students the scale of fraud on Solana's token launchpads, so they recognise the pattern when a case involves one. It matters here because cheap token creation makes Solana a common venue for pump-and-dumps. Emphasize that these are one firm's figures for a stated period.
+
+**Key Points**
+- Solidus Labs counted over 7 million Pump.fun tokens with at least five trades, January 2024 to March 2025.
+- About 98% of them showed pump-and-dump patterns (the report gives 98% to 98.7% in different places).
+- About 93% of Raydium pools showed soft-rug signs.
+- The open OFAC address extractor lists Solana addresses since May 2026.
+
+**Walkthrough**
+1. Read the three figures and the period.
+2. Note the report rounds its headline figure differently in different places; quote "about 98%".
+3. Mention the extractor in one line: sanctioned addresses exist on Solana as well.
+
+**Sources**
+- @soliduslabs_solanarugpulls_2025
+- @b10c_ofacaddresses_2026
+
+:::
+
+## A bridge moves a claim, not the coin {.smaller}
+
+Coins cannot leave their own chain. A bridge does one of three things [@ethereumorg_bridgesdev_2026]:
+
+::: {style="font-size: .8em;"}
+
+| Type | How value crosses | Where the evidence sits | Who can freeze |
+| --- | --- | --- | --- |
+| **Lock-and-mint** (or burn-and-mint) | Coin locked or burned on chain A; a copy minted on chain B | Lock on A, mint on B | The bridge's operators; the token issuer |
+| **Message-verified** | Chain B acts on a message saying something happened on chain A | The message, the action on B, and the event on A | The protocol's operators; the issuer |
+| **Liquidity and intents** | Someone on chain B pays you from their own funds | A deposit on A, a payment on B, joined by the protocol's records and events | Rarely anyone; stablecoin issuers |
+
+:::
+
+The last column is the analyst's question: could anyone have stopped this?
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide is the bridge map for the rest of the lesson. Each type moves value differently, so each leaves different evidence and has a different party who could freeze it. It matters here because "which bridge?" decides where to look on day 8, when students trace across chains. Emphasize the last two columns.
+
+**Key Points**
+- Lock-and-mint and burn-and-mint: a copy is created on the far chain.
+- Message-verified: the far chain trusts a message about the near chain.
+- Liquidity and intents: another party pays on the far chain from its own funds.
+- Each type has its own evidence and its own possible freezer.
+
+**Walkthrough**
+1. Say the title: a bridge never moves the coin itself.
+2. Read each row left to right.
+3. Ask students which type a rollup's native bridge is. (Lock-and-mint.)
+
+**Sources**
+- @ethereumorg_bridgesdev_2026
+
+:::
+
+## Lock-and-mint: the coin waits in a contract {.smaller}
+
+- The bridge locks the real coin on chain A and mints a **wrapped** copy on chain B; burning the copy releases the coin [@ethereumorg_bridgesdev_2026].
+- A wrapped token lives on a public ledger, so wrapping does not hide it. Wrapped Monero on Ethereum is as visible as any Ethereum token [@salisu_blockchainforensicsmodern_2023].
+- The locked pool is a target: an attacker who controls the bridge can release it. The Wormhole bridge lost 120,000 wETH (about $325 million) [@l31_ethereumorg_blockchainbridges_2026]; the Ronin bridge (day 8's case) lost over $600 million [@roninnetwork_roninblogcommunity_2022].
+- **Evidence**: the lock on chain A and the mint on chain B, linked by amount, time and the bridge's own event.
+- **Who can freeze**: the bridge's operators can pause it; an issuer can freeze its token on either side.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide covers the oldest and simplest bridge type. The real coin sits in a contract, and a copy circulates on the other chain. It matters here because wrapped tokens are common in cases, and the locked pool is why bridges are hacked so often. Emphasize that wrapping is not hiding.
+
+**Key Points**
+- Lock on one chain, mint a wrapped copy on the other; burn to go back.
+- Wrapped tokens are as visible as any token on their chain.
+- The locked pool draws attackers: Wormhole and Ronin are examples.
+- Evidence sits on both chains; operators and issuers can freeze.
+
+**Walkthrough**
+1. Explain lock, mint, burn, release with a hand gesture: one coin held, one copy out.
+2. Read the wrapped Monero point.
+3. Name Wormhole and Ronin briefly; Ronin returns on day 8.
+4. Read the evidence and freeze lines.
+
+**Sources**
+- @ethereumorg_bridgesdev_2026
+- @salisu_blockchainforensicsmodern_2023
+- @l31_ethereumorg_blockchainbridges_2026
+- @roninnetwork_roninblogcommunity_2022
+
+:::
+
+## Message bridges trust a message: Kelp DAO {.smaller}
+
+- A **message-verified** bridge passes messages between chains; the destination acts when its verifiers say a message is genuine [@ethereumorg_bridgesdev_2026].
+- **Kelp DAO, 18 April 2026**: a forged LayerZero message, claiming to come from Unichain, released rsETH on Ethereum. About $292 million was drained [@blockaid_kelpdao_2026; @layerzero_kelpdao_2026].
+- One compromised verifier (a "DVN") was enough [@blockaid_kelpdao_2026].
+- **Evidence**: the release on the destination chain, the message, and the event it claims on the source chain. A release with no matching source event is the sign of a forged message.
+- **Who can freeze**: the protocol's operators; and the chains the funds reach. Arbitrum froze 30,766 ETH from this exploit [@arbitrum_kelpfreeze_2026].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide covers bridges that act on messages, with Kelp DAO as the example. It matters here because a forged message leaves a release with no real event behind it, which an analyst can spot by checking both chains. Emphasize that this was a forged message, not a theft from Ethereum to Arbitrum.
+
+**Key Points**
+- Message bridges act when their verifiers accept a message.
+- Kelp DAO: a forged message claiming to be from Unichain released about $292 million of rsETH on Ethereum.
+- A single compromised verifier was enough.
+- Evidence: the release, the message, and the claimed source event; Arbitrum froze 30,766 ETH.
+
+**Walkthrough**
+1. Explain the type in one sentence: the far side trusts a message.
+2. Tell the Kelp story in three lines: forged message, release, drain.
+3. Ask: where would you look to show the message was forged? (The claimed source chain, for the matching event.)
+4. Day 8 traces where the Kelp funds went; today only the type.
+
+**Sources**
+- @ethereumorg_bridgesdev_2026
+- @blockaid_kelpdao_2026
+- @layerzero_kelpdao_2026
+- @arbitrum_kelpfreeze_2026
+
+:::
+
+## Liquidity bridges: someone pays you there {.smaller}
+
+- **Liquidity networks** swap assets between chains instead of minting copies [@ethereumorg_bridgesdev_2026].
+- **Intents (Across)**: the user deposits on chain A; a **relayer** pays the user on chain B "using their own tokens"; the protocol repays relayers later through Ethereum [@across_intentlifecycle_2026].
+- **Cross-chain swaps (THORChain)**: "anyone can swap a coin on one chain for a coin on another" [@bitquery_bitgethack_2026].
+- **Atomic swaps**: two parties lock funds behind the same secret on each chain; both sides complete or both refund [@salisu_blockchainforensicsmodern_2023].
+- **Evidence**: two transactions on two chains, by different parties, joined by the protocol's records and contract events. An atomic swap is joined by its shared secret.
+- **Who can freeze**: usually no one; the funds never sit in one place for long. A stablecoin issuer still can.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide covers the bridge type that leaves the weakest link between the two sides. Someone else pays on the far chain, so no token moves across at all. It matters here because launderers favour this type, and it is the reason cross-chain tracing on day 8 needs protocol data. Emphasize that the two sides are different parties' transactions.
+
+**Key Points**
+- Liquidity networks swap rather than mint.
+- Across: deposit on one chain, a relayer pays from its own tokens on the other.
+- THORChain swaps native coins across chains; atomic swaps use one shared secret.
+- Evidence is two separate transactions; freezing is rarely possible except by a stablecoin issuer.
+
+**Walkthrough**
+1. Read the type definition.
+2. Walk Across: deposit, relayer pays, relayer repaid.
+3. Name THORChain and atomic swaps as the same idea without a relayer.
+4. Ask: what joins the two transactions? (Only the protocol's own records.)
+
+**Sources**
+- @ethereumorg_bridgesdev_2026
+- @across_intentlifecycle_2026
+- @bitquery_bitgethack_2026
+- @salisu_blockchainforensicsmodern_2023
+
+:::
+
+## Bitget: the hack was at the exchange {.smaller}
+
+- **24 September 2026, about 18:31 UTC**: attackers reached Bitget's wallet servers and injected forged withdrawal commands [@bitget_securityincident_2026].
+- Bitget says private keys were not compromised and cold wallets were unaffected [@bitget_securityincident_2026].
+- **How much**: about $388 million across 11 blockchains, by Bitget's final count [@bitget_securityincident_2026]; Bitquery's on-chain count is about $387 million on nine blockchains [@bitquery_bitgethack_2026] (both as of 31 Oct 2026).
+- **Who**: Bitget's chief executive said the firm suspects North Korean attackers [@fortune_bitgethack_2026]. That is a suspicion, not a finding.
+- Bitget finished resuming withdrawals on 2 October 2026 [@bitget_securityincident_2026].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets out the Bitget case. The theft happened inside an exchange; no bridge was hacked. It matters here because the bridges come next, as the route the money took. Emphasize that figures differ by source and date, and that attribution is a suspicion.
+
+**Key Points**
+- Attackers forged withdrawal commands on Bitget's wallet servers on 24 September 2026.
+- Bitget reports about $388 million across 11 chains; Bitquery counts about $387 million on nine.
+- The chief executive suspects North Korea; that is not a confirmed attribution.
+- Withdrawals resumed fully on 2 October 2026.
+
+**Walkthrough**
+1. Read the time and the method.
+2. Compare the two figures, and say why sources differ: different counting and different dates.
+3. Read the attribution line and use the course's confidence words: "suspects" is not "assesses with high confidence".
+
+**Sources**
+- @bitget_securityincident_2026
+- @bitquery_bitgethack_2026
+- @fortune_bitgethack_2026
+
+:::
+
+## Bitget: bridges moved it faster than freezes {.smaller}
+
+::: {style="font-size: .85em;"}
+
+| What moved | Through | Bridge type |
+| --- | --- | --- |
+| USDC | Circle's CCTP, to Noble and Solana | Issuer's own bridge |
+| ETH | Stargate, Across, deBridge, Relay | Liquidity and intents |
+| Some ETH, plus BNB and XRP | THORChain, mostly into BTC | Cross-chain swap |
+
+[@bitquery_bitgethack_2026]
+
+:::
+
+- **Frozen**: about $339,000 by Tether and Circle, of about $387 million [@bitquery_bitgethack_2026] (as of 30 Sep 2026).
+- Issuers can freeze only their own stablecoins; most of the money crossed as ETH and other coins with no issuer.
+- For the analyst: name each bridge's type, and you know where the next record sits and whether anyone could stop it.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the bridge types at work in one case. The stolen funds left through several bridges at once, mostly of the liquidity type. It matters here because it shows why freezes failed: most of it crossed as coins that no issuer can freeze. Emphasize the frozen figure against the total.
+
+**Key Points**
+- USDC crossed on Circle's own bridge; most ETH on liquidity bridges; some ETH, BNB and XRP through THORChain.
+- Only about $339,000 was frozen, as of 30 September 2026.
+- ETH, BNB and XRP have no issuer, and liquidity bridges hold nothing for long.
+- Naming the type tells the analyst where to look next.
+
+**Walkthrough**
+1. Read the table row by row, naming each type from the map slide.
+2. Read the frozen figure and ask why it is so small.
+3. Close: on day 8 students trace a case like this; today they can name the types.
+
+**Sources**
+- @bitquery_bitgethack_2026
+
+:::
+
+## This afternoon: bridge a token, read both sides {.smaller}
+
+- The lab moves a token from one chain to another through a bridge.
+- On the first chain, students find the deposit: who sent it, to which contract, how much.
+- On the second chain, students find the mint or payment: to whom, how much, how long after.
+- Then they name the bridge's type, and say who could have frozen the token.
+- No tracing: the lab reads one known movement on both sides.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide previews the afternoon lab. Students bridge a token and read the record on each chain. It matters here because the lab turns the lesson's map into practice. Emphasize that the lab reads one known movement; it does not trace unknown funds.
+
+**Key Points**
+- Read the deposit on the first chain.
+- Read the mint or payment on the second chain.
+- Name the bridge's type and who could freeze.
+- This is reading, not tracing.
+
+**Walkthrough**
+1. Read the steps.
+2. Ask students to predict, for a lock-and-mint bridge, what they will see on each side.
+
+**Sources**
+None
+
+:::
+
+## What to carry out of this lesson {.smaller}
+
+- Ethereum stays small; L2s run the trades and post them to Ethereum.
+- A rollup's sequencer can delay or censor; its council can freeze.
+- Optimistic withdrawals take about a week; ZK withdrawals wait only for the proof.
+- Solana keeps tokens in token accounts, and its mints can name a freeze authority.
+- Bridges come in three types. Each type tells you where the evidence sits and who can freeze.
+- Bitget: the hack was at the exchange; the bridges carried the money away.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarises the lesson in six lines. It matters here because day 8 builds on each of them when students trace across chains. Emphasize the bridge map's last two columns.
+
+**Key Points**
+- L2s run trades; Ethereum keeps the record.
+- Sequencers and councils are points of control.
+- Withdrawal timing depends on the rollup type.
+- Bridges by type: lock-and-mint, message-verified, liquidity and intents.
+
+**Walkthrough**
+1. Ask a student to say each line in their own words.
+
+**Sources**
+None
+
+:::
+
+## References
