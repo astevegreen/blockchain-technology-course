@@ -1,0 +1,387 @@
+{
+  "lesson_id": "daily_d4_review_of_day3",
+  "lesson_title": "Day 4 Morning Quiz: Review of Day 3 (Ethereum Intro, Reading Smart Contracts, Tokens)",
+  "date_generated": "2026-10-31",
+  "topic": "ethereum",
+  "tags": [
+    "ethereum",
+    "daily-quiz",
+    "day-4",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "ethereum",
+    "quiz": "daily 08:45",
+    "covers_day": 3,
+    "question_count": 12,
+    "lessons": [
+      "01-EF-ethereum_intro",
+      "04-EF-smart_contracts",
+      "05-EF-digital_assets_tokenization_and_nfts"
+    ]
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_day3_review",
+        "title": "Day 3 Review: Ethereum",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_d3_ethereum_intro",
+            "title": "Ethereum Intro: accounts, EVM, transactions, gas",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4"
+            ]
+          },
+          {
+            "id": "lec_d3_smart_contracts",
+            "title": "Reading a Smart Contract",
+            "enabled": true,
+            "question_ids": [
+              "q5",
+              "q6",
+              "q7",
+              "q8"
+            ]
+          },
+          {
+            "id": "lec_d3_tokens_nfts",
+            "title": "Tokens, Stablecoins, NFTs and Issuer Freezes",
+            "enabled": true,
+            "question_ids": [
+              "q9",
+              "q10",
+              "q11",
+              "q12"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "Address A sends a transaction to contract B, and in the same block B sends ETH on to address C. Which statement about the three accounts is correct?",
+      "correct_answer": "A must be an externally owned account, since only a key-controlled account can start a transaction; B acted only because A's transaction reached it.",
+      "incorrect_answers": [
+        "A may be either type of account, since a contract account can start a transaction by itself once its code has been deployed on the network.",
+        "B must be an externally owned account, since only an account controlled by a private key can send ETH on to another address in the same block.",
+        "C must be a contract account, since an address that is sent ETH by a contract is then always controlled by the very code that first sent it."
+      ],
+      "explanation": "Only an EOA, controlled by a private key, can start a transaction. A contract account acts only when a transaction or another call reaches it, and it can then send ETH on. Nothing about receiving ETH makes C a contract.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "accounts",
+        "eoa",
+        "contract-account",
+        "misconception"
+      ],
+      "lesson_block": "Accounts: key or code",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/01-EF-ethereum_intro.qmd",
+        "reading": "A key or code controls each account"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the Bitcoin change-address heuristic have nothing to work on in an ordinary Ethereum payment?",
+      "correct_answer": "An Ethereum payment has no change output: the sender's balance just goes down and the rest stays in that same account.",
+      "incorrect_answers": [
+        "An Ethereum payment sends its change to a fresh address that wallets hide, so the heuristic cannot tell which one.",
+        "An Ethereum payment spends whole outputs like Bitcoin does, but the EVM merges the change back before the block is built.",
+        "An Ethereum payment records the change in the receipt's logs, which explorers do not index, so the heuristic finds nothing."
+      ],
+      "explanation": "Bitcoin returns change as a new output, so a heuristic can look for it. Ethereum keeps accounts with balances: the sender's balance falls by the amount, and nothing comes back as a separate output.",
+      "difficulty_level": 1,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "account-model",
+        "utxo",
+        "change-heuristic"
+      ],
+      "lesson_block": "Account model versus outputs",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/01-EF-ethereum_intro.qmd",
+        "reading": "Bitcoin spends outputs; Ethereum edits balances"
+      }
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "A receipt shows status 0 for a transaction that called a contract, yet the sender's balance fell afterward. What explains the drop?",
+      "correct_answer": "The sender still paid the fee for the gas the call used, though every other change the call made was reverted.",
+      "incorrect_answers": [
+        "The sender was charged the full value attached to the call as a penalty, and the fee was waived since the call failed.",
+        "The EVM refunded the fee to the block proposer and kept the attached value in escrow until the call could be retried.",
+        "The failed call left its changes in place, so the balance fell by the value it tried to send to the contract it called."
+      ],
+      "explanation": "Gas is paid for the work done whether the call succeeds or fails; a call that fails has its changes reverted. So a failed transaction is on the chain but moves nothing except its fee.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "gas",
+        "receipt",
+        "failed-transaction"
+      ],
+      "lesson_block": "Gas and failed calls",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/01-EF-ethereum_intro.qmd",
+        "reading": "Gas prices the work; a failed call still pays"
+      }
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "Alice sends 1 ETH to Contract A, and the transaction lists only Alice and A, yet Bob later received 1 ETH from this call. How is the rest of the trail found?",
+      "correct_answer": "Trace the call: A passed the ETH on through internal calls, which a tracing tool such as Otterscan lists as internal transfers.",
+      "incorrect_answers": [
+        "Read the receipt's status field, which lists every address that received ETH while the transaction was running in the EVM.",
+        "Look for a second transaction signed by Contract A, since a contract sends ETH to another address only by signing one.",
+        "Check the Transfer log, which records every ETH send including plain ones made inside a call, so Bob would appear there as its receiver."
+      ],
+      "explanation": "Calls between contracts are not new transactions, so the transaction shows only Alice to A. A trace lists the internal transfers for ETH; token moves appear in logs instead, but a plain ETH send emits no log.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "internal-transfers",
+        "trace",
+        "otterscan"
+      ],
+      "lesson_block": "Internal transfers",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/01-EF-ethereum_intro.qmd",
+        "reading": "Contracts move value the transaction won't show"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst reads the Coin contract by hand to say who can create coins and whether a watcher of its Sent events would see them. What is the correct reading?",
+      "correct_answer": "Only the stored minter can create coins, because mint requires msg.sender to equal minter; a mint emits no Sent event, so an event watcher misses it.",
+      "incorrect_answers": [
+        "Any address can create coins by calling mint, but each call emits a Sent event, so a watcher of those Sent events sees every creation made.",
+        "Only the stored minter can create coins, and each mint emits a Sent event from the zero address, so a watcher of Sent events would see every mint.",
+        "Only the deployer can ever create coins, and any mint is recorded by the Sent event that send emits when the coins are later moved around."
+      ],
+      "explanation": "The require on msg.sender reserves mint to the address the constructor stored as minter. Mint changes balances but emits nothing; only send emits Sent. A reader who trusts events alone misses every mint.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "coin",
+        "msg-sender",
+        "events",
+        "access-control"
+      ],
+      "lesson_block": "Reading Coin: who creates, what is recorded",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd",
+        "reading": "Example: Coin (Code, Part 1)"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst sees a call to a contract whose input data starts with a 4-byte code, followed by 32-byte words. What does that first code show?",
+      "correct_answer": "Which function was called: the selector is the first four bytes of the keccak-256 hash of the name and parameter types.",
+      "incorrect_answers": [
+        "The memory address where the called function's code starts, which the EVM jumps to as soon as it begins running the call.",
+        "The sender's signature, shortened to four bytes, which the contract checks before it will run the function it names.",
+        "Which block the call was meant for, with the 32-byte words after it holding the ETH value and the gas limit set."
+      ],
+      "explanation": "The selector is a compact dispatch code, not an address and not the function's name. It is derived from the signature, and the arguments follow as 32-byte words, so a direct call to a function is identifiable even when no event is emitted.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "abi",
+        "function-selector",
+        "calldata"
+      ],
+      "lesson_block": "Four-byte function code",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd",
+        "reading": "ABI, Encoding, and Function Selectors"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A verified contract on an explorer shows def, @external, @view and holdings: HashMap[address, uint256]. What is this, and what does the HashMap do?",
+      "correct_answer": "Vyper, a Python-like EVM language; its HashMap plays the role of a Solidity mapping, here the ledger of holdings.",
+      "incorrect_answers": [
+        "Rust with the Anchor framework for Solana; its HashMap lists the accounts that an instruction must be given by the caller.",
+        "Solidity written in a compact style for the EVM; its HashMap is a temporary list kept in memory for a single call only.",
+        "Vyper, a Python-like language for Solana; its HashMap stores the program's address, which the network reads at launch."
+      ],
+      "explanation": "Vyper looks like Python but compiles for the same EVM as Solidity, so its transactions and logs look the same on-chain. HashMap is Vyper's mapping, the same role balances plays in Coin. Recognise it; the same four questions still apply.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "vyper",
+        "recognition",
+        "mapping"
+      ],
+      "lesson_block": "Recognising Vyper",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd",
+        "reading": "Recognize It: Vyper"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A program's source shows declare_id!, #[program], and a #[derive(Accounts)] struct that includes a Signer. What is it, and what does the Signer correspond to?",
+      "correct_answer": "Rust with the Anchor framework for Solana; declare_id! is the program's address, and the Signer is the account that signed the transaction.",
+      "incorrect_answers": [
+        "Rust compiled for the EVM through the Anchor framework; declare_id! is the sender's address, and the Signer is the payable recipient.",
+        "Vyper with Python-style decorators for Solana; declare_id! names the compiler version, and the Signer is the proxy's upgrade admin key.",
+        "Solidity with attributes added by an explorer for display; declare_id! hashes the function name, and the Signer is the first event topic."
+      ],
+      "explanation": "Solana programs are most often written in Rust with Anchor. declare_id! gives the program's on-chain address, #[program] holds the instructions, and the Signer in the accounts list shows who signed, as msg.sender does on Ethereum. The analyst's questions stay the same.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "rust",
+        "solana",
+        "anchor",
+        "recognition"
+      ],
+      "lesson_block": "Recognising Rust on Solana",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd",
+        "reading": "Recognize It: Rust on Solana"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "In an explorer, a direct USDT transfer shows the token contract as the transaction's to field and 0 ETH as its value. Where does the analyst find the recipient?",
+      "correct_answer": "In the encoded input data and in the Transfer log that the token contract emitted for the call, not in the to field.",
+      "incorrect_answers": [
+        "In the to field once the explorer decodes it, because the token contract copies the recipient's address into that field.",
+        "In the value field, which holds the recipient's address in place of an amount, as it does for any token transfer.",
+        "In the receipt's contractAddress field, which names the account that received the tokens whenever a transfer succeeds."
+      ],
+      "explanation": "Tokens move by a call to the token contract, so to is the contract and value is usually 0. The recipient is encoded in the input data and named by the Transfer log. Fees are still paid in ETH.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "erc-20",
+        "transfer-log",
+        "token-transfer"
+      ],
+      "lesson_block": "Reading a token transfer",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd",
+        "reading": "A token transfer shows up as a log"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "Tether has blacklisted an address that holds USDT. A third party then sends USDT to that address. What happens, according to the contract code?",
+      "correct_answer": "The transfer succeeds, because only the sender is checked, so a frozen address can still receive but cannot send.",
+      "incorrect_answers": [
+        "The transfer reverts, because the contract refuses any transfer whose sender or receiver is on the blacklist at that time.",
+        "The transfer succeeds, but the contract at once calls destroyBlackFunds, zeroing the listed receiver's balance.",
+        "The transfer is held in a pending state until the owner removes the address from the list or approves the transfer by hand."
+      ],
+      "explanation": "USDT's transfer checks the sender against isBlackListed, not the receiver, so incoming transfers succeed while the listed address's own sends revert. USDC differs: its transfer refuses a blacklisted sender or receiver.",
+      "difficulty_level": 4,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "usdt",
+        "blacklist",
+        "freeze",
+        "tether"
+      ],
+      "lesson_block": "USDT blacklist behaviour",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd",
+        "reading": "What a USDT freeze leaves on chain"
+      }
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "Funds sit in USDT at an address and are then swapped for ETH. Can the issuer still freeze them?",
+      "correct_answer": "No: the blacklist lives inside one token's contract, so ETH from the swap is beyond that issuer's reach.",
+      "incorrect_answers": [
+        "Yes: a blacklist entry made earlier follows the address, so the ETH from the swap is frozen along with the USDT.",
+        "Yes: the issuer's key can call the blacklist on any address, so it freezes the ETH once the address is named.",
+        "No: the swap burns the USDT in the contract, so the issuer can no longer freeze any address that was in the trade."
+      ],
+      "explanation": "The blacklist is a feature of one token contract. Funds are freezable only while they stay in an issuer's token; swapped into ETH or a token with no issuer they are out of reach, and the window is the time before the next move.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "freeze",
+        "blacklist",
+        "tracing",
+        "issuer"
+      ],
+      "lesson_block": "Freezable funds and token swaps",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd",
+        "reading": "Freezable? Which issuer, and how fast?"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst traces NFT token 7 on Ethereum. Which statement about what the chain records is correct?",
+      "correct_answer": "It records who owns token 7 and a Transfer log naming the ID; a mint is a transfer from address zero, and the image usually sits off chain.",
+      "incorrect_answers": [
+        "It records the image itself, since tokenURI stores the file on chain, and a mint is logged as a transfer to address zero in the very same call.",
+        "It records an amount of token 7 held by each address, as an ERC-20 balance does, and a mint appears only as a plain ETH value sent.",
+        "It records the artist's identity in each Transfer log it emits, and a mint is a transfer from the marketplace's own contract address."
+      ],
+      "explanation": "An ERC-721 token is one numbered item with one owner. The Transfer event names the token ID, with from set to zero on a mint. tokenURI points to metadata, often on IPFS, so the chain records ownership, not the picture.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "day-3-review",
+        "erc-721",
+        "nft",
+        "mint",
+        "metadata"
+      ],
+      "lesson_block": "NFT records",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd",
+        "reading": "An NFT is a token ID with one owner"
+      }
+    }
+  ]
+}

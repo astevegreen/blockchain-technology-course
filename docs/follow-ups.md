@@ -15,12 +15,17 @@ slide index), which is never listed here.
 - 01-EF gas slides (lines 397, 411, 976) still say the tip goes to "the block proposer"; 03-EF now says the block's
   fee recipient (proposer, or the builder who pays the proposer). Align the wording. (31 Oct 2026, 03-EF tip fix)
 
+- 02-IN: the slides that say what a blockchain is and that it is not the same thing as a cryptocurrency (build-spec
+  D1 ①) are all hidden (`content-hidden`, from "What is a Blockchain?"), so no visible slide teaches it and the
+  day 2 daily quiz cannot test it. (31 Oct 2026, daily quiz bank week 1)
+
 ## Quizzes
+- 04-EF lesson bank (`ethereum_04-EF-smart_contracts-quiz-bank.json`) has no questions on the Coin reading, the
+  4-byte function code, or Vyper and Rust; the day 4 daily bank covers them, the lesson bank does not. (31 Oct 2026,
+  daily quiz bank week 1)
 - 03-EF quiz bank q at line 97 and the synthesis (`lesson_synthesis/ethereum_03-EF-ethereum_network-synthesis.md`
   lines 39, 95, 117) say the tip "compensates the proposer"; 03-EF now says fee recipient. (31 Oct 2026, 03-EF tip fix)
 - 03-EF bank has no questions on the DEX, sandwich-attack or look-alike slides. (31 Oct 2026, rebuild `0504bcc`)
-- 04-EF bank has no questions on the Coin reading, the 4-byte function code, or Vyper and Rust; q2 leans on a
-  slide that is now hidden. (31 Oct 2026, D3 ② rebuild)
 - 05-FO (VASPs and the Rules) has no quiz bank; 04-BF q9 and 01-FO q8 (KYC as a gateway duty, displacement to weak
   jurisdictions) retired with the slides they tested and could seed it. The 04-BF and 01-FO syntheses in
   `quizes/lesson_synthesis/` still describe the hidden slides. (31 Oct 2026, D5 ② build, grep of `quizes/`)
