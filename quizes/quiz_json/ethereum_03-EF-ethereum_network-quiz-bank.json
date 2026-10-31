@@ -1,38 +1,29 @@
 {
   "lesson_id": "ethereum_03_ef_ethereum_network",
-  "lesson_title": "The Ethereum Network",
+  "lesson_title": "Mempool, MEV and DEX Trades",
   "date_generated": "2026-04-26",
   "topic": "ethereum",
   "tags": [
     "ethereum",
     "03-ef-ethereum-network",
-    "ethereum-network",
-    "ethereum-networking",
-    "transaction-lifecycle",
+    "dex",
     "mempool",
     "eip-1559",
     "gas-fees",
-    "execution-layer",
-    "consensus-layer",
-    "engine-api",
-    "block-production",
     "mev",
     "proposer-builder-separation",
-    "ethereum-nodes",
-    "client-diversity",
-    "sync-modes",
     "quiz-bank"
   ],
   "metadata": {
     "module": "ethereum",
     "lesson_file_stem": "03-EF-ethereum_network",
     "reading_status": "acquired",
-    "question_count": 13,
+    "question_count": 7,
     "source_mix": {
-      "lesson_questions": 10,
+      "lesson_questions": 4,
       "reading_questions": 3
     },
-    "reading_scope_note": "The assigned reading primarily supports node architecture, access models, sync, JSON-RPC, and client diversity; transaction-fee, mempool, and MEV questions are grounded in the lesson slides.",
+    "reading_scope_note": "The assigned reading primarily supports node architecture, access models, sync, JSON-RPC, and client diversity; transaction-fee, mempool, and MEV questions are grounded in the lesson slides. Reading items q11-q13 are disabled from 31 Oct 2026: the lesson now hides its node, client and sync slides.",
     "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd",
     "reading_sources": [
       "/tmp/blockchain-course-readings/text/mastering_ethereum_ch3.txt",
@@ -48,25 +39,19 @@
         "lectures": [
           {
             "id": "lec_ethereum_network_lesson_slides",
-            "title": "The Ethereum Network - lesson slides",
+            "title": "Mempool, MEV and DEX Trades - lesson slides",
             "enabled": true,
             "question_ids": [
-              "q1",
-              "q2",
               "q3",
               "q4",
-              "q5",
               "q6",
-              "q7",
-              "q8",
-              "q9",
               "q10"
             ]
           },
           {
             "id": "lec_ethereum_network_assigned_reading",
-            "title": "The Ethereum Network - assigned reading",
-            "enabled": true,
+            "title": "Mempool, MEV and DEX Trades - assigned reading",
+            "enabled": false,
             "question_ids": [
               "q11",
               "q12",
@@ -78,60 +63,6 @@
     ]
   },
   "questions": [
-    {
-      "id": "q1",
-      "question_type": "multiple_choice",
-      "question_stem": "A user signs a transaction in a wallet and later sees a receipt with logs. Which path best describes what happened between those events?",
-      "correct_answer": "The signed transaction entered local mempools through gossip, was selected for a block, re-executed by nodes, and produced a receipt recording status, gas used, and logs.",
-      "incorrect_answers": [
-        "The wallet executed the signed transaction locally, broadcast a completed receipt to peers, and validators only checked the user's signature before accepting the state change.",
-        "The transaction entered a consensus-layer queue, was finalized for ordering before EVM execution, and produced logs after validators agreed on the queued result as canonical.",
-        "The transaction was sent directly to one proposer, included in an execution payload, and trusted by other nodes without re-execution because the block was already signed by the proposer."
-      ],
-      "explanation": "The lesson frames Ethereum networking as an operational pipeline: signed intent propagates through local mempools, block builders select transactions, nodes re-execute included transactions, and receipts/logs record execution outcomes for off-chain consumers.",
-      "difficulty_level": 2,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "ethereum-networking",
-        "transaction-lifecycle",
-        "receipts",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "Review: The Life of an Ethereum Transaction",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Transaction Lifecycle As The Backbone / Review: The Life of an Ethereum Transaction"
-    },
-    {
-      "id": "q2",
-      "question_type": "multiple_choice",
-      "question_stem": "A transaction is signed with the right private key but with the wrong chainId for the network where it is submitted. What should students infer?",
-      "correct_answer": "The signature does not validly authorize that transaction on the target network because chainId binds the signed payload to a specific chain.",
-      "incorrect_answers": [
-        "The transaction can still execute if nonce and gas fields are valid, because chainId only labels the user's intended network in the payload.",
-        "A receiving execution node can replace the chainId during gossip as long as the recovered sender address matches the account that signed it.",
-        "The transaction stays valid but is routed after inclusion, because the signature names the source chain for later settlement by validators."
-      ],
-      "explanation": "Transaction signatures commit to the encoded payload, and chainId is part of replay resistance. A correct private key is not enough if the signed transaction is bound to another network.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "transaction-signatures",
-        "chainid",
-        "replay-resistance",
-        "lesson",
-        "slides",
-        "misconception"
-      ],
-      "lesson_block": "Transaction Fields and Signatures",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Transaction Validity, Ordering, And Resource Bounds / Transaction Fields and Signatures"
-    },
     {
       "id": "q3",
       "question_type": "multiple_choice",
@@ -155,7 +86,7 @@
         "slides",
         "scenario"
       ],
-      "lesson_block": "Transaction Validity, Ordering, And Resource Bounds",
+      "lesson_block": "A pending transaction already shows the trade",
       "source_type": "lesson_slides",
       "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Nonce ordering and replacement / Common Misconceptions And Confusions"
     },
@@ -165,7 +96,7 @@
       "question_stem": "A transaction sets maxFeePerGas to 50 gwei and maxPriorityFeePerGas to 2 gwei. If the current base fee is 30 gwei, which outcome best reflects EIP-1559 fee mechanics?",
       "correct_answer": "The effective gas price is 32 gwei, the 30 gwei base fee is burned, the 2 gwei priority fee compensates the proposer, and unused max fee headroom is not paid.",
       "incorrect_answers": [
-        "The effective gas price is 50 gwei, the 30 gwei base fee is burned, and the remaining 20 gwei is treated as an added proposer tip rather than refunded to the sender.",
+        "The effective gas price is 50 gwei, the 30 gwei base fee is burned, and the remaining 20 gwei goes to the proposer as an extra tip, not back to the sender.",
         "The effective gas price is 30 gwei, the base fee is burned, and no proposer tip is paid because the priority fee applies only when the cap is exceeded.",
         "The transaction is invalid until the base fee reaches 48 gwei, because maxFeePerGas must equal the current base fee plus the stated priority fee."
       ],
@@ -183,36 +114,9 @@
         "slides",
         "mechanism"
       ],
-      "lesson_block": "EIP-1559 Fee Mechanics",
+      "lesson_block": "Fees set the queue: base fee burned, tip paid",
       "source_type": "lesson_slides",
       "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Fee Mechanics As Inclusion Logic And User Risk / EIP-1559 Fee Mechanics"
-    },
-    {
-      "id": "q5",
-      "question_type": "multiple_choice",
-      "question_stem": "A wallet simulation estimates that a contract call will succeed, but before inclusion another transaction changes the contract's state. The user's transaction then reverts. What is the best explanation?",
-      "correct_answer": "Gas estimation is based on simulated execution against a state snapshot, so state-dependent logic can change before inclusion; a revert still consumes gas up to the failure point.",
-      "incorrect_answers": [
-        "Gas estimation is binding once the wallet signs, so a later state change should delay inclusion until the simulated branch is true again and refund all gas to the sender.",
-        "The revert means the transaction failed before EVM execution began, so nodes should remove it from the block, produce no receipt, and refund the gas because no state change was committed.",
-        "The builder must recompute the estimate and raise the user's gas limit before inclusion, because simulations transfer fee-setting authority from the wallet to the selected block builder."
-      ],
-      "explanation": "The lesson distinguishes gas estimation from guaranteed success. Ethereum execution is state dependent, and failed execution still uses network resources that are charged as gas.",
-      "difficulty_level": 4,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "gas-estimation",
-        "reverts",
-        "execution-risk",
-        "lesson",
-        "slides",
-        "scenario"
-      ],
-      "lesson_block": "Gas Strategy and UX",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Gas estimation and execution risk / Common Misconceptions And Confusions"
     },
     {
       "id": "q6",
@@ -237,94 +141,9 @@
         "slides",
         "misconception"
       ],
-      "lesson_block": "The Mempool",
+      "lesson_block": "The mempool is public, so pending trades show",
       "source_type": "lesson_slides",
       "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Mempool Visibility And MEV / The Mempool"
-    },
-    {
-      "id": "q7",
-      "question_type": "multiple_choice",
-      "question_stem": "A consensus client receives a proposed Beacon block and asks its local execution client to evaluate the execution payload. The execution client returns INVALID. What should this mean for block acceptance?",
-      "correct_answer": "The consensus client should treat the block as unacceptable for fork choice because the execution payload failed local execution validation.",
-      "incorrect_answers": [
-        "The consensus client can keep the block in fork choice if enough attestations arrive, because validator votes override local execution invalidity.",
-        "The consensus client should treat INVALID like SYNCING and keep the block viable while the execution client downloads more state locally.",
-        "The execution client should repair the payload by dropping invalid transactions and return a modified block body for the consensus client to accept."
-      ],
-      "explanation": "The Engine API is the local seam between consensus and execution clients. The execution client returns statuses such as VALID, INVALID, or SYNCING, and those results inform the consensus client's block acceptance and fork-choice behavior.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "execution-layer",
-        "consensus-layer",
-        "engine-api",
-        "block-validation",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "Two Networks, One Chain",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Two Coordinated Networks / Engine API coordination"
-    },
-    {
-      "id": "q8",
-      "question_type": "multiple_choice",
-      "question_stem": "During a slot, which sequence best describes block production?",
-      "correct_answer": "A proposer is selected, an execution payload is assembled, the payload is wrapped in a signed Beacon block, peers receive it, validators re-execute the payload, and attestations move the chain toward finality.",
-      "incorrect_answers": [
-        "A proposer is selected, the slot is finalized before execution, the execution client builds receipts from the finalized order, and validators accept without re-running the payload in the slot.",
-        "The execution client chooses the proposer, broadcasts attestations over devp2p, asks the consensus client to run the EVM, and then signs the Beacon block for peer gossip during the current slot.",
-        "Every validator builds a competing payload for the slot, the highest-priority-fee block wins immediately, and consensus attestations are added only after the finalized state is first chosen."
-      ],
-      "explanation": "The lesson connects proposer selection, payload assembly, Beacon block broadcast, execution validation, attestation, and finalization as one slot-level pipeline across the execution and consensus layers.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "block-production",
-        "slots",
-        "attestations",
-        "execution-layer",
-        "consensus-layer",
-        "lesson",
-        "slides",
-        "mechanism"
-      ],
-      "lesson_block": "Block Production: Anatomy of a Slot",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Block Production In Time / Block Production: Anatomy of a Slot"
-    },
-    {
-      "id": "q9",
-      "question_type": "multiple_choice",
-      "question_stem": "An operator wants independent verification of the current chain but does not need arbitrary historical state queries from years ago. Which node-type choice best fits this tradeoff?",
-      "correct_answer": "Run a full node, because it independently verifies current chain data without retaining all historical state like an archive node.",
-      "incorrect_answers": [
-        "Use a remote wallet or hosted API, because local key custody provides current-chain verification equivalent to a local full node.",
-        "Run an archive node, because a standard full node's pruning prevents it from verifying current execution payloads at the chain head.",
-        "Use a light client, because header and proof checks provide old storage queries with minimal local state and no remote trust tradeoff."
-      ],
-      "explanation": "The lesson distinguishes full, archive, and light access by verification independence, historical availability, storage cost, and trust assumptions. Archive nodes are for historical state retention, not a requirement for ordinary current-chain validation.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "03-ef-ethereum-network",
-        "full-node",
-        "archive-node",
-        "sync-modes",
-        "node-trust-models",
-        "lesson",
-        "slides",
-        "application"
-      ],
-      "lesson_block": "Nodes and Clients",
-      "source_type": "lesson_slides",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: Node and sync modes / Sync Modes & Data Availability"
     },
     {
       "id": "q10",
@@ -351,7 +170,7 @@
         "slides",
         "mechanism"
       ],
-      "lesson_block": "Builder / Relay Stack and MEV",
+      "lesson_block": "Searchers, builders and relays set the order",
       "source_type": "lesson_slides",
       "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: MEV Supply Chain And PBS / Builder Relay Stack and MEV"
     },
