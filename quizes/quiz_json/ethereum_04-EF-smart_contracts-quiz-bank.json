@@ -9,21 +9,14 @@
     "smart-contracts",
     "evm",
     "solidity",
-    "contract-accounts",
-    "call-frames",
-    "storage-memory-calldata",
-    "reentrancy",
-    "checks-effects-interactions",
-    "upgradeability",
-    "oracles",
     "quiz-bank"
   ],
   "metadata": {
     "module": "ethereum",
     "lesson_file_stem": "04-EF-smart_contracts",
-    "question_count": 13,
+    "question_count": 7,
     "source_mix": {
-      "lesson_questions": 10,
+      "lesson_questions": 4,
       "reading_questions": 3
     },
     "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd",
@@ -46,14 +39,8 @@
             "question_ids": [
               "q1",
               "q2",
-              "q3",
-              "q4",
               "q5",
-              "q6",
-              "q7",
-              "q8",
-              "q9",
-              "q10"
+              "q7"
             ]
           },
           {
@@ -127,62 +114,6 @@
       "source_type": "lesson_slides"
     },
     {
-      "id": "q3",
-      "question_type": "multiple_choice",
-      "question_stem": "A contract contains logic that should run every hour. Why can it not simply wake itself up and execute on Ethereum?",
-      "correct_answer": "Contract accounts cannot self-initiate execution; on-chain actions must trace back to an EOA-signed transaction or an existing call chain.",
-      "incorrect_answers": [
-        "Contract accounts can store schedules, but validators must voluntarily execute each stored timer during block production rounds.",
-        "Contract accounts can sign their own scheduled transactions after enough ETH is locked to prepay hourly gas costs for every call.",
-        "Contract accounts can include timestamp checks, but reaching the timestamp itself commits the scheduled state transition on-chain."
-      ],
-      "explanation": "The lesson distinguishes EOAs from contract accounts. Contracts contain code and storage and can react to calls, but they do not sign or initiate transactions on their own.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "contract-accounts",
-        "eoa",
-        "call-frames",
-        "mechanism"
-      ],
-      "lesson_block": "Ethereum Execution Model",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Ethereum Accounts and Contract Review; Calls and Control Flow in the EVM",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q4",
-      "question_type": "multiple_choice",
-      "question_stem": "A user calls Contract A, and Contract A calls Contract B. Inside Contract B, which interpretation of `msg.sender` is correct for ordinary calls?",
-      "correct_answer": "`msg.sender` is Contract A, because it is the immediate caller in B's current call frame.",
-      "incorrect_answers": [
-        "`msg.sender` is the original EOA, because calls preserve the transaction signer across frames.",
-        "`msg.sender` is Contract B, because context belongs to the contract whose code is running.",
-        "`msg.sender` is `tx.origin`, because both values track who started this transaction chain."
-      ],
-      "explanation": "`msg.sender` is local to the current call frame and identifies the immediate caller. Confusing it with the original user is a common access-control mistake.",
-      "difficulty_level": 3,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "msg-sender",
-        "call-frames",
-        "access-control",
-        "scenario"
-      ],
-      "lesson_block": "Calls and Control Flow in the EVM",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Calls and Control Flow in the EVM; Ethereum Execution Model",
-      "source_type": "lesson_slides"
-    },
-    {
       "id": "q5",
       "question_type": "multiple_choice",
       "question_stem": "After a Solidity contract is deployed, what best describes the role of the constructor and deployed runtime bytecode?",
@@ -211,34 +142,6 @@
       "source_type": "lesson_slides"
     },
     {
-      "id": "q6",
-      "question_type": "multiple_choice",
-      "question_stem": "During a code review, a function copies a large input array into storage even though it only needs to inspect the values during that call. What is the best diagnosis?",
-      "correct_answer": "It likely wastes gas and changes persistence unnecessarily; calldata or memory would better match temporary read-only inspection.",
-      "incorrect_answers": [
-        "It saves gas because storage references avoid copying costs, and the array remains available to later transactions without extra work.",
-        "It improves privacy because temporary call data becomes less visible once the values are committed to contract storage.",
-        "It is needed when a loop reads values more than once, because calldata arrays cannot be indexed repeatedly in Solidity code."
-      ],
-      "explanation": "The lesson treats storage, memory, and calldata as design choices with persistence, cost, copying, and mutation consequences. Storage is persistent and expensive, while calldata and memory are temporary.",
-      "difficulty_level": 4,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "storage-memory-calldata",
-        "gas",
-        "code-review",
-        "application"
-      ],
-      "lesson_block": "Data Locations: Storage, Memory, Calldata",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Data Locations: Storage, Memory, Calldata; Solidity As A State And Interface Language",
-      "source_type": "lesson_slides"
-    },
-    {
       "id": "q7",
       "question_type": "multiple_choice",
       "question_stem": "A contract emits an event whenever a transfer occurs. An on-chain function later tries to read those event logs to calculate the current balance. Why is this design flawed?",
@@ -264,90 +167,6 @@
       "lesson_block": "Events and Logs",
       "source": "lesson",
       "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Events and Logs; Interfaces To Off-Chain Systems",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q8",
-      "question_type": "multiple_choice",
-      "question_stem": "A withdrawal function sends ETH to the caller before reducing the caller's recorded balance. Why is this sequence dangerous?",
-      "correct_answer": "The external transfer can hand control to untrusted code that reenters before the balance has been updated.",
-      "incorrect_answers": [
-        "The ETH send finalizes the withdrawal before storage changes, so later balance updates are ignored by clients.",
-        "The caller's fallback can consume gas and make the withdrawal fail, but it cannot observe intermediate state.",
-        "The transfer changes `msg.sender` to the original EOA, which lets the caller bypass internal access checks too."
-      ],
-      "explanation": "Reentrancy arises when a contract yields control while its internal state is still inconsistent. Checks-Effects-Interactions mitigates this by updating internal accounting before interacting externally.",
-      "difficulty_level": 4,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "reentrancy",
-        "checks-effects-interactions",
-        "external-calls",
-        "scenario"
-      ],
-      "lesson_block": "Reentrancy: Anatomy and Defenses",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Reentrancy: Anatomy and Defenses; Reentrancy: Vulnerable Pattern (Code); Reentrancy: Checks-Effects-Interactions (Fix)",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q9",
-      "question_type": "multiple_choice",
-      "question_stem": "Why might a project use a proxy pattern instead of deploying only an immutable contract, and what new risk does that introduce?",
-      "correct_answer": "A proxy can preserve a stable address and storage while changing logic, but it adds governance complexity and malicious-upgrade risk.",
-      "incorrect_answers": [
-        "A proxy can preserve a public address while routing calls to new logic, but it removes the need for upgrade governance process.",
-        "A proxy can make bytecode editable at the same address, but it adds the risk that validators disagree on current code during upgrades.",
-        "A proxy can isolate storage in the logic contract while users call the proxy, but it avoids storage-layout concerns later."
-      ],
-      "explanation": "The lesson frames proxy upgradeability as a tradeoff. `delegatecall` lets replaceable logic operate over stable proxy storage, which helps with upgrades but creates operational and authorization risks around governance controls.",
-      "difficulty_level": 4,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "upgradeability",
-        "proxy-patterns",
-        "delegatecall",
-        "tradeoff"
-      ],
-      "lesson_block": "Upgradeability and Proxy Patterns",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Upgradeability and Proxy Patterns; Immutability, Upgradeability, And External Data",
-      "source_type": "lesson_slides"
-    },
-    {
-      "id": "q10",
-      "question_type": "multiple_choice",
-      "question_stem": "A lottery contract chooses a winner by directly fetching a random number from a web API during EVM execution. What is the core problem with this design?",
-      "correct_answer": "Validators must execute deterministically, so external data and randomness need mediated designs such as oracles, commit-reveal, or VRFs with explicit trust assumptions.",
-      "incorrect_answers": [
-        "The web API can be contacted if the contract marks the function payable, but the result is unsafe because the caller might underpay the gas for the response.",
-        "A direct API call becomes deterministic once the sender signs it, but it weakens privacy because the random seed appears in event logs before the lottery payout is settled.",
-        "The design mainly fails because web APIs charge off-chain fees, so the contract must escrow tokens and route callback receipts before requesting a number."
-      ],
-      "explanation": "The lesson emphasizes the boundary between deterministic on-chain execution and external data. Oracles and randomness schemes bridge that boundary, but they add assumptions about data sources, freshness, manipulation resistance, and failure handling.",
-      "difficulty_level": 4,
-      "topic": "ethereum",
-      "tags": [
-        "ethereum",
-        "04-ef-smart-contracts",
-        "lesson",
-        "slides",
-        "oracles",
-        "randomness",
-        "deterministic-execution",
-        "trust-assumptions"
-      ],
-      "lesson_block": "Randomness, Oracles, and External Data",
-      "source": "lesson",
-      "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd: Randomness, Oracles, and External Data; Immutability, Upgradeability, And External Data",
       "source_type": "lesson_slides"
     },
     {
@@ -385,9 +204,9 @@
       "question_stem": "A developer marks a Solidity variable `private` because it contains information they do not want blockchain observers to see. What is the issue with this approach?",
       "correct_answer": "`private` limits Solidity-level access from other contracts and derived contracts, but it does not make public-chain data secret.",
       "incorrect_answers": [
-        "`private` hides the variable from Solidity getters and block explorers, but validators can still inspect it while executing.",
+        "`private` hides the variable from Solidity getters and from block explorers, but validators can still inspect it while executing it.",
         "`private` encrypts reads from other contracts at runtime, but transaction calldata can still reveal values passed into it during calls.",
-        "`private` keeps other contracts from calling the variable directly, so it is sufficient for user secrets stored on-chain."
+        "`private` keeps other contracts from calling the variable directly, so on its own it is sufficient for user secrets stored on-chain."
       ],
       "explanation": "The reading distinguishes visibility from privacy. Solidity visibility controls callability and inheritance access; it does not hide data from observers of a public blockchain.",
       "difficulty_level": 3,
