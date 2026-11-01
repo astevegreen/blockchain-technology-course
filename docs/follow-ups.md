@@ -37,9 +37,13 @@ slide index), which is never listed here.
 - The exchange and bridge lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`);
   it shares the explorer's Otterscan and gateway images and adds Foundry's. Add it with the explorer, or note why
   not. (31 Oct 2026, D4 exchange and bridge lab build)
-- The exchange and bridge lab has not been tried with a whole class: 40 seats swapping against one pool in one
-  12-second L1 block, and the relayer finalizing their deposits (`dynamic-labs/dex/relayer/relayer.py`). (31 Oct
-  2026, D4 exchange and bridge lab build)
+- The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
+  seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
+  received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3
+  minutes) and the price fell from about 1,999 to 1,714 cUSD per WETH. The relayer finalized 40 deposits from one
+  L1 block in about 25 s each, and every seat found its L2 transaction. The swap page now explains a revert and asks
+  for a new quote. Owner decision: keep this as a slippage lesson, or deepen the pool or loosen the minimum so
+  most seats land first time. (31 Oct 2026, D4 exchange and bridge lab build)
 
 - The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
   `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)

@@ -121,8 +121,17 @@ async function send(chain, to, data, value, gas, nonce) {
     await pause(2000);
     receipt = await rpc(chain, "eth_getTransactionReceipt", [hash]);
   }
-  if (receipt.status !== "0x1") throw new Error(`${hash} failed in block ${BigInt(receipt.blockNumber)}`);
+  if (receipt.status !== "0x1") {
+    throw Object.assign(new Error(`${hash} failed in block ${BigInt(receipt.blockNumber)}`), { hash });
+  }
   return receipt;
+}
+
+// Why a transaction reverted: the contract's require message, read through Otterscan's own method.
+async function revertReason(hash) {
+  const data = await rpc(L1, "ots_getTransactionError", [hash]);
+  if (!data.startsWith("0x08c379a0")) return "no reason given";
+  return ethers.AbiCoder.defaultAbiCoder().decode(["string"], "0x" + data.slice(10))[0];
 }
 
 async function nonce() {
@@ -199,7 +208,18 @@ $("swap").addEventListener("click", guard(async () => {
   $("swap").disabled = true;
   const before = await price();
   const [start] = await call(L1, DOLLAR, token, "balanceOf", [wallet.address]);
-  const receipt = await send(L1, ROUTER, swapData, AMOUNT_IN, 300000n, await nonce());
+  let receipt;
+  try {
+    receipt = await send(L1, ROUTER, swapData, AMOUNT_IN, 300000n, await nonce());
+  } catch (err) {
+    if (!err.hash) throw err;
+    // The class shares one pool: swaps that landed first in the same block can push the price
+    // past this swap's 99% minimum. A new quote starts from the pool as it is now.
+    $("build").disabled = true;
+    throw new Error(`${err.message}: "${await revertReason(err.hash)}". Other swaps in that block ` +
+      "moved the pool's price, so this one would have received less than its 99% minimum. " +
+      "Ask the router for a new quote, build the swap and send it again.");
+  }
   const [end] = await call(L1, DOLLAR, token, "balanceOf", [wallet.address]);
   received = end - start;
   rows($("swapped"), [
