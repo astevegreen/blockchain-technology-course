@@ -68,12 +68,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 cleanup_runtime_dir() {
+  # Keeps the tracked files (.gitkeep, install-fabric.sh); everything else
+  # under hlf/runtime is generated or downloaded.
   echo "[hlf-regression] removing generated HLF runtime state"
   docker run --rm \
     -v "${ROOT_DIR}/hlf/runtime:/runtime" \
     "${CLEANUP_IMAGE}" \
     sh -lc '
-      find /runtime -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+      find /runtime -mindepth 1 -maxdepth 1 ! -name .gitkeep ! -name install-fabric.sh \
+        -exec rm -rf {} + 2>/dev/null || true
       touch /runtime/.gitkeep
     '
 }
@@ -93,9 +96,11 @@ fresh_start() {
 
   cleanup_runtime_dir
 
+  # The cleanup removed the downloaded fabric-samples tree, so the start must
+  # be allowed to fetch the pinned release again.
   (
     cd "${ROOT_DIR}"
-    bash ./lab-manager.sh start hlf
+    HLF_ALLOW_RUNTIME_DOWNLOADS="${HLF_ALLOW_RUNTIME_DOWNLOADS:-1}" bash ./lab-manager.sh start hlf
   )
 }
 
@@ -110,7 +115,7 @@ ensure_live_stack() {
 build_runner_image() {
   echo "[hlf-regression] building runner image ${RUNNER_IMAGE}"
   docker build \
-    --network "${DOCKER_BUILD_NETWORK:-bridge}" \
+    --network "${DOCKER_BUILD_NETWORK:-default}" \
     -t "${RUNNER_IMAGE}" \
     -f "${SCRIPT_DIR}/runner.Dockerfile" \
     "${SCRIPT_DIR}"

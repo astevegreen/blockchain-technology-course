@@ -75,13 +75,8 @@ slide index), which is never listed here.
   the wallet tests hold the lab's fees and amounts. The wallet playbook, `wallet/quizes/facts.json` and
   `wallet/quizes/build-steps.sh` (it names the signers) are fenced. Decide whether the rest count as instructor
   seeds (rule 1) and fence them in `pages.yml` and `vm-build.yml`. (31 Oct 2026, D2 wallet lab review)
-- `regression-tests/automated/hlf/run.sh --fresh-start` deletes `hlf/runtime`, including the tracked
-  `install-fabric.sh`; the next start fails until `git checkout` restores it. (31 Oct 2026, D5 Fabric demo build)
 - About 1,700 files outside `dynamic-labs/` are CRLF on the desktop checkout (`git ls-files --eol`); `dynamic-labs/`
   was fixed 31 Oct. Renormalize the rest. (31 Oct 2026, D5 Fabric demo build)
-- `regression-tests/automated/hlf/run.sh:113` builds its runner with `--network bridge` by default, which the
-  desktop's BuildKit refuses ("network mode bridge not supported"); the suite runs only with
-  `DOCKER_BUILD_NETWORK=default`. Change the default. (31 Oct 2026, D5 Fabric demo build)
 
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`

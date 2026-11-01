@@ -270,6 +270,9 @@ def _candidate_instructor_cookie_cache_paths(
     return candidates
 
 
+_COOKIE_CACHE_MAX_AGE = 30 * 60
+
+
 def _load_cached_instructor_cookie(
     session: requests.Session,
     base_url: str,
@@ -279,6 +282,10 @@ def _load_cached_instructor_cookie(
         if not candidate.exists():
             continue
         try:
+            # Instructor cookies expire 1 h after login, with no renewal; an
+            # older cached one passes this probe and then expires mid-suite.
+            if time.time() - candidate.stat().st_mtime > _COOKIE_CACHE_MAX_AGE:
+                continue
             payload = json.loads(candidate.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
