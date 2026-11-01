@@ -15,8 +15,6 @@ slide index), which is never listed here.
 - The signatures lab's ECDH panel text (`index.html:350`) always claims the HTTP fallback. A later lab session takes it. (1 Nov 2026, review of the follow-ups lesson fixes)
 
 ## Quizzes
-- The day 2 daily quiz (session 9) has no question on the new slide "A blockchain is a record, not a currency".
-  (31 Oct 2026, 02-IN D1 ① slides)
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
@@ -49,13 +47,9 @@ slide index), which is never listed here.
   come from Anvil's public test phrase like the seats', and the gateway passes signed transactions, so a student
   could mint unbacked bcUSD, pause a bridge or take the relayer's nonces mid-class; the token lab's issuer has the
   same exposure. Refuse those senders at the gateway, or say so to instructors. (31 Oct 2026, D4 lab review)
-- No quiz questions test the exchange and bridge lab (`dynamic-labs/dex/`): a swap's price impact, matching a
-  deposit to its finalize, lock and mint, who can pause a bridge. (31 Oct 2026, D4 exchange and bridge lab build)
 
 - The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
   `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)
-- No quiz questions test the wallet lab (`dynamic-labs/wallet/`): the day 3 daily bank could check its five ideas
-  (path levels, gap limit, change clues, xpub reach, reading a 2-of-3 witness). (31 Oct 2026, D2 wallet lab build)
 - The Tron lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); its suite
   needs only nginx and Python, so it could run there. The workflow is a rail. (31 Oct 2026, D5 Tron lab build)
 - No quiz questions test the Tron lab (`dynamic-labs/tron/`): who paid the Energy, a sweep's signature, what the

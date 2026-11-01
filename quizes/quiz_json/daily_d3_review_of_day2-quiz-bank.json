@@ -11,7 +11,7 @@
   ],
   "metadata": {
     "module": "bitcoin",
-    "question_count": 12,
+    "question_count": 16,
     "quiz_slot": "08:45 on day 3",
     "reviews": [
       "02-BF-transactions_and_mining",
@@ -19,7 +19,7 @@
       "06-BF-multisig_and_wallet_software"
     ],
     "source_mix": {
-      "lesson_questions": 12
+      "lesson_questions": 16
     }
   },
   "hierarchy": {
@@ -48,7 +48,11 @@
               "q5",
               "q6",
               "q7",
-              "q8"
+              "q8",
+              "q13",
+              "q14",
+              "q15",
+              "q16"
             ]
           },
           {
@@ -390,6 +394,114 @@
       "specific_source": {
         "lesson": "06-BF-multisig_and_wallet_software",
         "reading": "Wallet software builds, signs and broadcasts"
+      }
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "A wallet file lists a key at m/84'/0'/0'/1/0. What does the path tell an analyst?",
+      "correct_answer": "A native SegWit key (BIP 84) on Bitcoin, in the first account, on the change chain, at address index 0.",
+      "incorrect_answers": [
+        "A native SegWit key on Bitcoin, in the first account, on the receiving chain, at address index 0.",
+        "A native SegWit key on Bitcoin, in the first account, on the change chain, as the wallet's 84th address.",
+        "A legacy P2PKH key on Bitcoin, in the first account, on the change chain, at address index 0."
+      ],
+      "explanation": "Each level of the path has one job: m is the master key, 84' the purpose (BIP 84, native SegWit), the first 0' the coin type (Bitcoin), the second 0' the account, then 0 for receiving or 1 for change, then the address index. The 84 names the address type, not a position in the list.",
+      "difficulty_level": 3,
+      "topic": "bitcoin",
+      "tags": [
+        "daily-quiz",
+        "day-3",
+        "wallet-lab",
+        "derivation-path",
+        "bip84",
+        "hd-wallet"
+      ],
+      "lesson_block": "Derivation path",
+      "specific_source": {
+        "lesson": "dynamic-labs/wallet (day 2 wallet lab worksheet)",
+        "reading": "Reading m/84'/0'/0'/0/0"
+      }
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "An agent restores a seized seed phrase and the wallet misses a payment that an explorer shows going to an address at index 23. Indices 3 to 22 were never used. Why is it missing?",
+      "correct_answer": "The wallet stops scanning after a run of unused addresses, the gap limit, so it never reaches index 23; raising the limit finds it.",
+      "incorrect_answers": [
+        "Index 23 is beyond the addresses a seed can produce, so the payment cannot belong to the wallet that the seed makes at all.",
+        "A restore scans only the first few indexes of each chain, so any payment placed past index 3 is lost for good from then on, too.",
+        "The payment went to the change chain, which a restore never scans, so the coins stay hidden from every wallet and every tool."
+      ],
+      "explanation": "A seed derives an unlimited list of addresses. Wallet software checks them in order and stops after a set run of unused ones, the gap limit. A payment placed past that run is still on the chain and still belongs to the seed; the analyst checks further down the list or raises the limit.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "daily-quiz",
+        "day-3",
+        "wallet-lab",
+        "gap-limit",
+        "seed-phrase",
+        "recovery"
+      ],
+      "lesson_block": "Gap limit",
+      "specific_source": {
+        "lesson": "dynamic-labs/wallet (day 2 wallet lab worksheet)",
+        "reading": "Challenge a: the payment a restore misses"
+      }
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A wallet transaction pays 0.06 BTC to one new address and 0.00998 BTC to another. Both match the inputs' address type. What can the analyst say about which is the change?",
+      "correct_answer": "The round 0.06 points to the payment, but it is the only clue, so a trace should state it at low confidence.",
+      "incorrect_answers": [
+        "The smaller output is the change at high confidence, because a payment is always the larger of the two outputs.",
+        "Neither can be separated, because two new addresses of one type leave the analyst with no clue at all.",
+        "The 0.00998 output is the payment at moderate confidence, because an unround amount shows a computed price."
+      ],
+      "explanation": "Same address type gives no clue, and both addresses are new, so only the round amount separates them. One weak heuristic that a careful wallet can defeat supports a low-confidence call; certainty would need off-chain evidence such as the wallet itself.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "daily-quiz",
+        "day-3",
+        "wallet-lab",
+        "change-output",
+        "heuristics",
+        "confidence"
+      ],
+      "lesson_block": "Change clues",
+      "specific_source": {
+        "lesson": "dynamic-labs/wallet (day 2 wallet lab worksheet)",
+        "reading": "Which output is the change"
+      }
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "An agent holds the account xpub for m/84'/0'/0'. The same seed also made a multi-sig key at m/48'/0'/0'/2'. What does the xpub give?",
+      "correct_answer": "Every receiving and change address of that account, past and future; no spending and no address on the other branch.",
+      "incorrect_answers": [
+        "Every address the seed ever made, the multi-sig key's included, since an xpub is derived straight from the master key.",
+        "Only the receiving addresses of that account, because the change chain is beyond what any public key can ever derive.",
+        "Every address of that account and the power to spend from them, since the xpub carries the account's own signing key itself."
+      ],
+      "explanation": "An account xpub derives public keys for both chains below its account, so it reveals the whole account but no private key. The multi-sig key sits on a different hardened branch, and a hardened child cannot be derived from a public key, so the xpub reaches nothing outside its own branch.",
+      "difficulty_level": 4,
+      "topic": "bitcoin",
+      "tags": [
+        "daily-quiz",
+        "day-3",
+        "wallet-lab",
+        "xpub",
+        "hardened-derivation",
+        "seed-phrase"
+      ],
+      "lesson_block": "Reach of an xpub",
+      "specific_source": {
+        "lesson": "dynamic-labs/wallet (day 2 wallet lab worksheet)",
+        "reading": "What an account xpub reveals"
       }
     }
   ]
