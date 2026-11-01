@@ -16,7 +16,7 @@
 
 The CRS report explains how U.S. anti-money-laundering law was applied to virtual currencies before Congress or FinCEN had comprehensively rewritten the legal framework around them. Its central contribution is institutional: virtual currency laundering is not only a technical tracing problem, but also a legal classification problem involving the Bank Secrecy Act, money services businesses, money transmitters, suspicious activity reporting, criminal money-laundering statutes, and enforcement against exchanges or payment systems.
 
-For this lesson, the report supplies the legal and regulatory foundation behind the lesson's broader forensics narrative. The lesson emphasizes tracing, pseudonymity, obfuscation, chokepoints, and case studies; the CRS report shows why those chokepoints matter legally and how prosecutors and regulators used existing AML categories to make virtual-currency conduct actionable.
+For this lesson, the report supplies the legal and regulatory foundation behind the lesson's broader forensics narrative. The lesson (recut as Attribution and Confidence) teaches how to name a service, state a source and give a confidence; the CRS report adds the legal side of why exchanges hold the records that corroborate a trace, and how prosecutors and regulators used existing AML categories to make virtual-currency conduct actionable.
 
 ## Reading-Lesson Connection
 
@@ -39,7 +39,7 @@ The report also adds nuance beyond the lesson slides. It foregrounds legal uncer
 - Weak or absent KYC/AML controls at exchangers can convert a business into a useful laundering chokepoint for criminals and an enforcement target for regulators.
 - Cross-border transfer, anonymity or pseudonymity, settlement finality, and uneven international regulation are presented as features that make virtual currencies attractive to money launderers.
 - The report treats legal uncertainty as a real policy problem: clarity can help enforcement, but broad obligations can also risk burdening legitimate innovation.
-- The reading is primarily about AML law and enforcement through 2019; it does not cover the lesson's later bridge, DEX, cross-chain tracing, AI attribution, or embedded provenance topics in depth.
+- The reading is primarily about AML law and enforcement through 2019; it does not cover clustering, label sources, platform analytics or confidence scales, which the lesson teaches.
 
 ## Essential Concepts From The Reading
 
@@ -150,8 +150,8 @@ Virtual currencies can cross borders easily, while AML regimes are not uniformly
 - Avoid: asking for the name of a commentator or bill sponsor.
 
 - Target: Assess how the reading complements, but does not fully cover, the lesson's technical forensics topics.
-- Good question shape: compare what the CRS report explains about regulation with what the lesson adds about mixers, bridges, DEXs, and cross-chain tracing.
-- Avoid: attributing post-2019 bridge or AI-forensics concepts to the CRS report.
+- Good question shape: compare what the CRS report explains about regulation with what the lesson adds about label sources, platform clustering and confidence.
+- Avoid: attributing post-2019 platform, clustering or confidence concepts to the CRS report.
 
 ## High-Value Question Tags
 
@@ -197,14 +197,14 @@ Virtual currencies can cross borders easily, while AML regimes are not uniformly
 - Do not turn Silk Road, AlphaBay, e-Gold, Liberty Reserve, Ripple, or BTC-e into name-recognition questions; use them to test the legal concept each example illustrates.
 - Do not ask whether Bitcoin is legal tender as a standalone fact; tie it to why legal tender status is not the end of AML analysis.
 - Do not ask learners to list every bill from the 116th Congress; focus on the policy categories they represent.
-- Do not imply that the CRS report covers later DeFi, bridges, Tornado Cash, AI attribution, or embedded provenance topics. Those are lesson concepts, not central reading claims.
+- Do not imply that the CRS report covers later DeFi, bridges, Tornado Cash, platform analytics or clustering studies. Those are not central reading claims.
 - Do not reduce the reading to "crypto is anonymous"; the report's more useful assessment angle is how anonymity-like features interact with intermediaries, legal duties, and enforcement.
 
 ## Acquisition And Grounding Notes
 
 The assigned reading was acquired from `/tmp/blockchain-course-readings/text/crs_virtual_currencies_money_laundering.txt`, with the corresponding PDF at `/tmp/blockchain-course-readings/crs_virtual_currencies_money_laundering.pdf`. The syllabus match came from `/tmp/blockchain-syllabus.txt`, which lists this reading for `01-FO Illicit Finance Forensics and Regulation`.
 
-The synthesis is grounded in the CRS report text, the assigned lesson identity, and the existing lesson synthesis file for alignment. The CRS report is a 2019 legal background document, so it does not include later lesson examples and technologies such as Ronin, Tornado Cash litigation, modern bridges, DEX laundering workflows, AI-assisted attribution, or embedded provenance. Those topics should be assessed from the lesson synthesis, not attributed to this reading.
+The synthesis is grounded in the CRS report text, the assigned lesson identity, and the existing lesson synthesis file for alignment. The CRS report is a 2019 legal background document, so it does not include later technologies and cases such as Tornado Cash litigation, modern bridges, DEX laundering workflows, or the Bitcoin Fog appeal. Lesson topics should be assessed from the lesson synthesis, not attributed to this reading.
 
 ## Readiness Check
 

@@ -32,10 +32,6 @@ slide index), which is never listed here.
   in 02-FO, 04-AS, 06-FO and 07-FO: use six digits. (31 Oct 2026, D7 ③ browser check)
 
 ## Quizzes
-- 01-FO bank (`quizes/quiz_json/`) and `lesson_synthesis/` 01-FO synthesis predate the recut as Attribution and
-  confidence: no questions on the nine new slides (q9, and q1-q4 on the unrated slides hidden the same day, were
-  retired, leaving 4 slide questions); q10 still traces to Colonial Pipeline, hidden 24 Oct as moved to 03-FO.
-  Both 01-FO syntheses also still teach Ronin, hidden 31 Oct as moved to 09-FO. (31 Oct 2026, 01-FO recut as D6 ③)
 - 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`) and the day 2 daily
   quiz have no question on the new slide "A blockchain is a record, not a currency" (one chain many assets, one
   asset many chains, a chain with no coin); q1 traces to the hidden "What is a Blockchain?" slide, so retrace it to

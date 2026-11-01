@@ -1,26 +1,24 @@
 {
   "lesson_id": "forensics_01_fo_illicit_finance_regulation_case_studies",
-  "lesson_title": "Illicit Finance, Regulation, and Case Studies",
-  "date_generated": "2026-04-26",
+  "lesson_title": "Attribution and Confidence",
+  "date_generated": "2026-10-31",
   "topic": "forensics",
   "tags": [
     "forensics",
     "01-fo-illicit-finance-regulation-case-studies",
-    "illicit-finance",
-    "blockchain-forensics",
-    "pseudonymity",
-    "money-laundering",
-    "regulatory-chokepoints",
-    "case-studies",
+    "attribution",
+    "confidence",
+    "labels",
+    "clustering",
+    "bitcoin-fog",
     "quiz-bank"
   ],
   "metadata": {
     "module": "forensics",
     "lesson_file_stem": "01-FO-illicit_finance_regulation_case_studies",
-    "slide_source_path": "/tmp/blockchain-course-slide-only/forensics_01-FO-illicit_finance_regulation_case_studies-slides-only.qmd",
-    "reading_source_path": "/tmp/blockchain-course-readings/text/crs_virtual_currencies_money_laundering.txt",
-    "question_count": 7,
-    "lesson_grounded_count": 4,
+    "lesson_path": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+    "question_count": 13,
+    "lesson_grounded_count": 10,
     "reading_grounded_count": 3,
     "reading_assignment": "Sykes and Vanatko, Virtual Currencies and Money Laundering: Legal Background, Enforcement Actions, and Legislative Proposals"
   },
@@ -33,18 +31,24 @@
         "lectures": [
           {
             "id": "lec_illicit_finance_regulation_case_studies_lesson",
-            "title": "Illicit Finance, Regulation, and Case Studies - slides",
+            "title": "Attribution and Confidence - slides",
             "enabled": true,
             "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
               "q5",
               "q6",
               "q7",
+              "q8",
+              "q9",
               "q10"
             ]
           },
           {
             "id": "lec_illicit_finance_regulation_case_studies_reading",
-            "title": "Illicit Finance, Regulation, and Case Studies - assigned reading",
+            "title": "Attribution and Confidence - assigned reading",
             "enabled": true,
             "question_ids": [
               "q11",
@@ -58,119 +62,293 @@
   },
   "questions": [
     {
-      "id": "q5",
+      "id": "q1",
       "question_type": "multiple_choice",
-      "question_stem": "Why can a CoinJoin-style transaction undermine a common-input-ownership heuristic?",
-      "correct_answer": "Multiple users may intentionally contribute inputs to one transaction, so shared inputs do not necessarily mean one owner controls all of them.",
+      "question_stem": "An explorer tags the 2-million-address cluster at the end of your trace \"Exchange X\" but shows no basis for the tag. What confidence does the course scale give the attribution?",
+      "correct_answer": "Low, because it rests on one label with no basis you can check.",
       "incorrect_answers": [
-        "The transaction is usually run by a custodial mixer, so all inputs should be attributed to the coordinator rather than the contributors.",
-        "The equal-sized outputs remove the need for input analysis, so investigators can infer one owner from the matching denominations.",
-        "The heuristic is designed only for exchange deposit addresses, so a CoinJoin transaction falls outside the model regardless of ownership."
+        "Moderate, because a well-known explorer's tag is one strong line.",
+        "Moderate, because cluster size and a tag are two lines that agree.",
+        "High, because a cluster this large is nearly always a named service."
       ],
-      "explanation": "Forensic heuristics are useful but fallible inference rules. Privacy tools can deliberately target those assumptions, creating false-positive risks if heuristics are treated as proof.",
+      "explanation": "A tag with no basis shown is one unverified label, and a cluster's size is behavior alone. Neither is a strong line, and they are not independent, so the attribution stays Low until a label of another kind agrees.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "01-fo-illicit-finance-regulation-case-studies",
+        "lesson-synthesis",
+        "labels",
+        "confidence",
+        "attribution",
+        "scenario"
+      ],
+      "lesson_block": "Step 4 ended Low: now name the service",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "Step 4 ended Low: now name the service"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "Exchange X publishes a list of its own wallet addresses, and the last address of your trace is on it. What does the list support, and what does it not?",
+      "correct_answer": "It is strong for the addresses it lists, because the owner holds the keys, but it says nothing about the addresses it leaves out.",
+      "incorrect_answers": [
+        "It is strong for the whole cluster behind the address, because an owner would list every single address that it controls.",
+        "It is weak, because an owner has every reason to publish a list that flatters its own compliance record and hides the rest.",
+        "It is current for any date, because a published list never changes once the owner has posted it for the public to read."
+      ],
+      "explanation": "The owner knows its own keys, so a listed address is a strong label. The same list is silent on deposit addresses or wallets it did not publish, and lists change, so the exact address and the date matter.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "01-fo-illicit-finance-regulation-case-studies",
+        "lesson-synthesis",
+        "labels",
+        "label-sources",
+        "owner-list",
+        "misconception"
+      ],
+      "lesson_block": "A label is only as good as its source",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "A label is only as good as its source"
+      }
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "A forum alias and an IP address analysis point to a named person as the operator of a mixing service. How far does this evidence carry on its own?",
+      "correct_answer": "It is a lead to a person or service that needs another line of evidence before anyone relies on it.",
+      "incorrect_answers": [
+        "It is strong evidence of the operator, because forum posts and IP addresses are public and checkable.",
+        "It is as strong as a court record, because investigators gathered it in the course of a criminal case.",
+        "It is worthless, because off-chain information can never be tied to on-chain activity at all."
+      ],
+      "explanation": "Open-source intelligence is a lead. It points at a person or a service but needs a second line of a different kind, such as the cluster or a record, to carry weight.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "01-fo-illicit-finance-regulation-case-studies",
+        "lesson-synthesis",
+        "labels",
+        "osint",
+        "label-sources",
+        "attribution"
+      ],
+      "lesson_block": "A label is only as good as its source",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "A label is only as good as its source"
+      }
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A platform reports a cluster of about 900,000 addresses for a mixer. Investigators' own test deposits to the mixer landed in four of the five addresses they tested. How should you read the cluster?",
+      "correct_answer": "As a floor: the cluster likely leaves out some of the service's addresses, so the real count is higher.",
+      "incorrect_answers": [
+        "As complete: four of five is close enough, so the cluster lists every address the mixer used in total.",
+        "As unreliable: one missed address means the whole cluster should be dropped from the assessment entirely.",
+        "As a ceiling: the platform merges owners freely, so the real count is lower than 900,000 addresses."
+      ],
+      "explanation": "A conservative platform leaves out addresses that belong to the service (underinclusion). The missed deposit shows that here, so the count is a floor. Merging unrelated owners is the opposite error and shows up in a different test.",
       "difficulty_level": 4,
       "topic": "forensics",
       "tags": [
         "forensics",
         "01-fo-illicit-finance-regulation-case-studies",
-        "slides",
-        "heuristics",
-        "coinjoin",
-        "false-positives",
-        "misconception"
+        "lesson-synthesis",
+        "platforms",
+        "clustering",
+        "underinclusion",
+        "scenario"
       ],
-      "lesson_block": "Challenges in Forensic Analysis",
+      "lesson_block": "Platforms run your heuristics at scale",
       "source_type": "slides",
       "specific_source": {
-        "lesson": "/tmp/blockchain-course-slide-only/forensics_01-FO-illicit_finance_regulation_case_studies-slides-only.qmd",
-        "anchor": "Challenges in Forensic Analysis"
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "Platforms run your heuristics at scale"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst merges two clusters whenever an output looks like change, without testing the guess. What is the risk?",
+      "correct_answer": "One wrong link joins everything behind it, so unrelated owners collapse into a single supercluster.",
+      "incorrect_answers": [
+        "The clusters stay too small, because change guesses only ever leave out addresses that really belong.",
+        "The labels disappear, because merged clusters lose the tags that were attached to each part.",
+        "The analysis slows, because a larger cluster takes much longer to search than two small ones."
+      ],
+      "explanation": "Careless change merging builds clusters that hold many owners; one false link carries every address attached to it. This is over-merging, the opposite of the underinclusion a conservative platform shows.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "01-fo-illicit-finance-regulation-case-studies",
+        "lesson-synthesis",
+        "clustering",
+        "change-heuristic",
+        "over-merging",
+        "mechanism"
+      ],
+      "lesson_block": "Platforms run your heuristics at scale",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "Platforms run your heuristics at scale"
       }
     },
     {
       "id": "q6",
       "question_type": "multiple_choice",
-      "question_stem": "Which comparison best captures the distinction between centralized exchanges, DEXs, and bridges in laundering workflows?",
-      "correct_answer": "Centralized exchanges can create KYC and fiat off-ramp records, DEXs automate crypto-to-crypto swaps, and bridges move value across chain boundaries that require correlation.",
+      "question_stem": "A colleague writes \"99.9% confident\" next to a cluster label, citing a study that found a very low false-positive rate for the clustering method. What is wrong with the claim?",
+      "correct_answer": "The rate describes the method on the study's data, not this link, so give a word and the reason.",
       "incorrect_answers": [
-        "Centralized exchanges and DEXs both swap assets, but only DEXs routinely bind trades to verified customers while bridges add liquidity within one chain rather than crossing ledgers.",
-        "Centralized exchanges are mainly obfuscation tools, DEXs are regulated fiat cash-out ramps, and bridges give every route one shared identifier for investigators.",
-        "Centralized exchanges matter only after fiat cash-out, DEXs provide stronger anonymity than privacy coins, and bridges preserve one address across chains during laundering."
+        "The rate is too low to trust, because a study this small cannot support so many nines in a report.",
+        "The rate is fine if two platforms agree, because agreement turns a method's rate into a link's rate.",
+        "The rate is right, but the wording is off: analysts should say 100% when a study found none."
       ],
-      "explanation": "The lesson distinguishes chokepoints and trace surfaces: centralized exchanges may connect to accounts and fiat, DEXs reduce account-based intermediaries for crypto swaps, and bridges create cross-chain continuity challenges.",
-      "difficulty_level": 3,
-      "topic": "forensics",
-      "tags": [
-        "forensics",
-        "01-fo-illicit-finance-regulation-case-studies",
-        "slides",
-        "dexs",
-        "bridges",
-        "kyc-aml",
-        "cross-chain-tracing"
-      ],
-      "lesson_block": "Decentralized Exchanges (DEXs)",
-      "source_type": "slides",
-      "specific_source": {
-        "lesson": "/tmp/blockchain-course-slide-only/forensics_01-FO-illicit_finance_regulation_case_studies-slides-only.qmd",
-        "anchor": "Decentralized Exchanges (DEXs); BTC-e: Weak KYC Made the Cluster Actionable; Future of Forensics: Automated Cross-Chain Tracing"
-      }
-    },
-    {
-      "id": "q7",
-      "question_type": "multiple_choice",
-      "question_stem": "A bridge emits a withdrawal on Chain B minutes after a deposit on Chain A, with a fee-adjusted amount that closely matches the original transfer. Why is that useful for cross-chain tracing, and what remains unresolved?",
-      "correct_answer": "Bridge logs, timing, amount, and fee-adjusted matching can support transaction linkage across chains, but real-world identity attribution still needs corroborating evidence.",
-      "incorrect_answers": [
-        "The match is enough to identify common ownership of both wallets, but investigators still need the bridge's pricing formula to value the transfer and allocate fees.",
-        "It shows a likely bridge interaction, but once value exits on Chain B analysts should stop using timing, amount, and bridge-log correlations for attribution.",
-        "It mainly proves the bridge was a regulated exchange deposit with customer records, while the unresolved issue is whether public ledgers recorded enough evidence for attribution review."
-      ],
-      "explanation": "The XSema-style slide supports automated cross-chain linkage from bridge logs, timing windows, and fee-adjusted amount matching. Separate attribution evidence is still needed before tying that linked flow to a human or organization.",
+      "explanation": "A study tests clustering against known answers and shows it works for most users and fails in known ways. Its error rate is for the method on that test set. The course gives each link Low, Moderate or High, never a percentage.",
       "difficulty_level": 4,
       "topic": "forensics",
       "tags": [
         "forensics",
         "01-fo-illicit-finance-regulation-case-studies",
-        "slides",
-        "xsema",
-        "bridges",
-        "cross-chain-tracing",
-        "mechanism"
+        "lesson-synthesis",
+        "clustering",
+        "error-rate",
+        "confidence",
+        "misconception"
       ],
-      "lesson_block": "Future of Forensics: Automated Cross-Chain Tracing",
+      "lesson_block": "Clustering works for most, fails in known ways",
       "source_type": "slides",
       "specific_source": {
-        "lesson": "/tmp/blockchain-course-slide-only/forensics_01-FO-illicit_finance_regulation_case_studies-slides-only.qmd",
-        "anchor": "Future of Forensics: Automated Cross-Chain Tracing"
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "Clustering works for most, fails in known ways"
       }
     },
     {
-      "id": "q10",
+      "id": "q7",
       "question_type": "multiple_choice",
-      "question_stem": "In the Colonial Pipeline case, why was following the ransom trail not enough by itself to recover funds?",
-      "correct_answer": "Recovery required tracing to intersect with jurisdiction, legal authority, and control over the relevant key or account.",
+      "question_stem": "In the model explanation of Bitcoin Fog, suppose the investigators' own test deposits had never been made. Which part would change, and how?",
+      "correct_answer": "Part 4 falls from High to Moderate, because only clustering evidence of one kind would remain.",
       "incorrect_answers": [
-        "Recovery required a clean chain-of-custody graph, because a certain trace gives law enforcement control over the attacker's wallet.",
-        "Recovery depended on funds reaching a compliant fiat off-ramp, because warrants cannot affect assets before exchange deposit.",
-        "Recovery was limited because Bitcoin transactions are shielded from graph analysis, so agents relied only on victim records."
+        "Part 2 changes most, because the number of addresses would drop below 900,000 without deposits.",
+        "Part 3 is dropped, because without deposits nothing about the group would be inferred at all.",
+        "Part 5 changes most, because the operator's identity would no longer come from records off the chain."
       ],
-      "explanation": "The lesson uses Colonial Pipeline to distinguish tracing from recovery: live transaction visibility mattered, but asset recovery depended on legal process and practical control.",
+      "explanation": "The confidence in part 4 rests on two kinds of evidence agreeing: the clustering and deposits made to the service itself. Other tools that check the cluster are the same kind as the clustering, so without the deposits the word falls to Moderate.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "01-fo-illicit-finance-regulation-case-studies",
+        "lesson-synthesis",
+        "explanation",
+        "confidence",
+        "bitcoin-fog",
+        "five-part"
+      ],
+      "lesson_block": "A model explanation: Bitcoin Fog",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "A model explanation: Bitcoin Fog"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "The court accepted Chainalysis Reactor's clustering in the Bitcoin Fog case although the platform had no peer review and no known error rate. Which check was evidence of a different kind from the clustering?",
+      "correct_answer": "Investigators' own deposits to the service, four of five of which landed in the cluster.",
+      "incorrect_answers": [
+        "A second platform agreeing on all 144 addresses that paid the defendant, as it did.",
+        "The defense's own tool confirming almost 400,000 addresses with no false positive found at all.",
+        "Both experts agreeing that the platform's clustering was conservative here on purpose."
+      ],
+      "explanation": "Deposits made to the service itself test the cluster against the service's behavior. A second platform and the defense's tool also cluster the chain, so they support the result but are the same kind of evidence.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "01-fo-illicit-finance-regulation-case-studies",
+        "lesson-synthesis",
+        "bitcoin-fog",
+        "corroboration",
+        "kinds-of-evidence",
+        "court"
+      ],
+      "lesson_block": "Bitcoin Fog: why the court trusted the trace",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "Bitcoin Fog: why the court trusted the trace"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "Your trace reaches a cluster of over 900,000 addresses that you can name as a mixer. An agent asks who ran it. What do you say?",
+      "correct_answer": "The chain shows and sizes the service; who ran it comes from records off the chain, outside your own assessment.",
+      "incorrect_answers": [
+        "The largest address in the cluster belongs to the operator, because the owner usually sits at its center.",
+        "The earliest address in the cluster names the operator, because the person funded the service at its launch.",
+        "High confidence on the cluster covers its operator too, because a service and its owner are one finding."
+      ],
+      "explanation": "In Bitcoin Fog, Samourai Wallet and Hydra, the chain found and sized the service. The people, their intent and control came from aliases, IP addresses, forum posts, servers and a government listing. The analyst's assessment stops at what the chain shows.",
       "difficulty_level": 3,
       "topic": "forensics",
       "tags": [
         "forensics",
         "01-fo-illicit-finance-regulation-case-studies",
-        "slides",
-        "colonial-pipeline",
-        "asset-recovery",
-        "legal-process",
-        "case-studies"
+        "lesson-synthesis",
+        "attribution",
+        "on-chain-vs-off-chain",
+        "records",
+        "scenario"
       ],
-      "lesson_block": "Case Study: Colonial Pipeline",
+      "lesson_block": "The chain shows a service; records show who",
       "source_type": "slides",
       "specific_source": {
-        "lesson": "/tmp/blockchain-course-slide-only/forensics_01-FO-illicit_finance_regulation_case_studies-slides-only.qmd",
-        "anchor": "Case Study: Colonial Pipeline; Colonial Pipeline: Payment Recovery"
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "The chain shows a service; records show who"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "TRM and Chainalysis both tag the last cluster of your trace \"Exchange X\". Then Exchange X's own published list is found to include the final address. How does your confidence move?",
+      "correct_answer": "Moderate with two platforms agreeing, then High once the owner's list adds another kind.",
+      "incorrect_answers": [
+        "High with two platforms agreeing, then no higher once the owner's own list is also added.",
+        "Moderate with two platforms agreeing, then still Moderate once the owner's list is added in.",
+        "Low with two platforms agreeing, then only Moderate once the owner's list is added to them."
+      ],
+      "explanation": "Two platforms run similar clustering heuristics over the same transactions, which is one kind of evidence. The owner's list is a label of another kind, so a cluster and a label that agree, with no known failure, reach High.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "01-fo-illicit-finance-regulation-case-studies",
+        "lesson-synthesis",
+        "confidence",
+        "kinds-of-evidence",
+        "attribution",
+        "scenario"
+      ],
+      "lesson_block": "Attribution confidence: count kinds of evidence",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd",
+        "anchor": "Attribution confidence: count kinds of evidence"
       }
     },
     {
