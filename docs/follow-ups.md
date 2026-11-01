@@ -12,12 +12,18 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
+- Four new bib entries for 13-FO (`decrypt_dprk2025theft_2025`, `trmlabs_drift_2026`, `elliptic_drift_2026`,
+  `theblock_safedevmachine_2025`) quote search excerpts: the pages were not reachable from the cloud session. Read each
+  page and replace the note with the passage word for word; prefer Chainalysis's own 2025 theft report over Decrypt.
+  (1 Nov 2026, D9 ① build)
 
 ## Quizzes
 - No quiz bank asks about 12-FO (`blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd`, D9 ②: typologies,
   ATT&CK, AADAPT, the Diamond Model); there is no day 9 bank yet. (1 Nov 2026, D9 ② build)
 - No quiz bank asks about 14-FO (`blockchain-course/lessons/forensics/14-FO-fusing_sources.qmd`, D9 ③: kinds of
   source, ICD 203's source factors, echoes, freezes, classified holdings as a process). (1 Nov 2026, D9 ③ build)
+- No quiz bank asks about 13-FO (`blockchain-course/lessons/forensics/13-FO-state_actors_north_korea.qmd`, D9 ①: state
+  actors, North Korea's thefts, Bybit's way in, Drift, vendor versus government attribution). (1 Nov 2026, D9 ① build)
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
