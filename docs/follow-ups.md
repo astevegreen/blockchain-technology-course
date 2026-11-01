@@ -23,6 +23,9 @@ slide index), which is never listed here.
   lab's questions (4, 5 and 5); they still need questions on the previous day's lessons, about five each (build-spec
   "Daily quizzes"). The week-one check replaces the day 5 morning quiz. (1 Nov 2026, lab quiz questions)
 
+- No quiz question tests who signs a sweep on the Tron lab's worked example (the sweeping address signs it and pays
+  nothing itself; `dynamic-labs/tron/quizes/INSTRUCTOR_ANSWERS.md` question 1). (1 Nov 2026, lab quiz questions)
+
 ## Labs
 - The explorer lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`): its stack
   pulls about 4 GB of images. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D1 explorer lab build)
