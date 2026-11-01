@@ -1,5 +1,5 @@
 ---
-title: "Ransomware Payments: Colonial Pipeline"
+title: "Ransomware: the Payment and the Cash-out"
 subtitle: 'Section VIII: Forensics'
 author: CATS
 lesson: 03-FO
@@ -15,7 +15,7 @@ format:
 
 ## Ransom: a payment you can watch from the start {.smaller}
 
-**Bottom line:** the victim knows the address it paid, and the ledger is "visible online to everyone" [@fbi_colonialaffidavit_2021, para. 21]. So a ransom trace starts from a known payment. This lesson follows Colonial Pipeline's 2021 ransom hop by hop, the way your trace will this afternoon.
+**Bottom line:** the victim knows the address it paid, and the ledger is "visible online to everyone" [@fbi_colonialaffidavit_2021, para. 21]. So a ransom trace starts from a known payment. This lesson follows Colonial Pipeline's 2021 ransom hop by hop, the way your trace will this afternoon, then the services where ransoms cash out.
 
 | This lesson | What you take to the lab |
 | --- | --- |
@@ -24,6 +24,9 @@ format:
 | The ransom on-chain, hop by hop | Each hop's heuristic and confidence |
 | Where the trace stopped | Not every trace reaches a service |
 | The developer's and affiliate's shares | Reading a split |
+| Where ransoms cash out | The kinds of first service |
+| Darknet markets | A market is a service too |
+| Silk Road's stolen coins | The same patterns on a market's money |
 | The portal and the chat as leads | What to ask the victim for |
 | Trends, as of February 2026 | Why each payment is worth tracing |
 
@@ -32,17 +35,17 @@ format:
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens lesson ③ of day 2 and ties it to the afternoon's annotated trace. It matters here because the lab's trace starts at a ransom payment, and this lesson shows a real one followed from the same start. Emphasize that ransomware gives the analyst an unusual gift: the starting address and transaction are known, not guessed.
+This slide opens lesson ② of day 6 and ties it to the afternoon's annotated trace. It matters here because the lab's trace starts at a ransom payment, and this lesson shows a real one followed from the same start. Emphasize that ransomware gives the analyst an unusual gift: the starting address and transaction are known, not guessed.
 
 **Key Points**
 - The FBI affidavit defines the blockchain as a public ledger that is "visible online to everyone" (para. 21).
 - Colonial told the FBI the address it had been told to pay (para. 28), so the trace began from a known address.
-- The lesson uses the heuristics from lesson ② (co-spending, change, "change undetermined") on Colonial's real transfers.
-- New glossary terms this lesson: ransom note, payment portal, ransomware-as-a-service (RaaS), affiliate, digital forensics and incident response (DFIR) firm, anonymity-enhanced cryptocurrency (AEC), holding address.
+- The lesson uses the heuristics from lesson ① (co-spending, change, "change undetermined") on Colonial's real transfers, then follows where ransoms cash out, darknet markets among them.
+- New glossary terms this lesson: ransom note, payment portal, ransomware-as-a-service (RaaS), affiliate, digital forensics and incident response (DFIR) firm, anonymity-enhanced cryptocurrency (AEC), holding address, cash-out, darknet market, tumbler.
 
 **Walkthrough**
 1. Read the bottom line.
-2. Run down the table: each row is a slide, and the right column is what it gives the lab.
+2. Run down the table: each row is a slide, and the right column is what it gives the lab. Colonial takes the first half; the cash-out the second.
 
 **Sources**
 - @fbi_colonialaffidavit_2021
@@ -98,7 +101,7 @@ This slide teaches how a ransom is demanded and paid, from the note to the payme
 **Walkthrough**
 1. Follow the diagram top to bottom: note, portal, exchange, ransom address.
 2. Ask: which box does your trace start from? (The ransom address.)
-3. Ask: which boxes hold leads that are not on the blockchain? (The note and the portal: slide 8.)
+3. Ask: which boxes hold leads that are not on the blockchain? (The note and the portal: slide 11.)
 
 **Sources**
 - @fbi_colonialaffidavit_2021
@@ -204,7 +207,7 @@ This slide draws the ransom's path as the FBI affidavit describes it, from the r
 1. Start at the yellow ransom address on the left.
 2. Follow the numbered edges in order: 1 to 5.
 3. Point out the two places an address is used twice: ...tpsf receives in hops 1 and 2, and ...wg45 pays itself in hop 4.
-4. Ask: which white boxes would you want to follow next? (...9zwt, with 11.2496 BTC: slide 7.)
+4. Ask: which white boxes would you want to follow next? (...9zwt, with 11.2496 BTC: slide 6.)
 
 **Sources**
 - @fbi_colonialaffidavit_2021
@@ -228,20 +231,20 @@ This slide draws the ransom's path as the FBI affidavit describes it, from the r
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide turns the affidavit's narrative into the annotated trace the lab asks for. It matters here because students see lesson ②'s heuristics working, and failing to decide, on a real ransom. Emphasize that "change undetermined" appears twice and is a correct answer: no confidence is given because no call is made, and both outputs stay leads.
+This slide turns the affidavit's narrative into the annotated trace the lab asks for. It matters here because students see lesson ①'s heuristics working, and failing to decide, on a real ransom. Emphasize that "change undetermined" appears twice and is a correct answer: no confidence is given because no call is made, and both outputs stay leads.
 
 **Key Points**
 - Hop 1: two outputs, the larger and the smaller; from this transaction alone the clues do not show which is change.
-- Hop 2: the bulk goes to ...tpsf, the address that received hop 1's small output (para. 30). Both branches of hop 1 meet at one address, so one holder received both, and hop 3 spends them together (para. 31). It fails if ...tpsf belongs to a service that holds many customers' coins; lesson ② also notes some wallets reuse addresses.
-- Hop 3: ...tpsf spends both its coins in one transaction (para. 31); neither output is round and both addresses are new, so change is undetermined. The affidavit follows the 63.75; the 11.25 is a lead (slide 7).
+- Hop 2: the bulk goes to ...tpsf, the address that received hop 1's small output (para. 30). Both branches of hop 1 meet at one address, so one holder received both, and hop 3 spends them together (para. 31). It fails if ...tpsf belongs to a service that holds many customers' coins; lesson ① also notes some wallets reuse addresses.
+- Hop 3: ...tpsf spends both its coins in one transaction (para. 31); neither output is round and both addresses are new, so change is undetermined. The affidavit follows the 63.75; the 11.25 is a lead (slide 6).
 - Hop 4: 0.04976631 returns to the paying address itself (para. 32): change by the plainest clue there is, so follow the round 63.70000000. Rated Moderate because it is still a same-transaction clue. Whether the 63.70 paid someone else or moved to the same actor's own address does not change where the trace goes; the 27 May grouping suggests the latter.
 - Hop 5: an explorer grouped ...dNxB with at least 23 other addresses "in one wallet" (para. 33). The affidavit does not show the transactions behind the grouping, so it is one unverified label: Low on the course scale. Checking the 27 May transactions for co-spending yourself would make it your own judgment, still Moderate at best.
-- Course scale: same-transaction clues stop at Moderate; High needs a different kind of evidence (day 3).
+- Course scale: same-transaction clues stop at Moderate; High needs a different kind of evidence (lesson ③).
 
 **Walkthrough**
 1. Read each row against the diagram on the last slide.
 2. Ask: why is hop 1 undetermined when hop 2 settles it? (Hop 2 is a different transaction; reading forward resolved hop 1.)
-3. Ask: how would you raise hop 5 from Low? (Read the 27 May transactions yourself: co-spending there is Moderate. High needs something off-chain, such as an exchange's records: day 3.)
+3. Ask: how would you raise hop 5 from Low? (Read the 27 May transactions yourself: co-spending there is Moderate. High needs something off-chain, such as an exchange's records: lesson ③.)
 
 **Sources**
 - @fbi_colonialaffidavit_2021
@@ -259,7 +262,7 @@ This slide turns the affidavit's narrative into the annotated trace the lab asks
   - 11.2496 BTC to `...9zwt` at hop 3
   - 0.0000675 BTC to `...ycsm` at hop 2
   - about 5.9 BTC from the 23+ other addresses, gathered into `...segq` with the 63.7
-- **Where DarkSide's money usually went:** mostly to exchanges, many in places that don't enforce anti-money-laundering rules [@robinson_darkside_2021].
+- **Where most ransoms go next:** a service, such as an exchange (later in this lesson).
 
 ::: {.notes}
 
@@ -269,9 +272,9 @@ This slide shows that a trace can end without reaching a service. It matters her
 **Key Points**
 - Para. 33: on 27 May, 69.60422177 BTC, including the 63.7, went to ...segq, and "it has not moved since" (the affidavit is dated 7 June 2021).
 - The leads come from paras. 30-31; the 5.9 BTC is arithmetic: 69.60422177 minus 63.70000000 is 5.90422177 BTC.
-- Elliptic (18 May 2021) found that most DarkSide funds went to cryptoasset exchanges, many in jurisdictions that do not enforce anti-money-laundering rules.
+- Most DarkSide funds did reach a service: Elliptic found they went mainly to exchanges (slide 8).
 - Define holding address briefly: an address where funds are gathered and then left unmoved.
-- Day 2's lab product: the trace ends at the first service; when it stops before that, write where and as of when.
+- Day 6's lab: the trace ends at the first service; when it stops before that, write where and as of when.
 
 **Walkthrough**
 1. Read the bottom line; stress the date.
@@ -334,6 +337,151 @@ This slide teaches how a ransomware-as-a-service split appears on-chain, and has
 
 :::
 
+## A ransom cashes out at a service {.smaller}
+
+**Bottom line:** a ransom becomes money the criminal can spend at a service: an exchange, an over-the-counter (OTC) broker or a darknet market. Your trace ends at the first one.
+
+:::: {.columns}
+::: {.column width="60%"}
+- **Exchanges:** most DarkSide funds, many to places that don't enforce anti-money-laundering rules (as of May 2021) [@robinson_darkside_2021].
+- **BTC-e:** fined \$110 million by FinCEN in 2017 for facilitating ransomware [@financialcrimesenforcementnetworkfincen_fincenfinesbtce_2017].
+- **Garantex:** nearly \$6 million from the Conti ransomware gang (as of April 2022) [@u.s.dept.oftreasury_hydragarantex_2022].
+- **OTC brokers:** "some of them specialize in providing money laundering services" [@chainalysis_moneylaundering_2020].
+- **Darknet markets:** about \$8 million in ransomware proceeds passed through Hydra [@u.s.dept.oftreasury_hydragarantex_2022].
+:::
+::: {.column width="40%"}
+```{dot}
+//| fig-width: 4
+//| fig-height: 3.8
+digraph CashOut {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  A [label="Affiliate's share", fillcolor="#fef3c7", color="#f59e0b"];
+  X [label="Exchange", fillcolor="#e0f2fe", color="#38bdf8"];
+  O [label="OTC broker", fillcolor="#e0f2fe", color="#38bdf8"];
+  M [label="Darknet market", fillcolor="#e0f2fe", color="#38bdf8"];
+
+  A -> X;
+  A -> O;
+  A -> M;
+  M -> X [label="vendors\ncash out", style=dashed];
+}
+```
+
+Blue: a service. The trace ends at the first one.
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches where a ransom goes after the split: to a service that turns it into money the criminal can use. It matters here because the lab's trace ends at the first service, and students should know which kinds of service to expect. Emphasize that the first service is where the on-chain trace stops and the off-chain records begin.
+
+**Key Points**
+- Elliptic (Robinson, 18 May 2021): most DarkSide funds were sent to cryptoasset exchanges, many in jurisdictions that do not enforce anti-money-laundering rules.
+- FinCEN (27 July 2017): BTC-e was fined \$110 million; the release's title says it was for "Facilitating Ransomware, Dark Net Drug Sales".
+- Treasury (5 April 2022, release jy0701): Garantex had "over \$100 million in transactions" associated with illicit actors and darknet markets, "including nearly \$6 million from Russian RaaS gang Conti". It sanctioned Garantex and Hydra that day.
+- All three named services were later penalized: FinCEN fined BTC-e (2017), and Treasury sanctioned Garantex and Hydra (2022).
+- Chainalysis (15 January 2020): "while most OTC brokers run a legitimate business, some of them specialize in providing money laundering services to criminals". Day 5 covered OTC brokers.
+- Treasury: "approximately \$8 million in ransomware proceeds" transited Hydra's virtual currency accounts, "including from the Ryuk, Sodinokibi, and Conti ransomware variants".
+- The dashed arrow is the next slide's point: a market's vendors move their earnings on to exchanges.
+- Define cash-out briefly: turning cryptocurrency into money or goods the criminal can use, at a service.
+
+**Walkthrough**
+1. Read the bottom line.
+2. Follow the diagram: every solid arrow ends at a blue box, a service.
+3. Ask: where does your trace end on each arrow? (At the blue box: the first service.)
+4. Ask: why is the first service worth naming? (It keeps records of its customers: off-chain evidence, which lesson ③ uses for High confidence.)
+
+**Sources**
+- @robinson_darkside_2021
+- @financialcrimesenforcementnetworkfincen_fincenfinesbtce_2017
+- @u.s.dept.oftreasury_hydragarantex_2022
+- @chainalysis_moneylaundering_2020
+
+:::
+
+## A darknet market is a shop and a cash-out {.smaller}
+
+**Bottom line:** a darknet market sells illegal goods and services on sites reached with special software that hides its users, and takes "almost exclusively" virtual currency. Its users "often incorrectly believe" the coins are "an anonymous and untraceable means of exchange" [@u.s.dept.oftreasury_hydragarantex_2022].
+
+:::: {.columns}
+::: {.column width="58%"}
+- **Silk Road, 2011-2013:** a Tor market with a Bitcoin payment system built to hide its users [@departmentofjustice_manhattanusattorneyannounces_2014]. Bitcoin was "the only form of payment accepted", and sales topped 9.5 million BTC [@departmentofjustice_silkroadcomplaint_2020, paras. 11-12].
+- **Hydra, from 2015:** the world's largest darknet market when Treasury sanctioned it in April 2022. It sold ransomware-as-a-service, hacking tools, stolen data and drugs; its revenue rose from under \$10 million in 2016 to over \$1.3 billion in 2020 [@u.s.dept.oftreasury_hydragarantex_2022].
+- **A route, not just a shop:** about 86% of the illicit Bitcoin that Russian exchanges received directly in 2019 came from Hydra [@u.s.dept.oftreasury_hydragarantex_2022].
+:::
+::: {.column width="42%"}
+![Silk Road's market page: every price is in BTC](../images/silk-road.jpg)
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches what a darknet market is and why it matters to a ransom trace in two ways: as a shop that sells ransomware, and as a route by which criminals cash out. It matters here because a trace that reaches a market has reached a service, and its vendors' coins move on to exchanges. Emphasize the Treasury's point that users wrongly think the coins can't be traced.
+
+**Key Points**
+- Treasury (5 April 2022): darknets are networks "that individuals use special software to access in a manner designed to obscure the individuals' identity"; "Marketplaces that reside on the darknet almost exclusively accept virtual currency as payment for a large range of illegal services and goods, including ransomware-as-a-service (RaaS)"; "illicit actors who transact on the darknet often incorrectly believe virtual currencies to be an anonymous and untraceable means of exchange".
+- DOJ (4 February 2014): Silk Road ran on Tor from about January 2011 until law enforcement shut it down in October 2013, and was designed with "a Bitcoin-based payment system" that concealed users' identities and locations.
+- Complaint for forfeiture (5 November 2020), para. 11: "The only form of payment accepted on Silk Road was Bitcoin." Para. 12: sales "totaling over 9.5 million Bitcoin" and commissions "totaling over 600,000 Bitcoin".
+- Complaint para. 13: Silk Road used a "tumbler" "designed to frustrate the tracking of individual transactions through the Blockchain".
+- Treasury: "Hydra was launched in 2015"; its offerings included "ransomware-as-a-service, hacking services and software, stolen personal information, counterfeit currency, stolen virtual currency, and illicit drugs"; revenue "from under \$10 million in 2016, to over \$1.3 billion in 2020"; "approximately 86 percent of the illicit Bitcoin received directly by Russian virtual currency exchanges in 2019 came from Hydra".
+- Define darknet market briefly: an online market for illegal goods and services, reached with software that hides its users, such as Tor (Silk Road ran on Tor). Define tumbler briefly: a service that mixes coins to break the link between payer and payee (D7 covers mixers).
+
+**Walkthrough**
+1. Read the bottom line and point at the screenshot: every price is in bitcoin.
+2. Read Silk Road and Hydra: one sold drugs, the other also sold ransomware.
+3. Ask: how is Hydra both a shop and a cash-out for a ransomware affiliate? (It sold the ransomware, ransomware proceeds passed through its accounts, and its coins reached Russian exchanges.)
+
+**Sources**
+- @u.s.dept.oftreasury_hydragarantex_2022
+- @departmentofjustice_manhattanusattorneyannounces_2014
+- @departmentofjustice_silkroadcomplaint_2020
+
+:::
+
+## Silk Road: stolen coins left in round amounts {.smaller}
+
+**Bottom line:** in 2020, a court filing traced about 70,000 BTC taken out of Silk Road. The same patterns you read in Colonial's trace showed the way [@departmentofjustice_silkroadcomplaint_2020, paras. 15-19].
+
+| What the filing describes | The pattern you would read |
+| --- | --- |
+| 54 transactions from Silk Road's addresses to two addresses, 70,411.46 BTC (para. 15) | A large outflow from a service |
+| "mainly round Bitcoin amounts and close together in time": ten of exactly 2,500 BTC at about 3:59 am (para. 16) | Round amounts, sent together |
+| Other withdrawals were "mostly less than 100 Bitcoin" (para. 16) | Unlike the service's normal traffic |
+| On 9 April 2013, 69,471.08 BTC sent on to one address, `1HQ3` (para. 17) | Gathered into one address |
+| On 23 April 2015, 101 BTC from `1HQ3` to BTC-e (para. 18) | The first service: an exchange |
+| The other 69,370 BTC stayed in `1HQ3` until November 2020 (para. 19) | A holding address, like Colonial's |
+
+: {tbl-colwidths="[58,42]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reads the money trail of coins taken out of Silk Road, as the 2020 complaint for forfeiture sets it out. It matters here because it shows the patterns from Colonial's trace, round amounts, a holding address and a first service, on a darknet market's money. Emphasize that the on-chain patterns raised the question, and an off-chain record settled it.
+
+**Key Points**
+- Para. 15: in 2020, officers "used a third party bitcoin attribution company" to analyze Silk Road's transactions, and observed 54 transactions from Silk Road's addresses to two addresses, totalling 70,411.46 BTC. A commercial analytics firm did the first pass; the course names such firms for awareness and does not use their platforms.
+- Para. 16: the amounts were "mainly round Bitcoin amounts and close together in time"; ten were "exactly 2,500 Bitcoin" at about 3:59 a.m.; other withdrawals were "mostly less than 100 Bitcoin".
+- Para. 16 also: the 54 transactions "were not noted in the Silk Road database as a vendor withdrawal or a Silk Road employee withdrawal and therefore appear to represent Bitcoin that was stolen from Silk Road". That conclusion came from the market's own database, not the ledger: off-chain evidence (lesson ③).
+- Para. 17: on about 9 April 2013 the two addresses sent 69,471.082201 BTC to 1HQ3. Para. 18: on about 23 April 2015, 1HQ3 sent 101 BTC to BTC-e. Para. 19: the remaining 69,370.082201 BTC stayed in 1HQ3 from April 2015 to November 2020.
+- The forfeiture itself, and who took the coins, are legal process and out of scope; only the trace is read here.
+
+**Walkthrough**
+1. Read the rows top to bottom against the right column.
+2. Ask: which rows could you see on the ledger alone? (All but the database check in para. 16.)
+3. Ask: what confidence would the round amounts alone give that the coins were stolen? (Moderate at best: a pattern from the ledger. The database record is what settled it.)
+4. Ask: how is `1HQ3` like Colonial's `...segq`? (Both held the money still; Silk Road's moved 101 BTC to an exchange first.)
+
+**Sources**
+- @departmentofjustice_silkroadcomplaint_2020
+
+:::
+
 ## The portal and chat are leads; ask for them {.smaller}
 
 **Bottom line:** the start of your trace comes from the victim's side, not the blockchain. Ask the victim, or the firm that paid for it, for everything the criminals sent.
@@ -359,7 +507,7 @@ This slide lists the off-chain artifacts of a ransom and why each is a lead. It 
 - The chat is where the criminals set the price and the address; a discount for paying in Monero (FinCEN p. 5) would show there.
 - FinCEN p. 2: the victim buys the coins at an exchange, often sending from a hosted wallet, so the exchange holds records of the victim's side.
 - FinCEN red flags (p. 7): use of "the onion router or an unidentified web portal" to communicate with the recipient of a cryptocurrency transaction; a customer with little cryptocurrency history buying or sending a large amount, which may mean a ransomware victim.
-- Off-chain artifacts are a different kind of evidence from the ledger: day 3 uses them for attribution and High confidence.
+- Off-chain artifacts are a different kind of evidence from the ledger: lesson ③ uses them for attribution and High confidence.
 
 **Walkthrough**
 1. Read each row: what to ask for and why.
@@ -395,7 +543,7 @@ This slide gives the current scale of ransomware payments, dated. It matters her
 **Walkthrough**
 1. Read the bottom line and the date.
 2. Ask: why might the 2025 total still rise? (Payments are counted only once attributed to ransomware.)
-3. Ask: how would you cite this figure in a memo? (Source and "as of" date.)
+3. Ask: how would you cite this figure when you explain it to an agent? (Source and "as of" date.)
 
 **Sources**
 - @chainalysis_ransomware_2026
@@ -410,13 +558,15 @@ This slide gives the current scale of ransomware payments, dated. It matters her
 - **The trace:** four hops by 9 May and a fifth on 27 May, each with its heuristic. Change was undetermined twice, and that is a correct answer.
 - **Where it stopped:** a holding address, not a service. Say which, and as of when.
 - **The split:** developer and affiliate shares go to separate wallets; a share read from the amount alone is Low.
+- **The cash-out:** at an exchange, an OTC broker or a darknet market; the trace ends at the first one.
+- **Darknet markets:** a shop for ransomware and a route to exchanges; Silk Road's stolen coins showed round amounts and a holding address.
 - **Leads off the chain:** the note, the portal, the chat, the payment transaction.
 - **This afternoon:** your annotated trace starts at a ransom address and follows it to the first service.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide summarizes the lesson and hands over to the lab. It matters here because the afternoon's trace uses every line: a known start, hop-by-hop judgments and a stated end. Emphasize the habit carried from lesson ②: heuristic, failure, confidence, for every hop.
+This slide summarizes the lesson and hands over to the lab. It matters here because the afternoon's trace uses every line: a known start, hop-by-hop judgments and a stated end. Emphasize the habit carried from lesson ①: heuristic, failure, confidence, for every hop.
 
 **Key Points**
 - How a ransom is demanded and paid, and where the trace starts.
@@ -424,6 +574,7 @@ This slide summarizes the lesson and hands over to the lab. It matters here beca
 - "Change undetermined" as a correct answer.
 - A trace ends at the first service or where the money stops, with the date checked.
 - The RaaS split and its confidence.
+- Where ransoms cash out, and darknet markets as both shop and route.
 - Off-chain leads to ask for.
 
 **Walkthrough**
@@ -434,6 +585,8 @@ None
 - @blount_testimony_2021
 - @robinson_darkside_2021
 - @financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021
+- @u.s.dept.oftreasury_hydragarantex_2022
+- @departmentofjustice_silkroadcomplaint_2020
 
 :::
 

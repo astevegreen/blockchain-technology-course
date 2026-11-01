@@ -53,6 +53,9 @@ slide index), which is never listed here.
 - The 04-FO, 05-FO and 01-PC quiz banks have no reading deck: none of the three lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
+- 03-FO (`lessons/forensics/03-FO-ransomware_payments_colonial.qmd`, Ransomware: the Payment and the Cash-out)
+  has no quiz bank or lesson synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and
+  `LESSON_SYNTHESIS_GUIDE.md`, covering the cash-out, darknet-market and Silk Road slides. (31 Oct 2026, D6 ② build)
 - 06-FO (`lessons/forensics/06-FO-mixers_and_coinjoin.qmd`, Mixers and CoinJoin) has no quiz bank or lesson
   synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026,
   D7 ① build)
