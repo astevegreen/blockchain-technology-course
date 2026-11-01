@@ -9,6 +9,14 @@ format:
     number-sections: false
 ---
 
+::: {.callout-note}
+On day 5 your instructor runs this network as a 30-minute demo on the
+projected screen, and you don't claim a lane. Bring the three questions
+from the slide "Fabric demo: watch the gatekeeper work": who signed it,
+who decides, and who can see it. The rest of this guide is for a longer
+run of the lab where each student has a lane.
+:::
+
 This lab gives you a **hands-on Hyperledger Fabric environment** where you
 will issue a real credential on a live blockchain, verify a classmate's
 credential as though you were a prospective employer, and then learn —

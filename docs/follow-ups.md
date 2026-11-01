@@ -51,6 +51,9 @@ slide index), which is never listed here.
 - 06-FO (`lessons/forensics/06-FO-mixers_and_coinjoin.qmd`, Mixers and CoinJoin) has no quiz bank or lesson
   synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026,
   D7 ① build)
+- 07-FO (`lessons/forensics/07-FO-privacy_coins.qmd`, Privacy Coins: Monero and Zcash) has no quiz bank or lesson
+  synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026,
+  D7 ② build)
 - 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
   address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 
@@ -129,6 +132,26 @@ slide index), which is never listed here.
   the wallet tests hold the lab's fees and amounts. The wallet playbook, `wallet/quizes/facts.json` and
   `wallet/quizes/build-steps.sh` (it names the signers) are fenced. Decide whether the rest count as instructor
   seeds (rule 1) and fence them in `pages.yml` and `vm-build.yml`. (31 Oct 2026, D2 wallet lab review)
+- HLF peer and orderer outages (`hlf/web_service/hlf_service.py:2052`, `:2068`) skip the stop or start when the
+  cached container status (polled every 10 s) says it is already done, and still report success: Recover pressed
+  within 10 s of Trigger leaves the node down. The endorsement-policy scenario no longer trusts the cache; do the
+  same here. (31 Oct 2026, D5 Fabric demo build)
+- The HLF explorer's transaction detail shows every endorsement with `msp_id` null and "Endorsed by: none"
+  (`hlf/web_service/hlf_service.py`, `get_transaction_detail`), so students cannot see which schools endorsed.
+  (31 Oct 2026, D5 Fabric demo build)
+- Meridian (Org5) is labelled "read-only" in about 20 places (`hlf_service.py:291`, `:868`, `:1423`, `:2456`-`:2497`,
+  `:2713`, `:3149`; `hlf_console.js:41`; `hlf_instructor.html:195`; `hlf/README.md:41`; `CLASSROOM_OPERATIONS.md:28`;
+  agent task `instructor-auth-faults.md:26`, `:37`), but its Writers policy lets it propose diplomas under its own
+  MSP. Relabel as "member, not an endorser". (31 Oct 2026, D5 Fabric demo build, live probe)
+- `regression-tests/automated/hlf/run.sh --fresh-start` deletes `hlf/runtime`, including the tracked
+  `install-fabric.sh`; the next start fails until `git checkout` restores it. (31 Oct 2026, D5 Fabric demo build)
+- `lab-manager.sh:931` sets `force_rebuild="false"` and nothing sets it true, so `build-images` never rebuilds a
+  cached lane image. (31 Oct 2026, D5 Fabric demo build)
+- About 1,700 files outside `dynamic-labs/` are CRLF on the desktop checkout (`git ls-files --eol`); `dynamic-labs/`
+  was fixed 31 Oct. Renormalize the rest. (31 Oct 2026, D5 Fabric demo build)
+- `regression-tests/automated/hlf/run.sh:113` builds its runner with `--network bridge` by default, which the
+  desktop's BuildKit refuses ("network mode bridge not supported"); the suite runs only with
+  `DOCKER_BUILD_NETWORK=default`. Change the default. (31 Oct 2026, D5 Fabric demo build)
 
 - `blockchain-course/assets/labs/tamper-ledger/tamper_ledger_lab.html`: editing an entry's text re-renders the whole
   chain on every keystroke, so the field loses focus after one character. The primer says "change one digit" to

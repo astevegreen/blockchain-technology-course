@@ -76,7 +76,7 @@ function exerciseCommands() {
       'hlf-help                                                           # show available commands',
       'query diploma-001                                                  # read a diploma (works: query path is open to channel members)',
       'list-assets                                                        # list all diplomas on the shared ledger',
-      'invoke create diploma-forged credential 4 "Fake" 2024 "X" "BSc"    # fails — Org5 is not in the endorsement policy',
+      'invoke create diploma-m01 credential 4 "Ada" 2024 "Math" "BSc"     # succeeds — the consortium peers endorse it, stamped Org5MSP',
     ];
   }
   return [
