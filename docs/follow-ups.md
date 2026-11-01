@@ -39,17 +39,6 @@ slide index), which is never listed here.
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
 
-- The Bitcoin trace lab's students receive `regression-tests/automated/bitcoin-trace/` in `src.zip` and on the VM; its
-  shape tests spell out the trail's design (12-input sweep, 14-output batch). Same decision as the explorer and wallet
-  tests above. (31 Oct 2026, D6 Bitcoin trace lab build)
-- The CoinJoin trace lab's students receive `regression-tests/automated/coinjoin-trace/` in `src.zip` and on the VM;
-  its shape tests name the planted leaks and the mixer's two near-match outputs. Same decision as the Bitcoin trace
-  tests above. (31 Oct 2026, D7 lab build)
-- Students still receive the explorer lab's chain build scripts, the other labs' browser playbooks and the
-  automated tests (`dynamic-labs/explorer/chain/`, `dynamic-labs/regression-tests/`) in `src.zip` and on the VM;
-  the wallet tests hold the lab's fees and amounts. The wallet playbook, `wallet/quizes/facts.json` and
-  `wallet/quizes/build-steps.sh` (it names the signers) are fenced. Decide whether the rest count as instructor
-  seeds (rule 1) and fence them in `pages.yml` and `vm-build.yml`. (31 Oct 2026, D2 wallet lab review)
 - About 1,700 files outside `dynamic-labs/` are CRLF on the desktop checkout (`git ls-files --eol`); `dynamic-labs/`
   was fixed 31 Oct. Renormalize the rest. (31 Oct 2026, D5 Fabric demo build)
 
