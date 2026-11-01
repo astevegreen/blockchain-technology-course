@@ -14,9 +14,9 @@
   "metadata": {
     "module": "ethereum",
     "lesson_file_stem": "04-EF-smart_contracts",
-    "question_count": 7,
+    "question_count": 11,
     "source_mix": {
-      "lesson_questions": 4,
+      "lesson_questions": 8,
       "reading_questions": 3
     },
     "lesson_slide_source": "/tmp/blockchain-course-slide-only/ethereum_04-EF-smart_contracts-slides-only.qmd",
@@ -40,7 +40,11 @@
               "q1",
               "q2",
               "q5",
-              "q7"
+              "q7",
+              "q14",
+              "q15",
+              "q16",
+              "q17"
             ]
           },
           {
@@ -255,6 +259,121 @@
       "source": "reading",
       "specific_source_reading": "/tmp/blockchain-course-readings/text/mastering_ethereum_ch7.txt: Calling Other Contracts; Creating a new instance; Addressing an existing instance; Raw call, delegatecall, and staticcall",
       "source_type": "assigned_reading"
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst totals every coin the Coin contract has created by adding up its Sent events. What does this approach miss?",
+      "correct_answer": "Every mint: mint raises a balance but emits no event, so a mint shows only in the call and the changed balance.",
+      "incorrect_answers": [
+        "Only mints over the cap: mint emits Sent only for amounts that stay inside the contract's fixed maximum token supply.",
+        "Nothing: mint calls send to deliver the new coins, so each mint leaves a Sent event from the minter's address.",
+        "Only mints by others: mint emits Sent unless the caller is the stored minter, whose mints stay out of logs."
+      ],
+      "explanation": "The Your Turn: Read the Coin Contract slide asks what record a mint leaves. mint changes balances but emits nothing, and the contract has no supply cap, so a reader who watches only Sent events misses every mint.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "coin-contract",
+        "events",
+        "minting",
+        "contract-reading",
+        "misconception"
+      ],
+      "lesson_block": "Your Turn: Read the Coin Contract",
+      "source": "lesson",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Your Turn: Read the Coin Contract",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction to the Coin contract left no event, and its input data begins with four bytes. What do those four bytes tell the analyst?",
+      "correct_answer": "Which function was called: they are the first 4 bytes of the keccak256 hash of its name and argument types.",
+      "incorrect_answers": [
+        "Where the function sits in memory: they are the code offset the EVM jumps to when the call starts to execute.",
+        "Which function was called: they spell out the function's name in ASCII, cut short to its first four letters.",
+        "Who sent the call: they are the first 4 bytes of the caller's address, which the mint function checks against minter."
+      ],
+      "explanation": "The ABI, Encoding, and Function Selectors slide defines the selector as the first 4 bytes of keccak256 of the function signature. It is a dispatch code, not a memory address, and the input carries only those 4 bytes, not the function's name, so a direct call to mint shows up in the transaction even with no event.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "abi",
+        "function-selectors",
+        "calldata",
+        "mechanism"
+      ],
+      "lesson_block": "ABI, Encoding, and Function Selectors",
+      "source": "lesson",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: ABI, Encoding, and Function Selectors",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst is given a token address that turns out to be an ERC-1967 proxy. Where are the token's rules, and what else belongs in the characterization?",
+      "correct_answer": "In the implementation contract named in the proxy's fixed storage slot, and who holds the right to upgrade it.",
+      "incorrect_answers": [
+        "In the proxy's own source code, since delegatecall copies the implementation's logic into it at each upgrade.",
+        "In the most recent Upgraded event alone, since a proxy cannot swap its logic without emitting that event first.",
+        "In the proxy's storage slot itself, since ERC-1967 keeps the token's rules there instead of an address."
+      ],
+      "explanation": "The Upgradeability and Proxy Patterns slide says the proxy holds the state and balances while a separate implementation holds the code, run through delegatecall. ERC-1967 fixes the slot that holds the implementation's address and says each change should emit Upgraded, which is not a must. Whoever can upgrade can change every rule, so the upgrade right belongs in the characterization.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "proxy-patterns",
+        "upgradeability",
+        "erc-1967",
+        "delegatecall",
+        "scenario"
+      ],
+      "lesson_block": "Upgradeability and Proxy Patterns",
+      "source": "lesson",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Upgradeability and Proxy Patterns",
+      "source_type": "lesson_slides"
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "An explorer shows verified source with def, the decorators @external and @view, self., and no curly braces. What is the analyst looking at?",
+      "correct_answer": "Vyper compiled for the EVM: the same four reading questions apply, and its transactions and logs look like Solidity's.",
+      "incorrect_answers": [
+        "Rust for Solana: its decorators mark the program's instructions, so it must be read under Solana's account model.",
+        "Python run off-chain by an indexer: the contract's real logic sits in a separate Solidity file at that address.",
+        "Vyper compiled for its own chain: its transactions and logs differ, so EVM tools cannot read what it records."
+      ],
+      "explanation": "The Recognize It: Vyper slide lists def, decorators such as @external and @view, self., and no curly braces as Vyper's clues on sight. Vyper compiles for the same EVM as Solidity, so its on-chain activity looks the same and the four questions still apply. Rust on Solana shows fn, pub and #[...] attributes instead.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "04-ef-smart-contracts",
+        "lesson",
+        "slides",
+        "vyper",
+        "rust",
+        "solana",
+        "contract-languages",
+        "recognition"
+      ],
+      "lesson_block": "Recognize It: Vyper",
+      "source": "lesson",
+      "specific_source_lesson": "blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd: Recognize It: Vyper",
+      "source_type": "lesson_slides"
     }
   ]
 }

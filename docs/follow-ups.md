@@ -40,9 +40,6 @@ slide index), which is never listed here.
   quiz have no question on the new slide "A blockchain is a record, not a currency" (one chain many assets, one
   asset many chains, a chain with no coin); q1 traces to the hidden "What is a Blockchain?" slide, so retrace it to
   "A blockchain is blocks, each linked to the last". (31 Oct 2026, 02-IN D1 ① slides)
-- 04-EF lesson bank (`ethereum_04-EF-smart_contracts-quiz-bank.json`) has no questions on the Coin reading, the
-  4-byte function code, or Vyper and Rust; the day 4 daily bank covers them, the lesson bank does not. (31 Oct 2026,
-  daily quiz bank week 1)
 - 03-EF quiz bank q at line 97 and the synthesis (`lesson_synthesis/ethereum_03-EF-ethereum_network-synthesis.md`
   lines 39, 95, 117) say the tip "compensates the proposer"; 03-EF now says fee recipient. (31 Oct 2026, 03-EF tip fix)
 - 03-EF bank has no questions on the DEX, sandwich-attack or look-alike slides. (31 Oct 2026, rebuild `0504bcc`)
