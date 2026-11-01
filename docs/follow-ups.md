@@ -30,6 +30,10 @@ slide index), which is never listed here.
   at the 10x5 inch default (960x480), which can push a slide past 700px. Switch to `//|` in 02-BF, 02-DS, 04-AS,
   05-AS, 02-FO, 06-FO and 07-FO, then re-check each slide's fit. Three-digit fill colours (`#fdd`) render black
   in 02-FO, 04-AS, 06-FO and 07-FO: use six digits. (31 Oct 2026, D7 ③ browser check)
+- 02-AS "Types of Digital Money" (line 108, and the hidden slide at line 271) says China banned private stablecoins (February 2026)
+  and the US "legislatively blocked" a federal CBDC (July 2025), with no citation. The US claim looks overstated (the House passed
+  an anti-CBDC bill in July 2025; the federal bar is a January 2025 executive order). Source or narrow both through the `source`
+  skill. (1 Nov 2026, 02-AS quiz review)
 
 ## Quizzes
 - The day 2 daily quiz (session 9) has no question on the new slide "A blockchain is a record, not a currency".

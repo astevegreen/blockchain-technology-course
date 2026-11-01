@@ -24,7 +24,7 @@ The reading supports the lesson's claim that blockchain forensics does not end a
 
 The report deepens the lesson's regulatory-chokepoint theme by focusing on exchangers, administrators, payment systems, and marketplaces rather than base-layer protocols. FinCEN's 2013 guidance distinguishes ordinary users from administrators and exchangers, making clear that compliance obligations attach most strongly when an entity is in the business of exchanging, administering, or transmitting value.
 
-The reading contributes historical enforcement examples that map onto the lesson's case-study logic. Silk Road illustrates that Bitcoin transactions can support money-laundering charges; Liberty Reserve and e-Gold illustrate payment systems allegedly designed or operated to facilitate illicit transactions; Ripple and BTC-e illustrate civil enforcement for inadequate AML programs, registration failures, and missing suspicious activity reports.
+The reading contributes historical enforcement examples as background; the lesson itself teaches attribution and confidence, not these cases. Silk Road illustrates that Bitcoin transactions can support money-laundering charges; Liberty Reserve and e-Gold illustrate payment systems allegedly designed or operated to facilitate illicit transactions; Ripple and BTC-e illustrate civil enforcement for inadequate AML programs, registration failures, and missing suspicious activity reports.
 
 The report also adds nuance beyond the lesson slides. It foregrounds legal uncertainty and innovation tradeoffs: applying statutes designed for traditional financial institutions to novel blockchain business models can create uncertainty, while overly broad regulation may burden developers or noncustodial service providers who do not control customer funds.
 
@@ -89,7 +89,7 @@ Virtual currencies can cross borders easily, while AML regimes are not uniformly
 - e-Gold: The reading uses e-Gold to show that virtual or alternative payment systems may be treated as money transmitting businesses even when they do not operate like cash-based transmitters. The concept illustrated is functional regulation of value transmission.
 - Liberty Reserve: The reading uses Liberty Reserve to illustrate a payment system allegedly structured to support anonymous criminal transactions and to show how authorities can cut a virtual currency business off from the U.S. financial system.
 - Ripple: The reading uses Ripple to show civil enforcement against a virtual currency developer/exchanger for registration and AML-program failures. The concept illustrated is that legitimate businesses can still face AML penalties when compliance controls are inadequate.
-- BTC-e: The reading uses BTC-e to show how weak customer verification and failure to file SARs can make an exchange both attractive to criminals and vulnerable to major FinCEN penalties. This directly supports the lesson's weak-KYC chokepoint theme.
+- BTC-e: The reading uses BTC-e to show how weak customer verification and failure to file SARs can make an exchange both attractive to criminals and vulnerable to major FinCEN penalties.
 - 116th Congress bills: The reading uses proposed legislation to illustrate policy responses: commissioning studies, clarifying FinCEN coordination authority, and considering safe harbors for noncontrolling blockchain developers.
 
 ## Common Misconceptions And Confusions
