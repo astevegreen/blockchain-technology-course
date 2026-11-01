@@ -1,0 +1,502 @@
+---
+title: "Flash Loans, Reentrancy and Oracle Manipulation"
+subtitle: 'Section VIII: Forensics'
+author: Army Cyber Institute
+lesson: 10-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## The protocol paid: find out which attack {.smaller}
+
+**Bottom line:** day 8 ① followed thefts from a person's wallet. This lesson follows thefts from a contract that holds many people's money. Three attack types recur: re-entering a contract, borrowing with a flash loan and moving a price. Each leaves its own shape in one transaction. Name the shape, then read the case write-up.
+
+::: {style="font-size: .8em;"}
+
+| Question | The answer tells you |
+| --- | --- |
+| What is a DeFi pool, and who can call it? | Why the victim is a contract |
+| What is reentrancy? | The repeat inside one transaction |
+| What happened to The DAO? | The first big case, and its fork |
+| What is a flash loan? | Why the attacker needs no money |
+| What does a price oracle trust? | Why moving a price pays |
+| What did bZx and Euler show? | The two flash-loan cases |
+| How do the three look apart? | The pattern for each |
+| Where does the loot go? | Back to day 7's trace |
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens day 8's second lesson: attacks on DeFi contracts rather than on a person's wallet. It matters here because outcome 5 asks students to recognize these attack types from their transaction patterns and the case write-ups. Emphasize that no code is read in this lesson; the one contract read is at the start of the day 8 lab.
+
+**Key Points**
+- Day 8 ① covered approvals, drainers, EIP-7702 and address poisoning: thefts from an account.
+- This lesson: thefts from a contract, where the flaw is in the contract's logic or in what it trusts.
+- The analyst's job is to say which attack type the transactions show, and how sure.
+
+**Walkthrough**
+1. Read the bottom line aloud.
+2. Walk the table; each row is one or two slides.
+
+**Sources**
+None
+
+:::
+
+## A DeFi pool is a contract anyone can call {.smaller}
+
+**Bottom line:** a DeFi protocol keeps its users' deposits in a contract. Anyone may call that contract, including another contract an attacker writes. When the contract's rules have a gap, the caller takes the pool.
+
+| Pool | What it holds | What it decides from |
+| --- | --- | --- |
+| **Lending pool** | Deposits that others borrow against collateral | The value of the collateral, often a price it reads from elsewhere [@ethereum.org_smartcontractsecurity_2026] |
+| **Exchange pool** (03-EF's DEX) | Two tokens; the ratio sets the price | Its own balances |
+| **Flash loan pool** | Deposits lent out within one transaction | Whether the loan comes back [@aave_flashloans_2026] |
+
+: {tbl-colwidths="[22,38,40]"}
+
+- **Public by design:** flash loans "can be taken from public smart contract-governed liquidity pools. Any borrower can borrow the entire pool at any point in time" [@qin_attackingdefiecosystem_2021].
+- **Analyst move:** the victim address is a contract. Find the protocol behind it and its write-up before you read the transactions.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces DeFi pools as targets (Role Concept 14, DeFi and its threats). It matters here because every attack in this lesson takes money from a pool, not from a person. Emphasize that "anyone can call" includes contracts: the attacker usually acts through a contract they deployed.
+
+**Key Points**
+- DeFi: lending, exchange and other financial services run as smart contracts with no operator taking custody.
+- A lending pool lends against collateral and must value that collateral; this is where oracles come in.
+- An exchange pool's price comes from its own balances; 03-EF showed a swap moving it.
+- The victim in each case below is a pool contract; the attacker's tools are contracts too (CertiK names the Euler attacker's contracts).
+
+**Walkthrough**
+1. Read the three rows; ask which pool decides from something outside itself (the lending pool).
+2. Read the Qin quote: the whole pool is available to any borrower for one transaction.
+
+**Sources**
+- @ethereum.org_smartcontractsecurity_2026 (lending platforms read a DEX price to value collateral)
+- @aave_flashloans_2026
+- @qin_attackingdefiecosystem_2021 (section 1)
+
+:::
+
+## Reentrancy: the contract pays before it updates {.smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+
+- **The flaw:** a contract sends money out, then records the payment. The money goes to a contract, which runs as it receives.
+- **The attack:** "a malicious contract calls back into a vulnerable contract before the original function invocation is complete" [@ethereum.org_smartcontractsecurity_2026].
+- **The result:** the balance "isn't set to 0 until the function execution completes", so later calls succeed and the caller can "withdraw their balance multiple times" [@ethereum.org_smartcontractsecurity_2026].
+- **The fix:** record first, then pay (checks, effects, interactions), or lock the function while it runs [@ethereum.org_smartcontractsecurity_2026].
+
+:::
+::: {.column width="48%"}
+
+```{dot}
+//| echo: false
+//| fig-width: 4.4
+//| fig-height: 3
+digraph Reenter {
+  graph [bgcolor="transparent", nodesep=0.3, ranksep=0.45];
+  rankdir=TB;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#f5f7fb"];
+  edge [fontname="Helvetica", fontsize=9];
+  A [label="Attacker contract", fillcolor="#FFDDDD"];
+  V [label="Victim pool\n(balance still 10)"];
+  A -> V [label=" 1. withdraw 10"];
+  V -> A [label=" 2. pays 10"];
+  A -> V [label=" 3. withdraw again\n(before step 4)", style=dashed];
+  U [label="4. balance set to 0\n(too late)", fillcolor="#FFF5CC"];
+  V -> U [style=dotted, arrowhead=none];
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains reentrancy in a picture, with no code (Role Concept 16). It matters here because students must recognize the repeat in a transaction trace without reading Solidity. Emphasize the order: pay first, update later.
+
+**Key Points**
+- Sending ETH to a contract runs that contract's code; the attacker's code calls withdraw again.
+- Steps 2 and 3 loop until the pool is empty or the transaction runs out of gas; step 4 happens once, at the end.
+- Defenses: checks-effects-interactions (update the balance before paying) and a mutex (a lock that refuses a second entry).
+- 04-EF's hidden reentrancy slides show the code; this lesson does not use them.
+
+**Walkthrough**
+1. Trace the arrows 1, 2, 3; ask what the pool believes at step 3 (that the balance is still 10).
+2. Ask: which single change stops it? (Set the balance to 0 before paying.)
+
+**Sources**
+- @ethereum.org_smartcontractsecurity_2026 (section "Reentrancy")
+
+:::
+
+## The DAO: one split called many times over {.smaller}
+
+**Bottom line:** in June 2016 an attacker re-entered The DAO and drained about a third of its ether. Ethereum's answer was a fork; the chain that refused it is Ethereum Classic.
+
+| When | What happened |
+| --- | --- |
+| 2016 | The DAO sold about 1.15 billion DAO Tokens for about 12 million ETH [@sec_daoreport_2017] |
+| 17 June 2016 | About 3.6 million ETH, "1/3 of the total ETH raised", moved to an attacker-controlled address [@sec_daoreport_2017] |
+| The attack | "a recursive calling vulnerability": the attacker called "split" inside "split", "collecting ether many times over in a single transaction" [@l34_ethereum_dao_vulnerability_2016] |
+| The hold | The DAO's own code kept the ETH from moving for 27 days [@sec_daoreport_2017] |
+| 20 July 2016 | The forked chain went live and moved the funds to a recovery address [@sec_daoreport_2017]; about 85% of miners mined on the fork [@l34_ethereum_hard_fork_completed_2016] |
+| After | The unforked chain is "Ethereum Classic" [@sec_daoreport_2017] |
+
+: {tbl-colwidths="[18,82]"}
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the founding reentrancy case. It matters here because analysts still meet The DAO in case write-ups, and because the fork explains why two chains share Ethereum's history before July 2016. Emphasize the Ethereum Foundation's own words: many times over in a single transaction.
+
+**Key Points**
+- The DAO was an investment fund run by a contract; DAO Token holders voted on projects.
+- "Split" let a holder leave with their ether into a child DAO; the attacker re-entered it before their balance was updated.
+- The child DAO's 27-day creation window held the funds, which gave time for the fork.
+- The fork was an irregular state change at block 1,920,000, not a rollback of transactions.
+
+**Walkthrough**
+1. Read down the timeline.
+2. Ask: what made the attack one transaction? (Each nested split ran inside the first call.)
+
+**Sources**
+- @sec_daoreport_2017 (pp. 1, 9-10; fn. 32)
+- @l34_ethereum_dao_vulnerability_2016
+- @l34_ethereum_hard_fork_completed_2016
+
+:::
+
+## Reading a reentrancy: one call nested in itself {.smaller}
+
+**Bottom line:** in a transaction's call trace (the D3 lab's internal transactions), reentrancy shows as the same function on the same contract, called again and again inside its first call, each paying the same caller.
+
+| In the trace | What it means |
+| --- | --- |
+| One transaction, one sender | The whole drain is atomic: it all succeeds or none does |
+| The caller is a contract, not a plain account | The attacker's code runs when it is paid |
+| Withdraw → pay → withdraw → pay, nested, all to that contract | The pool paid again before it updated its records |
+| The pool's balance drops far more than the caller deposited | The loss: the proof it was not a normal withdrawal |
+
+: {tbl-colwidths="[45,55]"}
+
+- **How sure:** nested repeat calls paying one contract, with a loss larger than the deposit: **Moderate** from the trace alone, **High** with the protocol's write-up. Without the loss, **Low**: some contracts call back legitimately.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide turns reentrancy into a pattern an analyst can spot in a trace. It matters here because outcome 5 asks for recognition from transactions, not code. Emphasize the last row: the loss is what makes a nested pattern an attack.
+
+**Key Points**
+- The D3 lab read internal transactions and Transfer logs in Otterscan; the nesting shows there.
+- The DAO's split, called inside split, is the textbook case.
+- A legitimate callback (a token that notifies its receiver) also nests; it does not take more than was deposited.
+- High, Moderate or Low: the words from day 6.
+
+**Walkthrough**
+1. Read each row and match it to the picture on the reentrancy slide.
+2. Ask: which row would you quote first to an agent? (The loss, then the nesting.)
+
+**Sources**
+- @l34_ethereum_dao_vulnerability_2016 (recursive calls in a single transaction)
+- @ethereum.org_smartcontractsecurity_2026
+
+:::
+
+## A flash loan lasts one transaction {.smaller}
+
+**Bottom line:** a flash loan lends the whole pool, with no collateral, on one condition: it comes back in the same transaction. If it does not, the transaction never happened.
+
+- **The rule:** flash loans "let you borrow an asset without collateral, as long as the borrowed amount and a fee are returned before the end of the same transaction" [@aave_flashloans_2026].
+- **The guarantee:** if the amount owed is not there, "the transaction reverts" [@aave_flashloans_2026]. The lender bears "no debt default risk" [@qin_attackingdefiecosystem_2021].
+- **The fee:** 0.05% on Aave at deployment, changeable by governance vote (Aave docs, as of 31 Oct 2026) [@aave_flashloans_2026].
+- **Lawful uses:** arbitrage "without holding the principal", and liquidating loans [@aave_flashloans_2026].
+- **What it gives an attacker:** millions for one transaction, with no money of their own at risk beyond the fee and gas.
+- **Analyst move:** a flash loan alone is not an attack. It is the attacker's capital; the attack is what the money does in between.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines a flash loan (Role Concept 15). It matters here because a flash loan turns an attacker with little money into one with a pool's worth for a few seconds. Emphasize that most flash loans are ordinary arbitrage.
+
+**Key Points**
+- Aave and dYdX are among the protocols that offer flash loans from their pools (Qin et al. study both).
+- The lending contract sends the money, calls the borrower's contract, then checks it was paid back; if not, everything reverts.
+- Atomic: the borrowing, the use and the repayment are one transaction, in one block.
+- The fee is a governance setting, so the figure carries a date.
+
+**Walkthrough**
+1. Read the rule and the guarantee; ask why the lender needs no collateral (the loan cannot outlive the transaction).
+2. Ask: what does a flash loan in a transaction prove by itself? (Nothing about intent.)
+
+**Sources**
+- @aave_flashloans_2026 (Overview, Execution Flow, Applications, Flash Loan Fee)
+- @qin_attackingdefiecosystem_2021 (section 1)
+
+:::
+
+## A price oracle can be moved with borrowed money {.smaller}
+
+**Bottom line:** a lending pool must know what collateral is worth. If it asks an exchange pool for the price, a big enough trade moves the answer, and a flash loan pays for the trade.
+
+1. **Borrow** a large sum with a flash loan.
+2. **Move the price:** a large trade on the exchange pool the lender reads.
+3. **Borrow against the wrong price:** the lender sees "a higher-than-normal value", "allowing them to borrow more than they should" [@ethereum.org_smartcontractsecurity_2026].
+4. **Repay** the flash loan and keep the difference.
+
+- **Why it works:** lenders "often" use an onchain exchange "to get the spot price for an asset"; DEX prices "are open to manipulation" [@ethereum.org_smartcontractsecurity_2026].
+- **The defenses:** a decentralized oracle network that "queries information from multiple sources", or a time-weighted average price (TWAP), which a recent large trade cannot move [@ethereum.org_smartcontractsecurity_2026].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains oracle manipulation (Role Concept 17). It matters here because most large flash-loan attacks are price attacks: the loan pays for the trade that bends the price. Emphasize that the lending contract worked as written; it trusted the wrong price.
+
+**Key Points**
+- An oracle brings outside data, such as a price, to a contract.
+- An onchain oracle that reads one exchange pool's spot price can be moved within the same transaction.
+- The ethereum.org page calls these "flash loan attacks" that have cost "protocols millions in lost funds".
+- Defenses: many sources (a decentralized oracle network), or an average over time (TWAP).
+
+**Walkthrough**
+1. Walk steps 1 to 4; ask which step is the crime (3: borrowing against a false price).
+2. Ask: why does a TWAP help? (A trade in this block barely moves an average over many blocks.)
+
+**Sources**
+- @ethereum.org_smartcontractsecurity_2026 (section "Oracle manipulation")
+
+:::
+
+## bZx, Feb 2020: borrow, move a price, borrow {.smaller}
+
+**Bottom line:** on 18 February 2020 one transaction borrowed 7,500 ETH, bought sUSD on two thin exchange pools so each sUSD looked worth more ETH, borrowed against that price and repaid. It kept 2,381.41 ETH, about \$634.9k [@qin_attackingdefiecosystem_2021].
+
+| Step | Inside the one transaction [@qin_attackingdefiecosystem_2021] |
+| --- | --- |
+| 1 | Flash loan of 7,500.00 ETH (bZx) |
+| 2 | 540.00 ETH to 92,419.70 sUSD (Uniswap) |
+| 3 | 360.00 ETH to 63,584.09 sUSD (Kyber) |
+| 4 | 3,517.86 ETH deposited for 943,837.59 sUSD (Synthetix) |
+| 5 | 1,099,841.39 sUSD as collateral to borrow 6,799.27 ETH (bZx) |
+| 6 | Repay 7,500.00 ETH (bZx) |
+
+: {tbl-colwidths="[10,90]"}
+
+- **The price:** steps 2 and 3 raised sUSD's price in ETH (fewer sUSD per ETH); bZx read that price and lent too much ETH against sUSD [@qin_attackingdefiecosystem_2021].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide walks a real oracle-manipulation attack, step by step, from the peer-reviewed post-mortem. It matters here because the six steps are the shape students will look for: a loan first, trades in the middle, a borrow at the bad price, repayment last. Emphasize that every step is in one transaction (Qin et al. give its hash).
+
+**Key Points**
+- sUSD is a dollar-pegged token; the attacker bought it on thin pools, which left fewer sUSD per ETH on those pools: each sUSD now cost more ETH there.
+- bZx valued the sUSD collateral from a price the trades had distorted, so 1.1 million sUSD borrowed 6,799.27 ETH.
+- Qin et al. also show that better parameters would have earned about \$1.1 million: the attack was not even optimal.
+- The same week (15 February 2020) saw a second bZx flash-loan attack, the "pump and arbitrage".
+
+**Walkthrough**
+1. Read steps 1 and 6 first: the loan and its repayment bracket the attack.
+2. Then 2 to 5: the trades, then the borrow at the bad price.
+3. Ask: where does the profit come from? (ETH borrowed in step 5 that the collateral is not really worth.)
+
+**Sources**
+- @qin_attackingdefiecosystem_2021 (section 3.2, Figure 4; tx 0x762881b0...ac15)
+
+:::
+
+## Euler, March 2023: a loan, a gift, a liquidation {.smaller}
+
+**Bottom line:** on 13 March 2023 Euler lost about \$197 million [@eulerfinance_warpeacescenes_2024]. The flaw was one missing check in a function that let users donate to the reserves; a flash loan supplied the money.
+
+| Step | In attack transaction 0xc310 [@certik_eulerincident_2023] |
+| --- | --- |
+| 1 | Flash loan of 30 million DAI from Aave |
+| 2 | Deposit 20 million DAI; borrow ten times over through Euler's mint() |
+| 3 | Donate 100 million eDAI to the reserves: the account is now insolvent |
+| 4 | A second attacker contract liquidates the first, at a discount |
+| 5 | Withdraw the remaining 38.9 million DAI; repay the flash loan |
+
+: {tbl-colwidths="[10,90]"}
+
+- **The flaw:** the donate function "lacked a health check", so the attacker could "make themselves eligible for liquidation" and claim a liquidation bonus larger than the donation [@eulerfinance_warpeacescenes_2024].
+- **The scale:** the attacker "repeatedly called attack transactions on multiple Euler pools", five in all [@certik_eulerincident_2023].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the second flash-loan case, where the loan paid for a logic flaw rather than a price move. It matters here because it shows a flash loan is a tool used with many flaws, and that the attacker can be on both sides (the liquidated account and the liquidator). Emphasize step 4: two attacker contracts trading with each other.
+
+**Key Points**
+- The donate function was added in July 2022 to fix a smaller bug; it was audited and the flaw was missed.
+- eDAI is Euler's deposit token, dDAI its debt token.
+- Self-liquidation: the liquidator takes the bad account's collateral at a discount, and the attacker owns both.
+- CertiK: the attacker liquidated "in the same transaction" and then drained the pool by withdrawing.
+- CertiK, writing on 13 March 2023, called it by far the largest incident of the year in funds lost.
+
+**Walkthrough**
+1. Read steps 1 and 5: the loan and the repayment bracket it again.
+2. Ask: is this oracle manipulation? (No: no price moved. The flaw was a missing check.)
+
+**Sources**
+- @eulerfinance_warpeacescenes_2024
+- @certik_eulerincident_2023 (Event Summary; the 0xc310 walkthrough, steps i-vi)
+
+:::
+
+## A flash-loan attack: borrow first, repay last {.smaller}
+
+**Bottom line:** in one transaction, the first large transfer is a loan from a pool and the last repays it with a fee. What happens between is the attack.
+
+| In the trace | What it means |
+| --- | --- |
+| A large transfer in from a lending pool, early | The flash loan [@aave_flashloans_2026] |
+| Trades, deposits or borrows on other protocols | The use: a price moved (bZx) or a flaw used (Euler) |
+| A transfer back to the same pool, last, slightly larger | The repayment and fee |
+| The caller is a contract; often two attacker contracts | The attacker's tooling [@certik_eulerincident_2023] |
+| A victim pool ends far poorer; the caller keeps the difference | The loss: what separates an attack from arbitrage |
+
+: {tbl-colwidths="[50,50]"}
+
+- **How sure:** that a flash loan was used: **High**, the transfers show it. That it was an attack: **High** only with a victim's loss or the protocol's write-up; without either, it may be arbitrage.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the flash-loan pattern to look for in a trace. It matters here because the same loan-first, repay-last shape fills thousands of ordinary arbitrage transactions; only the loss marks an attack. Emphasize the last row.
+
+**Key Points**
+- bZx and Euler both open with the loan and close with the repayment.
+- Between them: several protocols called in order; that sequence is what the case write-up explains.
+- Two attacker contracts trading with each other (Euler's liquidator and violator) is a strong sign.
+- The protocol's own post-mortem, or an analysis like CertiK's, is the write-up students cite.
+
+**Walkthrough**
+1. Map each row onto the bZx table: step 1, steps 2 to 5, step 6.
+2. Do the same for Euler.
+3. Ask: an arbitrage bot borrows, trades on two exchanges and repays. What is missing? (A victim's loss.)
+
+**Sources**
+- @aave_flashloans_2026
+- @certik_eulerincident_2023
+- @qin_attackingdefiecosystem_2021
+
+:::
+
+## Three patterns in a trace look different {.smaller}
+
+| | Reentrancy: a flaw | Flash loan: money | Oracle moved: a flaw |
+| --- | --- | --- | --- |
+| **What repeats or moves** | One function, called inside itself | A loan in, then out | A price, up or down, within the transaction |
+| **First sign in the trace** | Nested calls paying one contract | A large transfer from a lending pool | Large trades on a thin exchange pool |
+| **What the victim trusted** | Its own unrecorded balance | Nothing: the lender is safe | The price it read |
+| **Who loses** | The pool that paid twice | Not the lender | The lender that valued collateral wrongly |
+| **Case** | The DAO, 2016 | Euler, 2023 (with a missing check) | bZx, 2020 (with a flash loan) |
+
+: {tbl-colwidths="[22,26,26,26]"}
+
+- **They combine:** a flash loan is the money; reentrancy, a moved price or a missing check is the flaw. Name both in the finding.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets the three attack types side by side. It matters here because students must say which one a transaction shows, and a single attack often uses two. Emphasize the bottom line: the flash loan funds the attack; the flaw is what the money exploits.
+
+**Key Points**
+- Reentrancy needs no flash loan: The DAO attacker used their own DAO Tokens.
+- A flash-loan lender is not the victim: the loan comes back or never happened.
+- Oracle manipulation's victim is the contract that trusted the price, not the exchange pool that was traded on.
+- Day 8 ① covered the fourth way out, a theft through an approval or a delegation.
+
+**Walkthrough**
+1. Read across each row.
+2. Ask: the transaction opens with a 10,000 ETH loan and nests the same withdraw call five times. What do you write? (A flash loan funding a reentrancy.)
+
+**Sources**
+- @l34_ethereum_dao_vulnerability_2016
+- @certik_eulerincident_2023
+- @qin_attackingdefiecosystem_2021
+
+:::
+
+## After the exploit, the money moves on {.smaller}
+
+**Bottom line:** the theft is one transaction; the laundering takes weeks. Euler's attacker used the routes of days 7 and 8, and then gave the money back [@eulerfinance_warpeacescenes_2024].
+
+| What the attacker did | What Euler read into it [@eulerfinance_warpeacescenes_2024] |
+| --- | --- |
+| Funded the exploit address from Tornado Cash | "difficult to trace the source of their funds back any further" |
+| Sent 100 ETH to Tornado Cash | Bad news: the thief "probably does not have plans to return them" |
+| 17 March: paid the address labelled Ronin Bridge Exploiter, which OFAC attributed to Lazarus | "a major escalation"; Euler judged it "a poor attempt at misdirection" |
+| Sent and received messages on chain | A channel for negotiation |
+| Returned the funds | "100% of the stolen funds were recovered", about \$240 million at return |
+
+: {tbl-colwidths="[50,50]"}
+
+- **How sure:** one payment to a labelled address is a lead, **Low**. It shows the attacker knew the address, not who the attacker is.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide links the exploit to the trace that follows it. It matters here because the analyst's work does not end at the exploit transaction: the D8 lab's cross-chain trace starts here. Emphasize the Ronin payment: a link to a sanctioned address is not attribution.
+
+**Key Points**
+- Day 7 ① covered Tornado Cash; day 8 ① covered Ronin and the Lazarus attribution.
+- Euler had other evidence that the attacker was not tied to Lazarus, so it read the payment as misdirection; the payment alone could not settle that either way.
+- Euler also read the payment as a possible taunt: it might "troll Euler users". The label could not tell the two readings apart.
+- The stolen assets were worth about \$197 million at the time of the attack; about \$240 million came back, as the price of ETH rose during the negotiation.
+- The DAO's 27-day hold and Euler's full recovery are the exceptions in this lesson, not a pattern to expect.
+
+**Walkthrough**
+1. Read each row; ask what an analyst would write for the Ronin payment (a lead, Low).
+2. Ask: what would raise it? (An independent line, such as a shared funding source.)
+
+**Sources**
+- @eulerfinance_warpeacescenes_2024 (TL;DR; "First clues"; "March 17th")
+
+:::
+
+## What to carry out of this lesson {.smaller}
+
+- The victim is a pool: a contract anyone, or any contract, can call.
+- Reentrancy: one function called inside itself, paying one contract; The DAO, 2016.
+- A flash loan lasts one transaction and is not an attack by itself; look for the loss.
+- Oracle manipulation: borrowed money moves a price a lender trusts; bZx, 2020.
+- Euler, 2023: a flash loan and a missing check, with the attacker on both sides.
+- Name the money and the flaw; say how sure, and what shows the loss.
+- Then follow the proceeds: mixers, sanctioned addresses, messages and returns.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson in seven lines and hands over to day 8 ③ and the lab. It matters here because the D8 lab opens with the one contract read of outcome 5, then traces an exploit's proceeds. Emphasize the sixth line: the money and the flaw are two parts of one finding.
+
+**Key Points**
+- Terms: DeFi pool, reentrancy, flash loan, price oracle, oracle manipulation, TWAP, self-liquidation.
+- Cases: The DAO (2016), bZx (2020), Euler (2023).
+
+**Walkthrough**
+1. Ask a student to say each line in their own words.
+
+**Sources**
+None
+
+:::
+
+## References
+
+::: {#refs}
+:::

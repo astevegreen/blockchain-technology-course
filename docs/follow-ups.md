@@ -67,6 +67,12 @@ slide index), which is never listed here.
 - 09-FO (`lessons/forensics/09-FO-approvals_drainers_poisoning.qmd`, Approvals, Drainers and Address Poisoning)
   has no quiz bank or lesson synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and
   `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026, D8 ① build)
+- 10-FO (`lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd`, Flash Loans, Reentrancy and Oracle
+  Manipulation) has no quiz bank or lesson synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and
+  `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026, D8 ② build)
+- 06-EF (`lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.qmd`, The DAO slide notes) gives the
+  fork block as "192,000"; it was 1,920,000 (10-FO cites the Ethereum Foundation's post). 02-EF's DAO notes say the
+  attacker called "the withdraw function"; 10-FO, after the Foundation, says "split". Align both. (31 Oct 2026, D8 ② review)
 - 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
   address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 
