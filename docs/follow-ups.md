@@ -83,6 +83,3 @@ slide index), which is never listed here.
   step 2 now says questions first. The reviewer is a rail: the change runs the rail audit. (30 Oct 2026)
 
 ## Notion and documents
-- `regression-tests/automated/bitcoin/run.sh --fresh-start` (and a run straight after it) failed at once with a 502 on
-  `/api/bitcoin/claims`: the suite starts before `bitcoin-instructor` listens on 8090; it passed on a stack left up for
-  a minute (13 tests). Wait for the service before the first request. (1 Nov 2026, lab fresh-start fixes)

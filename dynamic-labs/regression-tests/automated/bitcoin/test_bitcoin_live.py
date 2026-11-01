@@ -116,6 +116,14 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
             probe_session.close()
 
         login_instructor(cls.instructor_session, cls.base_url)
+        # Right after a fresh start the router answers before bitcoin-instructor
+        # listens on 8090, so the claims API returns 502 for a while.
+        wait_for_http(
+            cls.instructor_session,
+            f"{cls.base_url}/api/bitcoin/claims",
+            lambda resp: resp.status_code == 200,
+            description="bitcoin-instructor claims API",
+        )
         if os.environ.get("BITCOIN_REGRESSION_RELEASE_EXISTING_CLAIMS", "1") == "1":
             claims = list_bitcoin_claims(cls.instructor_session, base_url=cls.base_url)
             for entry in claims:
