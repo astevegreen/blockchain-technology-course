@@ -1,0 +1,484 @@
+{
+  "lesson_id": "forensics_09_fo_approvals_drainers_poisoning",
+  "lesson_title": "Approvals, Drainers and Address Poisoning",
+  "date_generated": "2026-10-31",
+  "topic": "forensics",
+  "tags": [
+    "forensics",
+    "09-fo-approvals-drainers-poisoning",
+    "token-approvals",
+    "permit",
+    "drainer-as-a-service",
+    "eip-7702",
+    "address-poisoning",
+    "clipboard-hijacker",
+    "confidence-words",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "forensics",
+    "lesson_file_stem": "09-FO-approvals_drainers_poisoning",
+    "lesson_path": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+    "question_count": 15,
+    "source_mix": {
+      "lesson_grounded": 15,
+      "reading_grounded": 0
+    },
+    "note": "No assigned reading for this lesson; every question is grounded in a visible slide."
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_forensics",
+        "title": "Forensics",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_approvals_drainers_poisoning_lesson",
+            "title": "Approvals, Drainers and Address Poisoning - lesson synthesis",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10",
+              "q11",
+              "q12",
+              "q13",
+              "q14",
+              "q15"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A victim's USDC left their address in a transaction sent by an address the victim never used. What should the analyst look for next?",
+      "correct_answer": "An Approval event from the victim to that sender, or to a contract the sender controls.",
+      "incorrect_answers": [
+        "A second transaction signed by the victim's key, which must have authorized the transfer.",
+        "A contract deployment by the victim, because only a contract can move tokens it does not own.",
+        "The victim's address balance on a day before the theft, because the Transfer proves a loss."
+      ],
+      "explanation": "A Transfer out of the victim in someone else's transaction means a spender held permission. The permission is an allowance, set by an Approval event, and the spender used it through transferFrom.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "token-approvals",
+        "transferfrom",
+        "scenario"
+      ],
+      "lesson_block": "An approval lets someone else spend your tokens",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "An approval lets someone else spend your tokens"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A victim learns they approved a malicious spender last week and has not yet been drained. What ends the spender's permission?",
+      "correct_answer": "A new approve call for the same spender with an amount of zero, which overwrites the allowance.",
+      "incorrect_answers": [
+        "Nothing, because an allowance stays valid for as long as the spender's address exists.",
+        "Waiting for the allowance to expire, because every approval lapses after a fixed number of blocks.",
+        "Revoking the approval in the wallet app, which deletes the Approval event from the chain."
+      ],
+      "explanation": "A later approve overwrites the amount, so approving zero takes the permission away. Until then the permission lasts, which is why the mistake and the loss can be days apart.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "token-approvals",
+        "allowance",
+        "mechanism"
+      ],
+      "lesson_block": "An approval lets someone else spend your tokens",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "An approval lets someone else spend your tokens"
+      }
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "How does an NFT setApprovalForAll differ in reach from an ERC-20 approve?",
+      "correct_answer": "It gives an operator control of every token the owner holds in that collection, not a capped amount.",
+      "incorrect_answers": [
+        "It gives the operator control of the owner's tokens in every collection, not only that one.",
+        "It lets the operator view the owner's tokens, while only approve lets someone else move them.",
+        "It moves the NFTs to the operator at once, while approve only sets a limit for a later date."
+      ],
+      "explanation": "ERC-20 approve sets an amount. setApprovalForAll with true lets the operator manage all the owner's NFTs in that collection, so one signature exposes the whole collection.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "token-approvals",
+        "nft",
+        "comparison"
+      ],
+      "lesson_block": "An approval lets someone else spend your tokens",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "An approval lets someone else spend your tokens"
+      }
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A victim says, \"I never approved anything,\" and their own history shows no approve call, yet their tokens were taken through transferFrom. What should the analyst check?",
+      "correct_answer": "Whether an Approval event naming the victim as owner sits in the spender's own transaction, which means a permit.",
+      "incorrect_answers": [
+        "Whether the victim's key was stolen, because an allowance can only be set by a transaction the owner sends.",
+        "Whether the victim's address holds code, because a missing approve proves a delegation set the allowance.",
+        "Whether the tokens were NFTs, because only NFTs can be moved without any approval event on chain at all."
+      ],
+      "explanation": "With ERC-2612 the victim signs a message on a phishing site and sends nothing. The spender submits the signature, producing the Approval event in the spender's transaction. Checking only the victim's own transactions misses it.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "permit",
+        "diagnosis",
+        "scenario"
+      ],
+      "lesson_block": "A permit is an approval signed off chain",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "A permit is an approval signed off chain"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "Two victims on two different fake sites each lost tokens, and in both cases 20% went to the same admin address. What can the analyst say?",
+      "correct_answer": "Both drains likely used one kit, though the people who ran the two sites may be different people.",
+      "incorrect_answers": [
+        "Both drains were run by one person, because one admin address receives every cut from a single operator.",
+        "The two sites are unconnected, because a fixed percentage appears in all thefts of this kind.",
+        "Nothing yet, because a split can only be attributed once the sites' domain registrations are traced."
+      ],
+      "explanation": "Drainer kits are rented, with a fixed cut to the developers and the rest to the customer. A shared admin address ties drains to the kit, not to whoever ran each site.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "drainer-as-a-service",
+        "attribution-evidence",
+        "scenario"
+      ],
+      "lesson_block": "A drainer kit is phishing sold as a service",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "A drainer kit is phishing sold as a service"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "After taking USDC, the drain's recipient swaps it for ETH on a decentralized exchange. What does that swap protect against?",
+      "correct_answer": "A freeze: the USDC issuer can freeze a wallet holding the stolen token, but no one can freeze ETH.",
+      "incorrect_answers": [
+        "A reversal: any token transfer can be cancelled by the victim within a day, but ETH transfers cannot.",
+        "A tax: swapping into the native coin hides the amount, so the exchange reports nothing about it.",
+        "A trace: a decentralized exchange swap breaks the link between the old and new addresses."
+      ],
+      "explanation": "Thieves move off tokens whose issuer can freeze them into a native coin. The swap does not hide the trail, but it removes the issuer's ability to freeze the loot.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "drainer-as-a-service",
+        "stablecoin-freeze",
+        "mechanism"
+      ],
+      "lesson_block": "Reading an approval drain, step by step",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "Reading an approval drain, step by step"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A victim's own address sent all its tokens to a new address, with no lure in its history and no approval before it. Which explanation does the chain alone leave open?",
+      "correct_answer": "A stolen key or a clipboard hijacker, because both look like the owner's own payment.",
+      "incorrect_answers": [
+        "An approval drain, because the tokens moved to an address the victim never used before.",
+        "Address poisoning, because the new address is a stranger to the victim's earlier history.",
+        "An EIP-7702 delegation, because only a delegated account can send all of its tokens at once."
+      ],
+      "explanation": "When the victim's own address sent the funds, the chain cannot tell the owner from a thief with the key. Poisoning needs a lure and approvals need an Approval event, and neither is present.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "comparison",
+        "stolen-key",
+        "clipboard-hijacker"
+      ],
+      "lesson_block": "Four ways out of a wallet look different",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "Four ways out of a wallet look different"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "An explorer shows code at an address that used to be a plain wallet. What should the analyst check first?",
+      "correct_answer": "Whether the code starts with 0xef0100, then which delegate it names and which type-0x04 transaction set it.",
+      "incorrect_answers": [
+        "Whether the address was funded by a mixer, because only mixed funds can turn a wallet into a contract.",
+        "Whether the code is the contract's full bytecode, because a delegation copies the delegate's code in.",
+        "Whether the account was sent a permit, because a permit installs code at the owner's address itself."
+      ],
+      "explanation": "Since Pectra an account can sign an authorization that writes 0xef0100 plus a delegate's address as its code. Calls to the account then run the delegate's code, and the 0x04 transaction shows who set it and who paid for it.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "eip-7702",
+        "delegation",
+        "mechanism"
+      ],
+      "lesson_block": "EIP-7702 lets a plain account run code",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "EIP-7702 lets a plain account run code"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "An account is delegated to a widely reused sweeper contract, and the delegation was signed with the account's own key the day before the drain, and the victim signed nothing on any site. How should the analyst read it?",
+      "correct_answer": "Most likely a stolen key, because a sweeper only works on a key that has already leaked.",
+      "incorrect_answers": [
+        "Signature phishing, because the victim signed a delegation on a site without seeing its effect.",
+        "A legitimate batching setup, because the owner chose a delegate and meant the outflows.",
+        "A drainer kit, because every sweeper delegate is rented out for a fixed share of stolen funds."
+      ],
+      "explanation": "Most early delegations pointed to copied sweeper contracts that empty wallets with leaked keys. There 7702 only automates the theft; the crime is the leaked key. Phishing would show the victim signing on a site.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "eip-7702",
+        "sweeper",
+        "diagnosis"
+      ],
+      "lesson_block": "After 7702, an outflow may not be the owner's",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "After 7702, an outflow may not be the owner's"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does an attacker plant a look-alike address in a victim's transaction history?",
+      "correct_answer": "Wallets show only the start and end of an address, so the victim may copy the look-alike from history.",
+      "incorrect_answers": [
+        "A look-alike address in the history gives the attacker signing authority over the victim's wallet.",
+        "A look-alike address lets the attacker read the victim's balance and time the theft on a large day.",
+        "A look-alike address makes the victim's wallet reuse an old allowance without any new approval."
+      ],
+      "explanation": "Poisoning needs no malware and no signature. The victim sends the money by copying the wrong address, so the attacker's work is the lure.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "address-poisoning",
+        "mechanism",
+        "lure"
+      ],
+      "lesson_block": "Address poisoning plants a look-alike in history",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "Address poisoning plants a look-alike in history"
+      }
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A real 5,000 USDT payment is followed minutes later by a zero-value transfer to a look-alike, and days later by a 5,000 USDT payment to that look-alike. Which statement is supported by the chain?",
+      "correct_answer": "The look-alike matches the payee's ends and a lure came first, so poisoning is supported.",
+      "incorrect_answers": [
+        "The victim knowingly paid the look-alike twice, so the zero-value transfer was a test payment.",
+        "The look-alike belongs to the payee, because both addresses share the characters a wallet shows.",
+        "The loss was a clipboard hijack, because the amount copied the earlier real payment exactly."
+      ],
+      "explanation": "Two on-chain lines support poisoning: the look-alike match and a lure planted before the loss. The zero-value row only appears sent by the victim; the attacker created it.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "address-poisoning",
+        "timeline",
+        "application"
+      ],
+      "lesson_block": "Reading a poisoning: the lure comes first",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "Reading a poisoning: the lure comes first"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A victim paid an address that shares the payee's first and last four characters, but there is no lure anywhere in their history. What does the analyst say?",
+      "correct_answer": "Wrong recipient; poisoning is not shown without a lure, and a clipper or another lure remain possible.",
+      "incorrect_answers": [
+        "Address poisoning, because a look-alike recipient is enough on its own to establish that a lure was planted.",
+        "A clipboard hijack, because the missing lure proves that malware replaced the address the victim copied.",
+        "A stolen key, because the victim's own address sent the funds to an unfamiliar recipient on the public chain."
+      ],
+      "explanation": "A look-alike recipient with no lure is not enough for poisoning; the lure decides it. A clipper's proof is on the device, so from the chain the finding is wrong recipient, cause not shown.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "clipboard-hijacker",
+        "address-poisoning",
+        "limits-of-tracing"
+      ],
+      "lesson_block": "Poisoning or clipboard: what the chain shows",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "Poisoning or clipboard: what the chain shows"
+      }
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does the lesson rate a poisoning High but a clipboard hijacker Low?",
+      "correct_answer": "Poisoning has two independent on-chain lines, the look-alike match and the lure; a clipper has only a missing lure.",
+      "incorrect_answers": [
+        "Poisoning losses are larger on average, so the scale gives them a higher word than the clipper losses tend to get overall.",
+        "Clipper malware is newer, so fewer published reports exist to support any finding about it in actual practice.",
+        "Poisoning is shown by the victim's signature, while a clipper leaves no signed transaction on the chain."
+      ],
+      "explanation": "High needs two independent kinds of evidence with no known failure. The clipper's proof is on the device, so the chain gives only a wrong recipient, which is Low.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "confidence-words",
+        "independent-evidence",
+        "comparison"
+      ],
+      "lesson_block": "How sure: words for a drain finding",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "How sure: words for a drain finding"
+      }
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "The Ronin thief held five of nine validator keys and signed withdrawals itself. Why could the chain not tell the forged withdrawals from real ones?",
+      "correct_answer": "The signatures were valid: enough validators had signed, so on chain it is a stolen-key theft at bridge scale.",
+      "incorrect_answers": [
+        "The bridge contract had a flaw that accepted withdrawals without checking the validators' signatures at all on chain.",
+        "The thief's approval was set weeks earlier, so the outflows looked like the owner's own regular spending.",
+        "The withdrawals were split into many small transfers that fell below the bridge's alert limit for the day."
+      ],
+      "explanation": "The way in was people, not code: one phished employee and a forgotten allowlist. The signatures on chain were valid, so the chain cannot separate forgery from the real thing.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "ronin",
+        "stolen-key",
+        "bridge"
+      ],
+      "lesson_block": "Ronin: stolen keys, not broken code",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "Ronin: stolen keys, not broken code"
+      }
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "How should an assessment state who stole from Ronin?",
+      "correct_answer": "Quote the attribution as the FBI's, with its date: the FBI attributed the theft to Lazarus Group on 14 April 2022.",
+      "incorrect_answers": [
+        "State that the chain shows North Korea, because the funds later reached sanctioned mixers on the public chain itself.",
+        "State it as High confidence, because Treasury sanctioned the mixers that handled the funds afterwards on chain.",
+        "Leave out the actor, because an analyst may only describe the flow and never name any group in a report."
+      ],
+      "explanation": "The chain shows where the funds went. The name is a government finding, so it is quoted with its source and date rather than rated.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "09-fo-approvals-drainers-poisoning",
+        "lesson-synthesis",
+        "attribution",
+        "north-korea",
+        "application"
+      ],
+      "lesson_block": "Ronin: the FBI named Lazarus, not the chain",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "anchor": "Ronin: the FBI named Lazarus, not the chain"
+      }
+    }
+  ]
+}

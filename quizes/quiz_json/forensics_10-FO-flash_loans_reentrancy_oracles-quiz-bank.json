@@ -1,0 +1,425 @@
+{
+  "lesson_id": "forensics_10_fo_flash_loans_reentrancy_oracles",
+  "lesson_title": "Flash Loans, Reentrancy and Oracle Manipulation",
+  "date_generated": "2026-10-31",
+  "topic": "forensics",
+  "tags": [
+    "forensics",
+    "10-fo-flash-loans-reentrancy-oracles",
+    "defi-pools",
+    "reentrancy",
+    "flash-loans",
+    "oracle-manipulation",
+    "the-dao",
+    "bzx",
+    "euler",
+    "confidence-words",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "forensics",
+    "lesson_file_stem": "10-FO-flash_loans_reentrancy_oracles",
+    "lesson_path": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+    "question_count": 13,
+    "source_mix": {
+      "lesson_grounded": 13,
+      "reading_grounded": 0
+    },
+    "note": "No assigned reading for this lesson; every question is grounded in a visible slide."
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_forensics",
+        "title": "Forensics",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_flash_loans_reentrancy_oracles_lesson",
+            "title": "Flash Loans, Reentrancy and Oracle Manipulation - lesson synthesis",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7",
+              "q8",
+              "q9",
+              "q10",
+              "q11",
+              "q12",
+              "q13"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "In the thefts of this lesson the victim is a pool contract, not a person's wallet. Why can an attacker act against it directly?",
+      "correct_answer": "A pool is a public contract that anyone, including a contract the attacker deploys, may call.",
+      "incorrect_answers": [
+        "A pool holds its users' private keys, so an attacker who reads the contract can sign for them.",
+        "A pool is run by an operator, and the attacker needs one operator's account to reach every deposit.",
+        "A pool accepts calls only from approved lenders, and the attacker posed as one to get in."
+      ],
+      "explanation": "DeFi protocols keep deposits in contracts with no operator taking custody. When the rules have a gap, whoever calls the contract can exploit it, and the attacker's tools are usually contracts too.",
+      "difficulty_level": 2,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "defi-pools",
+        "mechanism"
+      ],
+      "lesson_block": "A DeFi pool is a contract anyone can call",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "A DeFi pool is a contract anyone can call"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "A pool sends money to a caller and only afterwards sets the caller's balance to zero. Why can the caller withdraw more than it deposited?",
+      "correct_answer": "The payment runs the caller's code, which calls withdraw again while the pool still records the old balance.",
+      "incorrect_answers": [
+        "The payment runs the caller's code, which edits the pool's balance record directly, before the pool updates it.",
+        "The pool pays out twice by design, and the second payment is only caught when the transaction ends.",
+        "The caller's repeat call carries a higher gas limit, which lets it skip the pool's own balance check."
+      ],
+      "explanation": "Sending ether to a contract runs that contract's code. The attacker's code calls back in before the balance is zeroed, so each repeat passes the check. Setting the balance first, or locking the function, stops it.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "reentrancy",
+        "mechanism"
+      ],
+      "lesson_block": "Reentrancy: the contract pays before it updates",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "Reentrancy: the contract pays before it updates"
+      }
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "The DAO attack drained about a third of the ether raised. What made the repeated splits a single transaction?",
+      "correct_answer": "Each repeat split ran nested inside the first split call, before that call had finished.",
+      "incorrect_answers": [
+        "The attacker batched many split calls into one signed bundle that miners treated as one entry.",
+        "The attacker borrowed the ether in a flash loan, so every repeated split settled together.",
+        "The DAO's code paused the fund for 27 days, so the repeated calls were merged on resuming."
+      ],
+      "explanation": "The attacker called split inside split, collecting ether many times over in a single transaction. No flash loan was needed: the attacker used their own DAO Tokens.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "the-dao",
+        "reentrancy",
+        "atomic-transaction"
+      ],
+      "lesson_block": "The DAO: one split called many times over",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "The DAO: one split called many times over"
+      }
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A call trace shows withdraw, pay, withdraw, pay, nested, all paying one contract, and the pool lost far more than the caller deposited. How sure is the analyst from the trace alone?",
+      "correct_answer": "Moderate: the nesting plus the loss fit reentrancy, and the protocol's write-up would raise it to High.",
+      "incorrect_answers": [
+        "High: a contract calling back into a pool can only be a reentrancy attack, whatever the loss was.",
+        "Low: a trace alone can never show a nested pattern, only the protocol's write-up can show it.",
+        "Undetermined: nested calls are normal and the loss may come from anywhere else entirely, so no rating."
+      ],
+      "explanation": "Nested repeat calls with a loss larger than the deposit are Moderate from the trace. Without the loss it is Low, because some contracts call back legitimately, such as a token notifying its receiver.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "reentrancy",
+        "trace-reading",
+        "confidence-words"
+      ],
+      "lesson_block": "Reading a reentrancy: one call nested in itself",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "Reading a reentrancy: one call nested in itself"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "Why can a flash loan lender lend a whole pool with no collateral?",
+      "correct_answer": "If the borrowed amount and fee are not returned by the end of the transaction, it reverts as if the loan never happened.",
+      "incorrect_answers": [
+        "The lender holds the borrower's other assets as security until the loan is repaid in a later block, or ever after.",
+        "The lender insures each loan and recovers any losses from a fee pool that all of the borrowers pay into over time.",
+        "The lender checks the borrower's contract in advance, and only lends to code that an auditor has signed off."
+      ],
+      "explanation": "The borrowing, use and repayment are atomic. The lender bears no default risk, which is why the attacker needs no capital beyond the fee and gas.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "flash-loans",
+        "mechanism",
+        "risk"
+      ],
+      "lesson_block": "A flash loan lasts one transaction",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "A flash loan lasts one transaction"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction opens with a large flash loan and closes by repaying it. What does that, by itself, support?",
+      "correct_answer": "That a flash loan was used, with high confidence; an attack needs a victim's loss or the protocol's write-up.",
+      "incorrect_answers": [
+        "That an attack took place, because a flash loan is how every exploit on a pool is financed, in practice.",
+        "Nothing at all, because a flash loan's transfers are recorded only in the lender's own logs, off chain.",
+        "That a flash loan is itself the attack, because a loan of this size is never used for anything except theft, ever."
+      ],
+      "explanation": "Most flash loans are ordinary arbitrage or liquidations. The loan is the attacker's capital; the attack is what the money does in between, and only a loss separates the two.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "flash-loans",
+        "confidence-words",
+        "misconception"
+      ],
+      "lesson_block": "A flash-loan attack: borrow first, repay last",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "A flash-loan attack: borrow first, repay last"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A lender reads the spot price of its collateral from one thin exchange pool. How does a flash loan let an attacker exploit this?",
+      "correct_answer": "It pays for a large trade that moves the price, after which the lender lends too much against the collateral.",
+      "incorrect_answers": [
+        "It gives the attacker the lender's admin rights for the transaction, so the attacker sets the price at will, directly.",
+        "It lets the attacker withdraw the collateral after the price moves, before the lender can liquidate it.",
+        "It pauses the exchange pool, so the lender falls back to a stale price and over-lends on it, as a result."
+      ],
+      "explanation": "Borrow, move the price with a large trade, borrow against the wrong price, repay and keep the difference. The lending contract worked as written; it trusted a manipulable price.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "oracle-manipulation",
+        "mechanism",
+        "flash-loans"
+      ],
+      "lesson_block": "A price oracle can be moved with borrowed money",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "A price oracle can be moved with borrowed money"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "Why does using a time-weighted average price (TWAP) help a lender resist this attack?",
+      "correct_answer": "A single large trade in one block barely moves an average taken over many blocks.",
+      "incorrect_answers": [
+        "It reads the price only from the lender's own pool, which no outside trade can change.",
+        "It prices the collateral at the lowest value seen, so the lender always lends too little.",
+        "It slows each trade by a day, so the flash loan has to be held and repaid across blocks."
+      ],
+      "explanation": "The defenses are many price sources or an average over time. A flash-loan trade lives inside one transaction, so it cannot pull a long average far.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "oracle-manipulation",
+        "twap",
+        "tradeoff"
+      ],
+      "lesson_block": "A price oracle can be moved with borrowed money",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "A price oracle can be moved with borrowed money"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "In the bZx attack, one transaction borrowed 7,500 ETH, traded on thin pools, then borrowed 6,799 ETH against sUSD. Where did the profit come from?",
+      "correct_answer": "From ETH borrowed against sUSD collateral valued at a price the attacker's own trades had distorted.",
+      "incorrect_answers": [
+        "From the flash loan fee, which bZx paid to the attacker for lending its own pool for the transaction.",
+        "From a bug in the sUSD token that let the attacker mint more of it than it ever paid for, which bZx accepted.",
+        "From selling the 7,500 ETH on the exchange pools at a price above the one the lender used there."
+      ],
+      "explanation": "The loan and its repayment bracket the attack. Steps in the middle raised the price of sUSD in ETH, and bZx lent too much ETH against it. The attacker kept the difference, about 2,381 ETH.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "bzx",
+        "oracle-manipulation",
+        "trace-reading"
+      ],
+      "lesson_block": "bZx, Feb 2020: borrow, move a price, borrow",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "bZx, Feb 2020: borrow, move a price, borrow"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "Euler's 2023 loss also began with a flash loan. Why is it not an oracle-manipulation attack?",
+      "correct_answer": "No price moved; a donate function lacked a health check, so the attacker made its own account insolvent and liquidated it.",
+      "incorrect_answers": [
+        "The loan was repaid in a later block, so a price attack is impossible, and the real cause was a plain coding bug.",
+        "Euler had no lending pool, so there was no collateral price for the attacker to move, and so no loss to explain.",
+        "The attacker used a reentrant call into Euler instead of a trade, so the oracle was never read for any loan at all."
+      ],
+      "explanation": "The loan only supplied the money. The flaw was a missing check, and the attacker stood on both sides, with one contract liquidated and a second contract doing the liquidating at a discount.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "euler",
+        "self-liquidation",
+        "comparison"
+      ],
+      "lesson_block": "Euler, March 2023: a loan, a gift, a liquidation",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "Euler, March 2023: a loan, a gift, a liquidation"
+      }
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction opens with a 10,000 ETH loan and nests the same withdraw call five times, all paying one contract, and the pool ends far poorer. What does the finding name?",
+      "correct_answer": "A flash loan funding a reentrancy: the loan is the money and the nested calls are the flaw.",
+      "incorrect_answers": [
+        "An oracle manipulation, because a large loan always means a price was moved first by the attacker.",
+        "Ordinary arbitrage, because the loan was repaid and so no victim lost anything at all.",
+        "A reentrancy only, because a flash loan is a type of reentrancy and not a funding tool."
+      ],
+      "explanation": "A flash loan is the money; reentrancy, a moved price or a missing check is the flaw. A finding names both, and the pattern table shows that they combine.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "comparison",
+        "reentrancy",
+        "flash-loans"
+      ],
+      "lesson_block": "Three patterns in a trace look different",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "Three patterns in a trace look different"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "In a price-oracle attack, which party loses?",
+      "correct_answer": "The lender that valued its collateral at the manipulated price, not the exchange pool that was traded on.",
+      "incorrect_answers": [
+        "The exchange pool that was traded on, because its price was pushed far away from the real market rate for it.",
+        "The flash loan lender, because its pool was emptied during the transaction, even if only for a moment.",
+        "The oracle itself, because it must refund every loan made against its wrong price, and it cannot."
+      ],
+      "explanation": "The victim is the contract that trusted the price. The flash loan lender is safe because the loan came back or the transaction reverted.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "comparison",
+        "oracle-manipulation",
+        "misconception"
+      ],
+      "lesson_block": "Three patterns in a trace look different",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "Three patterns in a trace look different"
+      }
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "Euler's attacker paid an address labelled as the Ronin Bridge Exploiter. How should an analyst treat that payment?",
+      "correct_answer": "As a lead rated Low: it shows the attacker knew the address, not who the attacker is.",
+      "incorrect_answers": [
+        "As High confidence that Lazarus was behind it, because OFAC had attributed the payee address.",
+        "As disproof of a link to Lazarus, because a real group would never pay its own address.",
+        "As no finding, because on-chain payments never inform an assessment of who the actor is."
+      ],
+      "explanation": "One payment to a labelled address could be misdirection or a taunt, and the label cannot tell the readings apart. An independent line, such as a shared funding source, would raise it.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "10-fo-flash-loans-reentrancy-oracles",
+        "lesson-synthesis",
+        "euler",
+        "attribution",
+        "confidence-words"
+      ],
+      "lesson_block": "After the exploit, the money moves on",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "anchor": "After the exploit, the money moves on"
+      }
+    }
+  ]
+}
