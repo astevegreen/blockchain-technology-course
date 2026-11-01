@@ -19,6 +19,10 @@ slide index), which is never listed here.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
 
+- The daily banks `daily_d6_review_of_day5`, `daily_d7_review_of_day6` and `daily_d8_review_of_day7` hold only their
+  lab's questions (4, 5 and 5); they still need questions on the previous day's lessons, about five each (build-spec
+  "Daily quizzes"). The week-one check replaces the day 5 morning quiz. (1 Nov 2026, lab quiz questions)
+
 ## Labs
 - The explorer lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`): its stack
   pulls about 4 GB of images. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D1 explorer lab build)
@@ -52,20 +56,14 @@ slide index), which is never listed here.
   `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)
 - The Tron lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); its suite
   needs only nginx and Python, so it could run there. The workflow is a rail. (31 Oct 2026, D5 Tron lab build)
-- No quiz questions test the Tron lab (`dynamic-labs/tron/`): who paid the Energy, a sweep's signature, what the
-  blacklist shows as of a block. (31 Oct 2026, D5 Tron lab build)
 - The Bitcoin trace lab (`dynamic-labs/bitcoin-trace/`) is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`,
   `tools/lab_tests.py`); like the wallet lab it needs the `bitcoin-mempool` image. The workflow is a rail.
   (31 Oct 2026, D6 Bitcoin trace lab build)
-- No quiz questions test the Bitcoin trace lab: naming the heuristic and its false positive, reading a peel chain,
-  why same-transaction clues stop at Moderate, a sweep versus a CoinJoin shape. (31 Oct 2026, D6 Bitcoin trace lab build)
 - The Bitcoin trace lab's students receive `regression-tests/automated/bitcoin-trace/` in `src.zip` and on the VM; its
   shape tests spell out the trail's design (12-input sweep, 14-output batch). Same decision as the explorer and wallet
   tests above. (31 Oct 2026, D6 Bitcoin trace lab build)
 - The CoinJoin trace lab (`dynamic-labs/coinjoin-trace/`) is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`,
   `tools/lab_tests.py`); it needs the `bitcoin-mempool` image, like the Bitcoin trace lab. (31 Oct 2026, D7 lab build)
-- No quiz questions test the CoinJoin trace lab: what an equal-output round hides, the two leaks that undo it
-  (co-spending, address reuse), the timing tell, why a mixer's batch payout caps confidence. (31 Oct 2026, D7 lab build)
 - The CoinJoin trace lab's students receive `regression-tests/automated/coinjoin-trace/` in `src.zip` and on the VM;
   its shape tests name the planted leaks and the mixer's two near-match outputs. Same decision as the Bitcoin trace
   tests above. (31 Oct 2026, D7 lab build)
