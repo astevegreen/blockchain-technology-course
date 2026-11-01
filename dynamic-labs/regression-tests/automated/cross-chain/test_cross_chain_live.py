@@ -130,10 +130,12 @@ class CrossChainLiveRegressionTests(unittest.TestCase):
                     self.assertEqual(hashlib.sha256(get(base + name).content).hexdigest(), sha)
 
     def test_every_label_says_what_supports_it(self) -> None:
-        # A label rests on the chain itself, on a Blockchain.bib key, or is marked pending until it has one.
+        # A label rests on the chain itself, on a Blockchain.bib key, or is marked pending, and left blank, until it has one.
         for row in csv.DictReader(io.StringIO(get(DATA + "labels.csv").text)):
             with self.subTest(address=row["address"]):
                 self.assertRegex(row["source"], r"^(on-chain: |pending: |[a-z0-9_]+(; [a-z0-9_]+)*$)")
+                if row["source"].startswith("pending: "):
+                    self.assertEqual(row["label"], "", "an unsourced name would reach the query page")
 
     def test_every_query_gives_the_expected_row_count(self) -> None:
         self.assertEqual({k: len(v) for k, v in self.results.items()}, FACTS["rows"])

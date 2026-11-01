@@ -36,7 +36,8 @@ hand-written input), with cryo 0.3.2 (open source) for Ethereum, Arbitrum and Un
 Esplora API for Bitcoin, from free public endpoints. Every dataset was read from two endpoints where
 two serve it, and the rows had to match (`meta.json` "checks"). `meta.json` records each file's rows
 and SHA-256, and query 16 says how far each chain was read. A label's source is a `Blockchain.bib`
-key, `on-chain: <what shows it>`, or `pending: <the source still needed>`.
+key, `on-chain: <what shows it>`, or `pending: <the source still needed>`
+(with the label left blank, so students see no unsourced name).
 
 To rebuild: `python build/extract.py <folder> --same-heads snapshot/meta.json` (about 10 minutes),
 then `python build/saved_results.py` (DuckDB 1.4.3) to rewrite the saved results.

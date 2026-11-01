@@ -138,13 +138,13 @@ FROM calls c
 JOIN tx t ON t.chain = c.chain AND t.transaction_hash = c.transaction_hash
 LEFT JOIN labels l ON l.chain = c.chain AND l.address = c.to_address
 WHERE t.incident = 'bybit' AND c.call_type = 'delegate_call'
-  AND c.from_address = (SELECT address FROM labels WHERE label LIKE 'Bybit ETH cold wallet%')
+  AND c.from_address = (SELECT address FROM labels WHERE label LIKE 'case start%')
 ORDER BY t.block_number, t.transaction_hash, c.call_path;
 
 -- name: 2. Bybit: what left the cold wallet
 SELECT time_utc, left(transaction_hash, 10) AS tx, asset, amount, to_address, to_label
 FROM moves
-WHERE incident = 'bybit' AND from_address = (SELECT address FROM labels WHERE label LIKE 'Bybit ETH cold wallet%')
+WHERE incident = 'bybit' AND from_address = (SELECT address FROM labels WHERE label LIKE 'case start%')
 ORDER BY block_number, transaction_hash, pos;
 
 -- name: 3. Bybit: the ETH receiver splits its ETH into tranches

@@ -28,6 +28,9 @@ These hold whichever hops the lab keeps (`facts.json`):
 
 ## Labels still to source
 
-`snapshot/labels.csv` marks 14 labels `pending:` with the source each needs. The worksheet must not
-lean on one until its source is a `Blockchain.bib` key (`build/cases.json`, then rerun
+`snapshot/labels.csv` marks 12 addresses `pending:` with the source each needs, and leaves their label
+blank so no unsourced name reaches the query page or the saved results (the router, the Aave and Kelp
+contracts, the LayerZero endpoints, the recovery multisig). Bybit's cold wallet is labelled only as the
+case's starting address until a source names it. The worksheet must not lean on a name until its source
+is a `Blockchain.bib` key (`build/cases.json`, then rerun
 `build/extract.py --same-heads snapshot/meta.json`).
