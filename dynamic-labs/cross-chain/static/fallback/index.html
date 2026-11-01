@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saved query results: cross-chain lab</title>
+<style>
+body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 1rem; max-width: 110rem; color: #1b1b1b; }
+h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; border-top: 1px solid #ccc; padding-top: .8rem; margin-top: 1.5rem; }
+pre { background: #f4f4f4; padding: .6rem; overflow-x: auto; font-size: .85rem; }
+.table-wrap { overflow-x: auto; max-height: 30rem; }
+table { border-collapse: collapse; font-size: .85rem; }
+th, td { border: 1px solid #ccc; padding: .2rem .5rem; text-align: left; white-space: nowrap; }
+th { background: #eee; position: sticky; top: 0; }
+td.null { color: #999; }
+nav li { display: inline; margin-right: .75rem; }
+.note { background: #fff6dd; padding: .5rem 1rem; border-left: 4px solid #e0a800; }
+</style>
+</head>
+<body>
+<h1>Saved query results: Day 8 lab: a cross-chain trace (the Bybit theft, Feb 2025, and the Kelp DAO rsETH release, Apr 2026)</h1>
+<p class="note">Use this page when the query page will not load. It shows every query and the output it gives on
+the lab's snapshot, so your worksheet questions have the same answers here. Extracted 24 Oct 2026 UTC with cryo 0.3.2 (Ethereum, Arbitrum, Unichain) and Esplora (Bitcoin), from public endpoints. Chains read to Ethereum block 26,259,270 (01:39 UTC), Arbitrum 517,703,385 (01:38 UTC), Unichain 62,057,198 (01:32 UTC) and Bitcoin 972,854 (00:55 UTC): query 16. Times are UTC.</p>
+<nav><ul><li><a href="#q1">1. Bybit</a></li><li><a href="#q2">2. Bybit</a></li><li><a href="#q3">3. Bybit</a></li><li><a href="#q4">4. Bybit</a></li><li><a href="#q5">5. Bybit</a></li><li><a href="#q6">6. Bybit</a></li><li><a href="#q7">7. Bybit</a></li><li><a href="#q8">8. Bybit</a></li><li><a href="#q9">9. Kelp</a></li><li><a href="#q10">10. Kelp</a></li><li><a href="#q11">11. Kelp</a></li><li><a href="#q12">12. Kelp</a></li><li><a href="#q13">13. Kelp</a></li><li><a href="#q14">14. Kelp</a></li><li><a href="#q15">15. Kelp</a></li><li><a href="#q16">16. As of</a></li></ul></nav>
+<section id="q1"><h2>1. Bybit: the code the cold wallet runs, before and after the takeover (its delegate calls)</h2>
+<details><summary>The query</summary><pre>SELECT t.time_utc, left(t.transaction_hash, 10) AS tx, t.step, c.call_path, c.to_address AS runs_code_of,
+       l.label, c.selector
+FROM calls c
+JOIN tx t ON t.chain = c.chain AND t.transaction_hash = c.transaction_hash
+LEFT JOIN labels l ON l.chain = c.chain AND l.address = c.to_address
+WHERE t.incident = &#x27;bybit&#x27; AND c.call_type = &#x27;delegate_call&#x27;
+  AND c.from_address = (SELECT address FROM labels WHERE label LIKE &#x27;Bybit ETH cold wallet%&#x27;)
+ORDER BY t.block_number, t.transaction_hash, c.call_path</pre></details>
+<p>7 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>tx</th><th>step</th><th>call_path</th><th>runs_code_of</th><th>label</th><th>selector</th></tr></thead><tbody>
+<tr><td>2025-02-21 14:13:35</td><td>0x46deef0f</td><td>the cold wallet runs a delegatecall that replaces its logic</td><td>0</td><td>0x34cfac646f301356faa8b21e94227e3583fe3f5f</td><td>wallet code the cold wallet ran until the takeover</td><td>0x6a761202</td></tr>
+<tr><td>2025-02-21 14:13:35</td><td>0x46deef0f</td><td>the cold wallet runs a delegatecall that replaces its logic</td><td>0_0</td><td>0x96221423681a6d52e184d440a8efcebb105c7242</td><td>contract the cold wallet delegatecalled into</td><td>0xa9059cbb</td></tr>
+<tr><td>2025-02-21 14:15:11</td><td>0x25800d10</td><td>sweep out of the cold wallet</td><td>0</td><td>0xbdd077f651ebe7f7b3ce16fe5f2b025be2969516</td><td>contract that ran the sweeps</td><td>0x582515c7</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0x847b8403</td><td>sweep out of the cold wallet</td><td>0</td><td>0xbdd077f651ebe7f7b3ce16fe5f2b025be2969516</td><td>contract that ran the sweeps</td><td>0x582515c7</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0xa284a1bc</td><td>sweep out of the cold wallet</td><td>0</td><td>0xbdd077f651ebe7f7b3ce16fe5f2b025be2969516</td><td>contract that ran the sweeps</td><td>0x582515c7</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0xb61413c4</td><td>sweep out of the cold wallet</td><td>0</td><td>0xbdd077f651ebe7f7b3ce16fe5f2b025be2969516</td><td>contract that ran the sweeps</td><td>0x1163b2b0</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0xbcf316f5</td><td>sweep out of the cold wallet</td><td>0</td><td>0xbdd077f651ebe7f7b3ce16fe5f2b025be2969516</td><td>contract that ran the sweeps</td><td>0x582515c7</td></tr>
+</tbody></table></div></section>
+<section id="q2"><h2>2. Bybit: what left the cold wallet</h2>
+<details><summary>The query</summary><pre>SELECT time_utc, left(transaction_hash, 10) AS tx, asset, amount, to_address, to_label
+FROM moves
+WHERE incident = &#x27;bybit&#x27; AND from_address = (SELECT address FROM labels WHERE label LIKE &#x27;Bybit ETH cold wallet%&#x27;)
+ORDER BY block_number, transaction_hash, pos</pre></details>
+<p>5 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>tx</th><th>asset</th><th>amount</th><th>to_address</th><th>to_label</th></tr></thead><tbody>
+<tr><td>2025-02-21 14:15:11</td><td>0x25800d10</td><td>USDT</td><td>90.000000000000000000</td><td>0x47666fab8bd0ac7003bce3f5c3585383f09486e2</td><td>received the ETH sweep</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0x847b8403</td><td>cmETH</td><td>15000.000000000000000000</td><td>0x47666fab8bd0ac7003bce3f5c3585383f09486e2</td><td>received the ETH sweep</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0xa284a1bc</td><td>stETH</td><td>90375.547907685258392043</td><td>0x47666fab8bd0ac7003bce3f5c3585383f09486e2</td><td>received the ETH sweep</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0xb61413c4</td><td>ETH</td><td>401346.768858404671846374</td><td>0x47666fab8bd0ac7003bce3f5c3585383f09486e2</td><td>received the ETH sweep</td></tr>
+<tr><td>2025-02-21 14:16:11</td><td>0xbcf316f5</td><td>mETH</td><td>8000.000000000000000000</td><td>0x47666fab8bd0ac7003bce3f5c3585383f09486e2</td><td>received the ETH sweep</td></tr>
+</tbody></table></div></section>
+<section id="q3"><h2>3. Bybit: the ETH receiver splits its ETH into tranches</h2>
+<details><summary>The query</summary><pre>SELECT time_utc, left(transaction_hash, 10) AS tx, from_label, to_address, to_label, amount AS eth
+FROM moves WHERE step = &#x27;a 10,000 ETH tranche from the sweep receiver&#x27; AND asset = &#x27;ETH&#x27;
+ORDER BY block_number, transaction_hash, pos</pre></details>
+<p>4 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>tx</th><th>from_label</th><th>to_address</th><th>to_label</th><th>eth</th></tr></thead><tbody>
+<tr><td>2025-02-21 15:48:23</td><td>0x54a3a068</td><td>received the ETH sweep</td><td>0x51e9d833ecae4e8d9d8be17300aee6d3398c135d</td><td>tranche receiver; named in the FBI&#x27;s list of Bybit theft addresses</td><td>10000.000000000000000000</td></tr>
+<tr><td>2025-02-21 15:48:23</td><td>0x8c9f8135</td><td>received the ETH sweep</td><td>0x83ef5e80fad88288f770152875ab0bb16641a09e</td><td>tranche receiver</td><td>10000.000000000000000000</td></tr>
+<tr><td>2025-02-21 15:48:23</td><td>0xf5a95e8b</td><td>received the ETH sweep</td><td>0xcd1a4a457ca8b0931c3bf81df3cfa227adbdb6e9</td><td>tranche receiver</td><td>10000.000000000000000000</td></tr>
+<tr><td>2025-02-21 15:48:35</td><td>0x9c0aa9b4</td><td>received the ETH sweep</td><td>0x1eb27f136bfe7947f80d6cee3cf0bfdf92b45e57</td><td>tranche receiver</td><td>10000.000000000000000000</td></tr>
+</tbody></table></div></section>
+<section id="q4"><h2>4. Bybit: pooling at the hub: who paid in, how often, how much</h2>
+<details><summary>The query</summary><pre>SELECT coalesce(m.from_label, s.kind) AS sender, m.from_address, count(*) AS payments, sum(m.amount) AS eth,
+       min(m.time_utc) AS first_utc, max(m.time_utc) AS last_utc
+FROM moves m
+JOIN (SELECT transaction_hash, regexp_extract(step, &#x27;from (an? .*)$&#x27;, 1) AS kind FROM steps) s USING (transaction_hash)
+WHERE m.step LIKE &#x27;%into the hub%&#x27; AND m.asset = &#x27;ETH&#x27; AND m.to_label LIKE &#x27;hub:%&#x27;
+GROUP BY ALL ORDER BY eth DESC, sender, from_address</pre></details>
+<p>23 rows</p>
+<div class="table-wrap"><table><thead><tr><th>sender</th><th>from_address</th><th>payments</th><th>eth</th><th>first_utc</th><th>last_utc</th></tr></thead><tbody>
+<tr><td>tranche receiver; named in the FBI&#x27;s list of Bybit theft addresses</td><td>0x51e9d833ecae4e8d9d8be17300aee6d3398c135d</td><td>11</td><td>929.209909273823957000</td><td>2025-02-24 18:25:59</td><td>2025-02-25 01:28:59</td></tr>
+<tr><td>tranche receiver</td><td>0xcd1a4a457ca8b0931c3bf81df3cfa227adbdb6e9</td><td>8</td><td>713.808021569171638000</td><td>2025-02-25 02:11:35</td><td>2025-02-25 05:36:11</td></tr>
+<tr><td>tranche receiver</td><td>0x1eb27f136bfe7947f80d6cee3cf0bfdf92b45e57</td><td>2</td><td>304.524831641439940000</td><td>2025-02-25 06:29:23</td><td>2025-02-25 07:47:11</td></tr>
+<tr><td>an untraced sender</td><td>0xd5b098c91f0956f4413d1663975e311aff5aa796</td><td>1</td><td>107.519835010735274646</td><td>2025-02-24 16:45:47</td><td>2025-02-24 16:45:47</td></tr>
+<tr><td>an untraced sender</td><td>0x2c74f74948d2c063fe49ed296436163ff9e36e99</td><td>1</td><td>101.431000000000000000</td><td>2025-02-24 19:04:35</td><td>2025-02-24 19:04:35</td></tr>
+<tr><td>tranche receiver</td><td>0x83ef5e80fad88288f770152875ab0bb16641a09e</td><td>1</td><td>98.990096470478250000</td><td>2025-02-25 00:39:11</td><td>2025-02-25 00:39:11</td></tr>
+<tr><td>a lookalike address</td><td>0x0eb65da4b3f044e74ad912d3411298bc3247bdde</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 20:43:59</td><td>2025-02-24 20:43:59</td></tr>
+<tr><td>a lookalike address</td><td>0x192f4720a1527c095fba63d45e9a84d997a59953</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 20:40:47</td><td>2025-02-24 20:40:47</td></tr>
+<tr><td>a lookalike address</td><td>0x21e28f763cf7faec661807c5fbbe9e9d720ded2b</td><td>1</td><td>0.000001000000000000</td><td>2025-02-25 04:41:59</td><td>2025-02-25 04:41:59</td></tr>
+<tr><td>a lookalike address</td><td>0x248aef2f68c9cc713dc1d13aac300113fd614672</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:31:59</td><td>2025-02-24 21:31:59</td></tr>
+<tr><td>a lookalike address</td><td>0x3415e7b011d6ef24df1c0f3f7c30900135711248</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 19:50:47</td><td>2025-02-24 19:50:47</td></tr>
+<tr><td>a lookalike address</td><td>0x58a554d8b6db740280284a410b3e541960504285</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 20:51:59</td><td>2025-02-24 20:51:59</td></tr>
+<tr><td>a lookalike address</td><td>0x60de6174d227035e5f17cabbde431a3438cdf6b1</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:36:35</td><td>2025-02-24 21:36:35</td></tr>
+<tr><td>a lookalike address</td><td>0x6ed22fd821a20c1349c53380287ddd4a0eb5f73c</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:33:11</td><td>2025-02-24 21:33:11</td></tr>
+<tr><td>a lookalike address</td><td>0x8c921bec7767ccdf64e14478d018881e3a1fea4a</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:35:23</td><td>2025-02-24 21:35:23</td></tr>
+<tr><td>a lookalike address</td><td>0xb150e6e5b0e4a4090d6cd81226dc1bded2f6355e</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:36:11</td><td>2025-02-24 21:36:11</td></tr>
+<tr><td>a lookalike address</td><td>0xbcc0e13dda4fec9a09d154674f2b1da3e2ae26bb</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 20:56:59</td><td>2025-02-24 20:56:59</td></tr>
+<tr><td>a lookalike address</td><td>0xbe1e333283ddda6fc440a5590535f6e9ead5e429</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:36:23</td><td>2025-02-24 21:36:23</td></tr>
+<tr><td>a lookalike address</td><td>0xc2dc01d6c5458f068123085737b477ed8990bfe9</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:37:35</td><td>2025-02-24 21:37:35</td></tr>
+<tr><td>a lookalike address</td><td>0xcab97c353edba1ca3dc6f8c802c22813107c26a7</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 21:00:59</td><td>2025-02-24 21:00:59</td></tr>
+<tr><td>a lookalike address</td><td>0xd9cc75bfcbe53cffa17bf3edf6df623b862561ba</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 20:58:35</td><td>2025-02-24 20:58:35</td></tr>
+<tr><td>a lookalike address</td><td>0xe0775caada6fe2acd8aa4a903ea1939fc39b1210</td><td>1</td><td>0.000001000000000000</td><td>2025-02-24 20:53:35</td><td>2025-02-24 20:53:35</td></tr>
+<tr><td>a lookalike address</td><td>0xe81c9749a665e2f65d7dd7efcb96d50c86e94ac6</td><td>1</td><td>0.000000001000000000</td><td>2025-02-24 20:36:23</td><td>2025-02-24 20:36:23</td></tr>
+</tbody></table></div></section>
+<section id="q5"><h2>5. Bybit: address poisoning: each dust sender beside the address it imitates</h2>
+<details><summary>The query</summary><pre>WITH paid AS (
+  SELECT to_address AS real, block_number AS paid_block, time_utc AS paid_utc, amount AS paid_eth
+  FROM moves WHERE incident = &#x27;bybit&#x27; AND from_label LIKE &#x27;hub:%&#x27; AND asset = &#x27;ETH&#x27;),
+dust AS (
+  SELECT from_address AS lookalike, block_number AS dust_block, time_utc AS dust_utc, eth AS dust_eth
+  FROM tx WHERE step = &#x27;dust into the hub from a lookalike address&#x27;)
+SELECT d.lookalike, p.real AS imitates, p.paid_utc, p.paid_eth, d.dust_utc, d.dust_eth,
+       d.dust_block - p.paid_block AS blocks_later,
+       d.lookalike IN (SELECT real FROM paid) AS hub_paid_the_lookalike
+FROM dust d
+LEFT JOIN paid p ON substr(p.real, 3, 4) = substr(d.lookalike, 3, 4) AND right(p.real, 4) = right(d.lookalike, 4)
+                AND p.paid_block &lt; d.dust_block
+ORDER BY d.dust_block, d.lookalike, p.paid_block</pre></details>
+<p>17 rows</p>
+<div class="table-wrap"><table><thead><tr><th>lookalike</th><th>imitates</th><th>paid_utc</th><th>paid_eth</th><th>dust_utc</th><th>dust_eth</th><th>blocks_later</th><th>hub_paid_the_lookalike</th></tr></thead><tbody>
+<tr><td>0x3415e7b011d6ef24df1c0f3f7c30900135711248</td><td>0x3415beffaa1f1b7fb85f702607f3fee96d6f1248</td><td>2025-02-24 19:28:59</td><td>10.000000000000000000</td><td>2025-02-24 19:50:47</td><td>0.000001000000000000</td><td>108</td><td>false</td></tr>
+<tr><td>0xe81c9749a665e2f65d7dd7efcb96d50c86e94ac6</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td><td>2025-02-24 20:36:23</td><td>0.000000001000000000</td><td class="null">NULL</td><td>false</td></tr>
+<tr><td>0x192f4720a1527c095fba63d45e9a84d997a59953</td><td>0x192fed6cd2f61e521e3b8650d46d5bd653d19953</td><td>2025-02-24 20:39:23</td><td>10.000000000000000000</td><td>2025-02-24 20:40:47</td><td>0.000001000000000000</td><td>7</td><td>false</td></tr>
+<tr><td>0x0eb65da4b3f044e74ad912d3411298bc3247bdde</td><td>0x0eb6fb7fe105b32115eb0ba8751260d46be7bdde</td><td>2025-02-24 20:42:47</td><td>10.000000000000000000</td><td>2025-02-24 20:43:59</td><td>0.000001000000000000</td><td>6</td><td>false</td></tr>
+<tr><td>0x58a554d8b6db740280284a410b3e541960504285</td><td>0x58a5427ca481a038e4c6ecf2aa32a9fb57ad4285</td><td>2025-02-24 20:49:23</td><td>10.000000000000000000</td><td>2025-02-24 20:51:59</td><td>0.000001000000000000</td><td>13</td><td>false</td></tr>
+<tr><td>0xe0775caada6fe2acd8aa4a903ea1939fc39b1210</td><td>0xe0771b22c880473efb47b01a1298ca3d6dcb1210</td><td>2025-02-24 20:50:23</td><td>10.000000000000000000</td><td>2025-02-24 20:53:35</td><td>0.000001000000000000</td><td>16</td><td>false</td></tr>
+<tr><td>0xbcc0e13dda4fec9a09d154674f2b1da3e2ae26bb</td><td>0xbcc03e6856b605e7cc43fcaf62c70ed4f1de26bb</td><td>2025-02-24 20:52:47</td><td>10.000000000000000000</td><td>2025-02-24 20:56:59</td><td>0.000001000000000000</td><td>21</td><td>false</td></tr>
+<tr><td>0xd9cc75bfcbe53cffa17bf3edf6df623b862561ba</td><td>0xd9cceff9295bb1f8c1a894a66394773293e561ba</td><td>2025-02-24 20:53:47</td><td>10.000000000000000000</td><td>2025-02-24 20:58:35</td><td>0.000001000000000000</td><td>24</td><td>false</td></tr>
+<tr><td>0xcab97c353edba1ca3dc6f8c802c22813107c26a7</td><td>0xcab9fcb1247b58fe52d5bad67847991f3a1c26a7</td><td>2025-02-24 20:55:59</td><td>10.000000000000000000</td><td>2025-02-24 21:00:59</td><td>0.000001000000000000</td><td>25</td><td>false</td></tr>
+<tr><td>0x248aef2f68c9cc713dc1d13aac300113fd614672</td><td>0x248a8c6625efe7c69b2a44177f2b885f90194672</td><td>2025-02-24 21:30:59</td><td>10.000000000000000000</td><td>2025-02-24 21:31:59</td><td>0.000001000000000000</td><td>5</td><td>false</td></tr>
+<tr><td>0x6ed22fd821a20c1349c53380287ddd4a0eb5f73c</td><td>0x6ed2b17a3674c41bd300353c5c49ec9ad375f73c</td><td>2025-02-24 21:31:59</td><td>20.000000000000000000</td><td>2025-02-24 21:33:11</td><td>0.000001000000000000</td><td>6</td><td>false</td></tr>
+<tr><td>0x8c921bec7767ccdf64e14478d018881e3a1fea4a</td><td>0x8c9206985422494a47e26b6b8a1a699dfe8fea4a</td><td>2025-02-24 21:33:23</td><td>10.000000000000000000</td><td>2025-02-24 21:35:23</td><td>0.000001000000000000</td><td>10</td><td>false</td></tr>
+<tr><td>0xb150e6e5b0e4a4090d6cd81226dc1bded2f6355e</td><td>0xb150998aaf3de3db2413f09de0edc6107aa1355e</td><td>2025-02-24 21:32:47</td><td>20.000000000000000000</td><td>2025-02-24 21:36:11</td><td>0.000001000000000000</td><td>17</td><td>false</td></tr>
+<tr><td>0xbe1e333283ddda6fc440a5590535f6e9ead5e429</td><td>0xbe1e698ad7286b73f35d98dc06b6f0df0d15e429</td><td>2025-02-24 21:34:47</td><td>10.000000000000000000</td><td>2025-02-24 21:36:23</td><td>0.000001000000000000</td><td>8</td><td>false</td></tr>
+<tr><td>0x60de6174d227035e5f17cabbde431a3438cdf6b1</td><td>0x60defb7c1071df6e439e57fe95550dcb154df6b1</td><td>2025-02-24 21:34:11</td><td>10.000000000000000000</td><td>2025-02-24 21:36:35</td><td>0.000001000000000000</td><td>12</td><td>false</td></tr>
+<tr><td>0xc2dc01d6c5458f068123085737b477ed8990bfe9</td><td>0xc2dcabb36c3a7de29d03885453ba67519110bfe9</td><td>2025-02-24 21:36:23</td><td>10.000000000000000000</td><td>2025-02-24 21:37:35</td><td>0.000001000000000000</td><td>6</td><td>false</td></tr>
+<tr><td>0x21e28f763cf7faec661807c5fbbe9e9d720ded2b</td><td>0x21e21f4be6b232cfc05be8ed41ae4715c90ded2b</td><td>2025-02-25 03:59:59</td><td>103.105000000000000000</td><td>2025-02-25 04:41:59</td><td>0.000001000000000000</td><td>207</td><td>false</td></tr>
+</tbody></table></div></section>
+<section id="q6"><h2>6. Bybit: deposits to THORChain, and what each memo asks for</h2>
+<details><summary>The query</summary><pre>SELECT time_utc, left(transaction_hash, 10) AS tx, depositor, vault, asset, amount,
+       split_part(memo, &#x27;:&#x27;, 2) AS asks_for, split_part(memo, &#x27;:&#x27;, 3) AS pay_to, memo
+FROM thorchain_deposits ORDER BY block_number, transaction_hash</pre></details>
+<p>3 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>tx</th><th>depositor</th><th>vault</th><th>asset</th><th>amount</th><th>asks_for</th><th>pay_to</th><th>memo</th></tr></thead><tbody>
+<tr><td>2025-02-25 21:56:47</td><td>0x62f4697f</td><td>0xbfd214765e4bf93a095ce8c308e5c242d4d688e4</td><td>0x863df8de90376b4582132170d381a2f9f4b88b32</td><td>ETH</td><td>9.980000000000000000</td><td>BTC.BTC</td><td>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</td><td>=:BTC.BTC:bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z:0/10/0</td></tr>
+<tr><td>2025-02-25 21:56:47</td><td>0xe5be82e2</td><td>0x1e15cd18952d4ee5765e436888098e3d27701055</td><td>0x863df8de90376b4582132170d381a2f9f4b88b32</td><td>ETH</td><td>9.980000000000000000</td><td>BTC.BTC</td><td>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</td><td>=:BTC.BTC:bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z:0/10/0</td></tr>
+<tr><td>2025-02-25 21:56:47</td><td>0xe62e6205</td><td>0xf19e24cf1b46a60cceb56a3d58ec135cea2cfd06</td><td>0x863df8de90376b4582132170d381a2f9f4b88b32</td><td>ETH</td><td>9.980000000000000000</td><td>BTC.BTC</td><td>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</td><td>=:BTC.BTC:bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z:0/10/0</td></tr>
+</tbody></table></div></section>
+<section id="q7"><h2>7. Bybit: THORChain pays out on Bitcoin, each payout naming the Ethereum deposit it answers</h2>
+<details><summary>The query</summary><pre>WITH outs AS (
+  SELECT txid, op_return_text(script_hex) AS memo FROM &#x27;bitcoin_outputs.parquet&#x27; WHERE script_type = &#x27;op_return&#x27;)
+SELECT d.time_utc AS deposited_utc, left(d.transaction_hash, 10) AS eth_tx, d.amount AS eth_in,
+       b.time_utc AS paid_utc, date_diff(&#x27;minute&#x27;, d.time_utc, b.time_utc) AS minutes_later,
+       left(o.txid, 10) AS btc_tx, p.address AS paid_to, p.address = d.memo_pay_to AS as_the_memo_asked,
+       units(p.value_sat::VARCHAR, 8) AS btc_out
+FROM (SELECT *, split_part(memo, &#x27;:&#x27;, 3) AS memo_pay_to FROM thorchain_deposits) d
+JOIN outs o ON upper(o.memo) = &#x27;OUT:&#x27; || upper(substr(d.transaction_hash, 3))
+JOIN btc_tx b ON b.txid = o.txid
+JOIN &#x27;bitcoin_outputs.parquet&#x27; p ON p.txid = o.txid AND p.script_type &lt;&gt; &#x27;op_return&#x27;
+-- leave out the change the vault pays back to itself
+WHERE p.address NOT IN (SELECT address FROM &#x27;bitcoin_inputs.parquet&#x27; i WHERE i.txid = o.txid)
+ORDER BY d.block_number, d.transaction_hash, p.vout</pre></details>
+<p>3 rows</p>
+<div class="table-wrap"><table><thead><tr><th>deposited_utc</th><th>eth_tx</th><th>eth_in</th><th>paid_utc</th><th>minutes_later</th><th>btc_tx</th><th>paid_to</th><th>as_the_memo_asked</th><th>btc_out</th></tr></thead><tbody>
+<tr><td>2025-02-25 21:56:47</td><td>0x62f4697f</td><td>9.980000000000000000</td><td>2025-02-25 22:39:21</td><td>43</td><td>9d839ee3f5</td><td>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</td><td>true</td><td>0.277486230000000000</td></tr>
+<tr><td>2025-02-25 21:56:47</td><td>0xe5be82e2</td><td>9.980000000000000000</td><td>2025-02-25 22:39:21</td><td>43</td><td>b17895b5dd</td><td>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</td><td>true</td><td>0.273936190000000000</td></tr>
+<tr><td>2025-02-25 21:56:47</td><td>0xe62e6205</td><td>9.980000000000000000</td><td>2025-02-25 22:39:21</td><td>43</td><td>74a9353d0b</td><td>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</td><td>true</td><td>0.273059320000000000</td></tr>
+</tbody></table></div></section>
+<section id="q8"><h2>8. Bybit: the Bitcoin address the memos named, in sum, as of the Bitcoin head</h2>
+<details><summary>The query</summary><pre>WITH a AS (SELECT address FROM labels WHERE chain = &#x27;bitcoin&#x27; AND label LIKE &#x27;BTC address the deposit memos%&#x27;),
+flows AS (
+  SELECT txid, value_sat AS in_sat, 0 AS out_sat FROM &#x27;bitcoin_outputs.parquet&#x27; WHERE address IN (FROM a)
+  UNION ALL
+  SELECT txid, 0, value_sat FROM &#x27;bitcoin_inputs.parquet&#x27; WHERE address IN (FROM a)),
+per_tx AS (SELECT txid, sum(in_sat) AS in_sat, sum(out_sat) AS out_sat FROM flows GROUP BY 1)
+SELECT (FROM a) AS address, count(*) AS transactions, count(*) FILTER (in_sat &gt; 0) AS paid_in,
+       count(*) FILTER (out_sat &gt; 0) AS paid_out, units(sum(in_sat)::VARCHAR, 8) AS btc_in,
+       units(sum(out_sat)::VARCHAR, 8) AS btc_out, units((sum(in_sat) - sum(out_sat))::VARCHAR, 8) AS btc_held,
+       min(b.time_utc) AS first_utc, max(b.time_utc) AS last_utc,
+       any_value(h.head_block) AS as_of_block, any_value(h.head_time_utc) AS as_of_utc
+FROM per_tx f JOIN btc_tx b USING (txid) CROSS JOIN (FROM heads WHERE chain = &#x27;bitcoin&#x27;) h</pre></details>
+<p>1 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>transactions</th><th>paid_in</th><th>paid_out</th><th>btc_in</th><th>btc_out</th><th>btc_held</th><th>first_utc</th><th>last_utc</th><th>as_of_block</th><th>as_of_utc</th></tr></thead><tbody>
+<tr><td>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</td><td>249</td><td>225</td><td>25</td><td>61.785053370000000000</td><td>61.785053370000000000</td><td>0.000000000000000000</td><td>2025-02-24 17:06:10</td><td>2025-02-26 02:56:35</td><td>972854</td><td>2026-10-24 00:55:56</td></tr>
+</tbody></table></div></section>
+<section id="q9"><h2>9. Kelp: the delivery that released rsETH: what it claimed, against what Unichain had sent</h2>
+<details><summary>The query</summary><pre>WITH d AS (
+  SELECT time_utc, block_number, uint(word(data, 0)) AS src_eid, addr(word(data, 1)) AS sender,
+         uint(word(data, 2)) AS nonce
+  FROM logs
+  WHERE topic0 = &#x27;0x3cd5e48f9730b129dc7550f0fcea9c767b7be37837cd10e55eb35f734f4bca04&#x27;
+    AND step = &#x27;a delivery claiming to come from Unichain releases rsETH&#x27;),
+calls AS (
+  SELECT &#x27;ethereum&#x27; AS chain, * FROM &#x27;ethereum_eth_calls.parquet&#x27;
+  UNION ALL BY NAME SELECT &#x27;unichain&#x27; AS chain, * FROM &#x27;unichain_eth_calls.parquet&#x27;)
+SELECT &#x27;ethereum&#x27; AS chain, d.block_number, d.time_utc,
+       &#x27;the delivery says: from &#x27; || e.chain || &#x27; (endpoint &#x27; || d.src_eid || &#x27;), sender &#x27; || d.sender AS what,
+       d.nonce AS nonce
+FROM d JOIN eids e ON e.eid = d.src_eid
+UNION ALL
+SELECT c.chain, c.block_number, b.time_utc, r.what, uint(word(c.output_data, 0))
+FROM calls c
+JOIN reads r ON r.chain = c.chain AND r.contract_address = c.contract_address AND r.call_data = c.call_data
+JOIN blocks b ON b.chain = c.chain AND b.block_number = c.block_number
+ORDER BY time_utc, chain, what</pre></details>
+<p>7 rows</p>
+<div class="table-wrap"><table><thead><tr><th>chain</th><th>block_number</th><th>time_utc</th><th>what</th><th>nonce</th></tr></thead><tbody>
+<tr><td>ethereum</td><td>24908284</td><td>2026-04-18 17:35:23</td><td>packets from Unichain the Ethereum adapter has accepted, in order (lazyInboundNonce)</td><td>307</td></tr>
+<tr><td>ethereum</td><td>24908285</td><td>2026-04-18 17:35:35</td><td>packets from Unichain the Ethereum adapter has accepted, in order (lazyInboundNonce)</td><td>308</td></tr>
+<tr><td>ethereum</td><td>24908285</td><td>2026-04-18 17:35:35</td><td>the delivery says: from unichain (endpoint 30320), sender 0xc3eacf0612346366db554c991d7858716db09f58</td><td>308</td></tr>
+<tr><td>unichain</td><td>45785376</td><td>2026-04-18 17:35:35</td><td>packets the Unichain rsETH contract has sent to the Ethereum adapter (outboundNonce)</td><td>307</td></tr>
+<tr><td>unichain</td><td>45788976</td><td>2026-04-18 18:35:35</td><td>packets the Unichain rsETH contract has sent to the Ethereum adapter (outboundNonce)</td><td>307</td></tr>
+<tr><td>unichain</td><td>62057198</td><td>2026-10-24 01:32:37</td><td>packets the Unichain rsETH contract has sent to the Ethereum adapter (outboundNonce)</td><td>320</td></tr>
+<tr><td>ethereum</td><td>26259270</td><td>2026-10-24 01:39:35</td><td>packets from Unichain the Ethereum adapter has accepted, in order (lazyInboundNonce)</td><td>320</td></tr>
+</tbody></table></div></section>
+<section id="q10"><h2>10. Kelp: where the released rsETH went on Ethereum</h2>
+<details><summary>The query</summary><pre>SELECT time_utc, left(transaction_hash, 10) AS tx, step, from_address, from_label, to_address, to_label, amount
+FROM moves
+WHERE incident = &#x27;kelp&#x27; AND chain = &#x27;ethereum&#x27; AND asset = &#x27;rsETH&#x27;
+  AND (step LIKE &#x27;a delivery claiming%&#x27; OR step LIKE &#x27;split%&#x27;)
+ORDER BY block_number, transaction_hash, pos</pre></details>
+<p>8 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>tx</th><th>step</th><th>from_address</th><th>from_label</th><th>to_address</th><th>to_label</th><th>amount</th></tr></thead><tbody>
+<tr><td>2026-04-18 17:35:35</td><td>0x1ae232da</td><td>a delivery claiming to come from Unichain releases rsETH</td><td>0x85d456b2dff1fd8245387c0bfb64dfb700e98ef3</td><td>Kelp rsETH bridge adapter on Ethereum (LayerZero OFT adapter)</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>116500.000000000000000000</td></tr>
+<tr><td>2026-04-18 17:37:23</td><td>0xe3812485</td><td>split of the released rsETH</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td><td>split receiver; supplies rsETH to Aave</td><td>53000.000000000000000000</td></tr>
+<tr><td>2026-04-18 17:37:59</td><td>0x95fa2f73</td><td>split of the released rsETH</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>0xeba786c9517a4823a5cfd9c72e4e80bf8168129b</td><td>split receiver; bridges to Arbitrum</td><td>30000.000000000000000000</td></tr>
+<tr><td>2026-04-18 17:39:23</td><td>0x2acb453e</td><td>split of the released rsETH</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>0xcbb24a6b4dafaaa1a759a2f413ea0eb6ae1455cc</td><td>split receiver; bridges to Arbitrum</td><td>10000.000000000000000000</td></tr>
+<tr><td>2026-04-18 17:39:47</td><td>0xc86fbb4c</td><td>split of the released rsETH</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>0xbb6a6006eb71205e977eceb19fcad1c8d631c787</td><td>split receiver; bridges to Arbitrum</td><td>6000.000000000000000000</td></tr>
+<tr><td>2026-04-18 17:40:35</td><td>0x373dfc8a</td><td>split of the released rsETH</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>0x8d11aeac74267dd5c56d371bf4ae1afa174c2d49</td><td>split receiver; bridges to Arbitrum</td><td>5000.000000000000000000</td></tr>
+<tr><td>2026-04-18 17:41:11</td><td>0xe8748b75</td><td>split of the released rsETH</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>0x1b748b680373a1dd70a2319261328cab2a6f644c</td><td>split receiver; bridges to Arbitrum</td><td>8000.000000000000000000</td></tr>
+<tr><td>2026-04-18 17:41:59</td><td>0x684ccb28</td><td>split of the released rsETH</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>received the rsETH released by the forged delivery</td><td>0xe9e2f48bb0018276391aec240abb46e8c3cad181</td><td>split receiver; bridges to Arbitrum</td><td>4500.000000000000000000</td></tr>
+</tbody></table></div></section>
+<section id="q11"><h2>11. Kelp: Aave on Ethereum: rsETH supplied, ETH borrowed, and where the ETH went</h2>
+<details><summary>The query</summary><pre>SELECT time_utc, left(transaction_hash, 10) AS tx, step, asset, amount, from_label, from_address, to_label, to_address
+FROM moves
+WHERE incident = &#x27;kelp&#x27; AND chain = &#x27;ethereum&#x27; AND (step LIKE &#x27;Aave on Ethereum%&#x27; OR step LIKE &#x27;the borrowed ETH%&#x27;)
+ORDER BY block_number, transaction_hash, pos</pre></details>
+<p>25 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>tx</th><th>step</th><th>asset</th><th>amount</th><th>from_label</th><th>from_address</th><th>to_label</th><th>to_address</th></tr></thead><tbody>
+<tr><td>2026-04-18 17:38:47</td><td>0x9a7df483</td><td>Aave on Ethereum: supply rsETH</td><td>rsETH</td><td>1.000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td><td>aEthrsETH token contract</td><td>0x2d62109243b87c4ba3ee7ba1d91b0dd0a074d7b1</td></tr>
+<tr><td>2026-04-18 17:38:47</td><td>0x9a7df483</td><td>Aave on Ethereum: supply rsETH</td><td>aEthrsETH</td><td>0.999999999999999999</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:40:11</td><td>0xdac71a69</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>0.984790260181950369</td><td>WETH token contract</td><td>0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:40:11</td><td>0xdac71a69</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>0.984790260181950369</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:40:11</td><td>0xdac71a69</td><td>Aave on Ethereum: borrow ETH against it</td><td>variableDebtEthWETH</td><td>0.984790260181950370</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:40:11</td><td>0xdac71a69</td><td>Aave on Ethereum: borrow ETH against it</td><td>WETH</td><td>0.984790260181950369</td><td class="null">NULL</td><td>0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:40:47</td><td>0x3fa3e894</td><td>Aave on Ethereum: supply rsETH</td><td>rsETH</td><td>5000.000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td><td>aEthrsETH token contract</td><td>0x2d62109243b87c4ba3ee7ba1d91b0dd0a074d7b1</td></tr>
+<tr><td>2026-04-18 17:40:47</td><td>0x3fa3e894</td><td>Aave on Ethereum: supply rsETH</td><td>aEthrsETH</td><td>5000.000000000000003921</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:41:23</td><td>0xbcbc76d1</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>4923.961148776689335700</td><td>WETH token contract</td><td>0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:41:23</td><td>0xbcbc76d1</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>4923.961148776689335700</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:41:23</td><td>0xbcbc76d1</td><td>Aave on Ethereum: borrow ETH against it</td><td>variableDebtEthWETH</td><td>4923.961148827544779666</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:41:23</td><td>0xbcbc76d1</td><td>Aave on Ethereum: borrow ETH against it</td><td>WETH</td><td>4923.961148776689335700</td><td class="null">NULL</td><td>0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:41:59</td><td>0xc73c9e7e</td><td>Aave on Ethereum: supply rsETH</td><td>rsETH</td><td>20000.000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td><td>aEthrsETH token contract</td><td>0x2d62109243b87c4ba3ee7ba1d91b0dd0a074d7b1</td></tr>
+<tr><td>2026-04-18 17:41:59</td><td>0xc73c9e7e</td><td>Aave on Ethereum: supply rsETH</td><td>aEthrsETH</td><td>20000.000000000011524296</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:42:35</td><td>0x2d464e2d</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>19745.044657455187431632</td><td>WETH token contract</td><td>0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:42:35</td><td>0x2d464e2d</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>19745.044657455187431632</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:42:35</td><td>0x2d464e2d</td><td>Aave on Ethereum: borrow ETH against it</td><td>variableDebtEthWETH</td><td>19745.044912254221074672</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:42:35</td><td>0x2d464e2d</td><td>Aave on Ethereum: borrow ETH against it</td><td>WETH</td><td>19745.044657455187431632</td><td class="null">NULL</td><td>0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:43:11</td><td>0xc295f4cd</td><td>Aave on Ethereum: supply rsETH</td><td>rsETH</td><td>27999.000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td><td>aEthrsETH token contract</td><td>0x2d62109243b87c4ba3ee7ba1d91b0dd0a074d7b1</td></tr>
+<tr><td>2026-04-18 17:43:11</td><td>0xc295f4cd</td><td>Aave on Ethereum: supply rsETH</td><td>aEthrsETH</td><td>27999.000000000053109534</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:43:47</td><td>0x5e2d5c6c</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>27770.592068918515843779</td><td>WETH token contract</td><td>0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:43:47</td><td>0x5e2d5c6c</td><td>Aave on Ethereum: borrow ETH against it</td><td>ETH</td><td>27770.592068918515843779</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:43:47</td><td>0x5e2d5c6c</td><td>Aave on Ethereum: borrow ETH against it</td><td>variableDebtEthWETH</td><td>27770.593354697627291007</td><td>(none: new tokens)</td><td>0x0000000000000000000000000000000000000000</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td></tr>
+<tr><td>2026-04-18 17:43:47</td><td>0x5e2d5c6c</td><td>Aave on Ethereum: borrow ETH against it</td><td>WETH</td><td>27770.592068918515843779</td><td class="null">NULL</td><td>0x4d5f47fa6a74757f35c14fd3a6ef8e3c9bc514e8</td><td>Aave WETH gateway (Ethereum)</td><td>0xd01607c3c5ecaba394d8be377a08590149325722</td></tr>
+<tr><td>2026-04-18 17:44:47</td><td>0xe21c3603</td><td>the borrowed ETH moves to the collecting address</td><td>ETH</td><td>52440.676111351964954319</td><td>split receiver; supplies rsETH to Aave</td><td>0x1f4c1c2e610f089d6914c4448e6f21cb0db3adef</td><td>collecting address (Ethereum)</td><td>0x5d3919f12bcc35c26eee5f8226a9bee90c257ccc</td></tr>
+</tbody></table></div></section>
+<section id="q12"><h2>12. Kelp: across the LayerZero bridge: each rsETH send matched to its arrival by message id (guid)</h2>
+<details><summary>The query</summary><pre>-- OFTSent comes in two versions: Kelp&#x27;s rsETH contracts emit the older one, with a single amount. A message can also
+-- be cleared at the far end without running (LayerZero&#x27;s clear()): it then arrives, but nothing is released.
+WITH sent AS (
+  SELECT l.topic1 AS guid, l.chain AS from_chain, l.time_utc AS sent_utc, l.transaction_hash AS sent_tx,
+         t.from_address AS sent_by, uint(word(l.data, 0)) AS dst_eid, units(uint(word(l.data, 1))::VARCHAR, 18) AS rseth_sent
+  FROM logs l JOIN tx t ON t.chain = l.chain AND t.transaction_hash = l.transaction_hash
+  WHERE l.topic0 IN (&#x27;0xfff873bb909b73d08a8c1af4b21779e87103bb8ea8cf3b3a0067eb8526b8b80a&#x27;,  -- 4 fields
+                     &#x27;0x85496b760a4b7f8d66384b9df21b381f5d1b1e79f229a47aaf4c232edc2fe59a&#x27;)), -- 5 fields
+got AS (
+  SELECT topic1 AS guid, chain AS to_chain, uint(word(data, 0)) AS src_eid, &#x27;released&#x27; AS arrival,
+         time_utc AS arrived_utc, transaction_hash AS arrival_tx, addr(topic2) AS receiver,
+         units(uint(word(data, 1))::VARCHAR, 18) AS rseth_received
+  FROM logs WHERE topic0 = &#x27;0xefed6d3500546b29533b128a29e3a94d70788727f0507505ac12eaf2e578fd9c&#x27;
+  UNION ALL
+  -- clear(oapp, (srcEid, sender, nonce), guid, message): the guid is the fifth word after the selector
+  SELECT &#x27;0x&#x27; || substr(c.input, 11 + 64 * 4, 64), c.chain, uint(substr(c.input, 11 + 64, 64)), &#x27;cleared: nothing released&#x27;,
+         t.time_utc, c.transaction_hash, NULL, NULL
+  FROM calls c JOIN tx t ON t.chain = c.chain AND t.transaction_hash = c.transaction_hash
+  WHERE c.selector = &#x27;0x2a56c1b0&#x27; AND NOT c.undone)
+SELECT left(guid, 10) AS guid, coalesce(s.from_chain, (SELECT chain FROM eids WHERE eid = g.src_eid)) AS from_chain,
+       coalesce(g.to_chain, (SELECT chain FROM eids WHERE eid = s.dst_eid)) AS to_chain,
+       s.sent_utc, left(s.sent_tx, 10) AS sent_tx, s.sent_by, s.rseth_sent, coalesce(g.arrival, &#x27;not in the extract&#x27;) AS arrival,
+       g.arrived_utc, left(g.arrival_tx, 10) AS arrival_tx, g.receiver, g.rseth_received,
+       date_diff(&#x27;second&#x27;, s.sent_utc, g.arrived_utc) AS seconds_across
+FROM sent s FULL JOIN got g USING (guid)
+ORDER BY coalesce(s.sent_utc, g.arrived_utc), guid</pre></details>
+<p>8 rows</p>
+<div class="table-wrap"><table><thead><tr><th>guid</th><th>from_chain</th><th>to_chain</th><th>sent_utc</th><th>sent_tx</th><th>sent_by</th><th>rseth_sent</th><th>arrival</th><th>arrived_utc</th><th>arrival_tx</th><th>receiver</th><th>rseth_received</th><th>seconds_across</th></tr></thead><tbody>
+<tr><td>0x3f4510d8</td><td>unichain</td><td>ethereum</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td><td>released</td><td>2026-04-18 17:35:35</td><td>0x1ae232da</td><td>0x8b1b6c9a6db1304000412dd21ae6a70a82d60d3b</td><td>116500.000000000000000000</td><td class="null">NULL</td></tr>
+<tr><td>0x706bc40a</td><td>ethereum</td><td>arbitrum</td><td>2026-04-18 17:42:23</td><td>0xdde8945d</td><td>0x1b748b680373a1dd70a2319261328cab2a6f644c</td><td>8000.000000000000000000</td><td>released</td><td>2026-04-18 17:50:56</td><td>0x2f813c53</td><td>0x1b748b680373a1dd70a2319261328cab2a6f644c</td><td>8000.000000000000000000</td><td>513</td></tr>
+<tr><td>0x8f036a55</td><td>ethereum</td><td>arbitrum</td><td>2026-04-18 17:43:35</td><td>0xb4572aff</td><td>0xe9e2f48bb0018276391aec240abb46e8c3cad181</td><td>4500.000000000000000000</td><td>released</td><td>2026-04-18 17:52:10</td><td>0x319cb7ed</td><td>0xe9e2f48bb0018276391aec240abb46e8c3cad181</td><td>4500.000000000000000000</td><td>515</td></tr>
+<tr><td>0x5d2531d1</td><td>ethereum</td><td>arbitrum</td><td>2026-04-18 17:53:35</td><td>0x7497fe11</td><td>0xeba786c9517a4823a5cfd9c72e4e80bf8168129b</td><td>12573.795185000000000000</td><td>released</td><td>2026-04-18 18:02:13</td><td>0x4b2b98d5</td><td>0xeba786c9517a4823a5cfd9c72e4e80bf8168129b</td><td>12573.795185000000000000</td><td>518</td></tr>
+<tr><td>0x838b1e52</td><td>ethereum</td><td>arbitrum</td><td>2026-04-18 17:53:47</td><td>0x46a3d80d</td><td>0xbb6a6006eb71205e977eceb19fcad1c8d631c787</td><td>770.000000000000000000</td><td>released</td><td>2026-04-18 18:02:22</td><td>0xad0c1829</td><td>0xbb6a6006eb71205e977eceb19fcad1c8d631c787</td><td>770.000000000000000000</td><td>515</td></tr>
+<tr><td>0xf688c5a2</td><td>ethereum</td><td>arbitrum</td><td>2026-04-18 18:02:23</td><td>0x74e00914</td><td>0xcbb24a6b4dafaaa1a759a2f413ea0eb6ae1455cc</td><td>9299.000000000000000000</td><td>released</td><td>2026-04-18 18:10:57</td><td>0x12739d93</td><td>0xcbb24a6b4dafaaa1a759a2f413ea0eb6ae1455cc</td><td>9299.000000000000000000</td><td>514</td></tr>
+<tr><td>0x6e478157</td><td>ethereum</td><td>arbitrum</td><td>2026-04-18 18:04:23</td><td>0x5006bf68</td><td>0x8d11aeac74267dd5c56d371bf4ae1afa174c2d49</td><td>4600.000000000000000000</td><td>released</td><td>2026-04-18 18:12:55</td><td>0xe7f7178e</td><td>0x8d11aeac74267dd5c56d371bf4ae1afa174c2d49</td><td>4600.000000000000000000</td><td>512</td></tr>
+<tr><td>0x8bef09cd</td><td>arbitrum</td><td>ethereum</td><td>2026-04-18 18:30:31</td><td>0x30a59579</td><td>0x8d11aeac74267dd5c56d371bf4ae1afa174c2d49</td><td>3575.571057000000000000</td><td>cleared: nothing released</td><td>2026-04-22 19:46:23</td><td>0xfb77f3d3</td><td class="null">NULL</td><td class="null">NULL</td><td>350152</td></tr>
+</tbody></table></div></section>
+<section id="q13"><h2>13. Kelp: ETH in and out of the collecting address, on each chain (in these transactions only)</h2>
+<details><summary>The query</summary><pre>SELECT chain, CASE WHEN to_label LIKE &#x27;collecting address%&#x27; THEN &#x27;in&#x27; ELSE &#x27;out&#x27; END AS direction,
+       count(*) AS payments, sum(amount) AS eth, min(time_utc) AS first_utc, max(time_utc) AS last_utc
+FROM moves
+WHERE incident = &#x27;kelp&#x27; AND asset = &#x27;ETH&#x27; AND (to_label LIKE &#x27;collecting address%&#x27; OR from_label LIKE &#x27;collecting address%&#x27;)
+GROUP BY ALL ORDER BY chain, direction</pre></details>
+<p>4 rows</p>
+<div class="table-wrap"><table><thead><tr><th>chain</th><th>direction</th><th>payments</th><th>eth</th><th>first_utc</th><th>last_utc</th></tr></thead><tbody>
+<tr><td>arbitrum</td><td>in</td><td>10</td><td>30765.667501709008927568</td><td>2026-04-18 17:58:20</td><td>2026-04-18 19:34:26</td></tr>
+<tr><td>arbitrum</td><td>out</td><td>1</td><td>30765.667401709008927568</td><td>2026-04-21 03:35:08</td><td>2026-04-21 03:35:08</td></tr>
+<tr><td>ethereum</td><td>in</td><td>1</td><td>52440.676111351964954319</td><td>2026-04-18 17:44:47</td><td>2026-04-18 17:44:47</td></tr>
+<tr><td>ethereum</td><td>out</td><td>2</td><td>75700.000000000000000000</td><td>2026-04-21 07:39:11</td><td>2026-04-21 07:40:47</td></tr>
+</tbody></table></div></section>
+<section id="q14"><h2>14. Kelp: the freeze and the release on Arbitrum: who sent each transaction, and the ETH it moved</h2>
+<details><summary>The query</summary><pre>SELECT t.time_utc, t.block_number, left(t.transaction_hash, 10) AS tx, t.step, t.transaction_type, t.from_address,
+       m.from_label, m.to_address, m.to_label, m.amount AS eth
+FROM tx t LEFT JOIN moves m ON m.chain = t.chain AND m.transaction_hash = t.transaction_hash
+WHERE t.step LIKE &#x27;freeze%&#x27; OR t.step LIKE &#x27;release%&#x27;
+ORDER BY t.time_utc, t.transaction_hash, m.pos</pre></details>
+<p>3 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>block_number</th><th>tx</th><th>step</th><th>transaction_type</th><th>from_address</th><th>from_label</th><th>to_address</th><th>to_label</th><th>eth</th></tr></thead><tbody>
+<tr><td>2026-04-21 03:26:47</td><td>24925592</td><td>0x079984c5</td><td>freeze: the Security Council&#x27;s transaction on Ethereum</td><td>2</td><td>0x10590a5c93e8695bdb134c22f04c4d5b50755dc4</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-04-21 03:35:08</td><td>454686044</td><td>0x56180442</td><td>freeze: the ETH leaves the collecting address on Arbitrum</td><td>101</td><td>0x5d3919f12bcc35c26eee5f8226a9bee90c257ccc</td><td>collecting address (Arbitrum); its ETH was frozen</td><td>0x0000000000000000000000000000000000000da0</td><td>where the frozen ETH was held until release</td><td>30765.667401709008927568</td></tr>
+<tr><td>2026-06-15 10:18:25</td><td>473716531</td><td>0x09795deb</td><td>release: the frozen ETH goes to a recovery multisig</td><td>101</td><td>0x0000000000000000000000000000000000000da0</td><td>where the frozen ETH was held until release</td><td>0x3b87db6ded35ebd28ecbf8014fb325eef23f6c07</td><td>recovery multisig that received the frozen ETH</td><td>30765.617401709008927568</td></tr>
+</tbody></table></div></section>
+<section id="q15"><h2>15. Kelp: ETH held at each address on Arbitrum, block by block, read from the chain&#x27;s own state</h2>
+<details><summary>The query</summary><pre>SELECT b.block_number, b.time_utc, l.label, x.address, units(x.balance_string, 18) AS eth
+FROM &#x27;arbitrum_balances.parquet&#x27; x
+JOIN blocks b ON b.chain = &#x27;arbitrum&#x27; AND b.block_number = x.block_number
+LEFT JOIN labels l ON l.chain = &#x27;arbitrum&#x27; AND l.address = x.address
+ORDER BY b.block_number, l.label, x.address</pre></details>
+<p>15 rows</p>
+<div class="table-wrap"><table><thead><tr><th>block_number</th><th>time_utc</th><th>label</th><th>address</th><th>eth</th></tr></thead><tbody>
+<tr><td>454686043</td><td>2026-04-21 03:35:08</td><td>collecting address (Arbitrum); its ETH was frozen</td><td>0x5d3919f12bcc35c26eee5f8226a9bee90c257ccc</td><td>30765.667501709008927568</td></tr>
+<tr><td>454686043</td><td>2026-04-21 03:35:08</td><td>recovery multisig that received the frozen ETH</td><td>0x3b87db6ded35ebd28ecbf8014fb325eef23f6c07</td><td>0.000000000000000000</td></tr>
+<tr><td>454686043</td><td>2026-04-21 03:35:08</td><td>where the frozen ETH was held until release</td><td>0x0000000000000000000000000000000000000da0</td><td>0.000000000000000000</td></tr>
+<tr><td>454686044</td><td>2026-04-21 03:35:08</td><td>collecting address (Arbitrum); its ETH was frozen</td><td>0x5d3919f12bcc35c26eee5f8226a9bee90c257ccc</td><td>0.000099578656000000</td></tr>
+<tr><td>454686044</td><td>2026-04-21 03:35:08</td><td>recovery multisig that received the frozen ETH</td><td>0x3b87db6ded35ebd28ecbf8014fb325eef23f6c07</td><td>0.000000000000000000</td></tr>
+<tr><td>454686044</td><td>2026-04-21 03:35:08</td><td>where the frozen ETH was held until release</td><td>0x0000000000000000000000000000000000000da0</td><td>30765.667401709008927568</td></tr>
+<tr><td>473716530</td><td>2026-06-15 10:18:25</td><td>collecting address (Arbitrum); its ETH was frozen</td><td>0x5d3919f12bcc35c26eee5f8226a9bee90c257ccc</td><td>0.000099578656000000</td></tr>
+<tr><td>473716530</td><td>2026-06-15 10:18:25</td><td>recovery multisig that received the frozen ETH</td><td>0x3b87db6ded35ebd28ecbf8014fb325eef23f6c07</td><td>0.009994515470313383</td></tr>
+<tr><td>473716530</td><td>2026-06-15 10:18:25</td><td>where the frozen ETH was held until release</td><td>0x0000000000000000000000000000000000000da0</td><td>30765.667401709008927568</td></tr>
+<tr><td>473716531</td><td>2026-06-15 10:18:25</td><td>collecting address (Arbitrum); its ETH was frozen</td><td>0x5d3919f12bcc35c26eee5f8226a9bee90c257ccc</td><td>0.000099578656000000</td></tr>
+<tr><td>473716531</td><td>2026-06-15 10:18:25</td><td>recovery multisig that received the frozen ETH</td><td>0x3b87db6ded35ebd28ecbf8014fb325eef23f6c07</td><td>30765.627396224479240951</td></tr>
+<tr><td>473716531</td><td>2026-06-15 10:18:25</td><td>where the frozen ETH was held until release</td><td>0x0000000000000000000000000000000000000da0</td><td>0.049999453146710000</td></tr>
+<tr><td>517703385</td><td>2026-10-24 01:38:52</td><td>collecting address (Arbitrum); its ETH was frozen</td><td>0x5d3919f12bcc35c26eee5f8226a9bee90c257ccc</td><td>0.000099578656000000</td></tr>
+<tr><td>517703385</td><td>2026-10-24 01:38:52</td><td>recovery multisig that received the frozen ETH</td><td>0x3b87db6ded35ebd28ecbf8014fb325eef23f6c07</td><td>30765.627396224479240951</td></tr>
+<tr><td>517703385</td><td>2026-10-24 01:38:52</td><td>where the frozen ETH was held until release</td><td>0x0000000000000000000000000000000000000da0</td><td>0.049999453146710000</td></tr>
+</tbody></table></div></section>
+<section id="q16"><h2>16. As of: how far each chain was read</h2>
+<details><summary>The query</summary><pre>SELECT chain, head_block, head_time_utc FROM heads ORDER BY chain</pre></details>
+<p>4 rows</p>
+<div class="table-wrap"><table><thead><tr><th>chain</th><th>head_block</th><th>head_time_utc</th></tr></thead><tbody>
+<tr><td>arbitrum</td><td>517703385</td><td>2026-10-24 01:38:52</td></tr>
+<tr><td>bitcoin</td><td>972854</td><td>2026-10-24 00:55:56</td></tr>
+<tr><td>ethereum</td><td>26259270</td><td>2026-10-24 01:39:35</td></tr>
+<tr><td>unichain</td><td>62057198</td><td>2026-10-24 01:32:37</td></tr>
+</tbody></table></div></section>
+<footer><p>Written by build/saved_results.py with DuckDB 1.4.3.</p></footer>
+</body>
+</html>

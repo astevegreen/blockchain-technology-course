@@ -20,6 +20,7 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 | `/labs/bitcoin-trace/` | Day-6 Bitcoin trace lab (worksheet, saved pages; the explorer at `/labs/bitcoin-trace/mempool/`) |
 | `/labs/coinjoin-trace/` | Day-7 CoinJoin trace lab (worksheet, saved pages; the explorer at `/labs/coinjoin-trace/mempool/`) |
 | `/labs/tron/` | Tron lab (worksheet, query page, saved results) |
+| `/labs/cross-chain/` | Day-8 cross-chain lab (worksheet, query page, saved results) |
 | `/quiz/` | Quiz engine |
 
 ## Prerequisites
@@ -351,6 +352,7 @@ machine may be offline, and the build downloads Quarto.
 | `tokens` | Day-3 token lab (Otterscan on a frozen chain with a proxied dollar token and an NFT); `tokens/README.md` |
 | `dex` | Day-4 exchange and bridge lab (Otterscan on two frozen chains: a pool swap on L1, a bridge to L2); `dex/README.md` |
 | `tron` | Day-5 Tron lab (query page over a frozen Tron snapshot); `tron/README.md` |
+| `cross-chain` | Day-8 cross-chain lab (query page over a frozen Ethereum, Arbitrum and Bitcoin snapshot); `cross-chain/README.md` |
 | `quiz-engine-v2` | Quiz engine |
 | `hlf` | Hyperledger Fabric lab |
 
@@ -360,7 +362,7 @@ Labs fall into two categories:
 
 **On-demand lanes** (bitcoin, consensus, p2p_trust, ethereum, hlf): Students claim a session via `/api/<lab>/claim`, and the lab control plane starts a lane-specific container from a pre-built image. `--max-student-capacity` is the base upper bound for how many claimable stations exist at once, and the per-lab capacity flags can override it for individual labs up to the 40-lane limit.
 
-**Shared singleton apps** (cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, tokens, dex, tron, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
+**Shared singleton apps** (cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, tokens, dex, tron, cross-chain, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
 
 That is why lane capacity only applies to the claim-based labs:
 

@@ -92,6 +92,7 @@ fresh_start() {
     tokens \
     dex \
     tron \
+    cross-chain \
     quiz-engine-v2 \
     hlf
   do

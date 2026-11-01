@@ -26,6 +26,7 @@ Use these links after the instructor tells the class which lab is active.
 * [Token Lab](/labs/tokens/)
 * [Exchange and Bridge Lab](/labs/dex/)
 * [Tron Lab](/labs/tron/)
+* [Cross-Chain Lab](/labs/cross-chain/)
 * [Cryptography Lab](/labs/cryptography/)
 * [P2P Trust Lab](/labs/p2p_trust/)
 * [Consensus Lab](/labs/consensus/)
