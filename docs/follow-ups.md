@@ -35,7 +35,7 @@ slide index), which is never listed here.
 - 01-FO bank (`quizes/quiz_json/`) and `lesson_synthesis/` 01-FO synthesis predate the recut as Attribution and
   confidence: no questions on the nine new slides (q9, and q1-q4 on the unrated slides hidden the same day, were
   retired, leaving 4 slide questions); q10 still traces to Colonial Pipeline, hidden 24 Oct as moved to 03-FO.
-  (31 Oct 2026, 01-FO recut as D6 ③)
+  Both 01-FO syntheses also still teach Ronin, hidden 31 Oct as moved to 09-FO. (31 Oct 2026, 01-FO recut as D6 ③)
 - 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`) and the day 2 daily
   quiz have no question on the new slide "A blockchain is a record, not a currency" (one chain many assets, one
   asset many chains, a chain with no coin); q1 traces to the hidden "What is a Blockchain?" slide, so retrace it to
@@ -64,6 +64,9 @@ slide index), which is never listed here.
   D7 ② build)
 - 08-FO (`lessons/forensics/08-FO-cryptojacking.qmd`, Cryptojacking) has no quiz bank or lesson synthesis; write
   both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026, D7 ③ build)
+- 09-FO (`lessons/forensics/09-FO-approvals_drainers_poisoning.qmd`, Approvals, Drainers and Address Poisoning)
+  has no quiz bank or lesson synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and
+  `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026, D8 ① build)
 - 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
   address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 

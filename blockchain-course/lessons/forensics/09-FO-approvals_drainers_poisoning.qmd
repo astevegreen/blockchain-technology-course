@@ -1,0 +1,657 @@
+---
+title: "Approvals, Drainers and Address Poisoning"
+subtitle: 'Section VIII: Forensics'
+author: Army Cyber Institute
+lesson: 09-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## The victim's account paid: find out how {.smaller}
+
+**Bottom line:** in each theft in this lesson the money leaves the victim's own account. Something let it leave: a permission the victim gave, code the victim's account now runs, a send to the wrong address, or a key the thief holds. Each one leaves a different pattern on chain.
+
+::: {style="font-size: .8em;"}
+
+| Question | The answer tells you |
+| --- | --- |
+| Who sent the transaction that moved the tokens? | The owner, or a spender with permission |
+| Did the victim approve, or sign a permit? | An approval drain |
+| Who sells the phishing kit? | Drainer-as-a-service, and how a kit's cut shows |
+| Does the victim's address now hold code? | An EIP-7702 delegation |
+| Did a look-alike address appear just before? | Address poisoning |
+| Wrong recipient, but no lure? | Possibly a clipboard hijacker |
+| What if the stolen keys belong to a bridge? | Ronin, and North Korea |
+| How sure can you be? | The words for each finding |
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens day 8, "Ethereum attacks and the loot". It sets the one question that sorts every case in the lesson: what let the money leave the victim's own account? It matters here because a drain, a poisoning and a stolen key all show the same thing at first, the victim's balance going to zero, and the analyst's first job is to tell them apart. Emphasize "who sent the transaction": it is the first field to read.
+
+**Key Points**
+- An ERC-20 token lets its owner give another address permission to spend; this lesson shows what a thief does with that permission.
+- Students recognize each pattern from transactions and published write-ups; nobody reads code today.
+- Day 8 ② takes flash loans, reentrancy and oracle attacks; day 8 ③ takes bytecode and NFT wash trading.
+- Ronin closes the lesson as the introduction to North Korea; day 9 ① takes North Korea in depth.
+
+**Walkthrough**
+1. Read the bottom line aloud.
+2. Walk the table; each row is one or two slides.
+
+**Sources**
+None
+
+:::
+
+## An approval lets someone else spend your tokens {.smaller}
+
+**Bottom line:** a token owner can give another address permission to move their tokens. Whoever holds that permission can take them later in a transaction the owner never sends.
+
+::: {style="font-size: .8em;"}
+
+| Call | What it does | What the chain shows |
+| --- | --- | --- |
+| `approve(spender, amount)` | Lets the spender withdraw from the owner, more than once, up to the amount [@vogelsteller_eip20tokenstandard_2015] | An `Approval` event, in a transaction the owner sent |
+| `transferFrom(owner, to, amount)` | The spender moves the owner's tokens [@vogelsteller_eip20tokenstandard_2015] | A `Transfer` event, in a transaction the **spender** sent |
+| `allowance(owner, spender)` | What the spender may still take [@vogelsteller_eip20tokenstandard_2015] | Readable at any time |
+| `setApprovalForAll(operator, true)` | NFTs: lets an operator manage **all** the owner's tokens in that collection [@entriken_eip721nonfungibletoken_2018] | An `ApprovalForAll` event |
+
+: {tbl-colwidths="[30,40,30]"}
+
+:::
+
+- **The permission lasts:** a later `approve` overwrites the amount, so approving zero takes it away [@vogelsteller_eip20tokenstandard_2015].
+- **Analyst move:** a `Transfer` out of the victim in a transaction the victim did not send means someone held permission. Find the `Approval` that gave it.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains the token approval: the permission every drain in the next four slides abuses. It matters here because an approval separates the moment of the mistake (the victim approves) from the moment of the loss (the spender takes), sometimes by days. Emphasize the third column: the loss arrives in someone else's transaction.
+
+**Key Points**
+- ERC-20's `approve` sets an allowance; `transferFrom` spends it; `allowance` reads what is left.
+- Apps ask for approvals legitimately: a decentralized exchange needs permission to move the tokens a user swaps. A drainer asks for the same permission under a lure.
+- ERC-721's `setApprovalForAll` gives an operator control of every NFT the owner holds in that collection, not one token.
+- The permission stays until it is spent or overwritten; a new `approve` with zero ends it.
+
+**Walkthrough**
+1. Read each row: what the call does, then what the analyst sees.
+2. Ask: the victim's tokens left in a transaction sent by an address the victim never used. What do you look for next? (An `Approval` from the victim to that address, or to a contract that address controls.)
+
+**Sources**
+- @vogelsteller_eip20tokenstandard_2015
+- @entriken_eip721nonfungibletoken_2018
+
+:::
+
+## A permit is an approval signed off chain {.smaller}
+
+**Bottom line:** ERC-2612 adds `permit`, which sets an allowance from a signed message instead of a transaction [@lundfall_erc2612permit_2020]. The victim signs on a website and sends nothing; the spender puts the signature on chain.
+
+::: {style="font-size: .8em;"}
+
+| Step | Who acts | What the chain shows |
+| --- | --- | --- |
+| 1. Victim signs a permit message on a phishing site | Victim | Nothing |
+| 2. Spender calls `permit` with the signature | Spender | `Approval` event; the owner's permit nonce goes up by one [@lundfall_erc2612permit_2020] |
+| 3. Spender calls `transferFrom` | Spender | `Transfer` out of the victim |
+
+: {tbl-colwidths="[44,14,42]"}
+
+:::
+
+- **Scale:** Permit and Permit2 signatures caused 38% of large-case phishing losses in 2025 [@scamsniffer_phishingreport2025_2026] (as of Jan 2026).
+- **Analyst move:** the victim's history shows no `approve`. That does not rule out an approval: look for an `Approval` event inside the spender's transaction.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the permit, the approval that never appears in the victim's own history. It matters here because an analyst who checks only the transactions the victim sent will miss it and may call the case a stolen key. Emphasize step 1: the victim's mistake is a signature, not a transaction.
+
+**Key Points**
+- `permit` lets a holder change the allowance with a signed message instead of a transaction from their own address.
+- A valid call sets the allowance, increments the owner's nonce and emits the same `Approval` event as `approve`.
+- Scam Sniffer counts Permit and Permit2 signatures together.
+- Scam Sniffer's 2025 report puts all signature phishing at $83.85M across 106,106 victims; permits were the largest single share of large cases.
+
+**Walkthrough**
+1. Read the three steps. Point out that only steps 2 and 3 are on chain, and both were sent by the spender.
+2. Ask: the victim says "I never approved anything". What do you check? (`Approval` events naming the victim as owner, in any transaction.)
+
+**Sources**
+- @lundfall_erc2612permit_2020
+- @scamsniffer_phishingreport2025_2026
+
+:::
+
+## A drainer kit is phishing sold as a service {.smaller}
+
+**Bottom line:** a drainer is the phishing site and the code behind it that get a victim to sign an approval or a transfer [@scamsniffer_phishingreport2025_2026]. Its developers rent it out and take a cut of every theft.
+
+::: {style="font-size: .8em;"}
+
+| Inferno Drainer | Detail |
+| --- | --- |
+| Model | "Scam-as-a-service", active Nov 2022 to Nov 2023 [@shevchenko_infernodrainer_2024] |
+| Reach | 16,000 domains imitating more than 100 crypto brands [@shevchenko_infernodrainer_2024] |
+| Lures | Fake airdrops and giveaways, spread on X and Discord [@shevchenko_infernodrainer_2024] |
+| Take | At least $80 million stolen [@shevchenko_infernodrainer_2024] |
+| The cut | 20% to the developers, 80% to the customer who ran the site [@shevchenko_infernodrainer_2024] |
+
+: {tbl-colwidths="[22,78]"}
+
+:::
+
+- **On chain, the cut shows:** the account that holds the approval sends 20% to an admin account and 80% to the customer [@metasleuth_infernoprofitsharing_2024].
+- **Analyst move:** the same split to the same admin address across victims ties those drains to one kit.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows who builds drainers: a criminal service that rents its kit to many operators. It matters here because many unconnected victims, each phished on a different site, can lead to one admin address. Emphasize the split: a fixed percentage paid to the same address is a fingerprint the analyst can read.
+
+**Key Points**
+- Group-IB studied Inferno Drainer from November 2022 to November 2023; its figures are from that study.
+- MetaSleuth (BlockSec) followed the profit sharing on chain: in the ERC-20 case the victim approves a plain account, which then pays out 20% and 80%.
+- The 20% is the developers' fee, the 80% the customer's.
+- A shared admin address links drains to the kit, not to the person who ran each site.
+
+**Walkthrough**
+1. Read the table top to bottom.
+2. Ask: two victims on two different fake sites each lost tokens, and in both cases 20% went to the same address. What can you say? (Both drains likely used one kit; the site operators may still be different people.)
+
+**Sources**
+- @scamsniffer_phishingreport2025_2026
+- @shevchenko_infernodrainer_2024
+- @metasleuth_infernoprofitsharing_2024
+
+:::
+
+## Reading an approval drain, step by step {.smaller}
+
+**Bottom line:** a drain reads in four steps: the permission, the take, the cut, and the swap out of tokens that can be frozen. (Invented data.)
+
+::: {style="font-size: .75em;"}
+
+| Step | Transaction | Sent by | What it shows |
+| --- | --- | --- | --- |
+| 1 | `approve(0xA11…, 50,000)` on USDC, from the victim | Victim | The victim gave 0xA11… permission, on a fake airdrop site |
+| 2 | `transferFrom(victim, 0xA11…, 9,800 USDC)` | 0xA11… | The spender took everything the victim held |
+| 3 | 0xA11… pays 1,960 USDC to 0xAD… and 7,840 USDC to 0xC0… | 0xA11… | A 20/80 split: a drainer kit's cut |
+| 4 | 0xC0… swaps the USDC for ETH on a decentralized exchange | 0xC0… | Off a token whose issuer can freeze it, into ETH, which no one can freeze |
+
+: {tbl-colwidths="[7,38,13,42]"}
+
+:::
+
+Step 2 is the loss; step 1, possibly days earlier, is the mistake.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide walks one approval drain end to end, with invented data. It matters here because students see every pattern from the last three slides in one place before they meet a real case. Emphasize the "Sent by" column: the victim sent only step 1.
+
+**Key Points**
+- Step 1 could equally be a permit; then the victim sent nothing at all, and the `Approval` appears in 0xA11…'s transaction.
+- Step 3's split is the kit's fee, as MetaSleuth traced for Inferno Drainer.
+- Step 4: thieves swap tokens for a native coin because token issuers can freeze wallets holding stolen tokens, while no one can freeze ETH or BTC; Elliptic describes the same first step after the Bybit theft.
+- The data are invented.
+
+**Walkthrough**
+1. Read each row left to right.
+2. Ask: how would you say step 2 to an agent? ("The victim's USDC was taken by 0xA11…, which the victim had given permission two days earlier.")
+
+**Sources**
+- @metasleuth_infernoprofitsharing_2024
+- @elliptic_bybit_2025
+
+:::
+
+## Four ways out of a wallet look different {.smaller}
+
+**Bottom line:** read who sent the outflow, what came just before it, and whether the victim's address holds code. Those three answers sort most cases.
+
+::: {style="font-size: .78em;"}
+
+| What let the money leave | Who sent the outflow | What comes before it | The victim's address |
+| --- | --- | --- | --- |
+| Approval | The spender | The victim's `approve` transaction | A plain account |
+| Permit | The spender | An `Approval` inside the spender's transaction | A plain account |
+| EIP-7702 delegation | Anyone, even a stranger who pays the fee | A signed authorization; the account's code is set | Holds code starting `0xef0100` |
+| Stolen key | The victim's own address | Nothing on chain | A plain account |
+| Wrong recipient (poisoning, clipboard) | The victim's own address | A look-alike lure, or nothing | A plain account |
+
+: {tbl-colwidths="[24,22,30,24]"}
+
+:::
+
+A stolen key and a mistaken send both look like the owner's own payment. What tells them apart is the recipient.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide puts the lesson's patterns side by side. It matters here because the victim's complaint is always the same ("my wallet was drained") and the analyst's finding has to name the mechanism. Emphasize the last two rows: when the victim's own address sent the funds, the chain cannot tell the owner from a thief holding the key, so the analyst reads the recipient and what came before.
+
+**Key Points**
+- Approval and permit: the outflow is the spender's `transferFrom`.
+- EIP-7702: the next two slides; the outflow can arrive in a transaction anyone sent, running code at the victim's address.
+- Stolen key: the thief signs as the owner, so the outflow looks like the owner's own send.
+- Wrong recipient: the owner really did send it; poisoning leaves a lure, a clipboard hijacker does not.
+
+**Walkthrough**
+1. Read each row and ask the class to say the first column from the other three.
+2. Ask: the victim's address sent all its tokens to a new address, with no lure and no approval before it. What are the two candidates? (A stolen key or a clipboard hijacker; the chain alone may not decide between them.)
+
+**Sources**
+- @vogelsteller_eip20tokenstandard_2015
+- @lundfall_erc2612permit_2020
+- @buterin_eip7702setcode_2024
+
+:::
+
+## EIP-7702 lets a plain account run code {.smaller}
+
+**Bottom line:** since the Pectra upgrade of 7 May 2025 [@ethereumfoundation_pectramainnet_2025], an ordinary Ethereum account can sign one authorization that makes it run a contract's code [@buterin_eip7702setcode_2024].
+
+::: {style="font-size: .78em;"}
+
+| Piece | What it is | What the analyst sees |
+| --- | --- | --- |
+| Authorization | The owner signs a message naming a delegate contract [@ethereumfoundation_pectramainnet_2025] | Inside a transaction of type `0x04` [@buterin_eip7702setcode_2024] |
+| Delegation indicator | `0xef0100` plus the delegate's address, written as the account's code [@buterin_eip7702setcode_2024] | The address now "has code" |
+| Execution | A call to the account runs the delegate's code as the account [@buterin_eip7702setcode_2024] | The account's tokens move by the delegate's rules |
+| Sponsorship | Another account can send and pay for the transaction [@buterin_eip7702setcode_2024] | The sender is not the owner |
+| Batching | Several operations in one transaction [@buterin_eip7702setcode_2024] | One transaction, many transfers |
+| Clearing | Delegating to the zero address removes the code [@buterin_eip7702setcode_2024] | The code is gone again |
+
+: {tbl-colwidths="[20,46,34]"}
+
+:::
+
+The standard warns that a bad delegate can take "near complete control" of the account [@buterin_eip7702setcode_2024].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains EIP-7702, the change that blurred the line between a plain account and a contract. It matters here because before May 2025 a plain account held no code, so every outflow from it was a transaction its key signed; after Pectra that is no longer true. Emphasize the second row: the delegation indicator is the thing to look for.
+
+**Key Points**
+- Pectra activated on Ethereum mainnet on 7 May 2025 at epoch 364032 (as of 2026: 7702 is live).
+- The authorization names a chain, a delegate address and the account's nonce, and is signed by the account's key.
+- The account's code becomes `0xef0100` followed by the delegate's address; calls to the account run the delegate's code in the account's own context.
+- The legitimate uses are sponsorship (someone else pays the fee) and batching (several steps at once).
+- A delegation lasts until the owner signs another; delegating to the zero address clears it.
+
+**Walkthrough**
+1. Read each row; for each, ask what changes for an analyst who learned that plain accounts have no code.
+2. Ask: an explorer shows code at an address that used to be a plain wallet. What do you check first? (Whether the code starts with `0xef0100`; if so, which delegate it names and which `0x04` transaction set it.)
+
+**Sources**
+- @ethereumfoundation_pectramainnet_2025
+- @buterin_eip7702setcode_2024
+
+:::
+
+## After 7702, an outflow may not be the owner's {.smaller}
+
+**Bottom line:** one signature can now hand an account's behaviour to a stranger's code. The theft can arrive in a transaction someone else sent and paid for.
+
+::: {style="font-size: .78em;"}
+
+| What happened | The pattern | Read it as |
+| --- | --- | --- |
+| The victim signed a malicious 7702 authorization on a phishing site | A delegation the victim did not mean to set, then a batch of transfers out; the largest cases were in Aug 2025, $2.54M from two incidents [@scamsniffer_phishingreport2025_2026] (as of Jan 2026) | Signature phishing |
+| The thief already had the key and delegated to a "sweeper" | Over 80% of delegations pointed to copied sweeper contracts that empty wallets with leaked keys [@abrams_wintermutepectra_2025] (as of Jun 2025) | A stolen key; 7702 only automates the theft |
+| The owner chose a delegate for batching or sponsored fees | Delegation to a known wallet contract; outflows the owner meant | No theft |
+
+: {tbl-colwidths="[30,48,22]"}
+
+:::
+
+- **Analyst move:** read the account's code, find the `0x04` transaction that set it and who sent it, then ask whether the key was already leaking.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows the two ways criminals use EIP-7702 and the one way it is used honestly. It matters here because a delegation on a drained account is not by itself proof of phishing: the market maker Wintermute found that most delegations in the first weeks pointed to sweepers, which only work on keys that have already leaked. Emphasize the middle row: there the crime is the stolen key.
+
+**Key Points**
+- Scam Sniffer: "EIP-7702 malicious signatures emerged after the Pectra upgrade"; attackers bundle several malicious operations into one signature.
+- Wintermute, reported by The Block on 1 June 2025: over 80% of delegations went to copy-pasted sweeper contracts; one, nicknamed CrimeEnjoyor, is short and widely reused.
+- With a sweeper, the 7702 delegation is a tool the thief used after the key leaked, not the way in.
+
+**Walkthrough**
+1. Read each row.
+2. Ask: an account delegated to a widely reused sweeper contract, and the `0x04` transaction was signed with the account's key the day before the drain. Phishing or stolen key? (Stolen key, most likely: a sweeper needs the key, and the victim signed nothing on a site.)
+
+**Sources**
+- @scamsniffer_phishingreport2025_2026
+- @abrams_wintermutepectra_2025
+- @buterin_eip7702setcode_2024
+
+:::
+
+## Address poisoning plants a look-alike in history {.smaller}
+
+**Bottom line:** the attacker makes an address that looks like one the victim has paid, then plants it in the victim's history, hoping the victim copies it next time [@tsuchiya_addresspoisoning_2025].
+
+::: {style="font-size: .8em;"}
+
+| Lure | What appears in the victim's history [@tsuchiya_addresspoisoning_2025] |
+| --- | --- |
+| Tiny transfer | A small amount of the same token, from the look-alike to the victim |
+| Zero-value transfer | A transfer of zero of the same token, from the victim to the look-alike |
+| Counterfeit token | The same amount the victim really paid, to the look-alike, in a fake token the attacker made |
+
+: {tbl-colwidths="[24,76]"}
+
+:::
+
+- **Why it works:** most wallets showed only the first and last 3 to 5 characters of an address [@tsuchiya_addresspoisoning_2025].
+- **Scale:** over two years on Ethereum and Binance Smart Chain, 270M attempts against 17M victims; 6,633 incidents cost at least $83.8M [@tsuchiya_addresspoisoning_2025].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains address poisoning: a theft that needs no malware and no signature, only a careless copy. It matters here because the victim really did send the money; the analyst's job is to show that a lure came first. Emphasize the three lure types: each leaves a different record before the loss.
+
+**Key Points**
+- An Ethereum address is 40 hexadecimal characters; people copy them from their recent history.
+- The attacker generates an address whose first and last characters match the real payee's.
+- The zero-value lure looks as if the victim sent it; the victim did not.
+- The study (USENIX Security 2025) found success is rare: on Ethereum 0.01% of attempts paid, so attackers send lures in bulk.
+
+**Walkthrough**
+1. Read the three lures and ask which one would fool the victim most easily. (The counterfeit token: it copies the real amount.)
+2. Ask: why would an attacker send a lure for zero? (It costs little, and it puts the look-alike next to the real payee in the victim's history.)
+
+**Sources**
+- @tsuchiya_addresspoisoning_2025
+
+:::
+
+## Reading a poisoning: the lure comes first {.smaller}
+
+**Bottom line:** a poisoning reads as a real payment, a lure from a look-alike minutes later, then the victim's next payment to the look-alike. (Invented data.)
+
+::: {style="font-size: .75em;"}
+
+| When | From | To | Amount | What it is |
+| --- | --- | --- | --- | --- |
+| Day 1, 10:02 | Victim | Payee `0x7a3F4c…d09c21` | 5,000 USDT | The real payment |
+| Day 1, 10:05 | Victim | Look-alike `0x7a3F91…e19c21` | 0 USDT | Lure: zero-value transfer, sent by the attacker |
+| Day 4, 09:40 | Victim | Look-alike `0x7a3F91…e19c21` | 5,000 USDT | The loss |
+| Day 4, 09:52 | Look-alike | New address | 5,000 USDT | The thief moves it on |
+
+: {tbl-colwidths="[15,12,30,15,28]"}
+
+:::
+
+Same first four and last four characters; the lure came three minutes after the real payment.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide models a poisoning case with invented data. It matters here because the finding rests on two separate things the chain shows: the look-alike's match to a real payee, and a lure before the loss. Emphasize the order: payment, lure, loss.
+
+**Key Points**
+- The look-alike matches the payee's first and last characters, the part a wallet shows.
+- The study found timing is one of the conditions for success: lures sent soon after a real payment do better.
+- The victim sent row 2 in name only: the attacker created it.
+- The data are invented.
+
+**Walkthrough**
+1. Read each row; cover the last column and ask the class to fill it in.
+2. Ask: how would you say row 3 to an agent? ("The victim sent 5,000 USDT to an address made to look like their usual payee; a fake transfer planted that address in their history three days earlier.")
+
+**Sources**
+- @tsuchiya_addresspoisoning_2025
+
+:::
+
+## A clipboard hijacker leaves no lure on chain {.smaller}
+
+**Bottom line:** malware on the victim's computer swaps an address the victim copies for the thief's. The chain shows only the victim paying a stranger; the proof is on the device.
+
+::: {style="font-size: .8em;"}
+
+| Kaspersky's 2023 case | Detail |
+| --- | --- |
+| How it spread | Fake Tor Browser installers [@kaspersky_clipperfaketor_2023] |
+| What it did | Replaced part of the copied text with the criminal's own wallet address [@kaspersky_clipperfaketor_2023] |
+| Reach | More than 15,000 users in 52 countries [@kaspersky_clipperfaketor_2023] |
+| Take | About US$400,000 [@kaspersky_clipperfaketor_2023] |
+| Why it lasts | Can sit silent for years, with no network activity [@kaspersky_clipperfaketor_2023] |
+
+: {tbl-colwidths="[22,78]"}
+
+:::
+
+- **Analyst move:** say what the chain shows (an unexpected recipient, no lure, no approval) and what it cannot (the malware). The device examination belongs to someone else.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide covers the clipboard hijacker, or "clipper": the theft that happens before the transaction is signed. It matters here because the analyst must not overstate the chain: a wrong recipient with no lure fits a clipper, a typing error or a stolen key equally well from the chain alone. Emphasize "the proof is on the device".
+
+**Key Points**
+- The victim signs a real transaction; only the recipient is wrong.
+- Kaspersky's 2023 report: trojanized Tor Browser installers, more than 15,000 users in 52 countries, about US$400,000 stolen.
+- The malware stays quiet and makes no network calls, so it can go unnoticed for years.
+- The thief's address may receive from many victims; that cluster is a lead the analyst can follow.
+
+**Walkthrough**
+1. Read the table.
+2. Ask: how is this different from poisoning on chain? (No lure before the loss, and the recipient need not look like a past payee.)
+
+**Sources**
+- @kaspersky_clipperfaketor_2023
+
+:::
+
+## Poisoning or clipboard: what the chain shows {.smaller}
+
+**Bottom line:** both end with the victim's own payment to the wrong address. Poisoning leaves its lure on chain; a clipper leaves its evidence on the device.
+
+::: {style="font-size: .8em;"}
+
+| Sign | Address poisoning | Clipboard hijacker |
+| --- | --- | --- |
+| Recipient looks like a past payee | Yes: same first and last characters [@tsuchiya_addresspoisoning_2025] | Not necessarily: the thief's own address [@kaspersky_clipperfaketor_2023] |
+| A lure in the victim's history before the loss | Yes [@tsuchiya_addresspoisoning_2025] | No |
+| Where the proof is | On chain | On the device [@kaspersky_clipperfaketor_2023] |
+| What you can say from the chain | Poisoning, with the lure and the match | Wrong recipient; cause not shown on chain |
+
+: {tbl-colwidths="[28,36,36]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets the two mistaken-send thefts side by side. It matters here because the analyst's finding differs: poisoning can be shown from the chain, a clipper cannot. Emphasize the last row: "cause not shown on chain" is a finding, not a failure.
+
+**Key Points**
+- Poisoning: two lines of on-chain evidence, the look-alike match and the lure before the loss.
+- Clipboard hijacker: the chain shows the wrong recipient and the absence of a lure; the cause is a lead for a device examination.
+- A look-alike recipient with no lure is not enough for poisoning; the lure is what decides it.
+
+**Walkthrough**
+1. Read each row.
+2. Ask: a victim paid an address that shares the payee's first and last four characters, but there is no lure in their history. What do you say? (Wrong recipient; poisoning not shown, since there is no lure; a clipper or a lure on another chain are both possible.)
+
+**Sources**
+- @tsuchiya_addresspoisoning_2025
+- @kaspersky_clipperfaketor_2023
+
+:::
+
+## Ronin: stolen keys, not broken code {.smaller}
+
+**Bottom line:** in March 2022 the Ronin bridge lost 173,600 ETH and 25.5M USDC [@roninnetwork_roninblogcommunity_2022]. The thief held five of the nine validator keys and signed the withdrawals itself [@roninnetwork_backtobuilding_2022].
+
+::: {style="font-size: .78em;"}
+
+| Fact | Detail |
+| --- | --- |
+| When | 23 Mar 2022; found on 29 Mar [@roninnetwork_backtobuilding_2022], when a user could not withdraw 5,000 ETH [@roninnetwork_roninblogcommunity_2022] |
+| How | Five of nine validator keys, four Sky Mavis and one Axie DAO, used to forge withdrawals [@roninnetwork_backtobuilding_2022] |
+| The way in | Spear-phishing compromised one employee; an allowlist from Nov 2021, stopped in Dec 2021, was never revoked, giving the Axie DAO signature [@roninnetwork_backtobuilding_2022] |
+| Why six days | No system to track large outflows from the bridge [@roninnetwork_backtobuilding_2022] |
+
+: {tbl-colwidths="[18,82]"}
+
+:::
+
+On chain, the withdrawals were valid: enough validators had signed. It is a stolen-key theft at bridge scale.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide revisits the Ronin bridge from day 4's bridges lesson, now as a theft case. It matters here because Ronin is the stolen-key pattern from the comparison slide, on a bridge: no contract bug, no approval, just keys in the wrong hands. Emphasize the last line: the chain cannot tell a forged withdrawal from a real one when the signatures are valid.
+
+**Key Points**
+- Withdrawals needed five of nine validator signatures; the thief controlled exactly five.
+- The way in was people, not code: one employee phished, and a forgotten allowlist.
+- The theft went unnoticed for six days because nobody watched large outflows.
+- The thief took the funds in two transactions.
+- What happened to the funds and who did it is the next slide.
+
+**Walkthrough**
+1. Read each row.
+2. Ask: which pattern from the comparison slide is this? (A stolen key: the outflows were signed by the keys that were supposed to sign them.)
+
+**Sources**
+- @roninnetwork_roninblogcommunity_2022
+- @roninnetwork_backtobuilding_2022
+
+:::
+
+## Ronin: the FBI named Lazarus, not the chain {.smaller}
+
+**Bottom line:** two weeks after Ronin found the theft, the FBI named North Korea. The analyst quotes that attribution as the FBI's, with its date.
+
+::: {style="font-size: .78em;"}
+
+| Date | Who | What they said |
+| --- | --- | --- |
+| 14 Apr 2022 | FBI | Lazarus Group and APT38, linked to North Korea, were responsible for the $620M theft [@fbinationalpressoffice_fbistatementattribution_2022] |
+| 6 May 2022 | Treasury | Sanctioned Blender, a Bitcoin mixer that processed over $20.5M of the heist [@u.s.dept.oftreasury_ustreasuryissuesfirstever_2022] |
+| 8 Aug 2022 | Treasury | Sanctioned Tornado Cash, which laundered over $455M that Lazarus stole in "the largest known virtual currency heist to date" [@u.s.dept.oftreasury_ustreasurysanctions_2022]; lifted 21 Mar 2025 [@u.s.dept.oftreasury_tornadocashdelisting_2025] |
+| 26 Feb 2025 | FBI | A separate, later case: North Korea was behind the theft of about $1.5B from the exchange Bybit [@fbi_bybitpsa_2025] |
+
+: {tbl-colwidths="[15,12,73]"}
+
+:::
+
+- **What the chain shows:** where the funds went (a mixer on Ethereum, then Bitcoin and a Bitcoin mixer). **Who:** the FBI's finding.
+- Day 9 ① takes North Korea's thefts and laundering in depth.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces North Korea through Ronin: the attribution, and where the money went. It matters here because the analyst must keep two things apart: the flow, which the chain shows, and the name, which comes from a government finding. Emphasize "quote it as the FBI's": the chain alone does not name a state.
+
+**Key Points**
+- The FBI's statement of 14 April 2022 confirmed Lazarus Group and APT38 for the $620M Ronin theft.
+- Treasury's first sanctions on a mixer (Blender, 6 May 2022) named the heist; Blender operated on Bitcoin, so some proceeds had moved off Ethereum.
+- Treasury's Tornado Cash sanctions (8 August 2022) cited over $455M stolen by Lazarus in the largest heist to date.
+- Bybit (February 2025, about $1.5B) is the largest theft on record (Elliptic, as of Mar 2025); day 9 ① covers it.
+- Day 5 ② covered the Tornado Cash sanctions and their later removal.
+
+**Walkthrough**
+1. Read the dates in order: theft, attribution, then the two mixers.
+2. Ask: how would you write the Ronin attribution in an assessment? ("The FBI attributed the theft to North Korea's Lazarus Group on 14 April 2022.")
+
+**Sources**
+- @fbinationalpressoffice_fbistatementattribution_2022
+- @u.s.dept.oftreasury_ustreasuryissuesfirstever_2022
+- @u.s.dept.oftreasury_ustreasurysanctions_2022
+- @fbi_bybitpsa_2025
+- @elliptic_bybit_2025
+
+:::
+
+## How sure: words for a drain finding {.smaller}
+
+**Bottom line:** what the chain records is observed, not judged. Each inference after it carries the course scale's word, never a percentage.
+
+::: {style="font-size: .8em;"}
+
+| Finding | Confidence | Why |
+| --- | --- | --- |
+| The spender took the tokens under the victim's approval | Observed | The `Approval` and the `Transfer` are on chain |
+| Two drains used the same kit | Moderate | One strong line: the same split to the same admin address |
+| The kit is a named drainer | Low | A published label alone, until a second line agrees |
+| A poisoning caused the loss | High | Two independent lines: the look-alike match and the lure before the loss |
+| A clipboard hijacker caused the loss | Low | No lure and a wrong recipient: the proof is on the device |
+| The 7702 delegate is a sweeper on a leaked key | Moderate | Its code matches a known sweeper; evidence of the leak would raise it |
+| North Korea stole from Ronin | Quote the FBI | The attribution is the FBI's, 14 Apr 2022 |
+
+: {tbl-colwidths="[42,18,40]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide applies the course's confidence scale to the lesson's findings. It matters here because a drain finding mixes things the chain records with things the analyst infers, and the two must not share a word. Emphasize "Observed": an approval and a transfer are facts, not judgements.
+
+**Key Points**
+- High: two or more independent lines agree and no known failure applies.
+- Moderate: one strong line, or weaker lines that agree, with a known false positive possible.
+- Low: timing, amount or behavior alone, or one unverified label.
+- Independent means a different kind of evidence, not a second reading of the same transactions.
+- An attribution made by a government is quoted with its source and date, not rated. Day 6 ③ rates a government label on an address as one line of evidence; here the claim is who did it, which the chain cannot test.
+
+**Walkthrough**
+1. Read each row and ask the class for the word before revealing the column.
+2. Ask: why is the poisoning High and the clipper Low? (The poisoning has two kinds of evidence on chain; the clipper has only the absence of one.)
+
+**Sources**
+None (the course's confidence scale)
+
+:::
+
+## What to carry out of this lesson {.smaller}
+
+- Ask first who sent the transaction that moved the money: the owner, or a spender.
+- An approval or a permit lets a spender take tokens later; a permit leaves nothing in the victim's own history.
+- A drainer is a rented kit; the same cut to the same address ties drains to one kit.
+- Since May 2025 a plain account can hold code: look for `0xef0100`, then ask whether the key had leaked.
+- Poisoning: a look-alike and a lure before the loss. No lure: say what the chain cannot show.
+- Ronin was stolen keys; the FBI named North Korea. Quote attributions with their source and date.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson in six lines. It matters here because day 8 ② turns from thefts that trick a person to thefts that trick a contract, and the "who sent it" habit carries over. Emphasize the first line.
+
+**Key Points**
+- Approval, allowance, `transferFrom`, permit, `setApprovalForAll`.
+- Drainer-as-a-service and its profit split.
+- EIP-7702: authorization, delegation indicator, sponsorship, sweepers.
+- Address poisoning and its three lures; clipboard hijackers.
+- Ronin, Lazarus and the FBI's attribution; day 9 ① continues.
+
+**Walkthrough**
+1. Ask a student to say each line in their own words.
+
+**Sources**
+None
+
+:::
+
+## References
+
+::: {#refs}
+:::
