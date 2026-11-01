@@ -26,17 +26,10 @@ slide index), which is never listed here.
   nothing itself; `dynamic-labs/tron/quizes/INSTRUCTOR_ANSWERS.md` question 1). (1 Nov 2026, lab quiz questions)
 
 ## Labs
-- The explorer lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`): its stack
-  pulls about 4 GB of images. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D1 explorer lab build)
-- The token lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it shares the
-  explorer's Otterscan and gateway images. Add it with the explorer, or note why not. (31 Oct 2026, D3 token lab build)
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
   (`das_understandingsecurityissues_2022`) supports "many". Students read it on the Contract tab. Reword at the next
   chain rebuild: a comment change alters the bytecode, so the deploy hashes and possibly every fee after them
   change. (31 Oct 2026, D3 token lab review)
-- The exchange and bridge lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`);
-  it shares the explorer's Otterscan and gateway images and adds Foundry's. Add it with the explorer, or note why
-  not. (31 Oct 2026, D4 exchange and bridge lab build)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3
@@ -46,18 +39,9 @@ slide index), which is never listed here.
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
 
-- The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
-  `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)
-- The Tron lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); its suite
-  needs only nginx and Python, so it could run there. The workflow is a rail. (31 Oct 2026, D5 Tron lab build)
-- The Bitcoin trace lab (`dynamic-labs/bitcoin-trace/`) is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`,
-  `tools/lab_tests.py`); like the wallet lab it needs the `bitcoin-mempool` image. The workflow is a rail.
-  (31 Oct 2026, D6 Bitcoin trace lab build)
 - The Bitcoin trace lab's students receive `regression-tests/automated/bitcoin-trace/` in `src.zip` and on the VM; its
   shape tests spell out the trail's design (12-input sweep, 14-output batch). Same decision as the explorer and wallet
   tests above. (31 Oct 2026, D6 Bitcoin trace lab build)
-- The CoinJoin trace lab (`dynamic-labs/coinjoin-trace/`) is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`,
-  `tools/lab_tests.py`); it needs the `bitcoin-mempool` image, like the Bitcoin trace lab. (31 Oct 2026, D7 lab build)
 - The CoinJoin trace lab's students receive `regression-tests/automated/coinjoin-trace/` in `src.zip` and on the VM;
   its shape tests name the planted leaks and the mixer's two near-match outputs. Same decision as the Bitcoin trace
   tests above. (31 Oct 2026, D7 lab build)
