@@ -1,0 +1,551 @@
+---
+title: "AML Typologies: ATT&CK, the Diamond and AADAPT"
+subtitle: 'Section VIII: Forensics'
+author: Army Cyber Institute
+lesson: 12-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## You know the patterns: now name them {.smaller}
+
+**Bottom line:** a typology names what the funds did. A framework names which step of an attack it was and who, with what, over what, against whom. This lesson teaches no new pattern; it puts the course's patterns into three shared structures.
+
+::: {style="font-size: .8em;"}
+
+| Question | The structure that answers it |
+| --- | --- |
+| What did the funds do? | A **typology**: peel chain, CoinJoin, chain-hop, OTC, scam cash-out, drain |
+| Why that step, and how? | **ATT&CK** tactics and techniques [@mitre_attack_design_2020] |
+| Which digital-asset technique is it? | **MITRE AADAPT**, built on ATT&CK's structure [@mitre_aadapt_2026] |
+| Who, with what, over what, against whom? | The **Diamond Model** [@caltagirone_diamond_2013] |
+
+: {tbl-colwidths="[38,62]"}
+
+:::
+
+The analyst's job still ends at the assessment: these structures organize a characterization; they do not replace one.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets up the lesson as a synthesis. It matters here because students have met every laundering pattern since day 4; what they lack is a common way to name them that a cyber analyst, an agent or another agency will recognize. Emphasize that the frameworks are vocabularies, not evidence.
+
+**Key Points**
+- A typology describes a pattern of fund movement; it says nothing on its own about who did it.
+- ATT&CK splits behavior into tactics (why) and techniques (how).
+- AADAPT applies ATT&CK's structure to digital-asset attacks.
+- The Diamond Model frames one event by four features: adversary, capability, infrastructure, victim.
+- Nothing here changes the confidence scale from day 6 ③.
+
+**Walkthrough**
+1. Read the four questions aloud.
+2. Ask: which of these can the chain answer on its own? (Mostly the first; the others need the chain plus other sources.)
+
+**Sources**
+- @mitre_attack_design_2020
+- @mitre_aadapt_2026
+- @caltagirone_diamond_2013
+
+:::
+
+## Six typologies you have already met {.smaller}
+
+**Bottom line:** each typology has a cue you can see on chain, and each was taught where its mechanism was.
+
+::: {style="font-size: .72em;"}
+
+| Typology | The cue on chain | Taught |
+| --- | --- | --- |
+| Peel chain | A small payment off, the rest to a fresh change address, hop after hop [@meiklejohn_fistfulbitcoinscharacterizing_2013] | Day 6 ① |
+| CoinJoin and mixers | Many owners' inputs, equal outputs [@gmaxwell_coinjoinbitcoinprivacy_2013]; or a pool that pays out other coins | Day 7 ① |
+| Chain-hopping | Funds leave one ledger through a bridge or swap and reappear on another [@mitre_aadapt_2026] | Day 4 ③ |
+| OTC and nested services | Many small deposits in, a few large transfers out [@chainalysis_launderingnetworks_2026]; a service inside an exchange's cluster [@kappos_howpeelmillion_2022] | Days 5 ①, 6 ① |
+| Pig-butchering cash-out | Scam proceeds routed to laundering networks rather than exchanges that can freeze [@chainalysis_launderingnetworks_2026] | Days 5 ①, 5 ② |
+| Drainer flows | A spender, not the owner, moves the tokens; the same cut to the same address across victims [@shevchenko_infernodrainer_2024; @metasleuth_infernoprofitsharing_2024] | Day 8 ① |
+
+: {tbl-colwidths="[20,64,16]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide collects the six typologies the course has taught into one table with the cue for each. It matters here because the rest of the lesson maps these rows onto the frameworks, so students need them in one place. Emphasize that every cue is a pattern, and day 6 ③'s confidence scale applies: a pattern alone is one line of evidence.
+
+**Key Points**
+- Peel chains: services make them too (exchange withdrawals, pool payouts), so a peel chain is not proof of laundering.
+- CoinJoin: do not cluster across it. Mixers: the coins out are not the coins in.
+- Chain-hopping: the trace continues on another ledger; day 4 ③ covered bridge types.
+- OTC: most desks are legitimate; the aggregation pattern raises a question. Nested services sit inside an exchange's cluster and look like the exchange under co-spending alone.
+- Pig-butchering cash-out: as of January 2026, Chinese-language laundering networks launder over 10% of pig-butchering proceeds, as exchange use declines.
+- Drainers: a rented kit; the split to the kit's admin address ties drains together.
+
+**Walkthrough**
+1. Cover the "Taught" column; ask the class where each was taught.
+2. Ask: which rows can a legitimate user produce? (Peel chains, CoinJoin and OTC aggregation all have lawful uses.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @gmaxwell_coinjoinbitcoinprivacy_2013
+- @mitre_aadapt_2026
+- @chainalysis_launderingnetworks_2026
+- @kappos_howpeelmillion_2022
+- @shevchenko_infernodrainer_2024
+- @metasleuth_infernoprofitsharing_2024
+
+:::
+
+## Chain-hopping: the trail changes ledgers {.smaller}
+
+**Bottom line:** chain-hopping moves value from one blockchain to another so the history breaks at each crossing. AADAPT describes it as a technique that "exploits the interoperability of blockchain networks to move assets between chains" [@mitre_aadapt_2026].
+
+::: {style="font-size: .8em;"}
+
+| Case | The hop | Source |
+| --- | --- | --- |
+| Ronin, 2022 | Ethereum proceeds reached Blender, a Bitcoin mixer, which processed over $20.5M of the heist | [@u.s.dept.oftreasury_ustreasuryissuesfirstever_2022] |
+| Bybit, 2025 | Stolen tokens swapped for Ether on decentralized exchanges, "likely to avoid any asset freezing"; most of the Ether then converted to bitcoin | [@elliptic_bybit_2025] (as of 5 Mar 2025) |
+
+: {tbl-colwidths="[16,60,24]"}
+
+:::
+
+- **The cue:** a deposit to a bridge, swap service or exchange on one chain, then a matching amount and time on another.
+- **Analyst move:** record each crossing as its own link, with its own confidence word. Two chains are two traces joined by an inference.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide treats chain-hopping as a typology with two cases students know. It matters here because a hop is where most traces lose strength: the link across chains is matched by amount and time, or by a bridge's own records, not by a shared transaction. Emphasize that the crossing itself needs a confidence word.
+
+**Key Points**
+- AADAPT lists cross-chain hopping (ADT3005) under Defense Evasion, using bridges, decentralized exchanges and atomic swaps.
+- Ronin's proceeds moved from Ethereum to Bitcoin: Treasury's Blender sanctions named the heist.
+- Bybit's thieves swapped tokens for Ether first because token issuers can freeze; Elliptic reported most of the Ether converted to bitcoin (as of 5 March 2025).
+- Day 9 ① covers Bybit's laundering in depth; this slide uses it only as an example of a hop.
+
+**Walkthrough**
+1. Read the Ronin row: one ledger to another, then a mixer.
+2. Read the Bybit row: why swap tokens for Ether first? (Tokens can be frozen by their issuer; Ether cannot.)
+3. Ask: what makes a cross-chain link High rather than Moderate? (A second, independent line, such as the bridge's own record of the deposit and the release.)
+
+**Sources**
+- @mitre_aadapt_2026
+- @u.s.dept.oftreasury_ustreasuryissuesfirstever_2022
+- @elliptic_bybit_2025
+
+:::
+
+## Scam cash-out: away from what can freeze {.smaller}
+
+**Bottom line:** pig-butchering proceeds need an exit that will not freeze them. As of January 2026, Chainalysis reported that Chinese-language laundering networks "now consistently launder over 10% of funds stolen in pig butchering scams", as centralized-exchange use declined, "potentially because exchanges can freeze funds" [@chainalysis_launderingnetworks_2026].
+
+::: {style="font-size: .8em;"}
+
+- **The services:** OTC desks that aggregate "numerous small deposits into wholesale amounts", and "swapping-as-a-service" [@chainalysis_launderingnetworks_2026].
+- **A named example:** FinCEN found that Huione Group laundered at least $36 million from crypto investment scams ("pig butchering") between August 2021 and January 2025 [@fincen_huionefinding_2025].
+- **The cue:** victim payments gathered into a few addresses, then many small transfers into an aggregating service, then a few large ones out.
+- **Analyst move:** a deposit to an exchange is a lead (it can freeze and it knows its customer); a deposit to an aggregator is a lead of a different kind. Name which one the funds reached.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide sets out the pig-butchering cash-out as a typology. It matters here because the analyst is asked where the money went. Emphasize that the pattern is the OTC aggregation pattern from day 5 ①, seen from the scam's side.
+
+**Key Points**
+- As of January 2026: over 10% of pig-butchering proceeds through Chinese-language laundering networks, with a steady decline in centralized-exchange use.
+- Chainalysis suggests the reason: exchanges can freeze funds. That is a hypothesis in the source, so present it as one.
+- Huione (day 5 ②) is the course's named laundering service for this crime type: at least $36 million from investment scams, by FinCEN's finding of May 2025.
+- The analyst's output is where the funds went and what kind of service holds them, with a confidence word.
+
+**Walkthrough**
+1. Read the Chainalysis finding with its date and scope: one crime type.
+2. Sketch the flow: victims in, consolidation, many small into an aggregator, a few large out.
+3. Ask: why is an exchange deposit worth more to an agent than an aggregator deposit? (The exchange can freeze and holds KYC records.)
+
+**Sources**
+- @chainalysis_launderingnetworks_2026
+- @fincen_huionefinding_2025
+
+:::
+
+## ATT&CK: tactics are why, techniques how {.smaller}
+
+**Bottom line:** MITRE built ATT&CK as "a common taxonomy for both offense and defense" [@mitre_attack_design_2020]. It splits what an adversary does into three levels.
+
+::: {style="font-size: .8em;"}
+
+| Level | What it records | In ATT&CK's words |
+| --- | --- | --- |
+| Tactic | The goal of a step | "Tactics represent the 'why'" of a technique [@mitre_attack_design_2020] |
+| Technique | The means to that goal | "Techniques represent 'how' an adversary achieves a tactical objective" [@mitre_attack_design_2020] |
+| Procedure | One adversary's way of doing it | "the specific implementation adversaries have used" [@mitre_attack_design_2020] |
+
+: {tbl-colwidths="[16,30,54]"}
+
+:::
+
+- Day 7 ③ met one ATT&CK technique: T1496 Resource Hijacking, which covers mining on co-opted machines [@mitre_resourcehijacking_2025].
+- **For the analyst:** a technique ID is a shared name. Cyber analysts, agents and other agencies read it the same way.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces ATT&CK's structure: tactic, technique, procedure. It matters here because AADAPT reuses this structure, and because cyber teams already use it: an on-chain finding that names a technique joins their picture without translation. Emphasize the three questions: why, how, and how this adversary did it.
+
+**Key Points**
+- ATT&CK is a behavioral model: tactics are short-term goals; techniques are the means; sub-techniques are more specific means.
+- Procedures are a specific adversary's implementation of a technique.
+- The course met T1496 Resource Hijacking in the cryptojacking lesson (day 7 ③).
+- ATT&CK is not a checklist of everything an attacker can do; it records observed behavior.
+
+**Walkthrough**
+1. Read each row and give a crypto example: tactic Defense Evasion; technique "use a mixer"; procedure "this group sent the proceeds through Tornado Cash in 100 ETH lots".
+2. Ask: which level does a trace usually establish? (The procedure: what this adversary did with these funds.)
+
+**Sources**
+- @mitre_attack_design_2020
+- @mitre_resourcehijacking_2025
+
+:::
+
+## AADAPT: ATT&CK's shape for digital assets {.smaller}
+
+**Bottom line:** MITRE introduced AADAPT (Adversarial Actions in Digital Asset Payment Technologies), as reported on 14 July 2025: "Modeled after the MITRE ATT&CK framework" and drawn from "over 150 sources across government, industry, and academia" [@mitre_aadapt_launch_2025].
+
+::: {style="font-size: .8em;"}
+
+| Part | What the matrix holds (as of 1 Nov 2026) |
+| --- | --- |
+| Tactics | Ten from ATT&CK, Reconnaissance to Impact, plus one new: **Fraud**, the adversary "trying to illicitly create, acquire, or utilize value-form" [@mitre_aadapt_2026] |
+| Techniques | 33 techniques and 33 sub-techniques, numbered ADT, such as ADT3028.005 Peel Chains [@mitre_aadapt_2026] |
+| Scope | Consensus, smart contracts, wallets, exchanges, market manipulation, and laundering [@mitre_aadapt_2026] |
+
+: {tbl-colwidths="[16,84]"}
+
+:::
+
+- **Read it from:** MITRE's public repository, `github.com/mitre/AADAPT`, file `AADAPT.yaml` (last changed 31 Oct 2025) [@mitre_aadapt_2026].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces AADAPT as ATT&CK's structure applied to digital assets. It matters here because it gives on-chain findings technique IDs that sit next to ATT&CK's, so a theft case can be described end to end in one vocabulary. Emphasize "as of": the matrix is young and changes.
+
+**Key Points**
+- Reported on 14 July 2025; it follows ATT&CK's structure and cites over 150 sources.
+- Ten tactics reuse ATT&CK's IDs (TA0043 Reconnaissance to TA0040 Impact); the new one is ADTA0001 Fraud.
+- As of 1 November 2026 the file lists 33 techniques and 33 sub-techniques; the last change was on 31 October 2025.
+- The file carries a "version 4.4.0" label inherited from MITRE's ATLAS template, so cite it by the date read, not by that number.
+- The repository has no licence file: quote it sparingly and name the technique IDs instead of copying descriptions.
+
+**Walkthrough**
+1. Read the Fraud tactic's words: value-form means any form of digital value, coin or token.
+2. Ask: why add a Fraud tactic to ATT&CK's list? (ATT&CK's tactics describe intrusions; much digital-asset crime takes value without an intrusion.)
+
+**Sources**
+- @mitre_aadapt_launch_2025
+- @mitre_aadapt_2026
+
+:::
+
+## AADAPT names most of the typologies {.smaller}
+
+**Bottom line:** four of the six typologies have an AADAPT entry. Most laundering ones sit under Siphon Funds and Use Anonymizing Services [@mitre_aadapt_2026].
+
+::: {style="font-size: .72em;"}
+
+| Typology | AADAPT entry | Tactic |
+| --- | --- | --- |
+| Peel chain | ADT3028.005 Peel Chains | Fraud, Defense Evasion |
+| Layering through many wallets | ADT3028.003 Layering | Fraud, Defense Evasion |
+| CoinJoin | ADT3030.001 CoinJoin | Defense Evasion |
+| Mixer | ADT3030.003 Tumblers | Defense Evasion |
+| Chain-hopping | ADT3005 Cross-Chain Swaps (Hopping) | Defense Evasion |
+| P2P cash-out | ADT3030.002 Peer to Peer Exchanges | Defense Evasion |
+| Drainer (approval phishing) | ADT3012.002 Evil Contract: phishing users "into signing the contract" | Execution |
+| Address poisoning | ADT3020.001 Address Poisoning | Fraud |
+| OTC and nested services, scam cash-out | No entry names them | (none) |
+
+: {tbl-colwidths="[30,52,18]"}
+
+:::
+
+All entries are from `AADAPT.yaml` as read on 1 Nov 2026 [@mitre_aadapt_2026]. A sub-technique takes its parent's tactics.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide maps the course's typologies to AADAPT's IDs. It matters here because the IDs are the shared names an analyst can put beside a finding. Emphasize the last row: a framework's gaps are real, and the analyst describes the pattern in plain words when no entry fits.
+
+**Key Points**
+- Siphon Funds (ADT3028) covers peel chains, layering, anonymous wallets and money mules.
+- Use Anonymizing Services (ADT3030) covers CoinJoin, tumblers and peer-to-peer exchanges.
+- Chain-hopping is its own technique, ADT3005.
+- AADAPT files approval phishing under Evil Contract (ADT3012.002), one of its examples; there is no entry named for drainer kits.
+- No technique description names OTC desks, nested services or investment scams (searched 1 November 2026). Pig butchering falls under the Fraud tactic only in general terms.
+
+**Walkthrough**
+1. Read down the typology column and ask the class to guess the tactic before revealing it.
+2. Ask: why is almost everything Defense Evasion? (Laundering is the adversary hiding where the value went.)
+
+**Sources**
+- @mitre_aadapt_2026
+
+:::
+
+## What AADAPT does not cover: sanctions {.smaller}
+
+**Bottom line:** AADAPT has no technique for evading sanctions. Its one use of the word is in ADT3019 Induce Legal and Regulatory Penalties, an Impact technique about the penalties a victim organization suffers [@mitre_aadapt_2026].
+
+::: {style="font-size: .8em;"}
+
+| The analyst's question | Where the course answers it |
+| --- | --- |
+| Did funds reach a sanctioned address or service? | Day 5 ②: OFAC and the SDN list |
+| How does a state use crypto to evade sanctions? | Day 9 ①: North Korea in depth |
+| Which step of the theft was this? | This lesson: AADAPT and ATT&CK |
+
+: {tbl-colwidths="[50,50]"}
+
+:::
+
+- **Analyst move:** when a finding is about sanctions, say so in plain words and cite the designation. Do not force it into a technique ID that does not fit.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide names AADAPT's largest gap for a government analyst: sanctions evasion. It matters here because sanctions exposure is often the first question an agent asks, and AADAPT will not answer it. Emphasize that a framework is a vocabulary for some questions, not all.
+
+**Key Points**
+- As of 1 November 2026, "sanction" appears in AADAPT only in ADT3019, about legal and regulatory penalties as an impact.
+- Sanctions exposure is a designation question (OFAC), taught on day 5 ②.
+- North Korea's use of theft to fund the state is day 9 ①.
+- Framework gaps are normal: AADAPT is young.
+
+**Walkthrough**
+1. Read the three questions and where each is answered.
+2. Ask: a client asks "did this wallet touch a sanctioned mixer?" Which tool answers that? (The SDN list and the trace, not AADAPT.)
+
+**Sources**
+- @mitre_aadapt_2026
+
+:::
+
+## The Diamond: four features of one event {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+
+- **Axiom 1:** "For every intrusion event there exists an adversary taking a step towards an intended goal by using a capability over infrastructure against a victim to produce a result" [@caltagirone_diamond_2013].
+- **Adversary:** the actor responsible. Usually unknown "at the time of discovery" [@caltagirone_diamond_2013].
+- **Capability:** the tools and techniques used [@caltagirone_diamond_2013]. An AADAPT technique fits here.
+- **Infrastructure:** the structures used to deliver the capability and take the result [@caltagirone_diamond_2013]. On chain: addresses, contracts, mixers, bridges.
+- **Victim:** the target [@caltagirone_diamond_2013].
+
+:::
+::: {.column width="45%"}
+
+```{dot}
+//| echo: false
+//| fig-width: 4.2
+//| fig-height: 3.6
+graph Diamond {
+  graph [bgcolor="transparent", layout=neato];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, fillcolor="#e0f2fe", color="#0369a1"];
+  edge [color="#64748b"];
+  A [label="Adversary", pos="0,2!"];
+  C [label="Capability", pos="-1.6,0!"];
+  I [label="Infrastructure", pos="1.6,0!"];
+  V [label="Victim", pos="0,-2!"];
+  A -- C; A -- I; C -- I; C -- V; I -- V;
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide introduces the Diamond Model's event and its four core features. It matters here because the Diamond keeps an analyst from collapsing "where the funds went" into "who did it": the adversary is a separate vertex, usually filled last. Emphasize that an event can be recorded with vertices empty.
+
+**Key Points**
+- Caltagirone, Pendergast and Betz (2013) built the model from intrusion-analysis practice.
+- The event has four core features: adversary, capability, infrastructure, victim.
+- "Not all of the features need to be known to create an event": record what you have.
+- The edges are relationships an analyst can pivot along. Adversary and victim are not joined by a technical edge; the extended model ties them through a social-political meta-feature (why this victim), which this lesson leaves out.
+- The model also has meta-features (timestamp, phase, result, direction, methodology, resources); this lesson uses timestamp and phase only.
+
+**Walkthrough**
+1. Point to each vertex and give the on-chain reading: the thief, the technique, the addresses and services, the platform or person robbed.
+2. Ask: which vertex does a blockchain show most directly? (Infrastructure: the addresses and contracts.)
+
+**Sources**
+- @caltagirone_diamond_2013
+
+:::
+
+## Ronin on the Diamond {.smaller}
+
+**Bottom line:** the Diamond gives each vertex its own source and its own confidence. In the authors' words, each event feature "has an associated confidence value" [@caltagirone_diamond_2013].
+
+::: {style="font-size: .74em;"}
+
+| Vertex | Ronin, March 2022 | Confidence |
+| --- | --- | --- |
+| Victim | The Ronin bridge: 173,600 ETH and 25.5M USDC taken [@roninnetwork_roninblogcommunity_2022] | Observed |
+| Capability | Spear-phishing, then five of nine validator keys signing forged withdrawals [@roninnetwork_backtobuilding_2022]; AADAPT ADT1552.004 Private Keys | High (the operator's account and the chain agree) |
+| Infrastructure | The withdrawal addresses on chain; Tornado Cash [@u.s.dept.oftreasury_ustreasurysanctions_2022] and Blender [@u.s.dept.oftreasury_ustreasuryissuesfirstever_2022] downstream | Observed (addresses); quote Treasury (mixers) |
+| Adversary | Lazarus Group and APT38, linked to North Korea [@fbinationalpressoffice_fbistatementattribution_2022] | Quote the FBI, 14 Apr 2022 |
+
+: {tbl-colwidths="[15,63,22]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide fills the Diamond for Ronin, the case from day 8 ①. It matters here because each vertex rests on a different kind of source: the chain, the victim's own account, Treasury and the FBI. Emphasize that the adversary vertex is a quoted attribution, not an on-chain finding.
+
+**Key Points**
+- Victim and the outflows are observed on chain.
+- The capability comes from Ronin's own post-mortem: a spear-phished employee and a forgotten allowlist gave five of nine validator signatures.
+- Infrastructure: the addresses that received the withdrawals, then the mixers Treasury named in its 2022 sanctions.
+- Adversary: the FBI's attribution of 14 April 2022, quoted with its date.
+- Chain-hopping (ADT3005) and tumblers (ADT3030.003) describe the laundering events that follow this one; each is its own Diamond event.
+
+**Walkthrough**
+1. Fill the vertices on the board in this order: victim, infrastructure, capability, adversary. That is the order evidence usually arrives.
+2. Ask: which vertex could the chain alone not fill? (Adversary, and most of capability.)
+
+**Sources**
+- @caltagirone_diamond_2013
+- @roninnetwork_roninblogcommunity_2022
+- @roninnetwork_backtobuilding_2022
+- @u.s.dept.oftreasury_ustreasurysanctions_2022
+- @u.s.dept.oftreasury_ustreasuryissuesfirstever_2022
+- @fbinationalpressoffice_fbistatementattribution_2022
+
+:::
+
+## Pivot along an edge to the next lead {.smaller}
+
+**Bottom line:** pivoting is "extracting a data element and exploiting that element, in conjunction with data sources, to discover other related elements" [@caltagirone_diamond_2013]. Each edge of the Diamond is a pivot an analyst can try.
+
+::: {style="font-size: .8em;"}
+
+| From | Along the edge to | On chain, for example |
+| --- | --- | --- |
+| Infrastructure | Victim | An address that drained one victim: who else did it drain? |
+| Infrastructure | Capability | A drainer's admin address: which kit pays it its cut? |
+| Capability | Infrastructure | A known kit's contract code: which other deployments match it? |
+| Infrastructure | Adversary | An address in a government designation: whose name does it carry? |
+
+: {tbl-colwidths="[18,22,60]"}
+
+:::
+
+The authors call pivoting "the fundamental analytic task of hypothesis testing" [@caltagirone_diamond_2013]: each pivot gives a lead, not a conclusion.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches pivoting with the Diamond's edges. It matters here because the on-chain analyst's daily work is pivoting from infrastructure: an address leads to its other victims, its kit, or a label. Emphasize that every pivot result still needs a confidence word.
+
+**Key Points**
+- Pivoting extracts one element and uses a data source to find related elements.
+- The Diamond's edges show which pivots are natural: infrastructure to victim, infrastructure to capability, and so on.
+- Infrastructure to adversary is the weakest pivot on chain: it rests on a label or a designation, which day 6 ③'s scale rates as one line of evidence.
+- A pivot is a hypothesis test: it can strengthen or weaken the event, not settle it.
+
+**Walkthrough**
+1. Read each row with a case from the course: drainers (day 8 ①), matching a kit's contract code, designations (day 5 ②).
+2. Ask: which row would you trust least, and why? (Infrastructure to adversary: it rests on someone else's label.)
+
+**Sources**
+- @caltagirone_diamond_2013
+
+:::
+
+## Practice: frame a drainer theft {.smaller}
+
+**Bottom line:** one victim's tokens left under an approval; the spender split them, 20% to one address and 80% to another, the same split seen in other drains. Frame it.
+
+::: {style="font-size: .8em;"}
+
+| Step | Your answer |
+| --- | --- |
+| 1. Name the typology | ? |
+| 2. Give the AADAPT entry | ? |
+| 3. Fill the Diamond: victim, capability, infrastructure, adversary | ? |
+| 4. Give each vertex a confidence word | ? |
+| 5. Name the next pivot | ? |
+
+: {tbl-colwidths="[52,48]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students one case to frame with all three structures. It matters here because the lesson's point is the habit: typology, then technique, then the Diamond, then confidence. Emphasize that the adversary vertex can stay empty.
+
+**Key Points**
+- Typology: drainer flow (day 8 ①).
+- AADAPT: ADT3012.002 Evil Contract, phishing users into signing (as of 1 November 2026).
+- Victim: the account holder (observed). Capability: a drainer kit's approval phishing (Moderate: one strong line, the split). Infrastructure: the spender contract and the two payout addresses (observed). Adversary: unknown; the kit's operator and the affiliate are different people.
+- Next pivot: infrastructure to victim (who else paid the 20% address?) or infrastructure to capability (which kit pays that address?).
+
+**Walkthrough**
+1. Give the class three minutes in pairs.
+2. Take answers row by row; reveal the key points.
+3. Ask: why is the adversary vertex empty even though the split is known? (The split ties drains to a kit, not to a person.)
+
+**Sources**
+- @mitre_aadapt_2026
+- @caltagirone_diamond_2013
+
+:::
+
+## What to carry out of this lesson {.smaller}
+
+- A typology says what the funds did; it does not say who.
+- ATT&CK: tactics are why, techniques how, procedures this adversary's way.
+- AADAPT gives digital-asset techniques ATT&CK-style IDs; cite it with the date read.
+- AADAPT has no sanctions-evasion technique and no entry for OTC desks or scam cash-outs.
+- The Diamond: adversary, capability, infrastructure, victim, each with its own source and confidence.
+- Pivot along an edge for the next lead; quote an attribution with its source and date.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson in six lines. It matters here because day 9 ③ fuses on-chain findings with other sources, and the Diamond's vertices are where those sources land. Emphasize the first line.
+
+**Key Points**
+- The six typologies and their cues.
+- ATT&CK's tactic, technique and procedure.
+- AADAPT's Fraud tactic and its laundering techniques.
+- The Diamond's four features, confidence per feature, and pivoting.
+
+**Walkthrough**
+1. Ask a student to say each line in their own words.
+
+**Sources**
+None
+
+:::
+
+## References
+
+::: {#refs}
+:::
