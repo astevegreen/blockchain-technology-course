@@ -41,7 +41,8 @@ reaches it. A CoinJoin stop takes no confidence word: it is the transaction's sh
 | J1 | `{{tx.j1.txid|short}}` | {{tx.j1.height}} | 5x5 round: P1, P2 and three crowd coins in; ransom outputs A1 (output {{tx.j1.by.A1.n}}) and A2 (output {{tx.j1.by.A2.n}}) |
 | J2 | `{{tx.j2.txid|short}}` | {{tx.j2.height}} | 5x5 round: P3, P4 and three crowd coins in; ransom outputs B1 (output {{tx.j2.by.B1.n}}) and B2 (output {{tx.j2.by.B2.n}}) |
 | M1 | `{{tx.m1.txid|short}}` | {{tx.m1.height}} | Post-mix co-spend: A1, B1 and C1 in; Q ({{tx.m1.by.Q.btc}} BTC) and change C2 ({{tx.m1.by.C2.btc}} BTC) out |
-| M2 | `{{tx.m2.txid|short}}` | {{tx.m2.height}} | Address reuse: B2 pays {{tx.m2.by.R1.btc}} BTC back to R1 |
+| K1, K2 | `{{tx.k1.txid|short}}`, `{{tx.k2.txid|short}}` | {{tx.k1.height}}, {{tx.k2.height}} | Other mixers spend J1's output {{tx.j1.by.J1o1.n}} and J2's output {{tx.j2.by.J2o1.n}} (neither a ransom output) alone; each carries an OP_RETURN note "DEAD END" |
+| M2 | `{{tx.m2.txid|short}}` | {{tx.m2.height}} | Address reuse: B2 pays {{tx.m2.by.R1.btc}} BTC back to R1, with the attacker's OP_RETURN taunt "HACKY HACK HACK" |
 | J3 | `{{tx.j3.txid|short}}` | {{tx.j3.height}} | 8x8 round: Q and seven crowd coins in; the ransom's output is S (output {{tx.j3.by.S.n}}) |
 | late | `{{tx.late.txid|short}}` | {{tx.late.height}} | S moves to L `{{addr.L}}`, {{calc.late_gap}} blocks after J3 (scripted) |
 | DEP | `{{tx.dep.txid|short}}` | {{tx.dep.height}} | R1 pays {{tx.dep.by.MX.btc}} BTC to the mixer's deposit address MX `{{addr.MX}}` |
@@ -58,8 +59,8 @@ reaches it. A CoinJoin stop takes no confidence word: it is the transaction's sh
 | 3 | J1 is `{{tx.j1.txid|short}}` (block {{tx.j1.height}}); J2 is `{{tx.j2.txid|short}}` (block {{tx.j2.height}}). Each has five inputs of {{tx.j1.in.0.btc}} BTC from five different transactions (two from T1, three from elsewhere) and five outputs of {{tx.j1.out.0.btc}} BTC. Equal outputs from many sources: CoinJoins. The co-spend rule does not apply: the three other inputs are not the ransom owner's. | | — (shape) |
 | 4 | Set of five in each round. Two of J1's five outputs are the ransom owner's (two coins in), and two of J2's; at this point which two is undetermined. Rows: *J1: Stops: CoinJoin, set of 5; two of five outputs are the ransom's, which two undetermined.* The same for J2. | | — |
 | 5 | M1 is `{{tx.m1.txid|short}}` (block {{tx.m1.height}}). It spends C1 together with `{{addr.A1}}` (J1's output {{tx.j1.by.A1.n}}) and `{{addr.B1}}` (J2's output {{tx.j2.by.B1.n}}). By co-spend, one wallet holds all three: A1 and B1 are the ransom's. Row: *M1: Resumes: post-mix co-spend; A1 and B1 rejoin the ransom cluster; Moderate.* M1 is not itself a CoinJoin: two unequal outputs. | M1 is a PayJoin, where the payee adds an input of their own (lesson 06-FO): then one of the three inputs is someone else's. | Moderate |
-| 6 | R1's page shows a second payment in: {{tx.m2.by.R1.btc}} BTC in block {{tx.m2.height}}, from `{{addr.B2}}` (J2's output {{tx.j2.by.B2.n}}), in M2 `{{tx.m2.txid|short}}`; then R1 is spent again in block {{tx.dep.height}}. Address reuse: B2 was sent back to the ransom address, so B2 is the ransom's. Row: *M2: Resumes: address reuse; J2's second ransom output found; Moderate.* Both of J2's ransom outputs are now found. | Someone else paid R1 (anyone can pay any address). One output, all of B2, sent to R1 makes that unlikely, but it is one line. | Moderate |
-| 7 | **Undetermined.** J1's other outputs: `{{addr.J1o1}}` is spent alone to a new address (block {{tx.k1.height}}); `{{addr.A2}}`, `{{addr.J1o2}}` and `{{addr.J1o3}}` are unspent. Nothing ties any of the four to the ransom. (The build made A2 the ransom's; the chain does not show it.) | | — |
+| 6 | R1's page shows a second payment in: {{tx.m2.by.R1.btc}} BTC in block {{tx.m2.height}}, from `{{addr.B2}}` (J2's output {{tx.j2.by.B2.n}}), in M2 `{{tx.m2.txid|short}}`; then R1 is spent again in block {{tx.dep.height}}. Address reuse: B2 was sent back to the ransom address, so B2 is the ransom's. M2 also carries an OP_RETURN note, "HACKY HACK HACK": text whoever built M2 chose to write, so it fits the reading but adds no independent line, and the confidence stays Moderate. Row: *M2: Resumes: address reuse; J2's second ransom output found; Moderate.* Both of J2's ransom outputs are now found. | Someone else paid R1 (anyone can pay any address). One output, all of B2, sent to R1 makes that unlikely, but it is one line. | Moderate |
+| 7 | **Undetermined.** J1's other outputs: `{{addr.J1o1}}` is spent alone to a new address (block {{tx.k1.height}}) in a transaction whose OP_RETURN note reads "DEAD END"; `{{addr.A2}}`, `{{addr.J1o2}}` and `{{addr.J1o3}}` are unspent. Nothing ties any of the four to the ransom; the note points away from J1o1, and the other three stay undetermined. (The build made A2 the ransom's; the chain does not show it.) | | — |
 | 8 | M1: spending mixed coins together, and with the toxic change C1, undoes the mix; a careful wallet spends each mixed coin on its own and keeps unmixed change apart. M2: CoinJoin wallets give a new address every time, so a reuse is the user's mistake (Svenda et al.). Both are planted here. | | — |
 | 9 | J3 is `{{tx.j3.txid|short}}` (block {{tx.j3.height}}): {{tx.j3.n_in}} inputs of {{tx.j3.in.0.btc}} BTC, {{tx.j3.n_out}} outputs of {{tx.j3.out.0.btc}} BTC, an 8x8 round in the same pool. Q (from M1) is one input. Row: *J3: Stops: CoinJoin, set of 8; one of eight outputs is the ransom's, which one undetermined.* Nothing in J3 picks it out, and no part-2 leak touches its outputs. | | — |
 | 10 | {{calc.crowd_gap}} block after J3, five outputs move one by one to new addresses; {{calc.j3_unspent}} stay unspent; one, `{{addr.S}}`, moves {{calc.late_gap}} blocks after J3 to `{{addr.L}}`. The colleague's reading is timing alone: a lead, not a finding. Row: *L, J3's last mover: Lead only; timing; Low.* (The build did make it the ransom's; grade the Low, not the guess.) | A careful user waits, remixes, or is offline; any of the eight could move last. | Low |
@@ -118,12 +119,16 @@ ransom's touches it; its inputs were funded by the course faucet before the rans
 - Rating the stop itself with a confidence word, or rating a lead High because two weak clues agree. Timing and
   amount from one pool are behavior; together they stay Low or, at most, Moderate.
 - Quoting a percentage as a confidence.
+- Raising M2 to High for its "HACKY HACK HACK" note, or reading "DEAD END" as a finding. A note is text the
+  transaction's builder wrote: it fits the trace here, but it is not a second kind of evidence.
 
 ## Notes on the build
 
 - The original course's Forensics 2 and 3 exercises are the base (Course Audit rows 41 and 42). This build keeps the
-  CoinJoin and timing exercises, says on the worksheet that the leaks are planted, and drops the "DEAD END" markers
-  and the taunt, so the answer is not self-confirming.
+  CoinJoin and timing exercises and says on the worksheet that the leaks are planted. It keeps Forensics 3's
+  OP_RETURN markers (owner, 31 Oct 2026: "Keep the dead end markers"), placed where they settle nothing graded: the
+  "HACKY HACK HACK" taunt on M2 confirms a leak already found by address reuse, and "DEAD END" on K1 and K2, the other
+  mixers' own spends. Nothing marks J3's outputs, L or the mixer's withdrawals, so the stops stay stops.
 - The course faucet funds the victim, every crowd coin and every other mixer customer, each by its own payment. A sharp
   student may notice. The lab does not ask who funded whom; do not grade it either way.
 - J2's two ransom outputs are both found (M1 and M2); J1's second is not. That asymmetry is deliberate: it gives the

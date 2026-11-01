@@ -18,6 +18,7 @@ TYPES = {
     "witness_v0_keyhash": "P2WPKH (V0_P2WPKH)",
     "witness_v1_taproot": "P2TR (V1_P2TR)",
     "scripthash": "P2SH",
+    "nulldata": "OP_RETURN",
 }
 
 
@@ -31,6 +32,10 @@ def btc(value):
 
 def code(text):
     return f"<code>{html.escape(str(text))}</code>"
+
+
+def memo(spk):
+    return bytes.fromhex(spk["asm"].split()[1]).decode()
 
 
 def addr_link(address):
@@ -61,7 +66,8 @@ def tx_section(tx, height):
     parts.append(f"<h3>Outputs ({len(tx['vout'])})</h3><table>")
     for vout in tx["vout"]:
         spk = vout["scriptPubKey"]
-        parts.append(row(f'Output {vout["n"]}', f'{addr_link(spk["address"])}<br>'
+        where = f'OP_RETURN {code(memo(spk))}' if spk["type"] == "nulldata" else addr_link(spk["address"])
+        parts.append(row(f'Output {vout["n"]}', f'{where}<br>'
                          f'{TYPES.get(spk["type"], spk["type"])}, {btc(vout["value"])}'))
     parts.append("</table></section>")
     return "\n".join(parts)
@@ -77,6 +83,8 @@ def address_sections(txs, heights, order):
                 (heights[name], tx["txid"], "sent", vin["prevout"]["value"]))
         for vout in tx["vout"]:
             spk = vout["scriptPubKey"]
+            if spk["type"] == "nulldata":
+                continue
             seen.setdefault(spk["address"], [spk["type"], []])[1].append(
                 (heights[name], tx["txid"], "received", vout["value"]))
     parts = []

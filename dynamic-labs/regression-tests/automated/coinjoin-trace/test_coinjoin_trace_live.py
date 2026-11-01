@@ -2,7 +2,8 @@
 
 The explorer's answers are compared with the frozen chain's facts (coinjoin-trace/quizes/facts.json), so a rebuilt chain
 that no longer matches the worksheet, the saved pages or the instructor answers fails here. The shape tests (the
-CoinJoin rounds, the two planted leaks, the timing tell, the mixer) hold the design the instructor answers depend on.
+CoinJoin rounds, the two planted leaks, the timing tell, the mixer, the OP_RETURN markers) hold the design the
+instructor answers depend on.
 """
 from __future__ import annotations
 
@@ -23,7 +24,9 @@ FACTS = json.loads((LAB / "quizes" / "facts.json").read_text(encoding="utf-8"))
 TX = FACTS["tx"]
 ADDR = FACTS["addr"]
 RBF = 0xFFFFFFFD
-API_TYPE = {"P2WPKH": "v0_p2wpkh", "P2TR": "v1_p2tr", "P2SH": "p2sh"}
+API_TYPE = {"P2WPKH": "v0_p2wpkh", "P2TR": "v1_p2tr", "P2SH": "p2sh", "OP_RETURN": "op_return"}
+# Forensics 3's OP_RETURN markers.
+MARKERS = {"m2": "HACKY HACK HACK", "k1": "DEAD END", "k2": "DEAD END"}
 POOL = 50_000_000
 # The worksheet may show the ransom address, the mixer's pool (the label) and the worked example's round.
 SHOWN = {"R1", "PW"}
@@ -112,7 +115,7 @@ class CoinJoinTraceLiveRegressionTests(unittest.TestCase):
                 self.assertTrue(tx["status"]["confirmed"])
                 self.assertEqual(tx["status"]["block_height"], expected["height"])
                 self.assertEqual(tx["fee"], expected["fee"])
-                self.assertEqual([(o["scriptpubkey_address"], o["value"]) for o in tx["vout"]],
+                self.assertEqual([(o.get("scriptpubkey_address"), o["value"]) for o in tx["vout"]],
                                  [(o["address"], o["sats"]) for o in expected["out"]])
                 self.assertEqual([(i["prevout"]["scriptpubkey_address"], i["prevout"]["value"]) for i in tx["vin"]],
                                  [(i["address"], i["sats"]) for i in expected["in"]])
@@ -151,7 +154,7 @@ class CoinJoinTraceLiveRegressionTests(unittest.TestCase):
 
     def test_m2_reuses_the_ransom_address(self) -> None:
         self.assertEqual([i["role"] for i in TX["m2"]["in"]], ["B2"])
-        self.assertEqual([o["role"] for o in TX["m2"]["out"]], ["R1"])
+        self.assertEqual([o["role"] for o in TX["m2"]["out"] if o["address"]], ["R1"])
         r1 = stats("R1")
         self.assertEqual((r1["funded_txo_count"], r1["spent_txo_count"]), (2, 2))
 
@@ -182,6 +185,21 @@ class CoinJoinTraceLiveRegressionTests(unittest.TestCase):
         self.assertEqual(near, ["W", "W2"])
         self.assertLess(payout["by"]["W2"]["sats"], payout["by"]["W"]["sats"])
 
+    def test_markers_ride_zero_value_op_return_outputs(self) -> None:
+        for name in FACTS["order"]:
+            notes = [o for o in TX[name]["out"] if o["type"] == "OP_RETURN"]
+            with self.subTest(tx=name):
+                if name not in MARKERS:
+                    self.assertEqual(notes, [])
+                    continue
+                self.assertEqual([(o["memo"], o["sats"]) for o in notes], [(MARKERS[name], 0)])
+                vout = api(f"/tx/{TX[name]['txid']}")["vout"][-1]
+                self.assertEqual(vout["scriptpubkey_type"], "op_return")
+                self.assertTrue(vout["scriptpubkey_asm"].endswith(MARKERS[name].encode().hex()))
+        # The DEAD END notes sit on the other mixers' spends of J1o1 and J2o1, which are not ransom outputs.
+        self.assertEqual([i["role"] for i in TX["k1"]["in"]], ["J1o1"])
+        self.assertEqual([i["role"] for i in TX["k2"]["in"]], ["J2o1"])
+
     def test_saved_pages_cover_every_transaction_and_address(self) -> None:
         resp = get(f"{PREFIX}/fallback/")
         self.assertEqual(resp.status_code, 200)
@@ -190,6 +208,8 @@ class CoinJoinTraceLiveRegressionTests(unittest.TestCase):
         for role in ("R1", "C1", "C2", "A1", "A2", "B1", "B2", "Q", "S", "L", "MX", "PW", "W", "W2"):
             self.assertIn(ADDR[role], resp.text, role)
         self.assertIn("Search", resp.text)
+        for text in set(MARKERS.values()):
+            self.assertIn(f"OP_RETURN <code>{text}</code>", resp.text)
 
 
 if __name__ == "__main__":

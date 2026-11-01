@@ -15,6 +15,8 @@ to L (a scripted timing tell). The coin at R1 goes to a custodial mixer's deposi
 mixer sweeps it with five other deposits into its pool PW (SWEEP) and later pays a batch of withdrawals (PAYOUT).
 Two withdrawals fit the deposit less a fee: W (the attacker's, 1% less) and W2 (someone else's, 2% less).
 J0 is an unrelated 5x5 round in the same pool: the worksheet's worked example.
+The original course's Forensics 3 markers ride OP_RETURN outputs: the attacker's "HACKY HACK HACK" taunt on M2, and
+"DEAD END" on K1 and K2, the other mixers' spends of J1's and J2's outputs. Neither settles a graded answer.
 
 What a careful analyst can say, step by step (the instructor answers and the worksheet depend on this):
   T1      pre-mix split from the ransom address                                     -> continues
@@ -99,22 +101,26 @@ def size_of(address):
     return next(v for k, v in SIZES.items() if address.startswith(k))
 
 
-def build(name, wallets, ins, outs, rate=None, fee=None):
+def build(name, wallets, ins, outs, rate=None, fee=None, memo=None):
     """Spend whole outputs `ins` [(txid, address)] into `outs` [(role, address, sats | None)], signed by each of
     `wallets` in turn (a CoinJoin needs every owner's signature). The one None output gets what is left after the
-    fee: `fee` sats, or the estimated size times `rate`. Inputs and outputs keep the order given."""
+    fee: `fee` sats, or the estimated size times `rate`. Inputs and outputs keep the order given; a `memo` adds a
+    last, zero-value OP_RETURN output carrying its text."""
     cin, total = [], 0
     for txid, address in ins:
         n, v = utxo(txid, address)
         cin.append({"txid": txid, "vout": n})
         total += v
     if fee is None:
-        fee = (11 + sum(size_of(a)[0] for _, a in ins) + sum(size_of(a)[1] for _, a, _ in outs)) * rate
+        fee = (11 + sum(size_of(a)[0] for _, a in ins) + sum(size_of(a)[1] for _, a, _ in outs)
+               + (11 + len(memo) if memo else 0)) * rate
     fixed = sum(s for _, _, s in outs if s is not None)
     rest = total - fixed - fee
     assert rest >= 0, (name, total, fixed, fee)
     assert rest > 0 or all(s is not None for _, _, s in outs), (name, rest)
     spec = [{a: btc(s if s is not None else rest)} for _, a, s in outs]
+    if memo:
+        spec.append({"data": memo.encode().hex()})
     height = int(cli("getblockcount"))
     hexed = cli("createrawtransaction", json.dumps(cin), json.dumps(spec), height, "true")
     for w in wallets:
@@ -127,12 +133,14 @@ def build(name, wallets, ins, outs, rate=None, fee=None):
         ADDR[role] = a
 
 
-def spend(name, wallet, ins, outs, rate, confirm=True):
-    build(name, [wallet], ins, outs, rate=rate)
+def spend(name, wallet, ins, outs, rate, confirm=True, memo=None):
+    build(name, [wallet], ins, outs, rate=rate, memo=memo)
     if confirm:
         mine()
 
 
+TAUNT = "HACKY HACK HACK"   # the attacker's signature, as in the original course's Forensics 1 to 3
+DEAD_END = "DEAD END"      # marks a path that is not the ransom's, as in Forensics 3
 POOL = 50_000_000          # the 0.5 BTC pool
 PREMIX = POOL + 10_000     # each input carries 10,000 sats toward the round's fee
 
@@ -190,9 +198,10 @@ spend("t1", "thief", [(TX["v1"], R1)], chunks + [("C1", C1, None)], rate=10)
 join("j1", [(TX["t1"], ADDR["P1"]), (TX["t1"], ADDR["P2"])], fund_crowd("J1", 3), ["A1", "A2"], "J1")
 join("j2", [(TX["t1"], ADDR["P3"]), (TX["t1"], ADDR["P4"])], fund_crowd("J2", 3), ["B1", "B2"], "J2")
 
-# Other mixers spend a J1 and a J2 output on their own, as careful wallets do.
-spend("k1", "crowd", [(TX["j1"], ADDR["J1o1"])], [("K1", new("other", "k1"), None)], rate=8, confirm=False)
-spend("k2", "crowd", [(TX["j2"], ADDR["J2o1"])], [("K2", new("other", "k2"), None)], rate=8)
+# Other mixers spend a J1 and a J2 output on their own, as careful wallets do; each spend is marked DEAD END.
+spend("k1", "crowd", [(TX["j1"], ADDR["J1o1"])], [("K1", new("other", "k1"), None)], rate=8, confirm=False,
+      memo=DEAD_END)
+spend("k2", "crowd", [(TX["j2"], ADDR["J2o1"])], [("K2", new("other", "k2"), None)], rate=8, memo=DEAD_END)
 
 # M1, the post-mix co-spend: A1 and B1 with the toxic change C1; Q is a fresh 0.5001 pre-mix coin, C2 the change.
 Q = new("thief", "q")
@@ -200,8 +209,8 @@ C2 = new("thief", "c2")
 spend("m1", "thief", [(TX["j1"], ADDR["A1"]), (TX["t1"], C1), (TX["j2"], ADDR["B1"])],
       [("C2", C2, None), ("Q", Q, PREMIX)], rate=10)
 
-# M2, address reuse: B2 goes back to R1, the address the victim paid.
-build("m2", ["thief"], [(TX["j2"], ADDR["B2"])], [("R1", R1, None)], rate=10)
+# M2, address reuse: B2 goes back to R1, the address the victim paid, signed with the attacker's taunt.
+build("m2", ["thief"], [(TX["j2"], ADDR["B2"])], [("R1", R1, None)], rate=10, memo=TAUNT)
 mine()
 
 # J3: Q and seven crowd coins, an 8x8 round in the same pool.
@@ -252,7 +261,7 @@ with open(f"{OUT}/blocks.hex", "w") as f:
         f.write(cli("getblock", cli("getblockhash", h), 0) + "\n")
 
 ROLE = {a: r for r, a in ADDR.items()}
-TYPES = {"witness_v0_keyhash": "P2WPKH", "scripthash": "P2SH", "witness_v1_taproot": "P2TR"}
+TYPES = {"witness_v0_keyhash": "P2WPKH", "scripthash": "P2SH", "witness_v1_taproot": "P2TR", "nulldata": "OP_RETURN"}
 facts = {"height": HEIGHT, "addr": ADDR, "tx": {}}
 for name in ORDER:
     t = cli("getrawtransaction", TX[name], 2, j=True)
@@ -262,8 +271,10 @@ for name in ORDER:
 
     def leg(spk, value, **extra):
         sats = int(value * 10**8)
-        return {"address": spk["address"], "type": TYPES.get(spk["type"], spk["type"]), "sats": sats,
-                "btc": btc(sats), "role": ROLE.get(spk["address"], ""), **extra}
+        if spk["type"] == "nulldata":   # an OP_RETURN marker: no address, its text instead
+            extra["memo"] = bytes.fromhex(spk["asm"].split()[1]).decode()
+        return {"address": spk.get("address"), "type": TYPES.get(spk["type"], spk["type"]), "sats": sats,
+                "btc": btc(sats), "role": ROLE.get(spk.get("address"), ""), **extra}
 
     ins = [leg(v["prevout"]["scriptPubKey"], v["prevout"]["value"]) for v in t["vin"]]
     outs_ = [leg(o["scriptPubKey"], o["value"], n=o["n"]) for o in t["vout"]]
