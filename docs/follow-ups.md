@@ -12,28 +12,11 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- 01-EF gas slides (lines 397, 411, 976) still say the tip goes to "the block proposer"; 03-EF now says the block's
-  fee recipient (proposer, or the builder who pays the proposer). Align the wording. (31 Oct 2026, 03-EF tip fix)
-
-- `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd:95` speaker notes say "A's signature, C's signature";
-  with BIP 67 sorted keys the order depends on the keys (on the wallet lab's chain it is C's, then A's). Word it as
-  "the two signatures, in key order". (31 Oct 2026, D2 wallet lab build)
-
-- `lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd` part 1 still points to "day 3" for attribution,
-  spotting a CoinJoin and the memo (lines 61, 372, 475, 519, 551, 554, 555); attribution is now 01-FO the same
-  day (D6 ③), CoinJoin is D7 and memos are retired. (31 Oct 2026, 01-FO recut as D6 ③)
-
-- 01-FO "BTC-e: Weak KYC Made the Cluster Actionable" now opens the BTC-e case, with the intro hidden: it never
-  says BTC-e was an exchange, or when it ran. Add one cited line of context. (31 Oct 2026, 01-FO unrated slides hidden)
-
-- `{dot}` cells read options from `//|` lines, not `#|`: their `#| fig-height` is ignored and every diagram renders
-  at the 10x5 inch default (960x480), which can push a slide past 700px. Switch to `//|` in 02-BF, 02-DS, 04-AS,
-  05-AS, 02-FO, 06-FO and 07-FO, then re-check each slide's fit. Three-digit fill colours (`#fdd`) render black
-  in 02-FO, 04-AS, 06-FO and 07-FO: use six digits. (31 Oct 2026, D7 ③ browser check)
 - 02-AS "Types of Digital Money" (line 108, and the hidden slide at line 271) says China banned private stablecoins (February 2026)
   and the US "legislatively blocked" a federal CBDC (July 2025), with no citation. The US claim looks overstated (the House passed
   an anti-CBDC bill in July 2025; the federal bar is a January 2025 executive order). Source or narrow both through the `source`
   skill. (1 Nov 2026, 02-AS quiz review)
+- 06-EF's DAO slide still says the attacker re-entered `withdraw()` while 02-EF and 10-FO say "split"; 01-EF (lines 117, 160) still has ignored `#|` `{dot}` options, 04-EF line 516 a three-digit colour (`#555`); the signatures lab's ECDH panel text (`index.html:350`) always claims the HTTP fallback. (1 Nov 2026, review of the follow-ups lesson fixes)
 
 ## Quizzes
 - The day 2 daily quiz (session 9) has no question on the new slide "A blockchain is a record, not a currency".
@@ -41,16 +24,11 @@ slide index), which is never listed here.
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
-- 06-EF (`lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.qmd`, The DAO slide notes) gives the
-  fork block as "192,000"; it was 1,920,000 (10-FO cites the Ethereum Foundation's post). 02-EF's DAO notes say the
-  attacker called "the withdraw function"; 10-FO, after the Foundation, says "split". Align both. (31 Oct 2026, D8 ② review)
 
 ## Labs
 - `dynamic-labs/bitcoin/mempool/Dockerfile` lines 16 and 40 clone electrs and mempool at their latest commit, so a
   rebuild can change what students see; pin mempool to v3.3.2 (or a commit) and electrs to a commit.
   (31 Oct 2026, mempool spike, `docs/spikes/mempool.md`)
-- `lessons/consensus/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:525` says "In a memo"; the
-  direction drops memos. Reword as "In your assessment". (31 Oct 2026, D1 explorer lab build)
 - The explorer lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`): its stack
   pulls about 4 GB of images. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D1 explorer lab build)
 - Cloud deploys need a DNS record and a certificate name for `explorer.<domain>` (`deploy-cloud.sh`, certbot); the
@@ -91,10 +69,6 @@ slide index), which is never listed here.
   from them leaves the explorer running. (31 Oct 2026, D2 wallet lab build)
 - No quiz questions test the wallet lab (`dynamic-labs/wallet/`): the day 3 daily bank could check its five ideas
   (path levels, gap limit, change clues, xpub reach, reading a 2-of-3 witness). (31 Oct 2026, D2 wallet lab build)
-- `lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd:306` says students find "the account
-  that delegated Energy" for the exchange sweep; in the Tron lab the Binance sweeps are paid by a TRX top-up that is
-  burned, and only the unnamed 2026 address gets delegated Energy. Word it as "the account that paid for it".
-  (31 Oct 2026, D5 Tron lab build)
 - The Tron lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); its suite
   needs only nginx and Python, so it could run there. The workflow is a rail. (31 Oct 2026, D5 Tron lab build)
 - No quiz questions test the Tron lab (`dynamic-labs/tron/`): who paid the Energy, a sweep's signature, what the
@@ -122,9 +96,6 @@ slide index), which is never listed here.
   Walk the playbook on the desktop. (31 Oct 2026, D7 lab build)
 - `vm-build/prepare-docker-image-bundles.sh:13` (the `projects` list) lacks `dynamic-labs/dex` and `dynamic-labs/tokens`,
   so the student VM may not bundle their images. (31 Oct 2026, D7 lab review)
-- `lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd` (about lines 61, 372, 554) still sends CoinJoin and
-  attribution to "day 3"; under the settled day map CoinJoin detection is day 7 and attribution is day 6 ③. The
-  Bitcoin trace worksheet uses the new map. (31 Oct 2026, D6 Bitcoin trace lab review)
 - Most labs' `run.sh` fresh-start lists lack `tokens` (only explorer, wallet and tron have it), so a fresh start from
   them leaves the token lab running. (31 Oct 2026, D5 Tron lab rebase onto the D3 token lab)
 - Students still receive the explorer lab's chain build scripts, the other labs' browser playbooks and the
@@ -153,18 +124,8 @@ slide index), which is never listed here.
   desktop's BuildKit refuses ("network mode bridge not supported"); the suite runs only with
   `DOCKER_BUILD_NETWORK=default`. Change the default. (31 Oct 2026, D5 Fabric demo build)
 
-- `blockchain-course/assets/labs/tamper-ledger/tamper_ledger_lab.html`: editing an entry's text re-renders the whole
-  chain on every keystroke, so the field loses focus after one character. The primer says "change one digit" to
-  work around it. Render the chain only on change or blur. (31 Oct 2026, primer page build)
-
-- `blockchain-course/assets/labs/signatures/index.html` (the "Browser note", about line 342) always says "On this HTTP
-  lab URL, the controls use a visible toy signature fallback", on HTTPS too. Make the note conditional on the
-  fallback actually running. (31 Oct 2026, primer page build)
-
 ## Tooling and rules
 - `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`
   step 2 now says questions first. The reviewer is a rail: the change runs the rail audit. (30 Oct 2026)
 
 ## Notion and documents
-- `docs/build-spec.md:83`, day 3 ③ cell, still names the token lesson as "(02-AS, 06-EF)"; 05-EF is that lesson since
-  `fff167f`. (31 Oct 2026, reviewer on the 04-EF quiz items)
