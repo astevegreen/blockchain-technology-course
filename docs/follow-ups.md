@@ -54,7 +54,5 @@ slide index), which is never listed here.
   was fixed 31 Oct. Renormalize the rest. (31 Oct 2026, D5 Fabric demo build)
 
 ## Tooling and rules
-- `.claude/agents/reviewer.md` (the lab bullet) says a lab writes its "product first"; `.claude/skills/lab/SKILL.md`
-  step 2 now says questions first. The reviewer is a rail: the change runs the rail audit. (30 Oct 2026)
 
 ## Notion and documents

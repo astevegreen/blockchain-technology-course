@@ -42,7 +42,7 @@ holds as a `blocker` of yours.
      message says why, and a cut for want of a source lists the searches tried (`.claude/skills/source/SKILL.md`,
      step 5). A cut with no searches listed is a `blocker`; a cut or narrowing with no reason given is `minor`
    - every new or changed slide ends with a complete notes block (the four parts in `.claude/rules/lessons.md`)
-   - a lab change follows the steps in `.claude/skills/lab/SKILL.md`: product first, worked example and a
+   - a lab change follows the steps in `.claude/skills/lab/SKILL.md`: questions first, worked example and a
      straight-to-the-problem entry, ready-made queries, and a test playbook in `dynamic-labs/regression-tests/agent/<lab>/`
    - quiz items follow `quizes/QUIZ_ENGINE_JSON_SPEC.md` and the distractor rules in
      `quizes/DISTRACTOR_REWRITE_GUIDE.md`, and every correct answer traces to a line of the lesson
