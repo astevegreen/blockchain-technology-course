@@ -135,6 +135,18 @@ slide index), which is never listed here.
 - The Bitcoin trace lab's browser playbook (`regression-tests/agent/bitcoin-trace/`) has not been walked in a
   browser; the automated suite passed (15 tests) without `--fresh-start`, since other labs' containers were
   running. Walk the playbook on the desktop. (31 Oct 2026, D6 Bitcoin trace lab build)
+- The CoinJoin trace lab (`dynamic-labs/coinjoin-trace/`) is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`,
+  `tools/lab_tests.py`); it needs the `bitcoin-mempool` image, like the Bitcoin trace lab. (31 Oct 2026, D7 lab build)
+- No quiz questions test the CoinJoin trace lab: what an equal-output round hides, the two leaks that undo it
+  (co-spending, address reuse), the timing tell, why a mixer's batch payout caps confidence. (31 Oct 2026, D7 lab build)
+- The CoinJoin trace lab's students receive `regression-tests/automated/coinjoin-trace/` in `src.zip` and on the VM;
+  its shape tests name the planted leaks and the mixer's two near-match outputs. Same decision as the Bitcoin trace
+  tests above. (31 Oct 2026, D7 lab build)
+- The CoinJoin trace lab's browser playbook (`regression-tests/agent/coinjoin-trace/`) has not been walked in a
+  browser; the automated suite passed (14 tests) without `--fresh-start`, since other labs' containers were running.
+  Walk the playbook on the desktop. (31 Oct 2026, D7 lab build)
+- `vm-build/prepare-docker-image-bundles.sh:13` (the `projects` list) lacks `dynamic-labs/dex` and `dynamic-labs/tokens`,
+  so the student VM may not bundle their images. (31 Oct 2026, D7 lab review)
 - `lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd` (about lines 61, 372, 554) still sends CoinJoin and
   attribution to "day 3"; under the settled day map CoinJoin detection is day 7 and attribution is day 6 ③. The
   Bitcoin trace worksheet uses the new map. (31 Oct 2026, D6 Bitcoin trace lab review)

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 7 lab: where the trace stops</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../mempool/">Explorer</a> · <a href="../fallback/">Saved pages</a></p>
+<h1>Day 7 lab: where the trace stops</h1>
+<p>The course runs a small Bitcoin chain of its own, built for this lab, with the same address formats
+and transaction rules as Bitcoin. On it, a ransomware victim has paid a ransom (the incident is
+invented), and the attacker has sent it through CoinJoins and a mixer. You follow it in mempool, an
+open-source block explorer <a href="#s1">[1]</a>, until it goes dark, and write a limits-of-tracing note:
+where the trace stops, why, what still shows, and how sure you are.</p>
+<p>Write your note as short rows. Your instructor checks it with you; it is the day's graded point.</p>
+<p class="note">This chain is not Bitcoin's. The names and amounts are made up (a course faucet pays every
+payer and mixer user, so where the coins first came from is not a question here), and nothing here points
+to a real person or service. <b>The leaks are planted for teaching:</b> real CoinJoin wallets
+are built to avoid them <a href="#s4">[4]</a>. If the explorer
+or the chain is down, use the <a href="../fallback/">saved pages</a>: they show the same transactions, so
+every question has the same answer there.</p>
+
+<h2>Where to start</h2>
+<ul>
+<li>Your instructor tells you where to start: the worked example, or straight at the problem.</li>
+<li>You may always do the worked example first. It shows you a CoinJoin in the explorer and one finished
+row of a note.</li>
+<li>Then the questions: part 1 (questions 1 to 4), part 2 (questions 5 to 8) and part 3 (questions 9
+to 12).</li>
+<li>The challenge at the end is optional.</li>
+</ul>
+
+<h2>Reading this explorer</h2>
+<ul>
+<li>This explorer is offline, so its dollar figures, fee badges and "Accelerate" buttons mean nothing
+here. Ignore them.</li>
+<li>The lab's blocks were made seconds apart. Use block numbers, not times, to put events in order.</li>
+<li>The explorer shows no names, and it does not tell you who owns an output. Deciding what the chain
+shows is your job.</li>
+<li>An address page lists the transactions that pay it and spend from it. An output with no spend after
+it has not been spent yet.</li>
+<li>On a transaction's page, each input shows the transaction it came from. The "Details" button shows the
+other fields.</li>
+<li>Use a window at least 800 pixels wide. A narrower one shows a different, mobile page.</li>
+</ul>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments
+about what the facts mean. Give each judgment a confidence word <a href="#s2">[2]</a>:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the
+reasoning applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false
+positive could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same
+transaction. Never give a percentage. "Undetermined" is an answer.</p>
+
+<p>Your note has this shape: one row per step, from the ransom address to each place the trace stops. The
+worked example shows a finished row.</p>
+<table class="grid">
+<tr><th>Step</th><th>What you see</th><th>The trace</th><th>Still shows</th><th>Confidence</th></tr>
+<tr><td>1</td><td></td><td>Continues, Stops, Resumes or Lead only</td><td></td><td></td></tr>
+</table>
+
+<h3>Part 1: into the mix</h3>
+<p>The victim paid {{tx.v1.by.R1.btc}} BTC to the ransom address <code>{{addr.R1}}</code> in block
+{{tx.v1.height}}. Call the transaction that spends that payment <b>T1</b>.</p>
+<ol>
+<li>Which block is T1 in, and what are its outputs? Which outputs look alike, and which one does not?</li>
+<li>Why would the ransom's owner make outputs of exactly that size? Write T1 as the first row of your
+note. What could make your reading wrong?</li>
+<li>Follow two of T1's look-alike outputs into the transaction that spends them; call it <b>J1</b>. Follow
+the other two into <b>J2</b>. What makes J1 and J2 CoinJoins? What does that do to the co-spend rule
+for their inputs?</li>
+<li>How many outputs could each ransom coin have become in J1 (the anonymity set)? How many of J1's
+outputs belong to the ransom's owner, and can you say which? Answer the same for J2, then write J1 and
+J2 as rows.</li>
+</ol>
+
+<h3>Part 2: what leaks</h3>
+<ol start="5">
+<li>T1's odd output is the toxic change. Find the transaction that spends it; call it <b>M1</b>. What
+does M1 spend with it? What does that tell you about J1 and J2? Write the row: what could make it
+wrong, and your confidence.</li>
+<li>Go back to the ransom address's page. What else has happened there since T1? Which CoinJoin output
+does it tie to the ransom, and by what habit? Write the row with a confidence.</li>
+<li>The ransom's owner put two coins into J1. You have tied one J1 output to them. What can you say
+about the second?</li>
+<li>The leaks in questions 5 and 6 were planted in this lab. For each, which habit of a CoinJoin wallet
+would have prevented it?</li>
+</ol>
+
+<h3>Part 3: where it goes dark</h3>
+<ol start="9">
+<li>One of M1's outputs goes into another CoinJoin; call it <b>J3</b>. How many inputs and outputs does
+it have, and at what amount? Write the row. Does anything in J3 itself pick out the ransom's output?</li>
+<li>Look at when J3's outputs are spent. A colleague points at the one that moved last and says "that's
+the ransom". What do you say, and how sure are you? Write it as a row.</li>
+<li>The coin that came back to the ransom address moves on. Follow it until it is spent with other
+people's coins. A shared label list (invented and unverified) tags
+<code>{{addr.PW}}</code> as a mixer. What does the chain show about this address, and what does
+the label add? The mixer later pays out a batch. Which withdrawals fit the coin that went in, and can
+you pick one? Write the rows.</li>
+<li>Write your limits-of-tracing note: one row per step from the ransom address to each place the trace
+stops, with what still shows after each stop and a confidence for each lead. Then one or two sentences
+an agent could read: where the trace stops, why, and what is still worth asking about.</li>
+</ol>
+
+<h2>Worked example: a CoinJoin with nothing of the ransom in it</h2>
+<p>This is an earlier round in the same pool, before the ransom was paid. It shows you what a CoinJoin
+looks like in the explorer, and one finished row.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="../mempool/">explorer</a>, paste <code>{{tx.j0.txid}}</code> into the search box and
+press Enter.</li>
+<li>It is in block {{tx.j0.height}}.</li>
+</ol>
+
+<h3>Read it</h3>
+<table>
+<tr><th>Inputs</th><td>{{tx.j0.n_in}}, each {{tx.j0.in.0.btc}} BTC, each from a different earlier
+transaction</td></tr>
+<tr><th>Outputs</th><td>{{tx.j0.n_out}}, each {{tx.j0.out.0.btc}} BTC, every one a new address of the
+same type</td></tr>
+<tr><th>Fee</th><td>{{tx.j0.fee}} sats: {{calc.j0_fee_per_input}} sats for each input</td></tr>
+</table>
+<ul>
+<li><b>Equal outputs.</b> Every output is the same amount, so the amount cannot say which input became
+which output. That is the mark of a CoinJoin: one transaction that several users build together, each
+signing for their own input <a href="#s3">[3]</a>.</li>
+<li><b>The pool.</b> Whirlpool, the CoinJoin design this chain imitates, ran rounds of five inputs and
+five outputs, later up to eight by eight, all of one pool size such as 0.5 BTC <a href="#s4">[4]</a>.
+Each input here carries a little over 0.5 BTC to pay its share of the fee.</li>
+<li><b>Do not cluster.</b> The co-spend rule says inputs spent together share an owner. In a CoinJoin
+they need not: a round of five can hold up to five owners, and the rule would wrongly merge them into one
+<a href="#s4">[4]</a>.</li>
+</ul>
+<table class="grid">
+<tr><th>Step</th><th>What you see</th><th>The trace</th><th>Still shows</th><th>Confidence</th></tr>
+<tr><td>0</td><td>{{tx.j0.n_in}} inputs of {{tx.j0.in.0.btc}} BTC from {{tx.j0.n_in}} different
+transactions; {{tx.j0.n_out}} outputs of {{tx.j0.out.0.btc}} BTC</td><td><b>Stops:</b> CoinJoin, set of
+{{tx.j0.n_out}}</td><td>Each input became one of the {{tx.j0.n_out}} outputs; which one is
+undetermined. The inputs are not one owner.</td><td>—</td></tr>
+</table>
+<p>No confidence word on the stop: it is a fact about the transaction's shape, not a judgment about an
+owner. The leads you find after a stop each get their own confidence. Questions 3 and 4 ask the same of
+J1 and J2.</p>
+
+<h2>The problem</h2>
+<p>Answer the questions above. These hints say where to look.</p>
+<ol>
+<li><b>Outputs.</b> On the ransom address's page, the transaction that lists the address as an input is
+the one that spends it. Compare the outputs' amounts with the pool sizes in the worked example.</li>
+<li><b>Pre-mix.</b> Whirlpool first splits a coin into pool-sized outputs in one transaction, before any
+round <a href="#s4">[4]</a>. That transaction spends from the address you were tracing. The split is a
+behavior: ask what else it could be, then what the next transaction (question 3) adds.</li>
+<li><b>A CoinJoin.</b> Compare the inputs' sources and the outputs' amounts with the worked example. A
+CoinJoin is the known false positive of the co-spend rule <a href="#s5">[5]</a>.</li>
+<li><b>Anonymity set.</b> The set is the equal outputs a coin could have become. The larger the set, the
+weaker any guess <a href="#s6">[6]</a>.</li>
+<li><b>After the mix.</b> Outputs spent together after the mix are co-spent like any other inputs
+<a href="#s6">[6]</a>. Check that the spending transaction is not itself a CoinJoin: look at its
+outputs.</li>
+<li><b>Reuse.</b> Paying a mixed coin to an address already seen "directly reveals ownership by the same
+entity"; CoinJoin wallets avoid it <a href="#s4">[4]</a>.</li>
+<li><b>The second coin.</b> Check every J1 output: where it went next, and whether anything ties it to
+the ransom. If nothing does, the answer is "undetermined".</li>
+<li><b>Careful wallets.</b> Each leak is a user's habit, not a flaw in the CoinJoin
+<a href="#s4">[4]</a> <a href="#s6">[6]</a>. Ask what the user did with coins from different places.</li>
+<li><b>A bigger round.</b> Count the inputs and outputs, and compare the amounts with the earlier rounds.
+Then check whether any leak from part 2 touches J3's outputs.</li>
+<li><b>Timing.</b> Knowing how long a wallet stays in the mix can raise the odds that the outputs leaving
+at the end are its own <a href="#s4">[4]</a>. Timing alone is behavior: the confidence scale says how
+far it goes.</li>
+<li><b>A mixer.</b> A mixer accepts coins and sends coins on "in a manner designed to prevent others from
+tracing" them <a href="#s7">[7]</a>: the coins out are not the coins in. Look at how the address you
+followed is spent, and with what. Matching amounts and timing are the habits that can pair a deposit with
+a withdrawal, each Low alone <a href="#s8">[8]</a>. A label is one unverified source.</li>
+<li><b>The note.</b> End each branch at its stop, or at the first service. List each lead with what it
+is and its confidence. Bottom line first, in plain English, with a confidence word; say plainly what the
+chain does not show.</li>
+</ol>
+
+<h2>Challenge</h2>
+<p>Optional. Each part has a flag: an address or an amount you find on the chain. Your instructor has the
+flags.</p>
+<ol type="a">
+<li><b>Flag: an amount.</b> Part of the ransom never entered a second round and has not moved since. How
+much is it, and at which address? How sure are you that it is the ransom owner's, and why?</li>
+<li><b>Flag: an address.</b> Follow J3's last mover to the address it paid. Name two innocent reasons an
+output leaves a CoinJoin late.</li>
+<li><b>Flag: an amount.</b> In the mixer's batch, find the withdrawal that is the deposit less exactly
+1%, rounded down to the thousand sats. Does knowing that make it the ransom's? Say what else a mixer's
+fee could be.</li>
+<li>Total the BTC that went into the mixer's pool, from every deposit. What share of it came from the
+address you followed? What does that say about the matching-amount lead?</li>
+</ol>
+
+<h2 id="sources">Sources</h2>
+<ol class="hint">
+<li id="s1">The Mempool Open Source Project contributors, <i>mempool</i>, version 3.3.2, AGPL-3.0
+(read 31 Oct 2026). <code>mempool_mempool_2026</code></li>
+<li id="s2">Office of the Director of National Intelligence, <i>Intelligence Community Directive
+203: Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are
+the course's own scale. <code>odni_icd203_2015</code></li>
+<li id="s3">gmaxwell, <i>CoinJoin: Bitcoin Privacy for the Real World</i>, 2013.
+<code>gmaxwell_coinjoinbitcoinprivacy_2013</code></li>
+<li id="s4">Svenda et al., <i>CoinJoin Ecosystem Insights for Wasabi 1.x, Wasabi 2.x and Whirlpool Coordinator-Based Privacy Mixers</i>, 2026: Whirlpool's rounds and pools, address
+reuse, and timing. <code>svenda_coinjoinecosystem_2026</code></li>
+<li id="s5">Meiklejohn et al., <i>A Fistful of Bitcoins: Characterizing Payments among Men with
+No Names</i>, 2013. <code>meiklejohn_fistfulbitcoinscharacterizing_2013</code></li>
+<li id="s6">Stütz et al., <i>Adoption and Actual Privacy of Decentralized CoinJoin Implementations in
+Bitcoin</i>, 2022. <code>stutz_adoptionprivacycoinjoin_2022</code></li>
+<li id="s7">Financial Crimes Enforcement Network, <i>Application of FinCEN's Regulations to Certain
+Business Models Involving Convertible Virtual Currencies</i>, May 2019, sec. 4.5.1 (as of May 2019).
+<code>financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019</code></li>
+<li id="s8">Wang et al., <i>On How Zero-Knowledge Proof Blockchain Mixers Improve, and Worsen User
+Privacy</i>, 2023: the user habits that link deposits to withdrawals.
+<code>wang_zkpmixers_2023</code></li>
+</ol>
+</main>
+</body>
+</html>

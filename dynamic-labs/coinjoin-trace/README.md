@@ -1,0 +1,50 @@
+# CoinJoin trace lab (day 7)
+
+Students follow a ransom through CoinJoin rounds and a custodial mixer on a small, frozen Bitcoin chain in the
+mempool explorer, and write a limits-of-tracing note: where the trace continues, where it stops and why, what still
+shows after each stop, and how sure (lesson 06-FO). The incident, the mixer and its label are invented, and the
+attacker's leaks are planted so there is something to find. One copy serves the whole class (a shared singleton,
+like `bitcoin-trace`).
+
+Start it with the rest of the stack: `./lab-manager.sh start coinjoin-trace`. Students open `/labs/coinjoin-trace/`
+on the course site, which sends them to the worksheet. Everything sits under that path on the course site's own
+host (`router/routes.conf`):
+
+| Path | Goes to | What it is |
+|---|---|---|
+| `/labs/coinjoin-trace/lab/` | gateway | the student worksheet |
+| `/labs/coinjoin-trace/fallback/` | gateway | the saved explorer pages, for when the explorer is down |
+| `/labs/coinjoin-trace/mempool/` | mempool | the explorer (mempool UI and its API) |
+
+The router also adds the slash to a page folder typed without one, since the gateway's own redirect would drop the
+`/labs/coinjoin-trace` prefix.
+
+## Services
+
+The same two as `bitcoin-trace`, on their own chain:
+
+- `mempool` runs the course's `bitcoin-mempool` image (`bitcoin/mempool/`): bitcoind, electrs and the mempool UI in
+  one container, all open source. `mempool/load-chain.sh` wraps its entrypoint and loads `chain/blocks.hex` into the
+  empty node; the node has no volume and no peers, so a restart reloads the same chain and the class cannot add to it.
+- `gateway` is nginx serving `gateway/static/` with `gateway/default.conf`.
+
+## The chain
+
+Blocks 1-40 are frozen in `chain/blocks.hex`. The story (a pre-mix split, three CoinJoin rounds in a 0.5 BTC pool,
+two planted leaks, a timing tell and a mixer) is in the docstring of `quizes/build-steps.py`; it sits in `quizes/`
+because it names the design behind every answer. `quizes/facts.json` holds every address, amount and block the
+worksheet, the instructor answers and the tests use.
+
+`chain/build-chain.sh` rebuilds all of it with Docker only: it mines the chain in a throwaway container, writes
+`chain/blocks.hex` and `quizes/facts.json`, recaptures the saved pages (`chain/capture_pages.py`) and renders the
+worksheet (`gateway/static/lab/index.html`) and the instructor answers (`quizes/INSTRUCTOR_ANSWERS.md`) from
+`chain/lab.template.html` and `quizes/answers.template.md` (`chain/render.py`). A rebuild changes every transaction
+ID, address and time, and the worksheet, answers and tests follow. Edit the templates, never the rendered files.
+The instructor answers never reach students (`pages.yml` and `vm-build.yml` leave out every lab's `quizes/` folder).
+
+## Tests
+
+- `regression-tests/automated/coinjoin-trace/` - the live suite checks the router, the pages, the explorer's API
+  against `quizes/facts.json` (every transaction, and the shape the answers rely on), the saved pages and that the
+  worksheet gives away no part of the trail.
+- `regression-tests/agent/coinjoin-trace/` - the browser playbook for what the suite cannot see.

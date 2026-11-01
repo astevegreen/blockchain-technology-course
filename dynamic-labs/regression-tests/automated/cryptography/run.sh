@@ -87,6 +87,7 @@ fresh_start() {
     exercises \
     wallet \
     bitcoin-trace \
+    coinjoin-trace \
     tron \
     quiz-engine-v2 \
     hlf

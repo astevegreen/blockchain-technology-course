@@ -88,6 +88,7 @@ fresh_start() {
     explorer \
     wallet \
     bitcoin-trace \
+    coinjoin-trace \
     tokens \
     dex \
     tron \
