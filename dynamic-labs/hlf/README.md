@@ -38,7 +38,7 @@ Fixed services (always on when the lab is up):
   network down on container exit. Shared instructor auth is now owned by
   the dedicated top-level instructor auth service.
 - Fabric: 1 orderer + 4 org peers (Cascadia State, Chesapeake Canoe University,
-  South Hudson, Maple Leaf) + Meridian (Org5, read-only) + chaincode
+  South Hudson, Maple Leaf) + Meridian (Org5, member, not an endorser) + chaincode
   (asset-transfer-basic fork). Each peer/orderer container runs a
   built-in ttyd instance (baked into `hlf-peer-ttyd` / `hlf-orderer-ttyd`
   images via `Dockerfile.ttyd`).

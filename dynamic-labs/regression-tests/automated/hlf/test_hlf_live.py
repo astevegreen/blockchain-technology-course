@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+import subprocess
 import time
 import unittest
 from urllib.parse import quote
@@ -900,6 +901,39 @@ class HLFFaultScenarioTests(unittest.TestCase):
         result = hlf_fault(self.instructor_session, "nonexistent", "trigger", self.base_url)
         self.assertFalse(result.get("success"))
 
+    def _assert_quick_recover_restarts(self, target: str, container: str) -> None:
+        # Recover pressed within one docker poll (10 s) of Trigger must really
+        # start the node, not trust the cached "running" status.
+        result = hlf_fault(self.instructor_session, target, "stop", self.base_url)
+        try:
+            self.assertTrue(result.get("success"), result)
+        finally:
+            result = hlf_fault(self.instructor_session, target, "start", self.base_url)
+        self.assertTrue(result.get("success"), result)
+        state = subprocess.run(
+            ["docker", "inspect", "-f", "{{.State.Running}}", container],
+            capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(state.stdout.strip(), "true", f"{container} left down: {result} {state.stderr}")
+        deadline = time.time() + 120
+        while True:
+            out = hlf_execute(
+                self.instructor_session, verb="invoke", action="create",
+                args=[f"outage-{target.replace('_', '-')}-{int(time.time())}", "credential", "4", "Recovery Check", "2024",
+                      "History", "Bachelor of Arts", "Cascadia State"],
+                org="org1", base_url=self.base_url,
+            )
+            if out.get("exit_code") == 0 or time.time() > deadline:
+                break
+            time.sleep(5)
+        self.assertEqual(out.get("exit_code"), 0, f"writes did not recover after {target}: {out}")
+
+    def test_peer_outage_quick_recover_restarts_the_peer(self) -> None:
+        self._assert_quick_recover_restarts("peer_org3", "peer0.southhudson.example.com")
+
+    def test_orderer_outage_quick_recover_restarts_the_orderer(self) -> None:
+        self._assert_quick_recover_restarts("orderer", "orderer.example.com")
+
 
 class HLFFabricDemoTests(unittest.TestCase):
     """The day-5 instructor demo (docs/INSTRUCTOR_GUIDE.md): who signed it,
@@ -984,13 +1018,16 @@ class HLFFabricDemoTests(unittest.TestCase):
         )
         self.assertEqual(code, 0, out)
         self.assertRegex(out, r'\\?"IssuerMSP\\?":\\?"Org5MSP')
-        # The explorer does not decode endorser MSPs yet, so the endorsers are
-        # read from the peers the client sent the proposal to: the consortium.
         committed_at = set(re.findall(r"committed with status \(VALID\) at ([\w.]+):\d+", out))
         self.assertEqual(committed_at, set(CONSORTIUM_PEERS), out)
         tx = self._transaction(out)
         self.assertEqual(tx.get("creator_msp"), "Org5MSP", tx)
         self.assertGreaterEqual(tx.get("endorsement_count", 0), 3, tx)
+        endorsers = [e.get("msp_id") for e in tx.get("endorsements", [])]
+        self.assertGreaterEqual(len(endorsers), 3, tx)
+        self.assertTrue(set(endorsers) <= set(CONSORTIUM_MSPS), endorsers)
+        self.assertTrue(all(e.get("org_label") for e in tx["endorsements"]), tx["endorsements"])
+        self.assertIn("3-of-4 endorsement policy satisfied", tx.get("endorsement_policy_note", ""), tx)
 
     def test_beat2_endorsement_policy_refuses_then_restores(self) -> None:
         hlf_seed(self.instructor_session, base_url=self.base_url)

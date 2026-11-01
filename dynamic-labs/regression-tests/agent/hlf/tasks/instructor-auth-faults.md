@@ -23,7 +23,7 @@ all consortium node consoles and the orderer console.
 3. Open `/labs/hlf/hlf_instructor.html` and confirm it loads only after auth.
 4. Verify the instructor panel contains links for all 6 consortium nodes:
    Org1 (Cascadia State), Org2 (Chesapeake Canoe), Org3 (South Hudson),
-   Org4 (Maple Leaf), Org5 (Meridian, read-only), and Orderer.
+   Org4 (Maple Leaf), Org5 (Meridian, member, not an endorser), and Orderer.
 5. Open `/labs/hlf/peer/org1/console/` — confirm it loads behind auth and
    the ttyd iframe points to `/labs/hlf/instructor/term/org1/` (absolute,
    not through a student claim prefix).
@@ -34,7 +34,7 @@ all consortium node consoles and the orderer console.
 8. Open `/labs/hlf/peer/org4/console/` — confirm it loads behind auth and
    the ttyd iframe points to `/labs/hlf/instructor/term/org4/`.
 9. Open `/labs/hlf/peer/org5/console/` — confirm console loads with the
-   read-only Meridian context.
+   Meridian context (a member, not an endorser).
 10. Open `/labs/hlf/orderer/console/` — confirm orderer console loads and
     the ttyd iframe points to `/labs/hlf/instructor/term/orderer/`.
 11. Open an instructor-only data surface such as the instructor snapshot

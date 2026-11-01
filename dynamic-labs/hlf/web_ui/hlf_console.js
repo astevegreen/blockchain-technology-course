@@ -38,7 +38,7 @@ function currentNodeLabel() {
     org2: 'Chesapeake Canoe University (peer0.chesapeakecanoe.example.com)',
     org3: 'South Hudson Institute of Technology (peer0.southhudson.example.com)',
     org4: 'Maple Leaf Academy (peer0.mapleleaf.example.com)',
-    org5: 'Meridian Industries (peer0.meridian.example.com) — read-only verifier',
+    org5: 'Meridian Industries (peer0.meridian.example.com) — member, not an endorser',
     orderer: 'orderer.example.com',
   };
   return mapping[currentNodeKey()];

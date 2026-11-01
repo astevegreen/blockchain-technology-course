@@ -184,8 +184,8 @@ invoke create diploma-1031-meridian credential 4 "Ada Lovelace" 2024 "Mathematic
 It succeeds (`committed with status (VALID)` at the four consortium peers,
 `"IssuerMSP":"Org5MSP"`). Membership lets Meridian read and propose. Only the
 four schools can endorse, and the chaincode stamps Meridian's own name on
-whatever it proposes. The "read-only" label in the console means "never
-endorses", not "cannot propose".
+whatever it proposes. The console labels it "member, not an endorser": it never
+endorses, but it can propose.
 
 **Who can change the rules.** Every policy on the Governance page is listed
 "via `Admins`": that is its `mod_policy`, the rule for changing it. For the application policies, including `Endorsement`,

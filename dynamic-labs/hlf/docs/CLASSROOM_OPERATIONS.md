@@ -25,7 +25,7 @@ That boots:
 - the HLF frontend (`hlf`)
 - the HLF control plane (`hlf-runner`)
 - the orderer + 4 consortium peers (Cascadia State, Chesapeake Canoe University,
-  South Hudson, Maple Leaf) + Meridian (Org5, read-only), each with
+  South Hudson, Maple Leaf) + Meridian (Org5, member, not an endorser), each with
   built-in ttyd (via `hlf-peer-ttyd` / `hlf-orderer-ttyd` images)
 - the channel `diplomas` + committed chaincode
 

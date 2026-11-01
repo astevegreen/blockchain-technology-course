@@ -43,6 +43,52 @@ class _DockerUnixConn(http.client.HTTPConnection):
         self.sock.connect(self._socket_path)
 
 
+def _decode_serialized_identity(endorser: Any) -> Dict[str, Any]:
+    """Split an endorsement's endorser into msp_id and identity_pem.
+
+    configtxlator leaves the endorser as base64 bytes of a protobuf
+    SerializedIdentity (field 1 mspid, field 2 id_bytes), not a decoded object.
+    """
+    if isinstance(endorser, dict):
+        return {"msp_id": endorser.get("mspid"), "identity_pem": endorser.get("id_bytes")}
+    if not isinstance(endorser, str):
+        return {"msp_id": None, "identity_pem": None}
+    try:
+        data = base64.b64decode(endorser)
+    except Exception:
+        return {"msp_id": None, "identity_pem": None}
+    fields: Dict[int, bytes] = {}
+    pos = 0
+    while pos < len(data):
+        key, pos = _read_varint(data, pos)
+        if key is None or key & 7 != 2:
+            break
+        length, pos = _read_varint(data, pos)
+        if length is None or pos + length > len(data):
+            break
+        fields[key >> 3] = data[pos:pos + length]
+        pos += length
+    msp = fields.get(1)
+    id_bytes = fields.get(2)
+    return {
+        "msp_id": msp.decode("utf-8", errors="ignore") if msp else None,
+        "identity_pem": base64.b64encode(id_bytes).decode("ascii") if id_bytes else None,
+    }
+
+
+def _read_varint(data: bytes, pos: int) -> Tuple[Optional[int], int]:
+    value = 0
+    shift = 0
+    while pos < len(data):
+        byte = data[pos]
+        pos += 1
+        value |= (byte & 0x7F) << shift
+        if not byte & 0x80:
+            return value, pos
+        shift += 7
+    return None, pos
+
+
 def _docker_api_get(path: str, timeout: float = 5) -> Any:
     """GET a Docker Engine API endpoint via the Unix socket. Returns parsed JSON."""
     conn = _DockerUnixConn(_DOCKER_SOCKET, timeout=timeout)
@@ -288,8 +334,8 @@ class HLFLabService:
         self._governance_detail_refreshing: bool = False
 
         # Container name mapping — centralized so every method uses the same names.
-        # Org5 (Meridian) is a read-only channel member: shown in topology + node
-        # overview, but excluded from endorsement/invoke paths.
+        # Org5 (Meridian) is a channel member, not an endorser: shown in topology +
+        # node overview, but excluded from endorsement paths.
         self._container_names = {
             "peer_org1": "peer0.cascadiastate.example.com",
             "peer_org2": "peer0.chesapeakecanoe.example.com",
@@ -865,7 +911,7 @@ class HLFLabService:
                 {
                     "org": "Org5MSP",
                     "peer": self.peer_org5_container,
-                    "role": "Meridian Industries (Read-only Observer)",
+                    "role": "Meridian Industries (Member, not an endorser)",
                     "can": ["query world state", "receive block updates", "maintain an independent ledger replica"],
                 },
                 {
@@ -1374,8 +1420,7 @@ for n in $(seq 0 $((height - 1))); do
         chaincode_args: ((.payload.data.actions[0].payload.chaincode_proposal_payload.input.chaincode_spec.input.args // []) | map(@base64d?)),
         endorsement_count: ((.payload.data.actions[0].payload.action.endorsements // []) | length),
         endorsements: ((.payload.data.actions[0].payload.action.endorsements // []) | map({
-          msp_id: ((try .endorser.mspid catch null) // null),
-          identity_pem: ((try .endorser.id_bytes catch null) // null),
+          endorser: (.endorser // null),
           signature: (.signature // null)
         })),
         response_status: (.payload.data.actions[0].payload.action.proposal_response_payload.extension.response.status // null),
@@ -1420,7 +1465,7 @@ printf '%s' "$result"
             "Org2MSP": "Chesapeake Canoe University",
             "Org3MSP": "South Hudson Institute of Technology",
             "Org4MSP": "Maple Leaf Academy",
-            "Org5MSP": "Meridian Industries (Read-only)",
+            "Org5MSP": "Meridian Industries (Member, not an endorser)",
             "OrdererMSP": "Ordering Service",
         }
 
@@ -1455,7 +1500,10 @@ printf '%s' "$result"
             return entry
 
         endorsements = payload.get("endorsements") or []
-        payload["endorsements"] = [_enrich_identity(dict(e)) for e in endorsements]
+        payload["endorsements"] = [
+            _enrich_identity({**_decode_serialized_identity(e.pop("endorser", None)), **e})
+            for e in (dict(raw) for raw in endorsements)
+        ]
 
         creator_entry = _enrich_identity({
             "msp_id": payload.get("creator_msp"),
@@ -1760,7 +1808,7 @@ rm -rf "$tmpdir"
             self.peer_org5_container: {
                 "kind": "peer",
                 "msp_id": "Org5MSP",
-                "role": "Meridian Industries — read-only channel member",
+                "role": "Meridian Industries — channel member, not an endorser",
                 "port": 15051,
             },
             self.orderer_container: {
@@ -1884,7 +1932,7 @@ rm -rf "$tmpdir"
             },
             p5: {
                 "node": "org5",
-                "label": f"Meridian Industries — Read-only ({p5})",
+                "label": f"Meridian Industries — member, not an endorser ({p5})",
                 "kind": "peer",
                 "org": "Org5MSP",
                 "working_dir": "/etc/hyperledger/fabric",
@@ -2027,7 +2075,7 @@ rm -rf "$tmpdir"
         #
         # Org5 (Meridian) stop/start is still supported as a plumbing
         # target for admin/debug use, but we no longer surface it as a
-        # pedagogical scenario — the read-only-outage story added noise
+        # pedagogical scenario — the Meridian-outage story added noise
         # without changing any of the trust properties the lab is
         # teaching, so it is omitted from the exercise catalog.
         scenario_map = {
@@ -2046,10 +2094,11 @@ rm -rf "$tmpdir"
         if not container:
             return False, f"Container not found: {container_name}"
 
+        # As in the endorsement-policy scenario, act unconditionally: the
+        # cached container status can be up to 10 s stale, and Docker treats
+        # stopping a stopped container (or starting a running one) as a no-op.
         try:
             if action == "stop":
-                if container.status != "running":
-                    return True, f"{container_name} already stopped"
                 container.stop(timeout=10)
                 scenario_id = scenario_map.get(target)
                 if scenario_id:
@@ -2064,8 +2113,6 @@ rm -rf "$tmpdir"
                 self._invalidate_runtime_caches()
                 return True, f"Stopped {container_name}"
             if action == "start":
-                if container.status == "running":
-                    return True, f"{container_name} already running"
                 container.start()
                 scenario_id = scenario_map.get(target)
                 if scenario_id:
@@ -2456,12 +2503,12 @@ rm -rf "$tmpdir"
                     ],
                     "student_steps": [
                         "You should have already hit /labs/hlf/claim — if you got here, you have been assigned station {{student_id}}, playing **{{school}}**, at peer `{{peer}}`.",
-                        "Open the Explorer. You will see four consortium peers (Cascadia State, Chesapeake Canoe University, South Hudson, Maple Leaf), a fifth read-only observer peer (Meridian Industries), one orderer, and — as classmates claim stations — their student peers joining the channel.",
+                        "Open the Explorer. You will see four consortium peers (Cascadia State, Chesapeake Canoe University, South Hudson, Maple Leaf), a fifth peer for Meridian Industries, a member but not an endorser, one orderer, and — as classmates claim stations — their student peers joining the channel.",
                         "Open Your Console. You are logged in as **{{school}}**'s admin (`{{student_id}}`). You can sign transactions as your org, and nobody else can sign as you.",
                         "Use the Lesson Nav sidebar (top-left) to see the full lesson outline. When you are ready, click Next.",
                     ],
                     "expected_observations": [
-                        "The network has four named consortium peer orgs (Cascadia State, Chesapeake Canoe University, South Hudson, Maple Leaf), one read-only observer org (Meridian Industries), one orderer, and a growing set of per-student peers — not anonymous miners.",
+                        "The network has four named consortium peer orgs (Cascadia State, Chesapeake Canoe University, South Hudson, Maple Leaf), one member org that is not an endorser (Meridian Industries), one orderer, and a growing set of per-student peers — not anonymous miners.",
                         "Your explorer view is shared with the whole class: you see classmates' peers and (later) their transactions on the same ledger.",
                         "Your console is scoped to {{student_id}} — you cannot act as another student or as a consortium org.",
                     ],
@@ -2478,7 +2525,7 @@ rm -rf "$tmpdir"
                     "id": "meet-the-players",
                     "chapter": "chapter-1",
                     "title": "Meet the Consortium (and Your Place in It)",
-                    "goal": "This ledger has three kinds of participants: the always-on **consortium** that backs credentialing for the whole class, a **read-only observer** org that holds the ledger but is excluded from endorsement, and the **per-student orgs** — one of which is yours.\n\n"
+                    "goal": "This ledger has three kinds of participants: the always-on **consortium** that backs credentialing for the whole class, a **member, not an endorser** org that holds the ledger and may propose, but is excluded from endorsement, and the **per-student orgs** — one of which is yours.\n\n"
                         "The consortium is four named universities plus an orderer:\n\n"
                         "- **Cascadia State University** — runs `peer0.cascadiastate.example.com`.\n"
                         "- **Chesapeake Canoe University** — runs `peer0.chesapeakecanoe.example.com`.\n"
@@ -2487,19 +2534,19 @@ rm -rf "$tmpdir"
                         "- **Orderer** — `orderer.example.com`. Not an issuer or verifier; it batches approved transactions into blocks in a fixed sequence. Think of it like a notary or filing clerk — it decides the official order, not the content.\n\n"
                         "The consortium runs a **MAJORITY (3-of-4) endorsement policy**: any write needs sign-off from at least three of the four consortium peers before it can be committed. That rule is what keeps a single compromised or offline institution from writing to the record on its own.\n\n"
                         "Alongside the consortium, a fifth org runs on the network but plays a very different role:\n\n"
-                        "- **Meridian Industries** — runs `peer0.meridian.example.com`. Meridian is a **read-only channel member**: its peer replicates every committed block and can answer queries against world state, but its signature is never accepted on an endorsement. Think of it as an employer or regulator that runs its own mirror of the ledger so it can verify credentials without trusting anyone else's copy, but does not have (and should not have) the authority to endorse diplomas. The channel's endorsement policy explicitly names the four universities; Org5MSP is not listed there.\n\n"
+                        "- **Meridian Industries** — runs `peer0.meridian.example.com`. Meridian is a **channel member, not an endorser**: its peer replicates every committed block and can answer queries against world state, and it may propose a diploma under its own name, but its signature is never accepted on an endorsement. Think of it as an employer or regulator that runs its own mirror of the ledger so it can verify credentials without trusting anyone else's copy, but does not have (and should not have) the authority to endorse diplomas. The channel's endorsement policy explicitly names the four universities; Org5MSP is not listed there.\n\n"
                         "On top of that, **every student has their own org and peer**, each playing the role of a different university. You are `{{student_id}}` — playing **{{school}}** — running `{{peer}}`. Your classmates each play their own school: s01, s02, s03, and so on. When you issue a credential, it is signed by {{school}}'s peer — but it still has to clear the 3-of-4 consortium policy before it lands on the shared ledger. That is why a classroom of 20 students ends up with a single, coherent, cross-signed ledger instead of 20 private sandboxes.",
-                    "question": "Why spread the consortium across four institutions with a 3-of-4 endorsement policy, and why require consortium endorsement on student writes at all? And why is it useful to have a read-only member like Meridian Industries that holds the ledger but cannot endorse?",
+                    "question": "Why spread the consortium across four institutions with a 3-of-4 endorsement policy, and why require consortium endorsement on student writes at all? And why is it useful to have a member like Meridian Industries that holds the ledger and can propose, but cannot endorse?",
                     "prediction_prompt": "Think about what could go wrong if one student's peer was the only signer on their own credential. What would stop a classmate from quietly rewriting their own record?",
                     "surfaces": [
                         {"label": "Explorer", "href": "explorer/"},
                         {"label": "Your Console", "href": "term/"},
                     ],
                     "student_steps": [
-                        "Open the Explorer and look at the Network section. You should see the four consortium peers, Meridian Industries' read-only observer peer, the orderer, and whichever student peers are currently running — including `{{peer}}` (that's you).",
-                        "Each participant shows a status indicator — green means running and connected. Meridian is labeled as a read-only observer; notice its role is different from the consortium peers.",
+                        "Open the Explorer and look at the Network section. You should see the four consortium peers, Meridian Industries' peer (a member, not an endorser), the orderer, and whichever student peers are currently running — including `{{peer}}` (that's you).",
+                        "Each participant shows a status indicator — green means running and connected. Meridian is labeled as a member, not an endorser; notice its role is different from the consortium peers.",
                         "Open the Governance & Identity panel. Each organization has its own MSP (membership identity). The four consortium orgs plus Org5MSP (Meridian) are channel members; your org is listed alongside them. You'll dig into this in Chapter 4.",
-                        "Ask yourself: why is it useful that four independent consortium institutions maintain this ledger, rather than just one or two? And why might you want a non-endorsing observer like Meridian on the same ledger?",
+                        "Ask yourself: why is it useful that four independent consortium institutions maintain this ledger, rather than just one or two? And why might you want a member that is not an endorser, like Meridian, on the same ledger?",
                     ],
                     "meaning": [
                         "The consortium is the independent oversight layer. An employer (or another student, or a future you) can trust a credential on this ledger because no single institution could have written it alone — at least three of the four consortium peers signed off.",
@@ -2713,7 +2760,7 @@ rm -rf "$tmpdir"
                     "title": "Identity: What Is an MSP?",
                     "goal": "Every participant in this network has an identity. In Hyperledger Fabric, identities are managed by something called an **MSP** (Membership Service Provider).\n\n"
                         "An MSP is a folder of digital certificates that proves:\n"
-                        "• Which organization you belong to (Org1MSP for Cascadia State, Org2MSP for Chesapeake Canoe University, Org3MSP for South Hudson, Org4MSP for Maple Leaf, Org5MSP for Meridian Industries — the read-only observer — OrdererMSP for the ordering service, and a per-student MSP for each student, including {{msp}} for you)\n"
+                        "• Which organization you belong to (Org1MSP for Cascadia State, Org2MSP for Chesapeake Canoe University, Org3MSP for South Hudson, Org4MSP for Maple Leaf, Org5MSP for Meridian Industries — a member, not an endorser — OrdererMSP for the ordering service, and a per-student MSP for each student, including {{msp}} for you)\n"
                         "• What role you have (admin, peer, client, orderer)\n"
                         "• Who issued your certificate (your organization's Certificate Authority)\n\n"
                         "Think of an MSP like an employee badge. The badge has your name, your department, your access level, and a hologram from HR proving it's real. Without a valid MSP identity, a node cannot participate in the network at all.\n\n"
@@ -2726,7 +2773,7 @@ rm -rf "$tmpdir"
                         {"label": "Your Console", "href": "term/"},
                     ],
                     "student_steps": [
-                        "In the Explorer, open the Governance & Identity panel. You should see the four consortium MSPs, Org5MSP (Meridian Industries — read-only), the OrdererMSP, and a growing list of per-student MSPs as classmates claim stations — including {{msp}}.",
+                        "In the Explorer, open the Governance & Identity panel. You should see the four consortium MSPs, Org5MSP (Meridian Industries — member, not an endorser), the OrdererMSP, and a growing list of per-student MSPs as classmates claim stations — including {{msp}}.",
                         "Open Your Console and inspect your peer's environment:\n\n```\nhlf-peerenv\n```\n\nThis shows the environment variables that configure your peer's identity — MSP path, TLS certs, org ID.",
                         "List the key directories, including the MSP directory where your certs live:\n\n```\nhlf-files\n```",
                         "Look at the cert paths. These are the cryptographic certificates that prove this container is authorized to sign as `{{student_id}}`. If you copied them to another machine and tried to sign, the consortium would still only accept signatures that match these exact certs.",
@@ -2833,7 +2880,7 @@ rm -rf "$tmpdir"
                     ],
                     "instructor_actions": [
                         "Activate the identity-authority review from the instructor page.",
-                        "Point the class at the Governance drilldown and walk through the MSPs for the four consortium orgs (Cascadia State, Chesapeake Canoe University, South Hudson, Maple Leaf), Meridian Industries' read-only Org5MSP, and OrdererMSP — and note that each student org has its own MSP alongside them. Call out that the channel's Endorsement / LifecycleEndorsement policies explicitly name Org1..Org4 only; Org5 (Meridian) is a member but absent from those policy lists.",
+                        "Point the class at the Governance drilldown and walk through the MSPs for the four consortium orgs (Cascadia State, Chesapeake Canoe University, South Hudson, Maple Leaf), Meridian Industries' Org5MSP (a member, not an endorser), and OrdererMSP — and note that each student org has its own MSP alongside them. Call out that the channel's Endorsement / LifecycleEndorsement policies explicitly name Org1..Org4 only; Org5 (Meridian) is a member but absent from those policy lists.",
                     ],
                     "student_steps": [
                         "Open the Governance drilldown. You should see the channel configuration broken down into policies for the application (orgs), the orderer, and the channel itself.",
@@ -3149,7 +3196,7 @@ rm -rf "$tmpdir"
                 },
                 {
                     "id": "Org5MSP",
-                    "label": "Meridian Industries (Read-only)",
+                    "label": "Meridian Industries (Member, not an endorser)",
                     "nodes": [p5],
                     "responsibilities": ["channel membership", "ledger replication", "world-state queries"],
                 },
@@ -3181,7 +3228,7 @@ rm -rf "$tmpdir"
                 {"from": o, "to": p2, "label": "committed blocks"},
                 {"from": o, "to": p3, "label": "committed blocks"},
                 {"from": o, "to": p4, "label": "committed blocks"},
-                {"from": o, "to": p5, "label": "committed blocks (read-only)"},
+                {"from": o, "to": p5, "label": "committed blocks (member, not an endorser)"},
             ],
             "notes": [
                 "Peers endorse and validate. The orderer sequences but does not endorse application transactions.",

@@ -368,7 +368,7 @@ deploy_chaincode_manual() {
     echo \"CCAAS_PACKAGE_ID=\${PACKAGE_ID}\"
     
     # Check approval status for all 5 orgs (no 'local' in heredoc).
-    # Org5 (Meridian) is a read-only channel member: we still install and
+    # Org5 (Meridian) is a channel member, not an endorser: we still install and
     # approve the chaincode on its peer so it can query world state, but its
     # approval does not contribute to LifecycleEndorsement, which is
     # explicitly OutOf(3, Org1MSP.peer, Org2MSP.peer, Org3MSP.peer, Org4MSP.peer).
@@ -536,7 +536,7 @@ deploy_chaincode_manual() {
         --version ${CC_VERSION} \
         --package-id \"\$PACKAGE_ID\" \
         --sequence ${CC_SEQUENCE} || {
-          echo 'Org5 approval failed (non-fatal; Meridian is read-only)' >&2
+          echo 'Org5 approval failed (non-fatal; Meridian is not an endorser)' >&2
         }
     else
       echo 'Org5 already approved, skipping...'
@@ -658,7 +658,7 @@ check_chaincode_health() {
   fi
 
   # Check if chaincode is installed on peers (4 consortium + Org5/Meridian).
-  # Meridian is a read-only channel member: its install/approval state is
+  # Meridian is a channel member, not an endorser: its install/approval state is
   # surfaced for visibility but does not gate the success return — the lab
   # can operate correctly even if Meridian's peer is lagging.
   local installed_org1 installed_org2 installed_org3 installed_org4 installed_org5
@@ -696,12 +696,12 @@ check_chaincode_health() {
   committed=$(echo "$committed" | tr -d '[:space:]')
 
   echo "[hlf] Chaincode health check results:" >&2
-  echo "[hlf]   Installed - Org1: ${installed_org1}, Org2: ${installed_org2}, Org3: ${installed_org3}, Org4: ${installed_org4}, Org5(read-only): ${installed_org5}" >&2
-  echo "[hlf]   Approved  - Org1: ${approved_org1}, Org2: ${approved_org2}, Org3: ${approved_org3}, Org4: ${approved_org4}, Org5(read-only): ${approved_org5}" >&2
+  echo "[hlf]   Installed - Org1: ${installed_org1}, Org2: ${installed_org2}, Org3: ${installed_org3}, Org4: ${installed_org4}, Org5(non-endorser): ${installed_org5}" >&2
+  echo "[hlf]   Approved  - Org1: ${approved_org1}, Org2: ${approved_org2}, Org3: ${approved_org3}, Org4: ${approved_org4}, Org5(non-endorser): ${approved_org5}" >&2
   echo "[hlf]   Committed: ${committed}" >&2
 
   # Return success if the four consortium orgs are fully deployed. Org5
-  # (Meridian) is read-only, so a lagging install/approval on it does not
+  # (Meridian) is not an endorser, so a lagging install/approval on it does not
   # block lab functionality.
   if [[ "$installed_org1" -gt 0 && "$installed_org2" -gt 0 && "$installed_org3" -gt 0 && "$installed_org4" -gt 0 \
      && "$approved_org1" -gt 0 && "$approved_org2" -gt 0 && "$approved_org3" -gt 0 && "$approved_org4" -gt 0 \
@@ -872,7 +872,7 @@ deploy_chaincode_with_retry() {
 }
 
 select_org_num() {
-  # Accept: 1..5 or org1..org5 (default org1). Org5 (Meridian) is read-only
+  # Accept: 1..5 or org1..org5 (default org1). Org5 (Meridian) is not an endorser
   # at the endorsement-policy layer but can still query and — for the
   # forgery-check demo — attempt writes that the chaincode rejects.
   local in="${1:-org1}"
@@ -1616,7 +1616,7 @@ patch_managed_test_network() {
             }' \
         "${set_anchor_script}"
     fi
-    # Add Org5 branch if missing (Meridian read-only member still needs an
+    # Add Org5 branch if missing (Meridian non-endorsing member still needs an
     # anchor peer entry so gossip membership advertises it on the channel).
     if ! grep -q 'peer0.meridian.example.com' "${set_anchor_script}"; then
       sed -i \
@@ -1677,7 +1677,7 @@ patch_managed_test_network() {
 
   # ---- 4-org extension ------------------------------------------------------
   # Stage Org3 (South Hudson Institute of Technology), Org4 (Maple Leaf
-  # Academy), and Org5 (Meridian Industries — read-only channel member)
+  # Academy), and Org5 (Meridian Industries — channel member, not an endorser)
   # alongside Cascadia State and Chesapeake Canoe University so cryptogen,
   # configtxgen, and docker compose all see a 5-org network.
   info "Staging Org3/Org4/Org5 crypto-config files"
@@ -1744,7 +1744,7 @@ insert = (
     '    if [ $res -ne 0 ]; then\n'
     '      fatalln "Failed to generate certificates..."\n'
     '    fi\n\n'
-    '    infoln "Creating Org5 Identities (Meridian — read-only channel member)"\n\n'
+    '    infoln "Creating Org5 Identities (Meridian — channel member, not an endorser)"\n\n'
     '    set -x\n'
     '    cryptogen generate --config=./organizations/cryptogen/crypto-config-org5.yaml --output="organizations"\n'
     '    res=$?\n'
@@ -1763,12 +1763,12 @@ PY
   fi
 
   # Patch envVar.sh so setGlobals knows about Org3 (South Hudson), Org4
-  # (Maple Leaf), and Org5 (Meridian, read-only channel member) branches,
+  # (Maple Leaf), and Org5 (Meridian, channel member, not an endorser) branches,
   # each with correct domain/port. Also export PEER0_ORG3_CA /
   # PEER0_ORG4_CA / PEER0_ORG5_CA with lab-specific domains.
   if [[ -f "${env_script}" ]] \
      && ! grep -q "meridian.example.com" "${env_script}"; then
-    info "Patching envVar.sh for 5-org (Org3 South Hudson, Org4 Maple Leaf, Org5 Meridian read-only)"
+    info "Patching envVar.sh for 5-org (Org3 South Hudson, Org4 Maple Leaf, Org5 Meridian non-endorser)"
     python3 - "${env_script}" <<'PY'
 import sys, pathlib, re
 p = pathlib.Path(sys.argv[1])
@@ -1821,7 +1821,7 @@ PY
   fi
 
   # Patch createChannel.sh so all 5 peers join the channel and all 5 orgs set
-  # their anchor peer. Meridian (Org5) is a read-only channel member but must
+  # their anchor peer. Meridian (Org5) is a channel member, not an endorser but must
   # still join the channel + set an anchor peer so its gossip membership is
   # visible and its peer can receive blocks. Idempotent.
   if [[ -f "${create_ch}" ]] \
@@ -1842,7 +1842,7 @@ new = (
     'joinChannel 3\n'
     'infoln "Joining org4 peer to the channel..."\n'
     'joinChannel 4\n'
-    'infoln "Joining org5 peer to the channel (Meridian — read-only)..."\n'
+    'infoln "Joining org5 peer to the channel (Meridian — not an endorser)..."\n'
     'joinChannel 5\n'
 )
 if old in t:
