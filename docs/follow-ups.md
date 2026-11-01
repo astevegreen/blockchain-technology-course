@@ -26,9 +26,6 @@ slide index), which is never listed here.
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
 
 ## Labs
-- `dynamic-labs/bitcoin/mempool/Dockerfile` lines 16 and 40 clone electrs and mempool at their latest commit, so a
-  rebuild can change what students see; pin mempool to v3.3.2 (or a commit) and electrs to a commit.
-  (31 Oct 2026, mempool spike, `docs/spikes/mempool.md`)
 - The explorer lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`): its stack
   pulls about 4 GB of images. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D1 explorer lab build)
 - Cloud deploys need a DNS record and a certificate name for `explorer.<domain>` (`deploy-cloud.sh`, certbot); the
@@ -61,12 +58,6 @@ slide index), which is never listed here.
 
 - The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
   `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)
-- `./lab-manager.sh start course-site` reuses the built image, which bakes the rendered site
-  (`dynamic-labs/course-site/Dockerfile`), so new lessons and lab links do not show until
-  `./lab-manager.sh build-images course-site`. Rebuild on start when the lessons changed, or say so in
-  `dynamic-labs/README.md`. (31 Oct 2026, wallet playbook walk: no Wallet Lab link until rebuilt)
-- The other labs' `run.sh` fresh-start lists (`regression-tests/automated/*/run.sh`) lack `explorer`, so a fresh start
-  from them leaves the explorer running. (31 Oct 2026, D2 wallet lab build)
 - No quiz questions test the wallet lab (`dynamic-labs/wallet/`): the day 3 daily bank could check its five ideas
   (path levels, gap limit, change clues, xpub reach, reading a 2-of-3 witness). (31 Oct 2026, D2 wallet lab build)
 - The Tron lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); its suite
@@ -94,10 +85,6 @@ slide index), which is never listed here.
 - The CoinJoin trace lab's browser playbook (`regression-tests/agent/coinjoin-trace/`) has not been walked in a
   browser; the automated suite passed (14 tests) without `--fresh-start`, since other labs' containers were running.
   Walk the playbook on the desktop. (31 Oct 2026, D7 lab build)
-- `vm-build/prepare-docker-image-bundles.sh:13` (the `projects` list) lacks `dynamic-labs/dex` and `dynamic-labs/tokens`,
-  so the student VM may not bundle their images. (31 Oct 2026, D7 lab review)
-- Most labs' `run.sh` fresh-start lists lack `tokens` (only explorer, wallet and tron have it), so a fresh start from
-  them leaves the token lab running. (31 Oct 2026, D5 Tron lab rebase onto the D3 token lab)
 - Students still receive the explorer lab's chain build scripts, the other labs' browser playbooks and the
   automated tests (`dynamic-labs/explorer/chain/`, `dynamic-labs/regression-tests/`) in `src.zip` and on the VM;
   the wallet tests hold the lab's fees and amounts. The wallet playbook, `wallet/quizes/facts.json` and
@@ -116,8 +103,6 @@ slide index), which is never listed here.
   MSP. Relabel as "member, not an endorser". (31 Oct 2026, D5 Fabric demo build, live probe)
 - `regression-tests/automated/hlf/run.sh --fresh-start` deletes `hlf/runtime`, including the tracked
   `install-fabric.sh`; the next start fails until `git checkout` restores it. (31 Oct 2026, D5 Fabric demo build)
-- `lab-manager.sh:931` sets `force_rebuild="false"` and nothing sets it true, so `build-images` never rebuilds a
-  cached lane image. (31 Oct 2026, D5 Fabric demo build)
 - About 1,700 files outside `dynamic-labs/` are CRLF on the desktop checkout (`git ls-files --eol`); `dynamic-labs/`
   was fixed 31 Oct. Renormalize the rest. (31 Oct 2026, D5 Fabric demo build)
 - `regression-tests/automated/hlf/run.sh:113` builds its runner with `--network bridge` by default, which the
@@ -129,3 +114,6 @@ slide index), which is never listed here.
   step 2 now says questions first. The reviewer is a rail: the change runs the rail audit. (30 Oct 2026)
 
 ## Notion and documents
+- `regression-tests/automated/bitcoin/run.sh --fresh-start` (and a run straight after it) failed at once with a 502 on
+  `/api/bitcoin/claims`: the suite starts before `bitcoin-instructor` listens on 8090; it passed on a stack left up for
+  a minute (13 tests). Wait for the service before the first request. (1 Nov 2026, lab fresh-start fixes)

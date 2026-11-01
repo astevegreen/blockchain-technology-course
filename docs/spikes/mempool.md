@@ -52,8 +52,7 @@ What the explorer does not show, for the lab and the slide to say:
 - **electrs:** mempool's fork of electrs is MIT.
 
 ## What the lab build must solve
-1. **Pin mempool.** Build from the v3.3.2 tag (or a fixed commit) so screens match the lab guide. On
-   `docs/follow-ups.md`.
+1. **Pin mempool.** Done 1 Nov 2026: the Dockerfile pins mempool to commit `e8dbba934` and electrs to `2fa977b5a`, the ones the image was built from.
 2. **Mining on the course chain.** `generatetoaddress`'s `maxtries` counts across the whole call, not per block:
    even with 100,000,000 tries the script's `mine 101` stopped after 18 blocks, so the chain reached 23, not 106.
    That was enough only because coins mature after 10 blocks here. A lab script should mine one block per call

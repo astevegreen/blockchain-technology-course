@@ -309,6 +309,11 @@ After initial deployment, use these commands. The deployment mode is saved in `.
 ./lab-manager.sh status all         # check what's running
 ```
 
+`start` reuses images already built. The `course-site` image bakes in the rendered lessons, so after the lessons or
+lab links change, run `./lab-manager.sh build-images course-site` and then start it again (`build-images` always
+rebuilds, from cached layers where nothing changed). Start does not rebuild it on its own because a classroom
+machine may be offline, and the build downloads Quarto.
+
 ### Managed targets
 
 | Target | Description |

@@ -13,8 +13,12 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --de
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Build Electrs
-RUN git clone --depth 1 https://github.com/mempool/electrs /opt/mempool-electrs \
+# Pinned so a rebuild shows students the same screens (the commit last built, June 2026).
+ARG ELECTRS_COMMIT=2fa977b5a99fc3422944171899463440f89e43c0
+RUN git init /opt/mempool-electrs \
  && cd /opt/mempool-electrs \
+ && git fetch --depth 1 https://github.com/mempool/electrs ${ELECTRS_COMMIT} \
+ && git checkout FETCH_HEAD \
  && cargo build --release \
  && strip target/release/electrs
 
@@ -37,7 +41,11 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 
 # --- A. Mempool Frontend & Backend ---
 WORKDIR /opt/mempool
-RUN git clone --depth 1 https://github.com/mempool/mempool.git .
+# Pinned to the commit the lab guide's screens come from (mempool 3.4-dev, April 2026).
+ARG MEMPOOL_COMMIT=e8dbba93493860fe150794e0198a6f7cccb77360
+RUN git init . \
+ && git fetch --depth 1 https://github.com/mempool/mempool.git ${MEMPOOL_COMMIT} \
+ && git checkout FETCH_HEAD
 
 # 1. Build Frontend (Static Files)
 WORKDIR /opt/mempool/frontend

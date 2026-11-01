@@ -85,9 +85,12 @@ fresh_start() {
     p2p_trust \
     ethereum_lab \
     exercises \
+    explorer \
     wallet \
     bitcoin-trace \
     coinjoin-trace \
+    tokens \
+    dex \
     tron \
     quiz-engine-v2 \
     hlf

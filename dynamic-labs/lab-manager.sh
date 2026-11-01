@@ -923,6 +923,7 @@ start_shared_infra() {
 build_lane_images() {
     local dir="$1"
     local include_default_services="${2:-false}"
+    local force_rebuild="${3:-false}"
     local zellij_config="${BASE_DIR}/zellij-config.kdl"
     if [[ -f "${zellij_config}" ]] && [[ ! -f "${dir}/zellij-config.kdl" ]]; then
         cp -f "${zellij_config}" "${dir}/zellij-config.kdl"
@@ -930,7 +931,6 @@ build_lane_images() {
     (
         cd "${dir}"
         local hlf_platform hlf_ttyd_arch
-        local force_rebuild="false"
         hlf_platform="$(default_hlf_platform)"
         hlf_ttyd_arch="$(hlf_platform_to_ttyd_arch "${hlf_platform}")"
         export HLF_PLATFORM="${HLF_PLATFORM:-${hlf_platform}}"
@@ -1339,13 +1339,13 @@ parse_build_images_args() {
     if [[ "${#targets[@]}" -eq 1 && "${targets[0]}" == "all" ]]; then
         while read -r target; do
             [[ "${target}" == "router" || "${target}" == "course-site" || "${target}" == "lane-service" || "${target}" == "instructor-auth-service" ]] && continue
-            build_lane_images "$(target_dir "${target}")" true
+            build_lane_images "$(target_dir "${target}")" true true
         done < <(list_targets)
         return
     fi
 
     for target in "${targets[@]}"; do
-        build_lane_images "$(target_dir "${target}")" true
+        build_lane_images "$(target_dir "${target}")" true true
     done
 }
 

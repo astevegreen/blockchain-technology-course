@@ -22,6 +22,8 @@ projects=(
   "dynamic-labs/quiz-engine-v2"
   "dynamic-labs/exercises"
   "dynamic-labs/explorer"
+  "dynamic-labs/tokens"
+  "dynamic-labs/dex"
   "dynamic-labs/wallet"
   "dynamic-labs/bitcoin-trace"
   "dynamic-labs/coinjoin-trace"
