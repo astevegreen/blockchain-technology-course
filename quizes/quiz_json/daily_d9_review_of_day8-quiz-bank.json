@@ -1,0 +1,345 @@
+{
+  "lesson_id": "daily_d9_review_of_day8",
+  "lesson_title": "Day 9 Daily Quiz: Review of Day 8 (Day 8 lessons and the cross-chain trace lab: approvals and drainers, flash loans and reentrancy, bytecode and NFT wash trading)",
+  "date_generated": "2026-11-01",
+  "topic": "forensics",
+  "tags": [
+    "forensics",
+    "daily-quiz",
+    "day-9",
+    "quiz-bank"
+  ],
+  "metadata": {
+    "module": "forensics",
+    "question_count": 10,
+    "quiz_slot": "08:45 on day 9",
+    "reviews": [
+      "dynamic-labs/cross-chain"
+    ],
+    "source_mix": {
+      "lesson_questions": 5,
+      "lab_questions": 5
+    },
+    "lessons": [
+      "09-FO-approvals_drainers_poisoning",
+      "10-FO-flash_loans_reentrancy_oracles",
+      "11-FO-bytecode_nft_wash_trading"
+    ]
+  },
+  "hierarchy": {
+    "sections": [
+      {
+        "id": "sec_day8_crosschain",
+        "title": "Cross-chain trace lab (day 8)",
+        "enabled": true,
+        "lectures": [
+          {
+            "id": "lec_d8_crosschain_lab",
+            "title": "Cross-chain trace lab: the contract read, the forged message and the gaps",
+            "enabled": true,
+            "question_ids": [
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5"
+            ]
+          },
+          {
+            "id": "lec_d8_approvals",
+            "title": "Approvals, permits and EIP-7702",
+            "enabled": true,
+            "question_ids": [
+              "q6",
+              "q7"
+            ]
+          },
+          {
+            "id": "lec_d8_defi",
+            "title": "Flash loans, reentrancy and oracles",
+            "enabled": true,
+            "question_ids": [
+              "q8"
+            ]
+          },
+          {
+            "id": "lec_d8_bytecode",
+            "title": "Bytecode, selectors and NFT wash trading",
+            "enabled": true,
+            "question_ids": [
+              "q9",
+              "q10"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "question_type": "multiple_choice",
+      "question_stem": "A call to contract 0x96221423… carries selector 0xa9059cbb, which 4byte lists as transfer(address,uint256) and five other names (as of 1 Nov 2026). What does the lookup tell the analyst?",
+      "correct_answer": "Only a name that fits those four bytes; what the function does comes from reading its code.",
+      "incorrect_answers": [
+        "That it was an ordinary token transfer, because a name in a signature database proves the code.",
+        "That it was a theft, because a selector shared by six names must belong to a hiding function.",
+        "Nothing, because four bytes of input data are in no database and cannot be looked up."
+      ],
+      "explanation": "A selector is a fingerprint of a name and its types, and anyone can register a name for it. The function behind 0x96221423… looks like transfer but writes its first argument into storage slot 0. The name is a claim; the code and the effect are the evidence.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "cross-chain-lab",
+        "selector",
+        "4byte",
+        "contract-read"
+      ],
+      "lesson_block": "The contract read: a name is a claim",
+      "specific_source": {
+        "lesson": "dynamic-labs/cross-chain (day 8 cross-chain trace worksheet)",
+        "reading": "Answer key: question 1"
+      }
+    },
+    {
+      "id": "q2",
+      "question_type": "multiple_choice",
+      "question_stem": "On 21 Feb 2025 the Safe wallet's calls switch from running 0x34cfac64… to running 0xbdd077f6…, and the sweeps follow about 1.5 minutes later. What did that call change, and how sure is the read?",
+      "correct_answer": "It swapped the wallet's logic contract through slot 0. High: the code read and the on-chain switch agree.",
+      "incorrect_answers": [
+        "It sent the wallet's coins to a new owner. High: the sweeps that came later show the call was a transfer.",
+        "It changed the wallet's signers. Moderate: only the selector shows it, and one line is thin evidence.",
+        "It did nothing the chain can show. Low: a call that moves no coins leaves no record to read after the event."
+      ],
+      "explanation": "The function wrote its first argument into slot 0, which in a Safe wallet holds the master copy, so the wallet now ran 0xbdd077f6…. NCC's code read and the on-chain change of the contract the wallet runs are two kinds, so High. Calling it a transfer from the selector alone misses the point.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "cross-chain-lab",
+        "contract-read",
+        "confidence",
+        "safe-wallet"
+      ],
+      "lesson_block": "What the call changed",
+      "specific_source": {
+        "lesson": "dynamic-labs/cross-chain (day 8 cross-chain trace worksheet)",
+        "reading": "Answer key: questions 2 and 4"
+      }
+    },
+    {
+      "id": "q3",
+      "question_type": "multiple_choice",
+      "question_stem": "On 18 Apr 2026 Ethereum accepted a delivery claiming message 308 from Unichain's rsETH contract, but Unichain had sent only 307. What does the analyst write?",
+      "correct_answer": "The delivery was forged, High: the two chains' own counters disagree on one message, 308 and 307.",
+      "incorrect_answers": [
+        "The delivery was late, Moderate: a counter that runs ahead means the sender was slow to record it.",
+        "The delivery was genuine, Low: one extra message is normal traffic and counters prove nothing.",
+        "The delivery was forged, Low: a lone counter is one unverified label and cannot support it."
+      ],
+      "explanation": "Each nonce on a channel stands for one message sent. The receiving chain had accepted 308 where the sending chain had sent 307, and the sender was still at 307 an hour later. Both chains' counters are the evidence, so High.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "cross-chain-lab",
+        "nonce",
+        "layerzero",
+        "forged-delivery"
+      ],
+      "lesson_block": "The nonce check",
+      "specific_source": {
+        "lesson": "dynamic-labs/cross-chain (day 8 cross-chain trace worksheet)",
+        "reading": "Answer key: question 11"
+      }
+    },
+    {
+      "id": "q4",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction of type 101 on Arbitrum moves 30,765 ETH out of the collecting address, and the Security Council had sent a transaction on Ethereum minutes before. Did the address's owner sign the move?",
+      "correct_answer": "No, High: the Council's statement, the Ethereum transaction minutes before and the type 101 agree.",
+      "incorrect_answers": [
+        "Yes, High: the move has the collecting address as its from field and only a key owner sets that.",
+        "Yes, Moderate: the move was paid from the collecting address, so its owner must have sent it.",
+        "Unknown: the chain cannot tell an owner's own send from any other, so no word can be added."
+      ],
+      "explanation": "Type 101 is a cross-chain retryable, and the Council says it made a cross-chain transaction impersonating the address. The from field alone does not show a signature. Three lines agree, so High.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "cross-chain-lab",
+        "impersonation",
+        "arbitrum",
+        "confidence"
+      ],
+      "lesson_block": "Who signed the move",
+      "specific_source": {
+        "lesson": "dynamic-labs/cross-chain (day 8 cross-chain trace worksheet)",
+        "reading": "Answer key: question 15"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "The snapshot shows ETH arriving at the collecting address on Arbitrum, but not the swap from rsETH. What does the note say about that step?",
+      "correct_answer": "That the chain data given do not show how rsETH became that ETH; the note says so plainly.",
+      "incorrect_answers": [
+        "That Aave swapped it, because the same lender took rsETH on Ethereum and would do so again.",
+        "That a bridge made it ETH, because tokens crossing chains change into the far coin.",
+        "Nothing, because a step the snapshot omits is no part of the assessment and a note skips it."
+      ],
+      "explanation": "A graded note must say at least one thing the chain does not show. The rsETH-to-ETH step on Arbitrum is not in the snapshot, so the analyst names the gap. A guess would be an unsourced fact.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "cross-chain-lab",
+        "gaps",
+        "assessment"
+      ],
+      "lesson_block": "What the chain does not show",
+      "specific_source": {
+        "lesson": "dynamic-labs/cross-chain (day 8 cross-chain trace worksheet)",
+        "reading": "Answer key: question 15 and the Meets list"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A victim says: I never approved anything. Their history shows no approve, yet a spender took their tokens with transferFrom. What do you check?",
+      "correct_answer": "An Approval event naming the victim as owner, which a permit can put inside the spender's own transaction.",
+      "incorrect_answers": [
+        "Only the victim's own sent transactions, because an approval that is not in them cannot exist on chain.",
+        "The victim's key, because a drain with no approve in the history means the owner's key was stolen.",
+        "The spender's balance, because a transferFrom needs no permission when the spender holds the tokens."
+      ],
+      "explanation": "A permit sets an allowance from a message the victim signed off chain, so the victim sent nothing. The spender calls permit, and the Approval event appears in the spender's transaction. Checking only the victim's transactions misses it.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "permit",
+        "approval",
+        "drainer"
+      ],
+      "lesson_block": "A permit is an approval signed off chain",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "reading": "A permit is an approval signed off chain"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A wallet that used to be a plain account now shows code beginning 0xef0100 after an outflow. What does that code mean?",
+      "correct_answer": "An EIP-7702 delegation: the account now runs the contract whose address follows the prefix.",
+      "incorrect_answers": [
+        "A token approval: the prefix marks a spender, whose address is now written into the account's code.",
+        "A contract deployment: the prefix marks init code that made a new wallet at the same address.",
+        "A poisoning lure: the prefix marks a look-alike address the attacker planted in history."
+      ],
+      "explanation": "Since Pectra (7 May 2025) an account can sign an authorization that sets its code to 0xef0100 plus a delegate's address. Next, find the type 0x04 transaction that set it and who sent it, then ask whether the key had already leaked.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "eip-7702",
+        "delegation",
+        "pectra"
+      ],
+      "lesson_block": "EIP-7702 lets a plain account run code",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "reading": "EIP-7702 lets a plain account run code"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "A transaction opens with a 10,000 ETH loan from a lending pool and nests the same withdraw call five times, each paying one contract. What do you write?",
+      "correct_answer": "A flash loan funding a reentrancy: name the money and the flaw, and show the loss.",
+      "incorrect_answers": [
+        "A flash loan attack only, because the loan is the flaw and the nested calls repay it.",
+        "A reentrancy only, because a flash loan merely funds ordinary trades, not the flaw.",
+        "Oracle manipulation, because any transaction that opens with a big loan must move a price."
+      ],
+      "explanation": "A flash loan is the attacker's capital; reentrancy, a moved price or a missing check is the flaw. The lesson says to name both in the finding. A loan alone may be arbitrage, so the loss is what marks an attack.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "flash-loan",
+        "reentrancy",
+        "defi"
+      ],
+      "lesson_block": "Three patterns in a trace look different",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "reading": "Three patterns in a trace look different"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "A lookup gives a transaction's selector the name transfer(address,uint256), but the logs show tokens leaving a third party for a fixed address. What do you write?",
+      "correct_answer": "The function is registered as transfer; what it did is in the logs, so the name stays a lead.",
+      "incorrect_answers": [
+        "The call was a standard transfer, because a registered name shows the code follows the standard.",
+        "The lookup was wrong, because a name that disagrees with the logs must have been submitted in error.",
+        "The call was a theft, because tokens that leave a third party prove who wrote the function."
+      ],
+      "explanation": "A name is what the author called the function, and a malicious contract can call its drain anything. The selector is a High fact, but the function's behavior rests on the logs and balance changes.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "selector",
+        "4byte",
+        "confidence"
+      ],
+      "lesson_block": "Looking up a selector: a name, not proof",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd",
+        "reading": "Looking up a selector: a name, not proof"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "NFT #7 is sold A to B, B to C and C to A, each move a paid sale, and one address funded all three wallets. How sure is wash trading?",
+      "correct_answer": "Moderate: paid sales and a shared funder put one party on both sides, with no payoff found yet.",
+      "incorrect_answers": [
+        "Low: a token that cycles among a few wallets fits friends and buy-backs, so a loop earns only that.",
+        "High: a loop of paid sales funded from one address is two kinds of evidence, so no payoff is needed.",
+        "Undetermined: a marketplace records a sale at a price, so no pattern can show who sat on each side."
+      ],
+      "explanation": "The loop alone is Low, and paid sales raise it only to Low to Moderate. Self-financing by the seller's side removes the look-alike of separate parties, so Moderate. High needs the pattern repeated with a payoff such as a later buyer, a ranking or reward tokens.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "wash-trading",
+        "nft",
+        "confidence",
+        "self-financed"
+      ],
+      "lesson_block": "How sure: wash trading by kinds of evidence",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd",
+        "reading": "How sure: wash trading by kinds of evidence"
+      }
+    }
+  ]
+}

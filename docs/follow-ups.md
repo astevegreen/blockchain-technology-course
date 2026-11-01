@@ -23,8 +23,6 @@ slide index), which is never listed here.
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
-- The D8 daily bank has no questions on 11-FO (bytecode and decompiling; NFT wash trading):
-  `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd`. (1 Nov 2026, D8 ③ lesson build)
 
 ## Labs
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
