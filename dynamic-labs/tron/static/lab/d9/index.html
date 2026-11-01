@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 9 lab: a sanctioned deposit address (Tron)</title>
+<link rel="stylesheet" href="../lab.css">
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="../../query/?lab=d9">Query page</a> · <a href="../../fallback/d9/">Saved results</a> ·
+<a href="../">Day 5 lab</a></p>
+<h1>Day 9 lab: a sanctioned deposit address, its sweeps and Tether's freeze</h1>
+<p>On 30 Sep 2026 the U.S. Treasury sanctioned a financial network of Tren de Aragua, which it says steals cash
+from U.S. ATMs and "uses cryptocurrency transactions to launder proceeds" <a href="#s1">[1]</a>. OFAC's list
+gives seven Tron addresses for the people it named. One of them,
+<code>TDxZ1XTZCmqkJJW2eJT362z6omRchJyGBX</code>, is listed for Oscar Leonardo Martinez Pirona
+<a href="#s2">[2]</a> (both read 1 Nov 2026). This lab reads that address's USDT from 1 Sep to 30 Nov 2023,
+found through TronGrid's index and read from a java-tron node <a href="#s3">[3]</a>.</p>
+<p>You end the day with an <b>exposure summary</b>: what the address is, which stablecoin it held, who issued
+it, whether it can be frozen and how fast, and which money-laundering typology fits best. Question 15 is the
+day's graded point (<a href="#graded">The graded note</a>).</p>
+<p>Every query is written for you. On the <a href="../../query/?lab=d9">query page</a>, press "Run" under a
+query, then read its output. You never edit the SQL. Write your answers down as short notes. Your instructor
+checks them with you.</p>
+<p class="note">The snapshot is frozen: every run gives the same answer. The blacklist and balances in queries
+5, 7 and 8 are as of block 87,630,406 (1 Nov 2026, 20:25:03 UTC), when they were read; the chain has moved on
+since. The balance the address held when the window opens (469 USDT on 1 Sep 2023) is summed from its USDT
+history since 20 Mar 2022. If the query page will not load, use the <a href="../../fallback/d9/">saved
+results</a>: they show every query's output, so every question has the same answer there.</p>
+
+<h2>Where to start</h2>
+<ul>
+<li>Most students start with the worked example (questions 1 to 5). It reviews day 5's deposit and sweep on
+this address's first two months.</li>
+<li>If you can already tell a deposit from a sweep, you may go straight to the problem (questions 6 to
+10).</li>
+<li>Everyone then does the freeze and the typology (questions 11 to 14) and writes the graded note (question
+15). The challenge at the end is optional.</li>
+</ul>
+
+<h2>Reminders from day 5</h2>
+<ul>
+<li>A <b>deposit address</b> is an address an exchange gives one customer account; money sent to it is that
+customer's deposit. The exchange then moves it, whole, into a wallet that pools many customers' funds: a
+<b>sweep</b> <a href="#s4">[4]</a>.</li>
+<li>Report the deposit, not the sweep. The deposit ties the money to one account; the sweep only says which
+exchange.</li>
+<li>USDT on Tron is a TRC-20 token at <code>TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</code> <a href="#s5">[5]</a>.
+A USDT transfer costs Energy, paid by burning TRX when the sender has none <a href="#s6">[6]</a>. Who sends
+that TRX is evidence of who controls the address.</li>
+<li>Times are UTC. Amounts are in USDT or TRX, to six decimals.</li>
+</ul>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments about what
+the facts mean. Give each judgment a confidence word <a href="#s7">[7]</a>, never a percentage:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the reasoning
+applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false positive
+could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same transaction. A
+label is evidence only with its source and the date you read it.</p>
+
+<h3>Worked example: deposits and sweeps to Binance (September to October 2023)</h3>
+<ol>
+<li>Query 1. How many deposits came in, from how many senders, and how many outflows went out, to how many
+places? What does a published source say about the address, and when was it read?</li>
+<li>Query 2, the rows up to 5 Oct 2023. What happens to the balance after deposits arrive? Why is the first
+outflow (15,469 USDT) larger than the deposit before it (15,000)?</li>
+<li>Query 3. Where did those sweeps go? Who published that address, and when?</li>
+<li>Query 4. Who paid for each sweep, with how much TRX, and how long before it?</li>
+<li>What do you report: which address, which deposit transaction, and which service? Give your confidence and
+the lines of evidence behind it.</li>
+</ol>
+
+<h3>The problem: the sweeps change (22 October to 30 November 2023)</h3>
+<ol start="6">
+<li>Query 2 and query 3, from 22 Oct 2023. Where do the sweeps go now? Does any published source name that
+address?</li>
+<li>Query 4. Who pays for these sweeps? Is it the account that paid for the sweeps to Binance?</li>
+<li>Is <code>TDxZ1X...</code> still a deposit address after 22 Oct, and can you say at which service? How far
+can you carry the Binance label, and with what confidence?</li>
+<li>Query 5. Who paid in? Which senders sent the most, and does a published source name any of them?</li>
+<li>Query 2, the last two rows. What happened to the 305 USDT that arrived on 27 Nov? What does the chain not
+show you about who owns this address?</li>
+</ol>
+
+<h3>The freeze and the typology</h3>
+<ol start="11">
+<li>Query 6. What did USDT's contract record on 30 Sep 2026, for which addresses, at what times? Which
+account signed the transactions?</li>
+<li>Query 7 and query 8. As of block 87,630,406, is the case address blacklisted, and how much USDT does it
+hold? How many days passed between its last sweep in the window and the blacklisting?</li>
+<li>Freezable? Which issuer, and how fast? Did the freeze stop any money at this address?</li>
+<li>The typology table on day 9's typologies slide gives a cue for each typology. Which typology fits this
+address best? Name one indicator for it and one against, each from a query or a source.</li>
+<li>The graded note: write the exposure summary (<a href="#graded">below</a>).</li>
+</ol>
+
+<h2>Worked example: deposits and sweeps to Binance</h2>
+<p>This follows the address's first two months, to a wallet whose owner published it. Questions 6 onward use
+the same queries.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="../../query/?lab=d9">query page</a> and wait for "Ready". Press "Run" under query 1.
+Twenty USDT deposits from 11 senders, 92,451 USDT in; 14 outflows to 2 addresses, 92,615 USDT out; first seen
+5 Sep 2023, last 27 Nov. The <code>what_a_source_says</code> column gives the OFAC listing and its source:
+listed 30 Sep 2026, read 1 Nov 2026 <a href="#s2">[2]</a>.</li>
+<li>Run query 2. On 5 Sep at 18:29:12, <code>TWnBq4Zeo3U6bwqgdNfxv1gotHJTaAU6Ar</code> deposited 15,000
+USDT. The balance after it is 15,469, because the address already held 469 when the window opened. At
+18:46:03, 17 minutes later, all 15,469 went out to <code>TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi</code> and the
+balance went to 0. Five more times up to 5 Oct, deposits arrive and one outflow empties the address to the
+same place. An outflow that empties the address to the same place each time is a <b>sweep</b>.</li>
+</ol>
+
+<h3>Follow the money</h3>
+<ol start="3">
+<li>Run query 3. Six sweeps, 58,844 USDT, went to <code>TV6Mu...</code> from 5 Sep to 5 Oct. Binance
+publishes a list of its own wallets, and it lists <code>TV6Mu...</code> as its USDT wallet on Tron
+<a href="#s8">[8]</a> (list updated 9 Oct 2023, read 31 Oct 2026). It is the same wallet as in day 5's lab.</li>
+<li>Run query 4. Before each sweep, <code>TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh</code> sent the address
+14.5366 TRX, 8 to 10 minutes ahead. The address signed each sweep itself and burned 13.3959 TRX for its
+Energy. Someone topped it up with just enough TRX to move its USDT out, as day 5's Binance deposit address
+was.</li>
+</ol>
+
+<h3>What you report</h3>
+<ul>
+<li>Up to 5 Oct 2023, <code>TDxZ1X...</code> behaves as a deposit address at Binance, with <b>moderate</b>
+confidence: its money is swept, whole, to a wallet Binance itself publishes, and a third account pays for
+each sweep, as a service does for its own addresses. It is not high: both lines come from the same sweep
+transactions, and no source names <code>TDxZ1X...</code> as Binance's.</li>
+<li>Report a deposit, not the sweep: for example 15,000 USDT from <code>TWnBq4...</code> on 5 Sep 2023,
+18:29:12 UTC, transaction <code>a7db8d43...</code>. The sweep at 18:46:03 is the exchange moving its own
+customers' money.</li>
+<li>OFAC's listing is a second, separate fact: the U.S. government ties the address to Martinez Pirona
+<a href="#s2">[2]</a>. It does not say which exchange, and the chain does not say who the account holder is.
+The exchange's records would.</li>
+</ul>
+
+<h2>The problem</h2>
+<p>Now do questions 6 to 10. From 22 Oct 2023 the pattern looks the same, but one thing changes. Look at where
+the sweeps go, at who pays for them, and at what query 3 says about the new address.</p>
+
+<h2>The freeze</h2>
+<p>Tether, USDT's issuer, can add an address to USDT's blacklist. In USDT's published code, only the
+contract's owner can blacklist, and a blacklisted address cannot send its USDT <a href="#s9">[9]</a>. The Tron
+contract records each addition as an <code>AddedBlackList</code> event, and anyone can ask it whether an
+address is blacklisted now and what it holds <a href="#s5">[5]</a>. You read these functions on day 3 and saw
+a freeze on day 5.</p>
+<p>Do questions 11 to 13 with queries 6, 7 and 8. Query 7 is as of block 87,630,406: write "blacklisted as of
+block 87,630,406, read on 1 Nov 2026", not "blacklisted".</p>
+
+<h2>The typology</h2>
+<p>Question 14 asks you to weigh a typology, not to prove one. The cue in the typology table is a pattern, and
+a pattern alone is one line of evidence. Day 9's table gives, for example, "OTC and nested services": many
+small deposits in and a few large transfers out <a href="#s10">[10]</a>, or a service inside an exchange's
+cluster <a href="#s11">[11]</a>. Say which typology fits best, then give one indicator for it and one against
+it, each with the query or source it comes from.</p>
+
+<h2 id="graded">The graded note</h2>
+<p>Question 15 is the day's graded point. Your instructor marks it <b>Meets</b> or <b>Not yet</b>, and you get
+one retry in class time. Write a short exposure summary of <code>TDxZ1X...</code>. It meets when it has all
+four:</p>
+<ol>
+<li><b>The deposit</b>: the address is a deposit address, with one deposit transaction named and told apart
+from the sweep that followed it, and the service it was swept to, with how far that label goes.</li>
+<li><b>The stablecoin</b>: which stablecoin, which issuer, whether it can be frozen, and how fast the freeze
+came compared with the money.</li>
+<li><b>The typology</b>: the most likely AML typology, with one indicator for it and one against.</li>
+<li><b>Sources and confidence</b>: each label with its source and the date it was read, and each judgment with a
+confidence word (never a percentage), including what the chain does not show.</li>
+</ol>
+
+<h2>Challenge (optional)</h2>
+<ol start="16">
+<li>Query 9. What else arrived at the case address: which tokens, how much, from whom? Did the owner ask for
+them? Do they tell you anything about who controls the address?</li>
+<li>Query 5 and query 7. One sender, <code>TFSYy3...</code>, is blacklisted today and holds 36,162 USDT, but
+it is not in query 6's events of 30 Sep 2026. What can you say about it from the snapshot, and what can you
+not? Another sender, <code>TUpHuD...</code>, holds over 33 million USDT. What kind of address might hold
+that much, and what would you need before you named it?</li>
+</ol>
+
+<h2>Sources</h2>
+<ol class="sources">
+<li id="s1">U.S. Department of the Treasury, <i>Treasury Sanctions Financial Network of Foreign Terrorist
+Organization, Tren de Aragua, After Theft of Millions from U.S. Banks</i> (press release sb0640), 30 Sep 2026
+(read 1 Nov 2026). <code>ustreasury_trendearagua_2026</code></li>
+<li id="s2">Office of Foreign Assets Control, <i>Counter Terrorism and Transnational Criminal Organizations
+Designations</i> (recent actions, 30 Sep 2026): the SDN entry for Martinez Pirona, Oscar Leonardo, "Digital
+Currency Address - TRX TDxZ1XTZCmqkJJW2eJT362z6omRchJyGBX" (read 1 Nov 2026).
+<code>ofac_trendearagua_2026</code></li>
+<li id="s3">java-tron contributors, <i>java-tron</i> (the Tron node, LGPL-3.0), 2026 (read 23 Oct 2026).
+<code>tronprotocol_javatron_2026</code></li>
+<li id="s4">Victor, <i>Address Clustering Heuristics for Ethereum</i>, 2020: the deposit-address heuristic, on
+Ethereum's account model, which Tron shares. <code>victor_clustering_2020</code></li>
+<li id="s5">TetherToken (USDT) contract on Tron, <code>TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t</code>, read
+through java-tron on 31 Oct 2026. <code>tether_usdttroncontract_2026</code></li>
+<li id="s6">TRON Developer Hub, <i>Resource Model</i>, 2026. <code>tron_resourcemodel_2026</code></li>
+<li id="s7">Office of the Director of National Intelligence, <i>Intelligence Community Directive 203:
+Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are the course's own
+scale. <code>odni_icd203_2015</code></li>
+<li id="s8">Binance, <i>Our Commitment to Transparency</i>, 2022, updated 9 Oct 2023 (read 31 Oct 2026).
+<code>binance_transparency_2023</code></li>
+<li id="s9">Tether, <i>TetherToken (USDT) verified source code, Ethereum mainnet</i>, 2017 (read 31 Oct 2026).
+<code>tether_tethertokensource_2017</code></li>
+<li id="s10">Chainalysis Team, <i>The Chinese-Language Underground Crypto Money Laundering Ecosystem</i>, 27 Jan
+2026 (read 31 Oct 2026). <code>chainalysis_launderingnetworks_2026</code></li>
+<li id="s11">Kappos and others, <i>How to Peel a Million: Validating and Expanding Bitcoin Clusters</i>, USENIX
+Security 2022. <code>kappos_howpeelmillion_2022</code></li>
+</ol>
+</main>
+</body>
+</html>

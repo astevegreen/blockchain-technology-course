@@ -1,10 +1,14 @@
-# Tron lab (day 5)
+# Tron labs (days 5 and 9)
 
 Students read a frozen snapshot of Tron activity with ready-made queries: a USDT transfer and what it
 cost, a deposit address swept to a published Binance wallet (the worked example), an unnamed deposit
 address to characterize (the problem), and Tether's April 2026 freeze of about $344M. They run the
 queries and read the output; they never write or edit SQL. One copy serves the whole class (a shared
-singleton, like `explorer`). The day-9 lab reads the same snapshot.
+singleton, like `explorer`).
+
+The day-9 lab shares the container: the deposit address OFAC listed for a Tren de Aragua designee
+(30 Sep 2026), its sweeps from 1 Sep to 30 Nov 2023, and Tether's blacklisting of it. Its students
+write a graded note (Meets or Not yet, one retry) characterizing the address and its exposure.
 
 Start it with the rest of the stack: `./lab-manager.sh start tron`. Students open `/labs/tron/` on the
 course site, which sends them to the worksheet. Everything sits under that path on the course site's
@@ -16,6 +20,10 @@ own host (`router/routes.conf`, prefix stripped):
 | `/labs/tron/query/?lab=d5` | the query page: DuckDB 1.4.3 (duckdb-wasm 1.32.0, MIT) in the student's browser, over the snapshot |
 | `/labs/tron/fallback/` | every query's saved output, for when the query page will not load (`static/fallback/`) |
 | `/labs/tron/snapshot/` | the snapshot's CSV files and `meta.json` |
+| `/labs/tron/lab/d9/` | the day-9 worksheet (`static/lab/d9/`) |
+| `/labs/tron/query/?lab=d9` | the query page over the day-9 snapshot |
+| `/labs/tron/fallback/d9/` | the day-9 saved results (`static/fallback/d9/`) |
+| `/labs/tron/snapshot/d9/` | the day-9 snapshot (`snapshot/d9/`) |
 
 The router also adds the slash to a page folder typed without one, since nginx's own redirect would
 drop the `/labs/tron` prefix.
@@ -39,18 +47,23 @@ drop the `/labs/tron` prefix.
 - `labels.csv`: what a published source says about an address, one cited line each, written by hand;
 - `meta.json`: the windows, node version, row counts and SHA-256 of each file.
 
-`queries/d5.sql` holds the queries; the query page and `build/saved_results.py` split it on
+`snapshot/d9/` is built the same way (java-tron 4.8.2.4, read 1 Nov 2026): every transaction
+touching `TDxZ1X…` from 1 Sep to 30 Nov 2023, the 30 Sep 2026 blacklist events, freeze status as of
+block 87,630,406, and `opening_balance.csv`, the address's USDT balance when the window opens, summed
+from its history since March 2022 (`build/opening_balance.py`).
+
+`queries/d5.sql` and `queries/d9.sql` hold the queries; the query page and `build/saved_results.py` split it on
 `-- name: ` the same way, so the saved results page shows the same text. `build/build-snapshot.sh`
 rebuilds everything from the network; a rebuild reads the blacklist as of a new block, so update
-`quizes/facts.json`, the worksheet and the instructor answers from its output.
+`quizes/facts.json` (`facts_d9.json`), the worksheets and the instructor answers from its output.
 
-The instructor answers are in `quizes/INSTRUCTOR_ANSWERS.md` and the expected query output in
-`quizes/facts.json`; neither reaches students (`pages.yml` and `vm-build.yml` leave out every lab's
+The instructor answers are in `quizes/INSTRUCTOR_ANSWERS.md` and `INSTRUCTOR_ANSWERS_D9.md`, and the
+expected query output in `quizes/facts.json` and `facts_d9.json`; neither reaches students (`pages.yml` and `vm-build.yml` leave out every lab's
 `quizes/` folder).
 
 ## Tests
 
 `regression-tests/automated/tron/run.sh` runs the lab and checks it through the router: it downloads
 the served snapshot, checks it against `meta.json`, runs the served queries with DuckDB 1.4.3 and
-compares the output with `quizes/facts.json` and the saved results page. The browser walk is the
+compares the output with `quizes/facts.json` and `facts_d9.json` and both saved results pages. The browser walk is the
 playbook in `regression-tests/agent/tron/`.

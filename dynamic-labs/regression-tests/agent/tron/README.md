@@ -1,11 +1,11 @@
-# Day 5 Tron Lab Agent Regression
+# Tron Lab Agent Regression
 
-Browser-driven regression for the day-5 Tron lab (`dynamic-labs/tron`) lives here.
+Browser-driven regression for the day-5 and day-9 Tron labs (`dynamic-labs/tron`) lives here.
 
 Run the automated suite first (`../../automated/tron/run.sh`): it checks the router's redirects,
 the pages and query-page assets, the served snapshot against its SHA-256 seal, every query's
 output on the served snapshot (DuckDB 1.4.3, the browser's engine) against
-`tron/quizes/facts.json`, and the saved results page. Use this directory for what only a browser
+`tron/quizes/facts.json` and `facts_d9.json`, and both saved results pages. Use this directory for what only a browser
 shows:
 
 - the query page loads DuckDB in the browser, from this server only, and reports "Ready"

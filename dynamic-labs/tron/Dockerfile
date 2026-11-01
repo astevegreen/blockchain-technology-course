@@ -1,4 +1,4 @@
-# The day-5 Tron lab page: the worksheet, the query page with the snapshot, and the saved results, served by nginx.
+# The day-5 and day-9 Tron lab pages: the worksheet, the query page with the snapshot, and the saved results, served by nginx.
 # Build context: dynamic-labs/tron. The query page is built here, so the image needs no outside network to run.
 FROM node:22-alpine AS build
 WORKDIR /lab/query-page

@@ -351,7 +351,7 @@ machine may be offline, and the build downloads Quarto.
 | `coinjoin-trace` | Day-7 CoinJoin trace lab (mempool on a frozen Bitcoin chain: CoinJoin rounds, two planted leaks, a mixer); `coinjoin-trace/README.md` |
 | `tokens` | Day-3 token lab (Otterscan on a frozen chain with a proxied dollar token and an NFT); `tokens/README.md` |
 | `dex` | Day-4 exchange and bridge lab (Otterscan on two frozen chains: a pool swap on L1, a bridge to L2); `dex/README.md` |
-| `tron` | Day-5 Tron lab (query page over a frozen Tron snapshot); `tron/README.md` |
+| `tron` | Day-5 and day-9 Tron labs (query page over frozen Tron snapshots); `tron/README.md` |
 | `cross-chain` | Day-8 cross-chain lab (query page over a frozen Ethereum, Arbitrum and Bitcoin snapshot); `cross-chain/README.md` |
 | `quiz-engine-v2` | Quiz engine |
 | `hlf` | Hyperledger Fabric lab |

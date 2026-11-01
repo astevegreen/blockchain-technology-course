@@ -21,6 +21,9 @@ slide index), which is never listed here.
   source, ICD 203's source factors, echoes, freezes, classified holdings as a process). (1 Nov 2026, D9 ③ build)
 - No quiz bank asks about 13-FO (`blockchain-course/lessons/forensics/13-FO-state_actors_north_korea.qmd`, D9 ①: state
   actors, North Korea's thefts, Bybit's way in, Drift, vendor versus government attribution). (1 Nov 2026, D9 ① build)
+- No quiz bank asks about the day-9 Tron lab (`dynamic-labs/tron/static/lab/d9/`: deposit address versus
+  sweep, a freezable stablecoin, the freeze's timing, a typology with indicators for and against). (1 Nov 2026,
+  D9 lab build)
 - 11-FO (`blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd`, D8 ③) has no per-lesson quiz
   bank; only the day 9 daily bank asks about it. (1 Nov 2026, D9 daily quiz review)
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.

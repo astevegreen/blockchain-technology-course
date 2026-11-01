@@ -1,6 +1,10 @@
-"""Writes static/fallback/index.html: every query in queries/d5.sql with its output on the snapshot.
+"""Writes a lab's saved results page: every query in its queries file with its output on its snapshot.
 
-    python build/saved_results.py          (from dynamic-labs/tron; needs the duckdb package)
+    python build/saved_results.py [lab]    (from dynamic-labs/tron; needs the duckdb package; lab d5 or d9,
+                                            both when left out)
+
+d5 reads queries/d5.sql on snapshot/ and writes static/fallback/index.html; d9 reads queries/d9.sql on
+snapshot/d9/ and writes static/fallback/d9/index.html.
 
 The query page splits queries.sql the same way and shows every value as DuckDB's own text, so a student who
 reads this page instead of the query page reads the same answers. Rerun it whenever the queries or the
@@ -10,14 +14,15 @@ import html
 import json
 import os
 import re
+import sys
 
 import duckdb
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SNAPSHOT = os.path.join(HERE, "snapshot")
-QUERIES = os.path.join(HERE, "queries", "d5.sql")
-LAB = os.path.join(HERE, "query-page", "labs", "d5.json")
-OUT = os.path.join(HERE, "static", "fallback", "index.html")
+LABS = {
+    "d5": ("snapshot", os.path.join("static", "fallback", "index.html")),
+    "d9": (os.path.join("snapshot", "d9"), os.path.join("static", "fallback", "d9", "index.html")),
+}
 
 
 def split_queries(sql):
@@ -35,12 +40,13 @@ def run(conn, body):
     return [d[0] for d in cur.description], cur.fetchall()
 
 
-def main():
-    with open(QUERIES, encoding="utf-8") as f:
+def write(name):
+    snapshot, out = (os.path.join(HERE, p) for p in LABS[name])
+    with open(os.path.join(HERE, "queries", f"{name}.sql"), encoding="utf-8") as f:
         setup, named = split_queries(f.read())
-    with open(LAB, encoding="utf-8") as f:
+    with open(os.path.join(HERE, "query-page", "labs", f"{name}.json"), encoding="utf-8") as f:
         lab = json.load(f)
-    os.chdir(SNAPSHOT)
+    os.chdir(snapshot)
     conn = duckdb.connect()
     conn.execute(setup)
     parts = []
@@ -85,11 +91,12 @@ the lab's snapshot, so your worksheet questions have the same answers here. {htm
 </body>
 </html>
 """
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", encoding="utf-8", newline="\n") as f:
         f.write(page)
-    print(f"{OUT}: {len(named)} queries")
+    print(f"{out}: {len(named)} queries")
 
 
 if __name__ == "__main__":
-    main()
+    for name in sys.argv[1:] or LABS:
+        write(name)
