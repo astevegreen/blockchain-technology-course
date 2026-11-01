@@ -12,7 +12,6 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- The signatures lab's ECDH panel text (`index.html:350`) always claims the HTTP fallback. A later lab session takes it. (1 Nov 2026, review of the follow-ups lesson fixes)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
