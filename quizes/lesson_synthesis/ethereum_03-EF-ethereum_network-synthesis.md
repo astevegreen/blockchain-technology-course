@@ -36,7 +36,7 @@ Transactions are not merely payments; they are signed instructions containing or
 
 ### Fee Mechanics As Inclusion Logic And User Risk
 
-EIP-1559 separates the burned base fee from the priority fee paid to the proposer. The effective gas price is constrained by the user's maximum fee and the current base fee plus priority fee, with overpayment refunded. This structure is presented as both protocol economics and user experience: fee settings affect inclusion, gas limits must cover expected execution, simulations can misestimate complex state-dependent calls, and reverted transactions still consume gas up to the failure point.
+EIP-1559 separates the burned base fee from the priority fee paid to the block's fee recipient (the proposer, or the builder in a block built by an outside builder). The effective gas price is constrained by the user's maximum fee and the current base fee plus priority fee, with overpayment refunded. This structure is presented as both protocol economics and user experience: fee settings affect inclusion, gas limits must cover expected execution, simulations can misestimate complex state-dependent calls, and reverted transactions still consume gas up to the failure point.
 
 ### Mempool Visibility And MEV
 
@@ -65,7 +65,7 @@ The final conceptual move is from public ordering opportunity to specialized inf
 | Transaction lifecycle | Provides the organizing flow for signing, gossip, block inclusion, execution, and receipts. | Trace where validation, propagation, fee selection, execution, and recording occur in the transaction path. |
 | Signed transaction fields | Transaction fields encode authority, intent, ordering, replay resistance, and resource constraints. | Explain how `nonce`, `chainId`, fee fields, gas limits, destination, value, and data affect validity and execution. |
 | Nonce ordering and replacement | Account-local sequencing determines which pending transactions can execute and how stuck transactions are superseded. | Diagnose nonce gaps, same-nonce replacements, and why builders must respect per-account order. |
-| EIP-1559 fees | Fee mechanics shape inclusion incentives, ETH burning, proposer compensation, and refunds. | Calculate or reason about effective gas price and distinguish base fee, priority fee, max fee, and refund behavior. |
+| EIP-1559 fees | Fee mechanics shape inclusion incentives, ETH burning, fee-recipient payment, and refunds. | Calculate or reason about effective gas price and distinguish base fee, priority fee, max fee, and refund behavior. |
 | Gas estimation and execution risk | Gas settings are user-facing risk controls, and failed execution is not free. | Predict why a transaction may revert, run out of gas, or require a buffer despite simulation. |
 | Mempool visibility | Public pending transactions create both propagation benefits and MEV opportunities. | Explain why public mempools enable searchers and when private submission changes the risk profile. |
 | Execution layer and consensus layer split | Ethereum relies on two P2P networks and two client roles joined locally. | Distinguish EL and CL responsibilities and trace Engine API validation statuses. |
@@ -92,7 +92,7 @@ The final conceptual move is from public ordering opportunity to specialized inf
 
 - Misconception: Ethereum has one global mempool that all nodes see identically. Corrected understanding: each node has a local mempool, and nodes usually converge through gossip but may have different pending-transaction views.
 - Misconception: Validators can include an account's transactions in any order if higher-fee later transactions are more profitable. Corrected understanding: builders may prioritize by effective gas price across the pool, but valid transactions from the same account must respect nonce order.
-- Misconception: The base fee is paid to the validator or builder. Corrected understanding: the base fee is burned, while the priority fee compensates the proposer for inclusion.
+- Misconception: The base fee is paid to the validator or builder. Corrected understanding: the base fee is burned, while the priority fee goes to the block's fee recipient.
 - Misconception: Setting a very high maximum fee means the user necessarily pays that full amount. Corrected understanding: the effective gas price is capped by the lesser of the max fee and base fee plus priority fee, with overpayment refunded.
 - Misconception: A reverted transaction is free because it did not complete the intended state change. Corrected understanding: reverts still consume gas up to the failure point.
 - Misconception: Gas estimation guarantees successful execution. Corrected understanding: estimation relies on simulated execution and can be wrong when contract logic or state changes before inclusion.
@@ -114,7 +114,7 @@ The final conceptual move is from public ordering opportunity to specialized inf
 - Good question shape: Scenario diagnosis involving pending transactions.
 - Avoid: Asking for a verbatim definition of `nonce`.
 
-- Target: Make students reason through EIP-1559 fee payment, burn, proposer tip, and refund behavior under specific fee settings.
+- Target: Make students reason through EIP-1559 fee payment, burn, priority fee to the fee recipient, and refund behavior under specific fee settings.
 - Good question shape: Causal explanation or small calculation using effective gas price.
 - Avoid: Asking only what EIP stands for.
 

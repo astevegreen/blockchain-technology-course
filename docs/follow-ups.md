@@ -34,9 +34,6 @@ slide index), which is never listed here.
 ## Quizzes
 - The day 2 daily quiz (session 9) has no question on the new slide "A blockchain is a record, not a currency".
   (31 Oct 2026, 02-IN D1 ① slides)
-- 03-EF quiz bank q at line 97 and the synthesis (`lesson_synthesis/ethereum_03-EF-ethereum_network-synthesis.md`
-  lines 39, 95, 117) say the tip "compensates the proposer"; 03-EF now says fee recipient. (31 Oct 2026, 03-EF tip fix)
-- 03-EF bank has no questions on the DEX, sandwich-attack or look-alike slides. (31 Oct 2026, rebuild `0504bcc`)
 - 02-AS quiz bank may lean on the four slides hidden as moved to 01-PC (CBDC trust, landscape, platforms, USDT on
   Tron). (31 Oct 2026, D5 ③ rebuild)
 - The 04-BF and 01-FO syntheses in `quizes/lesson_synthesis/` still describe slides now hidden (their q9 and q8

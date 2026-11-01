@@ -1,7 +1,7 @@
 {
   "lesson_id": "ethereum_03_ef_ethereum_network",
   "lesson_title": "Mempool, MEV and DEX Trades",
-  "date_generated": "2026-04-26",
+  "date_generated": "2026-10-31",
   "topic": "ethereum",
   "tags": [
     "ethereum",
@@ -18,9 +18,9 @@
     "module": "ethereum",
     "lesson_file_stem": "03-EF-ethereum_network",
     "reading_status": "acquired",
-    "question_count": 7,
+    "question_count": 10,
     "source_mix": {
-      "lesson_questions": 4,
+      "lesson_questions": 7,
       "reading_questions": 3
     },
     "reading_scope_note": "The assigned reading primarily supports node architecture, access models, sync, JSON-RPC, and client diversity; transaction-fee, mempool, and MEV questions are grounded in the lesson slides. Reading items q11-q13 are disabled from 31 Oct 2026: the lesson now hides its node, client and sync slides.",
@@ -45,7 +45,10 @@
               "q3",
               "q4",
               "q6",
-              "q10"
+              "q10",
+              "q14",
+              "q15",
+              "q16"
             ]
           },
           {
@@ -94,13 +97,13 @@
       "id": "q4",
       "question_type": "multiple_choice",
       "question_stem": "A transaction sets maxFeePerGas to 50 gwei and maxPriorityFeePerGas to 2 gwei. If the current base fee is 30 gwei, which outcome best reflects EIP-1559 fee mechanics?",
-      "correct_answer": "The effective gas price is 32 gwei, the 30 gwei base fee is burned, the 2 gwei priority fee compensates the proposer, and unused max fee headroom is not paid.",
+      "correct_answer": "The effective gas price is 32 gwei, the 30 gwei base fee is burned, the 2 gwei priority fee goes to the fee recipient, and unused max fee headroom is not paid.",
       "incorrect_answers": [
         "The effective gas price is 50 gwei, the 30 gwei base fee is burned, and the remaining 20 gwei goes to the proposer as an extra tip, not back to the sender.",
         "The effective gas price is 30 gwei, the base fee is burned, and no proposer tip is paid because the priority fee applies only when the cap is exceeded.",
         "The transaction is invalid until the base fee reaches 48 gwei, because maxFeePerGas must equal the current base fee plus the stated priority fee."
       ],
-      "explanation": "EIP-1559 separates the burned base fee from the priority fee. The user caps total price with maxFeePerGas, but overpayment above the current base fee plus priority fee is refunded rather than automatically spent.",
+      "explanation": "EIP-1559 separates the burned base fee from the priority fee, which goes to the block's fee recipient: the proposer's address, or the builder's in a block built by an outside builder. The user caps total price with maxFeePerGas, but overpayment above the current base fee plus priority fee is not charged.",
       "difficulty_level": 3,
       "topic": "ethereum",
       "tags": [
@@ -173,6 +176,97 @@
       "lesson_block": "Searchers, builders and relays set the order",
       "source_type": "lesson_slides",
       "specific_source_lesson": "/tmp/blockchain-course-slide-only/ethereum_03-EF-ethereum_network-slides-only.qmd: MEV Supply Chain And PBS / Builder Relay Stack and MEV"
+    },
+    {
+      "id": "q14",
+      "question_type": "multiple_choice",
+      "question_stem": "An agent asks who was on the other side of a subject's Uniswap swap. What do you say?",
+      "correct_answer": "Nobody: the counterparty is the pool contract, whose reserves and formula set the price, so no person agreed to the trade.",
+      "incorrect_answers": [
+        "The router's operator, because the router takes the input tokens and keeps them for good, which makes its owner the other trader.",
+        "The previous trader in that pool, because a pool pairs each new buyer with the last seller who used it for a swap.",
+        "The exchange's company, because it runs the exchange and takes the other side of every swap that its users make."
+      ],
+      "explanation": "On a DEX built like Uniswap a pool contract holds the reserves and its formula sets the price. The trader swaps with the pool through a router, so the counterparty is code; nobody on the other side agreed to the trade.",
+      "difficulty_level": 2,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "dex",
+        "pool",
+        "router",
+        "counterparty",
+        "scenario",
+        "lesson",
+        "slides"
+      ],
+      "lesson_block": "A DEX swaps against a pool, not a person",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd",
+        "anchor": "A DEX swaps against a pool, not a person"
+      }
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "In one block, a bot buys token X in a pool, the subject then buys X in that pool, and the bot sells X right after. How do you describe the bot?",
+      "correct_answer": "A third party that sandwiched the subject's swap, not a counterparty or partner, so its address is not one of the subject's.",
+      "incorrect_answers": [
+        "The subject's other wallet, because it traded in the same pool and block, which is how one owner's wallets usually behave on chain.",
+        "The subject's counterparty, because it bought before the swap and sold after it, so it took the other side of the trade.",
+        "A partner of the subject, because its profit came from the subject's trade, so both of them acted together on one plan."
+      ],
+      "explanation": "This is a sandwich: front-run, victim, back-run. The bot is a searcher who took value from the subject's trade. It trades around many people for profit, so its address is not one of the subject's.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "mev",
+        "sandwich",
+        "look-alikes",
+        "scenario",
+        "lesson",
+        "slides"
+      ],
+      "lesson_block": "A sandwich: three transactions, one victim",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd",
+        "anchor": "A sandwich: three transactions, one victim"
+      }
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "Two wallets each sent a swap to the same Uniswap router address. Does that link the wallets?",
+      "correct_answer": "No: any trader can call the same router, which holds nothing afterward, so a shared router links nobody without more evidence.",
+      "incorrect_answers": [
+        "Yes: a router belongs to one operator, so two wallets that sent to it show that both wallets answer to a single owner here.",
+        "Yes, if both swapped the same pair: the router keeps a list of its callers, so a shared pair shows both were run by one person.",
+        "Only if the swaps were in one block: a router serves one trader per block, so two callers in one block must be the same."
+      ],
+      "explanation": "A router takes tokens from whoever called it and keeps nothing afterward, so any trader can use the same one. The real parties are found by reading the Transfer logs past the router.",
+      "difficulty_level": 3,
+      "topic": "ethereum",
+      "tags": [
+        "ethereum",
+        "03-ef-ethereum-network",
+        "router",
+        "look-alikes",
+        "linking",
+        "scenario",
+        "lesson",
+        "slides"
+      ],
+      "lesson_block": "Routers and aggregators are only in the path",
+      "source_type": "slides",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd",
+        "anchor": "Routers and aggregators are only in the path"
+      }
     },
     {
       "id": "q11",
