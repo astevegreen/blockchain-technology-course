@@ -41,9 +41,6 @@ slide index), which is never listed here.
 - `dynamic-labs/ethereum_lab/docs/guides/BYTECODE_REVERSE_ENGINEERING.md:102` points students to the commercial
   "Etherscan Opcode Tool"; labs use open-source tools only. Swap in heimdall-rs or an open disassembler.
   (1 Nov 2026, D8 ③ lesson build)
-- The day-8 cross-chain lab (`dynamic-labs/cross-chain/`) has no agent playbook in `dynamic-labs/regression-tests/agent/`
-  (tron has `playbook.md`, `suite.yaml` and `tasks/`): write it with the worksheet, once the owner settles the hops and
-  the contract students read. (1 Nov 2026, D8 lab scaffolding review)
 
 ## Tooling and rules
 

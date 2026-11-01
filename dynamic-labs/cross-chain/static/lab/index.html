@@ -10,34 +10,246 @@
 <main>
 <p class="crumbs"><a href="../query/?lab=d8">Query page</a> · <a href="../fallback/">Saved results</a></p>
 <h1>Day 8 lab: a cross-chain trace</h1>
-<p class="note">This worksheet is being built. The query page and the saved results already work; the
-questions arrive once the lab's scenario is settled.</p>
-<p>This lab reads a frozen snapshot of real transactions from two thefts that crossed chains: the Bybit
-theft of about $1.5 billion on 21 Feb 2025 <a href="#s1">[1]</a>, and the release of rsETH from Kelp DAO's
-bridge on 18 Apr 2026 (UTC, query 10) <a href="#s2">[2]</a>.</p>
+<p>This lab reads a frozen snapshot of real transactions from two thefts that crossed chains. North Korea
+stole about $1.5 billion from the exchange Bybit on or about 21 Feb 2025 <a href="#s1">[1]</a>; some of it
+was converted to Bitcoin <a href="#s1">[1]</a> <a href="#s2">[2]</a>. On 18 Apr 2026 (UTC, query 10), a forged
+bridge message released 116,500 rsETH from Kelp DAO's bridge, about $292 million <a href="#s3">[3]</a>
+<a href="#s4">[4]</a>.</p>
 <p>Every query is written for you. On the <a href="../query/?lab=d8">query page</a>, press "Run" under a
-query, then read its output. You never edit the SQL. Write your answers down as short notes. Your
-instructor checks them with you.</p>
+query, then read its output. You never edit the SQL. Write your answers down as short notes, and draw the
+diagram on paper. Your instructor checks them with you; question 17 is the day's graded point.</p>
 <p class="note">The snapshot is frozen: every run gives the same answer. Query 16 says how far each chain
-was read. If the query page will not load, use the <a href="../fallback/">saved results</a>: they show
-every query's output, so every question has the same answer there.</p>
+was read: write "as of" with its block, not "now". If the query page will not load, use the
+<a href="../fallback/">saved results</a>: they show every query's output, so every question has the same
+answer there.</p>
 
-<h2>What you will do</h2>
+<h2>Where to start</h2>
+<ul>
+<li>Everyone starts with the contract read (questions 1 to 4): the contract Bybit's wallet was tricked
+into running.</li>
+<li>Most students then do the worked example, Bybit's ETH to Bitcoin (questions 5 to 10). It shows you
+how to follow money through a swap that crosses chains.</li>
+<li>If your pretest showed you can already follow a swap across chains, you may go straight to the
+problem, Kelp DAO (questions 11 to 16).</li>
+<li>Everyone does the graded note (question 17). The challenge at the end is optional.</li>
+</ul>
+
+<h2>Reading contracts and bridges</h2>
+<ul>
+<li>A call to a contract starts with a 4-byte <b>selector</b>: the first four bytes of the Keccak-256 hash
+of the function's signature, such as <code>transfer(address,uint256)</code> <a href="#s7">[7]</a>. The
+call data does not carry the name.</li>
+<li>4byte.directory maps selectors back to names that people have submitted <a href="#s8">[8]</a>. Two
+different signatures can share a selector <a href="#s9">[9]</a>, so a name from a selector is a claim, not
+a fact.</li>
+<li>A <b>delegatecall</b> runs another contract's code inside the caller's own account: the code works on
+the caller's storage and balance <a href="#s10">[10]</a>. A Safe multisig wallet is a proxy: it keeps
+the address of its logic contract (its "master copy") in storage and delegatecalls into it
+<a href="#s6">[6]</a> <a href="#s10">[10]</a>.</li>
+<li>THORChain is a cross-chain exchange: anyone can swap a coin on one chain for a coin on another
+<a href="#s11">[11]</a>. Query 6 reads each deposit's memo into what it asks for (<code>asks_for</code>)
+and where to pay it (<code>pay_to</code>).</li>
+<li>A LayerZero bridge sends messages between chains. Each message has an ID (<code>guid</code>). A channel
+is one sending contract on one chain talking to one receiving contract on another, and it numbers its
+messages 1, 2, 3 with no gaps (the nonce); a message is executed only once every earlier number on its
+channel has been verified <a href="#s14">[14]</a>. Queries 9 and 12 read both.</li>
+<li>Times are UTC. Amounts are exact, in the asset's own units.</li>
+</ul>
+
+<h2>The questions you answer</h2>
+<p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments about what
+the facts mean. Give each judgment a confidence word <a href="#s13">[13]</a>:</p>
+<table>
+<tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the reasoning
+applies.</td></tr>
+<tr><th>Moderate</th><td>One strong line of evidence, or weaker lines that agree, but a known false positive
+could apply.</td></tr>
+<tr><th>Low</th><td>Timing, amount or behavior alone, or one unverified label such as an explorer
+tag.</td></tr>
+</table>
+<p class="hint">Independent means a different kind of evidence, not a second look at the same transaction.</p>
+
+<h3>The contract read (21 Feb 2025)</h3>
 <ol>
-<li>Read one contract the stolen funds passed through, and look up its function's 4-byte selector.</li>
-<li>Follow the funds across at least one swap and one bridge.</li>
-<li>Draw the cross-chain flow: each contract, the assets in and out, and the address on the far side.</li>
-<li>Write your assessment, with a confidence word for each judgement.</li>
+<li>Query 1. In the transaction at 14:13:35, which contract did the cold wallet delegatecall, and with
+which selector? Look the selector up on 4byte.directory: how many signatures does it list?</li>
+<li>Query 1. Which contract's code did the wallet run before that transaction, and which after it? How
+long after the change do the sweeps start?</li>
+<li>Queries 1 and 2. The sweeps call two other selectors, <code>0x1163b2b0</code> and
+<code>0x582515c7</code>. What names does 4byte.directory give them? Do the names fit what each sweep
+moved?</li>
+<li>Your contract read: what does the function at <code>0x96221423…</code> do, who could make the wallet
+call it, and what did it change? Give a confidence for each, and the lines of evidence behind it.</li>
+</ol>
+
+<h3>Worked example: Bybit's ETH to Bitcoin (21 to 26 Feb 2025)</h3>
+<ol start="5">
+<li>Queries 2 and 3. What left the wallet, and to which address? Where did the ETH go next, in what
+amounts?</li>
+<li>Query 4. What does the address <code>0x31c4b3da…</code> receive, and from whom?</li>
+<li>Query 5. Who sent the hub the tiny payments? Do they belong to the thief?</li>
+<li>Query 6. Which addresses deposit into THORChain, how much, and what does each deposit ask for?</li>
+<li>Query 7. Was each deposit paid out as its memo asked, how much, and how long after?</li>
+<li>Query 8. What did <code>bc1qjm4u…</code> receive and send, over what period? What do you report?</li>
+</ol>
+
+<h3>The problem: Kelp DAO's rsETH, Unichain to Arbitrum (18 to 21 Apr 2026)</h3>
+<ol start="11">
+<li>Query 9. Which message number did the delivery on Ethereum claim to come from, and how many had the
+Unichain contract sent? What does that tell you?</li>
+<li>Query 10. How much rsETH was released, to whom, and where did it go in the next six minutes?</li>
+<li>Query 11. What did <code>0x1f4c1c2e…</code> do with its rsETH, what did it get back, and where did that
+go? Which contracts did it deal with? What can you say about who runs them?</li>
+<li>Query 12. Which addresses sent rsETH across the bridge, to which chain, to which address there, and
+how long did each take? What happened to the one message sent back?</li>
+<li>Queries 13 and 14. What reached the collecting address on Arbitrum, and what moved it out? Did the
+collecting address's owner sign that move?</li>
+<li>Queries 14 and 15. Where is that ETH as of the snapshot? What can you say about the address that
+holds it?</li>
+</ol>
+
+<h3>The graded note</h3>
+<ol start="17">
+<li>Write it out for your instructor: your contract read (question 4), a diagram of the Kelp flow, and
+your assessment. See <a href="#graded">The graded note</a> for what it must have.</li>
+</ol>
+
+<h2>The contract read</h2>
+<p>A security firm read the contract at <code>0x96221423…</code>: it has a function with the same signature
+as an ERC-20 <code>transfer(address,uint256)</code>, but instead of moving tokens it writes its first argument
+into storage slot 0. In a Safe wallet, slot 0 holds the master copy, the logic contract the wallet runs.
+The wallet called it with a delegatecall, through its own <code>execTransaction</code>, which runs only what
+the wallet's required signers sign <a href="#s6">[6]</a>.</p>
+<p>Check that against the chain. In query 1, path <code>0</code> is the wallet running its old master copy
+(<code>0x34cfac64…</code>, selector <code>0x6a761202</code>, <code>execTransaction</code> on 4byte
+<a href="#s8">[8]</a>), and path <code>0_0</code> is the delegatecall into <code>0x96221423…</code>. Every
+later call runs <code>0xbdd077f6…</code>. The firm's code read and the change you see on the chain are two
+different kinds of evidence.</p>
+
+<h2>Worked example: Bybit's ETH to Bitcoin</h2>
+<p>This follows the stolen ETH from the wallet, through a hub, into THORChain, and out on Bitcoin. Elliptic
+reports that the stolen tokens, such as stETH and cmETH, were swapped for ETH on exchanges with no one to
+freeze them, and that most of the ETH became Bitcoin <a href="#s2">[2]</a>.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="../query/?lab=d8">query page</a> and wait for "Ready". Run query 2. Five sweeps,
+14:15:11 to 14:16:11, move USDT, cmETH, stETH, mETH and 401,346.77 ETH (transaction
+<code>0xb61413c4…</code>) to <code>0x47666fab8bd0ac7003bce3f5c3585383f09486e2</code>.</li>
+<li>Run query 3. At 15:48, four transactions each send 10,000 ETH to a new address. The FBI lists one of
+them, <code>0x51e9d833…</code>, among the addresses the thieves used <a href="#s1">[1]</a>.</li>
+</ol>
+
+<h3>Follow the money</h3>
+<ol start="3">
+<li>Run query 4. Three days later, <code>0x31c4b3da…</code> collects ETH from all four:
+929.21 from <code>0x51e9…</code>, 713.81 from <code>0xcd1a…</code>, 304.52 from <code>0x1eb2…</code> and
+98.99 from <code>0x83ef…</code>, plus two senders this snapshot does not trace. That is a hub.</li>
+<li>The hub also got 17 payments of 0.000001 ETH or less. Run query 5: 16 of the senders match the first
+four and last four characters of an address the hub had paid, and each arrives 5 to 207 blocks after that payment.
+That is <b>address poisoning</b>: a look-alike sends a tiny amount, hoping the victim copies the wrong
+address from their history next time <a href="#s12">[12]</a>. The poisoner is a stranger fishing, not the
+thief's own wallet: leave the look-alikes out of the cluster.</li>
+<li>Run query 6. At 21:56:47 on 25 Feb, three fresh addresses each deposit 9.98 ETH into THORChain's
+vault <code>0x863df8de…</code>. Each memo asks for Bitcoin (<code>BTC.BTC</code>), paid to
+<code>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</code>.</li>
+<li>Run query 7. Forty-three minutes later THORChain's Bitcoin vault pays 0.277, 0.274 and 0.273 BTC to
+that address, each naming its Ethereum deposit (<code>as_the_memo_asked</code> is true).</li>
+<li>Run query 8. As of Bitcoin block 972,854, <code>bc1qjm4u…</code> took in and sent out 61.785 BTC over
+two days, and holds nothing.</li>
+</ol>
+
+<h3>What you report</h3>
+<ul>
+<li>The ETH crossed to Bitcoin through THORChain: three deposits from Ethereum on 25 Feb 2025 at 21:56:47,
+paid out on Bitcoin to <code>bc1qjm4u…</code> at 22:39:21. <b>High</b>: the deposit memos and the
+payouts are two records on two chains, and they agree.</li>
+<li>The hub <code>0x31c4b3da…</code> pooled the thieves' ETH. <b>Moderate</b>: it collects from the four
+addresses the wallet's ETH went to, one of them on the FBI's list; the hub itself is on no list here.</li>
+<li>The diagram: cold wallet <code>0x1db92e2e…</code> → (ETH and tokens) <code>0x47666fab…</code> →
+(4 × 10,000 ETH) four addresses → (ETH) hub <code>0x31c4b3da…</code> → … → (9.98 ETH × 3) THORChain vault
+<code>0x863df8de…</code> on Ethereum → (BTC × 3) <code>bc1qjm4u…</code> on Bitcoin.</li>
+<li>The chain does not show who holds the keys, or what became of the hub's ETH beyond these
+deposits.</li>
+</ul>
+
+<h2>The problem: Kelp DAO</h2>
+<p>Now do questions 11 to 16. The pattern is a bridge, not a swap: the money is released on one chain
+because of a message said to come from another. Hints:</p>
+<ul>
+<li><b>The message.</b> Each number on a channel stands for one message the sending contract sent
+<a href="#s14">[14]</a>. Compare the number the
+delivery claimed with the number the sending contract had reached, on both chains, at the same time.</li>
+<li><b>Names from tokens.</b> In query 11 the contracts are named only by the tokens they mint, such as
+<code>aEthrsETH</code> and <code>variableDebtEthWETH</code>. A token name is a claim made by whoever
+deployed it, like a name from a selector. Blockaid reports that the attacker put the rsETH into Aave V3 as
+collateral and borrowed WETH against it <a href="#s3">[3]</a>. Say what the tokens show, what the source
+adds, and how much rsETH the snapshot shows going in.</li>
+<li><b>The far side.</b> In query 12, compare each send's <code>receiver</code> with its sender.</li>
+<li><b>What the snapshot does not hold.</b> rsETH crosses to Arbitrum; ETH arrives at the collecting
+address. Say which step you cannot see.</li>
+<li><b>The freeze.</b> Arbitrum's Security Council says it moved the ETH with a cross-chain transaction
+made as if it came from the collecting address <a href="#s5">[5]</a>. Compare its figure with query 13.
+<code>from_address</code> shows whose account a transaction acts for, not always who signed it.</li>
+<li><b>The holder.</b> The address that holds the ETH as of the snapshot has no label. The Council says
+releasing the ETH is for Arbitrum's governance to decide <a href="#s5">[5]</a>. Say what the chain shows,
+and stop there.</li>
+</ul>
+
+<h2 id="graded">The graded note</h2>
+<p>Question 17 is the day's graded point. Your instructor marks it <b>Meets</b> or <b>Not yet</b>, and you
+get one retry in class time. It meets when it has all three:</p>
+<ol>
+<li><b>The contract read</b>: what the function at <code>0x96221423…</code> does, who could make the wallet
+call it, and what it changed.</li>
+<li><b>A diagram of the Kelp flow</b>: each contract, by its address and what the queries show it doing;
+the assets in and out at each step; and the address on the far side, on Arbitrum.</li>
+<li><b>An assessment</b>: what happened, each judgment with a confidence word (never a percentage), and
+what the chain does not show.</li>
+</ol>
+
+<h2>Challenge (optional)</h2>
+<p>Each part has a flag: an address or an amount you find on the chain. Your instructor has the flags.</p>
+<ol type="a">
+<li><b>Flag: an amount.</b> Query 13. The collecting address sends more ETH out on Ethereum than this
+snapshot shows coming in. How much more, and why can the snapshot not account for it?</li>
+<li><b>Flag: an amount.</b> Query 12. How much rsETH did someone try to send back from Arbitrum, and what
+became of it?</li>
+<li><b>Flag: an address.</b> Query 5. One tiny payment to the hub imitates none of the addresses the hub
+paid. Which address sent it?</li>
 </ol>
 
 <h2>Sources</h2>
 <ol class="sources">
-<li id="s1">Federal Bureau of Investigation, "North Korea Responsible for $1.5 Billion Bybit Hack",
-Internet Crime Complaint Center PSA, 26 Feb 2025. <a href="https://www.ic3.gov/PSA/2025/PSA250226">ic3.gov/PSA/2025/PSA250226</a>
-<code>fbi_bybitpsa_2025</code></li>
-<li id="s2">Blockaid, "How a Single LayerZero DVN Compromise Drained $292M from KelpDAO", 19 Apr 2026.
-<a href="https://www.blockaid.io/blog/how-a-single-layerzero-dvn-compromise-drained-292m-from-kelpdao">blockaid.io</a>
-<code>blockaid_kelpdao_2026</code></li>
+<li id="s1">Federal Bureau of Investigation, <i>North Korea Responsible for $1.5 Billion Bybit Hack</i>,
+Internet Crime Complaint Center PSA, 26 Feb 2025 (read 31 Oct 2026). <code>fbi_bybitpsa_2025</code></li>
+<li id="s2">Elliptic Research, <i>The Largest Theft in History: Following the Money Trail from the Bybit
+Hack</i>, 23 Feb 2025, updated 5 Mar 2025 (read 31 Oct 2026). <code>elliptic_bybit_2025</code></li>
+<li id="s3">Blockaid, <i>How a Single LayerZero DVN Compromise Drained $292M from KelpDAO</i>, 19 Apr 2026
+(read 23 Oct 2026). <code>blockaid_kelpdao_2026</code></li>
+<li id="s4">CoinDesk, <i>2026's Biggest Crypto Exploit: $292 Million Gets Drained from Kelp DAO with Wrapped
+Ether Stranded across 20 Chains</i>, 19 Apr 2026 (read 23 Oct 2026). <code>coindesk_kelpdao_2026</code></li>
+<li id="s5">Arbitrum Security Council, <i>Security Council Emergency Action – 21/04/2026</i>, Arbitrum DAO
+Forum, 21 Apr 2026 (read 23 Oct 2026). <code>arbitrum_kelpfreeze_2026</code></li>
+<li id="s6">Rivas, Santos and Sanz, <i>In-Depth Technical Analysis of the Bybit Hack</i>, NCC Group, 10 Mar
+2025 (read 1 Nov 2026). <code>nccgroup_bybithack_2025</code></li>
+<li id="s7">Solidity Team, <i>Contract ABI Specification</i>, Solidity documentation (read 1 Nov 2026).
+<code>solidityteam_abispecification_2026</code></li>
+<li id="s8">4byte.directory, <i>Ethereum Signature Database</i> (read 1 Nov 2026).
+<code>fourbyte_signaturedatabase_2026</code></li>
+<li id="s9">Foundry, <i>Function Selector Collision</i>, Foundry Book (read 1 Nov 2026).
+<code>foundry_functionselectorcollision_2026</code></li>
+<li id="s10">Palladino, Giordano and Croubois, <i>ERC-1967: Proxy Storage Slots</i>, 24 Apr 2019 (read 31
+Oct 2026). <code>palladino_erc1967proxystorage_2019</code></li>
+<li id="s11">Bitquery, <i>Bitget Hack: How $387M Left, and Where It Is Now</i>, 30 Sep 2026 (read 31 Oct
+2026). <code>bitquery_bitgethack_2026</code></li>
+<li id="s12">Tsuchiya, Dong, Soska and Christin, <i>Blockchain Address Poisoning</i>, USENIX Association,
+2025 (read 31 Oct 2026). <code>tsuchiya_addresspoisoning_2025</code></li>
+<li id="s13">Office of the Director of National Intelligence, <i>Intelligence Community Directive 203:
+Analytic Standards</i>, 2015: the source of the confidence words. The definitions above are the course's own
+scale. <code>odni_icd203_2015</code></li>
+<li id="s14">LayerZero Labs, <i>Glossary</i>, LayerZero V2 documentation (read 1 Nov 2026): GUID, Nonce, Lazy
+Nonce, Channel. <code>layerzero_v2glossary_2026</code></li>
 </ol>
 </main>
 </body>
