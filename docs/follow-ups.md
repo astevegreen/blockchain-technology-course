@@ -34,10 +34,6 @@ slide index), which is never listed here.
 ## Quizzes
 - The day 2 daily quiz (session 9) has no question on the new slide "A blockchain is a record, not a currency".
   (31 Oct 2026, 02-IN D1 ① slides)
-- 02-AS quiz bank may lean on the four slides hidden as moved to 01-PC (CBDC trust, landscape, platforms, USDT on
-  Tron). (31 Oct 2026, D5 ③ rebuild)
-- The 04-BF and 01-FO syntheses in `quizes/lesson_synthesis/` still describe slides now hidden (their q9 and q8
-  were retired). (31 Oct 2026, D5 quiz banks)
 - The 04-FO, 05-FO and 01-PC quiz banks have no reading deck: none of the three lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
@@ -53,8 +49,6 @@ slide index), which is never listed here.
 - 06-EF (`lessons/ethereum/06-EF-token_based_communities_and_nfts_in_practice.qmd`, The DAO slide notes) gives the
   fork block as "192,000"; it was 1,920,000 (10-FO cites the Ethereum Foundation's post). 02-EF's DAO notes say the
   attacker called "the withdraw function"; 10-FO, after the Foundation, says "split". Align both. (31 Oct 2026, D8 ② review)
-- 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
-  address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 
 ## Labs
 - `dynamic-labs/bitcoin/mempool/Dockerfile` lines 16 and 40 clone electrs and mempool at their latest commit, so a

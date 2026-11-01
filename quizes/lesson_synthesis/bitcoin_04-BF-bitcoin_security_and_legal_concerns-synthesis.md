@@ -9,20 +9,19 @@
 
 ## Executive Summary
 
-This lesson argues that Bitcoin security cannot be understood as a single protocol property. Different adversaries target different layers: consensus history, peer-to-peer connectivity, transaction propagation timing, miner incentives, software implementation, ecosystem scale, and regulated gateways. Students should learn to separate what an attack controls, what it can achieve, and which assumptions or defenses limit it.
+This lesson argues that Bitcoin security cannot be understood as a single protocol property. Different adversaries target different layers: consensus history, peer-to-peer connectivity, transaction propagation timing, miner incentives, software implementation, and ecosystem scale. Students should learn to separate what an attack controls, what it can achieve, and which assumptions or defenses limit it.
 
-The lesson also connects technical security to operational and legal realities. Case studies such as the 2010 overflow bug and the Bitcoin Gold 51% attack show that real-world outcomes depend on implementation quality, emergency coordination, hash-rate economics, exchange responses, and community strength. KYC and AML discussion then shows that policy control usually operates through intermediaries rather than Bitcoin consensus rules.
+The lesson also connects technical security to operational and legal realities. Case studies such as the 2010 overflow bug and the Bitcoin Gold 51% attack show that real-world outcomes depend on implementation quality, emergency coordination, hash-rate economics, exchange responses, and community strength.
 
 ## Core Learning Outcomes
 
 - Explain why adversaries may attack Bitcoin for fraud, censorship, surveillance, trust erosion, or strategic disruption rather than only direct theft.
-- Distinguish consensus attacks, network-view attacks, timing/deanonymization attacks, incentive attacks, implementation bugs, and off-chain regulatory controls.
+- Distinguish consensus attacks, network-view attacks, timing/deanonymization attacks, incentive attacks, implementation bugs, and small-network risk.
 - Reason about what a consensus attack can and cannot accomplish, including double-spends, censorship, short reorganizations, and loss of settlement confidence.
 - Diagnose how Sybil, eclipse, partitioning, and latency attacks manipulate visibility and propagation without necessarily breaking signatures, proof-of-work, or validation rules.
 - Evaluate why peer diversity, route diversity, monitoring, rebroadcasting, anonymity layers, and operational caution reduce network-level risk but do not eliminate it.
 - Explain selfish mining as strategic incentive manipulation that can obey validity rules while still undermining honest reward expectations.
 - Compare Bitcoin's security posture with smaller proof-of-work forks by reasoning about hash power, liquidity, exchange monitoring, and community coordination.
-- Distinguish Bitcoin's permissionless protocol from KYC/AML obligations imposed on exchanges, custodians, brokers, and payment processors.
 
 ## Conceptual Structure
 
@@ -42,9 +41,9 @@ Timing and latency attacks exploit who hears about a transaction or block first.
 
 Selfish mining illustrates an incentive-layer attack: a miner can withhold valid blocks and release them strategically to earn outsized rewards. The overflow bug illustrates an implementation-layer failure: the intended fixed-supply design rule was sound, but the validation code failed to enforce it. The emergency response shows that blockchain security includes human coordination, open-source review, patching, and willingness to reorganize when rule integrity is at stake.
 
-### Ecosystem Scale And Legal Gateways
+### Ecosystem Scale
 
-The Bitcoin Gold case demonstrates that copying Bitcoin-like code or using proof-of-work does not grant Bitcoin-like security. Smaller networks with lower hash power, liquidity, and community depth can be economically easier to reorganize, so exchanges rely more on monitoring and deeper confirmations. The KYC/AML section extends the same layered reasoning: Bitcoin itself does not perform identity checks, but regulated intermediaries link users, addresses, deposits, withdrawals, monitoring, and reporting.
+The Bitcoin Gold case demonstrates that copying Bitcoin-like code or using proof-of-work does not grant Bitcoin-like security. Smaller networks with lower hash power, liquidity, and community depth can be economically easier to reorganize, so exchanges rely more on monitoring and deeper confirmations.
 
 ## Essential Concepts
 
@@ -58,7 +57,6 @@ The Bitcoin Gold case demonstrates that copying Bitcoin-like code or using proof
 | Selfish mining | Valid blocks can still be used strategically in ways that exploit incentives. | Trace how withholding and strategic release can increase a miner's reward share and why this is not the same as invalid block creation. |
 | Implementation versus design | A sound protocol rule can fail if software enforces it incorrectly. | Use the overflow bug to distinguish intended monetary policy from the validation bug and emergency response that restored rule integrity. |
 | Proof-of-work security budget and community scale | Smaller PoW networks may be far cheaper to reorganize than Bitcoin. | Explain why Bitcoin Gold was more vulnerable than Bitcoin and why exchanges used pauses and confirmation policies to limit damage. |
-| Off-chain KYC/AML controls | Legal pressure usually constrains intermediaries and gateways, not base-layer consensus. | Distinguish peer-to-peer Bitcoin use from exchange/custodial compliance involving identity, monitoring, sanctions screening, and reporting. |
 
 ## Supporting Details
 
@@ -71,11 +69,10 @@ The Bitcoin Gold case demonstrates that copying Bitcoin-like code or using proof
 - Block 74638 and the 184 billion BTC overflow amount support the concept that implementation bugs can violate intended monetary constraints; they should be treated as case-study anchors, not trivia.
 - The Bitcoin Gold dates, approximate reorganization depth, and BTG double-spend amount support the concept that lower security budgets make majority attacks more plausible on smaller networks.
 - Hard fork versus soft fork definitions support the broader point that rule changes matter only when enough miners, nodes, businesses, and users coordinate around the same rules.
-- E-gold, Liberty Reserve, and privacy-enhancing assets support the broader legal point that regulators can pressure centralized operators, exchange listings, liquidity, and access even when they do not change a protocol.
 
 ## Common Misconceptions And Confusions
 
-- Misconception: Any attack on Bitcoin must break cryptography. Corrected understanding: Many attacks exploit networking, timing, incentives, implementation errors, operational practices, or regulated gateways without breaking signatures or hashes.
+- Misconception: Any attack on Bitcoin must break cryptography. Corrected understanding: Many attacks exploit networking, timing, incentives, implementation errors, or operational practices without breaking signatures or hashes.
 - Misconception: A Sybil or eclipse attack is the same as a 51% attack. Corrected understanding: Sybil and eclipse attacks distort a victim's view; 51% attacks concern majority block-production power and accepted chain history.
 - Misconception: If Bitcoin's consensus rules are sound, implementation bugs cannot threaten monetary integrity. Corrected understanding: The overflow bug shows that software must correctly enforce the intended rules.
 - Misconception: Immutability means the chain can never be reorganized after an incident. Corrected understanding: The overflow response shows the community chose security and rule integrity over strict preservation of the invalid history.
@@ -83,8 +80,6 @@ The Bitcoin Gold case demonstrates that copying Bitcoin-like code or using proof
 - Misconception: Privacy tools completely solve deanonymization. Corrected understanding: They add uncertainty and reduce linkability, but the lesson explicitly frames them as mitigations with limits.
 - Misconception: Selfish mining requires invalid blocks or majority hash power. Corrected understanding: It can use valid blocks and strategic withholding, with profitability discussed below full majority control.
 - Misconception: A Bitcoin fork automatically inherits Bitcoin's security. Corrected understanding: Forks may inherit code but not Bitcoin's hash rate, liquidity, monitoring capacity, or community strength.
-- Misconception: KYC and AML are part of Bitcoin's protocol. Corrected understanding: They are obligations imposed on regulated intermediaries around Bitcoin, especially on/off ramps and custodians.
-- Misconception: Regulation must change protocol rules to affect Bitcoin use. Corrected understanding: Regulation often works through gateways, exchange listings, liquidity, monitoring, custody, and fiat conversion.
 
 ## Assessment Targets For Future Quiz Generation
 
@@ -132,24 +127,16 @@ The Bitcoin Gold case demonstrates that copying Bitcoin-like code or using proof
 - Good question shape: Transfer question about why the same majority attack is more feasible on a smaller PoW network.
 - Avoid: Treating Bitcoin Gold details as facts to memorize without the security-budget comparison.
 
-- Target: Assess legal perimeter reasoning for KYC/AML.
-- Good question shape: Scenario distinguishing a self-custody peer-to-peer transaction from exchange onboarding, monitoring, and reporting.
-- Avoid: Asking for statutory acronyms without application.
-
-- Target: Test how regulation can affect Bitcoin without modifying consensus.
-- Good question shape: Compare centralized digital money shutdowns, privacy-asset delistings, and Bitcoin exchange compliance.
-- Avoid: Asking which named centralized system appeared in the lesson unless used to reason about operator control.
-
 ## High-Value Question Tags
 
-- `core_tags`: `bitcoin-security`, `consensus-attacks`, `eclipse-attacks`, `partitioning-attacks`, `network-deanonymization`, `selfish-mining`, `implementation-security`, `proof-of-work-security`, `kyc-aml`
-- `supporting_tags`: `sybil-attacks`, `routing-attacks`, `privacy-mitigations`, `bitcoin-gold`, `hard-forks`, `exchange-compliance`, `blockchain-analytics`
+- `core_tags`: `bitcoin-security`, `consensus-attacks`, `eclipse-attacks`, `partitioning-attacks`, `network-deanonymization`, `selfish-mining`, `implementation-security`, `proof-of-work-security`
+- `supporting_tags`: `sybil-attacks`, `routing-attacks`, `privacy-mitigations`, `bitcoin-gold`, `hard-forks`
 
 ## Suggested Difficulty Distribution
 
-- Level 1: 1-2 questions for essential vocabulary needed to follow the lesson, such as KYC/AML, eclipse attack, consensus attack, and selfish mining.
+- Level 1: 1-2 questions for essential vocabulary needed to follow the lesson, such as eclipse attack, consensus attack, and selfish mining.
 - Level 2: 2-3 questions for recognizing basic mechanisms and distinguishing attack layers.
-- Level 3: 4-6 questions for cause/effect reasoning across consensus, network propagation, implementation failure, and gateway regulation.
+- Level 3: 4-6 questions for cause/effect reasoning across consensus, network propagation, implementation failure, and small-network risk.
 - Level 4: 2-3 questions for scenario transfer, misconception diagnosis, and comparing Bitcoin with smaller proof-of-work ecosystems.
 - Level 5: 0-1 questions only if asking students to synthesize multiple layers, such as explaining how a technical incident, exchange response, and community coordination together shape security.
 
@@ -171,9 +158,6 @@ The lesson supports a center of gravity around Levels 3 and 4 because its main v
 - `Implementation vs. Design`
 - `Bitcoin Gold 51% Attack Discovery`
 - `Lessons: Small Community Risks`
-- `Off-Chain Controls: KYC and AML`
-- `How KYC/AML Apply to Bitcoin`
-- `Regulatory Pressure Beyond Bitcoin`
 
 ## Anti-Trivia Guidance
 
@@ -186,8 +170,6 @@ The lesson supports a center of gravity around Levels 3 and 4 because its main v
 - Do not ask about diagram node labels, visual placement, or rendering syntax.
 - Do not ask for exhaustive lists of mitigation mechanisms; ask students to choose or explain mitigations appropriate to a scenario.
 - Do not ask for definitions of hard fork and soft fork in isolation; connect them to coordination, ecosystem support, and security implications.
-- Do not ask for names of e-gold or Liberty Reserve unless the question uses them to contrast centralized operator shutdowns with protocol-level control.
-- Do not ask for legal acronyms as pure recall; require application to exchanges, custodians, monitoring, or peer-to-peer use.
 
 ## Readiness Check
 
