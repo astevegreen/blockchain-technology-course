@@ -40,8 +40,5 @@ slide index), which is never listed here.
   bridge lab build)
 
 ## Tooling and rules
-- The workflows pin `actions/checkout@v4` and `actions/upload-artifact@v4`, which target Node.js 20; GitHub warns it
-  now forces them onto Node.js 24 (Lab Tests run 41313684316). Move to the releases built for Node.js 24. The
-  workflows are rails. (1 Nov 2026, Lab Tests run)
 
 ## Notion and documents
