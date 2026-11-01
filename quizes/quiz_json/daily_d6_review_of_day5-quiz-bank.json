@@ -1,6 +1,6 @@
 {
   "lesson_id": "daily_d6_review_of_day5",
-  "lesson_title": "Day 6 Daily Quiz: Review of Day 5 (the Tron lab: deposit addresses, Energy and an issuer freeze)",
+  "lesson_title": "Day 6 Daily Quiz: Review of Day 5 (Day 5 lessons and the Tron lab: exchanges, VASPs, a permissioned-ledger freeze, deposit addresses and Energy)",
   "date_generated": "2026-11-01",
   "topic": "forensics",
   "tags": [
@@ -11,14 +11,20 @@
   ],
   "metadata": {
     "module": "forensics",
-    "question_count": 4,
+    "question_count": 10,
     "quiz_slot": "08:45 on day 6",
     "reviews": [
       "dynamic-labs/tron"
     ],
     "source_mix": {
-      "lesson_questions": 4
-    }
+      "lesson_questions": 5,
+      "lab_questions": 5
+    },
+    "lessons": [
+      "04-FO-exchanges_otc_p2p",
+      "05-FO-vasps_and_the_rules",
+      "01-PC-permissioned_distributed_ledgers"
+    ]
   },
   "hierarchy": {
     "sections": [
@@ -36,6 +42,40 @@
               "q2",
               "q3",
               "q4"
+            ]
+          },
+          {
+            "id": "lec_d5_tron_signer",
+            "title": "Tron lab: who signs a deposit",
+            "enabled": true,
+            "question_ids": [
+              "q5"
+            ]
+          },
+          {
+            "id": "lec_d5_exchanges",
+            "title": "Exchanges, OTC desks and P2P markets",
+            "enabled": true,
+            "question_ids": [
+              "q6",
+              "q7"
+            ]
+          },
+          {
+            "id": "lec_d5_vasps",
+            "title": "VASPs and the rules",
+            "enabled": true,
+            "question_ids": [
+              "q8",
+              "q9"
+            ]
+          },
+          {
+            "id": "lec_d5_gatekeepers",
+            "title": "Ledgers with a gatekeeper",
+            "enabled": true,
+            "question_ids": [
+              "q10"
             ]
           }
         ]
@@ -153,6 +193,163 @@
       "specific_source": {
         "lesson": "dynamic-labs/tron (day 5 Tron lab worksheet)",
         "reading": "The freeze: questions 12 and 14"
+      }
+    },
+    {
+      "id": "q5",
+      "question_type": "multiple_choice",
+      "question_stem": "In the Tron lab's worked example, 400 USDT reaches the deposit address from its depositor. Who signed that transfer, and who paid its fee?",
+      "correct_answer": "The depositor signed it and, having no Energy, burned TRX for the fee; the deposit address signed nothing.",
+      "incorrect_answers": [
+        "The deposit address signed it and paid the fee from its own TRX, so the depositor was never involved.",
+        "The exchange signed it and lent the Energy, so no TRX was burned and the fee cost the depositor nothing at all.",
+        "The depositor signed it, and the USDT contract paid the fee in Energy that it holds for all holders."
+      ],
+      "explanation": "A transfer is signed by its sender. The depositor called the USDT contract, had no Energy and so burned 13.3959 TRX (31,895 Energy used; 13.7409 TRX fee in all). The deposit address only receives; it signs nothing for that transfer.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-6",
+        "tron-lab",
+        "tron",
+        "signed-by",
+        "deposit-address"
+      ],
+      "lesson_block": "Who signs the deposit",
+      "specific_source": {
+        "lesson": "dynamic-labs/tron/quizes/INSTRUCTOR_ANSWERS.md",
+        "reading": "Question 1"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "A customer deposits coins at an exchange, and a week later a withdrawal reaches another address. What can the chain show about the link between the two?",
+      "correct_answer": "Nothing: withdrawals are paid from the exchange's pooled wallets, so only the exchange's own records can pair them.",
+      "incorrect_answers": [
+        "That the withdrawal came from the customer's deposit address, because each customer's coins stay in that address.",
+        "That they are linked whenever the amounts match, because the exchange pays a withdrawal from the coins just deposited.",
+        "That the deposit address signs the withdrawal, which is why exchange withdrawals show the customer as sender."
+      ],
+      "explanation": "Deposit addresses are per customer, but the exchange sweeps them into its own wallets and pays withdrawals from the pool. The chain cannot link a deposit to a later withdrawal; the exchange's ledger can.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-6",
+        "exchange",
+        "withdrawal",
+        "sweep"
+      ],
+      "lesson_block": "Withdrawals",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd",
+        "reading": "Withdrawals come from the pool, not the deposit"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "On Bitcoin, an exchange sweep spends many recent deposits in one transaction. How do you cluster those inputs?",
+      "correct_answer": "Into the exchange's cluster, never into any one customer: the exchange has control of the coins, not ownership.",
+      "incorrect_answers": [
+        "Into the customer whose deposit is largest, because the biggest input is the one that paid the fee and so owns it.",
+        "Into every depositor's cluster, because inputs spent together always belong to one customer's wallet or another one.",
+        "Not at all, because a sweep is a CoinJoin and its inputs are unrelated to each other, so no cluster forms at all, ever."
+      ],
+      "explanation": "Co-spending shows common control. Here the controller is the exchange, which holds the keys to every deposit address, so the inputs merge into its cluster and not into a customer's.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-6",
+        "exchange",
+        "sweep",
+        "clustering"
+      ],
+      "lesson_block": "Sweeps",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd",
+        "reading": "On Bitcoin, a sweep gathers many deposits"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "FinCEN's Section 311 final rule on Huione took effect on 17 November 2025. What does the rule do?",
+      "correct_answer": "It bars U.S. banks from holding correspondent accounts for Huione and from allowing indirect access.",
+      "incorrect_answers": [
+        "It freezes Huione's addresses on the blockchain, so that coins held at those addresses can no longer move.",
+        "It places Huione on OFAC's SDN list, so that every U.S. person must block all of the firm's property.",
+        "It orders Huione to register as a money services business with FinCEN within the next 180 days."
+      ],
+      "explanation": "A Section 311 action acts on U.S. financial institutions' accounts. It is not an OFAC designation and does not freeze coins on chain: funds reaching Huione are a risk signal to report with a confidence word.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-6",
+        "section-311",
+        "huione",
+        "fincen"
+      ],
+      "lesson_block": "Huione",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/05-FO-vasps_and_the_rules.qmd",
+        "reading": "Huione: what the rule does and doesn't do"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "What does a Suspicious Activity Report (SAR) filed by an exchange give an analyst?",
+      "correct_answer": "A lead to follow with other evidence, not a finding that the activity was criminal.",
+      "incorrect_answers": [
+        "A finding of fact, because an exchange files only once it has proved the activity illicit.",
+        "A confirmed owner for each address, because the report includes the KYC file.",
+        "A confirmed attribution, because the exchange attests that its records name the owner."
+      ],
+      "explanation": "A SAR records what the exchange saw and suspected. It points you to records and addresses worth checking; it does not settle who did what.",
+      "difficulty_level": 2,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-6",
+        "sar",
+        "bsa",
+        "lead"
+      ],
+      "lesson_block": "SARs are leads",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/05-FO-vasps_and_the_rules.qmd",
+        "reading": "The BSA makes the business keep records"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "Anyone can read Tron, yet USDT held on Tron can be frozen. Who can freeze it?",
+      "correct_answer": "The owner of the USDT contract, a multisignature wallet, through its blacklist functions; the 27 block producers cannot.",
+      "incorrect_answers": [
+        "The 27 Super Representatives, who can blacklist any address by a vote when they produce a block of their own.",
+        "The account that delegated Energy to the address, which can freeze a balance by taking its Energy back at will.",
+        "Any exchange that has swept the address, since a sweep passes on the right to freeze that balance to the exchange."
+      ],
+      "explanation": "USDT on Tron uses the same TetherToken design as on Ethereum, with owner-only blacklist functions. The Super Representatives produce blocks but do not hold the contract's owner role. A freeze is true only as of the block you read. The owner is a multisignature wallet as of 31 Oct 2026; an owner can change.",
+      "difficulty_level": 2,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-6",
+        "tron",
+        "usdt",
+        "blacklist"
+      ],
+      "lesson_block": "Same freeze, same owner",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd",
+        "reading": "USDT on Tron: same freeze, same owner rule"
       }
     }
   ]

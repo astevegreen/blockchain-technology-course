@@ -1,6 +1,6 @@
 {
   "lesson_id": "daily_d8_review_of_day7",
-  "lesson_title": "Day 8 Daily Quiz: Review of Day 7 (the CoinJoin trace lab: where the trace stops and what still shows)",
+  "lesson_title": "Day 8 Daily Quiz: Review of Day 7 (Day 7 lessons and the CoinJoin trace lab: PayJoin, privacy coins, cryptojacking, and where a trace stops)",
   "date_generated": "2026-11-01",
   "topic": "forensics",
   "tags": [
@@ -11,14 +11,20 @@
   ],
   "metadata": {
     "module": "forensics",
-    "question_count": 5,
+    "question_count": 10,
     "quiz_slot": "08:45 on day 8",
     "reviews": [
       "dynamic-labs/coinjoin-trace"
     ],
     "source_mix": {
-      "lesson_questions": 5
-    }
+      "lesson_questions": 5,
+      "lab_questions": 5
+    },
+    "lessons": [
+      "06-FO-mixers_and_coinjoin",
+      "07-FO-privacy_coins",
+      "08-FO-cryptojacking"
+    ]
   },
   "hierarchy": {
     "sections": [
@@ -37,6 +43,32 @@
               "q3",
               "q4",
               "q5"
+            ]
+          },
+          {
+            "id": "lec_d7_coinjoin",
+            "title": "CoinJoin, mixers and PayJoin",
+            "enabled": true,
+            "question_ids": [
+              "q6"
+            ]
+          },
+          {
+            "id": "lec_d7_privacy_coins",
+            "title": "Privacy coins: Monero and Zcash",
+            "enabled": true,
+            "question_ids": [
+              "q7",
+              "q8"
+            ]
+          },
+          {
+            "id": "lec_d7_cryptojacking",
+            "title": "Cryptojacking",
+            "enabled": true,
+            "question_ids": [
+              "q9",
+              "q10"
             ]
           }
         ]
@@ -179,6 +211,136 @@
       "specific_source": {
         "lesson": "dynamic-labs/coinjoin-trace (day 7 CoinJoin trace lab worksheet)",
         "reading": "Answer key: question 11"
+      }
+    },
+    {
+      "id": "q6",
+      "question_type": "multiple_choice",
+      "question_stem": "Why is a PayJoin harder to spot than a CoinJoin?",
+      "correct_answer": "The receiver adds an input to an ordinary payment, so there are no equal outputs and co-spend becomes unreliable.",
+      "incorrect_answers": [
+        "It uses many equal outputs of one pool size, which a wallet splits into pieces before the mix begins to run.",
+        "It routes the payment through a coordinator, which hides every address from the whole blockchain, for good.",
+        "It hides amounts in commitments, so the explorer shows no output values for the payment at all, as in Monero."
+      ],
+      "explanation": "In a PayJoin the receiver contributes an input, so the transaction looks like a normal payment. There is no equal-output pattern to warn you, and the assumption that inputs belong to one owner can fail without any sign.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-8",
+        "payjoin",
+        "coinjoin",
+        "co-spend"
+      ],
+      "lesson_block": "PayJoin",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/06-FO-mixers_and_coinjoin.qmd",
+        "reading": "PayJoin hides a co-spend inside a payment"
+      }
+    },
+    {
+      "id": "q7",
+      "question_type": "multiple_choice",
+      "question_stem": "A ransom note gives a Monero address. Where do you find that address on a Monero explorer?",
+      "correct_answer": "Nowhere: a Monero address is never on chain, because each payment goes to a one-time stealth address.",
+      "incorrect_answers": [
+        "On the output of the payment, shown next to an amount that the explorer has hidden from view, as well.",
+        "In the ring of 16 members, where the receiver's address is one of the decoys beside the real input.",
+        "In the key image, which names the address that was paid and the address that spent it, in each case."
+      ],
+      "explanation": "Stealth addresses give every payment its own one-time output key that cannot be linked to the recipient's address. An explorer shows time, fee and the transaction's shape.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-8",
+        "monero",
+        "stealth-address",
+        "explorer"
+      ],
+      "lesson_block": "What a Monero explorer shows",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/07-FO-privacy_coins.qmd",
+        "reading": "What a Monero explorer shows, and what it hides"
+      }
+    },
+    {
+      "id": "q8",
+      "question_type": "multiple_choice",
+      "question_stem": "The same unusual amount is shielded into Zcash and deshielded a few blocks later. What confidence does matching the two give?",
+      "correct_answer": "Low: amount and timing alone make a lead, not a link.",
+      "incorrect_answers": [
+        "Moderate, because a round trip is one strong line.",
+        "High, because a unique amount identifies the depositor.",
+        "Undetermined, because shielded values cannot be read."
+      ],
+      "explanation": "Round trips linked 28.5% of deposited coins in a 2018 study (data to January 2018), which makes them useful leads. A match on amount and timing alone is Low; independent lines of evidence are needed to go higher.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-8",
+        "zcash",
+        "shielding",
+        "round-trip"
+      ],
+      "lesson_block": "Zcash round trips",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/07-FO-privacy_coins.qmd",
+        "reading": "Most Zcash stayed public; round trips leak"
+      }
+    },
+    {
+      "id": "q9",
+      "question_type": "multiple_choice",
+      "question_stem": "How does a cryptojacking trace start differently from a ransomware trace?",
+      "correct_answer": "No victim pays: it starts at the attacker's wallet, which the malware's settings tie to the crime, not the chain.",
+      "incorrect_answers": [
+        "It starts at the victim's payment, as in ransomware, but the payment is made in Monero and is hidden from view, too.",
+        "It starts at the mining pool's wallet, because every cryptojacker is paid out from one pool address of the pool, too.",
+        "It starts at the cloud provider's invoice, which names the wallet that was paid out on the chain by the attacker, too."
+      ],
+      "explanation": "The coins are new block reward, so nothing on chain points back to the victim. The wallet and pool come from the sample, and the pool's own statistics can show earnings.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-8",
+        "cryptojacking",
+        "wallet",
+        "malware"
+      ],
+      "lesson_block": "No victim pays",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/08-FO-cryptojacking.qmd",
+        "reading": "No victim pays: the money starts as new coin"
+      }
+    },
+    {
+      "id": "q10",
+      "question_type": "multiple_choice",
+      "question_stem": "Sysdig estimated that one group cost its cloud victims $430,000 in bills to earn $8,100 in coins. What does that mean for your assessment?",
+      "correct_answer": "Never report the wallet's earnings as the victim's loss; the loss comes from the victim's bills.",
+      "incorrect_answers": [
+        "Report the wallet's earnings as the loss, since the on-chain proceeds are the harm done to the victim.",
+        "Report the cloud bill as the wallet's earnings, since the chain shows what is paid out.",
+        "Drop both figures, since the chain cannot show earnings for cryptojacking at all, so skip it."
+      ],
+      "explanation": "In the cloud the victim pays for the compute, so earnings understate the harm (about $53 billed for every $1 earned, as of September 2022). Earnings and loss are different numbers from different sources.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-8",
+        "cryptojacking",
+        "cloud",
+        "loss"
+      ],
+      "lesson_block": "Earnings are not the loss",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/08-FO-cryptojacking.qmd",
+        "reading": "In the cloud the victim pays the bill"
       }
     }
   ]
