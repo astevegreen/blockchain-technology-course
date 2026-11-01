@@ -31,7 +31,8 @@ The router's `routes/tokens-host.conf` splits that host the same way as the expl
 - `anvil` (Foundry 1.8.6) loads `chain/course-chain.json` read-only and seals a block every
   12 s (`TOKENS_BLOCK_TIME`). A restart reloads the frozen chain: the class's badges are gone.
 - `gateway` is the explorer lab's `gateway/gateway.py`, mounted read-only, so both labs filter
-  the node the same way. Each static folder is its own mount: Docker cannot mount the shared
+  the node the same way. It refuses transactions signed by the issuer, Account 0
+  (`REFUSED_SENDERS`): its key comes from the public test phrase like the seats'. Each static folder is its own mount: Docker cannot mount the shared
   `vendor/` folder inside a read-only `static/` mount.
 - `otterscan` uses the explorer lab's `otterscan/default.conf` (a real 404 for missing source).
 

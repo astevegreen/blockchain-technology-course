@@ -49,10 +49,6 @@ slide index), which is never listed here.
 - The exchange and bridge lab has not been tried with a whole class: 40 seats swapping against one pool in one
   12-second L1 block, and the relayer finalizing their deposits (`dynamic-labs/dex/relayer/relayer.py`). (31 Oct
   2026, D4 exchange and bridge lab build)
-- In the exchange and bridge lab, the cUSD issuer (Account 0), bridge owner (Account 6) and relayer (Account 7) keys
-  come from Anvil's public test phrase like the seats', and the gateway passes signed transactions, so a student
-  could mint unbacked bcUSD, pause a bridge or take the relayer's nonces mid-class; the token lab's issuer has the
-  same exposure. Refuse those senders at the gateway, or say so to instructors. (31 Oct 2026, D4 lab review)
 
 - The wallet lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it needs the
   `bitcoin-mempool` image. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D2 wallet lab build)

@@ -135,6 +135,21 @@ class DexLiveRegressionTests(unittest.TestCase):
                 reply = post_rpc({"jsonrpc": "2.0", "id": n, "method": method, "params": []}, host, path).json()
                 self.assertEqual(reply["error"]["code"], -32601, f"{host}{path} {method}")
 
+    def test_the_labs_own_keys_are_refused_on_every_door(self) -> None:
+        # Issuer, bridge owner and relayer keys are public (Anvil's test phrase): the gateways
+        # refuse what they sign, so no student can mint, pause or take the relayer's nonces.
+        Account.enable_unaudited_hdwallet_features()
+        for index in (0, 6, 7):
+            key = Account.from_mnemonic(PHRASE, account_path=f"m/44'/60'/0'/0/{index}")
+            for host, path, chain in ((HOST, "/rpc", 31337), (HOST, "/rpc-l2", 31338), (HOST_L2, "/rpc", 31338)):
+                signed = key.sign_transaction({
+                    "type": 2, "chainId": chain, "nonce": 0, "to": key.address, "value": 0, "data": b"",
+                    "gas": 21_000, "maxPriorityFeePerGas": 10**9, "maxFeePerGas": 10**11,
+                })
+                reply = post_rpc({"jsonrpc": "2.0", "id": 1, "method": "eth_sendRawTransaction",
+                                  "params": ["0x" + bytes(signed.raw_transaction).hex()]}, host, path).json()
+                self.assertEqual(reply["error"]["code"], -32003, f"account {index} on {host}{path}")
+
     def test_contract_source_is_served(self) -> None:
         for chain, host, name, key in [(31337, HOST, "CourseDex", "DOLLAR"), (31337, HOST, "CourseDex", "PAIR"),
                                        (31337, HOST, "CourseDex", "ROUTER"), (31337, HOST, "CourseBridge", "BRIDGE_L1"),
@@ -155,6 +170,22 @@ class DexLiveRegressionTests(unittest.TestCase):
                             allow_redirects=False)
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.headers["Location"], f"{SCHEME}://{HOST}/lab/")
+
+    def test_by_ip_address_the_lab_has_its_own_port(self) -> None:
+        # An IP address has no dex.<host>: the router sends the class to a port of the lab's own.
+        ip = "10.9.8.7"
+        resp = requests.get(f"{BASE_URL}/labs/dex/", headers={"Host": ip}, timeout=30, allow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.headers["Location"], f"{SCHEME}://{ip}:8443/lab/")
+        router = BASE_URL.split("://", 1)[1].split("/", 1)[0].split(":", 1)[0]
+        for port, name in ((8443, "Course L1 (training)"), (8444, "Course L2 (training)")):
+            origin = f"{SCHEME}://{router}:{port}"
+            page = requests.get(f"{origin}/lab/", headers={"Host": f"{ip}:{port}"}, timeout=30, verify=False)
+            self.assertEqual(page.status_code, 200, port)
+            config = requests.get(f"{origin}/config.json", headers={"Host": f"{ip}:{port}"}, timeout=30,
+                                  verify=False).json()
+            self.assertEqual(config["erigonURL"], f"{SCHEME}://{ip}:{port}/rpc")
+            self.assertEqual(config["chainInfo"]["name"], name)
 
     def test_swap_page_names_the_chains_contracts(self) -> None:
         script = (STATIC / "sign" / "swap.js").read_text(encoding="utf-8")

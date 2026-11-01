@@ -40,7 +40,9 @@ the token lab's:
   `finalizeDeposit` if not. It talks to the nodes directly, not through the gateways (which
   refuse `eth_getLogs`). A finalize takes 20 to 40 s.
 - `gateway` and `gateway-l2` are the explorer lab's `gateway/gateway.py`, mounted read-only, one
-  per chain. Only the L1 gateway has `L2_ANVIL_URL`, which opens `/rpc-l2`.
+  per chain. Only the L1 gateway has `L2_ANVIL_URL`, which opens `/rpc-l2`. Both refuse
+  transactions signed by the issuer (Account 0), the bridge owner (Account 6) and the relayer
+  (Account 7) (`REFUSED_SENDERS`): their keys come from the public test phrase like the seats'.
 - `otterscan` serves both hosts: each host's `/config.json` points it at that host's `/rpc`.
 
 Restart the whole lab, never one chain: a restart reloads both frozen chains, and restarting only

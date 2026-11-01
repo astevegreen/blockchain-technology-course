@@ -100,6 +100,18 @@ class TokensLiveRegressionTests(unittest.TestCase):
             reply = post_rpc({"jsonrpc": "2.0", "id": n, "method": method, "params": []}).json()
             self.assertEqual(reply["error"]["code"], -32601, method)
 
+    def test_issuer_transactions_are_refused(self) -> None:
+        # The issuer's key is public (Anvil's test phrase): the gateway refuses what it signs.
+        Account.enable_unaudited_hdwallet_features()
+        issuer = Account.from_mnemonic(PHRASE, account_path="m/44'/60'/0'/0/0")
+        signed = issuer.sign_transaction({
+            "type": 2, "chainId": 31337, "nonce": 0, "to": ADDRESSES["DOLLAR"], "value": 0, "data": b"",
+            "gas": 100_000, "maxPriorityFeePerGas": 10**9, "maxFeePerGas": 10**11,
+        })
+        reply = post_rpc({"jsonrpc": "2.0", "id": 1, "method": "eth_sendRawTransaction",
+                          "params": ["0x" + bytes(signed.raw_transaction).hex()]}).json()
+        self.assertEqual(reply["error"]["code"], -32003)
+
     def test_contract_source_is_served(self) -> None:
         for name, key in [("DollarProxy", "DOLLAR"), ("CourseDollar", "DOLLAR_CODE"), ("CourseBadge", "BADGE"),
                           ("BadgeShop", "SHOP")]:
@@ -118,6 +130,21 @@ class TokensLiveRegressionTests(unittest.TestCase):
                             allow_redirects=False)
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.headers["Location"], f"{SCHEME}://{HOST}/lab/")
+
+    def test_by_ip_address_the_lab_has_its_own_port(self) -> None:
+        # An IP address has no tokens.<host>: the router sends the class to a port of the lab's own.
+        ip = "10.9.8.7"
+        resp = requests.get(f"{BASE_URL}/labs/tokens/", headers={"Host": ip}, timeout=30, allow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.headers["Location"], f"{SCHEME}://{ip}:8442/lab/")
+        router = BASE_URL.split("://", 1)[1].split("/", 1)[0].split(":", 1)[0]
+        for port in (8442,):
+            origin = f"{SCHEME}://{router}:{port}"
+            page = requests.get(f"{origin}/lab/", headers={"Host": f"{ip}:{port}"}, timeout=30, verify=False)
+            self.assertEqual(page.status_code, 200, port)
+            config = requests.get(f"{origin}/config.json", headers={"Host": f"{ip}:{port}"}, timeout=30,
+                                  verify=False).json()
+            self.assertEqual(config["erigonURL"], f"{SCHEME}://{ip}:{port}/rpc")
 
     def test_mint_page_names_the_chains_contracts(self) -> None:
         script = (STATIC / "sign" / "mint.js").read_text(encoding="utf-8")

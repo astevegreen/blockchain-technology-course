@@ -35,7 +35,9 @@ instead of a `/labs/` path. The router's `routes/explorer-host.conf` splits that
 - `gateway` (`gateway/gateway.py`, Python standard library only) passes the JSON-RPC methods
   Otterscan and the signing page use and refuses the rest with -32601. Anvil's control methods
   (`anvil_*`, `evm_*`) and `eth_sendTransaction` (which Anvil would sign with its own unlocked
-  keys) never reach the node.
+  keys) never reach the node. A lab can also list its own keys in `REFUSED_SENDERS`: the gateway
+  recovers who signed each `eth_sendRawTransaction` and refuses those senders with -32003 (the
+  token and exchange labs use it; this lab lists none).
 - `otterscan` serves the explorer with `otterscan/default.conf`, which returns a real 404 for
   a contract source that is not there (the image's own config answers with its home page).
 

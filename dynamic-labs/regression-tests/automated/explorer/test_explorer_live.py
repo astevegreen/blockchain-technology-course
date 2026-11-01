@@ -136,6 +136,21 @@ class ExplorerLiveRegressionTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.headers["Location"], f"{SCHEME}://{HOST}/lab/")
 
+    def test_by_ip_address_the_lab_has_its_own_port(self) -> None:
+        # An IP address has no explorer.<host>: the router sends the class to a port of the lab's own.
+        ip = "10.9.8.7"
+        resp = requests.get(f"{BASE_URL}/labs/explorer/", headers={"Host": ip}, timeout=30, allow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.headers["Location"], f"{SCHEME}://{ip}:8441/lab/")
+        router = BASE_URL.split("://", 1)[1].split("/", 1)[0].split(":", 1)[0]
+        for port in (8441,):
+            origin = f"{SCHEME}://{router}:{port}"
+            page = requests.get(f"{origin}/lab/", headers={"Host": f"{ip}:{port}"}, timeout=30, verify=False)
+            self.assertEqual(page.status_code, 200, port)
+            config = requests.get(f"{origin}/config.json", headers={"Host": f"{ip}:{port}"}, timeout=30,
+                                  verify=False).json()
+            self.assertEqual(config["erigonURL"], f"{SCHEME}://{ip}:{port}/rpc")
+
     def test_worked_example_block_3(self) -> None:
         tx = rpc("eth_getTransactionByHash", WORKED_TX)
         receipt = rpc("eth_getTransactionReceipt", WORKED_TX)
