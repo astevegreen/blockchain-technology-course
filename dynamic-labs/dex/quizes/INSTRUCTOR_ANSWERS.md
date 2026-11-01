@@ -73,7 +73,10 @@ Students on live chains get their own numbers; check the shape, not the values. 
 a. Swap `0xda3cf5e327694529b14e8b0c94a4158a87f35ee6ee0aa8a4737286e4f004316f`, L1 block 24: 0.1 ETH
    in, 202.065487 cUSD out, exactly the quote. Pool price 2,030.81 before, 2,022.66 after. A student
    who got less than the quote had someone else's swap land first (the class shares one pool); the
-   99% minimum keeps the difference small or makes the swap fail.
+   99% minimum keeps the difference small or makes the swap fail. Expect most first swaps to fail when
+   the whole class swaps at once: in a 40-seat test (1 Nov 2026) only about 3 landed per block and the rest
+   reverted with "too little received". That is the slippage lesson: the page tells them to re-quote and
+   send again, and the class's swaps landing at ever-worse prices show each one moving the pool.
 b. Deposit number 2, L1 block 26 (`0x6579…b1c5`, after the `approve` in block 25). Completed by L2
    transaction `0xe41e4feb1cf799f958885234fb614e8f6ba5a836fdc28ef9a46ce37b9b0aa62c`, L2 block 167,
    22 s after L1 block 26 by the two blocks' timestamps; the recorded run's page says it waited 28 s
