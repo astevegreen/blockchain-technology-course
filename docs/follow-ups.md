@@ -26,6 +26,11 @@ slide index), which is never listed here.
 - 01-FO "BTC-e: Weak KYC Made the Cluster Actionable" now opens the BTC-e case, with the intro hidden: it never
   says BTC-e was an exchange, or when it ran. Add one cited line of context. (31 Oct 2026, 01-FO unrated slides hidden)
 
+- `{dot}` cells read options from `//|` lines, not `#|`: their `#| fig-height` is ignored and every diagram renders
+  at the 10x5 inch default (960x480), which can push a slide past 700px. Switch to `//|` in 02-BF, 02-DS, 04-AS,
+  05-AS, 02-FO, 06-FO and 07-FO, then re-check each slide's fit. Three-digit fill colours (`#fdd`) render black
+  in 02-FO, 04-AS, 06-FO and 07-FO: use six digits. (31 Oct 2026, D7 ③ browser check)
+
 ## Quizzes
 - 01-FO bank (`quizes/quiz_json/`) and `lesson_synthesis/` 01-FO synthesis predate the recut as Attribution and
   confidence: no questions on the nine new slides (q9, and q1-q4 on the unrated slides hidden the same day, were
@@ -54,6 +59,8 @@ slide index), which is never listed here.
 - 07-FO (`lessons/forensics/07-FO-privacy_coins.qmd`, Privacy Coins: Monero and Zcash) has no quiz bank or lesson
   synthesis; write both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026,
   D7 ② build)
+- 08-FO (`lessons/forensics/08-FO-cryptojacking.qmd`, Cryptojacking) has no quiz bank or lesson synthesis; write
+  both per `quizes/QUIZ_BANK_GENERATION_GUIDE.md` and `LESSON_SYNTHESIS_GUIDE.md`. (31 Oct 2026, D7 ③ build)
 - 02-BF bank has no question on reading the mempool view on "Reading Alice's payment, field by field" (input
   address and type shown beside the input; RBF read from nSequence once confirmed). (31 Oct 2026, mempool spike)
 

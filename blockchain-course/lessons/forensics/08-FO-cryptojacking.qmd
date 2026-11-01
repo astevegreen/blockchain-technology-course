@@ -1,0 +1,491 @@
+---
+title: "Cryptojacking: Mining Malware and Its Proceeds"
+subtitle: 'Section VIII: Forensics'
+author: Army Cyber Institute
+lesson: 08-FO
+date: last-modified
+bibliography: ../references/Blockchain.bib
+csl: ../references/ieee.csl
+link-citations: true
+skip-title-lift: true
+format:
+  aci-revealjs:
+    slide-level: 2
+---
+
+## Cryptojacking steals computing power, not coins {.smaller}
+
+**Bottom line:** a cryptojacker never takes the victim's coins. They take electricity and processor time, mine new coins with it, and collect the reward in their own wallet. No victim payment ever lands on chain, so the trace starts at the attacker's wallet, often in Monero, and often goes dark at once.
+
+::: {style="font-size: .8em;"}
+
+| Question | The answer tells you |
+| --- | --- |
+| What is cryptojacking? | The typology's name and its ATT&CK entry |
+| Why Monero? | Why most traces go dark from the first coin |
+| How do the proceeds move? | Victim, pool, wallet, exit |
+| Why is there no victim payment? | Where the trace can and cannot start |
+| What still shows? | The wallet and pool in the malware report |
+| Who pays the cloud bill? | Why the coins understate the harm |
+| What did a real case look like? | The Parks case, leg by leg |
+| Is this cryptojacking at all? | Indicators for, against, and other explanations |
+| How sure can you be? | The words for each finding |
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide opens day 7's third lesson: crime that earns crypto without stealing it. It matters here because the day's theme is where the trace goes dark, and cryptojacking proceeds are dark from the first coin when the coin is Monero. Emphasize the contrast with day 6's ransomware: there the victim pays an address; here nobody pays anyone.
+
+**Key Points**
+- Cryptojacking is mining on someone else's machine without their consent.
+- The harm is off chain (a slow computer, a cloud bill); the proceeds are on chain (mining rewards).
+- Most of it mines Monero, so 07-FO's limits apply from the first payout.
+- The analyst's job: name the typology, say what the chain shows, and say how sure.
+
+**Walkthrough**
+1. Read the bottom line aloud.
+2. Walk the table; each row is one slide.
+
+**Sources**
+None
+
+:::
+
+## Cryptojacking: mining on someone else's machine {.smaller}
+
+**Bottom line:** cryptojacking is mining with stolen computing power. The victim's machine does the work, the victim pays for the power, and the attacker's wallet gets the reward.
+
+- **The definition:** "the unauthorized use or hijacking of another party's resources, such as electricity, hardware, or computing power, to mine cryptocurrency" [@usaoedny_parks_2025].
+- **ATT&CK's name:** Resource Hijacking, T1496 (as of version 2.0, October 2025) [@mitre_resourcehijacking_2025]; the mining case is Compute Hijacking, T1496.001 (as of version 1.0, April 2025) [@mitre_computehijacking_2025].
+
+::: {style="font-size: .8em;"}
+
+| Where it runs | How the miner gets there | What stops it |
+| --- | --- | --- |
+| **A web page** | Mining script runs in the visitor's browser, without consent [@pastrana_cryptomining_2019] | The visitor leaves the site [@pastrana_cryptomining_2019] |
+| **Servers and endpoints** | Malware installs a mining program [@pastrana_cryptomining_2019; @mitre_computehijacking_2025] | Finding and removing it |
+| **Cloud and containers** | Accounts opened under false names, exposed APIs [@mitre_computehijacking_2025; @usaoedny_parks_2025] | Closing the account; the bill stays |
+
+: {tbl-colwidths="[22,44,34]"}
+
+:::
+
+- **Analyst move:** name the typology and the place. The rest of the lesson asks what the chain can add.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide defines cryptojacking in DOJ's words, gives its MITRE ATT&CK name, and lays out the three places it runs. It matters here because the analyst names the typology before anything else, and the place decides what evidence exists. Emphasize that ATT&CK is how a CTI report will label it.
+
+**Key Points**
+- DOJ: "also referred to as malicious cryptomining".
+- ATT&CK T1496 Resource Hijacking (version 2.0, last modified 24 October 2025); sub-technique T1496.001 Compute Hijacking says "one common purpose" is to "validate transactions of cryptocurrency networks and earn virtual currency".
+- Browser mining (Pastrana: "executed by client browsers without the explicit consent of the users") stops when the tab closes; malware mining runs until someone removes it.
+- ATT&CK lists servers, cloud systems, user endpoints and containers as targets.
+
+**Walkthrough**
+1. Read the DOJ definition.
+2. Take the table one row at a time.
+3. Ask: which row leaves the victim with a bill after the miner is gone? (Cloud.)
+
+**Sources**
+- @usaoedny_parks_2025 (DOJ definition, 15 August 2025)
+- @mitre_resourcehijacking_2025 (T1496, as of version 2.0, 24 October 2025)
+- @mitre_computehijacking_2025 (T1496.001, as of version 1.0, 15 April 2025)
+- @pastrana_cryptomining_2019 (browser and binary mining)
+
+:::
+
+## Most cryptojacking mines Monero, on CPUs {.smaller}
+
+**Bottom line:** a stolen laptop or server cannot compete at Bitcoin mining, but it can mine Monero. That choice is why most cryptojacking proceeds start dark.
+
+- **Monero leads:** a study of about 4.5 million samples (2007–2019) found "Monero (XMR) is by far the most popular cryptocurrency among cyber-criminals" [@pastrana_cryptomining_2019].
+- **Why:** illicit mining grew after 2014 with mining algorithms "resistant to ASIC-based mining" [@pastrana_cryptomining_2019]. Since 30 November 2019, Monero mines with RandomX, "optimized for general-purpose CPUs" (as of October 2026) [@tevador_randomx_2026].
+- **Scale:** criminals had mined "at least 4.37% of the total Monero in circulation" (about 58 million USD, as of 2019) [@pastrana_cryptomining_2019].
+- **Not only Monero:** the Parks case mined Ether, Litecoin and Monero [@usaoedny_parks_2025].
+- **Analyst move:** name the coin first. Monero payouts hide receiver and amount [@koe_zeromonerosecond_2020]; a transparent coin's payouts can be traced with day 6's methods.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide explains why cryptojackers choose Monero: it can be mined on ordinary processors, and it hides the proceeds. It matters here because the coin decides whether the analyst has a trail at all. Emphasize "name the coin first", the habit from 07-FO.
+
+**Key Points**
+- ASIC: a chip built for one mining algorithm. Bitcoin mining is dominated by them, so a hijacked CPU earns almost nothing there.
+- RandomX is designed to run best on general-purpose CPUs; Monero activated it on 30 November 2019.
+- Pastrana and Suarez-Tangil (IMC 2019) is the largest measurement of mining malware; its figures are as of 2019.
+- A transparent coin (Ether, Litecoin) gives a public payout; Monero does not.
+
+**Walkthrough**
+1. Ask: why would an attacker with 2,000 hijacked laptops mine Monero, not Bitcoin? (CPUs can compete on RandomX; and the payouts are hidden.)
+2. Read the analyst move.
+
+**Sources**
+- @pastrana_cryptomining_2019 (figures as of 2019)
+- @tevador_randomx_2026 (RandomX on Monero since 30 November 2019)
+- @usaoedny_parks_2025
+- @koe_zeromonerosecond_2020
+
+:::
+
+## Proceeds run victim, pool, wallet, exit {.smaller}
+
+**Bottom line:** hijacked machines rarely mine alone. They join a mining pool, the pool pays the attacker's wallet, and the wallet cashes out. The chain can show only the right half, and only for a transparent coin.
+
+```{dot}
+//| echo: false
+//| fig-width: 8
+//| fig-height: 1.6
+digraph Proceeds {
+  graph [bgcolor="transparent", nodesep=0.2, ranksep=0.3];
+  rankdir=LR;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10];
+  edge [fontname="Helvetica", fontsize=8];
+  subgraph cluster_off {
+    label="Off chain";
+    style=dashed;
+    fontname="Helvetica";
+    fontsize=9;
+    Victims [label="Hijacked\nmachines", fillcolor="#FFDDDD"];
+    Pool [label="Mining pool", fillcolor="#FFF5CC"];
+  }
+  subgraph cluster_on {
+    label="On chain";
+    style=dashed;
+    fontname="Helvetica";
+    fontsize=9;
+    Wallet [label="Attacker's\nwallet", fillcolor="#E6F7FF"];
+    Exit [label="Exchange\nor swap", fillcolor="#E8F5E9"];
+  }
+  Victims -> Pool [label="work, with\nwallet as login"];
+  Pool -> Wallet [label="payouts"];
+  Wallet -> Exit [label="cash out"];
+}
+```
+
+- **The login is the wallet:** each miner connects with "the identifier of the miner in a 'login' parameter", usually the wallet the pool pays [@pastrana_cryptomining_2019].
+- **The pool keeps the books:** it pays workers in proportion to their work [@pastrana_cryptomining_2019].
+- **Analyst move:** your trace begins at the payout.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows how cryptojacking proceeds move: hijacked machines, mining pool, attacker's wallet, exit. It matters here because the analyst must know which half the chain can show. Emphasize that the wallet address is typed into the malware as the pool login, which is why it can be found.
+
+**Key Points**
+- A mining pool shares the work of many miners and splits each block reward in proportion to the work each did.
+- Miners talk to pools with the Stratum protocol; the wallet travels as the login.
+- Some campaigns put a mining proxy between the bots and the pool so one wallet does not show thousands of connections (Pastrana).
+- The cash-out leg is day 5 ① (exchanges) and 07-FO (swaps out of Monero).
+
+**Walkthrough**
+1. Trace the diagram left to right.
+2. Ask: which box would a malware report name? (The wallet and the pool.) Which would the chain show? (The wallet's payouts and exit, if the coin is transparent.)
+
+**Sources**
+- @pastrana_cryptomining_2019
+
+:::
+
+## No victim pays: the money starts as new coin {.smaller}
+
+**Bottom line:** in ransomware the victim's payment is the first hop. In cryptojacking there is no payment: the coins are newly mined, and nothing on chain points back to the victim.
+
+::: {style="font-size: .82em;"}
+
+| | Ransomware (day 6) | Cryptojacking |
+| --- | --- | --- |
+| First money on chain | Victim pays the attacker's address | The pool pays the attacker's wallet |
+| Where the coins come from | The victim's own funds | A block reward: "a new coin owned by the creator of the block" [@nakamoto_bitcoinpeertopeerelectronic_2008] |
+| Victim visible on chain? | Yes, as the payer | No |
+| What ties wallet to crime | The ransom note's address | The wallet in the malware's settings |
+
+: {tbl-colwidths="[26,32,42]"}
+
+:::
+
+- **The link is off chain:** a malware report or a seized machine ties the wallet to the intrusion. The chain shows a miner being paid.
+- **Cash-out is unknown:** even a large study of pool payments could not say "when the criminals have cashed-out their earnings (if ever)" [@pastrana_cryptomining_2019].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide contrasts cryptojacking with ransomware to show why its trace starts at the attacker's side. It matters here because students will look for a victim payment that does not exist. Emphasize that the wallet-to-crime link comes from the malware, not the ledger.
+
+**Key Points**
+- A mining reward creates new coin; it has no earlier owner to trace back to.
+- A pool payout looks the same whether the miner's hardware was stolen or bought.
+- The analyst inherits the wallet from CTI (a malware report) and reads the chain from there.
+
+**Walkthrough**
+1. Read each row, ransomware column first.
+2. Ask: an agent asks "how much did the victim pay?" What do you say? (Nothing on chain; the victim's loss is power and computing time, measured off chain.)
+
+**Sources**
+- @nakamoto_bitcoinpeertopeerelectronic_2008 (new coin to the block's creator)
+- @pastrana_cryptomining_2019
+
+:::
+
+## The wallet in the sample is the pivot {.smaller}
+
+**Bottom line:** the malware names its wallet and its pool. Those two strings are where the analyst starts, and some pools publish what they paid each wallet.
+
+::: {style="font-size: .82em;"}
+
+| What still shows | Where | What it gives you |
+| --- | --- | --- |
+| **Wallet and pool** | The sample's settings, command line or network traffic, in a malware report [@pastrana_cryptomining_2019] | The wallet to trace |
+| **Pool statistics** | Many pools show "the timestamp of the last share, the current (last) hashrate and the total amount of currency paid to the wallet" [@pastrana_cryptomining_2019] | Earnings and activity, even for Monero |
+| **Same wallet, other samples** | Other malware reports | One campaign across many samples [@pastrana_cryptomining_2019] |
+| **Domain aliases** | DNS: an attacker's domain pointing to a known pool [@pastrana_cryptomining_2019] | The real pool behind a disguise |
+
+: {tbl-colwidths="[22,48,30]"}
+
+:::
+
+- **Pools can act:** two reported wallets were banned in October 2018, and the campaign "decided to move their mining efforts to another pool" [@pastrana_cryptomining_2019].
+- **Analyst move:** quote the pool's figures with the date you read them; they change and some pools show only recent payments [@pastrana_cryptomining_2019].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide lists what still shows when the coin is Monero: the wallet and pool named in the malware, the pool's own statistics, and links between samples. It matters here because this is the evidence a limits-of-tracing note can still quote. Emphasize that pool statistics are a pool's records, not the chain: cite them as such.
+
+**Key Points**
+- The malware analyst extracts the wallet and pool; the blockchain analyst reads what the wallet earned and where it went.
+- Pool statistics show total paid even when the Monero ledger hides the payout.
+- Same wallet across samples groups them into one campaign.
+- CNAME: a DNS alias. The attacker's subdomain resolves to the pool, so a blocklist of pool names misses it.
+- A pool ban is an exit point for the campaign and a date for the timeline.
+
+**Walkthrough**
+1. Read the table top to bottom.
+2. Ask: why date the pool figures? (They change, and some pools keep only the last week or month.)
+
+**Sources**
+- @pastrana_cryptomining_2019
+
+:::
+
+## In the cloud the victim pays the bill {.smaller}
+
+**Bottom line:** cloud cryptojacking turns a stolen account into a bill. The coins the attacker earns are a small fraction of what the victim pays.
+
+- **Common:** of 50 recently compromised Google Cloud instances, 86% were used "to perform cryptocurrency mining" (as of November 2021) [@google_threathorizons_2021].
+- **Costly:** Sysdig estimated it "costs \$430,000 in cloud bills for an attacker to generate \$8,100 in cryptocurrency revenue": \$53 billed for every \$1 earned (one group, as of September 2022) [@sysdig_threatreport_2022].
+- **So:** the on-chain proceeds understate the harm. The victim's loss is in the cloud provider's invoices, not on chain.
+- **Analyst move:** report the wallet's earnings as earnings, never as the loss. The loss figure comes from the victim.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows why cloud cryptojacking is mostly a billing crime: the victim pays far more than the attacker earns. It matters here because an agent may ask the analyst "how much did they get?" and confuse it with "how much did the victim lose?". Emphasize keeping the two numbers apart.
+
+**Key Points**
+- Google's November 2021 Threat Horizons snapshot: 86% of 50 compromised instances mined.
+- Sysdig's 2022 Cloud Native Threat Report: about \$8,100 earned against more than \$430,000 billed, for one group (TeamTNT).
+- Both figures are dated vendor estimates from small samples; use them for scale, not as rates.
+
+**Walkthrough**
+1. Read the two figures with their dates.
+2. Ask: the wallet earned 40 XMR; the victim's bill was \$200,000. Which is the loss? (The bill.)
+
+**Sources**
+- @google_threathorizons_2021 (as of November 2021)
+- @sysdig_threatreport_2022 (as of 28 September 2022)
+
+:::
+
+## Parks: a cloud bill over three times the coin {.smaller}
+
+**Bottom line:** a real case shows the pattern. Parks took more than \$3.5 million of cloud computing to mine coins worth nearly \$1 million, then moved the proceeds through on-chain and off-chain exits (as of 15 August 2025) [@usaoedny_parks_2025].
+
+::: {style="font-size: .8em;"}
+
+| Leg | What DOJ says | On chain? |
+| --- | --- | --- |
+| **Access** | Accounts opened under names and companies; providers deceived into "heightened privileges" | No |
+| **Mining** | "Ether, Litecoin, and Monero" | Ether and Litecoin payouts: yes. Monero: hidden |
+| **Exits** | "cryptocurrency exchanges, a non-fungible token (NFT) marketplace, an online payment provider, and traditional bank accounts" | Exchanges and NFT marketplace: yes. Payment provider and banks: no |
+| **Structuring** | "structured money movements to avoid transaction reporting requirements" | No: bank records |
+
+: {tbl-colwidths="[16,54,30]"}
+
+:::
+
+- **Outcome:** pleaded guilty to wire fraud; sentenced to one year and one day [@usaoedny_parks_2025].
+- **Analyst move:** split each leg by what the chain can show. The access, payment-provider and bank legs can only come from those firms' records, not the chain.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide walks the Parks case (EDNY, sentenced 15 August 2025) as a cryptojacking case leg by leg. It matters here because it shows the analyst's share of a real case: the transparent-coin payouts and on-chain exits, not the access or the banking. Emphasize that the cloud providers, not individuals, were the victims.
+
+**Key Points**
+- Parks defrauded "two well-known providers of cloud computing services"; January to August 2021.
+- He mined three coins; two left public payouts.
+- NFTs are day 3 ③ and NFT wash trading is day 8 ③; exchanges are day 5 ①.
+- He agreed to forfeit \$500,000 and a Mercedes Benz; restitution was still to be set at the release date.
+- Charging and sentencing are legal process, out of scope; the case is here for its money flow.
+
+**Walkthrough**
+1. Read each leg and ask the class the "On chain?" column before revealing it.
+2. Ask: which leg would you write up first? (The Ether and Litecoin payouts to the exchanges: public and traceable.)
+
+**Sources**
+- @usaoedny_parks_2025 (as of 15 August 2025)
+
+:::
+
+## Characterize: for, against, and alternatives {.smaller}
+
+**Bottom line:** on chain, a cryptojacker's payout looks like any miner's. Calling a wallet "cryptojacking proceeds" needs off-chain evidence, and an honest note names what else it could be.
+
+::: {style="font-size: .8em;"}
+
+| | Evidence |
+| --- | --- |
+| **For** | The wallet is in a mining sample or an unauthorized process's settings; the same wallet in other samples; payouts start near the intrusion date; the pool banned it |
+| **Against** | The wallet belongs to the machine's owner; the miner was installed on purpose; payouts began long before the intrusion |
+| **Other explanations** | A **donation wallet**: stock mining tools mine a share (often 2–5%) for their developer [@pastrana_cryptomining_2019]; **mixed earnings**: the same wallet may also mine legitimately [@pastrana_cryptomining_2019]; a legitimate miner |
+
+: {tbl-colwidths="[20,80]"}
+
+:::
+
+- **Analyst move:** state the typology, the evidence for, the evidence against, and at least one other explanation, each with its confidence word.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide applies the course's characterization method to cryptojacking: name the typology, give indicators for and against, and at least one other explanation. It matters here because pool payouts look the same for every miner, so the typology rests on off-chain evidence. Emphasize the donation wallet: a wallet found in a sample is not always the attacker's.
+
+**Key Points**
+- Donation wallets: Pastrana's team white-listed 14 developer donation wallets before grouping samples, so they would not merge unrelated campaigns.
+- Mixed earnings: the paper notes a criminal "could start mining from his own PC", so pool totals may include licit mining.
+- "Against" evidence is what would make the analyst withdraw the typology.
+
+**Walkthrough**
+1. Read the three rows.
+2. Ask: a wallet appears in 40 samples from unrelated campaigns. What is the likeliest explanation? (A donation wallet in a stock mining tool.)
+
+**Sources**
+- @pastrana_cryptomining_2019
+
+:::
+
+## How sure: words for cryptojacking findings {.smaller}
+
+**Bottom line:** the typology rests on the malware; the money rests on the pool and the chain. Each finding gets the course scale's word, never a percentage.
+
+::: {style="font-size: .82em;"}
+
+| Finding | Confidence | Why |
+| --- | --- | --- |
+| This wallet received this campaign's mining proceeds | Moderate | One strong line: the wallet is in the malware; a donation wallet is a known false positive |
+| Same, and the pool's own logs show that login mining from the victims' machines | High | A different kind of evidence agrees: the pool's records, not the malware |
+| The pool paid the wallet this much | As strong as the pool's page, dated | A pool's own records, not the chain |
+| Which Monero payout went where | Undetermined | Monero hides receiver and amount |
+| Ether payout traced to an exchange deposit | As strong as the trace | Public chain, day 6 methods |
+| This exchange deposit is the cryptojacker's cash-out | Low | Amount and timing alone |
+
+: {tbl-colwidths="[44,22,34]"}
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide applies the course's confidence scale to cryptojacking findings. It matters here because the day's limits-of-tracing note rates each finding. Emphasize that High needs a second, independent kind of evidence, such as the pool's own records; more samples of the same malware are the same kind.
+
+**Key Points**
+- High: two or more independent lines agree and no known failure applies. Independent means a different kind of evidence: more samples of the malware are not, and a pool ban prompted by the same malware report is not either (Pastrana's banned wallets were reported by the researchers).
+- Moderate: one strong line, or weaker lines that agree, with a known false positive possible.
+- Low: timing, amount or behavior alone, or one unverified label.
+- Undetermined: nothing on chain picks an answer.
+
+**Walkthrough**
+1. Read each finding and ask the class for the word before revealing the column.
+2. Ask: why is the first row not High? (One line, and donation wallets are a known false positive.)
+
+**Sources**
+None (the course's confidence scale)
+
+:::
+
+## A limits-of-tracing note for mining proceeds {.smaller}
+
+**Bottom line:** the day's lab (the CoinJoin and mixer trace) ends in a limits-of-tracing note; here is one on a cryptojacking wallet: where the trace starts, where it stops, what still shows and how sure. (Invented data.)
+
+::: {style="font-size: .75em;"}
+
+| Step | What you see | The trace | Still shows | Confidence |
+| --- | --- | --- | --- | --- |
+| 1 | A malware report names a Monero wallet and a pool | Starts at the wallet | Wallet and pool in the sample | Moderate |
+| 2 | The pool's page shows 310 XMR paid to the wallet, read 31 Oct | Earnings, not a trace | Pool total, dated | Moderate |
+| 3 | The pool's payouts to the wallet | **Stops:** Monero hides receiver and amount | No address or amount to quote | — |
+| 4 | The same campaign mined Ether; payouts go to an exchange deposit address | Continues to the exchange | The exchange's records of the depositor | Moderate |
+
+: {tbl-colwidths="[7,33,22,23,15]"}
+
+:::
+
+The note starts at the wallet, stops at the Monero payouts, and keeps the leads that remain.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide models a limits-of-tracing note, the product of the day's CoinJoin and mixer lab, on cryptojacking proceeds, with invented data. It matters here because students see the finished product before they write one. Emphasize that step 3 is the stop and step 4 is a transparent-coin lead that day 6's methods can follow.
+
+**Key Points**
+- Step 1: the malware ties the wallet to the intrusion: one strong line, Moderate.
+- Step 2: pool statistics are the pool's records, cited with the date read.
+- Step 3: the Monero payouts cannot be followed.
+- Step 4: a transparent coin reopens the trail; the exchange's records would be a second line.
+- The data are invented.
+
+**Walkthrough**
+1. Read each row left to right.
+2. Ask: how would you say step 2 to an agent? ("The pool reports paying this wallet 310 XMR as of 31 October; that is the attacker's earnings, not the victim's loss.")
+
+**Sources**
+None (invented example)
+
+:::
+
+## What to carry out of this lesson {.smaller}
+
+- Cryptojacking steals computing power; ATT&CK calls it Resource Hijacking, T1496.
+- Most of it mines Monero on ordinary CPUs; name the coin first.
+- No victim pays: the trace starts at the attacker's wallet, found in the malware.
+- The pool's statistics still show earnings, even for Monero; date them.
+- In the cloud the victim's bill dwarfs the attacker's coins: never report earnings as the loss.
+- On chain a cryptojacker's payout looks like any miner's: give evidence for, against, and another explanation.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide summarizes the lesson in six lines and hands over to the day's CoinJoin and mixer lab. It matters here because a limits-of-tracing note uses them when a trace starts at a mining wallet. Emphasize the third line.
+
+**Key Points**
+- Cryptojacking, Resource Hijacking, Compute Hijacking.
+- Mining pool, Stratum login, pool statistics, donation wallet.
+- RandomX, ASIC resistance.
+- Day 8 turns to Ethereum attacks and the loot.
+
+**Walkthrough**
+1. Ask a student to say each line in their own words.
+
+**Sources**
+None
+
+:::
+
+## References
+
+::: {#refs}
+:::
