@@ -12,10 +12,6 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- Four new bib entries for 13-FO (`decrypt_dprk2025theft_2025`, `trmlabs_drift_2026`, `elliptic_drift_2026`,
-  `theblock_safedevmachine_2025`) quote search excerpts: the pages were not reachable from the cloud session. Read each
-  page and replace the note with the passage word for word; prefer Chainalysis's own 2025 theft report over Decrypt.
-  (1 Nov 2026, D9 ① build)
 
 ## Quizzes
 - No quiz bank asks about 12-FO (`blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd`, D9 ②: typologies,
