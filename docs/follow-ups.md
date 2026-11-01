@@ -12,11 +12,7 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- 02-AS "Types of Digital Money" (line 108, and the hidden slide at line 271) says China banned private stablecoins (February 2026)
-  and the US "legislatively blocked" a federal CBDC (July 2025), with no citation. The US claim looks overstated (the House passed
-  an anti-CBDC bill in July 2025; the federal bar is a January 2025 executive order). Source or narrow both through the `source`
-  skill. (1 Nov 2026, 02-AS quiz review)
-- 06-EF's DAO slide still says the attacker re-entered `withdraw()` while 02-EF and 10-FO say "split"; 01-EF (lines 117, 160) still has ignored `#|` `{dot}` options, 04-EF line 516 a three-digit colour (`#555`); the signatures lab's ECDH panel text (`index.html:350`) always claims the HTTP fallback. (1 Nov 2026, review of the follow-ups lesson fixes)
+- The signatures lab's ECDH panel text (`index.html:350`) always claims the HTTP fallback. A later lab session takes it. (1 Nov 2026, review of the follow-ups lesson fixes)
 
 ## Quizzes
 - The day 2 daily quiz (session 9) has no question on the new slide "A blockchain is a record, not a currency".
