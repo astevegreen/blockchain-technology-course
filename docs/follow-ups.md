@@ -32,10 +32,8 @@ slide index), which is never listed here.
   in 02-FO, 04-AS, 06-FO and 07-FO: use six digits. (31 Oct 2026, D7 ③ browser check)
 
 ## Quizzes
-- 02-IN bank (`quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json`) and the day 2 daily
-  quiz have no question on the new slide "A blockchain is a record, not a currency" (one chain many assets, one
-  asset many chains, a chain with no coin); q1 traces to the hidden "What is a Blockchain?" slide, so retrace it to
-  "A blockchain is blocks, each linked to the last". (31 Oct 2026, 02-IN D1 ① slides)
+- The day 2 daily quiz (session 9) has no question on the new slide "A blockchain is a record, not a currency".
+  (31 Oct 2026, 02-IN D1 ① slides)
 - 03-EF quiz bank q at line 97 and the synthesis (`lesson_synthesis/ethereum_03-EF-ethereum_network-synthesis.md`
   lines 39, 95, 117) say the tip "compensates the proposer"; 03-EF now says fee recipient. (31 Oct 2026, 03-EF tip fix)
 - 03-EF bank has no questions on the DEX, sandwich-attack or look-alike slides. (31 Oct 2026, rebuild `0504bcc`)
