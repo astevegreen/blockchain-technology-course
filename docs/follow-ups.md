@@ -72,9 +72,6 @@ slide index), which is never listed here.
 - The Bitcoin trace lab's students receive `regression-tests/automated/bitcoin-trace/` in `src.zip` and on the VM; its
   shape tests spell out the trail's design (12-input sweep, 14-output batch). Same decision as the explorer and wallet
   tests above. (31 Oct 2026, D6 Bitcoin trace lab build)
-- The Bitcoin trace lab's browser playbook (`regression-tests/agent/bitcoin-trace/`) has not been walked in a
-  browser; the automated suite passed (15 tests) without `--fresh-start`, since other labs' containers were
-  running. Walk the playbook on the desktop. (31 Oct 2026, D6 Bitcoin trace lab build)
 - The CoinJoin trace lab (`dynamic-labs/coinjoin-trace/`) is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`,
   `tools/lab_tests.py`); it needs the `bitcoin-mempool` image, like the Bitcoin trace lab. (31 Oct 2026, D7 lab build)
 - No quiz questions test the CoinJoin trace lab: what an equal-output round hides, the two leaks that undo it
@@ -82,9 +79,6 @@ slide index), which is never listed here.
 - The CoinJoin trace lab's students receive `regression-tests/automated/coinjoin-trace/` in `src.zip` and on the VM;
   its shape tests name the planted leaks and the mixer's two near-match outputs. Same decision as the Bitcoin trace
   tests above. (31 Oct 2026, D7 lab build)
-- The CoinJoin trace lab's browser playbook (`regression-tests/agent/coinjoin-trace/`) has not been walked in a
-  browser; the automated suite passed (14 tests) without `--fresh-start`, since other labs' containers were running.
-  Walk the playbook on the desktop. (31 Oct 2026, D7 lab build)
 - Students still receive the explorer lab's chain build scripts, the other labs' browser playbooks and the
   automated tests (`dynamic-labs/explorer/chain/`, `dynamic-labs/regression-tests/`) in `src.zip` and on the VM;
   the wallet tests hold the lab's fees and amounts. The wallet playbook, `wallet/quizes/facts.json` and
