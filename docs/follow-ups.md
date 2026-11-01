@@ -17,8 +17,6 @@ slide index), which is never listed here.
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
-- The day 6 daily bank asks who signs the Tron deposit and pays its fee (lab answers Q1) but not who signs and pays for the
-  sweep (lab answers Q4 and Q7: a third account pays). Add one question if the sweep needs a recall check. (1 Nov 2026)
 
 ## Labs
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
