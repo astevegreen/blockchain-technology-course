@@ -1,125 +1,255 @@
-# Instructor Guide — Hyperledger Fabric Long Lab
+# Instructor Guide — Hyperledger Fabric
 
-Pedagogical plan and teaching notes. For the operational side (setup,
-live ops, resets, troubleshooting) see
-[CLASSROOM_OPERATIONS.md](CLASSROOM_OPERATIONS.md).
+Instructor-only: this file is left out of the student site and the
+student VM. For the operational side (setup, live ops, resets,
+troubleshooting) see [CLASSROOM_OPERATIONS.md](CLASSROOM_OPERATIONS.md).
 
-## Learning objectives
+Day 5 runs this lab as a **30-minute demo that the instructor drives**. Students watch
+the projected screen; nobody claims a lane. The longer student lab (about 90
+minutes) is described after the demo for a later run.
 
-By the end of the lab students should be able to:
+## Day 5 demo: watch the gatekeeper work (about 30 minutes)
 
-- Explain the roles of **peers**, **orderer**, **channels**, and
-  **chaincode** in a permissioned Fabric network.
-- Issue a real credential (a diploma) from their own org's peer and
-  verify it from another org on the same shared ledger.
-- Read blocks and transactions in the explorer and connect them to the
-  **propose → endorse → order → validate → commit** lifecycle.
-- Predict and observe the consequences of **peer outages**, **orderer
-  outages**, and **endorsement policy violations**.
-- Describe how **MSP identity**, **endorsement policy**, and **channel
-  governance** control who can do what, and why "permissioned" doesn't
-  mean "centralized".
-- Apply the same infrastructure to a consortium with **competing
-  interests** (trade finance).
+The demo pairs with the slide "Fabric demo: watch the gatekeeper work" in
+`blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd`.
+That slide hands students three questions, and each beat below answers one:
 
-## Classroom topology
+1. **Who signed it?** Beat 1, the forged diploma.
+2. **Who decides?** Beat 2, the endorsement policy with two peers down.
+3. **Who can see it?** Beat 3, Meridian (Org5), the member that never endorses.
 
-This is a multi-tenant classroom lab, not a single-user sandbox. Every
-student has:
+The outputs below were captured from the live network on 31 Oct 2026
+(Fabric test network, channel `diplomas`, chaincode `basic`). Your ids,
+transaction ids and timestamps will differ; the messages will not. If the
+network will not start in class, project these outputs instead: they are the
+demo's fallback.
 
-- Their own **org** and **peer** (`peer0.studentNN.example.com`).
-- Their own admin **MSP** identity — they cannot act as another student.
-- Their own per-student exercise surface at `/labs/hlf/c/<uuid>/…`.
-- A shell (`ttyd`) scoped to their own peer.
+### Before class (about 10 minutes, not counted in the 30)
 
-All students share:
+1. Bring up the core network only (the four consortium peers, Meridian and the
+   orderer), with no student lanes to fill. From `dynamic-labs/`:
 
-- One **ledger** on the channel `diplomas`.
-- Four **consortium peers** (Cascadia State, Chesapeake Canoe University, South
-  Hudson, Maple Leaf) under 3-of-4 MAJORITY endorsement.
-- One **orderer**.
+   ```bash
+   ./lab-manager.sh deploy --mode instructor --hlf-student-capacity 1
+   ./lab-manager.sh start hlf
+   ```
 
-Writes made by one student show up in every other student's explorer.
-That is pedagogically load-bearing — Chapter 1 is about seeing
-classmates' diplomas appear on the same ledger.
+   Capacity 1 is the smallest the lab manager accepts. It provisions one
+   student lane that nobody claims, so the network stays small enough for a
+   laptop. You don't need the 16 GB host the student lab requires.
+2. Log in at `/instructor/` and open `/labs/hlf/hlf_instructor.html`. Wait
+   until the network shows as up.
+3. Press **Seed Sample Transactions** so the ledger is not empty. The
+   endorsement-policy scenario in beat 2 needs at least one diploma on the ledger.
+4. From the instructor console's node links, open three consoles in separate
+   tabs: **Org1 · Cascadia State**, **Org2 · Chesapeake Canoe** and
+   **Org5 · Meridian**. Each one is a shell that signs as that organization.
+   Also open **Open Explorer**.
+5. Pick a short tag for today's ids, such as the date (`1031` below). A diploma
+   id can be used only once on a ledger, so use a new tag for each class unless
+   you ran **Reset Network** afterwards.
 
-## Recommended flow (90 minutes)
+### Beat 1: who signed it? (8 minutes)
 
-### 0. Before you start (5 min, before class)
+In the **Org2 · Chesapeake Canoe** console, try to issue a diploma in
+Cascadia State's name:
 
-- Start the network from the instructor console.
-- Set pool size to ~20% of class size.
-- Post the claim URL (`/labs/hlf/claim`) where students can find it.
+```
+invoke create diploma-1031-forgery credential 4 "George Washington" 2024 "History" "Bachelor of Arts" "Cascadia State"
+```
 
-### 1. Orientation — Chapter 0 (10 min)
+Expected output:
 
-- Have everyone hit `/labs/hlf/claim`. Watch the lane grid fill in.
-- Walk through the lesson UI: sidebar TOC, current exercise card, the
-  explorer button, the student console button.
-- Call out that each student has their own org and peer, but the ledger
-  is shared — classmates' transactions will appear in their explorer.
+```
+Error: endorsement failure during invoke. response: status:500 message:"Issuer forgery rejected: transaction signed by Org2MSP (Chesapeake Canoe University) but the credential claims to be issued by \"Cascadia State\" (Org1MSP). A school can only issue diplomas under its own MSP."
+```
 
-### 2. Chapter 1 — Issue & Verify a Diploma (25 min)
+Now issue the same diploma honestly, from the **Org1 · Cascadia State** console:
 
-- Students issue a diploma from their own peer. Have them use a name
-  they'll recognize so they can pick it out of the explorer.
-- Open the explorer as a class — watch diplomas stream in from every
-  student.
-- Pair students: A's diploma is verified from B's explorer view as
-  though B were a prospective employer.
+```
+invoke create diploma-1031-honest credential 4 "George Washington" 2024 "History" "Bachelor of Arts" "Cascadia State"
+```
 
-Teaching moment: **who signed this?** The transaction detail shows the
-endorsing peer's MSP identity. A diploma issued by Cascadia State shows
-a Cascadia State signature — you can't fake that from Chesapeake Canoe's peer.
+Expected output (the lines that matter):
 
-### 3. Chapter 2 — How That Transaction Worked (15 min)
+```
+... txid [77017d18...] committed with status (VALID) at peer0.mapleleaf.example.com:13051
+... txid [77017d18...] committed with status (VALID) at peer0.southhudson.example.com:11051
+... txid [77017d18...] committed with status (VALID) at peer0.chesapeakecanoe.example.com:9051
+... txid [77017d18...] committed with status (VALID) at peer0.cascadiastate.example.com:7051
+... Chaincode invoke successful. result: status:200 payload:"{...\"IssuerMSP\":\"Org1MSP\",\"Issuer\":\"Cascadia State\"...}"
+```
 
-- Drill into one student's diploma transaction.
-- Walk the five lifecycle stages: propose (client → their peer),
-  endorse (their peer signs), order (orderer batches into a block),
-  validate (every peer validates the policy), commit (state updates).
-- Block view vs. world state view — both come from the same chain.
+Read it back from the Chesapeake Canoe console, the school that just failed to
+forge it:
 
-### 4. Chapter 3 — What Happens When Things Break (15 min)
+```
+query diploma-1031-honest
+```
 
-- Use **Scenario Controls** → Peer outage: Cascadia State. Ask a
-  student whose org isn't Cascadia to issue a diploma. It should still
-  succeed — 3-of-4 MAJORITY holds.
-- Recover Cascadia. Then drop two peers (Endorsement policy demo).
-  Attempt a write. It fails with ENDORSEMENT\_POLICY\_FAILURE.
-- Recover, then drop the orderer. Reads still work; new writes stall.
-- Framing: peer outages are about **availability**, orderer outages are
-  about **commit ordering**, policy violations are about **integrity**.
+```
+{
+  "DegreeType": "Bachelor of Arts",
+  "FieldOfStudy": "History",
+  "ID": "diploma-1031-honest",
+  "Issuer": "Cascadia State",
+  "IssuerMSP": "Org1MSP",
+  ...
+}
+```
 
-### 5. Chapter 4 — Who Controls the Network (10 min)
+What to say: Chesapeake Canoe held a valid identity and the consortium peers
+would endorse its transactions, but the chaincode reads the signer's
+organization from the certificate on the proposal, which cannot be typed in,
+and refuses a diploma in another school's name. The forged record never
+reached a block. `IssuerMSP` on the honest diploma came from that same
+certificate. The `Issuer` text is just a display name. The peers that endorsed
+it show only as the four `committed with status (VALID)` lines: the Explorer
+does not yet name endorsing organizations.
 
-- Open the governance panel. MSPs, policies, admin identities.
-- Ask: "who could issue a diploma as Cascadia State?" Answer: only an
-  identity signed by Cascadia's CA. That's the MSP doing its job.
-- Contrast with Bitcoin/Ethereum: there, anyone with the right signature
-  can write. Here, the signer must be a recognized member.
-- Use Meridian (Org5) as the pedagogical anchor: it is a channel member
-  with a full ledger mirror but is deliberately *absent* from the
-  Endorsement / LifecycleEndorsement policies. Every student org sits in
-  exactly the same posture — members who can read and propose, but who
-  cannot themselves endorse a write. That separation between "channel
-  membership" and "endorsement authority" is the governance lever worth
-  dwelling on here.
+### Beat 2: who decides? (8 minutes)
 
-### 6. Chapter 5 — Credentials to Consortium (10 min)
+First show the rule. The channel's endorsement policy, as written in the
+network's configuration
+(`dynamic-labs/hlf/managed_runtime/configtx-4org-students.yaml`, `Endorsement`
+under `Application`), is:
 
-- Trade finance capstone. Same infrastructure, competing interests.
-- Discuss role-tagged assets (exporter/importer/bank/customs metadata)
-  and how they map to organization identity.
+```
+OutOf(3, 'Org1MSP.peer', 'Org2MSP.peer', 'Org3MSP.peer', 'Org4MSP.peer')
+```
 
-### 7. Wrap-up (5 min)
+Any three of the four consortium schools must sign a write. Meridian and the
+student organizations are not in the list. On screen, beat 1's four
+`committed with status (VALID)` lines show the consortium peers that took part.
 
-- What persists, what doesn't: ledger survives peer reset; peer state
-  survives claim release under `sticky`; nothing survives Reset Network.
-- What's real vs. presentation: see the "Infrastructure Notes" panel on
-  the instructor console for the honest list.
+Then, in **Scenario Controls**, press **Activate** on **Endorsement policy demo**.
+It stops two consortium peers, Chesapeake Canoe and Maple Leaf, which leaves two
+of the four. The console reports:
 
-## Per-chapter instructor notes
+```
+Triggered endorsement-policy demo (stopped 2 peers) and captured a failed write probe.
+```
+
+From the **Org1 · Cascadia State** console, try an honest write:
+
+```
+invoke create diploma-1031-two credential 4 "George Washington" 2024 "History" "Bachelor of Arts" "Cascadia State"
+```
+
+Expected output:
+
+```
+[hlf] Only 2 of 4 peers are reachable.
+[hlf] The channel endorsement policy requires 3-of-4 peers to sign, so this transaction would fail at commit validation.
+[hlf] Refusing to submit. Ask the instructor to recover at least one more peer, then retry.
+ENDORSEMENT_POLICY_FAILURE: insufficient live peers (2/4, need 3)
+```
+
+Say it plainly: the lab's console helper counts the live peers and stops here.
+A production client would usually fail to gather enough endorsements and
+never submit, and one that submitted anyway would see the write marked invalid
+at validation, because it would carry two signatures where the policy needs
+three. Either way it never changes the ledger, even though Cascadia State is
+the honest issuer. Press **Restore** on the same card before beat 3:
+
+```
+Recovered Chesapeake Canoe + Maple Leaf peers for endorsement-policy scenario.
+```
+
+### Beat 3: who can see it? (8 minutes)
+
+In the **Org5 · Meridian** console:
+
+```
+query all
+```
+
+Every diploma on the ledger comes back, including `diploma-1031-honest` from
+beat 1. Meridian is a channel member: its peer holds every block, though it is
+in no endorsement rule.
+
+In the Explorer, open **Governance**. The organizations listed are the
+channel's members: Org1MSP to Org4MSP, Org5MSP (Meridian), and one MSP per
+student lane provisioned (`StudentNNMSP`). Being on this
+list is what lets a peer receive blocks at all. An organization that is not
+listed has no certificate the channel recognizes, so it has no copy to read.
+
+If someone asks whether Meridian can write, show them. From the Meridian
+console:
+
+```
+invoke create diploma-1031-meridian credential 4 "Ada Lovelace" 2024 "Mathematics" "Bachelor of Science"
+```
+
+It succeeds (`committed with status (VALID)` at the four consortium peers,
+`"IssuerMSP":"Org5MSP"`). Membership lets Meridian read and propose. Only the
+four schools can endorse, and the chaincode stamps Meridian's own name on
+whatever it proposes. The "read-only" label in the console means "never
+endorses", not "cannot propose".
+
+**Who can change the rules.** Every policy on the Governance page is listed
+"via `Admins`": that is its `mod_policy`, the rule for changing it. For the application policies, including `Endorsement`,
+that means a majority of the member organizations' admins must sign a
+configuration update (`MAJORITY Admins` in the same file). Meridian cannot
+endorse a diploma, but it counts toward that majority. Each change is itself a
+block: the Governance page's config history lists the `CONFIG` blocks that
+built the channel.
+
+### Close (6 minutes)
+
+Ask the slide's three questions aloud and take answers before you show the
+ones below.
+
+### Answers to the slide's three questions
+
+Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale").
+
+1. **Who signed it?** Cascadia State (Org1MSP) issued `diploma-1031-honest`.
+   Chesapeake Canoe (Org2MSP) tried to issue the same diploma in Cascadia's
+   name and was refused, so no forged record exists. *High confidence:* two
+   kinds of evidence agree. The chaincode read the signer from the certificate
+   (the refusal names the real signer and the claimed one, and `IssuerMSP` on
+   the honest record was set the same way, not typed), and the four consortium
+   peers independently validated and committed the honest diploma.
+2. **Who decides?** The four consortium schools: any three of Org1 to Org4
+   must endorse a write. With two of them down, even an honest write did not
+   go through. *High confidence:* the policy text in the channel configuration
+   names them, and the outage behaved as that policy predicts.
+3. **Who can see it?** Every channel member, including Meridian, which endorses
+   nothing: its `query all` returned the whole ledger. *High confidence:* we
+   watched it, and the channel configuration gives Meridian a `Readers` policy
+   (`configtx-4org-students.yaml`, `Org5`) while leaving it out of
+   `Endorsement`. That an organization outside the member list sees nothing is
+   *moderate confidence* from this demo alone: we read it from the member list
+   and Fabric's design but did not show an outsider being turned away.
+   **Who can change the rules?** A majority of the member organizations'
+   admins, through a configuration update that is itself recorded as a block.
+
+## The student lab (about 90 minutes, not on the current day map)
+
+The full lab gives each student a lane: their own organization, peer, MSP
+identity and console on one shared ledger (channel `diplomas`), endorsed by
+the four consortium peers. Its chapters, and the exercise ids in the lesson
+UI, are:
+
+- Chapter 0, orientation (`orientation`, `meet-the-players`).
+- Chapter 1, issue and verify a diploma (`issue-diploma`, `verify-diploma`).
+- Chapter 2, how the transaction worked (`anatomy-of-a-block`,
+  `endorsement-lifecycle`).
+- Chapter 3, faults: peer outage, orderer outage (`peer-outage`,
+  `orderer-outage`).
+- Chapter 4, who controls the network (`what-is-msp`, `endorsement-policy`,
+  `forge-a-diploma`, `governance`).
+- Chapter 5, trade finance (`trade-finance-consortium`); Chapter 6, the
+  Westview used-car exchange (`westview-*`).
+
+Each exercise card carries its own instructor actions and expected
+observations (`web_service/hlf_service.py`), and the notes below cover the
+classroom side. Deploy with one lane per student (`--hlf-student-capacity N`)
+and post the claim URL `/labs/hlf/claim`.
+
+### Per-chapter instructor notes
 
 **Chapter 0 (Orientation).** The claim flow is the quiet star — 20
 students hit it in the first minute and the lane grid lights up. If
@@ -150,14 +280,14 @@ The instructor panel's Seed Sample Transactions currently seeds
 diplomas; extend `seed_routes` / `hlf_service.seed_*` if you want a
 second preset for trade finance.
 
-## Guided Teaching Prompts panel
+### Guided Teaching Prompts panel
 
 Bottom of the instructor console. Pulls live exercise state for the
 current class, including per-exercise "live checks" (e.g. "did anyone
 issue a diploma yet?"). Good for glancing at progress without
 interrupting students.
 
-## Operational reminders
+### Operational reminders
 
 - **Per-lane Reset** wipes one student's peer. Shared ledger is fine.
 - **Reset Network** wipes everything. Use between classes, not during.
@@ -165,7 +295,7 @@ interrupting students.
 - **Release** on a claim hands the lane back to the pool per the current
   policy (`sticky` = keep peer state; `wipe` = reset back to clean).
 
-## Pre-class checklist
+### Pre-class checklist
 
 - [ ] Host has ≥16 GB RAM free for 20 students + consortium
 - [ ] Shared router up (`docker compose -f router ps`)
@@ -176,14 +306,14 @@ interrupting students.
 - [ ] Claim URL posted for the class
 - [ ] Seeded baseline transactions if you want a non-empty opening ledger
 
-## Post-class checklist
+### Post-class checklist
 
 - [ ] Release any idle claims (or let sweeper do it)
 - [ ] **Reset Network** if you want a clean slate for the next class
 - [ ] Rotate `INSTRUCTOR_AUTH_KEY` if policy dictates
 - [ ] `docker system prune -f` if disk is getting tight
 
-## Debug logging
+### Debug logging
 
 All backend + lab-manager tracing is off by default to reduce noise.
 Enable by setting `HLF_DEBUG=1` in the `hlf-runner` environment and
@@ -198,7 +328,7 @@ Use it when tracking:
 - Intermittent invoke/query failures
 - Network health mismatches across the classroom
 
-## Further reading
+### Further reading
 
 - [CLASSROOM_OPERATIONS.md](CLASSROOM_OPERATIONS.md) — runbook
 - [STUDENT_GUIDE.md](STUDENT_GUIDE.md) — what students see

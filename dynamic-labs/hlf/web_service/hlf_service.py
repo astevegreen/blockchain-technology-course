@@ -1919,9 +1919,13 @@ rm -rf "$tmpdir"
             if action == "stop":
                 chaincode_snapshot = self.get_chaincode_detail().get("chaincode", {})
                 all_ct = self._list_containers_by_name()
+                # Container status comes from a cache polled every 10 s, so it
+                # can be stale right after a Restore. Docker treats stopping a
+                # stopped container (or starting a running one) as a no-op, so
+                # act unconditionally rather than trust the cached status.
                 for peer_name in policy_peer_targets:
                     c = all_ct.get(peer_name)
-                    if c and c.status == "running":
+                    if c:
                         c.stop(timeout=10)
                 probe = self._run_endorsement_policy_probe()
                 scenarios["endorsement-policy"] = {
@@ -1943,8 +1947,7 @@ rm -rf "$tmpdir"
                 for peer_name in policy_peer_targets:
                     c = all_ct.get(peer_name)
                     if c:
-                        if c.status != "running":
-                            c.start()
+                        c.start()
                     else:
                         missing.append(peer_name)
                 if missing:

@@ -901,6 +901,123 @@ class HLFFaultScenarioTests(unittest.TestCase):
         self.assertFalse(result.get("success"))
 
 
+class HLFFabricDemoTests(unittest.TestCase):
+    """The day-5 instructor demo (docs/INSTRUCTOR_GUIDE.md): who signed it,
+    who decides, who can see it. Each test runs one beat through the same
+    org consoles the instructor projects."""
+
+    base_url = DEFAULT_BASE_URL
+    instructor_session = None
+    DIPLOMA_ARGS = ["credential", "4", "George Washington", "2024", "History", "Bachelor of Arts"]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.instructor_session = _get_shared_instructor_session()
+        wait_for_hlf_startup_complete(
+            cls.instructor_session,
+            cls.base_url,
+            require_student_overlay=True,
+        )
+        cls.tag = str(int(time.time()))[-6:]
+
+    def _run(self, verb: str, action: str, args: list[str], org: str) -> tuple[int, str]:
+        result = hlf_execute(
+            self.instructor_session, verb=verb, action=action, args=args, org=org, base_url=self.base_url,
+        )
+        return result.get("exit_code"), f"{result.get('stdout', '')}\n{result.get('stderr', '')}"
+
+    def _transaction(self, output: str) -> dict:
+        match = re.search(r"txid \[([0-9a-f]{64})\]", output)
+        self.assertIsNotNone(match, f"no txid in invoke output: {output[-500:]}")
+        deadline = time.time() + 60
+        while True:
+            tx = get_hlf_transaction(self.instructor_session, match.group(1), self.base_url).json()["transaction"]
+            if "error" not in tx or time.time() > deadline:
+                return tx
+            time.sleep(3)
+
+    def test_beat1_forged_diploma_is_refused(self) -> None:
+        code, out = self._run(
+            "invoke", "create", [f"diploma-{self.tag}-forgery", *self.DIPLOMA_ARGS, "Cascadia State"], "org2",
+        )
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("Issuer forgery rejected", out)
+        self.assertIn("Org2MSP", out)
+        self.assertIn("Org1MSP", out)
+        code, out = self._run("query", "read", [f"diploma-{self.tag}-forgery"], "org1")
+        self.assertNotIn('"IssuerMSP"', out, "the forged diploma reached the ledger")
+
+    def test_beat1_and_3_honest_diploma_is_read_by_every_member(self) -> None:
+        asset_id = f"diploma-{self.tag}-honest"
+        code, out = self._run("invoke", "create", [asset_id, *self.DIPLOMA_ARGS, "Cascadia State"], "org1")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(out.count("committed with status (VALID)"), 4, out)
+        deadline = time.time() + 60
+        while True:
+            code, out = self._run("query", "all", [], "org5")
+            if asset_id in out or time.time() > deadline:
+                break
+            time.sleep(3)
+        self.assertEqual(code, 0, out)
+        self.assertIn(asset_id, out, "Meridian's query all does not show the honest diploma")
+        code, out = self._run("query", "read", [asset_id], "org2")
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r'"IssuerMSP":\s*"Org1MSP"')
+
+    def test_beat3_meridian_is_a_member_but_never_endorses(self) -> None:
+        # Governance is empty until the network status reads running again,
+        # which lags beat 2's restore by up to one docker poll.
+        deadline = time.time() + 60
+        while True:
+            gov = get_hlf_governance(self.instructor_session, self.base_url)
+            members = {org.get("msp_id") for org in gov.get("governance", gov).get("organizations", [])}
+            if members or time.time() > deadline:
+                break
+            time.sleep(3)
+        self.assertTrue({*CONSORTIUM_MSPS, "Org5MSP"} <= members, members)
+
+        code, out = self._run(
+            "invoke", "create",
+            [f"diploma-{self.tag}-meridian", "credential", "4", "Ada Lovelace", "2024", "Mathematics",
+             "Bachelor of Science"],
+            "org5",
+        )
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r'\\?"IssuerMSP\\?":\\?"Org5MSP')
+        # The explorer does not decode endorser MSPs yet, so the endorsers are
+        # read from the peers the client sent the proposal to: the consortium.
+        committed_at = set(re.findall(r"committed with status \(VALID\) at ([\w.]+):\d+", out))
+        self.assertEqual(committed_at, set(CONSORTIUM_PEERS), out)
+        tx = self._transaction(out)
+        self.assertEqual(tx.get("creator_msp"), "Org5MSP", tx)
+        self.assertGreaterEqual(tx.get("endorsement_count", 0), 3, tx)
+
+    def test_beat2_endorsement_policy_refuses_then_restores(self) -> None:
+        hlf_seed(self.instructor_session, base_url=self.base_url)
+        try:
+            result = hlf_fault(self.instructor_session, "endorsement_policy", "stop", self.base_url)
+            self.assertTrue(result.get("success"), result)
+            code, out = self._run(
+                "invoke", "create", [f"diploma-{self.tag}-two", *self.DIPLOMA_ARGS, "Cascadia State"], "org1",
+            )
+            self.assertNotEqual(code, 0, out)
+            self.assertIn("ENDORSEMENT_POLICY_FAILURE: insufficient live peers (2/4, need 3)", out)
+        finally:
+            # Restore at once, as a hurried instructor would: it must really
+            # restart the peers, not trust a cached "running" status.
+            result = hlf_fault(self.instructor_session, "endorsement_policy", "start", self.base_url)
+        self.assertTrue(result.get("success"), result)
+        deadline = time.time() + 120
+        while True:
+            code, out = self._run(
+                "invoke", "create", [f"diploma-{self.tag}-after", *self.DIPLOMA_ARGS, "Cascadia State"], "org1",
+            )
+            if code == 0 or time.time() > deadline:
+                break
+            time.sleep(5)
+        self.assertEqual(code, 0, f"writes did not recover after Restore: {out[-500:]}")
+
+
 class HLFLifecycleLogTests(unittest.TestCase):
     """Tests for the lifecycle log streaming API."""
 
