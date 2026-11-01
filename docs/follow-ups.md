@@ -188,3 +188,5 @@ slide index), which is never listed here.
   step 2 now says questions first. The reviewer is a rail: the change runs the rail audit. (30 Oct 2026)
 
 ## Notion and documents
+- `docs/build-spec.md:83`, day 3 ③ cell, still names the token lesson as "(02-AS, 06-EF)"; 05-EF is that lesson since
+  `fff167f`. (31 Oct 2026, reviewer on the 04-EF quiz items)
