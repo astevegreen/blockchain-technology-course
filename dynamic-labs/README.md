@@ -13,9 +13,9 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 | `/labs/ethereum_lab/` | Ethereum lab |
 | `/labs/hlf/` | Hyperledger Fabric lab |
 | `/exercises/<name>/` | Exercises (trust-game, bgp-game) |
-| `/labs/explorer/` | Explorer lab (redirects to its own host, `explorer.<host>`) |
-| `/labs/tokens/` | Token lab (redirects to its own host, `tokens.<host>`) |
-| `/labs/dex/` | Exchange and bridge lab (redirects to `dex.<host>`, its L1 chain; its L2 chain is `dex-l2.<host>`) |
+| `/labs/explorer/` | Explorer lab (redirects to its own host, `explorer.<host>`; reached by IP address, to port 8441) |
+| `/labs/tokens/` | Token lab (redirects to its own host, `tokens.<host>`; by IP address, to port 8442) |
+| `/labs/dex/` | Exchange and bridge lab (redirects to `dex.<host>`, its L1 chain; its L2 chain is `dex-l2.<host>`; by IP address, ports 8443 and 8444) |
 | `/labs/wallet/` | Wallet lab (worksheet, wallet page, saved pages; the explorer at `/labs/wallet/mempool/`) |
 | `/labs/bitcoin-trace/` | Day-6 Bitcoin trace lab (worksheet, saved pages; the explorer at `/labs/bitcoin-trace/mempool/`) |
 | `/labs/coinjoin-trace/` | Day-7 CoinJoin trace lab (worksheet, saved pages; the explorer at `/labs/coinjoin-trace/mempool/`) |
@@ -25,7 +25,8 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 ## Prerequisites
 
 - Docker and Docker Compose v2
-- Ports 80 (and 443 for TLS) available on the host
+- Ports 80 (and 443 for TLS) available on the host, and 8441-8444 for the explorer, token and exchange labs when
+  students reach the site by IP address
 
 ## Prebuilt VM Images
 
@@ -238,7 +239,22 @@ Pick the section that matches your environment. Each deploys the shared infrastr
 
 ### Cloud (public VM with HTTPS)
 
-For a public-facing VM with Let's Encrypt TLS. Requires a DNS A record pointing to the VM and inbound TCP 80 + 443 open.
+For a public-facing VM with Let's Encrypt TLS. Requires inbound TCP 80 and 443 open (and 8441-8444 if students will
+use the VM's IP address instead of its name), and five DNS A records pointing to the VM's public IPv4 address:
+
+| Name | Type | Value |
+|------|------|-------|
+| `labs.my-course.com` (your `--domain`) | A | the VM's public IPv4 address |
+| `explorer.labs.my-course.com` | A | the same address |
+| `tokens.labs.my-course.com` | A | the same address |
+| `dex.labs.my-course.com` | A | the same address |
+| `dex-l2.labs.my-course.com` | A | the same address |
+
+The explorer, token and exchange labs each answer on their own host name, so `deploy-cloud.sh` requests one
+certificate covering all five names. Creating the records is up to whoever deploys, at their DNS provider; the script
+cannot do it. Before it calls certbot it checks that each name resolves to this host, and if one does not, it prints
+the records to create and stops. Remove any AAAA record for these names unless it also points at the VM. If the VM's
+public address is detected wrongly (the check asks `api.ipify.org`), set `PUBLIC_IP=<address>` before running it.
 
 ```bash
 cd dynamic-labs

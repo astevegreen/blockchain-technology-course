@@ -38,7 +38,8 @@ const bridge = new ethers.Interface([
   "event DepositFinalized(uint256 indexed depositId, address indexed from, address indexed to, uint256 amount)",
 ]);
 const $ = (id) => document.getElementById(id);
-const l2Origin = location.protocol + "//" + location.host.replace(/^dex\./, "dex-l2.");
+// L2's host: dex-l2.<host>, or port 8444 in place of 8443 when the class uses an IP address.
+const l2Origin = location.protocol + "//" + location.host.replace(/^dex\./, "dex-l2.").replace(/:8443$/, ":8444");
 $("l2-home").href = l2Origin + "/";
 
 let wallet = null;

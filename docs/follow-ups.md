@@ -28,14 +28,8 @@ slide index), which is never listed here.
 ## Labs
 - The explorer lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`): its stack
   pulls about 4 GB of images. Add it, or note why not; the workflow is a rail. (31 Oct 2026, D1 explorer lab build)
-- Cloud deploys need a DNS record and a certificate name for `explorer.<domain>` (`deploy-cloud.sh`, certbot); the
-  lab works on this machine and the classroom network only. (31 Oct 2026, D1 explorer lab build)
-- `/labs/explorer/` (`dynamic-labs/router/routes.conf:159`) redirects to `explorer.$http_host`, which fails when
-  students reach the course site by bare IP. (31 Oct 2026, D1 explorer lab build)
 - The token lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`); it shares the
   explorer's Otterscan and gateway images. Add it with the explorer, or note why not. (31 Oct 2026, D3 token lab build)
-- Cloud deploys need a DNS record and a certificate name for `tokens.<domain>` as well (`deploy-cloud.sh`,
-  certbot); `/labs/tokens/` has the explorer's bare-IP redirect problem too. (31 Oct 2026, D3 token lab build)
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
   (`das_understandingsecurityissues_2022`) supports "many". Students read it on the Contract tab. Reword at the next
   chain rebuild: a comment change alters the bytecode, so the deploy hashes and possibly every fee after them
@@ -43,9 +37,6 @@ slide index), which is never listed here.
 - The exchange and bridge lab is not in the CI Lab Tests (`.github/workflows/lab-tests.yml`, `tools/lab_tests.py`);
   it shares the explorer's Otterscan and gateway images and adds Foundry's. Add it with the explorer, or note why
   not. (31 Oct 2026, D4 exchange and bridge lab build)
-- Cloud deploys need DNS records and certificate names for `dex.<domain>` and `dex-l2.<domain>` (`deploy-cloud.sh`,
-  certbot); `/labs/dex/` has the explorer's bare-IP redirect problem too. (31 Oct 2026, D4 exchange and bridge lab
-  build)
 - The exchange and bridge lab has not been tried with a whole class: 40 seats swapping against one pool in one
   12-second L1 block, and the relayer finalizing their deposits (`dynamic-labs/dex/relayer/relayer.py`). (31 Oct
   2026, D4 exchange and bridge lab build)

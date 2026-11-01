@@ -16,7 +16,9 @@ Usage:
   ./deploy-cloud.sh --domain <your-domain.com> [capacity options]
 
 Options:
-  --domain DOMAIN                   Public DNS name for Let's Encrypt and router TLS
+  --domain DOMAIN                   Public DNS name for Let's Encrypt and router TLS; DOMAIN,
+                                    explorer.DOMAIN, tokens.DOMAIN, dex.DOMAIN and
+                                    dex-l2.DOMAIN must each have an A record for this host
   --max-student-capacity N          Base capacity for claim-based labs (default 20, max 40)
   --bitcoin-student-capacity N      Override Bitcoin claim-lane capacity
   --consensus-student-capacity N    Override consensus claim-lane capacity
@@ -93,6 +95,53 @@ CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
 FULLCHAIN_PATH="$CERT_DIR/fullchain.pem"
 PRIVKEY_PATH="$CERT_DIR/privkey.pem"
 
+# The explorer, token and exchange labs each answer on their own host name, so
+# one certificate covers the course domain and these four names.
+CERT_NAMES=("$DOMAIN" "explorer.$DOMAIN" "tokens.$DOMAIN" "dex.$DOMAIN" "dex-l2.$DOMAIN")
+
+# Every name must resolve to this host before certbot runs, or Let's Encrypt
+# refuses the certificate. The records are created by whoever deploys, at their
+# DNS provider; this only checks them and prints what is missing.
+check_dns_records() {
+    local public_ip="${PUBLIC_IP:-}" name addrs missing=()
+    if [[ -z "$public_ip" ]]; then
+        public_ip="$(curl -4 -fsS --max-time 10 https://api.ipify.org 2>/dev/null || true)"
+    fi
+    for name in "${CERT_NAMES[@]}"; do
+        addrs="$(getent ahostsv4 "$name" 2>/dev/null | awk '{print $1}' | sort -u | tr '
+' ' ')"
+        if [[ -z "$addrs" ]]; then
+            missing+=("$name (does not resolve)")
+        elif [[ -n "$public_ip" && " $addrs" != *" $public_ip "* ]]; then
+            missing+=("$name (resolves to ${addrs% }, not $public_ip)")
+        fi
+    done
+    if [[ "${#missing[@]}" -eq 0 ]]; then
+        echo "DNS records found for: ${CERT_NAMES[*]}"
+        return 0
+    fi
+    echo "These names do not point at this host yet:"
+    printf '  %s
+' "${missing[@]}"
+    echo
+    echo "Create these records at your DNS provider, wait for them to resolve, and run this script again:"
+    for name in "${CERT_NAMES[@]}"; do
+        printf '  %-40s A     %s
+' "$name" "${public_ip:-<public IPv4 address of this host>}"
+    done
+    echo "Remove any AAAA record for these names unless it also points at this host."
+    echo "Set PUBLIC_IP=<address> if this host's public address was not detected correctly."
+    return 1
+}
+
+cert_covers_all_names() {
+    local sans name
+    sans="$(openssl x509 -noout -ext subjectAltName -in "$FULLCHAIN_PATH" 2>/dev/null)" || return 1
+    for name in "${CERT_NAMES[@]}"; do
+        [[ "$sans" == *"DNS:$name"* ]] || return 1
+    done
+}
+
 # 1. Install Docker if not installed
 if ! command -v docker &> /dev/null; then
     echo "Installing Docker..."
@@ -106,12 +155,19 @@ if ! command -v certbot &> /dev/null; then
     apt-get update && apt-get install -y certbot
 fi
 
-if [ -f "$FULLCHAIN_PATH" ] && [ -f "$PRIVKEY_PATH" ] && openssl x509 -checkend 86400 -noout -in "$FULLCHAIN_PATH" >/dev/null 2>&1; then
-    echo "Reusing existing Let's Encrypt certificate for $DOMAIN"
+if [ -f "$FULLCHAIN_PATH" ] && [ -f "$PRIVKEY_PATH" ] && openssl x509 -checkend 86400 -noout -in "$FULLCHAIN_PATH" >/dev/null 2>&1 && cert_covers_all_names; then
+    echo "Reusing existing Let's Encrypt certificate for ${CERT_NAMES[*]}"
 else
-    echo "Requesting Let's Encrypt certificate..."
-    # Make sure port 80 is free before running standalone certbot
-    certbot certonly --standalone -d "$DOMAIN" --non-interactive --agree-tos --email admin@"$DOMAIN"
+    check_dns_records || exit 1
+    echo "Requesting Let's Encrypt certificate for ${CERT_NAMES[*]}..."
+    certbot_domains=()
+    for name in "${CERT_NAMES[@]}"; do
+        certbot_domains+=(-d "$name")
+    done
+    # Make sure port 80 is free before running standalone certbot. --cert-name
+    # keeps the files in live/$DOMAIN, where the router mounts them; --expand
+    # adds the lab names to a certificate issued for the domain alone.
+    certbot certonly --standalone --cert-name "$DOMAIN" --expand "${certbot_domains[@]}"         --non-interactive --agree-tos --email admin@"$DOMAIN"
 fi
 
 # Ensure certificates are readable by docker (nginx)
