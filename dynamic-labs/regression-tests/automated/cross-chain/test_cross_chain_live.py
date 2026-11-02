@@ -17,6 +17,7 @@ import re
 import tempfile
 import time
 import unittest
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 import duckdb
@@ -34,6 +35,11 @@ PARQUET_SHA256 = "22765c8f7dc741cda2b571a66ac7bb355295d7d69a6c37e5315b265672984f
 
 def get(path: str) -> requests.Response:
     return requests.get(f"{BASE_URL}{path}", timeout=30, allow_redirects=False)
+
+
+def flag_hash(flag: str) -> str:
+    """What a worksheet's flag box holds: flags.js hashes the student's answer the same way."""
+    return hashlib.sha256(f"course-flag:{flag}".encode()).hexdigest()
 
 
 def split_queries(sql: str):
@@ -175,6 +181,23 @@ class CrossChainLiveRegressionTests(unittest.TestCase):
 
     def test_query_16_the_as_of(self) -> None:
         self.assertEqual({r["chain"]: r["head_block"] for r in self.results["16"]}, FACTS["as_of"])
+
+    def test_challenge_flags_match_the_queries_and_the_page_holds_only_their_hashes(self) -> None:
+        f = FACTS["flags"]
+        eth = {r["direction"]: Decimal(r["eth"]) for r in self.results["13"] if r["chain"] == "ethereum"}
+        self.assertEqual(str((eth["out"] - eth["in"]).quantize(Decimal("0.01"), ROUND_HALF_UP)), f["a"]["value"])
+        (back,) = [r for r in self.results["12"] if r["from_chain"] == "arbitrum"]
+        self.assertEqual(str(Decimal(back["rseth_sent"]).quantize(Decimal("0.000001"))), f["b"]["value"])
+        (lone,) = [r for r in self.results["5"] if not r["imitates"]]
+        self.assertEqual(lone["lookalike"], f["c"]["value"])
+        text = get("/labs/cross-chain/lab/").text
+        self.assertEqual(re.findall(r'data-sha256="([0-9a-f]{64})"', text),
+                         [flag_hash(f[part]["value"]) for part in "abc"])
+        self.assertNotIn(f["a"]["value"], text)
+        self.assertNotIn(f["b"]["value"], text)
+        self.assertNotIn(f["c"]["value"], text.lower())
+        self.assertEqual(get("/labs/cross-chain/lab/flags.js").content,
+                         (LAB / "static" / "lab" / "flags.js").read_bytes())
 
     def test_saved_results_page_matches_the_queries(self) -> None:
         resp = get("/labs/cross-chain/fallback/")

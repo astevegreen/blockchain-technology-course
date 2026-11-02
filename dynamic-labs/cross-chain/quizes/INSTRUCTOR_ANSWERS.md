@@ -116,3 +116,8 @@ b. **3,575.571057 rsETH** sent back from Arbitrum by `0x8d11…` (guid `0x8bef09
    released on 22 Apr 2026 by the delegate `0xcbcdd778…`.
 c. **`0xe81c9749a665e2f65d7dd7efcb96d50c86e94ac6`**: its 0.000000001 ETH matches no payee (`imitates` is
    blank).
+
+The flags are **23259.32**, **3575.571057** and **`0xe81c9749a665e2f65d7dd7efcb96d50c86e94ac6`** (also in
+`quizes/facts.json` under `flags`). Each part's box on the worksheet holds only `sha256("course-flag:" + flag)`
+and says whether a typed answer matches: amounts are rounded half up to the flag's places (2 for a, 6 for b),
+commas and units are ignored, and an address may be in any letter case.

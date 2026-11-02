@@ -6,8 +6,10 @@ that no longer matches the worksheet, the saved pages or the instructor answers 
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import time
 import unittest
 from pathlib import Path
@@ -34,6 +36,11 @@ def api(path: str):
     resp = get(f"{API}{path}")
     resp.raise_for_status()
     return resp.json()
+
+
+def flag_hash(flag: str) -> str:
+    """What a worksheet's flag box holds: flags.js hashes the student's answer the same way."""
+    return hashlib.sha256(f"course-flag:{flag}".encode()).hexdigest()
 
 
 def is_round(sats: int) -> bool:
@@ -174,6 +181,20 @@ class BitcoinTraceLiveRegressionTests(unittest.TestCase):
         tx = TX["tx"]
         self.assertEqual({i["role"] for i in tx["in"]}, {"X0", "Y"})
         self.assertGreater(tx["height"], TX["t1"]["height"])
+
+    def test_challenge_flags_are_on_the_decoy_and_the_page_holds_only_their_hashes(self) -> None:
+        # Part e: the round output of X0's co-spend with Y is the payment; part f: the un-round one is the change.
+        by = TX["tx"]["by"]
+        self.assertTrue(is_round(by["SHOP"]["sats"]))
+        self.assertFalse(is_round(by["Z"]["sats"]))
+        flags = [ADDR["SHOP"], by["Z"]["btc"]]
+        text = get(f"{PREFIX}/lab/").text
+        self.assertEqual(re.findall(r'data-sha256="([0-9a-f]{64})"', text), [flag_hash(f) for f in flags])
+        for flag in flags:
+            self.assertNotIn(flag, text)
+        self.assertIn('<script src="flags.js"></script>', text)
+        self.assertEqual(get(f"{PREFIX}/lab/flags.js").content,
+                         (LAB / "gateway" / "static" / "lab" / "flags.js").read_bytes())
 
     def test_saved_pages_cover_every_transaction_and_address(self) -> None:
         resp = get(f"{PREFIX}/fallback/")

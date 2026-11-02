@@ -7,8 +7,10 @@ instructor answers depend on.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
+import re
 import time
 import unittest
 from pathlib import Path
@@ -31,6 +33,11 @@ POOL = 50_000_000
 # The worksheet may show the ransom address, the mixer's pool (the label) and the worked example's round.
 SHOWN = {"R1", "PW"}
 SHOWN_TX = {"j0"}
+
+
+def flag_hash(flag: str) -> str:
+    """What a worksheet's flag box holds: flags.js hashes the student's answer the same way."""
+    return hashlib.sha256(f"course-flag:{flag}".encode()).hexdigest()
 
 
 def get(path: str) -> requests.Response:
@@ -199,6 +206,16 @@ class CoinJoinTraceLiveRegressionTests(unittest.TestCase):
         # The DEAD END notes sit on the other mixers' spends of J1o1 and J2o1, which are not ransom outputs.
         self.assertEqual([i["role"] for i in TX["k1"]["in"]], ["J1o1"])
         self.assertEqual([i["role"] for i in TX["k2"]["in"]], ["J2o1"])
+
+    def test_challenge_flags_page_holds_only_their_hashes(self) -> None:
+        flags = [TX["m1"]["by"]["C2"]["btc"], ADDR["L"], TX["payout"]["by"]["W"]["btc"]]
+        text = get(f"{PREFIX}/lab/").text
+        self.assertEqual(re.findall(r'data-sha256="([0-9a-f]{64})"', text), [flag_hash(f) for f in flags])
+        for flag in flags:
+            self.assertNotIn(flag, text)
+        self.assertIn('<script src="flags.js"></script>', text)
+        self.assertEqual(get(f"{PREFIX}/lab/flags.js").content,
+                         (LAB / "gateway" / "static" / "lab" / "flags.js").read_bytes())
 
     def test_saved_pages_cover_every_transaction_and_address(self) -> None:
         resp = get(f"{PREFIX}/fallback/")

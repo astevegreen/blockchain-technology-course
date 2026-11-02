@@ -35,6 +35,11 @@ def get(path: str) -> requests.Response:
     return requests.get(f"{BASE_URL}{path}", timeout=30, allow_redirects=False)
 
 
+def flag_hash(flag: str) -> str:
+    """What a worksheet's flag box holds: flags.js hashes the student's answer the same way."""
+    return hashlib.sha256(f"course-flag:{flag}".encode()).hexdigest()
+
+
 def split_queries(sql: str):
     """The query page's splitQueries (query-page/app.mjs): setup, then (title, body) per "-- name: " block."""
     setup, *blocks = re.split(r"^-- name: ", sql, flags=re.M)
@@ -318,6 +323,20 @@ class TronDay9LiveRegressionTests(unittest.TestCase):
         for address in ("TFSYy3aacRbk3LPRLoGUqw7NvfLShPWMvo", "TUpHuDkiCCmwaTZBHZvQdwWzGNm5t8J2b9"):
             self.assertEqual(held[address], c[address], address)
         self.assertNotIn("TFSYy3aacRbk3LPRLoGUqw7NvfLShPWMvo", {r["address"] for r in self.results["6"]})
+
+    def test_challenge_flags_match_the_queries_and_the_page_holds_only_their_hashes(self) -> None:
+        f = FACTS9["flags"]
+        largest = max(self.results["9"], key=lambda r: float(r["amount"]))
+        self.assertEqual(largest["sender"], f["16"]["value"])
+        (row,) = [r for r in self.results["5"] if r["sender"] == "TFSYy3aacRbk3LPRLoGUqw7NvfLShPWMvo"]
+        self.assertEqual(row["usdt"], f["17"]["value"])
+        text = get("/labs/tron/lab/d9/").text
+        self.assertEqual(re.findall(r'data-sha256="([0-9a-f]{64})"', text),
+                         [flag_hash(f[q]["value"]) for q in ("16", "17")])
+        self.assertNotIn(f["16"]["value"], text)
+        self.assertNotIn("7,830", text)
+        self.assertIn('<script src="../flags.js"></script>', text)
+        self.assertEqual(get("/labs/tron/lab/flags.js").content, (LAB / "static" / "lab" / "flags.js").read_bytes())
 
     def test_saved_results_page_matches_the_queries(self) -> None:
         check_saved_results(self, "/labs/tron/fallback/d9/", LAB / "static" / "fallback" / "d9" / "index.html",

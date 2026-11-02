@@ -124,6 +124,11 @@ freeze timely; gives a typology with no indicator against; any percentage.
 
 ## Challenge (questions 16-17)
 
+Flags: 16 is **`TCfKMnsAQeu5mC2UBJabDPT1kQgfochJtr`** (sender of the 888,888,888 token-1004937 transfer, the
+largest); 17 is **7,830 USDT** (`TFSYy3…`'s one deposit in query 5; the 170 USDT of 22 Oct 2025 is outside the
+snapshot). Both are in `quizes/facts_d9.json` under `flags`. The worksheet's boxes hold only
+`sha256("course-flag:" + flag)`; an amount is checked to 6 places, so 7830 and 7,830.00 both match.
+
 16. Query 9: four TRC10 transfers nobody asked for: 888,888,888 of token 1004937 from `TCfKMn…` on
     14 Sep 2023, and 8,880 of token 1004990 from three different senders on 8, 11 and 27 Nov, each
     seconds or minutes after a deposit or sweep. The address sent none of them; they show someone

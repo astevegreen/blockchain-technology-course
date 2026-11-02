@@ -67,6 +67,13 @@ beside {{tx.v1.by.F_v1.btc}} BTC to the faucet's change address. Amount is the o
   it. Answer: undetermined, or Low.
 - **d. Steady and varying clues.** Steady: the peels were round and not P2WPKH (P2SH at T1, Taproot at T2 and T3); the changes were P2WPKH and
   un-round (T1, T2, T3). Varying: output position (T2 vs T3); nothing separated the outputs at T4; amount only at T5.
+- **e. Flag: `{{addr.SHOP}}`.** X0 and Y are spent together in `{{tx.tx.txid|short}}` (block {{tx.tx.height}}); the
+  round {{tx.tx.by.SHOP.btc}} BTC output is the payment. It does not belong on the ransom trail: X0 was a payment
+  out of the trail, and its owner, who also holds Y, paid someone else. Its owner is a lead, not the thief.
+- **f. Flag: {{tx.tx.by.Z.btc}} BTC** at `{{addr.Z}}`, the un-round output. Both outputs are P2WPKH, so the amount
+  is the only clue: Low.
+- The worksheet's flag boxes hold only `sha256("course-flag:" + flag)`, written by `chain/render.py`; amounts are
+  checked to 8 decimal places, and an address in any letter case.
 
 ## Common mistakes
 
