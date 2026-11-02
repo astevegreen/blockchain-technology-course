@@ -949,7 +949,7 @@ build_lane_images() {
         if [[ "${include_default_services}" == "true" ]]; then
             local -a _default_build_services=()
             mapfile -t _default_build_services < <(docker compose config --format json 2>/dev/null \
-                | python3 -c 'import json,sys; data=json.load(sys.stdin); print("\n".join(name for name, svc in data.get("services", {}).items() if svc.get("build")))' 2>/dev/null) || true
+                | python3 -c 'import json,sys; data=json.load(sys.stdin); sys.stdout.write("".join(name + "\n" for name, svc in data.get("services", {}).items() if svc.get("build")))' 2>/dev/null) || true
             if [[ ${#_default_build_services[@]} -gt 0 ]]; then
                 echo "  Building compose images: ${_default_build_services[*]}"
                 local default_build_output default_build_rc=0
