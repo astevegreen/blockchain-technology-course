@@ -31,7 +31,7 @@ Usage:
   regression-tests/automated/consensus/run.sh [options]
 
 Options:
-  --fresh-start  Wipe runtime state and recreate the stack before running tests.
+  --fresh-start  Wipe runtime state, rebuild the lab's images and recreate the stack before running tests.
   --skip-start    Do not call lab-manager before running the suite.
   --direct-host   Run the unittest suite directly on the host instead of in the router-net runner container.
   --match TEXT    Run only tests whose unittest id/name contains TEXT.
@@ -121,6 +121,7 @@ fresh_start() {
   (
     cd "${ROOT_DIR}"
     bash ./lab-manager.sh deploy --mode instructor --no-tls --max-student-capacity 2
+    bash ./lab-manager.sh build-images consensus
     bash ./lab-manager.sh start consensus
   )
 }

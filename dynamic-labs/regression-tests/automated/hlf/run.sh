@@ -21,7 +21,7 @@ Usage:
   regression-tests/automated/hlf/run.sh [options]
 
 Options:
-  --fresh-start  Wipe HLF runtime state and recreate the lab before running tests.
+  --fresh-start  Wipe HLF runtime state, rebuild its images and recreate the lab before running tests.
   --skip-start   Do not call lab-manager before running the suite.
   --direct-host  Run the unittest suite directly on the host instead of in the router-net runner container.
   --match TEXT   Run only tests whose unittest id/name contains TEXT.
@@ -100,6 +100,7 @@ fresh_start() {
   # be allowed to fetch the pinned release again.
   (
     cd "${ROOT_DIR}"
+    HLF_ALLOW_RUNTIME_DOWNLOADS="${HLF_ALLOW_RUNTIME_DOWNLOADS:-1}" bash ./lab-manager.sh build-images hlf
     HLF_ALLOW_RUNTIME_DOWNLOADS="${HLF_ALLOW_RUNTIME_DOWNLOADS:-1}" bash ./lab-manager.sh start hlf
   )
 }

@@ -49,10 +49,6 @@ slide index), which is never listed here.
 - `dynamic-labs/ethereum_lab/docs/guides/BYTECODE_REVERSE_ENGINEERING.md:102` points students to the commercial
   "Etherscan Opcode Tool"; labs use open-source tools only. Swap in heimdall-rs or an open disassembler.
   (1 Nov 2026, D8 ③ lesson build)
-- The lab test runners (`dynamic-labs/regression-tests/automated/*/run.sh`, even with `--fresh-start`) start a lab
-  through `lab-manager.sh start`, which never rebuilds its image; images such as `tron-page:latest` are shared by
-  every checkout, so a run can test pages built from another branch. Rebuild the lab's image in `--fresh-start`.
-  (1 Nov 2026, CTF flags lab run: tron and cross-chain failed on stale images until `docker compose build`)
 
 ## Tooling and rules
 - `tools/check.py` never runs `quizes/pretest/verify_pretest.py`: it checks only `quizes/quiz_json/` banks
