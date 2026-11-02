@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the week-1 pretest bank: blueprint, answer keys, visible sources, option lengths."""
+"""Verify the pretest banks (weeks 1 and 2): blueprint, answer keys, visible sources, option lengths."""
 
 import json
 import re
@@ -12,10 +12,8 @@ REPO = HERE.parent.parent
 sys.path.insert(0, str(HERE.parent))
 from verify_single_quiz import check_single_quiz  # noqa: E402
 
-BANK = HERE / "pretest_week1-quiz-bank.json"
-
 # docs/build-spec.md, "Pretest blueprint": day -> {Role Concepts Order: skill}.
-BLUEPRINT = {
+BLUEPRINT_WEEK1 = {
     1: {1: "familiarity", 2: "familiarity", 3: "familiarity", 4: "familiarity",
         5: "familiarity", 41: "working", 42: "familiarity"},
     2: {},
@@ -23,6 +21,18 @@ BLUEPRINT = {
     4: {6: "familiarity", 10: "working", 12: "working"},
     5: {31: "familiarity", 38: "familiarity", 39: "familiarity", 48: "familiarity", 49: "familiarity"},
 }
+BLUEPRINT_WEEK2 = {
+    6: {7: "working", 8: "working", 20: "working", 21: "familiarity", 25: "familiarity",
+        27: "familiarity", 28: "working", 40: "familiarity", 45: "working"},
+    7: {9: "working", 11: "familiarity", 23: "familiarity"},
+    8: {13: "familiarity", 14: "familiarity", 15: "familiarity", 16: "familiarity", 17: "familiarity",
+        19: "familiarity", 22: "familiarity", 24: "familiarity", 47: "familiarity"},
+    9: {26: "familiarity", 29: "familiarity", 30: "familiarity", 37: "working"},
+}
+BANKS = [
+    (HERE / "pretest_week1-quiz-bank.json", BLUEPRINT_WEEK1),
+    (HERE / "pretest_week2-quiz-bank.json", BLUEPRINT_WEEK2),
+]
 TYPE_FOR_SKILL = {"familiarity": "multiple_choice", "working": "written"}
 
 
@@ -47,8 +57,8 @@ def visible_headings(path: Path) -> set[str]:
     return out
 
 
-def main() -> int:
-    bank = json.loads(BANK.read_text(encoding="utf-8"))
+def check_bank(bank_path: Path, blueprint: dict, cache: dict[Path, set[str]]) -> list[str]:
+    bank = json.loads(bank_path.read_text(encoding="utf-8"))
     questions = bank["questions"]
     errors = []
 
@@ -59,7 +69,7 @@ def main() -> int:
     if sorted(listed) != sorted(ids):
         errors.append("hierarchy does not list every question exactly once")
 
-    for day, concepts in BLUEPRINT.items():
+    for day, concepts in blueprint.items():
         got = {q["concept"]["order"]: q for q in questions if q["day"] == day}
         if set(got) != set(concepts):
             errors.append(f"day {day}: concepts {sorted(got)} != blueprint {sorted(concepts)}")
@@ -71,10 +81,9 @@ def main() -> int:
                 continue
             if q["concept"]["skill"] != skill or q["question_type"] != TYPE_FOR_SKILL[skill]:
                 errors.append(f"{q['id']}: concept {order} is {skill}, so it must be {TYPE_FOR_SKILL[skill]}")
-    if len(questions) != sum(len(c) for c in BLUEPRINT.values()):
-        errors.append(f"{len(questions)} items; the blueprint has {sum(len(c) for c in BLUEPRINT.values())}")
+    if len(questions) != sum(len(c) for c in blueprint.values()):
+        errors.append(f"{len(questions)} items; the blueprint has {sum(len(c) for c in blueprint.values())}")
 
-    cache: dict[Path, set[str]] = {}
     for q in questions:
         if q["question_type"] == "written" and not q.get("answer_key"):
             errors.append(f"{q['id']}: written item has no answer_key")
@@ -96,10 +105,21 @@ def main() -> int:
     # Option lengths: the course rule for multiple choice, run on the multiple-choice items only.
     mc = {**bank, "questions": [q for q in questions if q["question_type"] == "multiple_choice"]}
     with tempfile.TemporaryDirectory() as tmp:
-        mc_file = Path(tmp) / "pretest_week1_mc.json"
+        mc_file = Path(tmp) / f"{bank_path.stem}_mc.json"
         mc_file.write_text(json.dumps(mc), encoding="utf-8")
         if check_single_quiz(mc_file) != 0:
             errors.append("multiple-choice option lengths fail verify_single_quiz")
+    return [f"{bank_path.name}: {e}" for e in errors]
+
+
+def main() -> int:
+    errors, cache, seen = [], {}, set()
+    for bank_path, blueprint in BANKS:
+        errors += check_bank(bank_path, blueprint, cache)
+        ids = {q["id"] for q in json.loads(bank_path.read_text(encoding="utf-8"))["questions"]}
+        if seen & ids:
+            errors.append(f"{bank_path.name}: ids {sorted(seen & ids)} are used in another pretest bank")
+        seen |= ids
 
     for e in errors:
         print(f"FAIL: {e}")

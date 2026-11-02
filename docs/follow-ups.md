@@ -55,5 +55,8 @@ slide index), which is never listed here.
   (1 Nov 2026, CTF flags lab run: tron and cross-chain failed on stale images until `docker compose build`)
 
 ## Tooling and rules
+- `tools/check.py` never runs `quizes/pretest/verify_pretest.py`: it checks only `quizes/quiz_json/` banks
+  (`tools/check.py:482`), so a pretest bank that breaks its blueprint or option-length rule still passes the check
+  and the pre-commit hook. (2 Nov 2026, week-2 pretest build: check passed while the verifier failed)
 
 ## Notion and documents
