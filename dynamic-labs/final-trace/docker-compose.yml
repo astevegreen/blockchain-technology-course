@@ -1,0 +1,42 @@
+name: final-trace
+
+# The day-10 final trace: one copy for the whole class. One unguided scenario across week 2: a Bitcoin leg on the
+# course chain and an invented Tron leg. The router sends (router/routes.conf):
+#   /labs/final-trace/mempool/...  -> mempool (the explorer: bitcoind, electrs and the mempool UI in one image)
+#   /labs/final-trace/...          -> page, as /<path>:
+#       /lab/              the worksheet (the case file)
+#       /query/?lab=d10    the Tron query page: DuckDB in the student's browser, over the snapshot
+#       /fallback/         the Bitcoin leg's saved explorer pages; /fallback/tron/ the Tron queries' saved output
+#       /snapshot/         the Tron snapshot's files and meta.json (row counts and SHA-256)
+# The node has no volume and no peers: a restart reloads the frozen chain (chain/blocks.hex), and the snapshot is
+# frozen in the page image, so every answer stays the same. chain/build-chain.sh rebuilds both legs.
+
+services:
+  mempool:
+    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-mempool:latest}"
+    entrypoint: ["bash", "/chain-loader/load-chain.sh"]
+    command: ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
+    environment:
+      MEMPOOL_BASE_PATH: "/labs/final-trace/mempool"
+      # The frozen chain's tip ages past bitcoind's 24-hour limit; this keeps the node out of initial
+      # block download so electrs indexes it (bitcoin/mempool/mempool-entrypoint.sh says more).
+      BITCOIN_EXTRA_ARGS: "-maxtipage=9999999999 -connect=0"
+    volumes:
+      - ./mempool/load-chain.sh:/chain-loader/load-chain.sh:ro
+      - ./chain/blocks.hex:/chain/blocks.hex:ro
+    networks:
+      - router-net
+    restart: unless-stopped
+
+  page:
+    build:
+      context: .
+      network: ${DOCKER_BUILD_NETWORK:-default}
+    image: final-trace-page:latest
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  router-net:
+    external: true

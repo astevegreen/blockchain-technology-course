@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saved query results: final trace, Tron leg</title>
+<style>
+body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 1rem; max-width: 110rem; color: #1b1b1b; }
+h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; border-top: 1px solid #ccc; padding-top: .8rem; margin-top: 1.5rem; }
+pre { background: #f4f4f4; padding: .6rem; overflow-x: auto; font-size: .85rem; }
+.table-wrap { overflow-x: auto; max-height: 30rem; }
+table { border-collapse: collapse; font-size: .85rem; }
+th, td { border: 1px solid #ccc; padding: .2rem .5rem; text-align: left; white-space: nowrap; }
+th { background: #eee; position: sticky; top: 0; }
+td.null { color: #999; }
+nav li { display: inline; margin-right: .75rem; }
+.note { background: #fff6dd; padding: .5rem 1rem; border-left: 4px solid #e0a800; }
+</style>
+</head>
+<body>
+<h1>Saved query results: Day 10 final trace: the Tron leg (invented)</h1>
+<p class="note">Use this page when the query page will not load. It shows every query and the output it gives on
+the lab's snapshot, so your worksheet questions have the same answers here. This snapshot is invented for the course: it is not data from Tron. Balances and freeze status are as of the end of the snapshot. Times are UTC.</p>
+<nav><ul><li><a href="#q1">1. Labelled addresses</a></li><li><a href="#q2">2. Every transfer in the snapshot, oldest first, with any label on either side</a></li><li><a href="#q3">3. Every address in one row each</a></li><li><a href="#q4">4. Flows</a></li><li><a href="#q5">5. Everything each labelled address sent, oldest first</a></li><li><a href="#q6">6. Each USDT send, with any TRX its sender received in the 30 minutes before (TRX pays the fee)</a></li><li><a href="#q7">7. USDT held and freeze status at the end of the snapshot, largest holdings first</a></li></ul></nav>
+<section id="q1"><h2>1. Labelled addresses: what the case file and published lists say</h2>
+<details><summary>The query</summary><pre>SELECT address, label FROM labels ORDER BY address</pre></details>
+<p>2 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>label</th></tr></thead><tbody>
+<tr><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td></tr>
+</tbody></table></div></section>
+<section id="q2"><h2>2. Every transfer in the snapshot, oldest first, with any label on either side</h2>
+<details><summary>The query</summary><pre>SELECT t.time_utc, t.block, t.asset, t.amount, t.from_addr, lf.label AS from_label, t.to_addr, lt.label AS to_label,
+       t.signer, t.tx_id
+FROM tr t
+LEFT JOIN labels lf ON lf.address = t.from_addr
+LEFT JOIN labels lt ON lt.address = t.to_addr
+ORDER BY t.block, t.seq, t.tx_id</pre></details>
+<p>31 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>block</th><th>asset</th><th>amount</th><th>from_addr</th><th>from_label</th><th>to_addr</th><th>to_label</th><th>signer</th><th>tx_id</th></tr></thead><tbody>
+<tr><td>2026-11-02 01:23:23</td><td>87696604</td><td>USDT</td><td>32745.090000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TB4cau16iYNuxGSmxGDk4uUy2dxA7g4n6J</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>ea9b791ad0af9720eab39e8132631a111ecd6231db028911981b1f207df5bf2b</td></tr>
+<tr><td>2026-11-02 01:43:57</td><td>87697015</td><td>USDT</td><td>69492.750000</td><td>TJsNxwWfn189DqMxxC4L4isXU9pMA3uyKK</td><td class="null">NULL</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td class="null">NULL</td><td>TJsNxwWfn189DqMxxC4L4isXU9pMA3uyKK</td><td>45f26051b96d05209c4aa537972cc26ee1da3069998ed91c217ed39bed96c621</td></tr>
+<tr><td>2026-11-02 01:47:02</td><td>87697077</td><td>TRX</td><td>13.700000</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td class="null">NULL</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>b8d977169a88f0a86ec21f6f9a61bdc580411c42b953743dadc3b05c76034bd7</td></tr>
+<tr><td>2026-11-02 01:49:29</td><td>87697126</td><td>USDT</td><td>69492.750000</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td class="null">NULL</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td>36930ece219bc9740de734d475ee06aed611daca53b849203b6f81c4ca452e35</td></tr>
+<tr><td>2026-11-02 02:15:24</td><td>87697644</td><td>USDT</td><td>144655.660000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TGfcNiB1xJh4NXdjuTLZgBpUeDPTDjrs7x</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>100f3c768b5350ab76b5ba737946f83d4dd7e974216d758a606bf8cc3d78653b</td></tr>
+<tr><td>2026-11-02 03:09:12</td><td>87698720</td><td>USDT</td><td>27933.840000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TTXNAAaWpiozG7asGZ8R2TLytcWHsi7vui</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>99fdd681a2970a77a3de0dd5e057594f1adddab8450db41f1d6a94ea5fa86245</td></tr>
+<tr><td>2026-11-02 03:33:34</td><td>87699207</td><td>USDT</td><td>75938.690000</td><td>THaXshSLLadmGN4aoVVjGTUYgj2xXEcwpV</td><td class="null">NULL</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td class="null">NULL</td><td>THaXshSLLadmGN4aoVVjGTUYgj2xXEcwpV</td><td>e9226920f376ba15534774d1f21e5328ad7ad9a771ed3fd11dc5f8736bdec030</td></tr>
+<tr><td>2026-11-02 03:37:10</td><td>87699279</td><td>TRX</td><td>13.700000</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td class="null">NULL</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>7d85775ea73552edd5e82b8bfa47ddd5aeccc006639de49b984732fa09ae41ed</td></tr>
+<tr><td>2026-11-02 03:39:24</td><td>87699324</td><td>USDT</td><td>75938.690000</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td class="null">NULL</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td>9709f81d14765f6bbd3341ae4b51dd1bb50310db1ee57636bb52c458ee1e081a</td></tr>
+<tr><td>2026-11-02 03:51:36</td><td>87699568</td><td>USDT</td><td>80518.430000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TBe8gyYkeGBNsNTpV8yzEwfbvT7x38jL6H</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>78c3fabfdc91cd6f2bed03b453f3cd9614df53965b143721c6fb4f099283c30c</td></tr>
+<tr><td>2026-11-02 04:28:41</td><td>87700310</td><td>USDT</td><td>20166.730000</td><td>TL1WvuH7rezM7GpBVqwM5deLF4rDPdddF3</td><td class="null">NULL</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td class="null">NULL</td><td>TL1WvuH7rezM7GpBVqwM5deLF4rDPdddF3</td><td>e42221871bb8657767712d9a8b30ad503f3c01ef66012df68d5a6fee634507e2</td></tr>
+<tr><td>2026-11-02 04:31:35</td><td>87700368</td><td>TRX</td><td>13.700000</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td class="null">NULL</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>1054038fe3f57a10313d2ba584e89e78af7aa003857cf6b27827d8f9f5f2e649</td></tr>
+<tr><td>2026-11-02 04:32:34</td><td>87700387</td><td>USDT</td><td>40962.880000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TZBb57iS41f65DRmeWkzVYwZ6DunUnmXyw</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>bd24eeb26642867eb170b05d87bb6c02d7a5bbd43469aebdc67d49fcec21d549</td></tr>
+<tr><td>2026-11-02 04:35:09</td><td>87700439</td><td>USDT</td><td>20166.730000</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td class="null">NULL</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td>113676d5f31e0ad78dc391e215ea46be1d8253f6cc6ec775e008c36b564118ff</td></tr>
+<tr><td>2026-11-02 04:40:20</td><td>87700543</td><td>USDT</td><td>168435.000000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>b6e74630ed148f452aca36b7712a4434a4d3c856bedd80f4885c5c66238d1f15</td></tr>
+<tr><td>2026-11-02 04:54:40</td><td>87700829</td><td>TRX</td><td>60.000000</td><td>TESDqRDkCZTNZxegX4QtdbieV4bMmpabS6</td><td class="null">NULL</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td class="null">NULL</td><td>TESDqRDkCZTNZxegX4QtdbieV4bMmpabS6</td><td>10960f045316152b716e6490d1c7e9ee28d9bef862433568a3255e105746fd57</td></tr>
+<tr><td>2026-11-02 05:11:16</td><td>87701161</td><td>USDT</td><td>120000.000000</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td class="null">NULL</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td class="null">NULL</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>a9d6671646b44aa0f8b4286e34e132a2d0af3c1dcdd8e1642bdce7e29bdb8717</td></tr>
+<tr><td>2026-11-02 05:14:58</td><td>87701235</td><td>TRX</td><td>13.700000</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td class="null">NULL</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>6c8e56278525ef42a4e6c45c33f0d60410921dcfef884533aaa56ee71c872604</td></tr>
+<tr><td>2026-11-02 05:17:32</td><td>87701287</td><td>USDT</td><td>120000.000000</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td class="null">NULL</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td>de555736a747c1f1dc04a210a1200b603e3d642b19ff5a40282d6a7ffb1473af</td></tr>
+<tr><td>2026-11-02 05:26:02</td><td>87701457</td><td>USDT</td><td>48435.000000</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td class="null">NULL</td><td>TYGp3PE4hma5NPtKCCDyixuK2AToCCNduZ</td><td class="null">NULL</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>af846fa0b5f2a88ae925296531fc5b961e7c01acae4ac90823e23d7c166fb4a4</td></tr>
+<tr><td>2026-11-02 05:42:06</td><td>87701778</td><td>USDT</td><td>125966.350000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>THQEVbPvGAfDqQnWxNmSXYroZzm2X5Wrdg</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>17726aea373510fa09caf75a1ea253d4b122d4b368888e9a8a9c81f4e68e2ffb</td></tr>
+<tr><td>2026-11-02 06:23:35</td><td>87702608</td><td>USDT</td><td>31149.620000</td><td>TNyvpANEbx3JXju8yAqHVdaDCP77xmx1Dm</td><td class="null">NULL</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td class="null">NULL</td><td>TNyvpANEbx3JXju8yAqHVdaDCP77xmx1Dm</td><td>727a2a4a4a4672cc0b2e97492907d0194961a0467cc6574dc1f3bca07a96c06c</td></tr>
+<tr><td>2026-11-02 06:26:55</td><td>87702674</td><td>TRX</td><td>13.700000</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td class="null">NULL</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>481b76ba5d2d5229c5e7dfaf6f96ab33b89571d18c321b7f779817710c34c9dd</td></tr>
+<tr><td>2026-11-02 06:30:00</td><td>87702736</td><td>USDT</td><td>31149.620000</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td class="null">NULL</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td>13a2b6a43e88fff4e101f3af0d6fa14319463c84462f632e5667f441419cad3f</td></tr>
+<tr><td>2026-11-02 06:54:41</td><td>87703230</td><td>USDT</td><td>168217.270000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TNtgEZ8XCSUVJXWqwbDPrrpR17SNdLxAWA</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>f7781f062f83b611a80602d6c7883ead9d1cf57ba175028e244c409ed0a4f907</td></tr>
+<tr><td>2026-11-02 07:37:31</td><td>87704086</td><td>USDT</td><td>32104.670000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TYiawj8PcpqtV2SaYni2go1v5nra4mWLtj</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>f8f6b062f0cbcc5e6314d6f3153a637f6ccda1ff78df75d7f9d167b2f2515cdb</td></tr>
+<tr><td>2026-11-02 08:03:41</td><td>87704610</td><td>USDT</td><td>3871.180000</td><td>TM3Yzm5FYF9ChC5mM6P9MymcgiQSpLUxT2</td><td class="null">NULL</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td class="null">NULL</td><td>TM3Yzm5FYF9ChC5mM6P9MymcgiQSpLUxT2</td><td>5401a1d4f33028eb7127258c4152b5990758c5602fc90b31a46c794bc6ef17ca</td></tr>
+<tr><td>2026-11-02 08:06:55</td><td>87704674</td><td>TRX</td><td>13.700000</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td class="null">NULL</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>12f63d5cd8eb048e72deab389086dec8cbade81580c2f667fdddbff036e838e5</td></tr>
+<tr><td>2026-11-02 08:09:50</td><td>87704733</td><td>USDT</td><td>3871.180000</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td class="null">NULL</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td>b29eafff3a91006a3a10598f5594baca895f308c9bf55f7ceabf0f8109b53ec8</td></tr>
+<tr><td>2026-11-02 08:24:24</td><td>87705024</td><td>USDT</td><td>190994.520000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TDYRDEjmD9Wgk7YPf7NPa8CPsegKTDiqJZ</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>421aa11130ecd1bf2498c6293f98c797ee68c7c84575314ac252169f84c97269</td></tr>
+<tr><td>2026-11-02 09:11:07</td><td>87705958</td><td>USDT</td><td>11309.020000</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>TZ7pjubVQFkzz3ebGQF7DSx5XuptReoMmG</td><td class="null">NULL</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>5d5bbe5e88e0f14ffb81f32b70b73b742fb283f8045a488e535cd6dffe21411e</td></tr>
+</tbody></table></div></section>
+<section id="q3"><h2>3. Every address in one row each: USDT in and out, TRX in, how many counterparties, first and last seen</h2>
+<details><summary>The query</summary><pre>WITH legs AS (
+  SELECT to_addr AS address, asset, amount, 1 AS dir, from_addr AS other, time_utc FROM tr
+  UNION ALL
+  SELECT from_addr, asset, amount, -1, to_addr, time_utc FROM tr)
+SELECT g.address, l.label,
+       coalesce(sum(amount) FILTER (WHERE asset = &#x27;USDT&#x27; AND dir = 1), 0) AS usdt_in,
+       count(*) FILTER (WHERE asset = &#x27;USDT&#x27; AND dir = 1) AS usdt_receipts,
+       coalesce(sum(amount) FILTER (WHERE asset = &#x27;USDT&#x27; AND dir = -1), 0) AS usdt_out,
+       count(*) FILTER (WHERE asset = &#x27;USDT&#x27; AND dir = -1) AS usdt_sends,
+       coalesce(sum(amount) FILTER (WHERE asset = &#x27;TRX&#x27; AND dir = 1), 0) AS trx_in,
+       count(DISTINCT other) FILTER (WHERE dir = 1) AS senders,
+       count(DISTINCT other) FILTER (WHERE dir = -1) AS recipients,
+       min(time_utc) AS first_seen, max(time_utc) AS last_seen
+FROM legs g LEFT JOIN labels l ON l.address = g.address
+GROUP BY g.address, l.label
+ORDER BY usdt_in DESC, g.address</pre></details>
+<p>27 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>label</th><th>usdt_in</th><th>usdt_receipts</th><th>usdt_out</th><th>usdt_sends</th><th>trx_in</th><th>senders</th><th>recipients</th><th>first_seen</th><th>last_seen</th></tr></thead><tbody>
+<tr><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>320618.970000</td><td>6</td><td>0.000000</td><td>0</td><td>0.000000</td><td>6</td><td>0</td><td>2026-11-02 01:49:29</td><td>2026-11-02 08:09:50</td></tr>
+<tr><td>TDYRDEjmD9Wgk7YPf7NPa8CPsegKTDiqJZ</td><td class="null">NULL</td><td>190994.520000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 08:24:24</td><td>2026-11-02 08:24:24</td></tr>
+<tr><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td class="null">NULL</td><td>168435.000000</td><td>1</td><td>168435.000000</td><td>2</td><td>60.000000</td><td>2</td><td>2</td><td>2026-11-02 04:40:20</td><td>2026-11-02 05:26:02</td></tr>
+<tr><td>TNtgEZ8XCSUVJXWqwbDPrrpR17SNdLxAWA</td><td class="null">NULL</td><td>168217.270000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 06:54:41</td><td>2026-11-02 06:54:41</td></tr>
+<tr><td>TGfcNiB1xJh4NXdjuTLZgBpUeDPTDjrs7x</td><td class="null">NULL</td><td>144655.660000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 02:15:24</td><td>2026-11-02 02:15:24</td></tr>
+<tr><td>THQEVbPvGAfDqQnWxNmSXYroZzm2X5Wrdg</td><td class="null">NULL</td><td>125966.350000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 05:42:06</td><td>2026-11-02 05:42:06</td></tr>
+<tr><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td class="null">NULL</td><td>120000.000000</td><td>1</td><td>120000.000000</td><td>1</td><td>13.700000</td><td>2</td><td>1</td><td>2026-11-02 05:11:16</td><td>2026-11-02 05:17:32</td></tr>
+<tr><td>TBe8gyYkeGBNsNTpV8yzEwfbvT7x38jL6H</td><td class="null">NULL</td><td>80518.430000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 03:51:36</td><td>2026-11-02 03:51:36</td></tr>
+<tr><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td class="null">NULL</td><td>75938.690000</td><td>1</td><td>75938.690000</td><td>1</td><td>13.700000</td><td>2</td><td>1</td><td>2026-11-02 03:33:34</td><td>2026-11-02 03:39:24</td></tr>
+<tr><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td class="null">NULL</td><td>69492.750000</td><td>1</td><td>69492.750000</td><td>1</td><td>13.700000</td><td>2</td><td>1</td><td>2026-11-02 01:43:57</td><td>2026-11-02 01:49:29</td></tr>
+<tr><td>TYGp3PE4hma5NPtKCCDyixuK2AToCCNduZ</td><td class="null">NULL</td><td>48435.000000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 05:26:02</td><td>2026-11-02 05:26:02</td></tr>
+<tr><td>TZBb57iS41f65DRmeWkzVYwZ6DunUnmXyw</td><td class="null">NULL</td><td>40962.880000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 04:32:34</td><td>2026-11-02 04:32:34</td></tr>
+<tr><td>TB4cau16iYNuxGSmxGDk4uUy2dxA7g4n6J</td><td class="null">NULL</td><td>32745.090000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 01:23:23</td><td>2026-11-02 01:23:23</td></tr>
+<tr><td>TYiawj8PcpqtV2SaYni2go1v5nra4mWLtj</td><td class="null">NULL</td><td>32104.670000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 07:37:31</td><td>2026-11-02 07:37:31</td></tr>
+<tr><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td class="null">NULL</td><td>31149.620000</td><td>1</td><td>31149.620000</td><td>1</td><td>13.700000</td><td>2</td><td>1</td><td>2026-11-02 06:23:35</td><td>2026-11-02 06:30:00</td></tr>
+<tr><td>TTXNAAaWpiozG7asGZ8R2TLytcWHsi7vui</td><td class="null">NULL</td><td>27933.840000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 03:09:12</td><td>2026-11-02 03:09:12</td></tr>
+<tr><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td class="null">NULL</td><td>20166.730000</td><td>1</td><td>20166.730000</td><td>1</td><td>13.700000</td><td>2</td><td>1</td><td>2026-11-02 04:28:41</td><td>2026-11-02 04:35:09</td></tr>
+<tr><td>TZ7pjubVQFkzz3ebGQF7DSx5XuptReoMmG</td><td class="null">NULL</td><td>11309.020000</td><td>1</td><td>0.000000</td><td>0</td><td>0.000000</td><td>1</td><td>0</td><td>2026-11-02 09:11:07</td><td>2026-11-02 09:11:07</td></tr>
+<tr><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td class="null">NULL</td><td>3871.180000</td><td>1</td><td>3871.180000</td><td>1</td><td>13.700000</td><td>2</td><td>1</td><td>2026-11-02 08:03:41</td><td>2026-11-02 08:09:50</td></tr>
+<tr><td>TESDqRDkCZTNZxegX4QtdbieV4bMmpabS6</td><td class="null">NULL</td><td>0.000000</td><td>0</td><td>0.000000</td><td>0</td><td>0.000000</td><td>0</td><td>1</td><td>2026-11-02 04:54:40</td><td>2026-11-02 04:54:40</td></tr>
+<tr><td>THaXshSLLadmGN4aoVVjGTUYgj2xXEcwpV</td><td class="null">NULL</td><td>0.000000</td><td>0</td><td>75938.690000</td><td>1</td><td>0.000000</td><td>0</td><td>1</td><td>2026-11-02 03:33:34</td><td>2026-11-02 03:33:34</td></tr>
+<tr><td>TJsNxwWfn189DqMxxC4L4isXU9pMA3uyKK</td><td class="null">NULL</td><td>0.000000</td><td>0</td><td>69492.750000</td><td>1</td><td>0.000000</td><td>0</td><td>1</td><td>2026-11-02 01:43:57</td><td>2026-11-02 01:43:57</td></tr>
+<tr><td>TL1WvuH7rezM7GpBVqwM5deLF4rDPdddF3</td><td class="null">NULL</td><td>0.000000</td><td>0</td><td>20166.730000</td><td>1</td><td>0.000000</td><td>0</td><td>1</td><td>2026-11-02 04:28:41</td><td>2026-11-02 04:28:41</td></tr>
+<tr><td>TM3Yzm5FYF9ChC5mM6P9MymcgiQSpLUxT2</td><td class="null">NULL</td><td>0.000000</td><td>0</td><td>3871.180000</td><td>1</td><td>0.000000</td><td>0</td><td>1</td><td>2026-11-02 08:03:41</td><td>2026-11-02 08:03:41</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>0.000000</td><td>0</td><td>0.000000</td><td>0</td><td>0.000000</td><td>0</td><td>6</td><td>2026-11-02 01:47:02</td><td>2026-11-02 08:06:55</td></tr>
+<tr><td>TNyvpANEbx3JXju8yAqHVdaDCP77xmx1Dm</td><td class="null">NULL</td><td>0.000000</td><td>0</td><td>31149.620000</td><td>1</td><td>0.000000</td><td>0</td><td>1</td><td>2026-11-02 06:23:35</td><td>2026-11-02 06:23:35</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>0.000000</td><td>0</td><td>1023842.730000</td><td>11</td><td>0.000000</td><td>0</td><td>11</td><td>2026-11-02 01:23:23</td><td>2026-11-02 09:11:07</td></tr>
+</tbody></table></div></section>
+<section id="q4"><h2>4. Flows: every sender-to-recipient pair, with the total, the count and the first and last time</h2>
+<details><summary>The query</summary><pre>SELECT from_addr, to_addr, asset, sum(amount) AS total, count(*) AS transfers, min(time_utc) AS first_utc,
+       max(time_utc) AS last_utc
+FROM tr
+GROUP BY from_addr, to_addr, asset
+ORDER BY first_utc</pre></details>
+<p>31 rows</p>
+<div class="table-wrap"><table><thead><tr><th>from_addr</th><th>to_addr</th><th>asset</th><th>total</th><th>transfers</th><th>first_utc</th><th>last_utc</th></tr></thead><tbody>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TB4cau16iYNuxGSmxGDk4uUy2dxA7g4n6J</td><td>USDT</td><td>32745.090000</td><td>1</td><td>2026-11-02 01:23:23</td><td>2026-11-02 01:23:23</td></tr>
+<tr><td>TJsNxwWfn189DqMxxC4L4isXU9pMA3uyKK</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td>USDT</td><td>69492.750000</td><td>1</td><td>2026-11-02 01:43:57</td><td>2026-11-02 01:43:57</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td>TRX</td><td>13.700000</td><td>1</td><td>2026-11-02 01:47:02</td><td>2026-11-02 01:47:02</td></tr>
+<tr><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>USDT</td><td>69492.750000</td><td>1</td><td>2026-11-02 01:49:29</td><td>2026-11-02 01:49:29</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TGfcNiB1xJh4NXdjuTLZgBpUeDPTDjrs7x</td><td>USDT</td><td>144655.660000</td><td>1</td><td>2026-11-02 02:15:24</td><td>2026-11-02 02:15:24</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TTXNAAaWpiozG7asGZ8R2TLytcWHsi7vui</td><td>USDT</td><td>27933.840000</td><td>1</td><td>2026-11-02 03:09:12</td><td>2026-11-02 03:09:12</td></tr>
+<tr><td>THaXshSLLadmGN4aoVVjGTUYgj2xXEcwpV</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td>USDT</td><td>75938.690000</td><td>1</td><td>2026-11-02 03:33:34</td><td>2026-11-02 03:33:34</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td>TRX</td><td>13.700000</td><td>1</td><td>2026-11-02 03:37:10</td><td>2026-11-02 03:37:10</td></tr>
+<tr><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>USDT</td><td>75938.690000</td><td>1</td><td>2026-11-02 03:39:24</td><td>2026-11-02 03:39:24</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TBe8gyYkeGBNsNTpV8yzEwfbvT7x38jL6H</td><td>USDT</td><td>80518.430000</td><td>1</td><td>2026-11-02 03:51:36</td><td>2026-11-02 03:51:36</td></tr>
+<tr><td>TL1WvuH7rezM7GpBVqwM5deLF4rDPdddF3</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td>USDT</td><td>20166.730000</td><td>1</td><td>2026-11-02 04:28:41</td><td>2026-11-02 04:28:41</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td>TRX</td><td>13.700000</td><td>1</td><td>2026-11-02 04:31:35</td><td>2026-11-02 04:31:35</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TZBb57iS41f65DRmeWkzVYwZ6DunUnmXyw</td><td>USDT</td><td>40962.880000</td><td>1</td><td>2026-11-02 04:32:34</td><td>2026-11-02 04:32:34</td></tr>
+<tr><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>USDT</td><td>20166.730000</td><td>1</td><td>2026-11-02 04:35:09</td><td>2026-11-02 04:35:09</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>USDT</td><td>168435.000000</td><td>1</td><td>2026-11-02 04:40:20</td><td>2026-11-02 04:40:20</td></tr>
+<tr><td>TESDqRDkCZTNZxegX4QtdbieV4bMmpabS6</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>TRX</td><td>60.000000</td><td>1</td><td>2026-11-02 04:54:40</td><td>2026-11-02 04:54:40</td></tr>
+<tr><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td>USDT</td><td>120000.000000</td><td>1</td><td>2026-11-02 05:11:16</td><td>2026-11-02 05:11:16</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td>TRX</td><td>13.700000</td><td>1</td><td>2026-11-02 05:14:58</td><td>2026-11-02 05:14:58</td></tr>
+<tr><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>USDT</td><td>120000.000000</td><td>1</td><td>2026-11-02 05:17:32</td><td>2026-11-02 05:17:32</td></tr>
+<tr><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>TYGp3PE4hma5NPtKCCDyixuK2AToCCNduZ</td><td>USDT</td><td>48435.000000</td><td>1</td><td>2026-11-02 05:26:02</td><td>2026-11-02 05:26:02</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>THQEVbPvGAfDqQnWxNmSXYroZzm2X5Wrdg</td><td>USDT</td><td>125966.350000</td><td>1</td><td>2026-11-02 05:42:06</td><td>2026-11-02 05:42:06</td></tr>
+<tr><td>TNyvpANEbx3JXju8yAqHVdaDCP77xmx1Dm</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td>USDT</td><td>31149.620000</td><td>1</td><td>2026-11-02 06:23:35</td><td>2026-11-02 06:23:35</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td>TRX</td><td>13.700000</td><td>1</td><td>2026-11-02 06:26:55</td><td>2026-11-02 06:26:55</td></tr>
+<tr><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>USDT</td><td>31149.620000</td><td>1</td><td>2026-11-02 06:30:00</td><td>2026-11-02 06:30:00</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TNtgEZ8XCSUVJXWqwbDPrrpR17SNdLxAWA</td><td>USDT</td><td>168217.270000</td><td>1</td><td>2026-11-02 06:54:41</td><td>2026-11-02 06:54:41</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TYiawj8PcpqtV2SaYni2go1v5nra4mWLtj</td><td>USDT</td><td>32104.670000</td><td>1</td><td>2026-11-02 07:37:31</td><td>2026-11-02 07:37:31</td></tr>
+<tr><td>TM3Yzm5FYF9ChC5mM6P9MymcgiQSpLUxT2</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td>USDT</td><td>3871.180000</td><td>1</td><td>2026-11-02 08:03:41</td><td>2026-11-02 08:03:41</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td>TRX</td><td>13.700000</td><td>1</td><td>2026-11-02 08:06:55</td><td>2026-11-02 08:06:55</td></tr>
+<tr><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>USDT</td><td>3871.180000</td><td>1</td><td>2026-11-02 08:09:50</td><td>2026-11-02 08:09:50</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TDYRDEjmD9Wgk7YPf7NPa8CPsegKTDiqJZ</td><td>USDT</td><td>190994.520000</td><td>1</td><td>2026-11-02 08:24:24</td><td>2026-11-02 08:24:24</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>TZ7pjubVQFkzz3ebGQF7DSx5XuptReoMmG</td><td>USDT</td><td>11309.020000</td><td>1</td><td>2026-11-02 09:11:07</td><td>2026-11-02 09:11:07</td></tr>
+</tbody></table></div></section>
+<section id="q5"><h2>5. Everything each labelled address sent, oldest first</h2>
+<details><summary>The query</summary><pre>SELECT l.label AS sender, t.time_utc, t.asset, t.amount, t.to_addr, t.tx_id
+FROM tr t JOIN labels l ON l.address = t.from_addr
+ORDER BY l.label, t.block, t.seq</pre></details>
+<p>11 rows</p>
+<div class="table-wrap"><table><thead><tr><th>sender</th><th>time_utc</th><th>asset</th><th>amount</th><th>to_addr</th><th>tx_id</th></tr></thead><tbody>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 01:23:23</td><td>USDT</td><td>32745.090000</td><td>TB4cau16iYNuxGSmxGDk4uUy2dxA7g4n6J</td><td>ea9b791ad0af9720eab39e8132631a111ecd6231db028911981b1f207df5bf2b</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 02:15:24</td><td>USDT</td><td>144655.660000</td><td>TGfcNiB1xJh4NXdjuTLZgBpUeDPTDjrs7x</td><td>100f3c768b5350ab76b5ba737946f83d4dd7e974216d758a606bf8cc3d78653b</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 03:09:12</td><td>USDT</td><td>27933.840000</td><td>TTXNAAaWpiozG7asGZ8R2TLytcWHsi7vui</td><td>99fdd681a2970a77a3de0dd5e057594f1adddab8450db41f1d6a94ea5fa86245</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 03:51:36</td><td>USDT</td><td>80518.430000</td><td>TBe8gyYkeGBNsNTpV8yzEwfbvT7x38jL6H</td><td>78c3fabfdc91cd6f2bed03b453f3cd9614df53965b143721c6fb4f099283c30c</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 04:32:34</td><td>USDT</td><td>40962.880000</td><td>TZBb57iS41f65DRmeWkzVYwZ6DunUnmXyw</td><td>bd24eeb26642867eb170b05d87bb6c02d7a5bbd43469aebdc67d49fcec21d549</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 04:40:20</td><td>USDT</td><td>168435.000000</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>b6e74630ed148f452aca36b7712a4434a4d3c856bedd80f4885c5c66238d1f15</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 05:42:06</td><td>USDT</td><td>125966.350000</td><td>THQEVbPvGAfDqQnWxNmSXYroZzm2X5Wrdg</td><td>17726aea373510fa09caf75a1ea253d4b122d4b368888e9a8a9c81f4e68e2ffb</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 06:54:41</td><td>USDT</td><td>168217.270000</td><td>TNtgEZ8XCSUVJXWqwbDPrrpR17SNdLxAWA</td><td>f7781f062f83b611a80602d6c7883ead9d1cf57ba175028e244c409ed0a4f907</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 07:37:31</td><td>USDT</td><td>32104.670000</td><td>TYiawj8PcpqtV2SaYni2go1v5nra4mWLtj</td><td>f8f6b062f0cbcc5e6314d6f3153a637f6ccda1ff78df75d7f9d167b2f2515cdb</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 08:24:24</td><td>USDT</td><td>190994.520000</td><td>TDYRDEjmD9Wgk7YPf7NPa8CPsegKTDiqJZ</td><td>421aa11130ecd1bf2498c6293f98c797ee68c7c84575314ac252169f84c97269</td></tr>
+<tr><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>2026-11-02 09:11:07</td><td>USDT</td><td>11309.020000</td><td>TZ7pjubVQFkzz3ebGQF7DSx5XuptReoMmG</td><td>5d5bbe5e88e0f14ffb81f32b70b73b742fb283f8045a488e535cd6dffe21411e</td></tr>
+</tbody></table></div></section>
+<section id="q6"><h2>6. Each USDT send, with any TRX its sender received in the 30 minutes before (TRX pays the fee)</h2>
+<details><summary>The query</summary><pre>SELECT u.time_utc, u.from_addr, u.amount AS usdt_sent, u.to_addr, f.from_addr AS trx_from, f.amount AS trx,
+       f.time_utc AS trx_utc
+FROM tr u
+LEFT JOIN tr f ON f.asset = &#x27;TRX&#x27; AND f.to_addr = u.from_addr
+              AND f.time_utc BETWEEN u.time_utc - INTERVAL 30 MINUTE AND u.time_utc
+WHERE u.asset = &#x27;USDT&#x27;
+ORDER BY u.block, u.seq</pre></details>
+<p>24 rows</p>
+<div class="table-wrap"><table><thead><tr><th>time_utc</th><th>from_addr</th><th>usdt_sent</th><th>to_addr</th><th>trx_from</th><th>trx</th><th>trx_utc</th></tr></thead><tbody>
+<tr><td>2026-11-02 01:23:23</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>32745.090000</td><td>TB4cau16iYNuxGSmxGDk4uUy2dxA7g4n6J</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 01:43:57</td><td>TJsNxwWfn189DqMxxC4L4isXU9pMA3uyKK</td><td>69492.750000</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 01:49:29</td><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td>69492.750000</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>13.700000</td><td>2026-11-02 01:47:02</td></tr>
+<tr><td>2026-11-02 02:15:24</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>144655.660000</td><td>TGfcNiB1xJh4NXdjuTLZgBpUeDPTDjrs7x</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 03:09:12</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>27933.840000</td><td>TTXNAAaWpiozG7asGZ8R2TLytcWHsi7vui</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 03:33:34</td><td>THaXshSLLadmGN4aoVVjGTUYgj2xXEcwpV</td><td>75938.690000</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 03:39:24</td><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td>75938.690000</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>13.700000</td><td>2026-11-02 03:37:10</td></tr>
+<tr><td>2026-11-02 03:51:36</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>80518.430000</td><td>TBe8gyYkeGBNsNTpV8yzEwfbvT7x38jL6H</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 04:28:41</td><td>TL1WvuH7rezM7GpBVqwM5deLF4rDPdddF3</td><td>20166.730000</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 04:32:34</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>40962.880000</td><td>TZBb57iS41f65DRmeWkzVYwZ6DunUnmXyw</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 04:35:09</td><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td>20166.730000</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>13.700000</td><td>2026-11-02 04:31:35</td></tr>
+<tr><td>2026-11-02 04:40:20</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>168435.000000</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 05:11:16</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>120000.000000</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td>TESDqRDkCZTNZxegX4QtdbieV4bMmpabS6</td><td>60.000000</td><td>2026-11-02 04:54:40</td></tr>
+<tr><td>2026-11-02 05:17:32</td><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td>120000.000000</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>13.700000</td><td>2026-11-02 05:14:58</td></tr>
+<tr><td>2026-11-02 05:26:02</td><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td>48435.000000</td><td>TYGp3PE4hma5NPtKCCDyixuK2AToCCNduZ</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 05:42:06</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>125966.350000</td><td>THQEVbPvGAfDqQnWxNmSXYroZzm2X5Wrdg</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 06:23:35</td><td>TNyvpANEbx3JXju8yAqHVdaDCP77xmx1Dm</td><td>31149.620000</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 06:30:00</td><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td>31149.620000</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>13.700000</td><td>2026-11-02 06:26:55</td></tr>
+<tr><td>2026-11-02 06:54:41</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>168217.270000</td><td>TNtgEZ8XCSUVJXWqwbDPrrpR17SNdLxAWA</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 07:37:31</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>32104.670000</td><td>TYiawj8PcpqtV2SaYni2go1v5nra4mWLtj</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 08:03:41</td><td>TM3Yzm5FYF9ChC5mM6P9MymcgiQSpLUxT2</td><td>3871.180000</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 08:09:50</td><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td>3871.180000</td><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td>13.700000</td><td>2026-11-02 08:06:55</td></tr>
+<tr><td>2026-11-02 08:24:24</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>190994.520000</td><td>TDYRDEjmD9Wgk7YPf7NPa8CPsegKTDiqJZ</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+<tr><td>2026-11-02 09:11:07</td><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>11309.020000</td><td>TZ7pjubVQFkzz3ebGQF7DSx5XuptReoMmG</td><td class="null">NULL</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+</tbody></table></div></section>
+<section id="q7"><h2>7. USDT held and freeze status at the end of the snapshot, largest holdings first</h2>
+<details><summary>The query</summary><pre>SELECT f.address, l.label, f.usdt_balance, f.usdt_blacklisted, f.as_of_block, f.as_of_time_utc
+FROM freeze_status f LEFT JOIN labels l ON l.address = f.address
+ORDER BY f.usdt_balance DESC, f.address</pre></details>
+<p>27 rows</p>
+<div class="table-wrap"><table><thead><tr><th>address</th><th>label</th><th>usdt_balance</th><th>usdt_blacklisted</th><th>as_of_block</th><th>as_of_time_utc</th></tr></thead><tbody>
+<tr><td>TAXVTHwk28V2Ua2EYMSPyVQrMbAd5J6F4g</td><td>Northwind, an exchange: hot wallet [Northwind&#x27;s published wallet list (invented)]</td><td>21529338.260000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TRca4dadMSdzAXupKdNafW51VpaCug5nN3</td><td>Lantern Desk, an OTC broker: its USDT payout wallet [case file (invented)]</td><td>835008.860000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TDYRDEjmD9Wgk7YPf7NPa8CPsegKTDiqJZ</td><td class="null">NULL</td><td>190994.520000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TNtgEZ8XCSUVJXWqwbDPrrpR17SNdLxAWA</td><td class="null">NULL</td><td>168217.270000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TGfcNiB1xJh4NXdjuTLZgBpUeDPTDjrs7x</td><td class="null">NULL</td><td>144655.660000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>THQEVbPvGAfDqQnWxNmSXYroZzm2X5Wrdg</td><td class="null">NULL</td><td>125966.350000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TBe8gyYkeGBNsNTpV8yzEwfbvT7x38jL6H</td><td class="null">NULL</td><td>80518.430000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TYGp3PE4hma5NPtKCCDyixuK2AToCCNduZ</td><td class="null">NULL</td><td>48435.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TZBb57iS41f65DRmeWkzVYwZ6DunUnmXyw</td><td class="null">NULL</td><td>40962.880000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TB4cau16iYNuxGSmxGDk4uUy2dxA7g4n6J</td><td class="null">NULL</td><td>32745.090000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TYiawj8PcpqtV2SaYni2go1v5nra4mWLtj</td><td class="null">NULL</td><td>32104.670000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TTXNAAaWpiozG7asGZ8R2TLytcWHsi7vui</td><td class="null">NULL</td><td>27933.840000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TZ7pjubVQFkzz3ebGQF7DSx5XuptReoMmG</td><td class="null">NULL</td><td>11309.020000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TBBT5WMnRnnQ4jBLiCQ4WdQ9HEJAgKHop2</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TESDqRDkCZTNZxegX4QtdbieV4bMmpabS6</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TFb6rz5AV1LiQC7ukEEd5SYcj4Rgrpeas2</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>THQnrd6fsymX8pdTbVArkSkp4KsU1hxy8E</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>THaXshSLLadmGN4aoVVjGTUYgj2xXEcwpV</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TJsNxwWfn189DqMxxC4L4isXU9pMA3uyKK</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TL1WvuH7rezM7GpBVqwM5deLF4rDPdddF3</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TM3Yzm5FYF9ChC5mM6P9MymcgiQSpLUxT2</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TMMS5746MD2B6MktFDnpqmzTxx7A4LgtXU</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TMsyv2UeMiyTUM7yDxsVxmWVubtWEm59c3</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TNbsX1LQMLN3fyyp4Y7jtwaoPmQYqVXhx5</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TNyvpANEbx3JXju8yAqHVdaDCP77xmx1Dm</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TSMMp51WTkem7VC2cu9mSg9KiaCVTSUUCV</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+<tr><td>TSzY6JLE9NmJToSncyo1Az7CX12EKHSjEC</td><td class="null">NULL</td><td>0.000000</td><td>false</td><td>87728800</td><td>2026-11-03 04:13:11</td></tr>
+</tbody></table></div></section>
+<footer><p>Written by build/saved_results.py with DuckDB 1.4.3.</p></footer>
+</body>
+</html>

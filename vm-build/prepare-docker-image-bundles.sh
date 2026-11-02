@@ -29,6 +29,7 @@ projects=(
   "dynamic-labs/coinjoin-trace"
   "dynamic-labs/tron"
   "dynamic-labs/cross-chain"
+  "dynamic-labs/final-trace"
   "dynamic-labs/ethereum_lab"
   "dynamic-labs/hlf"
 )

@@ -67,7 +67,7 @@ Usage:
   ./lab-manager.sh list
 
 Managed targets:
-  router, course-site, instructor-auth-service, ethereum_lab, bitcoin, consensus, cryptography, p2p_trust, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, tokens, dex, tron, cross-chain, quiz-engine-v2, hlf
+  router, course-site, instructor-auth-service, ethereum_lab, bitcoin, consensus, cryptography, p2p_trust, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2, hlf
 
 Deploy options:
   --mode <instructor|student>
@@ -689,6 +689,7 @@ target_dir() {
         dex) echo "${BASE_DIR}/dex" ;;
         tron) echo "${BASE_DIR}/tron" ;;
         cross-chain|cross_chain) echo "${BASE_DIR}/cross-chain" ;;
+        final-trace|final_trace) echo "${BASE_DIR}/final-trace" ;;
         quiz|quiz-engine-v2) echo "${BASE_DIR}/quiz-engine-v2" ;;
         hlf) echo "${BASE_DIR}/hlf" ;;
         lane-service|lane_service) echo "${BASE_DIR}/lane-service" ;;
@@ -719,6 +720,7 @@ tokens
 dex
 tron
 cross-chain
+final-trace
 quiz-engine-v2
 hlf
 EOF

@@ -1,0 +1,57 @@
+version: 1
+suite_id: day10-final-trace-agent-regression
+lab: final-trace
+mode: browser_mcp
+entry_mode:
+  default: non_destructive
+  fresh_start_reference: ../../automated/final-trace/run.sh
+assumptions:
+  - MCP browser tooling is available.
+  - The final-trace automated suite has already run against the same live environment.
+  - Reset is never needed; the chain and the snapshot are frozen and nothing the pages do changes them.
+shared_inputs:
+  lab_base: /labs/final-trace/
+observability:
+  required:
+    - console_logs
+    - network_failures
+shared_rules:
+  - Use a fresh browser context per task.
+  - Start from the worksheet and follow only what the pages show, as a student would; use the playbook's values to check, not to navigate.
+  - Check console errors and network failures after each major phase.
+  - Capture a screenshot for any visible failure.
+parallelization:
+  recommended:
+    - Run all three tasks in parallel; they share no state.
+tasks:
+  - id: final-trace-bitcoin-flow
+    title: The Bitcoin leg can be walked in the explorer from the case file
+    file: tasks/bitcoin-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/final-trace/lab/
+      - /labs/final-trace/mempool/
+    parallel_safe: true
+  - id: final-trace-tron-flow
+    title: The Tron leg can be walked on the query page
+    file: tasks/tron-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/final-trace/query/?lab=d10
+    parallel_safe: true
+  - id: final-trace-links-flow
+    title: Worksheet, saved pages and links
+    file: tasks/links-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /labs/final-trace/
+      - /labs/final-trace/lab/
+      - /labs/final-trace/fallback/
+      - /labs/final-trace/fallback/tron/
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.

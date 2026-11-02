@@ -93,6 +93,7 @@ fresh_start() {
     dex \
     tron \
     cross-chain \
+    final-trace \
     quiz-engine-v2 \
     hlf
   do
