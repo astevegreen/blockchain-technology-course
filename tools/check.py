@@ -302,6 +302,28 @@ def verify_quiz(rel: str) -> list[str]:
     return [f"{rel}: verify_single_quiz.py failed", *[f"  {line.strip()}" for line in (keep or tail(out))[:10]]]
 
 
+# Each quizes/ verifier besides verify_single_quiz.py (run per bank above): name, script, and the paths whose
+# change reruns it. The pretest, post-test and challenge verifiers trace items to visible lesson slides, so a
+# lesson change reruns them too.
+QUIZ_VERIFIERS = (
+    ("pretest", "quizes/pretest/verify_pretest.py", ("quizes/pretest/", "quizes/verify_single_quiz.py")),
+    ("post-test", "quizes/posttest/verify_posttest.py",
+     ("quizes/posttest/", "quizes/pretest/", "quizes/verify_single_quiz.py")),
+    ("challenge bank", "quizes/challenge/verify_challenge.py", ("quizes/challenge/", "quizes/pretest/verify_pretest.py")),
+    ("distractor alignment", "quizes/verify_distractor_alignment.py",
+     ("quizes/quiz_json/", "quizes/verify_distractor_alignment.py")),
+)
+TRACES_LESSONS = {"pretest", "post-test", "challenge bank"}
+
+
+def run_verifier(script: str) -> list[str]:
+    code, out = run([sys.executable, str(REPO / script)])
+    if code == 0:
+        return []
+    keep = [line for line in out.splitlines() if re.search(r"^FAIL|^Error|^\s+- \S", line)]
+    return [f"{script} failed", *[f"  {line.strip()}" for line in (keep or tail(out, 10))[:10]]]
+
+
 def bundle_quizzes() -> list[str]:
     with tempfile.TemporaryDirectory(prefix="quiz-bundle-check.") as tmp:
         code, out = run([sys.executable, str(REPO / "quizes" / "build_quiz_bank_bundle.py"),
@@ -485,6 +507,9 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     if bank_files:
         plan.checks.append(Check("quiz banks", lambda: [line for b in bank_files for line in verify_quiz(b)]))
         plan.checks.append(Check("quiz bundle", bundle_quizzes))
+    for name, script, covers in QUIZ_VERIFIERS:
+        if touched(covers) or (name in TRACES_LESSONS and lessons_changed):
+            plan.checks.append(Check(name, lambda script=script: run_verifier(script)))
 
     py = tracked_files(".py") if everything else [f for f in present if f.endswith(".py")]
     if py:

@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -121,12 +122,35 @@ class Planning(unittest.TestCase):
         lesson = "blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd"
         names, _ = self.names([lesson])
         self.assertEqual(names, ["lesson lint", "render 02-IN-blockchain_at_a_glance.qmd",
-                                 "glossary slide index", "mind-map links"])
+                                 "glossary slide index", "mind-map links",
+                                 "pretest", "post-test", "challenge bank"])
 
     def test_quiz_bank_change(self) -> None:
         bank = "quizes/quiz_json/bitcoin_01-BF-bitcoin_origins_and_mechanics-quiz-bank.json"
         names, _ = self.names([bank])
-        self.assertEqual(names, ["quiz banks", "quiz bundle"])
+        self.assertEqual(names, ["quiz banks", "quiz bundle", "distractor alignment"])
+
+    def test_pretest_change_runs_the_verifiers_that_read_it(self) -> None:
+        names, _ = self.names(["quizes/pretest/pretest_week2-quiz-bank.json"])
+        self.assertEqual(names, ["pretest", "post-test"])
+
+    def test_challenge_bank_change(self) -> None:
+        names, _ = self.names(["quizes/challenge/challenge-bank.md"])
+        self.assertEqual(names, ["challenge bank"])
+
+    def test_every_quiz_verifier_is_run(self) -> None:
+        scripts = {s.relative_to(check.REPO).as_posix() for s in (check.REPO / "quizes").glob("**/verify*.py")}
+        self.assertEqual(scripts - {"quizes/verify_single_quiz.py"}, {s for _, s, _ in check.QUIZ_VERIFIERS})
+        names = [c.name for c in check.plan_checks(None, added=[]).checks]
+        for name, _, _ in check.QUIZ_VERIFIERS:
+            self.assertIn(name, names)
+
+    def test_a_failing_verifier_names_its_failures(self) -> None:
+        out = "=== Single Quiz ===\n- Margin violations: 0\nFAIL: pretest_week2-quiz-bank.json: day 6: bad\nPretest: 1 failure(s).\n"
+        with unittest.mock.patch.object(check, "run", return_value=(1, out)):
+            lines = check.run_verifier("quizes/pretest/verify_pretest.py")
+        self.assertEqual(lines, ["quizes/pretest/verify_pretest.py failed",
+                                 "  FAIL: pretest_week2-quiz-bank.json: day 6: bad"])
 
     def test_site_wide_and_lab_changes_inform(self) -> None:
         _, info = self.names(["blockchain-course/_quarto.yml", "dynamic-labs/README.md"])
