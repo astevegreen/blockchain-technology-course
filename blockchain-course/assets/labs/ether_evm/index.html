@@ -3,731 +3,421 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Micro‑Lab: Prove Your Friend Wrong — Ethereum as a Replicated Computer</title>
+<title>Micro-Lab: Reading a Contract With No Source</title>
 <style>
-  :root{
-    --bg:#0f172a;          /* slate-900 */
-    --panel:#111827;       /* gray-900 */
-    --panel-2:#0b1220;     /* darker */
-    --text:#e5e7eb;        /* gray-200 */
-    --muted:#94a3b8;       /* slate-400 */
-    --accent:#22c55e;      /* green-500 */
-    --accent-2:#60a5fa;    /* blue-400 */
-    --warn:#f59e0b;        /* amber-500 */
-    --danger:#ef4444;      /* red-500 */
-    --code:#0b1220;
-    --chip:#1f2937;        /* gray-800 */
-    --chip-border:#334155; /* slate-700 */
+  :root {
+    --bg: #f8fafc; --panel: #ffffff; --text: #0f172a; --muted: #475569; --line: #cbd5e1;
+    --accent: #1d4ed8; --ok: #15803d; --warn: #b45309; --bad: #b91c1c; --code: #f1f5f9; --chip: #e2e8f0;
   }
-  html,body{height:100%;}
-  body{
-    margin:0; font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,"Helvetica Neue",Arial;
-    color:var(--text); background: radial-gradient(1200px 800px at 15% -10%, #1e293b 0%, #0f172a 40%) fixed, var(--bg);
-    line-height:1.35;
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f172a; --panel: #111827; --text: #e5e7eb; --muted: #94a3b8; --line: #334155;
+      --accent: #60a5fa; --ok: #4ade80; --warn: #fbbf24; --bad: #f87171; --code: #0b1220; --chip: #1f2937;
+    }
   }
-  header{
-    padding:16px 20px; border-bottom:1px solid #1f2937; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0));
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text); line-height: 1.5;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   }
-  header h1{margin:0; font-size:20px; letter-spacing:0.3px}
-  header p{margin:6px 0 0 0; color:var(--muted); font-size:13px}
-  .wrap{
-    display:grid; grid-template-columns: 360px 1fr 420px; gap:16px;
-    padding:16px; height:calc(100% - 80px);
-    box-sizing:border-box;
+  main { max-width: 980px; margin: 0 auto; padding: 16px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 16px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; }
+  h2 { font-size: 1.25rem; margin: 28px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+  h3 { font-size: 1.05rem; margin: 18px 0 6px; }
+  a { color: var(--accent); }
+  .sub { color: var(--muted); margin: 0; }
+  section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+  code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-size: .88rem; margin: 6px 0; }
+  code { background: var(--code); padding: 0 4px; border-radius: 4px; overflow-wrap: anywhere; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; margin: 6px 0; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+  th { background: var(--chip); }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cols > * { min-width: 0; }
+  @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+  label { font-weight: 600; display: block; margin: 6px 0 2px; }
+  input[type=text], select {
+    width: 100%; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--code); color: var(--text); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .92rem;
   }
-  .panel{
-    background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-    border:1px solid #1f2937; border-radius:12px; padding:14px; overflow:auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.03);
+  button {
+    border: 1px solid var(--line); background: var(--chip); color: var(--text);
+    border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: .88rem; margin: 2px 4px 2px 0;
   }
-  h2{font-size:16px; margin:0 0 10px 0; letter-spacing:0.3px}
-  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
-  .muted{color:var(--muted); font-size:12px}
-  label{font-size:12px; color:var(--muted)}
-  input[type="number"], input[type="text"]{
-    background:#0b1220; border:1px solid #1f2937; color:var(--text);
-    padding:8px 10px; border-radius:8px; width:120px; font-size:14px;
-  }
-  input[type="range"]{width:160px}
-  .btn{
-    border:1px solid #1f2937; background:linear-gradient(180deg,#1f2937,#0b1220); color:var(--text);
-    padding:8px 10px; border-radius:10px; font-size:13px; cursor:pointer;
-    transition:.15s transform ease, .15s background ease, .15s box-shadow ease;
-  }
-  .btn:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,0.2)}
-  .btn-accent{border-color:#14532d; background:linear-gradient(180deg,#14532d,#0b1220);}
-  .btn-warn{border-color:#7c2d12; background:linear-gradient(180deg,#7c2d12,#0b1220);}
-  .btn-danger{border-color:#7f1d1d; background:linear-gradient(180deg,#7f1d1d,#0b1220);}
-  .chips{display:flex; gap:8px; flex-wrap:wrap}
-  .chip{
-    display:inline-flex; gap:6px; align-items:center;
-    border:1px solid var(--chip-border); background:linear-gradient(180deg,#0b1220,#0a0f1b);
-    padding:8px 10px; border-radius:999px; font-size:12px; cursor:pointer;
-  }
-  .chip .cost{color:#a7f3d0; font-weight:600}
-  .chip:hover{border-color:#475569}
-  .formula{ color: var(--danger); font-weight:700; }
-  .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-  .program{
-    display:flex; flex-direction:column; gap:10px;
-  }
-  .step{
-    display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;
-    border:1px solid #1f2937; background:linear-gradient(180deg,#0b1220,#0a0f1b); border-radius:10px; padding:10px;
-  }
-  .step .title{font-weight:600}
-  .step .meta{font-size:12px; color:var(--muted)}
-  .step .actions{display:flex; align-items:center;}
-  .step .actions button{margin-left:6px}
-  .timesInput{
-    width:68px; margin-left:8px; margin-right:6px;
-    background:#0b1220; border:1px solid #1f2937; color:var(--text); padding:6px 8px; border-radius:8px;
-  }
-  .summary-box{
-    display:grid; grid-template-columns: repeat(4,1fr); gap:8px; margin-top:10px;
-  }
-  .card{
-    border:1px solid #1f2937; background:linear-gradient(180deg,#0b1220,#0a0f1b); border-radius:10px; padding:10px;
-    font-size:13px;
-  }
-  .big{font-size:20px; font-weight:700}
-  .good{color:var(--accent)}
-  .warn{color:var(--warn)}
-  .bad{color:var(--danger)}
-  .nodes{
-    display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;
-  }
-  .node{
-    border:1px solid #1f2937; background:linear-gradient(180deg,#0b1220,#0a0f1b); border-radius:10px; padding:10px;
-    font-size:12px;
-  }
-  .node h3{margin:0 0 6px 0; font-size:13px}
-  .log{background:var(--code); border:1px solid #1f2937; border-radius:8px; padding:8px; color:#93c5fd; max-height:120px; overflow:auto; white-space:pre-wrap}
-  .footer{
-    padding:10px 16px; color:var(--muted); font-size:12px; border-top:1px solid #1f2937;
-    background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0.02));
-  }
-  .divider{height:1px; background:#1f2937; margin:10px 0}
-  .pill{display:inline-block; border:1px solid #1f2937; background:#0b1220; padding:2px 8px; border-radius:999px; font-size:11px; color:#a7f3d0}
-  .right{float:right}
-  .hint{font-size:12px; color:#93c5fd}
-  .consensus{
-    margin-top:10px; padding:10px; border-radius:10px; border:1px solid #1f2937;
-    background:linear-gradient(180deg,#0b1220,#0a0f1b);
-  }
-  .consensus.good{box-shadow:0 0 0 1px rgba(34,197,94,0.25) inset}
-  .consensus.bad{box-shadow:0 0 0 1px rgba(239,68,68,0.25) inset}
-  .small{font-size:12px}
-  .flex{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-  .spacer{flex:1}
-  .kbd-key{border:1px solid #334155; background:#0b1220; padding:1px 6px; border-radius:6px}
-  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
-  .story{font-size:13px; color:var(--text); background:linear-gradient(180deg, rgba(96,165,250,0.1), rgba(0,0,0,0)); border:1px solid #1f2937; padding:10px; border-radius:10px}
+  button.picked { outline: 2px solid var(--accent); }
+  .out { margin-top: 8px; }
+  .big { font-size: 1.15rem; font-weight: 700; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .muted { color: var(--muted); }
+  .chip { display: inline-block; background: var(--chip); border-radius: 999px; padding: 0 8px; font-size: .82rem; margin: 0 4px; }
+  .sel { color: var(--accent); font-weight: 700; }
+  ol li, ul li { margin: 3px 0; }
+  .note { border-left: 4px solid var(--warn); padding: 4px 10px; background: var(--code); border-radius: 0 6px 6px 0; margin: 8px 0; }
+  .feedback { font-size: .88rem; margin-top: 2px; }
+  .sources li { font-size: .88rem; }
+  .word { word-break: break-all; white-space: pre-wrap; }
 </style>
 </head>
 <body>
-  <header>
-    <h1>Micro‑Lab: Prove Your Friend Wrong — Ethereum as a Replicated Computer</h1>
-    <p class="story">
-      Your mathematically‑challenged friend claims it’s <em>impossible</em> to reach a large target value from <span class="pill">x = 1</span> using his tiny contract. 
-      He deployed a minimalist “ArithmeticProxy” contract that exposes only a few calls. Each call changes a single storage variable <span class="pill">x</span> and costs gas.
-      <br/>Your challenge: from the same start state on every node, craft the <strong>lowest‑gas</strong> call sequence that lands exactly on <span class="pill">x = target</span>.
-      Honest Ethereum nodes must deterministically compute the same result — any divergent node is rejected by consensus.
-    </p>
-  </header>
+<main>
+<header>
+  <h1>Micro-Lab: Reading a Contract With No Source</h1>
+  <p class="sub">Selectors, signature lookups and decompiled code, as an analyst reads them. Goes with lesson 11-FO
+    (day 8). Everything runs in this page; nothing is sent anywhere.</p>
+</header>
 
-  <div class="wrap">
-    <!-- Left: Controls & Ops -->
-    <section class="panel" id="controls">
-      <h2>1) Configure the Challenge</h2>
-      <div class="row">
-        <label>Start x (storage):</label>
-        <input type="number" id="startX" value="1" step="1" readonly />
-        <span class="muted">Starts at 1. Use <span class="pill mono">x = 1</span> to reset (expensive).</span>
-      </div>
-      <div class="row">
-        <label>Target x:</label>
-        <input type="number" id="targetX" value="—" step="1" readonly />
-        <span class="muted">🔒 Randomly assigned &amp; locked for this challenge.</span>
-      </div>
-      <div class="row">
-        <label>Nodes:</label>
-        <input type="range" id="nodesRange" min="3" max="8" value="5" />
-        <span id="nodesCount" class="muted">5</span>
-      </div>
-      <div class="row">
-        <label>Gas price (gwei):</label>
-        <input type="number" id="gasPrice" value="30" step="1" />
-      </div>
-      <div class="divider"></div>
-      <h2>2) Contract Calls</h2>
-      <p class="muted">Click to append calls to your “transaction.” Each has a gas cost. Because gcd(5,4)=1, the ±{5,4} pair lets you synthesize any integer.</p>
-      <div class="chips" id="opPalette"></div>
-      <p class="muted" style="margin-top:8px">Tip: <span class="pill">x = 1</span> is costly but can reset your path.</p>
-    </section>
+<section class="panel" id="questions">
+  <h2 style="margin-top:4px">Questions you answer</h2>
+  <p>You are asked what an unverified contract at <code>0xc0de…7e57</code> does. Its source was never published, so
+    you have its decompiled code, two of its transactions and three of its storage slots. Answer these for that
+    contract (the <a href="#problem">problem</a> below):</p>
+  <ol>
+    <li>For each function: what is its selector, and what name does a signature lookup give it?</li>
+    <li>What does each function let its caller do, and who may call it?</li>
+    <li>What did transactions P1 and P2 actually do? Use their logs.</li>
+    <li>Does each looked-up name match what the code does?</li>
+    <li>For each function, write one sentence an agent could read, with a confidence word from the course scale
+      (11-FO, "How sure"), and say what the sentence rests on.</li>
+  </ol>
+  <p class="muted">Work through the <a href="#worked">worked example</a> first. The contracts, addresses and
+    transactions on this page are made up for the lab; the selectors are real Keccak-256 values, computed by the
+    page.</p>
+</section>
 
-    <!-- Middle: Program Builder -->
-    <section class="panel" id="programPanel">
-      <h2>3) Your Call Sequence</h2>
-      <div class="row" style="margin-bottom:8px">
-        <button class="btn" id="undo">↩️ Undo</button>
-        <button class="btn" id="clear">🗑️ Clear</button>
-        <button class="btn" id="demo">✨ Demo</button>
-        <span class="spacer"></span>
-        <button class="btn btn-accent" id="run">🚀 Execute on Nodes</button>
-      </div>
-      <div class="program" id="program"></div>
+<h2 id="tools">Two tools</h2>
+<div class="cols">
+  <section class="panel">
+    <h3 style="margin-top:0">Selector checker</h3>
+    <p>A selector is the first four bytes of the Keccak-256 hash of the function's signature: its name and argument
+      types, with no spaces and no argument names [solidityteam_abispecification_2026].</p>
+    <label for="sigIn">Signature</label>
+    <input type="text" id="sigIn" value="transfer(address,uint256)" spellcheck="false" autocomplete="off" />
+    <div class="out" id="sigOut" aria-live="polite"></div>
+    <p class="muted" style="font-size:.86rem">Try <code>transfer(address,uint128)</code>, then
+      <code>transfer(address to, uint256 amount)</code>.</p>
+  </section>
 
-      <div class="summary-box">
-        <div class="card">
-          <div class="muted">Total Gas</div>
-          <div class="big" id="totalGas">0</div>
-        </div>
-        <div class="card">
-          <div class="muted">Fee (gwei)</div>
-          <div class="big" id="feeGwei">0</div>
-        </div>
-        <div class="card">
-          <div class="muted">Fee (ETH)</div>
-          <div class="big" id="feeEth">0</div>
-        </div>
-        <div class="card">
-          <div class="muted">Friend’s Bet Budget (gwei)</div>
-          <div class="big" id="friendBudget">—</div>
-          <div class="muted small" id="betOutcome">Bet status: —</div>
-        </div>
-      </div>
+  <section class="panel">
+    <h3 style="margin-top:0">Calldata reader</h3>
+    <p>A call's input data is the selector, then the arguments in 32-byte words. "The encoding is not self
+      describing": you need the function's types to read the words [solidityteam_abispecification_2026].</p>
+    <label for="txPick">Captured transaction</label>
+    <select id="txPick"></select>
+    <div class="out" id="txOut" aria-live="polite"></div>
+  </section>
+</div>
 
-      <div class="consensus" id="consensusBox">
-        <div class="flex">
-          <strong>Consensus Result:</strong>
-          <span class="spacer"></span>
-          <span class="muted small">Determinism check across all nodes</span>
-        </div>
-        <div id="consensusMsg" class="small muted" style="margin-top:6px">— not executed yet —</div>
-      </div>
+<section class="panel">
+  <h3 style="margin-top:0">The signature list the reader uses</h3>
+  <p>A signature database maps selectors back to signatures that people have submitted
+    [fourbyte_signaturedatabase_2026]. This page carries a small list of its own for the lab. A match gives a name,
+    not proof of what the code does, and two signatures can share a selector [foundry_functionselectorcollision_2026].</p>
+  <table id="sigTable"><thead><tr><th>Selector</th><th>Signatures on file</th></tr></thead><tbody></tbody></table>
+</section>
 
-      <div style="margin-top:10px" class="small muted">
-        <strong>Goal:</strong> Prove your friend wrong by hitting <span class="pill">x = target</span> with minimum gas — and beat their bet budget.
-      </div>
-    </section>
-
-    <!-- Right: Nodes / Logs / Auto-Solve -->
-    <section class="panel" id="nodesPanel">
-      <div class="flex">
-        <h2>4) Simulated Nodes</h2>
-        <span class="spacer"></span>
-        <button class="btn" id="autoSolve">🧠 Best‑Gas (search)</button>
-      </div>
-      <p class="muted small">Each node independently executes the same call sequence. Because the EVM is deterministic, every honest node lands on the exact same final state — and the network reaches consensus on it.</p>
-      <div class="nodes" id="nodes"></div>
-      <div class="divider"></div>
-      <details>
-        <summary class="hint">What is this showing?</summary>
-        <p class="small">Ethereum is a replicated state machine: given the same input (start state, call sequence, gas), all honest nodes compute the same output. The network reaches consensus on that output and rejects any divergent computation.</p>
-      </details>
-    </section>
+<h2 id="worked">Worked example: a verified token</h2>
+<section class="panel">
+  <p>Transaction <b>W1</b> calls the token contract <code>0x5afe…0001</code>. A verifier reports an <b>exact
+    match</b> for it: the published source compiles to the same bytecode, byte for byte [sourcify_exactmatch_2026].</p>
+  <ol>
+    <li><b>Read the selector.</b> Pick W1 in the calldata reader. The input starts
+      <span class="sel mono">a9059cbb</span>.</li>
+    <li><b>Look it up.</b> The list gives <code>transfer(address,uint256)</code>. Check it in the selector checker:
+      the hash of that signature starts <span class="mono">a9059cbb</span>.</li>
+    <li><b>Read the arguments with those types.</b> Word 0 is an address, <code>0xbeef…</code>; word 1 is 1,500.</li>
+    <li><b>Check the logs.</b> W1 logged <code>Transfer(from 0xdad…, to 0xbeef…, 1500)</code>. EIP-20 requires a
+      token to log <code>Transfer</code> when tokens are transferred [vogelsteller_eip20tokenstandard_2015]. The code,
+      the name and the effect agree.</li>
+  </ol>
+  <p>Now compare what a decompiler would print from the bytecode with the verified source. The decompiled column is
+    illustrative, written for this lab in the style decompilers print, not a real tool's output.</p>
+  <div class="cols">
+    <div>
+      <b>Verified source</b>
+<pre><code>/// @notice Move tokens from the caller to another address.
+function transfer(address to, uint256 amount)
+    public returns (bool)
+{
+    require(balanceOf[msg.sender] &gt;= amount);
+    balanceOf[msg.sender] -= amount;
+    balanceOf[to] += amount;
+    emit Transfer(msg.sender, to, amount);
+    return true;
+}</code></pre>
+    </div>
+    <div>
+      <b>Decompiled from the bytecode (illustrative)</b>
+<pre><code>function Unresolved_a9059cbb(address arg0,
+                             uint256 arg1)
+    public returns (bool)
+{
+    require(storage_map_a[msg.sender] &gt;= arg1);
+    storage_map_a[msg.sender] -= arg1;
+    storage_map_a[arg0] += arg1;
+    emit Transfer(msg.sender, arg0, arg1);
+    return true;
+}</code></pre>
+    </div>
   </div>
+  <h3>Sort what the decompiler gave you</h3>
+  <p>A decompiler rebuilds structure, not intent: names, comments and purpose were never in the bytecode, and types
+    are inferred [grech_elipmocadvanceddecompilation_2022]. Put each item in a column of 11-FO's decompiler table.</p>
+  <table id="sortTable">
+    <thead><tr><th style="width:42%">Item</th><th>Your pick</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p>With verified source and agreeing logs, you can write: "W1 moved 1,500 tokens from <code>0xdad…</code> to
+    <code>0xbeef…</code> by calling <code>transfer</code>; the function moves the caller's own tokens." <b>High</b>:
+    exact-match source and the logs agree (11-FO, "How sure") [odni_icd203_2015].</p>
+</section>
 
-  <div class="footer">
-    <span>Hotkeys: <span class="kbd-key">R</span> run, <span class="kbd-key">U</span> undo, <span class="kbd-key">C</span> clear, <span class="kbd-key">D</span> demo.</span>
-    <span class="right">© Micro‑Lab | CC‑BY for classroom use</span>
-  </div>
+<h2 id="problem">Problem: an unverified contract</h2>
+<section class="panel">
+  <p>The contract at <code>0xc0de…7e57</code> has <b>no match</b> on a verifier. Below is its decompiled code
+    (illustrative, written for this lab in the style decompilers print; for a real contract you would run an
+    open-source decompiler such as heimdall-rs [becker_heimdallrs_2026]), the values of three storage slots read from a
+    node, and two transactions. Answer the <a href="#questions">questions</a> at the top.</p>
+<pre><code>// Illustrative, not a real tool's output
+function Unresolved_a9059cbb(address arg0, uint256 arg1) public returns (bool) {
+    require(storage_map_a[msg.sender] &gt;= arg1);
+    uint256 var_a = arg1 * storage[3] / 100;
+    storage_map_a[msg.sender] -= arg1;
+    storage_map_a[arg0] += arg1 - var_a;
+    storage_map_a[storage[2]] += var_a;
+    emit Transfer(msg.sender, arg0, arg1 - var_a);
+    emit Transfer(msg.sender, storage[2], var_a);
+    return true;
+}
+
+function Unresolved_42966c68(uint256 arg0) public {
+    require(msg.sender == storage[1]);
+    storage[0] += arg0;
+    storage_map_a[storage[1]] += arg0;
+    emit Transfer(address(0), storage[1], arg0);
+}</code></pre>
+  <h3>Storage slots, read from a node</h3>
+  <table id="slotTable"><thead><tr><th>Slot</th><th>Value (32 bytes)</th></tr></thead><tbody></tbody></table>
+  <h3>Transactions</h3>
+  <p>Pick <b>P1</b> and <b>P2</b> in the calldata reader for their input data and logs. EIP-20 asks a token that
+    creates new tokens to log a <code>Transfer</code> from the zero address [vogelsteller_eip20tokenstandard_2015].</p>
+  <div class="note">Write what the code allows and what the logs show as two separate things. A looked-up name is a
+    lead, not a kind of evidence.</div>
+</section>
+
+<h2 id="challenge">Optional challenge</h2>
+<section class="panel">
+  <ol start="6">
+    <li>Selector <span class="sel mono">42966c68</span> has two signatures on file. Pick P1 in the calldata reader
+      and read its argument both ways. Which signature do you report, and why? (In a correct encoding, a
+      <code>bytes16</code> value sits at the start of its word and the rest of the word is zero
+      [solidityteam_abispecification_2026].)</li>
+    <li>Bob sent 250 in P2. Explain to an agent, in two sentences, why <code>0xcafe…</code> received 245 and where
+      the other 5 went. Which storage slot sets the share?</li>
+    <li>Type <code>burn(uint256)</code> and <code>collate_propagate_storage(bytes16)</code> into the selector checker.
+      What does that tell you about trusting a lookup?</li>
+  </ol>
+</section>
+
+<h2 id="sources">Sources</h2>
+<section class="panel">
+  <p class="muted">Keys in square brackets are entries in the course bibliography, <code>Blockchain.bib</code>.</p>
+  <ul class="sources">
+    <li>[solidityteam_abispecification_2026] Solidity Team, "Contract ABI Specification": the function selector,
+      argument encoding and <code>bytes&lt;M&gt;</code> padding.</li>
+    <li>[fourbyte_signaturedatabase_2026] 4byte.directory, "Ethereum Signature Database".</li>
+    <li>[foundry_functionselectorcollision_2026] Foundry, "Function Selector Collision".</li>
+    <li>[sourcify_exactmatch_2026] Sourcify, "Exact Match vs. Match".</li>
+    <li>[grech_elipmocadvanceddecompilation_2022] Grech, Lagouvardos, Tsatiris and Smaragdakis, "Elipmoc: Advanced
+      Decompilation of Ethereum Smart Contracts", Proceedings of the ACM on Programming Languages (OOPSLA 2022).</li>
+    <li>[becker_heimdallrs_2026] Jonathan Becker, heimdall-rs: an open-source (MIT, as of 1 Nov 2026) EVM toolkit with a decompiler.</li>
+    <li>[vogelsteller_eip20tokenstandard_2015] Vogelsteller and Buterin, "EIP-20: Token Standard": the
+      <code>Transfer</code> event, and new tokens logged as a transfer from the zero address.</li>
+    <li>[odni_icd203_2015] Office of the Director of National Intelligence, "Intelligence Community Directive 203:
+      Analytic Standards": the basis of the course's confidence words.</li>
+  </ul>
+</section>
+</main>
 
 <script>
-(function(){
-  "use strict";
-
-  /* -------------------------
-   * Contract "ABI" (toy ops)
-   * ------------------------- */
-  const OPS = [
-    {
-      id:"add5",
-      label:"x = x + 5",
-      cost:5,
-      fn:(x)=> x + 5,
-      desc:"Add 5 to x. Cheap."
-    },
-    {
-      id:"sub4",
-      label:"x = x − 4",
-      cost:5,
-      fn:(x)=> x - 4,
-      desc:"Subtract 4 from x. Cheap; pairs with +5 to synthesize any integer."
-    },
-    {
-      id:"mul2",
-      label:"x = x × 2",
-      cost:100,
-      fn:(x)=> x * 2,
-      desc:"Double x. Moderate gas."
-    },
-    {
-      id:"square",
-      label:"x = x²",
-      cost:10000,
-      fn:(x)=> x * x,
-      desc:"Square x. Very expensive."
-    },
-    {
-      id:"set1",
-      label:"x = 1 (reset)",
-      cost:20000,
-      fn:(x)=> 1,
-      desc:"Reset x to one. Very expensive."
+"use strict";
+// Keccak-256, the Ethereum variant (padding byte 0x01, not SHA-3's 0x06), on BigInt lanes. In-house, no library.
+const M = (1n << 64n) - 1n;
+const RC = [
+  0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n,
+  0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n,
+  0x000000000000008an, 0x0000000000000088n, 0x0000000080008009n, 0x000000008000000an,
+  0x000000008000808bn, 0x800000000000008bn, 0x8000000000008089n, 0x8000000000008003n,
+  0x8000000000008002n, 0x8000000000000080n, 0x000000000000800an, 0x800000008000000an,
+  0x8000000080008081n, 0x8000000000008080n, 0x0000000080000001n, 0x8000000080008008n];
+const ROT = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14];
+const rotl = (v, n) => n === 0 ? v : ((v << BigInt(n)) | (v >> BigInt(64 - n))) & M;
+function keccakF(s) {
+  for (let round = 0; round < 24; round++) {
+    const c = [0, 1, 2, 3, 4].map(x => s[x] ^ s[x + 5] ^ s[x + 10] ^ s[x + 15] ^ s[x + 20]);
+    for (let x = 0; x < 5; x++) {
+      const d = c[(x + 4) % 5] ^ rotl(c[(x + 1) % 5], 1);
+      for (let y = 0; y < 25; y += 5) s[y + x] ^= d;
     }
-  ];
-
-  /* Bounds to keep numbers sane */
-  const MAX_ABS = 1_000_000_000; // 1e9 absolute value bound
-  const STEP_DELAY_MS = 160;      // animation delay per step-group during exec
-
-  /* State */
-  /** program: array of { opId: string, times: number } */
-  let program = [];
-  let running = false;
-  let friendEstimateGas = null; // best (or near-best) gas estimate
-  let friendBudgetGwei = null;  // estimate * gasPrice + 100000
-  let lockedTarget = null;      // randomly assigned & validated target, fixed for the session
-  let lockedEstimate = null;    // cached estimateBestGas result for lockedTarget
-
-  /* DOM */
-  const startXEl   = document.getElementById("startX");
-  const targetXEl  = document.getElementById("targetX");
-  const nodesRange = document.getElementById("nodesRange");
-  const nodesCount = document.getElementById("nodesCount");
-  const gasPriceEl = document.getElementById("gasPrice");
-
-  const opPalette = document.getElementById("opPalette");
-  const programEl = document.getElementById("program");
-  const totalGasEl= document.getElementById("totalGas");
-  const feeGweiEl = document.getElementById("feeGwei");
-  const feeEthEl  = document.getElementById("feeEth");
-  const friendBudgetEl = document.getElementById("friendBudget");
-  const betOutcomeEl = document.getElementById("betOutcome");
-
-  const runBtn    = document.getElementById("run");
-  const undoBtn   = document.getElementById("undo");
-  const clearBtn  = document.getElementById("clear");
-  const demoBtn   = document.getElementById("demo");
-  const autoSolveBtn = document.getElementById("autoSolve");
-
-  const nodesEl   = document.getElementById("nodes");
-  const consensusBox = document.getElementById("consensusBox");
-  const consensusMsg = document.getElementById("consensusMsg");
-
-  /* Utility */
-  const getOpById = (id)=> OPS.find(o=>o.id===id);
-  const fmt = (n)=> new Intl.NumberFormat().format(n);
-
-  /* Palette with red formulas */
-  function renderPalette(){
-    opPalette.innerHTML = "";
-    OPS.forEach(op=>{
-      const chip = document.createElement("button");
-      chip.className = "chip";
-      chip.title = op.desc + " | Gas: " + op.cost;
-      chip.innerHTML = `<span class="mono formula">${op.label}</span> <span class="cost">• ${fmt(op.cost)} gas</span>`;
-      chip.addEventListener("click", ()=>{ addStep(op.id); });
-      opPalette.appendChild(chip);
-    });
+    const b = new Array(25);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++)
+      b[y + 5 * ((2 * x + 3 * y) % 5)] = rotl(s[x + 5 * y], ROT[x + 5 * y]);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 25; y += 5)
+      s[y + x] = b[y + x] ^ ((~b[y + (x + 1) % 5] & M) & b[y + (x + 2) % 5]);
+    s[0] ^= RC[round];
   }
-
-  /* Program manipulation */
-  function addStep(opId){
-    program.push({ opId, times: 1 });
-    renderProgram();
-  }
-  function removeStep(idx){
-    program.splice(idx,1);
-    renderProgram();
-  }
-  function moveStep(idx, dir){
-    const j = idx + dir;
-    if (j<0 || j>=program.length) return;
-    const t = program[idx]; program[idx] = program[j]; program[j] = t;
-    renderProgram();
-  }
-  function updateTimes(idx, v){
-    let t = Math.max(1, Math.min(9999, (Number(v) || 1)));
-    program[idx].times = t;
-    updateGasSummary();
-  }
-  function undo(){ if(program.length){ program.pop(); renderProgram(); } }
-  function clear(){ program = []; renderProgram(); }
-
-  /* Gas accounting */
-  function totalGas(){
-    return program.reduce((acc,step)=> acc + getOpById(step.opId).cost * step.times, 0);
-  }
-  function updateGasSummary(){
-    const gas = totalGas();
-    totalGasEl.textContent = fmt(gas);
-    const gwei = Number(gasPriceEl.value)||0;
-    const feeGwei = gas * gwei;
-    const feeEth = feeGwei / 1e9; // 1 gwei = 1e9 wei; 1 ETH = 1e18 wei
-    feeGweiEl.textContent = fmt(feeGwei);
-    feeEthEl.textContent = feeEth.toLocaleString(undefined,{maximumFractionDigits:9});
-    // Update bet comparison if we have a friend budget
-    updateBetOutcome();
-  }
-
-  /* Render program list with Times controls */
-  function renderProgram(){
-    programEl.innerHTML = "";
-    if (!program.length){
-      const empty = document.createElement("div");
-      empty.className = "muted";
-      empty.textContent = "Empty. Click contract calls on the left to build your sequence.";
-      programEl.appendChild(empty);
-    } else {
-      program.forEach((step, idx)=>{
-        const op = getOpById(step.opId);
-        const row = document.createElement("div");
-        row.className = "step";
-        row.innerHTML = `
-          <div>
-            <div class="title mono">#${idx+1} — CALL ${op.label} <span class="muted">×</span> <span class="mono">${step.times}</span></div>
-            <div class="meta">Gas: ${fmt(op.cost)} each • Total for step: ${fmt(op.cost*step.times)}</div>
-          </div>
-          <div class="actions">
-            <label class="muted">times</label>
-            <input class="timesInput" type="number" min="1" max="9999" value="${step.times}" />
-            <button class="btn" title="Move up">▲</button>
-            <button class="btn" title="Move down">▼</button>
-            <button class="btn btn-danger" title="Remove">✖</button>
-          </div>
-        `;
-        const timesEl = row.querySelector(".timesInput");
-        const titleEl = row.querySelector(".title");
-        const metaEl  = row.querySelector(".meta");
-        const [up,down,del] = row.querySelectorAll("button");
-        timesEl.addEventListener("input", (e)=>{
-          updateTimes(idx, e.target.value);
-          // refresh this row's display in place (full re-render would steal focus mid-typing)
-          const op2 = getOpById(program[idx].opId);
-          titleEl.innerHTML = `#${idx+1} — CALL ${op2.label} <span class="muted">×</span> <span class="mono">${program[idx].times}</span>`;
-          metaEl.textContent = `Gas: ${fmt(op2.cost)} each • Total for step: ${fmt(op2.cost*program[idx].times)}`;
-        });
-        up.addEventListener("click", ()=> moveStep(idx,-1));
-        down.addEventListener("click", ()=> moveStep(idx,+1));
-        del.addEventListener("click", ()=> removeStep(idx));
-        programEl.appendChild(row);
-      });
+}
+function keccak256Hex(text) {
+  const rate = 136, bytes = Array.from(new TextEncoder().encode(text));
+  bytes.push(0x01);
+  while (bytes.length % rate) bytes.push(0);
+  bytes[bytes.length - 1] |= 0x80;
+  const s = new Array(25).fill(0n);
+  for (let off = 0; off < bytes.length; off += rate) {
+    for (let i = 0; i < rate / 8; i++) {
+      let lane = 0n;
+      for (let k = 7; k >= 0; k--) lane = (lane << 8n) | BigInt(bytes[off + i * 8 + k]);
+      s[i] ^= lane;
     }
-    updateGasSummary();
+    keccakF(s);
   }
+  let out = "";
+  for (let i = 0; i < 4; i++) for (let k = 0; k < 8; k++)
+    out += Number((s[i] >> BigInt(8 * k)) & 0xffn).toString(16).padStart(2, "0");
+  return out;
+}
+const selectorOf = sig => keccak256Hex(sig).slice(0, 8);
 
-  /* Nodes UI */
-  function renderNodes(n){
-    nodesEl.innerHTML = "";
-    for(let i=0;i<n;i++){
-      const div = document.createElement("div");
-      div.className = "node";
-      div.innerHTML = `
-        <h3>Node #${i+1} <span id="nodeBadge${i}" class="pill">idle</span></h3>
-        <div class="row small">
-          <div>start: <span id="nodeStart${i}" class="mono"></span></div>
-          <div>final: <span id="nodeFinal${i}" class="mono"></span></div>
-          <div>gas: <span id="nodeGas${i}" class="mono"></span></div>
-        </div>
-        <div class="log" id="nodeLog${i}"></div>
-      `;
-      nodesEl.appendChild(div);
-    }
+// Made-up addresses for the lab (20 bytes each).
+const A = {
+  token: "5afe" + "0".repeat(35) + "1", contract: "c0de" + "0".repeat(32) + "7e57",
+  dad: "dad" + "0".repeat(37), beef: "beef" + "0".repeat(36),
+  owner: "a11ce" + "0".repeat(35), bob: "b0b" + "0".repeat(37),
+  cafe: "cafe" + "0".repeat(36), fee: "fee" + "0".repeat(37), zero: "0".repeat(40)
+};
+function short(a) {
+  if (/^0+$/.test(a)) return "0x0 (the zero address)";
+  const tail = a.slice(-4);
+  return "0x" + a.slice(0, 5).replace(/0+$/, "") + "…" + (/^0+$/.test(tail) ? "" : tail);
+}
+const word = hex => hex.padStart(64, "0");
+const uintWord = n => word(BigInt(n).toString(16));
+
+// The page's own signature list: selectors are computed here, never typed in.
+const SIGNATURES = ["transfer(address,uint256)", "approve(address,uint256)", "transferFrom(address,address,uint256)",
+  "balanceOf(address)", "burn(uint256)", "collate_propagate_storage(bytes16)"];
+const DB = {};
+for (const sig of SIGNATURES) (DB[selectorOf(sig)] ||= []).push(sig);
+
+const TXS = [
+  { id: "W1", label: "W1: 0xdad… calls the verified token", from: A.dad, to: A.token,
+    input: selectorOf("transfer(address,uint256)") + word(A.beef) + uintWord(1500),
+    logs: [["Transfer", A.dad, A.beef, 1500]] },
+  { id: "P1", label: "P1: 0xa11ce… calls the unverified contract", from: A.owner, to: A.contract,
+    input: selectorOf("burn(uint256)") + uintWord(1000000),
+    logs: [["Transfer", A.zero, A.owner, 1000000]] },
+  { id: "P2", label: "P2: 0xb0b… calls the unverified contract", from: A.bob, to: A.contract,
+    input: selectorOf("transfer(address,uint256)") + word(A.cafe) + uintWord(250),
+    logs: [["Transfer", A.bob, A.cafe, 245], ["Transfer", A.bob, A.fee, 5]] }
+];
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// Selector checker
+const sigIn = document.getElementById("sigIn"), sigOut = document.getElementById("sigOut");
+function showSelector() {
+  const sig = sigIn.value;
+  if (!sig.trim()) { sigOut.innerHTML = ""; return; }
+  const sel = selectorOf(sig);
+  let html = `<div>Selector: <span class="big sel mono">0x${sel}</span></div>`;
+  const inner = (sig.match(/\((.*)\)/) || [, ""])[1];
+  if (/\s/.test(sig)) {
+    html += `<div class="warn">This has spaces. A signature has none, so this hash is not the selector of the function you meant.</div>`;
+  } else if (inner && inner.split(",").some(t => !/^[a-z]+\d*(\[\d*\])*$/.test(t))) {
+    html += `<div class="warn">Each argument should be a type only, such as <code>address</code> or <code>uint256</code>, with no names.</div>`;
   }
+  const known = DB[sel];
+  html += known ? `<div>On file in the page's list: ${known.map(k => `<code>${esc(k)}</code>`).join(", ")}</div>`
+                : `<div class="muted">Not in the page's signature list.</div>`;
+  sigOut.innerHTML = html;
+}
+sigIn.addEventListener("input", showSelector);
 
-  function setConsensus(status, msg){
-    consensusMsg.textContent = msg;
-    consensusBox.classList.remove("good","bad");
-    if (status==="good"){ consensusBox.classList.add("good"); }
-    else if (status==="bad"){ consensusBox.classList.add("bad"); }
+// Signature list
+document.querySelector("#sigTable tbody").innerHTML = Object.entries(DB)
+  .map(([sel, sigs]) => `<tr><td class="mono sel">0x${sel}</td><td>${sigs.map(s => `<code>${esc(s)}</code>`).join("<br>")}</td></tr>`)
+  .join("");
+
+// Calldata reader
+function decodeWord(type, w) {
+  if (type === "address") {
+    return /^0{24}/.test(w) ? `address <code>${short(w.slice(24))}</code>`
+                            : `<span class="bad">not a valid address: the first 12 bytes should be zero</span>`;
   }
-
-  /* SHA-256 digest (for "state root" demo) */
-  async function sha256Hex(str){
-    const enc = new TextEncoder().encode(str);
-    const digest = await crypto.subtle.digest("SHA-256", enc);
-    return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  if (/^uint\d+$/.test(type)) return `${type} <b>${BigInt("0x" + w).toLocaleString("en-US")}</b>`;
+  const m = type.match(/^bytes(\d+)$/);
+  if (m) {
+    const n = Number(m[1]) * 2, rest = w.slice(n);
+    return `${type} <code>0x${w.slice(0, n)}</code>` + (/^0*$/.test(rest) ? ""
+      : ` <span class="bad">but the rest of the word is not zero, which a correct encoding never leaves</span>`);
   }
-
-  /* Execute program on a node */
-  async function executeOnNode(nodeIdx, start, progSteps){
-    const logEl = document.getElementById("nodeLog"+nodeIdx);
-    const startEl = document.getElementById("nodeStart"+nodeIdx);
-    const finalEl = document.getElementById("nodeFinal"+nodeIdx);
-    const gasEl = document.getElementById("nodeGas"+nodeIdx);
-    const badgeEl = document.getElementById("nodeBadge"+nodeIdx);
-
-    startEl.textContent = String(start);
-    finalEl.textContent = "…";
-    gasEl.textContent = "…";
-    logEl.textContent = "";
-
-    let x = start;
-    let gas = 0;
-    badgeEl.textContent = "executing…";
-
-    for (let i=0; i<progSteps.length; i++){
-      await new Promise(r=>setTimeout(r, STEP_DELAY_MS));
-      const { opId, times } = progSteps[i];
-      const spec = getOpById(opId);
-
-      let before = x;
-      let localTimes = Math.max(1, Math.min(9999, Number(times) || 1));
-      let localGas = spec.cost * localTimes;
-
-      // Apply op 'times' times
-      for (let t=0; t<localTimes; t++){
-        const after = spec.fn(before);
-        if (!Number.isFinite(after) || Math.abs(after) > MAX_ABS){
-          logEl.textContent += `#${i+1}: CALL ${spec.label} × ${localTimes} → ❌ overflow/out-of-bounds\n`;
-          badgeEl.textContent = "error";
-          finalEl.textContent = "revert";
-          gas += spec.cost * (t+1); // charge gas up to failure
-          gasEl.textContent = fmt(gas);
-          return { ok:false, final: NaN, gas };
-        }
-        before = after;
-      }
-      x = before;
-      gas += localGas;
-      logEl.textContent += `#${i+1}: CALL ${spec.label} × ${localTimes} → x=${x}\n`;
-    }
-    await new Promise(r=>setTimeout(r, STEP_DELAY_MS));
-    finalEl.textContent = String(x);
-    gasEl.textContent = fmt(gas);
-    const root = await sha256Hex(String(x));
-    logEl.textContent += `stateRoot = sha256(x) = ${root.slice(0,16)}…\n`;
-    badgeEl.textContent = "done";
-    return { ok:true, final:x, gas };
+  return `<span class="muted">type not handled here</span>`;
+}
+const txPick = document.getElementById("txPick"), txOut = document.getElementById("txOut");
+txPick.innerHTML = TXS.map(t => `<option value="${t.id}">${esc(t.label)}</option>`).join("");
+function showTx() {
+  const t = TXS.find(x => x.id === txPick.value);
+  const sel = t.input.slice(0, 8), args = t.input.slice(8).match(/.{64}/g) || [];
+  let html = `<div><span class="chip">from</span>${short(t.from)} <span class="chip">to</span>${short(t.to)}</div>`;
+  html += `<div style="margin-top:6px">Input data, selector first, then one 32-byte word per line:</div>`;
+  html += `<pre class="word"><code><span class="sel">0x${sel}</span>${args.map(a => "\n" + a).join("")}</code></pre>`;
+  const sigs = DB[sel] || [];
+  if (!sigs.length) html += `<div class="muted">No signature on file for this selector.</div>`;
+  for (const sig of sigs) {
+    const types = sig.match(/\((.*)\)/)[1].split(",").filter(Boolean);
+    html += `<div style="margin-top:6px">Read as <code>${esc(sig)}</code>:</div><ul>`;
+    types.forEach((ty, i) => { html += `<li>word ${i}: ${args[i] ? decodeWord(ty, args[i]) : '<span class="bad">missing</span>'}</li>`; });
+    if (args.length > types.length) html += `<li class="bad">${args.length - types.length} word(s) left over</li>`;
+    html += `</ul>`;
   }
+  if (sigs.length > 1) html += `<div class="warn">More than one signature shares this selector.</div>`;
+  html += `<div style="margin-top:6px">Logs:</div><ul>` + t.logs.map(([ev, f, to, v]) =>
+    `<li><code>${ev}</code>(from ${short(f)}, to ${short(to)}, value ${v.toLocaleString("en-US")})</li>`).join("") + `</ul>`;
+  txOut.innerHTML = html;
+}
+txPick.addEventListener("change", showTx);
 
-  /* Orchestrate execution on all nodes */
-  async function runAll(){
-    if (running) return;
-    const n = Number(nodesRange.value)||5;
-    const start = Number(startXEl.value)||0;
-    const target = lockedTarget;
-    const ops = program.map(p=>({opId:p.opId, times: p.times}));
-    if (ops.length===0){ alert("Add at least one CALL to your sequence."); return; }
-    running = true;
-    setConsensus(null,"— executing —");
-    renderNodes(n);
+// Storage slots of the unverified contract
+const SLOTS = [[1, A.owner], [2, A.fee], [3, (2).toString(16)]];
+document.querySelector("#slotTable tbody").innerHTML = SLOTS
+  .map(([n, v]) => `<tr><td>${n}</td><td class="mono word">0x${word(v)}</td></tr>`).join("");
 
-    const results = [];
-    for (let i=0;i<n;i++){
-      /* stagger starts to simulate network timing */
-      await new Promise(r=>setTimeout(r, 80));
-      results.push(executeOnNode(i, start, ops));
-    }
-    const settled = await Promise.all(results);
-    running = false;
+// Sorting exercise: the three columns of 11-FO's decompiler table.
+const COLS = ["Usually recovered", "Not recovered", "Can be wrong"];
+const ITEMS = [
+  ["The selector <code>a9059cbb</code>", 0, "The selector is in the bytecode, so the tool can list the function by it."],
+  ["The check that the caller's balance is at least <code>arg1</code>", 0, "Conditions are structure the bytecode carries."],
+  ["The storage writes: the caller's balance down, <code>arg0</code>'s up", 0, "Storage reads and writes are usually recovered."],
+  ["The names <code>arg0</code>, <code>arg1</code> and <code>storage_map_a</code>", 1, "The tool made these up; the source says <code>to</code>, <code>amount</code> and <code>balanceOf</code>."],
+  ["The comment \"Move tokens from the caller to another address\"", 1, "Comments live only in the source."],
+  ["The types <code>address</code> and <code>uint256</code>", 2, "Types are inferred from how the bytecode uses the values; they can be wrong."]
+];
+const sortBody = document.querySelector("#sortTable tbody");
+sortBody.innerHTML = ITEMS.map(([text], i) => `<tr><td>${text}</td><td>` +
+  COLS.map((c, j) => `<button type="button" data-i="${i}" data-j="${j}">${c}</button>`).join("") +
+  `<div class="feedback" id="fb${i}" aria-live="polite"></div></td></tr>`).join("");
+sortBody.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  const i = Number(b.dataset.i), j = Number(b.dataset.j), [, right, why] = ITEMS[i];
+  sortBody.querySelectorAll(`button[data-i="${i}"]`).forEach(x => x.classList.toggle("picked", x === b));
+  document.getElementById("fb" + i).innerHTML = j === right
+    ? `<span class="ok">Yes.</span> ${why}` : `<span class="bad">Not quite.</span> Try again.`;
+});
 
-    const allOk = settled.every(r=>r.ok);
-    const gasTotals = settled.map(r=>r.gas);
-
-    if (allOk){
-      const finals = settled.map(r=>r.final);
-      const allEqual = finals.every(v => v===finals[0]);
-      if (allEqual){
-        const success = (finals[0]===target);
-        const msg = `All ${settled.length} nodes agree: x = ${finals[0]}  •  Gas: ${fmt(gasTotals[0])}  •  ${success ? "✅ target reached" : "⚠️ target not reached"}`;
-        setConsensus(success ? "good" : "bad", msg);
-      } else {
-        setConsensus("bad", `Divergence detected: ${JSON.stringify(finals)} • Block/result would be rejected by honest nodes.`);
-      }
-    } else {
-      // Deterministic EVM: every node hits the same overflow/revert. Identical failure
-      // is still consensus — just on a failed transaction, not a divergence.
-      setConsensus("bad", `All ${settled.length} nodes deterministically revert (overflow / out-of-bounds). Identical failure is still consensus — but you didn't reach the target. Try a cheaper path.`);
-    }
-  }
-
-  /* -------
-   * Search: Uniform-cost (Dijkstra) to estimate best gas (can be near-optimal).
-   * We keep it synchronous; tuned bounds for ~10k targets.
-   * ------- */
-  function estimateBestGas(start, target){
-    const LIMIT_STEPS = 22;    // allow deeper sequences for ~10k targets
-    const VISIT_CAP  = 220000; // exploration cap
-
-    const OPS_FOR_SEARCH = OPS; // use all ops
-
-    const pq = []; // [cost, value, steps[]]
-    const push = (cost, val, steps)=>{
-      let i=0; while(i<pq.length && pq[i][0] <= cost) i++;
-      pq.splice(i,0,[cost, val, steps]);
-    };
-    const pop = ()=> pq.shift();
-
-    const best = new Map(); // value -> bestCost seen
-
-    push(0, start, []);
-    best.set(start, 0);
-    let visits = 0;
-
-    // heuristic bound to prune explosions when target is large
-    const bound = Math.max(1000, 3*Math.abs(target) + 500);
-
-    while(pq.length && visits < VISIT_CAP){
-      const [cost, val, steps] = pop();
-      visits++;
-      if (val===target){
-        // compress consecutive equal ops into {opId,times} list
-        const compressed = [];
-        for (let k=0;k<steps.length;k++){
-          const id = steps[k];
-          if (compressed.length && compressed[compressed.length-1].opId===id){
-            compressed[compressed.length-1].times++;
-          } else {
-            compressed.push({opId:id, times:1});
-          }
-        }
-        return {cost, stepsCompressed: compressed, visits};
-      }
-      if (steps.length >= LIMIT_STEPS) continue;
-
-      for (const op of OPS_FOR_SEARCH){
-        let nextVal = op.fn(val);
-        if (!Number.isFinite(nextVal) || Math.abs(nextVal) > MAX_ABS) continue;
-        if (Math.abs(nextVal) > bound) continue; // mild pruning
-        const nextCost = cost + op.cost;
-        if (!best.has(nextVal) || nextCost < best.get(nextVal)){
-          best.set(nextVal, nextCost);
-          push(nextCost, nextVal, [...steps, op.id]);
-        }
-      }
-    }
-    // Fallback: exact, fast solution using only ± ops (always reachable since gcd(5,4)=1).
-    const pm = plusMinusOnly(target - start);
-    const steps = [];
-    if (pm.a > 0) steps.push({opId:"add5", times: pm.a});
-    if (pm.b > 0) steps.push({opId:"sub4", times: pm.b});
-    return {cost: pm.gas, stepsCompressed: steps, visits};
-  }
-
-  /* Minimal solution using only +5 and -4 to reach delta d = target-start.
-     Solve 5a - 4b = d with a,b >= 0 minimizing a+b. Since a+b = (d+9b)/5 is
-     strictly increasing in b, the first valid b is optimal. Gas = 5*(a+b). */
-  function plusMinusOnly(d){
-    const MAX_B = 100000; // safety cap
-    for (let b=0; b<=MAX_B; b++){
-      const num = d + 4*b;
-      if (num % 5 !== 0) continue;
-      const a = num / 5;
-      if (a < 0) continue;
-      return { a, b, gas: (a + b) * 5 };
-    }
-    // Practically unreachable for our integer deltas; worst-case +5-only guess.
-    const a = Math.max(0, Math.ceil(d / 5));
-    return { a, b: 0, gas: a * 5 };
-  }
-
-  /* Replay a program to verify it deterministically lands on target within bounds. */
-  function programReaches(steps, start, target){
-    let x = start;
-    for (const s of steps){
-      const op = getOpById(s.opId);
-      const times = Math.max(1, Math.min(9999, Number(s.times)||1));
-      for (let t=0;t<times;t++){
-        x = op.fn(x);
-        if (!Number.isFinite(x) || Math.abs(x) > MAX_ABS) return false;
-      }
-    }
-    return x === target;
-  }
-
-  /* Pick a random target, validate that it's solvable (without surfacing the solution),
-     and lock it in. Retries with fresh targets until a validated one is found. */
-  function lockChallenge(){
-    const start = Number(startXEl.value)||1;
-    for (let attempt=0; attempt<64; attempt++){
-      const candidate = Math.floor(8000 + Math.random()*4001); // 8,000–12,000
-      const est = estimateBestGas(start, candidate);
-      if (est && est.stepsCompressed.length && programReaches(est.stepsCompressed, start, candidate)){
-        lockedTarget = candidate;
-        lockedEstimate = est;
-        targetXEl.value = String(candidate);
-        return;
-      }
-    }
-    // Guaranteed-solvable fallback (±5/∓4 always works since gcd(5,4)=1).
-    lockedTarget = 10000;
-    lockedEstimate = estimateBestGas(start, 10000);
-    targetXEl.value = "10000";
-  }
-
-  /* Recompute the friend's bet budget from the cached estimate + current gas price.
-     The expensive search runs only when the target is locked, not on every keystroke. */
-  function updateFriendBet(){
-    if (!lockedEstimate){ friendBudgetEl.textContent = "—"; return; }
-    friendEstimateGas = lockedEstimate.cost;
-    const gasPrice = Number(gasPriceEl.value)||0;
-    friendBudgetGwei = (friendEstimateGas * gasPrice) + 100000; // +100000 gwei headroom over best estimate
-    friendBudgetEl.textContent = isFinite(friendBudgetGwei) ? fmt(friendBudgetGwei) : "—";
-    updateBetOutcome();
-  }
-
-  function updateBetOutcome(){
-    if (friendBudgetGwei == null) { betOutcomeEl.textContent = "Bet status: —"; return; }
-    const gas = totalGas();
-    const gwei = Number(gasPriceEl.value)||0;
-    const feeGwei = gas * gwei;
-    if (!isFinite(feeGwei)) { betOutcomeEl.textContent = "Bet status: —"; return; }
-    if (feeGwei <= friendBudgetGwei){
-      betOutcomeEl.innerHTML = `<span class="good">✅ You beat the bet!</span> Your fee ${fmt(feeGwei)} ≤ ${fmt(friendBudgetGwei)} gwei.`;
-    } else {
-      betOutcomeEl.innerHTML = `<span class="bad">❌ Above bet.</span> Your fee ${fmt(feeGwei)} &gt; ${fmt(friendBudgetGwei)} gwei.`;
-    }
-  }
-
-  /* Auto-solve button uses same estimator and loads compressed program */
-  function autoSolveAndLoad(){
-    const res = lockedEstimate || estimateBestGas(Number(startXEl.value)||1, lockedTarget);
-    if (!res || !res.stepsCompressed.length){ alert("No estimate found within search limits."); return; }
-    // Copy so editing the loaded program can't mutate the cached estimate.
-    program = res.stepsCompressed.map(s=>({opId:s.opId, times:s.times}));
-    renderProgram();
-    alert("Estimate found: best gas ≈ " + res.cost + " (grouped steps; explored ~" + res.visits + " states).");
-  }
-
-  /* Demo sequence (simple illustration, not necessarily optimal) */
-  function loadDemo(){
-    program = [{opId:"mul2",times:1},{opId:"add5",times:1},{opId:"square",times:1},{opId:"sub4",times:3},{opId:"mul2",times:2},{opId:"add5",times:2}];
-    renderProgram();
-  }
-
-  /* Events */
-  nodesRange.addEventListener("input", ()=>{
-    nodesCount.textContent = nodesRange.value;
-  });
-  gasPriceEl.addEventListener("input", ()=>{ updateGasSummary(); updateFriendBet(); });
-  undoBtn.addEventListener("click", undo);
-  clearBtn.addEventListener("click", clear);
-  demoBtn.addEventListener("click", loadDemo);
-  runBtn.addEventListener("click", runAll);
-  autoSolveBtn.addEventListener("click", autoSolveAndLoad);
-
-  /* Hotkeys */
-  window.addEventListener("keydown", (e)=>{
-    if (e.target.tagName === "INPUT") return;
-    if (e.key==='r' || e.key==='R'){ runAll(); }
-    if (e.key==='u' || e.key==='U'){ undo(); }
-    if (e.key==='c' || e.key==='C'){ clear(); }
-    if (e.key==='d' || e.key==='D'){ loadDemo(); }
-  });
-
-  /* Init */
-  renderPalette();
-  renderProgram();
-  renderNodes(Number(nodesRange.value));
-  lockChallenge();   // randomly pick + validate + lock the target for this session
-  updateFriendBet(); // budget derived from the cached estimate
-  // initial message
-  setConsensus(null, "— not executed yet —");
-})();
+showSelector();
+showTx();
 </script>
 </body>
 </html>

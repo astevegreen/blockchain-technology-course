@@ -31,12 +31,15 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- The ether_evm micro-lab (`blockchain-course/assets/labs/ether_evm/index.html`, linked from 01-EF:410; Course
-  Audit row 63) still teaches opcodes step by step; 11-FO now asks students to read decompiled code and selectors.
-  Revise the lab toward that read. (1 Nov 2026, D8 ③ lesson build)
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
+- `blockchain-course/assets/mindmap.html:1844-1849`: 01-EF's lab card still names the old "EVM Replicated Computer
+  Lab" and its description; the page at that URL is now "Reading a Contract With No Source" (11-FO's practice). Retitle
+  it in the next mind-map pass, and consider listing it under 11-FO too. (2 Nov 2026, ether_evm rework)
+- `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd:237`: "heimdall-rs, open source (MIT)"
+  states a licence with no "as of" date; the bib entry was read 1 Nov 2026, as the micro-lab now says. (2 Nov 2026,
+  ether_evm rework)
 
 ## Tooling and rules
 

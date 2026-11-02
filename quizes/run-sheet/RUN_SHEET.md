@@ -207,6 +207,10 @@ sure. Rubric: "What the lab grades" in that answer file.
 | ② | Flash loans, reentrancy and oracle manipulation | `blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd` |
 | ③ | Bytecode and decompiling; NFT wash trading | `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd` |
 
+**Micro-lab: reading a contract with no source,** linked from 11-FO's "How sure" slide:
+`blockchain-course/assets/labs/ether_evm/index.html`. Static page, nothing to start. Answers:
+`quizes/microlabs/ether_evm_INSTRUCTOR_ANSWERS.md`.
+
 **Lab: cross-chain trace (Bybit, Kelp DAO), opening with one exploit contract read.** Start:
 `./lab-manager.sh start cross-chain`. Students open `/labs/cross-chain/`; query page `/labs/cross-chain/query/?lab=d8`;
 fallback `/labs/cross-chain/fallback/`. README: `dynamic-labs/cross-chain/README.md`. Answers:

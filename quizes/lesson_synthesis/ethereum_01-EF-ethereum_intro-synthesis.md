@@ -80,7 +80,7 @@ Persistent state and larger blocks both threaten broad verifiability by increasi
 - The Vitalik portrait, governance graphic, halting-problem image, oracle cartoon, UTXO/account diagrams, and Merge energy chart are visual supports, not standalone assessment targets.
 - Gwei is useful only insofar as it helps interpret gas prices and fee units; it should not dominate assessment.
 - Contract address determinism under `CREATE` and `CREATE2` supports deployment planning and upgrade patterns, but appears as supporting detail rather than a core concept in this introductory lesson.
-- The interactive Ether EVM lab reinforces account types, execution, and state transitions; future quiz writers should treat it as practice for mechanism tracing, not as a source of lab-interface trivia.
+- The linked micro-lab ("Reading a Contract With No Source") is a day-8 preview for 11-FO: selectors, decompiled code and confidence words. It is not assessed in this lesson; future quiz writers should not draw 01-EF questions from it.
 - The SimpleCounter example illustrates persistent contract storage, constructor initialization, access control, public functions, and read-only access.
 - Examples of L2s such as Optimism, Arbitrum, Base, zkSync, StarkNet, Scroll, and Polygon zkEVM contextualize rollup models but should not become name-matching trivia.
 - The sharding callout supports the idea of splitting workload to improve capacity without forcing every node to process everything.
