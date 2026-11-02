@@ -278,7 +278,7 @@ class TokensLiveRegressionTests(unittest.TestCase):
             holder = decode(["address"], call(ADDRESSES["BADGE"], "ownerOf(uint256)", ["uint256"], [number], "latest"))[0]
             self.assertEqual(holder.lower(), expected.lower())
             stored = decode(["string"], call(ADDRESSES["BADGE"], "tokenURI(uint256)", ["uint256"], [number], "latest"))[0]
-            self.assertIn("\"name\":\"Course Certificate\"", stored)
+            self.assertIn("\"name\":\"Blockchain Intelligence Analysis Certificate\"", stored)
 
 
 if __name__ == "__main__":

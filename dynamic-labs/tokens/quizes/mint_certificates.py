@@ -28,9 +28,9 @@ from eth_utils import keccak, to_checksum_address
 PHRASE = "test test test test test test test test test test test junk"
 MINTER_INDEX = 9  # Accounts 10 to 49 are student seats (seat N is account 9 + N); 9 is free
 
-# PLACEHOLDERS: the owner decides the real name and wording.
-CERT_NAME = "Course Certificate"
-CERT_DESCRIPTION = "Placeholder: awarded for passing the blockchain intelligence analysis course."
+# The owner set this wording (1 Nov 2026). A passing student is one who passed the day-10 post-test.
+CERT_NAME = "Blockchain Intelligence Analysis Certificate"
+CERT_DESCRIPTION = "Awarded for passing the course."
 
 
 def seat_address(seat: int) -> str:

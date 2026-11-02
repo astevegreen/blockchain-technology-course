@@ -62,7 +62,7 @@ from the same `CourseBadge` contract, so each student finds theirs in the explor
 badge. `quizes/mint-certificates.sh pass-list.txt` does it (the pass list is one address or `seat N`
 per line; `quizes/mint_certificates.py` explains the rest). It signs as Account 9 through the gateway,
 needs no secret, and runs while the lab is up: a restart reloads the frozen chain and the certificates
-vanish. The certificate's name and wording are placeholders until the owner sets them.
+vanish. A student passes by passing the day-10 post-test; the certificate is named "Blockchain Intelligence Analysis Certificate".
 
 ## Tests
 
