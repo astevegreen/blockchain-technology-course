@@ -1,9 +1,10 @@
 // Optional flag self-check for the week-2 labs (one identical copy per lab).
 // A flag form holds only the SHA-256 of "course-flag:" + the flag in canonical form, never the flag itself:
 //   <form class="flag" data-kind="address|amount" data-decimals="8" data-sha256="..."> <input> <button> <output>
-// Canonical form: spaces, commas and underscores removed. An amount drops a trailing unit word (BTC, USDT, ETH)
-// and is rounded half up to data-decimals places. An address that starts 0x, bc1, tb1 or bcrt1 is lowercased;
-// a base58 address (1..., 3..., T...) is kept as typed. Nothing is sent anywhere and nothing is graded.
+// Canonical form: spaces, commas, underscores and quotes removed. An amount drops a leading sign ($, ~) and a
+// trailing unit word (BTC, USDT, ETH), and is rounded half up to data-decimals places. An address that starts
+// 0x, bc1, tb1 or bcrt1 is lowercased; a base58 address (1..., 3..., T...) is kept as typed.
+// Nothing is sent anywhere and nothing is graded.
 // SHA-256 is written out here because crypto.subtle is missing on a plain-HTTP page.
 (function () {
   "use strict";
@@ -50,9 +51,9 @@
     return h.map(function (v) { return ("0000000" + (v >>> 0).toString(16)).slice(-8); }).join("");
   }
 
-  // "0.5" with 8 places -> "0.50000000"; "23259.3238886" with 2 -> "23259.32"; null if not a number.
+  // "0.5" with 8 places -> "0.50000000"; "1234.5678" with 2 -> "1234.57"; null if not a number.
   function amount(text, decimals) {
-    var m = /^(\d*)(?:\.(\d*))?$/.exec(text.replace(/[a-z]+$/i, ""));
+    var m = /^(\d*)(?:\.(\d*))?$/.exec(text.replace(/^[^\d.]+/, "").replace(/[a-z]+$/i, ""));
     if (!m || (m[1] + (m[2] || "")) === "") { return null; }
     var frac = ((m[2] || "") + "0".repeat(decimals + 1)).slice(0, decimals + 1);
     var digits = ((m[1] || "0") + frac.slice(0, decimals)).split("").map(Number);
@@ -66,7 +67,7 @@
   }
 
   function canonical(raw, kind, decimals) {
-    var text = raw.replace(/[\s,_]/g, "");
+    var text = raw.replace(/[\s,_"'`]/g, "");
     if (kind === "amount") { return amount(text, decimals); }
     return /^(0x|bc1|tb1|bcrt1)/i.test(text) ? text.toLowerCase() : text;
   }

@@ -214,8 +214,10 @@ class CoinJoinTraceLiveRegressionTests(unittest.TestCase):
         for flag in flags:
             self.assertNotIn(flag, text)
         self.assertIn('<script src="flags.js"></script>', text)
-        self.assertEqual(get(f"{PREFIX}/lab/flags.js").content,
-                         (LAB / "gateway" / "static" / "lab" / "flags.js").read_bytes())
+        script = get(f"{PREFIX}/lab/flags.js").content
+        self.assertEqual(script, (LAB / "gateway" / "static" / "lab" / "flags.js").read_bytes())
+        for flag in flags:
+            self.assertNotIn(flag.encode(), script)
 
     def test_saved_pages_cover_every_transaction_and_address(self) -> None:
         resp = get(f"{PREFIX}/fallback/")

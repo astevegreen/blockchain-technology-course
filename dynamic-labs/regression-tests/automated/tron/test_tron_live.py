@@ -336,7 +336,10 @@ class TronDay9LiveRegressionTests(unittest.TestCase):
         self.assertNotIn(f["16"]["value"], text)
         self.assertNotIn("7,830", text)
         self.assertIn('<script src="../flags.js"></script>', text)
-        self.assertEqual(get("/labs/tron/lab/flags.js").content, (LAB / "static" / "lab" / "flags.js").read_bytes())
+        script = get("/labs/tron/lab/flags.js").content
+        self.assertEqual(script, (LAB / "static" / "lab" / "flags.js").read_bytes())
+        self.assertNotIn(f["16"]["value"].encode(), script)
+        self.assertNotIn(b"7830", script)
 
     def test_saved_results_page_matches_the_queries(self) -> None:
         check_saved_results(self, "/labs/tron/fallback/d9/", LAB / "static" / "fallback" / "d9" / "index.html",

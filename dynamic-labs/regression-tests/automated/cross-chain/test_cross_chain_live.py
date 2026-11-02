@@ -196,8 +196,10 @@ class CrossChainLiveRegressionTests(unittest.TestCase):
         self.assertNotIn(f["a"]["value"], text)
         self.assertNotIn(f["b"]["value"], text)
         self.assertNotIn(f["c"]["value"], text.lower())
-        self.assertEqual(get("/labs/cross-chain/lab/flags.js").content,
-                         (LAB / "static" / "lab" / "flags.js").read_bytes())
+        script = get("/labs/cross-chain/lab/flags.js").content
+        self.assertEqual(script, (LAB / "static" / "lab" / "flags.js").read_bytes())
+        for part in "abc":
+            self.assertNotIn(f[part]["value"].split(".")[0].encode(), script.lower())
 
     def test_saved_results_page_matches_the_queries(self) -> None:
         resp = get("/labs/cross-chain/fallback/")
