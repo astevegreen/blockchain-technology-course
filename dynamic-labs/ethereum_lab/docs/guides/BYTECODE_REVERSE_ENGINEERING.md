@@ -97,10 +97,15 @@ SimpleStorage has `store(uint256)` and `retrieve()`. In the bytecode you might s
 
 ## External Tools
 
-For deeper analysis, you can paste bytecode into:
+For deeper analysis, use open-source tools only:
 
-- **[Etherscan Opcode Tool](https://etherscan.io/opcode-tool)** — Disassembles and runs bytecode
-- **[evm.codes](https://www.evm.codes)** — EVM opcode reference
+- **[heimdall-rs](https://github.com/Jon-Becker/heimdall-rs)** — MIT-licensed command-line toolkit
+  (as of 1 Nov 2026) that disassembles and decompiles EVM bytecode. It is not installed in the lab image
+  or the student VM, so the instructor runs it and shares the output, or you install it on your own
+  machine and run `heimdall disassemble <bytecode>` and `heimdall decompile <bytecode>`.
+  Source: `becker_heimdallrs_2026`.
+- **[evm.codes](https://www.evm.codes)** — EVM opcode reference, whose source is MIT-licensed
+  (as of 2 Nov 2026). Source: `comity_evmcodes_2026`.
 
 ---
 

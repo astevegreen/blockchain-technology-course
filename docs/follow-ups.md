@@ -34,9 +34,9 @@ slide index), which is never listed here.
 - The ether_evm micro-lab (`blockchain-course/assets/labs/ether_evm/index.html`, linked from 01-EF:410; Course
   Audit row 63) still teaches opcodes step by step; 11-FO now asks students to read decompiled code and selectors.
   Revise the lab toward that read. (1 Nov 2026, D8 ③ lesson build)
-- `dynamic-labs/ethereum_lab/docs/guides/BYTECODE_REVERSE_ENGINEERING.md:102` points students to the commercial
-  "Etherscan Opcode Tool"; labs use open-source tools only. Swap in heimdall-rs or an open disassembler.
-  (1 Nov 2026, D8 ③ lesson build)
+- Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
+  it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
+  machine. (2 Nov 2026, bytecode guide fix)
 
 ## Tooling and rules
 
