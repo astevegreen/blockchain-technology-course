@@ -1,0 +1,204 @@
+lesson_id: "11-FO"
+lesson_title: "Bytecode and Decompiling; NFT Wash Trading"
+source_path: "lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd"
+terms:
+  - term: "Decompiled code"
+    modifier: null
+    aliases: ["decompiled output"]
+    definition: "Code-like output that a tool rebuilds from a contract's bytecode. It is a reconstruction of the evidence, not the evidence itself, and it carries the tool's guesses."
+    context: "The lesson ranks bytecode, verified source and decompiled code as three levels of trust when no source was published."
+    slide_heading: "The chain stores bytecode, not source"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Exact match"
+    modifier: null
+    aliases: ["exact-match verification"]
+    definition: "Sourcify's strongest verification result: the published source recompiles to the on-chain bytecode byte for byte, metadata hash included, so these are exactly the files that were compiled. A plain match agrees on everything but the metadata hash, so behavior is the same but names, comments or file paths may differ."
+    context: "Analysts note which level of match a verifier reports, because only an exact match vouches for the source's names and comments."
+    slide_heading: "Verified source: a match someone checked"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Metadata hash"
+    modifier: null
+    aliases: ["compilation metadata hash"]
+    definition: "A hash of the compilation's metadata that the compiler appends to the bytecode. Changing any source byte, even a comment, changes it, which makes it the fingerprint that separates an exact match from a match."
+    context: "The lesson uses it to explain why names and comments reach the bytecode only as a hash, so no decompiler can recover them."
+    slide_heading: "Verified source: a match someone checked"
+    tags: ["ethereum", "cryptography", "forensics"]
+    confidence: "high"
+  - term: "Sourcify"
+    modifier: null
+    aliases: []
+    definition: "A contract verification service that recompiles published source and reports whether it is an exact match, a match, or no match for the bytecode at an address."
+    context: "The analyst's first move on an unknown contract is to look its address up on a verifier such as Sourcify."
+    slide_heading: "Verified source: a match someone checked"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Signature database"
+    modifier: null
+    aliases: ["signature lookup", "selector lookup", "selector database"]
+    definition: "A database that maps 4-byte selectors back to the human-readable function signatures people have submitted. A hit gives the name that produces those bytes, not proof of what the contract's code does."
+    context: "The lesson treats a lookup result as a lead and confirms what happened from the logs and balance changes."
+    slide_heading: "Looking up a selector: a name, not proof"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "4byte.directory"
+    modifier: null
+    aliases: ["4byte"]
+    definition: "A free signature database that maps function selectors back to their human-readable signatures."
+    context: "It is the lesson's example of where an analyst pastes a selector copied from a transaction's input data."
+    slide_heading: "Looking up a selector: a name, not proof"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Selector collision"
+    modifier: null
+    aliases: ["function selector collision", "four-byte selector collision"]
+    definition: "Two different function signatures that produce the same 4-byte selector. Because four bytes leave room for collisions, a database may list several names for one selector."
+    context: "Analysts pick the signature whose argument types decode the input sensibly, and say they did so."
+    slide_heading: "Looking up a selector: a name, not proof"
+    tags: ["ethereum", "forensics", "security"]
+    confidence: "high"
+  - term: "Decompiler"
+    modifier: null
+    aliases: ["decompilers", "decompilation", "decompiling"]
+    definition: "A tool that turns bytecode back into something like code: functions by selector, storage reads and writes, calls and conditions. It cannot recover names, comments or the author's intent, and it can get types, internal functions and large contracts wrong."
+    context: "The lesson teaches students to separate what a decompiler shows about the bytecode from what the tool guessed."
+    slide_heading: "A decompiler rebuilds structure, not intent"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Storage slot"
+    modifier: null
+    aliases: ["storage slots"]
+    definition: "A numbered location in a contract's storage. Decompiled code shows which slots a function reads and writes, but you learn what a slot holds only by reading it on chain."
+    context: "In the illustrative decompiled function, the caller check and the destination address both come from storage slots the analyst must read next."
+    slide_heading: "A decompiler rebuilds structure, not intent"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "EVM jump"
+    modifier: null
+    aliases: ["EVM jumps"]
+    definition: "The instruction the EVM uses to implement every call, return, loop and conditional. Because all control flow is jumps, rebuilding functions and structure from bytecode is hard."
+    context: "The lesson cites this to explain why earlier decompilers handled under 20% of contracts over 20 KB (as of 2022)."
+    slide_heading: "A decompiler rebuilds structure, not intent"
+    tags: ["ethereum", "forensics"]
+    confidence: "medium"
+  - term: "heimdall-rs"
+    modifier: null
+    aliases: ["heimdall"]
+    definition: "An open-source (MIT) decompiler for EVM bytecode, the one the course names for exercises."
+    context: "It is listed beside Panoramix as a tool for reading contracts that have no published source."
+    slide_heading: "A decompiler rebuilds structure, not intent"
+    tags: ["ethereum", "forensics", "labs"]
+    confidence: "high"
+  - term: "Panoramix"
+    modifier: null
+    aliases: []
+    definition: "The decompiler built into Etherscan's decompiler tab; it decompiles complex contracts only partly. The course names it for awareness, not for exercises."
+    context: "It is the lesson's example of a commercial explorer's decompiler, set beside the open-source heimdall-rs."
+    slide_heading: "A decompiler rebuilds structure, not intent"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Etherscan"
+    modifier: null
+    aliases: []
+    definition: "A block explorer whose decompiler tab runs Panoramix; the course names it for awareness."
+    context: "Students see where a decompiler sits in the tools an analyst already uses to read transactions."
+    slide_heading: "A decompiler rebuilds structure, not intent"
+    tags: ["ethereum", "forensics"]
+    confidence: "medium"
+  - term: "ICD 203"
+    modifier: null
+    aliases: []
+    definition: "The analytic standard that asks analysts to state their confidence. The course uses it only to standardize its confidence words, not to write formal memos."
+    context: "Both halves of the lesson end with an assessment stated in ICD 203's words."
+    slide_heading: "How sure: what a code read rests on"
+    tags: ["forensics", "policy"]
+    confidence: "high"
+  - term: "Confidence word"
+    modifier: null
+    aliases: ["confidence scale", "course confidence scale"]
+    definition: "High, Moderate or Low, attached to an assessment to say how sure you are. It follows how many independent kinds of evidence agree, never a percentage."
+    context: "For a code read, a looked-up name is Low on what the function does, decompiled code alone is Moderate at best, and verified source plus agreeing logs is High."
+    slide_heading: "How sure: what a code read rests on"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Independent line of evidence"
+    modifier: null
+    aliases: ["kind of evidence", "kinds of evidence", "independent line", "line of evidence"]
+    definition: "Support for an assessment that comes from a different kind of evidence than the rest. Counting these kinds, not names or labels, sets the confidence word."
+    context: "In a code read, the code says what can happen and the logs say what did; a function name alone is not a kind."
+    slide_heading: "How sure: what a code read rests on"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Reward farming"
+    modifier: null
+    aliases: ["volume farming", "farm rewards"]
+    definition: "Wash trading to collect tokens a marketplace pays per unit of trading volume. Trading with yourself raises your share of volume, so it earns rewards."
+    context: "It is one of three wash-trading motives; its payoff shows on chain as reward-token transfers while the rewards ran."
+    slide_heading: "Wash trading: the seller on both sides"
+    tags: ["forensics", "tokenization", "ethereum"]
+    confidence: "high"
+  - term: "LooksRare"
+    modifier: null
+    aliases: []
+    definition: "An NFT marketplace that paid trading rewards in LOOKS as a share of total platform volume, excluding private sales, so trading with yourself earned tokens. The rewards ended as of September 2023."
+    context: "The lesson cites only LooksRare's reward rule, not any claim about how much of its volume was wash trading."
+    slide_heading: "Wash trading: the seller on both sides"
+    tags: ["forensics", "tokenization", "real-world"]
+    confidence: "high"
+  - term: "LOOKS"
+    modifier: null
+    aliases: ["LOOKS token"]
+    definition: "The token LooksRare paid as trading rewards, with each user's daily share set by their volume divided by the platform's volume."
+    context: "Reward-token transfers are the visible payoff when the motive for wash trading is farming."
+    slide_heading: "Wash trading: the seller on both sides"
+    tags: ["tokenization", "forensics"]
+    confidence: "high"
+  - term: "Wash-trading loop"
+    modifier: null
+    aliases: ["token loop", "token cycle"]
+    definition: "One token ID passing around a few related wallets, A to B to C and back to A, while the payment flows back the other way to the seller's group. Each hop records a sale, but no real ownership changes."
+    context: "Following the token ID's Transfer logs in a circle is the core on-chain pattern of NFT wash trading."
+    slide_heading: "The loop: one token ID among related wallets"
+    tags: ["forensics", "tokenization", "ethereum"]
+    confidence: "high"
+  - term: "Self-financed address"
+    modifier: null
+    aliases: ["self-financed buyer", "self-financed sale", "self-financing"]
+    definition: "A buyer address funded by the selling address, or by the address that first funded the seller. A sale to it is a transfer within one group, not a sale to a separate party."
+    context: "It is the strongest single test for wash trading; Chainalysis flagged sellers with more than 25 sales to self-financed buyers."
+    slide_heading: "Self-financed: follow the buyer's money back"
+    tags: ["forensics", "tokenization"]
+    confidence: "high"
+  - term: "Shared funder"
+    modifier: null
+    aliases: ["common funder"]
+    definition: "One address that funded the wallets on both sides of a sale, found by tracing each wallet's first incoming ETH. It ties buyer and seller to one party; an exchange that funds millions does not count, because the funder must be the seller's own."
+    context: "Tracing the buyer's first incoming ETH back to the seller's funder is what turns a loop into a wash-trading case."
+    slide_heading: "Self-financed: follow the buyer's money back"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Own-wallet move"
+    modifier: null
+    aliases: ["own-wallet moves"]
+    definition: "One person moving an NFT between their own wallets. It shows a Transfer log with no payment and no marketplace call, so no sale, price or volume was recorded."
+    context: "It is the first look-alike to rule out: a transfer is not a sale."
+    slide_heading: "Look-alikes that are not wash trades"
+    tags: ["forensics", "tokenization"]
+    confidence: "high"
+  - term: "Collector buy-back"
+    modifier: null
+    aliases: ["buy-back", "buy-backs"]
+    definition: "A real sale followed by a later purchase back at a new price. Time between the sales and outside funding separate it from a wash trade."
+    context: "The lesson lists it among the innocent patterns a loop alone cannot rule out."
+    slide_heading: "Look-alikes that are not wash trades"
+    tags: ["forensics", "tokenization"]
+    confidence: "medium"
+  - term: "Test sale"
+    modifier: null
+    aliases: ["test sales"]
+    definition: "A sale a team makes to check that a listing works. One or two sales at trivial prices point to a test, not a wash trade."
+    context: "It is the last look-alike in the lesson's table, offered as a question to check."
+    slide_heading: "Look-alikes that are not wash trades"
+    tags: ["forensics", "tokenization"]
+    confidence: "medium"

@@ -1,0 +1,268 @@
+lesson_id: "09-FO"
+lesson_title: "Approvals, Drainers and Address Poisoning"
+source_path: "lessons/forensics/09-FO-approvals_drainers_poisoning.qmd"
+terms:
+  - term: "Spender"
+    modifier: null
+    aliases: []
+    definition: "The address an ERC-20 approval names, which may then move the owner's tokens with transferFrom, up to the approved amount."
+    context: "In an approval drain the loss arrives in a transaction the spender sent, not the victim."
+    slide_heading: "An approval lets someone else spend your tokens"
+    tags: ["ethereum", "tokenization", "forensics"]
+    confidence: "high"
+  - term: "transferFrom"
+    modifier: null
+    aliases: []
+    definition: "The ERC-20 call a spender uses to move an owner's tokens under an approval; it emits a Transfer event in a transaction the spender sent."
+    context: "A Transfer out of the victim in a transaction the victim did not send points to someone holding permission."
+    slide_heading: "An approval lets someone else spend your tokens"
+    tags: ["ethereum", "tokenization", "forensics"]
+    confidence: "high"
+  - term: "Approval event"
+    modifier: null
+    aliases: []
+    definition: "The log an ERC-20 token emits when an allowance is set, by approve in the owner's own transaction or by permit in the spender's."
+    context: "The analyst looks for the Approval naming the victim as owner to find who held permission to take the tokens."
+    slide_heading: "An approval lets someone else spend your tokens"
+    tags: ["ethereum", "tokenization", "forensics"]
+    confidence: "high"
+  - term: "setApprovalForAll"
+    modifier: null
+    aliases: ["ApprovalForAll", "ApprovalForAll event"]
+    definition: "The NFT (ERC-721) call that lets an operator manage all of the owner's tokens in a collection, not just one; it emits an ApprovalForAll event."
+    context: "One such signature gives control of every NFT the victim holds in that collection."
+    slide_heading: "An approval lets someone else spend your tokens"
+    tags: ["ethereum", "tokenization", "security"]
+    confidence: "high"
+  - term: "Drainer"
+    modifier: null
+    aliases: ["wallet drainer", "drainer kit", "drainers"]
+    definition: "The phishing site and the code behind it that get a victim to sign an approval or a transfer, which the thief then uses to empty the wallet."
+    context: "A drainer asks for the same permission a legitimate app asks for, but under a lure; its developers usually rent the kit out."
+    slide_heading: "An approval lets someone else spend your tokens"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Lure"
+    modifier: null
+    aliases: ["lures"]
+    definition: "The bait that gets a victim to act, such as a fake airdrop or giveaway on a drainer site, or a look-alike transfer planted in the victim's history."
+    context: "In address poisoning the lure is on chain before the loss, and finding it is what decides the case."
+    slide_heading: "An approval lets someone else spend your tokens"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Permit"
+    modifier: null
+    aliases: ["ERC-2612", "permit signature"]
+    definition: "An ERC-2612 function that sets a token allowance from a message the owner signs off chain, so the owner sends no transaction and the spender puts the signature on chain."
+    context: "The victim's own history shows no approve, so the analyst looks for an Approval event inside the spender's transaction; the owner's permit nonce also goes up by one."
+    slide_heading: "A permit is an approval signed off chain"
+    tags: ["ethereum", "tokenization", "security"]
+    confidence: "high"
+  - term: "Permit2"
+    modifier: null
+    aliases: []
+    definition: "A permit-style signature that, like an ERC-2612 permit, gives token permission without a transaction from the owner; Scam Sniffer counts the two together."
+    context: "Permit and Permit2 signatures caused 38% of large-case phishing losses in 2025, as of January 2026."
+    slide_heading: "A permit is an approval signed off chain"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Signature phishing"
+    modifier: null
+    aliases: ["malicious signature", "malicious signatures"]
+    definition: "Phishing that tricks a victim into signing a message, such as a permit or an EIP-7702 authorization, which the thief then uses to take funds."
+    context: "Scam Sniffer put 2025 signature phishing at $83.85M across 106,106 victims; the victim's mistake is a signature, not a transaction."
+    slide_heading: "A permit is an approval signed off chain"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Drainer-as-a-service"
+    modifier: null
+    aliases: ["scam-as-a-service"]
+    definition: "The model in which a drainer's developers rent their kit to customers who run the phishing sites, and take a cut of every theft."
+    context: "Because one kit serves many operators, unconnected victims on different sites can lead to one admin address."
+    slide_heading: "A drainer kit is phishing sold as a service"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Inferno Drainer"
+    modifier: null
+    aliases: ["Inferno"]
+    definition: "A scam-as-a-service drainer that Group-IB studied from November 2022 to November 2023, finding 16,000 domains imitating more than 100 crypto brands and at least $80 million stolen."
+    context: "MetaSleuth traced its 20/80 profit split on chain."
+    slide_heading: "A drainer kit is phishing sold as a service"
+    tags: ["security", "real-world"]
+    confidence: "high"
+  - term: "Drainer profit split"
+    modifier: null
+    aliases: ["drainer cut", "profit sharing", "20/80 split"]
+    definition: "The fixed share of each theft a drainer pays its developers, for Inferno Drainer 20% to an admin account and 80% to the customer who ran the site."
+    context: "The same split to the same admin address across victims ties those drains to one kit, though not to one site operator."
+    slide_heading: "A drainer kit is phishing sold as a service"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Drainer admin address"
+    modifier: null
+    aliases: ["admin address", "admin account"]
+    definition: "The address that receives a drainer developer's cut of each theft."
+    context: "A shared admin address links drains to the kit, not to the person who ran each phishing site."
+    slide_heading: "A drainer kit is phishing sold as a service"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Approval drain"
+    modifier: null
+    aliases: []
+    definition: "A theft that reads in four steps: the victim's approval, the spender's take with transferFrom, the drainer's cut, and a swap out of tokens that can be frozen."
+    context: "The loss in step 2 can come days after the mistake in step 1, and the victim sent only step 1."
+    slide_heading: "Reading an approval drain, step by step"
+    tags: ["forensics", "security"]
+    confidence: "high"
+  - term: "Bybit hack"
+    modifier: null
+    aliases: ["Bybit theft", "Bybit"]
+    definition: "The February 2025 theft of about $1.5B from the exchange Bybit, which the FBI attributed to North Korea on 26 February 2025."
+    context: "Elliptic calls it the largest theft on record (as of March 2025) and describes the thieves first swapping tokens for a coin no one can freeze."
+    slide_heading: "Reading an approval drain, step by step"
+    tags: ["real-world", "forensics"]
+    confidence: "high"
+  - term: "EIP-7702"
+    modifier: null
+    aliases: ["7702"]
+    definition: "The Ethereum change, live since the Pectra upgrade, that lets an ordinary account sign one authorization making it run a delegate contract's code."
+    context: "Before it, every outflow from a plain account was a transaction its key signed; after it, an outflow can arrive in a transaction someone else sent."
+    slide_heading: "Four ways out of a wallet look different"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "EIP-7702 authorization"
+    modifier: null
+    aliases: ["signed authorization", "7702 authorization"]
+    definition: "The message an account's owner signs under EIP-7702, naming a chain, a delegate contract and the account's nonce; it is carried in a type 0x04 transaction."
+    context: "A malicious authorization signed on a phishing site is signature phishing; the analyst finds the 0x04 transaction that carried it and who sent it."
+    slide_heading: "Four ways out of a wallet look different"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "EIP-7702 delegation"
+    modifier: null
+    aliases: ["7702 delegation"]
+    definition: "The state of an account whose code, set by an EIP-7702 authorization, points to a delegate contract, so calls to the account run the delegate's code."
+    context: "A delegation lasts until the owner signs another, and delegating to the zero address clears it; a delegation on a drained account is not by itself proof of phishing."
+    slide_heading: "Four ways out of a wallet look different"
+    tags: ["ethereum", "security", "forensics"]
+    confidence: "high"
+  - term: "Address poisoning"
+    modifier: null
+    aliases: ["poisoning"]
+    definition: "A theft in which the attacker plants an address that looks like one the victim has paid in the victim's history, hoping the victim copies it next time."
+    context: "The victim really sends the money; the analyst shows poisoning from two on-chain lines, the look-alike match and a lure before the loss."
+    slide_heading: "Four ways out of a wallet look different"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Look-alike address"
+    modifier: null
+    aliases: ["look-alike"]
+    definition: "An address the attacker generates so its first and last characters match a real payee's, the part most wallets show."
+    context: "A look-alike recipient with no lure before the loss is not enough to call a case poisoning."
+    slide_heading: "Four ways out of a wallet look different"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Clipboard hijacker"
+    modifier: null
+    aliases: ["clipper"]
+    definition: "Malware on the victim's computer that swaps an address the victim copies for the thief's, so the victim signs a real payment to the wrong recipient."
+    context: "It leaves no lure on chain: the chain shows only the victim paying a stranger, and the proof is on the device."
+    slide_heading: "Four ways out of a wallet look different"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Delegation indicator"
+    modifier: null
+    aliases: []
+    definition: "The code EIP-7702 writes to a delegated account: 0xef0100 followed by the delegate contract's address."
+    context: "Code starting 0xef0100 at an address that used to be a plain wallet is the sign to look for, then the delegate it names."
+    slide_heading: "EIP-7702 lets a plain account run code"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Delegate contract"
+    modifier: null
+    aliases: []
+    definition: "The contract an EIP-7702 authorization names, whose code then runs as the delegating account."
+    context: "The standard warns that a bad delegate can take near complete control of the account."
+    slide_heading: "EIP-7702 lets a plain account run code"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Type 0x04 transaction"
+    modifier: null
+    aliases: ["0x04 transaction"]
+    definition: "The Ethereum transaction type that carries EIP-7702 authorizations and sets an account's code."
+    context: "The analyst finds the 0x04 transaction that set a drained account's code and asks who sent it."
+    slide_heading: "EIP-7702 lets a plain account run code"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Pectra upgrade"
+    modifier: null
+    aliases: ["Pectra"]
+    definition: "The Ethereum upgrade that activated on mainnet on 7 May 2025, at epoch 364032, and brought EIP-7702."
+    context: "It marks the date after which a plain account can hold code, so an analyst reads pre- and post-Pectra outflows differently."
+    slide_heading: "EIP-7702 lets a plain account run code"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Transaction sponsorship"
+    modifier: null
+    aliases: ["sponsored fees"]
+    definition: "Under EIP-7702, another account sending and paying for a transaction on a delegated account's behalf."
+    context: "It is a legitimate use of 7702, but it means the sender of an outflow is not necessarily the owner."
+    slide_heading: "EIP-7702 lets a plain account run code"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Transaction batching"
+    modifier: null
+    aliases: ["batching"]
+    definition: "Running several operations in one transaction, which EIP-7702 allows an ordinary account to do."
+    context: "It is a legitimate use, but a 7702 phishing drain shows as one transaction with many transfers out."
+    slide_heading: "EIP-7702 lets a plain account run code"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Sweeper contract"
+    modifier: null
+    aliases: ["sweeper", "CrimeEnjoyor"]
+    definition: "A copied contract that thieves delegate a wallet to after its key has leaked, so the wallet is emptied automatically; CrimeEnjoyor is a short, widely reused one."
+    context: "Wintermute found over 80% of early 7702 delegations pointed to sweepers; there the crime is the stolen key and 7702 only automates the theft."
+    slide_heading: "After 7702, an outflow may not be the owner's"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Zero-value transfer"
+    modifier: null
+    aliases: ["zero-value lure"]
+    definition: "A poisoning lure: a transfer of zero of the same token that appears to go from the victim to the look-alike, though the attacker created it."
+    context: "It costs little and puts the look-alike next to the real payee in the victim's history."
+    slide_heading: "Address poisoning plants a look-alike in history"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Tiny transfer"
+    modifier: null
+    aliases: []
+    definition: "A poisoning lure: a small amount of the same token sent from the look-alike to the victim."
+    context: "It is one of three lure types, each leaving a different record before the loss."
+    slide_heading: "Address poisoning plants a look-alike in history"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Counterfeit token"
+    modifier: null
+    aliases: ["fake token"]
+    definition: "A poisoning lure: a fake token the attacker made, sent to the look-alike for the same amount the victim really paid."
+    context: "It fools victims most easily because it copies the real payment's amount."
+    slide_heading: "Address poisoning plants a look-alike in history"
+    tags: ["security", "forensics", "tokenization"]
+    confidence: "high"
+  - term: "Spear-phishing"
+    modifier: null
+    aliases: []
+    definition: "Phishing aimed at a chosen person; in the Ronin case it compromised one employee and opened the way to the validator keys."
+    context: "Ronin's way in was people, not code, so its losses read on chain as valid, key-signed withdrawals."
+    slide_heading: "Ronin: stolen keys, not broken code"
+    tags: ["security", "real-world"]
+    confidence: "high"
+  - term: "APT38"
+    modifier: null
+    aliases: []
+    definition: "A North Korea-linked group that the FBI named, with Lazarus Group, as responsible for the $620M Ronin theft on 14 April 2022."
+    context: "The analyst quotes the attribution as the FBI's, with its date; the chain alone does not name a state."
+    slide_heading: "Ronin: the FBI named Lazarus, not the chain"
+    tags: ["real-world", "security"]
+    confidence: "high"

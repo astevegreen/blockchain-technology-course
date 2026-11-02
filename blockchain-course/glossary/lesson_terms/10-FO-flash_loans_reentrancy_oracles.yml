@@ -1,0 +1,236 @@
+lesson_id: "10-FO"
+lesson_title: "Flash Loans, Reentrancy and Oracle Manipulation"
+source_path: "lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd"
+terms:
+  - term: "DeFi pool"
+    modifier: null
+    aliases: []
+    definition: "A contract in which a DeFi protocol keeps its users' deposits; anyone may call it, including a contract an attacker writes."
+    context: "Every attack in the lesson takes money from a pool, not a person, so the victim address is a contract and the analyst first finds the protocol behind it."
+    slide_heading: "A DeFi pool is a contract anyone can call"
+    tags: ["ethereum", "security", "forensics"]
+    confidence: "high"
+  - term: "Lending pool"
+    modifier: null
+    aliases: ["lending pools"]
+    definition: "A DeFi pool that holds deposits others borrow against collateral, and decides how much to lend from the collateral's value, often a price it reads from elsewhere."
+    context: "Because it must value collateral, a lending pool is where oracle manipulation strikes."
+    slide_heading: "A DeFi pool is a contract anyone can call"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Flash loan pool"
+    modifier: null
+    aliases: []
+    definition: "A DeFi pool whose deposits are lent out within one transaction; it decides only from whether the loan comes back."
+    context: "Any borrower can borrow the whole pool for one transaction, which gives an attacker a pool's worth of capital."
+    slide_heading: "A DeFi pool is a contract anyone can call"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Post-mortem"
+    modifier: null
+    aliases: ["write-up", "case write-up"]
+    definition: "A protocol's own account of an attack, or an analysis such as CertiK's, that explains the sequence of calls in the exploit transaction."
+    context: "The analyst finds the write-up before reading the transactions, and a reentrancy finding rises from Moderate to High with it."
+    slide_heading: "A DeFi pool is a contract anyone can call"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Euler Finance hack"
+    modifier: null
+    aliases: ["Euler", "Euler exploit"]
+    definition: "The 13 March 2023 attack in which Euler lost about $197 million through a donate function that lacked a health check, funded by a flash loan; the funds were later returned."
+    context: "It shows a flash loan paying for a logic flaw rather than a price move, with the attacker on both sides of a liquidation."
+    slide_heading: "A DeFi pool is a contract anyone can call"
+    tags: ["real-world", "ethereum", "security"]
+    confidence: "high"
+  - term: "Attacker contract"
+    modifier: null
+    aliases: ["attacker contracts"]
+    definition: "A contract the attacker deploys and calls the victim pool through; its code runs when the pool pays it."
+    context: "In a trace the caller is a contract, not a plain account, and two attacker contracts trading with each other is a strong sign of an attack."
+    slide_heading: "Reentrancy: the contract pays before it updates"
+    tags: ["ethereum", "security", "forensics"]
+    confidence: "high"
+  - term: "DAO Token"
+    modifier: null
+    aliases: ["DAO Tokens"]
+    definition: "The token The DAO sold, about 1.15 billion of them for about 12 million ETH in 2016; holders voted on the projects the fund backed."
+    context: "The DAO attacker used their own DAO Tokens, with no flash loan, to re-enter the split function."
+    slide_heading: "The DAO: one split called many times over"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "DAO split"
+    modifier: null
+    aliases: ["split function"]
+    definition: "The DAO's function that let a holder leave with their ether into a child DAO; the attacker called it inside itself before their balance was updated."
+    context: "Split called inside split, collecting ether many times over in one transaction, is the textbook reentrancy."
+    slide_heading: "The DAO: one split called many times over"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Child DAO"
+    modifier: null
+    aliases: []
+    definition: "The new DAO a split moved a holder's ether into; its 27-day creation window kept the ether from moving."
+    context: "That hold gave time for the fork that moved the funds to a recovery address."
+    slide_heading: "The DAO: one split called many times over"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Irregular state change"
+    modifier: null
+    aliases: []
+    definition: "The DAO fork at block 1,920,000, which moved the funds to a recovery address without rolling back transactions."
+    context: "It explains why Ethereum and Ethereum Classic share history before July 2016."
+    slide_heading: "The DAO: one split called many times over"
+    tags: ["ethereum", "consensus"]
+    confidence: "high"
+  - term: "Atomic transaction"
+    modifier: null
+    aliases: ["atomic", "atomicity"]
+    definition: "A transaction that all succeeds or none of it does; a reentrancy drain or a flash loan's borrow, use and repayment happen as one."
+    context: "Because a flash loan is atomic, the lender bears no default risk: if the money is not repaid, the transaction never happened."
+    slide_heading: "Reading a reentrancy: one call nested in itself"
+    tags: ["ethereum", "distributed-systems"]
+    confidence: "high"
+  - term: "Flash loan fee"
+    modifier: null
+    aliases: []
+    definition: "The fee a flash loan borrower returns with the amount borrowed, 0.05% on Aave at deployment and changeable by governance vote."
+    context: "In a trace the repayment to the pool is slightly larger than the loan; the figure carries a date because governance can change it (as of 31 Oct 2026)."
+    slide_heading: "A flash loan lasts one transaction"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Aave"
+    modifier: null
+    aliases: []
+    definition: "A DeFi protocol that offers flash loans from its pools."
+    context: "The Euler attack opened with a 30 million DAI flash loan from Aave."
+    slide_heading: "A flash loan lasts one transaction"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "dYdX"
+    modifier: null
+    aliases: []
+    definition: "A DeFi protocol that, like Aave, offers flash loans from its pools; Qin et al. study both."
+    context: "It is one of the lenders an analyst may see at the start of a flash-loan trace."
+    slide_heading: "A flash loan lasts one transaction"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Price oracle"
+    modifier: null
+    aliases: ["onchain oracle"]
+    definition: "An oracle that brings a price to a contract, such as a lending pool reading an exchange pool to value collateral."
+    context: "An onchain oracle that reads one exchange pool's spot price can be moved within the same transaction."
+    slide_heading: "A price oracle can be moved with borrowed money"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Oracle manipulation"
+    modifier: null
+    aliases: []
+    definition: "Moving the price a lending pool reads, usually with a large trade paid for by a flash loan, then borrowing more than the collateral is worth and repaying the loan."
+    context: "The lending contract works as written but trusts the wrong price; its victim is the lender, not the exchange pool traded on."
+    slide_heading: "A price oracle can be moved with borrowed money"
+    tags: ["ethereum", "security", "forensics"]
+    confidence: "high"
+  - term: "Spot price"
+    modifier: null
+    aliases: []
+    definition: "The current price on an exchange pool, which lenders often read and which a big enough trade can move."
+    context: "A lender that reads one pool's spot price can be manipulated in a single transaction."
+    slide_heading: "A price oracle can be moved with borrowed money"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "TWAP"
+    modifier: null
+    aliases: ["time-weighted average price"]
+    definition: "A time-weighted average price: an average over many blocks, which a recent large trade cannot move much."
+    context: "It is one of the two defenses against oracle manipulation, alongside a decentralized oracle network."
+    slide_heading: "A price oracle can be moved with borrowed money"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "bZx attack"
+    modifier: null
+    aliases: ["bZx"]
+    definition: "The 18 February 2020 oracle-manipulation attack in which one transaction borrowed 7,500 ETH, raised sUSD's price on two thin exchange pools, borrowed against that price on bZx and repaid, keeping 2,381.41 ETH."
+    context: "Its six steps, loan first and repayment last, are the shape analysts look for in a flash-loan trace."
+    slide_heading: "bZx, Feb 2020: borrow, move a price, borrow"
+    tags: ["real-world", "ethereum", "security"]
+    confidence: "high"
+  - term: "sUSD"
+    modifier: null
+    aliases: []
+    definition: "A dollar-pegged token, the collateral the bZx attacker bought on thin pools to raise its price in ETH."
+    context: "bZx valued the attacker's sUSD collateral from the distorted price and lent too much ETH against it."
+    slide_heading: "bZx, Feb 2020: borrow, move a price, borrow"
+    tags: ["tokenization", "real-world"]
+    confidence: "high"
+  - term: "Thin market"
+    modifier: null
+    aliases: ["thin pool", "thin exchange pool", "thin exchange pools"]
+    definition: "An exchange pool whose price a trade of an attacker's size can move far, as the bZx trades did."
+    context: "Large trades on a thin exchange pool are the first sign of oracle manipulation in a trace."
+    slide_heading: "bZx, Feb 2020: borrow, move a price, borrow"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Pump and arbitrage"
+    modifier: null
+    aliases: []
+    definition: "The name for a second bZx flash-loan attack, on 15 February 2020, the same week as the oracle-manipulation attack."
+    context: "It shows the same protocol hit twice in one week by flash-loan attacks."
+    slide_heading: "bZx, Feb 2020: borrow, move a price, borrow"
+    tags: ["real-world", "security"]
+    confidence: "high"
+  - term: "Donate function"
+    modifier: null
+    aliases: ["donate"]
+    definition: "Euler's function that let users donate to the reserves; added in July 2022 and audited, it lacked a health check."
+    context: "The Euler attacker donated 100 million eDAI to make their own account insolvent and eligible for liquidation."
+    slide_heading: "Euler, March 2023: a loan, a gift, a liquidation"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Health check"
+    modifier: null
+    aliases: []
+    definition: "The check Euler's donate function lacked, so a user could make their own account insolvent and eligible for liquidation."
+    context: "The missing check was the flaw in the Euler attack; no price moved, so the case is not oracle manipulation."
+    slide_heading: "Euler, March 2023: a loan, a gift, a liquidation"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Self-liquidation"
+    modifier: null
+    aliases: []
+    definition: "An attacker liquidating their own insolvent account with a second contract they also control, taking its collateral at a discount."
+    context: "In the Euler attack the attacker was both the liquidated account and the liquidator."
+    slide_heading: "Euler, March 2023: a loan, a gift, a liquidation"
+    tags: ["ethereum", "security", "forensics"]
+    confidence: "high"
+  - term: "Liquidation bonus"
+    modifier: null
+    aliases: []
+    definition: "The discount a liquidator gets on a bad account's collateral; the Euler attacker claimed one larger than their donation."
+    context: "The bonus, not the donation, was where the Euler attacker's profit came from."
+    slide_heading: "Euler, March 2023: a loan, a gift, a liquidation"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "eDAI"
+    modifier: null
+    aliases: []
+    definition: "Euler's deposit token for DAI."
+    context: "The attacker donated 100 million eDAI to the reserves to make their account insolvent."
+    slide_heading: "Euler, March 2023: a loan, a gift, a liquidation"
+    tags: ["tokenization", "ethereum"]
+    confidence: "high"
+  - term: "dDAI"
+    modifier: null
+    aliases: []
+    definition: "Euler's debt token for DAI."
+    context: "It is the counterpart of eDAI, Euler's deposit token, in the Euler attack."
+    slide_heading: "Euler, March 2023: a loan, a gift, a liquidation"
+    tags: ["tokenization", "ethereum"]
+    confidence: "high"
+  - term: "On-chain message"
+    modifier: null
+    aliases: ["on-chain messages", "messages on chain"]
+    definition: "A message sent between addresses on the chain itself, which Euler and its attacker used as a channel for negotiation."
+    context: "The Euler negotiation ended with all the stolen funds returned, about $240 million at return."
+    slide_heading: "After the exploit, the money moves on"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"

@@ -1,452 +1,284 @@
 lesson_id: "01-CM"
-lesson_title: "Consensus in Distributed Systems & Blockchains — An Introduction"
+lesson_title: "Ledger and Finality"
 source_path: "lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd"
 terms:
   - term: "Consensus"
     modifier: "distributed systems"
     aliases: ["agreement"]
     definition: "A protocol goal where non-faulty participants eventually choose one proposed value or history despite delay and failure."
-    context: "The lesson frames consensus as the answer to which ledger history all honest nodes should accept."
-    slide_heading: "Why Agreement Matters"
+    context: "Consensus is the third thing that turns a log into a ledger: a rule for agreeing what is added next, and in what order, so every honest node accepts the same history."
+    slide_heading: "A ledger is a shared log no one can quietly edit"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Double-spending"
     modifier: "blockchain"
     aliases: ["double-spend", "double-spend attempt"]
     definition: "An attempt to use the same value in competing transactions or histories so only one can validly survive."
-    context: "Double-spending is the concrete blockchain problem that motivates system-wide agreement."
-    slide_heading: "Why Agreement Matters"
+    context: "Alice signs two payments of the same coins, to Carol and to Dave; without consensus, copies of the ledger would tell different stories. Later, the lesson shows an attacker trying it with a private chain."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Process"
     modifier: "consensus"
     aliases: ["participant", "node"]
     definition: "An independently running participant in a distributed consensus protocol."
-    context: "The formal definition of consensus describes processes proposing values and converging on one result."
-    slide_heading: "Foundations of Consensus"
+    context: "In a ledger every participant holds a full copy, so no one controls the record; the lesson calls these participants nodes."
+    slide_heading: "A ledger is a shared log no one can quietly edit"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Non-faulty process"
     modifier: null
     aliases: ["correct node", "honest node", "honest participant"]
     definition: "A participant that follows the protocol rules and is not exhibiting the fault behavior under discussion."
-    context: "Consensus guarantees are stated for non-faulty processes rather than for every possible faulty participant."
-    slide_heading: "Foundations of Consensus"
+    context: "Consensus makes every honest node accept the same history, and its promises are stated for honest nodes, even when some nodes crash or lie."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Safety"
     modifier: "consensus"
     aliases: ["safety property"]
     definition: "The guarantee that a protocol will not commit conflicting results or later roll back a committed result."
-    context: "Safety is one of the four SLVA properties used throughout the lesson to compare consensus protocols."
-    slide_heading: "Foundations of Consensus"
+    context: "Safety is one of the two promises consensus makes: once something is decided, honest nodes never disagree about it. Each chain balances it against liveness differently."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Liveness"
     modifier: "consensus"
     aliases: ["progress"]
     definition: "The guarantee that the system eventually moves forward and reaches a new decision when assumptions allow it."
-    context: "Liveness explains why protocols need recovery tools such as timeouts and view changes."
-    slide_heading: "Foundations of Consensus"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Validity"
-    modifier: "consensus"
-    aliases: ["integrity"]
-    definition: "The guarantee that only proposed values satisfying the protocol rules can be committed."
-    context: "Validity prevents consensus from accepting arbitrary or invalid ledger updates."
-    slide_heading: "Foundations of Consensus"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Agreement"
-    modifier: "consensus"
-    aliases: ["consistency"]
-    definition: "The guarantee that correct participants converge on the same chosen value or ledger result."
-    context: "Agreement captures the shared-history outcome that consensus protocols are built to produce."
-    slide_heading: "Foundations of Consensus"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "SLVA"
-    modifier: null
-    aliases: ["safety, liveness, validity, agreement"]
-    definition: "The academic shorthand for the four core consensus properties: safety, liveness, validity, and agreement."
-    context: "The lesson uses SLVA as the recurring vocabulary for evaluating consensus guarantees."
-    slide_heading: "Foundations of Consensus"
+    context: "Liveness is the second promise of consensus: the ledger keeps growing even when some nodes crash or lie. How a chain balances it against safety sets what \"final\" means there."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Quorum"
     modifier: "consensus"
     aliases: ["quorum threshold"]
     definition: "A required amount of participant support before a protocol treats a proposal or decision as valid."
-    context: "The lesson first introduces quorums through everyday decision rules, then uses them to explain BFT safety."
-    slide_heading: "Consensus in the Real World"
+    context: "Byzantine-fault-tolerant protocols such as PBFT are final at once, as soon as a quorum of known members signs."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Leader"
-    modifier: "consensus"
-    aliases: ["proposer"]
-    definition: "The participant responsible for coordinating a round by putting forward the next candidate value."
-    context: "Leader-based coordination appears as a recurring way to keep consensus progress organized."
-    slide_heading: "Consensus in the Real World"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Timeout"
-    modifier: "consensus"
-    aliases: ["timeouts"]
-    definition: "A waiting limit that lets nodes turn prolonged silence or delay into a protocol recovery event."
-    context: "Timeouts help protocols recover liveness when a leader stalls and timing becomes predictable enough."
-    slide_heading: "Consensus in the Real World"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "FPIC"
-    modifier: null
-    aliases: ["finality, progress, integrity, consistency"]
-    definition: "A blockchain-oriented vocabulary that maps closely to safety, liveness, validity, and agreement."
-    context: "The lesson warns that academic and blockchain sources often name the same correctness goals differently."
-    slide_heading: "Consensus Properties: SLVA and FPIC"
-    tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Finality"
     modifier: "consensus"
     aliases: ["finalized", "finalization"]
     definition: "The point at which a committed result is treated as no longer reversible under the protocol's assumptions."
-    context: "Finality is the blockchain-facing term paired with safety in the SLVA and FPIC comparison."
-    slide_heading: "Consensus Properties: SLVA and FPIC"
+    context: "Hashes and copies protect old entries, but the newest can still change while two versions compete; finality is the point after which an entry won't change, and it means something different on each chain."
+    slide_heading: "\"Immutable\" means an edit would show"
     tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Failure model"
     modifier: null
     aliases: ["fault model"]
     definition: "The set of failure behaviors a protocol assumes it must tolerate."
-    context: "The lesson emphasizes that consensus guarantees only make sense relative to an expected failure model."
-    slide_heading: "Failure Models"
+    context: "The comparison table lists what each consensus family survives: crashes but not lies for Raft, fewer than a third of members lying for PBFT, attackers with less than half the mining power for proof of work."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Crash fault"
     modifier: null
     aliases: ["crash faults", "crash failure"]
     definition: "A failure where a node stops responding or goes offline without sending deceptive messages."
-    context: "Crash faults are the simplest fault type and define the environment for CFT protocols."
-    slide_heading: "Failure Models"
+    context: "Consensus must keep the ledger growing even when some nodes crash; crash-fault-tolerant protocols such as Raft survive nodes that crash, but not nodes that lie."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Omission fault"
     modifier: null
     aliases: ["omission faults", "message omission"]
     definition: "A failure where a node or network path drops some messages while other behavior may continue."
-    context: "Omission faults show that communication can fail partially rather than as a clean crash."
-    slide_heading: "Failure Models"
+    context: "One explanation for a transaction that never confirms is that it never reached the miners because of relay or routing trouble, which from outside can look the same as censorship."
+    slide_heading: "Delay may mean congestion, not censorship"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Byzantine fault"
     modifier: null
     aliases: ["Byzantine faults", "arbitrary fault", "malicious fault"]
     definition: "A fault where a participant may lie, equivocate, collude, or send conflicting messages."
-    context: "Byzantine faults motivate BFT protocols and the quorum-overlap argument for safety."
-    slide_heading: "Failure Models"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Equivocation"
-    modifier: "consensus"
-    aliases: ["equivocate", "double-signing"]
-    definition: "The act of sending conflicting protocol messages to different participants."
-    context: "The lesson uses equivocation as a core example of behavior that crash-fault tolerant systems are not designed to handle."
-    slide_heading: "Failure Models"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Timing model"
-    modifier: null
-    aliases: ["timing assumption"]
-    definition: "The assumptions a protocol makes about message and processing delays."
-    context: "The lesson pairs timing models with fault models because both shape what consensus can guarantee."
-    slide_heading: "Timing Models on a Spectrum"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Asynchronous system"
-    modifier: null
-    aliases: ["asynchrony", "fully asynchronous system"]
-    definition: "A distributed system with no known upper bound on message or processing delay."
-    context: "Asynchrony makes it impossible to reliably distinguish a failed node from one that is merely slow."
-    slide_heading: "Timing Models on a Spectrum"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Partially synchronous system"
-    modifier: null
-    aliases: ["partial synchrony", "partially synchronous network"]
-    definition: "A system where timing may be unstable for a while but eventually becomes bounded enough for timeouts to be useful."
-    context: "Partial synchrony is the practical middle ground assumed by many BFT protocols."
-    slide_heading: "Timing Models on a Spectrum"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Synchronous system"
-    modifier: null
-    aliases: ["synchrony", "synchronous network"]
-    definition: "A system whose message and processing delays are bounded and known in advance."
-    context: "Synchronous systems are the predictable end of the timing spectrum used for comparison with real deployments."
-    slide_heading: "Timing Models on a Spectrum"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "FLP result"
-    modifier: null
-    aliases: ["FLP impossibility", "Fischer-Lynch-Paterson result"]
-    definition: "The result that deterministic consensus cannot guarantee both safety and liveness in full asynchrony if even one node may fail."
-    context: "FLP explains why practical protocols preserve safety during uncertain timing instead of guessing incorrectly."
-    slide_heading: "The Timing Limits — FLP and DLS Results"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "DLS result"
-    modifier: null
-    aliases: ["Dwork-Lynch-Stockmeyer result", "DLS partial synchrony result"]
-    definition: "The result showing that consensus becomes practical when the network eventually behaves predictably enough for timing assumptions to hold."
-    context: "DLS motivates partial synchrony as the standard assumption behind practical BFT protocol liveness."
-    slide_heading: "The Timing Limits — FLP and DLS Results"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "View change"
-    modifier: "consensus"
-    aliases: ["view changes", "leader rotation"]
-    definition: "A recovery step where nodes move to a new view with a new leader after enough evidence of a stall."
-    context: "View changes are the mechanism that lets practical protocols regain liveness after a bad or slow leader."
-    slide_heading: "The Timing Limits — FLP and DLS Results"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Structured round"
-    modifier: "consensus"
-    aliases: ["round", "consensus round"]
-    definition: "A named unit of protocol progress that keeps one proposal and its supporting evidence organized together."
-    context: "Structured rounds are one of the recurring design ideas for making practical consensus protocols understandable and safe."
-    slide_heading: "Practical Consensus Design"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Quorum overlap"
-    modifier: null
-    aliases: ["quorum intersection"]
-    definition: "The property that any two valid quorums share enough membership to include at least one honest participant."
-    context: "Quorum overlap is the core safety argument against two conflicting commits both becoming valid."
-    slide_heading: "Practical Consensus Design"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Propose phase"
-    modifier: "consensus"
-    aliases: ["propose"]
-    definition: "The phase in a round where the leader suggests the candidate value for participants to consider."
-    context: "The propose phase starts the basic propose-vote-commit pattern used to explain BFT rounds."
-    slide_heading: "Rounds and Phases"
+    context: "Consensus must keep working even when some nodes lie; Byzantine-fault-tolerant protocols such as PBFT survive fewer than a third of members lying."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Vote phase"
     modifier: "consensus"
     aliases: ["vote", "voting"]
-    definition: "The phase where replicas or validators sign support for a candidate value."
-    context: "Votes become meaningful when enough matching support can be assembled into a quorum certificate."
-    slide_heading: "Rounds and Phases"
+    definition: "The step where validators or members signal support for a candidate, so that enough matching votes can make it final."
+    context: "Ethereum's proof of stake finalizes after a vote of two-thirds of the stake: validators vote for pairs of checkpoints, one at the start of each epoch."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Commit phase"
     modifier: "consensus"
     aliases: ["commit", "committed"]
     definition: "The phase where enough matching votes allow the protocol to accept a value as decided for that position."
-    context: "Commit is the point where safety concerns become concrete because conflicting commits must be prevented."
-    slide_heading: "Rounds and Phases"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Quorum certificate"
-    modifier: null
-    aliases: ["QC"]
-    definition: "Portable evidence that a round gathered enough matching votes to move forward safely."
-    context: "The lesson presents quorum certificates as the bridge between signed votes and finality."
-    slide_heading: "Rounds and Phases"
+    context: "Crash-fault-tolerant protocols such as Raft are final at once, when the protocol commits."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Deterministic finality"
     modifier: null
     aliases: ["immediate finality"]
     definition: "Finality where a committed value is final immediately under the protocol assumptions rather than becoming safer gradually."
-    context: "Traditional BFT-style protocols use quorum certificates and honest overlap to provide deterministic finality."
-    slide_heading: "Traditional BFT-Style Finality"
+    context: "A system that knows its members can count their votes and finish at once: Raft when the protocol commits, PBFT when a quorum signs. Open chains can't count strangers, so they finalize more slowly."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems", "permissioned-ledgers"]
     confidence: "high"
   - term: "Slot"
     modifier: "consensus log"
     aliases: ["height", "position"]
     definition: "A specific position in the ordered history where a protocol chooses one value or block."
-    context: "The finality discussion distinguishes conflicts at the same slot or height from ordinary progress to later positions."
-    slide_heading: "Traditional BFT-Style Finality"
+    context: "During a routine fork two valid blocks can share a height, so a report cites the block hash as well as the height."
+    slide_heading: "A stale block is routine, not an attack"
     tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Byzantine fault threshold"
     modifier: "BFT quorum"
     aliases: ["fault threshold", "t"]
     definition: "The maximum number of Byzantine participants a protocol's quorum math is designed to tolerate."
-    context: "The lesson introduces the t = (n - 1) / 3 threshold to explain why BFT quorums must be large enough to overlap."
-    slide_heading: "Quorums"
-    tags: ["consensus", "distributed-systems"]
-    confidence: "high"
-  - term: "Quorum size"
-    modifier: "BFT"
-    aliases: ["2t + 1"]
-    definition: "The number of matching participants required to form a valid BFT quorum for a given fault threshold."
-    context: "The lesson uses quorum size to show why two conflicting decisions cannot both gather valid support."
-    slide_heading: "Quorums"
+    context: "The comparison table states the BFT threshold in words: PBFT survives fewer than a third of members lying."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Crash-fault tolerance"
     modifier: null
     aliases: ["CFT"]
     definition: "A consensus family that tolerates nodes crashing, restarting, or going silent, but not lying or colluding."
-    context: "CFT is presented as efficient for controlled environments but inappropriate for adversarial membership."
-    slide_heading: "Crash-Fault Tolerance (CFT)"
+    context: "Raft is the lesson's example: known nodes, survives nodes that crash but not nodes that lie, and final at once when the protocol commits."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Identity model"
     modifier: "consensus"
     aliases: ["membership model"]
     definition: "The protocol assumption about who can participate and how participants are recognized."
-    context: "The lesson compares CFT, BFT, and Nakamoto-style consensus partly by whether membership is known or open."
-    slide_heading: "Crash-Fault Tolerance (CFT)"
+    context: "The comparison table's \"who takes part\" column: known nodes for Raft, known members for PBFT, anyone for proof of work, and anyone who locks up stake for proof of stake."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems", "permissioned-ledgers"]
     confidence: "high"
   - term: "Sybil attack"
     modifier: null
     aliases: ["Sybil attacks"]
     definition: "An attack where one actor creates many fake identities to gain disproportionate influence."
-    context: "The lesson introduces Sybil attacks to explain why identity assumptions differ across consensus families."
-    slide_heading: "Crash-Fault Tolerance (CFT)"
+    context: "Anyone can create a thousand identities on an open chain, which is why open chains make influence cost something instead: computing work or locked-up stake."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Sybil resistance"
     modifier: null
     aliases: ["anti-Sybil mechanism"]
     definition: "A mechanism that prevents one actor from cheaply multiplying identities into excess protocol influence."
-    context: "Sybil resistance is handled by admission control in known-membership systems and by scarce work in PoW systems."
-    slide_heading: "Crash-Fault Tolerance (CFT)"
+    context: "Sybil resistance comes from admission control in permissioned systems and from economic cost, computing work or locked-up stake, in open ones."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems", "blockchain"]
     confidence: "high"
   - term: "Adversary assumption"
     modifier: "consensus"
     aliases: ["adversary model"]
     definition: "The protocol assumption about what faulty or malicious participants are able and willing to do."
-    context: "The lesson uses adversary assumptions to distinguish crash-only systems from Byzantine and proof-of-work settings."
-    slide_heading: "Crash-Fault Tolerance (CFT)"
+    context: "Each family assumes a different adversary: nodes that crash but don't lie for Raft, fewer than a third of members lying for PBFT, and attackers with less than half the mining power for proof of work."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Byzantine-fault tolerance"
     modifier: null
     aliases: ["BFT", "Byzantine fault tolerance"]
     definition: "A consensus family designed to remain safe when some known participants may lie, equivocate, or act maliciously."
-    context: "BFT is the lesson's model for permissioned or consortium systems with governed membership but incomplete trust."
-    slide_heading: "Byzantine-Fault Tolerance (BFT)"
+    context: "PBFT is the lesson's example: known members, survives fewer than a third of members lying, and final at once when a quorum signs."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems", "permissioned-ledgers"]
     confidence: "high"
   - term: "Governed membership"
     modifier: null
     aliases: ["controlled membership", "known participants"]
     definition: "A participation model where admission, authorization, and membership changes are handled by governance outside the voting protocol."
-    context: "Governed membership explains how BFT systems resist Sybil attacks without making consensus itself open to anyone."
-    slide_heading: "Byzantine-Fault Tolerance (BFT)"
+    context: "Crash- and Byzantine-fault-tolerant protocols run among known members, and permissioned systems resist Sybil attacks through admission control."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "permissioned-ledgers"]
     confidence: "high"
   - term: "Nakamoto consensus"
     modifier: null
     aliases: ["Nakamoto-style consensus", "Proof-of-Work consensus", "PoW consensus"]
     definition: "A permissionless consensus style where scarce work and the heaviest valid chain guide nodes toward one history over time."
-    context: "The lesson presents Nakamoto consensus as the open-membership alternative to CFT and classical BFT."
-    slide_heading: "Nakamoto (Proof-of-Work) Consensus"
+    context: "Bitcoin's proof of work is open to anyone, survives attackers with less than half the mining power, and makes reversal harder with every block without ever declaring anything final."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "blockchain", "bitcoin"]
     confidence: "high"
   - term: "Open participation"
     modifier: "consensus"
     aliases: ["permissionless participation", "open membership"]
     definition: "A model where nodes can join or leave without prior admission by a central membership authority."
-    context: "Open participation is the identity model that makes Sybil resistance central in Nakamoto-style systems."
-    slide_heading: "Nakamoto (Proof-of-Work) Consensus"
+    context: "Open chains let anyone take part, so they can't count votes from members they don't know and finalize more slowly; they make influence cost work or stake instead."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Proof-of-Work"
     modifier: null
     aliases: ["PoW", "work"]
     definition: "A Sybil-resistance mechanism that makes influence expensive by requiring participants to perform scarce computation."
-    context: "Proof-of-Work lets permissionless systems weight influence by costly computation rather than by approved identity."
-    slide_heading: "Nakamoto (Proof-of-Work) Consensus"
-    tags: ["consensus", "blockchain", "bitcoin"]
-    confidence: "high"
-  - term: "Asymmetric difficulty"
-    modifier: "Proof-of-Work"
-    aliases: []
-    definition: "The property that producing valid proof-of-work is expensive while checking it is cheap."
-    context: "Asymmetric difficulty is the lesson's explanation for how PoW can be hard to forge but easy for ordinary nodes to verify."
-    slide_heading: "Nakamoto (Proof-of-Work) Consensus"
+    context: "Proof of work makes influence on an open chain cost computing work; Bitcoin's security rests on most of the mining power not working together to attack it."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "blockchain", "bitcoin"]
     confidence: "high"
   - term: "Probabilistic finality"
     modifier: null
     aliases: ["probabilistic settlement"]
     definition: "Finality where confidence increases as more blocks build on a history rather than becoming absolute immediately."
-    context: "Nakamoto-style systems trade immediate finality for open participation and growing confidence over time."
-    slide_heading: "Nakamoto (Proof-of-Work) Consensus"
+    context: "Proof of work never declares a block final: each block on top makes reversal harder, but never impossible. Six confirmations, about an hour, is the usual wait on Bitcoin for high-value payments."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "blockchain", "bitcoin"]
-    confidence: "high"
-  - term: "Censorship resistance"
-    modifier: "blockchain"
-    aliases: []
-    definition: "A system property where no single gatekeeper can easily prevent valid participants or transactions from being included."
-    context: "The lesson names censorship resistance as one benefit purchased by the cost and latency of permissionless PoW consensus."
-    slide_heading: "Nakamoto (Proof-of-Work) Consensus"
-    tags: ["consensus", "blockchain", "policy"]
     confidence: "high"
   - term: "Consensus family"
     modifier: null
     aliases: ["consensus families"]
     definition: "A broad category of consensus protocols grouped by identity assumptions, adversary model, and finality style."
-    context: "The comparison slide gives students a map for placing CFT, BFT, and Nakamoto-style protocols."
-    slide_heading: "Comparing Consensus Families"
+    context: "The comparison table places crash-fault-tolerant, Byzantine-fault-tolerant, proof-of-work and proof-of-stake consensus by who takes part, what they survive and when they are final."
+    slide_heading: "Open chains buy openness with slower finality"
     tags: ["consensus", "distributed-systems"]
     confidence: "high"
   - term: "Trust minimization"
     modifier: "blockchain"
     aliases: ["minimized trust"]
     definition: "Reducing reliance on a central authority by replacing some trusted intermediaries with protocol rules and incentives."
-    context: "The lesson uses trust minimization to explain why consensus matters beyond ordinary replication."
-    slide_heading: "Why Consensus Matters in Blockchains"
+    context: "The lesson rejects \"trustless\": distributed trust moves from one party to cryptography, the consensus rules and an honest majority, and where it sits differs by chain."
+    slide_heading: "\"Trustless\" is wrong: the trust just moves"
     tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Ledger convergence"
     modifier: null
     aliases: ["chain convergence", "history convergence"]
     definition: "The process by which honest nodes settle on the same accepted ledger history."
-    context: "Ledger convergence is the blockchain outcome created by consensus despite competing histories."
-    slide_heading: "Why Consensus Matters in Blockchains"
+    context: "Different nodes may see conflicting transactions in a different order; consensus makes honest nodes converge on one history."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Canonical chain"
     modifier: "blockchain"
     aliases: ["canonical history", "accepted chain"]
     definition: "The ledger branch that honest nodes treat as the accepted history under the consensus rule."
-    context: "The lesson uses canonical chain to show how consensus chooses one surviving history from competing branches."
-    slide_heading: "Why Consensus Matters in Blockchains"
+    context: "Consensus picks the one history every honest node accepts; on Bitcoin, when two blocks compete, nodes follow the chain with the most work."
+    slide_heading: "Consensus decides which history we all accept"
     tags: ["consensus", "blockchain"]
     confidence: "high"
   - term: "Confirmation"
     modifier: "blockchain"
     aliases: ["confirmations", "block confirmations"]
-    definition: "A block added after a transaction's block, increasing confidence that the chosen history will remain accepted."
-    context: "Confirmations translate probabilistic finality into an operational policy for deciding when risk is low enough."
-    slide_heading: "Why Consensus Matters in Blockchains"
+    definition: "A count of a transaction's own block and every block built on top of it; each one makes reversing the transaction harder."
+    context: "A transaction with one confirmation can drop out in a routine fork; six confirmations, about an hour, is the usual wait on Bitcoin for high-value payments, a convention rather than a rule."
+    slide_heading: "A stale block is routine, not an attack"
     tags: ["consensus", "blockchain", "bitcoin"]
     confidence: "high"
   - term: "Heaviest chain"
     modifier: "Proof-of-Work"
     aliases: ["most-work chain"]
     definition: "The valid chain with the most accumulated proof-of-work, used as the surviving history in Nakamoto-style consensus."
-    context: "The final diagram uses the heaviest-chain rule to show how forks are pruned and confidence grows with depth."
-    slide_heading: "Why Consensus Matters in Blockchains"
+    context: "When two miners find a block at nearly the same time, nodes follow the chain with the most work, and the block the next one doesn't extend becomes stale."
+    slide_heading: "A stale block is routine, not an attack"
     tags: ["consensus", "blockchain", "bitcoin"]
     confidence: "high"
   - term: "Orphaned branch"
     modifier: "blockchain"
     aliases: ["orphaned fork", "stale branch", "pruned fork"]
     definition: "A competing branch that loses the consensus race and is no longer treated as the accepted ledger history."
-    context: "The final slide uses an orphaned branch to illustrate how consensus invalidates one side of a double-spend fork."
-    slide_heading: "Why Consensus Matters in Blockchains"
+    context: "The lesson calls the losing block stale (older sources say \"orphan\"); its transactions go back to the mempool, and the fork is routine, not an attack."
+    slide_heading: "A stale block is routine, not an attack"
     tags: ["consensus", "blockchain"]
     confidence: "high"

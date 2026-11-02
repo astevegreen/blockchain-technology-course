@@ -1,0 +1,116 @@
+lesson_id: "06-FO"
+lesson_title: "Mixers and CoinJoin"
+source_path: "lessons/forensics/06-FO-mixers_and_coinjoin.qmd"
+terms:
+  - term: "CoinJoin coordinator"
+    modifier: null
+    aliases: ["coordinator", "coordinator server"]
+    definition: "The server that gathers users into each CoinJoin round. Enforcement in 2024 ended the main coordinators, not the CoinJoin technique."
+    context: "After Samourai's coordinator was shut down and zkSNACKs stopped its own, new coordinators took over; as of 31 October 2026 one, kruw.io, carries 99% of Wasabi 2.x mixed inputs."
+    slide_heading: "Equal outputs mark a CoinJoin on sight"
+    tags: ["privacy", "bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Wasabi"
+    modifier: null
+    aliases: ["Wasabi Wallet", "Wasabi 1.x", "Wasabi 2.x", "WabiSabi"]
+    definition: "A CoinJoin design. Wasabi 1.x makes many outputs of about 0.1 BTC each; Wasabi 2.x (WabiSabi) makes many inputs and outputs with arbitrary output denominations."
+    context: "Researchers detected Wasabi 1.x CoinJoins with over 99% accuracy; zkSNACKs stopped its Wasabi 2.x coordinator on 1 June 2024, citing legal uncertainty."
+    slide_heading: "Equal outputs mark a CoinJoin on sight"
+    tags: ["privacy", "bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Samourai Whirlpool"
+    modifier: null
+    aliases: ["Whirlpool", "Samourai Wallet", "Samourai"]
+    definition: "Samourai's CoinJoin design: 5 inputs by 5 outputs, later up to 8 by 8, all of one pool size of 0.001, 0.01, 0.05 or 0.5 BTC."
+    context: "FBI actions shut down Samourai's Whirlpool coordinator on 24 April 2024, and its founders were sentenced in November 2025; a new Whirlpool coordinator started on 31 May 2025."
+    slide_heading: "Equal outputs mark a CoinJoin on sight"
+    tags: ["privacy", "bitcoin", "forensics", "real-world"]
+    confidence: "high"
+  - term: "Pre-mix"
+    modifier: null
+    aliases: ["pre-mixing", "TX0", "TX0 transaction"]
+    definition: "What a user does before a mix. In Whirlpool, a TX0 transaction first splits a fresh input into pool-sized outputs, spending from the cluster being traced."
+    context: "Pre-mix activity narrows the anonymity set, so the trace can follow a cluster into the mix even where it cannot follow it out."
+    slide_heading: "Before and after the mix still leak"
+    tags: ["privacy", "bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Post-mix"
+    modifier: null
+    aliases: ["post-mixing", "post-mix co-spend"]
+    definition: "What a user does with outputs after a mix. Spending mixed outputs together, or paying one to an address already seen, can undo the mix."
+    context: "A post-mix co-spend or an address reuse is one strong line, Moderate confidence; timing alone is Low."
+    slide_heading: "Before and after the mix still leak"
+    tags: ["privacy", "bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Bitcoin Fog"
+    modifier: null
+    aliases: []
+    definition: "A custodial mixer on Bitcoin, whose operator was sentenced to more than 12 years."
+    context: "The lesson's example of a mixer that pools coins and pays out other people's coins."
+    slide_heading: "A mixer pools coins and pays out others"
+    tags: ["privacy", "bitcoin", "forensics", "real-world"]
+    confidence: "high"
+  - term: "Sinbad"
+    modifier: null
+    aliases: ["Sinbad mixer"]
+    definition: "A custodial Bitcoin mixer, sanctioned in 2023, that some industry experts believe succeeded the Blender.io mixer."
+    context: "The lesson pairs it with Bitcoin Fog as custodial mixers on Bitcoin, against Tornado Cash as a contract on Ethereum."
+    slide_heading: "A mixer pools coins and pays out others"
+    tags: ["privacy", "bitcoin", "forensics", "policy"]
+    confidence: "high"
+  - term: "Deposit-withdrawal linking"
+    modifier: null
+    aliases: ["deposit-withdrawal pairing", "mixer user-habit heuristics"]
+    definition: "Pairing a mixer deposit with a later withdrawal from user habits: the same address on both sides, a direct transfer between the two addresses, matching amounts across pools, or a withdrawal soon after a deposit in a quiet pool."
+    context: "Wang et al. used such habits to cut Tornado Cash anonymity sets by an average of 27.34% on Ethereum; on its own, timing is Low confidence and the address links are Moderate."
+    slide_heading: "User habits link deposit to withdrawal"
+    tags: ["privacy", "ethereum", "forensics"]
+    confidence: "high"
+  - term: "PayJoin"
+    modifier: null
+    aliases: ["BIP 78"]
+    definition: "A protocol for two parties to build a CoinJoin during a payment between them: the receiver adds an input of their own, so the co-spend rule becomes unreliable."
+    context: "A PayJoin looks like a normal transaction, with no equal outputs to warn the analyst, which is why co-spending with no sign of a CoinJoin stays Moderate, not High."
+    slide_heading: "PayJoin hides a co-spend inside a payment"
+    tags: ["privacy", "bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Async PayJoin"
+    modifier: null
+    aliases: ["BIP 77", "directory server"]
+    definition: "A PayJoin variant, BIP 77, that replaces the receiver's own server with an untrusted directory server, so a receiver need not run one."
+    context: "The lesson lists it as a Draft as of 31 October 2026, beside the deployed BIP 78."
+    slide_heading: "PayJoin hides a co-spend inside a payment"
+    tags: ["privacy", "bitcoin"]
+    confidence: "high"
+  - term: "Dust attack"
+    modifier: null
+    aliases: ["dusting attack", "dust", "dust input"]
+    definition: "Sending a tiny amount to an address that has already been paid, in the hope that the wallet spends it together with the owner's other coins and so reveals them."
+    context: "Anyone can pay any address, so a dust input says nothing about who sent it; a trace that runs through one can jump to a stranger."
+    slide_heading: "Dust is bait: a dust input is not a link"
+    tags: ["privacy", "bitcoin", "forensics", "security"]
+    confidence: "high"
+  - term: "avoid_reuse"
+    modifier: null
+    aliases: ["avoid_reuse flag"]
+    definition: "A Bitcoin Core wallet flag, added in version 0.19 and off by default, that defends against dust attacks."
+    context: "The lesson cites it as Bitcoin Core's answer to tracking spends by sending dust, as of November 2019."
+    slide_heading: "Dust is bait: a dust input is not a link"
+    tags: ["privacy", "bitcoin", "security"]
+    confidence: "high"
+  - term: "zkSNACKs"
+    modifier: null
+    aliases: []
+    definition: "The company that ran the Wasabi 2.x coordinator until it stopped on 1 June 2024, citing legal uncertainty."
+    context: "After it stopped, other coordinators took over and Wasabi 2.x mixing passed its pre-shutdown level, as of 31 October 2026."
+    slide_heading: "2024: Samourai shut down, zkSNACKs stopped"
+    tags: ["privacy", "bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Limits-of-tracing note"
+    modifier: null
+    aliases: ["limits of tracing note"]
+    definition: "The lab's written product: where a trace stops, why, what still shows and how sure the analyst is."
+    context: "The note ends at the first service, or at the stop, with the leads that remain, such as an address reuse or a timing match."
+    slide_heading: "A limits-of-tracing note: where it stops"
+    tags: ["forensics", "labs"]
+    confidence: "high"

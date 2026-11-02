@@ -1,0 +1,124 @@
+lesson_id: "07-FO"
+lesson_title: "Privacy Coins: Monero and Zcash"
+source_path: "lessons/forensics/07-FO-privacy_coins.qmd"
+terms:
+  - term: "Decoy output"
+    modifier: null
+    aliases: ["decoy", "decoys", "mixin", "ring member", "ring members"]
+    definition: "An earlier output from the Monero chain, belonging to someone else, that the spender adds to a ring so the real input is hidden among it and the other decoys."
+    context: "Because decoys are real outputs, an analyst can only say a Monero input is one of the ring's members; 'mixin' is the older research word for a decoy."
+    slide_heading: "Monero hides sender, receiver and amount"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Ring size"
+    modifier: null
+    aliases: ["ring of 16"]
+    definition: "The number of possible inputs in a Monero ring: the real one plus its decoys. It has been 16 since the August 2022 upgrade, and was 11 before that."
+    context: "Ring size sets the honest statement for a Monero input: 'one of 16' for a transaction made today."
+    slide_heading: "Monero hides sender, receiver and amount"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "One-time output key"
+    modifier: null
+    aliases: ["output key", "one-time key"]
+    definition: "The key that appears on the Monero ledger in place of a recipient's address; the sender derives it from the recipient's public address so no one else can link it to that address."
+    context: "Each Monero output shows only this key and no amount, which is why a Monero address from a ransom note or seized wallet is never found on chain."
+    slide_heading: "Monero hides sender, receiver and amount"
+    tags: ["privacy", "cryptography", "forensics"]
+    confidence: "high"
+  - term: "Pedersen commitment"
+    modifier: null
+    aliases: ["Pedersen commitments"]
+    definition: "The commitment RingCT uses to hide Monero amounts while still letting every node check that inputs equal outputs plus the fee."
+    context: "It is the reason a Monero transaction proves no coins were created without showing any amount an analyst could quote."
+    slide_heading: "Monero hides sender, receiver and amount"
+    tags: ["privacy", "cryptography"]
+    confidence: "high"
+  - term: "Key image"
+    modifier: null
+    aliases: ["key images"]
+    definition: "A value derived from the real output's private key and published when a Monero output is spent; spending the same output twice repeats the key image, so the network refuses the second spend."
+    context: "The key image shows that some output was spent, never which ring member it was, so it stops double-spends without helping the trace."
+    slide_heading: "A ring hides the spender among 15 decoys"
+    tags: ["privacy", "cryptography", "forensics"]
+    confidence: "high"
+  - term: "Zero-decoy input"
+    modifier: null
+    aliases: ["0-mixin input", "zero-mixin input", "no-decoy input"]
+    definition: "An early Monero input whose ring had no decoys, so it named the output it spent, as a Bitcoin input does."
+    context: "A 2018 study found 64.04% of the inputs in its data had no decoys, which made early Monero far more traceable than today's."
+    slide_heading: "Old Monero leaked: zero decoys, newest is real"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Chain-reaction analysis"
+    modifier: null
+    aliases: ["chain reaction"]
+    definition: "Striking an output known to be spent out of every other ring where it appears as a decoy, which can leave only the real input."
+    context: "Starting from zero-decoy inputs, the 2018 study traced about 62% of early Monero inputs with decoys this way."
+    slide_heading: "Old Monero leaked: zero decoys, newest is real"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Guess-newest heuristic"
+    modifier: null
+    aliases: ["newest is real", "guess-newest"]
+    definition: "Guessing that the newest member of a Monero ring is the real input, which was right about 80% of the time in early Monero because wallets drew decoys from older outputs."
+    context: "The lesson warns that this heuristic describes the early Monero the 2018 study measured and must not be applied to later transactions without a newer study."
+    slide_heading: "Old Monero leaked: zero decoys, newest is real"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Shielding"
+    modifier: null
+    aliases: ["shielding transaction", "t to z transaction"]
+    definition: "A Zcash transaction from a transparent address into the shielded pool; the ledger shows the sending address and the amount going in."
+    context: "A trace through Zcash stops at the shielding transaction, but its visible amount is what a later round-trip match uses."
+    slide_heading: "Zcash has two pools: one public, one shielded"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Deshielding"
+    modifier: null
+    aliases: ["deshielding transaction", "z to t transaction"]
+    definition: "A Zcash transaction out of the shielded pool to a transparent address; the ledger shows the receiving address and the amount coming out."
+    context: "Deshielding is where a Zcash trace picks up again, and its amount and time can be matched to an earlier shielding."
+    slide_heading: "Zcash has two pools: one public, one shielded"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Unified address"
+    modifier: null
+    aliases: ["unified addresses", "Zcash unified address"]
+    definition: "A newer Zcash address format that bundles several receivers in one address."
+    context: "The lesson notes that with a unified address the pool actually used is still what decides whether the trace continues."
+    slide_heading: "Zcash has two pools: one public, one shielded"
+    tags: ["privacy"]
+    confidence: "high"
+  - term: "Optional privacy"
+    modifier: null
+    aliases: ["opt-in privacy"]
+    definition: "Privacy the user has to choose, as with Zcash's shielded pool, in contrast to Monero, where every transaction is private by default."
+    context: "A 2018 study found optional privacy was used less and used carelessly: only 14.96% of Zcash transactions touched the shielded pool."
+    slide_heading: "Most Zcash stayed public; round trips leak"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Round-trip heuristic"
+    modifier: null
+    aliases: ["Zcash round trip", "round-trip match"]
+    definition: "Linking a Zcash shielding and a deshielding of the same unusual amount made within a few blocks of each other."
+    context: "It is the analyst's main tool at a shielded pool, but an amount-and-timing match alone is a lead rated Low, not a link."
+    slide_heading: "Most Zcash stayed public; round trips leak"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Incoming viewing key"
+    modifier: null
+    aliases: ["Zcash incoming viewing key"]
+    definition: "A Zcash read-only key that shows the payments coming in to an address, but not payments out or change."
+    context: "An analyst handed one must say which key it is and not claim it shows the holder's spending."
+    slide_heading: "A view key shows payments in, not spends"
+    tags: ["privacy", "forensics"]
+    confidence: "high"
+  - term: "Full viewing key"
+    modifier: null
+    aliases: ["Zcash full viewing key"]
+    definition: "A Zcash read-only key that shows all transactions to and from an address, without giving any power to spend."
+    context: "It discloses more than an incoming viewing key or a Monero view key, which shows money in but not money out."
+    slide_heading: "A view key shows payments in, not spends"
+    tags: ["privacy", "forensics"]
+    confidence: "high"

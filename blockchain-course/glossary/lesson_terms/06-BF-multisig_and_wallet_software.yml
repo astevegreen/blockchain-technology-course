@@ -1,0 +1,172 @@
+lesson_id: "06-BF"
+lesson_title: "Bitcoin — Multi-sig and Wallet Software"
+source_path: "lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd"
+terms:
+  - term: "m-of-n"
+    modifier: null
+    aliases: ["m of n", "2-of-3", "multi-sig threshold"]
+    definition: "The multi-sig rule that m signatures from a set of n public keys are needed to spend, such as 2-of-3; m is the minimum number of signatures that must match a key."
+    context: "Once a multi-sig output is spent, the chain shows m, n and all n public keys, but never who holds the keys."
+    slide_heading: "A multi-sig needs m of n keys to spend"
+    tags: ["bitcoin", "cryptography", "forensics"]
+    confidence: "high"
+  - term: "P2SH"
+    modifier: null
+    aliases: ["pay-to-script-hash", "pay to script hash"]
+    definition: "A legacy wrapper whose addresses start with 3; when the output is spent, the input's scriptSig carries the signatures and the redeem script that holds the rule."
+    context: "Until a 3... output is spent it says only 'some script'; P2SH also caps a multi-sig at 15 keys."
+    slide_heading: "The rule is written in the script"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "Redeem script"
+    modifier: null
+    aliases: ["redeemScript", "redeem scripts"]
+    definition: "In P2SH, the script that holds the spending rule, such as OP_2, three public keys, OP_3, OP_CHECKMULTISIG; the spender reveals it last in the scriptSig."
+    context: "Reading the redeem script gives m, n and the public keys of a P2SH multi-sig."
+    slide_heading: "The rule is written in the script"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Dummy element"
+    modifier: null
+    aliases: ["dummy item", "OP_0 dummy", "multi-sig dummy"]
+    definition: "The empty first item in a multi-sig spend, there because an old bug in OP_CHECKMULTISIG pops one item too many; since SegWit (BIP 147) it must be empty."
+    context: "In a witness, an empty first item followed by signatures and a script ending in OP_CHECKMULTISIG is the multi-sig pattern."
+    slide_heading: "The rule is written in the script"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "P2SH-P2WSH"
+    modifier: null
+    aliases: ["nested SegWit", "SegWit nested in P2SH", "wrapped SegWit"]
+    definition: "SegWit nested inside P2SH: the address starts with 3, the scriptSig holds only a SegWit program, and the witness holds the signatures and the script."
+    context: "A 3... prefix alone cannot tell P2SH multi-sig from nested SegWit until the output is spent."
+    slide_heading: "One rule, three wrappers on chain"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "P2WSH"
+    modifier: null
+    aliases: ["pay-to-witness-script-hash", "native SegWit script hash"]
+    definition: "The native SegWit script wrapper: a 62-character bc1q address whose output holds the SHA-256 hash of a witness script, which the witness reveals on spend."
+    context: "Bitcoin Core's multi-sig tutorial uses P2WSH, so it is the wrapper expected in the lab; its spend witness has a dummy, the signatures and the witness script."
+    slide_heading: "One rule, three wrappers on chain"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "Witness script"
+    modifier: null
+    aliases: ["witnessScript", "witness scripts"]
+    definition: "In P2WSH, the script that holds the spending rule; it is the last witness item when the output is spent, and its SHA-256 hash must match the output's witness program."
+    context: "The witness script is what makes a spend multi-sig: m, the keys, n and OP_CHECKMULTISIG; the explorer decodes it."
+    slide_heading: "One rule, three wrappers on chain"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Witness program"
+    modifier: null
+    aliases: ["SegWit program"]
+    definition: "The data a SegWit output locks to; for P2WSH it is 0 followed by the 32-byte hash of the witness script."
+    context: "In nested SegWit, the scriptSig carries only this program, and the multi-sig data sits in the witness."
+    slide_heading: "One rule, three wrappers on chain"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "BIP 67"
+    modifier: null
+    aliases: ["BIP67", "sorted keys", "key sorting"]
+    definition: "The standard that sorts a multi-sig's public keys so the same set of keys always gives the same redeem script and address."
+    context: "Because wallets usually sort keys, which key comes first says nothing about rank or role."
+    slide_heading: "Key order in the script carries no meaning"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Output descriptor"
+    modifier: null
+    aliases: ["descriptor", "descriptors", "descriptor wallet", "descriptor wallets"]
+    definition: "A short text that tells a wallet which scripts and addresses to make, such as wsh(sortedmulti(2,K1,K2,K3)) for a sorted SegWit 2-of-3."
+    context: "Bitcoin Core's 2-of-3 tutorial builds its multi-sig wallet from a descriptor."
+    slide_heading: "Key order in the script carries no meaning"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "sortedmulti"
+    modifier: null
+    aliases: ["sortedmulti()"]
+    definition: "The descriptor form of a multi-sig that sorts the keys before building the script."
+    context: "With sortedmulti, key position in the script is arithmetic, not hierarchy."
+    slide_heading: "Key order in the script carries no meaning"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "Taproot"
+    modifier: null
+    aliases: ["Taproot output", "bc1p"]
+    definition: "The output type (bc1p... addresses) that can be spent by a single key (key path) or by revealing a script (script path); a key-path spend hides its rule."
+    context: "A Taproot multi-sig may leave no multi-sig trace, so a missing multi-sig script is not evidence of one signer."
+    slide_heading: "Taproot multi-sig can look like one key"
+    tags: ["bitcoin", "privacy"]
+    confidence: "high"
+  - term: "Key path spend"
+    modifier: null
+    aliases: ["key path", "key-path spend", "Taproot key path"]
+    definition: "A Taproot spend with one key and one signature, which shows nothing of what stood behind that key."
+    context: "Describe it as a key-path spend with the number of signers not shown, never as a single-key wallet."
+    slide_heading: "Taproot multi-sig can look like one key"
+    tags: ["bitcoin", "privacy", "forensics"]
+    confidence: "high"
+  - term: "Script path spend"
+    modifier: null
+    aliases: ["script path", "script-path spend", "Taproot script path"]
+    definition: "A Taproot spend that reveals a script; a multi-sig there shows m-of-n with OP_CHECKSIG, OP_CHECKSIGADD and a final count."
+    context: "OP_CHECKMULTISIG cannot appear in tapscript, so the old pattern is not what to look for in a bc1p spend."
+    slide_heading: "Taproot multi-sig can look like one key"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "MuSig2"
+    modifier: null
+    aliases: ["BIP 327", "BIP327"]
+    definition: "An n-of-n multi-signature scheme that combines n keys into one Taproot key, so every key must sign and the output looks like a single signer's."
+    context: "MuSig2 outputs are indistinguishable on chain from regular single-signer Taproot outputs."
+    slide_heading: "Taproot multi-sig can look like one key"
+    tags: ["bitcoin", "cryptography", "privacy"]
+    confidence: "high"
+  - term: "Tapscript"
+    modifier: null
+    aliases: ["BIP 342", "BIP342"]
+    definition: "The script language of Taproot script-path spends, in which OP_CHECKMULTISIG is disabled and m-of-n is written with OP_CHECKSIGADD."
+    context: "A tapscript 2-of-3 checks each key in turn and requires the total to equal 2."
+    slide_heading: "Taproot multi-sig can look like one key"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "OP_CHECKSIGADD"
+    modifier: null
+    aliases: []
+    definition: "The tapscript opcode that adds one to a running count for each key that signed; a final OP_NUMEQUAL checks the count against m."
+    context: "Seeing OP_CHECKSIGADD in a revealed Taproot script is the sign of an m-of-n rule."
+    slide_heading: "Taproot multi-sig can look like one key"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Cosigner"
+    modifier: null
+    aliases: ["cosigners", "co-signer"]
+    definition: "One of the parties in a multi-sig wallet; in Electrum, cosigners exchange master public keys so each wallet can build the same addresses."
+    context: "Each signer adds a signature on their own machine without seeing the others' private keys."
+    slide_heading: "Wallet software builds, signs and broadcasts"
+    tags: ["bitcoin"]
+    confidence: "high"
+  - term: "Electrum server"
+    modifier: null
+    aliases: ["Electrum servers", "private Electrum server"]
+    definition: "A server that lightweight wallets such as Electrum and Sparrow ask about their addresses instead of running their own node; anyone can run one."
+    context: "A server sent many addresses can guess they belong to one entity and sees the client's IP address, an off-chain record held by its operator."
+    slide_heading: "Wallet software builds, signs and broadcasts"
+    tags: ["bitcoin", "privacy", "forensics"]
+    confidence: "high"
+  - term: "PSBT"
+    modifier: null
+    aliases: ["partially signed Bitcoin transaction", "BIP 174", "BIP174", ".psbt"]
+    definition: "A partially signed Bitcoin transaction: a file (.psbt) that multi-sig signers pass between them, through the roles creator, updater, signer, combiner, finalizer and extractor, until it is broadcast."
+    context: "A PSBT is off chain: a half-signed transaction is a file, not a payment, and one never broadcast leaves no trace on chain."
+    slide_heading: "A PSBT carries a half-signed spend"
+    tags: ["bitcoin", "forensics"]
+    confidence: "high"
+  - term: "Full-node wallet"
+    modifier: null
+    aliases: ["own-node wallet", "wallet on its own node"]
+    definition: "A wallet run on the user's own full node, which scans the chain itself and tells no server which addresses it holds."
+    context: "It is not invisible: its node still relays the wallet's transactions, which the network can tie to an IP address."
+    slide_heading: "Servers learn which addresses a wallet has"
+    tags: ["bitcoin", "privacy"]
+    confidence: "high"

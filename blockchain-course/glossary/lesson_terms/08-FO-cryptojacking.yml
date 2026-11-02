@@ -1,0 +1,188 @@
+lesson_id: "08-FO"
+lesson_title: "Cryptojacking: Mining Malware and Its Proceeds"
+source_path: "lessons/forensics/08-FO-cryptojacking.qmd"
+terms:
+  - term: "Cryptojacking"
+    modifier: null
+    aliases: ["malicious cryptomining", "cryptojacker", "cryptojackers"]
+    definition: "Using someone else's electricity, hardware or computing power to mine cryptocurrency without their consent. The attacker takes no coins from the victim; the reward goes to the attacker's own wallet."
+    context: "Because no victim pays anyone, the trace starts at the attacker's wallet, and when the coin is Monero it goes dark from the first payout."
+    slide_heading: "Cryptojacking: mining on someone else's machine"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "MITRE ATT&CK"
+    modifier: null
+    aliases: ["ATT&CK"]
+    definition: "MITRE's catalog of attacker techniques, each with a name and an ID, which threat-intelligence reports use to label what an intrusion did."
+    context: "The lesson gives cryptojacking's ATT&CK names so the analyst recognizes them in a CTI report."
+    slide_heading: "Cryptojacking: mining on someone else's machine"
+    tags: ["security"]
+    confidence: "high"
+  - term: "Resource Hijacking"
+    modifier: null
+    aliases: ["T1496", "ATT&CK T1496"]
+    definition: "The MITRE ATT&CK technique, T1496, for an attacker using a victim's resources for their own ends; cryptojacking falls under it."
+    context: "The lesson cites it as of version 2.0, October 2025."
+    slide_heading: "Cryptojacking: mining on someone else's machine"
+    tags: ["security"]
+    confidence: "high"
+  - term: "Compute Hijacking"
+    modifier: null
+    aliases: ["T1496.001", "ATT&CK T1496.001"]
+    definition: "The ATT&CK sub-technique, T1496.001, for using a victim's computing power, one common purpose being to validate cryptocurrency transactions and earn coins."
+    context: "It is the specific ATT&CK entry for mining on hijacked servers, cloud systems, endpoints and containers, cited as of version 1.0, April 2025."
+    slide_heading: "Cryptojacking: mining on someone else's machine"
+    tags: ["security"]
+    confidence: "high"
+  - term: "Browser mining"
+    modifier: null
+    aliases: ["in-browser mining"]
+    definition: "Cryptojacking by a mining script that runs in a website visitor's browser without their consent; it stops when the visitor leaves the site."
+    context: "It is one of the three places cryptojacking runs, alongside malware on servers and endpoints and hijacked cloud accounts."
+    slide_heading: "Cryptojacking: mining on someone else's machine"
+    tags: ["security"]
+    confidence: "high"
+  - term: "Mining malware"
+    modifier: null
+    aliases: ["malware mining"]
+    definition: "Malware that installs a mining program on a server or endpoint and keeps mining until someone finds and removes it."
+    context: "Its settings name the wallet and pool the miner uses, which is where the blockchain analyst's trace begins."
+    slide_heading: "Cryptojacking: mining on someone else's machine"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Typology"
+    modifier: null
+    aliases: []
+    definition: "The named type of crime a case fits, such as cryptojacking or ransomware."
+    context: "The lesson's first analyst move is to name the typology, because the type decides what evidence exists on and off chain."
+    slide_heading: "Cryptojacking: mining on someone else's machine"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Transparent coin"
+    modifier: null
+    aliases: []
+    definition: "A coin, such as Ether or Litecoin, whose ledger shows payouts publicly, so they can be traced with the usual methods; Monero is the contrast."
+    context: "In cryptojacking the coin decides whether there is a trail: transparent payouts can be followed, Monero payouts cannot."
+    slide_heading: "Most cryptojacking mines Monero, on CPUs"
+    tags: ["forensics", "privacy"]
+    confidence: "high"
+  - term: "ASIC resistance"
+    modifier: null
+    aliases: ["ASIC-resistant", "resistant to ASIC-based mining"]
+    definition: "A mining algorithm's design to keep chips built for one algorithm from dominating, so ordinary processors can still compete."
+    context: "Illicit mining grew after 2014 with such algorithms, because a hijacked CPU earns almost nothing at Bitcoin mining, which ASICs dominate."
+    slide_heading: "Most cryptojacking mines Monero, on CPUs"
+    tags: ["consensus", "security"]
+    confidence: "high"
+  - term: "RandomX"
+    modifier: null
+    aliases: []
+    definition: "Monero's mining algorithm since 30 November 2019, designed to run best on general-purpose CPUs."
+    context: "It explains why stolen laptops and servers mine Monero rather than Bitcoin."
+    slide_heading: "Most cryptojacking mines Monero, on CPUs"
+    tags: ["consensus", "privacy"]
+    confidence: "high"
+  - term: "Litecoin"
+    modifier: null
+    aliases: []
+    definition: "A transparent cryptocurrency whose mining payouts are public, unlike Monero's."
+    context: "The Parks case mined Ether, Litecoin and Monero; the Ether and Litecoin payouts were the traceable part."
+    slide_heading: "Most cryptojacking mines Monero, on CPUs"
+    tags: ["real-world"]
+    confidence: "high"
+  - term: "Pool login"
+    modifier: null
+    aliases: ["wallet as login", "Stratum login", "login parameter"]
+    definition: "The identifier a miner sends when it connects to a mining pool, usually the wallet the pool pays."
+    context: "Because the wallet is typed into the malware as the pool login, a malware report can name the wallet the analyst then traces."
+    slide_heading: "Proceeds run victim, pool, wallet, exit"
+    tags: ["forensics", "security"]
+    confidence: "high"
+  - term: "Stratum protocol"
+    modifier: null
+    aliases: ["Stratum"]
+    definition: "The protocol miners use to talk to mining pools; the wallet travels in it as the login."
+    context: "It is how hijacked machines join a pool and how the attacker's wallet gets credited for their work."
+    slide_heading: "Proceeds run victim, pool, wallet, exit"
+    tags: ["consensus"]
+    confidence: "high"
+  - term: "Mining proxy"
+    modifier: null
+    aliases: []
+    definition: "A relay some cryptojacking campaigns put between their infected machines and the pool, so one wallet does not show thousands of connections."
+    context: "It hides the size of a campaign from the pool."
+    slide_heading: "Proceeds run victim, pool, wallet, exit"
+    tags: ["security"]
+    confidence: "high"
+  - term: "Malware report"
+    modifier: null
+    aliases: ["CTI report"]
+    definition: "A threat-intelligence write-up of a malware sample, which for a miner names the wallet and pool found in its settings, command line or network traffic."
+    context: "The malware report, not the ledger, ties a mining wallet to the intrusion; the analyst inherits the wallet from it."
+    slide_heading: "Proceeds run victim, pool, wallet, exit"
+    tags: ["forensics", "security"]
+    confidence: "high"
+  - term: "Pool statistics"
+    modifier: null
+    aliases: []
+    definition: "The figures many mining pools publish for each wallet, such as the last share, the current hashrate and the total paid to the wallet."
+    context: "They show earnings even when the Monero ledger hides the payouts, but they are the pool's records, not the chain, and must be quoted with the date read."
+    slide_heading: "The wallet in the sample is the pivot"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Malware campaign"
+    modifier: null
+    aliases: ["campaign", "mining campaign"]
+    definition: "A set of malware samples and intrusions run by one operator, which the same wallet across many samples can group together."
+    context: "Grouping samples by wallet shows one campaign, though donation wallets in stock tools can merge unrelated ones."
+    slide_heading: "Proceeds run victim, pool, wallet, exit"
+    tags: ["forensics", "security"]
+    confidence: "high"
+  - term: "CNAME"
+    modifier: null
+    aliases: ["DNS alias", "domain alias", "domain aliases"]
+    definition: "A DNS alias: an attacker's subdomain that points to a known mining pool, so a blocklist of pool names misses it."
+    context: "Resolving the alias reveals the real pool behind the disguise."
+    slide_heading: "The wallet in the sample is the pivot"
+    tags: ["security", "forensics"]
+    confidence: "high"
+  - term: "Pool ban"
+    modifier: null
+    aliases: []
+    definition: "A mining pool's refusal to keep serving a wallet reported for cryptojacking, which can push the campaign to another pool."
+    context: "A ban gives the timeline a date and an exit point, but a ban prompted by the same malware report is not independent evidence."
+    slide_heading: "The wallet in the sample is the pivot"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Cloud cryptojacking"
+    modifier: null
+    aliases: []
+    definition: "Cryptojacking in a stolen or fraudulently opened cloud account, where the victim pays the cloud bill and that bill far exceeds the coins the attacker earns."
+    context: "Sysdig estimated one group's mining cost victims $53 in cloud bills for every $1 earned, so the analyst never reports the wallet's earnings as the loss."
+    slide_heading: "In the cloud the victim pays the bill"
+    tags: ["security", "real-world"]
+    confidence: "high"
+  - term: "Parks case"
+    modifier: null
+    aliases: ["Parks"]
+    definition: "A 2025 federal case in which Parks used more than $3.5 million of cloud computing, obtained by deceiving two cloud providers, to mine Ether, Litecoin and Monero worth nearly $1 million."
+    context: "The lesson splits the case leg by leg to show that only the transparent-coin payouts and the exchange and NFT-marketplace exits are on chain."
+    slide_heading: "Most cryptojacking mines Monero, on CPUs"
+    tags: ["real-world", "forensics"]
+    confidence: "high"
+  - term: "Donation wallet"
+    modifier: null
+    aliases: ["developer donation wallet"]
+    definition: "A wallet built into stock mining tools that mines a share, often 2–5%, for the tool's developer."
+    context: "It is the known false positive for cryptojacking: a wallet seen in many unrelated samples is likely a donation wallet, not the attacker's."
+    slide_heading: "Characterize: for, against, and alternatives"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Mixed earnings"
+    modifier: null
+    aliases: []
+    definition: "Pool earnings for one wallet that may include legitimate mining as well as mining on hijacked machines."
+    context: "It is one of the other explanations an honest characterization names, since pool totals may not all be cryptojacking proceeds."
+    slide_heading: "Characterize: for, against, and alternatives"
+    tags: ["forensics"]
+    confidence: "high"

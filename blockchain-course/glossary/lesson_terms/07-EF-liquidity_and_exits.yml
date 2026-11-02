@@ -1,0 +1,236 @@
+lesson_id: "07-EF"
+lesson_title: "Liquidity: Pools, Thin Markets and Exits"
+source_path: "lessons/ethereum/07-EF-liquidity_and_exits.qmd"
+terms:
+  - term: "Order book"
+    modifier: null
+    aliases: ["order books"]
+    definition: "The way exchanges match trades between buyers and sellers, which an automated market maker replaces by pricing trades from a pool's reserves."
+    context: "The lesson sets the AMM against the order book; order books and the exchanges that run them come on day 5."
+    slide_heading: "A DEX pool is the other side of the trade"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Uniswap"
+    modifier: null
+    aliases: ["Uniswap v2", "Uniswap v3", "Uniswap v4"]
+    definition: "A decentralized exchange that is an automated market maker; its v2 pools hold two tokens and issue ERC-20 LP tokens, while v3 and v4 positions are price ranges instead."
+    context: "The lesson uses Uniswap v2 as its example because it is the simplest and most copied design; other DEXs differ in detail."
+    slide_heading: "A DEX pool is the other side of the trade"
+    tags: ["ethereum", "real-world"]
+    confidence: "high"
+  - term: "Liquidity provider"
+    modifier: null
+    aliases: ["liquidity providers", "LP"]
+    definition: "Anyone who deposits both of a pool's tokens into it; they earn the pool's trading fee and can withdraw their share of the reserves."
+    context: "Whoever holds a pool's LP tokens can withdraw its reserves, the first fact to find about a small pool."
+    slide_heading: "A DEX pool is the other side of the trade"
+    tags: ["ethereum", "tokenization"]
+    confidence: "high"
+  - term: "LP token"
+    modifier: null
+    aliases: ["LP tokens", "pool token", "pool tokens", "liquidity token"]
+    definition: "In Uniswap v2, the ERC-20 token a liquidity provider receives as a share of a pool's reserves; burning it takes that share of both tokens back out."
+    context: "Follow who holds the LP tokens through their Transfer logs: one address holding most of them can empty the pool, which is how a rug pull works."
+    slide_heading: "A DEX pool is the other side of the trade"
+    tags: ["ethereum", "tokenization", "forensics"]
+    confidence: "high"
+  - term: "Pool reserves"
+    modifier: null
+    aliases: ["pool reserve", "reserve0", "reserve1"]
+    definition: "The amounts of the two tokens a DEX pool holds; their ratio is the pool's price, and the other reserve caps what any sale can take out."
+    context: "The lab reads the reserves before and after a swap; a 10 ETH pool cannot pay more than 10 ETH however much of the token is sold into it."
+    slide_heading: "The pool's reserves set its price"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Swap fee"
+    modifier: null
+    aliases: ["0.30% fee", "pool fee", "trading fee"]
+    definition: "The 0.30% each Uniswap v2 trade pays, which stays in the pool for the liquidity providers."
+    context: "Most of the 1.3% shortfall on a small sale is this fee plus the pool's curve."
+    slide_heading: "The pool's reserves set its price"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Price impact"
+    modifier: null
+    aliases: []
+    definition: "How far a trade moves a pool's price: the larger the trade compared with the pool, the worse the price the trader gets."
+    context: "The price a seller got and how far the pool moved show how big a trade was against that market; a sale that moves a pool 17% was large for it."
+    slide_heading: "A bigger trade gets a worse price"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Spot price"
+    modifier: null
+    aliases: []
+    definition: "A pool's current price before a trade, the ratio of its reserves; small trades fill close to it."
+    context: "Compare the price a seller got with the spot price to see the trade's price impact."
+    slide_heading: "A bigger trade gets a worse price"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "Swap event"
+    modifier: null
+    aliases: ["Swap log", "Swap logs"]
+    definition: "The log a Uniswap v2 pool writes on each trade: the amounts in and out and the address that got the output."
+    context: "When a trader goes through a router, the Swap's to field is often the router or the next pool, not the person, so follow the tokens."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Sync event"
+    modifier: null
+    aliases: ["Sync log", "Sync logs"]
+    definition: "The log a Uniswap v2 pool writes after every swap, mint or burn, giving both reserves; divide one by the other, after scaling by decimals, for the new price."
+    context: "In the lab, the Sync before and the Sync after your swap give the price impact of your trade."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Mint event"
+    modifier: null
+    aliases: ["Mint log"]
+    definition: "The log a Uniswap v2 pool writes when liquidity is added."
+    context: "A pool's first Mint dates it; Mint's sender is often a router, so follow the LP tokens instead."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Burn event"
+    modifier: null
+    aliases: ["Burn log"]
+    definition: "The log a Uniswap v2 pool writes when liquidity is withdrawn and LP tokens are burned."
+    context: "A Burn that empties a pool after many buys is the on-chain trace of a rug pull."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "getReserves()"
+    modifier: null
+    aliases: ["getReserves"]
+    definition: "The Uniswap v2 pool function that returns its two reserves at the moment it is called."
+    context: "With the Sync log, it is where to read a pool's depth when checking whether funds can exit."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "token0 / token1"
+    modifier: null
+    aliases: ["token0", "token1"]
+    definition: "A pool's two tokens, in a fixed order; check which is which before dividing one reserve by the other."
+    context: "Getting the order wrong turns a price upside down."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum"]
+    confidence: "high"
+  - term: "decimals()"
+    modifier: null
+    aliases: ["token decimals", "decimals"]
+    definition: "The number of decimal places a token's raw integer amounts use, such as 18 for WETH and 6 for USDC."
+    context: "Reserves are raw integers, so scale each by its decimals() before dividing, or an ETH price in USDC comes out wrong by a factor of 10^12."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum", "tokenization"]
+    confidence: "high"
+  - term: "DEX router"
+    modifier: null
+    aliases: ["router", "routers"]
+    definition: "A contract traders go through to reach a pool, which can show up in a pool's logs in place of the person trading."
+    context: "Mint's sender and often Swap's or Burn's to are the router or the next pool, so follow the tokens to their end."
+    slide_heading: "A swap leaves Swap and Sync logs"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Deep pool"
+    modifier: null
+    aliases: ["deep pools", "deep market"]
+    definition: "A pool with large reserves, where a sale moves the price only a little and arbitrage pulls it back to the market."
+    context: "A deep pool's price is a fair reading of what a token is worth, and only deep pools could take hundreds of millions quickly in the Bybit case."
+    slide_heading: "Arbitrage holds a deep pool near the market"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Thin market"
+    modifier: null
+    aliases: ["thin markets", "thin pool", "thin pools"]
+    definition: "A pool with small reserves, where one trade moves the price a lot, so its price is one trade's word rather than the market's."
+    context: "Signs: reserves small next to the holding, only one pool, a new pool with few Swap logs, or one address holding most of the LP tokens."
+    slide_heading: "Arbitrage holds a deep pool near the market"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Price manipulation"
+    modifier: null
+    aliases: ["price-manipulation attack"]
+    definition: "Moving a thin pool's price with a trade, which is easy when other contracts read that pool as a price feed."
+    context: "The lesson flags thin prices as unsafe to rely on; price manipulation as an attack is covered on day 8."
+    slide_heading: "Arbitrage holds a deep pool near the market"
+    tags: ["ethereum", "security"]
+    confidence: "high"
+  - term: "Quoted value"
+    modifier: null
+    aliases: ["quoted at"]
+    definition: "A holding multiplied by the last price, as a wallet or price site shows it; it ignores the pool's depth, so it can be far more than any sale could raise."
+    context: "Report the units held, then the value quoted at a named pool with its depth, never a quoted value as what the subject could have realized."
+    slide_heading: "Quoted value is not what can be sold"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Scam token"
+    modifier: null
+    aliases: ["scam tokens"]
+    definition: "A token built to take buyers' money, for example through a rug pull; a 2021 study found over 10,000 listed on Uniswap, roughly half the tokens it studied."
+    context: "The study's 50% figure covers one period; quote it with its date."
+    slide_heading: "Thin pools let creators pull the rug"
+    tags: ["ethereum", "security", "forensics"]
+    confidence: "high"
+  - term: "Sale-restricted token"
+    modifier: null
+    aliases: ["honeypot", "honeypot token"]
+    definition: "A token whose code lets anyone buy but blocks selling except by the creator, so buyers hold a balance with a price and no exit."
+    context: "On chain it shows many buys and no sells except from the creator; the token's code shows the rule."
+    slide_heading: "Thin pools let creators pull the rug"
+    tags: ["ethereum", "security", "forensics"]
+    confidence: "high"
+  - term: "Exit"
+    modifier: null
+    aliases: ["exits", "exit point"]
+    definition: "A place value can leave a chain or change form: a deep DEX pool, a centralized exchange, an OTC desk or a bridge; some balances have no exit at all."
+    context: "Week-2 traces end at an exit, and the assessment says which one and who could have stopped it."
+    slide_heading: "Where funds can leave a chain"
+    tags: ["ethereum", "forensics"]
+    confidence: "high"
+  - term: "Centralized exchange"
+    modifier: null
+    aliases: ["CEX", "centralized exchanges"]
+    definition: "An exchange that needs an account and a listing for the asset, and can freeze deposits; after a deposit to its address the record is off-chain."
+    context: "Chainalysis reported (as of January 2026) pig-butchering proceeds moving through centralized exchanges less and less, potentially because they can freeze funds."
+    slide_heading: "Where funds can leave a chain"
+    tags: ["real-world", "forensics"]
+    confidence: "high"
+  - term: "OTC desk"
+    modifier: null
+    aliases: ["OTC desks", "over-the-counter desk"]
+    definition: "A desk that takes large amounts off-chain; on chain it shows as many small deposits gathered into wholesale amounts."
+    context: "The desk itself is who can stop this exit; day 5 covers exchanges and OTC."
+    slide_heading: "Where funds can leave a chain"
+    tags: ["real-world", "forensics"]
+    confidence: "high"
+  - term: "Pig butchering"
+    modifier: null
+    aliases: ["pig-butchering", "pig-butchering scam"]
+    definition: "A scam type whose proceeds, Chainalysis reported as of January 2026, were moving through centralized exchanges less and less."
+    context: "The finding is about that one crime type, not all laundering, and is quoted with its date."
+    slide_heading: "Where funds can leave a chain"
+    tags: ["real-world", "forensics"]
+    confidence: "medium"
+  - term: "Bybit hack"
+    modifier: null
+    aliases: ["Bybit theft", "Bybit"]
+    definition: "North Korea's theft of about $1.5 billion in crypto from the exchange Bybit on or about 21 February 2025, which Elliptic calls the largest theft in history."
+    context: "The thieves swapped freezable tokens such as stETH and cmETH for ETH on DEXs within minutes, then converted most of the ETH to bitcoin by 5 March 2025."
+    slide_heading: "Bybit: stolen tokens became ETH first"
+    tags: ["ethereum", "real-world", "forensics"]
+    confidence: "high"
+  - term: "TraderTraitor"
+    modifier: null
+    aliases: []
+    definition: "The North Korean actors the FBI attributed the Bybit theft to, in its public service announcement of 26 February 2025."
+    context: "The FBI asked exchanges, bridges, DeFi services and others to block transactions tied to the thieves' addresses."
+    slide_heading: "Bybit: stolen tokens became ETH first"
+    tags: ["real-world", "security"]
+    confidence: "high"
+  - term: "eXch"
+    modifier: null
+    aliases: []
+    definition: "A service through which, with others, most of the ETH stolen from Bybit was converted to bitcoin by 5 March 2025."
+    context: "Converting to bitcoin took the funds off Ethereum and into an asset with no issuer to freeze it."
+    slide_heading: "Bybit: stolen tokens became ETH first"
+    tags: ["real-world", "forensics"]
+    confidence: "high"

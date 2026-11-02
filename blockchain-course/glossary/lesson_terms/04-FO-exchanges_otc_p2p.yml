@@ -1,0 +1,148 @@
+lesson_id: "04-FO"
+lesson_title: "Exchanges, OTC Desks and P2P Markets"
+source_path: "lessons/forensics/04-FO-exchanges_otc_p2p.qmd"
+terms:
+  - term: "Deposit address"
+    modifier: null
+    aliases: ["exchange deposit address", "deposit addresses"]
+    definition: "An address an exchange creates for one customer and holds the key to. Whoever sends to it is paying into that one exchange account, and the exchange forwards what arrives to its own wallets."
+    context: "The deposit address is the last on-chain link to a customer, so a trace that reaches an exchange names the deposit address, not the sweep."
+    slide_heading: "An exchange's wallets: deposit, hot and cold"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Sweeping"
+    modifier: null
+    aliases: ["sweep", "exchange sweep", "sweep transaction"]
+    definition: "An exchange moving customer deposits out of deposit addresses into its own wallets, leaving the deposit addresses empty. On Ethereum it is a forward of each deposit; on Bitcoin one transaction gathers many deposits."
+    context: "A Bitcoin sweep has many inputs from different customers, so the common-input heuristic merges its inputs into the exchange's cluster, never into one customer."
+    slide_heading: "An exchange's wallets: deposit, hot and cold"
+    tags: ["forensics", "bitcoin", "ethereum"]
+    confidence: "high"
+  - term: "Cold wallet"
+    modifier: null
+    aliases: ["cold storage", "cold wallets"]
+    definition: "An offline exchange wallet that holds most of the exchange's funds, while the online hot wallet pays withdrawals."
+    context: "Naming a cold wallet tells the reader only which exchange; in a 2017 survey 92% of exchanges used cold storage, for 87% of funds on average."
+    slide_heading: "An exchange's wallets: deposit, hot and cold"
+    tags: ["forensics", "security", "real-world"]
+    confidence: "high"
+  - term: "Omnibus account"
+    modifier: null
+    aliases: ["omnibus wallet", "omnibus holding", "pooled wallet"]
+    definition: "An exchange wallet that pools many customers' coins on the blockchain, while the exchange's own ledger records which customer owns what."
+    context: "Because coins are pooled, a withdrawal comes from the exchange's pool, not from the customer's deposit, and only the exchange's records can link the two."
+    slide_heading: "An exchange's wallets: deposit, hot and cold"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Order book"
+    modifier: null
+    aliases: ["order books"]
+    definition: "The exchange's internal list where buyers and sellers are matched; trades on it are recorded in the exchange's ledger, not on the blockchain."
+    context: "An OTC desk trades large amounts off the open order book, which is one way it differs from an exchange."
+    slide_heading: "Withdrawals come from the pool, not the deposit"
+    tags: ["real-world", "forensics"]
+    confidence: "high"
+  - term: "Shared deposit address heuristic"
+    modifier: null
+    aliases: ["deposit address reuse heuristic", "deposit address clustering"]
+    definition: "The rule that addresses sending funds to the same exchange deposit address are likely controlled by one entity, because a deposit address belongs to one exchange account."
+    context: "It fails when an address only looks like a deposit address, or when one exchange address takes many customers' payments told apart by a tag or memo; the lesson reports it with a confidence word."
+    slide_heading: "Shared deposit addresses link their senders"
+    tags: ["forensics", "ethereum"]
+    confidence: "high"
+  - term: "Destination tag"
+    modifier: null
+    aliases: ["XRP destination tag"]
+    definition: "On the XRP Ledger, a number sent with a payment to one exchange address that says which customer to credit."
+    context: "Where one address serves many customers, senders are linked only when the tag matches too."
+    slide_heading: "Shared deposit addresses link their senders"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Memo"
+    modifier: null
+    aliases: ["Stellar memo"]
+    definition: "On Stellar, a note sent with a payment that tells an exchange which account a payment to its single shared deposit address belongs to; a muxed address does the same job."
+    context: "Kraken, as of July 2026, uses a single Lumens deposit address for all accounts, so senders are linked only when the memo or muxed address matches too."
+    slide_heading: "Shared deposit addresses link their senders"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "OTC desk"
+    modifier: null
+    aliases: ["OTC broker", "over-the-counter desk", "over-the-counter broker"]
+    definition: "A business that arranges large trades directly between buyers and sellers, off an exchange's open order book. Only the settlement shows on-chain, and only if it goes to an outside wallet."
+    context: "Kraken's desk had a $100,000 minimum order as of October 2026, so the trace to expect is a large transfer to or from a desk's address; some desks specialize in laundering."
+    slide_heading: "OTC desks trade large amounts off the order book"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Chinese-language money laundering network"
+    modifier: null
+    aliases: ["Chinese-language laundering network"]
+    definition: "Laundering networks that run OTC services, collecting many small deposits into wholesale amounts that can re-enter legitimate finance, as of January 2026."
+    context: "The pattern to read is many small payments in from unrelated senders, then a few large transfers out, often to an exchange."
+    slide_heading: "Some OTC desks launder: small in, large out"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Swapping-as-a-service"
+    modifier: null
+    aliases: []
+    definition: "A service some laundering OTC desks offer that converts a client's crypto into several different assets."
+    context: "The lesson lists it among the services laundering networks offer alongside OTC collection."
+    slide_heading: "Some OTC desks launder: small in, large out"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "P2P exchanger"
+    modifier: null
+    aliases: ["peer-to-peer exchanger"]
+    definition: "Typically a person in the business of buying and selling crypto with others found through ads, forums, websites or word of mouth. The seller sends the crypto once the buyer's off-chain payment arrives."
+    context: "FinCEN's 2019 guidance describes P2P exchangers; the payment leg, in cash, bank transfer or gift card, never appears on the chain."
+    slide_heading: "P2P markets: two people trade, an escrow holds"
+    tags: ["forensics", "policy", "real-world"]
+    confidence: "high"
+  - term: "P2P trading platform"
+    modifier: null
+    aliases: ["P2P market", "peer-to-peer platform", "peer-to-peer market"]
+    definition: "A platform that lets buyers and sellers of crypto find each other, and sometimes stands between them by holding the crypto in escrow."
+    context: "Who holds the escrow key decides who can freeze a P2P trade: the platform, or with a multisig, neither side alone."
+    slide_heading: "P2P markets: two people trade, an escrow holds"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Payment leg"
+    modifier: null
+    aliases: ["fiat leg"]
+    definition: "The part of a P2P trade where the buyer pays the seller in cash, bank transfer or gift card. It happens off-chain."
+    context: "The chain shows only the crypto side of a P2P trade, so the payment leg must come from other records."
+    slide_heading: "P2P markets: two people trade, an escrow holds"
+    tags: ["forensics"]
+    confidence: "high"
+  - term: "Escrow wallet"
+    modifier: null
+    aliases: ["platform escrow", "escrow"]
+    definition: "A wallet that holds a trader's crypto while a P2P trade is pending. A platform may hold its key, as Paxful did, or the traders may lock coins in a multisig."
+    context: "The lesson compares a platform-held escrow, which the platform can freeze, with Bisq's 2-of-2 multisig escrow."
+    slide_heading: "P2P markets: two people trade, an escrow holds"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Paxful"
+    modifier: null
+    aliases: []
+    definition: "An online peer-to-peer virtual currency platform that kept an escrow wallet, whose key it controlled, to hold customers' crypto while a trade was pending."
+    context: "The lesson's example of a P2P platform that holds the escrow itself."
+    slide_heading: "P2P markets: two people trade, an escrow holds"
+    tags: ["forensics", "real-world"]
+    confidence: "high"
+  - term: "Bisq"
+    modifier: null
+    aliases: []
+    definition: "A P2P market that, as of v1.2 (2019), locks both traders' coins in a 2-of-2 multisig escrow. A dispute goes to a mediator, then to arbitration once a trader publishes a time-locked transaction."
+    context: "On Bisq the chain shows the multisig and its payout, and no single party holds the escrow key."
+    slide_heading: "P2P markets: two people trade, an escrow holds"
+    tags: ["forensics", "bitcoin", "real-world"]
+    confidence: "high"
+  - term: "Pig butchering"
+    modifier: null
+    aliases: ["pig-butchering scam", "crypto investment scam"]
+    definition: "A crypto investment scam whose proceeds criminals cash out through exchanges."
+    context: "Chainalysis links exchanges' ability to freeze funds to a decline in exchange cash-outs of pig-butchering proceeds, as of January 2026."
+    slide_heading: "Name the deposit, not the sweep"
+    tags: ["forensics", "real-world"]
+    confidence: "high"

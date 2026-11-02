@@ -12,6 +12,22 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
+- `blockchain-course/assets/mindmap.html` has no lesson card for 03-FO to 14-FO, 05-BF, 06-BF, 07-EF or 08-EF, so
+  their concepts and the ether_evm micro-lab (11-FO's practice) are not on the map. (2 Nov 2026, glossary and
+  mind-map pass)
+- Mind-map concepts whose names the linked slide no longer teaches (the closest current slide is linked): 01-CM
+  "Crash Fault Tolerance", "Byzantine Fault Tolerance", "PBFT", "Quorums"; mod-intro "State Machine Replication";
+  02-IN "Cryptographic Signatures"; 04-CP "Catastrophic Nonce Reuse", "Elliptic Curve Points", "ECDH Key Agreement";
+  mod-consensus "Casper FFG Finality"; 02-BF "Mining Pools & Stratum"; 01-EF "World State Trie"; 04-EF "Storage
+  Slots vs Memory"; 01-PC "Consortium Governance", "Access Control Lists"; 01-FO "Silk Road Seizure" and "Colonial
+  Pipeline Recovery" (the 03-FO slides now teach the trace, not the seizure). (2 Nov 2026, glossary and mind-map pass)
+- Glossary has no terms for some slides students see: the 05-EF stablecoin slides (stablecoin types, freeze and
+  blacklist functions), 04-CP ML-KEM and ML-DSA, 01-PC Tron, TRC-20, USDT freeze, CBDC and mBridge, 01-FO "label"
+  (notes, line 47), and 03-FO cash-out, tumbler and anonymity-enhanced cryptocurrency (notes, line 44). Add them to
+  `glossary/lesson_terms/` and rerun the pipeline. (2 Nov 2026, glossary and mind-map pass)
+- `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd`: the Agenda slide still says
+  "End with off-chain controls" (KYC and AML), but those slides are hidden and moved to 05-FO. (2 Nov 2026, glossary
+  and mind-map pass)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
@@ -34,13 +50,14 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- `blockchain-course/assets/mindmap.html:1844-1849`: 01-EF's lab card still names the old "EVM Replicated Computer
-  Lab" and its description; the page at that URL is now "Reading a Contract With No Source" (11-FO's practice). Retitle
-  it in the next mind-map pass, and consider listing it under 11-FO too. (2 Nov 2026, ether_evm rework)
 - `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd:237`: "heimdall-rs, open source (MIT)"
   states a licence with no "as of" date; the bib entry was read 1 Nov 2026, as the micro-lab now says. (2 Nov 2026,
   ether_evm rework)
 
 ## Tooling and rules
+- `blockchain-course/glossary/index.pdf` was not rebuilt with the 2 Nov glossary: `render_outputs.py` needs TinyTeX,
+  which this machine lacks (`quarto install tinytex`). (2 Nov 2026, glossary and mind-map pass)
 
 ## Notion and documents
+- Notion "Build Tracker" lags the repo: Meets rubrics, P6's D9 half and the week-2 quiz banks are built but not
+  marked done. (2 Nov 2026, glossary and mind-map pass)
