@@ -258,6 +258,28 @@ class TokensLiveRegressionTests(unittest.TestCase):
         stored = decode(["string"], call(ADDRESSES["BADGE"], "tokenURI(uint256)", ["uint256"], [badge], "latest"))[0]
         self.assertEqual(stored, uri)
 
+    def test_instructor_mints_certificates_from_a_pass_list(self) -> None:
+        # The instructor script (tokens/quizes/, instructor only) mints through the gateway.
+        sys.path.insert(0, str(LAB / "quizes"))
+        try:
+            import mint_certificates as certs
+        finally:
+            sys.path.pop(0)
+        listed = certs.read_pass_list("# pass list\nseat 38\n\n0x70997970C51812dc3A010C7d01b50e0d17dc79C8\n")
+        Account.enable_unaudited_hdwallet_features()
+        seat38 = Account.from_mnemonic(PHRASE, account_path="m/44'/60'/0'/0/47").address
+        self.assertEqual(listed, [seat38, "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"])
+        with self.assertRaises(ValueError):
+            certs.read_pass_list("seat 99")
+        chain = certs.Chain(f"{BASE_URL}/rpc", HOST)
+        minted = certs.mint_certificates(chain, ADDRESSES["BADGE"], listed)
+        self.assertEqual([a for a, _ in minted], listed)
+        for (address, number), expected in zip(minted, listed):
+            holder = decode(["address"], call(ADDRESSES["BADGE"], "ownerOf(uint256)", ["uint256"], [number], "latest"))[0]
+            self.assertEqual(holder.lower(), expected.lower())
+            stored = decode(["string"], call(ADDRESSES["BADGE"], "tokenURI(uint256)", ["uint256"], [number], "latest"))[0]
+            self.assertIn("\"name\":\"Course Certificate\"", stored)
+
 
 if __name__ == "__main__":
     unittest.main()

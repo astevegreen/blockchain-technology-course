@@ -55,9 +55,18 @@ The instructor answers are in `quizes/INSTRUCTOR_ANSWERS.md`, which never reache
 Accounts 10 to 49 are the class's seats on the mint page (seat N is account 9 + N, 100 ETH each).
 Give each student a seat number: two students on one seat clash over nonces.
 
+## Certificates (day 10)
+
+At the end of day 10 the instructor mints one certificate NFT per passing student on this same chain,
+from the same `CourseBadge` contract, so each student finds theirs in the explorer like their day-3
+badge. `quizes/mint-certificates.sh pass-list.txt` does it (the pass list is one address or `seat N`
+per line; `quizes/mint_certificates.py` explains the rest). It signs as Account 9 through the gateway,
+needs no secret, and runs while the lab is up: a restart reloads the frozen chain and the certificates
+vanish. The certificate's name and wording are placeholders until the owner sets them.
+
 ## Tests
 
 - `regression-tests/automated/tokens/` - the live suite (router, gateway filter, config, source
   files, pages, the worked example, the proxy slot, the blacklist and badge-sale stories, the
-  saved pages, and one badge minted and read back).
+  saved pages, and one badge minted and read back, and the instructor certificate mint).
 - `regression-tests/agent/tokens/` - the browser playbook for what the suite cannot see.
