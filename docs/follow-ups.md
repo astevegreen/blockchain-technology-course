@@ -15,9 +15,6 @@ slide index), which is never listed here.
 - `blockchain-course/assets/mindmap.html` `conceptDefinitions` has no entry for most concepts on the 18 new lesson
   cards or the renamed 01-CM names beyond the four added, so their hover definitions are empty. (2 Nov 2026, mind-map
   card pass)
-- `blockchain-course/lessons/ethereum/04-EF-*.qmd`: the "Data Locations: Storage, Memory, Calldata" slide is hidden
-  (`.content-hidden`), so the mind map's 04-EF concept is "Reference Types" and cannot link to it. Unhide it if that
-  comparison should be on the map. (2 Nov 2026, mind-map card pass)
 - Two scheduled lessons keep their March titles: `lessons/forensics/02-FO-*.qmd` ("Blockchain Forensics: Foundations,
   Obfuscation, and Tracing", now day 6's clustering and peel-chain lesson) and `lessons/bitcoin/02-BF-*.qmd`
   ("Bitcoin — Transactions and Mining", now day 2's reading-a-transaction lesson). Retitling them changes
