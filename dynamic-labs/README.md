@@ -430,7 +430,7 @@ For the external router use AP or bridge mode with its own DHCP disabled, then c
 
 ## Classroom Network Helper
 
-The deploy flow calls [scripts/classroom-network-helper.sh](/home/ben/Code/courseware-builder-pipeline/dynamic-labs/scripts/classroom-network-helper.sh:1) for host-side NIC setup. You can also operate it directly:
+The deploy flow calls [scripts/classroom-network-helper.sh](scripts/classroom-network-helper.sh) for host-side NIC setup. You can also operate it directly:
 
 ```bash
 sudo ./scripts/classroom-network-helper.sh status
