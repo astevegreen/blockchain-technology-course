@@ -49,10 +49,12 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- The Ethereum lab image has not been built since 3d42852 dropped `COPY cache/ ./cache/` from
-  `dynamic-labs/ethereum_lab/Dockerfile` (the `hardhat compile --force` step should regenerate it). Run the lab's
-  `run.sh` once Docker answers inside WSL Ubuntu: on 3 Nov 2026 the distro had no Docker and the engine dropped
-  `docker build` twice. Lab Tests CI picked no labs for that push. (3 Nov 2026, cache untrack)
+- `dynamic-labs/regression-tests/automated/ethereum_lab/test_ethereum_lab_live.py` still expects the lab as it was
+  at the first commit (75ec588, May 2026): 7 of its 8 tests fail against today's image. It wants `rpcUrl` `/rpc`
+  (now `/rpc-write`), the old shorter exercise list (`EXPECTED_EXERCISE_IDS`), the "Ethereum — Instructor
+  Console" title, and a 200 from the router's RPC (now 403). The lab changed in 2784c28 (June PR). Update the
+  expectations to the current lab, or fix the lab where the test is right. The lab is not in Lab Tests CI.
+  (3 Nov 2026, `run.sh --skip-start` after the cache untrack)
 - `dynamic-labs/ethereum_lab/frontend/public/docs/` is a tracked copy of `ethereum_lab/docs/` that `Dockerfile:19`
   (`COPY docs/ ./public/docs/`) overwrites at build, so every docs edit must be made twice or they drift. Untracking
   it also means changing `dynamic-labs/tests/test_ethereum_lab_docker_context.py:62`, `pages.yml:60` and
