@@ -12,9 +12,11 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- `blockchain-course/assets/mindmap.html` `conceptDefinitions` has no entry for most concepts on the 18 new lesson
-  cards or the renamed 01-CM names beyond the four added, so their hover definitions are empty. (2 Nov 2026, mind-map
-  card pass)
+- `blockchain-course/assets/mindmap.html` `conceptDefinitions` still lacks Fractional Reserve (04-IN), Kerckhoffs's
+  Principle (01-CP), Side Channels (05-CP), Quadratic Voting (06-EF) and Strategic Reserves (03-AS): no glossary term
+  or slide defines them, and the session's network reached only GitHub, so their primary sources (Kerckhoffs 1883,
+  NIST CSRC glossary, Lalley & Weyl 2018, a Federal Reserve page, Executive Order 14233) went unread. Source each
+  and add it. (3 Nov 2026, mind-map definitions pass)
 - Two scheduled lessons keep their March titles: `lessons/forensics/02-FO-*.qmd` ("Blockchain Forensics: Foundations,
   Obfuscation, and Tracing", now day 6's clustering and peel-chain lesson) and `lessons/bitcoin/02-BF-*.qmd`
   ("Bitcoin — Transactions and Mining", now day 2's reading-a-transaction lesson). Retitling them changes
