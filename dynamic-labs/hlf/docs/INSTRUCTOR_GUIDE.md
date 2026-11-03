@@ -332,5 +332,3 @@ Use it when tracking:
 
 - [CLASSROOM_OPERATIONS.md](CLASSROOM_OPERATIONS.md) — runbook
 - [STUDENT_GUIDE.md](STUDENT_GUIDE.md) — what students see
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — common issues
-- [../../hlf-phase7-classroom-plan.md](../../../hlf-phase7-classroom-plan.md) — multi-tenant design

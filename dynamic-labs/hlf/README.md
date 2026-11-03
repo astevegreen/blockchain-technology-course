@@ -199,9 +199,3 @@ router's route to student containers). The corpus analysis tracks it as REM-02.
 - [STUDENT_GUIDE.md](docs/STUDENT_GUIDE.md) — what students need to know
 - `docs/INSTRUCTOR_GUIDE.md` — pedagogical plan + instructor controls (instructor copy of the repo only; not in student downloads)
 - [CLASSROOM_OPERATIONS.md](docs/CLASSROOM_OPERATIONS.md) — end-to-end operational runbook
-- [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) — common issues
-
-## Plan & status
-
-- [`../../hlf-update-plan.md`](../../hlf-update-plan.md) — phased refactor plan
-- [`../../hlf-phase7-classroom-plan.md`](../../hlf-phase7-classroom-plan.md) — classroom multi-tenant design
