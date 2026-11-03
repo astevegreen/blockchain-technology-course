@@ -52,35 +52,29 @@ None
 - The ledger enforces the rules; humans and institutions supply the **meaning behind those rules**.
 - Same primitive, radically different applications: stablecoin, supply chain record, membership pass.
 
-::: {style="margin-top: -5em;"}
+::: {style="margin-top: 0.2em;"}
 ```{dot}
-//| fig-width: 10
-//| fig-height: 4.8
+//| fig-width: 9.5
+//| fig-height: 2.8
 digraph token_anatomy {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=13 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=TB
-  graph [fontname="Arial Bold" fontsize=17 pad=0.3 nodesep=1.0 ranksep=0.9 splines=true bgcolor="transparent"]
-  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
-  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  nodesep=0.3
+  ranksep=0.5
 
-  TOKEN [label="TOKEN\n─────────────────────────\nA programmable claim on\na shared ledger"
-         shape=ellipse style=filled fillcolor="#1a3a4a" fontcolor=white penwidth=3 fontsize=16]
+  TOKEN [label=<<b>TOKEN</b><br/>A programmable claim on<br/>a shared ledger> fillcolor="#e0f2fe" color="#38bdf8" penwidth=2]
 
-  ID    [label="Identifier\n─────────────────────────\nUnique (NFT) or fungible\n(interchangeable units)\nEnforced by the contract"
-         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+  ID    [label=<<b>Identifier</b><br/>Unique (NFT) or fungible<br/>(interchangeable units)<br/>Enforced by the contract> fillcolor="#dcfce7" color="#22c55e"]
+  OWN   [label=<<b>Owner</b><br/>A wallet address<br/>Verifiable by anyone<br/>Immutably recorded> fillcolor="#dcfce7" color="#22c55e"]
+  HIST  [label=<<b>Transfer History</b><br/>Every prior owner<br/>Timestamped on-chain<br/>Cannot be altered> fillcolor="#dcfce7" color="#22c55e"]
+  MEAN  [label=<<b>Meaning</b><br/>Art · Deed · Vote · Key<br/>Credential · Currency<br/>NOT enforced by the chain> fillcolor="#fee2e2" color="#ef4444"]
 
-  OWN   [label="Owner\n─────────────────────────\nA wallet address\nVerifiable by anyone\nImmutably recorded"
-         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-
-  HIST  [label="Transfer History\n─────────────────────────\nEvery prior owner\nTimestamped on-chain\nCannot be altered"
-         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-
-  MEAN  [label="Meaning\n─────────────────────────\nArt · Deed · Vote · Key\nCredential · Currency\nNOT enforced by the chain"
-         shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
-
-  TOKEN -> ID   [label="  has a" color="#2ecc71" fontcolor="#2ecc71"]
-  TOKEN -> OWN  [label="  has an" color="#2ecc71" fontcolor="#2ecc71"]
-  TOKEN -> HIST [label="  carries" color="#2ecc71" fontcolor="#2ecc71"]
-  TOKEN -> MEAN [label="  acquires" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2]
+  TOKEN -> ID   [label="  has a" color="#16a34a" fontcolor="#15803d"]
+  TOKEN -> OWN  [label="  has an" color="#16a34a" fontcolor="#15803d"]
+  TOKEN -> HIST [label="  carries" color="#16a34a" fontcolor="#15803d"]
+  TOKEN -> MEAN [label="  acquires" style=dashed color="#dc2626" fontcolor="#b91c1c" penwidth=1.5]
 
   { rank=same; ID; OWN; HIST; MEAN }
 }
@@ -142,36 +136,29 @@ None
 ## Token Standard Design Considerations {style="font-size: 0.90em;"}
 
 ```{dot}
-//| fig-width: 15
-//| fig-height: 7.0
+//| fig-width: 10
+//| fig-height: 6.2
 digraph token_design {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=13 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=TB
-  graph [fontname="Arial Bold" fontsize=17 pad=0.7 nodesep=1.1 ranksep=1.2 bgcolor="transparent"]
-  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
-  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  nodesep=0.5
+  ranksep=0.45
 
-  Q1 [label="Are all instances\ninterchangeable?"
-      shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white penwidth=2]
+  Q1 [label="Are all instances\ninterchangeable?" shape=diamond style="filled" fillcolor="#e0f2fe" color="#38bdf8" margin=0]
+  Q2 [label="Do you need both\nfungible and unique\ntokens in one system?" shape=diamond style="filled" fillcolor="#e0f2fe" color="#38bdf8" margin=0]
 
-  Q2 [label="Do you need both\nfungible and unique\ntokens in one system?"
-      shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white penwidth=2]
+  ERC20 [label=<<b>ERC-20  —  Fungible</b><br/>Tracks: balance per address<br/>Transfer unit: any amount<br/>Constraint: no individual identity<br/>Use: governance, stablecoin, currency> fillcolor="#dcfce7" color="#22c55e"]
+  ERC721 [label=<<b>ERC-721  —  Non-Fungible</b><br/>Tracks: one owner per token ID<br/>Transfer unit: one whole token<br/>Constraint: no batch efficiency<br/>Use: art, deed, membership, credential> fillcolor="#e0f2fe" color="#38bdf8"]
+  ERC1155 [label=<<b>ERC-1155  —  Multi-Token</b><br/>Tracks: balance per (address, ID) pair<br/>Transfer unit: amounts per ID<br/>Constraint: larger attack surface<br/>Use: gaming inventory, enterprise catalog> fillcolor="#fef3c7" color="#f59e0b"]
 
-  ERC20 [label="ERC-20  —  Fungible\n─────────────────────────────\nTracks: balance per address\nTransfer unit: any amount\nConstraint: no individual identity\nUse: governance, stablecoin, currency"
-         shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+  WARN [label="Standard choice is\nan architectural commitment —\nit constrains every downstream\nwallet, market, and indexer." fillcolor="#fee2e2" color="#ef4444" penwidth=2]
 
-  ERC721 [label="ERC-721  —  Non-Fungible\n─────────────────────────────\nTracks: one owner per token ID\nTransfer unit: one whole token\nConstraint: no batch efficiency\nUse: art, deed, membership, credential"
-          shape=box style=filled fillcolor="#1a3a5a" fontcolor=white]
-
-  ERC1155 [label="ERC-1155  —  Multi-Token\n─────────────────────────────\nTracks: balance per (address, ID) pair\nTransfer unit: amounts per ID\nConstraint: larger attack surface\nUse: gaming inventory, enterprise catalog"
-           shape=box style=filled fillcolor="#4a3500" fontcolor=white]
-
-  WARN [label="Standard choice is\nan architectural commitment —\nit constrains every downstream\nwallet, market, and indexer."
-        shape=box style=filled fillcolor="#5a1a1a" fontcolor=white penwidth=2]
-
-  Q1 -> ERC20  [label="  Yes" color="#2ecc71" fontcolor="#2ecc71"]
-  Q1 -> Q2     [label="  No" color="#e74c3c" fontcolor="#e74c3c"]
-  Q2 -> ERC721 [label="  No — unique only" color="#3498db" fontcolor="#3498db"]
-  Q2 -> ERC1155[label="  Yes — mixed" color="#f39c12" fontcolor="#f39c12"]
+  Q1 -> ERC20  [label="  Yes" color="#16a34a" fontcolor="#15803d"]
+  Q1 -> Q2     [label="  No" color="#dc2626" fontcolor="#b91c1c"]
+  Q2 -> ERC721 [label="  No — unique only" color="#0284c7" fontcolor="#0369a1"]
+  Q2 -> ERC1155[label="  Yes — mixed" color="#d97706" fontcolor="#b45309"]
   ERC20   -> WARN [style=invis]
   ERC721  -> WARN [style=invis]
   ERC1155 -> WARN [style=invis]
@@ -230,50 +217,54 @@ None
 :::
 
 ## On-Chain vs. Off-Chain {style="font-size: 0.90em;"}
-::: {style="margin-top: -5em;"}
+::: {style="margin-top: 0.2em;"}
 ```{dot}
-//| fig-width: 15
-//| fig-height: 6.2
+//| fig-width: 9.5
+//| fig-height: 4.6
 digraph onchain_offchain {
-  rankdir=LR
-  graph [fontname="Arial" fontsize=18 pad=0.5 splines=ortho bgcolor="transparent"]
-  node  [fontname="Arial" fontsize=18 penwidth=1.5]
-  edge  [fontname="Arial" fontsize=18 penwidth=1.5]
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=13 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
+  rankdir=TB
+  newrank=true
+  nodesep=1.4
+  ranksep=0.22
 
   subgraph cluster_onchain {
-    label="On-Chain  —  Enforced by Consensus"
+    label=<<b>On-Chain  —  Enforced by Consensus</b>>
     labeljust=l
-    style=filled
-    fillcolor="#1a3a2a"
-    color="#2ecc71"
-    penwidth=2
-    fontcolor="white"
+    style="rounded,filled"
+    fillcolor="#f0fdf4"
+    color="#22c55e"
     fontsize=13
 
-    TID  [label="Token ID" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-    OWN  [label="Owner Address" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-    HIST [label="Transfer History" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-    URI  [label="tokenURI\n(pointer)" shape=box style=filled fillcolor="#2d7a50" fontcolor=white]
+    TID  [label="Token ID" fillcolor="#dcfce7" color="#22c55e" width=2]
+    OWN  [label="Owner Address" fillcolor="#dcfce7" color="#22c55e" width=2]
+    HIST [label="Transfer History" fillcolor="#dcfce7" color="#22c55e" width=2]
+    URI  [label="tokenURI\n(pointer)" fillcolor="#dcfce7" color="#22c55e" width=2 penwidth=2]
   }
 
   subgraph cluster_offchain {
-    label="Off-Chain  —  NOT Enforced by Chain"
+    label=<<b>Off-Chain  —  NOT Enforced by Chain</b>>
     labeljust=l
-    style=filled
-    fillcolor="#3a1a1a"
-    color="#e74c3c"
-    penwidth=2
-    fontcolor="white"
+    style="rounded,filled"
+    fillcolor="#fef2f2"
+    color="#ef4444"
     fontsize=13
 
-    META [label="Metadata JSON\n(name, description, traits)" shape=box style=filled fillcolor="#8b2020" fontcolor=white]
-    IMG  [label="Image / File" shape=box style=filled fillcolor="#8b2020" fontcolor=white]
-    LEG  [label="Legal Rights" shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
-    ID   [label="Real-World Identity\nof Wallet Holder" shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
+    LEG  [label="Legal Rights" fillcolor="#fee2e2" color="#ef4444" width=2.4]
+    ID   [label="Real-World Identity\nof Wallet Holder" fillcolor="#fee2e2" color="#ef4444" width=2.4]
+    META [label="Metadata JSON\n(name, description, traits)" fillcolor="#fee2e2" color="#ef4444" width=2.4]
+    IMG  [label="Image / File" fillcolor="#fee2e2" color="#ef4444" width=2.4]
   }
 
-  URI  -> META [label="  points to\n  (not enforced)" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2]
-  META -> IMG  [label="  links to" style=dashed color="#e74c3c" fontcolor="#e74c3c"]
+  TID -> OWN -> HIST -> URI [style=invis]
+  TID -> LEG [style=invis]
+  LEG -> ID -> META [style=invis]
+  { rank=same; URI; META }
+
+  URI  -> META [label="points to\n(not enforced)" style=dashed color="#dc2626" fontcolor="#b91c1c" penwidth=1.5]
+  META -> IMG  [label="  links to" style=dashed color="#dc2626" fontcolor="#b91c1c"]
 }
 ```
 :::
@@ -328,47 +319,51 @@ None
 ## Two-Layer Community Architecture {style="font-size: 0.90em;"}
 
 ```{dot}
-//| fig-width: 15
-//| fig-height: 6.5
+//| fig-width: 9.5
+//| fig-height: 4.2
 digraph tbc_layers {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=13 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=LR
-  graph [fontname="Arial Bold" fontsize=17 pad=0.6 nodesep=0.7 ranksep=1.2 bgcolor="transparent"]
-  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
-  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  newrank=true
+  nodesep=0.3
+  ranksep=1.3
 
   subgraph cluster_enforced {
-    label="Enforced On-Chain"
+    label=<<b>Enforced On-Chain</b>>
     labeljust=l
-    style=filled
-    fillcolor="#1a3a2a"
-    color="#2ecc71"
-    penwidth=2.5
-    fontcolor=white
+    style="rounded,filled"
+    fillcolor="#f0fdf4"
+    color="#22c55e"
     fontsize=13
 
-    ACC  [label="Access Control\n(token gate)" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-    GOV  [label="Governance Votes\n(token-weighted)" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-    TRES [label="Treasury Disbursement\n(contract execution)" shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+    ACC  [label="Access Control\n(token gate)" fillcolor="#dcfce7" color="#22c55e" width=2.3]
+    GOV  [label="Governance Votes\n(token-weighted)" fillcolor="#dcfce7" color="#22c55e" width=2.3]
+    TRES [label="Treasury Disbursement\n(contract execution)" fillcolor="#dcfce7" color="#22c55e" width=2.3]
   }
 
   subgraph cluster_social {
-    label="Social Layer  —  Off-Chain"
+    label=<<b>Social Layer  —  Off-Chain</b>>
     labeljust=l
-    style=filled
-    fillcolor="#1a2a3a"
-    color="#3498db"
-    penwidth=2.5
-    fontcolor=white
+    style="rounded,filled"
+    fillcolor="#f0f9ff"
+    color="#38bdf8"
     fontsize=13
 
-    COMS [label="Communication\n(Discord, Telegram, Forums)" shape=box style=filled fillcolor="#1a4a6e" fontcolor=white]
-    CULT [label="Culture / Norms\n(trust, reputation)" shape=box style=filled fillcolor="#1a4a6e" fontcolor=white]
-    MOD  [label="Moderation\n& Curation" shape=box style=filled fillcolor="#154060" fontcolor=white]
+    COMS [label="Communication\n(Discord, Telegram, Forums)" fillcolor="#e0f2fe" color="#38bdf8" width=2.6]
+    CULT [label="Culture / Norms\n(trust, reputation)" fillcolor="#e0f2fe" color="#38bdf8" width=2.6]
+    MOD  [label="Moderation\n& Curation" fillcolor="#e0f2fe" color="#38bdf8" width=2.6]
   }
 
-  ACC  -> COMS [label="gates entry to" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2]
-  GOV  -> TRES [label="authorizes" color="#2ecc71" fontcolor="#2ecc71"]
-  CULT -> MOD  [label="shapes" color="#3498db" fontcolor="#3498db"]
+  { rank=same; ACC; GOV; TRES }
+  TRES -> GOV -> ACC [style=invis]
+  { rank=same; COMS; CULT; MOD }
+  MOD -> CULT -> COMS [style=invis]
+
+  ACC  -> COMS [label="gates entry to" style=dashed color="#dc2626" fontcolor="#b91c1c" penwidth=1.5]
+  TRES -> GOV  [dir=back label="  authorizes" color="#16a34a" fontcolor="#15803d"]
+  MOD  -> CULT [dir=back label="  shapes" color="#0284c7" fontcolor="#0369a1"]
 }
 ```
 
@@ -405,21 +400,24 @@ This slide establishes the two-layer model behind token communities: enforced on
 - These patterns **mix freely** — most real communities combine elements of all three.
 
 ```{dot}
-//| fig-width: 10
-//| fig-height: 3.0
+//| fig-width: 9
+//| fig-height: 2.9
 digraph community_patterns {
-  rankdir=LR
-  node [shape=box style=filled fontname="Arial" fontsize=10 bgcolor="transparent"]
-  edge [fontname="Arial Bold" fontsize=11]
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=12 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
+  rankdir=TB
+  nodesep=0.35
+  ranksep=0.55
 
-  DAO   [label=<<FONT COLOR="white"><B>DAO</B><BR/>──────────<BR/>Token: ERC-20<BR/>Enforces: votes,<BR/>treasury, upgrades<BR/>Example: Gitcoin</FONT>> fillcolor="#1e6e42"]
-  MEM   [label=<<FONT COLOR="white"><B>Membership NFT</B><BR/>──────────<BR/>Token: ERC-721<BR/>Enforces: access<BR/>to content/events<BR/>Example: BAYC</FONT>> fillcolor="#1a3a5a"]
-  SOC   [label=<<FONT COLOR="white"><B>Social Token</B><BR/>──────────<BR/>Token: ERC-20<BR/>Enforces: balance;<BR/>signals status/role<BR/>Example: FWB</FONT>> fillcolor="#4a3500"]
-  HYB   [label=<<FONT COLOR="white"><B>Hybrid</B><BR/>──────────<BR/>NFT = identity<BR/>Fungible = budget<BR/>Example: FWB + DAO</FONT>> fillcolor="#5a1a1a" shape=ellipse]
+  DAO   [label=<<b>DAO</b><br/>Token: ERC-20<br/>Enforces: votes,<br/>treasury, upgrades<br/>Example: Gitcoin> fillcolor="#dcfce7" color="#22c55e"]
+  MEM   [label=<<b>Membership NFT</b><br/>Token: ERC-721<br/>Enforces: access<br/>to content/events<br/>Example: BAYC> fillcolor="#e0f2fe" color="#38bdf8"]
+  SOC   [label=<<b>Social Token</b><br/>Token: ERC-20<br/>Enforces: balance;<br/>signals status/role<br/>Example: FWB> fillcolor="#fef3c7" color="#f59e0b"]
+  HYB   [label=<<b>Hybrid</b><br/>NFT = identity<br/>Fungible = budget<br/>Example: FWB + DAO> fillcolor="#fee2e2" color="#ef4444" penwidth=2]
 
-  DAO -> HYB [label="add identity layer" color="#2ecc71" fontcolor="#2ecc71"]
-  MEM -> HYB [label="add governance layer" color="#3498db" fontcolor="#3498db"]
-  SOC -> HYB [label="add treasury control" color="#f39c12" fontcolor="#f39c12"]
+  DAO -> HYB [label="  add identity layer" color="#16a34a" fontcolor="#15803d"]
+  MEM -> HYB [label="  add governance layer" color="#0284c7" fontcolor="#0369a1"]
+  SOC -> HYB [label="  add treasury control" color="#d97706" fontcolor="#b45309"]
 }
 ```
 :::
@@ -741,43 +739,36 @@ None
 ## Token Gating: Access Flow {style="font-size: 0.90em;"}
 
 ```{dot}
-//| fig-width: 15
-//| fig-height: 6
+//| fig-width: 10.3
+//| fig-height: 5.6
 digraph token_gate_flow {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=13 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=TB
-  graph [fontname="Arial" fontsize=17 pad=0.7 nodesep=1.2 ranksep=0.9 splines=ortho bgcolor="transparent"]
-  node  [fontname="Arial" fontsize=17 penwidth=2.5 margin="0.30,0.20" width=4.5]
-  edge  [fontname="Arial" fontsize=17 penwidth=2.5 arrowsize=1.2]
+  nodesep=0.45
+  ranksep=0.6
 
-  S1 [label="(1) User Wallet\nConnect wallet to bot / dApp"
-      shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
+  S1 [label=<<b>(1) User Wallet</b><br/>Connect wallet to bot / dApp> fillcolor="#e0f2fe" color="#38bdf8"]
+  S2 [label=<<b>(2) Gate Bot / dApp</b><br/>Issues off-chain signature challenge<br/>(no gas, no on-chain record)> fillcolor="#fef3c7" color="#f59e0b"]
+  S3 [label=<<b>(3) User Wallet</b><br/>Signs message — proves key control<br/>(still off-chain)> fillcolor="#e0f2fe" color="#38bdf8"]
+  S4 [label=<<b>(4) Token Contract  ·  ON-CHAIN</b><br/>balanceOf(wallet)  or  ownerOf(tokenId)> fillcolor="#dcfce7" color="#22c55e" penwidth=2.5]
+  S5 [label=<<b>(5) Gate Bot / dApp</b><br/>Receives confirmed / denied result> fillcolor="#fef3c7" color="#f59e0b"]
 
-  S2 [label="(2) Gate Bot / dApp\nIssues off-chain signature challenge\n(no gas, no on-chain record)"
-      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+  DENY  [label=<<b>(6a)  Access Denied</b>> fillcolor="#fee2e2" color="#ef4444"]
+  GRANT [label=<<b>(6b)  Access Granted</b><br/>Role assigned — resource unlocked> fillcolor="#dcfce7" color="#22c55e"]
 
-  S3 [label="(3) User Wallet\nSigns message — proves key control\n(still off-chain)"
-      shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
-
-  S4 [label="(4) Token Contract  ·  ON-CHAIN\nbalanceOf(wallet)  or  ownerOf(tokenId)"
-      shape=box style=filled fillcolor="#1e6e42" fontcolor=white penwidth=3]
-
-  S5 [label="(5) Gate Bot / dApp\nReceives confirmed / denied result"
-      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
-
-  DENY  [label="(6a)  Access Denied"
-         shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
-
-  GRANT [label="(6b)  Access Granted\nRole assigned — resource unlocked"
-         shape=box style=filled fillcolor="#1e4a2a" fontcolor=white]
-
-  S1 -> S2 [color="#3498db" penwidth=2.5]
-  S2 -> S3 [color="#f39c12" penwidth=2.5]
-  S3 -> S4 [color="#2ecc71" penwidth=2.5]
-  S4 -> S5 [color="#2ecc71" penwidth=2.5]
-  S5 -> DENY  [headlabel="no token  " labeldistance=2.5 labelangle=25 style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2.5]
-  S5 -> GRANT [headlabel="  token held" labeldistance=2.5 labelangle=-25 color="#2ecc71" fontcolor="#2ecc71" penwidth=2.5]
-
+  { rank=same; S1; S2; S3 }
+  { rank=same; S5; S4 }
   { rank=same; DENY; GRANT }
+
+  S1 -> S2 [color="#0284c7" fontcolor="#0369a1" penwidth=1.5]
+  S2 -> S3 [color="#d97706" fontcolor="#b45309" penwidth=1.5]
+  S3 -> S4 [color="#16a34a" fontcolor="#15803d" penwidth=1.5]
+  S5 -> S4 [dir=back color="#16a34a" fontcolor="#15803d" penwidth=1.5]
+  S5 -> DENY  [label="  no token" style=dashed color="#dc2626" fontcolor="#b91c1c" penwidth=1.5]
+  S5 -> GRANT [label="  token held" color="#16a34a" fontcolor="#15803d" penwidth=1.5]
+  S1 -> S5 [style=invis]
 }
 ```
 
@@ -813,39 +804,31 @@ This diagram slide establishes the flow of a typical token-gated access check fr
 
 - After minting: the token enters the standard ownership and transfer lifecycle.
 
-::: {style="margin-top: -5em;"}
+::: {style="margin-top: 0.2em;"}
 ```{dot}
-//| fig-width: 13
-//| fig-height: 5.4
+//| fig-width: 10.3
+//| fig-height: 2.8
 digraph minting_flow {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=13 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=LR
-  graph [fontname="Arial Bold" fontsize=17 pad=0.5 nodesep=0.8 ranksep=1.4 splines=ortho bgcolor="transparent"]
-  node  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
-  edge  [fontname="Arial Bold" fontsize=17 penwidth=1.5]
+  nodesep=0.3
+  ranksep=0.45
 
-  CALL  [label="mint() call\nsigned tx from\nauthorized address"
-         height=1.2 width=3 shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+  CALL  [label=<<b>mint() call</b><br/>signed tx from<br/>authorized address> fillcolor="#fef3c7" color="#f59e0b"]
+  CHECK [label=<<b>Contract checks<br/>mint conditions</b><br/>allowlist?<br/>supply cap?<br/>payment?> fillcolor="#e0f2fe" color="#38bdf8"]
+  WRITE [label=<<b>State written</b><br/>tokenId → owner<br/>Transfer emitted<br/>from 0x0> fillcolor="#dcfce7" color="#22c55e"]
+  META  [label=<<b>tokenURI set</b><br/>pointer to metadata<br/>(off-chain storage)> fillcolor="#fee2e2" color="#ef4444"]
+  DONE  [label=<<b>Token exists</b><br/>on-chain> fillcolor="#dcfce7" color="#22c55e" penwidth=2]
+  REV   [label=<<b>Transaction</b><br/>reverts<br/>(nothing written)> fillcolor="#fee2e2" color="#ef4444" style="rounded,filled,dashed"]
 
-  CHECK [label="Contract checks\nmint conditions\n\nallowlist?\nsupply cap?\npayment?"
-         height=1.2 width=3 shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white]
-
-  WRITE [label="State written\n─────────────\ntokenId → owner\nTransfer emitted\nfrom 0x0"
-         height=1.2 width=3 shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-
-  META  [label="tokenURI set\n─────────────\npointer to metadata\n(off-chain storage)"
-         height=1.2 width=3 shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
-
-  DONE  [label="Token exists\non-chain"
-         height=1.2 width=3 shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-
-  REV   [label="Transaction\nreverts\n(nothing written)"
-         height=1.2 width=3 shape=box style=filled fillcolor="#5a1a1a" fontcolor="#ffaaaa"]
-
-  CALL  -> CHECK [color="#f39c12"]
-  CHECK -> WRITE [label="  conditions met" color="#2ecc71" fontcolor="#2ecc71"]
-  CHECK -> REV   [label="  conditions\n  not met" style=dashed color="#e74c3c" fontcolor="#e74c3c"]
-  WRITE -> META  [color="#2ecc71"]
-  META  -> DONE  [color="#2ecc71"]
+  CALL  -> CHECK [color="#d97706" fontcolor="#b45309"]
+  CHECK -> WRITE [label="conditions met" color="#16a34a" fontcolor="#15803d"]
+  CHECK -> REV   [label="conditions\nnot met" style=dashed color="#dc2626" fontcolor="#b91c1c"]
+  WRITE -> META  [color="#16a34a" fontcolor="#15803d"]
+  META  -> DONE  [color="#16a34a" fontcolor="#15803d"]
+  { rank=same; WRITE; REV }
 }
 ```
 :::
@@ -881,34 +864,29 @@ None
 
 - **Royalty signaling (EIP-2981)** — contract declares royalty recipient and basis points; marketplace enforcement varies.
 
-::: {style="margin-top: -9em;"}
+::: {style="margin-top: 0.2em;"}
 ```{dot}
 //| fig-width: 10
-//| fig-height: 7
+//| fig-height: 3.2
 digraph mint_patterns {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=12 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=TB
-  graph [fontname="Arial" fontsize=17 pad=0.6 nodesep=0.8 ranksep=1.2 bgcolor="transparent"]
-  node  [fontname="Arial" fontsize=17 penwidth=1.5]
-  edge  [fontname="Arial" fontsize=17 penwidth=1.5]
+  nodesep=0.25
+  ranksep=0.45
 
-  Q  [label="Who can mint?" width=2.5 height=1.5 shape=diamond style=filled fillcolor="#1a2a4a" fontcolor=white]
+  Q  [label="Who can mint?" shape=diamond style="filled" fillcolor="#e0f2fe" color="#38bdf8" margin=0]
 
-  PUB [label="Public Mint\n─────────────\nAnyone, any time\nControl: supply cap only\nRisk: bot front-running"
-       shape=box style=filled fillcolor="#1a4a1a" fontcolor=white]
+  PUB [label=<<b>Public Mint</b><br/>Anyone, any time<br/>Control: supply cap only<br/>Risk: bot front-running> fillcolor="#dcfce7" color="#22c55e"]
+  AL  [label=<<b>Allowlist — Merkle Proof</b><br/>Merkle root stored on-chain<br/>Caller submits inclusion proof<br/>Risk: proof generation<br/>backend> fillcolor="#e0f2fe" color="#38bdf8"]
+  SIG [label=<<b>Lazy Mint — Signed Voucher</b><br/>Deployer backend signs voucher<br/>Buyer pays gas to mint<br/>on demand<br/>Risk: voucher replay w/o nonce> fillcolor="#fef3c7" color="#f59e0b"]
+  DEL [label=<<b>Delegated Minter Role</b><br/>Trusted address has<br/>MINTER_ROLE<br/>Used for bridges /<br/>off-chain issuance<br/>Risk: key compromise<br/>= unlimited mint> fillcolor="#fee2e2" color="#ef4444"]
 
-  AL  [label="Allowlist — Merkle Proof\n─────────────\nMerkle root stored on-chain\nCaller submits inclusion proof\nRisk: proof generation backend"
-       shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
-
-  SIG [label="Lazy Mint — Signed Voucher\n─────────────\nDeployer backend signs voucher\nBuyer pays gas to mint on demand\nRisk: voucher replay w/o nonce"
-       shape=box style=filled fillcolor="#4a3500" fontcolor=white]
-
-  DEL [label="Delegated Minter Role\n─────────────\nTrusted address has MINTER_ROLE\nUsed for bridges / off-chain issuance\nRisk: key compromise = unlimited mint"
-       shape=box style=filled fillcolor="#5a1a1a" fontcolor=white]
-
-  Q -> PUB [label="Anyone" color="#2ecc71" fontcolor="#2ecc71"]
-  Q -> AL  [label="Pre-approved list" color="#3498db" fontcolor="#3498db"]
-  Q -> SIG [label="Voucher holders" color="#f39c12" fontcolor="#f39c12"]
-  Q -> DEL [label="Operator / bridge" color="#e74c3c" fontcolor="#e74c3c"]
+  Q -> PUB [label="Anyone" color="#16a34a" fontcolor="#15803d"]
+  Q -> AL  [label="Pre-approved list" color="#0284c7" fontcolor="#0369a1"]
+  Q -> SIG [label="Voucher holders" color="#d97706" fontcolor="#b45309"]
+  Q -> DEL [label="Operator / bridge" color="#dc2626" fontcolor="#b91c1c"]
 }
 ```
 :::
@@ -982,32 +960,31 @@ None
 
 - **The open problem**: non-transferability binds the credential to a *wallet*, not a *person*.
 :::
-::: {style="margin-top: -7em;"}
+::: {style="margin-top: 0.2em;"}
 
 ```{dot}
-//| fig-width: 14
-//| fig-height: 7
+//| fig-width: 8.5
+//| fig-height: 2.85
 digraph sbt_flow {
-  rankdir=LR
-  graph [fontname="Arial" fontsize=17 pad=0.6 nodesep=0.9 ranksep=1.5 bgcolor="transparent"]
-  node  [fontname="Arial" fontsize=17 penwidth=1.5]
-  edge  [fontname="Arial" fontsize=17 penwidth=1.5]
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=12 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
+  rankdir=TB
+  nodesep=1.0
+  ranksep=0.5
 
-  ISSUER [label="Issuer\n─────────────\nInstitution / DAO / Peer\nsigns mint transaction"
-          shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+  ISSUER [label=<<b>Issuer</b><br/>Institution / DAO / Peer<br/>signs mint transaction> fillcolor="#fef3c7" color="#f59e0b"]
+  MINT   [label=<<b>Mint SBT</b><br/>Transfer functions locked<br/>at contract level<br/>(ERC-5192 or ERC-4973)> fillcolor="#dcfce7" color="#22c55e"]
+  WALLET [label=<<b>Recipient Wallet</b><br/>CAN: hold, display,<br/>use for access<br/>CANNOT: sell or transfer> fillcolor="#e0f2fe" color="#38bdf8"]
+  PERSON [label=<<b>Real Person?</b><br/>Binding ONLY IF person<br/>controls the private key<br/>Key sale = credential sale<br/>Key compromise = identity theft> fillcolor="#fee2e2" color="#ef4444" penwidth=2]
 
-  MINT   [label="Mint SBT\n─────────────\nTransfer functions locked\nat contract level\n(ERC-5192 or ERC-4973)"
-          shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
+  { rank=same; ISSUER; MINT }
+  { rank=same; PERSON; WALLET }
+  ISSUER -> PERSON [style=invis]
 
-  WALLET [label="Recipient Wallet\n─────────────\nCAN: hold, display,\nuse for access\nCANNOT: sell or transfer"
-          shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
-
-  PERSON [label="Real Person?\n─────────────\nBinding ONLY IF person\ncontrols the private key\n\nKey sale = credential sale\nKey compromise = identity theft"
-          shape=ellipse style=filled fillcolor="#5a1a1a" fontcolor=white]
-
-  ISSUER -> MINT   [label="  signs mint tx" color="#f39c12" fontcolor="#f39c12"]
-  MINT   -> WALLET [label="  token created\n  transfer disabled" color="#2ecc71" fontcolor="#2ecc71"]
-  WALLET -> PERSON [label="  assumed — NOT enforced\n  by any contract" style=dashed color="#e74c3c" fontcolor="#e74c3c" penwidth=2.5]
+  ISSUER -> MINT   [label="signs mint tx" color="#d97706" fontcolor="#b45309"]
+  MINT   -> WALLET [label="  token created\l  transfer disabled\l" color="#16a34a" fontcolor="#15803d"]
+  PERSON -> WALLET [dir=back label="assumed — NOT enforced\nby any contract" style=dashed color="#dc2626" fontcolor="#b91c1c" penwidth=1.5]
 }
 ```
 :::
@@ -1042,58 +1019,51 @@ None
 
 - Fabric adds: **known identities, multi-org sign-off, private data**. It removes: **permissionlessness, public verifiability**.
 :::
-::: {style="margin-top: -2em;"}
+::: {style="margin-top: 0.2em;"}
 ```{dot}
 //| fig-width: 11
-//| fig-height: 4.6
+//| fig-height: 2.9
 digraph fabric_vs_eth {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=12 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=LR
-  graph [fontname="Arial" fontsize=12 pad=0.6 nodesep=0.7 ranksep=0.5 bgcolor="transparent"]
-  node  [fontname="Arial" fontsize=12 penwidth=2 color="#f4f7fb"]
-  edge  [fontname="Arial" fontsize=11 penwidth=1.8]
+  nodesep=0.25
+  ranksep=0.35
 
   subgraph cluster_eth {
-    label="Ethereum — Public, Permissionless"
+    label=<<b>Ethereum — Public, Permissionless</b>>
     labeljust=l
-    style=filled
-    fillcolor="#0d1f35"
-    color="#3498db"
-    penwidth=2.5
-    fontcolor=white
-    fontsize=13
+    style="rounded,filled"
+    fillcolor="#f0f9ff"
+    color="#38bdf8"
+    fontsize=12
 
-    ETX  [label="Any wallet\ncalls mint()\n(no CA, no identity)"
-          shape=box style=filled fillcolor="#1a3a5a" fontcolor=white]
-    ECON [label="EVM executes\ncontract code\n(deterministic, public)"
-          shape=box style=filled fillcolor="#1a3a5a" fontcolor=white]
-    EPUB [label="State written\npublicly\n(anyone can read)"
-          shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-    ETX -> ECON -> EPUB [color="#3498db"]
+    ETX  [label="Any wallet\ncalls mint()\n(no CA, no identity)" fillcolor="#e0f2fe" color="#38bdf8"]
+    ECON [label="EVM executes\ncontract code\n(deterministic, public)" fillcolor="#e0f2fe" color="#38bdf8"]
+    EPUB [label="State written\npublicly\n(anyone can read)" fillcolor="#dcfce7" color="#22c55e"]
+    ETX -> ECON -> EPUB [color="#0284c7" fontcolor="#0369a1"]
   }
 
   subgraph cluster_fab {
-    label="Hyperledger Fabric — Permissioned Consortium"
+    label=<<b>Hyperledger Fabric — Permissioned Consortium</b>>
     labeljust=l
-    style=filled
-    fillcolor="#2a1a00"
-    color="#f39c12"
-    penwidth=2.5
-    fontcolor=white
-    fontsize=13
+    style="rounded,filled"
+    fillcolor="#fffbeb"
+    color="#f59e0b"
+    fontsize=12
 
-    FID   [label="X.509 Identity\n(CA-issued cert)\nknown at protocol level"
-           shape=box style=filled fillcolor="#4a3500" fontcolor=white]
-    FEND  [label="Endorsing Peers\nrun chaincode\nmulti-org sign-off required"
-           shape=box style=filled fillcolor="#4a3500" fontcolor=white]
-    FORD  [label="Orderer sequences\nblock committed\nto channel ledger"
-           shape=box style=filled fillcolor="#1e6e42" fontcolor=white]
-    FPRIV [label="Private Data Collection\n(optional)\nhash on channel\ndata off-channel"
-           shape=box style=filled fillcolor="#5a1a1a" fontcolor=white]
+    FID   [label="X.509 Identity\n(CA-issued cert)\nknown at protocol level" fillcolor="#fef3c7" color="#f59e0b"]
+    FEND  [label="Endorsing Peers\nrun chaincode\nmulti-org sign-off\nrequired" fillcolor="#fef3c7" color="#f59e0b"]
+    FORD  [label="Orderer sequences\nblock committed\nto channel ledger" fillcolor="#dcfce7" color="#22c55e"]
+    FPRIV [label="Private Data Collection\n(optional)\nhash on channel\ndata off-channel" fillcolor="#fee2e2" color="#ef4444"]
 
-    FID  -> FEND [label="  authenticated\n  proposal" color="#f39c12" fontcolor="#f39c12"]
-    FEND -> FORD [label="  endorsed\n  read/write set" color="#f39c12" fontcolor="#f39c12"]
-    FORD -> FPRIV [style=dashed label="  if PDC used" color="#e74c3c" fontcolor="#e74c3c"]
+    FID  -> FEND [label="authenticated\nproposal" color="#d97706" fontcolor="#b45309"]
+    FEND -> FORD [label="endorsed\nread/write set" color="#d97706" fontcolor="#b45309"]
+    FORD -> FPRIV [style=dashed label="if PDC\nused" color="#dc2626" fontcolor="#b91c1c"]
   }
+  { rank=same; ETX; FID }
+  FID -> ETX [style=invis]
 }
 ```
 :::
@@ -1152,38 +1122,30 @@ None
 ## Rug Pull Operator Wallet Graph {style="font-size: 0.90em;"}
 
 ```{dot}
-//| fig-width: 13
-//| fig-height: 7.0
+//| fig-width: 10
+//| fig-height: 6.2
 digraph rugpull_frosties {
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=13 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
   rankdir=TB
-  graph [fontname="Arial" fontsize=14 pad=0.7 nodesep=1.0 ranksep=1.0 bgcolor="transparent"]
-  node  [fontname="Arial" fontsize=14 penwidth=1.5 width=4.5]
-  edge  [fontname="Arial" fontsize=13 penwidth=2.0]
+  nodesep=0.6
+  ranksep=0.45
 
-  S1 [label="(1)  8,888 Frosties Mint — Jan 9 2022\nPublic sale at 0.04 ETH each — raises ~$1.1M"
-      shape=box style=filled fillcolor="#1a3a4a" fontcolor=white]
+  S1 [label=<<b>(1)  8,888 Frosties Mint — Jan 9 2022</b><br/>Public sale at 0.04 ETH each — raises ~$1.1M> fillcolor="#e0f2fe" color="#38bdf8"]
+  S2 [label=<<b>(2)  Rug Pull — Hours After Sellout</b><br/>Website deactivated · Discord deleted · Twitter: 'I'm sorry'> fillcolor="#fef3c7" color="#f59e0b"]
+  S3 [label=<<b>(3)  Frosties Wallet → Operator Wallet</b><br/>356.56 ETH transferred — visible on-chain to all holders> fillcolor="#fee2e2" color="#ef4444" penwidth=2.5]
+  S4 [label=<<b>(4)  Funds Scattered Across Multiple Wallets</b><br/>Transactions designed to obfuscate source of funds> fillcolor="#fee2e2" color="#ef4444"]
+  S5 [label=<<b>(5)  'Embers' — New Project Announced</b><br/>Same operators, new brand — expected $1.5M raise<br/>Arrested before March 26 pre-sale> fillcolor="#fef3c7" color="#f59e0b"]
 
-  S2 [label="(2)  Rug Pull — Hours After Sellout\nWebsite deactivated · Discord deleted · Twitter: 'I'm sorry'"
-      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
+  SIGNAL [label=<<b>FORENSIC SIGNAL</b><br/>On-chain transfer was publicly visible —<br/>holders spotted it immediately.<br/>IRS-CI + HSI traced wallets to Nguyen &amp; Llacuna> fillcolor="#dcfce7" color="#22c55e" penwidth=2.5]
 
-  S3 [label="(3)  Frosties Wallet → Operator Wallet\n356.56 ETH transferred — visible on-chain to all holders"
-      shape=box style=filled fillcolor="#8b1a1a" fontcolor=white penwidth=2.5]
+  S1 -> S2 [label="  sell out, abandon" color="#dc2626" fontcolor="#b91c1c"]
+  S2 -> S3 [label="  ETH drained" color="#dc2626" fontcolor="#b91c1c"]
+  S3 -> S4 [label="  obfuscation attempt" color="#d97706" fontcolor="#b45309"]
+  S4 -> S5 [label="  fund next project" color="#dc2626" fontcolor="#b91c1c"]
 
-  S4 [label="(4)  Funds Scattered Across Multiple Wallets\nTransactions designed to obfuscate source of funds"
-      shape=box style=filled fillcolor="#6b1a1a" fontcolor=white]
-
-  S5 [label="(5)  'Embers' — New Project Announced\nSame operators, new brand — expected $1.5M raise\nArrested before March 26 pre-sale"
-      shape=box style=filled fillcolor="#4a3500" fontcolor=white]
-
-  SIGNAL [label="FORENSIC SIGNAL\nOn-chain transfer was publicly visible —\nholders spotted it immediately.\nIRS-CI + HSI traced wallets to Nguyen & Llacuna"
-          shape=box style=filled fillcolor="#1e6e42" fontcolor=white penwidth=3]
-
-  S1 -> S2 [label="  sell out, abandon" color="#e74c3c" fontcolor="#e74c3c"]
-  S2 -> S3 [label="  ETH drained" color="#e74c3c" fontcolor="#e74c3c"]
-  S3 -> S4 [label="  obfuscation attempt" color="#f39c12" fontcolor="#f39c12"]
-  S4 -> S5 [label="  fund next project" color="#e74c3c" fontcolor="#e74c3c"]
-
-  S3 -> SIGNAL [style=dashed color="#2ecc71" fontcolor="#2ecc71" label="  key evidence"]
+  S3 -> SIGNAL [style=dashed color="#16a34a" fontcolor="#15803d" label="  key evidence"]
 
   { rank=same; S5; SIGNAL }
 }
@@ -1413,21 +1375,25 @@ None
 
 :::
 ```{dot}
-//| fig-width: 7.5
-//| fig-height: 2.4
+//| fig-width: 9
+//| fig-height: 2.5
 digraph decoupling {
-  rankdir=LR
-  node [shape=box style=filled fontname="Arial" fontsize=10]
-  edge [fontname="Arial" fontsize=9]
+  graph [bgcolor="transparent" pad=0.1 fontname="Helvetica"]
+  node  [shape=box style="rounded,filled" fillcolor="#f8fafc" color="#cbd5e1" fontname="Helvetica" fontsize=12 margin="0.14,0.07"]
+  edge  [color="#64748b" arrowsize=0.7 fontname="Helvetica" fontsize=11]
+  rankdir=TB
+  nodesep=1.2
+  ranksep=0.4
 
-  SPEC [label="Speculative Layer\n──────────\nPFP collections\nSecondary market trading\nPrice speculation\nSTATUS: Collapsed -37% YoY" fillcolor="#6b1a1a" fontcolor=white]
-  UTIL [label="Utility Layer\n──────────\nDigital Product Passports\nSupply chain records\nTokenized loyalty\nSBT credentials\nSTATUS: Growing quietly" fillcolor="#1e6e42" fontcolor=white]
-  ANA  [label="Most analysts\nwatching here ↑" fillcolor="#4a3500" fontcolor=white shape=ellipse]
-  OPS  [label="Operational reality\nbuilding here ↑" fillcolor="#1a3a5a" fontcolor=white shape=ellipse]
+  SPEC [label=<<b>Speculative Layer</b><br/>PFP collections<br/>Secondary market trading<br/>Price speculation<br/><b>STATUS: Collapsed -37% YoY</b>> fillcolor="#fee2e2" color="#ef4444"]
+  UTIL [label=<<b>Utility Layer</b><br/>Digital Product Passports<br/>Supply chain records<br/>Tokenized loyalty<br/>SBT credentials<br/><b>STATUS: Growing quietly</b>> fillcolor="#dcfce7" color="#22c55e"]
+  ANA  [label="Most analysts\nwatching here ↑" fillcolor="#fef3c7" color="#f59e0b"]
+  OPS  [label="Operational reality\nbuilding here ↑" fillcolor="#e0f2fe" color="#38bdf8"]
 
-  ANA  -> SPEC [style=dashed color="#e74c3c" fontcolor="#e74c3c"]
-  OPS  -> UTIL [style=dashed color="#2ecc71" fontcolor="#2ecc71"]
-  SPEC -> UTIL [label="same primitive\ndifferent application" style=dotted color="#f39c12" fontcolor="#f39c12"]
+  { rank=same; SPEC; UTIL }
+  SPEC -> ANA  [dir=back style=dashed color="#dc2626" fontcolor="#b91c1c"]
+  UTIL -> OPS  [dir=back style=dashed color="#16a34a" fontcolor="#15803d"]
+  SPEC -> UTIL [label="same primitive\ndifferent application" style=dotted color="#d97706" fontcolor="#b45309"]
 }
 ```
 
