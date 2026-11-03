@@ -18,9 +18,6 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/ethereum/04-EF-*.qmd`: the "Data Locations: Storage, Memory, Calldata" slide is hidden
   (`.content-hidden`), so the mind map's 04-EF concept is "Reference Types" and cannot link to it. Unhide it if that
   comparison should be on the map. (2 Nov 2026, mind-map card pass)
-- `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd`: the Agenda slide still says
-  "End with off-chain controls" (KYC and AML), but those slides are hidden and moved to 05-FO. (2 Nov 2026, glossary
-  and mind-map pass)
 - Two scheduled lessons keep their March titles: `lessons/forensics/02-FO-*.qmd` ("Blockchain Forensics: Foundations,
   Obfuscation, and Tracing", now day 6's clustering and peel-chain lesson) and `lessons/bitcoin/02-BF-*.qmd`
   ("Bitcoin — Transactions and Mining", now day 2's reading-a-transaction lesson). Retitling them changes
@@ -52,9 +49,6 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd:237`: "heimdall-rs, open source (MIT)"
-  states a licence with no "as of" date; the bib entry was read 1 Nov 2026, as the micro-lab now says. (2 Nov 2026,
-  ether_evm rework)
 - Four lab overviews declare `format: pdf` but nothing renders them: `dynamic-labs/cryptography/lab02_crypto_overview.qmd`
   is copied raw into the instructor nginx image (`Dockerfile.instructor:9`) and served as `.qmd`;
   `consensus/lab4_pow_pos_overview.qmd`, `p2p_trust/lab3_trust_p2p_overview.qmd` and `p2p_trust/instructor_notes.qmd`
