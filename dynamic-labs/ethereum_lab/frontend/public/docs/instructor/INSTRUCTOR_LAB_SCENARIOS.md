@@ -10,7 +10,7 @@ Three ready-to-use scenarios for keeping students busy across **two 1-hour lab b
 
 | Activity | Lab Document | Path / Location |
 |----------|--------------|------------------|
-| Web UI (wallet, faucet, staking, Live) | [README.md](../../README.md) | `http://<INSTRUCTOR_IP>:5173` |
+| Web UI (wallet, faucet, staking, Live) | `README.md` | `http://<INSTRUCTOR_IP>:5173` |
 | Token Concepts (FT vs NFT) | [TOKEN_CONCEPTS_LAB.md](../labs/gui/TOKEN_CONCEPTS_LAB.md) | Web: Learn tab → Token Concepts. CLI: `node 8-token-concepts.js` |
 | Classroom Vote | [CLASSROOM_VOTE_LAB.md](../labs/scenarios/CLASSROOM_VOTE_LAB.md) | Instructor deploys via CLI; students vote via web or Hardhat console |
 | Event Tickets | [EVENT_TICKETS_LAB.md](../labs/scenarios/EVENT_TICKETS_LAB.md) | Contract Builder → Event Tickets |
@@ -20,9 +20,9 @@ Three ready-to-use scenarios for keeping students busy across **two 1-hour lab b
 | Ransomware Investigation | [RANSOMWARE_INVESTIGATION_LAB.md](../labs/scenarios/RANSOMWARE_INVESTIGATION_LAB.md) | `forensics-setup.js` then `6-ransomware-investigation.js` |
 | Ransomware Advanced | [RANSOMWARE_ADVANCED_LAB.md](../labs/scenarios/RANSOMWARE_ADVANCED_LAB.md) | `forensics-setup-advanced.js` then `7-ransomware-advanced.js` |
 | Smart Contract Guide (SimpleStorage) | [SMART_CONTRACT_GUIDE.md](../guides/SMART_CONTRACT_GUIDE.md) | Write, compile, deploy from `contracts/SimpleStorage.sol` |
-| Contract Builder (all templates) | [scripts/cli-labs/standalone/CONTRACT_BUILDER_GUIDE.md](../../scripts/cli-labs/standalone/CONTRACT_BUILDER_GUIDE.md) | CLI: `node interactive.js` → option 9 |
-| CLI Labs (explore, sign, interact, forensics) | [scripts/cli-labs/standalone/README.md](../../scripts/cli-labs/standalone/README.md) | `node 1-explore-blockchain.js`, `2-sign-transaction.js`, etc. |
-| Playground / Analyst Console | [scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md](../../scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md) | `node interactive.js` → option 8 |
+| Contract Builder (all templates) | `scripts/cli-labs/standalone/CONTRACT_BUILDER_GUIDE.md` | CLI: `node interactive.js` → option 9 |
+| CLI Labs (explore, sign, interact, forensics) | `scripts/cli-labs/standalone/README.md` | `node 1-explore-blockchain.js`, `2-sign-transaction.js`, etc. |
+| Playground / Analyst Console | `scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md` | `node interactive.js` → option 8 |
 | Vehicle Title | [VEHICLE_TITLE_LAB.md](../labs/scenarios/VEHICLE_TITLE_LAB.md) | Contract Builder → Vehicle Title Transfer |
 | Diagnostics (connection troubleshooting) | [MANUAL.md](../guides/MANUAL.md) | Web: Diagnostics view (when connection fails) |
 | Verify connection | — | `node scripts/verify-connection.js` |
@@ -115,7 +115,7 @@ By the end of Scenario A, students will be able to:
 3. Click **Request 5 ETH** (or **Get 5 ETH**) to receive test funds from the faucet.
 4. Confirm your balance shows ~5 ETH.
 
-**Lab document:** Main [README.md](../../README.md) — “For Students” and “Running the Lab” sections.
+**Lab document:** Main `README.md` — “For Students” and “Running the Lab” sections.
 
 **Instructor:** Use the instructor dashboard to fund any student who didn’t receive ETH. Dashboard: `http://<YOUR_IP>:5173/?mode=instructor`.
 
@@ -292,7 +292,7 @@ By the end of Scenario B, students will be able to:
    - **Lab 3 — Interact with Contract:** `node 3-interact-contract.js`  
      - Follow prompts: call contract functions.
 
-**Lab document:** [scripts/cli-labs/standalone/README.md](../../scripts/cli-labs/standalone/README.md)
+**Lab document:** `scripts/cli-labs/standalone/README.md`
 
 ---
 
@@ -308,7 +308,7 @@ By the end of Scenario B, students will be able to:
    ```
 4. Type `help forensics` and `help investigate` to see example workflows.
 
-**Lab document:** [scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md](../../scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md)
+**Lab document:** `scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md`
 
 ---
 
@@ -386,7 +386,7 @@ By the end of Scenario B, students will be able to:
    contract.queryFilter('Staked', 0)
    ```
 
-**Lab document:** [scripts/cli-labs/standalone/README.md](../../scripts/cli-labs/standalone/README.md) — Forensics section.
+**Lab document:** `scripts/cli-labs/standalone/README.md` — Forensics section.
 
 **Pause:** *“How would you trace money between addresses?”*
 
@@ -455,7 +455,7 @@ By the end of Scenario C, students will be able to:
    ```
 6. Type `help forensics` and `help investigate`.
 
-**Lab document:** [PLAYGROUND_TUTORIAL.md](../../scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md)
+**Lab document:** `scripts/cli-labs/standalone/PLAYGROUND_TUTORIAL.md`
 
 ---
 
@@ -638,4 +638,4 @@ When adding a contract at `http://<INSTRUCTOR_IP>:5173/dashboard.html`, select t
 5. **Discussion:** Use the pause questions to reinforce concepts.
 6. **Backup:** If RPC fails, students can use the Learn tab and read docs offline.
 7. **Verify connection:** Run `node scripts/verify-connection.js` to test RPC and contract.
-8. **Validator Simulation (local dev):** Students with the full repo running on their own machine can try `npm run lab5` for validator mechanics — see [scripts/cli-labs/README.md](../../scripts/cli-labs/README.md).
+8. **Validator Simulation (local dev):** Students with the full repo running on their own machine can try `npm run lab5` for validator mechanics — see `scripts/cli-labs/README.md`.
