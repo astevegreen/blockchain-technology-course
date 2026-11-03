@@ -319,6 +319,7 @@ nav li {{ display: inline; margin-right: .75rem; }}
 </style>
 </head>
 <body>
+<p class="crumbs"><a href="../lab/">Worksheet</a></p>
 <h1>Saved explorer pages: day-3 course chain, blocks 0-{last}</h1>
 <p class="note">Use this page when the explorer or the course chain is down. It shows the fields the
 explorer shows for the chain's saved history, read from the same node, and what the contracts answer

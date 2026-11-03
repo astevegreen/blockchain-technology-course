@@ -35,6 +35,8 @@ slide index), which is never listed here.
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
 
 ## Labs
+- Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
+  request)
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
   (`das_understandingsecurityissues_2022`) supports "many". Students read it on the Contract tab. Reword at the next
   chain rebuild: a comment change alters the bytecode, so the deploy hashes and possibly every fee after them
@@ -53,10 +55,6 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd:237`: "heimdall-rs, open source (MIT)"
   states a licence with no "as of" date; the bib entry was read 1 Nov 2026, as the micro-lab now says. (2 Nov 2026,
   ether_evm rework)
-- The saved-pages index (`/fallback/`) of the wallet, token and DEX labs has no link back to the worksheet, though
-  the token and DEX recorded-run pages have one (`Worksheet · Saved pages`); a student who lands there must use
-  Back. Add the crumbs line in each lab's `chain/capture_pages.py` and regenerate. (2 Nov 2026, week-1 lab Desktop
-  walks)
 - Four lab overviews declare `format: pdf` but nothing renders them: `dynamic-labs/cryptography/lab02_crypto_overview.qmd`
   is copied raw into the instructor nginx image (`Dockerfile.instructor:9`) and served as `.qmd`;
   `consensus/lab4_pow_pos_overview.qmd`, `p2p_trust/lab3_trust_p2p_overview.qmd` and `p2p_trust/instructor_notes.qmd`
