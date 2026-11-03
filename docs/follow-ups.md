@@ -12,9 +12,9 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- `blockchain-course/assets/mindmap.html` `conceptDefinitions` has no entry for most concepts on the 18 new lesson
-  cards or the renamed 01-CM names beyond the four added, so their hover definitions are empty. (2 Nov 2026, mind-map
-  card pass)
+- `blockchain-course/assets/mindmap.html` `conceptDefinitions` still has no entry for 142 older concepts on the
+  mind-map cards (the new cards and renamed 01-CM names are done), so their hover definitions are empty. Find them by
+  listing each card's `concepts` with no definition. (2 Nov 2026, mind-map card pass)
 - Two scheduled lessons keep their March titles: `lessons/forensics/02-FO-*.qmd` ("Blockchain Forensics: Foundations,
   Obfuscation, and Tracing", now day 6's clustering and peel-chain lesson) and `lessons/bitcoin/02-BF-*.qmd`
   ("Bitcoin — Transactions and Mining", now day 2's reading-a-transaction lesson). Retitling them changes
