@@ -55,8 +55,10 @@ and a screenshot.
 12. Open Account 3 (`0x90F79bf6EB2c4f870365E785982E1f101E93b906`). Confirm it lists only the
     block 7 transaction (hint 7 tells students to go to the cUSD page instead). More rows mean
     someone sent from Account 3 on the live chain: note it, not a failure.
-13. Check console errors and failed network requests. A 404 from `/sourcify` for an address
-    that is not a contract is expected; anything else is a failure.
+13. Check console errors and failed network requests. Three kinds of 404 are expected: from
+    `/sourcify` for an address that is not a contract, from `/topic0/<hash>` for an event
+    Otterscan's built-in list does not name (the shop's `Sold`), and from
+    `/assets/31337/<address>/logo.png` for a token with no logo. Anything else is a failure.
 
 ## Mint Flow
 

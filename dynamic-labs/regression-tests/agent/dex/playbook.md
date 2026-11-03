@@ -51,8 +51,11 @@ and a screenshot.
 10. On L2, open Account 8 (`0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f`). Confirm it lists no
     transactions (the worksheet's question 8 sends students to the swap page's `balanceOf`
     instead).
-11. Check console errors and failed network requests on both hosts. A 404 from `/sourcify` for
-    an address that is not a contract is expected; anything else is a failure.
+11. Check console errors and failed network requests on both hosts. Four kinds of 404 are
+    expected: from `/sourcify` for an address that is not a contract, from `/signatures/<selector>`
+    and `/topic0/<hash>` for a function or event Otterscan's built-in lists do not name (the
+    bridge's `finalizeDeposit` and `DepositFinalized`), and from `/assets/<chain>/<address>/logo.png`
+    for a token with no logo. Anything else is a failure.
 
 ## Swap Flow
 

@@ -18,10 +18,6 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/ethereum/04-EF-*.qmd`: the "Data Locations: Storage, Memory, Calldata" slide is hidden
   (`.content-hidden`), so the mind map's 04-EF concept is "Reference Types" and cannot link to it. Unhide it if that
   comparison should be on the map. (2 Nov 2026, mind-map card pass)
-- Glossary has no terms for some slides students see: the 05-EF stablecoin slides (stablecoin types, freeze and
-  blacklist functions), 04-CP ML-KEM and ML-DSA, 01-PC Tron, TRC-20, USDT freeze, CBDC and mBridge, 01-FO "label"
-  (notes, line 47), and 03-FO cash-out, tumbler and anonymity-enhanced cryptocurrency (notes, line 44). Add them to
-  `glossary/lesson_terms/` and rerun the pipeline. (2 Nov 2026, glossary and mind-map pass)
 - `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd`: the Agenda slide still says
   "End with off-chain controls" (KYC and AML), but those slides are hidden and moved to 05-FO. (2 Nov 2026, glossary
   and mind-map pass)
@@ -50,6 +46,10 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd:237`: "heimdall-rs, open source (MIT)"
   states a licence with no "as of" date; the bib entry was read 1 Nov 2026, as the micro-lab now says. (2 Nov 2026,
   ether_evm rework)
+- The saved-pages index (`/fallback/`) of the wallet, token and DEX labs has no link back to the worksheet, though
+  the token and DEX recorded-run pages have one (`Worksheet · Saved pages`); a student who lands there must use
+  Back. Add the crumbs line in each lab's `chain/capture_pages.py` and regenerate. (2 Nov 2026, week-1 lab Desktop
+  walks)
 
 ## Tooling and rules
 - `blockchain-course/glossary/index.pdf` was not rebuilt with the 2 Nov glossary: `render_outputs.py` needs TinyTeX,
