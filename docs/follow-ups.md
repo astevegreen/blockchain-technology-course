@@ -12,9 +12,9 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- `blockchain-course/assets/mindmap.html` `conceptDefinitions` has no entry for most concepts on the 18 new lesson
-  cards or the renamed 01-CM names beyond the four added, so their hover definitions are empty. (2 Nov 2026, mind-map
-  card pass)
+- `blockchain-course/assets/mindmap.html` `conceptDefinitions` still has no entry for 142 older concepts on the
+  mind-map cards (the new cards and renamed 01-CM names are done), so their hover definitions are empty. Find them by
+  listing each card's `concepts` with no definition. (2 Nov 2026, mind-map card pass)
 - Two scheduled lessons keep their March titles: `lessons/forensics/02-FO-*.qmd` ("Blockchain Forensics: Foundations,
   Obfuscation, and Tracing", now day 6's clustering and peel-chain lesson) and `lessons/bitcoin/02-BF-*.qmd`
   ("Bitcoin — Transactions and Mining", now day 2's reading-a-transaction lesson). Retitling them changes
@@ -46,10 +46,14 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-
-- `dynamic-labs/ethereum_lab/frontend/public/docs/` has 31 dead relative links (`../../README.md`, `../../DOCKER.md`,
-  `scripts/cli-labs/standalone/*.md`), most in `instructor/INSTRUCTOR_GETTING_STARTED.md` and
-  `INSTRUCTOR_LAB_SCENARIOS.md`; fix them for however the lab's docs viewer resolves paths. (3 Nov 2026, link scan)
+- The Ethereum lab image has not been built since 3d42852 dropped `COPY cache/ ./cache/` from
+  `dynamic-labs/ethereum_lab/Dockerfile` (the `hardhat compile --force` step should regenerate it). Run the lab's
+  `run.sh` once Docker answers inside WSL Ubuntu: on 3 Nov 2026 the distro had no Docker and the engine dropped
+  `docker build` twice. Lab Tests CI picked no labs for that push. (3 Nov 2026, cache untrack)
+- `dynamic-labs/ethereum_lab/frontend/public/docs/` is a tracked copy of `ethereum_lab/docs/` that `Dockerfile:19`
+  (`COPY docs/ ./public/docs/`) overwrites at build, so every docs edit must be made twice or they drift. Untracking
+  it also means changing `dynamic-labs/tests/test_ethereum_lab_docker_context.py:62`, `pages.yml:60` and
+  `vm-build.yml:49`. (3 Nov 2026, dead-link fix)
 
 ## Tooling and rules
 
