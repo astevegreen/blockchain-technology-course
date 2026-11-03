@@ -12,15 +12,12 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- `blockchain-course/assets/mindmap.html` has no lesson card for 03-FO to 14-FO, 05-BF, 06-BF, 07-EF or 08-EF, so
-  their concepts and the ether_evm micro-lab (11-FO's practice) are not on the map. (2 Nov 2026, glossary and
-  mind-map pass)
-- Mind-map concepts whose names the linked slide no longer teaches (the closest current slide is linked): 01-CM
-  "Crash Fault Tolerance", "Byzantine Fault Tolerance", "PBFT", "Quorums"; mod-intro "State Machine Replication";
-  02-IN "Cryptographic Signatures"; 04-CP "Catastrophic Nonce Reuse", "Elliptic Curve Points", "ECDH Key Agreement";
-  mod-consensus "Casper FFG Finality"; 02-BF "Mining Pools & Stratum"; 01-EF "World State Trie"; 04-EF "Storage
-  Slots vs Memory"; 01-PC "Consortium Governance", "Access Control Lists"; 01-FO "Silk Road Seizure" and "Colonial
-  Pipeline Recovery" (the 03-FO slides now teach the trace, not the seizure). (2 Nov 2026, glossary and mind-map pass)
+- `blockchain-course/assets/mindmap.html` `conceptDefinitions` has no entry for most concepts on the 18 new lesson
+  cards or the renamed 01-CM names beyond the four added, so their hover definitions are empty. (2 Nov 2026, mind-map
+  card pass)
+- `blockchain-course/lessons/ethereum/04-EF-*.qmd`: the "Data Locations: Storage, Memory, Calldata" slide is hidden
+  (`.content-hidden`), so the mind map's 04-EF concept is "Reference Types" and cannot link to it. Unhide it if that
+  comparison should be on the map. (2 Nov 2026, mind-map card pass)
 - Glossary has no terms for some slides students see: the 05-EF stablecoin slides (stablecoin types, freeze and
   blacklist functions), 04-CP ML-KEM and ML-DSA, 01-PC Tron, TRC-20, USDT freeze, CBDC and mBridge, 01-FO "label"
   (notes, line 47), and 03-FO cash-out, tumbler and anonymity-enhanced cryptocurrency (notes, line 44). Add them to
