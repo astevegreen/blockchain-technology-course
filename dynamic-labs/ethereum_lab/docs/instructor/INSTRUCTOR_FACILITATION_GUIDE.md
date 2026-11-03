@@ -310,7 +310,7 @@ When many students each use their own **Lab Terminal** (browser PTY) against you
 
 ### Before class
 
-1. Start the lab ([INSTRUCTOR_SETUP.md](INSTRUCTOR_SETUP.md) or [DOCKER.md](../../DOCKER.md)).
+1. Start the lab ([INSTRUCTOR_SETUP.md](INSTRUCTOR_SETUP.md) or `ethereum_lab/DOCKER.md`).
 2. **Pre-generate accounts** so students are not racing to create wallets:
 
    ```bash
@@ -372,5 +372,5 @@ See [QUICK_REFERENCE.md](../guides/QUICK_REFERENCE.md) for a one-page cheat shee
 
 For detailed setup instructions, see:
 - [INSTRUCTOR_SETUP.md](INSTRUCTOR_SETUP.md) - Step-by-step setup guide
-- [../../DOCKER.md](../../DOCKER.md) - Docker deployment options
-- [../../README.md](../../README.md) - Full project documentation
+- `ethereum_lab/DOCKER.md` - Docker deployment options
+- `ethereum_lab/README.md` - Full project documentation

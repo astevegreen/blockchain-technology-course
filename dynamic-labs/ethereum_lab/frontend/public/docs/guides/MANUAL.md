@@ -1,6 +1,6 @@
 # Ethereum Lab — User Manual
 
-This manual is a **how-to guide** for using the Ethereum Lab. It is written for students and other users who want to use the lab step by step. For setup and technical details, see the main [README](../../README.md).
+This manual is a **how-to guide** for using the Ethereum Lab. It is written for students and other users who want to use the lab step by step. For setup and technical details, see the main README (`ethereum_lab/README.md`).
 
 ---
 

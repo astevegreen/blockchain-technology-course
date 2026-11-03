@@ -140,7 +140,7 @@ docker compose up --build
 - Deploys the smart contracts
 - Serves the web interface
 
-**Default (recommended): in-container nginx on port 8080** — The repo’s [docker-compose.yml](../../docker-compose.yml) sets `NGINX_ENABLED=1`. Students can use **one URL**: `http://<YOUR-IP>:8080`, with RPC at **`http://<YOUR-IP>:8080/rpc`**. Ports **5173** (frontend) and **8545** (RPC) are still exposed on your machine for debugging.
+**Default (recommended): in-container nginx on port 8080** — The repo’s `ethereum_lab/docker-compose.yml` sets `NGINX_ENABLED=1`. Students can use **one URL**: `http://<YOUR-IP>:8080`, with RPC at **`http://<YOUR-IP>:8080/rpc`**. Ports **5173** (frontend) and **8545** (RPC) are still exposed on your machine for debugging.
 
 **First run:** Expect 2–5 minutes. Later runs are faster.
 
@@ -170,7 +170,7 @@ docker compose up --build
 ╚════════════════════════════════════════════════════════════════╝
 ```
 
-If you set **`NGINX_ENABLED=0`**, share `http://<YOUR-IP>:5173` and `http://<YOUR-IP>:8545` instead. See [DOCKER.md](../../DOCKER.md).
+If you set **`NGINX_ENABLED=0`**, share `http://<YOUR-IP>:5173` and `http://<YOUR-IP>:8545` instead. See `ethereum_lab/DOCKER.md`.
 
 **Important:** Keep this terminal open. Closing it or pressing Ctrl+C will stop the lab.
 
@@ -255,7 +255,7 @@ Contract:  [paste from banner or /contract-address.txt]
 
 For detailed student instructions, share the [User Manual](../guides/MANUAL.md).
 
-**Remote classes:** If students are not on the same network, you'll need to expose your RPC and frontend (e.g. with ngrok). See the main [README](../../README.md) section on Remote Access.
+**Remote classes:** If students are not on the same network, you'll need to expose your RPC and frontend (e.g. with ngrok). See the main README (`ethereum_lab/README.md`) section on Remote Access.
 
 ---
 
@@ -375,4 +375,4 @@ Use `docker compose up` (without `--build`) if you haven't changed any code — 
 
 ---
 
-**Need more?** See [INSTRUCTOR_GETTING_STARTED.md](INSTRUCTOR_GETTING_STARTED.md), [DOCKER.md](../../DOCKER.md), or the main [README](../../README.md) for the full project overview.
+**Need more?** See [INSTRUCTOR_GETTING_STARTED.md](INSTRUCTOR_GETTING_STARTED.md), `ethereum_lab/DOCKER.md`, or the main README (`ethereum_lab/README.md`) for the full project overview.

@@ -45,7 +45,7 @@ In one sentence: **you are hosting a private practice Ethereum network and a web
 | **Docker** | Default for classrooms; Lab Terminal behaves well; matches “it works on my machine” | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
 | **`start-lab.ps1` (Windows)** | Quick local workshops, you already use Node on Windows | [Node.js 18+](https://nodejs.org/), Git, PowerShell |
 
-**Recommendation:** Use **Docker** unless you have a reason not to. The main [README](../../README.md) and [DOCKER.md](../../DOCKER.md) assume this default.
+**Recommendation:** Use **Docker** unless you have a reason not to. The main README (`ethereum_lab/README.md`) and `ethereum_lab/DOCKER.md` assume this default.
 
 ---
 
@@ -66,7 +66,7 @@ docker compose up --build
 
 The **first** build can take several minutes; later starts are faster. Leave this terminal open while you teach (or run detached with `-d` — see [INSTRUCTOR_SETUP.md](INSTRUCTOR_SETUP.md)).
 
-### Default URLs (nginx **on**, `NGINX_ENABLED=1` in [docker-compose.yml](../../docker-compose.yml))
+### Default URLs (nginx **on**, `NGINX_ENABLED=1` in `ethereum_lab/docker-compose.yml`)
 
 This is the **default** instructor layout: one public port for almost everything.
 
@@ -81,7 +81,7 @@ This is the **default** instructor layout: one public port for almost everything
 
 ### If nginx is off (`NGINX_ENABLED=0`)
 
-Then share **frontend** `http://<YOUR-IP>:5173` and **RPC** `http://<YOUR-IP>:8545`. See [DOCKER.md](../../DOCKER.md).
+Then share **frontend** `http://<YOUR-IP>:5173` and **RPC** `http://<YOUR-IP>:8545`. See `ethereum_lab/DOCKER.md`.
 
 ---
 
@@ -101,7 +101,7 @@ Typical sharing:
 - **RPC:** `http://<YOUR-IP>:8545`
 - **Contract address:** printed in the terminal when deploy finishes
 
-If the **Lab Terminal** will not connect, prefer switching to **Docker** for instructor mode ([README troubleshooting](../../README.md#lab-terminal-wont-start--cannot-connect-to-terminal-server)).
+If the **Lab Terminal** will not connect, prefer switching to **Docker** for instructor mode (see the troubleshooting section of `ethereum_lab/README.md`).
 
 ---
 
@@ -112,7 +112,7 @@ If the **Lab Terminal** will not connect, prefer switching to **Docker** for ins
 3. On **Live**, confirm you see a **connected** state and block activity.
 4. In the instructor view, locate **contract address** and **RPC** hints if students will type them manually.
 
-**Access control:** In Docker, `INSTRUCTOR_IP` in `docker-compose.yml` defaults to `*` (permissive). For stricter classrooms, restrict it to your IPs once you are comfortable ([README](../../README.md), [INSTRUCTOR_SETUP.md](INSTRUCTOR_SETUP.md)).
+**Access control:** In Docker, `INSTRUCTOR_IP` in `docker-compose.yml` defaults to `*` (permissive). For stricter classrooms, restrict it to your IPs once you are comfortable (`ethereum_lab/README.md`, [INSTRUCTOR_SETUP.md](INSTRUCTOR_SETUP.md)).
 
 ---
 
@@ -153,7 +153,7 @@ If students on the same network cannot connect, allow the ports you actually use
 - [ ] `docker compose up --build` (or `.\start-lab.ps1 -Mode instructor`) completed without deploy errors.
 - [ ] You can open the app locally and **`?mode=instructor`** works.
 - [ ] You wrote **IP**, **URL**, **RPC** (with `/rpc` if using nginx), and **contract** on the board or slide.
-- [ ] Students are on the **same network** (or you have **ngrok**/VPN planned — [README remote access](../../README.md#remote-access-optional)).
+- [ ] Students are on the **same network** (or you have **ngrok**/VPN planned — the remote access section of `ethereum_lab/README.md`).
 - [ ] You know how to **fund** students (dashboard / faucet flow) and where **fund requests** appear.
 
 ---
@@ -167,7 +167,7 @@ If students on the same network cannot connect, allow the ports you actually use
 | Scenario outlines (beginner / intermediate / expert) | [INSTRUCTOR_LAB_SCENARIOS.md](INSTRUCTOR_LAB_SCENARIOS.md) |
 | On-chain role-play (car sale, ransomware) rules & deploy scripts | [ROLE_SCENARIO_RULES.md](../guides/ROLE_SCENARIO_RULES.md) |
 | During class commands | [QUICK_REFERENCE.md](../guides/QUICK_REFERENCE.md) |
-| Docker ports, student compose, minimal instructor | [DOCKER.md](../../DOCKER.md) |
+| Docker ports, student compose, minimal instructor | `ethereum_lab/DOCKER.md` |
 | Architecture / concepts | [ARCHITECTURE.md](../architecture/ARCHITECTURE.md), [MANUAL.md](../guides/MANUAL.md) |
 
 In the UI, **Learn** = narrative / concepts; **Live** = wallets, staking, Beacon Chain lab, contract builder experiences, etc.
@@ -176,7 +176,7 @@ In the UI, **Learn** = narrative / concepts; **Live** = wallets, staking, Beacon
 
 ## 9. Reset between cohorts
 
-- **Docker full reset (new chain state):** from repo root, `npm run reset:docker` (stops containers, removes volumes, rebuilds — see [package.json](../../package.json)).
+- **Docker full reset (new chain state):** from repo root, `npm run reset:docker` (stops containers, removes volumes, rebuilds — see `ethereum_lab/package.json`).
 - **Windows:** `.\start-lab.ps1 -Mode reset` then `.\start-lab.ps1 -Mode instructor`, or `.\start-lab.ps1 -Mode instructor -Reset`.
 
 After a reset, have students **refresh** or use a clean browser profile if the UI cached an old contract address.
@@ -192,7 +192,7 @@ After a reset, have students **refresh** or use a clean browser profile if the U
 | Lab Terminal broken on Windows native | `node-pty` on Windows | Run instructor in **Docker** |
 | Wrong contract / weird reverts | Stale UI or old volume | Reset ([§9](#9-reset-between-cohorts)), clear site storage |
 
-More patterns: [README troubleshooting](../../README.md#troubleshooting), [DOCKER.md troubleshooting](../../DOCKER.md#troubleshooting).
+More patterns: README troubleshooting (`ethereum_lab/README.md`), DOCKER.md troubleshooting (`ethereum_lab/DOCKER.md`).
 
 ---
 
@@ -200,6 +200,6 @@ More patterns: [README troubleshooting](../../README.md#troubleshooting), [DOCKE
 
 1. [INSTRUCTOR_SETUP.md](INSTRUCTOR_SETUP.md) — detailed setup and firewall.
 2. [INSTRUCTOR_FACILITATION_GUIDE.md](INSTRUCTOR_FACILITATION_GUIDE.md) — how to run the day.
-3. [README.md](../../README.md) — full stack reference for you and TAs.
+3. `ethereum_lab/README.md` — full stack reference for you and TAs.
 
 You are ready when **you** can open the app, see **instructor mode**, and **one test student machine** can connect using **your IP** and the **correct RPC URL**.
