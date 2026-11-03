@@ -49,10 +49,6 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- Four lab overviews declare `format: pdf` but nothing renders them: `dynamic-labs/cryptography/lab02_crypto_overview.qmd`
-  is copied raw into the instructor nginx image (`Dockerfile.instructor:9`) and served as `.qmd`;
-  `consensus/lab4_pow_pos_overview.qmd`, `p2p_trust/lab3_trust_p2p_overview.qmd` and `p2p_trust/instructor_notes.qmd`
-  are referenced nowhere. Render them as PDFs or drop the front matter. (2 Nov 2026, TinyTeX sweep)
 
 ## Tooling and rules
 
