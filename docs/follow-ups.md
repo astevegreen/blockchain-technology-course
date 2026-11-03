@@ -47,10 +47,6 @@ slide index), which is never listed here.
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
 
-- `dynamic-labs/ethereum_lab/cache/` (Hardhat's build cache, with `/home/ben/...` paths) is tracked in git and ships
-  to students; untrack it and add it to `.gitignore`, then run the Ethereum lab tests to confirm the image still
-  builds. (3 Nov 2026, absolute-path scan)
-
 ## Tooling and rules
 
 ## Notion and documents
