@@ -50,9 +50,6 @@ slide index), which is never listed here.
 - `dynamic-labs/ethereum_lab/frontend/public/docs/` has 31 dead relative links (`../../README.md`, `../../DOCKER.md`,
   `scripts/cli-labs/standalone/*.md`), most in `instructor/INSTRUCTOR_GETTING_STARTED.md` and
   `INSTRUCTOR_LAB_SCENARIOS.md`; fix them for however the lab's docs viewer resolves paths. (3 Nov 2026, link scan)
-- `dynamic-labs/ethereum_lab/cache/` (Hardhat's build cache, with `/home/ben/...` paths) is tracked in git and ships
-  to students; untrack it and add it to `.gitignore`, then run the Ethereum lab tests to confirm the image still
-  builds. (3 Nov 2026, absolute-path scan)
 
 ## Tooling and rules
 

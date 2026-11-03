@@ -69,9 +69,9 @@ COPY scripts/ ./scripts/
 COPY server/ ./server/
 COPY hardhat.config.js ./
 # Reuse the repo's checked-in Hardhat outputs so runtime startup doesn't need
-# to compile the whole project before the node becomes ready.
+# to compile the whole project before the node becomes ready. Hardhat's cache/
+# is not in git: the compile step below creates it.
 COPY artifacts/ ./artifacts/
-COPY cache/ ./cache/
 # PoS ABI for Hardhat console / example scripts (image has no frontend/src)
 COPY frontend/src/PoS.json ./abi/PoS.json
 
