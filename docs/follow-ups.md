@@ -50,11 +50,11 @@ slide index), which is never listed here.
   the token and DEX recorded-run pages have one (`Worksheet · Saved pages`); a student who lands there must use
   Back. Add the crumbs line in each lab's `chain/capture_pages.py` and regenerate. (2 Nov 2026, week-1 lab Desktop
   walks)
+- Four lab overviews declare `format: pdf` but nothing renders them: `dynamic-labs/cryptography/lab02_crypto_overview.qmd`
+  is copied raw into the instructor nginx image (`Dockerfile.instructor:9`) and served as `.qmd`;
+  `consensus/lab4_pow_pos_overview.qmd`, `p2p_trust/lab3_trust_p2p_overview.qmd` and `p2p_trust/instructor_notes.qmd`
+  are referenced nowhere. Render them as PDFs or drop the front matter. (2 Nov 2026, TinyTeX sweep)
 
 ## Tooling and rules
-- `blockchain-course/glossary/index.pdf` was not rebuilt with the 2 Nov glossary: `render_outputs.py` needs TinyTeX,
-  which this machine lacks (`quarto install tinytex`). (2 Nov 2026, glossary and mind-map pass)
 
 ## Notion and documents
-- Notion "Build Tracker" lags the repo: Meets rubrics, P6's D9 half and the week-2 quiz banks are built but not
-  marked done. (2 Nov 2026, glossary and mind-map pass)
