@@ -186,3 +186,107 @@ terms:
     slide_heading: "A token transfer shows up as a log"
     tags: ["ethereum", "tokenization", "security"]
     confidence: "high"
+  - term: "Stablecoin"
+    modifier: null
+    aliases: ["stablecoins"]
+    definition: "A token that aims to keep a stable price against a reference asset such as the dollar; its type (fiat-backed, crypto-backed or algorithmic) decides who stands behind that dollar and who, if anyone, can freeze it."
+    context: "The lesson sorts stablecoins by what holds the peg, then stays on the fiat-backed kind, whose issuer controls the token contract."
+    slide_heading: "Three ways a stablecoin holds its peg"
+    tags: ["stablecoins", "tokenization", "ethereum"]
+    confidence: "high"
+  - term: "Fiat-backed stablecoin"
+    modifier: null
+    aliases: ["fiat-backed stablecoins", "fiat-collateralized stablecoin", "fiat-backed"]
+    definition: "A stablecoin whose issuer holds reserves, such as dollars, behind the tokens, as with USDT and USDC; the issuer can freeze it through the contract's code."
+    context: "Only the issuer's verified customers can redeem directly with it, after KYC checks; everyone else sells on the market."
+    slide_heading: "Three ways a stablecoin holds its peg"
+    tags: ["stablecoins", "tokenization"]
+    confidence: "high"
+  - term: "Crypto-collateralized stablecoin"
+    modifier: null
+    aliases: ["crypto-backed stablecoin", "crypto-backed"]
+    definition: "A stablecoin backed by other crypto worth more than the coins issued, as with DAI and USDS."
+    context: "The lesson's table sets it beside the fiat-backed and algorithmic types to show who stands behind the dollar."
+    slide_heading: "Three ways a stablecoin holds its peg"
+    tags: ["stablecoins", "tokenization"]
+    confidence: "high"
+  - term: "Algorithmic stablecoin"
+    modifier: null
+    aliases: ["algorithmic stablecoins"]
+    definition: "A stablecoin with no backing asset, in which an algorithm trades tokens to hold the price; TerraUSD collapsed in May 2022."
+    context: "TerraUSD is the lesson's reminder that \"stable\" is a claim, not a guarantee."
+    slide_heading: "Three ways a stablecoin holds its peg"
+    tags: ["stablecoins", "tokenization"]
+    confidence: "high"
+  - term: "USDT"
+    modifier: null
+    aliases: ["Tether", "TetherToken"]
+    definition: "Tether's fiat-backed, dollar-referenced stablecoin; its TetherToken contract gives the owner key owner-only functions to blacklist an address and destroy its balance."
+    context: "The lesson reads the real USDT contract on Ethereum; the Tron lesson shows the same design there."
+    slide_heading: "Three ways a stablecoin holds its peg"
+    tags: ["stablecoins", "tokenization", "ethereum"]
+    confidence: "high"
+  - term: "Stablecoin issuer"
+    modifier: null
+    aliases: ["stablecoin issuers", "issuer layer"]
+    definition: "The company that creates a stablecoin and holds its contract's admin key, such as Tether or Circle; that key can call functions no other address can, such as mint, burn, blacklist and pause."
+    context: "The lesson splits a fiat-backed stablecoin into an issuer layer and an open network layer: the issuer can freeze an address once someone names it, but anyone can still hold and send."
+    slide_heading: "The issuer sits above an open network"
+    tags: ["stablecoins", "ethereum"]
+    confidence: "high"
+  - term: "Address freeze"
+    modifier: null
+    aliases: ["blacklist", "blacklisting", "freeze", "freeze capability", "stablecoin freeze"]
+    definition: "An issuer-controlled function that puts an address on a token contract's blacklist so it cannot send that token; in USDT the address can still receive, while USDC blocks a listed sender or receiver."
+    context: "A freeze is reactive: the issuer acts on an address someone names."
+    slide_heading: "The issuer sits above an open network"
+    tags: ["stablecoins", "forensics", "ethereum"]
+    confidence: "high"
+  - term: "onlyOwner"
+    modifier: null
+    aliases: ["owner-only function"]
+    definition: "A Solidity modifier that lets only the contract's owner key call a function, as with USDT's addBlackList, removeBlackList and destroyBlackFunds."
+    context: "Reading onlyOwner first tells the analyst who holds the power: for USDT, Tether."
+    slide_heading: "Tether's blacklist: three owner-only functions"
+    tags: ["ethereum", "stablecoins", "smart-contracts"]
+    confidence: "high"
+  - term: "isBlackListed"
+    modifier: null
+    aliases: ["isBlackListed mapping"]
+    definition: "USDT's public mapping holding one true or false per address; anyone can query it, and transfer refuses a sender it marks true."
+    context: "It answers whether an address is frozen at the block you read it, not when it was frozen."
+    slide_heading: "Tether's blacklist: three owner-only functions"
+    tags: ["stablecoins", "ethereum", "forensics"]
+    confidence: "high"
+  - term: "AddedBlackList"
+    modifier: null
+    aliases: ["addBlackList", "RemovedBlackList", "removeBlackList"]
+    definition: "The event the USDT contract emits when its owner-only addBlackList function freezes an address; the block it is in dates the freeze, and RemovedBlackList records an unfreeze."
+    context: "A freeze is public and dated by its block, so the freeze itself is evidence an analyst can read."
+    slide_heading: "What a USDT freeze leaves on chain"
+    tags: ["stablecoins", "ethereum", "forensics"]
+    confidence: "high"
+  - term: "destroyBlackFunds"
+    modifier: null
+    aliases: ["DestroyedBlackFunds"]
+    definition: "USDT's owner-only function that zeroes a blacklisted address's balance and cuts total supply, emitting DestroyedBlackFunds and no Transfer log."
+    context: "A tool that sums Transfer logs still shows the old balance, so it overstates what the address holds."
+    slide_heading: "What a USDT freeze leaves on chain"
+    tags: ["stablecoins", "ethereum", "forensics"]
+    confidence: "high"
+  - term: "Blacklister role"
+    modifier: null
+    aliases: ["blacklister", "Blacklisted event"]
+    definition: "In USDC's contract, a separate role, not the owner, that keeps the blacklist; each listing emits Blacklisted, and transfers from or to a listed address are refused."
+    context: "The lesson contrasts USDC with USDT, which checks only the sender and keeps the list under the owner key."
+    slide_heading: "What a USDT freeze leaves on chain"
+    tags: ["stablecoins", "ethereum"]
+    confidence: "high"
+  - term: "Freeze window"
+    modifier: null
+    aliases: []
+    definition: "The time during which funds stay in an issuer's blacklistable token and can still be frozen; it closes once they are swapped out of that token."
+    context: "The analyst answers three questions (freezable, which issuer, how fast) and states the balance with a confidence; asking the issuer to freeze is the agent's decision."
+    slide_heading: "Freezable? Which issuer, and how fast?"
+    tags: ["stablecoins", "forensics"]
+    confidence: "high"

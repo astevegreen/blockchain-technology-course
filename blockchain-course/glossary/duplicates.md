@@ -109,6 +109,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Stablecoin
 
 Multiple definitions were proposed. Kept the earliest course appearance.
+- `05-EF` / Three ways a stablecoin holds its peg: A token that aims to keep a stable price against a reference asset such as the dollar; its type (fiat-backed, crypto-backed or algorithmic) decides who stands behind that dollar and who, if anyone, can freeze it.
 - `01-AS` / Finance (High-Level Overview): A token designed to track the value of a reference asset such as a national currency.
 - `02-AS` / Types of Digital Money: A token designed to maintain value relative to a reference asset, often a fiat currency such as the US dollar.
 
@@ -892,6 +893,13 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-EF` / Most users reach the chain through a wallet: A separate execution environment built on top of a Layer 1 that processes transactions off the main chain and posts data or proofs back.
 - `04-AS` / Layer 2s, Rollups, and Blobs: A system that moves execution or aggregation away from Ethereum Layer 1 while relying on it for settlement or data availability.
 
+## Transaction receipt
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `01-EF` / The receipt says what actually happened: What a node returns for a transaction once it is in a block: its status (1 success, 0 failure), gas used, effective gas price, logs and any new contract address.
+- `03-EF` / A DEX trade is visible before it lands: The record produced after Ethereum transaction execution that reports status, gas used, and emitted logs.
+- `04-EF` / Events and Logs: The transaction result record that includes status, gas use, and emitted logs.
+
 ## Know Your Customer
 
 Multiple definitions were proposed. Kept the earliest course appearance.
@@ -903,6 +911,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-FO` / Step 4 ended Low: now name the service: A service or protocol that pools funds from multiple users to obscure direct transaction links between sources and destinations.
 - `02-FO` / One false link merges two actors into one: A service or smart contract that pools deposits and redistributes withdrawals to obscure direct custody links.
+- `03-FO` / A darknet market is a shop and a cash-out: A service that mixes coins to break the link between payer and payee.
 - `04-AS` / Obfuscation and Countermeasures: A service or protocol that pools deposits and withdrawals to weaken direct links between sources and destinations.
 
 ## Chain hopping
@@ -956,6 +965,12 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `01-FO` / Step 4 ended Low: now name the service: Linking on-chain activity to the service or actor behind it.
 - `02-FO` / One false link merges two actors into one: The process of linking a pseudonymous on-chain cluster to a real-world person, organization, or service.
 - `04-AS` / Attribution: The process of linking on-chain behavior or clusters to real-world people, organizations, or services.
+
+## Darknet market
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `01-FO` / Challenges in Forensic Analysis: An online illicit marketplace accessed through privacy-focused infrastructure such as Tor.
+- `03-FO` / A darknet market is a shop and a cash-out: An online market for illegal goods and services on sites reached with software that hides its users, paid almost exclusively in virtual currency.
 
 ## Hot wallet
 
@@ -1030,18 +1045,52 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `06-EF` / Minting on Hyperledger Fabric: A permissioned distributed ledger framework where known consortium members execute chaincode and govern access to shared state.
 - `04-AS` / Where Hyperledger Fabric Fits: A permissioned distributed ledger platform built around known organizations, managed identities, and policy-driven transaction flow.
 
-## Digital money
+## Tron
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `03-IN` / Early Attempts at Digital Money: Money or payment value represented and transferred through digital systems rather than physical cash.
-- `02-AS` / Types of Digital Money: Money represented and transferred through digital systems rather than physical cash.
+- `01-PC` / Tron works like Ethereum, with T-addresses: A public account chain that works like Ethereum (balances per address, tokens as contracts, transfers as logs); its addresses start with T, and it charges fees in Energy and Bandwidth.
+- `02-AS` / Major Stablecoins and Use Cases: A public blockchain on which USDT is dominant for emerging-market payments.
+
+## USDT
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `01-PC` / Half of all USDT sits on Tron: Tether's fiat-backed, dollar-referenced stablecoin, issued on several chains; its TetherToken contract gives the owner key owner-only functions to blacklist an address and destroy its balance, on Tron as on Ethereum.
+- `05-EF` / Three ways a stablecoin holds its peg: Tether's fiat-backed, dollar-referenced stablecoin; its TetherToken contract gives the owner key owner-only functions to blacklist an address and destroy its balance.
+- `02-AS` / Types of Digital Money: A dollar-referenced stablecoin issued by Tether that dominates many high-volume and emerging-market payment flows.
+
+## Address freeze
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `01-PC` / USDT on Tron: same freeze, same owner rule: An issuer-controlled function that puts an address on a token contract's blacklist so it cannot send that token.
+- `05-EF` / The issuer sits above an open network: An issuer-controlled function that puts an address on a token contract's blacklist so it cannot send that token; in USDT the address can still receive, while USDC blocks a listed sender or receiver.
+- `02-AS` / Major Stablecoins and Use Cases: An issuer-controlled function that prevents specified blockchain addresses from moving a stablecoin token.
+
+## AddedBlackList
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `01-PC` / A freeze is true only as of the read: The event USDT's contract emits when an address is blacklisted; a later RemovedBlackList undoes it.
+- `05-EF` / What a USDT freeze leaves on chain: The event the USDT contract emits when its owner-only addBlackList function freezes an address; the block it is in dates the freeze, and RemovedBlackList records an unfreeze.
+- `14-FO` / A freeze is a source: read it narrowly: The event USDT's contract on Tron emits when its addBlackList function freezes an address. It lets you read who was frozen, and when, yourself.
 
 ## Central bank digital currency
 
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `03-IN` / Why This History Matters: A digital form of central bank money issued or governed by a monetary authority.
 - `04-IN` / A Taxonomy for the Future: The "Money Flower": A digitally native form of money issued by a central bank.
+- `01-PC` / A CBDC is a ledger a central bank runs: A digital form of central bank money; a CBDC on a ledger is a permissioned ledger with the central bank as operator.
 - `02-AS` / Types of Digital Money: A digital form of central-bank money issued and governed by a state monetary authority.
+
+## mBridge
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `01-PC` / A CBDC is a ledger a central bank runs: A shared CBDC ledger, compatible with the Ethereum Virtual Machine, on which each founding central bank ran a validating node; the BIS handed the project to its partners in October 2024.
+- `02-AS` / Global Payment Infrastructure: Overview: A multi-central-bank CBDC platform for direct cross-border settlement in participating sovereign digital currencies.
+
+## Digital money
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `03-IN` / Early Attempts at Digital Money: Money or payment value represented and transferred through digital systems rather than physical cash.
+- `02-AS` / Types of Digital Money: Money represented and transferred through digital systems rather than physical cash.
 
 ## Retail CBDC
 
@@ -1062,6 +1111,12 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `02-AS` / Types of Digital Money: A blockchain system where anyone can run a node, validate, and transact without prior authorization.
 - `04-AS` / Permissioned vs Permissionless Systems: A blockchain system that allows open participation and must defend against unknown adversaries.
 - `05-AS` / What Actually Happened: A system where users can participate without prior approval from a central gatekeeper.
+
+## Crypto-collateralized stablecoin
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `05-EF` / Three ways a stablecoin holds its peg: A stablecoin backed by other crypto worth more than the coins issued, as with DAI and USDS.
+- `02-AS` / Major Stablecoins and Use Cases: A stablecoin backed by crypto assets held as collateral.
 
 ## Monetary sovereignty
 
@@ -1401,6 +1456,12 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 - `05-IN` / Classical Consensus Approaches: A classical consensus algorithm designed to make leader-based replicated consensus easier to understand and implement.
 - `02-PC` / Orderer Cluster and Raft Quorum: A crash-fault-tolerant consensus protocol commonly used by Fabric orderers to agree on block sequence under known membership.
 
+## Stablecoin issuer
+
+Multiple definitions were proposed. Kept the earliest course appearance.
+- `05-EF` / The issuer sits above an open network: The company that creates a stablecoin and holds its contract's admin key, such as Tether or Circle; that key can call functions no other address can, such as mint, burn, blacklist and pause.
+- `03-AS` / How Blockchain Changes State Power: An entity that creates and manages stablecoins, usually by promising reserve backing or redemption rules.
+
 ## Permissionless Participation
 
 Multiple definitions were proposed. Kept the earliest course appearance.
@@ -1515,12 +1576,6 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 Multiple definitions were proposed. Kept the earliest course appearance.
 - `03-EF` / A DEX trade is visible before it lands: A specialist that combines ordinary transactions and searchers' bundles into full blocks, choosing their order.
 - `04-AS` / Block Building: An actor or system that assembles candidate Ethereum blocks, often optimizing for validity and revenue.
-
-## Transaction receipt
-
-Multiple definitions were proposed. Kept the earliest course appearance.
-- `03-EF` / A DEX trade is visible before it lands: The record produced after Ethereum transaction execution that reports status, gas used, and emitted logs.
-- `04-EF` / Events and Logs: The transaction result record that includes status, gas use, and emitted logs.
 
 ## Event log
 
