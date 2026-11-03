@@ -144,7 +144,7 @@ Configuration for **VS Code Dev Containers** and GitHub Codespaces. Defines a co
 ---
 
 ### `cache/`
-**Hardhat build cache**. Speeds up recompilation; safe to delete.
+**Hardhat build cache**. Speeds up recompilation; safe to delete. Not in git: Hardhat creates it on the first compile (the image build runs one).
 
 | Path | Type | Description |
 |------|------|-------------|
