@@ -47,6 +47,10 @@ slide index), which is never listed here.
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
 
+- `dynamic-labs/ethereum_lab/frontend/public/docs/` has 31 dead relative links (`../../README.md`, `../../DOCKER.md`,
+  `scripts/cli-labs/standalone/*.md`), most in `instructor/INSTRUCTOR_GETTING_STARTED.md` and
+  `INSTRUCTOR_LAB_SCENARIOS.md`; fix them for however the lab's docs viewer resolves paths. (3 Nov 2026, link scan)
+
 ## Tooling and rules
 
 ## Notion and documents
