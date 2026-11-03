@@ -18,7 +18,6 @@ from live_support import (
     login_instructor,
     new_session,
     release_claim,
-    terminal_command_round_trip,
     wait_for_student_config,
     wait_for_http,
 )
@@ -28,9 +27,32 @@ EXPECTED_EXERCISE_IDS = [
     "eth-live",
     "eth-beacon-lab",
     "eth-contract-write",
+    "eth-contract-compile",
     "eth-contract-deploy",
+    "eth-contract-review-class-contracts",
     "eth-contract-interact",
+    "eth-contract-peer-open",
+    "eth-contract-peer-interact",
+    "eth-contract-event-receipt",
+    "eth-contract-bytecode",
+    "eth-contract-disasm",
+    "eth-token-erc721",
+    "eth-token-metadata",
+    "eth-token-deploy",
+    "eth-token-evm",
+    "eth-token-transfer",
+    "eth-token-sale",
+    "eth-ft-load",
+    "eth-ft-buy",
+    "eth-ft-approve",
+    "eth-ft-play",
+    "eth-ft-burn-verify",
 ]
+
+# Read-capable JSON-RPC is closed to classroom sessions (router/routes/ethereum.conf):
+# /rpc always refuses, and /rpc-write forwards only transaction methods plus the
+# lifecycle helpers ethers needs (ethereum_lab/server/frontend-server.js).
+RPC_DISABLED_CODE = -32080
 
 
 class EthereumLiveRegressionTests(unittest.TestCase):
@@ -111,10 +133,30 @@ class EthereumLiveRegressionTests(unittest.TestCase):
             json={"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1},
             timeout=10,
         )
-        self.assertEqual(rpc.status_code, 200)
-        payload = rpc.json()
+        self.assertEqual(rpc.status_code, 403)
+        self.assertEqual(rpc.json()["error"]["code"], RPC_DISABLED_CODE)
+
+        rpc_write = self.student_session.post(
+            f"{self.base_url}/labs/ethereum_lab/rpc-write",
+            json={"jsonrpc": "2.0", "method": "eth_blockNumber", "params": [], "id": 1},
+            timeout=10,
+        )
+        self.assertEqual(rpc_write.status_code, 200)
+        payload = rpc_write.json()
         self.assertEqual(payload["id"], 1)
         self.assertTrue(str(payload["result"]).startswith("0x"))
+
+        read_on_write = self.student_session.post(
+            f"{self.base_url}/labs/ethereum_lab/rpc-write",
+            json={
+                "jsonrpc": "2.0",
+                "method": "eth_getBalance",
+                "params": ["0x0000000000000000000000000000000000000000", "latest"],
+                "id": 2,
+            },
+            timeout=10,
+        )
+        self.assertEqual(read_on_write.status_code, 403)
 
     def test_exercises_catalog_matches_expected_ids(self) -> None:
         response = self.student_session.get(
@@ -143,23 +185,25 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         self.assertEqual(config["station"], claim.station)
         self.assertEqual(config["assignedAddress"], claim.assigned_address)
         self.assertEqual(len(config["assignedPrivateKey"]), 66)
-        self.assertEqual(config["rpcUrl"], "/rpc")
-        self.assertTrue(config["terminalRpcUrl"].endswith("/labs/ethereum_lab/rpc"))
+        self.assertEqual(config["rpcUrl"], "/rpc-write")
+        self.assertTrue(config["terminalRpcUrl"].endswith("/labs/ethereum_lab/rpc-write"))
 
         claims = list_claims(self.instructor_session, base_url=self.base_url)["claims"]
         self.assertTrue(any(entry["uuid"] == claim.uuid and entry["station"] == claim.station for entry in claims))
 
-    def test_student_terminal_round_trip(self) -> None:
+    def test_student_lane_has_no_terminal(self) -> None:
+        # lane-service/labs/ethereum.py starts student lanes with LAB_TERMINAL_ENABLED=0:
+        # a per-lane PTY server crushed the host at 25-30 students, and the GUI covers the
+        # student work. The instructor lane keeps its terminal.
         claim = self.require_claim()
-        output = terminal_command_round_trip(
-            self.student_session,
-            self.base_url,
-            "pwd",
-            expected_fragment="/home/student/workspace",
+        config = wait_for_student_config(self.student_session, base_url=self.base_url)
+        self.assertIs(config["labTerminalEnabled"], False)
+        processes = docker_exec_checked(
+            claim.container_name,
+            "cat /proc/[0-9]*/cmdline 2>/dev/null | tr '\\0' ' ' | grep -c 'terminal-serve[r].js' || true",
+            timeout_seconds=20,
         )
-        self.assertIn("/home/student/workspace", output)
-        self.assertIn("pwd", output)
-        self.assertEqual(self.student_session.cookies.get("ethereum_session"), claim.uuid)
+        self.assertEqual(processes.strip(), "0")
 
     def test_lane_runtime_hardening_and_router_rpc(self) -> None:
         claim = self.require_claim()
@@ -182,7 +226,7 @@ class EthereumLiveRegressionTests(unittest.TestCase):
 
         rpc_output = docker_exec_checked(
             claim.container_name,
-            """curl -fsS -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":7}' http://router-router-1/labs/ethereum_lab/rpc""",
+            """curl -fsS -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":7}' http://router-router-1/labs/ethereum_lab/rpc-write""",
             timeout_seconds=20,
             user="1000:1000",
         )
@@ -265,7 +309,7 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         self.assertEqual(summary["station"], claim.station)
         self.assertEqual(summary["exercises_total"], len(EXPECTED_EXERCISE_IDS))
         self.assertEqual(summary["exercises_visited"], 2)
-        self.assertEqual(summary["percent"], 7)
+        self.assertEqual(summary["percent"], 9)  # 2 of 23 exercises
         self.assertEqual(summary["last_route"], "exercise:eth-token-erc721")
         self.assertTrue(summary["surfaces"]["home"])
 
@@ -301,7 +345,8 @@ class EthereumLiveRegressionTests(unittest.TestCase):
             timeout=10,
         )
         self.assertEqual(admin.status_code, 200)
-        self.assertIn("Ethereum — Instructor Console", admin.text)
+        # lane-service/lab_blueprint.py builds this title for every lab console.
+        self.assertIn("Ethereum -- Instructor Console", admin.text)
 
         instructor_alias = self.instructor_session.get(
             f"{self.base_url}/labs/ethereum_lab/instructor/",
