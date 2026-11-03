@@ -21,6 +21,13 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/bitcoin/04-BF-bitcoin_security_and_legal_concerns.qmd`: the Agenda slide still says
   "End with off-chain controls" (KYC and AML), but those slides are hidden and moved to 05-FO. (2 Nov 2026, glossary
   and mind-map pass)
+- Two scheduled lessons keep their March titles: `lessons/forensics/02-FO-*.qmd` ("Blockchain Forensics: Foundations,
+  Obfuscation, and Tracing", now day 6's clustering and peel-chain lesson) and `lessons/bitcoin/02-BF-*.qmd`
+  ("Bitcoin — Transactions and Mining", now day 2's reading-a-transaction lesson). Retitling them changes
+  `glossary/slide-index.yml`, `terms.yml`, `terms.json` and the glossary PDF, so run the glossary pipeline with it, after
+  the TinyTeX PDF rebuild lands. (2 Nov 2026, site cleanup)
+- `blockchain-course/assets/mindmap.html` is published but no page links to it, and its cards follow the March
+  sections, not the ten days. Link it from the navbar once it is organized by day. (2 Nov 2026, site cleanup)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.

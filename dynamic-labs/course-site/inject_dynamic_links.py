@@ -15,25 +15,27 @@ Use this section when the packaged VM or cloud lab stack is running.
 
 ### Student Lab Workspaces
 
-Use these links after the instructor tells the class which lab is active.
+Use these links after the instructor tells the class which lab is active. They are listed in the order of the days that use them.
 
-* [Social Trust Lab: The Insider](/exercises/insider/)
+* Day 1: [Social Trust Lab: The Insider](/exercises/insider/) and [Explorer Lab](/labs/explorer/)
+* Day 2: [Wallet Lab](/labs/wallet/)
+* Day 3: [Token Lab](/labs/tokens/)
+* Day 4: [Exchange and Bridge Lab](/labs/dex/)
+* Days 5 and 9: [Tron Lab](/labs/tron/)
+* Day 5: [Hyperledger Fabric Lab](/labs/hlf/)
+* Day 6: [Bitcoin Trace Lab](/labs/bitcoin-trace/)
+* Day 7: [CoinJoin Trace Lab](/labs/coinjoin-trace/)
+* Day 8: [Cross-Chain Lab](/labs/cross-chain/)
+* Day 10: [Final Trace Lab](/labs/final-trace/)
+
+### Labs outside the ten-day schedule
+
 * [Byzantine Generals Lab](/exercises/bgp/)
-* [Explorer Lab](/labs/explorer/)
-* [Wallet Lab](/labs/wallet/)
-* [Bitcoin Trace Lab](/labs/bitcoin-trace/)
-* [CoinJoin Trace Lab](/labs/coinjoin-trace/)
-* [Token Lab](/labs/tokens/)
-* [Exchange and Bridge Lab](/labs/dex/)
-* [Tron Lab](/labs/tron/)
-* [Cross-Chain Lab](/labs/cross-chain/)
-* [Final Trace Lab](/labs/final-trace/)
 * [Cryptography Lab](/labs/cryptography/)
 * [P2P Trust Lab](/labs/p2p_trust/)
 * [Consensus Lab](/labs/consensus/)
 * [Bitcoin Lab](/labs/bitcoin/)
 * [Ethereum Lab](/labs/ethereum_lab/)
-* [Hyperledger Fabric Lab](/labs/hlf/)
 
 ### Instructor Access
 
