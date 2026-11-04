@@ -153,6 +153,11 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
   step), tested with the lab. A failure in class or in a pilot switches the lab to it.
 - Instructor answers stay out of what students receive (CLAUDE.md rule 1).
 
+## Quality rubric
+Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
+well, evidence), each a judgement rather than a count. A review of a lesson or lab checks it against them; the
+central one is whether a student meeting a concept for the first time can follow the explanation.
+
 ## Confidence scale
 - **High**: two or more independent lines of evidence agree, and no known failure of the heuristic applies.
 - **Moderate**: one strong line, or weaker lines that agree, but a known false positive could apply.
