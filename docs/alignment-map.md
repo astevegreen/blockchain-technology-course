@@ -11,16 +11,7 @@ to look, and a concept with many slides can still be taught badly.
 
 ## Flags
 
-- **39. OFAC sanctions and evasion** (day 5, familiarity): no daily-quiz recall after it is taught.
-- **48. FATF Travel Rule** (day 5, familiarity): no daily-quiz recall after it is taught.
-- **49. Permissioned ledgers: what an analyst can and cannot see** (day 5, familiarity): no daily-quiz recall after it is taught.
-- **21. Ransomware-as-a-Service ecosystems** (day 6, familiarity): no daily-quiz recall after it is taught.
-- **25. Dark web markets** (day 6, familiarity): no daily-quiz recall after it is taught.
-- **27. OSINT for attribution** (day 6, familiarity): no daily-quiz recall after it is taught.
-- **45. Explaining findings to agents, prosecutors and leadership** (day 6, working): post-test answer rests on slides taught after day 6, or not scheduled: 08-FO: The wallet in the sample is the pivot; 08-FO: How sure: words for cryptojacking findings; 08-FO: In the cloud the victim pays the bill; no daily-quiz recall after it is taught.
-- **17. Oracle manipulation** (day 8, familiarity): no daily-quiz recall after it is taught.
-- **24. Clipboard hijackers** (day 8, familiarity): no daily-quiz recall after it is taught.
-- **47. North Korean theft and laundering** (day 8, familiarity): no daily-quiz recall after it is taught.
+- **45. Explaining findings to agents, prosecutors and leadership** (day 6, working): post-test answer rests on slides taught after day 6, or not scheduled: 08-FO: The wallet in the sample is the pivot; 08-FO: How sure: words for cryptojacking findings; 08-FO: In the cloud the victim pays the bill.
 
 ## By concept
 
@@ -37,39 +28,39 @@ is marked with *g*.
 | 41 | Block explorers | working | 1 | D1: 6, D2: 2, D3: 1, D6: 3, D7: 1 | D1: 7, D2: 8, D3: 7, D4: 4, D6: 1, D7: 1 | D2: 3, D3: 3, D4: 3, D7: 1, D8: 1 | q6 | p6 |
 | 42 | Direct node queries | familiarity | 1 | D1: 1, D2: 2, D7: 1 | none | D3: 1 | q7 | p7 |
 | 18 | Reading and auditing smart contracts (Solidity, Vyper, Rust) | working | 3 | D3: 13, D4: 1, D8: 3 | D8: 3 (*g*) | D4: 2, D9: 2 | q8 | p8 |
-| 46 | Stablecoins as a laundering rail | working | 3 | D1: 2, D3: 12, D4: 14, D5: 13, D8: 2, D9: 9 | D3: 6, D4: 2, D5: 9, D8: 1, D9: 11, D10: 1 (*g*) | D2: 1, D4: 3, D5: 2, D6: 5 | q9 | p9 |
+| 46 | Stablecoins as a laundering rail | working | 3 | D1: 2, D3: 12, D4: 14, D5: 13, D8: 2, D9: 9 | D3: 6, D4: 2, D5: 9, D8: 1, D9: 11, D10: 1 (*g*) | D2: 1, D4: 3, D5: 2, D6: 6, D9: 1 | q9 | p9 |
 | 6 | Layer-1 vs Layer-2 networks | familiarity | 4 | D1: 2, D3: 1, D4: 9 | D4: 16, D8: 3 (*g*) | D5: 4, D9: 2 | q10 | p10 |
-| 10 | Cross-chain bridges and chain hopping | working | 4 | D1: 1, D3: 1, D4: 11, D6: 1, D8: 1, D9: 5 | D4: 11, D8: 4 | D5: 3 | q11 | p11 |
+| 10 | Cross-chain bridges and chain hopping | working | 4 | D1: 1, D3: 1, D4: 11, D6: 1, D8: 1, D9: 5 | D4: 11, D8: 4 | D5: 3, D9: 1 | q11 | p11 |
 | 12 | Decentralized exchanges (DEXs) | working | 4 | D1: 1, D3: 3, D4: 20, D6: 1, D7: 3, D8: 2, D9: 3 | D3: 2, D4: 13 | D4: 1, D5: 1, D9: 2 | q12 | p12 |
 | 31 | VASPs and KYC, compliant and non-compliant | familiarity | 5 | D2: 2, D5: 16, D6: 3, D8: 2, D9: 2 | D5: 9, D6: 1, D8: 3, D9: 10 (*g*) | D3: 1, D6: 7, D7: 1, D9: 1 | q13 | p13 |
 | 38 | Bank Secrecy Act and FinCEN | familiarity | 5 | D5: 9 | none | D6: 2 | q14 | p14 |
-| 39 | OFAC sanctions and evasion | familiarity | 5 | D4: 1, D5: 6, D6: 1, D7: 1, D8: 1, D9: 6 | D9: 1 | none | q15 | p15 |
-| 48 | FATF Travel Rule | familiarity | 5 | D5: 5 | none | none | q16 | p16 |
-| 49 | Permissioned ledgers: what an analyst can and cannot see | familiarity | 5 | D1: 2, D5: 9 | none | none | q17 | p17 |
-| 7 | Transaction tracing | working | 6 | D1: 3, D2: 2, D3: 1, D5: 2, D6: 20, D7: 10, D8: 3, D9: 4 | D2: 1, D3: 1, D4: 1, D6: 19, D7: 3, D8: 1 (*g*) | D2: 1, D3: 3, D4: 3, D5: 2, D7: 6, D8: 6 | q18 | p18 |
-| 8 | Clustering heuristics and tracing patterns (e.g. peel chains) | working | 6 | D1: 3, D2: 3, D3: 2, D5: 2, D6: 18, D7: 10, D9: 3 | D2: 4, D6: 11, D7: 2, D8: 1, D10: 1 (*g*) | D2: 2, D3: 2, D4: 1, D6: 1, D7: 7, D8: 2 | q19 | p19 |
-| 20 | Ransomware payments and payment portals | working | 6 | D6: 11, D7: 2 | D6: 7, D7: 12 (*g*) | D7: 2, D8: 7 | q20 | p20 |
-| 21 | Ransomware-as-a-Service ecosystems | familiarity | 6 | D6: 1 | none | none | q21 | p21 |
-| 25 | Dark web markets | familiarity | 6 | D6: 7, D9: 2 | none | none | q22 | p22 |
-| 27 | OSINT for attribution | familiarity | 6 | D6: 1 | none | none | q23 | p23 |
-| 28 | Attribution and deanonymisation standards | working | 6 | D1: 12, D2: 9, D3: 7, D4: 1, D5: 4, D6: 17, D7: 5, D8: 6, D9: 9 | D1: 2, D5: 1, D6: 2, D7: 2, D9: 4 (*g*) | D2: 3, D3: 1, D6: 1, D7: 3 | q24 | p24 |
+| 39 | OFAC sanctions and evasion | familiarity | 5 | D4: 1, D5: 6, D6: 1, D7: 1, D8: 1, D9: 6 | D9: 1 | D6: 1, D7: 1 | q15 | p15 |
+| 48 | FATF Travel Rule | familiarity | 5 | D5: 5 | none | D6: 1 | q16 | p16 |
+| 49 | Permissioned ledgers: what an analyst can and cannot see | familiarity | 5 | D1: 2, D5: 9 | none | D6: 1 | q17 | p17 |
+| 7 | Transaction tracing | working | 6 | D1: 3, D2: 2, D3: 1, D5: 2, D6: 20, D7: 10, D8: 3, D9: 4 | D2: 1, D3: 1, D4: 1, D6: 19, D7: 3, D8: 1 (*g*) | D2: 1, D3: 3, D4: 3, D5: 2, D6: 1, D7: 8, D8: 6 | q18 | p18 |
+| 8 | Clustering heuristics and tracing patterns (e.g. peel chains) | working | 6 | D1: 3, D2: 3, D3: 2, D5: 2, D6: 18, D7: 10, D9: 3 | D2: 4, D6: 11, D7: 2, D8: 1, D10: 1 (*g*) | D2: 2, D3: 2, D4: 1, D6: 2, D7: 7, D8: 2 | q19 | p19 |
+| 20 | Ransomware payments and payment portals | working | 6 | D6: 11, D7: 2 | D6: 7, D7: 12 (*g*) | D7: 4, D8: 7 | q20 | p20 |
+| 21 | Ransomware-as-a-Service ecosystems | familiarity | 6 | D6: 1 | none | D7: 1 | q21 | p21 |
+| 25 | Dark web markets | familiarity | 6 | D6: 7, D9: 2 | none | D7: 1 | q22 | p22 |
+| 27 | OSINT for attribution | familiarity | 6 | D6: 1 | none | D7: 1 | q23 | p23 |
+| 28 | Attribution and deanonymisation standards | working | 6 | D1: 12, D2: 9, D3: 7, D4: 1, D5: 4, D6: 17, D7: 5, D8: 6, D9: 9 | D1: 2, D5: 1, D6: 2, D7: 2, D9: 4 (*g*) | D2: 3, D3: 1, D6: 1, D7: 4, D9: 1 | q24 | p24 |
 | 40 | Commercial analytics platforms, as a category | familiarity | 6 | D1: 1, D6: 1, D8: 1, D9: 2 | none | D7: 1 | q25 | p25 |
-| 45 | Explaining findings to agents, prosecutors and leadership | working | 6 | D1: 2, D6: 2, D7: 1 | D2: 2, D3: 2, D4: 1, D5: 1, D6: 3, D7: 2, D8: 2, D9: 1, D10: 1 (*g*) | D2: 1, D3: 3, D5: 2 | q26 | p26 |
-| 9 | Mixers, tumblers and CoinJoin | working | 7 | D1: 1, D2: 1, D5: 1, D6: 5, D7: 11, D8: 2, D9: 4 | D2: 1, D6: 2, D7: 17 (*g*) | D7: 2, D8: 6 | q27 | p27 |
+| 45 | Explaining findings to agents, prosecutors and leadership | working | 6 | D1: 2, D6: 2, D7: 1 | D2: 2, D3: 2, D4: 1, D5: 1, D6: 3, D7: 2, D8: 2, D9: 1, D10: 1 (*g*) | D2: 1, D3: 3, D5: 2, D7: 1 | q26 | p26 |
+| 9 | Mixers, tumblers and CoinJoin | working | 7 | D1: 1, D2: 1, D5: 1, D6: 5, D7: 11, D8: 2, D9: 4 | D2: 1, D6: 2, D7: 17 (*g*) | D7: 4, D8: 6 | q27 | p27 |
 | 11 | Privacy coins (Monero, Zcash) | familiarity | 7 | D6: 2, D7: 17 | none | D8: 2 | q28 | p28 |
 | 23 | Cryptojacking | familiarity | 7 | D7: 7 | none | D8: 2 | q29 | p29 |
 | 13 | NFT wash trading | familiarity | 8 | D8: 3 | none | D9: 1 | q30 | p30 |
-| 14 | DeFi and its threats | familiarity | 8 | D4: 3, D8: 1 | none | D9: 1 | q31 | p31 |
-| 15 | Flash loan attacks | familiarity | 8 | D8: 8 | none | D9: 1 | q32 | p32 |
+| 14 | DeFi and its threats | familiarity | 8 | D4: 3, D8: 1 | none | D9: 2 | q31 | p31 |
+| 15 | Flash loan attacks | familiarity | 8 | D8: 8 | none | D9: 2 | q32 | p32 |
 | 16 | Reentrancy vulnerabilities | familiarity | 8 | D8: 6 | none | D9: 1 | q33 | p33 |
-| 17 | Oracle manipulation | familiarity | 8 | D3: 1, D4: 1, D8: 1 | none | D5: 1 | q34 | p34 |
+| 17 | Oracle manipulation | familiarity | 8 | D3: 1, D4: 1, D8: 1 | none | D5: 1, D9: 1 | q34 | p34 |
 | 19 | EVM bytecode and decompiling | familiarity | 8 | D3: 3, D8: 9 | D3: 1, D8: 7 | D4: 1, D9: 2 | q35 | p35 |
 | 22 | Wallet drainers | familiarity | 8 | D3: 3, D8: 9, D9: 2 | none | D9: 2 | q36 | p36 |
-| 24 | Clipboard hijackers | familiarity | 8 | D8: 7, D9: 1 | D8: 1 | none | q37 | p37 |
-| 47 | North Korean theft and laundering | familiarity | 8 | D4: 1, D5: 2, D8: 6, D9: 14 | none | none | q38 | p38 |
+| 24 | Clipboard hijackers | familiarity | 8 | D8: 7, D9: 1 | D8: 1 | D9: 1 | q37 | p37 |
+| 47 | North Korean theft and laundering | familiarity | 8 | D4: 1, D5: 2, D8: 6, D9: 14 | none | D9: 1 | q38 | p38 |
 | 26 | MITRE ATT&CK and the Diamond Model | familiarity | 9 | D9: 9 | none | none | q39 | p39 |
 | 29 | Fusing on-chain, OSINT, darknet and classified data | familiarity | 9 | D1: 1, D2: 1, D9: 2 | none | D5: 1 | q40 | p40 |
-| 30 | State-sponsored threat actors | familiarity | 9 | D4: 1, D5: 2, D8: 1, D9: 11 | none | none | q41 | p41 |
+| 30 | State-sponsored threat actors | familiarity | 9 | D4: 1, D5: 2, D8: 1, D9: 11 | none | D9: 1 | q41 | p41 |
 | 37 | AML typologies | working | 9 | D5: 5, D6: 2, D7: 1, D9: 6 | D9: 2 (*g*) | none | q42 | p42 |
 
 ## By lesson
@@ -171,7 +162,7 @@ but no slot teaches them):
 
 ## Labs and quizzes no concept claims
 
-42 of 128 numbered lab questions and 11 of 101 daily-quiz items match no concept.
+42 of 128 numbered lab questions and 11 of 111 daily-quiz items match no concept.
 
 - D1 `explorer` Q2: How many seconds apart are blocks 4 and 5? What decides when this chain makes a block?
 - D1 `explorer` Q3: Is 0x5FbDB2315678afecb367f032d93F642f64180aa3 an account or a contract? Who created it, and in which block? Gi
@@ -301,7 +292,7 @@ Day 3, working. Post-test p9 (written); pretest q9.
 - Post-test answer rests on: 05-EF: Freezable? Which issuer, and how fast? (day 3); 05-EF: What a USDT freeze leaves on chain (day 3); 05-EF: The issuer sits above an open network (day 3)
 - Slides: D1W 01-IN Week 1 teaches how it works, week 2 traces; D1① 02-IN A blockchain is a record, not a currency; D3② 04-EF Key Takeaways; D3③ 05-EF A token is a balance a contract keeps; D3③ 05-EF Coin or Token? Start With the Balance Record; D3③ 05-EF Same Token Standard, Different Promise; D3③ 05-EF Why Investigators and Users Care; D3③ 05-EF Three ways a stablecoin holds its peg; D3③ 05-EF The issuer sits above an open network; D3③ 05-EF Stablecoins carry most illicit volume; D3③ 05-EF Tether's blacklist: three owner-only functions; D3③ 05-EF What a USDT freeze leaves on chain; D3③ 05-EF Freezable? Which issuer, and how fast?; D3③ 05-EF This afternoon you read a token and mint one; D4② 07-EF The pool's reserves set its price; D4② 07-EF A bigger trade gets a worse price; D4② 07-EF A thin market moves on a small sale; D4② 07-EF Where funds can leave a chain; D4② 07-EF Some tokens have no exit; D4② 07-EF Bybit: stolen tokens became ETH first; D4② 07-EF Can it exit here? Six checks; D4③ 08-EF An L2 runs trades; Ethereum keeps the record; D4③ 08-EF Solana keeps each token in its own account; D4③ 08-EF A bridge moves a claim, not the coin; D4③ 08-EF Lock-and-mint: the coin waits in a contract; D4③ 08-EF Liquidity bridges: someone pays you there; D4③ 08-EF Bitget: bridges moved it faster than freezes; D4③ 08-EF What to carry out of this lesson; D5① 04-FO Exchange, OTC or P2P: who holds the keys; D5① 04-FO Practice: characterize three patterns; D5② 05-FO Huione laundered at least $4 billion; D5② 05-FO Rules push money to firms that ignore them; D5③ 01-PC Find the gatekeeper: who can stop or see it; D5③ 01-PC 27 elected producers; final after 19 confirm; D5③ 01-PC Energy pays for a USDT move: who staked it?; D5③ 01-PC Half of all USDT sits on Tron; D5③ 01-PC USDT on Tron: same freeze, same owner rule; D5③ 01-PC A freeze is true only as of the read; D5③ 01-PC This afternoon: a transfer, a sweep, a freeze; D5③ 01-PC What each reader can see; D5③ 01-PC What to carry out of this lesson; D8① 09-FO Reading an approval drain, step by step; D8① 09-FO Reading a poisoning: the lure comes first; D9① 13-FO Blockchain cuts both ways for state power; D9① 13-FO Bybit: out of freezable tokens first, then to Bitcoin; D9① 13-FO Report exposure; leave "violation" to others; D9② 12-FO Scam cash-out: away from what can freeze; D9③ 14-FO Six kinds of source, and what each adds; D9③ 14-FO How each source moves the confidence word; D9③ 14-FO A freeze is a source: read it narrowly; D9③ 14-FO Practice: weigh four sources on one address; D9③ 14-FO What to carry out of this lesson
 - Lab: D3 Q4; D3 Q6; D3 The problem, item 4; D3 The problem, item 6; D3 The problem, item 7; D3 Q5; D4 Q10; D4 The problem, item 10; D5 Q1; D5 Q11; D5 Q12; D5 Q14; D5 Worked example: a deposit at an exchange, item 2; D5 Worked example: a deposit at an exchange, item 3; D5 Worked example: a deposit at an exchange, item 4; D5 Worked example: a deposit at an exchange, item 5; D5 Worked example: a deposit at an exchange, item 6; D8 Worked example: Bybit's ETH to Bitcoin, item 1; D9 Q2; D9 Q10; D9 Q11; D9 Q12; D9 Q13; D9 Worked example: deposits and sweeps to Binance, item 1; D9 Worked example: deposits and sweeps to Binance, item 2; D9 Worked example: deposits and sweeps to Binance, item 3; D9 Worked example: deposits and sweeps to Binance, item 4; D9 The graded note, item 2 (graded); D9 Q17; D10 What to establish, item 3
-- Daily quiz: D2 q13, D4 q9, D4 q10, D4 q11, D6 q1, D6 q4, D6 q5, D6 q10, D6 q11, D5 q12, D5 q19
+- Daily quiz: D2 q13, D4 q9, D4 q10, D4 q11, D6 q1, D6 q4, D6 q5, D6 q10, D6 q11, D6 q13, D9 q13, D5 q12, D5 q19
 
 ### 6. Layer-1 vs Layer-2 networks
 
@@ -319,7 +310,7 @@ Day 4, working. Post-test p11 (written); pretest q11.
 - Post-test answer rests on: 08-EF: Liquidity bridges: someone pays you there (day 4); 08-EF: A bridge moves a claim, not the coin (day 4)
 - Slides: D1W 01-IN Week 1 teaches how it works, week 2 traces; D3③ 05-EF Same Token Standard, Different Promise; D4② 07-EF Where funds can leave a chain; D4③ 08-EF An L2 runs trades; Ethereum keeps the record; D4③ 08-EF A rollup posts its batches to Ethereum; D4③ 08-EF A deposit and a withdrawal touch both chains; D4③ 08-EF A bridge moves a claim, not the coin; D4③ 08-EF Lock-and-mint: the coin waits in a contract; D4③ 08-EF Message bridges trust a message: Kelp DAO; D4③ 08-EF Liquidity bridges: someone pays you there; D4③ 08-EF Bitget: bridges moved it faster than freezes; D4③ 08-EF This afternoon: bridge a token, read both sides; D4③ 08-EF What to carry out of this lesson; D6③ 01-FO Future of Forensics: Automated Cross-Chain Tracing; D8① 09-FO Ronin: stolen keys, not broken code; D9① 13-FO The names come from the government; D9① 13-FO One playbook across North Korea's cases; D9② 12-FO Six typologies you have already met; D9② 12-FO Chain-hopping: the trail changes ledgers; D9② 12-FO AADAPT names most of the typologies
 - Lab: D4 Q6; D4 Q9; D4 Q10; D4 The problem, item 6; D4 The problem, item 7; D4 The problem, item 9; D4 The problem, item 10; D4 Part 2: swap, then bridge, item 4; D4 Part 2: swap, then bridge, item 5; D4 Part 2: swap, then bridge, item 3; D4 Q4; D8 Q8; D8 Q14; D8 Worked example: Bybit's ETH to Bitcoin, item 5; D8 Worked example: Bybit's ETH to Bitcoin, item 6
-- Daily quiz: D5 q16, D5 q18, D5 q19
+- Daily quiz: D9 q13, D5 q16, D5 q18, D5 q19
 
 ### 12. Decentralized exchanges (DEXs)
 
@@ -355,7 +346,7 @@ Day 5, familiarity. Post-test p15 (multiple choice); pretest q15.
 - Post-test answer rests on: 05-FO: OFAC designates; every U.S. person blocks (day 5)
 - Slides: D4③ 08-EF Cheap Solana tokens draw pump-and-dumps; D5② 05-FO The rules bind businesses, not blockchains; D5② 05-FO Section 311 cuts a firm off from U.S. banks; D5② 05-FO OFAC designates; every U.S. person blocks; D5② 05-FO The SDN list names some addresses, not all; D5② 05-FO Tornado Cash: sanctioned 2022, delisted 2025; D5② 05-FO Each rule leaves a record to look for; D6③ 01-FO A label is only as good as its source; D7① 06-FO A mixer pools coins and pays out others; D8① 09-FO Ronin: the FBI named Lazarus, not the chain; D9① 13-FO A state actor steals to fund a state; D9① 13-FO Blockchain cuts both ways for state power; D9① 13-FO One playbook across North Korea's cases; D9① 13-FO Report exposure; leave "violation" to others; D9② 12-FO What AADAPT does not cover: sanctions; D9③ 14-FO An echo is not a second line
 - Lab: D9 Worked example: deposits and sweeps to Binance, item 1
-- Daily quiz: none found
+- Daily quiz: D6 q12, D7 q12
 
 ### 48. FATF Travel Rule
 
@@ -364,7 +355,7 @@ Day 5, familiarity. Post-test p16 (multiple choice); pretest q16.
 - Post-test answer rests on: 05-FO: The Travel Rule sends the sender's data along (day 5)
 - Slides: D5② 05-FO The rules bind businesses, not blockchains; D5② 05-FO A VASP moves crypto for others; D5② 05-FO The Travel Rule sends the sender's data along; D5② 05-FO Rules push money to firms that ignore them; D5② 05-FO Each rule leaves a record to look for
 - Lab: none found
-- Daily quiz: none found
+- Daily quiz: D6 q13
 
 ### 49. Permissioned ledgers: what an analyst can and cannot see
 
@@ -373,7 +364,7 @@ Day 5, familiarity. Post-test p17 (multiple choice); pretest q17.
 - Post-test answer rests on: 01-PC: The trace stops at the operator's edge (day 5); 01-PC: What each reader can see (day 5)
 - Slides: D1W 01-IN Every lab ends in an answer to an instructor; D1① 02-IN A blockchain is a record, not a currency; D5① 04-FO Next: who the exchange knows, and why; D5③ 01-PC Find the gatekeeper: who can stop or see it; D5③ 01-PC This afternoon: a transfer, a sweep, a freeze; D5③ 01-PC Permissioned: the operator decides who writes; D5③ 01-PC The trace stops at the operator's edge; D5③ 01-PC What each reader can see; D5③ 01-PC A CBDC is a ledger a central bank runs; D5③ 01-PC Fabric demo: watch the gatekeeper work; D5③ 01-PC What to carry out of this lesson
 - Lab: none found
-- Daily quiz: none found
+- Daily quiz: D6 q14
 
 ### 7. Transaction tracing
 
@@ -382,7 +373,7 @@ Day 6, working. Post-test p18 (written); pretest q18.
 - Post-test answer rests on: 02-FO: Every hop in your trace names its heuristic (day 6); 02-FO: Change is a guess from several weak clues (day 6); 02-FO: Two outputs aren't always payment and change (day 6)
 - Slides: D1W 01-IN By day 10 you can do nine things; D1W 01-IN Week 1 teaches how it works, week 2 traces; D1W 01-IN A certificate needs three things; D2① 02-BF A trace is read one transaction at a time; D2① 02-BF Recap: what to record for every hop; D3① 01-EF Contracts move value the transaction won't show; D5③ 01-PC The trace stops at the operator's edge; D5③ 01-PC What to carry out of this lesson; D6① 02-FO Every hop in your trace names its heuristic; D6① 02-FO Change is a guess from several weak clues; D6① 02-FO Two outputs aren't always payment and change; D6① 02-FO A peel chain: a small peel, the rest rolls on; D6① 02-FO Follow the remainder; the peels are your leads; D6① 02-FO Batched payouts look busy but aren't a peel; D6① 02-FO When forward fails, trace backward; D6① 02-FO A worked trace: four steps, four judgments; D6① 02-FO Recap: every hop, a heuristic and a confidence; D6② 03-FO Ransom: a payment you can watch from the start; D6② 03-FO The ransom moved four times in two days; D6② 03-FO Each hop gets a heuristic and a confidence; D6② 03-FO This trace stopped at a wallet, not a service; D6② 03-FO A ransom cashes out at a service; D6② 03-FO Silk Road: stolen coins left in round amounts; D6② 03-FO The portal and chat are leads; ask for them; D6② 03-FO Recap: start at the ransom address; D6③ 01-FO Bitcoin Fog: why the court trusted the trace; D6③ 01-FO Challenges in Forensic Analysis; D6③ 01-FO Future of Forensics: Automated Cross-Chain Tracing; D7① 06-FO Where the trace goes dark, and what still shows; D7① 06-FO A limits-of-tracing note: where it stops; D7② 07-FO A privacy coin hides the trail by design; D7② 07-FO Monero hides sender, receiver and amount; D7② 07-FO Zcash has two pools: one public, one shielded; D7② 07-FO How sure: words for a trail that goes dark; D7② 07-FO A limits-of-tracing note for a Monero hop; D7③ 08-FO Cryptojacking steals computing power, not coins; D7③ 08-FO How sure: words for cryptojacking findings; D7③ 08-FO A limits-of-tracing note for mining proceeds; D8② 10-FO Reading a reentrancy: one call nested in itself; D8② 10-FO Three patterns in a trace look different; D8③ 11-FO Self-financed: follow the buyer's money back; D9① 13-FO A state actor steals to fund a state; D9① 13-FO Bybit: out of freezable tokens first, then to Bitcoin; D9② 12-FO Six typologies you have already met; D9② 12-FO Chain-hopping: the trail changes ledgers
 - Lab: D2 The problem, item 12; D3 The problem, item 3; D4 The problem, item 1; D6 Q4 (graded); D6 Q6 (graded); D6 Q7 (graded); D6 Q8 (graded); D6 Q9 (graded); D6 Q11 (graded); D6 Q12 (graded); D6 The problem, item 4; D6 The problem, item 5; D6 The problem, item 6; D6 The problem, item 9; D6 Challenge, item 1; D6 Challenge, item 4; D6 Challenge, item 5; D6 Q1 (graded); D6 Q2 (graded); D6 Q3 (graded); D6 Q5 (graded); D6 Q10 (graded); D7 Q12 (graded); D7 The problem, item 2; D7 The problem, item 11; D8 Worked example: Bybit's ETH to Bitcoin, item 3
-- Daily quiz: D2 q4, D3 q2, D3 q12, D3 q15, D4 q4, D4 q11, D4 q12, D7 q1, D7 q2, D7 q3, D7 q4, D7 q5, D7 q8, D8 q1, D8 q2, D8 q3, D8 q4, D8 q5, D8 q9, D5 q5, D5 q6
+- Daily quiz: D2 q4, D3 q2, D3 q12, D3 q15, D4 q4, D4 q11, D4 q12, D6 q14, D7 q1, D7 q2, D7 q3, D7 q4, D7 q5, D7 q8, D7 q12, D7 q14, D8 q1, D8 q2, D8 q3, D8 q4, D8 q5, D8 q9, D5 q5, D5 q6
 
 ### 8. Clustering heuristics and tracing patterns (e.g. peel chains)
 
@@ -391,7 +382,7 @@ Day 6, working. Post-test p19 (written); pretest q19.
 - Post-test answer rests on: 02-FO: Follow the remainder; the peels are your leads (day 6); 02-FO: A peel chain: a small peel, the rest rolls on (day 6); 02-FO: Batched payouts look busy but aren't a peel (day 6)
 - Slides: D1W 01-IN By day 10 you can do nine things; D1W 01-IN Every judgment carries High, Moderate or Low; D1② 04-CP Pseudonymous is not anonymous; D2① 02-BF Co-spending and change: two clues to carry; D2① 02-BF Recap: what to record for every hop; D2② 05-BF A wallet manages many keys and addresses; D3① 01-EF Bitcoin spends outputs; Ethereum edits balances; D3③ 05-EF The issuer sits above an open network; D5① 04-FO On Bitcoin, a sweep gathers many deposits; D5① 04-FO Next: who the exchange knows, and why; D6① 02-FO Every hop in your trace names its heuristic; D6① 02-FO Co-spending links inputs, unless it's a CoinJoin; D6① 02-FO One false link merges two actors into one; D6① 02-FO A peel chain: a small peel, the rest rolls on; D6① 02-FO Follow the remainder; the peels are your leads; D6① 02-FO Batched payouts look busy but aren't a peel; D6① 02-FO Same-transaction clues never reach High alone; D6① 02-FO A worked trace: four steps, four judgments; D6① 02-FO Recap: every hop, a heuristic and a confidence; D6② 03-FO Each hop gets a heuristic and a confidence; D6③ 01-FO Step 4 ended Low: now name the service; D6③ 01-FO Platforms run your heuristics at scale; D6③ 01-FO Clustering works for most, fails in known ways; D6③ 01-FO Bitcoin Fog: why the court trusted the trace; D6③ 01-FO Attribution confidence: count kinds of evidence; D6③ 01-FO Recap: every label, a source and a confidence; D6③ 01-FO Challenges in Forensic Analysis; D6③ 01-FO BTC-e: Weak KYC Made the Cluster Actionable; D7① 06-FO Where the trace goes dark, and what still shows; D7① 06-FO A CoinJoin is many owners in one transaction; D7① 06-FO Before and after the mix still leak; D7① 06-FO A mixer pools coins and pays out others; D7① 06-FO PayJoin hides a co-spend inside a payment; D7① 06-FO A limits-of-tracing note: where it stops; D7① 06-FO What to carry out of this lesson; D7② 07-FO How sure: words for a trail that goes dark; D7② 07-FO A limits-of-tracing note for a Monero hop; D7③ 08-FO Proceeds run victim, pool, wallet, exit; D9② 12-FO Six typologies you have already met; D9② 12-FO AADAPT names most of the typologies; D9③ 14-FO An echo is not a second line
 - Lab: D2 Q4; D2 Q10; D2 The problem, item 9; D2 The problem, item 10; D6 Q2 (graded); D6 Q5 (graded); D6 Q7 (graded); D6 Q9 (graded); D6 Q10 (graded); D6 The problem, item 2; D6 The problem, item 5; D6 The problem, item 7; D6 The problem, item 11; D6 Challenge, item 1; D6 Challenge, item 5; D7 Q3; D7 The problem, item 3; D8 Worked example: Bybit's ETH to Bitcoin, item 4; D10 What to establish, item 1
-- Daily quiz: D2 q1, D2 q4, D3 q15, D3 q16, D4 q2, D6 q7, D7 q1, D7 q2, D7 q3, D7 q6, D7 q7, D7 q9, D7 q10, D8 q2, D8 q6
+- Daily quiz: D2 q1, D2 q4, D3 q15, D3 q16, D4 q2, D6 q7, D6 q12, D7 q1, D7 q2, D7 q3, D7 q6, D7 q7, D7 q9, D7 q10, D8 q2, D8 q6
 
 ### 20. Ransomware payments and payment portals
 
@@ -400,7 +391,7 @@ Day 6, working. Post-test p20 (written); pretest q20.
 - Post-test answer rests on: 03-FO: Each hop gets a heuristic and a confidence (day 6); 03-FO: Ransom: a payment you can watch from the start (day 6); 03-FO: A note leads to a portal, a price, an address (day 6)
 - Slides: D6① 02-FO Follow the remainder; the peels are your leads; D6② 03-FO Ransom: a payment you can watch from the start; D6② 03-FO A note leads to a portal, a price, an address; D6② 03-FO Colonial: shut down at dawn, paid the next day; D6② 03-FO The ransom moved four times in two days; D6② 03-FO Developer and affiliate split it on-chain; D6② 03-FO A ransom cashes out at a service; D6② 03-FO Silk Road: stolen coins left in round amounts; D6② 03-FO The portal and chat are leads; ask for them; D6② 03-FO Fewer victims pay, but each pays more; D6② 03-FO Recap: start at the ransom address; D7① 06-FO A limits-of-tracing note: where it stops; D7③ 08-FO No victim pays: the money starts as new coin
 - Lab: D6 Q1 (graded); D6 Q2 (graded); D6 Q4 (graded); D6 Q12 (graded); D6 The problem, item 4; D6 Challenge, item 1; D6 Challenge, item 5; D7 Q2; D7 Q4; D7 Q6; D7 Q7; D7 Q9; D7 Q10; D7 Q11; D7 Q12 (graded); D7 The problem, item 1; D7 The problem, item 7; D7 Challenge, item 1; D7 Challenge, item 3
-- Daily quiz: D7 q1, D7 q8, D8 q1, D8 q2, D8 q3, D8 q4, D8 q5, D8 q7, D8 q9
+- Daily quiz: D7 q1, D7 q8, D7 q11, D7 q12, D8 q1, D8 q2, D8 q3, D8 q4, D8 q5, D8 q7, D8 q9
 
 ### 21. Ransomware-as-a-Service ecosystems
 
@@ -409,7 +400,7 @@ Day 6, familiarity. Post-test p21 (multiple choice); pretest q21.
 - Post-test answer rests on: 03-FO: Developer and affiliate split it on-chain (day 6)
 - Slides: D6② 03-FO Developer and affiliate split it on-chain
 - Lab: none found
-- Daily quiz: none found
+- Daily quiz: D7 q11
 
 ### 25. Dark web markets
 
@@ -418,7 +409,7 @@ Day 6, familiarity. Post-test p22 (multiple choice); pretest q22.
 - Post-test answer rests on: 03-FO: A darknet market is a shop and a cash-out (day 6)
 - Slides: D6② 03-FO Ransom: a payment you can watch from the start; D6② 03-FO A ransom cashes out at a service; D6② 03-FO A darknet market is a shop and a cash-out; D6② 03-FO Silk Road: stolen coins left in round amounts; D6② 03-FO Recap: start at the ransom address; D6③ 01-FO The chain shows a service; records show who; D6③ 01-FO Challenges in Forensic Analysis; D9③ 14-FO Six kinds of source, and what each adds; D9③ 14-FO Bitfinex: records about an account
 - Lab: none found
-- Daily quiz: none found
+- Daily quiz: D7 q12
 
 ### 27. OSINT for attribution
 
@@ -427,7 +418,7 @@ Day 6, familiarity. Post-test p23 (multiple choice); pretest q23.
 - Post-test answer rests on: 01-FO: The chain shows a service; records show who (day 6)
 - Slides: D6③ 01-FO A label is only as good as its source
 - Lab: none found
-- Daily quiz: none found
+- Daily quiz: D7 q13
 
 ### 28. Attribution and deanonymisation standards
 
@@ -436,7 +427,7 @@ Day 6, working. Post-test p24 (written); pretest q24.
 - Post-test answer rests on: 01-FO: Attribution confidence: count kinds of evidence (day 6); 01-FO: A label is only as good as its source (day 6); 01-FO: Step 4 ended Low: now name the service (day 6)
 - Slides: D1W 01-IN By day 10 you can do nine things; D1W 01-IN Every judgment carries High, Moderate or Low; D1① 02-IN A blockchain is blocks, each linked to the last; D1① 02-IN Bitcoin spends whole coins and makes change; D1① 02-IN Nodes check a payment before passing it on; D1① 02-IN Unconfirmed is not paid: it can still vanish; D1① 02-IN A miner packs waiting payments into a block; D1① 02-IN Each block on top adds one confirmation; D1③ 01-CM A stale block is routine, not an attack; D1③ 01-CM Each confirmation makes reversal harder; D1③ 01-CM Proof of stake finalizes by a two-thirds vote; D1③ 01-CM Delay may mean congestion, not censorship; D2① 02-BF P2SH and Taproot reveal the rule only on spend; D2① 02-BF Replace-by-fee: unconfirmed can still change; D2① 02-BF The Merkle root commits to every transaction; D2① 02-BF A Merkle proof shows a tx is in a block; D2① 02-BF Co-spending and change: two clues to carry; D2② 05-BF A wallet manages many keys and addresses; D2② 05-BF One seed grows a whole tree of keys; D2③ 06-BF Reading a multi-sig spend in the explorer; D2③ 06-BF A PSBT carries a half-signed spend; D3① 01-EF Bitcoin spends outputs; Ethereum edits balances; D3① 01-EF Contracts move value the transaction won't show; D3① 01-EF Most users reach the chain through a wallet; D3② 04-EF Contract Deployment; D3② 04-EF Upgradeability and Proxy Patterns; D3③ 05-EF The issuer sits above an open network; D3③ 05-EF Stablecoins carry most illicit volume; D4① 03-EF A DEX swaps against a pool, not a person; D5① 04-FO Shared deposit addresses link their senders; D5③ 01-PC Energy pays for a USDT move: who staked it?; D5③ 01-PC USDT on Tron: same freeze, same owner rule; D5③ 01-PC The trace stops at the operator's edge; D6① 02-FO Co-spending links inputs, unless it's a CoinJoin; D6① 02-FO One false link merges two actors into one; D6① 02-FO Two outputs aren't always payment and change; D6① 02-FO A peel chain: a small peel, the rest rolls on; D6① 02-FO When forward fails, trace backward; D6① 02-FO Recap: every hop, a heuristic and a confidence; D6② 03-FO A note leads to a portal, a price, an address; D6② 03-FO The ransom moved four times in two days; D6② 03-FO Each hop gets a heuristic and a confidence; D6② 03-FO A ransom cashes out at a service; D6③ 01-FO Step 4 ended Low: now name the service; D6③ 01-FO A label is only as good as its source; D6③ 01-FO Platforms run your heuristics at scale; D6③ 01-FO Attribution confidence: count kinds of evidence; D6③ 01-FO Recap: every label, a source and a confidence; D6③ 01-FO Future of Forensics: Automated Cross-Chain Tracing; D6③ 01-FO BTC-e: Weak KYC Made the Cluster Actionable; D7① 06-FO A CoinJoin is many owners in one transaction; D7① 06-FO A mixer pools coins and pays out others; D7② 07-FO A ring hides the spender among 15 decoys; D7② 07-FO The edges still show: ramps, swaps, delistings; D7③ 08-FO Proceeds run victim, pool, wallet, exit; D8① 09-FO How sure: words for a drain finding; D8② 10-FO Reentrancy: the contract pays before it updates; D8② 10-FO After the exploit, the money moves on; D8③ 11-FO The loop: one token ID among related wallets; D8③ 11-FO Look-alikes that are not wash trades; D8③ 11-FO How sure: wash trading by kinds of evidence; D9① 13-FO You characterize; the government attributes; D9① 13-FO Drift: a firm's assessment is not a government attribution; D9② 12-FO The Diamond: four features of one event; D9③ 14-FO The chain says what moved; others say who; D9③ 14-FO Six kinds of source, and what each adds; D9③ 14-FO Judge each source before you count it; D9③ 14-FO An echo is not a second line; D9③ 14-FO How each source moves the confidence word; D9③ 14-FO What to carry out of this lesson
 - Lab: D1 Q10; D1 The problem, item 10; D5 Q15; D6 The problem, item 11; D6 Challenge, item 1; D7 Q11; D7 The problem, item 11; D9 Q8; D9 The graded note, item 1 (graded); D9 The graded note, item 4 (graded); D9 Q16
-- Daily quiz: D2 q2, D2 q5, D2 q7, D3 q9, D6 q3, D7 q5, D7 q9, D7 q10
+- Daily quiz: D2 q2, D2 q5, D2 q7, D3 q9, D6 q3, D7 q5, D7 q9, D7 q10, D7 q13, D9 q13
 
 ### 40. Commercial analytics platforms, as a category
 
@@ -454,7 +445,7 @@ Day 6, working. Post-test p26 (written); pretest q26.
 - Post-test answer rests on: 01-FO: A model explanation: Bitcoin Fog (day 6); 08-FO: The wallet in the sample is the pivot (day 7); 08-FO: How sure: words for cryptojacking findings (day 7); 08-FO: In the cloud the victim pays the bill (day 7)
 - Slides: D1W 01-IN By day 10 you can do nine things; D1③ 01-CM Delay may mean congestion, not censorship; D6③ 01-FO A model explanation: Bitcoin Fog; D6③ 01-FO Recap: every label, a source and a confidence; D7③ 08-FO Characterize: for, against, and alternatives
 - Lab: D2 Q11; D2 The problem, item 11; D3 Q7; D3 The problem, item 3; D4 Q5; D5 Q14; D6 Q12 (graded); D6 The problem, item 12; D6 Challenge, item 2; D7 Q12 (graded); D7 The problem, item 12; D8 The graded note, item 3 (graded); D8 Q5; D9 The graded note, item 4 (graded); D10 What to establish, item 5
-- Daily quiz: D2 q12, D3 q3, D3 q7, D3 q12, D5 q1, D5 q7
+- Daily quiz: D2 q12, D3 q3, D3 q7, D3 q12, D7 q14, D5 q1, D5 q7
 
 ### 9. Mixers, tumblers and CoinJoin
 
@@ -463,7 +454,7 @@ Day 7, working. Post-test p27 (written); pretest q27.
 - Post-test answer rests on: 06-FO: User habits link deposit to withdrawal (day 7); 06-FO: A mixer pools coins and pays out others (day 7); 06-FO: A limits-of-tracing note: where it stops (day 7)
 - Slides: D1W 01-IN By day 10 you can do nine things; D2① 02-BF Co-spending and change: two clues to carry; D5② 05-FO Tornado Cash: sanctioned 2022, delisted 2025; D6① 02-FO Co-spending links inputs, unless it's a CoinJoin; D6① 02-FO Same-transaction clues never reach High alone; D6① 02-FO Recap: every hop, a heuristic and a confidence; D6③ 01-FO The chain shows a service; records show who; D6③ 01-FO Challenges in Forensic Analysis; D7① 06-FO Where the trace goes dark, and what still shows; D7① 06-FO A CoinJoin is many owners in one transaction; D7① 06-FO Equal outputs mark a CoinJoin on sight; D7① 06-FO Before and after the mix still leak; D7① 06-FO A mixer pools coins and pays out others; D7① 06-FO User habits link deposit to withdrawal; D7① 06-FO PayJoin hides a co-spend inside a payment; D7① 06-FO 2024: Samourai shut down, zkSNACKs stopped; D7① 06-FO What to carry out of this lesson; D7② 07-FO A privacy coin hides the trail by design; D7③ 08-FO A limits-of-tracing note for mining proceeds; D8① 09-FO Ronin: the FBI named Lazarus, not the chain; D8② 10-FO After the exploit, the money moves on; D9① 13-FO One playbook across North Korea's cases; D9② 12-FO Six typologies you have already met; D9② 12-FO AADAPT names most of the typologies; D9② 12-FO Ronin on the Diamond
 - Lab: D2 The problem, item 4; D6 The problem, item 2; D6 The problem, item 10; D7 Q3; D7 Q4; D7 Q6; D7 Q8; D7 Q9; D7 Q11; D7 The problem, item 2; D7 The problem, item 3; D7 The problem, item 4; D7 The problem, item 5; D7 The problem, item 6; D7 The problem, item 8; D7 The problem, item 11; D7 Challenge, item 2; D7 Challenge, item 3; D7 Challenge, item 4; D7 Q12 (graded)
-- Daily quiz: D7 q1, D7 q4, D8 q1, D8 q2, D8 q3, D8 q4, D8 q5, D8 q6
+- Daily quiz: D7 q1, D7 q4, D7 q13, D7 q14, D8 q1, D8 q2, D8 q3, D8 q4, D8 q5, D8 q6
 
 ### 11. Privacy coins (Monero, Zcash)
 
@@ -499,7 +490,7 @@ Day 8, familiarity. Post-test p31 (multiple choice); pretest q31.
 - Post-test answer rests on: 10-FO: A DeFi pool is a contract anyone can call (day 8)
 - Slides: D4① 03-EF MEV is profit from choosing the order; D4② 07-EF Thin pools let creators pull the rug; D4② 07-EF Some tokens have no exit; D8② 10-FO A DeFi pool is a contract anyone can call
 - Lab: none found
-- Daily quiz: D9 q8
+- Daily quiz: D9 q8, D9 q11
 
 ### 15. Flash loan attacks
 
@@ -508,7 +499,7 @@ Day 8, familiarity. Post-test p32 (multiple choice); pretest q32.
 - Post-test answer rests on: 10-FO: Euler, March 2023: a loan, a gift, a liquidation (day 8); 10-FO: A flash loan lasts one transaction (day 8); 10-FO: Three patterns in a trace look different (day 8)
 - Slides: D8② 10-FO The protocol paid: find out which attack; D8② 10-FO A DeFi pool is a contract anyone can call; D8② 10-FO A flash loan lasts one transaction; D8② 10-FO A price oracle can be moved with borrowed money; D8② 10-FO Euler, March 2023: a loan, a gift, a liquidation; D8② 10-FO A flash-loan attack: borrow first, repay last; D8② 10-FO Three patterns in a trace look different; D8② 10-FO What to carry out of this lesson
 - Lab: none found
-- Daily quiz: D9 q8
+- Daily quiz: D9 q8, D9 q11
 
 ### 16. Reentrancy vulnerabilities
 
@@ -526,7 +517,7 @@ Day 8, familiarity. Post-test p34 (multiple choice); pretest q34.
 - Post-test answer rests on: 10-FO: A price oracle can be moved with borrowed money (day 8)
 - Slides: D3① 01-EF A contract sees only what is on chain; D4② 07-EF Arbitrage holds a deep pool near the market; D8② 10-FO A price oracle can be moved with borrowed money
 - Lab: none found
-- Daily quiz: D5 q9
+- Daily quiz: D9 q11, D5 q9
 
 ### 19. EVM bytecode and decompiling
 
@@ -553,7 +544,7 @@ Day 8, familiarity. Post-test p37 (multiple choice); pretest q37.
 - Post-test answer rests on: 09-FO: Poisoning or clipboard: what the chain shows (day 8); 09-FO: How sure: words for a drain finding (day 8)
 - Slides: D8① 09-FO The victim's account paid: find out how; D8① 09-FO Four ways out of a wallet look different; D8① 09-FO Address poisoning plants a look-alike in history; D8① 09-FO Reading a poisoning: the lure comes first; D8① 09-FO A clipboard hijacker leaves no lure on chain; D8① 09-FO Poisoning or clipboard: what the chain shows; D8① 09-FO How sure: words for a drain finding; D9② 12-FO AADAPT names most of the typologies
 - Lab: D8 Worked example: Bybit's ETH to Bitcoin, item 4
-- Daily quiz: none found
+- Daily quiz: D9 q12
 
 ### 47. North Korean theft and laundering
 
@@ -562,7 +553,7 @@ Day 8, familiarity. Post-test p38 (multiple choice); pretest q38.
 - Post-test answer rests on: 09-FO: Ronin: stolen keys, not broken code (day 8)
 - Slides: D4② 07-EF Bybit: stolen tokens became ETH first; D5② 05-FO Huione laundered at least $4 billion; D5② 05-FO Tornado Cash: sanctioned 2022, delisted 2025; D8① 09-FO The victim's account paid: find out how; D8① 09-FO Ronin: stolen keys, not broken code; D8① 09-FO Ronin: the FBI named Lazarus, not the chain; D8① 09-FO How sure: words for a drain finding; D8① 09-FO What to carry out of this lesson; D8② 10-FO After the exploit, the money moves on; D9① 13-FO You characterize; the government attributes; D9① 13-FO A state actor steals to fund a state; D9① 13-FO North Korea's thefts: fewer, larger, more in 2025; D9① 13-FO The names come from the government; D9① 13-FO Bybit: the way in was a wallet's website, not the contract; D9① 13-FO Bybit: out of freezable tokens first, then to Bitcoin; D9① 13-FO One playbook across North Korea's cases; D9① 13-FO Drift: a firm's assessment is not a government attribution; D9① 13-FO Report exposure; leave "violation" to others; D9① 13-FO Practice: Drift on 2 April 2026; D9① 13-FO What to carry out of this lesson; D9② 12-FO Chain-hopping: the trail changes ledgers; D9② 12-FO Ronin on the Diamond; D9③ 14-FO Six kinds of source, and what each adds
 - Lab: none found
-- Daily quiz: none found
+- Daily quiz: D9 q13
 
 ### 26. MITRE ATT&CK and the Diamond Model
 
@@ -589,7 +580,7 @@ Day 9, familiarity. Post-test p41 (multiple choice); pretest q41.
 - Post-test answer rests on: 13-FO: The names come from the government (day 9); 13-FO: One playbook across North Korea's cases (day 9)
 - Slides: D4② 07-EF Bybit: stolen tokens became ETH first; D5② 05-FO Huione laundered at least $4 billion; D5② 05-FO Tornado Cash: sanctioned 2022, delisted 2025; D8① 09-FO Ronin: the FBI named Lazarus, not the chain; D9① 13-FO You characterize; the government attributes; D9① 13-FO A state actor steals to fund a state; D9① 13-FO North Korea's thefts: fewer, larger, more in 2025; D9① 13-FO The names come from the government; D9① 13-FO One playbook across North Korea's cases; D9① 13-FO Drift: a firm's assessment is not a government attribution; D9① 13-FO Report exposure; leave "violation" to others; D9① 13-FO Practice: Drift on 2 April 2026; D9① 13-FO What to carry out of this lesson; D9② 12-FO Ronin on the Diamond; D9③ 14-FO Six kinds of source, and what each adds
 - Lab: none found
-- Daily quiz: none found
+- Daily quiz: D9 q13
 
 ### 37. AML typologies
 

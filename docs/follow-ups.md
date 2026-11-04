@@ -41,6 +41,9 @@ slide index), which is never listed here.
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
+- Post-test p26 (concept 45, day 6) lists three 08-FO cryptojacking slides, taught on day 7, among its sources
+  (`quizes/posttest/posttest_day10-quiz-bank.json:1227`); the alignment map flags it. Drop them or move p26 to day 7.
+  (4 Nov 2026, alignment map after the recall-gap items)
 
 ## Labs
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's

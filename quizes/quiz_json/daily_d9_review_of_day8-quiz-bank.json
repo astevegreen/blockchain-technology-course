@@ -11,13 +11,13 @@
   ],
   "metadata": {
     "module": "forensics",
-    "question_count": 10,
+    "question_count": 13,
     "quiz_slot": "08:45 on day 9",
     "reviews": [
       "dynamic-labs/cross-chain"
     ],
     "source_mix": {
-      "lesson_questions": 5,
+      "lesson_questions": 8,
       "lab_questions": 5
     },
     "lessons": [
@@ -51,7 +51,9 @@
             "enabled": true,
             "question_ids": [
               "q6",
-              "q7"
+              "q7",
+              "q12",
+              "q13"
             ]
           },
           {
@@ -59,7 +61,8 @@
             "title": "Flash loans, reentrancy and oracles",
             "enabled": true,
             "question_ids": [
-              "q8"
+              "q8",
+              "q11"
             ]
           },
           {
@@ -339,6 +342,87 @@
       "specific_source": {
         "lesson": "blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd",
         "reading": "How sure: wash trading by kinds of evidence"
+      }
+    },
+    {
+      "id": "q11",
+      "question_type": "multiple_choice",
+      "question_stem": "A lending pool values collateral by one exchange pool's spot price. In one transaction a flash loan pays for a large trade on that pool, and the attacker then borrows against the collateral. What went wrong?",
+      "correct_answer": "The lender's price oracle read a price the trade had moved, so it lent more than the collateral was worth.",
+      "incorrect_answers": [
+        "The lending contract had a reentrancy bug, so the attacker withdrew the same collateral twice over.",
+        "The flash loan was never repaid, so the pool lost the borrowed sum on top of the collateral it lent.",
+        "The large trade broke the exchange pool's code, so its swap function paid out free tokens to anyone."
+      ],
+      "explanation": "Oracle manipulation: a lender that reads one pool's spot price can be fooled within the same transaction, because a big enough trade moves the answer and a flash loan pays for the trade. The lender works as written; it trusts the wrong price. The flash loan is repaid at the end. The defenses are many sources or a time-weighted average price.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "oracle",
+        "price-oracle",
+        "flash-loan",
+        "defi"
+      ],
+      "lesson_block": "Oracle manipulation",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd",
+        "reading": "A price oracle can be moved with borrowed money"
+      }
+    },
+    {
+      "id": "q12",
+      "question_type": "multiple_choice",
+      "question_stem": "A victim paid a stranger instead of their usual payee. The address looks nothing like the payee's, and their history shows no lure. What can you say from the chain?",
+      "correct_answer": "A wrong recipient, cause not shown on chain; a clipboard hijacker is one possibility.",
+      "incorrect_answers": [
+        "Address poisoning, since a payment to an unknown address is the mark of a planted lure.",
+        "A clipboard hijacker, shown by the missing lure, so the finding can be stated as High.",
+        "A drainer, since a payment the victim never meant to make shows an earlier approval."
+      ],
+      "explanation": "Poisoning leaves its lure on chain and a look-alike recipient; a clipboard hijacker swaps the address on the device and leaves no lure. The chain shows only the wrong recipient. Say that, and that the cause is not shown on chain: the proof of a clipper is on the device.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "clipboard-hijacker",
+        "address-poisoning",
+        "drain",
+        "confidence"
+      ],
+      "lesson_block": "Poisoning or clipboard",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "reading": "Poisoning or clipboard: what the chain shows"
+      }
+    },
+    {
+      "id": "q13",
+      "question_type": "multiple_choice",
+      "question_stem": "The Ronin bridge lost 173,600 ETH and 25.5M USDC in March 2022. How should your assessment name who did it?",
+      "correct_answer": "Quote the attribution as the FBI's: on 14 April 2022 it named North Korea's Lazarus Group.",
+      "incorrect_answers": [
+        "Name Lazarus from the chain: the funds' route through Tornado Cash proves it was North Korea.",
+        "Name no one: an attribution made by a government agency has no place in an analyst's report.",
+        "Name the validators whose keys signed, since the signers are the thieves the chain shows us."
+      ],
+      "explanation": "On chain, Ronin's withdrawals were valid: the thief held five of nine validator keys. The chain shows where the funds went; the name came from the FBI's statement of 14 April 2022. Quote it as the FBI's, with its date.",
+      "difficulty_level": 2,
+      "topic": "forensics",
+      "tags": [
+        "daily-quiz",
+        "day-9",
+        "north-korea",
+        "lazarus",
+        "ronin",
+        "attribution"
+      ],
+      "lesson_block": "Ronin: who named the thief",
+      "specific_source": {
+        "lesson": "blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd",
+        "reading": "Ronin: the FBI named Lazarus, not the chain"
       }
     }
   ]
