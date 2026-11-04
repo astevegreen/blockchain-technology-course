@@ -26,6 +26,8 @@ The owner judges results, not code: explain every change in plain English and pr
   in the background).
 - `quarto render lessons/<section>/<file>.qmd` from `blockchain-course/` - render one lesson into `_site/`.
 - Glossary pipeline: `blockchain-course/glossary/README.md`.
+- `python tools/alignment_map.py` - the alignment map `docs/alignment-map.md`: where each Role Concept is taught,
+  practised, recalled and tested, with gaps flagged. A wrong match means a term in `tools/alignment_terms.yml`.
 - `node tools/sonar.mjs <pr>` - a PR's SonarCloud gate and findings, read through GitHub.
 - `node tools/sonar-backlog.mjs [--files <path>...]` - the open issues on `main`, read from SonarCloud's public API
   (the project is public, so no token): BLOCKER and CRITICAL by default, or every severity in just the files you
@@ -49,7 +51,7 @@ The owner judges results, not code: explain every change in plain English and pr
    forensics solutions, instructor seeds) lives in `quizes/`, or under `dynamic-labs/` with an `-x` entry in
    `pages.yml` and a removal in `vm-build.yml`, in the same change.
 2. Generated files change only by running their script: `glossary/slide-index.yml`, `terms.yml`, `terms.json`,
-   `duplicates.md`, `index.qmd`, `index.pdf`; `quizes/dist/`; `_site/`.
+   `duplicates.md`, `index.qmd`, `index.pdf`; `quizes/dist/`; `_site/`; `docs/alignment-map.md`.
 3. File and folder names use letters, digits, `-`, `_` and `.` only.
 4. Content decisions are the owner's: what a lesson teaches, cutting material the Course Audit leaves open, quiz
    difficulty, lab scenarios, how lab answers are checked. Ask one question with a recommendation. Technical choices (how to
