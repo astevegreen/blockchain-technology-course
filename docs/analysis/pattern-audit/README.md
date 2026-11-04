@@ -1,0 +1,5 @@
+# Pattern audit, week 2: synthesis
+
+(Draft: the synthesis is written after all five reports. The paragraph below went into the day briefs for sessions 2 to 4.)
+
+**Lessons from day 6.** The day 6 report first named one strongest example for the whole day; name one `path:line` per criterion instead (5, 6, 7, 8, 12, 13, 14 and lab 2, 9, 10), or say plainly that nothing in scope is good enough to copy. Day 6 found four retired slides rendering after 01-FO's recap because a `::::` closed a `.content-hidden` block early: for each lesson, compare the `## ` headings in its rendered `blockchain-course/_site/lessons/forensics/<file>.html` with the slides you expect to show, and report any leak. Day 6's lab had no debrief and put its worked example after the questions: check whether your lab repeats either gap, and look for a debrief in the instructor answers, the lab README and the run sheet before marking it absent. Write nothing outside your report file, not even a note for other sessions: put cross-day points in a "For the other day audits" section of the report.
