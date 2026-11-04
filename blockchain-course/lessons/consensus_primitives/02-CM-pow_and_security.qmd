@@ -61,15 +61,20 @@ The **block body** contains the actual ledger—a set of transactions that trans
 
 ::: {.column width="40%"}
 ```{dot}
+//| fig-width: 4.6
+//| fig-height: 5.4
 digraph BlockAnatomy {
   rankdir=TB;
   bgcolor="transparent";
-  node [shape=box, style=filled, fillcolor=lightblue, fontsize=11, margin="0.15,0.1"];
+  nodesep=0.25; ranksep=0.35;
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+        fontname="Helvetica", fontsize=13, margin="0.15,0.08"];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  Block [label="Block" fillcolor=lightyellow fontsize=12];
+  Block [label="Block", fillcolor="#fef3c7", color="#f59e0b"];
 
-  Header [label="Header\nFields" fillcolor=lightcyan];
-  Body [label="Body\n(Transactions)" fillcolor=lightgreen];
+  Header [label="Header\nFields", fillcolor="#e0f2fe", color="#38bdf8"];
+  Body [label="Body\n(Transactions)", fillcolor="#dcfce7", color="#22c55e"];
 
   Block -> Header;
   Block -> Body;
@@ -82,13 +87,13 @@ digraph BlockAnatomy {
   Body -> Tx2;
   Body -> Txn;
 
-  MTree [label="Merkle Root\n(fingerprint)" shape=circle fillcolor=orange fontsize=10];
+  MTree [label="Merkle Root\n(fingerprint)", fillcolor="#fef3c7", color="#f59e0b"];
 
   Tx1 -> MTree;
   Tx2 -> MTree;
   Txn -> MTree;
 
-  MerkleRoot [label="merkle_root\n(in Header)" fillcolor=lightcyan];
+  MerkleRoot [label="merkle_root\n(in Header)", fillcolor="#e0f2fe", color="#38bdf8"];
   MTree -> MerkleRoot;
 
   {rank=same; Tx1; Tx2; Txn}
@@ -125,15 +130,17 @@ None
 - **Core idea:** computation is **costly to produce but cheap to verify**, enabling secure, open participation without central authority.
 
 
-<div style="position: relative; top: -115px; z-index: -1;max-height:350px; overflow:hidden;">
+<div style="position: relative; top: 0px; z-index: -1;max-height:350px; overflow:hidden;">
 ```{dot}
+//| fig-width: 10
+//| fig-height: 1.7
 digraph PoW_Fork {
 rankdir=LR;
-bgcolor = "transparent";
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#333333", fontname="Inter,Helvetica,Arial", fontsize=18,
-margin="0.12,0.08"];
-edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+bgcolor="transparent";
+nodesep=0.3; ranksep=0.45;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
 // Main chain
 A [label="Block 0\n(Genesis)"];
@@ -143,16 +150,15 @@ D [label="Block 3\nhash < target"];
 A -> B -> C -> D;
 
 // Competing fork
-C2 [label="Block 2′\nalt miner", fillcolor="#e0f2fe"];
-D2 [label="Block 3′\nshort fork", fillcolor="#e0f2fe"];
+C2 [label="Block 2′\nalt miner", fillcolor="#e0f2fe", color="#38bdf8"];
+D2 [label="Block 3′\nshort fork", fillcolor="#e0f2fe", color="#38bdf8"];
 B -> C2 -> D2;
 
 // Annotation
-L [shape=note, fillcolor="#fff7ed", color="#fdba74",
+L [shape=note, fillcolor="#fef3c7", color="#f59e0b",
 label="Longest valid chain wins"];
 D -> L [style=dotted, arrowsize=0.5];
 }
-
 ```
 </div>
 
@@ -222,16 +228,17 @@ None
 - **Nonce:** example of a field miners vary to explore new hashes
 - **Precision matters:** the hash output depends exactly on the header’s byte order and encoding—any difference changes the result.
 
-<div style="position: relative; top: -115px; z-index: -1;">
+<div style="position: relative; top: 0px; z-index: -1;">
 ```{dot}
+//| fig-width: 10
+//| fig-height: 3.3
 digraph BlockHeader {
-ratio=compress;
-rankdir=LR;
-bgcolor="transparent"
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18,
-margin="0.12,0.08", pad="0.0"];
-edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+rankdir=TB;
+bgcolor="transparent";
+nodesep=0.18; ranksep=0.4;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
 // Header fields
 Version     [label="Version"];
@@ -242,9 +249,9 @@ Target      [label="Difficulty Target"];
 Nonce       [label="Nonce / Extra-Nonce"];
 
 // Hashing process
-Combine [shape=parallelogram, label="Concatenate & Encode\n(endianness matters)", fillcolor="#e2e8f0"];
-Hash    [shape=ellipse, label="hash(header bytes)"];
-Output  [shape=note, fillcolor="#fff7ed", color="#fdba74",
+Combine [shape=parallelogram, style="filled", label="Concatenate & Encode\n(endianness matters)", fillcolor="#e0f2fe", color="#38bdf8"];
+Hash    [shape=ellipse, style="filled", label="hash(header bytes)"];
+Output  [shape=note, fillcolor="#fef3c7", color="#f59e0b",
 label="Block Hash\n(valid if < target)"];
 
 // Connections
@@ -254,7 +261,9 @@ MerkleRoot -> Combine;
 Time -> Combine;
 Target -> Combine;
 Nonce -> Combine;
-Combine -> Hash -> Output;
+Combine -> Hash;
+Hash -> Output;
+{rank=same; Hash; Output;}
 }
 ```
 </div>
@@ -288,34 +297,35 @@ None
 - **Network hash rate (H):** with H total hashes per second, the expected block time is `(1/p) ÷ H`.  
 - **Difficulty tuning:** often, the protocol adjusts the target so blocks arrive at a consistent average interval (e.g., ~10 minutes in Bitcoin).
 
-<div style="position: relative; top: -115px; z-index: -1;">
+<div style="position: relative; top: 0px; z-index: -1;">
 ```{dot}
+//| fig-width: 10
+//| fig-height: 1.4
 digraph PoW_Trials {
 bgcolor="transparent";
 rankdir=LR;
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18,
-margin="0.12,0.08"];
-edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+nodesep=0.2; ranksep=0.35;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-Miner [label="Miner"];
-Trial1 [label="Hash #1\n> target ❌"];
-Trial2 [label="Hash #2\n> target ❌"];
-Trial3 [label="Hash #3\n> target ❌"];
-TrialN [label="Hash #N\n< target ✅"];
+Miner [label="Miner", fillcolor="#fef3c7", color="#f59e0b"];
+Trial1 [label="Hash #1\n> target ❌", fillcolor="#fee2e2", color="#ef4444"];
+Trial2 [label="Hash #2\n> target ❌", fillcolor="#fee2e2", color="#ef4444"];
+Trial3 [label="Hash #3\n> target ❌", fillcolor="#fee2e2", color="#ef4444"];
+TrialN [label="Hash #N\n< target ✅", fillcolor="#dcfce7", color="#22c55e"];
 
 Miner -> Trial1 -> Trial2 -> Trial3 -> TrialN;
 
 // Add context nodes
-Prob [shape=note, fillcolor="#fff7ed", color="#fdba74",
-label=<Each hash is an independent trial<BR/>Probability of success ≈ target / 2<SUP>p</SUP>>];
+Prob [shape=note, fillcolor="#fef3c7", color="#f59e0b",
+label="Each hash is an independent trial\nProbability of success ≈ target / 2^p"];
 Work [shape=note, fillcolor="#e0f2fe", color="#38bdf8",
 label="Expected trials ≈ 1/p\nExpected block time ≈ (1/p) ÷ H"];
 
 TrialN -> Prob [style=dotted, arrowsize=0.5];
 TrialN -> Work [style=dotted, arrowsize=0.5];
 }
-
 ```
 </div>
 
@@ -352,20 +362,22 @@ None
 
 ::: {.column width="40%"}
 ```{dot}
+//| fig-width: 4.4
+//| fig-height: 4.2
 digraph DifficultyAdjustment {
 layout=circo;
 bgcolor="transparent";
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=14,
-margin="0.10,0.06"];
-edge [color="#64748b", arrowsize=0.6, penwidth=1.1];
+mindist=0.6;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
 // Main feedback loop arranged circularly
 HR [label="Network\nHash Rate"];
 BT [label="Observed\nBlock Time"];
-CMP [shape=circle, label="Compare"];
+CMP [label="Compare", fillcolor="#fef3c7", color="#f59e0b"];
 ADJ [label="Adjust\nDifficulty"];
-TGT [label="Updated\nTarget"];
+TGT [label="Updated\nTarget", fillcolor="#e0f2fe", color="#38bdf8"];
 
 // Circular flow
 HR -> BT -> CMP -> ADJ -> TGT -> HR;
@@ -605,24 +617,26 @@ None
 Once the protocol decides to adjust, how does it happen in practice?
 
 ```{dot}
+//| fig-width: 10
+//| fig-height: 5.4
 digraph RetargetingImpl {
   rankdir=TB;
   bgcolor="transparent";
-  node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-        color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18,
-        margin="0.40,0.25"];
-  edge [color="#64748b", arrowsize=0.8, penwidth=1.5];
+  nodesep=0.5; ranksep=0.3;
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+        fontname="Helvetica", fontsize=13, margin="0.15,0.06"];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
   ADJ  [label="Raw Adjustment\n(compare observed time to target)"];
   BND  [label="Apply Bounds & Damping\n(cap max swing, smooth noise)"];
-  TGT  [label="Updated Difficulty Target"];
+  TGT  [label="Updated Difficulty Target", fillcolor="#e0f2fe", color="#38bdf8"];
   EXP  [label="Expected Work per Block\n(~1/p,  p = target / 2^256)"];
-  IMPL [label="Implementation Defenses\nmedian-time-past, timestamp limits,\nretarget period caps"];
+  IMPL [label="Implementation Defenses\nmedian-time-past, timestamp limits,\nretarget period caps", fillcolor="#dcfce7", color="#22c55e"];
 
   ADJ -> BND -> TGT -> EXP;
   BND -> IMPL [style=dashed, arrowsize=0.6];
 
-  TRADE [shape=note, fillcolor="#fef3c7", color="#d97706",
+  TRADE [shape=note, fillcolor="#fef3c7", color="#f59e0b",
          label="Stability vs Responsiveness:\nShort retarget window = faster but noisier\nLong retarget window = stable but slower"];
 
   EXP -> TRADE [style=dotted, arrowsize=0.6];
@@ -684,26 +698,29 @@ None
 - **Economic impact:** stale blocks are valid but excluded from the canonical chain. Specific chain implementations must determine impact of stale blocks on miner revenue and incentives.  
 - **Design trade-off:** for a given network speed, **shorter block intervals** raise the stale rate because the difficulty is lower. 
 
-<div style="position: relative; top: -200px; z-index: -1; max-height:300px; overflow:hidden;">
+<div style="position: relative; top: 0px; z-index: -1; max-height:300px; overflow:hidden;">
 
 ```{dot}
+//| fig-width: 10
+//| fig-height: 1.8
 digraph Fork {
 bgcolor="transparent";
 rankdir=LR;
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18];
+nodesep=0.35; ranksep=0.5;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-A [label="Block N (canonical)"];
-B1 [label="Block N+1 (Miner A)"];
-B2 [label="Block N+1' (Miner B)", fillcolor="#e0f2fe"];
-C [label="Block N+2 (extends A's chain)"];
-D [label="Block N+3 (canonical tip)", fillcolor="#e0f2ee"];
-B3 [label="Block N+2' (extends B's chain)", fillcolor="#f0e2ee"];
-
+A [label="Block N\n(canonical)"];
+B1 [label="Block N+1\n(Miner A)"];
+B2 [label="Block N+1'\n(Miner B)", fillcolor="#e0f2fe", color="#38bdf8"];
+C [label="Block N+2\n(extends A's chain)"];
+D [label="Block N+3\n(canonical tip)", fillcolor="#dcfce7", color="#22c55e"];
+B3 [label="Block N+2'\n(extends B's chain)", fillcolor="#e0f2fe", color="#38bdf8"];
 
 A -> B1 -> C -> D;
-A -> B2 [color="#60a5fa", style=dashed, label="same height"];
-B2 -> B3 [color="#60a5fa", style=dashed, label="same height"];
+A -> B2 [color="#38bdf8", style=dashed, label="same height"];
+B2 -> B3 [color="#38bdf8", style=dashed, label="same height"];
 }
 ```
 </div>
@@ -944,21 +961,22 @@ None
 - **Mitigation:** merchant chooses the required number of **confirmations** based on transaction value, risk tolerance, and current network stability.  
   - a higher confirmation depth makes the attack exponentially harder; the deeper the block, the lower the probability of a successful reorg. 
 
-<div style="position: relative; top: -200px; z-index: -1; overflow:hidden; height:375px;">
+<div style="position: relative; top: -35px; z-index: -1; overflow:hidden; height:375px;">
 
 ```{dot}
-
+//| fig-width: 10
+//| fig-height: 1.85
 digraph DoubleSpend {
 rankdir=LR;
-bgcolor="transparent"
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18,
-margin="0.12,0.08"];
-edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+bgcolor="transparent";
+nodesep=0.2; ranksep=0.35;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
 // Main (honest) chain with the merchant's payment
-G0 [label="Block N (tip-1)"];
-T1 [label="Block N+1\ncontains Tx"];
+G0 [label="Block N\n(tip-1)"];
+T1 [label="Block N+1\ncontains Tx", fillcolor="#fef3c7", color="#f59e0b"];
 B2 [label="N+2"];
 B3 [label="N+3"];
 B4 [label="N+4"];
@@ -966,28 +984,23 @@ B5 [label="N+5"];
 G0 -> T1 -> B2 -> B3 -> B4 -> B5;
 
 // Attacker's private fork starting before the Tx block
-A1 [label="N+1′\n(attacker fork)", fillcolor="#e0f2fe"];
-A2 [label="N+2′", fillcolor="#e0f2fe"];
-A3 [label="N+3′", fillcolor="#e0f2fe"];
-G0 -> A1 -> A2 -> A3 [style=dashed, color="#60a5fa"];
+A1 [label="N+1′\n(attacker fork)", fillcolor="#fee2e2", color="#ef4444"];
+A2 [label="N+2′", fillcolor="#fee2e2", color="#ef4444"];
+A3 [label="N+3′", fillcolor="#fee2e2", color="#ef4444"];
+G0 -> A1 -> A2 -> A3 [style=dashed, color="#ef4444"];
 
 // Annotation: confirmations depth z
-Z [shape=note, fillcolor="#fff7ed", color="#fdba74",
+Z [shape=note, fillcolor="#e0f2fe", color="#38bdf8",
 label="Confirmations z = 4\n(# of blocks after Tx)"];
-T1 -> Z [style=dotted, arrowsize=0.5, color="#94a3b8"];
-Z -> B5 [style=dotted, arrowsize=0.5, color="#94a3b8"];
+T1 -> Z [style=dotted, arrowsize=0.5];
+Z -> B5 [style=dotted, arrowsize=0.5];
 {rank=same; B5; Z;}
 
 // Outcome hint
-Win [shape=note, fillcolor="#ecfdf5", color="#34d399",
+Win [shape=note, fillcolor="#dcfce7", color="#22c55e",
 label="Honest chain longer →\nattacker reorg unlikely"];
 B5 -> Win [style=dotted, arrowsize=0.5];
-
-// Legend (compact)
-Legend [shape=plaintext, label=""];
-{rank=same; A3; Legend;}
 }
-
 ```
 </div>
 
@@ -1061,47 +1074,48 @@ None
 - **Design responses:** fee mechanisms, privacy layers, and decentralized relay networks aim to reduce the risk of arbitrary or policy-driven censorship.
 
 
-<div style="position: relative; top: -125px; z-index: -1;">
+<div style="position: relative; top: 0px; z-index: -1;">
 ```{dot}
+//| fig-width: 10
+//| fig-height: 1.85
 digraph CensorshipSelection {
 rankdir=LR;
 bgcolor="transparent";
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18,
-margin="0.12,0.08"];
-edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+nodesep=0.25; ranksep=0.45;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
 // Users broadcasting transactions
 U1 [label="User A\n(tx: normal)"];
 U2 [label="User B\n(tx: high fee)"];
-U3 [label="User C\n(tx: censored target)", fillcolor="#fee2e2", color="#f87171"];
+U3 [label="User C\n(tx: censored target)", fillcolor="#fee2e2", color="#ef4444"];
 
 // Mempool
-MP [label="Node / Mempool", shape=component, fillcolor="#e0f2fe", color="#38bdf8"];
+MP [label="Node / Mempool", shape=component, style="filled", fillcolor="#e0f2fe", color="#38bdf8"];
 
 // Miners
-M [label="Miner\n(block assembly)", fillcolor="#fef9c3", color="#fbbf24"];
+M [label="Miner\n(block assembly)", fillcolor="#fef3c7", color="#f59e0b"];
 
 // Validated block
-B [label="Block\n(included txs)", fillcolor="#ecfdf5", color="#34d399"];
+B [label="Block\n(included txs)", fillcolor="#dcfce7", color="#22c55e"];
 
 // Transaction flows
 U1 -> MP;
 U2 -> MP;
-U3 -> MP [label="delayed / dropped", color="#f87171", style=dashed];
+U3 -> MP [label="delayed / dropped", color="#ef4444", fontcolor="#b91c1c", style=dashed];
 MP -> M [label="fee-based selection"];
 M -> B [label="included txs"];
 
 // Notes
-Note1 [shape=note, fillcolor="#fff7ed", color="#fdba74",
+Note1 [shape=note, fillcolor="#dcfce7", color="#22c55e",
 label="High-fee and compliant txs\nmore likely to be included"];
-Note2 [shape=note, fillcolor="#fee2e2", color="#f87171",
+Note2 [shape=note, fillcolor="#fee2e2", color="#ef4444",
 label="Censored or low-fee txs\nmay be delayed or excluded"];
 
 U2 -> Note1 [style=dotted, arrowsize=0.5];
 U3 -> Note2 [style=dotted, arrowsize=0.5];
 }
-
 ```
 </div>
 
@@ -1134,16 +1148,18 @@ None
 - **Consequences:** higher orphan (stale) rates, pressure on independent miners to join the selfish group, and increased centralization risk.  
 - **Countermeasures:** improve block relay efficiency, refine tie-breaking rules, and design incentives that discourage block withholding, bigger networks
 
-<div style="position: relative; top: -175px; z-index: -1;">
+<div style="position: relative; top: 0px; z-index: -1;">
 
 ```{dot}
+//| fig-width: 10
+//| fig-height: 1.4
 digraph SelfishMining {
 rankdir=LR;
-bgcolor="transparent"
-node [shape=box, style="rounded,filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18,
-margin="0.12,0.08"];
-edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+bgcolor="transparent";
+nodesep=0.35; ranksep=0.45;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
 // Honest chain (public view)
 G0 [label="Block N"];
@@ -1152,20 +1168,18 @@ H2 [label="Block N+2\n(honest)"];
 G0 -> H1 -> H2;
 
 // Selfish miner’s private chain
-S1 [label="N+1′\n(selfish miner)", fillcolor="#e0f2fe"];
-S2 [label="N+2′", fillcolor="#e0f2fe"];
-S3 [label="N+3′", fillcolor="#e0f2fe"];
-G0 -> S1 -> S2 -> S3 [style=dashed, color="#60a5fa"];
+S1 [label="N+1′\n(selfish miner)", fillcolor="#fee2e2", color="#ef4444"];
+S2 [label="N+2′", fillcolor="#fee2e2", color="#ef4444"];
+S3 [label="N+3′", fillcolor="#fee2e2", color="#ef4444"];
+G0 -> S1 -> S2 -> S3 [style=dashed, color="#ef4444"];
 
 // Release point and outcome
-Release [shape=ellipse, label="Strategic release\n(private chain longer)"];
+Release [shape=ellipse, style="filled", fillcolor="#fef3c7", color="#f59e0b", label="Strategic release\n(private chain longer)"];
 S3 -> Release;
-Release -> H2 [label="→ reorg\n(selfish chain wins)", color="#16a34a", penwidth=2];
-
+Release -> H2 [label="→ reorg\n(selfish chain wins)", color="#22c55e", penwidth=2];
 
 {rank=same; H2; S3;}
 }
-
 ```
 </div>
 
@@ -1203,49 +1217,49 @@ None
 ::: {.column width="30%"}
 
 ```{dot}
+//| fig-width: 3.3
+//| fig-height: 4.6
 digraph EclipseAttack {
-rankdir=TB;
-bgcolor="transparent"
-node [shape=circle, style="filled", fillcolor="#f8fafc",
-color="#cbd5e1", fontname="Inter,Helvetica,Arial", fontsize=18];
-edge [color="#64748b", arrowsize=0.7, penwidth=1.1];
+rankdir=LR;
+bgcolor="transparent";
+nodesep=0.15; ranksep=0.45;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
 // Honest network cluster
 subgraph cluster_honest {
-label="Honest Network";
-color="#e2e8f0"; style="rounded";
+label="Honest Network"; fontname="Helvetica"; fontsize=12; fontcolor="#475569";
+color="#cbd5e1"; style="rounded,dashed";
 H1 [label="Node A"];
 H2 [label="Node B"];
 H3 [label="Node C"];
 H4 [label="Node D"];
 H5 [label="Node E"];
-H1 -> H2 -> H3 -> H4 -> H5 [dir=both];
 }
 
-H1 ->A1 [dir=both, style=dotted, arrowsize=0.5];
+// Attacker nodes surrounding victim
+A1 [label="Attacker 1", fillcolor="#fee2e2", color="#ef4444"];
+A2 [label="Attacker 2", fillcolor="#fee2e2", color="#ef4444"];
+A3 [label="Attacker 3", fillcolor="#fee2e2", color="#ef4444"];
+A4 [label="Attacker 4", fillcolor="#fee2e2", color="#ef4444"];
+
+// Victim node isolated
+V [label="Victim\nNode", fillcolor="#fef3c7", color="#f59e0b"];
+
+H1 -> A1 [dir=both, style=dotted, arrowsize=0.5];
 H2 -> A2 [dir=both, style=dotted, arrowsize=0.5];
 H3 -> A3 [dir=both, style=dotted, arrowsize=0.5];
 H4 -> A4 [dir=both, style=dotted, arrowsize=0.5];
 H5 -> A4 [dir=both, style=dotted, arrowsize=0.5];
 
-// Victim node isolated
-V [label="Victim\nNode", shape=circle, fillcolor="#fef9c3", color="#fbbf24"];
+A1 -> V [dir=both, color="#ef4444"];
+A2 -> V [dir=both, color="#ef4444"];
+A3 -> V [dir=both, color="#ef4444"];
+A4 -> V [dir=both, color="#ef4444"];
 
-// Attacker nodes surrounding victim
-A1 [label="Attacker 1", fillcolor="#fee2e2", color="#f87171"];
-A2 [label="Attacker 2", fillcolor="#fee2e2", color="#f87171"];
-A3 [label="Attacker 3", fillcolor="#fee2e2", color="#f87171"];
-A4 [label="Attacker 4", fillcolor="#fee2e2", color="#f87171"];
-
-A1 -> V [dir=both, color="#f87171"];
-A2 -> V [dir=both, color="#f87171"];
-A3 -> V [dir=both, color="#f87171"];
-A4 -> V [dir=both, color="#f87171"];
-
-// Isolated victim not connected to honest peers
-{rank=same; A2; V; A3;}
-{rank=same; H1; H2; H3; H4; H5;}
-
+// Honest peers linked to one another; victim not connected to them
+H1 -> H2 -> H3 -> H4 -> H5 [dir=both, constraint=false];
 }
 ```
 :::

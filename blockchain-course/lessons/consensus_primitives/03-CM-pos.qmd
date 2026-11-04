@@ -60,23 +60,27 @@ None
 - **Slot** — the basic unit of time for one block proposal and committee attestation (duration varies by system)
 - **Epoch** — multiple slots grouped together (e.g., 32 slots in Ethereum) for checkpoints, finality updates, and validator selections
 
-<div style="position:relative; z-index:-1; top:-150px; max-height:350px; overflow:hidden;">
+<div style="position:relative; z-index:-1; top: -30px; max-height:350px; overflow:hidden;">
 ```{dot}
+//| fig-width: 10
+//| fig-height: 1.75
 digraph PoSLifecycle {
   rankdir=LR;
-  graph [fontsize=11, nodesep=0.5, ranksep=0.85, bgcolor=transparent];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
-  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+  bgcolor="transparent";
+  nodesep=0.3; ranksep=0.45;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  P1 [label="① Join\nDeposit stake → activation queue\n→ active validator", fillcolor="#bfdbfe"];
-  P2 [label="② Slot Duty  (per slot)\nProposer selects txns + builds block\nCommittee attests (votes)", fillcolor="#bbf7d0"];
-  P3 [label="③ Epoch & Finality  (slot groups)\nEpoch checkpoint + 2/3 vote\n→ justified → finalized", fillcolor="#fde68a"];
-  P4 [label="④ Exit\nExit queue → unbonding period\n→ stake withdrawn", fillcolor="#fecdd3"];
+  P1 [label="① Join\nDeposit stake → activation queue\n→ active validator", fillcolor="#e0f2fe", color="#38bdf8"];
+  P2 [label="② Slot Duty  (per slot)\nProposer selects txns + builds block\nCommittee attests (votes)", fillcolor="#dcfce7", color="#22c55e"];
+  P3 [label="③ Epoch & Finality  (slot groups)\nEpoch checkpoint + 2/3 vote\n→ justified → finalized", fillcolor="#fef3c7", color="#f59e0b"];
+  P4 [label="④ Exit\nExit queue → unbonding period\n→ stake withdrawn", fillcolor="#fee2e2", color="#ef4444"];
 
   P1 -> P2 [label="validator active"];
   P2 -> P3 [label="end of epoch"];
-  P3 -> P2 [label="next slot", style=dashed, color="#6b7280"];
-  P2 -> P4 [label="voluntary exit", style=dashed, color="#6b7280", constraint=false];
+  P3 -> P2 [label="next slot", style=dashed];
+  P2 -> P4 [label="voluntary exit", style=dashed, constraint=false];
 }
 ```
 
@@ -161,24 +165,28 @@ In each slot, **one validator is selected** to propose the next block:
 
 - **Key point:** the proposer has **control over transaction ordering**
   
-<div style="position:relative; z-index:-1; top:-150px; max-height:350px; overflow:hidden;">
+<div style="position:relative; z-index:-1; top: -35px; max-height:350px; overflow:hidden;">
 
 ```{dot}
+//| fig-width: 10
+//| fig-height: 1.75
 digraph ProposerSelection {
   rankdir=LR;
-  graph [fontsize=11, nodesep=0.45, ranksep=0.6, bgcolor=transparent];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
-  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+  bgcolor="transparent";
+  nodesep=0.3; ranksep=0.55;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  Randomness [label="Verifiable\nRandomness\nBeacon", shape=ellipse, fillcolor="#e0e7ff"];
-  Selection  [label="Stake-Weighted\nSelection", fillcolor="#bfdbfe"];
-  Proposer   [label="Block Proposer\nSelected", fillcolor="#3b82f6", fontcolor=white];
-  Mempool    [label="Mempool\n(pending txns)", shape=cylinder, fillcolor="#f3f4f6"];
-  Block      [label="Block\nProposal", fillcolor="#2563eb", fontcolor=white];
+  Randomness [label="Verifiable\nRandomness\nBeacon", shape=ellipse, style="filled", fillcolor="#e0f2fe", color="#38bdf8"];
+  Selection  [label="Stake-Weighted\nSelection"];
+  Proposer   [label="Block Proposer\nSelected", fillcolor="#fef3c7", color="#f59e0b"];
+  Mempool    [label="Mempool\n(pending txns)", shape=cylinder, style="filled"];
+  Block      [label="Block\nProposal", fillcolor="#dcfce7", color="#22c55e"];
 
   Randomness -> Selection [label="input"];
   Selection  -> Proposer  [label="deterministic\noutput"];
-  Mempool    -> Proposer  [label="select txns from", style=dashed, color="#6b7280"];
+  Mempool    -> Proposer  [label="select txns from", style=dashed];
   Proposer   -> Block     [label="build + propose"];
 }
 ```
@@ -223,22 +231,26 @@ In each slot, **a random subset of validators** attests to the proposed block:
 :::
 ::: {.column width="25%"}
 ```{dot}
+//| fig-width: 2.7
+//| fig-height: 4.9
 digraph CommitteeAttestation {
   rankdir=TB;
-  graph [fontsize=11, nodesep=0.4, ranksep=0.55, bgcolor=transparent];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
-  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+  bgcolor="transparent";
+  nodesep=0.3; ranksep=0.28;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  Block      [label="Block\nProposal\n(from proposer)", fillcolor="#3b82f6", fontcolor=white];
-  Committee  [label="Committee\n(random validators)", fillcolor="#bbf7d0"];
-  Attest     [label="Attestations\n(stake-weighted votes)", fillcolor="#86efac"];
-  QC         [label="Quorum Certificate\n(aggregated sigs)", fillcolor="#fde68a"];
-  Canonical  [label="Block Canonical\n(≥ 2/3 stake)", fillcolor="#ca8a04", fontcolor=white];
+  Block      [label="Block\nProposal\n(from proposer)", fillcolor="#dcfce7", color="#22c55e"];
+  Committee  [label="Committee\n(random validators)", fillcolor="#e0f2fe", color="#38bdf8"];
+  Attest     [label="Attestations\n(stake-weighted votes)", fillcolor="#e0f2fe", color="#38bdf8"];
+  QC         [label="Quorum Certificate\n(aggregated sigs)", fillcolor="#fef3c7", color="#f59e0b"];
+  Canonical  [label="Block Canonical\n(≥ 2/3 stake)", fillcolor="#b45309", color="#b45309", fontcolor="#ffffff"];
 
-  Block     -> Committee [label="broadcast"];
-  Committee -> Attest    [label="validate + vote"];
-  Attest    -> QC        [label="aggregate"];
-  QC        -> Canonical [label="threshold met"];
+  Block     -> Committee [label=" broadcast"];
+  Committee -> Attest    [label=" validate + vote"];
+  Attest    -> QC        [label=" aggregate"];
+  QC        -> Canonical [label=" threshold met"];
 }
 ```
 :::
@@ -283,20 +295,24 @@ None
 :::
 ::: {.column width="34%"}
 ```{dot}
+//| fig-width: 3.4
+//| fig-height: 4.8
 digraph EpochStructure {
   rankdir=TB;
-  graph [fontsize=11, nodesep=0.4, ranksep=0.65, bgcolor=transparent];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
-  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+  bgcolor="transparent";
+  nodesep=0.3; ranksep=0.32;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  S0     [label="Slot 0\n(epoch start)", fillcolor="#dcfce7"];
-  Slots1 [label="Slot 1, 2, …\nN-1", shape=ellipse, fillcolor="#f3f4f6"];
-  CP1    [label="Checkpoint\n(Epoch 1 start)", fillcolor="#fde68a"];
-  Slots2 [label="Slot N+1, …\nN+M-1", shape=ellipse, fillcolor="#f3f4f6"];
-  CP2    [label="Checkpoint\n(Epoch 2 start)", fillcolor="#fde68a"];
+  S0     [label="Slot 0\n(epoch start)", fillcolor="#dcfce7", color="#22c55e"];
+  Slots1 [label="Slot 1, 2, …\nN-1", shape=ellipse, style="filled"];
+  CP1    [label="Checkpoint\n(Epoch 1 start)", fillcolor="#fef3c7", color="#f59e0b"];
+  Slots2 [label="Slot N+1, …\nN+M-1", shape=ellipse, style="filled"];
+  CP2    [label="Checkpoint\n(Epoch 2 start)", fillcolor="#fef3c7", color="#f59e0b"];
 
-  S0 -> Slots1 -> CP1 [label="epoch N slots"];
-  CP1 -> Slots2 -> CP2 [label="epoch N+1 slots"];
+  S0 -> Slots1 -> CP1 [label=" epoch N slots"];
+  CP1 -> Slots2 -> CP2 [label=" epoch N+1 slots"];
 }
 ```
 
@@ -336,16 +352,20 @@ None
 :::
 ::: {.column width="50%"}
 ```{dot}
+//| fig-width: 5.4
+//| fig-height: 1.75
 digraph Justification {
   rankdir=LR;
-  graph [fontsize=11, nodesep=0.5, ranksep=0.65, bgcolor=transparent];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
-  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+  bgcolor="transparent";
+  nodesep=0.35; ranksep=0.5;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  CPsrc [label="Source\nCheckpoint\n(Epoch N)", fillcolor="#fde68a"];
-  Vote  [label="Validators Vote\n(≥ 2/3 stake)", fillcolor="#bbf7d0"];
-  CPtr  [label="Target\nCheckpoint\n(Epoch N+1)", fillcolor="#fde68a"];
-  Justi [label="Justified Link\nSrc → Tgt", fillcolor="#2563eb", fontcolor=white];
+  CPsrc [label="Source\nCheckpoint\n(Epoch N)", fillcolor="#fef3c7", color="#f59e0b"];
+  Vote  [label="Validators Vote\n(≥ 2/3 stake)", fillcolor="#e0f2fe", color="#38bdf8"];
+  CPtr  [label="Target\nCheckpoint\n(Epoch N+1)", fillcolor="#fef3c7", color="#f59e0b"];
+  Justi [label="Justified Link\nSrc → Tgt", fillcolor="#dcfce7", color="#22c55e"];
 
   CPsrc -> Vote [label="source"];
   CPtr  -> Vote [label="target"];
@@ -391,20 +411,24 @@ None
 :::
 ::: {.column width="55%"}
 ```{dot}
+//| fig-width: 5.6
+//| fig-height: 3.6
 digraph Finalization {
-  rankdir=LR;
-  graph [fontsize=11, nodesep=0.4, ranksep=0.65, bgcolor=transparent];
-  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
-  edge [fontname="Helvetica", fontsize=10, arrowsize=0.8];
+  rankdir=TB;
+  bgcolor="transparent";
+  nodesep=0.35; ranksep=0.45;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  CPN1 [label="Checkpoint\nN-1", fillcolor="#fde68a"];
-  CPN  [label="Checkpoint\nN", fillcolor="#fde68a"];
-  CPN1_next [label="Checkpoint\nN+1", fillcolor="#fde68a"];
+  CPN1 [label="Checkpoint\nN-1", fillcolor="#fef3c7", color="#f59e0b"];
+  CPN  [label="Checkpoint\nN", fillcolor="#fef3c7", color="#f59e0b"];
+  CPN1_next [label="Checkpoint\nN+1", fillcolor="#fef3c7", color="#f59e0b"];
 
-  Link1 [label="Justified\nLink", fillcolor="#86efac"];
-  Link2 [label="Justified\nLink", fillcolor="#86efac"];
+  Link1 [label="Justified\nLink", fillcolor="#dcfce7", color="#22c55e"];
+  Link2 [label="Justified\nLink", fillcolor="#dcfce7", color="#22c55e"];
 
-  Finalized [label="FINALIZED\nCheckpoint N-1", fillcolor="#b45309", fontcolor=white];
+  Finalized [label="FINALIZED\nCheckpoint N-1", fillcolor="#b45309", color="#b45309", fontcolor="#ffffff"];
 
   CPN1 -> Link1 [label="Cp N-1"];
   CPN -> Link1 [label="Cp N"];
@@ -413,6 +437,7 @@ digraph Finalization {
 
   Link1 -> Link2 [label="2 consecutive\njustified links"];
   Link2 -> Finalized [label="→ Finalize\nCp N-1"];
+  {rank=same; Link1; Link2;}
 }
 ```
 :::
@@ -446,29 +471,39 @@ None
 ## From Slot Validation to Finality {.smaller}
 
 ```{dot}
+//| fig-width: 10
+//| fig-height: 4.3
 digraph PoSFlow {
   rankdir=TB;
-  graph [fontsize=36, nodesep=0.6, ranksep=0.7, bgcolor=transparent];
-  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=36];
-  edge  [fontname="Helvetica", fontsize=28, arrowsize=1.2];
+  bgcolor="transparent";
+  nodesep=1.1; ranksep=0.35;
+node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
+      fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
+edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  Proposer     [label="Block Proposer\n(stake-weighted selection)", fillcolor="#c8e6c9"];
-  Committee    [label="Committee\n(random validator subset)", fillcolor="#fff8e1"];
-  Attest       [label="Attestations\n(≥ 2/3 committee stake)", fillcolor="#c8e6c9"];
-  QC           [label="Quorum Certificate\n(aggregated signatures)", fillcolor="#bbdefb"];
-  Decide       [label="Epoch boundary?", shape=diamond, fillcolor="#fff9c4"];
-  Checkpoint   [label="Epoch Checkpoint", fillcolor="#fff176"];
-  Finalized    [label="Finalized\nCheckpoint", fillcolor="#f9a825", fontcolor=white];
-  NextProposer [label="Next Proposer\nSelected", fillcolor="#c8e6c9"];
+  Proposer     [label="Block Proposer\n(stake-weighted selection)", fillcolor="#dcfce7", color="#22c55e"];
+  Committee    [label="Committee\n(random validator subset)", fillcolor="#e0f2fe", color="#38bdf8"];
+  Attest       [label="Attestations\n(≥ 2/3 committee stake)", fillcolor="#e0f2fe", color="#38bdf8"];
+  QC           [label="Quorum Certificate\n(aggregated signatures)", fillcolor="#fef3c7", color="#f59e0b"];
+  Decide       [label="Epoch boundary?", shape=diamond, style="filled", fillcolor="#fef3c7", color="#f59e0b"];
+  Checkpoint   [label="Epoch Checkpoint", fillcolor="#fef3c7", color="#f59e0b"];
+  Finalized    [label="Finalized\nCheckpoint", fillcolor="#b45309", color="#b45309", fontcolor="#ffffff"];
+  NextProposer [label="Next Proposer\nSelected", fillcolor="#dcfce7", color="#22c55e"];
 
-  Proposer     -> Committee    [label="proposes block"];
-  Committee    -> Attest       [label="vote"];
-  Attest       -> QC           [label="aggregate"];
+  // Left column runs down through one slot; right column runs back up to the next proposer
+  {rank=same; Proposer; NextProposer;}
+  {rank=same; Committee; Finalized;}
+  {rank=same; Attest; Checkpoint;}
+  {rank=same; QC; Decide;}
+
+  Proposer     -> Committee    [label=" proposes block"];
+  Committee    -> Attest       [label=" vote"];
+  Attest       -> QC           [label=" aggregate"];
   QC           -> Decide;
-  Decide       -> Checkpoint   [label="yes"];
-  Decide       -> NextProposer [label="no (next slot)"];
-  Checkpoint   -> Finalized    [label="2 consecutive\njustified epochs"];
-  Finalized    -> NextProposer [label="epoch advances"];
+  Decide       -> Checkpoint   [label=" yes", constraint=false];
+  Decide       -> NextProposer [label="no (next slot)", constraint=false];
+  Checkpoint   -> Finalized    [label=" 2 consecutive\n justified epochs", constraint=false];
+  Finalized    -> NextProposer [label=" epoch advances", constraint=false];
 }
 ```
 

@@ -25,6 +25,15 @@ slide index), which is never listed here.
   the TinyTeX PDF rebuild lands. (2 Nov 2026, site cleanup)
 - `blockchain-course/assets/mindmap.html` is published but no page links to it, and its cards follow the March
   sections, not the ten days. Link it from the navbar once it is organized by day. (2 Nov 2026, site cleanup)
+- `lessons/consensus_primitives/03-CM-pos.qmd:408` and its Finalization diagram say Checkpoint N-1 is finalized when
+  N and N+1 are justified; Casper FFG (and 01-CM's checkpoint slide) finalize the older checkpoint of the justified
+  pair, N. Check against a source and fix slide text and diagram together. (3 Nov 2026, diagram refresh)
+- `lessons/consensus_primitives/02-CM-pow_and_security.qmd:327` PoW_Trials note says "target / 2^p"; the slide text
+  above it (line 300) says target / 2^b. (3 Nov 2026, diagram refresh)
+- `lessons/consensus_primitives/03-CM-pos.qmd:310-314` EpochStructure labels are muddled: "Checkpoint (Epoch 1
+  start)" follows "epoch N slots", and slot N+1 follows the checkpoint at slot N. (3 Nov 2026, diagram refresh)
+- `lessons/consensus_primitives/02-CM-pow_and_security.qmd:728` Fork diagram labels the N+1' → N+2' edge "same
+  height", which reads as if the two blocks share a height. (3 Nov 2026, diagram refresh)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
