@@ -59,11 +59,13 @@ class EthereumLabDockerContextTests(unittest.TestCase):
         rules = _rules()
         guides = [
             path.relative_to(LAB).as_posix()
-            for folder in ("docs/instructor", "frontend/public/docs/instructor")
-            for path in (LAB / folder).rglob("*")
+            for path in (LAB / "docs/instructor").rglob("*")
             if path.is_file()
         ]
         self.assertTrue(guides, "expected instructor guides to check")
+        # frontend/public/docs/ is generated from docs/ (copy-docs.cjs, Dockerfile) and untracked,
+        # so check the mirrored path of each guide as well as the source.
+        guides += [f"frontend/public/{rel}" for rel in guides]
         leaked = [rel for rel in guides if not _ignored(rel, rules)]
         self.assertEqual(leaked, [], "instructor guides reach the Docker build context")
 

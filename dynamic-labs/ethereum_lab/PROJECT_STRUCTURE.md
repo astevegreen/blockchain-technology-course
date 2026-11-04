@@ -203,11 +203,11 @@ Configuration for **VS Code Dev Containers** and GitHub Codespaces. Defines a co
 | `tsconfig.json` | File | TypeScript config for frontend |
 | `vite.config.js` | File | Vite build config (plugins, base path) |
 | `scripts/` | Dir | Build scripts (run via npm lifecycle) |
-| `scripts/copy-docs.cjs` | File | Syncs `docs/**/*.md` → `public/docs/` recursively (removes stale `.md`); runs on frontend `prebuild` |
+| `scripts/copy-docs.cjs` | File | Syncs `docs/**/*.md` → `public/docs/` recursively (removes stale `.md`); runs on frontend `predev` and `prebuild` |
 | `public/` | Dir | Static assets served as-is |
 | `public/api/config.json` | File | Runtime config (e.g. Docker/instructor deploy; contract address) |
 | `public/beacon-lab-config.json`, `contract-config.json` | Files | JSON configs for Beacon lab and contract lab |
-| `public/docs/` | Dir | Mirror of `docs/` markdown tree (via `copy-docs.cjs`) for in-app help |
+| `public/docs/` | Dir | Generated, untracked mirror of `docs/` (via `copy-docs.cjs`) for in-app help; edit `docs/` only |
 | `public/artifacts/*.json` | Files | Published role / scenario ABIs for Role Hub and related UI |
 | `public/dashboard.html` | File | Standalone classroom vote dashboard |
 | `public/walkthrough.html`, `progress-display.html` | Files | Optional walkthrough / progress HTML |

@@ -62,10 +62,6 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- `dynamic-labs/ethereum_lab/frontend/public/docs/` is a tracked copy of `ethereum_lab/docs/` that `Dockerfile:19`
-  (`COPY docs/ ./public/docs/`) overwrites at build, so every docs edit must be made twice or they drift. Untracking
-  it also means changing `dynamic-labs/tests/test_ethereum_lab_docker_context.py:62`, `pages.yml:60` and
-  `vm-build.yml:49`. (3 Nov 2026, dead-link fix)
 
 ## Tooling and rules
 
