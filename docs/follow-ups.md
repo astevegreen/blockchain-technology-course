@@ -36,6 +36,10 @@ slide index), which is never listed here.
   Tokens" (`lessons/ethereum/06-EF-*.qmd:390`) wraps to two lines, and "Future of Forensics: Automated Cross-Chain
   Tracing" (`lessons/forensics/01-FO-*.qmd:761`) runs under the Course Portal button. Shorten each to about 48
   characters, and update the mind-map anchors if a slide id changes. (3 Nov 2026, diagram restyle)
+- `lessons/forensics/01-FO-*.qmd` shows four retired slides after its recap (Challenges in Forensic Analysis :566,
+  DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
+  :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
+  (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
@@ -63,6 +67,9 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
+- `dynamic-labs/cross-chain/README.md:10` still says "Status: scaffolding" and that the questions wait on the
+  owner's choice of hops, but the lab page has a full worksheet, worked example and graded note. (4 Nov 2026, week-2
+  pattern audit, `docs/analysis/pattern-audit/d8.md`)
 
 ## Tooling and rules
 
