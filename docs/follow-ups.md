@@ -40,6 +40,22 @@ slide index), which is never listed here.
   DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
   :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
   (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
+- `lessons/primitives/04-CP-*.qmd:455` names ML-KEM (FIPS 203), a key-encapsulation standard, among the replacements
+  for ECDSA signatures; check with the `source` skill and keep only signature schemes. (4 Nov 2026, week-1 pattern audit)
+- `04-CP-*.qmd:378`'s notes point to "the previous slide's limits", but the previous slide is the Tron address
+  (`:332`); the limits slide is `:237`. (4 Nov 2026, week-1 pattern audit)
+- `01-CM-*.qmd:364` and `:376` call the bridge case "day 6"; bridges are taught on day 4 (`08-EF-*.qmd:179`).
+  (4 Nov 2026, week-1 pattern audit)
+- `07-EF-*.qmd:235` says "decimals() (05-EF)", but 05-EF never mentions decimals; only the tokens lab page
+  (`tokens/.../index.html:125`) teaches them. (4 Nov 2026, week-1 pattern audit)
+- `02-IN-*.qmd:641` files "balance" under what the chain records with no "on Bitcoin", against `:309`'s account
+  balance. (4 Nov 2026, week-1 assessments audit)
+- Speaker notes still say "memo", wording the 30 Oct direction retired: `04-CP-*.qmd:254`, `01-CM-*.qmd:456`, `:470`,
+  `:537`, `02-BF-*.qmd:230` (not 04-FO's Stellar memo). (4 Nov 2026, week-1 pattern audit)
+- Speaker notes carry build history and internal concept numbers: `05-FO-*.qmd:99` "(Course Audit: keep)",
+  `01-PC-*.qmd:497` "concept 49". (4 Nov 2026, week-1 pattern audit)
+- `05-FO-*.qmd:219`'s notes say "Southeast Asian criminal groups" with no citation; source it with the `source`
+  skill or cut it. (4 Nov 2026, week-1 pattern audit)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
@@ -70,6 +86,9 @@ slide index), which is never listed here.
 - `dynamic-labs/cross-chain/README.md:10` still says "Status: scaffolding" and that the questions wait on the
   owner's choice of hops, but the lab page has a full worksheet, worked example and graded note. (4 Nov 2026, week-2
   pattern audit, `docs/analysis/pattern-audit/d8.md`)
+- Day 4's lab gives `0xe7f1725E…0512` to WETH (`dex/gateway/static/lab/index.html:47`), the address day 3's lab gave
+  cUSD (`tokens/gateway/static/lab/index.html:40`), with no word that it is a new chain. (4 Nov 2026, week-1 pattern
+  audit)
 
 ## Tooling and rules
 
