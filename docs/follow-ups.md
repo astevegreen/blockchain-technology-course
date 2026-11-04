@@ -16,13 +16,13 @@ slide index), which is never listed here.
   opens the Milk Sad slide (weak key entropy, not a side channel) and Quadratic Voting (06-EF) opens the Gitcoin slide
   (quadratic funding). Neither lesson has a slide on the concept itself; add one or relink. (4 Nov 2026, reviewer on
   the five sourced definitions)
-- Two scheduled lessons keep their March titles: `lessons/forensics/02-FO-*.qmd` ("Blockchain Forensics: Foundations,
-  Obfuscation, and Tracing", now day 6's clustering and peel-chain lesson) and `lessons/bitcoin/02-BF-*.qmd`
-  ("Bitcoin — Transactions and Mining", now day 2's reading-a-transaction lesson). Retitling them changes
-  `glossary/slide-index.yml`, `terms.yml`, `terms.json` and the glossary PDF, so run the glossary pipeline with it, after
-  the TinyTeX PDF rebuild lands. (2 Nov 2026, site cleanup)
 - `blockchain-course/assets/mindmap.html` is published but no page links to it, and its cards follow the March
-  sections, not the ten days. Link it from the navbar once it is organized by day. (2 Nov 2026, site cleanup)
+  sections, not the ten days. Link it from the navbar once it is organized by day; relabel its "02-BF: Transactions &
+  Mining" and "02-FO: Obfuscation & Tracing" cards (about lines 2523 and 2690) to the lessons' 4 Nov titles then. (2 Nov
+  2026, site cleanup)
+- `lessons/conclusion/04-AS-final_technical_review.qmd` (scheduled) links six headings (lines 1147, 1233, 1817, 1847,
+  1911, 1938) to 02-BF and 02-FO slides that are now inside `.content-hidden`. Point them at the scheduled slides or
+  drop them. (4 Nov 2026, lesson retitle review)
 - `lessons/consensus_primitives/03-CM-pos.qmd:408` and its Finalization diagram say Checkpoint N-1 is finalized when
   N and N+1 are justified; Casper FFG (and 01-CM's checkpoint slide) finalize the older checkpoint of the justified
   pair, N. Check against a source and fix slide text and diagram together. (3 Nov 2026, diagram refresh)
