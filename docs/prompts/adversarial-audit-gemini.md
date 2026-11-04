@@ -5,10 +5,12 @@ Claude's pattern audit (`docs/analysis/pattern-audit/`). Where `docs/prompts/adv
 the course *design* from documents, this one attacks what was *built*: the lessons, labs and assessments in this
 repo. It reads Claude's audit only at the end, so its findings are not anchored on Claude's.
 
-Open the repo in Antigravity and run it on **Gemini 3.8 Flash (high)**: it is long, read-heavy work and Flash's
-quota holds. `GEMINI.md` keeps Gemini read-only, so the report comes back as its answer; save it as
-`docs/analysis/pattern-audit/gemini-adversarial.md` (or give it to Claude to save, check and act on). Everything
-below the line is the prompt.
+**Use the script, not this prompt.** Pasted into Antigravity's agent (4 Nov 2026), this prompt was reviewed as a
+change under `GEMINI.md`'s finding format instead of being run. `node tools/gemini-course-audit.mjs` runs the same audit
+through agy, one day at a time (then the assessments, then a synthesis), with the lenses in
+`tools/gemini-course-audit.md`, and saves the reports in `docs/analysis/gemini-audit/`. This file stays as the
+interactive version: if you paste it, tell the agent first that this is an audit to run, not a prompt to review.
+Everything below the line is the prompt.
 
 ---
 

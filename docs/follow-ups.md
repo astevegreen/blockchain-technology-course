@@ -64,6 +64,9 @@ slide index), which is never listed here.
 - Post-test p26 (concept 45, day 6) lists three 08-FO cryptojacking slides, taught on day 7, among its sources
   (`quizes/posttest/posttest_day10-quiz-bank.json:1227`); the alignment map flags it. Drop them or move p26 to day 7.
   (4 Nov 2026, alignment map after the recall-gap items)
+- `quizes/run-sheet/RUN_SHEET.md:25` and `:174` say the day 6 to 9 pretest items have not landed, but
+  `quizes/pretest/pretest_week2-quiz-bank.json` exists; days 7 to 9 give no pretest items at all. Name each day's
+  items, as days 1 to 5 do. (4 Nov 2026, Gemini reading the adversarial-audit prompt)
 
 ## Labs
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
@@ -89,7 +92,17 @@ slide index), which is never listed here.
 - Day 4's lab gives `0xe7f1725E…0512` to WETH (`dex/gateway/static/lab/index.html:47`), the address day 3's lab gave
   cUSD (`tokens/gateway/static/lab/index.html:40`), with no word that it is a new chain. (4 Nov 2026, week-1 pattern
   audit)
+- `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:67` says students follow Q "because its amount is closer to
+  the gross quote", but `facts.json:1356-1358` puts P (168,435.00) closer to the 171,000.00 quote than Q (168,217.27).
+  Reword the mistake, and its source in `answers.template.md`. (4 Nov 2026, Gemini audit D10-2, checked against
+  `facts.json`)
+- `dynamic-labs/cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory site; a
+  class without internet cannot answer Q1 and Q3. Give the lookups on the page or in the fallback. (4 Nov 2026,
+  Gemini audit D8-2)
 
 ## Tooling and rules
+- `docs/analysis/gemini-audit/` holds Gemini's whole-course audit (4 Nov 2026), unchecked apart from D10-2 and
+  D8-2. Triage it against the files and Claude's pattern audit: its top ten are in `README.md` section 2. Its line
+  numbers can be off (D3-2 cites 01-EF:571; the diagram is at :177). (4 Nov 2026, Gemini audit run)
 
 ## Notion and documents
