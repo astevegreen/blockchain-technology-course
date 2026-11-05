@@ -40,8 +40,6 @@ slide index), which is never listed here.
   DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
   :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
   (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
-- `01-CM-*.qmd:364` and `:376` call the bridge case "day 6"; bridges are taught on day 4 (`08-EF-*.qmd:179`).
-  (4 Nov 2026, week-1 pattern audit)
 - `02-IN-*.qmd:641` files "balance" under what the chain records with no "on Bitcoin", against `:309`'s account
   balance. (4 Nov 2026, week-1 assessments audit)
 - Speaker notes still say "memo", wording the 30 Oct direction retired: `04-CP-*.qmd:254`, `01-CM-*.qmd:456`, `:470`,
@@ -58,9 +56,6 @@ slide index), which is never listed here.
   keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
   key once the pair is known. Also `:65`: say the letters label the keys and a sorted script orders them by key
   bytes (lab answers `wallet/quizes/INSTRUCTOR_ANSWERS.md:95-96`). (4 Nov 2026, Gemini audit D2-2, D2-5)
-- `lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd` has two slides
-  taller than the 700 px slide, so they scroll: "A stale block is routine, not an attack" (709 px) and "Proof of stake
-  finalizes by a two-thirds vote" (706 px). Trim a line from each. (4 Nov 2026, slide-fit sweep at 1280x800)
 - `lessons/introduction/01-IN-course_welcome.qmd:33`, `:154`, `:171`, `:353` give the welcome 35 minutes and lesson ①
   0920; `quizes/run-sheet/RUN_SHEET.md:36-37` gives 30 minutes and 0915, keeping the buffer at `:40`. Move 01-IN to
   the run sheet's times. (4 Nov 2026, Gemini audit D1-5, `docs/analysis/gemini-audit/triage.md`)
