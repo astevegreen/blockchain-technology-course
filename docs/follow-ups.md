@@ -40,7 +40,6 @@ slide index), which is never listed here.
   DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
   :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
   (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
-- Speaker notes carry an internal concept number: `01-PC-*.qmd:497` "concept 49". (4 Nov 2026, week-1 pattern audit)
 - `lessons/forensics/14-FO-fusing_sources.qmd:191` rates a deposit address sweeping into the exchange's own published
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
