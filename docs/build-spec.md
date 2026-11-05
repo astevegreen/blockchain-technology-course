@@ -183,8 +183,8 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   review session, never as evening work; the end of day 10's review session is the last chance (owner: "Once, in
   class time").
 - **Post-test:** about 2 hours on day 10's morning, after the review session; pass mark 70% overall (owner: "70%
-  overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the
-  list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
+  overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026, plus wallets and key custody, concept 50, added 4 Nov 2026 to the
+  post-test only; the list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
   working-skill concepts. No separate minimum on the written items (owner, 30 Oct: "Rubric line, no minimum"):
   every working-skill concept also has a graded lab point. Each written item has an answer key naming what the
   answer must contain; the instructors mark against it over lunch and while the class traces, before the first
@@ -200,12 +200,12 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   | 2 | 0 | 0 | none yet (wallets are a feedback addition), so day 2's lab starts everyone at the worked example |
   | 3 | 2 | 2 | 18 W, 46 W |
   | 4 | 3 | 2 | 6, 10 W, 12 W |
-  | 5 | 5 | 0 | 31, 38, 39, 48, 49 |
+  | 5 | 7 | 0 | 31, 38, 39, 46 (two: the Tron lab gate), 48, 49 |
   | 6 | 9 | 5 | 7 W, 8 W, 20 W, 21, 25, 27, 28 W, 40, 45 W |
   | 7 | 3 | 1 | 9 W, 11, 23 |
   | 8 | 9 | 0 | 13, 14, 15, 16, 17, 19, 22, 24, 47 |
   | 9 | 4 | 1 | 26, 29, 30, 37 W |
-  | All | 42 | 12 | |
+  | All | 44 | 12 | |
 - **Outcome 9** (Course Design section 2) reads: "Explain findings plainly. Tell someone who is not a specialist,
   bottom line first, what the activity is, what the chain shows and what is inferred, how confident the judgement
   is, and what the evidence cannot show." Its evidence is the informal explanation behind each graded point and on

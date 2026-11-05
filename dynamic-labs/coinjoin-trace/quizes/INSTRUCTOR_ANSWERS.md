@@ -25,7 +25,9 @@ how sure (lesson 06-FO, day 7 ①). It is Meets or Not yet.
 
 **Not yet** when the note follows the coin through J3 or the mixer as if the trace continued, names the late mover or
 a withdrawal as the ransom's as a finding, gives High to any link, or gives a percentage. Questions 1 to 11 are
-feedback, not graded; a different confidence with a reason the scale supports is right.
+feedback, not graded; there a different confidence with a reason the scale supports is right. In the graded note the
+fixed words in Meets 2 win: timing alone, a matching amount alone and one unverified label are Low, because the
+scale caps them there, so a note that raises any of them is Not yet, with whatever reason it gives.
 
 Scale used (lesson 02-FO, day 6 ①; lesson 06-FO, day 7 ①): Low is timing, amount or behavior alone, or one
 unverified label. Moderate is one strong line, such as a post-mix co-spend or an address reuse, with a known false

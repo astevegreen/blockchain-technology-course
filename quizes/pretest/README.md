@@ -5,9 +5,12 @@ here, outside `blockchain-course/` and `dynamic-labs/`.
 
 ## How an instructor uses it
 
-Each day's items decide where each student starts that day's lab:
+Each day's gate items decide where each student starts that day's lab:
 
-- A student who gets **every** item for a day right is offered that day's problem.
+- A student who gets **every** gate item for a day right is offered that day's problem. In the week-1 bank the gate
+  items are listed in `metadata.lab_gates` (day 1: q6 alone; day 3: q8, q9; day 4: q10 to q12; day 5: q43, q44); the
+  day's other items are a readiness check the instructor reads, and they do not decide entry. The week-2 bank has no
+  `lab_gates`: every item of a day gates it.
 - Everyone else starts at the worked example.
 - There is no overall cut score. Day 2 has no items, so every student starts day 2's lab at the worked example.
   Day 10 has none either: its final trace has no worked example.
@@ -17,7 +20,7 @@ Multiple-choice items are right or wrong. A written item is right when the answe
 
 ## Files
 
-- `pretest_week1-quiz-bank.json`: days 1-5, 17 items (q1-q17), in the quiz-engine format (`../QUIZ_ENGINE_JSON_SPEC.md`),
+- `pretest_week1-quiz-bank.json`: days 1-5, 19 items (q1-q17, q43, q44), in the quiz-engine format (`../QUIZ_ENGINE_JSON_SPEC.md`),
   with extra fields for the pretest (below).
 - `pretest_week2-quiz-bank.json`: days 6-9, 25 items (q18-q42), in the same format. Pilot A runs week 1 only, so it uses
   the week-1 bank alone.
@@ -27,7 +30,7 @@ The banks sit here rather than in `quiz_json/` for three reasons:
 
 - `quiz_json/` banks are pools that the quiz engine samples at random. The pretest is a fixed form.
 - Written items carry no options, so `verify_single_quiz.py` can't score them.
-- `verify_pretest.py` runs the same option-length rule on each bank's multiple-choice items (12 in week 1, 18 in
+- `verify_pretest.py` runs the same option-length rule on each bank's multiple-choice items (14 in week 1, 18 in
   week 2), and adds the pretest's own checks.
 
 ## Blueprint
@@ -54,6 +57,8 @@ From `docs/build-spec.md`, "Pretest blueprint". Concept numbers are the Notion "
 | 5 | q15 | 39 OFAC sanctions | MC | 05-FO, "The SDN list names some addresses, not all" |
 | 5 | q16 | 48 FATF Travel Rule | MC | 05-FO, "The Travel Rule sends the sender's data along" |
 | 5 | q17 | 49 Permissioned ledgers | MC | 01-PC, "The trace stops at the operator's edge" |
+| 5 | q43 | 46 Stablecoins as a laundering rail | MC | 01-PC, "Energy pays for a USDT move: who staked it?" (Tron lab gate) |
+| 5 | q44 | 46 Stablecoins as a laundering rail | MC | 01-PC, "Tron works like Ethereum, with T-addresses"; "This afternoon: a transfer, a sweep, a freeze" (Tron lab gate) |
 | 6 | q18 | 7 Transaction tracing | W | 02-FO, "Every hop in your trace names its heuristic" |
 | 6 | q19 | 8 Clustering heuristics and tracing patterns (e.g. peel chains) | W | 02-FO, "Co-spending links inputs, unless it's a CoinJoin" |
 | 6 | q20 | 20 Ransomware payments and payment portals | W | 03-FO, "The portal and chat are leads; ask for them" |

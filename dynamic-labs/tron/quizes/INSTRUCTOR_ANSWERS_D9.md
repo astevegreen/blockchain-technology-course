@@ -25,7 +25,8 @@ Meets or Not yet, one retry (as day 8's graded note). The note meets when it has
 1. **The deposit**: says the address is a deposit address, names one deposit transaction (any of
    the 20; the worked example's `a7db8d43…` is fine) and tells it apart from the sweep that
    followed; names Binance as the service up to 5 Oct 2023 with its source, and says the label does
-   not carry, or carries only at low confidence, to the sweeps from 22 Oct.
+   not carry, or carries only at Low, to the sweeps from 22 Oct. "No source found" alone, with no confidence
+   word, does not meet this part.
 2. **The stablecoin**: USDT, issued by Tether; freezable, because the contract has a blacklist
    Tether's owner account controls; the freeze came on 30 Sep 2026, 1,054 days after the window's
    last sweep, and caught 0 USDT at this address.
@@ -34,7 +35,7 @@ Meets or Not yet, one retry (as day 8's graded note). The note meets when it has
 4. **Sources and confidence**: each label with its source and the date read; each judgment with
    a confidence word, no percentages; says what the chain does not show (the account holder).
 
-Not yet: reports the sweep as the deposit; treats OFAC's listing as naming the exchange; calls the
+Not yet: reports the sweep as the deposit; says "no source found" for the later sweeps with no Low, Moderate or High; treats OFAC's listing as naming the exchange; calls the
 freeze timely; gives a typology with no indicator against; any percentage.
 
 ## Names

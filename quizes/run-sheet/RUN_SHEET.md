@@ -12,19 +12,19 @@ repo root. If this sheet and `docs/build-spec.md` disagree, the spec wins; tell 
   `./lab-manager.sh deploy --mode instructor --max-student-capacity 20`. The full options are in
   `dynamic-labs/README.md` (cloud, WiFi, Ethernet LAN). The instructor login is in
   `dynamic-labs/.runtime/instructor-credentials.txt`; sign in at `/instructor/`.
-- Start the quiz engine, which serves every daily quiz, the week-one check and the post-test: `./lab-manager.sh start quiz-engine-v2`
+- Start the quiz engine, which serves every daily quiz, the week-one and week-two checks and the post-test: `./lab-manager.sh start quiz-engine-v2`
   (students open `/quiz/`; `dynamic-labs/quiz-engine-v2/README.md`).
 - If lessons changed since the last image build: `./lab-manager.sh build-images course-site`, then
   `./lab-manager.sh start course-site`.
 - Students take the **pretest** before day 1. The bank and answer keys are in `quizes/pretest/` (`README.md`,
   `pretest_week1-quiz-bank.json`). Mark it before class and write down, for each day, who got every one of that day's
-  items right.
+  gate items right (the readiness items are for the instructor's eye, not for entry).
 - **Lab entry rule** (build spec, "A lab"; set per day by the instructor). At the start of each lab, a student who
-  got every pretest item for that day right is offered the day's problem. Everyone else, and anyone with no pretest,
-  starts at the worked example. A student may always choose the worked example. There is no overall cut score. The
-  bank today holds items for days 1, 3, 4 and 5 only. Day 2 has no items by design. Days 6 to 9 have items in the
-  blueprint (6, 7, 8 and 9) that another session is adding to `quizes/pretest/`; until they land, everyone starts those
-  days' labs at the worked example. Check `quizes/pretest/README.md` for the current list.
+  got every gate item for that day right is offered the day's problem. The week-one bank marks them in `lab_gates`
+  (day 1: q6 alone; day 3: q8, q9; day 4: q10, q11, q12; day 5: q43, q44); a day's other items are a readiness check.
+  Days 6 to 9 are in `pretest_week2-quiz-bank.json` with no `lab_gates`: there every item of the day gates it. Everyone
+  else, and anyone with no pretest, starts at the worked example. A student may always choose the worked example.
+  There is no overall cut score. Day 2 has no items by design.
 
 ## The standard day (days 1 to 9)
 
@@ -56,8 +56,8 @@ students check them in a self-check box, and the answers are in that lab's answe
 
 **Challenge bank** (`quizes/challenge/challenge-bank.md`; `README.md` there says which item fits which topic): from
 day 6 on, after a student explains a graded trace, ask one or two of its questions to test whether they can defend
-each judgment. Items c1, c3 and c4 (day 4) fit a DEX trade, c2, c5 to c7 and c12 a Bitcoin trace, and c7 to c11, c13 and c14 an
-attribution.
+each judgment. Items c1, c3 and c4 (day 4) fit a DEX trade, c2 and c5 to c7 a Bitcoin trace, c15 a mixer trace (day 7), c16 a contract read (day 8), c17 a typology call (day 9),
+and c7, c8, c10, c11, c13 and c14 an attribution.
 
 **Marking graded points** (days 6 to 9): each is Meets or Not yet against the rubric in that lab's answer file. A
 student gets one retry per point after you say what was missing, in lab time or in day 10's review session, never as
@@ -94,7 +94,7 @@ Answers: `dynamic-labs/explorer/quizes/INSTRUCTOR_ANSWERS.md`. Graded point: non
 | ② | Wallet types | `blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd` |
 | ③ | Multi-sig and open-source wallet software | `blockchain-course/lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd` |
 
-The spec names other sources for ①: 01-BF and 03-BF's scripts slides (`blockchain-course/lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.qmd`, `blockchain-course/lessons/bitcoin/03-BF-bitcoin_nodes_and_network.qmd`) and 02-CP's Merkle slides. Check the lesson itself for which slides it carries.
+Teach 02-BF alone for ①: it already absorbed the scripts slides of 01-BF and 03-BF (`docs/build-spec.md`, day 2), and 02-CP's Merkle slides are carried there too. Check the lesson itself for which slides it carries.
 
 Pretest: no day-2 items, so everyone starts at the worked example.
 
@@ -152,7 +152,7 @@ Graded point: none.
 | ② | VASPs and KYC, BSA and FinCEN, OFAC, the Travel Rule | `blockchain-course/lessons/forensics/05-FO-vasps_and_the_rules.qmd` |
 | ③ | Ledgers with a gatekeeper: Tron and USDT on Tron, permissioned ledgers, CBDCs | `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd` (rebuilt to cover the whole slot, Tron and CBDCs included) |
 
-Pretest items: the gate is two Tron items (Energy and bandwidth fees; reading a TRC-20 transfer), not yet in the bank; until they land, everyone starts the Tron lab at the worked example. q13 to q17 are a readiness check for the rules and permissioned ledgers: read them, but they do not decide lab entry.
+Pretest items: the gate is q43 and q44 (Energy and bandwidth fees; reading a TRC-20 transfer). q13 to q17 are a readiness check for the rules and permissioned ledgers: read them, but they do not decide lab entry.
 
 **Lab: Tron snapshot, then the Fabric demo (about 30 minutes, instructor-driven).**
 Tron: `./lab-manager.sh start tron`. Students open `/labs/tron/`; the day-5 query page is `/labs/tron/query/?lab=d5`;
@@ -176,7 +176,7 @@ Graded point: none.
 | ② | Ransomware: the payment and the cash-out | `blockchain-course/lessons/forensics/03-FO-ransomware_payments_colonial.qmd` |
 | ③ | Attribution and confidence | `blockchain-course/lessons/forensics/01-FO-illicit_finance_regulation_case_studies.qmd` |
 
-Pretest items (day 6 in the blueprint): not yet in `quizes/pretest/`; until they land, everyone starts at the worked example.
+Pretest items: q18 to q26 in `quizes/pretest/pretest_week2-quiz-bank.json`; a student offered the day's problem got all nine right.
 
 **Lab: Bitcoin trace.** Start: `./lab-manager.sh start bitcoin-trace`. Students open `/labs/bitcoin-trace/`;
 fallback `/labs/bitcoin-trace/fallback/`. README: `dynamic-labs/bitcoin-trace/README.md`. Answers:
@@ -195,6 +195,8 @@ false positive and a confidence. Rubric: "What the lab grades" in that answer fi
 | ② | Privacy coins: Monero and Zcash | `blockchain-course/lessons/forensics/07-FO-privacy_coins.qmd` |
 | ③ | Cryptojacking | `blockchain-course/lessons/forensics/08-FO-cryptojacking.qmd` |
 
+Pretest items: q27 to q29 in `quizes/pretest/pretest_week2-quiz-bank.json`.
+
 **Lab: CoinJoin and mixer trace.** Start: `./lab-manager.sh start coinjoin-trace`. Students open
 `/labs/coinjoin-trace/`; fallback `/labs/coinjoin-trace/fallback/`. README: `dynamic-labs/coinjoin-trace/README.md`.
 Answers: `dynamic-labs/coinjoin-trace/quizes/INSTRUCTOR_ANSWERS.md`. CTF flags: same file, items a to c.
@@ -211,6 +213,8 @@ sure. Rubric: "What the lab grades" in that answer file.
 | ① | Approvals, wallet drainers, EIP-7702, address poisoning; North Korea introduced through Ronin | `blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd` |
 | ② | Flash loans, reentrancy and oracle manipulation | `blockchain-course/lessons/forensics/10-FO-flash_loans_reentrancy_oracles.qmd` |
 | ③ | Bytecode and decompiling; NFT wash trading | `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd` |
+
+Pretest items: q30 to q38 in `quizes/pretest/pretest_week2-quiz-bank.json`.
 
 **Micro-lab: reading a contract with no source,** linked from 11-FO's "How sure" slide:
 `blockchain-course/assets/labs/ether_evm/index.html`. Static page, nothing to start. Answers:
@@ -234,18 +238,22 @@ grades" in that answer file.
 | ② | AML typologies: ATT&CK, the Diamond Model, AADAPT | `blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd` |
 | ③ | Fusing on-chain findings with other sources | `blockchain-course/lessons/forensics/14-FO-fusing_sources.qmd` |
 
+Pretest items: q39 to q42 in `quizes/pretest/pretest_week2-quiz-bank.json`.
+
 **Lab: Tron stablecoin trace.** Start: `./lab-manager.sh start tron` (the same container as day 5). Students open
 `/labs/tron/lab/d9/`; query page `/labs/tron/query/?lab=d9`; fallback `/labs/tron/fallback/d9/`. README:
 `dynamic-labs/tron/README.md`. Answers: `dynamic-labs/tron/quizes/INSTRUCTOR_ANSWERS_D9.md`. CTF flags: same file,
 near its end ("Flags:").
-**Graded point 4:** the exposure summary (question 15): stablecoin and issuer, freezable or not, the most likely
-AML typology with one indicator for and one against. Rubric: "Marking (question 15)" in that answer file.
+**Graded point 4:** the exposure summary (question 15), all four parts: the deposit address told from its sweep,
+with the exchange label's source and a confidence word for the later sweeps; the stablecoin and issuer, freezable or
+not, and when the freeze came; the most likely AML typology with one indicator for and one against; each label's
+source and date read, each judgment's confidence word, and what the chain does not show. Rubric: "Marking (question 15)" in that answer file.
 
 ---
 
 ## Day 10: Post-test, then a final trace
 
-No new lessons and no daily quiz.
+No new lessons and no daily quiz. The week-two check (`quizes/quiz_json/weektwo_check-quiz-bank.json`, ten items on days 6 to 9, ungraded) opens the review session: about 15 minutes, then discussion of what the class missed.
 
 | Time | Block | Fixed or proposed |
 | --- | --- | --- |

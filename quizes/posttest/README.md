@@ -9,10 +9,11 @@ Passing it earns the day-10 certificate. Spec: `docs/build-spec.md`, "Marking an
 
 ## What it tests
 
-There is one item for each of the 42 in-scope Role Concepts (Notion "Role Concepts", as of 30 Oct 2026). Each item sits on the day that
-teaches its concept.
+There is one item for each of the 42 in-scope Role Concepts (Notion "Role Concepts", as of 30 Oct 2026), plus one for
+wallets and key custody (concept 50, added 4 Nov 2026 on the owner's approval of Gemini finding A-9). That makes 43 items.
+Each item sits on the day that teaches its concept.
 
-- The 30 familiarity concepts get multiple choice.
+- The 31 familiarity concepts get multiple choice.
 - The 12 working-skill concepts (7, 8, 9, 10, 12, 18, 20, 28, 37, 41, 45, 46) get a short written answer.
 - Outcome 9's five-part explanation is item p26 (concept 45).
 - Outcome 7's scenario items (characterizing the activity) are p20, p21, p22, p29, p30, p37, p38, p39, p41 and
@@ -28,12 +29,15 @@ scenario, so check that by eye when you edit an item.
 
 ## Marking
 
-- Each item is worth one point. The pass mark is 70%: 30 of 42. There is no separate minimum on the written items.
+- Each item is worth one point. The pass mark is 70%: 31 of 43 (70% of 43 is 30.1). There is no separate minimum on
+  the written items.
 - Multiple-choice items are marked right or wrong.
 - A written item is right only when the answer states every point in its `answer_key`. Any wording is fine.
   A key point that is missing or wrong scores the item zero.
 - Instructors mark the 12 written items over lunch and while the class runs the final trace. Each written answer
-  is short, so allow about two minutes per answer.
+  is short, so allow about two minutes per answer. Mark the written items only for a student who scores 19 to 30 of
+  the 31 on multiple choice: 31 passes outright, and 18 or fewer cannot reach 31 even with all 12 written right
+  (owner, 4 Nov 2026: "No change" to the pass rule; this only orders the marking).
 - Each item's `explanation` gives the reason behind the answer, for going over the test with students afterwards.
 
 ## Fields beyond the quiz-engine spec
@@ -57,6 +61,7 @@ The quiz engine ignores these fields.
 | 1 | p5 | 5. Distributed network topologies | Multiple choice | `02-IN-blockchain_at_a_glance`: Nodes check a payment before passing it on |
 | 1 | p6 | 41. Block explorers | Written | `02-IN-blockchain_at_a_glance`: An explorer is a node's record, plus extras |
 | 1 | p7 | 42. Direct node queries | Multiple choice | `02-IN-blockchain_at_a_glance`: An explorer is a node's record, plus extras |
+| 2 | p43 | 50. Wallets and key custody | Multiple choice | `05-BF-wallet_types`: An xpub reveals every address, past and future |
 | 3 | p8 | 18. Reading and auditing smart contracts (Solidity, Vyper, Rust) | Written | `04-EF-smart_contracts`: Your Turn: Read the Coin Contract |
 | 3 | p9 | 46. Stablecoins as a laundering rail | Written | `05-EF-digital_assets_tokenization_and_nfts`: Freezable? Which issuer, and how fast? |
 | 4 | p10 | 6. Layer-1 vs Layer-2 networks | Multiple choice | `08-EF-layer2s_and_bridges`: A deposit and a withdrawal touch both chains |

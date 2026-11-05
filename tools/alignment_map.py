@@ -210,6 +210,8 @@ def daily_banks() -> list[tuple[str, int]]:
             out.append((f.name, int(m.group(1))))
     if (QUIZ_JSON / "weekone_check-quiz-bank.json").exists():
         out.append(("weekone_check-quiz-bank.json", 5))
+    if (QUIZ_JSON / "weektwo_check-quiz-bank.json").exists():
+        out.append(("weektwo_check-quiz-bank.json", 10))
     return out
 
 

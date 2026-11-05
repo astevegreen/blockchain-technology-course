@@ -96,16 +96,6 @@ Is that the subject?
 
 **Traces to:** 01-FO "A label is only as good as its source"; 01-FO "Attribution confidence: count kinds of evidence"
 
-## c9 Two tools are one kind of evidence
-
-**Ask:** Two analytics platforms put the address in the same cluster. Is that High?
-
-**Answer points:**
-- No, Moderate: both run clustering heuristics, so they are one kind of evidence.
-- Count kinds of evidence, not labels or tools.
-
-**Traces to:** 01-FO "Attribution confidence: count kinds of evidence"; 01-FO "Platforms run your heuristics at scale"
-
 ## c10 A study's error rate is not your confidence
 
 **Ask:** A study found a 0.044% false-positive rate for change detection, and a platform claimed 99.9% in another
@@ -129,17 +119,6 @@ case. Can you write "99.9% confident" in your assessment?
 
 **Traces to:** 01-FO "A label is only as good as its source"; 05-FO "The SDN list names some addresses, not all"
 
-## c12 A cluster's size is a floor, or an error
-
-**Ask:** The platform's cluster for the service holds 900,000 addresses. Is that every address the service used?
-
-**Answer points:**
-- Not necessarily. A conservative platform leaves addresses out: Reactor missed one of five test deposit
-  addresses, so the count is a floor.
-- A careless one merges too many: change guesses can build a supercluster of about 224 million addresses.
-
-**Traces to:** 01-FO "Platforms run your heuristics at scale"; 01-FO "A model explanation: Bitcoin Fog"
-
 ## c13 No error rate: why trust it?
 
 **Ask:** The platform has no peer review and no known error rate. Why should anyone accept its clustering?
@@ -162,3 +141,43 @@ case. Can you write "99.9% confident" in your assessment?
 - Say what the chain shows and name the service; say what the evidence cannot show.
 
 **Traces to:** 01-FO "The chain shows a service; records show who"; 01-FO "A model explanation: Bitcoin Fog"
+
+## c15 Timing alone does not pair a deposit with a withdrawal
+
+**Ask:** A withdrawal left the mixer pool an hour after the subject's deposit. Is that the subject's money?
+
+**Answer points:**
+- Not on timing alone: timing is behavior, so Low. In a busy pool many withdrawals fit the same hour.
+- A habit gives a stronger line (Moderate): the same address on both sides of the pool, or a direct transfer between
+  the deposit and withdrawal addresses.
+- Timing and matching amounts agreeing are still behavior from the same pool: Moderate at most.
+- The mix is one transaction; the leads are before it and after it.
+
+**Traces to:** 06-FO "User habits link deposit to withdrawal"; 06-FO "Before and after the mix still leak"
+
+## c16 What a code read rests on
+
+**Ask:** The decompiled contract can send every token to one address. How sure are you that is what it does?
+
+**Answer points:**
+- Decompiled code alone is Moderate at best: the tool may be wrong.
+- If the transactions' logs agree that it moved the tokens, Moderate to High; verified source that matches, with the
+  logs agreeing, is High.
+- The code says what can happen; the logs say what did. A function name alone is a lead, not a kind of evidence.
+
+**Traces to:** 11-FO "How sure: what a code read rests on"
+
+## c17 A typology call names the pattern, and each crossing needs its own word
+
+**Ask:** Funds went into a bridge on one chain, and a similar amount appeared on another chain an hour later. Do you
+call it chain-hopping, and how sure are you?
+
+**Answer points:**
+- The shape fits chain-hopping: a deposit to a bridge or swap on one chain, then a matching amount and time on
+  another.
+- The crossing is matched by amount and time, or by the bridge's own records, not by a shared transaction, so record
+  it as its own link with its own confidence word.
+- Two chains are two traces joined by an inference; the typology names the pattern, not who did it or why.
+
+**Traces to:** 12-FO "Chain-hopping: the trail changes ledgers"
+

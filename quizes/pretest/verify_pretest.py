@@ -19,8 +19,11 @@ BLUEPRINT_WEEK1 = {
     2: {},
     3: {18: "working", 46: "working"},
     4: {6: "familiarity", 10: "working", 12: "working"},
-    5: {31: "familiarity", 38: "familiarity", 39: "familiarity", 48: "familiarity", 49: "familiarity"},
+    5: {31: "familiarity", 38: "familiarity", 39: "familiarity", 46: "familiarity", 48: "familiarity",
+        49: "familiarity"},
 }
+# (day, concept order) -> items the bank holds for that concept; the default is one.
+ITEMS_PER_CONCEPT = {(5, 46): 2}  # the two Tron lab-gate items (owner, Q19)
 BLUEPRINT_WEEK2 = {
     6: {7: "working", 8: "working", 20: "working", 21: "familiarity", 25: "familiarity",
         27: "familiarity", 28: "working", 40: "familiarity", 45: "working"},
@@ -70,19 +73,26 @@ def check_bank(bank_path: Path, blueprint: dict, cache: dict[Path, set[str]]) ->
         errors.append("hierarchy does not list every question exactly once")
 
     for day, concepts in blueprint.items():
-        got = {q["concept"]["order"]: q for q in questions if q["day"] == day}
+        items = [q for q in questions if q["day"] == day]
+        got = {q["concept"]["order"]: q for q in items}
+        for order in concepts:
+            n = sum(q["concept"]["order"] == order for q in items)
+            if n != ITEMS_PER_CONCEPT.get((day, order), 1) and order in got:
+                errors.append(f"day {day}: concept {order} has {n} items, expected {ITEMS_PER_CONCEPT.get((day, order), 1)}")
         if set(got) != set(concepts):
             errors.append(f"day {day}: concepts {sorted(got)} != blueprint {sorted(concepts)}")
-        if sorted(bank["metadata"]["days"][str(day)]) != sorted(q["id"] for q in got.values()):
+        if sorted(bank["metadata"]["days"][str(day)]) != sorted(q["id"] for q in items):
             errors.append(f"day {day}: metadata.days does not match the items")
-        for order, skill in concepts.items():
-            q = got.get(order)
-            if not q:
+        for q in items:
+            order, skill = q["concept"]["order"], concepts.get(q["concept"]["order"])
+            if skill is None:
                 continue
             if q["concept"]["skill"] != skill or q["question_type"] != TYPE_FOR_SKILL[skill]:
                 errors.append(f"{q['id']}: concept {order} is {skill}, so it must be {TYPE_FOR_SKILL[skill]}")
-    if len(questions) != sum(len(c) for c in blueprint.values()):
-        errors.append(f"{len(questions)} items; the blueprint has {sum(len(c) for c in blueprint.values())}")
+    expected = sum(len(c) for c in blueprint.values()) + sum(
+        n - 1 for (day, order), n in ITEMS_PER_CONCEPT.items() if order in blueprint.get(day, {}))
+    if len(questions) != expected:
+        errors.append(f"{len(questions)} items; the blueprint has {expected}")
 
     for q in questions:
         if q["question_type"] == "written" and not q.get("answer_key"):

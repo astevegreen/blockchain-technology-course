@@ -21,7 +21,7 @@ ones opened at e764798, not Gemini's; where its lines were wrong, the note says 
 
 ## Assessments and day 10
 
-**A-1: Partly.** The post-test bank has 42 items, 30 multiple-choice and 12 written (p6, p8, p9, p11, p12, p18,
+**A-1: Partly (owner, 4 Nov: "No change"; the written items are marked at lunch only for students scoring 19 to 30 of the 31 multiple-choice items, `quizes/posttest/README.md`).** The post-test bank has 42 items, 30 multiple-choice and 12 written (p6, p8, p9, p11, p12, p18,
 p19, p20, p24, p26, p27, p42). The pass mark is 30 of 42 with no separate minimum on the written items, so a student
 can pass the post-test on multiple choice alone (`quizes/posttest/README.md:31`). But the certificate also needs Meets
 on all four graded week-2 lab points (`quizes/run-sheet/RUN_SHEET.md:255-256`; `docs/build-spec.md:170-191`), and
@@ -35,7 +35,7 @@ instructor-hours" assumes 30 students and more items than the bank has. The run 
 whether marking fits (`RUN_SHEET.md:271-273`). One easing that needs no decision: only a student scoring 18 to 29 on
 multiple choice needs the written items marked to know the result.
 
-**D10-1: Partly.** Gemini read a 45-minute window; the run sheet gives the explanations "as each finishes, until
+**D10-1: Partly (resolved 4 Nov: the class is 16 students with two instructors, so two assessors cover 16 by 1600).** Gemini read a 45-minute window; the run sheet gives the explanations "as each finishes, until
 1600", about five minutes each, two assessors (`RUN_SHEET.md:252-253`; `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:13-15`).
 If every student finishes at 1515, two assessors hear about 18 by 1600. The overrun is real only above about 18
 students, and smaller than Gemini says.
@@ -179,10 +179,10 @@ heaviest is D4-2.
 
 ### Quizzes and the run sheet
 
-- **D2-7: Listed** (Minor). `RUN_SHEET.md:97` points the instructor to 01-BF and 03-BF as sources for ①; 02-BF
+- **D2-7: Listed, fixed in 9eb91dd** (Minor). `RUN_SHEET.md:97` points the instructor to 01-BF and 03-BF as sources for ①; 02-BF
   already carries those slides (`docs/build-spec.md:82`). Archiving the two March files would be a cut, the owner's
   call, so only the run-sheet line is listed.
-- **A-8: Listed** (Minor). `quizes/quiz_json/daily_d6_review_of_day5-quiz-bank.json:225` cites the instructor-only
+- **A-8: Listed, fixed in 9eb91dd** (Minor). `quizes/quiz_json/daily_d6_review_of_day5-quiz-bank.json:225` cites the instructor-only
   `tron/quizes/INSTRUCTOR_ANSWERS.md`; students never see `specific_source`, but rule 4 wants a trace to what was
   taught: the worksheet's worked example (`tron/static/lab/index.html:81-85`).
 
@@ -240,8 +240,8 @@ All 24 read against the pattern each names: 16 match. Changes:
 - **D4-5, D7-1, D9-5: Covered, each with a leftover Listed.** 03-EF's role table (`:1062-1064`) still puts ERC-4337,
   `handleOps`, EntryPoint and the ERC-2771 forwarder on the slide; coinjoin-trace's hints sit apart (`:158`) from
   their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern.
-- **Notes for the sessions that take a Covered row.** A-7: post-test p6's key still says "Observed"
-  (`quizes/posttest/posttest_day10-quiz-bank.json:398`), for the C1 session. D8-7: compound confidence words also sit
+- **Notes for the sessions that take a Covered row.** A-7: post-test p6's key said "Observed"
+  (`quizes/posttest/posttest_day10-quiz-bank.json:398`); fixed in e59f56d. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
   `:276` and the 08-FO synthesis `:68`, `:115`. D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
   01-CM have 0 Asks (fixed in f2e82dc, 3815c66). D5-8: week-2 Q3 should name the Tron page if it gets a self-check. D10-7 and A-10: Gemini's
