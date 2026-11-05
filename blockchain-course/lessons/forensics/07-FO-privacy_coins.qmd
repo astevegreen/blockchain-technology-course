@@ -36,7 +36,7 @@ format:
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens day 7's second lesson: coins whose ledgers hide what Bitcoin's shows. It matters here because the afternoon's limits-of-tracing note must say where a trace stops, and a privacy coin is the clearest stop there is. Emphasize "name the coin first", the habit from 04-BF's proof-of-work slide.
+This slide opens day 7's second lesson: coins whose ledgers hide what Bitcoin's shows. It matters here because the afternoon's limits-of-tracing note must say where a trace stops, and a privacy coin is the clearest stop there is. Emphasize "name the coin first": the coin decides which methods apply.
 
 **Key Points**
 - Day 7 ① hid a payment among others; this lesson's coins hide the sender, the receiver or the amount at the protocol level.
@@ -60,7 +60,7 @@ None
 | --- | --- | --- |
 | **Sender** | Ring signature: the real input is signed for among decoys [@koe_zeromonerosecond_2020] | A ring of 16 possible inputs (since Aug 2022) [@monero_networkupgradejuly_2022] |
 | **Receiver** | Stealth address: a new one-time address for each payment [@monero_stealthaddress_2025] | An output key no one else can link to the recipient's address |
-| **Amount** | RingCT: amounts hidden in commitments that still prove no coins were created [@noether_ringsignatureconfidential_2015] | No amount at all |
+| **Amount** | RingCT: each amount is hidden in a Pedersen commitment, a sealed number that still lets nodes check inputs equal outputs plus fee [@noether_ringsignatureconfidential_2015] | No amount at all |
 
 : {tbl-colwidths="[16,44,40]"}
 
@@ -122,7 +122,7 @@ digraph Ring {
     Dn [label="... Output 16"];
   }
   TX [label="Monero tx", shape=ellipse, fillcolor="#ffdddd"];
-  KI [label="Key image\n(spent once)", fillcolor="#FFF5CC"];
+  KI [label="Key image\n(seen twice = refused)", fillcolor="#FFF5CC"];
   Out [label="One-time\noutput key", fillcolor="#E8F5E9"];
   {D1, D2, Real, Dn} -> TX;
   TX -> KI [style=dashed];
@@ -203,7 +203,7 @@ This slide lists the fields an analyst can quote from a Monero transaction. It m
 - **No decoys:** 64.04% of all inputs in the study's data had no decoys at all, so they named the output they spent, like Bitcoin [@moser_empiricalanalysistraceability_2018, sec. 1].
 - **Chain reaction:** those spent outputs then appeared as decoys in other rings and could be struck off. About 62% of inputs with decoys were traceable this way [@moser_empiricalanalysistraceability_2018].
 - **Newest is real:** decoys were drawn unlike real spending, so guessing the newest ring member was right about 80% of the time [@moser_empiricalanalysistraceability_2018].
-- **Fixes since:** RingCT from January 2017, a minimum of 4 decoys from September 2017 [@moser_empiricalanalysistraceability_2018, sec. 3], rings of 16 from August 2022 [@monero_networkupgradejuly_2022].
+- **Fixes since:** RingCT from January 2017, a minimum of 4 decoys (a ring of 5) from September 2017 [@moser_empiricalanalysistraceability_2018, sec. 3], rings of 16 (15 decoys) from August 2022 [@monero_networkupgradejuly_2022].
 - **Analyst move:** these heuristics describe the early Monero the study measured. Do not apply them to a later transaction without a newer study.
 
 ::: {.notes}
@@ -237,7 +237,7 @@ This slide shows that privacy depends on the version in use when a transaction w
 | --- | --- | --- |
 | t → t | Sender, receiver and amount, like Bitcoin | Continues: day 6's heuristics apply |
 | t → z (shielding) | The sending address and the amount going in | Stops at the pool |
-| z → z | That a transaction happened, and its fee | Hidden |
+| z → z | That a transaction happened, and its fee; a zk-SNARK proves it valid and reveals nothing else | Hidden |
 | z → t (deshielding) | The receiving address and the amount coming out | Picks up again |
 
 : {tbl-colwidths="[18,50,32]"}
@@ -278,6 +278,8 @@ This slide sets out Zcash's two pools and the four ways money moves between them
 - **Round trips:** a unique amount shielded, then the same amount deshielded within a few blocks, links the two. That linked 28.5% of all coins ever deposited [@kappos_empiricalanalysisanonymity_2018, sec. 6].
 - **Analyst move:** match a deshielding amount and time to a shielding one. The match is a lead, not a link: amount and timing alone are Low.
 
+**Ask:** 12.34567891 ZEC is shielded at block 100, and the same amount deshielded at block 104. What do you write?
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -291,7 +293,7 @@ This slide shows how optional privacy is weakened by how people use it. It matte
 
 **Walkthrough**
 1. Read the three findings in order.
-2. Ask: 12.34567891 ZEC shielded at block 100, and the same amount deshielded at block 104. What do you write? (A lead: amount and timing match. Low.)
+2. Ask the slide's question. (A lead: amount and timing match. Low.)
 
 **Sources**
 - @kappos_empiricalanalysisanonymity_2018 (sec. 1, 4.1, 6; data to 21 Jan 2018)
@@ -345,6 +347,7 @@ This slide moves the trace from the hidden chain to the transparent chains on ei
 **Walkthrough**
 1. Left to right in the diagram: visible in, hidden middle, visible out.
 2. Ask: 1.2 BTC into a swap at 10:00, 1.19 BTC out of the same swap at 10:40 to a new address. What do you write? (The trace stops at the swap; the 10:40 payout is a lead, Low: only amount and timing match.)
+3. Likely question: "Can commercial tools trace Monero?" (Vendors have announced tools, such as CipherTrace in 2020; treat a vendor's result as a lead and ask what evidence it rests on.)
 
 **Sources**
 - @koe_zeromonerosecond_2020
@@ -385,6 +388,7 @@ This slide explains view keys, the one way the hidden part of a privacy coin can
 **Walkthrough**
 1. Read the Monero row, then the two Zcash rows.
 2. Ask: you have a Monero view key and see 40 XMR arrive. Can you say the wallet holds 40 XMR? (No: spends do not show reliably.)
+3. Likely question: "How would we get a view key?" (From a holder, an exchange or a seized wallet; how is legal process, outside this course. The analyst's part is saying what the key shows.)
 
 **Sources**
 - @monero_viewkey_2026
@@ -395,14 +399,14 @@ This slide explains view keys, the one way the hidden part of a privacy coin can
 
 ## How sure: words for a trail that goes dark {.smaller}
 
-**Bottom line:** "the trace stops" is a finding. Each lead after it carries the course scale's word, never a percentage.
+**Bottom line:** "the trace stops" is a finding. Each lead after it carries the course scale's word, never a percentage. A fact read off the chain takes no word (—).
 
 ::: {style="font-size: .82em;"}
 
 | Finding | Confidence | Why |
 | --- | --- | --- |
-| Funds entered Monero at this swap or exchange | As strong as the evidence for the entry | The transparent leg is on a public chain |
-| Which ring member was spent (today's Monero) | Undetermined | Nothing on chain picks one of the 16 |
+| A payment into a swap, on the transparent chain | — | A fact on a public chain; the swap's label carries its source and date |
+| Which ring member was spent (today's Monero) | — | Undetermined: nothing on chain picks one of the 16 |
 | Old Monero input traced by a published heuristic | Moderate | One strong line; the heuristic has known misses |
 | Zcash round trip (same amount, few blocks) | Low | Amount and timing alone |
 | Swap in matched to swap out | Low | Amount and timing alone |
@@ -418,6 +422,7 @@ This slide explains view keys, the one way the hidden part of a privacy coin can
 This slide applies the course's confidence scale to privacy-coin findings. It matters here because the lab's note rates each lead after the stop. Emphasize "undetermined" as an honest answer, and that High needs a second, independent kind of evidence, such as an exchange record.
 
 **Key Points**
+- The first two rows take no word: one is a fact the chain records, the other is undetermined. Only Low, Moderate and High go in the column.
 - High: two or more independent lines agree and no known failure applies.
 - Moderate: one strong line, or weaker lines that agree, with a known false positive possible.
 - Low: timing, amount or behavior alone, or one unverified label.
@@ -434,7 +439,7 @@ None (the course's confidence scale)
 
 ## A limits-of-tracing note for a Monero hop {.smaller}
 
-**Bottom line:** the lab's product, on a privacy-coin hop: where the trace stops, why, what still shows and how sure. (Invented data.)
+**Bottom line:** the day's lab (the CoinJoin and mixer trace) ends in a limits-of-tracing note; here is one on a privacy-coin hop: where the trace stops, why, what still shows and how sure. (Invented data.)
 
 ::: {style="font-size: .75em;"}
 
@@ -443,7 +448,7 @@ None (the course's confidence scale)
 | 1 | Ransom cluster pays 2.0 BTC to a swap service's deposit address | Continues to the swap | The cluster reached the swap | Moderate |
 | 2 | The swap pays out about 2.0 BTC worth of XMR | **Stops:** Monero hides receiver and amount | The XMR side has no address or amount to quote | — |
 | 3 | Six hours later a swap pays 1.97 BTC to a new address | Lead only | Amount and timing | Low |
-| 4 | That address deposits to an exchange that delisted XMR in 2024 | Lead for the agent | The exchange's records of the depositor | Low |
+| 4 | That address deposits to an exchange | Lead for the agent | The exchange's records of the depositor | Low |
 
 : {tbl-colwidths="[7,33,22,23,15]"}
 
@@ -482,6 +487,8 @@ None (invented example)
 - The edges still show: swaps, exchanges, and delistings with their dates.
 - A view key shows what its type allows; Monero's shows money in, not out.
 
+**Check:** a swap pays out 1.97 BTC six hours after a 2.0 BTC swap into Monero. What word, and what would raise it?
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -495,6 +502,7 @@ This slide summarizes the lesson in seven lines and hands over to the lab. It ma
 
 **Walkthrough**
 1. Ask a student to say each line in their own words.
+2. Ask the Check. (Low: amount and timing alone. A different kind of evidence, such as the same exchange account at both ends, could raise it.)
 
 **Sources**
 None

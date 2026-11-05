@@ -59,6 +59,7 @@ None
 
 - **The definition:** "the unauthorized use or hijacking of another party's resources, such as electricity, hardware, or computing power, to mine cryptocurrency" [@usaoedny_parks_2025].
 - **ATT&CK's name:** Resource Hijacking, T1496 (as of version 2.0, October 2025) [@mitre_resourcehijacking_2025]; the mining case is Compute Hijacking, T1496.001 (as of version 1.0, April 2025) [@mitre_computehijacking_2025].
+- **What ATT&CK is:** MITRE's public catalogue of attacker techniques, each with an ID; day 9 returns to it [@mitre_resourcehijacking_2025].
 
 ::: {style="font-size: .8em;"}
 
@@ -239,7 +240,7 @@ This slide contrasts cryptojacking with ransomware to show why its trace starts 
 | What still shows | Where | What it gives you |
 | --- | --- | --- |
 | **Wallet and pool** | The sample's settings, command line or network traffic, in a malware report [@pastrana_cryptomining_2019] | The wallet to trace |
-| **Pool statistics** | Many pools show "the timestamp of the last share, the current (last) hashrate and the total amount of currency paid to the wallet" [@pastrana_cryptomining_2019] | Earnings and activity, even for Monero |
+| **Pool statistics** (the pool's own page) | Many pools show "the timestamp of the last share, the current (last) hashrate and the total amount of currency paid to the wallet" [@pastrana_cryptomining_2019] | Earnings and activity, even for Monero |
 | **Same wallet, other samples** | Other malware reports | One campaign across many samples [@pastrana_cryptomining_2019] |
 | **Domain aliases** | DNS: an attacker's domain pointing to a known pool [@pastrana_cryptomining_2019] | The real pool behind a disguise |
 
@@ -247,6 +248,7 @@ This slide contrasts cryptojacking with ransomware to show why its trace starts 
 
 :::
 
+- **Terms:** the miner logs in to the pool (Stratum protocol) with the wallet as its login; a *share* is one unit of work it sends; *hashrate* is how fast it works; a *sample* is one copy of the malware.
 - **Pools can act:** two reported wallets were banned in October 2018, and the campaign "decided to move their mining efforts to another pool" [@pastrana_cryptomining_2019].
 - **Analyst move:** quote the pool's figures with the date you read them; they change and some pools show only recent payments [@pastrana_cryptomining_2019].
 
@@ -380,7 +382,7 @@ This slide applies the course's characterization method to cryptojacking: name t
 
 ## How sure: words for cryptojacking findings {.smaller}
 
-**Bottom line:** the typology rests on the malware; the money rests on the pool and the chain. Each finding gets the course scale's word, never a percentage.
+**Bottom line:** the typology rests on the malware; the money rests on the pool and the chain. Each judgment gets Low, Moderate or High, never a percentage; a fact read off the chain or a source's dated figure takes no word (—).
 
 ::: {style="font-size: .82em;"}
 
@@ -388,9 +390,9 @@ This slide applies the course's characterization method to cryptojacking: name t
 | --- | --- | --- |
 | This wallet received this campaign's mining proceeds | Moderate | One strong line: the wallet is in the malware; a donation wallet is a known false positive |
 | Same, and the pool's own logs show that login mining from the victims' machines | High | A different kind of evidence agrees: the pool's records, not the malware |
-| The pool paid the wallet this much | As strong as the pool's page, dated | A pool's own records, not the chain |
-| Which Monero payout went where | Undetermined | Monero hides receiver and amount |
-| Ether payout traced to an exchange deposit | As strong as the trace | Public chain, day 6 methods |
+| The pool paid the wallet this much | — | The pool's own figure: cite it with the date read, not rated |
+| Which Monero payout went where | — | Undetermined: Monero hides receiver and amount |
+| Ether payout reaches an exchange deposit address | — | A fact on a public chain; a label on the deposit carries its source and date |
 | This exchange deposit is the cryptojacker's cash-out | Low | Amount and timing alone |
 
 : {tbl-colwidths="[44,22,34]"}
@@ -406,11 +408,12 @@ This slide applies the course's confidence scale to cryptojacking findings. It m
 - High: two or more independent lines agree and no known failure applies. Independent means a different kind of evidence: more samples of the malware are not, and a pool ban prompted by the same malware report is not either (Pastrana's banned wallets were reported by the researchers).
 - Moderate: one strong line, or weaker lines that agree, with a known false positive possible.
 - Low: timing, amount or behavior alone, or one unverified label.
-- Undetermined: nothing on chain picks an answer.
+- No word (—): a fact read off the chain (the Ether payout reached that address), a source's own figure cited with its date (the pool's total), or a finding nothing on chain can settle (the Monero payout). The confidence column holds only Low, Moderate or High.
 
 **Walkthrough**
 1. Read each finding and ask the class for the word before revealing the column.
 2. Ask: why is the first row not High? (One line, and donation wallets are a known false positive.)
+3. Ask: why does the Ether row take no word, when the last row takes Low? (The payment reaching the address is on the chain; calling the deposit the cryptojacker's cash-out is a judgment.)
 
 **Sources**
 None (the course's confidence scale)
@@ -426,9 +429,9 @@ None (the course's confidence scale)
 | Step | What you see | The trace | Still shows | Confidence |
 | --- | --- | --- | --- | --- |
 | 1 | A malware report names a Monero wallet and a pool | Starts at the wallet | Wallet and pool in the sample | Moderate |
-| 2 | The pool's page shows 310 XMR paid to the wallet, read 31 Oct | Earnings, not a trace | Pool total, dated | Moderate |
+| 2 | The pool's page shows 310 XMR paid to the wallet, read 31 Oct | Earnings, not a trace | Pool total, dated | — (the pool's figure) |
 | 3 | The pool's payouts to the wallet | **Stops:** Monero hides receiver and amount | No address or amount to quote | — |
-| 4 | The same campaign mined Ether; payouts go to an exchange deposit address | Continues to the exchange | The exchange's records of the depositor | Moderate |
+| 4 | A second malware report names an Ether wallet with the same pool login; its payouts go to an exchange deposit address | Continues to the exchange | The exchange's records of the depositor | Moderate |
 
 : {tbl-colwidths="[7,33,22,23,15]"}
 
@@ -443,14 +446,15 @@ This slide models a limits-of-tracing note, the product of the day's CoinJoin an
 
 **Key Points**
 - Step 1: the malware ties the wallet to the intrusion: one strong line, Moderate.
-- Step 2: pool statistics are the pool's records, cited with the date read.
+- Step 2: pool statistics are the pool's records, cited with the date read; a source's figure takes no confidence word.
 - Step 3: the Monero payouts cannot be followed.
-- Step 4: a transparent coin reopens the trail; the exchange's records would be a second line.
+- Step 4: a second report ties an Ether wallet to the same pool login, so it rests on the malware like step 1: Moderate. A transparent coin reopens the trail; the exchange's records would be a second line.
 - The data are invented.
 
 **Walkthrough**
 1. Read each row left to right.
 2. Ask: how would you say step 2 to an agent? ("The pool reports paying this wallet 310 XMR as of 31 October; that is the attacker's earnings, not the victim's loss.")
+3. Likely question: why not rate step 2 Moderate? (It is the pool's own figure; we cite it with its date and let the reader judge the pool.)
 
 **Sources**
 None (invented example)
@@ -479,6 +483,8 @@ This slide summarizes the lesson in six lines and hands over to the day's CoinJo
 
 **Walkthrough**
 1. Ask a student to say each line in their own words.
+2. Check: a malware report names a Monero wallet, and the pool's page shows 40 XMR paid to it, read today. What word does each finding take? (The wallet as the campaign's: Moderate, one strong line. The 40 XMR: no word; the pool's figure, cited with today's date.)
+3. Likely question: can we ever follow the Monero payout? (Not on the chain; the leads are the pool's records, a transparent coin the campaign also mined, or the exchange where it cashed out.)
 
 **Sources**
 None

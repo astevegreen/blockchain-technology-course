@@ -21,13 +21,13 @@ format:
 
 | Question | The answer tells you | Slide |
 | --- | --- | --- |
-| Is this transaction a CoinJoin? | Whether co-spending still means one owner | Many owners; equal outputs |
+| Is this transaction a CoinJoin? | Whether co-spending still means one owner | Many owners; repeated equal amounts |
 | What leaks around a CoinJoin? | Which links survive the mix | Before and after the mix |
 | Is this a mixer? | That a service pooled the coins | A mixer pools coins |
 | Can a deposit be paired with a withdrawal? | Which user habits link the two | User habits |
 | Is this ordinary payment a PayJoin? | Why co-spending can lie with no sign | PayJoin |
-| Is this tiny input a link? | Why dust proves nothing about its sender | Dust |
-| Who still runs coordinators? | What changed in 2024 | Samourai, zkSNACKs |
+| Is this tiny input a link? | Why dust proves nothing about its sender | Dust is bait |
+| Who still runs coordinators? | What changed in 2024 | 2024: Samourai, zkSNACKs |
 
 :::
 
@@ -114,7 +114,7 @@ This slide defines CoinJoin as the known false positive of the co-spend rule. It
 
 :::
 
-## Equal outputs mark a CoinJoin on sight {.smaller}
+## Repeated equal amounts mark a CoinJoin {.smaller}
 
 **Bottom line:** the three main designs each leave a shape you can spot; researchers detected Wasabi 1.x and Samourai CoinJoins with "> 99%" accuracy [@stutz_adoptionprivacycoinjoin_2022].
 
@@ -123,7 +123,7 @@ This slide defines CoinJoin as the known false positive of the co-spend rule. It
 | Design | Shape on the chain | Source |
 | --- | --- | --- |
 | Wasabi 1.x | Many outputs of about 0.1 BTC each, one denomination | [@svenda_coinjoinecosystem_2026, sec. 2.1] |
-| Wasabi 2.x (WabiSabi) | Many inputs and outputs; "arbitrary output denominations" | [@svenda_coinjoinecosystem_2026, sec. 2.1] |
+| Wasabi 2.x (WabiSabi) | Many inputs and outputs; "arbitrary output denominations", so look for amounts that repeat, not one size | [@svenda_coinjoinecosystem_2026, sec. 2.1] |
 | Samourai Whirlpool | 5 inputs by 5 outputs, later up to 8 by 8, all one pool size: 0.001, 0.01, 0.05 or 0.5 BTC | [@svenda_coinjoinecosystem_2026, sec. 2.1] |
 
 : {tbl-colwidths="[22,50,28]"}
@@ -132,7 +132,9 @@ This slide defines CoinJoin as the known false positive of the co-spend rule. It
 
 - **Scale:** these three designs have mixed more than 391,000 BTC since 2018 [@svenda_coinjoinecosystem_2026] (as of 31 Oct 2026).
 - **A coordinator** is the server that gathers users into each round; the coordinator is what 2024's enforcement ended (later slide).
-- **For the analyst:** many equal outputs in one transaction is a CoinJoin until shown otherwise.
+- **For the analyst:** many outputs of one repeated amount in one transaction is a CoinJoin until shown otherwise.
+
+**Ask:** one input of a Whirlpool round is in your ransom cluster. Which output is the ransom's now?
 
 ::: {.notes}
 
@@ -141,14 +143,15 @@ This slide shows that CoinJoins are easy to recognize: their equal outputs are t
 
 **Key Points**
 - Wasabi 1.x: one denomination of about 0.1 BTC.
-- Wasabi 2.x: WabiSabi allows many denominations, so look for many inputs and outputs with repeated amounts.
+- Wasabi 2.x: WabiSabi allows many denominations, so there is no single size; the tell is many inputs and outputs with several amounts each repeated. The title says "repeated equal amounts" for that reason.
 - Whirlpool: small fixed pools (5x5, later 8x8) at 0.001, 0.01, 0.05 or 0.5 BTC.
 - Stütz et al. detected 30,251 Wasabi and 223,597 Samourai CoinJoins with highly accurate (> 99%) algorithms.
 - Svenda et al. count more than 391,000 BTC mixed by the three designs since 2018.
 
 **Walkthrough**
 1. Draw a Whirlpool round: five inputs, five outputs of 0.01.
-2. Ask: one input is in your ransom cluster. Which output is the ransom's now? (Any of five: the anonymity set.)
+2. Ask the slide's question. (Any of five: the anonymity set.)
+3. Likely question: "Can a Wasabi 2.x round hide because its amounts differ?" (It is still spotted by its size and its repeated amounts; Stütz et al.'s > 99% is for 1.x and Samourai.)
 
 **Sources**
 - @stutz_adoptionprivacycoinjoin_2022
@@ -200,6 +203,8 @@ This slide shows where CoinJoin users give themselves away: before the mix, afte
 :::
 ::: {.column width="45%"}
 
+Nothing on the chain joins A to A': the withdrawals are grey because their owners are unknown.
+
 ```{dot}
 //| echo: false
 //| fig-height: 2.6
@@ -219,7 +224,7 @@ digraph Mixer {
   subgraph cluster_outputs {
     label="Withdrawals";
     style=dashed;
-    NewA [label="A'", fillcolor="#ffdddd"];
+    NewA [label="A'\n(owner unknown)", fillcolor="#eeeeee"];
     NewB [label="B'", fillcolor="#e8f5e9"];
     NewC [label="C'", fillcolor="#e8f5e9"];
   }
@@ -239,7 +244,7 @@ This slide separates a mixer from a CoinJoin: a mixer takes the coins and pays o
 - FinCEN's 2019 guidance (sec. 4.5.1) defines an anonymizing services provider and calls it a money transmitter.
 - Bitcoin Fog (sentenced 12 Nov 2024), Blender.io and Sinbad are Bitcoin mixers; Treasury's release reports that some industry experts believe Sinbad succeeded Blender.io; that is the experts' view, not the reason for the sanction.
 - Tornado Cash is a set of Ethereum contracts; day 5 ② covered its 2022 sanctions and 2025 delisting.
-- Only User A's coloring is known; the diagram is illustrative.
+- Only User A's deposit is known to be illicit; the withdrawals are drawn grey because nothing on the chain says which one is A's. The diagram is illustrative.
 
 **Walkthrough**
 1. Point at A and A': nothing on the chain joins them.
@@ -272,6 +277,8 @@ This slide separates a mixer from a CoinJoin: a mixer takes the coins and pays o
 
 The first three rows are Wang et al.'s heuristics 1, 3 and 5 [@wang_zkpmixers_2023, sec. 7.1]. Timing alone is behavior: Low on the course scale.
 
+**Ask:** timing and matching amounts agree on one pair. Is that High?
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -285,7 +292,7 @@ This slide lists the habits that pair a mixer deposit with a withdrawal. It matt
 
 **Walkthrough**
 1. Read each row; ask which kind of evidence it is.
-2. Ask: timing and matching amounts agree. High? (No: both are behavior from the same pool; Moderate at most.)
+2. Ask the slide's question. (No: both are behavior from the same pool; Moderate at most.)
 
 **Sources**
 - @wang_zkpmixers_2023
@@ -313,6 +320,7 @@ This slide introduces PayJoin, a two-party CoinJoin that looks like an ordinary 
 
 **Walkthrough**
 1. Draw a payment: two inputs, a payment output and change. Ask: one owner? (Probably; a PayJoin would make it two.)
+2. Likely question: "How would I spot a PayJoin?" (Often you cannot from the chain: by design it looks like a payment. That is why co-spending stays Moderate.)
 
 **Sources**
 - @dorier_bip78payjoin_2019
@@ -378,6 +386,42 @@ This slide brings the CoinJoin story up to date: the two big coordinators ended 
 
 :::
 
+## From two raw transactions to the note's first rows {.smaller}
+
+**Bottom line:** read the explorer, name the shape, then write the row. (Invented data, the same case as the next slide.)
+
+```text
+T7    in:  R3 (ransom cluster)  0.5003
+      out: 0  0.1   1  0.1   2  0.1   3  0.1   4  0.1      fee 0.0003
+J1    in:  50 inputs of 0.1 (five are T7's outputs 0-4)
+      out: 50 outputs of 0.1                               fee paid from extra inputs
+```
+
+1. **`T7`:** one ransom input splits into five equal pool-sized outputs, spent from the cluster: a pre-mix. The trace continues; the cluster's Moderate carries.
+2. **`J1`:** 50 outputs of one repeated amount, and T7's five outputs among its inputs: a CoinJoin.
+3. **Which five outputs are the ransom's?** Nothing in `J1` pairs an input with an output, so the trace stops: anonymity set 50, which five undetermined. A stop is a fact, so no confidence word.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide derives the first two rows of the next slide's note from raw explorer output. It matters here because the lab asks students to do exactly this: read a transaction, name its shape and write a row. Emphasize the order: what the explorer shows, which rule it matches, then the row.
+
+**Key Points**
+- `T7` is the pre-mix: Whirlpool splits a fresh input into pool-sized outputs in a TX0 (earlier slide); here it spends from the ransom cluster, so it is still the ransom's money.
+- `J1`'s 50 equal outputs are the CoinJoin shape; finding T7's five outputs among its inputs is what ties the CoinJoin to this trace.
+- The stop row has no confidence word: that the CoinJoin breaks the link is what the chain shows, not a judgment.
+- The fee detail is simplified; real rounds charge fees in their own ways.
+
+**Walkthrough**
+1. Read `T7` aloud: one input, five equal outputs. Ask: what shape? (A pre-mix split.)
+2. Read `J1`: ask which of its outputs is the ransom's. (Undetermined: any five of 50.)
+3. Point ahead: these are rows 1 and 2 of the next slide.
+
+**Sources**
+- @svenda_coinjoinecosystem_2026
+
+:::
+
 ## A limits-of-tracing note: where it stops {.smaller}
 
 **Bottom line:** your lab product looks like this: where the trace stops, why, what still shows and how sure. (Invented data.)
@@ -403,6 +447,7 @@ The note ends at the first service, or at the stop, with the leads that remain.
 This slide models the lab's limits-of-tracing note on invented data. It matters here because students see the finished product before they build one. Emphasize that "undetermined" is an answer, and that each lead after the stop carries its own confidence.
 
 **Key Points**
+- Rows 1 and 2 were derived on the previous slide.
 - Step 1 inherits the cluster's Moderate from day 6.
 - Step 2 is the stop: the anonymity set is 50 and nothing in the transaction picks one output.
 - Step 3: address reuse is one strong line, Moderate.
@@ -429,6 +474,8 @@ This slide models the lab's limits-of-tracing note on invented data. It matters 
 - Coordinators ended in 2024; the technique did not. Date every claim.
 - The note says where the trace stops, why, what still shows, and how sure.
 
+**Check:** a ransom output enters a 50-output CoinJoin, and one output later pays an address in the ransom cluster. What does your note say?
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -442,6 +489,7 @@ This slide summarizes the lesson in seven lines and hands over to the lab. It ma
 
 **Walkthrough**
 1. Ask a student to say each line in their own words.
+2. Ask the Check. (The trace stops at the CoinJoin: an anonymity set of 50, which output is undetermined. It resumes for the one output by address reuse, Moderate. Other leads, such as timing, are Low.)
 
 **Sources**
 None

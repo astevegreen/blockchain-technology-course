@@ -39,9 +39,6 @@ slide index), which is never listed here.
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
-- `07-FO-*.qmd:446` sends a BTC deposit to "an exchange that delisted XMR in 2024": cut the clause. `:437` calls its
-  note "the lab's product, on a privacy-coin hop", but the lab excludes privacy coins; reword as `08-FO:422` was.
-  (4 Nov 2026, Gemini audit D7-3, D7-6, `docs/analysis/gemini-audit/triage.md`)
 - `09-FO-*.qmd:42`'s notes say "nobody reads code today"; say "in this lesson: the day 8 lab reads the Bybit code".
   (4 Nov 2026, Gemini audit D8-8, `docs/analysis/gemini-audit/triage.md`)
 - `09-FO-*.qmd:352` and `:391` show a zero-value transfer "from the victim" and never say how the attacker sends it.
@@ -116,8 +113,8 @@ slide index), which is never listed here.
 
 - `lessons/introduction/02-IN-*.qmd:15` (and 03-IN, 05-IN) declare `slide-level: 3` with only `##` headings, which
   renders content slides centred, against the theme's `center: false`. Set 2 and check in a browser. (4 Nov 2026, Gemini audit D1-7, `docs/analysis/gemini-audit/triage.md`)
-- `tools/pointer_check.py` finds two wrong cross-lesson pointers on today's tree (07-FO:39,
-  13-FO:112; run it for the list), so it is not yet in `tools/check.py`. Once it exits 0, add it to
+- `tools/pointer_check.py` finds a wrong cross-lesson pointer on today's tree (13-FO:112;
+  run it for the list), so it is not yet in `tools/check.py`. Once it exits 0, add it to
   `plan_checks` as a failing check whenever a lesson changes; its "note:" lines stay advice. That change is a rail:
   run `second-look.mjs` and follow the rail audit. (4 Nov 2026, week-1 audit W2 pointer check)
 
