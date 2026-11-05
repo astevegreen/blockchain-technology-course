@@ -39,11 +39,17 @@ to reference that as well so we cover everything."
    staged by the session that ran it but not yet committed. Two of its findings (D10-2, D8-2) are already on the
    follow-ups list. Its material was a snapshot taken before the 4 Nov decision commit changed lessons, so its line
    numbers can be off: every finding is checked against today's files by its quoted text, not its line.
+5. **The plan that joins them**, `docs/analysis/audit-plan.md`: every finding of all three audits in one register,
+   each with a route (Done, Listed, Covered, Owner, Dry run, Verify, Reject), the grounds for rejecting one (R1-R5),
+   the points where Claude and Gemini disagree (C1-C5), and the owner decisions that unblock the rest. Where it and
+   this prompt differ, the plan is newer.
 
 ## First, before any child
 
 1. Ask the owner the 20 week-2 questions, in one message: list each with its recommendation (README.md section 5,
-   shortened to a line each) and ask "Approve all, or name the numbers to change". Record the answer word for word
+   shortened to a line each, with Q4's recommendation revised as `docs/analysis/audit-plan.md` C1 gives it) and ask
+   "Approve all, or name the numbers to change". In a second message ask the plan's two day-10 questions (its
+   section 5, phase 0). Record each answer word for word
    for the briefs and `Requested:` trailers. Do not start sessions 3, 5 or 6 until it arrives; start 1 and 2 meanwhile.
 2. Check Gemini's reports are committed (`git log --oneline -- docs/analysis/gemini-audit/`). If they are still
    uncommitted, ask the owner whether the session that ran Gemini will commit them; never commit or move another
@@ -123,11 +129,12 @@ Model `claude-opus-5-5`, effort `medium`, `use_worktree: false`.
 
 > Gemini audited the whole course adversarially: `docs/analysis/gemini-audit/` (per-scope reports and `README.md`,
 > its synthesis). Claude's audits are `docs/analysis/pattern-audit/week1.md` and `README.md`; open work is on
-> `docs/follow-ups.md`. Write `docs/analysis/gemini-audit/triage.md`, under 200 lines: one row per Gemini finding,
-> marked **covered** (name the week-1 or week-2 pattern, question or follow-up bullet that already has it),
-> **confirmed** (new; you opened the cited text in today's files and it holds; give today's `path:line`), or
-> **rejected** (one line why: it collapses under the strongest reason for the choice, or the text no longer says
-> that). Gemini's lines are from a snapshot before the 4 Nov decision commit: find each by its quoted text. Use
+> `docs/follow-ups.md`. `docs/analysis/audit-plan.md` already routes every Gemini finding (section 4.3) and says how
+> to verify one (section 5, phase 1): open the 37 rows marked **Verify**, and spot-check that the Covered rows really
+> match the pattern named. Extend `docs/analysis/gemini-audit/triage.md` (it holds the top ten): one entry per Verify
+> row, ending **Listed**, **Owner**, **Covered** or **Rejected** (name the plan's ground, R1-R5), with today's
+> `path:line`; then change that row's route in the plan to match. Gemini's lines are from a snapshot before the 4 Nov
+> decision commit: find each by its quoted text. Use
 > `scout` or Explore subagents to check findings in parallel, and look yourself at every finding a subagent rejects
 > or confirms as a Blocker. Group the confirmed ones by file area (week-1 lessons, week-2 lessons, labs, quizzes,
 > tooling). Clear errors go on `docs/follow-ups.md` per its "How to use"; content decisions become questions for the
@@ -207,4 +214,6 @@ Model `claude-opus-5-5`, effort `medium`, `use_worktree: false`.
 > Read `docs/analysis/gemini-audit/triage.md` and act on every confirmed finding no earlier session took (check each
 > against `git log` and the files: sessions 3 to 8 may have fixed it already). Then rerun session 1's pointer check
 > and fix what it still lists. Run `python tools/check.py --all --render` in the background and paste the result.
-> Update the triage so each confirmed row says where it was fixed or why it is still open.
+> Update the triage so each confirmed row says where it was fixed or why it is still open, and close
+> `docs/analysis/audit-plan.md` as its "Close" step says: every row Done, Incorporated or Rejected, or waiting on
+> the dry run.
