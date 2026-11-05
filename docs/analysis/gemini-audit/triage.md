@@ -145,10 +145,10 @@ heaviest is D4-2.
   privacy-coin hop", but the lab puts privacy coins out of scope (coinjoin-trace `INSTRUCTOR_ANSWERS.md:143`).
   `08-FO:422` is already reworded; match it. Fixed in b3940f2.
 - **D8-8: Listed** (Minor). `09-FO-approvals_drainers_poisoning.qmd:42`'s notes say "nobody reads code today"; day 8's
-  lab reads the Bybit code (`cross-chain/static/lab/index.html:120`; `11-FO:38`). Say "in this lesson".
+  lab reads the Bybit code (`cross-chain/static/lab/index.html:120`; `11-FO:38`). Say "in this lesson". Fixed in 5b9153e.
 - **D8-9: Listed** (Minor). `09-FO:352` says the lure goes "from the victim to the look-alike"; neither `:391` nor
   the notes (`:370`) say how an attacker sends from the victim. Source the mechanism (zero-value `transferFrom`)
-  first.
+  first. Fixed in 5b9153e.
 
 ### Labs
 
@@ -243,7 +243,7 @@ All 24 read against the pattern each names: 16 match. Changes:
 - **Notes for the sessions that take a Covered row.** A-7: post-test p6's key said "Observed"
   (`quizes/posttest/posttest_day10-quiz-bank.json:398`); fixed in e59f56d. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
-  `:276` and the 08-FO synthesis `:68`, `:115`. D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
+  `:276` and the 08-FO synthesis `:68`, `:115` (11-FO:305 and the 11-FO bank `:276` fixed in 8d8e44f). D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
   01-CM have 0 Asks (fixed in f2e82dc, 3815c66). D5-8: week-2 Q3 should name the Tron page if it gets a self-check. D10-7 and A-10: Gemini's
   challenge topics (cross-chain timing, freezes, Tron sweeps) go to the owner beside week-2 Q20. D8-5: give
   Gemini's alternative (the micro-lab as the afternoon opener) beside Q14.
