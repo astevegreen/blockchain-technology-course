@@ -99,3 +99,26 @@ e. Account 2 holds all 2,236,067,977,499,789 of the pool's shares (`totalSupply`
    `balanceOf`; this course pool keeps no locked minimum). At block 18 they are worth the whole
    reserves: 100,780.5194 cUSD and 49.625851312092203649 WETH. Account 2 put in 100,000 cUSD and 50
    WETH: the trades left it with more cUSD, less WETH, plus fees.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **In block 11, is Account 4 the trader, or the router?** Account 4, at **High**: block 11 (it
+   signed, the WETH left it, the cUSD reached it) is one line, and block 10's approval of the router
+   is a second, independent one. Without block 10 it is **Moderate**. The router only called the
+   pool and holds nothing; whether Account 4 traded for itself the chain cannot settle (Q5). Slide:
+   `blockchain-course/lessons/ethereum/03-EF-ethereum_network.qmd`, "In the path, or the real party?".
+2. **How far did the swap move the price, and why that far?** From about 2,204.69 to 2,030.81 cUSD
+   per WETH, down about 7.9%; the trader got about 2,109.74. Arithmetic on the reserves the chain
+   records: no confidence word. The trade was large against the pool's reserves, so it got a worse
+   price (Q4). Slides: `blockchain-course/lessons/ethereum/07-EF-liquidity_and_exits.qmd`, "The pool's reserves set its
+   price" and "A bigger trade gets a worse price".
+3. **What kind of bridge is this, and how do you know L2 block 101 completes the L1 deposit?** Lock
+   and mint, at **High**: the cUSD stays in the L1 bridge and bcUSD is minted from the zero address,
+   and the code says the same (Q9). The two halves are linked at **High**: both contracts write
+   deposit number 1 and the same addresses, and the amount and timing agree. Matching by amount or
+   time alone is the trap: deposit 0 is also on the chain (Q7). Slide:
+   `blockchain-course/lessons/ethereum/08-EF-layer2s_and_bridges.qmd`, "Lock-and-mint: the coin waits in a contract".

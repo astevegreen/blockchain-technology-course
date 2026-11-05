@@ -35,7 +35,7 @@ This slide opens day 2 by naming what every transaction read records. It matters
 **Key Points**
 - A trace is a chain of transactions; each hop is read the same way.
 - The fields to record: input script types, outputs and change, fee rate and the replace-by-fee signal, block height and time, and whether the chain starts at a coinbase.
-- Day 1 taught inputs, outputs, fees and confirmations; today adds scripts, fee rate, time and the coinbase.
+- Day 1 taught inputs, outputs, fees and confirmations; today adds scripts, fee rate, time, how a block is mined (proof of work) and the coinbase.
 
 **Walkthrough**
 1. Read the bottom line: one transaction per hop.
@@ -361,6 +361,67 @@ This slide teaches replace-by-fee as the reason an unconfirmed transaction is no
 
 :::
 
+## Mining a Candidate Block {.smaller}
+
+:::: {.columns}
+::: {.column width="60%"}
+**Bottom line:** a miner guesses until its block header's hash falls below the network's target. That guessing is proof of work.
+
+- **What is hashed:** the 80-byte header: the previous block's hash, the Merkle root and "a dedicated nonce field" [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- **The loop:** change the nonce, hash again; "there is no way to modify the data to make the hash number predictable" [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- **Why it costs:** each guess spends "CPU time and electricity" [@nakamoto_bitcoinpeertopeerelectronic_2008]. The target resets each 2,016 blocks to keep blocks about ten minutes apart [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+- **What the analyst reads:** the coinbase, the block's first transaction, which pays the winner the subsidy plus the fees [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
+:::
+::: {.column width="40%"}
+```{dot}
+//| fig-width: 4.5
+//| fig-height: 4.8
+digraph MiningLoop {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=13];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  C [label="Candidate block\ncoinbase + waiting transactions", fillcolor="#fef3c7", color="#f59e0b"];
+  H [label="Hash the header\n(previous hash, Merkle root,\ntime, nonce)", fillcolor="#e0f2fe", color="#38bdf8"];
+  T [label="Hash below\nthe target?", shape=diamond, fillcolor="#f8fafc"];
+  N [label="Change the nonce"];
+  W [label="Broadcast the block:\nthe coinbase pays the miner", fillcolor="#dcfce7", color="#22c55e"];
+
+  C -> H -> T;
+  T -> N [label=" no: almost always"];
+  N -> H;
+  T -> W [label=" yes"];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches proof of work at the level an analyst needs: what the miner hashes, the guess-and-check loop, why it costs real money, and what the analyst reads from a mined block. It matters here because day 1 named the coinbase and the header's link to the block before; this slide shows how a block is won, and the next one reads what the winner is paid. Emphasize that the nonce and the hash are the miner's lottery ticket: the analyst reads the coinbase, not the nonce.
+
+**Key Points**
+- The miner hashes the 80-byte header, not the whole block; the Merkle root in the header commits to the transactions (two slides on).
+- The miner changes the nonce and hashes again until the hash is no higher than the target. No one can predict which nonce works, so the only way is to try.
+- The cost is computing time and electricity. That cost is why rewriting an old block is hard: its work, and the work of every block after it, would have to be redone.
+- Every 2,016 blocks the network adjusts the target so that 2,016 blocks take about two weeks (1,209,600 seconds), about ten minutes a block.
+- The winning block's coinbase pays the miner the subsidy plus every fee in the block. That is the analyst's reading; the next slide adds pools.
+
+**Walkthrough**
+1. Start at the candidate block: the miner picks waiting transactions and adds its own coinbase.
+2. Hash the header; compare with the target.
+3. Almost always the answer is no: change the nonce and hash again.
+4. When the hash is low enough, the miner broadcasts the block and its coinbase pays the miner.
+5. Ask: what in a mined block tells an analyst who was paid for it? (The coinbase's outputs; the nonce tells you nothing about anyone.)
+
+**Sources**
+- @bitcoin.orgdevelopers_blockchaindeveloper_2024
+- @nakamoto_bitcoinpeertopeerelectronic_2008
+
+:::
+
 ## Coinbase pays the miner: subsidy plus fees {.smaller}
 
 :::: {.columns}
@@ -386,7 +447,7 @@ This slide teaches replace-by-fee as the reason an unconfirmed transaction is no
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide compresses mining to what an analyst needs: where new coins come from and what a miner is paid. It matters here because a trace backwards can end at a coinbase or a pool payout, and students must recognize both. Emphasize that proof of work was taught on day 1 (lesson ③); here mining matters only as a source of funds and a payer of fees.
+This slide compresses mining to what an analyst needs: where new coins come from and what a miner is paid. It matters here because a trace backwards can end at a coinbase or a pool payout, and students must recognize both. Emphasize that the previous slide showed how a block is won (proof of work); here mining matters only as a source of funds and a payer of fees.
 
 **Key Points**
 - The coinbase is the first transaction in every block; it pays the subsidy plus all fees in the block.
@@ -1423,76 +1484,6 @@ None
 **Sources**
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 - @bitcoin.orgdevelopers_blockchaindeveloper_2024
-
-:::
-
-::::
-
-:::: {.content-hidden}
-
-## Mining a Candidate Block
-
-:::: {.columns}
-
-::: {.column width="40%"}
-<div style="font-size: 0.8em; line-height: 1.1;">
-
-- Miners select valid pending transactions for a candidate block.
-- They add a **coinbase transaction** to claim subsidy and fees.
-- They hash the block header, mainly varying the **nonce** and related permitted fields.
-- The goal is a header hash below the current **difficulty target**.
-
-</div>
-:::
-
-::: {.column width="60%"}
-::: {style="font-size: 0.8em;"}
-```{dot}
-//| fig-width: 8.5
-//| fig-height: 5.4
-digraph MiningFlow {
-  graph [rankdir=TB, splines=ortho, nodesep=0.45, ranksep=0.42, bgcolor="transparent"];
-  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
-        fontname="Helvetica", fontsize=12, margin=0.14];
-  edge [color="#94a3b8", penwidth=1.1, arrowsize=0.65, fontname="Helvetica", fontsize=10];
-
-  s1 [label="Users -> Full Nodes\nBroadcast signed transaction"];
-  s2 [label="Full Nodes\nGossip to peers (mempool)", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
-  s3 [label="Miner\nBuild candidate block from mempool\nFind PoW solution (hash < target)", fillcolor="#dbeafe", color="#2563eb", penwidth=2];
-  s4 [label="Miner -> Full Nodes\nBroadcast new block"];
-  s5 [label="Full Nodes\nValidate block & transactions"];
-  s6 [label="Full Nodes -> Miner\nAccept if valid"];
-  s7 [label="Full Nodes -> Users\nConfirmations increase over time"];
-
-  s1 -> s2 [color="#2563eb", penwidth=2];
-  s2 -> s3 [color="#2563eb", penwidth=2];
-  s3 -> s4;
-  s4 -> s5;
-  s5 -> s6;
-  s6 -> s7;
-}
-```
-:::
-:::
-
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the miner's job as assembling a candidate block and searching for a valid proof-of-work over its header. It matters here because here is where transaction inclusion, issuance, and competition for block rewards come together. Emphasize that mining is probabilistic and that miners vary allowed fields to keep generating new candidate headers.
-
-**Key Points**
-- Miners select valid transactions, add a coinbase transaction, and build a candidate block.
-- They search for a header hash below the current difficulty target by varying nonce-related data.
-- Mining joins transaction inclusion, new issuance, and network security in one process.
-
-**Walkthrough**
-None
-
-**Sources**
-- @nakamoto_bitcoinpeertopeerelectronic_2008
-- @bitcoin.orgdevelopers_miningdeveloperguide_2024
 
 :::
 

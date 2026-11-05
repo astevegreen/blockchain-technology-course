@@ -131,12 +131,14 @@ event Approval(address indexed _owner,
 :::
 ::: {.column width="45%"}
 - **`transfer`**: the holder moves their own balance [@vogelsteller_eip20tokenstandard_2015].
-- **`approve`, then `transferFrom`**: the holder lets another address, often a contract, spend up to an allowance for them [@vogelsteller_eip20tokenstandard_2015].
-- **`Transfer` event**: every move writes a log. New tokens SHOULD show as a `Transfer` from address `0x0` [@vogelsteller_eip20tokenstandard_2015].
+- **`approve`, then `transferFrom`**: the holder lets another address, often a contract, spend up to an allowance [@vogelsteller_eip20tokenstandard_2015].
+- **`Transfer` event**: every move writes a log; new tokens SHOULD show as a `Transfer` from `0x0` [@vogelsteller_eip20tokenstandard_2015].
 - One standard lets any wallet or exchange handle any token [@vogelsteller_eip20tokenstandard_2015].
 :::
 
 ::::
+
+**Decimals:** balances are whole numbers of the token's smallest unit, and the optional `decimals()` says where the point goes. USDT uses 6, most ERC-20s 18: divide the raw amount by 10^decimals^ before reading it [@vogelsteller_eip20tokenstandard_2015; @openzeppelin_erc20docs_2026; @etherscan_usdttoken_2026].
 
 **For the analyst:** an approval is standing permission to spend. Wallet drainers abuse it on day 8.
 
@@ -149,16 +151,20 @@ This slide shows the whole ERC-20 interface on one screen. It matters here becau
 - `balanceOf` and `totalSupply` read balances; `transfer` moves the caller's own tokens.
 - `approve` sets an allowance; `transferFrom` lets the approved spender move up to that amount.
 - Every move emits a `Transfer` event; the standard says new tokens SHOULD emit a `Transfer` from `0x0`.
+- `decimals()` is optional in EIP-20 and only tells software how to display a balance: the contract stores and moves whole units. USDT's contract reports 6, so a raw `_value` of 1,500,000 is 1.5 USDT; OpenZeppelin's ERC-20 defaults to 18, the value it says matches Ether and most ERC-20s (OpenZeppelin Contracts 5.x docs, read 4 Nov 2026). Read the token's own `decimals()` rather than assuming.
 - Because the interface is standard, wallets and exchanges can support any token without custom code.
 - Approvals are standing permissions, which is why wallet drainers target them (day 8).
 
 **Walkthrough**
 1. Read the code top to bottom: three read functions (`totalSupply`, `balanceOf`, `allowance`), then the three that move value or permit it (`transfer`, `approve`, `transferFrom`).
 2. Contrast `transfer` (I move mine) with `approve` plus `transferFrom` (you may move mine, up to a limit).
-3. Point at the two events and say the next slide shows where they appear.
+3. Read the `decimals()` bullet and ask: a USDT `Transfer` shows `_value` 1,500,000; how much moved? (Expected answer: 1.5 USDT, because USDT has 6 decimals.) The liquidity lesson needs this to read pool reserves.
+4. Point at the two events and say the next slide shows where they appear.
 
 **Sources**
 - @vogelsteller_eip20tokenstandard_2015
+- @openzeppelin_erc20docs_2026
+- @etherscan_usdttoken_2026
 
 :::
 
@@ -554,12 +560,14 @@ This slide reads the real USDT contract on Ethereum: the blacklist functions, ve
 | --- | --- | --- |
 | `addBlackList(addr)` | An `AddedBlackList(addr)` event from the USDT contract; `isBlackListed(addr)` reads true | The freeze is public and dated by its block |
 | The listed address tries to send | The transaction reverts; the balance stays | The funds sit still |
-| Someone sends USDT **to** it | It succeeds: only the sender is checked | A frozen address can still receive |
-| `destroyBlackFunds(addr)` | A `DestroyedBlackFunds(addr, amount)` event; balance 0; supply falls. **No `Transfer` log** | A tool that sums `Transfer` logs still shows the old balance |
+| Someone sends USDT **to** it | **?** | **?** |
+| `destroyBlackFunds(addr)` | **?** | **?** |
 
 : {tbl-colwidths="[22,42,36]"}
 
 :::
+
+**Your turn:** fill in the last two rows from the code on the previous slide. Does the send succeed? Which logs appear?
 
 **USDC is built differently:** its `transfer` refuses a blacklisted sender **or** receiver, and a separate blacklister role, not the owner, keeps the list. Each listing emits `Blacklisted(addr)` [@circle_fiattokenv1_2026; @circle_blacklistable_2026].
 
@@ -576,9 +584,11 @@ This slide turns the code into what an analyst sees after a freeze. It matters h
 - USDC's `transfer` checks both sides, and a separate blacklister role keeps its list, emitting `Blacklisted`.
 
 **Walkthrough**
-1. Read the table top to bottom as a timeline: listed, stuck, still receiving, destroyed.
-2. Stop on row four and ask what a tool reading only `Transfer` logs would show.
-3. Contrast USDC in one sentence: both sides blocked, a separate role, its own event.
+1. Read rows one and two as the start of a timeline: listed, then stuck.
+2. Give students two minutes with the previous slide's code to fill in rows three and four, then take answers.
+3. Expected answer, row three: the send succeeds, because `transfer` checks only the sender; a frozen address can still receive.
+4. Expected answer, row four: a `DestroyedBlackFunds(addr, amount)` event, the balance set to 0 and the total supply lowered, but **no `Transfer` log**; a tool that sums `Transfer` logs still shows the old balance. Ask what such a tool would report.
+5. Contrast USDC in one sentence: both sides blocked, a separate role, its own event.
 
 **Sources**
 - @tether_tethertokensource_2017
@@ -595,7 +605,7 @@ This slide turns the code into what an analyst sees after a freeze. It matters h
 - **Has the issuer done it before?** As of 23 April 2026, Tether says it has frozen "more than \$4.4 billion in assets" across "more than 2,300 cases", working with "more than 340 law enforcement agencies across 65 countries" [@tether_freeze344m_2026].
 
 ::: {.callout-note appearance="simple"}
-**The analyst flags; the agent acts.** Say what the address holds, in which token and since which block, and with what confidence (High, Moderate, Low). Asking the issuer to freeze is the agent's decision.
+**The analyst flags; the agent acts.** State what the address holds, in which token and since which block: these are read off the chain, so they take no confidence word. A judgment, such as whose address it is, does. Asking the issuer to freeze is the agent's decision.
 :::
 
 ::: {.notes}

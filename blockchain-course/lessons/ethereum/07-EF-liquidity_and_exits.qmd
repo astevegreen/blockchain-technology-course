@@ -55,28 +55,15 @@ This slide opens the liquidity lesson with its one question: can these funds exi
 
 ## A DEX pool is the other side of the trade {.smaller}
 
-:::: {.columns}
+::: {style="font-size: .85em;"}
+**Seen this morning in 03-EF:** a **pool** contract holds reserves of two tokens, and a trader swaps against them through a router, with no person on the other side. This design is an automated market maker (AMM), not an order book; order books come with exchanges on day 5 [@uniswap_howuniswapworks_2026; @adams_uniswapv2core_2020].
 
-::: {.column width="50%"}
-::: {style="font-size: .8em;"}
-**Not an order book**
+**New: who supplies the reserves**
 
-- "Instead of relying on order books, Uniswap is an automated market maker (AMM)" [@uniswap_howuniswapworks_2026].
-- Order books, and the exchanges that run them, are day 5.
-:::
-:::
-
-::: {.column width="50%"}
-::: {style="font-size: .8em;"}
-**Automated market maker (a DEX)**
-
-- A contract holds reserves of two tokens: a **pool**. A trader puts one token in and takes the other out [@adams_uniswapv2core_2020].
 - Anyone can be a **liquidity provider (LP)** by depositing both tokens into the pool [@uniswap_howuniswapworks_2026].
 - In Uniswap v2, the LP receives ERC-20 **LP tokens**, a share of the reserves; burning them takes that share back out [@uniswap_howuniswapworks_2026; @uniswap_v2pair_2020].
+- The next slide shows how the reserves set the price.
 :::
-:::
-
-::::
 
 ::: {.callout-note appearance="simple"}
 **Why it matters:** whoever holds a pool's LP tokens can withdraw its reserves. That is the first fact to find about a small pool.
@@ -85,23 +72,24 @@ This slide opens the liquidity lesson with its one question: can these funds exi
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide replaces the picture of a trade between two people with the picture students will see on-chain: a trader swapping against a contract that holds two tokens. It matters here because every later slide (price, thin markets, rug pulls) follows from the pool's reserves and from who owns them. Emphasize that the LP token is the key to the reserves.
+This slide recalls in one line what 03-EF taught this morning (a trader swaps against a pool contract, through a router) and adds what is new: who puts the reserves there. It matters here because every later slide (price, thin markets, rug pulls) follows from the pool's reserves and from who owns them. Emphasize that the LP token is the key to the reserves.
 
 **Key Points**
-- An AMM prices trades from a pool's reserves, not from an order book; order books come with exchanges on day 5.
-- A pool is a contract holding two tokens; anyone can add both and become a liquidity provider.
+- Recall, not re-teach: 03-EF's "A DEX swaps against a pool, not a person" covered the pool, the router and the AMM; spend seconds here, not minutes.
+- New: anyone can add both tokens to a pool and become a liquidity provider.
 - In Uniswap v2, LPs receive fungible ERC-20 pool tokens; in v3 and v4, each LP picks a price range instead (as of the Uniswap docs read 31 Oct 2026).
 - Burning LP tokens withdraws the provider's share of both reserves.
 - Uniswap is the example because its v2 design is the simplest and most copied; other DEXs differ in detail.
 
 **Walkthrough**
-1. Set the AMM against the order book students meet on day 5: here a contract holds the funds and its reserves set the price.
-2. Define pool, liquidity provider and LP token.
+1. Ask the room what 03-EF showed this morning. (Expected answer: the trader calls a router, the tokens go into a pool contract, and the pool sends the other token out; the counterparty is code.)
+2. Define liquidity provider and LP token, the new terms.
 3. Read the callout: the LP-token holder can empty the pool, which comes back on the rug-pull slide.
 
 **Sources**
 - @uniswap_howuniswapworks_2026
 - @adams_uniswapv2core_2020
+- @uniswap_v2pair_2020
 
 :::
 
@@ -231,11 +219,10 @@ function getReserves() public view returns
 
 ::: {.column width="45%"}
 ::: {style="font-size: .85em;"}
-- **`Swap`**: what went in and what came out, and the address that got the output [@uniswap_v2pair_2020].
-- **`Sync`**: both reserves after the change. Divide one by the other for the new price, after scaling each by its token's `decimals()` (05-EF) [@uniswap_v2pair_2020; @adams_uniswapv2core_2020].
+- **Seen this morning in 03-EF:** `Swap` says what went in, what came out and who got the output; the tokens' own `Transfer` logs (05-EF) show them moving in and out of the pool [@uniswap_v2pair_2020].
+- **New, `Sync`**: both reserves after the change. Divide one by the other for the new price, after scaling each by its token's `decimals()` (05-EF) [@uniswap_v2pair_2020; @adams_uniswapv2core_2020].
 - **`Mint` / `Burn`**: liquidity added or withdrawn [@uniswap_v2pair_2020].
 - **`getReserves()`**: read the reserves at any time [@uniswap_v2pair_2020].
-- The token's own `Transfer` logs (05-EF) show the same tokens moving in and out of the pool.
 :::
 :::
 
@@ -246,7 +233,7 @@ function getReserves() public view returns
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide turns the formula into evidence students can find. It matters here because the afternoon lab asks for the pool's price before and after a swap, and those prices come straight from the reserves in the `Sync` log or from `getReserves()`. Emphasize that the pool writes its own reserves into the log after every change.
+This slide turns the formula into evidence students can find. Students read `Swap` and the `Transfer` logs this morning (03-EF, "Reading a swap"); what is new here is reading the price from `Sync`, plus `Mint`, `Burn` and `getReserves()`. It matters here because the afternoon lab asks for the pool's price before and after a swap, and those prices come straight from the reserves in the `Sync` log or from `getReserves()`. Emphasize that the pool writes its own reserves into the log after every change.
 
 **Key Points**
 - `Swap` records the amounts in and out and the recipient. When a trader goes through a router, `Mint`'s `sender` and often `Swap`'s or `Burn`'s `to` are the router or the next pool, not the person: follow the tokens.
@@ -257,7 +244,7 @@ This slide turns the formula into evidence students can find. It matters here be
 - The reserves are raw integers in each token's smallest unit: scale each by its `decimals()` (WETH 18, USDC 6) before dividing, or an ETH price in USDC comes out wrong by a factor of 10^12.
 
 **Walkthrough**
-1. Point at each event in the code and say what it records.
+1. Recall `Swap` and `Transfer` from 03-EF in one sentence, then point at `Sync`, `Mint`, `Burn` and `getReserves()` and say what each records.
 2. Show how a price comes from `Sync`: reserve1 ÷ reserve0 (or the inverse) for the price of one token in the other.
 3. Connect to the lab: a `Sync` before the swap and a `Sync` after give the price before and after.
 

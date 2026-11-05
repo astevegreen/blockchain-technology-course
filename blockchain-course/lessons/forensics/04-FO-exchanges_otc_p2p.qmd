@@ -201,10 +201,10 @@ This slide shows how a sweep looks on Ethereum: the deposit address forwards wha
 ::: {style="font-size: .8em;"}
 **Why it fools the input heuristic**
 
-- The common-input heuristic says all inputs of a transaction share an owner (02-FO) [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **Preview of day 6:** the common-input heuristic says all inputs of a transaction share an owner. You met it as co-spending on day 2 (Transactions, "Co-spending and change"); day 6 (02-FO) teaches it in full [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 - For a sweep that is true of the keys, and false of the coins: the exchange has "control over addresses but not ownership over Bitcoins" [@sendin_detectingcoldstorage_2018].
 - Applied blindly, "the clients of an exchange are considered as a unique entity" [@sendin_detectingcoldstorage_2018].
-- So: merge the sweep's inputs into the exchange's cluster, never into one customer.
+- So: merge the sweep's inputs into the exchange's **cluster** (a set of addresses the analyst attributes to one controller), never into one customer [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 :::
 :::
 
@@ -213,13 +213,14 @@ This slide shows how a sweep looks on Ethereum: the deposit address forwards wha
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows how a sweep looks on Bitcoin and why it misleads the common-input heuristic. It matters here because day 6 (02-FO) teaches that heuristic, and an exchange sweep is the textbook case where it links the wrong things. Emphasize the difference between who holds the keys and who owns the coins.
+This slide shows how a sweep looks on Bitcoin and why it misleads the common-input heuristic, which it previews: students met the clue as co-spending on day 2 (02-BF, "Co-spending and change: two clues to carry"), and day 6 (02-FO) teaches it in full. It matters here because an exchange sweep is the textbook case where the heuristic links the wrong things. Emphasize the difference between who holds the keys and who owns the coins.
 
 **Key Points**
 - A Bitcoin sweep spends many recent deposits at once into one or two outputs, often cold storage.
 - Sendin's detector looked for many inputs funded recently and few outputs; each exchange sets its own schedule, so the numbers are a guide, not a rule.
 - The 92% and 87% figures come from a 2017 survey, cited in Sendin's 2018 paper.
 - The common-input heuristic links all the inputs to the exchange, correctly; it would be wrong to read them as one customer's coins.
+- Define cluster where it first appears: a set of addresses the analyst attributes to one controller. Day 6 shows how clusters are built; today students need only the word.
 
 **Walkthrough**
 1. Draw a transaction with 60 inputs and 2 outputs; say each input was funded by a different sender in the last few hours.
@@ -277,8 +278,8 @@ This slide explains why the trail breaks at an exchange: what comes out is paid 
 **The heuristic**
 
 - "Multiple addresses that send funds to the same deposit address are highly likely to be controlled by the same entity" [@victor_clustering_2020].
-- The reason: a deposit address belongs to one exchange account.
-- In Victor's data through September 2019, "out of the 3,261,091 addresses that have used a deposit address, 1,446,715 (44.3%) have used the same deposit address with more than one account" [@victor_clustering_2020].
+- The reason: an exchange gives each **customer account** (its own ledger entry for one customer) a deposit address of its own [@victor_clustering_2020].
+- In Victor's data through September 2019, 1,446,715 of the 3,261,091 addresses that used a deposit address (44.3%) shared it with at least one other address [@victor_clustering_2020].
 :::
 :::
 
@@ -287,7 +288,7 @@ This slide explains why the trail breaks at an exchange: what comes out is paid 
 **Where it fails**
 
 - An address that forwards the same amount to an exchange wallet looks like a deposit address, so an adversary can create false links; Victor examined one layer of forwarding only [@victor_clustering_2020].
-- On the XRP Ledger, one exchange address can take payments for many customers; a destination tag says "which customer to credit" [@xrpl_tags_2026]. On Stellar, Kraken, **as of July 2026**, uses "a single Lumens deposit address" for all accounts, told apart by a memo or a muxed address [@kraken_xlmmemo_2026]. Link senders only when the tag, memo or muxed address matches too (inference).
+- Some chains let one deposit address serve every customer: a **destination tag** (XRP Ledger) or a **memo** or **muxed address** (Stellar) rides with the payment and says "which customer to credit" [@xrpl_tags_2026; @kraken_xlmmemo_2026]. Kraken, **as of July 2026**, uses "a single Lumens deposit address" for all its customers [@kraken_xlmmemo_2026]. Link senders only when the tag, memo or muxed address matches too (inference).
 - A label is stronger than a pattern: confirm that the destination belongs to an exchange before calling anything a deposit address.
 - Say it with a confidence: "Moderate confidence that addresses A and B are controlled by one entity: both sent to deposit address D, which forwards to an address labelled as exchange X."
 :::
@@ -301,10 +302,10 @@ This slide explains why the trail breaks at an exchange: what comes out is paid 
 This slide gives the deposit-address heuristic: senders who share a deposit address are likely one entity. It matters here because it is one of the few Ethereum heuristics that links addresses across a whole account, and the day 5 lab reads an exchange deposit and its sweep. Emphasize the limits and the confidence word.
 
 **Key Points**
-- One deposit address means one account, so its senders likely share an owner.
-- In the data through September 2019, 44.3% of addresses that used a deposit address shared it with another; the heuristic links many addresses.
+- One deposit address means one customer account, so its senders likely share an owner. Keep the two meanings of "account" apart: the **customer account** is the exchange's ledger entry; the **address** (an on-chain account on Ethereum) is what the chain shows.
+- In the data through September 2019, 44.3% of addresses that used a deposit address shared it with another address; the heuristic links many addresses.
 - An adversary can fake the pattern by forwarding funds exactly; Victor looked at one layer of forwarding only.
-- On chains with tags or memos (XRP Ledger, Stellar), one exchange address can serve many customers (at Kraken on Stellar, all of them), and the tag or memo names the account. Kraken has also accepted Stellar muxed addresses since December 2022, and with one "a Memo is no longer required". Senders who share that address are many customers, not one; only a shared tag, memo or muxed address would suggest one account, and that is an inference, not a published heuristic.
+- Destination tags belong to the XRP Ledger; memos and muxed addresses belong to Stellar. Exchanges use them so that one shared deposit address can serve many customers (at Kraken on Stellar, all of them), with the tag or memo naming the customer account. The XRP Ledger docs give the reason: on other ledgers it is common to give each customer a different deposit address. Kraken has also accepted Stellar muxed addresses since December 2022, and with one "a Memo is no longer required". Senders who share that address are many customers, not one; only a shared tag, memo or muxed address would suggest one account, and that is an inference, not a published heuristic.
 - A confirmed exchange label on the destination makes the reading stronger than the pattern alone.
 - The confidence words are High, Moderate and Low.
 

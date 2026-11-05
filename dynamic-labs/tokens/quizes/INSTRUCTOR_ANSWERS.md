@@ -158,3 +158,25 @@ the example; a test run with seat 40 the same day got badge 2.
   transaction is sent by the admin, Account 0, calling `upgradeTo` on the proxy. Balances survive
   because they live in the proxy's storage, not in the code contract; the new code reads and
   writes the same storage (though it could then change what any balance does).
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **Where does cUSD's code live, and who can swap it?** At `0x5FbDB…0aa3`, behind the proxy, at
+   **High**: block 2's `Upgraded` log, block 3's `delegatecall` and the ERC-1967 slot read agree.
+   Only the admin, Account 0, can swap it (**High**: the verified source and block 2's sender agree),
+   and a swap changes the rules for every holder at once (Q3). Slide:
+   `blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd`, "Upgradeability and Proxy Patterns".
+2. **How much cUSD does Account 3 hold?** None at block 17, though its `Transfer` logs add up to
+   1,100: block 9's `destroyBlackFunds` wiped the balance and wrote no `Transfer` log. **High**: the
+   contract read and the `DestroyedBlackFunds` log agree. A tool that reads only `Transfer` logs
+   gets this wrong (Q7). Slide: `blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd`, "What
+   a USDT freeze leaves on chain".
+3. **Account 4 was paid 0.5 ETH for its badge. Why does no transaction show it?** The shop's code
+   sent it while running Account 2's `buy` in block 15: an internal transfer, which is not a
+   transaction of its own. **High**: the node's replay, the `Sold` log and `ownerOf(1)` agree
+   (Q10). Slide: `blockchain-course/lessons/ethereum/01-EF-ethereum_intro.qmd`, "Contracts move value the transaction
+   won't show".

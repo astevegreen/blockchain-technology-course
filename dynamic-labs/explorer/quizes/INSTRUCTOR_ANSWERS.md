@@ -157,3 +157,24 @@ If the game is down, deal the card version described on the page.
 
 If the Bitcoin lab will not start, the page's saved output covers questions 1 and 2's shape; do questions
 3 and 4 on the instructor's own screen.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **Block 5 names block 4's hash. What happens to that link if someone edits a transaction in
+   block 4?** Block 4's hash changes, so block 5's parent hash no longer matches and the link breaks,
+   and every later link with it (Q1). A fact read off the chain: no confidence word. Slide:
+   `blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd`, "A blockchain is blocks, each linked to the
+   last".
+2. **Block 3's transfer had 8 confirmations at block 10. Is it final?** Eight is a count read off
+   the chain. On Ethereum it would not be final: finality comes from two-thirds of staked ETH voting
+   for a later checkpoint, about 15 minutes on (as of 23 Oct 2026), not from a count of blocks (Q9).
+   Slides: `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd`,
+   "Each confirmation makes reversal harder" and "Proof of stake finalizes by a two-thirds vote".
+3. **The saved pages call Account 5 "class drop box". Who controls it?** The chain does not say: it
+   records an address, a balance, no code and transactions, never who holds the key (Q10). The label
+   is **Low**: one unverified label. Slide: `blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd`, "An
+   explorer is a node's record, plus extras".

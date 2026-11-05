@@ -11,7 +11,14 @@
   ],
   "metadata": {
     "purpose": "Pretest taken before day 1. An instructor reads one day's items to set each student's entry to that day's lab.",
-    "lab_entry_rule": "A student who gets every item for a day right is offered that day's problem; everyone else starts at the worked example. There is no overall cut score.",
+    "lab_entry_rule": "A student who gets every one of a day's lab_gates items right is offered that day's problem; everyone else starts at the worked example. A day's other items are a readiness check: the instructor reads them, but they do not decide lab entry. There is no overall cut score.",
+    "lab_gates": {
+      "1": ["q6"],
+      "3": ["q8", "q9"],
+      "4": ["q10", "q11", "q12"],
+      "5": []
+    },
+    "lab_gates_note": "Day 1's lab entry turns on q6 alone (owner, assessments audit Q20). Day 5's gate is two Tron items, on Energy and bandwidth fees and on reading a TRC-20 transfer (owner, Q19); until they are in this bank, everyone starts the Tron lab at the worked example, and q13 to q17 stay a readiness check.",
     "blueprint": "docs/build-spec.md, Pretest blueprint (concept numbers are the Role Concepts Order, as of 30 Oct 2026)",
     "question_count": 17,
     "multiple_choice_count": 12,
@@ -286,15 +293,15 @@
       "day": 3,
       "concept": {"order": 46, "name": "Stablecoins as a laundering rail", "skill": "working"},
       "question_type": "written",
-      "question_stem": "Stolen funds were swapped into 400,000 USDT on Ethereum and have sat at one address since block 21,000,000. The case agent asks what this means for the case. Write your answer to the agent, covering: (a) can the funds be frozen where they sit, by whom, and for how long; (b) what happens to USDT sent to the address after a freeze; (c) what your answer states about the holding and how sure you are (High, Moderate or Low); (d) who decides whether to ask for a freeze.",
+      "question_stem": "Stolen funds were swapped into 400,000 USDT on Ethereum and have sat at one address since block 21,000,000. The case agent asks what this means for the case. Write your answer to the agent, covering: (a) can the funds be frozen where they sit, by whom, and for how long; (b) what happens to USDT sent to the address after a freeze; (c) what your answer states about the holding; (d) who decides whether to ask for a freeze.",
       "answer_key": [
         "Freezable in place: USDT has an issuer, Tether, whose key controls a blacklist in the token contract, so the address can be frozen.",
         "Only while the funds stay in USDT: swapped into ETH or a token with no issuer they are out of reach; swapped into another stablecoin or bridged, the question goes to that issuer. The window is the time before the next move.",
         "A frozen address can still receive USDT; it cannot send.",
-        "States the token, the amount, since which block, and a confidence word (High, Moderate or Low).",
+        "States the token, the amount and since which block.",
         "Leaves the freeze request to the agent: the analyst flags, the agent acts."
       ],
-      "explanation": "A blacklist lives in one token's contract, so the funds are freezable only while they sit in that issuer's token. The analyst says what the address holds and how sure they are; asking the issuer is the agent's decision.",
+      "explanation": "A blacklist lives in one token's contract, so the funds are freezable only while they sit in that issuer's token. The analyst says what the address holds: the token, the amount and since which block, read straight off the chain, so they take no confidence word. Asking the issuer is the agent's decision.",
       "difficulty_level": 4,
       "topic": "ethereum",
       "tags": ["pretest", "day-3", "stablecoins", "usdt", "freeze", "laundering", "working-skill"],
@@ -306,6 +313,7 @@
       "sources": [
         {"lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd", "slide": "Freezable? Which issuer, and how fast?"},
         {"lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd", "slide": "What a USDT freeze leaves on chain"},
+        {"lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd", "slide": "Tether's blacklist: three owner-only functions"},
         {"lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd", "slide": "The issuer sits above an open network"},
         {"lesson": "blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd", "slide": "Stablecoins carry most illicit volume"}
       ],
@@ -345,9 +353,12 @@
       "question_stem": "50 ETH goes into a bridge contract on Ethereum. Forty minutes later, 50 wrapped ETH is minted to a new address on another chain. (a) What kind of bridge is this, and what actually crossed? (b) How do you link the two sides? (c) Who could have stopped or frozen the funds? (d) Does wrapping hide the funds from a trace?",
       "answer_key": [
         "Lock-and-mint: the ETH is locked in the bridge contract on Ethereum and a wrapped copy is minted on the other chain; a claim crossed, not the coin.",
-        "Link the lock and the mint by amount, time and the bridge's own event.",
+        "Link the lock and the mint by amount (50 ETH locked, 50 wrapped ETH minted).",
+        "Link them by time (the mint forty minutes after the lock).",
+        "Link them by the bridge's own event.",
         "Wrapping does not hide the funds: the wrapped token is on a public ledger.",
-        "The bridge's operators can pause it; a token issuer can freeze its token on either side (none for ETH itself)."
+        "The bridge's operators can pause the bridge.",
+        "A token issuer can freeze its token on either side; ETH itself has no issuer to freeze it."
       ],
       "explanation": "A bridge moves a claim, not the coin. For lock-and-mint the evidence is the lock on chain A and the mint on chain B; the question to answer is who could have stopped it. By contrast, a liquidity or intents bridge pays from a relayer's own funds and usually no one can freeze.",
       "difficulty_level": 4,
@@ -373,8 +384,13 @@
       "question_stem": "A wallet sends 1,000,000 of token X into a Uniswap v2-style pool and receives 4 ETH, in one transaction sent to the Uniswap router. (a) Who was on the other side of the trade? (b) Which logs show the trade, and what do they tell you? (c) The wallet holds 50,000,000 more of token X. What do you check before calling this pool its exit, and could the pool itself freeze the funds?",
       "answer_key": [
         "The other side was the pool contract, not a person: the trader swapped against its reserves, at a price its formula set.",
-        "Logs: Transfer logs show token X going into the pool and ETH (WETH) leaving it; the pool's Swap log shows the amounts in and out and the recipient (to); Sync shows the reserves after the trade. The router is only in the path: follow the output to whoever received it.",
-        "Before calling it an exit, at least: whether the pool is deep enough for 50,000,000 X (reserves from Sync or getReserves, and the price impact); who holds the LP tokens (they can withdraw the reserves); whether token X can be sold or frozen (its code and issuer).",
+        "Transfer logs show token X going into the pool and ETH (WETH) leaving it.",
+        "The pool's Swap log shows the amounts in and out and the recipient (to).",
+        "The pool's Sync log shows the reserves after the trade.",
+        "The router is only in the path: follow the output to whoever received it.",
+        "Check whether the pool is deep enough for 50,000,000 X: its reserves (from Sync or getReserves) and the price impact.",
+        "Check who holds the LP tokens: they can withdraw the reserves.",
+        "Check whether token X can be sold or frozen: its code and its issuer.",
         "The pool itself has no freeze."
       ],
       "explanation": "On a DEX the counterparty is code. A swap leaves token Transfer logs, a Swap log and a Sync log; the router only carries the trade. Whether a pool is an exit turns on its depth against the holding, who holds the LP tokens, and the token itself.",

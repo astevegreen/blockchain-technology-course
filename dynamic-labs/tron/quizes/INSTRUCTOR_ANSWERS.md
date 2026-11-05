@@ -92,3 +92,28 @@ present only, so a later read could differ. Times are UTC.
     0.000001 TRX, each seconds after a deposit or a sweep. The owner did not ask for them (no
     transaction from the address); they say nothing about who controls it, only that someone is
     watching the address's activity. Accept any answer that refuses to attribute from them.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **In the worked example, what do you report, and how sure are you?** The deposit, transaction
+   `d11ff48c…`, not the sweep. `TXLhMx…` is a Binance deposit address at **Moderate**: its sweeps go
+   whole to a wallet Binance publishes, and a third account pays for each, but both lines come from
+   the same sweep transactions and no source names `TXLhMx…` itself (Q5). Slide:
+   `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd`, "Name the deposit, not the sweep".
+2. **For `TY4zRA…`, what changed, and can you name the service?** `TJarPj…` lent the address Energy,
+   so its sweeps burned no TRX: a fact read off the chain. It behaves as a custodial deposit address,
+   at **Moderate** at most and often **Low**, and no service can be named: no source names the
+   address its sweeps go to (Q7, Q9, Q10). Slide:
+   `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd`, "Energy pays for a USDT move:
+   who staked it?".
+3. **What does the chain show about the freeze, and what does it not?** It shows, with no confidence
+   word: the `AddedBlackList` events in block 82,092,618 on 23 Apr 2026, their signer, and both
+   addresses still blacklisted as of block 87,600,650 (read 31 Oct 2026), holding about $344M. Who
+   controls them and why they were frozen come from Tether's statement, the press and the SDN list,
+   not the chain (Q12-Q14). Slides: `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd`,
+   "A freeze is true only as of the read", and `blockchain-course/lessons/forensics/05-FO-vasps_and_the_rules.qmd`, "The SDN
+   list names some addresses, not all".

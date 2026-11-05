@@ -121,3 +121,25 @@ b. The passphrase `TREZOR` gives master fingerprint `b4e3f5ed` and receiving 0
    not wrong: every passphrase opens a valid wallet, and only the right one opens the funded one.
 c. No. The witness holds two signatures and nothing about who made them or where. One person with
    two of the three phrases would produce the same transaction.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **In block 16, which output is Dana's change, judged from the explorer alone?** The 0.00998 BTC
+   output (C0) is change and the shop's 0.06 is the payment, at **Low**: both outputs are new
+   P2WPKH addresses, so only the round amount separates them. The wallet page makes it certain, but
+   that certainty comes from the phrase, off the chain (Q3). Slides:
+   `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "Co-spending and change: two clues to carry", and
+   `blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd`, "What each wallet type leaves the analyst".
+2. **Does the chain tie receiving addresses 0 and 1 to one owner?** Yes, at **Moderate**: block 16
+   spends both, one strong line, and CoinJoin is the known false positive. Change address 0 with
+   them is **Low**, because it rests on the change call in question 1 (Q4). Slide:
+   `blockchain-course/lessons/bitcoin/02-BF-transactions_and_mining.qmd`, "Co-spending and change: two clues to carry".
+3. **Is Dana's wallet linked to the treasury?** Not on the chain: no transaction moves coins between
+   them or spends from both, and a common payer (the faucet) is not a common owner. Off the chain,
+   yes: Dana's master fingerprint (`73c5da0a`) equals key A's, so one seed holds both, and
+   fingerprints never appear in a transaction (Q12). Slide:
+   `blockchain-course/lessons/bitcoin/05-BF-wallet_types.qmd`, "One seed grows a whole tree of keys".

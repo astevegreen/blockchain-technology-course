@@ -74,13 +74,14 @@ evening work. The certificate needs Meets on all four points by the end of day 1
 | ② | Keys, signatures and addresses (the lesson already opens with the hash-property slides) | `blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd` |
 | ③ | How a public ledger agrees and when it is final | `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd` |
 
-Pretest items for the day's lab entry: q1 to q7 in `quizes/pretest/pretest_week1-quiz-bank.json`.
+Pretest item for the day's lab entry: q6 alone (the explorer reading) in `quizes/pretest/pretest_week1-quiz-bank.json`. q1 to q5 and q7 are a readiness check: read them, but they do not decide lab entry.
 
 **Lab: explorer worksheet, then sign and send a transaction.** Start: `./lab-manager.sh start explorer` (from
 `dynamic-labs/`). Students open `/labs/explorer/`. The Insider game and terminal orientation open the lab: also start
 `./lab-manager.sh start exercises` and `./lab-manager.sh start bitcoin` (terminal orientation lives in the Bitcoin
 lab). Details, host names and the fallback: `dynamic-labs/explorer/README.md`.
 Answers: `dynamic-labs/explorer/quizes/INSTRUCTOR_ANSWERS.md`. Graded point: none.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---
 
@@ -100,6 +101,7 @@ Pretest: no day-2 items, so everyone starts at the worked example.
 **Lab: wallet walkthrough.** Start: `./lab-manager.sh start wallet`. Students open `/labs/wallet/`; the fallback is
 `/labs/wallet/fallback/`. README: `dynamic-labs/wallet/README.md`. Answers:
 `dynamic-labs/wallet/quizes/INSTRUCTOR_ANSWERS.md`. Graded point: none.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---
 
@@ -117,6 +119,7 @@ Pretest items: q8 and q9.
 **Lab: read a token contract, then mint an NFT badge.** Start: `./lab-manager.sh start tokens`. Students open
 `/labs/tokens/`; fallback at `/fallback/` on the lab's own host. README: `dynamic-labs/tokens/README.md`. Answers:
 `dynamic-labs/tokens/quizes/INSTRUCTOR_ANSWERS.md`. Graded point: none.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 **Do not restart this lab before day 10:** a restart reloads the frozen chain and wipes the class's badges and, on
 day 10, the certificates.
 
@@ -136,6 +139,7 @@ Pretest items: q10, q11, q12.
 **Lab: DEX swap, then bridge.** Start: `./lab-manager.sh start dex`. Students open `/labs/dex/`. Restart the whole
 lab, never one chain. README: `dynamic-labs/dex/README.md`. Answers: `dynamic-labs/dex/quizes/INSTRUCTOR_ANSWERS.md`.
 Graded point: none.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---
 
@@ -148,12 +152,13 @@ Graded point: none.
 | ② | VASPs and KYC, BSA and FinCEN, OFAC, the Travel Rule | `blockchain-course/lessons/forensics/05-FO-vasps_and_the_rules.qmd` |
 | ③ | Ledgers with a gatekeeper: Tron and USDT on Tron, permissioned ledgers, CBDCs | `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd` (rebuilt to cover the whole slot, Tron and CBDCs included) |
 
-Pretest items: q13 to q17.
+Pretest items: the gate is two Tron items (Energy and bandwidth fees; reading a TRC-20 transfer), not yet in the bank; until they land, everyone starts the Tron lab at the worked example. q13 to q17 are a readiness check for the rules and permissioned ledgers: read them, but they do not decide lab entry.
 
 **Lab: Tron snapshot, then the Fabric demo (about 30 minutes, instructor-driven).**
 Tron: `./lab-manager.sh start tron`. Students open `/labs/tron/`; the day-5 query page is `/labs/tron/query/?lab=d5`;
 the fallback is `/labs/tron/fallback/`. README: `dynamic-labs/tron/README.md`. Answers:
 `dynamic-labs/tron/quizes/INSTRUCTOR_ANSWERS.md`.
+**Tron debrief:** 10 minutes before the Fabric demo, run from "Debrief (10 minutes)" at the end of the answer file.
 Fabric demo: from `dynamic-labs/`, `./lab-manager.sh deploy --mode instructor --hlf-student-capacity 1`, then
 `./lab-manager.sh start hlf`. Bring it up before class (about 10 minutes, not counted): `deploy` restarts the shared infrastructure, so do not run it while other labs are in use. The beats, the questions
 and the fallback outputs are in `dynamic-labs/hlf/docs/INSTRUCTOR_GUIDE.md`; operations in

@@ -46,8 +46,6 @@ slide index), which is never listed here.
   (`:332`); the limits slide is `:237`. (4 Nov 2026, week-1 pattern audit)
 - `01-CM-*.qmd:364` and `:376` call the bridge case "day 6"; bridges are taught on day 4 (`08-EF-*.qmd:179`).
   (4 Nov 2026, week-1 pattern audit)
-- `07-EF-*.qmd:235` says "decimals() (05-EF)", but 05-EF never mentions decimals; only the tokens lab page
-  (`tokens/.../index.html:125`) teaches them. (4 Nov 2026, week-1 pattern audit)
 - `02-IN-*.qmd:641` files "balance" under what the chain records with no "on Bitcoin", against `:309`'s account
   balance. (4 Nov 2026, week-1 assessments audit)
 - Speaker notes still say "memo", wording the 30 Oct direction retired: `04-CP-*.qmd:254`, `01-CM-*.qmd:456`, `:470`,
@@ -63,6 +61,9 @@ slide index), which is never listed here.
 - `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd:88` and `:184` (notes) say signature order "narrows which
   keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
   key once the pair is known. (4 Nov 2026, Gemini audit D2-2)
+- `lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd` has two slides
+  taller than the 700 px slide, so they scroll: "A stale block is routine, not an attack" (709 px) and "Proof of stake
+  finalizes by a two-thirds vote" (706 px). Trim a line from each. (4 Nov 2026, slide-fit sweep at 1280x800)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
@@ -74,6 +75,16 @@ slide index), which is never listed here.
 - `quizes/run-sheet/RUN_SHEET.md:25` and `:174` say the day 6 to 9 pretest items have not landed, but
   `quizes/pretest/pretest_week2-quiz-bank.json` exists; days 7 to 9 give no pretest items at all. Name each day's
   items, as days 1 to 5 do. (4 Nov 2026, Gemini reading the adversarial-audit prompt)
+- Day 5's lab gate (owner, assessments audit Q19) is two Tron items, drafted in
+  `docs/analysis/pattern-audit/tron-pretest-drafts.json` (Energy and fees; reading a TRC-20 transfer). Adding them
+  needs `BLUEPRINT_WEEK1` in `quizes/pretest/verify_pretest.py` changed, a rail, so it goes through the second look
+  and rail audit; until then `lab_gates["5"]` is empty. (4 Nov 2026, week-1 audit decisions)
+- `quizes/run-sheet/RUN_SHEET.md:22-24` still says a student who got "every pretest item for that day" right gets
+  the problem; the bank now gates on `lab_gates` (day 1 is q6 alone). Reword it, and check `quizes/pretest/README.md`
+  says the same. (4 Nov 2026, week-1 audit decisions)
+- Pretest q12's key (`quizes/pretest/pretest_week1-quiz-bank.json:387`) says the Swap log gives "the recipient (to)";
+  in a swap sent through the router, the pool's `to` is often the router itself. Say so in the key. (4 Nov 2026,
+  week-1 audit decisions)
 
 ## Labs
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
@@ -106,8 +117,13 @@ slide index), which is never listed here.
 - `dynamic-labs/cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory site; a
   class without internet cannot answer Q1 and Q3. Give the lookups on the page or in the fallback. (4 Nov 2026,
   Gemini audit D8-2)
+- Wallet Q11 now asks for "one sentence that states what the witness shows" (owner, audit Q17), but
+  `dex/gateway/static/lab/index.html:142`, `tron/static/lab/index.html:142`, `bitcoin-trace/.../index.html:107` and
+  `coinjoin-trace/.../index.html:114` still ask for a sentence "an agent could read". Match them. (4 Nov 2026,
+  week-1 audit decisions)
 
 ## Tooling and rules
+
 - `docs/analysis/gemini-audit/` holds Gemini's whole-course audit (4 Nov 2026); its top ten are triaged in
   `triage.md`, the rest are not. Triage the day reports' other findings against the files and Claude's pattern audit.
   Its line numbers can be off (D3-2 cites 01-EF:571; the diagram is at :177). (4 Nov 2026, Gemini audit run)

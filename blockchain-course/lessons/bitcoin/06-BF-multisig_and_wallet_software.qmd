@@ -474,44 +474,48 @@ This slide explains what wallet software reveals off chain, to whatever server i
 
 :::
 
-## Reading the lab's 2-of-3 spend {.smaller}
+## Reading a real 2-of-3 spend {.smaller}
 
-**Bottom line:** read the spend field by field, then say what it is in one sentence with a confidence.
+**Bottom line:** read each field, say it in one sentence; only judgments take a confidence word.
 
-| Record | Where to find it |
-| --- | --- |
-| Input script type | The input: P2WSH, P2SH-P2WSH or P2SH |
-| m-of-n and the public keys | The last witness item, or the redeem script |
-| Number of signatures | The items between the dummy and the script: in the witness, or the `scriptSig` for P2SH |
-| Outputs: payment and change | Change often goes back to a multi-sig output of the same type, a clue for day 6 [@frowis_safeguardingevidentialvalue_2020] |
-| What it does not show | Who holds the keys; which program built it |
+| Record | Where to find it | Tx `49383f75…7832` |
+| --- | --- | --- |
+| Input type | P2WSH, P2SH-P2WSH, P2SH | P2WSH, `bc1qnjx7…2dmz` |
+| m-of-n, keys | Last witness item, or redeem script | `OP_2`, 3 keys, `OP_3 OP_CHECKMULTISIG` |
+| Signatures | After the dummy, before the script | Two; the first item is empty |
+| Payment, change | Change often returns to the same multi-sig type [@frowis_safeguardingevidentialvalue_2020] | 296,299 sats to a single-key `bc1q`; 476,346 back to the payer |
 
-: {tbl-colwidths="[35,65]"}
+: {tbl-colwidths="[17,35,48]"}
 
-**Model sentence:** "This transaction spends a P2WSH 2-of-3 multi-sig output; two of its three keys signed (read from the witness). Who holds the keys is not shown on chain."
+Mainnet block 974,528, on mempool.space (as of 4 Nov 2026) [@mempoolspace_transaction49383f75_2026].
+
+**Model sentence:** "This transaction spends a P2WSH 2-of-3 multi-sig output; two of its three keys signed, and 476,346 sats went back to the paying address. Who holds the keys, and which program built it, is not shown on chain."
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide turns the lesson into the checklist students carry into the lab's last step. It matters here because the lab ends with this spend and asks students to recognize it and say what it does and doesn't show. Emphasize the one-sentence explanation: the fact, the confidence and the limit.
+This slide turns the lesson into a checklist and works it once on a real mainnet 2-of-3 spend, so students carry the method, not the answer, into the lab's last step. It matters here because the lab ends with a different 2-of-3 spend and asks students to recognize it and say what it does and doesn't show. Emphasize the one-sentence explanation: the facts read from the chain, stated plainly, then the limit.
 
 **Key Points**
 - The input type tells which wrapper; the script tells m and n.
-- The signatures between the dummy and the script tell how many signed.
-- A change output with the same multi-sig script type as the input is a change clue, carried to day 6.
+- The signatures between the dummy and the script (in the witness, or the `scriptSig` for P2SH) tell how many signed. Here: an empty item, a 71-byte and a 72-byte signature, then the 105-byte witness script.
+- A change output with the same multi-sig script type as the input is a change clue, carried to day 6. Here the clue is as plain as it gets: 476,346 sats returned to the very address that paid, so the same 2-of-3 rule still holds them.
+- Readings straight off the chain (the type, 2 of 3, two signatures, each amount and the address it went to) take no confidence word. Confidence words are for judgments, such as which output is change, who holds the keys, or whether the 296,299 sats paid someone else.
 - State what is not shown, every time.
+- The transaction is real (mainnet, block 974,528, fee 1,500 sats); its holders are unknown, and the slide says nothing about them.
 
 **Walkthrough**
-1. Find the multi-sig input; name its type.
-2. Read the script: m, n, the keys.
-3. Count the signatures.
-4. Read the outputs: which looks like payment, which like change.
-5. Write the model sentence with your own values.
+1. Find the multi-sig input; name its type: P2WSH.
+2. Read the script: `OP_2`, three keys, `OP_3`, `OP_CHECKMULTISIG`.
+3. Count the signatures: two.
+4. Read the outputs. Ask: which is the payment? (The 296,299 sats. The 476,346 went back to the address that paid, the plainest change clue. That the 296,299 went to another person is a judgment, not a reading: a wallet can pay its own address.)
+5. Read the model sentence; in the lab, students write their own for the lab's spend.
 
 **Sources**
 - @lombrozo_bip141segregatedwitness_2015
 - @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
 - @frowis_safeguardingevidentialvalue_2020
+- @mempoolspace_transaction49383f75_2026
 
 :::
 

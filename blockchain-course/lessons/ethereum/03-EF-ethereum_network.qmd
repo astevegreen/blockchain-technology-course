@@ -983,45 +983,65 @@ This slide treats MEV bots as look-alikes: addresses that appear right beside a 
 
 ## Paymasters and relayers pay gas, not the bill {.smaller}
 
-:::: {.columns}
-::: {.column width="50%"}
+```{dot}
+//| echo: false
+//| fig-width: 9
+//| fig-height: 2.6
+digraph AA {
+  graph [rankdir=LR, bgcolor="transparent", nodesep=0.3, ranksep=0.4,
+         fontname="Helvetica", fontsize=10, margin=0];
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=9,
+         height=0.45];
+  edge  [fontname="Helvetica", fontsize=8];
 
-**Account abstraction (ERC-4337)** [@buterin_erc4337accountabstraction_2021]
+  subgraph cluster_eoa {
+    label="Normal transaction: the from is the actor"; style="rounded,dashed";
+    fontname="Helvetica"; fontsize=10;
+    U1 [label="User's key (EOA)\nsigns a transaction", fillcolor="#dbeafe"];
+    C1 [label="Contract", fillcolor="#dcfce7"];
+    U1 -> C1 [label=" from = user;\n user pays gas"];
+  }
 
-- The user signs a **UserOperation**, not a transaction.
-- A **bundler** packs many UserOperations into one transaction calling `handleOps` on the **EntryPoint** contract. The transaction's `from` is the bundler.
-- A **paymaster** is a helper contract that agrees to pay for the operation, instead of the sender.
+  subgraph cluster_aa {
+    label="Smart account: the from is a service"; style="rounded,dashed";
+    fontname="Helvetica"; fontsize=10;
+    U2 [label="User's key\nsigns a UserOperation", fillcolor="#dbeafe"];
+    B  [label="Bundler\n(sends the transaction,\npays the gas)", fillcolor="#fef3c7"];
+    E  [label="EntryPoint\ncontract", fillcolor="#fef3c7"];
+    S  [label="Smart account\n(the actor)", fillcolor="#dbeafe"];
+    C2 [label="Contract", fillcolor="#dcfce7"];
+    PM [label="Paymaster\n(optional: covers the cost)", fillcolor="#fef3c7"];
+    U2 -> B [label=" not a\n transaction", style=dashed];
+    B  -> E [label=" from = bundler"];
+    E  -> S -> C2;
+    PM -> E [label=" pays", style=dashed];
+  }
+}
+```
 
-:::
-::: {.column width="50%"}
-
-**Meta-transactions (ERC-2771)** [@sandford_erc2771securenative_2020]
-
-- The user signs a request and hands it to a **gas relay**, which pays the gas to turn it into a transaction.
-- The relay sends it through a **trusted forwarder**, which adds the signer's address to the end of the call data.
-- The receiving contract treats that appended address, not `msg.sender`, as the caller.
-
-:::
-::::
+- On the smart-account path the user's key never sends a transaction: the bundler's address is the `from`, and the smart account acts inside the call [@buterin_erc4337accountabstraction_2021].
+- A **gas relay** does the same for a plain signed request: it pays the gas, and the receiving contract reads the signer from the call data [@sandford_erc2771securenative_2020].
 
 **What to say:** "The gas was paid by a bundler, paymaster or relay; the actor is the smart account or the signer." The account that paid the gas is a service, not the actor.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide covers two ways a service pays the gas for someone else's action. It matters here because the transaction's `from` is normally the actor, and in these two patterns it is not. Emphasize that the real actor is the smart account named in the UserOperation, or the signer the forwarder appends to the call data.
+This slide sets two paths side by side: a normal transaction, where the `from` is the actor, and a smart-account action, where a service sends the transaction and pays the gas. It matters here because the transaction's `from` is normally the actor, and in these patterns it is not. Emphasize that the real actor is the smart account, or the signer of a relayed request.
 
 **Key Points**
-- ERC-4337: users sign UserOperations; bundlers submit them in one `handleOps` transaction to the EntryPoint, so the bundler is the transaction's `from`.
-- A paymaster pays for a UserOperation instead of its sender.
-- ERC-2771: a gas relay pays gas and sends a signed request through a trusted forwarder, which appends the signer's address.
-- The receiving contract treats the appended signer as the caller.
 - Define account abstraction as letting a smart contract account act as the user's wallet, with its own rules for signing and paying.
+- The smart-account path is ERC-4337. The user signs a UserOperation; a bundler packs many UserOperations into one transaction calling `handleOps` on the EntryPoint contract, so the bundler is the transaction's `from`. The EntryPoint then calls each smart account.
+- A paymaster is a helper contract that agrees to pay for a UserOperation instead of its sender.
+- The relay pattern is ERC-2771 (meta-transactions). The user signs a request; a gas relay pays the gas and sends it through a **trusted forwarder**, which appends the signer's address to the end of the call data. The receiving contract treats that appended address, not `msg.sender`, as the caller.
+- Students need the picture, not the ERC numbers; the numbers are here for the stand-in instructor and for questions.
 
 **Walkthrough**
-1. Left column: the user signs, the bundler submits, the paymaster pays. Ask which address is the actor.
-2. Right column: the user signs, the relay pays, the forwarder appends the signer. Ask the same question.
-3. Read the sentence at the bottom.
+1. Normal path: the user's key signs, the transaction goes to the contract, the `from` is the user. This is every transaction students have read so far.
+2. Smart-account path: the user's key signs a UserOperation (not a transaction), the bundler sends the real transaction to the EntryPoint, which calls the smart account. Ask which address is the actor. (Expected answer: the smart account, not the bundler in the `from` field.)
+3. Point at the paymaster: sometimes neither the user nor the smart account pays.
+4. Read the relay bullet: same lesson, different mechanism. Ask the same question. (Expected answer: the signer appended to the call data.)
+5. Read the sentence at the bottom.
 
 **Sources**
 - @buterin_erc4337accountabstraction_2021
