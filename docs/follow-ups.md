@@ -48,12 +48,6 @@ slide index), which is never listed here.
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
-- `08-EF-*.qmd:580-582`'s Bitget table labels bridges "Issuer's own bridge", "Liquidity and intents", "Cross-chain
-  swap", not the three types of `:414-416`. Relabel through the `source` skill (CCTP is burn-and-mint run by the
-  issuer; THORChain needs a source). (4 Nov 2026, Gemini audit D4-1, `docs/analysis/gemini-audit/triage.md`)
-- `08-EF-*.qmd:285` "a Security Council (at least 75% of it) can still block or forge a message" reads as a power;
-  L2BEAT's Stage 1 principle (forum, 29 Jan 2025) makes it a limit: only ≥75% of the council could block a
-  withdrawal or push a false one. `l2beat.com/stages` now redirects to `ethbeat.org`; check the bib URL. (4 Nov 2026, Gemini audit D4-6, `docs/analysis/gemini-audit/triage.md`)
 - `lessons/forensics/04-FO-*.qmd:291` and its notes (`:308`) never say what a muxed address is: "a Stellar address
   with the customer's ID built in". (4 Nov 2026, Gemini audit D5-7, `docs/analysis/gemini-audit/triage.md`)
 - `05-FO-*.qmd:120` and `:414` file CTRs with SARs as "a pattern someone saw"; a CTR is a cash-threshold filing over

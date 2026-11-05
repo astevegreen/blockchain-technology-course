@@ -149,7 +149,7 @@ This slide shows where a rollup's records sit. Execution happens on the rollup; 
 
 ## One sequencer orders each rollup's trades {.smaller}
 
-- A rollup's **sequencer** collects users' transactions, puts them in order, and posts the batches to Ethereum [@ethereumorg_optimisticrollups_2026].
+- You met the sequencer on day 1 (01-CM): a rollup's **sequencer** collects users' transactions, puts them in order, and posts the batches to Ethereum [@ethereumorg_optimisticrollups_2026].
 - On an optimistic rollup it "is the only entity authorized to submit transactions to the onchain contract" [@ethereumorg_optimisticrollups_2026]. On ZK rollups, too, "in some cases, the operator is a centralized entity" [@ethereumorg_zkrollups_2026].
 - One operator means one party that can delay or refuse a transaction.
 - Some rollups also have councils that can act in an emergency. On 21 April 2026 Arbitrum's Security Council froze 30,766 ETH tied to the Kelp DAO exploit [@arbitrum_kelpfreeze_2026] (as of 31 Oct 2026).
@@ -167,10 +167,10 @@ This slide introduces the sequencer, the single operator that orders a rollup's 
 - Arbitrum's Security Council froze 30,766 ETH after the Kelp DAO exploit in April 2026.
 
 **Walkthrough**
-1. Define the sequencer in one sentence.
+1. Define the sequencer in one sentence, and say students met it on day 1 (01-CM), where Arbitrum's sequencer gave a soft confirmation, "a semi-trusted promise", until Ethereum finalized the batch.
 2. Read the quote: one entity submits the batches.
 3. Tell the Arbitrum freeze briefly; the Kelp exploit itself comes on the message-bridge slide.
-4. Ask students to list who can stop funds so far: issuers (day 3), and now sequencers and councils.
+4. Ask students to list who can stop funds so far. (Expected answer: token issuers such as Tether and Circle (day 3), and now a rollup's sequencer, which can delay or refuse, and its council, which can freeze.)
 
 **Sources**
 - @ethereumorg_optimisticrollups_2026
@@ -250,6 +250,7 @@ This slide separates the two rollup types by one question: how Ethereum comes to
 ::::
 
 - The rollup's own bridge is the **native** bridge. It is a lock-and-mint bridge, the first type on the bridge slides.
+- **Example**: on Ethereum, 1 ETH goes from `0xA1…` to the rollup's bridge contract; on the rollup, 1 ETH arrives at `0xA1…`. Same amount, same owner, two chains.
 - This is what the lab does: one movement, read on each chain.
 
 ::: {.notes}
@@ -265,8 +266,9 @@ This slide lays out the records a native rollup bridge leaves, step by step. It 
 
 **Walkthrough**
 1. Walk the deposit: Ethereum first, rollup second.
-2. Walk the withdrawal: rollup first, a wait, Ethereum last.
-3. Tie it to the lab: students will see each of these records themselves.
+2. Read the example end to end, as the lab will: on Ethereum, the transaction's `from` is `0xA1…`, its `to` is the bridge contract and its value is 1 ETH; on the rollup, 1 ETH reaches `0xA1…`. Ask what joins the two sides. (Expected answer: the bridge contract, the same amount and the same address; the bridge's own records tie the deposit to the credit.) The addresses are made up; the lab's are its own.
+3. Walk the withdrawal: rollup first, a wait, Ethereum last.
+4. Tie it to the lab: students will see each of these records themselves.
 
 **Sources**
 - @ethereumorg_optimisticrollups_2026
@@ -275,14 +277,14 @@ This slide lays out the records a native rollup bridge leaves, step by step. It 
 
 ## L2BEAT stages: who can still change the rules {.smaller}
 
-- **L2BEAT** rates rollups by how far they depend on people rather than code [@l2beat_stages_2026] (as of 31 Oct 2026):
+- **L2BEAT** (renamed ETHBEAT) rates rollups by how far they depend on people rather than code [@l2beat_stages_2026] (as of 4 Nov 2026):
 
 ::: {style="font-size: .85em;"}
 
 | Stage | What it means |
 | --- | --- |
 | Stage 0 | "fully controlled by few entities" |
-| Stage 1 | Mostly code; a Security Council (at least 75% of it) can still block or forge a message to Ethereum |
+| Stage 1 | Mostly code: a message to Ethereum can be blocked or forged only if at least 75% of a Security Council is compromised |
 | Stage 2 | "fully controlled by code" |
 
 :::
@@ -297,7 +299,8 @@ This slide gives students one public reference for judging how much control a ro
 
 **Key Points**
 - L2BEAT's Stages rate rollups from 0 (few entities in control) to 2 (code in control).
-- At Stage 1 a Security Council keeps limited emergency power.
+- At Stage 1 a Security Council keeps limited emergency power: the 75% figure is a limit, not a power. Fewer than 75% of its members cannot block or forge a message.
+- L2BEAT now calls itself ETHBEAT; its page still uses the same stages.
 - Lower stages mean more human power to upgrade, censor or freeze.
 - Ratings change; always note the date read.
 
@@ -522,7 +525,7 @@ This slide covers the bridge type that leaves the weakest link between the two s
 
 **Key Points**
 - Liquidity networks swap rather than mint.
-- Across: deposit on one chain, a relayer pays from its own tokens on the other.
+- Across: deposit on one chain, a relayer pays from its own tokens on the other. Not to be confused with day 3's MEV-Boost relay (03-EF), which passes blocks to validators, or a gas relay, which pays a user's gas; this relayer pays the user.
 - THORChain swaps native coins across chains; atomic swaps use one shared secret.
 - Evidence is two separate transactions; freezing is rarely possible except by a stablecoin issuer.
 
@@ -577,9 +580,9 @@ This slide sets out the Bitget case. The theft happened inside an exchange; no b
 
 | What moved | Through | Bridge type |
 | --- | --- | --- |
-| USDC | Circle's CCTP, to Noble and Solana | Issuer's own bridge |
+| USDC | Circle's CCTP, to Noble and Solana | Burn-and-mint, run by the issuer [@circle_cctp_2026] |
 | ETH | Stargate, Across, deBridge, Relay | Liquidity and intents |
-| Some ETH, plus BNB and XRP | THORChain, mostly into BTC | Cross-chain swap |
+| Some ETH, plus BNB and XRP | THORChain, mostly into BTC | Liquidity: a cross-chain swap |
 
 [@bitquery_bitgethack_2026]
 
@@ -595,18 +598,19 @@ This slide sets out the Bitget case. The theft happened inside an exchange; no b
 This slide shows the bridge types at work in one case. The stolen funds left through several bridges at once, mostly of the liquidity type. It matters here because it shows why freezes failed: most of it crossed as coins that no issuer can freeze. Emphasize the frozen figure against the total.
 
 **Key Points**
-- USDC crossed on Circle's own bridge; most ETH on liquidity bridges; some ETH, BNB and XRP through THORChain.
+- USDC crossed on Circle's own bridge, CCTP, which is burn-and-mint: the first type on the map slide, run by the issuer itself. Most ETH went on liquidity bridges; some ETH, BNB and XRP through THORChain, a cross-chain swap, which is the liquidity type too.
 - Only about $339,000 was frozen, as of 30 September 2026.
 - ETH, BNB and XRP have no issuer, and liquidity bridges hold nothing for long.
 - Naming the type tells the analyst where to look next.
 
 **Walkthrough**
 1. Read the table row by row, naming each type from the map slide.
-2. Read the frozen figure and ask why it is so small.
+2. Read the frozen figure and ask why it is so small. (Expected answer: issuers can freeze only their own stablecoins, and most of the money crossed as ETH and other coins with no issuer, through bridges that hold nothing for long.)
 3. Close: on day 8 students trace a case like this; today they can name the types.
 
 **Sources**
 - @bitquery_bitgethack_2026
+- @circle_cctp_2026
 
 :::
 
@@ -631,7 +635,7 @@ This slide previews the afternoon lab. Students bridge a token and read the reco
 
 **Walkthrough**
 1. Read the steps.
-2. Ask students to predict, for a lock-and-mint bridge, what they will see on each side.
+2. Ask students to predict, for a lock-and-mint bridge, what they will see on each side. (Expected answer: on the first chain, the token sent to the bridge contract; on the second, the same amount minted to the receiving address.)
 
 **Sources**
 None
