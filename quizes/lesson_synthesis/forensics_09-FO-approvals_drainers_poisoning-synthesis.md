@@ -70,7 +70,7 @@ Five of nine validator keys were held by the thief, so the signatures were valid
 
 ## Supporting Details
 
-- The comparison table of four ways out of a wallet: approval, permit, stolen key, wrong recipient.
+- The comparison table of five ways out of a wallet: approval, permit, EIP-7702 delegation, stolen key, wrong recipient.
 - Ronin: one phished employee and a forgotten allowlist.
 - The Lazarus attribution and the sanctioned mixers that handled the funds.
 
@@ -99,7 +99,7 @@ The comparison table and the Ronin case support the point that the chain shows t
 - Target: Reading an approval drain, step by step.
   - Good question shape: why the recipient swaps into a coin the issuer cannot freeze.
   - Avoid: the order of every hop.
-- Target: Four ways out of a wallet look different.
+- Target: Five ways out of a wallet look different.
   - Good question shape: which explanations remain when the owner's own address sent the funds.
   - Avoid: naming the four from memory.
 - Target: EIP-7702 lets a plain account run code.
@@ -148,7 +148,7 @@ Level 3 for mechanisms and what to look for; Level 4 for diagnosis between near-
 - The slide "A permit is an approval signed off chain".
 - The slide "A drainer kit is phishing sold as a service".
 - The slide "Reading an approval drain, step by step".
-- The slide "Four ways out of a wallet look different".
+- The slide "Five ways out of a wallet look different".
 - The slide "EIP-7702 lets a plain account run code".
 - The slide "After 7702, an outflow may not be the owner's".
 - The slide "Address poisoning plants a look-alike in history".

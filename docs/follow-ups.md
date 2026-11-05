@@ -39,10 +39,6 @@ slide index), which is never listed here.
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
-- `09-FO-*.qmd:42`'s notes say "nobody reads code today"; say "in this lesson: the day 8 lab reads the Bybit code".
-  (4 Nov 2026, Gemini audit D8-8, `docs/analysis/gemini-audit/triage.md`)
-- `09-FO-*.qmd:352` and `:391` show a zero-value transfer "from the victim" and never say how the attacker sends it.
-  Add one sourced line (`source` skill). (4 Nov 2026, Gemini audit D8-9, `docs/analysis/gemini-audit/triage.md`)
 - `13-FO-*.qmd:368` "Staging began with 10 ETH from Tornado Cash" never says what staging means. (4 Nov 2026, Gemini audit D9-5, `docs/analysis/gemini-audit/triage.md`)
 
 ## Quizzes
