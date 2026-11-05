@@ -12,7 +12,9 @@ from the same facts the worksheet and the tests use.
 The graded point is the **annotated trace**: each link has a heuristic, a known false positive and a confidence on
 the course scale (High, Moderate, Low; never a percentage). Facts (an address, an amount, a block) are marked or
 not; the judgments are graded on the heuristic named, the false positive named and a confidence that the scale
-supports. A student who gives a different confidence with a reason the scale supports gets the mark.
+supports. A student who gives a different confidence with a reason the scale supports gets the mark, except where the scale fixes the word: a clue alone (amount, timing, behavior or an unverified
+label) is Low and clues from one transaction stop at Moderate, so a higher word on those is wrong, whatever the
+reason.
 
 Scale used (lesson 02-FO, day 6 ①): Low is one clue, amount, timing or behavior alone, or an unverified label.
 Moderate is one strong line of evidence, or several clues that all come from one transaction, with a known false

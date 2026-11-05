@@ -238,8 +238,10 @@ grades" in that answer file.
 `/labs/tron/lab/d9/`; query page `/labs/tron/query/?lab=d9`; fallback `/labs/tron/fallback/d9/`. README:
 `dynamic-labs/tron/README.md`. Answers: `dynamic-labs/tron/quizes/INSTRUCTOR_ANSWERS_D9.md`. CTF flags: same file,
 near its end ("Flags:").
-**Graded point 4:** the exposure summary (question 15): stablecoin and issuer, freezable or not, the most likely
-AML typology with one indicator for and one against. Rubric: "Marking (question 15)" in that answer file.
+**Graded point 4:** the exposure summary (question 15), all four parts: the deposit address told from its sweep,
+with the exchange label's source and a confidence word for the later sweeps; the stablecoin and issuer, freezable or
+not, and when the freeze came; the most likely AML typology with one indicator for and one against; each label's
+source and date read, each judgment's confidence word, and what the chain does not show. Rubric: "Marking (question 15)" in that answer file.
 
 ---
 
