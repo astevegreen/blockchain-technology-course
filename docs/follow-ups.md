@@ -56,9 +56,6 @@ slide index), which is never listed here.
   keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
   key once the pair is known. Also `:65`: say the letters label the keys and a sorted script orders them by key
   bytes (lab answers `wallet/quizes/INSTRUCTOR_ANSWERS.md:95-96`). (4 Nov 2026, Gemini audit D2-2, D2-5)
-- `lessons/introduction/01-IN-course_welcome.qmd:33`, `:154`, `:171`, `:353` give the welcome 35 minutes and lesson ①
-  0920; `quizes/run-sheet/RUN_SHEET.md:36-37` gives 30 minutes and 0915, keeping the buffer at `:40`. Move 01-IN to
-  the run sheet's times. (4 Nov 2026, Gemini audit D1-5, `docs/analysis/gemini-audit/triage.md`)
 - `02-BF-*.qmd:260` "weight = base size × 3 + total size" defines base size only in the notes (`:284`), and its one
   example is legacy (`:270-271`). Say "(base size: the transaction without its witness)" and that a SegWit vsize is
   below its byte size. (4 Nov 2026, Gemini audit D2-4, `docs/analysis/gemini-audit/triage.md`)
