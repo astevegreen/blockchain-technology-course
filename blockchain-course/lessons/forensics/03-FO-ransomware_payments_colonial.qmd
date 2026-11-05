@@ -54,14 +54,14 @@ This slide opens lesson ② of day 6 and ties it to the afternoon's annotated tr
 
 ## A note leads to a portal, a price, an address {.smaller}
 
-**Bottom line:** the criminals' note leads to a Tor site and a price in cryptocurrency. The victim, or a firm acting for it, buys the coins and sends them to the address the criminals give.
+**Bottom line:** the criminals' note leads to a Tor site, the **payment portal**, and a price in cryptocurrency. The victim, or a firm acting for it, buys the coins and sends them to the address the criminals give.
 
 :::: {.columns}
 ::: {.column width="58%"}
 - **The note:** on Colonial's screens, it gave a Tor site said to hold samples of stolen data, and demanded about 75 BTC [@fbi_colonialaffidavit_2021, para. 26].
 - **Two threats:** files stay encrypted, and stolen data may be published [@fbi_colonialaffidavit_2021, para. 24; @cisa_aa21131a_2021].
 - **The payment:** the victim buys the coin at an exchange and sends it, often from a wallet the exchange hosts [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 2].
-- **Who pays:** a DFIR firm may negotiate and pay for the victim [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 3].
+- **Who pays:** a DFIR (digital forensics and incident response) firm may negotiate and pay for the victim [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 3].
 - **Which coin:** most often Bitcoin; increasingly privacy coins such as Monero, sometimes at a discount (as of November 2021) [@financialcrimesenforcementnetworkfincen_advisoryransomwareuse_2021, p. 5].
 :::
 ::: {.column width="42%"}
@@ -188,7 +188,7 @@ digraph Colonial {
 }
 ```
 
-Hops 1-3 on 8 May; hop 4 on 9 May; hop 5 on 27 May. Amounts in BTC; the affidavit hides each address's first 12 characters, so addresses here go by their last four.
+Hops 1-3 on 8 May; hop 4 on 9 May: four moves in two days. Hop 5, on 27 May, gathers the money. Yellow: the ransom address; green: the path the affidavit follows; white: leads; blue: where it was gathered. Amounts in BTC; the affidavit hides each address's first 12 characters, so addresses here go by their last four.
 
 ::: {.notes}
 
@@ -223,7 +223,7 @@ This slide draws the ransom's path as the FBI affidavit describes it, from the r
 | 1 | `c9fr` pays 75.0003 to `7q5X`, a sliver to `tpsf` | Change undetermined | n/a | No call: follow both |
 | 2 | `7q5X` pays 74.99998 to `tpsf` too | Branches meet at one address | `tpsf` is a service's | Moderate |
 | 3 | `tpsf` pays 11.24962019 and 63.74998561 | Change undetermined | n/a | No call: follow both |
-| 4 | `wg45` pays 63.7000 on, 0.0498 to itself | Change goes back to the payer | n/a: same address | Moderate |
+| 4 | `wg45` pays 63.7000 on, 0.0498 to itself | Self-change: back to the payer | n/a: same address | Moderate |
 | 5 | An explorer lists `dNxB` + 23 as one wallet | Explorer's label | The label is wrong | Low |
 
 : {tbl-colwidths="[5,34,25,18,18]"}
@@ -239,6 +239,7 @@ This slide turns the affidavit's narrative into the annotated trace the lab asks
 - Hop 3: ...tpsf spends both its coins in one transaction (para. 31); neither output is round and both addresses are new, so change is undetermined. The affidavit follows the 63.75; the 11.25 is a lead (slide 6).
 - Hop 4: 0.04976631 returns to the paying address itself (para. 32): change by the plainest clue there is, so follow the round 63.70000000. Rated Moderate because it is still a same-transaction clue. Whether the 63.70 paid someone else or moved to the same actor's own address does not change where the trace goes; the 27 May grouping suggests the latter.
 - Hop 5: an explorer grouped ...dNxB with at least 23 other addresses "in one wallet" (para. 33). The affidavit does not show the transactions behind the grouping, so it is one unverified label: Low on the course scale. Checking the 27 May transactions for co-spending yourself would make it your own judgment, still Moderate at best.
+- "Branches meet" and "self-change" are the last two rows of lesson ①'s change-clue table.
 - Course scale: same-transaction clues stop at Moderate; High needs a different kind of evidence (lesson ③).
 
 **Walkthrough**
@@ -344,10 +345,10 @@ This slide teaches how a ransomware-as-a-service split appears on-chain, and has
 :::: {.columns}
 ::: {.column width="60%"}
 - **Exchanges:** most DarkSide funds, many to places that don't enforce anti-money-laundering rules (as of May 2021) [@robinson_darkside_2021].
-- **BTC-e:** fined \$110 million by FinCEN in 2017 for facilitating ransomware [@financialcrimesenforcementnetworkfincen_fincenfinesbtce_2017].
-- **Garantex:** nearly \$6 million from the Conti ransomware gang (as of April 2022) [@u.s.dept.oftreasury_hydragarantex_2022].
+- **BTC-e, an exchange:** fined \$110 million by FinCEN in 2017 for facilitating ransomware [@financialcrimesenforcementnetworkfincen_fincenfinesbtce_2017].
+- **Garantex, an exchange:** nearly \$6 million from the Conti ransomware gang (as of April 2022) [@u.s.dept.oftreasury_hydragarantex_2022].
 - **OTC brokers:** "some of them specialize in providing money laundering services" [@chainalysis_moneylaundering_2020].
-- **Darknet markets:** about \$8 million in ransomware proceeds passed through Hydra [@u.s.dept.oftreasury_hydragarantex_2022].
+- **Darknet markets:** about \$8 million in ransomware proceeds passed through Hydra, a market (next slide) [@u.s.dept.oftreasury_hydragarantex_2022].
 :::
 ::: {.column width="40%"}
 ```{dot}
@@ -563,6 +564,8 @@ This slide gives the current scale of ransomware payments, dated. It matters her
 - **Leads off the chain:** the note, the portal, the chat, the payment transaction.
 - **This afternoon:** your annotated trace starts at a ransom address and follows it to the first service.
 
+**Check:** your trace's money stops moving before it reaches any service. What do you write?
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -578,7 +581,8 @@ This slide summarizes the lesson and hands over to the lab. It matters here beca
 - Off-chain leads to ask for.
 
 **Walkthrough**
-None
+1. Put the check question. (Where it stopped, that it reached no service, and the date you checked: "has not moved" is true only as of that date. Colonial's `...segq` is the example.)
+2. Likely question: "Why didn't the FBI follow the 11.25 BTC?" The affidavit does not say; it followed the larger branch to the seizure. In a full investigation it is a lead, as the holding-address slide lists.
 
 **Sources**
 - @fbi_colonialaffidavit_2021

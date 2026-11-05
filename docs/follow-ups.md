@@ -32,14 +32,9 @@ slide index), which is never listed here.
   start)" follows "epoch N slots", and slot N+1 follows the checkpoint at slot N. (3 Nov 2026, diagram refresh)
 - `lessons/consensus_primitives/02-CM-pow_and_security.qmd:728` Fork diagram labels the N+1' → N+2' edge "same
   height", which reads as if the two blocks share a height. (3 Nov 2026, diagram refresh)
-- Two slide headings are too long for the header bar at 1280x800: "Three Patterns: DAOs, Membership NFTs, and Social
-  Tokens" (`lessons/ethereum/06-EF-*.qmd:390`) wraps to two lines, and "Future of Forensics: Automated Cross-Chain
-  Tracing" (`lessons/forensics/01-FO-*.qmd:761`) runs under the Course Portal button. Shorten each to about 48
-  characters, and update the mind-map anchors if a slide id changes. (3 Nov 2026, diagram restyle)
-- `lessons/forensics/01-FO-*.qmd` shows four retired slides after its recap (Challenges in Forensic Analysis :566,
-  DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
-  :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
-  (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
+- A slide heading is too long for the header bar at 1280x800: "Three Patterns: DAOs, Membership NFTs, and Social
+  Tokens" (`lessons/ethereum/06-EF-*.qmd:390`) wraps to two lines. Shorten it to about 48 characters, and update the
+  mind-map anchors if the slide id changes. (3 Nov 2026, diagram restyle)
 - `lessons/forensics/14-FO-fusing_sources.qmd:191` rates a deposit address sweeping into the exchange's own published
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
