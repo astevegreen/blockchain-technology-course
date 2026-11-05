@@ -41,7 +41,10 @@ This opening slide sets the purpose of the lesson: reading a contract's source w
 - Solidity is read line by line today; Vyper and Rust are shown only so students recognize them when they meet them.
 
 **Walkthrough**
-None
+1. Tie back to 01-EF: a contract account holds code; this lesson reads that code.
+2. Read the definition and the "not a legal contract" line.
+3. Put the four questions on the board; every code slide today answers some of them.
+4. Ask what the `SimpleCounter` contract in 01-EF let a stranger do. (Expected answer: call `increment` and read the count, but not `reset`, which checks `msg.sender` against `owner`.)
 
 **Sources**
 - @buterin_ethereumnextgenerationsmart_2014
@@ -72,7 +75,10 @@ This slide establishes why Ethereum-style contracts represent a major jump from 
 - Define UTXO as unspent transaction output and note that Turing complete means the language supports general control flow under gas limits.
 
 **Walkthrough**
-None
+1. Recall day 2: a Bitcoin script only says who may spend one output.
+2. Read the rows for state model and control flow, the two biggest differences.
+3. Ask why Solidity needs gas when Bitcoin Script does not. (Expected answer: Solidity allows loops, so without a gas limit a call could run forever; Script has no loops and is bounded by design.)
+4. Close on the security row: more power, more ways to get it wrong.
 
 **Sources**
 - @nakamoto_bitcoinpeertopeerelectronic_2008
@@ -591,7 +597,8 @@ This code slide establishes a minimal example students can use to connect Solidi
 1. Identify the stored variable that lives in contract state.
 2. Show the function that changes that value.
 3. End with the function that reads the value back for later callers.
-4. Counting the `pragma` line as code line 1:
+4. Take the slide's question on access control. (Expected answer: there is none; anyone can call `set` and overwrite the value, and nothing checks `x`.)
+5. Counting the `pragma` line as code line 1:
    - state variable: code line 3
    - event declaration: code line 4
    - setter: code lines 6-9
@@ -638,7 +645,10 @@ This slide establishes a richer example where a token-like contract introduces b
 - This is the Solidity documentation's own subcurrency example, shortened.
 
 **Walkthrough**
-None
+1. Point to the two state variables, `minter` and `balances`, and say they live in storage.
+2. Read the constructor: the deployer becomes `minter`.
+3. Read `mint` and stop on the `require` line.
+4. Ask what a call to `mint` from any other address does. (Expected answer: the `require` fails with "not minter", the call reverts and no balance changes.)
 
 **Sources**
 - @solidity_introsmartcontracts_2026
@@ -760,7 +770,10 @@ This slide establishes events as Ethereum's main contract-to-off-chain communica
 - For an analyst, logs are the fastest record of what a contract did, but only of what its author chose to emit: the Coin's `mint` emits nothing.
 
 **Walkthrough**
-None
+1. Read the three parts of a log: emitter, topics, data.
+2. Read the callout: topic 0 names the event, topics 1-3 hold indexed values.
+3. Ask whether a reverted transfer leaves a `Sent` event. (Expected answer: no; events vanish when the transaction reverts, so only the failed transaction and its fee remain.)
+4. Recall the Your Turn answer: `mint` emits nothing, so logs alone miss it.
 
 **Sources**
 - @solidity_abispec_2026
@@ -913,7 +926,7 @@ This code slide establishes the classic vulnerable ordering pattern that made re
    - multiple withdrawals from one balance: code lines 4-9 can repeat while the old balance remains visible
 
 **Sources**
-solidityteam_solidityexample_2025
+- @solidityteam_solidityexample_2025
 
 :::
 
@@ -982,7 +995,7 @@ This slide establishes the standard defensive ordering that breaks the classic r
 4. If students ask about `nonReentrant` in real code, explain that it is a common library modifier that implements this reentry-lock idea.
 
 **Sources**
-solidityteam_solidityexample_2025
+- @solidityteam_solidityexample_2025
 
 :::
 
@@ -1021,10 +1034,12 @@ None
 
 ## Upgradeability and Proxy Patterns {.smaller}
 
+::: {style="font-size: 0.8em;"}
 - A deployed contract's code cannot change, but a **proxy** lets its owner change the code users run [@ethereumorg_upgradingsmartcontracts_2026].
-- The **proxy** address holds the state and balances; a separate **implementation** (logic) contract holds the code, run through `delegatecall` [@palladino_erc1967proxystorage_2019].
+- The **proxy** address holds the state and balances; a separate **implementation** (logic) contract holds the code. The proxy runs it with `delegatecall`: the implementation's code acts on the proxy's own storage [@palladino_erc1967proxystorage_2019; @solidity_introsmartcontracts_2026].
 - Under **ERC-1967** the implementation's address sits in a fixed storage slot, and each change should emit `Upgraded(implementation)` [@palladino_erc1967proxystorage_2019].
 - For an analyst: the address you were given may hold only forwarding code. Read the implementation, and ask who can upgrade it.
+:::
 
 :::: columns
 ::: {.column width="48%"}
@@ -1121,7 +1136,8 @@ This slide establishes the boundary of what the EVM can know on its own and why 
 None
 
 **Sources**
-https://ethereum.org/en/developers/docs/; https://ethereum.org/en/whitepaper/
+- @ethereum.org_smartcontractsdeveloper_2025
+- @buterin_ethereumnextgenerationsmart_2014
 
 :::
 
@@ -1184,7 +1200,7 @@ This slide shows one short Vyper snippet so students can recognize the language 
 
 ```rust
 use anchor_lang::prelude::*;
-declare_id!("11111111111111111111111111111111");
+declare_id!("<program address>");
 
 #[program]
 mod hello_anchor {
@@ -1216,6 +1232,8 @@ pub struct NewAccount { data: u64 }
 ::: {style="font-size: 0.85em;"}
 
 - Solana programs are written in **Rust**, most often with the **Anchor** framework.
+- Solana calls a contract a **program**; the data it keeps sits in separate **accounts** that each call must list [@anchor_programstructure_2026].
+- To recognize, not to read: the same four questions still apply.
 - Clues on sight: `fn`, `pub`, `#[...]` attributes, `declare_id!`, `Result<()>`.
 - `declare_id!` is the program's on-chain address.
 - `#[program]` holds the instructions a caller can run.
@@ -1234,11 +1252,11 @@ This slide shows one short Rust program so students can recognize Solana contrac
 
 **Key Points**
 - Anchor is the most popular framework for Solana programs and provides Rust tools for writing them.
-- `declare_id!` specifies the program's on-chain address, its program ID. The all-ones value in this example is not a real deployment: by default the program ID is the public key of the keypair Anchor generates for the program, so a deployed program carries its own value here.
+- `declare_id!` specifies the program's on-chain address, its program ID. The slide shows a placeholder, not a real address: by default the program ID is the public key of the keypair Anchor generates for the program, so a deployed program carries its own value here.
 - The `#[program]` module contains the instruction logic; `initialize` here is the one instruction.
 - `#[derive(Accounts)]` specifies the accounts that must be provided when an instruction is invoked; the `Signer` in that list is the counterpart of Solidity's `msg.sender`.
 - `#[account]` on a struct (`NewAccount`) defines the structure of the data stored in custom accounts; `#[account(...)]` on a field inside `Initialize` is different, a constraint on that account (here: create it, the signer pays).
-- The snippet is the Anchor documentation's own example program, shortened to fit: blank lines are removed, one long line is wrapped and the last struct sits on one line.
+- The snippet is the Anchor documentation's own example program, shortened to fit: blank lines are removed, one long line is wrapped, the last struct sits on one line and the program ID is a placeholder.
 
 **Walkthrough**
 1. Point to `declare_id!` as the program's address.
@@ -1283,7 +1301,9 @@ This final slide gives students the reading habit they should leave with: find t
 - Vyper and Rust were shown for recognition only; the exploit contract students read closely comes on day 8.
 
 **Walkthrough**
-None
+1. Read the takeaways as a reading order: state, gates, what moves, what is recorded.
+2. Ask what an analyst should check when the address they were given is a proxy. (Expected answer: read the implementation it points to, and find who holds the upgrade right.)
+3. Point to 05-EF, next.
 
 **Sources**
 - @solidity_introsmartcontracts_2026

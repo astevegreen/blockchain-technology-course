@@ -48,9 +48,6 @@ slide index), which is never listed here.
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
-- `04-EF-*.qmd:916` and `:985` cite `solidityteam_solidityexample_2025` without `@`; `:1124` gives raw ethereum.org
-  URLs; `:1187`'s `declare_id!("1111…1111")` is Solana's System Program, though the notes (`:1237`) call it not a real
-  deployment. Fix the citations; source the ID or use an obviously fake one. (4 Nov 2026, Gemini audit D3-7, `docs/analysis/gemini-audit/triage.md`)
 - `05-EF-*.qmd:356` lists TerraUSD without saying it ran on its own chain, Terra (notes `:374`, `:381`). Add it, and
   check `l34_euronews_reuters_terra_2022` names the chain. (4 Nov 2026, Gemini audit D3-8, `docs/analysis/gemini-audit/triage.md`)
 - `03-EF-*.qmd:1062-1064`'s role table still puts ERC-4337, `handleOps`, EntryPoint and the ERC-2771 forwarder on the
