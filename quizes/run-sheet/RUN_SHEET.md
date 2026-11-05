@@ -259,7 +259,7 @@ No new lessons and no daily quiz. The week-two check (`quizes/quiz_json/weektwo_
 | --- | --- | --- |
 | 0845-0935 | Review session: answers students' questions, teaches nothing new. Last chance for resubmissions of the four graded points | 50 minutes fixed |
 | 0935-0945 | Break | Proposed |
-| 0945-1145 | **Post-test** (about 2 hours, 70% overall to pass). Bank and answer keys: `quizes/posttest/` (being built by another session; link only until it lands). Deliver it through the quiz engine at `/quiz/` | Length about 2 hours fixed; start proposed |
+| 0945-1145 | **Post-test** (about 2 hours, 70% overall to pass). Bank and answer keys: `quizes/posttest/posttest_day10-quiz-bank.json` (its `README.md` explains it; `verify_posttest.py` checks it). Deliver it through the quiz engine at `/quiz/` | Length about 2 hours fixed; start proposed |
 | 1145-1210 | Slack, then lunch | Proposed |
 | 1210-1325 | Lunch. **The instructors mark the written post-test items** against their answer keys now and while the class traces, before the first explanation, so certificates can be handed out on day 10 | Lunch fixed; who marks is proposed |
 | 1325-1515 | Final trace, unguided, no worked example. Start: `./lab-manager.sh start final-trace` (students open `/labs/final-trace/`; fallback `/labs/final-trace/fallback/` and `/labs/final-trace/fallback/tron/`). README: `dynamic-labs/final-trace/README.md`. Answers: `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md` | Stop at 15:15 until Pilot B sets the final time |
