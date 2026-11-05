@@ -111,26 +111,6 @@ slide index), which is never listed here.
 - Post-test p26 (concept 45, day 6) lists three 08-FO cryptojacking slides, taught on day 7, among its sources
   (`quizes/posttest/posttest_day10-quiz-bank.json:1227`); the alignment map flags it. Drop them or move p26 to day 7.
   (4 Nov 2026, alignment map after the recall-gap items)
-- `quizes/run-sheet/RUN_SHEET.md:25` and `:174` say the day 6 to 9 pretest items have not landed, but
-  `quizes/pretest/pretest_week2-quiz-bank.json` exists; days 7 to 9 give no pretest items at all. Name each day's
-  items, as days 1 to 5 do. (4 Nov 2026, Gemini reading the adversarial-audit prompt)
-- Day 5's lab gate (owner, assessments audit Q19) is two Tron items, drafted in
-  `docs/analysis/pattern-audit/tron-pretest-drafts.json` (Energy and fees; reading a TRC-20 transfer). Adding them
-  needs `BLUEPRINT_WEEK1` in `quizes/pretest/verify_pretest.py` changed, a rail, so it goes through the second look
-  and rail audit; until then `lab_gates["5"]` is empty. (4 Nov 2026, week-1 audit decisions)
-- `quizes/run-sheet/RUN_SHEET.md:22-24` still says a student who got "every pretest item for that day" right gets
-  the problem; the bank now gates on `lab_gates` (day 1 is q6 alone). Reword it, and check `quizes/pretest/README.md`
-  says the same. (4 Nov 2026, week-1 audit decisions)
-- Pretest q12's key (`quizes/pretest/pretest_week1-quiz-bank.json:387`) says the Swap log gives "the recipient (to)";
-  in a swap sent through the router, the pool's `to` is often the router itself. Say so in the key. (4 Nov 2026,
-  week-1 audit decisions)
-- `quizes/run-sheet/RUN_SHEET.md:97` points to 01-BF and 03-BF as sources for ①; 02-BF already absorbed them
-  (`docs/build-spec.md:82`). Say "teach 02-BF alone". (4 Nov 2026, Gemini audit D2-7, `docs/analysis/gemini-audit/triage.md`)
-- `quizes/quiz_json/daily_d6_review_of_day5-quiz-bank.json:225` cites the instructor-only
-  `tron/quizes/INSTRUCTOR_ANSWERS.md`; point it at the worksheet's worked example (`tron/static/lab/index.html:81-85`).
-  (4 Nov 2026, Gemini audit A-8, `docs/analysis/gemini-audit/triage.md`)
-- Post-test p6's key still says "Observed" (`quizes/posttest/posttest_day10-quiz-bank.json:398`), against C1.
-  (4 Nov 2026, Gemini audit A-7, `docs/analysis/gemini-audit/triage.md`)
 
 ## Labs
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
