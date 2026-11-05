@@ -14,7 +14,7 @@ ones opened at e764798, not Gemini's; where its lines were wrong, the note says 
 | D10-2 | Confirmed | Fix | `docs/follow-ups.md`, Labs |
 | D8-1 | Confirmed | Owner (lab scenario) | Put to the owner, 4 Nov |
 | D8-2 | Confirmed | Fix | `docs/follow-ups.md`, Labs |
-| D9-1 | Confirmed | Fix | `docs/follow-ups.md`, Lessons |
+| D9-1 | Confirmed | Fix | Fixed in d5c18b3 |
 | D2-2 | Partly | Fix (notes only) | Fixed in c671b2f |
 | D1-1 | Partly, not a blocker | Nothing | Below |
 | D3-5 | Partly | Nothing | Below |
@@ -63,7 +63,7 @@ sweeping into a wallet on the exchange's own published list **High** ("the chain
 lab and its answer key's question 5 rate the same pattern Moderate and reject High, because both lines come from the
 same sweeps and no source names the deposit address (`dynamic-labs/tron/static/lab/d9/index.html:122-137`). The
 lesson's own notes concede that a nested service would hold step 5 at Moderate. Two rules for one pattern, not two
-wordings.
+wordings. Fixed in d5c18b3.
 
 **D2-2: Partly.** With sorted keys (BIP 67), any two of the three keys can sign in key order, so order alone rules out
 no pair; it only says which signature goes with which key once the pair is known. The speaker notes at
@@ -239,7 +239,7 @@ All 24 read against the pattern each names: 16 match. Changes:
 - **D5-7 → Listed.** Q16 kept the term, but `04-FO:291` and its notes (`:308`) never say what a muxed address is. Fixed in 6cd7af7.
 - **D4-5, D7-1, D9-5: Covered, each with a leftover Listed.** 03-EF's role table (`:1062-1064`) still puts ERC-4337,
   `handleOps`, EntryPoint and the ERC-2771 forwarder on the slide; coinjoin-trace's hints sit apart (`:158`) from
-  their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern. D4-5's leftover fixed in 45d28ab.
+  their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern. D4-5's leftover fixed in 45d28ab; D9-5's fixed in eac7131.
 - **Notes for the sessions that take a Covered row.** A-7: post-test p6's key said "Observed"
   (`quizes/posttest/posttest_day10-quiz-bank.json:398`); fixed in e59f56d. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
