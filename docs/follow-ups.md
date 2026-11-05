@@ -127,5 +127,9 @@ slide index), which is never listed here.
 - `docs/analysis/gemini-audit/` holds Gemini's whole-course audit (4 Nov 2026); its top ten are triaged in
   `triage.md`, the rest are not. Triage the day reports' other findings against the files and Claude's pattern audit.
   Its line numbers can be off (D3-2 cites 01-EF:571; the diagram is at :177). (4 Nov 2026, Gemini audit run)
+- `tools/pointer_check.py` finds six wrong cross-lesson pointers on today's tree (05-EF:643, 05-FO:99/161/396,
+  07-FO:39, 13-FO:112; run it for the list), so it is not yet in `tools/check.py`. Once it exits 0, add it to
+  `plan_checks` as a failing check whenever a lesson changes; its "note:" lines stay advice. That change is a rail:
+  run `second-look.mjs` and follow the rail audit. (4 Nov 2026, week-1 audit W2 pointer check)
 
 ## Notion and documents
