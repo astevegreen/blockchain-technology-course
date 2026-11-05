@@ -178,10 +178,10 @@ heaviest is D4-2.
 
 ### Quizzes and the run sheet
 
-- **D2-7: Listed** (Minor). `RUN_SHEET.md:97` points the instructor to 01-BF and 03-BF as sources for ①; 02-BF
+- **D2-7: Listed, fixed in 9eb91dd** (Minor). `RUN_SHEET.md:97` points the instructor to 01-BF and 03-BF as sources for ①; 02-BF
   already carries those slides (`docs/build-spec.md:82`). Archiving the two March files would be a cut, the owner's
   call, so only the run-sheet line is listed.
-- **A-8: Listed** (Minor). `quizes/quiz_json/daily_d6_review_of_day5-quiz-bank.json:225` cites the instructor-only
+- **A-8: Listed, fixed in 9eb91dd** (Minor). `quizes/quiz_json/daily_d6_review_of_day5-quiz-bank.json:225` cites the instructor-only
   `tron/quizes/INSTRUCTOR_ANSWERS.md`; students never see `specific_source`, but rule 4 wants a trace to what was
   taught: the worksheet's worked example (`tron/static/lab/index.html:81-85`).
 
@@ -239,8 +239,8 @@ All 24 read against the pattern each names: 16 match. Changes:
 - **D4-5, D7-1, D9-5: Covered, each with a leftover Listed.** 03-EF's role table (`:1062-1064`) still puts ERC-4337,
   `handleOps`, EntryPoint and the ERC-2771 forwarder on the slide; coinjoin-trace's hints sit apart (`:158`) from
   their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern.
-- **Notes for the sessions that take a Covered row.** A-7: post-test p6's key still says "Observed"
-  (`quizes/posttest/posttest_day10-quiz-bank.json:398`), for the C1 session. D8-7: compound confidence words also sit
+- **Notes for the sessions that take a Covered row.** A-7: post-test p6's key said "Observed"
+  (`quizes/posttest/posttest_day10-quiz-bank.json:398`); fixed in e59f56d. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
   `:276` and the 08-FO synthesis `:68`, `:115`. D1-2: W2 also reaches `04-CP:244`, `:350`, `:401`. D1-8: 04-CP and
   01-CM have 0 Asks. D5-8: week-2 Q3 should name the Tron page if it gets a self-check. D10-7 and A-10: Gemini's
