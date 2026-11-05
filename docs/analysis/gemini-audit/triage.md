@@ -108,34 +108,34 @@ heaviest is D4-2.
 - **D2-6: Listed** (Minor). `05-BF:525` "4. Spend from a 2-of-3 multi-sig"; the lab only reads a spend. Fixed in
   9d4a283.
 - **D3-2: Listed** (Minor). `01-EF:172-178` draws Alice's 3 ETH as a second node, "Remaining: 3 ETH", in the fill of
-  the Bitcoin change output (`:136-143`); the text under it (`:186`) rightly says Ethereum has no change output.
+  the Bitcoin change output (`:136-143`); the text under it (`:186`) rightly says Ethereum has no change output. Fixed in a365425.
 - **D3-4: Covered by W4** (Minor). The contract at `01-EF:298-323` is glossed and framed as "to read, not write"
   (notes `:332`, `:340-344`); what is left is `public`, `view` and `msg.sender` before 04-EF, W4's gap.
 - **D3-7: Listed** (Minor). Notes cite a key without `@` (`04-EF:916`, `:985`) and raw ethereum.org URLs (`:1124`).
   The Anchor example's `declare_id!("11111111111111111111111111111111")` (`:1187`) is Solana's System Program ID
   (solana.com docs on built-in programs, read 4 Nov 2026 through a search summary: the page returned 429), while the
-  notes call it "not a real deployment" (`:1237`). Needs a bib key, or an obviously fake ID.
+  notes call it "not a real deployment" (`:1237`). Needs a bib key, or an obviously fake ID. Fixed in 8eeb4c5.
 - **D3-8: Listed** (Minor). `05-EF:356` lists TerraUSD ("collapsed in May 2022") beside Ethereum stablecoins and
-  never says it ran on its own chain, Terra. Add the chain; check `l34_euronews_reuters_terra_2022` names it.
+  never says it ran on its own chain, Terra. Add the chain; check `l34_euronews_reuters_terra_2022` names it. Fixed in 00bd6bf; source and wording corrected in ddb4726.
 - **D4-1: Listed** (Minor, not Major). The core slide's three bridge types (`08-EF:414-416`) and the Bitget table's
   labels (`:580-582`: "Issuer's own bridge", "Liquidity and intents", "Cross-chain swap") differ, and the DEX lab
   hint (`dex/gateway/static/lab/index.html:191`) omits message-verified. No answer changes (dex
   `INSTRUCTOR_ANSWERS.md:57`). Relabelling CCTP (burn-and-mint run by the issuer) and THORChain goes through the
-  `source` skill.
+  `source` skill. Lesson fixed in 16f7d41; the lab hint stays on `docs/follow-ups.md` (lab work).
 - **D4-3: Listed** (Minor). `07-EF:466` "Where funds can leave a chain" lists a DEX pool first (`:472`, opener
-  `:29`); the notes say "leave a chain or change form" (`:487`). Retitle "Where funds can be sold or leave the chain".
+  `:29`); the notes say "leave a chain or change form" (`:487`). Retitle "Where funds can be sold or leave the chain". Fixed in 49c8144.
 - **D4-6: Listed** (Minor). `08-EF:285` "a Security Council (at least 75% of it) can still block or forge a
   message". L2BEAT's Stage 1 principle (forum.l2beat.com, "Stages update: a high-level guiding principle for Stage
   1", 29 Jan 2025, read 4 Nov 2026) says only ≥75% of the council could block a message or push an invalid one, so the
   facts hold and Gemini's reading is R4; "can still" reads as a power rather than a limit, so reword.
-  `l2beat.com/stages` now redirects to `ethbeat.org`; check the bib URL.
+  `l2beat.com/stages` now redirects to `ethbeat.org`; check the bib URL. Fixed in 16f7d41.
 - **D5-4: Listed** (Minor). `01-PC:226-227` rightly says the USDT owner is a multisig (`TBPxhV…`); the worksheet asks
   who signed (`tron/static/lab/index.html:138`) and the snapshot shows `TRLi4K…`, a key that called
   `confirmTransaction` on that multisig (TronGrid `gettransactionbyid`, read 4 Nov 2026). The key already says not to
   require it (`tron/quizes/INSTRUCTOR_ANSWERS.md:73-74`); one worksheet line should say why another key signs.
 - **D5-6: Listed** (Minor). `05-FO-vasps_and_the_rules.qmd:120` and `:414` file CTRs with SARs as "a pattern someone
   saw"; a CTR reports cash transactions over $10,000 (31 CFR 1010.311, law.cornell.edu, read 4 Nov 2026), not a
-  judgement. No bib key yet.
+  judgement. No bib key yet. Fixed in 5a1afb7.
 
 ### Week-2 lessons
 
@@ -236,10 +236,10 @@ All 24 read against the pattern each names: 16 match. Changes:
   explorer lab (02-IN's worked example is Bitcoin; Otterscan appears only at `02-IN:646`, `:660`). Question 2 below. Owner approved 4 Nov; fixed in 765cd58.
 - **D2-9 → Listed.** Not W4's cross-lesson gap: inside 05-BF, the hardened `'` is used at `:334` and `:407-412` and
   defined on a slide only at `:453` (notes `:429`). Fixed in 9d4a283.
-- **D5-7 → Listed.** Q16 kept the term, but `04-FO:291` and its notes (`:308`) never say what a muxed address is.
+- **D5-7 → Listed.** Q16 kept the term, but `04-FO:291` and its notes (`:308`) never say what a muxed address is. Fixed in 6cd7af7.
 - **D4-5, D7-1, D9-5: Covered, each with a leftover Listed.** 03-EF's role table (`:1062-1064`) still puts ERC-4337,
   `handleOps`, EntryPoint and the ERC-2771 forwarder on the slide; coinjoin-trace's hints sit apart (`:158`) from
-  their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern.
+  their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern. D4-5's leftover fixed in 45d28ab.
 - **Notes for the sessions that take a Covered row.** A-7: post-test p6's key said "Observed"
   (`quizes/posttest/posttest_day10-quiz-bank.json:398`); fixed in e59f56d. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
