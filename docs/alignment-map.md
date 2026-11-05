@@ -11,7 +11,7 @@ to look, and a concept with many slides can still be taught badly.
 
 ## Flags
 
-- **45. Explaining findings to agents, prosecutors and leadership** (day 6, working): post-test answer rests on slides taught after day 6, or not scheduled: 08-FO: The wallet in the sample is the pivot; 08-FO: How sure: words for cryptojacking findings; 08-FO: In the cloud the victim pays the bill.
+- **50. Wallets and key custody** (day 2, familiarity): no pretest item.
 - **47. North Korean theft and laundering** (day 8, familiarity): post-test answer rests on slides taught after day 8, or not scheduled: 13-FO: One playbook across North Korea's cases; 13-FO: Bybit: out of freezable tokens first, then to Bitcoin.
 
 ## By concept
@@ -28,6 +28,7 @@ is marked with *g*.
 | 5 | Distributed network topologies | familiarity | 1 | D1: 3, D2: 1, D3: 1, D4: 5, D5: 5, D6: 2, D9: 1 | D4: 4 | D2: 1, D5: 1 | q5 | p5 |
 | 41 | Block explorers | working | 1 | D1: 6, D2: 2, D3: 2, D6: 3, D7: 1 | D1: 10, D2: 8, D3: 7, D4: 4, D6: 1, D7: 1 | D2: 3, D3: 3, D4: 3, D7: 1, D8: 1 | q6 | p6 |
 | 42 | Direct node queries | familiarity | 1 | D1: 1, D2: 2, D7: 1 | none | D3: 1 | q7 | p7 |
+| 50 | Wallets and key custody | familiarity | 2 | D2: 7 | D2: 3 | D3: 4, D5: 1 | none | p43 |
 | 18 | Reading and auditing smart contracts (Solidity, Vyper, Rust) | working | 3 | D3: 13, D4: 1, D8: 3 | D8: 3 (*g*) | D4: 2, D9: 2 | q8 | p8 |
 | 46 | Stablecoins as a laundering rail | working | 3 | D1: 2, D3: 12, D4: 14, D5: 13, D8: 2, D9: 9 | D3: 6, D4: 2, D5: 9, D8: 1, D9: 11, D10: 1 (*g*) | D2: 1, D4: 3, D5: 2, D6: 6, D9: 2 | q9, q43, q44 | p9 |
 | 6 | Layer-1 vs Layer-2 networks | familiarity | 4 | D1: 2, D3: 1, D4: 9 | D4: 16, D8: 3 (*g*) | D5: 4, D9: 2 | q10 | p10 |
@@ -77,7 +78,7 @@ names them.
 | 1 | ② | 04-CP `04-CP-asymmetric_encryption_and_digital_signatures` | 17 | 14 | 3 |
 | 1 | ③ | 01-CM `01-CM-consensus_in_distributed_systems_and_blockchains_intro` | 14 | 12 | 2 |
 | 2 | ① | 02-BF `02-BF-transactions_and_mining` | 15 | 12 | 3 |
-| 2 | ② | 05-BF `05-BF-wallet_types` | 12 | 6 | 6 |
+| 2 | ② | 05-BF `05-BF-wallet_types` | 12 | 10 | 2 |
 | 2 | ③ | 06-BF `06-BF-multisig_and_wallet_software` | 13 | 8 | 5 |
 | 3 | ① | 01-EF `01-EF-ethereum_intro` | 14 | 9 | 5 |
 | 3 | ② | 04-EF `04-EF-smart_contracts` | 18 | 12 | 6 |
@@ -109,7 +110,7 @@ by design.
 - **D1 ② 04-CP**: A Tron address is an Ethereum address plus 41; Keys fail through people and bad randomness; References
 - **D1 ③ 01-CM**: A ledger is a shared log no one can quietly edit; References
 - **D2 ① 02-BF**: A transaction has no timestamp of its own; Coinbase pays the miner: subsidy plus fees; References
-- **D2 ② 05-BF**: A wallet holds keys, not coins; Hot or cold says where the key lives; A seed phrase is the whole wallet as words; The path names coin, account, chain and index; What each wallet type leaves the analyst; References
+- **D2 ② 05-BF**: The path names coin, account, chain and index; References
 - **D2 ③ 06-BF**: Key order in the script carries no meaning; Taproot multi-sig can look like one key; Reading a real 2-of-3 spend; Recap: read the rule, not the people; References
 - **D3 ① 01-EF**: Every node runs the same program: the EVM; Gas prices the work; a failed call still pays; The receipt says what actually happened; Recap: account, transaction, receipt; References
 - **D3 ② 04-EF**: Types: Value Types; Types: Reference Types; Visibility, Mutability, and Payable; Example: Coin (Code, Part 2); Your Turn: Read the Coin Contract; References
@@ -163,7 +164,7 @@ but no slot teaches them):
 
 ## Labs and quizzes no concept claims
 
-41 of 123 numbered lab questions and 11 of 124 daily-quiz items match no concept.
+40 of 123 numbered lab questions and 9 of 124 daily-quiz items match no concept.
 
 - D1 `explorer` Q2: How many seconds apart are blocks 4 and 5? What decides when this chain makes a block?
 - D1 `explorer` Q3: Preview: day 3 explains this. Is 0x5FbDB2315678afecb367f032d93F642f64180aa3 an account or a contract? Who crea
@@ -174,7 +175,6 @@ but no slot teaches them):
 - D1 `explorer` Q8: How many transactions has Account 3 sent? Which field on its page says so?
 - D1 `explorer` Q4: Account 2 held about 102.1 ETH at block 10. Using its page, list what came in and what went out. Its page show
 - D2 `wallet` Q1: What is the path of Dana's receiving address 0? What does each level of the path mean?
-- D2 `wallet` Q5: Dana gives her account's xpub to an accountant. Which of her addresses can the accountant list? Can the accoun
 - D2 `wallet` Q11: Write one sentence that states what the witness shows, and what the block 18 transaction does not.
 - D2 `wallet` Q12: Is there anything on the chain that links Dana's wallet in part 1 to the treasury? Is there anything off the c
 - D3 `tokens` Q1: In block 4, Account 1 sends cUSD. Who receives it, and how much? Why is the receiver not in the transaction's 
@@ -209,7 +209,7 @@ but no slot teaches them):
 
 Quiz items:
 
-- `daily_d3_review_of_day2` q5; `daily_d3_review_of_day2` q6; `daily_d3_review_of_day2` q8; `daily_d3_review_of_day2` q13; `daily_d4_review_of_day3` q1; `daily_d4_review_of_day3` q3; `daily_d4_review_of_day3` q5; `daily_d9_review_of_day8` q3; `weekone_check` q10; `weekone_check` q11; `weekone_check` q14
+- `daily_d3_review_of_day2` q5; `daily_d3_review_of_day2` q6; `daily_d4_review_of_day3` q1; `daily_d4_review_of_day3` q3; `daily_d4_review_of_day3` q5; `daily_d9_review_of_day8` q3; `weekone_check` q10; `weekone_check` q11; `weekone_check` q14
 
 ## Detail
 
@@ -275,6 +275,15 @@ Day 1, familiarity. Post-test p7 (multiple choice); pretest q7.
 - Slides: D1① 02-IN An explorer is a node's record, plus extras; D2③ 06-BF Wallet software builds, signs and broadcasts; D2③ 06-BF Servers learn which addresses a wallet has; D7① 06-FO Dust is bait: a dust input is not a link
 - Lab: none found
 - Daily quiz: D3 q12
+
+### 50. Wallets and key custody
+
+Day 2, familiarity. Post-test p43 (multiple choice); pretest none.
+
+- Post-test answer rests on: 05-BF: An xpub reveals every address, past and future (day 2)
+- Slides: D2② 05-BF A wallet holds keys, not coins; D2② 05-BF Most people hold bitcoin one of two ways; D2② 05-BF Hot or cold says where the key lives; D2② 05-BF A seed phrase is the whole wallet as words; D2② 05-BF One seed grows a whole tree of keys; D2② 05-BF An xpub reveals every address, past and future; D2② 05-BF What each wallet type leaves the analyst
+- Lab: D2 Worked example: Dana's first address, item 1; D2 Q5; D2 The problem, item 5
+- Daily quiz: D3 q8, D3 q13, D3 q14, D3 q16, D5 q7
 
 ### 18. Reading and auditing smart contracts (Solidity, Vyper, Rust)
 
@@ -442,7 +451,7 @@ Day 6, familiarity. Post-test p25 (multiple choice); pretest q25.
 
 Day 6, working. Post-test p26 (written); pretest q26.
 
-- Post-test answer rests on: 01-FO: A model explanation: Bitcoin Fog (day 6); 08-FO: The wallet in the sample is the pivot (day 7); 08-FO: How sure: words for cryptojacking findings (day 7); 08-FO: In the cloud the victim pays the bill (day 7)
+- Post-test answer rests on: 01-FO: A model explanation: Bitcoin Fog (day 6)
 - Slides: D1W 01-IN By day 10 you can do nine things; D1③ 01-CM Delay may mean congestion, not censorship; D6③ 01-FO A model explanation: Bitcoin Fog; D6③ 01-FO Recap: every label, a source and a confidence; D7③ 08-FO Characterize: for, against, and alternatives
 - Lab: D2 The problem, item 11; D3 Q7; D3 The problem, item 3; D4 Q5; D5 Q14; D6 Q12 (graded); D6 The problem, item 12; D6 Challenge, item 2; D7 Q12 (graded); D7 The problem, item 12; D8 The graded note, item 3 (graded); D8 Q5; D9 The graded note, item 4 (graded); D10 What to establish, item 5
 - Daily quiz: D2 q12, D3 q3, D3 q7, D3 q12, D7 q14, D5 q1, D5 q7

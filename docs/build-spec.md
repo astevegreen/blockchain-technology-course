@@ -183,8 +183,8 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   review session, never as evening work; the end of day 10's review session is the last chance (owner: "Once, in
   class time").
 - **Post-test:** about 2 hours on day 10's morning, after the review session; pass mark 70% overall (owner: "70%
-  overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026; the
-  list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
+  overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026, plus wallets and key custody, concept 50, added 4 Nov 2026 to the
+  post-test only; the list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
   working-skill concepts. No separate minimum on the written items (owner, 30 Oct: "Rubric line, no minimum"):
   every working-skill concept also has a graded lab point. Each written item has an answer key naming what the
   answer must contain; the instructors mark against it over lunch and while the class traces, before the first

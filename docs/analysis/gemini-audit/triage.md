@@ -21,7 +21,7 @@ ones opened at e764798, not Gemini's; where its lines were wrong, the note says 
 
 ## Assessments and day 10
 
-**A-1: Partly.** The post-test bank has 42 items, 30 multiple-choice and 12 written (p6, p8, p9, p11, p12, p18,
+**A-1: Partly (owner, 4 Nov: "No change"; the written items are marked at lunch only for students scoring 19 to 30 of the 31 multiple-choice items, `quizes/posttest/README.md`).** The post-test bank has 42 items, 30 multiple-choice and 12 written (p6, p8, p9, p11, p12, p18,
 p19, p20, p24, p26, p27, p42). The pass mark is 30 of 42 with no separate minimum on the written items, so a student
 can pass the post-test on multiple choice alone (`quizes/posttest/README.md:31`). But the certificate also needs Meets
 on all four graded week-2 lab points (`quizes/run-sheet/RUN_SHEET.md:255-256`; `docs/build-spec.md:170-191`), and
@@ -35,7 +35,7 @@ instructor-hours" assumes 30 students and more items than the bank has. The run 
 whether marking fits (`RUN_SHEET.md:271-273`). One easing that needs no decision: only a student scoring 18 to 29 on
 multiple choice needs the written items marked to know the result.
 
-**D10-1: Partly.** Gemini read a 45-minute window; the run sheet gives the explanations "as each finishes, until
+**D10-1: Partly (resolved 4 Nov: the class is 16 students with two instructors, so two assessors cover 16 by 1600).** Gemini read a 45-minute window; the run sheet gives the explanations "as each finishes, until
 1600", about five minutes each, two assessors (`RUN_SHEET.md:252-253`; `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:13-15`).
 If every student finishes at 1515, two assessors hear about 18 by 1600. The overrun is real only above about 18
 students, and smaller than Gemini says.
