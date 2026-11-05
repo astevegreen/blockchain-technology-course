@@ -56,8 +56,8 @@ students check them in a self-check box, and the answers are in that lab's answe
 
 **Challenge bank** (`quizes/challenge/challenge-bank.md`; `README.md` there says which item fits which topic): from
 day 6 on, after a student explains a graded trace, ask one or two of its questions to test whether they can defend
-each judgment. Items c1, c3 and c4 (day 4) fit a DEX trade, c2, c5 to c7 and c12 a Bitcoin trace, and c7 to c11, c13 and c14 an
-attribution.
+each judgment. Items c1, c3 and c4 (day 4) fit a DEX trade, c2 and c5 to c7 a Bitcoin trace, c15 a mixer trace (day 7), c16 a contract read (day 8), c17 a typology call (day 9),
+and c7, c8, c10, c11, c13 and c14 an attribution.
 
 **Marking graded points** (days 6 to 9): each is Meets or Not yet against the rubric in that lab's answer file. A
 student gets one retry per point after you say what was missing, in lab time or in day 10's review session, never as

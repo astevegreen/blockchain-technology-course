@@ -11,13 +11,13 @@ known false positives an analyst most often mistakes for a counterparty.
 ## How an instructor uses it
 
 - Pick the items that fit what the student just explained: a DEX trade (c1, c3, c4), a Bitcoin trace (c2, c5 to
-  c7, c12), an attribution (c7 to c11, c13, c14).
+  c7), a mixer trace (c15), a contract read (c16), a typology call (c17), an attribution (c7, c8, c10, c11, c13, c14).
 - A strong answer makes every point under **Answer points**, in any wording. There is no score.
 - A weak answer is a cue to revisit the slide it traces to.
 
 ## Files
 
-- `challenge-bank.md`: the 14 items. Each names the visible slides its answer points come from.
+- `challenge-bank.md`: the 15 items. Each names the visible slides its answer points come from.
 - `verify_challenge.py`: checks that every traced slide exists and is visible (not inside a `content-hidden`
   block). Run `python quizes/challenge/verify_challenge.py` from the repo root after editing the bank or the slides
   it cites.
@@ -34,12 +34,13 @@ known false positives an analyst most often mistakes for a counterparty.
 | c6 | Clues versus kinds of evidence | 6 | 02-FO, "Same-transaction clues never reach High alone" |
 | c7 | Huge cluster, no label | 6 | 01-FO, "Step 4 ended Low: now name the service" |
 | c8 | A platform tag | 6 | 01-FO, "A label is only as good as its source" |
-| c9 | Two platforms agree | 6 | 01-FO, "Attribution confidence: count kinds of evidence" |
 | c10 | Error rates and percentages | 6 | 01-FO, "Clustering works for most, fails in known ways" |
 | c11 | A sanctions listing | 5, 6 | 05-FO, "The SDN list names some addresses, not all" |
-| c12 | Cluster size | 6 | 01-FO, "Platforms run your heuristics at scale" |
 | c13 | No error rate | 6 | 01-FO, "Bitcoin Fog: why the court trusted the trace" |
 | c14 | Service, not person | 6 | 01-FO, "The chain shows a service; records show who" |
+| c15 | Timing and a mixer | 7 | 06-FO, "User habits link deposit to withdrawal" |
+| c16 | A code read | 8 | 11-FO, "How sure: what a code read rests on" |
+| c17 | A typology call | 9 | 12-FO, "Chain-hopping: the trail changes ledgers" |
 
 Each item's **Traces to** line lists every slide; the table shows the main one.
 
@@ -47,5 +48,5 @@ Each item's **Traces to** line lists every slide; the table shows the main one.
 
 - A cited slide is renamed or hidden: the verifier names the item. Point it at the new heading, or rewrite it
   from a visible slide.
-- Items for later days (mixers on day 7, for example) are added as those lessons are built; keep the bank at 15
-  items or fewer.
+- Items for days 7 to 9 are added as those lessons are built; keep the bank at 15 items or fewer, replacing the
+  weakest item (c9 and c12 were retired for c15 to c17).
