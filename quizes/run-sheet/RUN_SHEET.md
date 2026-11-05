@@ -12,7 +12,7 @@ repo root. If this sheet and `docs/build-spec.md` disagree, the spec wins; tell 
   `./lab-manager.sh deploy --mode instructor --max-student-capacity 20`. The full options are in
   `dynamic-labs/README.md` (cloud, WiFi, Ethernet LAN). The instructor login is in
   `dynamic-labs/.runtime/instructor-credentials.txt`; sign in at `/instructor/`.
-- Start the quiz engine, which serves every daily quiz, the week-one check and the post-test: `./lab-manager.sh start quiz-engine-v2`
+- Start the quiz engine, which serves every daily quiz, the week-one and week-two checks and the post-test: `./lab-manager.sh start quiz-engine-v2`
   (students open `/quiz/`; `dynamic-labs/quiz-engine-v2/README.md`).
 - If lessons changed since the last image build: `./lab-manager.sh build-images course-site`, then
   `./lab-manager.sh start course-site`.
@@ -253,7 +253,7 @@ source and date read, each judgment's confidence word, and what the chain does n
 
 ## Day 10: Post-test, then a final trace
 
-No new lessons and no daily quiz.
+No new lessons and no daily quiz. The week-two check (`quizes/quiz_json/weektwo_check-quiz-bank.json`, ten items on days 6 to 9, ungraded) opens the review session: about 15 minutes, then discussion of what the class missed.
 
 | Time | Block | Fixed or proposed |
 | --- | --- | --- |
