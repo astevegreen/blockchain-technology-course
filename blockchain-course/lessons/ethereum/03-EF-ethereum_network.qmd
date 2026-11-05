@@ -36,7 +36,7 @@ This afternoon's lab makes a swap on the course's own chain and reads the pool's
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens the lesson with its one idea: a DEX trade is a contract call that anyone can watch before it lands and read after it lands. It matters here because concept 12, decentralized exchanges, is a working skill for the role: analysts must read a swap and say who traded what. Concept 4, mempool dynamics (first met on day 1), is the familiarity half: the trade is visible before inclusion, and that visibility is what MEV bots feed on. Emphasize the last row: most of the addresses in a swap's path are services, not the person an agent is asking about.
+This slide opens the lesson with its one idea: a DEX trade is a contract call that anyone can watch before it lands and read after it lands. It matters here because reading a DEX trade is a working skill for the role: analysts must read a swap and say who traded what. Mempool dynamics (first met on day 1) are the familiarity half: the trade is visible before inclusion, and that visibility is what MEV bots feed on. Emphasize the last row: most of the addresses in a swap's path are services, not the person an agent is asking about.
 
 **Key Points**
 - A DEX trade is a public contract call that waits in the mempool before a block includes it.
@@ -292,7 +292,7 @@ This slide establishes how Ethereum proves a transaction came from the claimed s
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes the mempool as the public waiting room where pending trades can be seen and competed over. It matters here because concept 4, mempool dynamics, is the reason front-running and sandwiches exist at all. Emphasize that there is no single global mempool, only many local views that usually converge, and that private submission changes who sees a trade, not who orders the block.
+This slide establishes the mempool as the public waiting room where pending trades can be seen and competed over. It matters here because mempool dynamics are the reason front-running and sandwiches exist at all. Emphasize that there is no single global mempool, only many local views that usually converge, and that private submission changes who sees a trade, not who orders the block.
 
 **Key Points**
 - Each node keeps its own pool of pending transactions and gossips new ones to peers.
@@ -729,7 +729,7 @@ digraph Swap {
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes how a DEX trade works: the trader swaps against a pool contract's reserves, through a router. It matters here because concept 12 asks analysts to characterize DEX activity, and the first thing to get right is that there is no human counterparty. Emphasize that the next lesson, on liquidity, explains how the pool sets its price; this lesson only needs the path.
+This slide establishes how a DEX trade works: the trader swaps against a pool contract's reserves, through a router. It matters here because the role asks analysts to characterize DEX activity, and the first thing to get right is that there is no human counterparty. Emphasize that the next lesson, on liquidity, explains how the pool sets its price; this lesson only needs the path.
 
 **Key Points**
 - A pool (pair) holds reserves of two tokens and prices trades by formula.
@@ -772,7 +772,7 @@ A Uniswap V2 swap of token A for token B leaves these logs (order can vary):
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide teaches the working skill for concept 12: reading one swap from its receipt. It matters here because the lab, and every later trace through a DEX, depends on turning four logs into one plain sentence. Emphasize that the `Swap` event's `sender` is usually the router, so the trader is found in token A's `Transfer` `from` (usually the transaction's `from`, but not when a bundler, relay or multi-sig sent it), and the token amounts must be matched to `token0` and `token1`.
+This slide teaches the working skill for DEX trades: reading one swap from its receipt. It matters here because the lab, and every later trace through a DEX, depends on turning four logs into one plain sentence. Emphasize that the `Swap` event's `sender` is usually the router, so the trader is found in token A's `Transfer` `from` (usually the transaction's `from`, but not when a bundler, relay or multi-sig sent it), and the token amounts must be matched to `token0` and `token1`.
 
 **Key Points**
 - One swap leaves two token `Transfer` logs, one in and one out of the pool, plus the pool's `Sync` and `Swap` events.
@@ -903,12 +903,13 @@ This slide establishes proposer-builder separation as how blocks are ordered on 
 **Key Points**
 - Searchers, builders, relays and validators each play a separate role in building a block.
 - Relays forward blinded bids, so the proposer chooses a block without seeing its contents first.
+- Not to be confused with the gas relay (relayer) later in this lesson, which pays a user's gas; and on day 4 a bridge relayer pays out on the far chain. An MEV-Boost relay only passes blocks from builders to validators.
 - Block position next to a trade reflects a builder's profit, not a relationship between the parties.
 - Spell out PBS as proposer-builder separation; MEV-Boost is the common software for it.
 
 **Walkthrough**
 1. Start with searchers finding chances and bundling transactions.
-2. Move to builders assembling blocks and relays forwarding blinded bids.
+2. Move to builders assembling blocks and relays forwarding blinded bids. Say that this relay is not the gas relay students meet later today: same word, different job.
 3. End with the validator signing the winning header, then open the demo.
 
 **Sources**
@@ -1020,7 +1021,7 @@ digraph AA {
 ```
 
 - On the smart-account path the user's key never sends a transaction: the bundler's address is the `from`, and the smart account acts inside the call [@buterin_erc4337accountabstraction_2021].
-- A **gas relay** does the same for a plain signed request: it pays the gas, and the receiving contract reads the signer from the call data [@sandford_erc2771securenative_2020].
+- A **gas relay** (relayer) does the same for a plain signed request: it pays the gas, and the receiving contract reads the signer from the call data [@sandford_erc2771securenative_2020]. Not the MEV-Boost relay, which passes blocks to validators.
 
 **What to say:** "The gas was paid by a bundler, paymaster or relay; the actor is the smart account or the signer." The account that paid the gas is a service, not the actor.
 
@@ -1059,9 +1060,9 @@ This slide sets two paths side by side: a normal transaction, where the `from` i
 | Aggregator | Routes one trade across pools | One call, `Swap` events in several pools | Whoever's tokens went in and the recipient |
 | Pool | Holds reserves and prices the trade | Tokens in and out; `Sync` and `Swap` events | No person: the counterparty is code |
 | MEV bot | Trades beside others for profit | Swaps around large trades, in many pools | A third party, not a partner |
-| Bundler (ERC-4337) | Submits users' operations | `from` of a `handleOps` transaction to the EntryPoint | The smart account in the UserOperation |
-| Paymaster (ERC-4337) | Pays for the operation | A contract named in the UserOperation | A service, not the actor |
-| Relayer (ERC-2771) | Pays gas and forwards a signed request | `from` is the relayer; the call goes through a forwarder | The signer appended to the call data |
+| Bundler | Submits users' operations | `from` of one transaction that carries many users' operations | The smart account in the operation |
+| Paymaster | Pays for the operation | A contract named in the operation | A service, not the actor |
+| Relayer | Pays gas and forwards a signed request | `from` is the relayer | The signer appended to the call data |
 
 :::
 
@@ -1075,9 +1076,10 @@ This slide closes the look-alikes segment with one table students can use in the
 - A pool is code, so a swap has no human counterparty.
 - MEV bots are third parties beside the trade.
 - Bundlers, paymasters and relayers pay or submit for someone else; the actor is the smart account or the appended signer.
+- For questions: the bundler and paymaster rows are ERC-4337 (the bundler's transaction calls `handleOps` on the EntryPoint contract); the relayer row is ERC-2771, whose call goes through a trusted forwarder. Students need the roles, not the numbers.
 
 **Walkthrough**
-1. Read down the first column and ask, for each, who the real party is before revealing the last column.
+1. Read down the first column and ask, for each, who the real party is before revealing the last column. (Expected answer: the last column; for a router, whoever's tokens went in and the recipient.)
 2. Point out that four of the seven rows send the transaction's `from` or `to` to a service.
 3. Tie back to the lab: name the real party in the swap students make this afternoon.
 
@@ -1112,7 +1114,9 @@ This conclusion gathers the lesson into the four things an analyst says about a 
 - Services in the path are not the real party.
 
 **Walkthrough**
-None
+1. Read the four bullets as the four sentences an analyst says about a DEX trade.
+2. Ask: a swap's transaction was sent by a bundler; who traded? (Expected answer: the smart account in the operation, not the bundler in the `from` field.)
+3. Point to the next lesson and the afternoon lab, where students make a swap and name who traded.
 
 **Sources**
 - @ethereum.org_transactionsdeveloperdocs_2025

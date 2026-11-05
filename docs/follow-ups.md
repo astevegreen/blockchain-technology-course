@@ -48,8 +48,6 @@ slide index), which is never listed here.
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
-- `03-EF-*.qmd:1062-1064`'s role table still puts ERC-4337, `handleOps`, EntryPoint and the ERC-2771 forwarder on the
-  slide, which week-1 Q13 sent to the notes. (4 Nov 2026, Gemini audit D4-5, `docs/analysis/gemini-audit/triage.md`)
 - `07-EF-*.qmd:466` "Where funds can leave a chain" lists a DEX pool first (`:472`; opener `:29`). Retitle "Where
   funds can be sold or leave the chain", as the notes say (`:487`). (4 Nov 2026, Gemini audit D4-3, `docs/analysis/gemini-audit/triage.md`)
 - `08-EF-*.qmd:580-582`'s Bitget table labels bridges "Issuer's own bridge", "Liquidity and intents", "Cross-chain
