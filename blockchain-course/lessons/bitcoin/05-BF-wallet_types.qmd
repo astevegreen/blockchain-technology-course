@@ -355,23 +355,29 @@ This slide explains the seed phrase (BIP39 mnemonic): the backup words from whic
 
 ```{dot}
 //| fig-width: 13
-//| fig-height: 2.4
-digraph WalletKeyFlow {
-  graph [rankdir=LR, splines=ortho, nodesep=0.7, ranksep=0.8, bgcolor="transparent"];
+//| fig-height: 3
+digraph WalletKeyTree {
+  graph [rankdir=LR, nodesep=0.15, ranksep=0.45, bgcolor="transparent"];
   node  [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#64748b",
-         fontname="Helvetica", fontsize=18, margin=0.18];
+         fontname="Helvetica", fontsize=16, margin="0.12,0.06"];
   edge  [fontname="Helvetica", fontsize=13, color="#64748b", penwidth=1.2, arrowsize=0.7];
 
   Words [label="Seed phrase\n(12-24 words)"];
   Seed  [label="Seed\n(512 bits)"];
-  Priv  [label="Private keys\n(a tree)"];
-  Pub   [label="Public keys"];
-  Addr  [label="Addresses\n(bc1q...)"];
+  Acct  [label="Account key\nm/84'/0'/0'"];
+  Ext   [label="Receiving chain\n.../0", fillcolor="#dcfce7", color="#22c55e"];
+  Int   [label="Change chain\n.../1", fillcolor="#fef3c7", color="#f59e0b"];
+  A0    [label=".../0/0  bc1qannf...", fillcolor="#dcfce7", color="#22c55e"];
+  A1    [label=".../0/1  bc1q7e6q...", fillcolor="#dcfce7", color="#22c55e"];
+  C0    [label=".../1/0  first change address", fillcolor="#fef3c7", color="#f59e0b"];
 
   Words -> Seed [label="BIP39"];
-  Seed  -> Priv [label="BIP32: derive many"];
-  Priv  -> Pub  [label="compute"];
-  Pub   -> Addr [label="hash, encode"];
+  Seed  -> Acct [label="BIP32"];
+  Acct  -> Ext;
+  Acct  -> Int;
+  Ext   -> A0;
+  Ext   -> A1;
+  Int   -> C0;
 }
 ```
 
@@ -385,9 +391,13 @@ This slide shows how one seed becomes a tree of keys (BIP32 hierarchical determi
 - Derivation is local; no registry or issuer is involved.
 - Each account has an external (receiving) chain and an internal (change) chain.
 - Public keys are hashed and encoded as addresses; `bc1q` is native SegWit.
+- The figure's two receiving addresses are SLIP-0014's published test vectors for paths .../0/0 and .../0/1.
 
 **Walkthrough**
-Read the diagram left to right: words, seed, the key tree, public keys, addresses. Name the standard on each arrow; students meet these BIP numbers again in wallet settings this afternoon.
+1. Read the diagram left to right: words, seed (BIP39), then the tree (BIP32). Students meet these BIP numbers again in wallet settings this afternoon.
+2. Follow the account key's two branches: the receiving chain hands out addresses to payers; the change chain takes the wallet's own change.
+3. Each leaf is a key pair; its public key is hashed and encoded as the `bc1q…` address shown. The two receiving addresses are the test phrase's first two, read on the next slide.
+4. Ask: which of these does the chain record as related? (None: each address appears on its own; only the seed or the account's xpub links them.)
 
 **Sources**
 - @lesavre_blockchainnetworkstoken_2021
@@ -395,12 +405,13 @@ Read the diagram left to right: words, seed, the key tree, public keys, addresse
 - @bitcoin.orgdevelopers_walletsdeveloperguide_2024
 - @antonopoulos_masteringbitcoinprogramming_2017
 - @wuille_bip173base32address_2017
+- @rusnak_slip0014stresstest_2015
 
 :::
 
 ## The path names coin, account, chain and index {.smaller}
 
-Every key has an address in the tree, its **derivation path** [@palatinus_bip44multiaccounthierarchy_2014]:
+Every key's place in the tree is its **derivation path** [@palatinus_bip44multiaccounthierarchy_2014]; `'` marks a **hardened** level, out of reach of the public key above [@wuille_bip32hierarchicaldeterministic_2012]:
 
 ```text
 m / purpose' / coin_type' / account' / change / address_index
@@ -409,13 +420,13 @@ m /   84'    /     0'     /    0'    /   0    /      0
 
 | Level | Example | Meaning |
 | --- | --- | --- |
-| purpose | `84'` | Native SegWit (P2WPKH) addresses [@rusnak_bip84derivationscheme_2017] |
+| purpose | `84'` | Native SegWit (P2WPKH) [@rusnak_bip84derivationscheme_2017] |
 | coin_type | `0'` | Bitcoin (`1'` is testnet) [@palatinus_bip44multiaccounthierarchy_2014] |
-| account | `0'` | First account in the wallet [@palatinus_bip44multiaccounthierarchy_2014] |
+| account | `0'` | First account [@palatinus_bip44multiaccounthierarchy_2014] |
 | change | `0` | `0` receiving, `1` change [@palatinus_bip44multiaccounthierarchy_2014] |
 | address_index | `0` | First address on that chain [@palatinus_bip44multiaccounthierarchy_2014] |
 
-From the test phrase, `m/84'/0'/0'/0/0` is `bc1qannfxke2tfd4l7vhepehpvt05y83v3qsf6nfkk` and the next receiving address `m/84'/0'/0'/0/1` is `bc1q7e6qu5smalrpgqrx9k2gnf0hgjyref5p36ru2m` [@rusnak_slip0014stresstest_2015]. A restoring wallet stops after **20 unused addresses** in a row, the gap limit [@palatinus_bip44multiaccounthierarchy_2014].
+From the test phrase, `m/84'/0'/0'/0/0` is `bc1qannfxke2tfd4l7vhepehpvt05y83v3qsf6nfkk` and the next, `m/84'/0'/0'/0/1`, is `bc1q7e6qu5smalrpgqrx9k2gnf0hgjyref5p36ru2m` [@rusnak_slip0014stresstest_2015]. A restoring wallet stops after **20 unused addresses** in a row (the gap limit) [@palatinus_bip44multiaccounthierarchy_2014].
 
 ::: {.notes}
 
@@ -504,7 +515,7 @@ This slide pulls the lesson into one table the analyst can use: what each wallet
 - Hot or cold from the chain alone is an inference from behaviour: low confidence on the course scale.
 
 **Walkthrough**
-Read each row left to right. Then ask the class to characterize a large balance that has not moved in two years: self-custody or custodial, hot or cold, and with what confidence.
+Read each row left to right. Then ask the class to characterize a large balance that has not moved in two years: self-custody or custodial, hot or cold, and with what confidence. (Expected: probably cold storage, but at low confidence. The chain shows only that the key has not signed; a custodian's cold wallet and a forgotten personal wallet look the same, so self-custody or custodial stays open.)
 
 **Sources**
 - @scott_digitalwalletsselected_2022
@@ -522,7 +533,7 @@ Read each row left to right. Then ask the class to characterize a large balance 
 1. Make a wallet from a seed phrase [@palatinus_bip39mnemoniccode_2013].
 2. Read its derivation path and the addresses it derives [@palatinus_bip44multiaccounthierarchy_2014].
 3. Find those addresses in the explorer: nothing there ties them to one seed [@wuille_bip32hierarchicaldeterministic_2012].
-4. Spend from a 2-of-3 multi-sig: lesson ③ covers it next.
+4. Read a spend from a 2-of-3 multi-sig: lesson ③ covers it next.
 
 ::: {.notes}
 
@@ -533,7 +544,7 @@ This slide bridges the lecture to day 2's lab: a wallet made from a seed phrase,
 - The lab builds a wallet from a seed phrase.
 - Students read the derivation path and the addresses it derives.
 - In the explorer, nothing ties those addresses to one seed.
-- The 2-of-3 multi-sig spend belongs to lesson ③.
+- Reading the 2-of-3 multi-sig spend belongs to lesson ③.
 
 **Walkthrough**
 Read the four steps in order and say which slide each step comes from. Leave step 4 for lesson ③.

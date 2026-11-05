@@ -52,9 +52,6 @@ slide index), which is never listed here.
   keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
   key once the pair is known. Also `:65`: say the letters label the keys and a sorted script orders them by key
   bytes (lab answers `wallet/quizes/INSTRUCTOR_ANSWERS.md:95-96`). (4 Nov 2026, Gemini audit D2-2, D2-5)
-- `05-BF-*.qmd:525` "4. Spend from a 2-of-3 multi-sig": the lab only reads one. Say "Read a spend from…". (4 Nov 2026, Gemini audit D2-6, `docs/analysis/gemini-audit/triage.md`)
-- `05-BF-*.qmd` uses the hardened tick at `:334` and `:407-412` but defines it on a slide only at `:453` (notes
-  `:429`). Add one line on the path slide near `:405`. (4 Nov 2026, Gemini audit D2-9, `docs/analysis/gemini-audit/triage.md`)
 - `01-EF-*.qmd:172-178` draws Alice's 3 ETH as a second node, "Remaining: 3 ETH", in the fill of the Bitcoin change
   output (`:136-143`), against `:186`'s "no change output". Drop the node; label Alice "13 → 3 ETH". (4 Nov 2026, Gemini audit D3-2, `docs/analysis/gemini-audit/triage.md`)
 - `04-EF-*.qmd:916` and `:985` cite `solidityteam_solidityexample_2025` without `@`; `:1124` gives raw ethereum.org
