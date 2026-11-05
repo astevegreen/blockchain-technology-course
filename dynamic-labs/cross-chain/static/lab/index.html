@@ -78,8 +78,11 @@ long after the change do the sweeps start?</li>
 <li>Queries 1 and 2. The sweeps call two other selectors, <code>0x1163b2b0</code> and
 <code>0x582515c7</code>. What names does 4byte.directory give them? Do the names fit what each sweep
 moved?</li>
-<li>Your contract read: what does the function at <code>0x96221423…</code> do, who could make the wallet
-call it, and what did it change? Give a confidence for each, and the lines of evidence behind it.</li>
+<li>Read the two pieces of code under <a href="#read">The contract read</a>. Which line of
+<code>0x96221423…</code>'s code does the work, and which storage slot does it write? What does the wallet's
+own code keep in that slot? Then your contract read: what does the function at <code>0x96221423…</code>
+do, who could make the wallet call it, and what did it change? Give a confidence for each, and the lines of
+evidence behind it.</li>
 </ol>
 
 <h3>Worked example: Bybit's ETH to Bitcoin (21 to 26 Feb 2025)</h3>
@@ -114,16 +117,50 @@ holds it?</li>
 your assessment. See <a href="#graded">The graded note</a> for what it must have.</li>
 </ol>
 
-<h2>The contract read</h2>
-<p>A security firm read the contract at <code>0x96221423…</code>: it has a function with the same signature
-as an ERC-20 <code>transfer(address,uint256)</code>, but instead of moving tokens it writes its first argument
-into storage slot 0. In a Safe wallet, slot 0 holds the master copy, the logic contract the wallet runs.
-The wallet called it with a delegatecall, through its own <code>execTransaction</code>, which runs only what
-the wallet's required signers sign <a href="#s6">[6]</a>.</p>
-<p>Check that against the chain. In query 1, path <code>0</code> is the wallet running its old master copy
-(<code>0x34cfac64…</code>, selector <code>0x6a761202</code>, <code>execTransaction</code> on 4byte
+<h2 id="read">The contract read</h2>
+<p>Two pieces of code decide what the transaction at 14:13:35 did. Read them line by line, then check
+what you read against the chain.</p>
+<p><b>The wallet.</b> Bybit's cold wallet is a Safe proxy: it keeps the address of its master copy in
+storage slot 0 and delegatecalls every call into it <a href="#s6">[6]</a>. Below is Safe's proxy code as published
+in release 1.1.1 <a href="#s15">[15]</a>, the release of the master copy <code>0x34cfac64…</code> the wallet
+ran <a href="#s16">[16]</a>. Lines left out are marked <code>…</code>.</p>
+<pre><code>contract Proxy {
+
+    // masterCopy always needs to be first declared variable, to ensure that it is at the same location in the contracts to which calls are delegated.
+    // To reduce deployment costs this variable is internal and needs to be retrieved via `getStorageAt`
+    address internal masterCopy;
+    …
+    function ()
+        external
+        payable
+    {
+        …
+            let masterCopy := and(sload(0), 0xffffffffffffffffffffffffffffffffffffffff)
+            …
+            let success := delegatecall(gas, masterCopy, 0, calldatasize(), 0, 0)
+            …
+    }
+}</code></pre>
+<p><b>The contract it was tricked into running.</b> NCC Group read <code>0x96221423…</code> from its
+bytecode: they put it through Etherscan's decompiler and printed the result <a href="#s6">[6]</a>. As in day
+8's lesson on bytecode, the decompiler's output is a reading of the bytecode, not the attacker's source.</p>
+<pre><code>def storage:
+  stor0 is uint256 at storage 0
+def _fallback() payable: # default function
+  revert
+def transfer(address _to, uint256 _value) payable:
+  require calldata.size - 4 >= 64
+  require _to == _to
+  stor0 = _to</code></pre>
+<p class="hint">The decompiler wrote the names. <code>transfer</code> rests on the selector you looked up in
+question 1; the body is what the bytecode does.</p>
+<p><b>Who could make the wallet run it.</b> The wallet called <code>0x96221423…</code> with a delegatecall,
+through its own <code>execTransaction</code>, which runs only what the wallet's required signers sign
+<a href="#s6">[6]</a>.</p>
+<p>Now check the code against the chain. In query 1, path <code>0</code> is the wallet running its old master
+copy (<code>0x34cfac64…</code>, selector <code>0x6a761202</code>, <code>execTransaction</code> on 4byte
 <a href="#s8">[8]</a>), and path <code>0_0</code> is the delegatecall into <code>0x96221423…</code>. Every
-later call runs <code>0xbdd077f6…</code>. The firm's code read and the change you see on the chain are two
+later call runs <code>0xbdd077f6…</code>. The code you read and the change you see on the chain are two
 different kinds of evidence.</p>
 
 <h2>Worked example: Bybit's ETH to Bitcoin</h2>
@@ -200,8 +237,8 @@ and stop there.</li>
 <p>Question 17 is the day's graded point. Your instructor marks it <b>Meets</b> or <b>Not yet</b>, and you
 get one retry in class time. It meets when it has all three:</p>
 <ol>
-<li><b>The contract read</b>: what the function at <code>0x96221423…</code> does, who could make the wallet
-call it, and what it changed.</li>
+<li><b>The contract read</b>: what the function at <code>0x96221423…</code> does, with the line of its
+code that does it, who could make the wallet call it, and what it changed.</li>
 <li><b>A diagram of the Kelp flow</b>: each contract, by its address and what the queries show it doing;
 the assets in and out at each step; and the address on the far side, on Arbitrum.</li>
 <li><b>An assessment</b>: what happened, each judgment with a confidence word (never a percentage), and
@@ -255,6 +292,10 @@ Analytic Standards</i>, 2015: the source of the confidence words. The definition
 scale. <code>odni_icd203_2015</code></li>
 <li id="s14">LayerZero Labs, <i>Glossary</i>, LayerZero V2 documentation (read 1 Nov 2026): GUID, Nonce, Lazy
 Nonce, Channel. <code>layerzero_v2glossary_2026</code></li>
+<li id="s15">Safe, <i>Proxy.sol</i>, safe-smart-account release 1.1.1, 13 Dec 2019, LGPL-3.0 (read 4 Nov
+2026). <code>safe_proxysol111_2019</code></li>
+<li id="s16">Safe, <i>safe-deployments</i>, <code>v1.1.1/gnosis_safe.json</code> (read 4 Nov 2026): GnosisSafe
+1.1.1 at <code>0x34CfAC646f301356fAa8B21e94227e3583Fe3F5F</code>. <code>safe_deployments111_2026</code></li>
 </ol>
 </main>
 <script src="flags.js"></script>

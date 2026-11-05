@@ -58,10 +58,15 @@ and a screenshot.
    cross-chain trace".
 2. Follow the worksheet's crumbs to the query page and the saved results, and back. Confirm each loads
    under `/labs/cross-chain/`.
-3. Confirm the worksheet's source links (`[1]` to `[14]`) jump to entries under "Sources", and the link in
+3. Confirm the worksheet's source links (`[1]` to `[16]`) jump to entries under "Sources", and the link in
    question 17 jumps to "The graded note", which lists three parts and the one retry.
-4. Confirm the worksheet gives no name to an address the snapshot's `labels.csv` leaves blank (for
+4. Follow the link in question 4 to "The contract read". Confirm two code blocks: Safe's proxy, with
+   `address internal masterCopy;`, `sload(0)` and `delegatecall`, cited [15] and [16]; and NCC's decompiled
+   code, ending `stor0 = _to`, cited [6]. Confirm each block keeps its line breaks and indentation, scrolls
+   sideways rather than spilling past the page at 1280 px and at 375 px wide, and that the hint under the
+   second says the decompiler wrote the names.
+5. Confirm the worksheet gives no name to an address the snapshot's `labels.csv` leaves blank (for
    example `0x85d456b2…`, `0xd01607c3…`, `0x3b87db6d…`): it may show the address, never a role for it.
-5. Open `/labs/cross-chain/fallback/`. Confirm 16 sections, each with its query and row count, and that
+6. Open `/labs/cross-chain/fallback/`. Confirm 16 sections, each with its query and row count, and that
    query 9's and query 14's rows match Query Flow steps 8 and 10. Check console errors and failed network
    requests.

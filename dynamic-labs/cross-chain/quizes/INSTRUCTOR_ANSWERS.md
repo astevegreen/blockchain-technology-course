@@ -15,8 +15,9 @@ in and out and the far-side address").
 **Meets** when the note has all three:
 
 1. **The contract read.** Does: the function at `0x96221423…` looks like an ERC-20 `transfer` but writes
-   its first argument into storage slot 0, which in the Safe wallet is the master copy, so the wallet's code
-   was swapped for `0xbdd077f6…`. Who may call: the wallet ran it through its own `execTransaction`
+   its first argument into storage slot 0 (the decompiled line `stor0 = _to`), which in the Safe wallet is the
+   master copy (the proxy reads it with `sload(0)` and delegatecalls it), so the wallet's code was swapped for
+   `0xbdd077f6…`. Who may call: the wallet ran it through its own `execTransaction`
    (selector `0x6a761202`), which runs only what the wallet's required signers sign; so the signers were
    made to sign it. Changed: the wallet's logic contract, after which the sweeps ran (about 1.5 minutes
    later).
@@ -49,11 +50,15 @@ alone. A name from a selector or a token symbol is one unverified label.
    ETH). `0x582515c7` = `sweepERC20(address,address)`, used for the token sweeps (USDT 90, cmETH 15,000,
    stETH 90,375.547907685258392043, mETH 8,000). The names fit what moved: **moderate** (4byte only, but
    consistent with the moves). Accept low with that reason.
-4. Does: overwrote the wallet's logic contract, **high** (NCC's code read [6] and the on-chain switch from
-   `0x34cfac64…` to `0xbdd077f6…` are two kinds). Who may call: the wallet's own signers, through
-   `execTransaction`, **moderate** or **high** (NCC says so; path `0` shows it). Changed: slot 0, so the
-   wallet now runs `0xbdd077f6…`, **high**. A student who calls the function "a transfer" from the
-   selector alone has missed the point.
+4. The line that does the work is `stor0 = _to`: it writes the first argument into storage slot 0. The
+   wallet's proxy keeps `masterCopy` in slot 0 (first declared variable; `sload(0)` in the fallback, which
+   delegatecalls it). Does: overwrote the wallet's logic contract, **high** (the decompiled code [6] and the
+   on-chain switch from `0x34cfac64…` to `0xbdd077f6…` are two kinds that agree). Accept **moderate** with the
+   reason day 8's lesson gives: the code is a decompiler's reading of bytecode, not verified source. Who may
+   call: the wallet's own signers, through `execTransaction`, **moderate** or **high** (NCC says so; path `0`
+   shows it). Changed: slot 0, so the wallet now runs `0xbdd077f6…`, **high**. A student who calls the
+   function "a transfer" from its name has missed the point: the decompiler took the name from the selector,
+   which has six signatures (question 1); the body never moves a token.
 
 ## The worked example (questions 5 to 10, not graded)
 
