@@ -49,9 +49,6 @@ slide index), which is never listed here.
 - `13-FO-*.qmd:368` "Staging began with 10 ETH from Tornado Cash" never says what staging means. (4 Nov 2026, Gemini audit D9-5, `docs/analysis/gemini-audit/triage.md`)
 
 ## Quizzes
-- `quizes/run-sheet/RUN_SHEET.md:262` still says the post-test bank is "being built by another session; link only
-  until it lands", but `quizes/posttest/` now holds the bank, keys and verifier: point the row at them. (5 Nov 2026,
-  handoff-note cleanup)
 - Add "Wallets and key custody" (Order 50 here; renumber to the list's own) to the Notion "Role Concepts" list: the post-test
   has an item for it (p43, day 2) and `tools/alignment_terms.yml` carries it, but Notion is the owner's list and was not
   edited. The pretest has no item for it yet; the shared blueprint wants one. (4 Nov 2026, Gemini audit A-9)
