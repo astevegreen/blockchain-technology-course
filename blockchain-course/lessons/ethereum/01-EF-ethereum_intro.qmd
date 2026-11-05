@@ -98,7 +98,8 @@ This slide sorts Ethereum accounts by what controls them: a private key or code.
 **Walkthrough**
 1. Read the two columns: key-controlled on the left, code-controlled on the right.
 2. Read the four fields and the wei conversion.
-3. Close on the analyst line: code or no code, and what the nonce says.
+3. Ask which kind of account sent day 1's block 3 transfer, and how they know. (Expected answer: an EOA; only an EOA can start a transaction.)
+4. Close on the analyst line: code or no code, and what the nonce says.
 
 **Sources**
 - @ethereum.org_accountsdeveloperdocs_2025
@@ -169,14 +170,12 @@ digraph EthereumAccounts {
     label="";
     color="#bdbdbd";
 
-    // --- Accounts before and after
-    A  [label="Alice Account\nBalance: 13 ETH", fillcolor="#FFF9C4"];
+    // --- One account per person; balances change in place
+    A  [label="Alice Account\nBalance: 13 → 3 ETH", fillcolor="#FFF9C4"];
     B  [label="Bob Account\nBalance: +10 ETH", fillcolor="#E8F5E9"];
-    A2 [label="Alice Account\nRemaining: 3 ETH", fillcolor="#D1C4E9"];
 
-    // --- Transfers
-    A -> B  [label="−10 ETH"];
-    A -> A2 [label="= 3 ETH (post-transfer)"];
+    // --- Transfer
+    A -> B  [label="10 ETH"];
   }
 }
 ```  
@@ -199,8 +198,9 @@ This slide sets Bitcoin's UTXO model beside Ethereum's account model, using the 
 
 **Walkthrough**
 1. Left: two of Alice's outputs are spent whole, and 3 BTC comes back as change.
-2. Right: Alice's balance drops from 13 to 3 ETH and Bob's rises by 10; nothing comes back.
-3. Read the analyst line.
+2. Right: one box per account. Alice's balance drops from 13 to 3 ETH in place and Bob's rises by 10; nothing comes back.
+3. Ask how many new records the Ethereum payment made for Alice's 3 ETH. (Expected answer: none; the same account's balance changed, while Bitcoin made a new 3 BTC output.)
+4. Read the analyst line.
 
 **Sources**
 - @garratt_tokenaccountbaseddigital_2020
@@ -234,7 +234,9 @@ This slide introduces the EVM as the program every Ethereum node runs to reprodu
 - Because every node agrees on the result, the state an explorer shows is the network's record.
 
 **Walkthrough**
-None
+1. Read the definition: Solidity source is compiled to bytecode, and every node runs that bytecode.
+2. Take the four properties in turn; "metered" returns on the gas slide later in this lesson.
+3. Ask why an analyst can read a balance from any full node and trust it. (Expected answer: every node reran the same transactions and must reach the same result, so the balance is the network's record, not one company's.)
 
 **Sources**
 - @wood_ethereumsecuredecentralised_2016
@@ -265,7 +267,10 @@ This slide explains the price of determinism: a contract can see only what is on
 - Day 8 returns to oracles as an attack surface.
 
 **Walkthrough**
-None
+1. Start from the last slide: every node must reach the same result.
+2. Ask what would break if a contract could read a website's ETH price. (Expected answer: nodes reading at different moments would see different prices and compute different results, so they could not agree.)
+3. Introduce the oracle as the answer, and the trust it adds.
+4. Close on the analyst line and the day 8 pointer.
 
 **Sources**
 - @wood_ethereumsecuredecentralised_2016
@@ -340,8 +345,9 @@ This slide shows a smart contract as code plus storage at its own address, with 
 **Walkthrough**
 1. Point to the two stored values, `count` and `owner`.
 2. The constructor runs once, at deployment, and records the deployer as owner.
-3. `increment` is open to anyone; `reset` checks `msg.sender` against `owner` first.
-4. `getCount` only reads the stored value.
+3. Gloss three words students meet again in lesson ②: `public` means anyone can call the function, `view` means it only reads and changes nothing, and `msg.sender` is the address that made this call.
+4. `increment` is open to anyone; `reset` checks `msg.sender` against `owner` first.
+5. Ask what happens if a stranger calls `reset`. (Expected answer: the `require` fails, the call reverts and the count stays; the stranger still pays the fee, as the gas slide shows.)
 
 **Sources**
 - @wood_ethereumsecuredecentralised_2016
@@ -448,7 +454,9 @@ This slide follows a transaction from the wallet to finality in today's proof-of
 - The Merge on 15 September 2022 replaced miners with validators; execution did not change.
 
 **Walkthrough**
-None
+1. Follow the three stages in order: signed and pending, included, final.
+2. Ask whether a transaction in a block two minutes old is final. (Expected answer: no; it is included, and final only after the validators' votes, about 15 minutes after inclusion.)
+3. Note The Merge date, so students read "mined" on older blocks without confusion.
 
 **Sources**
 - @ethereumorg_transactions_2025
@@ -488,7 +496,8 @@ This slide reads the receipt, the node's record of what a transaction actually d
 **Walkthrough**
 1. Read the table, stopping on `status` and `logs`.
 2. Read the log's three parts.
-3. Close on the analyst line: status first, then logs for tokens.
+3. Ask what day 1's block 6 receipt showed. (Expected answer: `status` 0; the call failed, nothing moved, and the sender still paid gas.)
+4. Close on the analyst line: status first, then logs for tokens.
 
 **Sources**
 - @ethereumorg_jsonrpcapi_2025
@@ -646,7 +655,9 @@ This closing slide gathers the four things an analyst reads on Ethereum. It matt
 - Receipts and traces: status, fee, logs and internal transfers.
 
 **Walkthrough**
-None
+1. Read the four bullets as the reading order: account, transaction, receipt, then internal transfers.
+2. Ask where to look for a USDT payment that a transaction's `value` shows as 0 ETH. (Expected answer: in the receipt's logs, because a token moves by a contract call; lesson ③ reads them.)
+3. Point to lessons ② and ③ and this afternoon's lab.
 
 **Sources**
 - @ethereum.org_accountsdeveloperdocs_2025
