@@ -176,6 +176,12 @@ This slide shows how a sweep looks on Ethereum: the deposit address forwards wha
 1. Read each row: what the sweep shows, then why.
 2. Ask: a deposit of 2.0 ETH, and 40 minutes later 1.9996 ETH leaves to an address that has received 50,000 such forwards. What is the first address? (Probably a deposit address.)
 3. Point at the contract row: the pattern is the same; the forwarder is code.
+4. Work that example as a procedure, one check per row, aloud. The values are made up.
+   - Amount: 2.0 ETH in, 1.9996 ETH out. The 0.0004 ETH difference is a fee, under Victor's 0.0083 ETH, so row 1 fits.
+   - Timing: 40 minutes, inside the 13 hours that covered 95% of forwards, so row 3 fits.
+   - Destination: one address that has received 50,000 such forwards: the exchange's main address, by pattern.
+   - Label: is that main address labelled as an exchange? If yes, the reading is stronger; if not, it rests on the pattern.
+   - Say it: "Moderate confidence that the first address is a deposit address at the exchange that controls the main address: it forwarded 2.0 ETH less a fee within the hour to an address that receives tens of thousands of such forwards." The practice slide's pattern 1 asks for the same read.
 
 **Sources**
 - @victor_clustering_2020
@@ -210,6 +216,23 @@ This slide shows how a sweep looks on Ethereum: the deposit address forwards wha
 
 ::::
 
+```{dot}
+//| fig-width: 9
+//| fig-height: 0.9
+digraph Sweep {
+  rankdir=LR; bgcolor="transparent"; nodesep=0.15;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [color="#64748b", fontname="Helvetica", fontsize=9];
+  D [label="60 deposit addresses
+(60 customers)", fillcolor="#dbeafe"];
+  T [label="One sweep transaction
+(the exchange signs every input)", fillcolor="#fef3c7"];
+  C [label="Cold storage", fillcolor="#dcfce7"];
+  H [label="Change or hot wallet", fillcolor="#dcfce7"];
+  D -> T [label="60 inputs"]; T -> C; T -> H;
+}
+```
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -223,7 +246,7 @@ This slide shows how a sweep looks on Bitcoin and why it misleads the common-inp
 - Define cluster where it first appears: a set of addresses the analyst attributes to one controller. Day 6 shows how clusters are built; today students need only the word.
 
 **Walkthrough**
-1. Draw a transaction with 60 inputs and 2 outputs; say each input was funded by a different sender in the last few hours.
+1. Point at the figure: a transaction with 60 inputs and 2 outputs; say each input was funded by a different sender in the last few hours.
 2. Ask: one owner? (One key holder, the exchange; sixty customers.)
 3. Read the Sendin quote on control and ownership.
 
@@ -288,7 +311,7 @@ This slide explains why the trail breaks at an exchange: what comes out is paid 
 **Where it fails**
 
 - An address that forwards the same amount to an exchange wallet looks like a deposit address, so an adversary can create false links; Victor examined one layer of forwarding only [@victor_clustering_2020].
-- Some chains let one deposit address serve every customer: a **destination tag** (XRP Ledger) or a **memo** or **muxed address** (Stellar) rides with the payment and says "which customer to credit" [@xrpl_tags_2026; @kraken_xlmmemo_2026]. Kraken, **as of July 2026**, uses "a single Lumens deposit address" for all its customers [@kraken_xlmmemo_2026]. Link senders only when the tag, memo or muxed address matches too (inference).
+- Some chains let one deposit address serve every customer: a **destination tag** (XRP Ledger) or a **memo** or **muxed address** (Stellar; the address with a customer number built in) says "which customer to credit" [@xrpl_tags_2026; @kraken_xlmmemo_2026; @stellar_muxed_2026]. Kraken, **as of July 2026**, uses "a single Lumens deposit address" for all its customers [@kraken_xlmmemo_2026]. Link senders only when the tag, memo or muxed address matches too (inference).
 - A label is stronger than a pattern: confirm that the destination belongs to an exchange before calling anything a deposit address.
 - Say it with a confidence: "Moderate confidence that addresses A and B are controlled by one entity: both sent to deposit address D, which forwards to an address labelled as exchange X."
 :::
@@ -305,7 +328,7 @@ This slide gives the deposit-address heuristic: senders who share a deposit addr
 - One deposit address means one customer account, so its senders likely share an owner. Keep the two meanings of "account" apart: the **customer account** is the exchange's ledger entry; the **address** (an on-chain account on Ethereum) is what the chain shows.
 - In the data through September 2019, 44.3% of addresses that used a deposit address shared it with another address; the heuristic links many addresses.
 - An adversary can fake the pattern by forwarding funds exactly; Victor looked at one layer of forwarding only.
-- Destination tags belong to the XRP Ledger; memos and muxed addresses belong to Stellar. Exchanges use them so that one shared deposit address can serve many customers (at Kraken on Stellar, all of them), with the tag or memo naming the customer account. The XRP Ledger docs give the reason: on other ledgers it is common to give each customer a different deposit address. Kraken has also accepted Stellar muxed addresses since December 2022, and with one "a Memo is no longer required". Senders who share that address are many customers, not one; only a shared tag, memo or muxed address would suggest one account, and that is an inference, not a published heuristic.
+- Destination tags belong to the XRP Ledger; memos and muxed addresses belong to Stellar. Exchanges use them so that one shared deposit address can serve many customers (at Kraken on Stellar, all of them), with the tag or memo naming the customer account. The XRP Ledger docs give the reason: on other ledgers it is common to give each customer a different deposit address. Kraken has also accepted Stellar muxed addresses since December 2022, and with one "a Memo is no longer required". A muxed address (it starts with M) is the shared address plus a 64-bit customer number: Stellar's docs say muxed accounts "combine the familiar `GABC…` address with a 64-bit integer ID", and they do not exist on the ledger; the shared account does. Senders who share that address are many customers, not one; only a shared tag, memo or muxed address would suggest one account, and that is an inference, not a published heuristic.
 - A confirmed exchange label on the destination makes the reading stronger than the pattern alone.
 - The confidence words are High, Moderate and Low.
 
@@ -320,6 +343,7 @@ This slide gives the deposit-address heuristic: senders who share a deposit addr
 - @victor_clustering_2020
 - @xrpl_tags_2026
 - @kraken_xlmmemo_2026
+- @stellar_muxed_2026
 
 :::
 
@@ -426,6 +450,21 @@ This slide explains what an OTC desk does: it arranges large trades directly bet
 
 :::
 
+```{dot}
+//| fig-width: 9
+//| fig-height: 0.9
+digraph OTC {
+  rankdir=LR; bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11];
+  edge [color="#64748b", fontname="Helvetica", fontsize=9];
+  S [label="20 small payments
+(unrelated senders)", fillcolor="#dbeafe"];
+  O [label="OTC desk's address", fillcolor="#fef3c7"];
+  E [label="Exchange", fillcolor="#dcfce7"];
+  S -> O [label="many in"]; O -> E [label="2 large transfers out"];
+}
+```
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -440,7 +479,7 @@ This slide shows the OTC desk as a laundering exit. It matters here because the 
 **Walkthrough**
 1. Read the legitimate-business quote first, so students do not assume every desk launders.
 2. Read the 2026 aggregation quote with its date.
-3. Sketch the pattern: twenty small arrows into one address, two large arrows out to an exchange.
+3. Point at the figure: twenty small payments into one address, two large transfers out to an exchange. The Bitcoin sweep has the same many-in, few-out shape; what tells them apart is who sent in (customers of one exchange, against unrelated senders paying a desk) and where it goes (the exchange's own cold storage, against another exchange).
 
 **Sources**
 - @chainalysis_moneylaundering_2020
@@ -458,7 +497,7 @@ This slide shows the OTC desk as a laundering exit. It matters here because the 
 
 - P2P exchangers are "(typically) natural persons engaged in the business of buying and selling" crypto, found through ads, forums, websites and word of mouth, online or in person [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
 - Once the seller confirms the buyer has paid, the seller sends the crypto [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019]. The payment leg (cash, bank transfer, gift card) is off-chain.
-- P2P trading platforms "enable buyers and sellers of CVC to find each other", and sometimes stand between them [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
+- P2P trading platforms "enable buyers and sellers of CVC to find each other" (CVC, convertible virtual currency, is FinCEN's term for crypto), and sometimes stand between them [@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019].
 :::
 :::
 
