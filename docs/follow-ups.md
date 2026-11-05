@@ -40,16 +40,11 @@ slide index), which is never listed here.
   DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
   :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
   (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
-- Speaker notes carry build history and internal concept numbers: `05-FO-*.qmd:99` "(Course Audit: keep)",
-  `01-PC-*.qmd:497` "concept 49". (4 Nov 2026, week-1 pattern audit)
-- `05-FO-*.qmd:219`'s notes say "Southeast Asian criminal groups" with no citation; source it with the `source`
-  skill or cut it. (4 Nov 2026, week-1 pattern audit)
+- Speaker notes carry an internal concept number: `01-PC-*.qmd:497` "concept 49". (4 Nov 2026, week-1 pattern audit)
 - `lessons/forensics/14-FO-fusing_sources.qmd:191` rates a deposit address sweeping into the exchange's own published
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
-- `05-FO-*.qmd:120` and `:414` file CTRs with SARs as "a pattern someone saw"; a CTR is a cash-threshold filing over
-  $10,000 (31 CFR 1010.311). Add a bib key and split the two. (4 Nov 2026, Gemini audit D5-6, `docs/analysis/gemini-audit/triage.md`)
 - `07-FO-*.qmd:446` sends a BTC deposit to "an exchange that delisted XMR in 2024": cut the clause. `:437` calls its
   note "the lab's product, on a privacy-coin hop", but the lab excludes privacy coins; reword as `08-FO:422` was.
   (4 Nov 2026, Gemini audit D7-3, D7-6, `docs/analysis/gemini-audit/triage.md`)
@@ -127,8 +122,8 @@ slide index), which is never listed here.
 
 - `lessons/introduction/02-IN-*.qmd:15` (and 03-IN, 05-IN) declare `slide-level: 3` with only `##` headings, which
   renders content slides centred, against the theme's `center: false`. Set 2 and check in a browser. (4 Nov 2026, Gemini audit D1-7, `docs/analysis/gemini-audit/triage.md`)
-- `tools/pointer_check.py` finds six wrong cross-lesson pointers on today's tree (05-EF:643, 05-FO:99/161/396,
-  07-FO:39, 13-FO:112; run it for the list), so it is not yet in `tools/check.py`. Once it exits 0, add it to
+- `tools/pointer_check.py` finds two wrong cross-lesson pointers on today's tree (07-FO:39,
+  13-FO:112; run it for the list), so it is not yet in `tools/check.py`. Once it exits 0, add it to
   `plan_checks` as a failing check whenever a lesson changes; its "note:" lines stay advice. That change is a rail:
   run `second-look.mjs` and follow the rail audit. (4 Nov 2026, week-1 audit W2 pointer check)
 
