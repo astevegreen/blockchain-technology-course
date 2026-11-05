@@ -38,7 +38,10 @@ This slide opens the lesson by treating a hash as a fingerprint: a short name th
 - Hashing is not encryption: there is no key and nothing to decrypt.
 
 **Walkthrough**
-None
+1. Read the scenario aloud and let students answer before the bullets.
+2. Ask: what does the transaction ID from the phone tell you, and what doesn't it? (It names exactly one transaction, so any explorer or node finds the same record from it. It says nothing about the amount, the addresses or who sent it: the ID is a hash, and a hash carries none of its input. Looking it up is what tells you the content.)
+3. Read the three properties; point out that "fixed length" is why every txid looks the same length.
+4. Close on the last bullet: no key, so nothing to decrypt.
 
 **Sources**
 - @nationalinstituteofstandardsandtechnologyus_securehashstandard_2015
@@ -66,7 +69,9 @@ This slide explains one-way behavior: a digest cannot be reversed, only matched 
 - An input drawn from a small set can be found by hashing every candidate.
 
 **Walkthrough**
-None
+1. Read the pre-image bullet, then the address bullet that follows from it.
+2. Ask: if a hash cannot be reversed, how could anyone ever find the input? (By guessing: hash candidates until one matches. That works only when the input came from a small set.)
+3. Flag the last bullet: the Milk Sad slide near the end is this guessing at work.
 
 **Sources**
 - @boneh_hashfunctions_2020
@@ -86,7 +91,7 @@ None
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide covers the two collision properties and turns them into the analyst's working assumption: one ID, one record. It matters here because memos cite transaction IDs as if each one is unique, and that is only safe while the hash holds. Emphasize the SHA-1 collision as proof that the assumption depends on the hash still standing.
+This slide covers the two collision properties and turns them into the analyst's working assumption: one ID, one record. It matters here because analysts cite transaction IDs as if each one is unique, and that is only safe while the hash holds. Emphasize the SHA-1 collision as proof that the assumption depends on the hash still standing.
 
 **Key Points**
 - Second pre-image resistance protects a known input from being matched by a different one.
@@ -94,7 +99,8 @@ This slide covers the two collision properties and turns them into the analyst's
 - SHA-1 lost collision resistance in 2017, so the property is not permanent.
 
 **Walkthrough**
-None
+1. Read the two properties and the conclusion: one ID, one record.
+2. Ask: an agent asks whether someone could have swapped the transaction behind this ID for another one. What do you answer? (Not with SHA-256 as it stands today: no one can make a second transaction with the same ID. Say that it depends on the hash holding, as SHA-1 shows.)
 
 **Sources**
 - @nationalinstituteofstandardsandtechnologyus_securehashstandard_2015
@@ -152,7 +158,7 @@ This slide demonstrates the avalanche effect with two messages that differ by on
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide maps which hash each course chain uses and where students will see it. It matters here because the address slides that follow are built from these hashes, and a memo that names the wrong hash undermines the analyst. Emphasize the Keccak-256 versus SHA3-256 trap, which catches people who check a hash with the wrong tool.
+This slide maps which hash each course chain uses and where students will see it. It matters here because the address slides that follow are built from these hashes, and an explanation that names the wrong hash undermines the analyst. Emphasize the Keccak-256 versus SHA3-256 trap, which catches people who check a hash with the wrong tool.
 
 **Key Points**
 - Bitcoin uses double SHA-256 for IDs and hash160 for addresses.
@@ -160,7 +166,9 @@ This slide maps which hash each course chain uses and where students will see it
 - Keccak-256 and NIST SHA3-256 are not interchangeable.
 
 **Walkthrough**
-None
+1. Read the table by chain: Bitcoin uses two hashes for two jobs; Ethereum and Tron share one.
+2. Point to the Keccak-256 bullet: a tool labelled "SHA3" may mean either.
+3. Ask: you check an Ethereum address with an online "SHA3-256" tool and the digest doesn't match. What went wrong? (Probably the tool: NIST SHA3-256 and Keccak-256 give different digests; use Keccak-256.)
 
 **Sources**
 - @antonopoulos_masteringbitcoinprogramming_2017
@@ -175,8 +183,8 @@ None
 **Bottom line:** whoever holds the private key can spend. There is no account name, no password reset and no bank behind it.
 
 - **Private key:** a random 256-bit number, $k$.
-- **Public key:** a point on an elliptic curve, $K = k \times G$, where $G$ is a fixed starting point everyone uses.
-- Going forward (key to public key) is quick. Going back (public key to key) is the **elliptic-curve discrete logarithm problem**, which no known computer can solve for curves this size.
+- **Public key:** a point on an elliptic curve (a pair of numbers, $x$ and $y$, that fits the curve's equation), $K = k \times G$, where $G$ is a fixed starting point everyone uses.
+- Going forward (key to public key) is quick. Going back (public key to key) is the **elliptic-curve discrete logarithm problem**: working out $k$ from $K$, which no known computer can do for curves this size.
 - **One curve, three chains:** Bitcoin, Ethereum and Tron all use **secp256k1**, a curve published in the SEC 2 standard (as of 24 Oct 2026).
 - So the same key-handling story applies on every chain in this course.
 
@@ -191,7 +199,10 @@ This slide introduces the key pair: a random private number and the public point
 - Bitcoin, Ethereum and Tron all use secp256k1 (as of 24 Oct 2026).
 
 **Walkthrough**
-None
+1. Read the private-key bullet: just a number.
+2. Read the public-key bullet; say a curve point is a pair of numbers $(x, y)$, and that multiplying by $G$ is a fixed recipe every wallet follows.
+3. Point to the one-way bullet: forward is quick, backward is infeasible. That is all students need from the curve.
+4. Ask: someone has your public key. Can they spend your coins? (No. They would have to work back to the private key, which is the problem no known computer can solve.)
 
 **Sources**
 - @certicom_sec2recommendedelliptic_2010
@@ -210,6 +221,7 @@ None
   2. Sign the hash with the private key and a fresh random number (the **nonce**), giving two numbers, $(r, s)$.
   3. Anyone checks $(r, s)$ against the hash and the public key. Valid or not: no one is trusted.
 - **The nonce must never repeat.** Sony signed PlayStation 3 software with the same nonce each time, and the private key was worked out from two signatures (2010).
+- **Not to be confused with** the other two nonces you meet today: an Ethereum account's nonce counts its transactions (lesson ①), and a block header's nonce is the number miners change while searching for a block (day 2).
 
 ::: {.notes}
 
@@ -221,6 +233,7 @@ This slide walks through ECDSA signing and verification and names its sharpest f
 - Anyone can verify with the public key; any change to the transaction breaks the signature.
 - Bitcoin's Taproot outputs sign with Schnorr instead, still on secp256k1.
 - Reusing a nonce exposes the private key, as in the PlayStation 3 case.
+- "Nonce" means three things on day 1: this secret one-time number inside a signature, an Ethereum account's transaction counter (02-IN's account table), and the block-header field miners change (02-IN's block card; proof of work is taught in 02-BF's "Mining a Candidate Block"). Only the signature nonce is secret.
 
 **Walkthrough**
 1. Hash the transaction.
@@ -241,20 +254,22 @@ This slide walks through ECDSA signing and verification and names its sharpest f
 - A key can be **stolen**, **shared**, or **held by a service** such as an exchange that signs for its customers.
 - A signature proves the approval was made with the key, **not who held it or whether they understood it**.
 - **Write it this way:** "The transaction was signed with the key controlling address X," not "Smith sent the funds."
-- **Day 4 returns to this:** a victim can sign a message that hands their tokens to a thief, and on chain it is still a valid signature.
+- **Day 8 returns to this** ("A permit is an approval signed off chain"): a victim can sign a message that hands their tokens to a thief, and on chain it is still a valid signature.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide separates authorization from identity. It matters here because agents and prosecutors hear "signed" as "did it", and the analyst's job is to keep the claim to what the evidence shows. Emphasize the memo wording, and preview the day-4 case where a victim's own signature authorizes a theft.
+This slide separates authorization from identity. It matters here because agents and prosecutors hear "signed" as "did it", and the analyst's job is to keep the claim to what the evidence shows. Emphasize the wording, and preview the day-8 case where a victim's own signature authorizes a theft.
 
 **Key Points**
 - A signature proves use of a key, not the identity or intent of its holder.
 - Services such as exchanges hold and sign with keys on their customers' behalf.
-- Memo wording ties the action to the key and address, not to a named person.
+- Careful wording ties the action to the key and address, not to a named person.
 
 **Walkthrough**
-None
+1. Read the three ways a key can be held by someone other than its owner.
+2. Read the "Write it this way" bullet aloud, both versions.
+3. Ask: a transaction was signed by the key behind an exchange's hot wallet. Who approved it? (The exchange's system signed it; the customer who asked for the withdrawal is a separate fact, from the exchange's records, not from the signature.)
 
 **Sources**
 - @nakamoto_bitcoinpeertopeerelectronic_2008
@@ -347,7 +362,7 @@ This slide shows Ethereum's address derivation and contrasts it with Bitcoin's. 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows that Tron reuses Ethereum's derivation and only changes the prefix and encoding. It matters here because day 7 traces stablecoins on Tron, and an analyst who can convert between forms can spot one key used on both chains. Emphasize the lead-not-finding framing.
+This slide shows that Tron reuses Ethereum's derivation and only changes the prefix and encoding. It matters here because day 5 reads USDT on Tron and day 9's lab traces it, and an analyst who can convert between forms can spot one key used on both chains. Emphasize the lead-not-finding framing.
 
 **Key Points**
 - Tron addresses are the Ethereum 20 bytes with a 0x41 prefix, encoded in Base58Check.
@@ -364,6 +379,72 @@ This slide shows that Tron reuses Ethereum's derivation and only changes the pre
 
 :::
 
+## Worked: one key, three addresses, one signature {.smaller}
+
+**Bottom line:** one published key, followed through this lesson's steps. Every arrow is a step anyone can repeat; only the private key is secret.
+
+```{dot}
+//| fig-width: 10
+//| fig-height: 4
+digraph KeyWalk {
+  rankdir=LR;
+  bgcolor="transparent";
+  nodesep=0.15; ranksep=0.35;
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=16];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=13];
+
+  k [label="Private key k (secret)\n1E99423A…26AEDD", fillcolor="#fee2e2", color="#f87171"];
+  K [label="Public key K = k × G\n03 F028892B…DC341A", fillcolor="#e0f2fe", color="#38bdf8"];
+  M [label="Message \"Pay Alice 1 BTC\"\nSHA-256: 44b8841b…"];
+  B [label="Bitcoin address\n1J7mdg5r…pEoXZy", fillcolor="#dcfce7", color="#22c55e"];
+  E [label="Ethereum address\n0xf4ddd38a…4e08fe", fillcolor="#dcfce7", color="#22c55e"];
+  T [label="Tron address\nTYHwcdSL…L8239x", fillcolor="#dcfce7", color="#22c55e"];
+  S [label="Signature (r, s)\nr = 4607c5f4…\ns = 68b92da6…", fillcolor="#fef3c7", color="#f59e0b"];
+  V [label="Check with K:\nvalid", fillcolor="#dcfce7", color="#22c55e"];
+
+  k -> K [label="× G"];
+  K -> B [label="SHA-256, RIPEMD-160,\nBase58Check"];
+  K -> E [label="Keccak-256,\nlast 20 bytes"];
+  E -> T [label="41 in front,\nBase58Check"];
+  k -> S [label="sign"];
+  M -> S;
+  S -> V;
+  K -> V [style=dashed];
+}
+```
+
+- Change the message to "Pay Alice 2 BTC" and the same $(r, s)$ fails the check: the signature fits only these bytes.
+- Only the red box is secret. An investigation sees everything else, and never sees $k$.
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide works the lesson's three procedures once with real values: one private key to its public key, to a Bitcoin, an Ethereum and a Tron address, and to a signature that checks. It matters here because the explorer lab asks students to read addresses and signatures, and this is the one place the lesson shows every step done. Emphasize that every arrow is public arithmetic anyone can repeat, and the private key is the only secret.
+
+**Key Points**
+- The private key is the worked example in *Mastering Bitcoin* (chapter 4): k = 1E99423A4ED27608A15A2616A2B0E9E52CED330AC530EDCC32C8FFC6A526AEDD. Its compressed public key (03 followed by x) gives the book's address 1J7mdg5rbQyUHENYdx39WVWK7fsLpEoXZy, through hash160 bbc1e42a39d05a4cc61752d6963b7f69d09bb27b.
+- Public key: x = F028892BAD7ED57D2FB57BF33081D5CFCF6F9ED3D3D7F159C2E2FFF579DC341A, y = 07CF33DA18BD734C600B96A72BBC4749D5141C90EC8AC328AE52DDFE2E505BDB (y is odd, hence the 03 prefix).
+- Ethereum hashes the 64-byte x and y with Keccak-256 and keeps the last 20 bytes: 0xf4ddd38a2d2f4231e1ddf131a8f3fd80804e08fe. Tron puts 41 in front and encodes it: TYHwcdSLEBSXasK9xp6JDPieYLosL8239x.
+- The message is the avalanche slide's "Pay Alice 1 BTC"; its SHA-256 is that slide's digest, 44b8841b753dd6b72b90dfb80f64fedcb869d00d0c24dd68a8f8ad0cc96b8643. The ECDSA signature: r = 4607c5f418a9640ebbb91bc23bff24fa9bc354d8207c4216657dad396c4fa317, s = 68b92da6f2cd96e14ee7e5ac3a0a019ad3c0a23cbbc50713d0cc6582ece3a08d. It verifies against K; against the hash of "Pay Alice 2 BTC" it fails.
+- The book gives the key and the Bitcoin address. The Ethereum and Tron forms and the signature were computed for this course on 4 Nov 2026 with the derivations on the earlier slides (signature nonce chosen deterministically, as RFC 6979 describes). Another tool picks another nonce, so its $(r, s)$ differ but check just as well; the three addresses never differ.
+- This key is published, so it protects nothing: a key printed in a book or tutorial is a key anyone can sign with.
+
+**Walkthrough**
+1. Start at the red box: the private key is a number, nothing more.
+2. Follow the top path: multiply by G to get K, then each chain's hash to its address. Point out that Ethereum and Tron share the same 20 bytes.
+3. Follow the bottom path: the key and the message's hash make $(r, s)$; K alone checks it.
+4. Ask: which of these boxes could an analyst read on chain? (The addresses, the public key once a hashed Bitcoin address spends, and the signature. Never the private key.)
+5. Ask: the same signature is attached to "Pay Alice 2 BTC". What does the check say? (Invalid: the signature fits only the bytes that were signed.)
+
+**Sources**
+- @antonopoulos_masteringbitcoinprogramming_2017
+- @wood_ethereumsecuredecentralised_2016
+- @tron_accounts_2026
+- @schmid_ecdsaapplicationimplementation_2015
+- @nationalinstituteofstandardsandtechnologyus_securehashstandard_2015
+
+:::
+
 ## Ethereum works out the sender from the signature {.smaller}
 
 **Bottom line:** a signed Ethereum transaction does not carry the sender's address. Every node recovers it from the signature, so the explorer's "From" field is computed, not sent.
@@ -375,15 +456,18 @@ This slide shows that Tron reuses Ethereum's derivation and only changes the pre
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide explains sender recovery in Ethereum and contrasts it with Bitcoin. It matters here because students will read the From field in Otterscan, and they should know it is derived from the signature rather than claimed by the sender. Emphasize that a valid signature ties the transaction to the key behind the From address, and the previous slide's limits still apply.
+This slide explains sender recovery in Ethereum and contrasts it with Bitcoin. It matters here because students will read the From field in Otterscan, and they should know it is derived from the signature rather than claimed by the sender. Emphasize that a valid signature ties the transaction to the key behind the From address, and the limits from "A signature authorizes; it doesn't identify" still apply.
 
 **Key Points**
 - Ethereum transactions carry a signature, not a sender address.
 - Nodes recover the public key from the signature and derive the address.
 - Bitcoin inputs show the public key directly.
+- The limits from "A signature authorizes; it doesn't identify" still apply: the key signed, not necessarily its owner.
 
 **Walkthrough**
-None
+1. Read the first bullet: signature and hash in, public key and then address out.
+2. Contrast with Bitcoin, where the key sits in the input.
+3. Ask: can a sender type a false "From" address into an Ethereum transaction? (No. The From field is recovered from the signature, so a valid signature means the key behind that address signed. Who held the key is still the earlier slide's question.)
 
 **Sources**
 - @wood_ethereumsecuredecentralised_2016
@@ -398,12 +482,12 @@ None
 
 - Bitcoin's design paper admits the limit: it advises a new key pair for each transaction, and warns that spending several inputs together links them to one owner.
 - Researchers have clustered Bitcoin addresses this way and labeled the clusters with known services.
-- Days 2 and 3 teach these methods, with a confidence on each link.
+- Day 2 previews the first of these clues; day 6 teaches the methods, with a confidence on each link.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide corrects the common belief that cryptocurrency is anonymous. It matters here because the whole course rests on the gap between pseudonymity and anonymity, and days 2 and 3 build the tracing methods on it. Emphasize that the public history is the analyst's raw material.
+This slide corrects the common belief that cryptocurrency is anonymous. It matters here because the whole course rests on the gap between pseudonymity and anonymity, and day 6 builds the tracing methods on it (day 2 previews co-spending in 02-BF's "Co-spending and change: two clues to carry"). Emphasize that the public history is the analyst's raw material.
 
 **Key Points**
 - Addresses carry no names, but their full histories are public.
@@ -411,7 +495,8 @@ This slide corrects the common belief that cryptocurrency is anonymous. It matte
 - Clustering and labeling turn pseudonymous addresses into leads.
 
 **Walkthrough**
-None
+1. Read the bottom line, then the Bitcoin paper's own warning.
+2. Ask: an address has no name attached. Why can an analyst still learn who is behind it? (Its whole history is public. Patterns such as co-spending link it to other addresses, and one of those may already be identified, for example as an exchange.)
 
 **Sources**
 - @nakamoto_bitcoinpeertopeerelectronic_2008
@@ -438,7 +523,9 @@ This slide shows that real key losses come from weak generation and theft, not f
 - Blockchains have no way to revoke a stolen key.
 
 **Walkthrough**
-None
+1. Tie Milk Sad back to the pre-image slide: a 32-bit seed is a small set, so every seed can be tried.
+2. Read the Bitfinex line: theft of the keys, not a broken curve.
+3. Ask: on chain, how does a theft with a stolen key look different from the owner's own spend? (It doesn't. Both carry valid signatures; the difference has to come from other evidence, such as the victim's report or where the funds go next.)
 
 **Sources**
 - @l35_milksad_update2_2023
@@ -452,7 +539,7 @@ None
 
 - **The threat:** Shor's algorithm would break ECDSA on a large quantum computer. The Bitcoin Wiki puts the machine needed far beyond today's (as of 23 Mar 2026).
 - **Most exposed:** keys already shown on chain: addresses that have spent, and Taproot addresses, which carry their key.
-- **The replacements:** NIST published ML-KEM (FIPS 203) and ML-DSA (FIPS 204) on 13 Aug 2024.
+- **The replacement:** NIST published ML-DSA (FIPS 204), a post-quantum signature standard, on 13 Aug 2024.
 - **As of 24 Oct 2026,** Bitcoin, Ethereum and Tron still sign with secp256k1 keys: ECDSA, plus Schnorr for Bitcoin's Taproot.
 
 ::: {.notes}
@@ -463,10 +550,12 @@ This slide gives a dated, sober picture of the quantum threat to elliptic-curve 
 **Key Points**
 - Shor's algorithm threatens ECDSA, but no machine large enough exists.
 - Public keys revealed by spending, or carried in Taproot addresses, are the most exposed.
-- NIST's post-quantum standards are FIPS 203 (ML-KEM) and FIPS 204 (ML-DSA), 13 Aug 2024.
+- NIST's post-quantum signature standard is FIPS 204 (ML-DSA), 13 Aug 2024. FIPS 203 (ML-KEM), published the same day, is for agreeing keys, not signing, so it is not a replacement for ECDSA.
 
 **Walkthrough**
-None
+1. Read the threat, then which keys are most exposed and why: their public keys are already on chain.
+2. Read the replacement standard and the "as of" line.
+3. Ask: an agent asks whether quantum computers make Bitcoin evidence unreliable today. What do you answer? (No: no machine large enough exists, and the chains still sign with secp256k1 as of 24 Oct 2026. It is a future risk to keys whose public key is already visible.)
 
 **Sources**
 - @l34_bitcoin_wiki_quantum_2026
@@ -491,7 +580,7 @@ None
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide summarizes the lesson and points to the next one, Ledger and Finality. It matters here because the explorer lab asks students to read IDs, addresses and From fields, and say what each proves. Emphasize the memo habit: tie actions to keys and addresses, not to people.
+This slide summarizes the lesson and points to the next one, Ledger and Finality. It matters here because the explorer lab asks students to read IDs, addresses and From fields, and say what each proves. Emphasize the habit: tie actions to keys and addresses, not to people.
 
 **Key Points**
 - Hashes name data; keys sign; addresses are hashes of public keys.
@@ -499,7 +588,9 @@ This slide summarizes the lesson and points to the next one, Ledger and Finality
 - Signatures prove authorization, not identity.
 
 **Walkthrough**
-None
+1. Ask students to say, without the slide, what each of these proves: a transaction ID, an address, a valid signature. (The ID names one transaction; the address is a hash of a public key; the signature proves the key approved those exact bytes, not who held the key.)
+2. Read the bullets as the check on their answers.
+3. Point to the next lesson.
 
 **Sources**
 - @antonopoulos_masteringbitcoinprogramming_2017

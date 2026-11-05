@@ -40,10 +40,6 @@ slide index), which is never listed here.
   DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
   :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
   (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
-- `lessons/primitives/04-CP-*.qmd:455` names ML-KEM (FIPS 203), a key-encapsulation standard, among the replacements
-  for ECDSA signatures; check with the `source` skill and keep only signature schemes. (4 Nov 2026, week-1 pattern audit)
-- `04-CP-*.qmd:378`'s notes point to "the previous slide's limits", but the previous slide is the Tron address
-  (`:332`); the limits slide is `:237`. (4 Nov 2026, week-1 pattern audit)
 - `01-CM-*.qmd:364` and `:376` call the bridge case "day 6"; bridges are taught on day 4 (`08-EF-*.qmd:179`).
   (4 Nov 2026, week-1 pattern audit)
 - `02-IN-*.qmd:641` files "balance" under what the chain records with no "on Bitcoin", against `:309`'s account
