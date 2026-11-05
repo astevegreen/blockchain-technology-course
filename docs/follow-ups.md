@@ -48,10 +48,6 @@ slide index), which is never listed here.
   wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
   rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
-- `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd:88` and `:184` (notes) say signature order "narrows which
-  keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
-  key once the pair is known. Also `:65`: say the letters label the keys and a sorted script orders them by key
-  bytes (lab answers `wallet/quizes/INSTRUCTOR_ANSWERS.md:95-96`). (4 Nov 2026, Gemini audit D2-2, D2-5)
 - `01-EF-*.qmd:172-178` draws Alice's 3 ETH as a second node, "Remaining: 3 ETH", in the fill of the Bitcoin change
   output (`:136-143`), against `:186`'s "no change output". Drop the node; label Alice "13 → 3 ETH". (4 Nov 2026, Gemini audit D3-2, `docs/analysis/gemini-audit/triage.md`)
 - `04-EF-*.qmd:916` and `:985` cite `solidityteam_solidityexample_2025` without `@`; `:1124` gives raw ethereum.org

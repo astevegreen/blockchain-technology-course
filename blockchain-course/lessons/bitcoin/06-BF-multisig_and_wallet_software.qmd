@@ -74,7 +74,7 @@ A spend signed by A and C:
 OP_0 <A sig> <C sig> <redeemScript>
 ```
 
-Read it: 2 of 3 keys, two signatures. A real explorer does not label which key made each signature.
+Read it: 2 of 3 keys, two signatures. A, B and C only label the keys; a sorted script orders them by their bytes [@kerin_bip67sortedmulti_2015]. A real explorer does not label which key made each signature.
 :::
 ::::
 
@@ -85,7 +85,8 @@ This slide shows the multi-sig rule as script and the data that satisfies it. It
 
 **Key Points**
 - `OP_2 ... OP_3 OP_CHECKMULTISIG`: threshold 2, three keys.
-- The spend supplies m signatures in the same order as their keys, so the order narrows which keys signed; the explorer does not label them.
+- The spend supplies m signatures in the same order as their keys. Any pair of keys signs in that order, so the order rules out no pair; it only matches each signature to its key once the pair is known. The explorer does not label them.
+- A, B and C are labels for this example; a wallet that sorts keys (BIP 67) lists them by their bytes, so the letters say nothing about who holds which key.
 - The empty first item is a dummy forced by an old off-by-one bug; BIP 147 made it a consensus rule that it be empty.
 - This is the script lesson ① said a `3...` output reveals on spend.
 
@@ -99,6 +100,7 @@ This slide shows the multi-sig rule as script and the data that satisfies it. It
 - @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
 - @andresen_bip11mofn_2011
 - @lau_bip147dummy_2016
+- @kerin_bip67sortedmulti_2015
 
 :::
 
@@ -181,7 +183,7 @@ This slide walks the exact witness students will open in the lab's explorer for 
 
 **Key Points**
 - Four witness items for 2-of-3: dummy, two signatures, witness script.
-- The signatures follow key order, so their order narrows which keys signed; matching a signature to a key exactly needs the transaction data, which the explorer does not do for you.
+- The signatures follow key order, but any pair of signers produces signatures in that order, so the order rules out no pair. Which keys signed takes checking each signature against the keys and the transaction data, which the explorer does not do for you.
 - The witness script is what makes it multi-sig: m, the keys, n, `OP_CHECKMULTISIG`.
 - Record the same fields every time.
 
@@ -543,7 +545,10 @@ This slide summarizes the lesson and hands over to the day's lab. It matters her
 - Server privacy.
 
 **Walkthrough**
-None
+1. Ask students, without the slide: what does a 2-of-3 spend show on chain, and what doesn't it? (It shows the rule, the three public keys and two signatures; it doesn't show who holds the keys or, from the explorer alone, which two signed.)
+2. Read the bullets as the check on their answers.
+3. Ask: a MuSig2 Taproot spend lands in the trace. What can you say? (It looks like a single-key spend; nothing on chain shows it was multi-sig.)
+4. Point to the lab: read the wallet walkthrough's 2-of-3 spend with this lesson's checklist.
 
 **Sources**
 - @andresen_bip11mofn_2011
