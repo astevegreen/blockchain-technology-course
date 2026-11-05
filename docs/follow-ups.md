@@ -192,5 +192,9 @@ slide index), which is never listed here.
 
 - `lessons/introduction/02-IN-*.qmd:15` (and 03-IN, 05-IN) declare `slide-level: 3` with only `##` headings, which
   renders content slides centred, against the theme's `center: false`. Set 2 and check in a browser. (4 Nov 2026, Gemini audit D1-7, `docs/analysis/gemini-audit/triage.md`)
+- `tools/pointer_check.py` finds six wrong cross-lesson pointers on today's tree (05-EF:643, 05-FO:99/161/396,
+  07-FO:39, 13-FO:112; run it for the list), so it is not yet in `tools/check.py`. Once it exits 0, add it to
+  `plan_checks` as a failing check whenever a lesson changes; its "note:" lines stay advice. That change is a rail:
+  run `second-look.mjs` and follow the rail audit. (4 Nov 2026, week-1 audit W2 pointer check)
 
 ## Notion and documents
