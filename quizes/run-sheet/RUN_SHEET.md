@@ -18,7 +18,7 @@ repo root. If this sheet and `docs/build-spec.md` disagree, the spec wins; tell 
   `./lab-manager.sh start course-site`.
 - Students take the **pretest** before day 1. The bank and answer keys are in `quizes/pretest/` (`README.md`,
   `pretest_week1-quiz-bank.json`). Mark it before class and write down, for each day, who got every one of that day's
-  items right.
+  gate items right (the readiness items are for the instructor's eye, not for entry).
 - **Lab entry rule** (build spec, "A lab"; set per day by the instructor). At the start of each lab, a student who
   got every gate item for that day right is offered the day's problem. The week-one bank marks them in `lab_gates`
   (day 1: q6 alone; day 3: q8, q9; day 4: q10, q11, q12; day 5: q43, q44); a day's other items are a readiness check.
