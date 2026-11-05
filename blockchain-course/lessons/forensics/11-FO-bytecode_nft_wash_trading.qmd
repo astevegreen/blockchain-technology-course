@@ -35,7 +35,7 @@ format:
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens day 8's third lesson: two analyst skills that close the day's lectures before the lab. It matters here because outcome 5 asks students to recognize when only bytecode exists and what a decompiler can and can't recover, and Role Concept 13 asks them to characterize NFT wash trading. Emphasize that students read, they do not write: the one contract read is at the start of the day 8 lab.
+This slide opens day 8's third lesson: two analyst skills that close the day's lectures before the lab. It matters here because outcome 5 asks students to recognize when only bytecode exists and what a decompiler can and can't recover, and Role Concept 13 asks them to characterize NFT wash trading. Emphasize that students read, they do not write: the one contract read is at the start of the day 8 lab. Allow about 50 minutes, half for each part.
 
 **Key Points**
 - Part 1, bytecode (Role Concept 19, reading level): what the chain holds, verified source, selectors, decompilers.
@@ -133,7 +133,7 @@ This slide explains what "verified source" means and its two levels (Role Concep
 :::: {.columns}
 ::: {.column width="55%"}
 
-- **The rule:** the selector is "the first (left, high-order in big-endian) four bytes of the Keccak-256 hash of the signature of the function" [@solidityteam_abispecification_2026].
+- **The rule:** the selector is "the first (left, high-order in big-endian) four bytes of the Keccak-256 hash of the signature of the function" [@solidityteam_abispecification_2026]. Big-endian means the most significant byte comes first, so these are simply the hash's first four bytes as written.
 - **The signature:** the name and the argument types, with no spaces and no argument names: `transfer(address,uint256)` [@solidityteam_abispecification_2026].
 - **The rest of the input** is the arguments, in 32-byte words. "The encoding is not self describing": you need the function's types to read it [@solidityteam_abispecification_2026].
 
@@ -153,6 +153,8 @@ This slide explains what "verified source" means and its two levels (Role Concep
 
 :::
 
+**Ask:** an input starts `0x095ea7b3`. What did it call?
+
 :::
 ::::
 
@@ -163,13 +165,14 @@ This slide defines the 4-byte function selector (Role Concept 19). It matters he
 
 **Key Points**
 - 04-EF's ABI slide showed the formula; this slide uses it as an analyst would.
-- The four selectors in the table recur in day 8 ①: `approve` and `setApprovalForAll` are the drainer's approvals; `transferFrom` is the sweep.
+- The four selectors in the table recur in 09-FO: `approve` and `setApprovalForAll` are the drainer's approvals; `transferFrom` is the sweep.
 - Selector values were computed for this slide with Keccak-256 and checked against the Solidity specification's own example (`baz(uint32,bool)` = `0xcdcd77c0`).
 - The same name with different types is a different selector: `transfer(address,uint256)` and `transfer(address,uint128)` differ.
 
 **Walkthrough**
 1. Point at a transaction's input data on an explorer: the first 10 characters, `0x` plus 8 hex digits, are the selector.
-2. Ask: a transaction's input starts `0x095ea7b3`. What did it do? (Called `approve`, if the contract follows the standard; next slide on why "if".)
+2. Ask the slide's question. (`approve`, if the contract follows the standard; next slide on why "if".)
+3. Likely question: "Do we need to hash anything ourselves?" (No: the lookup does it; the micro-lab's checker shows the hash for anyone curious.)
 
 **Sources**
 - @solidityteam_abispecification_2026 ("Function Selector"; "Formal Specification of the Encoding")
@@ -193,7 +196,7 @@ This slide defines the 4-byte function selector (Role Concept 19). It matters he
 :::
 
 - **Collisions happen:** four bytes leave room for different signatures with the same selector. Foundry's linter, for one, "reports different proxy and implementation function signatures with the same four-byte selector" [@foundry_functionselectorcollision_2026].
-- **Analyst move:** the name is what the author called the function, a lead. Confirm what happened from the logs and balance changes.
+- **Analyst move:** the name is what the author called the function, a lead. Confirm what happened from the logs and balance changes. **Ask:** the lookup says `transfer`, but the logs show tokens leaving a third address. What do you write?
 
 ::: {.notes}
 
@@ -208,7 +211,7 @@ This slide teaches how an analyst looks up a selector and how far to trust the r
 
 **Walkthrough**
 1. Show the lookup: paste a selector into the database's search.
-2. Ask: the lookup says `transfer(address,uint256)`, but the logs show tokens leaving the caller to a third address. What do you write? (The function's name is `transfer`; what it did is in the logs.)
+2. Ask the slide's question. (The function's registered name is `transfer`; what it did, moving someone else's tokens, is in the logs.)
 
 **Sources**
 - @fourbyte_signaturedatabase_2026 (home page)
@@ -290,6 +293,8 @@ function Unresolved_a9059cbb(address arg0,
 
 : {tbl-colwidths="[38,62]"}
 
+**Ask:** what would a standard `transfer` do instead?
+
 :::
 ::::
 
@@ -302,11 +307,11 @@ This slide shows students what decompiled code looks like and how to read it at 
 - The selector `0xa9059cbb` is `transfer(address,uint256)` (the selector slide), but this body does not do what a standard `transfer` does: it moves someone else's tokens to a fixed address, and only one caller may use it.
 - That is the lookup slide's point: the name is a claim; the code and the logs are the evidence.
 - To learn what `storage[1]` and `storage[2]` hold, read those storage slots on chain (any node, or the lab's tools).
-- What to write: "the function lets one address move any holder's tokens to a fixed address" (from the code), Moderate from the decompiled read alone, Moderate to High when the logs agree, High with verified source and the logs (the confidence slide).
+- What to write: "the function lets one address move any holder's tokens to a fixed address" (from the code). Moderate from the decompiled read alone, and still Moderate when the logs agree, since the decompiler can misread; High with verified source and the logs (the confidence slide). One word each time, never a range.
 
 **Walkthrough**
 1. Read the function line by line; ask what each `require` checks.
-2. Ask: what would a standard `transfer` do? (Move the caller's own tokens to `arg0`.) What does this one do?
+2. Ask: what would a standard `transfer` do? (Move the caller's own tokens to `arg0`.) What does this one do? (Moves `arg0`'s tokens to the address in `storage[2]`, and only the address in `storage[1]` may call it.)
 3. Ask: what would you check next? (Read storage slots 1 and 2; find transactions that called it and their `Transfer` logs.)
 
 **Sources**
@@ -322,9 +327,9 @@ This slide shows students what decompiled code looks like and how to read it at 
 
 | What you have | You can say | How sure |
 | --- | --- | --- |
-| A selector and its looked-up name | "The call used selector `0x...`, registered as `name(...)`" | **High** for the selector; **Low** for what the function does |
+| A selector and its looked-up name | "Selector `0x...` (a fact: no word), registered as `name(...)`" | **Low** for what it does: a name is not proof |
 | Decompiled code alone | "The bytecode appears to ..." | **Moderate** at best: the tool may be wrong |
-| Decompiled code and the transactions' logs agree | "The contract moved ..., as its code allows" | **Moderate** to **High** |
+| Decompiled code and the transactions' logs agree | "The contract moved ..., as its code allows" | **Moderate**: the decompiler can misread |
 | Verified source (exact match) and the logs agree | "The function does ..." | **High** |
 
 : {tbl-colwidths="[32,44,24]"}
@@ -340,17 +345,19 @@ Practice: [read a contract that has no published source](/assets/labs/ether_evm/
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide applies the course confidence scale to reading contract code (outcome 5). It matters here because an agent will ask "what does this contract do?" and the answer's confidence depends on what the analyst read. Emphasize the split in the first row: the selector is a fact; the name is a lead.
+This slide applies the course confidence scale to reading contract code (outcome 5). It matters here because an agent will ask "what does this contract do?" and the answer's confidence depends on what the analyst read. Emphasize the split in the first row: the selector is a fact, so it takes no word; the name is a lead.
 
 **Key Points**
 - Same method as 01-FO's attribution slide: count independent kinds of evidence; no percentages.
 - Decompiled code is one kind; the transaction logs are another; verified source replaces decompiled code with something stronger.
 - A function name from a signature database never raises confidence on its own.
+- Each row gets one word, never a range. The third row stays Moderate: 01-FO's High needs independent lines with no known failure, and a decompiler's misreading is a known failure. Verified source removes it, so the last row reaches High.
 
 **Walkthrough**
 1. Read the rows top to bottom; ask what moves each to the next.
 2. Ask: decompiled code shows a fee sent to a fixed address, but no transaction has paid it yet. What do you write? (The code allows it, Moderate; no transaction shows it happened.)
-3. Point to the micro-lab: students check selectors, read calldata and sort a decompiler's output, then assess a made-up unverified contract.
+3. Likely question: "Why isn't code plus logs High?" (The decompiler can misread the code; verified source removes that failure.)
+4. Point to the micro-lab: students check selectors, read calldata and sort a decompiler's output, then assess a made-up unverified contract.
 
 **Sources**
 - @odni_icd203_2015
@@ -370,6 +377,7 @@ This slide applies the course confidence scale to reading contract code (outcome
 : {tbl-colwidths="[18,46,36]"}
 
 - **Reward farming:** LooksRare paid trading rewards in LOOKS "derived as a percentage of the total platform trading volume, excluding private sales", so trading with yourself earned tokens [@looksrare_tradingrewards_2026]. Its trading rewards were discontinued as of September 2023 [@looksrare_tradingrewards_2026].
+- **Ask:** which motive's payoff can you see on chain?
 
 ::: {.notes}
 
@@ -385,7 +393,8 @@ This slide defines NFT wash trading and its three motives (Role Concept 13). It 
 
 **Walkthrough**
 1. Read the definition, then the three rows.
-2. Ask: which motive has its payoff on chain, visible to you? (All three: the later sale, the volume, the reward token transfers.)
+2. Ask the slide's question. (All three: the later sale, the volume, the reward token transfers.)
+3. Likely question: "Is wash trading NFTs illegal?" (Out of scope here: the analyst characterizes the activity; the legal call is the prosecutor's.)
 
 **Sources**
 - @chainalysis_nftwashtrading_2022 (opening section)
@@ -399,7 +408,7 @@ This slide defines NFT wash trading and its three motives (Role Concept 13). It 
 ::: {.column width="50%"}
 
 - **Follow the token ID** through its `Transfer` logs (05-EF): the same NFT goes A → B → C → A.
-- **Follow the payment** the other way: the buyer's ETH or WETH ends up back with the seller's group.
+- **Follow the payment** the other way (green): each buyer pays the seller, and the ETH or WETH stays within the group.
 - **What research found:** in the 52 largest collections, January 2018 to mid-November 2021, "3.93% of addresses, processing a total of 2.04% of sale transactions" looked like market abuse, a lower bound [@vonwachter_nftwashtrading_2022].
 - **Its shape:** "Most flagged transaction patterns alternate between a few addresses" [@vonwachter_nftwashtrading_2022].
 
@@ -425,6 +434,9 @@ digraph Loop {
   A -> B [label=" NFT #7\n sale 1"];
   B -> C [label=" NFT #7\n sale 2"];
   C -> A [label=" NFT #7\n sale 3"];
+  B -> A [label=" pays 10 ETH", color="#2E7D32", fontcolor="#2E7D32"];
+  C -> B [label=" pays 12 ETH", color="#2E7D32", fontcolor="#2E7D32"];
+  A -> C [label=" pays 15 ETH", color="#2E7D32", fontcolor="#2E7D32"];
 }
 ```
 
@@ -438,6 +450,7 @@ This slide shows the core on-chain pattern of NFT wash trading: one token cyclin
 
 **Key Points**
 - The dashed lines are funding: one source pays gas and purchase money to each wallet (next slide).
+- The green lines are the payments, with made-up prices that rise at each sale: the recorded price climbs while the ETH only circles the group.
 - "Most flagged transaction patterns alternate between a few addresses" (von Wachter et al.). A cycle back to the first seller is shown here as the clearest case to read; that ranking is this lesson's reasoning, not the paper's.
 - The 2.04% figure is from one study of one period and the largest collections, stated as a lower bound; it is not today's rate.
 
@@ -445,6 +458,7 @@ This slide shows the core on-chain pattern of NFT wash trading: one token cyclin
 1. Trace NFT #7 round the loop; ask who owns it at the end (A, who started).
 2. Ask: three sales were recorded. How much real demand do they show? (None, if A, B and C are one party.)
 3. Ask: what would show A, B and C are one party? (The funder: next slide.)
+4. Likely question: "Where did the profit go?" (Nowhere yet: the group paid itself, less fees. The payoff is a later buyer who pays near 15 ETH.)
 
 **Sources**
 - @vonwachter_nftwashtrading_2022 (abstract)
@@ -465,6 +479,8 @@ This slide shows the core on-chain pattern of NFT wash trading: one token cyclin
 
 - **Analyst move:** trace the buyer's funding back, as for any account. A shared funder ties buyer and seller together; the sale is then a transfer within one group.
 
+**Ask:** buyer and seller were both funded from the same exchange. Self-financed?
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -478,7 +494,7 @@ This slide gives the strongest single test for wash trading: the buyer was funde
 
 **Walkthrough**
 1. Read the three checks in order.
-2. Ask: the buyer was funded by an exchange withdrawal, and so was the seller, from the same exchange. Self-financed? (Not by this test: an exchange funds millions; the funder must be the seller's own.)
+2. Ask the slide's question. (Not by this test: an exchange funds millions; the funder must be the seller's own.)
 
 **Sources**
 - @chainalysis_nftwashtrading_2022 ("Wash trading" section)
@@ -494,11 +510,11 @@ This slide gives the strongest single test for wash trading: the buyer was funde
 | **Own-wallet moves** | One person moving an NFT between their wallets | No sale: a `Transfer` log with no payment and no marketplace call |
 | **Friends or a team trading** | Related, but each pays their own money | Funding from separate sources |
 | **A collector buying back** | A real sale, then a later buy at a new price | Time between sales; outside funding |
-| **Test sales** | A team checking a listing works | A question to check: only one or two sales, at trivial prices? |
+| **Test sales** | A team checking a listing works | One or two sales at trivial prices, then none |
 
 : {tbl-colwidths="[26,38,36]"}
 
-- **Analyst move:** state what you saw (loop, funding, timing) before the label. The label goes in the assessment; the pattern goes in the support.
+- **Analyst move:** state what you saw (loop, funding, timing) before the label. The label goes in the assessment; the pattern goes in the support. **Ask:** an NFT moves A → B → A with no payment. Wash trade?
 
 ::: {.notes}
 
@@ -511,8 +527,8 @@ This slide lists the innocent patterns that resemble wash trading (Role Concept 
 - These rows are reasoning from the patterns on the previous slides, not a published list; say so if asked.
 
 **Walkthrough**
-1. Read each row; ask which column holds the evidence.
-2. Ask: an NFT moves A → B → A, no payment in either transaction. Wash trade? (No: no sale was recorded, so no price or volume was faked.)
+1. Read each row; ask which column holds the evidence. (The last: what separates them.)
+2. Ask the slide's question. (No: no sale was recorded, so no price or volume was faked.)
 
 **Sources**
 None
@@ -526,7 +542,7 @@ None
 | What you have | How sure that it is wash trading |
 | --- | --- |
 | A token cycling among a few wallets | **Low**: friends, own-wallet moves and buy-backs fit too |
-| The cycle, with each move a paid sale | **Low** to **Moderate**: the price and volume were recorded |
+| The cycle, with each move a paid sale | **Low**: own-wallet moves are ruled out; friends and buy-backs still fit |
 | Paid sales, and the buyers self-financed by the seller's side | **Moderate**: one party on both sides |
 | All of that, repeated, with a payoff (later buyer, ranking, reward tokens) | **High** |
 
@@ -540,12 +556,13 @@ None
 This slide applies the course confidence scale to a wash-trading assessment (Role Concept 13). It matters here because the assessment is where the analyst's job ends, and its confidence word must match the evidence. Emphasize that each row adds a kind of evidence that removes a look-alike from the previous slide.
 
 **Key Points**
-- The loop alone is Low: every look-alike fits.
+- The loop alone is Low: every look-alike fits. Paid sales are still Low: they remove one look-alike, not the others.
+- One word per row, never a range.
 - Paid sales rule out own-wallet moves; self-financing rules out separate parties; a payoff shows the motive.
 - Write the observations first, then the assessment with its confidence word (ICD 203 standardizes the words only; no formal memo).
 
 **Walkthrough**
-1. Read the rows top to bottom; ask which look-alike each row removes.
+1. Read the rows top to bottom; ask which look-alike each row removes. (Paid sales: own-wallet moves. Self-financing: friends with their own money. Repetition and a payoff: a one-off buy-back.)
 2. Have a student say the sample sentence for the loop slide's diagram.
 
 **Sources**
@@ -563,6 +580,8 @@ This slide applies the course confidence scale to a wash-trading assessment (Rol
 - On chain: a token ID in a loop, buyers self-financed by the seller's side, a payoff.
 - Say how sure, and what each kind of evidence rules out.
 
+**Check:** decompiled code and the logs agree that a function sweeps tokens to one address. How sure, and what would raise it?
+
 ::: {.notes}
 
 **Overall Slide Concept**
@@ -575,6 +594,7 @@ This slide summarizes the lesson in seven lines and hands over to the day 8 lab.
 
 **Walkthrough**
 1. Ask a student to say each line in their own words.
+2. Ask the Check. (Moderate: the decompiler can misread. Verified source, an exact match, with the same logs makes it High.)
 
 **Sources**
 None
