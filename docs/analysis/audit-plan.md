@@ -21,9 +21,10 @@ find each finding by its quoted text.
   one-offs are on `docs/follow-ups.md`.
 - **Week 2 (Claude): not decided.** Patterns P1-P13 and questions Q1-Q20 wait on the owner. Week 1's Q1, Q2 and
   Q14 already applied week 2's Q1, Q2 and Q6 to week 1 only.
-- **Gemini: ten of 91 checked.** Of the top ten: D8-1 is fixed (0531a2b, "Yes, add code"); D10-2, D8-2, D9-1 and
+- **Gemini: all 91 checked.** Of the top ten: D8-1 is fixed (0531a2b, "Yes, add code"); D10-2, D8-2, D9-1 and
   D2-2 are confirmed and on `docs/follow-ups.md`; A-1, A-2 and D10-1 are owner decisions about day 10; D1-1 and
-  D3-5 need nothing. The other 81 are mapped below; 37 of them have not been opened against the files.
+  D3-5 need nothing. Phase 1 (4 Nov) opened the 37 Verify rows: 28 Listed, 1 Owner, 1 Covered, 7 Rejected, and its
+  spot-check of the Covered rows moved D1-4 to Owner and D2-9, D5-7 to Listed (`gemini-audit/triage.md`).
 - **The machinery exists.** `docs/prompts/backlog-orchestrator.md` runs nine child sessions over this backlog. This
   plan feeds it: its session 2 (Gemini triage) now starts from section 4's "Verify" rows instead of all 91.
 
@@ -113,7 +114,7 @@ ID; open `gemini-audit/<scope>.md` for the evidence. "Session N" is a child of `
 
 ### 4.3 Gemini, by scope
 
-Totals: 24 Covered, 8 Listed, 8 Owner, 9 Dry run, 4 Reject, 1 Done, 37 Verify. A Gemini
+Totals: 22 Covered, 38 Listed, 10 Owner, 9 Dry run, 11 Reject, 1 Done (after phase 1's triage, 4 Nov 2026). A Gemini
 duplicate of another Gemini row is marked "= ID".
 
 **Day 1**
@@ -122,13 +123,13 @@ duplicate of another Gemini row is marked "= ID".
 |---|---|---|---|---|
 | D1-1 | Blocker | Lab Q4-Q6 need tokens, logs, reverts before day 3 | Reject (R4) | Triage: each hint teaches it; Q6 now marked a preview (week 1 Q6) |
 | D1-2 | Major | Stale day references in 04-CP, 01-CM | Covered | W2; one already listed (01-CM "day 6" bridge); session 1's pointer check finds the rest |
-| D1-3 | Major | Three server stacks for two openers before the worksheet | Verify | Then Owner if real (what the lab opens with) |
-| D1-4 | Major | 02-IN's only worked example is Bitcoin; no Ethereum transaction before the lab | Covered | W1 |
-| D1-5 | Major | Run sheet gives the welcome 30 min, 01-IN says 35 | Verify | Likely a one-line fix |
+| D1-3 | Major | Three server stacks for two openers before the worksheet | Owner | Triage: openers settled (R2); question is the unused terminal orientation |
+| D1-4 | Major | 02-IN's only worked example is Bitcoin; no Ethereum transaction before the lab | Owner | Triage: not W1; question is one 02-IN Otterscan slide |
+| D1-5 | Major | Run sheet gives the welcome 30 min, 01-IN says 35 | Listed | Triage: move 01-IN to 0915, 30 min |
 | D1-6 | Major | "Nonce" in three senses | Covered | W7 |
-| D1-7 | Minor | 02-IN declares `slide-level: 3` | Verify | Tooling: check the render, not the YAML |
+| D1-7 | Minor | 02-IN declares `slide-level: 3` | Listed | Triage: no stacking, but content slides render centred |
 | D1-8 | Minor | 04-CP, 01-CM: no Asks, Walkthrough "None" | Covered | W8, W13 |
-| D1-9 | Minor | Otterscan's `[EOA]` tag on a creation row confuses Q3 | Verify | |
+| D1-9 | Minor | Otterscan's `[EOA]` tag on a creation row confuses Q3 | Listed | Triage: gloss the tag in the hint |
 | D1-10 | Minor | Lab asks recall of JSON-RPC method names | Owner | Challenge: what the lab asks. Students read, not program (charter) |
 
 **Day 2**
@@ -137,37 +138,37 @@ duplicate of another Gemini row is marked "= ID".
 |---|---|---|---|---|
 | D2-1 | Major | 02-BF packs eight mechanisms into 50 min | Dry run | W14 |
 | D2-2 | Major | Signature order said to narrow signers | Listed | Notes only; hint is right (triage) |
-| D2-3 | Major | Wallet worked example omits the multisig part | Verify | Week 1 rated criterion 2 Meets; check against the 4 Nov page |
-| D2-4 | Minor | SegWit vsize uses an undefined "base size", shown on a legacy tx | Verify | |
-| D2-5 | Minor | 06-BF's toy multisig spend is unsorted, against BIP 67 | Verify | Decide with D2-2's fix |
-| D2-6 | Minor | 05-BF says students will "spend from" a 2-of-3; the lab only reads one | Verify | |
-| D2-7 | Minor | Run sheet cites unadapted 01-BF, 03-BF as sources | Verify | |
-| D2-8 | Minor | Lab chain spends a coinbase after 10 blocks; 02-BF teaches 100 | Verify | Truth: check the chain's config |
-| D2-9 | Minor | Hardened tick used before it is defined | Covered | W4 |
+| D2-3 | Major | Wallet worked example omits the multisig part | Reject | R4: 06-BF:143 walks the witness before the lab |
+| D2-4 | Minor | SegWit vsize uses an undefined "base size", shown on a legacy tx | Listed | |
+| D2-5 | Minor | 06-BF's toy multisig spend is unsorted, against BIP 67 | Listed | With D2-2's bullet |
+| D2-6 | Minor | 05-BF says students will "spend from" a 2-of-3; the lab only reads one | Listed | |
+| D2-7 | Minor | Run sheet cites unadapted 01-BF, 03-BF as sources | Listed | Run-sheet line only; archiving the files is a cut |
+| D2-8 | Minor | Lab chain spends a coinbase after 10 blocks; 02-BF teaches 100 | Listed | Confirmed: 10 blocks (build-steps.sh:48); low value |
+| D2-9 | Minor | Hardened tick used before it is defined | Listed | Triage: not W4; a gap inside 05-BF |
 
 **Day 3**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
 | D3-1 | Blocker | 04-EF: 17 dense slides and an exercise in 50 min | Dry run | W14; 04-EF is a week 1 Q14 cut candidate |
-| D3-2 | Major | 01-EF's account diagram draws a balance change as a transfer | Verify | The diagram is at 01-EF:177, not :571 (follow-ups) |
-| D3-3 | Major | Tokens Q3 needs an ERC-1967 slot Otterscan cannot show | Verify | If real, the lab cannot be answered as written |
-| D3-4 | Major | 01-EF shows a 25-line contract before 04-EF teaches syntax | Verify | Then Covered by W4 or P1 |
+| D3-2 | Major | 01-EF's account diagram draws a balance change as a transfer | Listed | |
+| D3-3 | Major | Tokens Q3 needs an ERC-1967 slot Otterscan cannot show | Reject | R4: log and trace give High without the slot |
+| D3-4 | Major | 01-EF shows a 25-line contract before 04-EF teaches syntax | Covered | W4 |
 | D3-5 | Major | Anvil state lost on restart | Reject (R4) | Triage: README warns; day 10 does not depend on it |
 | D3-6 | Major | 01-EF has no Asks; notes empty on five slides | Covered | W8, W13 |
-| D3-7 | Minor | 04-EF: raw URLs, unprefixed keys, Anchor program ID | Verify | `source` skill for the program ID |
-| D3-8 | Minor | TerraUSD cited although it is not on Ethereum | Verify | Content: probably a scope note, not a cut |
+| D3-7 | Minor | 04-EF: raw URLs, unprefixed keys, Anchor program ID | Listed | ID is Solana's System Program; needs a bib key |
+| D3-8 | Minor | TerraUSD cited although it is not on Ethereum | Listed | Scope note |
 
 **Day 4**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D4-1 | Major | Three bridge taxonomies across slide, case and lab | Verify | High value if real: students meet three answers |
-| D4-2 | Major | DEX lab hint confines to block 11; key wants block 10's approval | Verify | |
-| D4-3 | Major | 07-EF counts a DEX pool as a way funds "leave a chain" | Verify | |
+| D4-1 | Major | Three bridge taxonomies across slide, case and lab | Listed | Minor: labels differ, no answer changes |
+| D4-2 | Major | DEX lab hint confines to block 11; key wants block 10's approval | Listed | Major: add block 10 to hint 5 |
+| D4-3 | Major | 07-EF counts a DEX pool as a way funds "leave a chain" | Listed | Retitle |
 | D4-4 | Major | Solana slides interrupt 08-EF | Dry run | Week 1 Q14's first cut candidates (08-EF :311, :343) |
 | D4-5 | Major | 03-EF: 15 topics, ERC-4337 and 2771 internals | Covered | Week 1 Q13 (two-path diagram, ERC names to notes); then dry run |
-| D4-6 | Minor | L2BEAT Stage 1: a council "forges a message" | Verify | `source` skill |
+| D4-6 | Minor | L2BEAT Stage 1: a council "forges a message" | Listed | Facts hold (L2BEAT, 29 Jan 2025); reword only |
 | D4-7 | Minor | 03-EF likely overruns | Dry run | = D4-5, W14 |
 | D4-8 | Minor | No warning that class swaps revert | Reject (R2) | Owner, 1 Nov: "Keep as a slippage lesson"; the swap page explains a revert. Confirm the page says so |
 
@@ -178,10 +179,10 @@ duplicate of another Gemini row is marked "= ID".
 | D5-1 | Major | Pretest gates the Tron lab on rules items | Covered | Week 1 Q19 (two Tron items; session 8) |
 | D5-2 | Major | 01-PC packs Tron, Fabric and CBDCs into 50 min | Dry run | W14; CBDCs (:457) a cut candidate |
 | D5-3 | Major | Lab block underruns by about 90 min | Dry run | Verify the run sheet's arithmetic first |
-| D5-4 | Major | Query 5's signer contradicts "only the multisig owner can freeze USDT" | Verify | Truth: check the lab data and the source |
-| D5-5 | Major | HLF student mode overprovisions lanes | Verify | Lab operations; test on the desktop |
-| D5-6 | Minor | 05-FO conflates CTRs with SARs | Verify | `source` skill |
-| D5-7 | Minor | "Muxed address" unexplained on 04-FO | Covered | Week 1 Q16 (keep the terms, name the chains); check muxed is glossed |
+| D5-4 | Major | Query 5's signer contradicts "only the multisig owner can freeze USDT" | Listed | One worksheet line on the confirming key |
+| D5-5 | Major | HLF student mode overprovisions lanes | Reject | R4: day 5 runs the demo at capacity 1 |
+| D5-6 | Minor | 05-FO conflates CTRs with SARs | Listed | Needs a bib key for 31 CFR 1010.311 |
+| D5-7 | Minor | "Muxed address" unexplained on 04-FO | Listed | Triage: muxed is never explained |
 | D5-8 | Minor | Tron worksheet has no answer checks | Covered | P5, week 2 Q3 |
 
 **Day 6**
@@ -189,11 +190,11 @@ duplicate of another Gemini row is marked "= ID".
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
 | D6-1 | Major | Run sheet says day 6 pretest items have not landed | Listed | Follow-ups, Quizzes (= A-5) |
-| D6-2 | Major | Bitcoin-trace Q10 asks about CoinJoin, taught on day 7 | Verify | Then Covered by P2 |
+| D6-2 | Major | Bitcoin-trace Q10 asks about CoinJoin, taught on day 7 | Reject | R4: taught that morning (02-FO:53) |
 | D6-3 | Major | Worked example omits co-spends and peels | Covered | Week 2 Q2 |
 | D6-4 | Minor | 02-FO notes say it opens lesson ② | Covered | P11 |
 | D6-5 | Minor | A 2013 darknet theft case breaks 03-FO's flow | Owner | Challenge: lesson order; ask after the dry run |
-| D6-6 | Minor | Answers file has no "Meets:" and "Not yet:" lines | Verify | Against `docs/build-spec.md` |
+| D6-6 | Minor | Answers file has no "Meets:" and "Not yet:" lines | Listed | |
 | D6-7 | Minor | 03-FO likely overruns | Dry run | P12, week 2 Q6 |
 
 **Day 7**
@@ -202,10 +203,10 @@ duplicate of another Gemini row is marked "= ID".
 |---|---|---|---|---|
 | D7-1 | Major | Questions before the worked example; hints detached | Covered | P4, week 2 Q2 |
 | D7-2 | Major | "Toxic change" untaught | Covered | P2 |
-| D7-3 | Major | 07-FO's model note cites an XMR delisting for a BTC deposit | Verify | |
-| D7-4 | Major | Rubric names stops J3 and the mixer; Q4 and the model note want J1 and J2 too | Verify | A key contradiction: fix with the week-2 lab session |
-| D7-5 | Minor | Mixer sweep Moderate in Q11, Low in Q12's table | Verify | Decide with C1 and week 2 Q15 |
-| D7-6 | Minor | 07-FO, 08-FO show "the lab's product" for topics the lab skips | Verify | Then Covered by P6 or a wording fix |
+| D7-3 | Major | 07-FO's model note cites an XMR delisting for a BTC deposit | Listed | Minor: cut the clause |
+| D7-4 | Major | Rubric names stops J3 and the mixer; Q4 and the model note want J1 and J2 too | Listed | Fix with the week-2 lab session |
+| D7-5 | Minor | Mixer sweep Moderate in Q11, Low in Q12's table | Listed | |
+| D7-6 | Minor | 07-FO, 08-FO show "the lab's product" for topics the lab skips | Listed | 07-FO only; 08-FO already fixed (R1) |
 
 **Day 8**
 
@@ -213,13 +214,13 @@ duplicate of another Gemini row is marked "= ID".
 |---|---|---|---|---|
 | D8-1 | Blocker | Graded point 3 gives no code to read | Done | 0531a2b |
 | D8-2 | Major | Q1 and Q3 need the live 4byte.directory | Listed | Follow-ups, Labs |
-| D8-3 | Major | Snapshot truncation presented as chain opacity | Verify | |
+| D8-3 | Major | Snapshot truncation presented as chain opacity | Listed | |
 | D8-4 | Major | Bybit and Kelp in one 2.5 h lab | Dry run | Then Owner (lab scenario); see C3 |
 | D8-5 | Major | 11-FO: decompiling, wash trading and a micro-lab in 50 min | Covered | Week 2 Q14; then dry run |
-| D8-6 | Minor | Safe's slot 0 cited as ERC-1967 | Verify | `source` skill; ERC-1967 avoids slot 0 by design |
+| D8-6 | Minor | Safe's slot 0 cited as ERC-1967 | Reject | R4: the lab cites Safe's code, not ERC-1967 |
 | D8-7 | Minor | "Moderate to High", "Low to Moderate" | Covered | C1 |
-| D8-8 | Minor | 09-FO notes say "nobody reads code today" | Verify | |
-| D8-9 | Minor | Address poisoning's zero-value transfer unexplained | Verify | P1 if the mechanism is only in notes |
+| D8-8 | Minor | 09-FO notes say "nobody reads code today" | Listed | |
+| D8-9 | Minor | Address poisoning's zero-value transfer unexplained | Listed | Source the mechanism first |
 | D8-10 | Minor | Cross-chain README says "scaffolding" | Listed | Follow-ups, Labs |
 
 **Day 9**
@@ -228,8 +229,8 @@ duplicate of another Gemini row is marked "= ID".
 |---|---|---|---|---|
 | D9-1 | Major | 14-FO rates a sweep High; the lab rates it Moderate | Listed | Follow-ups, Lessons |
 | D9-2 | Major | 13-FO taught before 12-FO but cites it as past | Covered | P11, week 2 Q5 |
-| D9-3 | Major | Q14-Q15 force an exchange deposit into an AML typology list | Owner | Challenge: what the lab asks. Verify first |
-| D9-4 | Major | `d9.sql`'s labels view drops `as_of` | Verify | Likely a one-line fix with a lab test |
+| D9-3 | Major | Q14-Q15 force an exchange deposit into an AML typology list | Owner | Confirmed by triage |
+| D9-4 | Major | `d9.sql`'s labels view drops `as_of` | Listed | Minor; needs a lab test |
 | D9-5 | Minor | Durable nonce, Tornado staging unexplained | Covered | P2, week 2 Q10 |
 | D9-6 | Minor | Diamond table uses "Observed", "Quote the FBI" | Covered | C1, P7 |
 | D9-7 | Minor | No debrief in the day-9 answers | Covered | P3, week 2 Q1 |
@@ -241,9 +242,9 @@ duplicate of another Gemini row is marked "= ID".
 | D10-1 | Blocker | Oral explanations do not fit | Owner | C4; triage: real above about 18 students |
 | D10-2 | Blocker | Key says Q is closer to the quote; P is | Listed | Follow-ups, Labs |
 | D10-3 | Major | Written post-test marking does not fit lunch | Owner | = A-2, C4 |
-| D10-4 | Major | Case file omits the OTC desk's 1.5% fee | Verify | If real, students cannot link the sale to the payout |
-| D10-5 | Major | Review session mixes revision and four resubmissions | Dry run | Verify the run sheet first |
-| D10-6 | Minor | Key deducts for oral explanations that carry no grade | Verify | Then part of the C4 bundle |
+| D10-4 | Major | Case file omits the OTC desk's 1.5% fee | Reject | R4: the fee is withheld on purpose |
+| D10-5 | Major | Review session mixes revision and four resubmissions | Dry run | Run sheet confirmed |
+| D10-6 | Minor | Key deducts for oral explanations that carry no grade | Listed | Reword as feedback |
 | D10-7 | Minor | Challenge bank has nothing for week 2 | Covered | Week 2 Q20 (= A-10) |
 | D10-8 | Minor | Certificate mint needs day 3's Anvil running | Reject (R4) | Triage D3-5: the mint uses frozen addresses |
 
@@ -253,12 +254,12 @@ duplicate of another Gemini row is marked "= ID".
 |---|---|---|---|---|
 | A-1 | Blocker | Post-test passable on multiple choice alone | Owner | C5; the certificate also needs four lab Meets |
 | A-2 | Blocker | Written marking does not fit day 10 | Owner | C4 |
-| A-3 | Major | Week 2 dailies test worked examples routed students skipped | Verify | Then Owner if real (quiz difficulty) |
+| A-3 | Major | Week 2 dailies test worked examples routed students skipped | Reject | R4: no skipped worked example is tested |
 | A-4 | Major | p26 indexed to day 6, needs day 7 | Listed | Follow-ups, Quizzes |
 | A-5 | Major | Run sheet says pretest week 2 is missing | Listed | = D6-1 |
 | A-6 | Major | Day 9 concepts get no recall before the post-test | Covered | Week 2 Q19 |
 | A-7 | Minor | p6's key wants "Observed" | Covered | C1; week 1 Q5 dropped the word from pre q9(c), check p6 |
-| A-8 | Minor | daily_d6 q5 cites an instructor-only answers file | Verify | Quick; a student-facing citation to hidden material |
+| A-8 | Minor | daily_d6 q5 cites an instructor-only answers file | Listed | Cite the worksheet, not the key |
 | A-9 | Minor | Day 2's wallets and multisig have no summative item | Owner | Challenge; check `docs/alignment-map.md` first |
 | A-10 | Minor | Challenge bank stops before days 7-9 | Covered | Week 2 Q20 |
 
@@ -278,7 +279,8 @@ Four phases. Phases 1 and 2 run through `docs/prompts/backlog-orchestrator.md`; 
 
    D10-5 and D10-6 join this bundle only if phase 1 confirms them.
 
-**Phase 1. Verify the 37 unopened Gemini findings** (backlog session 2, Opus, main checkout, read-only). For each
+**Phase 1. Verify the 37 unopened Gemini findings** (done 4 Nov 2026; the owner questions are at the end of
+`gemini-audit/triage.md`) (backlog session 2, Opus, main checkout, read-only). For each
 "Verify" row: find the quoted text in today's files, then mark it Listed (a clear error: a `docs/follow-ups.md`
 bullet), Owner (a content decision: a question with a recommendation), Covered (it turns out to be a Claude
 pattern), or Reject (R1-R5, one line). Record the evidence in `gemini-audit/triage.md`, as for the top ten.

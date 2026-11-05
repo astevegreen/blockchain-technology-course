@@ -1,9 +1,10 @@
-# Triage of Gemini's top ten
+# Triage of Gemini's findings
 
 Gemini's ten top findings (`README.md` section 2), each checked against the files at e764798 on 4 Nov 2026 by Claude.
 **Confirmed**: the files show it. **Partly**: some of it holds, and the note says which part. Line numbers are the
-ones opened at e764798, not Gemini's; where its lines were wrong, the note says so. Findings outside the top ten are
-not triaged yet.
+ones opened at e764798, not Gemini's; where its lines were wrong, the note says so. The other 37 findings that
+`docs/analysis/audit-plan.md` marked Verify, and a spot-check of its 24 Covered rows, follow in
+"The Verify rows" below.
 
 | ID | Verdict | Who acts | Where it went |
 |---|---|---|---|
@@ -84,3 +85,183 @@ already marking question 6 "Preview: day 3 explains this" (uncommitted on 4 Nov)
 already warns of it (`dynamic-labs/tokens/README.md:31-32`, `:58-65`). Day 10 does not depend on that state: the
 certificate mint uses the frozen addresses and the live nonce (`dynamic-labs/tokens/quizes/mint_certificates.py:95-110`). No fix needed beyond the
 existing warning.
+
+## The Verify rows
+
+The 37 rows that `docs/analysis/audit-plan.md` section 4.3 marked **Verify**, checked against the files at 886974b on
+4 Nov 2026 by Claude (every rejection reopened by hand). Gemini's lines predate the 4 Nov decision commit, so each
+finding was found by its quoted text; lines below are today's. Each ends **Listed** (a bullet on
+`docs/follow-ups.md`), **Owner** (a question at the end of this file), **Covered** (a Claude pattern takes it) or
+**Rejected** (a plan ground, R1-R5). Totals: 28 Listed, 1 Owner, 1 Covered, 7 Rejected. None is a blocker; the
+heaviest is D4-2.
+
+### Week-1 lessons
+
+- **D1-5: Listed** (Minor). `quizes/run-sheet/RUN_SHEET.md:36-37` gives the welcome 0845-0915 and lesson ① 0915;
+  `01-IN-course_welcome.qmd:33`, `:154`, `:171`, `:353` say 35 minutes and 0920, which eats the pre-lunch buffer
+  (`RUN_SHEET.md:40`). Move 01-IN to the run sheet's times.
+- **D2-4: Listed** (Minor). `02-BF:260` "weight = base size × 3 + total size" never says on the slide what base
+  size is (only the notes, `:284`), and the one example is a legacy transaction (`:270-271`).
+- **D2-5: Listed with D2-2** (Minor). `06-BF:63-70` uses lettered placeholder keys; the lab chain's sorted order
+  (wallet `INSTRUCTOR_ANSWERS.md:95-96`) is by key bytes, so the slide should say the letters are labels, not key
+  order. Folded into the D2-2 bullet.
+- **D2-6: Listed** (Minor). `05-BF:525` "4. Spend from a 2-of-3 multi-sig"; the lab only reads a spend.
+- **D3-2: Listed** (Minor). `01-EF:172-178` draws Alice's 3 ETH as a second node, "Remaining: 3 ETH", in the fill of
+  the Bitcoin change output (`:136-143`); the text under it (`:186`) rightly says Ethereum has no change output.
+- **D3-4: Covered by W4** (Minor). The contract at `01-EF:298-323` is glossed and framed as "to read, not write"
+  (notes `:332`, `:340-344`); what is left is `public`, `view` and `msg.sender` before 04-EF, W4's gap.
+- **D3-7: Listed** (Minor). Notes cite a key without `@` (`04-EF:916`, `:985`) and raw ethereum.org URLs (`:1124`).
+  The Anchor example's `declare_id!("11111111111111111111111111111111")` (`:1187`) is Solana's System Program ID
+  (solana.com docs on built-in programs, read 4 Nov 2026 through a search summary: the page returned 429), while the
+  notes call it "not a real deployment" (`:1237`). Needs a bib key, or an obviously fake ID.
+- **D3-8: Listed** (Minor). `05-EF:356` lists TerraUSD ("collapsed in May 2022") beside Ethereum stablecoins and
+  never says it ran on its own chain, Terra. Add the chain; check `l34_euronews_reuters_terra_2022` names it.
+- **D4-1: Listed** (Minor, not Major). The core slide's three bridge types (`08-EF:414-416`) and the Bitget table's
+  labels (`:580-582`: "Issuer's own bridge", "Liquidity and intents", "Cross-chain swap") differ, and the DEX lab
+  hint (`dex/gateway/static/lab/index.html:191`) omits message-verified. No answer changes (dex
+  `INSTRUCTOR_ANSWERS.md:57`). Relabelling CCTP (burn-and-mint run by the issuer) and THORChain goes through the
+  `source` skill.
+- **D4-3: Listed** (Minor). `07-EF:466` "Where funds can leave a chain" lists a DEX pool first (`:472`, opener
+  `:29`); the notes say "leave a chain or change form" (`:487`). Retitle "Where funds can be sold or leave the chain".
+- **D4-6: Listed** (Minor). `08-EF:285` "a Security Council (at least 75% of it) can still block or forge a
+  message". L2BEAT's Stage 1 principle (forum.l2beat.com, "Stages update: a high-level guiding principle for Stage
+  1", 29 Jan 2025, read 4 Nov 2026) says only ≥75% of the council could block a message or push an invalid one, so the
+  facts hold and Gemini's reading is R4; "can still" reads as a power rather than a limit, so reword.
+  `l2beat.com/stages` now redirects to `ethbeat.org`; check the bib URL.
+- **D5-4: Listed** (Minor). `01-PC:226-227` rightly says the USDT owner is a multisig (`TBPxhV…`); the worksheet asks
+  who signed (`tron/static/lab/index.html:138`) and the snapshot shows `TRLi4K…`, a key that called
+  `confirmTransaction` on that multisig (TronGrid `gettransactionbyid`, read 4 Nov 2026). The key already says not to
+  require it (`tron/quizes/INSTRUCTOR_ANSWERS.md:73-74`); one worksheet line should say why another key signs.
+- **D5-6: Listed** (Minor). `05-FO-vasps_and_the_rules.qmd:120` and `:414` file CTRs with SARs as "a pattern someone
+  saw"; a CTR reports cash transactions over $10,000 (31 CFR 1010.311, law.cornell.edu, read 4 Nov 2026), not a
+  judgement. No bib key yet.
+
+### Week-2 lessons
+
+- **D7-3: Listed** (Minor). `07-FO-privacy_coins.qmd:446`'s deposit is BTC, sent to "an exchange that delisted XMR in
+  2024", a stray detail; the row's point holds. Cut the clause.
+- **D7-6: Listed for 07-FO; Rejected R1 for 08-FO** (Minor). `07-FO:437` calls its note "the lab's product, on a
+  privacy-coin hop", but the lab puts privacy coins out of scope (coinjoin-trace `INSTRUCTOR_ANSWERS.md:143`).
+  `08-FO:422` is already reworded; match it.
+- **D8-8: Listed** (Minor). `09-FO-approvals_drainers_poisoning.qmd:42`'s notes say "nobody reads code today"; day 8's
+  lab reads the Bybit code (`cross-chain/static/lab/index.html:120`; `11-FO:38`). Say "in this lesson".
+- **D8-9: Listed** (Minor). `09-FO:352` says the lure goes "from the victim to the look-alike"; neither `:391` nor
+  the notes (`:370`) say how an attacker sends from the victim. Source the mechanism (zero-value `transferFrom`)
+  first.
+
+### Labs
+
+- **D1-9: Listed** (Minor). Explorer Q3's hint (`explorer/gateway/static/lab/index.html:127-131`) never says "EOA",
+  though the key expects Otterscan's `[EOA]` tag (`INSTRUCTOR_ANSWERS.md:51`). Gloss the tag in the hint and say a
+  label alone is not evidence. Not checked live.
+- **D2-8: Listed** (Minor; R5 defensible). The course chain matures coinbases after 10 blocks
+  (`wallet/quizes/build-steps.sh:48`; `bitcoin/LAB1.md:87`), where `02-BF:433` teaches 100. One clause in the wallet
+  page's intro.
+- **D4-2: Listed** (Major). The DEX key makes block 10's approval the independent line (dex
+  `INSTRUCTOR_ANSWERS.md:29-31`, `:110`); hint 5 (`dex/gateway/static/lab/index.html:173-175`) points only at block 11.
+- **D6-6: Listed** (Minor). The D6 trace is graded (`docs/build-spec.md:117`, `:180-181`), but
+  `bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md:12-16` has no Meets and Not yet lines, as the other graded labs do. Edit
+  `answers.template.md`, then regenerate with `chain/render.py`.
+- **D7-4: Listed** (Minor). coinjoin-trace's rubric says "Names both places the trace stops … J3 … the mixer"
+  (`INSTRUCTOR_ANSWERS.md:18`); the model and Q4 also mark J1 and J2 (`:60`, `:75`). Fix with the week-2 lab session.
+- **D7-5: Listed** (Minor). Q11's answer gives "Moderate (service); Low (label…)" (`coinjoin-trace
+  INSTRUCTOR_ANSWERS.md:63`); model step 8 shows only Low (`:82`).
+- **D8-3: Listed** (Minor). The worksheet and the key's walk-through say the snapshot lacks the rsETH-to-ETH step
+  (`cross-chain/static/lab/index.html:226`; `INSTRUCTOR_ANSWERS.md:103`), but the graded-note rubric lists it as
+  something "the chain does not show" (`INSTRUCTOR_ANSWERS.md:29-30`). Split the two.
+- **D9-4: Listed** (Minor, not Major). `tron/queries/d9.sql:20` builds `label || ' [' || source || ']'` and drops
+  `as_of`; the worked example and the key's Q1 say the date shows (`d9/index.html:113-114`;
+  `INSTRUCTOR_ANSWERS_D9.md:58-59`). Regenerate the fallback and run the Tron lab test.
+- **D10-6: Listed** (Minor). final-trace's key says "Mark down" for faults in the oral explanation
+  (`final-trace/quizes/INSTRUCTOR_ANSWERS.md:34`, `:61`), which carries no grade (`RUN_SHEET.md:258-261`). Reword as
+  feedback.
+
+### Quizzes and the run sheet
+
+- **D2-7: Listed** (Minor). `RUN_SHEET.md:97` points the instructor to 01-BF and 03-BF as sources for ①; 02-BF
+  already carries those slides (`docs/build-spec.md:82`). Archiving the two March files would be a cut, the owner's
+  call, so only the run-sheet line is listed.
+- **A-8: Listed** (Minor). `quizes/quiz_json/daily_d6_review_of_day5-quiz-bank.json:225` cites the instructor-only
+  `tron/quizes/INSTRUCTOR_ANSWERS.md`; students never see `specific_source`, but rule 4 wants a trace to what was
+  taught: the worksheet's worked example (`tron/static/lab/index.html:81-85`).
+
+### Tooling
+
+- **D1-7: Listed** (Minor). 02-IN has no level-3 headings, so nothing stacks, but `slide-level: 3` (`02-IN:15`)
+  renders content slides as `title-slide … center`, centred against the theme's `center: false`
+  (`_extensions/aci/_extension.yml:52`). Set 2 and check in a browser; 03-IN and 05-IN declare 3 too.
+
+### Owner
+
+- **D1-3: Owner** (Minor, not Major). `RUN_SHEET.md:80-81` starts the `exercises` and `bitcoin` stacks for The
+  Insider (15 min) and terminal orientation (10 min). Both openers are settled (`docs/build-spec.md:62`: R2 for
+  Gemini's cut). The real point is elsewhere: `terminal.html:13` says "From day 2 you read output in a terminal",
+  but no later lab uses one. Question 1 below.
+
+### Rejected
+
+- **D2-3: R4.** The multisig read is demonstrated on the slide before the lab, "Reading a multi-sig spend in the
+  explorer" (`06-BF:143`), and the lab hints carry it (`:179-190`). Week 1 rated this criterion Meets.
+- **D3-3: R4.** High needs two independent lines (`tokens/gateway/static/lab/index.html:115`): the `Upgraded` log and
+  the `delegatecall` trace are two, and the hint (`:158-161`) gives the slot on the saved pages. The key lists three
+  (`INSTRUCTOR_ANSWERS.md:79`); two suffice.
+- **D5-5: R4.** `hlf/docs/CLASSROOM_OPERATIONS.md:18`, `:53-56` sizes a full class; day 5 runs the instructor demo at
+  capacity 1 (`hlf/docs/INSTRUCTOR_GUIDE.md:33-39`; `01-PC:35`). Judged from the files, not run (no Docker here).
+- **D6-2: R4.** "Co-spending links inputs, unless it's a CoinJoin" is taught that morning (`02-FO:53`, `:61`), the
+  lab hint gives the check (`bitcoin-trace/gateway/static/lab/index.html:182-184`), and the key accepts the answer
+  (`INSTRUCTOR_ANSWERS.md:35`).
+- **D8-6: R4.** The lab puts slot 0 on Safe's own code (`cross-chain/static/lab/index.html:124`), not on ERC-1967,
+  whose slot is `keccak256('eip1967.proxy.implementation') - 1` (eips.ethereum.org, read 4 Nov 2026).
+- **D10-4: R4.** The fee is withheld on purpose: "the desk's fee, which the case file does not give"
+  (`final-trace/quizes/INSTRUCTOR_ANSWERS.md:34`); students link by timing and a near amount at Low or Moderate, and
+  two decoys are built on the gap (`:66-67`). Stating the fee would remove that lesson.
+- **A-3: R4.** The Tron page starts everyone at the worked example (`tron/static/lab/index.html:117-119`), so
+  daily_d6's items test work all did; daily_d9 names no worked example; day 10 has no daily quiz; daily_d3's
+  gap-limit item is taught in 05-BF.
+
+### Rows checked but not rerouted
+
+- **D9-3** (Owner) holds as Gemini says: Q14 (`tron/static/lab/d9/index.html:100`) and the graded note (`:176`) want
+  "the most likely AML typology", 12-FO's table (`12-FO:64-71`) has no plain-deposit row, and the key's own evidence
+  calls the address a plain Binance deposit address (`INSTRUCTOR_ANSWERS_D9.md:116`). Question 3 below.
+- **D10-5** (Dry run): the facts hold, a 50-minute review session that is also the last chance to resubmit
+  (`RUN_SHEET.md:252`, `:62-64`).
+
+## The Covered rows, spot-checked
+
+All 24 read against the pattern each names: 16 match. Changes:
+
+- **D1-4 → Owner.** W1 glosses lab terms; Gemini's point is that no lesson reads an Ethereum transaction before the
+  explorer lab (02-IN's worked example is Bitcoin; Otterscan appears only at `02-IN:646`, `:660`). Question 2 below.
+- **D2-9 → Listed.** Not W4's cross-lesson gap: inside 05-BF, the hardened `'` is used at `:334` and `:407-412` and
+  defined on a slide only at `:453` (notes `:429`).
+- **D5-7 → Listed.** Q16 kept the term, but `04-FO:291` and its notes (`:308`) never say what a muxed address is.
+- **D4-5, D7-1, D9-5: Covered, each with a leftover Listed.** 03-EF's role table (`:1062-1064`) still puts ERC-4337,
+  `handleOps`, EntryPoint and the ERC-2771 forwarder on the slide; coinjoin-trace's hints sit apart (`:158`) from
+  their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern.
+- **Notes for the sessions that take a Covered row.** A-7: post-test p6's key still says "Observed"
+  (`quizes/posttest/posttest_day10-quiz-bank.json:398`), for the C1 session. D8-7: compound confidence words also sit
+  at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
+  `:276` and the 08-FO synthesis `:68`, `:115`. D1-2: W2 also reaches `04-CP:244`, `:350`, `:401`. D1-8: 04-CP and
+  01-CM have 0 Asks. D5-8: week-2 Q3 should name the Tron page if it gets a self-check. D10-7 and A-10: Gemini's
+  challenge topics (cross-chain timing, freezes, Tron sweeps) go to the owner beside week-2 Q20. D8-5: give
+  Gemini's alternative (the micro-lab as the afternoon opener) beside Q14.
+
+## Questions for the owner
+
+1. **D1-3. Day 1's terminal orientation:** the 10-minute page says "From day 2 you read output in a terminal", but no
+   later lab uses a terminal, and the `bitcoin` stack starts only to host it. **Recommend cutting it** and the stack
+   start, keeping The Insider as settled: ten minutes back for the explorer worksheet.
+2. **D1-4. An Ethereum transaction before the explorer lab:** 02-IN's only worked example is Bitcoin, so students
+   first meet Otterscan's nonce, gas and base fee in the lab. **Recommend one 02-IN slide** reading the lab's block-3
+   transaction in Otterscan.
+3. **D9-3. A plain deposit address in a typology question:** Q14-Q15 make students pick an AML typology for what the
+   key's own evidence calls a plain Binance deposit address. **Recommend accepting "no typology fits: a plain deposit
+   address"**, with evidence for and against, on the worksheet and in the key, leaving 12-FO's table as is.
+4. **D1-10. RPC method names in explorer Part 2(b):** the key wants `eth_getTransactionCount` and
+   `eth_sendRawTransaction` (`explorer/quizes/INSTRUCTOR_ANSWERS.md:97-98`). **Recommend asking what the wallet asked
+   for (the next nonce) and what it sent (the signed transaction)**, method names not required: students read, not
+   program.
+5. **A-9. Day 2 has no summative item:** no Role Concept covers wallets (`docs/alignment-map.md:103`). **Recommend
+   adding a wallets and key custody concept** to the Notion list, with one multiple-choice post-test item (what an
+   xpub links).

@@ -60,10 +60,49 @@ slide index), which is never listed here.
   lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
 - `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd:88` and `:184` (notes) say signature order "narrows which
   keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
-  key once the pair is known. (4 Nov 2026, Gemini audit D2-2)
+  key once the pair is known. Also `:65`: say the letters label the keys and a sorted script orders them by key
+  bytes (lab answers `wallet/quizes/INSTRUCTOR_ANSWERS.md:95-96`). (4 Nov 2026, Gemini audit D2-2, D2-5)
 - `lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd` has two slides
   taller than the 700 px slide, so they scroll: "A stale block is routine, not an attack" (709 px) and "Proof of stake
   finalizes by a two-thirds vote" (706 px). Trim a line from each. (4 Nov 2026, slide-fit sweep at 1280x800)
+- `lessons/introduction/01-IN-course_welcome.qmd:33`, `:154`, `:171`, `:353` give the welcome 35 minutes and lesson ①
+  0920; `quizes/run-sheet/RUN_SHEET.md:36-37` gives 30 minutes and 0915, keeping the buffer at `:40`. Move 01-IN to
+  the run sheet's times. (4 Nov 2026, Gemini audit D1-5, `docs/analysis/gemini-audit/triage.md`)
+- `02-BF-*.qmd:260` "weight = base size × 3 + total size" defines base size only in the notes (`:284`), and its one
+  example is legacy (`:270-271`). Say "(base size: the transaction without its witness)" and that a SegWit vsize is
+  below its byte size. (4 Nov 2026, Gemini audit D2-4, `docs/analysis/gemini-audit/triage.md`)
+- `05-BF-*.qmd:525` "4. Spend from a 2-of-3 multi-sig": the lab only reads one. Say "Read a spend from…". (4 Nov 2026, Gemini audit D2-6, `docs/analysis/gemini-audit/triage.md`)
+- `05-BF-*.qmd` uses the hardened tick at `:334` and `:407-412` but defines it on a slide only at `:453` (notes
+  `:429`). Add one line on the path slide near `:405`. (4 Nov 2026, Gemini audit D2-9, `docs/analysis/gemini-audit/triage.md`)
+- `01-EF-*.qmd:172-178` draws Alice's 3 ETH as a second node, "Remaining: 3 ETH", in the fill of the Bitcoin change
+  output (`:136-143`), against `:186`'s "no change output". Drop the node; label Alice "13 → 3 ETH". (4 Nov 2026, Gemini audit D3-2, `docs/analysis/gemini-audit/triage.md`)
+- `04-EF-*.qmd:916` and `:985` cite `solidityteam_solidityexample_2025` without `@`; `:1124` gives raw ethereum.org
+  URLs; `:1187`'s `declare_id!("1111…1111")` is Solana's System Program, though the notes (`:1237`) call it not a real
+  deployment. Fix the citations; source the ID or use an obviously fake one. (4 Nov 2026, Gemini audit D3-7, `docs/analysis/gemini-audit/triage.md`)
+- `05-EF-*.qmd:356` lists TerraUSD without saying it ran on its own chain, Terra (notes `:374`, `:381`). Add it, and
+  check `l34_euronews_reuters_terra_2022` names the chain. (4 Nov 2026, Gemini audit D3-8, `docs/analysis/gemini-audit/triage.md`)
+- `03-EF-*.qmd:1062-1064`'s role table still puts ERC-4337, `handleOps`, EntryPoint and the ERC-2771 forwarder on the
+  slide, which week-1 Q13 sent to the notes. (4 Nov 2026, Gemini audit D4-5, `docs/analysis/gemini-audit/triage.md`)
+- `07-EF-*.qmd:466` "Where funds can leave a chain" lists a DEX pool first (`:472`; opener `:29`). Retitle "Where
+  funds can be sold or leave the chain", as the notes say (`:487`). (4 Nov 2026, Gemini audit D4-3, `docs/analysis/gemini-audit/triage.md`)
+- `08-EF-*.qmd:580-582`'s Bitget table labels bridges "Issuer's own bridge", "Liquidity and intents", "Cross-chain
+  swap", not the three types of `:414-416`. Relabel through the `source` skill (CCTP is burn-and-mint run by the
+  issuer; THORChain needs a source). (4 Nov 2026, Gemini audit D4-1, `docs/analysis/gemini-audit/triage.md`)
+- `08-EF-*.qmd:285` "a Security Council (at least 75% of it) can still block or forge a message" reads as a power;
+  L2BEAT's Stage 1 principle (forum, 29 Jan 2025) makes it a limit: only ≥75% of the council could block a
+  withdrawal or push a false one. `l2beat.com/stages` now redirects to `ethbeat.org`; check the bib URL. (4 Nov 2026, Gemini audit D4-6, `docs/analysis/gemini-audit/triage.md`)
+- `lessons/forensics/04-FO-*.qmd:291` and its notes (`:308`) never say what a muxed address is: "a Stellar address
+  with the customer's ID built in". (4 Nov 2026, Gemini audit D5-7, `docs/analysis/gemini-audit/triage.md`)
+- `05-FO-*.qmd:120` and `:414` file CTRs with SARs as "a pattern someone saw"; a CTR is a cash-threshold filing over
+  $10,000 (31 CFR 1010.311). Add a bib key and split the two. (4 Nov 2026, Gemini audit D5-6, `docs/analysis/gemini-audit/triage.md`)
+- `07-FO-*.qmd:446` sends a BTC deposit to "an exchange that delisted XMR in 2024": cut the clause. `:437` calls its
+  note "the lab's product, on a privacy-coin hop", but the lab excludes privacy coins; reword as `08-FO:422` was.
+  (4 Nov 2026, Gemini audit D7-3, D7-6, `docs/analysis/gemini-audit/triage.md`)
+- `09-FO-*.qmd:42`'s notes say "nobody reads code today"; say "in this lesson: the day 8 lab reads the Bybit code".
+  (4 Nov 2026, Gemini audit D8-8, `docs/analysis/gemini-audit/triage.md`)
+- `09-FO-*.qmd:352` and `:391` show a zero-value transfer "from the victim" and never say how the attacker sends it.
+  Add one sourced line (`source` skill). (4 Nov 2026, Gemini audit D8-9, `docs/analysis/gemini-audit/triage.md`)
+- `13-FO-*.qmd:368` "Staging began with 10 ETH from Tornado Cash" never says what staging means. (4 Nov 2026, Gemini audit D9-5, `docs/analysis/gemini-audit/triage.md`)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
@@ -85,6 +124,13 @@ slide index), which is never listed here.
 - Pretest q12's key (`quizes/pretest/pretest_week1-quiz-bank.json:387`) says the Swap log gives "the recipient (to)";
   in a swap sent through the router, the pool's `to` is often the router itself. Say so in the key. (4 Nov 2026,
   week-1 audit decisions)
+- `quizes/run-sheet/RUN_SHEET.md:97` points to 01-BF and 03-BF as sources for ①; 02-BF already absorbed them
+  (`docs/build-spec.md:82`). Say "teach 02-BF alone". (4 Nov 2026, Gemini audit D2-7, `docs/analysis/gemini-audit/triage.md`)
+- `quizes/quiz_json/daily_d6_review_of_day5-quiz-bank.json:225` cites the instructor-only
+  `tron/quizes/INSTRUCTOR_ANSWERS.md`; point it at the worksheet's worked example (`tron/static/lab/index.html:81-85`).
+  (4 Nov 2026, Gemini audit A-8, `docs/analysis/gemini-audit/triage.md`)
+- Post-test p6's key still says "Observed" (`quizes/posttest/posttest_day10-quiz-bank.json:398`), against C1.
+  (4 Nov 2026, Gemini audit A-7, `docs/analysis/gemini-audit/triage.md`)
 
 ## Labs
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
@@ -121,11 +167,30 @@ slide index), which is never listed here.
   `dex/gateway/static/lab/index.html:142`, `tron/static/lab/index.html:142`, `bitcoin-trace/.../index.html:107` and
   `coinjoin-trace/.../index.html:114` still ask for a sentence "an agent could read". Match them. (4 Nov 2026,
   week-1 audit decisions)
+- Explorer Q3's hint (`dynamic-labs/explorer/gateway/static/lab/index.html:127-131`) never explains Otterscan's `EOA`
+  tag, which the key uses (`INSTRUCTOR_ANSWERS.md:51`). Gloss it, and say a label alone is not evidence. (4 Nov 2026, Gemini audit D1-9, `docs/analysis/gemini-audit/triage.md`)
+- The wallet chain matures coinbases after 10 blocks (`dynamic-labs/wallet/quizes/build-steps.sh:48`), where
+  `02-BF:433` teaches 100. One clause in the wallet page's intro (`:14`). (4 Nov 2026, Gemini audit D2-8, `docs/analysis/gemini-audit/triage.md`)
+- DEX hint 5 (`dynamic-labs/dex/gateway/static/lab/index.html:173-175`) points only at block 11; the key makes block
+  10's approval the independent line (`INSTRUCTOR_ANSWERS.md:29-31`, `:110`). Add block 10 to the hint; also add
+  message-verified bridges to the hint at `:191`. (4 Nov 2026, Gemini audit D4-2, D4-1, `docs/analysis/gemini-audit/triage.md`)
+- The Tron worksheet asks who signed the freeze (`dynamic-labs/tron/static/lab/index.html:138`); the snapshot shows
+  `TRLi4K…`, a key confirming inside the owner multisig. Say so in one sourced line. (4 Nov 2026, Gemini audit D5-4, `docs/analysis/gemini-audit/triage.md`)
+- `dynamic-labs/bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md:12-16` has no Meets and Not yet lines for a graded
+  point; add them in `answers.template.md` and regenerate. (4 Nov 2026, Gemini audit D6-6, `docs/analysis/gemini-audit/triage.md`)
+- coinjoin-trace's key: the rubric's "both places the trace stops" (`INSTRUCTOR_ANSWERS.md:18`) omits J1 and J2,
+  which the model and Q4 mark (`:60`, `:75`); model step 8 (`:82`) omits Q11's Moderate for the service (`:63`); and
+  the page's hints (`index.html:158`) sit apart from their questions (`:73-101`). (4 Nov 2026, Gemini audit D7-4, D7-5, D7-1, `docs/analysis/gemini-audit/triage.md`)
+- `dynamic-labs/cross-chain/quizes/INSTRUCTOR_ANSWERS.md:29-30` credits the rsETH-to-ETH step as "the chain does not
+  show"; it is a snapshot gap (worksheet `index.html:226`; key `:103`). Split the two. (4 Nov 2026, Gemini audit D8-3, `docs/analysis/gemini-audit/triage.md`)
+- `dynamic-labs/tron/queries/d9.sql:20` drops `as_of` from the labels column that the worked example and key Q1 say
+  shows the date read. Add it, regenerate the fallback, run the Tron lab test. (4 Nov 2026, Gemini audit D9-4, `docs/analysis/gemini-audit/triage.md`)
+- `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:34` and `:61` say "Mark down" for the ungraded oral
+  explanation (`RUN_SHEET.md:258-261`). Say "Correct in feedback". (4 Nov 2026, Gemini audit D10-6, `docs/analysis/gemini-audit/triage.md`)
 
 ## Tooling and rules
 
-- `docs/analysis/gemini-audit/` holds Gemini's whole-course audit (4 Nov 2026); its top ten are triaged in
-  `triage.md`, the rest are not. Triage the day reports' other findings against the files and Claude's pattern audit.
-  Its line numbers can be off (D3-2 cites 01-EF:571; the diagram is at :177). (4 Nov 2026, Gemini audit run)
+- `lessons/introduction/02-IN-*.qmd:15` (and 03-IN, 05-IN) declare `slide-level: 3` with only `##` headings, which
+  renders content slides centred, against the theme's `center: false`. Set 2 and check in a browser. (4 Nov 2026, Gemini audit D1-7, `docs/analysis/gemini-audit/triage.md`)
 
 ## Notion and documents
