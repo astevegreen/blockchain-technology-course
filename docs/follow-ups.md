@@ -56,6 +56,13 @@ slide index), which is never listed here.
   `01-PC-*.qmd:497` "concept 49". (4 Nov 2026, week-1 pattern audit)
 - `05-FO-*.qmd:219`'s notes say "Southeast Asian criminal groups" with no citation; source it with the `source`
   skill or cut it. (4 Nov 2026, week-1 pattern audit)
+- `lessons/forensics/14-FO-fusing_sources.qmd:191` rates a deposit address sweeping into the exchange's own published
+  wallet **High**; day 9's lab (`dynamic-labs/tron/static/lab/d9/index.html:122-137`) and its answer key's question 5
+  rate the same pattern Moderate, and the lesson's notes concede a nested service holds it at Moderate. Make the
+  lesson's step 5 match the lab. (4 Nov 2026, Gemini audit D9-1, `docs/analysis/gemini-audit/triage.md`)
+- `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd:88` and `:184` (notes) say signature order "narrows which
+  keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
+  key once the pair is known. (4 Nov 2026, Gemini audit D2-2)
 
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
@@ -101,8 +108,8 @@ slide index), which is never listed here.
   Gemini audit D8-2)
 
 ## Tooling and rules
-- `docs/analysis/gemini-audit/` holds Gemini's whole-course audit (4 Nov 2026), unchecked apart from D10-2 and
-  D8-2. Triage it against the files and Claude's pattern audit: its top ten are in `README.md` section 2. Its line
-  numbers can be off (D3-2 cites 01-EF:571; the diagram is at :177). (4 Nov 2026, Gemini audit run)
+- `docs/analysis/gemini-audit/` holds Gemini's whole-course audit (4 Nov 2026); its top ten are triaged in
+  `triage.md`, the rest are not. Triage the day reports' other findings against the files and Claude's pattern audit.
+  Its line numbers can be off (D3-2 cites 01-EF:571; the diagram is at :177). (4 Nov 2026, Gemini audit run)
 
 ## Notion and documents
