@@ -68,7 +68,8 @@ Gemini's synthesis (section 6) names its disagreements with Claude. Each is sett
   to "not on the scale".** Facts off the chain take no word, a source's attribution is cited with its date, and the
   confidence column holds only Low, Moderate or High. One rule for both weeks, and it is the charter's ("ICD 203 only
   standardizes confidence words"). The same decision settles D8-7 (compound words such as "Moderate to High"), D9-6
-  and A-7, and frames Q12, Q15 and Q16, which should be answered with it.
+  and A-7, and frames Q12, Q15 and Q16, which should be answered with it. **Decided 4 Nov 2026**, owner: "Yes,
+  revise Q4". Sessions 3 to 6 bring `09-FO`, `12-FO` and any other "Observed" into line with it.
 - **C2. Multisig signature order (D2-2).** Settled by the triage: the speaker notes are wrong, the lab hint is right.
   Listed.
 - **C3. The cross-chain lab as a model.** Claude rated day 8's lab Meets on criterion 10 (a varied case) and held it
@@ -102,7 +103,8 @@ ID; open `gemini-audit/<scope>.md` for the evidence. "Session N" is a child of `
 
 | Item | Status | Who finishes it |
 |---|---|---|
-| Q1-Q20 | Unanswered; Q4's recommendation revised (C1) | Owner, phase 0 |
+| Q4 | Decided 4 Nov: revised as C1 gives it (owner: "Yes, revise Q4") | Sessions 3-6 |
+| Q1-Q3, Q5-Q20 | Unanswered | Owner, phase 0 |
 | P1-P2, P6-P11 lessons | Open, after the answers | Session 5 |
 | P3-P5, P13 labs | Open, after Q1-Q3, Q7 | Session 7 |
 | Assessments (Q15-Q20) | Open, after the answers | Session 8 |
@@ -265,8 +267,8 @@ duplicate of another Gemini row is marked "= ID".
 Four phases. Phases 1 and 2 run through `docs/prompts/backlog-orchestrator.md`; phases 0 and 3 are the owner's.
 
 **Phase 0. Owner decisions that unblock the rest (one message each).**
-1. Week 2's 20 questions (`pattern-audit/README.md`, section 5), with Q4 revised as C1 recommends. Answer Q12, Q15
-   and Q16 in the same breath: they apply the same scale.
+1. Week 2's other 19 questions (`pattern-audit/README.md`, section 5); Q4 is decided (C1). Answer Q12, Q15 and Q16
+   by the same rule: they apply the same scale.
 2. Day 10 (C4, C5), two questions, each with its recommendation:
    - What class size does the course plan for? **Recommend 16, two instructors,** the size day 10's marking and oral
      explanations fit (triage A-2, D10-1); a bigger class adds a third marker.

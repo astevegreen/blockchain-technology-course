@@ -26,11 +26,12 @@ to reference that as well so we cover everything."
    (cuts wait for a timed dry run, which is the owner's to run). What is left is section 2's course-wide fixes
    (W1-W14) beyond those decisions, and section 4's one-offs, now on the follow-ups list.
 2. **Week 2's audit**, `docs/analysis/pattern-audit/README.md`: patterns P1-P13 and 20 owner questions (section 5),
-   **not yet answered**. Week 1's Q1, Q2 and Q14 already applied week 2's Q1, Q2 and Q6 to week 1 only. Week 1's Q5
+   **not yet answered** except Q4. Week 1's Q1, Q2 and Q14 already applied week 2's Q1, Q2 and Q6 to week 1 only. Week 1's Q5
    is different: it took the "no word" branch (a fact read off the chain takes no confidence word, now taught at
-   `01-IN`'s confidence-scale slide), while week 2's Q4 recommends adding "Observed" to the scale, and `09-FO` and
-   `12-FO` still use "Observed". Whichever way the owner answers week 2's Q4, sessions 3, 4, 5 and 6 bring `01-IN`,
-   `01-CM`, `06-BF`, the five week-1 lab pages and `09-FO`/`12-FO` into line with it.
+   `01-IN`'s confidence-scale slide). Week 2's Q4 is now decided the same way (owner, 4 Nov: "Yes, revise Q4";
+   `docs/analysis/audit-plan.md` C1): "Observed" stays off the scale, a source's attribution is cited with its date,
+   and the confidence column holds only Low, Moderate or High. `09-FO` and `12-FO` still use "Observed": sessions 3,
+   4, 5 and 6 bring `01-IN`, `01-CM`, `06-BF`, the five week-1 lab pages and `09-FO`/`12-FO` into line with it.
 3. **The follow-ups list**, `docs/follow-ups.md`, sorted by section (Lessons, Quizzes, Labs, Tooling and rules, Notion
    and documents).
 4. **Gemini's adversarial audit**, `docs/analysis/gemini-audit/`: one report per scope (`d1.md` to `d10.md`,
@@ -46,8 +47,8 @@ to reference that as well so we cover everything."
 
 ## First, before any child
 
-1. Ask the owner the 20 week-2 questions, in one message: list each with its recommendation (README.md section 5,
-   shortened to a line each, with Q4's recommendation revised as `docs/analysis/audit-plan.md` C1 gives it) and ask
+1. Ask the owner the other 19 week-2 questions (Q4 is decided), in one message: list each with its recommendation
+   (README.md section 5, shortened to a line each; Q12, Q15 and Q16 follow Q4's rule) and ask
    "Approve all, or name the numbers to change". In a second message ask the plan's two day-10 questions (its
    section 5, phase 0). Record each answer word for word
    for the briefs and `Requested:` trailers. Do not start sessions 3, 5 or 6 until it arrives; start 1 and 2 meanwhile.
