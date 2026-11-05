@@ -258,11 +258,11 @@ All 24 read against the pattern each names: 16 match. Changes:
    transaction in Otterscan.
 3. **D9-3. A plain deposit address in a typology question:** Q14-Q15 make students pick an AML typology for what the
    key's own evidence calls a plain Binance deposit address. **Recommend accepting "no typology fits: a plain deposit
-   address"**, with evidence for and against, on the worksheet and in the key, leaving 12-FO's table as is.
+   address"**, with evidence for and against, on the worksheet and in the key, leaving 12-FO's table as is. *Owner, 5 Nov 2026: approved ("Yes, accept it").*
 4. **D1-10. RPC method names in explorer Part 2(b):** the key wants `eth_getTransactionCount` and
    `eth_sendRawTransaction` (`explorer/quizes/INSTRUCTOR_ANSWERS.md:97-98`). **Recommend asking what the wallet asked
    for (the next nonce) and what it sent (the signed transaction)**, method names not required: students read, not
-   program.
+   program. *Owner, 5 Nov 2026: approved ("Yes, drop the names").*
 5. **A-9. Day 2 has no summative item:** no Role Concept covers wallets (`docs/alignment-map.md:103`). **Recommend
    adding a wallets and key custody concept** to the Notion list, with one multiple-choice post-test item (what an
    xpub links).

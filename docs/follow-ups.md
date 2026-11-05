@@ -54,6 +54,14 @@ slide index), which is never listed here.
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
 
 ## Labs
+- Day 9 Tron lab, questions 14-15 and the graded note (`dynamic-labs/tron/static/lab/d9/index.html:100`, `:160-176`,
+  `INSTRUCTOR_ANSWERS_D9.md`): accept "no typology fits: a plain deposit address", with one indicator for and one
+  against, on the worksheet and in the key; leave 12-FO's typology table as is. (5 Nov 2026, owner approved Gemini
+  D9-3)
+- Day 1 explorer lab, Part 2(b) (`dynamic-labs/explorer/gateway/static/lab/index.html`, Part 2;
+  `explorer/quizes/INSTRUCTOR_ANSWERS.md:97-98`): ask what the wallet asked for (the next nonce) and what it sent (the
+  signed transaction); method names such as `eth_getTransactionCount` are not required. (5 Nov 2026, owner approved
+  Gemini D1-10)
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
   request)
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found

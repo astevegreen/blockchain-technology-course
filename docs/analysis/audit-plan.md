@@ -130,7 +130,7 @@ duplicate of another Gemini row is marked "= ID".
 | D1-7 | Minor | 02-IN declares `slide-level: 3` | Listed | Triage: no stacking, but content slides render centred |
 | D1-8 | Minor | 04-CP, 01-CM: no Asks, Walkthrough "None" | Covered | W8, W13 |
 | D1-9 | Minor | Otterscan's `[EOA]` tag on a creation row confuses Q3 | Listed | Triage: gloss the tag in the hint |
-| D1-10 | Minor | Lab asks recall of JSON-RPC method names | Owner | Challenge: what the lab asks. Students read, not program (charter) |
+| D1-10 | Minor | Lab asks recall of JSON-RPC method names | Listed | Owner approved 5 Nov: ask for the next nonce and the signed transaction, no method names |
 
 **Day 2**
 
@@ -229,7 +229,7 @@ duplicate of another Gemini row is marked "= ID".
 |---|---|---|---|---|
 | D9-1 | Major | 14-FO rates a sweep High; the lab rates it Moderate | Listed | Follow-ups, Lessons |
 | D9-2 | Major | 13-FO taught before 12-FO but cites it as past | Covered | P11, week 2 Q5 |
-| D9-3 | Major | Q14-Q15 force an exchange deposit into an AML typology list | Owner | Confirmed by triage |
+| D9-3 | Major | Q14-Q15 force an exchange deposit into an AML typology list | Listed | Owner approved 5 Nov: accept "no typology fits: a plain deposit address" |
 | D9-4 | Major | `d9.sql`'s labels view drops `as_of` | Listed | Minor; needs a lab test |
 | D9-5 | Minor | Durable nonce, Tornado staging unexplained | Covered | P2, week 2 Q10 |
 | D9-6 | Minor | Diamond table uses "Observed", "Quote the FBI" | Covered | C1, P7 |
