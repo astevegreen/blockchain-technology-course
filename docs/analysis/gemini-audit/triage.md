@@ -140,10 +140,10 @@ heaviest is D4-2.
 ### Week-2 lessons
 
 - **D7-3: Listed** (Minor). `07-FO-privacy_coins.qmd:446`'s deposit is BTC, sent to "an exchange that delisted XMR in
-  2024", a stray detail; the row's point holds. Cut the clause.
+  2024", a stray detail; the row's point holds. Cut the clause. Fixed in b3940f2.
 - **D7-6: Listed for 07-FO; Rejected R1 for 08-FO** (Minor). `07-FO:437` calls its note "the lab's product, on a
   privacy-coin hop", but the lab puts privacy coins out of scope (coinjoin-trace `INSTRUCTOR_ANSWERS.md:143`).
-  `08-FO:422` is already reworded; match it.
+  `08-FO:422` is already reworded; match it. Fixed in b3940f2.
 - **D8-8: Listed** (Minor). `09-FO-approvals_drainers_poisoning.qmd:42`'s notes say "nobody reads code today"; day 8's
   lab reads the Bybit code (`cross-chain/static/lab/index.html:120`; `11-FO:38`). Say "in this lesson".
 - **D8-9: Listed** (Minor). `09-FO:352` says the lure goes "from the victim to the look-alike"; neither `:391` nor
