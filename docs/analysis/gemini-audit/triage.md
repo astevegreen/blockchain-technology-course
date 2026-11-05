@@ -15,7 +15,7 @@ ones opened at e764798, not Gemini's; where its lines were wrong, the note says 
 | D8-1 | Confirmed | Owner (lab scenario) | Put to the owner, 4 Nov |
 | D8-2 | Confirmed | Fix | `docs/follow-ups.md`, Labs |
 | D9-1 | Confirmed | Fix | `docs/follow-ups.md`, Lessons |
-| D2-2 | Partly | Fix (notes only) | `docs/follow-ups.md`, Lessons |
+| D2-2 | Partly | Fix (notes only) | Fixed in c671b2f |
 | D1-1 | Partly, not a blocker | Nothing | Below |
 | D3-5 | Partly | Nothing | Below |
 
@@ -99,13 +99,14 @@ heaviest is D4-2.
 
 - **D1-5: Listed** (Minor). `quizes/run-sheet/RUN_SHEET.md:36-37` gives the welcome 0845-0915 and lesson ① 0915;
   `01-IN-course_welcome.qmd:33`, `:154`, `:171`, `:353` say 35 minutes and 0920, which eats the pre-lunch buffer
-  (`RUN_SHEET.md:40`). Move 01-IN to the run sheet's times.
+  (`RUN_SHEET.md:40`). Move 01-IN to the run sheet's times. Fixed in 2b46e23.
 - **D2-4: Listed** (Minor). `02-BF:260` "weight = base size × 3 + total size" never says on the slide what base
-  size is (only the notes, `:284`), and the one example is a legacy transaction (`:270-271`).
+  size is (only the notes, `:284`), and the one example is a legacy transaction (`:270-271`). Fixed in 11796c0.
 - **D2-5: Listed with D2-2** (Minor). `06-BF:63-70` uses lettered placeholder keys; the lab chain's sorted order
   (wallet `INSTRUCTOR_ANSWERS.md:95-96`) is by key bytes, so the slide should say the letters are labels, not key
-  order. Folded into the D2-2 bullet.
-- **D2-6: Listed** (Minor). `05-BF:525` "4. Spend from a 2-of-3 multi-sig"; the lab only reads a spend.
+  order. Folded into the D2-2 bullet. Fixed in c671b2f.
+- **D2-6: Listed** (Minor). `05-BF:525` "4. Spend from a 2-of-3 multi-sig"; the lab only reads a spend. Fixed in
+  9d4a283.
 - **D3-2: Listed** (Minor). `01-EF:172-178` draws Alice's 3 ETH as a second node, "Remaining: 3 ETH", in the fill of
   the Bitcoin change output (`:136-143`); the text under it (`:186`) rightly says Ethereum has no change output.
 - **D3-4: Covered by W4** (Minor). The contract at `01-EF:298-323` is glossed and framed as "to read, not write"
@@ -232,9 +233,9 @@ heaviest is D4-2.
 All 24 read against the pattern each names: 16 match. Changes:
 
 - **D1-4 → Owner.** W1 glosses lab terms; Gemini's point is that no lesson reads an Ethereum transaction before the
-  explorer lab (02-IN's worked example is Bitcoin; Otterscan appears only at `02-IN:646`, `:660`). Question 2 below.
+  explorer lab (02-IN's worked example is Bitcoin; Otterscan appears only at `02-IN:646`, `:660`). Question 2 below. Owner approved 4 Nov; fixed in 765cd58.
 - **D2-9 → Listed.** Not W4's cross-lesson gap: inside 05-BF, the hardened `'` is used at `:334` and `:407-412` and
-  defined on a slide only at `:453` (notes `:429`).
+  defined on a slide only at `:453` (notes `:429`). Fixed in 9d4a283.
 - **D5-7 → Listed.** Q16 kept the term, but `04-FO:291` and its notes (`:308`) never say what a muxed address is.
 - **D4-5, D7-1, D9-5: Covered, each with a leftover Listed.** 03-EF's role table (`:1062-1064`) still puts ERC-4337,
   `handleOps`, EntryPoint and the ERC-2771 forwarder on the slide; coinjoin-trace's hints sit apart (`:158`) from
@@ -242,8 +243,8 @@ All 24 read against the pattern each names: 16 match. Changes:
 - **Notes for the sessions that take a Covered row.** A-7: post-test p6's key still says "Observed"
   (`quizes/posttest/posttest_day10-quiz-bank.json:398`), for the C1 session. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
-  `:276` and the 08-FO synthesis `:68`, `:115`. D1-2: W2 also reaches `04-CP:244`, `:350`, `:401`. D1-8: 04-CP and
-  01-CM have 0 Asks. D5-8: week-2 Q3 should name the Tron page if it gets a self-check. D10-7 and A-10: Gemini's
+  `:276` and the 08-FO synthesis `:68`, `:115`. D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
+  01-CM have 0 Asks (fixed in f2e82dc, 3815c66). D5-8: week-2 Q3 should name the Tron page if it gets a self-check. D10-7 and A-10: Gemini's
   challenge topics (cross-chain timing, freezes, Tron sweeps) go to the owner beside week-2 Q20. D8-5: give
   Gemini's alternative (the micro-lab as the afternoon opener) beside Q14.
 

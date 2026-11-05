@@ -221,7 +221,7 @@ This slide introduces the key pair: a random private number and the public point
   2. Sign the hash with the private key and a fresh random number (the **nonce**), giving two numbers, $(r, s)$.
   3. Anyone checks $(r, s)$ against the hash and the public key. Valid or not: no one is trusted.
 - **The nonce must never repeat.** Sony signed PlayStation 3 software with the same nonce each time, and the private key was worked out from two signatures (2010).
-- **Not to be confused with** the other two nonces you meet today: an Ethereum account's nonce counts its transactions (lesson ①), and a block header's nonce is the number miners change while searching for a block (day 2).
+- **Not to be confused with** the other two nonces you meet today: an Ethereum account's nonce counts its transactions (lesson ①), and a block header's nonce is the number miners change while searching for a block (lesson ①'s block card; proof of work is day 2).
 
 ::: {.notes}
 
@@ -404,12 +404,13 @@ digraph KeyWalk {
 
   k -> K [label="× G"];
   K -> B [label="SHA-256, RIPEMD-160,\nBase58Check"];
-  K -> E [label="Keccak-256,\nlast 20 bytes"];
+  K -> E [label="Keccak-256 of x and y,\nlast 20 bytes"];
   E -> T [label="41 in front,\nBase58Check"];
   k -> S [label="sign"];
   M -> S;
   S -> V;
   K -> V [style=dashed];
+  M -> V [style=dashed];
 }
 ```
 
@@ -426,7 +427,7 @@ This slide works the lesson's three procedures once with real values: one privat
 - Public key: x = F028892BAD7ED57D2FB57BF33081D5CFCF6F9ED3D3D7F159C2E2FFF579DC341A, y = 07CF33DA18BD734C600B96A72BBC4749D5141C90EC8AC328AE52DDFE2E505BDB (y is odd, hence the 03 prefix).
 - Ethereum hashes the 64-byte x and y with Keccak-256 and keeps the last 20 bytes: 0xf4ddd38a2d2f4231e1ddf131a8f3fd80804e08fe. Tron puts 41 in front and encodes it: TYHwcdSLEBSXasK9xp6JDPieYLosL8239x.
 - The message is the avalanche slide's "Pay Alice 1 BTC"; its SHA-256 is that slide's digest, 44b8841b753dd6b72b90dfb80f64fedcb869d00d0c24dd68a8f8ad0cc96b8643. The ECDSA signature: r = 4607c5f418a9640ebbb91bc23bff24fa9bc354d8207c4216657dad396c4fa317, s = 68b92da6f2cd96e14ee7e5ac3a0a019ad3c0a23cbbc50713d0cc6582ece3a08d. It verifies against K; against the hash of "Pay Alice 2 BTC" it fails.
-- The book gives the key and the Bitcoin address. The Ethereum and Tron forms and the signature were computed for this course on 4 Nov 2026 with the derivations on the earlier slides (signature nonce chosen deterministically, as RFC 6979 describes). Another tool picks another nonce, so its $(r, s)$ differ but check just as well; the three addresses never differ.
+- The book gives the key and the Bitcoin address. The Ethereum and Tron forms and the signature were computed for this course on 4 Nov 2026 with the derivations on the earlier slides (the signature nonce chosen deterministically from the key and the message). Another tool picks another nonce, so its $(r, s)$ differ but check just as well; the three addresses never differ.
 - This key is published, so it protects nothing: a key printed in a book or tutorial is a key anyone can sign with.
 
 **Walkthrough**
