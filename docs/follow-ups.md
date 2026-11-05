@@ -40,8 +40,6 @@ slide index), which is never listed here.
   DEXs :656, Future of Forensics :761, BTC-e :1152): each `.content-hidden` block closes early (`::::` at :564, :654,
   :759, :1150), and the rendered page lists their headings. Re-hide them; the :761 title-length item then lapses.
   (4 Nov 2026, week-2 pattern audit, `docs/analysis/pattern-audit/d6.md`)
-- Speaker notes still say "memo", wording the 30 Oct direction retired: `04-CP-*.qmd:254`, `01-CM-*.qmd:456`, `:470`,
-  `:537`, `02-BF-*.qmd:230` (not 04-FO's Stellar memo). (4 Nov 2026, week-1 pattern audit)
 - Speaker notes carry build history and internal concept numbers: `05-FO-*.qmd:99` "(Course Audit: keep)",
   `01-PC-*.qmd:497` "concept 49". (4 Nov 2026, week-1 pattern audit)
 - `05-FO-*.qmd:219`'s notes say "Southeast Asian criminal groups" with no citation; source it with the `source`
@@ -54,9 +52,6 @@ slide index), which is never listed here.
   keys signed"; with sorted keys any pair signs in key order, so order rules out no pair and only matches signature to
   key once the pair is known. Also `:65`: say the letters label the keys and a sorted script orders them by key
   bytes (lab answers `wallet/quizes/INSTRUCTOR_ANSWERS.md:95-96`). (4 Nov 2026, Gemini audit D2-2, D2-5)
-- `02-BF-*.qmd:260` "weight = base size × 3 + total size" defines base size only in the notes (`:284`), and its one
-  example is legacy (`:270-271`). Say "(base size: the transaction without its witness)" and that a SegWit vsize is
-  below its byte size. (4 Nov 2026, Gemini audit D2-4, `docs/analysis/gemini-audit/triage.md`)
 - `05-BF-*.qmd:525` "4. Spend from a 2-of-3 multi-sig": the lab only reads one. Say "Read a spend from…". (4 Nov 2026, Gemini audit D2-6, `docs/analysis/gemini-audit/triage.md`)
 - `05-BF-*.qmd` uses the hardened tick at `:334` and `:407-412` but defines it on a slide only at `:453` (notes
   `:429`). Add one line on the path slide near `:405`. (4 Nov 2026, Gemini audit D2-9, `docs/analysis/gemini-audit/triage.md`)
