@@ -57,6 +57,26 @@ VM_WORKFLOW = ".github/workflows/vm-build.yml"
 # Kept out of src.zip but deliberately left on the VM: the lab services read them at run time (a known gap).
 VM_RUNTIME_KEYS = ("dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/cryptography/solution.md",
                    "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml")
+# A file name with one of these words is instructor-only until shown otherwise (CLAUDE.md rule 1).
+INSTRUCTOR_WORDS = re.compile(r"answer|solution|instructor|seed", re.IGNORECASE)
+# Never waved through by STUDENT_FACING: a name with these words is an answer key wherever it sits.
+KEY_WORDS = re.compile(r"answer|solution", re.IGNORECASE)
+# Files whose name has an INSTRUCTOR_WORDS word but which students may have, and why. `*` crosses `/`; case is
+# ignored.
+STUDENT_FACING = {
+    "dynamic-labs/*instructor*.py": "code of a lab's instructor pages or auth: the running lab, gated by its login",
+    "dynamic-labs/*instructor*.js": "code of a lab's instructor pages: the running lab, gated by its login",
+    "dynamic-labs/*instructor*.jsx": "code of a lab's instructor pages: the running lab, gated by its login",
+    "dynamic-labs/*instructor*.html": "a lab's instructor page template: the running lab, gated by its login",
+    "dynamic-labs/cryptography/Dockerfile.instructor": "builds the lab's instructor container",
+    "dynamic-labs/cryptography/instructor-nginx.conf": "configures the lab's instructor container",
+    "dynamic-labs/ethereum_lab/docker-compose.instructor-minimal.yml": "a compose file to run the lab",
+    "dynamic-labs/ethereum_lab/instructor-config.json": "a saved chain address and RPC URL, no answers",
+    "dynamic-labs/ethereum_lab/docs/plans/beacon-instructor-controls-and-mempool-plan.md":
+        "a design plan for the instructor controls, no answers",
+    "dynamic-labs/bitcoin/bitcoin-instructor-seed.sh": "seeds the class chain at container start; in the lab image",
+    "dynamic-labs/wallet/chain/seedkeys.py": "derives keys from a seed phrase, which the wallet lab teaches",
+}
 
 
 @dataclass
@@ -423,19 +443,32 @@ def matches_any(path: str, patterns: list[str], whole_folders: bool) -> bool:
     return False
 
 
+def instructor_named(rel: str) -> bool:
+    """A name that says answer, solution, instructor or seed, and is not a STUDENT_FACING file (answers and solutions
+    never are; a seed only by its own entry, not by a pattern meant for instructor code)."""
+    name = Path(rel).name
+    if not INSTRUCTOR_WORDS.search(name):
+        return False
+    if KEY_WORDS.search(name):
+        return True
+    allowed = [k.lower() for k in STUDENT_FACING if "*" not in k or "seed" not in name.lower()]
+    return not matches_any(rel.lower(), allowed, whole_folders=False)
+
+
 def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
     """Tracked files under the student trees that src.zip or the VM image still hold although they are instructor-only:
-    `*answer*` files, and anything under `dynamic-labs/` that pages.yml leaves out of src.zip (it must leave the VM too,
-    bar the named runtime keys)."""
+    files named for answers, solutions, instructors or seeds (bar STUDENT_FACING), and anything under `dynamic-labs/`
+    that pages.yml leaves out of src.zip (it must leave the VM too, bar the named runtime keys)."""
     zip_x, vm_rm = zip_exclusions(pages), vm_removals(vm)
     problems = []
     for rel in tracked:
         if not rel.startswith(STUDENT_TREES):
             continue
-        answer = "answer" in Path(rel).name.lower()
+        answer = instructor_named(rel)
         in_zip = matches_any(rel, zip_x, whole_folders=False)
         if answer and not in_zip:
-            problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}')
+            problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}, '
+                            "or, if students may have it, list it in STUDENT_FACING (tools/check.py) with why")
         instructor_only = answer or (in_zip and rel.startswith("dynamic-labs/"))
         if instructor_only and rel not in VM_RUNTIME_KEYS and not matches_any(rel, vm_rm, whole_folders=True):
             problems.append(f"{rel}: baked into the VM: add it to the rm list of {VM_WORKFLOW}")
@@ -587,7 +620,7 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     if new:
         plan.checks.append(Check("file names", lambda: file_names(new)))
 
-    if touched(".github/workflows/") or any("answer" in Path(f).name.lower() for f in files):
+    if touched(".github/workflows/") or any(INSTRUCTOR_WORDS.search(Path(f).name) for f in files):
         plan.checks.append(Check("answer files", answer_files))
 
     if touched("tools/") or touched(".claude/"):
