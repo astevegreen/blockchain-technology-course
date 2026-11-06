@@ -139,7 +139,7 @@ class Planning(unittest.TestCase):
     def test_quiz_bank_change(self) -> None:
         bank = "quizes/quiz_json/bitcoin_01-BF-bitcoin_origins_and_mechanics-quiz-bank.json"
         names, _ = self.names([bank])
-        self.assertEqual(names, ["quiz banks", "quiz bundle", "distractor alignment"])
+        self.assertEqual(names, ["quiz banks", "quiz bundle", "distractor alignment", "quiz engine tests"])
 
     def test_pretest_change_runs_the_verifiers_that_read_it(self) -> None:
         names, _ = self.names(["quizes/pretest/pretest_week2-quiz-bank.json"])
@@ -174,6 +174,74 @@ class Planning(unittest.TestCase):
 
     def test_unrelated_change_runs_nothing(self) -> None:
         self.assertEqual(self.names(["README.md"]), ([], []))
+
+
+class LabTests(unittest.TestCase):
+    def names(self, files: list[str] | None) -> list[str]:
+        return [c.name for c in check.plan_checks(files, added=[]).checks]
+
+    def test_a_lab_change_runs_the_lab_unit_tests(self) -> None:
+        for changed in ("dynamic-labs/lane-service/app.py", "dynamic-labs/lab-manager.sh",
+                        "dynamic-labs/tests/test_capacity_defaults.py",
+                        "dynamic-labs/regression-tests/unit/test_hlf_my_term.py", ".github/workflows/pages.yml"):
+            self.assertIn("lab unit tests", self.names([changed]), changed)
+
+    def test_a_quiz_engine_or_bank_change_runs_the_quiz_engine_tests(self) -> None:
+        for changed in ("dynamic-labs/quiz-engine-v2/app/grading.py", "quizes/build_quiz_bank_bundle.py",
+                        "quizes/quiz_json/bitcoin_01-BF-bitcoin_origins_and_mechanics-quiz-bank.json"):
+            self.assertIn("quiz engine tests", self.names([changed]), changed)
+        self.assertNotIn("quiz engine tests", self.names(["dynamic-labs/hlf/lab.sh"]))
+
+    def test_everything_runs_both(self) -> None:
+        names = self.names(None)
+        self.assertIn("lab unit tests", names)
+        self.assertIn("quiz engine tests", names)
+
+    def test_each_contract_test_file_runs_in_its_own_process(self) -> None:
+        # The files import different modules that share a name (instructor_auth, app), so one process can't hold them.
+        calls = []
+        with unittest.mock.patch.object(check, "run", side_effect=lambda cmd, **kw: calls.append(cmd) or (0, "OK")):
+            self.assertEqual(check.lab_unit_tests(), [])
+        files = sorted(p.name for p in (check.REPO / "dynamic-labs" / "tests").glob("test_*.py"))
+        self.assertGreater(len(files), 10)
+        run_files = [Path(c[-1]).name for c in calls if c[-1].endswith(".py")]
+        self.assertEqual(run_files, files)
+        self.assertTrue(any("discover" in c and "regression-tests/unit" in c for c in calls))
+
+    def test_a_failing_lab_test_is_named_with_its_failure(self) -> None:
+        out = "ERROR: test_x (test_capacity_defaults.T.test_x)\nTraceback...\nAssertionError: 3 != 4\nFAILED (failures=1)\n"
+        with unittest.mock.patch.object(check, "run", return_value=(1, out)):
+            lines = check.lab_unit_tests()
+        self.assertIn("dynamic-labs/tests/test_capacity_defaults.py failed (python -m unittest)", lines)
+        self.assertIn("  AssertionError: 3 != 4", lines)
+
+    def test_a_missing_package_names_the_install(self) -> None:
+        out = "ModuleNotFoundError: No module named 'flask'\n"
+        with unittest.mock.patch.object(check, "run", return_value=(1, out)):
+            lines = check.lab_unit_tests()
+        self.assertIn("fix: python -m pip install -r requirements-dev.txt", lines)
+
+    def test_quiz_engine_tests_run_against_a_freshly_built_bundle(self) -> None:
+        seen = {}
+
+        def fake_run(cmd, cwd=check.REPO, timeout=1800, env=None):
+            if "build_quiz_bank_bundle.py" in " ".join(cmd):
+                out = Path(cmd[cmd.index("--output") + 1])
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text("{}", encoding="utf-8")
+                return 0, ""
+            sample = Path(env["QUIZ_ENGINE_SAMPLE_QUIZ_DIR"])
+            seen["bundle"] = (sample / "dist" / "blockchain-course-quiz-bank-bundle.json").is_file()
+            seen["banks"] = any((sample / "quiz_json").glob("*-quiz-bank.json"))
+            seen["cmd"], seen["cwd"] = cmd, cwd
+            return 1, "FAILED tests/unit/test_grading.py::test_x - AssertionError\n1 failed, 3 passed"
+
+        with unittest.mock.patch.object(check, "run", side_effect=fake_run):
+            lines = check.quiz_engine_tests()
+        self.assertTrue(seen["bundle"] and seen["banks"])
+        self.assertEqual(seen["cmd"][1:3], ["-m", "pytest"])
+        self.assertEqual(seen["cwd"], check.REPO / "dynamic-labs" / "quiz-engine-v2")
+        self.assertIn("  FAILED tests/unit/test_grading.py::test_x - AssertionError", lines)
 
 
 PAGES_FENCED = '''

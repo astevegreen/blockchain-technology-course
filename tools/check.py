@@ -71,10 +71,10 @@ class Plan:
     info: list[str] = field(default_factory=list)
 
 
-def run(cmd: list[str], cwd: Path = REPO, timeout: int = 1800) -> tuple[int, str]:
+def run(cmd: list[str], cwd: Path = REPO, timeout: int = 1800, env: dict[str, str] | None = None) -> tuple[int, str]:
     """Run a command; return (exit code, stdout+stderr with ANSI codes stripped)."""
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=ENV, capture_output=True, timeout=timeout)
+        proc = subprocess.run(cmd, cwd=cwd, env=env or ENV, capture_output=True, timeout=timeout)
     except FileNotFoundError:
         return 127, f"{cmd[0]}: not found"
     except subprocess.TimeoutExpired:
@@ -465,6 +465,60 @@ def tool_tests() -> list[str]:
     return failures
 
 
+LABS = REPO / "dynamic-labs"
+QUIZ_ENGINE = LABS / "quiz-engine-v2"
+INSTALL_FIX = "fix: python -m pip install -r requirements-dev.txt"
+# A change under these reruns the lab unit tests: the contract tests read the labs, lab-manager.sh, the shared
+# instructor auth, and the workflows and VM build that package the labs.
+LAB_TEST_PATHS = ("dynamic-labs/", ".github/workflows/", "vm-build/")
+# The quiz engine's tests ingest the real quiz banks through the bundle builder.
+QUIZ_ENGINE_TEST_PATHS = ("dynamic-labs/quiz-engine-v2/", "quizes/quiz_json/", "quizes/build_quiz_bank_bundle.py")
+
+
+def failed_suite(head: str, out: str) -> list[str]:
+    keep = [line for line in out.splitlines()
+            if re.match(r"^(FAIL|ERROR):|^FAILED |^\w*(Error|Exception)\b|^E\s+\w*Error", line)]
+    lines = [head, *[f"  {line.strip()}" for line in (keep or tail(out))[:8]]]
+    if "ModuleNotFoundError" in out:
+        lines.append(INSTALL_FIX)
+    return lines
+
+
+def lab_unit_tests() -> list[str]:
+    """dynamic-labs/tests, one process per file (the files import different modules that share a name, such as
+    instructor_auth and app), then dynamic-labs/regression-tests/unit. Neither needs Docker."""
+    failures = []
+    # Some tests run `bash`: put Git Bash first, so Windows never reaches the WSL launcher.
+    bash = find_bash()
+    env = {**ENV, "PATH": os.pathsep.join([str(Path(bash).parent), ENV.get("PATH", "")])} if bash else ENV
+    for path in sorted((LABS / "tests").glob("test_*.py")):
+        rel = path.relative_to(LABS).as_posix()
+        code, out = run([sys.executable, "-m", "unittest", rel], cwd=LABS, timeout=600, env=env)
+        if code:
+            failures += failed_suite(f"dynamic-labs/{rel} failed (python -m unittest)", out)
+    code, out = run([sys.executable, "-m", "unittest", "discover", "-s", "regression-tests/unit"],
+                    cwd=LABS, timeout=600, env=env)
+    if code:
+        failures += failed_suite("dynamic-labs/regression-tests/unit failed (python -m unittest discover)", out)
+    return [line for i, line in enumerate(failures) if line != INSTALL_FIX or INSTALL_FIX not in failures[:i]]
+
+
+def quiz_engine_tests() -> list[str]:
+    """The quiz engine's pytest suite, against a bundle built now from quizes/quiz_json (quizes/dist/ is not
+    tracked), in a temporary folder so nothing in the repository changes."""
+    with tempfile.TemporaryDirectory(prefix="quiz-engine-tests.") as tmp:
+        sample = Path(tmp) / "quizes"
+        shutil.copytree(REPO / "quizes" / "quiz_json", sample / "quiz_json")
+        bundle = sample / "dist" / "blockchain-course-quiz-bank-bundle.json"
+        code, out = run([sys.executable, str(REPO / "quizes" / "build_quiz_bank_bundle.py"), "--output", str(bundle)])
+        if code:
+            return failed_suite("quiz bundle for the quiz engine tests failed", out)
+        env = {**ENV, "QUIZ_ENGINE_SAMPLE_QUIZ_DIR": str(sample), "PYTHONDONTWRITEBYTECODE": "1"}
+        code, out = run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+                        cwd=QUIZ_ENGINE, timeout=1200, env=env)
+    return failed_suite("dynamic-labs/quiz-engine-v2 tests failed (python -m pytest, in that folder)", out) if code else []
+
+
 # --- planning ------------------------------------------------------------------------------
 
 def is_lesson(rel: str) -> bool:
@@ -538,6 +592,10 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
 
     if touched("tools/") or touched(".claude/"):
         plan.checks.append(Check("tool tests", tool_tests))
+    if touched(LAB_TEST_PATHS):
+        plan.checks.append(Check("lab unit tests", lab_unit_tests))
+    if touched(QUIZ_ENGINE_TEST_PATHS):
+        plan.checks.append(Check("quiz engine tests", quiz_engine_tests))
 
     if not everything and touched("dynamic-labs/"):
         plan.info.append("dynamic-labs changed: this check doesn't run labs; run the lab's "
