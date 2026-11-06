@@ -1135,6 +1135,12 @@ class HLFAuthGateTests(unittest.TestCase):
         "/api/hlf/claims/resume",
     ]
 
+    def assert_router_refused(self, path, resp) -> None:
+        # The router's instructor-gated catch-all for /labs/hlf/api/hlf/* answers a missing
+        # login itself, before Flask: @hlf_api_unauth in router/routes/_auth.conf.
+        self.assertEqual(resp.status_code, 401, f"{path} returned {resp.status_code} without auth")
+        self.assertEqual(resp.json(), {"error": "instructor auth required"}, path)
+
     def test_instructor_get_endpoints_require_auth(self) -> None:
         session = new_session()
         try:
@@ -1145,10 +1151,7 @@ class HLFAuthGateTests(unittest.TestCase):
                         timeout=10,
                         allow_redirects=False,
                     )
-                    self.assertIn(
-                        resp.status_code, (302, 401, 403),
-                        f"{path} returned {resp.status_code} without auth",
-                    )
+                    self.assert_router_refused(path, resp)
         finally:
             session.close()
 
@@ -1163,10 +1166,7 @@ class HLFAuthGateTests(unittest.TestCase):
                         timeout=10,
                         allow_redirects=False,
                     )
-                    self.assertIn(
-                        resp.status_code, (302, 401, 403),
-                        f"{path} returned {resp.status_code} without auth",
-                    )
+                    self.assert_router_refused(path, resp)
         finally:
             session.close()
 
