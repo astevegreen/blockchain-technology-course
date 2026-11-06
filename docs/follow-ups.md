@@ -42,5 +42,9 @@ slide index), which is never listed here.
   bridge lab build)
 
 ## Tooling and rules
+- Dependabot pull requests (`.github/dependabot.yml`) run no tests: `check.yml` and `lab-tests.yml` run only on a
+  push to `main` or by hand, so each one needs a by-hand Lab Tests run on its branch before merging. A
+  `pull_request` trigger limited to Dependabot's branches would test them on arrival (a rail change). (6 Nov 2026,
+  toolchain upgrades)
 
 ## Notion and documents
