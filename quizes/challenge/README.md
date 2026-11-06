@@ -11,13 +11,14 @@ known false positives an analyst most often mistakes for a counterparty.
 ## How an instructor uses it
 
 - Pick the items that fit what the student just explained: a DEX trade (c1, c3, c4), a Bitcoin trace (c2, c5 to
-  c7), a mixer trace (c15), a contract read (c16), a typology call (c17), an attribution (c7, c8, c10, c11, c13, c14).
+  c7), a mixer trace (c15), a contract read (c16), a typology call (c17), a stablecoin
+  freeze (c18), a Tron deposit and its sweep (c19), an attribution (c7, c8, c10, c11, c13, c14).
 - A strong answer makes every point under **Answer points**, in any wording. There is no score.
 - A weak answer is a cue to revisit the slide it traces to.
 
 ## Files
 
-- `challenge-bank.md`: the 15 items. Each names the visible slides its answer points come from.
+- `challenge-bank.md`: the 17 items. Each names the visible slides its answer points come from.
 - `verify_challenge.py`: checks that every traced slide exists and is visible (not inside a `content-hidden`
   block). Run `python quizes/challenge/verify_challenge.py` from the repo root after editing the bank or the slides
   it cites.
@@ -41,6 +42,8 @@ known false positives an analyst most often mistakes for a counterparty.
 | c15 | Timing and a mixer | 7 | 06-FO, "User habits link deposit to withdrawal" |
 | c16 | A code read | 8 | 11-FO, "How sure: what a code read rests on" |
 | c17 | A typology call | 9 | 12-FO, "Chain-hopping: the trail changes ledgers" |
+| c18 | A stablecoin freeze | 3, 5, 9 | 14-FO, "A freeze is a source: read it narrowly" |
+| c19 | A Tron sweep | 5, 9 | 04-FO, "Name the deposit, not the sweep" |
 
 Each item's **Traces to** line lists every slide; the table shows the main one.
 
@@ -48,5 +51,5 @@ Each item's **Traces to** line lists every slide; the table shows the main one.
 
 - A cited slide is renamed or hidden: the verifier names the item. Point it at the new heading, or rewrite it
   from a visible slide.
-- Items for days 7 to 9 are added as those lessons are built; keep the bank at 15 items or fewer, replacing the
-  weakest item (c9 and c12 were retired for c15 to c17).
+- Items for days 7 to 9 are added as those lessons are built; keep the bank at 17 items or fewer (the owner raised
+  the cap from 15 for c18 and c19), replacing the weakest item (c9 and c12 were retired for c15 to c17).

@@ -169,8 +169,9 @@ scale"); a fact read straight off the chain takes none. Each question names the 
    account. (Q11, Q12, Q13.) Slides: `blockchain-course/lessons/forensics/14-FO-fusing_sources.qmd`,
    "A freeze is a source: read it narrowly"; `blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd`,
    "What a USDT freeze leaves on chain".
-3. **Which typology fits, or none?** OTC and nested services, Low to Moderate (many senders in; but
-   the outflows are the exchange's own sweeps), or "no typology fits: a plain deposit address" (swept
+3. **Which typology fits, or none?** OTC and nested services, Low (many senders in; but the outflows
+   are the exchange's own sweeps; a pattern alone is one line of evidence, and the exchange's records showing a
+   desk or nested service behind the account would raise it), or "no typology fits: a plain deposit address" (swept
    like any customer's; but OFAC lists it in a laundering network's action). Either meets with one
    indicator for and one against; a pattern alone is one line of evidence. (Q14.) Slides:
    `blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd`, "Six typologies you have

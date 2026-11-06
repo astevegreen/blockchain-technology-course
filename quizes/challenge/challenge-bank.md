@@ -161,8 +161,8 @@ case. Can you write "99.9% confident" in your assessment?
 
 **Answer points:**
 - Decompiled code alone is Moderate at best: the tool may be wrong.
-- If the transactions' logs agree that it moved the tokens, Moderate to High; verified source that matches, with the
-  logs agreeing, is High.
+- If the transactions' logs agree that it moved the tokens, still Moderate: the decompiler can misread. Verified
+  source that matches, with the logs agreeing, is High.
 - The code says what can happen; the logs say what did. A function name alone is a lead, not a kind of evidence.
 
 **Traces to:** 11-FO "How sure: what a code read rests on"
@@ -180,4 +180,37 @@ call it chain-hopping, and how sure are you?
 - Two chains are two traces joined by an inference; the typology names the pattern, not who did it or why.
 
 **Traces to:** 12-FO "Chain-hopping: the trail changes ledgers"
+
+## c18 A freeze shows the act, not the reason
+
+**Ask:** The address at the end of your trace shows an `AddedBlackList` event from the USDT contract. Is it
+sanctioned, and is the money stuck?
+
+**Answer points:**
+- The freeze is a fact read off the chain, so it takes no confidence word: write the block and the date you read it
+  ("blacklisted as of block N, read on date D"), because a later `RemovedBlackList` can undo it.
+- It shows that the issuer acted on this address on that date, not why, and not who controls the address. Quote a
+  reason only if the issuer or a government gave one, with its date; otherwise say none was given.
+- Its own sends revert, so what it holds stays, unless the issuer destroys it: `DestroyedBlackFunds` zeroes the
+  balance with no `Transfer` log. USDT checks only the sender, so it can still receive.
+- Set the freeze time against the trace's transfers: a freeze after the last send out caught nothing.
+
+**Traces to:** 14-FO "A freeze is a source: read it narrowly"; 05-EF "What a USDT freeze leaves on chain"; 01-PC "A freeze is true only as of the read"
+
+## c19 A Tron sweep ties a deposit address to the exchange, not to the customer
+
+**Ask:** On Tron, your subject sent USDT to a fresh address, which forwarded all of it within minutes to an exchange's
+hot wallet. The address held no TRX; another account paid for the forward. Whose address is it, and how sure are you?
+
+**Answer points:**
+- Most likely a deposit address at that exchange: a token deposit is forwarded in full, soon after it arrives, and
+  tokens cannot pay the fee.
+- Moderate: one strong line, and a known false positive (a shared deposit address) could apply. High needs a second,
+  independent kind of evidence, such as the exchange's own records; a label on the hot wallet is one unverified label.
+- Name the deposit address and the transaction into it: it marks one customer's account. The sweep only ties that
+  address to the exchange.
+- Note who paid for the forward, not only who sent it: the account that delegated Energy or sent TRX is a link of
+  its own.
+
+**Traces to:** 04-FO "On Ethereum, a sweep forwards the deposit"; 04-FO "Name the deposit, not the sweep"; 04-FO "Practice: characterize three patterns"; 01-PC "Tron works like Ethereum, with T-addresses"; 01-PC "Energy pays for a USDT move: who staked it?"
 

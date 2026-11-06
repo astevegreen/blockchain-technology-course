@@ -147,10 +147,12 @@ scale"); a fact read straight off the chain takes none. Each question names the 
    name, not proof" and "How sure: what a code read rests on".
 2. **Sixteen addresses sent the hub tiny amounts. Why are they not in the thief's cluster?** Each looks like
    an address the hub had paid and arrives after that payment, and the hub never pays them: address
-   poisoning, a stranger fishing. Moderate to High: the pattern on the chain and the published behavior
-   agree. Clustering them would tie strangers to the theft. (Q7.) Slides:
+   poisoning, a stranger fishing. High: two independent lines agree, the look-alike match and the
+   order (each arrives after the hub's payment to the address it mimics), as in 09-FO's poisoning row.
+   Clustering them would tie strangers to the theft. (Q7.) Slides:
    `blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd`, "Address poisoning plants a
-   look-alike in history" and "Reading a poisoning: the lure comes first".
+   look-alike in history", "Reading a poisoning: the lure comes first" and "How sure: words for a drain
+   finding".
 3. **How sure are you that Kelp's delivery was forged, and what can your note not say?** High: Ethereum
    accepted message 308 while Unichain's own counter stood at 307, two chains' records that agree. The
    note cannot say who holds the keys or what was decided off-chain; that is beyond any chain. The

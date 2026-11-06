@@ -35,8 +35,8 @@ def main() -> int:
                 errors.append(f"{current}: no single lesson file for {code}")
             elif heading not in cache[code]:
                 errors.append(f'{current}: {code} has no visible slide "{heading}"')
-    if not 10 <= items <= 15:
-        errors.append(f"{items} items; the build spec asks for 10 to 15")
+    if not 10 <= items <= 17:
+        errors.append(f"{items} items; the build spec asks for 10 to 17")
     for e in errors:
         print(e)
     return 1 if errors else 0

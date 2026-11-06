@@ -25,9 +25,10 @@ slot 3 = 2 (the fee, in percent).
    `burn`: no; the code creates tokens for the owner, the opposite of burning (11-FO, "a name, not proof").
 5. **Sentences for an agent** (11-FO, "How sure"):
    - "Function `0xa9059cbb` moves the caller's tokens and sends 2% to `0xfee…`; P2 shows 5 of 250 going there."
-     Moderate to High: decompiled code and the logs agree. Not High, because there is no verified source.
+     Moderate: decompiled code and the logs agree, but the decompiler can misread. Verified source that matches
+     would make it High.
    - "Function `0x42966c68` lets only `0xa11ce…` create new tokens for itself; P1 created 1,000,000."
-     Moderate to High, for the same reason. The looked-up name `burn` adds no confidence and should not be repeated
+     Moderate, for the same reason. The looked-up name `burn` adds no confidence and should not be repeated
      as what the function does.
    - A student who answers from the decompiled code alone, without the logs, should write Moderate at best.
 

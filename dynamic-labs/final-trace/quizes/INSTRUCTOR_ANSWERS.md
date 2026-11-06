@@ -54,8 +54,9 @@ point of the exercise.
 
 > The victims' bitcoin was gathered into one wallet, split across eight addresses and funneled back together, then
 > 2.5 BTC was sold to an OTC desk (Moderate). The desk's USDT payout most likely went to an address that
-> deposited 120,000 USDT at Northwind and parked the rest, which is still unfrozen (Low to Moderate for the
-> cross-chain link: it rests on timing and amount). The data does not show who controls any of these addresses;
+> deposited 120,000 USDT at Northwind and parked the rest, which is still unfrozen (Moderate for the
+> cross-chain link: timing, amount and a fresh address agree, all from one payout; only the desk's records would
+> raise it). The data does not show who controls any of these addresses;
 > Northwind's and the desk's records could.
 
 Correct in feedback (the explanation carries no grade): a percentage; a named person; "the chain shows who owns"; High on link 8; claiming B7 and B8 for the scam
