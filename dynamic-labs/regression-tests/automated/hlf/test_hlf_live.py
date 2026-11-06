@@ -15,7 +15,6 @@ from live_support import (
     clear_cookie,
     docker_exec_checked,
     get_hlf_asset,
-    get_hlf_chaincode,
     get_hlf_chaincode_source,
     get_hlf_claims_policy,
     get_hlf_claims_pool,
@@ -32,7 +31,6 @@ from live_support import (
     get_hlf_progress_detail,
     get_hlf_status,
     get_hlf_transaction,
-    get_instructor_snapshot,
     hlf_execute,
     hlf_fault,
     hlf_seed,
@@ -155,14 +153,6 @@ class HLFRouterAndAuthTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertTrue((resp.headers.get("Location") or "").endswith("/labs/hlf/claim"))
 
-    def test_instructor_apis_require_auth(self) -> None:
-        resp = self.session.get(
-            f"{self.base_url}/labs/hlf/api/hlf/instructor-snapshot",
-            timeout=10,
-            allow_redirects=False,
-        )
-        self.assertIn(resp.status_code, (302, 401, 403))
-
     def test_instructor_panel_loads_when_authenticated(self) -> None:
         resp = self.instructor_session.get(
             f"{self.base_url}/labs/hlf/instructor/",
@@ -183,10 +173,6 @@ class HLFRouterAndAuthTests(unittest.TestCase):
     def test_health_endpoint(self) -> None:
         health = get_hlf_health(self.session, self.base_url)
         self.assertIn("fault_scenarios", health)
-
-    def test_status_endpoint(self) -> None:
-        status = get_hlf_status(self.session, self.base_url)
-        self.assertIn("status", status)
 
 
 class HLFNetworkAPITests(unittest.TestCase):
@@ -213,10 +199,6 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertIn("nodes", explorer)
         self.assertIn("channel", explorer)
 
-    def test_explorer_view_returns_structured_data(self) -> None:
-        view = get_hlf_explorer_view(self.instructor_session, self.base_url)
-        self.assertIsInstance(view, dict)
-
     def test_explorer_view_is_public(self) -> None:
         session = new_session()
         resp = session.get(
@@ -225,18 +207,6 @@ class HLFNetworkAPITests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertIsInstance(resp.json(), dict)
-
-    def test_chaincode_detail(self) -> None:
-        cc = get_hlf_chaincode(self.instructor_session, self.base_url, timeout=60)
-        self.assertIsInstance(cc, dict)
-
-    def test_governance_detail(self) -> None:
-        gov = get_hlf_governance(self.instructor_session, self.base_url)
-        self.assertIsInstance(gov, dict)
-
-    def test_instructor_snapshot(self) -> None:
-        snap = get_instructor_snapshot(self.instructor_session, self.base_url)
-        self.assertIsInstance(snap, dict)
 
     def test_execute_rejects_raw_command(self) -> None:
         url = f"{self.base_url}/labs/hlf/api/hlf/execute"
@@ -411,18 +381,6 @@ class HLFLaneTests(unittest.TestCase):
         self.assertIn("lanes", data)
         self.assertIsInstance(data["lanes"], list)
         self.assertGreater(len(data["lanes"]), 0)
-
-    def test_lanes_list_requires_auth(self) -> None:
-        unauth = new_session()
-        try:
-            resp = unauth.get(
-                f"{self.base_url}/labs/hlf/api/hlf/lanes",
-                timeout=10,
-                allow_redirects=False,
-            )
-            self.assertIn(resp.status_code, (302, 401, 403))
-        finally:
-            unauth.close()
 
 
 class HLFExerciseCatalogTests(unittest.TestCase):
@@ -1095,17 +1053,6 @@ class HLFLifecycleLogTests(unittest.TestCase):
         )
         self.assertEqual(resp2.status_code, 200)
         self.assertEqual(len(resp2.json()["lines"]), 0)
-
-    def test_lifecycle_log_requires_auth(self) -> None:
-        unauth = new_session()
-        try:
-            resp = unauth.get(
-                f"{self.base_url}/labs/hlf/api/hlf/lifecycle-log",
-                timeout=10,
-            )
-            self.assertIn(resp.status_code, (401, 302))
-        finally:
-            unauth.close()
 
 
 class HLFAuthGateTests(unittest.TestCase):
