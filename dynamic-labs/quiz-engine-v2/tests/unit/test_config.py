@@ -58,7 +58,7 @@ def test_load_config_reads_environment_mapping():
 
 
 def test_load_config_has_no_built_in_secret_key():
-    config = load_config({"QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE": "test-header"})
+    config = load_config({"QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE": "standalone"})
 
     assert config["SECRET_KEY"] == ""
 
@@ -82,8 +82,54 @@ def test_load_config_rejects_invalid_registration_identifier_style():
         load_config({"QUIZ_ENGINE_REGISTRATION_IDENTIFIER_STYLE": "emoji"})
 
 
-@pytest.mark.parametrize("mode", ["test-header", "shared", "standalone", "disabled"])
+@pytest.mark.parametrize("mode", ["shared", "standalone", "disabled"])
 def test_load_config_accepts_supported_instructor_auth_modes(mode):
     config = load_config({"QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE": mode})
 
     assert config["INSTRUCTOR_AUTH_MODE"] == mode
+
+
+def test_load_config_accepts_test_header_only_when_testing():
+    config = load_config(
+        {"QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE": "test-header", "TESTING": "1"}
+    )
+
+    assert config["INSTRUCTOR_AUTH_MODE"] == "test-header"
+
+
+@pytest.mark.parametrize("testing", [None, "0", "false", ""])
+def test_load_config_refuses_test_header_outside_testing(testing):
+    # test-header trusts a request header, so a running app with it would give
+    # any student instructor rights.
+    env = {"QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE": "test-header"}
+    if testing is not None:
+        env["TESTING"] = testing
+
+    with pytest.raises(ValueError, match="test-header.*TESTING"):
+        load_config(env)
+
+
+def test_create_app_refuses_test_header_override_without_testing(tmp_path):
+    from app import create_app
+
+    with pytest.raises(RuntimeError, match="test-header.*TESTING"):
+        create_app(
+            {
+                "DATABASE_PATH": str(tmp_path / "quiz-engine-test.sqlite"),
+                "SECRET_KEY": "test-secret",
+                "TESTING": False,
+                "INSTRUCTOR_AUTH_MODE": "test-header",
+            }
+        )
+
+
+def test_create_app_refuses_test_header_env_without_testing(tmp_path, monkeypatch):
+    from app import create_app
+
+    monkeypatch.setenv("QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE", "test-header")
+    monkeypatch.setenv("QUIZ_ENGINE_SECRET_KEY", "secret")
+    monkeypatch.setenv("QUIZ_ENGINE_DB_PATH", str(tmp_path / "q.sqlite"))
+    monkeypatch.delenv("TESTING", raising=False)
+
+    with pytest.raises(ValueError, match="test-header.*TESTING"):
+        create_app()

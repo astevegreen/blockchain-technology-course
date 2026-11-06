@@ -95,7 +95,8 @@ console, page, or network errors in the run log.
 2. For direct app checks, the app service is attached to the
    `quiz_engine_v2_browser` Docker network at `10.2.0.10`, the browser MCP
    container is attached to the same Docker network, and
-   `QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=test-header` is acceptable.
+   `QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=test-header` with `TESTING=1` is acceptable
+   (the app refuses test-header without it).
 3. For routed full-stack checks, `lab-manager.sh start quiz-engine-v2` or
    `lab-manager.sh start all` has started router, course-site,
    instructor-auth-service, lane-service, and quiz-engine-v2; the browser MCP
