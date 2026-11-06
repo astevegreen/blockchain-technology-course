@@ -121,7 +121,7 @@ heaviest is D4-2.
   labels (`:580-582`: "Issuer's own bridge", "Liquidity and intents", "Cross-chain swap") differ, and the DEX lab
   hint (`dex/gateway/static/lab/index.html:191`) omits message-verified. No answer changes (dex
   `INSTRUCTOR_ANSWERS.md:57`). Relabelling CCTP (burn-and-mint run by the issuer) and THORChain goes through the
-  `source` skill. Lesson fixed in 16f7d41; the lab hint stays on `docs/follow-ups.md` (lab work).
+  `source` skill. Lesson fixed in 16f7d41; lab hint fixed in 874c204.
 - **D4-3: Listed** (Minor). `07-EF:466` "Where funds can leave a chain" lists a DEX pool first (`:472`, opener
   `:29`); the notes say "leave a chain or change form" (`:487`). Retitle "Where funds can be sold or leave the chain". Fixed in 49c8144.
 - **D4-6: Listed** (Minor). `08-EF:285` "a Security Council (at least 75% of it) can still block or forge a
@@ -132,7 +132,7 @@ heaviest is D4-2.
 - **D5-4: Listed** (Minor). `01-PC:226-227` rightly says the USDT owner is a multisig (`TBPxhV…`); the worksheet asks
   who signed (`tron/static/lab/index.html:138`) and the snapshot shows `TRLi4K…`, a key that called
   `confirmTransaction` on that multisig (TronGrid `gettransactionbyid`, read 4 Nov 2026). The key already says not to
-  require it (`tron/quizes/INSTRUCTOR_ANSWERS.md:73-74`); one worksheet line should say why another key signs.
+  require it (`tron/quizes/INSTRUCTOR_ANSWERS.md:73-74`); one worksheet line should say why another key signs. Fixed in 874c204.
 - **D5-6: Listed** (Minor). `05-FO-vasps_and_the_rules.qmd:120` and `:414` file CTRs with SARs as "a pattern someone
   saw"; a CTR reports cash transactions over $10,000 (31 CFR 1010.311, law.cornell.edu, read 4 Nov 2026), not a
   judgement. No bib key yet. Fixed in 5a1afb7.
@@ -154,12 +154,12 @@ heaviest is D4-2.
 
 - **D1-9: Listed** (Minor). Explorer Q3's hint (`explorer/gateway/static/lab/index.html:127-131`) never says "EOA",
   though the key expects Otterscan's `[EOA]` tag (`INSTRUCTOR_ANSWERS.md:51`). Gloss the tag in the hint and say a
-  label alone is not evidence. Not checked live.
+  label alone is not evidence. Not checked live. Fixed in 874c204.
 - **D2-8: Listed** (Minor; R5 defensible). The course chain matures coinbases after 10 blocks
   (`wallet/quizes/build-steps.sh:48`; `bitcoin/LAB1.md:87`), where `02-BF:433` teaches 100. One clause in the wallet
-  page's intro.
+  page's intro. Fixed in 874c204.
 - **D4-2: Listed** (Major). The DEX key makes block 10's approval the independent line (dex
-  `INSTRUCTOR_ANSWERS.md:29-31`, `:110`); hint 5 (`dex/gateway/static/lab/index.html:173-175`) points only at block 11.
+  `INSTRUCTOR_ANSWERS.md:29-31`, `:110`); hint 5 (`dex/gateway/static/lab/index.html:173-175`) points only at block 11. Fixed in 874c204.
 - **D6-6: Listed** (Minor). The D6 trace is graded (`docs/build-spec.md:117`, `:180-181`), but
   `bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md:12-16` has no Meets and Not yet lines, as the other graded labs do. Edit
   `answers.template.md`, then regenerate with `chain/render.py`.
@@ -262,7 +262,7 @@ All 24 read against the pattern each names: 16 match. Changes:
 4. **D1-10. RPC method names in explorer Part 2(b):** the key wants `eth_getTransactionCount` and
    `eth_sendRawTransaction` (`explorer/quizes/INSTRUCTOR_ANSWERS.md:97-98`). **Recommend asking what the wallet asked
    for (the next nonce) and what it sent (the signed transaction)**, method names not required: students read, not
-   program. *Owner, 5 Nov 2026: approved ("Yes, drop the names").*
+   program. *Owner, 5 Nov 2026: approved ("Yes, drop the names").* Fixed in 874c204.
 5. **A-9. Day 2 has no summative item:** no Role Concept covers wallets (`docs/alignment-map.md:103`). **Recommend
    adding a wallets and key custody concept** to the Notion list, with one multiple-choice post-test item (what an
    xpub links).
