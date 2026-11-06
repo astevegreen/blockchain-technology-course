@@ -129,7 +129,7 @@ run_derive_check() {
   docker run --rm \
     -v "${ROOT_DIR}:/work" \
     -w /work \
-    node:22-alpine \
+    node:24-alpine \
     node regression-tests/automated/wallet/derive_check.cjs
 }
 

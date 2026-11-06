@@ -4,7 +4,7 @@
 # ============================================
 # Stage 1: Build Frontend
 # ============================================
-FROM node:20-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -26,7 +26,7 @@ RUN npm run build
 # ============================================
 # Stage 2: Build CLI Labs
 # ============================================
-FROM node:20-alpine AS cli-builder
+FROM node:24-alpine AS cli-builder
 
 WORKDIR /app/scripts/cli-labs/standalone
 
@@ -58,7 +58,7 @@ RUN cargo install --locked --git https://github.com/Jon-Becker/heimdall-rs \
 # ============================================
 # Use Debian slim instead of Alpine: node-pty has known issues with Alpine (musl libc).
 # Debian/glibc provides reliable PTY support for the Lab Terminal in Docker.
-FROM node:20-slim
+FROM node:24-slim
 
 LABEL maintainer="Ethereum Immersive Trainer"
 LABEL description="Interactive blockchain training environment"
