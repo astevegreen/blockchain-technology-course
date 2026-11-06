@@ -31,7 +31,7 @@ independent kinds of evidence with no known failure.
 | 5 | Two of T2's outputs are never spent: B7 `bc1qkjy0…70mqqd` (0.51728877 BTC) and B8 `bc1qcr93…wasupk` (0.53880406 BTC), 1.05609283 BTC together. Loose ends: the scam's, or payments to someone else. | none | | Undetermined; a student who names them as loose ends has it right |
 | 6 | T4 (`a5eb69df…0c67c8`, block 23): M pays O (`3AGSvcPg…tRYtzx`, 2.50000000 BTC, P2SH, round); the change M2 (`bc1qlv6c…3mz27z`, 0.94680242 BTC, P2WPKH like the input, un-round) is never spent. | Change clues: type and round amount | The wallet paid an un-round amount or to a P2WPKH address. Two clues from one transaction are one kind of evidence. | Moderate |
 | 7 | T5 (`9d11b726…a4db1d`, block 24) spends O as input 3 of 6, with 5 other inputs that each received once, into one output: W, the desk's hot wallet (case file). O is a Lantern Desk deposit address: the scam sold 2.5 BTC to the OTC desk. | Co-spend (a deposit sweep), and the desk's own statement about W | CoinJoin; or the desk's statement is wrong. | Moderate: the sweep ties O to W and the desk's statement names W, two steps of one chain, not two independent lines (day 9). High needs the desk's own records for O |
-| 8 | The desk pays out on Tron. At the quoted 68,400 USDT per BTC, 2.5 BTC is 171,000.00 USDT. The payout wallet (labelled) pays 168,435.00 USDT to P (`TMsyv2Ue…Em59c3`) at 2026-11-02 04:40:20, 27 minutes after T4's block. That is 1.5% under the quote: the desk's fee, which the case file does not give. P is fresh: this payout is the first thing it receives. | Timing and amount across chains | A different customer's payout. Two decoys sit in the same data: 40,962.88 USDT 19 minutes after T4 (right time, wrong amount) and 168,217.27 USDT to Q at 2026-11-02 06:54:41 (near amount, two and a half hours later). Only the desk's records settle it. | Low or Moderate (timing, amount and a fresh address all come from one event); mark down High |
+| 8 | The desk pays out on Tron. At the quoted 68,400 USDT per BTC, 2.5 BTC is 171,000.00 USDT. The payout wallet (labelled) pays 168,435.00 USDT to P (`TMsyv2Ue…Em59c3`) at 2026-11-02 04:40:20, 27 minutes after T4's block. That is 1.5% under the quote: the desk's fee, which the case file does not give. P is fresh: this payout is the first thing it receives. | Timing and amount across chains | A different customer's payout. Two decoys sit in the same data: 40,962.88 USDT 19 minutes after T4 (right time, wrong amount) and 168,217.27 USDT to Q at 2026-11-02 06:54:41 (near amount, two and a half hours later). Only the desk's records settle it. | Low or Moderate (timing, amount and a fresh address all come from one event); say in feedback why High overstates it |
 | 9 | G (`TESDqRDk…mpabS6`) sends P TRX for fees at 2026-11-02 04:54:40. P then sends 120,000.00 USDT to X (`TBBT5WMn…gKHop2`) at 2026-11-02 05:11:16 and the rest, 48,435.00 USDT, to K (`TYGp3PE4…CCNduZ`) at 2026-11-02 05:26:02. | fact (given link 8) | | fact |
 | 10 | X gets TRX from N (`TMMS5746…4LgtXU`) at 2026-11-02 05:14:58, then sends all 120,000.00 USDT to E, Northwind's hot wallet (published list), at 2026-11-02 05:17:32. X is a Northwind deposit address. Five other addresses show the same pattern with the same fee payer N, which supports it. | Deposit address (day 9), and Northwind's published wallet list | The published list is out of date, or X is an address that happens to forward to the exchange. | Moderate: the pattern ties X to E and the list names E, one chain (day 9). Five more addresses with fee payer N support the pattern, not the label. High needs Northwind's own records for X |
 
@@ -58,13 +58,13 @@ point of the exercise.
 > cross-chain link: it rests on timing and amount). The data does not show who controls any of these addresses;
 > Northwind's and the desk's records could.
 
-Mark down: a percentage; a named person; "the chain shows who owns"; High on link 8; claiming B7 and B8 for the scam
+Correct in feedback (the explanation carries no grade): a percentage; a named person; "the chain shows who owns"; High on link 8; claiming B7 and B8 for the scam
 without a reason.
 
 ## Common mistakes
 
 - Treating link 8 as proven. Timing and amount are one event; the near-match payout to Q is the trap.
-- Following Q because its amount is closer to the gross quote. P is closer in time; both are under the quote.
+- Following Q because its amount is near the gross quote. P's amount is nearer still, and P came 27 minutes after T4's block, Q two and a half hours after.
 - Treating E's whole balance as the scam's. It is the exchange's pooled wallet.
 - Saying Tether can freeze the bitcoin, or anyone can freeze M2.
 - Reading the Bitcoin explorer's local times against Tron's UTC without converting. The saved Bitcoin pages show UTC.

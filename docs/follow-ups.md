@@ -62,12 +62,6 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:67` says students follow Q "because its amount is closer to
-  the gross quote", but `facts.json:1356-1358` puts P (168,435.00) closer to the 171,000.00 quote than Q (168,217.27).
-  Reword the mistake, and its source in `answers.template.md`. (4 Nov 2026, Gemini audit D10-2, checked against
-  `facts.json`)
-- `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:34` and `:61` say "Mark down" for the ungraded oral
-  explanation (`RUN_SHEET.md:258-261`). Say "Correct in feedback". (4 Nov 2026, Gemini audit D10-6, `docs/analysis/gemini-audit/triage.md`)
 
 ## Tooling and rules
 
