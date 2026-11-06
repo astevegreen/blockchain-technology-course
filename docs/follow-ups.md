@@ -42,5 +42,9 @@ slide index), which is never listed here.
   bridge lab build)
 
 ## Tooling and rules
+- Planned, low priority: move `dynamic-labs/ethereum_lab/frontend` (the repo's only TypeScript project, `typescript ~5.9.3`,
+  built with `tsc && vite build`) to TypeScript 7, Microsoft's native compiler, or 7.1 if it is out (beta 20 Oct 2026;
+  stable reported for late November 2026). Do it at the lab's next rebuild: it speeds up that one build and nothing
+  else, since `tools/check.py` and the site never run TypeScript. (6 Nov 2026, owner's research request)
 
 ## Notion and documents
