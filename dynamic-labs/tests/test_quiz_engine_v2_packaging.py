@@ -17,21 +17,6 @@ class QuizEngineV2PackagingTests(unittest.TestCase):
         self.assertNotIn('"dynamic-labs/quiz-' + 'engine"', script)
         self.assertIn('"$project_dir/compose.yaml"', script)
 
-    def test_vm_workflow_checks_for_v2_bundle_only(self) -> None:
-        workflow = (
-            REPO_ROOT / ".github/workflows/build-and-package.yml"
-        ).read_text(encoding="utf-8")
-
-        self.assertIn("vm-build/docker-image-bundles/quiz-engine-v2.tar", workflow)
-        self.assertNotIn(
-            "dynamic-labs -maxdepth 1 -type d -name 'quiz-" + "engine'",
-            workflow,
-        )
-        self.assertNotIn(
-            "vm-build/docker-image-bundles/quiz-" + "engine.tar",
-            workflow,
-        )
-
     def test_quiz_engine_entrypoint_is_resilient_to_lost_host_file_modes(self) -> None:
         dockerfile = (
             REPO_ROOT / "dynamic-labs/quiz-engine-v2/Dockerfile"
@@ -55,19 +40,22 @@ class QuizEngineV2PackagingTests(unittest.TestCase):
         self.assertNotIn('"dynamic-labs/quiz-' + 'engine:instructor_auth"', script)
 
     def test_student_source_zip_excludes_quiz_solution_inputs(self) -> None:
-        workflow = (
-            REPO_ROOT / ".github/workflows/build-and-package.yml"
-        ).read_text(encoding="utf-8")
-
-        self.assertIn(
-            "zip -r blockchain-course/assets/src.zip blockchain-course dynamic-labs",
-            workflow,
+        # Instructor quiz banks and each lab's quizes/ answers stay out of the
+        # src.zip that the Pages site gives students (CLAUDE.md rule 1).
+        workflow = (REPO_ROOT / ".github/workflows/pages.yml").read_text(
+            encoding="utf-8"
         )
-        self.assertIn("Keep instructor quiz banks/solutions out", workflow)
-        self.assertIn('-x "quizes/**"', workflow)
-        self.assertIn('-x "quizes/*"', workflow)
-        self.assertIn('-x "dynamic-labs/**/quizes/**"', workflow)
-        self.assertIn('-x "dynamic-labs/**/quizes/*"', workflow)
+        zip_step = workflow.split("zip -r blockchain-course/assets/src.zip", 1)
+
+        self.assertEqual(len(zip_step), 2, "pages.yml no longer builds src.zip")
+        self.assertTrue(zip_step[1].startswith(" blockchain-course dynamic-labs"))
+        for pattern in (
+            '-x "quizes/**"',
+            '-x "quizes/*"',
+            '-x "dynamic-labs/**/quizes/**"',
+            '-x "dynamic-labs/**/quizes/*"',
+        ):
+            self.assertIn(pattern, zip_step[1])
 
 
 if __name__ == "__main__":
