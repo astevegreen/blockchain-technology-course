@@ -305,14 +305,14 @@ node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1",
       fontname="Helvetica", fontsize=13, margin="0.12,0.06"];
 edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
 
-  S0     [label="Slot 0\n(epoch start)", fillcolor="#dcfce7", color="#22c55e"];
-  Slots1 [label="Slot 1, 2, …\nN-1", shape=ellipse, style="filled"];
-  CP1    [label="Checkpoint\n(Epoch 1 start)", fillcolor="#fef3c7", color="#f59e0b"];
-  Slots2 [label="Slot N+1, …\nN+M-1", shape=ellipse, style="filled"];
-  CP2    [label="Checkpoint\n(Epoch 2 start)", fillcolor="#fef3c7", color="#f59e0b"];
+  S0     [label="Checkpoint\nEpoch N, slot 1", fillcolor="#fef3c7", color="#f59e0b"];
+  Slots1 [label="Rest of\nepoch N", shape=ellipse, style="filled"];
+  CP1    [label="Checkpoint\nEpoch N+1, slot 1", fillcolor="#fef3c7", color="#f59e0b"];
+  Slots2 [label="Rest of\nepoch N+1", shape=ellipse, style="filled"];
+  CP2    [label="Checkpoint\nEpoch N+2, slot 1", fillcolor="#fef3c7", color="#f59e0b"];
 
-  S0 -> Slots1 -> CP1 [label=" epoch N slots"];
-  CP1 -> Slots2 -> CP2 [label=" epoch N+1 slots"];
+  S0 -> Slots1 -> CP1;
+  CP1 -> Slots2 -> CP2;
 }
 ```
 
@@ -405,8 +405,8 @@ None
 **Finalization** makes history irreversible:
 
 - **Rule** — when two consecutive checkpoints are both justified, the **earlier one is finalized**
-- **Example:** if Checkpoint N and Checkpoint N+1 are both justified, then Checkpoint N-1 (and all its descendants) is finalized
-- **Irreversibility** — reversing a finalized block would require a 2/3+ supermajority to sign conflicting justifications, which is provable slashing
+- **Example:** Checkpoints N and N+1 both justified → N and every block before it are finalized [@ethereumorg_pos_2026] (as of 23 Oct 2026)
+- **Irreversibility** — reversing it takes provable, slashable conflicting votes (cost below)
 
 :::
 ::: {.column width="55%"}
@@ -425,18 +425,18 @@ edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
   CPN  [label="Checkpoint\nN", fillcolor="#fef3c7", color="#f59e0b"];
   CPN1_next [label="Checkpoint\nN+1", fillcolor="#fef3c7", color="#f59e0b"];
 
-  Link1 [label="Justified\nLink", fillcolor="#dcfce7", color="#22c55e"];
-  Link2 [label="Justified\nLink", fillcolor="#dcfce7", color="#22c55e"];
+  Link1 [label="Supermajority link\nN-1 → N\n(N justified)", fillcolor="#dcfce7", color="#22c55e"];
+  Link2 [label="Supermajority link\nN → N+1\n(N+1 justified)", fillcolor="#dcfce7", color="#22c55e"];
 
-  Finalized [label="FINALIZED\nCheckpoint N-1", fillcolor="#b45309", color="#b45309", fontcolor="#ffffff"];
+  Finalized [label="FINALIZED\nCheckpoint N", fillcolor="#b45309", color="#b45309", fontcolor="#ffffff"];
 
-  CPN1 -> Link1 [label="Cp N-1"];
-  CPN -> Link1 [label="Cp N"];
-  CPN -> Link2 [label="Cp N"];
-  CPN1_next -> Link2 [label="Cp N+1"];
+  CPN1 -> Link1;
+  CPN -> Link1;
+  CPN -> Link2;
+  CPN1_next -> Link2;
 
-  Link1 -> Link2 [label="2 consecutive\njustified links"];
-  Link2 -> Finalized [label="→ Finalize\nCp N-1"];
+  Link1 -> Link2 [label="2 consecutive\njustified checkpoints"];
+  Link2 -> Finalized [label="→ Finalize\nCp N"];
   {rank=same; Link1; Link2;}
 }
 ```
@@ -463,6 +463,7 @@ None
 
 **Sources**
 - @ethereumdevelopers_proofofstakepos_2025
+- @ethereumorg_pos_2026
 - @namoo908_ethereumbeaconchain_2025
 
 :::

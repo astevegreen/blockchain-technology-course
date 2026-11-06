@@ -20,21 +20,6 @@ slide index), which is never listed here.
   sections, not the ten days. Link it from the navbar once it is organized by day; relabel its "02-BF: Transactions &
   Mining" and "02-FO: Obfuscation & Tracing" cards (about lines 2523 and 2690) to the lessons' 4 Nov titles then. (2 Nov
   2026, site cleanup)
-- `lessons/conclusion/04-AS-final_technical_review.qmd` (scheduled) links six headings (lines 1147, 1233, 1817, 1847,
-  1911, 1938) to 02-BF and 02-FO slides that are now inside `.content-hidden`. Point them at the scheduled slides or
-  drop them. (4 Nov 2026, lesson retitle review)
-- `lessons/consensus_primitives/03-CM-pos.qmd:408` and its Finalization diagram say Checkpoint N-1 is finalized when
-  N and N+1 are justified; Casper FFG (and 01-CM's checkpoint slide) finalize the older checkpoint of the justified
-  pair, N. Check against a source and fix slide text and diagram together. (3 Nov 2026, diagram refresh)
-- `lessons/consensus_primitives/02-CM-pow_and_security.qmd:327` PoW_Trials note says "target / 2^p"; the slide text
-  above it (line 300) says target / 2^b. (3 Nov 2026, diagram refresh)
-- `lessons/consensus_primitives/03-CM-pos.qmd:310-314` EpochStructure labels are muddled: "Checkpoint (Epoch 1
-  start)" follows "epoch N slots", and slot N+1 follows the checkpoint at slot N. (3 Nov 2026, diagram refresh)
-- `lessons/consensus_primitives/02-CM-pow_and_security.qmd:728` Fork diagram labels the N+1' → N+2' edge "same
-  height", which reads as if the two blocks share a height. (3 Nov 2026, diagram refresh)
-- A slide heading is too long for the header bar at 1280x800: "Three Patterns: DAOs, Membership NFTs, and Social
-  Tokens" (`lessons/ethereum/06-EF-*.qmd:390`) wraps to two lines. Shorten it to about 48 characters, and update the
-  mind-map anchors if the slide id changes. (3 Nov 2026, diagram restyle)
 
 ## Quizzes
 - Add "Wallets and key custody" (Order 50 here; renumber to the list's own) to the Notion "Role Concepts" list: the post-test
