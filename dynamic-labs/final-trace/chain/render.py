@@ -48,11 +48,11 @@ def fill(text, facts):
 
 def main(lab):
     lab = Path(lab)
-    facts = derive(json.loads((lab / "quizes" / "facts.json").read_text()))
+    facts = derive(json.loads((lab / "quizes" / "facts.json").read_text(encoding="utf-8")))
     jobs = [(lab / "chain" / "lab.template.html", lab / "static" / "lab" / "index.html"),
             (lab / "quizes" / "answers.template.md", lab / "quizes" / "INSTRUCTOR_ANSWERS.md")]
     for src, dst in jobs:
-        dst.write_text(fill(src.read_text(), facts), newline="\n")
+        dst.write_text(fill(src.read_text(encoding="utf-8"), facts), encoding="utf-8", newline="\n")
         print(f"wrote {dst.relative_to(lab)}")
 
 

@@ -47,9 +47,6 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- `dynamic-labs/final-trace/chain/render.py:56` reads and writes the templates with the platform's default
-  encoding, so on Windows it turns every "…" into mojibake unless run with `PYTHONUTF8=1`; pass
-  `encoding="utf-8"` to `read_text` and `write_text`. (6 Nov 2026, week-2 confidence-word rewrite)
 
 ## Tooling and rules
 
