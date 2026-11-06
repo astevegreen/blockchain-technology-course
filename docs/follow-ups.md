@@ -42,5 +42,17 @@ slide index), which is never listed here.
   bridge lab build)
 
 ## Tooling and rules
+- Planned, low priority: move `dynamic-labs/ethereum_lab/frontend` (the repo's only TypeScript project, `typescript ~5.9.3`,
+  built with `tsc && vite build`) to TypeScript 7, Microsoft's native compiler, or 7.1 if it is out (beta 20 Oct 2026;
+  stable reported for late November 2026). Do it at the lab's next rebuild: it speeds up that one build and nothing
+  else, since `tools/check.py` and the site never run TypeScript. (6 Nov 2026, owner's research request)
+- Before the later course runs: rebuild the student VM on Ubuntu 24.04 (`vm-build/ubuntu-lab.pkr.hcl:17,22` still
+  name the 22.04 "jammy" cloud image; its standard support ends in mid-2027, while 24.04 is supported to 2029). In the
+  same pass, move the lab images on Debian 12 "bookworm" (regular support ended 12 Jul 2026) and `python:3.11-slim`
+  to Debian 13 "trixie" and Python 3.12 or later, and pin the Debian codename in each tag (`python:3.12-slim-trixie`)
+  so a base image never changes underneath a lab; 27 Dockerfiles under `dynamic-labs/` use them. Pin Packer
+  and its QEMU plugin (`~> 1.0` today), and check whether the Fabric lab needs the `fabric-kafka` or
+  `fabric-zookeeper` images, which Fabric stopped publishing at 2.5.15. Every lab's regression test reruns. (6 Nov
+  2026, owner's research request)
 
 ## Notion and documents
