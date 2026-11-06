@@ -143,6 +143,47 @@ def test_written_grading_rejects_points_above_possible(app):
             grade_written_answer(answer["id"], 2)
 
 
+@pytest.mark.parametrize(
+    "points",
+    ["nan", float("nan"), "inf", float("inf"), "-inf", -0.01, "-1", "", None, "one"],
+)
+def test_written_grading_rejects_points_that_are_not_a_finite_non_negative_number(
+    app, points
+):
+    with app.app_context():
+        ingest_json(json.dumps(_bank()), actor_sub="teacher")
+        version = _published_version(["written"])
+        student = _student()
+        _attempt, answer = _submit_written_attempt(version, student)
+
+        with pytest.raises(GradingError):
+            grade_written_answer(answer["id"], points)
+        stored = get_db().execute(
+            "SELECT points_awarded, graded_at FROM attempt_answers WHERE id = ?",
+            (answer["id"],),
+        ).fetchone()
+
+    assert stored["points_awarded"] is None
+    assert stored["graded_at"] is None
+
+
+def test_written_grading_accepts_exactly_points_possible_and_rejects_just_above(app):
+    with app.app_context():
+        ingest_json(json.dumps(_bank()), actor_sub="teacher")
+        version = _published_version(["written"])
+        student = _student()
+        _attempt, answer = _submit_written_attempt(version, student)
+        possible = float(answer["points_possible"])
+
+        with pytest.raises(GradingError, match="exceeds"):
+            grade_written_answer(answer["id"], possible + 0.001)
+        graded = grade_written_answer(answer["id"], possible, actor_sub="teacher")
+
+    assert graded["answer"]["points_awarded"] == possible
+    assert graded["attempt"]["status"] == "graded"
+    assert graded["attempt"]["score"] == possible
+
+
 def test_expired_written_grading_preserves_expired_status(app):
     with app.app_context():
         ingest_json(json.dumps(_bank()), actor_sub="teacher")
