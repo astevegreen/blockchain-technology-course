@@ -65,8 +65,6 @@ slide index), which is never listed here.
 
 ## Tooling and rules
 
-- `lessons/introduction/02-IN-*.qmd:15` (and 03-IN, 05-IN) declare `slide-level: 3` with only `##` headings, which
-  renders content slides centred, against the theme's `center: false`. Set 2 and check in a browser. (4 Nov 2026, Gemini audit D1-7, `docs/analysis/gemini-audit/triage.md`)
 - `tools/pointer_check.py` exits 0 on today's tree (5 Nov 2026) but is not yet in `tools/check.py`. Add it to
   `plan_checks` as a failing check whenever a lesson changes; its "note:" lines stay advice. That change is a rail:
   run `second-look.mjs` and follow the rail audit. (4 Nov 2026, week-1 audit W2 pointer check)

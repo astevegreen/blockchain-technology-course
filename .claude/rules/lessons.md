@@ -4,7 +4,7 @@ paths:
 ---
 # Lesson rules
 - Front matter: copy a sibling lesson's. It sets `title`, `lesson`, `bibliography: ../references/Blockchain.bib` and
-  `format: aci-revealjs` (`slide-level: 2`; 02-IN, 03-IN and 05-IN use 3).
+  `format: aci-revealjs` (`slide-level: 2`; 03-IN uses 3 for its `###` sub-slides).
 - Each substantive slide ends with a `::: {.notes}` block in four parts: `**Overall Slide Concept**`,
   `**Key Points**`, `**Walkthrough**` (`None` when there is nothing to walk through) and `**Sources**` (`- @key` lines).
 - Cite with `@key` from `../references/Blockchain.bib`; `python tools/qmd_lint.py <file>` flags unknown keys.
