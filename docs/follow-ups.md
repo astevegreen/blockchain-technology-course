@@ -76,13 +76,6 @@ slide index), which is never listed here.
 - `dynamic-labs/cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory site; a
   class without internet cannot answer Q1 and Q3. Give the lookups on the page or in the fallback. (4 Nov 2026,
   Gemini audit D8-2)
-- Wallet Q11 now asks for "one sentence that states what the witness shows" (owner, audit Q17), and the dex and
-  Tron day-5 labs match it, and so does bitcoin-trace, but `coinjoin-trace/.../index.html:114` still asks
-  for a sentence "an agent could read". Match it. (4 Nov 2026,
-  week-1 audit decisions)
-- coinjoin-trace's key: the rubric's "both places the trace stops" (`INSTRUCTOR_ANSWERS.md:18`) omits J1 and J2,
-  which the model and Q4 mark (`:60`, `:75`); model step 8 (`:82`) omits Q11's Moderate for the service (`:63`); and
-  the page's hints (`index.html:158`) sit apart from their questions (`:73-101`). (4 Nov 2026, Gemini audit D7-4, D7-5, D7-1, `docs/analysis/gemini-audit/triage.md`)
 - `dynamic-labs/cross-chain/quizes/INSTRUCTOR_ANSWERS.md:29-30` credits the rsETH-to-ETH step as "the chain does not
   show"; it is a snapshot gap (worksheet `index.html:226`; key `:103`). Split the two. (4 Nov 2026, Gemini audit D8-3, `docs/analysis/gemini-audit/triage.md`)
 - `dynamic-labs/tron/queries/d9.sql:20` drops `as_of` from the labels column that the worked example and key Q1 say

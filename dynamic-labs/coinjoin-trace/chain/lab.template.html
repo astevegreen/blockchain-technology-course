@@ -29,7 +29,7 @@ every question has the same answer there.</p>
 <li>You may always do the worked example first. It shows you a CoinJoin in the explorer and one finished
 row of a note.</li>
 <li>Then the questions: part 1 (questions 1 to 4), part 2 (questions 5 to 8) and part 3 (questions 9
-to 12).</li>
+to 13). Each question has a hint under it that says where to look.</li>
 <li>The challenge at the end is optional.</li>
 </ul>
 
@@ -49,7 +49,7 @@ other fields.</li>
 <li>Use a window at least 800 pixels wide. A narrower one shows a different, mobile page.</li>
 </ul>
 
-<h2>The questions you answer</h2>
+<h2>How you answer</h2>
 <p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments
 about what the facts mean. Give each judgment a confidence word <a href="#s2">[2]</a>:</p>
 <table>
@@ -64,55 +64,11 @@ tag.</td></tr>
 transaction. Never give a percentage. "Undetermined" is an answer.</p>
 
 <p>Your note has this shape: one row per step, from the ransom address to each place the trace stops. The
-worked example shows a finished row.</p>
+worked example below shows a finished row.</p>
 <table class="grid">
 <tr><th>Step</th><th>What you see</th><th>The trace</th><th>Still shows</th><th>Confidence</th></tr>
 <tr><td>1</td><td></td><td>Continues, Stops, Resumes or Lead only</td><td></td><td></td></tr>
 </table>
-
-<h3>Part 1: into the mix</h3>
-<p>The victim paid {{tx.v1.by.R1.btc}} BTC to the ransom address <code>{{addr.R1}}</code> in block
-{{tx.v1.height}}. Call the transaction that spends that payment <b>T1</b>.</p>
-<ol>
-<li>Which block is T1 in, and what are its outputs? Which outputs look alike, and which one does not?</li>
-<li>Why would the ransom's owner make outputs of exactly that size? Write T1 as the first row of your
-note. What could make your reading wrong?</li>
-<li>Follow two of T1's look-alike outputs into the transaction that spends them; call it <b>J1</b>. Follow
-the other two into <b>J2</b>. What makes J1 and J2 CoinJoins? What does that do to the co-spend rule
-for their inputs?</li>
-<li>How many outputs could each ransom coin have become in J1 (the anonymity set)? How many of J1's
-outputs belong to the ransom's owner, and can you say which? Answer the same for J2, then write J1 and
-J2 as rows.</li>
-</ol>
-
-<h3>Part 2: what leaks</h3>
-<ol start="5">
-<li>T1's odd output is the toxic change. Find the transaction that spends it; call it <b>M1</b>. What
-does M1 spend with it? What does that tell you about J1 and J2? Write the row: what could make it
-wrong, and your confidence.</li>
-<li>Go back to the ransom address's page. What else has happened there since T1? Which CoinJoin output
-does it tie to the ransom, and by what habit? Write the row with a confidence.</li>
-<li>The ransom's owner put two coins into J1. You have tied one J1 output to them. What can you say
-about the second?</li>
-<li>The leaks in questions 5 and 6 were planted in this lab. For each, which habit of a CoinJoin wallet
-would have prevented it?</li>
-</ol>
-
-<h3>Part 3: where it goes dark</h3>
-<ol start="9">
-<li>One of M1's outputs goes into another CoinJoin; call it <b>J3</b>. How many inputs and outputs does
-it have, and at what amount? Write the row. Does anything in J3 itself pick out the ransom's output?</li>
-<li>Look at when J3's outputs are spent. A colleague points at the one that moved last and says "that's
-the ransom". What do you say, and how sure are you? Write it as a row.</li>
-<li>The coin that came back to the ransom address moves on. Follow it until it is spent with other
-people's coins. A shared label list (invented and unverified) tags
-<code>{{addr.PW}}</code> as a mixer. What does the chain show about this address, and what does
-the label add? The mixer later pays out a batch. Which withdrawals fit the coin that went in, and can
-you pick one? Write the rows.</li>
-<li>Write your limits-of-tracing note: one row per step from the ransom address to each place the trace
-stops, with what still shows after each stop and a confidence for each lead. Then one or two sentences
-an agent could read: where the trace stops, why, and what is still worth asking about.</li>
-</ol>
 
 <h2>Worked example: a CoinJoin with nothing of the ransom in it</h2>
 <p>This is an earlier round in the same pool, before the ransom was paid. It shows you what a CoinJoin
@@ -155,39 +111,90 @@ undetermined. The inputs are not one owner.</td><td>—</td></tr>
 owner. The leads you find after a stop each get their own confidence. Questions 3 and 4 ask the same of
 J1 and J2.</p>
 
-<h2>The problem</h2>
-<p>Answer the questions above. These hints say where to look.</p>
+<h2>The questions</h2>
+
+<h3>Part 1: into the mix</h3>
+<p>The victim paid {{tx.v1.by.R1.btc}} BTC to the ransom address <code>{{addr.R1}}</code> in block
+{{tx.v1.height}}. Call the transaction that spends that payment <b>T1</b>.</p>
 <ol>
-<li><b>Outputs.</b> On the ransom address's page, the transaction that lists the address as an input is
-the one that spends it. Compare the outputs' amounts with the pool sizes in the worked example.</li>
-<li><b>Pre-mix.</b> Whirlpool first splits a coin into pool-sized outputs in one transaction, before any
-round <a href="#s4">[4]</a>. That transaction spends from the address you were tracing. The split is a
-behavior: ask what else it could be, then what the next transaction (question 3) adds.</li>
-<li><b>A CoinJoin.</b> Compare the inputs' sources and the outputs' amounts with the worked example. A
-CoinJoin is the known false positive of the co-spend rule <a href="#s5">[5]</a>.</li>
-<li><b>Anonymity set.</b> The set is the equal outputs a coin could have become. The larger the set, the
-weaker any guess <a href="#s6">[6]</a>.</li>
-<li><b>After the mix.</b> Outputs spent together after the mix are co-spent like any other inputs
-<a href="#s6">[6]</a>. Check that the spending transaction is not itself a CoinJoin: look at its
-outputs.</li>
-<li><b>Reuse.</b> Paying a mixed coin to an address already seen "directly reveals ownership by the same
-entity"; CoinJoin wallets avoid it <a href="#s4">[4]</a>.</li>
-<li><b>The second coin.</b> Check every J1 output: where it went next, and whether anything ties it to
-the ransom. If nothing does, the answer is "undetermined".</li>
-<li><b>Careful wallets.</b> Each leak is a user's habit, not a flaw in the CoinJoin
-<a href="#s4">[4]</a> <a href="#s6">[6]</a>. Ask what the user did with coins from different places.</li>
-<li><b>A bigger round.</b> Count the inputs and outputs, and compare the amounts with the earlier rounds.
-Then check whether any leak from part 2 touches J3's outputs.</li>
-<li><b>Timing.</b> Knowing how long a wallet stays in the mix can raise the odds that the outputs leaving
-at the end are its own <a href="#s4">[4]</a>. Timing alone is behavior: the confidence scale says how
-far it goes.</li>
-<li><b>A mixer.</b> A mixer accepts coins and sends coins on "in a manner designed to prevent others from
-tracing" them <a href="#s7">[7]</a>: the coins out are not the coins in. Look at how the address you
-followed is spent, and with what. Matching amounts and timing are the habits that can pair a deposit with
-a withdrawal, each Low alone <a href="#s8">[8]</a>. A label is one unverified source.</li>
-<li><b>The note.</b> End each branch at its stop, or at the first service. List each lead with what it
-is and its confidence. Bottom line first, in plain English, with a confidence word; say plainly what the
-chain does not show.</li>
+<li>Which block is T1 in, and what are its outputs? Which outputs look alike, and which one does not?
+<p class="hint"><b>Outputs.</b> On the ransom address's page, the transaction that lists the address as
+an input is the one that spends it. Compare the outputs' amounts with the pool sizes in the worked
+example.</p></li>
+<li>Why would the ransom's owner make outputs of exactly that size? Write T1 as the first row of your
+note. What could make your reading wrong?
+<p class="hint"><b>Pre-mix.</b> Whirlpool first splits a coin into pool-sized outputs in one
+transaction, before any round <a href="#s4">[4]</a>. That transaction spends from the address you were
+tracing. The split is a behavior: ask what else it could be, then what the next transaction (question 3)
+adds.</p></li>
+<li>Follow two of T1's look-alike outputs into the transaction that spends them; call it <b>J1</b>. Follow
+the other two into <b>J2</b>. What makes J1 and J2 CoinJoins? What does that do to the co-spend rule
+for their inputs?
+<p class="hint"><b>A CoinJoin.</b> Compare the inputs' sources and the outputs' amounts with the worked
+example. A CoinJoin is the known false positive of the co-spend rule <a href="#s5">[5]</a>.</p></li>
+<li>How many outputs could each ransom coin have become in J1 (the anonymity set)? How many of J1's
+outputs belong to the ransom's owner, and can you say which? Answer the same for J2, then write J1 and
+J2 as rows.
+<p class="hint"><b>Anonymity set.</b> The set is the equal outputs a coin could have become. The larger
+the set, the weaker any guess <a href="#s6">[6]</a>.</p></li>
+</ol>
+
+<h3>Part 2: what leaks</h3>
+<ol start="5">
+<li>T1's odd output is the toxic change. Find the transaction that spends it; call it <b>M1</b>. What
+does M1 spend with it? What does that tell you about J1 and J2? Write the row: what could make it
+wrong, and your confidence.
+<p class="hint"><b>After the mix.</b> Outputs spent together after the mix are co-spent like any other
+inputs <a href="#s6">[6]</a>. Check that the spending transaction is not itself a CoinJoin: look at its
+outputs.</p></li>
+<li>Go back to the ransom address's page. What else has happened there since T1? Which CoinJoin output
+does it tie to the ransom, and by what habit? Write the row with a confidence.
+<p class="hint"><b>Reuse.</b> Paying a mixed coin to an address already seen "directly reveals
+ownership by the same entity"; CoinJoin wallets avoid it <a href="#s4">[4]</a>.</p></li>
+<li>The ransom's owner put two coins into J1. You have tied one J1 output to them. What can you say
+about the second?
+<p class="hint"><b>The second coin.</b> Check every J1 output: where it went next, and whether anything
+ties it to the ransom. If nothing does, the answer is "undetermined".</p></li>
+<li>The leaks in questions 5 and 6 were planted in this lab. For each, which habit of a CoinJoin wallet
+would have prevented it?
+<p class="hint"><b>Careful wallets.</b> Each leak is a user's habit, not a flaw in the CoinJoin
+<a href="#s4">[4]</a> <a href="#s6">[6]</a>. Ask what the user did with coins from different
+places.</p></li>
+</ol>
+
+<h3>Part 3: where it goes dark</h3>
+<ol start="9">
+<li>One of M1's outputs goes into another CoinJoin; call it <b>J3</b>. How many inputs and outputs does
+it have, and at what amount? Write the row. Does anything in J3 itself pick out the ransom's output?
+<p class="hint"><b>A bigger round.</b> Count the inputs and outputs, and compare the amounts with the
+earlier rounds. Then check whether any leak from part 2 touches J3's outputs.</p></li>
+<li>Look at when J3's outputs are spent. A colleague points at the one that moved last and says "that's
+the ransom". What do you say, and how sure are you? Write it as a row.
+<p class="hint"><b>Timing.</b> Knowing how long a wallet stays in the mix can raise the odds that the
+outputs leaving at the end are its own <a href="#s4">[4]</a>. Timing alone is behavior: the confidence
+scale says how far it goes.</p></li>
+<li>The coin that came back to the ransom address moves on. Follow it until it is spent with other
+people's coins. A shared label list (invented and unverified) tags
+<code>{{addr.PW}}</code> as a mixer. What does the chain show about this address, and what does
+the label add? The mixer later pays out a batch. Which withdrawals fit the coin that went in, and can
+you pick one? Write the rows.
+<p class="hint"><b>A mixer.</b> A mixer accepts coins and sends coins on "in a manner designed to
+prevent others from tracing" them <a href="#s7">[7]</a>: the coins out are not the coins in. Look at how
+the address you followed is spent, and with what. Matching amounts and timing are the habits that can
+pair a deposit with a withdrawal, each Low alone <a href="#s8">[8]</a>. A label is one unverified
+source.</p></li>
+<li>Now work the other way. Take either withdrawal that fits the deposit and walk it backward: open the
+transaction that paid it, then the transaction that paid that one's input, until you reach the
+deposits. Where does the walk end? Does it pick out which deposit paid the withdrawal? Write the row.
+<p class="hint"><b>Backward.</b> On a transaction's page, each input shows the transaction it came from:
+follow the inputs back one step at a time. Then try the same walk from a withdrawal that does not fit,
+and compare where the two walks end.</p></li>
+<li>Write your limits-of-tracing note: one row per step from the ransom address to each place the trace
+stops, with what still shows after each stop and a confidence for each lead. Then write one sentence
+that states what your note shows: where the trace stops, why, and what is still worth asking about.
+<p class="hint"><b>The note.</b> End each branch at its stop, or at the first service. List each lead
+with what it is and its confidence. Bottom line first, in plain English, with a confidence word; say
+plainly what the chain does not show.</p></li>
 </ol>
 
 <h2>Challenge</h2>

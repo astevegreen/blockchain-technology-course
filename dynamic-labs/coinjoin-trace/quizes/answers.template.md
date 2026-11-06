@@ -10,13 +10,14 @@ and block below is read from the same facts the worksheet and the tests use.
 
 ## What the lab grades
 
-The graded point is the **limits-of-tracing note** (question 12): where the trace stops, why, what still shows and
+The graded point is the **limits-of-tracing note** (question 13): where the trace stops, why, what still shows and
 how sure (lesson 06-FO, day 7 ①). It is Meets or Not yet.
 
 **Meets** when the note does all four:
 
-1. Names both places the trace stops, each with its reason: **J3** (an 8x8 CoinJoin: the ransom's coin is one of
-   eight equal outputs) and **the mixer** (the coin is swept into a pool and other coins come out).
+1. Names every place the trace stops, each with its reason: **J1 and J2** (5x5 CoinJoins, which the leaks in M1
+   and M2 get past), **J3** (an 8x8 CoinJoin: the ransom's coin is one of eight equal outputs) and **the mixer** (the
+   coin is swept into a pool and other coins come out).
 2. Lists what still shows after each stop, each with a confidence: the late mover L after J3 (timing, Low), the two
    withdrawals that fit the deposit (matching amount, Low, and no way to pick one), and the mixer label (one
    unverified label, Low).
@@ -24,7 +25,7 @@ how sure (lesson 06-FO, day 7 ①). It is Meets or Not yet.
 4. Has no High anywhere and no percentage.
 
 **Not yet** when the note follows the coin through J3 or the mixer as if the trace continued, names the late mover or
-a withdrawal as the ransom's as a finding, gives High to any link, or gives a percentage. Questions 1 to 11 are
+a withdrawal as the ransom's as a finding, gives High to any link, or gives a percentage. Questions 1 to 12 are
 feedback, not graded; there a different confidence with a reason the scale supports is right. In the graded note the
 fixed words in Meets 2 win: timing alone, a matching amount alone and one unverified label are Low, because the
 scale caps them there, so a note that raises any of them is Not yet, with whatever reason it gives.
@@ -67,9 +68,10 @@ reaches it. A CoinJoin stop takes no confidence word: it is the transaction's sh
 | 9 | J3 is `{{tx.j3.txid|short}}` (block {{tx.j3.height}}): {{tx.j3.n_in}} inputs of {{tx.j3.in.0.btc}} BTC, {{tx.j3.n_out}} outputs of {{tx.j3.out.0.btc}} BTC, an 8x8 round in the same pool. Q (from M1) is one input. Row: *J3: Stops: CoinJoin, set of 8; one of eight outputs is the ransom's, which one undetermined.* Nothing in J3 picks it out, and no part-2 leak touches its outputs. | | — |
 | 10 | {{calc.crowd_gap}} block after J3, five outputs move one by one to new addresses; {{calc.j3_unspent}} stay unspent; one, `{{addr.S}}`, moves {{calc.late_gap}} blocks after J3 to `{{addr.L}}`. The colleague's reading is timing alone: a lead, not a finding. Row: *L, J3's last mover: Lead only; timing; Low.* (The build did make it the ransom's; grade the Low, not the guess.) | A careful user waits, remixes, or is offline; any of the eight could move last. | Low |
 | 11 | R1's second coin is spent in DEP `{{tx.dep.txid|short}}` (block {{tx.dep.height}}) to `{{addr.MX}}` ({{tx.dep.by.MX.btc}} BTC). MX is input {{calc.mx_position}} of {{calc.deposits}} in SWEEP `{{tx.sweep.txid|short}}` (block {{tx.sweep.height}}), which pays one output, {{calc.pool_btc}} BTC, to PW `{{addr.PW}}`. The other inputs each received once, in a payment of its own, and sat until the sweep: a service sweeping its deposit addresses (co-spend, Moderate). The label adds that the service is a mixer: one unverified label, Low. PAYOUT `{{tx.payout.txid|short}}` (block {{tx.payout.height}}) pays {{calc.withdrawals}} withdrawals. Two fit the deposit: `{{addr.W}}` ({{tx.payout.by.W.btc}} BTC, {{calc.w_less}}% less) and `{{addr.W2}}` ({{tx.payout.by.W2.btc}} BTC, {{calc.w2_less}}% less). Neither can be picked: each is a matching-amount lead, Low. Rows: *DEP and SWEEP: Stops: first service, a mixer by an unverified label (Low); W and W2: Lead only; matching amount; Low.* | The sweep is a CoinJoin (one output: no). The label is wrong. Mixer fees vary, so the matching withdrawal may be neither. | Moderate (service); Low (label, each withdrawal) |
-| 12 | See below. | | |
+| 12 | Either fitting withdrawal walks back the same way: PAYOUT `{{tx.payout.txid|short}}` has one input, the pool `{{addr.PW}}`; the pool was paid by SWEEP `{{tx.sweep.txid|short}}`, whose {{calc.deposits}} inputs are the deposits, MX among them. The walk ends at all {{calc.deposits}} deposits at once, and every other withdrawal in the batch walks back to the same pool and the same deposits. It cannot pick out which deposit paid a withdrawal: the coins out are not the coins in. Row: *W or W2, walked back: Stops: the mixer's pool; every deposit feeds it.* The walk itself is fact and takes no confidence word; the matching-amount leads stay Low. | | — |
+| 13 | See below. | | |
 
-### Question 12: a model note
+### Question 13: a model note
 
 | Step | What you see | The trace | Still shows | Confidence |
 |---|---|---|---|---|
@@ -80,10 +82,10 @@ reaches it. A CoinJoin stop takes no confidence word: it is the transaction's sh
 | 5 | J1's second ransom output | Undetermined | One of four outputs; nothing ties any to the ransom | — |
 | 6 | J3: 8x8 round, M1's {{tx.m1.by.Q.btc}} BTC coin is one input | **Stops:** CoinJoin, set of 8 | One of eight outputs is the ransom's | — |
 | 7 | One J3 output moves {{calc.late_gap}} blocks after the round; five moved after {{calc.crowd_gap}} | Lead only | Timing | Low |
-| 8 | R1's coin goes to a deposit address swept with {{calc.deposits}} others into one address, labelled a mixer | **Stops:** first service, a mixer | The label (unverified) | Low |
-| 9 | Two withdrawals of the mixer's batch fit the deposit, less {{calc.w_less}}% and {{calc.w2_less}}% | Lead only | Matching amount; cannot pick one | Low |
+| 8 | R1's coin goes to a deposit address swept with the other deposits into one address, labelled a mixer | **Stops:** first service, a mixer | A service sweeping its deposits (co-spend); the mixer label (unverified) | Moderate (a service); Low (a mixer) |
+| 9 | Two withdrawals of the mixer's batch fit the deposit, less {{calc.w_less}}% and {{calc.w2_less}}% | Lead only | Matching amount; cannot pick one, and walking either back reaches every deposit | Low |
 
-Sentence for an agent, for example:
+The sentence, for example:
 
 > The ransom went through three CoinJoin rounds and a mixer. Two of the attacker's mistakes let us follow part of it
 > past the first two rounds with moderate confidence, but the trail stops at the third round and at the mixer. What
@@ -121,6 +123,8 @@ ransom's touches it; its inputs were funded by the course faucet before the rans
 - Rating the stop itself with a confidence word, or rating a lead High because two weak clues agree. Timing and
   amount from one pool are behavior; together they stay Low or, at most, Moderate.
 - Quoting a percentage as a confidence.
+- Walking a withdrawal back to the pool and calling the deposit found. Every withdrawal walks back to every
+  deposit; the walk shows the pool, not a pairing.
 - Raising M2 to High for its "HACKY HACK HACK" note, or reading "DEAD END" as a finding. A note is text the
   transaction's builder wrote: it fits the trace here, but it is not a second kind of evidence.
 
@@ -149,3 +153,23 @@ and any dollar figure.
 
 The scale, the stop rules and the leak confidences come from the day-7 slides (`06-FO-mixers_and_coinjoin.qmd`);
 citations in the worksheet's Sources list.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **J1's five inputs were spent together. Why may you not put them in one cluster, and what does the trace do
+   there?** A CoinJoin is the co-spend rule's known false positive: five inputs can be five owners. The trace stops
+   at a set of five, and the stop takes no confidence word: it is the transaction's shape. (Q3, Q4.) Slides:
+   `blockchain-course/lessons/forensics/06-FO-mixers_and_coinjoin.qmd`, "A CoinJoin is many owners in one
+   transaction" and "Repeated equal amounts mark a CoinJoin".
+2. **M1 and M2 got the trace past J1 and J2. How sure is each, and why not High?** Moderate each: one strong line
+   (a post-mix co-spend; an address reuse), each with a known false positive (a PayJoin; someone else paying the
+   ransom address). M2's OP_RETURN note is text its builder wrote, not a second kind of evidence. (Q5, Q6, Q8.)
+   Slides: same file, "Before and after the mix still leak" and "PayJoin hides a co-spend inside a payment".
+3. **Is J3's last mover, or a withdrawal that fits the deposit, the ransom?** Neither is a finding. The late mover
+   is timing alone and each fitting withdrawal is amount alone: Low, a lead only. Walking a withdrawal back reaches
+   every deposit in the pool, so the walk cannot pick one. (Q10, Q11, Q12.) Slides: same file, "User habits link
+   deposit to withdrawal" and "A mixer pools coins and pays out others".
