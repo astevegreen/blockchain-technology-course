@@ -40,6 +40,10 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
+- `dynamic-labs/bitcoin/mempool/Dockerfile` now installs Node 24 (mempool's own Dockerfile at the pinned commit
+  does too), but no lab test builds it: the labs pull the published `bitcoin-mempool` image, which is built by hand.
+  Build it with Node 24 and check the mempool and explorer pages before the image is next published. (6 Nov 2026,
+  toolchain upgrades)
 
 ## Tooling and rules
 - Dependabot pull requests (`.github/dependabot.yml`) run no tests: `check.yml` and `lab-tests.yml` run only on a
