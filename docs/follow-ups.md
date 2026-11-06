@@ -44,10 +44,6 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- `dynamic-labs/ethereum_lab/docs/guides/BYTECODE_REVERSE_ENGINEERING.md`, "Example: SimpleStorage", names
-  `store(uint256)`/`retrieve()` and selectors `0x6057361d`/`0x2e64cec1` (Remix's sample contract), but the lab's
-  `contracts/SimpleStorage.sol` has `set(uint256)`/`get()`: heimdall shows selectors `0x60fe47b1`/`0x6d4ce63c`.
-  (6 Nov 2026, heimdall-rs install test)
 
 ## Tooling and rules
 

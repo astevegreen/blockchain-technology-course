@@ -87,11 +87,13 @@ Given only the bytecode from a deployed contract, try to infer:
 
 ### Example: SimpleStorage
 
-SimpleStorage has `store(uint256)` and `retrieve()`. In the bytecode you might see:
+The lab's SimpleStorage (`contracts/SimpleStorage.sol`) has `set(uint256)`, `get()` and the
+public variable `owner`, which Solidity gives a getter, `owner()`. In the bytecode you should see:
 
-- A selector check for `retrieve()` (e.g. `0x2e64cec1`)
-- A selector check for `store(uint256)` (e.g. `0x6057361d`)
-- SSTORE/SLOAD at a fixed slot (e.g. slot 0)
+- A selector check for `set(uint256)`: `0x60fe47b1`
+- A selector check for `get()`: `0x6d4ce63c`
+- A selector check for `owner()`: `0x8da5cb5b`
+- SSTORE/SLOAD at slot 0, where the stored value lives (`owner` is in slot 1)
 
 ---
 
@@ -100,9 +102,11 @@ SimpleStorage has `store(uint256)` and `retrieve()`. In the bytecode you might s
 For deeper analysis, use open-source tools only:
 
 - **[heimdall-rs](https://github.com/Jon-Becker/heimdall-rs)** — MIT-licensed command-line toolkit
-  (as of 1 Nov 2026) that disassembles and decompiles EVM bytecode. It is installed on the student VM,
-  so open a terminal there and run it on the bytecode you copied in step 3 (paste the whole `0x...`
-  string in place of `0x6080...`):
+  (as of 1 Nov 2026) that disassembles and decompiles EVM bytecode. It is installed on the lab VM and
+  in the instructor's Lab Terminal; the student lanes in the browser have no terminal. If you run the
+  VM yourself, open a terminal on it (SSH in, so you can paste) and run it on the bytecode you copied
+  in step 3. In a classroom, where the VM is the instructor's, your instructor runs it and shows the
+  result. Paste the whole `0x...` string in place of `0x6080...`:
 
   ```bash
   heimdall disassemble 0x6080...
