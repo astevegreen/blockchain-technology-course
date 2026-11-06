@@ -82,7 +82,7 @@ From `docs/build-spec.md`, "Pretest blueprint". Concept numbers are the Notion "
 | 8 | q38 | 47 North Korean theft and laundering | MC | 09-FO, "Ronin: the FBI named Lazarus, not the chain" |
 | 9 | q39 | 26 MITRE ATT&CK and the Diamond Model | MC | 12-FO, "Pivot along an edge to the next lead" |
 | 9 | q40 | 29 Fusing on-chain, OSINT, darknet and classified data | MC | 14-FO, "An echo is not a second line" |
-| 9 | q41 | 30 State-sponsored threat actors | MC | 13-FO, "Drift: a firm's assessment is not a government attribution" |
+| 9 | q41 | 30 State-sponsored threat actors | MC | 13-FO, "Drift: a firm's assessment, not the government's" |
 | 9 | q42 | 37 AML typologies | W | 12-FO, "Six typologies you have already met" |
 
 Each item's `sources` lists every slide its answer traces to; the table shows the main ones. The verifier checks that
