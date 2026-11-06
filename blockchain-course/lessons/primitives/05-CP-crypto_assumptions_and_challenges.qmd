@@ -653,6 +653,36 @@ None
 
 :::
 
+## Side Channels: When the Device Leaks {.smaller}
+
+- **Definition:** a side-channel attack is one "enabled by leakage of information from a physical cryptosystem": its timing, power consumption, or electromagnetic and acoustic emissions [@nist_sidechannelattack_2026].
+- **The math is not broken:** the attacker measures how a device behaves while it works on a secret; the algorithm itself is never attacked.
+- **Case: Trezor One (2019).** Ledger's Donjon team recorded the wallet's power consumption with an oscilloscope while it checked a PIN. With a stolen device, they could recover the PIN "within a few minutes" [@ledgerdonjon_trezorsca_2019].
+- **The PIN limit did not save it:** the attack needed about 5.5 PIN attempts on average, below the 16 attempts after which the wallet wipes itself [@ledgerdonjon_trezorsca_2019].
+- **Physical access required:** this attack starts with the device in the attacker's hands, not over a network. Trezor patched the PIN check after Donjon disclosed it [@ledgerdonjon_trezorsca_2019].
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide establishes side channels as the first class of implementation failure in this run of cases: the cryptography holds, but the device that runs it leaks. It matters here because students tend to equate "secure" with "the algorithm is unbroken", and a side channel recovers a secret without touching the algorithm. Emphasize that the leak is physical (time, power, emissions), so the attacker usually needs the device itself.
+
+**Key Points**
+- A side-channel attack reads physical leakage from a working device, as NIST's definition says.
+- Donjon recovered a stolen Trezor One's PIN from its power consumption, in fewer tries than the wipe limit allows.
+- The attack needed the device in hand, and Trezor patched it after a responsible disclosure.
+- Bridge to the next slide: Milk Sad also takes keys without breaking secp256k1, by guessing a weak seed rather than reading the device.
+
+**Walkthrough**
+1. Read NIST's list of leaks aloud: timing, power, electromagnetic and acoustic emissions.
+2. Walk the Trezor case: steal the device, record power while it checks PIN guesses, recover the PIN digit by digit.
+3. Ask why a 16-attempt wipe limit did not help: the attack needed only about 5.5 attempts on average.
+
+**Sources**
+- @nist_sidechannelattack_2026
+- @ledgerdonjon_trezorsca_2019
+
+:::
+
 ## When Good Crypto Goes Bad: Milk Sad (CVE-2023-39910) {.smaller}
 
 - **Rule one:** never substitute a general-purpose PRNG for a cryptographically secure one — the resulting key space is trivially brute-forceable.
