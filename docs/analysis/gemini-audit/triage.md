@@ -13,7 +13,7 @@ ones opened at e764798, not Gemini's; where its lines were wrong, the note says 
 | D10-1 | Partly | Owner (class size) | Below |
 | D10-2 | Confirmed | Fix | `docs/follow-ups.md`, Labs |
 | D8-1 | Confirmed | Owner (lab scenario) | Put to the owner, 4 Nov |
-| D8-2 | Confirmed | Fix | `docs/follow-ups.md`, Labs |
+| D8-2 | Confirmed | Fix | Fixed in 8540e6e |
 | D9-1 | Confirmed | Fix | Fixed in d5c18b3 |
 | D2-2 | Partly | Fix (notes only) | Fixed in c671b2f |
 | D1-1 | Partly, not a blocker | Nothing | Below |
@@ -56,7 +56,7 @@ firm's read and that change as two kinds of evidence. So students check the clai
 read code, which outcome 5 names as day 8's evidence: "the short Solidity contract behind one exploit" (`docs/build-spec.md:215-221`). What the lab should show is a lab
 scenario, so it is the owner's call.
 
-**D8-2: Confirmed.** `cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory.
+**D8-2: Confirmed.** `cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory. Fixed in 8540e6e (an offline table of what 4byte lists, read 5 Nov 2026).
 
 **D9-1: Confirmed.** `blockchain-course/lessons/forensics/14-FO-fusing_sources.qmd:191` rates a deposit address
 sweeping into a wallet on the exchange's own published list **High** ("the chain and the owner agree"). The day-9
@@ -162,17 +162,17 @@ heaviest is D4-2.
   `INSTRUCTOR_ANSWERS.md:29-31`, `:110`); hint 5 (`dex/gateway/static/lab/index.html:173-175`) points only at block 11. Fixed in 874c204.
 - **D6-6: Listed** (Minor). The D6 trace is graded (`docs/build-spec.md:117`, `:180-181`), but
   `bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md:12-16` has no Meets and Not yet lines, as the other graded labs do. Edit
-  `answers.template.md`, then regenerate with `chain/render.py`.
+  `answers.template.md`, then regenerate with `chain/render.py`. Fixed in 1255577.
 - **D7-4: Listed** (Minor). coinjoin-trace's rubric says "Names both places the trace stops … J3 … the mixer"
-  (`INSTRUCTOR_ANSWERS.md:18`); the model and Q4 also mark J1 and J2 (`:60`, `:75`). Fix with the week-2 lab session.
+  (`INSTRUCTOR_ANSWERS.md:18`); the model and Q4 also mark J1 and J2 (`:60`, `:75`). Fix with the week-2 lab session. Fixed in c4acbae.
 - **D7-5: Listed** (Minor). Q11's answer gives "Moderate (service); Low (label…)" (`coinjoin-trace
-  INSTRUCTOR_ANSWERS.md:63`); model step 8 shows only Low (`:82`).
+  INSTRUCTOR_ANSWERS.md:63`); model step 8 shows only Low (`:82`). Fixed in c4acbae.
 - **D8-3: Listed** (Minor). The worksheet and the key's walk-through say the snapshot lacks the rsETH-to-ETH step
   (`cross-chain/static/lab/index.html:226`; `INSTRUCTOR_ANSWERS.md:103`), but the graded-note rubric lists it as
-  something "the chain does not show" (`INSTRUCTOR_ANSWERS.md:29-30`). Split the two.
+  something "the chain does not show" (`INSTRUCTOR_ANSWERS.md:29-30`). Split the two. Fixed in 8540e6e.
 - **D9-4: Listed** (Minor, not Major). `tron/queries/d9.sql:20` builds `label || ' [' || source || ']'` and drops
   `as_of`; the worked example and the key's Q1 say the date shows (`d9/index.html:113-114`;
-  `INSTRUCTOR_ANSWERS_D9.md:58-59`). Regenerate the fallback and run the Tron lab test.
+  `INSTRUCTOR_ANSWERS_D9.md:58-59`). Regenerate the fallback and run the Tron lab test. Fixed in 2999481.
 - **D10-6: Listed** (Minor). final-trace's key says "Mark down" for faults in the oral explanation
   (`final-trace/quizes/INSTRUCTOR_ANSWERS.md:34`, `:61`), which carries no grade (`RUN_SHEET.md:258-261`). Reword as
   feedback.
@@ -224,7 +224,7 @@ heaviest is D4-2.
 
 - **D9-3** (Owner) holds as Gemini says: Q14 (`tron/static/lab/d9/index.html:100`) and the graded note (`:176`) want
   "the most likely AML typology", 12-FO's table (`12-FO:64-71`) has no plain-deposit row, and the key's own evidence
-  calls the address a plain Binance deposit address (`INSTRUCTOR_ANSWERS_D9.md:116`). Question 3 below.
+  calls the address a plain Binance deposit address (`INSTRUCTOR_ANSWERS_D9.md:116`). Question 3 below. Fixed in 2999481.
 - **D10-5** (Dry run): the facts hold, a 50-minute review session that is also the last chance to resubmit
   (`RUN_SHEET.md:252`, `:62-64`).
 
@@ -239,12 +239,12 @@ All 24 read against the pattern each names: 16 match. Changes:
 - **D5-7 → Listed.** Q16 kept the term, but `04-FO:291` and its notes (`:308`) never say what a muxed address is. Fixed in 6cd7af7.
 - **D4-5, D7-1, D9-5: Covered, each with a leftover Listed.** 03-EF's role table (`:1062-1064`) still puts ERC-4337,
   `handleOps`, EntryPoint and the ERC-2771 forwarder on the slide; coinjoin-trace's hints sit apart (`:158`) from
-  their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern. D4-5's leftover fixed in 45d28ab; D9-5's fixed in eac7131.
+  their questions (`:73-101`); `13-FO:368` "Staging began with 10 ETH from Tornado Cash" is in no pattern. D4-5's leftover fixed in 45d28ab; D7-1's in c4acbae; D9-5's fixed in eac7131.
 - **Notes for the sessions that take a Covered row.** A-7: post-test p6's key said "Observed"
   (`quizes/posttest/posttest_day10-quiz-bank.json:398`); fixed in e59f56d. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
   `:276` and the 08-FO synthesis `:68`, `:115` (11-FO:305 and the 11-FO bank `:276` fixed in 8d8e44f). D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
-  01-CM have 0 Asks (fixed in f2e82dc, 3815c66). D5-8: week-2 Q3 should name the Tron page if it gets a self-check. D10-7 and A-10: Gemini's
+  01-CM have 0 Asks (fixed in f2e82dc, 3815c66). D5-8: week-2 Q3 should name the Tron page if it gets a self-check (it did: questions 6 and 12, 2999481). D10-7 and A-10: Gemini's
   challenge topics (cross-chain timing, freezes, Tron sweeps) go to the owner beside week-2 Q20. D8-5: give
   Gemini's alternative (the micro-lab as the afternoon opener) beside Q14.
 
@@ -258,7 +258,7 @@ All 24 read against the pattern each names: 16 match. Changes:
    transaction in Otterscan.
 3. **D9-3. A plain deposit address in a typology question:** Q14-Q15 make students pick an AML typology for what the
    key's own evidence calls a plain Binance deposit address. **Recommend accepting "no typology fits: a plain deposit
-   address"**, with evidence for and against, on the worksheet and in the key, leaving 12-FO's table as is. *Owner, 5 Nov 2026: approved ("Yes, accept it").*
+   address"**, with evidence for and against, on the worksheet and in the key, leaving 12-FO's table as is. *Owner, 5 Nov 2026: approved ("Yes, accept it").* Fixed in 2999481.
 4. **D1-10. RPC method names in explorer Part 2(b):** the key wants `eth_getTransactionCount` and
    `eth_sendRawTransaction` (`explorer/quizes/INSTRUCTOR_ANSWERS.md:97-98`). **Recommend asking what the wallet asked
    for (the next nonce) and what it sent (the signed transaction)**, method names not required: students read, not

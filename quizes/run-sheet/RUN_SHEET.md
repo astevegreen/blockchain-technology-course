@@ -180,9 +180,10 @@ Pretest items: q18 to q26 in `quizes/pretest/pretest_week2-quiz-bank.json`; a st
 
 **Lab: Bitcoin trace.** Start: `./lab-manager.sh start bitcoin-trace`. Students open `/labs/bitcoin-trace/`;
 fallback `/labs/bitcoin-trace/fallback/`. README: `dynamic-labs/bitcoin-trace/README.md`. Answers:
-`dynamic-labs/bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md`. CTF flags: same file, items e and f.
+`dynamic-labs/bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md`. CTF flags: same file, items d and e.
 **Graded point 1:** the annotated trace follows the ransom to the first service, naming each hop's heuristic, a known
 false positive and a confidence. Rubric: "What the lab grades" in that answer file.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---
 
@@ -200,8 +201,9 @@ Pretest items: q27 to q29 in `quizes/pretest/pretest_week2-quiz-bank.json`.
 **Lab: CoinJoin and mixer trace.** Start: `./lab-manager.sh start coinjoin-trace`. Students open
 `/labs/coinjoin-trace/`; fallback `/labs/coinjoin-trace/fallback/`. README: `dynamic-labs/coinjoin-trace/README.md`.
 Answers: `dynamic-labs/coinjoin-trace/quizes/INSTRUCTOR_ANSWERS.md`. CTF flags: same file, items a to c.
-**Graded point 2:** the limits-of-tracing note (question 12): where the trace stops, why, what still shows and how
+**Graded point 2:** the limits-of-tracing note (question 13): where the trace stops, why, what still shows and how
 sure. Rubric: "What the lab grades" in that answer file.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---
 
@@ -226,6 +228,7 @@ fallback `/labs/cross-chain/fallback/`. README: `dynamic-labs/cross-chain/README
 `dynamic-labs/cross-chain/quizes/INSTRUCTOR_ANSWERS.md`. CTF flags: same file, near its end ("The flags are").
 **Graded point 3:** question 17, the contract read, the flow diagram and an assessment. Rubric: "What the lab
 grades" in that answer file.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---
 
@@ -246,8 +249,10 @@ Pretest items: q39 to q42 in `quizes/pretest/pretest_week2-quiz-bank.json`.
 near its end ("Flags:").
 **Graded point 4:** the exposure summary (question 15), all four parts: the deposit address told from its sweep,
 with the exchange label's source and a confidence word for the later sweeps; the stablecoin and issuer, freezable or
-not, and when the freeze came; the most likely AML typology with one indicator for and one against; each label's
+not, and when the freeze came; the most likely AML typology, or that none fits (a plain deposit address), with one
+indicator for and one against; each label's
 source and date read, each judgment's confidence word, and what the chain does not show. Rubric: "Marking (question 15)" in that answer file.
+**Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---
 
