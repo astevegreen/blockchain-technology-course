@@ -32,7 +32,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 # FIXED: Added 'rsync' (required for frontend build) and Rust deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl git python3 build-essential rsync pkg-config libssl-dev ca-certificates \
-    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && curl --proto '=https' --tlsv1.2 -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs 
 
 # Install Rust (Required for mempool-backend 'gbt' compilation)
@@ -86,7 +86,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mariadb-server mariadb-client \
     nginx python-is-python3 supervisor \
     curl ca-certificates \
-    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && curl --proto '=https' --tlsv1.2 -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
