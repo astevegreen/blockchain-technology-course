@@ -1,0 +1,73 @@
+# Dependabot version updates: once a week it opens pull requests that move the workflows' actions, the lab images,
+# the lab frontends' npm packages and the Python requirements to newer versions. Nothing merges by itself.
+# Each ecosystem puts every minor and patch update, across all its directories, in one pull request; a major
+# update gets its own, and each ecosystem keeps at most three open. No workflow runs on a pull request: run the
+# Lab Tests on its branch (CLAUDE.md) before merging one that touches dynamic-labs/.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      actions-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Every Dockerfile, runner.Dockerfile and Dockerfile.chaincode under dynamic-labs/.
+  - package-ecosystem: docker
+    directories:
+      - /dynamic-labs/**
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      docker-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # The Ubuntu 24.04 and Debian trixie move is planned on its own.
+      - dependency-name: ubuntu
+      - dependency-name: debian
+      # Node and Python versions are chosen by hand, for their support dates: Node 24 (to 30 Apr 2028) and
+      # Python 3.11 and 3.12 (to Oct 2027 and Oct 2028). Their tags already pull each patch release.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+      - dependency-name: python
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # The lab frontends and query pages (docs/spikes/ is a spike, not shipped).
+  - package-ecosystem: npm
+    directories:
+      - /dynamic-labs/cross-chain/query-page
+      - /dynamic-labs/final-trace/query-page
+      - /dynamic-labs/tron/query-page
+      - /dynamic-labs/ethereum_lab
+      - /dynamic-labs/ethereum_lab/frontend
+      - /dynamic-labs/ethereum_lab/scripts/cli-labs/standalone
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      npm-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # requirements-dev.txt (the check) and every requirements file under dynamic-labs/.
+  - package-ecosystem: pip
+    directories:
+      - /
+      - /dynamic-labs/**
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      pip-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]

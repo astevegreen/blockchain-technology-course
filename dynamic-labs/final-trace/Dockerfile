@@ -1,7 +1,7 @@
 # The day-10 final trace's pages: the worksheet, the Tron query page with the invented snapshot, and the saved pages
 # for both legs, served by nginx. Build context: dynamic-labs/final-trace. The query page is built here, so the image
 # needs no outside network to run.
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /lab/query-page
 COPY query-page/package.json query-page/package-lock.json ./
 RUN npm ci --ignore-scripts
