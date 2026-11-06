@@ -98,8 +98,8 @@ capstone (owner, 30 Oct: "Nothing"). Of the code-reading worksheet (62, 54, 51, 
 contract read, at the start of day 8's lab, is kept: outcome 5 has students recognize the other attack types from
 their transactions (owner, 30 Oct).
 
-Day 9's second lesson also teaches MITRE AADAPT, MITRE's ATT&CK-style matrix of attacks on digital-asset payments.
-It has no sanctions-evasion technique, so sanctions stay with Day 5's second lesson and Day 9's first. Details are
+Day 9's first lesson also teaches MITRE AADAPT, MITRE's ATT&CK-style matrix of attacks on digital-asset payments.
+It has no sanctions-evasion technique, so sanctions stay with Day 5's second lesson and Day 9's second. Details are
 on the Build Tracker item.
 
 ## Additions to existing lessons
