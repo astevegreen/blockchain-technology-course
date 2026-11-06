@@ -7,8 +7,8 @@ reading one exploit contract and looking up its 4-byte selector, and finish with
 diagram and an assessment. They run the queries and read the output; they never write or edit SQL.
 One copy serves the whole class (a shared singleton, like `tron`).
 
-**Status: scaffolding.** The worksheet's questions wait on the owner's choice of hops; see
-`quizes/INSTRUCTOR_ANSWERS.md`. The design and its traps are in `docs/spikes/cross-chain.md`.
+**Status: complete.** The worksheet has the contract read, the worked example, the Kelp problem, the
+graded note and the challenge; the key and the debrief are in `quizes/INSTRUCTOR_ANSWERS.md`. The design and its traps are in `docs/spikes/cross-chain.md`.
 
 Start it with the rest of the stack: `./lab-manager.sh start cross-chain`. Students open
 `/labs/cross-chain/` on the course site, which sends them to the worksheet (`router/routes.conf`,

@@ -66,18 +66,10 @@ slide index), which is never listed here.
 - Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
   it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
   machine. (2 Nov 2026, bytecode guide fix)
-- `dynamic-labs/cross-chain/README.md:10` still says "Status: scaffolding" and that the questions wait on the
-  owner's choice of hops, but the lab page has a full worksheet, worked example and graded note. (4 Nov 2026, week-2
-  pattern audit, `docs/analysis/pattern-audit/d8.md`)
 - `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:67` says students follow Q "because its amount is closer to
   the gross quote", but `facts.json:1356-1358` puts P (168,435.00) closer to the 171,000.00 quote than Q (168,217.27).
   Reword the mistake, and its source in `answers.template.md`. (4 Nov 2026, Gemini audit D10-2, checked against
   `facts.json`)
-- `dynamic-labs/cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory site; a
-  class without internet cannot answer Q1 and Q3. Give the lookups on the page or in the fallback. (4 Nov 2026,
-  Gemini audit D8-2)
-- `dynamic-labs/cross-chain/quizes/INSTRUCTOR_ANSWERS.md:29-30` credits the rsETH-to-ETH step as "the chain does not
-  show"; it is a snapshot gap (worksheet `index.html:226`; key `:103`). Split the two. (4 Nov 2026, Gemini audit D8-3, `docs/analysis/gemini-audit/triage.md`)
 - `dynamic-labs/tron/queries/d9.sql:20` drops `as_of` from the labels column that the worked example and key Q1 say
   shows the date read. Add it, regenerate the fallback, run the Tron lab test. (4 Nov 2026, Gemini audit D9-4, `docs/analysis/gemini-audit/triage.md`)
 - `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:34` and `:61` say "Mark down" for the ungraded oral

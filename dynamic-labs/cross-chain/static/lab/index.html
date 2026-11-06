@@ -56,9 +56,10 @@ channel has been verified <a href="#s14">[14]</a>. Queries 9 and 12 read both.</
 <li>Times are UTC. Amounts are exact, in the asset's own units.</li>
 </ul>
 
-<h2>The questions you answer</h2>
-<p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments about what
-the facts mean. Give each judgment a confidence word <a href="#s13">[13]</a>:</p>
+<h2>How you answer</h2>
+<p>Some answers are facts the chain records: an address, an amount, a block. A fact takes no confidence
+word. Others are judgments about what the facts mean. Give each judgment a confidence word
+<a href="#s13">[13]</a>:</p>
 <table>
 <tr><th>High</th><td>Two or more independent lines of evidence agree, and no known failure of the reasoning
 applies.</td></tr>
@@ -69,55 +70,38 @@ tag.</td></tr>
 </table>
 <p class="hint">Independent means a different kind of evidence, not a second look at the same transaction.</p>
 
-<h3>The contract read (21 Feb 2025)</h3>
+<h2>The contract read (21 Feb 2025)</h2>
 <ol>
 <li>Query 1. In the transaction at 14:13:35, which contract did the cold wallet delegatecall, and with
-which selector? Look the selector up on 4byte.directory: how many signatures does it list?</li>
+which selector? Look the selector up in <a href="#fourbyte">What 4byte.directory lists</a>: how many
+signatures does it list?</li>
 <li>Query 1. Which contract's code did the wallet run before that transaction, and which after it? How
 long after the change do the sweeps start?</li>
 <li>Queries 1 and 2. The sweeps call two other selectors, <code>0x1163b2b0</code> and
-<code>0x582515c7</code>. What names does 4byte.directory give them? Do the names fit what each sweep
-moved?</li>
-<li>Read the two pieces of code under <a href="#read">The contract read</a>. Which line of
+<code>0x582515c7</code>. What names does <a href="#fourbyte">4byte.directory</a> give them? Do the names
+fit what each sweep moved?</li>
+<li>Read the two pieces of code under <a href="#read">The code</a>. Which line of
 <code>0x96221423…</code>'s code does the work, and which storage slot does it write? What does the wallet's
 own code keep in that slot? Then your contract read: what does the function at <code>0x96221423…</code>
 do, who could make the wallet call it, and what did it change? Give a confidence for each, and the lines of
 evidence behind it.</li>
 </ol>
 
-<h3>Worked example: Bybit's ETH to Bitcoin (21 to 26 Feb 2025)</h3>
-<ol start="5">
-<li>Queries 2 and 3. What left the wallet, and to which address? Where did the ETH go next, in what
-amounts?</li>
-<li>Query 4. What does the address <code>0x31c4b3da…</code> receive, and from whom?</li>
-<li>Query 5. Who sent the hub the tiny payments? Do they belong to the thief?</li>
-<li>Query 6. Which addresses deposit into THORChain, how much, and what does each deposit ask for?</li>
-<li>Query 7. Was each deposit paid out as its memo asked, how much, and how long after?</li>
-<li>Query 8. What did <code>bc1qjm4u…</code> receive and send, over what period? What do you report?</li>
-</ol>
+<h3 id="fourbyte">What 4byte.directory lists</h3>
+<p>Every signature 4byte.directory lists for each selector in this lab <a href="#s8">[8]</a>. Anyone can
+submit a signature, so a long list means people have found other signatures with the same selector.</p>
+<table class="grid">
+<tr><th>Selector</th><th>Signatures listed</th></tr>
+<tr><td><code>0xa9059cbb</code></td><td><code>transfer(address,uint256)</code>;
+<code>workMyDirefulOwner(uint256,uint256)</code>; <code>join_tg_invmru_haha_fd06787(address,bool)</code>;
+<code>func_2093253501(bytes)</code>; <code>transfer(bytes4[9],bytes5[6],int48[11])</code>;
+<code>many_msg_babbage(bytes1)</code></td></tr>
+<tr><td><code>0x1163b2b0</code></td><td><code>sweepETH(address)</code></td></tr>
+<tr><td><code>0x582515c7</code></td><td><code>sweepERC20(address,address)</code></td></tr>
+<tr><td><code>0x6a761202</code></td><td><code>execTransaction(address,uint256,bytes,uint8,uint256,uint256,uint256,address,address,bytes)</code></td></tr>
+</table>
 
-<h3>The problem: Kelp DAO's rsETH, Unichain to Arbitrum (18 to 21 Apr 2026)</h3>
-<ol start="11">
-<li>Query 9. Which message number did the delivery on Ethereum claim to come from, and how many had the
-Unichain contract sent? What does that tell you?</li>
-<li>Query 10. How much rsETH was released, to whom, and where did it go in the next six minutes?</li>
-<li>Query 11. What did <code>0x1f4c1c2e…</code> do with its rsETH, what did it get back, and where did that
-go? Which contracts did it deal with? What can you say about who runs them?</li>
-<li>Query 12. Which addresses sent rsETH across the bridge, to which chain, to which address there, and
-how long did each take? What happened to the one message sent back?</li>
-<li>Queries 13 and 14. What reached the collecting address on Arbitrum, and what moved it out? Did the
-collecting address's owner sign that move?</li>
-<li>Queries 14 and 15. Where is that ETH as of the snapshot? What can you say about the address that
-holds it?</li>
-</ol>
-
-<h3>The graded note</h3>
-<ol start="17">
-<li>Write it out for your instructor: your contract read (question 4), a diagram of the Kelp flow, and
-your assessment. See <a href="#graded">The graded note</a> for what it must have.</li>
-</ol>
-
-<h2 id="read">The contract read</h2>
+<h3 id="read">The code</h3>
 <p>Two pieces of code decide what the transaction at 14:13:35 did. Read them line by line, then check
 what you read against the chain.</p>
 <p><b>The wallet.</b> Bybit's cold wallet is a Safe proxy: it keeps the address of its master copy in
@@ -163,7 +147,7 @@ copy (<code>0x34cfac64…</code>, selector <code>0x6a761202</code>, <code>execTr
 later call runs <code>0xbdd077f6…</code>. The code you read and the change you see on the chain are two
 different kinds of evidence.</p>
 
-<h2>Worked example: Bybit's ETH to Bitcoin</h2>
+<h2>Worked example: Bybit's ETH to Bitcoin (21 to 26 Feb 2025)</h2>
 <p>This follows the stolen ETH from the wallet, through a hub, into THORChain, and out on Bitcoin. Elliptic
 reports that the stolen tokens, such as stETH and cmETH, were swapped for ETH on exchanges with no one to
 freeze them, and that most of the ETH became Bitcoin <a href="#s2">[2]</a>.</p>
@@ -206,34 +190,65 @@ addresses the wallet's ETH went to, one of them on the FBI's list; the hub itsel
 <li>The diagram: cold wallet <code>0x1db92e2e…</code> → (ETH and tokens) <code>0x47666fab…</code> →
 (4 × 10,000 ETH) four addresses → (ETH) hub <code>0x31c4b3da…</code> → … → (9.98 ETH × 3) THORChain vault
 <code>0x863df8de…</code> on Ethereum → (BTC × 3) <code>bc1qjm4u…</code> on Bitcoin.</li>
-<li>The chain does not show who holds the keys, or what became of the hub's ETH beyond these
-deposits.</li>
+<li>The chain does not show who holds the keys. This snapshot does not show what became of the hub's
+ETH beyond these deposits: that is on Ethereum's chain, but the snapshot holds only the case's
+transactions.</li>
 </ul>
 
-<h2>The problem: Kelp DAO</h2>
-<p>Now do questions 11 to 16. The pattern is a bridge, not a swap: the money is released on one chain
-because of a message said to come from another. Hints:</p>
-<ul>
-<li><b>The message.</b> Each number on a channel stands for one message the sending contract sent
-<a href="#s14">[14]</a>. Compare the number the
-delivery claimed with the number the sending contract had reached, on both chains, at the same time.</li>
-<li><b>Names from tokens.</b> In query 11 the contracts are named only by the tokens they mint, such as
-<code>aEthrsETH</code> and <code>variableDebtEthWETH</code>. A token name is a claim made by whoever
+<h3>Check yourself</h3>
+<p>Run each query and check what the worked example says against what you see. Your instructor checks
+these with you; they are not graded.</p>
+<ol start="5">
+<li>Queries 2 and 3. What left the wallet, and to which address? Where did the ETH go next, in what
+amounts?</li>
+<li>Query 4. What does the address <code>0x31c4b3da…</code> receive, and from whom?</li>
+<li>Query 5. Who sent the hub the tiny payments? Do they belong to the thief?</li>
+<li>Query 6. Which addresses deposit into THORChain, how much, and what does each deposit ask for?</li>
+<li>Query 7. Was each deposit paid out as its memo asked, how much, and how long after?</li>
+<li>Query 8. What did <code>bc1qjm4u…</code> receive and send, over what period? What do you report?</li>
+</ol>
+
+<h2>The problem: Kelp DAO's rsETH, Unichain to Arbitrum (18 to 21 Apr 2026)</h2>
+<p>The pattern is a bridge, not a swap: the money is released on one chain because of a message said to
+come from another. Each question has a hint under it.</p>
+<ol start="11">
+<li>Query 9. Which message number did the delivery on Ethereum claim to come from, and how many had the
+Unichain contract sent? What does that tell you?
+<p class="hint"><b>The message.</b> Each number on a channel stands for one message the sending contract
+sent <a href="#s14">[14]</a>. Compare the number the delivery claimed with the number the sending contract
+had reached, on both chains, at the same time.</p></li>
+<li>Query 10. How much rsETH was released, to whom, and where did it go in the next six minutes?</li>
+<li>Query 11. What did <code>0x1f4c1c2e…</code> do with its rsETH, what did it get back, and where did that
+go? Which contracts did it deal with? What can you say about who runs them?
+<p class="hint"><b>Names from tokens.</b> In query 11 the contracts are named only by the tokens they mint,
+such as <code>aEthrsETH</code> and <code>variableDebtEthWETH</code>. A token name is a claim made by whoever
 deployed it, like a name from a selector. Blockaid reports that the attacker put the rsETH into Aave V3 as
 collateral and borrowed WETH against it <a href="#s3">[3]</a>. Say what the tokens show, what the source
-adds, and how much rsETH the snapshot shows going in.</li>
-<li><b>The far side.</b> In query 12, compare each send's <code>receiver</code> with its sender.</li>
-<li><b>What the snapshot does not hold.</b> rsETH crosses to Arbitrum; ETH arrives at the collecting
-address. Say which step you cannot see.</li>
-<li><b>The freeze.</b> Arbitrum's Security Council says it moved the ETH with a cross-chain transaction
-made as if it came from the collecting address <a href="#s5">[5]</a>. Compare its figure with query 13.
-<code>from_address</code> shows whose account a transaction acts for, not always who signed it.</li>
-<li><b>The holder.</b> The address that holds the ETH as of the snapshot has no label. The Council says
-releasing the ETH is for Arbitrum's governance to decide <a href="#s5">[5]</a>. Say what the chain shows,
-and stop there.</li>
-</ul>
+adds, and how much rsETH the snapshot shows going in.</p></li>
+<li>Query 12. Which addresses sent rsETH across the bridge, to which chain, to which address there, and
+how long did each take? What happened to the one message sent back?
+<p class="hint"><b>The far side.</b> Compare each send's <code>receiver</code> with its sender.</p></li>
+<li>Queries 13 and 14. What reached the collecting address on Arbitrum, and what moved it out? Did the
+collecting address's owner sign that move?
+<p class="hint"><b>What the snapshot does not hold.</b> rsETH crosses to Arbitrum; ETH arrives at the
+collecting address. Say which step you cannot see. That step happened on Arbitrum's chain: it is missing
+from this snapshot, which holds only the case's transactions, not from the chain.</p>
+<p class="hint"><b>The freeze.</b> Arbitrum's Security Council says it moved the ETH with a cross-chain
+transaction made as if it came from the collecting address <a href="#s5">[5]</a>. Compare its figure with
+query 13. <code>from_address</code> shows whose account a transaction acts for, not always who signed
+it.</p></li>
+<li>Queries 14 and 15. Where is that ETH as of the snapshot? What can you say about the address that
+holds it?
+<p class="hint"><b>The holder.</b> The address that holds the ETH as of the snapshot has no label. The
+Council says releasing the ETH is for Arbitrum's governance to decide <a href="#s5">[5]</a>. Say what the
+chain shows, and stop there.</p></li>
+</ol>
 
 <h2 id="graded">The graded note</h2>
+<ol start="17">
+<li>Write it out for your instructor: your contract read (question 4), a diagram of the Kelp flow, and
+your assessment.</li>
+</ol>
 <p>Question 17 is the day's graded point. Your instructor marks it <b>Meets</b> or <b>Not yet</b>, and you
 get one retry in class time. It meets when it has all three:</p>
 <ol>
@@ -242,7 +257,8 @@ code that does it, who could make the wallet call it, and what it changed.</li>
 <li><b>A diagram of the Kelp flow</b>: each contract, by its address and what the queries show it doing;
 the assets in and out at each step; and the address on the far side, on Arbitrum.</li>
 <li><b>An assessment</b>: what happened, each judgment with a confidence word (never a percentage), and
-what the chain does not show.</li>
+what the chain does not show. A step that is on the chain but not in this snapshot is a gap in the
+snapshot: say so, and keep it apart from what no chain records.</li>
 </ol>
 
 <h2>Challenge (optional)</h2>

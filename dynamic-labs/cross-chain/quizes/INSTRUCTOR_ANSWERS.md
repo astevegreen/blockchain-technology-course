@@ -27,8 +27,10 @@ in and out and the far-side address").
    ETH to the collecting address `0x5d3919f1…` on Ethereum; and the bridge sends (rsETH out on Ethereum)
    to the same addresses on Arbitrum (rsETH in), ETH to `0x5d3919f1…` on Arbitrum → `0x…0da0`.
 3. **An assessment** with a confidence word per judgment, no percentages, and at least one thing the chain
-   does not show (the rsETH-to-ETH step on Arbitrum; who holds the keys; what Aave or the Council decided
-   off-chain).
+   does not show (who holds the keys; what Aave or the Council decided off-chain). The rsETH-to-ETH step on
+   Arbitrum is not one of these: it is on Arbitrum's chain, but this snapshot holds only the case's
+   transactions. Credit it when the note calls it a gap in the snapshot; a note that says the chain does not
+   show it gets that corrected in feedback.
 
 **Not yet** when any of the three is missing, the diagram leaves out the far-side address, a judgment has
 no confidence or carries a percentage, or the note names a contract by a label the snapshot leaves blank
@@ -42,8 +44,9 @@ alone. A name from a selector or a token symbol is one unverified label.
 ## The contract read (questions 1 to 4, everyone)
 
 1. Transaction `0x46deef0f…`, 21 Feb 2025 14:13:35. Path `0_0` delegatecalls `0x96221423…` with selector
-   `0xa9059cbb`. 4byte lists six signatures for it (read 1 Nov 2026): `transfer(address,uint256)` and five
-   others such as `workMyDirefulOwner(uint256,uint256)`. The name is a claim.
+   `0xa9059cbb`. 4byte lists six signatures for it (read 1 Nov 2026; the worksheet's table "What
+   4byte.directory lists" prints them): `transfer(address,uint256)` and five others such as
+   `workMyDirefulOwner(uint256,uint256)`. The name is a claim.
 2. Before: path `0` runs `0x34cfac64…` (selector `0x6a761202`, `execTransaction`). After: every call runs
    `0xbdd077f6…`. The first sweep is at 14:15:11, about 1.5 minutes later; the last at 14:16:11.
 3. `0x1163b2b0` = `sweepETH(address)`, used in `0xb61413c4…` (the ETH sweep, 401,346.768858404671846374
@@ -100,7 +103,8 @@ alone. A name from a selector or a token symbol is one unverified label.
     (`0xeba7…`), 770 (`0xbb6a…`), 9,299 (`0xcbb2…`), 4,600 (`0x8d11…`); 39,742.795185 rsETH in all. The one
     sent back, 3,575.571057 rsETH from `0x8d11…` at 18:30:31, was cleared with nothing released on 22 Apr.
 15. Query 13: on Arbitrum, 10 payments in, 30,765.667501709008927568 ETH, 17:58:20–19:34:26 on 18 Apr.
-    How rsETH became that ETH on Arbitrum is not in the snapshot: say so. Query 14: 21 Apr 03:26:47, the
+    How rsETH became that ETH on Arbitrum is not in the snapshot: say so. It is a gap in the snapshot,
+    which holds only the case's transactions, not something the chain does not record. Query 14: 21 Apr 03:26:47, the
     Security Council's transaction on Ethereum; 03:35:08, Arbitrum tx `0x56180442…` (type 101, a
     cross-chain retryable), `from` the collecting address, moves 30,765.667401709008927568 ETH to
     `0x…0da0`. The Council says it made a cross-chain transaction impersonating the address [5], and its
@@ -126,3 +130,31 @@ The flags are **23259.32**, **3575.571057** and **`0xe81c9749a665e2f65d7dd7efcb9
 `quizes/facts.json` under `flags`). Each part's box on the worksheet holds only `sha256("course-flag:" + flag)`
 and says whether a typed answer matches: amounts are rounded half up to the flag's places (2 for a, 6 for b),
 commas and units are ignored, and an address may be in any letter case.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **The decompiler calls the function `transfer`. What does it do, and how do you know?** It writes its
+   first argument into slot 0, the wallet's master copy, so the wallet's code was swapped; it never moves a
+   token. The name came from the selector, which has six signatures on 4byte: a claim, not a finding. How
+   sure: High that it overwrote the logic contract, because the decompiled line and the on-chain switch to
+   `0xbdd077f6…` are two kinds of evidence that agree; Moderate if a student weighs that the code is a
+   decompiler's reading, not verified source. (Q1, Q4.) Slides:
+   `blockchain-course/lessons/forensics/11-FO-bytecode_nft_wash_trading.qmd`, "Looking up a selector: a
+   name, not proof" and "How sure: what a code read rests on".
+2. **Sixteen addresses sent the hub tiny amounts. Why are they not in the thief's cluster?** Each looks like
+   an address the hub had paid and arrives after that payment, and the hub never pays them: address
+   poisoning, a stranger fishing. Moderate to High: the pattern on the chain and the published behavior
+   agree. Clustering them would tie strangers to the theft. (Q7.) Slides:
+   `blockchain-course/lessons/forensics/09-FO-approvals_drainers_poisoning.qmd`, "Address poisoning plants a
+   look-alike in history" and "Reading a poisoning: the lure comes first".
+3. **How sure are you that Kelp's delivery was forged, and what can your note not say?** High: Ethereum
+   accepted message 308 while Unichain's own counter stood at 307, two chains' records that agree. The
+   note cannot say who holds the keys or what was decided off-chain; that is beyond any chain. The
+   rsETH-to-ETH step on Arbitrum is different: it is on the chain but not in this snapshot, so say "not in
+   the snapshot", not "not on the chain". (Q11, Q15, Q17.) Slides:
+   `blockchain-course/lessons/ethereum/08-EF-layer2s_and_bridges.qmd`, "Message bridges trust a message:
+   Kelp DAO" and "A bridge moves a claim, not the coin".
