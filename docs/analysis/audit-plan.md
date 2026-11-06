@@ -15,18 +15,16 @@ find each finding by its quoted text.
 
 ## 1. Where things stand
 
-- **Week 1 (Claude): decided and mostly applied.** The owner approved all 21 recommendations on 4 Nov; 89c7c82
-  applied them except Q14 (cuts wait for a timed dry run) and Q19's two Tron pretest items (drafted, waiting on a rail
-  change; on `docs/follow-ups.md`). The course-wide fixes W1-W14 beyond those decisions are not done yet; the
-  one-offs are on `docs/follow-ups.md`.
-- **Week 2 (Claude): not decided.** Patterns P1-P13 and questions Q1-Q20 wait on the owner. Week 1's Q1, Q2 and
-  Q14 already applied week 2's Q1, Q2 and Q6 to week 1 only.
-- **Gemini: all 91 checked.** Of the top ten: D8-1 is fixed (0531a2b, "Yes, add code"); D10-2, D8-2, D9-1 and
-  D2-2 are confirmed and on `docs/follow-ups.md`; A-1, A-2 and D10-1 are owner decisions about day 10; D1-1 and
-  D3-5 need nothing. Phase 1 (4 Nov) opened the 37 Verify rows: 28 Listed, 1 Owner, 1 Covered, 7 Rejected, and its
-  spot-check of the Covered rows moved D1-4 to Owner and D2-9, D5-7 to Listed (`gemini-audit/triage.md`).
-- **The machinery exists.** `docs/prompts/backlog-orchestrator.md` runs nine child sessions over this backlog. This
-  plan feeds it: its session 2 (Gemini triage) now starts from section 4's "Verify" rows instead of all 91.
+**Closed 5 Nov 2026 (backlog session 9). This file is history.** Every row in section 4 ends Done, Incorporated (with
+its commit) or Rejected (with its reason), or waits on the owner's timed dry run (phase 3). Open work lives on
+`docs/follow-ups.md`; the owner's remaining questions are at the end of `gemini-audit/triage.md`.
+
+- **Week 1 (Claude): decided 4 Nov and applied** (89c7c82, then backlog sessions 1, 3, 4 and 6). Q14's cuts wait
+  for the dry run.
+- **Week 2 (Claude): decided 4-5 Nov and applied** (backlog sessions 5, 7 and 8). Q6's cuts wait for the dry run.
+- **Gemini: all 91 routed.** 66 Incorporated, 1 Done, 13 Rejected, 11 waiting on the dry run.
+- **Waiting on the dry run:** W14, P12, week 1 Q14 and week 2 Q6 cuts (04-CP, 04-EF, 08-EF, 01-PC; 03-, 07-, 10-,
+  12-FO), D2-1, D3-1, D4-4, D4-7, D5-2, D5-3, D6-5, D6-7, D8-4, D8-5, D10-5.
 
 ## 2. How a finding is decided
 
@@ -89,179 +87,183 @@ ID; open `gemini-audit/<scope>.md` for the evidence. "Session N" is a child of `
 
 ### 4.1 Claude, week 1 (decided 4 Nov)
 
-| Item | Status | Who finishes it |
+| Item | Status | Link or reason |
 |---|---|---|
-| Q1-Q13, Q15-Q18, Q20, Q21 | Applied in 89c7c82 | Done |
-| Q14 cuts (04-CP, 04-EF, 08-EF, 01-PC) | Held for the dry run | Phase 3 |
-| Q19 Tron pretest items | Drafted, needs a rail change | Session 8 |
-| W2 pointers, W4 terms early, W6 real-value walks, W7 one word several meanings, W8 Asks, W9 figures, W12 re-teaching, W13 notes | Open | Sessions 1, 3, 4 |
-| W1 labs need untaught ideas | Open beyond Q6 and Q7 | Session 6 |
-| W3 scale home, W5 worked example first, W10 debriefs, W11 lesson solves the lab | Applied with Q4, Q2, Q1, Q9-Q10 | Done |
-| W14 overruns | Unverified | Phase 3 |
-| Eight one-offs | On `docs/follow-ups.md` (Lessons, Labs) | Sessions 3, 4, 6 |
+| Q1-Q13, Q15-Q18, Q20, Q21 | Incorporated | 89c7c82 |
+| Q14 cuts (04-CP, 04-EF, 08-EF, 01-PC) | Dry run | Owner, 4 Nov: wait for the timed dry run |
+| Q19 Tron pretest items | Incorporated | 8ee08fb (q43, q44) |
+| W2 pointers | Incorporated | eb3acea (pointer check, clean on 5 Nov), f2e82dc, 3815c66, ddb4726 |
+| W4 terms early, W6 real-value walks, W7 one word several meanings, W8 Asks, W9 figures, W12 re-teaching, W13 notes | Incorporated | Sessions 3-4: 2b46e23, a12a841, 765cd58, 11796c0, 9d4a283, c671b2f, f2e82dc, 3815c66, a365425, 8eeb4c5, 00bd6bf, 45d28ab, 49c8144, 16f7d41, 6cd7af7, 5a1afb7, fff462e, ddb4726 |
+| W1 labs need untaught ideas | Incorporated | 874c204 |
+| W3 scale home, W5 worked example first, W10 debriefs, W11 lesson solves the lab | Incorporated | 89c7c82 (with Q4, Q2, Q1, Q9-Q10) |
+| W14 overruns | Dry run | Phase 3 |
+| Eight one-offs | Incorporated | With the lesson and lab sessions above |
 
-### 4.2 Claude, week 2 (waiting on the owner)
+### 4.2 Claude, week 2 (decided 4-5 Nov)
 
-| Item | Status | Who finishes it |
+| Item | Status | Link or reason |
 |---|---|---|
-| Q4 | Decided 4 Nov: revised as C1 gives it (owner: "Yes, revise Q4") | Sessions 3-6 |
-| Q1-Q3, Q5-Q20 | Unanswered | Owner, phase 0 |
-| P1-P2, P6-P11 lessons | Open, after the answers | Session 5 |
-| P3-P5, P13 labs | Open, after Q1-Q3, Q7 | Session 7 |
-| Assessments (Q15-Q20) | Open, after the answers | Session 8 |
-| P12 crammed lessons | Unverified | Phase 3 |
-| Two one-offs (01-FO hidden slides, cross-chain README) | On `docs/follow-ups.md` | Sessions 5, 7 |
+| Q4 | Incorporated | Revised as C1 gives it (owner: "Yes, revise Q4"); 5b9153e, 8d8e44f, 5e2c789, d5c18b3, b3940f2 |
+| Q1-Q3, Q5, Q7-Q20 | Incorporated | Owner approved 4-5 Nov; lessons, labs and quizzes below; Q5 also c8f22c0, 9f22f50; Q14's micro-lab slot c8f22c0 |
+| Q6 cuts (03-, 07-, 10-, 12-FO) | Dry run | Owner: hold every cut until the timed dry run |
+| P1-P2, P6-P11 lessons | Incorporated | d39cd07, b3940f2, 5b9153e, 48dc61b, 8d8e44f, 5e2c789, eac7131, d5c18b3, fe0fe9e |
+| P3-P5, P13 labs | Incorporated | 1255577, c4acbae, 8540e6e, 2999481, 820f8d0 |
+| Assessments (Q15-Q20) | Incorporated | e59f56d, c96c271, 6197242, e6987e0 |
+| P12 crammed lessons | Dry run | Phase 3 |
+| Two one-offs (01-FO hidden slides, cross-chain README) | Incorporated | fe58361, 8540e6e |
+| Week-2 answer keys' compound confidence words ("Low to Moderate", "Moderate to High") | Held for the owner | Kept as they are; question in `gemini-audit/triage.md` |
 
 ### 4.3 Gemini, by scope
 
-Totals: 22 Covered, 38 Listed, 10 Owner, 9 Dry run, 11 Reject, 1 Done (after phase 1's triage, 4 Nov 2026). A Gemini
+Totals at close (5 Nov 2026): 66 Incorporated, 1 Done, 13 Rejected, 11 Dry run. Phase 1's routes were 22 Covered, 38
+Listed, 10 Owner, 9 Dry run, 11 Reject, 1 Done. A Gemini
 duplicate of another Gemini row is marked "= ID".
 
 **Day 1**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D1-1 | Blocker | Lab Q4-Q6 need tokens, logs, reverts before day 3 | Reject (R4) | Triage: each hint teaches it; Q6 now marked a preview (week 1 Q6) |
-| D1-2 | Major | Stale day references in 04-CP, 01-CM | Covered | W2; one already listed (01-CM "day 6" bridge); session 1's pointer check finds the rest |
-| D1-3 | Major | Three server stacks for two openers before the worksheet | Owner | Triage: openers settled (R2); question is the unused terminal orientation |
-| D1-4 | Major | 02-IN's only worked example is Bitcoin; no Ethereum transaction before the lab | Owner | Triage: not W1; question is one 02-IN Otterscan slide |
-| D1-5 | Major | Run sheet gives the welcome 30 min, 01-IN says 35 | Listed | Triage: move 01-IN to 0915, 30 min |
-| D1-6 | Major | "Nonce" in three senses | Covered | W7 |
-| D1-7 | Minor | 02-IN declares `slide-level: 3` | Listed | Triage: no stacking, but content slides render centred |
-| D1-8 | Minor | 04-CP, 01-CM: no Asks, Walkthrough "None" | Covered | W8, W13 |
-| D1-9 | Minor | Otterscan's `[EOA]` tag on a creation row confuses Q3 | Listed | Triage: gloss the tag in the hint |
-| D1-10 | Minor | Lab asks recall of JSON-RPC method names | Listed | Owner approved 5 Nov: ask for the next nonce and the signed transaction, no method names |
+| D1-1 | Blocker | Lab Q4-Q6 need tokens, logs, reverts before day 3 | Rejected (R4) | Triage: each hint teaches it; Q6 now marked a preview (week 1 Q6) |
+| D1-2 | Major | Stale day references in 04-CP, 01-CM | Incorporated | f2e82dc, 3815c66 (W2); `tools/pointer_check.py` (eb3acea) lists nothing on 5 Nov |
+| D1-3 | Major | Three server stacks for two openers before the worksheet | Rejected (R2) | Owner, 4 Nov: not approved; the terminal orientation stays |
+| D1-4 | Major | 02-IN's only worked example is Bitcoin; no Ethereum transaction before the lab | Incorporated | 765cd58 (owner approved 4 Nov) |
+| D1-5 | Major | Run sheet gives the welcome 30 min, 01-IN says 35 | Incorporated | 2b46e23 |
+| D1-6 | Major | "Nonce" in three senses | Incorporated | a12a841 (W7) |
+| D1-7 | Minor | 02-IN declares `slide-level: 3` | Incorporated | e11f4fe: 02-IN, 05-IN at level 2; 03-IN keeps 3 for its `###` sub-slides |
+| D1-8 | Minor | 04-CP, 01-CM: no Asks, Walkthrough "None" | Incorporated | f2e82dc, 3815c66 (W8, W13) |
+| D1-9 | Minor | Otterscan's `[EOA]` tag on a creation row confuses Q3 | Incorporated | 874c204 |
+| D1-10 | Minor | Lab asks recall of JSON-RPC method names | Incorporated | 874c204 (owner approved 5 Nov) |
 
 **Day 2**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
 | D2-1 | Major | 02-BF packs eight mechanisms into 50 min | Dry run | W14 |
-| D2-2 | Major | Signature order said to narrow signers | Listed | Notes only; hint is right (triage) |
-| D2-3 | Major | Wallet worked example omits the multisig part | Reject | R4: 06-BF:143 walks the witness before the lab |
-| D2-4 | Minor | SegWit vsize uses an undefined "base size", shown on a legacy tx | Listed | |
-| D2-5 | Minor | 06-BF's toy multisig spend is unsorted, against BIP 67 | Listed | With D2-2's bullet |
-| D2-6 | Minor | 05-BF says students will "spend from" a 2-of-3; the lab only reads one | Listed | |
-| D2-7 | Minor | Run sheet cites unadapted 01-BF, 03-BF as sources | Listed | Run-sheet line only; archiving the files is a cut |
-| D2-8 | Minor | Lab chain spends a coinbase after 10 blocks; 02-BF teaches 100 | Listed | Confirmed: 10 blocks (build-steps.sh:48); low value |
-| D2-9 | Minor | Hardened tick used before it is defined | Listed | Triage: not W4; a gap inside 05-BF |
+| D2-2 | Major | Signature order said to narrow signers | Incorporated | c671b2f |
+| D2-3 | Major | Wallet worked example omits the multisig part | Rejected | R4: 06-BF:143 walks the witness before the lab |
+| D2-4 | Minor | SegWit vsize uses an undefined "base size", shown on a legacy tx | Incorporated | 11796c0 |
+| D2-5 | Minor | 06-BF's toy multisig spend is unsorted, against BIP 67 | Incorporated | c671b2f |
+| D2-6 | Minor | 05-BF says students will "spend from" a 2-of-3; the lab only reads one | Incorporated | 9d4a283 |
+| D2-7 | Minor | Run sheet cites unadapted 01-BF, 03-BF as sources | Incorporated | 9eb91dd |
+| D2-8 | Minor | Lab chain spends a coinbase after 10 blocks; 02-BF teaches 100 | Incorporated | 874c204 |
+| D2-9 | Minor | Hardened tick used before it is defined | Incorporated | 9d4a283 |
 
 **Day 3**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
 | D3-1 | Blocker | 04-EF: 17 dense slides and an exercise in 50 min | Dry run | W14; 04-EF is a week 1 Q14 cut candidate |
-| D3-2 | Major | 01-EF's account diagram draws a balance change as a transfer | Listed | |
-| D3-3 | Major | Tokens Q3 needs an ERC-1967 slot Otterscan cannot show | Reject | R4: log and trace give High without the slot |
-| D3-4 | Major | 01-EF shows a 25-line contract before 04-EF teaches syntax | Covered | W4 |
-| D3-5 | Major | Anvil state lost on restart | Reject (R4) | Triage: README warns; day 10 does not depend on it |
-| D3-6 | Major | 01-EF has no Asks; notes empty on five slides | Covered | W8, W13 |
-| D3-7 | Minor | 04-EF: raw URLs, unprefixed keys, Anchor program ID | Listed | ID is Solana's System Program; needs a bib key |
-| D3-8 | Minor | TerraUSD cited although it is not on Ethereum | Listed | Scope note |
+| D3-2 | Major | 01-EF's account diagram draws a balance change as a transfer | Incorporated | a365425 |
+| D3-3 | Major | Tokens Q3 needs an ERC-1967 slot Otterscan cannot show | Rejected | R4: log and trace give High without the slot |
+| D3-4 | Major | 01-EF shows a 25-line contract before 04-EF teaches syntax | Incorporated | a365425 (W4) |
+| D3-5 | Major | Anvil state lost on restart | Rejected (R4) | Triage: README warns; day 10 does not depend on it |
+| D3-6 | Major | 01-EF has no Asks; notes empty on five slides | Incorporated | a365425 (W8, W13) |
+| D3-7 | Minor | 04-EF: raw URLs, unprefixed keys, Anchor program ID | Incorporated | 8eeb4c5 |
+| D3-8 | Minor | TerraUSD cited although it is not on Ethereum | Incorporated | 00bd6bf, ddb4726 |
 
 **Day 4**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D4-1 | Major | Three bridge taxonomies across slide, case and lab | Listed | Minor: labels differ, no answer changes |
-| D4-2 | Major | DEX lab hint confines to block 11; key wants block 10's approval | Listed | Major: add block 10 to hint 5 |
-| D4-3 | Major | 07-EF counts a DEX pool as a way funds "leave a chain" | Listed | Retitle |
+| D4-1 | Major | Three bridge taxonomies across slide, case and lab | Incorporated | 16f7d41, 874c204 |
+| D4-2 | Major | DEX lab hint confines to block 11; key wants block 10's approval | Incorporated | 874c204 |
+| D4-3 | Major | 07-EF counts a DEX pool as a way funds "leave a chain" | Incorporated | 49c8144 |
 | D4-4 | Major | Solana slides interrupt 08-EF | Dry run | Week 1 Q14's first cut candidates (08-EF :311, :343) |
-| D4-5 | Major | 03-EF: 15 topics, ERC-4337 and 2771 internals | Covered | Week 1 Q13 (two-path diagram, ERC names to notes); then dry run |
-| D4-6 | Minor | L2BEAT Stage 1: a council "forges a message" | Listed | Facts hold (L2BEAT, 29 Jan 2025); reword only |
+| D4-5 | Major | 03-EF: 15 topics, ERC-4337 and 2771 internals | Incorporated | 89c7c82 (week 1 Q13), 45d28ab; its timing waits on the dry run |
+| D4-6 | Minor | L2BEAT Stage 1: a council "forges a message" | Incorporated | 16f7d41 |
 | D4-7 | Minor | 03-EF likely overruns | Dry run | = D4-5, W14 |
-| D4-8 | Minor | No warning that class swaps revert | Reject (R2) | Owner, 1 Nov: "Keep as a slippage lesson"; the swap page explains a revert. Confirm the page says so |
+| D4-8 | Minor | No warning that class swaps revert | Rejected (R2) | Owner, 1 Nov: "Keep as a slippage lesson"; the swap page explains a revert |
 
 **Day 5**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D5-1 | Major | Pretest gates the Tron lab on rules items | Covered | Week 1 Q19 (two Tron items; session 8) |
+| D5-1 | Major | Pretest gates the Tron lab on rules items | Incorporated | 8ee08fb (week 1 Q19: q43, q44) |
 | D5-2 | Major | 01-PC packs Tron, Fabric and CBDCs into 50 min | Dry run | W14; CBDCs (:457) a cut candidate |
 | D5-3 | Major | Lab block underruns by about 90 min | Dry run | Verify the run sheet's arithmetic first |
-| D5-4 | Major | Query 5's signer contradicts "only the multisig owner can freeze USDT" | Listed | One worksheet line on the confirming key |
-| D5-5 | Major | HLF student mode overprovisions lanes | Reject | R4: day 5 runs the demo at capacity 1 |
-| D5-6 | Minor | 05-FO conflates CTRs with SARs | Listed | Needs a bib key for 31 CFR 1010.311 |
-| D5-7 | Minor | "Muxed address" unexplained on 04-FO | Listed | Triage: muxed is never explained |
-| D5-8 | Minor | Tron worksheet has no answer checks | Covered | P5, week 2 Q3 |
+| D5-4 | Major | Query 5's signer contradicts "only the multisig owner can freeze USDT" | Incorporated | 874c204 |
+| D5-5 | Major | HLF student mode overprovisions lanes | Rejected | R4: day 5 runs the demo at capacity 1 |
+| D5-6 | Minor | 05-FO conflates CTRs with SARs | Incorporated | 5a1afb7 |
+| D5-7 | Minor | "Muxed address" unexplained on 04-FO | Incorporated | 6cd7af7 |
+| D5-8 | Minor | Tron worksheet has no answer checks | Incorporated | 2999481 (self-checks, questions 6 and 12) |
 
 **Day 6**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D6-1 | Major | Run sheet says day 6 pretest items have not landed | Listed | Follow-ups, Quizzes (= A-5) |
-| D6-2 | Major | Bitcoin-trace Q10 asks about CoinJoin, taught on day 7 | Reject | R4: taught that morning (02-FO:53) |
-| D6-3 | Major | Worked example omits co-spends and peels | Covered | Week 2 Q2 |
-| D6-4 | Minor | 02-FO notes say it opens lesson ② | Covered | P11 |
-| D6-5 | Minor | A 2013 darknet theft case breaks 03-FO's flow | Owner | Challenge: lesson order; ask after the dry run |
-| D6-6 | Minor | Answers file has no "Meets:" and "Not yet:" lines | Listed | |
+| D6-1 | Major | Run sheet says day 6 pretest items have not landed | Incorporated | 9eb91dd |
+| D6-2 | Major | Bitcoin-trace Q10 asks about CoinJoin, taught on day 7 | Rejected | R4: taught that morning (02-FO:53) |
+| D6-3 | Major | Worked example omits co-spends and peels | Incorporated | 1255577 (week 2 Q2) |
+| D6-4 | Minor | 02-FO notes say it opens lesson ② | Incorporated | d39cd07 (P11) |
+| D6-5 | Minor | A 2013 darknet theft case breaks 03-FO's flow | Dry run | Owner question on lesson order, asked after the dry run |
+| D6-6 | Minor | Answers file has no "Meets:" and "Not yet:" lines | Incorporated | 1255577 |
 | D6-7 | Minor | 03-FO likely overruns | Dry run | P12, week 2 Q6 |
 
 **Day 7**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D7-1 | Major | Questions before the worked example; hints detached | Covered | P4, week 2 Q2 |
-| D7-2 | Major | "Toxic change" untaught | Covered | P2 |
-| D7-3 | Major | 07-FO's model note cites an XMR delisting for a BTC deposit | Listed | Minor: cut the clause |
-| D7-4 | Major | Rubric names stops J3 and the mixer; Q4 and the model note want J1 and J2 too | Listed | Fix with the week-2 lab session |
-| D7-5 | Minor | Mixer sweep Moderate in Q11, Low in Q12's table | Listed | |
-| D7-6 | Minor | 07-FO, 08-FO show "the lab's product" for topics the lab skips | Listed | 07-FO only; 08-FO already fixed (R1) |
+| D7-1 | Major | Questions before the worked example; hints detached | Incorporated | c4acbae |
+| D7-2 | Major | "Toxic change" untaught | Incorporated | b3940f2, c4acbae (P2) |
+| D7-3 | Major | 07-FO's model note cites an XMR delisting for a BTC deposit | Incorporated | b3940f2 |
+| D7-4 | Major | Rubric names stops J3 and the mixer; Q4 and the model note want J1 and J2 too | Incorporated | c4acbae |
+| D7-5 | Minor | Mixer sweep Moderate in Q11, Low in Q12's table | Incorporated | c4acbae |
+| D7-6 | Minor | 07-FO, 08-FO show "the lab's product" for topics the lab skips | Incorporated | b3940f2 (07-FO); 08-FO R1 |
 
 **Day 8**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
 | D8-1 | Blocker | Graded point 3 gives no code to read | Done | 0531a2b |
-| D8-2 | Major | Q1 and Q3 need the live 4byte.directory | Listed | Follow-ups, Labs |
-| D8-3 | Major | Snapshot truncation presented as chain opacity | Listed | |
+| D8-2 | Major | Q1 and Q3 need the live 4byte.directory | Incorporated | 8540e6e |
+| D8-3 | Major | Snapshot truncation presented as chain opacity | Incorporated | 8540e6e |
 | D8-4 | Major | Bybit and Kelp in one 2.5 h lab | Dry run | Then Owner (lab scenario); see C3 |
-| D8-5 | Major | 11-FO: decompiling, wash trading and a micro-lab in 50 min | Covered | Week 2 Q14; then dry run |
-| D8-6 | Minor | Safe's slot 0 cited as ERC-1967 | Reject | R4: the lab cites Safe's code, not ERC-1967 |
-| D8-7 | Minor | "Moderate to High", "Low to Moderate" | Covered | C1 |
-| D8-8 | Minor | 09-FO notes say "nobody reads code today" | Listed | |
-| D8-9 | Minor | Address poisoning's zero-value transfer unexplained | Listed | Source the mechanism first |
-| D8-10 | Minor | Cross-chain README says "scaffolding" | Listed | Follow-ups, Labs |
+| D8-5 | Major | 11-FO: decompiling, wash trading and a micro-lab in 50 min | Dry run | Week 2 Q14 kept the pairing "for now"; the micro-lab got its own 1325-1345 slot in c8f22c0 |
+| D8-6 | Minor | Safe's slot 0 cited as ERC-1967 | Rejected | R4: the lab cites Safe's code, not ERC-1967 |
+| D8-7 | Minor | "Moderate to High", "Low to Moderate" | Incorporated | 8d8e44f (11-FO and its bank). Still compound, held for the owner (week-2 answer keys stay as they are): cross-chain, final-trace, tron D9 and ether_evm answers, daily_d9, the week-two check, challenge c16, 08-FO synthesis |
+| D8-8 | Minor | 09-FO notes say "nobody reads code today" | Incorporated | 5b9153e |
+| D8-9 | Minor | Address poisoning's zero-value transfer unexplained | Incorporated | 5b9153e |
+| D8-10 | Minor | Cross-chain README says "scaffolding" | Incorporated | 8540e6e |
 
 **Day 9**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D9-1 | Major | 14-FO rates a sweep High; the lab rates it Moderate | Listed | Follow-ups, Lessons |
-| D9-2 | Major | 13-FO taught before 12-FO but cites it as past | Covered | P11, week 2 Q5 |
-| D9-3 | Major | Q14-Q15 force an exchange deposit into an AML typology list | Listed | Owner approved 5 Nov: accept "no typology fits: a plain deposit address" |
-| D9-4 | Major | `d9.sql`'s labels view drops `as_of` | Listed | Minor; needs a lab test |
-| D9-5 | Minor | Durable nonce, Tornado staging unexplained | Covered | P2, week 2 Q10 |
-| D9-6 | Minor | Diamond table uses "Observed", "Quote the FBI" | Covered | C1, P7 |
-| D9-7 | Minor | No debrief in the day-9 answers | Covered | P3, week 2 Q1 |
+| D9-1 | Major | 14-FO rates a sweep High; the lab rates it Moderate | Incorporated | d5c18b3 |
+| D9-2 | Major | 13-FO taught before 12-FO but cites it as past | Incorporated | c8f22c0, 9f22f50 (week 2 Q5: 12-FO first) |
+| D9-3 | Major | Q14-Q15 force an exchange deposit into an AML typology list | Incorporated | 2999481 (owner approved 5 Nov) |
+| D9-4 | Major | `d9.sql`'s labels view drops `as_of` | Incorporated | 2999481 |
+| D9-5 | Minor | Durable nonce, Tornado staging unexplained | Incorporated | eac7131 (week 2 Q10) |
+| D9-6 | Minor | Diamond table uses "Observed", "Quote the FBI" | Incorporated | 5e2c789, eac7131 (C1) |
+| D9-7 | Minor | No debrief in the day-9 answers | Incorporated | 2999481 (week 2 Q1) |
 
 **Day 10**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| D10-1 | Blocker | Oral explanations do not fit | Owner | C4; triage: real above about 18 students |
-| D10-2 | Blocker | Key says Q is closer to the quote; P is | Listed | Follow-ups, Labs |
-| D10-3 | Major | Written post-test marking does not fit lunch | Owner | = A-2, C4 |
-| D10-4 | Major | Case file omits the OTC desk's 1.5% fee | Reject | R4: the fee is withheld on purpose |
+| D10-1 | Blocker | Oral explanations do not fit | Incorporated | Owner, 4 Nov: 16 students, two instructors; two assessors hear 16 by 1600 |
+| D10-2 | Blocker | Key says Q is closer to the quote; P is | Incorporated | 44efa0e |
+| D10-3 | Major | Written post-test marking does not fit lunch | Incorporated | = A-2: resolved by the class size of 16 |
+| D10-4 | Major | Case file omits the OTC desk's 1.5% fee | Rejected | R4: the fee is withheld on purpose |
 | D10-5 | Major | Review session mixes revision and four resubmissions | Dry run | Run sheet confirmed |
-| D10-6 | Minor | Key deducts for oral explanations that carry no grade | Listed | Reword as feedback |
-| D10-7 | Minor | Challenge bank has nothing for week 2 | Covered | Week 2 Q20 (= A-10) |
-| D10-8 | Minor | Certificate mint needs day 3's Anvil running | Reject (R4) | Triage D3-5: the mint uses frozen addresses |
+| D10-6 | Minor | Key deducts for oral explanations that carry no grade | Incorporated | 44efa0e |
+| D10-7 | Minor | Challenge bank has nothing for week 2 | Incorporated | 6197242 (week 2 Q20); freezes and Tron sweeps not added, owner question 6 in `gemini-audit/triage.md` |
+| D10-8 | Minor | Certificate mint needs day 3's Anvil running | Rejected (R4) | Triage D3-5: the mint uses frozen addresses |
 
 **Assessments**
 
 | ID | Sev | Finding, short | Route | Link or reason |
 |---|---|---|---|---|
-| A-1 | Blocker | Post-test passable on multiple choice alone | Owner | C5; the certificate also needs four lab Meets |
-| A-2 | Blocker | Written marking does not fit day 10 | Owner | C4 |
-| A-3 | Major | Week 2 dailies test worked examples routed students skipped | Reject | R4: no skipped worked example is tested |
-| A-4 | Major | p26 indexed to day 6, needs day 7 | Listed | Follow-ups, Quizzes |
-| A-5 | Major | Run sheet says pretest week 2 is missing | Listed | = D6-1 |
-| A-6 | Major | Day 9 concepts get no recall before the post-test | Covered | Week 2 Q19 |
-| A-7 | Minor | p6's key wants "Observed" | Covered | C1; week 1 Q5 dropped the word from pre q9(c), check p6 |
-| A-8 | Minor | daily_d6 q5 cites an instructor-only answers file | Listed | Cite the worksheet, not the key |
-| A-9 | Minor | Day 2's wallets and multisig have no summative item | Owner | Challenge; check `docs/alignment-map.md` first |
-| A-10 | Minor | Challenge bank stops before days 7-9 | Covered | Week 2 Q20 |
+| A-1 | Blocker | Post-test passable on multiple choice alone | Rejected (R2) | Owner, 4 Nov: "No change"; the certificate also needs four lab Meets |
+| A-2 | Blocker | Written marking does not fit day 10 | Incorporated | Owner, 4 Nov: 16 students, two instructors: 384 minutes of marking, 192 each, inside about 210 |
+| A-3 | Major | Week 2 dailies test worked examples routed students skipped | Rejected | R4: no skipped worked example is tested |
+| A-4 | Major | p26 indexed to day 6, needs day 7 | Incorporated | e6987e0 |
+| A-5 | Major | Run sheet says pretest week 2 is missing | Incorporated | 9eb91dd |
+| A-6 | Major | Day 9 concepts get no recall before the post-test | Incorporated | c96c271 (week 2 Q19) |
+| A-7 | Minor | p6's key wants "Observed" | Incorporated | e59f56d |
+| A-8 | Minor | daily_d6 q5 cites an instructor-only answers file | Incorporated | 9eb91dd |
+| A-9 | Minor | Day 2's wallets and multisig have no summative item | Incorporated | e6987e0 (p43); the Notion Role Concepts entry is the owner's (`docs/follow-ups.md`) |
+| A-10 | Minor | Challenge bank stops before days 7-9 | Incorporated | 6197242 (week 2 Q20) |
 
 ## 5. The plan
 
@@ -301,4 +303,4 @@ lab on that list, then decide the cuts together (week 1 Q14, week 2 Q6). Cutting
 
 **Close** (backlog session 9). Every row in section 4 ends Done, Incorporated (with its commit) or Rejected (with
 its reason); rows waiting on the dry run say so. Then this file is history: the open work lives on
-`docs/follow-ups.md`.
+`docs/follow-ups.md`. **Done 5 Nov 2026** (see section 1).

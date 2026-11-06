@@ -6,13 +6,16 @@ ones opened at e764798, not Gemini's; where its lines were wrong, the note says 
 `docs/analysis/audit-plan.md` marked Verify, and a spot-check of its 24 Covered rows, follow in
 "The Verify rows" below.
 
+**Status, 5 Nov 2026 (backlog session 9):** every confirmed or listed row now names the commit that fixed it, or says
+why it is still open (an owner decision, or the timed dry run). This file is closed; it stays as history.
+
 | ID | Verdict | Who acts | Where it went |
 |---|---|---|---|
 | A-1 | Partly | Owner (already decided) | Below |
-| A-2 | Confirmed | Owner (open question on the run sheet) | Below |
-| D10-1 | Partly | Owner (class size) | Below |
-| D10-2 | Confirmed | Fix | `docs/follow-ups.md`, Labs |
-| D8-1 | Confirmed | Owner (lab scenario) | Put to the owner, 4 Nov |
+| A-2 | Confirmed | Owner (class size) | Resolved 4 Nov: 16 students |
+| D10-1 | Partly | Owner (class size) | Resolved 4 Nov: 16 students |
+| D10-2 | Confirmed | Fix | Fixed in 44efa0e |
+| D8-1 | Confirmed | Owner (lab scenario) | Owner: "Yes, add code"; fixed in 0531a2b |
 | D8-2 | Confirmed | Fix | Fixed in 8540e6e |
 | D9-1 | Confirmed | Fix | Fixed in d5c18b3 |
 | D2-2 | Partly | Fix (notes only) | Fixed in c671b2f |
@@ -28,7 +31,8 @@ on all four graded week-2 lab points (`quizes/run-sheet/RUN_SHEET.md:255-256`; `
 those are working-skill traces. So "zero on every working-skill trace" cannot certify; zero on the written post-test
 items can. The missing written minimum is the owner's standing decision; Gemini's case is a Challenge to it.
 
-**A-2: Confirmed.** At 20 students, 12 written answers each at the README's two minutes is 480 minutes of marking,
+**A-2: Confirmed (resolved 4 Nov: the class is 16 students with two instructors; 16 × 12 × 2 = 384 minutes, 192
+each, inside about 210).** At 20 students, 12 written answers each at the README's two minutes is 480 minutes of marking,
 240 per instructor with two, against about 210 minutes from lunch to the end of the final trace (1145 to 1515)
 (`quizes/posttest/README.md:35-36`; `RUN_SHEET.md:249-253`). Two instructors fit about 17 students. Gemini's "12
 instructor-hours" assumes 30 students and more items than the bank has. The run sheet's open questions already ask
@@ -42,11 +46,11 @@ students, and smaller than Gemini says.
 
 **D10-2: Confirmed.** `final-trace/quizes/INSTRUCTOR_ANSWERS.md:67` says students follow Q because its amount is
 closer to the gross quote; `facts.json:1356-1358` puts P (168,435.00) closer to the 171,000.00 quote than Q
-(168,217.27).
+(168,217.27). Fixed in 44efa0e: the key now says P is nearer still, and came minutes after T4, Q hours after.
 
 ## Week 2 labs and lessons
 
-**D8-1: Confirmed.** The cross-chain lab's questions 1 to 4 and graded question 17 ask what the function at
+**D8-1: Confirmed (owner, 4 Nov: "Yes, add code"; fixed in 0531a2b).** The cross-chain lab's questions 1 to 4 and graded question 17 ask what the function at
 `0x96221423…` does, who could call it and what it changed, but the only reading of the code is the security firm's
 conclusion, written into the page (`dynamic-labs/cross-chain/static/lab/index.html:81-83`, `:117-127`, `:199-204`).
 `d8.sql` loads traces, selectors, logs and labels, no source, bytecode or storage read, and day 8's lessons and the
@@ -175,7 +179,7 @@ heaviest is D4-2.
   `INSTRUCTOR_ANSWERS_D9.md:58-59`). Regenerate the fallback and run the Tron lab test. Fixed in 2999481.
 - **D10-6: Listed** (Minor). final-trace's key says "Mark down" for faults in the oral explanation
   (`final-trace/quizes/INSTRUCTOR_ANSWERS.md:34`, `:61`), which carries no grade (`RUN_SHEET.md:258-261`). Reword as
-  feedback.
+  feedback. Fixed in 44efa0e.
 
 ### Quizzes and the run sheet
 
@@ -191,13 +195,14 @@ heaviest is D4-2.
 - **D1-7: Listed** (Minor). 02-IN has no level-3 headings, so nothing stacks, but `slide-level: 3` (`02-IN:15`)
   renders content slides as `title-slide … center`, centred against the theme's `center: false`
   (`_extensions/aci/_extension.yml:52`). Set 2 and check in a browser; 03-IN and 05-IN declare 3 too.
+  Fixed in e11f4fe: 02-IN and 05-IN set to 2 and checked at 1280x800; 03-IN keeps 3 for its real `###` sub-slides.
 
 ### Owner
 
 - **D1-3: Owner** (Minor, not Major). `RUN_SHEET.md:80-81` starts the `exercises` and `bitcoin` stacks for The
   Insider (15 min) and terminal orientation (10 min). Both openers are settled (`docs/build-spec.md:62`: R2 for
   Gemini's cut). The real point is elsewhere: `terminal.html:13` says "From day 2 you read output in a terminal",
-  but no later lab uses one. Question 1 below.
+  but no later lab uses one. Question 1 below. *Owner, 4 Nov 2026: not approved; no change.*
 
 ### Rejected
 
@@ -226,7 +231,7 @@ heaviest is D4-2.
   "the most likely AML typology", 12-FO's table (`12-FO:64-71`) has no plain-deposit row, and the key's own evidence
   calls the address a plain Binance deposit address (`INSTRUCTOR_ANSWERS_D9.md:116`). Question 3 below. Fixed in 2999481.
 - **D10-5** (Dry run): the facts hold, a 50-minute review session that is also the last chance to resubmit
-  (`RUN_SHEET.md:252`, `:62-64`).
+  (`RUN_SHEET.md:252`, `:62-64`). Open: waits on the timed dry run.
 
 ## The Covered rows, spot-checked
 
@@ -245,8 +250,11 @@ All 24 read against the pattern each names: 16 match. Changes:
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
   `:276` and the 08-FO synthesis `:68`, `:115` (11-FO:305 and the 11-FO bank `:276` fixed in 8d8e44f). D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
   01-CM have 0 Asks (fixed in f2e82dc, 3815c66). D5-8: week-2 Q3 should name the Tron page if it gets a self-check (it did: questions 6 and 12, 2999481). D10-7 and A-10: Gemini's
-  challenge topics (cross-chain timing, freezes, Tron sweeps) go to the owner beside week-2 Q20. D8-5: give
-  Gemini's alternative (the micro-lab as the afternoon opener) beside Q14.
+  challenge topics (cross-chain timing, freezes, Tron sweeps) go to the owner beside week-2 Q20. Q20 was approved
+  and done in 6197242 (c15 mixer timing, c16 the code read, c17 chain-hopping crossings); freezes and Tron sweeps
+  were not added, since the bank is at its 15-item cap: open, question 6 below. D8-5: give Gemini's alternative
+  (the micro-lab as the afternoon opener) beside Q14. Q14 kept the pairing "for now"; the micro-lab now opens the
+  afternoon lab block, 1325-1345, in c8f22c0, which is Gemini's alternative.
 
 ## Questions for the owner
 
@@ -255,7 +263,7 @@ All 24 read against the pattern each names: 16 match. Changes:
    start, keeping The Insider as settled: ten minutes back for the explorer worksheet.
 2. **D1-4. An Ethereum transaction before the explorer lab:** 02-IN's only worked example is Bitcoin, so students
    first meet Otterscan's nonce, gas and base fee in the lab. **Recommend one 02-IN slide** reading the lab's block-3
-   transaction in Otterscan.
+   transaction in Otterscan. *Owner, 4 Nov 2026: approved.* Fixed in 765cd58.
 3. **D9-3. A plain deposit address in a typology question:** Q14-Q15 make students pick an AML typology for what the
    key's own evidence calls a plain Binance deposit address. **Recommend accepting "no typology fits: a plain deposit
    address"**, with evidence for and against, on the worksheet and in the key, leaving 12-FO's table as is. *Owner, 5 Nov 2026: approved ("Yes, accept it").* Fixed in 2999481.
@@ -265,4 +273,8 @@ All 24 read against the pattern each names: 16 match. Changes:
    program. *Owner, 5 Nov 2026: approved ("Yes, drop the names").* Fixed in 874c204.
 5. **A-9. Day 2 has no summative item:** no Role Concept covers wallets (`docs/alignment-map.md:103`). **Recommend
    adding a wallets and key custody concept** to the Notion list, with one multiple-choice post-test item (what an
-   xpub links).
+   xpub links). *Owner, 4 Nov 2026: approved.* Post-test p43 added in e6987e0; the Notion list is the owner's to edit
+   (`docs/follow-ups.md`, Quizzes).
+6. **D10-7, A-10. Challenge items on freezes and Tron sweeps:** week-2 Q20 added days 7-9 items (6197242) and the
+   bank is at its 15-item cap. **Recommend no more items until the dry run** shows which challenge items assessors
+   actually reach; c17 already covers cross-chain timing.
