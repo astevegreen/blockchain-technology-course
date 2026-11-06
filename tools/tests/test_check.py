@@ -122,8 +122,19 @@ class Planning(unittest.TestCase):
         lesson = "blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd"
         names, _ = self.names([lesson])
         self.assertEqual(names, ["lesson lint", "render 02-IN-blockchain_at_a_glance.qmd",
-                                 "glossary slide index", "mind-map links",
+                                 "glossary slide index", "mind-map links", "lesson pointers",
                                  "pretest", "post-test", "challenge bank"])
+
+    def test_run_sheet_change_checks_lesson_pointers(self) -> None:
+        names, _ = self.names(["quizes/run-sheet/RUN_SHEET.md"])
+        self.assertIn("lesson pointers", names)
+
+    def test_a_wrong_pointer_fails_and_topic_notes_do_not(self) -> None:
+        out = "note: 03-FO.qmd:9: `xpub` not shown in 02-BF\nlessons/a/01-FO.qmd:12: day 6 (02-FO): run sheet says day 3\n"
+        with unittest.mock.patch.object(check, "run", return_value=(1, out)):
+            self.assertEqual(check.lesson_pointers(), ["lessons/a/01-FO.qmd:12: day 6 (02-FO): run sheet says day 3"])
+        with unittest.mock.patch.object(check, "run", return_value=(0, "")):
+            self.assertEqual(check.lesson_pointers(), [])
 
     def test_quiz_bank_change(self) -> None:
         bank = "quizes/quiz_json/bitcoin_01-BF-bitcoin_origins_and_mechanics-quiz-bank.json"

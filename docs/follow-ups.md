@@ -50,8 +50,5 @@ slide index), which is never listed here.
 
 ## Tooling and rules
 
-- `tools/pointer_check.py` exits 0 on today's tree (5 Nov 2026) but is not yet in `tools/check.py`. Add it to
-  `plan_checks` as a failing check whenever a lesson changes; its "note:" lines stay advice. That change is a rail:
-  run `second-look.mjs` and follow the rail audit. (4 Nov 2026, week-1 audit W2 pointer check)
 
 ## Notion and documents

@@ -324,6 +324,15 @@ def run_verifier(script: str) -> list[str]:
     return [f"{script} failed", *[f"  {line.strip()}" for line in (keep or tail(out, 10))[:10]]]
 
 
+def lesson_pointers() -> list[str]:
+    """Every "day N", "lesson ③" and "(NN-XX)" pointer in a taught lesson names the right lesson (pointer_check.py)."""
+    code, out = run([sys.executable, str(REPO / "tools" / "pointer_check.py")])
+    if code == 0:
+        return []
+    found = [line.strip() for line in out.splitlines() if line.strip() and not line.startswith("note:")]
+    return found or tail(out)
+
+
 def bundle_quizzes() -> list[str]:
     with tempfile.TemporaryDirectory(prefix="quiz-bundle-check.") as tmp:
         code, out = run([sys.executable, str(REPO / "quizes" / "build_quiz_bank_bundle.py"),
@@ -491,6 +500,8 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
         plan.checks.append(Check("glossary", validate_glossary))
     if lessons_changed or touched("blockchain-course/assets/mindmap.html"):
         plan.checks.append(Check("mind-map links", lambda: as_notes(mindmap_links())))
+    if lessons_changed or touched("quizes/run-sheet/") or touched("tools/pointer_check.py"):
+        plan.checks.append(Check("lesson pointers", lesson_pointers))
 
     bibs = sorted(f.relative_to(REPO).as_posix() for f in (COURSE / "lessons" / "references").glob("*.bib"))
     bibs = bibs if everything else [f for f in present if f in bibs]
