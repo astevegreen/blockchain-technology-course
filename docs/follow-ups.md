@@ -42,10 +42,5 @@ slide index), which is never listed here.
   bridge lab build)
 
 ## Tooling and rules
-- `dynamic-labs/regression-tests/automated/ethereum_lab/run.sh --fresh-start` starts the suite about a second after
-  the lane service starts, so setUpClass gets a 502 from `/claims` and runs 0 tests; a rerun without the flag
-  passed 9 of 9. Make it wait for the lane service to answer before the tests start. (6 Nov 2026, heimdall-rs
-  lab test run)
-
 
 ## Notion and documents

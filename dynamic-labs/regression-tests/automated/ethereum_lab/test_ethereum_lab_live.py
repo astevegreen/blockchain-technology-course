@@ -73,6 +73,14 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         finally:
             probe_session.close()
         login_instructor(cls.instructor_session, cls.base_url)
+        # Right after a fresh start the router answers before the lane service
+        # does, so the claims API returns 502 for a while.
+        wait_for_http(
+            cls.instructor_session,
+            f"{cls.base_url}/api/ethereum/claims",
+            lambda resp: resp.status_code == 200,
+            description="ethereum claims API",
+        )
         if os.environ.get("ETHEREUM_REGRESSION_RELEASE_EXISTING_CLAIMS", "0") == "1":
             claims = list_claims(cls.instructor_session, base_url=cls.base_url).get("claims", [])
             for entry in claims:
