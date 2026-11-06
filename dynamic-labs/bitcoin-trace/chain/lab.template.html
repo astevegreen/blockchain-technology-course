@@ -23,9 +23,9 @@ pages</a>: they show the same transactions, so every question has the same answe
 <h2>Where to start</h2>
 <ul>
 <li>Your instructor tells you where to start: the worked example, or straight at the problem.</li>
-<li>You may always do the worked example first. It shows you the explorer and one row of a trace.</li>
+<li>You may always do the worked example first. It shows you the explorer and two rows of a trace.</li>
 <li>Then the questions: part 1 (questions 1 to 4), part 2 (questions 5 to 9) and part 3 (questions 10
-to 12).</li>
+to 13).</li>
 <li>The challenge at the end is optional.</li>
 </ul>
 
@@ -46,7 +46,7 @@ Taproot (P2TR) and <code>3</code> is P2SH <a href="#s6">[6]</a> <a href="#s7">[7
 <li>Use a window at least 800 pixels wide. A narrower one shows a different, mobile page.</li>
 </ul>
 
-<h2>The questions you answer</h2>
+<h2>How you answer</h2>
 <p>Some answers are facts the chain records: an address, an amount, a block. Others are judgments
 about what the facts mean. Give each judgment a confidence word <a href="#s2">[2]</a>:</p>
 <table>
@@ -60,12 +60,83 @@ tag.</td></tr>
 <p class="hint">Independent means a different kind of evidence, not a second look at the same
 transaction. Never give a percentage.</p>
 
-<p>Your trace has this shape: one row for each judgment. The worked example shows a finished row.</p>
+<p>Your trace has this shape: one row for each judgment. The worked example below shows two finished rows.</p>
 <table class="grid">
 <tr><th>Step</th><th>What you see</th><th>Heuristic</th><th>Could be wrong if</th><th>Confidence</th></tr>
 <tr><td>1</td><td></td><td></td><td></td><td></td></tr>
 </table>
 
+<h2>Worked example: the victims' payments</h2>
+<p>This follows the ransom into the ransom addresses, two transactions before your trail starts. It
+shows you the explorer and two finished rows: reading one transaction, then following its change one hop.
+Question 1 onward use the same pages.</p>
+
+<h3>Find it</h3>
+<ol>
+<li>Open the <a href="../mempool/">explorer</a>, paste <code>{{addr.R1}}</code> into the search box and
+press Enter. Its page lists two transactions.</li>
+<li>Open the older one, in block {{tx.v1.height}}. Its ID is <code>{{tx.v1.txid}}</code>.</li>
+</ol>
+
+<h3>Read it</h3>
+<table>
+<tr><th>Input</th><td><code>{{tx.v1.in.0.address}}</code>, {{tx.v1.in.0.btc}} BTC, type P2WPKH</td></tr>
+<tr><th>Output {{tx.v1.by.R1.n}}</th><td><code>{{tx.v1.by.R1.address}}</code>, {{tx.v1.by.R1.btc}} BTC</td></tr>
+<tr><th>Output {{tx.v1.by.F_v1.n}}</th><td><code>{{tx.v1.by.F_v1.address}}</code>, {{tx.v1.by.F_v1.btc}} BTC</td></tr>
+<tr><th>Fee</th><td>{{tx.v1.fee}} sats, for a transaction of {{tx.v1.vsize}} vB: about {{tx.v1.feerate}} sats per
+vB</td></tr>
+</table>
+<ul>
+<li><b>Outputs, not balances.</b> Bitcoin records outputs, each an amount locked to an address, and a
+transaction spends whole outputs <a href="#s3">[3]</a>. The input here was one {{tx.v1.in.0.btc}} BTC
+output. {{tx.v1.by.R1.btc}} BTC went to the ransom address; the rest, less the fee, went back to the
+payer.</li>
+<li><b>The fee.</b> No output records the fee: it is what the inputs hold beyond the outputs,
+inputs minus outputs leaves {{tx.v1.fee}} sats
+<a href="#s3">[3]</a>.</li>
+<li><b>Which output is the ransom?</b> The ransom output is a round number, 1.2 BTC; the other is not. Both
+addresses are the same type. One clue, so the judgment is below.</li>
+</ul>
+<table class="grid">
+<tr><th>Step</th><th>What you see</th><th>Heuristic</th><th>Could be wrong if</th><th>Confidence</th></tr>
+<tr><td>0</td><td>The victim's payment pays {{tx.v1.by.R1.btc}} BTC to the ransom address and
+{{tx.v1.by.F_v1.btc}} BTC to a new address</td><td>Change: round amount beside an un-round one
+<a href="#s4">[4]</a> <a href="#s5">[5]</a></td><td>The payer chose an un-round amount for the ransom, or
+both amounts are round to the payer</td><td>Low</td></tr>
+</table>
+<p>Low, because one clue alone rates Low: the amount, with nothing else to confirm it.</p>
+
+<h3>Follow the change one hop</h3>
+<ol start="3">
+<li>On the payment's page, open the change output, <code>{{addr.F_v1}}</code>. Its page shows it spent
+once, in block {{tx.v2.height}}: transaction <code>{{tx.v2.txid}}</code>.</li>
+<li>That transaction spends the change alone. It pays {{tx.v2.by.R2.btc}} BTC to the second ransom
+address, <code>{{addr.R2}}</code>, and {{tx.v2.by.F_v2.btc}} BTC to a new address. In this invented case
+the course faucet paid both ransoms (the note at the top), so one wallet paid both; two real victims would
+not share one.</li>
+</ol>
+<ul>
+<li><b>A peel hop.</b> A small amount is paid away, the peel, and the rest rolls on to a new address, the
+change, which pays again <a href="#s4">[4]</a>. The peel here is the rounder amount ({{tx.v2.by.R2.btc}}
+against {{tx.v2.by.F_v2.btc}}). All three addresses are P2WPKH, so type tells them apart no better than
+in row 0.</li>
+<li><b>What the row rests on.</b> You opened this transaction only because row 0 called its input the
+change. If row 0 is wrong, this row is wrong too.</li>
+</ul>
+<table class="grid">
+<tr><th>Step</th><th>What you see</th><th>Heuristic</th><th>Could be wrong if</th><th>Confidence</th></tr>
+<tr><td>1</td><td>Row 0's change is spent alone: {{tx.v2.by.R2.btc}} BTC to the second ransom address and
+{{tx.v2.by.F_v2.btc}} BTC to a new address</td><td>Peel chain: the peel is paid away, the change rolls on
+<a href="#s4">[4]</a>; change by the rounder amount <a href="#s5">[5]</a></td><td>Row 0's change call is
+wrong, or the payer chose a rounder amount for its change</td><td>Low</td></tr>
+</table>
+<p>Low twice over: the amount is again the only clue, and the row stands on row 0, itself Low. A row
+cannot be surer than the call it stands on. Your trail does not need these rows. It starts at the ransom addresses, but
+the rows show the format and the two moves you repeat: read a transaction, then follow its change into
+the next. Back on the first ransom address's page, the newer transaction spends it together with the second
+ransom address: that is question 1.</p>
+
+<h2>The questions</h2>
 <h3>Part 1: the ransom addresses</h3>
 <p>The victims paid two ransom addresses. Victim 1 paid
 <code>{{addr.R1}}</code>. Victim 2 paid <code>{{addr.R2}}</code>. Call the transaction that spends
@@ -104,51 +175,13 @@ could make it wrong, and how would you check? Give your confidence.</li>
 <li>T6's single output is spent in one transaction, T7. How many inputs and outputs does T7 have?
 What does its shape suggest about the wallet that holds the funds? Give your confidence, and say why
 the trace stops here.</li>
-<li>Write one or two sentences an agent could read: where the ransom went, how sure you are, and what
-your trace does not show.</li>
+<li>Now trace backward, as the lesson's Mt. Gox case does. Start at the peel from T5, where T6 swept
+it, and walk back input by input: which transaction paid it, what did that transaction spend, and so on,
+until you reach T4. Does walking back settle which of T4's outputs was the change? Write the row, with your
+confidence.</li>
+<li>Write one sentence that states what your trace shows: where the ransom went, how sure you are, and
+what the trace does not show.</li>
 </ol>
-
-<h2>Worked example: the first victim's payment</h2>
-<p>This follows the ransom into the first ransom address, a transaction before your trail starts. It
-shows you the explorer and one finished row. Question 1 onward use the same pages.</p>
-
-<h3>Find it</h3>
-<ol>
-<li>Open the <a href="../mempool/">explorer</a>, paste <code>{{addr.R1}}</code> into the search box and
-press Enter. Its page lists two transactions.</li>
-<li>Open the older one, in block {{tx.v1.height}}. Its ID is <code>{{tx.v1.txid}}</code>.</li>
-</ol>
-
-<h3>Read it</h3>
-<table>
-<tr><th>Input</th><td><code>{{tx.v1.in.0.address}}</code>, {{tx.v1.in.0.btc}} BTC, type P2WPKH</td></tr>
-<tr><th>Output {{tx.v1.by.R1.n}}</th><td><code>{{tx.v1.by.R1.address}}</code>, {{tx.v1.by.R1.btc}} BTC</td></tr>
-<tr><th>Output {{tx.v1.by.F_v1.n}}</th><td><code>{{tx.v1.by.F_v1.address}}</code>, {{tx.v1.by.F_v1.btc}} BTC</td></tr>
-<tr><th>Fee</th><td>{{tx.v1.fee}} sats, for a transaction of {{tx.v1.vsize}} vB: about {{tx.v1.feerate}} sats per
-vB</td></tr>
-</table>
-<ul>
-<li><b>Outputs, not balances.</b> Bitcoin records outputs, each an amount locked to an address, and a
-transaction spends whole outputs <a href="#s3">[3]</a>. The input here was one {{tx.v1.in.0.btc}} BTC
-output. {{tx.v1.by.R1.btc}} BTC went to the ransom address; the rest, less the fee, went back to the
-payer.</li>
-<li><b>The fee.</b> No output records the fee: it is what the inputs hold beyond the outputs,
-inputs minus outputs leaves {{tx.v1.fee}} sats
-<a href="#s3">[3]</a>.</li>
-<li><b>Which output is the ransom?</b> The ransom output is a round number, 1.2 BTC; the other is not. Both
-addresses are the same type. One clue, so the judgment is below.</li>
-</ul>
-<table class="grid">
-<tr><th>Step</th><th>What you see</th><th>Heuristic</th><th>Could be wrong if</th><th>Confidence</th></tr>
-<tr><td>0</td><td>The victim's payment pays {{tx.v1.by.R1.btc}} BTC to the ransom address and
-{{tx.v1.by.F_v1.btc}} BTC to a new address</td><td>Change: round amount beside an un-round one
-<a href="#s4">[4]</a> <a href="#s5">[5]</a></td><td>The payer chose an un-round amount for the ransom, or
-both amounts are round to the payer</td><td>Low</td></tr>
-</table>
-<p>Low, because one clue alone rates Low: the amount, with nothing else to confirm it. Your trail does
-not need this row. It starts at the ransom addresses, but the row shows the format. Back on the address
-page, the newer transaction spends the ransom address together with the second one: that is question
-1.</p>
 
 <h2>The problem</h2>
 <p>Answer the questions above. These hints say where to look.</p>
@@ -185,19 +218,19 @@ positive is a CoinJoin <a href="#s9">[9]</a>; day 7 teaches how to spot one.</li
 <li><b>A batch.</b> A service often pays many customers in one transaction, one output each, from a
 single input <a href="#s10">[10]</a>. Peel chains have two outputs. Ask who else the funds went to,
 and whether you could name any of them. Naming a service from the chain alone is attribution, later in day 6.</li>
+<li><b>Backward.</b> When forward stops at two look-alike outputs, start where the money ended and work
+back <a href="#s5">[5]</a>. Each step back is a spend the chain records. Ask which steps are the record and
+which are still your guess.</li>
 <li><b>The sentence.</b> Bottom line first, in plain English, with a confidence word. Say plainly what
 the chain does not show.</li>
 </ol>
 
 <h2>Challenge</h2>
-<p>Optional, for early finishers. Parts e and f each have a flag: an address or an amount you find on
+<p>Optional, for early finishers. Parts d and e each have a flag: an address or an amount you find on
 the chain. Type a flag in its box to check it.
 The page holds only a fingerprint of each flag, not the flag, and nothing is sent or graded. Your instructor
 has the flags.</p>
 <ol type="a">
-<li>Start at the peel you found in question 9 and walk backward, input by input, to the ransom
-addresses. At which hops did you need a change guess? Which part of the trail stands on the chain's
-record alone, and what does that still not show about who controls it?</li>
 <li>T4 has an output that was never spent. Give two explanations. What would you do to tell them apart,
 and what would change your confidence?</li>
 <li>In T7, which output is the change? Which clues point to it and which are no help, given how many

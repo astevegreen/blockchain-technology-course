@@ -183,7 +183,7 @@ class BitcoinTraceLiveRegressionTests(unittest.TestCase):
         self.assertGreater(tx["height"], TX["t1"]["height"])
 
     def test_challenge_flags_are_on_the_decoy_and_the_page_holds_only_their_hashes(self) -> None:
-        # Part e: the round output of X0's co-spend with Y is the payment; part f: the un-round one is the change.
+        # Part d: the round output of X0's co-spend with Y is the payment; part e: the un-round one is the change.
         by = TX["tx"]["by"]
         self.assertTrue(is_round(by["SHOP"]["sats"]))
         self.assertFalse(is_round(by["Z"]["sats"]))

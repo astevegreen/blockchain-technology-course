@@ -16,6 +16,22 @@ supports. A student who gives a different confidence with a reason the scale sup
 label) is Low and clues from one transaction stop at Moderate, so a higher word on those is wrong, whatever the
 reason.
 
+It is **Meets** or **Not yet**.
+
+**Meets** when the trace does all four:
+
+1. Follows the trail from the ransom addresses through T1 to T5 to the sweep T6 and the batch T7, and says it
+   stops there, at the first service, because the next hops belong to the service's customers.
+2. Gives each row its heuristic (co-spend, change clues, peel chain, sweep, batch) and a known false positive:
+   a CoinJoin for each co-spend, a wallet habit for each change clue, exchange withdrawals for the peel chain.
+3. Gives each judgment a confidence the scale supports: Moderate at most for the co-spends and for clues from
+   one transaction, Low for the amount alone at T5, and T4's change marked **undetermined**, with the spent
+   output followed as a practical choice, Low.
+4. Has no High anywhere, no percentage, and names no service or person.
+
+**Not yet** when the trace follows X0 or Y as the ransom's trail, calls T4's change as a finding, gives High to
+any link, gives a percentage, or names the service or the ransom's owner from the chain.
+
 Scale used (lesson 02-FO, day 6 ①): Low is one clue, amount, timing or behavior alone, or an unverified label.
 Moderate is one strong line of evidence, or several clues that all come from one transaction, with a known false
 positive that may apply. High is two or more independent kinds of evidence with no known failure. Clues from one
@@ -36,15 +52,16 @@ transaction are one kind of evidence, so they stop at Moderate.
 | 9 | T5 (`3782b312…8320ec`, block 24): `bc1ql7wgq9ne3py6huaxead29m0wky3zzfdzm8rdpd` (0.05000000 BTC, a round amount) is the peel; `bc1qxqzs958pf9xgp0q36y8lhqfmef40kut90zt4vj` (0.26740923 BTC) is the change and is not spent. D is spent next in T6. Both outputs are P2WPKH, so the amount is the only clue. | Change clues (amount alone) | The payer chose a round amount for the change, or an un-round one for the payment. | Low |
 | 10 | T6 (`1a37d49e…1c15e7`, block 25) has 12 inputs and 1 output of 2.51780113 BTC. D is input number 5, counting from 1 down the explorer's input list (the transaction's raw data counts from 0, so it holds D at index one less); the other 11 inputs are addresses that each received once, from the faucet, in an earlier block. The co-spend heuristic says the same wallet holds D and the other inputs: a service sweeping deposit addresses into one hot wallet `bc1qugz223geppy8486j43h6etnd056eya0m768ktx`. Check: the deposits come from 11 different earlier transactions. | Co-spend | CoinJoin (day 7 teaches how to spot one). One output of one amount is not a CoinJoin shape. | Moderate |
 | 11 | T7 (`617a3bb0…7e247f`, block 26) has 1 input and 14 outputs: 13 payouts to 13 different addresses and one change output (`bc1q0pkqw370lthkdaukyz0us27ft5eg0u45emtpkc`, output 3). That is a batch payout. The funds go to a service's customers, so the trail has reached the first service. The chain cannot name the service; attribution is later in day 6. The trace stops here because the next hops belong to other people. | Payment batching | A batch is also what a business or a mixer does. Without a label from a source, it is a pattern only. | Low until attribution |
-| 12 | See below. | | | |
+| 12 | Backward from T6: D was paid by T5 (`3782b312…8320ec`), whose one input is K4, paid by T4 (`e881af81…afafc0`), whose one input is C3, the change of T3. Each step back is a spend the chain records, so the path from the ransom to the service's deposit is unbroken in the record. It does not settle T4: the record shows that K4 led to the service, not whether K4 was the thief's change or a payment to someone who then paid the service. T4 stays **undetermined**, and following K4 stays a practical choice. | Backward trace (lesson 02-FO, "When forward fails, trace backward") | K4 was a payment, and its recipient paid the service; a backward walk gives more false positives than a forward one. | The spends: fact. T4's change: Low, unchanged |
+| 13 | See below. | | | |
 
-### Question 12: the assessment sentence
+### Question 13: the assessment sentence
 
-A good answer is one or two sentences, bottom line first, with a confidence word, and says what the trace does
-not show. For example:
+A good answer is one sentence, bottom line first, with a confidence word, that states what the trace shows and
+says what it does not show. For example:
 
 > The ransom was spent as a group and passed through five hops to a deposit address that a service swept into its
-> hot wallet, at Moderate confidence for the path and Low for the choices at the fourth and fifth hops. The chain does not
+> hot wallet, at Moderate for the path and Low for the choices at the fourth and fifth hops, but the chain does not
 > name the service, who pays into it, or who controls the ransom address.
 
 Mark down: a percentage; "the attacker is" or any named person; a claim that the chain shows who owns a wallet;
@@ -52,27 +69,29 @@ Mark down: a percentage; "the attacker is" or any named person; a claim that the
 
 ## The worked example (not graded)
 
-The first victim's payment, `fc031252…8b8e6f` in block 15: 1.20000000 BTC to R1
+Row 0, the first victim's payment, `fc031252…8b8e6f` in block 15: 1.20000000 BTC to R1
 beside 48.79999154 BTC to the faucet's change address. Amount is the only clue, so Low.
+
+Row 1, a peel hop: that change is spent alone in `292a8b97…1f105f` (block 16), paying
+0.81230000 BTC to R2 and 47.98768308 BTC to a new address. Low: amount is again the only clue,
+and the row stands on row 0's Low. The page says the faucet paid both ransoms, so a student who asks why the two
+victims share a wallet has read it right: it is the build, not a finding.
 
 ## Challenge key (optional, ungraded)
 
-- **a. Backward trace from D.** D is spent in T6, the sweep. Going backward, D came from T5, whose input is K4, from
-  T4, whose input is C3, from T3 (C2), T2 (C1), T1 (R1 and R2). Change guesses were needed at T1 to T5; the record
-  alone supports "these outputs were spent in this order", and not who controls them.
-- **b. U4.** Two explanations: U4 is the payment to a recipient who has not spent it, or U4 is the change and the
+- **a. U4.** Two explanations: U4 is the payment to a recipient who has not spent it, or U4 is the change and the
   wallet holds it. Telling them apart: wait and watch, or find a source that labels it. An observed spend of U4 by
   the thief's cluster would raise the confidence on the other link; a spend that merges U4 with a known thief address
   would make it the change.
-- **c. T7's change.** `bc1q0pkqw370lthkdaukyz0us27ft5eg0u45emtpkc` is output 3 of 14. With 13
+- **b. T7's change.** `bc1q0pkqw370lthkdaukyz0us27ft5eg0u45emtpkc` is output 3 of 14. With 13
   payouts of mixed address types and un-round amounts, no clue separates the change: position and type do not settle
   it. Answer: undetermined, or Low.
-- **d. Steady and varying clues.** Steady: the peels were round and not P2WPKH (P2SH at T1, Taproot at T2 and T3); the changes were P2WPKH and
+- **c. Steady and varying clues.** Steady: the peels were round and not P2WPKH (P2SH at T1, Taproot at T2 and T3); the changes were P2WPKH and
   un-round (T1, T2, T3). Varying: output position (T2 vs T3); nothing separated the outputs at T4; amount only at T5.
-- **e. Flag: `bc1q32xtvpjdn90h6apqp4kue8280h77a0dshw2vze`.** X0 and Y are spent together in `1d1d402f…e4ae84` (block 21); the
+- **d. Flag: `bc1q32xtvpjdn90h6apqp4kue8280h77a0dshw2vze`.** X0 and Y are spent together in `1d1d402f…e4ae84` (block 21); the
   round 0.51000000 BTC output is the payment. It does not belong on the ransom trail: X0 was a payment
   out of the trail, and its owner, who also holds Y, paid someone else. Its owner is a lead, not the thief.
-- **f. Flag: 0.01998144 BTC** at `bc1qqjdhwws7ar6exy7a906mfx2drfq6pxzd0zddeu`, the un-round output. Both outputs are P2WPKH, so the amount
+- **e. Flag: 0.01998144 BTC** at `bc1qqjdhwws7ar6exy7a906mfx2drfq6pxzd0zddeu`, the un-round output. Both outputs are P2WPKH, so the amount
   is the only clue: Low.
 - The worksheet's flag boxes hold only `sha256("course-flag:" + flag)`, written by `chain/render.py`; amounts are
   checked to 8 decimal places, and an address in any letter case.
@@ -86,6 +105,7 @@ beside 48.79999154 BTC to the faucet's change address. Amount is the only clue, 
 - Treating X0's owner as the thief. X0 is a lead and its owner spent it with an outside input.
 - Naming the service, or saying the payouts are the thief's. The chain does not say.
 - Quoting a percentage.
+- Treating the backward walk as proof that K4 was the change. It shows K4 reached the service, not whose it was.
 
 ## Notes on the build
 
@@ -108,3 +128,26 @@ figure.
 
 The scale and heuristic names come from the day-6 slides (`02-FO-foundations_obfuscation_tracing.qmd`); citations
 in the worksheet's Sources list.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **T1 spends both ransom addresses together. Why is that Moderate, not High?** One heuristic, co-spend, and
+   its known false positive, a CoinJoin, could apply, though T1's two unlike outputs do not look like one (Q2).
+   Adding T1's change clues does not raise it: they come from the same transaction, one kind of evidence. The
+   same holds for the sweep in T6 (Q10). Slides:
+   `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd`, "Co-spending links inputs,
+   unless it's a CoinJoin" and "Same-transaction clues never reach High alone".
+2. **At T4, which output is the change?** Neither can be told: both are fresh P2WPKH and un-round, so the answer
+   is **undetermined**. Following K4 is a practical choice, Low, because it is the one spent; the larger output is
+   not "probably" the change (Q8). Walking back from the service shows K4 reached it, but not whose K4 was (Q12).
+   Slides: `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd`, "Two outputs aren't
+   always payment and change" and "When forward fails, trace backward".
+3. **Is X0's owner the thief, and is the service's batch the thief's payouts?** No to both. X0 is a peel paid out
+   of the trail; its owner spent it with an outside input, so it is a lead, not the trail (Q4). T7 pays the
+   service's customers, and the chain does not name the service: a batch payout, Low until a source labels it
+   (Q11). Slides: `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd`, "Follow the
+   remainder; the peels are your leads" and "Batched payouts look busy but aren't a peel".

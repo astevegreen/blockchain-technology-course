@@ -77,11 +77,9 @@ slide index), which is never listed here.
   class without internet cannot answer Q1 and Q3. Give the lookups on the page or in the fallback. (4 Nov 2026,
   Gemini audit D8-2)
 - Wallet Q11 now asks for "one sentence that states what the witness shows" (owner, audit Q17), and the dex and
-  Tron day-5 labs match it, but `bitcoin-trace/.../index.html:107` and `coinjoin-trace/.../index.html:114` still ask
-  for a sentence "an agent could read". Match them. (4 Nov 2026,
+  Tron day-5 labs match it, and so does bitcoin-trace, but `coinjoin-trace/.../index.html:114` still asks
+  for a sentence "an agent could read". Match it. (4 Nov 2026,
   week-1 audit decisions)
-- `dynamic-labs/bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md:12-16` has no Meets and Not yet lines for a graded
-  point; add them in `answers.template.md` and regenerate. (4 Nov 2026, Gemini audit D6-6, `docs/analysis/gemini-audit/triage.md`)
 - coinjoin-trace's key: the rubric's "both places the trace stops" (`INSTRUCTOR_ANSWERS.md:18`) omits J1 and J2,
   which the model and Q4 mark (`:60`, `:75`); model step 8 (`:82`) omits Q11's Moderate for the service (`:63`); and
   the page's hints (`index.html:158`) sit apart from their questions (`:73-101`). (4 Nov 2026, Gemini audit D7-4, D7-5, D7-1, `docs/analysis/gemini-audit/triage.md`)
