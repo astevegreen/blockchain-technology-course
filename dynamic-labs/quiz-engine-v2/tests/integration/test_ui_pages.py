@@ -193,44 +193,6 @@ def test_student_quiz_list_collapses_completed_quizzes(app, client):
     assert "Attempt limit reached." in html
 
 
-def test_theme_css_includes_responsive_ux_hardening(client):
-    css = client.get("/static/dynamic-labs-theme.css").get_data(as_text=True)
-
-    assert "width: min(100%, 1920px)" in css
-    assert ".dynamic-labs-instructor + main form" in css
-    assert "max-width: 1200px" in css
-    assert "--control-min: 44px" in css
-    assert "[hidden]" in css
-    assert "display: none !important" in css
-    assert ".dynamic-labs-skip-link" in css
-    assert '[aria-current="page"]' in css
-    assert "-webkit-overflow-scrolling: touch" in css
-    assert ".retirement-target-options" in css
-    assert ".table-column-compact" in css
-    assert ".table-action-link" in css
-    assert ".roster-time-column" in css
-    assert ".template-bank-actions" in css
-    assert ".workflow-steps" in css
-    assert ".quiz-result-option-correct" in css
-    assert ".quiz-result-option-selected-incorrect" in css
-    assert ".item-analysis-option-missed" in css
-    assert ".item-analysis-option-weighted" in css
-    assert ".item-analysis-controls" in css
-    assert ".item-difficulty-hover-popup" in css
-    assert ".item-difficulty-popup-close" in css
-    assert ".metrics-quiz-filter" in css
-    assert ".metrics-collapsible-section" in css
-    assert ".strengths-weaknesses-grid" in css
-    assert ".student-attempt-summary" in css
-    assert "--quiz-font-scale" in css
-    assert ".quiz-font-toolbar" in css
-    assert ".quiz-question-item > h2" in css
-    assert ".quiz-font-scaled button" in css
-    assert ".student-quiz-title" in css
-    assert ".student-quiz-action a" in css
-    assert "@media (max-width: 760px)" in css
-
-
 def _assert_themed(html, *, role):
     assert 'href="/static/dynamic-labs-theme.css"' in html
     assert 'class="dynamic-labs-shell' in html

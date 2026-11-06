@@ -1,32 +1,9 @@
 import pytest
 
-from app.enums import CANONICAL_ENUMS
 from app.schema import (
-    ENUM_CONSTRAINT_COVERAGE,
     SNAPSHOT_TABLES,
-    bool_check,
-    difficulty_check,
-    enum_constraint,
-    positive_check,
     validate_snapshot_migration_statements,
 )
-
-
-def test_schema_helper_functions_emit_expected_fragments():
-    assert positive_check("attempt_limit") == "CHECK (attempt_limit > 0)"
-    assert difficulty_check("difficulty_level") == (
-        "CHECK (difficulty_level BETWEEN 1 AND 5)"
-    )
-    assert bool_check("archived") == "CHECK (archived IN (0, 1))"
-    assert enum_constraint("status", "student_status") == (
-        "CHECK (status IN ('inactive', 'active', 'revoked'))"
-    )
-
-
-def test_enum_constraint_coverage_mentions_every_canonical_enum():
-    assert set(ENUM_CONSTRAINT_COVERAGE) == set(CANONICAL_ENUMS)
-    for enum_name, locations in ENUM_CONSTRAINT_COVERAGE.items():
-        assert locations, f"{enum_name} must have at least one validation location"
 
 
 def test_snapshot_table_list_matches_phase_2_policy():

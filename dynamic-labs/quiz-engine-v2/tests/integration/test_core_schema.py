@@ -230,6 +230,21 @@ def test_invalid_difficulty_and_negative_counts_are_rejected(app):
                 """,
                 (EMPTY_CRITERIA_JSON,),
             )
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute(
+                """
+                INSERT INTO quiz_templates (
+                    title,
+                    criteria_json,
+                    question_count,
+                    archived,
+                    created_at,
+                    updated_at
+                )
+                VALUES ('Not boolean', ?, 1, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                (EMPTY_CRITERIA_JSON,),
+            )
 
 
 def test_broken_foreign_keys_are_rejected(app):
@@ -420,3 +435,14 @@ def test_rerunning_migrations_on_a_current_database_changes_nothing(tmp_path):
     assert before == after == len(SCHEMA_MIGRATIONS)
     assert students == 1
 
+
+def test_connections_enforce_foreign_keys_and_wait_for_locks(tmp_path):
+    conn = connect_database(str(tmp_path / "pragmas.sqlite"), busy_timeout_ms=1000)
+    try:
+        foreign_keys = conn.execute("PRAGMA foreign_keys").fetchone()[0]
+        busy_timeout = conn.execute("PRAGMA busy_timeout").fetchone()[0]
+    finally:
+        conn.close()
+
+    assert foreign_keys == 1
+    assert busy_timeout == 1000

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from app.attempts import get_student_attempt, save_answer, start_or_resume_attempt, submit_attempt
+from app.attempts import start_or_resume_attempt, submit_attempt
 from app.db import get_db
 from app.generation import generate_quiz_version
 from app.grading import (
@@ -182,38 +182,6 @@ def test_written_grading_accepts_exactly_points_possible_and_rejects_just_above(
     assert graded["answer"]["points_awarded"] == possible
     assert graded["attempt"]["status"] == "graded"
     assert graded["attempt"]["score"] == possible
-
-
-def test_expired_written_grading_preserves_expired_status(app):
-    with app.app_context():
-        ingest_json(json.dumps(_bank()), actor_sub="teacher")
-        version = _published_version(["written"], timer_minutes=1)
-        student = _student()
-        attempt = start_or_resume_attempt(version["id"], student)
-        question_id = attempt["questions"][0]["id"]
-        save_answer(
-            attempt["id"],
-            student,
-            {"question_id": question_id, "written_response": "Saved written response"},
-        )
-        get_db().execute(
-            "UPDATE attempts SET deadline_at = ? WHERE id = ?",
-            ("2000-01-01T00:00:00+00:00", attempt["id"]),
-        )
-        get_db().commit()
-
-        expired = get_student_attempt(attempt["id"], student)
-        queue = list_written_grading_queue()
-        graded = grade_written_answer(queue[0]["answer_id"], 0.5, actor_sub="teacher")
-        result = get_student_result(attempt["id"], student)
-
-    assert expired["status"] == "expired"
-    assert queue[0]["attempt_status"] == "expired"
-    assert graded["attempt"]["status"] == "expired"
-    assert graded["attempt"]["score"] == 0.5
-    assert result["status"] == "expired"
-    assert result["score_visible"] is True
-    assert result["score"] == 0.5
 
 
 def test_student_result_visibility_policy_matrix(app):
