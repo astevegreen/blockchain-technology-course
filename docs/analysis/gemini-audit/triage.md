@@ -56,7 +56,7 @@ firm's read and that change as two kinds of evidence. So students check the clai
 read code, which outcome 5 names as day 8's evidence: "the short Solidity contract behind one exploit" (`docs/build-spec.md:215-221`). What the lab should show is a lab
 scenario, so it is the owner's call.
 
-**D8-2: Confirmed.** `cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory. Fixed in 8540e6e (an offline table of what 4byte lists, read 5 Nov 2026).
+**D8-2: Confirmed.** `cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory. Fixed in 8540e6e (an offline table of what 4byte lists, read 1 Nov 2026, re-checked 5 Nov).
 
 **D9-1: Confirmed.** `blockchain-course/lessons/forensics/14-FO-fusing_sources.qmd:191` rates a deposit address
 sweeping into a wallet on the exchange's own published list **High** ("the chain and the owner agree"). The day-9

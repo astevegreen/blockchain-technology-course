@@ -34,7 +34,7 @@ and a screenshot.
 4. Run query 2. Confirm 41 rows; for `TXLhMx…` three rows read "sweep: empties the address" to
    `TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi` (800, 655 and 1000 USDT), each with balance_after 0.
 5. Run query 3. Confirm two rows: `TXLhMx…` to `TV6Mu…`, 3 sweeps, 2455 USDT, labelled as a
-   Binance wallet `[binance_transparency_2023]`; `TY4zRA…` to `TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa`,
+   Binance wallet `[binance_transparency_2023, read 31 Oct 2026]`; `TY4zRA…` to `TU4vEruvZwLLkSfV9bNw12EJTPvNr7Pvaa`,
    13 sweeps, 1496.695834 USDT, 15 Sep to 16 Oct 2026, "no published source names this address".
 6. Run query 4. Confirm 16 rows: the three `TXLhMx…` sweeps paid by
    `TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh`, "sent TRX", 14.5366, 624, 864 and 894 seconds before; the
@@ -69,14 +69,14 @@ and a screenshot.
    naming block 87,630,406, and within a minute "Ready: 7 files, 9 queries."
 2. Run query 1. Confirm one row for `TDxZ1XTZCmqkJJW2eJT362z6omRchJyGBX`: 20 deposits, 11 senders,
    92451.000000 in, 14 outflows, 2 recipients, 92615.000000 out, first seen `2023-09-05 18:29:12`,
-   and the source column naming Oscar Leonardo Martinez Pirona `[ofac_trendearagua_2026]`.
+   and the source column naming Oscar Leonardo Martinez Pirona `[ofac_trendearagua_2026, read 1 Nov 2026]`.
 3. Run query 2. Confirm 34 rows; the first is a 15000.000000 deposit from
    `TWnBq4Zeo3U6bwqgdNfxv1gotHJTaAU6Ar` with balance_after 15469.000000 (tx `a7db8d43…`), the second
    "sweep: empties the address" of 15469.000000 to `TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi` at
    `2023-09-05 18:46:03`; no row reads "other outflow"; the last two are deposits from `TUpHuD…`
    ending at balance 305.000000.
 4. Run query 3. Confirm two rows: `TV6Mu…`, 6 sweeps, 58844.000000, labelled as a Binance wallet
-   `[binance_transparency_2023]`; `TDqSquXBgUCLYvYC4XZgrprLK589dkhSCf`, 8 sweeps, 33771.000000,
+   `[binance_transparency_2023, read 31 Oct 2026]`; `TDqSquXBgUCLYvYC4XZgrprLK589dkhSCf`, 8 sweeps, 33771.000000,
    `2023-10-22 01:36:03` to `2023-11-11 23:26:03`, "no published source names this address".
 5. Run query 4. Confirm 14 rows, each signed by `TDxZ1X…`, energy 31895, 13.3959 TRX burned; 13 paid
    by `TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh` with 14.536600 TRX 465 to 615 seconds before, and the

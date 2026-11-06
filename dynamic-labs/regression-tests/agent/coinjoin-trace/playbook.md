@@ -55,7 +55,7 @@ For every failed step, capture the URL, the visible failure, console errors, net
    the trace stops".
 2. Read it top to bottom. Confirm: the note on planted leaks is near the top; the confidence table (High, Moderate,
    Low) renders; the note table has the lesson's five columns (Step, What you see, The trace, Still shows,
-   Confidence); the worked example's J0 row is finished as a stop with "—"; the problem's questions run 1 to 12 in
+   Confidence); the worked example's J0 row is finished as a stop with "—"; the problem's questions run 1 to 13 in
    three parts with their hints; the challenge steps are marked optional; no percentage is offered as a confidence.
 3. Confirm the worksheet names only the ransom address, the mixer's labelled pool address and the worked example.
    It must not name T1, any round past J0, the leaks, the late mover or the withdrawals (search the page text for
