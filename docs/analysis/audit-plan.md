@@ -111,7 +111,7 @@ ID; open `gemini-audit/<scope>.md` for the evidence. "Session N" is a child of `
 | Assessments (Q15-Q20) | Incorporated | e59f56d, c96c271, 6197242, e6987e0 |
 | P12 crammed lessons | Dry run | Phase 3 |
 | Two one-offs (01-FO hidden slides, cross-chain README) | Incorporated | fe58361, 8540e6e |
-| Week-2 answer keys' compound confidence words ("Low to Moderate", "Moderate to High") | Held for the owner | Kept as they are; question in `gemini-audit/triage.md` |
+| Week-2 answer keys' compound confidence words ("Low to Moderate", "Moderate to High") | Incorporated | 5e52945: one word and what would raise it (owner, 6 Nov 2026: "One word + condition") |
 
 ### 4.3 Gemini, by scope
 
@@ -220,7 +220,7 @@ duplicate of another Gemini row is marked "= ID".
 | D8-4 | Major | Bybit and Kelp in one 2.5 h lab | Dry run | Then Owner (lab scenario); see C3 |
 | D8-5 | Major | 11-FO: decompiling, wash trading and a micro-lab in 50 min | Dry run | Week 2 Q14 kept the pairing "for now"; the micro-lab got its own 1325-1345 slot in c8f22c0 |
 | D8-6 | Minor | Safe's slot 0 cited as ERC-1967 | Rejected | R4: the lab cites Safe's code, not ERC-1967 |
-| D8-7 | Minor | "Moderate to High", "Low to Moderate" | Incorporated | 8d8e44f (11-FO and its bank). Still compound, held for the owner (week-2 answer keys stay as they are): cross-chain, final-trace, tron D9 and ether_evm answers, daily_d9, the week-two check, challenge c16, 08-FO synthesis |
+| D8-7 | Minor | "Moderate to High", "Low to Moderate" | Incorporated | 8d8e44f (11-FO and its bank); 5e52945 the week-2 keys (cross-chain, final-trace, tron D9 and ether_evm answers, daily_d9, the week-two check, challenge c16), owner 6 Nov 2026: "One word + condition". The 08-FO synthesis moves between single words, not a range |
 | D8-8 | Minor | 09-FO notes say "nobody reads code today" | Incorporated | 5b9153e |
 | D8-9 | Minor | Address poisoning's zero-value transfer unexplained | Incorporated | 5b9153e |
 | D8-10 | Minor | Cross-chain README says "scaffolding" | Incorporated | 8540e6e |
@@ -247,7 +247,7 @@ duplicate of another Gemini row is marked "= ID".
 | D10-4 | Major | Case file omits the OTC desk's 1.5% fee | Rejected | R4: the fee is withheld on purpose |
 | D10-5 | Major | Review session mixes revision and four resubmissions | Dry run | Run sheet confirmed |
 | D10-6 | Minor | Key deducts for oral explanations that carry no grade | Incorporated | 44efa0e |
-| D10-7 | Minor | Challenge bank has nothing for week 2 | Incorporated | 6197242 (week 2 Q20); freezes and Tron sweeps not added, owner question 6 in `gemini-audit/triage.md` |
+| D10-7 | Minor | Challenge bank has nothing for week 2 | Incorporated | 6197242 (week 2 Q20); freezes and Tron sweeps added as c18 and c19 in 5e52945 (owner, 6 Nov 2026: "Add them now", cap raised to 17) |
 | D10-8 | Minor | Certificate mint needs day 3's Anvil running | Rejected (R4) | Triage D3-5: the mint uses frozen addresses |
 
 **Assessments**
@@ -263,7 +263,7 @@ duplicate of another Gemini row is marked "= ID".
 | A-7 | Minor | p6's key wants "Observed" | Incorporated | e59f56d |
 | A-8 | Minor | daily_d6 q5 cites an instructor-only answers file | Incorporated | 9eb91dd |
 | A-9 | Minor | Day 2's wallets and multisig have no summative item | Incorporated | e6987e0 (p43); the Notion Role Concepts entry is the owner's (`docs/follow-ups.md`) |
-| A-10 | Minor | Challenge bank stops before days 7-9 | Incorporated | 6197242 (week 2 Q20) |
+| A-10 | Minor | Challenge bank stops before days 7-9 | Incorporated | 6197242 (week 2 Q20); c18 and c19 in 5e52945 |
 
 ## 5. The plan
 

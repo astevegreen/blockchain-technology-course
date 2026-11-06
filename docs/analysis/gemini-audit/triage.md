@@ -248,11 +248,12 @@ All 24 read against the pattern each names: 16 match. Changes:
 - **Notes for the sessions that take a Covered row.** A-7: post-test p6's key said "Observed"
   (`quizes/posttest/posttest_day10-quiz-bank.json:398`); fixed in e59f56d. D8-7: compound confidence words also sit
   at `11-FO:305`, final-trace answers `:57`, `ether_evm` answers `:28`, `:30`, daily_d9 json `:352`, the 11-FO bank
-  `:276` and the 08-FO synthesis `:68`, `:115` (11-FO:305 and the 11-FO bank `:276` fixed in 8d8e44f). D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
+  `:276` and the 08-FO synthesis `:68`, `:115` (11-FO:305 and the 11-FO bank `:276` fixed in 8d8e44f; the rest in 5e52945, owner 6 Nov 2026: "One word +
+  condition"; the 08-FO synthesis moves between single words and stays). D1-2: W2 also reaches `04-CP:244`, `:350`, `:401` (fixed in f2e82dc). D1-8: 04-CP and
   01-CM have 0 Asks (fixed in f2e82dc, 3815c66). D5-8: week-2 Q3 should name the Tron page if it gets a self-check (it did: questions 6 and 12, 2999481). D10-7 and A-10: Gemini's
   challenge topics (cross-chain timing, freezes, Tron sweeps) go to the owner beside week-2 Q20. Q20 was approved
   and done in 6197242 (c15 mixer timing, c16 the code read, c17 chain-hopping crossings); freezes and Tron sweeps
-  were not added, since the bank is at its 15-item cap: open, question 6 below. D8-5: give Gemini's alternative
+  were then added as c18 and c19 in 5e52945 (question 6 below). D8-5: give Gemini's alternative
   (the micro-lab as the afternoon opener) beside Q14. Q14 kept the pairing "for now"; the micro-lab now opens the
   afternoon lab block, 1325-1345, in c8f22c0, which is Gemini's alternative.
 
@@ -277,4 +278,5 @@ All 24 read against the pattern each names: 16 match. Changes:
    (`docs/follow-ups.md`, Quizzes).
 6. **D10-7, A-10. Challenge items on freezes and Tron sweeps:** week-2 Q20 added days 7-9 items (6197242) and the
    bank is at its 15-item cap. **Recommend no more items until the dry run** shows which challenge items assessors
-   actually reach; c17 already covers cross-chain timing.
+   actually reach; c17 already covers cross-chain timing. *Owner, 6 Nov 2026: "Add them now", and "Raise the cap to
+   17".* c18 (a freeze) and c19 (a Tron sweep) added in 5e52945.
