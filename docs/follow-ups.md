@@ -44,9 +44,10 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- Install heimdall-rs in the Ethereum lab image and the student VM (`vm-build/provision.sh`) so students can run 
-  it themselves; BYTECODE_REVERSE_ENGINEERING.md now says the instructor runs it or students install it on their own 
-  machine. (2 Nov 2026, bytecode guide fix)
+- `dynamic-labs/ethereum_lab/docs/guides/BYTECODE_REVERSE_ENGINEERING.md`, "Example: SimpleStorage", names
+  `store(uint256)`/`retrieve()` and selectors `0x6057361d`/`0x2e64cec1` (Remix's sample contract), but the lab's
+  `contracts/SimpleStorage.sol` has `set(uint256)`/`get()`: heimdall shows selectors `0x60fe47b1`/`0x6d4ce63c`.
+  (6 Nov 2026, heimdall-rs install test)
 
 ## Tooling and rules
 

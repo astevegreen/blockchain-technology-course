@@ -35,7 +35,26 @@ COPY scripts/cli-labs/standalone/package*.json ./
 RUN npm ci --only=production
 
 # ============================================
-# Stage 3: Production Image
+# Stage 3: Build heimdall-rs
+# ============================================
+# heimdall-rs (MIT) disassembles and decompiles EVM bytecode for
+# docs/guides/BYTECODE_REVERSE_ENGINEERING.md. Its release binaries need glibc 2.39, newer
+# than this image's Debian bookworm (2.36) and the student VM's Ubuntu 22.04 (2.35). So it is
+# built here from the 0.9.3 release (it reports itself as 0.9.2), pinned to that tag's
+# commit with its lockfile, on the VM's own Ubuntu 22.04. The one binary then needs only glibc
+# 2.35 and libssl3, which the VM and this image both have. The VM copies it out of this image
+# (vm-build/ubuntu-lab.pkr.hcl). Student lanes have no terminal, so students run it on the VM.
+FROM ubuntu:22.04 AS heimdall-builder
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates curl build-essential git pkg-config libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.91.0
+ENV PATH=/root/.cargo/bin:$PATH
+RUN cargo install --locked --git https://github.com/Jon-Becker/heimdall-rs \
+      --rev 13ae7cb02959feca08bcaafb10c9d66a28037f77 heimdall-cli
+
+# ============================================
+# Stage 4: Production Image
 # ============================================
 # Use Debian slim instead of Alpine: node-pty has known issues with Alpine (musl libc).
 # Debian/glibc provides reliable PTY support for the Lab Terminal in Docker.
@@ -54,6 +73,11 @@ ENV HARDHAT_USER_HOME=/opt/hardhat-user-home
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl bash python3 make g++ nginx \
     && rm -rf /var/lib/apt/lists/*
+
+# heimdall-rs (MIT), built in Stage 3 above. The instructor lane's Lab Terminal has it; students
+# run the copy the VM build takes from this image.
+COPY --from=heimdall-builder /root/.cargo/bin/heimdall /usr/local/bin/heimdall
+RUN heimdall --version
 
 # Copy blockchain dependencies (needed for instructor mode)
 # Use --ignore-scripts to skip postinstall (frontend is built separately)

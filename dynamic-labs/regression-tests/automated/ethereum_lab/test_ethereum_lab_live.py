@@ -242,6 +242,23 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         )
         self.assertNotEqual(direct_instructor.returncode, 0)
 
+    def test_heimdall_decompiles_simplestorage_offline(self) -> None:
+        # The image carries heimdall-rs for the bytecode guide; the student VM copies it out of
+        # this image. It must run here and decompile the lab's own SimpleStorage without network:
+        # set(uint256) is selector 0x60fe47b1.
+        claim = self.require_claim()
+        out = docker_exec_checked(
+            claim.container_name,
+            "cd \"$(mktemp -d -p /home/student)\" && heimdall --version"
+            " && code=$(node -p \"require('/home/student/workspace/artifacts/contracts/SimpleStorage.sol/SimpleStorage.json').deployedBytecode\")"
+            " && heimdall decompile \"$code\" --include-sol --skip-resolving >/dev/null 2>&1"
+            " && grep -c 'function Unresolved_60fe47b1' output/local/decompiled.sol",
+            timeout_seconds=60,
+            user="1000:1000",
+        )
+        self.assertIn("heimdall", out)
+        self.assertEqual(out.strip().splitlines()[-1], "1")
+
     def test_student_home_is_writable_and_rootfs_is_read_only(self) -> None:
         claim = self.require_claim()
         docker_exec_checked(

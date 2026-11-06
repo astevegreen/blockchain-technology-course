@@ -100,10 +100,21 @@ SimpleStorage has `store(uint256)` and `retrieve()`. In the bytecode you might s
 For deeper analysis, use open-source tools only:
 
 - **[heimdall-rs](https://github.com/Jon-Becker/heimdall-rs)** — MIT-licensed command-line toolkit
-  (as of 1 Nov 2026) that disassembles and decompiles EVM bytecode. It is not installed in the lab image
-  or the student VM, so the instructor runs it and shares the output, or you install it on your own
-  machine and run `heimdall disassemble <bytecode>` and `heimdall decompile <bytecode>`.
-  Source: `becker_heimdallrs_2026`.
+  (as of 1 Nov 2026) that disassembles and decompiles EVM bytecode. It is installed on the student VM,
+  so open a terminal there and run it on the bytecode you copied in step 3 (paste the whole `0x...`
+  string in place of `0x6080...`):
+
+  ```bash
+  heimdall disassemble 0x6080...
+  heimdall decompile 0x6080... --include-sol --skip-resolving
+  cat output/local/disassembled.asm
+  cat output/local/decompiled.sol
+  ```
+
+  Each command writes its result to `output/local/` in the current folder. `--skip-resolving` skips
+  heimdall's online lookup of function names, so each function appears as `Unresolved_<selector>`:
+  match the selector to its signature yourself, as in step 5. The decompiled code is a reconstruction
+  and may not compile. Source: `becker_heimdallrs_2026`.
 - **[evm.codes](https://www.evm.codes)** — EVM opcode reference, whose source is MIT-licensed
   (as of 2 Nov 2026). Source: `comity_evmcodes_2026`.
 
