@@ -52,7 +52,7 @@ FROM scratch
 class Repo(unittest.TestCase):
     def test_the_labs_pull_the_images_that_stalled_25_oct_and_no_local_build(self) -> None:
         images = lab_images.lab_images()
-        for image in ("python:3.11-slim", "docker:27-cli", "ghcr.io/blockchain-course-2026/bitcoin-lab:latest"):
+        for image in ("python:3.11-slim", "docker:29-cli", "ghcr.io/blockchain-course-2026/bitcoin-lab:latest"):
             self.assertIn(image, images)
         for local in ("lane-service:latest", "hlf-peer-ttyd:latest", "bitcoin-lab-student"):
             self.assertNotIn(local, images)
