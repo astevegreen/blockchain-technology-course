@@ -50,5 +50,8 @@ slide index), which is never listed here.
   push to `main` or by hand, so each one needs a by-hand Lab Tests run on its branch before merging. A
   `pull_request` trigger limited to Dependabot's branches would test them on arrival (a rail change). (6 Nov 2026,
   toolchain upgrades)
+- `tools/sonar.mjs:45` reads the PR's head commit with `gh pr view`, which uses GraphQL, and cloud sessions get
+  "GitHub GraphQL is not available"; `gh api repos/{owner}/{repo}/pulls/<n>` (REST) gives the same `head.sha`. Its
+  other calls are REST and work. (6 Nov 2026, toolchain upgrades)
 
 ## Notion and documents
