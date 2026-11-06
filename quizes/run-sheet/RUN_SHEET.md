@@ -218,11 +218,13 @@ sure. Rubric: "What the lab grades" in that answer file.
 
 Pretest items: q30 to q38 in `quizes/pretest/pretest_week2-quiz-bank.json`.
 
-**Micro-lab: reading a contract with no source,** linked from 11-FO's "How sure" slide:
+**Micro-lab: reading a contract with no source, 1325-1345** (the first 20 minutes of the lab block, not inside
+11-FO's 50 minutes; it warms students up for the lab's contract read). Linked from 11-FO's "How sure" slide:
 `blockchain-course/assets/labs/ether_evm/index.html`. Static page, nothing to start. Answers:
-`quizes/microlabs/ether_evm_INSTRUCTOR_ANSWERS.md`.
+`quizes/microlabs/ether_evm_INSTRUCTOR_ANSWERS.md`. The timed dry run checks whether the cross-chain lab fits the
+2 h 15 min left.
 
-**Lab: cross-chain trace (Bybit, Kelp DAO), opening with one exploit contract read.** Start:
+**Lab (1345-1600): cross-chain trace (Bybit, Kelp DAO), opening with one exploit contract read.** Start:
 `./lab-manager.sh start cross-chain`. Students open `/labs/cross-chain/`; query page `/labs/cross-chain/query/?lab=d8`;
 fallback `/labs/cross-chain/fallback/`. README: `dynamic-labs/cross-chain/README.md`. Answers:
 `dynamic-labs/cross-chain/quizes/INSTRUCTOR_ANSWERS.md`. CTF flags: same file, near its end ("The flags are").
@@ -237,8 +239,8 @@ grades" in that answer file.
 | Slot | Teach | File |
 | --- | --- | --- |
 | 0845 | Quiz: `quizes/quiz_json/daily_d9_review_of_day8-quiz-bank.json` | |
-| ① | State actors and North Korea in depth | `blockchain-course/lessons/forensics/13-FO-state_actors_north_korea.qmd` |
-| ② | AML typologies: ATT&CK, the Diamond Model, AADAPT | `blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd` |
+| ① | AML typologies: ATT&CK, the Diamond Model, AADAPT | `blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd` |
+| ② | State actors and North Korea in depth | `blockchain-course/lessons/forensics/13-FO-state_actors_north_korea.qmd` |
 | ③ | Fusing on-chain findings with other sources | `blockchain-course/lessons/forensics/14-FO-fusing_sources.qmd` |
 
 Pretest items: q39 to q42 in `quizes/pretest/pretest_week2-quiz-bank.json`.
