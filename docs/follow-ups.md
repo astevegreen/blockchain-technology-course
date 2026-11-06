@@ -45,10 +45,6 @@ slide index), which is never listed here.
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
 
 ## Labs
-- Day 9 Tron lab, questions 14-15 and the graded note (`dynamic-labs/tron/static/lab/d9/index.html:100`, `:160-176`,
-  `INSTRUCTOR_ANSWERS_D9.md`): accept "no typology fits: a plain deposit address", with one indicator for and one
-  against, on the worksheet and in the key; leave 12-FO's typology table as is. (5 Nov 2026, owner approved Gemini
-  D9-3)
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
   request)
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
@@ -70,8 +66,6 @@ slide index), which is never listed here.
   the gross quote", but `facts.json:1356-1358` puts P (168,435.00) closer to the 171,000.00 quote than Q (168,217.27).
   Reword the mistake, and its source in `answers.template.md`. (4 Nov 2026, Gemini audit D10-2, checked against
   `facts.json`)
-- `dynamic-labs/tron/queries/d9.sql:20` drops `as_of` from the labels column that the worked example and key Q1 say
-  shows the date read. Add it, regenerate the fallback, run the Tron lab test. (4 Nov 2026, Gemini audit D9-4, `docs/analysis/gemini-audit/triage.md`)
 - `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:34` and `:61` say "Mark down" for the ungraded oral
   explanation (`RUN_SHEET.md:258-261`). Say "Correct in feedback". (4 Nov 2026, Gemini audit D10-6, `docs/analysis/gemini-audit/triage.md`)
 

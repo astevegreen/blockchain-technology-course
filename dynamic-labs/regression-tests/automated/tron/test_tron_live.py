@@ -331,7 +331,8 @@ class TronDay9LiveRegressionTests(unittest.TestCase):
         (row,) = [r for r in self.results["5"] if r["sender"] == "TFSYy3aacRbk3LPRLoGUqw7NvfLShPWMvo"]
         self.assertEqual(row["usdt"], f["17"]["value"])
         text = get("/labs/tron/lab/d9/").text
-        self.assertEqual(re.findall(r'data-sha256="([0-9a-f]{64})"', text),
+        challenge = text[text.index("<h2>Challenge (optional)</h2>"):]
+        self.assertEqual(re.findall(r'data-sha256="([0-9a-f]{64})"', challenge),
                          [flag_hash(f[q]["value"]) for q in ("16", "17")])
         self.assertNotIn(f["16"]["value"], text)
         self.assertNotIn("7,830", text)
@@ -340,6 +341,18 @@ class TronDay9LiveRegressionTests(unittest.TestCase):
         self.assertEqual(script, (LAB / "static" / "lab" / "flags.js").read_bytes())
         self.assertNotIn(f["16"]["value"].encode(), script)
         self.assertNotIn(b"7830", script)
+
+    def test_self_check_boxes_hold_only_the_hashes_of_query_answers(self) -> None:
+        # Question 6's box checks where the sweeps go from 22 Oct; question 12's, the days to the blacklisting.
+        # Both values are asserted against queries 3 and 8 above.
+        text = get("/labs/tron/lab/d9/").text
+        answers = text[:text.index("<h2>Challenge (optional)</h2>")]
+        expected = [FACTS9["problem"]["swept_to"], FACTS9["freeze"]["days_between"]]
+        self.assertEqual(re.findall(r'data-sha256="([0-9a-f]{64})"', answers), [flag_hash(v) for v in expected])
+        self.assertEqual(len(re.findall(r'<form class="flag"[^>]*data-right="[^"]+" data-wrong="[^"]+"', answers)), 2)
+        self.assertNotIn(expected[0], text)
+        self.assertNotIn(expected[0][:6], text)
+        self.assertEqual(re.findall(r'(?<![0-9a-f])1,?054(?![0-9a-f])', text), [])
 
     def test_saved_results_page_matches_the_queries(self) -> None:
         check_saved_results(self, "/labs/tron/fallback/d9/", LAB / "static" / "fallback" / "d9" / "index.html",

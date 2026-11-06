@@ -15,9 +15,11 @@ FROM read_csv('transfers.csv', header = true, columns = {
   'amount': 'DECIMAL(38,6)'}) r
 JOIN tx t USING (tx_id);
 
--- What a published source says about an address, one line per address (labels.csv cites a source for each).
+-- What a published source says about an address, one line per address (labels.csv cites a source for each,
+-- and the date it was read).
 CREATE OR REPLACE VIEW labels AS
-SELECT address, string_agg(label || ' [' || source || ']', '; ' ORDER BY source) AS label
+SELECT address, string_agg(label || ' [' || source || ', read ' || strftime(as_of, '%-d %b %Y') || ']', '; '
+                           ORDER BY source) AS label
 FROM read_csv('labels.csv', header = true, columns = {
   'address': 'VARCHAR', 'label': 'VARCHAR', 'source': 'VARCHAR', 'as_of': 'DATE'})
 GROUP BY address;

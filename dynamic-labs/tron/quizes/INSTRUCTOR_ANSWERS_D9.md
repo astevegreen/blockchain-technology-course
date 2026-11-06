@@ -4,7 +4,9 @@ Instructor only: `pages.yml` and `vm-build.yml` leave every lab's `quizes/` fold
 students receive. The worksheet is `static/lab/d9/index.html`; the numbers below are what
 `queries/d9.sql` gives on the frozen snapshot (`snapshot/d9/`, sealed in `snapshot/d9/meta.json`),
 the same text the query page (`query/?lab=d9`) and the saved results (`static/fallback/d9/`) show.
-`facts_d9.json` holds them for the automated suite.
+`facts_d9.json` holds them for the automated suite. Questions 6 and 12 each have a self-check box
+on the worksheet, for `TDqSqu…` (the full address) and 1,054 days; like the challenge's boxes, they
+hold only a hash and grade nothing.
 
 The case is the Tron address OFAC listed for Oscar Leonardo Martinez Pirona in the Tren de Aragua
 action of 30 Sep 2026: `TDxZ1XTZCmqkJJW2eJT362z6omRchJyGBX`. The exact string was checked on 1 Nov
@@ -30,13 +32,13 @@ Meets or Not yet, one retry (as day 8's graded note). The note meets when it has
 2. **The stablecoin**: USDT, issued by Tether; freezable, because the contract has a blacklist
    Tether's owner account controls; the freeze came on 30 Sep 2026, 1,054 days after the window's
    last sweep, and caught 0 USDT at this address.
-3. **The typology**: one typology from the day-9 table, with one indicator for and one against,
-   each from a query or a source (see question 14).
+3. **The typology**: one typology from the day-9 table, or "no typology fits: a plain deposit
+   address", with one indicator for and one against, each from a query or a source (see question 14).
 4. **Sources and confidence**: each label with its source and the date read; each judgment with
    a confidence word, no percentages; says what the chain does not show (the account holder).
 
 Not yet: reports the sweep as the deposit; says "no source found" for the later sweeps with no Low, Moderate or High; treats OFAC's listing as naming the exchange; calls the
-freeze timely; gives a typology with no indicator against; any percentage.
+freeze timely; gives a typology, or none, with no indicator against; any percentage.
 
 ## Names
 
@@ -120,8 +122,12 @@ freeze timely; gives a typology with no indicator against; any percentage.
     transfers out" by the address's owner, and no source names an OTC desk. Accept another typology
     from the table with one indicator for and one against, each traced to a query or source; for
     example scam cash-out (for: sb0640 says the network launders proceeds; against: the money went
-    to an exchange that can freeze, the opposite of the cue). Reject a typology asserted with no
-    indicator against.
+    to an exchange that can freeze, the opposite of the cue). Also accept **no typology fits: a plain
+    deposit address** (owner, 5 Nov 2026), with one indicator for and one against. For: every deposit
+    is swept whole to an exchange's wallet, a third account paying the Energy, as for any customer's
+    deposit address (queries 2 to 4). Against: OFAC lists the address in an action against a network
+    Treasury says launders proceeds (sources 1 and 2), so its customer may be using an ordinary
+    deposit address to cash out. Reject a typology, or "none fits", asserted with no indicator against.
 
 ## Challenge (questions 16-17)
 
@@ -142,3 +148,31 @@ snapshot). Both are in `quizes/facts_d9.json` under `flags`. The worksheet's box
     USDT: an exchange or other service hot wallet is the likely kind, but naming one needs that
     service's published wallets or a reputable attribution. Accept "a service, not named" with
     what would be needed.
+
+## Debrief (10 minutes)
+
+The lab ends here, with the whole class. Ask the three questions aloud and take answers before you
+give the ones below. Confidence words follow the course's scale (`docs/build-spec.md`, "Confidence
+scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
+
+1. **Up to 5 Oct the address is a Binance deposit address. Why Moderate and not High, and how far does
+   the label carry after 22 Oct?** Moderate: the whole-balance sweeps to a wallet Binance publishes and
+   the third account paying for them are both read from the same sweep transactions, and no source names
+   the address as Binance's. From 22 Oct the sweeps go to `TDqSqu…`, which no source names: still a
+   deposit address, Moderate, but the Binance label carries only at Low, or not at all. Report a deposit,
+   not the sweep. (Q5, Q8.) Slides: `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd`,
+   "A deposit address is one customer's door" and "Name the deposit, not the sweep".
+2. **Tether froze the address the day OFAC listed it. Was the freeze timely, and what does it tell
+   you?** The facts take no confidence word: blacklisted on 30 Sep 2026, 1,054 days after the window's
+   last sweep, holding 0 USDT as of block 87,630,406. It came the same day as the listing but years
+   after the money moved, and caught nothing here. It shows what Tether acted on, not who holds the
+   account. (Q11, Q12, Q13.) Slides: `blockchain-course/lessons/forensics/14-FO-fusing_sources.qmd`,
+   "A freeze is a source: read it narrowly"; `blockchain-course/lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.qmd`,
+   "What a USDT freeze leaves on chain".
+3. **Which typology fits, or none?** OTC and nested services, Low to Moderate (many senders in; but
+   the outflows are the exchange's own sweeps), or "no typology fits: a plain deposit address" (swept
+   like any customer's; but OFAC lists it in a laundering network's action). Either meets with one
+   indicator for and one against; a pattern alone is one line of evidence. (Q14.) Slides:
+   `blockchain-course/lessons/forensics/12-FO-aml_typologies_frameworks.qmd`, "Six typologies you have
+   already met"; `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd`, "Some OTC desks
+   launder: small in, large out".

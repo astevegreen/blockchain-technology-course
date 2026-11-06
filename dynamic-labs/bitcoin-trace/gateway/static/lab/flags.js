@@ -4,6 +4,8 @@
 // Canonical form: spaces, commas, underscores and quotes removed. An amount drops a leading sign ($, ~) and a
 // trailing unit word (BTC, USDT, ETH), and is rounded half up to data-decimals places. An address that starts
 // 0x, bc1, tb1 or bcrt1 is lowercased; a base58 address (1..., 3..., T...) is kept as typed.
+// A self-check box is the same form with its own messages: data-right="..." and data-wrong="..." replace the
+// flag messages below.
 // Nothing is sent anywhere and nothing is graded.
 // SHA-256 is written out here because crypto.subtle is missing on a plain-HTTP page.
 (function () {
@@ -81,7 +83,8 @@
       if (!input.value.trim()) { result.textContent = ""; return; }
       if (value === null) { result.textContent = "Not an amount: type digits, with a decimal point if needed."; return; }
       var right = sha256("course-flag:" + value) === form.dataset.sha256;
-      result.textContent = right ? "Correct: that is the flag." : "Not the flag. Check the hop or the row and try again.";
+      result.textContent = right ? (form.dataset.right || "Correct: that is the flag.")
+        : (form.dataset.wrong || "Not the flag. Check the hop or the row and try again.");
       result.className = right ? "flag-right" : "flag-wrong";
     });
   });
