@@ -44,6 +44,10 @@ job.</li>
 BIP 141 rounds that up to a whole number (141 vB), as the saved pages do <a href="#s7">[7]</a>.
 Fee rates differ by the same small amount.</li>
 <li>Use a window at least 800 pixels wide. A narrower one shows a different, mobile page.</li>
+<li>The chain's coins began as mining rewards, each paid by a block's first transaction, the
+coinbase (this morning's slide "Coinbase pays the miner: subsidy plus fees"). On Bitcoin a coinbase
+output cannot be spent for 100 blocks <a href="#s21">[21]</a>; this chain allows it after 10, so
+its history stays short.</li>
 </ul>
 
 <h2>Worked example: Dana's first address</h2>
@@ -78,8 +82,8 @@ P2WPKH</td></tr>
 <ul>
 <li><b>Outputs, not balances.</b> Bitcoin records outputs, each an amount locked to an address,
 and a transaction spends whole outputs <a href="#s12">[12]</a>. The input here was a 50 BTC output.
-0.05 BTC went to Dana; the rest, less the fee, went to a new address, which is likely the
-sender's change.</li>
+0.05 BTC went to Dana; the rest, less the fee, went to a new address. That it is the sender's
+change is a judgment, not a fact: question 3 shows how to weigh it.</li>
 <li><b>The fee.</b> No output records the fee: it is what the inputs hold beyond the outputs,
 50 − 49.94999436 − 0.05 = 0.00000564 BTC <a href="#s12">[12]</a>.</li>
 <li><b>The witness.</b> The input's witness has two items, a 71-byte signature and a 33-byte public
@@ -130,7 +134,10 @@ Can the accountant spend from them? Can the accountant find her key for the trea
 <h3>Part 2: the treasury, a 2-of-3 multi-signature wallet</h3>
 <p>Dana, Eli and Fran share a treasury: any two of their three keys can spend it. Each holds a key
 from their own phrase, at path <code>m/48'/0'/0'/2'</code>, BIP 48's default for this kind of
-wallet <a href="#s20">[20]</a>. Key A is Dana's phrase above. Key B
+wallet <a href="#s20">[20]</a>. BIP 48 is BIP 44's layout for multi-signature wallets, with one
+level more: purpose 48, coin type 0 (bitcoin), account 0, then a script type, where 2 means a
+native SegWit multi-signature script (P2WSH) <a href="#s20">[20]</a>. All four levels are
+hardened. Key A is Dana's phrase above. Key B
 (Eli) is
 <code>legal winner thank year wave sausage worth useful legal winner thank yellow</code>; key C
 (Fran) is
@@ -198,7 +205,8 @@ output is spent <a href="#s15">[15]</a>.</li>
 words "multi-sig" and "witness".</li>
 <li><b>A link?</b> Follow the money into each wallet: who paid Dana's addresses, and who paid the
 treasury? Then compare the master key fingerprint in section 1 with key A's fingerprint in section
-2 <a href="#s3">[3]</a>. The fingerprints appear in the descriptor <a href="#s11">[11]</a>; ask
+2. A fingerprint is the first 4 bytes of a hash of a key, a short name wallets use to say which
+seed a key came from <a href="#s3">[3]</a>. The fingerprints appear in the descriptor <a href="#s11">[11]</a>; ask
 whether they appear in any transaction.</li>
 </ol>
 
@@ -258,6 +266,8 @@ the course's own scale. <code>odni_icd203_2015</code></li>
 <code>chow_bip174psbt_2017</code></li>
 <li id="s20">Fontaine, <i>BIP 48: Multi-Script Hierarchy for Multi-Sig Wallets</i>, 2020.
 <code>fontaine_bip48multiscript_2020</code></li>
+<li id="s21">Bitcoin.org developers, <i>Block Chain (Developer Guide)</i>, 2024.
+<code>bitcoin.orgdevelopers_blockchaindeveloper_2024</code></li>
 </ol>
 </main>
 </body>

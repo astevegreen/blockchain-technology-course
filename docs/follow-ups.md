@@ -49,10 +49,6 @@ slide index), which is never listed here.
   `INSTRUCTOR_ANSWERS_D9.md`): accept "no typology fits: a plain deposit address", with one indicator for and one
   against, on the worksheet and in the key; leave 12-FO's typology table as is. (5 Nov 2026, owner approved Gemini
   D9-3)
-- Day 1 explorer lab, Part 2(b) (`dynamic-labs/explorer/gateway/static/lab/index.html`, Part 2;
-  `explorer/quizes/INSTRUCTOR_ANSWERS.md:97-98`): ask what the wallet asked for (the next nonce) and what it sent (the
-  signed transaction); method names such as `eth_getTransactionCount` are not required. (5 Nov 2026, owner approved
-  Gemini D1-10)
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
   request)
 - `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
@@ -73,9 +69,6 @@ slide index), which is never listed here.
 - `dynamic-labs/cross-chain/README.md:10` still says "Status: scaffolding" and that the questions wait on the
   owner's choice of hops, but the lab page has a full worksheet, worked example and graded note. (4 Nov 2026, week-2
   pattern audit, `docs/analysis/pattern-audit/d8.md`)
-- Day 4's lab gives `0xe7f1725E…0512` to WETH (`dex/gateway/static/lab/index.html:47`), the address day 3's lab gave
-  cUSD (`tokens/gateway/static/lab/index.html:40`), with no word that it is a new chain. (4 Nov 2026, week-1 pattern
-  audit)
 - `dynamic-labs/final-trace/quizes/INSTRUCTOR_ANSWERS.md:67` says students follow Q "because its amount is closer to
   the gross quote", but `facts.json:1356-1358` puts P (168,435.00) closer to the 171,000.00 quote than Q (168,217.27).
   Reword the mistake, and its source in `answers.template.md`. (4 Nov 2026, Gemini audit D10-2, checked against
@@ -83,19 +76,10 @@ slide index), which is never listed here.
 - `dynamic-labs/cross-chain/static/lab/index.html:75` and `:79` send students to the live 4byte.directory site; a
   class without internet cannot answer Q1 and Q3. Give the lookups on the page or in the fallback. (4 Nov 2026,
   Gemini audit D8-2)
-- Wallet Q11 now asks for "one sentence that states what the witness shows" (owner, audit Q17), but
-  `dex/gateway/static/lab/index.html:142`, `tron/static/lab/index.html:142`, `bitcoin-trace/.../index.html:107` and
-  `coinjoin-trace/.../index.html:114` still ask for a sentence "an agent could read". Match them. (4 Nov 2026,
+- Wallet Q11 now asks for "one sentence that states what the witness shows" (owner, audit Q17), and the dex and
+  Tron day-5 labs match it, but `bitcoin-trace/.../index.html:107` and `coinjoin-trace/.../index.html:114` still ask
+  for a sentence "an agent could read". Match them. (4 Nov 2026,
   week-1 audit decisions)
-- Explorer Q3's hint (`dynamic-labs/explorer/gateway/static/lab/index.html:127-131`) never explains Otterscan's `EOA`
-  tag, which the key uses (`INSTRUCTOR_ANSWERS.md:51`). Gloss it, and say a label alone is not evidence. (4 Nov 2026, Gemini audit D1-9, `docs/analysis/gemini-audit/triage.md`)
-- The wallet chain matures coinbases after 10 blocks (`dynamic-labs/wallet/quizes/build-steps.sh:48`), where
-  `02-BF:433` teaches 100. One clause in the wallet page's intro (`:14`). (4 Nov 2026, Gemini audit D2-8, `docs/analysis/gemini-audit/triage.md`)
-- DEX hint 5 (`dynamic-labs/dex/gateway/static/lab/index.html:173-175`) points only at block 11; the key makes block
-  10's approval the independent line (`INSTRUCTOR_ANSWERS.md:29-31`, `:110`). Add block 10 to the hint; also add
-  message-verified bridges to the hint at `:191`. (4 Nov 2026, Gemini audit D4-2, D4-1, `docs/analysis/gemini-audit/triage.md`)
-- The Tron worksheet asks who signed the freeze (`dynamic-labs/tron/static/lab/index.html:138`); the snapshot shows
-  `TRLi4K…`, a key confirming inside the owner multisig. Say so in one sourced line. (4 Nov 2026, Gemini audit D5-4, `docs/analysis/gemini-audit/triage.md`)
 - `dynamic-labs/bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md:12-16` has no Meets and Not yet lines for a graded
   point; add them in `answers.template.md` and regenerate. (4 Nov 2026, Gemini audit D6-6, `docs/analysis/gemini-audit/triage.md`)
 - coinjoin-trace's key: the rubric's "both places the trace stops" (`INSTRUCTOR_ANSWERS.md:18`) omits J1 and J2,

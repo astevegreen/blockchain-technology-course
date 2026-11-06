@@ -51,6 +51,11 @@ first.</li>
 <tr><th>L1 and L2: the bridge</th><td><code>0x7ef8E99980Da5bcEDcF7C10f41E55f759F6A174B</code></td></tr>
 <tr><th>L2: bcUSD (bridged cUSD)</th><td><code>0x61Ab51bE7C866a54B0B442c149d7715367743EfD</code></td></tr>
 </table>
+<p class="note">These are new chains, not day 3's, and some addresses repeat: on day 3,
+<code>0xe7f1…0512</code> was cUSD; here it is WETH. A contract's address is worked out from the
+address that creates it and that address's nonce <a href="#s14">[14]</a>, so on any fresh chain the
+same account's first, second, third contract lands at the same address, whatever that contract is. Before you read an
+address's page, check which chain the explorer is showing.</p>
 <p class="hint">The first 4 bytes of a call's input data name the function it calls. The ones on
 these chains:</p>
 <table>
@@ -139,7 +144,7 @@ pool's money?</li>
 cUSD?</li>
 <li>What was the price of one WETH in cUSD before the swap, and after it? What price did the
 trader get? By how much did the swap move the price?</li>
-<li>Write one sentence an agent could read about block 11. Is Account 4 the trader, or could the
+<li>Write one sentence that states what block 11 shows. Is Account 4 the trader, or could the
 router or the pool be? Give your confidence and the evidence for it.</li>
 </ol>
 <p>The bridge, L1 to L2:</p>
@@ -172,12 +177,16 @@ is cUSD out divided by WETH in. Give the change as a percentage of the price bef
 <a href="#s5">[5]</a>.</li>
 <li><b>The trader.</b> Count the lines of evidence: who signed, who the WETH came from, who the cUSD
 went to, and the <code>Swap</code> log's <code>to</code>. Which of them are independent of each
-other? Remember what the <code>Swap</code> log's <code>sender</code> means.</li>
+other? Then open L1 block 10, the block before: what did Account 4 do there, and is that a
+different kind of evidence from block 11? Remember what the <code>Swap</code> log's
+<code>sender</code> means.</li>
 <li><b>The deposit.</b> Open L1 block 14 and its second transaction. The bridge wrote a
 <code>DepositInitiated</code> log: it carries a deposit number, the sender, the address on the other
 chain and the amount. In a rollup, users deposit into a bridge contract on L1 and the same amount is
 created for them on L2 <a href="#s8">[8]</a>. This lab's bridge is simpler, a trusted bridge
-<a href="#s7">[7]</a>: one key, the relayer, carries each deposit to L2.</li>
+<a href="#s7">[7]</a>: one key, the relayer, carries each deposit to L2, and nothing on L2 checks
+L1 for itself, so you must trust whoever holds that key. This morning's slide "A bridge moves a
+claim, not the coin" (lesson ③) sets the types side by side.</li>
 <li><b>The other side.</b> Open the <a href="/" id="l2-link-2">L2 explorer</a>. The bridge's address
 is the same on both chains: the address alone does not tell you which chain a page is about, so check
 the explorer's chain name. Search for the bridge on L2 and look for a <code>finalizeDeposit</code>
@@ -188,8 +197,10 @@ the transactions an address sent or was sent, not the token logs that name it. R
 <code>Transfer</code> log in the L2 transaction instead. On the <a href="../sign/">swap page</a>,
 under "Ask the contracts", ask <code>balanceOf</code> on each chain. Then find the transaction that
 created bcUSD: open bcUSD's address page on L2 and look at who created it.</li>
-<li><b>The kind of bridge.</b> Bridges lock and mint, burn and mint, or swap with a party on the
-other side <a href="#s7">[7]</a>. Ask which one fits what you saw on L1 (where the cUSD went) and on
+<li><b>The kind of bridge.</b> Lesson ③ gives three types <a href="#s7">[7]</a>: lock-and-mint
+(or burn-and-mint), where a coin is locked or burned on one chain and a copy minted on the other;
+message-verified, where the far chain acts on a message its verifiers accept as genuine; and
+liquidity and intents, where someone on the far chain pays you from their own funds. Ask which one fits what you saw on L1 (where the cUSD went) and on
 L2 (where the bcUSD came from). Read both bridges' code on their Contract tabs.</li>
 <li><b>Who could stop it.</b> Read on the Contract tabs: <code>setPaused</code> on each bridge, who
 <code>finalizeDeposit</code> accepts calls from, and cUSD's <code>addBlackList</code>. Then ask who
@@ -264,6 +275,8 @@ the course's own scale. <code>odni_icd203_2015</code></li>
 2026). <code>otterscan_otsnamespace_2026</code></li>
 <li id="s13">ethereum.org, <i>JSON-RPC API</i>, 2025 (read 31 Oct 2026).
 <code>ethereumorg_jsonrpcapi_2025</code></li>
+<li id="s14">Wood, <i>Ethereum: A Secure Decentralised Generalised Transaction Ledger</i> (the
+Yellow Paper), 2016. <code>wood_ethereumsecuredecentralised_2016</code></li>
 </ol>
 </main>
 <script>

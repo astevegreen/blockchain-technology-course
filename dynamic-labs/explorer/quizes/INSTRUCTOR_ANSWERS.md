@@ -94,8 +94,11 @@ judgment is who holds Account 1's key, which the chain cannot show.
 - **a.** The hash the signing page shows; a block above 10; the wait is under one block time
   (up to about 12 seconds). Test runs 31 Oct 2026: block 28 after about 10 seconds; the recorded
   run on the saved pages (`fallback/sign-run.html`, seat 39) was block 89 after about 4 seconds.
-- **b.** `eth_getTransactionCount` (with `"pending"`) gave the next nonce;
-  `eth_sendRawTransaction` sent the signed bytes. The panel also shows `eth_getBalance`,
+- **b.** The page asked for the seat's next nonce (the count of transactions it has sent), because
+  each transaction must carry the next one in turn; at the end it sent the signed transaction.
+  Method names are not required (owner, 5 Nov 2026, Gemini D1-10): students read, not program.
+  For the instructor: the panel shows `eth_getTransactionCount` (with `"pending"`) for the nonce
+  and `eth_sendRawTransaction` for the signed bytes, plus `eth_getBalance`,
   `eth_getBlockByNumber` (for the base fee), then `eth_getTransactionReceipt` and
   `eth_getTransactionByHash` polled until the receipt arrives.
 - **c.** From is the seat's address, recovered from the signature. Confidence **High** that the

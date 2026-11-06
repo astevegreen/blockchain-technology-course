@@ -70,8 +70,9 @@ present only, so a later read could differ. Times are UTC.
 11. Thirteen AddedBlackList events on 23 Apr 2026. `TNiq9…` and `TTiDL…` were added at 12:02:36
     UTC in block 82,092,618 (transactions `ebe670f1…75fe` and `295cd606…b09a`); eleven other
     addresses followed between 16:29 and 19:56 UTC. Every one was signed by `TRLi4K…` (query 5's
-    `signed_by`). The worksheet names `TBPxhV…` as USDT's owner; that `TRLi4K…` signs for it is not in
-    the query output, so don't require it.
+    `signed_by`). The worksheet names `TBPxhV…` as USDT's owner and explains that `TRLi4K…` is one of
+    its three keys (two must agree), so credit "one of the owner wallet's keys"; the query output alone
+    does not show it, so don't require it.
 12. As of block 87,600,650 (read 31 Oct 2026), both are still blacklisted: `TNiq9…` holds
     212,922,804.915554 USDT and `TTiDL…` 131,288,801.972952 (about $344M together).
 13. The Block reports Tether froze about $213M and $131M in these two wallets on 23 Apr 2026,
