@@ -14,7 +14,7 @@ slide index), which is never listed here.
 ## Lessons
 - `blockchain-course/assets/mindmap.html` is published but no page links to it, and its cards follow the March
   sections, not the ten days. Link it from the navbar once it is organized by day; relabel its "02-BF: Transactions &
-  Mining" and "02-FO: Obfuscation & Tracing" cards (about lines 2523 and 2690) to the lessons' 4 Nov titles then. (2 Nov
+  Mining" and "02-FO: Obfuscation & Tracing" cards (about lines 2533 and 2700) to the lessons' 4 Nov titles then. (2 Nov
   2026, site cleanup)
 
 ## Quizzes
@@ -40,46 +40,43 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- `dynamic-labs/bitcoin/mempool/Dockerfile` now installs Node 24 (mempool's own Dockerfile at the pinned commit
+- `dynamic-labs/bitcoin/mempool/Dockerfile:35` now installs Node 24 (mempool's own Dockerfile at the pinned commit
   does too), but no lab test builds it: the labs pull the published `bitcoin-mempool` image, which is built by hand.
   Build it with Node 24 and check the mempool and explorer pages before the image is next published. (6 Nov 2026,
   toolchain upgrades)
-- `dynamic-labs/tests/test_exercise_bgp_contract.py` and `test_exercise_trust_game_shared_auth_contract.py` (6 tests)
-  skip in the check: they need Flask-SocketIO, and the games pin eventlet 0.33.3, which imports `distutils` and so
-  fails on Python 3.12 and later ("Invalid async_mode specified"). They run nowhere. Run them inside the exercise image, or move the games to a
-  current eventlet or threading mode. (6 Nov 2026, test-suite audit fixes)
-- The quiz engine's expiration worker thread starts before a test's database has its tables, so a pytest run can
-  warn "Exception in thread quiz-engine-expiration-worker: no such table: attempts"
-  (`tests/unit/test_quiz_generation_unit.py`, intermittent). Keep the worker off under TESTING unless a test starts it.
-  (6 Nov 2026, test-suite audit fixes)
 - The 17 `dynamic-labs/regression-tests/automated/*/run.sh` files repeat the same Docker and venv steps: one shared
   `run-lab.sh` taking the lab's name would keep them in step. The 8 `live_support.py` files likewise repeat their
   session, wait and login helpers: a shared `live_common.py`. (6 Nov 2026, test-suite audit)
 - `dynamic-labs/tests/test_router_instructor_auth_config.py` checks nginx config text, not behaviour: replace it with
   a live check through the router (each gated path refuses a stranger) in the regression suite. (6 Nov 2026,
   test-suite audit)
-- `tools/lab_tests.py` `IN_CI` leaves out bitcoin, consensus, cryptography, ethereum_lab, hlf and p2p_trust, so no
+- `tools/lab_tests.py:25` `IN_CI` leaves out bitcoin, consensus, cryptography, ethereum_lab, hlf and p2p_trust, so no
   push runs their live tests; add each once its `run.sh` passes on a GitHub runner. (6 Nov 2026, test-suite audit)
+- `dynamic-labs/regression-tests/automated/hlf/live_support.py:451` `get_hlf_chaincode` and `:467`
+  `get_instructor_snapshot` are no longer called: since #38 the HLF live suite makes no signed-in call to the
+  chaincode detail or instructor snapshot routes, only refusal checks. Add one signed-in test per route, or delete the
+  helpers. (7 Nov 2026, second look on #38)
 
 ## Tooling and rules
 - Dependabot pull requests (`.github/dependabot.yml`) run no tests: `check.yml` and `lab-tests.yml` run only on a
   push to `main` or by hand, so each one needs a by-hand Lab Tests run on its branch before merging. A
   `pull_request` trigger limited to Dependabot's branches would test them on arrival (a rail change). (6 Nov 2026,
   toolchain upgrades)
-- `tools/sonar.mjs:45` reads the PR's head commit with `gh pr view`, which uses GraphQL, and cloud sessions get
+- `tools/sonar.mjs:44` reads the PR's head commit with `gh pr view`, which uses GraphQL, and cloud sessions get
   "GitHub GraphQL is not available"; `gh api repos/{owner}/{repo}/pulls/<n>` (REST) gives the same `head.sha`. Its
   other calls are REST and work. (6 Nov 2026, toolchain upgrades)
-- No test builds `src.zip` and lists what is in it: the answer-files check reads the `-x` patterns of
-  `.github/workflows/pages.yml` and matches them itself. A test that runs the zip step's command into a temporary
-  folder and lists the archive would catch a pattern zip reads differently. (6 Nov 2026, test-suite audit)
-- `tools/hooks/env-check.mjs:44-49` checks only PyYAML and beautifulsoup4; the check now also needs Flask, pytest,
-  requests and Markdown from `requirements-dev.txt` for the lab and quiz-engine tests. Check one of them too (a hook
-  change: by day it asks the owner). (6 Nov 2026, test-suite audit fixes)
-
 - `tools/agy.mjs` is 404 lines: its Gemini API half (`apiPrompt`, `parseApiReply`, the HTTPS post,
-  `geminiApi`) belongs in its own file, split the same way in all three repos. [7 Nov 2026, Gemini API fallback]
-- The "(diff truncated; read the rest from disk)" line is written in `tools/second-look.mjs` and matched by
-  `TRUNCATED` in `tools/agy.mjs`: one shared constant would stop a reworded marker from sending part of a diff to
-  the API. [7 Nov 2026, Gemini API fallback]
+  `geminiApi`) belongs in its own file, split the same way in all three repos. (7 Nov 2026, Gemini API fallback)
+- The "(diff truncated; read the rest from disk)" line is written in `tools/second-look.mjs:96` and matched by
+  `TRUNCATED` in `tools/agy.mjs:167`: one shared constant would stop a reworded marker from sending part of a diff to
+  the API. (7 Nov 2026, Gemini API fallback)
+- `tools/check.py:446-455` `instructor_named` reads only the file name, so an answer file whose folder says
+  instructor or seed (`dynamic-labs/x/instructor/key.json`) is not caught, and the `dynamic-labs/*instructor*.html`
+  entry of `STUDENT_FACING` (`tools/check.py:70`) lets any page so named ship, a rendered instructor notes page
+  among them. (7 Nov 2026, second look on #38)
+- `tools/hooks/env-check.mjs:53` says "The GitHub CLI isn't signed in" whenever `gh auth status` fails, and it fails
+  when any stored account does: on the desktop the active account (astevegreen) is signed in, but the keyring entry
+  for greenbeanbot fails, so every session start warns wrongly. Check the active account only (`gh auth status
+  --active`). (7 Nov 2026, test-suite audit follow-ups)
 
 ## Notion and documents
