@@ -161,6 +161,22 @@ class HLFRouterAndAuthTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("text/html", resp.headers.get("Content-Type", ""))
 
+    def test_runner_gates_its_instructor_files(self) -> None:
+        # The router passes these to the HLF runner, which checks the cookie itself
+        # (web_service/instructor_routes.py): a browser goes to the login, a script gets 401.
+        for name in ("hlf_instructor.html", "hlf_instructor.js"):
+            url = f"{self.base_url}/labs/hlf/{name}"
+            with self.subTest(file=name):
+                page = self.session.get(url, timeout=10, allow_redirects=False, headers={"Accept": "text/html"})
+                self.assertEqual(page.status_code, 302)
+                self.assertTrue((page.headers.get("Location") or "").endswith("/instructor/"))
+                script = self.session.get(url, timeout=10, allow_redirects=False, headers={"Accept": "*/*"})
+                self.assertEqual(script.status_code, 401)
+                self.assertEqual(script.content, b"")
+                served = self.instructor_session.get(url, timeout=10)
+                self.assertEqual(served.status_code, 200)
+                self.assertGreater(len(served.content), 1000)
+
     def test_student_guide_returns_html(self) -> None:
         resp = self.session.get(
             f"{self.base_url}/labs/hlf/api/hlf/guide",

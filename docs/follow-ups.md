@@ -47,15 +47,15 @@ slide index), which is never listed here.
 - The 17 `dynamic-labs/regression-tests/automated/*/run.sh` files repeat the same Docker and venv steps: one shared
   `run-lab.sh` taking the lab's name would keep them in step. The 8 `live_support.py` files likewise repeat their
   session, wait and login helpers: a shared `live_common.py`. (6 Nov 2026, test-suite audit)
-- `dynamic-labs/tests/test_router_instructor_auth_config.py` checks nginx config text, not behaviour: replace it with
-  a live check through the router (each gated path refuses a stranger) in the regression suite. (6 Nov 2026,
-  test-suite audit)
 - `tools/lab_tests.py:25` `IN_CI` leaves out bitcoin, consensus, cryptography, ethereum_lab, hlf and p2p_trust, so no
   push runs their live tests; add each once its `run.sh` passes on a GitHub runner. (6 Nov 2026, test-suite audit)
 - `dynamic-labs/regression-tests/automated/hlf/live_support.py:451` `get_hlf_chaincode` and `:467`
   `get_instructor_snapshot` are no longer called: since #38 the HLF live suite makes no signed-in call to the
   chaincode detail or instructor snapshot routes, only refusal checks. Add one signed-in test per route, or delete the
   helpers. (7 Nov 2026, second look on #38)
+- `dynamic-labs/hlf/web_service/ui_app.py:87-89` says the org5 (Meridian) peer page is "gated at the nginx layer",
+  but `router/routes/hlf.conf` serves every `/labs/hlf/peer/org[1-5]/` page to students on purpose (the topology view
+  links them); only the consoles are gated. Correct the comment. (7 Nov 2026, router gate live check)
 
 ## Tooling and rules
 - Dependabot pull requests (`.github/dependabot.yml`) run no tests: `check.yml` and `lab-tests.yml` run only on a

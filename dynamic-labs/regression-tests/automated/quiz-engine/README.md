@@ -18,6 +18,11 @@ Implemented files:
 
 - `test_quiz_engine_live.py` - live router, auth, seed, student, and
   instructor checks
+- `test_router_gates_live.py` - every instructor gate in `router/` refuses a
+  stranger and lets the instructor through; the HLF student routes beside
+  them stay open. It lives here because this is the lightest stack that
+  starts the router, and any router change runs it. Add a path to `GATED`
+  when a route file gains an instructor gate.
 - `live_support.py` - request, login, cookie-cache, CSRF, and v2 API seeding
   helpers
 - `run.sh` - default runner
