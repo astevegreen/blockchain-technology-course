@@ -123,6 +123,31 @@ def test_create_app_refuses_test_header_override_without_testing(tmp_path):
         )
 
 
+def test_refused_create_app_leaves_no_expiration_worker_running(tmp_path):
+    # A refused start used to leave the worker thread polling a database with no
+    # tables, so a later test logged "no such table: attempts".
+    import threading
+
+    from app import create_app
+
+    def workers():
+        return {t for t in threading.enumerate() if t.name == "quiz-engine-expiration-worker"}
+
+    before = workers()
+    with pytest.raises(RuntimeError, match="test-header.*TESTING"):
+        create_app(
+            {
+                "DATABASE_PATH": str(tmp_path / "quiz-engine-test.sqlite"),
+                "SECRET_KEY": "test-secret",
+                "TESTING": False,
+                "EXPIRATION_WORKER_ENABLED": True,
+                "INSTRUCTOR_AUTH_MODE": "test-header",
+            }
+        )
+
+    assert workers() - before == set()
+
+
 def test_create_app_refuses_test_header_env_without_testing(tmp_path, monkeypatch):
     from app import create_app
 
