@@ -97,8 +97,7 @@ The owner judges results, not code: explain every change in plain English and pr
   reviews the same change through agy and picks itself by what changed. Its findings are inputs: check each against
   the files, fix the valid blockers (a valid one holds the push like a reviewer's blocker; notes never do), and
   name any you rejected, with why, under **Unsure about**. A first line `Second look: retry` means no model
-  answered: the machine failed, so run it again later; the change it covers stays committed on a local branch,
-  unpushed, until a run answers. It never waits on the owner.
+  answered: the machine failed, so run it again later; the change stays unpushed until a run answers.
 - A change to a rail (`RAILS` in `tools/rail-audit.mjs`: the hooks, settings, sprint skills and agents, git hooks,
   workflows, the check and the checks it runs, the sprint queue, the second look and `GEMINI.md`) runs
   `second-look.mjs` too, tooling or not: it adds the rail audit, a deep review by Argon, Opus or Flash (never

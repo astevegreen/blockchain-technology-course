@@ -44,14 +44,12 @@ test("each sprint skill and agent wires the guard in its own mode", () => {
 
 // The cue and its stop are typed by the owner or the root /sprint-cue; the archiver's trigger types /sprint-archive.
 test("the sprint skills start only when typed, and run on the model the supervisor or the cue gives them", () => {
-  const want = { supervisor: "sonnet", lane: "sonnet", plan: "opus", integrate: "sonnet", start: "sonnet", stop: "sonnet", archive: "haiku" };
+  const want = { supervisor: "sonnet", lane: "sonnet", plan: "opus", integrate: "sonnet", start: "sonnet", stop: "sonnet", archive: "haiku", status: "sonnet" };
   for (const [name, model] of Object.entries(want)) {
     const fm = frontmatter(`.claude/skills/sprint-${name}/SKILL.md`);
     assert.match(fm, /^disable-model-invocation: true$/m, name);
     assert.match(fm, new RegExp(`^model: ${model}$`, "m"), name);
   }
-  assert.doesNotMatch(frontmatter(".claude/skills/sprint-status/SKILL.md"), /disable-model-invocation/,
-    "the owner asks for status in plain words");
 });
 
 // Owner, 28 Oct 2026: "Web and Notion read". The implementer finds and reads sources; the reviewer fetches them to

@@ -1,6 +1,6 @@
 ---
 name: sprint-archive
-description: The course sprint archiver. Archives the sprint's finished and stuck sessions, then switches itself off after the window. Run only from the "Course sprint archiver" scheduled task that /sprint-start makes.
+description: Course sprint archiver; run only from its scheduled task.
 disable-model-invocation: true
 model: haiku
 hooks:

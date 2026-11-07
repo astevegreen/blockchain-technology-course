@@ -1,6 +1,7 @@
 ---
 name: sprint-status
-description: Course sprint status in at most 8 lines, read from the sprint log's status block. Use when the owner asks how the sprint is going, whether it is running, or what waits on them.
+description: Course sprint status in at most 8 lines; run only as /sprint-status.
+disable-model-invocation: true
 model: sonnet
 ---
 Run `node C:/Antigravity/blockchain-technology-course/tools/sprint/queue.mjs window`: its `state` says whether

@@ -1,6 +1,6 @@
 ---
 name: sprint-stop
-description: End the course sprint's window now and switch its supervisor off; sessions already running finish the task in hand. Run only as /sprint-stop.
+description: End the course sprint window now; run only as /sprint-stop.
 disable-model-invocation: true
 model: sonnet
 hooks:
