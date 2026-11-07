@@ -21,6 +21,12 @@ on:
 permissions:
   contents: read
 
+# A hand-started run replaces an older hand-started one. A push is never cancelled or replaced: each push tests only the
+# labs it changed (tools/lab_tests.py --base), so dropping one would leave its labs untested.
+concurrency:
+  group: lab-tests-${{ github.event_name == 'push' && github.sha || 'dispatch' }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+
 defaults:
   run:
     shell: bash
