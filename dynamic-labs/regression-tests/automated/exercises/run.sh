@@ -170,6 +170,28 @@ if [[ "${SKIP_START}" != "1" ]]; then
   fi
 fi
 
+run_contract_tests_in_images() {
+  # The games pin eventlet 0.33.3, which imports distutils and so fails on Python 3.12 and later: the check
+  # skips these contract tests on such hosts, so they run here, inside each game's own image (Python 3.11).
+  local pair image test_file
+  for pair in "exercises-bgp:latest:test_exercise_bgp_contract.py" \
+              "exercises-insider:latest:test_exercise_trust_game_shared_auth_contract.py"; do
+    image="${pair%:*}"
+    test_file="${pair##*:}"
+    echo "[exercises-regression] running tests/${test_file} inside ${image}"
+    docker run --rm \
+      -v "${ROOT_DIR}:/labs:ro" \
+      -w /labs \
+      -e PYTHONDONTWRITEBYTECODE=1 \
+      -e EXERCISE_CONTRACT_TESTS_REQUIRED=1 \
+      --entrypoint python \
+      "${image}" \
+      -m unittest -v "tests/${test_file}"
+  done
+}
+
+run_contract_tests_in_images
+
 if [[ "${DIRECT_HOST}" == "1" ]]; then
   run_on_host
 else
