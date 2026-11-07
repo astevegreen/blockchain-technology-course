@@ -45,7 +45,7 @@ const [quarto, python, py, gh, ghAuth] = await Promise.all([
   run("python", ["-c", `import ${DEV_IMPORTS}`]),
   run("py", ["-c", `import ${DEV_IMPORTS}`]),
   run("gh", ["--version"]),
-  run("gh", ["auth", "status"]),
+  run("gh", ["auth", "status", "--active"]),
 ]);
 if (!quarto) problems.push("Quarto was not found. Install it from quarto.org, then restart the Claude app so it sees the new PATH.");
 if (!python && !py) problems.push("Python is missing a package the check, the lab tests or the quiz-engine tests need. Run: python -m pip install --user -r requirements-dev.txt");
