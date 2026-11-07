@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { ARGON, FLASH, OPUS, SONNET, askFirstAvailable, pickDepth } from "../agy.mjs";
+import { ARGON, FLASH, NO_API, OPUS, SONNET, askFirstAvailable, askModel, pickDepth } from "../agy.mjs";
 import { RAILS, RAIL_MODELS, couldNotRun, railAction, railDiff, railFiles, railVerdict } from "../rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..", "..");
@@ -83,7 +83,19 @@ test("the rail audit asks Argon, then Opus, then Flash, and never Sonnet", () =>
   assert.deepEqual(asked, [ARGON, OPUS, FLASH]);
   assert.ok(!asked.includes(SONNET));
   const script = readFileSync(path.join(ROOT, "tools", "second-look.mjs"), "utf8");
-  assert.match(script, /review\("rail-audit\.md", material, RAIL_MODELS, tmp\)/);
+  assert.match(script, /review\("rail-audit\.md", material, RAIL_MODELS, tmp, NO_API\)/);
+});
+
+// Owner, 7 Nov 2026: "Rails wait for the PC". Where agy is not installed (a cloud session), the rail audit refuses
+// the Gemini API, which sees only the diff and the rules files, so the rail change is retried rather than shipped.
+test("the rail audit never goes to the Gemini API, even with a key", () => {
+  const noAgy = () => ({ error: Object.assign(new Error("spawn agy ENOENT"), { code: "ENOENT" }) });
+  assert.throws(
+    () => askModel(noAgy, "audit", ARGON, [], NO_API),
+    (err) => err.stop && /cannot read the repository/.test(err.message),
+  );
+  const script = readFileSync(path.join(ROOT, "tools", "second-look.mjs"), "utf8");
+  assert.doesNotMatch(script, /review\("second-look\.md"[^)]*NO_API/, "the ordinary second look may use the API");
 });
 
 test("the second look runs the rail audit on a rail change, with the audit's own prompt", () => {
