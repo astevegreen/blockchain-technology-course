@@ -32,6 +32,11 @@ jobs:
           else
             echo "No VM release found yet; skipping VM links."
           fi
+      - name: Check the zip step leaves out what the check expects
+        # tools/check.py reads the -x patterns below with fnmatch; this lists what zip itself would pack.
+        env:
+          SRC_ZIP_TEST_REQUIRED: "1"
+        run: python3 -m unittest -v tools/tests/test_src_zip.py
       - name: Create source zip
         run: |
           # Keep instructor quiz banks/solutions out of the student-facing source bundle.
