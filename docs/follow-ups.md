@@ -68,6 +68,13 @@ slide index), which is never listed here.
   instructor or seed (`dynamic-labs/x/instructor/key.json`) is not caught, and the `dynamic-labs/*instructor*.html`
   entry of `STUDENT_FACING` (`tools/check.py:70`) lets any page so named ship, a rendered instructor notes page
   among them. (7 Nov 2026, second look on #38)
+- Quarto is downloaded on every `check.yml` run (~40 s): `quarto-dev/quarto-actions/setup` has no cache option, and
+  `actions/cache` on the Windows install folder is untested; try it on a branch and compare run times. The labs'
+  Docker images (~4 GB Otterscan) are also re-pulled every Lab Tests run; a registry cache or a smaller image set is
+  the fix. (7 Nov 2026, CI speed)
+- HELD for the owner: a `paths-ignore: docs/**` filter on `check.yml` (docs-only pushes would skip the render). The
+  rail audit says LOOSENS (the check would no longer run on those pushes). The change is on local branch
+  `ci-speed-held-paths`; merge it only on the owner's words. (7 Nov 2026, CI speed)
 
 ## Notion and documents
 
