@@ -1,6 +1,6 @@
 ---
 name: sprint-plan
-description: Writes specs for the next backlog items of one course sprint lane. Run only as /sprint-plan <lane>, from a session the sprint supervisor started, or by the owner on planning day.
+description: Writes specs for the next course sprint backlog items; run only as /sprint-plan <lane>.
 disable-model-invocation: true
 argument-hint: "<lessons|labs>"
 model: opus

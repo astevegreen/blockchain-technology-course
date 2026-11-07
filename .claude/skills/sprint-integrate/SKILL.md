@@ -1,6 +1,6 @@
 ---
 name: sprint-integrate
-description: The course sprint's single integrator. Lands reviewed sprint branches on main, up to three per push, pushes, and watches Lab Tests when a lab changed. Run only as /sprint-integrate, from a session the sprint supervisor started.
+description: Course sprint integrator: lands reviewed sprint branches on main; run only as /sprint-integrate.
 disable-model-invocation: true
 model: sonnet
 hooks:

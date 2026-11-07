@@ -1,6 +1,6 @@
 ---
 name: sprint-lane
-description: Coordinator for one lane of the course sprint. Run only as /sprint-lane <lane>, from a session the sprint supervisor started.
+description: Coordinator for one course sprint lane; run only as /sprint-lane <lane>.
 disable-model-invocation: true
 argument-hint: "<lessons|labs>"
 model: sonnet
