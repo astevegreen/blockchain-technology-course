@@ -478,7 +478,10 @@ def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
 def answer_files() -> list[str]:
     """CLAUDE.md rule 1: an answer key must not reach students through src.zip or the VM image."""
     texts = [(REPO / wf).read_text(encoding="utf-8") if (REPO / wf).is_file() else "" for wf in (PAGES_WORKFLOW, VM_WORKFLOW)]
-    return unfenced_answer_files((git(REPO, "ls-files") or "").splitlines(), *texts)
+    # Untracked files too: the stamp covers them, so a commit after `git add` would never be checked again.
+    files = [*(git(REPO, "ls-files") or "").splitlines(),
+             *(git(REPO, "ls-files", "--others", "--exclude-standard") or "").splitlines()]
+    return unfenced_answer_files(files, *texts)
 
 
 def tool_tests() -> list[str]:
@@ -503,9 +506,10 @@ QUIZ_ENGINE = LABS / "quiz-engine-v2"
 INSTALL_FIX = "fix: python -m pip install -r requirements-dev.txt"
 # A change under these reruns the lab unit tests: the contract tests read the labs, lab-manager.sh, the shared
 # instructor auth, and the workflows and VM build that package the labs.
-LAB_TEST_PATHS = ("dynamic-labs/", ".github/workflows/", "vm-build/")
-# The quiz engine's tests ingest the real quiz banks through the bundle builder.
-QUIZ_ENGINE_TEST_PATHS = ("dynamic-labs/quiz-engine-v2/", "quizes/quiz_json/", "quizes/build_quiz_bank_bundle.py")
+LAB_TEST_PATHS = ("dynamic-labs/", ".github/workflows/", "vm-build/", "requirements-dev.txt")
+# The quiz engine's tests ingest the real quiz banks through the bundle builder, and import the shared instructor auth.
+QUIZ_ENGINE_TEST_PATHS = ("dynamic-labs/quiz-engine-v2/", "dynamic-labs/shared/", "quizes/quiz_json/",
+                          "quizes/build_quiz_bank_bundle.py", "requirements-dev.txt")
 
 
 def failed_suite(head: str, out: str) -> list[str]:

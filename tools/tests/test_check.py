@@ -192,6 +192,12 @@ class LabTests(unittest.TestCase):
             self.assertIn("quiz engine tests", self.names([changed]), changed)
         self.assertNotIn("quiz engine tests", self.names(["dynamic-labs/hlf/lab.sh"]))
 
+    def test_shared_auth_or_dev_requirements_run_both_suites(self) -> None:
+        # The quiz engine imports dynamic-labs/shared/instructor_auth; both suites install requirements-dev.txt.
+        for changed in ("dynamic-labs/shared/instructor_auth/auth.py", "requirements-dev.txt"):
+            self.assertIn("quiz engine tests", self.names([changed]), changed)
+            self.assertIn("lab unit tests", self.names([changed]), changed)
+
     def test_everything_runs_both(self) -> None:
         names = self.names(None)
         self.assertIn("lab unit tests", names)
@@ -333,6 +339,18 @@ class AnswerFiles(unittest.TestCase):
 
     def test_this_repository_fences_every_answer_file(self) -> None:
         self.assertEqual(check.answer_files(), [])
+
+    def test_an_untracked_answer_file_is_caught_before_it_is_added(self) -> None:
+        # The check stamps untracked files too, so a commit after `git add` would never look at it again.
+        real_git = check.git
+        def git(root, *args):
+            if args == ("ls-files", "--others", "--exclude-standard"):
+                return "dynamic-labs/x/new_answer_key.json"
+            return real_git(root, *args)
+        with unittest.mock.patch.object(check, "git", git):
+            problems = check.answer_files()
+        self.assertTrue(any(p.startswith("dynamic-labs/x/new_answer_key.json: ships in src.zip") for p in problems),
+                        problems)
 
     def test_workflow_or_answer_file_changes_run_the_check(self) -> None:
         for changed in (".github/workflows/pages.yml", "dynamic-labs/x/new_answer_key.json",
