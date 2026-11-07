@@ -38,15 +38,17 @@ if (process.platform === "win32") {
 const major = Number(process.versions.node.split(".")[0]);
 if (major < 24) problems.push(`Node ${process.versions.node} is too old for the hooks; install Node 24 or newer.`);
 
+// One import per package in requirements-dev.txt (env-check.test.mjs fails if a package there has none).
+const DEV_IMPORTS = "yaml, bs4, flask, pytest, requests, markdown";
 const [quarto, python, py, gh, ghAuth] = await Promise.all([
   run("quarto", ["--version"]),
-  run("python", ["-c", "import yaml, bs4"]),
-  run("py", ["-c", "import yaml, bs4"]),
+  run("python", ["-c", `import ${DEV_IMPORTS}`]),
+  run("py", ["-c", `import ${DEV_IMPORTS}`]),
   run("gh", ["--version"]),
   run("gh", ["auth", "status"]),
 ]);
 if (!quarto) problems.push("Quarto was not found. Install it from quarto.org, then restart the Claude app so it sees the new PATH.");
-if (!python && !py) problems.push("Python can't import PyYAML and beautifulsoup4. Run: python -m pip install --user -r requirements-dev.txt");
+if (!python && !py) problems.push("Python is missing a package the check, the lab tests or the quiz-engine tests need. Run: python -m pip install --user -r requirements-dev.txt");
 if (!gh) problems.push("The GitHub CLI (gh) was not found. Install it from cli.github.com.");
 else if (!ghAuth) problems.push("The GitHub CLI isn't signed in. Run: gh auth login");
 
