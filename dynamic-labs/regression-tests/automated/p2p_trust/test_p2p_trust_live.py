@@ -187,7 +187,7 @@ class P2PTrustLiveRegressionTests(unittest.TestCase):
         )
         output = strip_terminal_artifacts(raw)
         self.assertIn("Reached responsible node", output)
-        self.assertIn("Optimal path:", output)
+        self.assertIn("Greedy reference path:", output)
 
     def test_feature_guard_home_is_writable_and_rootfs_is_read_only(self) -> None:
         if not os.environ.get("P2P_TRUST_STUDENT_HOME_ROOT"):
