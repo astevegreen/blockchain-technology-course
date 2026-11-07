@@ -15,6 +15,8 @@ from instructor_auth import (
     verify_csrf_token,
 )
 
+from .config import TEST_HEADER_REFUSED
+
 
 @dataclass(frozen=True)
 class InstructorContext:
@@ -113,6 +115,8 @@ def clear_test_instructor_session():
 def init_shared_auth(app):
     mode = app.config["INSTRUCTOR_AUTH_MODE"]
     if mode == "test-header":
+        if not app.config.get("TESTING"):
+            raise RuntimeError(TEST_HEADER_REFUSED)
         return
 
     auth = AuthConfig.from_env()

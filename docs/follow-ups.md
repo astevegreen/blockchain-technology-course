@@ -44,6 +44,22 @@ slide index), which is never listed here.
   does too), but no lab test builds it: the labs pull the published `bitcoin-mempool` image, which is built by hand.
   Build it with Node 24 and check the mempool and explorer pages before the image is next published. (6 Nov 2026,
   toolchain upgrades)
+- `dynamic-labs/tests/test_exercise_bgp_contract.py` and `test_exercise_trust_game_shared_auth_contract.py` (6 tests)
+  skip in the check: they need Flask-SocketIO, and the games pin eventlet 0.33.3, which imports `distutils` and so
+  fails on Python 3.12 and later ("Invalid async_mode specified"). They run nowhere. Run them inside the exercise image, or move the games to a
+  current eventlet or threading mode. (6 Nov 2026, test-suite audit fixes)
+- The quiz engine's expiration worker thread starts before a test's database has its tables, so a pytest run can
+  warn "Exception in thread quiz-engine-expiration-worker: no such table: attempts"
+  (`tests/unit/test_quiz_generation_unit.py`, intermittent). Keep the worker off under TESTING unless a test starts it.
+  (6 Nov 2026, test-suite audit fixes)
+- The 17 `dynamic-labs/regression-tests/automated/*/run.sh` files repeat the same Docker and venv steps: one shared
+  `run-lab.sh` taking the lab's name would keep them in step. The 8 `live_support.py` files likewise repeat their
+  session, wait and login helpers: a shared `live_common.py`. (6 Nov 2026, test-suite audit)
+- `dynamic-labs/tests/test_router_instructor_auth_config.py` checks nginx config text, not behaviour: replace it with
+  a live check through the router (each gated path refuses a stranger) in the regression suite. (6 Nov 2026,
+  test-suite audit)
+- `tools/lab_tests.py` `IN_CI` leaves out bitcoin, consensus, cryptography, ethereum_lab, hlf and p2p_trust, so no
+  push runs their live tests; add each once its `run.sh` passes on a GitHub runner. (6 Nov 2026, test-suite audit)
 
 ## Tooling and rules
 - Dependabot pull requests (`.github/dependabot.yml`) run no tests: `check.yml` and `lab-tests.yml` run only on a
@@ -53,5 +69,11 @@ slide index), which is never listed here.
 - `tools/sonar.mjs:45` reads the PR's head commit with `gh pr view`, which uses GraphQL, and cloud sessions get
   "GitHub GraphQL is not available"; `gh api repos/{owner}/{repo}/pulls/<n>` (REST) gives the same `head.sha`. Its
   other calls are REST and work. (6 Nov 2026, toolchain upgrades)
+- No test builds `src.zip` and lists what is in it: the answer-files check reads the `-x` patterns of
+  `.github/workflows/pages.yml` and matches them itself. A test that runs the zip step's command into a temporary
+  folder and lists the archive would catch a pattern zip reads differently. (6 Nov 2026, test-suite audit)
+- `tools/hooks/env-check.mjs:44-49` checks only PyYAML and beautifulsoup4; the check now also needs Flask, pytest,
+  requests and Markdown from `requirements-dev.txt` for the lab and quiz-engine tests. Check one of them too (a hook
+  change: by day it asks the owner). (6 Nov 2026, test-suite audit fixes)
 
 ## Notion and documents

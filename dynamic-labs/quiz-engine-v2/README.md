@@ -35,6 +35,6 @@ QUIZ_ENGINE_SECRET_KEY='<random string>' INSTRUCTOR_PASSWORD='<password>' INSTRU
 ```
 
 The `test-header` adapter, which trusts an `X-Test-Instructor` request header,
-is used only by the `test` service. To run the app with it, set
-`QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=test-header` and
-`INSTRUCTOR_AUTH_MODE=test-header` together.
+is used only by the `test` service and the test suite. The app refuses to start
+with `QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=test-header` unless `TESTING=1` is also
+set, so a running app never trusts that header.
