@@ -76,4 +76,10 @@ slide index), which is never listed here.
   requests and Markdown from `requirements-dev.txt` for the lab and quiz-engine tests. Check one of them too (a hook
   change: by day it asks the owner). (6 Nov 2026, test-suite audit fixes)
 
+- `tools/agy.mjs` is 404 lines: its Gemini API half (`apiPrompt`, `parseApiReply`, the HTTPS post,
+  `geminiApi`) belongs in its own file, split the same way in all three repos. [7 Nov 2026, Gemini API fallback]
+- The "(diff truncated; read the rest from disk)" line is written in `tools/second-look.mjs` and matched by
+  `TRUNCATED` in `tools/agy.mjs`: one shared constant would stop a reworded marker from sending part of a diff to
+  the API. [7 Nov 2026, Gemini API fallback]
+
 ## Notion and documents
