@@ -465,11 +465,11 @@ def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
         if not rel.startswith(STUDENT_TREES):
             continue
         answer = instructor_named(rel)
-        in_zip = matches_any(rel, zip_x, whole_folders=False)
-        if answer and not in_zip:
+        zip_excluded = matches_any(rel, zip_x, whole_folders=False)
+        if answer and not zip_excluded:
             problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}, '
                             "or, if students may have it, list it in STUDENT_FACING (tools/check.py) with why")
-        instructor_only = answer or (in_zip and rel.startswith("dynamic-labs/"))
+        instructor_only = answer or (zip_excluded and rel.startswith("dynamic-labs/"))
         if instructor_only and rel not in VM_RUNTIME_KEYS and not matches_any(rel, vm_rm, whole_folders=True):
             problems.append(f"{rel}: baked into the VM: add it to the rm list of {VM_WORKFLOW}")
     return problems
