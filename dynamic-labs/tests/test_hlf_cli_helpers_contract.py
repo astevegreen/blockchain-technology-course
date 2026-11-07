@@ -1,18 +1,20 @@
 from __future__ import annotations
 
+import shutil
 import subprocess
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HELPERS = ROOT / "hlf" / "scripts" / "hlf_cli_helpers.sh"
+HELPERS = (ROOT / "hlf" / "scripts" / "hlf_cli_helpers.sh").as_posix()
 
 
 class HlfCliHelpersContractTests(unittest.TestCase):
     def _run_bash(self, script: str) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
-            ["bash", "-lc", script],
+            # Resolve bash through PATH: on Windows a bare "bash" starts the WSL launcher in System32 first.
+            [shutil.which("bash") or "bash", "-c", script],
             cwd=ROOT,
             capture_output=True,
             text=True,
