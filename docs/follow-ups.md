@@ -68,11 +68,7 @@ slide index), which is never listed here.
   instructor or seed (`dynamic-labs/x/instructor/key.json`) is not caught, and the `dynamic-labs/*instructor*.html`
   entry of `STUDENT_FACING` (`tools/check.py:70`) lets any page so named ship, a rendered instructor notes page
   among them. (7 Nov 2026, second look on #38)
-- `tools/hooks/env-check.mjs:53` says "The GitHub CLI isn't signed in" whenever `gh auth status` fails, and it fails
-  when any stored account does: on the desktop the active account (astevegreen) is signed in, but the keyring entry
-  for greenbeanbot fails, so every session start warns wrongly. Check the active account only (`gh auth status
-  --active`). (7 Nov 2026, test-suite audit follow-ups)
 
 ## Notion and documents
 
-- Course settings still allow `git -C C:/Antigravity/bc-integrate push origin HEAD:main` (`.claude/settings.json`). The survey called that folder gone, but `sprint-integrate` recreates it each sprint and `settings.test.mjs:71` and `sprint-guard.test.mjs` pin the allow. Drop it together with the sprint integrator if the bot never returns.
+- Course settings still allow `git -C C:/Antigravity/bc-integrate push origin HEAD:main` (`.claude/settings.json`). The survey called that folder gone, but `sprint-integrate` recreates it each sprint and `settings.test.mjs:71` and `sprint-guard.test.mjs` pin the allow. Drop it together with the sprint integrator if the bot never returns. (7 Nov 2026, Batch B agent-context cleanup)
