@@ -133,7 +133,6 @@ Configuration for **VS Code Dev Containers** and GitHub Codespaces. Defines a co
 | `build-info/` | Dir | Incremental compilation metadata (JSON files with hashes) |
 | `build-info/*.json` | File | Build info for each compilation run; enables incremental builds |
 | `contracts/` | Dir | Per-contract compiled artifacts (root labs + `student/`) |
-| `contracts/Lock.sol/` | Dir | Lock contract artifacts |
 | `contracts/PoS.sol/` | Dir | PoS Simulator artifacts (`PoSSimulator.json`, etc.) |
 | `contracts/SimpleFT.sol/`, `SimpleNFT.sol/`, `SimpleStorage.sol/` | Dir | Token / storage lab artifacts |
 | `contracts/BeaconChainLab.sol/`, `ClassVote.sol/`, `LabNFT.sol/`, `LabNFTSale.sol/`, `MyContract.sol/` | Dir | Additional lab / demo contract artifacts |
@@ -158,7 +157,6 @@ Configuration for **VS Code Dev Containers** and GitHub Codespaces. Defines a co
 
 | Path | Type | Description |
 |------|------|-------------|
-| `Lock.sol` | File | Time-locked ETH contract (Hardhat default; used by `test/Lock.js`) |
 | `PoS.sol` | File | Proof-of-Stake simulator — main training contract (staking, rewards, slashing) |
 | `SimpleFT.sol` | File | Simple fungible token (ERC-20–like) for Token Concepts lab |
 | `SimpleNFT.sol` | File | Simple non-fungible token for Token Concepts lab |
@@ -358,7 +356,6 @@ Configuration for **VS Code Dev Containers** and GitHub Codespaces. Defines a co
 
 | Path | Type | Description |
 |------|------|-------------|
-| `Lock.js` | File | Tests for Lock contract |
 | `PoSScenarios.test.js` | File | PoS simulator scenario tests (`npm run test:pos`) |
 | `ContractLabScenarios.test.js` | File | Contract Lab scenario tests (`npm run test:contractlab`) |
 | `game/` | Dir | Placeholder for game-related tests (`.gitkeep`) |
