@@ -15,6 +15,7 @@ from live_support import (
     clear_cookie,
     docker_exec_checked,
     get_hlf_asset,
+    get_hlf_chaincode,
     get_hlf_chaincode_source,
     get_hlf_claims_policy,
     get_hlf_claims_pool,
@@ -30,6 +31,7 @@ from live_support import (
     get_hlf_progress,
     get_hlf_progress_detail,
     get_hlf_status,
+    get_instructor_snapshot,
     get_hlf_transaction,
     hlf_execute,
     hlf_fault,
@@ -265,6 +267,16 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertIsInstance(data, dict)
         files = data.get("files", [])
         self.assertGreaterEqual(len(files), 3)
+
+    def test_chaincode_detail_returns_network_and_chaincode(self) -> None:
+        data = get_hlf_chaincode(self.instructor_session, self.base_url)
+        self.assertIn("network", data)
+        self.assertIn("chaincode", data)
+
+    def test_instructor_snapshot_returns_health_logs_and_exercises(self) -> None:
+        data = get_instructor_snapshot(self.instructor_session, self.base_url)
+        for key in ("health", "logs", "exercises"):
+            self.assertIn(key, data)
 
     def test_logs_returns_lines(self) -> None:
         data = get_hlf_logs(self.instructor_session, self.base_url)

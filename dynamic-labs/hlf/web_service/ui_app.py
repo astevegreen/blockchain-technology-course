@@ -85,9 +85,9 @@ def peer_org4():
 
 @app.route("/peer/org5/")
 def peer_org5():
-    # Meridian employer console — gated at the nginx layer via
-    # auth_request /_auth/instructor; Flask just serves the static
-    # page.
+    # Meridian's peer page is open to students, like org1-org4: the
+    # topology view links it. Only its console (/peer/org5/console/)
+    # is gated, by the router (router/routes/hlf.conf).
     return app.send_static_file("hlf_node.html")
 
 
