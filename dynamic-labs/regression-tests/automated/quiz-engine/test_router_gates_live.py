@@ -102,6 +102,15 @@ class RouterInstructorGateLiveTests(unittest.TestCase):
             lambda resp: resp.status_code == 200,
             description="shared instructor login page",
         )
+        # The lane service gates this path itself and starts last, so it can still be booting when the suite begins
+        # (a 502 here once failed CI). Wait until it answers.
+        wait_for_http(
+            cls.instructor_session,
+            f"{cls.base_url}/instructor/labs-progress",
+            lambda resp: resp.status_code not in (502, 503, 504),
+            description="lane service behind /instructor/labs-progress",
+            allow_redirects=False,
+        )
         login_instructor(cls.instructor_session, cls.base_url)
 
     @classmethod
