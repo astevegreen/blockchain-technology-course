@@ -2,6 +2,11 @@
 
 Code-driven regression tests live here.
 
+Each lab's `<lab>/run.sh` is a few lines: it sets what differs for that lab (credentials, Docker socket, lane
+claims, its own fresh start) and sources `run-lab.sh`, which holds the options (`--fresh-start`, `--skip-start`,
+`--direct-host`, `--match`) and the steps every lab shares. The settings are listed at the top of `run-lab.sh`;
+a new lab copies the `run.sh` of the lab nearest to it.
+
 Rules:
 
 - keep suites scoped to one lab

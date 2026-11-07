@@ -44,9 +44,9 @@ slide index), which is never listed here.
   does too), but no lab test builds it: the labs pull the published `bitcoin-mempool` image, which is built by hand.
   Build it with Node 24 and check the mempool and explorer pages before the image is next published. (6 Nov 2026,
   toolchain upgrades)
-- The 17 `dynamic-labs/regression-tests/automated/*/run.sh` files repeat the same Docker and venv steps: one shared
-  `run-lab.sh` taking the lab's name would keep them in step. The 8 `live_support.py` files likewise repeat their
-  session, wait and login helpers: a shared `live_common.py`. (6 Nov 2026, test-suite audit)
+- The 8 `dynamic-labs/regression-tests/automated/*/live_support.py` files repeat their session, wait and login
+  helpers: a shared `live_common.py` would keep them in step, as `run-lab.sh` now does for the runners. (6 Nov 2026,
+  test-suite audit)
 - `tools/lab_tests.py:25` `IN_CI` leaves out bitcoin, consensus, cryptography, ethereum_lab, hlf and p2p_trust, so no
   push runs their live tests; add each once its `run.sh` passes on a GitHub runner. (6 Nov 2026, test-suite audit)
 - `dynamic-labs/regression-tests/automated/hlf/live_support.py:451` `get_hlf_chaincode` and `:467`

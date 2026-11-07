@@ -48,7 +48,9 @@ def lab_of(path: str) -> str | None:
     top = parts[1]
     if top == "regression-tests":
         if parts[2] == "automated":
-            return parts[3] if len(parts) > 4 else None
+            if len(parts) > 4:
+                return parts[3]
+            return None if parts[3] == "README.md" else ALL  # run-lab.sh, which every run.sh sources
         return None if parts[2] in NOT_RUN_UNDER_TESTS else ALL
     if top in NOT_RUN:
         return None
