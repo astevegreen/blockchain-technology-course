@@ -72,5 +72,12 @@ slide index), which is never listed here.
   when any stored account does: on the desktop the active account (astevegreen) is signed in, but the keyring entry
   for greenbeanbot fails, so every session start warns wrongly. Check the active account only (`gh auth status
   --active`). (7 Nov 2026, test-suite audit follow-ups)
+- Quarto is downloaded on every `check.yml` run (~40 s): `quarto-dev/quarto-actions/setup` has no cache option, and
+  `actions/cache` on the Windows install folder is untested; try it on a branch and compare run times. The labs'
+  Docker images (~4 GB Otterscan) are also re-pulled every Lab Tests run; a registry cache or a smaller image set is
+  the fix. (7 Nov 2026, CI speed)
+- HELD for the owner: a `paths-ignore: docs/**` filter on `check.yml` (docs-only pushes would skip the render). The
+  rail audit says LOOSENS (the check would no longer run on those pushes). The change is on local branch
+  `ci-speed-held-paths`; merge it only on the owner's words. (7 Nov 2026, CI speed)
 
 ## Notion and documents
