@@ -6,6 +6,7 @@ import re
 import shlex
 import subprocess
 import sys
+import threading
 import time
 import uuid as uuid_lib
 from dataclasses import dataclass
@@ -804,6 +805,9 @@ class TtydSession:
         self.line_settle_seconds = line_settle_seconds
         self.socket = None
         self.collected = ""
+        self._reader: threading.Thread | None = None
+        self._reader_stop = threading.Event()
+        self._reader_error: BaseException | None = None
 
     def __enter__(self) -> TtydSession:
         self.connect()
@@ -839,12 +843,21 @@ class TtydSession:
             header=headers,
             origin=origin,
             timeout=10,
+            enable_multithread=True,
         )
         self.socket.settimeout(1)
         init_payload = json.dumps(
             {"AuthToken": auth_token, "columns": self.columns, "rows": self.rows}
         ).encode("utf-8")
         self.socket.send(init_payload, opcode=ABNF.OPCODE_BINARY)
+        # One background reader owns the socket for the session's life, like a
+        # browser tab: it answers ttyd's pings and drains zellij's output while
+        # the test does slow work elsewhere (mining via docker exec). Without
+        # it an idle session misses its pongs and ttyd drops it (broken pipe).
+        self._reader_stop.clear()
+        self._reader_error = None
+        self._reader = threading.Thread(target=self._read_loop, name="ttyd-reader", daemon=True)
+        self._reader.start()
         self._warm()
         if self.connect_settle_seconds > 0:
             time.sleep(self.connect_settle_seconds)
@@ -852,6 +865,10 @@ class TtydSession:
     def close(self) -> None:
         if self.socket is None:
             return
+        self._reader_stop.set()
+        if self._reader is not None:
+            self._reader.join(timeout=5)
+            self._reader = None
         try:
             self.socket.close()
         except Exception:
@@ -860,9 +877,22 @@ class TtydSession:
 
     def _warm(self) -> None:
         deadline = time.time() + 3
-        while time.time() < deadline:
-            if self._recv_once():
+        while time.time() < deadline and not self.collected:
+            self._check_reader()
+            time.sleep(0.1)
+
+    def _read_loop(self) -> None:
+        while not self._reader_stop.is_set():
+            try:
+                self._recv_once()
+            except BaseException as exc:  # surfaced to the test by _check_reader
+                if not self._reader_stop.is_set():
+                    self._reader_error = exc
                 return
+
+    def _check_reader(self) -> None:
+        if self._reader_error is not None:
+            raise RegressionFailure(f"ttyd websocket reader stopped: {self._reader_error!r}")
 
     def _recv_once(self) -> bool:
         if self.socket is None:
@@ -930,7 +960,8 @@ class TtydSession:
                     exit_code=int(exit_match.group(1)),
                     raw_output=segment.strip(),
                 )
-            self._recv_once()
+            self._check_reader()
+            time.sleep(0.1)
 
         raise RegressionFailure(
             f"timed out waiting for ttyd command completion: command={command!r} "
