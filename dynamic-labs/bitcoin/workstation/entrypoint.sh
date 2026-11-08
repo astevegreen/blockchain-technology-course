@@ -41,8 +41,21 @@ bitcoind -datadir="${BITCOIN_DATADIR}" -daemon=1 ${BITCOIN_EXTRA_ARGS} || {
   echo "[entrypoint] Failed to start bitcoind"; exit 1;
 }
 
-# Wait for RPC to be ready
-bitcoin-cli -rpcwait -datadir="${BITCOIN_DATADIR}" getblockchaininfo >/dev/null
+# Wait for RPC to be ready. On a fresh datadir bitcoind writes its RPC cookie a
+# moment after it forks; a bitcoin-cli call made before then goes out with no
+# credentials, gets "Authorization failed" (401), and -rpcwait does not retry
+# that. So retry until RPC answers, and fail only if it never does.
+rpc_ready=0
+for _ in $(seq 1 60); do
+  if bitcoin-cli -rpcwait -rpcwaittimeout=10 -datadir="${BITCOIN_DATADIR}" getblockchaininfo >/dev/null 2>&1; then
+    rpc_ready=1
+    break
+  fi
+  sleep 1
+done
+if [[ "${rpc_ready}" != "1" ]]; then
+  echo "[entrypoint] bitcoind RPC did not come up"; exit 1
+fi
 
 # Auto-create a wallet on first run (optional)
 if [[ "${AUTO_WALLET}" == "1" ]]; then

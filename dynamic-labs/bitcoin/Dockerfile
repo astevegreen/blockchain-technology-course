@@ -8,6 +8,9 @@ USER root
 COPY --chmod=0755 ttyd-bind-mgmt.sh /usr/local/bin/ttyd-bind-mgmt.sh
 COPY --chmod=0755 bitcoin-instructor-seed.sh /usr/local/bin/bitcoin-instructor-seed.sh
 COPY workstation/zellij-config.kdl /etc/zellij/config.kdl
+# The base image is prebuilt on ghcr; ship the current entrypoint over its copy
+# so entrypoint fixes reach the lab without rebuilding bitcoind.
+COPY --chmod=0755 workstation/entrypoint.sh /usr/local/bin/entrypoint.sh
 # Phase 9.3g: pre-create the datadir with user ownership so the
 # instructor-data named volume (declared on the instructor service in
 # compose) picks up the correct uid/gid when Docker first initializes
