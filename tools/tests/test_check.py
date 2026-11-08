@@ -323,8 +323,25 @@ class AnswerFiles(unittest.TestCase):
 
     def test_instructor_code_is_the_running_lab_and_may_ship(self) -> None:
         files = ["dynamic-labs/hlf/web_service/instructor_routes.py", "dynamic-labs/hlf/web_ui/hlf_instructor.js",
-                 "dynamic-labs/exercises/game/templates/instructor.html"]
+                 "dynamic-labs/exercises/l03-i3-trust-game/templates/instructor.html",
+                 "dynamic-labs/hlf/web_ui/instructor_login.html", "dynamic-labs/shared/instructor_auth/README.md"]
         self.assertEqual(check.unfenced_answer_files(files, PAGES_FENCED, VM_FENCED), [])
+
+    def test_a_folder_named_for_instructors_seeds_or_answers_fences_what_is_inside(self) -> None:
+        files = ["dynamic-labs/x/instructor/key.json", "dynamic-labs/x/seeds/class.json",
+                 "dynamic-labs/x/answers/day1.md", "dynamic-labs/x/solutions/lab.py",
+                 "dynamic-labs/x/instructor/grader.py", "dynamic-labs/x/instructor/panel.js",
+                 "dynamic-labs/bitcoin-forensics/seeder/scenario_v37.py"]
+        problems = check.unfenced_answer_files(files, PAGES_FENCED, VM_FENCED)
+        for rel in files:
+            self.assertTrue(any(p.startswith(f"{rel}: ships in src.zip") for p in problems), rel)
+
+    def test_only_the_listed_instructor_pages_ship_not_any_page_so_named(self) -> None:
+        files = ["dynamic-labs/p2p_trust/instructor_notes.html", "dynamic-labs/hlf/web_ui/instructor_guide.html",
+                 "dynamic-labs/x/instructor/index.html"]
+        problems = check.unfenced_answer_files(files, PAGES_FENCED, VM_FENCED)
+        for rel in files:
+            self.assertTrue(any(p.startswith(f"{rel}: ships in src.zip") for p in problems), rel)
 
     def test_answers_solutions_or_seeds_in_code_are_never_waved_through(self) -> None:
         files = ["dynamic-labs/hlf/web_service/instructor_answers.py", "dynamic-labs/lab/instructor_solution.js",
@@ -354,7 +371,8 @@ class AnswerFiles(unittest.TestCase):
 
     def test_workflow_or_answer_file_changes_run_the_check(self) -> None:
         for changed in (".github/workflows/pages.yml", "dynamic-labs/x/new_answer_key.json",
-                        "dynamic-labs/x/Solution.md", "dynamic-labs/x/instructor_guide.md", "dynamic-labs/x/seed.sh"):
+                        "dynamic-labs/x/Solution.md", "dynamic-labs/x/instructor_guide.md", "dynamic-labs/x/seed.sh",
+                        "dynamic-labs/x/instructor/key.json"):
             plan = check.plan_checks([changed], added=[])
             self.assertIn("answer files", [c.name for c in plan.checks])
 

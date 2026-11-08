@@ -67,10 +67,6 @@ slide index), which is never listed here.
   2026, owner's research request)
 - `tools/agy.mjs` is 404 lines: its Gemini API half (`apiPrompt`, `parseApiReply`, the HTTPS post,
   `geminiApi`) belongs in its own file, split the same way in all three repos. (7 Nov 2026, Gemini API fallback)
-- `tools/check.py:446-455` `instructor_named` reads only the file name, so an answer file whose folder says
-  instructor or seed (`dynamic-labs/x/instructor/key.json`) is not caught, and the `dynamic-labs/*instructor*.html`
-  entry of `STUDENT_FACING` (`tools/check.py:70`) lets any page so named ship, a rendered instructor notes page
-  among them. (7 Nov 2026, second look on #38)
 - Quarto is downloaded on every `check.yml` run (~40 s): `quarto-dev/quarto-actions/setup` has no cache option, and
   `actions/cache` on the Windows install folder is untested; try it on a branch and compare run times. The labs'
   Docker images (~4 GB Otterscan) are also re-pulled every Lab Tests run; a registry cache or a smaller image set is

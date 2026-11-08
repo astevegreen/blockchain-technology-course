@@ -57,17 +57,30 @@ VM_WORKFLOW = ".github/workflows/vm-build.yml"
 # Kept out of src.zip but deliberately left on the VM: the lab services read them at run time (a known gap).
 VM_RUNTIME_KEYS = ("dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/cryptography/solution.md",
                    "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml")
-# A file name with one of these words is instructor-only until shown otherwise (CLAUDE.md rule 1).
+# A path with one of these words in any folder or file name is instructor-only until shown otherwise (CLAUDE.md
+# rule 1): `dynamic-labs/x/instructor/key.json` counts as much as `dynamic-labs/x/instructor_key.json`.
 INSTRUCTOR_WORDS = re.compile(r"answer|solution|instructor|seed", re.IGNORECASE)
-# Never waved through by STUDENT_FACING: a name with these words is an answer key wherever it sits.
+# Never waved through by STUDENT_FACING: a path with these words is an answer key wherever it sits.
 KEY_WORDS = re.compile(r"answer|solution", re.IGNORECASE)
-# Files whose name has an INSTRUCTOR_WORDS word but which students may have, and why. `*` crosses `/`; case is
-# ignored.
+# Files whose path has an INSTRUCTOR_WORDS word but which students may have, and why. `*` crosses `/`; case is
+# ignored. Pages are listed one by one: a pattern for instructor HTML would also pass a rendered notes page.
+SEEDER_ENGINE = "generic chain-building engine; the scenarios that hold the answers (scenario_v3*.py) are fenced"
 STUDENT_FACING = {
     "dynamic-labs/*instructor*.py": "code of a lab's instructor pages or auth: the running lab, gated by its login",
     "dynamic-labs/*instructor*.js": "code of a lab's instructor pages: the running lab, gated by its login",
     "dynamic-labs/*instructor*.jsx": "code of a lab's instructor pages: the running lab, gated by its login",
-    "dynamic-labs/*instructor*.html": "a lab's instructor page template: the running lab, gated by its login",
+    "dynamic-labs/hlf/web_ui/hlf_instructor.html": "the HLF lab's instructor console page, gated by its login",
+    "dynamic-labs/hlf/web_ui/instructor_login.html": "the instructor login page the auth service serves",
+    "dynamic-labs/hlf/web_ui/instructor_sessions.html": "the auth service's sessions page, gated by its login",
+    "dynamic-labs/exercises/l03-i3-trust-game/templates/instructor.html":
+        "the trust game's instructor dashboard template, gated by its login",
+    "dynamic-labs/shared/instructor_auth/*": "the shared instructor login code and its README",
+    "dynamic-labs/exercises/l03-i3-trust-game/instructor_auth/*": "a vendored copy of the instructor login code",
+    "dynamic-labs/hlf/shared_instructor_auth/*": "a vendored copy of the instructor login code",
+    "dynamic-labs/quiz-engine-v2/instructor_auth/*": "a vendored copy of the instructor login code",
+    "dynamic-labs/instructor_auth_service/*": "the instructor login service: its code, image and compose file",
+    "dynamic-labs/bitcoin-forensics/forensics-lab-v3-instructor-dir/*":
+        "the wallet-free class chain the lab's deploy button installs; students query this chain in the lab",
     "dynamic-labs/cryptography/Dockerfile.instructor": "builds the lab's instructor container",
     "dynamic-labs/cryptography/instructor-nginx.conf": "configures the lab's instructor container",
     "dynamic-labs/ethereum_lab/docker-compose.instructor-minimal.yml": "a compose file to run the lab",
@@ -76,6 +89,16 @@ STUDENT_FACING = {
         "a design plan for the instructor controls, no answers",
     "dynamic-labs/bitcoin/bitcoin-instructor-seed.sh": "seeds the class chain at container start; in the lab image",
     "dynamic-labs/wallet/chain/seedkeys.py": "derives keys from a seed phrase, which the wallet lab teaches",
+    "dynamic-labs/bitcoin-forensics/seeder/__init__.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/amounts.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/chain.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/engine.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/ledger.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/rpc.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/txbuilder.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/verify.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/wallets.py": SEEDER_ENGINE,
+    "dynamic-labs/bitcoin-forensics/seeder/tests/*": "unit tests of the seeder engine's pure logic, no scenario",
 }
 
 
@@ -444,15 +467,20 @@ def matches_any(path: str, patterns: list[str], whole_folders: bool) -> bool:
 
 
 def instructor_named(rel: str) -> bool:
-    """A name that says answer, solution, instructor or seed, and is not a STUDENT_FACING file (answers and solutions
-    never are; a seed only by its own entry, not by a pattern meant for instructor code)."""
-    name = Path(rel).name
-    if not INSTRUCTOR_WORDS.search(name):
+    """A path whose folders or file name say answer, solution, instructor or seed, and is not a STUDENT_FACING file
+    (answers and solutions never are; a seed only by an entry that names a seed itself, not by a pattern meant for
+    instructor code)."""
+    path = rel.lower()
+    if not INSTRUCTOR_WORDS.search(path):
         return False
-    if KEY_WORDS.search(name):
+    if KEY_WORDS.search(path):
         return True
-    allowed = [k.lower() for k in STUDENT_FACING if "*" not in k or "seed" not in name.lower()]
-    return not matches_any(rel.lower(), allowed, whole_folders=False)
+    # A pattern passes a file in an instructor or seed folder only if it names that folder: `*instructor*.py` is for
+    # instructor code, not for whatever sits in `<lab>/instructor/`.
+    folders = [f"/{part}/" for part in path.split("/")[:-1] if INSTRUCTOR_WORDS.search(part)]
+    allowed = [k.lower() for k in STUDENT_FACING if "*" not in k
+               or (("seed" not in path or "seed" in k.lower()) and all(f in k.lower() for f in folders))]
+    return not matches_any(path, allowed, whole_folders=False)
 
 
 def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
@@ -624,7 +652,7 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     if new:
         plan.checks.append(Check("file names", lambda: file_names(new)))
 
-    if touched(".github/workflows/") or any(INSTRUCTOR_WORDS.search(Path(f).name) for f in files):
+    if touched(".github/workflows/") or any(INSTRUCTOR_WORDS.search(f) for f in files):
         plan.checks.append(Check("answer files", answer_files))
 
     if touched("tools/") or touched(".claude/"):
