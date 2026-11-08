@@ -44,24 +44,24 @@ jobs:
       QUARTO_ZIP_SHA256: eda220a2f39c392f622049de013ddf7b4dfdf019ba877f251be14ce43e5734d1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           # A pull request's checkout has no origin/main, and the "bib dates" check compares against it to tell new
           # sources from old ones (without it, every source with a url fails). A push to main already has it.
           fetch-depth: ${{ github.event_name == 'pull_request' && '0' || '1' }}
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements-dev.txt
       - name: Set up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: "24"
       - name: Restore Quarto from the cache
         id: quarto-cache
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           # The extracted release; the key carries the version, so a new pin misses and fetches the new one.
           path: ${{ runner.temp }}/quarto
@@ -79,7 +79,7 @@ jobs:
       - name: Save Quarto to the cache
         # Saved here, not at the end of the job, so a red check run still leaves the cache for the next one.
         if: steps.quarto-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ runner.temp }}/quarto
           key: quarto-${{ runner.os }}-${{ env.QUARTO_VERSION }}

@@ -78,10 +78,6 @@ slide index), which is never listed here.
 - The open Dependabot and CodeQL alerts (182 and 149) are triaged in `docs/security-triage.md`. Its fix-now groups
   (D1 gunicorn, D2 Pillow, D3 and D6 the Ethereum lab's lockfile refresh, C1 escaping and randomness) still need a
   code change and those labs' tests, and its dismiss list waits for the owner. (8 Nov 2026, security triage)
-- Workflow actions are pinned by tag or branch, not by commit sha (22 `uses:` lines across `check.yml`,
-  `lab-tests.yml`, `pages.yml`, `quiz-bundle.yml` and `vm-build.yml`). `jlumbroso/free-disk-space@main`
-  (`.github/workflows/vm-build.yml:66`) follows a third party's moving branch, so it goes first. (8 Nov 2026, week
-  catch-up)
 
 ## Notion and documents
 
