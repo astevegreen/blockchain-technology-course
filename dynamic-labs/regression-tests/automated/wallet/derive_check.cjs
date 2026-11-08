@@ -1,5 +1,5 @@
 // Runs the wallet page's own derivation code (gateway/static/wallet/derive.js) in node and compares every key,
-// address and descriptor it produces with the frozen chain's facts.json. run.sh runs it in node:22-alpine.
+// address and descriptor it produces with the frozen chain's facts.json. run.sh runs it in node:24-alpine.
 //   node regression-tests/automated/wallet/derive_check.cjs   (from dynamic-labs/)
 const assert = require("node:assert/strict");
 const path = require("node:path");

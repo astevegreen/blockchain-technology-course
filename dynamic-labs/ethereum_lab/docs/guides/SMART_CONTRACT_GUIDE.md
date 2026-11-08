@@ -178,7 +178,7 @@ await contract.get();         // 100n
 - **Modify the contract** — Add a function that only the `owner` can call, or require a minimum value.
 - **Write tests** — Use Hardhat's testing framework in `test/` (e.g. `test/SimpleStorage.js`).
 - **Deploy to the lab network** — If your instructor runs a node, deploy with `--network localhost` and their RPC URL in `hardhat.config.js`.
-- **Explore other contracts** — Look at `contracts/Lock.sol` and `contracts/PoS.sol` for more examples.
+- **Explore other contracts** — Compare yours with the lab's own `contracts/SimpleStorage.sol`, then look at `contracts/PoS.sol` for a larger example.
 - **Use the CLI labs** — Run `npm run lab3` to deploy SimpleStorage as part of the structured lab, or explore the Smart Contract Builder in the web UI.
 
 ---

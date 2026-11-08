@@ -6,6 +6,12 @@ from .enums import enum_values
 
 INSTRUCTOR_AUTH_MODES = ("test-header", "shared", "standalone", "disabled")
 DEFAULT_DATABASE_PATH = "/data/quiz-engine.sqlite"
+# test-header trusts a request header (and opens /instructor/dev/login), so any
+# student could claim instructor rights: only the test suite may use it.
+TEST_HEADER_REFUSED = (
+    "QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=test-header trusts a request header and "
+    "is refused unless TESTING is on; use standalone or shared"
+)
 
 
 def _as_bool(value):
@@ -72,6 +78,10 @@ class AppConfig:
                 + ", ".join(INSTRUCTOR_AUTH_MODES)
             )
 
+        testing = _as_bool(env.get("TESTING", "0"))
+        if instructor_auth_mode == "test-header" and not testing:
+            raise ValueError(TEST_HEADER_REFUSED)
+
         registration_mode = env.get("QUIZ_ENGINE_REGISTRATION_MODE", "open")
         if registration_mode not in enum_values("registration_mode"):
             raise ValueError("QUIZ_ENGINE_REGISTRATION_MODE is not canonical")
@@ -93,7 +103,7 @@ class AppConfig:
         return cls(
             database_path=env.get("QUIZ_ENGINE_DB_PATH", DEFAULT_DATABASE_PATH),
             secret_key=env.get("QUIZ_ENGINE_SECRET_KEY", ""),
-            testing=_as_bool(env.get("TESTING", "0")),
+            testing=testing,
             sqlite_busy_timeout_ms=_as_positive_int(
                 env.get("QUIZ_ENGINE_SQLITE_BUSY_TIMEOUT_MS", "5000"),
                 "QUIZ_ENGINE_SQLITE_BUSY_TIMEOUT_MS",

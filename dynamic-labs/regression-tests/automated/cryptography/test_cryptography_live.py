@@ -240,17 +240,21 @@ class CryptographyLiveRegressionTests(unittest.TestCase):
                 ok, _ = lab.fill_leaf(index, leaf)
                 assert ok is True
 
-            for index in range(0, 8, 2):
-                ok, _ = lab.smart_combine(lab.leaves[index], lab.leaves[index + 1])
-                assert ok is True
+            # smart_combine only names the node a pair makes; combine_into fills it.
+            ok, hint = lab.smart_combine(lab.leaves[0], lab.leaves[1])
+            assert ok is False and "combine L1-0" in hint, hint
 
-            for index in range(0, 4, 2):
-                ok, _ = lab.smart_combine(lab.level1[index], lab.level1[index + 1])
-                assert ok is True
+            for index in range(4):
+                ok, message = lab.combine_into(f"L1-{index}", lab.leaves[2 * index], lab.leaves[2 * index + 1])
+                assert ok is True, message
 
-            ok, message = lab.smart_combine(lab.level2[0], lab.level2[1])
-            assert ok is True
-            assert "ROOT CALCULATED!" in message
+            for index in range(2):
+                ok, message = lab.combine_into(f"L2-{index}", lab.level1[2 * index], lab.level1[2 * index + 1])
+                assert ok is True, message
+
+            ok, message = lab.combine_into("ROOT", lab.level2[0], lab.level2[1])
+            assert ok is True, message
+            assert lab.student_root == lab.root
 
             print("module1-2-ok")
             PY

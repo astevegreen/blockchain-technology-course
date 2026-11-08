@@ -57,6 +57,26 @@ VM_WORKFLOW = ".github/workflows/vm-build.yml"
 # Kept out of src.zip but deliberately left on the VM: the lab services read them at run time (a known gap).
 VM_RUNTIME_KEYS = ("dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/cryptography/solution.md",
                    "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml")
+# A file name with one of these words is instructor-only until shown otherwise (CLAUDE.md rule 1).
+INSTRUCTOR_WORDS = re.compile(r"answer|solution|instructor|seed", re.IGNORECASE)
+# Never waved through by STUDENT_FACING: a name with these words is an answer key wherever it sits.
+KEY_WORDS = re.compile(r"answer|solution", re.IGNORECASE)
+# Files whose name has an INSTRUCTOR_WORDS word but which students may have, and why. `*` crosses `/`; case is
+# ignored.
+STUDENT_FACING = {
+    "dynamic-labs/*instructor*.py": "code of a lab's instructor pages or auth: the running lab, gated by its login",
+    "dynamic-labs/*instructor*.js": "code of a lab's instructor pages: the running lab, gated by its login",
+    "dynamic-labs/*instructor*.jsx": "code of a lab's instructor pages: the running lab, gated by its login",
+    "dynamic-labs/*instructor*.html": "a lab's instructor page template: the running lab, gated by its login",
+    "dynamic-labs/cryptography/Dockerfile.instructor": "builds the lab's instructor container",
+    "dynamic-labs/cryptography/instructor-nginx.conf": "configures the lab's instructor container",
+    "dynamic-labs/ethereum_lab/docker-compose.instructor-minimal.yml": "a compose file to run the lab",
+    "dynamic-labs/ethereum_lab/instructor-config.json": "a saved chain address and RPC URL, no answers",
+    "dynamic-labs/ethereum_lab/docs/plans/beacon-instructor-controls-and-mempool-plan.md":
+        "a design plan for the instructor controls, no answers",
+    "dynamic-labs/bitcoin/bitcoin-instructor-seed.sh": "seeds the class chain at container start; in the lab image",
+    "dynamic-labs/wallet/chain/seedkeys.py": "derives keys from a seed phrase, which the wallet lab teaches",
+}
 
 
 @dataclass
@@ -71,10 +91,10 @@ class Plan:
     info: list[str] = field(default_factory=list)
 
 
-def run(cmd: list[str], cwd: Path = REPO, timeout: int = 1800) -> tuple[int, str]:
+def run(cmd: list[str], cwd: Path = REPO, timeout: int = 1800, env: dict[str, str] | None = None) -> tuple[int, str]:
     """Run a command; return (exit code, stdout+stderr with ANSI codes stripped)."""
     try:
-        proc = subprocess.run(cmd, cwd=cwd, env=ENV, capture_output=True, timeout=timeout)
+        proc = subprocess.run(cmd, cwd=cwd, env=env or ENV, capture_output=True, timeout=timeout)
     except FileNotFoundError:
         return 127, f"{cmd[0]}: not found"
     except subprocess.TimeoutExpired:
@@ -423,20 +443,33 @@ def matches_any(path: str, patterns: list[str], whole_folders: bool) -> bool:
     return False
 
 
+def instructor_named(rel: str) -> bool:
+    """A name that says answer, solution, instructor or seed, and is not a STUDENT_FACING file (answers and solutions
+    never are; a seed only by its own entry, not by a pattern meant for instructor code)."""
+    name = Path(rel).name
+    if not INSTRUCTOR_WORDS.search(name):
+        return False
+    if KEY_WORDS.search(name):
+        return True
+    allowed = [k.lower() for k in STUDENT_FACING if "*" not in k or "seed" not in name.lower()]
+    return not matches_any(rel.lower(), allowed, whole_folders=False)
+
+
 def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
     """Tracked files under the student trees that src.zip or the VM image still hold although they are instructor-only:
-    `*answer*` files, and anything under `dynamic-labs/` that pages.yml leaves out of src.zip (it must leave the VM too,
-    bar the named runtime keys)."""
+    files named for answers, solutions, instructors or seeds (bar STUDENT_FACING), and anything under `dynamic-labs/`
+    that pages.yml leaves out of src.zip (it must leave the VM too, bar the named runtime keys)."""
     zip_x, vm_rm = zip_exclusions(pages), vm_removals(vm)
     problems = []
     for rel in tracked:
         if not rel.startswith(STUDENT_TREES):
             continue
-        answer = "answer" in Path(rel).name.lower()
-        in_zip = matches_any(rel, zip_x, whole_folders=False)
-        if answer and not in_zip:
-            problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}')
-        instructor_only = answer or (in_zip and rel.startswith("dynamic-labs/"))
+        answer = instructor_named(rel)
+        zip_excluded = matches_any(rel, zip_x, whole_folders=False)
+        if answer and not zip_excluded:
+            problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}, '
+                            "or, if students may have it, list it in STUDENT_FACING (tools/check.py) with why")
+        instructor_only = answer or (zip_excluded and rel.startswith("dynamic-labs/"))
         if instructor_only and rel not in VM_RUNTIME_KEYS and not matches_any(rel, vm_rm, whole_folders=True):
             problems.append(f"{rel}: baked into the VM: add it to the rm list of {VM_WORKFLOW}")
     return problems
@@ -445,7 +478,10 @@ def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
 def answer_files() -> list[str]:
     """CLAUDE.md rule 1: an answer key must not reach students through src.zip or the VM image."""
     texts = [(REPO / wf).read_text(encoding="utf-8") if (REPO / wf).is_file() else "" for wf in (PAGES_WORKFLOW, VM_WORKFLOW)]
-    return unfenced_answer_files((git(REPO, "ls-files") or "").splitlines(), *texts)
+    # Untracked files too: the stamp covers them, so a commit after `git add` would never be checked again.
+    files = [*(git(REPO, "ls-files") or "").splitlines(),
+             *(git(REPO, "ls-files", "--others", "--exclude-standard") or "").splitlines()]
+    return unfenced_answer_files(files, *texts)
 
 
 def tool_tests() -> list[str]:
@@ -463,6 +499,61 @@ def tool_tests() -> list[str]:
             keep = [line for line in out.splitlines() if re.match(r"^\s*not ok\b|^\s*error:|^\s*✖", line)]
             failures += [f"{folder} tests failed (node --test tools/{folder}/*.test.mjs)", *(keep or tail(out))[:12]]
     return failures
+
+
+LABS = REPO / "dynamic-labs"
+QUIZ_ENGINE = LABS / "quiz-engine-v2"
+INSTALL_FIX = "fix: python -m pip install -r requirements-dev.txt"
+# A change under these reruns the lab unit tests: the contract tests read the labs, lab-manager.sh, the shared
+# instructor auth, and the workflows and VM build that package the labs.
+LAB_TEST_PATHS = ("dynamic-labs/", ".github/workflows/", "vm-build/", "requirements-dev.txt")
+# The quiz engine's tests ingest the real quiz banks through the bundle builder, and import the shared instructor auth.
+QUIZ_ENGINE_TEST_PATHS = ("dynamic-labs/quiz-engine-v2/", "dynamic-labs/shared/", "quizes/quiz_json/",
+                          "quizes/build_quiz_bank_bundle.py", "requirements-dev.txt")
+
+
+def failed_suite(head: str, out: str) -> list[str]:
+    keep = [line for line in out.splitlines()
+            if re.match(r"^(FAIL|ERROR):|^FAILED |^\w*(Error|Exception)\b|^E\s+\w*Error", line)]
+    lines = [head, *[f"  {line.strip()}" for line in (keep or tail(out))[:8]]]
+    if "ModuleNotFoundError" in out:
+        lines.append(INSTALL_FIX)
+    return lines
+
+
+def lab_unit_tests() -> list[str]:
+    """dynamic-labs/tests, one process per file (the files import different modules that share a name, such as
+    instructor_auth and app), then dynamic-labs/regression-tests/unit. Neither needs Docker."""
+    failures = []
+    # Some tests run `bash`: put Git Bash first, so Windows never reaches the WSL launcher.
+    bash = find_bash()
+    env = {**ENV, "PATH": os.pathsep.join([str(Path(bash).parent), ENV.get("PATH", "")])} if bash else ENV
+    for path in sorted((LABS / "tests").glob("test_*.py")):
+        rel = path.relative_to(LABS).as_posix()
+        code, out = run([sys.executable, "-m", "unittest", rel], cwd=LABS, timeout=600, env=env)
+        if code:
+            failures += failed_suite(f"dynamic-labs/{rel} failed (python -m unittest)", out)
+    code, out = run([sys.executable, "-m", "unittest", "discover", "-s", "regression-tests/unit"],
+                    cwd=LABS, timeout=600, env=env)
+    if code:
+        failures += failed_suite("dynamic-labs/regression-tests/unit failed (python -m unittest discover)", out)
+    return [line for i, line in enumerate(failures) if line != INSTALL_FIX or INSTALL_FIX not in failures[:i]]
+
+
+def quiz_engine_tests() -> list[str]:
+    """The quiz engine's pytest suite, against a bundle built now from quizes/quiz_json (quizes/dist/ is not
+    tracked), in a temporary folder so nothing in the repository changes."""
+    with tempfile.TemporaryDirectory(prefix="quiz-engine-tests.") as tmp:
+        sample = Path(tmp) / "quizes"
+        shutil.copytree(REPO / "quizes" / "quiz_json", sample / "quiz_json")
+        bundle = sample / "dist" / "blockchain-course-quiz-bank-bundle.json"
+        code, out = run([sys.executable, str(REPO / "quizes" / "build_quiz_bank_bundle.py"), "--output", str(bundle)])
+        if code:
+            return failed_suite("quiz bundle for the quiz engine tests failed", out)
+        env = {**ENV, "QUIZ_ENGINE_SAMPLE_QUIZ_DIR": str(sample), "PYTHONDONTWRITEBYTECODE": "1"}
+        code, out = run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+                        cwd=QUIZ_ENGINE, timeout=1200, env=env)
+    return failed_suite("dynamic-labs/quiz-engine-v2 tests failed (python -m pytest, in that folder)", out) if code else []
 
 
 # --- planning ------------------------------------------------------------------------------
@@ -533,11 +624,15 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     if new:
         plan.checks.append(Check("file names", lambda: file_names(new)))
 
-    if touched(".github/workflows/") or any("answer" in Path(f).name.lower() for f in files):
+    if touched(".github/workflows/") or any(INSTRUCTOR_WORDS.search(Path(f).name) for f in files):
         plan.checks.append(Check("answer files", answer_files))
 
     if touched("tools/") or touched(".claude/"):
         plan.checks.append(Check("tool tests", tool_tests))
+    if touched(LAB_TEST_PATHS):
+        plan.checks.append(Check("lab unit tests", lab_unit_tests))
+    if touched(QUIZ_ENGINE_TEST_PATHS):
+        plan.checks.append(Check("quiz engine tests", quiz_engine_tests))
 
     if not everything and touched("dynamic-labs/"):
         plan.info.append("dynamic-labs changed: this check doesn't run labs; run the lab's "

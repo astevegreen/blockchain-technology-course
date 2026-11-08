@@ -93,7 +93,8 @@ class RuntimeCredentialsGenerationTests(unittest.TestCase):
         env["PATH"] = self.path
         env["DYNAMIC_LABS_ROOT"] = self.labs_root.as_posix()
         subprocess.run(
-            ["bash", "-c", f'source "{RUNTIME_CREDENTIALS.as_posix()}"; ensure_runtime_credentials {rotate}'],
+            # Resolve bash through PATH: on Windows a bare "bash" starts the WSL launcher in System32 first.
+            [shutil.which("bash"), "-c", f'source "{RUNTIME_CREDENTIALS.as_posix()}"; ensure_runtime_credentials {rotate}'],
             check=True,
             env=env,
             stdout=subprocess.PIPE,

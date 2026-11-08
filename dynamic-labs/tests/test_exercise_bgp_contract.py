@@ -25,6 +25,10 @@ class BgpStudentOnlyContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         if importlib.util.find_spec("flask_socketio") is None:
+            # The games pin eventlet 0.33.3, which needs Python 3.11 or older: the exercises lab suite
+            # (regression-tests/automated/exercises/run.sh) runs this file inside the game image instead.
+            if os.environ.get("EXERCISE_CONTRACT_TESTS_REQUIRED") == "1":
+                raise RuntimeError("flask_socketio is missing from the image these contract tests run in")
             raise unittest.SkipTest("flask_socketio is not installed in the host test environment")
         cls._old_env = os.environ.copy()
         cls._old_path = list(sys.path)

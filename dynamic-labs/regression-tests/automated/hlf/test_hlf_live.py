@@ -31,8 +31,8 @@ from live_support import (
     get_hlf_progress,
     get_hlf_progress_detail,
     get_hlf_status,
-    get_hlf_transaction,
     get_instructor_snapshot,
+    get_hlf_transaction,
     hlf_execute,
     hlf_fault,
     hlf_seed,
@@ -155,14 +155,6 @@ class HLFRouterAndAuthTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertTrue((resp.headers.get("Location") or "").endswith("/labs/hlf/claim"))
 
-    def test_instructor_apis_require_auth(self) -> None:
-        resp = self.session.get(
-            f"{self.base_url}/labs/hlf/api/hlf/instructor-snapshot",
-            timeout=10,
-            allow_redirects=False,
-        )
-        self.assertIn(resp.status_code, (302, 401, 403))
-
     def test_instructor_panel_loads_when_authenticated(self) -> None:
         resp = self.instructor_session.get(
             f"{self.base_url}/labs/hlf/instructor/",
@@ -170,6 +162,22 @@ class HLFRouterAndAuthTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertIn("text/html", resp.headers.get("Content-Type", ""))
+
+    def test_runner_gates_its_instructor_files(self) -> None:
+        # The router passes these to the HLF runner, which checks the cookie itself
+        # (web_service/instructor_routes.py): a browser goes to the login, a script gets 401.
+        for name in ("hlf_instructor.html", "hlf_instructor.js"):
+            url = f"{self.base_url}/labs/hlf/{name}"
+            with self.subTest(file=name):
+                page = self.session.get(url, timeout=10, allow_redirects=False, headers={"Accept": "text/html"})
+                self.assertEqual(page.status_code, 302)
+                self.assertTrue((page.headers.get("Location") or "").endswith("/instructor/"))
+                script = self.session.get(url, timeout=10, allow_redirects=False, headers={"Accept": "*/*"})
+                self.assertEqual(script.status_code, 401)
+                self.assertEqual(script.content, b"")
+                served = self.instructor_session.get(url, timeout=10)
+                self.assertEqual(served.status_code, 200)
+                self.assertGreater(len(served.content), 1000)
 
     def test_student_guide_returns_html(self) -> None:
         resp = self.session.get(
@@ -183,10 +191,6 @@ class HLFRouterAndAuthTests(unittest.TestCase):
     def test_health_endpoint(self) -> None:
         health = get_hlf_health(self.session, self.base_url)
         self.assertIn("fault_scenarios", health)
-
-    def test_status_endpoint(self) -> None:
-        status = get_hlf_status(self.session, self.base_url)
-        self.assertIn("status", status)
 
 
 class HLFNetworkAPITests(unittest.TestCase):
@@ -213,10 +217,6 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertIn("nodes", explorer)
         self.assertIn("channel", explorer)
 
-    def test_explorer_view_returns_structured_data(self) -> None:
-        view = get_hlf_explorer_view(self.instructor_session, self.base_url)
-        self.assertIsInstance(view, dict)
-
     def test_explorer_view_is_public(self) -> None:
         session = new_session()
         resp = session.get(
@@ -225,18 +225,6 @@ class HLFNetworkAPITests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertIsInstance(resp.json(), dict)
-
-    def test_chaincode_detail(self) -> None:
-        cc = get_hlf_chaincode(self.instructor_session, self.base_url, timeout=60)
-        self.assertIsInstance(cc, dict)
-
-    def test_governance_detail(self) -> None:
-        gov = get_hlf_governance(self.instructor_session, self.base_url)
-        self.assertIsInstance(gov, dict)
-
-    def test_instructor_snapshot(self) -> None:
-        snap = get_instructor_snapshot(self.instructor_session, self.base_url)
-        self.assertIsInstance(snap, dict)
 
     def test_execute_rejects_raw_command(self) -> None:
         url = f"{self.base_url}/labs/hlf/api/hlf/execute"
@@ -279,6 +267,16 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertIsInstance(data, dict)
         files = data.get("files", [])
         self.assertGreaterEqual(len(files), 3)
+
+    def test_chaincode_detail_returns_network_and_chaincode(self) -> None:
+        data = get_hlf_chaincode(self.instructor_session, self.base_url)
+        self.assertIn("network", data)
+        self.assertIn("chaincode", data)
+
+    def test_instructor_snapshot_returns_health_logs_and_exercises(self) -> None:
+        data = get_instructor_snapshot(self.instructor_session, self.base_url)
+        for key in ("health", "logs", "exercises"):
+            self.assertIn(key, data)
 
     def test_logs_returns_lines(self) -> None:
         data = get_hlf_logs(self.instructor_session, self.base_url)
@@ -411,18 +409,6 @@ class HLFLaneTests(unittest.TestCase):
         self.assertIn("lanes", data)
         self.assertIsInstance(data["lanes"], list)
         self.assertGreater(len(data["lanes"]), 0)
-
-    def test_lanes_list_requires_auth(self) -> None:
-        unauth = new_session()
-        try:
-            resp = unauth.get(
-                f"{self.base_url}/labs/hlf/api/hlf/lanes",
-                timeout=10,
-                allow_redirects=False,
-            )
-            self.assertIn(resp.status_code, (302, 401, 403))
-        finally:
-            unauth.close()
 
 
 class HLFExerciseCatalogTests(unittest.TestCase):
@@ -1096,17 +1082,6 @@ class HLFLifecycleLogTests(unittest.TestCase):
         self.assertEqual(resp2.status_code, 200)
         self.assertEqual(len(resp2.json()["lines"]), 0)
 
-    def test_lifecycle_log_requires_auth(self) -> None:
-        unauth = new_session()
-        try:
-            resp = unauth.get(
-                f"{self.base_url}/labs/hlf/api/hlf/lifecycle-log",
-                timeout=10,
-            )
-            self.assertIn(resp.status_code, (401, 302))
-        finally:
-            unauth.close()
-
 
 class HLFAuthGateTests(unittest.TestCase):
     """Verify all instructor-gated endpoints reject unauthenticated access."""
@@ -1135,6 +1110,12 @@ class HLFAuthGateTests(unittest.TestCase):
         "/api/hlf/claims/resume",
     ]
 
+    def assert_router_refused(self, path, resp) -> None:
+        # The router's instructor-gated catch-all for /labs/hlf/api/hlf/* answers a missing
+        # login itself, before Flask: @hlf_api_unauth in router/routes/_auth.conf.
+        self.assertEqual(resp.status_code, 401, f"{path} returned {resp.status_code} without auth")
+        self.assertEqual(resp.json(), {"error": "instructor auth required"}, path)
+
     def test_instructor_get_endpoints_require_auth(self) -> None:
         session = new_session()
         try:
@@ -1145,10 +1126,7 @@ class HLFAuthGateTests(unittest.TestCase):
                         timeout=10,
                         allow_redirects=False,
                     )
-                    self.assertIn(
-                        resp.status_code, (302, 401, 403),
-                        f"{path} returned {resp.status_code} without auth",
-                    )
+                    self.assert_router_refused(path, resp)
         finally:
             session.close()
 
@@ -1163,10 +1141,7 @@ class HLFAuthGateTests(unittest.TestCase):
                         timeout=10,
                         allow_redirects=False,
                     )
-                    self.assertIn(
-                        resp.status_code, (302, 401, 403),
-                        f"{path} returned {resp.status_code} without auth",
-                    )
+                    self.assert_router_refused(path, resp)
         finally:
             session.close()
 

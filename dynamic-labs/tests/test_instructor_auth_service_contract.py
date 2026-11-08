@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 import tempfile
@@ -39,6 +40,11 @@ class InstructorAuthServiceContractTests(unittest.TestCase):
         self.app = create_app()
 
     def tearDown(self) -> None:
+        # Close the audit log, or Windows refuses to delete the temporary folder that holds it.
+        audit = logging.getLogger("instructor_audit")
+        for handler in list(audit.handlers):
+            audit.removeHandler(handler)
+            handler.close()
         os.environ.clear()
         os.environ.update(self._old_env)
         self._tmpdir.cleanup()

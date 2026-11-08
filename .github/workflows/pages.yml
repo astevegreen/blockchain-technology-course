@@ -3,6 +3,9 @@ name: Publish Course to GitHub Pages (Manual)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-quarto:
     runs-on: ubuntu-latest
@@ -12,6 +15,8 @@ jobs:
       - name: Set up Quarto
         uses: quarto-dev/quarto-actions/setup@v2
         with:
+          # Pinned, so a new Quarto release cannot change the site mid-course; check.yml pins the same version.
+          version: 1.11.9
           tinytex: true
       - name: Inject VM Links
         env:
@@ -30,6 +35,11 @@ jobs:
           else
             echo "No VM release found yet; skipping VM links."
           fi
+      - name: Check the zip step leaves out what the check expects
+        # tools/check.py reads the -x patterns below with fnmatch; this lists what zip itself would pack.
+        env:
+          SRC_ZIP_TEST_REQUIRED: "1"
+        run: python3 -m unittest -v tools/tests/test_src_zip.py
       - name: Create source zip
         run: |
           # Keep instructor quiz banks/solutions out of the student-facing source bundle.

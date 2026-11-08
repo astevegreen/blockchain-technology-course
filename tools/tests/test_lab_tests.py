@@ -29,7 +29,8 @@ class LabsFor(unittest.TestCase):
 
     def test_shared_parts_and_the_workflow_run_every_ci_lab(self) -> None:
         for f in ["dynamic-labs/lab-manager.sh", "dynamic-labs/router/nginx.conf", "dynamic-labs/lane-service/app.py",
-                  f"{TESTS}/infrastructure/reset_live_claims.py", ".github/workflows/lab-tests.yml", "tools/lab_tests.py"]:
+                  f"{TESTS}/infrastructure/reset_live_claims.py", f"{TESTS}/automated/run-lab.sh",
+                  ".github/workflows/lab-tests.yml", "tools/lab_tests.py"]:
             self.assertEqual(lab_tests.labs_for([f]), ["exercises", "quiz-engine"], f)
 
     def test_docs_playbooks_and_files_outside_the_labs_run_nothing(self) -> None:
@@ -49,8 +50,8 @@ class LabsFor(unittest.TestCase):
 class Runners(unittest.TestCase):
     def test_every_run_sh_calls_lab_manager_through_bash(self) -> None:
         # lab-manager.sh isn't executable in git: `./lab-manager.sh` works on Windows and WSL, then fails on GitHub.
-        for lab in lab_tests.tested_labs():
-            run_sh = lab_tests.REPO / lab_tests.AUTOMATED / lab / "run.sh"
+        runners = [lab_tests.REPO / lab_tests.AUTOMATED / lab / "run.sh" for lab in lab_tests.tested_labs()]
+        for run_sh in [lab_tests.REPO / lab_tests.AUTOMATED / "run-lab.sh", *runners]:
             for n, line in enumerate(run_sh.read_text(encoding="utf-8").splitlines(), 1):
                 code = line.split("#", 1)[0].strip()
                 if code.startswith("./lab-manager.sh"):

@@ -1,3 +1,5 @@
+import math
+
 from .attempts import AttemptError, get_student_attempt
 from .audit import record_audit_event, utc_now_iso
 from .db import get_db
@@ -250,6 +252,9 @@ def _points(value):
         points = float(value)
     except (TypeError, ValueError) as exc:
         raise GradingError("points_awarded must be a number") from exc
+    # NaN compares false with everything, so it would pass both range checks.
+    if not math.isfinite(points):
+        raise GradingError("points_awarded must be a finite number")
     if points < 0:
         raise GradingError("points_awarded must be non-negative")
     return points

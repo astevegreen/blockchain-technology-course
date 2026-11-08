@@ -10,7 +10,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { ORDER, askFirstAvailable, askModel, buildPrompt, byLine, diffStats, pickDepth } from "./agy.mjs";
+import { NO_API, ORDER, askFirstAvailable, askModel, buildPrompt, byLine, diffStats, pickDepth } from "./agy.mjs";
 import { RAILS, RAIL_MODELS, couldNotRun, railAction, railDiff, railFiles, railVerdict } from "./rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -49,10 +49,11 @@ function change() {
 }
 
 // One agy review of the material, with the prompt in tools/<promptFile>, by the first of `models` that answers.
-function review(promptFile, material, models, tmp) {
+// api: askModel's `api` (the Gemini API where agy is not installed); the rail audit passes NO_API.
+function review(promptFile, material, models, tmp, api = undefined) {
   const prompt = buildPrompt(readFileSync(path.join(ROOT, "tools", promptFile), "utf8"), material);
   return askFirstAvailable(models, (model) =>
-    askModel((args) => run("agy", args), prompt, model, ["--add-dir", tmp]),
+    askModel((args) => run("agy", args), prompt, model, ["--add-dir", tmp], api),
   );
 }
 
@@ -77,7 +78,9 @@ function railAudit(request, diff, stats, rails, tmp) {
     `# The owner's request\n\n${request}\n\n# The change to the rails\n\n\`\`\`diff\n${railDiff(diff)}\`\`\`\n`,
   );
   try {
-    const answer = review("rail-audit.md", material, RAIL_MODELS, tmp);
+    // Never through the Gemini API, which sees only the diff and the rules files: rails wait for agy (owner, 7 Nov:
+    // "Rails wait for the PC").
+    const answer = review("rail-audit.md", material, RAIL_MODELS, tmp, NO_API);
     return `${railAction(railVerdict(answer.response))}\n${touches} Rail audit by ${byLine({ ...answer, ...pick })}\n\n${answer.response}`;
   } catch (err) {
     return `${couldNotRun("Rail audit", "The rail change", err.message)}\n${touches}`;

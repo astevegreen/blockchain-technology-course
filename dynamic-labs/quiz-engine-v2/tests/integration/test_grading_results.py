@@ -218,3 +218,81 @@ def test_expired_written_answer_can_be_graded_without_status_change(app, client)
     assert queue_item["attempt_status"] == "expired"
     assert graded["status"] == "expired"
     assert graded["score"] == 0.25
+
+
+def _submitted_written_answer_id(app, client):
+    version = _seed_written_quiz(app, client, result_policy="score_after_grading")
+    _enroll_student(client)
+    attempt = client.post(
+        f"/student/api/quizzes/{version['id']}/start"
+    ).get_json()["attempt"]
+    client.post(
+        f"/student/api/attempts/{attempt['id']}/submit",
+        json={
+            "answers": [
+                {
+                    "question_id": attempt["questions"][0]["id"],
+                    "written_response": "An answer to grade",
+                }
+            ]
+        },
+    )
+    queue = client.get("/instructor/api/grading/written", headers=HEADERS)
+    return queue.get_json()["items"][0]["answer_id"]
+
+
+def _stored_points(app, answer_id):
+    with app.app_context():
+        return get_db().execute(
+            "SELECT points_awarded FROM attempt_answers WHERE id = ?", (answer_id,)
+        ).fetchone()["points_awarded"]
+
+
+def test_grade_form_rejects_nan_infinite_and_negative_points(app, client):
+    answer_id = _submitted_written_answer_id(app, client)
+
+    for value in ("nan", "NaN", "inf", "-inf", "-1"):
+        response = client.post(
+            f"/instructor/attempt-answers/{answer_id}/grade",
+            data={"points_awarded": value},
+            headers=HEADERS,
+        )
+        assert response.status_code == 400, value
+        assert _stored_points(app, answer_id) is None, value
+
+
+def test_grade_api_rejects_nan_points(app, client):
+    answer_id = _submitted_written_answer_id(app, client)
+
+    response = client.post(
+        f"/instructor/api/attempt-answers/{answer_id}/grade",
+        data='{"points_awarded": NaN}',
+        content_type="application/json",
+        headers=HEADERS,
+    )
+
+    assert response.status_code == 400
+    assert _stored_points(app, answer_id) is None
+
+
+def test_grade_form_accepts_exactly_points_possible_and_rejects_just_above(app, client):
+    answer_id = _submitted_written_answer_id(app, client)
+    with app.app_context():
+        possible = get_db().execute(
+            "SELECT points_possible FROM attempt_answers WHERE id = ?", (answer_id,)
+        ).fetchone()["points_possible"]
+
+    above = client.post(
+        f"/instructor/attempt-answers/{answer_id}/grade",
+        data={"points_awarded": str(possible + 0.001)},
+        headers=HEADERS,
+    )
+    exact = client.post(
+        f"/instructor/attempt-answers/{answer_id}/grade",
+        data={"points_awarded": str(possible)},
+        headers=HEADERS,
+    )
+
+    assert above.status_code == 400
+    assert exact.status_code == 302
+    assert _stored_points(app, answer_id) == possible

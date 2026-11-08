@@ -33,10 +33,11 @@ def create_app(config_overrides=None):
 
     init_db_app(app)
     init_students_app(app)
-    init_expiration_worker_app(app)
     init_shared_auth(app)
     app.register_blueprint(health_bp)
     app.register_blueprint(instructor_bp)
     app.register_blueprint(student_bp)
+    # Last: a start refused above must not leave the worker thread running.
+    init_expiration_worker_app(app)
 
     return app

@@ -52,6 +52,14 @@ class P2PTrustLiveRegressionTests(unittest.TestCase):
             probe_session.close()
 
         login_instructor(cls.instructor_session, cls.base_url)
+        # The lane service answers the claims API and starts last, so it can still be booting when the suite begins
+        # (a 502 here once failed CI). Wait until it answers.
+        wait_for_http(
+            cls.instructor_session,
+            f"{cls.base_url}/api/p2p_trust/claims",
+            lambda resp: resp.status_code not in (502, 503, 504),
+            description="lane service behind /api/p2p_trust/claims",
+        )
         if os.environ.get("P2P_TRUST_REGRESSION_RELEASE_EXISTING_CLAIMS", "1") == "1":
             claims = list_p2p_trust_claims(cls.instructor_session, base_url=cls.base_url)
             for entry in claims:
@@ -187,7 +195,7 @@ class P2PTrustLiveRegressionTests(unittest.TestCase):
         )
         output = strip_terminal_artifacts(raw)
         self.assertIn("Reached responsible node", output)
-        self.assertIn("Optimal path:", output)
+        self.assertIn("Greedy reference path:", output)
 
     def test_feature_guard_home_is_writable_and_rootfs_is_read_only(self) -> None:
         if not os.environ.get("P2P_TRUST_STUDENT_HOME_ROOT"):

@@ -1,6 +1,6 @@
 ---
 name: sprint-supervisor
-description: Supervisor of the course sprint in docs/sprint.md, run hourly and whenever a sprint session stops. Starts and restarts the lane, plan and integrate sessions. Run only from the "Course sprint supervisor" scheduled task.
+description: Course sprint supervisor; run only from its scheduled task.
 disable-model-invocation: true
 argument-hint: "[dry-run]"
 model: sonnet

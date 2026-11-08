@@ -2,7 +2,8 @@ import sqlite3
 
 import pytest
 
-from app.db import get_db
+from app.db import connect_database, get_db, run_migrations
+from app.schema import SCHEMA_MIGRATIONS
 
 
 CORE_TABLES = {
@@ -229,6 +230,21 @@ def test_invalid_difficulty_and_negative_counts_are_rejected(app):
                 """,
                 (EMPTY_CRITERIA_JSON,),
             )
+        with pytest.raises(sqlite3.IntegrityError):
+            db.execute(
+                """
+                INSERT INTO quiz_templates (
+                    title,
+                    criteria_json,
+                    question_count,
+                    archived,
+                    created_at,
+                    updated_at
+                )
+                VALUES ('Not boolean', ?, 1, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+                (EMPTY_CRITERIA_JSON,),
+            )
 
 
 def test_broken_foreign_keys_are_rejected(app):
@@ -324,3 +340,109 @@ def test_question_revision_must_stay_in_same_quiz_bank(app):
                 """,
                 (bank_2, revision_2, original_question),
             )
+
+
+def _apply_migrations_through(conn, last_version, monkeypatch):
+    from app import db as db_module
+
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            db_module,
+            "SCHEMA_MIGRATIONS",
+            tuple(m for m in db_module.SCHEMA_MIGRATIONS if m[0] <= last_version),
+        )
+        run_migrations(conn)
+
+
+def test_upgrade_keeps_data_in_a_database_stopped_at_version_7(tmp_path, monkeypatch):
+    # A classroom database already holding templates, quizzes and settings is upgraded in
+    # place; migration 8 adds NOT NULL columns to a populated quiz_templates table.
+    conn = connect_database(str(tmp_path / "old.sqlite"))
+    try:
+        _apply_migrations_through(conn, 7, monkeypatch)
+        template_id = conn.execute(
+            """
+            INSERT INTO quiz_templates (
+                title, criteria_json, question_count, created_by, created_at, updated_at
+            )
+            VALUES ('Week 1 quiz', ?, 5, 'teacher', '2026-10-01', '2026-10-01')
+            """,
+            (EMPTY_CRITERIA_JSON,),
+        ).lastrowid
+        version_id = _insert_quiz_version(conn)
+        conn.execute(
+            "UPDATE quiz_versions SET template_id = ?, review_released_by = 'teacher' WHERE id = ?",
+            (template_id, version_id),
+        )
+        conn.execute(
+            "UPDATE app_settings SET value = '25' WHERE key = 'open_registration_cap'"
+        )
+        student_id = _insert_student(conn)
+        conn.commit()
+
+        run_migrations(conn)
+
+        versions = [
+            row["version"]
+            for row in conn.execute("SELECT version FROM schema_migrations ORDER BY version")
+        ]
+        template = conn.execute(
+            "SELECT * FROM quiz_templates WHERE id = ?", (template_id,)
+        ).fetchone()
+        version = conn.execute(
+            "SELECT template_id, review_released_by FROM quiz_versions WHERE id = ?",
+            (version_id,),
+        ).fetchone()
+        cap = conn.execute(
+            "SELECT value FROM app_settings WHERE key = 'open_registration_cap'"
+        ).fetchone()["value"]
+        student = conn.execute(
+            "SELECT identifier FROM students WHERE id = ?", (student_id,)
+        ).fetchone()
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                "UPDATE quiz_templates SET question_order_mode = 'sideways' WHERE id = ?",
+                (template_id,),
+            )
+    finally:
+        conn.close()
+
+    assert versions == [m[0] for m in SCHEMA_MIGRATIONS]
+    assert template["title"] == "Week 1 quiz"
+    assert template["question_count"] == 5
+    assert template["question_order_mode"] == "random_per_attempt"
+    assert template["option_order_mode"] == "random_per_attempt"
+    assert dict(version) == {"template_id": template_id, "review_released_by": "teacher"}
+    assert cap == "25"
+    assert student["identifier"] == "QZ-TEST-0001"
+
+
+def test_rerunning_migrations_on_a_current_database_changes_nothing(tmp_path):
+    conn = connect_database(str(tmp_path / "current.sqlite"))
+    try:
+        run_migrations(conn)
+        _insert_student(conn)
+        conn.commit()
+        before = conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0]
+
+        run_migrations(conn)
+
+        after = conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0]
+        students = conn.execute("SELECT COUNT(*) FROM students").fetchone()[0]
+    finally:
+        conn.close()
+
+    assert before == after == len(SCHEMA_MIGRATIONS)
+    assert students == 1
+
+
+def test_connections_enforce_foreign_keys_and_wait_for_locks(tmp_path):
+    conn = connect_database(str(tmp_path / "pragmas.sqlite"), busy_timeout_ms=1000)
+    try:
+        foreign_keys = conn.execute("PRAGMA foreign_keys").fetchone()[0]
+        busy_timeout = conn.execute("PRAGMA busy_timeout").fetchone()[0]
+    finally:
+        conn.close()
+
+    assert foreign_keys == 1
+    assert busy_timeout == 1000

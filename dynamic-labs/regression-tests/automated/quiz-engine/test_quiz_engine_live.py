@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from urllib.parse import urlparse
 
 from live_support import (
     DEFAULT_BASE_URL,
@@ -70,15 +71,21 @@ class QuizEngineV2LiveRegressionTests(unittest.TestCase):
             timeout=10,
             allow_redirects=False,
         )
-        self.assertIn(quiz_list_requires_login.status_code, (301, 302))
-        self.assertIn("/quiz/student/", quiz_list_requires_login.headers["Location"])
+        self.assertEqual(quiz_list_requires_login.status_code, 302)
+        self.assertEqual(
+            urlparse(quiz_list_requires_login.headers["Location"]).path, "/quiz/student/"
+        )
 
+        # The router gates /quiz/instructor* itself (auth_request, then @instructor_login in
+        # router/routes/_auth.conf): the instructor auth service stores the return path and
+        # sends the browser to the shared login page, for pages and API calls alike.
         protected = self.student_session.get(
             f"{self.base_url}/quiz/instructor",
             timeout=10,
             allow_redirects=False,
         )
-        self.assertIn(protected.status_code, (301, 302, 401, 403))
+        self.assertEqual(protected.status_code, 302)
+        self.assertEqual(urlparse(protected.headers["Location"]).path, "/instructor/")
 
         api_protected = self.student_session.get(
             f"{self.base_url}/quiz/instructor/api/metrics",
@@ -86,7 +93,8 @@ class QuizEngineV2LiveRegressionTests(unittest.TestCase):
             headers={"Accept": "application/json"},
             allow_redirects=False,
         )
-        self.assertIn(api_protected.status_code, (301, 302, 401, 403))
+        self.assertEqual(api_protected.status_code, 302)
+        self.assertEqual(urlparse(api_protected.headers["Location"]).path, "/instructor/")
 
     def test_student_enroll_start_submit_and_results(self) -> None:
         identifier = enroll_student(self.student_session, self.base_url)
