@@ -260,6 +260,7 @@ test("nothingOutstanding: Complete alone, numbered or with trailing words", () =
 
 test("nothingOutstanding: open work, or Complete with something pending", () => {
   assert.equal(nothingOutstanding(["## Next", "1. Run the tests"]), false);
+  assert.equal(nothingOutstanding(["## Next", "1. Complete the quiz questions"]), false);
   assert.equal(nothingOutstanding(["## Next", "Complete", "", "## Waiting on", "- run 123"]), false);
   assert.equal(nothingOutstanding(["## Decide first", "- merge? - recommend: yes", "## Next", "Complete"]), false);
   assert.equal(nothingOutstanding(["## Next", "Complete", "## Waiting on", ""]), true, "an empty section is no section");
