@@ -88,8 +88,14 @@ def mine_until_trusted_balance_command(
     return "\n".join(
         [
             f'TARGET_WALLET="{balance_wallet}"',
+            # Exactly one block pays the wallet; filler blocks pay an output no
+            # wallet owns (raw OP_TRUE) until that reward matures. The balance can
+            # only be 0 or 50, so a block from elsewhere can't push it past 50 and
+            # leave the loop spinning, as mining every block to the wallet could.
+            f"bitcoin-cli {mining_prefix}generatetoaddress 1 {address} 50000000 >/dev/null",
             'while [ "$(bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -r \'.mine.trusted\')" != "50" ]; do',
-            f"  bitcoin-cli {mining_prefix}generatetoaddress 1 {address} 50000000 >/dev/null",
+            '  bitcoin-cli generatetodescriptor 1 "raw(51)" 50000000 >/dev/null',
+            '  echo "height=$(bitcoin-cli getblockcount) $(bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -c .mine)" >&2',
             "done",
             'bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalance',
         ]
