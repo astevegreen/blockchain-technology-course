@@ -163,8 +163,12 @@ const API_HEADLESS =
   "without a file this prompt does not include is never passed: report it, naming the file, as a blocking " +
   "finding in the format the task asks for (for a rail audit, as a loosening).";
 const MATERIAL = /\nThe material is in (.+)\. Read all of it before answering\.\n$/;
-// The line the callers put where they cut a long diff; inside a diff line (+, - or space first) it is not a cut.
-const TRUNCATED = /^\.\.\. \(diff truncated; read the rest from disk\)$/m;
+// The line put where a long diff is cut, written by truncateDiff and matched by the API path below; inside a
+// diff line (+, - or space first) it is not a cut.
+export const TRUNCATION_MARKER = "... (diff truncated; read the rest from disk)";
+const TRUNCATED = new RegExp(`^${TRUNCATION_MARKER.replace(/[.()]/g, String.raw`\$&`)}$`, "m");
+export const truncateDiff = (diff, max) =>
+  diff.length > max ? `${diff.slice(0, max)}\n${TRUNCATION_MARKER}\n` : diff;
 export const API_NOTE =
   "_Answered through the Gemini API, which cannot read the repository: this review saw only the material._";
 

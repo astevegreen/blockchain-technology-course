@@ -41,7 +41,7 @@ export function report(arg, { gh = runGh } = {}) {
   const pr = String(arg ?? "").replace(/^#/, "");
   if (!/^\d+$/.test(pr)) return { code: 1, out: USAGE };
   try {
-    const { headRefOid: sha } = JSON.parse(gh(["pr", "view", pr, "--json", "number,headRefOid"]));
+    const sha = gh(["api", `repos/{owner}/{repo}/pulls/${pr}`, "--jq", ".head.sha"]).trim();
     const short = sha.slice(0, 7);
     const { check_runs: runs } = JSON.parse(gh(["api", `repos/{owner}/{repo}/commits/${sha}/check-runs?per_page=100`]));
     const run = runs

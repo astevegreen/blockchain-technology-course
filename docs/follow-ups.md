@@ -65,14 +65,8 @@ slide index), which is never listed here.
   and its QEMU plugin (`~> 1.0` today), and check whether the Fabric lab needs the `fabric-kafka` or
   `fabric-zookeeper` images, which Fabric stopped publishing at 2.5.15. Every lab's regression test reruns. (6 Nov
   2026, owner's research request)
-- `tools/sonar.mjs:44` reads the PR's head commit with `gh pr view`, which uses GraphQL, and cloud sessions get
-  "GitHub GraphQL is not available"; `gh api repos/{owner}/{repo}/pulls/<n>` (REST) gives the same `head.sha`. Its
-  other calls are REST and work. (6 Nov 2026, toolchain upgrades)
 - `tools/agy.mjs` is 404 lines: its Gemini API half (`apiPrompt`, `parseApiReply`, the HTTPS post,
   `geminiApi`) belongs in its own file, split the same way in all three repos. (7 Nov 2026, Gemini API fallback)
-- The "(diff truncated; read the rest from disk)" line is written in `tools/second-look.mjs:96` and matched by
-  `TRUNCATED` in `tools/agy.mjs:167`: one shared constant would stop a reworded marker from sending part of a diff to
-  the API. (7 Nov 2026, Gemini API fallback)
 - `tools/check.py:446-455` `instructor_named` reads only the file name, so an answer file whose folder says
   instructor or seed (`dynamic-labs/x/instructor/key.json`) is not caught, and the `dynamic-labs/*instructor*.html`
   entry of `STUDENT_FACING` (`tools/check.py:70`) lets any page so named ship, a rendered instructor notes page
