@@ -3,12 +3,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
-from urllib.parse import urlparse, urlunparse
 
 import requests
 
@@ -65,15 +65,94 @@ DEFAULT_INSTRUCTOR_COOKIE_CACHE_FILE = Path(
 )
 INSTRUCTOR_COOKIE_NAME = "hlf_instructor"
 
-_USERNAME_RE = re.compile(r"^Username:\s*(.+)$", re.MULTILINE)
-_PASSWORD_RE = re.compile(r"^Password:\s*(.+)$", re.MULTILINE)
 _UUID_RE = re.compile(r"^[0-9a-f-]{36}$")
 _ANSI_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 _OSC_RE = re.compile(r"\x1B\].*?(?:\x07|\x1B\\)")
 
 
-class RegressionFailure(RuntimeError):
-    pass
+# The session, wait and login helpers live in ../live_common.py, shared by every lab's live_support.py.
+# This file keeps the lab's own settings and the thin wrappers that pass them in.
+_AUTOMATED_DIR = str(Path(__file__).resolve().parents[1])
+if _AUTOMATED_DIR not in sys.path:
+    sys.path.insert(0, _AUTOMATED_DIR)
+import live_common  # noqa: E402
+
+RegressionFailure = live_common.RegressionFailure
+new_session = live_common.new_session
+clear_cookie = live_common.clear_cookie
+_cookie_header = live_common.cookie_header
+_to_websocket_url = live_common.to_websocket_url
+_session_has_valid_instructor_cookie = live_common.session_has_valid_instructor_cookie
+
+
+def parse_instructor_credentials(path: Path = DEFAULT_CREDENTIALS_FILE) -> tuple[str, str]:
+    return live_common.parse_instructor_credentials(path, "ETHEREUM_REGRESSION_CREDENTIALS_FILE")
+
+
+def wait_for_http(
+    session: requests.Session,
+    url: str,
+    predicate: Callable[[requests.Response], bool],
+    *,
+    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
+    interval_seconds: float = 1.0,
+    description: str,
+    allow_redirects: bool = True,
+) -> requests.Response:
+    return live_common.wait_for_http(
+        session,
+        url,
+        predicate,
+        timeout_seconds=timeout_seconds,
+        interval_seconds=interval_seconds,
+        description=description,
+        allow_redirects=allow_redirects,
+    )
+
+
+def _candidate_instructor_cookie_cache_paths(
+    cache_path: Path = DEFAULT_INSTRUCTOR_COOKIE_CACHE_FILE,
+) -> list[Path]:
+    return live_common.candidate_cookie_cache_paths(cache_path, ROOT)
+
+
+def _load_cached_instructor_cookie(
+    session: requests.Session,
+    base_url: str,
+    cache_path: Path = DEFAULT_INSTRUCTOR_COOKIE_CACHE_FILE,
+) -> bool:
+    return live_common.load_cached_instructor_cookie(
+        session,
+        base_url,
+        _candidate_instructor_cookie_cache_paths(cache_path),
+        INSTRUCTOR_COOKIE_NAME,
+    )
+
+
+def _persist_instructor_cookie(
+    session: requests.Session,
+    base_url: str,
+    cache_path: Path = DEFAULT_INSTRUCTOR_COOKIE_CACHE_FILE,
+) -> None:
+    live_common.persist_instructor_cookie(session, base_url, cache_path, INSTRUCTOR_COOKIE_NAME)
+
+
+def login_instructor(
+    session: requests.Session,
+    base_url: str = DEFAULT_BASE_URL,
+    *,
+    max_retries: int = 5,
+    retry_delay: float = 5.0,
+) -> None:
+    live_common.login_instructor(
+        session,
+        base_url,
+        load_cached=lambda: _load_cached_instructor_cookie(session, base_url),
+        credentials=parse_instructor_credentials,
+        persist=lambda: _persist_instructor_cookie(session, base_url),
+        max_retries=max_retries,
+        retry_delay=retry_delay,
+    )
 
 
 @dataclass
@@ -91,178 +170,10 @@ class ClaimContext:
         return self.config.get("assignedAddress", "")
 
 
-def new_session() -> requests.Session:
-    session = requests.Session()
-    session.trust_env = False
-    return session
-
-
-def clear_cookie(session: requests.Session, cookie_name: str) -> None:
-    for cookie in list(session.cookies):
-        if cookie.name == cookie_name:
-            session.cookies.clear(domain=cookie.domain, path=cookie.path, name=cookie.name)
-
-
-def _cookie_header(session: requests.Session) -> str:
-    cookies = session.cookies.get_dict()
-    return "; ".join(f"{name}={value}" for name, value in cookies.items())
-
-
-def _to_websocket_url(http_url: str) -> str:
-    parsed = urlparse(http_url)
-    scheme = "wss" if parsed.scheme == "https" else "ws"
-    return urlunparse(parsed._replace(scheme=scheme))
-
-
 def strip_terminal_artifacts(text: str) -> str:
     text = _OSC_RE.sub("", text)
     text = _ANSI_RE.sub("", text)
     return text.replace("\r", "")
-
-
-def parse_instructor_credentials(path: Path = DEFAULT_CREDENTIALS_FILE) -> tuple[str, str]:
-    if not path.exists():
-        raise RegressionFailure(
-            f"instructor credentials file not found: {path}. "
-            "Run deploy first or point ETHEREUM_REGRESSION_CREDENTIALS_FILE at a valid file."
-        )
-    content = path.read_text(encoding="utf-8")
-    username = _USERNAME_RE.search(content)
-    password = _PASSWORD_RE.search(content)
-    if not username or not password:
-        raise RegressionFailure(f"could not parse instructor credentials from {path}")
-    return username.group(1).strip(), password.group(1).strip()
-
-
-def wait_for_http(
-    session: requests.Session,
-    url: str,
-    predicate: Callable[[requests.Response], bool],
-    *,
-    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
-    interval_seconds: float = 1.0,
-    description: str,
-    allow_redirects: bool = True,
-) -> requests.Response:
-    deadline = time.time() + timeout_seconds
-    last_error: Exception | None = None
-    last_response: requests.Response | None = None
-    while time.time() < deadline:
-        try:
-            response = session.get(url, timeout=10, allow_redirects=allow_redirects)
-            last_response = response
-            if predicate(response):
-                return response
-        except requests.RequestException as exc:
-            last_error = exc
-        time.sleep(interval_seconds)
-    if last_response is not None:
-        raise RegressionFailure(
-            f"timed out waiting for {description}: last status={last_response.status_code} url={last_response.url}"
-        )
-    raise RegressionFailure(f"timed out waiting for {description}: last error={last_error}")
-
-
-def _session_has_valid_instructor_cookie(
-    session: requests.Session,
-    base_url: str,
-) -> bool:
-    try:
-        response = session.get(f"{base_url}/api/instructor/whoami", timeout=10)
-    except requests.RequestException:
-        return False
-    if response.status_code != 200:
-        return False
-    payload = response.json()
-    return bool(payload.get("authenticated"))
-
-
-def _candidate_instructor_cookie_cache_paths(
-    cache_path: Path = DEFAULT_INSTRUCTOR_COOKIE_CACHE_FILE,
-) -> list[Path]:
-    candidates = [cache_path]
-    runtime_dir = ROOT / ".runtime"
-    try:
-        for path in sorted(runtime_dir.glob("*-regression-instructor-cookie.json")):
-            if path not in candidates:
-                candidates.append(path)
-    except OSError:
-        pass
-    return candidates
-
-
-def _load_cached_instructor_cookie(
-    session: requests.Session,
-    base_url: str,
-    cache_path: Path = DEFAULT_INSTRUCTOR_COOKIE_CACHE_FILE,
-) -> bool:
-    for candidate in _candidate_instructor_cookie_cache_paths(cache_path):
-        if not candidate.exists():
-            continue
-        try:
-            payload = json.loads(candidate.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        if payload.get("base_url") != base_url:
-            continue
-        cookie_value = (payload.get("cookie_value") or "").strip()
-        if not cookie_value:
-            continue
-        session.cookies.set(INSTRUCTOR_COOKIE_NAME, cookie_value, path="/")
-        if _session_has_valid_instructor_cookie(session, base_url):
-            return True
-        clear_cookie(session, INSTRUCTOR_COOKIE_NAME)
-    return False
-
-
-def _persist_instructor_cookie(
-    session: requests.Session,
-    base_url: str,
-    cache_path: Path = DEFAULT_INSTRUCTOR_COOKIE_CACHE_FILE,
-) -> None:
-    cookie_value = session.cookies.get(INSTRUCTOR_COOKIE_NAME)
-    if not cookie_value:
-        return
-    payload = {
-        "base_url": base_url,
-        "cookie_name": INSTRUCTOR_COOKIE_NAME,
-        "cookie_value": cookie_value,
-    }
-    try:
-        cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps(payload), encoding="utf-8")
-    except OSError:
-        return
-
-
-def login_instructor(
-    session: requests.Session,
-    base_url: str = DEFAULT_BASE_URL,
-    *,
-    max_retries: int = 5,
-    retry_delay: float = 5.0,
-) -> None:
-    if _load_cached_instructor_cookie(session, base_url):
-        return
-
-    username, password = parse_instructor_credentials()
-    for attempt in range(1, max_retries + 1):
-        response = session.post(
-            f"{base_url}/api/instructor/login",
-            json={"user": username, "key": password},
-            timeout=10,
-        )
-        if response.status_code == 200:
-            if not _session_has_valid_instructor_cookie(session, base_url):
-                raise RegressionFailure("instructor login did not yield a usable instructor session")
-            _persist_instructor_cookie(session, base_url)
-            return
-        if response.status_code == 429 and attempt < max_retries:
-            time.sleep(retry_delay * attempt)
-            continue
-        raise RegressionFailure(
-            f"instructor login failed: status={response.status_code} body={response.text[:300]}"
-        )
 
 
 def _container_running(container: str) -> bool:
