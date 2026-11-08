@@ -40,13 +40,6 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- The Node 24 `bitcoin-mempool` image builds and shows blocks, transactions and the mempool view with data (built
-  locally 8 Nov 2026; the Dockerfile now skips btc-rpc-explorer's zeromq build, which fails on Node 24). Still open:
-  the labs pull the published image, which is still the old one, so publish this build (tag
-  `bitcoin-mempool:node24-local` as `ghcr.io/blockchain-course-2026/bitcoin-mempool:latest` and push it, or run
-  `build-and-publish-mempool.yml` in `course-containers`) and mirror the `--ignore-scripts` fix into
-  `course-containers/bitcoin-mempool/`. The suite's mempool test only checks HTTP 200 and page size, not data. (6 Nov
-  2026, toolchain upgrades)
 - `dynamic-labs/ethereum_lab` stays on Hardhat 2 with `@nomicfoundation/hardhat-toolbox` `^6.1.0`
   (`package.json:38`). Toolbox 7.0.0 only prints a notice and exits: Hardhat 3 split it into new plugins. Moving
   means ES modules, a new `hardhat.config` format with each plugin named, and porting the 3 test files, 12 scripts
