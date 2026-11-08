@@ -65,10 +65,6 @@ slide index), which is never listed here.
   and its QEMU plugin (`~> 1.0` today), and check whether the Fabric lab needs the `fabric-kafka` or
   `fabric-zookeeper` images, which Fabric stopped publishing at 2.5.15. Every lab's regression test reruns. (6 Nov
   2026, owner's research request)
-- Dependabot pull requests (`.github/dependabot.yml`) run no tests: `check.yml` and `lab-tests.yml` run only on a
-  push to `main` or by hand, so each one needs a by-hand Lab Tests run on its branch before merging. A
-  `pull_request` trigger limited to Dependabot's branches would test them on arrival (a rail change). (6 Nov 2026,
-  toolchain upgrades)
 - `tools/sonar.mjs:44` reads the PR's head commit with `gh pr view`, which uses GraphQL, and cloud sessions get
   "GitHub GraphQL is not available"; `gh api repos/{owner}/{repo}/pulls/<n>` (REST) gives the same `head.sha`. Its
   other calls are REST and work. (6 Nov 2026, toolchain upgrades)

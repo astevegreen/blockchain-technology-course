@@ -1,15 +1,21 @@
 name: Check
 
 # Runs the repo's one check over everything, with the whole site rendered (`python tools/check.py --all --render`),
-# on every push to main. The pre-commit hook runs the same check on each commit, but only in a clone that turned the
+# on every push to main and on every Dependabot pull request. The pre-commit hook runs the same check on each commit, but only in a clone that turned the
 # hooks on; this proves main itself (owner's policy, 28 Oct 2026). It builds and publishes nothing: the site
 # changes only when the owner runs Publish.
+# A Dependabot pull request gets the same run, so its green badge means something. Only Dependabot's: the pull_request
+# trigger cannot filter on the head branch, so the job's `if` does (a branch named dependabot/** in this repository).
+# Dependabot's token is read-only and has no repo secrets; this job uses neither beyond `contents: read`.
 # Windows, like the computers that commit: the check and its tool tests are written for Git Bash on Windows.
 
 on:
   push:
     branches: [main]
     # A push that touches only docs/ changes nothing the check reads (it never opens docs/), so it skips the render.
+    paths-ignore:
+      - "docs/**"
+  pull_request:
     paths-ignore:
       - "docs/**"
 
@@ -22,6 +28,7 @@ concurrency:
 
 jobs:
   check:
+    if: github.event_name != 'pull_request' || (startsWith(github.head_ref, 'dependabot/') && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: windows-latest
     timeout-minutes: 60
     defaults:

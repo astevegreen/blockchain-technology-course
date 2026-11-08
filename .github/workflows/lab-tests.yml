@@ -1,12 +1,19 @@
 name: Lab Tests
 
 # Runs each changed lab's automated tests (dynamic-labs/regression-tests/automated/<lab>/run.sh) in Docker.
-# It builds and publishes nothing, so unlike the other workflows it also runs on a push to main.
+# It builds and publishes nothing, so unlike the other workflows it also runs on a push to main, and on a Dependabot
+# pull request (a branch named dependabot/** in this repository; the pull_request trigger cannot filter on the head
+# branch, so the `pick` job's `if` does). Dependabot's token is read-only and has no repo secrets; no step needs either.
 # tools/lab_tests.py picks the labs; its IN_CI list names the labs whose tests pass here.
 
 on:
   push:
     branches: [main]
+    paths:
+      - "dynamic-labs/**"
+      - ".github/workflows/lab-tests.yml"
+      - "tools/lab_tests.py"
+  pull_request:
     paths:
       - "dynamic-labs/**"
       - ".github/workflows/lab-tests.yml"
@@ -21,11 +28,12 @@ on:
 permissions:
   contents: read
 
-# A hand-started run replaces an older hand-started one. A push is never cancelled or replaced: each push tests only the
-# labs it changed (tools/lab_tests.py --base), so dropping one would leave its labs untested.
+# A hand-started run replaces an older hand-started one, and a pull request's run is replaced by its next one (each run
+# tests the whole pull request). A push is never cancelled or replaced: each push tests only the labs it changed
+# (tools/lab_tests.py --base), so dropping one would leave its labs untested.
 concurrency:
-  group: lab-tests-${{ github.event_name == 'push' && github.sha || 'dispatch' }}
-  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+  group: lab-tests-${{ github.event_name == 'push' && github.sha || github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'dispatch' }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 defaults:
   run:
@@ -33,6 +41,7 @@ defaults:
 
 jobs:
   pick:
+    if: github.event_name != 'pull_request' || (startsWith(github.head_ref, 'dependabot/') && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     outputs:
       labs: ${{ steps.pick.outputs.labs }}
@@ -47,9 +56,13 @@ jobs:
           EVENT: ${{ github.event_name }}
           LABS: ${{ inputs.labs }}
           BEFORE: ${{ github.event.before }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "$EVENT" = workflow_dispatch ]; then
             labs=$(python3 tools/lab_tests.py --labs "$LABS")
+          elif [ "$EVENT" = pull_request ]; then
+            # The checkout is the PR merged into its base; GITHUB_SHA is that merge commit, so the diff is the PR's changes.
+            labs=$(python3 tools/lab_tests.py --base "$PR_BASE" --head "$GITHUB_SHA")
           else
             labs=$(python3 tools/lab_tests.py --base "$BEFORE" --head "$GITHUB_SHA")
           fi
