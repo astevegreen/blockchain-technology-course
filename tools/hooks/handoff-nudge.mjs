@@ -4,7 +4,9 @@
 // line (a compaction) and climbs past it again. Held while background work runs, so a note never says
 // "still running".
 // A sprint session (docs/sprint.md) runs unattended and reports on its issues, never in a handoff: no nudge.
-// SessionStart (startup, clear): tell the owner about open notes. Shown to the owner only, never to Claude.
+// SessionStart (startup, clear): first file open notes that leave nothing to do (Next reads Complete, nothing
+// waits), then tell the owner about the open ones and how many are old. The systemMessage is shown to the owner
+// only; the names of old notes go to Claude, with the command that closes them.
 // While the sprint window is open (the one `/sprint-start` opened, or a `Window (UTC)` line in docs/sprint.md),
 // also tell Claude that docs/sprint.md overrides CLAUDE.md, and that lab runs belong to the labs lane: in YODC a
 // banner in CLAUDE.md said so in every session, sprint or not, long after its window closed.
@@ -12,7 +14,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import os from "node:os";
 import path from "node:path";
 import { readInput } from "./shared.mjs";
-import { openNotes, storeDir } from "../handoff-notes.mjs";
+import { openNotes, STALE_DAYS, storeDir, sweep } from "../handoff-notes.mjs";
 
 const SHARE = 0.6;
 const STALE_MS = 2 * 60 * 60 * 1000;
@@ -24,24 +26,37 @@ function sessionStart() {
   const cwd = input.cwd ?? process.cwd();
   const out = {};
   let notes = [];
+  let swept = { filed: [], stale: [] };
   try {
+    swept = sweep({ cwd });
     notes = openNotes(storeDir(cwd));
   } catch {
     notes = [];
   }
-  if (notes.length > 0) {
-    out.systemMessage = notes.length === 1
-      ? `Open handoff note: ${notes[0].name}. Type /handoff resume to continue it.`
-      : `${notes.length} open handoff notes, newest ${notes[0].name}. Type /handoff resume to pick one.`;
-  }
+  const lines = [];
+  if (swept.filed.length) lines.push(`Filed ${swept.filed.length} handoff note(s) that said Complete with nothing outstanding.`);
+  if (notes.length > 0)
+    lines.push(
+      notes.length === 1
+        ? `Open handoff note: ${notes[0].name}. Type /handoff resume to continue it.`
+        : `${notes.length} open handoff notes, newest ${notes[0].name}. Type /handoff resume to pick one.`,
+    );
+  if (swept.stale.length) lines.push(`${swept.stale.length} of them are over ${STALE_DAYS} days old; ask Claude to close the finished ones.`);
+  if (lines.length) out.systemMessage = lines.join(" ");
+  const staleContext = swept.stale.length
+    ? `Open handoff notes over ${STALE_DAYS} days old: ${swept.stale.join(", ")}. When the owner asks, check each against ` +
+      "the repo and close the finished or overtaken ones: `node tools/handoff-notes.mjs close <name> <reason>`."
+    : "";
   const end = sprintWindowEnd(cwd);
   if (end) {
     out.hookSpecificOutput = {
       hookEventName: "SessionStart",
       additionalContext: `Sprint window open until ${end} UTC: \`docs/sprint.md\` overrides CLAUDE.md where they ` +
         `conflict. Lab tests and Docker run only in the labs lane's worktree: \`--fresh-start\` here would wipe its ` +
-        `containers.`,
+        `containers.${staleContext ? `\n${staleContext}` : ""}`,
     };
+  } else if (staleContext) {
+    out.hookSpecificOutput = { hookEventName: "SessionStart", additionalContext: staleContext };
   }
   if (Object.keys(out).length > 0) process.stdout.write(JSON.stringify(out));
   process.exit(0);
@@ -132,7 +147,9 @@ function stop() {
     `The conversation is ${Math.round(context / 1000)}k tokens, past the handoff line ` +
       `(${Math.round(line / 1000)}k, 60% of the auto-compact window). Before this turn ends, write a handoff ` +
       `with the handoff skill (/handoff). If the check is red, get it green first; a question you were about ` +
-      `to ask the owner goes under Decide first.\n`,
+      `to ask the owner goes under Decide first. If the task is finished and nothing waits on the owner or a run, ` +
+      `write no note: put future work on docs/follow-ups.md, close this session's own open notes, and tell the ` +
+      `owner in one line that nothing is left to hand off.\n`,
   );
   process.exit(2);
 }

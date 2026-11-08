@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { claim, list, recordSession, save, sinceNote } from "../handoff-notes.mjs";
+import { claim, close, list, nothingOutstanding, openNotes, recordSession, save, sinceNote, storeDir, sweep } from "../handoff-notes.mjs";
 import { canonical, toPosix } from "./shared.mjs";
 import { sh, tempRepo, writeFiles } from "./test-helpers.mjs";
 
@@ -249,4 +249,92 @@ test("an index that won't parse is left as it is, never replaced by one entry", 
   writeFileSync(file, half);
   assert.equal(recordSession("wrote", "b.md", "s", { env }), false);
   assert.equal(readFileSync(file, "utf8"), half);
+});
+
+const FINISHED = DRAFT.replace("1. Edit blockchain-course/lessons/bitcoin/01-BF-bitcoin_origins_and_mechanics.qmd", "Complete");
+
+test("nothingOutstanding: Complete alone, numbered or with trailing words", () => {
+  for (const next of ["Complete", "1. Complete", "Complete.", "complete, nothing left"])
+    assert.equal(nothingOutstanding(["## Next", next]), true, next);
+});
+
+test("nothingOutstanding: open work, or Complete with something pending", () => {
+  assert.equal(nothingOutstanding(["## Next", "1. Run the tests"]), false);
+  assert.equal(nothingOutstanding(["## Next", "Complete", "", "## Waiting on", "- run 123"]), false);
+  assert.equal(nothingOutstanding(["## Decide first", "- merge? - recommend: yes", "## Next", "Complete"]), false);
+  assert.equal(nothingOutstanding(["## Next", "Complete", "## Waiting on", ""]), true, "an empty section is no section");
+});
+
+test("save refuses a note with nothing outstanding and keeps the draft", () => {
+  const repo = repoWithNotes();
+  const r = saveDraft(repo, "done-work", NOW, FINISHED);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /nothing is outstanding.*docs\/follow-ups\.md.*write no note/);
+  assert.ok(existsSync(path.join(repo, ".handoff", "done-work.md")), "the draft stays");
+  assert.equal(list({ cwd: repo }).out, "no open handoff notes");
+});
+
+test("save files a Complete note that still waits on a run or an owner answer", () => {
+  const repo = repoWithNotes();
+  assert.equal(saveDraft(repo, "waiting", NOW, [FINISHED, "## Waiting on", "- run 42", ""].join("\n")).code, 0);
+  const asking = ["## Decide first", "- merge? - recommend: yes", "", "## Next"].join("\n");
+  assert.equal(saveDraft(repo, "asking", LATER, FINISHED.replace("## Next", asking)).code, 0);
+});
+
+test("close files the note in done/ with its reason, by slug or full name; a second close fails", () => {
+  const repo = repoWithNotes();
+  saveDraft(repo, "slide-edit");
+  const r = close("slide-edit", "finished in this session", { cwd: repo, now: LATER });
+  assert.equal(r.code, 0, r.out);
+  const text = readFileSync(path.join(repo, ".handoff", "done", "2026-10-17-1405-slide-edit.md"), "utf8");
+  assert.ok(text.endsWith("Closed: 2026-10-17 15:30: finished in this session\n"), text);
+  assert.ok(!text.includes("Resumed:"));
+  assert.equal(close("2026-10-17-1405-slide-edit.md", "again", { cwd: repo }).code, 3);
+  assert.equal(close("slide-edit", "again", { cwd: repo }).code, 1, "no open note of that name");
+  saveDraft(repo, "glossary");
+  assert.equal(close("glossary", "  ", { cwd: repo }).code, 1, "a reason is required");
+  assert.equal(close("glossary", undefined, { cwd: repo }).code, 1);
+  assert.equal(close("2026-10-17-1405-glossary.md", "overtaken", { cwd: repo }).code, 0, "full name");
+});
+
+test("close of a slug saved twice closes nothing and lists both", () => {
+  const repo = repoWithNotes();
+  saveDraft(repo, "slide-edit", NOW);
+  saveDraft(repo, "slide-edit", LATER);
+  const r = close("slide-edit", "done", { cwd: repo });
+  assert.equal(r.code, 4);
+  assert.match(r.out, /2 open notes named slide-edit/);
+  assert.equal(openNotes(storeDir(repo)).length, 2);
+});
+
+test("close from the command line is not recorded in the session-ids index", () => {
+  const repo = repoWithNotes();
+  saveDraft(repo, "slide-edit");
+  const config = mkdtempSync(path.join(os.tmpdir(), "bc-closecfg-"));
+  after(() => rmSync(config, { recursive: true, force: true }));
+  const run = (...args) =>
+    spawnSync(process.execPath, [path.resolve(import.meta.dirname, "..", "handoff-notes.mjs"), ...args], {
+      cwd: repo,
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_CODE_SESSION_ID: "sess-1", CLAUDE_CONFIG_DIR: config },
+    });
+  const r = run("close", "slide-edit", "finished", "here");
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.match(r.stdout, /^closed 2026-10-17-1405-slide-edit\.md/);
+  assert.ok(readFileSync(path.join(repo, ".handoff", "done", "2026-10-17-1405-slide-edit.md"), "utf8").endsWith(": finished here\n"));
+  assert.ok(!existsSync(path.join(config, "session-ids", "handoff.json")), "nothing recorded");
+});
+
+test("sweep files Complete notes and lists old ones, leaving them open", () => {
+  const repo = repoWithNotes();
+  const put = (name, next) =>
+    writeFiles(repo, { [`.handoff/${name}`]: ["# Handoff: x", "header", "", "## Goal", "g", "", "## Next", next, ""].join("\n") });
+  put("2026-11-08-0900-finished.md", "Complete");
+  put("2026-11-01-0900-old-open.md", "1. Still to do");
+  put("2026-11-08-0800-fresh-open.md", "1. Still to do");
+  const r = sweep({ cwd: repo, now: new Date(2026, 10, 8, 12, 0) });
+  assert.deepEqual(r.filed, ["2026-11-08-0900-finished.md"]);
+  assert.deepEqual(r.stale, ["2026-11-01-0900-old-open.md"]);
+  assert.deepEqual(openNotes(storeDir(repo)).map((n) => n.name), ["2026-11-08-0800-fresh-open.md", "2026-11-01-0900-old-open.md"]);
+  assert.match(readFileSync(path.join(repo, ".handoff", "done", "2026-11-08-0900-finished.md"), "utf8"), /swept, nothing outstanding/);
 });

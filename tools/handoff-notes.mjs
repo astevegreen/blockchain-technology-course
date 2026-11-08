@@ -4,6 +4,9 @@
 //   node tools/handoff-notes.mjs list           open notes, newest first
 //   node tools/handoff-notes.mjs claim [name]   move a note to .handoff/done/, print it and what changed since;
 //                                               name is the note's file name or the slug it was saved under
+//   node tools/handoff-notes.mjs close <name> <reason>   file a note whose work is done (or overtaken) in done/
+// A note exists only for work still open: save refuses one whose Next reads "Complete" with no Decide first or
+// Waiting on, and the SessionStart sweep files any such note that is open and lists notes older than STALE_DAYS.
 // Exit codes: 0 done, 1 error, 3 another session claimed the note first, 4 several notes are open: name one.
 import {
   appendFileSync,
@@ -20,6 +23,9 @@ import path from "node:path";
 import { canonical, git, toPosix } from "./hooks/shared.mjs";
 
 const MAX_LINES = 40;
+export const STALE_DAYS = 3;
+const NOTHING_LEFT =
+  "nothing is outstanding (Next reads Complete); put future work on docs/follow-ups.md and write no note";
 const STAMP = /^\d{4}-\d{2}-\d{2}-\d{4}-/;
 const SAVED = /^\d{4}-\d{2}-\d{2}-\d{4}-.+\.md$/;
 const HEADER = /· branch (\S+) · HEAD (\S+) · (clean|\d+ uncommitted) · (.+)$/;
@@ -68,6 +74,27 @@ export function openNotes(store) {
 
 const format = (notes) => notes.map((n) => `${n.name}  ${n.header}`).join("\n");
 
+// The non-blank lines under a "## <title>" heading, up to the next heading.
+function section(lines, title) {
+  const start = lines.indexOf(`## ${title}`);
+  if (start < 0) return [];
+  const end = lines.findIndex((l, i) => i > start && l.startsWith("## "));
+  return lines.slice(start + 1, end < 0 ? undefined : end).filter((l) => l.trim());
+}
+
+// True when a note leaves nothing to do: Next starts with "Complete" and nothing waits on the owner or a run.
+export function nothingOutstanding(lines) {
+  const next = section(lines, "Next");
+  if (!/^(1\.\s*)?complete\b/i.test(next[0]?.trim() ?? "")) return false;
+  return section(lines, "Decide first").length === 0 && section(lines, "Waiting on").length === 0;
+}
+
+// When the note was saved, from its file name (local time, as stamp() writes it).
+function savedAt(name) {
+  const m = name.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})-/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null;
+}
+
 // A note's name without its timestamp and .md, in the form save files it under.
 const slugOf = (name) =>
   path
@@ -100,6 +127,7 @@ export function save(file, { cwd = process.cwd(), now = new Date() } = {}) {
   if (lines.some((l) => l.startsWith("Resumed:")))
     problems.push("it was claimed (Resumed:) and can't be reopened, so write a new note");
   if (note.length > MAX_LINES) problems.push(`it is ${note.length} lines; keep it to ${MAX_LINES}`);
+  if (nothingOutstanding(lines)) problems.push(NOTHING_LEFT);
   if (problems.length) return { code: 1, out: `not saved: ${problems.join("; ")}.` };
 
   const slug = slugOf(source) || "note";
@@ -116,6 +144,38 @@ export function list({ cwd = process.cwd() } = {}) {
   return { code: 0, out: notes.length ? format(notes) : "no open handoff notes" };
 }
 
+// A full saved name, or the one open note whose slug matches; { code, out } when that is not one note.
+function resolve(name, store, verb) {
+  name = path.basename(name);
+  if (!name.endsWith(".md") && SAVED.test(`${name}.md`)) name += ".md";
+  // A slug ("kickoff-applied") names the open note saved under it; a full file name names only that note.
+  if (SAVED.test(name)) return { name };
+  const slug = slugOf(name);
+  const matches = openNotes(store).filter((n) => slugOf(n.name) === slug);
+  if (matches.length > 1)
+    return {
+      code: 4,
+      out: `${matches.length} open notes named ${slug}; ask the owner which one, then run ${verb} <name>:\n${format(matches)}`,
+    };
+  return { name: matches.length === 1 ? matches[0].name : name };
+}
+
+// Move an open note to done/ and append a line. A rename is atomic, so when two sessions take the same note only
+// one of them gets it.
+function file(store, name, line) {
+  const done = path.join(store, "done");
+  mkdirSync(done, { recursive: true });
+  try {
+    renameSync(path.join(store, name), path.join(done, name));
+  } catch {
+    return existsSync(path.join(done, name))
+      ? { code: 3, out: `already claimed: another session took ${name}` }
+      : { code: 1, out: `no open note named ${name}` };
+  }
+  appendFileSync(path.join(done, name), `${line}\n`);
+  return null;
+}
+
 export function claim(name, { cwd = process.cwd(), now = new Date() } = {}) {
   const store = storeDir(cwd);
   if (!name) {
@@ -128,37 +188,49 @@ export function claim(name, { cwd = process.cwd(), now = new Date() } = {}) {
       };
     name = notes[0].name;
   }
-  name = path.basename(name);
-  if (!name.endsWith(".md") && SAVED.test(`${name}.md`)) name += ".md";
-  // A slug ("kickoff-applied") names the open note saved under it; a full file name names only that note.
-  if (!SAVED.test(name)) {
-    const slug = slugOf(name);
-    const matches = openNotes(store).filter((n) => slugOf(n.name) === slug);
-    if (matches.length > 1)
-      return {
-        code: 4,
-        out: `${matches.length} open notes named ${slug}; ask the owner which one, then run claim <name>:\n${format(matches)}`,
-      };
-    if (matches.length === 1) name = matches[0].name;
-  }
-  const done = path.join(store, "done");
-  mkdirSync(done, { recursive: true });
-  // A rename is atomic, so when two sessions claim the same note only one of them gets it.
-  try {
-    renameSync(path.join(store, name), path.join(done, name));
-  } catch {
-    return existsSync(path.join(done, name))
-      ? { code: 3, out: `already claimed: another session took ${name}` }
-      : { code: 1, out: `no open note named ${name}` };
-  }
-  appendFileSync(path.join(done, name), `Resumed: ${stamp(now).text}\n`);
-  const text = readFileSync(path.join(done, name), "utf8").trimEnd();
+  const r = resolve(name, store, "claim");
+  if (r.code) return r;
+  name = r.name;
+  const failed = file(store, name, `Resumed: ${stamp(now).text}`);
+  if (failed) return failed;
+  const text = readFileSync(path.join(store, "done", name), "utf8").trimEnd();
   return {
     code: 0,
     out: `${text}\n\n## Since the note\n${sinceNote(text.split(/\r?\n/)[1], cwd).join("\n")}`,
     note: name,
     store,
   };
+}
+
+// File a note nobody needs to resume: its work was finished or overtaken. The reason goes on its Closed: line.
+export function close(name, reason, { cwd = process.cwd(), now = new Date() } = {}) {
+  if (!name || !reason?.trim()) return { code: 1, out: "usage: close <name> <reason>: say why the note is no longer needed" };
+  const store = storeDir(cwd);
+  const r = resolve(name, store, "close");
+  if (r.code) return r;
+  return file(store, r.name, `Closed: ${stamp(now).text}: ${reason.trim()}`) ?? { code: 0, out: `closed ${r.name}` };
+}
+
+// SessionStart: file open notes that leave nothing to do, and list those older than STALE_DAYS for the owner.
+export function sweep({ cwd = process.cwd(), now = new Date() } = {}) {
+  const store = storeDir(cwd);
+  const filed = [];
+  const stale = [];
+  for (const n of openNotes(store)) {
+    let lines;
+    try {
+      lines = readFileSync(path.join(store, n.name), "utf8").replace(/\r\n/g, "\n").split("\n");
+    } catch {
+      continue;
+    }
+    if (nothingOutstanding(lines)) {
+      if (!file(store, n.name, `Closed: ${stamp(now).text}: swept, nothing outstanding`)) filed.push(n.name);
+      continue;
+    }
+    const at = savedAt(n.name);
+    if (at && now - at > STALE_DAYS * 24 * 60 * 60 * 1000) stale.push(n.name);
+  }
+  return { filed, stale };
 }
 
 // The session-ids mod's index of which session saved or claimed which note (<config dir>/session-ids/handoff.json),
@@ -235,17 +307,18 @@ export function sinceNote(header, cwd) {
 }
 
 if (import.meta.main) {
-  const [command, arg] = process.argv.slice(2);
+  const [command, arg, ...rest] = process.argv.slice(2);
   let r;
   try {
     if (command === "save" && arg) r = save(arg);
     else if (command === "list") r = list();
     else if (command === "claim") r = claim(arg);
-    else r = { code: 1, out: "usage: node tools/handoff-notes.mjs save <file> | list | claim [name]" };
+    else if (command === "close") r = close(arg, rest.join(" "));
+    else r = { code: 1, out: "usage: node tools/handoff-notes.mjs save <file> | list | claim [name] | close <name> <reason>" };
   } catch (err) {
     r = { code: 1, out: `handoff-notes: ${err.message}` };
   }
-  if (r.code === 0 && r.note) recordSession(command === "save" ? "wrote" : "resumed", r.note, r.store);
+  if (r.code === 0 && r.note && command !== "close") recordSession(command === "save" ? "wrote" : "resumed", r.note, r.store);
   process.stdout.write(`${r.out}\n`);
   process.exit(r.code);
 }

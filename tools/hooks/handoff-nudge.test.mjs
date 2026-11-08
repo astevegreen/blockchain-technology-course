@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { runHook, sh, tempRepo, writeFiles } from "./test-helpers.mjs";
@@ -37,6 +37,7 @@ test("past the line, sends Claude back to write the handoff, once per session", 
   assert.equal(r.status, 2);
   assert.match(r.stderr, /125k tokens, past the handoff line \(120k/);
   assert.match(r.stderr, /\/handoff/);
+  assert.ok(r.stderr.includes("write no note: put future work on docs/follow-ups.md, close this session's own open notes"));
   assert.equal(stop([owner("Go on."), said(130_000)], { session }).status, 0, "already asked in this session");
 });
 
@@ -101,18 +102,50 @@ test("finishes quietly on input it can't read", () => {
 
 const sessionStart = (cwd) => runHook("handoff-nudge.mjs", { hook_event_name: "SessionStart", source: "clear", cwd });
 
+// A note name stamped minutes ago, so the sweep doesn't count it old (its age comes from the stamp).
+const recent = (slug, minutesAgo = 5) => {
+  const d = new Date(Date.now() - minutesAgo * 60 * 1000);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}-${slug}.md`;
+};
+const OPEN = ["# Handoff: x", "header", "", "## Goal", "g", "", "## Next", "1. Edit a slide", ""].join("\n");
+const GITIGNORE = [".handoff/", ""].join("\n");
+
 test("at session start, tells the owner about open notes and how to resume them", () => {
-  const repo = tempRepo({ ".gitignore": ".handoff/\n" });
+  const repo = tempRepo({ ".gitignore": GITIGNORE });
   assert.equal(sessionStart(repo).stdout, "", "no notes, no message");
 
+  const first = recent("slide-edit", 10);
+  const second = recent("glossary", 5);
   writeFiles(repo, {
-    ".handoff/2026-10-17-1405-slide-edit.md": "# Handoff: slide edit\nheader\n",
-    ".handoff/done/2026-10-16-0900-old.md": "# Handoff: old\nheader\nResumed: 2026-10-16 10:00\n",
+    [`.handoff/${first}`]: OPEN,
+    ".handoff/done/2026-10-16-0900-old.md": ["# Handoff: old", "header", "Resumed: 2026-10-16 10:00", ""].join("\n"),
   });
-  assert.equal(sessionStart(repo).json?.systemMessage, "Open handoff note: 2026-10-17-1405-slide-edit.md. Type /handoff resume to continue it.");
+  assert.equal(sessionStart(repo).json?.systemMessage, `Open handoff note: ${first}. Type /handoff resume to continue it.`);
 
-  writeFiles(repo, { ".handoff/2026-10-17-1530-glossary.md": "# Handoff: glossary\nheader\n" });
-  assert.match(sessionStart(repo).json?.systemMessage, /^2 open handoff notes, newest 2026-10-17-1530-glossary\.md\. Type \/handoff resume/);
+  writeFiles(repo, { [`.handoff/${second}`]: OPEN });
+  assert.equal(sessionStart(repo).json?.systemMessage, `2 open handoff notes, newest ${second}. Type /handoff resume to pick one.`);
+});
+
+test("at session start, files notes with nothing outstanding and says how many notes are old", () => {
+  const repo = tempRepo({ ".gitignore": GITIGNORE });
+  const finished = recent("all-done");
+  const fresh = recent("open-work");
+  const old = "2026-10-01-0900-old-work.md";
+  writeFiles(repo, {
+    [`.handoff/${finished}`]: OPEN.replace("1. Edit a slide", "Complete"),
+    [`.handoff/${fresh}`]: OPEN,
+    [`.handoff/${old}`]: OPEN,
+  });
+  const r = sessionStart(repo).json;
+  assert.match(r.systemMessage, /^Filed 1 handoff note\(s\)/);
+  assert.match(r.systemMessage, /2 open handoff notes/);
+  assert.match(r.systemMessage, /1 of them are over 3 days old/);
+  const context = r.hookSpecificOutput.additionalContext;
+  assert.ok(context.includes(`over 3 days old: ${old}.`) && context.includes("handoff-notes.mjs close <name> <reason>"), context);
+  assert.ok(existsSync(path.join(repo, ".handoff", "done", finished)), "the finished note moved to done/");
+  assert.ok(existsSync(path.join(repo, ".handoff", old)), "an old note stays open for the owner to judge");
+  assert.equal(sessionStart(repo).json.systemMessage.startsWith("Filed"), false, "filed once");
 });
 
 test("at session start, tells Claude the sprint file overrides CLAUDE.md only inside its window", () => {
