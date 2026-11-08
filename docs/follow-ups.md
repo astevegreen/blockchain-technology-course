@@ -72,10 +72,12 @@ slide index), which is never listed here.
   2026, owner's research request)
 - `tools/agy.mjs` is 404 lines: its Gemini API half (`apiPrompt`, `parseApiReply`, the HTTPS post,
   `geminiApi`) belongs in its own file, split the same way in all three repos. (7 Nov 2026, Gemini API fallback)
-- Quarto is downloaded on every `check.yml` run (~40 s): `quarto-dev/quarto-actions/setup` has no cache option, and
-  `actions/cache` on the Windows install folder is untested; try it on a branch and compare run times. The labs'
-  Docker images (~4 GB Otterscan) are also re-pulled every Lab Tests run; a registry cache or a smaller image set is
-  the fix. (7 Nov 2026, CI speed)
+- Lab Tests re-pulls the lab images every run. Measured 8 Nov 2026 (explorer job, run 42486806400): 5m15s in all, of
+  which Otterscan took 2m53s, nearly all of it extracting one 28 MB layer of many small files (the download is
+  ~10 s); the other images pull in 10-15 s. `docker save`/`load` would extract the same layer, so it saves nothing.
+  A full run takes as long as its slowest labs (hlf and ethereum_lab, ~9-9.5 min), so speeding Otterscan only
+  helps a single-lab run. Untested: caching `/var/lib/docker`, or moving Docker's data root to a RAM disk. Not
+  worth doing unless single-lab runs become routine. (7 Nov 2026, CI speed; Quarto half done 8 Nov 2026)
 
 ## Notion and documents
 

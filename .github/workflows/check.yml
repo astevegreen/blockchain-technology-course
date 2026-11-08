@@ -7,6 +7,8 @@ name: Check
 # A Dependabot pull request gets the same run, so its green badge means something. Only Dependabot's: the pull_request
 # trigger cannot filter on the head branch, so the job's `if` does (a branch named dependabot/** in this repository).
 # Dependabot's token is read-only and has no repo secrets; this job uses neither beyond `contents: read`.
+# Quarto comes from its release zip (pinned version, SHA-256 checked) and is cached by version: about 3 s on a hit,
+# 8 s on a miss, against about 39 s for quarto-actions/setup (8 Nov 2026 measurements). A new pin misses once.
 # Windows, like the computers that commit: the check and its tool tests are written for Git Bash on Windows.
 
 on:
@@ -37,6 +39,9 @@ jobs:
     env:
       NO_COLOR: "1"
       FORCE_COLOR: "0"
+      # Pinned, so a new Quarto release cannot change the site mid-course; pages.yml pins the same version.
+      QUARTO_VERSION: "1.11.9"
+      QUARTO_ZIP_SHA256: eda220a2f39c392f622049de013ddf7b4dfdf019ba877f251be14ce43e5734d1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -54,11 +59,34 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: "24"
-      - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2
+      - name: Restore Quarto from the cache
+        id: quarto-cache
+        uses: actions/cache/restore@v6
         with:
-          # Pinned, so a new Quarto release cannot change the site mid-course; pages.yml pins the same version.
-          version: 1.11.9
+          # The extracted release; the key carries the version, so a new pin misses and fetches the new one.
+          path: ${{ runner.temp }}/quarto
+          key: quarto-${{ runner.os }}-${{ env.QUARTO_VERSION }}
+      - name: Install Quarto (cache miss)
+        if: steps.quarto-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          url="https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}/quarto-${QUARTO_VERSION}-win.zip"
+          curl -fsSL --retry 3 -o "$RUNNER_TEMP/quarto.zip" "$url"
+          # Checked against the digest GitHub publishes for the release asset, so a cache entry is never a tampered download.
+          echo "${QUARTO_ZIP_SHA256}  $RUNNER_TEMP/quarto.zip" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/quarto"
+          unzip -q "$RUNNER_TEMP/quarto.zip" -d "$RUNNER_TEMP/quarto"
+      - name: Save Quarto to the cache
+        # Saved here, not at the end of the job, so a red check run still leaves the cache for the next one.
+        if: steps.quarto-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.temp }}/quarto
+          key: quarto-${{ runner.os }}-${{ env.QUARTO_VERSION }}
+      - name: Put Quarto on the path
+        run: |
+          echo "$RUNNER_TEMP/quarto/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/quarto/bin/quarto" --version
       - name: Install the check's Python packages
         run: python -m pip install -r requirements-dev.txt
       - name: Check everything, the whole site rendered
