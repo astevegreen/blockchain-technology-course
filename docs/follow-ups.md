@@ -75,14 +75,9 @@ slide index), which is never listed here.
   A full run takes as long as its slowest labs (hlf and ethereum_lab, ~9-9.5 min), so speeding Otterscan only
   helps a single-lab run. Untested: caching `/var/lib/docker`, or moving Docker's data root to a RAM disk. Not
   worth doing unless single-lab runs become routine. (7 Nov 2026, CI speed; Quarto half done 8 Nov 2026)
-- GitHub lists 182 open Dependabot alerts (7 critical, 96 high, 66 medium, 13 low). Dependabot's update PRs
-  handle only some of them; nobody has sorted the rest by lab or by whether a student-facing image ships the
-  package. (8 Nov 2026, week catch-up; recounted 8 Nov)
-- GitHub lists 149 open CodeQL alerts: 91 `py/stack-trace-exposure`, 12 `py/path-injection`, 11
-  `js/incomplete-sanitization`, 9 `js/incomplete-html-attribute-sanitization`, the rest under 6 each. By folder: 71 in
-  `dynamic-labs/quiz-engine-v2`, 24 `hlf`, 17 `lane-service`, 12 `ethereum_lab`, 10 `blockchain-course/assets`, the
-  rest under 8 each. None has been triaged as real or dismissed. (8 Nov 2026, week
-  catch-up)
+- The open Dependabot and CodeQL alerts (182 and 149) are triaged in `docs/security-triage.md`. Its fix-now groups
+  (D1 gunicorn, D2 Pillow, D3 and D6 the Ethereum lab's lockfile refresh, C1 escaping and randomness) still need a
+  code change and those labs' tests, and its dismiss list waits for the owner. (8 Nov 2026, security triage)
 - Workflow actions are pinned by tag or branch, not by commit sha (22 `uses:` lines across `check.yml`,
   `lab-tests.yml`, `pages.yml`, `quiz-bundle.yml` and `vm-build.yml`). `jlumbroso/free-disk-space@main`
   (`.github/workflows/vm-build.yml:66`) follows a third party's moving branch, so it goes first. (8 Nov 2026, week
