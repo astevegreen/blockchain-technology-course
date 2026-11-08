@@ -40,6 +40,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          # A pull request's checkout has no origin/main, and the "bib dates" check compares against it to tell new
+          # sources from old ones (without it, every source with a url fails). A push to main already has it.
+          fetch-depth: ${{ github.event_name == 'pull_request' && 0 || 1 }}
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
