@@ -50,6 +50,14 @@ class ConsensusLiveRegressionTests(unittest.TestCase):
             probe_session.close()
 
         login_instructor(cls.instructor_session, cls.base_url)
+        # The lane service answers the claims API and starts last, so it can still be booting when the suite begins
+        # (a 502 here once failed CI). Wait until it answers.
+        wait_for_http(
+            cls.instructor_session,
+            f"{cls.base_url}/api/consensus/claims",
+            lambda resp: resp.status_code not in (502, 503, 504),
+            description="lane service behind /api/consensus/claims",
+        )
         if os.environ.get("CONSENSUS_REGRESSION_RELEASE_EXISTING_CLAIMS", "1") == "1":
             claims = list_consensus_claims(cls.instructor_session, base_url=cls.base_url)
             for entry in claims:
