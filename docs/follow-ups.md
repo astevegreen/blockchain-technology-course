@@ -47,9 +47,12 @@ slide index), which is never listed here.
 - The 8 `dynamic-labs/regression-tests/automated/*/live_support.py` files repeat their session, wait and login
   helpers: a shared `live_common.py` would keep them in step, as `run-lab.sh` now does for the runners. (6 Nov 2026,
   test-suite audit)
-- `tools/lab_tests.py:25` `IN_CI` leaves out bitcoin, consensus, cryptography, ethereum_lab, hlf and p2p_trust, so no
-  push runs their live tests; add each once its `run.sh` passes on a GitHub runner. All six pass on the desktop (7
-  Nov 2026); a by-hand Lab Tests run with `labs` set to them is next. (6 Nov 2026, test-suite audit)
+- `tools/lab_tests.py:25` `IN_CI` leaves out bitcoin, consensus and p2p_trust, so no push runs their live tests; add
+  each once its `run.sh` passes on a GitHub runner (all pass on the desktop, 7 Nov 2026). In Lab Tests run
+  42434837154: consensus and p2p_trust got a 502 from `/api/<lab>/claims` in `setUpClass` (the lane service still
+  booting; wait for it as `4f349fd` does for the router gate test); bitcoin's
+  `test_student_ttyd_executes_deterministic_catalog_exercises` hit a BrokenPipeError (12 of 13 passed).
+  (6 Nov 2026, test-suite audit)
 
 ## Tooling and rules
 - Dependabot pull requests (`.github/dependabot.yml`) run no tests: `check.yml` and `lab-tests.yml` run only on a

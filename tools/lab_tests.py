@@ -22,7 +22,8 @@ ALL = "*"
 # Labs whose run.sh passes on GitHub's runners. Add one at a time, as each passes.
 # The explorer, tokens and dex labs pull Otterscan (about 4 GB) and Foundry (about 0.9 GB); the wallet and trace labs
 # pull the public bitcoin-mempool image (about 2.4 GB). A runner has room for one lab's images per job.
-IN_CI = ["exercises", "quiz-engine", "explorer", "tokens", "dex", "wallet", "tron", "cross-chain", "bitcoin-trace", "coinjoin-trace", "final-trace"]
+IN_CI = ["exercises", "quiz-engine", "explorer", "tokens", "dex", "wallet", "tron", "cross-chain", "bitcoin-trace", "coinjoin-trace", "final-trace",
+         "cryptography", "ethereum_lab", "hlf"]
 
 # Lab folders under dynamic-labs/ whose test folder has another name.
 TEST_NAME = {"quiz-engine-v2": "quiz-engine"}
