@@ -49,6 +49,10 @@ slide index), which is never listed here.
   its first `generatetoaddress 1` goes to `>/dev/null` and nothing checks it worked. If that call fails, the wallet
   gets no reward (0 trusted, 0 immature) and the loop mines filler until the timeout instead of failing fast. Seen in
   Lab Tests run 42501021771 (height 47); it passed on rerun 42504167031. (8 Nov 2026, live_common run)
+- `dynamic-labs/regression-tests/automated/consensus/live_support.py` and `p2p_trust/live_support.py` still
+  match on about 520 of their 700 lines (the claim, lane-busy and ttyd helpers that `live_common.py` doesn't
+  hold yet), and other labs repeat parts of the same code. SonarCloud failed PR #51's gate at 46.1% duplication on new
+  code for this reason. (8 Nov 2026, `node tools/sonar.mjs 51`)
 
 ## Tooling and rules
 - Planned, low priority: move `dynamic-labs/ethereum_lab/frontend` (the repo's only TypeScript project, `typescript ~5.9.3`,
