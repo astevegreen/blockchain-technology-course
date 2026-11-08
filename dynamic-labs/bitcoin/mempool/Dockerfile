@@ -68,7 +68,9 @@ RUN cp -r rust-gbt node_modules/rust-gbt-copy && \
 RUN rm -rf ../rust/gbt/target ../rust/gbt/src ../rust/gbt/.git
 
 # --- B. BTC RPC Explorer ---
-RUN npm install --prefix /opt/btc-rpc-explorer -g btc-rpc-explorer
+# --ignore-scripts: btc-rpc-explorer 3.4.0 (last release, June 2023) depends on zeromq 5.3.1, whose native
+# build does not compile on Node 24. Only dead code (`if (false)` in app.js) requires zeromq, so skip its build.
+RUN npm install --prefix /opt/btc-rpc-explorer -g --ignore-scripts btc-rpc-explorer
 RUN sed -i 's/} else if (global.activeBlockchain == "regtest") {/} else if (getblockchaininfo.blocks === 0 || global.activeBlockchain == "regtest") {/' /opt/btc-rpc-explorer/lib/node_modules/btc-rpc-explorer/routes/baseRouter.js \
  && sed -i 's/} else if (global.activeBlockchain == "regtest") {/} else if (getblockchaininfo.blocks === 0 || global.activeBlockchain == "regtest") {/' /opt/btc-rpc-explorer/lib/node_modules/btc-rpc-explorer/routes/apiRouter.js
 
