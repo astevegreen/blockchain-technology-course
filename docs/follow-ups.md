@@ -45,9 +45,6 @@ slide index), which is never listed here.
   means ES modules, a new `hardhat.config` format with each plugin named, and porting the 3 test files, 12 scripts
   and `lib/BlockchainEnv.js` that `require("hardhat")`, then rerunning the lab's tests. Do it at the lab's next
   rebuild; Dependabot ignores toolbox 7 until then. (8 Nov 2026, Dependabot PR #34)
-- The 8 `dynamic-labs/regression-tests/automated/*/live_support.py` files repeat their session, wait and login
-  helpers: a shared `live_common.py` would keep them in step, as `run-lab.sh` now does for the runners. (6 Nov 2026,
-  test-suite audit)
 
 ## Tooling and rules
 - Planned, low priority: move `dynamic-labs/ethereum_lab/frontend` (the repo's only TypeScript project, `typescript ~5.9.3`,
