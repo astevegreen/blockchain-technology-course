@@ -49,10 +49,11 @@ slide index), which is never listed here.
   means ES modules, a new `hardhat.config` format with each plugin named, and porting the 3 test files, 12 scripts
   and `lib/BlockchainEnv.js` that `require("hardhat")`, then rerunning the lab's tests. Do it at the lab's next
   rebuild; Dependabot ignores toolbox 7 until then. (8 Nov 2026, Dependabot PR #34)
-- `dynamic-labs/regression-tests/automated/consensus/live_support.py` and `p2p_trust/live_support.py` still
-  match on about 520 of their 700 lines (the claim, lane-busy and ttyd helpers that `live_common.py` doesn't
-  hold yet), and other labs repeat parts of the same code. SonarCloud failed PR #51's gate at 46.1% duplication on new
-  code for this reason. (8 Nov 2026, `node tools/sonar.mjs 51`)
+- `dynamic-labs/regression-tests/automated/bitcoin/live_support.py` (976 lines) and `hlf/live_support.py` (1,059)
+  still hold their own copies of the lane-claim, docker and ttyd helpers that `live_common.py` now shares
+  (`LaneLabSupport`). Each differs: bitcoin's `TtydSession` (`:678`) reads on a background thread and its
+  `wait_for_lane_running` (`:273`) waits longer; hlf's `TtydSession` (`:836`) waits for prompts. Move each onto the
+  shared code with those differences as options, rerunning its Lab Tests. (8 Nov 2026, live_common dedupe)
 
 ## Tooling and rules
 - Planned, low priority: move `dynamic-labs/ethereum_lab/frontend` (the repo's only TypeScript project, `typescript ~5.9.3`,

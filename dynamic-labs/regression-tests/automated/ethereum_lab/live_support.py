@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import re
 import sys
@@ -200,71 +199,9 @@ def wait_for_container_running(
     raise RegressionFailure(f"timed out waiting for container {container} to be running")
 
 
-def docker_exec(
-    container: str,
-    command: str,
-    *,
-    timeout_seconds: int = 60,
-    user: str | None = None,
-) -> subprocess.CompletedProcess[str]:
-    cmd = ["docker", "exec"]
-    if user:
-        cmd.extend(["-u", user])
-    cmd.extend(
-        [
-            container,
-            "timeout",
-            "--signal=TERM",
-            "--kill-after=5",
-            f"{timeout_seconds}s",
-            "bash",
-            "-lc",
-            command,
-        ]
-    )
-    return subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=timeout_seconds + 10,
-    )
-
-
-def docker_exec_checked(
-    container: str,
-    command: str,
-    *,
-    timeout_seconds: int = 60,
-    user: str | None = None,
-) -> str:
-    result = docker_exec(container, command, timeout_seconds=timeout_seconds, user=user)
-    if result.returncode != 0:
-        raise RegressionFailure(
-            "docker exec failed for "
-            f"{container}: command={command!r} stdout={result.stdout[-400:]} stderr={result.stderr[-400:]}"
-        )
-    return result.stdout
-
-
-def docker_inspect(container: str) -> dict:
-    result = subprocess.run(
-        ["docker", "inspect", container],
-        capture_output=True,
-        text=True,
-        timeout=20,
-    )
-    if result.returncode != 0:
-        raise RegressionFailure(
-            "docker inspect failed for "
-            f"{container}: stdout={result.stdout[-400:]} stderr={result.stderr[-400:]}"
-        )
-    try:
-        payload = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        raise RegressionFailure(f"docker inspect returned invalid JSON for {container}") from exc
-    if not payload or not isinstance(payload, list) or not isinstance(payload[0], dict):
-        raise RegressionFailure(f"docker inspect returned unexpected payload for {container}: {payload!r}")
-    return payload[0]
+docker_exec = live_common.docker_exec
+docker_exec_checked = live_common.docker_exec_checked
+docker_inspect = live_common.docker_inspect
 
 
 def list_claims(

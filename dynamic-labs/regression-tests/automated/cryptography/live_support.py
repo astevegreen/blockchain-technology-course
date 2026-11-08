@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import sys
-import subprocess
 from pathlib import Path
 from typing import Callable
 
@@ -107,34 +106,8 @@ def set_cryptography_session_cookie(session: requests.Session, session_id: str) 
     session.cookies.set("crypto_lab_session", session_id, path="/")
 
 
-def docker_exec(container: str, command: str, *, timeout_seconds: int = 60) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        [
-            "docker",
-            "exec",
-            container,
-            "timeout",
-            "--signal=TERM",
-            "--kill-after=5",
-            f"{timeout_seconds}s",
-            "bash",
-            "-lc",
-            command,
-        ],
-        capture_output=True,
-        text=True,
-        timeout=timeout_seconds + 10,
-    )
-
-
-def docker_exec_checked(container: str, command: str, *, timeout_seconds: int = 60) -> str:
-    result = docker_exec(container, command, timeout_seconds=timeout_seconds)
-    if result.returncode != 0:
-        raise RegressionFailure(
-            "docker exec failed for "
-            f"{container}: command={command!r} stdout={result.stdout[-400:]} stderr={result.stderr[-400:]}"
-        )
-    return result.stdout
+docker_exec = live_common.docker_exec
+docker_exec_checked = live_common.docker_exec_checked
 
 
 def get_progress_summary(
