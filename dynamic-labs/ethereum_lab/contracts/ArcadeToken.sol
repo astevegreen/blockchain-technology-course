@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -17,7 +17,7 @@ contract ArcadeToken is ERC20, ERC20Burnable, Ownable {
 
     event MinterUpdated(address indexed oldMinter, address indexed newMinter);
 
-    constructor() ERC20("Arcade Token", "ARC") {}
+    constructor() ERC20("Arcade Token", "ARC") Ownable(msg.sender) {}
 
     modifier onlyMinter() {
         require(msg.sender == minter, "ArcadeToken: caller is not minter");

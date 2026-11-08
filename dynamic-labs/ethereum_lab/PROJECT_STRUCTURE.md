@@ -383,7 +383,7 @@ Configuration for **VS Code Dev Containers** and GitHub Codespaces. Defines a co
 | `docker-entrypoint.sh` | Container entrypoint: starts node or frontend, deploys contracts, writes config |
 | `DOCKER.md` | Docker deployment guide |
 | `Dockerfile` | Multi-stage Docker image: frontend build, CLI labs, production image |
-| `hardhat.config.js` | Hardhat config: Solidity 0.8.19, Hardhat Toolbox |
+| `hardhat.config.js` | Hardhat config: Solidity 0.8.28 (Cancun), Hardhat Toolbox |
 | `instructor-config.json` | Instructor runtime config (role, contract, RPC, IP); written by start-lab.ps1 |
 | `nginx.conf` | Nginx reverse proxy for production (frontend + RPC) |
 | `nginx-internal.conf` | In-container nginx (port 8080): routes to frontend, RPC, terminal WebSocket when `NGINX_ENABLED=1` |

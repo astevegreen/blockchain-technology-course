@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IArcadeTokenMint {
     function mint(address to, uint256 amount) external;
@@ -24,7 +24,7 @@ contract TokenVendor is Ownable, ReentrancyGuard {
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
     event Swept(address indexed treasury, uint256 amount);
 
-    constructor(IArcadeTokenMint token_, uint256 tokenPriceWei_, address payable treasury_) {
+    constructor(IArcadeTokenMint token_, uint256 tokenPriceWei_, address payable treasury_) Ownable(msg.sender) {
         require(address(token_) != address(0), "TokenVendor: token required");
         require(tokenPriceWei_ > 0, "TokenVendor: price required");
         require(treasury_ != address(0), "TokenVendor: treasury required");

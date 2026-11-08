@@ -2829,6 +2829,13 @@ function startArcadePoller() {
           provider.getLogs({ address: vaultAddr, fromBlock, toBlock: head }).catch(() => []),
         ]);
 
+        // OpenZeppelin 5 no longer emits Approval when a spender uses an allowance, so the vault's
+        // burnFrom in playGame shows up only as a burn (Transfer to the zero address). Burns in a
+        // SessionStarted transaction are the vault spending the player's allowance.
+        const sessionTxs = new Set(vaultLogs.filter((l) => {
+          try { return vaultIface.parseLog(l)?.name === 'SessionStarted'; } catch (_) { return false; }
+        }).map((l) => l.transactionHash));
+
         for (const log of tokenLogs) {
           let parsed; try { parsed = tokenIface.parseLog(log); } catch (_) { continue; }
           if (parsed?.name === 'Transfer') {
@@ -2837,6 +2844,12 @@ function startArcadePoller() {
             const value = BigInt(parsed.args.value.toString());
             addBalance(from, -value);
             addBalance(to, value);
+            const owner = normalizeAddress(from);
+            if (to === ZERO && owner && sessionTxs.has(log.transactionHash) && allowances.has(owner)) {
+              const current = allowances.get(owner);
+              // An unlimited (max uint256) allowance is never reduced, as in ERC20._spendAllowance.
+              if (current !== ethers.MaxUint256) allowances.set(owner, current > value ? current - value : 0n);
+            }
           } else if (parsed?.name === 'Approval') {
             const owner = normalizeAddress(parsed.args.owner);
             const spender = normalizeAddress(parsed.args.spender);

@@ -44,6 +44,11 @@ slide index), which is never listed here.
   does too), but no lab test builds it: the labs pull the published `bitcoin-mempool` image, which is built by hand.
   Build it with Node 24 and check the mempool and explorer pages before the image is next published. (6 Nov 2026,
   toolchain upgrades)
+- `dynamic-labs/ethereum_lab` stays on Hardhat 2 with `@nomicfoundation/hardhat-toolbox` `^6.1.0`
+  (`package.json:38`). Toolbox 7.0.0 only prints a notice and exits: Hardhat 3 split it into new plugins. Moving
+  means ES modules, a new `hardhat.config` format with each plugin named, and porting the 3 test files, 12 scripts
+  and `lib/BlockchainEnv.js` that `require("hardhat")`, then rerunning the lab's tests. Do it at the lab's next
+  rebuild; Dependabot ignores toolbox 7 until then. (8 Nov 2026, Dependabot PR #34)
 - The 8 `dynamic-labs/regression-tests/automated/*/live_support.py` files repeat their session, wait and login
   helpers: a shared `live_common.py` would keep them in step, as `run-lab.sh` now does for the runners. (6 Nov 2026,
   test-suite audit)
