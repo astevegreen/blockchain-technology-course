@@ -47,11 +47,8 @@ slide index), which is never listed here.
 - The 8 `dynamic-labs/regression-tests/automated/*/live_support.py` files repeat their session, wait and login
   helpers: a shared `live_common.py` would keep them in step, as `run-lab.sh` now does for the runners. (6 Nov 2026,
   test-suite audit)
-- `tools/lab_tests.py:25` `IN_CI` leaves out bitcoin, consensus and p2p_trust, so no push runs their live tests; add
-  each once its `run.sh` passes on a GitHub runner (all pass on the desktop, 7 Nov 2026). In Lab Tests run
-  42434837154: consensus and p2p_trust got a 502 from `/api/<lab>/claims` in `setUpClass` (the lane service still
-  booting; `e96fdde` makes both wait for it and they pass on the desktop, so a by-hand Lab Tests run with `labs` set
-  to "consensus p2p_trust" is next); bitcoin's
+- `tools/lab_tests.py:25` `IN_CI` leaves out bitcoin, so no push runs its live tests; add it once its `run.sh`
+  passes on a GitHub runner (it passes on the desktop, 7 Nov 2026). In Lab Tests run 42434837154 its
   `test_student_ttyd_executes_deterministic_catalog_exercises` hit a BrokenPipeError (12 of 13 passed).
   (6 Nov 2026, test-suite audit)
 
