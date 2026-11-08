@@ -9,6 +9,8 @@ import {
   API_NOTE,
   ARGON,
   CONTEXT,
+  TRUNCATION_MARKER,
+  truncateDiff,
   FLASH,
   NO_API,
   apiFor,
@@ -72,7 +74,10 @@ test("the rules the API is given are the ones agy reads by itself, and they exis
 
 test("the API refuses an audit with no material, a truncated diff, and a whole-repo audit", () => {
   assert.throws(() => apiPrompt(buildPrompt("Audit the repo."), read, []), /cannot read the repository/);
-  const cut = reader(`${DIFF}\n... (diff truncated; read the rest from disk)\n`);
+  // The writer's own output, so rewording the marker in one place cannot slip a cut diff past the matcher.
+  assert.equal(truncateDiff(DIFF, DIFF.length), DIFF);
+  const cut = reader(truncateDiff(`${DIFF}${"x".repeat(50)}`, DIFF.length));
+  assert.ok(truncateDiff(`${DIFF}${"x".repeat(50)}`, DIFF.length).includes(`\n${TRUNCATION_MARKER}\n`));
   assert.throws(() => apiPrompt(buildPrompt("Review this.", material), cut, []), /truncated diff/);
   const ask = (model) => askModel(missing, buildPrompt("Tour the code.", material), model, [], NO_API);
   assert.throws(() => askFirstAvailable([ARGON, FLASH], ask, memory(), () => NOW), {

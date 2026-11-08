@@ -10,7 +10,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { NO_API, ORDER, askFirstAvailable, askModel, buildPrompt, byLine, diffStats, pickDepth } from "./agy.mjs";
+import { NO_API, ORDER, askFirstAvailable, askModel, buildPrompt, byLine, diffStats, pickDepth, truncateDiff } from "./agy.mjs";
 import { RAILS, RAIL_MODELS, couldNotRun, railAction, railDiff, railFiles, railVerdict } from "./rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -92,8 +92,7 @@ function secondLook(request, tmp) {
   if (!diff.trim()) return "Second look skipped: nothing has changed since origin/main.";
   const stats = diffStats(diff);
   const pick = pickDepth({ kind: "change", ...stats }, DEEP_PATHS);
-  const shown =
-    diff.length > MAX_DIFF ? `${diff.slice(0, MAX_DIFF)}\n... (diff truncated; read the rest from disk)\n` : diff;
+  const shown = truncateDiff(diff, MAX_DIFF);
   const material = path.join(tmp, "material.md");
   writeFileSync(
     material,

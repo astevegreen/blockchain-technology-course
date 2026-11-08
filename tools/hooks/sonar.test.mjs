@@ -45,7 +45,7 @@ function fakeGh({ findings = [], runs = [sonarRun({ issues: findings.length })],
   const gh = (args) => {
     calls.push(args);
     if (fail) throw new Error(fail);
-    if (args[0] === "pr") return JSON.stringify({ number: 12, headRefOid: SHA });
+    if (args.some((a) => a.endsWith("/pulls/12"))) return `${SHA}\n`;
     if (args.some((a) => a.includes("/check-runs?")))
       return JSON.stringify({ check_runs: [{ id: 1, name: "build", app: { slug: "github-actions" } }, ...runs] });
     return findings.map((f) => JSON.stringify(f)).join("\n");
@@ -91,7 +91,7 @@ test("a failed gate lists each failed condition with what it needed, and drops t
 test("it asks gh for the PR's latest commit, that commit's checks, and every page of findings, and only reads", () => {
   const { gh, calls } = fakeGh();
   report("#12", { gh });
-  assert.deepEqual(calls[0], ["pr", "view", "12", "--json", "number,headRefOid"]);
+  assert.deepEqual(calls[0], ["api", "repos/{owner}/{repo}/pulls/12", "--jq", ".head.sha"]);
   assert.deepEqual(calls[1], ["api", `repos/{owner}/{repo}/commits/${SHA}/check-runs?per_page=100`]);
   assert.deepEqual(calls[2], [
     "api",
