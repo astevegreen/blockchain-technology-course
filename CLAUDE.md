@@ -81,6 +81,10 @@ The owner judges results, not code: explain every change in plain English and pr
   fails with `os error 32`.
 - Generated paths over 260 characters fail to write on Windows; keep generated names short.
 - Quarto prints color codes and spinner frames: send long output to a file and grep it.
+- Write shell commands auto mode can read at a glance, so they run without a prompt: one plain `gh api …` per
+  call (a `$(…)`, variable or loop around it asks); short commands over long `cd …;` chains; commit-message and
+  scratch files in `$TEMP`, not `C:/tmp`; `git config core.hooksPath` only when the task needs it (its `ask` rule
+  fires on reads too). `cat`, `sed -n`, `grep`, git reads and `gh` reads never need an allow rule.
 
 ## Commits and pushing
 - Subject line, up to three lines of why, and `Requested: "<the owner's words>"`. One request per commit.
