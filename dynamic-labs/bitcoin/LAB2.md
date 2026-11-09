@@ -61,15 +61,17 @@ shown in the **Peers** dropdown.
 Inspecting the Tools (Code Literacy)**
 
 Before you can send coins, you need to mine some. In this fork of
-Bitcoin, it only takes 10 blocks before the first block matures.
-On classnet, the built-in miner also needs a higher `maxtries`
-budget than regtest, and one request is not guaranteed to find all
-11 blocks. Keep mining in 11-block batches until the wallet shows
-**50 BTC of trusted balance**.
+Bitcoin, it only takes 10 blocks before the first block matures, so
+keep mining until the wallet shows **50 BTC of trusted balance**.
+`mine-until` mines one block at a time until it does. It sometimes
+pauses for up to 20 seconds: ClassNet retargets every 2 blocks
+(Step 7), so fast blocks make the next ones harder, and the helper
+waits for the easy block ClassNet allows after a 20-second gap.
+Read it with `less /usr/local/bin/mine-until`.
 
 
 ```bash
-while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done
+mine-until student_wallet $MY_ADDR
 
 bitcoin-cli -rpcwallet=student_wallet getbalance
 ```
@@ -154,7 +156,7 @@ We need a clean state. Create a temporary wallet and fund it.
 ```bash
 bitcoin-cli createwallet "cheater"
 CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)
-while bitcoin-cli -rpcwallet=cheater getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
+mine-until cheater $CHEAT_ADDR
 
 ```
 
@@ -285,7 +287,7 @@ bitcoin-cli getblockchaininfo | grep difficulty
 2. **Mine a "Epoch":**
 Mine 5 blocks in a row quickly (since you have high CPU power relative to the difficulty).
 ```bash
-bitcoin-cli -rpcwallet=student_wallet generatetoaddress 5 $MY_ADDR
+bitcoin-cli -rpcwallet=student_wallet generatetoaddress 5 $MY_ADDR 50000000
 
 ```
 

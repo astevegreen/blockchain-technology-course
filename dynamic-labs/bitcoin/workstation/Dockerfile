@@ -75,7 +75,7 @@ RUN useradd -m user && echo "user:password" | chpasswd
 WORKDIR /home/user/
 
 COPY --chown=user:user agent.py miner.py ./scripts/
-COPY --chmod=755 entrypoint.sh peer-discovery.sh /usr/local/bin/
+COPY --chmod=755 entrypoint.sh peer-discovery.sh mine-until /usr/local/bin/
 
 
 COPY --from=builder /opt/venv /opt/venv

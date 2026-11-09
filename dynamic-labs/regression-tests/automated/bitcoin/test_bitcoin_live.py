@@ -38,7 +38,7 @@ CLASSNET_ADDRESS_SHARE_COMMAND = "\n".join(
 )
 CLASSNET_MINE_COMMAND = "\n\n".join(
     [
-        'while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e \'.mine.trusted < 50\' >/dev/null; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done',
+        "mine-until student_wallet $MY_ADDR",
         "bitcoin-cli -rpcwallet=student_wallet getbalance",
     ]
 )
@@ -47,7 +47,7 @@ CHEATER_SETUP_COMMAND = "\n".join(
     [
         'bitcoin-cli createwallet "cheater"',
         'CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)',
-        'while bitcoin-cli -rpcwallet=cheater getbalances | jq -e \'.mine.trusted < 50\' >/dev/null; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done',
+        "mine-until cheater $CHEAT_ADDR",
         "bitcoin-cli -rpcwallet=cheater getbalance",
     ]
 )
@@ -78,66 +78,22 @@ EXPLORER_READY_TIMEOUT_SECONDS = int(
 )
 
 
-# ClassNet (custom-genesis.patch) retargets every 2 blocks toward 10 s blocks,
-# and a back-to-back loop finds them in under a second, so each even-height
-# block is up to 4x harder than the one before. Past height ~25 one block can
-# take minutes, and even heights have no escape. Odd heights do: a block stamped
-# more than 20 s after its parent may use the minimum difficulty, and the next
-# retarget, computed from that block's easy bits, drops back to near-minimum.
-# So before each block: if the next one would be harder than DIFFICULTY_CEILING
-# and sits at an odd height, wait (about 20 s) until the node offers minimum
-# difficulty, then mine. That costs one wait per ~16 blocks and keeps every
-# block under ~4M expected hashes (4x the ceiling), far inside maxtries.
-# (setmocktime would avoid the wait, but this chain is not mockable: the RPC
-# refuses with "setmocktime is for regression testing (-regtest mode) only".)
-DIFFICULTY_CEILING = "0.00025"
-MIN_DIFFICULTY_BITS = "207fffff"
-STEER_DIFFICULTY_FUNCTION = "\n".join(
-    [
-        "steer_difficulty() {",
-        "  local info",
-        "  for _ in $(seq 1 60); do",
-        '    info="$(bitcoin-cli getmininginfo)" || return 1',
-        f"    jq -e '.next.difficulty > {DIFFICULTY_CEILING} and .next.height % 2 == 1"
-        f' and .next.bits != "{MIN_DIFFICULTY_BITS}"\' <<<"$info" >/dev/null || return 0',
-        "    sleep 1",
-        "  done",
-        '  echo "next block still above minimum difficulty after 60 s: $info" >&2',
-        "}",
-    ]
-)
+# mine-until (bitcoin/workstation/mine-until) is LAB2's funding helper: it mines
+# one block at a time until the wallet's trusted balance reaches 50 BTC, and
+# before a block that ClassNet's 2-block retarget has made hard, it waits for
+# the easiest-difficulty block ClassNet allows after a 20 s gap. Its ceiling is
+# difficulty 0.00025 and one retarget raises difficulty at most 4x, so no block
+# the test mines should pass 0.001. Back-to-back mining without the helper
+# reached 0.04 by height 26, where one block could take minutes.
+MAX_FUNDED_CHAIN_DIFFICULTY = 0.001
 
 
-def mine_until_trusted_balance_command(
-    address: str,
-    *,
-    balance_wallet: str,
-    mining_wallet: str | None = None,
-) -> str:
-    mining_prefix = f"-rpcwallet={mining_wallet} " if mining_wallet else ""
-    return "\n".join(
-        [
-            STEER_DIFFICULTY_FUNCTION,
-            f'TARGET_WALLET="{balance_wallet}"',
-            # Exactly one block pays the wallet; filler blocks pay an output no
-            # wallet owns (raw OP_TRUE) until that reward matures. The balance can
-            # only be 0 or 50, so a block from elsewhere can't push it past 50 and
-            # leave the loop spinning, as mining every block to the wallet could.
-            # Fail fast: if this call fails or finds no block, the wallet never
-            # gets a reward and the loop below would mine filler until the timeout.
-            "steer_difficulty",
-            f'if ! FIRST_BLOCK_OUT="$(bitcoin-cli {mining_prefix}generatetoaddress 1 {address} 50000000 2>&1)" \\',
-            "  || ! jq -e 'length == 1' <<<\"$FIRST_BLOCK_OUT\" >/dev/null; then",
-            '  echo "first generatetoaddress 1 failed, no block pays $TARGET_WALLET: $FIRST_BLOCK_OUT" >&2',
-            "  exit 1",
-            "fi",
-            'while bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -e \'.mine.trusted < 50\' >/dev/null; do',
-            "  steer_difficulty",
-            '  bitcoin-cli generatetodescriptor 1 "raw(51)" 50000000 >/dev/null',
-            '  echo "height=$(bitcoin-cli getblockcount) $(bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -c .mine)" >&2',
-            "done",
-            'bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalance',
-        ]
+def max_difficulty_since_command(start_height: int) -> str:
+    # The highest difficulty among the blocks above start_height, i.e. the ones the test mined.
+    return (
+        f'for h in $(seq {start_height + 1} "$(bitcoin-cli getblockcount)"); do '
+        'bitcoin-cli getblockheader "$(bitcoin-cli getblockhash "$h")" | jq .difficulty; '
+        "done | sort -g | tail -1"
     )
 
 
@@ -340,13 +296,12 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
             )
             self.assertEqual(static_resp.text.strip(), shared_address)
 
+            funding_start_height = int(
+                docker_exec_checked(claim.container_name, "bitcoin-cli getblockcount").strip()
+            )
             docker_exec_checked(
                 claim.container_name,
-                mine_until_trusted_balance_command(
-                    shared_address,
-                    mining_wallet=wallet_name,
-                    balance_wallet=wallet_name,
-                ),
+                f"mine-until {wallet_name} {shared_address}",
                 timeout_seconds=300,
             )
 
@@ -371,10 +326,7 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
             self.assertRegex(cheater_addr, r"^[A-Za-z0-9]{20,}$")
             docker_exec_checked(
                 claim.container_name,
-                mine_until_trusted_balance_command(
-                    cheater_addr,
-                    balance_wallet=cheater_wallet,
-                ),
+                f"mine-until {cheater_wallet} {cheater_addr}",
                 timeout_seconds=180,
             )
             wait_for_wallet_balance(
@@ -382,6 +334,13 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
                 cheater_wallet,
                 50.0,
             )
+            max_difficulty = float(
+                docker_exec_checked(
+                    claim.container_name,
+                    max_difficulty_since_command(funding_start_height),
+                ).strip()
+            )
+            self.assertLessEqual(max_difficulty, MAX_FUNDED_CHAIN_DIFFICULTY)
 
         with ttyd_session(self.student_session, self.base_url, ttyd_path) as terminal:
             self.assertEqual(

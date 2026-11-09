@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# mine-until WALLET ADDRESS [BTC]
+# Mine one block at a time to ADDRESS until WALLET holds BTC (default 50) of
+# trusted, spendable coins: on ClassNet a block reward matures 10 blocks later.
+#
+# Why it sometimes pauses: ClassNet retargets every 2 blocks (LAB2 Step 7, the
+# Difficulty Adjustment), so blocks mined back to back make the chain up to 4x
+# harder each time. When the next block would be hard, the script waits until
+# 20 s have passed since the last block. ClassNet then allows one block at the
+# easiest difficulty, and the retarget after it starts again from easy.
+set -uo pipefail
+
+[[ $# -ge 2 ]] || { echo "usage: mine-until WALLET ADDRESS [BTC]" >&2; exit 2; }
+wallet="$1"
+address="$2"
+want="${3:-50}"
+ceiling=0.00025     # above this difficulty one block costs seconds of CPU
+easiest=207fffff    # the "bits" of ClassNet's easiest block
+
+jq -en --argjson w "$want" '$w > 0' >/dev/null 2>&1 \
+  || { echo "mine-until: BTC must be a number above 0, not: $want" >&2; exit 2; }
+# Mining to someone else's address would never raise this wallet's balance.
+bitcoin-cli -rpcwallet="$wallet" getaddressinfo "$address" 2>/dev/null | jq -e .ismine >/dev/null \
+  || { echo "mine-until: $address is not an address of wallet $wallet" >&2; exit 1; }
+
+told=""
+failures=0
+while :; do
+  have="$(bitcoin-cli -rpcwallet="$wallet" getbalances | jq -e .mine.trusted)" \
+    || { echo "mine-until: cannot read the balance of wallet $wallet" >&2; exit 1; }
+  jq -en --argjson have "$have" --argjson want "$want" '$have >= $want' >/dev/null && break
+  next="$(bitcoin-cli getmininginfo | jq -ec .next)" \
+    || { echo "mine-until: cannot read the next block's difficulty" >&2; exit 1; }
+  # Only odd heights may drop to the easiest difficulty; even heights retarget.
+  if jq -e --argjson c "$ceiling" --arg e "$easiest" \
+      '.difficulty > $c and .height % 2 == 1 and .bits != $e' <<<"$next" >/dev/null; then
+    height="$(jq .height <<<"$next")"
+    if [[ "$told" != "$height" ]]; then
+      echo "block $height would be hard (difficulty retargets every 2 blocks): waiting up to 20 s for an easy one"
+      told="$height"
+    fi
+    sleep 1
+    continue
+  fi
+  # Many students share one node: a busy node can refuse a call, so retry a few times.
+  if bitcoin-cli generatetoaddress 1 "$address" 50000000 >/dev/null; then
+    failures=0
+  elif (( ++failures >= 10 )); then
+    echo "mine-until: the node refused 10 mining calls in a row" >&2
+    exit 1
+  else
+    sleep 1
+  fi
+done

@@ -11,6 +11,9 @@ COPY workstation/zellij-config.kdl /etc/zellij/config.kdl
 # The base image is prebuilt on ghcr; ship the current entrypoint over its copy
 # so entrypoint fixes reach the lab without rebuilding bitcoind.
 COPY --chmod=0755 workstation/entrypoint.sh /usr/local/bin/entrypoint.sh
+# LAB2's funding helper, shipped the same way so the lab has it before the
+# base image is rebuilt and pushed.
+COPY --chmod=0755 workstation/mine-until /usr/local/bin/mine-until
 # Phase 9.3g: pre-create the datadir with user ownership so the
 # instructor-data named volume (declared on the instructor service in
 # compose) picks up the correct uid/gid when Docker first initializes

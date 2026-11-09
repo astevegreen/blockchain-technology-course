@@ -28,7 +28,9 @@ slide index), which is never listed here.
   what the published images had but the repo lacked (the 10-second, 2-block retarget in `custom-genesis.patch`; the
   mempool's `configure-mempool-base-path.sh`), now pin ttyd 1.7.7 and zellij 0.45.1 (the workstation image) and rustup
   1.29.3 with Rust 1.99.1 (the mempool image) with sha256 checks, and passed the bitcoin, wallet and three trace
-  labs' tests built locally (`BITCOIN_LAB_IMAGE`, `BITCOIN_MEMPOOL_IMAGE`, `BITCOIN_GRAPH_IMAGE`). Build and push
+  labs' tests built locally (`BITCOIN_LAB_IMAGE`, `BITCOIN_MEMPOOL_IMAGE`, `BITCOIN_GRAPH_IMAGE`). The workstation
+  image also installs LAB2's `mine-until` funding helper; until the push, the lab gets it from the thin wrapper
+  (`bitcoin/Dockerfile`), as it gets the current entrypoint. Build and push
   the three, workstation first (`--build-arg BITCOIN_LAB_BASE` for the other two), with an account that can write to the ghcr
   org. (9 Nov 2026, trixie move)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every

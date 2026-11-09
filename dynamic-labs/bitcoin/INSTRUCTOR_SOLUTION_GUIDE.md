@@ -136,13 +136,15 @@ bitcoin-cli createwallet "student_wallet"
 MY_ADDR=$(bitcoin-cli -rpcwallet=student_wallet getnewaddress)
 echo $MY_ADDR > ~/share/address.txt        # published on your static site
 ```
-### 2.2 Mine coins (batch until 50 BTC trusted)
+### 2.2 Mine coins (until 50 BTC trusted)
 ```bash
-while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e '.mine.trusted < 50' >/dev/null; do
-  bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null
-done
+mine-until student_wallet $MY_ADDR
+bitcoin-cli -rpcwallet=student_wallet getbalance
 ```
-**Expected:** 50 BTC. (The `50000000` is the higher `maxtries` ClassNet needs; one call may not find all 11.)
+**Expected:** 50 BTC. `mine-until` (`/usr/local/bin/mine-until`, a short commented bash script) mines one block at a time.
+If it prints "would be hard ... waiting", that is expected: back-to-back blocks raise the 2-block retarget 4x a pair, so it
+waits about 20 s for the easiest-difficulty block ClassNet allows after a 20 s gap, which resets the next retarget. Without
+it, a class mining in a tight loop reaches blocks that take minutes around height 25-30.
 
 ### 2.3 Peer discovery & send
 Open the **Peers ▾** dropdown → pick a classmate → copy their `address.txt`. Then:
@@ -161,8 +163,7 @@ python3 ~/scripts/agent.py --wallet student_wallet --verbose   # Ctrl+C to stop
 ```bash
 bitcoin-cli createwallet "cheater"
 CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)
-while bitcoin-cli -rpcwallet=cheater getbalances | jq -e '.mine.trusted < 50' >/dev/null; do
-  bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
+mine-until cheater $CHEAT_ADDR
 bitcoin-cli -rpcwallet=cheater sendtoaddress $PEER_ADDR 49.999 "" "" true
 bitcoin-cli -rpcwallet=cheater sendtoaddress $MY_ADDR  49.999 "" "" true   # ERROR
 ```

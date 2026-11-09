@@ -685,16 +685,17 @@ exercises:
 - id: lab2-mine-coins
   chapter: lab2-identity
   title: Mine Coins on the Shared Chain
-  goal: 'ClassNet uses the same 10-block maturity fork as Lab 1, so the goal is still to unlock a spendable 50 BTC from the first matured coinbase reward. On this shared chain, one mining request is not guaranteed to find all 11 requested blocks, so keep mining in batches until your trusted balance reaches 50 BTC.'
+  goal: 'ClassNet uses the same 10-block maturity fork as Lab 1, so the goal is still to unlock a spendable 50 BTC from the first matured coinbase reward. The `mine-until` helper mines one block at a time until your trusted balance reaches 50 BTC.'
   student_steps:
   - |-
-    Mine 11-block batches until your ClassNet wallet has 50 BTC of trusted balance:
+    Mine until your ClassNet wallet has 50 BTC of trusted balance:
 
     ```
-    while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done
+    mine-until student_wallet $MY_ADDR
 
     bitcoin-cli -rpcwallet=student_wallet getbalance
     ```
+  - 'It sometimes pauses for up to 20 seconds and says why: ClassNet retargets every 2 blocks (see **Bonus · Difficulty Adjustment**), so fast blocks make the next ones harder, and the helper waits for the easy block ClassNet allows after a 20-second gap. Read it with `less /usr/local/bin/mine-until`.'
   expected_observations:
   - Your balance is 50 BTC once the first mined coinbase reward becomes trusted.
   - The block height from `bitcoin-cli getblockchaininfo` has increased for **every other station in the room too**. You didn't fork; you extended the shared chain.
@@ -794,7 +795,7 @@ exercises:
     ```
     bitcoin-cli createwallet "cheater"
     CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)
-    while bitcoin-cli -rpcwallet=cheater getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
+    mine-until cheater $CHEAT_ADDR
     bitcoin-cli -rpcwallet=cheater getbalance
     ```
   - |-
@@ -921,7 +922,7 @@ exercises:
     Mine 5 blocks as fast as you can:
 
     ```
-    bitcoin-cli -rpcwallet=student_wallet generatetoaddress 5 $MY_ADDR
+    bitcoin-cli -rpcwallet=student_wallet generatetoaddress 5 $MY_ADDR 50000000
     ```
   - |-
     Check difficulty again:
