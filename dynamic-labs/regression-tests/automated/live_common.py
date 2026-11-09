@@ -7,11 +7,13 @@ wrapper passes in; ClaimSettings.from_env and TtydTiming.from_env read them only
 """
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import re
 import subprocess
 import sys
+import threading
 import time
 import uuid as uuid_lib
 from dataclasses import dataclass
@@ -335,6 +337,51 @@ def docker_inspect(container: str) -> dict:
     return payload[0]
 
 
+def docker_exec_json(container: str, command: str, *, timeout_seconds: int = 60) -> dict:
+    output = docker_exec_checked(container, command, timeout_seconds=timeout_seconds).strip()
+    try:
+        return json.loads(output)
+    except json.JSONDecodeError as exc:
+        raise RegressionFailure(f"expected JSON from {command!r}, got {output[:300]!r}") from exc
+
+
+def docker_exec_int(container: str, command: str, *, timeout_seconds: int = 60) -> int:
+    output = docker_exec_checked(container, command, timeout_seconds=timeout_seconds).strip()
+    try:
+        return int(output)
+    except ValueError as exc:
+        raise RegressionFailure(f"expected integer from {command!r}, got {output[:300]!r}") from exc
+
+
+def wait_for_docker_output(
+    container: str,
+    command: str,
+    predicate: Callable[[str], bool],
+    *,
+    timeout_seconds: int,
+    interval_seconds: float = 1.0,
+    attempt_timeout_seconds: int = 60,
+    description: str,
+) -> str:
+    """Rerun command in container until predicate accepts its stripped output; each try is killed after
+    attempt_timeout_seconds. A failed try or a ValueError from predicate counts as not yet."""
+    deadline = time.time() + timeout_seconds
+    last_output = ""
+    last_error: Exception | None = None
+    while time.time() < deadline:
+        try:
+            output = docker_exec_checked(container, command, timeout_seconds=attempt_timeout_seconds).strip()
+            last_output = output
+            if predicate(output):
+                return output
+        except (RegressionFailure, ValueError) as exc:
+            last_error = exc
+        time.sleep(interval_seconds)
+    if last_output:
+        raise RegressionFailure(f"timed out waiting for {description}: last_output={last_output!r}")
+    raise RegressionFailure(f"timed out waiting for {description}: last_error={last_error}")
+
+
 def wait_for_container_running(
     candidates: list[str],
     *,
@@ -368,10 +415,15 @@ def _env_number(prefix: str, name: str, default: float, kind: type = float):
 
 @dataclass(frozen=True)
 class LaneLab:
-    """A lab whose students claim lanes: slug is its URL and API segment, container_prefix names its containers."""
+    """A lab whose students claim lanes: slug is its URL and API segment, container_prefix names its containers.
+
+    The claim waits for a wrapper page that contains wrapper_marker (the ttyd frame unless the lab names a link
+    its own panel adds, which shows the lab's page rather than a bare one).
+    """
 
     slug: str
     container_prefix: str
+    wrapper_marker: str = "/ttyd/"
 
     @property
     def cookie_name(self) -> str:
@@ -401,13 +453,16 @@ class ClaimSettings:
     retry_delay_seconds: float = 2.0
     settle_seconds: float = 1.0
     ttyd_ready_timeout_seconds: int = 20
+    # How long the lane must report "running" in a row before the claim trusts it.
+    lane_stable_seconds: float = 1.0
 
     @classmethod
-    def from_env(cls, prefix: str) -> ClaimSettings:
+    def from_env(cls, prefix: str, **lab_defaults) -> ClaimSettings:
         """Read <prefix>_CLAIM_READY_TIMEOUT, _CLAIM_RETRY_ATTEMPTS, _CLAIM_RETRY_DELAY_SECONDS,
-        _CLAIM_SETTLE_SECONDS and _TTYD_READY_TIMEOUT, falling back to the defaults above."""
-        defaults = cls()
-        return cls(
+        _CLAIM_SETTLE_SECONDS and _TTYD_READY_TIMEOUT, falling back to lab_defaults, then the defaults above."""
+        defaults = cls(**lab_defaults)
+        return dataclasses.replace(
+            defaults,
             ready_timeout_seconds=_env_number(prefix, "CLAIM_READY_TIMEOUT", defaults.ready_timeout_seconds, int),
             retry_attempts=_env_number(prefix, "CLAIM_RETRY_ATTEMPTS", defaults.retry_attempts, int),
             retry_delay_seconds=_env_number(prefix, "CLAIM_RETRY_DELAY_SECONDS", defaults.retry_delay_seconds),
@@ -517,13 +572,19 @@ def claim_student_lane(
     *,
     fresh: bool = False,
     settings: ClaimSettings = ClaimSettings(),
+    prepare_fresh_lane: Callable[[str], None] | None = None,
+    before_retry: Callable[[set[str]], None] | None = None,
 ) -> ClaimContext:
     """Claim a lane as a student and wait until its wrapper page, lane, container and ttyd route are ready.
 
     A 503 (no lane free) or a lane that never gets ready is retried up to settings.retry_attempts times, releasing
-    the half-ready claim first; any other claim status fails at once.
+    the half-ready claim first; any other claim status fails at once. A lab may pass prepare_fresh_lane(station),
+    run on a fresh claim before the waits (to reset and restart the lane), and before_retry(failed_stations), run
+    before each retry after a lane failed (to ready another lane); a RegressionFailure from before_retry is added
+    to the error reported if every attempt fails.
     """
     last_error: Exception | None = None
+    failed_stations: set[str] = set()
 
     for attempt in range(1, settings.retry_attempts + 1):
         if fresh or attempt > 1:
@@ -552,7 +613,9 @@ def claim_student_lane(
         wrapper_response = wait_for_http(
             student_session,
             f"{base_url}/labs/{lab.slug}/c/{uuid}/",
-            lambda resp: resp.status_code == 200 and f"/labs/{lab.slug}/c/" in resp.url and "/ttyd/" in resp.text,
+            lambda resp: (
+                resp.status_code == 200 and f"/labs/{lab.slug}/c/" in resp.url and lab.wrapper_marker in resp.text
+            ),
             timeout_seconds=settings.ready_timeout_seconds,
             interval_seconds=1.0,
             description=f"{lab.slug} wrapper page",
@@ -560,6 +623,8 @@ def claim_student_lane(
         station = _claim_station(instructor_session, base_url, lab, uuid, wrapper_response.text)
 
         try:
+            if fresh and prepare_fresh_lane is not None:
+                prepare_fresh_lane(station)
             if settings.settle_seconds > 0:
                 time.sleep(settings.settle_seconds)
             wait_for_lane_running(
@@ -568,7 +633,7 @@ def claim_student_lane(
                 lab,
                 station,
                 timeout_seconds=settings.ready_timeout_seconds,
-                stable_seconds=1.0,
+                stable_seconds=settings.lane_stable_seconds,
             )
             container_name = wait_for_container_running(
                 lab.container_names(station),
@@ -590,11 +655,17 @@ def claim_student_lane(
             )
         except RegressionFailure as exc:
             last_error = exc
+            failed_stations.add(station)
             try:
                 release_claim(instructor_session, base_url, lab, uuid, wipe=True)
             except Exception:
                 pass
             clear_cookie(student_session, lab.cookie_name)
+            if attempt < settings.retry_attempts and before_retry is not None:
+                try:
+                    before_retry(failed_stations)
+                except RegressionFailure as retry_exc:
+                    last_error = RegressionFailure(f"{exc}; preparing a retry failed: {retry_exc}")
             if attempt < settings.retry_attempts and settings.retry_delay_seconds > 0:
                 time.sleep(settings.retry_delay_seconds)
 
@@ -646,10 +717,11 @@ class TtydTiming:
     line_settle_seconds: float = 0.08
 
     @classmethod
-    def from_env(cls, prefix: str) -> TtydTiming:
+    def from_env(cls, prefix: str, **lab_defaults) -> TtydTiming:
         """Read <prefix>_TTYD_CONNECT_SETTLE_SECONDS, _TTYD_COMMAND_SETTLE_SECONDS, _TTYD_MULTILINE_EXTRA_SECONDS,
-        _TTYD_KEYSTROKE_DELAY_SECONDS and _TTYD_LINE_SETTLE_SECONDS, falling back to the defaults above."""
-        defaults = cls()
+        _TTYD_KEYSTROKE_DELAY_SECONDS and _TTYD_LINE_SETTLE_SECONDS, falling back to lab_defaults, then the
+        defaults above."""
+        defaults = cls(**lab_defaults)
         return cls(
             connect_settle_seconds=_env_number(
                 prefix, "TTYD_CONNECT_SETTLE_SECONDS", defaults.connect_settle_seconds
@@ -671,6 +743,9 @@ class TtydSession:
     """A ttyd terminal opened as the student's browser opens it, that types commands and reads their output back.
 
     marker_prefix names the lab in the end-of-command marker; strip cleans terminal output before it is matched.
+    background_reader=True gives the socket one reader thread for the session's life, as a browser tab has: it
+    answers ttyd's pings and drains output while the test does slow work elsewhere (bitcoin mines through docker
+    exec), where an idle session would miss its pongs and ttyd would drop it (broken pipe).
     """
 
     def __init__(
@@ -684,6 +759,7 @@ class TtydSession:
         strip: Callable[[str], str] = strip_terminal_artifacts,
         columns: int = 120,
         rows: int = 40,
+        background_reader: bool = False,
     ) -> None:
         if create_connection is None or ABNF is None:
             raise RegressionFailure("websocket-client is not installed in the regression runner")
@@ -695,8 +771,12 @@ class TtydSession:
         self.strip = strip
         self.columns = columns
         self.rows = rows
+        self.background_reader = background_reader
         self.socket = None
         self.collected = ""
+        self._reader: threading.Thread | None = None
+        self._reader_stop = threading.Event()
+        self._reader_error: BaseException | None = None
 
     def __enter__(self) -> TtydSession:
         self.connect()
@@ -732,12 +812,18 @@ class TtydSession:
             header=headers,
             origin=origin,
             timeout=10,
+            enable_multithread=self.background_reader,
         )
         self.socket.settimeout(1)
         init_payload = json.dumps(
             {"AuthToken": auth_token, "columns": self.columns, "rows": self.rows}
         ).encode("utf-8")
         self.socket.send(init_payload, opcode=ABNF.OPCODE_BINARY)
+        if self.background_reader:
+            self._reader_stop.clear()
+            self._reader_error = None
+            self._reader = threading.Thread(target=self._read_loop, name="ttyd-reader", daemon=True)
+            self._reader.start()
         self._warm()
         if self.timing.connect_settle_seconds > 0:
             time.sleep(self.timing.connect_settle_seconds)
@@ -745,6 +831,10 @@ class TtydSession:
     def close(self) -> None:
         if self.socket is None:
             return
+        self._reader_stop.set()
+        if self._reader is not None:
+            self._reader.join(timeout=5)
+            self._reader = None
         try:
             self.socket.close()
         except Exception:
@@ -754,7 +844,26 @@ class TtydSession:
     def _warm(self) -> None:
         deadline = time.time() + 3
         while time.time() < deadline:
-            if self._recv_once():
+            if self._receive():
+                return
+
+    def _receive(self) -> bool:
+        """Take in output: read one frame, or with a reader thread, check it and wait a moment for it.
+        True once some output has arrived (with a reader thread, in the session so far)."""
+        if self._reader is None:
+            return self._recv_once()
+        if self._reader_error is not None:
+            raise RegressionFailure(f"ttyd websocket reader stopped: {self._reader_error!r}")
+        time.sleep(0.1)
+        return bool(self.collected)
+
+    def _read_loop(self) -> None:
+        while not self._reader_stop.is_set():
+            try:
+                self._recv_once()
+            except BaseException as exc:  # surfaced to the test by _receive
+                if not self._reader_stop.is_set():
+                    self._reader_error = exc
                 return
 
     def _recv_once(self) -> bool:
@@ -819,7 +928,7 @@ class TtydSession:
                     exit_code=int(exit_match.group(1)),
                     raw_output=segment.strip(),
                 )
-            self._recv_once()
+            self._receive()
 
         raise RegressionFailure(
             f"timed out waiting for ttyd command completion: command={command!r} "
@@ -852,6 +961,10 @@ class LaneLabSupport:
     A lab's live_support.py builds one and exports its methods under the names its tests import. The base URL,
     timeout, credentials file and cookie cache file come from <prefix>_BASE_URL, _TIMEOUT, _CREDENTIALS_FILE and
     _INSTRUCTOR_COOKIE_CACHE_FILE, as each lab's own constants did.
+
+    The options keep a lab's differences: http_interval_seconds is how often wait_for_http polls by default;
+    login_retries and login_retry_delay retry a rate-limited (429) instructor login; share_cookie_caches lets the
+    login reuse any lab's cached instructor cookie, not only this lab's; ttyd_background_reader is TtydSession's.
     """
 
     def __init__(
@@ -866,6 +979,11 @@ class LaneLabSupport:
         ttyd_timing: TtydTiming,
         instructor_cookie_name: str = "hlf_instructor",
         strip: Callable[[str], str] = strip_terminal_artifacts,
+        http_interval_seconds: float = 1.0,
+        login_retries: int = 1,
+        login_retry_delay: float = 0.0,
+        share_cookie_caches: bool = False,
+        ttyd_background_reader: bool = False,
     ) -> None:
         self.lab = lab
         self.env_prefix = env_prefix
@@ -884,6 +1002,11 @@ class LaneLabSupport:
         self.claim_settings = claim_settings
         self.ttyd_timing = ttyd_timing
         self.strip = strip
+        self.http_interval_seconds = http_interval_seconds
+        self.login_retries = login_retries
+        self.login_retry_delay = login_retry_delay
+        self.share_cookie_caches = share_cookie_caches
+        self.ttyd_background_reader = ttyd_background_reader
 
     def wait_for_http(
         self,
@@ -892,7 +1015,7 @@ class LaneLabSupport:
         predicate: Callable[[requests.Response], bool],
         *,
         timeout_seconds: int | None = None,
-        interval_seconds: float = 1.0,
+        interval_seconds: float | None = None,
         description: str,
         allow_redirects: bool = True,
     ) -> requests.Response:
@@ -901,7 +1024,7 @@ class LaneLabSupport:
             url,
             predicate,
             timeout_seconds=self.timeout_seconds if timeout_seconds is None else timeout_seconds,
-            interval_seconds=interval_seconds,
+            interval_seconds=self.http_interval_seconds if interval_seconds is None else interval_seconds,
             description=description,
             allow_redirects=allow_redirects,
         )
@@ -910,16 +1033,45 @@ class LaneLabSupport:
         return parse_instructor_credentials(path or self.credentials_file, f"{self.env_prefix}_CREDENTIALS_FILE")
 
     def login_instructor(self, session: requests.Session, base_url: str | None = None) -> None:
-        login_instructor_once(
+        base_url = base_url or self.base_url
+        cache_paths = (
+            candidate_cookie_cache_paths(self.cookie_cache_file, self.root)
+            if self.share_cookie_caches
+            else [self.cookie_cache_file]
+        )
+        cookie_name = self.instructor_cookie_name
+        login_instructor(
             session,
-            base_url or self.base_url,
-            cache_path=self.cookie_cache_file,
-            cookie_name=self.instructor_cookie_name,
+            base_url,
+            load_cached=lambda: load_cached_instructor_cookie(session, base_url, cache_paths, cookie_name),
             credentials=self.parse_instructor_credentials,
+            persist=lambda: persist_instructor_cookie(session, base_url, self.cookie_cache_file, cookie_name),
+            max_retries=self.login_retries,
+            retry_delay=self.login_retry_delay,
         )
 
     def list_claims(self, instructor_session: requests.Session, base_url: str | None = None) -> list[dict]:
         return list_claims(instructor_session, base_url or self.base_url, self.lab)
+
+    def list_lanes(self, instructor_session: requests.Session, base_url: str | None = None) -> list[dict]:
+        return list_lanes(instructor_session, base_url or self.base_url, self.lab)
+
+    def wait_for_lane_running(
+        self,
+        instructor_session: requests.Session,
+        lane_id: str,
+        *,
+        timeout_seconds: int | None = None,
+        base_url: str | None = None,
+    ) -> None:
+        wait_for_lane_running(
+            instructor_session,
+            base_url or self.base_url,
+            self.lab,
+            lane_id,
+            timeout_seconds=self.claim_settings.ready_timeout_seconds if timeout_seconds is None else timeout_seconds,
+            stable_seconds=self.claim_settings.lane_stable_seconds,
+        )
 
     def claim_student_lane(
         self,
@@ -928,6 +1080,8 @@ class LaneLabSupport:
         base_url: str | None = None,
         *,
         fresh: bool = False,
+        prepare_fresh_lane: Callable[[str], None] | None = None,
+        before_retry: Callable[[set[str]], None] | None = None,
     ) -> ClaimContext:
         return claim_student_lane(
             student_session,
@@ -936,6 +1090,8 @@ class LaneLabSupport:
             self.lab,
             fresh=fresh,
             settings=self.claim_settings,
+            prepare_fresh_lane=prepare_fresh_lane,
+            before_retry=before_retry,
         )
 
     def release_claim(
@@ -960,6 +1116,7 @@ class LaneLabSupport:
             strip=self.strip,
             columns=columns,
             rows=rows,
+            background_reader=self.ttyd_background_reader,
         )
 
     def ttyd_command_round_trip(
