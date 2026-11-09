@@ -1,6 +1,9 @@
 # Managed HLF CouchDB compose overlay.
 # Rendered into fabric-samples/test-network/compose/compose-couch.yaml by lab.sh.
 # Pinned to couchdb:3.4.2 for this release.
+# Host ports listen on 127.0.0.1 only: the lab reaches these containers by name on the
+# fabric_test network, and a public port would open them to anyone who reaches a cloud
+# host (docs/security-triage.md, C9).
 
 volumes:
   couchdb0_data:
@@ -21,7 +24,7 @@ services:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=${HLF_COUCHDB_PASSWORD:?not set - run ./lab-manager.sh deploy}
     ports:
-      - "5984:5984"
+      - "127.0.0.1:5984:5984"
     volumes:
       - couchdb0_data:/opt/couchdb/data
     networks:
@@ -52,7 +55,7 @@ services:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=${HLF_COUCHDB_PASSWORD:?not set - run ./lab-manager.sh deploy}
     ports:
-      - "7984:5984"
+      - "127.0.0.1:7984:5984"
     volumes:
       - couchdb1_data:/opt/couchdb/data
     networks:

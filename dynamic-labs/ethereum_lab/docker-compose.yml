@@ -12,9 +12,12 @@
 #                                  into student lanes at start time.
 #
 # Host port maps (8545/5173) are kept for direct local access during
-# development; production traffic goes via the router. The terminal ports
-# (3002-3004) are not published: the lab terminal is reached only through
-# /ws/terminal on the router's authenticated proxy.
+# development, on 127.0.0.1 only; class traffic goes via the router. Port
+# 5173 serves /ws/terminal (a shell in this container) and trusts the
+# X-Instructor header, both of which only the router may front, so it must
+# never listen on the host's public address (docs/security-triage.md, C9).
+# The terminal ports (3002-3004) are not published: the lab terminal is
+# reached only through /ws/terminal on the router's authenticated proxy.
 
 services:
   ethereum-trainer:
@@ -28,7 +31,7 @@ services:
     container_name: ethereum-trainer-instructor
     ports:
       - "127.0.0.1:8545:8545"
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     environment:
       - MODE=instructor
       - RPC_PORT=8545

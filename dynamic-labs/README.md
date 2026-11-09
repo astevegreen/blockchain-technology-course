@@ -258,6 +258,10 @@ cannot do it. Before it calls certbot it checks that each name resolves to this 
 the records to create and stops. Remove any AAAA record for these names unless it also points at the VM. If the VM's
 public address is detected wrongly (the check asks `api.ipify.org`), set `PUBLIC_IP=<address>` before running it.
 
+No other inbound port needs to be open for the class (SSH aside, for whoever runs the VM): every lab container other
+than the router publishes its ports on 127.0.0.1 only (`tests/test_host_ports_contract.py` holds them to it;
+`docs/security-triage.md`, C9, says why).
+
 ```bash
 cd dynamic-labs
 sudo ./deploy-cloud.sh --domain labs.my-course.com

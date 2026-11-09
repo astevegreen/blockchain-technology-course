@@ -14,6 +14,7 @@ from live_support import (
     claim_hlf_station,
     clear_cookie,
     docker_exec_checked,
+    docker_inspect,
     get_hlf_asset,
     get_hlf_chaincode,
     get_hlf_chaincode_source,
@@ -145,6 +146,17 @@ class HLFRouterAndAuthTests(unittest.TestCase):
     def test_root_returns_200(self) -> None:
         resp = self.session.get(f"{self.base_url}/", timeout=10)
         self.assertEqual(resp.status_code, 200)
+
+    def test_web_container_publishes_only_on_loopback(self) -> None:
+        # hlf/docker-compose.yml: the class reaches these pages through the router, which gates
+        # the instructor ones. A port on the host's public address would skip that gate on a
+        # cloud host (docs/security-triage.md, C9).
+        bindings = docker_inspect("hlf-hlf-1").get("HostConfig", {}).get("PortBindings") or {}
+        self.assertTrue(bindings)
+        for port, binds in bindings.items():
+            for bind in binds or []:
+                with self.subTest(port=port):
+                    self.assertEqual(bind.get("HostIp"), "127.0.0.1")
 
     def test_hlf_landing_redirects_to_claim(self) -> None:
         resp = self.session.get(

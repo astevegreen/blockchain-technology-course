@@ -73,6 +73,7 @@ clear_cookie = live_common.clear_cookie
 strip_terminal_artifacts = live_common.strip_terminal_artifacts
 docker_exec = live_common.docker_exec
 docker_exec_checked = live_common.docker_exec_checked
+docker_inspect = live_common.docker_inspect
 
 
 def parse_instructor_credentials(path: Path = DEFAULT_CREDENTIALS_FILE) -> tuple[str, str]:

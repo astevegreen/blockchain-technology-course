@@ -251,6 +251,17 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         )
         self.assertNotEqual(direct_instructor.returncode, 0)
 
+    def test_instructor_container_publishes_only_on_loopback(self) -> None:
+        # Port 5173 serves /ws/terminal (a shell in the instructor container) and trusts the
+        # X-Instructor header, so only the router may front it: on a cloud host a public port
+        # would hand both to anyone (ethereum_lab/docker-compose.yml, docs/security-triage.md C9).
+        bindings = docker_inspect("ethereum-trainer-instructor").get("HostConfig", {}).get("PortBindings") or {}
+        self.assertIn("5173/tcp", bindings)
+        for port, binds in bindings.items():
+            for bind in binds or []:
+                with self.subTest(port=port):
+                    self.assertEqual(bind.get("HostIp"), "127.0.0.1")
+
     def test_heimdall_decompiles_simplestorage_offline(self) -> None:
         # The image carries heimdall-rs for the bytecode guide; the student VM copies it out of
         # this image. It must run here and decompile the lab's own SimpleStorage without network:

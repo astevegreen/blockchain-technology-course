@@ -1,5 +1,8 @@
 # Managed HLF CA runtime template.
 # Rendered into fabric-samples/test-network/compose/compose-ca.yaml by lab.sh.
+# Host ports listen on 127.0.0.1 only: the lab reaches these containers by name on the
+# fabric_test network, and a public port would open them to anyone who reaches a cloud
+# host (docs/security-triage.md, C9).
 
 networks:
   test:
@@ -21,8 +24,8 @@ services:
       - FABRIC_CA_SERVER_CSR_HOSTS=ca_org1,localhost
       - FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS=0.0.0.0:17054
     ports:
-      - "7054:7054"
-      - "17054:17054"
+      - "127.0.0.1:7054:7054"
+      - "127.0.0.1:17054:17054"
     command: sh -c 'fabric-ca-server start -b admin:${HLF_CA_ADMIN_PASSWORD:?not set - run ./lab-manager.sh deploy} -d'
     volumes:
       - ../organizations/fabric-ca/org1:/etc/hyperledger/fabric-ca-server
@@ -43,8 +46,8 @@ services:
       - FABRIC_CA_SERVER_CSR_HOSTS=ca_org2,localhost
       - FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS=0.0.0.0:18054
     ports:
-      - "8054:8054"
-      - "18054:18054"
+      - "127.0.0.1:8054:8054"
+      - "127.0.0.1:18054:18054"
     command: sh -c 'fabric-ca-server start -b admin:${HLF_CA_ADMIN_PASSWORD:?not set - run ./lab-manager.sh deploy} -d'
     volumes:
       - ../organizations/fabric-ca/org2:/etc/hyperledger/fabric-ca-server
@@ -65,8 +68,8 @@ services:
       - FABRIC_CA_SERVER_CSR_HOSTS=ca_orderer,localhost
       - FABRIC_CA_SERVER_OPERATIONS_LISTENADDRESS=0.0.0.0:19054
     ports:
-      - "9054:9054"
-      - "19054:19054"
+      - "127.0.0.1:9054:9054"
+      - "127.0.0.1:19054:19054"
     command: sh -c 'fabric-ca-server start -b admin:${HLF_CA_ADMIN_PASSWORD:?not set - run ./lab-manager.sh deploy} -d'
     volumes:
       - ../organizations/fabric-ca/ordererOrg:/etc/hyperledger/fabric-ca-server

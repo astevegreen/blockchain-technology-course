@@ -136,6 +136,13 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   in others), or a Fabric CLI result in the 13 `hlf_router.py` alerts, but never a traceback. The Fabric lab shows
   peer CLI output on purpose, the routes serve the lab's own network, and the text adds nothing a student can't see
   in their own lab terminal. Alerts 20-40.
+  **Re-checked for a cloud host, 9 Nov 2026: still holds.** The dismissal leaned on "the lab's own network"; on the
+  cloud anyone who reaches the host reaches these routes until the student pages are gated (follow-ups, "Lab hosting
+  is decided"). What they would read is still harmless: the text is a container path, a `docker` or Fabric CLI
+  message, or peer CLI output, and none of the routes puts a password or key in it (the CA and CouchDB passwords
+  reach Fabric through the environment, which neither `docker` nor the peer CLI prints). Most of the routes are
+  instructor-only as well (`@require_instructor` in `hlf_router.py`, and the router's gated `/labs/hlf/api/hlf/`
+  catch-all). Someone who can open a student lab already has a lab terminal, which shows more than these messages.
 - **C4, false positive.** Each path is built from a session id that is checked as a UUID first: `is_valid_uuid` in
   `hlf/web_service/claims.py:59`, used by `progress_routes.py:44,95` and `claim_routes.py`; `_require_active_session`
   in `lane-service/labs/ethereum.py:215`, which also requires a live claim; and `isUuid` in `lab-api.js:116` with
@@ -156,6 +163,24 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
 - **C9, won't fix.** Lab services on the classroom network. Two of the routes are instructor-only
   (`/beacon/reset`, `/beacon/tokenization-mode`), one resets the caller's own session, and one is the static-file
   fallback. Alerts 145-148.
+  **Re-checked for a cloud host, 9 Nov 2026: the four alerts still hold; a hole beside them is fixed.** The two
+  instructor routes trust the `X-Instructor` header, which the router always sets from the instructor cookie
+  (`router/routes/ethereum.conf`), so a stranger cannot reach them through the router; the session reset touches
+  only the caller's own session folder; the fallback sends one static file. A per-address rate limit was weighed
+  and left out: a cloud class often reaches the host through one office address, so a limit low enough to stop a
+  flood would also stop the class, and the one costly student action (a lane claim, which starts a container) is
+  capped by the lane count, and the student gate, once built, closes it to strangers (follow-ups, "Lab hosting is
+  decided").
+  The hole: the instructor container published port 5173 on every host address
+  (`ethereum_lab/docker-compose.yml`), and that port serves `/ws/terminal`, an unauthenticated shell in the
+  instructor container, and believes any `X-Instructor: 1` header. On a classroom network a student could reach it;
+  on a cloud host, anyone could, and Docker's published ports go around a host firewall such as `ufw`. It is now
+  bound to 127.0.0.1, and so are the other ports that skipped the router: the Fabric lab's page server
+  (`hlf/docker-compose.yml`, 8086, past the router's instructor gate on its pages) and its network's CAs, CouchDBs,
+  orderer and peers, operations ports included (`hlf/managed_runtime/compose-*.yaml.tmpl`; the lab reaches them by
+  name on its Docker network). The router's ports are now the only ones on the host's public address:
+  `dynamic-labs/tests/test_host_ports_contract.py` (run by the check) fails on any other, and the ethereum_lab and
+  hlf live suites check the running containers.
 - **C10, won't fix.** The Bitcoin workstation agent must accept peers on its container's interfaces; the
   cryptography lab prints the message a student has just decrypted, which is the exercise; the arcade signing secret
   is a server-side key file in the lane service's runtime folder, like any key file. Alerts 16-18.
