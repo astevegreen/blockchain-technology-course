@@ -345,10 +345,23 @@ jobs:
           docker buildx imagetools create -t "$PACKAGE:launcher-$VERSION" \
             "$PACKAGE@$(cat "$RUNNER_TEMP/digests/launcher--amd64")" "$PACKAGE@$(cat "$RUNNER_TEMP/digests/launcher--arm64")"
           docker buildx imagetools inspect "$PACKAGE:launcher-$VERSION"
+          # latest.json is what the wrapper reads, so it names the launcher by digest. The copy baked into the
+          # launcher keeps the tag: an image cannot hold its own digest.
+          digest=$(docker buildx imagetools inspect "$PACKAGE:launcher-$VERSION" --format '{{json .Manifest}}' | jq -r .digest)
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "no digest for launcher-$VERSION: $digest"; exit 1; }
+          jq --arg ref "$PACKAGE:launcher-$VERSION@$digest" '.launcher_image = $ref' \
+            "$RUNNER_TEMP/out/latest.json" > "$RUNNER_TEMP/latest.json"
+          mv "$RUNNER_TEMP/latest.json" "$RUNNER_TEMP/out/latest.json"
+          jq -c '{version, launcher_image, labs: [.labs[].id], images: (.images | length)}' "$RUNNER_TEMP/out/latest.json"
       - name: Create the draft release
         run: |
           set -euo pipefail
-          zip -j "$RUNNER_TEMP/Course-Labs.zip" student-launcher/wrappers/*
+          # Wrappers keep their repo names (Start-Course-Labs.*, Stop-Course-Labs.*). READ-ME-FIRST.html (the
+          # SmartScreen and Gatekeeper help) sits beside them once the student guide adds it.
+          files=(student-launcher/wrappers/*)
+          [ -f student-launcher/READ-ME-FIRST.html ] && files+=(student-launcher/READ-ME-FIRST.html)
+          zip -j "$RUNNER_TEMP/Course-Labs.zip" "${files[@]}"
+          unzip -l "$RUNNER_TEMP/Course-Labs.zip"
           gh release create "student-v$VERSION" --draft --prerelease --target "$GITHUB_SHA" \
             --title "Course labs $VERSION" \
             --notes "Download Course-Labs.zip, unzip it and double-click Start-Course-Labs for your system. Needs Docker Desktop. Launcher image: $PACKAGE:launcher-$VERSION" \
