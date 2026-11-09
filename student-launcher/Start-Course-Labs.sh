@@ -3,7 +3,7 @@
 # page that runs the labs, then opens it. --dry-run prints what it would open or start instead.
 set -u
 IMAGE="${COURSE_LABS_IMAGE:-ghcr.io/astevegreen/course-labs:launcher-stable}"
-GUIDE="https://astevegreen.github.io/blockchain-technology-course/run-the-labs.html"
+GUIDE="https://astevegreen.github.io/blockchain-technology-course/run-labs.html#install-docker"
 PAGE="http://127.0.0.1:8470/"
 DRY=0; [ "${1:-}" = "--dry-run" ] && DRY=1
 say() { printf '%s\n' "$*"; }

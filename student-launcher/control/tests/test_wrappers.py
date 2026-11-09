@@ -97,7 +97,7 @@ class Posix(Wrapper):
     def test_no_docker_opens_the_guide(self):
         code, out = self.run_script("Start-Course-Labs.sh", with_docker=False)
         self.assertEqual(code, 1)
-        self.assertIn("run-the-labs.html", out)
+        self.assertIn("run-labs.html#install-docker", out)
         self.assertIn("isn't installed", out)
 
     def test_docker_down_tries_to_start_it(self):
@@ -150,7 +150,7 @@ class Windows(Wrapper):
     def test_no_docker_opens_the_guide(self):
         code, out = self.run_script("Start-Course-Labs.cmd", with_docker=False)
         self.assertEqual(code, 1)
-        self.assertIn("run-the-labs.html", out)
+        self.assertIn("run-labs.html#install-docker", out)
 
     def test_docker_down_tries_to_start_it(self):
         code, out = self.run_script("Start-Course-Labs.cmd", FAKE_DOCKER="down")

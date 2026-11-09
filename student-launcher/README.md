@@ -28,3 +28,16 @@ The release workflow stages that folder from the lab manifests; the smoke test s
 
 `Start-Course-Labs.sh --dry-run` (or `.cmd --dry-run`) prints `would: …` instead of starting Docker Desktop or a
 browser. It still runs `docker` from `PATH`, so the tests put a fake one first.
+
+## The page without Docker (screenshots)
+
+```bash
+python student-launcher/control/dev_serve.py
+```
+
+Serves the real page at `http://127.0.0.1:8470/` against canned answers in
+`control/tests/fixtures/api/all-states.json`: a lab in every state, a download in progress, a start that fails, and
+the update notice. `--scenario docker-down` shows the page when Docker Desktop has stopped; `--port` picks another
+port. Buttons answer but change nothing. A test keeps the canned answers the same shape as the real ones.
+
+`READ-ME-FIRST.html`, the students' first page, belongs here too (the student guide adds it).

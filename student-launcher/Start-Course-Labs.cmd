@@ -5,7 +5,7 @@ setlocal
 rem "call docker" runs docker.exe as usual and lets the tests put a fake docker.cmd first on PATH.
 set "IMAGE=ghcr.io/astevegreen/course-labs:launcher-stable"
 if defined COURSE_LABS_IMAGE set "IMAGE=%COURSE_LABS_IMAGE%"
-set "GUIDE=https://astevegreen.github.io/blockchain-technology-course/run-the-labs.html"
+set "GUIDE=https://astevegreen.github.io/blockchain-technology-course/run-labs.html#install-docker"
 set "PAGE=http://127.0.0.1:8470/"
 set "DRY="
 if /i "%~1"=="--dry-run" set "DRY=1"
