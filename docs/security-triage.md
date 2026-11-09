@@ -44,11 +44,14 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   which is the setup those advisories describe. `instructor_auth_service` is the instructors' login. The fix is one
   pin per file. The BGP and trust games run gunicorn's eventlet worker, so rerun the `exercises` lab tests, plus a lab
   whose test signs in as instructor. Alerts 198, 200, 208, 210, 268, 269.
+  **Done 8 Nov 2026:** gunicorn 22.0.0 in all three `requirements.txt`; the `exercises` lab tests pass on the rebuilt
+  images (the BGP game on the eventlet worker, and the trust game's shared-login contract through `instructor_auth_service`).
 - **D2, fix now.** Pillow's advisories are about decoding untrusted images. The trust game uses Pillow only through
   `qrcode.make(join_url)` (`app.py:1218`), drawing a QR code from a URL the server builds, so none is reachable. It
   ships in a student-facing image, and the bump fits in the same rebuild and test as D1. Bump to the first release
   the alerts list as clearing every advisory (13.0.0), or to the latest release supporting Python 3.11. GitHub files the
   same package under two names: 31 alerts say `Pillow` and 21 say `pillow`. Alerts 212, 214-217, 221-267.
+  **Done 8 Nov 2026:** Pillow 13.0.0 (it has a Python 3.11 wheel); the trust-game image rebuilt and the `exercises` lab tests pass.
 - **D3, fix now.** The Ethereum image runs `npm ci` without `--omit=dev` (`ethereum_lab/Dockerfile`, Stage 4)
   because the lab runs `hardhat node` and `hardhat run` at start, so Hardhat's whole tool tree ships even though
   GitHub calls most of it "development". For these 69, the lockfile's declared ranges already allow the patched
@@ -110,6 +113,8 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   classroom LAN the fallback is what runs and another student could guess a player's id. `crypto.getRandomValues`
   works without TLS. All of these files reach students. Alerts 115, 131-139, 149. Rerun the bitcoin-graph, lane and
   `exercises` lab tests.
+  **Randomness alert done 8 Nov 2026:** `student.js` now builds the fallback id from `crypto.getRandomValues`; the
+  `exercises` lab tests pass.
 - **C2, false positive.** Each alert returns `str(exc)` for one of the engine's own error classes (`AttemptError`,
   `GradingError`, `QuizVersionError`, `TemplateError` and others), messages the code writes for the user. No stack
   trace is returned. Alerts 41-110.

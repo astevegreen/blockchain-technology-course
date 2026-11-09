@@ -32,6 +32,12 @@
     graphDetails: document.getElementById("student-graph-details"),
   };
 
+  function randomHex() {
+    const bytes = new Uint8Array(8);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
   function getPlayerUuid() {
     const url = new URL(window.location.href);
     const existing = url.searchParams.get("uuid");
@@ -40,7 +46,7 @@
     }
     const created = window.crypto && window.crypto.randomUUID
       ? window.crypto.randomUUID()
-      : `bgp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      : `bgp-${Date.now()}-${randomHex()}`;
     url.searchParams.set("uuid", created);
     window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
     return created;

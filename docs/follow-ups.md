@@ -61,10 +61,6 @@ slide index), which is never listed here.
   A full run takes as long as its slowest labs (hlf and ethereum_lab, ~9-9.5 min), so speeding Otterscan only
   helps a single-lab run. Untested: caching `/var/lib/docker`, or moving Docker's data root to a RAM disk. Not
   worth doing unless single-lab runs become routine. (7 Nov 2026, CI speed; Quarto half done 8 Nov 2026)
-- The Dependabot and CodeQL alerts are triaged in `docs/security-triage.md`; its dismiss list was approved and
-  dismissed on 9 Nov 2026, leaving 181 and 11 open. Its fix-now groups (D1 gunicorn, D2 Pillow, C1 randomness) still
-  need a code change and those labs' tests.
-  (8 Nov 2026, security triage)
 
 ## Notion and documents
 
