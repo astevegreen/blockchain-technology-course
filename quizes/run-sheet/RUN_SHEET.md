@@ -21,10 +21,10 @@ repo root. If this sheet and `docs/build-spec.md` disagree, the spec wins; tell 
   gate items right (the readiness items are for the instructor's eye, not for entry).
 - **Lab entry rule** (build spec, "A lab"; set per day by the instructor). At the start of each lab, a student who
   got every gate item for that day right is offered the day's problem. The week-one bank marks them in `lab_gates`
-  (day 1: q6 alone; day 3: q8, q9; day 4: q10, q11, q12; day 5: q43, q44); a day's other items are a readiness check.
+  (day 1: q6 alone; day 2: q45 alone; day 3: q8, q9; day 4: q10, q11, q12; day 5: q43, q44); a day's other items are a readiness check.
   Days 6 to 9 are in `pretest_week2-quiz-bank.json` with no `lab_gates`: there every item of the day gates it. Everyone
   else, and anyone with no pretest, starts at the worked example. A student may always choose the worked example.
-  There is no overall cut score. Day 2 has no items by design.
+  There is no overall cut score.
 
 ## The standard day (days 1 to 9)
 
@@ -96,7 +96,7 @@ Answers: `dynamic-labs/explorer/quizes/INSTRUCTOR_ANSWERS.md`. Graded point: non
 
 Teach 02-BF alone for ①: it already absorbed the scripts slides of 01-BF and 03-BF (`docs/build-spec.md`, day 2), and 02-CP's Merkle slides are carried there too. Check the lesson itself for which slides it carries.
 
-Pretest: no day-2 items, so everyone starts at the worked example.
+Pretest: q45 (wallets and key custody) gates day 2's lab; everyone else starts at the worked example.
 
 **Lab: wallet walkthrough.** Start: `./lab-manager.sh start wallet`. Students open `/labs/wallet/`; the fallback is
 `/labs/wallet/fallback/`. README: `dynamic-labs/wallet/README.md`. Answers:

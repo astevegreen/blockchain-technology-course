@@ -8,19 +8,19 @@ here, outside `blockchain-course/` and `dynamic-labs/`.
 Each day's gate items decide where each student starts that day's lab:
 
 - A student who gets **every** gate item for a day right is offered that day's problem. In the week-1 bank the gate
-  items are listed in `metadata.lab_gates` (day 1: q6 alone; day 3: q8, q9; day 4: q10 to q12; day 5: q43, q44); the
+  items are listed in `metadata.lab_gates` (day 1: q6 alone; day 2: q45 alone; day 3: q8, q9; day 4: q10 to q12; day 5: q43, q44); the
   day's other items are a readiness check the instructor reads, and they do not decide entry. The week-2 bank has no
   `lab_gates`: every item of a day gates it.
 - Everyone else starts at the worked example.
-- There is no overall cut score. Day 2 has no items, so every student starts day 2's lab at the worked example.
-  Day 10 has none either: its final trace has no worked example.
+- There is no overall cut score. Day 2's only item is q45 (concept 50), which gates it. Day 10 has no items: its
+  final trace has no worked example.
 
 Multiple-choice items are right or wrong. A written item is right when the answer states every point in its
 `answer_key`, in any wording.
 
 ## Files
 
-- `pretest_week1-quiz-bank.json`: days 1-5, 19 items (q1-q17, q43, q44), in the quiz-engine format (`../QUIZ_ENGINE_JSON_SPEC.md`),
+- `pretest_week1-quiz-bank.json`: days 1-5, 20 items (q1-q17, q43, q44, q45), in the quiz-engine format (`../QUIZ_ENGINE_JSON_SPEC.md`),
   with extra fields for the pretest (below).
 - `pretest_week2-quiz-bank.json`: days 6-9, 25 items (q18-q42), in the same format. Pilot A runs week 1 only, so it uses
   the week-1 bank alone.
@@ -30,7 +30,7 @@ The banks sit here rather than in `quiz_json/` for three reasons:
 
 - `quiz_json/` banks are pools that the quiz engine samples at random. The pretest is a fixed form.
 - Written items carry no options, so `verify_single_quiz.py` can't score them.
-- `verify_pretest.py` runs the same option-length rule on each bank's multiple-choice items (14 in week 1, 18 in
+- `verify_pretest.py` runs the same option-length rule on each bank's multiple-choice items (15 in week 1, 18 in
   week 2), and adds the pretest's own checks.
 
 ## Blueprint
@@ -47,6 +47,7 @@ From `docs/build-spec.md`, "Pretest blueprint". Concept numbers are the Notion "
 | 1 | q5 | 5 Distributed network topologies | MC | 02-IN, "Nodes check a payment before passing it on" |
 | 1 | q6 | 41 Block explorers | W | 02-IN, "An explorer is a node's record, plus extras"; "Each block on top adds one confirmation" |
 | 1 | q7 | 42 Direct node queries | MC | 01-CM, "Live data has costs, so we use captured data" |
+| 2 | q45 | 50 Wallets and key custody | MC | 05-BF, "Whoever holds the key controls the coins" |
 | 3 | q8 | 18 Reading smart contracts | W | 04-EF, "Your Turn: Read the Coin Contract"; 05-EF, "What a USDT freeze leaves on chain" |
 | 3 | q9 | 46 Stablecoins as a laundering rail | W | 05-EF, "Freezable? Which issuer, and how fast?" |
 | 4 | q10 | 6 Layer-1 vs Layer-2 networks | MC | 08-EF, "A rollup posts its batches to Ethereum" |

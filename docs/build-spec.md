@@ -140,8 +140,8 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
 - Entry is set per day, by the instructor (owner, 30 Oct: "Per day, instructor decides"). The instructor reads the
   pretest items for that day's concepts (the "Concepts first taught" column); a student who got them right is
   offered the problem, and everyone else, and anyone with no pretest, starts at the worked example. A student may
-  always choose the worked example. No overall cutoff score. Day 2 has no pretest items yet (see the blueprint),
-  so everyone starts day 2's lab at the worked example.
+  always choose the worked example. No overall cutoff score. Day 2 has one pretest item (concept 50, q45; see the blueprint),
+  so only a student who got it right is offered day 2's problem.
 - Short steps addressed to the student.
 - Students mostly read code. By default a query or script is handed over ready-made and only the reading of its
   output is checked; a lab may use another format when that works better (Direction 11). An instructor-led build
@@ -197,7 +197,7 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   | Day | Items | W | Concepts |
   | --- | --- | --- | --- |
   | 1 | 7 | 1 | 1, 2, 3, 4, 5, 41 W, 42 |
-  | 2 | 0 | 0 | none yet: 50 has no pretest item, so day 2's lab starts everyone at the worked example |
+  | 2 | 1 | 0 | 50 |
   | 3 | 2 | 2 | 18 W, 46 W |
   | 4 | 3 | 2 | 6, 10 W, 12 W |
   | 5 | 7 | 0 | 31, 38, 39, 46 (two: the Tron lab gate), 48, 49 |
@@ -205,7 +205,7 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   | 7 | 3 | 1 | 9 W, 11, 23 |
   | 8 | 9 | 0 | 13, 14, 15, 16, 17, 19, 22, 24, 47 |
   | 9 | 4 | 1 | 26, 29, 30, 37 W |
-  | All | 44 | 12 | |
+  | All | 45 | 12 | |
 - **Outcome 9** (Course Design section 2) reads: "Explain findings plainly. Tell someone who is not a specialist,
   bottom line first, what the activity is, what the chain shows and what is inferred, how confident the judgement
   is, and what the evidence cannot show." Its evidence is the informal explanation behind each graded point and on

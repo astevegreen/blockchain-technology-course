@@ -16,7 +16,7 @@ from verify_single_quiz import check_single_quiz  # noqa: E402
 BLUEPRINT_WEEK1 = {
     1: {1: "familiarity", 2: "familiarity", 3: "familiarity", 4: "familiarity",
         5: "familiarity", 41: "working", 42: "familiarity"},
-    2: {},
+    2: {50: "familiarity"},
     3: {18: "working", 46: "working"},
     4: {6: "familiarity", 10: "working", 12: "working"},
     5: {31: "familiarity", 38: "familiarity", 39: "familiarity", 46: "familiarity", 48: "familiarity",

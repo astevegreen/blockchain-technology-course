@@ -11,7 +11,6 @@ to look, and a concept with many slides can still be taught badly.
 
 ## Flags
 
-- **50. Wallets and key custody** (day 2, familiarity): no pretest item.
 - **47. North Korean theft and laundering** (day 8, familiarity): post-test answer rests on slides taught after day 8, or not scheduled: 13-FO: One playbook across North Korea's cases; 13-FO: Bybit: out of freezable tokens first, then to Bitcoin.
 
 ## By concept
@@ -28,7 +27,7 @@ is marked with *g*.
 | 5 | Distributed network topologies | familiarity | 1 | D1: 3, D2: 1, D3: 1, D4: 5, D5: 5, D6: 2, D9: 1 | D4: 4, D6: 1 | D2: 1, D5: 1 | q5 | p5 |
 | 41 | Block explorers | working | 1 | D1: 7, D2: 2, D3: 2, D6: 3, D7: 1 | D1: 10, D2: 8, D3: 7, D4: 4, D6: 1, D7: 1 | D2: 3, D3: 3, D4: 3, D7: 1, D8: 1 | q6 | p6 |
 | 42 | Direct node queries | familiarity | 1 | D1: 1, D2: 2, D7: 1 | none | D3: 1 | q7 | p7 |
-| 50 | Wallets and key custody | familiarity | 2 | D2: 7 | D2: 3 | D3: 4, D5: 1 | none | p43 |
+| 50 | Wallets and key custody | familiarity | 2 | D2: 7 | D2: 3 | D3: 4, D5: 1 | q45 | p43 |
 | 18 | Reading and auditing smart contracts (Solidity, Vyper, Rust) | working | 3 | D3: 13, D4: 1, D8: 3 | D8: 3 (*g*) | D4: 2, D9: 2 | q8 | p8 |
 | 46 | Stablecoins as a laundering rail | working | 3 | D1: 2, D3: 12, D4: 14, D5: 13, D8: 2, D9: 9 | D3: 6, D4: 2, D5: 9, D8: 2, D9: 11, D10: 1 (*g*) | D2: 1, D4: 3, D5: 2, D6: 6, D9: 2 | q9, q43, q44 | p9 |
 | 6 | Layer-1 vs Layer-2 networks | familiarity | 4 | D1: 2, D3: 1, D4: 9 | D4: 17, D8: 4 (*g*) | D5: 4, D9: 2 | q10 | p10 |
@@ -265,7 +264,7 @@ Day 1, familiarity. Post-test p7 (multiple choice); pretest q7.
 
 ### 50. Wallets and key custody
 
-Day 2, familiarity. Post-test p43 (multiple choice); pretest none.
+Day 2, familiarity. Post-test p43 (multiple choice); pretest q45.
 
 - Post-test answer rests on: 05-BF: An xpub reveals every address, past and future (day 2)
 - Slides: D2② 05-BF A wallet holds keys, not coins; D2② 05-BF Most people hold bitcoin one of two ways; D2② 05-BF Hot or cold says where the key lives; D2② 05-BF A seed phrase is the whole wallet as words; D2② 05-BF One seed grows a whole tree of keys; D2② 05-BF An xpub reveals every address, past and future; D2② 05-BF What each wallet type leaves the analyst
