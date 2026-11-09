@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dynamic-labs/lab.schema.json",
+  "title": "Lab manifest (lab.yaml)",
+  "description": "One per top-level dynamic-labs folder that holds a compose file. Design: docs/student-launcher-design.md section 3. Only these keywords are used, so tools/lab_manifest.py can validate without the jsonschema package: type, required, properties, additionalProperties, enum, pattern, items, minimum.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "kind", "order", "compose_project", "compose_file", "student_local", "services", "networks", "routes", "uses_lane_service", "entry", "memory_mb", "approx_download_mb", "data", "keep_volumes_on_update"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$", "description": "Equals the folder name."},
+    "title": {"type": "string", "description": "Shown on the control page."},
+    "kind": {"type": "string", "enum": ["lab", "shared", "instructor", "fixture"], "description": "shared: router, lane-service, course-site. instructor: quiz engine, instructor auth. fixture: test-only, never released."},
+    "order": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["day", "position"],
+      "properties": {
+        "day": {"type": ["integer", "null"], "minimum": 1, "description": "Course day 1-10, or null for labs outside the ten-day schedule."},
+        "position": {"type": "integer", "minimum": 0}
+      }
+    },
+    "compose_project": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$", "description": "The existing project name (top-level name:, else the folder name). Never change it: router upstreams are container names."},
+    "compose_file": {"type": "string", "description": "The instructor/classroom compose file, relative to the lab folder."},
+    "student_local": {"type": "boolean", "description": "Offered by the student launcher."},
+    "student_compose_file": {"type": "string", "pattern": "^docker-compose\\.launcher\\.yml$", "description": "Required when student_local is true."},
+    "services": {
+      "type": "object",
+      "description": "Every service the launcher compose file starts, keyed by compose service name.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "platforms"],
+        "properties": {
+          "source": {"type": "string", "enum": ["build", "upstream"]},
+          "image": {"type": "string", "description": "upstream: the pinned reference (tag or digest)."},
+          "context": {"type": "string", "description": "build: context, relative to the lab folder."},
+          "dockerfile": {"type": "string", "description": "build: relative to the context; default Dockerfile."},
+          "platforms": {"type": "array", "items": {"type": "string", "enum": ["linux/amd64", "linux/arm64"]}},
+          "variable": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*_IMAGE$", "description": "build: the variable the launcher compose file reads the pushed digest from. Default <ID>_<SERVICE>_IMAGE, upper-cased, - to _."}
+        }
+      }
+    },
+    "networks": {
+      "type": "array",
+      "description": "External networks the lab needs; the launcher and lab-manager.sh create them.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "internal"],
+        "properties": {
+          "name": {"type": "string"},
+          "internal": {"type": "boolean"}
+        }
+      }
+    },
+    "routes": {"type": "array", "items": {"type": "string", "pattern": "^routes/[a-z0-9_.-]+\\.conf$"}, "description": "Router files under dynamic-labs/router/ that this lab owns."},
+    "uses_lane_service": {"type": "boolean"},
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/", "description": "Path the control page's Open button goes to."},
+        "port": {"type": "integer", "description": "Set for the host-named labs (8441-8444); the button then opens http://127.0.0.1:<port><path>."}
+      }
+    },
+    "memory_mb": {"type": "integer", "minimum": 0, "description": "Docker memory the lab needs while running, for the control page's check."},
+    "approx_download_mb": {"type": "integer", "minimum": 0},
+    "data": {
+      "type": "array",
+      "description": "Repo files the classroom compose bind-mounts, and how the launcher compose gets them instead.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "into", "how"],
+        "properties": {
+          "path": {"type": "string", "description": "Relative to the lab folder."},
+          "into": {"type": "string", "description": "Container path."},
+          "how": {"type": "string", "enum": ["baked", "seeded-volume"]}
+        }
+      }
+    },
+    "keep_volumes_on_update": {"type": "boolean"},
+    "local_actions": {
+      "type": "array",
+      "description": "Extra control-page buttons for this lab in local mode.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "api"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "label": {"type": "string"},
+          "api": {"type": "string", "pattern": "^/", "description": "Path the control container POSTs to, through the router (for example a lane-service student-mode endpoint)."}
+        }
+      }
+    }
+  }
+}
