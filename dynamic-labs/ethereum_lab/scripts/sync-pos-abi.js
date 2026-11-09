@@ -3,18 +3,18 @@
  * Copy only PoSSimulator ABI (array) to frontend/src/PoS.json.
  * ethers v6 Contract requires an ABI array — not the full Hardhat artifact object.
  */
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
 
 const artifactPath = path.join(
-  __dirname,
+  import.meta.dirname,
   "..",
   "artifacts",
   "contracts",
   "PoS.sol",
   "PoSSimulator.json"
 );
-const destPath = path.join(__dirname, "..", "frontend", "src", "PoS.json");
+const destPath = path.join(import.meta.dirname, "..", "frontend", "src", "PoS.json");
 
 if (!fs.existsSync(artifactPath)) {
   console.warn("sync-pos-abi: PoSSimulator artifact missing; run: npx hardhat compile");

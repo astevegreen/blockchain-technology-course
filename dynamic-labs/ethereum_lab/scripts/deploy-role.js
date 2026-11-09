@@ -14,7 +14,9 @@
  * After deploy: Register the contract address in the web UI (Complete your role section).
  */
 
-const hre = require("hardhat");
+import { network } from "hardhat";
+
+const { ethers } = await network.getOrCreate();
 
 const ROLE_CONTRACTS = {
   CarSeller: { contract: "CarSellerRole", args: [] },
@@ -53,7 +55,7 @@ async function main() {
     process.exit(1);
   }
 
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log(`\n🎭 Deploying ${config.contract} as ${deployer.address}`);
 
   const deployArgs = config.args.map((a) => {
@@ -69,7 +71,7 @@ async function main() {
     return a;
   });
 
-  const Contract = await hre.ethers.getContractFactory(config.contract);
+  const Contract = await ethers.getContractFactory(config.contract);
   const instance = await Contract.deploy(...deployArgs);
   await instance.waitForDeployment();
 

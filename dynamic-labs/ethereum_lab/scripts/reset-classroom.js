@@ -8,10 +8,10 @@
  * DOCKER: Use "npm run reset:docker" instead (stops containers and removes volumes).
  */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
 
-const ROOT = path.join(__dirname, "..");
+const ROOT = path.join(import.meta.dirname, "..");
 
 const targets = [
   { path: path.join(ROOT, ".hardhat"), name: "Blockchain data (.hardhat)" },

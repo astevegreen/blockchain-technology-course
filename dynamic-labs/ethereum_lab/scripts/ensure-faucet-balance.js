@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const eMod = require('ethers');
+import * as eMod from "ethers";
 const ethers = eMod.ethers || eMod;
 
 const DEFAULT_FAUCET_PRIVATE_KEY = '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6';

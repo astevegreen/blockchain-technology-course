@@ -7,8 +7,9 @@
  * - Analyzing selection distribution
  */
 
-const { BlockchainEnv } = require("../../lib/BlockchainEnv");
-const fs = require("fs");
+import { BlockchainEnv } from "../../lib/BlockchainEnv.js";
+import fs from "node:fs";
+import { Contract } from "ethers";
 
 function weightedRandomSelection(validators, stakes) {
   const totalStake = stakes.reduce((a, b) => a + b, 0n);
@@ -39,8 +40,8 @@ async function main() {
     return;
   }
   
-  const PoSABI = require("../../frontend/src/PoS.json");
-  const contract = new (require("ethers").Contract)(posAddress, PoSABI, env.provider);
+  const PoSABI = JSON.parse(fs.readFileSync(new URL("../../frontend/src/PoS.json", import.meta.url), "utf8"));
+  const contract = new Contract(posAddress, PoSABI, env.provider);
   
   // Get all validators
   console.log("\n--- Fetching Validators ---");

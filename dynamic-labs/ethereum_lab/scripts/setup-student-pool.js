@@ -12,11 +12,13 @@
 // pool address whose balance is below TARGET_FUND_ETH so that
 // reused classroom restarts or higher-capacity classrooms are always topped up.
 
-const fs = require("fs");
-const path = require("path");
-const crypto = require("crypto");
-const { ethers } = require("hardhat");
-const { HDNodeWallet, Mnemonic } = require("ethers");
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { network } from "hardhat";
+import { HDNodeWallet, Mnemonic } from "ethers";
+
+const { ethers } = await network.getOrCreate();
 
 const POOL_SIZE = parseInt(
   process.env.POOL_SIZE ||

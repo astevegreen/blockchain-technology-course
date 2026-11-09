@@ -20,9 +20,9 @@
  *   BEACON_FORK_EVERY default 9 (propose a fork every N blocks for a slashing demo)
  */
 
-const fs = require("fs");
-const path = require("path");
-const { ethers } = require("ethers");
+import fs from "node:fs";
+import path from "node:path";
+import { ethers } from "ethers";
 
 const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
 // Hardhat account #0 (deployer == instructor) from the standard test mnemonic.
@@ -51,7 +51,7 @@ const BUNDLE_GAS_TARGET = BigInt(process.env.BEACON_BUNDLE_GAS_TARGET || "300000
 const TXOPTS = { gasLimit: 15_000_000n };
 const MNEMONIC = "test test test test test test test test test test test junk";
 
-const ROOT = path.join(__dirname, "..");
+const ROOT = path.join(import.meta.dirname, "..");
 const CONFIG_PATH = path.join(ROOT, "frontend", "public", "beacon-lab-config.json");
 const ABI_PATH = path.join(
   ROOT,

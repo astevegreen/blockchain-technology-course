@@ -7,8 +7,10 @@
  * Or read from SIMPLE_STORAGE_ADDRESS.txt if it exists.
  */
 
-const hre = require("hardhat");
-const fs = require("fs");
+import { network } from "hardhat";
+import fs from "node:fs";
+
+const { ethers } = await network.getOrCreate();
 
 async function main() {
   let address =
@@ -24,7 +26,7 @@ async function main() {
     process.exit(1);
   }
 
-  const contract = await hre.ethers.getContractAt("SimpleStorage", address);
+  const contract = await ethers.getContractAt("SimpleStorage", address);
 
   // Read current value
   const value = await contract.get();

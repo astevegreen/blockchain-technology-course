@@ -1,15 +1,19 @@
-const hre = require("hardhat");
+import fs from "node:fs";
+import path from "node:path";
+import { network } from "hardhat";
+
+const { ethers } = await network.getOrCreate();
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log(`\n🎓 Deploying PoS Simulator with instructor: ${deployer.address}`);
   
-  const pos = await hre.ethers.deployContract("PoSSimulator");
+  const pos = await ethers.deployContract("PoSSimulator");
   await pos.waitForDeployment();
   
   // Fund the reward pool with 200 ETH from the deployer
   // This provides enough for rewards, slashing burns, and extended demos
-  const fundingAmount = hre.ethers.parseEther("200.0");
+  const fundingAmount = ethers.parseEther("200.0");
   await deployer.sendTransaction({
     to: pos.target,
     value: fundingAmount
@@ -39,12 +43,10 @@ async function main() {
   console.log(`\n🔍 Verified: currentEpoch() = ${epoch}`);
 
   // Write contract address to file for easy access
-  const fs = require('fs');
-  const path = require('path');
   fs.writeFileSync('CONTRACT_ADDRESS.txt', pos.target + '\n');
   
   // Also write to frontend public dir so the app can auto-detect it
-  const publicConfig = path.join(__dirname, '..', 'frontend', 'public', 'contract-config.json');
+  const publicConfig = path.join(import.meta.dirname, '..', 'frontend', 'public', 'contract-config.json');
   fs.writeFileSync(publicConfig, JSON.stringify({ contractAddress: pos.target, deployedAt: new Date().toISOString() }));
   console.log(`\n📝 Contract address saved to CONTRACT_ADDRESS.txt and frontend/public/contract-config.json`);
 }

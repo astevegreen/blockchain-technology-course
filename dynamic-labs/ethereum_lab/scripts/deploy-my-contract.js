@@ -1,10 +1,12 @@
-const hre = require("hardhat");
+import { network } from "hardhat";
+
+const { ethers } = await network.getOrCreate();
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log("Deploying with:", deployer.address);
 
-  const MyContract = await hre.ethers.getContractFactory("MyContract");
+  const MyContract = await ethers.getContractFactory("MyContract");
   const contract = await MyContract.deploy();
   await contract.waitForDeployment();
 

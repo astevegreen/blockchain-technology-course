@@ -4,9 +4,9 @@
  * Usage: npm run beacon-lab
  */
 
-const { spawn } = require("child_process");
-const http = require("http");
-const path = require("path");
+import { spawn } from "node:child_process";
+import http from "node:http";
+import path from "node:path";
 
 const RPC_URL = "http://127.0.0.1:8545";
 const RPC_PORT = 8545;
@@ -54,7 +54,7 @@ function waitForRpc() {
 
 function run(cmd, args, opts = {}) {
   return new Promise((resolve, reject) => {
-    const cwd = opts.cwd || path.join(__dirname, "..");
+    const cwd = opts.cwd || path.join(import.meta.dirname, "..");
     const child = spawn(cmd, args, {
       cwd,
       stdio: opts.silent ? "pipe" : "inherit",
@@ -98,7 +98,7 @@ async function main() {
   if (!chainAlreadyUp) {
     console.log("\n⛓  Starting Hardhat node...");
     const chain = spawn("npx", ["hardhat", "node", "--hostname", "0.0.0.0"], {
-      cwd: path.join(__dirname, ".."),
+      cwd: path.join(import.meta.dirname, ".."),
       stdio: "pipe",
       shell: true,
     });
@@ -112,14 +112,14 @@ async function main() {
 
   console.log("📜 Deploying Beacon Chain Lab...");
   await run("npx", ["hardhat", "run", "scripts/deploy-beacon-lab.js", "--network", "localhost"], {
-    cwd: path.join(__dirname, ".."),
+    cwd: path.join(import.meta.dirname, ".."),
   });
   console.log("");
 
   console.log("🌐 Starting frontend...");
   console.log("   Open: http://localhost:5173/?view=beacon-lab\n");
   const web = spawn("npm", ["run", "web"], {
-    cwd: path.join(__dirname, ".."),
+    cwd: path.join(import.meta.dirname, ".."),
     stdio: "inherit",
     shell: true,
   });

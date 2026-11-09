@@ -31,11 +31,16 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- `dynamic-labs/ethereum_lab` stays on Hardhat 2 with `@nomicfoundation/hardhat-toolbox` `^6.1.0`
-  (`package.json:38`). Toolbox 7.0.0 only prints a notice and exits: Hardhat 3 split it into new plugins. Moving
-  means ES modules, a new `hardhat.config` format with each plugin named, and porting the 3 test files, 12 scripts
-  and `lib/BlockchainEnv.js` that `require("hardhat")`, then rerunning the lab's tests. Do it at the lab's next
-  rebuild; Dependabot ignores toolbox 7 until then. (8 Nov 2026, Dependabot PR #34)
+- `dynamic-labs/ethereum_lab/Dockerfile:70` sets `HARDHAT_USER_HOME` and `:103-105` creates and opens that folder,
+  but neither Hardhat 2 nor 3 reads the variable: the compilers land in `/root/.cache/hardhat-nodejs`, which `:126`
+  copies into the student seed. That copy (a 15 MB solc) cannot run in a student lane, whose `/home/student` and
+  `/tmp` are noexec tmpfs, and students have no terminal there; the instructor container compiles from `/root/.cache` as root. Drop
+  the variable and those lines, decide whether the seed needs the compiler, and rerun the lab's tests. (8 Nov 2026,
+  Hardhat 3 move)
+- `npm run lab1` to `lab5` (`dynamic-labs/ethereum_lab/package.json:20-24`) import `lib/BlockchainEnv.js`, but the
+  image copies no `lib/` (`Dockerfile:90-100`, `:124-125`), so those five CLI labs fail inside the lab image and
+  run only from a checkout. Copy `lib/` into `/app` and the student workspace if the labs are meant to run there.
+  (8 Nov 2026, Hardhat 3 move)
 - `dynamic-labs/regression-tests/automated/bitcoin/live_support.py` (976 lines) and `hlf/live_support.py` (1,059)
   still hold their own copies of the lane-claim, docker and ttyd helpers that `live_common.py` now shares
   (`LaneLabSupport`). Each differs: bitcoin's `TtydSession` (`:678`) reads on a background thread and its
@@ -43,10 +48,6 @@ slide index), which is never listed here.
   shared code with those differences as options, rerunning its Lab Tests. (8 Nov 2026, live_common dedupe)
 
 ## Tooling and rules
-- Planned, low priority: move `dynamic-labs/ethereum_lab/frontend` (the repo's only TypeScript project, `typescript ~5.9.3`,
-  built with `tsc && vite build`) to TypeScript 7, Microsoft's native compiler, or 7.1 if it is out (beta 20 Oct 2026;
-  stable reported for late November 2026). Do it at the lab's next rebuild: it speeds up that one build and nothing
-  else, since `tools/check.py` and the site never run TypeScript. (6 Nov 2026, owner's research request)
 - Before the later course runs: rebuild the student VM on Ubuntu 24.04 (`vm-build/ubuntu-lab.pkr.hcl:17,22` still
   name the 22.04 "jammy" cloud image; its standard support ends in mid-2027, while 24.04 is supported to 2029). In the
   same pass, move the lab images on Debian 12 "bookworm" (regular support ended 12 Jul 2026) and `python:3.11-slim`

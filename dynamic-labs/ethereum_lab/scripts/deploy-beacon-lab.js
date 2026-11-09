@@ -1,9 +1,11 @@
-const hre = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+import { network } from "hardhat";
+import fs from "node:fs";
+import path from "node:path";
+
+const { ethers } = await network.getOrCreate();
 
 async function main() {
-  const signers = await hre.ethers.getSigners();
+  const signers = await ethers.getSigners();
   const deployer = signers[0];
 
   // Defaults are tuned for a working classroom sim: committeesPerEpoch MUST be 1 so
@@ -19,11 +21,11 @@ async function main() {
   console.log(`   Committees per epoch: ${committeesPerEpoch}, Validators per committee: ${validatorsPerCommittee}`);
   console.log(`   Blocks per epoch: ${blocksPerEpoch}, Pool size: ${poolSize}`);
 
-  const BeaconChainLab = await hre.ethers.getContractFactory("BeaconChainLab");
+  const BeaconChainLab = await ethers.getContractFactory("BeaconChainLab");
   const lab = await BeaconChainLab.deploy(committeesPerEpoch, validatorsPerCommittee, blocksPerEpoch);
   await lab.waitForDeployment();
 
-  const fundingAmount = hre.ethers.parseEther("100.0");
+  const fundingAmount = ethers.parseEther("100.0");
   await deployer.sendTransaction({
     to: lab.target,
     value: fundingAmount,
@@ -56,20 +58,20 @@ async function main() {
     deployedAt: new Date().toISOString(),
   };
 
-  const configPath = path.join(__dirname, "..", "frontend", "public", "beacon-lab-config.json");
+  const configPath = path.join(import.meta.dirname, "..", "frontend", "public", "beacon-lab-config.json");
   fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   console.log(`\nConfig written to frontend/public/beacon-lab-config.json`);
 
   // Copy ABI to frontend
   const artifactPath = path.join(
-    __dirname,
+    import.meta.dirname,
     "..",
     "artifacts",
     "contracts",
     "BeaconChainLab.sol",
     "BeaconChainLab.json"
   );
-  const destDir = path.join(__dirname, "..", "frontend", "src", "contracts");
+  const destDir = path.join(import.meta.dirname, "..", "frontend", "src", "contracts");
   const destPath = path.join(destDir, "BeaconChainLab.json");
 
   if (fs.existsSync(artifactPath)) {

@@ -6,24 +6,26 @@
  *   2. Deploy:          npx hardhat run scripts/deploy-simple-storage.js --network localhost
  */
 
-const hre = require("hardhat");
+import fs from "node:fs";
+import { network } from "hardhat";
+
+const { ethers } = await network.getOrCreate();
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log("Deploying SimpleStorage with account:", deployer.address);
 
-  const balance = await hre.ethers.provider.getBalance(deployer.address);
-  console.log("Account balance:", hre.ethers.formatEther(balance), "ETH");
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("Account balance:", ethers.formatEther(balance), "ETH");
 
   console.log("\nDeploying SimpleStorage...");
-  const contract = await hre.ethers.deployContract("SimpleStorage");
+  const contract = await ethers.deployContract("SimpleStorage");
   await contract.waitForDeployment();
 
   const address = await contract.getAddress();
   console.log("SimpleStorage deployed to:", address);
 
   // Save address for easy reuse
-  const fs = require("fs");
   fs.writeFileSync("SIMPLE_STORAGE_ADDRESS.txt", address + "\n");
   console.log("Address saved to SIMPLE_STORAGE_ADDRESS.txt");
 }

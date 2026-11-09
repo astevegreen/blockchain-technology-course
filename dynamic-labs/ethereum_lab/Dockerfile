@@ -113,7 +113,10 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 # Ensure all app files are world-readable (git checkout umask can produce 600)
 RUN chmod -R a+rX /app/
 
-# Create directories for runtime data
+# Create directories for runtime data.
+# Hardhat 3 keeps its compilers in ~/.cache/hardhat-nodejs and creates the .config and
+# .local/share folders only when it has something to store there, so those two are copied
+# into the student seed only when present.
 RUN usermod -l student -d /home/student -m node \
  && groupmod -n student node \
  && mkdir -p /app/data /app/contracts/student /app/frontend/public /app/frontend/dist/api \
@@ -121,8 +124,9 @@ RUN usermod -l student -d /home/student -m node \
  && cp package*.json hardhat.config.js /opt/student-home-seed/workspace/ \
  && cp -a contracts scripts abi artifacts cache /opt/student-home-seed/workspace/ \
  && cp -a /root/.cache/hardhat-nodejs /opt/student-home-seed/.cache/hardhat-nodejs \
- && cp -a /root/.config/hardhat-nodejs /opt/student-home-seed/.config/hardhat-nodejs \
- && cp -a /root/.local/share/hardhat-nodejs /opt/student-home-seed/.local/share/hardhat-nodejs \
+ && for d in .config .local/share; do \
+      if [ -d "/root/$d/hardhat-nodejs" ]; then cp -a "/root/$d/hardhat-nodejs" "/opt/student-home-seed/$d/hardhat-nodejs"; fi; \
+    done \
  && rm -rf /opt/student-home-seed/workspace/scripts/cli-labs/standalone/node_modules \
  && ln -s /app/scripts/cli-labs/standalone/node_modules /opt/student-home-seed/workspace/scripts/cli-labs/standalone/node_modules \
  && ln -s /app/node_modules /opt/student-home-seed/workspace/node_modules \

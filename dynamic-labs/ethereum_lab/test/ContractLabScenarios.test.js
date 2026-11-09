@@ -15,8 +15,11 @@
  *   - CarBuyerRole, CarSellerRole: student role contracts with CarSale
  *   - Multi-contract: CarSale + RansomPayment in same session
  */
-const { expect } = require("chai");
-const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
+import { expect } from "chai";
+import { network } from "hardhat";
+
+const { ethers, networkHelpers } = await network.create();
+const { loadFixture } = networkHelpers;
 
 describe("Contract Lab - Build & Deploy Scenarios", function () {
   async function deployFixture() {

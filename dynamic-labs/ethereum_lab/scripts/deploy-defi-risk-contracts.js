@@ -1,6 +1,8 @@
-const hre = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+import { network } from "hardhat";
+import fs from "node:fs";
+import path from "node:path";
+
+const { ethers } = await network.getOrCreate();
 
 function writeJson(filePath, data) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -15,7 +17,6 @@ async function verifyCode(ethers, label, address) {
 }
 
 async function main() {
-  const { ethers } = hre;
   const [deployer] = await ethers.getSigners();
 
   const entropyLotteryInitialPoolEth = "1000";
@@ -112,7 +113,7 @@ async function main() {
     },
   };
 
-  const root = path.join(__dirname, "..");
+  const root = path.join(import.meta.dirname, "..");
   const publicPath = path.join(root, "frontend", "public", "labs", "ethereum_lab", "defi-risk-config.json");
   const distPath = path.join(root, "frontend", "dist", "labs", "ethereum_lab", "defi-risk-config.json");
 

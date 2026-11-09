@@ -1,5 +1,7 @@
-const { expect } = require("chai");
-const { ethers } = require("hardhat");
+import { expect } from "chai";
+import { network } from "hardhat";
+
+const { ethers } = await network.create();
 
 describe("Arcade Token Lab", function () {
   let token, vendor, vault, owner, alice, treasury;
@@ -82,10 +84,10 @@ describe("Arcade Token Lab", function () {
 
   it("requires allowance and balance before play", async () => {
     await expect(vault.connect(alice).playGame(1))
-      .to.be.reverted;
+      .to.revert(ethers);
 
     await vendor.connect(alice).buyToken({ value: price });
     await expect(vault.connect(alice).playGame(1))
-      .to.be.reverted;
+      .to.revert(ethers);
   });
 });

@@ -6,12 +6,14 @@
  *   npx hardhat run scripts/deploy-lab-nft-sale.js --network instructor
  */
 
-const hre = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+import { network } from "hardhat";
+import fs from "node:fs";
+import path from "node:path";
+
+const { ethers } = await network.getOrCreate();
 
 function writeTokenizationConfig(saleAddress) {
-  const outDir = path.join(__dirname, "..", "frontend", "public", "labs", "ethereum_lab");
+  const outDir = path.join(import.meta.dirname, "..", "frontend", "public", "labs", "ethereum_lab");
   const outPath = path.join(outDir, "tokenization-config.json");
   fs.mkdirSync(outDir, { recursive: true });
   let existing = {};
@@ -27,10 +29,10 @@ function writeTokenizationConfig(saleAddress) {
 }
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log("Deploying LabNFTSale with account:", deployer.address);
 
-  const contract = await hre.ethers.deployContract("LabNFTSale");
+  const contract = await ethers.deployContract("LabNFTSale");
   await contract.waitForDeployment();
 
   const address = await contract.getAddress();

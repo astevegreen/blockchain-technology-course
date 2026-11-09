@@ -5,13 +5,15 @@
  * from CLI scripts, reducing code duplication across lab scripts.
  * 
  * Usage:
- *   const { BlockchainEnv } = require("../../lib/BlockchainEnv");
+ *   import { BlockchainEnv } from "../../lib/BlockchainEnv.js";
  *   const env = new BlockchainEnv();
  */
 
-const { ethers } = require("hardhat");
+import { network } from "hardhat";
 
-class BlockchainEnv {
+const { ethers } = await network.getOrCreate();
+
+export class BlockchainEnv {
   constructor() {
     this.provider = ethers.provider;
     this._signers = null;
@@ -245,6 +247,4 @@ class BlockchainEnv {
     }
   }
 }
-
-module.exports = { BlockchainEnv };
 

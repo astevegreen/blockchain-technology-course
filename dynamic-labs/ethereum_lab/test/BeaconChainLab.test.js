@@ -1,6 +1,9 @@
-const { expect } = require("chai");
-const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
+import { expect } from "chai";
+import { anyValue } from "@nomicfoundation/hardhat-ethers-chai-matchers/withArgs";
+import { network } from "hardhat";
+
+const { ethers, networkHelpers } = await network.create();
+const { loadFixture } = networkHelpers;
 
 const MIN_STAKE = ethers.parseEther("32");
 

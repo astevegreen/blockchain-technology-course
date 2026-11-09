@@ -8,8 +8,8 @@
  * - Interacting with deployed contracts
  */
 
-const { BlockchainEnv } = require("../../lib/BlockchainEnv");
-const fs = require("fs");
+import { BlockchainEnv } from "../../lib/BlockchainEnv.js";
+import fs from "node:fs";
 
 async function main() {
   const env = new BlockchainEnv();

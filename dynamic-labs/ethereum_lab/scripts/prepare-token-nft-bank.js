@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "node:fs";
+import path from "node:path";
 
 const themes = [
   ["mempool-storms", "Mempool Storms", "Chaotic pending transactions visualized as electrical weather."],
@@ -44,7 +44,7 @@ const themes = [
   ["genesis-mint-cards", "Genesis Mint Cards", "First-edition cards marking a student's original token creation."],
 ];
 
-const publicRoot = path.join(__dirname, "..", "frontend", "public");
+const publicRoot = path.join(import.meta.dirname, "..", "frontend", "public");
 const labRoot = path.join(publicRoot, "labs", "ethereum_lab");
 const assetRoot = path.join(labRoot, "nft-assets");
 const metadataRoot = path.join(labRoot, "nft-metadata");

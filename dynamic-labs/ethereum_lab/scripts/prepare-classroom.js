@@ -13,11 +13,12 @@
  * Requires: blockchain node running (npm run chain) for funding step.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { ethers } = require('ethers');
+import fs from "node:fs";
+import path from "node:path";
+import readline from "node:readline";
+import { ethers } from "ethers";
 
-const PROJECT_ROOT = path.resolve(__dirname, '..');
+const PROJECT_ROOT = path.resolve(import.meta.dirname, '..');
 const ACCOUNTS_FILE = path.join(PROJECT_ROOT, 'student-accounts.json');
 const RPC_URL = process.env.RPC_URL || 'http://localhost:8545';
 const INSTRUCTOR_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
@@ -82,7 +83,6 @@ async function main() {
   const autoFund = process.env.PREPARE_CLASSROOM_FUND === '1' || process.argv.includes('--fund');
   if (!autoFund) {
     console.log(`\n💰 Fund ${unfunded.length} accounts with test ETH? (y/n) [y]: `);
-    const readline = require('readline');
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     const answer = await new Promise(r => rl.question('', r));
     rl.close();

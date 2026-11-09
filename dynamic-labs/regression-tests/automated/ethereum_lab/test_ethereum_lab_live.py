@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import unittest
 
 from live_support import (
@@ -266,6 +267,27 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         )
         self.assertIn("heimdall", out)
         self.assertEqual(out.strip().splitlines()[-1], "1")
+
+    def test_hardhat_recompiles_offline_in_the_lab_image(self) -> None:
+        # Hardhat 3 keeps its solc download in ~/.cache/hardhat-nodejs; the image fetches it at
+        # build time so the instructor lane's terminal compiles offline. Student lanes cannot run
+        # it (their tmpfs home is noexec, and they have no terminal), so this runs the lane's own
+        # image as the instructor container does, as root, with no network at all.
+        claim = self.require_claim()
+        image = docker_inspect(claim.container_name)["Image"]
+        result = subprocess.run(
+            [
+                "docker", "run", "--rm", "--network", "none", "--entrypoint", "bash", image, "-c",
+                "cd /app && rm -f artifacts/contracts/SimpleStorage.sol/SimpleStorage.json"
+                " && npx hardhat compile --force"
+                " && node -p \"require('./artifacts/contracts/SimpleStorage.sol/SimpleStorage.json').contractName\"",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=240,
+        )
+        self.assertEqual(result.returncode, 0, f"stdout={result.stdout[-2000:]}\nstderr={result.stderr[-2000:]}")
+        self.assertEqual(result.stdout.strip().splitlines()[-1], "SimpleStorage")
 
     def test_student_home_is_writable_and_rootfs_is_read_only(self) -> None:
         claim = self.require_claim()

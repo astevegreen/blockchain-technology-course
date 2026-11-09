@@ -17,6 +17,9 @@ Target coverage:
 - router-mediated shell RPC reachability and lack of direct instructor
   reachability from student lanes
 - student lab-api checks for session state and wallet registration
+- a forced `npx hardhat compile` in the lane's image with no network, as
+  root like the instructor container, using the solc fetched at build time
+  (student lanes cannot run it: their home is a noexec tmpfs)
 - progress tracker correctness for claim-backed sessions
 - instructor auth gate checks, instructor-mode routing, and instructor
   config/lab-api reachability

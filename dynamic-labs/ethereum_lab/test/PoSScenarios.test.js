@@ -17,9 +17,11 @@
  *   Register Contract  → registerRoleContract()
  *   Send Message       → sendMessage()
  */
-const { expect } = require("chai");
-const { loadFixture } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
-const { time } = require("@nomicfoundation/hardhat-network-helpers");
+import { expect } from "chai";
+import { network } from "hardhat";
+
+const { ethers, networkHelpers } = await network.create();
+const { loadFixture, time } = networkHelpers;
 
 describe("PoS Simulator - UI Action Scenarios", function () {
   async function deployFixture() {

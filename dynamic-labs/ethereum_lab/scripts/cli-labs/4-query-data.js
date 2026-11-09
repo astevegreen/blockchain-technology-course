@@ -10,7 +10,7 @@
  * - Gas estimation
  */
 
-const { BlockchainEnv } = require("../../lib/BlockchainEnv");
+import { BlockchainEnv } from "../../lib/BlockchainEnv.js";
 
 async function main() {
   const env = new BlockchainEnv();

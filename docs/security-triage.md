@@ -77,8 +77,22 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   picomatch 1, cookie 1. None is reached by a student's request. They run only for compiler downloads (offline in
   the image), test runs and plugin tasks. Alerts 42, 47, 59, 62, 64, 65, 71, 84, 102, 103, 114, 116, 118, 119, 122, 126,
   141-143, 156, 158, 159, 163, 168, 178, 188, 190-192, 194, 275.
+  **Done 8 Nov 2026:** the lab moved to Hardhat 3.21 with its split plugins (hardhat-ethers, hardhat-ethers-chai-matchers,
+  hardhat-mocha, hardhat-network-helpers) in place of toolbox 6, and the lockfile was regenerated. The D4 packages
+  are gone or on versions `npm audit` no longer flags, except tmp and minimatch below, and the lab's addresses and
+  outputs are unchanged. `npm audit` on 8 Nov 2026 went from 40 findings to 12 (0 critical, 9 high, 3 moderate),
+  from three root packages, none of which npm can fix without a downgrade:
+  - zod 3.25.76 under Hardhat 3 itself (GHSA-mrhx-c7xc-m3w5; fixed only in zod 4.6.6, which Hardhat 3.21 does not
+    accept). Hardhat uses zod to validate its own config and plugin options, never a student's request. It accounts
+    for 7 of the 12, since npm also counts hardhat, its zod helper and the four plugins that depend on them.
+  - tmp 0.2.6, pinned by solc 0.8.38, the compiler package `server/` uses (GHSA-7c78-jf6q-g5cm; npm's only fix is
+    downgrading solc to 0.8.36). The advisory needs a non-string prefix passed to tmp, which the lab never builds
+    from student input. 2 of the 12.
+  - glob 13 and minimatch 10 under mocha 12, the test runner (GHSA-3g3m-2fjr-6pw4, GHSA-g3hv-75wg-m249; no fixed
+    release in mocha's range). They run only for `npx hardhat test`. 3 of the 12, counting mocha.
 - **D5, dismiss as "tolerable risk".** elliptic sits under ethers v5 inside `@nomicfoundation/hardhat-verify`, which
   the lab never runs, and no fixed version is published. Hardhat 3 drops it. Alert 44.
+  **Done 8 Nov 2026:** gone with the Hardhat 3 move; neither elliptic nor ethers v5 is in the lockfile now.
 - **D6, fix now.** vite, rollup, postcss, Babel, browserslist and their helpers run only in the image's build stage;
   the final image serves the built `dist/` through `server/frontend-server.js`, so the Vite dev server never runs.
   fflate (2 alerts, via three-stdlib) is bundled into the page but only decompresses the lab's own 3D assets. A

@@ -8,12 +8,14 @@
  * For instructor node:  npx hardhat run scripts/deploy-lab-nft.js --network instructor
  */
 
-const hre = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+import { network } from "hardhat";
+import fs from "node:fs";
+import path from "node:path";
+
+const { ethers } = await network.getOrCreate();
 
 function writeTokenizationConfig(nftAddress, saleAddress = "") {
-  const outDir = path.join(__dirname, "..", "frontend", "public", "labs", "ethereum_lab");
+  const outDir = path.join(import.meta.dirname, "..", "frontend", "public", "labs", "ethereum_lab");
   const outPath = path.join(outDir, "tokenization-config.json");
   fs.mkdirSync(outDir, { recursive: true });
   let existing = {};
@@ -29,14 +31,14 @@ function writeTokenizationConfig(nftAddress, saleAddress = "") {
 }
 
 async function main() {
-  const [deployer] = await hre.ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   console.log("Deploying LabNFT with account:", deployer.address);
 
-  const balance = await hre.ethers.provider.getBalance(deployer.address);
-  console.log("Account balance:", hre.ethers.formatEther(balance), "ETH");
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("Account balance:", ethers.formatEther(balance), "ETH");
 
   console.log("\nDeploying LabNFT...");
-  const contract = await hre.ethers.deployContract("LabNFT", ["LabNFT", "LAB"]);
+  const contract = await ethers.deployContract("LabNFT", ["LabNFT", "LAB"]);
   await contract.waitForDeployment();
 
   const address = await contract.getAddress();

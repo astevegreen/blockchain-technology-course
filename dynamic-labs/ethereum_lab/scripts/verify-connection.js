@@ -1,4 +1,4 @@
-const { ethers } = require("ethers");
+import { ethers } from "ethers";
 
 async function main() {
   console.log("Attempting to connect to local Hardhat node...");

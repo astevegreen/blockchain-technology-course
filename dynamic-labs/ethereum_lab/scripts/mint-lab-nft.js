@@ -10,8 +10,10 @@
  * TOKEN_URI defaults to empty string (use Metadata Builder in lab to generate data URI).
  */
 
-const hre = require("hardhat");
-const fs = require("fs");
+import { network } from "hardhat";
+import fs from "node:fs";
+
+const { ethers } = await network.getOrCreate();
 
 async function main() {
   let address =
@@ -27,11 +29,11 @@ async function main() {
     process.exit(1);
   }
 
-  const [signer] = await hre.ethers.getSigners();
+  const [signer] = await ethers.getSigners();
   const to = process.env.TO || signer.address;
   const tokenURI = process.env.TOKEN_URI || "";
 
-  const contract = await hre.ethers.getContractAt("LabNFT", address);
+  const contract = await ethers.getContractAt("LabNFT", address);
 
   console.log("Minting to:", to);
   if (tokenURI) {
@@ -46,9 +48,9 @@ async function main() {
   const event = receipt.logs.find(
     (log) =>
       log.topics[0] ===
-      hre.ethers.id("Transfer(address,address,uint256)")
+      ethers.id("Transfer(address,address,uint256)")
   );
-  const tokenId = event ? hre.ethers.toBigInt(event.topics[3]) : "?";
+  const tokenId = event ? ethers.toBigInt(event.topics[3]) : "?";
 
   console.log("\nMinted! Token ID:", tokenId.toString());
   console.log("Transaction hash:", receipt.hash);

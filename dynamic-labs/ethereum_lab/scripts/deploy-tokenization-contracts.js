@@ -1,6 +1,8 @@
-const hre = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+import { network } from "hardhat";
+import fs from "node:fs";
+import path from "node:path";
+
+const { ethers } = await network.getOrCreate();
 
 function writeJson(filePath, data) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -8,7 +10,6 @@ function writeJson(filePath, data) {
 }
 
 async function main() {
-  const { ethers } = hre;
   const [deployer] = await ethers.getSigners();
   const tokenPriceEth = process.env.ARCADE_TOKEN_PRICE_ETH || "50";
   const tokenPriceWei = ethers.parseEther(tokenPriceEth);
@@ -80,7 +81,7 @@ async function main() {
     updatedAt: new Date().toISOString(),
   };
 
-  const root = path.join(__dirname, "..");
+  const root = path.join(import.meta.dirname, "..");
   const publicPath = path.join(root, "frontend", "public", "labs", "ethereum_lab", "tokenization-config.json");
   const distPath = path.join(root, "frontend", "dist", "labs", "ethereum_lab", "tokenization-config.json");
 
