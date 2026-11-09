@@ -133,6 +133,11 @@ def validate_manifest(folder: str, manifest: dict, schema: dict) -> list[str]:
         problems.append(f"{folder}/lab.yaml: id {manifest.get('id')!r} must equal the folder name {folder!r}")
     if manifest.get("student_local") is True and not manifest.get("student_compose_file"):
         problems.append(f"{folder}/lab.yaml: student_compose_file is required when student_local is true")
+    for i, item in enumerate(manifest.get("data") or []):
+        # A mount written ./${VAR:-default}:/target is recorded with the default resolved, never split at its colon.
+        if isinstance(item, dict) and (re.search(r"[${}]", str(item.get("path"))) or not str(item.get("into")).startswith("/")):
+            problems.append(f"{folder}/lab.yaml: data[{i}] {item.get('path')!r} -> {item.get('into')!r}: path must have "
+                            "any ${VAR:-default} resolved to its default, and into must be an absolute container path")
     if isinstance(manifest.get("services"), dict):
         for name, spec in manifest["services"].items():
             if not isinstance(spec, dict):

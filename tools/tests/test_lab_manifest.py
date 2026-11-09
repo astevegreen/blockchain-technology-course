@@ -81,6 +81,13 @@ class Validator(unittest.TestCase):
         m["student_local"] = False
         self.assertEqual(self.problems(m), [])
 
+    def test_data_mount_with_unresolved_variable_fails(self):
+        m = good()
+        m["data"] = [{"path": "./${NGINX_CONF", "into": "-nginx-ssl.conf}", "how": "baked"}]
+        self.assertTrue(any("data[0]" in p for p in self.problems(m)))
+        m["data"] = [{"path": "./nginx-ssl.conf", "into": "/etc/nginx/conf.d/default.conf", "how": "baked"}]
+        self.assertEqual(self.problems(m), [])
+
     def test_service_needs_image_or_context(self):
         m = good()
         del m["services"]["db"]["image"]

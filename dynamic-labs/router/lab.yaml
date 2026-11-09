@@ -12,8 +12,9 @@ student_local: true
 student_compose_file: docker-compose.launcher.yml
 services:
   router:
-    source: upstream
-    image: nginx:alpine
+    source: build
+    context: .
+    dockerfile: Dockerfile.launcher
     platforms:
     - linux/amd64
     - linux/arm64
@@ -34,8 +35,8 @@ entry:
 memory_mb: 128
 approx_download_mb: 20
 data:
-- path: ./${NGINX_CONF
-  into: -nginx-ssl.conf}
+- path: ./nginx-ssl.conf
+  into: /etc/nginx/conf.d/default.conf
   how: baked
 - path: ./nginx-cache.conf
   into: /etc/nginx/conf.d/00-cache.conf
@@ -49,8 +50,8 @@ data:
 - path: ./routes
   into: /etc/nginx/routes
   how: baked
-- path: ./class-gate/${CLASS_GATE
-  into: -off}.conf
+- path: ./class-gate/off.conf
+  into: /etc/nginx/class-gate.conf
   how: baked
 - path: ./https-redirect/off.conf
   into: /etc/nginx/https-redirect.conf
