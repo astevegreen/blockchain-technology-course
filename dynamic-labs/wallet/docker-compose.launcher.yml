@@ -1,0 +1,46 @@
+name: wallet
+
+# The day-2 wallet lab for the student launcher (docs/student-launcher-design.md). The same lab as docker-compose.yml,
+# with the same project, service and container names (the router's upstreams), but nothing from the repo: each
+# bind-mounted file is baked into a thin image (launcher/*.Dockerfile), every image comes from a variable the launcher
+# fills with a release digest, and every container carries the course.lab and course.release labels.
+#   /labs/wallet/mempool/...  -> mempool (bitcoind, electrs and the mempool UI in one image)
+#   /labs/wallet/...          -> gateway (worksheet, wallet page, saved pages)
+# The node still has no volume and no peers: a restart reloads the frozen chain, as in the classroom.
+#
+# Images the launcher fills in (lab.yaml services; context is relative to this folder, dockerfile to the context).
+# regression-tests/automated/launcher-stack.sh reads these lines to build them in CI:
+# launcher-build: WALLET_MEMPOOL_IMAGE . launcher/mempool.Dockerfile
+# launcher-build: WALLET_GATEWAY_IMAGE . launcher/gateway.Dockerfile
+# Platforms: mempool linux/amd64 only (its base, ghcr.io/blockchain-course-2026/bitcoin-mempool, has no arm64 build,
+# 9 Nov 2026); gateway linux/amd64 and linux/arm64.
+
+services:
+  mempool:
+    image: ${WALLET_MEMPOOL_IMAGE:?set by the student launcher}
+    entrypoint: ["bash", "/chain-loader/load-chain.sh"]
+    command: ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
+    environment:
+      MEMPOOL_BASE_PATH: "/labs/wallet/mempool"
+      # The frozen chain's tip ages past bitcoind's 24-hour limit; this keeps the node out of initial
+      # block download so electrs indexes it (bitcoin/mempool/mempool-entrypoint.sh says more).
+      BITCOIN_EXTRA_ARGS: "-maxtipage=9999999999 -connect=0"
+    labels:
+      course.lab: wallet
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - router-net
+    restart: unless-stopped
+
+  gateway:
+    image: ${WALLET_GATEWAY_IMAGE:?set by the student launcher}
+    labels:
+      course.lab: wallet
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  router-net:
+    external: true

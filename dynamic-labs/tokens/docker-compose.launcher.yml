@@ -1,0 +1,64 @@
+name: tokens
+
+# The token lab for the student launcher (docs/student-launcher-design.md). The same lab as docker-compose.yml, with
+# the same project, service and container names (the router's upstreams), but nothing from the repo: each bind-mounted
+# file, the explorer lab's shared gateway and Otterscan settings included, is baked into a thin image
+# (launcher/*.Dockerfile), every image comes from a variable the launcher fills with a release digest, and every
+# container carries the course.lab and course.release labels.
+# The chain still has no volume: a restart reloads the frozen chain, as in the classroom.
+#
+# Images the launcher fills in (lab.yaml services; context is relative to this folder, dockerfile to the context).
+# regression-tests/automated/launcher-stack.sh reads these lines to build them in CI:
+# launcher-build: TOKENS_ANVIL_IMAGE . launcher/anvil.Dockerfile
+# launcher-build: TOKENS_GATEWAY_IMAGE .. tokens/launcher/gateway.Dockerfile
+# launcher-build: TOKENS_OTTERSCAN_IMAGE .. tokens/launcher/otterscan.Dockerfile
+# Platforms: linux/amd64 and linux/arm64 (every base image publishes both, 9 Nov 2026).
+
+services:
+  anvil:
+    image: ${TOKENS_ANVIL_IMAGE:?set by the student launcher}
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json
+        --block-time ${TOKENS_BLOCK_TIME:-12}
+    labels:
+      course.lab: tokens
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - tokens-net
+    restart: unless-stopped
+
+  gateway:
+    image: ${TOKENS_GATEWAY_IMAGE:?set by the student launcher}
+    environment:
+      - ANVIL_URL=http://anvil:8545
+      - STATIC_ROOT=/srv/static
+      # The issuer (Account 0) comes from the public test phrase like the seats': the gateway
+      # refuses its signed transactions.
+      - REFUSED_SENDERS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+    labels:
+      course.lab: tokens
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - tokens-net
+      - router-net
+    depends_on:
+      - anvil
+    restart: unless-stopped
+
+  otterscan:
+    image: ${TOKENS_OTTERSCAN_IMAGE:?set by the student launcher}
+    environment:
+      # The router serves /config.json from the gateway; this stops the image writing its own.
+      - DISABLE_CONFIG_OVERWRITE=1
+    labels:
+      course.lab: tokens
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  tokens-net:
+  router-net:
+    external: true

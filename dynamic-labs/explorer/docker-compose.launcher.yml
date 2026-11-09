@@ -1,0 +1,60 @@
+name: explorer
+
+# The explorer lab for the student launcher (docs/student-launcher-design.md). The same lab as docker-compose.yml, with
+# the same project, service and container names (the router's upstreams), but nothing from the repo: each bind-mounted
+# file is baked into a thin image (launcher/*.Dockerfile), every image comes from a variable the launcher fills with a
+# release digest, and every container carries the course.lab and course.release labels.
+# The chain still has no volume: a restart reloads the frozen chain, as in the classroom.
+#
+# Images the launcher fills in (lab.yaml services; context is relative to this folder, dockerfile to the context).
+# regression-tests/automated/launcher-stack.sh reads these lines to build them in CI:
+# launcher-build: EXPLORER_ANVIL_IMAGE . launcher/anvil.Dockerfile
+# launcher-build: EXPLORER_GATEWAY_IMAGE . launcher/gateway.Dockerfile
+# launcher-build: EXPLORER_OTTERSCAN_IMAGE . launcher/otterscan.Dockerfile
+# Platforms: linux/amd64 and linux/arm64 (every base image publishes both, 9 Nov 2026).
+
+services:
+  anvil:
+    image: ${EXPLORER_ANVIL_IMAGE:?set by the student launcher}
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json
+        --block-time ${EXPLORER_BLOCK_TIME:-12}
+    labels:
+      course.lab: explorer
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - explorer-net
+    restart: unless-stopped
+
+  gateway:
+    image: ${EXPLORER_GATEWAY_IMAGE:?set by the student launcher}
+    environment:
+      - ANVIL_URL=http://anvil:8545
+      - STATIC_ROOT=/srv/static
+    labels:
+      course.lab: explorer
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - explorer-net
+      - router-net
+    depends_on:
+      - anvil
+    restart: unless-stopped
+
+  otterscan:
+    image: ${EXPLORER_OTTERSCAN_IMAGE:?set by the student launcher}
+    environment:
+      # The router serves /config.json from the gateway; this stops the image writing its own.
+      - DISABLE_CONFIG_OVERWRITE=1
+    labels:
+      course.lab: explorer
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  explorer-net:
+  router-net:
+    external: true
