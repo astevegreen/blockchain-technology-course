@@ -57,10 +57,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # libssl3 at most, so it runs on the VM (Ubuntu 24.04, glibc 2.39) and on this image (Debian
 # trixie, glibc 2.41). The instructor lane's Lab Terminal has it; students have no terminal in
 # their lanes and run the copy the VM build takes from this image (vm-build/ubuntu-lab.pkr.hcl).
-RUN curl -fsSL -o /usr/local/bin/heimdall \
-      https://github.com/Jon-Becker/heimdall-rs/releases/download/0.9.3/heimdall-linux-amd64 \
- && echo "8d58c97f56d584d5d0737d0d0895fc8c68b7b8b2b680f2a7842245789f0b4868  /usr/local/bin/heimdall" | sha256sum -c - \
- && chmod 755 /usr/local/bin/heimdall
+# Both the amd64 and arm64 builds need glibc 2.39 at most.
+RUN set -eu; \
+    case "$(uname -m)" in \
+      x86_64) asset=heimdall-linux-amd64; sha=8d58c97f56d584d5d0737d0d0895fc8c68b7b8b2b680f2a7842245789f0b4868 ;; \
+      aarch64|arm64) asset=heimdall-linux-arm64; sha=ef1d236e5e194e1722e12552b66303d3172e0c4cc267b096f7bc8a053f168df8 ;; \
+      *) echo "Unsupported architecture: $(uname -m)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o /usr/local/bin/heimdall \
+      "https://github.com/Jon-Becker/heimdall-rs/releases/download/0.9.3/${asset}"; \
+    echo "${sha}  /usr/local/bin/heimdall" | sha256sum -c -; \
+    chmod 755 /usr/local/bin/heimdall
 RUN heimdall --version
 
 # Copy blockchain dependencies (needed for instructor mode)
