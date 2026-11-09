@@ -21,8 +21,16 @@ slide index), which is never listed here.
   stem repeats "of one size". (8 Nov 2026, 06-FO reading synthesis)
 
 ## Labs
-- Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
-  request)
+- Lab hosting is decided: one shared host per class, the cloud by default and the classroom server as the offline
+  fallback, with the student VM kept for practice and self-study (owner, 9 Nov 2026). Before the first cloud class:
+  gate the student pages to the class (today only instructor pages sign in, through `router/routes/_auth.conf`;
+  anyone who reaches the host can open a student lab), and re-check the security
+  triage's C3 and C9 dismissals (`docs/security-triage.md:109,115`), which assumed that network; and measure the
+  host size a 20-40 seat class needs (`dynamic-labs/deploy-cloud.sh`, `--max-student-capacity`, default 20, max
+  40). (9 Nov 2026, lab hosting decision)
+- `dynamic-labs/hlf/Dockerfile.ttyd:12-13` fetch ttyd and zellij from `releases/latest`, so a new upstream release
+  changes the hlf lane image without a commit. Pin both versions (and their checksums) and rerun the hlf Lab Tests.
+  (9 Nov 2026, hlf startup outage, d48ed62)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3
