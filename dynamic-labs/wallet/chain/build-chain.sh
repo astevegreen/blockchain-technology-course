@@ -7,7 +7,7 @@
 set -euo pipefail
 export MSYS_NO_PATHCONV=1
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-IMAGE="${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-mempool:latest}"
+IMAGE="${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/astevegreen/course-labs:base-bitcoin-mempool}"
 MOUNT="$HERE"
 STEPS="$HERE/../quizes"
 command -v cygpath >/dev/null && MOUNT="$(cygpath -w "$HERE")" && STEPS="$(cygpath -w "$STEPS")"

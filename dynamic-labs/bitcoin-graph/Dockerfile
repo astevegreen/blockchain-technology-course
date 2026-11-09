@@ -5,7 +5,7 @@
 #
 # See bitcoin-graph/DESIGN.md.
 
-ARG BITCOIN_LAB_BASE=ghcr.io/blockchain-course-2026/bitcoin-lab:latest
+ARG BITCOIN_LAB_BASE=ghcr.io/astevegreen/course-labs:base-bitcoin-lab
 FROM ${BITCOIN_LAB_BASE}
 
 USER root
