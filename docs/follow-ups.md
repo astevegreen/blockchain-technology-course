@@ -16,6 +16,10 @@ slide index), which is never listed here.
   sections, not the ten days. Link it from the navbar once it is organized by day; relabel its "02-BF: Transactions &
   Mining" and "02-FO: Obfuscation & Tracing" cards (about lines 2533 and 2700) to the lessons' 4 Nov titles then. (2 Nov
   2026, site cleanup)
+- Five slides run past the 700 px slide frame, so their last line sits in the bottom margin at 1280x800:
+  `06-FO-mixers_and_coinjoin.qmd:117` (by 25 px), `07-FO-privacy_coins.qmd:55` (18), `08-FO-cryptojacking.qmd:56`
+  (37) and `:234` (40), `10-FO-flash_loans_reentrancy_oracles.qmd:357` (6), all under `lessons/forensics/`. Trim a
+  line or move it to the notes. (8 Nov 2026, first render of the 14 new lessons, measured in the browser)
 
 ## Quizzes
 - Add "Wallets and key custody" (Order 50 here; renumber to the list's own) to the Notion "Role Concepts" list: the post-test

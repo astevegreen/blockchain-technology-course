@@ -1795,7 +1795,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## OTC desk
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `07-EF` / Where funds can leave a chain: A desk that takes large amounts off-chain; on chain it shows as many small deposits gathered into wholesale amounts.
+- `07-EF` / Where funds can be sold or leave the chain: A desk that takes large amounts off-chain; on chain it shows as many small deposits gathered into wholesale amounts.
 - `04-FO` / OTC desks trade large amounts off the order book: A business that arranges large trades directly between buyers and sellers, off an exchange's open order book. Only the settlement shows on-chain, and only if it goes to an outside wallet.
 - `12-FO` / Six typologies you have already met: A service that gathers many small deposits into wholesale amounts and moves them out in a few large transfers. Most desks are legitimate; the aggregation pattern raises a question, not an answer.
 
@@ -1808,7 +1808,7 @@ Multiple definitions were proposed. Kept the earliest course appearance.
 ## Pig butchering
 
 Multiple definitions were proposed. Kept the earliest course appearance.
-- `07-EF` / Where funds can leave a chain: A scam type whose proceeds, Chainalysis reported as of January 2026, were moving through centralized exchanges less and less.
+- `07-EF` / Where funds can be sold or leave the chain: A scam type whose proceeds, Chainalysis reported as of January 2026, were moving through centralized exchanges less and less.
 - `04-FO` / Name the deposit, not the sweep: A crypto investment scam whose proceeds criminals cash out through exchanges.
 - `12-FO` / Six typologies you have already met: A crypto investment scam whose proceeds need an exit that will not freeze them. FinCEN uses the term for the investment scams Huione Group laundered.
 
