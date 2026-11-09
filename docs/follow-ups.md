@@ -18,9 +18,6 @@ slide index), which is never listed here.
   2026, site cleanup)
 
 ## Quizzes
-- `quizes/pretest/pretest_week1-quiz-bank.json` has no item for concept 50, "Wallets and key custody" (day 2,
-  familiarity; post-test item p43): the shared blueprint wants one, and until it exists day 2's lab starts everyone
-  at the worked example (`docs/build-spec.md` pretest blueprint). (8 Nov 2026, concept 50 added to Role Concepts)
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
@@ -72,7 +69,7 @@ slide index), which is never listed here.
   worth doing unless single-lab runs become routine. (7 Nov 2026, CI speed; Quarto half done 8 Nov 2026)
 - The Dependabot and CodeQL alerts are triaged in `docs/security-triage.md`; its dismiss list was approved and
   dismissed on 9 Nov 2026, leaving 181 and 11 open. Its fix-now groups (D1 gunicorn, D2 Pillow, D3 and D6 the
-  Ethereum lab's lockfile refresh, C1 escaping and randomness) still need a code change and those labs' tests.
+  Ethereum lab's lockfile refresh, C1 randomness and the `progress-display.html` exception) still need a code change and those labs' tests.
   (8 Nov 2026, security triage)
 
 ## Notion and documents

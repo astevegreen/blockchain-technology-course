@@ -89,7 +89,8 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
 | C10 | Lab behaviour by design: `py/bind-socket-all-network-interfaces` (`bitcoin/workstation/agent.py:175`), `py/clear-text-logging-sensitive-data` (`cryptography/lab_cli.py:112`), `py/clear-text-storage-sensitive-data` (`lane-service/labs/ethereum.py:266`) | 3 | **Dismiss** | Won't fix |
 | C11 | `js/redos`, `tools/hooks/shell-reader.mjs:31` | 2 | **Dismiss** | Won't fix |
 
-- **C1, fix now: the only real CodeQL findings, all small.** The two `escapeHtml` helpers (`bitcoin-graph/app/static/app.js:72`,
+- **C1, fix now: the only real CodeQL findings, all small. The 9 escaping alerts were fixed on 8 Nov 2026**
+  (both helpers now escape `"` and `'`; the other C1 alerts remain). The two `escapeHtml` helpers (`bitcoin-graph/app/static/app.js:72`,
   `lane-service/wrapper.html:690`) escape `&`, `<` and `>` but not quotes, and their output goes into quoted HTML
   attributes. Today's values are Bitcoin addresses, txids and the lab's own exercise titles, which hold no quotes,
   and the one free-text value (a node label) is the student's own, saved in their own browser. So nothing is
