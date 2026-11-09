@@ -23,10 +23,6 @@ slide index), which is never listed here.
   again. The class-pass cookie is set on the parent domain (`CLASS_PASS_COOKIE_DOMAIN`, `dynamic-labs/lab-manager.sh`);
   `dynamic-labs/tests/test_class_gate*.py` simulate that but cannot prove a real browser shares it. (9 Nov 2026,
   class gate review)
-- `dynamic-labs/scripts/sync-shared.sh` still lists `dynamic-labs/exercises/l03-i3-bgp-game` as a target, but the BGP
-  game no longer uses `instructor_auth` (its copy was removed), so a sync recreates an unused copy, which
-  `dynamic-labs/tests/test_vendored_instructor_auth.py` then flags as unlisted. Drop the target. (9 Nov 2026,
-  vendored audit.py sync)
 - Nothing renews the cloud host's Let's Encrypt certificate (90 days). `dynamic-labs/deploy-cloud.sh` runs
   `certbot certonly --standalone`, which needs port 80 free, but the running router holds port 80, so `certbot renew`
   and a rerun of `deploy-cloud.sh` near expiry both fail while the labs are up. Fine for a class shorter than the

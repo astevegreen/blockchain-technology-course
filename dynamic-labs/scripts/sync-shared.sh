@@ -26,7 +26,6 @@ fi
 TARGETS=(
   "dynamic-labs/quiz-engine-v2:instructor_auth"
   "dynamic-labs/exercises/l03-i3-trust-game:instructor_auth"
-  "dynamic-labs/exercises/l03-i3-bgp-game:instructor_auth"
   "dynamic-labs/hlf:shared_instructor_auth"
 )
 
