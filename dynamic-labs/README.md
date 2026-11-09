@@ -284,6 +284,18 @@ cat .runtime/instructor-credentials.txt
 
 `deploy-cloud.sh` saves the domain so that subsequent `lab-manager.sh start` commands preserve the HTTPS configuration automatically.
 
+The certificate lasts 90 days and renews itself with no downtime. On a cloud host the router sends plain HTTP to
+HTTPS except Let's Encrypt's challenge path, `/.well-known/acme-challenge/`, which it serves from
+`/var/www/course-labs-acme` (`router/https-redirect/on.conf`). `deploy-cloud.sh` gets the certificate with
+`certbot --webroot` into that folder: through the running router when the labs are up, or through a stand-in nginx
+on port 80 on the first deploy. certbot's timer (`certbot.timer`, or a cron entry in `/etc/cron.d/course-labs-certbot`
+where there is none) renews it the same way within 30 days of expiry, and the deploy hook
+`/etc/letsencrypt/renewal-hooks/deploy/course-labs-router.sh` runs `scripts/cloud-cert-deploy-hook.sh`, which copies
+the new certificate to `/etc/course-labs/router-certs` (where the router reads it) and reloads the router. Rerunning
+`deploy-cloud.sh` works with the labs up or down. Check renewal on the host with `sudo certbot renew --dry-run`. A
+host first deployed before 9 Nov 2026 got its certificate with `--standalone`: rerun `sudo ./deploy-cloud.sh` once to
+switch it to the webroot (the router stops for about a minute while certbot runs).
+
 A cloud host is on the open internet, so `deploy-cloud.sh` turns the class gate on: students enter the class code
 before any lab page ([Class Code](#class-code-student-gate)). `--no-class-gate` leaves the labs open to anyone who
 finds the host.

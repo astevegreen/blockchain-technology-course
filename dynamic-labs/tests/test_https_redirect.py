@@ -5,8 +5,8 @@ nginx-ssl.conf serves every host on ports 80 and 443. On a cloud host with a dom
 or instructor login sent to http:// would travel unencrypted, so the cloud overlay
 mounts https-redirect/on.conf: port 80 answers with a 301 to the same host and path
 over HTTPS. The classroom server and the student VM (by IP address, self-signed
-certificate) keep off.conf. The Let's Encrypt certificate needs nothing on port 80
-from the router: deploy-cloud.sh runs certbot --standalone before the router starts.
+certificate) keep off.conf. Let's Encrypt's challenge path is the one exception
+(tests/test_acme_challenge.py).
 
 Checked as text here; tests/test_class_gate_deploy.py covers the class gate's switch.
 """
@@ -51,7 +51,8 @@ def _servers(conf: str) -> list[str]:
 class HttpsRedirectTests(unittest.TestCase):
     def test_on_redirects_plain_http_with_301_to_same_host_and_path(self) -> None:
         on = _code((ROUTER / "https-redirect/on.conf").read_text(encoding="utf-8"))
-        self.assertRegex(on, r"if \(\$scheme = http\) \{\s*return 301 https://\$host\$request_uri;\s*\}")
+        self.assertRegex(on, r"set \$https_redirect \$scheme;")
+        self.assertRegex(on, r"if \(\$https_redirect = http\) \{\s*return 301 https://\$host\$request_uri;\s*\}")
 
     def test_off_does_nothing(self) -> None:
         off = _code((ROUTER / "https-redirect/off.conf").read_text(encoding="utf-8"))

@@ -23,12 +23,9 @@ slide index), which is never listed here.
   again. The class-pass cookie is set on the parent domain (`CLASS_PASS_COOKIE_DOMAIN`, `dynamic-labs/lab-manager.sh`);
   `dynamic-labs/tests/test_class_gate*.py` simulate that but cannot prove a real browser shares it. (9 Nov 2026,
   class gate review)
-- Nothing renews the cloud host's Let's Encrypt certificate (90 days). `dynamic-labs/deploy-cloud.sh` runs
-  `certbot certonly --standalone`, which needs port 80 free, but the running router holds port 80, so `certbot renew`
-  and a rerun of `deploy-cloud.sh` near expiry both fail while the labs are up. Fine for a class shorter than the
-  certificate; a longer-lived host needs a renewal that stops the router or serves the ACME challenge through it
-  (`dynamic-labs/router/https-redirect/on.conf` would then need to let `/.well-known/acme-challenge/` through).
-  (9 Nov 2026, HTTPS redirect)
+  Also there: run `sudo certbot renew --dry-run` to prove the certificate renews through the router's challenge
+  path (`dynamic-labs/tests/test_acme_challenge.py` checks the config, not Let's Encrypt). (9 Nov 2026, certificate
+  renewal)
 - The ghcr images `bitcoin-lab`, `bitcoin-mempool` and `bitcoin-graph` (`ghcr.io/blockchain-course-2026/`) are
   still the Debian 12 builds: no workflow publishes them, and the bitcoin, wallet and trace labs pull them. Their
   Dockerfiles (`bitcoin/workstation`, `bitcoin/mempool`, `bitcoin-graph`) are on trixie since 9 Nov 2026, now carry

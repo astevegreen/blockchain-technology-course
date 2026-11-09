@@ -1,7 +1,15 @@
 services:
   router:
     volumes:
-      - /etc/letsencrypt/live/${DOMAIN:-localhost}/privkey.pem:/etc/nginx/certs/privkey.pem:ro
-      - /etc/letsencrypt/live/${DOMAIN:-localhost}/fullchain.pem:/etc/nginx/certs/fullchain.pem:ro
-      # Replaces the base file's off.conf (compose merges volumes by container path).
+      # The Let's Encrypt certificate as plain files, copied out of
+      # /etc/letsencrypt/live/<domain> by scripts/cloud-cert-deploy-hook.sh (deploy-cloud.sh
+      # and certbot after each renewal), which then reloads nginx. A file mount of the live/
+      # symlinks would pin the files they named when the router started, so a reload would
+      # keep serving the old certificate. Replaces the base file's ./certs (compose merges
+      # volumes by container path).
+      - /etc/course-labs/router-certs:/etc/nginx/certs:ro
+      # Let's Encrypt's challenge tokens, written by certbot --webroot and served on port 80
+      # (https-redirect/on.conf).
+      - /var/www/course-labs-acme:/var/www/acme:ro
+      # Replaces the base file's off.conf.
       - ./https-redirect/on.conf:/etc/nginx/https-redirect.conf:ro

@@ -44,6 +44,10 @@ Notes:
 
   Cloud deploy persists the domain in .runtime/cloud-domain.txt, enables HLF
   runtime asset downloads for cloud builds, and prebuilds on-demand lane images.
+
+  The certificate renews itself: certbot's timer renews it through the
+  running router (no downtime) and a deploy hook reloads the router. Rerun
+  this script at any time, labs up or down.
 EOF
 }
 
@@ -153,6 +157,94 @@ cert_covers_all_names() {
     done
 }
 
+# Let's Encrypt checks each name by fetching a token from
+# http://<name>/.well-known/acme-challenge/. certbot --webroot writes the token into
+# ACME_WEBROOT, which the cloud router serves on port 80 (router/https-redirect/on.conf),
+# so the certificate is issued and renewed while the labs stay up.
+ACME_WEBROOT="/var/www/course-labs-acme"
+ACME_STANDIN="course-labs-acme-standin"
+ROUTER_CONTAINER="router-router-1"
+RENEWAL_CONF="/etc/letsencrypt/renewal/$DOMAIN.conf"
+RENEW_HOOK="/etc/letsencrypt/renewal-hooks/deploy/course-labs-router.sh"
+RENEW_CRON="/etc/cron.d/course-labs-certbot"
+
+# certbot's renewal settings for this certificate name the webroot.
+cert_renews_through_webroot() {
+    grep -Eq '^authenticator *= *webroot' "$RENEWAL_CONF" 2>/dev/null \
+        && grep -Fq "$ACME_WEBROOT" "$RENEWAL_CONF"
+}
+
+# 0 when port 80 on this host serves a file from ACME_WEBROOT for $DOMAIN.
+webroot_answers() {
+    local probe="deploy-cloud-probe" token answer
+    token="$(openssl rand -hex 16)"
+    printf '%s' "$token" > "$ACME_WEBROOT/.well-known/acme-challenge/$probe"
+    answer="$(curl -fsS --max-time 5 -H "Host: $DOMAIN" \
+        "http://127.0.0.1/.well-known/acme-challenge/$probe" 2>/dev/null || true)"
+    rm -f "$ACME_WEBROOT/.well-known/acme-challenge/$probe"
+    [[ "$answer" == "$token" ]]
+}
+
+# Something must serve ACME_WEBROOT on port 80 while certbot runs. A running cloud router
+# already does. Before the first deploy nothing does, so a stand-in nginx serves it for
+# the minute certbot needs; a router from before the challenge path existed is stopped
+# for that minute (lab-manager.sh deploy, below, starts it again).
+serve_acme_webroot() {
+    local tries
+    mkdir -p "$ACME_WEBROOT/.well-known/acme-challenge"
+    if webroot_answers; then
+        echo "The router serves the challenge path; the labs stay up."
+        return 0
+    fi
+    if [[ -n "$(docker ps -q --filter "name=^${ROUTER_CONTAINER}$")" ]]; then
+        echo "The running router does not serve the challenge path yet; stopping it while certbot runs."
+        docker stop "$ROUTER_CONTAINER" >/dev/null
+    fi
+    docker rm -f "$ACME_STANDIN" >/dev/null 2>&1 || true
+    docker run -d --rm --name "$ACME_STANDIN" -p 80:80 \
+        -v "$ACME_WEBROOT:/usr/share/nginx/html:ro" nginx:alpine >/dev/null
+    trap stop_acme_standin EXIT
+    for tries in 1 2 3 4 5 6 7 8 9 10; do
+        webroot_answers && return 0
+        echo "Waiting for the stand-in web server on port 80 ($tries)..."
+        sleep 1
+    done
+    echo "Port 80 on this host does not serve $ACME_WEBROOT; Let's Encrypt could not check the names." >&2
+    exit 1
+}
+
+stop_acme_standin() {
+    docker rm -f "$ACME_STANDIN" >/dev/null 2>&1 || true
+}
+
+# certbot runs every script in renewal-hooks/deploy/ after it renews a certificate.
+# Distribution packages ship a systemd timer that runs `certbot renew` twice a day;
+# without one, a cron entry does the same.
+install_cert_renewal() {
+    local timer
+    mkdir -p "$(dirname "$RENEW_HOOK")"
+    {
+        echo '#!/bin/bash'
+        echo '# Written by dynamic-labs/deploy-cloud.sh: after a renewal, copy the certificate to the'
+        echo '# lab router and reload it. Rerun deploy-cloud.sh if the course folder moves.'
+        printf 'exec /bin/bash %q %q\n' "${SCRIPT_DIR}/scripts/cloud-cert-deploy-hook.sh" "$DOMAIN"
+    } > "$RENEW_HOOK"
+    chmod 755 "$RENEW_HOOK"
+    for timer in certbot.timer snap.certbot.renew.timer; do
+        if systemctl cat "$timer" >/dev/null 2>&1; then
+            systemctl enable --now "$timer" >/dev/null 2>&1 || true
+            echo "Certificate renewal: $timer runs certbot renew; $RENEW_HOOK reloads the router."
+            return 0
+        fi
+    done
+    {
+        echo '# Written by dynamic-labs/deploy-cloud.sh: certbot renews the lab certificate within'
+        echo '# 30 days of expiry; its deploy hook reloads the router.'
+        echo '17 3,15 * * * root certbot renew --quiet'
+    } > "$RENEW_CRON"
+    echo "Certificate renewal: $RENEW_CRON runs certbot renew; $RENEW_HOOK reloads the router."
+}
+
 # 1. Install Docker if not installed
 if ! command -v docker &> /dev/null; then
     echo "Installing Docker..."
@@ -166,7 +258,7 @@ if ! command -v certbot &> /dev/null; then
     apt-get update && apt-get install -y certbot
 fi
 
-if [ -f "$FULLCHAIN_PATH" ] && [ -f "$PRIVKEY_PATH" ] && openssl x509 -checkend 86400 -noout -in "$FULLCHAIN_PATH" >/dev/null 2>&1 && cert_covers_all_names; then
+if [ -f "$FULLCHAIN_PATH" ] && [ -f "$PRIVKEY_PATH" ] && openssl x509 -checkend 86400 -noout -in "$FULLCHAIN_PATH" >/dev/null 2>&1 && cert_covers_all_names && cert_renews_through_webroot; then
     echo "Reusing existing Let's Encrypt certificate for ${CERT_NAMES[*]}"
 else
     check_dns_records || exit 1
@@ -175,15 +267,21 @@ else
     for name in "${CERT_NAMES[@]}"; do
         certbot_domains+=(-d "$name")
     done
-    # Make sure port 80 is free before running standalone certbot. --cert-name
-    # keeps the files in live/$DOMAIN, where the router mounts them; --expand
-    # adds the lab names to a certificate issued for the domain alone.
-    certbot certonly --standalone --cert-name "$DOMAIN" --expand "${certbot_domains[@]}"         --non-interactive --agree-tos --email admin@"$DOMAIN"
+    serve_acme_webroot
+    # --cert-name keeps the files in live/$DOMAIN; --expand adds the lab names to a
+    # certificate issued for the domain alone; --force-renewal also replaces a valid
+    # certificate that renews some other way (one an earlier deploy got with
+    # --standalone), so its renewal settings become the webroot.
+    certbot certonly --webroot -w "$ACME_WEBROOT" --cert-name "$DOMAIN" --expand --force-renewal \
+        "${certbot_domains[@]}" --non-interactive --agree-tos --email admin@"$DOMAIN"
+    stop_acme_standin
 fi
 
-# Ensure certificates are readable by docker (nginx)
-chmod -R 755 /etc/letsencrypt/live/
-chmod -R 755 /etc/letsencrypt/archive/
+# 3. Hand the certificate to the router, and keep it renewed: certbot's timer renews it
+# through the same webroot within 30 days of expiry, and the deploy hook copies each new
+# one to the router and reloads it.
+bash "${SCRIPT_DIR}/scripts/cloud-cert-deploy-hook.sh" "$DOMAIN"
+install_cert_renewal
 
 # Persist the cloud domain before handing off so lab-manager.sh starts
 # the router with the TLS overlay and can later restart it consistently.
