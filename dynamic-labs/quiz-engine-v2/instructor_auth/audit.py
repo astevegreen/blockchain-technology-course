@@ -36,6 +36,7 @@ def _configure(path: str, retention_days: int) -> logging.Logger:
     # Remove any prior handlers (idempotent reconfig in tests).
     for h in list(logger.handlers):
         logger.removeHandler(h)
+        h.close()
     try:
         handler: logging.Handler = TimedRotatingFileHandler(
             path, when="midnight", backupCount=retention_days, encoding="utf-8"
