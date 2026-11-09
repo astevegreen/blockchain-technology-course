@@ -1,0 +1,20 @@
+# P2P trust lab on a student's own machine (the course launcher; docs/student-launcher-design.md).
+# lane-service starts the student's lane with `docker run` from P2P_TRUST_STUDENT_IMAGE; this file
+# only names that image so the launcher pulls it. The classroom instructor service is left out: it
+# bind-mounts the instructor guide, and there is no instructor on a student's machine.
+name: p2p-trust-lab
+
+services:
+  student:
+    image: ${P2P_TRUST_STUDENT_IMAGE:?}
+    profiles: ["lane-image"]
+    labels:
+      course.lab: p2p_trust
+      course.release: ${COURSE_RELEASE:?}
+    networks:
+      - student-net
+
+networks:
+  student-net:
+    name: p2p-trust-student-net
+    external: true

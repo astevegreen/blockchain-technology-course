@@ -40,6 +40,23 @@ STATUS_ERROR = "error"
 
 log = logging.getLogger(__name__)
 
+LANE_MODE_STUDENT_LOCAL = "student-local"
+
+
+def student_local_mode() -> bool:
+    """True when lane-service runs on one student's own machine (the course launcher sets LANE_MODE=student-local):
+    one lane per lab, no class code, no host folders, and the one claim never expires. Classroom mode is unchanged."""
+    return (os.environ.get("LANE_MODE") or "").strip().lower() == LANE_MODE_STUDENT_LOCAL
+
+
+def student_local_labels(course_lab: str) -> List[str]:
+    """`docker run` flags that tag a container with its lab and release on a student's machine, so the launcher's
+    Stop and Reset find every container lane-service started. Nothing in classroom mode."""
+    if not student_local_mode():
+        return []
+    release = (os.environ.get("COURSE_RELEASE") or "").strip() or "unknown"
+    return ["--label", f"course.lab={course_lab}", "--label", f"course.release={release}"]
+
 
 class _DockerUnixConn(http.client.HTTPConnection):
     def __init__(self, timeout: float = 5):
@@ -153,6 +170,18 @@ class LaneConfig:
     env_fn: Optional[Callable[[str], Dict[str, str]]] = None
     # compose-profile mode
     compose_file: Optional[Path] = None
+    # Set from LANE_MODE at creation; see student_local_mode().
+    student_local: bool = False
+    # The lab id in lab.yaml, for the course.lab label in student-local mode; lab_name when unset.
+    course_lab: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if student_local_mode():
+            self.student_local = True
+        if self.student_local:
+            # Belt and braces for the lab modules' own settings: one lane, and no host folder for its home.
+            self.student_count = 1
+            self.student_home_root = None
 
 
 def lane_ids(count: int | None = None) -> List[str]:
@@ -519,6 +548,7 @@ class LaneManager:
             "docker", "run", "-d",
             "--name", container,
             "--network", self.config.network,
+            *student_local_labels(self.config.course_lab or self.config.lab_name),
         ]
         if self.config.docker_init:
             cmd.append("--init")

@@ -14,7 +14,7 @@ from pathlib import Path
 from exercises import register_catalog
 from generic_claims import ClaimManager
 from generic_lanes import LaneConfig, LaneManager
-from labs.env_utils import env_int
+from labs.env_utils import env_int, lane_capacity, student_home_root, warm_pool_size
 from labs.p2p_trust_catalog import (
     CATALOG as P2P_TRUST_CATALOG,
     EXERCISE_IDS as P2P_TRUST_EXERCISE_IDS,
@@ -23,18 +23,9 @@ from lab_blueprint import make_lab_blueprint
 
 IMAGE = os.environ.get("P2P_TRUST_IMAGE", "p2p-trust-lab-student")
 NETWORK = os.environ.get("P2P_TRUST_NETWORK", "p2p-trust-student-net")
-STUDENT_COUNT = max(
-    1,
-    env_int("P2P_TRUST_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20),
-)
-DEFAULT_WARM_POOL_SIZE = max(
-    0,
-    min(
-        STUDENT_COUNT,
-        env_int("P2P_TRUST_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=0),
-    ),
-)
-STUDENT_HOME_ROOT = (os.environ.get("P2P_TRUST_STUDENT_HOME_ROOT") or "").strip() or None
+STUDENT_COUNT = lane_capacity("P2P_TRUST_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20)
+DEFAULT_WARM_POOL_SIZE = warm_pool_size(STUDENT_COUNT, "P2P_TRUST_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=0)
+STUDENT_HOME_ROOT = student_home_root("P2P_TRUST_STUDENT_HOME_ROOT")
 STUDENT_PIDS_LIMIT = max(
     0,
     env_int("P2P_TRUST_STUDENT_PIDS_LIMIT", "STUDENT_PIDS_LIMIT", default=256),

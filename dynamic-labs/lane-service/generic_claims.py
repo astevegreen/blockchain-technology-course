@@ -157,7 +157,8 @@ class ClaimManager:
 
     def _refill_warm_pool(self) -> None:
         pool_size = self._pool_size
-        if pool_size <= 0:
+        if pool_size <= 0 or self.config.student_local:
+            # Locally no lane starts before the student opens the lab: each one costs the student's memory.
             return
         claimed = set(self._by_station.keys())
         status = self._lane_status_map()
@@ -202,6 +203,12 @@ class ClaimManager:
                     entry["last_active"] = now
                     station = entry["station"]
                     resumed = (existing_uuid, station)
+            if resumed is None and self.config.student_local and self._claims:
+                # One student, one claim: a new browser or a lost cookie gets the same workstation back
+                # instead of a "no free workstations" page.
+                existing_uuid, entry = next(iter(self._claims.items()))
+                entry["last_active"] = now
+                resumed = (existing_uuid, entry["station"])
             if resumed is not None:
                 pass
             else:
@@ -439,6 +446,9 @@ class ClaimManager:
     def _sweep_once(self) -> List[str]:
         if self.is_paused():
             self._refill_warm_pool()
+            return []
+        if self.config.student_local:
+            # On a student's own machine an idle claim is kept: the student stops the lab from the launcher.
             return []
         cutoff = time.time() - self.config.idle_timeout
         with self._lock:
