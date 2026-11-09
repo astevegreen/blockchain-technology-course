@@ -724,7 +724,7 @@ list_targets() {
 router
 course-site
 lane-service
-instructor_auth_service
+instructor-auth-service
 ethereum_lab
 bitcoin
 consensus

@@ -40,6 +40,9 @@ TARGET_ORDER = ["router", "course-site", "lane-service", "instructor_auth_servic
 EXTRA_ALIASES = {"ethereum_lab": ["ethereum"], "quiz-engine-v2": ["quiz"],
                  "instructor_auth_service": ["auth-service", "auth_service"]}
 
+# list_targets prints these names, and lab-manager.sh compares against them (build-images, stop), so they stay.
+LIST_NAMES = {"instructor_auth_service": "instructor-auth-service"}
+
 # The course site's links: where the manifests don't say.
 DAY_LABELS = {"tron": "Days 5 and 9"}  # the Tron lab is used on two days; the manifest has one `day`
 LINK_PATHS = {"explorer": "/labs/explorer/", "tokens": "/labs/tokens/", "dex": "/labs/dex/"}  # host-named labs
@@ -395,7 +398,7 @@ def sh_bodies(manifests: dict[str, dict]) -> dict[str, str]:
     nets = "".join(f'        "{n}:{"--internal" if internal else ""}"\n' for n, internal in network_list(manifests))
     cases = "".join(f'        {"|".join(aliases(m["id"]))}) echo "${{BASE_DIR}}/{m["id"]}" ;;\n'
                     for m in ordered(manifests) if m["id"] != "bitcoin-forensics")
-    ids = "".join(f"{m['id']}\n" for m in ordered(manifests))
+    ids = "".join(f"{LIST_NAMES.get(m['id'], m['id'])}\n" for m in ordered(manifests))
     return {"NETWORKS": nets, "TARGETS": cases, "LIST_TARGETS": f"    cat <<'EOF'\n{ids}EOF\n"}
 
 

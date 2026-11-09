@@ -221,6 +221,12 @@ class Generators(unittest.TestCase):
         self.assertIn("ethereum", lm.aliases("ethereum_lab"))
         self.assertIn("quiz", lm.aliases("quiz-engine-v2"))
 
+    def test_list_targets_keeps_the_hyphen_name_lab_manager_compares_against(self):
+        m = good("instructor_auth_service")
+        body = lm.sh_bodies({"instructor_auth_service": m})["LIST_TARGETS"]
+        self.assertIn("\ninstructor-auth-service\n", body)
+        self.assertNotIn("instructor_auth_service", body)
+
     def test_block_lists_by_day_then_off_schedule(self):
         block = lm.course_site_block(self.manifests())
         self.assertIn("* Day 1: [Demo](/labs/demo/)", block)
