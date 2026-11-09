@@ -18,14 +18,14 @@ services:
     build: .
     image: bitcoin-lab-student
   mempool:
-    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/blockchain-course-2026/bitcoin-mempool:latest}"
+    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/astevegreen/course-labs:base-bitcoin-mempool}"
   web:
     image: nginx:alpine
   odd:
     image: ${NO_DEFAULT}
 """
         pulled, built = lab_images.compose_images(text)
-        self.assertEqual(pulled, {"ghcr.io/blockchain-course-2026/bitcoin-mempool:latest", "nginx:alpine"})
+        self.assertEqual(pulled, {"ghcr.io/astevegreen/course-labs:base-bitcoin-mempool", "nginx:alpine"})
         self.assertEqual(built, {"bitcoin-lab-student"})
 
     def test_a_file_with_no_services_has_no_images(self) -> None:
@@ -44,15 +44,15 @@ FROM scratch
         self.assertEqual(lab_images.dockerfile_images(text), {"docker:27-cli", "python:3.11-slim"})
 
     def test_arg_defaults_fill_variables_and_a_variable_with_none_is_left_out(self) -> None:
-        text = "ARG BITCOIN_LAB_BASE=ghcr.io/blockchain-course-2026/bitcoin-lab:latest\nFROM ${BITCOIN_LAB_BASE}\n"
-        self.assertEqual(lab_images.dockerfile_images(text), {"ghcr.io/blockchain-course-2026/bitcoin-lab:latest"})
+        text = "ARG BITCOIN_LAB_BASE=ghcr.io/astevegreen/course-labs:base-bitcoin-lab\nFROM ${BITCOIN_LAB_BASE}\n"
+        self.assertEqual(lab_images.dockerfile_images(text), {"ghcr.io/astevegreen/course-labs:base-bitcoin-lab"})
         self.assertEqual(lab_images.dockerfile_images("FROM hyperledger/fabric-${ROLE}:${VERSION}\n"), set())
 
 
 class Repo(unittest.TestCase):
     def test_the_labs_pull_the_images_that_stalled_25_oct_and_no_local_build(self) -> None:
         images = lab_images.lab_images()
-        for image in ("python:3.12-slim-trixie", "docker:29-cli", "ghcr.io/blockchain-course-2026/bitcoin-lab:latest"):
+        for image in ("python:3.12-slim-trixie", "docker:29-cli", "ghcr.io/astevegreen/course-labs:base-bitcoin-lab"):
             self.assertIn(image, images)
         for local in ("lane-service:latest", "hlf-peer-ttyd:latest", "bitcoin-lab-student"):
             self.assertNotIn(local, images)
