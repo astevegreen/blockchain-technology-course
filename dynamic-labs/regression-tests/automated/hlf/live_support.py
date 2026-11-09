@@ -3,74 +3,49 @@ from __future__ import annotations
 import json
 import os
 import re
-import sys
 import subprocess
+import sys
 import time
-import uuid as uuid_lib
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
-from urllib.parse import urljoin, urlparse
 
 import requests
 
-try:
-    import docker as docker_sdk
-    from docker.errors import DockerException, NotFound
-except ImportError:  # pragma: no cover
-    docker_sdk = None
-
-    class DockerException(Exception):
-        pass
-
-    class NotFound(Exception):
-        pass
-
-try:
-    from websocket import ABNF, WebSocketTimeoutException, create_connection
-except ImportError:  # pragma: no cover
-    ABNF = None
-    create_connection = None
-
-    class WebSocketTimeoutException(TimeoutError):
-        pass
-
+# The session, login, docker exec and ttyd helpers live in ../live_common.py, shared by every lab's live_support.py.
+# This file keeps the lab's own settings, its API and claim flow, and the thin wrappers that pass them in.
+_AUTOMATED_DIR = str(Path(__file__).resolve().parents[1])
+if _AUTOMATED_DIR not in sys.path:
+    sys.path.insert(0, _AUTOMATED_DIR)
+import live_common  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
+ENV_PREFIX = "HLF_REGRESSION"
 DEFAULT_BASE_URL = os.environ.get("HLF_REGRESSION_BASE_URL", "http://127.0.0.1").rstrip("/")
 DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("HLF_REGRESSION_TIMEOUT", "180"))
-DEFAULT_CLAIM_READY_TIMEOUT_SECONDS = int(
-    os.environ.get("HLF_REGRESSION_CLAIM_READY_TIMEOUT", "120")
-)
 DEFAULT_STARTUP_READY_TIMEOUT_SECONDS = int(
     os.environ.get("HLF_REGRESSION_STARTUP_READY_TIMEOUT", "900")
 )
-DEFAULT_CLAIM_RETRY_ATTEMPTS = int(
-    os.environ.get("HLF_REGRESSION_CLAIM_RETRY_ATTEMPTS", "3")
+# HLF_REGRESSION_CLAIM_* and HLF_REGRESSION_TTYD_* override these (live_common's from_env names them).
+CLAIM_SETTINGS = live_common.ClaimSettings.from_env(
+    ENV_PREFIX,
+    ready_timeout_seconds=120,
+    retry_attempts=3,
+    retry_delay_seconds=5.0,
+    settle_seconds=3.0,
+    ttyd_ready_timeout_seconds=60,
 )
-DEFAULT_CLAIM_RETRY_DELAY_SECONDS = float(
-    os.environ.get("HLF_REGRESSION_CLAIM_RETRY_DELAY_SECONDS", "5.0")
-)
-DEFAULT_CLAIM_SETTLE_SECONDS = float(
-    os.environ.get("HLF_REGRESSION_CLAIM_SETTLE_SECONDS", "3.0")
-)
-DEFAULT_TTYD_READY_TIMEOUT_SECONDS = int(
-    os.environ.get("HLF_REGRESSION_TTYD_READY_TIMEOUT", "60")
-)
-DEFAULT_TTYD_CONNECT_SETTLE_SECONDS = float(
-    os.environ.get("HLF_REGRESSION_TTYD_CONNECT_SETTLE_SECONDS", "1.5")
-)
-DEFAULT_TTYD_COMMAND_SETTLE_SECONDS = float(
-    os.environ.get("HLF_REGRESSION_TTYD_COMMAND_SETTLE_SECONDS", "1.0")
-)
-DEFAULT_TTYD_MULTILINE_EXTRA_SECONDS = float(
-    os.environ.get("HLF_REGRESSION_TTYD_MULTILINE_EXTRA_SECONDS", "0.25")
-)
-DEFAULT_TTYD_KEYSTROKE_DELAY_SECONDS = float(
-    os.environ.get("HLF_REGRESSION_TTYD_KEYSTROKE_DELAY_SECONDS", "0.02")
-)
-DEFAULT_TTYD_LINE_SETTLE_SECONDS = float(
-    os.environ.get("HLF_REGRESSION_TTYD_LINE_SETTLE_SECONDS", "0.1")
+DEFAULT_CLAIM_READY_TIMEOUT_SECONDS = CLAIM_SETTINGS.ready_timeout_seconds
+DEFAULT_CLAIM_RETRY_ATTEMPTS = CLAIM_SETTINGS.retry_attempts
+DEFAULT_CLAIM_RETRY_DELAY_SECONDS = CLAIM_SETTINGS.retry_delay_seconds
+DEFAULT_CLAIM_SETTLE_SECONDS = CLAIM_SETTINGS.settle_seconds
+# The peer CLI shell takes a while to print its prompt, so connect waits for the prompt for up to
+# connect_settle_seconds rather than sleeping that long (TtydSession's wait_for_prompt).
+TTYD_TIMING = live_common.TtydTiming.from_env(
+    ENV_PREFIX,
+    connect_settle_seconds=1.5,
+    post_command_settle_seconds=1.0,
+    line_settle_seconds=0.1,
 )
 DEFAULT_CREDENTIALS_FILE = Path(
     os.environ.get(
@@ -90,22 +65,14 @@ RUNNER_CONTAINER = os.environ.get("HLF_REGRESSION_RUNNER_CONTAINER", "hlf-hlf-ru
 
 _UUID_RE = re.compile(r"/labs/hlf/c/([0-9a-f-]{36})/")
 
-
-# The session, wait and login helpers live in ../live_common.py, shared by every lab's live_support.py.
-# This file keeps the lab's own settings and the thin wrappers that pass them in.
-_AUTOMATED_DIR = str(Path(__file__).resolve().parents[1])
-if _AUTOMATED_DIR not in sys.path:
-    sys.path.insert(0, _AUTOMATED_DIR)
-import live_common  # noqa: E402
-
 RegressionFailure = live_common.RegressionFailure
+CommandResult = live_common.CommandResult
+TtydSession = live_common.TtydSession
 new_session = live_common.new_session
 clear_cookie = live_common.clear_cookie
-_cookie_header = live_common.cookie_header
-_to_websocket_url = live_common.to_websocket_url
-_decode_terminal_text = live_common.decode_terminal_text
-_session_has_valid_instructor_cookie = live_common.session_has_valid_instructor_cookie
 strip_terminal_artifacts = live_common.strip_terminal_artifacts
+docker_exec = live_common.docker_exec
+docker_exec_checked = live_common.docker_exec_checked
 
 
 def parse_instructor_credentials(path: Path = DEFAULT_CREDENTIALS_FILE) -> tuple[str, str]:
@@ -203,14 +170,6 @@ class ClaimContext:
         return self.uuid[:8]
 
 
-@dataclass
-class CommandResult:
-    command: str
-    output: str
-    exit_code: int
-    raw_output: str
-
-
 def _acquire_csrf_token(session: requests.Session, base_url: str = DEFAULT_BASE_URL) -> None:
     resp = session.post(f"{base_url}/api/instructor/csrf", timeout=10)
     if resp.status_code != 200:
@@ -218,8 +177,6 @@ def _acquire_csrf_token(session: requests.Session, base_url: str = DEFAULT_BASE_
     token = resp.json().get("token", "")
     if token:
         session.headers["X-CSRFToken"] = token
-
-
 
 
 # ------------------------------------------------------------------
@@ -677,130 +634,15 @@ def claim_hlf_station(
 # docker helpers
 # ------------------------------------------------------------------
 
-def _docker_client():
-    if docker_sdk is None:
-        return None
-    return docker_sdk.from_env()
-
-
 def wait_for_container_running(
     container: str,
     *,
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
     interval_seconds: float = 2.0,
 ) -> None:
-    deadline = time.time() + timeout_seconds
-    client = _docker_client()
-    if client is not None:
-        while time.time() < deadline:
-            try:
-                obj = client.containers.get(container)
-                obj.reload()
-                if bool(obj.attrs.get("State", {}).get("Running")):
-                    return
-            except NotFound:
-                pass
-            except DockerException as exc:
-                raise RegressionFailure(f"docker inspect failed for {container}: {exc}") from exc
-            time.sleep(interval_seconds)
-        raise RegressionFailure(f"container did not become ready: {container}")
-
-    while time.time() < deadline:
-        result = subprocess.run(
-            ["docker", "inspect", "-f", "{{.State.Running}}", container],
-            capture_output=True, text=True,
-        )
-        if result.returncode == 0 and result.stdout.strip() == "true":
-            return
-        time.sleep(interval_seconds)
-    raise RegressionFailure(f"container did not become ready: {container}")
-
-
-def docker_exec(
-    container: str,
-    command: str,
-    *,
-    timeout_seconds: int = 60,
-    user: str | None = None,
-) -> subprocess.CompletedProcess[str]:
-    docker_command = ["docker", "exec"]
-    if user:
-        docker_command.extend(["--user", user])
-    docker_command.extend(
-        [
-            container,
-            "timeout",
-            "--signal=TERM",
-            "--kill-after=5",
-            f"{timeout_seconds}s",
-            "bash",
-            "-lc",
-            command,
-        ]
+    live_common.wait_for_container_running(
+        [container], timeout_seconds=timeout_seconds, interval_seconds=interval_seconds
     )
-    return subprocess.run(
-        docker_command,
-        capture_output=True,
-        text=True,
-        timeout=timeout_seconds + 10,
-    )
-
-
-def docker_exec_checked(
-    container: str,
-    command: str,
-    *,
-    timeout_seconds: int = 60,
-    user: str | None = None,
-) -> str:
-    result = docker_exec(container, command, timeout_seconds=timeout_seconds, user=user)
-    if result.returncode != 0:
-        raise RegressionFailure(
-            f"docker exec failed for {container}: command={command!r} "
-            f"stdout={result.stdout[-400:]} stderr={result.stderr[-400:]}"
-        )
-    return result.stdout
-
-
-def docker_exec_json(container: str, command: str, *, timeout_seconds: int = 60) -> dict:
-    output = docker_exec_checked(container, command, timeout_seconds=timeout_seconds).strip()
-    try:
-        return json.loads(output)
-    except json.JSONDecodeError as exc:
-        raise RegressionFailure(f"expected JSON from {command!r}, got {output[:300]!r}") from exc
-
-
-def wait_for_docker_output(
-    container: str,
-    command: str,
-    predicate: Callable[[str], bool],
-    *,
-    timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
-    interval_seconds: float = 1.0,
-    description: str,
-) -> str:
-    deadline = time.time() + timeout_seconds
-    last_output = ""
-    last_error: Exception | None = None
-    while time.time() < deadline:
-        try:
-            per_attempt_timeout = max(5, min(timeout_seconds, 15))
-            output = docker_exec_checked(
-                container,
-                command,
-                timeout_seconds=per_attempt_timeout,
-            ).strip()
-            last_output = output
-            if predicate(output):
-                return output
-        except (RegressionFailure, ValueError) as exc:
-            last_error = exc
-        time.sleep(interval_seconds)
-    if last_output:
-        raise RegressionFailure(
-            f"timed out waiting for {description}: last_output={last_output!r}"
-        )
-    raise RegressionFailure(f"timed out waiting for {description}: last_error={last_error}")
 
 
 def wait_for_docker_exec_ready(
@@ -833,204 +675,30 @@ def wait_for_docker_exec_ready(
 # ttyd helpers
 # ------------------------------------------------------------------
 
-class TtydSession:
-    def __init__(
-        self,
-        session: requests.Session,
-        base_url: str,
-        ttyd_path: str,
-        *,
-        columns: int = 120,
-        rows: int = 40,
-        connect_settle_seconds: float = DEFAULT_TTYD_CONNECT_SETTLE_SECONDS,
-        post_command_settle_seconds: float = DEFAULT_TTYD_COMMAND_SETTLE_SECONDS,
-        multiline_extra_settle_seconds: float = DEFAULT_TTYD_MULTILINE_EXTRA_SECONDS,
-        keystroke_delay_seconds: float = DEFAULT_TTYD_KEYSTROKE_DELAY_SECONDS,
-        line_settle_seconds: float = DEFAULT_TTYD_LINE_SETTLE_SECONDS,
-    ) -> None:
-        if create_connection is None or ABNF is None:
-            raise RegressionFailure("websocket-client is not installed in the regression runner")
-        self.session = session
-        self.base_url = base_url.rstrip("/")
-        self.ttyd_path = ttyd_path
-        self.columns = columns
-        self.rows = rows
-        self.connect_settle_seconds = connect_settle_seconds
-        self.post_command_settle_seconds = post_command_settle_seconds
-        self.multiline_extra_settle_seconds = multiline_extra_settle_seconds
-        self.keystroke_delay_seconds = keystroke_delay_seconds
-        self.line_settle_seconds = line_settle_seconds
-        self.socket = None
-        self.collected = ""
-
-    def __enter__(self) -> TtydSession:
-        self.connect()
-        return self
-
-    def __exit__(self, exc_type, exc, tb) -> None:
-        self.close()
-
-    def connect(self) -> None:
-        ttyd_url = urljoin(f"{self.base_url}/", self.ttyd_path.lstrip("/"))
-        ws_url = _to_websocket_url(ttyd_url.rstrip("/") + "/ws")
-        token_url = ttyd_url.rstrip("/") + "/token"
-        origin = f"{urlparse(self.base_url).scheme}://{urlparse(self.base_url).netloc}"
-        cookie_header = _cookie_header(self.session)
-        headers = [f"Cookie: {cookie_header}"] if cookie_header else []
-        auth_token = ""
-
-        try:
-            token_response = self.session.get(token_url, timeout=10, allow_redirects=False)
-        except requests.RequestException as exc:
-            raise RegressionFailure(f"ttyd token request failed for {token_url}: {exc}") from exc
-        if token_response.status_code == 200:
-            auth_token = token_response.text.strip()
-        elif token_response.status_code not in (401, 404):
-            raise RegressionFailure(
-                f"unexpected ttyd token response: "
-                f"status={token_response.status_code} body={token_response.text[:300]}"
-            )
-
-        self.socket = create_connection(
-            ws_url,
-            subprotocols=["tty"],
-            header=headers,
-            origin=origin,
-            timeout=10,
-        )
-        self.socket.settimeout(1)
-        init_payload = json.dumps(
-            {"AuthToken": auth_token, "columns": self.columns, "rows": self.rows}
-        ).encode("utf-8")
-        self.socket.send(init_payload, opcode=ABNF.OPCODE_BINARY)
-        self._warm()
-        self._wait_for_prompt()
-
-    def close(self) -> None:
-        if self.socket is None:
-            return
-        try:
-            self.socket.close()
-        except Exception:
-            pass
-        self.socket = None
-
-    @property
-    def prompt_ready(self) -> bool:
-        return self._prompt_ready
-
-    def _wait_for_prompt(self) -> None:
-        _PROMPT_RE = re.compile(r"[$#]\s*$", re.MULTILINE)
-        _CONNECTED_RE = re.compile(r"Connected to ")
-        self._prompt_ready = False
-        saw_banner = False
-        deadline = time.time() + self.connect_settle_seconds
-        while time.time() < deadline:
-            self._recv_once()
-            cleaned = strip_terminal_artifacts(self.collected)
-            if _PROMPT_RE.search(cleaned):
-                time.sleep(0.5)
-                self._prompt_ready = True
-                return
-            if _CONNECTED_RE.search(cleaned) and not saw_banner:
-                saw_banner = True
-                self._send_input("\r")
-                time.sleep(0.25)
-        self._send_input("\r")
-        extra_deadline = time.time() + 5
-        while time.time() < extra_deadline:
-            self._recv_once()
-            cleaned = strip_terminal_artifacts(self.collected)
-            if _PROMPT_RE.search(cleaned):
-                time.sleep(0.5)
-                self._prompt_ready = True
-                return
-
-    def _warm(self) -> None:
-        deadline = time.time() + 3
-        while time.time() < deadline:
-            if self._recv_once():
-                return
-
-    def _recv_once(self) -> bool:
-        if self.socket is None:
-            raise RegressionFailure("ttyd websocket is not connected")
-        try:
-            frame = self.socket.recv()
-        except WebSocketTimeoutException:
-            return False
-        if not frame:
-            return False
-        raw = frame.encode("utf-8") if isinstance(frame, str) else frame
-        if not raw:
-            return False
-        if chr(raw[0]) != "0":
-            return False
-        self.collected += _decode_terminal_text(raw[1:])
-        return True
-
-    def _send_input(self, text: str) -> None:
-        if self.socket is None:
-            raise RegressionFailure("ttyd websocket is not connected")
-        if not text:
-            return
-        self.socket.send(b"0" + text.encode("utf-8"), opcode=ABNF.OPCODE_BINARY)
-
-    def _send_line(self, text: str) -> None:
-        if text:
-            for char in text:
-                self._send_input(char)
-                if self.keystroke_delay_seconds > 0:
-                    time.sleep(self.keystroke_delay_seconds)
-        self._send_input("\r")
-        if self.line_settle_seconds > 0:
-            time.sleep(self.line_settle_seconds)
-
-    def run_command(self, command: str, *, timeout_seconds: int = 20) -> CommandResult:
-        if self.socket is None:
-            raise RegressionFailure("ttyd websocket is not connected")
-
-        marker = f"__hlf_regression_{uuid_lib.uuid4().hex}__"
-        ttyd_command = command.strip("\r\n").replace("\r\n", "\n").replace("\r", "\n")
-        ttyd_lines = [line.strip() for line in ttyd_command.split("\n") if line.strip()]
-        transmit_command = "; ".join(ttyd_lines)
-        start_idx = len(self.collected)
-        marker_command = f"{transmit_command}; printf '{marker}:%s\\n' \"$?\""
-        self._send_line(marker_command)
-
-        deadline = time.time() + timeout_seconds
-        while time.time() < deadline:
-            segment = strip_terminal_artifacts(self.collected[start_idx:])
-            exit_matches = list(re.finditer(re.escape(marker) + r":(\d+)", segment))
-            if exit_matches:
-                exit_match = exit_matches[-1]
-                extra_lines = max(len(ttyd_lines) - 1, 0)
-                settle_seconds = self.post_command_settle_seconds + (
-                    extra_lines * self.multiline_extra_settle_seconds
-                )
-                if settle_seconds > 0:
-                    time.sleep(settle_seconds)
-                return CommandResult(
-                    command=command,
-                    output=segment[:exit_match.start()].strip(),
-                    exit_code=int(exit_match.group(1)),
-                    raw_output=segment.strip(),
-                )
-            self._recv_once()
-
-        raise RegressionFailure(
-            f"timed out waiting for ttyd command completion: command={command!r} "
-            f"last_output={strip_terminal_artifacts(self.collected[start_idx:])[-600:]!r}"
-        )
-
-
 def ttyd_session(
     session: requests.Session,
     base_url: str,
     ttyd_path: str,
-    **kwargs,
+    *,
+    columns: int = 120,
+    rows: int = 40,
+    connect_settle_seconds: float | None = None,
 ) -> TtydSession:
-    return TtydSession(session, base_url, ttyd_path, **kwargs)
+    """A ttyd terminal whose connect waits for the shell prompt, for up to connect_settle_seconds
+    (TTYD_TIMING's by default); check prompt_ready after connect."""
+    timing = TTYD_TIMING
+    if connect_settle_seconds is not None:
+        timing = replace(TTYD_TIMING, connect_settle_seconds=connect_settle_seconds)
+    return TtydSession(
+        session,
+        base_url,
+        ttyd_path,
+        marker_prefix="hlf",
+        timing=timing,
+        columns=columns,
+        rows=rows,
+        wait_for_prompt=True,
+    )
 
 
 def ttyd_command_round_trip(
@@ -1043,17 +711,14 @@ def ttyd_command_round_trip(
     timeout_seconds: int = 20,
     columns: int = 120,
     rows: int = 40,
-    connect_settle_seconds: float = DEFAULT_TTYD_CONNECT_SETTLE_SECONDS,
+    connect_settle_seconds: float | None = None,
 ) -> str:
-    with ttyd_session(
-        session, base_url, ttyd_path,
-        columns=columns, rows=rows,
-        connect_settle_seconds=connect_settle_seconds,
-    ) as terminal:
-        result = terminal.run_command(command, timeout_seconds=timeout_seconds)
-        if expected_fragment not in result.raw_output:
-            raise RegressionFailure(
-                f"expected {expected_fragment!r} in ttyd output, "
-                f"got: {result.raw_output[-500:]!r}"
-            )
-        return result.raw_output
+    return live_common.ttyd_command_round_trip(
+        ttyd_session(
+            session, base_url, ttyd_path,
+            columns=columns, rows=rows, connect_settle_seconds=connect_settle_seconds,
+        ),
+        command,
+        expected_fragment=expected_fragment,
+        timeout_seconds=timeout_seconds,
+    )

@@ -739,6 +739,10 @@ class TtydTiming:
         )
 
 
+# A shell prompt at the end of a line of terminal output.
+_PROMPT_RE = re.compile(r"[$#]\s*$", re.MULTILINE)
+
+
 class TtydSession:
     """A ttyd terminal opened as the student's browser opens it, that types commands and reads their output back.
 
@@ -746,6 +750,9 @@ class TtydSession:
     background_reader=True gives the socket one reader thread for the session's life, as a browser tab has: it
     answers ttyd's pings and drains output while the test does slow work elsewhere (bitcoin mines through docker
     exec), where an idle session would miss its pongs and ttyd would drop it (broken pipe).
+    wait_for_prompt=True makes connect wait for a shell prompt ($ or #) instead of sleeping, for up to
+    timing.connect_settle_seconds and then 5 s more after pressing Enter (hlf's shell starts slowly); prompt_ready
+    then says whether one appeared.
     """
 
     def __init__(
@@ -760,6 +767,7 @@ class TtydSession:
         columns: int = 120,
         rows: int = 40,
         background_reader: bool = False,
+        wait_for_prompt: bool = False,
     ) -> None:
         if create_connection is None or ABNF is None:
             raise RegressionFailure("websocket-client is not installed in the regression runner")
@@ -772,6 +780,8 @@ class TtydSession:
         self.columns = columns
         self.rows = rows
         self.background_reader = background_reader
+        self.wait_for_prompt = wait_for_prompt
+        self._prompt_ready = False
         self.socket = None
         self.collected = ""
         self._reader: threading.Thread | None = None
@@ -825,7 +835,9 @@ class TtydSession:
             self._reader = threading.Thread(target=self._read_loop, name="ttyd-reader", daemon=True)
             self._reader.start()
         self._warm()
-        if self.timing.connect_settle_seconds > 0:
+        if self.wait_for_prompt:
+            self._wait_for_prompt()
+        elif self.timing.connect_settle_seconds > 0:
             time.sleep(self.timing.connect_settle_seconds)
 
     def close(self) -> None:
@@ -840,6 +852,37 @@ class TtydSession:
         except Exception:
             pass
         self.socket = None
+
+    @property
+    def prompt_ready(self) -> bool:
+        """True once connect saw a shell prompt (only checked with wait_for_prompt=True)."""
+        return self._prompt_ready
+
+    def _seen_prompt(self) -> bool:
+        if _PROMPT_RE.search(self.strip(self.collected)):
+            time.sleep(0.5)
+            self._prompt_ready = True
+        return self._prompt_ready
+
+    def _wait_for_prompt(self) -> None:
+        # Press Enter once after ttyd's "Connected to" banner, and again if no prompt shows by the deadline.
+        self._prompt_ready = False
+        saw_banner = False
+        deadline = time.time() + self.timing.connect_settle_seconds
+        while time.time() < deadline:
+            self._receive()
+            if self._seen_prompt():
+                return
+            if not saw_banner and "Connected to " in self.strip(self.collected):
+                saw_banner = True
+                self._send_input("\r")
+                time.sleep(0.25)
+        self._send_input("\r")
+        extra_deadline = time.time() + 5
+        while time.time() < extra_deadline:
+            self._receive()
+            if self._seen_prompt():
+                return
 
     def _warm(self) -> None:
         deadline = time.time() + 3

@@ -41,11 +41,6 @@ slide index), which is never listed here.
   image copies no `lib/` (`Dockerfile:90-100`, `:124-125`), so those five CLI labs fail inside the lab image and
   run only from a checkout. Copy `lib/` into `/app` and the student workspace if the labs are meant to run there.
   (8 Nov 2026, Hardhat 3 move)
-- `dynamic-labs/regression-tests/automated/bitcoin/live_support.py` (976 lines) and `hlf/live_support.py` (1,059)
-  still hold their own copies of the lane-claim, docker and ttyd helpers that `live_common.py` now shares
-  (`LaneLabSupport`). Each differs: bitcoin's `TtydSession` (`:678`) reads on a background thread and its
-  `wait_for_lane_running` (`:273`) waits longer; hlf's `TtydSession` (`:836`) waits for prompts. Move each onto the
-  shared code with those differences as options, rerunning its Lab Tests. (8 Nov 2026, live_common dedupe)
 
 ## Tooling and rules
 - Before the later course runs: rebuild the student VM on Ubuntu 24.04 (`vm-build/ubuntu-lab.pkr.hcl:17,22` still
