@@ -14,13 +14,6 @@ ROOT = Path(__file__).resolve().parents[1]
 # served an unauthenticated shell that way until 9 Nov 2026).
 EXEMPT = {"router/docker-compose.yml", "router/docker-compose.cloud.yml"}
 
-# The ethereum_lab's other compose files are standalone and laptop variants that lab-manager.sh never starts.
-NOT_DEPLOYED = {
-    "ethereum_lab/docker-compose.fullstack-local.yml",
-    "ethereum_lab/docker-compose.instructor-minimal.yml",
-    "ethereum_lab/docker-compose.student.yml",
-}
-
 LOOPBACK = re.compile(r'^"?(127\.0\.0\.1|\$\{[A-Z0-9_]+:-127\.0\.0\.1\}):')
 
 
@@ -29,7 +22,7 @@ def deployed_compose_files() -> list[Path]:
     files += sorted((ROOT / "hlf" / "managed_runtime").glob("compose-*.yaml*"))
     return [
         path for path in files
-        if path.relative_to(ROOT).as_posix() not in EXEMPT | NOT_DEPLOYED
+        if path.relative_to(ROOT).as_posix() not in EXEMPT
     ]
 
 

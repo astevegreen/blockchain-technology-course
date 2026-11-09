@@ -156,6 +156,8 @@ Students can run almost everything locally (frontend, terminal, scripts). The in
 docker-compose -f docker-compose.instructor-minimal.yml up --build
 ```
 
+These standalone compose files publish ports on 127.0.0.1 only. To let students on a trusted LAN reach the chain, start the instructor file with `ETHEREUM_RPC_BIND=0.0.0.0` set (it opens only the RPC port 8545).
+
 **Student (full local stack):**
 ```bash
 cd blockchain_web && npm install
