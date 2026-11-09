@@ -1,7 +1,8 @@
 """The student release's steps that are easier to test in Python than in workflow YAML (student-release.yml).
 
-  python3 tools/student_release.py lfs-check
-      fail when a file Git LFS tracks is still a pointer (a checkout without `lfs: true`, or a missing object)
+  python3 tools/student_release.py lfs-check --images <json> [--pull]
+      fetch (--pull) the Git LFS files the release ships, those inside a build context and outside the fence, and
+      fail if any is still a pointer; LFS files nothing ships are listed and skipped
   python3 tools/student_release.py matrix --images <json> --version <v>
       the build matrix: one row per built image and platform, on a native runner for that platform
   python3 tools/student_release.py smoke-matrix
@@ -35,6 +36,8 @@ RUNNERS = {"linux/amd64": "ubuntu-24.04", "linux/arm64": "ubuntu-24.04-arm"}
 LFS_HEADER = b"version https://git-lfs.github.com/spec/v1"
 VERSION = re.compile(r"^\d{4}\.\d{2}\.\d{2}-\d+$")
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
+BASE_CONTEXTS = ("dynamic-labs/bitcoin/workstation", "dynamic-labs/bitcoin/mempool", "dynamic-labs/bitcoin-graph")
+LAUNCHER_CONTEXT = "student-launcher/control"
 ROUTER_LOCAL = ("dynamic-labs/router/docker-compose.launcher.yml", "dynamic-labs/router/routes/local")
 
 
@@ -75,11 +78,30 @@ def one_per_variable(images: list[dict], path: Path | str = "images") -> list[di
 
 
 # ---------------------------------------------------------------- lfs-check
-def lfs_pointers(root: Path = REPO) -> list[str]:
+def lfs_files(root: Path = REPO) -> list[str]:
     listed = subprocess.run(["git", "ls-files", "-z", ":(attr:filter=lfs)"], cwd=root, capture_output=True,
                             check=True).stdout.decode("utf-8").split("\0")
+    return [rel for rel in listed if rel]
+
+
+def shipped_contexts(images: list[dict], root: Path = REPO) -> list[str]:
+    """Every folder a student image is built from: the build rows, the Bitcoin bases, the launcher."""
+    contexts = {row["context"] for row in images if row["source"] == "build"} | set(BASE_CONTEXTS)
+    if (root / LAUNCHER_CONTEXT).is_dir():
+        contexts.add(LAUNCHER_CONTEXT)
+    return sorted(c.rstrip("/") for c in contexts)
+
+
+def shipped_lfs(files: list[str], contexts: list[str], fence: list[str]) -> list[str]:
+    """The LFS files inside a build context that the fence lets through (staging drops the rest)."""
+    import student_exclude
+    inside = [f for f in files if any(c == "." or f.startswith(c + "/") for c in contexts)]
+    return [f for f in inside if not student_exclude.excluded(f, fence)]
+
+
+def lfs_pointers(root: Path = REPO, files: list[str] | None = None) -> list[str]:
     pointers = []
-    for rel in filter(None, listed):
+    for rel in lfs_files(root) if files is None else files:
         path = root / rel
         if path.is_file():
             with path.open("rb") as handle:
@@ -290,7 +312,9 @@ def drive(base: str, lab: str, timeout: float, call=api, sleep=None, clock=None,
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("lfs-check")
+    lc = sub.add_parser("lfs-check")
+    lc.add_argument("--images", required=True)
+    lc.add_argument("--pull", action="store_true", help="git lfs pull the shipped LFS files first")
     m = sub.add_parser("matrix")
     m.add_argument("--images", required=True)
     m.add_argument("--version", required=True)
@@ -316,10 +340,18 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         return drive(args.url, args.lab, args.timeout)
     if args.cmd == "lfs-check":
-        pointers = lfs_pointers()
+        import student_exclude
+        files = lfs_files()
+        shipped = shipped_lfs(files, shipped_contexts(load_images(Path(args.images))), student_exclude.patterns())
+        for rel in sorted(set(files) - set(shipped)):
+            print(f"lfs-check: {rel} is in no student build context: not fetched")
+        if args.pull and shipped:
+            subprocess.run(["git", "lfs", "pull", "--include", ",".join(shipped)], cwd=REPO, check=True)
+        pointers = lfs_pointers(files=shipped)
         for rel in pointers:
-            print(f"{rel}: a Git LFS pointer, not the file (check out with lfs: true)", file=sys.stderr)
-        print(f"lfs-check: {len(pointers)} pointers")
+            print(f"{rel}: a Git LFS pointer, not the file (git lfs pull, or the object is missing on GitHub)",
+                  file=sys.stderr)
+        print(f"lfs-check: {len(shipped)} shipped LFS files, {len(pointers)} still pointers")
         return 1 if pointers else 0
     if args.cmd == "matrix":
         if not VERSION.match(args.version):

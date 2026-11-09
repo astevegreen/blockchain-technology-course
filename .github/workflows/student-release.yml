@@ -58,9 +58,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
-      - name: Fail on Git LFS pointers
-        run: python3 tools/student_release.py lfs-check
+          lfs: false
       - name: Install PyYAML
         run: sudo apt-get install -y -q python3-yaml
       - name: Plan the build
@@ -71,6 +69,7 @@ jobs:
         run: |
           version="$(date -u +%Y.%m.%d)-$RUN"
           [ -f "$IMAGES" ] || { echo "$IMAGES is not on this branch yet: building from $STUB"; IMAGES=$STUB; }
+          python3 tools/student_release.py lfs-check --images "$IMAGES" --pull
           matrix=$(python3 tools/student_release.py matrix --images "$IMAGES" --version "$version")
           smoke=$(python3 tools/student_release.py smoke-matrix)
           launcher=false; [ -f student-launcher/control/Dockerfile ] && launcher=true
@@ -110,7 +109,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
+          lfs: false
+      - name: Fetch the shipped Git LFS files and fail on pointers
+        env:
+          IMAGES: ${{ needs.prepare.outputs.images }}
+        run: python3 tools/student_release.py lfs-check --images "$IMAGES" --pull
       - name: Log in to ghcr
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -168,9 +171,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
-      - name: Fail on Git LFS pointers
-        run: python3 tools/student_release.py lfs-check
+          lfs: false
+      # Only the LFS files a student image ships are fetched: the instructor-only forensics blocks are not, and a
+      # shipped file that is still a pointer (an object missing on GitHub) fails the build.
+      - name: Fetch the shipped Git LFS files and fail on pointers
+        env:
+          IMAGES: ${{ needs.prepare.outputs.images }}
+        run: python3 tools/student_release.py lfs-check --images "$IMAGES" --pull
       - name: Log in to ghcr
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -221,7 +228,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
+          lfs: false
       - name: Install PyYAML
         run: sudo apt-get install -y -q python3-yaml
       - name: Download the digests
@@ -388,7 +395,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
+          lfs: false
       - name: Start the launcher as the wrapper does
         run: |
           docker run -d --name course-launcher -v /var/run/docker.sock:/var/run/docker.sock \
@@ -438,7 +445,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true
+          lfs: false
       - name: Install PyYAML
         run: sudo apt-get install -y -q python3-yaml
       - name: Download the release folder
