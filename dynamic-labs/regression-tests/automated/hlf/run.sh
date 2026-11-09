@@ -48,4 +48,18 @@ lab_fresh_start() {
   )
 }
 
+# lab-manager only warns when a Fabric image fails to build (an apt mirror outage did this on 9 Nov 2026), and the
+# suite then waits out its timeouts on a network that never started. Stop here with the cause instead.
+lab_before_suite() {
+  local image missing=()
+  for image in hlf-peer-ttyd:latest hlf-orderer-ttyd:latest chaincode-basic:latest; do
+    docker image inspect "${image}" >/dev/null 2>&1 || missing+=("${image}")
+  done
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo "${LAB_TAG} Fabric images missing after the start: ${missing[*]}." >&2
+    echo "${LAB_TAG} Their build failed; its output is above (look for 'Image build failed')." >&2
+    exit 1
+  fi
+}
+
 run_lab "$@"
