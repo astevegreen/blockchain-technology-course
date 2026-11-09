@@ -1,0 +1,73 @@
+# Student launcher stack for the HLF lab (docs/student-launcher-design.md, section 2 item 6).
+# Images only, no build contexts and no host paths except the Docker socket: the runner keeps the
+# whole Fabric runtime in the named volume hlf-runtime at /opt/hlf/runtime, and every container
+# lab.sh starts mounts parts of that volume with volume.subpath (managed_runtime/volume_binds.py).
+#
+# Needs Docker Engine 26.0 or later, which is Docker Desktop 4.29.0 or later (as of 9 Nov 2026):
+#   Engine 26.0 added volume subpath mounts: https://docs.docker.com/engine/release-notes/26.0/
+#   Docker Desktop 4.29 ships Engine 26.0:  https://www.docker.com/blog/docker-desktop-4-29/
+# Compose runs inside the runner image (docker:29-cli), so the host's Compose version does not matter.
+#
+# Images (lab.yaml services): hlf and hlf-runner are both built from Dockerfile.launcher, which bakes
+# the pinned Fabric 2.5.15 / CA 1.5.17 binaries in. The runner still builds hlf-peer-ttyd,
+# hlf-orderer-ttyd and chaincode-basic locally on first start, from the Dockerfiles it carries.
+# Capacity is one student.
+name: hlf
+
+x-labels: &labels
+  course.lab: hlf
+  course.release: ${COURSE_RELEASE:-dev}
+
+services:
+  hlf:
+    image: ${HLF_HLF_IMAGE:?not set - the launcher passes the release image}
+    command: ["python", "web_service/ui_app.py"]
+    restart: unless-stopped
+    labels: *labels
+    environment:
+      - HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY:?not set - the launcher writes runtime-secrets.env}
+    networks:
+      - router-net
+
+  hlf-runner:
+    image: ${HLF_HLF_RUNNER_IMAGE:?not set - the launcher passes the release image}
+    command: ["python", "web_service/app.py"]
+    restart: unless-stopped
+    stop_grace_period: 3m
+    labels: *labels
+    environment:
+      HLF_WEB_SECRET_KEY: ${HLF_WEB_SECRET_KEY:?not set - the launcher writes runtime-secrets.env}
+      HLF_CA_ADMIN_PASSWORD: ${HLF_CA_ADMIN_PASSWORD:?not set - the launcher writes runtime-secrets.env}
+      HLF_COUCHDB_PASSWORD: ${HLF_COUCHDB_PASSWORD:?not set - the launcher writes runtime-secrets.env}
+      HLF_DEBUG: ${HLF_DEBUG:-0}
+      # Volume mode in lab.sh: no host path exists; Docker mounts subpaths of this volume instead.
+      HLF_RUNTIME_VOLUME: hlf-runtime
+      HLF_AUTO_LAUNCH_WEB_UI: 0
+      HLF_AUTO_START_NETWORK: 1
+      HLF_STOP_NETWORK_ON_EXIT: 1
+      DOCKER_BUILD_NETWORK: bridge
+      HLF_STUDENT_COUNT: 1
+      MAX_STUDENT_CAPACITY: 1
+      HLF_CLAIM_WARM_POOL_SIZE: 1
+      STUDENT_PIDS_LIMIT: 256
+    volumes:
+      # Root-equivalent access to the student's own Docker, which lab.sh needs to start the
+      # Fabric network (README "Docker socket access").
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - hlf-runtime:/opt/hlf/runtime
+    pre_stop:
+      - command: bash /opt/hlf/scripts/pre_stop_cleanup.sh
+        working_dir: /opt/hlf
+    networks:
+      - router-net
+
+volumes:
+  hlf-runtime:
+    name: hlf-runtime
+    labels: *labels
+
+networks:
+  router-net:
+    external: true

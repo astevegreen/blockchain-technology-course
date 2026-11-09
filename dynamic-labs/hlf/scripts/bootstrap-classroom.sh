@@ -55,13 +55,27 @@ fi
 
 STUDENT_COUNT="${STUDENT_COUNT:-${HLF_STUDENT_COUNT:-${MAX_STUDENT_CAPACITY:-20}}}"
 
+# Student-launcher mode (lab.sh exports these): mount the runtime volume, never a host path.
+RUNTIME_VOLUME="${HLF_RUNTIME_VOLUME:-}"
+RUNTIME_ROOT="${MANAGED_RUNTIME_DIR%/managed_runtime}/runtime"
+if [[ -n "${RUNTIME_VOLUME}" ]]; then
+  FABRIC_SAMPLES_MOUNT=(--mount "type=volume,src=${RUNTIME_VOLUME},dst=/fabric-samples,volume-subpath=${HLF_FABRIC_SAMPLES_SUBPATH:-fabric-samples}")
+else
+  FABRIC_SAMPLES_MOUNT=(-v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples")
+fi
+
+volume_binds() {
+  [[ -n "${RUNTIME_VOLUME}" ]] || return 0
+  python3 "${MANAGED_RUNTIME_DIR}/volume_binds.py" --volume "${RUNTIME_VOLUME}" --root "${RUNTIME_ROOT}" "$@"
+}
+
 log() { printf '[student-overlay] %s\n' "$*" >&2; }
 die() { printf '[student-overlay] ERROR: %s\n' "$*" >&2; exit 1; }
 
 tools_run() {
   docker run --rm --platform "${TOOLS_PLATFORM}" \
     --network fabric_test \
-    -v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples" \
+    "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-tools:${IMAGE_TAG}" \
     bash -lc "$*"
@@ -73,6 +87,7 @@ stage_compose_students() {
   mkdir -p "${TEST_NETWORK}/compose"
   cp -f "${MANAGED_RUNTIME_DIR}/compose-students.yaml" \
         "${TEST_NETWORK}/compose/compose-students.yaml"
+  volume_binds "${TEST_NETWORK}/compose/compose-students.yaml"
 }
 
 compose_students() {
@@ -80,6 +95,7 @@ compose_students() {
   # labels — otherwise the daemon can't resolve relative bind mounts like
   # ./docker/peercfg (they'd look for the runner-internal /opt/hlf/... view
   # on the host, which is not the same directory).
+  volume_binds --ensure-dirs "${TEST_NETWORK}/compose/compose-students.yaml"
   (
     cd "${HOST_TEST_NETWORK}"
     docker compose -p hlf-students -f compose/compose-students.yaml "$@"

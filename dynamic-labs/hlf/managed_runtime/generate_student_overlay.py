@@ -57,7 +57,9 @@ HLF_PLATFORM = (
 
 HERE = Path(__file__).resolve().parent
 HOST_HLF_DIR = Path(os.environ.get("HLF_HOST_HLF_DIR") or HERE.parent).resolve()
-HOST_HLF_SCRIPTS_DIR = HOST_HLF_DIR / "scripts"
+# The student launcher stages the scripts inside its runtime volume (lab.sh, HLF_RUNTIME_VOLUME)
+# and points this at that copy, so volume_binds.py can mount it from the volume.
+HOST_HLF_SCRIPTS_DIR = Path(os.environ.get("HLF_HOST_SCRIPTS_DIR") or HOST_HLF_DIR / "scripts")
 
 
 def student_id(n: int) -> str:

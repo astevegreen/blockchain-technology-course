@@ -1,0 +1,85 @@
+# Student-launcher image for the HLF web page and runner (docker-compose.launcher.yml).
+# It is the classroom Dockerfile plus the pinned Fabric release baked in, so a student machine
+# downloads nothing at start and needs no host path: lab.sh copies the baked tree into the
+# hlf-runtime volume on first start (HLF_BAKED_FABRIC_SAMPLES). Keep the two files in step.
+
+FROM docker:29-cli AS docker_cli
+
+# The pinned fabric-samples commit and the Fabric 2.5.15 / CA 1.5.17 binaries for this platform,
+# fetched by the same installer and pins lab.sh uses (lab.sh: IMAGE_TAG, CA_IMAGE_TAG, FABRIC_SAMPLES_REF).
+FROM python:3.12-slim-trixie AS fabric_dist
+ARG FABRIC_VERSION=2.5.15
+ARG CA_VERSION=1.5.17
+ARG FABRIC_SAMPLES_REPO=https://github.com/hyperledger/fabric-samples.git
+ARG FABRIC_SAMPLES_REF=bf7e75c6c159dc1959f3bb8979ed739171673b4d
+RUN apt-get update && apt-get install -y --no-install-recommends bash ca-certificates curl git \
+    && rm -rf /var/lib/apt/lists/*
+COPY fabric/install-fabric.sh /tmp/install-fabric.sh
+WORKDIR /opt/hlf/fabric-dist
+RUN FABRIC_SAMPLES_REPO="${FABRIC_SAMPLES_REPO}" FABRIC_SAMPLES_REF="${FABRIC_SAMPLES_REF}" \
+      bash /tmp/install-fabric.sh --fabric-version "${FABRIC_VERSION}" --ca-version "${CA_VERSION}" samples binary \
+    && test -x fabric-samples/bin/peer \
+    && rm -rf fabric-samples/.git
+
+FROM python:3.12-slim-trixie
+
+ENV PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    HLF_AUTO_START_NETWORK=1 \
+    HLF_STOP_NETWORK_ON_EXIT=1 \
+    HLF_BAKED_FABRIC_SAMPLES=/opt/hlf/fabric-dist/fabric-samples
+
+WORKDIR /opt/hlf
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    ca-certificates \
+    curl \
+    git \
+    jq \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=docker_cli /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=docker_cli /usr/local/libexec/docker/cli-plugins/docker-compose /usr/local/libexec/docker/cli-plugins/docker-compose
+
+COPY web_service/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+COPY lab.sh /opt/hlf/lab.sh
+COPY Dockerfile.ttyd /opt/hlf/Dockerfile.ttyd
+COPY Dockerfile.chaincode /opt/hlf/Dockerfile.chaincode
+COPY fabric/install-fabric.sh /opt/hlf/fabric/install-fabric.sh
+COPY web_service/ /opt/hlf/web_service/
+COPY web_ui/ /opt/hlf/web_ui/
+COPY managed_runtime/ /opt/hlf/managed_runtime/
+COPY scripts/ /opt/hlf/scripts/
+COPY shared_instructor_auth/ /opt/hlf/shared_instructor_auth/
+COPY chaincode_overrides/ /opt/hlf/chaincode_overrides/
+COPY docs/STUDENT_GUIDE.md /opt/hlf/docs/STUDENT_GUIDE.md
+COPY --from=fabric_dist /opt/hlf/fabric-dist/ /opt/hlf/fabric-dist/
+
+COPY vendor/xterm/ /opt/hlf_vendor/
+
+# ttyd: the same pinned release and sums as Dockerfile.
+ARG TTYD_VERSION=1.7.7
+ARG TTYD_SHA256_X86_64=8a217c968aba172e0dbf3f34447218dc015bc4d5e59bf51db2f2cd12b7be4f55
+ARG TTYD_SHA256_AARCH64=b38acadd89d1d396a0f5649aa52c539edbad07f4bc7348b27b4f4b7219dd4165
+RUN arch="$(uname -m)" && \
+    case "$arch" in \
+      x86_64) ttyd_arch="x86_64"; ttyd_sha="$TTYD_SHA256_X86_64" ;; \
+      aarch64|arm64) ttyd_arch="aarch64"; ttyd_sha="$TTYD_SHA256_AARCH64" ;; \
+      *) echo "Unsupported architecture for ttyd: $arch" >&2; exit 1 ;; \
+    esac && \
+    curl -fsSL "https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.${ttyd_arch}" -o /usr/local/bin/ttyd && \
+    echo "${ttyd_sha}  /usr/local/bin/ttyd" | sha256sum -c - && \
+    chmod +x /usr/local/bin/ttyd && \
+    mkdir -p /opt/hlf/runtime
+
+# The committed overlay is the arm64 copy; lab.sh regenerates it for this machine's platform at start.
+RUN rm -f /opt/hlf/managed_runtime/compose-students.yaml && \
+    chmod 755 /opt/hlf/lab.sh /opt/hlf/fabric/install-fabric.sh
+
+EXPOSE 8080
+
+CMD ["python", "web_service/app.py"]

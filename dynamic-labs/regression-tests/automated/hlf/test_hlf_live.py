@@ -9,6 +9,7 @@ from urllib.parse import quote
 
 from live_support import (
     DEFAULT_BASE_URL,
+    LAUNCHER_STACK,
     ClaimContext,
     RUNNER_CONTAINER,
     claim_hlf_station,
@@ -147,6 +148,7 @@ class HLFRouterAndAuthTests(unittest.TestCase):
         resp = self.session.get(f"{self.base_url}/", timeout=10)
         self.assertEqual(resp.status_code, 200)
 
+    @unittest.skipIf(LAUNCHER_STACK, "the launcher stack publishes no host port at all")
     def test_web_container_publishes_only_on_loopback(self) -> None:
         # hlf/docker-compose.yml: the class reaches these pages through the router, which gates
         # the instructor ones. A port on the host's public address would skip that gate on a

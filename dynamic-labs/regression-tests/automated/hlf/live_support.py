@@ -63,6 +63,22 @@ INSTRUCTOR_COOKIE_NAME = "hlf_instructor"
 
 RUNNER_CONTAINER = os.environ.get("HLF_REGRESSION_RUNNER_CONTAINER", "hlf-hlf-runner-1")
 
+# Set by regression-tests/automated/hlf-launcher/run.sh: the student launcher stack, whose Fabric
+# runtime lives in the hlf-runtime volume, not under hlf/runtime in this checkout.
+LAUNCHER_STACK = os.environ.get("HLF_REGRESSION_LAUNCHER", "0") == "1"
+
+
+def runtime_file_exists(rel: str) -> bool:
+    """Whether hlf/runtime/<rel> exists: on the host for the classroom stack, in the runner for the launcher."""
+    if not LAUNCHER_STACK:
+        return (ROOT / "hlf" / "runtime" / rel).is_file()
+    result = subprocess.run(
+        ["docker", "exec", RUNNER_CONTAINER, "test", "-f", f"/opt/hlf/runtime/{rel}"],
+        capture_output=True,
+        timeout=30,
+    )
+    return result.returncode == 0
+
 _UUID_RE = re.compile(r"/labs/hlf/c/([0-9a-f-]{36})/")
 
 RegressionFailure = live_common.RegressionFailure
@@ -240,9 +256,9 @@ def wait_for_hlf_startup_complete(
     """
     deadline = time.time() + timeout_seconds
     last_status: dict | None = None
-    artifacts_root = ROOT / "hlf" / "runtime" / "fabric-samples" / "test-network"
-    compose_students = artifacts_root / "compose" / "compose-students.yaml"
-    channel_block = artifacts_root / "channel-artifacts" / "diplomas.block"
+    artifacts_root = "fabric-samples/test-network"
+    compose_students = f"{artifacts_root}/compose/compose-students.yaml"
+    channel_block = f"{artifacts_root}/channel-artifacts/diplomas.block"
 
     while time.time() < deadline:
         try:
@@ -258,7 +274,7 @@ def wait_for_hlf_startup_complete(
         if ready:
             if not require_student_overlay:
                 return last_status
-            if compose_students.is_file() and channel_block.is_file():
+            if runtime_file_exists(compose_students) and runtime_file_exists(channel_block):
                 return last_status
         time.sleep(interval_seconds)
 

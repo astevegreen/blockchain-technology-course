@@ -107,6 +107,47 @@ else
   HOST_FABRIC_SAMPLES_PATH="${FABRIC_SAMPLES_PATH}"
   HOST_TEST_NETWORK="${TEST_NETWORK}"
 fi
+
+# Student-launcher mode (docker-compose.launcher.yml sets HLF_RUNTIME_VOLUME): the
+# whole runtime tree lives in one named volume mounted at ${RUNTIME_ROOT}, so there
+# is no host path to hand the daemon. Containers this script starts mount that
+# volume with a subpath (Docker Engine 26.0+), and managed_runtime/volume_binds.py
+# rewrites the generated compose files the same way. Unset (the classroom), every
+# mount stays the host bind it was.
+RUNTIME_VOLUME="${HLF_RUNTIME_VOLUME:-}"
+RUNTIME_ROOT="${HERE}/runtime"
+if [[ -n "${RUNTIME_VOLUME}" ]]; then
+  if [[ -n "${HOST_HLF_DIR}" || "${FABRIC_SAMPLES_PATH}" != "${RUNTIME_ROOT}/"* ]]; then
+    echo "[hlf] ERROR: HLF_RUNTIME_VOLUME needs HLF_HOST_HLF_DIR unset and FABRIC_SAMPLES_PATH under ${RUNTIME_ROOT}" >&2
+    exit 1
+  fi
+  export HLF_FABRIC_SAMPLES_SUBPATH="${FABRIC_SAMPLES_PATH#"${RUNTIME_ROOT}/"}"
+  FABRIC_SAMPLES_MOUNT=(--mount "type=volume,src=${RUNTIME_VOLUME},dst=/fabric-samples,volume-subpath=${HLF_FABRIC_SAMPLES_SUBPATH}")
+  # Student peers mount the helper scripts from the volume (generate_student_overlay.py).
+  export HLF_HOST_SCRIPTS_DIR="${RUNTIME_ROOT}/hlf-scripts"
+else
+  FABRIC_SAMPLES_MOUNT=(-v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples")
+fi
+
+volume_mode() { [[ -n "${RUNTIME_VOLUME}" ]]; }
+
+# Rewrite generated compose files onto the runtime volume (no-op in the classroom).
+volume_rewrite_compose() {
+  volume_mode || return 0
+  python3 "${HERE}/managed_runtime/volume_binds.py" --volume "${RUNTIME_VOLUME}" --root "${RUNTIME_ROOT}" "$@"
+}
+
+# Create the subpaths a compose file mounts, just before it starts containers.
+volume_ensure_dirs() {
+  volume_mode || return 0
+  python3 "${HERE}/managed_runtime/volume_binds.py" --volume "${RUNTIME_VOLUME}" --root "${RUNTIME_ROOT}" --ensure-dirs "$@"
+}
+
+stage_volume_scripts() {
+  volume_mode || return 0
+  mkdir -p "${HLF_HOST_SCRIPTS_DIR}"
+  cp -a "${HERE}/scripts/." "${HLF_HOST_SCRIPTS_DIR}/"
+}
 CHAINCODE_OVERRIDE_PATH="${HERE}/chaincode_overrides/asset-transfer-basic/chaincode-javascript"
 CLI_HELPERS_FILE="${HERE}/scripts/hlf_cli_helpers.sh"
 CLI_HELPERS_B64=""
@@ -1699,6 +1740,7 @@ patch_managed_test_network() {
   # services. Students are NOT endorsers — the channel-level
   # Application.Endorsement policy remains OutOf(3, Org1..4).
   info "Regenerating student overlay configs via managed_runtime/generate_student_overlay.py"
+  stage_volume_scripts
   python3 "${managed_runtime_dir}/generate_student_overlay.py" --out "${managed_runtime_dir}" >/dev/null
 
   info "Staging ${hlf_student_count} x crypto-config-studentNN.yaml"
@@ -1867,6 +1909,8 @@ if old2 in t:
 p.write_text(t)
 PY
   fi
+
+  volume_rewrite_compose     "${TEST_NETWORK}/compose/compose-ca.yaml"     "${TEST_NETWORK}/compose/compose-test-net.yaml"     "${TEST_NETWORK}/compose/compose-couch.yaml"     "${TEST_NETWORK}/compose/compose-students.yaml"
 }
 
 prepare_ttyd_build_context() {
@@ -1970,6 +2014,15 @@ build_ttyd_images() {
 }
 
 runtime_compose() {
+  if volume_mode; then
+    local -a _files=()
+    local _a _prev=""
+    for _a in "$@"; do
+      [[ "${_prev}" == "-f" ]] && _files+=("${TEST_NETWORK}/${_a}")
+      _prev="${_a}"
+    done
+    [[ ${#_files[@]} -gt 0 ]] && volume_ensure_dirs "${_files[@]}"
+  fi
   (
     cd "${HOST_TEST_NETWORK}"
     export DOCKER_SOCK="${DOCKER_SOCK:-/var/run/docker.sock}"
@@ -1988,7 +2041,7 @@ generate_crypto_material_via_containers() {
   docker run --rm --platform ${TOOLS_PLATFORM} \
     --network fabric_test \
     -e HLF_CA_ADMIN_PASSWORD \
-    -v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples" \
+    "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-ca:${CA_IMAGE_TAG}" \
     bash -lc '
@@ -2020,7 +2073,7 @@ generate_crypto_material_via_containers() {
   info "Generating Org3/Org4/Org5 + Student01..Student${hlf_student_count} crypto material via cryptogen (fabric-tools)..."
   docker run --rm --platform ${TOOLS_PLATFORM} \
     --network fabric_test \
-    -v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples" \
+    "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-tools:${IMAGE_TAG}" \
     bash -lc '
@@ -2050,7 +2103,7 @@ create_channel_via_tools_container() {
   info "Creating channel and joining peers via Fabric tools container..."
   docker run --rm --platform ${TOOLS_PLATFORM} \
     --network fabric_test \
-    -v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples" \
+    "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-tools:${IMAGE_TAG}" \
     bash -lc '
@@ -2091,6 +2144,15 @@ prepare_fabric_samples_repo() {
     -f "${FABRIC_SAMPLES_PATH}/config/core.yaml" \
   ]]; then
     info "Using vendored fabric-samples assets at ${FABRIC_SAMPLES_PATH}"
+    return 0
+  fi
+
+  # The launcher runner image bakes the pinned tree in (Dockerfile.launcher), so a
+  # student machine copies it into the runtime volume instead of downloading it.
+  if [[ -n "${HLF_BAKED_FABRIC_SAMPLES:-}" && -x "${HLF_BAKED_FABRIC_SAMPLES}/bin/peer" ]]; then
+    info "Copying baked fabric-samples and Fabric binaries from ${HLF_BAKED_FABRIC_SAMPLES}"
+    rm -rf "${FABRIC_SAMPLES_PATH}"
+    cp -a "${HLF_BAKED_FABRIC_SAMPLES}" "${FABRIC_SAMPLES_PATH}"
     return 0
   fi
 
@@ -2468,7 +2530,8 @@ ensure_tools_container() {
       # Ensure volume mount points to the current FABRIC_SAMPLES_PATH
       local mount_src
       mount_src="$(timeout 3 docker inspect -f '{{range .Mounts}}{{if eq .Destination "/fabric-samples"}}{{.Source}}{{end}}{{end}}' "${TOOLS_NAME}" 2>/dev/null || true)"
-      if [[ -n "${mount_src}" && "${mount_src}" != "${HOST_FABRIC_SAMPLES_PATH}" ]]; then
+      # A volume mount's Source is the daemon's own path, never HOST_FABRIC_SAMPLES_PATH.
+      if ! volume_mode && [[ -n "${mount_src}" && "${mount_src}" != "${HOST_FABRIC_SAMPLES_PATH}" ]]; then
         info "Tools container has stale fabric-samples mount (${mount_src}), recreating..."
         docker rm -f "${TOOLS_NAME}" >/dev/null 2>&1 || true
       else
@@ -2492,7 +2555,7 @@ ensure_tools_container() {
   if ! docker run -d --name "${TOOLS_NAME}" \
     --platform ${TOOLS_PLATFORM} \
     --network "${net}" \
-    -v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples" \
+    "${FABRIC_SAMPLES_MOUNT[@]}" \
     "${tools_img}" \
     bash -lc "trap : TERM INT; sleep infinity" >/dev/null 2>&1; then
     echo "[hlf] ERROR: Failed to start tools container" >&2
@@ -2514,7 +2577,7 @@ ensure_tools_container() {
     if ! docker run -d --name "${TOOLS_NAME}" \
       --platform ${TOOLS_PLATFORM} \
       --network "${net}" \
-      -v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples" \
+      "${FABRIC_SAMPLES_MOUNT[@]}" \
       "${tools_img}" \
       bash -lc "trap : TERM INT; sleep infinity" >/dev/null 2>&1; then
       echo "[hlf] ERROR: Failed to start tools container" >&2
