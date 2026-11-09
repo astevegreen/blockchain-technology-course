@@ -21,18 +21,14 @@ slide index), which is never listed here.
   triage's C3 and C9 dismissals (`docs/security-triage.md:109,115`), which assumed that network; and measure the
   host size a 20-40 seat class needs (`dynamic-labs/deploy-cloud.sh`, `--max-student-capacity`, default 20, max
   40). (9 Nov 2026, lab hosting decision)
-- `dynamic-labs/hlf/Dockerfile.ttyd:12-13` fetch ttyd and zellij from `releases/latest`, so a new upstream release
-  changes the hlf lane image without a commit. Pin both versions (and their checksums) and rerun the hlf Lab Tests.
-  The same `releases/latest` downloads sit in `bitcoin/workstation/Dockerfile:21-23`, `consensus/Dockerfile:6-9`
-  and `p2p_trust/Dockerfile:11-13`. (9 Nov 2026, hlf startup outage, d48ed62; the other three found 9 Nov 2026,
-  trixie move)
 - The ghcr images `bitcoin-lab`, `bitcoin-mempool` and `bitcoin-graph` (`ghcr.io/blockchain-course-2026/`) are
   still the Debian 12 builds: no workflow publishes them, and the bitcoin, wallet and trace labs pull them. Their
   Dockerfiles (`bitcoin/workstation`, `bitcoin/mempool`, `bitcoin-graph`) are on trixie since 9 Nov 2026, now carry
   what the published images had but the repo lacked (the 10-second, 2-block retarget in `custom-genesis.patch`; the
-  mempool's `configure-mempool-base-path.sh`), and passed the bitcoin, wallet and three trace labs' tests built
-  locally (`BITCOIN_LAB_IMAGE`, `BITCOIN_MEMPOOL_IMAGE`, `BITCOIN_GRAPH_IMAGE`). Build and push the three,
-  workstation first (`--build-arg BITCOIN_LAB_BASE` for the other two), with an account that can write to the ghcr
+  mempool's `configure-mempool-base-path.sh`), now pin ttyd 1.7.7 and zellij 0.45.1 (the workstation image) and rustup
+  1.29.3 with Rust 1.99.1 (the mempool image) with sha256 checks, and passed the bitcoin, wallet and three trace
+  labs' tests built locally (`BITCOIN_LAB_IMAGE`, `BITCOIN_MEMPOOL_IMAGE`, `BITCOIN_GRAPH_IMAGE`). Build and push
+  the three, workstation first (`--build-arg BITCOIN_LAB_BASE` for the other two), with an account that can write to the ghcr
   org. (9 Nov 2026, trixie move)
 - `regression-tests/automated/bitcoin/test_bitcoin_live.py:316-344` mines in a tight loop, and the 2-block retarget
   raises difficulty so fast that a block can take minutes near height 25: one of three local runs (9 Nov 2026)

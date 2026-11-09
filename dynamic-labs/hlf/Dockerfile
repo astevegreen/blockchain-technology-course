@@ -38,13 +38,19 @@ COPY docs/STUDENT_GUIDE.md /opt/hlf/docs/STUDENT_GUIDE.md
 
 COPY vendor/xterm/ /opt/hlf_vendor/
 
+# ttyd is pinned to an exact release and checked against its sha256 sum, so an upstream release can't change
+# the image. To bump: change the version and both sums (SHA256SUMS on the release).
+ARG TTYD_VERSION=1.7.7
+ARG TTYD_SHA256_X86_64=8a217c968aba172e0dbf3f34447218dc015bc4d5e59bf51db2f2cd12b7be4f55
+ARG TTYD_SHA256_AARCH64=b38acadd89d1d396a0f5649aa52c539edbad07f4bc7348b27b4f4b7219dd4165
 RUN arch="$(uname -m)" && \
     case "$arch" in \
-      x86_64) ttyd_arch="x86_64" ;; \
-      aarch64|arm64) ttyd_arch="aarch64" ;; \
+      x86_64) ttyd_arch="x86_64"; ttyd_sha="$TTYD_SHA256_X86_64" ;; \
+      aarch64|arm64) ttyd_arch="aarch64"; ttyd_sha="$TTYD_SHA256_AARCH64" ;; \
       *) echo "Unsupported architecture for ttyd: $arch" >&2; exit 1 ;; \
     esac && \
-    curl -fsSL "https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${ttyd_arch}" -o /usr/local/bin/ttyd && \
+    curl -fsSL "https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.${ttyd_arch}" -o /usr/local/bin/ttyd && \
+    echo "${ttyd_sha}  /usr/local/bin/ttyd" | sha256sum -c - && \
     chmod +x /usr/local/bin/ttyd && \
     mkdir -p /opt/hlf/runtime
 

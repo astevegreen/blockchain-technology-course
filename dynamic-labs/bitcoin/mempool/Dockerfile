@@ -12,7 +12,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     clang cmake pkg-config libssl-dev git curl build-essential ca-certificates
 
 # Install Rust
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+# rustup-init and the Rust toolchain are pinned (rustup 1.29.3 checked against its sha256; Rust 1.99.1, as
+# stable was on 9 Nov 2026) so a rebuild can't change the compiler. To bump: change the versions and sums.
+ARG RUSTUP_VERSION=1.29.3
+ARG RUSTUP_SHA256_X86_64=b1c8cb14e30889e7e2999e6b69e62d9e9b9ffc0f4df8180564d306d9680e6c55
+ARG RUSTUP_SHA256_AARCH64=9f608c142e0e38a78957d0661ba1dfaf0b6fb37184cfaa4b9a0aa57af6184282
+ARG RUST_TOOLCHAIN=1.99.1
+RUN set -eu; arch="$(uname -m)"; \
+    case "$arch" in \
+      x86_64) sha="$RUSTUP_SHA256_X86_64" ;; \
+      aarch64|arm64) arch=aarch64; sha="$RUSTUP_SHA256_AARCH64" ;; \
+      *) echo "Unsupported architecture: $arch" >&2; exit 1 ;; \
+    esac; \
+    curl --proto '=https' --tlsv1.2 -fsSL "https://static.rust-lang.org/rustup/archive/${RUSTUP_VERSION}/${arch}-unknown-linux-gnu/rustup-init" -o /tmp/rustup-init; \
+    echo "${sha}  /tmp/rustup-init" | sha256sum -c -; \
+    chmod +x /tmp/rustup-init; /tmp/rustup-init -y --profile minimal --default-toolchain "$RUST_TOOLCHAIN"; rm /tmp/rustup-init
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Build Electrs
@@ -39,7 +53,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get install -y nodejs 
 
 # Install Rust (Required for mempool-backend 'gbt' compilation)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+# rustup-init and the Rust toolchain are pinned (rustup 1.29.3 checked against its sha256; Rust 1.99.1, as
+# stable was on 9 Nov 2026) so a rebuild can't change the compiler. To bump: change the versions and sums.
+ARG RUSTUP_VERSION=1.29.3
+ARG RUSTUP_SHA256_X86_64=b1c8cb14e30889e7e2999e6b69e62d9e9b9ffc0f4df8180564d306d9680e6c55
+ARG RUSTUP_SHA256_AARCH64=9f608c142e0e38a78957d0661ba1dfaf0b6fb37184cfaa4b9a0aa57af6184282
+ARG RUST_TOOLCHAIN=1.99.1
+RUN set -eu; arch="$(uname -m)"; \
+    case "$arch" in \
+      x86_64) sha="$RUSTUP_SHA256_X86_64" ;; \
+      aarch64|arm64) arch=aarch64; sha="$RUSTUP_SHA256_AARCH64" ;; \
+      *) echo "Unsupported architecture: $arch" >&2; exit 1 ;; \
+    esac; \
+    curl --proto '=https' --tlsv1.2 -fsSL "https://static.rust-lang.org/rustup/archive/${RUSTUP_VERSION}/${arch}-unknown-linux-gnu/rustup-init" -o /tmp/rustup-init; \
+    echo "${sha}  /tmp/rustup-init" | sha256sum -c -; \
+    chmod +x /tmp/rustup-init; /tmp/rustup-init -y --profile minimal --default-toolchain "$RUST_TOOLCHAIN"; rm /tmp/rustup-init
 ENV PATH="/root/.cargo/bin:${PATH}"
 
 # --- A. Mempool Frontend & Backend ---
