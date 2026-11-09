@@ -79,7 +79,7 @@ policy.
   `.gitattributes`, `CLAUDE.md`, this file, `tools/sprint/`, `tools/hooks/`, `tools/check.py`, the rest of the
   rails (`tools/qmd_lint.py`, `tools/tests/test_check.py`, `tools/tests/test_qmd_lint.py`,
   `quizes/verify_single_quiz.py`, `blockchain-course/glossary/scripts/validate_glossary.py`, `tools/agy.mjs`,
-  `tools/second-look*`, `tools/rail-audit*`, `GEMINI.md`), and the generated files: `glossary/slide-index.yml`,
+  `tools/gemini-api.mjs`, `tools/second-look*`, `tools/rail-audit*`, `GEMINI.md`), and the generated files: `glossary/slide-index.yml`,
   `terms.yml`, `terms.json`, `duplicates.md`, `index.qmd`, `index.pdf`, `quizes/dist/` and
   `blockchain-course/_site/`. No new dependencies.
 - **Glossary and mind map**: no lane runs the glossary pipeline or edits `assets/mindmap.html`. The check reports

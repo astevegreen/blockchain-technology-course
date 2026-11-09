@@ -68,8 +68,6 @@ slide index), which is never listed here.
   and its QEMU plugin (`~> 1.0` today), and check whether the Fabric lab needs the `fabric-kafka` or
   `fabric-zookeeper` images, which Fabric stopped publishing at 2.5.15. Every lab's regression test reruns. (6 Nov
   2026, owner's research request)
-- `tools/agy.mjs` is 404 lines: its Gemini API half (`apiPrompt`, `parseApiReply`, the HTTPS post,
-  `geminiApi`) belongs in its own file, split the same way in all three repos. (7 Nov 2026, Gemini API fallback)
 - Lab Tests re-pulls the lab images every run. Measured 8 Nov 2026 (explorer job, run 42486806400): 5m15s in all, of
   which Otterscan took 2m53s, nearly all of it extracting one 28 MB layer of many small files (the download is
   ~10 s); the other images pull in 10-15 s. `docker save`/`load` would extract the same layer, so it saves nothing.

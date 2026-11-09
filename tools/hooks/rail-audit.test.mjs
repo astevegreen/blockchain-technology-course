@@ -4,7 +4,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { ARGON, FLASH, NO_API, OPUS, SONNET, askFirstAvailable, askModel, pickDepth } from "../agy.mjs";
+import { ARGON, FLASH, OPUS, SONNET, askFirstAvailable, askModel, pickDepth } from "../agy.mjs";
+import { NO_API } from "../gemini-api.mjs";
 import { RAILS, RAIL_MODELS, couldNotRun, railAction, railDiff, railFiles, railVerdict } from "../rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..", "..");
@@ -15,7 +16,7 @@ test("the rails are the hooks, settings, sprint skills and agents, git hooks, wo
     ".claude/agents/implementer.md", ".claude/agents/reviewer.md", ".githooks/pre-commit", ".github/workflows/check.yml",
     "tools/check.py", "tools/qmd_lint.py", "tools/tests/test_check.py", "tools/tests/test_qmd_lint.py",
     "quizes/verify_single_quiz.py", "blockchain-course/glossary/scripts/validate_glossary.py", "tools/sprint/rules.mjs",
-    "tools/agy.mjs", "tools/second-look.mjs", "tools/second-look.md", "tools/rail-audit.mjs", "tools/rail-audit.md", "GEMINI.md",
+    "tools/agy.mjs", "tools/gemini-api.mjs", "tools/second-look.mjs", "tools/second-look.md", "tools/rail-audit.mjs", "tools/rail-audit.md", "GEMINI.md",
   ];
   const others = [
     ".claude/skills/lesson/SKILL.md", ".claude/agents/scout.md", ".claude/rules/ci.md", "blockchain-course/lessons/x.qmd",

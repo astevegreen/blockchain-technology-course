@@ -10,7 +10,8 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { NO_API, ORDER, askFirstAvailable, askModel, buildPrompt, byLine, diffStats, pickDepth, truncateDiff } from "./agy.mjs";
+import { ORDER, askFirstAvailable, askModel, buildPrompt, byLine, diffStats, pickDepth } from "./agy.mjs";
+import { NO_API, truncateDiff } from "./gemini-api.mjs";
 import { RAILS, RAIL_MODELS, couldNotRun, railAction, railDiff, railFiles, railVerdict } from "./rail-audit.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");

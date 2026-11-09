@@ -519,7 +519,7 @@ describe("--file-lock", () => {
       "tools/tests/test_check.py": "tools/tests/test_check.py", "tools/tests/test_qmd_lint.py": "tools/tests/test_qmd_lint.py",
       "quizes/verify_single_quiz.py": "quizes/verify_single_quiz.py",
       "blockchain-course/glossary/scripts/validate_glossary.py": "blockchain-course/glossary/scripts/validate_glossary.py",
-      "tools/sprint/": "tools/sprint/queue.mjs", "tools/agy.mjs": "tools/agy.mjs", "tools/second-look": "tools/second-look.md",
+      "tools/sprint/": "tools/sprint/queue.mjs", "tools/agy.mjs": "tools/agy.mjs", "tools/gemini-api.mjs": "tools/gemini-api.mjs", "tools/second-look": "tools/second-look.md",
       "tools/rail-audit": "tools/rail-audit.mjs", "GEMINI.md": "GEMINI.md",
       ".claude/agents/implementer.md": ".claude/agents/implementer.md", ".claude/agents/reviewer.md": ".claude/agents/reviewer.md",
     };

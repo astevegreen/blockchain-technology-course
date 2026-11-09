@@ -4,7 +4,7 @@ files whose content decides them: `tools/hooks/` (the Claude Code hooks and the 
 `.claude/settings*.json` (the hooks it wires and its permission rules), the sprint skills and agents (the guard
 they wire, and what the reviewer counts as a blocker), `.githooks/`, the `.github/` workflows, `tools/check.py`
 with the lint, quiz and glossary checks it runs and its tests, the sprint queue `tools/sprint/` (what holds and what
-reaches the integrator), and the second look and this audit (`tools/agy.mjs`, `tools/second-look*`,
+reaches the integrator), and the second look and this audit (`tools/agy.mjs`, `tools/gemini-api.mjs`, `tools/second-look*`,
 `tools/rail-audit*`, and `GEMINI.md`, which says what a blocker is).
 
 Answer one question: does this change loosen, bypass or disable any check, guard, gate, hook or required review?

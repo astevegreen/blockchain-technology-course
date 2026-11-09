@@ -28,6 +28,7 @@ export const RAILS = [
   "blockchain-course/glossary/scripts/validate_glossary.py",
   "tools/sprint/",
   "tools/agy.mjs",
+  "tools/gemini-api.mjs",
   "tools/second-look",
   "tools/rail-audit",
   "GEMINI.md",
