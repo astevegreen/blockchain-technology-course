@@ -34,7 +34,7 @@ Many users contribute inputs and receive outputs in a single transaction. Day 6'
 
 ### Equal Outputs Mark A CoinJoin On Sight
 
-Equal-sized outputs are the visible shape, so detection is easy; the difficulty is seeing through the mix. Wasabi 1.x rounds paid out outputs of one size; Wasabi 2.x changed the pattern, so recognition depends on the version and date.
+Equal-sized outputs are the visible shape, so detection is easy; the difficulty is seeing through the mix. Wasabi 1.x rounds paid out outputs of set sizes (about 0.1 BTC, and from 2019 also multiples such as 0.2 and 0.4 BTC); Wasabi 2.x changed the pattern, so recognition depends on the version and date.
 
 ### Before And After The Mix Still Leak
 

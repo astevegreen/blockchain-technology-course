@@ -12,10 +12,6 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
-- `forensics/06-FO-mixers_and_coinjoin.qmd:125` and `:144` say Wasabi 1.x used one denomination of about 0.1 BTC;
-  Svenda et al. sec. 2.1 say version 1.1.0 (2019) added multiples such as 0.2, 0.4 and 0.8 BTC. The 06-FO bank's q4
-  stem repeats "of one size". (8 Nov 2026, 06-FO reading synthesis)
-
 ## Labs
 - Lab hosting is decided: one shared host per class, the cloud by default and the classroom server as the offline
   fallback, with the student VM kept for practice and self-study (owner, 9 Nov 2026). Before the first cloud class:

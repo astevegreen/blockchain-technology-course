@@ -28,7 +28,6 @@ The lesson cites this paper for its CoinJoin slides: the cost of missing a CoinJ
 Where the reading and the lesson differ (the lesson wins for questions; no questions on these points):
 
 - **Why zkSNACKs stopped.** The abstract says law-enforcement actions in June 2024 shut down the coordinators of all three designs. The body says otherwise: the Wasabi 1.x coordinator was retired on 19 May 2023 in favour of Wasabi 2.x, and zkSNACKs stopped its Wasabi 2.x coordinator voluntarily on 1 June 2024, citing legal uncertainty (sec. 1, sec. 2.1, sec. 5.1). The lesson follows the body. Do not ask whether zkSNACKs was forced to close.
-- **Wasabi 1.x denominations.** The lesson's table gives Wasabi 1.x as "one denomination" of about 0.1 BTC. The reading says that was true from the 2018 release, but version 1.1.0 (2019) added fixed multiples such as 0.2, 0.4 and 0.8 BTC (sec. 2.1). Do not write questions that turn "Wasabi 1.x has exactly one output size" into an absolute.
 - **The "as of" date on the paper's figures.** The lesson dates the 391,000 BTC figure and the post-shutdown picture "as of 31 Oct 2026", the date the paper was read. The paper's own data stop on 10 November 2025 (sec. 5). This synthesis dates them to the cutoff.
 - **Whirlpool pool sizes after 2025.** The lesson's table lists Samourai's four pools (0.001, 0.01, 0.05, 0.5 BTC). The reading adds that the Ashigaru coordinator, started 31 May 2025, runs two different pools, 0.025 and 0.25 BTC (sec. 2.1). This is a gap in the lesson rather than a contradiction; questions keep to the shape (small rounds, one fixed size), not the pool list.
 
@@ -189,6 +188,6 @@ The synthesis is grounded in the assigned sections, checked against the lesson's
 
 - Is the synthesis grounded only in the reading and the assigned lesson identity? Yes.
 - Are the assessment targets comprehension-focused rather than trivia-focused? Yes.
-- Does the synthesis distinguish reading contribution from lesson content? Yes, including four points where they differ.
+- Does the synthesis distinguish reading contribution from lesson content? Yes, including three points where they differ.
 - Are tags normalized and useful for future quiz pooling? Yes.
 - Are acquisition limitations or ambiguities documented? Yes.
