@@ -17,7 +17,12 @@ slide index), which is never listed here.
 - Lab hosting is decided: one shared host per class, the cloud by default and the classroom server as the offline
   fallback, with the student VM kept for practice and self-study (owner, 9 Nov 2026). The host size in
   `dynamic-labs/README.md` ("Host size for a class") is a local estimate: rerun `dynamic-labs/scripts/measure-seats.py`
-  on the real host before the first cloud class. (9 Nov 2026, lab hosting decision)
+  on the real host before the first cloud class. (9 Nov 2026, lab hosting decision) Also on the real cloud host,
+  before the first class: a person opens a lab page in a real browser on the real domain over HTTPS, enters the
+  class code, and confirms the `explorer.`, `tokens.`, `dex.` and `dex-l2.` subdomains open without asking for it
+  again. The class-pass cookie is set on the parent domain (`CLASS_PASS_COOKIE_DOMAIN`, `dynamic-labs/lab-manager.sh`);
+  `dynamic-labs/tests/test_class_gate*.py` simulate that but cannot prove a real browser shares it. (9 Nov 2026,
+  class gate review)
 - The vendored instructor-auth copies (`dynamic-labs/quiz-engine-v2/instructor_auth/audit.py`,
   `exercises/l03-i3-trust-game/instructor_auth/audit.py`, `hlf/shared_instructor_auth/audit.py`) lack the `h.close()`
   that `dynamic-labs/shared/instructor_auth/audit.py:39` has, and no test keeps the copies in step with `shared/`.
