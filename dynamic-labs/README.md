@@ -290,6 +290,34 @@ Cloud deploy accepts the same claim-lane capacity controls as `lab-manager.sh de
 - `--bitcoin-student-capacity N`, `--consensus-student-capacity N`, `--p2p-trust-student-capacity N`, `--ethereum-student-capacity N`, and `--hlf-student-capacity N` override individual lab capacities.
 - Example: `sudo ./deploy-cloud.sh --domain labs.my-course.com --max-student-capacity 20 --hlf-student-capacity 10`
 
+#### Host size for a class (local estimate, 9 Nov 2026)
+
+Measured on the course desktop (Docker Desktop, 20 CPUs, 15.6 GiB), not on a cloud host, with
+`scripts/measure-seats.py`: a fresh classroom deploy, ten lanes of each claim-based lab started through the
+instructor API, and `docker stats` read after a 45-second settle. The seats were idle (a student reading or typing),
+so CPU is a floor, not a peak.
+
+| What | RAM | CPU |
+|------|----:|------------------------:|
+| Every lab started (`start all`), no student lanes: 56 containers | 5.0 GiB | 1.8 cores a minute after the start, 1 of them `bitcoin-graph` |
+| One Fabric (hlf) seat: its student peer | 85 MiB | 1.2% of a core idle, 1.5% starting |
+| One Bitcoin seat | 77 MiB | 0.6% of a core idle, 1.1% starting |
+| One Ethereum seat | 37 MiB | 0.1% of a core idle |
+| One consensus or P2P trust seat | 17 MiB | under 0.1% of a core |
+
+A seat with all five lanes open costs about 0.23 GiB, so 20 seats add about 4.6 GiB and 40 seats about 9.1 GiB to
+the 5 GiB the labs need on their own. In a class only the day's lab is busy: lanes stop after 20 minutes idle (60 for
+Bitcoin), and each lane-service lane is capped at 512 MiB. The images took about 35 GB of disk on the desktop (test images included).
+
+Recommended host, leaving room for a whole class acting at once, which this run did not measure:
+
+- **20 seats:** 8 vCPU, 16 GiB RAM, 100 GB SSD.
+- **40 seats:** 16 vCPU, 32 GiB RAM, 150 GB SSD.
+
+Before the first class on a new host, rerun the measurement there: deploy with `--max-student-capacity` at least the
+seat count, `lab-manager.sh start` the five labs, then
+`python3 scripts/measure-seats.py --seats 20 ethereum_lab bitcoin consensus p2p_trust hlf`.
+
 Cloud deployment is allowed to hydrate Hyperledger Fabric build assets from the internet during image prebuild. The packaged VM path remains offline-only: it expects the shipped `hlf/runtime/fabric-samples` tree to already contain Fabric samples, binaries, and config.
 
 ### Instructor (classroom server)
