@@ -12,6 +12,7 @@ slide index), which is never listed here.
 - A decision only the owner can make goes to the owner as a question, not here.
 
 ## Lessons
+
 ## Labs
 - Lab hosting is decided: one shared host per class, the cloud by default and the classroom server as the offline
   fallback, with the student VM kept for practice and self-study (owner, 9 Nov 2026). Before the first cloud class:
