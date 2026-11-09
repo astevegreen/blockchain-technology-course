@@ -30,7 +30,24 @@ slide index), which is never listed here.
   40). (9 Nov 2026, lab hosting decision)
 - `dynamic-labs/hlf/Dockerfile.ttyd:12-13` fetch ttyd and zellij from `releases/latest`, so a new upstream release
   changes the hlf lane image without a commit. Pin both versions (and their checksums) and rerun the hlf Lab Tests.
-  (9 Nov 2026, hlf startup outage, d48ed62)
+  The same `releases/latest` downloads sit in `bitcoin/workstation/Dockerfile:21-23`, `consensus/Dockerfile:6-9`
+  and `p2p_trust/Dockerfile:11-13`. (9 Nov 2026, hlf startup outage, d48ed62; the other three found 9 Nov 2026,
+  trixie move)
+- The ghcr images `bitcoin-lab`, `bitcoin-mempool` and `bitcoin-graph` (`ghcr.io/blockchain-course-2026/`) are
+  still the Debian 12 builds: no workflow publishes them, and the bitcoin, wallet and trace labs pull them. Their
+  Dockerfiles (`bitcoin/workstation`, `bitcoin/mempool`, `bitcoin-graph`) are on trixie since 9 Nov 2026, now carry
+  what the published images had but the repo lacked (the 10-second, 2-block retarget in `custom-genesis.patch`; the
+  mempool's `configure-mempool-base-path.sh`), and passed the bitcoin, wallet and three trace labs' tests built
+  locally (`BITCOIN_LAB_IMAGE`, `BITCOIN_MEMPOOL_IMAGE`, `BITCOIN_GRAPH_IMAGE`). Build and push the three,
+  workstation first (`--build-arg BITCOIN_LAB_BASE` for the other two), with an account that can write to the ghcr
+  org. (9 Nov 2026, trixie move)
+- `regression-tests/automated/bitcoin/test_bitcoin_live.py:316-344` mines in a tight loop, and the 2-block retarget
+  raises difficulty so fast that a block can take minutes near height 25: one of three local runs (9 Nov 2026)
+  failed its 180 s step with the chain stuck at heights 27-29. The published image mines the same way. A higher
+  timeout, or mining with `-mocktime` steps, would steady it. (9 Nov 2026, trixie move)
+- `dynamic-labs/ethereum_lab/Dockerfile:47-54` builds heimdall-rs from source with a Rust toolchain only so it
+  runs on the VM's glibc. Now the VM and the image are on Ubuntu 24.04 and trixie (glibc 2.39 and 2.41), the
+  upstream release binary, if it needs no newer glibc, could replace the build stage. (9 Nov 2026, trixie move)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3
@@ -51,14 +68,6 @@ slide index), which is never listed here.
   (8 Nov 2026, Hardhat 3 move)
 
 ## Tooling and rules
-- Before the later course runs: rebuild the student VM on Ubuntu 24.04 (`vm-build/ubuntu-lab.pkr.hcl:17,22` still
-  name the 22.04 "jammy" cloud image; its standard support ends in mid-2027, while 24.04 is supported to 2029). In the
-  same pass, move the lab images on Debian 12 "bookworm" (regular support ended 12 Jul 2026) and `python:3.11-slim`
-  to Debian 13 "trixie" and Python 3.12 or later, and pin the Debian codename in each tag (`python:3.12-slim-trixie`)
-  so a base image never changes underneath a lab; 27 Dockerfiles under `dynamic-labs/` use them. Pin Packer
-  and its QEMU plugin (`~> 1.0` today), and check whether the Fabric lab needs the `fabric-kafka` or
-  `fabric-zookeeper` images, which Fabric stopped publishing at 2.5.15. Every lab's regression test reruns. (6 Nov
-  2026, owner's research request)
 - Lab Tests re-pulls the lab images every run. Measured 8 Nov 2026 (explorer job, run 42486806400): 5m15s in all, of
   which Otterscan took 2m53s, nearly all of it extracting one 28 MB layer of many small files (the download is
   ~10 s); the other images pull in 10-15 s. `docker save`/`load` would extract the same layer, so it saves nothing.

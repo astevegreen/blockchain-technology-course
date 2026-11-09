@@ -1,6 +1,6 @@
 FROM docker:29-cli AS docker_cli
 
-FROM python:3.11-slim
+FROM python:3.12-slim-trixie
 
 ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \

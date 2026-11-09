@@ -184,6 +184,8 @@ JSON
 # Make sure Nginx can read them
 chown -R www-data:www-data /var/www/mempool/browser/dummy/pools
 
+/usr/local/bin/configure-mempool-base-path.sh
+
 
 
 

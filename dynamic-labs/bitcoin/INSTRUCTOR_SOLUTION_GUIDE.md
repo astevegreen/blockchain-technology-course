@@ -23,7 +23,7 @@
 |---|---|
 | **Tabs** | Primer · Terminal & Zellij · Lab 1 · Regtest · Lab 2 · ClassNet · Forensics Lab |
 | **Tools given to the student** | Web terminal (**ttyd** + **zellij**), **btc-rpc-explorer** ("Explorer" link), **mempool** UI ("Mempool" link), `~/scripts/miner.py`, `~/scripts/agent.py`, a personal static site (`~/share`) |
-| **Network** | Custom "ClassNet" Bitcoin Core fork. **Coinbase maturity = 10 blocks** (not 100). **Difficulty retargets every 4 blocks** (not 2016). Genesis `nBits = 0x207fffff`, 50 BTC initial reward. Uses mainnet-style `bc1q…` bech32 HRP. |
+| **Network** | Custom "ClassNet" Bitcoin Core fork. **Coinbase maturity = 10 blocks** (not 100). **Difficulty retargets every 2 blocks** (not 2016), aiming at 10 seconds a block. Genesis `nBits = 0x207fffff`, 50 BTC initial reward. Uses mainnet-style `bc1q…` bech32 HRP. |
 | **Two chains** | Lab 1 runs a **private** regtest node (own datadir/ports, driven by a `btc-lab1` alias). Lab 2 + Forensics use the **shared ClassNet** node (`bitcoin-cli` with no `-regtest`). |
 | **Explorer URLs** | Tx: `…/labs/bitcoin/btc-explorer/tx/<txid>` · Address: `…/btc-explorer/address/<addr>` · Block: `…/btc-explorer/block-height/<n>` |
 
@@ -138,7 +138,7 @@ echo $MY_ADDR > ~/share/address.txt        # published on your static site
 ```
 ### 2.2 Mine coins (batch until 50 BTC trusted)
 ```bash
-while [ "$(bitcoin-cli -rpcwallet=student_wallet getbalances | jq -r '.mine.trusted')" != "50" ]; do
+while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e '.mine.trusted < 50' >/dev/null; do
   bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null
 done
 ```
@@ -161,7 +161,7 @@ python3 ~/scripts/agent.py --wallet student_wallet --verbose   # Ctrl+C to stop
 ```bash
 bitcoin-cli createwallet "cheater"
 CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)
-while [ "$(bitcoin-cli -rpcwallet=cheater getbalances | jq -r '.mine.trusted')" != "50" ]; do
+while bitcoin-cli -rpcwallet=cheater getbalances | jq -e '.mine.trusted < 50' >/dev/null; do
   bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
 bitcoin-cli -rpcwallet=cheater sendtoaddress $PEER_ADDR 49.999 "" "" true
 bitcoin-cli -rpcwallet=cheater sendtoaddress $MY_ADDR  49.999 "" "" true   # ERROR
@@ -174,7 +174,7 @@ Use **Explorer** / **Mempool** to look up your own and classmates' TXIDs and add
 ### Bonus 2.x
 - **RBF (unstick a tx):** `bitcoin-cli -named sendtoaddress address=$PEER_ADDR amount=0.001 fee_rate=1 replaceable=true` → it sticks at the bottom of a congested mempool → `bitcoin-cli bumpfee <txid>` returns a new higher-fee TXID that confirms.
 - **Censorship (malicious miner):** edit `~/scripts/miner.py`, in the transaction loop add `if tx_id_hex == "<PARTNER_TXID>": continue` → run the miner → the partner's tx stays unconfirmed in the mempool (miners choose what to include).
-- **Difficulty adjustment:** `bitcoin-cli getblockchaininfo | grep difficulty` → mine 5 fast blocks → difficulty **rises** (ClassNet retargets every 4 blocks; fast blocks = harder next round).
+- **Difficulty adjustment:** `bitcoin-cli getblockchaininfo | grep difficulty` → mine 5 fast blocks → difficulty **rises** (ClassNet retargets every 2 blocks; fast blocks = harder next round).
 
 ---
 

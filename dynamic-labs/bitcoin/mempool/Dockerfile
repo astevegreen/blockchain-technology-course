@@ -1,7 +1,10 @@
+# Override BITCOIN_LAB_BASE to build on a locally built workstation image before it is published.
+ARG BITCOIN_LAB_BASE=ghcr.io/blockchain-course-2026/bitcoin-lab:latest
+
 # ==========================================
 # STAGE 1: Rust Builder (Electrs)
 # ==========================================
-FROM debian:bookworm AS builder-rust
+FROM debian:trixie AS builder-rust
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install Rust build deps
@@ -26,7 +29,7 @@ RUN git init /opt/mempool-electrs \
 # ==========================================
 # STAGE 2: Node Builder (Mempool & Explorer)
 # ==========================================
-FROM debian:bookworm AS builder-node
+FROM debian:trixie AS builder-node
 ARG DEBIAN_FRONTEND=noninteractive
 
 # FIXED: Added 'rsync' (required for frontend build) and Rust deps
@@ -78,8 +81,9 @@ RUN sed -i 's/} else if (global.activeBlockchain == "regtest") {/} else if (getb
 # ==========================================
 # STAGE 3: Final Runtime
 # ==========================================
-# Assuming this is your locally built optimized image
-FROM ghcr.io/blockchain-course-2026/bitcoin-lab:latest
+# The bitcoin-lab image built from ../workstation (published on ghcr). The build stages above
+# use that image's Debian release (trixie), so electrs and the native node modules match its glibc.
+FROM ${BITCOIN_LAB_BASE}
 
 USER root
 
@@ -118,6 +122,9 @@ RUN rm -f /etc/nginx/sites-enabled/default
 COPY mariadb-init.sh /usr/local/bin/mariadb-init.sh
 COPY electrs-init.sh /usr/local/bin/electrs-init.sh
 COPY btc-rpc-explorer-init.sh /usr/local/bin/btc-rpc-explorer-init.sh
+# Serves the explorer under MEMPOOL_BASE_PATH (/labs/<lab>/mempool/): renders the nginx template and
+# rewrites the frontend's root paths. The entrypoint runs it. See MEMPOOL_ADDRESS_FIX.md.
+COPY configure-mempool-base-path.sh /usr/local/bin/configure-mempool-base-path.sh
 COPY mempool-entrypoint.sh /usr/local/bin/mempool-entrypoint.sh
 COPY supervisord.conf /etc/supervisor/conf.d/mempool.conf
 
@@ -126,6 +133,7 @@ RUN chmod 755 /usr/local/bin/*.sh
 # Setup Environment
 ENV BITCOIN_DATADIR="/home/user/.bitcoin" \
     MEMPOOL_NETWORK="mainnet" \
+    MEMPOOL_BASE_PATH="/" \
     MEMPOOL_HTTP_PORT="8999" \
     MEMPOOL_BACKEND_MODE="electrum" \
     ELECTRUM_HOST="127.0.0.1" \

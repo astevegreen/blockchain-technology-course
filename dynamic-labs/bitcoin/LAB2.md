@@ -69,7 +69,7 @@ budget than regtest, and one request is not guaranteed to find all
 
 
 ```bash
-while [ "$(bitcoin-cli -rpcwallet=student_wallet getbalances | jq -r '.mine.trusted')" != "50" ]; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done
+while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done
 
 bitcoin-cli -rpcwallet=student_wallet getbalance
 ```
@@ -154,7 +154,7 @@ We need a clean state. Create a temporary wallet and fund it.
 ```bash
 bitcoin-cli createwallet "cheater"
 CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)
-while [ "$(bitcoin-cli -rpcwallet=cheater getbalances | jq -r '.mine.trusted')" != "50" ]; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
+while bitcoin-cli -rpcwallet=cheater getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
 
 ```
 
@@ -273,7 +273,7 @@ python3 ~/scripts/miner.py --address $MY_ADDR
 
 #### **Step 7: The Difficulty Adjustment**
 
-Bitcoin adjusts its difficulty to keep block times stable. On Mainnet, this happens every 2 weeks. On **ClassNet**, we have tweaked the code to update every **4 blocks**.
+Bitcoin adjusts its difficulty to keep block times stable. On Mainnet, this happens every 2 weeks. On **ClassNet**, we have tweaked the code to update every **2 blocks**.
 
 1. **Check Current Difficulty:**
 ```bash
@@ -298,4 +298,4 @@ bitcoin-cli getblockchaininfo | grep difficulty
 
 
 **Analysis:** Did the difficulty go up or down? Why?
-*(Answer: Since you mined 5 blocks very fast—faster than the target of 1 minute per block—the protocol increased the difficulty to make it harder for the next round.)*
+*(Answer: Since you mined 5 blocks very fast—faster than the target of 10 seconds per block—the protocol increased the difficulty to make it harder for the next round.)*

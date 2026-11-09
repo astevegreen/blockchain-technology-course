@@ -18,6 +18,8 @@ cmake -B build -S .  -DWITH_QRENCODE=OFF -DBUILD_GUI=OFF \
 	-DCMAKE_EXE_LINKER_FLAGS="-s" \
 	-DCMAKE_CXX_FLAGS="-Os -ffunction-sections -fdata-sections -fvisibility=hidden" \
 	-DCMAKE_C_FLAGS="-Os -ffunction-sections -fdata-sections -fvisibility=hidden" 
-cmake --build build -j "$(nproc)" && \
+# At most 8 jobs: GCC 14 needs about 1.5 GB a job here, and 20 jobs crashed it on a 16 GB Docker host.
+jobs="$(nproc)"; [ "$jobs" -le 8 ] || jobs=8
+cmake --build build -j "$jobs" && \
 cmake --install build
 cd / && rm -r /bitcoin 

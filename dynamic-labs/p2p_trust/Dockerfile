@@ -1,5 +1,5 @@
 # --- STAGE 1: Build ---
-FROM debian:bookworm AS builder
+FROM debian:trixie AS builder
 ARG DEBIAN_FRONTEND=noninteractive
 
 # We only need basic build tools and Python for this lab
@@ -20,7 +20,7 @@ RUN python3 -m venv /opt/venv \
  && /opt/venv/bin/pip install --no-cache-dir numpy
 
 # --- STAGE 2: Final (The Slim Image) ---
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Install runtime dependencies (text editors are crucial for the Pastry fix exercise)

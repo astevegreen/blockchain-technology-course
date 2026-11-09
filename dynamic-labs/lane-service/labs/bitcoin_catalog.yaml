@@ -691,7 +691,7 @@ exercises:
     Mine 11-block batches until your ClassNet wallet has 50 BTC of trusted balance:
 
     ```
-    while [ "$(bitcoin-cli -rpcwallet=student_wallet getbalances | jq -r '.mine.trusted')" != "50" ]; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done
+    while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done
 
     bitcoin-cli -rpcwallet=student_wallet getbalance
     ```
@@ -794,7 +794,7 @@ exercises:
     ```
     bitcoin-cli createwallet "cheater"
     CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)
-    while [ "$(bitcoin-cli -rpcwallet=cheater getbalances | jq -r '.mine.trusted')" != "50" ]; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
+    while bitcoin-cli -rpcwallet=cheater getbalances | jq -e '.mine.trusted < 50' >/dev/null; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done
     bitcoin-cli -rpcwallet=cheater getbalance
     ```
   - |-
@@ -909,7 +909,7 @@ exercises:
 - id: lab2-difficulty
   chapter: lab2-bonus
   title: Bonus · Difficulty Adjustment
-  goal: Mainnet adjusts difficulty every 2016 blocks (~2 weeks). ClassNet is forked to adjust every **4 blocks**. Mine a fast epoch and watch the difficulty rise.
+  goal: Mainnet adjusts difficulty every 2016 blocks (~2 weeks). ClassNet is forked to adjust every **2 blocks**. Mine a fast epoch and watch the difficulty rise.
   student_steps:
   - |-
     Check the current difficulty:

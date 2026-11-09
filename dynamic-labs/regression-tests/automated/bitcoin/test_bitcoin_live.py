@@ -38,7 +38,7 @@ CLASSNET_ADDRESS_SHARE_COMMAND = "\n".join(
 )
 CLASSNET_MINE_COMMAND = "\n\n".join(
     [
-        'while [ "$(bitcoin-cli -rpcwallet=student_wallet getbalances | jq -r \'.mine.trusted\')" != "50" ]; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done',
+        'while bitcoin-cli -rpcwallet=student_wallet getbalances | jq -e \'.mine.trusted < 50\' >/dev/null; do bitcoin-cli -rpcwallet=student_wallet generatetoaddress 11 $MY_ADDR 50000000 >/dev/null; done',
         "bitcoin-cli -rpcwallet=student_wallet getbalance",
     ]
 )
@@ -47,7 +47,7 @@ CHEATER_SETUP_COMMAND = "\n".join(
     [
         'bitcoin-cli createwallet "cheater"',
         'CHEAT_ADDR=$(bitcoin-cli -rpcwallet=cheater getnewaddress)',
-        'while [ "$(bitcoin-cli -rpcwallet=cheater getbalances | jq -r \'.mine.trusted\')" != "50" ]; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done',
+        'while bitcoin-cli -rpcwallet=cheater getbalances | jq -e \'.mine.trusted < 50\' >/dev/null; do bitcoin-cli generatetoaddress 11 $CHEAT_ADDR 50000000 >/dev/null; done',
         "bitcoin-cli -rpcwallet=cheater getbalance",
     ]
 )
@@ -98,7 +98,7 @@ def mine_until_trusted_balance_command(
             '  echo "first generatetoaddress 1 failed, no block pays $TARGET_WALLET: $FIRST_BLOCK_OUT" >&2',
             "  exit 1",
             "fi",
-            'while [ "$(bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -r \'.mine.trusted\')" != "50" ]; do',
+            'while bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -e \'.mine.trusted < 50\' >/dev/null; do',
             '  bitcoin-cli generatetodescriptor 1 "raw(51)" 50000000 >/dev/null',
             '  echo "height=$(bitcoin-cli getblockcount) $(bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -c .mine)" >&2',
             "done",

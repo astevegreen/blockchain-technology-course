@@ -36,7 +36,7 @@ class Chain:
         miner_address: Optional[str] = None,
         coinbase_maturity: int = 100,   # ClassNet fork uses 10; mainnet/regtest default 100
         mining_mode: str = "self",      # "self" (test) | "external" (production / agents mine)
-        maxtries: int = 100_000_000,    # ClassNet retargets difficulty every 4 blocks; default 1M can fail
+        maxtries: int = 100_000_000,    # ClassNet retargets difficulty every 2 blocks; default 1M can fail
         poll_interval: float = 3.0,
         confirm_timeout: float = 3600.0,
         logger: Optional[logging.Logger] = None,

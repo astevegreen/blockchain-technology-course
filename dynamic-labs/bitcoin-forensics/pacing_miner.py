@@ -5,7 +5,7 @@ Mines one block every --interval seconds, including whatever the flooders have p
 This is the load-bearing piece for the forensics run: a steady block cadence (a) lets the seeder's
 external-mode confirmations advance reliably, and (b) turns the flooders' mempool into realistic full
 blocks. Unlike agent.py it always passes a high --maxtries (the ClassNet fork retargets difficulty
-every 4 blocks; the default 1,000,000 tries can otherwise fail) and verifies/retries the result.
+every 2 blocks; the default 1,000,000 tries can otherwise fail) and verifies/retries the result.
 
 Run ONE of these on a stable station (e.g. the instructor station). Zero-config like agent.py; for a
 test regtest pass auth via the = form: --cli-extra="-regtest -rpcuser=v34 -rpcpassword=v34".

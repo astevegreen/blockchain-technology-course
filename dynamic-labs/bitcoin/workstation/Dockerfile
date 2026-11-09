@@ -1,13 +1,12 @@
 # --- STAGE 1: Build ---
-# --- STAGE 1: Build ---
-FROM debian:bookworm AS builder
+FROM debian:trixie AS builder
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Added ca-certificates for git clone and libssl-dev for the build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake pkgconf git patch wget curl \
     ca-certificates libssl-dev \
-    libgmp3-dev libevent-dev libboost-dev libsqlite3-dev \
+    libgmp-dev libevent-dev libboost-dev libsqlite3-dev \
     libcapnp-dev capnproto libzmq3-dev \
 	python3 python3-venv python3-pip python3-dev
 
@@ -32,20 +31,18 @@ RUN python3 -m venv /opt/venv \
 
 
 # --- STAGE 2: Final (The Slim Image) ---
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 ARG DEBIAN_FRONTEND=noninteractive
 
 # Added ca-certificates and libssl3 for runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates libssl3 \
-    libevent-extra-2.1-7 \
-    libevent-pthreads-2.1-7 \
-    libboost-filesystem1.74.0 \
-    libboost-thread1.74.0 \
+    ca-certificates libssl3t64 \
+    libevent-extra-2.1-7t64 \
+    libevent-pthreads-2.1-7t64 \
     libsqlite3-0 \
     libzmq5 \
     libgmp10 \
-    libcapnp-0.9.2 \
+    libcapnp-1.1.0 \
     python3 python3-venv python3-pip \
     procps jq curl netcat-openbsd iproute2 nano \
 	vim emacs less socat \

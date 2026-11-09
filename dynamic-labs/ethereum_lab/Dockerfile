@@ -38,13 +38,13 @@ RUN npm ci --only=production
 # Stage 3: Build heimdall-rs
 # ============================================
 # heimdall-rs (MIT) disassembles and decompiles EVM bytecode for
-# docs/guides/BYTECODE_REVERSE_ENGINEERING.md. Its release binaries need glibc 2.39, newer
-# than this image's Debian bookworm (2.36) and the student VM's Ubuntu 22.04 (2.35). So it is
-# built here from the 0.9.3 release (it reports itself as 0.9.2), pinned to that tag's
-# commit with its lockfile, on the VM's own Ubuntu 22.04. The one binary then needs only glibc
-# 2.35 and libssl3, which the VM and this image both have. The VM copies it out of this image
-# (vm-build/ubuntu-lab.pkr.hcl). Student lanes have no terminal, so students run it on the VM.
-FROM ubuntu:22.04 AS heimdall-builder
+# docs/guides/BYTECODE_REVERSE_ENGINEERING.md. It is built here from the 0.9.3 release (it
+# reports itself as 0.9.2), pinned to that tag's commit with its lockfile, on the VM's own
+# Ubuntu 24.04 (glibc 2.39), the older of the two systems that run it: this image is Debian
+# trixie (2.41). The one binary then needs only glibc 2.39 and libssl3, which the VM and this
+# image both have. The VM copies it out of this image (vm-build/ubuntu-lab.pkr.hcl). Student
+# lanes have no terminal, so students run it on the VM.
+FROM ubuntu:24.04 AS heimdall-builder
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       ca-certificates curl build-essential git pkg-config libssl-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -58,7 +58,7 @@ RUN cargo install --locked --git https://github.com/Jon-Becker/heimdall-rs \
 # ============================================
 # Use Debian slim instead of Alpine: node-pty has known issues with Alpine (musl libc).
 # Debian/glibc provides reliable PTY support for the Lab Terminal in Docker.
-FROM node:24-slim
+FROM node:24-trixie-slim
 
 LABEL maintainer="Ethereum Immersive Trainer"
 LABEL description="Interactive blockchain training environment"

@@ -7,7 +7,7 @@ RUN npm install socket.io-client@4.7.5
 RUN mkdir -p /build/vendor
 RUN cp /vendor/node_modules/socket.io-client/dist/socket.io.min.js /build/vendor/socket.io.min.js
 
-FROM python:3.11-slim
+FROM python:3.12-slim-trixie
 
 WORKDIR /app
 

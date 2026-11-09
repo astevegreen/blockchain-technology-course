@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim AS builder
+FROM debian:trixie-slim AS builder
 
 ARG QUARTO_VERSION=1.8.24
 ARG TARGETARCH

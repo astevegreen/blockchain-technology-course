@@ -1,5 +1,5 @@
 # --- STAGE 1: Fetch ttyd binary ---
-FROM debian:bookworm AS builder
+FROM debian:trixie AS builder
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget ca-certificates
@@ -11,7 +11,7 @@ RUN ARCH=$(uname -m) && \
     tar xzf /tmp/zellij.tar.gz -C /usr/local/bin && rm /tmp/zellij.tar.gz && chmod +x /usr/local/bin/zellij
 
 # --- STAGE 2: Runtime ---
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
