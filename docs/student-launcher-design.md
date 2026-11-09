@@ -111,7 +111,7 @@ there. Named seeded volumes are not used, because baked data updates with the im
   - `http://127.0.0.1/` and `http://127.0.0.1:8470/` both show the control page.
   - This replaces the spec's "landing links generated without them" (4.3): there is no landing page locally.
 - **The overlay.** It is `router/docker-compose.launcher.yml`, an override like `docker-compose.cloud.yml`. It sets
-  `HOST_BIND`, `HTTP_PORT` and `NGINX_CONF`, and mounts `routes/local/instructor-off.conf` over
+  `HOST_BIND`, `HTTP_PORT` and `NGINX_CONF`, and mounts `routes/local/staff-pages-off.conf` over
   `routes/_instructor.conf` and `routes/local/quiz-off.conf` over `routes/quiz-engine-v2.conf`. Both return 404. Other
   routes need no change, because the router resolves upstreams lazily (`resolver 127.0.0.11`, `routes.conf:1-2`).
   `CLASS_GATE` is off.

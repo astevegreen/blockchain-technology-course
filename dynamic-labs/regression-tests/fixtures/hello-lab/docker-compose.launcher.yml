@@ -1,0 +1,17 @@
+# The launcher's test lab: one web server that answers "hello" on 127.0.0.1:8449, and keeps a counter on a
+# volume so the smoke test can see Reset clear it.
+name: hello-lab
+services:
+  hello:
+    image: ${HELLO_LAB_HELLO_IMAGE:?}
+    command: ["sh", "-c", "mkdir -p /www && echo hello > /www/index.html && date >> /data/starts && httpd -f -p 80 -h /www"]
+    ports:
+      - "${HOST_BIND:-127.0.0.1}:8449:80"
+    volumes:
+      - hello-data:/data
+    networks: [hello-net]
+networks:
+  hello-net:
+    external: true
+volumes:
+  hello-data:
