@@ -3,7 +3,7 @@
 Every open GitHub security alert on `main`, sorted by lab and by whether it reaches students, with a mark per group:
 **fix now**, **dismiss** (with the reason to give GitHub) or **defer** (to the planned student-VM and lab-image rebuild
 on Ubuntu 24.04 / Debian 13 / Python 3.12 in `docs/follow-ups.md`). Read 8 Nov 2026 with `gh api` (Dependabot and
-code-scanning alerts, `state=open`). Nothing has been dismissed or changed: the dismiss list waits for the owner.
+code-scanning alerts, `state=open`). The owner approved the dismiss list on 9 Nov 2026; see "Owner decisions".
 
 **Totals (as of 8 Nov 2026):** 182 Dependabot alerts (7 critical, 96 high, 66 medium, 13 low) and 149 CodeQL alerts.
 The groups below cover all of them: Dependabot 6 + 52 + 69 + 31 + 1 + 23 = 182; CodeQL 11 + 70 + 21 + 17 + 6 + 10 +
@@ -132,10 +132,10 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
 - **C11, won't fix.** Repo tooling, not shipped: the hook reads the agent's own shell commands, and the worst case is a
   slow hook. Alerts 150, 151.
 
-## Owner decisions
+## ## Owner decisions
 
-- **The dismiss list** (D5 and C2-C11: 1 Dependabot and 138 CodeQL alerts) waits for the owner's approval. Once
-  approved, each group can be dismissed with the reason in its table row.
-- **Dependabot security updates** are off. Turning them on (Settings, Code security) would open PRs for transitive
-  fixes like D3 and D6 as new advisories land, one PR per advisory and outside the weekly groups. It is a repo setting,
-  so it is the owner's call.
+- **The dismiss list** (D5 and C2-C11: 1 Dependabot and 138 CodeQL alerts): approved as written by the owner and
+  dismissed on 9 Nov 2026, each alert with its group's reason and a comment naming the group and this file. Open
+  after that: the 11 C1 alerts and 181 Dependabot alerts (fix now and defer).
+- **Dependabot security updates**: turned on by the owner's decision on 9 Nov 2026, so transitive fixes like D3 and
+  D6 now arrive as PRs, one per advisory, as new advisories land.
