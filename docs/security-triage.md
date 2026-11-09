@@ -59,6 +59,15 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   student's request: path-to-regexp (Express routing in `server/lab-api.js` and `server/frontend-server.js`) and
   ws 7.x (Hardhat node's WebSocket RPC). The rest sit in tools the lab never runs (coverage, gas reporting, contract
   verification). Rerun the `ethereum_lab` lab tests after the refresh.
+  **Done 8 Nov 2026** (`npm update`, no major bumps, no `--force`): all the packages named above are now on patched
+  versions (axios 1.21.0, handlebars 4.7.10, ws 8.22.2, path-to-regexp 8.4.2, tmp 0.2.6), and the `ethereum_lab` lab
+  tests pass. `npm audit` on 8 Nov 2026 went from 54 findings (1 critical, 29 high, 11 moderate, 13 low) to 40 (0
+  critical, 19 high, 8 moderate, 13 low). `npm audit` counts packages and GitHub counts advisories per package, so the
+  two cannot be compared one to one, but the 3 critical and every D3 package are gone. The 40 left are all Hardhat 2
+  and toolbox 6 chains (npm's only fix for each is Hardhat 3 or toolbox 7, a major move) and match D4 and D5 (undici,
+  adm-zip, serialize-javascript, lodash, tmp via solc, uuid, cookie, @fastify/busboy, elliptic and the ethers v5 tree),
+  plus solidity-coverage and hardhat-gas-reporter, which `npm audit` reports through their own dependencies. Dependabot
+  will confirm the alert count on its next scan.
 - **D4, defer.** These versions are pinned by Hardhat 2 and its plugins, so only the Hardhat 3 move clears them, and
   that move is already a follow-up for the lab's next rebuild (toolbox 7). Packages: undici 12, adm-zip 4,
   serialize-javascript 3, minimatch 2, brace-expansion 2, lodash 2, tmp 1, @fastify/busboy 1, ws 1, uuid 1,
@@ -72,6 +81,7 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   fflate (2 alerts, via three-stdlib) is bundled into the page but only decompresses the lab's own 3D assets. A
   lockfile refresh clears all 23, and it goes in the same change and test as D3. Alerts 1, 3-7, 16-18, 20, 25, 26,
   30, 32-41.
+  **Done 8 Nov 2026:** `npm update` in `ethereum_lab/frontend`; `npm audit` went from 10 findings (7 high) to 0.
 
 ## CodeQL (149)
 
@@ -94,8 +104,8 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   `lane-service/wrapper.html:690`) escape `&`, `<` and `>` but not quotes, and their output goes into quoted HTML
   attributes. Today's values are Bitcoin addresses, txids and the lab's own exercise titles, which hold no quotes,
   and the one free-text value (a node label) is the student's own, saved in their own browser. So nothing is
-  exploitable today, but one more escape per helper (`"` and `'`) closes it. `progress-display.html:265` puts an
-  error message into `innerHTML`; use `textContent`. `student.js:49` falls back to `Math.random()` for the player's
+  exploitable today, but one more escape per helper (`"` and `'`) closes it. `progress-display.html:265` put an
+  error message into `innerHTML`; it now uses `textContent` (done 8 Nov 2026). `student.js:49` falls back to `Math.random()` for the player's
   id when `crypto.randomUUID` is missing, and `crypto.randomUUID` works only in secure contexts, so on a no-TLS
   classroom LAN the fallback is what runs and another student could guess a player's id. `crypto.getRandomValues`
   works without TLS. All of these files reach students. Alerts 115, 131-139, 149. Rerun the bitcoin-graph, lane and
