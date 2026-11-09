@@ -27,9 +27,12 @@ slide index), which is never listed here.
   `exercises/l03-i3-trust-game/instructor_auth/audit.py`, `hlf/shared_instructor_auth/audit.py`) lack the `h.close()`
   that `dynamic-labs/shared/instructor_auth/audit.py:39` has, and no test keeps the copies in step with `shared/`.
   (9 Nov 2026, found while syncing `ratelimit.py` for the class gate)
-- The TLS router (`dynamic-labs/router/nginx-ssl.conf`) also serves every host on plain port 80 with no redirect to
-  HTTPS, so on a cloud host a class pass or instructor login entered over `http://` travels unencrypted. Redirect
-  port 80 to HTTPS when a domain is set. (9 Nov 2026, class gate review)
+- Nothing renews the cloud host's Let's Encrypt certificate (90 days). `dynamic-labs/deploy-cloud.sh` runs
+  `certbot certonly --standalone`, which needs port 80 free, but the running router holds port 80, so `certbot renew`
+  and a rerun of `deploy-cloud.sh` near expiry both fail while the labs are up. Fine for a class shorter than the
+  certificate; a longer-lived host needs a renewal that stops the router or serves the ACME challenge through it
+  (`dynamic-labs/router/https-redirect/on.conf` would then need to let `/.well-known/acme-challenge/` through).
+  (9 Nov 2026, HTTPS redirect)
 - The ghcr images `bitcoin-lab`, `bitcoin-mempool` and `bitcoin-graph` (`ghcr.io/blockchain-course-2026/`) are
   still the Debian 12 builds: no workflow publishes them, and the bitcoin, wallet and trace labs pull them. Their
   Dockerfiles (`bitcoin/workstation`, `bitcoin/mempool`, `bitcoin-graph`) are on trixie since 9 Nov 2026, now carry
