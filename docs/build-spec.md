@@ -79,7 +79,7 @@ slides the audit names. Numbers in brackets are Course Audit rows. A boundary ma
 | Day | ① | ② | ③ | Concepts first taught |
 | --- | --- | --- | --- | --- |
 | 1 (settled) | Blocks and chains, and why a blockchain is not the same thing as a cryptocurrency, new, with one real Bitcoin transaction as its worked example (02-IN), L | Keys, signatures and addresses, adding secp256k1 and address derivation, then signing a transaction and sending it to a node (04-CP, with slides from 01, 03 and 05-CP; 02-CP's hash-property slides open it), L | How a public ledger agrees and when it is final (01-CM, absorbing 04-DS, 05-IN, 02-CM and 03-CM's comparison table and finality slides; per-chain finality), L | 1-5, 41, 42 |
-| 2 (settled) | Reading a Bitcoin transaction: scripts, address types, fees, change (02-BF, absorbing 01-BF and 03-BF's scripts; 02-CP's Merkle slides), L | Wallet types: hot and cold, custodial and self-custody, seed phrases and derivation, new, bringing back 02-BF's derivation slides, L | Multi-sig and open-source wallet software, new, L | none in Role Concepts yet (wallets are a feedback addition) |
+| 2 (settled) | Reading a Bitcoin transaction: scripts, address types, fees, change (02-BF, absorbing 01-BF and 03-BF's scripts; 02-CP's Merkle slides), L | Wallet types: hot and cold, custodial and self-custody, seed phrases and derivation, new, bringing back 02-BF's derivation slides, L | Multi-sig and open-source wallet software, new, L | 50 |
 | 3 (settled) | Accounts, the EVM and transactions (01-EF, adding the EVM), M | Reading a contract, read only (04-EF): Solidity read by hand, then one short Vyper and one short Rust snippet to recognise only (owner, 30 Oct: "Solidity by hand, others shown"), M | Tokens: ERC-20, stablecoins and NFTs; issuer freezes and blacklisting, with Tether's blacklist functions (02-AS, 05-EF), M | 18, 46 |
 | 4 (settled) | Mempool, MEV and DEX trades (03-EF; 64), M | Liquidity: pools, thin markets, and where funds can and can't exit, new, L | Layer 2s and bridges by type (01-EF's Layer 2 slides, with the trilemma from 04-IN; the bridge slides of 01-FO and 02-FO), L | 6, 10, 12 |
 | 5 (settled) | Exchanges, OTC and P2P: how an exchange holds funds (deposit addresses, sweeps to hot and cold wallets), OTC desks, P2P markets, new, L | VASPs and KYC, the BSA and FinCEN, OFAC, the Travel Rule (04-BF, 01-FO; Huione's Section 311 action), L | Ledgers with a gatekeeper: Tron and USDT on Tron, new, then permissioned ledgers and CBDCs (01-PC, 02-AS), L | 31, 38, 39, 48, 49 |
@@ -183,8 +183,8 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   review session, never as evening work; the end of day 10's review session is the last chance (owner: "Once, in
   class time").
 - **Post-test:** about 2 hours on day 10's morning, after the review session; pass mark 70% overall (owner: "70%
-  overall"). Post-test and pretest share one blueprint: one item per in-scope concept (42 as of 30 Oct 2026, plus wallets and key custody, concept 50, added 4 Nov 2026 to the
-  post-test only; the list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
+  overall"). Post-test and pretest share one blueprint: one item per in-scope concept (43 as of 8 Nov 2026: wallets and key custody, concept 50, reached the
+  post-test on 4 Nov and Role Concepts on 8 Nov; the list can change, Direction 10), multiple choice for familiarity concepts, a short written answer for
   working-skill concepts. No separate minimum on the written items (owner, 30 Oct: "Rubric line, no minimum"):
   every working-skill concept also has a graded lab point. Each written item has an answer key naming what the
   answer must contain; the instructors mark against it over lunch and while the class traces, before the first
@@ -197,7 +197,7 @@ Settled with the owner, 30 Oct 2026. The memo and briefing guides are retired.
   | Day | Items | W | Concepts |
   | --- | --- | --- | --- |
   | 1 | 7 | 1 | 1, 2, 3, 4, 5, 41 W, 42 |
-  | 2 | 0 | 0 | none yet (wallets are a feedback addition), so day 2's lab starts everyone at the worked example |
+  | 2 | 0 | 0 | none yet: 50 has no pretest item, so day 2's lab starts everyone at the worked example |
   | 3 | 2 | 2 | 18 W, 46 W |
   | 4 | 3 | 2 | 6, 10 W, 12 W |
   | 5 | 7 | 0 | 31, 38, 39, 46 (two: the Tron lab gate), 48, 49 |

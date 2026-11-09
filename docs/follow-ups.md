@@ -22,9 +22,9 @@ slide index), which is never listed here.
   line or move it to the notes. (8 Nov 2026, first render of the 14 new lessons, measured in the browser)
 
 ## Quizzes
-- Add "Wallets and key custody" (Order 50 here; renumber to the list's own) to the Notion "Role Concepts" list: the post-test
-  has an item for it (p43, day 2) and `tools/alignment_terms.yml` carries it, but Notion is the owner's list and was not
-  edited. The pretest has no item for it yet; the shared blueprint wants one. (4 Nov 2026, Gemini audit A-9)
+- `quizes/pretest/pretest_week1-quiz-bank.json` has no item for concept 50, "Wallets and key custody" (day 2,
+  familiarity; post-test item p43): the shared blueprint wants one, and until it exists day 2's lab starts everyone
+  at the worked example (`docs/build-spec.md` pretest blueprint). (8 Nov 2026, concept 50 added to Role Concepts)
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
   no longer feeds a bank. (31 Oct 2026, D5 quiz banks)

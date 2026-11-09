@@ -102,9 +102,6 @@ names them.
 | 9 | ② | 13-FO `13-FO-state_actors_north_korea` | 15 | 13 | 2 |
 | 9 | ③ | 14-FO `14-FO-fusing_sources` | 12 | 11 | 1 |
 
-Day 2 teaches wallets, which the Role Concepts list does not yet include, so its slides go unmatched
-by design.
-
 - **D1 W 01-IN**: Start by saying what cases you work; You will say what activity is, and how sure; Lessons in the morning, a lab after lunch; Come rested, ask freely, keep it UNCLASSIFIED; Missed the pretest? Take it tonight; What do you expect the chain to tell you?; References
 - **D1 ① 02-IN**: One real payment: Alice buys a coffee; The fee is the leftover, written nowhere; Four beliefs to correct when you brief; References
 - **D1 ② 04-CP**: A Tron address is an Ethereum address plus 41; Keys fail through people and bad randomness; References

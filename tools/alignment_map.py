@@ -412,8 +412,7 @@ def render(rows: list[Row], extra: dict) -> str:
     for les in extra["lessons"]:
         out.append(f"| {les['day']} | {les['slot']} | {short(les['path'])} `{Path(les['path']).stem}` | {les['slides']} | "
                    f"{les['claimed']} | {les['slides'] - les['claimed']} |")
-    out += ["", "Day 2 teaches wallets, which the Role Concepts list does not yet include, so its slides go unmatched",
-            "by design.", ""]
+    out.append("")
     for les in extra["lessons"]:
         if les["unclaimed"]:
             out.append(f"- **D{les['day']} {les['slot']} {short(les['path'])}**: " +
