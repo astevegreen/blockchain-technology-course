@@ -240,6 +240,19 @@ class LfsCheck(unittest.TestCase):
             self.assertEqual(sr.lfs_pointers(root), ["pointer.dat"])
 
 
+class ShippedLfs(unittest.TestCase):
+    def test_only_lfs_files_a_student_image_ships_are_fetched(self):
+        files = ["dynamic-labs/bitcoin-forensics/x-instructor-dir/blocks/blk.dat", "dynamic-labs/tron/data/chain.dat",
+                 "dynamic-labs/tron/answers/key.dat", "dynamic-labs/tronic/other.dat"]
+        got = sr.shipped_lfs(files, ["dynamic-labs/tron"], ["dynamic-labs/tron/answers/**"])
+        self.assertEqual(got, ["dynamic-labs/tron/data/chain.dat"])
+
+    def test_the_bases_and_launcher_count_as_shipped(self):
+        contexts = sr.shipped_contexts([row("tron", "page")])
+        self.assertIn("dynamic-labs/tron", contexts)
+        self.assertTrue(set(sr.BASE_CONTEXTS) <= set(contexts))
+
+
 class Workflow(unittest.TestCase):
     def setUp(self):
         self.text = WORKFLOW.read_text(encoding="utf-8")
@@ -263,13 +276,13 @@ class Workflow(unittest.TestCase):
         self.assertIn("inputs.publish", publish["if"])
         self.assertIn("needs.smoke.result == 'success'", publish["if"])
 
-    def test_every_checkout_that_builds_fetches_lfs(self):
+    def test_every_job_that_builds_fetches_and_checks_the_shipped_lfs_files(self):
         import yaml
         jobs = yaml.safe_load(self.text)["jobs"]
-        for name in ("prepare", "bases", "build", "assemble", "smoke", "fixture"):
+        for name in ("prepare", "bases", "build"):
             with self.subTest(job=name):
-                checkout = [s for s in jobs[name]["steps"] if str(s.get("uses", "")).startswith("actions/checkout@")]
-                self.assertEqual(checkout[0].get("with", {}).get("lfs"), True)
+                runs = " ".join(str(s.get("run", "")) for s in jobs[name]["steps"])
+                self.assertIn('student_release.py lfs-check --images "$IMAGES" --pull', runs)
 
     def test_version_and_tags(self):
         self.assertIn('version="$(date -u +%Y.%m.%d)-$RUN"', self.text)
