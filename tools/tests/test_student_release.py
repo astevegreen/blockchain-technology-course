@@ -278,6 +278,16 @@ class Workflow(unittest.TestCase):
         self.assertIn('"student-v$VERSION" --draft', self.text)
         self.assertIn("--draft=false --prerelease=false", self.text)
 
+    def test_the_zip_keeps_wrapper_names_and_adds_the_read_me_when_present(self):
+        self.assertIn("files=(student-launcher/wrappers/*)", self.text)
+        self.assertIn("[ -f student-launcher/READ-ME-FIRST.html ] && files+=(student-launcher/READ-ME-FIRST.html)",
+                      self.text)
+        self.assertIn('zip -j "$RUNNER_TEMP/Course-Labs.zip" "${files[@]}"', self.text)
+
+    def test_latest_json_names_the_launcher_by_digest(self):
+        self.assertIn('.launcher_image = $ref', self.text)
+        self.assertIn('"$PACKAGE:launcher-$VERSION@$digest"', self.text)
+
     def test_both_runner_architectures_are_smoke_tested(self):
         self.assertIn("runner: [ubuntu-24.04, ubuntu-24.04-arm]", self.text)
 
