@@ -30,10 +30,6 @@ slide index), which is never listed here.
   labs' tests built locally (`BITCOIN_LAB_IMAGE`, `BITCOIN_MEMPOOL_IMAGE`, `BITCOIN_GRAPH_IMAGE`). Build and push
   the three, workstation first (`--build-arg BITCOIN_LAB_BASE` for the other two), with an account that can write to the ghcr
   org. (9 Nov 2026, trixie move)
-- `regression-tests/automated/bitcoin/test_bitcoin_live.py:316-344` mines in a tight loop, and the 2-block retarget
-  raises difficulty so fast that a block can take minutes near height 25: one of three local runs (9 Nov 2026)
-  failed its 180 s step with the chain stuck at heights 27-29. The published image mines the same way. A higher
-  timeout, or mining with `-mocktime` steps, would steady it. (9 Nov 2026, trixie move)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3

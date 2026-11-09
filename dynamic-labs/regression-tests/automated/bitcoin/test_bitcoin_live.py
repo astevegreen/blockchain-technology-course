@@ -78,6 +78,36 @@ EXPLORER_READY_TIMEOUT_SECONDS = int(
 )
 
 
+# ClassNet (custom-genesis.patch) retargets every 2 blocks toward 10 s blocks,
+# and a back-to-back loop finds them in under a second, so each even-height
+# block is up to 4x harder than the one before. Past height ~25 one block can
+# take minutes, and even heights have no escape. Odd heights do: a block stamped
+# more than 20 s after its parent may use the minimum difficulty, and the next
+# retarget, computed from that block's easy bits, drops back to near-minimum.
+# So before each block: if the next one would be harder than DIFFICULTY_CEILING
+# and sits at an odd height, wait (about 20 s) until the node offers minimum
+# difficulty, then mine. That costs one wait per ~16 blocks and keeps every
+# block under ~4M expected hashes (4x the ceiling), far inside maxtries.
+# (setmocktime would avoid the wait, but this chain is not mockable: the RPC
+# refuses with "setmocktime is for regression testing (-regtest mode) only".)
+DIFFICULTY_CEILING = "0.00025"
+MIN_DIFFICULTY_BITS = "207fffff"
+STEER_DIFFICULTY_FUNCTION = "\n".join(
+    [
+        "steer_difficulty() {",
+        "  local info",
+        "  for _ in $(seq 1 60); do",
+        '    info="$(bitcoin-cli getmininginfo)" || return 1',
+        f"    jq -e '.next.difficulty > {DIFFICULTY_CEILING} and .next.height % 2 == 1"
+        f' and .next.bits != "{MIN_DIFFICULTY_BITS}"\' <<<"$info" >/dev/null || return 0',
+        "    sleep 1",
+        "  done",
+        '  echo "next block still above minimum difficulty after 60 s: $info" >&2',
+        "}",
+    ]
+)
+
+
 def mine_until_trusted_balance_command(
     address: str,
     *,
@@ -87,18 +117,22 @@ def mine_until_trusted_balance_command(
     mining_prefix = f"-rpcwallet={mining_wallet} " if mining_wallet else ""
     return "\n".join(
         [
+            STEER_DIFFICULTY_FUNCTION,
             f'TARGET_WALLET="{balance_wallet}"',
             # Exactly one block pays the wallet; filler blocks pay an output no
             # wallet owns (raw OP_TRUE) until that reward matures. The balance can
             # only be 0 or 50, so a block from elsewhere can't push it past 50 and
             # leave the loop spinning, as mining every block to the wallet could.
-            # Fail fast: if this call fails the wallet never gets a reward and the
-            # loop below would mine filler blocks until the timeout.
-            f'if ! FIRST_BLOCK_OUT="$(bitcoin-cli {mining_prefix}generatetoaddress 1 {address} 50000000 2>&1)"; then',
+            # Fail fast: if this call fails or finds no block, the wallet never
+            # gets a reward and the loop below would mine filler until the timeout.
+            "steer_difficulty",
+            f'if ! FIRST_BLOCK_OUT="$(bitcoin-cli {mining_prefix}generatetoaddress 1 {address} 50000000 2>&1)" \\',
+            "  || ! jq -e 'length == 1' <<<\"$FIRST_BLOCK_OUT\" >/dev/null; then",
             '  echo "first generatetoaddress 1 failed, no block pays $TARGET_WALLET: $FIRST_BLOCK_OUT" >&2',
             "  exit 1",
             "fi",
             'while bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -e \'.mine.trusted < 50\' >/dev/null; do',
+            "  steer_difficulty",
             '  bitcoin-cli generatetodescriptor 1 "raw(51)" 50000000 >/dev/null',
             '  echo "height=$(bitcoin-cli getblockcount) $(bitcoin-cli -rpcwallet=\"$TARGET_WALLET\" getbalances | jq -c .mine)" >&2',
             "done",
