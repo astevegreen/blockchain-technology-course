@@ -22,6 +22,7 @@ case "$1" in
   info) [ "$FAKE_DOCKER" = down ] && exit 1 ;;
   pull) [ "$FAKE_PULL" = fail ] && exit 1 ;;
   image) [ "$FAKE_LOCAL" = yes ] || exit 1 ;;
+  exec) [ "$FAKE_HEALTH" = down ] && exit 1 ;;
 esac
 exit 0
 """
@@ -31,6 +32,7 @@ echo %*>> "%FAKE_LOG%"
 if "%1"=="info" if "%FAKE_DOCKER%"=="down" exit /b 1
 if "%1"=="pull" if "%FAKE_PULL%"=="fail" exit /b 1
 if "%1"=="image" if not "%FAKE_LOCAL%"=="yes" exit /b 1
+if "%1"=="exec" if "%FAKE_HEALTH%"=="down" exit /b 1
 exit /b 0
 """
 
@@ -114,6 +116,12 @@ class Posix(Wrapper):
         self.assertEqual(code, 1)
         self.assertIn("internet connection", out)
 
+    def test_page_never_answers(self):
+        code, out = self.run_script("Start-Course-Labs.sh", FAKE_HEALTH="down")
+        self.assertEqual(code, 1, out)
+        self.assertIn("labs page didn't start", out)
+        self.assertNotIn("would: open http://127.0.0.1:8470/", out)
+
     def test_stop(self):
         code, out = self.run_script("Stop-Course-Labs.sh")
         self.assertEqual(code, 0, out)
@@ -164,6 +172,12 @@ class Windows(Wrapper):
         code, out = self.run_script("Start-Course-Labs.cmd", FAKE_PULL="fail")
         self.assertEqual(code, 1)
         self.assertIn("internet connection", out)
+
+    def test_page_never_answers(self):
+        code, out = self.run_script("Start-Course-Labs.cmd", FAKE_HEALTH="down")
+        self.assertEqual(code, 1, out)
+        self.assertIn("labs page didn't start", out)
+        self.assertNotIn("would: open http://127.0.0.1:8470/", out)
 
     def test_stop(self):
         code, out = self.run_script("Stop-Course-Labs.cmd")

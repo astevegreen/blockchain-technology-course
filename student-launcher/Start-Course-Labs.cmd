@@ -32,6 +32,8 @@ for /l %%i in (1,1,60) do (
   call docker exec course-launcher wget -q -O /dev/null %PAGE%api/health >nul 2>&1 && goto :up
   if not defined DRY ping -n 2 127.0.0.1 >nul
 )
+echo The labs page didn't start. Restart Docker Desktop, then double-click Start Course Labs again.
+goto :fail
 :up
 call :open "%PAGE%"
 echo The course labs page is open in your browser at %PAGE%

@@ -23,9 +23,11 @@ docker rm -f course-launcher >/dev/null 2>&1
 docker run -d --name course-launcher --restart unless-stopped -e LAUNCHER_IMAGE="$IMAGE" \
   -v /var/run/docker.sock:/var/run/docker.sock -v course-launcher-state:/state \
   -p 127.0.0.1:8470:8470 "$IMAGE" >/dev/null 2>&1 || fail "The course labs didn't start. Restart Docker Desktop, then try again."
+up=0
 for _ in $(seq 1 60); do
-  docker exec course-launcher wget -q -O /dev/null "${PAGE}api/health" >/dev/null 2>&1 && break
+  docker exec course-launcher wget -q -O /dev/null "${PAGE}api/health" >/dev/null 2>&1 && { up=1; break; }
   [ "$DRY" = 1 ] || sleep 1
 done
+[ "$up" = 1 ] || fail "The labs page didn't start. Restart Docker Desktop, then double-click Start Course Labs again."
 open_url "$PAGE"
 say "The course labs page is open in your browser at $PAGE"
