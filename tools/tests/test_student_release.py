@@ -301,6 +301,12 @@ class Workflow(unittest.TestCase):
         self.assertIn('.launcher_image = $ref', self.text)
         self.assertIn('"$PACKAGE:launcher-$VERSION@$digest"', self.text)
 
+    def test_hlf_builds_from_the_fabric_samples_commit_lab_sh_pins(self):
+        self.assertIn("if: matrix.context == 'dynamic-labs/hlf'", self.text)
+        self.assertIn('FABRIC_SAMPLES_REF="$ref" bash install-fabric.sh samples', self.text)
+        lab = (REPO / "dynamic-labs" / "hlf" / "lab.sh").read_text(encoding="utf-8")
+        self.assertRegex(lab, r"HLF_FABRIC_SAMPLES_REF:-[0-9a-f]{40}")
+
     def test_both_runner_architectures_are_smoke_tested(self):
         self.assertIn("runner: [ubuntu-24.04, ubuntu-24.04-arm]", self.text)
 

@@ -184,6 +184,17 @@ jobs:
         run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
       # The context is staged without the files dynamic-labs/student-exclude.txt lists, so no instructor file can be
       # COPY'd into a student image, whatever the Dockerfile or its .dockerignore says.
+      # HLF's chaincode image copies the upstream fabric-samples, which the lab fetches at a pinned commit rather
+      # than keeping in git (dynamic-labs/hlf/runtime/ is ignored). Fetch the same commit lab.sh pins.
+      - name: Fetch the pinned fabric-samples for HLF
+        if: matrix.context == 'dynamic-labs/hlf'
+        run: |
+          set -euo pipefail
+          ref=$(grep -oE 'HLF_FABRIC_SAMPLES_REF:-[0-9a-f]{40}' dynamic-labs/hlf/lab.sh | cut -d- -f2)
+          [ -n "$ref" ] || { echo "no pinned fabric-samples commit in dynamic-labs/hlf/lab.sh"; exit 1; }
+          cd dynamic-labs/hlf/runtime
+          FABRIC_SAMPLES_REF="$ref" bash install-fabric.sh samples
+          test -f fabric-samples/asset-transfer-basic/chaincode-javascript/package.json
       - name: Stage the build context without instructor files
         env:
           CONTEXT: ${{ matrix.context }}
