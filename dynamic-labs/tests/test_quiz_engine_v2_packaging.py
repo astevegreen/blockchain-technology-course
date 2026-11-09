@@ -49,13 +49,19 @@ class QuizEngineV2PackagingTests(unittest.TestCase):
 
         self.assertEqual(len(zip_step), 2, "pages.yml no longer builds src.zip")
         self.assertTrue(zip_step[1].startswith(" blockchain-course dynamic-labs"))
+        # The patterns live in the shared fence list; pages.yml expands it with zip-args.
+        self.assertIn("python3 tools/student_exclude.py zip-args", workflow)
+        self.assertIn('"${EXCLUDES[@]}"', zip_step[1])
+        fence = (REPO_ROOT / "dynamic-labs/student-exclude.txt").read_text(
+            encoding="utf-8"
+        ).split()
         for pattern in (
-            '-x "quizes/**"',
-            '-x "quizes/*"',
-            '-x "dynamic-labs/**/quizes/**"',
-            '-x "dynamic-labs/**/quizes/*"',
+            "quizes/**",
+            "quizes/*",
+            "dynamic-labs/**/quizes/**",
+            "dynamic-labs/**/quizes/*",
         ):
-            self.assertIn(pattern, zip_step[1])
+            self.assertIn(pattern, fence)
 
 
 if __name__ == "__main__":

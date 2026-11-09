@@ -54,6 +54,8 @@ NOTE = "note: "
 STUDENT_TREES = ("blockchain-course/", "dynamic-labs/")  # what students receive (CLAUDE.md rule 1)
 PAGES_WORKFLOW = ".github/workflows/pages.yml"
 VM_WORKFLOW = ".github/workflows/vm-build.yml"
+# The one list of what students never receive: pages.yml, vm-build.yml and student-release.yml all read it.
+STUDENT_EXCLUDE = "dynamic-labs/student-exclude.txt"
 # Kept out of src.zip but deliberately left on the VM: the lab services read them at run time (a known gap).
 VM_RUNTIME_KEYS = ("dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/cryptography/solution.md",
                    "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml")
@@ -433,17 +435,30 @@ def file_names(files: list[str]) -> list[str]:
     return [f"{rel}: use only letters, digits, '-', '_' and '.' in file and folder names" for rel in bad]
 
 
-def zip_exclusions(workflow: str) -> list[str]:
-    """The `-x "<pattern>"` entries of the src.zip step in pages.yml."""
-    return re.findall(r'-x\s+"([^"]+)"', workflow)
+def student_exclusions(text: str) -> list[str]:
+    """The patterns of student-exclude.txt: one per line; blank lines and `#` comments skipped."""
+    return [line.strip() for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")]
 
 
-def vm_removals(workflow: str) -> list[str]:
+def read_student_exclusions(root: Path | None = None) -> list[str]:
+    path = (root or REPO) / STUDENT_EXCLUDE
+    return student_exclusions(path.read_text(encoding="utf-8")) if path.is_file() else []
+
+
+# The line of vm-build.yml's payload step that removes the student-exclude.txt list (bar VM_RUNTIME_KEYS).
+VM_SHARED_REMOVAL = re.compile(r"^\s*python3? tools/student_exclude\.py remove --vm\s*$", re.M)
+
+
+def vm_removals(workflow: str, shared: list[str] | None = None) -> list[str]:
     """The paths the "Remove Unused Repo Payload" step of vm-build.yml deletes: `rm` lines (backslash
-    continuations) and `find dynamic-labs... -name <pattern>` lines, which count as `dynamic-labs/**/<pattern>`."""
+    continuations), `find dynamic-labs... -name <pattern>` lines, which count as `dynamic-labs/**/<pattern>`, and the
+    `shared` student-exclude.txt patterns when the step runs `tools/student_exclude.py remove --vm`."""
     step = re.search(r"- name: Remove Unused Repo Payload\n(.*?)(?=\n\s*- name:|\Z)", workflow, re.S)
     removed, deleting = [], False
-    for line in (step.group(1) if step else "").splitlines():
+    body = step.group(1) if step else ""
+    if shared and VM_SHARED_REMOVAL.search(body):
+        removed += shared
+    for line in body.splitlines():
         found = re.match(r"\s*find\s+(dynamic-labs\S*)\s.*-name\s+'?\"?([^\s'\"]+)", line)
         if found:
             removed.append(f"{found.group(1)}/**/{found.group(2)}")
@@ -483,11 +498,12 @@ def instructor_named(rel: str) -> bool:
     return not matches_any(path, allowed, whole_folders=False)
 
 
-def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
-    """Tracked files under the student trees that src.zip or the VM image still hold although they are instructor-only:
-    files named for answers, solutions, instructors or seeds (bar STUDENT_FACING), and anything under `dynamic-labs/`
-    that pages.yml leaves out of src.zip (it must leave the VM too, bar the named runtime keys)."""
-    zip_x, vm_rm = zip_exclusions(pages), vm_removals(vm)
+def unfenced_answer_files(tracked: list[str], excluded: str, vm: str) -> list[str]:
+    """Tracked files under the student trees that src.zip, a student image or the VM image still hold although they
+    are instructor-only: files named for answers, solutions, instructors or seeds (bar STUDENT_FACING), and anything
+    under `dynamic-labs/` on the student-exclude.txt list `excluded` (it must leave the VM too, bar the runtime keys)."""
+    zip_x = student_exclusions(excluded)
+    vm_rm = vm_removals(vm, zip_x)
     problems = []
     for rel in tracked:
         if not rel.startswith(STUDENT_TREES):
@@ -495,7 +511,7 @@ def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
         answer = instructor_named(rel)
         zip_excluded = matches_any(rel, zip_x, whole_folders=False)
         if answer and not zip_excluded:
-            problems.append(f'{rel}: ships in src.zip: add -x "{rel}" to the zip step of {PAGES_WORKFLOW}, '
+            problems.append(f"{rel}: ships in src.zip and the student images: add it to {STUDENT_EXCLUDE}, "
                             "or, if students may have it, list it in STUDENT_FACING (tools/check.py) with why")
         instructor_only = answer or (zip_excluded and rel.startswith("dynamic-labs/"))
         if instructor_only and rel not in VM_RUNTIME_KEYS and not matches_any(rel, vm_rm, whole_folders=True):
@@ -503,13 +519,29 @@ def unfenced_answer_files(tracked: list[str], pages: str, vm: str) -> list[str]:
     return problems
 
 
+# How each workflow that hands files to students must apply student-exclude.txt.
+FENCE_WIRING = {
+    PAGES_WORKFLOW: (re.compile(r"python3 tools/student_exclude\.py zip-args"), "build its zip -x list with it"),
+    VM_WORKFLOW: (VM_SHARED_REMOVAL, "run `python3 tools/student_exclude.py remove --vm` in Remove Unused Repo Payload"),
+    ".github/workflows/student-release.yml": (re.compile(r"python3 tools/student_exclude\.py stage "),
+                                              "stage every image build context with it"),
+}
+
+
+def unwired_fences(texts: dict[str, str]) -> list[str]:
+    """Workflows that hand files to students but no longer apply student-exclude.txt."""
+    return [f"{wf}: must {how} ({STUDENT_EXCLUDE})" for wf, (pattern, how) in FENCE_WIRING.items()
+            if wf in texts and not pattern.search(texts[wf])]
+
+
 def answer_files() -> list[str]:
-    """CLAUDE.md rule 1: an answer key must not reach students through src.zip or the VM image."""
-    texts = [(REPO / wf).read_text(encoding="utf-8") if (REPO / wf).is_file() else "" for wf in (PAGES_WORKFLOW, VM_WORKFLOW)]
+    """CLAUDE.md rule 1: an answer key must not reach students through src.zip, a student image or the VM image."""
+    texts = {f: (REPO / f).read_text(encoding="utf-8") for f in (STUDENT_EXCLUDE, *FENCE_WIRING) if (REPO / f).is_file()}
     # Untracked files too: the stamp covers them, so a commit after `git add` would never be checked again.
     files = [*(git(REPO, "ls-files") or "").splitlines(),
              *(git(REPO, "ls-files", "--others", "--exclude-standard") or "").splitlines()]
-    return unfenced_answer_files(files, *texts)
+    return [*unwired_fences(texts),
+            *unfenced_answer_files(files, texts.get(STUDENT_EXCLUDE, ""), texts.get(VM_WORKFLOW, ""))]
 
 
 def tool_tests() -> list[str]:
@@ -652,7 +684,7 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     if new:
         plan.checks.append(Check("file names", lambda: file_names(new)))
 
-    if touched(".github/workflows/") or any(INSTRUCTOR_WORDS.search(f) for f in files):
+    if touched(".github/workflows/") or touched(STUDENT_EXCLUDE) or any(INSTRUCTOR_WORDS.search(f) for f in files):
         plan.checks.append(Check("answer files", answer_files))
 
     if touched("tools/") or touched(".claude/"):

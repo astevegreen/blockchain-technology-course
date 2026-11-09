@@ -47,6 +47,11 @@ slide index), which is never listed here.
   bridge lab build)
 
 ## Tooling and rules
+- `tools/tests/test_src_zip.py` skips wherever `zip` is missing, which today is every machine that runs it: the
+  Windows check, Git Bash and the desktop's WSL Ubuntu. Either install `zip` on the `check.yml` runner or have the test
+  build the archive with Python's `zipfile` from `student_exclude.py zip-args`. Locally, `student_release.py lfs-check`
+  also flags the three `bitcoin-forensics` block files, because the checkout has no LFS objects; CI checks out with
+  `lfs: true`. (9 Nov 2026, S5 release build)
 
 ## Notion and documents
 
