@@ -78,6 +78,8 @@ STUDENT_FACING = {
     "dynamic-labs/exercises/l03-i3-trust-game/instructor_auth/*": "a vendored copy of the instructor login code",
     "dynamic-labs/hlf/shared_instructor_auth/*": "a vendored copy of the instructor login code",
     "dynamic-labs/quiz-engine-v2/instructor_auth/*": "a vendored copy of the instructor login code",
+    "dynamic-labs/router/routes/_instructor.conf":
+        "the router's /instructor locations, moved out of routes.conf (which students already ran); proxy rules, no answers",
     "dynamic-labs/instructor_auth_service/*": "the instructor login service: its code, image and compose file",
     "dynamic-labs/bitcoin-forensics/forensics-lab-v3-instructor-dir/*":
         "the wallet-free class chain the lab's deploy button installs; students query this chain in the lab",
@@ -530,6 +532,18 @@ def tool_tests() -> list[str]:
 
 
 LABS = REPO / "dynamic-labs"
+
+
+def manifest_rule(name: str) -> list[str]:
+    """One of tools/lab_manifest.py's rules: lab manifests, generated lists, launcher compose files, route ownership."""
+    import lab_manifest
+    rules = {"manifests": lab_manifest.check_manifests, "generated": lambda: lab_manifest.check_generated(),
+             "launcher": lab_manifest.check_launcher_files, "routes": lab_manifest.check_routes}
+    if name == "generated" and lab_manifest.check_manifests():
+        return []  # the manifests rule already failed; generating from a broken manifest only adds noise
+    return rules[name]()
+
+
 QUIZ_ENGINE = LABS / "quiz-engine-v2"
 INSTALL_FIX = "fix: python -m pip install -r requirements-dev.txt"
 # A change under these reruns the lab unit tests: the contract tests read the labs, lab-manager.sh, the shared
@@ -657,6 +671,10 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
 
     if touched("tools/") or touched(".claude/"):
         plan.checks.append(Check("tool tests", tool_tests))
+    if touched("dynamic-labs/") or touched("tools/lab_manifest.py"):
+        for label, rule in (("lab manifests", "manifests"), ("lab generated lists", "generated"),
+                            ("launcher compose files", "launcher"), ("router route ownership", "routes")):
+            plan.checks.append(Check(label, lambda rule=rule: manifest_rule(rule)))
     if touched(LAB_TEST_PATHS):
         plan.checks.append(Check("lab unit tests", lab_unit_tests))
     if touched(QUIZ_ENGINE_TEST_PATHS):

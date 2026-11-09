@@ -1,0 +1,61 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: router
+title: Router
+kind: shared
+order:
+  day: null
+  position: 5
+compose_project: router
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  router:
+    source: upstream
+    image: nginx:alpine
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+routes:
+- routes/_auth.conf
+- routes/_class_gate.conf
+- routes/_instructor.conf
+- routes/explorer-host.conf
+- routes/tokens-host.conf
+- routes/dex-host.conf
+- routes/dex-l2-host.conf
+uses_lane_service: false
+entry:
+  path: /
+memory_mb: 128
+approx_download_mb: 20
+data:
+- path: ./${NGINX_CONF
+  into: -nginx-ssl.conf}
+  how: baked
+- path: ./nginx-cache.conf
+  into: /etc/nginx/conf.d/00-cache.conf
+  how: baked
+- path: ./nginx-maps.conf
+  into: /etc/nginx/conf.d/10-maps.conf
+  how: baked
+- path: ./routes.conf
+  into: /etc/nginx/routes.conf
+  how: baked
+- path: ./routes
+  into: /etc/nginx/routes
+  how: baked
+- path: ./class-gate/${CLASS_GATE
+  into: -off}.conf
+  how: baked
+- path: ./https-redirect/off.conf
+  into: /etc/nginx/https-redirect.conf
+  how: baked
+- path: ./certs
+  into: /etc/nginx/certs
+  how: baked
+keep_volumes_on_update: false

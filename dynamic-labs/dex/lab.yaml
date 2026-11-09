@@ -1,0 +1,92 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: dex
+title: Exchange and Bridge Lab
+kind: lab
+order:
+  day: 4
+  position: 0
+compose_project: dex
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  anvil:
+    source: upstream
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  anvil-l2:
+    source: upstream
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  relayer:
+    source: upstream
+    image: python:3.12-alpine
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  gateway:
+    source: upstream
+    image: python:3.12-alpine
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  gateway-l2:
+    source: upstream
+    image: python:3.12-alpine
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  otterscan:
+    source: upstream
+    image: otterscan/otterscan:v2.11.0
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+routes:
+- routes/dex.conf
+uses_lane_service: false
+entry:
+  path: /lab/
+  port: 8443
+memory_mb: 3072
+approx_download_mb: 5000
+data:
+- path: ./chain
+  into: /chain
+  how: baked
+- path: ./relayer/relayer.py
+  into: /srv/relayer.py
+  how: baked
+- path: ./chain/addresses.env
+  into: /chain/addresses.env
+  how: baked
+- path: ../explorer/gateway/gateway.py
+  into: /srv/gateway.py
+  how: baked
+- path: ./gateway/static/lab
+  into: /srv/static/lab
+  how: baked
+- path: ./gateway/static/sign
+  into: /srv/static/sign
+  how: baked
+- path: ./gateway/static/fallback
+  into: /srv/static/fallback
+  how: baked
+- path: ../explorer/gateway/static/vendor
+  into: /srv/static/vendor
+  how: baked
+- path: ../explorer/otterscan/default.conf
+  into: /etc/nginx/conf.d/default.conf
+  how: baked
+- path: ./chain/sourcify
+  into: /usr/share/nginx/html/sourcify
+  how: baked
+keep_volumes_on_update: true
