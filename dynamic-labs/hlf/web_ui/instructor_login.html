@@ -66,6 +66,11 @@
     .badge.instructor { background: #1e3a5f; color: #7eb8f0; }
     .badge.student { background: #1a3328; color: #7fd0a2; }
 
+    .class-code { background: var(--bg); border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 24px; }
+    .class-code .code-value { display: inline-block; font-family: ui-monospace, Consolas, monospace; font-size: 26px;
+                              letter-spacing: .14em; color: var(--accent); margin: 2px 0 12px; }
+    .class-code form { max-width: 380px; }
+
     .util-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
     .util-section .link-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
     .util-section .link-row a { color: var(--text); text-decoration: none; font-size: 13px; }
@@ -93,6 +98,19 @@
       </form>
 
       <div id="dashboard" class="dashboard">
+        <div id="classCode" class="class-code" style="display:none">
+          <h2>Class Code</h2>
+          <p class="sub" id="classGateState"></p>
+          <div class="code-value" id="classCodeValue">-</div>
+          <form id="classCodeForm" onsubmit="return changeClassCode(event, false)">
+            <label for="newClassCode">Change the code</label>
+            <input type="text" id="newClassCode" placeholder="6 to 32 letters or digits" maxlength="40" autocomplete="off" />
+            <button type="submit">Set this code</button>
+            <button type="button" onclick="return changeClassCode(event, true)">Make up a new code</button>
+            <div id="classCodeMsg" class="msg"></div>
+          </form>
+        </div>
+
         <div id="labs-progress" style="display:none">
           <h2>Live Progress</h2>
           <div class="progress-grid" id="progressGrid"></div>
@@ -182,6 +200,7 @@
           logout.style.display = 'inline-block';
           msg.textContent = '';
           refreshProgress();
+          refreshClassCode();
         } else {
           form.style.display = 'flex';
           dashboard.classList.remove('show');
@@ -218,6 +237,58 @@
           await refresh();
         } else {
           msg.textContent = j.message || 'Login failed.';
+          msg.className = 'msg error';
+        }
+      } catch (e) {
+        msg.textContent = 'Network error.';
+        msg.className = 'msg error';
+      }
+      return false;
+    }
+    async function refreshClassCode() {
+      var box = document.getElementById('classCode');
+      try {
+        var r = await fetch('/api/instructor/class-code', { credentials: 'same-origin' });
+        if (!r.ok) return;
+        var j = await r.json();
+        document.getElementById('classCodeValue').textContent = j.code || '(none set)';
+        document.getElementById('classGateState').textContent = j.gate_on
+          ? 'Students type this code at /class/ before they reach any lab or page on this server. Changing it locks out everyone who entered the old code until they enter the new one.'
+          : 'The class gate is off on this server, so students do not need the code. It is on for a cloud class host (lab-manager.sh deploy --class-gate).';
+        box.style.display = 'block';
+      } catch (_) {}
+    }
+    async function changeClassCode(ev, generate) {
+      if (ev) ev.preventDefault();
+      var msg = document.getElementById('classCodeMsg');
+      var input = document.getElementById('newClassCode');
+      var body = generate ? { generate: true } : { code: input.value };
+      if (!generate && !input.value.trim()) {
+        msg.textContent = 'Type the new code first.';
+        msg.className = 'msg error';
+        return false;
+      }
+      if (!window.confirm('Everyone who entered the old code will have to enter the new one. Change the class code?')) {
+        return false;
+      }
+      try {
+        // A fresh CSRF token for this login (instructor_auth/csrf.py).
+        var t = await fetch('/api/instructor/csrf', { method: 'POST', credentials: 'same-origin' });
+        var token = t.ok ? (await t.json()).token : '';
+        var r = await fetch('/api/instructor/class-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': token },
+          credentials: 'same-origin',
+          body: JSON.stringify(body)
+        });
+        var j = await r.json().catch(function() { return {}; });
+        if (r.ok && j.success) {
+          input.value = '';
+          msg.textContent = 'Class code changed.';
+          msg.className = 'msg ok';
+          await refreshClassCode();
+        } else {
+          msg.textContent = j.message || 'Could not change the class code.';
           msg.className = 'msg error';
         }
       } catch (e) {

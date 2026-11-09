@@ -284,6 +284,10 @@ cat .runtime/instructor-credentials.txt
 
 `deploy-cloud.sh` saves the domain so that subsequent `lab-manager.sh start` commands preserve the HTTPS configuration automatically.
 
+A cloud host is on the open internet, so `deploy-cloud.sh` turns the class gate on: students enter the class code
+before any lab page ([Class Code](#class-code-student-gate)). `--no-class-gate` leaves the labs open to anyone who
+finds the host.
+
 Cloud deploy accepts the same claim-lane capacity controls as `lab-manager.sh deploy --mode instructor` and forwards them to lab-manager:
 
 - `--max-student-capacity N` sets the base capacity for claim-based labs. Instructor deployments default to 20 and accept values up to 40.
@@ -334,7 +338,8 @@ cd dynamic-labs
 ./lab-manager.sh start bitcoin
 ```
 
-Add `--no-tls` to skip generating a self-signed certificate.
+Add `--no-tls` to skip generating a self-signed certificate. Add `--class-gate` when students outside the room could
+reach the server: they then enter the class code first ([Class Code](#class-code-student-gate)).
 
 ### Student (local dev / single learner)
 
@@ -422,6 +427,38 @@ The same file holds the Hyperledger Fabric lab's Certificate Authority admin pas
 (`HLF_CA_ADMIN_PASSWORD`, `HLF_COUCHDB_PASSWORD`). The lab will not start without them, and a plain redeploy keeps
 the ones already saved. The Certificate Authority stores its admin password the first time it starts, so after a
 rotation also run `hlf/lab.sh reset` to make it use the new one.
+
+## Class Code (student gate)
+
+One code per class keeps strangers off a class host. It is on for a cloud deploy (`deploy-cloud.sh`; opt out with
+`--no-class-gate`), on for a classroom server deployed with `lab-manager.sh deploy --mode instructor --class-gate`,
+and off otherwise. The student VM (`--mode student`) refuses `--class-gate`: it serves one student.
+
+- **Where the code is.** `.runtime/instructor-credentials.txt` ("Class Code"), generated with the other credentials
+  (eight letters and digits, without 0, O, 1, I or L), and the Class Code panel of the instructor portal
+  (`/instructor/`), where the instructor can type a new code or make one up. `ROTATE_RUNTIME_CREDENTIALS=1` makes a
+  new one; a plain redeploy keeps it.
+- **What students see.** Any page on the server, or on the explorer, tokens, dex and dex-l2 hosts, first sends them to
+  `/class/`. The right code gives that browser a signed class pass for two weeks, then returns them to the page they
+  asked for. The pass is set on the course domain, so one entry covers all five host names; on an IP address it
+  covers that address's ports (8441-8444).
+- **Changing the code** voids every pass issued for the old one: everyone enters the new code. A redeploy that
+  rotates the code wins over a code changed in the portal before it.
+- **Instructors** pass with their instructor login; the code page, the instructor pages and the instructor sign-in
+  stay open. On a cloud host the instructor login is set on the main host only, so on the explorer, tokens, dex and
+  dex-l2 hosts the instructor enters the class code like a student.
+- **Wrong codes** are limited per address (20 a minute, 100 in 15 minutes, in each of the service's two workers),
+  loose enough for a class behind one address and far too slow to guess a code.
+
+How it works: the router asks the instructor auth service about each request
+(`router/routes/_class_gate.conf`, switched by `router/class-gate/on.conf` or `off.conf`), and the lane-service
+checks `/claim` and `/resolve` itself, since those use their own router check. The code and pass are in
+`instructor_auth_service/class_gate.py`. Tests: `tests/test_class_gate.py` (the service: no pass, valid pass, voided
+pass, instructor login, wrong-code limit), `tests/test_lane_service_class_gate.py` (claim and resolve) and
+`tests/test_class_gate_deploy.py` (deploy flags and router wiring).
+
+The instructor sign-in's rate limit counts attempts by the address the router saw, the last `X-Forwarded-For`
+entry, not the first one, which a client can write itself.
 
 ## WiFi Access Point (instructor mode)
 

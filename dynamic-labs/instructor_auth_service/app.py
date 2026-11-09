@@ -27,10 +27,11 @@ from instructor_auth import (  # noqa: E402
 )
 from instructor_auth.auth import COOKIE_NAME, build_payload, _serializer  # noqa: E402
 
-from . import sessions  # noqa: E402
+from . import class_gate, sessions  # noqa: E402
 
 
 UI_DIR = ROOT / "hlf" / "web_ui"
+CLASS_PAGE_DIR = Path(__file__).resolve().parent
 DEFAULT_USER = "admin"
 RETURN_TO_COOKIE_NAME = "hlf_instructor_return_to"
 RETURN_TO_COOKIE_SALT = "hlf-instructor-return-to-v1"
@@ -64,9 +65,8 @@ def _auth_bypassed(config: AuthConfig) -> bool:
 
 
 def _client_ip() -> str:
-    xff = request.headers.get("X-Forwarded-For", "")
-    if xff:
-        return xff.split(",")[0].strip()
+    # ProxyFix(x_for=1) has already set remote_addr to the address the router saw.
+    # The first X-Forwarded-For entry is whatever the client chose to send.
     return request.remote_addr or "-"
 
 
@@ -213,8 +213,17 @@ def create_app() -> Flask:
 
     app.register_blueprint(csrf_blueprint(config))
     install_sliding_reissue(app)
-    install_csrf_protection(app, config)
+    # Entering the class code needs no CSRF token, even from a browser that also
+    # holds an instructor cookie: a forged entry only hands that browser a pass.
+    install_csrf_protection(app, config, extra_exempt_paths=["/api/class/enter"])
     install_login_rate_limit(app, login_endpoints=["instructor_auth_service.login"])
+    class_failures = class_gate.FailureLimiter()
+
+    def _has_class_pass() -> bool:
+        code, _source = class_gate.current_code()
+        return class_gate.pass_is_valid(
+            secret_key, request.cookies.get(class_gate.PASS_COOKIE_NAME), code
+        )
 
     @app.get("/instructor")
     def instructor_landing_bare():
@@ -329,6 +338,113 @@ def create_app() -> Flask:
         sessions.forget(target_jti)
         audit_write("session.revoke", extra={"target_jti": target_jti})
         return jsonify({"success": True})
+
+    @app.get("/class")
+    def class_page_bare():
+        return redirect("/class/", code=301)
+
+    @app.get("/class/")
+    def class_page():
+        return send_from_directory(CLASS_PAGE_DIR, "class_pass.html")
+
+    @app.get("/api/class/return-to")
+    def class_return_to():
+        target = class_gate.safe_return_to(
+            request.headers.get("X-Original-URI", ""),
+            method=request.headers.get("X-Original-Method", "GET"),
+        )
+        resp = make_response(redirect("/class/", code=302))
+        if target:
+            resp.set_cookie(
+                class_gate.RETURN_TO_COOKIE_NAME,
+                class_gate.mint_return_to(secret_key, target),
+                max_age=class_gate.RETURN_TO_MAX_AGE,
+                httponly=True,
+                samesite="Lax",
+                path="/",
+            )
+        else:
+            resp.delete_cookie(class_gate.RETURN_TO_COOKIE_NAME, path="/")
+        return resp
+
+    @app.get("/api/class/status")
+    def class_status():
+        code, _source = class_gate.current_code()
+        return jsonify(
+            {
+                "gate_on": class_gate.gate_enabled(),
+                "code_set": bool(code),
+                "has_pass": _has_class_pass(),
+            }
+        )
+
+    @app.post("/api/class/enter")
+    def class_enter():
+        ip = _client_ip()
+        wait = class_failures.retry_after(ip)
+        if wait:
+            resp = jsonify(
+                {"success": False, "message": "Too many wrong codes. Wait a minute and try again."}
+            )
+            resp.status_code = 429
+            resp.headers["Retry-After"] = str(wait)
+            return resp
+        data = request.get_json(silent=True) or {}
+        code, _source = class_gate.current_code()
+        if not class_gate.codes_match(str(data.get("code") or ""), code):
+            class_failures.record_failure(ip)
+            log_auth_event("class_enter", outcome="fail", reason="wrong_code")
+            return jsonify({"success": False, "message": "That is not the class code."}), 401
+        redirect_to = class_gate.read_return_to(
+            secret_key, request.cookies.get(class_gate.RETURN_TO_COOKIE_NAME)
+        )
+        resp = make_response(jsonify({"success": True, "redirect_to": redirect_to or "/"}))
+        resp.set_cookie(
+            class_gate.PASS_COOKIE_NAME,
+            class_gate.mint_pass(secret_key, code),
+            max_age=class_gate.PASS_MAX_AGE,
+            httponly=True,
+            secure=request.is_secure,
+            samesite="Lax",
+            path="/",
+            domain=class_gate.cookie_domain(request.host),
+        )
+        resp.delete_cookie(class_gate.RETURN_TO_COOKIE_NAME, path="/")
+        log_auth_event("class_enter", outcome="ok")
+        return resp
+
+    @app.get("/api/class/verify")
+    def class_verify():
+        # The router's auth_request and the lane-service ask this on every gated request.
+        if _has_class_pass() or verify(request, config) is not None:
+            return ("", 200)
+        return ("", 403)
+
+    @app.get("/api/instructor/class-code")
+    @_require_api_instructor(config)
+    def get_class_code():
+        code, source = class_gate.current_code()
+        return jsonify({"code": code, "source": source, "gate_on": class_gate.gate_enabled()})
+
+    @app.post("/api/instructor/class-code")
+    @_require_api_instructor(config)
+    def change_class_code():
+        data = request.get_json(silent=True) or {}
+        if data.get("generate"):
+            new_code = class_gate.generate_code()
+        else:
+            new_code = class_gate.normalize_code(str(data.get("code") or ""))
+            problem = class_gate.code_problem(new_code)
+            if problem:
+                return jsonify({"success": False, "message": problem}), 400
+        try:
+            class_gate.set_code(new_code)
+        except OSError:
+            return jsonify({"success": False, "message": "could not save the class code"}), 500
+        audit_write("class_code.change", extra={"generated": bool(data.get("generate"))})
+        return jsonify(
+            {"success": True, "code": new_code, "source": "portal", "gate_on": class_gate.gate_enabled()}
+        )
 
     @app.get("/healthz")
     def healthz():

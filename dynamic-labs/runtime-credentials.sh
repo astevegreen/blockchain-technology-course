@@ -59,6 +59,17 @@ print(secrets.token_hex(nbytes))
 PY
 }
 
+# The class code students type to reach the labs when the class gate is on
+# (instructor_auth_service/class_gate.py). No 0/O or 1/I/L: it is read off a screen.
+runtime_class_code() {
+    python3 - <<'PY'
+import secrets
+
+alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+print("".join(secrets.choice(alphabet) for _ in range(8)))
+PY
+}
+
 write_runtime_credentials_files() {
     local old_umask
 
@@ -81,6 +92,7 @@ HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY}
 LANE_SERVICE_SECRET=${LANE_SERVICE_SECRET}
 HLF_CA_ADMIN_PASSWORD=${HLF_CA_ADMIN_PASSWORD}
 HLF_COUCHDB_PASSWORD=${HLF_COUCHDB_PASSWORD}
+CLASS_CODE=${CLASS_CODE}
 EOF
     chmod 600 "${RUNTIME_ENV_FILE}"
 
@@ -96,6 +108,13 @@ Central Instructor Auth
 URL: /instructor/
 Username: ${INSTRUCTOR_AUTH_USER}
 Password: ${INSTRUCTOR_AUTH_KEY}
+
+Class Code
+----------
+Code: ${CLASS_CODE}
+Students type this code once at /class/ when the class gate is on (cloud deploys).
+You can change it in the instructor portal; a change locks out everyone who
+entered the old code until they enter the new one.
 
 Notes
 -----
@@ -123,6 +142,9 @@ fill_missing_runtime_secrets() {
     fi
     if [[ -z "${HLF_COUCHDB_PASSWORD:-}" ]]; then
         HLF_COUCHDB_PASSWORD="$(runtime_random_alnum 24)"
+    fi
+    if [[ -z "${CLASS_CODE:-}" ]]; then
+        CLASS_CODE="$(runtime_class_code)"
     fi
 }
 
@@ -160,6 +182,7 @@ ensure_runtime_credentials() {
     LANE_SERVICE_SECRET="$(runtime_random_hex 32)"
     HLF_CA_ADMIN_PASSWORD="$(runtime_random_alnum 24)"
     HLF_COUCHDB_PASSWORD="$(runtime_random_alnum 24)"
+    CLASS_CODE="$(runtime_class_code)"
 
     write_runtime_credentials_files
 }

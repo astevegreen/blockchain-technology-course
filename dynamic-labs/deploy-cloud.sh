@@ -9,6 +9,8 @@ source "${SCRIPT_DIR}/runtime-credentials.sh"
 
 DOMAIN=""
 LAB_MANAGER_DEPLOY_ARGS=()
+# A cloud host is on the open internet: students enter the class code first.
+CLASS_GATE_ARGS=(--class-gate)
 
 usage() {
     cat <<'EOF'
@@ -25,11 +27,17 @@ Options:
   --p2p-trust-student-capacity N    Override P2P trust claim-lane capacity
   --ethereum-student-capacity N     Override Ethereum claim-lane capacity
   --hlf-student-capacity N          Override Hyperledger Fabric claim-lane capacity
+  --no-class-gate                   Leave the lab pages open to anyone who finds the host
+                                    (the class gate is on by default)
   -h, --help                        Show this help
 
 Notes:
   Capacity options are forwarded to:
-    ./lab-manager.sh deploy --mode instructor
+    ./lab-manager.sh deploy --mode instructor --class-gate
+
+  Students enter the class code before any lab page. The code is in
+  .runtime/instructor-credentials.txt and in the instructor portal, where the
+  instructor can change it; changing it signs every student out of the labs.
 
   Instructor deployments default to 20 claimable lanes and accept up to 40 when
   the host has enough CPU, RAM, and disk for the selected labs.
@@ -62,6 +70,9 @@ while [[ "$#" -gt 0 ]]; do
             LAB_MANAGER_DEPLOY_ARGS+=("$1" "$2")
             shift
             ;;
+        --no-class-gate)
+            CLASS_GATE_ARGS=()
+            ;;
         --students)
             echo "--students is no longer supported. Shared labs use singleton containers; use --max-student-capacity for claim-based labs."
             exit 1
@@ -80,7 +91,7 @@ if [ -z "$DOMAIN" ]; then
     exit 1
 fi
 
-deploy_args=(deploy --mode instructor "${LAB_MANAGER_DEPLOY_ARGS[@]}")
+deploy_args=(deploy --mode instructor "${CLASS_GATE_ARGS[@]}" "${LAB_MANAGER_DEPLOY_ARGS[@]}")
 
 if [[ "${DEPLOY_CLOUD_PRINT_LAB_MANAGER_ARGS_ONLY:-0}" == "1" ]]; then
     printf '%q ' "${deploy_args[@]}"
@@ -190,4 +201,7 @@ LAB_MANAGER_CLOUD_MODE=1 HLF_ALLOW_RUNTIME_DOWNLOADS=1 \
 
 echo "Cloud deployment complete. The router is now serving on https://$DOMAIN"
 echo "Instructor credentials written to ${INSTRUCTOR_CREDENTIALS_FILE}"
+if [[ "${#CLASS_GATE_ARGS[@]}" -gt 0 ]]; then
+    echo "Students enter the class code (in the same file and the instructor portal) before any lab page."
+fi
 echo "Start labs with: ./lab-manager.sh start all"

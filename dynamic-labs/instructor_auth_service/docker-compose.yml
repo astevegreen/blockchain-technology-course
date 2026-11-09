@@ -15,10 +15,21 @@ services:
       - HLF_INSTRUCTOR_USER=${HLF_INSTRUCTOR_USER:-}
       - HLF_INSTRUCTOR_KEY=${HLF_INSTRUCTOR_KEY:-}
       - INSTRUCTOR_AUDIT_LOG_PATH=/tmp/instructor-audit.log
+      # The class gate (class_gate.py): on for a cloud class (lab-manager.sh --class-gate).
+      - CLASS_GATE=${CLASS_GATE:-off}
+      - CLASS_CODE=${CLASS_CODE:-}
+      - CLASS_PASS_COOKIE_DOMAIN=${CLASS_PASS_COOKIE_DOMAIN:-}
+      - CLASS_GATE_STATE_DIR=/var/lib/class-gate
+    volumes:
+      # A class code changed in the portal survives a restart and is shared by both workers.
+      - class-gate-state:/var/lib/class-gate
     networks:
       router-net:
         aliases:
           - instructor-auth-service
+
+volumes:
+  class-gate-state:
 
 networks:
   router-net:

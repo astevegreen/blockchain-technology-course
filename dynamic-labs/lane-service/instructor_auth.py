@@ -56,6 +56,54 @@ def is_authenticated() -> bool:
     return _verify_cookie(request.cookies.get("hlf_instructor", ""))
 
 
+# Class gate (instructor_auth_service/class_gate.py). The router checks the
+# class pass at server level, but locations with their own auth_request (the
+# lane resolve subrequests) skip that check, so /claim and /resolve ask too.
+CLASS_VERIFY_URL = os.environ.get(
+    "CLASS_VERIFY_URL",
+    "http://instructor-auth-service:8080/api/class/verify",
+)
+_class_cache: dict[tuple[str, str], tuple[float, bool]] = {}
+
+
+def class_gate_enabled() -> bool:
+    return (os.environ.get("CLASS_GATE") or "off").strip().lower() in {"1", "on", "true", "yes"}
+
+
+def class_pass_ok() -> bool:
+    """True when the gate is off, or the request has a class pass or instructor cookie.
+
+    Fails closed: if the auth service does not answer, the student is sent to
+    the code page rather than let through.
+    """
+    if not class_gate_enabled():
+        return True
+    key = (request.cookies.get("class_pass", ""), request.cookies.get("hlf_instructor", ""))
+    if not any(key):
+        return False
+    now = time.time()
+    with _cache_lock:
+        hit = _class_cache.get(key)
+        if hit and (now - hit[0]) < _CACHE_TTL:
+            return hit[1]
+    try:
+        r = requests.get(
+            CLASS_VERIFY_URL,
+            cookies={name: value for name, value in zip(("class_pass", "hlf_instructor"), key) if value},
+            timeout=VERIFY_TIMEOUT,
+        )
+        ok = r.status_code == 200
+    except requests.RequestException:
+        ok = False
+    with _cache_lock:
+        _class_cache[key] = (now, ok)
+        if len(_class_cache) > 256:
+            cutoff = now - _CACHE_TTL
+            for k in [k for k, (t, _) in _class_cache.items() if t < cutoff]:
+                _class_cache.pop(k, None)
+    return ok
+
+
 def require_instructor(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):

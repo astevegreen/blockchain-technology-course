@@ -15,13 +15,16 @@ slide index), which is never listed here.
 
 ## Labs
 - Lab hosting is decided: one shared host per class, the cloud by default and the classroom server as the offline
-  fallback, with the student VM kept for practice and self-study (owner, 9 Nov 2026). Before the first cloud class,
-  gate the student pages to the class: today only instructor pages sign in (`router/routes/_auth.conf`), so anyone
-  who reaches the host can claim every lane, open a lab terminal and write to the shared chains. How students get in
-  (one class code, per-seat codes, or an address allowlist) went to the owner on 9 Nov 2026. Done the same day: the
-  C3 and C9 re-check (`docs/security-triage.md`), which closed the lab ports that skipped the router, and a local
-  host-size estimate (`dynamic-labs/README.md`, "Host size for a class"); rerun `dynamic-labs/scripts/measure-seats.py`
-  on the real host before the class. (9 Nov 2026, lab hosting decision)
+  fallback, with the student VM kept for practice and self-study (owner, 9 Nov 2026). The host size in
+  `dynamic-labs/README.md` ("Host size for a class") is a local estimate: rerun `dynamic-labs/scripts/measure-seats.py`
+  on the real host before the first cloud class. (9 Nov 2026, lab hosting decision)
+- The vendored instructor-auth copies (`dynamic-labs/quiz-engine-v2/instructor_auth/audit.py`,
+  `exercises/l03-i3-trust-game/instructor_auth/audit.py`, `hlf/shared_instructor_auth/audit.py`) lack the `h.close()`
+  that `dynamic-labs/shared/instructor_auth/audit.py:39` has, and no test keeps the copies in step with `shared/`.
+  (9 Nov 2026, found while syncing `ratelimit.py` for the class gate)
+- The TLS router (`dynamic-labs/router/nginx-ssl.conf`) also serves every host on plain port 80 with no redirect to
+  HTTPS, so on a cloud host a class pass or instructor login entered over `http://` travels unencrypted. Redirect
+  port 80 to HTTPS when a domain is set. (9 Nov 2026, class gate review)
 - The ghcr images `bitcoin-lab`, `bitcoin-mempool` and `bitcoin-graph` (`ghcr.io/blockchain-course-2026/`) are
   still the Debian 12 builds: no workflow publishes them, and the bitcoin, wallet and trace labs pull them. Their
   Dockerfiles (`bitcoin/workstation`, `bitcoin/mempool`, `bitcoin-graph`) are on trixie since 9 Nov 2026, now carry

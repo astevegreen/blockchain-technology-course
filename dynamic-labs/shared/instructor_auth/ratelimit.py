@@ -28,9 +28,9 @@ DEFAULT_LIMITS = ((60, 5), (15 * 60, 5))
 
 
 def _client_ip() -> str:
-    xff = request.headers.get("X-Forwarded-For", "")
-    if xff:
-        return xff.split(",")[0].strip()
+    # The services wrap the app in ProxyFix(x_for=1), which sets remote_addr to the
+    # address the router saw (the last X-Forwarded-For entry). The first entry is
+    # whatever the client chose to send, so keying on it let a client reset its count.
     return request.remote_addr or "-"
 
 

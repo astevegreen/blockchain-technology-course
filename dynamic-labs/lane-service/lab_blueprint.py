@@ -22,7 +22,7 @@ _WRAPPER_TEMPLATE_PATH = Path(__file__).parent / "wrapper.html"
 
 from generic_claims import ClaimManager, is_valid_uuid
 from generic_lanes import LaneConfig, LaneManager
-from instructor_auth import is_authenticated as _instructor_authenticated, require_instructor
+from instructor_auth import class_pass_ok, is_authenticated as _instructor_authenticated, require_instructor
 from exercises import get_catalog as get_exercise_catalog
 from progress import (
     all_trackers,
@@ -248,6 +248,11 @@ def make_lab_blueprint(
 
     @bp.route(f"{prefix}/claim", methods=["GET"])
     def claim_station():
+        if not class_pass_ok():
+            # A backstop: the router's gate normally refuses first and remembers this
+            # page. Reached only when a pass went stale inside the router's 5-second
+            # cache, so the code page then returns the student to `/`, not here.
+            return redirect("/class/", code=302)
         existing = request.cookies.get(cookie_name) or request.args.get("session")
         uuid, station, message = claim_manager.claim(existing_uuid=existing)
         if uuid is None:
@@ -291,6 +296,10 @@ def make_lab_blueprint(
     # ------------------------------------------------------------------
     @bp.route(f"{prefix}/resolve", methods=["GET"])
     def resolve():
+        if not class_pass_ok():
+            # 403, not 401: the router sends 403 to the class code page and
+            # 401 to the claim page (routes/_class_gate.conf, ethereum.conf).
+            return Response("class pass required", status=403)
         uuid = request.headers.get("X-Session-UUID") or _get_session_uuid()
         if not uuid or not is_valid_uuid(uuid):
             return Response("no session", status=401)
@@ -488,6 +497,8 @@ def make_lab_blueprint(
 
         @bp.route(f"{prefix}/resolve-short", methods=["GET"])
         def resolve_short():
+            if not class_pass_ok():
+                return Response("class pass required", status=403)
             short = request.headers.get("X-Peer-Short", "").lower()
             if not _SHORT_RE.match(short):
                 return Response("invalid short id", status=401)

@@ -78,6 +78,8 @@ Deploy options:
   --ethereum-student-capacity N
   --hlf-student-capacity N
   --no-tls
+  --class-gate               Students enter the class code before any lab page (instructor mode only;
+                             deploy-cloud.sh turns it on). The code is in .runtime/instructor-credentials.txt
   --wifi-bridge <iface>
   --wifi-ssid <ssid>
   --wifi-passphrase <passphrase>
@@ -91,6 +93,7 @@ Deploy options:
 
 Examples:
   ./lab-manager.sh deploy --mode instructor --max-student-capacity 20
+  ./lab-manager.sh deploy --mode instructor --class-gate
   ./lab-manager.sh deploy --mode student --no-tls
   ./lab-manager.sh deploy --mode student --bitcoin-student-capacity 2 --consensus-student-capacity 8
   sudo ./lab-manager.sh deploy --mode instructor --wifi-bridge wlan0 --wifi-ssid CourseLabs --wifi-passphrase YOUR_PASSPHRASE
@@ -127,6 +130,7 @@ reset_defaults() {
     ETHEREUM_STUDENT_HOME_ROOT=""
     HLF_STUDENT_DISK_ROOT=""
     USE_TLS="true"
+    CLASS_GATE="off"
     HOST_BIND="0.0.0.0"
     WIFI_BRIDGE=""
     WIFI_SSID="${DEFAULT_WIFI_SSID}"
@@ -181,6 +185,7 @@ save_state() {
         printf 'ETHEREUM_STUDENT_HOME_ROOT=%q\n' "${ETHEREUM_STUDENT_HOME_ROOT}"
         printf 'HLF_STUDENT_DISK_ROOT=%q\n' "${HLF_STUDENT_DISK_ROOT}"
         printf 'USE_TLS=%q\n' "${USE_TLS}"
+        printf 'CLASS_GATE=%q\n' "${CLASS_GATE}"
         printf 'HOST_BIND=%q\n' "${HOST_BIND}"
         printf 'WIFI_BRIDGE=%q\n' "${WIFI_BRIDGE}"
         printf 'WIFI_SSID=%q\n' "${WIFI_SSID}"
@@ -242,6 +247,7 @@ compose_up_cmd() {
         export P2P_TRUST_STUDENT_HOME_ROOT
         export ETHEREUM_STUDENT_HOME_ROOT
         export HLF_STUDENT_DISK_ROOT
+        export_class_gate
         export HLF_PLATFORM="${HLF_PLATFORM:-${hlf_platform}}"
         export HLF_TTYD_ARCH="${HLF_TTYD_ARCH:-${hlf_ttyd_arch}}"
         if [[ -z "${STUDENT_WARM_POOL_SIZE:-}" && "${MODE:-}" == "student" ]]; then
@@ -256,6 +262,28 @@ compose_up_cmd() {
             docker compose "$@"
         fi
     )
+}
+
+# The class gate (router/routes/_class_gate.conf, instructor_auth_service/class_gate.py)
+# is off unless the instructor deploy asked for it; the student VM never runs it.
+effective_class_gate() {
+    if [[ "${MODE:-student}" == "instructor" && "${CLASS_GATE:-off}" == "on" ]]; then
+        echo "on"
+    else
+        echo "off"
+    fi
+}
+
+# Exports what the router, the instructor auth service and the lane-service read.
+# On a cloud host the class pass goes on the course domain, so explorer., tokens.,
+# dex. and dex-l2. accept it.
+export_class_gate() {
+    CLASS_GATE="$(effective_class_gate)"
+    export CLASS_GATE
+    if [[ -z "${CLASS_PASS_COOKIE_DOMAIN:-}" && -f "${RUNTIME_DIR:-${BASE_DIR}/.runtime}/cloud-domain.txt" ]]; then
+        CLASS_PASS_COOKIE_DOMAIN="$(tr -d '[:space:]' < "${RUNTIME_DIR:-${BASE_DIR}/.runtime}/cloud-domain.txt")"
+    fi
+    export CLASS_PASS_COOKIE_DOMAIN="${CLASS_PASS_COOKIE_DOMAIN:-}"
 }
 
 default_hlf_platform() {
@@ -322,7 +350,7 @@ report_runtime_mode() {
 
     capacity="$(effective_lane_capacity)"
     mode_default="$(default_max_student_capacity_for_mode "${MODE:-student}")"
-    echo "Lab manager mode: ${MODE:-student} (default lane capacity: ${mode_default}, active base capacity: ${capacity}, pids_limit: ${STUDENT_PIDS_LIMIT}, student_home_disks: ${STUDENT_HOME_DISKS_MODE}, router_bind: $(effective_host_bind))"
+    echo "Lab manager mode: ${MODE:-student} (default lane capacity: ${mode_default}, active base capacity: ${capacity}, pids_limit: ${STUDENT_PIDS_LIMIT}, student_home_disks: ${STUDENT_HOME_DISKS_MODE}, router_bind: $(effective_host_bind), class_gate: $(effective_class_gate))"
 }
 
 cloud_runtime_mode() {
@@ -878,6 +906,7 @@ start_router() {
         (
             cd "$(router_dir)"
             export STUDENT_PIDS_LIMIT
+            export_class_gate
             HOST_BIND="0.0.0.0" DOMAIN="${cloud_domain}" docker compose \
                 --env-file "${BASE_DIR}/.runtime/runtime-secrets.env" \
                 -f docker-compose.yml -f docker-compose.cloud.yml up -d
@@ -891,6 +920,7 @@ start_router() {
     (
         cd "$(router_dir)"
         export STUDENT_PIDS_LIMIT
+        export_class_gate
         if [[ -f "${BASE_DIR}/.runtime/runtime-secrets.env" ]]; then
             HOST_BIND="${router_bind}" HTTP_PORT=80 TLS_PORT=443 docker compose --env-file "${BASE_DIR}/.runtime/runtime-secrets.env" up -d
         else
@@ -1074,6 +1104,8 @@ parse_deploy_args() {
     local previous_mode=""
     local previous_base_capacity=""
     local carry_forward_capacities=1
+    # Each deploy says again whether the class gate is on; `start` reuses the saved choice.
+    local provided_class_gate="off"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -1117,6 +1149,10 @@ parse_deploy_args() {
                 ;;
             --no-tls)
                 USE_TLS="false"
+                shift
+                ;;
+            --class-gate)
+                provided_class_gate="on"
                 shift
                 ;;
             --wifi-bridge)
@@ -1206,12 +1242,18 @@ parse_deploy_args() {
                 echo "--ethernet-lan is only valid in instructor mode."
                 exit 1
             fi
+            if [[ "${provided_class_gate}" == "on" ]]; then
+                echo "--class-gate is only valid in instructor mode: the student VM serves one student."
+                exit 1
+            fi
             ;;
         *)
             echo "Invalid mode: ${MODE}. Choose instructor or student."
             exit 1
             ;;
     esac
+
+    CLASS_GATE="${provided_class_gate}"
 
     if [[ "${carry_forward_capacities}" == "1" ]]; then
         MAX_STUDENT_CAPACITY="$(normalize_capacity "${provided_capacity:-${MAX_STUDENT_CAPACITY:-${mode_default_capacity}}}" "${mode_default_capacity}")"
@@ -1435,4 +1477,7 @@ main() {
     esac
 }
 
-main "$@"
+# Sourcing the script (tests/test_class_gate_deploy.py) defines the functions without running main.
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
