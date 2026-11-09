@@ -16,6 +16,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import yaml
@@ -214,6 +215,39 @@ class ClaimTests(unittest.TestCase):
             )
         with patch.dict(os.environ, env, clear=True):
             self.assertEqual(generic_lanes.student_local_labels("ethereum_lab"), [])
+
+    def _docker_run_args(self, tmp: str, env: dict, course_lab):
+        """The `docker run` arguments LaneManager sends when it starts a new lane container (Docker faked)."""
+        generic_lanes, _ = _lane_modules()
+        with patch.dict(os.environ, env, clear=True):
+            config = generic_lanes.LaneConfig(
+                lab_name="ethereum", container_name_fn=lambda lid: f"probe-{lid}", state_dir=Path(tmp),
+                student_count=1, image="probe-image", network="probe-net", course_lab=course_lab,
+            )
+            manager = generic_lanes.LaneManager(config)
+            calls: list[list[str]] = []
+            ok = SimpleNamespace(returncode=0, stdout="", stderr="")
+            with patch.object(manager, "_container_exists_direct", return_value=False), \
+                    patch.object(manager, "_run", side_effect=lambda cmd, timeout=120: calls.append(cmd) or ok):
+                self.assertEqual(manager._start_docker_run("s01"), (True, "started"))
+        runs = [c for c in calls if c[:2] == ["docker", "run"]]
+        self.assertEqual(len(runs), 1)
+        return runs[0]
+
+    def test_docker_run_of_a_lane_carries_the_launcher_labels(self) -> None:
+        env = {k: v for k, v in os.environ.items() if k not in ("LANE_MODE", "COURSE_RELEASE")}
+        local = {**env, "LANE_MODE": "student-local", "COURSE_RELEASE": "2026.11.09-1"}
+        with tempfile.TemporaryDirectory() as tmp:
+            cmd = self._docker_run_args(tmp, local, "ethereum_lab")
+            labels = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "--label"]
+            self.assertEqual(labels, ["course.lab=ethereum_lab", "course.release=2026.11.09-1"])
+            self.assertLess(cmd.index("--label"), cmd.index("probe-image"))  # flags come before the image
+        with tempfile.TemporaryDirectory() as tmp:  # no lab id given: the lab name stands in
+            cmd = self._docker_run_args(tmp, local, None)
+            self.assertIn("course.lab=ethereum", cmd)
+        with tempfile.TemporaryDirectory() as tmp:  # classroom: no labels at all
+            cmd = self._docker_run_args(tmp, env, "ethereum_lab")
+            self.assertNotIn("--label", cmd)
 
 
 LAUNCHER_FILES = {  # lab id: launcher compose file
