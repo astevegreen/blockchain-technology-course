@@ -36,7 +36,7 @@ and a screenshot.
 5. Open the cUSD address. Confirm the name, a Contract tab showing DollarProxy as an exact match
    with `decimals = 6` in the source (served from the lab's own `/sourcify`), and a list of the
    eight transactions of blocks 2 to 9.
-6. Open block 2's transaction (`0xcf39a6ef055b76f2811d06f806f12a54eec584bb8b71575c8b9e94df1be9c27c`).
+6. Open block 2's transaction (`0xe9b059481ea3f18c16bdc80be365d7b45b3022a70b4bddd0e452111fd2135074`).
    Confirm its Logs tab shows `Upgraded` naming `0x5FbDB…0aa3`.
 7. Open block 4's transaction. Confirm "Tokens Transferred (1)" shows Account 1 to Account 2,
    2,500 Course Dollar (cUSD).

@@ -19,10 +19,6 @@ slide index), which is never listed here.
 ## Labs
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's
   request)
-- `dynamic-labs/tokens/chain/src/CourseTokens.sol:153-154` says "most real NFTs store a link"; the source found
-  (`das_understandingsecurityissues_2022`) supports "many". Students read it on the Contract tab. Reword at the next
-  chain rebuild: a comment change alters the bytecode, so the deploy hashes and possibly every fee after them
-  change. (31 Oct 2026, D3 token lab review)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3

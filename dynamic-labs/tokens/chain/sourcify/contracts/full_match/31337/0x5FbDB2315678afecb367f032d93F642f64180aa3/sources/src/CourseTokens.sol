@@ -151,7 +151,7 @@ contract CourseBadge {
     event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
 
     // A mint is a Transfer from address zero. The metadata here is a data: URI, so it is stored
-    // on chain; most real NFTs store a link to metadata kept somewhere else.
+    // on chain; many real NFTs store a link to metadata kept somewhere else.
     function mint(address to, string calldata uri) external returns (uint256 tokenId) {
         require(to != address(0), "no owner");
         require(bytes(uri).length <= 2048, "metadata too long");
