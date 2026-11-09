@@ -29,8 +29,6 @@ The reading also explains the ring the lesson teaches on the slide "A ring hides
 
 Points where the reading and the lesson differ in detail (the lesson wins for questions; no questions are written on these):
 
-- The lesson's slide lists "RingCT from January 2017" as a fix. The reading is more careful: RingCT hides amounts and "does not directly address the traceability concern"; RingCT inputs are immune to the chain reaction only because RingCT was deployed after the 2-decoy minimum, so no RingCT output can be spent with no decoys. The two are compatible; questions use the reading's reason and never claim that hiding amounts stopped the chain reaction.
-- The lesson cites "sec. 3" for the RingCT date and the 4-decoy minimum (September 2017). In the arXiv copy these dates sit in Section 2 (Background, the version timeline); Section 3.2 gives the RingCT immunity. This is a citation-anchor detail, not a factual dispute.
 - The lesson says "about 62%"; the abstract says about 62% and the body says 63% (62.94% in Table 1). Same finding, rounded differently.
 - The reading, as of early 2018, says temporal analysis "remains independently effective" against the then-current software and estimates the guess at 45% for 4 decoys under the version 0.10.1 rules. The lesson does not say how traceable later Monero is and tells analysts not to apply the guess without a newer study. Questions follow the lesson: no question says today's Monero is traceable by the guess, and none says it is now fully fixed.
 
@@ -192,7 +190,7 @@ Inputs with no decoys were smaller and cheaper, a rational choice for a user who
 
 Read on 2026-11-08 from the arXiv copy, https://arxiv.org/abs/1704.04299 (PDF https://arxiv.org/pdf/1704.04299, version 4, 23 April 2018, the camera-ready text of the PoPETs 2018(3) article), downloaded to the session scratchpad and extracted with `pdftotext`. The figures and tables extracted as broken text; the numbers used here are taken from the running text and the table captions, which extracted cleanly. Section numbering follows the arXiv copy; the published PoPETs pages are 143-163.
 
-All figures here are as of the reading's data: the Monero blockchain to block 1,288,774 (15 April 2017), with a few updates in the text as of March 2018. The reading does not describe Monero after early 2018; the lesson's ring of 16 (since August 2022) comes from the lesson's other source, `monero_networkupgradejuly_2022`. Where the reading and the lesson differ in detail (RingCT as a "fix", the section cited for the version dates, 62% versus 63%), the differences are listed under Reading-Lesson Connection and no questions rest on them.
+All figures here are as of the reading's data: the Monero blockchain to block 1,288,774 (15 April 2017), with a few updates in the text as of March 2018. The reading does not describe Monero after early 2018; the lesson's ring of 16 (since August 2022) comes from the lesson's other source, `monero_networkupgradejuly_2022`. Where the reading and the lesson differ in detail (62% versus 63%, how traceable later Monero is), the differences are listed under Reading-Lesson Connection and no questions rest on them.
 
 ## Readiness Check
 
