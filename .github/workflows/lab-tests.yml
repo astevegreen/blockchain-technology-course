@@ -82,6 +82,68 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # Otterscan's image (explorer, tokens, dex) holds about 920,000 tiny files, its list of function signatures, and
+      # Docker unpacks them one at a time at about 4,500 a second: 2-4 minutes on any disk (9 Nov 2026 trials: the
+      # runner's disk, a RAM disk and containerd's image store were all as slow). GNU tar unpacks the same files in
+      # under a minute, so these labs start Docker on a data root that holds only Otterscan, restored from the Actions
+      # cache. The key is the digest the registry serves for the image's tag now, and the Docker version: a moved tag or
+      # a new Docker misses, pulls the image by that digest and saves a new root.
+      - name: Look up the lab's Otterscan image
+        id: otterscan
+        env:
+          LAB: ${{ matrix.lab }}
+        run: |
+          image=$(grep -hos 'otterscan/otterscan:[^" ]*' "dynamic-labs/$LAB"/docker-compose*.yml | sort -u | head -1 || true)
+          [ -n "$image" ] || exit 0
+          digest=$(docker buildx imagetools inspect "$image" --format '{{json .Manifest}}' | jq -r .digest)
+          case "$digest" in sha256:*) ;; *) echo "No digest for $image: $digest"; exit 1 ;; esac
+          echo "Otterscan image: $image@$digest"
+          {
+            echo "image=$image"
+            echo "digest=$digest"
+            echo "key=lab-docker-root-otterscan-docker$(docker version --format '{{.Server.Version}}')-$digest"
+          } >> "$GITHUB_OUTPUT"
+      - name: Restore the Docker data root that holds Otterscan
+        id: restore
+        if: steps.otterscan.outputs.key
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/docker-root.tar
+          key: ${{ steps.otterscan.outputs.key }}
+      - name: Start Docker on the data root that holds Otterscan
+        if: steps.otterscan.outputs.key
+        env:
+          IMAGE: ${{ steps.otterscan.outputs.image }}
+          DIGEST: ${{ steps.otterscan.outputs.digest }}
+          HIT: ${{ steps.restore.outputs.cache-hit }}
+        run: |
+          root=/var/lib/docker-lab
+          sudo systemctl stop docker docker.socket
+          sudo mkdir "$root"
+          if [ "$HIT" = true ]; then
+            sudo tar -xpf ~/docker-root.tar --xattrs --xattrs-include='*' --numeric-owner -C "$root"
+            rm ~/docker-root.tar
+          fi
+          conf='{}'
+          if [ -f /etc/docker/daemon.json ]; then conf=$(sudo cat /etc/docker/daemon.json); fi
+          echo "$conf" | jq --arg root "$root" '. + {"data-root": $root}' | sudo tee /etc/docker/daemon.json
+          sudo systemctl start docker
+          if [ "$HIT" != true ]; then
+            docker pull -q "${IMAGE%:*}@$DIGEST"
+            docker tag "${IMAGE%:*}@$DIGEST" "$IMAGE"
+            sudo systemctl stop docker docker.socket
+            sudo tar -cpf ~/docker-root.tar --xattrs --xattrs-include='*' --numeric-owner --exclude=./network -C "$root" .
+            sudo chown "$(id -u):$(id -g)" ~/docker-root.tar
+            sudo systemctl start docker
+          fi
+          # The tag must point at the digest the registry serves now, or the lab would test a stale image.
+          docker image inspect --format '{{join .RepoDigests " "}}' "$IMAGE" | tr ' ' '\n' | grep -qxF "${IMAGE%:*}@$DIGEST"
+      - name: Save the Docker data root for the next run
+        if: steps.otterscan.outputs.key && steps.restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/docker-root.tar
+          key: ${{ steps.otterscan.outputs.key }}
       - name: Run the lab's automated tests
         run: bash dynamic-labs/regression-tests/automated/${{ matrix.lab }}/run.sh --fresh-start 2>&1 | tee lab-test.log
       - name: Upload the output
