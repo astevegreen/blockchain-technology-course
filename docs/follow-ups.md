@@ -11,12 +11,6 @@ slide index), which is never listed here.
 - Finish an item: delete its bullet in the same commit.
 - A decision only the owner can make goes to the owner as a question, not here.
 
-## Lessons
-- `blockchain-course/assets/mindmap.html` is published but no page links to it, and its cards follow the March
-  sections, not the ten days. Link it from the navbar once it is organized by day; relabel its "02-BF: Transactions &
-  Mining" and "02-FO: Obfuscation & Tracing" cards (about lines 2533 and 2700) to the lessons' 4 Nov titles then. (2 Nov
-  2026, site cleanup)
-
 ## Quizzes
 - The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
   `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
