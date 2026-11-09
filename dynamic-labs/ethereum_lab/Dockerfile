@@ -35,26 +35,7 @@ COPY scripts/cli-labs/standalone/package*.json ./
 RUN npm ci --only=production
 
 # ============================================
-# Stage 3: Build heimdall-rs
-# ============================================
-# heimdall-rs (MIT) disassembles and decompiles EVM bytecode for
-# docs/guides/BYTECODE_REVERSE_ENGINEERING.md. It is built here from the 0.9.3 release (it
-# reports itself as 0.9.2), pinned to that tag's commit with its lockfile, on the VM's own
-# Ubuntu 24.04 (glibc 2.39), the older of the two systems that run it: this image is Debian
-# trixie (2.41). The one binary then needs only glibc 2.39 and libssl3, which the VM and this
-# image both have. The VM copies it out of this image (vm-build/ubuntu-lab.pkr.hcl). Student
-# lanes have no terminal, so students run it on the VM.
-FROM ubuntu:24.04 AS heimdall-builder
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      ca-certificates curl build-essential git pkg-config libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
-RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.91.0
-ENV PATH=/root/.cargo/bin:$PATH
-RUN cargo install --locked --git https://github.com/Jon-Becker/heimdall-rs \
-      --rev 13ae7cb02959feca08bcaafb10c9d66a28037f77 heimdall-cli
-
-# ============================================
-# Stage 4: Production Image
+# Stage 3: Production Image
 # ============================================
 # Use Debian slim instead of Alpine: node-pty has known issues with Alpine (musl libc).
 # Debian/glibc provides reliable PTY support for the Lab Terminal in Docker.
@@ -65,18 +46,21 @@ LABEL description="Interactive blockchain training environment"
 
 WORKDIR /app
 
-# Keep Hardhat's compiler cache in a shared image path so runtime shells do
-# not need network access to pull compiler metadata or binaries.
-ENV HARDHAT_USER_HOME=/opt/hardhat-user-home
-
 # Install curl for health checks, bash for scripts, build deps for node-pty, nginx for in-container routing
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl bash python3 make g++ nginx \
+    ca-certificates curl bash python3 make g++ nginx \
     && rm -rf /var/lib/apt/lists/*
 
-# heimdall-rs (MIT), built in Stage 3 above. The instructor lane's Lab Terminal has it; students
-# run the copy the VM build takes from this image.
-COPY --from=heimdall-builder /root/.cargo/bin/heimdall /usr/local/bin/heimdall
+# heimdall-rs (MIT) disassembles and decompiles EVM bytecode for
+# docs/guides/BYTECODE_REVERSE_ENGINEERING.md. This is the upstream 0.9.3 release binary (it
+# reports itself as 0.9.2), checked against its published SHA-256. It needs glibc 2.39 and
+# libssl3 at most, so it runs on the VM (Ubuntu 24.04, glibc 2.39) and on this image (Debian
+# trixie, glibc 2.41). The instructor lane's Lab Terminal has it; students have no terminal in
+# their lanes and run the copy the VM build takes from this image (vm-build/ubuntu-lab.pkr.hcl).
+RUN curl -fsSL -o /usr/local/bin/heimdall \
+      https://github.com/Jon-Becker/heimdall-rs/releases/download/0.9.3/heimdall-linux-amd64 \
+ && echo "8d58c97f56d584d5d0737d0d0895fc8c68b7b8b2b680f2a7842245789f0b4868  /usr/local/bin/heimdall" | sha256sum -c - \
+ && chmod 755 /usr/local/bin/heimdall
 RUN heimdall --version
 
 # Copy blockchain dependencies (needed for instructor mode)
@@ -91,6 +75,7 @@ RUN npm ci --ignore-scripts \
 COPY contracts/ ./contracts/
 COPY scripts/ ./scripts/
 COPY server/ ./server/
+COPY lib/ ./lib/
 COPY hardhat.config.js ./
 # Reuse the repo's checked-in Hardhat artifacts so runtime startup doesn't need
 # to compile the whole project before the node becomes ready. The compile cache
@@ -99,10 +84,10 @@ COPY artifacts/ ./artifacts/
 # PoS ABI for Hardhat console / example scripts (image has no frontend/src)
 COPY frontend/src/PoS.json ./abi/PoS.json
 
-# Pre-download the Solidity compiler so students can compile offline
-RUN mkdir -p "${HARDHAT_USER_HOME}" \
- && ./node_modules/.bin/hardhat compile --force \
- && chmod -R a+rX "${HARDHAT_USER_HOME}"
+# Compile once so ./cache matches ./artifacts. Hardhat keeps the compiler it downloads in
+# /root/.cache/hardhat-nodejs; that stays here (the instructor lane runs as root and reuses it)
+# and is not copied to students, whose noexec /home/student could not run it.
+RUN ./node_modules/.bin/hardhat compile --force
 
 # Copy CLI labs with pre-installed dependencies
 COPY --from=cli-builder /app/scripts/cli-labs/standalone/node_modules ./scripts/cli-labs/standalone/node_modules
@@ -114,19 +99,12 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 RUN chmod -R a+rX /app/
 
 # Create directories for runtime data.
-# Hardhat 3 keeps its compilers in ~/.cache/hardhat-nodejs and creates the .config and
-# .local/share folders only when it has something to store there, so those two are copied
-# into the student seed only when present.
 RUN usermod -l student -d /home/student -m node \
  && groupmod -n student node \
  && mkdir -p /app/data /app/contracts/student /app/frontend/public /app/frontend/dist/api \
- && mkdir -p /opt/student-home-seed/workspace /opt/student-home-seed/.cache /opt/student-home-seed/.config /opt/student-home-seed/.local/share \
+ && mkdir -p /opt/student-home-seed/workspace \
  && cp package*.json hardhat.config.js /opt/student-home-seed/workspace/ \
- && cp -a contracts scripts abi artifacts cache /opt/student-home-seed/workspace/ \
- && cp -a /root/.cache/hardhat-nodejs /opt/student-home-seed/.cache/hardhat-nodejs \
- && for d in .config .local/share; do \
-      if [ -d "/root/$d/hardhat-nodejs" ]; then cp -a "/root/$d/hardhat-nodejs" "/opt/student-home-seed/$d/hardhat-nodejs"; fi; \
-    done \
+ && cp -a contracts scripts lib abi artifacts cache /opt/student-home-seed/workspace/ \
  && rm -rf /opt/student-home-seed/workspace/scripts/cli-labs/standalone/node_modules \
  && ln -s /app/scripts/cli-labs/standalone/node_modules /opt/student-home-seed/workspace/scripts/cli-labs/standalone/node_modules \
  && ln -s /app/node_modules /opt/student-home-seed/workspace/node_modules \

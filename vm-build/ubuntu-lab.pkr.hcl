@@ -115,7 +115,7 @@ build {
       "while read -r tarfile; do echo \"Streaming and loading $tarfile...\"; curl -fsSL http://10.0.2.2:8000/$tarfile | sudo docker load; done < manifest.txt",
       "cd /",
       "rm -rf /tmp/bundles",
-      "echo 'Installing heimdall-rs from the Ethereum lab image (built for this glibc in its Dockerfile)...'",
+      "echo 'Installing heimdall-rs from the Ethereum lab image (the upstream release binary, checksum-verified in its Dockerfile)...'",
       "heimdall_cid=$(sudo docker create ethereum-trainer)",
       "sudo docker cp \"$heimdall_cid:/usr/local/bin/heimdall\" /usr/local/bin/heimdall",
       "sudo docker rm \"$heimdall_cid\"",

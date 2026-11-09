@@ -38,9 +38,6 @@ slide index), which is never listed here.
   raises difficulty so fast that a block can take minutes near height 25: one of three local runs (9 Nov 2026)
   failed its 180 s step with the chain stuck at heights 27-29. The published image mines the same way. A higher
   timeout, or mining with `-mocktime` steps, would steady it. (9 Nov 2026, trixie move)
-- `dynamic-labs/ethereum_lab/Dockerfile:47-54` builds heimdall-rs from source with a Rust toolchain only so it
-  runs on the VM's glibc. Now the VM and the image are on Ubuntu 24.04 and trixie (glibc 2.39 and 2.41), the
-  upstream release binary, if it needs no newer glibc, could replace the build stage. (9 Nov 2026, trixie move)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3
@@ -49,16 +46,6 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- `dynamic-labs/ethereum_lab/Dockerfile:70` sets `HARDHAT_USER_HOME` and `:103-105` creates and opens that folder,
-  but neither Hardhat 2 nor 3 reads the variable: the compilers land in `/root/.cache/hardhat-nodejs`, which `:126`
-  copies into the student seed. That copy (a 15 MB solc) cannot run in a student lane, whose `/home/student` and
-  `/tmp` are noexec tmpfs, and students have no terminal there; the instructor container compiles from `/root/.cache` as root. Drop
-  the variable and those lines, decide whether the seed needs the compiler, and rerun the lab's tests. (8 Nov 2026,
-  Hardhat 3 move)
-- `npm run lab1` to `lab5` (`dynamic-labs/ethereum_lab/package.json:20-24`) import `lib/BlockchainEnv.js`, but the
-  image copies no `lib/` (`Dockerfile:90-100`, `:124-125`), so those five CLI labs fail inside the lab image and
-  run only from a checkout. Copy `lib/` into `/app` and the student workspace if the labs are meant to run there.
-  (8 Nov 2026, Hardhat 3 move)
 
 ## Tooling and rules
 - Lab Tests re-pulls the lab images every run. Measured 8 Nov 2026 (explorer job, run 42486806400): 5m15s in all, of
