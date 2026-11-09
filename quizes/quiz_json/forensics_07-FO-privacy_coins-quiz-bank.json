@@ -18,12 +18,13 @@
     "module": "forensics",
     "lesson_file_stem": "07-FO-privacy_coins",
     "lesson_path": "blockchain-course/lessons/forensics/07-FO-privacy_coins.qmd",
-    "question_count": 16,
+    "question_count": 20,
     "source_mix": {
       "lesson_grounded": 16,
-      "reading_grounded": 0
+      "reading_grounded": 4
     },
-    "note": "No assigned reading for this lesson; every question is grounded in a visible slide."
+    "reading_assignment": "Möser et al., An Empirical Analysis of Traceability in the Monero Blockchain (PoPETs 2018): abstract, sections 1-3, 4.2 and the end of 4.3",
+    "reading_synthesis_path": "quizes/lesson_synthesis/forensics_07-FO-privacy_coins-reading-synthesis.md"
   },
   "hierarchy": {
     "sections": [
@@ -53,6 +54,17 @@
               "q14",
               "q15",
               "q16"
+            ]
+          },
+          {
+            "id": "lec_privacy_coins_reading",
+            "title": "Privacy Coins: Monero and Zcash - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q17",
+              "q18",
+              "q19",
+              "q20"
             ]
           }
         ]
@@ -519,6 +531,120 @@
         "lesson": "blockchain-course/lessons/forensics/07-FO-privacy_coins.qmd",
         "anchor": "How sure: words for a trail that goes dark"
       }
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "A Monero input lists several earlier outputs instead of one. How does that hide which output was really spent?",
+      "correct_answer": "The signature proves one listed output was spent without showing which; the rest are decoys.",
+      "incorrect_answers": [
+        "Each listed output is spent in part, so the amount is split evenly across all the members.",
+        "The listed outputs are encrypted, so only the receiver can later read which one was spent.",
+        "The real output is listed several times, so it hides among copies of itself in the ring."
+      ],
+      "explanation": "The assigned reading explains that a Cryptonote input names a set of earlier outputs, the real one among decoys (the paper calls them mixins), and carries a ring signature that is valid for one of them without revealing which. Privacy rests on the decoys being believable: if an observer can rule decoys out, the ring shrinks.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "07-fo-privacy-coins",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "monero",
+        "ring-signature",
+        "decoys",
+        "mechanism"
+      ],
+      "lesson_block": "A ring hides the spender among 15 decoys",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_07-FO-privacy_coins-reading-synthesis.md: Mechanisms (How A Ring Hides The Real Input); reading Sec. 2, Cryptonote: non-interactive mixing with ring signatures"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "In early Monero, a ring of two lists outputs A and B. A month later, output A is spent by an input with no decoys. What does that reveal?",
+      "correct_answer": "That B was the real spend in the ring, because A was spent by the later input.",
+      "incorrect_answers": [
+        "Nothing, because the open spend of A came after the ring had already been made.",
+        "That A and B share an owner, because both were listed together in the same ring.",
+        "That A was the real spend in the ring, and the later input spent it a second time."
+      ],
+      "explanation": "The assigned reading's chain reaction: an output known to be spent elsewhere can be struck off any ring that lists it as a decoy, leaving the other member as the real spend. The reading notes that order does not matter: a later open spend exposes an earlier ring just as well. This was a weakness of early Monero, which allowed inputs with no decoys.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "07-fo-privacy-coins",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "monero",
+        "chain-reaction",
+        "zero-decoy-inputs",
+        "scenario"
+      ],
+      "lesson_block": "Old Monero leaked: zero decoys, newest is real",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_07-FO-privacy_coins-reading-synthesis.md: Mechanisms (Weakness 1: The Chain Reaction); reading Sec. 3, Figure 4 and the paragraph after it"
+    },
+    {
+      "id": "q19",
+      "question_type": "multiple_choice",
+      "question_stem": "Why did guessing the newest ring member so often find the real spend in the early Monero the reading studied?",
+      "correct_answer": "People tended to spend coins soon after getting them, while decoys were mostly older outputs.",
+      "incorrect_answers": [
+        "Newer outputs carried larger amounts, so the biggest ring member was usually the real one.",
+        "Wallets could only pick decoys from blocks mined before the spender's own wallet had been made.",
+        "Only the newest ring member carried a key image, and that key image marked out the real spend."
+      ],
+      "explanation": "The assigned reading finds that real spends are usually recent, but early wallets drew decoys uniformly or from a triangular distribution that included much older outputs, so the real spend stood out as the newest. This describes early Monero: later versions changed how decoys are drawn, and the lesson says not to apply the guess to a later transaction without a newer study.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "07-fo-privacy-coins",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "monero",
+        "guess-newest",
+        "decoy-selection",
+        "dated-findings",
+        "mechanism"
+      ],
+      "lesson_block": "Old Monero leaked: zero decoys, newest is real",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_07-FO-privacy_coins-reading-synthesis.md: Mechanisms (Weakness 2: The Newest Member Is Usually Real); reading Sec. 1 Weakness 2 and Sec. 4.2"
+    },
+    {
+      "id": "q20",
+      "question_type": "multiple_choice",
+      "question_stem": "According to the reading, why does the chain reaction not work on RingCT transactions?",
+      "correct_answer": "RingCT came after the 2016 two-decoy minimum, so no output in its rings was ever spent decoy-free.",
+      "incorrect_answers": [
+        "RingCT hides amounts, and striking off decoys needed amounts to match outputs to their spends.",
+        "RingCT drew decoys only from recent outputs, so no openly spent output could ever be listed in a ring.",
+        "RingCT dropped key images, so a spent output could no longer be matched to any later spend."
+      ],
+      "explanation": "The assigned reading says RingCT does not directly address traceability: its rings can list only RingCT outputs, and RingCT became valid after the network required at least two decoys, so none of those outputs was ever spent openly. The chain reaction therefore had nothing to start from. It was a weakness of Monero before 2017, since closed.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "07-fo-privacy-coins",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "monero",
+        "ringct",
+        "chain-reaction",
+        "dated-findings",
+        "misconception"
+      ],
+      "lesson_block": "Old Monero leaked: zero decoys, newest is real",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_07-FO-privacy_coins-reading-synthesis.md: Mechanisms (Why The Chain Reaction Is Dated); reading Sec. 2 (After version 0.10.0) and Sec. 3.2, Applicability to current and future transactions using RingCT"
     }
   ]
 }

@@ -11,10 +11,14 @@ slide index), which is never listed here.
 - Finish an item: delete its bullet in the same commit.
 - A decision only the owner can make goes to the owner as a question, not here.
 
-## Quizzes
-- The 03-FO, 04-FO, 05-FO, 06-FO, 07-FO and 01-PC quiz banks have no reading deck: none of the lessons names an assigned reading.
-  `lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md` (the Fabric paper)
-  no longer feeds a bank. (31 Oct 2026, D5 quiz banks)
+## Lessons
+- `forensics/07-FO-privacy_coins.qmd:206` lists RingCT among the "fixes since", but Möser et al. say RingCT "does not
+  directly address" traceability: its rings escaped the chain reaction only because RingCT came after the 2-decoy
+  minimum. The same line cites "sec. 3" for dates that sit in sec. 2 of the arXiv copy. (8 Nov 2026, 07-FO reading
+  synthesis)
+- `forensics/06-FO-mixers_and_coinjoin.qmd:125` and `:144` say Wasabi 1.x used one denomination of about 0.1 BTC;
+  Svenda et al. sec. 2.1 say version 1.1.0 (2019) added multiples such as 0.2, 0.4 and 0.8 BTC. The 06-FO bank's q4
+  stem repeats "of one size". (8 Nov 2026, 06-FO reading synthesis)
 
 ## Labs
 - Lab hosting is still the owner's to decide: where the Docker labs run for a class. (3 Nov 2026, owner's

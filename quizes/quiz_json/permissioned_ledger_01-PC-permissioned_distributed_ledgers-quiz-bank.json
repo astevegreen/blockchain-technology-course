@@ -18,12 +18,13 @@
     "module": "permissioned_ledger",
     "lesson_file_stem": "01-PC-permissioned_distributed_ledgers",
     "lesson_path": "blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd",
-    "question_count": 16,
+    "question_count": 20,
     "source_mix": {
       "lesson_grounded": 16,
-      "reading_grounded": 0
+      "reading_grounded": 4
     },
-    "note": "No assigned reading for this lesson; every question is grounded in a visible slide."
+    "reading_assignment": "Androulaki et al., Hyperledger Fabric: A Distributed Operating System for Permissioned Blockchains (EuroSys 2018): abstract, sections 1, 3 and 4.1",
+    "reading_synthesis_path": "quizes/lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md"
   },
   "hierarchy": {
     "sections": [
@@ -53,6 +54,17 @@
               "q14",
               "q15",
               "q16"
+            ]
+          },
+          {
+            "id": "lec_permissioned_distributed_ledgers_reading",
+            "title": "Ledgers with a Gatekeeper - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q17",
+              "q18",
+              "q19",
+              "q20"
             ]
           }
         ]
@@ -523,6 +535,117 @@
         "lesson": "blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd",
         "anchor": "Fabric demo: watch the gatekeeper work"
       }
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "A Fabric consortium's ordering service is run by one bank, but the endorsement policy for transfers needs signatures from two other banks. Can the ordering bank move an asset on its own?",
+      "correct_answer": "No. It only puts transactions in order; peers reject a transfer that lacks the two endorsements the policy requires.",
+      "incorrect_answers": [
+        "Yes. Whoever runs the ordering service decides which transactions are valid, so it can approve the transfer alone.",
+        "Yes. The ordering bank's certificate outranks the endorsers' certificates, so peers accept its transfers directly.",
+        "No. Only the certificate authority can move assets, so the ordering bank must first ask it to sign the transfer."
+      ],
+      "explanation": "The assigned reading says orderers neither execute nor validate transactions (Sec. 3.3), and that Fabric decouples the application's trust model, set by the endorsement policy, from the trust model of the ordering service (Sec. 3.5). Running the orderer does not let a bank skip the endorsements the policy names.",
+      "difficulty_level": 4,
+      "topic": "other",
+      "tags": [
+        "permissioned-ledger",
+        "01-pc-ledgers-with-a-gatekeeper",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "hyperledger-fabric",
+        "endorsement-policy",
+        "ordering-service",
+        "scenario"
+      ],
+      "lesson_block": "Who decides: endorsement policy and ordering",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md: Androulaki et al. 2018, Sec. 3.3 and 3.5 (orderers do not validate; application trust decoupled from consensus trust)"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "An analyst's agency is a member of one channel on a Fabric network that has three channels. What can the analyst learn about the other two from the agency's copy of the ledger?",
+      "correct_answer": "Nothing from its own copy: each channel is a separate ledger with its own members and its own order.",
+      "incorrect_answers": [
+        "Their transactions appear in its copy as hashes, because all channels share one order of transactions.",
+        "Everything, since a member of one channel receives the blocks of every channel on the same Fabric network.",
+        "Only their order: the ordering service merges all channels into one sequence that every member can read."
+      ],
+      "explanation": "The assigned reading describes each channel as a separate blockchain that may have different peers as members; consensus across channels is not coordinated, and each channel's order of transactions is separate from the others (Sec. 3.1).",
+      "difficulty_level": 3,
+      "topic": "other",
+      "tags": [
+        "permissioned-ledger",
+        "01-pc-ledgers-with-a-gatekeeper",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "hyperledger-fabric",
+        "channels",
+        "visibility"
+      ],
+      "lesson_block": "Channels are separate ledgers",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md: Androulaki et al. 2018, Sec. 3.1 (channels; consensus across channels is not coordinated)"
+    },
+    {
+      "id": "q19",
+      "question_type": "multiple_choice",
+      "question_stem": "A colleague says that because every Fabric participant is known by certificate, the network can trust whatever a member submits. What does the assigned reading say?",
+      "correct_answer": "Known is not trusted: any client may be malicious, and a peer trusts only the peers of its own organization.",
+      "incorrect_answers": [
+        "Admitted members are trusted, so the network checks a certificate when it joins and not on each transaction.",
+        "Known members cannot misbehave, because the certificate authority revokes anyone who submits a bad transaction.",
+        "Clients are trusted and peers are not, so only the peers' endorsements are checked against the policy."
+      ],
+      "explanation": "The reading frames Fabric for organizations that do not fully trust each other (Sec. 1). Its trust model treats any client as potentially malicious, and a peer trusts the peers of its own organization but no peer of another (Sec. 3.5). Certificates make members known and accountable, not trusted.",
+      "difficulty_level": 3,
+      "topic": "other",
+      "tags": [
+        "permissioned-ledger",
+        "01-pc-ledgers-with-a-gatekeeper",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "hyperledger-fabric",
+        "trust-model",
+        "msp",
+        "misconception"
+      ],
+      "lesson_block": "Known is not trusted",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md: Androulaki et al. 2018, Sec. 1 and 3.5 (trust and fault model)"
+    },
+    {
+      "id": "q20",
+      "question_type": "multiple_choice",
+      "question_stem": "A draft assessment says a foreign consortium's Fabric ledger \"tolerates malicious ordering nodes because it runs Fabric.\" What should the analyst check first?",
+      "correct_answer": "Which ordering service it runs: Fabric's consensus is pluggable, and each kind tolerates different faults.",
+      "incorrect_answers": [
+        "Nothing more: every Fabric network uses the same Byzantine fault-tolerant ordering protocol by design.",
+        "How many endorsers the policy requires, since the endorsement policy sets the orderers' fault tolerance.",
+        "Whether members hold certificates, since the MSP is the part that lets the orderers tolerate malicious nodes."
+      ],
+      "explanation": "The reading says the ordering service's trust model depends on its implementation: at the paper's date (Fabric v1.0.6, 2018) a single-node development orderer, a crash-fault-tolerant cluster, and a Byzantine fault-tolerant proof of concept (Sec. 3.5). The endorsement policy sets application trust, separately from consensus.",
+      "difficulty_level": 4,
+      "topic": "other",
+      "tags": [
+        "permissioned-ledger",
+        "01-pc-ledgers-with-a-gatekeeper",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "hyperledger-fabric",
+        "pluggable-consensus",
+        "ordering-service",
+        "scenario"
+      ],
+      "lesson_block": "Consensus is pluggable",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/permissioned_ledger_01-PC-permissioned_distributed_ledgers-reading-synthesis.md: Androulaki et al. 2018, Sec. 3.3 and 3.5 (modular consensus; ordering trust depends on implementation)"
     }
   ]
 }

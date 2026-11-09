@@ -18,12 +18,13 @@
     "module": "forensics",
     "lesson_file_stem": "06-FO-mixers_and_coinjoin",
     "lesson_path": "blockchain-course/lessons/forensics/06-FO-mixers_and_coinjoin.qmd",
-    "question_count": 14,
+    "question_count": 18,
     "source_mix": {
       "lesson_grounded": 14,
-      "reading_grounded": 0
+      "reading_grounded": 4
     },
-    "note": "No assigned reading for this lesson; every question is grounded in a visible slide."
+    "reading_assignment": "Svenda et al., CoinJoin Ecosystem Insights for Wasabi 1.x, Wasabi 2.x and Whirlpool Coordinator-Based Privacy Mixers (PoPETs 2026): abstract, sections 1-2.1, 5.1, 5.3 and appendix C.3",
+    "reading_synthesis_path": "quizes/lesson_synthesis/forensics_06-FO-mixers_and_coinjoin-reading-synthesis.md"
   },
   "hierarchy": {
     "sections": [
@@ -51,6 +52,17 @@
               "q12",
               "q13",
               "q14"
+            ]
+          },
+          {
+            "id": "lec_mixers_and_coinjoin_reading",
+            "title": "Mixers and CoinJoin - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q15",
+              "q16",
+              "q17",
+              "q18"
             ]
           }
         ]
@@ -459,6 +471,118 @@
         "lesson": "blockchain-course/lessons/forensics/06-FO-mixers_and_coinjoin.qmd",
         "anchor": "A limits-of-tracing note: where it stops"
       }
+    },
+    {
+      "id": "q15",
+      "question_type": "multiple_choice",
+      "question_stem": "Transaction A has 300 outputs in several amounts, each repeated many times. Transaction B has five inputs and five outputs, all 0.01 BTC. Which reading fits the assigned reading's designs?",
+      "correct_answer": "A fits a Wasabi 2.x round, where wallets pick their own amounts; B fits a Whirlpool pool round.",
+      "incorrect_answers": [
+        "A is not a CoinJoin, because its output amounts are not all equal; B fits a Whirlpool pool round.",
+        "A fits a Whirlpool TX0 split into pool sizes; B fits a Wasabi 1.x round of one fixed size.",
+        "A fits a Wasabi 1.x round, where wallets pick their own amounts; B fits a Wasabi 2.x round."
+      ],
+      "explanation": "The assigned reading describes Wasabi 2.x (WabiSabi) as allowing arbitrary output amounts chosen by each wallet, in rounds of low hundreds of inputs and outputs, so many repeated values among hundreds of outputs fit it. Whirlpool rounds are small (5 by 5, later up to 8 by 8) with every output at the pool's fixed size. Different amounts do not rule out a CoinJoin.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "06-fo-mixers-and-coinjoin",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "coinjoin",
+        "wasabi",
+        "wabisabi",
+        "whirlpool"
+      ],
+      "lesson_block": "Repeated equal amounts mark a CoinJoin",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_06-FO-mixers_and_coinjoin-reading-synthesis.md: sec. 2.1 Trustless central coordinator designs (p. 559) and sec. 5 opening (p. 567)"
+    },
+    {
+      "id": "q16",
+      "question_type": "multiple_choice",
+      "question_stem": "A ransom cluster pays one transaction with one input, several outputs just above 0.05 BTC and a change output. What is it, and what does it do to the trace?",
+      "correct_answer": "A Whirlpool TX0 pre-mix split; its outputs are still the cluster's, so the trace continues.",
+      "incorrect_answers": [
+        "A Whirlpool CoinJoin round; its outputs belong to several owners, so the trace stops here.",
+        "A coordinator payout of mixed coins; its outputs are other users' money, so the trace is lost.",
+        "A post-mix spend by the wallet; its outputs have already left the mix, so the trace resumes."
+      ],
+      "explanation": "The assigned reading says Whirlpool first splits any fresh input into outputs of the pool's size in a TX0 transaction, which also pays the coordinator's fee and leaves a change output that is not mixed. TX0 has one owner, so it is still the cluster's own spend; the trace stops only at the CoinJoin rounds that follow.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "06-fo-mixers-and-coinjoin",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "whirlpool",
+        "tx0",
+        "pre-mix"
+      ],
+      "lesson_block": "Before and after the mix still leak",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_06-FO-mixers_and_coinjoin-reading-synthesis.md: sec. 2.1 (p. 559) and Appendix C.3 Samourai/Ashigaru Whirlpool (pp. 572-573)"
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "The inputs of a CoinJoin are spent in one transaction. Why, per the reading's protocol steps, do they not share an owner?",
+      "correct_answer": "Each wallet registers and signs only its own inputs; the coordinator only gathers them into one.",
+      "incorrect_answers": [
+        "The coordinator signs every input with its own key, so they only look as if one owner spent them.",
+        "The coordinator takes custody of each input first, then pays new coins from its pool to users.",
+        "Each input is first spent in its own transaction, and the coordinator later bundles them in one block."
+      ],
+      "explanation": "In the assigned reading's protocol steps, each wallet registers its own inputs and proves it owns them, registers its own new outputs, checks the final transaction and signs only its own inputs; the coordinator collects the signatures and broadcasts. The coordinator never holds the coins, which is what separates these designs from a custodial mixer. Inputs signed by several wallets are several owners, so the co-spend rule does not apply.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "06-fo-mixers-and-coinjoin",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "coinjoin",
+        "co-spend",
+        "clustering",
+        "coordinator",
+        "misconception"
+      ],
+      "lesson_block": "A CoinJoin is many owners in one transaction",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_06-FO-mixers_and_coinjoin-reading-synthesis.md: sec. 2 Coinjoin background, steps A-H (p. 558)"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "A colleague says the 2024 coordinator shutdowns ended Bitcoin CoinJoin. What does the assigned reading show, as of its November 2025 data?",
+      "correct_answer": "Wasabi 2.x mixing moved to new coordinators and passed its pre-shutdown level, mostly through one.",
+      "incorrect_answers": [
+        "CoinJoin mixing fell to a small share of its old level, since no major coordinator was left running.",
+        "Wasabi 2.x mixing spread evenly across many new coordinators, so none holds most of the volume.",
+        "Whirlpool came back under a new coordinator and now carries most of the mixed volume on Bitcoin."
+      ],
+      "explanation": "The assigned reading finds that after the 2024 shutdowns new Wasabi 2.x coordinators took over, and one of them, kruw.io, carries over 99% of mixed liquidity and has passed the pre-shutdown level (as of 10 Nov 2025). A new Whirlpool coordinator started in May 2025 but has little activity. The operators stopped; the technique did not.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "06-fo-mixers-and-coinjoin",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "coinjoin",
+        "coordinator",
+        "coordinator-shutdown",
+        "wasabi"
+      ],
+      "lesson_block": "2024: Samourai shut down, zkSNACKs stopped",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_06-FO-mixers_and_coinjoin-reading-synthesis.md: sec. 5 opening and sec. 5.1 Aftermath of 04-05/2024 shutdown (pp. 567-568)"
     }
   ]
 }

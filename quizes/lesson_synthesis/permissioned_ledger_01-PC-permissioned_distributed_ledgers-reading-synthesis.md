@@ -10,7 +10,7 @@
 
 ## Assigned Reading
 
-- Elli Androulaki, Artem Barger, Vita Bortnikov, Christian Cachin, Konstantinos Christidis, Angelo De Caro, David Enyeart, Christopher Ferris, Gennady Laventman, Yacov Manevich, Srinivasan Muralidharan, Chet Murthy, Binh Nguyen, Manish Sethi, Gari Singh, Keith Smith, Alessandro Sorniotti, Chrysoula Stathakopoulou, Marko Vukolic, Sharon Weed Cocco, and Jason Yellick. "Hyperledger Fabric: A Distributed Operating System for Permissioned Blockchains." EuroSys 2018. Required reading.
+- Elli Androulaki, Artem Barger, Vita Bortnikov, Christian Cachin, Konstantinos Christidis, Angelo De Caro, David Enyeart, Christopher Ferris, Gennady Laventman, Yacov Manevich, Srinivasan Muralidharan, Chet Murthy, Binh Nguyen, Manish Sethi, Gari Singh, Keith Smith, Alessandro Sorniotti, Chrysoula Stathakopoulou, Marko Vukolic, Sharon Weed Cocco, and Jason Yellick. "Hyperledger Fabric: A Distributed Operating System for Permissioned Blockchains." EuroSys 2018, ACM, doi 10.1145/3190508.3190538, https://dl.acm.org/doi/10.1145/3190508.3190538 (open access; a copy ships as `blockchain-course/assets/readings/3190508.3190538.pdf`). Required reading: the abstract, Section 1 (Introduction), Section 3 (Architecture: 3.1-3.5, the transaction flow and the trust and fault model) and Section 4.1 (Membership Service), about 45 minutes. Sections 2 and 4.2-8 are optional.
 
 ## Executive Summary
 
@@ -20,7 +20,9 @@ This deepens the lesson by turning the lesson's broad ideas of identity, policy,
 
 ## Reading-Lesson Connection
 
-The lesson explains that permissioned ledgers fit multi-organization settings where participants are known but not fully trusting. The reading supplies the main case study: Fabric assumes identified clients, peers, orderers, and organizations, then uses cryptographic credentials and membership service providers to make every interaction authenticated and policy-checkable.
+The lesson ("Ledgers with a Gatekeeper") follows money from an open ledger with a gatekeeping issuer (USDT on Tron) to a ledger that is closed by design, and teaches the analyst to find the gatekeeper: on a permissioned ledger it is the operator, trust rests on identity and policy, and an outside trace stops at the operator's edge. The slides cite this paper for the MSP mapping each participant to a certificate, for the endorsement policy that names whose peers must sign a write, and for "who can stop a payment: the operator and the policy". The reading supplies the design behind those claims: Fabric serves organizations that "do not fully trust each other" (Section 1), assumes identified clients, peers, orderers, and organizations, and uses cryptographic credentials and membership service providers to make every interaction authenticated and policy-checkable.
+
+The lesson keeps Fabric light: the second half of the day (02-PC) and its own reading deck, the Fabric documentation, cover the transaction lifecycle, ordering, MVCC validation and the block log in depth. Questions on this reading should therefore stay with what tells an analyst who controls and who is accountable on a permissioned ledger: the separate trust models for ordering and for applications, channels as separate ledgers, and known-but-not-trusted members.
 
 The reading also adds architectural precision to the lesson's transaction path. Instead of a generic submit-approve-order-validate-commit sequence, Fabric separates execution by endorsing peers, ordering by orderer nodes, deterministic validation by peers, and ledger/state update. This separation explains how a permissioned system can support application-specific endorsement rules, modular consensus, and private or selective execution while preserving a shared append-only history.
 
@@ -145,8 +147,8 @@ Fabric appends blocks containing both valid and invalid transactions, while inva
 - Good question shape: Ask how decoupling execution, ordering, validation, and gossip affects bottlenecks in a large network.
 - Avoid: Asking students to memorize benchmark throughput values.
 
-- Target: Map Fabric's architecture to the lesson's cooperating-organizations scenario.
-- Good question shape: Ask which Fabric components correspond to identity management, approval policy, shared ordering, and audit record in a cargo-handoff consortium.
+- Target: Map Fabric's architecture to the lesson's gatekeeper question.
+- Good question shape: Ask which Fabric component or policy decides who may write, who orders, and who is named, in a consortium an analyst meets from outside.
 - Avoid: Asking for one-off details from the paper's application examples.
 
 ## High-Value Question Tags
@@ -192,9 +194,9 @@ The reading is best assessed through application and diagnosis rather than recal
 
 ## Acquisition And Grounding Notes
 
-The synthesis used the assigned local reading sources at `/tmp/blockchain-course-readings/text/hyperledger_fabric_paper.txt` and `/tmp/blockchain-course-readings/hyperledger_fabric_paper.pdf`, plus the provided syllabus extracted text at `/tmp/blockchain-syllabus.txt` and the existing lesson synthesis for alignment. The syllabus match is high confidence: the Permissioned Chains entry assigns the Androulaki et al. Fabric paper to `01-PC Permissioned Distributed Ledgers` and lists concepts including Hyperledger Fabric, endorsement policies, MSP, permissioned blockchain, and identity management.
+The synthesis was first written from local text of the paper and the March 2026 syllabus, which assigned this paper to `01-PC`. On 8 Nov 2026 it was re-checked against `blockchain-course/assets/readings/3190508.3190538.pdf` (text extracted with pdftotext) and the rebuilt lesson, and named again as the lesson's one assigned reading: the lesson already cites it for MSP identity and endorsement policy, and it is open access. Anchors re-read on that date: Section 1 ("do not fully trust each other"), Section 3.1 (channels: "consensus across channels is not coordinated"), Section 3.3 (orderers "do not participate in the execution nor in the validation of transactions"), and Section 3.5 (any client "potentially malicious or Byzantine"; a peer trusts the peers of its own organization but no peer of another; the application trust model is decoupled from the consensus trust model). The ordering implementations named in Section 3.5 are as of Fabric release v1.0.6 (the paper's date, 2018); the lesson's demo runs a current release.
 
-No browsing was performed. The text extraction contains some two-column ordering artifacts, but the major section headings, mechanisms, and arguments were available. Direct quotation was avoided except for short system terms and paper-defined names.
+The original synthesis was written from a local text extraction, without browsing. That extraction contains some two-column ordering artifacts, but the major section headings, mechanisms, and arguments were available. Direct quotation was avoided except for short system terms and paper-defined names.
 
 ## Readiness Check
 

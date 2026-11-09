@@ -19,12 +19,13 @@
     "module": "forensics",
     "lesson_file_stem": "04-FO-exchanges_otc_p2p",
     "lesson_path": "blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd",
-    "question_count": 16,
+    "question_count": 20,
     "source_mix": {
       "lesson_grounded": 16,
-      "reading_grounded": 0
+      "reading_grounded": 4
     },
-    "note": "No assigned reading for this lesson; every question is grounded in a visible slide."
+    "reading_assignment": "Victor, Address Clustering Heuristics for Ethereum (FC 2020): abstract, sections 1-2, 3.1, 4.1, 5.1, the opening of 6, and 7",
+    "reading_synthesis_path": "quizes/lesson_synthesis/forensics_04-FO-exchanges_otc_p2p-reading-synthesis.md"
   },
   "hierarchy": {
     "sections": [
@@ -54,6 +55,17 @@
               "q14",
               "q15",
               "q16"
+            ]
+          },
+          {
+            "id": "lec_exchanges_otc_p2p_reading",
+            "title": "Exchanges, OTC Desks and P2P Markets - assigned reading",
+            "enabled": true,
+            "question_ids": [
+              "q17",
+              "q18",
+              "q19",
+              "q20"
             ]
           }
         ]
@@ -522,6 +534,121 @@
         "lesson": "blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd",
         "anchor": "Practice: characterize three patterns"
       }
+    },
+    {
+      "id": "q17",
+      "question_type": "multiple_choice",
+      "question_stem": "On Ethereum, an ETH deposit leaves address X for an exchange's main address in full, with nothing kept back for a fee. Does that rule X out as a deposit address?",
+      "correct_answer": "No: a contract deposit address forwards automatically, and the sender's transaction pays the fee.",
+      "incorrect_answers": [
+        "Yes: the exchange pays each ETH forward's fee from the deposit, so a full forward means a user.",
+        "No: the exchange pays the fee for an ETH forward in tokens, so the ETH itself arrives in full.",
+        "No: a full forward means the exchange waited, then paid one fee to forward several deposits."
+      ],
+      "explanation": "The assigned reading explains that the forwarded ETH is often slightly less because the exchange pays the fee, but a smart-contract deposit address forwards automatically and the sending transaction has already paid the fee, so nothing is kept back. Fees cannot be paid in tokens, and waiting for more deposits does not remove the fee.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "04-fo-exchanges-otc-p2p",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "deposit-address",
+        "sweep",
+        "contract-deposit-address",
+        "fees",
+        "ethereum"
+      ],
+      "lesson_block": "On Ethereum, a sweep forwards the deposit",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_04-FO-exchanges_otc_p2p-reading-synthesis.md: Victor 2020, Section 5.1 Deposit address reuse (identifying deposit addresses: fees, tokens and contract deposit addresses)"
+    },
+    {
+      "id": "q18",
+      "question_type": "multiple_choice",
+      "question_stem": "Deposit address D is paid by a mining pool's payout address and by another exchange's hot wallet, and forwards both to exchange X. Should the analyst link those two senders to D's customer?",
+      "correct_answer": "No: a pool payout or an exchange withdrawal comes from a shared service wallet, not the customer.",
+      "incorrect_answers": [
+        "Yes: every address that pays into one deposit address belongs to the customer behind that account.",
+        "Yes: a pool and an exchange that both pay one deposit address are probably run by one operator.",
+        "No: a deposit address only links senders that paid it inside the same short forwarding window."
+      ],
+      "explanation": "The assigned reading's heuristic ignores senders that are known exchange addresses or miners: users send straight from one exchange to another, and mining pools pay members' shares directly to deposit addresses. Those senders are shared services paying on the customer's behalf, not the customer's own addresses.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "04-fo-exchanges-otc-p2p",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "deposit-address",
+        "heuristic",
+        "address-clustering",
+        "mining-pool",
+        "false-positive"
+      ],
+      "lesson_block": "Shared deposit addresses link their senders",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_04-FO-exchanges_otc_p2p-reading-synthesis.md: Victor 2020, Section 5.1 Deposit address reuse (senders that are known exchanges or miners are excluded)"
+    },
+    {
+      "id": "q19",
+      "question_type": "multiple_choice",
+      "question_stem": "The deposit-address heuristic links 4,000 sending addresses into one entity, all through a single deposit address. How should the analyst read that cluster?",
+      "correct_answer": "As likely wrong: the deposit address may be an unlabelled exchange or service that many people use.",
+      "incorrect_answers": [
+        "As one large entity, since each deposit address is made for one customer however many addresses pay in.",
+        "As the exchange itself, since a deposit address and every address that pays into it belong to the exchange.",
+        "As one key holder, since many addresses gathered in one place share a key, as in a Bitcoin sweep."
+      ],
+      "explanation": "The assigned reading treats clusters of more than 1,000 addresses as unlikely and drops them, and its Discussion says some very large clusters could come from exchange addresses missing from the label list. The exchange controls the deposit address, but the senders are its customers, and a shared destination is not a shared key.",
+      "difficulty_level": 4,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "04-fo-exchanges-otc-p2p",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "deposit-address",
+        "heuristic",
+        "address-clustering",
+        "cluster-size",
+        "exchange-labels"
+      ],
+      "lesson_block": "Shared deposit addresses link their senders",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_04-FO-exchanges_otc_p2p-reading-synthesis.md: Victor 2020, Section 5.1 Results (clusters over 1,000 addresses ignored) and Section 7 Discussion (unknown exchange addresses)"
+    },
+    {
+      "id": "q20",
+      "question_type": "multiple_choice",
+      "question_stem": "Private address F receives ETH from address A and at once sends the same amount to an exchange's main wallet. F is not a deposit address. What false link could the heuristic draw?",
+      "correct_answer": "It could treat F as a deposit address and link A with anyone else who paid F, as one entity.",
+      "incorrect_answers": [
+        "It could treat F as the exchange's hot wallet and link every customer of that exchange with A.",
+        "It could treat A as a deposit address and then link the exchange's main wallet to F's own owner.",
+        "None: a forward that keeps nothing back for any fee is a pattern the heuristic already skips."
+      ],
+      "explanation": "The assigned reading's Limitations show that anyone who forwards a received amount to a known exchange wallet makes their address look like a forwarding deposit address, so the senders to it are pulled into one cluster. An exact forward still counts, because the heuristic allows any difference from zero up to its threshold.",
+      "difficulty_level": 3,
+      "topic": "forensics",
+      "tags": [
+        "forensics",
+        "04-fo-exchanges-otc-p2p",
+        "reading",
+        "reading-synthesis",
+        "assigned-reading",
+        "deposit-address",
+        "heuristic",
+        "false-positive",
+        "adversary"
+      ],
+      "lesson_block": "Shared deposit addresses link their senders",
+      "source_type": "assigned_reading",
+      "specific_source_reading": "quizes/lesson_synthesis/forensics_04-FO-exchanges_otc_p2p-reading-synthesis.md: Victor 2020, Section 5.1 Limitations (adversary forwarding to a known exchange wallet)"
     }
   ]
 }
