@@ -7,7 +7,13 @@ lanes s01..sNN of each lab through the router's instructor API, waits for them t
 a few times, prints each lab's per-seat CPU and RAM and the shared containers' total, and then stops the lanes it
 started (unless --keep). The numbers are an idle-seat baseline: a seat that is reading or typing in its terminal.
 
+--burst then has every seat act at the same moment, the way a class does when the instructor says "go", and samples
+`docker stats` until the last seat finishes: Bitcoin seats fund a wallet with LAB2's `mine-until` (each seat's time
+and the hardest block mined are printed), Ethereum seats compile SimpleStorage through their lane's compile API, and
+Fabric seats run chaincode invokes from their own peer. Consensus and P2P trust have no burst.
+
   python3 scripts/measure-seats.py --seats 10 ethereum_lab bitcoin consensus p2p_trust
+  python3 scripts/measure-seats.py --seats 20 --burst bitcoin
 
 Results for the course's own run are in README.md, "Host size for a class".
 """
@@ -22,6 +28,7 @@ import statistics
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -38,6 +45,34 @@ LANE_LABS = {
     "p2p_trust": ("/api/p2p_trust", lambda lane: f"p2p-trust-lab-student{lane[1:]}"),
     "hlf": ("/labs/hlf/api/hlf", lambda lane: f"peer0.student{lane[1:]}.example.com"),
 }
+
+# lab -> the shell one seat runs in its own container for --burst; {lane} and {repeat} are filled in.
+BURSTS = {
+    # LAB2 Step 2: a fresh wallet funded to 50 trusted BTC on the shared ClassNet chain.
+    "bitcoin": (
+        "set -e; w=burst_{lane}_$$; bitcoin-cli createwallet $w >/dev/null; "
+        "a=$(bitcoin-cli -rpcwallet=$w getnewaddress); mine-until $w $a >/dev/null"
+    ),
+    # The contract builder's Compile button: the lane's lab API compiles SimpleStorage with solc-js.
+    "ethereum_lab": (
+        "cd /app && for i in $(seq {repeat}); do node -e \"fetch('http://127.0.0.1:5173/lab-api/compile', "
+        "{{method: 'POST', headers: {{'content-type': 'application/json'}}, body: JSON.stringify({{source: "
+        "require('fs').readFileSync('contracts/SimpleStorage.sol', 'utf8')}})}}).then(r => r.json())"
+        ".then(j => process.exit(j.ok ? 0 : 1), () => process.exit(1))\" || exit 1; done"
+    ),
+    # The Fabric lab's `invoke create`, endorsed and ordered, from the student's own peer.
+    "hlf": (
+        "source /tmp/hlf-shell-rc && for i in $(seq {repeat}); do "
+        "invoke create burst-{lane}-$$-$i credential 4 'Burst Seat' 2024 History 'Bachelor of Arts' "
+        ">/dev/null 2>&1 || exit 1; done"
+    ),
+}
+
+# The highest difficulty among blocks above a height: the blocks the bitcoin burst mined.
+MAX_DIFFICULTY_SINCE = (
+    'for h in $(seq {height} "$(bitcoin-cli getblockcount)"); do '
+    'bitcoin-cli getblockheader "$(bitcoin-cli getblockhash "$h")" | jq .difficulty; done | sort -g | tail -1'
+)
 
 UNITS = {"B": 1, "KiB": 1024, "MiB": 1024**2, "GiB": 1024**3, "kB": 1000, "MB": 1000**2, "GB": 1000**3}
 
@@ -119,6 +154,74 @@ def mean_of(samples, names) -> tuple[float, float]:
     return cpu, mem
 
 
+def wait_for_lab(instructor: Instructor, lab: str, timeout: float = 900) -> None:
+    """The Fabric lab keeps building its channel, chaincode and student enrollment after it answers; lanes started
+    before that finishes fail or vanish (the live tests wait the same way: regression-tests/automated/hlf)."""
+    if lab != "hlf":
+        return
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        status, body = instructor.call("GET", "/labs/hlf/api/hlf/status")
+        if status == 200 and body.get("status") == "running" and not body.get("background_task"):
+            return
+        time.sleep(5)
+    sys.exit(f"hlf did not finish starting in {timeout:.0f} s (last status HTTP {status}: {body})")
+
+
+def docker_exec(container: str, script: str, timeout: float) -> tuple[int, str]:
+    try:
+        result = subprocess.run(["docker", "exec", container, "bash", "-c", script],
+                                capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return 124, "timed out"
+    return result.returncode, (result.stderr or result.stdout).strip()[-300:]
+
+
+def burst(lab: str, containers: list[str], repeat: int, timeout: float) -> None:
+    """Every seat runs the lab's burst at once; print the seats' times and the CPU while they ran."""
+    first_height = 0
+    if lab == "bitcoin":
+        _, out = docker_exec(containers[0], "bitcoin-cli getblockcount", 60)
+        first_height = int(out) + 1 if out.isdigit() else 0
+    times: dict[str, float] = {}
+    failures: dict[str, str] = {}
+
+    def seat(container: str) -> None:
+        lane = container.rsplit("student", 1)[-1].split(".")[0]
+        started = time.time()
+        code, out = docker_exec(container, BURSTS[lab].format(lane=lane, repeat=repeat), timeout)
+        times[container] = time.time() - started
+        if code:
+            failures[container] = f"exit {code}: {out}"
+
+    pool = ThreadPoolExecutor(max_workers=len(containers))
+    started = time.time()
+    futures = [pool.submit(seat, name) for name in containers]
+    watched = set(containers) | lab_containers()
+    samples = []
+    while True:
+        stats = docker_stats()
+        samples.append(sum(cpu for name, (cpu, _) in stats.items() if name in watched))
+        if all(future.done() for future in futures):
+            break
+        time.sleep(2)
+    pool.shutdown()
+    wall = time.time() - started
+    ordered = sorted(times.values())
+    print(f"{lab} burst: {len(containers)} seats at once, all done in {wall:.0f} s; per seat "
+          f"min {ordered[0]:.0f} s, median {statistics.median(ordered):.0f} s, max {ordered[-1]:.0f} s; "
+          f"lab containers' CPU peak {max(samples) / 100:.1f} cores, mean {statistics.mean(samples) / 100:.1f} cores "
+          f"({len(samples)} samples)")
+    if lab == "bitcoin" and first_height:
+        _, out = docker_exec(containers[0], MAX_DIFFICULTY_SINCE.format(height=first_height), 300)
+        _, tip = docker_exec(containers[0], "bitcoin-cli getblockcount", 60)
+        print(f"  blocks {first_height}..{tip} mined; hardest block difficulty {out}")
+        for name in sorted(times, key=lambda n: int(re.sub(r"\D", "", n) or 0)):
+            print(f"  {name}: {times[name]:.0f} s")
+    for name, why in sorted(failures.items()):
+        print(f"  {name} failed: {why}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("labs", nargs="+", choices=sorted(LANE_LABS))
@@ -127,6 +230,9 @@ def main() -> None:
     parser.add_argument("--samples", type=int, default=5)
     parser.add_argument("--base-url", default="http://127.0.0.1")
     parser.add_argument("--keep", action="store_true", help="leave the lanes running")
+    parser.add_argument("--burst", action="store_true", help="after the idle reading, every seat acts at once")
+    parser.add_argument("--burst-repeat", type=int, default=5, help="compiles or invokes each seat runs in a burst")
+    parser.add_argument("--burst-timeout", type=float, default=900, help="seconds one seat's burst may take")
     args = parser.parse_args()
 
     instructor = Instructor(args.base_url)
@@ -145,10 +251,16 @@ def main() -> None:
 
     for lab in args.labs:
         api, container = LANE_LABS[lab]
+        wait_for_lab(instructor, lab)
         started = time.time()
         failed = []
+        ready_by = time.time() + 300
         for lane in lanes:
             status, body = instructor.call("POST", f"{api}/lanes/{lane}/start")
+            # Right after `lab-manager.sh start` the router answers before the lab's API listens.
+            while status in (502, 503, 504) and time.time() < ready_by:
+                time.sleep(5)
+                status, body = instructor.call("POST", f"{api}/lanes/{lane}/start")
             if status != 200:
                 failed.append(f"{lane}: HTTP {status} {body.get('message', '')}".strip())
         start_seconds = time.time() - started
@@ -165,6 +277,8 @@ def main() -> None:
               f"start-up peak CPU {peak_cpu / seats:.1f}% of a core per seat")
         for line in failed:
             print(f"  failed to start {line}")
+        if args.burst and lab in BURSTS and running:
+            burst(lab, running, args.burst_repeat, args.burst_timeout)
         if not args.keep:
             for lane in lanes:
                 instructor.call("POST", f"{api}/lanes/{lane}/stop")

@@ -313,14 +313,29 @@ A seat with all five lanes open costs about 0.23 GiB, so 20 seats add about 4.6 
 the 5 GiB the labs need on their own. In a class only the day's lab is busy: lanes stop after 20 minutes idle (60 for
 Bitcoin), and each lane-service lane is capped at 512 MiB. The images took about 35 GB of disk on the desktop (test images included).
 
-Recommended host, leaving room for a whole class acting at once, which this run did not measure:
+A whole class acting at once (measured the same day on the same desktop with `--burst`, every seat starting its task
+at the same moment):
+
+| Burst (as of 9 Nov 2026) | Seats | Each seat's wait | CPU while it ran |
+|------|----:|------------------------:|------------------------:|
+| Bitcoin: fund a fresh wallet to 50 BTC with LAB2's `mine-until`, one shared ClassNet chain | 20 | 23 s to 94 s, median 47 s | peak 5.5 cores, mean 1.6 |
+| Fabric (hlf): five `invoke create` transactions from the seat's own peer | 40 | 14 s to 16 s | peak 8.3 cores, mean 3.7 |
+| Ethereum: five contract-builder compiles of SimpleStorage | 40 | 4 s to 6 s | peak 15.4 cores, mean 7.7 |
+
+The 20 Bitcoin wallets took turns at ClassNet's easy blocks: 87 blocks in all, the hardest at difficulty 0.0024, so
+no student waited past about a minute and a half. All 40 Fabric peers started and every invoke succeeded; idle, a
+Fabric seat used 102 MiB at 40 seats. Only the compile burst passed 16 cores, for a few seconds: on a 16-vCPU host
+it takes a few seconds longer, nothing fails. Bitcoin was not run at 40 seats.
+
+Recommended host, which these bursts fit:
 
 - **20 seats:** 8 vCPU, 16 GiB RAM, 100 GB SSD.
 - **40 seats:** 16 vCPU, 32 GiB RAM, 150 GB SSD.
 
 Before the first class on a new host, rerun the measurement there: deploy with `--max-student-capacity` at least the
 seat count, `lab-manager.sh start` the five labs, then
-`python3 scripts/measure-seats.py --seats 20 ethereum_lab bitcoin consensus p2p_trust hlf`.
+`python3 scripts/measure-seats.py --seats 20 ethereum_lab bitcoin consensus p2p_trust hlf`, and the class bursts
+with `python3 scripts/measure-seats.py --seats 40 --burst ethereum_lab bitcoin hlf`.
 
 Cloud deployment is allowed to hydrate Hyperledger Fabric build assets from the internet during image prebuild. The packaged VM path remains offline-only: it expects the shipped `hlf/runtime/fabric-samples` tree to already contain Fabric samples, binaries, and config.
 
