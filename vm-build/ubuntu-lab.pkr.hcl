@@ -1,7 +1,10 @@
+# Packer and its QEMU plugin are pinned so a rebuild uses the tools the last good build used.
+# The workflow installs the same Packer (.github/workflows/vm-build.yml, Setup Packer).
 packer {
+  required_version = "= 1.16.2"
   required_plugins {
     qemu = {
-      version = "~> 1.0"
+      version = "= 1.1.8"
       source  = "github.com/hashicorp/qemu"
     }
   }
@@ -14,12 +17,12 @@ variable "disk_size" {
 
 variable "base_image_url" {
   type    = string
-  default = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+  default = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
 }
 
 variable "base_image_checksum" {
   type    = string
-  default = "file:https://cloud-images.ubuntu.com/jammy/current/SHA256SUMS"
+  default = "file:https://cloud-images.ubuntu.com/noble/current/SHA256SUMS"
 }
 
 variable "accelerator" {
@@ -64,7 +67,7 @@ build {
   provisioner "shell" {
     inline = [
       "echo 'Waiting for cloud-init...'",
-      "cloud-init status --wait"
+      "cloud-init status --wait || { cloud-init status --long; exit 1; }"
     ]
   }
 

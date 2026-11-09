@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -30,7 +30,7 @@ RUN apt-get update && \
       docker-ce-cli \
       docker-buildx-plugin \
       docker-compose-plugin \
-      packer && \
+      packer=1.16.2-1 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
