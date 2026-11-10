@@ -12,6 +12,7 @@ import os
 import shlex
 import sys
 import time
+import uuid
 from pathlib import Path
 
 import requests
@@ -58,6 +59,8 @@ DEFAULT_ALLOW_CLASSNET_RESEED = os.environ.get(f"{ENV_PREFIX}_ALLOW_CLASSNET_RES
 LANE_START_TIMEOUT_SECONDS = 30
 
 RegressionFailure = live_common.RegressionFailure
+STUDENT_LAUNCHER = live_common.STUDENT_LAUNCHER
+NO_INSTRUCTOR = live_common.NO_INSTRUCTOR
 ClaimContext = live_common.ClaimContext
 CommandResult = live_common.CommandResult
 new_session = live_common.new_session
@@ -162,6 +165,9 @@ def claim_student_lane(
     *,
     fresh: bool = False,
 ) -> ClaimContext:
+    if STUDENT_LAUNCHER:
+        # Resetting a lane and readying another are instructor actions: the student's one lane is claimed as it is.
+        return SUPPORT.claim_student_lane(student_session, instructor_session, base_url, fresh=fresh)
     return SUPPORT.claim_student_lane(
         student_session,
         instructor_session,
@@ -241,6 +247,24 @@ def nuke_bitcoin_lab(instructor_session: requests.Session, *, base_url: str = DE
     )
 
 
+def confirm_waiting_transactions(container: str) -> None:
+    """Mine the transactions waiting in the lane's mempool into blocks paid to a throwaway wallet.
+
+    An earlier run's double spend waits there unconfirmed, and its fee would land in the first block the next
+    wallet mines: a balance of 50.0000141, not 50. mine-until does the mining, so the blocks stay as easy as LAB2's.
+    """
+    waiting_command = "bitcoin-cli getmempoolinfo | jq .size"
+    if docker_exec_int(container, waiting_command) == 0:
+        return
+    wallet = f"sweep_{uuid.uuid4().hex[:8]}"
+    docker_exec_checked(container, f"bitcoin-cli createwallet {wallet}")
+    address = docker_exec_checked(container, f"bitcoin-cli -rpcwallet={wallet} getnewaddress").strip()
+    docker_exec_checked(container, f"mine-until {wallet} {address}", timeout_seconds=300)
+    waiting = docker_exec_int(container, waiting_command)
+    if waiting:
+        raise RegressionFailure(f"{waiting} transactions still wait in the mempool of {container} after mining")
+
+
 def ensure_classnet_claim(
     student_session: requests.Session,
     instructor_session: requests.Session,
@@ -250,7 +274,13 @@ def ensure_classnet_claim(
     max_start_height: int = DEFAULT_CLASSNET_MAX_START_HEIGHT,
     allow_lab_reseed: bool = DEFAULT_ALLOW_CLASSNET_RESEED,
 ) -> ClaimContext:
-    """The claim if its chain is still near the seed height; otherwise reseed the lab (if allowed) and claim again."""
+    """The claim if its chain is still near the seed height; otherwise reseed the lab (if allowed) and claim again.
+
+    On the student launcher the claim comes back whatever its height: the reseed is an instructor action, so an
+    earlier run's blocks stay on the student's one chain and only its waiting transactions are cleared."""
+    if STUDENT_LAUNCHER:
+        confirm_waiting_transactions(claim.container_name)
+        return claim
     current_height = docker_exec_int(claim.container_name, "bitcoin-cli getblockcount")
     if current_height <= max_start_height:
         return claim

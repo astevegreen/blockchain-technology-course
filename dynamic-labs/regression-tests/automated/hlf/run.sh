@@ -51,6 +51,12 @@ lab_fresh_start() {
 # lab-manager only warns when a Fabric image fails to build (an apt mirror outage did this on 9 Nov 2026), and the
 # suite then waits out its timeouts on a network that never started. Stop here with the cause instead.
 lab_before_suite() {
+  # The student launcher builds nothing: its Fabric runner pulls the release's images and gives them these tags
+  # while it starts (hlf/lab.sh use_release_helper_images), after the launcher has said "running". A missing tag
+  # there means the start has not got that far, and the suite waits for the start itself.
+  if [[ "${STUDENT_LAUNCHER}" == "1" ]]; then
+    return 0
+  fi
   local image missing=()
   for image in hlf-peer-ttyd:latest hlf-orderer-ttyd:latest chaincode-basic:latest; do
     docker image inspect "${image}" >/dev/null 2>&1 || missing+=("${image}")

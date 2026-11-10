@@ -7,6 +7,8 @@ import uuid as uuid_lib
 
 from live_support import (
     DEFAULT_BASE_URL,
+    NO_INSTRUCTOR,
+    STUDENT_LAUNCHER,
     ClaimContext,
     claim_student_lane,
     clear_cookie,
@@ -104,6 +106,8 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.instructor_session = new_session()
+        if STUDENT_LAUNCHER:  # no instructor to log in as; the claim itself waits for the lane service
+            return
         probe_session = new_session()
 
         try:
@@ -162,7 +166,8 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
         self.assertEqual(root.status_code, 200)
 
         instructor = self.student_session.get(f"{self.base_url}/instructor/", timeout=10)
-        self.assertEqual(instructor.status_code, 200)
+        # The launcher's router answers 404 for every instructor page (routes/local/staff-pages-off.conf).
+        self.assertEqual(instructor.status_code, 404 if STUDENT_LAUNCHER else 200)
 
         bitcoin = self.student_session.get(
             f"{self.base_url}/labs/bitcoin/",
@@ -415,6 +420,7 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
         )
         self.assertGreater(len(explorer.text), 500)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_instructor_surfaces_require_auth_and_load(self) -> None:
         unauth_admin = self.student_session.get(
             f"{self.base_url}/labs/bitcoin/admin",
