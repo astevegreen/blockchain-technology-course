@@ -140,7 +140,7 @@ Flask, which lane-service already uses. All JSON. Paths are under `/api/`.
 | `GET /api/labs/<id>/progress` | `{"phase": "pulling"\|"starting"\|"running"\|"error", "pulled_mb", "total_mb", "message"}`, polled each second. |
 | `POST /api/labs/<id>/stop` | compose stop, keeping volumes. |
 | `POST /api/labs/<id>/reset` | compose down with volumes, after the page asks the student to confirm. |
-| `POST /api/labs/<id>/actions/<action>` | Runs a manifest `local_actions` entry (the forensics load) in the background and returns 202 with the lab's `action` at once; the page polls `GET /api/labs` while it runs. `api` is a router path, or the full `http://` address of a service on router-net (lane-service). |
+| `POST /api/labs/<id>/actions/<action>` | Runs a manifest `local_actions` entry (the forensics load) in the background and returns 202 with the lab's `action` at once; the page polls `GET /api/labs` while it runs. The control container POSTs the `api` path straight to lane-service (`http://lane-service-lane-service-1:8090<api>`) on the launcher network, never through the router, so the browser never reaches it. |
 | `GET /api/update` | Compares the running launcher's digest with `launcher-stable` on ghcr. `{"available": bool}`. |
 | `POST /api/shutdown` | Stops every lab and shared service. `Stop Course Labs` calls it, then removes the control container. |
 

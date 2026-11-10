@@ -24,8 +24,12 @@ LABEL_RELEASE = "course.release"
 PROJECT_LABEL = "com.docker.compose.project"
 SELF_NAME = "course-launcher"
 ROUTER_NET = "router-net"
-ROUTER_CONTAINER = "router-router-1"
 DOCKER_SOCKET = "/var/run/docker.sock"
+# The only labs that may reach the Docker socket: a copy of DOCKER_SOCKET_LABS in tools/lab_manifest.py, which a
+# test keeps equal (this image carries no tools/). lane-service starts the lanes; hlf starts the Fabric network.
+DOCKER_SOCKET_LABS = frozenset({"lane-service", "hlf"})
+# Lab buttons (local_actions) POST their `api` path here: lane-service on router-net, never through the router.
+LANE_SERVICE_URL = "http://lane-service-lane-service-1:8090"
 ACTION_TIMEOUT = 900  # seconds; the forensics case data takes up to about ten minutes to load
 HOST_BIND = "127.0.0.1"
 
@@ -186,9 +190,9 @@ class Controller:
 
     @staticmethod
     def refuse_host_files(lab: dict, config: dict) -> None:
-        """No lab reaches the student's own files. The one exception is the Docker socket, for a shared service whose
-        manifest says `docker_socket: true` (lane-service starts the lanes); tools/lab_manifest.py checks the same."""
-        socket_ok = lab.get("docker_socket") is True and lab.get("kind") == "shared"
+        """No lab reaches the student's own files. The one exception is the Docker socket, for a lab in
+        DOCKER_SOCKET_LABS whose manifest says `docker_socket: true`; tools/lab_manifest.py checks the same."""
+        socket_ok = lab.get("docker_socket") is True and lab.get("id") in DOCKER_SOCKET_LABS
         for name, service in (config.get("services") or {}).items():
             for vol in service.get("volumes") or []:
                 if not isinstance(vol, dict) or vol.get("type") != "bind":
@@ -582,9 +586,8 @@ class Controller:
 
     @staticmethod
     def action_url(action: dict) -> str:
-        """`api` is a path through the router, or the full address of a service on router-net (lane-service)."""
-        api = action["api"]
-        return api if api.startswith("http://") else f"http://{ROUTER_CONTAINER}{api}"
+        """Every button's `api` path is posted straight to lane-service, so the endpoint is never on the router."""
+        return f"{LANE_SERVICE_URL}{action['api']}"
 
     def run_action(self, action: dict, run: ActionRun) -> None:
         try:

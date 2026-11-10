@@ -82,6 +82,20 @@ class HostFiles(unittest.TestCase):
         row = self.start([{"type": "bind", "source": "/home", "target": "/data"}], docker_socket=True)
         self.assertEqual(row["state"], "error")
 
+    def test_hlf_is_a_lab_and_may_bind_the_socket(self):
+        self.bench = Bench(labs=[router(), lab("hlf", docker_socket=True)])
+        self.bench.fake.compose_volumes["hlf"] = [SOCKET]
+        dispatch(self.bench.controller, "POST", "/api/labs/hlf/start")
+        self.assertEqual(self.bench.state("hlf"), "running")
+
+    def test_a_lab_outside_the_list_is_refused_even_with_the_flag(self):
+        self.bench = Bench(labs=[router(), lab("tokens", docker_socket=True)])
+        self.bench.fake.compose_volumes["tokens"] = [SOCKET]
+        dispatch(self.bench.controller, "POST", "/api/labs/tokens/start")
+        row = dispatch(self.bench.controller, "GET", "/api/labs")[1]["labs"][0]
+        self.assertEqual(row["state"], "error")
+        self.assertIn("files on your computer", row["message"])
+
     def test_named_volumes_are_fine(self):
         self.assertEqual(self.start([{"type": "volume", "source": "data", "target": "/data"}])["state"], "running")
 

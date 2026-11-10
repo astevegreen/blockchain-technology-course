@@ -117,14 +117,14 @@ class Actions(unittest.TestCase):
     def tearDown(self):
         self.bench.close()
 
-    def test_action_posts_to_the_router_only_while_running(self):
+    def test_action_posts_to_lane_service_only_while_running(self):
         c = self.bench.controller
         self.assertEqual(dispatch(c, "POST", "/api/labs/forensics/actions/seed")[0], 409)
         dispatch(c, "POST", "/api/labs/forensics/start")
         self.assertIsNone(dispatch(c, "GET", "/api/labs")[1]["labs"][0]["action"])
         status, body = dispatch(c, "POST", "/api/labs/forensics/actions/seed")
         self.assertEqual(status, 202, body)
-        self.assertEqual(self.bench.posts, ["http://router-router-1/api/forensics/seed"])
+        self.assertEqual(self.bench.posts, ["http://lane-service-lane-service-1:8090/api/forensics/seed"])
         self.assertEqual(dispatch(c, "POST", "/api/labs/forensics/actions/other")[0], 404)
         row = dispatch(c, "GET", "/api/labs")[1]["labs"][0]
         self.assertEqual(row["actions"], [{"id": "seed", "label": "Load the case data"}])
@@ -132,10 +132,9 @@ class Actions(unittest.TestCase):
         dispatch(c, "POST", "/api/labs/forensics/stop")
         self.assertIsNone(dispatch(c, "GET", "/api/labs")[1]["labs"][0]["action"])
 
-    def test_a_full_address_goes_straight_to_that_service(self):
+    def test_the_forensics_button_goes_straight_to_lane_service_not_the_router(self):
         bench = Bench(labs=[router(), lab("bitcoin", local_actions=[
-            {"id": "forensics-load", "label": "Load the case data",
-             "api": "http://lane-service-lane-service-1:8090/api/local/bitcoin/forensics-load"}])])
+            {"id": "forensics-load", "label": "Load the case data", "api": "/api/local/bitcoin/forensics-load"}])])
         try:
             dispatch(bench.controller, "POST", "/api/labs/bitcoin/start")
             dispatch(bench.controller, "POST", "/api/labs/bitcoin/actions/forensics-load")
