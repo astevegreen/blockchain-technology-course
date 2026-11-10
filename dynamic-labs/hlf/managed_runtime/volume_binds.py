@@ -6,9 +6,12 @@ whole runtime tree in one named volume mounted at a fixed path, so no host path
 exists for the Docker daemon to bind. Each short-syntax bind whose source lies
 under that tree (relative, like ../organizations, or absolute under the mount)
 becomes a volume mount of the same volume with `volume.subpath` (Docker Engine
-26.0 or later), and `platform:` pins are dropped so images run natively.
+26.0 or later), and `platform:` pins are dropped so images run natively. With
+--release, every service also gets the labels the launcher stack sets
+(docker-compose.launcher.yml x-labels: course.lab and course.release), so the
+launcher counts the Fabric containers as this lab and release.
 
-Usage: volume_binds.py --volume hlf-runtime --root /opt/hlf/runtime [--ensure-dirs] FILE...
+Usage: volume_binds.py --volume hlf-runtime --root /opt/hlf/runtime [--release V] [--ensure-dirs] FILE...
 
 Standard library only and line-based: it reads the compose files this lab
 renders itself (managed_runtime templates and generate_student_overlay.py), and
@@ -19,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -93,6 +97,60 @@ def rewrite(text: str, compose_dir: Path, root: Path, volume: str) -> str:
     return "\n".join(out) + "\n"
 
 
+COURSE_LABELS = ("course.lab:", "course.release:")
+
+
+def add_labels(text: str, lab: str, release: str) -> str:
+    """Put course.lab and course.release on every service: into its `labels:` mapping, or a new one.
+
+    Old course.* lines are dropped first, so a rerun with a new release replaces them.
+    """
+    out: list[str] = []
+    services_at: int | None = None  # indent of the service keys while inside the top-level `services:`
+    service_line: int | None = None  # index in out of the current service's key line
+    unlabelled: list[tuple[int, int]] = []  # (index of key line, its indent) for services with no labels
+    has_labels = False
+    labels_at: int | None = None  # indent of the current service's `labels:` key while inside it
+
+    def close_service() -> None:
+        if service_line is not None and not has_labels:
+            unlabelled.append((service_line, services_at or 0))
+
+    for line in text.splitlines():
+        stripped = line.strip()
+        ind = _indent(line)
+        if labels_at is not None and stripped and ind <= labels_at:
+            labels_at = None
+        if labels_at is not None and stripped.startswith(COURSE_LABELS):
+            continue
+        if ind == 0 and stripped and not stripped.startswith("#"):
+            close_service()
+            service_line, has_labels = None, False
+            services_at = None
+            if stripped == "services:":
+                services_at = -1
+            out.append(line)
+            continue
+        if services_at is not None and stripped and not stripped.startswith("#"):
+            if services_at == -1:
+                services_at = ind
+            if ind == services_at and stripped.endswith(":"):
+                close_service()
+                service_line, has_labels = len(out), False
+            elif service_line is not None and ind == services_at + 2 and stripped == "labels:":
+                has_labels, labels_at = True, ind
+                out.append(line)
+                pad = " " * (ind + 2)
+                out += [f"{pad}course.lab: {lab}", f'{pad}course.release: "{release}"']
+                continue
+        out.append(line)
+    close_service()
+    for at, svc in reversed(unlabelled):
+        pad = " " * (svc + 2)
+        out[at + 1:at + 1] = [f"{pad}labels:", f"{pad}  course.lab: {lab}", f'{pad}  course.release: "{release}"']
+    return "\n".join(out) + "\n"
+
+
 def ensure_dirs(text: str, root: Path) -> None:
     """Create every subpath a rewritten file mounts.
 
@@ -111,9 +169,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--volume", required=True)
     parser.add_argument("--root", required=True, type=Path)
+    parser.add_argument("--release", help="label every service course.lab=hlf and course.release=RELEASE")
     parser.add_argument("--ensure-dirs", action="store_true", help="only create the subpaths the files mount")
     parser.add_argument("files", nargs="+", type=Path)
     args = parser.parse_args()
+    if args.release is not None and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", args.release):
+        parser.error(f"--release {args.release!r}: use letters, digits, '.', '_' and '-'")
     root = Path(os.path.normpath(args.root))
     for f in args.files:
         if not f.is_file():
@@ -121,7 +182,10 @@ def main() -> int:
         if args.ensure_dirs:
             ensure_dirs(f.read_text(), root)
             continue
-        f.write_text(rewrite(f.read_text(), f.resolve().parent, root, args.volume))
+        text = rewrite(f.read_text(), f.resolve().parent, root, args.volume)
+        if args.release:
+            text = add_labels(text, "hlf", args.release)
+        f.write_text(text)
     return 0
 
 

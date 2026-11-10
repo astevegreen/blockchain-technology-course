@@ -131,10 +131,20 @@ fi
 
 volume_mode() { [[ -n "${RUNTIME_VOLUME}" ]]; }
 
+# The labels the launcher stack sets (docker-compose.launcher.yml x-labels), on every container this
+# script starts in launcher mode, so the launcher counts them as this lab and release
+# (docs/student-launcher-design.md). volume_binds.py --release puts them in the compose files.
+LAUNCH_LABELS=()
+if volume_mode; then
+  export COURSE_RELEASE="${COURSE_RELEASE:-dev}"
+  LAUNCH_LABELS=(--label "course.lab=hlf" --label "course.release=${COURSE_RELEASE}")
+fi
+
 # Rewrite generated compose files onto the runtime volume (no-op in the classroom).
 volume_rewrite_compose() {
   volume_mode || return 0
-  python3 "${HERE}/managed_runtime/volume_binds.py" --volume "${RUNTIME_VOLUME}" --root "${RUNTIME_ROOT}" "$@"
+  python3 "${HERE}/managed_runtime/volume_binds.py" --volume "${RUNTIME_VOLUME}" --root "${RUNTIME_ROOT}" \
+    --release "${COURSE_RELEASE}" "$@"
 }
 
 # Create the subpaths a compose file mounts, just before it starts containers.
@@ -646,6 +656,7 @@ deploy_chaincode_manual() {
   docker rm -f chaincode-basic >/dev/null 2>&1 || true
   docker run -d \
     --name chaincode-basic \
+    ${LAUNCH_LABELS[@]+"${LAUNCH_LABELS[@]}"} \
     --network fabric_test \
     --platform "${PLATFORM}" \
     --restart unless-stopped \
@@ -1917,6 +1928,7 @@ prepare_ttyd_build_context() {
   local ctx_dir="$1"
   mkdir -p "${ctx_dir}/scripts"
   cp -f "${HERE}/Dockerfile.ttyd" "${ctx_dir}/Dockerfile.ttyd"
+  cp -f "${HERE}/Dockerfile.orderer-ttyd" "${ctx_dir}/Dockerfile.orderer-ttyd"
   cp -f "${HERE}/scripts/hlf_ttyd_wrapper.sh" "${ctx_dir}/scripts/hlf_ttyd_wrapper.sh"
   cp -f "${HERE}/scripts/hlf_peer_shell.sh" "${ctx_dir}/scripts/hlf_peer_shell.sh"
   cp -f "${HERE}/scripts/hlf_cli_helpers.sh" "${ctx_dir}/scripts/hlf_cli_helpers.sh"
@@ -1971,7 +1983,30 @@ resolve_docker_build_network() {
   echo "default"
 }
 
+# Launcher mode: the release lists a published image for each helper (student-release-images.json; the launcher
+# passes the refs as HLF_HLF_PEER_TTYD_IMAGE, HLF_HLF_ORDERER_TTYD_IMAGE and HLF_CHAINCODE_BASIC_IMAGE).
+# Use it, pulled or already pulled, under the local tag the compose files name, so the runner builds nothing.
+# Where no ref is set (the classroom, Lab Tests on a branch) or the pull fails, build_ttyd_images builds as before.
+use_release_helper_images() {
+  local local_tag ref
+  for local_tag in hlf-peer-ttyd chaincode-basic hlf-orderer-ttyd; do
+    case "${local_tag}" in
+      hlf-peer-ttyd) ref="${HLF_HLF_PEER_TTYD_IMAGE:-}" ;;
+      hlf-orderer-ttyd) ref="${HLF_HLF_ORDERER_TTYD_IMAGE:-}" ;;
+      chaincode-basic) ref="${HLF_CHAINCODE_BASIC_IMAGE:-}" ;;
+    esac
+    [[ -n "${ref}" ]] || continue
+    if docker image inspect "${ref}" >/dev/null 2>&1 || docker pull "${ref}" >/dev/null; then
+      docker tag "${ref}" "${local_tag}:latest" && info "Using release image ${ref} as ${local_tag}:latest."
+    else
+      info "Release image ${ref} is not available; ${local_tag} is built here instead."
+    fi
+  done
+  return 0
+}
+
 build_ttyd_images() {
+  use_release_helper_images
   local _needed=()
   docker image inspect hlf-peer-ttyd:latest    >/dev/null 2>&1 || _needed+=(hlf-peer-ttyd)
   docker image inspect hlf-orderer-ttyd:latest  >/dev/null 2>&1 || _needed+=(hlf-orderer-ttyd)
@@ -2005,10 +2040,9 @@ build_ttyd_images() {
       -f "${ttyd_ctx}/Dockerfile.ttyd" "${ttyd_ctx}"
     docker build --network "${build_network}" --platform "${PLATFORM}" \
       --build-arg FABRIC_VERSION="${IMAGE_TAG}" \
-      --build-arg FABRIC_ROLE=orderer \
       --build-arg TTYD_ARCH="${TTYD_ARCH}" \
       -t hlf-orderer-ttyd:latest \
-      -f "${ttyd_ctx}/Dockerfile.ttyd" "${ttyd_ctx}"
+      -f "${ttyd_ctx}/Dockerfile.orderer-ttyd" "${ttyd_ctx}"
     docker build --network "${build_network}" --platform "${PLATFORM}" \
       -t chaincode-basic:latest \
       -f "${chaincode_ctx}/Dockerfile.chaincode" "${chaincode_ctx}"
@@ -2045,6 +2079,7 @@ generate_crypto_material_via_containers() {
   info "Generating org and orderer materials via Fabric CA container..."
   docker run --rm --platform ${TOOLS_PLATFORM} \
     --network fabric_test \
+    ${LAUNCH_LABELS[@]+"${LAUNCH_LABELS[@]}"} \
     -e HLF_CA_ADMIN_PASSWORD \
     "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
@@ -2078,6 +2113,7 @@ generate_crypto_material_via_containers() {
   info "Generating Org3/Org4/Org5 + Student01..Student${hlf_student_count} crypto material via cryptogen (fabric-tools)..."
   docker run --rm --platform ${TOOLS_PLATFORM} \
     --network fabric_test \
+    ${LAUNCH_LABELS[@]+"${LAUNCH_LABELS[@]}"} \
     "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-tools:${IMAGE_TAG}" \
@@ -2108,6 +2144,7 @@ create_channel_via_tools_container() {
   info "Creating channel and joining peers via Fabric tools container..."
   docker run --rm --platform ${TOOLS_PLATFORM} \
     --network fabric_test \
+    ${LAUNCH_LABELS[@]+"${LAUNCH_LABELS[@]}"} \
     "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-tools:${IMAGE_TAG}" \
@@ -2558,6 +2595,7 @@ ensure_tools_container() {
 
   info "Starting tools container '${TOOLS_NAME}' on network '${net}' using image '${tools_img}' (${TOOLS_PLATFORM})..."
   if ! docker run -d --name "${TOOLS_NAME}" \
+    ${LAUNCH_LABELS[@]+"${LAUNCH_LABELS[@]}"} \
     --platform ${TOOLS_PLATFORM} \
     --network "${net}" \
     "${FABRIC_SAMPLES_MOUNT[@]}" \
@@ -2580,6 +2618,7 @@ ensure_tools_container() {
     info "Tools container missing /fabric-samples/test-network, recreating..."
     docker rm -f "${TOOLS_NAME}" >/dev/null 2>&1 || true
     if ! docker run -d --name "${TOOLS_NAME}" \
+      ${LAUNCH_LABELS[@]+"${LAUNCH_LABELS[@]}"} \
       --platform ${TOOLS_PLATFORM} \
       --network "${net}" \
       "${FABRIC_SAMPLES_MOUNT[@]}" \

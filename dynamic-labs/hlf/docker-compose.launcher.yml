@@ -9,8 +9,10 @@
 # Compose runs inside the runner image (docker:29-cli), so the host's Compose version does not matter.
 #
 # Images (lab.yaml services): hlf and hlf-runner are both built from Dockerfile.launcher, which bakes
-# the pinned Fabric 2.5.15 / CA 1.5.17 binaries in. The runner still builds hlf-peer-ttyd,
-# hlf-orderer-ttyd and chaincode-basic locally on first start, from the Dockerfiles it carries.
+# the pinned Fabric 2.5.15 / CA 1.5.17 binaries in. The runner tags the release's hlf-peer-ttyd,
+# hlf-orderer-ttyd and chaincode-basic images (the three HLF_*_IMAGE variables below) for lab.sh; where
+# none is set, as in Lab Tests on a branch, it builds them on first start from the Dockerfiles it carries.
+# Every Fabric container lab.sh starts carries the same course.lab and course.release labels as this file.
 # Capacity is one student.
 name: hlf
 
@@ -50,6 +52,11 @@ services:
       MAX_STUDENT_CAPACITY: 1
       HLF_CLAIM_WARM_POOL_SIZE: 1
       STUDENT_PIDS_LIMIT: 256
+      # lab.sh labels the Fabric containers with this release and uses these release images for them.
+      COURSE_RELEASE: ${COURSE_RELEASE:-dev}
+      HLF_HLF_PEER_TTYD_IMAGE: ${HLF_HLF_PEER_TTYD_IMAGE:-}
+      HLF_HLF_ORDERER_TTYD_IMAGE: ${HLF_HLF_ORDERER_TTYD_IMAGE:-}
+      HLF_CHAINCODE_BASIC_IMAGE: ${HLF_CHAINCODE_BASIC_IMAGE:-}
     volumes:
       # Root-equivalent access to the student's own Docker, which lab.sh needs to start the
       # Fabric network (README "Docker socket access").

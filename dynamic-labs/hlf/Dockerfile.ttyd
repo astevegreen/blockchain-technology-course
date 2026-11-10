@@ -1,12 +1,17 @@
+# The Fabric peer with ttyd and zellij, for the student and instructor terminals (hlf-peer-ttyd).
+# Dockerfile.orderer-ttyd is this file with FABRIC_ROLE=orderer, so the release builds the orderer image on its
+# own (tools/student_release.py builds each Dockerfile once); dynamic-labs/tests/test_hlf_ttyd_dockerfiles.py keeps
+# the two the same.
 ARG FABRIC_VERSION=2.5.15
 ARG FABRIC_ROLE=peer
-ARG TTYD_ARCH=x86_64
 
 FROM hyperledger/fabric-${FABRIC_ROLE}:${FABRIC_VERSION}
-ARG TTYD_ARCH
+# Empty: ttyd and zellij match the platform the image is built for (uname -m), so a multi-platform release
+# build gets the right binaries for each. Set x86_64 or aarch64 to force one.
+ARG TTYD_ARCH=
 
 RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ncurses-term jq \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ncurses-term jq curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # ttyd and zellij are pinned to exact releases and checked against these sha256 sums, so an upstream
@@ -17,14 +22,15 @@ ARG TTYD_SHA256_AARCH64=b38acadd89d1d396a0f5649aa52c539edbad07f4bc7348b27b4f4b72
 ARG ZELLIJ_VERSION=0.45.1
 ARG ZELLIJ_SHA256_X86_64=40bcc2e03f5d5ae8e054e39f676081fe12ab70871506996ba595834c3718eefc
 ARG ZELLIJ_SHA256_AARCH64=05f0802afadd53f8db9514e7cae53c9ae8432fed1b35b8294aa816ee3044a16b
-ADD https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.${TTYD_ARCH} /usr/local/bin/ttyd
-ADD https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-${TTYD_ARCH}-unknown-linux-musl.tar.gz /tmp/zellij.tar.gz
 RUN set -eu; \
-    case "$TTYD_ARCH" in \
-      x86_64) ttyd_sha="$TTYD_SHA256_X86_64"; zellij_sha="$ZELLIJ_SHA256_X86_64" ;; \
-      aarch64) ttyd_sha="$TTYD_SHA256_AARCH64"; zellij_sha="$ZELLIJ_SHA256_AARCH64" ;; \
-      *) echo "Unsupported TTYD_ARCH: $TTYD_ARCH" >&2; exit 1 ;; \
+    arch="${TTYD_ARCH:-$(uname -m)}"; \
+    case "$arch" in \
+      x86_64|amd64) arch="x86_64"; ttyd_sha="$TTYD_SHA256_X86_64"; zellij_sha="$ZELLIJ_SHA256_X86_64" ;; \
+      aarch64|arm64) arch="aarch64"; ttyd_sha="$TTYD_SHA256_AARCH64"; zellij_sha="$ZELLIJ_SHA256_AARCH64" ;; \
+      *) echo "Unsupported architecture for ttyd and zellij: $arch" >&2; exit 1 ;; \
     esac; \
+    curl -fsSL "https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.${arch}" -o /usr/local/bin/ttyd; \
+    curl -fsSL "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-${arch}-unknown-linux-musl.tar.gz" -o /tmp/zellij.tar.gz; \
     echo "${ttyd_sha}  /usr/local/bin/ttyd" | sha256sum -c -; \
     echo "${zellij_sha}  /tmp/zellij.tar.gz" | sha256sum -c -; \
     chmod +x /usr/local/bin/ttyd; \

@@ -58,7 +58,11 @@ STUDENT_COUNT="${STUDENT_COUNT:-${HLF_STUDENT_COUNT:-${MAX_STUDENT_CAPACITY:-20}
 # Student-launcher mode (lab.sh exports these): mount the runtime volume, never a host path.
 RUNTIME_VOLUME="${HLF_RUNTIME_VOLUME:-}"
 RUNTIME_ROOT="${MANAGED_RUNTIME_DIR%/managed_runtime}/runtime"
+# The launcher's labels on what this script starts (lab.sh: LAUNCH_LABELS).
+LAUNCH_LABELS=()
 if [[ -n "${RUNTIME_VOLUME}" ]]; then
+  COURSE_RELEASE="${COURSE_RELEASE:-dev}"
+  LAUNCH_LABELS=(--label "course.lab=hlf" --label "course.release=${COURSE_RELEASE}")
   FABRIC_SAMPLES_MOUNT=(--mount "type=volume,src=${RUNTIME_VOLUME},dst=/fabric-samples,volume-subpath=${HLF_FABRIC_SAMPLES_SUBPATH:-fabric-samples}")
 else
   FABRIC_SAMPLES_MOUNT=(-v "${HOST_FABRIC_SAMPLES_PATH}:/fabric-samples")
@@ -66,7 +70,8 @@ fi
 
 volume_binds() {
   [[ -n "${RUNTIME_VOLUME}" ]] || return 0
-  python3 "${MANAGED_RUNTIME_DIR}/volume_binds.py" --volume "${RUNTIME_VOLUME}" --root "${RUNTIME_ROOT}" "$@"
+  python3 "${MANAGED_RUNTIME_DIR}/volume_binds.py" --volume "${RUNTIME_VOLUME}" --root "${RUNTIME_ROOT}" \
+    --release "${COURSE_RELEASE}" "$@"
 }
 
 log() { printf '[student-overlay] %s\n' "$*" >&2; }
@@ -75,6 +80,7 @@ die() { printf '[student-overlay] ERROR: %s\n' "$*" >&2; exit 1; }
 tools_run() {
   docker run --rm --platform "${TOOLS_PLATFORM}" \
     --network fabric_test \
+    ${LAUNCH_LABELS[@]+"${LAUNCH_LABELS[@]}"} \
     "${FABRIC_SAMPLES_MOUNT[@]}" \
     -w /fabric-samples/test-network \
     "hyperledger/fabric-tools:${IMAGE_TAG}" \

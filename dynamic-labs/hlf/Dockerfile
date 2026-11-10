@@ -26,6 +26,7 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY lab.sh /opt/hlf/lab.sh
 COPY Dockerfile.ttyd /opt/hlf/Dockerfile.ttyd
+COPY Dockerfile.orderer-ttyd /opt/hlf/Dockerfile.orderer-ttyd
 COPY Dockerfile.chaincode /opt/hlf/Dockerfile.chaincode
 COPY fabric/install-fabric.sh /opt/hlf/fabric/install-fabric.sh
 COPY web_service/ /opt/hlf/web_service/
