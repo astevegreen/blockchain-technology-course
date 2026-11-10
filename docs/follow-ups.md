@@ -16,6 +16,9 @@ slide index), which is never listed here.
 ## Lessons
 
 ## Labs
+- The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
+  built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
+  draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
 
 ## Tooling and rules
 - The alignment map's keyword match is wrong in places: it shows no lab for concept 42 though day 1's explorer

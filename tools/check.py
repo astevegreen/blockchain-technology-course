@@ -701,7 +701,9 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     if touched(".github/workflows/") or touched(STUDENT_EXCLUDE) or any(INSTRUCTOR_WORDS.search(f) for f in files):
         plan.checks.append(Check("answer files", answer_files))
 
-    if touched("tools/") or touched(".claude/"):
+    # The labs' shared look and shell, and the design-card template, are tested in tools/tests/test_lab_shared.py.
+    if (touched("tools/") or touched(".claude/") or touched("blockchain-course/assets/labs/shared/")
+            or touched("docs/lab-cards/")):
         plan.checks.append(Check("tool tests", tool_tests))
     if touched("dynamic-labs/") or touched("tools/lab_manifest.py"):
         for label, rule in (("lab manifests", "manifests"), ("lab generated lists", "generated"),
