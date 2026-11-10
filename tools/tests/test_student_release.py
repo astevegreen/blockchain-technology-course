@@ -176,7 +176,7 @@ class FakeLauncher:
         if path == "/api/health":
             return {"ok": True, "version": V}
         if path == "/api/labs":
-            return self.labs
+            return {"labs": self.labs}  # the envelope server.py sends; a bare list here hid a bug until the first real run
         if path.endswith("/start"):
             return {}
         return {"phase": self.phases.pop(0) if len(self.phases) > 1 else self.phases[0], "message": "m"}
@@ -299,11 +299,20 @@ class Workflow(unittest.TestCase):
         self.assertIn("--draft=false --prerelease=false", self.text)
 
     def test_the_zip_keeps_wrapper_names_and_adds_the_read_me_when_present(self):
-        self.assertIn("files=(student-launcher/wrappers/*)", self.text)
+        self.assertIn("files=(student-launcher/Start-Course-Labs.* student-launcher/Stop-Course-Labs.*)", self.text)
         self.assertIn("[ -f student-launcher/READ-ME-FIRST.html ] && files+=(student-launcher/READ-ME-FIRST.html)",
                       self.text)
         self.assertIn('zip -j "$RUNNER_TEMP/Course-Labs.zip" "${files[@]}"', self.text)
-        self.assertIn('[ ${#files[@]} -gt 0 ] || { echo "no wrappers in student-launcher/wrappers/"; exit 1; }', self.text)
+        self.assertIn('[ ${#files[@]} -gt 0 ] || { echo "no Start-Course-Labs.* or Stop-Course-Labs.* in student-launcher/"; '
+                      'exit 1; }', self.text)
+
+    def test_the_zip_glob_finds_the_wrappers_in_the_repo(self):
+        # The first dry run to reach this step (42755031048) failed here: the glob named a folder that does not exist.
+        found = sorted(p.name for pattern in ("Start-Course-Labs.*", "Stop-Course-Labs.*")
+                       for p in (REPO / "student-launcher").glob(pattern))
+        for name in ("Start-Course-Labs.cmd", "Start-Course-Labs.command", "Stop-Course-Labs.cmd",
+                     "Stop-Course-Labs.command"):
+            self.assertIn(name, found)
 
     def test_latest_json_names_the_launcher_by_digest(self):
         self.assertIn('.launcher_image = $ref', self.text)

@@ -287,7 +287,7 @@ def drive(base: str, lab: str, timeout: float, call=api, sleep=None, clock=None,
     sleep, clock = sleep or time.sleep, clock or time.monotonic
     health = wait_health(base, 120, call, sleep, clock)
     log(f"launcher {health.get('version')} is up")
-    listed = {row["id"]: row for row in call(base, "GET", "/api/labs")}
+    listed = {row["id"]: row for row in call(base, "GET", "/api/labs")["labs"]}  # the server answers {"labs": [...]}
     if lab not in listed:
         raise SystemExit(f"/api/labs does not list {lab} (it lists {', '.join(sorted(listed)) or 'nothing'})")
     if listed[lab].get("state") == "unavailable":
