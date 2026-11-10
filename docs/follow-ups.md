@@ -47,8 +47,20 @@ slide index), which is never listed here.
 - `ghcr.io/blockchain-course-2026/bitcoin-mempool` has no linux/arm64 build, so the launcher's mempool images (wallet,
   bitcoin-trace, coinjoin-trace, final-trace `launcher/mempool.Dockerfile`) run on amd64 hosts only until it is rebuilt
   for both (spec 4.4 step 7). (9 Nov 2026, launcher S2 plain labs)
+- The release build makes the bitcoin `instructor` and `student` launcher images separately from the same
+  `dynamic-labs/bitcoin/Dockerfile` (`dynamic-labs/student-release-images.json`); it could build once and set
+  `BITCOIN_INSTRUCTOR_IMAGE` to the student digest. (9 Nov 2026, S3 lane labs manifest fill)
+- `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
+  measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
+  memory check relies on them. (9 Nov 2026, launcher manifests)
 
 ## Tooling and rules
+- `tools/tests/test_src_zip.py` skips wherever `zip` is missing, which today is every machine that runs it: the
+  Windows check, Git Bash and the desktop's WSL Ubuntu. Either install `zip` on the `check.yml` runner or have the test
+  build the archive with Python's `zipfile` from `student_exclude.py zip-args`. (9 Nov 2026, S5 release build)
+- `CLAUDE.md` hard rule 1 still says instructor files under `dynamic-labs/` need "an `-x` entry in `pages.yml` and a
+  removal in `vm-build.yml`"; the fence is now one list, `dynamic-labs/student-exclude.txt`, which the zip, the VM and
+  the student images all read. The owner edits CLAUDE.md. (9 Nov 2026, S5 release build)
 
 ## Notion and documents
 

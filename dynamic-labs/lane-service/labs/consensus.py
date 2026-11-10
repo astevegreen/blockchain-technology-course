@@ -18,23 +18,14 @@ from labs.consensus_catalog import (
     CATALOG as CONSENSUS_CATALOG,
     EXERCISE_IDS as CONSENSUS_EXERCISE_IDS,
 )
-from labs.env_utils import env_int
+from labs.env_utils import env_int, lane_capacity, student_home_root, warm_pool_size
 from lab_blueprint import make_lab_blueprint
 
 IMAGE = os.environ.get("CONSENSUS_IMAGE", "consensus-lab-student")
 NETWORK = os.environ.get("CONSENSUS_NETWORK", "consensus-student-net")
-STUDENT_COUNT = max(
-    1,
-    env_int("CONSENSUS_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20),
-)
-DEFAULT_WARM_POOL_SIZE = max(
-    0,
-    min(
-        STUDENT_COUNT,
-        env_int("CONSENSUS_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=0),
-    ),
-)
-STUDENT_HOME_ROOT = (os.environ.get("CONSENSUS_STUDENT_HOME_ROOT") or "").strip() or None
+STUDENT_COUNT = lane_capacity("CONSENSUS_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20)
+DEFAULT_WARM_POOL_SIZE = warm_pool_size(STUDENT_COUNT, "CONSENSUS_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=0)
+STUDENT_HOME_ROOT = student_home_root("CONSENSUS_STUDENT_HOME_ROOT")
 STUDENT_PIDS_LIMIT = max(
     0,
     env_int("CONSENSUS_STUDENT_PIDS_LIMIT", "STUDENT_PIDS_LIMIT", default=256),

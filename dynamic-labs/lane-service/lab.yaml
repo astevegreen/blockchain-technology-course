@@ -13,7 +13,9 @@ student_compose_file: docker-compose.launcher.yml
 services:
   lane-service:
     source: build
-    context: .
+    # The launcher image bakes files from sibling labs, so its context is dynamic-labs/.
+    context: ..
+    dockerfile: lane-service/Dockerfile.launcher
     platforms:
     - linux/amd64
     - linux/arm64
@@ -28,18 +30,18 @@ entry:
   path: /instructor/labs-progress
 memory_mb: 512
 approx_download_mb: 300
+# The launcher image bakes only the bitcoin launcher compose file and the forensics v3 snapshot
+# (Dockerfile.launcher). runtime is the named volume `runtime`, empty at first start.
+# ../cryptography is not shipped: it holds solution.md, the instructor guide.
 data:
 - path: ./runtime
   into: /app/runtime
-  how: baked
+  how: seeded-volume
 - path: ../bitcoin
   into: /app/bitcoin-compose
   how: baked
 - path: ../bitcoin-forensics
   into: /app/bitcoin-forensics
-  how: baked
-- path: ../cryptography
-  into: /app/cryptography
   how: baked
 keep_volumes_on_update: false
 docker_socket: true

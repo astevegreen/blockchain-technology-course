@@ -51,23 +51,14 @@ from labs.ethereum_catalog import (
     EXERCISE_IDS as ETH_EXERCISE_IDS,
     SURFACE_IDS as ETH_SURFACE_IDS,
 )
-from labs.env_utils import env_int
+from labs.env_utils import env_int, lane_capacity, student_home_root, warm_pool_size
 
 LAB_NAME = "ethereum"
 
 IMAGE = os.environ.get("ETHEREUM_IMAGE", "ethereum-trainer")
 MGMT_NET = os.environ.get("ETHEREUM_MGMT_NET", "ethereum-student-mgmt-net")
-STUDENT_COUNT = max(
-    1,
-    env_int("ETHEREUM_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20),
-)
-DEFAULT_WARM_POOL_SIZE = max(
-    0,
-    min(
-        STUDENT_COUNT,
-        env_int("ETHEREUM_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=1),
-    ),
-)
+STUDENT_COUNT = lane_capacity("ETHEREUM_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20)
+DEFAULT_WARM_POOL_SIZE = warm_pool_size(STUDENT_COUNT, "ETHEREUM_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=1)
 INSTRUCTOR_HOST = os.environ.get(
     "ETHEREUM_INSTRUCTOR_HOST", "ethereum-trainer-instructor"
 )
@@ -81,7 +72,7 @@ TERMINAL_RPC_URL = os.environ.get(
     "http://router-router-1/labs/ethereum_lab/rpc-write",
 )
 ARCADE_RPC_URL = os.environ.get("ETHEREUM_ARCADE_RPC_URL", f"{INSTRUCTOR_HTTP_URL}/rpc-write")
-STUDENT_HOME_ROOT = (os.environ.get("ETHEREUM_STUDENT_HOME_ROOT") or "").strip() or None
+STUDENT_HOME_ROOT = student_home_root("ETHEREUM_STUDENT_HOME_ROOT")
 STUDENT_PIDS_LIMIT = max(
     0,
     env_int("ETHEREUM_STUDENT_PIDS_LIMIT", "STUDENT_PIDS_LIMIT", default=256),
@@ -973,6 +964,7 @@ def _lane_env(lane_id: str) -> Dict[str, str]:
 
 config = LaneConfig(
     lab_name=LAB_NAME,
+    course_lab="ethereum_lab",
     container_name_fn=_container_name,
     state_dir=STATE_DIR,
     image=IMAGE,

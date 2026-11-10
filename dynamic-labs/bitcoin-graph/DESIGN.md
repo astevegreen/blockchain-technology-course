@@ -167,7 +167,7 @@ tip-stability loop, never on the IBD flag.
 | Rebuild button + status in admin console | admin console template (lane-service) |
 | Include `graph` in nuke/reseed + forensics-deploy service lists so it follows the chain lifecycle | `labs/bitcoin.py` (`CORE_SERVICES`/`CORE_CONTAINERS`) |
 
-Image published as `ghcr.io/blockchain-course-2026/bitcoin-graph` like the
+Image published as `ghcr.io/astevegreen/course-labs:base-bitcoin-graph` like the
 mempool image; local compose build during prototyping.
 
 ## Resource budget

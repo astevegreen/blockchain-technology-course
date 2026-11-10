@@ -17,6 +17,13 @@ services:
     platforms:
     - linux/amd64
     - linux/arm64
+  instructor:
+    # Same Dockerfile as student: BITCOIN_INSTRUCTOR_IMAGE may point at the same digest.
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
   mempool:
     source: upstream
     image: ghcr.io/blockchain-course-2026/bitcoin-mempool:latest
@@ -41,7 +48,8 @@ routes:
 uses_lane_service: true
 entry:
   path: /labs/bitcoin/
-memory_mb: 4096
+# graph is capped at 4g; the student and instructor nodes, mempool and one lane need about 2 GB more.
+memory_mb: 6144
 approx_download_mb: 3000
 data: []
 keep_volumes_on_update: true

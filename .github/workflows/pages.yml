@@ -42,39 +42,10 @@ jobs:
         run: python3 -m unittest -v tools/tests/test_src_zip.py
       - name: Create source zip
         run: |
-          # Keep instructor quiz banks/solutions out of the student-facing source bundle.
-          zip -r blockchain-course/assets/src.zip blockchain-course dynamic-labs \
-            -x "**/.git/**" \
-            -x "*/.git" \
-            -x "quizes/**" \
-            -x "quizes/*" \
-            -x "dynamic-labs/**/quizes/**" \
-            -x "dynamic-labs/**/quizes/*" \
-            -x "dynamic-labs/bitcoin-forensics/instructor-bitcoindir-forensics/**" \
-            -x "dynamic-labs/bitcoin-forensics/instructor.zip" \
-            -x "dynamic-labs/bitcoin-forensics/*_answer_LIVE.json" \
-            -x "dynamic-labs/bitcoin-forensics/copilot-gen-script.sh" \
-            -x "dynamic-labs/bitcoin-forensics/malicious_seed.py" \
-            -x "dynamic-labs/bitcoin-forensics/malicious_seed_v*.py" \
-            -x "dynamic-labs/bitcoin-forensics/seeder/scenario_v3*.py" \
-            -x "dynamic-labs/bitcoin-forensics/build_v3*.py" \
-            -x "dynamic-labs/bitcoin-forensics/FORENSICS-V34-STATE.md" \
-            -x "dynamic-labs/bitcoin-forensics/lab.md" \
-            -x "dynamic-labs/bitcoin/INSTRUCTOR_SOLUTION_GUIDE.md" \
-            -x "dynamic-labs/bitcoin/forensics-*.md" \
-            -x "dynamic-labs/docs/plans/forensics-v2-curriculum-draft.md" \
-            -x "dynamic-labs/cryptography/solution.md" \
-            -x "dynamic-labs/p2p_trust/instructor_notes.qmd" \
-            -x "dynamic-labs/ethereum_lab/CODEX-HANDOFF.md" \
-            -x "dynamic-labs/ethereum_lab/docs/instructor/**" \
-            -x "dynamic-labs/ethereum_lab/frontend/public/docs/instructor/**" \
-            -x "dynamic-labs/hlf/docs/INSTRUCTOR_GUIDE.md" \
-            -x "dynamic-labs/regression-tests/**" \
-            -x "dynamic-labs/explorer/chain/build-chain.sh" \
-            -x "dynamic-labs/explorer/chain/build-steps.sh" \
-            -x "dynamic-labs/explorer/chain/capture_pages.py" \
-            -x "dynamic-labs/explorer/chain/make_sourcify_copy.py" \
-            -x "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml"
+          # Keep instructor quiz banks/solutions out of the student-facing source bundle:
+          # the list is dynamic-labs/student-exclude.txt, shared with vm-build.yml and student-release.yml.
+          mapfile -t EXCLUDES < <(python3 tools/student_exclude.py zip-args)
+          zip -r blockchain-course/assets/src.zip blockchain-course dynamic-labs "${EXCLUDES[@]}"
       - name: Render
         uses: quarto-dev/quarto-actions/render@8a96df13519ee81fd526f2dfca5962811136661b # v2
         with:

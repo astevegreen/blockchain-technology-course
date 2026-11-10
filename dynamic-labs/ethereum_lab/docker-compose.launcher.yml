@@ -1,0 +1,90 @@
+# Ethereum lab on a student's own machine (the course launcher; docs/student-launcher-design.md).
+# Same project, service, container and network names as docker-compose.yml. The shared node runs as
+# ethereum-trainer-instructor; lane-service starts the student's frontend lane with `docker run` from
+# the same image (MODE=student) and fetches the pool and config from this container. The image comes
+# from the release manifest; no build context, no host folders, and no host ports (the local router
+# fronts it, and it serves no instructor routes).
+name: ethereum_lab
+
+services:
+  ethereum-trainer:
+    image: ${ETHEREUM_LAB_ETHEREUM_TRAINER_IMAGE:?}
+    container_name: ethereum-trainer-instructor
+    environment:
+      - MODE=instructor
+      - RPC_PORT=8545
+      - FRONTEND_PORT=5173
+      # Phase 9.4: instructor identity comes from the platform router's
+      # `X-Instructor` header (driven by the hlf_instructor cookie). The
+      # IP allowlist is now only a fallback for direct host:5173 access
+      # in standalone laptop mode; default covers Docker bridge gateways.
+      # Set INSTRUCTOR_IP=* to bypass even that fallback.
+      - TERMINAL_PORTS=3002,3003,3004
+      - TERMINAL_CWD=/app
+      - LAB_TERMINAL_ENABLED=1
+      - NGINX_ENABLED=1
+      # Public write-only RPC path the student SPA dials when fronted by the platform router.
+      - RPC_URL_PUBLIC=/rpc-write
+      - DEPLOY_BEACON_LAB=1
+      # The server-side top-off faucet uses one class-bank account. Hardhat's
+      # default is only 10,000 ETH; make the classroom bank intentionally huge.
+      - CLASS_FAUCET_BALANCE_ETH=${CLASS_FAUCET_BALANCE_ETH:-1000000000000}
+      - FAUCET_MAX_TOP_OFF_ETH=${FAUCET_MAX_TOP_OFF_ETH:-100}
+      - FAUCET_QUEUE_MAX_REQUESTS=${FAUCET_QUEUE_MAX_REQUESTS:-200}
+      - RPC_WRITE_QUEUE_MAX_MESSAGES=${RPC_WRITE_QUEUE_MAX_MESSAGES:-200}
+      - RPC_WRITE_QUEUE_CONCURRENCY=${RPC_WRITE_QUEUE_CONCURRENCY:-1}
+      - ARCADE_TOKEN_PRICE_ETH=${ARCADE_TOKEN_PRICE_ETH:-50}
+      - ARCADE_TREASURY_ADDRESS=${ARCADE_TREASURY_ADDRESS:-}
+      - CLASSROOM_AUTOMINE_DEFAULT=${CLASSROOM_AUTOMINE_DEFAULT:-0}
+      - CLASSROOM_MINING_DELAY_MS=${CLASSROOM_MINING_DELAY_MS:-3000}
+      # One committee = whole pool attests each slot (required to reach the 2/3
+      # justification quorum). Short epochs + self-running conductor make the PoS
+      # sim live and joinable. These match the code defaults; keep them in sync.
+      - COMMITTEES_PER_EPOCH=1
+      - VALIDATORS_PER_COMMITTEE=32
+      - BLOCKS_PER_EPOCH=4
+      - BEACON_CONDUCTOR=1
+      # Real Ethereum slots are 12s; classroom cadence is 6s so the lab stays responsive.
+      - BEACON_BLOCK_MS=6000
+      - BEACON_PROPOSAL_WINDOW_MS=15000
+      - BEACON_PROPOSAL_PENDING_GRACE_MS=9000
+      - BEACON_PROPOSAL_BUNDLES_PATH=/tmp/beacon-proposal-bundles.json
+      - BEACON_MEMPOOL_STATE_URL=http://127.0.0.1:5173/mempool-state
+      - BEACON_BUNDLE_MAX_TXS=12
+      - BEACON_BUNDLE_GAS_TARGET=30000000
+      - CHAIN_STATE_DEPTH=120
+      - MAX_STUDENT_CAPACITY=${MAX_STUDENT_CAPACITY:-20}
+      - ETHEREUM_STUDENT_CAPACITY=${ETHEREUM_STUDENT_CAPACITY:-}
+    labels:
+      course.lab: ethereum_lab
+      course.release: ${COURSE_RELEASE:?}
+    volumes:
+      - blockchain-data:/app/.hardhat
+      - student-contracts:/app/contracts/student
+    restart: unless-stopped
+    # The Hardhat node keeps the whole chain in memory and grows over long runs. Cap it
+    # so a runaway is a CONTAINED restart (cgroup OOM -> restart: unless-stopped re-deploys
+    # at the same addresses) instead of a host-wide OOM that took the backend fully down.
+    # Conductor idle-pause + pruning keep normal usage well under this.
+    mem_limit: ${ETHEREUM_NODE_MEM_LIMIT:-4g}
+    mem_reservation: 512m
+    # Cap container logs so a chatty process can't fill disk or overload the shared
+    # dockerd log pipeline (the Hardhat node's per-RPC logging is already silenced).
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    networks:
+      - instructor-mgmt-net
+
+volumes:
+  blockchain-data:
+    driver: local
+  student-contracts:
+    driver: local
+
+networks:
+  instructor-mgmt-net:
+    name: ethereum-instructor-mgmt-net
+    external: true
