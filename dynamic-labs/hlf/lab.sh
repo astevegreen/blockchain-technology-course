@@ -1939,6 +1939,11 @@ prepare_chaincode_build_context() {
   mkdir -p "${ctx_dir}/runtime/fabric-samples/asset-transfer-basic/chaincode-javascript"
   cp -f "${HERE}/Dockerfile.chaincode" "${ctx_dir}/Dockerfile.chaincode"
   cp -a "${chaincode_src}/." "${ctx_dir}/runtime/fabric-samples/asset-transfer-basic/chaincode-javascript/"
+  # Dockerfile.chaincode also copies the course's chaincode override and the school list.
+  mkdir -p "${ctx_dir}/chaincode_overrides/asset-transfer-basic/chaincode-javascript/lib" "${ctx_dir}/managed_runtime"
+  cp -f "${HERE}/chaincode_overrides/asset-transfer-basic/chaincode-javascript/lib/assetTransfer.js" \
+    "${ctx_dir}/chaincode_overrides/asset-transfer-basic/chaincode-javascript/lib/assetTransfer.js"
+  cp -f "${HERE}/managed_runtime/schools.json" "${ctx_dir}/managed_runtime/schools.json"
 }
 
 docker_build_network_available() {
