@@ -196,15 +196,23 @@ class Bench:
         self.posts = []
         self.internet = True
         self.digest = digest
+        self.lane_answers = []   # what lane-service's health check answers, in turn; True once it runs out
+        self.lane_checks = 0
+        self.pauses = []
         labs = labs if labs is not None else [router(), lab("hello")]
         self.release = make_release(root / "release", labs, version, images)
         self.controller = Controller(self.release, Docker(self.fake), root / "state",
                                      internet=lambda: self.internet, registry_digest=lambda: self.digest,
-                                     post=self.post, background=False)
+                                     post=self.post, background=False, lane_ready=self.lane_ready,
+                                     pause=self.pauses.append)
 
     def post(self, url, timeout):
         self.posts.append(url)
         return 200, "{}"
+
+    def lane_ready(self):
+        self.lane_checks += 1
+        return self.lane_answers.pop(0) if self.lane_answers else True
 
     def close(self):
         self.tmp.cleanup()

@@ -33,6 +33,10 @@ DOCKER_SOCKET_LABS = frozenset({"lane-service", "hlf"})
 # Lab buttons (local_actions) POST their `api` path here: lane-service on router-net, never through the router.
 LANE_SERVICE_URL = "http://lane-service-lane-service-1:8090"
 ACTION_TIMEOUT = 900  # seconds; the forensics case data takes up to about ten minutes to load
+# A lane lab's pages are served by lane-service, which takes about 30 seconds to listen after its container starts
+# (it waits that long for the Ethereum lab when that lab isn't running). Until it does, the router answers 502.
+LANE_READY_TIMEOUT = 180  # seconds
+LANE_READY_POLL = 1  # seconds
 HOST_BIND = "127.0.0.1"
 
 LAYER = re.compile(r"^([0-9a-f]{6,64}): (Pulling fs layer|Waiting|Already exists|Pull complete|Download complete)")
@@ -102,6 +106,15 @@ def http_post(url: str, timeout: float) -> tuple[int, str]:
         return 0, str(err)
 
 
+def lane_service_ready() -> bool:
+    """True once lane-service answers its health check."""
+    try:
+        with urllib.request.urlopen(f"{LANE_SERVICE_URL}/healthz", timeout=5) as resp:
+            return resp.status == 200
+    except (urllib.error.URLError, OSError):
+        return False
+
+
 def log(text: str) -> None:
     """A line for `docker logs course-launcher`. The page shows a plain sentence; the log keeps Docker's own words,
     so a failed start can be diagnosed afterwards."""
@@ -118,7 +131,8 @@ class Controller:
     def __init__(self, release: Release, docker: Docker, state_dir: Path, self_image: str = "",
                  probe: system.PortProbe | None = None, internet: Callable[[], bool] = system.internet_reachable,
                  registry_digest: Callable[[], str | None] = system.registry_digest,
-                 post: Callable[[str, float], tuple[int, str]] = http_post, background: bool = True):
+                 post: Callable[[str, float], tuple[int, str]] = http_post, background: bool = True,
+                 lane_ready: Callable[[], bool] = lane_service_ready, pause: Callable[[float], None] = time.sleep):
         self.release = release
         self.docker = docker
         self.state_dir = Path(state_dir)
@@ -128,6 +142,8 @@ class Controller:
         self.registry_digest = registry_digest
         self.post = post
         self.background = background
+        self.lane_ready = lane_ready
+        self.pause = pause
         self.jobs: dict[str, Job] = {}
         self.actions: dict[str, ActionRun] = {}
         self.start_lock = threading.Lock()
@@ -439,6 +455,7 @@ class Controller:
             # above fetches them and lane-service starts the lanes itself.
             if self.release.compose_file(lab).is_file():
                 self.compose_up(lab)
+            self.wait_for_lane_service()
             self.update_state(lambda d: d.setdefault("started", []).append(lab["id"])
                               if lab["id"] not in d.get("started", []) else None)
         else:
@@ -447,6 +464,16 @@ class Controller:
         self.update_state(lambda d: d.setdefault("labs", {}).__setitem__(
             lab["id"], {"release": self.release.version, "images": images,
                         "compose_project": lab["compose_project"]}))
+
+    def wait_for_lane_service(self) -> None:
+        """A lane lab is "running" only once lane-service answers: its container starts at once, but it listens
+        some seconds later, and a student who pressed Open in between got the router's 502 page."""
+        deadline = time.monotonic() + LANE_READY_TIMEOUT
+        while not self.lane_ready():
+            if time.monotonic() >= deadline:
+                log(f"lane-service did not answer {LANE_SERVICE_URL}/healthz within {LANE_READY_TIMEOUT} seconds")
+                raise Refused(500, messages.LANE_SLOW)
+            self.pause(LANE_READY_POLL)
 
     def compose_up(self, lab: dict) -> None:
         saved = self.load_state().get("labs", {}).get(lab["id"])

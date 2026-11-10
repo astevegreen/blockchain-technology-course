@@ -11,9 +11,11 @@ import unittest
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
+from unittest import mock
 
 from fake_docker import GB, Bench, lab, router
 
+from launcher import controller as controller_module
 from launcher import messages
 from launcher.server import dispatch, make_handler
 
@@ -403,6 +405,38 @@ class LaneLabs(unittest.TestCase):
         self.assertEqual(self.bench.state("hlf"), "running")
         dispatch(c, "POST", "/api/labs/hlf/stop")  # no container of its own is left behind, so not "stopped"
         self.assertEqual(self.bench.state("hlf"), "downloaded")
+
+    def test_lane_lab_is_running_only_once_lane_service_answers(self):
+        # lane-service's container starts at once but listens some seconds later; a lab reported "running" in
+        # between gave the student the router's 502 page (consensus and p2p_trust in the release smoke test).
+        c = self.bench.controller
+        self.bench.fake.compose_services["hlf"] = []
+        self.bench.lane_answers = [False, False, True]
+        dispatch(c, "POST", "/api/labs/hlf/start")
+        self.assertEqual(self.bench.lane_checks, 3)
+        self.assertEqual(len(self.bench.pauses), 2)
+        self.assertEqual(c.progress("hlf")["phase"], "running")
+        self.assertEqual(self.bench.state("hlf"), "running")
+
+    def test_lane_service_that_never_answers_is_an_error_not_running(self):
+        c = self.bench.controller
+        self.bench.fake.compose_services["hlf"] = []
+        self.bench.lane_answers = [False] * 50
+        err = io.StringIO()
+        with mock.patch.object(controller_module, "LANE_READY_TIMEOUT", 0), contextlib.redirect_stderr(err):
+            dispatch(c, "POST", "/api/labs/hlf/start")
+        self.assertEqual(c.progress("hlf")["phase"], "error")
+        self.assertEqual(c.progress("hlf")["message"], messages.LANE_SLOW)
+        self.assertIn("lane-service did not answer", err.getvalue())
+        self.assertNotIn("hlf", c.load_state().get("started", []))
+        self.assertNotEqual(self.bench.state("hlf"), "running")
+
+    def test_a_lab_without_lane_service_never_waits_for_it(self):
+        bench = Bench()
+        self.addCleanup(bench.close)
+        dispatch(bench.controller, "POST", "/api/labs/hello/start")
+        self.assertEqual(bench.state("hello"), "running")
+        self.assertEqual(bench.lane_checks, 0)
 
     def test_a_failed_start_writes_dockers_words_to_the_log(self):
         c = self.bench.controller
