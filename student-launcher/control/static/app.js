@@ -97,6 +97,8 @@ async function refresh() {
   const section = document.getElementById("labs");
   if (!result.ok) {
     showProblem(result.body.message);
+    // Before any lab is listed the section still says "Looking at this computer…": not under a problem.
+    if (!section.querySelector(".lab")) section.replaceChildren();
     return;
   }
   showProblem("");
