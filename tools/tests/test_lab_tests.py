@@ -34,7 +34,6 @@ class LabsFor(unittest.TestCase):
             self.assertEqual(lab_tests.labs_for(["dynamic-labs/hlf/docker-compose.launcher.yml"]), ["hlf", "hlf-launcher"])
             self.assertEqual(lab_tests.labs_for([f"{TESTS}/automated/hlf-launcher/run.sh"]), ["hlf-launcher"])
 
-
     def test_shared_parts_and_the_workflow_run_every_ci_lab(self) -> None:
         for f in ["dynamic-labs/lab-manager.sh", "dynamic-labs/router/nginx.conf", "dynamic-labs/lane-service/app.py",
                   f"{TESTS}/infrastructure/reset_live_claims.py", f"{TESTS}/automated/run-lab.sh",
