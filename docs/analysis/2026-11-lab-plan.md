@@ -214,3 +214,19 @@ Pushback given, awaiting the owner's answer: four of the six are speed races, wh
 work against the course's confidence discipline, so score by a correct answer with its reason and use time only
 as a tiebreak; score hide and trace by calibration; add day 4 pool trading (the best fit of game to concept, and
 days 4 and 9 otherwise have no game); consider day 9's echo hunt.
+
+## Locked in (owner, 10 Nov, later)
+
+**Games (eight)**: day 1 terminal scavenger hunt; day 2 two-of-three; day 3 spot the fake; day 4 pool trading
+("I agree with adding day 4's pool trading"); day 5 find the exchange; days 6-7 hide and trace; day 8 find the
+line; day 9 echo hunt. Day 9's sources exercise is approved but not built, so it is built as the echo hunt from
+the start ("may as well gamify it to give students some fun right before their final test on day 10").
+
+Not yet confirmed by the owner, so each goes on the game's design card for approval: score a correct answer
+with its reason, time only as a tiebreak; hide and trace gets a fixed menu of moves and a budget, is scored by
+calibration, is built last and runs in the second half of day 7.
+
+**Build order of prediction labs**: the labs for the beliefs the owner marked common come first (Make change,
+Forge the payment, Who got paid?, Through the exchange); the confirmation race and "Is it final yet?" follow.
+This replaces "first builds" in `docs/build-spec.md`, "A prediction lab", when step 2 records it. Belief 8 (a
+transaction's time is when it was sent) needs a new lab idea.
