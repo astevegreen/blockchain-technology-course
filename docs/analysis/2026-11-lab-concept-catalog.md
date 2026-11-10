@@ -187,6 +187,11 @@ For the owner to decide (CLAUDE.md rule 4). "Rebuild" means around one wrong bel
 
 ## Decisions for the owner
 
+**Decided 10 Nov 2026**: the owner approved all four recommendations below ("I approve your recommendations").
+1 is done (`archive/static-labs/README.md`); the rest are recorded in `docs/build-spec.md`, "A prediction lab".
+The fate of the unscheduled Docker labs is still open. A blind redesign of the lab set, compared with this
+catalog, is in `2026-11-blind-lab-outline.md`.
+
 1. **Archive `hashing_merkle` and `bitcoin-attacks`?** Recommendation: yes. Neither is a sole home.
 2. **Rebuild, not retire, `ether-smart-contract-micro`, `ether_mev` and `distributed-systems`?** Recommendation:
    yes; this changes the review's verdict on the first.

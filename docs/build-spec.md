@@ -153,6 +153,24 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
   step), tested with the lab. A failure in class or in a pilot switches the lab to it.
 - Instructor answers stay out of what students receive (CLAUDE.md rule 1).
 
+## A prediction lab (owner, 10 Nov 2026: a trial, not yet a rule)
+The owner approved these on 10 Nov ("I approve your recommendations"), from
+`docs/analysis/2026-11-lab-concept-catalog.md` and `docs/analysis/2026-11-static-labs-review.md`.
+
+- A static browser lab is five minutes, one wrong belief and one prediction, opened from the slide whose title
+  states the right belief. The seven steps are in the review ("A new job for static labs").
+- Projector-first: the instructor runs it and the room commits by a show of hands. One per lesson at most.
+- Build two and time them in a lesson before building more. Still open, and the owner's to answer: do students
+  have laptops open in lectures; do the five minutes come out of the lesson or the lab; do students do the
+  primer; which wrong beliefs do analysts hold.
+- First builds, because slides teach them and no lab lets a student try them: UTXO and change (idea 1),
+  confirmations (idea 7) and finality (idea 9).
+- Rebuilt, not retired, because each is the only lab for its topic: `ether-smart-contract-micro` (reentrancy,
+  idea 33), `ether_mev` (MEV, idea 20) and `distributed-systems` (network shape, idea 2).
+- Archived: `hashing_merkle` and `bitcoin-attacks` (`archive/static-labs/README.md`).
+- The unscheduled Docker labs (Cryptography, P2P Trust, Ethereum Lab, Forensics 1 to 3) are undecided. The
+  Ethereum Lab is settled first: it is partly broken and the largest to maintain.
+
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
 well, evidence), each a judgement rather than a count. A review of a lesson or lab checks it against them; the
