@@ -230,8 +230,7 @@ class HLFNetworkAPITests(unittest.TestCase):
     def test_fabric_containers_carry_the_launcher_labels(self) -> None:
         # The launcher counts a lab's containers by these labels (docker-compose.launcher.yml x-labels); lab.sh
         # puts them on every Fabric container it starts. run.sh sets COURSE_RELEASE=regression.
-        for container in ("orderer.example.com", "peer0.org1.example.com", "peer0.org2.example.com",
-                          "ca_org1", "couchdb0", "chaincode-basic"):
+        for container in ("orderer.example.com", *CONSORTIUM_PEERS, "ca_org1", "couchdb0", "chaincode-basic"):
             labels = (docker_inspect(container).get("Config") or {}).get("Labels") or {}
             self.assertEqual(labels.get("course.lab"), "hlf", container)
             self.assertEqual(labels.get("course.release"), "regression", container)
