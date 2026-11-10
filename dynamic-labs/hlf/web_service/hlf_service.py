@@ -663,6 +663,9 @@ class HLFLabService:
                 "updated_at": time.time(),
             }
             self.lifecycle_events = []
+            # The in-memory log holds one task: emptied when the next starts, not when this one ends, so the
+            # instructor's overlay still reads a failed task's last lines (its reason) after the task is over.
+            self._lifecycle_log.clear()
 
     def _record_lifecycle_line(self, line: str) -> None:
         text = line.strip()
@@ -729,11 +732,6 @@ class HLFLabService:
             except OSError:
                 pass
 
-    def _clear_lifecycle_log(self) -> None:
-        """Empty the in-memory log at the end of a task (runtime/lifecycle.log already holds every line)."""
-        with self._state_lock:
-            self._lifecycle_log.clear()
-
     def _stream_lifecycle(self, proc: subprocess.Popen, stream_callback=None) -> None:
         if proc.stdout is None:
             return
@@ -765,9 +763,10 @@ class HLFLabService:
         return True, f"Operation '{task}' cancelled"
 
     def _run_background_task(self, task_name: str, target) -> None:
+        # Reset first: a page that sees the new task must read only the new task's lines from cursor 0.
+        self._reset_lifecycle_progress(task_name)
         with self._state_lock:
             self.background_task = task_name
-        self._reset_lifecycle_progress(task_name)
 
         def wrapped():
             try:
@@ -793,7 +792,6 @@ class HLFLabService:
                             "updated_at": time.time(),
                         }
                     self.background_task = None
-                self._clear_lifecycle_log()
 
         threading.Thread(target=wrapped, daemon=True).start()
 
@@ -3735,6 +3733,7 @@ rm -rf "$tmpdir"
             )
             with self._state_lock:
                 background_task = self.background_task
+                previous_status = self.status
             if running_count == len(container_names):
                 status = LabStatus.RUNNING
             elif running_count == 0:
@@ -3750,6 +3749,10 @@ rm -rf "$tmpdir"
                 status = LabStatus.STARTING
             elif background_task in {"reset", "stop"} and status != LabStatus.RUNNING:
                 status = LabStatus.STOPPING
+            elif background_task is None and status != LabStatus.RUNNING and previous_status == LabStatus.ERROR:
+                # A start, stop or reset that failed stays "error" until the next one. Read as "stopped", a start
+                # stopped by the bootstrap limit showed "Completed successfully." in the instructor's overlay.
+                status = LabStatus.ERROR
 
             # Detect instructor-triggered fault: if the shortfall is explained by
             # an active scenario, treat the network as running (degraded) rather
