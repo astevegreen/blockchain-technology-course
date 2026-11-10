@@ -36,10 +36,17 @@ slide index), which is never listed here.
   bridge lab build)
 - The release build makes the bitcoin `instructor` and `student` launcher images separately from the same
   `dynamic-labs/bitcoin/Dockerfile` (`dynamic-labs/student-release-images.json`); it could build once and set
-  `BITCOIN_INSTRUCTOR_IMAGE` to the student digest. (9 Nov 2026, S3 lane labs manifest fill)
+  `BITCOIN_INSTRUCTOR_IMAGE` to the student digest. (9 Nov 2026, S3 lane labs manifest fill) Left open on 10 Nov
+  2026: it changes the release build, and only a release dry run (`student-release.yml`, `publish=false`) proves it.
+  Do it with a dry run to hand.
 - `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
   measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
-  memory check relies on them. (9 Nov 2026, launcher manifests)
+  memory check relies on them. (9 Nov 2026, launcher manifests) Left open on 10 Nov 2026: the figures need a
+  student-sized PC running the released images, so measure them during the release test.
+- The launcher's Fabric lab has never pulled its helper images from a release: `use_release_helper_images` in
+  `dynamic-labs/hlf/lab.sh` runs only when the release sets `HLF_HLF_PEER_TTYD_IMAGE`, `HLF_HLF_ORDERER_TTYD_IMAGE`
+  and `HLF_CHAINCODE_BASIC_IMAGE`, and the `hlf-launcher` tests leave them empty, so they build. Start the Fabric
+  lab from the first release draft and confirm it pulls and builds nothing. (10 Nov 2026, launcher S4 helper images)
 - The student guide (`blockchain-course/run-labs.qmd`) has no pictures of the Windows SmartScreen "Windows protected
   your PC" screen (More info, Run anyway) or the macOS "Open Anyway" step in Privacy & Security: they are text only,
   and its control-page screenshots (`blockchain-course/assets/run-labs/`) come from the sample-data preview, not the
