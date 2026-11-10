@@ -1,8 +1,10 @@
 # Archived static labs
 
-Eight browser labs taken out of what students receive on 10 Nov 2026, kept here so the owner can look at them
+Ten browser labs taken out of what students receive on 10 Nov 2026, kept here so the owner can look at them
 before deciding their future. Nothing was deleted. The reasons are in
-`docs/analysis/2026-11-static-labs-review.md` ("Lab by lab" and "Defects").
+`docs/analysis/2026-11-static-labs-review.md` ("Lab by lab" and "Defects"). Eight went in the first commit; the
+owner approved `hashing_merkle` and `bitcoin-attacks` later the same day, after
+`docs/analysis/2026-11-lab-concept-catalog.md` showed that neither is the only lab for its topic.
 
 Students receive only `blockchain-course/` and `dynamic-labs/` (CLAUDE.md rule 1), so nothing in this folder
 reaches the site, the `src.zip` or the student VM.
@@ -19,21 +21,23 @@ reaches the site, the `src.zip` or the student VM.
 | `trust-simulation` | `trust-simulation/trust_simulation_lab.html` | 03-DS Trust and P2P | The "slander" attack does nothing |
 | `pos-micro` | `pos-micro/index.html` | 03-CM Proof of Stake | Teaches that going offline is slashed |
 | `ether-sec-micro` | `ether-sec-micro/index.html` | 02-EF Ethereum PoS and Security | Consensus internals an analyst does not need |
+| `hashing_merkle` | `hashing_merkle/hashing_merkle_lab.html` | 02-CP Hashing and Merkle Trees | Its proof check cannot fail; says every input has a unique hash |
+| `bitcoin-attacks` | `bitcoin-attacks/index.html` | 04-BF Bitcoin Security and Legal Concerns | No randomness: 51% always wins, 49% never does |
 
 ## Looking at one
 
-Seven of the eight are single files: double-click the file in the table and it opens in a browser.
+Eight of the ten are single files: double-click the file in the table and it opens in a browser.
 
-`asym_sym_overview` loads Pyodide and two stylesheets from the site's vendor folder, so it needs a local web
-server. From the repository root:
+`asym_sym_overview` and `hashing_merkle` load Pyodide and two stylesheets from the site's vendor folder, so they
+need a local web server. From the repository root:
 
     python -m http.server 8000
 
-then open `http://localhost:8000/archive/static-labs/asym_sym_overview/crypto_primitives.html`. Its four vendor
-paths were changed from `../../vendor/` to `../../../blockchain-course/assets/vendor/` so that this works; that is
-the only edit made to any archived lab.
+then open `http://localhost:8000/archive/static-labs/asym_sym_overview/crypto_primitives.html` (or
+`.../hashing_merkle/hashing_merkle_lab.html`). Each one's four vendor paths were changed from `../../vendor/` to
+`../../../blockchain-course/assets/vendor/` so that this works; that is the only edit made to any archived lab.
 
-## What else changed in the same commit
+## What else changed in the same commits
 
 Each place that linked an archived lab was taken out of view:
 
@@ -45,15 +49,26 @@ Each place that linked an archived lab was taken out of view:
   DHT Routing" (02-DS), "Micro Lab: Trust Simulation" (03-DS), "Proof of Stake Microlab" (03-CM). Two link lines
   inside 03-CP slides ("XOR Pad Demo", "PRG Demo") are hidden the same way.
 
+For `hashing_merkle` and `bitcoin-attacks` (the second commit):
+
+- `blockchain-course/index.qmd`: the 04-BF line was removed, and the "Hashing and Merkle Proofs Lab" link was
+  taken off the 02-CP line (its other two labs stay).
+- `blockchain-course/assets/mindmap.html`: the `lab:` block of 04-BF is inside a `/* Lab archived ... */` comment.
+- 02-CP, slide "Practice: Micro Labs": the "Second: Hashing Merkle Lab" link line is hidden; the slide and its
+  first link stay.
+- The Merkle proof step now has one working home, the Cryptography Lab's Merkle page. Keep that lab until
+  `merkle-trees` gains a proof step (idea 12 in the review).
+
 ## Putting one back
 
-To restore all eight, revert the commit that added this file (`git log --diff-filter=A -- archive/static-labs/README.md`
-names it, then `git revert <sha>`).
+To restore the first eight, revert the commit that added this file (`git log --diff-filter=A -- archive/static-labs/README.md`
+names it, then `git revert <sha>`). To restore the last two, revert the commit that moved them
+(`git log --diff-filter=A -- archive/static-labs/bitcoin-attacks/index.html`).
 
 To restore one lab:
 
-1. `git mv archive/static-labs/<lab> blockchain-course/assets/labs/<lab>` (for `asym_sym_overview`, change the four
-   vendor paths back to `../../vendor/`).
+1. `git mv archive/static-labs/<lab> blockchain-course/assets/labs/<lab>` (for `asym_sym_overview` and
+   `hashing_merkle`, change the four vendor paths back to `../../vendor/`).
 2. Undo the matching item in the list above: remove the `content-hidden` wrapper, uncomment the mind-map block,
    and add the index line back.
 3. Run `python tools/check.py`.

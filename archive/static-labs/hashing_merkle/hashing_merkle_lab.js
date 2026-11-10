@@ -19,7 +19,7 @@ function escapeHtml(text) {
 async function initPyodide() {
     try {
         pyodide = await loadPyodide({
-            indexURL: "../../vendor/pyodide/v0.24.1/full/"
+            indexURL: "../../../blockchain-course/assets/vendor/pyodide/v0.24.1/full/"
         });
         
         // Load hashlib for SHA-256
