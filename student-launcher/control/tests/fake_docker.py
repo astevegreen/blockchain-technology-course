@@ -49,6 +49,7 @@ def make_release(root: Path, labs, version="r1", images=None) -> Release:
 class FakeDocker:
     def __init__(self):
         self.info = {"Architecture": "x86_64", "MemTotal": 8 * GB}
+        self.info_out = None     # what `docker info` prints, exit 0, when a test needs the CLI's exact words
         self.containers = []     # {"ID", "Names", "State", "labels": {}, "Ports"}
         self.images = set()      # "name:tag" references
         self.networks = {"bridge", "host", "none"}
@@ -84,8 +85,12 @@ class FakeDocker:
                 return Result(1, out)
         head = args[0]
         if head == "info":
+            if self.info_out is not None:
+                return Result(0, self.info_out)
             return Result(0, json.dumps(self.info)) if self.info else Result(1, "Cannot connect to the Docker daemon")
         if head == "version":
+            if not self.info or self.info_out is not None:
+                return Result(1, "Cannot connect to the Docker daemon")
             return Result(0, "27.5.1\n")
         if head == "ps":
             found = [c for c in self.containers if self.matches(c, args)]

@@ -71,13 +71,19 @@ class Docker:
         return rows
 
     def info(self) -> dict | None:
+        """The engine's `docker info`, or None when no engine answers. With no engine the CLI still prints its own
+        half of the JSON, with the failure under ServerErrors, and the 27.x CLI in the launcher image exits 0."""
         result = self.run("info", "--format", "{{json .}}", timeout=30)
         if not result.ok:
             return None
+        lines = [line.strip() for line in result.out.splitlines() if line.strip().startswith("{")]
         try:
-            return json.loads(result.out.strip().splitlines()[-1])
+            data = json.loads(lines[-1])
         except (json.JSONDecodeError, IndexError):
             return None
+        if not isinstance(data, dict) or data.get("ServerErrors"):
+            return None
+        return data
 
     def containers(self, *filters: str) -> list[dict]:
         """Every container (running or not), each with its labels parsed into a dict."""

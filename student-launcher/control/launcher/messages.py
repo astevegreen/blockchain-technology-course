@@ -5,6 +5,8 @@ import re
 
 DOCKER_SETTINGS = "Open Docker Desktop, choose Settings, then Resources"
 
+DOCKER_DOWN = "Docker isn't running. Open Docker Desktop, wait until it says it is running, then {then}."
+
 NO_INTERNET = ("No internet connection. The first start of each lab downloads it, so connect to the internet and "
                "press Start again.")
 NO_DISK = ("Your computer is out of disk space for this lab. Free some space (or press Reset on labs you have "

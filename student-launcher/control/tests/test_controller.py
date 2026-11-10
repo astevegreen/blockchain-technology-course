@@ -81,6 +81,32 @@ class Api(unittest.TestCase):
         self.assertEqual(status, 503)
         self.assertIn("Open Docker Desktop", body["message"])
 
+    def test_no_engine_is_not_running_at_page_load(self):
+        # What the docker 27.5.1 CLI in the launcher image prints, exit 0, when no engine answers (10 Nov 2026,
+        # DOCKER_HOST at a dead socket): its own half of the JSON with the failure in ServerErrors, plus the
+        # error on stderr, which the runner merges before or after the JSON.
+        error = "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?"
+        half = json.dumps({"ID": "", "ServerVersion": "", "MemTotal": 0, "Architecture": "", "ServerErrors": [error],
+                           "ClientInfo": {"Version": "27.5.1"}})
+        for out in (half, f"{error}\n{half}\n", f"{half}\n{error}\n"):
+            with self.subTest(out=out[:20]):
+                self.bench.fake.info_out = out
+                system = self.call("GET", "/api/system")[1]
+                self.assertEqual(system["docker"], {"running": False, "version": None})
+                status, body = self.call("GET", "/api/labs")
+                self.assertEqual(status, 503)
+                self.assertEqual(body["message"], "Docker isn't running. Open Docker Desktop, wait until it says it "
+                                                  "is running, then reload this page.")
+                self.assertEqual(self.call("POST", "/api/labs/hello/start")[0], 503)
+
+    def test_engine_back_shows_the_labs_again(self):
+        self.bench.fake.info = None
+        self.assertEqual(self.call("GET", "/api/labs")[0], 503)
+        self.assertEqual(self.call("GET", "/api/system")[1]["docker"], {"running": False, "version": None})
+        self.bench.fake.info = {"Architecture": "x86_64", "MemTotal": 8 * GB}
+        self.assertEqual(self.call("GET", "/api/labs")[0], 200)
+        self.assertEqual(self.call("GET", "/api/system")[1]["docker"], {"running": True, "version": "27.5.1"})
+
     def test_failed_start_shows_a_plain_message(self):
         self.bench.fake.fail[("pull",)] = "Error response from daemon: dial tcp: lookup ghcr.io: no such host"
         self.call("POST", "/api/labs/hello/start")

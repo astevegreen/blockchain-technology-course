@@ -340,9 +340,12 @@ class Controller:
         return "not-downloaded", None
 
     def labs(self) -> list[dict]:
+        info = self.docker.info()
+        if info is None:
+            # With no engine every lab would look "not downloaded": say what is wrong as soon as the page loads.
+            raise Refused(503, messages.DOCKER_DOWN.format(then="reload this page"))
         rows = self.course_containers()
         present = self.present_images()
-        info = self.docker.info()
         saved = self.load_state()
         out = []
         for lab in self.release.page_labs():
@@ -360,11 +363,12 @@ class Controller:
 
     def system(self) -> dict:
         info = self.docker.info()
-        version = self.docker.run("version", "--format", "{{.Server.Version}}", timeout=30)
+        version = self.docker.run("version", "--format", "{{.Server.Version}}", timeout=30) if info else None
         platform = system.platform_of(info)
         ports = self.probe.check() if info else {}
         return {
-            "docker": {"running": info is not None, "version": version.out.strip() if version.ok else None},
+            "docker": {"running": info is not None,
+                       "version": (version.out.strip() or None) if version and version.ok else None},
             "memory_mb": system.memory_mb(info),
             "arch": platform,
             "arch_name": system.ARCH_NAME.get(platform or "", None),
@@ -408,8 +412,7 @@ class Controller:
             return job.view()
         info = self.docker.info()
         if info is None:
-            raise Refused(503, "Docker isn't running. Open Docker Desktop, wait until it says it is running, then "
-                               "press Start again.")
+            raise Refused(503, messages.DOCKER_DOWN.format(then="press Start again"))
         reason = self.unavailable_reason(lab, info)
         if reason:
             raise Refused(409, reason)
