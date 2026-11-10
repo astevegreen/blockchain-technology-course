@@ -5,6 +5,7 @@ import re
 import subprocess
 import time
 import unittest
+import uuid
 from urllib.parse import quote
 
 from live_support import (
@@ -827,6 +828,49 @@ class HLFTtydTests(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
         finally:
             terminal.close()
+
+    def test_ttyd_student_issues_a_diploma_and_reads_it_back(self) -> None:
+        # Chapter 1 of the student guide, typed into the student's own terminal: the one ledger write this suite
+        # makes without the instructor's execute and seed APIs, so it also runs on the student launcher, which
+        # has neither. The results print on one line with commas, not spaces, so the screen zellij redraws reads
+        # back whole; the typed command never matches the patterns below.
+        asset_id = f"diploma-{self.claim.station}-{uuid.uuid4().hex[:8]}"
+        terminal = self._require_ttyd_session()
+        try:
+            write = terminal.run_command(
+                f"out=$(invoke create {asset_id} credential 4 'Regression Student' 2024 'Computer Science' "
+                "'Master of Science' 2>&1); rc=$?; "
+                r"""printf 'rc=%s,msp=%s,tx=%s,\n' "$rc" "$CORE_PEER_LOCALMSPID" """
+                r""""$(printf '%s' "$out" | sed -n 's/.*txid \[\([0-9a-f]\{64\}\)\].*/\1/p' | head -n 1)"; """
+                r"""[ "$rc" = 0 ] || printf '%s\n' "$out" | tail -n 15; (exit $rc)""",
+                timeout_seconds=120,
+            )
+            written = strip_terminal_artifacts(write.raw_output)
+            self.assertEqual(write.exit_code, 0, f"invoke create failed: {written[-900:]}")
+            match = re.search(r"rc=0,msp=([A-Za-z0-9]+),tx=([0-9a-f]{64}),", written)
+            self.assertIsNotNone(match, f"no MSP and txid after invoke create: {written[-900:]}")
+            msp, tx_id = match.groups()
+            # The station's own org (generate_student_overlay.student_msp), not a consortium org, signs the write.
+            self.assertEqual(msp, f"Student{int(self.claim.station[1:]):02d}MSP", written[-900:])
+
+            read = terminal.run_command(
+                f"query {asset_id} | jq -r '\"got,\" + .ID + \",\" + .Status + \",\" + .IssuerMSP + \",end\"'",
+                timeout_seconds=60,
+            )
+            got = strip_terminal_artifacts(read.raw_output)
+            self.assertEqual(read.exit_code, 0, f"query failed: {got[-900:]}")
+            self.assertRegex(got, rf"got,{re.escape(asset_id)},active,{msp},end")
+        finally:
+            terminal.close()
+
+        # The explorer's transaction page, which the student opens next, names the station's org as the signer.
+        deadline = time.time() + 60
+        while True:
+            tx = get_hlf_transaction(self.student_session, tx_id, self.base_url).json()["transaction"]
+            if "error" not in tx or time.time() > deadline:
+                break
+            time.sleep(3)
+        self.assertEqual(tx.get("creator_msp"), msp, tx)
 
     def test_ttyd_invoke_helper_available(self) -> None:
         terminal = self._require_ttyd_session()
