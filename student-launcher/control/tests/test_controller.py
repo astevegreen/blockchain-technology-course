@@ -2,6 +2,8 @@
 reconciliation, the classroom refusal, port fallback, memory and processor checks, updates and lab actions."""
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import threading
 import time
@@ -388,6 +390,29 @@ class LaneLabs(unittest.TestCase):
         dispatch(c, "POST", "/api/labs/hlf/start")
         self.assertFalse(self.bench.fake.ran("-p", "hlf", "up"))
         self.assertEqual(self.bench.state("hlf"), "running")
+
+    def test_lane_lab_with_only_a_lane_image_skips_compose_up(self):
+        # consensus and p2p_trust: the launcher compose file names one service, under the lane-image profile, so
+        # `compose config` lists no service and `compose up` would fail with "no service selected".
+        c = self.bench.controller
+        self.bench.fake.compose_services["hlf"] = []
+        dispatch(c, "POST", "/api/labs/hlf/start")
+        self.assertEqual(c.progress("hlf")["phase"], "running")
+        self.assertFalse(self.bench.fake.ran("-p", "hlf", "up"))
+        self.assertTrue(self.bench.fake.ran("pull"))
+        self.assertEqual(self.bench.state("hlf"), "running")
+        dispatch(c, "POST", "/api/labs/hlf/stop")  # no container of its own is left behind, so not "stopped"
+        self.assertEqual(self.bench.state("hlf"), "downloaded")
+
+    def test_a_failed_start_writes_dockers_words_to_the_log(self):
+        c = self.bench.controller
+        self.bench.fake.fail[("compose", "-p", "hlf")] = "service \"web\" refers to undefined network x"
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            dispatch(c, "POST", "/api/labs/hlf/start")
+        self.assertEqual(c.progress("hlf")["phase"], "error")
+        self.assertNotIn("undefined network", c.progress("hlf")["message"])
+        self.assertIn("undefined network", err.getvalue())
 
 
 class Http(unittest.TestCase):

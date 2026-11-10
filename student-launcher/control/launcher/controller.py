@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import threading
 import time
+import traceback
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -100,6 +102,18 @@ def http_post(url: str, timeout: float) -> tuple[int, str]:
         return 0, str(err)
 
 
+def log(text: str) -> None:
+    """A line for `docker logs course-launcher`. The page shows a plain sentence; the log keeps Docker's own words,
+    so a failed start can be diagnosed afterwards."""
+    print(f"[launcher] {text}", file=sys.stderr, flush=True)
+
+
+def failed(result, doing: str) -> Refused:
+    """The plain message for the page, with Docker's output (its last lines) written to the log."""
+    log(f"{doing} failed (exit {result.code}): {result.out.strip()[-2000:]}")
+    return Refused(500, messages.explain(result.out, doing))
+
+
 class Controller:
     def __init__(self, release: Release, docker: Docker, state_dir: Path, self_image: str = "",
                  probe: system.PortProbe | None = None, internet: Callable[[], bool] = system.internet_reachable,
@@ -179,7 +193,10 @@ class Controller:
         except ValueError:
             config = None
         if not config:
-            raise Refused(500, messages.explain(result.out, "reading the lab's setup"))
+            if result.ok:  # the output is the lab's whole setup, secrets included: keep it out of the log
+                log("reading the lab's setup failed: compose config printed no JSON")
+                raise Refused(500, messages.explain(result.out, "reading the lab's setup"))
+            raise failed(result, "reading the lab's setup")
         self.refuse_host_files(lab, config)
         labels = {LABEL_LAB: lab["id"], LABEL_RELEASE: self.release.version}
         body = {"services": {name: {"labels": labels} for name in sorted(config.get("services") or {})}}
@@ -404,6 +421,7 @@ class Controller:
             except Refused as err:
                 job.phase, job.message = "error", err.message
             except Exception:  # noqa: BLE001 - the page must always get a plain answer
+                log(f"starting {lab['id']} failed: {traceback.format_exc()}")
                 job.phase, job.message = "error", messages.GENERIC.format(doing="starting the lab")
 
     def do_start(self, lab: dict, job: Job) -> None:
@@ -439,9 +457,13 @@ class Controller:
         orphans = () if lab.get("uses_lane_service") else ("--remove-orphans",)
         if changed and not lab.get("keep_volumes_on_update"):
             self.compose(lab, "down", "-v", *orphans, timeout=300)
+        if not config.get("services"):
+            # Every service sits under a compose profile (a lane lab that is only its lane image): `compose up`
+            # would fail with "no service selected". The pull fetched the image; lane-service starts the lane.
+            return
         result = self.compose(lab, "up", "-d", "--pull", "missing", *orphans)
         if not result.ok:
-            raise Refused(500, messages.explain(result.out, "starting the lab"))
+            raise failed(result, "starting the lab")
 
     def ensure_networks(self, extra: dict | None = None) -> None:
         """Create the union of every manifest's networks, plus any other external network `extra` names."""
@@ -459,7 +481,7 @@ class Controller:
                 args.append("--internal")
             result = self.docker.run(*args, name, timeout=60)
             if not result.ok and "already exists" not in result.out:
-                raise Refused(500, messages.explain(result.out, "setting up the lab network"))
+                raise failed(result, "setting up the lab network")
 
     def join_router_net(self) -> None:
         """The router's `location /` reaches the control page as course-launcher on router-net."""
@@ -527,7 +549,7 @@ class Controller:
 
             result = self.docker.run("pull", ref, on_line=on_line, timeout=3600)
             if not result.ok:
-                raise Refused(500, messages.explain(result.out, "downloading the lab"))
+                raise failed(result, "downloading the lab")
             job.pulled_mb = int(job.total_mb * (index + 1) / len(missing))
 
     # ---------- stop, reset, actions, shutdown ----------
@@ -552,7 +574,7 @@ class Controller:
             return
         result = self.compose(lab, "stop", timeout=300)
         if not result.ok:
-            raise Refused(500, messages.explain(result.out, "stopping the lab"))
+            raise failed(result, "stopping the lab")
 
     def reset(self, lab_id: str) -> dict:
         lab = self.page_lab(lab_id)
@@ -572,7 +594,7 @@ class Controller:
         else:
             result = self.compose(lab, "down", "-v", "--remove-orphans", timeout=300)
             if not result.ok:
-                raise Refused(500, messages.explain(result.out, "resetting the lab"))
+                raise failed(result, "resetting the lab")
         volumes = self.docker.run("volume", "ls", "-q", "--filter", f"label={PROJECT_LABEL}={lab['compose_project']}",
                                   timeout=60)
         if volumes.ok and volumes.out.split():
