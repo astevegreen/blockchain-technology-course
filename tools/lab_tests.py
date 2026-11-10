@@ -23,10 +23,14 @@ ALL = "*"
 # The explorer, tokens and dex labs pull Otterscan (about 4 GB) and Foundry (about 0.9 GB); the wallet and trace labs
 # pull the public bitcoin-mempool image (about 2.4 GB). A runner has room for one lab's images per job.
 IN_CI = ["exercises", "quiz-engine", "explorer", "tokens", "dex", "wallet", "tron", "cross-chain", "bitcoin-trace", "coinjoin-trace", "final-trace",
-         "cryptography", "ethereum_lab", "hlf", "consensus", "p2p_trust", "bitcoin"]
+         "cryptography", "ethereum_lab", "hlf", "hlf-launcher", "consensus", "p2p_trust", "bitcoin"]
 
 # Lab folders under dynamic-labs/ whose test folder has another name.
 TEST_NAME = {"quiz-engine-v2": "quiz-engine"}
+
+# Labs whose files also break another suite: the hlf-launcher suite runs the hlf suite's own tests (and its code
+# under dynamic-labs/hlf/) against the student launcher stack, so a change to hlf tests both.
+ALSO_RUNS = {"hlf": ["hlf-launcher"]}
 
 # Folders and files under dynamic-labs/ that no lab runs: a change here tests nothing.
 NOT_RUN = {"bitcoin-forensics", "bitcoin-graph", "docs", "tests", "PRIMER.md", "README.md", ".gitignore"}
@@ -62,6 +66,9 @@ def lab_of(path: str) -> str | None:
 def labs_for(files: list[str]) -> list[str]:
     """The CI labs that `files` can break. Shared parts (router, lane service, lab-manager.sh, ...) break them all."""
     hit = {lab_of(f) for f in files}
+    for lab, also in ALSO_RUNS.items():
+        if lab in hit:
+            hit.update(also)
     return list(IN_CI) if ALL in hit else [lab for lab in IN_CI if lab in hit]
 
 

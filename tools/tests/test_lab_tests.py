@@ -25,7 +25,15 @@ class LabsFor(unittest.TestCase):
         self.assertEqual(lab_tests.labs_for([f"{TESTS}/automated/quiz-engine/run.sh"]), ["quiz-engine"])
 
     def test_a_lab_not_yet_in_ci_runs_nothing(self) -> None:
-        self.assertEqual(lab_tests.labs_for(["dynamic-labs/hlf/app.py", f"{TESTS}/automated/hlf/run.sh"]), [])
+        self.assertEqual(lab_tests.labs_for(["dynamic-labs/bitcoin-forensics/x.py", "dynamic-labs/hlf/app.py"]), [])
+
+    def test_hlf_changes_run_both_hlf_suites(self) -> None:
+        with mock.patch.object(lab_tests, "IN_CI", ["exercises", "hlf", "hlf-launcher"]):
+            for f in ["dynamic-labs/hlf/app.py", f"{TESTS}/automated/hlf/test_hlf_live.py"]:
+                self.assertEqual(lab_tests.labs_for([f]), ["hlf", "hlf-launcher"], f)
+            self.assertEqual(lab_tests.labs_for(["dynamic-labs/hlf/docker-compose.launcher.yml"]), ["hlf", "hlf-launcher"])
+            self.assertEqual(lab_tests.labs_for([f"{TESTS}/automated/hlf-launcher/run.sh"]), ["hlf-launcher"])
+
 
     def test_shared_parts_and_the_workflow_run_every_ci_lab(self) -> None:
         for f in ["dynamic-labs/lab-manager.sh", "dynamic-labs/router/nginx.conf", "dynamic-labs/lane-service/app.py",
@@ -45,6 +53,12 @@ class LabsFor(unittest.TestCase):
             self.assertIn(lab, tested)
         for folder in lab_tests.TEST_NAME:
             self.assertTrue((lab_tests.REPO / "dynamic-labs" / folder).is_dir(), folder)
+
+
+class Registry(unittest.TestCase):
+    def test_hlf_launcher_is_in_ci(self) -> None:
+        self.assertIn("hlf-launcher", lab_tests.IN_CI)
+        self.assertIn("hlf-launcher", lab_tests.tested_labs())
 
 
 class Runners(unittest.TestCase):
