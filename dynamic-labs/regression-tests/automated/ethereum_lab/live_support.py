@@ -77,6 +77,8 @@ if _AUTOMATED_DIR not in sys.path:
 import live_common  # noqa: E402
 
 RegressionFailure = live_common.RegressionFailure
+STUDENT_LAUNCHER = live_common.STUDENT_LAUNCHER
+NO_INSTRUCTOR = live_common.NO_INSTRUCTOR
 new_session = live_common.new_session
 clear_cookie = live_common.clear_cookie
 _cookie_header = live_common.cookie_header
@@ -209,6 +211,8 @@ def list_claims(
     *,
     base_url: str = DEFAULT_BASE_URL,
 ) -> dict:
+    if STUDENT_LAUNCHER:  # no claims API there: the station comes from the lane's own config
+        return {"claims": []}
     response = instructor_session.get(f"{base_url}/api/ethereum/claims", timeout=10)
     if response.status_code != 200:
         raise RegressionFailure(
@@ -224,6 +228,8 @@ def release_claim(
     wipe: bool = True,
     base_url: str = DEFAULT_BASE_URL,
 ) -> None:
+    if STUDENT_LAUNCHER:  # the student's one lane stays theirs, so a "fresh" claim is the same lane again
+        return
     response = instructor_session.delete(
         f"{base_url}/api/ethereum/claims/{claim_uuid}",
         params={"wipe": "1" if wipe else "0"},

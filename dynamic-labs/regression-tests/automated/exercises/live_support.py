@@ -43,6 +43,7 @@ if _AUTOMATED_DIR not in sys.path:
 import live_common  # noqa: E402
 
 RegressionFailure = live_common.RegressionFailure
+STUDENT_LAUNCHER = live_common.STUDENT_LAUNCHER
 new_session = live_common.new_session
 clear_cookie = live_common.clear_cookie
 _session_has_valid_instructor_cookie = live_common.session_has_valid_instructor_cookie

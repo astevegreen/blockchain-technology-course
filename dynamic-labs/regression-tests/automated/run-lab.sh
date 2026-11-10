@@ -42,6 +42,8 @@ LAB_PROJECTS=(
 
 FRESH_START=0
 SKIP_START=0
+# 1 when --skip-start finds the student launcher's own stack: see student_launcher_running.
+STUDENT_LAUNCHER=0
 DIRECT_HOST=0
 MATCH_PATTERN=""
 
@@ -52,6 +54,19 @@ reload_lab_manager_env() {
     source "${ROOT_DIR}/.lab-manager.env"
     set +a
   fi
+}
+
+# The student launcher's own stack (student-launcher/, started by its wrapper) is running: its control container
+# is up and the router carries the course.release label, which only the launcher's compose files set. That stack
+# has no instructor pages, no lab-manager files and no local image tags, so with --skip-start the suite gets
+# LAB_REGRESSION_STUDENT_LAUNCHER=1 (live_common.STUDENT_LAUNCHER) and skips what the launcher leaves out. The
+# classroom stack, and the launcher passes that swap one lab under the classroom router (launcher-stack.sh,
+# hlf-launcher), never match.
+student_launcher_running() {
+  local release
+  [[ "$(docker inspect -f '{{.State.Running}}' course-launcher 2>/dev/null)" == "true" ]] || return 1
+  release="$(docker inspect -f '{{index .Config.Labels "course.release"}}' router-router-1 2>/dev/null)" || return 1
+  [[ -n "${release}" ]]
 }
 
 # A setting of this lab's suite, read from the environment: lab_setting REGRESSION_RUNNER_IMAGE <default>.
@@ -188,6 +203,9 @@ suite_env() {
       "${p}_STUDENT_HOME_ROOT=$(lab_setting STUDENT_HOME_ROOT '')"
     )
   fi
+  if [[ "${STUDENT_LAUNCHER}" == "1" ]]; then
+    SUITE_ENV+=("LAB_REGRESSION_STUDENT_LAUNCHER=1")
+  fi
 }
 
 run_in_container() {
@@ -224,6 +242,11 @@ run_lab() {
   HOST_BASE_URL="$(lab_setting REGRESSION_HOST_BASE_URL http://127.0.0.1)"
 
   parse_args "$@"
+
+  if [[ "${SKIP_START}" == "1" ]] && student_launcher_running; then
+    STUDENT_LAUNCHER=1
+    echo "${LAB_TAG} the student launcher's stack is running: instructor-only tests are skipped"
+  fi
 
   if [[ "${SKIP_START}" != "1" ]]; then
     if [[ "${FRESH_START}" == "1" ]]; then

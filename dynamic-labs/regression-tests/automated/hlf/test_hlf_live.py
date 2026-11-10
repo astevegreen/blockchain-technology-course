@@ -10,6 +10,8 @@ from urllib.parse import quote
 from live_support import (
     DEFAULT_BASE_URL,
     LAUNCHER_STACK,
+    NO_INSTRUCTOR,
+    STUDENT_LAUNCHER,
     ClaimContext,
     RUNNER_CONTAINER,
     claim_hlf_station,
@@ -91,6 +93,12 @@ _SESSION_MAX_AGE = 600
 
 def _get_shared_instructor_session() -> "requests.Session":
     global _shared_instructor_session, _shared_instructor_session_ts
+    if STUDENT_LAUNCHER:
+        # No instructor to log in as: the tests that need one are skipped, and the rest read public pages, so a
+        # plain session stands in.
+        if _shared_instructor_session is None:
+            _shared_instructor_session = new_session()
+        return _shared_instructor_session
     now = time.time()
     if _shared_instructor_session is not None and (now - _shared_instructor_session_ts) < _SESSION_MAX_AGE:
         try:
@@ -169,6 +177,7 @@ class HLFRouterAndAuthTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertTrue((resp.headers.get("Location") or "").endswith("/labs/hlf/claim"))
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_instructor_panel_loads_when_authenticated(self) -> None:
         resp = self.instructor_session.get(
             f"{self.base_url}/labs/hlf/instructor/",
@@ -189,6 +198,8 @@ class HLFRouterAndAuthTests(unittest.TestCase):
                 script = self.session.get(url, timeout=10, allow_redirects=False, headers={"Accept": "*/*"})
                 self.assertEqual(script.status_code, 401)
                 self.assertEqual(script.content, b"")
+                if STUDENT_LAUNCHER:  # no instructor to serve the file to
+                    continue
                 served = self.instructor_session.get(url, timeout=10)
                 self.assertEqual(served.status_code, 200)
                 self.assertGreater(len(served.content), 1000)
@@ -229,11 +240,16 @@ class HLFNetworkAPITests(unittest.TestCase):
     @unittest.skipUnless(LAUNCHER_STACK, "the classroom stack sets no course labels")
     def test_fabric_containers_carry_the_launcher_labels(self) -> None:
         # The launcher counts a lab's containers by these labels (docker-compose.launcher.yml x-labels); lab.sh
-        # puts them on every Fabric container it starts. run.sh sets COURSE_RELEASE=regression.
+        # puts them on every Fabric container it starts. hlf-launcher/run.sh sets COURSE_RELEASE=regression; the
+        # student launcher sets its own release, which the runner's compose label carries.
+        release = "regression"
+        if STUDENT_LAUNCHER:
+            release = ((docker_inspect(RUNNER_CONTAINER).get("Config") or {}).get("Labels") or {}).get("course.release")
+            self.assertTrue(release, RUNNER_CONTAINER)
         for container in ("orderer.example.com", *CONSORTIUM_PEERS, "ca_org1", "couchdb0", "chaincode-basic"):
             labels = (docker_inspect(container).get("Config") or {}).get("Labels") or {}
             self.assertEqual(labels.get("course.lab"), "hlf", container)
-            self.assertEqual(labels.get("course.release"), "regression", container)
+            self.assertEqual(labels.get("course.release"), release, container)
 
     def test_explorer_returns_network_topology(self) -> None:
         explorer = get_hlf_explorer(self.instructor_session, self.base_url)
@@ -249,6 +265,7 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIsInstance(resp.json(), dict)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_execute_rejects_raw_command(self) -> None:
         url = f"{self.base_url}/labs/hlf/api/hlf/execute"
         resp = self.instructor_session.post(
@@ -259,6 +276,7 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn("Rejected", resp.json().get("stderr", ""))
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_execute_structured_query(self) -> None:
         result = hlf_execute(
             self.instructor_session,
@@ -271,11 +289,13 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertIn("exit_code", result)
         self.assertEqual(result.get("exit_code"), 0)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_seed_endpoint(self) -> None:
         result = hlf_seed(self.instructor_session, preset="sample", base_url=self.base_url)
         self.assertIn("success", result)
         self.assertTrue(result.get("success"), result)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_claims_list(self) -> None:
         data = list_hlf_claims(self.instructor_session, self.base_url)
         self.assertIn("summary", data)
@@ -296,6 +316,7 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertIn("network", data)
         self.assertIn("chaincode", data)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_instructor_snapshot_returns_health_logs_and_exercises(self) -> None:
         data = get_instructor_snapshot(self.instructor_session, self.base_url)
         for key in ("health", "logs", "exercises"):
@@ -365,6 +386,7 @@ class HLFNetworkAPITests(unittest.TestCase):
         self.assertIn("asset_id must be alphanumeric", resp.text)
 
 
+@unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
 class HLFClaimManagementTests(unittest.TestCase):
     """Tests for instructor claim administration endpoints."""
 
@@ -408,6 +430,7 @@ class HLFClaimManagementTests(unittest.TestCase):
             raise
 
 
+@unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
 class HLFLaneTests(unittest.TestCase):
     """Tests for instructor lane overview."""
 
@@ -612,12 +635,14 @@ class HLFClaimFlowTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200, resp.text[:300])
         self.assertIn(f"/labs/hlf/c/{claim.uuid}/", resp.url)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_claim_appears_in_instructor_list(self) -> None:
         claim = self.require_claim()
         data = list_hlf_claims(self.instructor_session, self.base_url)
         uuids = [c["uuid"] for c in data.get("claims", [])]
         self.assertIn(claim.uuid, uuids)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_release_claim_removes_from_list(self) -> None:
         claim = self.require_claim()
         release_hlf_claim(
@@ -651,6 +676,7 @@ class HLFClaimFlowTests(unittest.TestCase):
         )
         self.assertEqual(resp.status_code, 400)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_progress_list_shows_sessions(self) -> None:
         data = get_hlf_progress(self.instructor_session, self.base_url)
         self.assertIn("progress", data)
@@ -664,6 +690,8 @@ class HLFClaimFlowTests(unittest.TestCase):
             self.base_url,
             via_claim=claim.uuid,
         )
+        if STUDENT_LAUNCHER:  # reading the detail back is the instructor's
+            return
         detail = get_hlf_progress_detail(
             self.instructor_session, claim.uuid, self.base_url,
         )
@@ -926,6 +954,7 @@ class HLFFaultScenarioTests(unittest.TestCase):
         scenarios = health.get("fault_scenarios", {})
         self.assertIn("endorsement_policy", scenarios)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_fault_endpoint_rejects_unknown_target(self) -> None:
         result = hlf_fault(self.instructor_session, "nonexistent", "trigger", self.base_url)
         self.assertFalse(result.get("success"))
@@ -957,13 +986,16 @@ class HLFFaultScenarioTests(unittest.TestCase):
             time.sleep(5)
         self.assertEqual(out.get("exit_code"), 0, f"writes did not recover after {target}: {out}")
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_peer_outage_quick_recover_restarts_the_peer(self) -> None:
         self._assert_quick_recover_restarts("peer_org3", "peer0.southhudson.example.com")
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_orderer_outage_quick_recover_restarts_the_orderer(self) -> None:
         self._assert_quick_recover_restarts("orderer", "orderer.example.com")
 
 
+@unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
 class HLFFabricDemoTests(unittest.TestCase):
     """The day-5 instructor demo (docs/INSTRUCTOR_GUIDE.md): who signed it,
     who decides, who can see it. Each test runs one beat through the same
@@ -1084,6 +1116,7 @@ class HLFFabricDemoTests(unittest.TestCase):
         self.assertEqual(code, 0, f"writes did not recover after Restore: {out[-500:]}")
 
 
+@unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
 class HLFLifecycleLogTests(unittest.TestCase):
     """Tests for the lifecycle log streaming API."""
 
@@ -1155,7 +1188,8 @@ class HLFAuthGateTests(unittest.TestCase):
 
     def assert_router_refused(self, path, resp) -> None:
         # The router's instructor-gated catch-all for /labs/hlf/api/hlf/* answers a missing
-        # login itself, before Flask: @hlf_api_unauth in router/routes/_auth.conf.
+        # login itself, before Flask: @hlf_api_unauth in router/routes/_auth.conf. The student launcher has no
+        # auth service to ask, and its router answers the same way (router/routes/local/auth-off.conf).
         self.assertEqual(resp.status_code, 401, f"{path} returned {resp.status_code} without auth")
         self.assertEqual(resp.json(), {"error": "instructor auth required"}, path)
 
@@ -1189,6 +1223,7 @@ class HLFAuthGateTests(unittest.TestCase):
             session.close()
 
 
+@unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
 class HLFRestartRecoveryTests(unittest.TestCase):
     """Verify instructor reset/start restores a fully usable classroom."""
 

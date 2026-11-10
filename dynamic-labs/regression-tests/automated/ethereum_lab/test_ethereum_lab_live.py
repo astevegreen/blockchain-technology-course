@@ -7,6 +7,8 @@ import unittest
 
 from live_support import (
     DEFAULT_BASE_URL,
+    NO_INSTRUCTOR,
+    STUDENT_LAUNCHER,
     ClaimContext,
     claim_student_lane,
     clear_cookie,
@@ -63,6 +65,8 @@ class EthereumLiveRegressionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.instructor_session = new_session()
+        if STUDENT_LAUNCHER:  # no instructor to log in as; the claim itself waits for the lane service
+            return
         probe_session = new_session()
         try:
             wait_for_http(
@@ -196,6 +200,8 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         self.assertEqual(len(config["assignedPrivateKey"]), 66)
         self.assertEqual(config["rpcUrl"], "/rpc-write")
         self.assertTrue(config["terminalRpcUrl"].endswith("/labs/ethereum_lab/rpc-write"))
+        if STUDENT_LAUNCHER:  # the student's side is checked; no instructor is there to list the claim
+            return
 
         claims = list_claims(self.instructor_session, base_url=self.base_url)["claims"]
         self.assertTrue(any(entry["uuid"] == claim.uuid and entry["station"] == claim.station for entry in claims))
@@ -256,6 +262,10 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         # X-Instructor header, so only the router may front it: on a cloud host a public port
         # would hand both to anyone (ethereum_lab/docker-compose.yml, docs/security-triage.md C9).
         bindings = docker_inspect("ethereum-trainer-instructor").get("HostConfig", {}).get("PortBindings") or {}
+        if STUDENT_LAUNCHER:
+            # docker-compose.launcher.yml publishes no port at all: only the local router fronts the node.
+            self.assertEqual(bindings, {})
+            return
         self.assertIn("5173/tcp", bindings)
         for port, binds in bindings.items():
             for bind in binds or []:
@@ -330,7 +340,12 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         self.assertEqual(session_before.status_code, 200)
         before_payload = session_before.json()
         self.assertFalse(before_payload["isInstructor"])
-        self.assertFalse(before_payload["hasCreatedWallet"])
+        if STUDENT_LAUNCHER:
+            # The one lane is never released, and lab-api.js keeps this flag in the lane's memory:
+            # a second run of the suite can find it already set.
+            self.assertIsInstance(before_payload["hasCreatedWallet"], bool)
+        else:
+            self.assertFalse(before_payload["hasCreatedWallet"])
 
         register_wallet = self.student_session.post(
             f"{self.base_url}/labs/ethereum_lab/lab-api/register-wallet",
@@ -361,6 +376,8 @@ class EthereumLiveRegressionTests(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertTrue(response.json()["recorded"])
+        if STUDENT_LAUNCHER:  # the student's touches are recorded; no instructor is there to read them back
+            return
 
         summary = get_progress_summary(self.instructor_session, claim.uuid, base_url=self.base_url)
         self.assertEqual(summary["uuid"], claim.uuid)
@@ -379,6 +396,7 @@ class EthereumLiveRegressionTests(unittest.TestCase):
         self.assertIn("exercise:eth-token-erc721", detail["visited"])
         self.assertEqual(len(detail["timeline"]), 3)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_instructor_auth_and_surfaces(self) -> None:
         probe = new_session()
         try:

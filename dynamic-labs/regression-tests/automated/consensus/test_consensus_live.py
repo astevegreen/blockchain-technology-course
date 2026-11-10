@@ -5,6 +5,8 @@ import unittest
 
 from live_support import (
     DEFAULT_BASE_URL,
+    NO_INSTRUCTOR,
+    STUDENT_LAUNCHER,
     ClaimContext,
     claim_student_lane,
     clear_cookie,
@@ -38,6 +40,8 @@ class ConsensusLiveRegressionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.instructor_session = new_session()
+        if STUDENT_LAUNCHER:  # no instructor to log in as; the claim itself waits for the lane service
+            return
         probe_session = new_session()
         try:
             wait_for_http(
@@ -215,6 +219,7 @@ class ConsensusLiveRegressionTests(unittest.TestCase):
             f"{rootfs_attempt.stdout}\n{rootfs_attempt.stderr}",
         )
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_instructor_auth_and_surfaces(self) -> None:
         probe = new_session()
         try:

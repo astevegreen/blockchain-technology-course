@@ -143,6 +143,13 @@ class Assemble(unittest.TestCase):
             self.assertIn("hello-lab", [lab["id"] for lab in manifest["labs"]])
             self.assertTrue((out / "release/labs/hello-lab/docker-compose.launcher.yml").is_file())
 
+    def test_the_real_fixture_has_an_image_to_rebuild(self):
+        # The smoke test's Change check builds each row twice; with no row both launchers run the same digest.
+        rows = sr.fixture_builds()
+        self.assertEqual([(r["lab"], r["service"], r["variable"]) for r in rows],
+                         [("hello-lab", "hello", "HELLO_LAB_HELLO_IMAGE")])
+        self.assertTrue((sr.REPO / rows[0]["context"] / rows[0]["dockerfile"]).is_file())
+
     def test_a_missing_launcher_compose_file_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             labs = [{"id": "tron", "kind": "lab", "student_local": True,
