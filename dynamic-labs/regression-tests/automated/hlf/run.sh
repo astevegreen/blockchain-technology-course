@@ -57,6 +57,12 @@ lab_before_suite() {
   if [[ "${STUDENT_LAUNCHER}" == "1" ]]; then
     return 0
   fi
+  # The network's startup log (lab.sh up, run by the runner) goes into this run's log, as the hlf-launcher suite's
+  # does: a start that fails shows its cause, not only the "Startup failed with exit code 1" the suite reports
+  # (Lab Tests run 42837342011). The followers are stopped on exit, or they would hold the log pipe open.
+  trap 'pkill -f "exec hlf-hlf-runner-1 tail" 2>/dev/null; kill $(jobs -p) 2>/dev/null || true' EXIT
+  docker exec hlf-hlf-runner-1 tail -n +1 -F /opt/hlf/runtime/lifecycle.log /opt/hlf/runtime/debug.log 2>&1 \
+    | sed -u 's/^/[hlf-lifecycle] /' &
   local image missing=()
   for image in hlf-peer-ttyd:latest hlf-orderer-ttyd:latest chaincode-basic:latest; do
     docker image inspect "${image}" >/dev/null 2>&1 || missing+=("${image}")
