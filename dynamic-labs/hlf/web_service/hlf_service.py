@@ -826,6 +826,23 @@ class HLFLabService:
             self._governance_detail_cache = None
             self._governance_detail_ts = 0.0
 
+    def _start_claimed_lanes(self) -> None:
+        """Bring up the peers of stations claimed while the network was starting."""
+        try:
+            from claims import get_claim_manager  # type: ignore
+
+            results = get_claim_manager().start_claimed_lanes()
+        except Exception as exc:  # noqa: BLE001
+            self._record_lifecycle_line(f"[hlf] Claimed stations not started: {exc}")
+            return
+        if not results:
+            return
+        failed = [r["lane"] for r in results if not r.get("success")]
+        line = f"[hlf] Started the peers of {len(results) - len(failed)} claimed station(s)."
+        if failed:
+            line += f" Failed: {', '.join(failed)}."
+        self._record_lifecycle_line(line)
+
     def _reset_unclaimed_hot_spares(
         self,
         *,
@@ -3786,6 +3803,7 @@ rm -rf "$tmpdir"
                                 refill=True,
                                 force_runtime_ready=True,
                             )
+                            self._start_claimed_lanes()
                             self._record_lifecycle_line("[hlf] Network is up.")
                             threading.Thread(
                                 target=self._prewarm_governance_cache,

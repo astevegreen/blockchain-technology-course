@@ -602,6 +602,16 @@ class HLFClaimFlowTests(unittest.TestCase):
         self.assertTrue(claim.uuid)
         self.assertNotEqual(claim.uuid, "not-a-valid-uuid")
 
+    @unittest.skipUnless(LAUNCHER_STACK, "the classroom stack gives every browser its own station")
+    def test_second_browser_gets_the_same_station(self) -> None:
+        """The launcher runs one station for one student: a browser with no cookie gets it back, not a 503."""
+        claim = self.require_claim()
+        other = new_session()
+        self.addCleanup(other.close)
+        resp = other.get(f"{self.base_url}/labs/hlf/claim", timeout=15)
+        self.assertEqual(resp.status_code, 200, resp.text[:300])
+        self.assertIn(f"/labs/hlf/c/{claim.uuid}/", resp.url)
+
     def test_claim_appears_in_instructor_list(self) -> None:
         claim = self.require_claim()
         data = list_hlf_claims(self.instructor_session, self.base_url)

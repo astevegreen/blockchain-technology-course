@@ -46,6 +46,10 @@ SWEEP_INTERVAL_SECONDS = int(os.environ.get("HLF_CLAIM_SWEEP_INTERVAL", "60"))
 
 DEFAULT_POOL_SIZE = int(os.environ.get("HLF_CLAIM_WARM_POOL_SIZE") or os.environ.get("STUDENT_WARM_POOL_SIZE") or "3")
 MAX_POOL_SIZE = max(1, len(lane_ids()))
+# The student launcher sets this: the lab runs on the student's own PC, for that student alone.
+SINGLE_USER = os.environ.get("HLF_CLAIM_SINGLE_USER", "0") == "1"
+# How long start_claimed_lanes waits for a lane that another thread is starting or stopping.
+CLAIMED_LANE_BUSY_WAIT_SECONDS = 120
 
 POLICY_STICKY = "sticky"
 POLICY_WIPE = "wipe"
@@ -364,6 +368,45 @@ class ClaimManager:
                 self._warm_pool_recycling = False
             self._pool_maintenance_lock.release()
 
+    def _station_is_claimed(self, lane_id: str) -> bool:
+        with self._lock:
+            return lane_id in self._by_station
+
+    def start_claimed_lanes(self) -> List[Dict[str, Any]]:
+        """Start the peer of every claimed station, once the network is up.
+
+        Network startup enrols each student peer and then stops it, and the
+        warm pool only starts unclaimed stations. A student who claimed a
+        station while the network was still starting (the launcher opens the
+        page that early) was left with a stopped peer, and a console that
+        could not connect until they reloaded the page. start_lane is a no-op
+        for a peer that is already running.
+        """
+        with self._lock:
+            claimed = sorted(self._by_station.keys())
+        mgr = get_lane_manager()
+        results: List[Dict[str, Any]] = []
+        for lid in claimed:
+            deadline = time.time() + CLAIMED_LANE_BUSY_WAIT_SECONDS
+            try:
+                # The claim is checked before every start: a release meanwhile stops the lane, and it must stay stopped.
+                while self._station_is_claimed(lid):
+                    ok, msg = mgr.start_lane(lid)
+                    # "busy" is another start or stop of the same lane still in flight (the page's own early start
+                    # waits for the channel). Wait for it, then make sure the peer ended up running.
+                    if ok or not str(msg).endswith("is busy") or time.time() >= deadline:
+                        break
+                    time.sleep(2)
+                else:
+                    continue
+            except Exception as exc:  # noqa: BLE001
+                ok, msg = False, str(exc)
+                log.exception("claimed lane %s start raised exception", lid)
+            if not ok:
+                log.warning("claimed lane %s failed to start: %s", lid, msg)
+            results.append({"lane": lid, "success": bool(ok), "message": msg})
+        return results
+
     def claim(self, existing_uuid: Optional[str] = None) -> Tuple[Optional[str], Optional[str], str]:
         """Return (uuid, station, message).
 
@@ -383,6 +426,14 @@ class ClaimManager:
                     self._kick_start_lane(station)
                     return existing_uuid, station, "resumed"
             station = self._pick_free_station()
+            if station is None and SINGLE_USER and self._claims:
+                # One student, one PC: a second browser or a cleared cookie is the same student, so hand back
+                # their station rather than lock them out until the claim idles out.
+                own_uuid = max(self._claims, key=lambda u: self._claims[u]["last_active"])
+                self._claims[own_uuid]["last_active"] = now
+                station = self._claims[own_uuid]["station"]
+                self._kick_start_lane(station)
+                return own_uuid, station, "resumed"
             if station is None:
                 return None, None, "no free stations"
             new_uuid = str(uuid_lib.uuid4())
