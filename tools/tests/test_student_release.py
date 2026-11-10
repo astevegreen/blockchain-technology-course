@@ -72,6 +72,21 @@ class Matrix(unittest.TestCase):
         rows = sr.build_matrix([row("hlf", "hlf"), row("hlf", "hlf-runner")], V)
         self.assertEqual({r["image"] for r in rows}, {f"ghcr.io/astevegreen/course-labs:hlf-hlf-{V}"})
 
+    def test_the_real_bitcoin_instructor_is_the_student_build(self):
+        """The real manifest: bitcoin's student and instructor share a Dockerfile, so the release builds it once and
+        both variables pin that digest (as the published 2026.11.10-11 latest.json does). A change that gave the
+        instructor its own Dockerfile would build and ship a second copy; this says so."""
+        images = sr.load_images(REPO / "dynamic-labs" / "student-release-images.json")
+        built = [(r["lab"], r["service"]) for r in sr.build_matrix(images, V) if r["lab"] == "bitcoin"]
+        self.assertNotIn(("bitcoin", "instructor"), built)
+        self.assertIn(("bitcoin", "student"), built)
+        with tempfile.TemporaryDirectory() as tmp:
+            for r in sr.build_matrix(images, V):
+                (Path(tmp) / f"{sr.slug(r['lab'])}--{sr.slug(r['service'])}").write_text(D1)
+            got = sr.resolve_images(images, V, Path(tmp), inspect=lambda ref: D2)
+        self.assertEqual(got["BITCOIN_INSTRUCTOR_IMAGE"], got["BITCOIN_STUDENT_IMAGE"])
+        self.assertIn(":bitcoin-student-", got["BITCOIN_INSTRUCTOR_IMAGE"])
+
     def test_every_stub_tag_is_a_valid_docker_tag(self):
         for r in sr.build_matrix(sr.load_images(STUB), V):
             tag = r["image"].split(":", 1)[1]
