@@ -505,14 +505,18 @@ jobs:
           python3 tools/student_release.py drive --lab hello-lab --timeout 600
           running_digests | tee "$RUNNER_TEMP/rev2"
           if cmp -s "$RUNNER_TEMP/rev1" "$RUNNER_TEMP/rev2"; then echo "hello-lab still runs the first digests"; exit 1; fi
-          echo "Remove: a launcher without hello-lab cleans it up"
+          echo "Remove: a launcher without hello-lab cleans it up, its network too"
           launch plain
+          hello_net() { docker network ls -q --filter 'name=^hello-net$'; }
           for _ in $(seq 60); do
-            [ -z "$(docker ps -aq --filter label=course.lab=hello-lab)" ] && break
+            [ -z "$(docker ps -aq --filter label=course.lab=hello-lab)" ] && [ -z "$(hello_net)" ] && break
             sleep 2
           done
           if [ -n "$(docker ps -aq --filter label=course.lab=hello-lab)" ]; then
             docker ps -a --filter label=course.lab=hello-lab; echo "hello-lab containers remain"; exit 1
+          fi
+          if [ -n "$(hello_net)" ]; then
+            docker network ls; echo "hello-lab's network hello-net remains"; exit 1
           fi
           echo "Fixture lab: added, changed and removed"
       - name: Launcher log

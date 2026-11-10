@@ -31,10 +31,6 @@ slide index), which is never listed here.
   and its control-page screenshots (`blockchain-course/assets/run-labs/`) come from the sample-data preview, not the
   real launcher. Take real pictures on a clean Windows 11 PC and a Mac when the release test runs. (9 Nov 2026,
   launcher S7 student guide)
-- The launcher leaves a removed lab's Docker network behind: `reconcile` removes the lab's containers, volumes and
-  images (`student-launcher/control/launcher/controller.py`, `remove_lab`), but the network `ensure_networks` made
-  for it stays, empty, on the student's computer, and the release's fixture job checks containers only. (10 Nov 2026:
-  the fixture flow run by hand in WSL left `hello-net` after "Remove")
 - On the student launcher the Fabric suite writes nothing to the ledger: every write in
   `dynamic-labs/regression-tests/automated/hlf/test_hlf_live.py` goes through the instructor's execute and seed
   APIs, which the launcher does not have, so those tests are skipped there (24 of 70) and only reads are checked.

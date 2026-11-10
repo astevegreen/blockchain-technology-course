@@ -122,7 +122,8 @@ there. Named seeded volumes are not used, because baked data updates with the im
   parses every launcher compose file for `${X:?}` and fails if the generator misses one. No instructor-credentials
   file is written.
 - **Networks.** At start, the control container creates the union of every manifest's `networks` (the router joins
-  them all), then starts the router, then lane-service if any lab needs it.
+  them all), then starts the router, then lane-service if any lab needs it. It labels each one `course.release`, and
+  reconciliation removes a labelled network no manifest lists once no container, running or stopped, is on it.
 - **Labels.** Every launcher compose service carries `course.lab=<id>` and `course.release=<version>`, and
   reconciliation (spec 4.3) reads them. Project names stay `compose_project`, so a classroom stack and a local stack on
   one machine would collide. The control page refuses to start and says so when it finds containers without the

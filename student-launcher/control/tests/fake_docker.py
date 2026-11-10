@@ -52,6 +52,7 @@ class FakeDocker:
         self.containers = []     # {"ID", "Names", "State", "labels": {}, "Ports"}
         self.images = set()      # "name:tag" references
         self.networks = {"bridge", "host", "none"}
+        self.network_labels = {}     # network name -> its labels (`network create --label`)
         self.busy_ports = set()
         self.calls = []
         self.removed_images = []
@@ -62,10 +63,14 @@ class FakeDocker:
         self.counter = 0
 
     # -- helpers for tests --
-    def add_container(self, name, labels, state="running", ports=""):
+    def add_container(self, name, labels, state="running", ports="", networks=()):
         self.counter += 1
         self.containers.append({"ID": f"c{self.counter}", "Names": name, "State": state, "labels": dict(labels),
-                                "Ports": ports})
+                                "Ports": ports, "networks": list(networks)})
+
+    def add_network(self, name, labels=None):
+        self.networks.add(name)
+        self.network_labels[name] = dict(labels or {})
 
     def ran(self, *words):
         return [c for c in self.calls if all(w in c for w in words)]
@@ -83,7 +88,10 @@ class FakeDocker:
         if head == "version":
             return Result(0, "27.5.1\n")
         if head == "ps":
-            return Result(0, "\n".join(json.dumps(self.row(c)) for c in self.containers if self.matches(c, args)))
+            found = [c for c in self.containers if self.matches(c, args)]
+            if "-aq" in args:
+                return Result(0, "\n".join(c["ID"] for c in found))
+            return Result(0, "\n".join(json.dumps(self.row(c)) for c in found))
         if head == "image":
             return self.image(args)
         if head == "network":
@@ -126,6 +134,9 @@ class FakeDocker:
                 key, _, value = args[i + 1][len("label="):].partition("=")
                 if key not in c["labels"] or (value and c["labels"][key] != value):
                     return False
+            if word == "--filter" and args[i + 1].startswith("network="):
+                if args[i + 1][len("network="):] not in c.get("networks", []):
+                    return False
         return True
 
     def image(self, args):
@@ -144,9 +155,17 @@ class FakeDocker:
 
     def network(self, args):
         if args[1] == "ls":
-            return Result(0, "\n".join(sorted(self.networks)))
+            names = sorted(self.networks)
+            if "--filter" in args:
+                key = args[args.index("--filter") + 1][len("label="):]
+                names = [n for n in names if key in self.network_labels.get(n, {})]
+            return Result(0, "\n".join(names))
         if args[1] == "create":
-            self.networks.add(args[-1])
+            labels = dict(args[i + 1].split("=", 1) for i, w in enumerate(args) if w == "--label")
+            self.add_network(args[-1], labels)
+        if args[1] == "rm":
+            self.networks.discard(args[2])
+            self.network_labels.pop(args[2], None)
         return Result(0, "")
 
     def compose(self, args, env):

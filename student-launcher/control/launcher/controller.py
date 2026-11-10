@@ -705,7 +705,28 @@ class Controller:
             if ghost["compose_project"] and not self.classroom_project(ghost["compose_project"]):
                 self.remove_lab(ghost, images=True)
                 removed.append(lab_id)
+        self.prune_networks()
         return {"removed": removed}
+
+    def prune_networks(self) -> list[str]:
+        """Remove the networks this launcher made (ensure_networks labels them course.release) that no lab in the
+        release lists and no container uses, running or stopped: a lab dropped from the release leaves none behind.
+        A network another lab lists, or a classroom container sits on, stays."""
+        listed = self.docker.run("network", "ls", "--filter", f"label={LABEL_RELEASE}", "--format", "{{.Name}}",
+                                 timeout=60)
+        if not listed.ok:
+            return []
+        wanted = set(self.release.networks())
+        removed = []
+        for name in sorted(set(listed.out.split()) - wanted):
+            users = self.docker.run("ps", "-aq", "--filter", f"network={name}", timeout=60)
+            if not users.ok or users.out.split():
+                continue
+            if self.docker.run("network", "rm", name, timeout=60).ok:
+                removed.append(name)
+        if removed:
+            log(f"removed networks no lab uses: {', '.join(removed)}")
+        return removed
 
     def project_of(self, lab_id: str) -> str:
         for row in self.course_containers():
