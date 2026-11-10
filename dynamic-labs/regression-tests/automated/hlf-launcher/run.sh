@@ -70,6 +70,12 @@ lab_before_suite() {
     echo "${LAB_TAG} the launcher stack bind-mounts host paths: ${binds}" >&2
     exit 1
   fi
+  # The runner's output (lab.sh's startup) goes into this run's log, so a stalled start shows its cause.
+  # The followers are stopped on exit, or they would hold the log pipe open after the suite ends.
+  trap 'pkill -f "logs -f hlf-hlf-runner-1|exec hlf-hlf-runner-1 tail" 2>/dev/null; kill $(jobs -p) 2>/dev/null || true' EXIT
+  docker logs -f hlf-hlf-runner-1 2>&1 | sed -u 's/^/[hlf-runner] /' &
+  docker exec hlf-hlf-runner-1 tail -n +1 -F /opt/hlf/runtime/lifecycle.log /opt/hlf/runtime/debug.log 2>&1 \
+    | sed -u 's/^/[hlf-lifecycle] /' &
 }
 
 # The hlf suite's runner image, and its settings plus the launcher flag.
