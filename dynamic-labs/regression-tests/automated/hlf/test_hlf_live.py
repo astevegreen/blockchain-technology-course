@@ -720,17 +720,27 @@ class HLFTtydTests(unittest.TestCase):
 
     def _require_ttyd_session(self):
         ttyd_path = f"/labs/hlf/s/{self.claim.station}/term/"
-        terminal = ttyd_session(
-            self.student_session, self.base_url, ttyd_path,
-            connect_settle_seconds=60.0,
-        )
-        try:
-            terminal.connect()
-        except Exception as exc:
-            terminal.close()
-            self.fail(
-                f"ttyd websocket for {self.claim.station} failed to connect: {exc}"
+        # A websocket that ttyd accepts and then drops at once (its zellij attach exited, as once on main's Lab
+        # Tests run 42749584135 when the zellij test reconnected right after closing) gets one more try, as a
+        # student's tab is reconnected; any other error, a second drop or a missing prompt still fails.
+        for attempt in (1, 2):
+            terminal = ttyd_session(
+                self.student_session, self.base_url, ttyd_path,
+                connect_settle_seconds=60.0,
             )
+            try:
+                terminal.connect()
+                break
+            except Exception as exc:
+                terminal.close()
+                if attempt == 1 and type(exc).__name__ == "WebSocketConnectionClosedException":
+                    _log.warning("ttyd websocket for %s dropped on connect (%s); retrying once",
+                                 self.claim.station, exc)
+                    time.sleep(2)
+                    continue
+                self.fail(
+                    f"ttyd websocket for {self.claim.station} failed to connect: {exc}"
+                )
         if not terminal.prompt_ready:
             collected = strip_terminal_artifacts(terminal.collected)[-600:]
             terminal.close()
