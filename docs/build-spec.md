@@ -177,10 +177,12 @@ plan (what happens to every lab, the design card, the order of work) is `docs/an
   payment (idea 4), Who got paid? (idea 16) and Through the exchange (idea 24); the confirmation race (idea 7)
   and "Is it final yet?" (idea 9) follow, then the rest, a card first for each. Build two and time them in a
   lesson before building more. The marked beliefs and the lab for each are in the plan ("Owner's review").
-- Still open: belief 8 (a transaction's time is when it was sent) has no lab idea.
+- Belief 8 (a transaction's time is when it was sent): a lab for it is proposed on a design card in step 4,
+  with the first four (owner, 10 Nov: "Propose one in step 4").
 - Rebuilt as prediction labs, not retired: `signatures` (idea 4), `tamper-ledger` (idea 8), `micro-hashing`
-  (idea 3), `POW_mining_micro`, `distributed-systems` (idea 2), `ether_mev` (idea 20) and
-  `ether-smart-contract-micro` (idea 33). `merkle-trees` gains a proof step (idea 12).
+  (idea 3), `POW_mining_micro` (as a step of idea 3; owner, 10 Nov: "A step of Guess the input"),
+  `distributed-systems` (idea 2), `ether_mev` (idea 20) and `ether-smart-contract-micro` (idea 33).
+  `merkle-trees` gains a proof step (idea 12).
 - Archived: `hashing_merkle` and `bitcoin-attacks` (`archive/static-labs/README.md`).
 - The unscheduled Docker labs are decided. The P2P Trust Lab is archived. The Ethereum Lab is archived except
   its unused DeFi-risk contracts, which become an exploit part of about 40 minutes in day 8's afternoon lab.

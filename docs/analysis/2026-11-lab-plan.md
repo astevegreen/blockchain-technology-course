@@ -8,7 +8,7 @@ and the owner's `docs/technical-educator-pedagogical-blueprint.md`.
 **Status**: approved and locked in on 10 Nov 2026. The owner's review, the eight games, the build order, the
 scoring and the hide-and-trace guardrails are at the end ("Owner's review", "Locked in"), and where they differ
 from the draft above them, they win. The rules are recorded in `docs/build-spec.md` ("A prediction lab", "Lab
-games"). One thing is open: belief 8 has no lab idea yet.
+games"). Two answers followed on 10 Nov (end of file, "Settled when step 3 began").
 
 ## Decided so far (owner, 10 Nov)
 
@@ -240,3 +240,10 @@ reason, and time is only a tiebreak.
 team picks from a fixed menu of moves and spends a fixed budget; the tracing team is scored by calibration
 (right calls earn by stated confidence, and a wrong High call costs most); it is built last of the games and
 runs in the second half of day 7. With this, nothing in "Not yet confirmed" above is still waiting.
+
+## Settled when step 3 began (owner, 10 Nov, later)
+
+- Belief 8 (a transaction's time is when it was sent): a five-minute prediction lab for it is proposed on a
+  design card in step 4, alongside the first four cards (owner chose "Propose one in step 4").
+- Mining lottery (`POW_mining_micro`): becomes a step of Guess the input (idea 3), not its own lab; the step is
+  settled on that lab's design card (owner chose "A step of Guess the input").
