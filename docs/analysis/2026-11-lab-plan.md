@@ -254,3 +254,13 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
   across a bridge: the destination chain and recipient from the deposit's input data or the bridge's event, the
   bridge's own explorer, and the far side matched by amount and timing. It is built from the guide a reviewing
   expert offered, with each method sourced publicly, as part of step 6's day 8 changes (owner: "Yes, take it").
+- Day 8's second lesson gains one slide mapping the smart-contract vulnerability types, from the OWASP Smart
+  Contract Top 10 (2026 edition), placing the attacks day 8 teaches among them; a map, not a taxonomy day
+  (owner: "Yes, one slide").
+- Two vocabulary checks of a few minutes each: one at midday on day 1, and an Ethereum terms reset at the start of
+  day 3 (owner: "Yes, both").
+- A BIP39 prediction lab for day 2, on Ian Coleman's BIP39 tool (MIT-licensed upstream, read 10 Nov 2026), is
+  proposed on a design card in step 4, with the first four (owner: "Yes, write the card").
+- Open, to discuss with the owner: a slide in day 9's third lesson on which outside party holds which record,
+  stopping at who holds what (legal process is out), after asking the expert what "what to do with all of that
+  info" means (owner chose "Discuss this more between us later").

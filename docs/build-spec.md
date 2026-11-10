@@ -114,6 +114,8 @@ bridges by type, freezable stablecoins, the deposit-address heuristic and the li
 | Solana, to recognize only | D4 ③ | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
 | Bridges by type | D4 ③ | Lock-and-mint, message-verified, liquidity and intents, with the Bitget hack as the case. |
 | Following funds across a bridge | D8 lab | A worked example at the start of the lab, after the exploit contract read, so the graded trace is shown done once first: the destination chain and recipient read from the deposit's input data or the bridge's event, the bridge's own explorer, and the far side matched by amount and timing. D4 ③ teaches the types with no tracing. Built from the guide a reviewing expert offered (expert feedback on the pre-30 Oct outline, shared 10 Nov 2026; owner: "Yes, take it"); each method cites a public source. |
+| Vulnerability types on one map | D8 ② | One slide placing the attacks days 8 ① and ② teach among the common smart-contract vulnerability types, from the OWASP Smart Contract Top 10 (2026 edition, as of 10 Nov 2026): a map, not a taxonomy lesson. From a reviewing expert's exploit material (expert feedback on the pre-30 Oct outline, shared 10 Nov 2026; owner: "Yes, one slide"). |
+| Vocabulary checks | D1, midday; D3, at the start | A few minutes each, covering many terms: one at midday on day 1, and an Ethereum terms reset at the start of day 3. From a reviewing expert's feedback (on the pre-30 Oct outline, shared 10 Nov 2026; owner: "Yes, both"). |
 | Freezable stablecoins as a lead | D3 ③; D9 lab | D3 ③: reading Tether's blacklist functions. D9's exposure summary adds "Freezable? Which issuer, and how fast?" |
 | One graded Meets point | D6 trace, D7 limits note, D8 cross-chain trace, D9 summary | See Marking and assessment. |
 | Deposit-address heuristic | D9 lab (D5 ① teaches deposit addresses and sweeps) | Victor, "Address Clustering Heuristics for Ethereum" (FC 2020). |
@@ -180,6 +182,9 @@ plan (what happens to every lab, the design card, the order of work) is `docs/an
   lesson before building more. The marked beliefs and the lab for each are in the plan ("Owner's review").
 - Belief 8 (a transaction's time is when it was sent): a lab for it is proposed on a design card in step 4,
   with the first four (owner, 10 Nov: "Propose one in step 4").
+- A BIP39 lab for day 2 (students predict what a seed phrase derives, then check it in Ian Coleman's BIP39 tool,
+  MIT-licensed upstream as of 10 Nov 2026) is proposed on a design card in step 4, with the first four; from a
+  reviewing expert's feedback (owner, 10 Nov: "Yes, write the card").
 - Rebuilt as prediction labs, not retired: `signatures` (idea 4), `tamper-ledger` (idea 8), `micro-hashing`
   (idea 3), `POW_mining_micro` (as a step of idea 3; owner, 10 Nov: "A step of Guess the input"),
   `distributed-systems` (idea 2), `ether_mev` (idea 20) and `ether-smart-contract-micro` (idea 33).
