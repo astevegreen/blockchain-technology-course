@@ -301,6 +301,17 @@ class LaneManager:
         from hlf_service import DockerStateCache
         return DockerStateCache.get().running_names()
 
+    def _refresh_docker_state(self) -> None:
+        """Bring the Docker state cache up to date before a lane acts on it, and after it changes a container.
+
+        The cache polls every few seconds, and lab.sh starts and stops student peers behind the lane manager's
+        back: network startup enrols each one and stops it. start_lane trusting a cache that still said
+        "running" once waited 180s on a stopped peer, and a lane it had just started read "stopped" until the
+        next poll (Lab Tests run 42832515054)."""
+        from hlf_service import DockerStateCache
+        if not DockerStateCache.get().refresh_containers():
+            log.warning("Docker state cache not refreshed: Docker did not answer")
+
     # ------------------------------------------------------------------
     # channel-join self-heal (fix for #95)
     # ------------------------------------------------------------------
@@ -544,6 +555,7 @@ class LaneManager:
             return False, f"lane {lane_id} is busy"
         try:
             peer = _peer_container(lane_id)
+            self._refresh_docker_state()
             if self._container_running(peer):
                 ok, msg = self._apply_peer_limits(peer)
                 if ok:
@@ -596,6 +608,7 @@ class LaneManager:
                       last_message="started" if msg == "joined" else "started (channel already joined)")
             return True, "started"
         finally:
+            self._refresh_docker_state()
             lock.release()
 
     def stop_lane(self, lane_id: str) -> tuple[bool, str]:
@@ -623,6 +636,7 @@ class LaneManager:
             self._set(lane_id, status=STATUS_STOPPED, last_message="stopped")
             return True, "stopped"
         finally:
+            self._refresh_docker_state()
             lock.release()
 
     def reset_lane(self, lane_id: str) -> tuple[bool, str]:
@@ -666,6 +680,7 @@ class LaneManager:
             self._set(lane_id, status=STATUS_STOPPED, last_message="reset")
             return True, "reset"
         finally:
+            self._refresh_docker_state()
             lock.release()
 
     # ------------------------------------------------------------------

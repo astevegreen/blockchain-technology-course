@@ -187,6 +187,9 @@ class DockerStateCache:
         self._running_names: set = set()
         self._logs: Dict[str, List[str]] = {}
         self._updated_at: float = 0
+        # When the container list now held was read: a poll that read before a refresh_containers must not
+        # overwrite that newer list when it finishes collecting logs.
+        self._containers_read_at: float = 0
         self._stop = threading.Event()
         self._refresh()
         self._thread = threading.Thread(
@@ -198,13 +201,42 @@ class DockerStateCache:
         while not self._stop.wait(_POLL_INTERVAL):
             self._refresh()
 
-    def _refresh(self) -> None:
+    def refresh_containers(self) -> bool:
+        """Re-read which containers exist and run, now, without the logs; False when Docker did not answer.
+
+        For a caller about to act on a container (LaneManager.start_lane): lab.sh starts and stops peers on its
+        own, so the poller's view can be up to _POLL_INTERVAL seconds old."""
+        read_at = time.time()
+        containers = self._read_containers()
+        if containers is None:
+            return False
+        self._store_containers(containers, read_at)
+        return True
+
+    def _store_containers(self, containers: Dict[str, _RawContainer], read_at: float) -> bool:
+        """Keep this container list unless a newer one is already held; True when it was kept."""
+        with self._lock:
+            if read_at < self._containers_read_at:
+                return False
+            self._containers = containers
+            self._running_names = {n for n, c in containers.items() if c.status == "running"}
+            self._containers_read_at = read_at
+            self._updated_at = time.time()
+            return True
+
+    @staticmethod
+    def _read_containers() -> Optional[Dict[str, _RawContainer]]:
         try:
             raw = _docker_api_get("/containers/json?all=1")
         except Exception:
+            return None
+        return {c.name: c for c in (_RawContainer(d) for d in raw)}
+
+    def _refresh(self) -> None:
+        read_at = time.time()
+        containers = self._read_containers()
+        if containers is None:
             return
-        containers = {c.name: c for c in (_RawContainer(d) for d in raw)}
-        running = {n for n, c in containers.items() if c.status == "running"}
 
         logs: Dict[str, List[str]] = {}
         for name, c in containers.items():
@@ -220,11 +252,9 @@ class DockerStateCache:
             except (subprocess.TimeoutExpired, Exception):
                 logs[name] = []
 
+        self._store_containers(containers, read_at)
         with self._lock:
-            self._containers = containers
-            self._running_names = running
             self._logs = logs
-            self._updated_at = time.time()
 
     def containers_by_name(self) -> Dict[str, _RawContainer]:
         with self._lock:
