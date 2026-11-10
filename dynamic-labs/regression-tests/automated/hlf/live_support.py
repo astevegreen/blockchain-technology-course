@@ -63,9 +63,14 @@ INSTRUCTOR_COOKIE_NAME = "hlf_instructor"
 
 RUNNER_CONTAINER = os.environ.get("HLF_REGRESSION_RUNNER_CONTAINER", "hlf-hlf-runner-1")
 
+# The student launcher's own stack (run-lab.sh finds it with --skip-start): no instructor login, pages or APIs.
+STUDENT_LAUNCHER = live_common.STUDENT_LAUNCHER
+NO_INSTRUCTOR = live_common.NO_INSTRUCTOR
+
 # Set by regression-tests/automated/hlf-launcher/run.sh: the student launcher stack, whose Fabric
-# runtime lives in the hlf-runtime volume, not under hlf/runtime in this checkout.
-LAUNCHER_STACK = os.environ.get("HLF_REGRESSION_LAUNCHER", "0") == "1"
+# runtime lives in the hlf-runtime volume, not under hlf/runtime in this checkout. That suite runs
+# the launcher's Fabric lab under the classroom router; the launcher's own stack is one as well.
+LAUNCHER_STACK = os.environ.get("HLF_REGRESSION_LAUNCHER", "0") == "1" or STUDENT_LAUNCHER
 
 
 def runtime_file_exists(rel: str) -> bool:
@@ -376,6 +381,8 @@ def release_hlf_claim(
     wipe: bool = True,
     base_url: str = DEFAULT_BASE_URL,
 ) -> None:
+    if STUDENT_LAUNCHER:  # only an instructor can release a station; the student's one station stays theirs
+        return
     url = f"{base_url}/labs/hlf/api/hlf/claims/{claim_uuid}"
     resp = session.delete(url, params={"wipe": "1" if wipe else "0"}, timeout=30)
     if resp.status_code not in (200, 404):
@@ -544,6 +551,18 @@ def get_hlf_progress_detail(
 # claim flow
 # ------------------------------------------------------------------
 
+def _own_station(student_session: requests.Session, claim_uuid: str, base_url: str) -> str:
+    """The student's station on the student launcher, read with the student's own claim.
+
+    The claims list that names each claim's station is the instructor's. The launcher runs one station for one
+    student, so the only claimed station is this claim's; any other count is a failure, not a guess."""
+    data = hlf_api_get(student_session, f"/c/{claim_uuid}/api/hlf/claims/active", base_url)
+    stations = data.get("claimed_stations", [])
+    if len(stations) != 1:
+        raise RegressionFailure(f"the student launcher should have one claimed station, got {stations}")
+    return stations[0].strip()
+
+
 def claim_hlf_station(
     student_session: requests.Session,
     instructor_session: requests.Session,
@@ -601,12 +620,15 @@ def claim_hlf_station(
                 time.sleep(retry_delay_seconds)
             continue
 
-        claims_data = list_hlf_claims(instructor_session, base_url)
         station = ""
-        for claim in claims_data.get("claims", []):
-            if claim.get("uuid") == uuid:
-                station = claim.get("station", "").strip()
-                break
+        if STUDENT_LAUNCHER:
+            station = _own_station(student_session, uuid, base_url)
+        else:
+            claims_data = list_hlf_claims(instructor_session, base_url)
+            for claim in claims_data.get("claims", []):
+                if claim.get("uuid") == uuid:
+                    station = claim.get("station", "").strip()
+                    break
 
         if not station:
             raise RegressionFailure(f"could not resolve station for claimed UUID {uuid}")

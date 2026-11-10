@@ -160,6 +160,8 @@ class FakeDocker:
                                          "services": {s: {"volumes": volumes} for s in services}}))
         mine = [c for c in self.containers if c["labels"].get("com.docker.compose.project") == project]
         if verb == "up":
+            if not services:
+                return Result(1, "no service selected")  # what compose says when every service is under a profile
             if project == "router" and int(env.get("HTTP_PORT", "80")) in self.busy_ports:
                 return Result(1, f"Bind for 127.0.0.1:{env['HTTP_PORT']} failed: port is already allocated")
             labels = {}

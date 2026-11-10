@@ -32,6 +32,13 @@ except ImportError:  # pragma: no cover - only the ttyd labs' runners install we
     class WebSocketTimeoutException(TimeoutError):
         pass
 
+# The student launcher's own stack (student-launcher/: one student on their own PC) has no instructor pages or
+# APIs. run-lab.sh sets this when --skip-start finds that stack. A suite then skips its instructor-only tests with
+# NO_INSTRUCTOR as the reason, and the lane helpers below work from the student's side alone: the one lane is
+# handed back to every claim and cannot be released, so a "fresh" claim is the same lane again.
+STUDENT_LAUNCHER = os.environ.get("LAB_REGRESSION_STUDENT_LAUNCHER") == "1"
+NO_INSTRUCTOR = "the student launcher has no instructor pages"
+
 USERNAME_RE = re.compile(r"^Username:\s*(.+)$", re.MULTILINE)
 PASSWORD_RE = re.compile(r"^Password:\s*(.+)$", re.MULTILINE)
 ANSI_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
@@ -493,10 +500,14 @@ def _instructor_list(session: requests.Session, url: str, key: str) -> list[dict
 
 
 def list_claims(instructor_session: requests.Session, base_url: str, lab: LaneLab) -> list[dict]:
+    if STUDENT_LAUNCHER:
+        return []
     return _instructor_list(instructor_session, f"{base_url}/api/{lab.slug}/claims", "claims")
 
 
 def list_lanes(instructor_session: requests.Session, base_url: str, lab: LaneLab) -> list[dict]:
+    if STUDENT_LAUNCHER:
+        return []
     return _instructor_list(instructor_session, f"{base_url}/api/{lab.slug}/lanes", "lanes")
 
 
@@ -510,7 +521,11 @@ def wait_for_lane_running(
     interval_seconds: float = 1.0,
     stable_seconds: float = 1.5,
 ) -> None:
-    """Wait until the lane has reported "running" for stable_seconds in a row."""
+    """Wait until the lane has reported "running" for stable_seconds in a row.
+
+    The student launcher has no lanes API: the claim's wait for the lane's container stands in for this one."""
+    if STUDENT_LAUNCHER:
+        return
     deadline = time.time() + timeout_seconds
     running_since: float | None = None
     while time.time() < deadline:
@@ -537,6 +552,8 @@ def release_claim(
     *,
     wipe: bool = True,
 ) -> None:
+    if STUDENT_LAUNCHER:  # the student's one lane stays theirs
+        return
     response = instructor_session.delete(
         f"{base_url}/api/{lab.slug}/claims/{claim_uuid}",
         params={"wipe": "1" if wipe else "0"},

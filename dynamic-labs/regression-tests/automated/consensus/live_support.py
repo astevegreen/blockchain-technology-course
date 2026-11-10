@@ -27,6 +27,8 @@ SUPPORT = live_common.LaneLabSupport(
 
 DEFAULT_BASE_URL = SUPPORT.base_url
 RegressionFailure = live_common.RegressionFailure
+STUDENT_LAUNCHER = live_common.STUDENT_LAUNCHER
+NO_INSTRUCTOR = live_common.NO_INSTRUCTOR
 ClaimContext = live_common.ClaimContext
 new_session = live_common.new_session
 clear_cookie = live_common.clear_cookie

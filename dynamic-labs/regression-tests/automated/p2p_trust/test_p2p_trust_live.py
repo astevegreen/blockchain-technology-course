@@ -5,6 +5,8 @@ import unittest
 
 from live_support import (
     DEFAULT_BASE_URL,
+    NO_INSTRUCTOR,
+    STUDENT_LAUNCHER,
     ClaimContext,
     claim_student_lane,
     clear_cookie,
@@ -40,6 +42,8 @@ class P2PTrustLiveRegressionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.instructor_session = new_session()
+        if STUDENT_LAUNCHER:  # no instructor to log in as; the claim itself waits for the lane service
+            return
         probe_session = new_session()
         try:
             wait_for_http(
@@ -230,6 +234,8 @@ class P2PTrustLiveRegressionTests(unittest.TestCase):
         touch_payload = progress_touch.json()
         self.assertTrue(touch_payload.get("ok"))
         self.assertTrue(touch_payload.get("recorded"))
+        if STUDENT_LAUNCHER:  # the student's touch is recorded; no instructor is there to read it back
+            return
 
         progress_summary = self.instructor_session.get(
             f"{self.base_url}/api/p2p_trust/progress",
@@ -250,6 +256,7 @@ class P2PTrustLiveRegressionTests(unittest.TestCase):
         timeline = detail_payload.get("detail", {}).get("timeline", [])
         self.assertTrue(any(event.get("route_id") == TRUST_SCORE_PROGRESS_ROUTE for event in timeline))
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_progress_detail_rejects_invalid_uuid(self) -> None:
         invalid = self.instructor_session.get(
             f"{self.base_url}/api/p2p_trust/progress/not-a-uuid",
@@ -258,6 +265,7 @@ class P2PTrustLiveRegressionTests(unittest.TestCase):
         self.assertEqual(invalid.status_code, 400)
         self.assertIn("invalid uuid", invalid.text.lower())
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_instructor_auth_and_surfaces(self) -> None:
         probe = new_session()
         try:

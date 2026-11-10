@@ -7,6 +7,8 @@ import uuid as uuid_lib
 from live_support import (
     DEFAULT_BASE_URL,
     DEFAULT_EXEC_CONTAINER,
+    NO_INSTRUCTOR,
+    STUDENT_LAUNCHER,
     RegressionFailure,
     docker_exec_checked,
     get_progress_detail,
@@ -39,12 +41,13 @@ class CryptographyLiveRegressionTests(unittest.TestCase):
         cls.instructor_session = new_session()
         probe_session = new_session()
         try:
-            wait_for_http(
-                probe_session,
-                f"{cls.base_url}/instructor/",
-                lambda resp: resp.status_code == 200,
-                description="shared instructor login page",
-            )
+            if not STUDENT_LAUNCHER:
+                wait_for_http(
+                    probe_session,
+                    f"{cls.base_url}/instructor/",
+                    lambda resp: resp.status_code == 200,
+                    description="shared instructor login page",
+                )
             wait_for_http(
                 probe_session,
                 f"{cls.base_url}/api/cryptography/exercises",
@@ -53,6 +56,8 @@ class CryptographyLiveRegressionTests(unittest.TestCase):
             )
         finally:
             probe_session.close()
+        if STUDENT_LAUNCHER:  # no instructor to log in as
+            return
         login_instructor(cls.instructor_session, cls.base_url)
         wait_for_http(
             cls.instructor_session,
@@ -153,6 +158,8 @@ class CryptographyLiveRegressionTests(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertTrue(response.json()["recorded"])
+        if STUDENT_LAUNCHER:  # the student's touches are recorded; no instructor is there to read them back
+            return
 
         summary = get_progress_summary(self.instructor_session, session_id, base_url=self.base_url)
         self.assertEqual(summary["uuid"], session_id)
@@ -171,6 +178,7 @@ class CryptographyLiveRegressionTests(unittest.TestCase):
         self.assertIn("exercise:crypto-hashing-s2", detail["unvisited"])
         self.assertEqual(len(detail["timeline"]), 3)
 
+    @unittest.skipIf(STUDENT_LAUNCHER, NO_INSTRUCTOR)
     def test_instructor_auth_and_surfaces(self) -> None:
         probe = new_session()
         try:

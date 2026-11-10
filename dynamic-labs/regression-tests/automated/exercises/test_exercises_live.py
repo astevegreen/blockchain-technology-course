@@ -5,6 +5,7 @@ import uuid as uuid_lib
 
 from live_support import (
     DEFAULT_BASE_URL,
+    STUDENT_LAUNCHER,
     SocketHarness,
     cookie_header,
     login_instructor,
@@ -20,12 +21,13 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         probe = new_session()
         try:
-            wait_for_http(
-                probe,
-                f"{cls.base_url}/instructor/",
-                lambda resp: resp.status_code == 200,
-                description="shared instructor login page",
-            )
+            if not STUDENT_LAUNCHER:  # the student launcher has no instructor pages
+                wait_for_http(
+                    probe,
+                    f"{cls.base_url}/instructor/",
+                    lambda resp: resp.status_code == 200,
+                    description="shared instructor login page",
+                )
             wait_for_http(
                 probe,
                 f"{cls.base_url}/exercises/bgp/",
@@ -47,7 +49,8 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
         student = new_session()
         instructor = new_session()
         try:
-            login_instructor(instructor, self.base_url)
+            if not STUDENT_LAUNCHER:  # the student launcher has no instructor to log in as
+                login_instructor(instructor, self.base_url)
 
             bgp = student.get(f"{self.base_url}/exercises/bgp/", timeout=10)
             self.assertEqual(bgp.status_code, 200)
@@ -66,6 +69,11 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
                 timeout=10,
                 allow_redirects=False,
             )
+            if STUDENT_LAUNCHER:
+                # No auth service runs there, so the router has no login to redirect to: the dashboard answers
+                # 404 like /instructor/ (router/routes/local/auth-off.conf), and no instructor is there to open it.
+                self.assertEqual(unauth_insider_instructor.status_code, 404)
+                return
             self.assertIn(unauth_insider_instructor.status_code, (301, 302, 401, 403))
 
             insider_instructor = instructor.get(
@@ -148,21 +156,23 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
         instructor_socket = None
         student_socket = None
         try:
-            login_instructor(instructor, self.base_url)
-            instructor_page = instructor.get(
-                f"{self.base_url}/exercises/insider/instructor",
-                timeout=10,
-            )
-            self.assertEqual(instructor_page.status_code, 200)
+            # The student launcher has no instructor: there the student's side of the room runs alone.
+            if not STUDENT_LAUNCHER:
+                login_instructor(instructor, self.base_url)
+                instructor_page = instructor.get(
+                    f"{self.base_url}/exercises/insider/instructor",
+                    timeout=10,
+                )
+                self.assertEqual(instructor_page.status_code, 200)
 
-            instructor_socket = SocketHarness(
-                self.base_url,
-                cookie_header=cookie_header(instructor),
-                socketio_path="exercises/insider/socket.io",
-                event_names=("instructor_update", "error_message"),
-            )
-            instructor_socket.emit("instructor_join")
-            instructor_socket.wait_for("instructor_update")
+                instructor_socket = SocketHarness(
+                    self.base_url,
+                    cookie_header=cookie_header(instructor),
+                    socketio_path="exercises/insider/socket.io",
+                    event_names=("instructor_update", "error_message"),
+                )
+                instructor_socket.emit("instructor_join")
+                instructor_socket.wait_for("instructor_update")
 
             student_socket = SocketHarness(
                 self.base_url,
@@ -190,11 +200,12 @@ class ExercisesLiveRegressionTests(unittest.TestCase):
             self.assertEqual(qr.status_code, 200)
             self.assertEqual(qr.headers.get("Content-Type"), "image/png")
 
-            instructor_room = instructor_socket.wait_for(
-                "instructor_update",
-                lambda payload: payload and room_id in (payload.get("rooms") or {}),
-            )
-            self.assertIn(room_id, instructor_room["rooms"])
+            if not STUDENT_LAUNCHER:
+                instructor_room = instructor_socket.wait_for(
+                    "instructor_update",
+                    lambda payload: payload and room_id in (payload.get("rooms") or {}),
+                )
+                self.assertIn(room_id, instructor_room["rooms"])
 
             # Below the minimum of 4, agents fill the room up to the recommended 5 when it starts.
             student_socket.emit("start_game")
