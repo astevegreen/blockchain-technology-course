@@ -21,12 +21,6 @@ slide index), which is never listed here.
   `BITCOIN_INSTRUCTOR_IMAGE` to the student digest. (9 Nov 2026, S3 lane labs manifest fill) Left open on 10 Nov
   2026: it changes the release build, and only a release dry run (`student-release.yml`, `publish=false`) proves it.
   Do it with a dry run to hand.
-- `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
-  measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
-  memory check relies on them. (9 Nov 2026, launcher manifests) Left open on 10 Nov 2026: the figures need a
-  student-sized PC running the released images, so measure them during the release test. Seen on 10 Nov 2026 on a
-  16 GB Windows 11 PC with the 2026.11.10-7 images (`docker stats`, idle): the Fabric lab's containers held about
-  905 MiB with the student's peer stopped, against `memory_mb: 4096`; the router 22 MiB, the lane service 33 MiB.
 - The launcher's macOS wrappers (`student-launcher/Start-Course-Labs.command`, `Stop-Course-Labs.command`) have
   never run on a Mac: the release's smoke jobs run the `.sh` wrappers on Linux and the PC test ran the `.cmd` ones
   on Windows 11. Run both on a Mac with Docker Desktop before students with Macs get the release. (10 Nov 2026,
