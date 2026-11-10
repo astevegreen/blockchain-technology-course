@@ -61,6 +61,10 @@ slide index), which is never listed here.
 - `CLAUDE.md` hard rule 1 still says instructor files under `dynamic-labs/` need "an `-x` entry in `pages.yml` and a
   removal in `vm-build.yml`"; the fence is now one list, `dynamic-labs/student-exclude.txt`, which the zip, the VM and
   the student images all read. The owner edits CLAUDE.md. (9 Nov 2026, S5 release build)
+- Two workflows build the Bitcoin base images: `.github/workflows/lab-images.yml` pushes
+  `ghcr.io/astevegreen/bitcoin-{lab,mempool,graph}` (amd64 only), which nothing pulls, while `student-release.yml`
+  (its `bases` job) pushes the `ghcr.io/astevegreen/course-labs:base-bitcoin-*` images the labs, Lab Tests and the VM
+  use. One of the two should go. (9 Nov 2026, S5 release build)
 
 ## Notion and documents
 
