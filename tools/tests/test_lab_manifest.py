@@ -189,6 +189,15 @@ class Rules(unittest.TestCase):
             self._tmp.cleanup()
             self.setUp()
 
+    def test_min_docker_fields_are_set_together(self):
+        m = good("other")
+        m["min_docker_engine"] = "26.0"
+        self.assertTrue(any("set together" in p for p in lm.validate_manifest("other", m, SCHEMA)))
+        m["min_docker_desktop"] = "4.29"
+        self.assertEqual(lm.validate_manifest("other", m, SCHEMA), [])
+        m["min_docker_engine"] = "new"
+        self.assertTrue(lm.validate_manifest("other", m, SCHEMA))
+
     def test_docker_socket_flag_refused_for_an_unlisted_lab(self):
         m = good("other")
         m["docker_socket"] = True

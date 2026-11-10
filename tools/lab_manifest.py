@@ -136,6 +136,8 @@ def validate_manifest(folder: str, manifest: dict, schema: dict) -> list[str]:
         problems.append(f"{folder}/lab.yaml: id {manifest.get('id')!r} must equal the folder name {folder!r}")
     if manifest.get("student_local") is True and not manifest.get("student_compose_file"):
         problems.append(f"{folder}/lab.yaml: student_compose_file is required when student_local is true")
+    if bool(manifest.get("min_docker_engine")) != bool(manifest.get("min_docker_desktop")):
+        problems.append(f"{folder}/lab.yaml: min_docker_engine and min_docker_desktop are set together or not at all")
     if manifest.get("docker_socket") is True and manifest.get("id") not in DOCKER_SOCKET_LABS:
         problems.append(f"{folder}/lab.yaml: docker_socket is allowed only for "
                         f"{', '.join(sorted(DOCKER_SOCKET_LABS))}; a new socket user needs a reviewed edit to "

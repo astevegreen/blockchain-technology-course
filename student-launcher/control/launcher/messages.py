@@ -19,6 +19,10 @@ NOT_ON_THIS_COMPUTER = "This lab isn't available for this computer's processor (
 GENERIC = "Something went wrong while {doing}. Press Start to try again. If it happens again, tell your instructor."
 
 
+def docker_too_old(desktop: str) -> str:
+    return (f"This lab needs Docker Desktop {desktop} or newer. Update Docker Desktop, then press Start again.")
+
+
 def memory_short(have_mb: int, need_mb: int) -> str:
     return (f"Docker has {gb(have_mb)} of memory but this lab needs {gb(need_mb)}. {DOCKER_SETTINGS}, and raise "
             f"Memory to at least {gb(need_mb)}.")

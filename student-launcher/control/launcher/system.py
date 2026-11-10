@@ -42,6 +42,24 @@ def memory_mb(info: dict | None) -> int | None:
     return int(info["MemTotal"]) // (1024 * 1024)
 
 
+def version_tuple(text: object) -> tuple[int, ...] | None:
+    """"26.1.3" or "27.0.0-rc.1" -> (26, 1, 3); None when it doesn't start with numbers."""
+    match = re.match(r"^v?(\d+(?:\.\d+)*)", str(text or "").strip())
+    return tuple(int(p) for p in match.group(1).split(".")) if match else None
+
+
+def engine_older_than(info: dict | None, minimum: str) -> bool:
+    """Whether the Docker Engine in `docker info` is older than `minimum`. A version that can't be read is not
+    "older": the lab may well work, and blocking a student on a check we couldn't make is worse than the old
+    behaviour (the lab's own error)."""
+    have, need = version_tuple((info or {}).get("ServerVersion")), version_tuple(minimum)
+    if have is None or need is None:
+        return False
+    width = max(len(have), len(need))
+    pad = lambda v: v + (0,) * (width - len(v))  # noqa: E731 - 26 equals 26.0
+    return pad(have) < pad(need)
+
+
 def internet_reachable(host: str = REGISTRY, port: int = 443, timeout: float = 3.0) -> bool:
     try:
         with socket.create_connection((host, port), timeout=timeout):

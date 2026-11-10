@@ -1,6 +1,6 @@
 """Serve the real control page against canned /api answers, for screenshots and page work without Docker.
 
-    python student-launcher/control/dev_serve.py [--scenario all-states|docker-down] [--port 8470]
+    python student-launcher/control/dev_serve.py [--scenario all-states|docker-down|docker-old] [--port 8470]
 
 Then open http://127.0.0.1:8470/. The answers come from tests/fixtures/api/<scenario>.json; buttons answer but
 change nothing, so every screenshot shows the same page.
