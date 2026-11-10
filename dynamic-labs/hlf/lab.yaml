@@ -1,0 +1,74 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: hlf
+title: Hyperledger Fabric Lab
+kind: lab
+order:
+  day: 5
+  position: 1
+compose_project: hlf
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  hlf:
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  hlf-runner:
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  hlf-peer-ttyd:
+    source: build
+    context: .
+    dockerfile: Dockerfile.ttyd
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  hlf-orderer-ttyd:
+    source: build
+    context: .
+    dockerfile: Dockerfile.ttyd
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  chaincode-basic:
+    source: build
+    context: .
+    dockerfile: Dockerfile.chaincode
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+- name: hlf-student-term
+  internal: true
+- name: hlf-instructor-term
+  internal: true
+- name: fabric_test
+  internal: false
+routes:
+- routes/hlf-lanes.conf
+- routes/hlf.conf
+uses_lane_service: false
+entry:
+  path: /labs/hlf/
+memory_mb: 4096
+approx_download_mb: 2500
+data:
+- path: ./web_service
+  into: /opt/hlf/web_service
+  how: baked
+- path: ./web_ui
+  into: /opt/hlf/web_ui
+  how: baked
+- path: ./runtime
+  into: /opt/hlf/runtime
+  how: baked
+keep_volumes_on_update: true

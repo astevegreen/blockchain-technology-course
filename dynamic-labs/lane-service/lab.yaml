@@ -1,0 +1,45 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: lane-service
+title: Lane service
+kind: shared
+order:
+  day: null
+  position: 6
+compose_project: lane-service
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  lane-service:
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+- name: ethereum-instructor-mgmt-net
+  internal: true
+routes: []
+uses_lane_service: false
+entry:
+  path: /instructor/labs-progress
+memory_mb: 512
+approx_download_mb: 300
+data:
+- path: ./runtime
+  into: /app/runtime
+  how: baked
+- path: ../bitcoin
+  into: /app/bitcoin-compose
+  how: baked
+- path: ../bitcoin-forensics
+  into: /app/bitcoin-forensics
+  how: baked
+- path: ../cryptography
+  into: /app/cryptography
+  how: baked
+keep_volumes_on_update: false
+docker_socket: true

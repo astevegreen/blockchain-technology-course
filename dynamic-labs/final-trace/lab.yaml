@@ -1,0 +1,43 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: final-trace
+title: Final Trace Lab
+kind: lab
+order:
+  day: 10
+  position: 0
+compose_project: final-trace
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  mempool:
+    source: upstream
+    image: ghcr.io/blockchain-course-2026/bitcoin-mempool:latest
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  page:
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+routes:
+- routes/final-trace.conf
+uses_lane_service: false
+entry:
+  path: /labs/final-trace/
+memory_mb: 3072
+approx_download_mb: 2600
+data:
+- path: ./mempool/load-chain.sh
+  into: /chain-loader/load-chain.sh
+  how: baked
+- path: ./chain/blocks.hex
+  into: /chain/blocks.hex
+  how: baked
+keep_volumes_on_update: true

@@ -1,0 +1,33 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: consensus
+title: Consensus Lab
+kind: lab
+order:
+  day: null
+  position: 2
+compose_project: consensus-lab
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  student:
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: consensus-student-net
+  internal: true
+- name: consensus-instructor-net
+  internal: true
+routes:
+- routes/consensus.conf
+uses_lane_service: true
+entry:
+  path: /labs/consensus/
+memory_mb: 1024
+approx_download_mb: 300
+data: []
+keep_volumes_on_update: true
