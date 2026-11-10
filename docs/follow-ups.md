@@ -45,11 +45,6 @@ slide index), which is never listed here.
   student-sized PC running the released images, so measure them during the release test. Seen on 10 Nov 2026 on a
   16 GB Windows 11 PC with the 2026.11.10-7 images (`docker stats`, idle): the Fabric lab's containers held about
   905 MiB with the student's peer stopped, against `memory_mb: 4096`; the router 22 MiB, the lane service 33 MiB.
-- No live test opens the Fabric lab page while its network is still starting, which is what the launcher does: the
-  `hlf` and `hlf-launcher` suites (`dynamic-labs/regression-tests/automated/hlf/test_hlf_live.py`) wait for startup
-  before they claim a station. `ClaimManager.start_claimed_lanes` (`dynamic-labs/hlf/web_service/claims.py`) is
-  covered by unit tests and one cold start by hand (10 Nov 2026: station claimed 3 s in, peer running when the
-  network came up). A live test needs a network restart inside the suite. (10 Nov 2026, launcher PC test)
 - The launcher's macOS wrappers (`student-launcher/Start-Course-Labs.command`, `Stop-Course-Labs.command`) have
   never run on a Mac: the release's smoke jobs run the `.sh` wrappers on Linux and the PC test ran the `.cmd` ones
   on Windows 11. Run both on a Mac with Docker Desktop before students with Macs get the release. (10 Nov 2026,

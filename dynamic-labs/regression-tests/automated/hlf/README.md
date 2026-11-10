@@ -18,6 +18,10 @@ Target coverage:
   instructor snapshot, execute (structured vs rejected raw command),
   seed, fault injection
 - claim introspection: instructor list, active claims, release
+- reset and start inside the suite: the explorer and seeding come back, and
+  a station claimed while the network starts (as the student launcher
+  does) has its peer running once startup ends; the one restart serves
+  both, since each costs minutes of the 30-minute Lab Tests job
 - optional fresh-start reset and boot
 
 Implemented files:

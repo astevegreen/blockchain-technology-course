@@ -1223,7 +1223,50 @@ class HLFRestartRecoveryTests(unittest.TestCase):
             f"timed out waiting for HLF status={expected}: {last_status}"
         )
 
-    def test_reset_then_start_restores_explorer_and_seed(self) -> None:
+    def _assert_still_starting(self, when: str) -> None:
+        status = get_hlf_status(self.instructor_session, self.base_url)
+        self.assertEqual(
+            status.get("background_task"), "start",
+            f"the network was no longer starting {when}, so this run proves nothing about a claim made during "
+            f"startup: {status}",
+        )
+
+    def _claim_while_starting(self) -> ClaimContext:
+        """Open the lab page as a student while the network starts, as the student launcher does."""
+        student = new_session()
+        self.addCleanup(student.close)
+        self._assert_still_starting("before the claim")
+        resp = student.get(f"{self.base_url}/labs/hlf/claim", timeout=15)
+        self.assertEqual(resp.status_code, 200, f"claim during startup: {resp.url} {resp.text[:300]}")
+        uuid = student.cookies.get("hlf_session") or ""
+        if not uuid:
+            match = re.search(r"/labs/hlf/c/([0-9a-f-]{36})/", resp.url)
+            uuid = match.group(1) if match else ""
+        self.assertTrue(uuid, f"the claim set no hlf_session cookie: {resp.url}")
+        self.addCleanup(self._release_quietly, uuid)
+        stations = {
+            c.get("uuid"): (c.get("station") or "").strip()
+            for c in list_hlf_claims(self.instructor_session, self.base_url).get("claims", [])
+        }
+        self.assertTrue(stations.get(uuid), f"no station for the claim {uuid}: {stations}")
+        self._assert_still_starting("after the claim")
+        return ClaimContext(uuid=uuid, station=stations[uuid], wrapper_html=resp.text)
+
+    def _release_quietly(self, uuid: str) -> None:
+        # The launcher has one station, and the suite's later classes claim it again.
+        try:
+            release_hlf_claim(self.instructor_session, uuid, wipe=True, base_url=self.base_url)
+        except Exception:
+            _log.warning("cleanup: claim release failed for %s", uuid, exc_info=True)
+
+    def test_reset_then_start_restores_the_lab_and_a_station_claimed_meanwhile(self) -> None:
+        """After a reset and start, the explorer and seeding work, and a station claimed during the start has its peer.
+
+        The student launcher opens the lab page while the network is still starting: startup enrols each student
+        peer and stops it, and the network start must then start the claimed station's peer
+        (ClaimManager.start_claimed_lanes). The claim rides on this test's restart rather than a second one: a
+        restart costs minutes of the Lab Tests job's 30 (lab.sh up rebuilds the network, channel and chaincode).
+        """
         reset_resp = self.instructor_session.post(
             f"{self.base_url}/labs/hlf/api/hlf/reset",
             timeout=30,
@@ -1236,11 +1279,24 @@ class HLFRestartRecoveryTests(unittest.TestCase):
             timeout=30,
         )
         self.assertEqual(start_resp.status_code, 200, start_resp.text[:300])
+        claim = self._claim_while_starting()
         wait_for_hlf_startup_complete(
             self.instructor_session,
             self.base_url,
             require_student_overlay=True,
         )
+
+        # The start task ends only after start_claimed_lanes, so the peer must be up now, with no further wait.
+        state = subprocess.run(
+            ["docker", "inspect", "-f", "{{.State.Running}}", claim.peer_container],
+            capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(
+            state.stdout.strip(), "true",
+            f"{claim.peer_container} of {claim.station}, claimed during startup, is not running: {state.stderr}",
+        )
+        lanes = {lane.get("id"): lane for lane in get_hlf_lanes(self.instructor_session, self.base_url)["lanes"]}
+        self.assertEqual(lanes.get(claim.station, {}).get("status"), "running", lanes.get(claim.station))
 
         view = get_hlf_explorer_view(self.instructor_session, self.base_url)
         self.assertIsInstance(view, dict)
