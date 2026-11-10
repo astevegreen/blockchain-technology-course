@@ -50,9 +50,6 @@ slide index), which is never listed here.
   launcher S7 student guide)
 
 ## Tooling and rules
-- `CLAUDE.md` hard rule 1 still says instructor files under `dynamic-labs/` need "an `-x` entry in `pages.yml` and a
-  removal in `vm-build.yml`"; the fence is now one list, `dynamic-labs/student-exclude.txt`, which the zip, the VM and
-  the student images all read. The owner edits CLAUDE.md. (9 Nov 2026, S5 release build)
 
 ## Notion and documents
 
