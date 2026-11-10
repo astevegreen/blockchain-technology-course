@@ -16,38 +16,17 @@ slide index), which is never listed here.
 ## Lessons
 
 ## Labs
-- The release build makes the bitcoin `instructor` and `student` launcher images separately from the same
-  `dynamic-labs/bitcoin/Dockerfile` (`dynamic-labs/student-release-images.json`); it could build once and set
-  `BITCOIN_INSTRUCTOR_IMAGE` to the student digest. (9 Nov 2026, S3 lane labs manifest fill) Left open on 10 Nov
-  2026: it changes the release build, and only a release dry run (`student-release.yml`, `publish=false`) proves it.
-  Do it with a dry run to hand.
 - `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
   measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
   memory check relies on them. (9 Nov 2026, launcher manifests) Left open on 10 Nov 2026: the figures need a
   student-sized PC running the released images, so measure them during the release test. Seen on 10 Nov 2026 on a
   16 GB Windows 11 PC with the 2026.11.10-7 images (`docker stats`, idle): the Fabric lab's containers held about
   905 MiB with the student's peer stopped, against `memory_mb: 4096`; the router 22 MiB, the lane service 33 MiB.
-- The launcher's macOS wrappers (`student-launcher/Start-Course-Labs.command`, `Stop-Course-Labs.command`) have
-  never run on a Mac: the release's smoke jobs run the `.sh` wrappers on Linux and the PC test ran the `.cmd` ones
-  on Windows 11. Run both on a Mac with Docker Desktop before students with Macs get the release. (10 Nov 2026,
-  launcher PC test)
 - The student guide (`blockchain-course/run-labs.qmd`) has no pictures of the Windows SmartScreen "Windows protected
   your PC" screen (More info, Run anyway) or the macOS "Open Anyway" step in Privacy & Security: they are text only,
   and its control-page screenshots (`blockchain-course/assets/run-labs/`) come from the sample-data preview, not the
   real launcher. Take real pictures on a clean Windows 11 PC and a Mac when the release test runs. (9 Nov 2026,
   launcher S7 student guide)
-- The launcher leaves a removed lab's Docker network behind: `reconcile` removes the lab's containers, volumes and
-  images (`student-launcher/control/launcher/controller.py`, `remove_lab`), but the network `ensure_networks` made
-  for it stays, empty, on the student's computer, and the release's fixture job checks containers only. (10 Nov 2026:
-  the fixture flow run by hand in WSL left `hello-net` after "Remove")
-- On the student launcher, lane-service takes about 30 seconds to listen after its container starts whenever the
-  Ethereum lab is not running: `ethereum.start()` waits that long for the Ethereum instructor
-  (`_wait_for_instructor_metadata`, `dynamic-labs/lane-service/labs/ethereum.py`) before `app.run`
-  (`dynamic-labs/lane-service/app.py`). The launcher now holds a lane lab at "starting" until lane-service answers
-  (`wait_for_lane_service`, `student-launcher/control/launcher/controller.py`), so the first lane lab a student
-  starts takes that much longer. Skip or background the wait in `student-local` mode. The 30 seconds is read from
-  the code and from run 42819405327's timing (claims answered 502 eleven seconds after "running"), not measured.
-  (10 Nov 2026, third release dry run)
 
 ## Tooling and rules
 

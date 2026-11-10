@@ -1603,13 +1603,18 @@ def ethereum_arcade_reset():
 
 
 def start() -> None:
-    # Student lanes need the instructor's wallet pool and deployed
+    # Classroom: student lanes need the instructor's wallet pool and deployed
     # contract metadata before they are started. Otherwise warm-pool
     # lanes can come up with empty ASSIGNED_* / CONTRACT_* env and stay
     # stale until manually reset.
-    metadata_ready = _wait_for_instructor_metadata()
-    if metadata_ready and claim_manager.get_pool_size() <= 0 and DEFAULT_WARM_POOL_SIZE > 0:
-        claim_manager.set_pool_size(DEFAULT_WARM_POOL_SIZE)
+    # Student-local (the course launcher): there is no warm pool, and a lane
+    # reads the metadata when the student opens it (_lane_env, force=True),
+    # so lane-service listens at once instead of waiting up to 30 seconds for
+    # an Ethereum lab that may not be running.
+    if not config.student_local:
+        metadata_ready = _wait_for_instructor_metadata()
+        if metadata_ready and claim_manager.get_pool_size() <= 0 and DEFAULT_WARM_POOL_SIZE > 0:
+            claim_manager.set_pool_size(DEFAULT_WARM_POOL_SIZE)
     lane_manager.start_sweeper()
     claim_manager.start_sweeper()
 

@@ -31,6 +31,8 @@ esac
 exit 0
 """
 
+MAC_UNAME = 'uname() { echo Darwin; }; export -f uname; exec "$BASH" "$@"'
+
 FAKE_CMD = """@echo off
 echo %*>> "%FAKE_LOG%"
 if "%1"=="info" if "%FAKE_DOCKER%"=="down" exit /b 1
@@ -88,7 +90,7 @@ class Wrapper(unittest.TestCase):
 
 @unittest.skipUnless(git_bash(), "needs bash (Git Bash on Windows)")
 class Posix(Wrapper):
-    def run_script(self, name, with_docker=True, **env):
+    def run_script(self, name, with_docker=True, darwin=False, **env):
         bash = git_bash()
         if with_docker:
             fake = self.bin / "docker"
@@ -102,8 +104,12 @@ class Posix(Wrapper):
         full = {"PATH": path, "FAKE_LOG": str(self.log), "HOME": self.tmp.name, **env}
         if os.name == "nt":
             full["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", r"C:\Windows")
-        done = subprocess.run([bash, str(HERE / name), "--dry-run"], env=full, capture_output=True, text=True,
-                              timeout=120, check=False)
+        command = [bash, str(HERE / name), "--dry-run"]
+        if darwin:
+            # `uname` answers Darwin, so the wrapper takes its macOS branches. An exported function, not a fake on
+            # PATH: Git Bash puts its own /usr/bin first, so a PATH fake never wins there.
+            command = [bash, "-c", MAC_UNAME, "mac", str(HERE / name), "--dry-run"]
+        done = subprocess.run(command, env=full, capture_output=True, text=True, timeout=120, check=False)
         return done.returncode, done.stdout
 
     def test_command_and_sh_are_the_same(self):
@@ -156,6 +162,45 @@ class Posix(Wrapper):
         calls = self.calls()
         self.assertTrue(any("/api/shutdown" in c for c in calls))
         self.assertEqual(calls[-1], "rm -f course-launcher")
+
+    # The macOS copies: `uname` says Darwin, so the page opens with `open` and Docker Desktop with `open -a Docker`.
+    # The release's mac job runs them for real on a Mac runner; docs/before-first-class.md has the hands-on run.
+    def test_mac_start_opens_the_page_with_open(self):
+        code, out = self.run_script("Start-Course-Labs.command", darwin=True)
+        self.assertEqual(code, 0, out)
+        self.assertIn("would: open http://127.0.0.1:8470/", out)
+        self.assertNotIn("xdg-open", out)
+
+    def test_mac_no_docker_opens_the_guide_with_open(self):
+        code, out = self.run_script("Start-Course-Labs.command", with_docker=False, darwin=True)
+        self.assertEqual(code, 1, out)
+        self.assertIn("would: open https://astevegreen.github.io/blockchain-technology-course/run-labs.html"
+                      "#install-docker", out)
+
+    def test_mac_docker_down_starts_docker_desktop(self):
+        code, out = self.run_script("Start-Course-Labs.command", FAKE_DOCKER="down", darwin=True)
+        self.assertEqual(code, 1, out)
+        self.assertIn("would: open -a Docker", out)
+        self.assertIn("Docker didn't start", out)
+
+    def test_mac_stop(self):
+        code, out = self.run_script("Stop-Course-Labs.command", darwin=True)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.calls()[-1], "rm -f course-launcher")
+
+
+class Executable(unittest.TestCase):
+    @unittest.skipUnless(shutil.which("git"), "needs git")
+    def test_the_mac_and_linux_wrappers_are_executable_in_git(self):
+        """A double-clicked .command runs only with its executable bit, which the release zip carries from git."""
+        names = [f"student-launcher/{stem}.{ext}" for stem in ("Start-Course-Labs", "Stop-Course-Labs")
+                 for ext in ("command", "sh")]
+        done = subprocess.run(["git", "ls-files", "-s", *names], cwd=HERE.parent, capture_output=True, text=True,
+                              check=False)
+        if done.returncode != 0 or not done.stdout.strip():
+            self.skipTest("not a git checkout")
+        modes = {line.split("\t")[1]: line.split()[0] for line in done.stdout.splitlines()}
+        self.assertEqual(modes, {name: "100755" for name in names})
 
 
 @unittest.skipUnless(os.name == "nt", "cmd.exe is Windows only")
