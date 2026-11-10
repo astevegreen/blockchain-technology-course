@@ -9,8 +9,8 @@ jobs:
     permissions:
       contents: write
     env:
-      BITCOIN_LAB_IMAGE: ghcr.io/blockchain-course-2026/bitcoin-lab:latest
-      BITCOIN_MEMPOOL_IMAGE: ghcr.io/blockchain-course-2026/bitcoin-mempool:latest
+      BITCOIN_LAB_IMAGE: ghcr.io/astevegreen/course-labs:base-bitcoin-lab
+      BITCOIN_MEMPOOL_IMAGE: ghcr.io/astevegreen/course-labs:base-bitcoin-mempool
       HLF_IMAGE_TAG: 2.5.15
       HLF_CA_IMAGE_TAG: 1.5.17
       HLF_COUCHDB_IMAGE: couchdb:3.4.2
@@ -27,35 +27,11 @@ jobs:
           echo "Before repo cleanup:"
           du -sh dynamic-labs/bitcoin-forensics 2>/dev/null || true
           du -sh dynamic-labs/hlf 2>/dev/null || true
-          # Keep only the live bitcoin forensics runtime assets:
-          # - lab.md
-          # - instructor-bitcoindir-success-backup-little-longer
-          rm -rf \
-            dynamic-labs/bitcoin-forensics/instructor-bitcoindir-forensics \
-            dynamic-labs/bitcoin-forensics/instructor.zip \
-            dynamic-labs/bitcoin-forensics/*_answer_LIVE.json \
-            dynamic-labs/bitcoin-forensics/copilot-gen-script.sh \
-            dynamic-labs/bitcoin-forensics/malicious_seed.py \
-            dynamic-labs/bitcoin-forensics/malicious_seed_v*.py \
-            dynamic-labs/bitcoin-forensics/seeder/scenario_v3*.py \
-            dynamic-labs/bitcoin-forensics/build_v3*.py \
-            dynamic-labs/bitcoin-forensics/FORENSICS-V34-STATE.md \
-            dynamic-labs/bitcoin/INSTRUCTOR_SOLUTION_GUIDE.md \
-            dynamic-labs/bitcoin/forensics-*.md \
-            dynamic-labs/docs/plans/forensics-v2-curriculum-draft.md \
-            dynamic-labs/p2p_trust/instructor_notes.qmd \
-            dynamic-labs/ethereum_lab/CODEX-HANDOFF.md \
-            dynamic-labs/ethereum_lab/docs/instructor \
-            dynamic-labs/ethereum_lab/frontend/public/docs/instructor \
-            dynamic-labs/hlf/docs/INSTRUCTOR_GUIDE.md \
-            dynamic-labs/regression-tests \
-            dynamic-labs/explorer/chain/build-chain.sh \
-            dynamic-labs/explorer/chain/build-steps.sh \
-            dynamic-labs/explorer/chain/capture_pages.py \
-            dynamic-labs/explorer/chain/make_sourcify_copy.py \
-            dynamic-labs/hlf/runtime/fabric-samples.bak.* \
-            dynamic-labs/hlf/runtime/fabric-samples.arm64.bak.* \
-            || true
+          # Instructor-only files (dynamic-labs/student-exclude.txt, shared with pages.yml and student-release.yml)
+          # leave the VM, bar the runtime files its labs read (VM_RUNTIME_KEYS in tools/check.py).
+          python3 tools/student_exclude.py remove --vm
+          # Local backups the student VM does not need (not instructor material).
+          rm -rf dynamic-labs/hlf/runtime/fabric-samples.bak.* dynamic-labs/hlf/runtime/fabric-samples.arm64.bak.* || true
           find dynamic-labs/hlf -type f -name '*.meridian.bak' -delete 2>/dev/null || true
           # Instructor answers kept in a lab's own quizes/ folder never reach the VM (pages.yml leaves them out of src.zip)
           find dynamic-labs -type d -name quizes -prune -exec rm -rf {} + 2>/dev/null || true
