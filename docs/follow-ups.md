@@ -50,11 +50,6 @@ slide index), which is never listed here.
 - `tools/tests/test_src_zip.py` skips wherever `zip` is missing, which today is every machine that runs it: the
   Windows check, Git Bash and the desktop's WSL Ubuntu. Either install `zip` on the `check.yml` runner or have the test
   build the archive with Python's `zipfile` from `student_exclude.py zip-args`. (9 Nov 2026, S5 release build)
-- The only Git LFS files in the repo, `dynamic-labs/bitcoin-forensics/forensics-lab-v3-instructor-dir/blocks/*.dat`,
-  have no objects on GitHub's LFS server (404), so every clone has only their pointers. Any `lfs: true` checkout
-  fails. `student-release.yml` fetches only the LFS files a student image ships, and today there are none. Re-upload
-  the objects from a machine that has them (`git lfs push --all origin`), or untrack the files. (9 Nov 2026, S5
-  dry run 42676724571)
 
 ## Notion and documents
 
