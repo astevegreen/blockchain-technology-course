@@ -52,6 +52,9 @@ slide index), which is never listed here.
 - `tools/tests/test_src_zip.py` skips wherever `zip` is missing, which today is every machine that runs it: the
   Windows check, Git Bash and the desktop's WSL Ubuntu. Either install `zip` on the `check.yml` runner or have the test
   build the archive with Python's `zipfile` from `student_exclude.py zip-args`. (9 Nov 2026, S5 release build)
+- `CLAUDE.md` hard rule 1 still says instructor files under `dynamic-labs/` need "an `-x` entry in `pages.yml` and a
+  removal in `vm-build.yml`"; the fence is now one list, `dynamic-labs/student-exclude.txt`, which the zip, the VM and
+  the student images all read. The owner edits CLAUDE.md. (9 Nov 2026, S5 release build)
 
 ## Notion and documents
 
