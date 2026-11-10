@@ -25,11 +25,12 @@ slide index), which is never listed here.
   never run on a Mac: the release's smoke jobs run the `.sh` wrappers on Linux and the PC test ran the `.cmd` ones
   on Windows 11. Run both on a Mac with Docker Desktop before students with Macs get the release. (10 Nov 2026,
   launcher PC test)
-- The student guide (`blockchain-course/run-labs.qmd`) has no pictures of the Windows SmartScreen "Windows protected
-  your PC" screen (More info, Run anyway) or the macOS "Open Anyway" step in Privacy & Security: they are text only,
-  and its control-page screenshots (`blockchain-course/assets/run-labs/`) come from the sample-data preview, not the
-  real launcher. Take real pictures on a clean Windows 11 PC and a Mac when the release test runs. (9 Nov 2026,
-  launcher S7 student guide)
+- The student guide (`blockchain-course/run-labs.qmd`) has no picture of the Windows SmartScreen / "Open File -
+  Security Warning" screen, and its text says "Windows protected your PC" without having been checked against a
+  real downloaded zip. Download the release zip in a browser, extract it with Explorer, double-click
+  `Start-Course-Labs.cmd`, picture what appears and make the text match. (9 Nov 2026, launcher S7 student guide;
+  10 Nov 2026: the control-page pictures are now real, and the Mac step points at Apple's page; the "Docker isn't
+  running" picture is still a mock-up, because a real one needs Docker Desktop stopped.)
 - The launcher leaves a removed lab's Docker network behind: `reconcile` removes the lab's containers, volumes and
   images (`student-launcher/control/launcher/controller.py`, `remove_lab`), but the network `ensure_networks` made
   for it stays, empty, on the student's computer, and the release's fixture job checks containers only. (10 Nov 2026:
