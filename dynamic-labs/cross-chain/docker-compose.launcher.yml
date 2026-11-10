@@ -1,0 +1,26 @@
+name: cross-chain
+
+# The day-8 cross-chain lab for the student launcher (docs/student-launcher-design.md).
+# The same lab as docker-compose.yml, with the same project, service and container names (the router's upstreams).
+# The page image is the classroom one (Dockerfile: the snapshot is already frozen in it, and nothing is bind-mounted);
+# here it comes from a variable the launcher fills with a release digest, and the container carries the course.lab
+# and course.release labels.
+#
+# Images the launcher fills in (lab.yaml services; context is relative to this folder, dockerfile to the context).
+# regression-tests/automated/launcher-stack.sh reads these lines to build them in CI:
+# launcher-build: CROSS_CHAIN_PAGE_IMAGE . Dockerfile
+# Platforms: linux/amd64 and linux/arm64 (node:24-alpine and nginx:alpine publish both, 9 Nov 2026).
+
+services:
+  page:
+    image: ${CROSS_CHAIN_PAGE_IMAGE:?set by the student launcher}
+    labels:
+      course.lab: cross-chain
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  router-net:
+    external: true
