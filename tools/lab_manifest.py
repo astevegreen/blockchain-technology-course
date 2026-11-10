@@ -136,6 +136,8 @@ def validate_manifest(folder: str, manifest: dict, schema: dict) -> list[str]:
         problems.append(f"{folder}/lab.yaml: id {manifest.get('id')!r} must equal the folder name {folder!r}")
     if manifest.get("student_local") is True and not manifest.get("student_compose_file"):
         problems.append(f"{folder}/lab.yaml: student_compose_file is required when student_local is true")
+    if manifest.get("docker_socket") is True and manifest.get("kind") != "shared":
+        problems.append(f"{folder}/lab.yaml: docker_socket is allowed only for kind shared")
     for i, item in enumerate(manifest.get("data") or []):
         # A mount written ./${VAR:-default}:/target is recorded with the default resolved, never split at its colon.
         if isinstance(item, dict) and (re.search(r"[${}]", str(item.get("path"))) or not str(item.get("into")).startswith("/")):
@@ -271,9 +273,22 @@ def check_launcher_files(labs: Path = LABS) -> list[str]:
                                 f"(expected one of {', '.join(sorted(allowed)) or 'none'})")
             for vol in body.get("volumes") or []:
                 bad = bind_mount(vol)
+                if bad and m.get("docker_socket") is True and m.get("kind") == "shared" and is_docker_socket(vol):
+                    continue
                 if bad:
                     problems.append(f"{where}: service {svc} mounts a host path ({bad}); use a named volume or tmpfs")
     return problems
+
+
+DOCKER_SOCKET = "/var/run/docker.sock"
+
+
+def is_docker_socket(vol) -> bool:
+    """True only for the Docker socket mounted at the same path (the one host path a shared lab may bind)."""
+    if isinstance(vol, dict):
+        return (vol.get("type") == "bind" and vol.get("source") == DOCKER_SOCKET
+                and vol.get("target") == DOCKER_SOCKET)
+    return vol == f"{DOCKER_SOCKET}:{DOCKER_SOCKET}"
 
 
 def bind_mount(vol) -> str | None:

@@ -166,6 +166,37 @@ class Rules(unittest.TestCase):
                 "        source: ./x\n        target: /d\n")
         self.assertTrue(any("host path" in p for p in self.launcher(text)))
 
+    def socket_tree(self, kind, flag, volume):
+        m = good()
+        m["kind"] = kind
+        if flag:
+            m["docker_socket"] = True
+        text = f"services:\n  web:\n    image: ${{DEMO_WEB_IMAGE}}\n    volumes: ['{volume}']\n"
+        return lm.check_launcher_files(tree(self.root, {"demo": m}, {"demo": text}))
+
+    def test_docker_socket_allowed_for_shared_lab_that_sets_it(self):
+        sock = "/var/run/docker.sock:/var/run/docker.sock"
+        self.assertEqual(self.socket_tree("shared", True, sock), [])
+
+    def test_docker_socket_refused_without_the_flag(self):
+        sock = "/var/run/docker.sock:/var/run/docker.sock"
+        self.assertTrue(any("host path" in p for p in self.socket_tree("shared", False, sock)))
+
+    def test_docker_socket_flag_refused_for_a_lab(self):
+        m = good()
+        m["docker_socket"] = True
+        self.assertTrue(any("docker_socket is allowed only for kind shared" in p
+                            for p in lm.validate_manifest("demo", m, SCHEMA)))
+        sock = "/var/run/docker.sock:/var/run/docker.sock"
+        self.assertTrue(any("host path" in p for p in self.socket_tree("lab", True, sock)))
+
+    def test_docker_socket_flag_does_not_allow_other_host_paths(self):
+        for vol in ("/srv/x:/d", "/var/run/docker.sock:/other", "/var/run:/var/run",
+                    "/var/run/docker.sock:/var/run/docker.sock:ro", "./data:/d"):
+            self.assertTrue(any("host path" in p for p in self.socket_tree("shared", True, vol)), vol)
+            self._tmp.cleanup()
+            self.setUp()
+
     def test_launcher_build_fails(self):
         text = "services:\n  web:\n    build: .\n    image: ${DEMO_WEB_IMAGE}\n"
         self.assertTrue(any("`build:`" in p for p in self.launcher(text)))
