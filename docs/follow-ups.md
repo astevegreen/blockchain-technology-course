@@ -43,6 +43,14 @@ slide index), which is never listed here.
 - `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
   measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
   memory check relies on them. (9 Nov 2026, launcher manifests)
+- The HLF launcher needs Docker Engine 26.0+ (Docker Desktop 4.29+) for its volume subpath mounts
+  (`dynamic-labs/hlf/docker-compose.launcher.yml:6`), but nothing checks the version: an older Desktop fails at the
+  first Fabric start with no clear message. Check it before starting and say what to upgrade. (9 Nov 2026, launcher
+  S4 HLF review)
+- The HLF launcher builds its helper images (`hlf-peer-ttyd`, `hlf-orderer-ttyd`, `chaincode-basic`) inside the
+  runner on first start (`dynamic-labs/hlf/lab.sh`, `build_ttyd_images`) instead of pulling the release images
+  `dynamic-labs/student-release-images.json` lists for them, and the Fabric containers lab.sh starts lack the `course.release` label the
+  launcher stack sets. (9 Nov 2026, launcher S4 HLF)
 
 ## Tooling and rules
 - `tools/tests/test_src_zip.py` skips wherever `zip` is missing, which today is every machine that runs it: the
