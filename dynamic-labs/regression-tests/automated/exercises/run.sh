@@ -4,6 +4,8 @@
 LAB_CREDENTIALS=1
 # shellcheck source=../run-lab.sh
 source "$(dirname -- "${BASH_SOURCE[0]}")/../run-lab.sh"
+# shellcheck source=../launcher-stack.sh
+source "$(dirname -- "${BASH_SOURCE[0]}")/../launcher-stack.sh"
 
 lab_before_suite() {
   # The games pin eventlet 0.33.3, which imports distutils and so fails on Python 3.12 and later: the check
@@ -26,3 +28,4 @@ lab_before_suite() {
 }
 
 run_lab "$@"
+run_launcher_pass
