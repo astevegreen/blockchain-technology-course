@@ -33,8 +33,8 @@ DOCKER_SOCKET_LABS = frozenset({"lane-service", "hlf"})
 # Lab buttons (local_actions) POST their `api` path here: lane-service on router-net, never through the router.
 LANE_SERVICE_URL = "http://lane-service-lane-service-1:8090"
 ACTION_TIMEOUT = 900  # seconds; the forensics case data takes up to about ten minutes to load
-# A lane lab's pages are served by lane-service, which takes about 30 seconds to listen after its container starts
-# (it waits that long for the Ethereum lab when that lab isn't running). Until it does, the router answers 502.
+# A lane lab's pages are served by lane-service, which listens a few seconds after its container starts (it no
+# longer waits for the Ethereum instructor in student-local mode). Until it does, the router answers 502.
 LANE_READY_TIMEOUT = 180  # seconds
 LANE_READY_POLL = 1  # seconds
 HOST_BIND = "127.0.0.1"
