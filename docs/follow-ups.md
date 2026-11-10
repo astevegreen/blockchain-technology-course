@@ -10,6 +10,8 @@ slide index), which is never listed here.
   and how, in brackets.
 - Finish an item: delete its bullet in the same commit.
 - A decision only the owner can make goes to the owner as a question, not here.
+- Work that waits for a day that has not come (the real cloud host, a real class, a Mac) goes to
+  `docs/before-first-class.md`, not this list.
 
 ## Lessons
 
