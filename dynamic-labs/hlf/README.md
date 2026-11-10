@@ -193,6 +193,7 @@ router's route to student containers). The corpus analysis tracks it as REM-02.
 | `HLF_LANE_SWEEP_INTERVAL` | `60` | How often the idle sweeper runs |
 | `HLF_AUTO_START_NETWORK` | `1` | Auto-run `./lab.sh up` when `hlf-runner` starts |
 | `HLF_STOP_NETWORK_ON_EXIT` | `1` | Run `./lab.sh down` when `hlf-runner` stops |
+| `HLF_BOOTSTRAP_TIMEOUT_SECONDS` | `900` | How long `./lab.sh bootstrap` (the Fabric runtime and helper images) may run before the start stops with an error; every startup line also goes to `runtime/lifecycle.log` as it happens |
 
 ## Guides
 

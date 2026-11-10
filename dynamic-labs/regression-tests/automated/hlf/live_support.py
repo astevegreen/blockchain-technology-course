@@ -245,6 +245,7 @@ def wait_for_hlf_startup_complete(
     timeout_seconds: int = DEFAULT_STARTUP_READY_TIMEOUT_SECONDS,
     interval_seconds: float = 5.0,
     require_student_overlay: bool = False,
+    stopped_grace_seconds: float = 60.0,
 ) -> dict:
     """Wait for the managed HLF startup task to finish.
 
@@ -256,6 +257,10 @@ def wait_for_hlf_startup_complete(
     """
     deadline = time.time() + timeout_seconds
     last_status: dict | None = None
+    # Not running with no task in flight: the startup ended without the network. A short grace covers a status read
+    # between two tasks; after it the suite fails with the startup's last line (a stopped bootstrap says why) rather
+    # than waiting out the whole timeout once per test class.
+    idle_since: float | None = None
     artifacts_root = "fabric-samples/test-network"
     compose_students = f"{artifacts_root}/compose/compose-students.yaml"
     channel_block = f"{artifacts_root}/channel-artifacts/diplomas.block"
@@ -276,6 +281,16 @@ def wait_for_hlf_startup_complete(
                 return last_status
             if runtime_file_exists(compose_students) and runtime_file_exists(channel_block):
                 return last_status
+        if last_status.get("status") != "running" and not last_status.get("background_task"):
+            idle_since = idle_since or time.time()
+            if time.time() - idle_since >= stopped_grace_seconds:
+                detail = (last_status.get("lifecycle_progress") or {}).get("detail") or "no startup output"
+                raise RegressionFailure(
+                    f"HLF startup ended without the network running (status={last_status.get('status')}). "
+                    f"Its last line: {detail}"
+                )
+        else:
+            idle_since = None
         time.sleep(interval_seconds)
 
     raise RegressionFailure(

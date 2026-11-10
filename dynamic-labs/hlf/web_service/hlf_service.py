@@ -12,6 +12,7 @@ import http.client
 import json
 import os
 import re
+import signal
 import socket
 import subprocess
 import threading
@@ -28,6 +29,17 @@ _SAFE_ID_RE = re.compile(r"^[a-zA-Z0-9_.\-]{1,128}$")
 _DEBUG_ENABLED = os.getenv("HLF_DEBUG", "0") == "1"
 _STEP_RE = re.compile(r"Step (\d+)/(\d+):\s*(.+)")
 _DOCKER_SOCKET = "/var/run/docker.sock"
+# The limit on `lab.sh bootstrap`. In Lab Tests it fetches the Fabric runtime and builds the three helper images:
+# 5 and 11 minutes on 10 Nov 2026, inside a job that stops at 30. On a student PC the launcher has already pulled
+# the release's helper images, so it only copies and tags them.
+BOOTSTRAP_TIMEOUT_SECONDS = int(os.getenv("HLF_BOOTSTRAP_TIMEOUT_SECONDS", str(15 * 60)))
+
+
+def _plain_duration(seconds: int) -> str:
+    if seconds >= 60 and seconds % 60 == 0:
+        minutes = seconds // 60
+        return f"{minutes} minute{'s' if minutes != 1 else ''}"
+    return f"{seconds} second{'s' if seconds != 1 else ''}"
 
 
 class _DockerUnixConn(http.client.HTTPConnection):
@@ -296,6 +308,7 @@ class HLFLabService:
         self._lifecycle_log: List[str] = []
         self._lifecycle_log_seq: int = 0
         self._lifecycle_log_max: int = 4000
+        self._lifecycle_file_lock = threading.Lock()
         self.docker_client = None
         self._explorer_cache_lock = threading.Lock()
         self._explorer_refresh_lock = threading.Lock()
@@ -668,6 +681,7 @@ class HLFLabService:
             current_task = self.background_task
             progress["updated_at"] = ts
             progress["detail"] = text
+        self._append_lifecycle_log_file(stamped)
 
         step_match = _STEP_RE.search(text)
         if step_match:
@@ -705,32 +719,20 @@ class HLFLabService:
                 "lifecycle_progress": dict(self.lifecycle_progress),
             }
 
-    def _flush_lifecycle_log_to_disk(self) -> None:
+    def _append_lifecycle_log_file(self, stamped: str) -> None:
+        # Each line goes to runtime/lifecycle.log as it is recorded, not when the task ends: the hlf-launcher Lab
+        # Tests job follows that file, and a startup that stalls must show its last step while the job still runs.
+        with self._lifecycle_file_lock:
+            try:
+                with (self.runtime_path / "lifecycle.log").open("a", encoding="utf-8") as f:
+                    f.write(stamped + "\n")
+            except OSError:
+                pass
+
+    def _clear_lifecycle_log(self) -> None:
+        """Empty the in-memory log at the end of a task (runtime/lifecycle.log already holds every line)."""
         with self._state_lock:
-            lines = list(self._lifecycle_log)
             self._lifecycle_log.clear()
-        if not lines:
-            return
-        log_path = self.runtime_path / "lifecycle.log"
-        try:
-            with log_path.open("a", encoding="utf-8") as f:
-                f.write("\n".join(lines) + "\n")
-        except OSError:
-            pass
-
-    def _stream_process(self, proc: subprocess.Popen, source: str, stream_callback=None) -> None:
-        if not stream_callback or proc.stdout is None:
-            return
-
-        def stream_output():
-            for line in iter(proc.stdout.readline, ""):
-                if line:
-                    if source == "network":
-                        self._record_lifecycle_line(line)
-                    stream_callback(source, line)
-            proc.stdout.close()
-
-        threading.Thread(target=stream_output, daemon=True).start()
 
     def _stream_lifecycle(self, proc: subprocess.Popen, stream_callback=None) -> None:
         if proc.stdout is None:
@@ -791,7 +793,7 @@ class HLFLabService:
                             "updated_at": time.time(),
                         }
                     self.background_task = None
-                self._flush_lifecycle_log_to_disk()
+                self._clear_lifecycle_log()
 
         threading.Thread(target=wrapped, daemon=True).start()
 
@@ -3623,24 +3625,89 @@ rm -rf "$tmpdir"
     def _test_network_exists(self) -> bool:
         return (self.lab_path / "runtime" / "fabric-samples" / "test-network" / "network.sh").exists()
 
-    def bootstrap_runtime(self, stream_callback=None) -> Tuple[bool, str]:
+    def _bootstrap_command(self) -> List[str]:
+        return [str(self.lab_script), "bootstrap"]
+
+    @staticmethod
+    def _kill_process_group(proc: subprocess.Popen) -> None:
+        """Stop a process started with start_new_session, and everything it started (docker build, curl)."""
+        for forceful in (False, True):
+            try:
+                if os.name == "posix":
+                    os.killpg(proc.pid, signal.SIGKILL if forceful else signal.SIGTERM)
+                elif forceful:
+                    proc.kill()
+                else:
+                    proc.terminate()
+            except OSError:
+                pass  # already gone
+            try:
+                proc.wait(timeout=10)
+                return
+            except subprocess.TimeoutExpired:
+                continue
+
+    def _bootstrap_log_tail(self, count: int = 20) -> List[str]:
+        # lab.sh bootstrap sends its downloads' and builds' output to runtime/bootstrap.log when no terminal is attached.
+        try:
+            lines = (self.runtime_path / "bootstrap.log").read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            return []
+        return [line for line in lines if line.strip()][-count:]
+
+    def bootstrap_runtime(self, stream_callback=None, timeout_seconds: Optional[int] = None) -> Tuple[bool, str]:
+        """Run `lab.sh bootstrap`, which fetches the Fabric runtime and builds the helper images, within a limit.
+
+        Without a limit a stalled download kept the network "starting" until the Lab Tests job hit its own 30
+        minutes, with nothing saying where it was. Every output line goes to the lifecycle log as it arrives.
+        """
+        limit = BOOTSTRAP_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds
         proc = subprocess.Popen(
-            [str(self.lab_script), "bootstrap"],
+            self._bootstrap_command(),
             cwd=str(self.lab_path),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
             universal_newlines=True,
+            start_new_session=os.name == "posix",
         )
         self.processes["bootstrap"] = proc
-        self._stream_process(proc, "network", stream_callback)
-        proc.wait()
-        self.processes.pop("bootstrap", None)
+        # Read on a thread so the wait below can time out; reading also keeps a full pipe from stalling lab.sh.
+        reader = threading.Thread(
+            target=self._stream_lifecycle, args=(proc, stream_callback), name="bootstrap-output", daemon=True,
+        )
+        reader.start()
+        try:
+            proc.wait(timeout=limit)
+        except subprocess.TimeoutExpired:
+            self._kill_process_group(proc)
+            reader.join(timeout=5)
+            tail = self._bootstrap_log_tail()
+            if tail:
+                self._record_lifecycle_line("[hlf] The last lines of runtime/bootstrap.log:")
+                for line in tail:
+                    self._record_lifecycle_line(f"[hlf]   {line}")
+            message = (
+                f"[hlf] ERROR: Fabric setup (lab.sh bootstrap) was stopped after {_plain_duration(limit)} without "
+                "finishing. It fetches the Fabric programs and builds three helper images, so a slow or broken "
+                "download, or a Docker build that hangs, is the likely cause; the lines above show the last step it "
+                "reached. Check the internet connection and Docker, then start the network again."
+            )
+            self._record_lifecycle_line(message)
+            return False, message
+        finally:
+            self.processes.pop("bootstrap", None)
+        reader.join(timeout=5)
 
         if proc.returncode == 0:
             return True, "Bootstrap completed successfully"
-        return False, f"Bootstrap failed with exit code {proc.returncode}"
+        message = (
+            f"[hlf] ERROR: Fabric setup (lab.sh bootstrap) failed with exit code {proc.returncode}; "
+            "the lines above say why."
+        )
+        self._record_lifecycle_line(message)
+        return False, message
 
     def get_network_status(self) -> Dict:
         try:
@@ -3775,7 +3842,9 @@ rm -rf "$tmpdir"
                             stream_callback("network", "[hlf] test-network not found; running bootstrap first...\n")
                         success, _message = self.bootstrap_runtime(stream_callback=stream_callback)
                         if not success:
-                            self.status = LabStatus.ERROR
+                            # bootstrap_runtime has put the reason in the lifecycle log; it is the last line.
+                            with self._state_lock:
+                                self.status = LabStatus.ERROR
                             return
 
                     popen_kwargs = {
