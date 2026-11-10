@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import re
 import threading
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -24,6 +25,7 @@ PROJECT_LABEL = "com.docker.compose.project"
 SELF_NAME = "course-launcher"
 ROUTER_NET = "router-net"
 ROUTER_CONTAINER = "router-router-1"
+ACTION_TIMEOUT = 900  # seconds; the forensics case data takes up to about ten minutes to load
 HOST_BIND = "127.0.0.1"
 
 LAYER = re.compile(r"^([0-9a-f]{6,64}): (Pulling fs layer|Waiting|Already exists|Pull complete|Download complete)")
@@ -43,6 +45,22 @@ class Job:
     @property
     def active(self) -> bool:
         return self.phase in ("pulling", "starting")
+
+
+@dataclass
+class ActionRun:
+    """A lab button (local_actions) pressed: it runs in the background, and the lab row shows how it is going."""
+    id: str
+    label: str
+    started: float = field(default_factory=time.monotonic)
+    finished: float | None = None
+    phase: str = "running"   # running | done | error
+    message: str = ""
+
+    def view(self) -> dict:
+        end = self.finished if self.finished is not None else time.monotonic()
+        return {"id": self.id, "label": self.label, "phase": self.phase, "message": self.message,
+                "elapsed_s": int(end - self.started)}
 
 
 def split_ref(ref: str) -> tuple[str, str, str]:
@@ -92,6 +110,7 @@ class Controller:
         self.post = post
         self.background = background
         self.jobs: dict[str, Job] = {}
+        self.actions: dict[str, ActionRun] = {}
         self.start_lock = threading.Lock()
         self.state_lock = threading.Lock()
 
@@ -269,6 +288,7 @@ class Controller:
                 "actions": [{"id": a["id"], "label": a["label"]} for a in lab.get("local_actions") or []],
                 "unavailable_reason": reason if state == "unavailable" else None,
                 "message": reason if state == "error" else None,
+                "action": self.actions[lab["id"]].view() if lab["id"] in self.actions else None,
             })
         return out
 
@@ -361,6 +381,10 @@ class Controller:
         self.pull(lab, job)
         job.phase = "starting"
         if lab.get("uses_lane_service"):
+            # Only the lab's default services start; the lane images sit under a compose profile, so the pull
+            # above fetches them and lane-service starts the lanes itself.
+            if self.release.compose_file(lab).is_file():
+                self.compose_up(lab)
             self.update_state(lambda d: d.setdefault("started", []).append(lab["id"])
                               if lab["id"] not in d.get("started", []) else None)
         else:
@@ -375,9 +399,11 @@ class Controller:
         changed = saved is not None and saved.get("images") != self.release.lab_images(lab)
         config = self.write_labels(lab)
         self.ensure_networks(config.get("networks"))
+        # Lane-service's lane containers may share a lane lab's project: never remove them as orphans.
+        orphans = () if lab.get("uses_lane_service") else ("--remove-orphans",)
         if changed and not lab.get("keep_volumes_on_update"):
-            self.compose(lab, "down", "-v", "--remove-orphans", timeout=300)
-        result = self.compose(lab, "up", "-d", "--pull", "missing", "--remove-orphans")
+            self.compose(lab, "down", "-v", *orphans, timeout=300)
+        result = self.compose(lab, "up", "-d", "--pull", "missing", *orphans)
         if not result.ok:
             raise Refused(500, messages.explain(result.out, "starting the lab"))
 
@@ -477,11 +503,12 @@ class Controller:
         lab = self.page_lab(lab_id)
         self.stop_lab(lab)
         self.jobs.pop(lab_id, None)
+        self.actions.pop(lab_id, None)
         return {"ok": True}
 
     def stop_lab(self, lab: dict) -> None:
         if lab.get("uses_lane_service"):
-            ids = self.lab_containers(lab)
+            ids = self.lab_containers(lab)  # the lab's own services and the lanes lane-service labelled
             if ids:
                 self.docker.run("stop", *ids, timeout=300)
             self.update_state(lambda d: d.__setitem__("started", [i for i in d.get("started", []) if i != lab["id"]]))
@@ -494,6 +521,7 @@ class Controller:
         lab = self.page_lab(lab_id)
         self.remove_lab(lab)
         self.jobs.pop(lab_id, None)
+        self.actions.pop(lab_id, None)
         return {"ok": True}
 
     def remove_lab(self, lab: dict, images: bool = False) -> None:
@@ -518,18 +546,41 @@ class Controller:
                                      d.__setitem__("started", [i for i in d.get("started", []) if i != lab["id"]])))
 
     def action(self, lab_id: str, action_id: str) -> dict:
+        """Press a lab's button. It runs in the background (some take ten minutes); the lab row's `action` shows it."""
         lab = self.page_lab(lab_id)
         action = next((a for a in lab.get("local_actions") or [] if a["id"] == action_id), None)
         if not action:
             raise Refused(404, "This lab has no such button.")
+        run = self.actions.get(lab_id)
+        if run and run.phase == "running":
+            return run.view()
         state, _ = self.state_of(lab, self.course_containers(), set(), self.docker.info(), self.load_state())
         if state != "running":
             raise Refused(409, "Start the lab first, then press this button again.")
-        status, body = self.post(f"http://{ROUTER_CONTAINER}{action['api']}", 600)
+        run = self.actions[lab_id] = ActionRun(action["id"], action["label"])
+        if self.background:
+            threading.Thread(target=self.run_action, args=(action, run), daemon=True).start()
+        else:
+            self.run_action(action, run)
+        return run.view()
+
+    @staticmethod
+    def action_url(action: dict) -> str:
+        """`api` is a path through the router, or the full address of a service on router-net (lane-service)."""
+        api = action["api"]
+        return api if api.startswith("http://") else f"http://{ROUTER_CONTAINER}{api}"
+
+    def run_action(self, action: dict, run: ActionRun) -> None:
+        try:
+            status, _ = self.post(self.action_url(action), ACTION_TIMEOUT)
+        except Exception:  # noqa: BLE001 - the page must always get a plain answer
+            status = 0
         if 200 <= status < 300:
-            return {"ok": True, "message": f"Done: {action['label']}."}
-        raise Refused(502, f"\"{action['label']}\" didn't finish. Wait a minute, then press it again. If it happens "
-                           f"again, tell your instructor.")
+            run.phase, run.message = "done", f"Done: {action['label']}."
+        else:
+            run.phase, run.message = "error", (f"\"{action['label']}\" didn't finish. Wait a minute, then press it "
+                                               f"again. If it happens again, tell your instructor.")
+        run.finished = time.monotonic()
 
     def shutdown(self) -> dict:
         """Stop every lab and shared service (keeping their data), shared services last."""

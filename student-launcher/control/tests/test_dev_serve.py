@@ -44,6 +44,9 @@ class Fixtures(unittest.TestCase):
         self.assertEqual(status, 409)
         self.assertIn("memory", body["message"])
         self.assertEqual(dispatch(canned, "POST", "/api/labs/ethereum_lab/start")[0], 202)
+        busy = next(row for row in canned.data["labs"] if row["action"])
+        self.assertEqual(set(busy["action"]), {"id", "label", "phase", "message", "elapsed_s"})
+        self.assertEqual(dispatch(canned, "POST", f"/api/labs/{busy['id']}/actions/seed")[0], 202)
 
     def test_docker_down(self):
         canned = dev_serve.load("docker-down")

@@ -56,7 +56,7 @@ def dispatch(controller: Controller, method: str, path: str) -> tuple[int, dict]
             if name == "reset":
                 return 200, controller.reset(args["lab"])
             if name == "action":
-                return 200, controller.action(args["lab"], args["action"])
+                return 202, controller.action(args["lab"], args["action"])
             if name == "update":
                 return 200, controller.update()
             if name == "shutdown":

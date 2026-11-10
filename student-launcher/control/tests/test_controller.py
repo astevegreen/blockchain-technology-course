@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -120,12 +121,51 @@ class Actions(unittest.TestCase):
         c = self.bench.controller
         self.assertEqual(dispatch(c, "POST", "/api/labs/forensics/actions/seed")[0], 409)
         dispatch(c, "POST", "/api/labs/forensics/start")
+        self.assertIsNone(dispatch(c, "GET", "/api/labs")[1]["labs"][0]["action"])
         status, body = dispatch(c, "POST", "/api/labs/forensics/actions/seed")
-        self.assertEqual(status, 200, body)
+        self.assertEqual(status, 202, body)
         self.assertEqual(self.bench.posts, ["http://router-router-1/api/forensics/seed"])
         self.assertEqual(dispatch(c, "POST", "/api/labs/forensics/actions/other")[0], 404)
-        listed = dispatch(c, "GET", "/api/labs")[1]["labs"][0]["actions"]
-        self.assertEqual(listed, [{"id": "seed", "label": "Load the case data"}])
+        row = dispatch(c, "GET", "/api/labs")[1]["labs"][0]
+        self.assertEqual(row["actions"], [{"id": "seed", "label": "Load the case data"}])
+        self.assertEqual((row["action"]["phase"], row["action"]["message"]), ("done", "Done: Load the case data."))
+        dispatch(c, "POST", "/api/labs/forensics/stop")
+        self.assertIsNone(dispatch(c, "GET", "/api/labs")[1]["labs"][0]["action"])
+
+    def test_a_full_address_goes_straight_to_that_service(self):
+        bench = Bench(labs=[router(), lab("bitcoin", local_actions=[
+            {"id": "forensics-load", "label": "Load the case data",
+             "api": "http://lane-service-lane-service-1:8090/api/local/bitcoin/forensics-load"}])])
+        try:
+            dispatch(bench.controller, "POST", "/api/labs/bitcoin/start")
+            dispatch(bench.controller, "POST", "/api/labs/bitcoin/actions/forensics-load")
+            self.assertEqual(bench.posts, ["http://lane-service-lane-service-1:8090/api/local/bitcoin/forensics-load"])
+        finally:
+            bench.close()
+
+    def test_a_failed_or_slow_button_says_so_plainly_and_runs_once(self):
+        c = self.bench.controller
+        dispatch(c, "POST", "/api/labs/forensics/start")
+        self.bench.post = lambda url, timeout: (0, "timed out")
+        c.post = self.bench.post
+        dispatch(c, "POST", "/api/labs/forensics/actions/seed")
+        row = dispatch(c, "GET", "/api/labs")[1]["labs"][0]
+        self.assertEqual(row["action"]["phase"], "error")
+        self.assertIn("didn't finish", row["action"]["message"])
+        gate = threading.Event()
+        calls = []
+        c.background = True
+        c.post = lambda url, timeout: (calls.append(timeout), gate.wait(5), (200, "{}"))[-1]
+        first = dispatch(c, "POST", "/api/labs/forensics/actions/seed")
+        again = dispatch(c, "POST", "/api/labs/forensics/actions/seed")
+        self.assertEqual((first[1]["phase"], again[1]["phase"]), ("running", "running"))
+        gate.set()
+        for _ in range(50):
+            if c.actions["forensics"].phase != "running":
+                break
+            time.sleep(0.05)
+        self.assertEqual(c.actions["forensics"].phase, "done")
+        self.assertEqual(calls, [900])
 
 
 class Checks(unittest.TestCase):
@@ -244,9 +284,23 @@ class LaneLabs(unittest.TestCase):
         self.assertEqual(c.needed_mb(c.release.lab("hlf")), 1024 + 64 + 128)
         dispatch(c, "POST", "/api/labs/hlf/start")
         self.assertEqual(self.bench.state("hlf"), "running")
-        self.assertFalse(self.bench.fake.ran("compose", "hlf", "up"))
+        # The lab's default services come up; lanes (a compose profile) are left to lane-service, and its
+        # containers are never removed as orphans of the lab's project.
+        ups = self.bench.fake.ran("-p", "hlf", "up")
+        self.assertEqual(len(ups), 1)
+        self.assertNotIn("--profile", ups[0])
+        self.assertNotIn("--remove-orphans", ups[0])
         dispatch(c, "POST", "/api/labs/hlf/stop")
+        self.assertEqual(self.bench.state("hlf"), "stopped")
+        dispatch(c, "POST", "/api/labs/hlf/reset")
         self.assertEqual(self.bench.state("hlf"), "downloaded")
+
+    def test_lane_lab_without_a_compose_file_only_pulls(self):
+        c = self.bench.controller
+        c.release.compose_file(c.release.lab("hlf")).unlink()
+        dispatch(c, "POST", "/api/labs/hlf/start")
+        self.assertFalse(self.bench.fake.ran("-p", "hlf", "up"))
+        self.assertEqual(self.bench.state("hlf"), "running")
 
 
 class Http(unittest.TestCase):

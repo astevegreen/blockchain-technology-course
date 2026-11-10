@@ -12,6 +12,7 @@ const STATE_WORDS = {
 };
 const polling = new Set();
 const notes = {};
+let actionTimer = null;
 
 function el(tag, attrs, ...children) {
   const node = document.createElement(tag);
@@ -57,8 +58,16 @@ function labCard(lab) {
     el("div", { class: "lab-head" }, el("h2", {}, lab.title),
       el("span", { class: "state " + lab.state }, STATE_WORDS[lab.state] || lab.state)),
     el("p", { class: "facts" }, facts.join(" · ")));
-  const message = lab.unavailable_reason || lab.message || notes[lab.id];
+  const busy = lab.action && lab.action.phase === "running";
+  const finished = lab.action && !busy ? lab.action.message : null;
+  const message = lab.unavailable_reason || lab.message || notes[lab.id] || finished;
   if (message) card.append(el("p", { class: "message" }, message));
+  if (busy) {
+    const minutes = Math.floor(lab.action.elapsed_s / 60);
+    card.append(el("progress", {}));
+    card.append(el("p", { class: "message muted" }, lab.action.label + "… This can take up to 10 minutes. Leave " +
+      "this page open" + (minutes ? " (" + minutes + (minutes === 1 ? " minute" : " minutes") + " so far)." : ".")));
+  }
   if (lab.state === "starting") {
     card.append(el("progress", { id: "bar-" + lab.id }));
     card.append(el("p", { class: "message muted", id: "phase-" + lab.id }, "Getting ready…"));
@@ -68,8 +77,9 @@ function labCard(lab) {
   if (lab.state === "running") {
     buttons.append(el("a", { class: "button", href: lab.entry_url, target: "_blank", rel: "noopener" }, "Open"));
     for (const action of lab.actions || []) {
-      buttons.append(el("button", { class: "secondary", onclick: (e) => runAction(lab, action, e.target) },
-        action.label));
+      const attrs = { class: "secondary", onclick: (e) => runAction(lab, action, e.target) };
+      if (busy) attrs.disabled = "";
+      buttons.append(el("button", attrs, action.label));
     }
     buttons.append(el("button", { class: "secondary", onclick: () => press(lab, "stop") }, "Stop"));
   } else if (lab.state !== "starting" && lab.state !== "unavailable") {
@@ -92,6 +102,9 @@ async function refresh() {
   showProblem("");
   section.replaceChildren(...result.body.labs.map(labCard));
   if (!result.body.labs.length) section.append(el("p", { class: "muted" }, "No labs in this release."));
+  // A button that takes minutes: look again every few seconds until it finishes.
+  const anyBusy = result.body.labs.some((lab) => lab.action && lab.action.phase === "running");
+  if (anyBusy && !actionTimer) actionTimer = setTimeout(() => { actionTimer = null; refresh(); }, 3000);
 }
 
 async function press(lab, verb) {
@@ -104,8 +117,9 @@ async function press(lab, verb) {
 async function runAction(lab, action, button) {
   button.disabled = true;
   button.textContent = action.label + "…";
+  delete notes[lab.id];
   const result = await api("POST", "labs/" + lab.id + "/actions/" + action.id);
-  notes[lab.id] = result.body.message;
+  if (!result.ok) notes[lab.id] = result.body.message;
   await refresh();
 }
 
