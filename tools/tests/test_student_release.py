@@ -272,12 +272,8 @@ class Workflow(unittest.TestCase):
         import yaml
         flow = yaml.safe_load(self.text)
         on = flow.get("on", flow.get(True))
-        self.assertIn("workflow_dispatch", on)
-        # Only a dry-run push from a claude/ branch may sit beside the dispatch; never main, never a tag.
-        self.assertLessEqual(set(on), {"workflow_dispatch", "push"})
-        if "push" in on:
-            self.assertEqual(set(on["push"]), {"branches"})
-            self.assertTrue(all(b.startswith("claude/") for b in on["push"]["branches"]))
+        # Builds run only when the owner starts them (.claude/rules/ci.md).
+        self.assertEqual(set(on), {"workflow_dispatch"})
         self.assertIs(on["workflow_dispatch"]["inputs"]["publish"]["default"], False)
 
     def test_publish_waits_for_the_smoke_tests(self):

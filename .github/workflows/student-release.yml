@@ -9,10 +9,6 @@ name: Student Release
 # build context (dynamic-labs/student-exclude.txt, the list pages.yml and vm-build.yml also read).
 
 on:
-  # TEMPORARY dry-run trigger for the S5 branch (a dispatch-only workflow cannot be dispatched before it is on main).
-  # A push acts as publish: false, rebuild_bases: true. Removed before this branch merges.
-  push:
-    branches: [claude/launcher-s5-release-894041]
   workflow_dispatch:
     inputs:
       publish:
@@ -90,7 +86,7 @@ jobs:
   # Arch tags first; bases-merge joins them into base-bitcoin-<name> (moving) and base-bitcoin-<name>-<version>.
   bases:
     needs: prepare
-    if: inputs.rebuild_bases || github.event_name == 'push'
+    if: inputs.rebuild_bases
     name: bases (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
