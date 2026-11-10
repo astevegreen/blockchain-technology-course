@@ -348,6 +348,8 @@ Before the first class on a new host, rerun the measurement there: deploy with `
 seat count, `lab-manager.sh start` the five labs, then
 `python3 scripts/measure-seats.py --seats 20 ethereum_lab bitcoin consensus p2p_trust hlf`, and the class bursts
 with `python3 scripts/measure-seats.py --seats 40 --burst ethereum_lab bitcoin hlf`.
+The full list of checks that wait for the real host, the real domain and the first real class is
+`docs/before-first-class.md` in the course repository (instructors have it there; it is not part of this download).
 
 Cloud deployment is allowed to hydrate Hyperledger Fabric build assets from the internet during image prebuild. The packaged VM path remains offline-only: it expects the shipped `hlf/runtime/fabric-samples` tree to already contain Fabric samples, binaries, and config.
 
