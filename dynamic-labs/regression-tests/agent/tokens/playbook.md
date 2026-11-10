@@ -93,7 +93,6 @@ and a screenshot.
 - the classroom (`tokens.lab`) and cloud (`tokens.<domain>`) hosts and their certificates
 - a whole class minting at once (40 seats against one 12-second block)
 - Otterscan's look on a phone-width screen
-- the CI Lab Tests: the token lab is not in them yet, like the explorer (`docs/follow-ups.md`)
 
 ## Completion Rule
 

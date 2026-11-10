@@ -83,7 +83,6 @@ Follow `tasks/openers-flow.md`. It needs the exercises and bitcoin labs running 
 - the classroom (`explorer.lab`) and cloud (`explorer.<domain>`) hosts and their certificates
 - a whole class sending at once (40 seats against one 12-second block)
 - Otterscan's look on a phone-width screen
-- the CI Lab Tests: the explorer is not in them yet (`docs/follow-ups.md`)
 
 ## Completion Rule
 

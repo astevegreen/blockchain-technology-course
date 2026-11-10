@@ -1,4 +1,4 @@
-"""The cloud router serves Let's Encrypt's challenge path on port 80 (docs/follow-ups.md, 9 Nov 2026 HTTPS redirect).
+"""The cloud router serves Let's Encrypt's challenge path on port 80 (9 Nov 2026 HTTPS redirect).
 
 The Let's Encrypt certificate lasts 90 days. deploy-cloud.sh gets it with certbot --webroot, so certbot's
 renewal timer renews it the same way while the labs are up: certbot writes a token into
@@ -9,7 +9,7 @@ reloads it.
 
 The live test runs the real router config (nginx-ssl.conf with the cloud switches: redirect on, class gate
 on) in nginx:alpine on a Docker host and asks it over HTTP. A real Let's Encrypt renewal needs the real
-cloud host (docs/follow-ups.md, "Lab hosting is decided").
+cloud host (docs/before-first-class.md, step 3).
 """
 
 from __future__ import annotations

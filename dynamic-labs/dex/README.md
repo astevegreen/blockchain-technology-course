@@ -13,7 +13,7 @@ the course site, which sends them to the lab's own hosts, one per chain:
 |---|---|---|
 | This machine | `http(s)://dex.localhost/` | `http(s)://dex-l2.localhost/` |
 | Classroom network (`classroom-network-helper.sh`) | `https://dex.lab/` | `https://dex-l2.lab/` |
-| Cloud (`deploy-cloud.sh`) | `https://dex.<domain>/` | `https://dex-l2.<domain>/`: both need DNS records and certificate names (see `docs/follow-ups.md`) |
+| Cloud (`deploy-cloud.sh`) | `https://dex.<domain>/` | `https://dex-l2.<domain>/`: both need DNS records and certificate names (`dynamic-labs/README.md`, "Cloud") |
 
 The router's `routes/dex-host.conf` and `routes/dex-l2-host.conf` split each host the same way as
 the token lab's:
