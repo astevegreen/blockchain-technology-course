@@ -50,6 +50,13 @@ slide index), which is never listed here.
   before they claim a station. `ClaimManager.start_claimed_lanes` (`dynamic-labs/hlf/web_service/claims.py`) is
   covered by unit tests and one cold start by hand (10 Nov 2026: station claimed 3 s in, peer running when the
   network came up). A live test needs a network restart inside the suite. (10 Nov 2026, launcher PC test)
+- The Fabric lab's Lab Tests jobs (`hlf`, `hlf-launcher`) download the Fabric runtime on every run, and the wait has
+  no time limit (`bootstrap_runtime`, `dynamic-labs/hlf/web_service/hlf_service.py`), while the job stops at 30
+  minutes (`.github/workflows/lab-tests.yml`). On 10 Nov 2026 the download took about 5 minutes in one run and 11 in
+  another, and in run 42760037609 the `hlf-launcher` job reached the limit with the network still not up (the
+  startup log reaches the job output only when startup ends, so the step it was in is not recorded); its rerun
+  passed. Give the bootstrap a time limit that fails with a plain message, or keep the runtime between runs.
+  (10 Nov 2026, launcher Fabric fix)
 - The launcher's macOS wrappers (`student-launcher/Start-Course-Labs.command`, `Stop-Course-Labs.command`) have
   never run on a Mac: the release's smoke jobs run the `.sh` wrappers on Linux and the PC test ran the `.cmd` ones
   on Windows 11. Run both on a Mac with Docker Desktop before students with Macs get the release. (10 Nov 2026,
