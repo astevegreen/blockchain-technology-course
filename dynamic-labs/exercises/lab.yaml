@@ -1,0 +1,37 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: exercises
+title: "Social Trust Lab: The Insider"
+kind: lab
+order:
+  day: 1
+  position: 0
+compose_project: exercises
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  insider:
+    source: build
+    context: l03-i3-trust-game
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  bgp:
+    source: build
+    context: l03-i3-bgp-game
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+routes:
+- routes/exercises.conf
+uses_lane_service: false
+entry:
+  path: /exercises/insider/
+memory_mb: 512
+approx_download_mb: 200
+data: []
+keep_volumes_on_update: true

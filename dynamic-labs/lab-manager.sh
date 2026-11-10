@@ -652,36 +652,24 @@ ensure_networks() {
     # student ttyd shell cannot reach the instructor backend by
     # hostname/IP even on the same Docker host.
     local nets=(
+        # BEGIN GENERATED NETWORKS (tools/lab_manifest.py: edit the manifests, then run it with --write)
         "router-net:"
-        "consensus-student-net:--internal"
-        "consensus-instructor-net:--internal"
-        "p2p-trust-student-net:--internal"
-        "p2p-trust-instructor-net:--internal"
-        # Bitcoin uses two --internal nets. bitcoind P2P gossip over
-        # bitcoin-p2p-net; ttyd/static-web/mempool-UI via router on
-        # bitcoin-mgmt-net. ttyd-bind-mgmt.sh (in the wrapper image)
-        # binds ttyd to the mgmt-net interface only.
+        "bitcoin-instructor-mgmt-net:--internal"
         "bitcoin-p2p-net:--internal"
         "bitcoin-student-mgmt-net:--internal"
-        "bitcoin-instructor-mgmt-net:--internal"
-        # Phase 8.5
-        "crypto-student-net:--internal"
+        "consensus-instructor-net:--internal"
+        "consensus-student-net:--internal"
         "crypto-instructor-net:--internal"
-        # Ethereum: shared instructor + on-demand lanes (mirrors bitcoin
-        # split). rpc-net carries hardhat JSON-RPC + pool fetch between
-        # lanes and instructor; mgmt nets are router-facing.
+        "crypto-student-net:--internal"
+        "ethereum-instructor-mgmt-net:--internal"
         "ethereum-rpc-net:--internal"
         "ethereum-student-mgmt-net:--internal"
-        "ethereum-instructor-mgmt-net:--internal"
-        # HLF: per-peer ttyd terminal networks. Students and instructor
-        # consoles are on separate internal nets so students cannot
-        # reach consortium/orderer ttyd ports.
-        "hlf-student-term:--internal"
-        "hlf-instructor-term:--internal"
-        # HLF: Fabric test-network creates this, but student/classroom
-        # compose files declare it external. Pre-creating avoids a race
-        # when consoles start before Fabric bootstrap finishes.
         "fabric_test:"
+        "hlf-instructor-term:--internal"
+        "hlf-student-term:--internal"
+        "p2p-trust-instructor-net:--internal"
+        "p2p-trust-student-net:--internal"
+        # END GENERATED NETWORKS
     )
     local entry name flags
     for entry in "${nets[@]}"; do
@@ -700,10 +688,12 @@ router_dir() {
 
 target_dir() {
     case "$1" in
+        # BEGIN GENERATED TARGETS (tools/lab_manifest.py: edit the manifests, then run it with --write)
         router) echo "${BASE_DIR}/router" ;;
         course-site|course_site) echo "${BASE_DIR}/course-site" ;;
-        instructor-auth-service|instructor_auth_service|auth-service|auth_service) echo "${BASE_DIR}/instructor_auth_service" ;;
-        ethereum|ethereum_lab) echo "${BASE_DIR}/ethereum_lab" ;;
+        lane-service|lane_service) echo "${BASE_DIR}/lane-service" ;;
+        instructor_auth_service|instructor-auth-service|auth-service|auth_service) echo "${BASE_DIR}/instructor_auth_service" ;;
+        ethereum_lab|ethereum-lab|ethereum) echo "${BASE_DIR}/ethereum_lab" ;;
         bitcoin) echo "${BASE_DIR}/bitcoin" ;;
         consensus) echo "${BASE_DIR}/consensus" ;;
         cryptography) echo "${BASE_DIR}/cryptography" ;;
@@ -718,9 +708,9 @@ target_dir() {
         tron) echo "${BASE_DIR}/tron" ;;
         cross-chain|cross_chain) echo "${BASE_DIR}/cross-chain" ;;
         final-trace|final_trace) echo "${BASE_DIR}/final-trace" ;;
-        quiz|quiz-engine-v2) echo "${BASE_DIR}/quiz-engine-v2" ;;
+        quiz-engine-v2|quiz_engine_v2|quiz) echo "${BASE_DIR}/quiz-engine-v2" ;;
         hlf) echo "${BASE_DIR}/hlf" ;;
-        lane-service|lane_service) echo "${BASE_DIR}/lane-service" ;;
+        # END GENERATED TARGETS
         *)
             echo "Unknown target: $1" >&2
             exit 1
@@ -729,6 +719,7 @@ target_dir() {
 }
 
 list_targets() {
+    # BEGIN GENERATED LIST_TARGETS (tools/lab_manifest.py: edit the manifests, then run it with --write)
     cat <<'EOF'
 router
 course-site
@@ -752,6 +743,7 @@ final-trace
 quiz-engine-v2
 hlf
 EOF
+    # END GENERATED LIST_TARGETS
 }
 
 effective_lane_capacity() {

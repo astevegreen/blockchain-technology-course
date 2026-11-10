@@ -1,0 +1,59 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: explorer
+title: Explorer Lab
+kind: lab
+order:
+  day: 1
+  position: 1
+compose_project: explorer
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  anvil:
+    source: upstream
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  gateway:
+    source: upstream
+    image: python:3.12-alpine
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  otterscan:
+    source: upstream
+    image: otterscan/otterscan:v2.11.0
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+routes:
+- routes/explorer.conf
+uses_lane_service: false
+entry:
+  path: /lab/
+  port: 8441
+memory_mb: 2048
+approx_download_mb: 5000
+data:
+- path: ./chain
+  into: /chain
+  how: baked
+- path: ./gateway/gateway.py
+  into: /srv/gateway.py
+  how: baked
+- path: ./gateway/static
+  into: /srv/static
+  how: baked
+- path: ./otterscan/default.conf
+  into: /etc/nginx/conf.d/default.conf
+  how: baked
+- path: ./chain/sourcify
+  into: /usr/share/nginx/html/sourcify
+  how: baked
+keep_volumes_on_update: true

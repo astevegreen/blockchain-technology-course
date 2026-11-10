@@ -5,6 +5,7 @@ from pathlib import Path
 
 PLACEHOLDER = "<!-- DYNAMIC_RUNTIME_LINKS -->"
 
+# BEGIN GENERATED BLOCK (tools/lab_manifest.py: edit the manifests, then run it with --write)
 BLOCK = """## Dynamic Labs
 
 Use this section when the packaged VM or cloud lab stack is running.
@@ -41,6 +42,7 @@ Use these links after the instructor tells the class which lab is active. They a
 
 * [Instructor login](/instructor/) - single shared instructor login for dynamic lab controls, progress views, and instructor-only quiz management.
 """
+# END GENERATED BLOCK
 
 
 def main() -> None:
