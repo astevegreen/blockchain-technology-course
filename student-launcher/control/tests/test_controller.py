@@ -178,6 +178,32 @@ class Checks(unittest.TestCase):
         self.assertEqual(status, 409)
         self.assertIn("raise Memory to at least", body["message"])
 
+    def start_fabric(self, version):
+        self.bench = Bench(labs=[router(), lab("hello"), lab("fabric", min_docker_engine="26.0",
+                                                               min_docker_desktop="4.29")])
+        if version is not None:
+            self.bench.fake.info["ServerVersion"] = version
+        return dispatch(self.bench.controller, "POST", "/api/labs/fabric/start")
+
+    def test_older_docker_is_refused_with_what_to_update(self):
+        status, body = self.start_fabric("25.0.5")
+        self.assertEqual(status, 409)
+        self.assertEqual(body["message"], "This lab needs Docker Desktop 4.29 or newer. Update Docker Desktop, "
+                                          "then press Start again.")
+        self.assertFalse(self.bench.fake.ran("compose"))
+
+    def test_other_labs_start_on_older_docker(self):
+        self.start_fabric("25.0.5")
+        self.assertEqual(dispatch(self.bench.controller, "POST", "/api/labs/hello/start")[0], 202)
+
+    def test_equal_and_newer_docker_start(self):
+        for version in ("26.0.0", "26.0", "26.1.3", "27.5.1", "29.0.0-rc.1"):
+            self.assertEqual(self.start_fabric(version)[0], 202, version)
+
+    def test_unreadable_docker_version_does_not_block(self):
+        for version in (None, "", "unknown"):
+            self.assertEqual(self.start_fabric(version)[0], 202, version)
+
     def test_processor_not_supported(self):
         self.bench = Bench(labs=[router(), lab("amd-only", services={
             "web": {"source": "upstream", "image": "x/y:1", "platforms": ["linux/amd64"]}})])

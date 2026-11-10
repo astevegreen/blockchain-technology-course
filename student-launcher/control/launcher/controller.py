@@ -367,6 +367,9 @@ class Controller:
         reason = self.unavailable_reason(lab, info)
         if reason:
             raise Refused(409, reason)
+        minimum = lab.get("min_docker_engine")
+        if minimum and system.engine_older_than(info, minimum):
+            raise Refused(409, messages.docker_too_old(lab.get("min_docker_desktop") or minimum))
         have, need = system.memory_mb(info), self.needed_mb(lab)
         if have is not None and need and have < need:
             raise Refused(409, messages.memory_short(have, need))

@@ -55,6 +55,12 @@ class Fixtures(unittest.TestCase):
         self.assertIn("Docker isn't running", body["message"])
         self.assertFalse(dispatch(canned, "GET", "/api/system")[1]["docker"]["running"])
 
+    def test_docker_old_refuses_the_fabric_lab(self):
+        canned = dev_serve.load("docker-old")
+        status, body = dispatch(canned, "POST", "/api/labs/hlf/start")
+        self.assertEqual(status, 409)
+        self.assertIn("Docker Desktop 4.29 or newer", body["message"])
+
 
 if __name__ == "__main__":
     unittest.main()
