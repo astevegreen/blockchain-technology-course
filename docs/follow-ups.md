@@ -48,6 +48,10 @@ slide index), which is never listed here.
   bitcoin-trace, coinjoin-trace, final-trace `launcher/mempool.Dockerfile`) run on amd64 hosts only until it is rebuilt
   for both (spec 4.4 step 7). (9 Nov 2026, launcher S2 plain labs)
 
+- `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
+  measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
+  memory check relies on them. (9 Nov 2026, launcher manifests)
+
 ## Tooling and rules
 
 ## Notion and documents
