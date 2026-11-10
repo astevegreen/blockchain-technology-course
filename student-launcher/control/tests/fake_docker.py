@@ -57,6 +57,7 @@ class FakeDocker:
         self.removed_images = []
         self.repo_digests = ["ghcr.io/astevegreen/course-labs@sha256:old"]
         self.compose_services = {}   # project -> service names `compose config` reports
+        self.compose_volumes = {}    # project -> volumes (compose config's long form) every service reports
         self.fail = {}               # first command word sequence -> output, makes that command fail
         self.counter = 0
 
@@ -154,7 +155,9 @@ class FakeDocker:
         verb = args[args.index("--env-file") + 2] if "--env-file" in args else args[3]
         services = self.compose_services.get(project, ["web"] if project != "router" else ["router"])
         if verb == "config":
-            return Result(0, json.dumps({"name": project, "services": {s: {} for s in services}}))
+            volumes = self.compose_volumes.get(project, [])
+            return Result(0, json.dumps({"name": project,
+                                         "services": {s: {"volumes": volumes} for s in services}}))
         mine = [c for c in self.containers if c["labels"].get("com.docker.compose.project") == project]
         if verb == "up":
             if project == "router" and int(env.get("HTTP_PORT", "80")) in self.busy_ports:

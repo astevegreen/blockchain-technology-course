@@ -25,6 +25,7 @@ PROJECT_LABEL = "com.docker.compose.project"
 SELF_NAME = "course-launcher"
 ROUTER_NET = "router-net"
 ROUTER_CONTAINER = "router-router-1"
+DOCKER_SOCKET = "/var/run/docker.sock"
 ACTION_TIMEOUT = 900  # seconds; the forensics case data takes up to about ten minutes to load
 HOST_BIND = "127.0.0.1"
 
@@ -175,12 +176,27 @@ class Controller:
             config = None
         if not config:
             raise Refused(500, messages.explain(result.out, "reading the lab's setup"))
+        self.refuse_host_files(lab, config)
         labels = {LABEL_LAB: lab["id"], LABEL_RELEASE: self.release.version}
         body = {"services": {name: {"labels": labels} for name in sorted(config.get("services") or {})}}
         path = self.override_file(lab)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(body, indent=2), encoding="utf-8")
         return config
+
+    @staticmethod
+    def refuse_host_files(lab: dict, config: dict) -> None:
+        """No lab reaches the student's own files. The one exception is the Docker socket, for a shared service whose
+        manifest says `docker_socket: true` (lane-service starts the lanes); tools/lab_manifest.py checks the same."""
+        socket_ok = lab.get("docker_socket") is True and lab.get("kind") == "shared"
+        for name, service in (config.get("services") or {}).items():
+            for vol in service.get("volumes") or []:
+                if not isinstance(vol, dict) or vol.get("type") != "bind":
+                    continue
+                if socket_ok and vol.get("source") == DOCKER_SOCKET and vol.get("target") == DOCKER_SOCKET:
+                    continue
+                raise Refused(500, "This lab's setup asks for files on your computer, which the course labs never "
+                                   "do. Don't start it; tell your instructor.")
 
     # ---------- what is on the computer ----------
 
