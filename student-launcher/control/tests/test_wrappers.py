@@ -1,4 +1,8 @@
-"""The double-click wrappers in --dry-run mode, against a fake `docker` first on a PATH that holds no real one.
+"""The double-click wrappers in --dry-run mode, against a fake `docker` on a PATH that holds no real one.
+
+CI runners have Docker installed (System32 on Windows, /usr/bin on Linux), so a test PATH never lists a system
+folder: it holds the fake and a folder of only the few tools the wrappers use, and every run checks no real
+`docker` is reachable.
 
 Dry run opens no browser and starts no Docker Desktop; it prints "would: ..." instead, so the tests read what each
 wrapper would have done and which docker commands it sent.
@@ -57,6 +61,27 @@ class Wrapper(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def only_tools(self, names, search: str) -> Path:
+        """A folder holding just these commands, found on `search`, so nothing else there (docker) leaks in."""
+        folder = Path(self.tmp.name) / "tools"
+        folder.mkdir(exist_ok=True)
+        for name in names:
+            found = shutil.which(name, path=search)
+            self.assertIsNotNone(found, f"{name} not found on {search}")
+            target = folder / Path(found).name
+            if not target.exists():
+                if os.name == "nt":
+                    shutil.copy2(found, target)
+                else:
+                    target.symlink_to(found)
+        return folder
+
+    def run_env(self, path: str, with_docker: bool) -> str:
+        """The PATH, after checking that a test without the fake reaches no docker at all."""
+        if not with_docker:
+            self.assertIsNone(shutil.which("docker", path=path), f"a real docker is reachable on {path}")
+        return path
+
     def calls(self) -> list[str]:
         return self.log.read_text(encoding="utf-8").splitlines() if self.log.is_file() else []
 
@@ -69,8 +94,11 @@ class Posix(Wrapper):
             fake = self.bin / "docker"
             fake.write_text(FAKE_SH, encoding="utf-8", newline="\n")
             fake.chmod(0o755)
-        tools = Path(bash).parent.parent / "usr" / "bin" if os.name == "nt" else Path("/usr/bin")
-        path = os.pathsep.join([str(self.bin), str(tools), "/bin"])
+        if os.name == "nt":  # Git Bash's own tools need its DLLs beside them, and that folder holds no docker
+            tools = Path(bash).parent.parent / "usr" / "bin"
+        else:
+            tools = self.only_tools(("uname", "seq", "sleep"), os.environ.get("PATH", "/usr/bin:/bin"))
+        path = self.run_env(os.pathsep.join([str(self.bin), str(tools)]), with_docker)
         full = {"PATH": path, "FAKE_LOG": str(self.log), "HOME": self.tmp.name, **env}
         if os.name == "nt":
             full["SYSTEMROOT"] = os.environ.get("SYSTEMROOT", r"C:\Windows")
@@ -136,7 +164,9 @@ class Windows(Wrapper):
         if with_docker:
             (self.bin / "docker.cmd").write_text(FAKE_CMD.replace("\n", "\r\n"), encoding="ascii", newline="")
         system32 = Path(os.environ.get("SYSTEMROOT", r"C:\Windows")) / "System32"
-        full = {"PATH": os.pathsep.join([str(self.bin), str(system32)]), "PATHEXT": ".COM;.EXE;.BAT;.CMD",
+        tools = self.only_tools(("where", "ping"), str(system32))
+        path = self.run_env(os.pathsep.join([str(self.bin), str(tools)]), with_docker)
+        full = {"PATH": path, "PATHEXT": ".COM;.EXE;.BAT;.CMD",
                 "FAKE_LOG": str(self.log), "SYSTEMROOT": os.environ.get("SYSTEMROOT", r"C:\Windows"),
                 "ProgramFiles": self.tmp.name, "LOCALAPPDATA": self.tmp.name, **env}
         done = subprocess.run(["cmd", "/d", "/c", str(HERE / name), "--dry-run"], env=full, capture_output=True,
