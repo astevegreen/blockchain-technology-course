@@ -70,5 +70,15 @@ class Main(unittest.TestCase):
         out.assert_called_once_with(lab_tests.json.dumps(lab_tests.IN_CI))
 
 
+class Concurrency(unittest.TestCase):
+    def test_hand_started_runs_cancel_only_on_the_same_branch(self):
+        flow = (Path(__file__).resolve().parents[2] / ".github/workflows/lab-tests.yml").read_text(encoding="utf-8")
+        self.assertIn("format('dispatch-{0}', github.ref)", flow)
+        self.assertNotIn("|| 'dispatch' }}", flow)
+        # A push is never cancelled: each one tests only the labs it changed.
+        self.assertIn("github.event_name == 'push' && github.sha", flow)
+        self.assertIn("cancel-in-progress: ${{ github.event_name != 'push' }}", flow)
+
+
 if __name__ == "__main__":
     unittest.main()
