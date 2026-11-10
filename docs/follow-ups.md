@@ -19,6 +19,9 @@ slide index), which is never listed here.
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
+- Day 8's lab has no worked example of following funds across a bridge yet (`docs/build-spec.md`, Additions,
+  "Following funds across a bridge"); it waits on the guide the reviewing expert offered, which the owner is to
+  request [10 Nov 2026, expert feedback review]
 
 ## Tooling and rules
 - The alignment map's keyword match is wrong in places: it shows no lab for concept 42 though day 1's explorer
@@ -29,3 +32,6 @@ slide index), which is never listed here.
 - `docs/quality-rubric.md:86-87` says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP now has 12 and 01-CM
   has 7, and the lessons with none are 01-EF, 04-EF and 05-EF. `docs/analysis/2026-11-static-labs-review.md:28`
   repeats it. [10 Nov 2026, grep count]
+- The Notion home page's Decision log has no entries for the 10 Nov lab-plan decisions (the prediction-lab trial,
+  the eight games and their scoring, the Docker labs' fates, belief 8, the mining lottery); they are only in
+  `docs/build-spec.md` and `docs/analysis/2026-11-lab-plan.md` [10 Nov 2026, Notion fetch]

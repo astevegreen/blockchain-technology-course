@@ -66,7 +66,7 @@ trace").
 | 5 | Exchanges and the rules (settled) | On a Tron snapshot, a USDT transfer, an exchange deposit and its sweep, and an issuer freeze read; then the instructor's Fabric demo, about 30 minutes |
 | 6 | Tracing Bitcoin (settled) | Bitcoin trace (Forensics 1's annotated trace, 40): each link with its heuristic, its known false positives and a confidence |
 | 7 | Where the trace goes dark (settled) | CoinJoin and mixer trace (Forensics 2, then 3; 41, 42): limits-of-tracing note, saying where the trace stops and what still shows |
-| 8 | Ethereum attacks and the loot (settled) | Cross-chain trace (Bybit, Kelp DAO; 80), opening with one exploit contract read, through at least one swap and one bridge: cross-chain flow diagram |
+| 8 | Ethereum attacks and the loot (settled) | Cross-chain trace (Bybit, Kelp DAO; 80), opening with one exploit contract read and a worked example of following funds across a bridge, through at least one swap and one bridge: cross-chain flow diagram |
 | 9 | The threat picture (settled) | Tron stablecoin trace (79): exposure summary (deposit address and transaction, told apart from the hot-wallet sweep; "Freezable? Which issuer, and how fast?") |
 | 10 | Post-test, then a final trace (settled) | Morning: a review session for open questions (50 minutes), then the post-test. Afternoon: one unguided tracing scenario mixing week 2's types (Prince Group by default: Bitcoin, Tron USDT and an exchange exit; no worked example), then each student explains what they found, and how confident they are, to an instructor, informally (about 5 minutes each, as soon as they finish; a second instructor assesses for a class over 15, owner: "Two assessors, rolling"). The trace stops at 15:15 (Pilot B sets the final time), and a student still tracing then explains what they have so far (owner, 30 Oct: "15:15 stop, answer key"). No memo, no briefing |
 
@@ -113,6 +113,7 @@ bridges by type, freezable stablecoins, the deposit-address heuristic and the li
 | Mixers update | D7 ① | PayJoin, dusting, and the 2024 end of the zkSNACKs and Samourai coordinators. |
 | Solana, to recognize only | D4 ③ | About 20 minutes, taken from the Layer 2 slides: no lab, tool or test item; first to cut. |
 | Bridges by type | D4 ③ | Lock-and-mint, message-verified, liquidity and intents, with the Bitget hack as the case. |
+| Following funds across a bridge | D8 lab | A worked example at the start of the lab, after the exploit contract read, so the graded trace is shown done once first: the destination chain and recipient read from the deposit's input data or the bridge's event, the bridge's own explorer, and the far side matched by amount and timing. D4 ③ teaches the types with no tracing. Built from the guide a reviewing expert offered (expert feedback on the pre-30 Oct outline, shared 10 Nov 2026; owner: "Yes, take it"); each method cites a public source. |
 | Freezable stablecoins as a lead | D3 ③; D9 lab | D3 ③: reading Tether's blacklist functions. D9's exposure summary adds "Freezable? Which issuer, and how fast?" |
 | One graded Meets point | D6 trace, D7 limits note, D8 cross-chain trace, D9 summary | See Marking and assessment. |
 | Deposit-address heuristic | D9 lab (D5 ① teaches deposit addresses and sweeps) | Victor, "Address Clustering Heuristics for Ethereum" (FC 2020). |

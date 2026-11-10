@@ -247,3 +247,10 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
   design card in step 4, alongside the first four cards (owner chose "Propose one in step 4").
 - Mining lottery (`POW_mining_micro`): becomes a step of Guess the input (idea 3), not its own lab; the step is
   settled on that lab's design card (owner chose "A step of Guess the input").
+
+## From the expert feedback (owner, 10 Nov, later)
+
+- Day 8's cross-chain trace opens, after its exploit contract read, with a worked example of following funds
+  across a bridge: the destination chain and recipient from the deposit's input data or the bridge's event, the
+  bridge's own explorer, and the far side matched by amount and timing. It is built from the guide a reviewing
+  expert offered, with each method sourced publicly, as part of step 6's day 8 changes (owner: "Yes, take it").
