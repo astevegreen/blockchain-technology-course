@@ -50,6 +50,9 @@ slide index), which is never listed here.
 - The release build makes the bitcoin `instructor` and `student` launcher images separately from the same
   `dynamic-labs/bitcoin/Dockerfile` (`dynamic-labs/student-release-images.json`); it could build once and set
   `BITCOIN_INSTRUCTOR_IMAGE` to the student digest. (9 Nov 2026, S3 lane labs manifest fill)
+- `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
+  measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
+  memory check relies on them. (9 Nov 2026, launcher manifests)
 
 ## Tooling and rules
 
