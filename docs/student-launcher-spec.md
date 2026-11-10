@@ -43,7 +43,7 @@ Lessons stay on the GitHub Pages site, and nothing about them changes. This spec
 
 **Most images are built on the machine:**
 - Most lab images use `build:` and are built locally.
-- Only the three Bitcoin base images are on ghcr, under `blockchain-course-2026`, pushed by hand and still on Debian 12 while the Dockerfiles are on trixie (`docs/follow-ups.md:32-40`).
+- Only the three Bitcoin base images were on ghcr, in another organization's registry, pushed by hand. (Since 9 Nov 2026 `student-release.yml` builds them from this repo into `ghcr.io/astevegreen/course-labs:base-bitcoin-*`, and every lab pulls them from there.)
 - No workflow pushes images or uses buildx.
 - The Dockerfiles already pick amd64 or arm64 by `TARGETARCH`. The hlf build-only services default to `linux/amd64` (`dl/hlf/docker-compose.yml:67,78,90`).
 
@@ -143,7 +143,7 @@ The main compose file and its instructor behaviour are not touched.
 5. Run the smoke test (4.5). Only when it is green, publish the release as a non-prerelease and move `launcher-stable` to the new version.
    - The VM releases stay prereleases, so GitHub's "latest release" link always points at the student launcher.
 6. Apply the student-exclusion list from `pages.yml` and `vm-build.yml` to the image build contexts. Move that list into one shared file that all three read, so the three cannot drift.
-7. Rebuild the Bitcoin base images here too (trixie). Once they are pushed, switch the `ghcr.io/blockchain-course-2026/bitcoin-*` references repo-wide to the new package, in the same change.
+7. Rebuild the Bitcoin base images here too (trixie). Once they are pushed, switch every reference to the old registry's `bitcoin-*` images repo-wide to the new package, in the same change.
 
 A dispatch input `publish: false` stops at the draft. The first public release is the owner's call ("publishing to students" is an owner gate).
 

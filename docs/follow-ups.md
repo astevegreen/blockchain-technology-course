@@ -26,13 +26,6 @@ slide index), which is never listed here.
   Also there: run `sudo certbot renew --dry-run` to prove the certificate renews through the router's challenge
   path (`dynamic-labs/tests/test_acme_challenge.py` checks the config, not Let's Encrypt). (9 Nov 2026, certificate
   renewal)
-- The private repo `blockchain-course-2026/containers` holds stale Debian 12 copies of the `bitcoin/workstation` and
-  `bitcoin/mempool` sources, and its two hand-started workflows (`build-and-publish-bitcoin.yml`,
-  `build-and-publish-mempool.yml`) push `bitcoin-lab:latest` and `bitcoin-mempool:latest` for amd64 and arm64. Since
-  9 Nov 2026 `:latest` is the amd64 trixie build of this repo's Dockerfiles, pushed by hand after the bitcoin, wallet and
-  three trace labs' tests passed on it; starting either workflow would put the old images back. Point those workflows at
-  this repo's Dockerfiles (and add one for `bitcoin-graph`) or retire them. The arm64 Debian 12 builds stay under
-  `:debian12-2026-11-09`. (9 Nov 2026, ghcr push)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3
@@ -58,10 +51,6 @@ slide index), which is never listed here.
 - `CLAUDE.md` hard rule 1 still says instructor files under `dynamic-labs/` need "an `-x` entry in `pages.yml` and a
   removal in `vm-build.yml`"; the fence is now one list, `dynamic-labs/student-exclude.txt`, which the zip, the VM and
   the student images all read. The owner edits CLAUDE.md. (9 Nov 2026, S5 release build)
-- Two workflows build the Bitcoin base images: `.github/workflows/lab-images.yml` pushes
-  `ghcr.io/astevegreen/bitcoin-{lab,mempool,graph}` (amd64 only), which nothing pulls, while `student-release.yml`
-  (its `bases` job) pushes the `ghcr.io/astevegreen/course-labs:base-bitcoin-*` images the labs, Lab Tests and the VM
-  use. One of the two should go. (9 Nov 2026, S5 release build)
 
 ## Notion and documents
 
