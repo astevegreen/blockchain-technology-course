@@ -221,6 +221,19 @@ class Controller:
                 found.append(row.get("Names", ""))
         return found
 
+    def classroom_project(self, project: str) -> bool:
+        """Whether a compose project has containers without our release label: the classroom stack's. Stop, reset,
+        shutdown and reconcile never touch such a project; `compose -p <project> down -v` would remove the
+        classroom's containers and volumes."""
+        if not project:
+            return False
+        rows = self.docker.containers(f"label={PROJECT_LABEL}={project}")
+        return any(LABEL_RELEASE not in row.get("LabelMap", {}) for row in rows)
+
+    def refuse_classroom(self, lab: dict) -> None:
+        if self.classroom_project(lab.get("compose_project", "")):
+            raise Refused(409, messages.CLASSROOM)
+
     def present_images(self) -> set[str]:
         refs = set()
         for row in self.docker.json_lines("image", "ls", "--digests", "--format", "{{json .}}"):
@@ -524,6 +537,7 @@ class Controller:
 
     def stop(self, lab_id: str) -> dict:
         lab = self.page_lab(lab_id)
+        self.refuse_classroom(lab)
         self.stop_lab(lab)
         self.jobs.pop(lab_id, None)
         self.actions.pop(lab_id, None)
@@ -542,6 +556,7 @@ class Controller:
 
     def reset(self, lab_id: str) -> dict:
         lab = self.page_lab(lab_id)
+        self.refuse_classroom(lab)
         self.remove_lab(lab)
         self.jobs.pop(lab_id, None)
         self.actions.pop(lab_id, None)
@@ -612,6 +627,8 @@ class Controller:
         order += [lab for lab in self.release.labs if lab.get("id") in running_labs and lab.get("kind") == "shared"]
         for lab in order:
             try:
+                if self.classroom_project(lab.get("compose_project", "")):
+                    continue  # the classroom stack's containers share this project: leave them running
                 if lab.get("uses_lane_service") or not self.release.compose_file(lab).is_file():
                     ids = self.lab_containers(lab)
                     if ids:
@@ -636,7 +653,7 @@ class Controller:
             record = saved.get(lab_id, {})
             ghost = {"id": lab_id, "compose_project": record.get("compose_project") or self.project_of(lab_id),
                      "_images": record.get("images", {})}
-            if ghost["compose_project"]:
+            if ghost["compose_project"] and not self.classroom_project(ghost["compose_project"]):
                 self.remove_lab(ghost, images=True)
                 removed.append(lab_id)
         return {"removed": removed}
