@@ -183,3 +183,34 @@ Mark each: common among incoming analysts, sometimes, or rare. Add any that are 
 7. Archive the P2P Trust Lab, the rest of the Ethereum Lab, and Forensics 1 to 3 (after step 6).
 8. Build the games the owner locked in.
 9. Review the Chain Graph tool.
+
+## Owner's review (10 Nov, after reading this plan)
+
+"Overall plan is approved."
+
+**Beliefs marked most common** (numbers from the list above), with the prediction lab that breaks each:
+
+| Belief | Lab (review idea) |
+| --- | --- |
+| 1 Bitcoin keeps a balance | Make change (1) |
+| 2 Crypto is anonymous; 3 an address is a person | Through the exchange (24) |
+| 4 The coins are stored in the wallet | One seed, a tree of keys (14) |
+| 5 A signature shows who sent it | Forge the payment (4) |
+| 8 A transaction's time is when it was sent | No idea yet: needs one |
+| 10 The "To" field is who got paid | Who got paid? (16) |
+| 11 A token's quoted value is what it sells for | What is it really worth? (21) |
+| 12 A mixer or Monero makes funds untraceable | Who paid whom? (28); Which one is real? (30) |
+| 13 Two inputs always share an owner | Peel chain or payroll? (27) |
+| 15 A hack means the cryptography was broken | The wallet that emptied itself (5) |
+
+Not marked: 6 (fee and amount), 7 (in the explorer means final), 9 (unconfirmed means blocked), 14 (a label is
+proof). The confirmation race and "Is it final yet?" target 7 and 9, so they fill a practice gap, not a common
+belief. Open question for the owner: build the labs for the marked beliefs first?
+
+**Games the owner picked**: day 1 terminal scavenger hunt, day 2 two-of-three, day 3 spot the fake, day 5 find
+the exchange, days 6-7 hide and trace, day 8 find the line.
+
+Pushback given, awaiting the owner's answer: four of the six are speed races, which favour the experienced and
+work against the course's confidence discipline, so score by a correct answer with its reason and use time only
+as a tiebreak; score hide and trace by calibration; add day 4 pool trading (the best fit of game to concept, and
+days 4 and 9 otherwise have no game); consider day 9's echo hunt.
