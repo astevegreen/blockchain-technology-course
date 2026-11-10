@@ -424,7 +424,9 @@ class Controller:
             raise Refused(409, messages.memory_short(have, need))
         if self.classroom_containers():
             raise Refused(409, messages.CLASSROOM)
-        job = Job(total_mb=int(lab.get("approx_download_mb") or 0))
+        # The bar counts only the pull: what the lab downloads itself after Start comes later, outside it.
+        pull_mb = int(lab.get("approx_download_mb") or 0) - int(lab.get("downloads_after_start_mb") or 0)
+        job = Job(total_mb=max(pull_mb, 0))
         self.jobs[lab_id] = job
         if self.background:
             threading.Thread(target=self.run_start, args=(lab, job), daemon=True).start()

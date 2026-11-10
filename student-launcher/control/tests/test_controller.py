@@ -60,6 +60,17 @@ class Api(unittest.TestCase):
         labels = self.bench.fake.containers[-1]["labels"]
         self.assertEqual((labels["course.lab"], labels["course.release"]), ("hello", "r1"))
 
+    def test_card_counts_the_later_download_and_the_bar_only_the_pull(self):
+        # The Fabric lab: 501 MiB of images, then about 760 MiB the lab downloads itself at the first claim.
+        bench = Bench(labs=[router(), lab("fabric", approx_download_mb=1261, downloads_after_start_mb=760)])
+        try:
+            self.assertEqual(bench.controller.labs()[0]["approx_download_mb"], 1261)
+            self.assertEqual(dispatch(bench.controller, "POST", "/api/labs/fabric/start")[0], 202)
+            progress = bench.controller.progress("fabric")
+            self.assertEqual((progress["total_mb"], progress["pulled_mb"]), (501, 501))
+        finally:
+            bench.close()
+
     def test_start_writes_every_secret_once(self):
         self.call("POST", "/api/labs/hello/start")
         first = self.c.secrets_file.read_text(encoding="utf-8")
