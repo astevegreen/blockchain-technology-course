@@ -91,7 +91,6 @@ and a screenshot.
 - the classroom (`dex.lab`, `dex-l2.lab`) and cloud hosts and their certificates
 - a whole class swapping at once (40 seats against one pool and one 12-second block)
 - Otterscan's look on a phone-width screen
-- the CI Lab Tests: the dex lab is not in them yet (`docs/follow-ups.md`)
 
 ## Completion Rule
 

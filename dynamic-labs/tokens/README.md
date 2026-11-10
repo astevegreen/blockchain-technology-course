@@ -12,7 +12,7 @@ Start it with the rest of the stack: `./lab-manager.sh start tokens`. Students o
 |---|---|
 | This machine | `http(s)://tokens.localhost/` |
 | Classroom network (`classroom-network-helper.sh`) | `https://tokens.lab/` |
-| Cloud (`deploy-cloud.sh`) | `https://tokens.<domain>/`: needs a DNS record and a certificate name (see `docs/follow-ups.md`) |
+| Cloud (`deploy-cloud.sh`) | `https://tokens.<domain>/`: needs a DNS record and a certificate name (`dynamic-labs/README.md`, "Cloud") |
 
 The router's `routes/tokens-host.conf` splits that host the same way as the explorer lab's:
 

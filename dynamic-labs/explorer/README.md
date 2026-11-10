@@ -11,7 +11,7 @@ Start it with the rest of the stack: `./lab-manager.sh start explorer`. Students
 |---|---|
 | This machine | `http(s)://explorer.localhost/` |
 | Classroom network (`classroom-network-helper.sh`) | `https://explorer.lab/` |
-| Cloud (`deploy-cloud.sh`) | `https://explorer.<domain>/`: needs a DNS record and a certificate name (see `docs/follow-ups.md`) |
+| Cloud (`deploy-cloud.sh`) | `https://explorer.<domain>/`: needs a DNS record and a certificate name (`dynamic-labs/README.md`, "Cloud") |
 
 Otterscan is a single-page app that expects the root of a site, so the lab has a host of its own
 instead of a `/labs/` path. The router's `routes/explorer-host.conf` splits that host:

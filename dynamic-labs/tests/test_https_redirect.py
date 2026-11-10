@@ -1,4 +1,4 @@
-"""Plain port 80 redirects to HTTPS on a cloud host (docs/follow-ups.md, 9 Nov 2026 class gate review).
+"""Plain port 80 redirects to HTTPS on a cloud host (9 Nov 2026 class gate review).
 
 nginx-ssl.conf serves every host on ports 80 and 443. On a cloud host with a domain
 (deploy-cloud.sh, which starts the router with docker-compose.cloud.yml), a class code
