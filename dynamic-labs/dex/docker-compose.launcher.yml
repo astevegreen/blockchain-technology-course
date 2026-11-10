@@ -1,0 +1,116 @@
+name: dex
+
+# The exchange and bridge lab for the student launcher (docs/student-launcher-design.md). The same lab as
+# docker-compose.yml, with the same project, service and container names (the router's upstreams), but nothing from
+# the repo: each bind-mounted file, the explorer lab's shared gateway and Otterscan settings included, is baked into a
+# thin image (launcher/*.Dockerfile), every image comes from a variable the launcher fills with a release digest, and
+# every container carries the course.lab and course.release labels.
+# anvil and anvil-l2 share one image (both chains baked in), and gateway and gateway-l2 share another, as the classroom
+# file mounts the same files into each pair. Restart the whole lab, never one chain (docker-compose.yml says why).
+#
+# Images the launcher fills in (lab.yaml services; context is relative to this folder, dockerfile to the context).
+# regression-tests/automated/launcher-stack.sh reads these lines to build them in CI:
+# launcher-build: DEX_ANVIL_IMAGE . launcher/anvil.Dockerfile
+# launcher-build: DEX_RELAYER_IMAGE . launcher/relayer.Dockerfile
+# launcher-build: DEX_GATEWAY_IMAGE .. dex/launcher/gateway.Dockerfile
+# launcher-build: DEX_OTTERSCAN_IMAGE .. dex/launcher/otterscan.Dockerfile
+# Platforms: linux/amd64 and linux/arm64 (every base image publishes both, 9 Nov 2026).
+
+services:
+  anvil:
+    image: ${DEX_ANVIL_IMAGE:?set by the student launcher}
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json
+        --block-time ${DEX_BLOCK_TIME:-12}
+    labels:
+      course.lab: dex
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - dex-net
+    restart: unless-stopped
+
+  anvil-l2:
+    image: ${DEX_ANVIL_IMAGE:?set by the student launcher}
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --chain-id 31338 --load-state /chain/course-chain-l2.json
+        --block-time ${DEX_L2_BLOCK_TIME:-2}
+    labels:
+      course.lab: dex
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - dex-net
+    restart: unless-stopped
+
+  relayer:
+    image: ${DEX_RELAYER_IMAGE:?set by the student launcher}
+    environment:
+      - L1_URL=http://anvil:8545
+      - L2_URL=http://anvil-l2:8545
+      - ADDRESSES=/chain/addresses.env
+    labels:
+      course.lab: dex
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - dex-net
+    depends_on:
+      - anvil
+      - anvil-l2
+    restart: unless-stopped
+
+  gateway:
+    image: ${DEX_GATEWAY_IMAGE:?set by the student launcher}
+    environment:
+      - ANVIL_URL=http://anvil:8545
+      - L2_ANVIL_URL=http://anvil-l2:8545  # /rpc-l2: the swap page reads L2 from this origin
+      - STATIC_ROOT=/srv/static
+      - CHAIN_NAME=Course L1 (training)
+      # The lab's own keys (issuer A0, bridge owner A6, relayer A7) come from the public test
+      # phrase like the seats': the gateway refuses their signed transactions.
+      - REFUSED_SENDERS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,0x976EA74026E726554dB657fA54763abd0C3a0aa9,0x14dC79964da2C08b23698B3D3cc7Ca32193d9955
+    labels:
+      course.lab: dex
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - dex-net
+      - router-net
+    depends_on:
+      - anvil
+    restart: unless-stopped
+
+  gateway-l2:
+    image: ${DEX_GATEWAY_IMAGE:?set by the student launcher}
+    environment:
+      - ANVIL_URL=http://anvil-l2:8545
+      - STATIC_ROOT=/srv/static
+      - CHAIN_NAME=Course L2 (training)
+      # The lab's own keys (issuer A0, bridge owner A6, relayer A7) come from the public test
+      # phrase like the seats': the gateway refuses their signed transactions.
+      - REFUSED_SENDERS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,0x976EA74026E726554dB657fA54763abd0C3a0aa9,0x14dC79964da2C08b23698B3D3cc7Ca32193d9955
+    labels:
+      course.lab: dex
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - dex-net
+      - router-net
+    depends_on:
+      - anvil-l2
+    restart: unless-stopped
+
+  otterscan:
+    image: ${DEX_OTTERSCAN_IMAGE:?set by the student launcher}
+    environment:
+      # The router serves /config.json from a gateway; this stops the image writing its own.
+      - DISABLE_CONFIG_OVERWRITE=1
+    labels:
+      course.lab: dex
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - router-net
+    restart: unless-stopped
+
+networks:
+  dex-net:
+  router-net:
+    external: true

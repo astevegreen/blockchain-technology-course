@@ -41,6 +41,12 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
+- The classroom Dockerfiles of tron, cross-chain, final-trace and exercises (`l03-i3-*-game/Dockerfile`) build FROM
+  unpinned tags (`nginx:alpine`, `node:24-alpine`, `python:3.12-slim-trixie`), and the student launcher reuses them as
+  its page and game images: pin each by digest. (9 Nov 2026, launcher S2 plain labs)
+- `ghcr.io/blockchain-course-2026/bitcoin-mempool` has no linux/arm64 build, so the launcher's mempool images (wallet,
+  bitcoin-trace, coinjoin-trace, final-trace `launcher/mempool.Dockerfile`) run on amd64 hosts only until it is rebuilt
+  for both (spec 4.4 step 7). (9 Nov 2026, launcher S2 plain labs)
 
 ## Tooling and rules
 - `tools/tests/test_src_zip.py` skips wherever `zip` is missing, which today is every machine that runs it: the
