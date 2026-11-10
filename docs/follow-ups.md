@@ -34,9 +34,6 @@ slide index), which is never listed here.
   for a new quote. The owner kept the pool and the minimum as they are (1 Nov 2026: "Keep as a slippage
   lesson"); the instructor answers warn to expect it. Still open: a real class. (31 Oct 2026, D4 exchange and
   bridge lab build)
-- The classroom Dockerfiles of tron, cross-chain, final-trace and exercises (`l03-i3-*-game/Dockerfile`) build FROM
-  unpinned tags (`nginx:alpine`, `node:24-alpine`, `python:3.12-slim-trixie`), and the student launcher reuses them as
-  its page and game images: pin each by digest. (9 Nov 2026, launcher S2 plain labs)
 - The release build makes the bitcoin `instructor` and `student` launcher images separately from the same
   `dynamic-labs/bitcoin/Dockerfile` (`dynamic-labs/student-release-images.json`); it could build once and set
   `BITCOIN_INSTRUCTOR_IMAGE` to the student digest. (9 Nov 2026, S3 lane labs manifest fill)
