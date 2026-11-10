@@ -304,6 +304,21 @@ class Workflow(unittest.TestCase):
         self.assertIn("smoke", publish["needs"])
         self.assertIn("inputs.publish", publish["if"])
         self.assertIn("needs.smoke.result == 'success'", publish["if"])
+        self.assertIn("mac", publish["needs"])
+        self.assertIn("needs.mac.result == 'success'", publish["if"])
+
+    def test_the_mac_job_runs_the_command_wrappers_with_macos_bash(self):
+        import yaml
+        mac = yaml.safe_load(self.text)["jobs"]["mac"]
+        # GitHub's arm64 Macs have no nested virtualization, so no Docker engine: the Intel Mac runs Colima.
+        self.assertTrue(mac["runs-on"].startswith("macos-") and mac["runs-on"].endswith("-intel"))
+        runs = " ".join(str(s.get("run", "")) for s in mac["steps"])
+        lint = next(str(s["run"]) for s in mac["steps"] if "shellcheck -S warning" in str(s.get("run", "")))
+        for wrapper in ("Start-Course-Labs.command", "Stop-Course-Labs.command"):
+            self.assertIn(f"/bin/bash student-launcher/{wrapper}", runs)
+            self.assertIn(f"student-launcher/{wrapper}", lint)
+        self.assertIn('COURSE_LABS_IMAGE="$PACKAGE:launcher-$VERSION"', runs)
+        self.assertIn("student_release.py drive", runs)
 
     def test_every_job_that_builds_fetches_and_checks_the_shipped_lfs_files(self):
         import yaml

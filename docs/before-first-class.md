@@ -121,4 +121,34 @@ could not finish. If the class shows something the scripted run did not, fix it,
 
 ## On a Mac
 
-Nothing here yet.
+### 5. Start and Stop Course Labs with Docker Desktop
+
+What a computer here already proves: the release's `mac` job (`.github/workflows/student-release.yml`) runs
+`Start-Course-Labs.command` and `Stop-Course-Labs.command` with macOS's own `/bin/bash` and tools on a GitHub Intel
+Mac, against a Colima Docker engine, checks the control page answers, and shellchecks both; unit tests
+(`student-launcher/control/tests/test_wrappers.py`) cover their macOS branches (`open`, `open -a Docker`). What it
+cannot prove: GitHub's Apple silicon Macs cannot run Docker (no nested virtualization, its runner docs as of
+10 Nov 2026), and no runner has Docker Desktop, Finder or Gatekeeper. Those need a person with a Mac.
+
+On an Apple silicon Mac (M1 or newer; an Intel Mac too, if one is to hand) with Docker Desktop installed and quit,
+and no `course-launcher` container (`docker ps -a`):
+
+1. Download `Course-Labs.zip` from the latest release
+   (`https://github.com/astevegreen/blockchain-technology-course/releases/latest`) in Safari, and double-click it.
+2. Follow the student guide's Mac steps (`blockchain-course/run-labs.qmd`, "Mac"): double-click **Start Course
+   Labs**, press **Done**, then **Open Anyway** in Privacy & Security, the password, and **Open**.
+3. Watch the Terminal window. A pass: it prints "Starting Docker Desktop. This can take a minute...", Docker Desktop
+   starts by itself, then "Getting the latest course labs...", and the browser opens `http://127.0.0.1:8470/` with
+   the labs listed. A fail: "permission denied" or "cannot be executed" (the zip lost the executable bit), any
+   other message from the guide's table of messages, or no browser.
+4. Start one lab from the page (the Cryptography Lab is a small one) and open it. A pass: its page opens.
+5. Double-click **Stop Course Labs**. A pass: it prints "The course labs are stopped..." and `docker ps -a` shows no
+   `course-launcher` and no lab running.
+6. Double-click **Start Course Labs** again with Docker Desktop running. A pass: no warning this time, and the page
+   opens within a minute.
+
+Where to write it: the Result line below, with the Mac's chip, macOS version and Docker Desktop version. A fail is
+fixed in `student-launcher/` (the `.command` files stay byte-identical to the `.sh` ones), and the step stays here
+until it passes.
+
+**Result:** not run yet.

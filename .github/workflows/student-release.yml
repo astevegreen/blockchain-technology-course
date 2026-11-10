@@ -1,8 +1,8 @@
 name: Student Release
 
 # Builds the student lab images and the launcher, makes a draft GitHub Release with the wrappers and latest.json,
-# smoke-tests the launcher on amd64 and arm64 runners, and (only with publish: true, once every smoke job is green)
-# publishes the release and moves launcher-stable. Spec: docs/student-launcher-spec.md 4.4 and 4.5; contract:
+# smoke-tests the launcher on amd64 and arm64 runners and its macOS wrappers on a Mac runner, and (only with
+# publish: true, once every smoke job is green) publishes the release and moves launcher-stable. Spec: docs/student-launcher-spec.md 4.4 and 4.5; contract:
 # docs/student-launcher-design.md section 6. Every image goes to one public package, ghcr.io/astevegreen/course-labs,
 # pushed with GITHUB_TOKEN and unsigned (owner decisions, 9 Nov 2026). The first public release is the owner's call.
 # tools/student_release.py does the steps worth testing; tools/student_exclude.py keeps instructor files out of every
@@ -439,6 +439,47 @@ jobs:
             launcher.log
           retention-days: 14
 
+  # The macOS wrappers, run as a Mac runs them: /bin/bash (3.2) and macOS's own tools, against a real Docker engine.
+  # GitHub's arm64 Macs cannot run Docker (no nested virtualization: the runner docs, checked 10 Nov 2026), so this is
+  # the Intel Mac with Colima's engine, not Docker Desktop on Apple silicon; docs/before-first-class.md "On a Mac" has
+  # the hands-on run that covers the rest (double-click, Gatekeeper, Docker Desktop starting).
+  mac:
+    needs: [prepare, draft]
+    if: always() && needs.draft.result == 'success'
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: false
+      - name: Shellcheck the wrappers
+        run: |
+          brew install shellcheck
+          shellcheck -S warning student-launcher/Start-Course-Labs.command student-launcher/Stop-Course-Labs.command
+      - name: Start a Docker engine (Colima)
+        run: |
+          brew install docker colima
+          colima start --cpu 3 --memory 8 --arch x86_64 --vm-type=vz --mount-type=virtiofs
+          docker info --format 'Docker {{.ServerVersion}}, {{.OperatingSystem}}, {{.Architecture}}'
+      - name: Start Course Labs as a double-click does
+        run: |
+          COURSE_LABS_IMAGE="$PACKAGE:launcher-$VERSION" /bin/bash student-launcher/Start-Course-Labs.command
+          python3 tools/student_release.py drive --timeout 120
+      - name: Stop Course Labs
+        run: |
+          /bin/bash student-launcher/Stop-Course-Labs.command
+          if [ -n "$(docker ps -aq --filter 'name=^course-launcher$')" ]; then
+            docker ps -a; echo "course-launcher is still there after Stop"; exit 1
+          fi
+      - name: Launcher log
+        if: failure()
+        run: docker logs course-launcher || true
+
   # The hello-lab fixture proves the launcher follows its manifest: a lab added to it appears, a new digest is
   # pulled, and a lab dropped from it is cleaned up. Images go to a throwaway registry on the runner, never to ghcr.
   fixture:
@@ -523,11 +564,11 @@ jobs:
         if: always()
         run: docker logs course-launcher || true
 
-  # With publish: true and every smoke job green: move launcher-stable and publish the release as the latest,
+  # With publish: true and every smoke job green (the Mac one too): move launcher-stable and publish the release as the latest,
   # non-prerelease one. publish: false stops at the draft.
   publish:
-    needs: [prepare, draft, smoke, fixture]
-    if: always() && inputs.publish && needs.draft.result == 'success' && needs.smoke.result == 'success' && (needs.fixture.result == 'success' || needs.fixture.result == 'skipped')
+    needs: [prepare, draft, smoke, mac, fixture]
+    if: always() && inputs.publish && needs.draft.result == 'success' && needs.smoke.result == 'success' && needs.mac.result == 'success' && (needs.fixture.result == 'success' || needs.fixture.result == 'skipped')
     runs-on: ubuntu-24.04
     permissions:
       contents: write

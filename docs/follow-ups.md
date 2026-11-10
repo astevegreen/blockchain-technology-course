@@ -22,10 +22,6 @@ slide index), which is never listed here.
   student-sized PC running the released images, so measure them during the release test. Seen on 10 Nov 2026 on a
   16 GB Windows 11 PC with the 2026.11.10-7 images (`docker stats`, idle): the Fabric lab's containers held about
   905 MiB with the student's peer stopped, against `memory_mb: 4096`; the router 22 MiB, the lane service 33 MiB.
-- The launcher's macOS wrappers (`student-launcher/Start-Course-Labs.command`, `Stop-Course-Labs.command`) have
-  never run on a Mac: the release's smoke jobs run the `.sh` wrappers on Linux and the PC test ran the `.cmd` ones
-  on Windows 11. Run both on a Mac with Docker Desktop before students with Macs get the release. (10 Nov 2026,
-  launcher PC test)
 - The student guide (`blockchain-course/run-labs.qmd`) has no pictures of the Windows SmartScreen "Windows protected
   your PC" screen (More info, Run anyway) or the macOS "Open Anyway" step in Privacy & Security: they are text only,
   and its control-page screenshots (`blockchain-course/assets/run-labs/`) come from the sample-data preview, not the
