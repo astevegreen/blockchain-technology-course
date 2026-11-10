@@ -1,0 +1,47 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: lane-service
+title: Lane service
+kind: shared
+order:
+  day: null
+  position: 6
+compose_project: lane-service
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  lane-service:
+    source: build
+    # The launcher image bakes files from sibling labs, so its context is dynamic-labs/.
+    context: ..
+    dockerfile: lane-service/Dockerfile.launcher
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+- name: ethereum-instructor-mgmt-net
+  internal: true
+routes: []
+uses_lane_service: false
+entry:
+  path: /instructor/labs-progress
+memory_mb: 512
+approx_download_mb: 300
+# The launcher image bakes only the bitcoin launcher compose file and the forensics v3 snapshot
+# (Dockerfile.launcher). runtime is the named volume `runtime`, empty at first start.
+# ../cryptography is not shipped: it holds solution.md, the instructor guide.
+data:
+- path: ./runtime
+  into: /app/runtime
+  how: seeded-volume
+- path: ../bitcoin
+  into: /app/bitcoin-compose
+  how: baked
+- path: ../bitcoin-forensics
+  into: /app/bitcoin-forensics
+  how: baked
+keep_volumes_on_update: false
+docker_socket: true

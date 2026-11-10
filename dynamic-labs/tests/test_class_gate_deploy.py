@@ -83,7 +83,7 @@ class RouterClassGateContractTests(unittest.TestCase):
         for header in ("location @class_login", "location = /class ", "location ^~ /class/", "location ^~ /api/class/"):
             self.assertIn("auth_request off;", _location_block(gate, header), header)
 
-        routes = (ROUTER / "routes.conf").read_text(encoding="utf-8")
+        routes = (ROUTER / "routes/_instructor.conf").read_text(encoding="utf-8")
         for header in (
             "location ~ ^/instructor(?<rest>/.*)?$",
             "location ~ ^/api/instructor(?<rest>/.*)?$",

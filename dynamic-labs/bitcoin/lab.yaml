@@ -1,0 +1,59 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: bitcoin
+title: Bitcoin Lab
+kind: lab
+order:
+  day: null
+  position: 3
+compose_project: bitcoin
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  student:
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  instructor:
+    # Same Dockerfile as student: BITCOIN_INSTRUCTOR_IMAGE may point at the same digest.
+    source: build
+    context: .
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  mempool:
+    source: upstream
+    image: ghcr.io/blockchain-course-2026/bitcoin-mempool:latest
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  graph:
+    source: build
+    context: ../bitcoin-graph
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: bitcoin-p2p-net
+  internal: true
+- name: bitcoin-student-mgmt-net
+  internal: true
+- name: bitcoin-instructor-mgmt-net
+  internal: true
+routes:
+- routes/bitcoin.conf
+uses_lane_service: true
+entry:
+  path: /labs/bitcoin/
+# graph is capped at 4g; the student and instructor nodes, mempool and one lane need about 2 GB more.
+memory_mb: 6144
+approx_download_mb: 3000
+data: []
+keep_volumes_on_update: true
+local_actions:
+- id: forensics-load
+  label: Load the forensics chain
+  api: /api/local/bitcoin/forensics-load

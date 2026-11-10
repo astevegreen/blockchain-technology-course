@@ -1,0 +1,49 @@
+# Lab manifest. Schema: dynamic-labs/lab.schema.json. Design: docs/student-launcher-design.md section 3.
+# memory_mb and approx_download_mb are first estimates; the session that writes the launcher compose file refines them.
+id: coinjoin-trace
+title: CoinJoin Trace Lab
+kind: lab
+order:
+  day: 7
+  position: 0
+compose_project: coinjoin-trace
+compose_file: docker-compose.yml
+student_local: true
+student_compose_file: docker-compose.launcher.yml
+services:
+  mempool:
+    source: upstream
+    image: ghcr.io/blockchain-course-2026/bitcoin-mempool:latest
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  gateway:
+    source: upstream
+    image: nginx:alpine
+    platforms:
+    - linux/amd64
+    - linux/arm64
+networks:
+- name: router-net
+  internal: false
+routes:
+- routes/coinjoin-trace.conf
+uses_lane_service: false
+entry:
+  path: /labs/coinjoin-trace/
+memory_mb: 3072
+approx_download_mb: 2500
+data:
+- path: ./mempool/load-chain.sh
+  into: /chain-loader/load-chain.sh
+  how: baked
+- path: ./chain/blocks.hex
+  into: /chain/blocks.hex
+  how: baked
+- path: ./gateway/default.conf
+  into: /etc/nginx/conf.d/default.conf
+  how: baked
+- path: ./gateway/static
+  into: /usr/share/nginx/html
+  how: baked
+keep_volumes_on_update: true
