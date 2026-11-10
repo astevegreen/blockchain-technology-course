@@ -72,6 +72,21 @@ class Matrix(unittest.TestCase):
         rows = sr.build_matrix([row("hlf", "hlf"), row("hlf", "hlf-runner")], V)
         self.assertEqual({r["image"] for r in rows}, {f"ghcr.io/astevegreen/course-labs:hlf-hlf-{V}"})
 
+    def test_the_real_bitcoin_instructor_is_the_student_build(self):
+        """The real manifest: bitcoin's student and instructor share a Dockerfile, so the release builds it once and
+        both variables pin that digest (as the published 2026.11.10-11 latest.json does). A change that gave the
+        instructor its own Dockerfile would build and ship a second copy; this says so."""
+        images = sr.load_images(REPO / "dynamic-labs" / "student-release-images.json")
+        built = [(r["lab"], r["service"]) for r in sr.build_matrix(images, V) if r["lab"] == "bitcoin"]
+        self.assertNotIn(("bitcoin", "instructor"), built)
+        self.assertIn(("bitcoin", "student"), built)
+        with tempfile.TemporaryDirectory() as tmp:
+            for r in sr.build_matrix(images, V):
+                (Path(tmp) / f"{sr.slug(r['lab'])}--{sr.slug(r['service'])}").write_text(D1)
+            got = sr.resolve_images(images, V, Path(tmp), inspect=lambda ref: D2)
+        self.assertEqual(got["BITCOIN_INSTRUCTOR_IMAGE"], got["BITCOIN_STUDENT_IMAGE"])
+        self.assertIn(":bitcoin-student-", got["BITCOIN_INSTRUCTOR_IMAGE"])
+
     def test_every_stub_tag_is_a_valid_docker_tag(self):
         for r in sr.build_matrix(sr.load_images(STUB), V):
             tag = r["image"].split(":", 1)[1]
@@ -289,6 +304,21 @@ class Workflow(unittest.TestCase):
         self.assertIn("smoke", publish["needs"])
         self.assertIn("inputs.publish", publish["if"])
         self.assertIn("needs.smoke.result == 'success'", publish["if"])
+        self.assertIn("mac", publish["needs"])
+        self.assertIn("needs.mac.result == 'success'", publish["if"])
+
+    def test_the_mac_job_runs_the_command_wrappers_with_macos_bash(self):
+        import yaml
+        mac = yaml.safe_load(self.text)["jobs"]["mac"]
+        # GitHub's arm64 Macs have no nested virtualization, so no Docker engine: the Intel Mac runs Colima.
+        self.assertTrue(mac["runs-on"].startswith("macos-") and mac["runs-on"].endswith("-intel"))
+        runs = " ".join(str(s.get("run", "")) for s in mac["steps"])
+        lint = next(str(s["run"]) for s in mac["steps"] if "shellcheck -S warning" in str(s.get("run", "")))
+        for wrapper in ("Start-Course-Labs.command", "Stop-Course-Labs.command"):
+            self.assertIn(f"/bin/bash student-launcher/{wrapper}", runs)
+            self.assertIn(f"student-launcher/{wrapper}", lint)
+        self.assertIn('COURSE_LABS_IMAGE="$PACKAGE:launcher-$VERSION"', runs)
+        self.assertIn("student_release.py drive", runs)
 
     def test_every_job_that_builds_fetches_and_checks_the_shipped_lfs_files(self):
         import yaml

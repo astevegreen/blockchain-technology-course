@@ -12,7 +12,9 @@ Target coverage:
 - claim flow: assign station, set cookie, redirect, heartbeat, release
 - stale/invalid cookie edge case handling
 - per-student ttyd terminal: route, websocket command execution, peer
-  CLI environment, invoke/query helpers
+  CLI environment, invoke/query helpers, and one diploma the student
+  issues from it and reads back (the suite's only write that needs no
+  instructor API, so the student launcher checks a write too)
 - explorer, chaincode, and governance API surfaces
 - instructor-only APIs: lifecycle log (cursor pagination, auth gate),
   instructor snapshot, execute (structured vs rejected raw command),
@@ -38,8 +40,8 @@ Current split:
 - claim-dependent tests use a fresh student claim and wipe it after
   the test, while the overall environment remains intact
 - automated ttyd coverage handles deterministic single-station commands
-  such as environment verification, peer channel list, and helper
-  availability
+  such as environment verification, peer channel list, helper
+  availability, and one single-station diploma issue and read-back
 - agent coverage should own multi-student, exploratory, or long-running
   flows such as diploma issuance/verification, fault scenario
   walkthroughs, and governance exercises

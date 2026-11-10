@@ -339,6 +339,36 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(fake.removed_images, ["example/old:1"])
         self.assertNotIn("old", self.bench.controller.load_state()["labs"])
 
+    def test_a_removed_labs_network_goes_with_it(self):
+        """A network the launcher made for a lab the release dropped goes once nothing uses it; the release's own
+        networks, Docker's and ones the launcher did not make stay."""
+        self.bench = Bench()
+        fake, c = self.bench.fake, self.bench.controller
+        dispatch(c, "POST", "/api/labs/hello/start")
+        self.assertIn("router-net", fake.networks)
+        fake.add_network("old-net", {"course.release": "r0"})
+        fake.add_network("someone-elses-net")
+        fake.add_container("old-web-1", {"course.lab": "old", "course.release": "r0",
+                                         "com.docker.compose.project": "old"}, networks=["old-net"])
+        c.update_state(lambda d: d.setdefault("labs", {}).__setitem__(
+            "old", {"images": {}, "compose_project": "old"}))
+        self.assertEqual(c.reconcile(), {"removed": ["old"]})
+        self.assertNotIn("old-net", fake.networks)
+        self.assertTrue({"router-net", "someone-elses-net", "bridge", "host", "none"} <= fake.networks)
+        self.assertEqual(fake.ran("network", "rm", "router-net"), [])
+
+    def test_a_network_something_still_uses_stays(self):
+        """A stopped container (a classroom one, or a lab the launcher left) keeps the network: removing it would
+        leave that container unable to start."""
+        self.bench = Bench()
+        fake, c = self.bench.fake, self.bench.controller
+        fake.add_network("old-net", {"course.release": "r0"})
+        fake.add_container("old-db-1", {"com.docker.compose.project": "classroom"}, state="exited",
+                           networks=["old-net"])
+        c.reconcile()
+        self.assertIn("old-net", fake.networks)
+        self.assertEqual(fake.ran("network", "rm"), [])
+
     def test_changed_lab_drops_its_volumes(self):
         self.bench = Bench()
         c = self.bench.controller

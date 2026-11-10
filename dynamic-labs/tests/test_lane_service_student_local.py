@@ -59,6 +59,24 @@ print("PROBE" + json.dumps({"status": resp.status_code, "body": resp.get_json(),
                             "args": [str(a) for a in deploy.call_args.args]}))
 """
 
+# Runs ethereum.start() with the instructor wait, the pool and the sweepers stubbed: did it wait, did it fill a pool.
+_ETH_START = r"""
+import json, sys
+sys.path.insert(0, sys.argv[1])
+from contextlib import ExitStack
+from unittest.mock import patch
+import labs.ethereum as e
+with ExitStack() as stack:
+    wait = stack.enter_context(patch.object(e, "_wait_for_instructor_metadata", return_value=True))
+    stack.enter_context(patch.object(e.claim_manager, "get_pool_size", return_value=0))
+    pool = stack.enter_context(patch.object(e.claim_manager, "set_pool_size"))
+    claims = stack.enter_context(patch.object(e.claim_manager, "start_sweeper"))
+    lanes = stack.enter_context(patch.object(e.lane_manager, "start_sweeper"))
+    e.start()
+print("PROBE" + json.dumps({"waited": wait.called, "pool": [c.args for c in pool.call_args_list],
+                            "sweepers": claims.called and lanes.called}))
+"""
+
 
 def _run_probe(script: str, extra_env: dict[str, str]) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
@@ -110,6 +128,19 @@ class LabSettingsTests(unittest.TestCase):
         self.assertEqual(labs["labs.bitcoin"]["home"], self.home)
         self.assertEqual(labs["labs.consensus"]["home"], self.home)
         self.assertIsNone(labs["labs.p2p_trust"]["home"])
+
+    def test_ethereum_start_waits_for_the_instructor_only_in_the_classroom(self) -> None:
+        """Classroom: lane-service waits (up to 30 s) for the instructor's wallets and contracts, then fills the warm
+        pool. Student-local: no wait, so the launcher's wait_for_lane_service returns as soon as Flask listens."""
+        warm = {"STUDENT_WARM_POOL_SIZE": "2"}
+        classroom = _run_probe(_ETH_START, warm)
+        self.assertTrue(classroom["waited"])
+        self.assertEqual(classroom["pool"], [[2]])
+        self.assertTrue(classroom["sweepers"])
+        local = _run_probe(_ETH_START, {**warm, "LANE_MODE": "student-local"})
+        self.assertFalse(local["waited"])
+        self.assertEqual(local["pool"], [])
+        self.assertTrue(local["sweepers"])
 
     def test_forensics_load_route_exists_only_in_student_local(self) -> None:
         route = "/api/local/bitcoin/forensics-load"
