@@ -230,3 +230,6 @@ calibration, is built last and runs in the second half of day 7.
 Forge the payment, Who got paid?, Through the exchange); the confirmation race and "Is it final yet?" follow.
 This replaces "first builds" in `docs/build-spec.md`, "A prediction lab", when step 2 records it. Belief 8 (a
 transaction's time is when it was sent) needs a new lab idea.
+
+**Scoring approved** (owner, 10 Nov: "I approve the scoring"): every game scores a correct answer with its
+reason, and time is only a tiebreak. The hide-and-trace guardrails are still the owner's to decide.
