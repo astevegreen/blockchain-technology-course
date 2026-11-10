@@ -20,26 +20,17 @@ from flask import jsonify, request
 
 from exercises import register_catalog
 from generic_claims import ClaimManager
-from generic_lanes import LaneConfig, LaneManager
+from generic_lanes import LaneConfig, LaneManager, student_local_labels, student_local_mode
 from instructor_auth import require_instructor
 from labs.bitcoin_catalog import CATALOG as BITCOIN_CATALOG, EXERCISE_IDS as BITCOIN_EXERCISE_IDS
-from labs.env_utils import env_int
+from labs.env_utils import env_int, lane_capacity, student_home_root, warm_pool_size
 from lab_blueprint import make_lab_blueprint
 
 IMAGE = os.environ.get("BITCOIN_IMAGE", "bitcoin-lab-student")
 P2P_NET = os.environ.get("BITCOIN_P2P_NET", "bitcoin-p2p-net")
 MGMT_NET = os.environ.get("BITCOIN_MGMT_NET", "bitcoin-student-mgmt-net")
-STUDENT_COUNT = max(
-    1,
-    env_int("BITCOIN_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20),
-)
-DEFAULT_WARM_POOL_SIZE = max(
-    0,
-    min(
-        STUDENT_COUNT,
-        env_int("BITCOIN_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=0),
-    ),
-)
+STUDENT_COUNT = lane_capacity("BITCOIN_STUDENT_CAPACITY", "MAX_STUDENT_CAPACITY", "STUDENT_COUNT", default=20)
+DEFAULT_WARM_POOL_SIZE = warm_pool_size(STUDENT_COUNT, "BITCOIN_WARM_POOL_SIZE", "STUDENT_WARM_POOL_SIZE", default=0)
 
 # Phase 9.3f: the bitcoin compose file is bind-mounted read-only so
 # nuke-and-reseed can re-create the instructor + mempool containers
@@ -68,6 +59,9 @@ INSTRUCTOR_VOLUME = os.environ.get(
     "BITCOIN_INSTRUCTOR_VOLUME",
     "bitcoin-instructor-data",
 )
+# The short-lived container that fills or empties that volume. The course launcher points it at the lane-service
+# image itself, so a student's machine pulls nothing extra.
+LOADER_IMAGE = (os.environ.get("BITCOIN_LOADER_IMAGE") or "").strip() or "busybox"
 
 STATE_DIR = Path(os.environ.get(
     "BITCOIN_STATE_DIR",
@@ -75,7 +69,7 @@ STATE_DIR = Path(os.environ.get(
 ))
 
 STATIC_PORT = 8000
-STUDENT_HOME_ROOT = (os.environ.get("BITCOIN_STUDENT_HOME_ROOT") or "").strip() or None
+STUDENT_HOME_ROOT = student_home_root("BITCOIN_STUDENT_HOME_ROOT")
 STUDENT_PIDS_LIMIT = max(
     0,
     env_int("BITCOIN_STUDENT_PIDS_LIMIT", "STUDENT_PIDS_LIMIT", default=256),
@@ -331,9 +325,9 @@ def _wipe_instructor_volume() -> tuple[str, subprocess.CompletedProcess] | None:
     _docker_rm_force([loader])
 
     start = subprocess.run(
-        ["docker", "run", "-d", "--name", loader,
+        ["docker", "run", "-d", "--name", loader, *student_local_labels("bitcoin"),
          "-v", f"{INSTRUCTOR_VOLUME}:/dst",
-         "busybox", "sleep", "600"],
+         LOADER_IMAGE, "sleep", "600"],
         capture_output=True, text=True, timeout=60,
     )
     if start.returncode != 0:
@@ -453,9 +447,9 @@ def _deploy_forensics(snapshot: str = FORENSICS_V3_SNAPSHOT):
     _docker_rm_force([loader])
 
     start = subprocess.run(
-        ["docker", "run", "-d", "--name", loader,
+        ["docker", "run", "-d", "--name", loader, *student_local_labels("bitcoin"),
          "-v", f"{INSTRUCTOR_VOLUME}:/dst",
-         "busybox", "sleep", "600"],
+         LOADER_IMAGE, "sleep", "600"],
         capture_output=True, text=True, timeout=60,
     )
     if start.returncode != 0:
@@ -523,9 +517,9 @@ def _trigger_graph_rebuild() -> subprocess.CompletedProcess | None:
         return None
 
 
-@blueprint.route("/api/bitcoin/forensics/deploy", methods=["POST"])
-@require_instructor
-def bitcoin_forensics_deploy():
+def _forensics_deploy_response():
+    """Load the forensics chain once at a time and answer in JSON: the instructor's deploy button and, on a student's
+    own machine, the launcher's "Load the forensics chain" action."""
     if not _forensics_lock.acquire(blocking=False):
         return jsonify({
             "success": False,
@@ -545,6 +539,21 @@ def bitcoin_forensics_deploy():
         "success": True,
         "message": "forensics chain deployed — instructor serves the 3-part (v34 + v35 + v36) chain",
     })
+
+
+@blueprint.route("/api/bitcoin/forensics/deploy", methods=["POST"])
+@require_instructor
+def bitcoin_forensics_deploy():
+    return _forensics_deploy_response()
+
+
+if student_local_mode():
+    # A student alone on their own machine is their own instructor for this one step (owner decision, 9 Nov 2026:
+    # forensics labs 3-5 run locally behind a "Load the forensics chain" button). The route exists only in this
+    # mode, so a classroom lane-service never serves it.
+    @blueprint.route("/api/local/bitcoin/forensics-load", methods=["POST"])
+    def bitcoin_local_forensics_load():
+        return _forensics_deploy_response()
 
 
 # --- Chain Graph controls (bitcoin-graph/DESIGN.md) ---

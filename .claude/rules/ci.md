@@ -10,13 +10,15 @@ paths:
   lab's tests pass there. `check.yml` publishes nothing either: it runs `python tools/check.py --all --render` on
   every push to `main`. After a push, `gh run list --workflow check.yml --limit 1` shows it; a red run is fixed
   or reverted like a red check.
-- `pages.yml` builds the student `src.zip`; its `-x` list is the fence around instructor material (CLAUDE.md rule 1).
+- `pages.yml` builds the student `src.zip`. The fence around instructor material (CLAUDE.md rule 1) is
+  `dynamic-labs/student-exclude.txt`: `tools/student_exclude.py` applies it to the zip, the VM and every student
+  image build context (`student-release.yml`).
 - The VM build (`vm-build.yml`: Packer and QEMU) runs for hours on GitHub and cannot run here: say it is unverified.
 - Workflows run on Ubuntu, where the interpreter is `python3`; `check.yml` alone runs on Windows, like the
   computers that commit, since the check and its tool tests are written for Git Bash there.
 - Workflows are rails: a change to one gets the rail audit (`tools/second-look.mjs` runs it; CLAUDE.md, Finishing).
 - Known gap: three instructor files reach the student VM because the lab services read them at run time:
   `dynamic-labs/bitcoin-forensics/lab.md`, `dynamic-labs/cryptography/solution.md` and
-  `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` (`VM_RUNTIME_KEYS` in `tools/check.py`). Any other
-  `dynamic-labs/` path that `pages.yml` leaves out of `src.zip` must also be removed from the VM, or the check fails.
+  `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` (`VM_RUNTIME_KEYS` in `tools/check.py`). The student images keep them
+  too. Any other `dynamic-labs/` path that `pages.yml` leaves out of `src.zip` must also be removed from the VM, or the check fails.
   Serving them from the instructor's machine instead is a later redesign.

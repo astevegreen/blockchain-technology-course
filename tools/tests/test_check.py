@@ -250,11 +250,10 @@ class LabTests(unittest.TestCase):
         self.assertIn("  FAILED tests/unit/test_grading.py::test_x - AssertionError", lines)
 
 
-PAGES_FENCED = '''
-          zip -r blockchain-course/assets/src.zip blockchain-course dynamic-labs \\
-            -x "quizes/**" \\
-            -x "dynamic-labs/bitcoin-forensics/*_answer_LIVE.json" \\
-            -x "dynamic-labs/bitcoin-forensics/malicious_seed_v*.py"
+PAGES_FENCED = '''# student-exclude.txt
+quizes/**
+dynamic-labs/bitcoin-forensics/*_answer_LIVE.json
+dynamic-labs/bitcoin-forensics/malicious_seed_v*.py
 '''
 VM_FENCED = '''
       - name: Remove Unused Repo Payload
@@ -275,7 +274,7 @@ class AnswerFiles(unittest.TestCase):
         self.assertEqual(check.unfenced_answer_files(KEYS, PAGES_FENCED, VM_FENCED), [])
 
     def test_key_missing_from_the_zip_fence_is_named(self) -> None:
-        pages = PAGES_FENCED.replace('-x "dynamic-labs/bitcoin-forensics/*_answer_LIVE.json" \\\n', "")
+        pages = PAGES_FENCED.replace("dynamic-labs/bitcoin-forensics/*_answer_LIVE.json\n", "")
         problems = check.unfenced_answer_files(KEYS, pages, VM_FENCED)
         self.assertEqual(len(problems), 2)
         self.assertIn("v34_answer_LIVE.json: ships in src.zip", problems[0])
@@ -296,7 +295,7 @@ class AnswerFiles(unittest.TestCase):
         self.assertEqual(check.unfenced_answer_files(KEYS, PAGES_FENCED, vm), [])
 
     def test_a_lab_quizes_folder_must_leave_the_vm(self) -> None:
-        pages = PAGES_FENCED + '-x "dynamic-labs/**/quizes/**"\n'
+        pages = PAGES_FENCED + "dynamic-labs/**/quizes/**\n"
         files = ["dynamic-labs/exercises/l03/quizes/keys.json"]
         self.assertEqual(len(check.unfenced_answer_files(files, pages, VM_FENCED)), 1)
         find = "          find dynamic-labs -type d -name quizes -prune -exec rm -rf {} + || true\n"
@@ -304,7 +303,7 @@ class AnswerFiles(unittest.TestCase):
         self.assertEqual(check.unfenced_answer_files(files, pages, vm), [])
 
     def test_the_named_runtime_keys_may_stay_on_the_vm(self) -> None:
-        pages = PAGES_FENCED + '-x "dynamic-labs/bitcoin-forensics/lab.md"\n-x "dynamic-labs/p2p_trust/notes.md"\n'
+        pages = PAGES_FENCED + "dynamic-labs/bitcoin-forensics/lab.md\ndynamic-labs/p2p_trust/notes.md\n"
         files = ["dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/p2p_trust/notes.md"]
         problems = check.unfenced_answer_files(files, pages, VM_FENCED)
         self.assertEqual(len(problems), 1)

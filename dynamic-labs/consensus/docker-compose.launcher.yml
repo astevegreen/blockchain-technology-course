@@ -1,0 +1,20 @@
+# Consensus lab on a student's own machine (the course launcher; docs/student-launcher-design.md).
+# lane-service starts the student's lane with `docker run` from CONSENSUS_STUDENT_IMAGE; this file
+# only names that image so the launcher pulls it. The classroom instructor service is left out: it
+# bind-mounts the instructor overview, and there is no instructor on a student's machine.
+name: consensus-lab
+
+services:
+  student:
+    image: ${CONSENSUS_STUDENT_IMAGE:?}
+    profiles: ["lane-image"]
+    labels:
+      course.lab: consensus
+      course.release: ${COURSE_RELEASE:?}
+    networks:
+      - student-net
+
+networks:
+  student-net:
+    name: consensus-student-net
+    external: true

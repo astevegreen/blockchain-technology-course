@@ -1,0 +1,71 @@
+# Bitcoin lab on a student's own machine (the course launcher; docs/student-launcher-design.md).
+# lane-service drives this file: it is baked into the lane-service launcher image at
+# /app/bitcoin-compose/docker-compose.launcher.yml, and the forensics load and nuke run
+# `docker compose up -d instructor mempool graph` against it. Same project, service and network
+# names as docker-compose.yml, so container names (bitcoin-instructor-1, ...) match the classroom.
+# Images only: no build contexts and no host folders. Each image comes from the release manifest as
+# ${BITCOIN_<SERVICE>_IMAGE}; the instructor is built from the same Dockerfile as the student lane,
+# so the release may point BITCOIN_INSTRUCTOR_IMAGE at the student digest (one download).
+# The labels are here, not only in the launcher's override file, because lane-service's own
+# `compose up` does not see that override.
+name: bitcoin
+
+x-course-labels: &course-labels
+  course.lab: bitcoin
+  course.release: ${COURSE_RELEASE:?}
+
+services:
+  # The per-student lane image. lane-service starts it with `docker run`; it is listed here only so
+  # the launcher pulls it (profile lane-image is never started by compose).
+  student:
+    image: ${BITCOIN_STUDENT_IMAGE:?}
+    profiles: ["lane-image"]
+    labels: *course-labels
+    networks:
+      - p2p-net
+      - student-mgmt-net
+
+  instructor:
+    image: ${BITCOIN_INSTRUCTOR_IMAGE:?}
+    environment:
+      SEED_CLASSNET: "1"
+    labels: *course-labels
+    networks:
+      - p2p-net
+      - instructor-mgmt-net
+    volumes:
+      - instructor-data:/home/user/.bitcoin
+
+  mempool:
+    image: ${BITCOIN_MEMPOOL_IMAGE:?}
+    environment:
+      BTCEXP_BASEURL: "/labs/bitcoin/btc-explorer/"
+      MEMPOOL_BASE_PATH: "/labs/bitcoin/mempool"
+      BITCOIN_EXTRA_ARGS: "-maxtipage=9999999999 -addnode=bitcoin-instructor-1"
+    labels: *course-labels
+    networks:
+      - p2p-net
+      - student-mgmt-net
+
+  graph:
+    image: ${BITCOIN_GRAPH_IMAGE:?}
+    mem_limit: 4g
+    labels: *course-labels
+    networks:
+      - p2p-net
+      - student-mgmt-net
+
+networks:
+  p2p-net:
+    name: bitcoin-p2p-net
+    external: true
+  student-mgmt-net:
+    name: bitcoin-student-mgmt-net
+    external: true
+  instructor-mgmt-net:
+    name: bitcoin-instructor-mgmt-net
+    external: true
+
+volumes:
+  instructor-data:
+    name: bitcoin-instructor-data

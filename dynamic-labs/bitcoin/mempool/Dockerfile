@@ -1,5 +1,5 @@
 # Override BITCOIN_LAB_BASE to build on a locally built workstation image before it is published.
-ARG BITCOIN_LAB_BASE=ghcr.io/blockchain-course-2026/bitcoin-lab:latest
+ARG BITCOIN_LAB_BASE=ghcr.io/astevegreen/course-labs:base-bitcoin-lab
 
 # ==========================================
 # STAGE 1: Rust Builder (Electrs)

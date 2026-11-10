@@ -1,0 +1,65 @@
+# lane-service on a student's own machine (the course launcher; docs/student-launcher-design.md).
+# Same project, service and container name as docker-compose.yml (lane-service-lane-service-1).
+# The image is Dockerfile.launcher: LANE_MODE=student-local, with the bitcoin launcher compose file and the
+# forensics chain baked in, so the only host path is the Docker socket lane-service starts lanes through.
+# Lane images come from the release manifest: each lab's launcher file names its lane image under the
+# lane-image profile so the launcher pulls it, and lane-service gets the same variable here.
+name: lane-service
+
+services:
+  lane-service:
+    image: ${LANE_SERVICE_LANE_SERVICE_IMAGE:?}
+    restart: unless-stopped
+    stop_grace_period: 2m
+    environment:
+      - LANE_MODE=student-local
+      - CLASS_GATE=off
+      - COURSE_RELEASE=${COURSE_RELEASE:?}
+      - CONSENSUS_IMAGE=${CONSENSUS_STUDENT_IMAGE:?}
+      - CONSENSUS_NETWORK=consensus-student-net
+      - P2P_TRUST_IMAGE=${P2P_TRUST_STUDENT_IMAGE:?}
+      - P2P_TRUST_NETWORK=p2p-trust-student-net
+      - BITCOIN_IMAGE=${BITCOIN_STUDENT_IMAGE:?}
+      - BITCOIN_P2P_NET=bitcoin-p2p-net
+      - BITCOIN_MGMT_NET=bitcoin-student-mgmt-net
+      # lane-service runs `docker compose up` on the baked bitcoin launcher file, which reads these.
+      - BITCOIN_STUDENT_IMAGE=${BITCOIN_STUDENT_IMAGE:?}
+      - BITCOIN_INSTRUCTOR_IMAGE=${BITCOIN_INSTRUCTOR_IMAGE:?}
+      - BITCOIN_MEMPOOL_IMAGE=${BITCOIN_MEMPOOL_IMAGE:?}
+      - BITCOIN_GRAPH_IMAGE=${BITCOIN_GRAPH_IMAGE:?}
+      # The forensics load copies the chain out of this same image, so it needs no busybox pull.
+      - BITCOIN_LOADER_IMAGE=${LANE_SERVICE_LANE_SERVICE_IMAGE:?}
+      - BITCOIN_INSTRUCTOR_VOLUME=bitcoin-instructor-data
+      - ETHEREUM_IMAGE=${ETHEREUM_LAB_ETHEREUM_TRAINER_IMAGE:?}
+      - ETHEREUM_MGMT_NET=ethereum-student-mgmt-net
+      - ETHEREUM_INSTRUCTOR_HOST=ethereum-trainer-instructor
+      - ETHEREUM_INSTRUCTOR_PORT=8080
+      - STUDENT_PIDS_LIMIT=256
+      - LANE_SERVICE_PORT=8090
+      - LANE_SERVICE_SECRET=${LANE_SERVICE_SECRET:?}
+    labels:
+      course.lab: lane-service
+      course.release: ${COURSE_RELEASE:?}
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+      - runtime:/app/runtime
+    pre_stop:
+      - command: python /app/pre_stop_cleanup.py
+        working_dir: /app
+    networks:
+      - router-net
+      - ethereum-instructor-mgmt-net
+
+volumes:
+  runtime:
+    name: lane-service-runtime
+
+networks:
+  router-net:
+    name: router-net
+    external: true
+  ethereum-instructor-mgmt-net:
+    name: ethereum-instructor-mgmt-net
+    external: true

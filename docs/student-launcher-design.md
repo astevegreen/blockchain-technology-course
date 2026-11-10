@@ -111,7 +111,7 @@ there. Named seeded volumes are not used, because baked data updates with the im
   - `http://127.0.0.1/` and `http://127.0.0.1:8470/` both show the control page.
   - This replaces the spec's "landing links generated without them" (4.3): there is no landing page locally.
 - **The overlay.** It is `router/docker-compose.launcher.yml`, an override like `docker-compose.cloud.yml`. It sets
-  `HOST_BIND`, `HTTP_PORT` and `NGINX_CONF`, and mounts `routes/local/instructor-off.conf` over
+  `HOST_BIND`, `HTTP_PORT` and `NGINX_CONF`, and mounts `routes/local/staff-pages-off.conf` over
   `routes/_instructor.conf` and `routes/local/quiz-off.conf` over `routes/quiz-engine-v2.conf`. Both return 404. Other
   routes need no change, because the router resolves upstreams lazily (`resolver 127.0.0.11`, `routes.conf:1-2`).
   `CLASS_GATE` is off.
@@ -135,12 +135,12 @@ Flask, which lane-service already uses. All JSON. Paths are under `/api/`.
 |---|---|
 | `GET /api/health` | `{"ok": true, "version": ...}`. The wrapper polls it before opening the browser. |
 | `GET /api/system` | Docker version, memory available to Docker, CPU arch, free/busy for 80/8480/8441-8444, internet reachable. |
-| `GET /api/labs` | Every `student_local` lab of kind `lab`, in `order`: `id, title, day, memory_mb, approx_download_mb, state, entry_url, actions, unavailable_reason`. |
+| `GET /api/labs` | Every `student_local` lab of kind `lab`, in `order`: `id, title, day, memory_mb, approx_download_mb, state, entry_url, actions, unavailable_reason, message, action`; `action` is the last button pressed, `{id, label, phase: running\|done\|error, message, elapsed_s}`, or null. |
 | `POST /api/labs/<id>/start` | Pull (if needed), then compose up. Returns at once; progress comes from the next row. |
 | `GET /api/labs/<id>/progress` | `{"phase": "pulling"\|"starting"\|"running"\|"error", "pulled_mb", "total_mb", "message"}`, polled each second. |
 | `POST /api/labs/<id>/stop` | compose stop, keeping volumes. |
 | `POST /api/labs/<id>/reset` | compose down with volumes, after the page asks the student to confirm. |
-| `POST /api/labs/<id>/actions/<action>` | Runs a manifest `local_actions` entry (the forensics load). |
+| `POST /api/labs/<id>/actions/<action>` | Runs a manifest `local_actions` entry (the forensics load) in the background and returns 202 with the lab's `action` at once; the page polls `GET /api/labs` while it runs. The control container POSTs the `api` path straight to lane-service (`http://lane-service-lane-service-1:8090<api>`) on the launcher network, never through the router, so the browser never reaches it. |
 | `GET /api/update` | Compares the running launcher's digest with `launcher-stable` on ghcr. `{"available": bool}`. |
 | `POST /api/shutdown` | Stops every lab and shared service. `Stop Course Labs` calls it, then removes the control container. |
 

@@ -1,0 +1,27 @@
+# Cryptography lab on a student's own machine (the course launcher; docs/student-launcher-design.md).
+# Same project, service and network as docker-compose.yml; the image comes from the release
+# manifest. The classroom instructor service (Dockerfile.instructor, with the solutions) is left out.
+name: crypto-lab
+
+services:
+  student:
+    image: ${CRYPTOGRAPHY_STUDENT_IMAGE:?}
+    command:
+      - streamlit
+      - run
+      - Lab_2_Home.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+      - --server.baseUrlPath=labs/cryptography/app
+      - --server.enableCORS=false
+      - --server.enableXsrfProtection=false
+    labels:
+      course.lab: cryptography
+      course.release: ${COURSE_RELEASE:?}
+    networks:
+      - student-net
+
+networks:
+  student-net:
+    name: crypto-student-net
+    external: true

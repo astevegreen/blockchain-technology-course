@@ -1,0 +1,542 @@
+name: Student Release
+
+# Builds the student lab images and the launcher, makes a draft GitHub Release with the wrappers and latest.json,
+# smoke-tests the launcher on amd64 and arm64 runners, and (only with publish: true, once every smoke job is green)
+# publishes the release and moves launcher-stable. Spec: docs/student-launcher-spec.md 4.4 and 4.5; contract:
+# docs/student-launcher-design.md section 6. Every image goes to one public package, ghcr.io/astevegreen/course-labs,
+# pushed with GITHUB_TOKEN and unsigned (owner decisions, 9 Nov 2026). The first public release is the owner's call.
+# tools/student_release.py does the steps worth testing; tools/student_exclude.py keeps instructor files out of every
+# build context (dynamic-labs/student-exclude.txt, the list pages.yml and vm-build.yml also read).
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the release and move launcher-stable once the smoke tests pass (false stops at the draft)"
+        type: boolean
+        default: false
+      rebuild_bases:
+        description: "Rebuild the Bitcoin base images (base-bitcoin-lab, -mempool, -graph) before the lab images"
+        type: boolean
+        default: false
+      images_file:
+        description: "Build list (tools/lab_manifest.py writes it; the stub stands in until it lands)"
+        required: false
+        default: "dynamic-labs/student-release-images.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: student-release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PACKAGE: ghcr.io/astevegreen/course-labs
+  STUB: tools/tests/fixtures/student-release-images.stub.json
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      images: ${{ steps.plan.outputs.images }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      smoke: ${{ steps.plan.outputs.smoke }}
+      smoke_count: ${{ steps.plan.outputs.smoke_count }}
+      launcher: ${{ steps.plan.outputs.launcher }}
+      fixture: ${{ steps.plan.outputs.fixture }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: false
+      - name: Install PyYAML
+        run: sudo apt-get install -y -q python3-yaml
+      - name: Plan the build
+        id: plan
+        env:
+          IMAGES: ${{ inputs.images_file || 'dynamic-labs/student-release-images.json' }}
+          RUN: ${{ github.run_number }}
+        run: |
+          version="$(date -u +%Y.%m.%d)-$RUN"
+          [ -f "$IMAGES" ] || { echo "$IMAGES is not on this branch yet: building from $STUB"; IMAGES=$STUB; }
+          python3 tools/student_release.py lfs-check --images "$IMAGES" --pull
+          matrix=$(python3 tools/student_release.py matrix --images "$IMAGES" --version "$version")
+          smoke=$(python3 tools/student_release.py smoke-matrix)
+          launcher=false; [ -f student-launcher/control/Dockerfile ] && launcher=true
+          fixture=false; [ -f dynamic-labs/regression-tests/fixtures/hello-lab/lab.yaml ] && fixture=true
+          echo "Version $version from $IMAGES; launcher $launcher; fixture $fixture"
+          echo "Builds: $(echo "$matrix" | jq '.include | length'); smoke labs: $(echo "$smoke" | jq -c '[.include[].lab]')"
+          {
+            echo "version=$version"
+            echo "images=$IMAGES"
+            echo "matrix=$matrix"
+            echo "smoke=$smoke"
+            echo "smoke_count=$(echo "$smoke" | jq '.include | length')"
+            echo "launcher=$launcher"
+            echo "fixture=$fixture"
+          } >> "$GITHUB_OUTPUT"
+
+  # The Bitcoin bases (trixie): bitcoin-lab, then mempool and graph built FROM it, on each architecture's own runner.
+  # Arch tags first; bases-merge joins them into base-bitcoin-<name> (moving) and base-bitcoin-<name>-<version>.
+  bases:
+    needs: prepare
+    if: inputs.rebuild_bases
+    name: bases (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - { arch: amd64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      ARCH: ${{ matrix.arch }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: false
+      - name: Fetch the shipped Git LFS files and fail on pointers
+        env:
+          IMAGES: ${{ needs.prepare.outputs.images }}
+        run: python3 tools/student_release.py lfs-check --images "$IMAGES" --pull
+      - name: Log in to ghcr
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Build and push the bases
+        run: |
+          set -euo pipefail
+          docker buildx create --use --driver docker-container --name bases >/dev/null
+          build() {  # <name> <context>
+            local out; out=$(mktemp -d)
+            python3 tools/student_exclude.py stage "$2" "$out"
+            docker buildx build --platform "linux/$ARCH" --provenance=false \
+              --build-arg BITCOIN_LAB_BASE="$PACKAGE:base-bitcoin-lab-$VERSION-$ARCH" \
+              -t "$PACKAGE:base-bitcoin-$1-$VERSION-$ARCH" --push "$out"
+          }
+          build lab dynamic-labs/bitcoin/workstation
+          build mempool dynamic-labs/bitcoin/mempool
+          build graph dynamic-labs/bitcoin-graph
+
+  bases-merge:
+    needs: [prepare, bases]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Log in to ghcr
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Join the architectures and move the base tags
+        run: |
+          set -euo pipefail
+          for name in lab mempool graph; do
+            base="$PACKAGE:base-bitcoin-$name"
+            docker buildx imagetools create -t "$base-$VERSION" -t "$base" "$base-$VERSION-amd64" "$base-$VERSION-arm64"
+            docker buildx imagetools inspect "$base-$VERSION"
+          done
+
+  build:
+    needs: [prepare, bases-merge]
+    if: always() && needs.prepare.result == 'success' && needs.bases-merge.result != 'failure' && needs.bases-merge.result != 'cancelled'
+    name: build (${{ matrix.key }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: false
+      # Only the LFS files a student image ships are fetched: the instructor-only forensics blocks are not, and a
+      # shipped file that is still a pointer (an object missing on GitHub) fails the build.
+      - name: Fetch the shipped Git LFS files and fail on pointers
+        env:
+          IMAGES: ${{ needs.prepare.outputs.images }}
+        run: python3 tools/student_release.py lfs-check --images "$IMAGES" --pull
+      - name: Log in to ghcr
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      # The context is staged without the files dynamic-labs/student-exclude.txt lists, so no instructor file can be
+      # COPY'd into a student image, whatever the Dockerfile or its .dockerignore says.
+      # HLF's chaincode image copies the upstream fabric-samples, which the lab fetches at a pinned commit rather
+      # than keeping in git (dynamic-labs/hlf/runtime/ is ignored). Fetch the same commit lab.sh pins.
+      - name: Fetch the pinned fabric-samples for HLF
+        # Any Dockerfile under hlf/, whether its context is dynamic-labs/hlf or dynamic-labs/.
+        if: startsWith(format('{0}/{1}', matrix.context, matrix.dockerfile), 'dynamic-labs/hlf/')
+        run: |
+          set -euo pipefail
+          ref=$(grep -oE 'HLF_FABRIC_SAMPLES_REF:-[0-9a-f]{40}' dynamic-labs/hlf/lab.sh | cut -d- -f2)
+          [ -n "$ref" ] || { echo "no pinned fabric-samples commit in dynamic-labs/hlf/lab.sh"; exit 1; }
+          cd dynamic-labs/hlf/runtime
+          FABRIC_SAMPLES_REF="$ref" bash install-fabric.sh samples
+          test -f fabric-samples/asset-transfer-basic/chaincode-javascript/package.json
+      - name: Stage the build context without instructor files
+        env:
+          CONTEXT: ${{ matrix.context }}
+        run: |
+          echo "STAGED=$RUNNER_TEMP/context" >> "$GITHUB_ENV"
+          python3 tools/student_exclude.py stage "$CONTEXT" "$RUNNER_TEMP/context"
+      - name: Build and push by digest
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          DOCKERFILE: ${{ matrix.dockerfile }}
+          KEY: ${{ matrix.key }}
+        run: |
+          set -euo pipefail
+          docker buildx create --use --driver docker-container --name labs >/dev/null
+          docker buildx build --platform "$PLATFORM" --provenance=false -f "$STAGED/$DOCKERFILE" \
+            --build-arg BITCOIN_LAB_BASE="$PACKAGE:base-bitcoin-lab" \
+            --output "type=image,name=$PACKAGE,push-by-digest=true,name-canonical=true,push=true" \
+            --metadata-file "$RUNNER_TEMP/meta.json" "$STAGED"
+          mkdir -p "$RUNNER_TEMP/digests"
+          jq -r '."containerimage.digest"' "$RUNNER_TEMP/meta.json" > "$RUNNER_TEMP/digests/$KEY"
+          echo "$KEY: $(cat "$RUNNER_TEMP/digests/$KEY")"
+      - name: Upload the digest
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: digest-${{ matrix.key }}
+          path: ${{ runner.temp }}/digests/${{ matrix.key }}
+          retention-days: 7
+
+  # One multi-platform tag <lab>-<service>-<version> per built image, then the /release/ folder: manifest.json with
+  # every image pinned by digest, the launcher compose files, and latest.json.
+  assemble:
+    needs: [prepare, build]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      IMAGES: ${{ needs.prepare.outputs.images }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: false
+      - name: Install PyYAML
+        run: sudo apt-get install -y -q python3-yaml
+      - name: Download the digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: digest-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/arch-digests
+      - name: Log in to ghcr
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Tag each image for every platform it was built for
+        env:
+          MATRIX: ${{ needs.prepare.outputs.matrix }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/digests"
+          for image in $(echo "$MATRIX" | jq -r '[.include[].image] | unique | .[]'); do
+            keys=$(echo "$MATRIX" | jq -r --arg i "$image" '.include[] | select(.image == $i) | .key')
+            refs=()
+            for key in $keys; do refs+=("$PACKAGE@$(cat "$RUNNER_TEMP/arch-digests/$key")"); done
+            docker buildx imagetools create -t "$image" "${refs[@]}"
+            digest=$(docker buildx imagetools inspect "$image" --format '{{json .Manifest}}' | jq -r .digest)
+            first=$(echo "$keys" | head -1)
+            echo "$digest" > "$RUNNER_TEMP/digests/${first%--*}"
+            echo "$image@$digest"
+          done
+      - name: Assemble the release folder
+        run: |
+          python3 tools/student_release.py assemble --images "$IMAGES" --version "$VERSION" \
+            --digests "$RUNNER_TEMP/digests" --out "$RUNNER_TEMP/out"
+          cp -r "$RUNNER_TEMP/digests" "$RUNNER_TEMP/out/digests"
+          jq '{version, launcher_image, labs: [.labs[].id], images}' "$RUNNER_TEMP/out/latest.json"
+      - name: Upload the release folder
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: release
+          path: ${{ runner.temp }}/out
+          retention-days: 30
+
+  launcher:
+    needs: [prepare, assemble]
+    if: always() && needs.assemble.result == 'success' && needs.prepare.outputs.launcher == 'true'
+    name: launcher (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - { arch: amd64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Download the release folder
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: release
+          path: ${{ runner.temp }}/out
+      - name: Log in to ghcr
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      # The launcher's Dockerfile copies the release folder in with `COPY --from=release . /release/`.
+      - name: Build and push the launcher by digest
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          out=$RUNNER_TEMP/context
+          python3 tools/student_exclude.py stage student-launcher/control "$out"
+          docker buildx create --use --driver docker-container --name launcher >/dev/null
+          docker buildx build --platform "linux/$ARCH" --provenance=false -f "$out/Dockerfile" \
+            --build-context release="$RUNNER_TEMP/out/release" \
+            --output "type=image,name=$PACKAGE,push-by-digest=true,name-canonical=true,push=true" \
+            --metadata-file "$RUNNER_TEMP/meta.json" "$out"
+          mkdir -p "$RUNNER_TEMP/digests"
+          jq -r '."containerimage.digest"' "$RUNNER_TEMP/meta.json" > "$RUNNER_TEMP/digests/launcher--$ARCH"
+      - name: Upload the digest
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: launcher-digest-${{ matrix.arch }}
+          path: ${{ runner.temp }}/digests/launcher--${{ matrix.arch }}
+          retention-days: 7
+
+  draft:
+    needs: [prepare, launcher]
+    if: always() && needs.launcher.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Download the launcher digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: launcher-digest-*
+          merge-multiple: true
+          path: ${{ runner.temp }}/digests
+      - name: Download the release folder
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: release
+          path: ${{ runner.temp }}/out
+      - name: Log in to ghcr
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Tag launcher-<version>
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create -t "$PACKAGE:launcher-$VERSION" \
+            "$PACKAGE@$(cat "$RUNNER_TEMP/digests/launcher--amd64")" "$PACKAGE@$(cat "$RUNNER_TEMP/digests/launcher--arm64")"
+          docker buildx imagetools inspect "$PACKAGE:launcher-$VERSION"
+          # latest.json is what the wrapper reads, so it names the launcher by digest. The copy baked into the
+          # launcher keeps the tag: an image cannot hold its own digest.
+          digest=$(docker buildx imagetools inspect "$PACKAGE:launcher-$VERSION" --format '{{json .Manifest}}' | jq -r .digest)
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "no digest for launcher-$VERSION: $digest"; exit 1; }
+          jq --arg ref "$PACKAGE:launcher-$VERSION@$digest" '.launcher_image = $ref' \
+            "$RUNNER_TEMP/out/latest.json" > "$RUNNER_TEMP/latest.json"
+          mv "$RUNNER_TEMP/latest.json" "$RUNNER_TEMP/out/latest.json"
+          jq -c '{version, launcher_image, labs: [.labs[].id], images: (.images | length)}' "$RUNNER_TEMP/out/latest.json"
+      - name: Create the draft release
+        run: |
+          set -euo pipefail
+          # Wrappers keep their repo names (Start-Course-Labs.*, Stop-Course-Labs.*). READ-ME-FIRST.html (the
+          # SmartScreen and Gatekeeper help) sits beside them once the student guide adds it.
+          shopt -s nullglob
+          files=(student-launcher/wrappers/*)
+          [ ${#files[@]} -gt 0 ] || { echo "no wrappers in student-launcher/wrappers/"; exit 1; }
+          [ -f student-launcher/READ-ME-FIRST.html ] && files+=(student-launcher/READ-ME-FIRST.html)
+          zip -j "$RUNNER_TEMP/Course-Labs.zip" "${files[@]}"
+          unzip -l "$RUNNER_TEMP/Course-Labs.zip"
+          gh release create "student-v$VERSION" --draft --prerelease --target "$GITHUB_SHA" \
+            --title "Course labs $VERSION" \
+            --notes "Download Course-Labs.zip, unzip it and double-click Start-Course-Labs for your system. Needs Docker Desktop. Launcher image: $PACKAGE:launcher-$VERSION" \
+            "$RUNNER_TEMP/Course-Labs.zip" "$RUNNER_TEMP/out/latest.json"
+
+  # Start the launcher as the wrapper does, start each lab through its API (design section 5), then run the lab's own
+  # tests against the running stack (run-lab.sh --skip-start).
+  smoke:
+    needs: [prepare, draft]
+    if: always() && needs.draft.result == 'success' && needs.prepare.outputs.smoke_count != '0'
+    name: smoke (${{ matrix.target.lab }}, ${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+        target: ${{ fromJSON(needs.prepare.outputs.smoke).include }}
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: false
+      - name: Start the launcher as the wrapper does
+        run: |
+          docker run -d --name course-launcher -v /var/run/docker.sock:/var/run/docker.sock \
+            -v course-launcher-state:/state -p 127.0.0.1:8470:8470 "$PACKAGE:launcher-$VERSION"
+          python3 tools/student_release.py drive --timeout 120
+      - name: Start the lab through the launcher
+        id: start
+        env:
+          LAB: ${{ matrix.target.lab }}
+        run: |
+          set +e
+          python3 tools/student_release.py drive --lab "$LAB" --timeout 2400
+          code=$?
+          if [ "$code" = 3 ]; then echo "skipped=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          exit "$code"
+      - name: Run the lab's tests against the running stack
+        if: steps.start.outputs.skipped != 'true'
+        env:
+          TEST: ${{ matrix.target.test }}
+        run: bash "dynamic-labs/regression-tests/automated/$TEST/run.sh" --skip-start 2>&1 | tee smoke.log
+      - name: Launcher log
+        if: always()
+        run: docker logs course-launcher > launcher.log 2>&1 || true
+      - name: Upload the output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: smoke-${{ matrix.target.lab }}-${{ matrix.runner }}
+          path: |
+            smoke.log
+            launcher.log
+          retention-days: 14
+
+  # The hello-lab fixture proves the launcher follows its manifest: a lab added to it appears, a new digest is
+  # pulled, and a lab dropped from it is cleaned up. Images go to a throwaway registry on the runner, never to ghcr.
+  fixture:
+    needs: [prepare, draft]
+    if: always() && needs.draft.result == 'success' && needs.prepare.outputs.fixture == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      IMAGES: ${{ needs.prepare.outputs.images }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          lfs: false
+      - name: Install PyYAML
+        run: sudo apt-get install -y -q python3-yaml
+      - name: Download the release folder
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: release
+          path: ${{ runner.temp }}/out
+      - name: Add, change and remove the fixture lab
+        run: |
+          set -euo pipefail
+          # A throwaway registry on the runner (the launcher pulls through the host's Docker, so localhost:5000 works).
+          docker run -d --name registry -p 127.0.0.1:5000:5000 registry:2
+          rows=$(python3 tools/student_release.py fixture-builds)
+          echo "$rows" | jq .
+          # Two builds of each fixture image that differ only in a label, so their digests differ; a launcher for each.
+          for rev in 1 2; do
+            overrides=()
+            for row in $(echo "$rows" | jq -c '.[]'); do
+              var=$(jq -r .variable <<<"$row"); ctx=$(jq -r .context <<<"$row"); df=$(jq -r .dockerfile <<<"$row")
+              ref="localhost:5000/$(jq -r .lab <<<"$row")-$(jq -r .service <<<"$row"):rev$rev"
+              docker build -q --label "course.fixture.rev=$rev" -f "$ctx/$df" -t "$ref" "$ctx" >/dev/null
+              docker push -q "$ref" >/dev/null
+              overrides+=(--override "$var=$(docker image inspect --format '{{index .RepoDigests 0}}' "$ref")")
+            done
+            python3 tools/student_release.py assemble --images "$IMAGES" --version "$VERSION" --fixtures \
+              --digests "$RUNNER_TEMP/out/digests" --out "$RUNNER_TEMP/fixture-$rev" "${overrides[@]}"
+            docker build -q -f student-launcher/control/Dockerfile --build-context release="$RUNNER_TEMP/fixture-$rev/release" \
+              -t "course-launcher-fixture:rev$rev" student-launcher/control >/dev/null
+          done
+          docker build -q -f student-launcher/control/Dockerfile --build-context release="$RUNNER_TEMP/out/release" \
+            -t course-launcher-fixture:plain student-launcher/control >/dev/null
+          launch() {
+            docker rm -f course-launcher >/dev/null 2>&1 || true
+            docker run -d --name course-launcher -v /var/run/docker.sock:/var/run/docker.sock \
+              -v course-launcher-state:/state -p 127.0.0.1:8470:8470 "course-launcher-fixture:$1" >/dev/null
+            python3 tools/student_release.py drive --timeout 120
+          }
+          running_digests() {
+            docker ps --filter label=course.lab=hello-lab --format '{{.Image}}' | sort -u
+          }
+          echo "Add: a launcher whose manifest has hello-lab lists it and starts it"
+          launch rev1
+          python3 tools/student_release.py drive --lab hello-lab --timeout 600
+          running_digests | tee "$RUNNER_TEMP/rev1"
+          echo "Change: the next launcher has new digests, and the next Start pulls them"
+          launch rev2
+          python3 tools/student_release.py drive --lab hello-lab --timeout 600
+          running_digests | tee "$RUNNER_TEMP/rev2"
+          if cmp -s "$RUNNER_TEMP/rev1" "$RUNNER_TEMP/rev2"; then echo "hello-lab still runs the first digests"; exit 1; fi
+          echo "Remove: a launcher without hello-lab cleans it up"
+          launch plain
+          for _ in $(seq 60); do
+            [ -z "$(docker ps -aq --filter label=course.lab=hello-lab)" ] && break
+            sleep 2
+          done
+          if [ -n "$(docker ps -aq --filter label=course.lab=hello-lab)" ]; then
+            docker ps -a --filter label=course.lab=hello-lab; echo "hello-lab containers remain"; exit 1
+          fi
+          echo "Fixture lab: added, changed and removed"
+      - name: Launcher log
+        if: always()
+        run: docker logs course-launcher || true
+
+  # With publish: true and every smoke job green: move launcher-stable and publish the release as the latest,
+  # non-prerelease one. publish: false stops at the draft.
+  publish:
+    needs: [prepare, draft, smoke, fixture]
+    if: always() && inputs.publish && needs.draft.result == 'success' && needs.smoke.result == 'success' && (needs.fixture.result == 'success' || needs.fixture.result == 'skipped')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Log in to ghcr
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Move launcher-stable
+        run: docker buildx imagetools create -t "$PACKAGE:launcher-stable" "$PACKAGE:launcher-$VERSION"
+      - name: Publish the release
+        run: gh release edit "student-v$VERSION" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
