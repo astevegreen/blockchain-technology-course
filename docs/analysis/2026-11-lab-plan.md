@@ -5,8 +5,10 @@ this file is built yet. It draws on `2026-11-lab-concept-catalog.md` (what each 
 `2026-11-blind-lab-outline.md` (the 17-lab thought experiment), `2026-11-static-labs-review.md` (the 37 ideas)
 and the owner's `docs/technical-educator-pedagogical-blueprint.md`.
 
-**Status**: Stages 1 and 2 are agreed in outline. Stage 3 (games) is tentative: the owner picks from the list
-in "Every lab". The owner still has to mark the wrong-belief list and approve this plan.
+**Status**: approved and locked in on 10 Nov 2026. The owner's review, the eight games, the build order, the
+scoring and the hide-and-trace guardrails are at the end ("Owner's review", "Locked in"), and where they differ
+from the draft above them, they win. The rules are recorded in `docs/build-spec.md` ("A prediction lab", "Lab
+games"). One thing is open: belief 8 has no lab idea yet.
 
 ## Decided so far (owner, 10 Nov)
 
@@ -232,4 +234,9 @@ This replaces "first builds" in `docs/build-spec.md`, "A prediction lab", when s
 transaction's time is when it was sent) needs a new lab idea.
 
 **Scoring approved** (owner, 10 Nov: "I approve the scoring"): every game scores a correct answer with its
-reason, and time is only a tiebreak. The hide-and-trace guardrails are still the owner's to decide.
+reason, and time is only a tiebreak.
+
+**Hide-and-trace guardrails approved** (owner, 10 Nov: "I approve the hide-and-trace guardrails"): the hiding
+team picks from a fixed menu of moves and spends a fixed budget; the tracing team is scored by calibration
+(right calls earn by stated confidence, and a wrong High call costs most); it is built last of the games and
+runs in the second half of day 7. With this, nothing in "Not yet confirmed" above is still waiting.

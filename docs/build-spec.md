@@ -154,22 +154,55 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
 - Instructor answers stay out of what students receive (CLAUDE.md rule 1).
 
 ## A prediction lab (owner, 10 Nov 2026: a trial, not yet a rule)
-The owner approved these on 10 Nov ("I approve your recommendations"), from
-`docs/analysis/2026-11-lab-concept-catalog.md` and `docs/analysis/2026-11-static-labs-review.md`.
+The owner approved these on 10 Nov ("I approve your recommendations", then "Overall plan is approved"), from
+`docs/analysis/2026-11-lab-concept-catalog.md` and `docs/analysis/2026-11-static-labs-review.md`. The whole
+plan (what happens to every lab, the design card, the order of work) is `docs/analysis/2026-11-lab-plan.md`;
+"idea" numbers below are the review's.
 
 - A static browser lab is five minutes, one wrong belief and one prediction, opened from the slide whose title
-  states the right belief. The seven steps are in the review ("A new job for static labs").
-- Projector-first: the instructor runs it and the room commits by a show of hands. One per lesson at most.
-- Build two and time them in a lesson before building more. Still open, and the owner's to answer: do students
-  have laptops open in lectures; do the five minutes come out of the lesson or the lab; do students do the
-  primer; which wrong beliefs do analysts hold.
-- First builds, because slides teach them and no lab lets a student try them: UTXO and change (idea 1),
-  confirmations (idea 7) and finality (idea 9).
-- Rebuilt, not retired, because each is the only lab for its topic: `ether-smart-contract-micro` (reentrancy,
-  idea 33), `ether_mev` (MEV, idea 20) and `distributed-systems` (network shape, idea 2).
+  states the right belief. The seven steps are in the review ("A new job for static labs"). One per lesson at
+  most.
+- Students have laptops all day, lectures included, and follow along on them while the instructor runs the lab
+  on the projector.
+- Timing is flexible: during or right after a lecture that finishes early, or in the afternoon lab when
+  lectures run long.
+- Every one is repeatable by a student alone, later. The primer's labs stay in the primer; a student who
+  skipped it can do them on the evening of day 1.
+- Laptops only: every lab, of any kind, runs on the instructor's and students' laptops. No dice, paper or
+  other props.
+- A design card first: before a lab is built or changed, the owner approves its one-page card (the plan,
+  "Stage 2"). The shared look, the prediction-lab shell (offline, restartable, no Pyodide) and the card
+  template are built once, before any lab.
+- Build order: the labs for the beliefs the owner marked common come first, Make change (idea 1), Forge the
+  payment (idea 4), Who got paid? (idea 16) and Through the exchange (idea 24); the confirmation race (idea 7)
+  and "Is it final yet?" (idea 9) follow, then the rest, a card first for each. Build two and time them in a
+  lesson before building more. The marked beliefs and the lab for each are in the plan ("Owner's review").
+- Still open: belief 8 (a transaction's time is when it was sent) has no lab idea.
+- Rebuilt as prediction labs, not retired: `signatures` (idea 4), `tamper-ledger` (idea 8), `micro-hashing`
+  (idea 3), `POW_mining_micro`, `distributed-systems` (idea 2), `ether_mev` (idea 20) and
+  `ether-smart-contract-micro` (idea 33). `merkle-trees` gains a proof step (idea 12).
 - Archived: `hashing_merkle` and `bitcoin-attacks` (`archive/static-labs/README.md`).
-- The unscheduled Docker labs (Cryptography, P2P Trust, Ethereum Lab, Forensics 1 to 3) are undecided. The
-  Ethereum Lab is settled first: it is partly broken and the largest to maintain.
+- The unscheduled Docker labs are decided. The P2P Trust Lab is archived. The Ethereum Lab is archived except
+  its unused DeFi-risk contracts, which become an exploit part of about 40 minutes in day 8's afternoon lab.
+  Forensics 1 to 3 are archived once their decoy cases are folded into day 6's trace. The Cryptography Lab
+  stays until `merkle-trees` has its proof step. The Consensus Lab and Byzantine Generals stay as optional.
+  The Chain Graph tool is reviewed after everything else.
+- Day 9 gains an exercise that weighs disagreeing sources and ends in a characterization, built as the echo
+  hunt below.
+
+## Lab games (owner, 10 Nov 2026)
+Locked in by the owner on 10 Nov; the case for each is in `docs/analysis/2026-11-lab-plan.md` ("Every lab").
+
+- The game is the concept: the score measures the thing being learned, and nothing is added for show.
+- Eight games: day 1 terminal scavenger hunt; day 2 two-of-three (pairs hold two keys of three); day 3 spot the
+  fake token; day 4 pool trading against a sandwich bot; day 5 find the exchange; days 6-7 hide and trace; day
+  8 find the line; day 9 echo hunt.
+- Scoring (owner: "I approve the scoring"): a correct answer with its reason scores; time is only a tiebreak.
+- Hide and trace (owner: "I approve the hide-and-trace guardrails"): the hiding team picks from a fixed menu of
+  moves and spends a fixed budget; the tracing team is scored by calibration (right calls earn by stated
+  confidence, and a wrong High call costs most); it is built last of the games and runs in the second half of
+  day 7.
+- Each game gets a design card the owner approves before it is built, like any lab.
 
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches

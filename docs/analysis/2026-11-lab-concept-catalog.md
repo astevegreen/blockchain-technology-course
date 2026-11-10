@@ -189,8 +189,20 @@ For the owner to decide (CLAUDE.md rule 4). "Rebuild" means around one wrong bel
 
 **Decided 10 Nov 2026**: the owner approved all four recommendations below ("I approve your recommendations").
 1 is done (`archive/static-labs/README.md`); the rest are recorded in `docs/build-spec.md`, "A prediction lab".
-The fate of the unscheduled Docker labs is still open. A blind redesign of the lab set, compared with this
-catalog, is in `2026-11-blind-lab-outline.md`.
+A blind redesign of the lab set, compared with this catalog, is in `2026-11-blind-lab-outline.md`.
+
+**Decided later on 10 Nov 2026** ("Overall plan is approved"; the plan is `2026-11-lab-plan.md`, the rules are
+in `docs/build-spec.md`, "A prediction lab" and "Lab games"). These replace the "Decide" rows in the triage
+table above and recommendation 4's order:
+
+- Docker labs: the P2P Trust Lab is archived; the Ethereum Lab is archived except its DeFi-risk contracts,
+  which become day 8's exploit part; Forensics 1 to 3 are archived once day 6 has their decoy cases; the
+  Cryptography Lab stays until `merkle-trees` has a proof step; the Chain Graph tool is reviewed last.
+- Prediction labs: students have laptops all day; timing is flexible; each is repeatable alone; laptops only,
+  no props. The labs for the beliefs the owner marked common are built first (Make change, Forge the payment,
+  Who got paid?, Through the exchange), then the confirmation race and "Is it final yet?".
+- Eight games are locked in, one for each of days 1 to 9 (hide and trace spans days 6 and 7), scored by a
+  correct answer with its reason.
 
 1. **Archive `hashing_merkle` and `bitcoin-attacks`?** Recommendation: yes. Neither is a sole home.
 2. **Rebuild, not retire, `ether-smart-contract-micro`, `ether_mev` and `distributed-systems`?** Recommendation:
