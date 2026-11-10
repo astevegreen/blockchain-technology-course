@@ -178,6 +178,32 @@ class Checks(unittest.TestCase):
         self.assertEqual(status, 409)
         self.assertIn("raise Memory to at least", body["message"])
 
+    def start_fabric(self, version):
+        self.bench = Bench(labs=[router(), lab("hello"), lab("fabric", min_docker_engine="26.0",
+                                                               min_docker_desktop="4.29")])
+        if version is not None:
+            self.bench.fake.info["ServerVersion"] = version
+        return dispatch(self.bench.controller, "POST", "/api/labs/fabric/start")
+
+    def test_older_docker_is_refused_with_what_to_update(self):
+        status, body = self.start_fabric("25.0.5")
+        self.assertEqual(status, 409)
+        self.assertEqual(body["message"], "This lab needs Docker Desktop 4.29 or newer. Update Docker Desktop, "
+                                          "then press Start again.")
+        self.assertFalse(self.bench.fake.ran("compose"))
+
+    def test_other_labs_start_on_older_docker(self):
+        self.start_fabric("25.0.5")
+        self.assertEqual(dispatch(self.bench.controller, "POST", "/api/labs/hello/start")[0], 202)
+
+    def test_equal_and_newer_docker_start(self):
+        for version in ("26.0.0", "26.0", "26.1.3", "27.5.1", "29.0.0-rc.1"):
+            self.assertEqual(self.start_fabric(version)[0], 202, version)
+
+    def test_unreadable_docker_version_does_not_block(self):
+        for version in (None, "", "unknown"):
+            self.assertEqual(self.start_fabric(version)[0], 202, version)
+
     def test_processor_not_supported(self):
         self.bench = Bench(labs=[router(), lab("amd-only", services={
             "web": {"source": "upstream", "image": "x/y:1", "platforms": ["linux/amd64"]}})])
@@ -229,6 +255,68 @@ class Checks(unittest.TestCase):
         self.assertEqual(dispatch(self.bench.controller, "GET", "/api/update")[1], {"available": False})
         self.bench.digest = None  # offline
         self.assertEqual(dispatch(self.bench.controller, "GET", "/api/update")[1], {"available": False})
+
+
+class ClassroomGuard(unittest.TestCase):
+    """Stop, reset, shutdown and reconcile never touch a compose project the classroom stack also uses."""
+    CLASS = {"com.docker.compose.project": "hello"}
+    OURS = {"com.docker.compose.project": "hello", "course.lab": "hello", "course.release": "r1"}
+
+    def setUp(self):
+        self.bench = Bench(labs=[router(), lab("hello"), lab("lanes", uses_lane_service=True)])
+        self.c = self.bench.controller
+        self.fake = self.bench.fake
+
+    def tearDown(self):
+        self.bench.close()
+
+    def touched(self):
+        return [c for c in self.fake.calls if c[0] in ("compose", "rm", "stop", "volume")]
+
+    def test_stop_and_reset_refused_when_classroom_containers_share_the_project(self):
+        self.fake.add_container("hello-web-1", self.CLASS)
+        for verb in ("stop", "reset"):
+            status, body = dispatch(self.c, "POST", f"/api/labs/hello/{verb}")
+            self.assertEqual((status, body["message"]), (409, messages.CLASSROOM), verb)
+        self.assertEqual(self.touched(), [])
+        self.assertEqual(len(self.fake.containers), 1)
+
+    def test_mixed_project_is_refused_too(self):
+        self.fake.add_container("hello-web-1", self.OURS)
+        self.fake.add_container("hello-db-1", self.CLASS)
+        self.assertEqual(dispatch(self.c, "POST", "/api/labs/hello/reset")[0], 409)
+        self.assertEqual(self.touched(), [])
+
+    def test_lane_lab_reset_refused_before_the_file_less_down(self):
+        self.fake.add_container("lanes-lane-1", {"com.docker.compose.project": "lanes"})
+        status, body = dispatch(self.c, "POST", "/api/labs/lanes/reset")
+        self.assertEqual((status, body["message"]), (409, messages.CLASSROOM))
+        self.assertEqual(self.touched(), [])
+
+    def test_labelled_containers_stop_and_reset_as_before(self):
+        dispatch(self.c, "POST", "/api/labs/hello/start")
+        self.assertEqual(dispatch(self.c, "POST", "/api/labs/hello/stop")[0], 200)
+        self.assertTrue(self.fake.ran("compose", "hello", "stop"))
+        self.assertEqual(dispatch(self.c, "POST", "/api/labs/hello/reset")[0], 200)
+        self.assertTrue(self.fake.ran("compose", "hello", "down", "-v"))
+
+    def test_shutdown_skips_a_project_with_classroom_containers(self):
+        dispatch(self.c, "POST", "/api/labs/hello/start")
+        self.fake.add_container("hello-extra-1", self.CLASS)
+        self.assertEqual(dispatch(self.c, "POST", "/api/shutdown")[0], 200)
+        stops = [c[2] for c in self.fake.calls if c[:1] == ["compose"] and "stop" in c]
+        self.assertEqual(stops, ["router"])
+        self.assertEqual(self.fake.ran("compose", "hello", "stop"), [])
+
+    def test_reconcile_leaves_a_ghost_project_the_classroom_shares(self):
+        self.fake.add_container("old-web-1", {"course.lab": "old", "course.release": "r0",
+                                              "com.docker.compose.project": "old"})
+        self.fake.add_container("old-db-1", {"com.docker.compose.project": "old"})
+        self.c.update_state(lambda d: d.setdefault("labs", {}).__setitem__(
+            "old", {"images": {}, "compose_project": "old"}))
+        self.assertEqual(self.c.reconcile(), {"removed": []})
+        self.assertEqual(len(self.fake.containers), 2)
+        self.assertEqual(self.touched(), [])
 
 
 class Reconcile(unittest.TestCase):

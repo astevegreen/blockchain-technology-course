@@ -37,7 +37,7 @@ python student-launcher/control/dev_serve.py
 
 Serves the real page at `http://127.0.0.1:8470/` against canned answers in
 `control/tests/fixtures/api/all-states.json`: a lab in every state, a download in progress, a start that fails, and
-the update notice. `--scenario docker-down` shows the page when Docker Desktop has stopped; `--port` picks another
+the update notice. `--scenario docker-down` shows the page when Docker Desktop has stopped; `--scenario docker-old` shows the refusal when Docker Desktop is too old for the Fabric lab (`min_docker_engine` and `min_docker_desktop` in its manifest); `--port` picks another
 port. Buttons answer but change nothing. A test keeps the canned answers the same shape as the real ones.
 
 `READ-ME-FIRST.html`, the students' first page, belongs here too (the student guide adds it).

@@ -43,14 +43,15 @@ slide index), which is never listed here.
 - `memory_mb` and `approx_download_mb` in every `dynamic-labs/*/lab.yaml` are first estimates. Replace them with
   measured figures (`dynamic-labs/scripts/measure-seats.py`, and the pushed image sizes) before the launcher's
   memory check relies on them. (9 Nov 2026, launcher manifests)
-- The HLF launcher needs Docker Engine 26.0+ (Docker Desktop 4.29+) for its volume subpath mounts
-  (`dynamic-labs/hlf/docker-compose.launcher.yml:6`), but nothing checks the version: an older Desktop fails at the
-  first Fabric start with no clear message. Check it before starting and say what to upgrade. (9 Nov 2026, launcher
-  S4 HLF review)
 - The HLF launcher builds its helper images (`hlf-peer-ttyd`, `hlf-orderer-ttyd`, `chaincode-basic`) inside the
   runner on first start (`dynamic-labs/hlf/lab.sh`, `build_ttyd_images`) instead of pulling the release images
   `dynamic-labs/student-release-images.json` lists for them, and the Fabric containers lab.sh starts lack the `course.release` label the
   launcher stack sets. (9 Nov 2026, launcher S4 HLF)
+- The student guide (`blockchain-course/run-labs.qmd`) has no pictures of the Windows SmartScreen "Windows protected
+  your PC" screen (More info, Run anyway) or the macOS "Open Anyway" step in Privacy & Security: they are text only,
+  and its control-page screenshots (`blockchain-course/assets/run-labs/`) come from the sample-data preview, not the
+  real launcher. Take real pictures on a clean Windows 11 PC and a Mac when the release test runs. (9 Nov 2026,
+  launcher S7 student guide)
 
 ## Tooling and rules
 - `CLAUDE.md` hard rule 1 still says instructor files under `dynamic-labs/` need "an `-x` entry in `pages.yml` and a
@@ -60,3 +61,4 @@ slide index), which is never listed here.
 ## Notion and documents
 
 - Course settings still allow `git -C C:/Antigravity/bc-integrate push origin HEAD:main` (`.claude/settings.json`). The survey called that folder gone, but `sprint-integrate` recreates it each sprint and `settings.test.mjs:71` and `sprint-guard.test.mjs` pin the allow. Drop it together with the sprint integrator if the bot never returns. (7 Nov 2026, Batch B agent-context cleanup)
+
