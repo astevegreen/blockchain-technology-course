@@ -56,6 +56,14 @@ slide index), which is never listed here.
   `dynamic-labs/regression-tests/automated/hlf/test_hlf_live.py` goes through the instructor's execute and seed
   APIs, which the launcher does not have, so those tests are skipped there (24 of 70) and only reads are checked.
   Add one write through the student's own terminal. (10 Nov 2026, launcher smoke suites)
+- On the student launcher, lane-service takes about 30 seconds to listen after its container starts whenever the
+  Ethereum lab is not running: `ethereum.start()` waits that long for the Ethereum instructor
+  (`_wait_for_instructor_metadata`, `dynamic-labs/lane-service/labs/ethereum.py`) before `app.run`
+  (`dynamic-labs/lane-service/app.py`). The launcher now holds a lane lab at "starting" until lane-service answers
+  (`wait_for_lane_service`, `student-launcher/control/launcher/controller.py`), so the first lane lab a student
+  starts takes that much longer. Skip or background the wait in `student-local` mode. The 30 seconds is read from
+  the code and from run 42819405327's timing (claims answered 502 eleven seconds after "running"), not measured.
+  (10 Nov 2026, third release dry run)
 
 ## Tooling and rules
 

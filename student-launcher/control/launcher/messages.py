@@ -16,6 +16,8 @@ ISOLATION = ("Docker Desktop's \"Enhanced Container Isolation\" setting is block
 CLASSROOM = ("This computer is already running the course labs another way (the classroom setup). Stop those labs "
              "first, then close this page and double-click Start Course Labs again.")
 NOT_ON_THIS_COMPUTER = "This lab isn't available for this computer's processor ({arch})."
+LANE_SLOW = ("This lab is taking longer than usual to get ready. Wait a minute, then press Start again. If it "
+             "happens again, tell your instructor.")
 GENERIC = "Something went wrong while {doing}. Press Start to try again. If it happens again, tell your instructor."
 
 
