@@ -1,0 +1,17 @@
+# The router for the student launcher (docs/student-launcher-design.md section 4).
+# Launcher compose files can't bind-mount repo files, so the local router bakes its config:
+# plain HTTP (nginx-http.conf), class gate off, and no instructor, quiz or course-site routes.
+# Build from dynamic-labs/router/: docker build -f Dockerfile.launcher .
+FROM nginx:alpine
+COPY nginx-http.conf /etc/nginx/conf.d/default.conf
+COPY nginx-cache.conf /etc/nginx/conf.d/00-cache.conf
+COPY nginx-maps.conf /etc/nginx/conf.d/10-maps.conf
+COPY routes.conf /etc/nginx/routes.conf
+COPY routes/ /etc/nginx/routes/
+COPY class-gate/off.conf /etc/nginx/class-gate.conf
+COPY https-redirect/off.conf /etc/nginx/https-redirect.conf
+# Local mode hides the instructor and quiz parts (owner decision) and has no course-site:
+# location / goes to the control page instead.
+COPY routes/local/staff-pages-off.conf /etc/nginx/routes/_instructor.conf
+COPY routes/local/quiz-off.conf /etc/nginx/routes/quiz-engine-v2.conf
+COPY routes/local/course-site-launcher.conf /etc/nginx/routes/course-site.conf
