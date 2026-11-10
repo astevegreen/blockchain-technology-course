@@ -11,7 +11,7 @@ mine-on-fill blocks (difficulty pinned at the floor):
   recombine → peel → 3 decoys cluster in one block → 10-block temporal hold → co-mingled cashout → one
   taunt). Live answer key `v35_answer_LIVE.json` (ransom 728.12292303 BTC, lead `bc1qtgzxa4k…`,
   vault `bc1q02f6lzx…`; decoy block 264 → cashout block 276 = the temporal tell).
-- New container image `ghcr.io/blockchain-course-2026/bitcoin-lab` carries the 10s/2-block chainparams.
+- New container image `ghcr.io/astevegreen/course-labs:base-bitcoin-lab` carries the 10s/2-block chainparams.
 - The mine-on-fill miner (`pacing_miner.py --mempool-trigger N --min-interval 12`) keeps the chain busy.
 - **SERVER CAPACITY (hard limit): the instructor box is 4 CPU / 15 GB.** Standing up separate
   student-lane `bitcoind` nodes that flood is brutal — each node validating the busy ~700-tx blocks is
@@ -118,7 +118,7 @@ mempool node then syncs and electrs indexes (~30-60s for a small chain).
 5. Update the deployed student/instructor guides to match the v34 answer key.
 
 ## Outstanding / TODO
-- Build + push the patched `bitcoin-lab` image to `ghcr.io/blockchain-course-2026/...`; repoint ghcr in:
+- Build + push the patched `bitcoin-lab` image to `ghcr.io/astevegreen/course-labs` (`student-release.yml`, `rebuild_bases`); repoint ghcr in:
   `dynamic-labs/bitcoin/Dockerfile:4`, `dynamic-labs/bitcoin/docker-compose.yml:32/49/65`,
   `dynamic-labs/bitcoin/mempool/Dockerfile:72`, `dynamic-labs/scripts/local-validation-runner.sh:11/12`.
 - Eventually copy `flood.py`/`pacing_miner.py` (+ improved agent) into `course-containers/bitcoin-lab/`.

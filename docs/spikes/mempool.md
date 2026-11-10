@@ -13,7 +13,7 @@ change, and on a confirmed transaction it shows no RBF badge, so RBF is read fro
 chain it also shows numbers that mean nothing (dollar values, miner "Unknown", a delivery estimate and an
 "Accelerate" button), which the lab must explain or switch off.
 
-## What was tested on the desktop (Docker Desktop; image `ghcr.io/blockchain-course-2026/bitcoin-mempool:latest`, 31 Oct 2026)
+## What was tested on the desktop (Docker Desktop; the `bitcoin-mempool` base image, 31 Oct 2026)
 The image as the day 2 lab pulls it (digest `sha256:0f255459efa2…`, 2.44 GB): Bitcoin Core v30.2.0 on the course
 chain (it calls itself `main`; coins mature after 10 blocks and difficulty retargets every 4, per `custom-genesis.patch` and the instructor guide), mempool backend 3.4-dev (commit `e8dbba934`, built 9 Jun 2026),
 mempool's electrs in light mode, MariaDB and nginx. It ran alone as `mempool-spike` on its own network, not through
@@ -67,7 +67,7 @@ What the explorer does not show, for the lab and the slide to say:
 From the repo root in Git Bash (nothing here touches the lab's own containers):
 ```bash
 docker network create mempool-spike-net
-docker run -d --name mempool-spike --network mempool-spike-net -p 127.0.0.1:18089:8080 -e BITCOIN_EXTRA_ARGS="-maxtipage=9999999999" ghcr.io/blockchain-course-2026/bitcoin-mempool:latest
+docker run -d --name mempool-spike --network mempool-spike-net -p 127.0.0.1:18089:8080 -e BITCOIN_EXTRA_ARGS="-maxtipage=9999999999" ghcr.io/astevegreen/course-labs:base-bitcoin-mempool
 docker exec -i mempool-spike bash -s < docs/spikes/mempool/spike-chain.sh
 ```
 Then open `http://127.0.0.1:18089/tx/<txid>?showDetails=true` in a window about 800 pixels wide or more (at 640,
