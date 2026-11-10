@@ -303,13 +303,15 @@ class Workflow(unittest.TestCase):
         self.assertIn("[ -f student-launcher/READ-ME-FIRST.html ] && files+=(student-launcher/READ-ME-FIRST.html)",
                       self.text)
         self.assertIn('zip -j "$RUNNER_TEMP/Course-Labs.zip" "${files[@]}"', self.text)
+        self.assertIn('[ ${#files[@]} -gt 0 ] || { echo "no wrappers in student-launcher/wrappers/"; exit 1; }', self.text)
 
     def test_latest_json_names_the_launcher_by_digest(self):
         self.assertIn('.launcher_image = $ref', self.text)
         self.assertIn('"$PACKAGE:launcher-$VERSION@$digest"', self.text)
 
     def test_hlf_builds_from_the_fabric_samples_commit_lab_sh_pins(self):
-        self.assertIn("if: matrix.context == 'dynamic-labs/hlf'", self.text)
+        self.assertIn("if: startsWith(format('{0}/{1}', matrix.context, matrix.dockerfile), 'dynamic-labs/hlf/')",
+                      self.text)
         self.assertIn('FABRIC_SAMPLES_REF="$ref" bash install-fabric.sh samples', self.text)
         lab = (REPO / "dynamic-labs" / "hlf" / "lab.sh").read_text(encoding="utf-8")
         self.assertRegex(lab, r"HLF_FABRIC_SAMPLES_REF:-[0-9a-f]{40}")

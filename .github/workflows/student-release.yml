@@ -183,7 +183,8 @@ jobs:
       # HLF's chaincode image copies the upstream fabric-samples, which the lab fetches at a pinned commit rather
       # than keeping in git (dynamic-labs/hlf/runtime/ is ignored). Fetch the same commit lab.sh pins.
       - name: Fetch the pinned fabric-samples for HLF
-        if: matrix.context == 'dynamic-labs/hlf'
+        # Any Dockerfile under hlf/, whether its context is dynamic-labs/hlf or dynamic-labs/.
+        if: startsWith(format('{0}/{1}', matrix.context, matrix.dockerfile), 'dynamic-labs/hlf/')
         run: |
           set -euo pipefail
           ref=$(grep -oE 'HLF_FABRIC_SAMPLES_REF:-[0-9a-f]{40}' dynamic-labs/hlf/lab.sh | cut -d- -f2)
@@ -372,7 +373,9 @@ jobs:
           set -euo pipefail
           # Wrappers keep their repo names (Start-Course-Labs.*, Stop-Course-Labs.*). READ-ME-FIRST.html (the
           # SmartScreen and Gatekeeper help) sits beside them once the student guide adds it.
+          shopt -s nullglob
           files=(student-launcher/wrappers/*)
+          [ ${#files[@]} -gt 0 ] || { echo "no wrappers in student-launcher/wrappers/"; exit 1; }
           [ -f student-launcher/READ-ME-FIRST.html ] && files+=(student-launcher/READ-ME-FIRST.html)
           zip -j "$RUNNER_TEMP/Course-Labs.zip" "${files[@]}"
           unzip -l "$RUNNER_TEMP/Course-Labs.zip"
