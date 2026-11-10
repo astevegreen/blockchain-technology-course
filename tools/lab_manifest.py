@@ -136,8 +136,10 @@ def validate_manifest(folder: str, manifest: dict, schema: dict) -> list[str]:
         problems.append(f"{folder}/lab.yaml: id {manifest.get('id')!r} must equal the folder name {folder!r}")
     if manifest.get("student_local") is True and not manifest.get("student_compose_file"):
         problems.append(f"{folder}/lab.yaml: student_compose_file is required when student_local is true")
-    if manifest.get("docker_socket") is True and manifest.get("kind") != "shared":
-        problems.append(f"{folder}/lab.yaml: docker_socket is allowed only for kind shared")
+    if manifest.get("docker_socket") is True and manifest.get("id") not in DOCKER_SOCKET_LABS:
+        problems.append(f"{folder}/lab.yaml: docker_socket is allowed only for "
+                        f"{', '.join(sorted(DOCKER_SOCKET_LABS))}; a new socket user needs a reviewed edit to "
+                        "DOCKER_SOCKET_LABS in tools/lab_manifest.py")
     for i, item in enumerate(manifest.get("data") or []):
         # A mount written ./${VAR:-default}:/target is recorded with the default resolved, never split at its colon.
         if isinstance(item, dict) and (re.search(r"[${}]", str(item.get("path"))) or not str(item.get("into")).startswith("/")):
@@ -273,7 +275,7 @@ def check_launcher_files(labs: Path = LABS) -> list[str]:
                                 f"(expected one of {', '.join(sorted(allowed)) or 'none'})")
             for vol in body.get("volumes") or []:
                 bad = bind_mount(vol)
-                if bad and m.get("docker_socket") is True and m.get("kind") == "shared" and is_docker_socket(vol):
+                if bad and m.get("docker_socket") is True and folder in DOCKER_SOCKET_LABS and is_docker_socket(vol):
                     continue
                 if bad:
                     problems.append(f"{where}: service {svc} mounts a host path ({bad}); use a named volume or tmpfs")
@@ -281,6 +283,8 @@ def check_launcher_files(labs: Path = LABS) -> list[str]:
 
 
 DOCKER_SOCKET = "/var/run/docker.sock"
+# The only labs whose launcher compose file may bind the Docker socket, and why. A new one is a reviewed edit here.
+DOCKER_SOCKET_LABS = {"lane-service": "starts the lanes", "hlf": "starts the Fabric network"}
 
 
 def is_docker_socket(vol) -> bool:
