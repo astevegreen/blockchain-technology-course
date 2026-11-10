@@ -26,17 +26,13 @@ slide index), which is never listed here.
   Also there: run `sudo certbot renew --dry-run` to prove the certificate renews through the router's challenge
   path (`dynamic-labs/tests/test_acme_challenge.py` checks the config, not Let's Encrypt). (9 Nov 2026, certificate
   renewal)
-- The ghcr images `bitcoin-lab`, `bitcoin-mempool` and `bitcoin-graph` (`ghcr.io/blockchain-course-2026/`) are
-  still the Debian 12 builds: no workflow publishes them, and the bitcoin, wallet and trace labs pull them. Their
-  Dockerfiles (`bitcoin/workstation`, `bitcoin/mempool`, `bitcoin-graph`) are on trixie since 9 Nov 2026, now carry
-  what the published images had but the repo lacked (the 10-second, 2-block retarget in `custom-genesis.patch`; the
-  mempool's `configure-mempool-base-path.sh`), now pin ttyd 1.7.7 and zellij 0.45.1 (the workstation image) and rustup
-  1.29.3 with Rust 1.99.1 (the mempool image) with sha256 checks, and passed the bitcoin, wallet and three trace
-  labs' tests built locally (`BITCOIN_LAB_IMAGE`, `BITCOIN_MEMPOOL_IMAGE`, `BITCOIN_GRAPH_IMAGE`). The workstation
-  image also installs LAB2's `mine-until` funding helper; until the push, the lab gets it from the thin wrapper
-  (`bitcoin/Dockerfile`), as it gets the current entrypoint. Build and push
-  the three, workstation first (`--build-arg BITCOIN_LAB_BASE` for the other two), with an account that can write to the ghcr
-  org. (9 Nov 2026, trixie move)
+- The private repo `blockchain-course-2026/containers` holds stale Debian 12 copies of the `bitcoin/workstation` and
+  `bitcoin/mempool` sources, and its two hand-started workflows (`build-and-publish-bitcoin.yml`,
+  `build-and-publish-mempool.yml`) push `bitcoin-lab:latest` and `bitcoin-mempool:latest` for amd64 and arm64. Since
+  9 Nov 2026 `:latest` is the amd64 trixie build of this repo's Dockerfiles, pushed by hand after the bitcoin, wallet and
+  three trace labs' tests passed on it; starting either workflow would put the old images back. Point those workflows at
+  this repo's Dockerfiles (and add one for `bitcoin-graph`) or retire them. The arm64 Debian 12 builds stay under
+  `:debian12-2026-11-09`. (9 Nov 2026, ghcr push)
 - The exchange and bridge lab has not been tried with a real class. A scripted 40-seat run (1 Nov 2026) sent every
   seat's 0.1 ETH swap into one L1 block: 3 landed and 37 reverted at the page's 99% minimum ("too little
   received"); re-quoting and sending again, about 3 seats land per block, so all 40 took 14 blocks (about 3

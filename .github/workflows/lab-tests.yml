@@ -28,11 +28,12 @@ on:
 permissions:
   contents: read
 
-# A hand-started run replaces an older hand-started one, and a pull request's run is replaced by its next one (each run
+# A hand-started run replaces an older hand-started one on the same branch (runs on different branches no longer
+# cancel each other), and a pull request's run is replaced by its next one (each run
 # tests the whole pull request). A push is never cancelled or replaced: each push tests only the labs it changed
 # (tools/lab_tests.py --base), so dropping one would leave its labs untested.
 concurrency:
-  group: lab-tests-${{ github.event_name == 'push' && github.sha || github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || 'dispatch' }}
+  group: lab-tests-${{ github.event_name == 'push' && github.sha || github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('dispatch-{0}', github.ref) }}
   cancel-in-progress: ${{ github.event_name != 'push' }}
 
 defaults:
