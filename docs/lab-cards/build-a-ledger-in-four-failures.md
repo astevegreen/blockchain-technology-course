@@ -114,3 +114,4 @@ real.
 
 - Owner: "Build a ledger in 4 failures,Guess the input,Who saw it first,Peel chain or payroll" (11 Nov 2026)
 - Length: all four rounds, rounds 3 and 4 one press each, about eight minutes (owner, 11 Nov 2026)
+- Departure: the page hashes with its own SHA-256 code (checked against Node's crypto on three inputs), as Who saw it first? does, not Web Crypto, so it also runs on a plain http address; the W3C Web Crypto source is not cited.

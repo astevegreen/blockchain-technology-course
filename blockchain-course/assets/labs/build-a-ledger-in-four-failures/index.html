@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build a ledger in four failures</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.round { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .9em; margin: .8em 0; }
+.round h3 { margin: 0 0 .3em; font-size: 1em; }
+.chain { display: flex; flex-wrap: wrap; align-items: stretch; gap: .3em; margin: .5em 0; }
+.ent { border: 2px solid var(--ink); border-radius: 6px; padding: .3em .6em; background: var(--panel); min-width: 9em; }
+.ent .n { font-weight: 700; display: block; }
+.ent.edited { border-color: var(--change); background: var(--change-tint); }
+.ent .hash { display: flex; margin-top: .3em; font-size: .75em; }
+.lnk { align-self: center; font-size: .85em; padding: 0 .2em; }
+.lnk.ok::before { content: "\2192 link matches "; }
+.lnk.bad { font-weight: 700; color: #8a1c1c; border: 2px solid #8a1c1c; border-radius: 4px; padding: .1em .4em; }
+.lnk.bad::before { content: "\2192 \2717 link broken "; }
+.copies { display: grid; grid-template-columns: repeat(auto-fill, minmax(11em, 1fr)); gap: .4em; margin: .5em 0; }
+.copy { border: 2px solid var(--ink); border-radius: 6px; padding: .3em .6em; background: var(--panel); }
+.copy.yours { border-color: var(--change); background: var(--change-tint); }
+.copy.fake { border-style: dashed; border-color: var(--change); }
+.copy.out { opacity: .5; }
+.copy b { display: block; }
+.bar { height: 1.1em; background: var(--ink); border-radius: 3px; min-width: 2px; }
+.bar.you { background: var(--change); }
+.race td, .race th { padding: .15em .7em .15em 0; text-align: left; vertical-align: middle; }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.btn.cheat { background: var(--change); color: #000; border-color: var(--change); }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/build-a-ledger-in-four-failures.md. The agencies, the clerk and the ledger's entries
+   are made up for this lab. Every hash is real SHA-256, computed here so the page runs from a plain file. The
+   other copies in round 4 are simulated at ten times this laptop's measured rate, and the page says so. */
+
+var K = [], H0 = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+(function () {
+  var p = 2, n = 0;
+  while (n < 64) {
+    var prime = true;
+    for (var d = 2; d * d <= p; d++) if (p % d === 0) { prime = false; break; }
+    if (prime) { K.push((Math.cbrt(p) % 1) * 4294967296 | 0); n++; }
+    p++;
+  }
+})();
+function sha256(str) {
+  var H = H0.slice();
+  var bytes = unescape(encodeURIComponent(str)).split("").map(function (c) { return c.charCodeAt(0); });
+  var bitLen = bytes.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  for (var s = 7; s >= 0; s--) bytes.push(s >= 4 ? 0 : (bitLen >>> (s * 8)) & 255);
+  function rr(x, k) { return (x >>> k) | (x << (32 - k)); }
+  for (var off = 0; off < bytes.length; off += 64) {
+    var w = [];
+    for (var i = 0; i < 16; i++) w[i] = (bytes[off + 4 * i] << 24) | (bytes[off + 4 * i + 1] << 16) | (bytes[off + 4 * i + 2] << 8) | bytes[off + 4 * i + 3];
+    for (i = 16; i < 64; i++) {
+      var s0 = rr(w[i - 15], 7) ^ rr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+      var s1 = rr(w[i - 2], 17) ^ rr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+    }
+    var a = H[0], b = H[1], c = H[2], dd = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (i = 0; i < 64; i++) {
+      var S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25), ch = (e & f) ^ (~e & g);
+      var t1 = (h + S1 + ch + K[i] + w[i]) | 0;
+      var S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22), mj = (a & b) ^ (a & c) ^ (b & c);
+      var t2 = (S0 + mj) | 0;
+      h = g; g = f; f = e; e = (dd + t1) | 0; dd = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H = [(H[0] + a) | 0, (H[1] + b) | 0, (H[2] + c) | 0, (H[3] + dd) | 0, (H[4] + e) | 0, (H[5] + f) | 0, (H[6] + g) | 0, (H[7] + h) | 0];
+  }
+  return H.map(function (x) { return ("00000000" + (x >>> 0).toString(16)).slice(-8); }).join("");
+}
+
+var ENTRIES = [
+  { from: "Ben", to: "Ana", amt: 20 },
+  { from: "Ana", to: "you", amt: 5 },
+  { from: "Ben", to: "Dee", amt: 8 },
+  { from: "Dee", to: "Ana", amt: 3 }
+];
+function copyOf(list) { return list.map(function (e) { return { from: e.from, to: e.to, amt: e.amt, prev: e.prev, nonce: e.nonce, hash: e.hash }; }); }
+function say(e) { return e.from + " pays " + e.to + " " + e.amt; }
+/** mode 1: hash = SHA-256(previous hash | entry). mode 2: the nonce is searched until the hash starts 000. */
+function hashOf(e, mode) { return sha256(e.prev + "|" + say(e) + (mode === 2 ? "|" + e.nonce : "")); }
+function seal(e, mode) {
+  e.nonce = 0; e.hash = hashOf(e, mode);
+  var tries = 1;
+  if (mode === 2) while (e.hash.indexOf("000") !== 0) { e.nonce++; e.hash = hashOf(e, mode); tries++; }
+  return tries;
+}
+/** Seal entries from index `from` on, each linking to the one before. Returns the hashes tried. */
+function sealFrom(chain, from, mode) {
+  var tries = 0;
+  for (var i = from; i < chain.length; i++) { chain[i].prev = i ? chain[i - 1].hash : "start"; tries += seal(chain[i], mode); }
+  return tries;
+}
+function linkBroken(chain, i, mode) { return i > 0 && hashOf(chain[i - 1], mode) !== chain[i].prev; }
+
+var EXPLORER = {
+  prev: "0000000000000002a7bbd25a417c0374cc55261021e8a9ca74442b01284f0569",
+  hash: "0000000000000001b6b9a13b095e96db41c4a928b97ef2d944a9b31b2cc7bdc4",
+  onTop: 975384 - 277316
+};
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function ends(h) { return h.slice(0, 20) + "…" + h.slice(-4); }
+
+LabShell.start({
+  id: "build-a-ledger-in-four-failures",
+  title: "Build a ledger in four failures",
+  slide: { title: "A tamper-evident ledger", href: "../../../primer.html#a-tamper-evident-ledger" },
+  steps: {
+    "case": { html:
+      "<p>Four agencies keep one shared log of seized funds, and none of them is in charge. A clerk at one of them wants entry 2 to say 50, not 5. Build the log so the clerk can't get away with it.</p>" +
+      "<p>The agencies, the clerk and the entries are made up for this lab.</p>" },
+    commit: {
+      question: "A ledger stores the hash of each entry in the next one. You are the cheat: you want entry 2 to say Ana paid you 50, not 5. Can you change it so the ledger still checks out?",
+      choices: [
+        "No, the hash links make it impossible.",
+        "No, not without breaking SHA-256.",
+        "Yes, by rehashing every entry after it.",
+        "Yes, but only with the ledger's password."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var finished = false;
+      var status = api.el("p", { role: "status" }, "You are the cheat. Start with round 1.");
+      var rounds = api.el("div");
+      el.appendChild(api.el("p", null, "Four rounds, each as the cheat. Each fix below arrives because the last design failed. Every hash on this page is real SHA-256, worked out by this page's own code."));
+      el.appendChild(rounds);
+      el.appendChild(status);
+
+      function btn(label, cls, fn) { var b = api.el("button", { class: "btn " + cls, type: "button" }, label); b.addEventListener("click", function () { b.disabled = true; fn(b); }); return b; }
+      function entryBox(e, i, edited, showHash) {
+        var box = api.el("div", { class: "ent" + (edited ? " edited" : "") },
+          api.el("span", { class: "n" }, "Entry " + (i + 1)), api.coin({ role: "output", amount: String(e.amt), who: e.from + " pays " + e.to }));
+        if (showHash) box.appendChild(api.el("span", { class: "hash" }, api.short(e.hash, 5)));
+        return box;
+      }
+      function chainView(chain, mode, linked, edited, showHash) {
+        var d = api.el("div", { class: "chain" });
+        chain.forEach(function (e, i) {
+          if (linked && i > 0) d.appendChild(api.el("span", { class: "lnk " + (linkBroken(chain, i, mode) ? "bad" : "ok") }, ""));
+          d.appendChild(entryBox(e, i, edited && i === 1, showHash));
+        });
+        return d;
+      }
+      function round(title) { var r = api.el("section", { class: "round" }, api.el("h3", null, title)); rounds.appendChild(r); return r; }
+
+      /* Round 1: a plain list. */
+      var plain = copyOf(ENTRIES);
+      var r1 = round("Round 1: a plain list");
+      var v1 = api.el("div");
+      function draw1() { v1.innerHTML = ""; v1.appendChild(chainView(plain, 0, false, plain[1].amt === 50, false)); }
+      draw1();
+      r1.appendChild(v1);
+      r1.appendChild(btn("Change entry 2 to 50", "cheat", function () {
+        plain[1].amt = 50; draw1();
+        status.textContent = "Nothing shows. An entry carries nothing that would tell anyone it was edited. So each entry will carry the hash of the one before it.";
+        round2();
+      }));
+
+      /* Round 2: hash links. */
+      var linked = copyOf(ENTRIES);
+      function round2() {
+        var r = round("Round 2: each entry holds the hash of the one before");
+        sealFrom(linked, 0, 1);
+        var v = api.el("div"), edited = false;
+        function draw() { v.innerHTML = ""; v.appendChild(chainView(linked, 1, true, edited, false)); }
+        draw();
+        r.appendChild(v);
+        r.appendChild(btn("Change entry 2 to 50", "cheat", function () {
+          linked[1].amt = 50; edited = true; draw();
+          status.textContent = "The edit shows: the link into entry 3 no longer matches. Now try to cover it.";
+          r.appendChild(btn("Rehash after me", "cheat", function () {
+            sealFrom(linked, 1, 1); draw();
+            status.textContent = "Every link matches again, in a blink. The cheat can recompute every hash after the edit, so links alone do not stop her. Three other people will each hold a copy.";
+            round3();
+          }));
+        }));
+      }
+
+      /* Round 3: copies. */
+      function round3() {
+        var r = round("Round 3: three other people hold copies");
+        var tally = api.el("p", { role: "status" });
+        var box = api.el("div", { class: "copies" });
+        var made = false;
+        function copyBox(name, says, cls) {
+          return api.el("div", { class: "copy " + cls }, api.el("b", null, name), "Entry 2: " + says, api.el("br"), "links match");
+        }
+        function draw() {
+          box.innerHTML = "";
+          ["Agency A", "Agency B", "Agency C"].forEach(function (n) { box.appendChild(copyBox(n, "Ana pays you 5", made ? "out" : "")); });
+          box.appendChild(copyBox("Your copy", "Ana pays you 50", "yours" + (made ? "" : " out")));
+          if (made) [1, 2, 3].forEach(function (k) { box.appendChild(copyBox("Fake copy " + k, "Ana pays you 50", "fake")); });
+          tally.textContent = made ? "Entry 2 says 50 in 4 copies and 5 in 3. The majority is yours." : "Entry 2 says 5 in 3 copies and 50 in 1. You are outvoted, 3 to 1.";
+        }
+        draw();
+        r.appendChild(box); r.appendChild(tally);
+        r.appendChild(btn("Make three fake copies", "cheat", function () {
+          made = true; draw();
+          status.textContent = "You win, 4 to 3: copies cost nothing to make, so counting copies decides nothing. What cannot be made for free is work, so each entry must carry some: a hash starting 000, found by searching, as in Guess the input. Nodes then keep the copy with the most work.";
+          round4();
+        }));
+      }
+
+      /* Round 4: work. */
+      function round4() {
+        var r = round("Round 4: each entry carries work");
+        var honest = copyOf(ENTRIES);
+        sealFrom(honest, 0, 2);
+        r.appendChild(api.el("p", null, "Every entry now holds a hash that starts 000. The three other copies carry this work."));
+        r.appendChild(chainView(honest, 2, true, false, true));
+        var out = api.el("div");
+        r.appendChild(btn("Redo the work from entry 2 on", "cheat", function () {
+          var mine = copyOf(honest);
+          mine[1].amt = 50;
+          var t0 = performance.now();
+          var tries = sealFrom(mine, 1, 2);
+          var secs = Math.max((performance.now() - t0) / 1000, 0.01);
+          out.appendChild(api.el("p", null, "Your edited copy, with the work redone (" + fmt(tries) + " hashes tried, " + secs.toFixed(2) + " s on this laptop):"));
+          out.appendChild(chainView(mine, 2, true, true, true));
+          out.appendChild(api.el("p", null, "Meanwhile the other copies keep adding entries. Their speed is simulated at ten times this laptop's measured rate."));
+          var table = api.el("table", { class: "race" });
+          var hb = api.el("div", { class: "bar" }), yb = api.el("div", { class: "bar you" });
+          var hn = api.el("td"), yn = api.el("td");
+          table.appendChild(api.el("tr", null, api.el("th", null, "Other copies (simulated)"), api.el("td", { style: "width:60%" }, hb), hn));
+          table.appendChild(api.el("tr", null, api.el("th", null, "Your copy (outworked)"), api.el("td", null, yb), yn));
+          out.appendChild(table);
+          var line = api.el("p", { role: "status" });
+          out.appendChild(line);
+          r.appendChild(out);
+          var k = 0, max = ENTRIES.length + 30 * 10;
+          function step() {
+            k++;
+            var theirs = ENTRIES.length + 30 * k, yours = ENTRIES.length + 3 * (k - 1);
+            hb.style.width = (theirs / max * 100) + "%";
+            yb.style.width = (yours / max * 100) + "%";
+            hn.textContent = fmt(theirs) + " entries"; yn.textContent = fmt(yours) + " entries";
+            line.textContent = "After " + k + " × the time your redo took (" + (k * secs).toFixed(2) + " s): the other copies are " + fmt(theirs - yours) + " entries of work ahead of yours.";
+            if (k < 10) setTimeout(step, 350); else done();
+          }
+          function done() {
+            status.textContent = "Cheating stops working: nodes keep the copy with the most work, and yours falls further behind each step. An edit sticks only if the cheat outworks everyone else.";
+            if (!finished) {
+              finished = true;
+              api.finish({ choice: 2, note: "<p>You can change it and have every link match, by rehashing every entry after it, as round 2 showed. The links alone do not stop that, and neither does the copies' vote, since copies are free. What holds is the work: redoing it faster than everyone else adds entries is the only way to win.</p><p class=\"src\">Sources: <code>@haber_howtimestampdigital_1991</code>; <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (section 4); <code>@yaga_blockchaintechnologyoverview_2018</code>.</p>" });
+            }
+          }
+          step();
+        }));
+      }
+    } },
+    name: {
+      term: "tamper-evident",
+      parts: "tamper (meddle with it) + evident (it shows)",
+      plain: "<p>A record where any change to an old entry shows to everyone holding a copy, and sticks only if the cheat outworks everyone else. It does not mean the record cannot change.</p><p class=\"src\">Sources: <code>@haber_howtimestampdigital_1991</code>; <code>@yaga_blockchaintechnologyoverview_2018</code>; <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (section 4).</p>"
+    },
+    explorer: { render: function (el, api) {
+      el.appendChild(api.el("p", null, "Block 277,316 holds Alice's payment from the slides. Below are the fields a Bitcoin explorer shows for it: a copy made for this lab, not a live page (as of 10 Nov 2026)."));
+      var t = api.el("table", { class: "explore" },
+        api.el("tr", null, api.el("th", null, "Previous block"), api.el("td", null, api.el("span", { class: "hash" }, ends(EXPLORER.prev)), " the link from round 2")),
+        api.el("tr", null, api.el("th", null, "Block hash"), api.el("td", null, api.el("span", { class: "hash" }, ends(EXPLORER.hash)), " starts with 15 zeros: the work each entry carries (round 4)")),
+        api.el("tr", null, api.el("th", null, "Blocks on top"), api.el("td", null, "about " + fmt(Math.round(EXPLORER.onTop / 1000) * 1000) + ": the work a cheat would have to redo")));
+      el.appendChild(t);
+      el.appendChild(api.el("p", { class: "src" }, "Sources: ", api.el("code", null, "@mempoolspace_block277316_2026"), " (as of 10 Nov 2026); ", api.el("code", null, "@mempoolspace_block975384_2026"), " (the chain tip, as of 10 Nov 2026; the count rises by about 144 a day); ", api.el("code", null, "@antonopoulos_masteringbitcoinprogramming_2017"), "."));
+    } },
+    twist: {
+      html: "<p>This time the cheat edits nothing. She does the work for the next entry herself, and leaves out Ben's payment, which was waiting to go in.</p>" +
+        "<div class=\"panel\"><p><span class=\"coin output\"><span class=\"amount\">4</span><span class=\"who\">Ben pays Cy</span></span> is waiting. The cheat's new entry holds only <span class=\"coin output\"><span class=\"amount\">1</span><span class=\"who\">Cy pays Ana</span></span>, and every old entry is untouched.</p></div>",
+      question: "Does the ledger show what she did?",
+      choices: [
+        "Yes, the links break.",
+        "Yes, the other copies disagree.",
+        "No: nothing old changed, so nothing shows.",
+        "She can't: every entry must hold every payment."
+      ],
+      answer: 2,
+      why: "<p>The links show a changed entry, not a missing one. Ben's payment waits for the next writer to include it. The record shows what it holds, not what was left out; a delay may mean congestion, not censorship, as day 1 lesson 3 says.</p><p class=\"src\">Sources: <code>@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024</code>; <code>@bitcoin.orgdevelopers_transactionsdeveloperguide_2024</code>.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent's draft says the blockchain is immutable, so the payment can never change. What do you write instead?</p>",
+      example: "The record is tamper-evident: the payment in block 277,316 could only be changed by redoing that block and the 698,000 on top of it faster than the whole network, so it stands (High confidence: a rewrite would need more work than the network has done since 2013). The chain shows what was recorded; it cannot show a payment that was never included."
+    }
+  }
+});
+</script>
+</body>
+</html>
