@@ -330,3 +330,73 @@ lists what moved and how to restore it).
   (Recommended)". Done: all four moved to `archive/static-labs/`; their links in the primer, `index.qmd`, 02-CP,
   02-CM, 04-CP and the mind map now open Forge the payment (cfff8053), Guess the input (3be28b16) and its mining
   step, and Who saw it first? (7da9e166).
+
+## Step 9: Chain Graph review, 11 Nov 2026
+
+The plan's order of work item 9. The tool is `dynamic-labs/bitcoin-graph/`: one container (`bitcoin-graph-1`)
+that runs its own bitcoind on the Bitcoin lab's network, loads every block into Neo4j and serves an
+address-and-transaction graph at `/labs/bitcoin/graph/`, behind an instructor switch that is off by default.
+
+### Findings
+
+- **Nothing in the course uses it.** No lesson, lab card, `index.qmd` entry or mind-map node links to it. The
+  only student route is the Graph button in the Bitcoin lab's panel, shown only while the instructor has the tool
+  switched on (`dynamic-labs/lane-service/labs/bitcoin.py:113-144`), with the switch and a rebuild button in the
+  admin page (`dynamic-labs/lane-service/admin.html:520`). Its README and design were written for Forensics 2
+  (`dynamic-labs/bitcoin-graph/README.md:4`, `DESIGN.md:11-16`), which step 7 archived. The nearest course text is
+  a general line about "graph tools" (`02-FO-foundations_obfuscation_tracing.qmd:2151`).
+- **It serves Role Concept 8 (clustering and tracing patterns), which is already well practised.** The alignment
+  map counts 12 practice items for concept 8 on day 6 alone (`docs/alignment-map.md:42`). The catalog already
+  called the tool "likely duplicates of days 6 and 7; untested" (`docs/analysis/2026-11-lab-concept-catalog.md:186`).
+- **It overlaps days 6 and 7.** Day 6's trace (`docs/lab-cards/bitcoin-trace-decoys.md`) and day 7's hide-and-trace
+  (`docs/lab-cards/hide-and-trace.md`) teach the same following of money hop by hop, in the mempool explorer
+  (v3.3.2, AGPL-3.0), on chains built for each case (`dynamic-labs/bitcoin-trace/`, `dynamic-labs/coinjoin-trace/`).
+  The Chain Graph cannot read those chains: it syncs only the Bitcoin lab's classroom chain.
+- **It works, but has little to show on that chain.** Run today after the Bitcoin suite (15 tests, OK): the chain
+  stood at 35 blocks while the graph built at boot held 2 addresses and 12 transactions from height 11
+  (`/labs/bitcoin/graph/api/status`). It does not follow the chain; it rebuilds only at boot or when the
+  instructor presses rebuild. After a rebuild it held 22 addresses and 44 transactions, and the smoke test passed
+  (switch off blocks the page, switch on serves it, an address query returns 33 nodes, switch back off). Since the
+  forensics chain was archived, no case is seeded into what it reads.
+- **Its cluster colours contradict two day 6 slides.** It merges every multi-input transaction's inputs into one
+  owner, with no CoinJoin exception (`dynamic-labs/bitcoin-graph/etl.py:229-233`), and colours the result as
+  "Addresses spending together (common-input-ownership heuristic)" (`app/static/app.js:800-805`). Day 6 teaches
+  "Co-spending links inputs, unless it's a CoinJoin" (`02-FO-foundations_obfuscation_tracing.qmd:53`) and "One
+  false link merges two actors into one" (`:117`). On a chain with a CoinJoin, the tool would show the merged
+  super-cluster the slides warn about, with nothing on screen to say why. Changing that is a content decision, so
+  it is left as question 2.
+- **Fixed in this step (labels and wiring that changed nothing a student is taught):**
+  - The address panel called block times "First seen" and "Last seen" (`app/static/app.js:705-706`). The
+    "What time was it sent?" card teaches that "a transaction has no timestamp of its own" and that a report says
+    "block time"; mempool's explorer uses "First seen" for when its node first saw a transaction. They now read
+    "First block time" and "Last block time".
+  - An address paid change back to itself was counted twice in its transaction count (`etl.py:213-227`); each
+    transaction now counts once.
+  - The node "hops" box allowed 50 but the code quietly cut it to 6 (`app/static/app.js:756`, `:987`); it now
+    honours up to 50, as the path search already did.
+  - A timed-out path search told the user to "set a Min value, or narrow the time window", filters the path
+    search ignores (`app/main.py:336-339`); it now says to lower the hop count or pick closer addresses.
+  - The smoke test fell back to `/api/opreturns`, an endpoint removed on purpose (`app/main.py:365-368`), and left
+    the instructor switch on when it took that path. It also needed `jq` on the host, which the WSL host lacks, so
+    it hung in its rebuild wait. It now finds an address by each chain's prefix, runs `jq` inside the container
+    and always switches the tool back off (`dynamic-labs/bitcoin-graph/smoke-test.sh`).
+  - Checked after a rebuild: all 22 addresses' transaction counts equal their distinct transactions.
+- **Open source:** yes. Neo4j 5 Community (GPLv3), FastAPI, uvicorn, the neo4j driver and cytoscape.js (MIT,
+  vendored). Its packages are unpinned (`Dockerfile:15-39`).
+- **Code health:** SonarCloud lists 26 open issues in its files (read 11 Nov 2026). Three are CRITICAL: two
+  over-long functions (`app/main.py:304`, `etl.py:145`) and a spool in `/var/tmp` (`etl.py:41`). The rest are
+  MAJOR or lower: a key download in the Dockerfile that could follow a redirect to HTTP, a chmod, three inputs without labels and a role in
+  `index.html`, and shell-style items in `smoke-test.sh`. None was fixed here: none is a defect a student meets.
+- **Cost and testing:** it takes up to 4 GB of memory on every lab host (`dynamic-labs/bitcoin/docker-compose.yml:78-98`)
+  and no automated suite tests it: `tools/lab_tests.py:36` lists `bitcoin-graph` as not run, so its smoke test is
+  its only check.
+
+### Recommendations
+
+1. Archive it under `archive/dynamic-labs/bitcoin-graph/`, with its compose service, the lane-service Graph
+   button and admin controls, as step 7 archived the other labs. It serves no lesson, it would teach CIOH without
+   the CoinJoin exception, and days 6 and 7 already cover concept 8 with tools students can see working.
+2. If it stays, use it once as an instructor demo for day 6 ③'s "Platforms run your heuristics at scale"
+   (`01-FO-illicit_finance_regulation_case_studies.qmd:108`), on a chain that holds a case, with a line on the
+   cluster panel that co-spend clusters break on CoinJoins.
+3. Either way, its stale design notes, unpinned packages and Sonar items are listed in `docs/follow-ups.md`.

@@ -702,8 +702,8 @@
         row("Spent", fmtBtc(d.total_out)) +
         row("Balance", fmtBtc((d.total_in || 0) - (d.total_out || 0))) +
         row("Transactions", d.n_tx) +
-        row("First seen", fmtTime(d.first_seen)) +
-        row("Last seen", fmtTime(d.last_seen)) +
+        row("First block time", fmtTime(d.first_seen)) +
+        row("Last block time", fmtTime(d.last_seen)) +
         row("Cluster", "#" + d.cluster_id + " (" + d.cluster_size +
             " address" + (d.cluster_size === 1 ? "" : "es") + ")") +
         "</table>" +
@@ -753,7 +753,7 @@
   // Keep the expand settings synced with whichever panel is on screen.
   panelBody.addEventListener("input", function (ev) {
     if (ev.target.id === "node-depth") {
-      currentDepth = clamp(parseInt(ev.target.value, 10) || 1, 1, 6);
+      currentDepth = clamp(parseInt(ev.target.value, 10) || 1, 1, 50);
     }
   });
   panelBody.addEventListener("change", function (ev) {
@@ -984,7 +984,7 @@
     if (p.get("hops")) {
       document.getElementById("path-hops").value = clamp(parseInt(p.get("hops"), 10) || 5, 1, 50);
     }
-    if (p.get("depth")) currentDepth = clamp(parseInt(p.get("depth"), 10) || 1, 1, 6);
+    if (p.get("depth")) currentDepth = clamp(parseInt(p.get("depth"), 10) || 1, 1, 50);
     // dir=forward|back|both; legacy forward=1 maps to forward.
     var dirParam = (p.get("dir") || "").toLowerCase();
     if (dirParam === "forward" || dirParam === "back" || dirParam === "both") expandDir = dirParam;

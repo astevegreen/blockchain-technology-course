@@ -336,7 +336,7 @@ def api_paths(src: str, dst: str, maxhops: int = 5):
             if "timeout" in str(exc).lower() or "timed out" in str(exc).lower():
                 raise HTTPException(
                     504, f"path search timed out at {hops} hops — lower the hop "
-                    "count, set a Min value, or narrow the time window")
+                    "count or pick addresses closer together")
             raise
         nodes: dict = {}
         edges: dict = {}

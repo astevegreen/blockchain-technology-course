@@ -212,14 +212,15 @@ def scan_chain(rpc: Rpc, spool: str):
 
                 for addr, value in ins.items():
                     rec = touch(addr, when)
-                    rec[NTX] += 1
+                    rec[NTX] += 1  # once per tx, even if it is also an output
                     rec[TOTAL_OUT] += value
                     in_f.write(json.dumps(
                         {"addr": addr, "txid": txid, "value": value}) + "\n")
                     counts["in"] += 1
                 for addr, (value, n) in outs.items():
                     rec = touch(addr, when)
-                    rec[NTX] += 1
+                    if addr not in ins:  # change back to a spender: one tx
+                        rec[NTX] += 1
                     rec[TOTAL_IN] += value
                     out_f.write(json.dumps(
                         {"addr": addr, "txid": txid,

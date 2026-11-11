@@ -46,6 +46,13 @@ slide index), which is never listed here.
   example; it no longer matches any lab. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/bitcoin-graph/` DESIGN and README describe it as Forensics 2's tool; with Forensics archived it
   serves no lab (the plan reviews it last). [11 Nov 2026, step 7 archive]
+- `dynamic-labs/bitcoin-graph/` (only if the tool stays): stale notes in `DESIGN.md:206-228` (a time heatmap the UI
+  lacks; a staging swap the design's own deviation note drops for 503s), `graph-entrypoint.sh:41` ("named volume";
+  compose has none) and `dynamic-labs/bitcoin/docker-compose.yml:92` (the ~1.7M-tx forensics chain); unpinned apt
+  and pip packages (`Dockerfile:15-39`); 26 SonarCloud issues, 3 CRITICAL (`app/main.py:304`, `etl.py:145`
+  complexity; `etl.py:41` `/var/tmp` spool). [11 Nov 2026, step 9 review]
+- `dynamic-labs/bitcoin-graph/` has no automated test: `tools/lab_tests.py:36` lists it as not run, so only
+  `smoke-test.sh` checks it, by hand. [11 Nov 2026, step 9 review]
 - `dynamic-labs/bitcoin/INSTRUCTOR_SOLUTION_GUIDE.md` still has a Forensics section. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/lane-service/lab.yaml` `approx_download_mb: 139` still counts the 13 MB forensics snapshot the
   launcher image no longer bakes; measure at the next student release. [11 Nov 2026, step 7 archive]
