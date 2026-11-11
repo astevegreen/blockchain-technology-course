@@ -116,3 +116,5 @@ The trader, the block number and the amounts in the sentence are made up for the
 ## Approval
 
 - Owner: "Approve, score the calls (Recommended)" (11 Nov 2026)
+
+Built in 5bfd664a (11 Nov 2026).
