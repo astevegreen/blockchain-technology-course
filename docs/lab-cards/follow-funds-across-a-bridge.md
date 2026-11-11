@@ -144,3 +144,5 @@ that are not Bybit's three name deposits the snapshot does not hold. The agent's
 - Owner: "Approve as drafted (Recommended)" (10 Nov 2026)
 - Pretest skip: "Skip all but crossing (Recommended)": every student does the crossing steps; the pretest skip
   covers the rest of the Bybit example (owner, 10 Nov 2026)
+
+Built in 88a4d928 (11 Nov 2026).
