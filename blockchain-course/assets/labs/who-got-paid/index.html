@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who got paid?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.layer { border: 1px solid var(--rule, #bbb); border-radius: 6px; padding: .5em .8em; margin: .6em 0; }
+.layer h3 { margin: 0 0 .3em; font-size: 1em; }
+.layer pre { white-space: pre-wrap; word-break: break-all; margin: .3em 0; }
+.layer table { border-collapse: collapse; }
+.layer td, .layer th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.paid { margin-top: .4em; }
+.paid select, .paid input { font: inherit; }
+.say { min-height: 1.4em; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/who-got-paid.md. The victim, the seller, the drainer, their addresses and both
+   transactions are made up for this lab. Only the USDT contract's address and its 6 decimals are real
+   (Etherscan, as of 4 Nov 2026). The lab decodes the input and the log itself, so it runs offline. */
+var USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
+var VICTIM = "0x7c21e8d4b93a05f6c1d78e4a20b95f3d6a8e1c52";
+var SELLER = "0x4b7e2d90c15f8a63e07b9d2a4c6118e5f03ba1f3";
+var DRAINER_FROM = "0xe3a09f17d5c2b84a6f10c39d7e52ab48c6d0f9e1";
+var DRAINER_CONTRACT = "0x1f6b8c04a7d93e52b0c8f14a96d3e7a05b2c8d49";
+var DRAINER_TO = "0xb52d7a09e41c86f3a0d5b97e2c14f8a63d0e7b91";
+var TX1 = "0x5e1d3b7a94f02c68d1e5a07b39c4f8260ad71e5b8c3924f06d7a1be4350fc90a";
+var TX2 = "0x8a40c7e2d915b36f0e4a82d7c19b5036fe8a2d41c07b95e3a6d0f48b1c27e5d3";
+var RAW = 5000000000;           // what the call carries
+var DECIMALS = 6;
+var TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+
+function pad(hexNoPrefix) { return ("0000000000000000000000000000000000000000000000000000000000000000" + hexNoPrefix).slice(-64); }
+function word(addr) { return pad(addr.slice(2).toLowerCase()); }
+function amountWord(n) { return pad(n.toString(16)); }
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+LabShell.start({
+  id: "who-got-paid",
+  title: "Who got paid?",
+  slide: { title: "A token transfer shows up as a log", href: "../../../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/a-token-transfer-shows-up-as-a-log" },
+  steps: {
+    "case": { html:
+      "<p>A victim tells the agent she paid a seller 5,000 dollars in USDT for goods that never came. The agent has a " +
+      "screenshot of the explorer page for her payment and asks: &ldquo;This says she sent zero, to Tether. " +
+      "Did she pay anyone at all?&rdquo;</p>" +
+      "<p>The victim, the seller and the transaction are made up for this lab. Only the USDT contract's address is real.</p>" },
+    commit: {
+      question: "The victim says she paid the seller 5,000 USDT. You see two fields of her transaction, cropped from the explorer's page: To: 0xdAC1…1ec7 and Value: 0 ETH. Who got her money?",
+      choices: [
+        "0xdAC1…1ec7, the address in To.",
+        "Nobody: the value is zero, so she paid nothing.",
+        "An address these two fields do not show.",
+        "She paid in ETH, so look for another transaction."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var layers = [];
+      var opened = 0;
+      var root = api.el("div");
+      el.appendChild(api.el("p", null, "Open the transaction one layer at a time. At each layer, say who has been paid so far."));
+      el.appendChild(root);
+
+      var OPTIONS = ["Pick one…", "No one", "The To address (the USDT contract)", "The seller"];
+
+      function paidRow(correct, wrongText, rightText, after) {
+        var sel = api.el("select", { "aria-label": "Who has been paid so far?" });
+        OPTIONS.forEach(function (t, i) { sel.appendChild(api.el("option", { value: i }, t)); });
+        var say = api.el("p", { class: "say", role: "status" });
+        var row = api.el("div", { class: "paid" }, api.el("label", null, "Who has been paid so far? ", sel), say);
+        sel.addEventListener("change", function () {
+          var v = Number(sel.value);
+          if (v === 0) { say.textContent = ""; return; }
+          if (v !== correct) { say.textContent = wrongText[v] || "Not yet. Read the layer again."; return; }
+          say.textContent = rightText;
+          sel.disabled = true;
+          after();
+        });
+        return row;
+      }
+
+      function openNext() {
+        if (opened < layers.length) { layers[opened](); opened++; }
+      }
+      function nextButton(label) {
+        var b = api.el("button", { class: "btn", type: "button", onclick: function () { b.remove(); openNext(); } }, label);
+        return b;
+      }
+      function box(title) {
+        var d = api.el("div", { class: "layer" }, api.el("h3", null, title));
+        root.appendChild(d);
+        return d;
+      }
+
+      // Layer 1: the top of the transaction
+      layers.push(function () {
+        var d = box("1. The top of the transaction");
+        var fee = api.coin({ role: "fee", amount: "0.0011 ETH", who: "paid by the sender" });
+        d.appendChild(api.el("table", null,
+          api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr" }, api.short(VICTIM, 6)), " (the victim)")),
+          api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr" }, api.short(USDT, 4)), " (the USDT contract)")),
+          api.el("tr", null, api.el("th", null, "Value"), api.el("td", null, "0 ETH")),
+          api.el("tr", null, api.el("th", null, "Fee"), api.el("td", null, fee))));
+        d.appendChild(paidRow(1,
+          { 2: "Not from these fields. To is a contract that was called; nothing says it was paid.", 3: "The seller is not on this layer at all." },
+          "No one yet: Value is 0 ETH, and To is whatever the transaction called. Open the input data.",
+          function () { d.appendChild(nextButton("Open the input data")); }));
+      });
+
+      // Layer 2: input data, hex then decoded
+      layers.push(function () {
+        var d = box("2. The input data");
+        var hex = "0xa9059cbb" + word(SELLER) + amountWord(RAW);
+        d.appendChild(api.el("pre", null, hex));
+        var decodedBox = api.el("div");
+        d.appendChild(decodedBox);
+        var decode = api.el("button", { class: "btn", type: "button", onclick: function () { decode.remove(); showDecoded(); } }, "Decode it");
+        d.appendChild(decode);
+
+        function showDecoded() {
+          decodedBox.appendChild(api.el("p", null, api.el("code", null, "transfer(_to, _value)")));
+          decodedBox.appendChild(api.el("table", null,
+            api.el("tr", null, api.el("th", null, "_to"), api.el("td", null, api.el("span", { class: "addr" }, api.short(SELLER, 6)), " (the seller)")),
+            api.el("tr", null, api.el("th", null, "_value"), api.el("td", null, fmt(RAW) + "  (the token's decimals: " + DECIMALS + ")"))));
+          var num = api.el("input", { type: "text", inputmode: "numeric", size: 12, "aria-label": "Amount in USDT" });
+          var amountSay = api.el("p", { class: "say", role: "status" });
+          var amountOk = false, paidOk = false;
+          function maybeNext() { if (amountOk && paidOk) d.appendChild(nextButton("Open the contract's balance table")); }
+          num.addEventListener("input", function () {
+            var v = num.value.replace(/[,\s]/g, "");
+            if (!v) { amountSay.textContent = ""; return; }
+            if (v === "5000") {
+              if (!amountOk) { amountOk = true; num.disabled = true; amountSay.textContent = "5,000 USDT: the token counts in millionths, so 5,000,000,000 of them is 5,000."; maybeNext(); }
+            } else if (v === String(RAW)) amountSay.textContent = "That is the raw number. USDT counts in millionths: divide by 10^" + DECIMALS + ".";
+            else amountSay.textContent = "Not quite. Divide the raw number by 10^" + DECIMALS + " (a million).";
+          });
+          decodedBox.appendChild(api.el("p", null, "How many USDT is that? ", num, " USDT"));
+          decodedBox.appendChild(amountSay);
+          decodedBox.appendChild(paidRow(3,
+            { 1: "The call asks the contract to move tokens to someone; it names no payment to the contract itself.", 2: "To is the contract being called. The call names a different recipient." },
+            "The call names the seller as the recipient. It is a request so far: the contract's records show whether it ran.",
+            function () { paidOk = true; maybeNext(); }));
+        }
+      });
+
+      // Layer 3: the contract's own balance table
+      layers.push(function () {
+        var d = box("3. Inside the USDT contract: its balance table");
+        var tbl = api.el("table", null);
+        var vBal = api.el("td", null, "5,200 USDT"), sBal = api.el("td", null, "0 USDT");
+        tbl.appendChild(api.el("tr", null, api.el("th", null, "Address"), api.el("th", null, "Balance")));
+        tbl.appendChild(api.el("tr", null, api.el("td", null, api.el("span", { class: "addr" }, api.short(VICTIM, 6)), " (victim)"), vBal));
+        tbl.appendChild(api.el("tr", null, api.el("td", null, api.el("span", { class: "addr" }, api.short(SELLER, 6)), " (seller)"), sBal));
+        d.appendChild(tbl);
+        var run = api.el("button", { class: "btn", type: "button", onclick: function () {
+          run.remove();
+          vBal.textContent = "200 USDT";
+          sBal.textContent = "";
+          sBal.appendChild(api.coin({ role: "output", amount: "5,000 USDT" }));
+          d.appendChild(api.el("p", null, "The contract ran the call: 5,000 left the victim's line and arrived on the seller's. No ETH moved."));
+          d.appendChild(paidRow(3,
+            { 1: "Look at the table: a line changed.", 2: "The contract is not in its own table; it only keeps the records." },
+            "The seller: the contract's own records now show 5,000 USDT on the seller's line.",
+            function () { d.appendChild(nextButton("Open the receipt's log")); }));
+        } }, "Run the call");
+        d.appendChild(run);
+      });
+
+      // Layer 4: the receipt's log
+      layers.push(function () {
+        var d = box("4. The receipt's log");
+        d.appendChild(api.el("pre", null,
+          "Transfer  (from the USDT contract " + api.short(USDT, 4) + ")\n" +
+          "  from   " + api.short(VICTIM, 6) + "  (victim)\n" +
+          "  to     " + api.short(SELLER, 6) + "  (seller)\n" +
+          "  value  " + fmt(RAW) + "  = 5,000 USDT"));
+        d.appendChild(paidRow(3,
+          { 1: "The log names no payment to anyone but the seller.", 2: "The contract wrote this note; it is not a party in it." },
+          "The seller. Three layers agree: the call, the balance table and the log. The To field only named the contract that kept the record.",
+          function () {
+            api.finish({ choice: 2, note:
+              "<p>To was the token contract, which kept the record and was paid nothing. The recipient was in the input data, " +
+              "in the contract's balance table and in the <code>Transfer</code> log.</p>" });
+          }));
+      });
+
+      openNext();
+    } },
+    name: {
+      term: "Transfer event",
+      parts: "Transfer (the event every ERC-20 token writes when tokens move) + event (a record a contract adds to the transaction's receipt)",
+      plain: "<p>The token contract's own note of who sent how much of the token to whom. Tools build their token-transfer lists from these notes.</p>"
+    },
+    explorer: { render: function (el, api) {
+      el.appendChild(api.el("p", null, "The same transaction in Otterscan, as the afternoon lab meets it (a copy made up for this lab, not a live page). The overview:"));
+      el.appendChild(api.el("table", null,
+        api.el("tr", null, api.el("th", null, "Transaction"), api.el("td", null, api.el("span", { class: "hash" }, api.short(TX1, 6)))),
+        api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr" }, api.short(VICTIM, 6)))),
+        api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr" }, api.short(USDT, 4)), " (USDT contract)")),
+        api.el("tr", null, api.el("th", null, "Value"), api.el("td", null, "0 ETH")),
+        api.el("tr", null, api.el("th", null, "Transaction fee"), api.el("td", null, api.coin({ role: "fee", amount: "0.0011 ETH" }))),
+        api.el("tr", null, api.el("th", null, "Tokens Transferred"), api.el("td", null,
+          "From ", api.el("span", { class: "addr" }, api.short(VICTIM, 6)), " To ", api.el("span", { class: "addr" }, api.short(SELLER, 6)),
+          " For ", api.coin({ role: "output", amount: "5,000 USDT" })))));
+      el.appendChild(api.el("p", null, "The Logs tab, where the event itself is:"));
+      el.appendChild(api.el("pre", null,
+        "Address   " + USDT + "  (USDT)\n" +
+        "Name      Transfer(address indexed from, address indexed to, uint256 value)\n" +
+        "from      " + VICTIM + "\n" +
+        "to        " + SELLER + "\n" +
+        "value     " + fmt(RAW) + "   (6 decimals: 5,000 USDT)"));
+      el.appendChild(api.el("p", null, "The “Tokens Transferred” line is the explorer's summary, built from the Transfer log. An analyst reads that line and the log, not To. The USDT contract and its 6 decimals are real; the rest is made up."));
+    } },
+    twist: {
+      html: "<p>The next day the victim's USDT balance drops by 5,000 again. The transaction behind it is not from her:</p>" +
+        "<ul><li>From: <span class=\"addr\">" + LabShell.short(DRAINER_FROM, 6) + "</span> (no one knows it)</li>" +
+        "<li>To: <span class=\"addr\">" + LabShell.short(DRAINER_CONTRACT, 6) + "</span> (an unknown contract)</li>" +
+        "<li>Value: 0 ETH. The input data holds no address at all.</li>" +
+        "<li>The Transfer log from USDT names: from <span class=\"addr\">" + LabShell.short(VICTIM, 6) + "</span>, to <span class=\"addr\">" + LabShell.short(DRAINER_TO, 6) + "</span>, value 5,000 USDT.</li></ul>" +
+        "<p>These addresses and the transaction (<span class=\"hash\">" + LabShell.short(TX2, 6) + "</span>) are made up for this lab.</p>",
+      question: "Who got her tokens?",
+      choices: [
+        "The From address.",
+        "The To contract.",
+        "Nobody: she is not in this transaction.",
+        "The address the Transfer log names."
+      ],
+      answer: 3,
+      why: "<p>The unknown contract called the token's <code>transferFrom</code>, which moves tokens for an owner who approved it earlier. When another contract moves tokens, the recipient may not be in the input at all, and the log still names it. Day 8 returns to approvals abused by wallet drainers.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks who got paid in the first transaction. Say it in one sentence, with a confidence word.</p>",
+      example: "In transaction 0x5e1d…c90a, the victim's address sent 5,000 USDT to address 0x4b7e…a1f3 (High confidence: the USDT contract's <code>Transfer</code> log records it, and the call's input data names the same recipient and amount). The &lsquo;To&rsquo; field shows the USDT contract, which keeps the token's records; it was not paid."
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -103,3 +103,4 @@ made up for the lab and say so.
 ## Approval
 
 - Owner: "Who got paid?", "Forge the payment", "Through the exchange" (10 Nov 2026)
+- Built 11 Nov 2026: `blockchain-course/assets/labs/who-got-paid/`; opens from the "A token transfer shows up as a log" slide in 05-EF.
