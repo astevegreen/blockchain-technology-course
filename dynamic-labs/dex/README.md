@@ -24,7 +24,7 @@ the token lab's:
 | `/rpc-l2` | L1 gateway (L1 host only) | the L2 node, same filter, so the swap page reads both chains from one origin |
 | `/config.json` | that host's gateway | Otterscan's settings, named "Course L1" or "Course L2" |
 | `/lab/` | gateway | the student worksheet |
-| `/sign/` | gateway | the swap page: quote, swap, approve and deposit, wait for L2, ask the contracts |
+| `/sign/` | gateway | the swap page: quote, swap, approve and deposit, wait for L2, ask the contracts; and `pool-trading.html`, the day 4 game (below) |
 | `/fallback/` | gateway | the saved explorer pages for both chains and a recorded run of the swap page |
 | `/vendor/` | gateway | ethers.js 6.16.0 (MIT), shared with the explorer lab |
 | everything else | otterscan | Otterscan 2.11.0, with `/sourcify` serving both chains' source |
@@ -41,8 +41,8 @@ the token lab's:
   refuse `eth_getLogs`). A finalize takes 20 to 40 s.
 - `gateway` and `gateway-l2` are the explorer lab's `gateway/gateway.py`, mounted read-only, one
   per chain. Only the L1 gateway has `L2_ANVIL_URL`, which opens `/rpc-l2`. Both refuse
-  transactions signed by the issuer (Account 0), the bridge owner (Account 6) and the relayer
-  (Account 7) (`REFUSED_SENDERS`): their keys come from the public test phrase like the seats'.
+  transactions signed by the issuer (Account 0), the bridge owner (Account 6), the relayer
+  (Account 7) and Pool trading's instructor account (Account 9) (`REFUSED_SENDERS`): their keys come from the public test phrase like the seats'.
 - `otterscan` serves both hosts: each host's `/config.json` points it at that host's `/rpc`.
 
 Restart the whole lab, never one chain: a restart reloads both frozen chains, and restarting only
@@ -70,9 +70,25 @@ Accounts 10 to 49 are the class's seats on the swap page (seat N is account 9 + 
 each chain). Give each student a seat number: two students on one seat clash over
 nonces.
 
+## Pool trading (day 4 game)
+
+The game page `/sign/pool-trading.html` (opened from the course site's `assets/labs/pool-trading/`) has the class
+trade 1 ETH for cUSD against the one pool, one seat per block, in three rounds. The instructor opens each round and
+plays the bot from the relayer container, which reaches the L1 node directly:
+
+```bash
+docker exec -i dex-relayer-1 python - round 1 < dynamic-labs/dex/quizes/pool_trading.py
+docker exec -i dex-relayer-1 python - key 1 < dynamic-labs/dex/quizes/pool_trading.py
+```
+
+The script uses Account 9, which the node signs for (`eth_sendTransaction` from the lab's own network); the gateways
+refuse anything signed with its key. The instructor's guide and what students should find are in
+`quizes/POOL_TRADING_ANSWERS.md`. The game's trades stay in the pool until the lab restarts.
+
 ## Tests
 
 - `regression-tests/automated/dex/` - the live suite (both hosts through the router, the gateway
   filter and `/rpc-l2`, config, source files, the worked example, the saved pages against the
   chains, the recorded run's addresses, and one swap and deposit finalized by the relayer).
+  `test_pool_trading_live.py` plays the game: a round with the bot against three limits, then the twist.
 - `regression-tests/agent/dex/` - the browser playbook for what the suite cannot see.

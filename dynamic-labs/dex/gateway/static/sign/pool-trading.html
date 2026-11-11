@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pool trading</title>
+<link rel="stylesheet" href="../lab/lab.css">
+<style>
+  .score td, .score th { border-bottom: 1px solid #ddd; padding: .25rem .5rem; width: auto; }
+  .good { color: #1e6b2e; font-weight: 600; }
+  .bad { color: #a12020; font-weight: 600; }
+  fieldset { border: 1px solid #ccc; margin: .75rem 0; }
+  fieldset label { font-weight: 400; margin-top: .25rem; }
+  fieldset input[type=radio] { width: auto; }
+</style>
+</head>
+<body>
+<main>
+<p class="crumbs"><a href="index.html">Swap page</a> · <a href="/">L1 explorer</a></p>
+<h1>Pool trading</h1>
+<p>The whole class trades against the lab's one pool, in three rounds. Each round you swap 1 ETH for cUSD
+in your own turn: one seat per block. Before you trade you work out what you should get and choose the
+least you will accept. After your block, you find your trade on the explorer and say whether someone
+sandwiched it.</p>
+<p class="note">Your seat's key comes from a test phrase printed in public software documentation. It
+guards nothing and exists only on this training chain.</p>
+
+<section>
+<h2>1. Your seat</h2>
+<label for="seat">Seat number (your instructor gives you one, 1 to 40)</label>
+<div class="inline"><input id="seat" type="number" min="1" max="40" inputmode="numeric">
+<button id="load" type="button">Load my seat</button></div>
+<table id="account" hidden></table>
+</section>
+
+<section>
+<h2>2. The round</h2>
+<p id="round" role="status">Load your seat. The page then waits for your instructor to open a round.</p>
+</section>
+
+<section>
+<h2>3. Work out what 1 ETH buys</h2>
+<p>The pool pays out by the lesson's formula: for <var>a</var> WETH in, with <var>x</var> WETH and
+<var>y</var> cUSD in the pool, you get <code>997·a·y / (1000·x + 997·a)</code> cUSD.</p>
+<p><button id="read" type="button" disabled>Read the pool now</button></p>
+<table id="reserves" hidden></table>
+<label for="predict">What 1 ETH buys (cUSD)</label>
+<input id="predict" inputmode="decimal" disabled>
+<label for="working">Your working: the numbers you put in the formula</label>
+<textarea id="working" rows="2" disabled></textarea>
+<p><button id="lock-predict" type="button" disabled>Lock my answer</button></p>
+<p id="predicted"></p>
+</section>
+
+<section>
+<h2>4. Choose the least you will accept</h2>
+<fieldset id="limits" disabled>
+<legend>Your limit, below the quote the router gives when your trade is sent</legend>
+<label><input type="radio" name="limit" value="0"> None: accept any amount</label>
+<label><input type="radio" name="limit" value="500"> 5% below the quote</label>
+<label><input type="radio" name="limit" value="50"> 0.5% below the quote</label>
+</fieldset>
+<label for="why-limit">Why that limit?</label>
+<textarea id="why-limit" rows="2" disabled></textarea>
+<p><button id="lock-limit" type="button" disabled>Lock my limit</button></p>
+<p id="limited"></p>
+</section>
+
+<section>
+<h2>5. Trade in your turn</h2>
+<p>The page waits for the block before your turn, asks the router for a quote, sets your limit from it,
+then signs and sends the swap so it lands in your block.</p>
+<p><button id="arm" type="button" disabled>Send my trade in my turn</button></p>
+<p id="status" role="status"></p>
+<table id="traded" hidden></table>
+</section>
+
+<section>
+<h2>6. Were you sandwiched?</h2>
+<p>Open your block on the explorer and read the transactions in order. A sandwich is one account
+buying cUSD just before you and selling it back just after.</p>
+<fieldset id="calls" disabled>
+<legend>Your call</legend>
+<label><input type="radio" name="call" value="yes"> Yes</label>
+<label><input type="radio" name="call" value="no"> No</label>
+</fieldset>
+<label for="before">If yes: the transaction just before mine (its hash)</label>
+<input id="before" spellcheck="false" disabled>
+<label for="after">If yes: the transaction just after mine (its hash)</label>
+<input id="after" spellcheck="false" disabled>
+<label for="why-call">If no: why not</label>
+<textarea id="why-call" rows="2" disabled></textarea>
+<p><button id="lock-call" type="button" disabled>Lock my call</button></p>
+<p id="called"></p>
+</section>
+
+<section>
+<h2>7. Your score</h2>
+<p class="hint">Per round: the prediction with its working, +1; the limit with its reason, +1; the right
+call with its transactions or its reason, +2; a sandwich called where there was none, −2. Time only breaks
+ties.</p>
+<table id="score" class="score"></table>
+<p><button id="balances" type="button">Show the class's balances</button></p>
+<p class="hint">What each seat holds now, in seat order. Shown, never ranked: the points go to seeing why.</p>
+<table id="class" class="score" hidden></table>
+</section>
+
+<section>
+<h2>What this page asked the node</h2>
+<p class="hint">Each line is one JSON-RPC call to L1: the method, what was sent and what came back. The
+page's check for a new block, once a second, is left out.</p>
+<ol id="log" class="log"></ol>
+</section>
+</main>
+<script src="../vendor/ethers/ethers.umd.min.js"></script>
+<script src="pool-trading.js"></script>
+</body>
+</html>

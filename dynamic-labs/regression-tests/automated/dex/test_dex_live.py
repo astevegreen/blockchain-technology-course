@@ -136,10 +136,10 @@ class DexLiveRegressionTests(unittest.TestCase):
                 self.assertEqual(reply["error"]["code"], -32601, f"{host}{path} {method}")
 
     def test_the_labs_own_keys_are_refused_on_every_door(self) -> None:
-        # Issuer, bridge owner and relayer keys are public (Anvil's test phrase): the gateways
-        # refuse what they sign, so no student can mint, pause or take the relayer's nonces.
+        # Issuer, bridge owner, relayer and Pool trading's bot keys are public (Anvil's test phrase): the
+        # gateways refuse what they sign, so no student can mint, pause, take the relayer's nonces or play the bot.
         Account.enable_unaudited_hdwallet_features()
-        for index in (0, 6, 7):
+        for index in (0, 6, 7, 9):
             key = Account.from_mnemonic(PHRASE, account_path=f"m/44'/60'/0'/0/{index}")
             for host, path, chain in ((HOST, "/rpc", 31337), (HOST, "/rpc-l2", 31338), (HOST_L2, "/rpc", 31338)):
                 signed = key.sign_transaction({
@@ -160,7 +160,8 @@ class DexLiveRegressionTests(unittest.TestCase):
             self.assertIn(name, hit.text)
 
     def test_lab_pages_are_served(self) -> None:
-        for path in ["/lab/", "/lab/lab.css", "/sign/", "/sign/swap.js", "/fallback/", "/fallback/swap-run.html",
+        for path in ["/lab/", "/lab/lab.css", "/sign/", "/sign/swap.js", "/sign/pool-trading.html",
+                     "/sign/pool-trading.js", "/fallback/", "/fallback/swap-run.html",
                      "/vendor/ethers/ethers.umd.min.js"]:
             self.assertEqual(get(path).status_code, 200, path)
 

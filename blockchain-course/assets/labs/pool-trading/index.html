@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pool trading</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .read { display: grid; gap: 0.5rem; margin: 0.6rem 0; }
+  .read fieldset { border: 2px solid var(--rule); border-radius: 8px; padding: 0.4rem 0.8rem; }
+  .read label { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center; margin: 0.2rem 0; }
+  .read select { font: inherit; padding: 0.2em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  .src { color: var(--ink-soft); font-size: 0.85rem; }
+  .note { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/pool-trading.md. Played alone, one seat each, on the exchange lab's L1 chain. The
+   instructor runs the round script, which opens each round and plays the bot; students trade on the game page on
+   the dex host. This page holds no key and no answer: each round's sandwiches are on the instructor's key, which
+   students never receive. */
+(function () {
+  "use strict";
+
+  /* The exchange lab's own host: dex.<host> by name, port 8443 by IP address (router/docker-compose.yml). */
+  function labOrigin() {
+    var loc = window.location;
+    if (!/^https?:$/.test(loc.protocol)) return null;
+    var host = loc.hostname;
+    if (/^[0-9.]+$/.test(host) || host.indexOf(":") >= 0) return loc.protocol + "//" + loc.host.replace(/:\d+$/, "") + ":8443";
+    return loc.protocol + "//dex." + loc.host;
+  }
+  function labLink(api, path, text) {
+    var o = labOrigin();
+    return o ? api.el("a", { href: o + path, target: "_blank", rel: "noopener" }, text) : api.el("span", null, text + " (open the exchange lab from the class's lab page)");
+  }
+
+  function render(box, api) {
+    var el = api.el;
+    box.appendChild(el("p", null, "Open the game page, load the seat your instructor gives you, and play rounds 1 and 2 there: work out what 1 ETH buys, choose your limit, send your trade in your turn, then find it on the explorer and make your call."));
+    box.appendChild(el("p", null, labLink(api, "/sign/pool-trading.html", "Open the game page")));
+    box.appendChild(el("p", null, "Then come back and say what each round did to your trade."));
+
+    var rows = [1, 2].map(function (n) {
+      var limit = select(["", "none", "5% below the quote", "0.5% below the quote"]);
+      var got = select(["", "close to the quote", "just above my limit", "well under the quote", "nothing: refused"]);
+      var sand = select(["", "yes", "no"]);
+      var set = el("fieldset", null, el("legend", null, "Round " + n),
+        el("label", null, "My limit: ", limit),
+        el("label", null, "I received: ", got),
+        el("label", null, "Sandwiched: ", sand));
+      return { set: set, limit: limit, got: got, sand: sand };
+    });
+    var form = el("div", { class: "read" });
+    rows.forEach(function (r) { form.appendChild(r.set); });
+    box.appendChild(form);
+    var msg = el("div");
+    box.appendChild(msg);
+
+    function select(options) {
+      var s = el("select");
+      options.forEach(function (o) { s.appendChild(el("option", { value: o }, o || "pick")); });
+      s.addEventListener("change", check);
+      return s;
+    }
+
+    /* What the bot does in rounds 1 and 2: it leaves a 0.5% limit alone; it sandwiches no limit, which gets well
+       under the quote, and 5%, which it pushes down to just above the limit. */
+    function fits(r) {
+      var got = r.got.value;
+      if (r.limit.value === "0.5% below the quote") return r.sand.value === "no" && got === "close to the quote";
+      if (r.sand.value !== "yes") return false;
+      if (r.limit.value === "5% below the quote") return got === "just above my limit" || got === "well under the quote";
+      return got === "well under the quote";
+    }
+
+    function check() {
+      msg.innerHTML = "";
+      var done = rows.every(function (r) { return r.limit.value && r.got.value && r.sand.value; });
+      if (!done) return;
+      if (rows.every(fits)) {
+        api.finish({ choice: 2, note: "A limit that leaves room was sandwiched: an account bought just before the trade and sold just after. With no limit that cost well under the quote; with 5%, the bot pushed the price only as far as the limit allowed. A 0.5% limit got close to the quote, and no one sandwiched it." });
+        return;
+      }
+      msg.appendChild(el("p", { class: "note" }, "That is not what the bot does in rounds 1 and 2. Open your block on the explorer again: are there trades just before and just after yours from one address? Compare what you received with your quote."));
+      var keep = el("button", { type: "button" }, "My blocks really show this");
+      keep.addEventListener("click", function () {
+        api.finish({ choice: 2, note: "Your blocks read differently from the usual round; ask your instructor to open them with you. In most seats a limit that leaves room was sandwiched, and a 0.5% limit was not." });
+      });
+      msg.appendChild(keep);
+    }
+  }
+
+  LabShell.start({
+    id: "pool-trading",
+    title: "Pool trading",
+    slide: { title: "A bigger trade gets a worse price",
+      href: "../../../lessons/ethereum/07-EF-liquidity_and_exits.html#/a-bigger-trade-gets-a-worse-price" },
+    steps: {
+      "case": { html: "<p>A trader complains to the exchange: \"I sold at the price on the screen and got far less. The exchange cheated me.\"</p>" +
+        "<p>The exchange is a pool, and the trade is on the chain. Today the whole class trades against the lab's one pool, in three rounds, one seat per block.</p>" },
+      commit: {
+        question: "You swap 1 ETH for cUSD. The page quotes what the pool would pay you now, your own trade's effect included. You accept any amount (no minimum). What do you get?",
+        choices: [
+          "The quote.",
+          "More than the quote: the pool rewards a large trade.",
+          "Possibly much less: anyone who sees your trade before the block can move the price against you first.",
+          "Nothing: the trade fails."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "slippage tolerance",
+        parts: "the quote; the least you will accept (in the swap it is <code>amountOutMin</code>); and the router's check that refuses the trade if the output would be lower",
+        plain: "<p>How much worse than the quote you will let the price get before the trade is refused.</p>" +
+          "<p>With no limit, the router takes whatever the pool pays when your trade runs, after anyone ahead of you has moved the price. With a tight limit, a trade pushed below it is refused and you keep your ETH, so there is nothing to gain by getting in front of you.</p>" +
+          "<p class=\"src\">Sources: <code>@uniswaplabs_uniswapv2router02_2020</code>; <code>@adams_uniswapv2core_2020</code>; <code>@uniswap_howuniswapworks_2026</code>.</p>" },
+      explorer: { html: "<p>Open your block in Otterscan, the exchange lab's L1 explorer (your trade's row on the game page links to it). Read the transactions in order, then open each swap's logs: the pool emits a <code>Swap</code> event (what went in, what came out) and a <code>Sync</code> event (its reserves after).</p>" +
+        "<p>A sandwich is three swaps in a row on the same pool:</p>" +
+        "<ul><li>one address buys cUSD with ETH;</li>" +
+        "<li>the victim buys cUSD, at the worse price the first buy left;</li>" +
+        "<li>the same address sells its cUSD back for ETH.</li></ul>" +
+        "<p>The bot's profit is the ETH its sell got back less the ETH its buy paid. The block also shows how it got the order it wanted: its buy pays a higher fee than the victim's trade, its sell a lower one, and the chain puts higher fees first.</p>" +
+        "<p class=\"src\">Sources: <code>@ethereumorg_mev_2026</code>; <code>@daian_flashboys20_2019</code>; <code>@adams_uniswapv2core_2020</code>.</p>" },
+      twist: {
+        html: "<p>Round 3. Play it on the game page as before. In a few blocks this round, your trade got much less than the quote, or was refused.</p>",
+        question: "Your trade got much less than the quote, or was refused. Were you sandwiched?",
+        choices: [
+          "Yes: you got less.",
+          "Yes: a big trade came first.",
+          "No: no one bought before you and sold after you.",
+          "Cannot tell."
+        ],
+        answer: 2,
+        why: "<p>Open the block. One large trade ran just ahead of yours: the instructor's account swapped 20 ETH for cUSD, the same way you trade, and nothing from that account came after you.</p>" +
+          "<p>A sandwich needs the same account on both sides of your trade. One large trade ahead is price impact from another trader, not someone profiting from where you sit in the order.</p>" +
+          "<p>With a 0.5% limit, the router refused the trade, <code>too little received</code>, and you kept your ETH. With no limit, you took the worse price.</p>" +
+          "<p class=\"src\">Sources: <code>@uniswaplabs_uniswapv2router02_2020</code>; <code>@ethereumorg_mev_2026</code>.</p>"
+      },
+      tell: {
+        prompt: "<p>Tell the agent what happened to the victim's trade in block 214. (The block, the account and the amounts are made up for the game.)</p>",
+        example: "The victim's swap of 1 ETH received 1,850 cUSD, against a quote of 1,950. In the same block, account 0xB07… bought cUSD from the same pool just before the victim and sold it back just after, ending about 0.04 ETH up. The order of the three trades is read straight from the block. We assess with Moderate confidence that the account set out to profit from the victim's trade rather than trading twice by chance: its gain fits a sandwich, but every part of the case comes from the same three transactions."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
