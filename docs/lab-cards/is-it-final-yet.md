@@ -34,8 +34,8 @@ says inclusion is not finality and points back to day 1, and by then students ha
 5. **The name** (shell: `name`): finality. Parts: final + -ity, the state of being final. Plain: the point after
    which a chain's own rules say a block will not be reversed. Bitcoin has no such point, only depth.
 6. **The explorer view** (shell: `explorer`): the status each explorer prints. A Bitcoin explorer: a
-   confirmations count. An Ethereum explorer: the block's status, included or finalized. A Tron explorer: whether
-   the block is solidified. A report gives that status, the block and the time it was read.
+   confirmations count. An Ethereum explorer: the block's status, included or finalized. A Tron explorer: Tronscan
+   prints "Confirmed" with "Confirmed SRs: 19", and the protocol's word for that state is "solidified". A report gives that status, the block and the time it was read.
 7. **The twist** (shell: `twist`): back to Ethereum. More than a third of the stake stops voting. The clock
    reaches 20 minutes; new blocks keep arriving on top of the payment's block, but its status stays "included".
    "Is it final now?" Choices: yes, it has many blocks on top; yes, 15 minutes have passed; no: finality has
@@ -58,8 +58,7 @@ An agent calls eight minutes after the last payment: "Has the money gone? Can it
 
 ## Load check
 
-- [x] One new term per step: finality is the only new term; "solidified" and "finalized" appear as each
-  explorer's own status words, and "inactivity leak" only in the twist's answer, as on the slide.
+- [x] One new term per step: finality is the only new term; "solidified" (the protocol's word) and "finalized" appear as chain status words, and "inactivity leak" only in the twist's answer, as on the slide.
 - [x] Nothing drawn for decoration: each lane's state is what the student predicts.
 - [x] Labels sit on the thing they name: each status on its own block.
 - [x] Objects use the shared look: `.hash` for blocks and transactions, `.coin` for the payment in each lane,
@@ -89,3 +88,4 @@ The victim, times and blocks are made up for the lab and say so.
 
 - Owner: "Approve all four" and "Keep day 3" (10 Nov 2026)
 - Built 11 Nov 2026: `blockchain-course/assets/labs/is-it-final-yet/`; opens from the "Pending, then included, then final" slide in 01-EF.
+- Corrected 11 Nov 2026: Tronscan's transaction and block pages print "CONFIRMED" and "Confirmed SRs: 19", not "Solidified"; the lane keeps the protocol's word (`@tron_consensus_2026`). Read on tronscan.org pages found by web search, 11 Nov 2026.
