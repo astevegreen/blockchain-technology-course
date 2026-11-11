@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guess the input</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.row { display: flex; flex-wrap: wrap; gap: .5em; align-items: center; margin: .5em 0; }
+.row input[type=text] { flex: 1 1 18em; font: inherit; padding: .35em .5em; border: 2px solid var(--ink); border-radius: 4px; }
+.tries { font-family: var(--mono); font-size: .85em; height: 7.5em; overflow: hidden; border: 1px solid var(--rule); border-radius: 6px; padding: .3em .6em; background: var(--panel); margin: .5em 0; }
+.tries div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tries b { color: var(--ink-soft); font-weight: 400; display: inline-block; min-width: 7em; }
+.bars { margin: .6em 0; }
+.bar { display: grid; grid-template-columns: 7.5em 1fr 13em; gap: .5em; align-items: center; margin: .25em 0; }
+.bar .track { height: 1.3em; border: 2px solid var(--ink); border-radius: 4px; background: var(--panel); }
+.bar .fill { height: 100%; width: 0; background: var(--output); }
+.bar.calc .fill { background: var(--change); }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.blocks { display: flex; flex-wrap: wrap; gap: 3px; margin: .4em 0; }
+.blocks span { width: 1.1em; height: 1.1em; border: 2px solid var(--ink); border-radius: 3px; background: var(--panel); }
+.blocks span.mine { background: var(--output); }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.explore .hash { word-break: break-all; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/guess-the-input.md. The agent's printout, the student's sentence and the twist's
+   blocks are made up for this lab. The hashing is real: the browser's own SHA-256 (Web Crypto), no toy hash and
+   no library, so the page runs offline. In the twist the laptop's tries are real and the fast machine is
+   simulated: its finds are drawn by chance at 20 times the laptop's rate, and the page says so. Opened at
+   #mining (from the primer's "Proof-of-work mining") it starts at the twist. */
+var ENC = new TextEncoder();
+var rate = 0;                       // hashes per second this laptop has managed so far
+var hashed = 0, spent = 0;          // total hashes and total seconds spent hashing
+
+function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function hex(buf) { var a = new Uint8Array(buf), s = ""; for (var i = 0; i < a.length; i++) s += (a[i] < 16 ? "0" : "") + a[i].toString(16); return s; }
+function sha(text) { return crypto.subtle.digest("SHA-256", ENC.encode(text)).then(hex); }
+function zeros(h) { var n = 0; while (n < h.length && h.charAt(n) === "0") n++; return n; }
+function noteRate(count, ms) { hashed += count; spent += ms / 1000; if (spent > 0.05) rate = hashed / spent; }
+/** Years as plain words: below a million, a number; above, a power of ten. */
+function years(seconds) {
+  var y = seconds / 31557600;
+  if (y < 1) return seconds < 3600 ? "under an hour" : "under a year";
+  if (y < 1e6) return "about " + fmt(y) + " years";
+  return "about 10^" + Math.round(Math.log10(y)) + " years";
+}
+/** Let the page paint, without the timer throttling a background tab gets. */
+function tick() { return new Promise(function (r) { var c = new MessageChannel(); c.port1.onmessage = function () { r(); }; c.port2.postMessage(0); }); }
+function pow16(k) { return Math.pow(16, k); }
+
+/* The twist. Each block is its payments plus a counter (the nonce); the rule is a hash starting 000, about 1 try
+   in 4,096. The fast machine's tries for a block are drawn by chance (a geometric draw at 1/4,096) and it makes
+   them 20 times as fast as the laptop, so the laptop only has to try as far as the machine's finish time. */
+var BLOCKS = 200, SPEEDUP = 20, P = 1 / 4096;
+function geometric() { return Math.ceil(Math.log(1 - Math.random()) / Math.log(1 - P)); }
+function locked() { try { var s = JSON.parse(localStorage.getItem("lab:guess-the-input")); return !!(s && s.twist); } catch (e) { return false; } }
+async function runRace() {
+  var btn = document.getElementById("race"), out = document.getElementById("race-out"), box = document.getElementById("race-blocks");
+  if (!locked()) { out.textContent = "Lock in your answer first, then press Race."; return; }
+  btn.disabled = true; box.innerHTML = ""; var won = 0, tried = 0, t0 = performance.now();
+  for (var b = 1; b <= BLOCKS; b++) {
+    var machine = geometric() / SPEEDUP, found = false, n = 0;
+    var payments = "block " + b + ": Ana pays Ben 0.4; Cy pays Dee 1.1; nonce ";
+    while (n < machine) {                       // the laptop races on, one real try at a time, until the machine is done
+      var h = await sha(payments + n); n++; tried++;
+      if (h.indexOf("000") === 0) { found = true; break; }
+    }
+    if (found) won++;
+    var sp = document.createElement("span"); sp.className = found ? "mine" : ""; sp.title = "block " + b + (found ? ": your laptop" : ": the fast machine");
+    box.appendChild(sp);
+    out.textContent = "Block " + b + " of " + BLOCKS + ". Your laptop has won " + won + ".";
+  }
+  noteRate(tried, performance.now() - t0);
+  out.textContent = "Done. Your laptop won " + won + " of " + BLOCKS + " blocks (green); the fast machine won " + (BLOCKS - won) + ". One in 21 would be about 10: it is luck weighted by tries made, so run it again and the number moves.";
+  btn.disabled = false;
+}
+if (location.hash === "#mining") {            // the primer's mining button: start at the twist, once
+  try {
+    var saved = JSON.parse(localStorage.getItem("lab:guess-the-input")) || { commit: null, outcome: null, twist: null, sentence: "", finished: false };
+    saved.at = 5;                                // always at the twist, keeping any answers already given
+    localStorage.setItem("lab:guess-the-input", JSON.stringify(saved));
+  } catch (e) { /* private window: starts at the case */ }
+}
+
+LabShell.start({
+  id: "guess-the-input",
+  title: "Guess the input",
+  slide: { title: "You cannot run a hash backwards, only guess", href: "../../../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/you-cannot-run-a-hash-backwards-only-guess" },
+  steps: {
+    "case": { html:
+      "<p>An agent holds a printout from a seized laptop: 64 letters and digits, the fingerprint of some text the suspect hashed. " +
+      "“Our lab has a fast computer. Can it run this back into the text by morning?”</p>" +
+      "<p>The printout is made up for this lab.</p>" },
+    commit: {
+      question: "Your browser will hash your sentence with a counter on the end, 0, 1, 2 and so on, until the hash starts with one 0. That takes about 16 tries. How many tries until it starts with 000?",
+      choices: [
+        "About 48.",
+        "About 4,000.",
+        "About a million.",
+        "A few: a smart program works back from the zeros."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var text = api.el("input", { type: "text", id: "sentence", value: "Meet at the pier at nine", "aria-label": "Your sentence" });
+      var go = api.el("button", { class: "btn primary", type: "button" }, "Search");
+      var more4 = api.el("button", { class: "btn", type: "button", disabled: true }, "Ask for 4 zeros");
+      var more5 = api.el("button", { class: "btn", type: "button", disabled: true }, "Ask for 5 zeros");
+      var stop = api.el("button", { class: "btn", type: "button", disabled: true }, "Stop");
+      var tries = api.el("div", { class: "tries", "aria-hidden": "true" });
+      var status = api.el("p", { role: "status" }, "Type a sentence and press Search.");
+      var bars = api.el("div", { class: "bars" });
+      var finished = false, running = false, halt = false, counter = 0, best = 0, found = {}, base = "";
+
+      function bar(label, tries, share, calc, note) {
+        var fill = api.el("div", { class: "fill" });
+        fill.style.width = Math.max(1, share * 100) + "%";
+        return api.el("div", { class: "bar" + (calc ? " calc" : "") }, api.el("span", null, label),
+          api.el("div", { class: "track", role: "img", "aria-label": label + ": " + tries }, fill), api.el("span", null, tries + (note ? " " + note : "")));
+      }
+      function draw() {
+        bars.innerHTML = "";
+        var ks = Object.keys(found).map(Number).sort(function (a, b) { return a - b; });
+        var top = 1;
+        ks.forEach(function (k) { bars.appendChild(bar(k + " zero" + (k > 1 ? "s" : ""), fmt(found[k]) + " tries", Math.log10(found[k] + 1) / 7, false)); });
+        if (found[5]) {
+          [19, 64].forEach(function (k) {
+            var t = pow16(k), s = t / (rate || 1);
+            bars.appendChild(bar(k + " zeros", "about 16^" + k + " tries", Math.min(1, Math.log10(t) / 7), true, "= " + years(s)));
+          });
+        }
+      }
+      async function search(target) {
+        if (running) return;
+        running = true; halt = false; go.disabled = more4.disabled = more5.disabled = true; stop.disabled = false;
+        if (!found[1] && counter === 0) base = text.value;
+        text.disabled = true;
+        var batch = 2000, since = performance.now();
+        while (best < target && !halt) {
+          var jobs = [];
+          for (var i = 0; i < batch; i++) jobs.push(sha(base + " " + (counter + i)));
+          var hs = await Promise.all(jobs);
+          var start = counter, stopAt = -1;
+          for (i = 0; i < hs.length; i++) {
+            var z = zeros(hs[i]);
+            while (z > best) { best++; found[best] = start + i + 1; }
+            if (best >= target) { stopAt = i; break; }
+          }
+          var seen = stopAt >= 0 ? stopAt + 1 : hs.length;
+          counter = start + seen;
+          noteRate(hs.length, performance.now() - since); since = performance.now();
+          tries.innerHTML = "";
+          for (var j = 0; j < 6 && j < seen; j++) tries.appendChild(api.el("div", null, api.el("b", null, "try " + fmt(counter - j)), api.el("span", { class: "hash" }, hs[seen - 1 - j])));
+          status.textContent = "Try " + fmt(counter) + ", at about " + fmt(rate) + " hashes a second on this laptop. Longest run of zeros so far: " + best + ".";
+          draw();
+          await tick();
+        }
+        running = false; stop.disabled = true; go.disabled = false; text.disabled = false;
+        if (best >= target) status.textContent = "Stopped at " + best + " zero" + (best > 1 ? "s" : "") + " after " + fmt(found[best]) + " tries.";
+        more4.disabled = best < 3 || best >= 4; more5.disabled = best < 4 || best >= 5;
+        if (halt) { status.textContent = "Stopped after " + fmt(counter) + " tries with " + best + " zero" + (best === 1 ? "" : "s") + " so far."; }
+        if (best >= 3 && !finished) {
+          finished = true;
+          api.finish({ choice: 1, note: "<p>Your sentence took " + fmt(found[3]) + " tries to reach three zeros. The average is 16 × 16 × 16 = 4,096, so one run lands near it, not on it. Every try is blind: change one character of the input and the whole hash changes, so no try is warmer than another and there is nothing to work back from. Each extra zero is a 1-in-16 chance per try, so each takes about 16 times longer. Checking a find takes one hash; finding one takes thousands.</p><p>Ask for four and five zeros and watch the time grow, then read the bars past them: 19 zeros is what a Bitcoin block carries today, and 64 zeros would be a whole hash, which is what “working it backwards” means.</p><p class=\"src\">Sources: <code>@nationalinstituteofstandardsandtechnologyus_securehashstandard_2015</code> (SHA-256: 256 bits, 64 hex digits); <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (section 4: the work is exponential in the zero bits required and is checked with a single hash); <code>@w3c_webcryptographylevel2_2025</code> (the browser computes SHA-256, as of 10 Nov 2026).</p>" });
+        }
+      }
+      go.addEventListener("click", function () { if (!found[1]) { counter = 0; best = 0; found = {}; tries.innerHTML = ""; } search(3); });
+      more4.addEventListener("click", function () { search(4); });
+      more5.addEventListener("click", function () { search(5); });
+      stop.addEventListener("click", function () { halt = true; });
+
+      el.appendChild(api.el("p", null, "Type a sentence, then press Search. The page hashes it with real SHA-256, with a counter on the end (0, 1, 2 and so on). Every try is one hash. It stops at one 0, then two, then three, and writes each try count on a bar. Next opens at three zeros."));
+      el.appendChild(api.el("div", { class: "row" }, api.el("label", { for: "sentence" }, "Your sentence: "), text, go));
+      el.appendChild(tries);
+      el.appendChild(status);
+      el.appendChild(api.el("div", { class: "row" }, more4, more5, stop));
+      el.appendChild(api.el("p", { class: "lab-status" }, "Bars use a log scale: each step to the right is ten times more tries. The orange bars are worked out, not run, at your laptop’s measured rate."));
+      el.appendChild(bars);
+    } },
+    name: {
+      term: "pre-image resistance",
+      parts: "pre-image (the input before it was hashed) + resistance (hard to find)",
+      plain: "<p>Given a hash, nobody can find an input that makes it except by guessing, and guessing a random input never finishes. If the input was guessable, such as a short password, guessing can find it.</p><p class=\"src\">Sources: <code>@boneh_hashfunctions_2020</code>; <code>@katz_introductionmoderncryptography_2020</code>.</p>"
+    },
+    explorer: { html:
+      "<p>The same thing on a Bitcoin explorer: block 975,384, as read on 10 Nov 2026.</p>" +
+      "<table class=\"explore\"><tr><th>Block height</th><td>975,384</td></tr>" +
+      "<tr><th>Block hash</th><td><span class=\"hash\">000000000000000000011ff7251d4635641051375433710d4eb39d81352b4679</span></td></tr>" +
+      "<tr><th>Nonce</th><td>3,975,677,492</td></tr></table>" +
+      "<p>The hash starts with 19 zeros. The “nonce” is the counter you just ran, ticked up until the hash passed the rule. Someone made more than 16<sup>19</sup> tries, on average, to find it: the real target is tighter than 19 zeros (the real rule is a number the hash must fall below, and leading zeros are how it looks). Anyone checks it with one hash.</p>" +
+      "<p class=\"src\">Source: <code>@mempoolspace_block975384_2026</code> (as of 10 Nov 2026).</p>" },
+    twist: {
+      html: "<p>Now the input is a block: its payments plus the counter, which is called the nonce, and the rule is three zeros. " +
+        "Your laptop races a machine 20 times faster over 200 blocks. Your laptop’s tries are real; the fast machine is simulated, its finds drawn by chance at 20 times the rate. Pick your answer first, then press Race.</p>" +
+        "<div class=\"panel\"><h3>Your laptop against a machine 20 times faster (made up)</h3>" +
+        "<p><button class=\"btn primary\" id=\"race\" type=\"button\" onclick=\"runRace()\">Race</button></p>" +
+        "<div class=\"blocks\" id=\"race-blocks\" aria-hidden=\"true\"></div><p id=\"race-out\" role=\"status\"></p></div>",
+      question: "Out of 200 blocks, how many does your laptop win?",
+      choices: [
+        "None: the fast machine always finds it first.",
+        "About 10: one in 21.",
+        "About 100: it is luck.",
+        "About 20: one in 10."
+      ],
+      answer: 1,
+      why: "<p>About 10. Every try is a lottery ticket, so the share of blocks won is the share of tries made: the faster machine wins most, never all. That race is mining. When blocks come too fast, the network asks for more zeros: Bitcoin resets its target every 2,016 blocks to keep about ten minutes a block.</p><p class=\"src\">Sources: <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (section 4); <code>@bano_consensusageblockchains_2017</code> (expected work); <code>@bitcoin.orgdevelopers_blockchaindeveloper_2024</code> (2,016 blocks, as of 10 Nov 2026).</p>"
+    },
+    tell: {
+      prompt: "<p>The agent shows you a 64-character hash from a seized laptop and asks whether a fast computer could turn it back into the text that made it. Say it in one sentence, with a confidence word.</p>",
+      example: "No: a SHA-256 hash cannot be worked backwards. The only route is to guess inputs and hash each one, and for a random input no computer can make enough guesses (High confidence: this is the property SHA-256 is built to have). If the text was guessable, such as a short password, guessing could find it, so what made the hash is the next question."
+    }
+  }
+});
+</script>
+</body>
+</html>
