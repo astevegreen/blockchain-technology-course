@@ -84,7 +84,7 @@ that is logical and easily grasped by students encountering them for the first t
 - Why: answering from memory strengthens learning more than listening or rereading (Roediger and Karpicke 2006),
   and it tells the instructor what to re-explain. Lecture-led stays (Direction 3); this puts questions inside it.
 - Today: week 2 and day 5 lessons have 6 to 21 "Ask:" prompts in their notes. On days 1 to 4 most have 0 to 3,
-  and three have none (04-CP, 01-CM, 01-EF).
+  and three have none (01-EF, 04-EF, 05-EF).
 
 **9. A lab is clear, tells students how they are doing, and ends by tying back to the concept.**
 - Meets: a first-time student can follow its steps (criterion 5's questions apply). During the lab a student can

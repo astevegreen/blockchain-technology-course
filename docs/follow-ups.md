@@ -32,14 +32,12 @@ slide index), which is never listed here.
   decision]
 
 ## Tooling and rules
-- The alignment map's keyword match is wrong in places: it shows no lab for concept 42 though day 1's explorer
-  part 2(b) and terminal Q2 practise it, credits day 3 `tokens` Q3 and Q5 to concept 12, and credits day 4 and
-  day 6 Q12 to concept 5 (`tools/alignment_terms.yml`). [10 Nov 2026, lab and concept catalog]
+- The alignment map still shows no lab for concept 42's day 1 terminal Q2 (`getblockchaininfo`): the map reads only
+  each lab's `index.html`, not `terminal.html` (`tools/alignment_map.py`, `read_lab`). [10 Nov 2026, fixing the terms]
 
 ## Notion and documents
-- `docs/quality-rubric.md:86-87` says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP now has 12 and 01-CM
-  has 7, and the lessons with none are 01-EF, 04-EF and 05-EF. `docs/analysis/2026-11-static-labs-review.md:28`
-  repeats it. [10 Nov 2026, grep count]
+- `docs/analysis/2026-11-static-labs-review.md:28` still says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP
+  has 12 and 01-CM has 7, and the lessons with none are 01-EF, 04-EF and 05-EF. [10 Nov 2026, grep count]
 - The Notion home page's Decision log has no entries for the 10 Nov lab-plan decisions (the prediction-lab trial,
   the eight games and their scoring, the Docker labs' fates, belief 8, the mining lottery); they are only in
   `docs/build-spec.md` and `docs/analysis/2026-11-lab-plan.md` [10 Nov 2026, Notion fetch]
