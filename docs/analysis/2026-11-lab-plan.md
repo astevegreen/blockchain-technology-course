@@ -252,8 +252,10 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
 
 - Day 8's cross-chain trace opens, after its exploit contract read, with a worked example of following funds
   across a bridge: the destination chain and recipient from the deposit's input data or the bridge's event, the
-  bridge's own explorer, and the far side matched by amount and timing. It is built from the guide a reviewing
-  expert offered, with each method sourced publicly, as part of step 6's day 8 changes (owner: "Yes, take it").
+  bridge's own explorer, and the far side matched by amount and timing. It is built as part of step 6's
+  day 8 changes (owner: "Yes, take it"). The expert who suggested it cannot supply ready-made material, so the
+  course sources each method itself from the best public material and cites it (owner, 10 Nov: "we will have to
+  source it ourselves with the best available information").
 - Day 8's second lesson gains one slide mapping the smart-contract vulnerability types, from the OWASP Smart
   Contract Top 10 (2026 edition), placing the attacks day 8 teaches among them; a map, not a taxonomy day
   (owner: "Yes, one slide").
@@ -262,6 +264,6 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
 - A BIP39 prediction lab for day 2, on Ian Coleman's BIP39 tool (MIT-licensed upstream, read 10 Nov 2026), is
   proposed on a design card in step 4, with the first four (owner: "Yes, write the card").
 - Day 9's third lesson gains one slide on which outside party holds which record an on-chain finding points to,
-  stopping at who holds what (legal process is out). It is recorded now; the expert is asked what "what to do with
-  all of that info" means, in the same request as the bridge guide, and the answer can refine the slide before it
-  is built (owner, after discussing it: "Yes, add it now").
+  stopping at who holds what (legal process is out) (owner, after discussing it: "Yes, add it now"). The slide
+  answers the expert's "what to do with all of that info", so nothing is asked of the expert (owner, 10 Nov: "we
+  can consider that addressed").

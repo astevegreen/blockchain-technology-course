@@ -14,17 +14,16 @@ slide index), which is never listed here.
   `docs/before-first-class.md`, not this list.
 
 ## Lessons
-- Day 9 ③'s "Who holds which record" slide (`docs/build-spec.md`, Additions) needs the reviewing expert's meaning
-  of "what to do with all of that info", asked in the same request as the bridge guide, before it is built
-  [10 Nov 2026, expert feedback review]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
 - Day 8's lab has no worked example of following funds across a bridge yet (`docs/build-spec.md`, Additions,
-  "Following funds across a bridge"); it waits on the guide the reviewing expert offered, which the owner is to
-  request [10 Nov 2026, expert feedback review]
+  "Following funds across a bridge"). The expert cannot supply material, so its three methods (destination chain
+  and recipient from the deposit's input data or the bridge's event, the bridge's own explorer, amount and timing
+  matching) are still to be sourced from public material, each with a `Blockchain.bib` key [10 Nov 2026, expert
+  feedback review]
 - Two open Dependabot alerts on `main`, both in `dynamic-labs/ethereum_lab/package-lock.json`: `tmp` (high, #275)
   and `minimatch` (moderate, #194), open since 7-8 Nov [10 Nov 2026, push output while recording an expert-feedback
   decision]
