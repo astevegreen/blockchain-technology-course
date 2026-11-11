@@ -99,6 +99,7 @@ command finds each fact) goes in `quizes/`, which students never receive.
 - The class chain: the instructor node mines 11 blocks at a fresh start; the chain identifies as `main` —
   `dynamic-labs/bitcoin/bitcoin-instructor-seed.sh`; `dynamic-labs/bitcoin/README.md` (read 10 Nov 2026)
 - Bitcoin Core is open source (MIT) — `@bitcoincore_repository_2026` (as of 10 Nov 2026)
+- Built in 20ba210 (terminal scavenger hunt, 11 Nov 2026)
 
 ## Approval
 
