@@ -102,4 +102,4 @@ command finds each fact) goes in `quizes/`, which students never receive.
 
 ## Approval
 
-- Owner: waiting
+- Owner: selected "Terminal scavenger hunt,Two-of-three,Spot the fake,Find the exchange" (11 Nov 2026)

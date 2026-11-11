@@ -66,7 +66,8 @@ Left out, for the owner to see:
 
 - The plan's row said "ranked by what each ends with". The owner's approved scoring says a correct answer with
   its reason scores and time only breaks ties, so this card scores the calls and shows the balances. Ranking by
-  balance would reward a student who never trades.
+  balance would reward a student who never trades. The owner chose this on 11 Nov 2026: "Approve, score the
+  calls (Recommended)"; balances are shown, never ranked.
 - Trades are staggered: the game page gives each seat a turn, one student trade per block, so a round of 40
   seats takes about 8 minutes of 12-second blocks. Otherwise every student's trade would be another's "big trade
   ahead", and rounds 1 and 2 would blur into the twist.
@@ -114,4 +115,4 @@ The trader, the block number and the amounts in the sentence are made up for the
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve, score the calls (Recommended)" (11 Nov 2026)

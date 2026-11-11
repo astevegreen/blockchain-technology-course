@@ -103,4 +103,4 @@ sentence are placeholders until the chain is built.
 
 ## Approval
 
-- Owner: waiting
+- Owner: selected "Terminal scavenger hunt,Two-of-three,Spot the fake,Find the exchange" (11 Nov 2026)
