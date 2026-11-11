@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What time was it sent?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.clocks { display: flex; flex-wrap: wrap; gap: .8em; margin: .6em 0; }
+.clock { border: 2px solid var(--ink); border-radius: 6px; padding: .3em .7em; background: var(--panel); min-width: 9em; }
+.clock b { display: block; font-size: 1.4em; font-family: var(--mono); }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.row { display: flex; flex-wrap: wrap; gap: .5em; margin: .4em 0; align-items: stretch; }
+.blk { border: 2px solid var(--ink); border-radius: 6px; padding: .3em .6em; background: var(--panel); min-width: 10em; }
+.blk.mine { background: var(--output-tint); border-color: var(--output); }
+.blk .stamp { font-family: var(--mono); font-weight: 700; }
+.blk small { display: block; color: var(--ink-soft); }
+.pool { border: 2px dashed var(--ink-soft); border-radius: 6px; padding: .3em .6em; margin: .4em 0; }
+.fee { border: 2px solid var(--accent-strong); background: var(--accent-tint); border-radius: 6px; padding: .1em .5em; font-weight: 700; }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/what-time-was-it-sent.md. Ana, her clock times, the block numbers 812,328 to 812,331
+   and 800,001 to 800,002 and the transaction ids are made up for this lab. Alice's payment (block 277,316, time
+   1388185914) is the real example from Mastering Bitcoin. The rule that block times need not rise is from BIP 113
+   (Kerin): the rules "do not mandate strict ordering of block timestamps". */
+var HASH = "7c2e90b4d1a85f36e0c94a71b2d8f5036ae49c17d0b3e85f2a61c4d97b0e3f58";
+
+/* The blocks that go by while Ana's low-fee payment waits. The last one is mined by a miner whose clock runs slow. */
+var BLOCKS = [
+  { h: "812,328", t: "09:03", note: "full of payments that pay more per byte" },
+  { h: "812,329", t: "09:08", note: "full of payments that pay more per byte" },
+  { h: "812,330", t: "09:11", note: "full of payments that pay more per byte" },
+  { h: "812,331", t: "09:09", note: "the miner's clock runs a few minutes slow", mine: true }
+];
+
+LabShell.start({
+  id: "what-time-was-it-sent",
+  title: "What time was it sent?",
+  slide: { title: "A transaction has no timestamp of its own", href: "../../../lessons/bitcoin/02-BF-transactions_and_mining.html#/a-transaction-has-no-timestamp-of-its-own" },
+  steps: {
+    "case": { html:
+      "<p>An agent has a timeline. The suspect's alibi covers 09:00 to 09:05. The explorer shows a payment from the suspect's wallet at 09:09. " +
+      "“So the payment was sent after the alibi ends, right?”</p>" +
+      "<p>Ana, the clock times and the blocks in this lab are made up.</p>" },
+    commit: {
+      question: "Ana pressed Send at 09:02 by her phone's clock. The explorer shows 09:09 beside her payment. What is 09:09?",
+      choices: [
+        "When Ana pressed Send.",
+        "When the first node saw the payment.",
+        "The time the miner wrote in the block that included it.",
+        "When the explorer read the payment."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var shown = 0, opened = false, finished = false;
+      var phone = api.el("b", null, "09:00");
+      var wall = api.el("b", null, "09:00");
+      var sendBtn = api.el("button", { class: "btn primary", type: "button" }, "Press Send at 09:02");
+      var mineBtn = api.el("button", { class: "btn", type: "button", disabled: true }, "Mine the next block");
+      var openBtn = api.el("button", { class: "btn", type: "button", disabled: true }, "Open the payment's own fields");
+      var poolBox = api.el("div", { class: "pool", role: "status" }, "The pool of waiting payments is empty.");
+      var chain = api.el("div", { class: "row", "aria-label": "Blocks mined" });
+      var status = api.el("p", { role: "status" });
+      var fields = api.el("div");
+
+      el.appendChild(api.el("p", null, "Ana sends a payment with the lowest fee her wallet allows. Press Send, then mine blocks one at a time and watch where her payment waits. Each block shows the time its miner wrote in it."));
+      el.appendChild(api.el("div", { class: "clocks" },
+        api.el("div", { class: "clock" }, "Ana's phone", phone),
+        api.el("div", { class: "clock" }, "Wall clock", wall),
+        api.el("div", { class: "clock" }, "Fee she set", api.el("span", { class: "fee" }, "1 sat/vB (lowest)"))));
+      el.appendChild(api.el("p", null, sendBtn, " ", mineBtn));
+      el.appendChild(poolBox);
+      el.appendChild(chain);
+      el.appendChild(status);
+      el.appendChild(api.el("p", null, openBtn));
+      el.appendChild(fields);
+
+      sendBtn.addEventListener("click", function () {
+        sendBtn.disabled = true;
+        phone.textContent = "09:02"; wall.textContent = "09:02";
+        poolBox.textContent = "Waiting in the pool: Ana's payment (txid ";
+        poolBox.appendChild(api.el("span", { class: "hash" }, api.short(HASH, 4)));
+        poolBox.appendChild(document.createTextNode("), lowest fee in the pool."));
+        mineBtn.disabled = false;
+        status.textContent = "Sent. Nothing has recorded it yet: it is only waiting.";
+      });
+
+      mineBtn.addEventListener("click", function () {
+        var b = BLOCKS[shown++];
+        var box = api.el("div", { class: "blk" + (b.mine ? " mine" : "") },
+          "Block " + b.h, api.el("span", { class: "stamp" }, "time " + b.t), api.el("small", null, b.note));
+        if (b.mine) { box.appendChild(api.el("small", null, "includes Ana's payment")); }
+        chain.appendChild(box);
+        if (!b.mine) {
+          status.textContent = "Block " + b.h + " is stamped " + b.t + ". Ana's payment is still waiting: better-paying payments went first.";
+        } else {
+          mineBtn.disabled = true;
+          poolBox.textContent = "The pool no longer holds Ana's payment.";
+          status.textContent = "Block 812,331 includes it and is stamped 09:09, though block 812,330 before it says 09:11. The chain accepts it: the rules do not require block times to rise. The explorer will print 09:09 beside Ana's payment. Now open the payment's own fields.";
+          openBtn.disabled = false;
+        }
+      });
+
+      openBtn.addEventListener("click", function () {
+        if (opened) return;
+        opened = true;
+        fields.appendChild(api.el("div", { class: "panel" },
+          api.el("h3", null, "Ana's payment, field by field"),
+          api.el("p", null, "Inputs: ", api.coin({ role: "input", amount: "0.050 BTC", who: "Ana's" })),
+          api.el("p", null, "Outputs: ", api.coin({ role: "output", amount: "0.040 BTC", who: "to Ben" }), " ", api.coin({ role: "change", amount: "0.00995 BTC", who: "back to Ana" })),
+          api.el("p", null, "Locktime: ", api.el("code", null, "0"), " (no earliest-mined condition)."),
+          api.el("p", null, "Look for 09:02, or any time at all. No field holds one.")));
+        if (!finished) {
+          finished = true;
+          api.finish({ choice: 2, note: "<p>09:09 is the time the miner wrote in the block that included the payment. The payment itself carries no time: thousands of computers that share no clock cannot agree on when anything was sent, so the miner writes one time per block and the rules accept it within loose limits. Ana pressed Send at 09:02, so the payment waited while later, better-paying payments were mined, and the stamp is even earlier than the block before it.</p><p class=\"src\">Sources: <code>@kerin_bip113mediantimepast_2015</code> (block times need not be in strict order); <code>@bitcoin.orgdevelopers_transactionsdeveloperguide_2024</code> (miners choose mostly by fee per byte; a minimum-fee payment may wait a long time; locktime). Why a low fee waits is the next slide, “Fees are priced per virtual byte”.</p>" });
+        }
+      });
+    } },
+    name: {
+      term: "block time",
+      parts: "block + time (the time written in the block)",
+      plain: "<p>The time the miner put in the header of the block that included a transaction. It is the miner's claim, not the moment anyone sent anything.</p><p class=\"src\">Source: <code>@kerin_bip113mediantimepast_2015</code>.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var TXID = "6f1ce2a05d93b87c41e0a9f62d5b38c07e14a95bd2f6038c1ea7b459d02c8e61";
+      var table = api.el("table", { class: "explore" });
+      [
+        ["Alice's payment", api.el("span", { class: "hash" }, api.short(TXID, 4))],
+        ["Time shown", "2013-12-27 23:11:54 UTC"],
+        ["Block", "277,316"],
+        ["Locktime", "0"],
+        ["Raw time in block 277,316", "1388185914"]
+      ].forEach(function (r) {
+        table.appendChild(api.el("tr", null, api.el("th", null, r[0]), api.el("td", null, r[1])));
+      });
+      el.appendChild(api.el("p", null, "Alice's payment from the slides, on a Bitcoin explorer as an analyst meets it (the block, time and locktime are the real example; the transaction id is made up and the page is a copy, not live)."));
+      el.appendChild(table);
+      el.appendChild(api.el("p", null, "The time printed beside the payment is block 277,316's time, 1388185914 seconds after 1 Jan 1970: 27 Dec 2013, 23:11:54 UTC. The locktime field is 0. A report says “block time” and gives the block."));
+      el.appendChild(api.el("p", { class: "src" }, "Sources: ", api.el("code", null, "@antonopoulos_masteringbitcoinprogramming_2017"), "; ", api.el("code", null, "@bitcoin.orgdevelopers_transactionsdeveloperguide_2024"), " (locktime)."));
+    } },
+    twist: {
+      html: "<p>Two blocks, made up for this lab. A payment sits in each.</p>" +
+        "<div class=\"row\">" +
+        "<div class=\"blk\">Block 800,001<br><span class=\"stamp\">time 10:05</span><small>holds payment P</small></div>" +
+        "<div class=\"blk\">Block 800,002<br><span class=\"stamp\">time 10:03</span><small>holds payment Q; names block 800,001 as the one before it</small></div>" +
+        "</div>",
+      question: "Which payment did the chain record first?",
+      choices: [
+        "Q, in block 800,002: it has the earlier time.",
+        "P, in block 800,001: it has the lower height.",
+        "Both at once.",
+        "There is no way to tell."
+      ],
+      answer: 1,
+      why: "<p>P, in block 800,001. Each block names the block before it, so height sets the order of recording. The times only show that one miner's clock disagreed with another's, which the rules allow. Which payment was <em>sent</em> first, the chain cannot say: as the lab showed, a payment can wait in the pool while later ones are mined.</p><p class=\"src\">Sources: <code>@bitcoin.orgdevelopers_blockchaindeveloper_2024</code> (each header names the previous block's hash); <code>@kerin_bip113mediantimepast_2015</code>. Confidence words: <code>@odni_icd203_2015</code>.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks when Ana sent the payment. Say it in one sentence, with a confidence word.</p>",
+      example: "The payment was confirmed in block 812,331, whose miner stamped it 09:09 UTC; the chain does not record when it was sent. It was sent some time before that block was mined, and the stamp is the miner's claim, so it may have been sent before 09:05 (Low confidence on when it was sent: timing alone)."
+    }
+  }
+});
+</script>
+</body>
+</html>
