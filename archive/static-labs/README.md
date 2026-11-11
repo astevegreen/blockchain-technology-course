@@ -1,6 +1,6 @@
 # Archived static labs
 
-Eleven browser labs taken out of what students receive on 10 Nov 2026, kept here so the owner can look at them
+Thirteen browser labs taken out of what students receive (eleven on 10 and 11 Nov 2026, two on 11 Nov at plan step 7), kept here so the owner can look at them
 before deciding their future. Nothing was deleted. The reasons are in
 `docs/analysis/2026-11-static-labs-review.md` ("Lab by lab" and "Defects"). Eight went in the first commit; the
 owner approved `hashing_merkle` and `bitcoin-attacks` later the same day, after
@@ -24,10 +24,12 @@ reaches the site, the `src.zip` or the student VM.
 | `hashing_merkle` | `hashing_merkle/hashing_merkle_lab.html` | 02-CP Hashing and Merkle Trees | Its proof check cannot fail; says every input has a unique hash |
 | `bitcoin-attacks` | `bitcoin-attacks/index.html` | 04-BF Bitcoin Security and Legal Concerns | No randomness: 51% always wins, 49% never does |
 | `ether-smart-contract-micro` | `ether-smart-contract-micro/index.html` | 04-EF Smart Contracts (linked from the day 3 index) | Replaced by "The vault that paid twice" (11 Nov 2026): it logged an `ETHTransfer` event real transfers do not write, invented gas numbers and narrated forward |
+| `ether_mev` | `ether_mev/mev_builders.html` | 03-EF Ethereum Network and MEV (and the day 4 browser-labs line) | Replaced by "Find the sandwich" (built 88cc036a, 11 Nov 2026), from the card `docs/lab-cards/find-the-sandwich.md` |
+| `tamper-ledger` | `tamper-ledger/tamper_ledger_lab.html` | 04-DS Distributed Ledgers | Replaced by "Build a ledger in four failures" (built ba0b782a, 11 Nov 2026), from the card `docs/lab-cards/build-a-ledger-in-four-failures.md` |
 
 ## Looking at one
 
-Eight of the ten are single files: double-click the file in the table and it opens in a browser.
+Eleven of the thirteen are single files: double-click the file in the table and it opens in a browser.
 
 `asym_sym_overview` and `hashing_merkle` load Pyodide and two stylesheets from the site's vendor folder, so they
 need a local web server. From the repository root:
@@ -51,6 +53,15 @@ Each place that linked an archived lab was taken out of view:
   inside 03-CP slides ("XOR Pad Demo", "PRG Demo") are hidden the same way.
 
 For `ether-smart-contract-micro` (replaced by `blockchain-course/assets/labs/the-vault-that-paid-twice/`, built from the card `docs/lab-cards/the-vault-that-paid-twice.md`): the `blockchain-course/index.qmd` day 3 browser-labs line and the 04-EF `lab:` block of `mindmap.html` were removed; the new lab is listed under day 8 and on the 10-FO mind-map node.
+
+For `ether_mev` and `tamper-ledger` (plan step 7, 11 Nov 2026), each link now opens its replacement:
+
+- `blockchain-course/index.qmd`: the day 4 "Browser lab" line links "Find the sandwich"; the 04-DS line links
+  "Build a ledger in four failures".
+- `blockchain-course/assets/mindmap.html`: the 03-EF and 04-DS `lab:` blocks name the replacements.
+- 04-DS, slide "Micro Lab: Tamper-Evident Ledger": the link opens "Build a ledger in four failures".
+- 03-EF, slide "Searchers, builders and relays set the order": the "MEV demo" line was removed; the lesson
+  already opens "Find the sandwich" from its sandwich slide.
 
 For `hashing_merkle` and `bitcoin-attacks` (the second commit):
 

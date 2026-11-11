@@ -129,3 +129,4 @@ the lab and say so; the contracts' behaviour is their own code.
 - Owner: "Bitcoin trace decoys", "Echo hunt", "Name the money and the flaw" (10 Nov 2026)
 - Scoring of the unchecked line: "Either line, full credit"; the vault read before Bybit's and the game's cases read
   from transactions: "Keep both as drafted" (owner, 10 Nov 2026)
+- Built in 4f6a89e8 (11 Nov 2026).
