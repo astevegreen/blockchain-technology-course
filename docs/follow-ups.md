@@ -21,6 +21,9 @@ slide index), which is never listed here.
   [11 Nov 2026, bridge worked example]
 
 ## Labs
+- The old `signatures` lab is still linked from 04-CP, index.qmd, primer.qmd and the mind map beside the new Forge
+  the payment lab; swap or retire it when day 1's labs are placed (the card says Forge the payment replaces it).
+  [11 Nov 2026, reviewer on the Forge the payment build]
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]

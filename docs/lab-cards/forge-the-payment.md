@@ -107,3 +107,4 @@ worked example from *Mastering Bitcoin*.
 ## Approval
 
 - Owner: "Who got paid?", "Forge the payment", "Through the exchange" (10 Nov 2026)
+- Built: 11 Nov 2026, `blockchain-course/assets/labs/forge-the-payment/index.html`; opened from the slide named above. Vendored @noble secp256k1 and Keccak (MIT), notice in `SOURCE.md` and `LICENSE-noble.txt`.

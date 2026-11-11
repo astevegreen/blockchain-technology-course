@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge the payment</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .keys { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin: 0.5rem 0; }
+  .who { font-weight: 700; margin-right: 0.3rem; }
+  table.bal, table.fields { border-collapse: collapse; margin: 0.6rem 0; }
+  table.bal th, table.bal td, table.fields th, table.fields td { text-align: left; padding: 0.3rem 0.8rem 0.3rem 0; vertical-align: middle; }
+  table.fields th { color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+  .forge { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: flex-end; margin: 0.8rem 0; }
+  .forge label { display: grid; gap: 0.2rem; font-weight: 600; }
+  .forge select { font: inherit; padding: 0.3rem; }
+  .log { list-style: none; padding: 0; margin: 0.8rem 0; display: grid; gap: 0.5rem; }
+  .log li { padding: 0.5rem 0.8rem; border-left: 5px solid var(--rule); background: var(--panel); }
+  .log li p { margin: 0.2rem 0; }
+  .log li.ok { border-left-color: var(--output); }
+  .log li.bad { border-left-color: var(--private-key); }
+  .mark { font-weight: 800; }
+  .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.6rem 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script src="./noble-secp256k1-keccak.js"></script>
+<script>
+/* Design card: docs/lab-cards/forge-the-payment.md. Ana, Ben and their payments are made up for the lab. Keys are made
+   fresh in the browser each time the page loads. Only the twist uses a published key: the worked key of the
+   lesson (Antonopoulos 2017, chapter 4). Amounts are whole hundredths of a coin, so no rounding creeps in. */
+(function () {
+  "use strict";
+  var S = NobleSecp.secp256k1, K = NobleSecp.keccak_256;
+  var el = LabShell.el;
+  var BOOK_KEY = "1e99423a4ed27608a15a2616a2b0e9e52ced330ac530edcc32c8ffc6a526aedd";
+  var BOOK_ADDR = "0xf4ddd38a2d2f4231e1ddf131a8f3fd80804e08fe";
+
+  function hex(u8) { return Array.prototype.map.call(u8, function (b) { return ("0" + b.toString(16)).slice(-2); }).join(""); }
+  function unhex(h) { var o = new Uint8Array(h.length / 2); for (var i = 0; i < o.length; i++) o[i] = parseInt(h.substr(i * 2, 2), 16); return o; }
+  function utf8(s) { return new TextEncoder().encode(s); }
+  function coins(n) { return (n / 100).toFixed(2); }
+  function addrOf(pub65) { return "0x" + hex(K(pub65.slice(1)).slice(12)); }
+  function shortAddr(a) { return a.slice(0, 6) + "…" + a.slice(-4); }
+  function makeKey(sk) {
+    sk = sk || S.utils.randomSecretKey();
+    var pk = S.getPublicKey(sk, false);
+    return { sk: sk, pk: pk, addr: addrOf(pk) };
+  }
+  function sign(msg, key) { return S.sign(K(utf8(msg)), key.sk, { prehash: false, format: "recovered" }); }
+  /** The address a signature points at, as the ledger works it out; null when it points at none. */
+  function recover(sig, msg) {
+    try { return addrOf(S.Point.fromBytes(S.recoverPublicKey(sig, K(utf8(msg)), { prehash: false })).toBytes(false)); }
+    catch (e) { return null; }
+  }
+  function fits(sig, msg, pk) {
+    try { return S.verify(sig.slice(1), K(utf8(msg)), pk, { prehash: false }); } catch (e) { return false; }
+  }
+  function sigText(sig) { return hex(sig.slice(1, 33)).slice(0, 8) + "…" + hex(sig.slice(33)).slice(-6); }
+  function sigChip(sig) { return el("span", { class: "sig" }, sigText(sig)); }
+  function addrChip(a) { return el("span", { class: "addr" }, shortAddr(a)); }
+
+  var ana = makeKey(), ben = makeKey(), me = makeKey();
+  var NAMES = {};
+  NAMES[ana.addr] = "Ana"; NAMES[ben.addr] = "Ben"; NAMES[me.addr] = "you";
+  function nameOf(a) { return NAMES[a] || "no one's account"; }
+
+  /* The ledger: accepts any payment whose signature checks and whose signer holds the coins. Its sender is never
+     typed in: it is worked out from the signature, as an Ethereum node does. With a counter it also accepts each
+     number from an account once. */
+  function Ledger(useCounter) {
+    this.bal = {}; this.bal[ana.addr] = 100; this.bal[ben.addr] = 0; this.bal[me.addr] = 0;
+    this.next = {}; this.useCounter = useCounter;
+  }
+  Ledger.prototype.submit = function (tx) {
+    var from = recover(tx.sig, tx.msg);
+    if (!from) return { ok: false, from: null, why: "The signature points at no key at all. Refused." };
+    var have = this.bal[from] || 0;
+    if (have < tx.value) return { ok: false, from: from, why: "The ledger works out the signer as " + nameOf(from) + " (" + shortAddr(from) + "), an account holding " + coins(have) + ". Refused." };
+    if (this.useCounter) {
+      var want = this.next[from] || 0;
+      if (tx.nonce !== want) return { ok: false, from: from, why: "Number " + tx.nonce + " from this account was used already; the ledger expects " + want + ". Refused." };
+      this.next[from] = want + 1;
+    }
+    this.bal[from] = have - tx.value;
+    this.bal[tx.to] = (this.bal[tx.to] || 0) + tx.value;
+    return { ok: true, from: from, why: "The ledger works out the signer as " + nameOf(from) + " and moves " + coins(tx.value) + " from that account. Accepted." };
+  };
+  function msgText(to, value, nonce) { return "Pay " + nameOf(to) + " " + coins(value) + " coins" + (nonce === undefined ? "" : ", number " + nonce); }
+
+  // ---- The ledger Ana's morning payment went through (no counter yet) ----
+  var morning = { to: ben.addr, value: 30 };
+  morning.msg = msgText(morning.to, morning.value);
+  morning.sig = sign(morning.msg, ana);
+  function morningLedger() { var l = new Ledger(false); l.submit(morning); return l; } // Ana 0.70, Ben 0.30
+
+  function balances(ledger) {
+    var rows = [[ana, "Ana"], [ben, "Ben"], [me, "You"]].map(function (r) {
+      return el("tr", null, el("th", { scope: "row" }, r[1]), el("td", null, addrChip(r[0].addr)), el("td", null, el("strong", null, coins(ledger.bal[r[0].addr] || 0))));
+    });
+    return el("table", { class: "bal" },
+      el("thead", null, el("tr", null, el("th", null, "Account"), el("th", null, "Address"), el("th", null, "Coins"))),
+      el.apply(null, ["tbody", null].concat(rows)));
+  }
+
+  function render(box, api) {
+    var plain = morningLedger(); // fresh each time the step opens, so Back and Restart start from this morning
+    var attempts = 0, forged = false, replayed = false;
+    var payee = me.addr, amount = 30, by = "ana"; // the form opens on an edit, so the first try is a forgery
+    var log = [];
+
+    function draw() {
+      box.innerHTML = "";
+      box.appendChild(el("p", null, "The ledger accepts any payment whose signature checks, and keeps no other record. You hold a copy of Ana's signed payment and a key of your own."));
+      box.appendChild(el("div", { class: "keys" },
+        el("span", { class: "who" }, "Ana's public key"), el("span", { class: "key public" }, hex(ana.pk).slice(2, 10) + "…"),
+        el("span", { class: "who" }, "Your private key"), el("span", { class: "key private" }, hex(me.sk).slice(0, 8) + "…")));
+      box.appendChild(el("table", { class: "fields" }, el("tbody", null,
+        el("tr", null, el("th", { scope: "row" }, "Ana's signed payment"), el("td", null, "“" + morning.msg + "”")),
+        el("tr", null, el("th", { scope: "row" }, "Her signature"), el("td", null, sigChip(morning.sig))))));
+      box.appendChild(balances(plain));
+
+      var payeeSel = el("select", { id: "payee", onchange: function () { payee = payeeSel.value; } },
+        el("option", { value: ben.addr, selected: payee === ben.addr }, "Ben"), el("option", { value: me.addr, selected: payee === me.addr }, "me"));
+      var amtSel = el("select", { id: "amount", onchange: function () { amount = Number(amtSel.value); } },
+        el("option", { value: "30", selected: amount === 30 }, "0.30"), el("option", { value: "300", selected: amount === 300 }, "3.00"));
+      var bySel = el("select", { id: "by", onchange: function () { by = bySel.value; } },
+        el("option", { value: "ana", selected: by === "ana" }, "Ana's signature, copied on"), el("option", { value: "me", selected: by === "me" }, "my own key signs it"));
+      box.appendChild(el("div", { class: "forge" },
+        el("label", { for: "payee" }, "Pay", payeeSel), el("label", { for: "amount" }, "Coins", amtSel), el("label", { for: "by" }, "Signature", bySel),
+        el("button", { class: "btn primary", type: "button", disabled: replayed, onclick: tryForgery }, "Send to the ledger")));
+
+      box.appendChild(el("div", { class: "actions" }, el("button", { class: "btn", type: "button", disabled: !forged || replayed, onclick: replay },
+        "Send Ana's payment again, byte for byte")));
+      if (!forged) box.appendChild(el("p", { class: "from" }, "Try a forgery first; the last button opens after your first try."));
+
+      var list = el("ol", { class: "log", "aria-live": "polite", "aria-label": "What the ledger did" });
+      log.slice().reverse().forEach(function (r) { list.appendChild(r); });
+      box.appendChild(list);
+    }
+
+    function row(label, msg, sig, check, res) {
+      return el("li", { class: res.ok ? "ok" : "bad" },
+        el("p", null, el("strong", null, attempts + ". " + label + ": "), "“" + msg + "” ", sigChip(sig)),
+        el("p", null, "Check against Ana's key: ", el("span", { class: "mark" }, check ? "✓ fits" : "✗ does not fit")),
+        el("p", null, res.why));
+    }
+
+    function tryForgery() {
+      var msg = msgText(payee, amount);
+      var sig = by === "ana" ? morning.sig : sign(msg, me);
+      var res = plain.submit({ msg: msg, to: payee, value: amount, sig: sig });
+      attempts++;
+      forged = true;
+      // With Ana's signature and nothing changed, the form sends her payment byte for byte: that is the copy.
+      replayed = res.ok;
+      log.push(row(by === "ana" ? "Her signature on these words" : "Your own signature", msg, sig, fits(sig, msg, ana.pk), res));
+      draw();
+      if (replayed) done();
+    }
+
+    function replay() {
+      var res = plain.submit(morning);
+      attempts++;
+      replayed = true;
+      log.push(row("Ana's payment, sent again", morning.msg, morning.sig, fits(morning.sig, morning.msg, ana.pk), res));
+      draw();
+      done();
+    }
+
+    function done() {
+      api.finish({
+        choice: 3,
+        note: "<p>The copy was accepted. Ben was paid twice and Ana is down 0.60 in all, and you never held her key: whoever sends a signed payment need not be the one who signed it. Every edit failed, because her signature fits only the bytes she signed. Signing with your own key gave a valid signature, but the ledger works out the signer as your own empty account.</p>" +
+          "<p>No signature check can tell the copy from the first send: same bytes, same signature. So each payment will carry the sender's counter, the account nonce from lesson ①, and the ledger accepts each number once. On Bitcoin a copy fails for another reason: the coin it spends is already spent, once and whole (Make change).</p>"
+      });
+    }
+    draw();
+  }
+
+  // ---- The explorer's view: the ledger with the counter ----
+  var counted = new Ledger(true);
+  var tx0 = { to: ben.addr, value: 30, nonce: 0 };
+  tx0.msg = msgText(tx0.to, tx0.value, 0);
+  tx0.sig = sign(tx0.msg, ana);
+  counted.submit(tx0);
+
+  function explorer(box) {
+    var from = recover(tx0.sig, tx0.msg);
+    var copy = el("div", { "aria-live": "polite" });
+    function field(name, value) { return el("tr", null, el("th", { scope: "row" }, name), el("td", null, value)); }
+    box.appendChild(el("p", null, "The ledger now keeps a counter for each account, so it works as Ethereum does. Ana's payment, as an Ethereum explorer's transaction page shows it:"));
+    box.appendChild(el("table", { class: "fields" }, el("tbody", null,
+      field("Hash", el("span", { class: "hash" }, LabShell.short(hex(K(utf8(tx0.msg + hex(tx0.sig)))), 6))),
+      field("From", el("span", null, addrChip(from), " ", el("em", null, "worked out from v, r and s; nobody typed it"))),
+      field("To", addrChip(tx0.to)),
+      field("Value", coins(tx0.value) + " coins"),
+      field("Nonce", el("strong", null, String(tx0.nonce))),
+      field("v", String(27 + tx0.sig[0])),
+      field("r", el("span", { class: "sig" }, LabShell.short(hex(tx0.sig.slice(1, 33)), 6))),
+      field("s", el("span", { class: "sig" }, LabShell.short(hex(tx0.sig.slice(33)), 6))))));
+    box.appendChild(el("p", null, "The nonce is the field that makes a copy fail. Send the copy again:"));
+    box.appendChild(el("div", { class: "actions" }, el("button", { class: "btn", type: "button", onclick: function () {
+      var res = counted.submit(tx0);
+      copy.innerHTML = "";
+      copy.appendChild(el("ol", { class: "log" }, el("li", { class: res.ok ? "ok" : "bad" },
+        el("p", null, el("strong", null, "The copy: "), el("span", { class: "mark" }, res.ok ? "✓ accepted" : "✗ refused")), el("p", null, res.why))));
+    } }, "Send the copy again")));
+    box.appendChild(copy);
+    box.appendChild(balances(counted));
+  }
+
+  // ---- The twist: a payment signed with the book's published key ----
+  function twistHtml() {
+    var book = makeKey(unhex(BOOK_KEY));
+    if (book.addr !== BOOK_ADDR) return "<p class=\"lab-error\">The worked key no longer gives the lesson's address; the lab is broken.</p>";
+    var stranger = makeKey();
+    var msg = "Pay " + shortAddr(stranger.addr) + " 0.50 coins, number 1";
+    var sig = sign(msg, book);
+    var valid = recover(sig, msg) === BOOK_ADDR && fits(sig, msg, book.pk);
+    return "<p>The next day a new payment leaves Ana's account for an address no one knows, with a valid signature and the next counter. Ana says she did not send it.</p>" +
+      "<table class=\"fields\"><tbody>" +
+      "<tr><th scope=\"row\">From</th><td><span class=\"addr\">" + shortAddr(BOOK_ADDR) + "</span> worked out from the signature</td></tr>" +
+      "<tr><th scope=\"row\">To</th><td><span class=\"addr\">" + shortAddr(stranger.addr) + "</span></td></tr>" +
+      "<tr><th scope=\"row\">Value</th><td>0.50 coins</td></tr><tr><th scope=\"row\">Nonce</th><td>1</td></tr>" +
+      "<tr><th scope=\"row\">Signature</th><td><span class=\"sig\">" + sigText(sig) + "</span> " + (valid ? "✓ valid" : "✗ invalid") + "</td></tr></tbody></table>" +
+      "<p>The case file adds one fact: Ana's address is <span class=\"addr\">" + shortAddr(BOOK_ADDR) + "</span>, the address of this lesson's worked key, whose private key is printed in <em>Mastering Bitcoin</em> (Antonopoulos 2017).</p>";
+  }
+
+  LabShell.start({
+    id: "forge-the-payment",
+    title: "Forge the payment",
+    slide: { title: "A signature authorizes; it doesn't identify",
+      href: "../../../lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.html#/a-signature-authorizes-it-doesnt-identify" },
+    steps: {
+      "case": { html: "<p>Ana paid Ben 0.30 coins this morning. Every node on the network saw her signed payment, and so did you. You have your own key and an empty account.</p><p><strong>The challenge: make Ana's money move.</strong></p>" },
+      commit: {
+        question: "This small ledger accepts any payment whose signature checks; it keeps no other record yet. You hold a copy of Ana's signed payment, “Pay Ben 0.30 coins”, and a key of your own. Can you make the ledger move Ana's money?",
+        choices: [
+          "Yes: change the payee to you, and her signature still checks.",
+          "Yes: sign a payment from Ana's account with your own key.",
+          "No: without Ana's private key nothing moves her money.",
+          "You cannot pay yourself, but you can move her money anyway."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "replay", parts: "replay: play it again",
+        plain: "<p>Sending a copy of someone else's signed payment again so that it runs a second time. The signature still checks, because nothing in it changed. A counter in the payment is what stops it.</p>" },
+      explorer: { render: explorer },
+      twist: {
+        html: twistHtml(),
+        question: "What does the valid signature prove?",
+        choices: [
+          "Ana sent it.",
+          "Ana is lying.",
+          "The key behind Ana's address signed it, and anyone who read the book holds that key.",
+          "The signature is forged."
+        ],
+        answer: 2,
+        why: "<p>A valid signature proves the key signed, not who held it. A key can also be stolen, shared or held by a service, and this one is printed in a published book.</p>"
+      },
+      tell: {
+        prompt: "<p>The agent asks whether Ana sent the second payment. Tell the agent, in one sentence with a confidence word.</p>",
+        example: "The second payment was signed with the key that controls Ana's address, 0xf4dd…08fe (High confidence: the signature verifies and the ledger accepted it). That key is printed in a published book, so the signature does not show that Ana sent the payment; who signed it needs other evidence."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
