@@ -48,7 +48,6 @@ class HostPortsListenOnLoopbackTests(unittest.TestCase):
     def test_the_files_are_found(self) -> None:
         names = {path.relative_to(ROOT).as_posix() for path in deployed_compose_files()}
         for expected in (
-            "ethereum_lab/docker-compose.yml",
             "hlf/docker-compose.yml",
             "hlf/managed_runtime/compose-test-net.yaml.tmpl",
             "quiz-engine-v2/compose.yaml",

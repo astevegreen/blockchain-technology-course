@@ -24,8 +24,6 @@ Options:
   --max-student-capacity N          Base capacity for claim-based labs (default 20, max 40)
   --bitcoin-student-capacity N      Override Bitcoin claim-lane capacity
   --consensus-student-capacity N    Override consensus claim-lane capacity
-  --p2p-trust-student-capacity N    Override P2P trust claim-lane capacity
-  --ethereum-student-capacity N     Override Ethereum claim-lane capacity
   --hlf-student-capacity N          Override Hyperledger Fabric claim-lane capacity
   --no-class-gate                   Leave the lab pages open to anyone who finds the host
                                     (the class gate is on by default)
@@ -66,7 +64,7 @@ while [[ "$#" -gt 0 ]]; do
             DOMAIN="$2"
             shift
             ;;
-        --max-student-capacity|--bitcoin-student-capacity|--consensus-student-capacity|--p2p-trust-student-capacity|--ethereum-student-capacity|--hlf-student-capacity)
+        --max-student-capacity|--bitcoin-student-capacity|--consensus-student-capacity|--hlf-student-capacity)
             if [[ -z "${2:-}" ]]; then
                 echo "$1 requires a value"
                 exit 1
@@ -295,7 +293,7 @@ LAB_MANAGER_CLOUD_MODE=1 HLF_ALLOW_RUNTIME_DOWNLOADS=1 \
 
 echo "Prebuilding on-demand student images via lab-manager.sh..."
 LAB_MANAGER_CLOUD_MODE=1 HLF_ALLOW_RUNTIME_DOWNLOADS=1 \
-    bash "${SCRIPT_DIR}/lab-manager.sh" build-images bitcoin consensus p2p_trust ethereum_lab hlf
+    bash "${SCRIPT_DIR}/lab-manager.sh" build-images bitcoin consensus hlf
 
 echo "Cloud deployment complete. The router is now serving on https://$DOMAIN"
 echo "Instructor credentials written to ${INSTRUCTOR_CREDENTIALS_FILE}"

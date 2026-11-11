@@ -15,8 +15,8 @@ The course is split into three layers, each of which can stand on its own:
   schedule, and a set of self-contained "static" lab pages that render as HTML
   and need no server. This is what gets published to GitHub Pages.
 - **`dynamic-labs/`** — the containerized side of the course: an nginx router
-  fronting per-lab services (Bitcoin, Consensus, Cryptography, P2P Trust,
-  Ethereum, Hyperledger Fabric), the centralized instructor login, the lane
+  fronting per-lab services (Bitcoin, Consensus, Cryptography,
+  Hyperledger Fabric, and the frozen-chain investigation labs), the centralized instructor login, the lane
   service that spins up per-student containers on demand, the trust-game and
   BGP exercises, and the quiz engine. This layer requires a host that can run
   Docker.

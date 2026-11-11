@@ -68,8 +68,6 @@ cd ../lane-service && docker compose down -v --remove-orphans || true
 cd ../bitcoin && docker compose down -v --remove-orphans || true
 cd ../consensus && docker compose down -v --remove-orphans || true
 cd ../cryptography && docker compose down -v --remove-orphans || true
-cd ../p2p_trust && docker compose down -v --remove-orphans || true
-cd ../ethereum_lab && docker compose down -v --remove-orphans || true
 cd ../exercises && docker compose down -v --remove-orphans || true
 cd ../quiz-engine-v2 && docker compose down -v --remove-orphans || true
 cd ../hlf && docker compose down -v --remove-orphans || true

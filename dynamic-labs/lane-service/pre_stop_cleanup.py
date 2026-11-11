@@ -8,11 +8,11 @@ same stop handlers. This entrypoint exists as a separate pre_stop hook so
 signaled.
 """
 
-from labs import bitcoin, consensus, cryptography, ethereum, p2p_trust
+from labs import bitcoin, consensus, cryptography
 
 
 def main() -> int:
-    for module in (bitcoin, consensus, p2p_trust, ethereum, cryptography):
+    for module in (bitcoin, consensus, cryptography):
         stop = getattr(module, "stop", None)
         if callable(stop):
             try:

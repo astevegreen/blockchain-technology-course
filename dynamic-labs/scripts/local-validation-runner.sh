@@ -182,10 +182,8 @@ phase2() {
     bitcoin.tar
     consensus.tar
     cryptography.tar
-    p2p_trust.tar
     quiz-engine-v2.tar
     exercises.tar
-    ethereum_lab.tar
     hlf.tar
   )
 

@@ -33,11 +33,11 @@ COMPOSE_NAME = re.compile(r"^(docker-)?compose[^/]*\.ya?ml$", re.IGNORECASE)
 
 # The order lab-manager.sh starts the targets in today (it stops them in reverse), so the router comes up first.
 # A lab not listed here is appended after these, by kind, day and position.
-TARGET_ORDER = ["router", "course-site", "lane-service", "instructor_auth_service", "ethereum_lab", "bitcoin",
-                "consensus", "cryptography", "p2p_trust", "exercises", "explorer", "wallet", "bitcoin-trace",
+TARGET_ORDER = ["router", "course-site", "lane-service", "instructor_auth_service", "bitcoin",
+                "consensus", "cryptography", "exercises", "explorer", "wallet", "bitcoin-trace",
                 "coinjoin-trace", "hide-and-trace", "tokens", "dex", "tron", "cross-chain", "final-trace", "quiz-engine-v2", "hlf"]
 # Names `lab-manager.sh` accepts besides the id and its - / _ spelling.
-EXTRA_ALIASES = {"ethereum_lab": ["ethereum"], "quiz-engine-v2": ["quiz"],
+EXTRA_ALIASES = {"quiz-engine-v2": ["quiz"],
                  "instructor_auth_service": ["auth-service", "auth_service"]}
 
 # list_targets prints these names, and lab-manager.sh compares against them (build-images, stop), so they stay.

@@ -52,33 +52,10 @@ class CapacityDefaultsTests(unittest.TestCase):
         for rel in (
             "lane-service/labs/bitcoin.py",
             "lane-service/labs/consensus.py",
-            "lane-service/labs/p2p_trust.py",
-            "lane-service/labs/ethereum.py",
         ):
             lab = (ROOT / rel).read_text(encoding="utf-8")
             self.assertIn("default=20", lab, rel)
             self.assertNotIn("default=30", lab, rel)
-
-    def test_ethereum_student_pool_uses_configured_capacity(self) -> None:
-        compose = (ROOT / "ethereum_lab/docker-compose.yml").read_text(
-            encoding="utf-8"
-        )
-        entrypoint = (ROOT / "ethereum_lab/docker-entrypoint.sh").read_text(
-            encoding="utf-8"
-        )
-        pool_script = (
-            ROOT / "ethereum_lab/scripts/setup-student-pool.js"
-        ).read_text(encoding="utf-8")
-
-        self.assertIn("MAX_STUDENT_CAPACITY=${MAX_STUDENT_CAPACITY:-20}", compose)
-        self.assertIn("ETHEREUM_STUDENT_CAPACITY=${ETHEREUM_STUDENT_CAPACITY:-}", compose)
-        self.assertIn(
-            'export POOL_SIZE="${POOL_SIZE:-${ETHEREUM_STUDENT_CAPACITY:-${MAX_STUDENT_CAPACITY:-20}}}"',
-            entrypoint,
-        )
-        self.assertIn("process.env.ETHEREUM_STUDENT_CAPACITY", pool_script)
-        self.assertIn("process.env.MAX_STUDENT_CAPACITY", pool_script)
-        self.assertIn('"20"', pool_script)
 
     def test_hlf_defaults_to_20_and_committed_assets_include_40(self) -> None:
         hlf_lab = (ROOT / "hlf/lab.sh").read_text(encoding="utf-8")

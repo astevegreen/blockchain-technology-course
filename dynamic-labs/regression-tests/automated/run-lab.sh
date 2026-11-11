@@ -36,7 +36,7 @@ LAB_START_NOTE="${LAB_START_NOTE:+ ${LAB_START_NOTE}}"
 
 # Every compose project the default fresh start takes down, volumes and all.
 LAB_PROJECTS=(
-  router course-site instructor_auth_service lane-service bitcoin consensus cryptography p2p_trust ethereum_lab
+  router course-site instructor_auth_service lane-service bitcoin consensus cryptography
   exercises explorer wallet bitcoin-trace coinjoin-trace hide-and-trace tokens dex tron cross-chain final-trace quiz-engine-v2 hlf
 )
 

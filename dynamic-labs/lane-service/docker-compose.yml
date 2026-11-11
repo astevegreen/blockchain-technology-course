@@ -11,25 +11,12 @@ services:
     environment:
       - CONSENSUS_IMAGE=consensus-lab-student
       - CONSENSUS_NETWORK=consensus-student-net
-      - P2P_TRUST_IMAGE=p2p-trust-lab-student
-      - P2P_TRUST_NETWORK=p2p-trust-student-net
       - BITCOIN_IMAGE=bitcoin-lab-student
       - BITCOIN_P2P_NET=bitcoin-p2p-net
       - BITCOIN_MGMT_NET=bitcoin-student-mgmt-net
-      # Ethereum on-demand. lane-service spawns a per-station container
-      # from the same image as the instructor (MODE=student); the
-      # instructor mgmt net is needed so it can fetch the pool/config
-      # for env injection without exposing the instructor container
-      # directly to student lanes.
-      - ETHEREUM_IMAGE=ethereum-trainer
-      - ETHEREUM_MGMT_NET=ethereum-student-mgmt-net
-      - ETHEREUM_INSTRUCTOR_HOST=ethereum-trainer-instructor
-      - ETHEREUM_INSTRUCTOR_PORT=8080
       - MAX_STUDENT_CAPACITY=${MAX_STUDENT_CAPACITY:-20}
       - BITCOIN_STUDENT_CAPACITY=${BITCOIN_STUDENT_CAPACITY:-}
       - CONSENSUS_STUDENT_CAPACITY=${CONSENSUS_STUDENT_CAPACITY:-}
-      - P2P_TRUST_STUDENT_CAPACITY=${P2P_TRUST_STUDENT_CAPACITY:-}
-      - ETHEREUM_STUDENT_CAPACITY=${ETHEREUM_STUDENT_CAPACITY:-}
       - STUDENT_WARM_POOL_SIZE=${STUDENT_WARM_POOL_SIZE:-}
       # Phase 9.3f: nuke-and-reseed needs the bitcoin compose file
       # bind-mounted so the lane-service can invoke
@@ -44,8 +31,6 @@ services:
       - STUDENT_PIDS_LIMIT=${STUDENT_PIDS_LIMIT:-256}
       - BITCOIN_STUDENT_HOME_ROOT=${BITCOIN_STUDENT_HOME_ROOT:-}
       - CONSENSUS_STUDENT_HOME_ROOT=${CONSENSUS_STUDENT_HOME_ROOT:-}
-      - P2P_TRUST_STUDENT_HOME_ROOT=${P2P_TRUST_STUDENT_HOME_ROOT:-}
-      - ETHEREUM_STUDENT_HOME_ROOT=${ETHEREUM_STUDENT_HOME_ROOT:-}
       - INSTRUCTOR_AUTH_URL=http://instructor-auth-service:8080/api/instructor/verify
       # Class gate (instructor_auth_service/class_gate.py): /claim and /resolve
       # ask for a class pass when on. lab-manager.sh --class-gate sets it.
@@ -63,12 +48,8 @@ services:
         working_dir: /app
     networks:
       - router-net
-      - ethereum-instructor-mgmt-net
 
 networks:
   router-net:
     name: router-net
-    external: true
-  ethereum-instructor-mgmt-net:
-    name: ethereum-instructor-mgmt-net
     external: true

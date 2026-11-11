@@ -263,8 +263,7 @@ class Generators(unittest.TestCase):
         self.assertEqual(lm.network_list(self.manifests()), [("router-net", False), ("beta-net", True)])
 
     def test_aliases(self):
-        self.assertEqual(lm.aliases("p2p_trust"), ["p2p_trust", "p2p-trust"])
-        self.assertIn("ethereum", lm.aliases("ethereum_lab"))
+        self.assertEqual(lm.aliases("bitcoin-trace"), ["bitcoin-trace", "bitcoin_trace"])
         self.assertIn("quiz", lm.aliases("quiz-engine-v2"))
 
     def test_list_targets_keeps_the_hyphen_name_lab_manager_compares_against(self):

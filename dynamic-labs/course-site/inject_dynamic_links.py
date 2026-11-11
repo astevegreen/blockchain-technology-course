@@ -33,10 +33,8 @@ Use these links after the instructor tells the class which lab is active. They a
 
 * [Byzantine Generals Lab](/exercises/bgp/)
 * [Cryptography Lab](/labs/cryptography/)
-* [P2P Trust Lab](/labs/p2p_trust/)
 * [Consensus Lab](/labs/consensus/)
 * [Bitcoin Lab](/labs/bitcoin/)
-* [Ethereum Lab](/labs/ethereum_lab/)
 
 ### Instructor Access
 

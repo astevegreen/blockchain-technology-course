@@ -106,20 +106,6 @@ class RouterClassGateContractTests(unittest.TestCase):
         self.assertIn("keys_zone=class_pass_cache:", cache)
         self.assertIn("keys_zone=instructor_auth_cache:", cache)
 
-    def test_ethereum_sends_only_a_refused_resolve_to_the_code_page(self) -> None:
-        conf = (ROUTER / "routes/ethereum.conf").read_text(encoding="utf-8")
-        claims = conf.count("error_page 401 = @ethereum_claim;")
-        self.assertGreater(claims, 0)
-        self.assertEqual(conf.count("error_page 403 = @ethereum_forbidden;"), claims)
-        self.assertNotIn("error_page 403 = @class_login;", conf)
-        # The lab's own 403 must stay a 403 (proxy_intercept_errors is on there):
-        # only a refused resolve subrequest, with no lane host, goes to the code page.
-        forbidden = _location_block(conf, "location @ethereum_forbidden")
-        self.assertIn('if ($resolved_host != "") {', forbidden)
-        self.assertIn("return 403;", forbidden)
-        self.assertIn("auth_request off;", forbidden)  # else the server-level gate refuses it again
-        self.assertIn("/api/class/return-to", forbidden)
-
     def test_services_read_the_switch(self) -> None:
         auth = (ROOT / "instructor_auth_service/docker-compose.yml").read_text(encoding="utf-8")
         self.assertIn("CLASS_GATE=${CLASS_GATE:-off}", auth)

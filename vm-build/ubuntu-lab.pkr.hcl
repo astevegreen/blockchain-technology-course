@@ -115,10 +115,8 @@ build {
       "while read -r tarfile; do echo \"Streaming and loading $tarfile...\"; curl -fsSL http://10.0.2.2:8000/$tarfile | sudo docker load; done < manifest.txt",
       "cd /",
       "rm -rf /tmp/bundles",
-      "echo 'Installing heimdall-rs from the Ethereum lab image (the upstream release binary, checksum-verified in its Dockerfile)...'",
-      "heimdall_cid=$(sudo docker create ethereum-trainer)",
-      "sudo docker cp \"$heimdall_cid:/usr/local/bin/heimdall\" /usr/local/bin/heimdall",
-      "sudo docker rm \"$heimdall_cid\"",
+      "echo 'Installing heimdall-rs 0.9.3, the upstream release binary, checked against its published SHA-256...'",
+      "case \"$(uname -m)\" in x86_64) asset=heimdall-linux-amd64; sha=8d58c97f56d584d5d0737d0d0895fc8c68b7b8b2b680f2a7842245789f0b4868 ;; aarch64) asset=heimdall-linux-arm64; sha=ef1d236e5e194e1722e12552b66303d3172e0c4cc267b096f7bc8a053f168df8 ;; *) echo \"Unsupported architecture: $(uname -m)\" >&2; exit 1 ;; esac; curl -fsSL -o /tmp/heimdall \"https://github.com/Jon-Becker/heimdall-rs/releases/download/0.9.3/$asset\" && echo \"$sha  /tmp/heimdall\" | sha256sum -c - && sudo install -m 755 /tmp/heimdall /usr/local/bin/heimdall && rm /tmp/heimdall",
       "heimdall --version",
       "cd /opt/dynamic-labs/router && sudo docker network create router-net || true"
     ]

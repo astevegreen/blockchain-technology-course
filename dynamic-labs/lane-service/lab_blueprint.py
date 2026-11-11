@@ -298,7 +298,7 @@ def make_lab_blueprint(
     def resolve():
         if not class_pass_ok():
             # 403, not 401: the router sends 403 to the class code page and
-            # 401 to the claim page (routes/_class_gate.conf, ethereum.conf).
+            # 401 to the claim page (routes/_class_gate.conf, bitcoin.conf).
             return Response("class pass required", status=403)
         uuid = request.headers.get("X-Session-UUID") or _get_session_uuid()
         if not uuid or not is_valid_uuid(uuid):

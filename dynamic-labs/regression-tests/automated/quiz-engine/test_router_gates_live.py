@@ -37,9 +37,6 @@ GATED = [
     "/labs/cryptography/admin",  # routes/cryptography.conf
     "/labs/cryptography/instructor/",  # routes/cryptography.conf
     "/labs/cryptography/instructor/dashboard",  # routes/cryptography.conf
-    "/labs/ethereum/admin",  # routes/ethereum.conf
-    "/labs/ethereum_lab/instructor",  # routes/ethereum.conf, redirects to ?mode=instructor
-    "/labs/ethereum_lab/?mode=instructor",  # routes/ethereum.conf, @ethereum_instructor_mode
     "/labs/hlf/api/hlf/claims",  # routes/hlf.conf, the API catch-all
     "/labs/hlf/instructor/term/org1/",  # routes/hlf.conf
     "/labs/hlf/instructor/term/orderer/",  # routes/hlf.conf
@@ -47,8 +44,6 @@ GATED = [
     "/labs/hlf/orderer/console/",  # routes/hlf.conf
     "/labs/hlf/instructor",  # routes/hlf.conf, the instructor panel page
     "/labs/hlf/instructor/",  # routes/hlf.conf
-    "/labs/p2p_trust/admin",  # routes/p2p_trust.conf
-    "/labs/p2p_trust/instructor/",  # routes/p2p_trust.conf
 ]
 
 # Student routes in routes/hlf.conf that a broader gate could swallow.

@@ -9,8 +9,6 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 | `/labs/bitcoin/` | Bitcoin lab |
 | `/labs/consensus/` | Consensus lab |
 | `/labs/cryptography/` | Cryptography lab |
-| `/labs/p2p_trust/` | P2P Trust lab |
-| `/labs/ethereum_lab/` | Ethereum lab |
 | `/labs/hlf/` | Hyperledger Fabric lab |
 | `/exercises/<name>/` | Exercises (trust-game, bgp-game) |
 | `/labs/explorer/` | Explorer lab (redirects to its own host, `explorer.<host>`; reached by IP address, to port 8441) |
@@ -304,7 +302,7 @@ finds the host.
 Cloud deploy accepts the same claim-lane capacity controls as `lab-manager.sh deploy --mode instructor` and forwards them to lab-manager:
 
 - `--max-student-capacity N` sets the base capacity for claim-based labs. Instructor deployments default to 20 and accept values up to 40.
-- `--bitcoin-student-capacity N`, `--consensus-student-capacity N`, `--p2p-trust-student-capacity N`, `--ethereum-student-capacity N`, and `--hlf-student-capacity N` override individual lab capacities.
+- `--bitcoin-student-capacity N`, `--consensus-student-capacity N` and `--hlf-student-capacity N` override individual lab capacities.
 - Example: `sudo ./deploy-cloud.sh --domain labs.my-course.com --max-student-capacity 20 --hlf-student-capacity 10`
 
 #### Host size for a class (local estimate, 9 Nov 2026)
@@ -312,7 +310,8 @@ Cloud deploy accepts the same claim-lane capacity controls as `lab-manager.sh de
 Measured on the course desktop (Docker Desktop, 20 CPUs, 15.6 GiB), not on a cloud host, with
 `scripts/measure-seats.py`: a fresh classroom deploy, ten lanes of each claim-based lab started through the
 instructor API, and `docker stats` read after a 45-second settle. The seats were idle (a student reading or typing),
-so CPU is a floor, not a peak.
+so CPU is a floor, not a peak. The Ethereum and P2P Trust labs were archived on 11 Nov 2026 (`archive/dynamic-labs/`
+in the course repository); their rows below are kept as measured.
 
 | What | RAM | CPU |
 |------|----:|------------------------:|
@@ -346,9 +345,9 @@ Recommended host, which these bursts fit:
 - **40 seats:** 16 vCPU, 32 GiB RAM, 150 GB SSD.
 
 Before the first class on a new host, rerun the measurement there: deploy with `--max-student-capacity` at least the
-seat count, `lab-manager.sh start` the five labs, then
-`python3 scripts/measure-seats.py --seats 20 ethereum_lab bitcoin consensus p2p_trust hlf`, and the class bursts
-with `python3 scripts/measure-seats.py --seats 40 --burst ethereum_lab bitcoin hlf`. On a cloud host add
+seat count, `lab-manager.sh start` the three lane labs, then
+`python3 scripts/measure-seats.py --seats 20 bitcoin consensus hlf`, and the class bursts
+with `python3 scripts/measure-seats.py --seats 40 --burst bitcoin hlf`. On a cloud host add
 `--base-url https://<your domain>` to each: the router redirects plain `http://127.0.0.1` to HTTPS.
 The full list of checks that wait for the real host, the real domain and the first real class is
 `docs/before-first-class.md` in the course repository (instructors have it there; it is not part of this download).
@@ -360,8 +359,8 @@ Cloud deployment is allowed to hydrate Hyperledger Fabric build assets from the 
 One machine hosting a full classroom.
 
 - Default claim-lane capacity is `20`; the hard limit is `40`.
-- `--max-student-capacity` sets the base lane capacity ceiling for claim-based labs such as `bitcoin`, `consensus`, `p2p_trust`, `ethereum_lab`, and `hlf`.
-- Per-lab overrides are available for claim-based labs: `--bitcoin-student-capacity`, `--consensus-student-capacity`, `--p2p-trust-student-capacity`, `--ethereum-student-capacity`, and `--hlf-student-capacity`.
+- `--max-student-capacity` sets the base lane capacity ceiling for claim-based labs such as `bitcoin`, `consensus`, and `hlf`.
+- Per-lab overrides are available for claim-based labs: `--bitcoin-student-capacity`, `--consensus-student-capacity`, and `--hlf-student-capacity`.
 
 ```bash
 cd dynamic-labs
@@ -411,8 +410,6 @@ machine may be offline, and the build downloads Quarto.
 | `bitcoin` | Bitcoin lab (ttyd + mempool + explorer) |
 | `consensus` | Consensus lab (ttyd) |
 | `cryptography` | Cryptography lab (Streamlit) |
-| `p2p_trust` | P2P Trust lab (ttyd) |
-| `ethereum_lab` | Ethereum lab (Vite SPA + Hardhat) |
 | `exercises` | Flask exercises (trust-game, bgp-game) |
 | `explorer` | Day-1 explorer lab (Otterscan on a frozen course chain); `explorer/README.md` |
 | `wallet` | Day-2 wallet lab (wallet page and mempool on a frozen Bitcoin chain); `wallet/README.md` |
@@ -431,7 +428,7 @@ machine may be offline, and the build downloads Quarto.
 
 Labs fall into two categories:
 
-**On-demand lanes** (bitcoin, consensus, p2p_trust, ethereum, hlf): Students claim a session via `/api/<lab>/claim`, and the lab control plane starts a lane-specific container from a pre-built image. `--max-student-capacity` is the base upper bound for how many claimable stations exist at once, and the per-lab capacity flags can override it for individual labs up to the 40-lane limit.
+**On-demand lanes** (bitcoin, consensus, hlf): Students claim a session via `/api/<lab>/claim`, and the lab control plane starts a lane-specific container from a pre-built image. `--max-student-capacity` is the base upper bound for how many claimable stations exist at once, and the per-lab capacity flags can override it for individual labs up to the 40-lane limit.
 
 **Shared singleton apps** (cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
 
@@ -555,11 +552,11 @@ You can bypass `lab-manager.sh` and use Docker Compose if you prefer:
 
 ```bash
 cd bitcoin
-docker compose --profile build-only build    # build student image (bitcoin, consensus, p2p_trust)
+docker compose --profile build-only build    # build student image (bitcoin, consensus)
 docker compose up -d                         # start instructor + supporting services
 ```
 
-The `--profile build-only build` step is only needed for labs where lane-service creates student containers on demand (bitcoin, consensus, p2p_trust). Other labs start all services directly via `docker compose up -d`.
+The `--profile build-only build` step is only needed for labs where lane-service creates student containers on demand (bitcoin, consensus). Other labs start all services directly via `docker compose up -d`.
 
 When using compose directly, pass the runtime secrets env file:
 

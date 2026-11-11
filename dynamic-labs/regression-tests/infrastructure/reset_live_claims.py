@@ -22,14 +22,6 @@ LAB_ENDPOINTS = {
         "list": "/api/consensus/claims",
         "delete_prefix": "/api/consensus/claims/",
     },
-    "p2p_trust": {
-        "list": "/api/p2p_trust/claims",
-        "delete_prefix": "/api/p2p_trust/claims/",
-    },
-    "ethereum_lab": {
-        "list": "/api/ethereum/claims",
-        "delete_prefix": "/api/ethereum/claims/",
-    },
     "hlf": {
         "list": "/labs/hlf/api/hlf/claims",
         "delete_prefix": "/labs/hlf/api/hlf/claims/",

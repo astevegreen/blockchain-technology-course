@@ -30,7 +30,7 @@ _PROBE = r"""
 import json, sys
 sys.path.insert(0, sys.argv[1])
 from flask import Flask
-import labs.bitcoin as b, labs.consensus as c, labs.p2p_trust as p, labs.ethereum as e
+import labs.bitcoin as b, labs.consensus as c
 app = Flask("probe")
 app.register_blueprint(b.blueprint)
 out = {
@@ -38,7 +38,7 @@ out = {
     "labs": {
         m.__name__: {"count": m.STUDENT_COUNT, "warm": m.DEFAULT_WARM_POOL_SIZE, "home": m.STUDENT_HOME_ROOT,
                      "local": m.config.student_local, "config_count": m.config.student_count}
-        for m in (b, c, p, e)
+        for m in (b, c)
     },
 }
 print("PROBE" + json.dumps(out))
@@ -59,29 +59,10 @@ print("PROBE" + json.dumps({"status": resp.status_code, "body": resp.get_json(),
                             "args": [str(a) for a in deploy.call_args.args]}))
 """
 
-# Runs ethereum.start() with the instructor wait, the pool and the sweepers stubbed: did it wait, did it fill a pool.
-_ETH_START = r"""
-import json, sys
-sys.path.insert(0, sys.argv[1])
-from contextlib import ExitStack
-from unittest.mock import patch
-import labs.ethereum as e
-with ExitStack() as stack:
-    wait = stack.enter_context(patch.object(e, "_wait_for_instructor_metadata", return_value=True))
-    stack.enter_context(patch.object(e.claim_manager, "get_pool_size", return_value=0))
-    pool = stack.enter_context(patch.object(e.claim_manager, "set_pool_size"))
-    claims = stack.enter_context(patch.object(e.claim_manager, "start_sweeper"))
-    lanes = stack.enter_context(patch.object(e.lane_manager, "start_sweeper"))
-    e.start()
-print("PROBE" + json.dumps({"waited": wait.called, "pool": [c.args for c in pool.call_args_list],
-                            "sweepers": claims.called and lanes.called}))
-"""
-
-
 def _run_probe(script: str, extra_env: dict[str, str]) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         env = {k: v for k, v in os.environ.items() if k != "LANE_MODE"}
-        for lab in ("BITCOIN", "CONSENSUS", "P2P_TRUST", "ETHEREUM"):
+        for lab in ("BITCOIN", "CONSENSUS"):
             env[f"{lab}_STATE_DIR"] = str(Path(tmp) / lab.lower())
         env.update(extra_env)
         result = subprocess.run(
@@ -127,20 +108,6 @@ class LabSettingsTests(unittest.TestCase):
                 self.assertFalse(lab["local"])
         self.assertEqual(labs["labs.bitcoin"]["home"], self.home)
         self.assertEqual(labs["labs.consensus"]["home"], self.home)
-        self.assertIsNone(labs["labs.p2p_trust"]["home"])
-
-    def test_ethereum_start_waits_for_the_instructor_only_in_the_classroom(self) -> None:
-        """Classroom: lane-service waits (up to 30 s) for the instructor's wallets and contracts, then fills the warm
-        pool. Student-local: no wait, so the launcher's wait_for_lane_service returns as soon as Flask listens."""
-        warm = {"STUDENT_WARM_POOL_SIZE": "2"}
-        classroom = _run_probe(_ETH_START, warm)
-        self.assertTrue(classroom["waited"])
-        self.assertEqual(classroom["pool"], [[2]])
-        self.assertTrue(classroom["sweepers"])
-        local = _run_probe(_ETH_START, {**warm, "LANE_MODE": "student-local"})
-        self.assertFalse(local["waited"])
-        self.assertEqual(local["pool"], [])
-        self.assertTrue(local["sweepers"])
 
     def test_forensics_load_route_exists_only_in_student_local(self) -> None:
         route = "/api/local/bitcoin/forensics-load"
@@ -241,18 +208,18 @@ class ClaimTests(unittest.TestCase):
         env["COURSE_RELEASE"] = "2026.11.09-1"
         with patch.dict(os.environ, {**env, "LANE_MODE": "student-local"}, clear=True):
             self.assertEqual(
-                generic_lanes.student_local_labels("ethereum_lab"),
-                ["--label", "course.lab=ethereum_lab", "--label", "course.release=2026.11.09-1"],
+                generic_lanes.student_local_labels("consensus"),
+                ["--label", "course.lab=consensus", "--label", "course.release=2026.11.09-1"],
             )
         with patch.dict(os.environ, env, clear=True):
-            self.assertEqual(generic_lanes.student_local_labels("ethereum_lab"), [])
+            self.assertEqual(generic_lanes.student_local_labels("consensus"), [])
 
     def _docker_run_args(self, tmp: str, env: dict, course_lab):
         """The `docker run` arguments LaneManager sends when it starts a new lane container (Docker faked)."""
         generic_lanes, _ = _lane_modules()
         with patch.dict(os.environ, env, clear=True):
             config = generic_lanes.LaneConfig(
-                lab_name="ethereum", container_name_fn=lambda lid: f"probe-{lid}", state_dir=Path(tmp),
+                lab_name="consensus-probe", container_name_fn=lambda lid: f"probe-{lid}", state_dir=Path(tmp),
                 student_count=1, image="probe-image", network="probe-net", course_lab=course_lab,
             )
             manager = generic_lanes.LaneManager(config)
@@ -269,15 +236,15 @@ class ClaimTests(unittest.TestCase):
         env = {k: v for k, v in os.environ.items() if k not in ("LANE_MODE", "COURSE_RELEASE")}
         local = {**env, "LANE_MODE": "student-local", "COURSE_RELEASE": "2026.11.09-1"}
         with tempfile.TemporaryDirectory() as tmp:
-            cmd = self._docker_run_args(tmp, local, "ethereum_lab")
+            cmd = self._docker_run_args(tmp, local, "consensus")
             labels = [cmd[i + 1] for i, arg in enumerate(cmd) if arg == "--label"]
-            self.assertEqual(labels, ["course.lab=ethereum_lab", "course.release=2026.11.09-1"])
+            self.assertEqual(labels, ["course.lab=consensus", "course.release=2026.11.09-1"])
             self.assertLess(cmd.index("--label"), cmd.index("probe-image"))  # flags come before the image
         with tempfile.TemporaryDirectory() as tmp:  # no lab id given: the lab name stands in
             cmd = self._docker_run_args(tmp, local, None)
-            self.assertIn("course.lab=ethereum", cmd)
+            self.assertIn("course.lab=consensus-probe", cmd)
         with tempfile.TemporaryDirectory() as tmp:  # classroom: no labels at all
-            cmd = self._docker_run_args(tmp, env, "ethereum_lab")
+            cmd = self._docker_run_args(tmp, env, "consensus")
             self.assertNotIn("--label", cmd)
 
 
@@ -285,9 +252,7 @@ LAUNCHER_FILES = {  # lab id: launcher compose file
     "lane-service": "lane-service/docker-compose.launcher.yml",
     "bitcoin": "bitcoin/docker-compose.launcher.yml",
     "consensus": "consensus/docker-compose.launcher.yml",
-    "p2p_trust": "p2p_trust/docker-compose.launcher.yml",
     "cryptography": "cryptography/docker-compose.launcher.yml",
-    "ethereum_lab": "ethereum_lab/docker-compose.launcher.yml",
 }
 # The one host path a launcher file may name: lane-service starts lanes through the Docker socket.
 ALLOWED_BINDS = {("lane-service", "/var/run/docker.sock")}
@@ -335,15 +300,13 @@ class LauncherComposeTests(unittest.TestCase):
         self.assertEqual(values["LANE_MODE"], "student-local")
         self.assertEqual(values["BITCOIN_IMAGE"], "${BITCOIN_STUDENT_IMAGE:?}")
         self.assertEqual(values["CONSENSUS_IMAGE"], "${CONSENSUS_STUDENT_IMAGE:?}")
-        self.assertEqual(values["P2P_TRUST_IMAGE"], "${P2P_TRUST_STUDENT_IMAGE:?}")
-        self.assertEqual(values["ETHEREUM_IMAGE"], "${ETHEREUM_LAB_ETHEREUM_TRAINER_IMAGE:?}")
         # lane-service's own `docker compose up` on the baked bitcoin file must interpolate every variable it uses.
         bitcoin = (ROOT / LAUNCHER_FILES["bitcoin"]).read_text(encoding="utf-8")
         for var in set(re.findall(r"\$\{([A-Z0-9_]+)[:}]", bitcoin)):
             self.assertIn(var, values, var)
 
     def test_lane_images_are_pulled_but_not_started_by_compose(self) -> None:
-        for lab_id in ("bitcoin", "consensus", "p2p_trust"):
+        for lab_id in ("bitcoin", "consensus"):
             student = _load(LAUNCHER_FILES[lab_id])["services"]["student"]
             self.assertEqual(student.get("profiles"), ["lane-image"], lab_id)
 

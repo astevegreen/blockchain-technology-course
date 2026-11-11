@@ -70,7 +70,6 @@ SEEDER_ENGINE = "generic chain-building engine; the scenarios that hold the answ
 STUDENT_FACING = {
     "dynamic-labs/*instructor*.py": "code of a lab's instructor pages or auth: the running lab, gated by its login",
     "dynamic-labs/*instructor*.js": "code of a lab's instructor pages: the running lab, gated by its login",
-    "dynamic-labs/*instructor*.jsx": "code of a lab's instructor pages: the running lab, gated by its login",
     "dynamic-labs/hlf/web_ui/hlf_instructor.html": "the HLF lab's instructor console page, gated by its login",
     "dynamic-labs/hlf/web_ui/instructor_login.html": "the instructor login page the auth service serves",
     "dynamic-labs/hlf/web_ui/instructor_sessions.html": "the auth service's sessions page, gated by its login",
@@ -87,10 +86,6 @@ STUDENT_FACING = {
         "the wallet-free class chain the lab's deploy button installs; students query this chain in the lab",
     "dynamic-labs/cryptography/Dockerfile.instructor": "builds the lab's instructor container",
     "dynamic-labs/cryptography/instructor-nginx.conf": "configures the lab's instructor container",
-    "dynamic-labs/ethereum_lab/docker-compose.instructor-minimal.yml": "a compose file to run the lab",
-    "dynamic-labs/ethereum_lab/instructor-config.json": "a saved chain address and RPC URL, no answers",
-    "dynamic-labs/ethereum_lab/docs/plans/beacon-instructor-controls-and-mempool-plan.md":
-        "a design plan for the instructor controls, no answers",
     "dynamic-labs/bitcoin/bitcoin-instructor-seed.sh": "seeds the class chain at container start; in the lab image",
     "dynamic-labs/wallet/chain/seedkeys.py": "derives keys from a seed phrase, which the wallet lab teaches",
     "dynamic-labs/bitcoin-forensics/seeder/__init__.py": SEEDER_ENGINE,

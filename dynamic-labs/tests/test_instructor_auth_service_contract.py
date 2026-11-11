@@ -68,13 +68,6 @@ class InstructorAuthServiceContractTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertEqual(resp.headers["Location"], "/instructor/")
 
-    def test_instructor_portal_links_to_ethereum_trainer_query_mode(self) -> None:
-        with self.app.test_client() as client:
-            resp = client.get("/instructor/")
-        body = resp.get_data(as_text=True)
-        self.assertEqual(resp.status_code, 200)
-        self.assertIn('/labs/ethereum_lab/?mode=instructor', body)
-
     def test_instructor_live_progress_uses_hlf_instructor_console_url(self) -> None:
         with self.app.test_client() as client:
             resp = client.get("/instructor/")

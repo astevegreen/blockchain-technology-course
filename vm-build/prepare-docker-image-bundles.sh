@@ -18,7 +18,6 @@ projects=(
   "dynamic-labs/bitcoin"
   "dynamic-labs/consensus"
   "dynamic-labs/cryptography"
-  "dynamic-labs/p2p_trust"
   "dynamic-labs/quiz-engine-v2"
   "dynamic-labs/exercises"
   "dynamic-labs/explorer"
@@ -31,7 +30,6 @@ projects=(
   "dynamic-labs/tron"
   "dynamic-labs/cross-chain"
   "dynamic-labs/final-trace"
-  "dynamic-labs/ethereum_lab"
   "dynamic-labs/hlf"
 )
 

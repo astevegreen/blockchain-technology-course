@@ -48,8 +48,6 @@ DEFAULT_STUDENT_MODE_WARM_POOL_SIZE="${LAB_MANAGER_DEFAULT_STUDENT_WARM_POOL_SIZ
 DEFAULT_STUDENT_HOME_DISKS_MODE="auto"
 DEFAULT_BITCOIN_STUDENT_HOME_SIZE_MB=512
 DEFAULT_CONSENSUS_STUDENT_HOME_SIZE_MB=128
-DEFAULT_P2P_TRUST_STUDENT_HOME_SIZE_MB=128
-DEFAULT_ETHEREUM_STUDENT_HOME_SIZE_MB=256
 DEFAULT_HLF_STUDENT_DISK_SIZE_MB=256
 DEFAULT_STUDENT_HOME_DISK_RESERVE_MB=2048
 
@@ -67,15 +65,13 @@ Usage:
   ./lab-manager.sh list
 
 Managed targets:
-  router, course-site, instructor-auth-service, ethereum_lab, bitcoin, consensus, cryptography, p2p_trust, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2, hlf
+  router, course-site, instructor-auth-service, bitcoin, consensus, cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2, hlf
 
 Deploy options:
   --mode <instructor|student>
   --max-student-capacity N   Base lane capacity for claim-based labs (default instructor: 20, max: 40)
   --bitcoin-student-capacity N
   --consensus-student-capacity N
-  --p2p-trust-student-capacity N
-  --ethereum-student-capacity N
   --hlf-student-capacity N
   --no-tls
   --class-gate               Students enter the class code before any lab page (instructor mode only;
@@ -101,7 +97,7 @@ Examples:
   ./lab-manager.sh start bitcoin
   ./lab-manager.sh start hlf
   ./lab-manager.sh start all
-  ./lab-manager.sh build-images bitcoin consensus p2p_trust
+  ./lab-manager.sh build-images bitcoin consensus
   ./lab-manager.sh stop bitcoin
   ./lab-manager.sh status all
   ./lab-manager.sh cleanup student-home-disks
@@ -114,20 +110,14 @@ reset_defaults() {
     MAX_STUDENT_CAPACITY="${MAX_STUDENT_CAPACITY:-}"
     BITCOIN_STUDENT_CAPACITY="${BITCOIN_STUDENT_CAPACITY:-}"
     CONSENSUS_STUDENT_CAPACITY="${CONSENSUS_STUDENT_CAPACITY:-}"
-    P2P_TRUST_STUDENT_CAPACITY="${P2P_TRUST_STUDENT_CAPACITY:-}"
-    ETHEREUM_STUDENT_CAPACITY="${ETHEREUM_STUDENT_CAPACITY:-}"
     STUDENT_PIDS_LIMIT="${STUDENT_PIDS_LIMIT:-${DEFAULT_STUDENT_PIDS_LIMIT}}"
     STUDENT_HOME_DISKS_MODE="${STUDENT_HOME_DISKS_MODE:-${DEFAULT_STUDENT_HOME_DISKS_MODE}}"
     BITCOIN_STUDENT_HOME_SIZE_MB="${BITCOIN_STUDENT_HOME_SIZE_MB:-${DEFAULT_BITCOIN_STUDENT_HOME_SIZE_MB}}"
     CONSENSUS_STUDENT_HOME_SIZE_MB="${CONSENSUS_STUDENT_HOME_SIZE_MB:-${DEFAULT_CONSENSUS_STUDENT_HOME_SIZE_MB}}"
-    P2P_TRUST_STUDENT_HOME_SIZE_MB="${P2P_TRUST_STUDENT_HOME_SIZE_MB:-${DEFAULT_P2P_TRUST_STUDENT_HOME_SIZE_MB}}"
-    ETHEREUM_STUDENT_HOME_SIZE_MB="${ETHEREUM_STUDENT_HOME_SIZE_MB:-${DEFAULT_ETHEREUM_STUDENT_HOME_SIZE_MB}}"
     HLF_STUDENT_DISK_SIZE_MB="${HLF_STUDENT_DISK_SIZE_MB:-${DEFAULT_HLF_STUDENT_DISK_SIZE_MB}}"
     STUDENT_HOME_DISK_RESERVE_MB="${STUDENT_HOME_DISK_RESERVE_MB:-${DEFAULT_STUDENT_HOME_DISK_RESERVE_MB}}"
     BITCOIN_STUDENT_HOME_ROOT=""
     CONSENSUS_STUDENT_HOME_ROOT=""
-    P2P_TRUST_STUDENT_HOME_ROOT=""
-    ETHEREUM_STUDENT_HOME_ROOT=""
     HLF_STUDENT_DISK_ROOT=""
     USE_TLS="true"
     CLASS_GATE="off"
@@ -169,20 +159,14 @@ save_state() {
         printf 'MAX_STUDENT_CAPACITY=%q\n' "${MAX_STUDENT_CAPACITY}"
         printf 'BITCOIN_STUDENT_CAPACITY=%q\n' "${BITCOIN_STUDENT_CAPACITY}"
         printf 'CONSENSUS_STUDENT_CAPACITY=%q\n' "${CONSENSUS_STUDENT_CAPACITY}"
-        printf 'P2P_TRUST_STUDENT_CAPACITY=%q\n' "${P2P_TRUST_STUDENT_CAPACITY}"
-        printf 'ETHEREUM_STUDENT_CAPACITY=%q\n' "${ETHEREUM_STUDENT_CAPACITY}"
         printf 'STUDENT_PIDS_LIMIT=%q\n' "${STUDENT_PIDS_LIMIT}"
         printf 'STUDENT_HOME_DISKS_MODE=%q\n' "${STUDENT_HOME_DISKS_MODE}"
         printf 'BITCOIN_STUDENT_HOME_SIZE_MB=%q\n' "${BITCOIN_STUDENT_HOME_SIZE_MB}"
         printf 'CONSENSUS_STUDENT_HOME_SIZE_MB=%q\n' "${CONSENSUS_STUDENT_HOME_SIZE_MB}"
-        printf 'P2P_TRUST_STUDENT_HOME_SIZE_MB=%q\n' "${P2P_TRUST_STUDENT_HOME_SIZE_MB}"
-        printf 'ETHEREUM_STUDENT_HOME_SIZE_MB=%q\n' "${ETHEREUM_STUDENT_HOME_SIZE_MB}"
         printf 'HLF_STUDENT_DISK_SIZE_MB=%q\n' "${HLF_STUDENT_DISK_SIZE_MB}"
         printf 'STUDENT_HOME_DISK_RESERVE_MB=%q\n' "${STUDENT_HOME_DISK_RESERVE_MB}"
         printf 'BITCOIN_STUDENT_HOME_ROOT=%q\n' "${BITCOIN_STUDENT_HOME_ROOT}"
         printf 'CONSENSUS_STUDENT_HOME_ROOT=%q\n' "${CONSENSUS_STUDENT_HOME_ROOT}"
-        printf 'P2P_TRUST_STUDENT_HOME_ROOT=%q\n' "${P2P_TRUST_STUDENT_HOME_ROOT}"
-        printf 'ETHEREUM_STUDENT_HOME_ROOT=%q\n' "${ETHEREUM_STUDENT_HOME_ROOT}"
         printf 'HLF_STUDENT_DISK_ROOT=%q\n' "${HLF_STUDENT_DISK_ROOT}"
         printf 'USE_TLS=%q\n' "${USE_TLS}"
         printf 'CLASS_GATE=%q\n' "${CLASS_GATE}"
@@ -239,13 +223,9 @@ compose_up_cmd() {
         export MAX_STUDENT_CAPACITY
         export BITCOIN_STUDENT_CAPACITY
         export CONSENSUS_STUDENT_CAPACITY
-        export P2P_TRUST_STUDENT_CAPACITY
-        export ETHEREUM_STUDENT_CAPACITY
         export STUDENT_PIDS_LIMIT
         export BITCOIN_STUDENT_HOME_ROOT
         export CONSENSUS_STUDENT_HOME_ROOT
-        export P2P_TRUST_STUDENT_HOME_ROOT
-        export ETHEREUM_STUDENT_HOME_ROOT
         export HLF_STUDENT_DISK_ROOT
         export_class_gate
         export HLF_PLATFORM="${HLF_PLATFORM:-${hlf_platform}}"
@@ -329,8 +309,6 @@ effective_lab_capacity() {
     case "${lab}" in
         bitcoin) override_var="BITCOIN_STUDENT_CAPACITY" ;;
         consensus) override_var="CONSENSUS_STUDENT_CAPACITY" ;;
-        p2p_trust) override_var="P2P_TRUST_STUDENT_CAPACITY" ;;
-        ethereum_lab) override_var="ETHEREUM_STUDENT_CAPACITY" ;;
         hlf)
             echo "$(hlf_effective_student_count)"
             return
@@ -367,21 +345,17 @@ report_lane_capacity_config() {
     echo "Claim-based lab capacities:"
     echo "  bitcoin: $(effective_lab_capacity "bitcoin")"
     echo "  consensus: $(effective_lab_capacity "consensus")"
-    echo "  p2p_trust: $(effective_lab_capacity "p2p_trust")"
-    echo "  ethereum_lab: $(effective_lab_capacity "ethereum_lab")"
     echo "  hlf: $(effective_lab_capacity "hlf")"
 }
 
 report_student_home_config() {
-    local bitcoin_count consensus_count p2p_count ethereum_count
+    local bitcoin_count consensus_count
     local required_mb
     local hlf_count
     local hlf_required_mb
 
     bitcoin_count="$(effective_lab_capacity "bitcoin")"
     consensus_count="$(effective_lab_capacity "consensus")"
-    p2p_count="$(effective_lab_capacity "p2p_trust")"
-    ethereum_count="$(effective_lab_capacity "ethereum_lab")"
     required_mb="$(student_home_required_capacity_mb)"
     hlf_count="$(hlf_effective_student_count)"
     hlf_required_mb="$(hlf_student_disk_required_capacity_mb)"
@@ -389,18 +363,14 @@ report_student_home_config() {
     echo "Student home disk sizing:"
     echo "  bitcoin: ${BITCOIN_STUDENT_HOME_SIZE_MB}MB per lane"
     echo "  consensus: ${CONSENSUS_STUDENT_HOME_SIZE_MB}MB per lane"
-    echo "  p2p_trust: ${P2P_TRUST_STUDENT_HOME_SIZE_MB}MB per lane"
-    echo "  ethereum_lab: ${ETHEREUM_STUDENT_HOME_SIZE_MB}MB per lane"
     echo "  hlf: ${HLF_STUDENT_DISK_SIZE_MB}MB per lane"
     echo "  reserve: ${STUDENT_HOME_DISK_RESERVE_MB}MB"
-    echo "  estimated required free space for claim lanes (bitcoin=${bitcoin_count}, consensus=${consensus_count}, p2p_trust=${p2p_count}, ethereum_lab=${ethereum_count}): ${required_mb}MB"
+    echo "  estimated required free space for claim lanes (bitcoin=${bitcoin_count}, consensus=${consensus_count}): ${required_mb}MB"
     echo "  estimated required free space for hlf (${hlf_count} lanes): ${hlf_required_mb}MB"
     if student_home_feature_requested; then
         echo "  roots:"
         echo "    bitcoin: ${BITCOIN_STUDENT_HOME_ROOT:-disabled}"
         echo "    consensus: ${CONSENSUS_STUDENT_HOME_ROOT:-disabled}"
-        echo "    p2p_trust: ${P2P_TRUST_STUDENT_HOME_ROOT:-disabled}"
-        echo "    ethereum_lab: ${ETHEREUM_STUDENT_HOME_ROOT:-disabled}"
         echo "    hlf: ${HLF_STUDENT_DISK_ROOT:-disabled}"
     else
         echo "  roots: disabled by STUDENT_HOME_DISKS_MODE=${STUDENT_HOME_DISKS_MODE}"
@@ -429,12 +399,10 @@ student_home_lab_images_dir() {
 }
 
 student_home_required_capacity_mb() {
-    local bitcoin_count consensus_count p2p_count ethereum_count
+    local bitcoin_count consensus_count
     bitcoin_count="$(effective_lab_capacity "bitcoin")"
     consensus_count="$(effective_lab_capacity "consensus")"
-    p2p_count="$(effective_lab_capacity "p2p_trust")"
-    ethereum_count="$(effective_lab_capacity "ethereum_lab")"
-    echo $(( bitcoin_count * BITCOIN_STUDENT_HOME_SIZE_MB + consensus_count * CONSENSUS_STUDENT_HOME_SIZE_MB + p2p_count * P2P_TRUST_STUDENT_HOME_SIZE_MB + ethereum_count * ETHEREUM_STUDENT_HOME_SIZE_MB + STUDENT_HOME_DISK_RESERVE_MB ))
+    echo $(( bitcoin_count * BITCOIN_STUDENT_HOME_SIZE_MB + consensus_count * CONSENSUS_STUDENT_HOME_SIZE_MB + STUDENT_HOME_DISK_RESERVE_MB ))
 }
 
 hlf_effective_student_count() {
@@ -453,8 +421,6 @@ disable_student_home_disks() {
     local reason="$1"
     BITCOIN_STUDENT_HOME_ROOT=""
     CONSENSUS_STUDENT_HOME_ROOT=""
-    P2P_TRUST_STUDENT_HOME_ROOT=""
-    ETHEREUM_STUDENT_HOME_ROOT=""
     HLF_STUDENT_DISK_ROOT=""
     echo "Student home disks disabled: ${reason}"
 }
@@ -502,12 +468,10 @@ prepare_student_home_lab() {
 }
 
 configure_student_home_disks() {
-    local free_mb required_mb bitcoin_count consensus_count p2p_count ethereum_count
+    local free_mb required_mb bitcoin_count consensus_count
 
     BITCOIN_STUDENT_HOME_ROOT=""
     CONSENSUS_STUDENT_HOME_ROOT=""
-    P2P_TRUST_STUDENT_HOME_ROOT=""
-    ETHEREUM_STUDENT_HOME_ROOT=""
     HLF_STUDENT_DISK_ROOT=""
 
     if ! student_home_feature_requested; then
@@ -532,16 +496,10 @@ configure_student_home_disks() {
 
     bitcoin_count="$(effective_lab_capacity "bitcoin")"
     consensus_count="$(effective_lab_capacity "consensus")"
-    p2p_count="$(effective_lab_capacity "p2p_trust")"
-    ethereum_count="$(effective_lab_capacity "ethereum_lab")"
     prepare_student_home_lab "bitcoin" "${BITCOIN_STUDENT_HOME_SIZE_MB}" "${bitcoin_count}"
     prepare_student_home_lab "consensus" "${CONSENSUS_STUDENT_HOME_SIZE_MB}" "${consensus_count}"
-    prepare_student_home_lab "p2p_trust" "${P2P_TRUST_STUDENT_HOME_SIZE_MB}" "${p2p_count}"
-    prepare_student_home_lab "ethereum_lab" "${ETHEREUM_STUDENT_HOME_SIZE_MB}" "${ethereum_count}"
     BITCOIN_STUDENT_HOME_ROOT="$(student_home_lab_root "bitcoin")"
     CONSENSUS_STUDENT_HOME_ROOT="$(student_home_lab_root "consensus")"
-    P2P_TRUST_STUDENT_HOME_ROOT="$(student_home_lab_root "p2p_trust")"
-    ETHEREUM_STUDENT_HOME_ROOT="$(student_home_lab_root "ethereum_lab")"
     echo "Student home disks: all labs provisioned"
 }
 
@@ -582,7 +540,7 @@ teardown_student_home_disks() {
         return
     fi
 
-    for root in "$(student_home_lab_root "bitcoin")" "$(student_home_lab_root "consensus")" "$(student_home_lab_root "p2p_trust")" "$(student_home_lab_root "ethereum_lab")" "$(student_home_lab_root "hlf")"; do
+    for root in "$(student_home_lab_root "bitcoin")" "$(student_home_lab_root "consensus")" "$(student_home_lab_root "hlf")"; do
         [[ -d "${root}" ]] || continue
         while IFS= read -r mount; do
             if mountpoint -q "${mount}"; then
@@ -617,7 +575,7 @@ cleanup_student_home_artifacts() {
         exit 1
     fi
 
-    for root in "$(student_home_lab_root "bitcoin")" "$(student_home_lab_root "consensus")" "$(student_home_lab_root "p2p_trust")" "$(student_home_lab_root "ethereum_lab")" "$(student_home_lab_root "hlf")"; do
+    for root in "$(student_home_lab_root "bitcoin")" "$(student_home_lab_root "consensus")" "$(student_home_lab_root "hlf")"; do
         [[ -d "${root}" ]] || continue
         while IFS= read -r mount; do
             if mountpoint -q "${mount}"; then
@@ -633,7 +591,7 @@ cleanup_student_home_artifacts() {
         exit 1
     fi
 
-    for root in "$(student_home_lab_root "bitcoin")" "$(student_home_lab_root "consensus")" "$(student_home_lab_root "p2p_trust")" "$(student_home_lab_root "ethereum_lab")" "$(student_home_lab_root "hlf")"; do
+    for root in "$(student_home_lab_root "bitcoin")" "$(student_home_lab_root "consensus")" "$(student_home_lab_root "hlf")"; do
         images_dir="${root%/mounts}/images"
         [[ -d "${root}" ]] && sudo -n rm -rf "${root}"
         [[ -d "${images_dir}" ]] && sudo -n rm -rf "${images_dir}"
@@ -661,15 +619,10 @@ ensure_networks() {
         "consensus-student-net:--internal"
         "crypto-instructor-net:--internal"
         "crypto-student-net:--internal"
-        "ethereum-instructor-mgmt-net:--internal"
-        "ethereum-rpc-net:--internal"
-        "ethereum-student-mgmt-net:--internal"
         "exploit-net:--internal"
         "fabric_test:"
         "hlf-instructor-term:--internal"
         "hlf-student-term:--internal"
-        "p2p-trust-instructor-net:--internal"
-        "p2p-trust-student-net:--internal"
         # END GENERATED NETWORKS
     )
     local entry name flags
@@ -694,11 +647,9 @@ target_dir() {
         course-site|course_site) echo "${BASE_DIR}/course-site" ;;
         lane-service|lane_service) echo "${BASE_DIR}/lane-service" ;;
         instructor_auth_service|instructor-auth-service|auth-service|auth_service) echo "${BASE_DIR}/instructor_auth_service" ;;
-        ethereum_lab|ethereum-lab|ethereum) echo "${BASE_DIR}/ethereum_lab" ;;
         bitcoin) echo "${BASE_DIR}/bitcoin" ;;
         consensus) echo "${BASE_DIR}/consensus" ;;
         cryptography) echo "${BASE_DIR}/cryptography" ;;
-        p2p_trust|p2p-trust) echo "${BASE_DIR}/p2p_trust" ;;
         exercises) echo "${BASE_DIR}/exercises" ;;
         explorer) echo "${BASE_DIR}/explorer" ;;
         wallet) echo "${BASE_DIR}/wallet" ;;
@@ -727,11 +678,9 @@ router
 course-site
 lane-service
 instructor-auth-service
-ethereum_lab
 bitcoin
 consensus
 cryptography
-p2p_trust
 exercises
 explorer
 wallet
@@ -1092,8 +1041,6 @@ parse_deploy_args() {
     local provided_capacity=""
     local provided_bitcoin_capacity=""
     local provided_consensus_capacity=""
-    local provided_p2p_capacity=""
-    local provided_ethereum_capacity=""
     local provided_hlf_capacity=""
     local mode_default_capacity=""
     local previous_mode=""
@@ -1125,16 +1072,6 @@ parse_deploy_args() {
             --consensus-student-capacity)
                 provided_consensus_capacity="${2:-}"
                 parse_capacity "${provided_consensus_capacity}"
-                shift 2
-                ;;
-            --p2p-trust-student-capacity)
-                provided_p2p_capacity="${2:-}"
-                parse_capacity "${provided_p2p_capacity}"
-                shift 2
-                ;;
-            --ethereum-student-capacity)
-                provided_ethereum_capacity="${2:-}"
-                parse_capacity "${provided_ethereum_capacity}"
                 shift 2
                 ;;
             --hlf-student-capacity)
@@ -1266,20 +1203,6 @@ parse_deploy_args() {
         else
             CONSENSUS_STUDENT_CAPACITY="${MAX_STUDENT_CAPACITY}"
         fi
-        if [[ -n "${provided_p2p_capacity}" ]]; then
-            P2P_TRUST_STUDENT_CAPACITY="$(normalize_capacity "${provided_p2p_capacity}" "${MAX_STUDENT_CAPACITY}")"
-        elif [[ -n "${P2P_TRUST_STUDENT_CAPACITY:-}" && -n "${previous_base_capacity}" && "${P2P_TRUST_STUDENT_CAPACITY}" != "${previous_base_capacity}" ]]; then
-            P2P_TRUST_STUDENT_CAPACITY="$(normalize_capacity "${P2P_TRUST_STUDENT_CAPACITY}" "${MAX_STUDENT_CAPACITY}")"
-        else
-            P2P_TRUST_STUDENT_CAPACITY="${MAX_STUDENT_CAPACITY}"
-        fi
-        if [[ -n "${provided_ethereum_capacity}" ]]; then
-            ETHEREUM_STUDENT_CAPACITY="$(normalize_capacity "${provided_ethereum_capacity}" "${MAX_STUDENT_CAPACITY}")"
-        elif [[ -n "${ETHEREUM_STUDENT_CAPACITY:-}" && -n "${previous_base_capacity}" && "${ETHEREUM_STUDENT_CAPACITY}" != "${previous_base_capacity}" ]]; then
-            ETHEREUM_STUDENT_CAPACITY="$(normalize_capacity "${ETHEREUM_STUDENT_CAPACITY}" "${MAX_STUDENT_CAPACITY}")"
-        else
-            ETHEREUM_STUDENT_CAPACITY="${MAX_STUDENT_CAPACITY}"
-        fi
         if [[ -n "${provided_hlf_capacity}" ]]; then
             HLF_STUDENT_COUNT="$(normalize_capacity "${provided_hlf_capacity}" "${MAX_STUDENT_CAPACITY}")"
         elif [[ -n "${HLF_STUDENT_COUNT:-}" && -n "${previous_base_capacity}" && "${HLF_STUDENT_COUNT}" != "${previous_base_capacity}" ]]; then
@@ -1291,8 +1214,6 @@ parse_deploy_args() {
         MAX_STUDENT_CAPACITY="$(normalize_capacity "${provided_capacity:-${mode_default_capacity}}" "${mode_default_capacity}")"
         BITCOIN_STUDENT_CAPACITY="$(normalize_capacity "${provided_bitcoin_capacity:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
         CONSENSUS_STUDENT_CAPACITY="$(normalize_capacity "${provided_consensus_capacity:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
-        P2P_TRUST_STUDENT_CAPACITY="$(normalize_capacity "${provided_p2p_capacity:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
-        ETHEREUM_STUDENT_CAPACITY="$(normalize_capacity "${provided_ethereum_capacity:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
         HLF_STUDENT_COUNT="$(normalize_capacity "${provided_hlf_capacity:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
     fi
 
@@ -1327,8 +1248,6 @@ parse_start_args() {
     MAX_STUDENT_CAPACITY="$(normalize_capacity "${MAX_STUDENT_CAPACITY:-$(default_max_student_capacity_for_mode "${MODE:-student}")}" "$(default_max_student_capacity_for_mode "${MODE:-student}")")"
     BITCOIN_STUDENT_CAPACITY="$(normalize_capacity "${BITCOIN_STUDENT_CAPACITY:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
     CONSENSUS_STUDENT_CAPACITY="$(normalize_capacity "${CONSENSUS_STUDENT_CAPACITY:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
-    P2P_TRUST_STUDENT_CAPACITY="$(normalize_capacity "${P2P_TRUST_STUDENT_CAPACITY:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
-    ETHEREUM_STUDENT_CAPACITY="$(normalize_capacity "${ETHEREUM_STUDENT_CAPACITY:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
     HLF_STUDENT_COUNT="$(normalize_capacity "${HLF_STUDENT_COUNT:-${MAX_STUDENT_CAPACITY}}" "${MAX_STUDENT_CAPACITY}")"
 
     start_shared_infra

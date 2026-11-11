@@ -9,10 +9,10 @@ started (unless --keep). The numbers are an idle-seat baseline: a seat that is r
 
 --burst then has every seat act at the same moment, the way a class does when the instructor says "go", and samples
 `docker stats` until the last seat finishes: Bitcoin seats fund a wallet with LAB2's `mine-until` (each seat's time
-and the hardest block mined are printed), Ethereum seats compile SimpleStorage through their lane's compile API, and
-Fabric seats run chaincode invokes from their own peer. Consensus and P2P trust have no burst.
+and the hardest block mined are printed) and Fabric seats run chaincode invokes from their own peer. Consensus has
+no burst.
 
-  python3 scripts/measure-seats.py --seats 10 ethereum_lab bitcoin consensus p2p_trust
+  python3 scripts/measure-seats.py --seats 10 bitcoin consensus
   python3 scripts/measure-seats.py --seats 20 --burst bitcoin
 
 Results for the course's own run are in README.md, "Host size for a class".
@@ -36,13 +36,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CREDENTIALS = ROOT / ".runtime" / "instructor-credentials.txt"
 
-# lab-manager target -> (its instructor lane API, the container of lane sNN: some names pad the number, some don't). The four lane-service labs are in
+# lab-manager target -> (its instructor lane API, the container of lane sNN: some names pad the number, some don't). The lane-service labs are in
 # lane-service/labs/*.py; the Fabric lab's runner has its own API, behind a CSRF token (hlf/web_service/lanes.py).
 LANE_LABS = {
-    "ethereum_lab": ("/api/ethereum", lambda lane: f"ethereum-lab-student{int(lane[1:])}"),
     "bitcoin": ("/api/bitcoin", lambda lane: f"bitcoin-lab-student{int(lane[1:])}"),
     "consensus": ("/api/consensus", lambda lane: f"consensus-lab-student{lane[1:]}"),
-    "p2p_trust": ("/api/p2p_trust", lambda lane: f"p2p-trust-lab-student{lane[1:]}"),
     "hlf": ("/labs/hlf/api/hlf", lambda lane: f"peer0.student{lane[1:]}.example.com"),
 }
 
@@ -52,13 +50,6 @@ BURSTS = {
     "bitcoin": (
         "set -e; w=burst_{lane}_$$; bitcoin-cli createwallet $w >/dev/null; "
         "a=$(bitcoin-cli -rpcwallet=$w getnewaddress); mine-until $w $a >/dev/null"
-    ),
-    # The contract builder's Compile button: the lane's lab API compiles SimpleStorage with solc-js.
-    "ethereum_lab": (
-        "cd /app && for i in $(seq {repeat}); do node -e \"fetch('http://127.0.0.1:5173/lab-api/compile', "
-        "{{method: 'POST', headers: {{'content-type': 'application/json'}}, body: JSON.stringify({{source: "
-        "require('fs').readFileSync('contracts/SimpleStorage.sol', 'utf8')}})}}).then(r => r.json())"
-        ".then(j => process.exit(j.ok ? 0 : 1), () => process.exit(1))\" || exit 1; done"
     ),
     # The Fabric lab's `invoke create`, endorsed and ordered, from the student's own peer.
     "hlf": (
