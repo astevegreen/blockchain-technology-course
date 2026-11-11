@@ -84,8 +84,8 @@ of 9.98 ETH, from three fresh addresses, into THORChain. "Is the money gone? Or 
 
 Left out, for the owner to see: the worksheet lets a student whose pretest shows they can already follow a swap
 across chains skip the Bybit worked example. This card's steps are the only place the three methods are shown, so
-skipping the example would skip them; that is a question for the owner (recommended: every student does the
-crossing steps, and the skip covers the rest of the example). The aggregator limit (with a cross-chain
+every student does the crossing steps, and the pretest skip covers the rest of the Bybit example (owner, 10 Nov
+2026: "Skip all but crossing"). The aggregator limit (with a cross-chain
 aggregator the bridge underneath may not show) and the other bridges' events (Across, CCTP) are for a slide, not
 this lab: neither case uses them.
 
@@ -141,4 +141,6 @@ that are not Bybit's three name deposits the snapshot does not hold. The agent's
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve as drafted (Recommended)" (10 Nov 2026)
+- Pretest skip: "Skip all but crossing (Recommended)": every student does the crossing steps; the pretest skip
+  covers the rest of the Bybit example (owner, 10 Nov 2026)
