@@ -75,3 +75,4 @@ Alice's.
 ## Approval
 
 - Owner: "Approve all four" (10 Nov 2026)
+- Built: 10 Nov 2026, `blockchain-course/assets/labs/make-change/index.html`; opened from the slide named above.

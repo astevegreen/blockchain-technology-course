@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Make change</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .pay-zone { min-height: 3.4rem; padding: 0.5rem; border: 2px dashed var(--rule); border-radius: 8px; margin: 0.5rem 0 1rem; }
+  .pay-zone.over { border-color: var(--accent); }
+  .wallet { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.5rem 0 1rem; }
+  button.coinbtn { background: none; border: 0; padding: 2px; cursor: grab; font: inherit; border-radius: 999px; }
+  button.coinbtn:focus-visible { outline: 3px solid var(--accent); }
+  .fee-row { display: flex; align-items: center; gap: 0.6rem; margin: 0.6rem 0; flex-wrap: wrap; }
+  .warn { padding: 0.5rem 0.8rem; border-left: 4px solid var(--change); background: var(--change-tint); margin: 0.6rem 0; }
+  .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.6rem 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/make-change.md. Amounts are whole hundredths of a bitcoin, so no rounding creeps in.
+   The lab's own payment (Ana, Ben, txid 3f9a...e04b) is made up for the lab. */
+(function () {
+  "use strict";
+  var PAY = 30; // Ben is owed 0.30 BTC
+  var COINS = [{ id: "a", v: 50 }, { id: "b", v: 20 }, { id: "c", v: 5 }];
+  function btc(n) { return (n / 100).toFixed(2); }
+
+  function render(box, api) {
+    var el = api.el;
+    var sel = {};          // coin id -> true while it sits on the payment
+    var fee = 1;           // hundredths of a BTC
+    var changeAdded = false;
+    var sent = false;
+    var drag = null;
+
+    function sum() { return COINS.reduce(function (t, c) { return t + (sel[c.id] ? c.v : 0); }, 0); }
+    function toggle(id) {
+      if (sent) return;
+      sel[id] = !sel[id];
+      changeAdded = false;
+      draw();
+    }
+
+    function coinButton(c) {
+      return el("button", { type: "button", class: "coinbtn", draggable: "true", disabled: sent,
+        "aria-label": (sel[c.id] ? "Take the " : "Add the ") + btc(c.v) + " coin " + (sel[c.id] ? "off the payment" : "to the payment"),
+        onclick: function () { toggle(c.id); },
+        ondragstart: function (e) { drag = c.id; if (e.dataTransfer) e.dataTransfer.setData("text/plain", c.id); } },
+        api.coin({ role: "input", amount: btc(c.v), who: "Ana", spent: sent && sel[c.id] }));
+    }
+
+    function draw() {
+      box.innerHTML = "";
+      var s = sum();
+      var change = s - PAY - fee;
+      var enough = s >= PAY + fee;
+      var needsChange = enough && change > 0;
+
+      box.appendChild(el("p", null, "Ana's wallet shows ", el("strong", null, "0.75 BTC"),
+        ", and she owes Ben ", el("strong", null, "0.30 BTC"), ". Her wallet holds three coins. Click a coin, or drag it, onto the payment to spend it."));
+
+      var wallet = el("div", { class: "wallet", "aria-label": "Ana's wallet" });
+      COINS.forEach(function (c) { if (!sel[c.id]) wallet.appendChild(coinButton(c)); });
+      if (!wallet.firstChild) wallet.appendChild(el("span", { class: "from" }, "Every coin is on the payment."));
+      box.appendChild(wallet);
+
+      var zone = el("div", { class: "pay-zone", "aria-label": "The payment",
+        ondragover: function (e) { e.preventDefault(); zone.classList.add("over"); },
+        ondragleave: function () { zone.classList.remove("over"); },
+        ondrop: function (e) { e.preventDefault(); if (drag && !sel[drag]) toggle(drag); drag = null; } });
+      var ins = el("div", { class: "ins" });
+      COINS.forEach(function (c) { if (sel[c.id]) ins.appendChild(coinButton(c)); });
+      if (!ins.firstChild) ins.appendChild(el("span", { class: "from" }, "Drop coins here."));
+      var outs = el("div", { class: "outs" }, api.coin({ role: "output", amount: btc(PAY), who: "Ben" }));
+      if (changeAdded && change > 0) outs.appendChild(api.coin({ role: "change", amount: btc(change), who: "Ana" }));
+      if (enough && fee > 0) outs.appendChild(api.coin({ role: "fee", amount: btc(fee), who: "no coin" }));
+      zone.appendChild(el("div", { class: "tx" }, ins, el("div", { class: "arrow", "aria-hidden": "true" }, "→"), outs));
+      box.appendChild(zone);
+
+      var slider = el("input", { type: "range", min: "0", max: "5", step: "1", value: String(fee), id: "fee",
+        disabled: sent, oninput: function () { fee = Number(slider.value); changeAdded = false; draw(); document.getElementById("fee").focus(); } });
+      box.appendChild(el("div", { class: "fee-row" }, el("label", { for: "fee" }, "Fee left for the miner: "),
+        slider, el("strong", null, btc(fee) + " BTC")));
+
+      var msg = el("div", { "aria-live": "polite" });
+      if (s > 0 && s < PAY) {
+        msg.appendChild(el("div", { class: "warn" }, "These coins hold " + btc(s) + " BTC: short of the " + btc(PAY) +
+          " payment. A coin cannot be torn, so add another whole coin."));
+      } else if (s >= PAY && !enough) {
+        msg.appendChild(el("div", { class: "warn" }, "These coins hold " + btc(s) + " BTC, not enough for the payment and a " +
+          btc(fee) + " fee. Add a coin or lower the fee."));
+      } else if (needsChange && !changeAdded && !sent) {
+        msg.appendChild(el("div", { class: "warn" }, "Nothing returns the " + btc(change) + " BTC to Ana. A transaction pays out only the outputs it lists, so the miner would keep it. Add a coin back to Ana (her wallet pays it to the same address the spent coin came from)."));
+      }
+      box.appendChild(msg);
+
+      var addChange = el("button", { class: "btn", type: "button", disabled: sent || !needsChange || changeAdded,
+        onclick: function () { changeAdded = true; draw(); } }, "Add a coin back to Ana" + (needsChange ? " (" + btc(change) + ")" : ""));
+      var send = el("button", { class: "btn primary", type: "button",
+        disabled: sent || !enough || (needsChange && !changeAdded), onclick: broadcast }, "Broadcast the payment");
+      box.appendChild(el("div", { class: "actions" }, addChange, send));
+    }
+
+    function broadcast() {
+      sent = true;
+      var s = sum(), change = s - PAY - fee;
+      draw();
+      var left = COINS.filter(function (c) { return !sel[c.id]; }).reduce(function (t, c) { return t + c.v; }, 0);
+      api.finish({
+        choice: 2,
+        note: "<p>The chain recorded one transaction. Each coin you used was spent whole (struck through above), and new coins appeared: " +
+          btc(PAY) + " for Ben" + (change > 0 ? " and " + btc(change) + " back to Ana" : "") + ". No coin was made for the fee: it is the " + btc(fee) +
+          " BTC the inputs hold that the outputs do not pay out.</p>" +
+          "<p>The change coin went to the address that paid, so it is change. Only now, the transaction's ID: <span class=\"hash\">3f9a…e04b</span> (made up for this lab). It lists inputs, each pointing at an earlier output, and outputs, each an amount and an owner. It has no balance field and no fee field.</p>" +
+          "<p>Ana's wallet “balance” is now " + btc(left + (change > 0 ? change : 0)) + " BTC: a sum her wallet adds up over the coins she can still spend.</p>"
+      });
+    }
+    draw();
+  }
+
+  function txPicture(label, input, outs) {
+    var o = outs.map(function (x) {
+      return "<span class=\"coin " + x[0] + "\"><span class=\"vh\">" + x[0] + ": </span><span class=\"amount\">" + x[1] + "</span><span class=\"who\">" + x[2] + "</span></span>";
+    }).join("");
+    return "<div class=\"tx\" aria-label=\"" + label + "\"><div class=\"ins\"><span class=\"coin input\"><span class=\"vh\">input: </span><span class=\"amount\">" +
+      input[0] + "</span><span class=\"who\">" + input[1] + "</span></span></div><div class=\"arrow\" aria-hidden=\"true\">→</div><div class=\"outs\">" + o + "</div></div>";
+  }
+
+  LabShell.start({
+    id: "make-change",
+    title: "Make change",
+    slide: { title: "Bitcoin keeps no balances, only unspent coins",
+      href: "../../../lessons/introduction/02-IN-blockchain_at_a_glance.html#/bitcoin-keeps-no-balances-only-unspent-coins" },
+    steps: {
+      "case": { html: "<p>Ana owes Ben 0.30 BTC. Her wallet app says she has 0.75. She presses Pay. Ben's phone shows 0.30 arriving.</p><p><strong>What happened to the 0.75?</strong></p>" },
+      commit: {
+        question: "Ana's wallet holds three coins: 0.50, 0.20 and 0.05 BTC. She pays Ben 0.30 BTC. What will the chain record?",
+        choices: [
+          "Ana's balance drops from 0.75 to 0.45.",
+          "0.30 is cut off her 0.50 coin, which now holds 0.20.",
+          "One or more of her coins is spent whole, and new coins appear: 0.30 for Ben and the rest back to Ana.",
+          "A 0.30 payment and a separate fee line."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "UTXO", parts: "UTXO: unspent + transaction output",
+        plain: "<p>A coin a transaction made that no later transaction has spent yet. Spending it uses all of it, once. Bitcoin records these coins; it keeps no balances.</p>" +
+          "<p>Why whole and once: a coin is the record of an earlier payment, and any node must be able to check it has not been spent before. So the surplus comes back as a new coin: “one for the payment, and one returning the change, if any, back to the sender” (Nakamoto 2008, section 9).</p>" },
+      explorer: { html: "<p>A Bitcoin explorer shows a payment like yours, here with the 0.50 coin and a 0.01 fee, inputs on the left and outputs on the right. The explorer works out the fee from the inputs' values; the transaction does not contain it. The ID, <span class=\"hash\">3f9a…e04b</span>, is made up for this lab.</p>" +
+        txPicture("Ana's payment: input 0.50, outputs 0.30 to Ben and 0.19 change to Ana, fee 0.01", ["0.50", "Ana"],
+          [["output", "0.30", "Ben"], ["change", "0.19", "Ana"], ["fee", "0.01", "worked out"]]) +
+        "<p>The real payment from the slides, <span class=\"hash\">0627052b…c2f2</span>: one 0.1 BTC coin in; 0.015 to Bob and 0.0845 change out; 0.0005 fee, written nowhere (Antonopoulos 2017).</p>" +
+        txPicture("Alice's payment: input 0.1, outputs 0.015 to Bob and 0.0845 change, fee 0.0005", ["0.1", "Alice"],
+          [["output", "0.015", "Bob"], ["change", "0.0845", "Alice"], ["fee", "0.0005", "worked out"]]) +
+        "<p>An address's “balance” on an explorer is a sum the explorer added up over its unspent coins.</p>" },
+      twist: {
+        html: "<p>Change one thing. Ana's wallet builds the same payment by hand: the 0.50 coin in, 0.30 out to Ben, and <strong>no change coin</strong>.</p>",
+        question: "What does the chain record now?",
+        choices: ["The payment fails.", "Ben gets 0.50.", "The miner keeps 0.20 as the fee.", "The 0.50 coin keeps 0.20."],
+        answer: 2,
+        why: "<p>The fee is whatever the inputs hold that the outputs do not pay out, so the 0.20 goes to the miner. A coin is spent whole, so nothing keeps 0.20, and Ben's output says 0.30. An analyst who sees a huge fee should consider a forgotten change output.</p>"
+      },
+      tell: {
+        prompt: "<p>Tell the agent what Ana's payment did, in one sentence with a confidence word.</p>",
+        example: "Transaction 3f9a…e04b spent one 0.50 BTC coin whole: 0.30 BTC went to Ben's address and 0.19 BTC came back to the address that paid, which is change (Moderate confidence: one strong line, the output pays the same address as the input); the 0.01 BTC fee is the difference and appears in no field."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
