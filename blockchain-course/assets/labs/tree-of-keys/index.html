@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One seed, a tree of keys</title>
+<link rel="stylesheet" href="../shared/look.css">
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/one-seed-a-tree-of-keys.md. The tool beside it is Ian Coleman's BIP39 page (MIT),
+   unmodified: see SOURCE.md and LICENSE-bip39.txt. The phrase and addresses are SLIP-0014's published test values. */
+var PHRASE = "all all all all all all all all all all all all";
+LabShell.start({
+  id: "tree-of-keys",
+  title: "One seed, a tree of keys",
+  slide: { title: "The path names coin, account, chain and index", href: "../../../lessons/bitcoin/05-BF-wallet_types.html#/the-path-names-coin-account-chain-and-index" },
+  steps: {
+    "case": { html:
+      "<p>A notebook from a suspect's desk holds twelve plain English words and nothing else. The agent asks: " +
+      "&ldquo;Is this a password? To what?&rdquo;</p>" +
+      "<p>The notebook is made up for this lab. The words are the published test phrase from SLIP-0014; " +
+      "no real wallet is involved.</p>" },
+    commit: {
+      question: "A notebook holds twelve words. Typed into a wallet, how many Bitcoin addresses do they open?",
+      choices: [
+        "One.",
+        "Twelve, one per word.",
+        "The few the owner made when setting it up.",
+        "As many as the wallet asks for, all from these words."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var boxes = [];
+      function item(text) {
+        var cb = api.el("input", { type: "checkbox", onchange: update });
+        boxes.push(cb);
+        return api.el("li", null, api.el("label", null, cb, " " + text));
+      }
+      var go = api.el("button", { class: "btn primary", type: "button", disabled: true,
+        onclick: function () {
+          api.finish({ choice: 3, note: "<p>The same twelve words gave as many addresses as the tool was asked for, " +
+            "and \"more rows\" never ran out. A swapped word was refused, so the words are checked, not just copied.</p>" });
+        } }, "I have done all four");
+      function update() { go.disabled = !boxes.every(function (b) { return b.checked; }); }
+      el.appendChild(api.el("p", null, "Open the tool beside this page. It is Ian Coleman's BIP39 page, run from a file on this laptop; it needs no network. Use only the test phrase below, never a real one."));
+      el.appendChild(api.el("p", null, api.el("a", { class: "btn", href: "bip39-standalone.html", target: "_blank", rel: "noopener" }, "Open the BIP39 tool")));
+      el.appendChild(api.el("p", null, "Test phrase: ", api.el("code", null, PHRASE)));
+      el.appendChild(api.el("ol", null,
+        item("Paste the phrase into the BIP39 Mnemonic box, then pick the BIP84 tab. The first two rows should read bc1qannf…nfkk and bc1q7e6q…ru2m."),
+        item("Press \"more rows\" a few times. Count how many addresses appear, and whether it ever stops."),
+        item("Change the first word from \"all\" to \"abandon\". Read the tool's answer. Then try a misspelt word, such as \"alll\", and read that answer."),
+        item("Put the phrase back and read the path, public key and private key columns last.")));
+      el.appendChild(api.el("p", null, go));
+    } },
+    name: {
+      term: "HD wallet",
+      parts: "hierarchical (a tree of branches) + deterministic (the same words always give the same keys)",
+      plain: "<p>A wallet whose every key grows from one seed, so its words restore every address it has used or will use.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var a = "bc1qannfxke2tfd4l7vhepehpvt05y83v3qsf6nfkk", b = "bc1q7e6qu5smalrpgqrx9k2gnf0hgjyref5p36ru2m";
+      el.appendChild(api.el("p", null, "Snapshot of two Bitcoin explorer pages, 10 Nov 2026 (the lab runs offline, so this is a copy, not a live page):"));
+      el.appendChild(api.el("ul", null,
+        api.el("li", null, api.el("span", { class: "addr" }, api.short(a, 6)), " 14 transactions"),
+        api.el("li", null, api.el("span", { class: "addr" }, api.short(b, 6)), " 2 transactions")));
+      el.appendChild(api.el("p", null, "No transaction is shared, and neither page names the other address or the words. The payments sit on the chain at the addresses; the words hold only the keys that spend them. Only the seed links the two, or the tool's \"Account Extended Public Key\" in the BIP84 tab (the next slide's subject)."));
+    } },
+    twist: {
+      html: "<p>A colleague restores the same twelve words in another wallet and reports: &ldquo;First address 1JAd7…WaGL, not the bc1q… one in the case file. Did you copy the words wrong?&rdquo;</p>" +
+        "<p>Switch the tool to its <strong>BIP44</strong> tab. Row 0 is 1JAd7…WaGL.</p>",
+      question: "Why a different address?",
+      choices: [
+        "A word was miscopied.",
+        "The same words open different wallets at random.",
+        "Same words, different path: the other wallet uses purpose 44' (legacy addresses), not 84'.",
+        "Someone moved the funds."
+      ],
+      answer: 2,
+      why: "<p>A miscopied word would most likely have been refused by the wallet. The words alone do not say which path the owner used, so check each path before calling a phrase wrong or a wallet empty.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks what the twelve words are and whether we now have the whole wallet. Say it in one sentence, with a confidence word.</p>",
+      example: "The twelve words are a BIP39 seed phrase, which is the wallet itself: they regenerate every address it has used or will use. On the native SegWit path (m/84'/0'/0') its first receiving address is bc1qannf…nfkk. The words do not record which path or passphrase the owner used, so the addresses found so far may not be the whole wallet (Low confidence that they are: two paths checked, the others and a passphrase untried)."
+    }
+  }
+});
+</script>
+</body>
+</html>

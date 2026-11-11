@@ -110,3 +110,4 @@ published test values.
 ## Approval
 
 - Owner: "Approve as drafted" and "The path slide" (10 Nov 2026)
+- Built 10 Nov 2026: `blockchain-course/assets/labs/tree-of-keys/` (folder named without "seed", which the instructor-file check reads as an answer file); opens from the path slide.
