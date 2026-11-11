@@ -19,15 +19,48 @@ services:
     platforms:
     - linux/amd64
     - linux/arm64
+  exploit-anvil:
+    source: build
+    context: .
+    dockerfile: launcher/exploit-anvil.Dockerfile
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  exploit-gateway:
+    source: build
+    context: ..
+    dockerfile: cross-chain/launcher/exploit-gateway.Dockerfile
+    platforms:
+    - linux/amd64
+    - linux/arm64
+  exploit-otterscan:
+    source: build
+    context: ..
+    dockerfile: cross-chain/launcher/exploit-otterscan.Dockerfile
+    platforms:
+    - linux/amd64
+    - linux/arm64
 networks:
 - name: router-net
   internal: false
+- name: exploit-net
+  internal: true
 routes:
 - routes/cross-chain.conf
+- routes/exploit-host.conf
 uses_lane_service: false
 entry:
   path: /labs/cross-chain/
-memory_mb: 20
-approx_download_mb: 34
-data: []
+memory_mb: 90
+approx_download_mb: 170
+data:
+- path: ./exploit/chain/course-chain.json
+  into: /chain/course-chain.json
+  how: baked
+- path: ./exploit/gateway/static/fallback
+  into: /srv/static/fallback
+  how: baked
+- path: ./exploit/chain/sourcify
+  into: /usr/share/nginx/html/sourcify
+  how: baked
 keep_volumes_on_update: true

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Name the money and the flaw</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .counter { display: inline-flex; align-items: center; gap: 0.35em; padding: 0.2em 0.7em; border-radius: 6px;
+    font-variant-numeric: tabular-nums; font-weight: 600; margin: 0.15em 0.3em; }
+  .counter.vault-bal { background: var(--input-tint); border: 2px solid var(--input); }
+  .counter.rec-bal { background: var(--change-tint); border: 2px solid var(--change); }
+  .verdict { display: inline-block; padding: 0.3em 0.8em; border-radius: 6px; font-weight: 700; margin: 0.3em 0; }
+  .verdict.ok { background: #dff4ec; color: #006b4f; }
+  .verdict.fail { background: #fbe6d9; color: #9a3412; }
+  .trace-tree { font-family: var(--mono); font-size: 0.82em; line-height: 1.6; white-space: pre; overflow-x: auto; padding: 0.5rem; }
+  .step-row { display: flex; gap: 0.8rem; align-items: flex-start; margin: 0.4rem 0; flex-wrap: wrap; }
+  .replay-out { margin: 0.6rem 0; padding: 0.6rem 0.8rem; border-radius: 8px; background: var(--panel); border: 1px solid var(--rule); }
+  .replay-out h4 { margin: 0 0 0.3rem; font-size: 0.95rem; }
+  .explorer-link { display: inline-block; padding: 0.3em 0.8em; border: 2px solid var(--accent); border-radius: 6px; font-weight: 600; text-decoration: none; color: var(--accent-strong); margin: 0.2em 0; }
+  .explorer-link:hover { background: var(--accent-tint); }
+  .game-case { padding: 0.6rem 0.8rem; border: 1px solid var(--rule); border-radius: 8px; margin: 0.4rem 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ---- Chain data (recorded at build time) ---- */
+  var ATTACK_TX = "0x3b715df51b066b5cccca050c36ef51689067c35cabac021d2e07039790f4420a";
+  var FIXED_ATTACK_TX = "0xaef0620ed1e5b96d47da14e19ac52b64d5b6d208e0ab22d65313b5e1f7c67bde";
+  var EXPLOIT_HOST = (function () {
+    var h = location.hostname;
+    var p = location.protocol;
+    if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h.endsWith(".localhost")) {
+      return p + "//exploit.localhost:8445/";
+    }
+    if (h.endsWith(".lab")) return p + "//exploit.lab:8445/";
+    return p + "//exploit." + h.replace(/^[^.]+\./, "") + "/";
+  })();
+
+  /* The vault's 41 lines, as numbered in VulnerableBankVault.sol. Each entry: [lineNo, code, pickable].
+     pickable lines are the ones the student can move. */
+  var VAULT_LINES = [
+    [1,  "// SPDX-License-Identifier: MIT", false],
+    [2,  "pragma solidity ^0.8.19;", false],
+    [3,  "", false],
+    [4,  "contract VulnerableBankVault {", false],
+    [5,  "    mapping(address => uint256) private balances;", false],
+    [6,  "", false],
+    [7,  "    event Deposit(address indexed account, uint256 amount);", false],
+    [8,  "    event Withdrawal(address indexed account, uint256 amount);", false],
+    [9,  "    event UntrackedSeedFunding(address indexed sender, uint256 amount);", false],
+    [10, "", false],
+    [11, "    function deposit() external payable {", false],
+    [12, "        require(msg.value > 0, \"Deposit required\");", false],
+    [13, "        balances[msg.sender] += msg.value;", false],
+    [14, "        emit Deposit(msg.sender, msg.value);", false],
+    [15, "    }", false],
+    [16, "", false],
+    [17, "    function withdraw(uint256 amount) external {", false],
+    [18, "        require(balances[msg.sender] >= amount, \"Insufficient balance\");", true],
+    [19, "", false],
+    [20, "        // Intentionally vulnerable: control is transferred before accounting updates.", false],
+    [21, "        (bool sent, ) = payable(msg.sender).call{ value: amount }(\"\");", true],
+    [22, "        require(sent, \"ETH transfer failed\");", false],
+    [23, "", false],
+    [24, "        unchecked {", true],
+    [25, "            balances[msg.sender] -= amount;", true],
+    [26, "        }", false],
+    [27, "        emit Withdrawal(msg.sender, amount);", true],
+    [28, "    }", false],
+    [29, "", false],
+    [30, "    function totalAssets() external view returns (uint256) { return address(this).balance; }", false],
+    [31, "    function balanceOf(address account) external view returns (uint256) { return balances[account]; }", false],
+    [32, "    receive() external payable { emit UntrackedSeedFunding(msg.sender, msg.value); }", false],
+    [33, "}", false]
+  ];
+
+  /* Replay results. Each key is a description of the change. The result records what happens when
+     the same attack is sent against a vault with that change applied. Recorded at build time by
+     running the modified vault against the same attacker on a scratch chain. */
+  var REPLAYS = {
+    "line25_above_line21": {
+      label: "Move line 25 above line 21",
+      which: [25],
+      status: "fail",
+      vaultAfter: "500 ETH",
+      attackerGain: "0 ETH",
+      events: 0,
+      why: "The balance is updated before the payment, so the second withdraw call finds the recorded balance is zero and reverts. The whole transaction fails."
+    },
+    "remove_unchecked": {
+      label: "Remove the unchecked block (line 24)",
+      which: [24],
+      status: "fail",
+      vaultAfter: "500 ETH",
+      attackerGain: "0 ETH",
+      events: 0,
+      why: "Without unchecked, the subtraction on the way back out (when the recorded balance is 0 and amount is 100) causes an arithmetic underflow, which reverts. The whole transaction fails."
+    },
+    "line27_above_line21": {
+      label: "Move line 27 above line 21",
+      which: [27],
+      status: "success",
+      vaultAfter: "0 ETH",
+      attackerGain: "~499.91 ETH",
+      events: 6,
+      why: "The emit moved above the payment does not change when the balance is updated. The payment still hands control to the attacker before the balance changes. The attack still works."
+    },
+    "line18_below_line22": {
+      label: "Move line 18 below line 22",
+      which: [18],
+      status: "success",
+      vaultAfter: "0 ETH",
+      attackerGain: "~499.91 ETH",
+      events: 6,
+      why: "Moving the balance check below the payment means the check runs after the attacker has already been paid. Each re-entry still sees the original balance. The attack still works."
+    }
+  };
+
+  /* ---- "Do it" step: the vault code with pickable lines ---- */
+  function renderDo(box, api) {
+    var el = api.el;
+    var chosen = null;
+
+    function draw() {
+      box.innerHTML = "";
+      box.appendChild(el("p", null,
+        "The vault held 500 ETH from five depositors. The attacker borrowed 100 ETH, deposited it, " +
+        "then called ", el("code", null, "withdraw(100)"), ". Step through the vault’s code beside the trace."));
+
+      /* Trace summary */
+      box.appendChild(el("div", { class: "trace-tree" },
+        "attacker.attack()\n" +
+        "  lender.flashLoan(100 ETH)\n" +
+        "    attacker.onFlashLoan()\n" +
+        "      vault.deposit{100 ETH}()\n" +
+        "      vault.withdraw(100)           ← vault: 600 ETH, recorded: 100\n" +
+        "        attacker.receive{100 ETH}()\n" +
+        "          vault.withdraw(100)       ← vault: 500, recorded: 100 (not updated)\n" +
+        "            attacker.receive{100}()\n" +
+        "              vault.withdraw(100)   ← vault: 400, recorded: 100\n" +
+        "                attacker.receive{100}()\n" +
+        "                  vault.withdraw(100) ← vault: 300, recorded: 100\n" +
+        "                    attacker.receive{100}()\n" +
+        "                      vault.withdraw(100) ← vault: 200, recorded: 100\n" +
+        "                        attacker.receive{100}()\n" +
+        "                          vault.withdraw(100) ← vault: 100, recorded: 100\n" +
+        "                            attacker.receive{100}()\n" +
+        "                              (vault < 100, stop)\n" +
+        "      lender.transfer(100.09 ETH)   ← repay loan + fee"
+      ));
+
+      box.appendChild(el("p", null,
+        "Two counters on the vault during the attack:"));
+      box.appendChild(el("div", { class: "step-row" },
+        el("span", { class: "counter vault-bal" }, "Vault balance: 600 → 500 → 400 → 300 → 200 → 100 → 0 ETH"),
+        el("span", { class: "counter rec-bal" }, "Recorded balance: 100 → 100 → 100 → 100 → 100 → 100 (unchanged until all six payments finish)")));
+
+      box.appendChild(el("p", null, el("strong", null, "Pick the line to blame."),
+        " Click one of the highlighted lines to move it; the page replays the transaction against the changed vault."));
+
+      /* Vault source with pickable lines */
+      var codeBox = el("div", { class: "code-box", role: "listbox", "aria-label": "Vault source: pick a line" });
+      VAULT_LINES.forEach(function (row) {
+        var ln = row[0], code = row[1], pick = row[2];
+        var cls = "code-line" + (pick ? " pick" : "") + (chosen === ln ? " chosen" : "");
+        var line = el("span", {
+          class: cls,
+          role: pick ? "option" : "presentation",
+          tabindex: pick ? "0" : undefined,
+          "aria-selected": chosen === ln ? "true" : undefined,
+          onclick: pick ? (function (n) { return function () { chosen = n; draw(); showReplay(); }; })(ln) : undefined,
+          onkeydown: pick ? (function (n) { return function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); chosen = n; draw(); showReplay(); } }; })(ln) : undefined
+        }, el("span", { class: "ln" }, String(ln)), code);
+        codeBox.appendChild(line);
+      });
+      box.appendChild(codeBox);
+
+      /* Replay result area */
+      var replayBox = el("div", { id: "replay-result" });
+      box.appendChild(replayBox);
+    }
+
+    function showReplay() {
+      var replayBox = document.getElementById("replay-result");
+      if (!replayBox) return;
+      replayBox.innerHTML = "";
+      if (chosen === null) return;
+
+      /* Map the chosen line to a replay key */
+      var key = null;
+      if (chosen === 25) key = "line25_above_line21";
+      else if (chosen === 24) key = "remove_unchecked";
+      else if (chosen === 27) key = "line27_above_line21";
+      else if (chosen === 18) key = "line18_below_line22";
+      else if (chosen === 21) key = "line25_above_line21"; /* Moving the payment: same effect as moving the balance update */
+
+      if (!key || !REPLAYS[key]) return;
+      var r = REPLAYS[key];
+      var isFix = r.status === "fail";
+
+      var out = document.createElement("div");
+      out.className = "replay-out";
+      out.innerHTML =
+        "<h4>Replay: " + esc(r.label) + "</h4>" +
+        "<div class='verdict " + (isFix ? "fail" : "ok") + "'>" +
+          "Transaction " + (isFix ? "fails" : "succeeds") +
+        "</div>" +
+        "<p>Vault after: <strong>" + esc(r.vaultAfter) + "</strong> &middot; " +
+          "Attacker gain: <strong>" + esc(r.attackerGain) + "</strong> &middot; " +
+          "Withdrawal events: <strong>" + r.events + "</strong></p>" +
+        "<p>" + esc(r.why) + "</p>";
+      replayBox.appendChild(out);
+
+      if (isFix) {
+        api.finish({
+          choice: 2,
+          note: "<p>Moving that line stops the attack. " + esc(r.why) + "</p>" +
+            "<p>The flash loan is the money: the attacker borrowed 100 ETH from the lender and used it to drain 500 ETH. " +
+            "The flaw is the line: the vault pays before it records the withdrawal, handing control to the caller while its books are wrong.</p>"
+        });
+      }
+    }
+
+    draw();
+  }
+
+  function esc(s) { var d = document.createElement("span"); d.textContent = s; return d.innerHTML; }
+
+  /* ---- Shell config ---- */
+  LabShell.start({
+    id: "name-the-money-and-the-flaw",
+    title: "Name the money and the flaw",
+    slide: {
+      title: "Three patterns in a trace look different",
+      href: "../../../lessons/forensics/10-FO-flash_loans_reentrancy_oracles.html#/three-patterns-in-a-trace-look-different"
+    },
+    steps: {
+      "case": {
+        html:
+          "<p>An agent forwards a protocol’s message:</p>" +
+          "<blockquote>“Our vault held 500 ETH last night. This morning it holds nothing, and we never signed anything. Were we hacked?”</blockquote>" +
+          "<p>One transaction is attached.</p>"
+      },
+      commit: {
+        question: "The vault held 500 ETH. One transaction, from an address that had never used it, left it empty. How?",
+        choices: [
+          "The attacker stole the vault’s private key",
+          "The attacker forged a signature",
+          "The attacker called the vault’s own withdraw in a way its code allows",
+          "The vault’s owner moved the money"
+        ],
+        answer: 2
+      },
+      "do": {
+        render: renderDo
+      },
+      name: {
+        term: "reentrancy",
+        parts: "re- (again) + entry",
+        plain: "A contract is called again before its first call has finished, and the second call sees the state the first had not yet updated."
+      },
+      explorer: {
+        html:
+          "<p>The transaction on the course chain’s explorer:</p>" +
+          "<ul>" +
+            "<li><strong>Trace tab</strong>: <code>withdraw</code> nested inside the attacker’s contract six times, each with its 100 ETH transfer. These show only in the trace and its internal calls.</li>" +
+            "<li><strong>Logs tab</strong>: six <code>Withdrawal</code> events, written on the way back out, innermost first.</li>" +
+            "<li><strong>Source</strong>: the vault’s source opens from Sourcify beside the trace.</li>" +
+            "<li>The lender’s 100 ETH goes out first and comes back, with its fee, last.</li>" +
+          "</ul>" +
+          "<p><strong>The flash loan is the money; the line is the flaw.</strong></p>" +
+          "<p class='step-row'>" +
+            "<a class='explorer-link' href='" + EXPLOIT_HOST + "' target='_blank'>Open the explorer</a> " +
+            "<a class='explorer-link' href='/labs/cross-chain/exploit-fallback/' target='_blank'>Saved pages (fallback)</a>" +
+          "</p>"
+      },
+      twist: {
+        html:
+          "<p>The vault is fixed: it records the withdrawal before it pays (checks–effects–interactions). The same transaction is sent again.</p>" +
+          "<p><strong>What happens to the loan and the vault?</strong></p>",
+        question: "The fixed vault records the withdrawal before paying. The same attack is sent. What happens?",
+        choices: [
+          "The attacker gets 100 ETH and stops",
+          "The loan stays unpaid",
+          "The whole transaction fails and nothing moves",
+          "The vault pays once and the lender loses its fee"
+        ],
+        answer: 2,
+        why: "The fixed vault updates the balance first. The second withdraw call finds the recorded balance is zero and reverts. " +
+          "Because the attacker’s contract does not catch the failure, the whole transaction reverts: the loan, the deposit and " +
+          "every payment are undone. The attempt is still on chain with its sender, the attacker’s contract and a failure status, " +
+          "and the sender paid the gas fee. A failed attempt is evidence too."
+      },
+      tell: {
+        prompt: "Tell the agent how the vault was emptied.",
+        example: "Transaction " + ATTACK_TX.slice(0, 6) + "…" + ATTACK_TX.slice(-4) +
+          " emptied the vault of 500 ETH by reentrancy: the vault pays before it records the withdrawal, and the " +
+          "attacker’s contract called withdraw again from inside each payment. A 100 ETH flash loan, repaid in the " +
+          "same transaction, was the money; no key was taken (High confidence: the trace and the verified source agree)."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -19,8 +19,8 @@ Usage:
 
 Options:
   --domain DOMAIN                   Public DNS name for Let's Encrypt and router TLS; DOMAIN,
-                                    explorer.DOMAIN, tokens.DOMAIN, dex.DOMAIN and
-                                    dex-l2.DOMAIN must each have an A record for this host
+                                    explorer.DOMAIN, tokens.DOMAIN, dex.DOMAIN,
+                                    dex-l2.DOMAIN and exploit.DOMAIN must each have an A record for this host
   --max-student-capacity N          Base capacity for claim-based labs (default 20, max 40)
   --bitcoin-student-capacity N      Override Bitcoin claim-lane capacity
   --consensus-student-capacity N    Override consensus claim-lane capacity
@@ -110,9 +110,9 @@ CERT_DIR="/etc/letsencrypt/live/$DOMAIN"
 FULLCHAIN_PATH="$CERT_DIR/fullchain.pem"
 PRIVKEY_PATH="$CERT_DIR/privkey.pem"
 
-# The explorer, token and exchange labs each answer on their own host name, so
-# one certificate covers the course domain and these four names.
-CERT_NAMES=("$DOMAIN" "explorer.$DOMAIN" "tokens.$DOMAIN" "dex.$DOMAIN" "dex-l2.$DOMAIN")
+# The explorer, token, exchange and exploit labs each answer on their own host name, so
+# one certificate covers the course domain and these five names.
+CERT_NAMES=("$DOMAIN" "explorer.$DOMAIN" "tokens.$DOMAIN" "dex.$DOMAIN" "dex-l2.$DOMAIN" "exploit.$DOMAIN")
 
 # Every name must resolve to this host before certbot runs, or Let's Encrypt
 # refuses the certificate. The records are created by whoever deploys, at their

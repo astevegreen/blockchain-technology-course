@@ -9,7 +9,10 @@ name: cross-chain
 # Images the launcher fills in (lab.yaml services; context is relative to this folder, dockerfile to the context).
 # regression-tests/automated/launcher-stack.sh reads these lines to build them in CI:
 # launcher-build: CROSS_CHAIN_PAGE_IMAGE . Dockerfile
-# Platforms: linux/amd64 and linux/arm64 (node:24-alpine and nginx:alpine publish both, 9 Nov 2026).
+# launcher-build: CROSS_CHAIN_EXPLOIT_ANVIL_IMAGE . launcher/exploit-anvil.Dockerfile
+# launcher-build: CROSS_CHAIN_EXPLOIT_GATEWAY_IMAGE .. cross-chain/launcher/exploit-gateway.Dockerfile
+# launcher-build: CROSS_CHAIN_EXPLOIT_OTTERSCAN_IMAGE .. cross-chain/launcher/exploit-otterscan.Dockerfile
+# Platforms: linux/amd64 and linux/arm64 (every base image publishes both, 11 Nov 2026).
 
 services:
   page:
@@ -21,6 +24,47 @@ services:
       - router-net
     restart: unless-stopped
 
+  exploit-anvil:
+    image: ${CROSS_CHAIN_EXPLOIT_ANVIL_IMAGE:?set by the student launcher}
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json
+    labels:
+      course.lab: cross-chain
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - exploit-net
+    restart: unless-stopped
+
+  exploit-gateway:
+    image: ${CROSS_CHAIN_EXPLOIT_GATEWAY_IMAGE:?set by the student launcher}
+    environment:
+      - ANVIL_URL=http://exploit-anvil:8545
+      - STATIC_ROOT=/srv/static
+      - CHAIN_NAME=Course exploit chain (training)
+      - REFUSED_SENDERS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,0x976EA74026E726554dB657fA54763abd0C3a0aa9,0x14dC79964da2C08b23698B3D3cc7Ca32193d9955,0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f,0xa0Ee7A142d267C1f36714E4a8F75612F20a79720
+    labels:
+      course.lab: cross-chain
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - exploit-net
+      - router-net
+    depends_on:
+      - exploit-anvil
+    restart: unless-stopped
+
+  exploit-otterscan:
+    image: ${CROSS_CHAIN_EXPLOIT_OTTERSCAN_IMAGE:?set by the student launcher}
+    environment:
+      - DISABLE_CONFIG_OVERWRITE=1
+    labels:
+      course.lab: cross-chain
+      course.release: ${COURSE_RELEASE:?set by the student launcher}
+    networks:
+      - router-net
+    restart: unless-stopped
+
 networks:
+  exploit-net:
   router-net:
     external: true

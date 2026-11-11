@@ -216,5 +216,116 @@ class CrossChainLiveRegressionTests(unittest.TestCase):
                                       .replace("<", "&lt;").replace(">", "&gt;"), section, (i, value))
 
 
+class ExploitChainLiveRegressionTests(unittest.TestCase):
+    """Checks for the day-8 exploit chain (the course chain behind exploit.<host>:8445).
+
+    The exploit chain runs on its own host, so every request goes to port 8445 with Host: exploit.localhost.
+    The gateway is the same explorer gateway.py (read-only RPC to Anvil, /config.json, static files).
+    """
+
+    ADDRESSES = dict(
+        line.strip().split("=", 1)
+        for line in (LAB / "exploit" / "chain" / "addresses.env").read_text(encoding="utf-8").splitlines()
+        if "=" in line
+    )
+
+    @staticmethod
+    def _exploit_base() -> str:
+        parsed = BASE_URL.rsplit(":", 2)
+        if len(parsed) == 3 and parsed[2].isdigit():
+            host_part = ":".join(parsed[:2])
+        else:
+            host_part = BASE_URL
+        return f"{host_part}:8445"
+
+    @classmethod
+    def exploit_get(cls, path: str) -> requests.Response:
+        return requests.get(f"{cls._exploit_base()}{path}",
+                            headers={"Host": "exploit.localhost"}, timeout=30, allow_redirects=False)
+
+    @classmethod
+    def exploit_post_rpc(cls, method: str, *params):
+        resp = requests.post(f"{cls._exploit_base()}/rpc",
+                             json={"jsonrpc": "2.0", "id": 1, "method": method, "params": list(params)},
+                             headers={"Host": "exploit.localhost"}, timeout=30)
+        body = resp.json()
+        if "error" in body:
+            raise AssertionError(f"{method}: {body['error']}")
+        return body["result"]
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        deadline = time.time() + 120
+        while True:
+            try:
+                if cls.exploit_get("/healthz").status_code == 200:
+                    block = int(cls.exploit_post_rpc("eth_blockNumber"), 16)
+                    if block >= int(cls.ADDRESSES.get("LAST_BLOCK", "1")):
+                        return
+            except (requests.RequestException, AssertionError, ValueError):
+                pass
+            if time.time() > deadline:
+                raise AssertionError(f"exploit chain did not come up at {cls._exploit_base()}")
+            time.sleep(2)
+
+    def test_gateway_healthz(self) -> None:
+        resp = self.exploit_get("/healthz")
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(resp.json()["ok"])
+
+    def test_chain_has_the_expected_blocks(self) -> None:
+        block = int(self.exploit_post_rpc("eth_blockNumber"), 16)
+        self.assertEqual(block, int(self.ADDRESSES["LAST_BLOCK"]))
+
+    def test_vault_contract_exists(self) -> None:
+        code = self.exploit_post_rpc("eth_getCode", self.ADDRESSES["VAULT"], "latest")
+        self.assertNotEqual(code, "0x")
+
+    def test_attack_transaction_succeeded(self) -> None:
+        receipt = self.exploit_post_rpc("eth_getTransactionReceipt", self.ADDRESSES["ATTACK_TX"])
+        self.assertIsNotNone(receipt)
+        self.assertEqual(receipt["status"], "0x1")
+
+    def test_fixed_vault_attack_failed(self) -> None:
+        receipt = self.exploit_post_rpc("eth_getTransactionReceipt", self.ADDRESSES["FIXED_ATTACK_TX"])
+        self.assertIsNotNone(receipt)
+        self.assertEqual(receipt["status"], "0x0")
+
+    def test_config_points_otterscan_at_exploit_host(self) -> None:
+        config = self.exploit_get("/config.json").json()
+        self.assertIn("/rpc", config["erigonURL"])
+        self.assertIn("sourcify", config["sourcify"]["sources"]["Course copy"]["url"])
+
+    def test_otterscan_loads(self) -> None:
+        resp = self.exploit_get("/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('id="root"', resp.text)
+
+    def test_fallback_pages_load(self) -> None:
+        resp = self.exploit_get("/fallback/")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_otterscan_trace_api_answers(self) -> None:
+        result = self.exploit_post_rpc("ots_traceTransaction", self.ADDRESSES["ATTACK_TX"])
+        self.assertIsNotNone(result)
+
+    def test_worksheet_mentions_exploit_part(self) -> None:
+        lab = get("/labs/cross-chain/lab/")
+        self.assertEqual(lab.status_code, 200)
+        self.assertIn("Name the money and the flaw", lab.text)
+        self.assertIn("/assets/labs/name-the-money-and-the-flaw/", lab.text)
+        self.assertIn("exploit-fallback", lab.text)
+
+    def test_exploit_fallback_served_from_page_container(self) -> None:
+        resp = get("/labs/cross-chain/exploit-fallback/")
+        self.assertIn(resp.status_code, (200, 301, 302))
+
+    def test_sourcify_serves_vault_source(self) -> None:
+        resp = self.exploit_get(
+            f"/sourcify/contracts/full_match/31337/{self.ADDRESSES['VAULT']}/metadata.json")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("VulnerableBankVault", resp.text)
+
+
 if __name__ == "__main__":
     unittest.main()

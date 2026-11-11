@@ -664,6 +664,7 @@ ensure_networks() {
         "ethereum-instructor-mgmt-net:--internal"
         "ethereum-rpc-net:--internal"
         "ethereum-student-mgmt-net:--internal"
+        "exploit-net:--internal"
         "fabric_test:"
         "hlf-instructor-term:--internal"
         "hlf-student-term:--internal"
@@ -789,7 +790,7 @@ configure_tls() {
                 -keyout "${certs_dir}/privkey.pem" \
                 -out "${certs_dir}/fullchain.pem" \
                 -subj "/C=US/ST=State/L=City/O=Courseware/CN=localhost" \
-                -addext "subjectAltName=DNS:localhost,DNS:explorer.localhost,DNS:lab,DNS:explorer.lab,DNS:tokens.localhost,DNS:tokens.lab,DNS:dex.localhost,DNS:dex.lab,DNS:dex-l2.localhost,DNS:dex-l2.lab"
+                -addext "subjectAltName=DNS:localhost,DNS:explorer.localhost,DNS:lab,DNS:explorer.lab,DNS:tokens.localhost,DNS:tokens.lab,DNS:dex.localhost,DNS:dex.lab,DNS:dex-l2.localhost,DNS:dex-l2.lab,DNS:exploit.localhost,DNS:exploit.lab"
         fi
         if declare -F runtime_fix_path_ownership >/dev/null 2>&1; then
             runtime_fix_path_ownership "${certs_dir}"

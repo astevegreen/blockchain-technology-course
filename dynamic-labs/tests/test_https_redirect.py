@@ -60,7 +60,7 @@ class HttpsRedirectTests(unittest.TestCase):
 
     def test_every_tls_server_that_listens_on_80_includes_the_switch(self) -> None:
         servers = _servers((ROUTER / "nginx-ssl.conf").read_text(encoding="utf-8"))
-        self.assertEqual(len(servers), 5)  # the default server and explorer, tokens, dex, dex-l2
+        self.assertEqual(len(servers), 6)  # the default server and explorer, tokens, dex, dex-l2, exploit
         for server in servers:
             self.assertRegex(server, r"listen 80;")
             self.assertIn(INCLUDE, server, server[:80])

@@ -6,6 +6,11 @@ name: cross-chain
 #   /query/      the query page (?lab=d8): DuckDB in the student's browser, over the snapshot
 #   /fallback/   every query's saved output, for when the query page will not load
 #   /snapshot/   the snapshot's files and meta.json (row counts and SHA-256)
+#
+# The exploit chain (Name the money and the flaw) runs Otterscan on a separate frozen chain.
+# The router sends https://exploit.<host>/ here (router/routes/exploit-host.conf):
+#   /rpc, /config.json, /fallback/, /vendor/, /healthz  -> exploit-gateway
+#   everything else                                       -> exploit-otterscan
 
 services:
   page:
@@ -17,6 +22,49 @@ services:
       - router-net
     restart: unless-stopped
 
+  exploit-anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.8.6
+    command:
+      - >-
+        anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json
+    volumes:
+      - ./exploit/chain:/chain:ro
+    networks:
+      - exploit-net
+    restart: unless-stopped
+
+  exploit-gateway:
+    image: python:3.12-alpine
+    command: ["python", "-u", "/srv/gateway.py"]
+    environment:
+      - ANVIL_URL=http://exploit-anvil:8545
+      - STATIC_ROOT=/srv/static
+      - CHAIN_NAME=Course exploit chain (training)
+      # Every account used in the build script: deployer A0, attacker A6, A7, victim A8, drainer A9.
+      - REFUSED_SENDERS=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266,0x976EA74026E726554dB657fA54763abd0C3a0aa9,0x14dC79964da2C08b23698B3D3cc7Ca32193d9955,0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f,0xa0Ee7A142d267C1f36714E4a8F75612F20a79720
+    volumes:
+      - ../explorer/gateway/gateway.py:/srv/gateway.py:ro
+      - ./exploit/gateway/static/fallback:/srv/static/fallback:ro
+      - ../explorer/gateway/static/vendor:/srv/static/vendor:ro
+    networks:
+      - exploit-net
+      - router-net
+    depends_on:
+      - exploit-anvil
+    restart: unless-stopped
+
+  exploit-otterscan:
+    image: otterscan/otterscan:v2.11.0
+    environment:
+      - DISABLE_CONFIG_OVERWRITE=1
+    volumes:
+      - ../explorer/otterscan/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./exploit/chain/sourcify:/usr/share/nginx/html/sourcify:ro
+    networks:
+      - router-net
+    restart: unless-stopped
+
 networks:
+  exploit-net:
   router-net:
     external: true

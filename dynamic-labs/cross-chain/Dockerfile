@@ -15,3 +15,4 @@ COPY gateway/default.conf /etc/nginx/conf.d/default.conf
 COPY static/ /usr/share/nginx/html/
 COPY --from=build /lab/query-page/dist/ /usr/share/nginx/html/query/
 COPY snapshot/ /usr/share/nginx/html/snapshot/
+COPY exploit/gateway/static/fallback/ /usr/share/nginx/html/exploit-fallback/
