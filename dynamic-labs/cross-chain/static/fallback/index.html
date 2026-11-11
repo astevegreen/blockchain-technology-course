@@ -21,7 +21,7 @@ nav li { display: inline; margin-right: .75rem; }
 <h1>Saved query results: Day 8 lab: a cross-chain trace (the Bybit theft, Feb 2025, and the Kelp DAO rsETH release, Apr 2026)</h1>
 <p class="note">Use this page when the query page will not load. It shows every query and the output it gives on
 the lab's snapshot, so your worksheet questions have the same answers here. Extracted 24 Oct 2026 UTC with cryo 0.3.2 (Ethereum, Arbitrum, Unichain) and Esplora (Bitcoin), from public endpoints. Chains read to Ethereum block 26,259,270 (01:39 UTC), Arbitrum 517,703,385 (01:38 UTC), Unichain 62,057,198 (01:32 UTC) and Bitcoin 972,854 (00:55 UTC): query 16. Times are UTC.</p>
-<nav><ul><li><a href="#q1">1. Bybit</a></li><li><a href="#q2">2. Bybit</a></li><li><a href="#q3">3. Bybit</a></li><li><a href="#q4">4. Bybit</a></li><li><a href="#q5">5. Bybit</a></li><li><a href="#q6">6. Bybit</a></li><li><a href="#q7">7. Bybit</a></li><li><a href="#q8">8. Bybit</a></li><li><a href="#q9">9. Kelp</a></li><li><a href="#q10">10. Kelp</a></li><li><a href="#q11">11. Kelp</a></li><li><a href="#q12">12. Kelp</a></li><li><a href="#q13">13. Kelp</a></li><li><a href="#q14">14. Kelp</a></li><li><a href="#q15">15. Kelp</a></li><li><a href="#q16">16. As of</a></li></ul></nav>
+<nav><ul><li><a href="#q1">1. Bybit</a></li><li><a href="#q2">2. Bybit</a></li><li><a href="#q3">3. Bybit</a></li><li><a href="#q4">4. Bybit</a></li><li><a href="#q5">5. Bybit</a></li><li><a href="#q6">6. Bybit</a></li><li><a href="#q7">7. Bybit</a></li><li><a href="#q8">8. Bybit</a></li><li><a href="#q9">9. Kelp</a></li><li><a href="#q10">10. Kelp</a></li><li><a href="#q11">11. Kelp</a></li><li><a href="#q12">12. Kelp</a></li><li><a href="#q13">13. Kelp</a></li><li><a href="#q14">14. Kelp</a></li><li><a href="#q15">15. Kelp</a></li><li><a href="#q16">16. As of</a></li><li><a href="#q17">17. Bybit</a></li></ul></nav>
 <section id="q1"><h2>1. Bybit: the code the cold wallet runs, before and after the takeover (its delegate calls)</h2>
 <details><summary>The query</summary><pre>SELECT t.time_utc, left(t.transaction_hash, 10) AS tx, t.step, c.call_path, c.to_address AS runs_code_of,
        l.label, c.selector
@@ -354,6 +354,35 @@ ORDER BY b.block_number, l.label, x.address</pre></details>
 <tr><td>bitcoin</td><td>972854</td><td>2026-10-24 00:55:56</td></tr>
 <tr><td>ethereum</td><td>26259270</td><td>2026-10-24 01:39:35</td></tr>
 <tr><td>unichain</td><td>62057198</td><td>2026-10-24 01:32:37</td></tr>
+</tbody></table></div></section>
+<section id="q17"><h2>17. Bybit: every bitcoin the memos&#x27; address received from 22:00 to 23:30 on 25 Feb, by time (the guess, tried)</h2>
+<details><summary>The query</summary><pre>WITH a AS (SELECT address FROM labels WHERE chain = &#x27;bitcoin&#x27; AND label LIKE &#x27;BTC address the deposit memos%&#x27;),
+outs AS (
+  SELECT txid, op_return_text(script_hex) AS memo FROM &#x27;bitcoin_outputs.parquet&#x27; WHERE script_type = &#x27;op_return&#x27;)
+SELECT b.time_utc AS paid_utc,
+       date_diff(&#x27;minute&#x27;, (SELECT min(time_utc) FROM thorchain_deposits), b.time_utc) AS minutes_after_deposits,
+       left(p.txid, 10) AS btc_tx, units(p.value_sat::VARCHAR, 8) AS btc, o.memo,
+       coalesce((SELECT left(d.transaction_hash, 10) FROM thorchain_deposits d
+                 WHERE upper(o.memo) = &#x27;OUT:&#x27; || upper(substr(d.transaction_hash, 3))), &#x27;not a deposit in query 6&#x27;) AS answers_deposit
+FROM &#x27;bitcoin_outputs.parquet&#x27; p
+JOIN btc_tx b USING (txid)
+LEFT JOIN outs o USING (txid)
+WHERE p.address IN (FROM a)
+  AND b.time_utc BETWEEN TIMESTAMP &#x27;2025-02-25 22:00:00&#x27; AND TIMESTAMP &#x27;2025-02-25 23:30:00&#x27;
+ORDER BY b.time_utc, p.txid</pre></details>
+<p>11 rows</p>
+<div class="table-wrap"><table><thead><tr><th>paid_utc</th><th>minutes_after_deposits</th><th>btc_tx</th><th>btc</th><th>memo</th><th>answers_deposit</th></tr></thead><tbody>
+<tr><td>2025-02-25 22:19:16</td><td>23</td><td>676e00f407</td><td>0.276769660000000000</td><td>OUT:FAA684EDD53C8ABEC5FEE5135A3B37F594D5C4B206145164C7FC21F984541473</td><td>not a deposit in query 6</td></tr>
+<tr><td>2025-02-25 22:19:16</td><td>23</td><td>96fd3c3898</td><td>0.278563010000000000</td><td>OUT:967E51C3E2CA393056598F5857BFE68267961797DFD0A0237C3F30A610B54D60</td><td>not a deposit in query 6</td></tr>
+<tr><td>2025-02-25 22:19:16</td><td>23</td><td>a537211f2a</td><td>0.140877780000000000</td><td>OUT:7827D6B92FC4EF0FDAF382A09E7F6E3D0CE88B9EB0B03AE466B7C3FC387B9C7F</td><td>not a deposit in query 6</td></tr>
+<tr><td>2025-02-25 22:39:21</td><td>43</td><td>275c9937c7</td><td>0.274817300000000000</td><td>OUT:A71C51AAED904CA3398BAE48EDFF3B9DC18C3EBEC6984E5262B71782A4BE650B</td><td>not a deposit in query 6</td></tr>
+<tr><td>2025-02-25 22:39:21</td><td>43</td><td>2badc8ccb6</td><td>0.276592280000000000</td><td>OUT:946A65C27F8FEF6FA319493D356EA4458901A7975F65594DAABD82E4317310DD</td><td>not a deposit in query 6</td></tr>
+<tr><td>2025-02-25 22:39:21</td><td>43</td><td>74a9353d0b</td><td>0.273059320000000000</td><td>OUT:E62E6205112228FBA096AB632086CC5E8964211F027E35FAAD1F568789419BFE</td><td>0xe62e6205</td></tr>
+<tr><td>2025-02-25 22:39:21</td><td>43</td><td>9d839ee3f5</td><td>0.277486230000000000</td><td>OUT:62F4697F90BF9F2B1990DE9E361197FD7944708CE9F22DF53A7321BECDAEDBE4</td><td>0x62f4697f</td></tr>
+<tr><td>2025-02-25 22:39:21</td><td>43</td><td>b17895b5dd</td><td>0.273936190000000000</td><td>OUT:E5BE82E201ECA31424EA5DE01826C34795BF55112C7FCA8204FAD264E811CD52</td><td>0xe5be82e2</td></tr>
+<tr><td>2025-02-25 23:22:51</td><td>86</td><td>30fa1ca8ca</td><td>0.279466230000000000</td><td>OUT:246B214F42FD0162275AFD12E11D9F73511F114FD60B046752C5ACEB4B1D3CCB</td><td>not a deposit in query 6</td></tr>
+<tr><td>2025-02-25 23:22:51</td><td>86</td><td>89783b353a</td><td>0.277664150000000000</td><td>OUT:E304BF0FB105A252E023DAAF3FB01656E96AF23E5706B8A69F235C1775281627</td><td>not a deposit in query 6</td></tr>
+<tr><td>2025-02-25 23:22:51</td><td>86</td><td>8c38f26458</td><td>0.275702660000000000</td><td>OUT:978B4BA0E3081BCE31871A4B131D3E83539AE9534640EEFCE8D391384B2E8DFF</td><td>not a deposit in query 6</td></tr>
 </tbody></table></div></section>
 <footer><p>Written by build/saved_results.py with DuckDB 1.4.3.</p></footer>
 </body>

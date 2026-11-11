@@ -294,3 +294,19 @@ ORDER BY b.block_number, l.label, x.address;
 
 -- name: 16. As of: how far each chain was read
 SELECT chain, head_block, head_time_utc FROM heads ORDER BY chain;
+
+-- name: 17. Bybit: every bitcoin the memos' address received from 22:00 to 23:30 on 25 Feb, by time (the guess, tried)
+WITH a AS (SELECT address FROM labels WHERE chain = 'bitcoin' AND label LIKE 'BTC address the deposit memos%'),
+outs AS (
+  SELECT txid, op_return_text(script_hex) AS memo FROM 'bitcoin_outputs.parquet' WHERE script_type = 'op_return')
+SELECT b.time_utc AS paid_utc,
+       date_diff('minute', (SELECT min(time_utc) FROM thorchain_deposits), b.time_utc) AS minutes_after_deposits,
+       left(p.txid, 10) AS btc_tx, units(p.value_sat::VARCHAR, 8) AS btc, o.memo,
+       coalesce((SELECT left(d.transaction_hash, 10) FROM thorchain_deposits d
+                 WHERE upper(o.memo) = 'OUT:' || upper(substr(d.transaction_hash, 3))), 'not a deposit in query 6') AS answers_deposit
+FROM 'bitcoin_outputs.parquet' p
+JOIN btc_tx b USING (txid)
+LEFT JOIN outs o USING (txid)
+WHERE p.address IN (FROM a)
+  AND b.time_utc BETWEEN TIMESTAMP '2025-02-25 22:00:00' AND TIMESTAMP '2025-02-25 23:30:00'
+ORDER BY b.time_utc, p.txid;

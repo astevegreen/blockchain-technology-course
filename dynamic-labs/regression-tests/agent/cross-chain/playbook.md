@@ -23,7 +23,7 @@ and a screenshot.
 1. Set the browser's time zone to one that is not UTC if the tooling allows (for example
    America/New_York). Open `/labs/cross-chain/query/?lab=d8`. Confirm the title begins "Day 8 lab: a
    cross-chain trace", the as-of line names Ethereum block 26,259,270, and within a minute the status
-   reads "Ready: 24 files, 16 queries." The footer names DuckDB 1.4.3.
+   reads "Ready: 24 files, 17 queries." The footer names DuckDB 1.4.3.
 2. Confirm every network request went to `/labs/cross-chain/query/` (no CDN, no extension download).
 3. Press "Run" under query 1. Confirm 7 rows. In `0x46deef0f…` at `2025-02-21 14:13:35` (UTC, not
    shifted to the browser's zone), path `0` runs `0x34cfac64…` with selector `0x6a761202`, and path `0_0`
@@ -35,7 +35,10 @@ and a screenshot.
    17 rows; `hub_paid_the_lookalike` is false in every row, and `0xe81c9749…` has a blank `imitates`.
 6. Run queries 6 and 7. Query 6: 3 deposits of 9.98 ETH at `2025-02-25 21:56:47`, each asking for
    `BTC.BTC` to `bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z`. Query 7: 3 payouts at 22:39:21 of
-   0.27748623, 0.27393619 and 0.27305932 BTC, `as_the_memo_asked` true.
+   0.27748623, 0.27393619 and 0.27305932 BTC, `as_the_memo_asked` true. Then run query 17 (the
+   worksheet's "Now try the guess" step). Confirm 11 rows: three at 22:19:16 (`minutes_after_deposits`
+   23, `answers_deposit` "not a deposit in query 6"), five at 22:39:21 (43), three of them answering
+   `0xe62e6205`, `0x62f4697f` and `0xe5be82e2`, and three at 23:22:51 (86).
 7. Run query 8. Confirm 1 row: `bc1qjm4u…`, 249 transactions, 61.78505337 BTC in and out, as of block
    972854.
 8. Run query 9. Confirm 7 rows: Ethereum had accepted 307, then 308; the delivery claims Unichain nonce
@@ -58,8 +61,12 @@ and a screenshot.
    cross-chain trace".
 2. Follow the worksheet's crumbs to the query page and the saved results, and back. Confirm each loads
    under `/labs/cross-chain/`.
-3. Confirm the worksheet's source links (`[1]` to `[16]`) jump to entries under "Sources", and the section
+3. Confirm the worksheet's source links (`[1]` to `[23]`) jump to entries under "Sources", and the section
    "The graded note" (question 17) lists three parts and the one retry.
+   Confirm "Across the bridge (everyone, about 20 minutes)" sits between the worked example's
+   poisoning step and "The rest of the trail", opens with the "Predict first" box (choices (a) to (d)
+   and a confidence word), and that the `#crossing` links in "Where to start", in "Reading contracts
+   and bridges" and in the Kelp problem's "The far side" hint all land on it.
 4. Follow the link in question 4 to "The code", under "The contract read". Confirm two code blocks: Safe's proxy, with
    `address internal masterCopy;`, `sload(0)` and `delegatecall`, cited [15] and [16]; and NCC's decompiled
    code, ending `stor0 = _to`, cited [6]. Confirm each block keeps its line breaks and indentation, scrolls
@@ -67,6 +74,6 @@ and a screenshot.
    second says the decompiler wrote the names.
 5. Confirm the worksheet gives no name to an address the snapshot's `labels.csv` leaves blank (for
    example `0x85d456b2…`, `0xd01607c3…`, `0x3b87db6d…`): it may show the address, never a role for it.
-6. Open `/labs/cross-chain/fallback/`. Confirm 16 sections, each with its query and row count, and that
+6. Open `/labs/cross-chain/fallback/`. Confirm 17 sections, each with its query and row count, and that
    query 9's and query 14's rows match Query Flow steps 8 and 10. Check console errors and failed network
    requests.

@@ -74,9 +74,33 @@ alone. A name from a selector or a token symbol is one unverified label.
    hub paid (10, 20 or 103.105 ETH), 5 to 207 blocks later; the hub never paid any of them. Strangers, not
    the thief: **moderate** to **high** (the pattern and the published behavior). Not in the cluster.
 8. Query 6: 25 Feb 21:56:47, three × 9.98 ETH into vault `0x863df8de…` from `0xbfd21476…`, `0x1e15cd18…`
-   and `0xf19e24cf…` (each paid by the hub). Each memo: `=:BTC.BTC:bc1qjm4u…:0/10/0`.
+   and `0xf19e24cf…` (each paid by the hub). Each memo: `=:BTC.BTC:bc1qjm4u…:0/10/0`: `=` swap,
+   `BTC.BTC` the coin wanted, `bc1qjm4u…lvz79z` the address to pay; `0/10/0` is `LIM/INTERVAL/QUANTITY`,
+   left aside [17].
 9. Query 7: 22:39:21, 43 minutes later; 0.27748623, 0.27393619 and 0.27305932 BTC to `bc1qjm4u…`;
-   `as_the_memo_asked` true for all three.
+   `as_the_memo_asked` true for all three; each payout's memo is `OUT:` and its deposit's hash [19].
+   Query 17: 11 payouts, 22:19:16 to 23:22:51. Within 30 minutes: 3 (at 22:19, 23 minutes after), none
+   of them the deposits'. Within an hour: 8 (three at 22:19, five at 22:39), three of them the deposits'.
+   Amount and time alone pick wrong payouts; the memo pairs each deposit with its payout exactly.
+
+### Across the bridge: the prediction and the twist
+
+- **The prediction**: (c). The deposit's memo names the coin and the address to pay [17], and the
+  payout's `OUT:` memo names the deposit [19]. A student who picks (b) sees in query 17 why it fails; one
+  who picks (d) is told the explorer is the second method, the bridge's own account. Any confidence word is
+  fine before the run; afterwards, **high**: two records on two chains that agree.
+- **The twist**: the second choice. With no `OUT:` memo, the deposit's memo still says where it asked
+  to be paid, so it gives half the link; bitcoin arriving there soon after is a **low**-confidence lead
+  (ETH in and BTC out compare only through a price); the bridge's explorer is the bridge's word, not a
+  settlement. On this evening the lead is weak: the address took eleven payouts, most of 0.27 to 0.28
+  BTC, so without `OUT:` memos the analyst can say where the deposits asked to be paid and that bitcoin
+  arrived there, not which arrivals were theirs. Issue 2232 proposes the change; it was open with no
+  merge request as of 10 Nov 2026 [19].
+- **The sentence**, for example: "On 25 Feb 2025 at 21:56:47 UTC three deposits of 9.98 ETH went into
+  THORChain on Ethereum, each memo asking for bitcoin at bc1qjm4u…lvz79z; 43 minutes later THORChain paid
+  that address 0.27305932, 0.27393619 and 0.27748623 BTC, each payout naming its deposit (High
+  confidence: the deposit memos and the payouts are two records on two chains, and they agree). The
+  address took eight other payouts that evening; amount and time alone would have picked wrong ones."
 10. Query 8, as of Bitcoin block 972,854: 249 transactions, 61.78505337 BTC in and out, nothing held,
     24 Feb 17:06:10 to 26 Feb 02:56:35. Report: the crossing to Bitcoin through THORChain, **high**.
 

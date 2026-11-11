@@ -17,16 +17,16 @@ slide index), which is never listed here.
 
 - The new 10-FO slide "Where the three sit on OWASP's Top 10" has no questions in
   `quizes/quiz_json/forensics_10-FO-flash_loans_reentrancy_oracles-quiz-bank.json`. [10 Nov 2026, OWASP map slide]
+- The new 10-FO slide "A bridge's explorer pairs send and arrival" has no questions in the same bank.
+  [11 Nov 2026, bridge worked example]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
-- Day 8's lab has no worked example of following funds across a bridge yet (`docs/build-spec.md`, Additions,
-  "Following funds across a bridge"). Its three methods are now sourced from public material, each step with a
-  `Blockchain.bib` key, with their limits and the Bybit and Kelp transactions to use, in
-  `docs/analysis/2026-11-bridge-tracing-sources.md`; only the build remains (step 6 of the lab plan)
-  [10 Nov 2026, expert feedback review; sourced 10 Nov 2026]
+- The build spec's slide saying no public method matches funds across a swap (`docs/build-spec.md`, Additions,
+  "Following funds across a bridge") is not built; the worksheet's "A twist" step says it for THORChain only
+  [11 Nov 2026, building the bridge worked example]
 - Two open Dependabot alerts on `main`, both in `dynamic-labs/ethereum_lab/package-lock.json`: `tmp` (high, #275)
   and `minimatch` (moderate, #194), open since 7-8 Nov [10 Nov 2026, push output while recording an expert-feedback
   decision]

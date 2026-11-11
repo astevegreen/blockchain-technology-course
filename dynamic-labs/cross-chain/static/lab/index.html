@@ -31,8 +31,10 @@ line game on the course chain. Your instructor walks this with you.</li>
 into running.</li>
 <li>Most students then do the worked example, Bybit's ETH to Bitcoin (questions 5 to 10). It shows you
 how to follow money through a swap that crosses chains.</li>
-<li>If your pretest showed you can already follow a swap across chains, you may go straight to the
-problem, Kelp DAO (questions 11 to 16).</li>
+<li>If your pretest showed you can already follow a swap across chains, you may skip the rest of the
+worked example, but everyone does its <a href="#crossing">Across the bridge</a> steps (about 20 minutes):
+they are the only place the lab shows how to follow money across a bridge. Then go to the problem, Kelp DAO
+(questions 11 to 16).</li>
 <li>Everyone does the graded note (question 17). The challenge at the end is optional.</li>
 </ul>
 
@@ -49,8 +51,8 @@ the caller's storage and balance <a href="#s10">[10]</a>. A Safe multisig wallet
 the address of its logic contract (its "master copy") in storage and delegatecalls into it
 <a href="#s6">[6]</a> <a href="#s10">[10]</a>.</li>
 <li>THORChain is a cross-chain exchange: anyone can swap a coin on one chain for a coin on another
-<a href="#s11">[11]</a>. Query 6 reads each deposit's memo into what it asks for (<code>asks_for</code>)
-and where to pay it (<code>pay_to</code>).</li>
+<a href="#s11">[11]</a>. The worked example's <a href="#crossing">Across the bridge</a> steps show how
+to follow money through it.</li>
 <li>A LayerZero bridge sends messages between chains. Each message has an ID (<code>guid</code>). A channel
 is one sending contract on one chain talking to one receiving contract on another, and it numbers its
 messages 1, 2, 3 with no gaps (the nonce); a message is executed only once every earlier number on its
@@ -200,11 +202,69 @@ four and last four characters of an address the hub had paid, and each arrives 5
 That is <b>address poisoning</b>: a look-alike sends a tiny amount, hoping the victim copies the wrong
 address from their history next time <a href="#s12">[12]</a>. The poisoner is a stranger fishing, not the
 thief's own wallet: leave the look-alikes out of the cluster.</li>
-<li>Run query 6. At 21:56:47 on 25 Feb, three fresh addresses each deposit 9.98 ETH into THORChain's
-vault <code>0x863df8de…</code>. Each memo asks for Bitcoin (<code>BTC.BTC</code>), paid to
-<code>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</code>.</li>
-<li>Run query 7. Forty-three minutes later THORChain's Bitcoin vault pays 0.277, 0.274 and 0.273 BTC to
-that address, each naming its Ethereum deposit (<code>as_the_memo_asked</code> is true).</li>
+</ol>
+
+<h3 id="crossing">Across the bridge (everyone, about 20 minutes)</h3>
+<p>The agent has followed the thieves' ETH to the hub. From there, three payments of 9.98 ETH, from three
+fresh addresses, go into THORChain. "Is the money gone? Or can we see where it went?"</p>
+<p class="note"><b>Predict first</b>, before you run query 6, and write your answer down. Three fresh
+addresses each send 9.98 ETH into THORChain on Ethereum, in the same second. What can the record tell you
+about where that money went?<br>
+(a) Nothing: the bridge holds it now, and the trail ends there.<br>
+(b) Only a guess: look on other chains for arrivals worth about the same, soon after.<br>
+(c) The deposit itself says which chain, which coin and which address to pay, and the payout on the far
+chain names the deposit it answers.<br>
+(d) Only the bridge's own website can say.<br>
+Then say how sure you are: High, Moderate or Low.</p>
+<ol type="a">
+<li><b>Read the deposit.</b> Run query 6. At 21:56:47 on 25 Feb, three fresh addresses each deposit 9.98
+ETH into THORChain's vault <code>0x863df8de…</code>. The deposit's "to" is THORChain's, but who gets paid is
+written inside it. Take the first deposit, <code>0xe62e6205…</code>, and read its <code>memo</code> field
+by field, split at each colon: <code>=</code> means swap; <code>BTC.BTC</code> is the coin wanted, bitcoin
+on Bitcoin; <code>bc1qjm4u92xpcahtmhtjrp3r4vdy6reg4yg4lvz79z</code> is the address to pay
+<a href="#s17">[17]</a>. On Ethereum the memo is a text argument of THORChain's router call
+<a href="#s18">[18]</a>. Leave the last field, <code>0/10/0</code>, aside: it sets limits on the swap
+<a href="#s17">[17]</a>. Query 6 shows the second and third fields as <code>asks_for</code> and
+<code>pay_to</code>; do the other two deposits ask for the same?</li>
+<li><b>Read the payout.</b> Run query 7. Forty-three minutes later THORChain's Bitcoin vault pays 0.27748623,
+0.27393619 and 0.27305932 BTC to that address. Each payout carries its own memo, <code>OUT:</code> and the
+hash of the deposit it answers <a href="#s19">[19]</a>; query 7 pairs them on that hash, and
+<code>as_the_memo_asked</code> is true when the payout went where the deposit asked. Two records, on two
+chains, that point at each other.</li>
+<li><b>Now try the guess.</b> Run query 17: every payout that address received from 22:00 to 23:30. Look
+only at <code>paid_utc</code>, <code>minutes_after_deposits</code> and <code>btc</code>, and cover the last
+two columns. Say you had only amount and time. Which payouts fall within 30 minutes of the deposits? Within
+an hour? Which three would you pick? Now read <code>memo</code> and <code>answers_deposit</code>. How many
+of your picks were the deposits' payouts? The three deposits are the same amount in the same second, and ETH
+went in while BTC came out, so the amounts compare only through a price. Research on bridges finds the same:
+a wider window adds wrong matches, and amount and time alone often pick wrong <a href="#s20">[20]</a>
+<a href="#s21">[21]</a>.</li>
+<li><b>Name it: the memo.</b> The memo is the instruction a deposit gives the bridge: the action, the coin
+wanted and the address to pay (<code>SWAP:ASSET:DESTADDR:…</code>) <a href="#s17">[17]</a>. The payout's own
+memo, <code>OUT:</code> with the deposit's hash, points back <a href="#s19">[19]</a>. A bridge must know
+where to pay before it can pay, so the deposit carries that, and the analyst reads it to learn where the
+money was sent.</li>
+<li><b>The bridge's own explorer.</b> The second way is the bridge's own site: paste a hash, read the
+status, and take the far side's hash. Day 8's slide "A bridge's explorer pairs send and arrival" shows one
+Kelp send on LayerZero Scan <a href="#s22">[22]</a>; on THORChain, the node's API gives an inbound hash's
+status <a href="#s23">[23]</a>. You do not open them in this lab. They are the bridge's account of itself,
+so the two chains stay the check.</li>
+<li><b>A twist.</b> THORChain's developers have proposed dropping the payout memo (issue 2232, open since 31
+Jul 2025, as of 10 Nov 2026) <a href="#s19">[19]</a>. Say a later case's payouts carry no <code>OUT:</code>
+memo. What links a deposit to its payout now? Nothing, the trail ends; the deposit's memo still names the
+coin and the address, so bitcoin arriving there soon after is a lead, said at Low confidence; the bridge's
+explorer, which settles it; or the closest amount? Use query 17 to say how strong that lead would be on this
+evening.</li>
+<li><b>Say it.</b> The agent asks where the three deposits went. Write one or two sentences: when and what
+went in, where each memo asked to be paid, what was paid and when, your confidence and why. Add what amount
+and time alone would have done here.</li>
+</ol>
+<p class="hint">Three ways across a bridge, in the order to trust them: the record the deposit and the payout
+carry (a memo, or a message ID); the bridge's own explorer; amount and time, which is a check, and on its own
+a Low-confidence lead.</p>
+
+<h3>The rest of the trail</h3>
+<ol start="5">
 <li>Run query 8. As of Bitcoin block 972,854, <code>bc1qjm4u…</code> took in and sent out 61.785 BTC over
 two days, and holds nothing.</li>
 </ol>
@@ -213,7 +273,8 @@ two days, and holds nothing.</li>
 <ul>
 <li>The ETH crossed to Bitcoin through THORChain: three deposits from Ethereum on 25 Feb 2025 at 21:56:47,
 paid out on Bitcoin to <code>bc1qjm4u…</code> at 22:39:21. <b>High</b>: the deposit memos and the
-payouts are two records on two chains, and they agree.</li>
+payouts are two records on two chains, and they agree. The address took eight other payouts that evening;
+amount and time alone would have picked wrong ones.</li>
 <li>The hub <code>0x31c4b3da…</code> pooled the thieves' ETH. <b>Moderate</b>: it collects from the four
 addresses the wallet's ETH went to, one of them on the FBI's list; the hub itself is on no list here.</li>
 <li>The diagram: cold wallet <code>0x1db92e2e…</code> → (ETH and tokens) <code>0x47666fab…</code> →
@@ -232,8 +293,10 @@ these with you; they are not graded.</p>
 amounts?</li>
 <li>Query 4. What does the address <code>0x31c4b3da…</code> receive, and from whom?</li>
 <li>Query 5. Who sent the hub the tiny payments? Do they belong to the thief?</li>
-<li>Query 6. Which addresses deposit into THORChain, how much, and what does each deposit ask for?</li>
-<li>Query 7. Was each deposit paid out as its memo asked, how much, and how long after?</li>
+<li>Query 6. Which addresses deposit into THORChain, how much, and what does each memo ask for, field by
+field?</li>
+<li>Queries 7 and 17. Was each deposit paid out as its memo asked, how much, and how long after? Which
+payouts would amount and time alone have picked within 30 minutes, and within an hour?</li>
 <li>Query 8. What did <code>bc1qjm4u…</code> receive and send, over what period? What do you report?</li>
 </ol>
 
@@ -256,7 +319,9 @@ collateral and borrowed WETH against it <a href="#s3">[3]</a>. Say what the toke
 adds, and how much rsETH the snapshot shows going in.</p></li>
 <li>Query 12. Which addresses sent rsETH across the bridge, to which chain, to which address there, and
 how long did each take? What happened to the one message sent back?
-<p class="hint"><b>The far side.</b> Compare each send's <code>receiver</code> with its sender.</p></li>
+<p class="hint"><b>The far side.</b> Compare each send's <code>receiver</code> with its sender. Cross the
+bridge as in <a href="#crossing">Across the bridge</a>: the record first (here the message ID,
+<code>guid</code>, plays the memo's part), then the bridge's explorer, then amount and time as a check.</p></li>
 <li>Queries 13 and 14. What reached the collecting address on Arbitrum, and what moved it out? Did the
 collecting address's owner sign that move?
 <p class="hint"><b>What the snapshot does not hold.</b> rsETH crosses to Arbitrum; ETH arrives at the
@@ -341,6 +406,22 @@ Nonce, Channel. <code>layerzero_v2glossary_2026</code></li>
 2026). <code>safe_proxysol111_2019</code></li>
 <li id="s16">Safe, <i>safe-deployments</i>, <code>v1.1.1/gnosis_safe.json</code> (read 4 Nov 2026): GnosisSafe
 1.1.1 at <code>0x34CfAC646f301356fAa8B21e94227e3583Fe3F5F</code>. <code>safe_deployments111_2026</code></li>
+<li id="s17">THORChain, <i>Transaction Memos</i>, THORChain Developer Docs (read 10 Nov 2026).
+<code>thorchain_memos_2026</code></li>
+<li id="s18">THORChain, <i>Sending Transactions</i>, THORChain Developer Docs: router version 4.1 (read 10
+Nov 2026). <code>thorchain_sendingtx_2026</code></li>
+<li id="s19">THORChain, <i>REMOVE TXOUT MEMOS</i>, THORNode issue 2232, GitLab (read 10 Nov 2026).
+<code>thornode_outboundmemos_2026</code></li>
+<li id="s20">Lin et al., <i>CONNECTOR: Enhancing the Traceability of Decentralized Bridge Applications via
+Automatic Cross-Chain Transaction Association</i>, 2024 (read 10 Nov 2026).
+<code>lin_connectorenhancingtraceability_2024</code></li>
+<li id="s21">Yan, Huang and Tessone, <i>Tracing Cross-Chain Transactions between EVM-based Blockchains: An
+Analysis of Ethereum-Polygon Bridges</i>, Ledger, 2 Oct 2025 (read 10 Nov 2026).
+<code>yan_tracingcrosschain_2025</code></li>
+<li id="s22">LayerZero Labs, <i>LayerZero Scan Overview and Scan API</i>, LayerZero V2 documentation (read 10
+Nov 2026). <code>layerzero_scan_2026</code></li>
+<li id="s23">THORChain, <i>THORNode API</i> (OpenAPI 3.20.0), GitLab (read 10 Nov 2026).
+<code>thornode_openapi_2026</code></li>
 </ol>
 </main>
 <script src="flags.js"></script>

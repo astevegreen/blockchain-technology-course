@@ -164,6 +164,17 @@ class CrossChainLiveRegressionTests(unittest.TestCase):
         self.assertEqual([r["btc_out"] for r in self.results["7"]], t["btc_out"])
         self.assertEqual([r["as_the_memo_asked"] for r in self.results["7"]], t["as_the_memo_asked"])
 
+    def test_query_17_amount_and_time_picks_wrong_payouts(self) -> None:
+        w = FACTS["thorchain_window"]
+        rows = self.results["17"]
+        self.assertEqual(len(rows), w["payouts"])
+        for minutes in (30, 60):
+            with self.subTest(window=minutes):
+                inside = [r for r in rows if int(r["minutes_after_deposits"]) <= minutes]
+                ours = [r for r in inside if r["answers_deposit"].startswith("0x")]
+                self.assertEqual({"payouts": len(inside), "query_6_deposits": len(ours)},
+                                 w[f"within_{minutes}_minutes"])
+
     def test_query_9_the_nonce_the_forged_delivery_claimed(self) -> None:
         got = [{"chain": r["chain"], "what": r["what"], "nonce": r["nonce"]} for r in self.results["9"]]
         self.assertEqual(got, FACTS["kelp_nonce"])
