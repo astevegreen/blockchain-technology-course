@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hide and trace</title>
+<link rel="stylesheet" href="/assets/labs/shared/look.css">
+<style>
+  body { background: var(--panel, #fff); }
+  .row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin: 0.4rem 0; }
+  .row label { display: flex; gap: 0.4em; align-items: center; flex-wrap: wrap; }
+  input[type=text], select, textarea { font: inherit; padding: 0.25em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); color: inherit; }
+  input.wide { width: min(42rem, 100%); }
+  textarea { width: min(42rem, 100%); min-height: 3em; }
+  .coins { display: grid; gap: 0.3rem; margin: 0.4rem 0; }
+  .coins label { display: flex; gap: 0.5em; align-items: center; flex-wrap: wrap; }
+  .facts { display: flex; flex-wrap: wrap; gap: 1.2rem; font-weight: 700; margin: 0.4rem 0; }
+  .note { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+  .src { color: var(--ink-soft); font-size: 0.85rem; }
+  .err { padding: 0.5rem 0.8rem; border-left: 6px double var(--ink); margin: 0.6rem 0; font-weight: 700; }
+  .err::before { content: "\2717  "; }
+  table { max-width: 100%; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main class="lab">
+  <header class="lab-bar"><h1>Hide and trace</h1>
+    <p class="from">A team game on the class's live Bitcoin chain. The amounts, the exchange and the theft are made up for the game.</p></header>
+  <section class="lab-step" id="join">
+    <h2>Your team</h2>
+    <p>Type the team code your instructor gives you. Keep it in your team: anyone with it can move your coins.</p>
+    <div class="row"><label>Team code <input type="text" id="code" autocomplete="off" spellcheck="false"></label>
+      <button class="btn primary" type="button" id="join-btn">Open</button></div>
+  </section>
+  <div id="msg" role="status" aria-live="polite"></div>
+  <div id="game"></div>
+</main>
+<script src="game.js"></script>
+<script>
+(function () {
+  "use strict";
+  var el = HT.el, code = "", state = null, chosen = null, busy = false, lastKey = "";
+  var game = document.getElementById("game"), msg = document.getElementById("msg");
+
+  function headers() { return { "X-Team-Code": code }; }
+  function say(text, bad) { msg.innerHTML = ""; if (text) msg.appendChild(el("p", { class: bad ? "err" : "note" }, text)); }
+
+  try { code = sessionStorage.getItem("ht-code") || ""; } catch (e) { code = ""; }
+  document.getElementById("code").value = code;
+  document.getElementById("join-btn").addEventListener("click", function () {
+    code = document.getElementById("code").value.trim().toLowerCase();
+    try { sessionStorage.setItem("ht-code", code); } catch (e) { /* the page works without storage */ }
+    lastKey = ""; refresh();
+  });
+
+  function refresh() {
+    if (!code || busy) return;
+    HT.api("api/state", null, headers()).then(function (s) {
+      state = s;
+      document.getElementById("join").hidden = true;
+      var key = JSON.stringify([s.phase, s.game_block, s.moves_used, (s.coins || []).length, (s.calls || []).length, s.stop, s.locked_until, (s.pending_mix || []).length]);
+      if (key !== lastKey) { lastKey = key; draw(); }
+      else drawFacts();
+    }).catch(function (e) { document.getElementById("join").hidden = false; say(e.message, true); });
+  }
+  setInterval(refresh, 4000);
+
+  function post(path, body, method) {
+    busy = true;
+    return HT.api(path, { method: method || "POST", body: body }, headers())
+      .then(function (r) { busy = false; lastKey = ""; refresh(); return r; })
+      .catch(function (e) { busy = false; say(e.message, true); throw e; });
+  }
+
+  var facts = el("div", { class: "facts", "aria-live": "polite" });
+  function drawFacts() {
+    var s = state; facts.innerHTML = "";
+    facts.appendChild(el("span", null, s.team));
+    if (s.game_block !== null && s.game_block !== undefined) facts.appendChild(el("span", null, "Block " + Math.min(s.game_block, s.blocks) + " of " + s.blocks));
+    if (s.moves_used !== undefined) facts.appendChild(el("span", null, "Moves used: " + s.moves_used + " of " + s.moves_budget));
+    if (s.phase === "hide" && s.clock) facts.appendChild(el("span", null, "A block every " + s.clock + " seconds"));
+  }
+
+  function draw() {
+    game.innerHTML = ""; drawFacts(); game.appendChild(facts);
+    var s = state;
+    if (s.phase === "setup") return game.appendChild(el("p", { class: "note" }, "The game is getting ready: " + s.status + ". This page updates itself."));
+    if (s.phase === "ready") { game.appendChild(el("p", { class: "note" }, "Your team holds the stolen coin below. Moves open when your instructor starts the hide.")); return drawHide(false); }
+    if (s.phase === "hide") return drawHide(true);
+    drawTrace();
+    if (s.phase === "reveal") { var box = el("section", { class: "lab-step" }); HT.renderReveal(box, s.reveal); game.appendChild(box); }
+  }
+
+  /* ---------- hiding ---------- */
+
+  var MENU = [
+    ["peel", "Peel", "Pay a round amount out; the change comes back to you."],
+    ["split", "Split", "One coin into two to five."],
+    ["merge", "Merge", "Two or more of your coins in one transaction."],
+    ["wait", "Wait", "Let 1 to 10 blocks pass before your next move."],
+    ["coinjoin", "CoinJoin", "One 0.5001 BTC coin into the next round of the 0.5 BTC pool."],
+    ["mixer", "Mixer", "Deposit to the mixer; choose a delay and where it pays you back."],
+    ["cashout", "Cash out", "Deposit to the exchange, which pays you out. The trail ends there."]
+  ];
+
+  function drawHide(open) {
+    var s = state;
+    var sec = el("section", { class: "lab-step" }, el("h2", null, "Hide the 2.1 BTC"));
+    sec.appendChild(el("p", null, "Get the money to the exchange within 30 blocks, in at most eight moves, while the other teams watch the chain. Whatever has not reached the exchange by block 30 is deposited there for you, in one transaction."));
+    if (s.locked_until) sec.appendChild(el("p", { class: "note" }, "You are waiting until block " + s.locked_until + "."));
+    (s.pending_mix || []).forEach(function (p) { sec.appendChild(el("p", { class: "note" }, "The mixer will pay you " + HT.btc(p.pay) + " at about block " + p.due + ".")); });
+
+    sec.appendChild(el("h3", null, "Your coins"));
+    var coins = el("div", { class: "coins" });
+    if (!s.coins.length) coins.appendChild(el("p", null, "No confirmed coins. A coin you have just made confirms in the next block."));
+    s.coins.forEach(function (c) {
+      var box = el("input", { type: "checkbox", value: c.outpoint, disabled: c.reserved || !open ? "disabled" : null });
+      coins.appendChild(el("label", null, box,
+        el("span", { class: "coin output" }, el("span", { class: "amount" }, HT.btc(c.sats)), el("span", { class: "who" }, " at " + HT.short(c.address))),
+        HT.outLink(c.outpoint), c.reserved ? " (waiting for the CoinJoin round)" : ""));
+    });
+    sec.appendChild(coins);
+
+    if (open) {
+      sec.appendChild(el("h3", null, "Your move"));
+      var menu = el("div", { class: "menu", role: "group", "aria-label": "Moves" });
+      var form = el("div");
+      var spent = s.moves_used >= s.moves_budget || s.locked_until;
+      MENU.forEach(function (m) {
+        var b = el("button", { type: "button", class: "move", "aria-pressed": chosen === m[0] ? "true" : "false", disabled: spent ? "disabled" : null },
+          el("strong", null, m[1]), el("span", null, m[2]));
+        b.addEventListener("click", function () { chosen = m[0]; lastKey = ""; draw(); });
+        menu.appendChild(b);
+      });
+      sec.appendChild(menu);
+      if (chosen && !spent) sec.appendChild(moveForm(chosen, coins));
+      sec.appendChild(form);
+    }
+    if (s.moves && s.moves.length) sec.appendChild(el("div", { class: "scroll" }, HT.moveTable(s.moves, "Your moves so far")));
+    sec.appendChild(el("p", { class: "src" }, "Your coins are spent at 5 sat/vB. The CoinJoin coordinator keeps 5,000 sats of each entry and the miner takes 5,000; the mixer keeps 2%. The mixer and the coordinator are the game's own."));
+    game.appendChild(sec);
+  }
+
+  function addressPicker() {
+    var sel = el("select", null, el("option", { value: "fresh" }, "a fresh address"));
+    (state.addresses || []).forEach(function (a) { sel.appendChild(el("option", { value: a }, "reuse " + HT.short(a))); });
+    return sel;
+  }
+
+  function moveForm(kind, coinBox) {
+    var f = el("div", { class: "lab-step" });
+    var fields = {};
+    function picked() { return Array.prototype.map.call(coinBox.querySelectorAll("input:checked"), function (x) { return x.value; }); }
+    function field(label, node, key) { fields[key] = node; f.appendChild(el("div", { class: "row" }, el("label", null, label, node))); }
+    var help = {
+      peel: "Tick one coin. Pay a round amount (a multiple of 0.01 BTC); the change goes to the address you choose.",
+      split: "Tick one coin. Write the new coins' amounts in BTC; leave one blank to take what is left after the fee.",
+      merge: "Tick two or more coins.",
+      wait: "",
+      coinjoin: "Tick one coin of exactly 0.5001 BTC (split one off first). It joins the round in block " + state.next_round + "; rounds run every three blocks.",
+      mixer: "Tick the coins to deposit. The mixer pays back what you deposit, less its 2% and the fee, after the delay.",
+      cashout: "Tick the coins to deposit to the exchange."
+    }[kind];
+    if (help) f.appendChild(el("p", null, help));
+    if (kind === "peel") { field("Pay (BTC) ", el("input", { type: "text", inputmode: "decimal" }), "amount"); field("Change to ", addressPicker(), "to"); }
+    if (kind === "split") {
+      var n = el("select"); [2, 3, 4, 5].forEach(function (k) { n.appendChild(el("option", { value: k }, k + " coins")); });
+      var rows = el("div");
+      function drawRows() {
+        rows.innerHTML = ""; fields.amounts = []; fields.tos = [];
+        for (var i = 0; i < +n.value; i++) {
+          var a = el("input", { type: "text", inputmode: "decimal", placeholder: i === +n.value - 1 ? "blank: what is left" : "" });
+          var t = addressPicker(); fields.amounts.push(a); fields.tos.push(t);
+          rows.appendChild(el("div", { class: "row" }, el("label", null, "Coin " + (i + 1) + " (BTC) ", a), el("label", null, " to ", t)));
+        }
+      }
+      n.addEventListener("change", drawRows);
+      f.appendChild(el("div", { class: "row" }, el("label", null, "Make ", n)));
+      f.appendChild(rows); drawRows();
+    }
+    if (kind === "merge") field("Into ", addressPicker(), "to");
+    if (kind === "wait") field("Blocks (1 to 10) ", el("input", { type: "text", inputmode: "numeric", value: "3" }), "blocks");
+    if (kind === "coinjoin") field("Its 0.5 BTC output to ", addressPicker(), "to");
+    if (kind === "mixer") { field("Delay in blocks (2 to 20) ", el("input", { type: "text", inputmode: "numeric", value: "6" }), "delay"); field("Pay me back at ", addressPicker(), "to"); }
+    var go = el("button", { type: "button", class: "btn primary" }, "Make this move");
+    go.addEventListener("click", function () {
+      var body = { kind: kind, coins: picked() };
+      if (fields.amount) body.amount = fields.amount.value;
+      if (fields.to) body.to = fields.to.value;
+      if (fields.blocks) body.blocks = fields.blocks.value;
+      if (fields.delay) body.delay = fields.delay.value;
+      if (kind === "split") { body.amounts = fields.amounts.map(function (a) { return a.value; }); body.to = fields.tos.map(function (t) { return t.value; }); }
+      go.disabled = true;
+      post("api/move", body).then(function (mv) { chosen = null; say("Move " + mv.n + ": " + mv.note); }).catch(function () { go.disabled = false; });
+    });
+    f.appendChild(go);
+    return f;
+  }
+
+  /* ---------- tracing ---------- */
+
+  var KIND_HELP = {
+    cospend: "co-spend: spent together with a coin already on the trail",
+    reuse: "reuse: paid to an address already on the trail",
+    change: "change: the output that looks like the change",
+    amount: "amount: a size that matches (a deposit less the fee, a team coin)",
+    timing: "timing: moved soon after a step on the trail",
+    flow: "flow: the only way on from the last coin",
+    behavior: "behavior: the pattern the hiders have shown"
+  };
+
+  function drawTrace() {
+    var s = state;
+    var sec = el("section", { class: "lab-step" }, el("h2", null, "Trace " + s.target + "'s coin"));
+    sec.appendChild(el("p", null, s.target + " stole 2.1 BTC in this output: ", HT.outLink(s.target_start),
+      ". It had 30 blocks from block " + s.start_height + " of the chain to reach an exchange. Follow it in the explorer and make your calls: each output you say carries " + s.target + "'s money, with a confidence word and its reasons. Then say where the trace stops, and why."));
+    sec.appendChild(el("p", null, el("a", { href: HT.EXPLORER + "/", target: "_blank", rel: "noopener" }, "Open the explorer"),
+      ": the transaction page shows a CoinJoin as equal outputs and a merge as several inputs; the address page shows a reused address with two receives; the block page shows when a coin moved."));
+    sec.appendChild(el("h3", null, "The exchange's deposit addresses"));
+    sec.appendChild(el("p", null, "The exchange holds one deposit address per customer. These are all of them on this chain; most are other customers'."));
+    var ex = el("div", { class: "coins" });
+    s.exchanges.forEach(function (e) { ex.appendChild(el("div", null, el("strong", null, e.label + " "), HT.addrLink(e.address))); });
+    sec.appendChild(ex);
+
+    sec.appendChild(el("h3", null, "How calls score"));
+    sec.appendChild(el("div", { class: "scroll" }, el("table", { class: "class-table" },
+      el("thead", null, el("tr", null, el("th", null, "Word"), el("th", null, "Your reasons must have"), el("th", null, "Right"), el("th", null, "Wrong"))),
+      el("tbody", null,
+        el("tr", null, el("td", null, HT.word("low")), el("td", null, "one weaker line: change, amount, timing, flow or behavior alone"), el("td", null, "+1"), el("td", null, "−1")),
+        el("tr", null, el("td", null, HT.word("moderate")), el("td", null, "one strong line (a co-spend or a reuse), or weaker lines of different kinds that agree"), el("td", null, "+2"), el("td", null, "−3")),
+        el("tr", null, el("td", null, HT.word("high")), el("td", null, "two independent lines, one of them strong: different kinds, from different transactions"), el("td", null, "+3"), el("td", null, "−9")),
+        el("tr", null, el("td", null, "Undetermined"), el("td", null, "nothing: you say the trail is lost here"), el("td", null, "0"), el("td", null, "0"))))));
+    sec.appendChild(el("p", null, "A word above what its reasons allow is scored as the word they allow. A call with no reason is struck. A co-spend inside a CoinJoin round is not counted: its inputs are many people's. The call on where the trace stops scores +2 if it names the move that ended the trail. Time only breaks ties."));
+    sec.appendChild(el("p", { class: "src" }, "The words are the course scale's (06-FO; ICD 203 standardizes the words); “right” means the output was the target team's, from the game server's log, shown at the reveal."));
+
+    if (s.phase === "trace") sec.appendChild(callForm());
+    if (s.calls.length) sec.appendChild(el("div", { class: "scroll" }, myCalls(s.calls, s.phase === "trace")));
+    if (s.phase === "trace") sec.appendChild(stopForm());
+    else if (s.stop) sec.appendChild(el("p", null, "Your stop call: ", HT.txLink(s.stop.txid), " (" + s.stop.kind + ")."));
+    if (s.own_moves && s.own_moves.length) sec.appendChild(el("details", null, el("summary", null, "Your own moves, from when you hid"), el("div", { class: "scroll" }, HT.moveTable(s.own_moves))));
+    game.appendChild(sec);
+  }
+
+  function callForm() {
+    var f = el("div", { class: "lab-step" }, el("h3", null, "Make a call"));
+    var op = el("input", { type: "text", class: "wide", placeholder: "txid:index, as the explorer shows it", spellcheck: "false" });
+    var word = el("select", null, el("option", { value: "" }, "pick"), ["low", "moderate", "high", "undetermined"].map(function (w) { return el("option", { value: w }, w.charAt(0).toUpperCase() + w.slice(1)); }));
+    var reasons = el("div");
+    function addReason() {
+      var k = el("select", null, el("option", { value: "" }, "kind of evidence"), Object.keys(KIND_HELP).map(function (x) { return el("option", { value: x }, KIND_HELP[x]); }));
+      var t = el("input", { type: "text", class: "wide", placeholder: "the transaction it is in (txid)", spellcheck: "false" });
+      reasons.appendChild(el("div", { class: "row" }, el("label", null, "Reason ", k), el("label", null, " in ", t)));
+    }
+    addReason();
+    var more = el("button", { type: "button", class: "btn" }, "Add a reason");
+    more.addEventListener("click", addReason);
+    var note = el("textarea", { placeholder: "Optional: what you saw, in a sentence" });
+    f.appendChild(el("div", { class: "row" }, el("label", null, "This output carries the target's money: ", op)));
+    f.appendChild(el("div", { class: "row" }, el("label", null, "Confidence ", word)));
+    f.appendChild(reasons); f.appendChild(more);
+    f.appendChild(el("div", { class: "row" }, note));
+    var go = el("button", { type: "button", class: "btn primary" }, "Make the call");
+    go.addEventListener("click", function () {
+      var rs = [];
+      reasons.querySelectorAll(".row").forEach(function (r) {
+        var k = r.querySelector("select").value, t = r.querySelector("input").value.trim();
+        if (k || t) rs.push({ kind: k, txid: t });
+      });
+      post("api/call", { outpoint: op.value.trim(), word: word.value, reasons: rs, note: note.value })
+        .then(function () { say("Call made."); }).catch(function () {});
+    });
+    f.appendChild(go);
+    return f;
+  }
+
+  function myCalls(calls, canDelete) {
+    return el("table", { class: "class-table" }, el("caption", null, "Your calls (the time each was made is kept)"),
+      el("thead", null, el("tr", null, ["Output", "Word", "Reasons", "Note", ""].map(function (h) { return el("th", null, h); }))),
+      el("tbody", null, calls.map(function (c) {
+        var del = null;
+        if (canDelete) {
+          del = el("button", { type: "button", class: "btn" }, "Withdraw");
+          del.addEventListener("click", function () { post("api/call/" + c.id, null, "DELETE").catch(function () {}); });
+        }
+        return el("tr", null, el("td", null, HT.outLink(c.outpoint)), el("td", null, HT.word(c.word)),
+          el("td", null, c.reasons.length ? c.reasons.map(function (r) { return el("div", null, r.kind + " in ", HT.txLink(r.txid)); }) : "none: it will be struck"),
+          el("td", null, c.note || ""), el("td", null, del));
+      })));
+  }
+
+  function stopForm() {
+    var f = el("div", { class: "lab-step" }, el("h3", null, "Where the trace stops"));
+    var cur = state.stop;
+    if (cur) f.appendChild(el("p", null, "Your call now: ", HT.txLink(cur.txid), " (" + cur.kind + "). A new one replaces it."));
+    var kind = el("select", null, el("option", { value: "" }, "what stopped it"),
+      el("option", { value: "coinjoin" }, "a CoinJoin round"), el("option", { value: "mixer" }, "the mixer"), el("option", { value: "exchange" }, "the exchange"));
+    var tx = el("input", { type: "text", class: "wide", placeholder: "the transaction where it stops (txid)", spellcheck: "false" });
+    var why = el("textarea", { placeholder: "Why the trail cannot go on from there" });
+    f.appendChild(el("div", { class: "row" }, el("label", null, "Stopped by ", kind)));
+    f.appendChild(el("div", { class: "row" }, el("label", null, "At ", tx)));
+    f.appendChild(el("div", { class: "row" }, why));
+    var go = el("button", { type: "button", class: "btn primary" }, "Make the stop call");
+    go.addEventListener("click", function () {
+      post("api/stop", { kind: kind.value, txid: tx.value.trim(), reason: why.value }).then(function () { say("Stop call made."); }).catch(function () {});
+    });
+    f.appendChild(go);
+    return f;
+  }
+
+  refresh();
+})();
+</script>
+</body>
+</html>

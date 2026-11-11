@@ -27,6 +27,7 @@ projects=(
   "dynamic-labs/wallet"
   "dynamic-labs/bitcoin-trace"
   "dynamic-labs/coinjoin-trace"
+  "dynamic-labs/hide-and-trace"
   "dynamic-labs/tron"
   "dynamic-labs/cross-chain"
   "dynamic-labs/final-trace"

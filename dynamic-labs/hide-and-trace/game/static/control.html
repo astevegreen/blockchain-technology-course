@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hide and trace: instructor</title>
+<link rel="stylesheet" href="/assets/labs/shared/look.css">
+<style>
+  body { background: var(--panel, #fff); }
+  .row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin: 0.4rem 0; }
+  input[type=text], select { font: inherit; padding: 0.25em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); color: inherit; width: 6em; }
+  .facts { display: flex; flex-wrap: wrap; gap: 1.2rem; font-weight: 700; margin: 0.4rem 0; }
+  .note { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+  .err { padding: 0.5rem 0.8rem; border-left: 6px double var(--ink); margin: 0.6rem 0; font-weight: 700; }
+  .scroll { overflow-x: auto; }
+  code.team-code { font-size: 1.2rem; letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+<main class="lab">
+  <header class="lab-bar"><h1>Hide and trace: instructor</h1>
+    <p class="from">Design card docs/lab-cards/hide-and-trace.md; scoring notes in dynamic-labs/hide-and-trace/quizes/SCORING_NOTES.md.</p></header>
+  <div id="msg" role="status" aria-live="polite"></div>
+  <section class="lab-step"><h2>The game</h2><div class="facts" id="facts"></div><div id="controls"></div></section>
+  <section class="lab-step"><h2>Teams</h2><div id="teams" class="scroll"></div></section>
+  <section class="lab-step" id="reveal-box" hidden></section>
+</main>
+<script src="../game.js"></script>
+<script>
+(function () {
+  "use strict";
+  var el = HT.el, s = null, lastKey = "", busy = false;
+  var msg = document.getElementById("msg");
+  function say(text, bad) { msg.innerHTML = ""; if (text) msg.appendChild(el("p", { class: bad ? "err" : "note" }, text)); }
+
+  function post(path, body) {
+    busy = true;
+    return HT.api("api/" + path, { method: "POST", body: body || {} })
+      .then(function (r) { busy = false; s = r; lastKey = ""; draw(); say(""); return r; })
+      .catch(function (e) { busy = false; say(e.message, true); });
+  }
+
+  function refresh() {
+    if (busy) return;
+    HT.api("api/state").then(function (r) {
+      s = r;
+      var key = JSON.stringify(r);
+      if (key !== lastKey) { lastKey = key; draw(); }
+    }).catch(function (e) { say(e.message, true); });
+  }
+  setInterval(refresh, 4000);
+
+  function button(text, fn, primary) {
+    var b = el("button", { type: "button", class: primary ? "btn primary" : "btn" }, text);
+    b.addEventListener("click", fn); return b;
+  }
+
+  function draw() {
+    var f = document.getElementById("facts"); f.innerHTML = "";
+    f.appendChild(el("span", null, "Phase: " + s.phase));
+    f.appendChild(el("span", null, s.status));
+    if (s.height !== null) f.appendChild(el("span", null, "Chain height " + s.height));
+    if (s.game_block !== null && s.game_block !== undefined) f.appendChild(el("span", null, "Game block " + Math.min(s.game_block, s.blocks) + " of " + s.blocks));
+    f.appendChild(el("span", null, s.clock ? "A block every " + s.clock + " s" : "Blocks by hand"));
+    if (s.phase === "hide") f.appendChild(el("span", null, "CoinJoin rounds run: " + s.rounds + "; joins waiting: " + s.pending_join + "; mixer payouts due: " + s.pending_mix));
+    if (s.error) say("Setup failed: " + s.error, true);
+
+    var c = document.getElementById("controls"); c.innerHTML = "";
+    if (s.fallback) c.appendChild(el("p", { class: "note" }, "This is the saved game, loaded because the live one could not run. Open the reveal to show it."));
+    if (s.phase === "setup") c.appendChild(el("p", null, "The server is mining the first blocks and funding the crowd. This takes a few minutes; the page updates itself."));
+    if (s.phase === "ready" && !s.teams.length) {
+      var n = el("input", { type: "text", inputmode: "numeric", value: "4" });
+      c.appendChild(el("div", { class: "row" }, el("label", null, "Teams (2 to 12) ", n),
+        button("Make the teams", function () { post("teams", { count: +n.value }); }, true)));
+      c.appendChild(el("p", null, "Each team is given 2.1 BTC from the exchange's hot wallet, a code, and an exchange deposit address. Team k traces team k+1; the last traces the first."));
+    }
+    if (s.phase === "ready" && s.teams.length) {
+      c.appendChild(el("div", { class: "row" }, button("Start the hide: 30 blocks", function () { post("start"); }, true)));
+      c.appendChild(el("p", null, "Hand each team its code first. The clock starts with the first block after this."));
+    }
+    if (s.phase === "ready" || s.phase === "hide") {
+      var secs = el("input", { type: "text", inputmode: "numeric", value: String(s.clock) });
+      c.appendChild(el("div", { class: "row" }, el("label", null, "Seconds per block (0: by hand) ", secs),
+        button("Set the clock", function () { post("clock", { seconds: +secs.value }); })));
+    }
+    if (s.phase === "hide") {
+      var k = el("input", { type: "text", inputmode: "numeric", value: "1" });
+      c.appendChild(el("div", { class: "row" }, el("label", null, "Mine now ", k, " block(s)"), button("Mine", function () { post("mine", { blocks: +k.value }); })));
+      if (s.mining) c.appendChild(el("p", null, "Mining: " + s.mining + " block(s) still to go. The page updates itself."));
+    }
+    if (s.phase === "trace") {
+      c.appendChild(el("p", null, "The deadline has passed: every team is tracing its target. Open the reveal when the calls are in."));
+      c.appendChild(el("div", { class: "row" }, button("Open the reveal", function () {
+        if (window.confirm("Open the reveal? Calls are fixed from then, and every team sees every move log.")) post("reveal");
+      }, true)));
+    }
+    c.appendChild(el("p", null, el("a", { href: "api/export", download: "hide-and-trace-game.json" }, "Save this game"),
+      ": the chain's blocks and the game state, to keep as a saved game (it holds every move log: keep it with the instructor's files)."));
+
+    var t = document.getElementById("teams"); t.innerHTML = "";
+    if (!s.teams.length) t.appendChild(el("p", null, "No teams yet."));
+    else t.appendChild(el("table", { class: "class-table" },
+      el("thead", null, el("tr", null, ["Team", "Code", "Traces", "Moves used", "Calls", "Stop call"].map(function (h) { return el("th", null, h); }))),
+      el("tbody", null, s.teams.map(function (tm, i) {
+        return el("tr", null, el("td", null, tm.name), el("td", null, el("code", { class: "team-code" }, tm.code)),
+          el("td", null, s.teams[(i + 1) % s.teams.length].name), el("td", null, tm.moves_used + " of 8"),
+          el("td", null, String(tm.calls)), el("td", null, tm.stop ? "made" : "–"));
+      }))));
+
+    var box = document.getElementById("reveal-box");
+    if (s.phase === "reveal" || s.phase === "trace") {
+      box.hidden = false;
+      HT.api("api/reveal").then(function (rv) {
+        HT.renderReveal(box, rv);
+        if (s.phase === "trace") box.insertBefore(el("p", { class: "note" }, "A preview for you: the teams see this only when you open the reveal."), box.firstChild);
+      }).catch(function (e) { say(e.message, true); });
+    } else box.hidden = true;
+  }
+
+  refresh();
+})();
+</script>
+</body>
+</html>

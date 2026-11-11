@@ -1,0 +1,38 @@
+name: hide-and-trace
+
+# The days 6-7 team game "Hide and trace" (design card docs/lab-cards/hide-and-trace.md): one copy for the class.
+# One container, the course's Bitcoin and mempool image, runs the game's own live chain (a block every 30 s while
+# the game runs), the mempool explorer and the game server (game/server.py). The router sends
+# (router/routes/hide-and-trace.conf):
+#   /labs/hide-and-trace/mempool/...  -> the explorer (port 8080)
+#   /labs/hide-and-trace/game/...     -> the game server (port 8090): team page, instructor page, their APIs
+# Nothing is pre-built: the server mines the chain, funds the crowd and draws the team codes at run time.
+
+services:
+  mempool:
+    image: "${BITCOIN_MEMPOOL_IMAGE:-ghcr.io/astevegreen/course-labs:base-bitcoin-mempool}"
+    entrypoint: ["bash", "/chain-loader/start-game.sh"]
+    command: ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
+    environment:
+      MEMPOOL_BASE_PATH: "/labs/hide-and-trace/mempool"
+      # No peers; the long tip age keeps a restarted node out of initial block download so electrs indexes it.
+      BITCOIN_EXTRA_ARGS: "-maxtipage=9999999999 -connect=0"
+      HT_BLOCK_SECONDS: "30"
+      # The saved game, for a class where the live chain cannot run (README.md, "The saved game"): set
+      # HT_FALLBACK_FILE=/game-quizes/fallback-game.json on a fresh volume. Empty: the live game.
+      HT_FALLBACK_FILE: "${HT_FALLBACK_FILE:-}"
+    volumes:
+      - chain:/home/user/.bitcoin
+      - ./game:/game:ro
+      - ./mempool/start-game.sh:/chain-loader/start-game.sh:ro
+      - ./quizes:/game-quizes:ro
+    networks:
+      - router-net
+    restart: unless-stopped
+
+volumes:
+  chain:
+
+networks:
+  router-net:
+    external: true

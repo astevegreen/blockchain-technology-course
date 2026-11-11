@@ -19,6 +19,7 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 | `/labs/wallet/` | Wallet lab (worksheet, wallet page, saved pages; the explorer at `/labs/wallet/mempool/`) |
 | `/labs/bitcoin-trace/` | Day-6 Bitcoin trace lab (worksheet, saved pages; the explorer at `/labs/bitcoin-trace/mempool/`) |
 | `/labs/coinjoin-trace/` | Day-7 CoinJoin trace lab (worksheet, saved pages; the explorer at `/labs/coinjoin-trace/mempool/`) |
+| `/labs/hide-and-trace/` | Days 6-7 team game "Hide and trace" (team page at `/labs/hide-and-trace/game/`, instructor page at `/labs/hide-and-trace/game/instructor/`, the explorer at `/labs/hide-and-trace/mempool/`) |
 | `/labs/tron/` | Tron lab (worksheet, query page, saved results) |
 | `/labs/cross-chain/` | Day-8 cross-chain lab (worksheet, query page, saved results) |
 | `/labs/final-trace/` | Day-10 final trace (worksheet, Tron query page, saved pages; the explorer at `/labs/final-trace/mempool/`) |
@@ -417,6 +418,7 @@ machine may be offline, and the build downloads Quarto.
 | `wallet` | Day-2 wallet lab (wallet page and mempool on a frozen Bitcoin chain); `wallet/README.md` |
 | `bitcoin-trace` | Day-6 Bitcoin trace lab (mempool on a frozen Bitcoin chain: a ransom, a peel chain, a service); `bitcoin-trace/README.md` |
 | `coinjoin-trace` | Day-7 CoinJoin trace lab (mempool on a frozen Bitcoin chain: CoinJoin rounds, two planted leaks, a mixer); `coinjoin-trace/README.md` |
+| `hide-and-trace` | Days 6-7 team game (one live Bitcoin chain and mempool for the class: teams hide 2.1 BTC, then trace another team's; a block every 30 s); `hide-and-trace/README.md` |
 | `tokens` | Day-3 token lab (Otterscan on a frozen chain with a proxied dollar token and an NFT); `tokens/README.md` |
 | `dex` | Day-4 exchange and bridge lab (Otterscan on two frozen chains: a pool swap on L1, a bridge to L2); `dex/README.md` |
 | `tron` | Day-5 and day-9 Tron labs (query page over frozen Tron snapshots); `tron/README.md` |
@@ -431,7 +433,7 @@ Labs fall into two categories:
 
 **On-demand lanes** (bitcoin, consensus, p2p_trust, ethereum, hlf): Students claim a session via `/api/<lab>/claim`, and the lab control plane starts a lane-specific container from a pre-built image. `--max-student-capacity` is the base upper bound for how many claimable stations exist at once, and the per-lab capacity flags can override it for individual labs up to the 40-lane limit.
 
-**Shared singleton apps** (cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
+**Shared singleton apps** (cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
 
 That is why lane capacity only applies to the claim-based labs:
 

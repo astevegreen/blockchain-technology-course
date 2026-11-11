@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hide and trace</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .read { display: grid; gap: 0.5rem; margin: 0.6rem 0; }
+  .read fieldset { border: 2px solid var(--rule); border-radius: 8px; padding: 0.4rem 0.8rem; }
+  .read label { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center; margin: 0.2rem 0; }
+  .src { color: var(--ink-soft); font-size: 0.85rem; }
+  .note { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/hide-and-trace.md. A team game on one live chain, run by the instructor from the
+   lab stack (dynamic-labs/hide-and-trace/). This page holds no key and no answer: the answers are the teams' move
+   logs, made at run time and kept on the game server until the instructor opens the reveal. */
+(function () {
+  "use strict";
+
+  /* The game is served by the class's lab stack, on the same host as this page. */
+  function gameLink(api, path, text) {
+    if (!/^https?:$/.test(window.location.protocol)) return api.el("span", null, text + " (open it from the class's lab page)");
+    return api.el("a", { href: path, target: "_blank", rel: "noopener" }, text);
+  }
+
+  function render(box, api) {
+    var el = api.el;
+    box.appendChild(el("p", null, "Open the game page and enter the team code your instructor gives you. Hide first: pick your moves on the page, eight at most, before block 30. Then trace the team the page gives you, in the explorer, and make your calls on the game page: each output you name, with a confidence word and its reasons, and where the trace stops."));
+    box.appendChild(el("p", null, gameLink(api, "/labs/hide-and-trace/game/", "Open the game page"), " · ",
+      gameLink(api, "/labs/hide-and-trace/mempool/", "Open the explorer")));
+    box.appendChild(el("p", null, "Come back once your instructor opens the reveal, and read your own trail there: your move log, beside the calls the other team made on it."));
+
+    var leaks = [
+      ["merge", "a merge of our own coins (ours, or the deadline's)"],
+      ["reuse", "an address we used twice"],
+      ["mixer", "a mixer withdrawal near our deposit less the fee"],
+      ["timing", "a cash-out timed to the mix"],
+      ["none", "nowhere: they stopped at a CoinJoin and stayed there"]
+    ];
+    var boxes = leaks.map(function (l) {
+      var c = el("input", { type: "checkbox", value: l[0] });
+      c.addEventListener("change", check);
+      return { key: l[0], input: c, label: el("label", null, c, " " + l[1]) };
+    });
+    box.appendChild(el("div", { class: "read" }, el("fieldset", null,
+      el("legend", null, "At the reveal: where did the tracers pick up our trail?"),
+      boxes.map(function (b) { return b.label; }))));
+    var msg = el("div");
+    box.appendChild(msg);
+
+    function check() {
+      msg.innerHTML = "";
+      var picked = boxes.filter(function (b) { return b.input.checked; }).map(function (b) { return b.key; });
+      if (!picked.length) return;
+      var go = el("button", { type: "button", class: "btn primary" }, "That is our trail");
+      go.addEventListener("click", function () {
+        var only = picked.length === 1 && picked[0] === "none";
+        api.finish({ choice: 2, note: only
+          ? "Your trail stopped at a CoinJoin: the moves around it leaked nothing the tracers could hold. What leaks decides it, not the number of hops: in the class table, other trails were picked up at a merge, a reused address or a mixer withdrawal."
+          : "Every move was on the chain, but not every move was followed: the tracers picked your trail up where it leaked, and lost it where nothing did. What decided it was what leaked, not how many hops you made." });
+      });
+      msg.appendChild(go);
+    }
+  }
+
+  LabShell.start({
+    id: "hide-and-trace",
+    title: "Hide and trace",
+    slide: { title: "Before and after the mix still leak",
+      href: "../../../lessons/forensics/06-FO-mixers_and_coinjoin.html#/before-and-after-the-mix-still-leak" },
+    steps: {
+      "case": { html: "<p>Your team has just stolen 2.1 BTC from an exchange's hot wallet. In 30 blocks it must reach an exchange that will pay you out, and the other teams will be watching the chain.</p>" +
+        "<p>The theft, the amounts, the exchange and the teams' moves are made up for the game. The whole class plays on one live chain: every team hides at once, then every team traces another team's coin.</p>" },
+      commit: {
+        question: "Your team holds 2.1 BTC stolen from an exchange. You have eight moves, including a CoinJoin and a mixer, and 30 blocks to get it to an exchange deposit. Can another team follow it there?",
+        choices: [
+          "No: after the mixer nobody can.",
+          "No: enough hops loses anyone.",
+          "It depends on what leaks: a merge, a reused address, a withdrawal the size of the deposit less the fee, a cash-out timed to the mix.",
+          "Yes: every move is on chain, so all of it."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "calibration",
+        parts: "from <em>calibrate</em>, to check a measure against a known standard",
+        plain: "<p>Your confidence words match how often you turn out right, so your Highs are right more often than your Moderates, and your Moderates more often than your Lows. The reveal is the known standard.</p>" +
+          "<p>Calibration is the match between the probabilities a forecaster gives and how often the events happen. When intelligence analysts' forecasts were checked against what happened, they were well calibrated, erring mainly towards underconfidence.</p>" +
+          "<p>In the game a word above what its reasons allow on the course scale is scored as the word they allow: timing alone is Low; a reuse or a post-mix co-spend is one strong line, Moderate; High needs a second, independent line.</p>" +
+          "<p class=\"src\">Sources: <code>@mandel_accuracyforecastsstrategic_2014</code>; <code>@odni_icd203_2015</code> (the course scale's words).</p>" },
+      explorer: { html: "<p>The game's explorer is mempool, on the game's own live chain. Three pages carry the trace:</p>" +
+        "<ul><li>the transaction page: a CoinJoin shows as many equal outputs, a merge as several inputs spent together;</li>" +
+        "<li>the address page: a reused address shows two receives;</li>" +
+        "<li>the block page: when a coin moved, and what else moved in that block.</li></ul>" +
+        "<p>Co-spent inputs usually share an owner, and a CoinJoin is the known exception: its inputs are many people's. A mixer takes coins in and pays coins out to prevent tracing; what links a deposit to a withdrawal is the user's habits, such as a matching amount or timing. Before and after the mix still leak: a pre-mix split spends from the cluster you were tracing, and a reused address directly reveals the same owner.</p>" +
+        "<p>At the reveal each team's move log sits beside the same pages, so every call can be checked against what was done.</p>" +
+        "<p class=\"src\">Sources: <code>@meiklejohn_fistfulbitcoinscharacterizing_2013</code>; <code>@gmaxwell_coinjoinbitcoinprivacy_2013</code>; <code>@financialcrimesenforcementnetworkfincen_applicationcertainbusinessmodels_2019</code> (as of May 2019); <code>@wang_zkpmixers_2023</code>; <code>@stutz_adoptionprivacycoinjoin_2022</code>; <code>@svenda_coinjoinecosystem_2026</code>; the explorer: <code>@mempool_mempool_2026</code> (mempool 3.3.2, AGPL-3.0, as of 31 Oct 2026).</p>" },
+      twist: {
+        html: "<p>The class table: every High call, its reason and whether it was right, sorted by the kind of evidence it rested on. One row: a High that a CoinJoin output spent to the exchange one block after the round was the target's (\"first out, straight to the exchange\"). It was wrong: two hiding teams had a coin in that round, and the output was the other team's.</p>",
+        question: "What did the call lack?",
+        choices: [
+          "Nothing: it was bad luck.",
+          "A second, independent line: timing is one kind of evidence, Low on its own.",
+          "More blocks of watching.",
+          "The other team's move log."
+        ],
+        answer: 1,
+        why: "<p>What changed is who shared the round. The tracers could see only the chain, and on it the other team's move looked like their target's. Timing is one kind of evidence, Low on its own; a High needs a second line of another kind, and the game scored this one as the Low its reason allowed.</p>" +
+          "<p>Read the line under the class table: how many Highs rested on amount or timing alone, and how many of those were wrong.</p>" +
+          "<p class=\"src\">Sources: <code>@svenda_coinjoinecosystem_2026</code> (timing in the mix); <code>@odni_icd203_2015</code>.</p>"
+      },
+      tell: {
+        prompt: "<p>Tell the agent where the 2.1 BTC went, and where the trace stops. (The blocks, the amounts and the deposit are made up for the game.)</p>",
+        example: "In block 3 the 2.1 BTC was split into three coins. The pool-sized coin, 0.5001 BTC, joined a CoinJoin in block 9, where its trace stops. The 0.8 BTC coin paid out a round 0.3 BTC in block 12; on amount alone its 0.5 BTC change looked like the thieves' own (Low). At the deadline, in block 30, that change and the split's third coin were deposited to exchange deposit E3 in one transaction (Moderate: the co-spend is one strong line that the change is still the thieves'). Where the 0.3 BTC went is undetermined."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

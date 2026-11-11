@@ -25,7 +25,7 @@ Use these links after the instructor tells the class which lab is active. They a
 * Days 5 and 9: [Tron Lab](/labs/tron/)
 * Day 5: [Hyperledger Fabric Lab](/labs/hlf/)
 * Day 6: [Bitcoin Trace Lab](/labs/bitcoin-trace/)
-* Day 7: [CoinJoin Trace Lab](/labs/coinjoin-trace/)
+* Day 7: [CoinJoin Trace Lab](/labs/coinjoin-trace/) and [Hide and trace (team game)](/labs/hide-and-trace/)
 * Day 8: [Cross-Chain Lab](/labs/cross-chain/)
 * Day 10: [Final Trace Lab](/labs/final-trace/)
 

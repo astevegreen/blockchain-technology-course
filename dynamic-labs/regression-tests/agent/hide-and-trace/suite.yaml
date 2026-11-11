@@ -1,0 +1,51 @@
+version: 1
+suite_id: day6-7-hide-and-trace-agent-regression
+lab: hide-and-trace
+mode: browser_mcp
+entry_mode:
+  default: destructive
+  fresh_start_reference: ../../automated/hide-and-trace/run.sh
+assumptions:
+  - MCP browser tooling is available.
+  - The hide-and-trace automated suite has passed on this machine.
+  - The game is played once per chain. A game in the trace or reveal phase cannot be replayed, so the game flow
+    starts from a fresh volume (docker compose -p hide-and-trace down -v, then ./lab-manager.sh start hide-and-trace) whose phase is "ready" with no teams.
+shared_inputs:
+  lab_base: /labs/hide-and-trace/
+  shell_page: /assets/labs/hide-and-trace/index.html
+  viewport_min_width: 800
+observability:
+  required:
+    - console_logs
+    - network_failures
+shared_rules:
+  - Use one browser context for the instructor and one per team, each with a window at least 800 pixels wide.
+  - Team codes are made at run time and shown only on the instructor page; never write them into a report.
+  - Check console errors and network failures after each phase (hide, trace, reveal).
+  - Capture a screenshot for any visible failure.
+parallelization:
+  recommended:
+    - Run the shell-page task in parallel with the game flow; the game flow runs its phases in order.
+tasks:
+  - id: hide-and-trace-game-flow
+    title: Two teams hide, trace and see the reveal
+    file: tasks/game-flow.md
+    context: instructor_and_two_teams
+    auth: instructor
+    routes:
+      - /labs/hide-and-trace/game/instructor/
+      - /labs/hide-and-trace/game/
+      - /labs/hide-and-trace/mempool/
+    parallel_safe: false
+  - id: hide-and-trace-shell-flow
+    title: The team page on the course shell reads well and gives nothing away
+    file: tasks/shell-flow.md
+    context: student_fresh
+    auth: none
+    routes:
+      - /assets/labs/hide-and-trace/index.html
+      - /lessons/forensics/06-FO-mixers_and_coinjoin.html#/before-and-after-the-mix-still-leak
+    parallel_safe: true
+completion:
+  - Every required task returns pass, partial, or fail.
+  - Any non-pass result includes route, reproduction steps, console evidence, network evidence, screenshot, and a fix recommendation.
