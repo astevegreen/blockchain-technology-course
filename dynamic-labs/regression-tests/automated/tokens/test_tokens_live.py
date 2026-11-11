@@ -35,6 +35,13 @@ ADDRESSES = dict(
 # The worked example (block 3); the worksheet and INSTRUCTOR_ANSWERS.md give the same values.
 WORKED_TX = "0x8a26810f5f5f0c4701c72507945289bafca405635ed7bec1c93cea737d9b39a5"
 IMPLEMENTATION_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
+# The day's last game (blocks 18-30): which token is which is instructor-only (tokens/quizes/).
+GAME = dict(
+    line.strip().split("=", 1)
+    for line in (LAB / "quizes" / "spot-the-fake.env").read_text(encoding="utf-8").splitlines()
+    if "=" in line
+)
+GAME_BLOCK = "0x1e"  # block 30, the last the build seals
 TRANSFER = "0x" + keccak(text="Transfer(address,address,uint256)").hex()
 DESTROYED = "0x" + keccak(text="DestroyedBlackFunds(address,uint256)").hex()
 
@@ -279,6 +286,67 @@ class TokensLiveRegressionTests(unittest.TestCase):
             self.assertEqual(holder.lower(), expected.lower())
             stored = decode(["string"], call(ADDRESSES["BADGE"], "tokenURI(uint256)", ["uint256"], [number], "latest"))[0]
             self.assertIn("\"name\":\"Blockchain Intelligence Analysis Certificate\"", stored)
+
+
+
+class SpotTheFakeLiveTests(unittest.TestCase):
+    """The game's four Course Pounds: alike in name, symbol and decimals; told apart by creator and code."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        TokensLiveRegressionTests.setUpClass()
+
+    def ask(self, token: str, signature: str, out: str, types=(), args=()):
+        return decode([out], call(GAME[token], signature, list(types), list(args), GAME_BLOCK))[0]
+
+    def test_every_pound_answers_the_same(self) -> None:
+        for token in ["POUND", "FAKE_A", "FAKE_B", "TWIST"]:
+            self.assertEqual(self.ask(token, "name()", "string"), "Course Pound", token)
+            self.assertEqual(self.ask(token, "symbol()", "string"), "cGBP", token)
+            self.assertEqual(self.ask(token, "decimals()", "uint8"), 6, token)
+
+    def test_creators_tell_them_apart(self) -> None:
+        a0, a7 = ADDRESSES["A0"].lower(), GAME["A7"].lower()
+        expected = {"POUND_CODE": a0, "POUND": a0, "FAKE_A": a7, "FAKE_B_CODE": a7, "FAKE_B": a7,
+                    "TWIST_CODE": a7, "TWIST": a7}
+        for key, creator in expected.items():
+            found = rpc("ots_getContractCreator", GAME[key])
+            self.assertEqual(found["creator"].lower(), creator, key)
+
+    def test_owner_is_whatever_setup_was_given(self) -> None:
+        self.assertEqual(self.ask("POUND", "owner()", "address").lower(), ADDRESSES["A0"].lower())
+        self.assertEqual(self.ask("FAKE_B", "owner()", "address").lower(), GAME["A7"].lower())
+        # The twist: a copy whose deployer named the issuer as owner.
+        self.assertEqual(self.ask("TWIST", "owner()", "address").lower(), ADDRESSES["A0"].lower())
+        with self.assertRaises(AssertionError):  # the plain token has no owner
+            self.ask("FAKE_A", "owner()", "address")
+
+    def test_proxies_borrow_the_right_code(self) -> None:
+        for proxy, code in [("POUND", "POUND_CODE"), ("FAKE_B", "FAKE_B_CODE"), ("TWIST", "TWIST_CODE")]:
+            slot = rpc("eth_getStorageAt", GAME[proxy], IMPLEMENTATION_SLOT, GAME_BLOCK)
+            self.assertEqual(word_address(slot), GAME[code].lower(), proxy)
+
+    def test_every_seat_holds_all_four(self) -> None:
+        Account.enable_unaudited_hdwallet_features()
+        for path in ["m/44'/60'/0'/0/10", "m/44'/60'/0'/0/49"]:  # seats 1 and 40
+            seat = Account.from_mnemonic(PHRASE, account_path=path).address
+            held = {t: self.ask(t, "balanceOf(address)", "uint256", ["address"], [seat])
+                    for t in ["POUND", "FAKE_A", "FAKE_B", "TWIST"]}
+            self.assertEqual(held, {"POUND": 50_000_000, "FAKE_A": 120_000_000, "FAKE_B": 500_000_000,
+                                    "TWIST": 500_000_000}, path)
+
+    def test_game_source_is_served(self) -> None:
+        for name, key in [("DollarProxy", "POUND"), ("CoursePound", "POUND_CODE"), ("PlainToken", "FAKE_A"),
+                          ("DollarProxy", "FAKE_B"), ("CoursePound", "FAKE_B_CODE"), ("DollarProxy", "TWIST"),
+                          ("CoursePound", "TWIST_CODE")]:
+            hit = get(f"/sourcify/contracts/full_match/31337/{GAME[key]}/metadata.json")
+            self.assertEqual(hit.status_code, 200, key)
+            self.assertIn(name, hit.text, key)
+
+    def test_mint_page_asks_any_token(self) -> None:
+        sheet = (STATIC / "sign" / "index.html").read_text(encoding="utf-8")
+        for fn in ["name", "symbol", "decimals", "owner"]:
+            self.assertIn(f'<option value="{fn}">', sheet, fn)
 
 
 if __name__ == "__main__":

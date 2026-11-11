@@ -12,7 +12,7 @@ SEATS=40                 # accounts 10..49 are the class's seats on the mint pag
 
 work=/tmp/build
 rm -rf "$work" && mkdir -p "$work/src" /lab/chain/out
-cp /lab/chain/src/CourseTokens.sol "$work/src/"
+cp /lab/chain/src/*.sol "$work/src/"
 printf '[profile.default]\nsrc = "src"\nout = "out"\nsolc = "0.8.24"\nbytecode_hash = "ipfs"\n' > "$work/foundry.toml"
 (cd "$work" && forge build -q)
 
@@ -30,7 +30,8 @@ for _ in $(seq 1 30); do cast block-number --rpc-url $R >/dev/null 2>&1 && break
 send() { cast send --async --rpc-url $R "$@"; }            # queue in the mempool; prints the hash
 mine() { cast rpc --rpc-url $R evm_mine "$1" >/dev/null; } # seal one block at the given time
 created() { cast to-check-sum-address "$(cast receipt --rpc-url $R "$1" contractAddress)"; }
-code() { (cd "$work" && forge inspect "src/CourseTokens.sol:$1" bytecode); }
+# A contract's creation code, from whichever source file declares it.
+code() { (cd "$work" && forge inspect "$(grep -l "^contract $1 " src/*.sol):$1" bytecode); }
 
 # Block 1: account 0, the issuer, creates the dollar's code (the implementation).
 h=$(send --private-key "$K0" --gas-limit 3000000 --create "$(code CourseDollar)"); mine $((T0 + 12))
@@ -86,6 +87,61 @@ mine $((T0 + 180))
 # Blocks 16 and 17: empty, so the last transactions have confirmations inside the saved history.
 mine $((T0 + 192)); mine $((T0 + 204))
 
+# Blocks 18-30: the "Spot the fake" game. Every seat (accounts 10..49) receives four tokens, all
+# named Course Pound, cGBP, 6 decimals. Only POUND is real: account 0, the issuer, creates it.
+# Account 7, an account the worksheet never names, creates the three fakes:
+#   FAKE_A  PlainToken: a plain ERC-20, no issuer, no blacklist (falls on its code)
+#   FAKE_B  the issuer's own source (CoursePound behind a DollarProxy), copied (falls on its creator)
+#   TWIST   the same copy, set up with owner = account 0 (owner() answers the issuer; its creator is
+#           still account 7)
+# Amounts: real 50 cGBP from the issuer; fake A 120; fake B 500 (the car payment); the twist 500.
+K7=$(key 7); A7=$(addr 7)
+seat() { addr $((10 + $1)); }
+SEAT_ADDRS=(); for s in $(seq 0 $((SEATS - 1))); do SEAT_ADDRS+=("$(seat "$s")"); done
+nonce() { cast nonce --rpc-url $R "$1"; }
+# One transaction to every seat, all in the next block, with nonces counted here.
+to_every_seat() {   # key sender token function amount
+    local n; n=$(nonce "$2")
+    for a in "${SEAT_ADDRS[@]}"; do
+        send --private-key "$1" --nonce "$n" --gas-limit 200000 "$3" "$4(address,uint256)" "$a" "$5" >/dev/null
+        n=$((n + 1))
+    done
+}
+pound_setup() { cast calldata "initialize(address,address,uint256)" "$1" "$2" "$3"; }
+proxy_of() {        # key code setup -> creation tx hash
+    local a; a=$(cast abi-encode "constructor(address,bytes)" "$2" "$3")
+    send --private-key "$1" --gas-limit 1000000 --create "$(code DollarProxy)${a#0x}"
+}
+# Block 18: the issuer creates Course Pound's code. Block 19: the issuer creates its proxy, owner = issuer.
+h=$(send --private-key "$K0" --gas-limit 3000000 --create "$(code CoursePound)"); mine $((T0 + 216))
+POUND_CODE=$(created "$h")
+h=$(proxy_of "$K0" "$POUND_CODE" "$(pound_setup "$A0" "$A0" 0)"); mine $((T0 + 228))
+POUND=$(created "$h")
+# Block 20: the issuer mints 50 cGBP to every seat.
+to_every_seat "$K0" "$A0" "$POUND" mint 50000000; mine $((T0 + 240))
+# Block 21: account 7 creates fake A, a plain token with the same name, symbol and decimals; it
+# receives all 4,800 cGBP. Block 22: it sends 120 to every seat.
+fake_a_args=$(cast abi-encode "constructor(string,string,uint8,uint256)" "Course Pound" "cGBP" 6 $((SEATS * 120000000)))
+h=$(send --private-key "$K7" --gas-limit 3000000 --create "$(code PlainToken)${fake_a_args#0x}"); mine $((T0 + 252))
+FAKE_A=$(created "$h")
+to_every_seat "$K7" "$A7" "$FAKE_A" transfer 120000000; mine $((T0 + 264))
+# Blocks 23-25: account 7 creates a copy of the issuer's code and a proxy for it, owner = account 7,
+# and mints 500 cGBP to every seat.
+h=$(send --private-key "$K7" --gas-limit 3000000 --create "$(code CoursePound)"); mine $((T0 + 276))
+FAKE_B_CODE=$(created "$h")
+h=$(proxy_of "$K7" "$FAKE_B_CODE" "$(pound_setup "$A7" "$A7" 0)"); mine $((T0 + 288))
+FAKE_B=$(created "$h")
+to_every_seat "$K7" "$A7" "$FAKE_B" mint 500000000; mine $((T0 + 300))
+# Blocks 26-28: the twist. Account 7 creates another copy and a proxy whose initialize names account 0
+# as owner and gives account 7 the first 20,000 cGBP; then it sends 500 to every seat.
+h=$(send --private-key "$K7" --gas-limit 3000000 --create "$(code CoursePound)"); mine $((T0 + 312))
+TWIST_CODE=$(created "$h")
+h=$(proxy_of "$K7" "$TWIST_CODE" "$(pound_setup "$A0" "$A7" $((SEATS * 500000000)))"); mine $((T0 + 324))
+TWIST=$(created "$h")
+to_every_seat "$K7" "$A7" "$TWIST" transfer 500000000; mine $((T0 + 336))
+# Blocks 29 and 30: empty.
+mine $((T0 + 348)); mine $((T0 + 360))
+
 sleep 3                              # let the interval save catch the last block
 kill -INT $pid; wait $pid || true
 cp "$work/chain.json" /lab/chain/out/course-chain.json
@@ -102,4 +158,26 @@ DOLLAR=$DOLLAR
 BADGE=$BADGE
 SHOP=$SHOP
 EOF
-echo "chain built: dollar $DOLLAR (code $DOLLAR_CODE), badge $BADGE, shop $SHOP"
+# The game's contracts. These names say which token is real, so they go only to the instructor's
+# copy (build-chain.sh puts it in quizes/spot-the-fake.env), never to the students' addresses.env.
+cat >/lab/chain/out/spot-the-fake.env <<EOF
+A7=$A7
+POUND_CODE=$POUND_CODE
+POUND=$POUND
+FAKE_A=$FAKE_A
+FAKE_B_CODE=$FAKE_B_CODE
+FAKE_B=$FAKE_B
+TWIST_CODE=$TWIST_CODE
+TWIST=$TWIST
+EOF
+# What build-chain.sh verifies on Sourcify for the game: contract name and address only.
+cat >/lab/chain/out/sourcify-more.txt <<EOF
+CoursePound=$POUND_CODE
+DollarProxy=$POUND
+PlainToken=$FAKE_A
+CoursePound=$FAKE_B_CODE
+DollarProxy=$FAKE_B
+CoursePound=$TWIST_CODE
+DollarProxy=$TWIST
+EOF
+echo "chain built: dollar $DOLLAR (code $DOLLAR_CODE), badge $BADGE, shop $SHOP; the game: quizes/spot-the-fake.env"

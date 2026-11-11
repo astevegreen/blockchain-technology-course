@@ -40,6 +40,10 @@ slide index), which is never listed here.
 ## Tooling and rules
 - The alignment map still shows no lab for concept 42's day 1 terminal Q2 (`getblockchaininfo`): the map reads only
   each lab's `index.html`, not `terminal.html` (`tools/alignment_map.py`, `read_lab`). [10 Nov 2026, fixing the terms]
+- The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
+  so the day 3 game needs the live lab [11 Nov 2026, building the game]
+- The day 3 game Spot the fake has no questions in the 05-EF quiz bank on telling a token by its creator rather
+  than its name (`quizes/quiz_json/`) [11 Nov 2026, building the game]
 
 ## Notion and documents
 - `docs/analysis/2026-11-static-labs-review.md:28` still says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spot the fake</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.7rem; margin: 0.6rem 0; }
+  .board .srccard label { display: grid; gap: 0.15em; font-size: 0.85em; margin-top: 0.35em; }
+  .board select, .board input[type="text"] { width: 100%; font: inherit; padding: 0.25em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  .board .addr { word-break: break-all; }
+  .src { color: var(--ink-soft); font-size: 0.85rem; }
+  .count { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+  table.q { width: 100%; border-collapse: collapse; background: var(--panel); margin: 0.6rem 0; }
+  table.q th, table.q td { padding: 0.4em 0.7em; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  table.q th { font-size: 0.85rem; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/spot-the-fake.md. Course Pound, the victim, the car and the amounts are made up for the
+   game. The tokens are real contracts on the token lab's course chain (dynamic-labs/tokens, blocks 18-30). The page lists
+   the three tokens in a fixed order that says nothing, records each call with its reason, and scores only the
+   reasons; the instructor's key is in dynamic-labs/tokens/quizes/, which students never receive. The tell step shows
+   the issuer's published address, as the card says, so that address is in this source: the game is played on the
+   rendered page, not its source. */
+(function () {
+  "use strict";
+  var BOARD_KEY = "lab:spot-the-fake:board";
+
+  // The three tokens every seat received, in an order that does not give the answer away.
+  var TOKENS = [
+    { id: 1, addr: "0xef11D1c2aA48826D4c41e54ab82D1Ff5Ad8A64Ca" },
+    { id: 2, addr: "0x0165878A594ca255338adfa4d48449f69242Eb8F" },
+    { id: 3, addr: "0x6E757C04Dcf764f7b06AFC428eD75773CDAC7fDc" }
+  ];
+  var TWIST = "0x0a49923d13ab698cfC0e747b5b9594C16C8d130F";
+  var ISSUER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"; // Account 0, which issued Course Dollar
+
+  // The reasons a pair can give. Only the first two rest on something the deployer could not choose.
+  var REASONS = [
+    { key: "creator", label: "Its contract creator", scores: true },
+    { key: "code", label: "What its code does", scores: true },
+    { key: "name", label: "Its name or symbol", scores: false },
+    { key: "holders", label: "How many accounts hold it", scores: false },
+    { key: "icon", label: "What a wallet shows: its icon or label", scores: false }
+  ];
+  function reasonOf(key) { return REASONS.filter(function (r) { return r.key === key; })[0]; }
+
+  /** The token lab's own host, worked out from where this page is served: tokens.<host>, or port 8442 by IP. */
+  function labOrigin() {
+    var loc = window.location;
+    if (!/^https?:$/.test(loc.protocol)) return null;
+    var host = loc.hostname;
+    if (/^[0-9.]+$/.test(host) || host.indexOf(":") >= 0) return loc.protocol + "//" + loc.host.replace(/:\d+$/, "") + ":8442";
+    return loc.protocol + "//tokens." + loc.host;
+  }
+  function labLink(api, path, text) {
+    var o = labOrigin();
+    return o ? api.el("a", { href: o + path, target: "_blank", rel: "noopener" }, text) : api.el("span", null, text);
+  }
+
+  function loadBoard() {
+    try { var b = JSON.parse(window.localStorage.getItem(BOARD_KEY)); if (b && b.call) return b; } catch (e) { /* none */ }
+    return { call: {}, reason: {}, note: {} };
+  }
+  function saveBoard(b) { try { window.localStorage.setItem(BOARD_KEY, JSON.stringify(b)); } catch (e) { /* private window */ } }
+
+  function render(box, api) {
+    var el = api.el;
+    var board = loadBoard();
+
+    box.appendChild(el("p", null, "Three tokens in the victim's history, all answering ", el("strong", null, "Course Pound, cGBP, 6 decimals"),
+      ". For each one: open it in the explorer, then ask it for its name, symbol and decimals on the ",
+      labLink(api, "/sign/", "sign page"), "'s “Ask the contracts” (pick “Any token” and paste the address). Then find what differs: who created it, and what its code does."));
+    box.appendChild(el("p", { class: "src" }, "The links open the token lab on the course server. On another copy of this page, open the token lab from the course menu and paste each address into its search box."));
+
+    var grid = el("div", { class: "board", "aria-label": "The three tokens" });
+    TOKENS.forEach(function (t) {
+      var call = el("select", { id: "call-" + t.id, "aria-label": "Token " + t.id + ": real or fake",
+        onchange: function () { board.call[t.id] = call.value; saveBoard(board); gate(); } });
+      [["", "Pick…"], ["real", "Real: the issuer's Course Pound"], ["fake", "Fake"]].forEach(function (o) {
+        call.appendChild(el("option", { value: o[0] }, o[1]));
+      });
+      call.value = board.call[t.id] || "";
+      var why = el("select", { id: "why-" + t.id, "aria-label": "Token " + t.id + ": the reason",
+        onchange: function () { board.reason[t.id] = why.value; saveBoard(board); gate(); } });
+      why.appendChild(el("option", { value: "" }, "Pick…"));
+      REASONS.forEach(function (r) { why.appendChild(el("option", { value: r.key }, r.label)); });
+      why.value = board.reason[t.id] || "";
+      var note = el("input", { type: "text", id: "note-" + t.id, value: board.note[t.id] || "", maxlength: "200",
+        placeholder: "What you saw, e.g. created by 0x…", "aria-label": "Token " + t.id + ": what you saw",
+        oninput: function () { board.note[t.id] = note.value; saveBoard(board); gate(); } });
+      grid.appendChild(el("div", { class: "srccard" },
+        el("div", { class: "head" }, el("span", null, "Token " + t.id), labLink(api, "/address/" + t.addr, "Open in the explorer")),
+        el("p", { class: "says" }, el("span", { class: "addr" }, t.addr)),
+        el("label", null, "Our call", call),
+        el("label", null, "Because of", why),
+        el("label", null, "What we saw", note)));
+    });
+    box.appendChild(grid);
+    var cnt = el("div", { class: "count", id: "tally", "aria-live": "polite" });
+    box.appendChild(cnt);
+    box.appendChild(el("button", { class: "btn primary", type: "button", id: "called", onclick: finish }, "These are our calls"));
+    gate();
+
+    function complete() {
+      return TOKENS.every(function (t) { return board.call[t.id] && board.reason[t.id] && (board.note[t.id] || "").trim() !== ""; });
+    }
+    function gate() {
+      var b = document.getElementById("called");
+      if (b) b.disabled = !complete();
+      var reals = TOKENS.filter(function (t) { return board.call[t.id] === "real"; }).length;
+      cnt.textContent = reals > 1 ? "You have called " + reals + " tokens real. Only one issuer issued Course Pound: look again at what differs." :
+        "Each call needs a reason and what you saw.";
+    }
+
+    function finish() {
+      var label = 0;
+      var lines = TOKENS.map(function (t) {
+        var r = reasonOf(board.reason[t.id]);
+        if (!r.scores) label++;
+        return "<li>Token " + t.id + ": " + (board.call[t.id] === "real" ? "real" : "fake") + ", because of " + r.label.toLowerCase() +
+          (r.scores ? "" : " <strong>(0 points: the deployer chose that)</strong>") + ".</li>";
+      });
+      // The prediction this matches: a call resting on a name, or on holders, is (a) or (b); contract reasons are (c).
+      var keys = TOKENS.map(function (t) { return board.reason[t.id]; });
+      var choice = keys.indexOf("name") >= 0 ? 0 : keys.indexOf("holders") >= 0 ? 1 : 2;
+      var note = "<p>Your calls:</p><ul>" + lines.join("") + "</ul>" +
+        "<p>All three tokens answer the same name, symbol and decimals: the token standard lets whoever deploys a token set all three, so they prove nothing. " +
+        "Two things differ: which account created each contract, and what its code does. Only the holder of the creating account's key could have created the contract, so the creator line is the one a counterfeiter cannot copy.</p>" +
+        (label ? "<p>" + label + (label === 1 ? " of your reasons rests" : " of your reasons rest") + " on something the deployer chose. Find the contract reason for " + (label === 1 ? "that token" : "those tokens") + " before you score.</p>" : "") +
+        "<p>Score yourselves from the instructor's sheet: +2 for each token called right with a contract reason, 0 for a reason the deployer chose, -2 for a fake called real.</p>";
+      api.finish({ choice: choice, note: note });
+    }
+  }
+
+  LabShell.start({
+    id: "spot-the-fake",
+    title: "Spot the fake",
+    slide: { title: "A token is a balance a contract keeps",
+      href: "../../../lessons/ethereum/05-EF-digital_assets_tokenization_and_nfts.html#/a-token-is-a-balance-a-contract-keeps" },
+    steps: {
+      "case": { html: "<p>A victim sold their car and says they were paid <strong>500 Course Pounds</strong>. Their wallet shows them. The buyer says they paid in full.</p>" +
+        "<p>Three tokens called Course Pound, cGBP, sit in the victim's history. One was issued by the course's issuer, the account that issued Course Dollar this morning. Two are fakes.</p>" +
+        "<p class=\"src\">Course Pound, the victim, the car and the amounts are made up for the game. The tokens are real contracts on the course chain: your seat's account received all three.</p>" },
+      commit: {
+        question: "Three tokens in your history are all called Course Pound, cGBP. What proves which one is real?",
+        choices: [
+          "The name and symbol.",
+          "The one with the most holders.",
+          "The account that created the contract, and what its code does.",
+          "None of these: you cannot tell from the chain."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "Contract creator", parts: "creator: the one who made it",
+        plain: "<p>The account that signed the transaction that put the contract on the chain. Only the holder of that account's key could have made it, so a copy of the code cannot copy its creator.</p>" +
+          "<p>A token's name, symbol and decimals are values its deployer sets; decimals only tell a wallet where to put the point. Counterfeit tokens are a real lure: address poisoning plants “the same amount V sent to R, but with a counterfeit token created by the attacker”.</p>" +
+          "<p class=\"src\">Sources: <code>@vogelsteller_eip20tokenstandard_2015</code>; <code>@openzeppelin_erc20docs_2026</code> (read 4 Nov 2026); <code>@tsuchiya_addresspoisoning_2025</code>.</p>" },
+      explorer: { render: function (box, api) {
+        var el = api.el;
+        box.appendChild(el("p", null, "Otterscan's address page answers the three questions an analyst asks of any token. Course Dollar, from this morning's worksheet, shows where each answer sits: ",
+          el("span", { class: "addr" }, "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"), "."));
+        box.appendChild(el("table", { class: "q" },
+          el("thead", null, el("tr", null, el("th", null, "The question"), el("th", null, "Where Otterscan shows it"), el("th", null, "For Course Dollar"))),
+          el("tbody", null,
+            el("tr", null, el("td", null, "Who made it?"), el("td", null, "The Contract creator line: the creating account and its transaction"),
+              el("td", null, "Account 0, ", el("span", { class: "addr" }, "0xf39F…2266"), ", the issuer")),
+            el("tr", null, el("td", null, "What does its code do?"), el("td", null, "The Contract tab: the verified source, read from the course's Sourcify. For a proxy, the implementation it borrows its code from"),
+              el("td", null, "A proxy; its implementation, ", el("span", { class: "addr" }, "0x5FbD…0aa3"), ", has an issuer who mints and a blacklist only the issuer can change")),
+            el("tr", null, el("td", null, "Does that match what the issuer says?"), el("td", null, "Not on the chain: the issuer's own list of its contract addresses"),
+              el("td", null, "The worksheet gave you its address")))));
+        box.appendChild(el("p", { class: "src" }, "Sources: a proxy keeps the balances and borrows its code from an implementation whose address sits in a set slot, ",
+          el("code", null, "@palladino_erc1967proxystorage_2019"), "; an issuer's blacklist, ", el("code", null, "@tether_tethertokensource_2017"),
+          "; a verified exact match, ", el("code", null, "@sourcify_exactmatch_2026"), "; Otterscan is open source, ",
+          el("code", null, "@otterscan_otterscan_2025"), " (as of 23 Oct 2026)."));
+      } },
+      twist: {
+        html: "<p>A fourth Course Pound is in the victim's history too: <span class=\"addr\">" + TWIST + "</span>" +
+          (labOrigin() ? " (<a href=\"" + labOrigin() + "/address/" + TWIST + "\" target=\"_blank\" rel=\"noopener\">open it in the explorer</a>)" : "") +
+          ". Its code is the issuer's. Asked for its <code>owner()</code> on the sign page, it answers the issuer's address, <span class=\"addr\">" + ISSUER + "</span>.</p>",
+        question: "Is it real now?",
+        choices: [
+          "Yes: the owner is the issuer.",
+          "Yes: the code matches.",
+          "No: the owner is a value its deployer chose when setting it up, and its creator is not the issuer.",
+          "Cannot tell."
+        ],
+        answer: 2,
+        why: "<p>The issuer's code sets its owner from whatever address <code>initialize</code> is given, so anyone can deploy a copy that names the issuer as owner. Its creator line names the account that signed the creation, and that is not the issuer. The owner value is a label; the creator is a signature.</p>" +
+          "<p class=\"src\">Source: the token lab's <code>CoursePound.sol</code>, built like Course Dollar in <code>CourseTokens.sol</code> (read 11 Nov 2026).</p>"
+      },
+      tell: {
+        prompt: "<p>The issuer publishes one Course Pound address: <span class=\"addr\">" + TOKENS[1].addr + "</span>. Tell the agent which Course Pound the victim was paid in, and how sure you are.</p>" +
+          "<p class=\"src\">Confidence words, never a percentage: <code>@odni_icd203_2015</code>.</p>",
+        example: "The victim's 500 cGBP came from contract 0x6E75…7fDc, which the course issuer did not create: an unknown account created it a minute after the real one, with a copy of the issuer's code. Its name and symbol match the real Course Pound, which the issuer's own account created at 0x0165…Eb8F. We assess with High confidence that the payment was in a counterfeit token: the creator and the issuer's published address agree."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

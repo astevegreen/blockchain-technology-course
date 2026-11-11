@@ -20,6 +20,14 @@ const badge = new ethers.Interface([
   "function tokenURI(uint256) view returns (string)",
   "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
 ]);
+// Questions any token contract can be asked: the "Spot the fake" game asks them of every Course Pound.
+const token = new ethers.Interface([
+  "function name() view returns (string)",
+  "function symbol() view returns (string)",
+  "function decimals() view returns (uint8)",
+  "function owner() view returns (address)",
+]);
+const TOKEN_QUESTIONS = ["name", "symbol", "decimals", "owner"];
 const $ = (id) => document.getElementById(id);
 
 let wallet = null;
@@ -188,16 +196,26 @@ $("send").addEventListener("click", async () => {
 $("ask").addEventListener("click", async () => {
   try {
     const fn = $("question").value;
-    const onBadge = fn === "ownerOf" || fn === "tokenURI";
-    const contract = onBadge ? badge : dollar;
     const arg = $("arg").value.trim();
-    const data = contract.encodeFunctionData(fn, [onBadge ? BigInt(arg) : ethers.getAddress(arg)]);
-    const raw = await rpc("eth_call", [{ to: onBadge ? BADGE : DOLLAR, data }, "latest"]);
+    let to, data, contract, asked;
+    if (TOKEN_QUESTIONS.includes(fn)) {
+      to = ethers.getAddress(arg);
+      contract = token;
+      data = token.encodeFunctionData(fn, []);
+      asked = `${to} ${fn}()`;
+    } else {
+      const onBadge = fn === "ownerOf" || fn === "tokenURI";
+      contract = onBadge ? badge : dollar;
+      to = onBadge ? BADGE : DOLLAR;
+      data = contract.encodeFunctionData(fn, [onBadge ? BigInt(arg) : ethers.getAddress(arg)]);
+      asked = `${onBadge ? "Course Badge" : "Course Dollar"} ${fn}(${arg})`;
+    }
+    const raw = await rpc("eth_call", [{ to, data }, "latest"]);
     let value = contract.decodeFunctionResult(fn, raw)[0];
     if (fn === "balanceOf") value = `${value} (${ethers.formatUnits(value, 6)} cUSD: the token has 6 decimals)`;
     rows($("answer"), [
-      ["Asked", `${onBadge ? "Course Badge" : "Course Dollar"} ${fn}(${arg})`],
-      ["Sent to", onBadge ? BADGE : DOLLAR],
+      ["Asked", asked],
+      ["Sent to", to],
       ["Input data", data],
       ["Raw answer", raw],
       ["Decoded", String(value)],

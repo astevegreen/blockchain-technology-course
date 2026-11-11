@@ -38,7 +38,7 @@ The router's `routes/tokens-host.conf` splits that host the same way as the expl
 
 ## The chain
 
-`chain/build-chain.sh` rebuilds everything from `chain/src/CourseTokens.sol` with Docker only:
+`chain/build-chain.sh` rebuilds everything from `chain/src/` with Docker only:
 the chain, `addresses.env`, `sourcify/` and `gateway/static/fallback/index.html` (written by
 `chain/capture_pages.py` from the new chain). The block-by-block steps are in
 `quizes/build-steps.sh`, which sits with the instructor answers because its comments say what
@@ -51,6 +51,17 @@ contract addresses still match. After a rebuild, run the regression tests: they 
 worksheet's worked example, its selector table and that the saved pages still match the chain.
 The instructor answers are in `quizes/INSTRUCTOR_ANSWERS.md`, which never reaches students
 (`pages.yml` and `vm-build.yml` leave out every lab's `quizes/` folder).
+
+## The game: Spot the fake (day 3)
+
+Blocks 18 to 30 hold the day's last game, `blockchain-course/assets/labs/spot-the-fake/` (design card
+`docs/lab-cards/spot-the-fake.md`). Every seat holds four tokens that all answer Course Pound, cGBP, 6 decimals:
+one issued by Account 0 behind the lab's own `DollarProxy` (`chain/src/CoursePound.sol`), and three made by
+Account 7 (one from `chain/src/PlainToken.sol`, two from copies of the issuer's code). Pairs tell them apart by
+the contract creator Otterscan shows and the verified source. The worksheet's blocks 0 to 17 are unchanged, and
+the saved pages stop at block 17. Which token is which is in `quizes/SPOT_THE_FAKE_ANSWERS.md`; the build writes their
+addresses to `quizes/spot-the-fake.env`, and `addresses.env` leaves them out because students receive it.
+The mint page's "Ask the contracts" asks any token for its name, symbol, decimals and owner.
 
 Accounts 10 to 49 are the class's seats on the mint page (seat N is account 9 + N, 100 ETH each).
 Give each student a seat number: two students on one seat clash over nonces.

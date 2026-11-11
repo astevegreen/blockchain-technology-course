@@ -88,6 +88,28 @@ and a screenshot.
    with links back to the worksheet and the saved pages.
 3. On the course site host, open `/labs/tokens/`. Confirm it lands on the worksheet.
 
+## Spot the Fake
+
+The day's last game (blocks 18-30). Its key is `dynamic-labs/tokens/quizes/SPOT_THE_FAKE_ANSWERS.md`; the
+addresses are in `dynamic-labs/tokens/quizes/spot-the-fake.env`.
+
+1. On the course site host, open `/assets/labs/spot-the-fake/index.html`. Walk the case and the
+   prediction (pick the creator and the code, Moderate). On the do step, confirm three tokens are
+   listed with their addresses and their "Open in the explorer" links point at the lab host.
+2. Follow Token 2's link. Confirm Otterscan shows a Contract creator line naming Account 0
+   (`0xf39F…2266`) with a creation transaction in block 19, and a Contract tab with DollarProxy
+   as an exact match and its implementation, CoursePound. Token 1 shows Account 7
+   (`0x14dC…9955`), block 21, and PlainToken; Token 3 shows Account 7, block 24, DollarProxy.
+3. On `/sign/`, "Ask the contracts", ask `name()`, `symbol()` and `decimals()` of each token:
+   all answer Course Pound, cGBP and 6. Ask `owner()` of Token 1: the contract refuses.
+4. Back on the game, call Token 2 real because of its creator, Tokens 1 and 3 fake because of
+   their creator, with a line each, and finish: the shell shows the prediction held. Pick "its
+   name or symbol" for one token instead and confirm the page marks it 0 points.
+5. Name and explorer steps render; on the twist, open the fourth token: `owner()` on the sign
+   page answers Account 0, its creator is Account 7. Answer "no" and confirm the answer and why
+   appear. On the tell step, write a sentence with a confidence word and confirm the example
+   shows. Check console errors and failed network requests.
+
 ## Not Covered Here
 
 - the classroom (`tokens.lab`) and cloud (`tokens.<domain>`) hosts and their certificates

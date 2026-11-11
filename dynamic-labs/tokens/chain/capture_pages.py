@@ -261,7 +261,8 @@ def capture(page, addrs):
     at = hex(LAST_BLOCK)
     for address, label in page.order:
         code = rpc("eth_getCode", address, at)
-        history = rpc("ots_searchTransactionsBefore", address, 0, 25)["txs"]
+        # Search before the game's blocks (18 on), or its 40-seat mints crowd out the worksheet's history.
+        history = rpc("ots_searchTransactionsBefore", address, LAST_BLOCK + 1, 25)["txs"]
         mine = [t for t in history if int(t["blockNumber"], 16) <= LAST_BLOCK]
         rows = [
             row("Address", address, code=True),

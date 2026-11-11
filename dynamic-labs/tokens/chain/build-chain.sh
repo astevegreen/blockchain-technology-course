@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Rebuilds the day-3 course chain and everything made from it:
-#   course-chain.json   the frozen chain Anvil loads (blocks 0-17)
+#   course-chain.json   the frozen chain Anvil loads (blocks 0-17 for the worksheet, 18-30 for the
+#                       "Spot the fake" game)
 #   addresses.env       the accounts and contracts the worksheet names
+#   ../quizes/spot-the-fake.env   the game's contracts, named (instructor only)
 #   sourcify/           the contracts' source, laid out as Sourcify stores it, for Otterscan
 #   ../gateway/static/fallback/index.html   the saved explorer pages, read from the new chain
 # Needs only Docker. Run from anywhere: bash dynamic-labs/tokens/chain/build-chain.sh
@@ -34,13 +36,14 @@ docker run --rm -e HOME=/tmp -v "$lab:/lab" "$FOUNDRY" "bash /lab/quizes/build-s
 rm -rf "$here/sourcify"
 docker run --rm -v "$here:/chain" -v "$explorer/chain:/explorer:ro" "$PY" python /explorer/make_sourcify_copy.py \
     /chain /chain/out/forge-out /chain/sourcify 31337 \
-    "CourseDollar=$DOLLAR_CODE" "DollarProxy=$DOLLAR" "CourseBadge=$BADGE" "BadgeShop=$SHOP"
+    "CourseDollar=$DOLLAR_CODE" "DollarProxy=$DOLLAR" "CourseBadge=$BADGE" "BadgeShop=$SHOP"     $(cat "$here/out/sourcify-more.txt")
 cp "$here/out/course-chain.json" "$here/course-chain.json"
 cp "$here/out/addresses.env" "$here/addresses.env"
+cp "$here/out/spot-the-fake.env" "$lab/quizes/spot-the-fake.env"
 
 docker network create "$tag" >/dev/null
 docker run -d --name "${tag}-anvil" --network "$tag" -v "$here:/chain:ro" "$FOUNDRY" \
     "anvil --host 0.0.0.0 --port 8545 --load-state /chain/course-chain.json" >/dev/null
 docker run --rm --network "$tag" -v "$lab:/lab" "$PY" python /lab/chain/capture_pages.py \
     "http://${tag}-anvil:8545" /lab/chain/addresses.env /lab/gateway/static/fallback/index.html
-echo "rebuilt: course-chain.json, addresses.env, sourcify/, gateway/static/fallback/index.html"
+echo "rebuilt: course-chain.json, addresses.env, quizes/spot-the-fake.env, sourcify/, gateway/static/fallback/index.html"
