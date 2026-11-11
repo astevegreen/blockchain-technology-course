@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Through the exchange</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.trail { border: 1px solid var(--rule, #bbb); border-radius: 6px; padding: .5em .8em; margin: .6em 0; }
+.trail h3 { margin: 0 0 .3em; font-size: 1em; }
+.trail table { border-collapse: collapse; }
+.trail td, .trail th { padding: .2em .8em .2em 0; text-align: left; vertical-align: middle; }
+.hl { background: #fff3a8; outline: 2px solid #c9a400; border-radius: 4px; padding: 0 .25em; }
+.hl.grey { background: #ddd; outline-color: #888; color: #555; }
+.say { min-height: 1.4em; }
+.books td, .books th { padding: .15em .9em .15em 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/through-the-exchange.md. The exchange, its customers, its addresses and its books
+   are made up for this lab. The sweep's numbers (2.0 ETH in, 1.9996 ETH out after 40 minutes, a main address with
+   about 50,000 such forwards) are the lesson's worked example. It runs offline. */
+var A1 = "0xA1f3c5e7094b2d68a1c3e5f70b92d4a6c8e0f1a1";
+var C9 = "0xC9e2a4b6d80f1c35e7a9b1d3f5071c9e2a4b6c09";
+var D4 = "0xD4b7e9a1c3f50d28b4e6a8c0f2d4619b3e5a7d04";
+var B2 = "0xB2a8c0e2f4a61b93d5f7091b3d5e7a9c0b2d4e02";
+var C3 = "0xC3d5f70b9d2e4a6c8e0b1d3f5a7c9e0b2d4f6c03";
+function tail4(v) { return v.slice(0, 6) + "…" + v.slice(-4); }
+
+LabShell.start({
+  id: "through-the-exchange",
+  title: "Through the exchange",
+  slide: { title: "Withdrawals come from the pool, not the deposit", href: "../../../lessons/forensics/04-FO-exchanges_otc_p2p.html#/withdrawals-come-from-the-pool-not-the-deposit" },
+  steps: {
+    "case": { html:
+      "<p>A victim's stolen 2.0 ETH went to an address the agent has never seen. From there it went into an exchange. " +
+      "An hour later, 2.0 ETH came out of the same exchange to another address. The agent asks: &ldquo;Is that our thief?&rdquo;</p>" +
+      "<p>The exchange, its customers and their addresses are made up for this lab, and so are its books.</p>" },
+    commit: {
+      question: "A victim's 2.0 ETH reached address 0xA1…, which passed it to an exchange. An hour later, 2.0 ETH left the exchange for address 0xD4…. Where did the victim's 2.0 ETH go?",
+      choices: [
+        "To 0xD4…: same amount, an hour later.",
+        "To 0xD4… or another withdrawal near 2.0.",
+        "The chain cannot say: once inside, it is in the exchange's pool and its books.",
+        "Nowhere: it is still at 0xA1…."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var root = api.el("div");
+      var p0 = api.el("p", null, "Trace the money with the highlighter, one arrow at a time. Start at the deposit address ");
+      p0.appendChild(api.el("span", { class: "addr" }, tail4(A1)));
+      p0.appendChild(document.createTextNode(" and follow only what the chain shows."));
+      el.appendChild(p0);
+      el.appendChild(root);
+
+      // Box 1: three customers deposit; each sweep forwards its deposit, less a fee, to the main wallet.
+      var b1 = api.el("div", { class: "trail" }, api.el("h3", null, "1. Deposits and sweeps"));
+      var rows = [
+        { who: "Customer A", addr: A1, dep: "2.0 ETH", out: "1.9996 ETH", wait: "40 minutes later" },
+        { who: "Customer B", addr: B2, dep: "0.75 ETH", out: "0.7496 ETH", wait: "25 minutes later" },
+        { who: "Customer C", addr: C3, dep: "3.1 ETH", out: "3.0996 ETH", wait: "1 hour later" }
+      ];
+      var t1 = api.el("table", null);
+      var follow1 = null;
+      rows.forEach(function (r) {
+        var tr = api.el("tr", null,
+          api.el("td", null, r.who),
+          api.el("td", null, api.coin({ role: "input", amount: r.dep, who: "deposited" })),
+          api.el("td", null, api.el("span", { class: "addr" }, tail4(r.addr))),
+          api.el("td", null, "sweep, " + r.wait + ":"),
+          api.el("td", null, api.coin({ role: "output", amount: r.out })),
+          api.el("td", null, api.coin({ role: "fee", amount: "0.0004 ETH" })),
+          api.el("td", null, "to ", api.el("span", { class: "addr" }, tail4(C9)), " (the exchange's main wallet)"));
+        var td = api.el("td", null);
+        if (r.addr === A1) {
+          follow1 = api.el("button", { class: "btn", type: "button" }, "Follow this arrow");
+          td.appendChild(follow1);
+        }
+        tr.appendChild(td);
+        t1.appendChild(tr);
+      });
+      b1.appendChild(t1);
+      var say1 = api.el("p", { class: "say", role: "status" });
+      b1.appendChild(say1);
+      root.appendChild(b1);
+
+      // Box 2: from the main wallet, pick an outgoing arrow.
+      var b2 = null;
+      follow1.addEventListener("click", function () {
+        follow1.disabled = true;
+        follow1.parentNode.parentNode.querySelector(".coin.output").classList.add("hl");
+        say1.textContent = "The sweep forwarded the deposit, less a fee, to the exchange's main wallet. The trail reaches the pool.";
+        b2 = api.el("div", { class: "trail" }, api.el("h3", null, "2. Out of the main wallet"));
+        b2.appendChild(api.el("p", null, "The main wallet has thousands of withdrawals. Three of them, in the hour after the sweep:"));
+        var wd = [
+          { to: D4, amt: "2.0 ETH", when: "1 hour after the sweep", pick: true },
+          { to: "0x8f21c4a6e0b3d5f7092a4c6e8b0d2f4a6c8e1b3f", amt: "5.1 ETH", when: "20 minutes after" },
+          { to: "0x31d6b9e2a4c7f0a3d5b8e1c4f7a0b3d6e9c2a5f8", amt: "0.8 ETH", when: "50 minutes after" }
+        ];
+        var t2 = api.el("table", null);
+        var picked = false;
+        wd.forEach(function (w) {
+          var btn = api.el("button", { class: "btn", type: "button" }, "Highlight this arrow");
+          var tr = api.el("tr", null,
+            api.el("td", null, api.el("span", { class: "addr" }, tail4(C9))),
+            api.el("td", null, "→"),
+            api.el("td", null, api.coin({ role: "output", amount: w.amt, who: w.when })),
+            api.el("td", null, "→"),
+            api.el("td", null, api.el("span", { class: "addr" }, tail4(w.to))),
+            api.el("td", null, btn));
+          btn.addEventListener("click", function () {
+            if (picked) return;
+            if (!w.pick) { say2.textContent = "The amount does not match the deposit of 2.0 ETH. Which arrow would you have followed?"; return; }
+            picked = true;
+            tr.querySelector(".coin").classList.add("hl");
+            say2.textContent = "You followed 2.0 ETH to " + tail4(D4) + ": the same amount, about an hour later. Now open the exchange's books.";
+            Array.prototype.forEach.call(t2.querySelectorAll("button"), function (b) { b.disabled = true; });
+            var open = api.el("button", { class: "btn primary", type: "button", onclick: function () { open.remove(); books(tr); } }, "Open the exchange's books");
+            b2.appendChild(open);
+          });
+          t2.appendChild(tr);
+        });
+        b2.appendChild(t2);
+        var say2 = api.el("p", { class: "say", role: "status" });
+        b2.appendChild(say2);
+        root.appendChild(b2);
+      });
+
+      // Box 3: the books (made up) disagree.
+      function books(pickedRow) {
+        var b3 = api.el("div", { class: "trail" }, api.el("h3", null, "3. The exchange's books (made up for this lab)"));
+        var tb = api.el("table", { class: "books" },
+          api.el("tr", null, api.el("th", null, "Customer"), api.el("th", null, "Account balance"), api.el("th", null, "What the books say")),
+          api.el("tr", null, api.el("td", null, "Customer A (deposit address " + tail4(A1) + ")"), api.el("td", null, "2.0 ETH"), api.el("td", null, "A's 2.0 ETH is still credited to A's account.")),
+          api.el("tr", null, api.el("td", null, "Customer D (withdrawal address " + tail4(D4) + ")"), api.el("td", null, "0 ETH"), api.el("td", null, "D deposited 2.0 ETH last week; the withdrawal was paid from D's own balance.")));
+        b3.appendChild(tb);
+        var hl = pickedRow.querySelector(".coin");
+        hl.classList.remove("hl");
+        hl.classList.add("hl", "grey");
+        b3.appendChild(api.el("p", null, "Your highlighter on the 2.0 ETH withdrawal turns grey: it was Customer D's own money."));
+        var bal = api.el("p", null, "The main wallet held ");
+        bal.appendChild(api.el("strong", null, "3,000 ETH"));
+        bal.appendChild(document.createTextNode(" before A's deposit, and its balance is one number. Nothing in it marks which ETH was A's."));
+        b3.appendChild(bal);
+        root.appendChild(b3);
+        api.finish({ choice: 2, note:
+          "<p>The chain showed a deposit going in and a withdrawal coming out, with no line between them. The exchange holds its customers' " +
+          "coins together, &ldquo;in an omnibus manner on the blockchain,&rdquo; and its ledger says whose they are. A matching amount an hour " +
+          "later is a coincidence the chain cannot turn into a link; only the exchange's records can.</p>" });
+      }
+    } },
+    name: {
+      term: "Omnibus wallet",
+      parts: "omnibus (holding many in one) + wallet",
+      plain: "<p>One wallet that holds many customers' coins together. The exchange's books, not the chain, say whose they are.</p>"
+    },
+    explorer: { render: function (el, api) {
+      el.appendChild(api.el("p", null, "Two address pages, as an explorer would show them (copies made up for this lab, not live pages). The deposit address:"));
+      el.appendChild(api.el("table", null,
+        api.el("tr", null, api.el("th", null, "Address"), api.el("td", null, api.el("span", { class: "addr" }, tail4(A1)))),
+        api.el("tr", null, api.el("th", null, "In"), api.el("td", null, api.coin({ role: "input", amount: "2.0 ETH" }))),
+        api.el("tr", null, api.el("th", null, "Out"), api.el("td", null, api.coin({ role: "output", amount: "1.9996 ETH" }), " to ", api.el("span", { class: "addr" }, tail4(C9)), ", 40 minutes later")),
+        api.el("tr", null, api.el("th", null, "Balance"), api.el("td", null, "0 ETH"))));
+      el.appendChild(api.el("p", null, "The main wallet:"));
+      el.appendChild(api.el("table", null,
+        api.el("tr", null, api.el("th", null, "Address"), api.el("td", null, api.el("span", { class: "addr" }, tail4(C9)))),
+        api.el("tr", null, api.el("th", null, "In"), api.el("td", null, "about 50,000 forwards like the one above")),
+        api.el("tr", null, api.el("th", null, "Out"), api.el("td", null, "thousands of withdrawals")),
+        api.el("tr", null, api.el("th", null, "Balance"), api.el("td", null, "one number"))));
+      el.appendChild(api.el("p", null, "Neither page pairs a deposit with a withdrawal, and no explorer field could: the pairing lives in the exchange's books."));
+    } },
+    twist: {
+      html: "<p>The agent hears that the trail stops at the exchange and asks: &ldquo;So the money is anonymous now?&rdquo;</p>" +
+        "<p>One fact is added: this exchange verifies every account before it accepts a deposit.</p>",
+      question: "Is the 2.0 ETH anonymous?",
+      choices: [
+        "Yes: the trail is dead.",
+        "Yes, unless the exchange is hacked.",
+        "No: 0xA1… belongs to one customer account, and the exchange's records say who holds it and where the funds went next.",
+        "No: 0xD4… is the thief after all."
+      ],
+      answer: 2,
+      why: "<p>A deposit address is created per customer, so the deposit names one verified account, and the records are held by the exchange, not the chain. The analyst names the deposit address and who holds the record, and stops there.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks where the victim's 2.0 ETH went. Say it in one sentence, with a confidence word.</p>",
+      example: "The 2.0 ETH reached 0xA1…; Moderate confidence that it is a deposit address at the exchange that controls 0xC9…: it forwarded 1.9996 ETH, the amount less a fee, 40 minutes later to an address that has received about 50,000 such forwards. After that the funds sit in the exchange's pooled wallet, and the chain does not show which withdrawal, if any, paid them out; the exchange's records for the account behind 0xA1… would."
+    }
+  }
+});
+</script>
+</body>
+</html>

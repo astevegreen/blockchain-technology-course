@@ -99,3 +99,4 @@ the lab and say so; the sweep's numbers are the slide's worked example. It runs 
 ## Approval
 
 - Owner: "Who got paid?", "Forge the payment", "Through the exchange" (10 Nov 2026)
+- Built: 11 Nov 2026, `blockchain-course/assets/labs/through-the-exchange/index.html`; opened from the slide named above.
