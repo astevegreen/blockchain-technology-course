@@ -209,6 +209,46 @@ class BitcoinLiveRegressionTests(unittest.TestCase):
         )
         self.assertIn("ttyd", ttyd.text.lower())
 
+    def test_terminal_scavenger_hunt_checks_against_the_nodes(self) -> None:
+        """Day 1's hunt (docs/lab-cards/terminal-scavenger-hunt.md): the panel links it, lane-service serves it, and
+        its checker accepts block 5's real hash and the lane's own block count and refuses wrong ones."""
+        claim = self.require_claim()
+        wrapper = self.student_session.get(f"{self.base_url}/labs/bitcoin/c/{claim.uuid}/", timeout=10)
+        self.assertIn('id="hunt-btn"', wrapper.text)
+        page = self.student_session.get(f"{self.base_url}/api/bitcoin/hunt/?c={claim.uuid}", timeout=10)
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Terminal scavenger hunt", page.text)
+        shell = self.student_session.get(f"{self.base_url}/api/bitcoin/hunt/shared/shell.js", timeout=10)
+        self.assertEqual(shell.status_code, 200)
+
+        cli = "bitcoin-cli -datadir=/home/user/.bitcoin"
+        block5 = docker_exec_checked("bitcoin-instructor-1", f"{cli} getblockhash 5").strip()
+        own = wait_for_docker_output(
+            claim.container_name,
+            f"{cli} getblockhash 5",
+            lambda output: output.strip() == block5,
+            timeout_seconds=120,
+            description="the lane's node to hold block 5",
+        )
+        self.assertEqual(own.strip(), block5)
+        count = docker_exec_checked(claim.container_name, f"{cli} getblockcount").strip()
+
+        def check(**body):
+            resp = self.student_session.post(f"{self.base_url}/api/bitcoin/hunt/check",
+                                             json={"session": claim.uuid, **body}, timeout=30)
+            self.assertEqual(resp.status_code, 200, resp.text)
+            return resp.json()
+
+        self.assertTrue(check(fact="hash", command=f"{cli} getblockhash 5", line=block5)["ok"])
+        wrong = check(fact="hash", command=f"{cli} getblockhash 5", line="0" * 64)
+        self.assertFalse(wrong["ok"])
+        self.assertNotIn(block5, str(wrong))
+        self.assertTrue(check(fact="count", command=f"{cli} getblockcount", line=count)["ok"])
+        self.assertFalse(check(fact="count", command=f"{cli} getblockchaininfo", line=count)["ok"])
+        block = docker_exec_checked(claim.container_name, f"{cli} getblock {block5}")
+        line = next(row for row in block.splitlines() if '"confirmations"' in row)
+        self.assertTrue(check(fact="confirmations", command=f"{cli} getblock {block5}", line=line)["ok"])
+
     def test_student_ttyd_executes_real_command(self) -> None:
         claim = self.require_claim()
         expected_pwd = docker_exec_checked(claim.container_name, "pwd").strip()

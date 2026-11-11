@@ -90,3 +90,11 @@ test("short() keeps both ends of a long value", () => {
   assert.equal(LabShell.short("3f9a1c0d77b2e8f1c4a9e04b"), "3f9a1c…a9e04b");
   assert.equal(LabShell.short("abc"), "abc");
 });
+
+test("the optional reason and the tell without confidence are valid config", () => {
+  const c = good();
+  c.steps.commit.reason = "Your reason";
+  c.steps.twist.reason = "Your reason";
+  c.steps.tell.confidence = false;
+  assert.deepEqual(LabShell.validate(c), []);
+});

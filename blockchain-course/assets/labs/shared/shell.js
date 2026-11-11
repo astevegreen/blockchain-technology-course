@@ -11,7 +11,9 @@
  *   name      Name it: one term, its parts, its plain meaning (one new term per step).
  *   explorer  What the explorer shows: the same thing as an analyst meets it.
  *   twist     Change one thing: one fact changed; predict again, then the answer is shown.
- *   tell      Tell an agent: one sentence with a confidence word, said to a neighbour.
+ *   tell      Tell an agent: one sentence with a confidence word, said to a neighbour (confidence: false drops the
+ *             word, for a fact read straight off the record).
+ * commit and twist take an optional reason (a prompt): a written reason, required before the pick locks.
  *
  * Works offline and from a plain file: a classic script, no modules, no network, no Pyodide. Progress is kept
  * in the browser so a reload resumes; Restart clears it, so a student can repeat the lab alone later.
@@ -213,11 +215,13 @@
     }
 
     // A question step keeps the student's picks in the form until they lock them in.
-    var pending = { choice: null, conf: null };
+    var pending = { choice: null, conf: null, reason: "" };
 
     function lockQuestion(k) {
       if (pending.choice === null || pending.conf === null) return;
+      if (config.steps[k].reason && !pending.reason.trim()) return;
       state[k] = { choice: pending.choice, conf: pending.conf };
+      if (config.steps[k].reason) state[k].reason = pending.reason.trim();
       save();
       draw();
     }
@@ -232,7 +236,7 @@
       });
       body.innerHTML = "";
       status.textContent = "";
-      pending = { choice: null, conf: null };
+      pending = { choice: null, conf: null, reason: "" };
       backBtn.disabled = state.at === 0;
       nextBtn.disabled = false;
       nextBtn.textContent = "Next";
@@ -281,15 +285,25 @@
       });
       body.appendChild(pick);
       body.appendChild(sure);
+      // Optional: step.reason is a prompt for a short written reason, kept with the pick (a game may score it).
+      if (step.reason) {
+        var why = el("textarea", { class: "sentence reason", "aria-label": step.reason, disabled: !!done,
+          oninput: function () { pending.reason = why.value; ready(); } });
+        why.value = done ? done.reason || "" : "";
+        body.appendChild(el("label", { class: "reason-label" }, step.reason));
+        body.appendChild(why);
+      }
       if (done) {
         status.textContent = "Locked in. Your answer stays as you gave it.";
         return;
       }
       nextBtn.textContent = "Lock in my answer";
       nextBtn.disabled = true;
-      status.textContent = "Pick an answer and how sure you are. The lab goes on once both are picked.";
+      status.textContent = step.reason
+        ? "Pick an answer and how sure you are, and give your reason. The lab goes on once all three are in."
+        : "Pick an answer and how sure you are. The lab goes on once both are picked.";
       function ready() {
-        nextBtn.disabled = pending.choice === null || pending.conf === null;
+        nextBtn.disabled = pending.choice === null || pending.conf === null || (!!step.reason && !pending.reason.trim());
         if (!nextBtn.disabled) status.textContent = "Ready. Lock it in when you are sure of your pick.";
       }
     }
@@ -344,6 +358,8 @@
       nextBtn.textContent = state.finished ? "Done" : "Finish";
       if (state.finished) body.appendChild(summary());
       function check() {
+        // step.confidence === false: a fact read straight off the record takes no confidence word.
+        if (step.confidence === false) { hint.textContent = "Now say it to your neighbour."; return; }
         var level = findConfidence(area.value);
         hint.innerHTML = "";
         if (level) hint.append("Confidence word: ", conf(level), ". Now say it to your neighbour.");

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terminal scavenger hunt</title>
+<link rel="stylesheet" href="shared/look.css">
+<style>
+  .facts { display: grid; gap: 0.8rem; margin: 0.6rem 0; }
+  .fact { padding: 0.7rem 0.9rem; border: 2px solid var(--rule); border-radius: var(--radius); background: var(--panel); }
+  .fact[data-ok="yes"] { border-color: var(--output); }
+  .fact h3 { margin: 0 0 0.3rem; font-size: 1rem; }
+  .fact pre { margin: 0.3rem 0; padding: 0.4em 0.6em; background: var(--hash-tint); border-radius: 6px; font-family: var(--mono);
+    font-size: 0.85em; white-space: pre-wrap; word-break: break-all; }
+  .fact label { display: grid; gap: 0.15em; margin-top: 0.4rem; font-size: 0.85em; }
+  .fact input[type="text"] { width: 100%; font: inherit; font-family: var(--mono); padding: 0.3em 0.45em; border: 2px solid var(--rule);
+    border-radius: 6px; background: var(--panel); }
+  .fact .row { display: flex; gap: 0.6rem; align-items: center; margin-top: 0.45rem; flex-wrap: wrap; }
+  .fact .said { font-size: 0.9em; }
+  .fact[data-ok="yes"] .said::before { content: "\2713  "; font-weight: 700; }
+  .fact[data-ok="no"] .said::before { content: "\2717  "; font-weight: 700; }
+  .wait { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+  .reason-label { display: block; margin-top: 0.8rem; font-weight: 600; }
+  #hunt-score { position: sticky; bottom: 0; display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center;
+    padding: 0.5rem 1rem; border-top: 2px solid var(--rule); background: var(--panel); font-weight: 600; }
+  #hunt-score .over { color: var(--private-key); }
+  .warn { padding: 0.6rem 0.9rem; border: 3px solid var(--private-key); background: var(--private-key-tint); margin: 0.6rem 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<aside id="hunt-score" aria-live="polite"></aside>
+<script src="shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/terminal-scavenger-hunt.md. The page holds no answers: the class chain is mined fresh at
+   each lab start, so lane-service's checker (labs/bitcoin_hunt.py) reads the instructor's node, or the student's own
+   for the confirmations, and says only right or wrong. The scoring key and the instructor's run sheet are in
+   quizes/microlabs/terminal_scavenger_hunt_INSTRUCTOR_ANSWERS.md, which students never receive. */
+(function () {
+  "use strict";
+  var ID = "terminal-scavenger-hunt";
+  var LIMIT_MS = 15 * 60 * 1000;
+  var CLI = "bitcoin-cli -datadir=/home/user/.bitcoin";
+  var session = (/[?&]c=([0-9a-f-]{36})/.exec(location.search) || [])[1] || "";
+  // Facts are kept per claim: a fresh lab start mines a new chain and gives a new claim, so old facts do not carry over.
+  var FACTS_KEY = "lab:" + ID + ":facts:" + (session || "none");
+
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem(FACTS_KEY)) || null; } catch (e) { return null; } },
+    set: function (v) { try { localStorage.setItem(FACTS_KEY, JSON.stringify(v)); } catch (e) { /* the page still works */ } },
+    drop: function () { try { localStorage.removeItem(FACTS_KEY); } catch (e) { /* nothing kept */ } }
+  };
+  var blank = function () { return { started: Date.now(), ended: null, facts: {} }; };
+  var hunt = store.get() || blank();
+  var save = function () { store.set(hunt); };
+  save();
+
+  var FACTS = [
+    { id: "count", title: "Fact 1: how many blocks your node has", run: CLI + " getblockcount",
+      line: "The number it prints" },
+    { id: "hash", title: "Fact 2: block 5's hash", run: CLI + " getblockhash 5", line: "The hash it prints" },
+    { id: "time", title: "Fact 3: block 5's time", run: CLI + " getblock <block 5's hash>",
+      line: "The \"time\" line: seconds since 1 January 1970, set by the miner's clock" },
+    { id: "ntx", title: "Fact 4: how many transactions block 5 holds", run: CLI + " getblock <block 5's hash>",
+      line: "The \"nTx\" line" },
+    { id: "confirmations", title: "Fact 5: how many confirmations block 5 has", run: CLI + " getblock <block 5's hash>",
+      line: "The \"confirmations\" line" }
+  ];
+  var RERUN = { id: "rerun", title: "Run it again", run: CLI + " getblock <block 5's hash>",
+    line: "The \"confirmations\" line now" };
+
+  function got(id) { return hunt.facts[id] && hunt.facts[id].ok; }
+  function factsFound() { return FACTS.filter(function (f) { return got(f.id); }).length; }
+  function shownHash() { return got("hash") ? (/[0-9a-f]{64}/i.exec(hunt.facts.hash.line) || [""])[0].toLowerCase() : ""; }
+  function confirmationsOf(id) {
+    var m = hunt.facts[id] && /"confirmations"\s*:\s*(\d+)/.exec(hunt.facts[id].line);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
+  function check(fact, command, line, done) {
+    var body = { fact: fact, command: command, line: line, session: session };
+    if (fact === "rerun") body.previous = confirmationsOf("confirmations");
+    fetch("/api/bitcoin/hunt/check", { method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json(); })
+      .then(done)
+      .catch(function () { done({ ok: false, reason: "The checker did not answer; try again in a moment." }); });
+  }
+
+  /** One fact's box: the command to run, a box for the command run and a box for the line that proves it. */
+  function factBox(api, f, onFound) {
+    var el = api.el;
+    var saved = hunt.facts[f.id] || {};
+    var box = el("div", { class: "fact", "data-ok": saved.ok ? "yes" : saved.reason ? "no" : false });
+    var run = f.run;
+    var hash = shownHash();
+    if (hash) run = run.replace("<block 5's hash>", hash);
+    box.appendChild(el("h3", null, f.title));
+    box.appendChild(el("pre", null, run));
+    var cmd = el("input", { type: "text", spellcheck: "false", autocomplete: "off", disabled: !!saved.ok });
+    var line = el("input", { type: "text", spellcheck: "false", autocomplete: "off", disabled: !!saved.ok });
+    cmd.value = saved.command || "";
+    line.value = saved.line || "";
+    box.appendChild(el("label", null, "The command you ran (paste it from your terminal)", cmd));
+    box.appendChild(el("label", null, f.line + " (paste the line)", line));
+    var said = el("span", { class: "said" }, saved.reason || "");
+    var btn = el("button", { class: "btn", type: "button", disabled: !!saved.ok }, "Check");
+    btn.addEventListener("click", function () {
+      btn.disabled = true;
+      said.textContent = "Checking…";
+      check(f.id, cmd.value, line.value, function (res) {
+        hunt.facts[f.id] = { command: cmd.value, line: line.value, ok: !!res.ok, reason: res.reason || "" };
+        save();
+        box.setAttribute("data-ok", res.ok ? "yes" : "no");
+        said.textContent = res.reason || "";
+        if (res.ok) { cmd.disabled = true; line.disabled = true; onFound(); }
+        else btn.disabled = false;
+        paintScore();
+      });
+    });
+    box.appendChild(el("div", { class: "row" }, btn, said));
+    if (f.id === "hash" && hash) box.appendChild(el("p", null, "Block 5: ", el("span", { class: "hash" }, api.short(hash))));
+    return box;
+  }
+
+  function score(shellState) {
+    var s = shellState || {};
+    var prediction = s.commit && s.commit.choice === 1 && s.commit.reason ? 1 : 0;
+    var twist = s.twist && s.twist.choice === 2 && s.twist.reason ? 2 : 0;
+    return { facts: factsFound(), prediction: prediction, twist: twist, total: factsFound() + prediction + twist };
+  }
+
+  var lab = null;
+  function paintScore() {
+    var box = document.getElementById("hunt-score");
+    var s = lab ? lab.state() : {};
+    if (s.finished && !hunt.ended) { hunt.ended = Date.now(); save(); }
+    var sc = score(s);
+    var ms = (hunt.ended || Date.now()) - hunt.started;
+    var mins = Math.floor(ms / 60000), secs = Math.floor(ms / 1000) % 60;
+    box.innerHTML = "";
+    box.append("Facts " + sc.facts + "/5", "  ", "Prediction " + sc.prediction + "/1", "  ", "Twist " + sc.twist + "/2",
+      "  ", "Score " + sc.total + "/8");
+    var t = LabShell.el("span", { class: ms > LIMIT_MS ? "over" : false },
+      "Time " + mins + ":" + (secs < 10 ? "0" : "") + secs + (ms > LIMIT_MS ? " (over 15:00)" : "") + (hunt.ended ? " (finished)" : ""));
+    box.append(t);
+  }
+
+  lab = LabShell.start({
+    id: ID,
+    title: "Terminal scavenger hunt",
+    slide: { title: "An explorer is a node's record, plus extras",
+      href: "/lessons/introduction/02-IN-blockchain_at_a_glance.html#/an-explorer-is-a-nodes-record-plus-extras" },
+    steps: {
+      case: { html:
+        (session ? "" : "<p class=\"warn\">Open this page from the <strong>Hunt</strong> button on your Bitcoin lab's " +
+          "panel bar, so the checker can find your node.</p>") +
+        "<p>A colleague sends you a screenshot of an explorer page and writes:</p>" +
+        "<blockquote>“The explorer says block 5 was mined at 2:02 pm and has 7 confirmations. Can you check that on our " +
+        "own node before I put it in the file?”</blockquote>" +
+        "<p>You have your own node in the Bitcoin lab's terminal. Five facts to find with <code>bitcoin-cli</code>, about " +
+        "15 minutes. A fact scores only with the command that found it and the output line that proves it.</p>" +
+        "<p>Scoring: each fact +1; the prediction, with your reason, +1; the twist, with your reason, +2. " +
+        "Time only breaks ties, within 15 minutes.</p>" },
+      commit: {
+        question: "An explorer shows block 5 with its hash, its time, its transactions and how many confirmations it " +
+          "has. Which of these does your own node store as part of block 5?",
+        choices: [
+          "All four.",
+          "The hash, the time and the transactions; the confirmations are worked out from the node's newest block.",
+          "Only the hash.",
+          "None: the node only relays, the explorer keeps the record."
+        ],
+        reason: "Your reason, in a few words"
+      },
+      do: {
+        render: function (el, api) {
+          el.appendChild(api.el("p", null, "In your Bitcoin lab terminal, run each command, then paste the command and the " +
+            "line that proves the fact. Check each fact as you find it."));
+          var list = api.el("div", { class: "facts" });
+          el.appendChild(list);
+          var after = api.el("div");
+          el.appendChild(after);
+          function drawFacts() {
+            list.innerHTML = "";
+            FACTS.forEach(function (f) { list.appendChild(factBox(api, f, drawFacts)); });
+            drawAfter();
+          }
+          function drawAfter() {
+            after.innerHTML = "";
+            if (!got("confirmations")) return;
+            after.appendChild(api.el("p", { class: "wait" }, "Tell your instructor you have fact 5. The instructor " +
+              "mines one block on the class chain (nothing on it mines by itself). Then run getblock on block 5 again."));
+            after.appendChild(factBox(api, RERUN, function () { drawAfter(); finish(); }));
+            if (got("rerun")) finish();
+          }
+          function finish() {
+            var before = confirmationsOf("confirmations"), now = confirmationsOf("rerun");
+            api.finish({ choice: 1, note: "<p>Block 5's hash, time and one transaction are the same as before. Its " +
+              "confirmations went from " + before + " to " + now + ": your node worked them out again from its newest " +
+              "block. Facts found: " + factsFound() + " of 5.</p>" });
+          }
+          drawFacts();
+        }
+      },
+      name: { term: "node query", parts: "node + query",
+        plain: "Asking a node directly, with its own tool, for what it holds, rather than reading a page someone built " +
+          "on top of it. Here the tool is <code>bitcoin-cli</code> and the node is your own." },
+      explorer: { html:
+        "<p>Open the class explorer at block 5: <a href=\"/labs/bitcoin/btc-explorer/block-height/5\" target=\"_blank\" " +
+        "rel=\"noopener\">btc-rpc-explorer, block 5</a>.</p>" +
+        "<ul><li>The hash and the one transaction match your node's.</li>" +
+        "<li>The time is shown as a date in your time zone, not seconds since 1970: same fact, another form.</li>" +
+        "<li>The confirmations are the explorer's count, from the newest block its node has seen.</li></ul>" +
+        "<p>The explorer reads a node too. What differs is the form, and what it works out.</p>" },
+      twist: {
+        html: "<p>While you compared, the instructor mined two more blocks. The explorer now shows block 5 with two more " +
+          "confirmations than the count you gave when you ran getblock again.</p>",
+        question: "Which is wrong?",
+        choices: [
+          "The explorer.",
+          "Your node.",
+          "Neither: each count is from the newest block seen when it was asked, and the explorer has seen blocks your answer has not.",
+          "The chain has split."
+        ],
+        answer: 2,
+        reason: "Your reason, in a few words",
+        why: "Very likely neither. Confirmations are a view from one node's newest block at one moment, so two readings " +
+          "can differ while block 5 itself, its hash and its time, is the same on both."
+      },
+      tell: {
+        prompt: "<p>Tell a colleague what block 5 is, from your node, in one sentence.</p>",
+        example: "My node shows block 5 as hash 0000…a3f1, mined at 14:02 UTC by the miner's clock, holding one " +
+          "transaction, the reward; its confirmation count is my node's, not part of the block.",
+        confidence: false
+      }
+    }
+  });
+
+  // The shell's Restart clears its own steps; clear the facts and the clock with them.
+  var restart = Array.prototype.find.call(document.querySelectorAll(".lab-bar .btn"), function (b) {
+    return /^Restart/.test(b.textContent);
+  });
+  if (restart) restart.addEventListener("click", function () {
+    setTimeout(function () {
+      var s = lab && lab.state();
+      if (s && s.at === 0 && !s.commit) { hunt = blank(); save(); paintScore(); }
+    }, 0);
+  });
+  paintScore();
+  setInterval(paintScore, 1000);
+})();
+</script>
+</body>
+</html>

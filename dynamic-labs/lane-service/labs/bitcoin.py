@@ -22,6 +22,7 @@ from exercises import register_catalog
 from generic_claims import ClaimManager
 from generic_lanes import LaneConfig, LaneManager, student_local_labels, student_local_mode
 from instructor_auth import require_instructor
+from labs import bitcoin_hunt
 from labs.bitcoin_catalog import CATALOG as BITCOIN_CATALOG, EXERCISE_IDS as BITCOIN_EXERCISE_IDS
 from labs.env_utils import env_int, lane_capacity, student_home_root, warm_pool_size
 from lab_blueprint import make_lab_blueprint
@@ -121,6 +122,7 @@ PANEL_HTML = (
     '<a class="pbtn" id="graph-btn" href="/labs/bitcoin/graph/" target="_blank" rel="noopener"'
     ' style="display:none">Graph</a>'
     '<a class="pbtn" id="my-static-btn" target="_blank" rel="noopener">My Static</a>'
+    '<a class="pbtn" id="hunt-btn" target="_blank" rel="noopener">Hunt</a>'
     '<div class="peers-wrap">'
     '  <button class="pbtn" id="peers-toggle">Peers &#9662;</button>'
     '  <div id="peers-dropdown"></div>'
@@ -134,6 +136,9 @@ PANEL_SCRIPT = """
   var uuid = lab.uuid;
   var myStatic = document.getElementById("my-static-btn");
   if (myStatic) myStatic.href = "/labs/bitcoin/c/" + uuid + "/static/";
+  // Day 1's terminal scavenger hunt: the claim travels in the link so the checker finds this node.
+  var hunt = document.getElementById("hunt-btn");
+  if (hunt) hunt.href = "/api/bitcoin/hunt/?c=" + encodeURIComponent(uuid);
 
   // Graph tool button: only shown while the instructor has the tool
   // enabled (Forensics 2). Polled so it appears/disappears mid-session.
@@ -294,6 +299,8 @@ blueprint = make_lab_blueprint(
     enable_progress=True,
     progress_exercise_ids=BITCOIN_EXERCISE_IDS,
 )
+# Day 1's terminal scavenger hunt: its page and checker (labs/bitcoin_hunt.py).
+bitcoin_hunt.register(blueprint, claim_manager.resolve, _container_name)
 
 
 _nuke_lock = threading.Lock()

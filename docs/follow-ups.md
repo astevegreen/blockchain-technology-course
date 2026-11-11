@@ -30,6 +30,12 @@ slide index), which is never listed here.
 - Two open Dependabot alerts on `main`, both in `dynamic-labs/ethereum_lab/package-lock.json`: `tmp` (high, #275)
   and `minimatch` (moderate, #194), open since 7-8 Nov [10 Nov 2026, push output while recording an expert-feedback
   decision]
+- The terminal scavenger hunt's slide link (`dynamic-labs/lane-service/labs/bitcoin_hunt/index.html`, `slide.href`)
+  is `/lessons/...`, which only the classroom serves; in the student launcher the course is on Pages, so the link
+  fails there. The launcher also has no instructor to mine the hunt's one and two blocks. [11 Nov 2026, building the hunt]
+- `dynamic-labs/explorer/gateway/static/lab/terminal.html:71` "Next:" names the explorer worksheet; day 1 now runs the
+  terminal scavenger hunt in between, and `quizes/run-sheet/RUN_SHEET.md:80` does not name the hunt. [11 Nov 2026,
+  building the hunt]
 
 ## Tooling and rules
 - The alignment map still shows no lab for concept 42's day 1 terminal Q2 (`getblockchaininfo`): the map reads only
