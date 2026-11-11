@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peel chain or payroll?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.txbox { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .7em 0; }
+.txbox h3 { margin: 0 0 .3em; font-size: 1em; }
+.chips { display: flex; flex-wrap: wrap; gap: .35em; margin: .3em 0; }
+.chip { font: inherit; cursor: pointer; border: 2px solid var(--rule); background: var(--bg, #fff); color: var(--ink); border-radius: 6px; padding: .2em .5em; }
+.chip[aria-pressed=true] { border-color: var(--ink); background: var(--accent-tint); font-weight: 700; }
+.chip:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.chip.suspect { cursor: default; border-style: dashed; }
+.chip.owner-mine { border-color: var(--accent-strong); }
+.chip.owner-not { border-color: var(--ink-soft); opacity: .85; }
+.big { font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sortrow { display: grid; grid-template-columns: 4em 1fr; gap: .4em; align-items: center; margin: .3em 0; }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.small { color: var(--ink-soft); font-size: .9em; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/peel-chain-or-payroll.md. The suspect, the seller, the exchange, the five CoinJoin
+   users, the owner list, every address and amount, and the 41,000-address hot wallet are made up for this lab.
+   The page draws the transactions itself, so it runs offline. T1: 0.5 + 0.3 in, 0.6 + 0.1999 out (fee 0.0001).
+   T2: 3.0 + 2.5 in, twelve outputs summing 5.4995 (fee 0.0005). T3: five inputs summing 0.5005, five of 0.1 (fee 0.0005). */
+var TYPE = "bc1q";
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function tail(i, salt) { var h = ((i + 5) * 2654435761 + salt * 40503) >>> 0; var x = ("00000000" + h.toString(16)).slice(-8); return TYPE + x.slice(0, 4) + "…" + x.slice(4); }
+
+/* every address the student can put in S's cluster; size = addresses its own cluster brings (made up) */
+var CAND = [];
+CAND.push({ id: "A1", tx: "T1", label: "T1 other input", addr: tail(1, 1), size: 6, owner: "mine", ownerText: "the suspect's" });
+CAND.push({ id: "X1", tx: "T2", label: "T2 input 1", addr: tail(2, 2), size: 41000, group: "hot", owner: "not", ownerText: "the exchange's (hot wallet)" });
+CAND.push({ id: "X2", tx: "T2", label: "T2 input 2", addr: tail(3, 2), size: 41000, group: "hot", owner: "not", ownerText: "the exchange's (hot wallet)" });
+var PSIZE = [3, 5, 2, 8, 4, 2, 6, 3, 9, 2, 4];
+PSIZE.forEach(function (n, p) {
+  CAND.push({ id: "P" + (p + 1), tx: "T2", label: "T2 payee " + (p + 1), addr: tail(10 + p, 3), size: n, owner: "not", ownerText: "customer " + (p + 1) });
+});
+[12, 7, 5, 21].forEach(function (n, w) {
+  CAND.push({ id: "W" + (w + 1), tx: "T3", label: "T3 other input " + (w + 1), addr: tail(30 + w, 4), size: n, owner: "not", ownerText: "person " + (w + 2) + " of 5" });
+});
+
+var T2OUT = ["0.1200", "0.4500", "0.9000", "0.3100", "0.2700", "0.6000", "0.0800", "0.5200", "0.7000", "0.3500", "0.4100", "0.7895"]; // 0.7895 is S's
+
+function coinHtml(role, amount) { return "<span class=\"coin " + role + "\"><span class=\"vh\">" + role + ": </span><span class=\"amount\">" + amount + " BTC</span></span>"; }
+
+var GROUPS = [
+  { id: "T1", title: "T1: 2 inputs, 2 outputs", shape: "0.5 BTC (S) + 0.3 BTC in; 0.6 BTC and 0.1999 BTC out; fee 0.0001 BTC. Only the inputs are offered: they were spent together." },
+  { id: "T2", title: "T2: 2 inputs, 12 outputs", shape: "3.0 + 2.5 BTC in; twelve outputs of different amounts (S is one of them: 0.7895 BTC); fee 0.0005 BTC. The two inputs and the eleven other payees are offered." },
+  { id: "T3", title: "T3: 5 inputs, 5 outputs", shape: "S (0.2 BTC) and four other coins in; five outputs of 0.1 BTC each; fee 0.0005 BTC. Only the four other inputs are offered." }
+];
+var SHAPES = [
+  { key: "peel", text: "Peel hop: two outputs; the inputs are the payer's" },
+  { key: "payroll", text: "Payroll: many outputs; the inputs are the service's, never the customers'" },
+  { key: "owners", text: "Many owners: repeated equal outputs; the inputs are several people's" }
+];
+var ANS = { T1: "peel", T2: "payroll", T3: "owners" };
+
+LabShell.start({
+  id: "peel-chain-or-payroll",
+  title: "Peel chain or payroll?",
+  slide: { title: "Batched payouts look busy but aren't a peel", href: "../../../lessons/forensics/02-FO-foundations_obfuscation_tracing.html#/batched-payouts-look-busy-but-arent-a-peel" },
+  steps: {
+    "case": { html:
+      "<p>The agent has three transactions with the suspect's address, S, in each. &ldquo;Anyone who shows up in a transaction with him is in on it. Put them all in his wallet.&rdquo;</p>" +
+      "<p>The suspect, the exchange, the other people, every address and every amount are made up for this lab.</p>" },
+    commit: {
+      question: "S appears in three transactions. T1 spends S and one other coin, and pays two outputs. T2 spends two coins and pays twelve outputs; S is one of the twelve. T3 spends S and four other coins, and pays five outputs of 0.1 BTC each. Which addresses belong in S's cluster?",
+      choices: [
+        "Every address in all three transactions.",
+        "Every input of all three.",
+        "T1's other input and T3's four other inputs.",
+        "T1's other input only."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var inCluster = {}, revealed = false, sorted = {}, finished = false, chipEls = {};
+      var counter = api.el("span", { class: "big" }, "1");
+      var status = api.el("p", { role: "status" }, "Click an address to put it in S's cluster, and click again to take it out.");
+      var ownerBtn = api.el("button", { class: "btn primary", type: "button", onclick: reveal }, "I'm done: show me the owner list");
+      var sortBox = api.el("div", { class: "txbox", hidden: true });
+
+      function size() {
+        var n = 1, hot = false;
+        CAND.forEach(function (c) {
+          if (!inCluster[c.id]) return;
+          if (c.group === "hot") { if (!hot) { n += c.size; hot = true; } } else n += c.size;
+        });
+        return n;
+      }
+      function chip(c) {
+        var b = api.el("button", { class: "chip", type: "button", "aria-pressed": "false", "aria-label": c.label + ", address " + c.addr,
+          onclick: function () {
+            if (revealed) return;
+            inCluster[c.id] = !inCluster[c.id];
+            b.setAttribute("aria-pressed", inCluster[c.id] ? "true" : "false");
+            counter.textContent = fmt(size());
+          } }, api.el("span", { class: "addr" }, c.addr), " ", api.el("span", { class: "small" }, c.label));
+        chipEls[c.id] = b;
+        return b;
+      }
+      el.appendChild(api.el("p", null, "Put in S's cluster the addresses you predicted. Each address you add brings its own cluster with it: the counter shows the total."));
+      GROUPS.forEach(function (g) {
+        var box = api.el("div", { class: "txbox" }, api.el("h3", null, g.title), api.el("p", { class: "small" }, g.shape));
+        box.appendChild(api.el("div", { class: "chips" }, api.el("span", { class: "chip suspect" }, api.el("span", { class: "addr" }, "S"), " ", api.el("span", { class: "small" }, "the suspect's address"))));
+        var chips = api.el("div", { class: "chips" });
+        CAND.filter(function (c) { return c.tx === g.id; }).forEach(function (c) { chips.appendChild(chip(c)); });
+        box.appendChild(chips);
+        el.appendChild(box);
+      });
+      el.appendChild(api.el("p", null, "Addresses in S's cluster now, counting S: ", counter));
+      el.appendChild(status);
+      el.appendChild(ownerBtn);
+      el.appendChild(sortBox);
+
+      function reveal() {
+        revealed = true;
+        ownerBtn.hidden = true;
+        CAND.forEach(function (c) {
+          var b = chipEls[c.id];
+          b.classList.add(c.owner === "mine" ? "owner-mine" : "owner-not");
+          b.appendChild(api.el("span", { class: "small" }, " — " + c.ownerText));
+          b.disabled = true;
+        });
+        var wrong = CAND.filter(function (c) { return inCluster[c.id] && c.owner !== "mine"; });
+        var missed = CAND.filter(function (c) { return !inCluster[c.id] && c.owner === "mine"; });
+        var msg = "The owner list (made up for this lab): ";
+        msg += wrong.length ? "you added " + wrong.length + " address" + (wrong.length > 1 ? "es" : "") + " that are not the suspect's, and your cluster grew to " + fmt(size()) + " addresses, most of them strangers. " : "everything you added is the suspect's. ";
+        if (missed.length) msg += "You left out T1's other input, which is his. ";
+        status.textContent = msg + "T1's two inputs are the suspect's. T2's inputs are the exchange's; S was one customer it paid, and the other eleven are other customers. T3's five inputs belong to five people. Now sort the three transactions by shape.";
+        buildSort();
+      }
+      function buildSort() {
+        sortBox.hidden = false;
+        sortBox.appendChild(api.el("h3", null, "Sort each transaction by its shape, with the reason"));
+        var fb = api.el("p", { role: "status" });
+        ["T1", "T2", "T3"].forEach(function (t) {
+          var sel = api.el("select", { "aria-label": "Shape of " + t, onchange: function () {
+            if (!sel.value) return;
+            if (sel.value === ANS[t]) { sorted[t] = true; sel.disabled = true; fb.textContent = t + ": right."; }
+            else { sorted[t] = false; fb.textContent = t + ": not that one. Count the outputs, then ask whose inputs they are."; }
+            if (!finished && sorted.T1 && sorted.T2 && sorted.T3) done();
+          } }, api.el("option", { value: "" }, "Choose a shape…"));
+          SHAPES.forEach(function (s) { sel.appendChild(api.el("option", { value: s.key }, s.text)); });
+          sortBox.appendChild(api.el("div", { class: "sortrow" }, api.el("strong", null, t), sel));
+        });
+        sortBox.appendChild(fb);
+      }
+      function done() {
+        finished = true;
+        api.finish({ choice: 3, note:
+          "<p>Only T1's other input belongs in S's cluster: choice (d). Choice (c) is the common belief that two inputs in one transaction always share an owner: it merged four strangers into S's cluster. T2's inputs are an exchange paying its customers: S was one customer, and the other eleven are not his crew. T3's five equal outputs mark a likely CoinJoin, where several people each sign their own input.</p>" +
+          "<p>Co-spending works because each input needs its own key's signature, so a wallet that spends two coins together usually owns both. It fails because people can join their coins on purpose, and from the input list alone one signer looks the same as five. One false link merges two clusters into one: in a 2022 study, 60 of 120 ground-truth clusters merged owners, each holding a CoinJoin.</p>" +
+          "<p class=\"src\">Sources: <code>@meiklejohn_fistfulbitcoinscharacterizing_2013</code>; <code>@gmaxwell_coinjoinbitcoinprivacy_2013</code>; <code>@kappos_howpeelmillion_2022</code>; <code>@bitcoinoptech_paymentbatching_2021</code>.</p>" });
+      }
+    } },
+    name: {
+      term: "common-input-ownership heuristic",
+      parts: "common input (coins spent together in one transaction) + ownership (the guess that one owner controls them) + heuristic (a rule of thumb, not a rule)",
+      plain: "<p>The rule of thumb every cluster is built on. It is usually right, it links only the inputs, and it fails where people join their coins on purpose.</p><p class=\"src\">Sources: <code>@meiklejohn_fistfulbitcoinscharacterizing_2013</code>; <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code>; <code>@kappos_howpeelmillion_2022</code>.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var table = api.el("table", { class: "explore" });
+      function row(h, v) { table.appendChild(api.el("tr", null, api.el("th", null, h), api.el("td", null, v))); }
+      function sp() { return document.createTextNode(" "); }
+      row("T1", api.el("span", null, "inputs: 2 · outputs: 2 · ", api.coin({ role: "input", amount: "0.5 BTC" }), sp(), api.coin({ role: "input", amount: "0.3 BTC" }), " → ", api.coin({ role: "output", amount: "0.6 BTC" }), sp(), api.coin({ role: "change", amount: "0.1999 BTC" })));
+      var t2 = api.el("span", null, "inputs: 2 · outputs: 12 · ", api.coin({ role: "input", amount: "3.0 BTC" }), sp(), api.coin({ role: "input", amount: "2.5 BTC" }), " → ");
+      T2OUT.forEach(function (x) { t2.appendChild(api.coin({ role: "output", amount: x + " BTC" })); t2.appendChild(sp()); });
+      row("T2", t2);
+      var t3 = api.el("span", null, "inputs: 5 (0.2, 0.11, 0.1, 0.05, 0.0405 BTC) · outputs: 5 · ");
+      for (var i = 0; i < 5; i++) { t3.appendChild(api.coin({ role: "output", amount: "0.1 BTC" })); t3.appendChild(sp()); }
+      row("T3", t3);
+      el.appendChild(api.el("p", null, "The three transactions on a mempool-style transaction page, as the day 6 lab meets them (a copy made up for this lab, not a live page; the real explorer is mempool, AGPL-3.0, as of 31 Oct 2026)."));
+      el.appendChild(table);
+      el.appendChild(api.el("p", null, "The analyst reads the input list, the output count and the output amounts. T2's twelve outputs of differing amounts, from two inputs, have a payroll's shape. T3's five 0.1 BTC outputs are the sign that day 7 teaches you to confirm. The page names no owner for any input: only the shape and the amounts tell the three apart."));
+      el.appendChild(api.el("p", { class: "src" }, "Sources: ", api.el("code", null, "@mempool_mempool_2026"), "; ", api.el("code", null, "@bitcoinoptech_paymentbatching_2021"), "."));
+    } },
+    twist: {
+      html: "<p>A fourth transaction, T4, spends S and one other coin and pays a seller and change. Nothing about it is unusual.</p>" +
+        "<div class=\"txbox\"><strong>T4: 2 inputs, 2 outputs</strong><p>" + coinHtml("input", "0.4") + " (S) " + coinHtml("input", "0.2") + " &rarr; " + coinHtml("output", "0.55") + " " + coinHtml("change", "0.0499") + " (fee 0.0001 BTC)</p></div>" +
+        "<p>The lab's owner list says the other input was the seller's. All amounts are made up for this lab.</p>",
+      question: "Could you have seen on the chain that the other input was the seller's?",
+      choices: [
+        "Yes, from the amounts.",
+        "Yes, from the inputs' ages.",
+        "No: nothing on the chain marks it.",
+        "It cannot happen: both inputs needed the suspect's key."
+      ],
+      answer: 2,
+      why: "<p>Each input is signed by its own owner, so a payer and a payee can each add a coin to one payment, and the result will look like a normal transaction. The BIP 78 payment protocol is built for this, and it makes the common-input heuristic unreliable (as of 31 Oct 2026). That is why co-spending alone stays <span class=\"conf\" data-level=\"moderate\">Moderate</span>, and why clues from one transaction never reach High on their own.</p>" +
+        "<p class=\"src\">Sources: <code>@dorier_bip78payjoin_2019</code>; <code>@odni_icd203_2015</code> (the confidence words).</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks: &ldquo;Are the other payees in T2 and the other inputs in T3 the suspect's crew?&rdquo; Say it in a few sentences, with a confidence word.</p>",
+      example: "Address bc1q…9e2d joins the suspect's cluster through T1 (Moderate confidence: the two were spent together, and co-spending has known false positives). T2 is likely an exchange paying its customers (Low until attribution): its inputs are the exchange's, and the eleven other payees are not linked to the suspect. T3's five equal outputs mark a likely CoinJoin, so I did not add its other inputs."
+    }
+  }
+});
+</script>
+</body>
+</html>
