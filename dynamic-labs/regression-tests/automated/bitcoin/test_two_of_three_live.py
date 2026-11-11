@@ -101,6 +101,9 @@ class TwoOfThreeLiveTests(unittest.TestCase):
         txid = docker_exec_checked(two, send + "\necho $TXID", timeout_seconds=60).strip()
         self.assertRegex(txid, r"^[0-9a-f]{64}$")
 
+        # The block is mined on the instructor's node, so wait until the spend has reached its mempool.
+        wait_for_docker_output(fund.INSTRUCTOR, "bitcoin-cli getrawmempool", lambda out: txid in out,
+                               timeout_seconds=60, description="the spend in the instructor's mempool")
         seed_address = fund.cli(fund.INSTRUCTOR, "getnewaddress", wallet=fund.SEED_WALLET)
         block = fund.mine_one(seed_address)
         wait_for_docker_output(two, "bitcoin-cli getblockcount", lambda out: int(out) >= block,
