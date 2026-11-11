@@ -63,13 +63,15 @@ morning it holds nothing, and we never signed anything. Were we hacked?" One tra
 
 Left out, for the owner to see: the vault has a second line that lets this attack run. Its subtraction sits in an
 `unchecked` block, so the attacker's recorded balance wraps round instead of failing; with Solidity's default check
-the same replay fails too. The page replays that change as well; how the answer key scores it is a question for
-the owner. The oracle (price move) pattern stays with day 4's pool game and day 8 ②: the set has no oracle
+the same replay fails too. The page replays that change as well. Scoring (owner, 10 Nov 2026: "Either line, full
+credit"): a student who moves either line gets full credit, because both fixes stop the replay and the page shows
+it; the debrief then names reentrancy as the lesson's term. The oracle (price move) pattern stays with day 4's pool game and day 8 ②: the set has no oracle
 contract. `EntropyLottery` is not a game case: no source found states how a calling contract beats it (see
 Sources). The build spec keeps one exploit contract read at the start of day 8's lab (owner, 30 Oct), today
 Bybit's, which is graded; this part, decided on 10 Nov, puts the vault's read before it, ungraded. Outcome 5 has
 students recognize the other attack types from their transactions, so the game's cases are read from
-transactions, with their source as confirmation only. Both points are questions for the owner. Three contracts of the
+transactions, with their source as confirmation only. Both points are settled (owner, 10 Nov 2026: "Keep both as
+drafted"). Three contracts of the
 set (`HoneypotToken`, `ThousandEthDoubler`, `FakeAirdropClaimer`) are scams, not exploits; they move with the set
 but no step uses them.
 
@@ -124,4 +126,6 @@ the lab and say so; the contracts' behaviour is their own code.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Bitcoin trace decoys", "Echo hunt", "Name the money and the flaw" (10 Nov 2026)
+- Scoring of the unchecked line: "Either line, full credit"; the vault read before Bybit's and the game's cases read
+  from transactions: "Keep both as drafted" (owner, 10 Nov 2026)
