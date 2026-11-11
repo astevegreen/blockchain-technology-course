@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who saw it first?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.ctl { display: grid; grid-template-columns: 14em 1fr 5em; gap: .5em; align-items: center; margin: .4em 0; }
+.ctl input[type=range] { accent-color: var(--accent-strong); width: 100%; }
+.map { width: 100%; max-width: 44em; height: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); display: block; }
+.map line { stroke: var(--rule); stroke-width: 2; }
+.map .node { cursor: pointer; stroke: var(--ink); stroke-width: 2; fill: var(--panel); }
+.map .node.c { fill: var(--input-tint); stroke: var(--input); }
+.map .node.d { fill: var(--change-tint); stroke: var(--change); }
+.map .node.sel { stroke-width: 5; }
+.map .node.mined { stroke-dasharray: 4 3; stroke-width: 5; }
+.map text { font: bold 13px var(--sans); fill: var(--ink); pointer-events: none; text-anchor: middle; }
+.map .side { font: 12px var(--sans); fill: var(--ink-soft); }
+.map .dot { stroke: var(--ink); stroke-width: 1; }
+.map .dot.c { fill: var(--input); }
+.map .dot.d { fill: var(--change); }
+.key { display: flex; gap: 1.2em; flex-wrap: wrap; margin: .4em 0; }
+.key .sw { display: inline-block; width: 1em; height: 1em; border: 2px solid var(--ink); border-radius: 50%; vertical-align: -.15em; margin-right: .3em; }
+.key .sw.c { background: var(--input-tint); border-color: var(--input); }
+.key .sw.d { background: var(--change-tint); border-color: var(--change); }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/who-saw-it-first.md. Alice, Carol, Dave, the sellers, the twelve nodes, block 812,450
+   and its hash are made up for this lab. Nothing is on a network: the delays, the spread and the block are simulated
+   here. Each hop takes a time drawn from the slider's range; the first block's miner is an eastern node (the
+   card's example), later blocks are drawn by chance, so some runs have a western node mining Carol's. Txids are
+   real SHA-256 hashes of the made-up payments. */
+
+/* SHA-256, so the txids are real hashes on any address (Web Crypto needs a secure origin). */
+function sha256(str) {
+  var K = [], H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  var p = 2, n = 0;
+  while (n < 64) {
+    var prime = true;
+    for (var d = 2; d * d <= p; d++) if (p % d === 0) { prime = false; break; }
+    if (prime) { K.push((Math.cbrt(p) % 1) * 4294967296 | 0); n++; }
+    p++;
+  }
+  var bytes = unescape(encodeURIComponent(str)).split("").map(function (c) { return c.charCodeAt(0); });
+  var bitLen = bytes.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  for (var s = 7; s >= 0; s--) bytes.push(s >= 4 ? 0 : (bitLen >>> (s * 8)) & 255);
+  function rr(x, k) { return (x >>> k) | (x << (32 - k)); }
+  for (var off = 0; off < bytes.length; off += 64) {
+    var w = [];
+    for (var i = 0; i < 16; i++) w[i] = (bytes[off + 4 * i] << 24) | (bytes[off + 4 * i + 1] << 16) | (bytes[off + 4 * i + 2] << 8) | bytes[off + 4 * i + 3];
+    for (i = 16; i < 64; i++) {
+      var s0 = rr(w[i - 15], 7) ^ rr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+      var s1 = rr(w[i - 2], 17) ^ rr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+    }
+    var a = H[0], b = H[1], c = H[2], dd = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (i = 0; i < 64; i++) {
+      var S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25), ch = (e & f) ^ (~e & g);
+      var t1 = (h + S1 + ch + K[i] + w[i]) | 0;
+      var S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22), mj = (a & b) ^ (a & c) ^ (b & c);
+      var t2 = (S0 + mj) | 0;
+      h = g; g = f; f = e; e = (dd + t1) | 0; dd = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H = [(H[0] + a) | 0, (H[1] + b) | 0, (H[2] + c) | 0, (H[3] + dd) | 0, (H[4] + e) | 0, (H[5] + f) | 0, (H[6] + g) | 0, (H[7] + h) | 0];
+  }
+  return H.map(function (x) { return ("00000000" + (x >>> 0).toString(16)).slice(-8); }).join("");
+}
+var TXID_C = sha256("Alice pays Carol 0.5 BTC from coin A (made up for this lab)");
+var TXID_D = sha256("Alice pays Dave 0.5 BTC from coin A (made up for this lab)");
+var BLOCK_HASH = "7c1d4e0b92f35a68d1c7e3094ab5f26e8d03c7195be4a2f60d8c31e7b5a4a93e";
+var HEIGHT = 812450;
+
+/* Twelve nodes: 0-5 west, 6-11 east. */
+var POS = [[60, 70], [60, 230], [160, 150], [200, 50], [200, 260], [290, 150], [410, 150], [500, 50], [500, 260], [560, 150], [650, 70], [650, 230]];
+var EDGES = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 4], [2, 3], [2, 4], [2, 5], [3, 5], [4, 5], [5, 6], [3, 7], [4, 8], [6, 7], [6, 8], [6, 9], [7, 9], [8, 9], [7, 10], [8, 11], [9, 10], [9, 11], [10, 11]];
+var NEIGH = POS.map(function () { return []; });
+EDGES.forEach(function (e) { NEIGH[e[0]].push(e[1]); NEIGH[e[1]].push(e[0]); });
+var CAROL_AT = 0, DAVE_AT = 11, GAP = 100;      // Dave's payment is sent 100 ms after Carol's
+function side(i) { return i < 6 ? "west" : "east"; }
+function name(v) { return v === "c" ? "Carol's" : "Dave's"; }
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+/** Spread both payments. Each hop takes a time drawn from [d/2, 3d/2] ms; a node keeps the first version it hears. */
+function spread(d, rnd) {
+  var first = [], at = [], msgs = [], turned = POS.map(function () { return []; });
+  var queue = [{ node: CAROL_AT, v: "c", t: 0, from: -1 }, { node: DAVE_AT, v: "d", t: GAP, from: -1 }];
+  while (queue.length) {
+    queue.sort(function (a, b) { return a.t - b.t; });
+    var m = queue.shift();
+    if (first[m.node]) { turned[m.node].push({ v: m.v, t: m.t }); continue; }
+    first[m.node] = m.v; at[m.node] = m.t;
+    NEIGH[m.node].forEach(function (nb) {
+      if (nb === m.from) return;
+      var tt = m.t + d * (0.5 + rnd());
+      msgs.push({ from: m.node, to: nb, v: m.v, t0: m.t, t1: tt });
+      queue.push({ node: nb, v: m.v, t: tt, from: m.node });
+    });
+  }
+  return { first: first, at: at, msgs: msgs, turned: turned, end: Math.max.apply(null, msgs.map(function (x) { return x.t1; })) };
+}
+var LAST = null;                       // the latest run, shared with the explorer step
+function ensureRun() {
+  if (LAST) return LAST;
+  var s = 7;
+  var rnd = function () { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  var r = spread(400, rnd);
+  r.miner = 9; r.winner = r.first[9]; LAST = r; return r;
+}
+function nodeList(r, i, t, blockDone) {
+  var held = (t === null || t >= r.at[i]) ? r.first[i] : null;
+  var out = [], tl = [];
+  if (blockDone) {
+    out.push("Empty: the block holds " + name(r.winner).replace("'s", "'s payment") + ".");
+    if (held && held !== r.winner) out.push("It dropped " + name(held) + " payment: its coin is spent in the block.");
+    return out.join(" ");
+  }
+  if (!held) return "Empty so far: nothing has reached this node yet.";
+  out.push(name(held) + " payment (heard at " + Math.round(r.at[i]) + " ms).");
+  r.turned[i].forEach(function (x) { if (x.v !== held && (t === null || t >= x.t) && tl.length < 1) tl.push(name(x.v) + " payment turned away at " + Math.round(x.t) + " ms, because it spends the same coin as the one above"); });
+  return out.join(" ") + (tl.length ? " Also: " + tl.join("; ") + "." : "");
+}
+function showDelay() { document.getElementById("delay-n").textContent = document.getElementById("delay").value + " ms"; }
+
+LabShell.start({
+  id: "who-saw-it-first",
+  title: "Who saw it first?",
+  slide: { title: "Distributed systems", href: "../../../primer.html#distributed-systems" },
+  steps: {
+    "case": { html:
+      "<p>A seller in Chicago and a seller in Singapore each say Alice paid them for the same item with the same coin, and each shows the payment on their screen. Only one of them can keep it. Who decides which?</p>" +
+      "<p>Alice and the sellers are made up for this lab.</p>" },
+    commit: {
+      question: "Alice signs two payments of the same coin, both with the same fee: one to Carol, sent from a node in the west, and a split second later one to Dave, sent from a node in the east. Which payment ends up on the chain?",
+      choices: [
+        "Carol's: it was sent first.",
+        "Dave's: the later one replaces it.",
+        "Both, with Dave's flagged.",
+        "Whichever one the miner of the next block heard first."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var NS = "http://www.w3.org/2000/svg";
+      function svg(tag, attrs) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+      var dIn = api.el("input", { type: "range", min: 100, max: 1600, step: 100, value: 400, id: "delay" });
+      var dOut = api.el("output", { for: "delay" }, "400 ms");
+      dIn.addEventListener("input", function () { dOut.textContent = dIn.value + " ms"; });
+      var sendBtn = api.el("button", { class: "btn primary", type: "button" }, "Send both payments");
+      var mineBtn = api.el("button", { class: "btn", type: "button", disabled: true }, "A node finds a block");
+      var map = svg("svg", { "class": "map", viewBox: "0 0 710 310", role: "group", "aria-label": "A map of twelve nodes, six in the west and six in the east" });
+      var gEdges = svg("g", {}), gDots = svg("g", {}), gNodes = svg("g", {});
+      EDGES.forEach(function (e) { gEdges.appendChild(svg("line", { x1: POS[e[0]][0], y1: POS[e[0]][1], x2: POS[e[1]][0], y2: POS[e[1]][1] })); });
+      var nodes = POS.map(function (p, i) {
+        var c = svg("circle", { "class": "node", cx: p[0], cy: p[1], r: 20, tabindex: 0, role: "button", "aria-label": "Node " + (i + 1) + ", " + side(i) });
+        c.addEventListener("click", function () { select(i); });
+        c.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(i); } });
+        gNodes.appendChild(c);
+        var lab = svg("text", { x: p[0], y: p[1] + 5 }); lab.textContent = String(i + 1); gNodes.appendChild(lab);
+        return c;
+      });
+      var wl = svg("text", { "class": "side", x: 20, y: 300 }); wl.textContent = "West";
+      var el2 = svg("text", { "class": "side", x: 690, y: 300, "text-anchor": "end" }); el2.textContent = "East";
+      [gEdges, gDots, gNodes, wl, el2].forEach(function (g) { map.appendChild(g); });
+      var status = api.el("p", { role: "status" }, "Press Send. Alice's two payments leave a western node and an eastern node.");
+      var listBox = api.el("p", { role: "status" }, "Click a node to open its waiting list.");
+      var after = api.el("div");
+      var sel = -1, run = null, raf = 0, blockDone = false, runs = 0, finished = false;
+
+      function colour(t) {
+        nodes.forEach(function (c, i) {
+          var held = run && t >= run.at[i] ? run.first[i] : null;
+          c.setAttribute("class", "node" + (held ? " " + held : "") + (i === sel ? " sel" : "") + (blockDone && i === run.miner ? " mined" : ""));
+          var tx = c.nextSibling; tx.textContent = held ? (held === "c" ? "C" : "D") : String(i + 1);
+        });
+      }
+      function select(i) {
+        sel = i;
+        if (!run) { listBox.textContent = "Node " + (i + 1) + " (" + side(i) + "): nothing yet."; return; }
+        listBox.textContent = "Node " + (i + 1) + " (" + side(i) + ") waiting list: " + nodeList(run, i, blockDone ? Infinity : curT, blockDone);
+        colour(curT);
+      }
+      var curT = 0;
+      function frame(t) { curT = t; colour(t); gDots.innerHTML = ""; run.msgs.forEach(function (m) { if (t >= m.t0 && t < m.t1) { var f = (t - m.t0) / (m.t1 - m.t0), a = POS[m.from], b = POS[m.to]; gDots.appendChild(svg("circle", { "class": "dot " + m.v, cx: a[0] + (b[0] - a[0]) * f, cy: a[1] + (b[1] - a[1]) * f, r: 5 })); } }); if (sel >= 0) select(sel); }
+      function send() {
+        if (raf) clearTimeout(raf);
+        var d = Number(dIn.value), r = spread(d, Math.random);
+        run = r; blockDone = false; after.innerHTML = ""; mineBtn.disabled = true; runs++;
+        var scale = Math.min(2, 5000 / r.end), t0 = null;
+        status.textContent = "Spreading: every hop takes between " + Math.round(d / 2) + " and " + Math.round(d * 1.5) + " ms. Each node keeps the first version it hears (C = Carol's, D = Dave's).";
+        function tick() {
+          if (t0 === null) t0 = Date.now();
+          var t = (Date.now() - t0) / scale;
+          if (t >= r.end) { frame(r.end + 1); finishSpread(); return; }
+          frame(t); raf = setTimeout(tick, 30);
+        }
+        tick();
+      }
+      function finishSpread() {
+        var c = run.first.filter(function (v) { return v === "c"; }).length, dd = 12 - c;
+        status.textContent = "Spread done: " + c + " nodes hold Carol's payment, " + dd + " hold Dave's. Open a node on each side and compare their waiting lists: there is no master list to open. Slide the delay and send again: a shorter delay shrinks the split but never removes it.";
+        mineBtn.disabled = false;
+        select(sel < 0 ? 0 : sel);
+      }
+      function mine() {
+        var pool = [];
+        for (var k = 0; k < 12; k++) if (runs > 1 || (k >= 6 && run.first[k] === "d")) pool.push(k);
+        run.miner = pool[Math.floor(Math.random() * pool.length)];
+        run.winner = run.first[run.miner]; LAST = run;
+        blockDone = true; mineBtn.disabled = true; sendBtn.disabled = true;
+        gDots.innerHTML = "";
+        nodes.forEach(function (c, i) { c.setAttribute("class", "node " + run.winner + (i === run.miner ? " mined" : "")); c.nextSibling.textContent = run.winner === "c" ? "C" : "D"; });
+        var w = run.winner, l = w === "c" ? "d" : "c";
+        status.textContent = "Node " + (run.miner + 1) + " (" + side(run.miner) + ") found a block with " + name(w) + " payment in it. It spreads, and every node accepts it, because every transaction in it is valid. " + name(l) + " payment, " + (l === "c" ? "sent first" : "sent a moment later") + ", can never confirm: its coin is spent.";
+        after.appendChild(api.el("div", { class: "panel" },
+          api.el("h3", null, "Block " + fmt(HEIGHT) + " holds " + name(w) + " payment"),
+          api.el("p", null, api.coin({ role: "output", amount: "0.5 BTC", who: "Carol's", spent: w === "d" }), " ", api.el("span", { class: "hash" }, api.short(TXID_C, 4)), w === "c" ? " in the block" : " dead"),
+          api.el("p", null, api.coin({ role: "output", amount: "0.5 BTC", who: "Dave's", spent: w === "c" }), " ", api.el("span", { class: "hash" }, api.short(TXID_D, 4)), w === "d" ? " in the block" : " dead"),
+          api.el("p", null, "Both payments spend coin A, so only one can be in the chain. The txids are real SHA-256 hashes of the two made-up payments.")));
+        if (runs === 1) after.appendChild(api.el("p", null, "Press Send again to run it as often as you like. This first block was found by an eastern node holding Dave's payment; later blocks are drawn by chance, so some runs have a western node mining Carol's."));
+        select(sel < 0 ? 0 : sel);
+        sendBtn.disabled = false;
+        if (!finished) {
+          finished = true;
+          api.finish({ choice: 3, note: "<p>Whichever payment the next block's miner had heard first, whether or not it was sent first. Nodes can hear the two in different orders, and no server stamps an order, so arrival order cannot settle it. The block supplies the one agreed order.</p><p class=\"src\">Sources: <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (sections 2 and 5); <code>@decker_informationpropagationbitcoin_2013</code>; <code>@bitcoin.orgdevelopers_transactionsdeveloperguide_2024</code>.</p>" });
+        }
+      }
+      sendBtn.addEventListener("click", send);
+      mineBtn.addEventListener("click", mine);
+
+      el.appendChild(api.el("p", null, "Twelve nodes, six in the west and six in the east. Alice's payment to Carol enters at node 1 in the west; her payment to Dave enters at node 12 in the east, 100 ms later. Press Send, then open nodes on each side. When the spread is done, a node finds a block. The map is a simulation in this page, not a live network."));
+      el.appendChild(api.el("div", { class: "key" },
+        api.el("span", null, api.el("span", { class: "sw c" }), "C: holds Carol's payment"),
+        api.el("span", null, api.el("span", { class: "sw d" }), "D: holds Dave's payment"),
+        api.el("span", null, "A moving dot is a message on its way.")));
+      el.appendChild(api.el("div", { class: "ctl" }, api.el("label", { for: "delay" }, "Time one hop takes (average)"), dIn, dOut));
+      el.appendChild(api.el("p", null, sendBtn, " ", mineBtn));
+      el.appendChild(map);
+      el.appendChild(status);
+      el.appendChild(listBox);
+      el.appendChild(after);
+      colour(-1);
+    } },
+    name: {
+      term: "mempool",
+      parts: "memory + pool",
+      plain: "<p>One node's own list of payments it has heard about that no block holds yet. Every node keeps its own, and no two need match.</p><p class=\"src\">Sources: <code>@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024</code>.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var r = ensureRun(), w = r.winner, l = w === "c" ? "d" : "c";
+      var sel = api.el("select", { id: "node-pick", "aria-label": "Which node's view" });
+      for (var i = 0; i < 12; i++) sel.appendChild(api.el("option", { value: i }, "Node " + (i + 1) + " (" + side(i) + ")"));
+      var pending = api.el("table", { class: "explore" });
+      function draw() {
+        var i = Number(sel.value), v = r.first[i];
+        pending.innerHTML = "";
+        pending.appendChild(api.el("tr", null, api.el("th", null, "Mempool"), api.el("td", null, "1 waiting payment")));
+        pending.appendChild(api.el("tr", null, api.el("th", null, "Payment"), api.el("td", null, api.coin({ role: "output", amount: "0.5 BTC", who: name(v).replace("'s", "") }), " ", api.el("span", { class: "hash" }, api.short(v === "c" ? TXID_C : TXID_D, 4)))));
+        pending.appendChild(api.el("tr", null, api.el("th", null, "Not here"), api.el("td", null, name(v === "c" ? "d" : "c") + " payment, which another node may be holding")));
+      }
+      sel.addEventListener("change", draw);
+      var blockTable = api.el("table", { class: "explore" },
+        api.el("tr", null, api.el("th", null, "Payment"), api.el("td", null, api.coin({ role: "output", amount: "0.5 BTC", who: name(w).replace("'s", "") }), " ", api.el("span", { class: "hash" }, api.short(w === "c" ? TXID_C : TXID_D, 4)))),
+        api.el("tr", null, api.el("th", null, "Status"), api.el("td", null, "In block " + fmt(HEIGHT))),
+        api.el("tr", null, api.el("th", null, "Block height"), api.el("td", null, fmt(HEIGHT))),
+        api.el("tr", null, api.el("th", null, "Block hash"), api.el("td", null, api.el("span", { class: "hash" }, api.short(BLOCK_HASH, 4)))));
+      el.appendChild(api.el("p", null, "The lab's explorer is the open-source mempool project. Its pending view lists the payments waiting, and how many. A copy made up for this lab, drawn from the run you just did, not a live page."));
+      el.appendChild(api.el("p", null, api.el("label", { for: "node-pick" }, "Pending view just before the block, as node: "), sel));
+      el.appendChild(pending);
+      el.appendChild(api.el("p", null, "That list is one node's own mempool. A payment missing there may sit in other nodes' lists, so an explorer's pending view is one view among many."));
+      el.appendChild(api.el("p", null, name(w) + " payment's page, after the block:"));
+      el.appendChild(blockTable);
+      el.appendChild(api.el("p", { class: "src" }, "Sources: ", api.el("code", null, "@mempool_mempool_2026"), " (the open-source mempool project, as of 31 Oct 2026); ", api.el("code", null, "@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024"), " (each node keeps its own list)."));
+      el.appendChild(api.el("p", null, "The block's height and hash are the same for every node. Dead payment: " + name(l) + ", which no node's mempool keeps any more."));
+      draw();
+    } },
+    twist: {
+      html: "<p>Alice tries again, but this time she waits until a block already holds the payment to Carol, and only then sends the payment to Dave.</p>" +
+        "<div class=\"panel\"><h3>Dave's payment, sent after the block (made up)</h3>" +
+        "<p><button class=\"btn\" type=\"button\" onclick=\"sendLate()\">Send Dave's payment to all twelve nodes</button></p>" +
+        "<p id=\"late-out\" role=\"status\"></p></div>",
+      question: "Does the network split this time?",
+      choices: [
+        "Yes, as before.",
+        "Yes, but only the east.",
+        "No: every node turns Dave's payment away at once.",
+        "No: Dave's replaces Carol's everywhere."
+      ],
+      answer: 2,
+      why: "<p>The coin is spent in a block that every node holds, so no node needs to have heard anything first. Nodes disagree only while both payments wait. The block is where they agree.</p><p class=\"src\">Sources: <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (section 5: a block is accepted only if its transactions are valid and not already spent); <code>@bitcoin.orgdevelopers_transactionsdeveloperguide_2024</code>. Replace-by-fee is a different case, taught on day 2: <code>@harding_bip125optinfull_2015</code>, <code>@bitcoincore_bitcoincore28_2024</code> (as of 24 Oct 2026).</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks whether Alice paid Carol or Dave. Say it in two sentences, with a confidence word and the block.</p>",
+      example: "Alice signed two payments of the same coin, one to Carol and one to Dave; block 812,450 (hash 7c1d…a93e) holds the one to Dave, so the chain records Dave as paid and the payment to Carol can no longer confirm (High confidence: the block has three blocks on top). Which payment Alice sent first did not decide it."
+    }
+  }
+});
+function sendLate() {
+  var out = document.getElementById("late-out"), rows = [];
+  for (var i = 0; i < 12; i++) rows.push((i + 1));
+  out.textContent = "Refused by " + rows.length + " of 12 nodes, at once: its coin is already spent in a block they all hold. No delay, no split, no waiting list to join.";
+}
+</script>
+</body>
+</html>
