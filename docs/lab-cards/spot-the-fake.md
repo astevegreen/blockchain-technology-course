@@ -100,6 +100,7 @@ sentence are placeholders until the chain is built.
 - Verified source and what an exact match means — `@sourcify_exactmatch_2026`; Otterscan is open source —
   `@otterscan_otterscan_2025` (as of 23 Oct 2026)
 - Confidence words, never a percentage — `@odni_icd203_2015` (the course scale, build spec "Confidence scale")
+- Built in f165823 (spot the fake, 11 Nov 2026)
 
 ## Approval
 
