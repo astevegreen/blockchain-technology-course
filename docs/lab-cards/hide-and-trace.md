@@ -156,3 +156,4 @@ the game and say so; the 0.5 BTC pool and 0.5001 BTC pre-mix coins are day 7's c
 - Owner: "Approve as drafted (Recommended)" (11 Nov 2026)
 - Hiders: "Hiders don't score (Recommended)"; the payoffs and the confidence cap: "Keep both (Recommended)" (owner,
   11 Nov 2026)
+- Built in 62d38b76 (11 Nov 2026).
