@@ -144,8 +144,12 @@ same amount, soon after the deposit. The research treats this as matching, with 
 
 - **Wider windows add wrong matches.** Yan et al.'s deposit match rate peaks at a window of about 24.2 minutes
   and then falls, "since more duplicated yet incorrect matches are included" [@yan_tracingcrosschain_2025].
-- **Busy bridges defeat it.** A plain time-and-amount heuristic finds many candidates "with similar time and
-  amount but can not handle them"; CONNECTOR reports it matched 32.5% on Celer and 0.7% on Multichain
+- **Amount and time alone match poorly.** CONNECTOR compares itself with the YKM heuristic (Yousaf, Kappos and
+  Meiklejohn's, designed for centralized bridges), which "acquires a larger set of candidate transactions with
+  similar time and amount but can not handle them". Of the pairs YKM associated from Ethereum to BNB Chain, 32.50%
+  were right on Celer cBridge and 0.70% on Multichain, against CONNECTOR's 95.35% and 98.99% (Table 7, matching
+  rate: "The percentage of associated results that match ground truth labels"). The paper adds that this fits
+  YKM's authors' finding that rates "decreased significantly" without the services' APIs
   [@lin_connectorenhancingtraceability_2024].
 - **Slow transfers fall outside the window.** The method "cannot capture transactions that take a longer time
   than the time tolerance" [@yan_tracingcrosschain_2025]; Polygon withdrawals take hours to months.
