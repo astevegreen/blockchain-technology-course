@@ -295,3 +295,12 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
   primer does them on the evening of day 1. Forge the payment serves the primer too, as `signatures` does now.
 - Belief 9 (unconfirmed means blocked) gets no lab; the slide "Delay may mean congestion, not censorship" covers
   it (owner: "Leave it to the slide").
+
+## Gate 2: the first two labs timed (11 Nov 2026)
+
+The owner timed the first two prediction labs in a lesson: "Make change took me 10 minutes and One seed took me 15
+minutes but I was going slowly for both."
+
+Asked whether to build the rest at five minutes each, plan ten each, or trim first, the owner chose "Build as
+carded (Recommended)". The remaining labs are built at five minutes each. The timings stand on record; the real
+pace is checked at the first dry run with students.
