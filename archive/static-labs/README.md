@@ -1,6 +1,6 @@
 # Archived static labs
 
-Ten browser labs taken out of what students receive on 10 Nov 2026, kept here so the owner can look at them
+Eleven browser labs taken out of what students receive on 10 Nov 2026, kept here so the owner can look at them
 before deciding their future. Nothing was deleted. The reasons are in
 `docs/analysis/2026-11-static-labs-review.md` ("Lab by lab" and "Defects"). Eight went in the first commit; the
 owner approved `hashing_merkle` and `bitcoin-attacks` later the same day, after
@@ -23,6 +23,7 @@ reaches the site, the `src.zip` or the student VM.
 | `ether-sec-micro` | `ether-sec-micro/index.html` | 02-EF Ethereum PoS and Security | Consensus internals an analyst does not need |
 | `hashing_merkle` | `hashing_merkle/hashing_merkle_lab.html` | 02-CP Hashing and Merkle Trees | Its proof check cannot fail; says every input has a unique hash |
 | `bitcoin-attacks` | `bitcoin-attacks/index.html` | 04-BF Bitcoin Security and Legal Concerns | No randomness: 51% always wins, 49% never does |
+| `ether-smart-contract-micro` | `ether-smart-contract-micro/index.html` | 04-EF Smart Contracts (linked from the day 3 index) | Replaced by "The vault that paid twice" (11 Nov 2026): it logged an `ETHTransfer` event real transfers do not write, invented gas numbers and narrated forward |
 
 ## Looking at one
 
@@ -48,6 +49,8 @@ Each place that linked an archived lab was taken out of view:
 - Lesson slides wrapped in `:::: {.content-hidden}`: "Symmetric Crypto Micro Lab" (03-CP), "Micro Lab: Flood vs.
   DHT Routing" (02-DS), "Micro Lab: Trust Simulation" (03-DS), "Proof of Stake Microlab" (03-CM). Two link lines
   inside 03-CP slides ("XOR Pad Demo", "PRG Demo") are hidden the same way.
+
+For `ether-smart-contract-micro` (replaced by `blockchain-course/assets/labs/the-vault-that-paid-twice/`, built from the card `docs/lab-cards/the-vault-that-paid-twice.md`): the `blockchain-course/index.qmd` day 3 browser-labs line and the 04-EF `lab:` block of `mindmap.html` were removed; the new lab is listed under day 8 and on the 10-FO mind-map node.
 
 For `hashing_merkle` and `bitcoin-attacks` (the second commit):
 
