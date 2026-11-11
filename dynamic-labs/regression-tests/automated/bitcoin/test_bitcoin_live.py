@@ -24,6 +24,7 @@ from live_support import (
     release_claim,
     ttyd_command_round_trip,
     ttyd_session,
+    wait_for_docker_output,
     wait_for_wallet_balance,
     wait_for_http,
     wallet_setup_round_trip,
