@@ -33,10 +33,10 @@ var HASH = "7c2e90b4d1a85f36e0c94a71b2d8f5036ae49c17d0b3e85f2a61c4d97b0e3f58";
 
 /* The blocks that go by while Ana's low-fee payment waits. The last one is mined by a miner whose clock runs slow. */
 var BLOCKS = [
-  { h: "812,328", t: "09:03", note: "full of payments that pay more per byte" },
-  { h: "812,329", t: "09:08", note: "full of payments that pay more per byte" },
-  { h: "812,330", t: "09:11", note: "full of payments that pay more per byte" },
-  { h: "812,331", t: "09:09", note: "the miner's clock runs a few minutes slow", mine: true }
+  { h: "812,328", t: "09:03", wall: "09:03", note: "full of payments that pay more per byte" },
+  { h: "812,329", t: "09:08", wall: "09:08", note: "full of payments that pay more per byte" },
+  { h: "812,330", t: "09:11", wall: "09:11", note: "full of payments that pay more per byte" },
+  { h: "812,331", t: "09:09", wall: "09:12", note: "the miner's clock runs a few minutes slow", mine: true }
 ];
 
 LabShell.start({
@@ -73,7 +73,7 @@ LabShell.start({
       el.appendChild(api.el("div", { class: "clocks" },
         api.el("div", { class: "clock" }, "Ana's phone", phone),
         api.el("div", { class: "clock" }, "Wall clock", wall),
-        api.el("div", { class: "clock" }, "Fee she set", api.el("span", { class: "fee" }, "1 sat/vB (lowest)"))));
+        api.el("div", { class: "clock" }, "Fee she set", api.el("span", { class: "fee" }, "the lowest her wallet allows"))));
       el.appendChild(api.el("p", null, sendBtn, " ", mineBtn));
       el.appendChild(poolBox);
       el.appendChild(chain);
@@ -93,6 +93,7 @@ LabShell.start({
 
       mineBtn.addEventListener("click", function () {
         var b = BLOCKS[shown++];
+        wall.textContent = b.wall;
         var box = api.el("div", { class: "blk" + (b.mine ? " mine" : "") },
           "Block " + b.h, api.el("span", { class: "stamp" }, "time " + b.t), api.el("small", null, b.note));
         if (b.mine) { box.appendChild(api.el("small", null, "includes Ana's payment")); }
@@ -113,7 +114,7 @@ LabShell.start({
         fields.appendChild(api.el("div", { class: "panel" },
           api.el("h3", null, "Ana's payment, field by field"),
           api.el("p", null, "Inputs: ", api.coin({ role: "input", amount: "0.050 BTC", who: "Ana's" })),
-          api.el("p", null, "Outputs: ", api.coin({ role: "output", amount: "0.040 BTC", who: "to Ben" }), " ", api.coin({ role: "change", amount: "0.00995 BTC", who: "back to Ana" })),
+          api.el("p", null, "Outputs: ", api.coin({ role: "output", amount: "0.040 BTC", who: "to Ben" }), " ", api.coin({ role: "change", amount: "0.0099986 BTC", who: "back to Ana" })),
           api.el("p", null, "Locktime: ", api.el("code", null, "0"), " (no earliest-mined condition)."),
           api.el("p", null, "Look for 09:02, or any time at all. No field holds one.")));
         if (!finished) {

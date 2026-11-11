@@ -80,4 +80,4 @@ real example.
 ## Approval
 
 - Owner: "Approve all four" (10 Nov 2026)
-Built in SHA (11 Nov 2026).
+- Built in 902d1a64 (11 Nov 2026).
