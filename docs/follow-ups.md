@@ -15,6 +15,9 @@ slide index), which is never listed here.
 
 ## Lessons
 
+- The new 10-FO slide "Where the three sit on OWASP's Top 10" has no questions in
+  `quizes/quiz_json/forensics_10-FO-flash_loans_reentrancy_oracles-quiz-bank.json`. [10 Nov 2026, OWASP map slide]
+
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
