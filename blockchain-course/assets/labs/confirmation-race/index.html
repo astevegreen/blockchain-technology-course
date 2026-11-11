@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The confirmation race</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.ctl { display: grid; grid-template-columns: 16em 1fr 4em; gap: .5em; align-items: center; margin: .4em 0; }
+.ctl input[type=range] { accent-color: var(--accent-strong); width: 100%; }
+.rate { margin: .8em 0 .4em; }
+.rate .track { height: 1.6em; border: 2px solid var(--ink); border-radius: 4px; background: var(--panel); }
+.rate .fill { height: 100%; width: 0; background: var(--output); }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.blocks { display: flex; flex-wrap: wrap; gap: 3px; margin: .4em 0; }
+.blocks span { width: 1.1em; height: 1.1em; border: 2px solid var(--ink); border-radius: 3px; background: var(--panel); }
+.blocks span.stale { background: var(--ink); }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/confirmation-race.md. The dealer, the block heights and the hashes are made up
+   for this lab. The race is simulated: each new block goes to the public chain or to the attacker's private
+   chain by chance (the attacker's share of all mining power is the chance). The merchant ships after N
+   confirmations (the payment's block and N-1 on top); the attacker wins if its private chain, which leaves the
+   payment out, ever catches up (draws level; the next block it finds then makes it longer). The page states the rate it drew beside Nakamoto's figure. */
+var RACES = 1000;
+var NAKAMOTO = 0.1773523;          // 30% of the power, z = 5 blocks after the payment's block (six confirmations)
+
+/** One race. at holds the block counts of both chains at the moment the merchant ships. */
+function oneRace(q, n, rnd) {
+  var a = 0, h = 0, steps = 0;
+  while (h < n) { if (rnd() < q) a++; else h++; }
+  var at = { attacker: a, pub: h };
+  if (a >= h) return { won: true, at: at };
+  var cap = q >= 0.5 ? 5000 : 0;
+  while (true) {
+    if (rnd() < q) a++; else h++;
+    if (a >= h) return { won: true, at: at };
+    if (q < 0.5 && h - a >= 40) return { won: false, at: at };
+    if (cap && ++steps > cap) return { won: false, at: at };
+  }
+}
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function pct(x) { return (Math.round(x * 1000) / 10).toFixed(1) + "%"; }
+
+/* The twist: with no attacker, a block is sometimes found by two miners at nearly the same time. The chance
+   grows with how long a block takes to reach the others (Decker and Wattenhofer, 2013); about delay / 600
+   seconds when a block takes ten minutes. */
+function runDelay() {
+  var d = Number(document.getElementById("delay").value);
+  var p = 1 - Math.exp(-d / 600), box = document.getElementById("delay-blocks"), n = 200, s = 0;
+  box.innerHTML = "";
+  for (var i = 0; i < n; i++) {
+    var stale = Math.random() < p;
+    if (stale) s++;
+    var sp = document.createElement("span");
+    if (stale) { sp.className = "stale"; sp.title = "stale block"; }
+    box.appendChild(sp);
+  }
+  document.getElementById("delay-out").textContent =
+    "Of " + n + " blocks found, " + s + " dropped out of the chain (black). The payment's block could have been one of them.";
+}
+function showDelay() { document.getElementById("delay-n").textContent = document.getElementById("delay").value + " s"; }
+
+LabShell.start({
+  id: "confirmation-race",
+  title: "The confirmation race",
+  slide: { title: "Each confirmation makes reversal harder", href: "../../../lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.html#/each-confirmation-makes-reversal-harder" },
+  steps: {
+    "case": { html:
+      "<p>A car dealer in another country takes Bitcoin. A buyer pays, and the dealer's screen shows the payment on the chain. " +
+      "The buyer wants to drive away now. The dealer can wait a few minutes or an hour. Does waiting change anything?</p>" +
+      "<p>The dealer is made up for this lab.</p>" },
+    commit: {
+      question: "An attacker holds 30% of all mining power. The merchant waits for six confirmations, the usual wait, before handing over the goods. Out of many tries, how often does the double spend succeed?",
+      choices: [
+        "Never: six confirmations make a payment final.",
+        "About 1 in 1,000.",
+        "Between 1 in 10 and 1 in 4.",
+        "More than half the time."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var shareIn = api.el("input", { type: "range", min: 5, max: 70, step: 5, value: 30, id: "share" });
+      var confIn = api.el("input", { type: "range", min: 1, max: 12, step: 1, value: 6, id: "confs" });
+      var shareOut = api.el("output", { for: "share" }, "30%");
+      var confOut = api.el("output", { for: "confs" }, "6");
+      var runBtn = api.el("button", { class: "btn primary", type: "button" }, "Run 1,000 races");
+      var fill = api.el("div", { class: "fill" });
+      var track = api.el("div", { class: "track", role: "img", "aria-label": "Share of races the attacker won" }, fill);
+      var rateText = api.el("p", { role: "status" }, "No races yet.");
+      var last = api.el("p");
+      var runs = api.el("ol", { "aria-label": "Your runs" });
+      var finished = false;
+
+      function labels() { shareOut.textContent = shareIn.value + "%"; confOut.textContent = confIn.value; }
+      shareIn.addEventListener("input", labels);
+      confIn.addEventListener("input", labels);
+
+      el.appendChild(api.el("p", null, "The attacker pays the merchant, then mines a private chain without the payment. Each new block goes to the public chain or to the attacker's chain by chance, in proportion to their mining power. The merchant ships after the number of confirmations you pick. The attacker wins if its chain ever catches up to the public one. Run the case you predicted first (30% and 6 confirmations): Next opens once you have. Then move one slider at a time."));
+      el.appendChild(api.el("div", { class: "ctl" }, api.el("label", { for: "share" }, "Attacker's share of mining power"), shareIn, shareOut));
+      el.appendChild(api.el("div", { class: "ctl" }, api.el("label", { for: "confs" }, "Confirmations the merchant waits for"), confIn, confOut));
+      el.appendChild(runBtn);
+      el.appendChild(api.el("div", { class: "rate" }, api.el("div", null, "Races the attacker won"), track, rateText, last));
+      el.appendChild(api.el("p", null, "Your runs so far:"));
+      el.appendChild(runs);
+
+      function run() {
+        var q = Number(shareIn.value) / 100, n = Number(confIn.value);
+        var wins = 0, done = 0, lastRace = null, batch = 50;
+        runBtn.disabled = true;
+        fill.style.width = "0";
+        function step() {
+          for (var i = 0; i < batch; i++) { lastRace = oneRace(q, n, Math.random); if (lastRace.won) wins++; done++; }
+          fill.style.width = (wins / done * 100) + "%";
+          rateText.textContent = "After " + fmt(done) + " races the attacker has won " + fmt(wins) + " (" + pct(wins / done) + ").";
+          if (done < RACES) { setTimeout(step, 25); return; }
+          runBtn.disabled = false;
+          last.textContent = "The last race, when the merchant shipped: public chain " + lastRace.at.pub + " blocks, attacker's chain " + lastRace.at.attacker + ". " + (lastRace.won ? "The attacker caught up, so its chain can now overtake the public one and drop the payment." : "The public chain kept the payment.");
+          runs.appendChild(api.el("li", null, Math.round(q * 100) + "% of the power, " + n + " confirmations: " + pct(wins / RACES)));
+          if (q >= 0.5) rateText.textContent += " Past half the power the attacker's chain catches up eventually, so waiting longer does not save the merchant.";
+          if (q === 0.3 && n === 6) {
+            rateText.textContent += " Nakamoto's table gives " + NAKAMOTO + " for this case (five blocks after the payment's block). This race is modelled a little differently and drawn by chance, so its rate lands near that figure, not on it.";
+            if (!finished) {
+              finished = true;
+              api.finish({ choice: 2, note: "<p>The attacker's success rate is between 1 in 10 and 1 in 4. Six confirmations make a reversal unlikely, not impossible. Now move one slider at a time: more confirmations shrink the rate fast but never to zero, and past half the power the attacker wins whenever it is given time.</p><p class=\"src\">Sources: <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (section 11: 0.1773523 at 30% and five blocks after the payment's block; a majority attacker cannot forge a signature); <code>@rosenfeld_analysishashratebaseddouble_2014</code>; <code>@bitcoinorg_payment_2026</code> (six confirmations, as of 23 Oct 2026).</p>" });
+            }
+          }
+        }
+        step();
+      }
+      runBtn.addEventListener("click", run);
+
+      // Second panel: someone else's coin
+      var out = api.el("p", { role: "status" });
+      var tryBtn = api.el("button", { class: "btn", type: "button", onclick: function () {
+        out.textContent = "Refused by every node, at " + shareIn.value + "% of the power. The signature does not match the key that owns the coin, and mining power cannot make it match.";
+      } }, "Send it to the nodes");
+      el.appendChild(api.el("div", { class: "panel" },
+        api.el("h3", null, "Spending a coin the attacker does not own"),
+        api.el("p", null, "The attacker offers a payment of Dev's coin ", api.coin({ role: "input", amount: "2.0 BTC", who: "Dev's" }), " to itself, signed with its own key: ", api.el("span", { class: "sig" }, "a41c9e…07b2f3")),
+        tryBtn, out));
+    } },
+    name: {
+      term: "double spend",
+      parts: "double (twice) + spend (use a coin as payment)",
+      plain: "<p>Getting the chain to keep a different payment of a coin you already paid with, so the first payment vanishes. The attacker pays, takes the goods, then publishes a longer chain without that payment.</p><p class=\"src\">Source: <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code>.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var HEIGHT = 812004, count = 1;
+      var HASH = "3f9a1c7e5b02d84a96e1f03c7b5a28d4e09c61f7a3b8d25e4c9071fa6b3de04b";
+      var table = api.el("table", { class: "explore" });
+      var stamp = api.el("p");
+      function clock() { var m = 14 * 60 + 10 + (count - 1) * 10; return ("0" + Math.floor(m / 60)).slice(-2) + ":" + ("0" + (m % 60)).slice(-2); }
+      function draw() {
+        table.innerHTML = "";
+        table.appendChild(api.el("tr", null, api.el("th", null, "Status"), api.el("td", null, count + " confirmation" + (count > 1 ? "s" : ""))));
+        table.appendChild(api.el("tr", null, api.el("th", null, "Block height"), api.el("td", null, fmt(HEIGHT))));
+        table.appendChild(api.el("tr", null, api.el("th", null, "Block hash"), api.el("td", null, api.el("span", { class: "hash" }, api.short(HASH, 4)))));
+        table.appendChild(api.el("tr", null, api.el("th", null, "Amount"), api.el("td", null, api.coin({ role: "output", amount: "0.45 BTC" }))));
+        stamp.textContent = "Read at " + clock() + " today (a made-up time).";
+      }
+      el.appendChild(api.el("p", null, "The dealer's payment on a Bitcoin explorer, as an analyst meets it (a copy made up for this lab, not a live page)."));
+      el.appendChild(table);
+      el.appendChild(stamp);
+      el.appendChild(api.el("button", { class: "btn", type: "button", onclick: function () { count++; draw(); } }, "Ten minutes later: read it again"));
+      el.appendChild(api.el("p", null, "The count rises with every block on top, and it is true only at the moment it is read. A report gives the count and the time it was read. Cite the block hash too: during a fork two blocks share a height, and the hash says which one."));
+      draw();
+    } },
+    twist: {
+      html: "<p>Now take the attacker away: its share goes to zero. The payment is back at one confirmation, because its block is the newest. A new control appears: how long a block takes to reach the other miners.</p>" +
+        "<div class=\"panel\"><h3>Network delay (made-up figures)</h3>" +
+        "<p><label for=\"delay\">Delay: </label><input type=\"range\" id=\"delay\" min=\"0\" max=\"60\" step=\"5\" value=\"10\" style=\"accent-color: var(--accent-strong)\" oninput=\"showDelay()\"> <output id=\"delay-n\">10 s</output> " +
+        "<button class=\"btn primary\" type=\"button\" onclick=\"runDelay()\">Find 200 blocks</button></p>" +
+        "<div class=\"blocks\" id=\"delay-blocks\" aria-hidden=\"true\"></div><p id=\"delay-out\" role=\"status\"></p></div>" +
+        "<p>Now and then the payment's block drops out of the chain anyway, and the payment goes back to waiting.</p>",
+      question: "Who did that?",
+      choices: [
+        "A hidden attacker.",
+        "A fault in the explorer.",
+        "Nobody: two miners found a block at nearly the same time.",
+        "The payment was cancelled."
+      ],
+      answer: 2,
+      why: "<p>Nobody did. When two miners find a block at nearly the same time, nodes keep the chain with more work. The other block goes stale, and its payments return to the mempool to be mined again. A stale block is routine, not an attack. It is also why the wait matters: at one confirmation a stale block can still take the payment out.</p><p class=\"src\">Sources: <code>@decker_informationpropagationbitcoin_2013</code>; <code>@bitcoin.orgdevelopers_p2pnetworkdeveloper_2024</code>. Confidence words: <code>@odni_icd203_2015</code>.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks whether the payment could still be reversed. Say it in one sentence, with a confidence word and the time you read the count.</p>",
+      example: "As of 14:20 today the payment had two confirmations in block 812,004 (hash 3f9a…e04b); a reversal is unlikely but possible at that depth, so I will check again before we treat it as settled (Moderate confidence that it stands: the depth is one strong line, and the attacker's power is unknown)."
+    }
+  }
+});
+</script>
+</body>
+</html>

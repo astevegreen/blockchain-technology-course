@@ -84,3 +84,4 @@ Block heights, hashes and the dealer are made up for the lab and say so.
 ## Approval
 
 - Owner: "Approve all four" (10 Nov 2026)
+- Built: 11 Nov 2026, `blockchain-course/assets/labs/confirmation-race/index.html`; opened from the slide named above. The race counts the attacker as winning once its private chain catches up (Nakamoto's convention), which draws about 0.16 at 30% and six confirmations against his 0.177.
