@@ -118,4 +118,4 @@ and the made-up truth are made up for the lab, and the lab says so.
 ## Approval
 
 - Owner: "Approve (Recommended)" (11 Nov 2026)
-- Built (11 Nov 2026). Card deviations: the twist calls the two spent members "already spent" (9 and 131 days old) and keeps the fresh one at 23 days, so "the newest" stays a wrong choice; the card's "two old ones" would have made the fresh member the newest too. The spent members use `.coin.spent` and the outputs `.coin.output`; the ring signature is shown as `.sig`. The made-up block is 3,149,700 to match the made-up date of 14 May 2024.
+- Built in 3c5041f3 (11 Nov 2026). Card deviations: the twist calls the two spent members "already spent" (9 and 131 days old) and keeps the fresh one at 23 days, so "the newest" stays a wrong choice; the card's "two old ones" would have made the fresh member the newest too. The spent members use `.coin.spent` and the outputs `.coin.output`; the ring signature is shown as `.sig`. The made-up block is 3,149,700 to match the made-up date of 14 May 2024.
