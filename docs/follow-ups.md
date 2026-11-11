@@ -38,6 +38,3 @@ slide index), which is never listed here.
 ## Notion and documents
 - `docs/analysis/2026-11-static-labs-review.md:28` still says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP
   has 12 and 01-CM has 7, and the lessons with none are 01-EF, 04-EF and 05-EF. [10 Nov 2026, grep count]
-- `blockchain-course/lessons/ethereum/08-EF-layer2s_and_bridges.qmd:592` says "most of the money crossed as ETH and
-  other coins with no issuer", but `@bitquery_bitgethack_2026`'s note says "Most of it was sold for USDC on its home
-  chain and crossed over Circle's CCTP bridge"; one of them is wrong. [10 Nov 2026, drafting the Beat the freeze card]
