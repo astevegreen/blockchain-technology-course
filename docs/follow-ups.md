@@ -65,3 +65,4 @@ slide index), which is never listed here.
 - `docs/analysis/2026-11-static-labs-review.md:28` still says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP
   has 12 and 01-CM has 7, and the lessons with none are 01-EF, 04-EF and 05-EF. [10 Nov 2026, grep count]
 - `03-CM-pos.qmd:1073` (and the source line at 1089) still links the archived `/assets/labs/pos-micro`, which has no folder; swap it for the Is it final yet? lab or drop it when day 1's labs are placed. [11 Nov 2026, reviewer on the Is it final yet? build]
+- `06-FO-mixers_and_coinjoin.qmd`, slide "Before and after the mix still leak": check in a browser that the six bullets plus the new "Who paid whom?" link still fit on one screen. [11 Nov 2026, reviewer on the Who paid whom? build]
