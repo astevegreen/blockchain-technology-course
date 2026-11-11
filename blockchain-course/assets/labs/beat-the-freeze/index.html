@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beat the freeze</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.tl, .explore { border-collapse: collapse; width: 100%; }
+.tl td, .tl th, .explore td, .explore th { padding: .25em .7em .25em 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+.tl tr.now td { font-weight: 700; }
+.addrs { display: grid; grid-template-columns: repeat(auto-fit, minmax(13em, 1fr)); gap: .6em; margin: .6em 0; }
+.card { border: 2px solid var(--rule); border-radius: 6px; padding: .5em .7em; }
+.card.lit { border-color: var(--public-key); background: var(--public-key-tint); }
+.card.froze { border-style: dashed; }
+.card .bal { margin: .3em 0; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/beat-the-freeze.md. The theft, the company, addresses A to C, the blocks, the
+   amounts and the delays are made up for this lab. The freeze rules are the real USDT and USDC rules; the Bitget
+   figures are real (as of 30 Sep 2026). The chain is simulated in the page, so it runs offline.
+   Blocks come every 12 seconds, so five a minute: block = START + 5 x minutes. */
+var START = 21449300, FREEZE_DELAY = 120, REPORT_AT = 30;
+function blk(min) { return START + 5 * min; }
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+/* The thief's moves, in minutes after the theft. */
+var MOVES = [
+  { at: 0, text: "1,000,000 USDT leaves the company's wallet for address A." },
+  { at: 5, text: "A sends 600,000 USDT to B and 400,000 USDT to C." },
+  { at: 9, text: "B swaps its 600,000 USDT for ETH." },
+  { at: 20, text: "B's ETH leaves through a cross-chain swap into BTC. C waits." }
+];
+/* USDT held at each address, at a given minute. */
+function held(addr, min) {
+  if (addr === "A") return min < 5 ? 1000000 : 0;
+  if (addr === "B") return min >= 5 && min < 9 ? 600000 : 0;
+  return min >= 5 ? 400000 : 0;
+}
+var WHERE = { A: "empty: it sent everything on at minute 5", B: "empty: its share became ETH, then BTC", C: "still holds its share" };
+
+LabShell.start({
+  id: "beat-the-freeze",
+  title: "Beat the freeze",
+  slide: { title: "Bitget: bridges moved it faster than freezes", href: "../../../lessons/ethereum/08-EF-layer2s_and_bridges.html#/bitget-bridges-moved-it-faster-than-freezes" },
+  steps: {
+    "case": { html:
+      "<p>A company's treasury wallet is drained of 1,000,000 USDT overnight. The company calls the agent 30 minutes later. " +
+      "The agent calls Tether and asks you: \"They've frozen the address. Is the money safe now?\"</p>" +
+      "<p>The company, the theft and the addresses are made up for this lab.</p>" },
+    commit: {
+      question: "1,000,000 USDT is stolen. The victim reports it 30 minutes later, naming the address the money went to. Tether freezes that address 2 hours after the report. How much is caught?",
+      choices: [
+        "All of it: the freeze stops the money.",
+        "About half: some got away.",
+        "Whatever still sat in that address when the freeze landed, which may be nothing.",
+        "None: freezes do not work on a blockchain."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var frozen = {}, shown = false, finished = false;
+      var tbody = api.el("tbody");
+      var cards = api.el("div", { class: "addrs" });
+      var out = api.el("div", { role: "status" });
+      var goBtn = api.el("button", { class: "btn primary", type: "button" }, "Let the clock run");
+      var resetBtn = api.el("button", { class: "btn", type: "button" }, "Try other addresses");
+
+      el.appendChild(api.el("p", null, "You are the issuer. The thief's moves play on a fast clock, each landing as a block (made-up figures, one block every 12 seconds). " +
+        "The report reaches you at minute " + REPORT_AT + ". Press Freeze on any address; each freeze lands " + (FREEZE_DELAY / 60) + " hours after you press it. Then let the clock run to see what each freeze caught."));
+      el.appendChild(api.el("table", { class: "tl", "aria-label": "The thief's moves" },
+        api.el("thead", null, api.el("tr", null, api.el("th", null, "Minute"), api.el("th", null, "Block"), api.el("th", null, "Move"))), tbody));
+      el.appendChild(cards);
+      el.appendChild(goBtn);
+      el.appendChild(resetBtn);
+      el.appendChild(out);
+
+      function drawTable(upto) {
+        tbody.innerHTML = "";
+        MOVES.forEach(function (m) {
+          if (upto !== null && m.at > upto) return;
+          tbody.appendChild(api.el("tr", null, api.el("td", null, String(m.at)), api.el("td", null, fmt(blk(m.at))), api.el("td", null, m.text)));
+        });
+        tbody.appendChild(api.el("tr", { class: "now" }, api.el("td", null, String(REPORT_AT)), api.el("td", null, fmt(blk(REPORT_AT))), api.el("td", null, "The victim reports the theft; you may freeze.")));
+        if (upto === null) tbody.appendChild(api.el("tr", { class: "now" }, api.el("td", null, String(REPORT_AT + FREEZE_DELAY)), api.el("td", null, fmt(blk(REPORT_AT + FREEZE_DELAY))), api.el("td", null, "Your freezes land.")));
+      }
+      function drawCards() {
+        cards.innerHTML = "";
+        ["A", "B", "C"].forEach(function (a) {
+          var lit = held(a, REPORT_AT) > 0;
+          var btn = api.el("button", { class: "btn", type: "button", disabled: shown || !!frozen[a],
+            onclick: function () { frozen[a] = true; drawCards(); } }, frozen[a] ? "Freeze pressed" : "Freeze " + a);
+          cards.appendChild(api.el("div", { class: "card" + (lit ? " lit" : "") + (frozen[a] && shown ? " froze" : "") },
+            api.el("span", { class: "addr" }, "Address " + a), api.el("div", { class: "bal" }, "Holds USDT at minute " + REPORT_AT + ": " + fmt(held(a, REPORT_AT))), btn));
+        });
+      }
+      function result() {
+        var landing = REPORT_AT + FREEZE_DELAY, total = 0;
+        var rows = ["A", "B", "C"].filter(function (a) { return frozen[a]; }).map(function (a) {
+          var bal = held(a, landing); total += bal;
+          return api.el("tr", null, api.el("td", null, "Address " + a), api.el("td", null, "block " + fmt(blk(landing))),
+            api.el("td", null, api.coin({ role: "output", amount: fmt(bal) + " USDT" })), api.el("td", null, WHERE[a]));
+        });
+        out.innerHTML = "";
+        out.appendChild(api.el("p", null, "Your freezes landed at minute " + landing + ", block " + fmt(blk(landing)) + ". The balance of each address in that block:"));
+        var body = api.el("tbody");
+        rows.forEach(function (r) { body.appendChild(r); });
+        out.appendChild(api.el("table", { class: "tl" }, body));
+        out.appendChild(api.el("p", null, "Caught: " + fmt(total) + " USDT of 1,000,000. The thief's last move had landed 10 minutes before the report. " +
+          (total === 0 ? "Try other addresses: a freeze only catches what still sits in the address when it lands." : "B's share, now ETH and then BTC, can never be caught by a USDT freeze.")));
+        if (!finished) {
+          finished = true;
+          api.finish({ choice: 2, note: "<p>A freeze marks one address in one token's contract, so that address can no longer send that token. It does not follow the money. Funds are freezable only while they sit in that token at a listed address. A freeze on A, the address in the prediction, catches nothing, because A was already empty. Aimed at C, a freeze catches 400,000. B's share left as ETH, which has no issuer.</p><p class=\"src\">Sources: <code>@tether_tethertokensource_2017</code> (<code>addBlackList</code>; <code>transfer</code> refuses a listed sender); <code>@circle_blacklistable_2026</code>. The theft, addresses and blocks are made up.</p>" });
+        }
+      }
+      goBtn.addEventListener("click", function () {
+        if (!Object.keys(frozen).length) { out.textContent = "Press Freeze on at least one address first."; return; }
+        shown = true; goBtn.disabled = true; drawCards(); drawTable(null); result();
+      });
+      resetBtn.addEventListener("click", function () { frozen = {}; shown = false; goBtn.disabled = false; out.innerHTML = ""; drawCards(); });
+      drawTable(REPORT_AT);
+      drawCards();
+    } },
+    name: {
+      term: "chain hopping",
+      parts: "chain (one blockchain's ledger) + hopping (moving the funds across to another)",
+      plain: "<p>Moving stolen funds from one chain to another, here by a cross-chain swap, so that the trace and any freeze must start again on a new ledger, where a stablecoin issuer may have no reach.</p><p class=\"src\">Source: <code>@mitre_aadapt_2026</code> (technique ADT3005, read 1 Nov 2026).</p>"
+    },
+    explorer: { render: function (el, api) {
+      var landing = REPORT_AT + FREEZE_DELAY;
+      function row(a, b) { return api.el("tr", null, api.el("th", null, a), api.el("td", null, b)); }
+      var A = "0x7a3f91c5e20b84d6a1f09c3e5b72d8a64f10e9c3";
+      el.appendChild(api.el("p", null, "The same freeze as the analyst meets it, in an Otterscan-style layout (a copy made up for this lab, not a live page)."));
+      el.appendChild(api.el("h3", null, "USDT contract, Logs tab"));
+      el.appendChild(api.el("table", { class: "explore" }, api.el("tbody", null,
+        row("Event", api.el("code", null, "AddedBlackList")),
+        row("Address", api.el("span", { class: "addr" }, api.short(A, 6))),
+        row("Block", fmt(blk(landing))))));
+      el.appendChild(api.el("h3", null, "Address A, token transfers"));
+      el.appendChild(api.el("table", { class: "explore" }, api.el("tbody", null,
+        row("Last outgoing Transfer", "block " + fmt(blk(5)) + ": 600,000 USDT to B, 400,000 USDT to C"),
+        row("Balance since", "0 USDT"))));
+      el.appendChild(api.el("p", null, "Compare the two blocks: the freeze is in block " + fmt(blk(landing)) + ", A's last outgoing transfer in block " + fmt(blk(5)) + ". The freeze is real, and it caught nothing."));
+      el.appendChild(api.el("p", null, "The real case on the opening slide: in the Bitget hack, about $339,000 of about $387 million was frozen (as of 30 Sep 2026). Source: @bitquery_bitgethack_2026."));
+    } },
+    twist: {
+      html: "<p>Run it again with one fact changed. Before the freeze lands, at minute 60, the thief swaps C's 400,000 USDT for USDC, on the same chain, not for ETH. A and B are as before.</p>",
+      question: "Is C's money now out of reach?",
+      choices: [
+        "Yes: Tether's freeze cannot touch USDC.",
+        "Yes: a swapped coin is gone.",
+        "No: ask Circle, whose contract can list that address too.",
+        "No: Tether's freeze follows the swap."
+      ],
+      answer: 2,
+      why: "<p>USDC has its own blacklist, kept by Circle's blacklister role, and it blocks a listed address from sending or receiving. Tether's freeze cannot touch USDC, but Circle's can. Swapping between stablecoins moves the question to another issuer; it does not close it.</p><p class=\"src\">Sources: <code>@circle_fiattokenv1_2026</code>; <code>@circle_blacklistable_2026</code>; <code>@tether_tethertokensource_2017</code>.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks whether any of the stolen money can still be stopped. Say it in one sentence, with a confidence word.</p>",
+      example: "As of block 21,450,050, address C holds 400,000 USDC, received in block 21,449,600; Circle can block it. Tether froze address A in block 21,450,050, after A had sent its whole balance on. The other 600,000 left as ETH through a cross-chain swap into Bitcoin, which no issuer can freeze (Low confidence for the Bitcoin side: the swap's payout matches by amount and time only, and it is not yet traced)."
+    }
+  }
+});
+</script>
+</body>
+</html>
