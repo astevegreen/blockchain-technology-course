@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Echo hunt</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.7rem; margin: 0.6rem 0; }
+  .board .srccard label { display: grid; gap: 0.15em; font-size: 0.85em; }
+  .board select, .board input[type="text"] { width: 100%; font: inherit; padding: 0.25em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  .stacks { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.7rem; margin: 0.6rem 0; }
+  .stacks .srccard { font-size: 0.8rem; }
+  .count { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+  .src { color: var(--ink-soft); font-size: 0.85rem; }
+  table.q { width: 100%; border-collapse: collapse; background: var(--panel); margin: 0.6rem 0; }
+  table.q th, table.q td { padding: 0.4em 0.7em; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  table.q th { font-size: 0.85rem; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/echo-hunt.md. Everything here is invented for the game (T-echo, Desk X, the vendors,
+   the story, the dates, the flows) except the explorer step, which shows the real day 9 address. This page holds no
+   key: it records the team's stacks and counts them. Each card's origin and the accepted reasons are in the
+   instructor's key, which students never receive. */
+(function () {
+  "use strict";
+  var BOARD_KEY = "lab:echo-hunt:board";
+
+  var CARDS = [
+    { id: 1, title: "Treasury release", date: "3 Mar",
+      says: "Designates Desk X, an OTC desk, and lists T-echo as one of its addresses.", basis: "the government's own decision" },
+    { id: 2, title: "Open label set", date: "added 3 Mar",
+      says: "T-echo: Desk X (sanctioned).", basis: "OFAC's SDN list" },
+    { id: 3, title: "News story", date: "4 Mar",
+      says: "Treasury sanctioned Desk X and listed T-echo among its addresses.", basis: "quotes the Treasury release" },
+    { id: 4, title: "Vendor A tag", date: "first seen 4 Mar",
+      says: "Tag: \"Desk X OTC\".", basis: "not stated" },
+    { id: 5, title: "Vendor B tag", date: "6 Mar",
+      says: "Tag: \"Desk X OTC\".", basis: "source field: \"Vendor A\"" },
+    { id: 6, title: "Our flow summary", date: "read today",
+      says: "About 300 small USDT deposits from many senders; nine large transfers out to two addresses; some inflows are regular sweeps.",
+      basis: "the address's own transactions" },
+    { id: 7, title: "Vendor C tag", date: "5 Mar",
+      says: "Tag: \"exchange hot wallet\".", basis: "receives sweeps from deposit addresses" }
+  ];
+  var DESK_X = [1, 2, 3, 4, 5]; // the five cards that name T-echo as Desk X's address
+
+  /** Where a card's claim came from: follow the team's "came from" picks to the end. Pure, so it can be tested. */
+  function rootOf(place, id) {
+    var seen = {};
+    var at = id;
+    while (true) {
+      var p = place[at];
+      if (!p) return "unplaced";
+      if (p === "orig") return "orig:" + at;
+      if (p === "chain" || p === "unknown") return p;
+      var to = Number(p.slice(5));
+      if (seen[at]) return "cycle";
+      seen[at] = true;
+      at = to;
+    }
+  }
+
+  /** The team's stacks: { rootKey: [card ids] }, in card order. */
+  function stacksOf(place) {
+    var out = {};
+    CARDS.forEach(function (c) {
+      var r = rootOf(place, c.id);
+      (out[r] = out[r] || []).push(c.id);
+    });
+    return out;
+  }
+
+  function byId(id) { return CARDS.filter(function (c) { return c.id === id; })[0]; }
+
+  function loadBoard() {
+    try { var b = JSON.parse(window.localStorage.getItem(BOARD_KEY)); if (b && b.place) return b; } catch (e) { /* none */ }
+    return { place: {}, reason: {} };
+  }
+  function saveBoard(b) { try { window.localStorage.setItem(BOARD_KEY, JSON.stringify(b)); } catch (e) { /* private window */ } }
+
+  function cardEl(api, c, extra) {
+    var el = api.el;
+    return el("div", Object.assign({ class: "srccard" }, extra || {}),
+      el("div", { class: "head" }, el("span", null, c.id + ". " + c.title), el("span", null, c.date)),
+      el("p", { class: "says" }, "Says: " + c.says),
+      el("p", { class: "meta" }, "Basis: " + c.basis));
+  }
+
+  function render(box, api) {
+    var el = api.el;
+    var board = loadBoard();
+    var drag = null;
+    var focusId = null;
+
+    function allPlaced() {
+      return CARDS.every(function (c) { return board.place[c.id] && (board.reason[c.id] || "").trim() !== ""; });
+    }
+    function label(key, ownId) {
+      if (key === "orig") return "Nothing earlier: an original record";
+      if (key === "chain") return "The chain: the address's own transactions";
+      if (key === "unknown") return "Basis unknown";
+      if (key === "cycle") return "A loop: no origin";
+      if (key === "unplaced") return "Not placed yet";
+      return "Card " + key.slice(5);
+    }
+    function stackTitle(key) {
+      if (key.indexOf("orig:") === 0) return "Origin: card " + key.slice(5) + ", " + byId(Number(key.slice(5))).title;
+      return { chain: "Origin: the chain", unknown: "Basis unknown", cycle: "A loop: no origin", unplaced: "Not placed yet" }[key];
+    }
+
+    function draw() {
+      box.innerHTML = "";
+      box.appendChild(el("p", null, "Seven cards about one invented Tron address, ", el("span", { class: "addr" }, "T-echo"),
+        ". All of it is made up for the game. Say where each card's claim ", el("strong", null, "came from"),
+        ": drag it onto the card it came from, or pick it below. A card can also come from the chain, from nothing earlier (an original record), or from a basis you cannot find. Give a reason for each."));
+
+      var grid = el("div", { class: "board", "aria-label": "The seven source cards" });
+      CARDS.forEach(function (c) {
+        var sel = el("select", { id: "from-" + c.id, "aria-label": "Card " + c.id + " came from",
+          onchange: function () {
+            if (sel.value) board.place[c.id] = sel.value; else delete board.place[c.id];
+            saveBoard(board); focusId = "from-" + c.id; draw();
+          } });
+        sel.appendChild(el("option", { value: "" }, "Pick…"));
+        CARDS.forEach(function (o) {
+          if (o.id !== c.id) sel.appendChild(el("option", { value: "card:" + o.id }, "Card " + o.id + ": " + o.title));
+        });
+        ["orig", "chain", "unknown"].forEach(function (k) { sel.appendChild(el("option", { value: k }, label(k))); });
+        sel.value = board.place[c.id] || "";
+        var reason = el("input", { type: "text", id: "why-" + c.id, value: board.reason[c.id] || "", maxlength: "200",
+          placeholder: "Because…", "aria-label": "Why card " + c.id + " came from there",
+          oninput: function () { board.reason[c.id] = reason.value; saveBoard(board); gate(); } });
+        var card = cardEl(api, c, { draggable: "true",
+          ondragstart: function (e) { drag = c.id; if (e.dataTransfer) e.dataTransfer.setData("text/plain", String(c.id)); },
+          ondragover: function (e) { if (drag && drag !== c.id) { e.preventDefault(); card.classList.add("over"); } },
+          ondragleave: function () { card.classList.remove("over"); },
+          ondrop: function (e) {
+            e.preventDefault();
+            if (drag && drag !== c.id) { board.place[drag] = "card:" + c.id; saveBoard(board); focusId = "from-" + drag; }
+            drag = null; draw();
+          } });
+        card.appendChild(el("label", null, "Came from", sel));
+        card.appendChild(el("label", null, "Reason", reason));
+        grid.appendChild(card);
+      });
+      box.appendChild(grid);
+
+      var stacks = stacksOf(board.place);
+      var keys = Object.keys(stacks).filter(function (k) { return k !== "unplaced"; });
+      var wrap = el("div", { class: "stacks", "aria-label": "Your stacks", "aria-live": "polite" });
+      keys.forEach(function (k) {
+        var st = el("div", { class: "stack" }, el("h3", null, stackTitle(k)));
+        stacks[k].forEach(function (id) { st.appendChild(cardEl(api, byId(id))); });
+        wrap.appendChild(st);
+      });
+      box.appendChild(el("h3", null, "Your stacks"));
+      box.appendChild(keys.length ? wrap : el("p", { class: "src" }, "Nothing placed yet. A card sits on the card it came from, so cards that share an origin land in one stack."));
+
+      var known = keys.filter(function (k) { return k.indexOf("orig:") === 0 || k === "chain"; }).length;
+      var unk = stacks.unknown ? stacks.unknown.length : 0;
+      var cnt = el("div", { class: "count", "aria-live": "polite" });
+      cnt.textContent = known + " known origin" + (known === 1 ? "" : "s") + (unk ? "; " + unk + " card" + (unk === 1 ? "" : "s") + " with basis unknown" : "") + ".";
+      box.appendChild(cnt);
+
+      var done = el("button", { class: "btn primary", type: "button", id: "stacked", onclick: finish }, "These are our stacks");
+      box.appendChild(done);
+      gate();
+      if (focusId) { var f = document.getElementById(focusId); focusId = null; if (f) f.focus(); }
+    }
+
+    function gate() {
+      var b = document.getElementById("stacked");
+      if (b) b.disabled = !allPlaced() || Object.keys(stacksOf(board.place)).indexOf("cycle") >= 0;
+    }
+
+    function finish() {
+      var stacks = stacksOf(board.place);
+      // How many separate stacks the five cards that name Desk X fall into; the unknown-basis cards share one bin.
+      var seen = {};
+      DESK_X.forEach(function (id) { seen[rootOf(board.place, id)] = true; });
+      var n = Object.keys(seen).length;
+      // One stack is ambiguous: it fits (d), and it fits Vendor A traced to the release, which the key also accepts.
+      // So the page gives no verdict then; the instructor asks for the reasons.
+      var choice = n === 5 ? 0 : n === 4 ? 1 : n === 1 ? null : 2;
+      var known = Object.keys(stacks).filter(function (k) { return k.indexOf("orig:") === 0 || k === "chain"; }).length;
+      var unk = stacks.unknown ? stacks.unknown.length : 0;
+      var note = "<p>Five cards name T-echo as Desk X's address. On your stacks they fall into <strong>" + n + "</strong> " +
+        (n === 1 ? "stack" : "stacks") + ", and all seven cards make " + known + " known " + (known === 1 ? "origin" : "origins") +
+        (unk ? " and " + unk + " card" + (unk === 1 ? "" : "s") + " whose basis you could not find" : "") + ".</p>" +
+        "<p>Check each stack against its reasons. A copy carries its origin's claim and adds no evidence, so the lines you can count are the origins, not the cards. Cards with no findable basis are, at most, one unverified label between them.</p>" +
+        "<p>Score yourselves from the instructor's sheet: each card traced with its reason, the lines you counted with why, a typology with one indicator for it, one against and the alternative, and a confidence word with its reason.</p>";
+      api.finish({ choice: choice, note: note });
+    }
+    draw();
+  }
+
+  function cardHtml(c) {
+    return "<div class=\"srccard\"><div class=\"head\"><span>" + c.id + ". " + c.title + "</span><span>" + c.date + "</span></div>" +
+      "<p class=\"says\">Says: " + c.says + "</p><p class=\"meta\">Basis: " + c.basis + "</p></div>";
+  }
+
+  LabShell.start({
+    id: "echo-hunt",
+    title: "Echo hunt",
+    slide: { title: "Practice: weigh four sources on one address",
+      href: "../../../lessons/forensics/14-FO-fusing_sources.html#/practice-weigh-four-sources-on-one-address" },
+    steps: {
+      "case": { html: "<p>A colleague pastes seven tabs into the case file about one Tron address, <span class=\"addr\">T-echo</span> (invented for this game), and writes:</p>" +
+        "<p><em>“Five sources say it's Desk X. That's High, surely. Can we send it?”</em></p>" +
+        "<p>Five of the seven tabs say T-echo is an address of Desk X, an OTC desk.</p>" },
+      commit: {
+        question: "Five of the seven cards name T-echo as Desk X's address. How many independent lines of evidence do they make, and how do you tell?",
+        choices: [
+          "Five: five sources agree.",
+          "Four: the news story only reports.",
+          "One per origin: trace each card to where its claim came from.",
+          "One: only the government's word counts."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "Echo", parts: "echo: a sound that is only the first sound coming back",
+        plain: "<p>A source that agrees with another only because it copied it, so the two are one line. <strong>Count the origins, not the labels.</strong></p>" +
+          "<p>Labels get copied. An open label set can be built from OFAC's list; a vendor's clustering can draw on “data leaks, court documents, and data partnerships”; a news story quotes the release. A copy carries its origin's errors and adds no evidence, so counting copies turns one source into a false High. ICD 203 asks analysts to describe each source's quality and access, which means knowing where each claim came from.</p>" +
+          "<p class=\"src\">Sources: <code>@odni_icd203_2015</code>; <code>@b10c_ofacaddresses_2026</code> (as of 1 Nov 2026); <code>@sterlingov_cadc_2026</code> (as of 31 Oct 2026).</p>" },
+      explorer: { render: function (box, api) {
+        var el = api.el;
+        box.appendChild(el("p", null, "Day 9's query page, query 6, on the address you traced there: ",
+          el("span", { class: "addr" }, "TDxZ1X…JyGBX"), ". Two records, one on the chain and one off it, on the same day."));
+        var t = el("table", { class: "q" },
+          el("thead", null, el("tr", null, el("th", null, "Where"), el("th", null, "What it records"), el("th", null, "When"))),
+          el("tbody", null,
+            el("tr", null, el("td", null, "The chain: USDT's contract on Tron"), el("td", null, "AddedBlackList event for the address"), el("td", null, "16:14 UTC, 30 Sep 2026")),
+            el("tr", null, el("td", null, "What a source says: OFAC"), el("td", null, "The address is listed"), el("td", null, "30 Sep 2026"))));
+        box.appendChild(t);
+        box.appendChild(el("p", null, "The freeze is a fact. But it may be a response to the listing itself, so an echo can cross kinds, not only run between vendors."));
+        box.appendChild(el("p", { class: "src" }, "Sources: ", el("code", null, "@tether_usdttroncontract_2026"), " (as of 31 Oct 2026); ",
+          el("code", null, "@ofac_trendearagua_2026"), " (read 1 Nov 2026); the day 9 snapshot, java-tron 4.8.2.4 (read 1 Nov 2026). The address's flows in the game are invented."));
+      } },
+      twist: {
+        html: "<p>An eighth card arrives:</p>" + cardHtml({ id: 8, title: "The freeze", date: "3 Mar, two hours after the release",
+          says: "USDT's contract blacklisted T-echo; Tether says it acted in coordination with OFAC.", basis: "an on-chain record, and Tether's statement" }) +
+          "<p class=\"src\">Tether freezes in coordination with OFAC: <code>@tether_freeze344m_2026</code>.</p>",
+        question: "Does the freeze move the confidence word?",
+        choices: [
+          "Yes, to High: an on-chain record now agrees.",
+          "Yes, because issuers check their own customers.",
+          "No: the freeze is a fact, but its reason is what the issuer says, and here that is the release.",
+          "No: freezes are never evidence."
+        ],
+        answer: 2,
+        why: "<p>The freeze echoes the release: the issuer says it acted with OFAC, so its reason is the listing. A freeze for a reason of its own, say the issuer's own fraud reports, would be a second origin.</p>"
+      },
+      tell: {
+        prompt: "<p>Tell the agent what T-echo is, and how sure we are.</p>",
+        example: "Treasury designated Desk X, an OTC desk, on 3 Mar and listed T-echo as its address. Our eight sources come down to two origins: that release, which the label set, the news story, the freeze and Vendors A and B repeat or may repeat, and the address's own flows. The flows fit an OTC desk: about 300 small USDT deposits from many senders, and nine large transfers out to two addresses. Some inflows are regular sweeps, which also fits an exchange's hot wallet, as Vendor C reads it. We assess with Moderate confidence that T-echo is an OTC desk's address; an exchange's records for the two addresses it pays would raise or lower that."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
