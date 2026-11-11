@@ -117,3 +117,4 @@ up for the lab, and the lab says so.
 ## Approval
 
 - Owner: "Approve, Moderate (Recommended)" (11 Nov 2026): the twist's change link carries Moderate
+- Built in 6adb401d (11 Nov 2026).
