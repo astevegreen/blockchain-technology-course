@@ -107,3 +107,4 @@ amounts are worked from the constant product below.
 ## Approval
 
 - Owner: "Find the sandwich,What is it really worth,Beat the freeze,The vault that paid twice" (11 Nov 2026)
+- Built: 11 Nov 2026, `blockchain-course/assets/labs/what-is-it-really-worth/index.html`; opened from the slide named above.

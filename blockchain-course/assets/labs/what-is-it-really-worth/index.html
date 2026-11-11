@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What is it really worth?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.ctl { display: grid; grid-template-columns: 12em 1fr 9em; gap: .5em; align-items: center; margin: .4em 0; }
+.ctl input[type=range] { accent-color: var(--accent-strong); width: 100%; }
+.bar { height: 1.6em; border: 2px solid var(--ink); border-radius: 4px; background: var(--panel); margin: .3em 0; }
+.bar .fill { height: 100%; width: 100%; background: var(--output); }
+.bar .fill.quote { background: var(--input); }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.lots td, .lots th { padding: .1em .7em .1em 0; text-align: right; font-variant-numeric: tabular-nums; }
+.lots th:first-child, .lots td:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/what-is-it-really-worth.md. TKN, the pool, the subject, the lawyer and the
+   addresses are made up for this lab. Every sale is worked here from the constant product x*y = k with the
+   0.3% fee taken from the amount in (Uniswap v2), so the page runs offline. */
+var FEE = 0.003;
+var HOLDING = 5000000, POOL_TKN = 50000, POOL_USDC = 100000, PRICE = 2;
+var LOTS = 10, LOT = HOLDING / LOTS;
+
+/** USDC paid for selling `amt` TKN into a pool holding (x TKN, y USDC). */
+function sale(x, y, amt) { var inn = amt * (1 - FEE); return y * inn / (x + inn); }
+function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function usd(n) { return "$" + fmt(n); }
+
+LabShell.start({
+  id: "what-is-it-really-worth",
+  title: "What is it really worth?",
+  slide: { title: "Quoted value is not what can be sold", href: "../../../lessons/ethereum/07-EF-liquidity_and_exits.html#/quoted-value-is-not-what-can-be-sold" },
+  steps: {
+    "case": { html:
+      "<p>An agent has a screenshot of a subject's wallet: \"Portfolio: $10,000,000\", all of it in a token called TKN. " +
+      "The agent plans to write that the subject holds ten million dollars of proceeds and asks: \"That's what they have, right?\"</p>" +
+      "<p>The subject, TKN and the pool are made up for this lab.</p>" },
+    commit: {
+      question: "The subject's wallet shows 5,000,000 TKN, \"value $10,000,000\" at 2.00 USDC each. The only market for TKN is one pool holding 50,000 TKN and 100,000 USDC. If the subject sold it all there today, roughly what would they get?",
+      choices: [
+        "About $10,000,000.",
+        "About $9,970,000: the quote less the 0.3% fee.",
+        "About $5,000,000.",
+        "Under $100,000."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var x = POOL_TKN, y = POOL_USDC, sold = 0, got = 0, finished = false;
+      var guess = api.el("input", { type: "number", min: 0, step: 1, id: "guess", "aria-label": "Your guess in USDC" });
+      var sellBtn = api.el("button", { class: "btn primary", type: "button" }, "Sell lot 1");
+      var priceOut = api.el("p", { role: "status" }, "Pool price: 2.00 USDC per TKN. Pool holds " + fmt(y) + " USDC.");
+      var usdcFill = api.el("div", { class: "fill" });
+      var usdcBar = api.el("div", { class: "bar", role: "img", "aria-label": "USDC left in the pool" }, usdcFill);
+      var totalOut = api.el("p", { role: "status" }, "Quoted value of the holding: $10,000,000. Received so far: $0.");
+      var rows = api.el("tbody");
+      var table = api.el("table", { class: "lots" },
+        api.el("thead", null, api.el("tr", null, api.el("th", null, "Lot"), api.el("th", null, "Quoted"), api.el("th", null, "Your guess"), api.el("th", null, "Brought"), api.el("th", null, "Pool price"))), rows);
+
+      el.appendChild(api.el("p", null, "Sell the holding into the pool in ten lots of 500,000 TKN. Each lot is quoted at $1,000,000. Before each press, type what you think the lot will bring in USDC. The pool pays each sale out of its USDC at the price the constant product sets, after the 0.3% fee."));
+      el.appendChild(api.el("p", null, "Selling: ", api.coin({ role: "input", amount: fmt(LOT) + " TKN" }), " into pool ", api.el("span", { class: "addr" }, "0x9f01…7c"), " (fee ", api.coin({ role: "fee", amount: "0.3%" }), ")"));
+      el.appendChild(api.el("div", { class: "ctl" }, api.el("label", { for: "guess" }, "Your guess for this lot"), guess, api.el("span", null, "USDC")));
+      el.appendChild(sellBtn);
+      el.appendChild(priceOut);
+      el.appendChild(api.el("div", null, "USDC left in the pool"));
+      el.appendChild(usdcBar);
+      el.appendChild(totalOut);
+      el.appendChild(table);
+
+      sellBtn.addEventListener("click", function () {
+        if (sold >= LOTS) return;
+        var g = guess.value === "" ? null : Number(guess.value);
+        if (g === null || isNaN(g)) { api.say("Type a guess first."); return; }
+        var out = sale(x, y, LOT);
+        x += LOT; // the whole lot, fee included, joins the pool's TKN
+        y -= out; sold++; got += out;
+        var p = y / x;
+        rows.appendChild(api.el("tr", null,
+          api.el("td", null, String(sold)), api.el("td", null, "$1,000,000"),
+          api.el("td", null, usd(g)), api.el("td", null, api.coin({ role: "output", amount: usd(out) })),
+          api.el("td", null, (p < 0.1 ? p.toPrecision(2) : p.toFixed(2)))));
+        usdcFill.style.width = (y / POOL_USDC * 100) + "%";
+        priceOut.textContent = "Pool price: " + (p < 0.1 ? p.toPrecision(2) : p.toFixed(2)) + " USDC per TKN. Pool holds " + fmt(y) + " USDC.";
+        totalOut.textContent = "Quoted value of the holding: $10,000,000. Received so far: " + usd(got) + " from " + fmt(sold * LOT) + " TKN.";
+        guess.value = "";
+        if (sold < LOTS) { sellBtn.textContent = "Sell lot " + (sold + 1); guess.focus(); return; }
+        sellBtn.disabled = true; sellBtn.textContent = "All ten lots sold";
+        totalOut.textContent += " The pool still holds " + fmt(y) + " USDC: a sale can never take out more than the pool holds.";
+        if (!finished) {
+          finished = true;
+          api.finish({ choice: 3, note: "<p>The whole holding brought about " + usd(got) + ", under $100,000, against a quote of $10,000,000. The first lot brought $90,884, the second $4,334, the tenth $109. A pool is not a queue of buyers waiting at the quoted price: it pays each sale out of its other reserve, and every unit sold lowers the price for the next. Now move the pool's depth below.</p><p class=\"src\">Sources: <code>@adams_uniswapv2core_2020</code> (x·y = k, 0.3% fee); <code>@uniswap_howuniswapworks_2026</code> (price impact).</p>" });
+        }
+      });
+
+      // Second panel: the same sale into deeper pools at the same 2.00 price.
+      var depth = api.el("input", { type: "range", min: 0, max: 3, step: 1, value: 0, id: "depth" });
+      var depthOut = api.el("output", { for: "depth" }, usd(100000) + " USDC");
+      var res = api.el("p", { role: "status" });
+      var qFill = api.el("div", { class: "fill quote" });
+      var gFill = api.el("div", { class: "fill" });
+      var DEPTHS = [100000, 1000000, 10000000, 100000000];
+      function showDepth() {
+        var d = DEPTHS[Number(depth.value)], t = d / PRICE;
+        var out = sale(t, d, HOLDING), share = out / (HOLDING * PRICE);
+        depthOut.textContent = usd(d) + " USDC";
+        gFill.style.width = (share * 100) + "%";
+        res.textContent = "Selling all 5,000,000 TKN at once into a pool with " + usd(d) + " USDC (price still 2.00) brings " + usd(out) + ": " + Math.round(share * 100) + "% of the $10,000,000 quote.";
+      }
+      depth.addEventListener("input", showDepth);
+      el.appendChild(api.el("div", { class: "panel" },
+        api.el("h3", null, "The same holding, a deeper pool"),
+        api.el("div", { class: "ctl" }, api.el("label", { for: "depth" }, "Pool's USDC"), depth, depthOut),
+        api.el("div", null, "The $10,000,000 quote"), api.el("div", { class: "bar" }, qFill),
+        api.el("div", null, "What the sale brings"), api.el("div", { class: "bar", role: "img", "aria-label": "Share of the quote the sale brings" }, gFill),
+        res));
+      showDepth();
+
+      // Third panel: the reserves under the bar.
+      el.appendChild(api.el("div", { class: "panel" },
+        api.el("h3", null, "The reserves under the bar"),
+        api.el("p", null, "The pool's ", api.el("code", null, "getReserves"), " returns ", api.el("code", null, "reserve0"), " (TKN) and ", api.el("code", null, "reserve1"), " (USDC), the same numbers its ", api.el("code", null, "Sync"), " log records after each swap. Before any of your sales: ",
+          api.el("code", null, "reserve0 = " + fmt(POOL_TKN) + " TKN"), ", ", api.el("code", null, "reserve1 = " + fmt(POOL_USDC) + " USDC"), ". The price is reserve1 ÷ reserve0 = 2.00.")));
+    } },
+    name: {
+      term: "depth",
+      parts: "how deep a pool is: what it holds to pay a seller out of",
+      plain: "<p>What a pool holds on the side the seller is paid from, here 100,000 USDC. It is the most any sale there can bring, and the measure of a holding: sold into a pool as deep as its quoted value, a holding brings about half the quote.</p><p class=\"src\">Source: <code>@adams_uniswapv2core_2020</code>.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var table = api.el("table", { class: "explore" });
+      function row(k, v) { table.appendChild(api.el("tr", null, api.el("th", null, k), api.el("td", null, v))); }
+      row("Pool contract", api.el("span", { class: "addr" }, "0x9f01…7c"));
+      row("Latest log", api.el("code", null, "Sync(uint112 reserve0, uint112 reserve1)"));
+      row("reserve0", api.el("code", null, "50000000000000000000000"));
+      row("reserve1", api.el("code", null, "100000000000"));
+      row("Subject 0x4b7e…a2", api.el("code", null, "TKN balance 5000000000000000000000000"));
+      el.appendChild(api.el("p", null, "The same pool in Otterscan, as the afternoon lab meets it (a copy made up for this lab, not a live page). Values are raw units."));
+      el.appendChild(table);
+      el.appendChild(api.el("p", null, "TKN has 18 decimals and USDC has 6. Divide each raw figure by that power of ten: reserve0 is 50,000 TKN, reserve1 is 100,000 USDC, and the subject holds 5,000,000 TKN."));
+      el.appendChild(api.el("p", null, "The $10,000,000 is on no block. A wallet or a price site multiplied the units by the last price. The analyst reports the units, the pool and its depth."));
+    } },
+    twist: {
+      html: "<p>The subject's lawyer says the subject sold 1,000 TKN in this pool last week for $1,955, \"so the price is real and the holding is worth ten million.\" (The lawyer and the sale are made up for this lab.)</p>",
+      question: "Does that sale show it?",
+      choices: [
+        "Yes: a real sale at about 2 USDC.",
+        "Yes, less the fee.",
+        "No: a small sale tests the price, not the depth.",
+        "Cannot tell without more sales."
+      ],
+      answer: 2,
+      why: "<p>1,000 TKN is 2% of the pool's TKN and came within 3% of its quote. The same pool still pays about $99,000 for the whole 5,000,000. A small sale shows the price at the edge; only the pool's depth against the holding shows what the holding could bring.</p><p class=\"src\">Sources: <code>@adams_uniswapv2core_2020</code>; <code>@uniswap_v2pair_2020</code>. Confidence words: <code>@odni_icd203_2015</code>.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks what the subject's TKN is worth. Say it in two or three sentences, with the units, the pool, its depth and a confidence word.</p>",
+      example: "The subject holds 5,000,000 TKN, quoted at $10,000,000 (2.00 USDC each) in pool 0x9f01…7c, which holds 100,000 USDC. Selling the holding there would bring about $99,000 and never more than 100,000 USDC (<span class=\"conf\" data-level=\"high\">High</span> confidence: worked from the reserves in the pool's latest Sync log). We found no other market for TKN; a listing elsewhere would raise the figure."
+    }
+  }
+});
+</script>
+</body>
+</html>
