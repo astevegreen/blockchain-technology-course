@@ -27,8 +27,8 @@ The router also adds the slash to a page folder typed without one, since the gat
 
 ## The chain
 
-Blocks 1-28 are frozen in `chain/blocks.hex`. The story, hop by hop (T1 to T7), is in the docstring of
-`quizes/build-steps.py`; it sits in `quizes/` because it names the clue design behind every answer. `quizes/facts.json`
+Blocks 1-28 are frozen in `chain/blocks.hex`. The story, hop by hop (T1 to T7, and the decoy trail Q1 to Q3 that
+feeds the same service), is in the docstring of `quizes/build-steps.py`; it sits in `quizes/` because it names the clue design behind every answer. `quizes/facts.json`
 holds every address, amount and block the worksheet, the instructor answers and the tests use.
 
 `chain/build-chain.sh` rebuilds all of it with Docker only: it mines the chain in a throwaway container, writes

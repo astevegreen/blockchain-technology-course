@@ -12,11 +12,19 @@ two look-alike outputs of which only the smaller continues (the larger sits unsp
 D is a one-time deposit address of a service: T6 sweeps it with eleven other deposits into the service's hot
 wallet H, and T7 pays thirteen customers in one batch. Nothing here is a CoinJoin (day 7).
 
+The decoy trail (invented; docs/lab-cards/bitcoin-trace-decoys.md): a second wallet with the thief's habits. The
+faucet pays it one 2.45 BTC coin Q0 (qf, in victim 2's block). Q1, Q2, Q3 are three peel hops with one input each,
+round peels and P2WPKH change: Q1 and Q2 peel round amounts to Taproot addresses (like T2 and T3, in their blocks),
+and Q3 peels 0.05 BTC to E, another of the service's deposit addresses (like T5's D, in the deposits' block). T6
+sweeps E beside D. E carries no ransom money: its walk back reaches Q0, which never touched R1 or R2, and Q3's one
+input holds more than 1 BTC when the ransom trail held about 0.317 BTC after T4 (value conservation).
+
 Which clue separates which outputs, hop by hop (the instructor answers and the worksheet depend on this):
   T1  type (change matches the inputs, X0 is P2SH) and amount (X0 is round)         -> two clues
   T2, T3  type (the peel is Taproot) and amount (round)                             -> two clues
   T4  nothing: both outputs are fresh, P2WPKH and un-round                          -> undetermined
   T5  amount only (D is round; both outputs are P2WPKH)                             -> one clue
+  Q1, Q2  as T2, T3; Q3 as T5 (E is round; both outputs are P2WPKH)                 -> the thief's habits
 """
 import json
 import os
@@ -91,7 +99,7 @@ def size_of(address):
     return next(v for k, v in SIZES.items() if address.startswith(k))
 
 
-def spend(name, wallet, ins, outs, rate):
+def spend(name, wallet, ins, outs, rate, confirm=True):
     """Spend whole outputs `ins` [(txid, address)] into `outs` [(role, address, sats | None)].
     The one None gets what is left after the fee. Outputs keep the order given."""
     cin, total = [], 0
@@ -113,7 +121,8 @@ def spend(name, wallet, ins, outs, rate):
     ORDER.append(name)
     for role, a, _ in outs:
         ADDR[role] = a
-    mine()
+    if confirm:
+        mine()
 
 
 # ---- the chain -------------------------------------------------------------------------------------------
@@ -123,7 +132,7 @@ with open("/home/user/.bitcoin/bitcoin.conf", "w") as conf:
     conf.write("server=1\ntxindex=1\nmaxtipage=9999999999\n")
 subprocess.run(["bitcoind", "-datadir=/home/user/.bitcoin", "-daemon"], check=True, capture_output=True)
 subprocess.run(["bitcoin-cli", "-datadir=/home/user/.bitcoin", "-rpcwait", "getblockcount"], check=True, capture_output=True)
-for w in ("miner", "thief", "svc", "other"):
+for w in ("miner", "thief", "decoy", "svc", "other"):
     cli("-named", "createwallet", f"wallet_name={w}")
 MINER = new("miner", "faucet")
 mine(14)   # coinbase coins mature after 10 blocks on the course chain
@@ -132,7 +141,25 @@ mine(14)   # coinbase coins mature after 10 blocks on the course chain
 R1 = new("thief", "ransom-1")
 R2 = new("thief", "ransom-2")
 pay("v1", {"R1": (R1, 120_000_000)})
-pay("v2", {"R2": (R2, 81_230_000)})
+pay("v2", {"R2": (R2, 81_230_000)}, confirm=False)
+# The worked example follows victim 1's change into victim 2's payment.
+assert cli("getrawtransaction", TX["v2"], "true", j=True)["vin"][0]["txid"] == TX["v1"], "v2 must spend v1's change"
+
+# The decoy's first coin, in victim 2's block, paid from a mined coin of its own (not victim 2's change), so its
+# walk back stops at the faucet's coins and never meets the ransom's payers.
+Q0 = new("decoy", "q0")
+mined = [u for u in cli("listunspent", 1, wallet="miner", j=True) if u["txid"] != TX["v1"] and u["amount"] > 3]
+coin = mined[0]
+fund = cli("-named", "send", f"outputs={json.dumps({Q0: btc(245_000_000)})}", "fee_rate=6",
+           f"options={json.dumps({'inputs': [{'txid': coin['txid'], 'vout': coin['vout']}], 'add_inputs': False})}",
+           wallet="miner", j=True)
+TX["qf"] = fund["txid"]
+ORDER.append("qf")
+ADDR["Q0"] = Q0
+for o in cli("getrawtransaction", fund["txid"], "true", j=True)["vout"]:
+    if o["scriptPubKey"]["address"] != Q0:
+        ADDR["F_qf"] = o["scriptPubKey"]["address"]
+mine()
 
 # T1: R1 and R2 spent together. X0 (P2SH, round) is the payment; C1 (P2WPKH, un-round) is the change.
 X0 = new("other", "x0", "p2sh-segwit")
@@ -141,11 +168,18 @@ spend("t1", "thief", [(TX["v1"], R1), (TX["v2"], R2)],
       [("X0", X0, 50_000_000), ("C1", C1, None)], rate=10)
 
 # T2, T3: peel chain. The peel is a round amount to a Taproot address; the change is P2WPKH.
+# The decoy's first two peels ride in T2's and T3's blocks, so block order does not set the trails apart.
 X1 = new("other", "x1", "bech32m")
 C2 = new("thief", "c2")
+QP1 = new("other", "qp1", "bech32m")
+Q1 = new("decoy", "q1")
+spend("q1", "decoy", [(TX["qf"], Q0)], [("Q1", Q1, None), ("QP1", QP1, 60_000_000)], rate=10, confirm=False)
 spend("t2", "thief", [(TX["t1"], C1)], [("X1", X1, 20_000_000), ("C2", C2, None)], rate=11)
 X2 = new("other", "x2", "bech32m")
 C3 = new("thief", "c3")
+QP2 = new("other", "qp2", "bech32m")
+Q2 = new("decoy", "q2")
+spend("q2", "decoy", [(TX["q1"], Q1)], [("QP2", QP2, 40_000_000), ("Q2", Q2, None)], rate=8, confirm=False)
 spend("t3", "thief", [(TX["t2"], C2)], [("C3", C3, None), ("X2", X2, 15_000_000)], rate=9)
 
 # The decoy: X0's owner adds an input of their own (Y) and pays a shop. X0 and Y become a cluster of two.
@@ -161,21 +195,28 @@ U4 = new("other", "u4")
 K4 = new("thief", "k4")
 spend("t4", "thief", [(TX["t3"], C3)], [("U4", U4, None), ("K4", K4, 31_742_615)], rate=10)
 
-# The service: eleven customers each pay their own one-time deposit address (separate transactions, one block).
+# The service: ten customers each pay their own one-time deposit address (separate transactions, one block), and
+# the decoy's last peel, Q3, pays 0.05 BTC to an eleventh, E, in the same block.
 D = new("svc", "deposit-d")
-deposits = {f"D{i}": (new("svc", f"deposit-{i}"), rng.randrange(2_100_000, 46_000_000)) for i in range(1, 12)}
+E = new("svc", "deposit-e")
+deposits = {f"D{i}": (new("svc", f"deposit-{i}"), rng.randrange(2_100_000, 46_000_000)) for i in range(1, 11)}
+assert all(s != 5_000_000 for _, s in deposits.values()), "only D and E may be 0.05 BTC deposits"
 for role, (address, sats) in deposits.items():
     pay("dep" + role[1:], {role: (address, sats)}, confirm=False)
+Q3 = new("decoy", "q3")
+spend("q3", "decoy", [(TX["q2"], Q2)], [("Q3", Q3, None), ("E", E, 5_000_000)], rate=12, confirm=False)
 mine()
 
 # T5: the last peel, 0.05 BTC, to the deposit address D; C5 is the change and stays unspent.
 C5 = new("thief", "c5")
 spend("t5", "thief", [(TX["t4"], K4)], [("C5", C5, None), ("D", D, 5_000_000)], rate=12)
 
-# T6: the service sweeps D with the eleven other deposits into its hot wallet H (D sits fifth among the inputs).
+# T6: the service sweeps D with the eleven other deposits into its hot wallet H (D sits fifth among the inputs,
+# the decoy's E ninth).
 H = new("svc", "hot")
-sweep = [(TX[f"dep{i}"], deposits[f"D{i}"][0]) for i in range(1, 12)]
+sweep = [(TX[f"dep{i}"], deposits[f"D{i}"][0]) for i in range(1, 11)]
 sweep.insert(4, (TX["t5"], D))
+sweep.insert(8, (TX["q3"], E))
 spend("t6", "svc", sweep, [("H", H, None)], rate=7)
 
 # T7: the service pays thirteen customers in one batch; the change goes to H2.

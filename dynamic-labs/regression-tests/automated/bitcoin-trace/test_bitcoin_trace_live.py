@@ -98,7 +98,7 @@ class BitcoinTraceLiveRegressionTests(unittest.TestCase):
         for role, address in ADDR.items():
             if role not in ("R1", "R2") and not role.startswith("F_"):
                 self.assertNotIn(address, text, role)
-        for name in ("t1", "t2", "t3", "t4", "t5", "t6", "t7", "tx"):
+        for name in ("t1", "t2", "t3", "t4", "t5", "t6", "t7", "tx", "qf", "q1", "q2", "q3"):
             self.assertNotIn(TX[name]["txid"], text, name)
 
     def test_instructor_answers_are_not_served(self) -> None:
@@ -120,7 +120,7 @@ class BitcoinTraceLiveRegressionTests(unittest.TestCase):
                                  [(i["address"], i["sats"]) for i in expected["in"]])
                 self.assertEqual({o["scriptpubkey_type"] for o in tx["vout"]},
                                  {API_TYPE[o["type"]] for o in expected["out"]})
-                self.assertTrue(all(i["sequence"] == RBF for i in tx["vin"]) or name.startswith(("v", "dep", "yf")))
+                self.assertTrue(all(i["sequence"] == RBF for i in tx["vin"]) or name.startswith(("v", "dep", "yf", "qf")))
 
     def test_ransom_addresses_are_spent_together(self) -> None:
         t1 = TX["t1"]
@@ -165,10 +165,49 @@ class BitcoinTraceLiveRegressionTests(unittest.TestCase):
         t6 = TX["t6"]
         self.assertEqual((len(t6["in"]), len(t6["out"])), (12, 1))
         self.assertEqual(t6["in"][4]["role"], "D")
+        self.assertEqual(t6["in"][8]["role"], "E")
+        # Two 0.05 BTC deposits, D and the decoy's E; no other deposit is that amount.
+        self.assertEqual([i["role"] for i in t6["in"] if i["sats"] == 5_000_000], ["D", "E"])
         self.assertEqual(len({i["address"] for i in t6["in"]}), 12)
         # Not a CoinJoin shape: one output, and the inputs came from twelve different payments.
         deposits = api(f"/tx/{t6['txid']}")["vin"]
         self.assertEqual(len({v["txid"] for v in deposits}), 12)
+
+    def test_decoy_trail_moves_like_the_thiefs_but_carries_no_ransom(self) -> None:
+        # The design card (docs/lab-cards/bitcoin-trace-decoys.md): three one-input peel hops with the thief's
+        # habits, the last to the service's deposit address E, from one 2.45 BTC faucet coin paid in victim 2's block.
+        qf = TX["qf"]
+        self.assertEqual(qf["height"], TX["v2"]["height"])
+        self.assertEqual((qf["by"]["Q0"]["sats"], qf["by"]["Q0"]["type"]), (245_000_000, "P2WPKH"))
+        for name, change, peel, ptype, twin in (("q1", "Q1", "QP1", "P2TR", "t2"), ("q2", "Q2", "QP2", "P2TR", "t3"),
+                                                ("q3", "Q3", "E", "P2WPKH", None)):
+            with self.subTest(tx=name):
+                tx = TX[name]
+                self.assertEqual((len(tx["in"]), len(tx["out"])), (1, 2))
+                self.assertEqual(tx["by"][change]["type"], "P2WPKH")
+                self.assertEqual(tx["by"][peel]["type"], ptype)
+                self.assertTrue(is_round(tx["by"][peel]["sats"]))
+                self.assertFalse(is_round(tx["by"][change]["sats"]))
+                if twin:
+                    self.assertEqual(tx["height"], TX[twin]["height"])
+        self.assertEqual(TX["q3"]["by"]["E"]["sats"], 5_000_000)
+        self.assertLess(TX["q3"]["height"], TX["t5"]["height"])
+        self.assertEqual([TX[n]["in"][0]["role"] for n in ("q1", "q2", "q3")], ["Q0", "Q1", "Q2"])
+        # Value conservation: the coin that paid E holds more than 1 BTC, more than the ransom trail held after T4,
+        # and the decoy's first coin holds more than the whole ransom.
+        ransom = TX["v1"]["by"]["R1"]["sats"] + TX["v2"]["by"]["R2"]["sats"]
+        paid_e = TX["q3"]["in"][0]["sats"]
+        self.assertGreater(paid_e, 100_000_000)
+        self.assertGreater(paid_e, TX["t4"]["by"]["K4"]["sats"])
+        self.assertGreater(qf["by"]["Q0"]["sats"], ransom)
+        # The decoy's walk back never meets the ransom: its first coin is paid from no ransom payer's output.
+        ransom_side = {ADDR[r] for r in ("R1", "R2", "F_v1", "F_v2", "C1", "C2", "C3", "K4", "U4", "C5")}
+        decoy_inputs = {i["address"] for n in ("qf", "q1", "q2", "q3") for i in TX[n]["in"]}
+        self.assertFalse(decoy_inputs & ransom_side)
+        info = api(f"/address/{ADDR['E']}")["chain_stats"]
+        self.assertEqual((info["funded_txo_count"], info["spent_txo_count"]), (1, 1))
+        for role in ("Q3", "QP1", "QP2"):
+            self.assertEqual(api(f"/address/{ADDR[role]}")["chain_stats"]["spent_txo_count"], 0, role)
 
     def test_t7_is_a_batch_with_one_input(self) -> None:
         t7 = TX["t7"]
@@ -203,7 +242,7 @@ class BitcoinTraceLiveRegressionTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         for name in FACTS["order"]:
             self.assertIn(TX[name]["txid"], resp.text, name)
-        for role in ("R1", "R2", "X0", "C1", "D", "H", "H2", "K4", "U4"):
+        for role in ("R1", "R2", "X0", "C1", "D", "H", "H2", "K4", "U4", "E", "Q0", "Q1", "Q2"):
             self.assertIn(ADDR[role], resp.text, role)
         self.assertIn("Search", resp.text)
 

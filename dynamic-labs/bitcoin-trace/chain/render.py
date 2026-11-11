@@ -30,6 +30,10 @@ def derive(facts):
         "swept": facts["tx"]["t6"]["out"][0]["btc"],
     }
     facts["calc"]["d_input_position"] = next(n for n, i in enumerate(facts["tx"]["t6"]["in"]) if i["role"] == "D") + 1
+    facts["calc"]["e_input_position"] = next(n for n, i in enumerate(facts["tx"]["t6"]["in"]) if i["role"] == "E") + 1
+    facts["calc"]["faucet_deposits"] = facts["tx"]["t6"]["n_in"] - 2
+    ransom = facts["tx"]["v1"]["by"]["R1"]["sats"] + facts["tx"]["v2"]["by"]["R2"]["sats"]
+    facts["calc"]["ransom_paid"] = f"{ransom / 10**8:.8f}"
     t7 = facts["tx"]["t7"]
     facts["calc"]["change_position"] = next(o["n"] for o in t7["out"] if o["role"] == "H2")
     return facts

@@ -15,7 +15,8 @@ If this stage is split across agents, dispatch from `suite.yaml` instead.
 Every ID, address, amount and block number is in `dynamic-labs/bitcoin-trace/quizes/facts.json`
 (`tx.<name>.txid`, `addr.<role>`, `tx.<name>.height`); the answers are in
 `dynamic-labs/bitcoin-trace/quizes/INSTRUCTOR_ANSWERS.md`. A rebuild changes every value, so read them from
-there. The transaction names are v1 and v2 (the victims' payments), t1 to t7 (the trail) and tx (X0's later spend).
+there. The transaction names are v1 and v2 (the victims' payments), t1 to t7 (the trail), tx (X0's later spend), and qf and q1 to q3 (the decoy trail: its first coin Q0 and three
+peel hops ending at the service's deposit address E).
 
 ## Evidence Rules
 
@@ -35,7 +36,10 @@ For every failed step, capture the URL, the visible failure, console errors, net
    one is not (U4).
 6. Open T5. Confirm a round-amount output to D and an un-round output to C5, both `bc1q...`; C5 is unspent.
 7. Open T6. Confirm 12 inputs and 1 output, D among the inputs. Open one other input's address page and confirm
-   it received once, in an earlier block.
+   it received once, in an earlier block. Then the decoy (question 13): confirm two inputs of 0.05 BTC, D and E;
+   from E's input follow the link to q3 and confirm its one input holds more than 1 BTC; walk back q3, q2 and q1,
+   one input each, to Q0, 2.45 BTC paid in victim 2's block (v2's block). Confirm nothing on those pages labels
+   either deposit.
 8. Open T7. Confirm 1 input and 14 outputs, all different addresses.
 9. Open X0's address page and confirm its later spend (`tx`) has a second input Y.
 10. Confirm block times show as local time and that dollar figures or "Accelerate" buttons, if shown, are the

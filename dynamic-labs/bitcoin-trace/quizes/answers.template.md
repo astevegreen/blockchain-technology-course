@@ -50,22 +50,28 @@ transaction are one kind of evidence, so they stop at Moderate.
 | 7 | T1, T2 and T3 form a peel chain: each hop pays a round amount to a non-P2WPKH address (P2SH at T1, Taproot at T2 and T3) and rolls the un-round remainder to a new P2WPKH address. Record the peels as leads: `{{addr.X0}}` (T1, {{tx.t1.by.X0.btc}} BTC), `{{addr.X1}}` (T2, {{tx.t2.by.X1.btc}} BTC), `{{addr.X2}}` (T3, {{tx.t3.by.X2.btc}} BTC), each with its next transaction. X1 and X2 are not spent. | Peel chain | A peel chain is also what an exchange's withdrawals look like, and a regular pattern is one kind of evidence. | Moderate |
 | 8 | T4 (`{{tx.t4.txid|short}}`, block {{tx.t4.height}}) has two outputs, both fresh P2WPKH and both un-round: `{{addr.U4}}` ({{tx.t4.by.U4.btc}} BTC, larger, unspent) and `{{addr.K4}}` ({{tx.t4.by.K4.btc}} BTC, spent in T5). No clue separates them, so the change is **undetermined**. Follow K4 only because it is the one that is spent; say that this is a practical choice, not a finding. U4 stays an alternative lead. | Change clues (none apply); follow the spent output | The followed output is the payment and the larger one is the change. | Low |
 | 9 | T5 (`{{tx.t5.txid|short}}`, block {{tx.t5.height}}): `{{addr.D}}` ({{tx.t5.by.D.btc}} BTC, a round amount) is the peel; `{{addr.C5}}` ({{tx.t5.by.C5.btc}} BTC) is the change and is not spent. D is spent next in T6. Both outputs are P2WPKH, so the amount is the only clue. | Change clues (amount alone) | The payer chose a round amount for the change, or an un-round one for the payment. | Low |
-| 10 | T6 (`{{tx.t6.txid|short}}`, block {{tx.t6.height}}) has {{tx.t6.n_in}} inputs and {{tx.t6.n_out}} output of {{calc.swept}} BTC. D is input number {{calc.d_input_position}}, counting from 1 down the explorer's input list (the transaction's raw data counts from 0, so it holds D at index one less); the other {{calc.deposit_inputs}} inputs are addresses that each received once, from the faucet, in an earlier block. The co-spend heuristic says the same wallet holds D and the other inputs: a service sweeping deposit addresses into one hot wallet `{{addr.H}}`. Check: the deposits come from {{calc.deposit_inputs}} different earlier transactions. | Co-spend | CoinJoin (day 7 teaches how to spot one). One output of one amount is not a CoinJoin shape. | Moderate |
+| 10 | T6 (`{{tx.t6.txid|short}}`, block {{tx.t6.height}}) has {{tx.t6.n_in}} inputs and {{tx.t6.n_out}} output of {{calc.swept}} BTC. D is input number {{calc.d_input_position}}, counting from 1 down the explorer's input list (the transaction's raw data counts from 0, so it holds D at index one less); the other {{calc.deposit_inputs}} inputs are addresses that each received once, in an earlier block: {{calc.faucet_deposits}} from the faucet and one, `{{addr.E}}` (input {{calc.e_input_position}}), from the decoy's last peel (Q13). The co-spend heuristic says the same wallet holds D and the other inputs, E among them: a service sweeping deposit addresses into one hot wallet `{{addr.H}}`. Check: the deposits come from {{calc.deposit_inputs}} different earlier transactions. | Co-spend | CoinJoin (day 7 teaches how to spot one). One output of one amount is not a CoinJoin shape. | Moderate |
 | 11 | T7 (`{{tx.t7.txid|short}}`, block {{tx.t7.height}}) has {{tx.t7.n_in}} input and {{tx.t7.n_out}} outputs: {{calc.payouts}} payouts to {{calc.payouts}} different addresses and one change output (`{{addr.H2}}`, output {{calc.change_position}}). That is a batch payout. The funds go to a service's customers, so the trail has reached the first service. The chain cannot name the service; attribution is later in day 6. The trace stops here because the next hops belong to other people. | Payment batching | A batch is also what a business or a mixer does. Without a label from a source, it is a pattern only. | Low until attribution |
 | 12 | Backward from T6: D was paid by T5 (`{{tx.t5.txid|short}}`), whose one input is K4, paid by T4 (`{{tx.t4.txid|short}}`), whose one input is C3, the change of T3. Each step back is a spend the chain records, so the path from the ransom to the service's deposit is unbroken in the record. It does not settle T4: the record shows that K4 led to the service, not whether K4 was the thief's change or a payment to someone who then paid the service. T4 stays **undetermined**, and following K4 stays a practical choice. | Backward trace (lesson 02-FO, "When forward fails, trace backward") | K4 was a payment, and its recipient paid the service; a backward walk gives more false positives than a forward one. | The spends: fact. T4's change: undetermined; following K4: Low |
-| 13 | See below. | | | |
+| 13 | **(c).** The second deposit is `{{addr.E}}` ({{tx.q3.by.E.btc}} BTC, input {{calc.e_input_position}} of T6). Q3 (`{{tx.q3.txid|short}}`, block {{tx.q3.height}}) paid it; Q3's one input, `{{addr.Q2}}`, held {{tx.q3.in.0.btc}} BTC, more than the {{tx.t4.by.K4.btc}} BTC the ransom trail held after T4. Walking back, one input a hop: `{{addr.Q2}}` is the change of `{{tx.q2.txid|short}}` (block {{tx.q2.height}}, T3's block; its peel {{tx.q2.by.QP2.btc}} BTC to Taproot), whose one input `{{addr.Q1}}` is the change of `{{tx.q1.txid|short}}` (block {{tx.q1.height}}, T2's block; its peel {{tx.q1.by.QP1.btc}} BTC to Taproot), whose one input is `{{addr.Q0}}`, the decoy's first coin: {{tx.qf.by.Q0.btc}} BTC from the faucet (`{{tx.qf.txid|short}}`, block {{tx.qf.height}}, victim 2's block), which never touched R1 or R2 and is more than the {{calc.ransom_paid}} BTC the victims paid in all. So E carries no ransom money. Choice (a) adds it to the trail and the sum breaks: the trail would hold more than the victims paid. Choice (b) takes who holds the deposit address (the service, Q10) for who paid into it. Choice (d) is wrong: the record settles it. Whether the thief also owns the decoy wallet is not shown. | Value conservation: a transaction's outputs and fee add up to its inputs, and each input names the coin it spends. Matching habits are wallet habits, not an owner. | Nothing in the record: each step back is a spend the chain records. What goes wrong is joining trails by habit (lesson 02-FO, "One false link merges two actors into one"). | E carries no ransom money: fact (the record). Same owner as the thief: not shown; habits alone are Low. The prediction's own confidence is not graded. |
+| 14 | **0.05 BTC, D alone.** T6 gathers twelve deposits, eleven of them other people's money (Q13 rules out E), so counting all {{calc.swept}} BTC of T6's output merges eleven customers into the thief, and 0.10 BTC adds E. The sweep does not stop the count: D's {{tx.t5.by.D.btc}} BTC is recorded going in. After the sweep the chain cannot say which of the service's later payouts carried the ransom's coins. | Value conservation; sweep | D is not the ransom's: the choices at T4 and T5 are wrong. | The amount: fact. That it is the ransom's: as the path, Moderate, with Low for the choices at T4 and T5 |
+| 15 | See below. | | | |
 
-### Question 13: the assessment sentence
+### Question 15: the statement
 
-A good answer is one sentence, bottom line first, with a confidence word, that states what the trace shows and
-says what it does not show. For example:
+A good answer is short, bottom line first, with confidence words, and says what reached the service, what the
+second deposit is and what the trace does not show. For example:
 
-> The ransom was spent as a group and passed through five hops to a deposit address that a service swept into its
-> hot wallet, at Moderate for the path and Low for the choices at the fourth and fifth hops, but the chain does not
-> name the service, who pays into it, or who controls the ransom address.
+> Of the {{calc.ransom_paid}} BTC paid to the ransom addresses, {{tx.t5.by.D.btc}} BTC reached a deposit address that a
+> service swept (Moderate for the path; Low for the choices at T4 and T5, and Low that the service is an exchange
+> until attribution). A second {{tx.q3.by.E.btc}} BTC deposit in the same sweep carries no ransom money: the chain
+> records its trail starting from coins that never touched the ransom addresses, and its first coin held
+> {{tx.qf.by.Q0.btc}} BTC, more than the ransom had left. Whether the thief also owns it is not shown: matching habits
+> alone are Low.
 
 Mark down: a percentage; "the attacker is" or any named person; a claim that the chain shows who owns a wallet;
-"definitely"; a confidence of High on any link (no link here has two independent kinds of evidence).
+"definitely"; a confidence of High on any link (no link here has two independent kinds of evidence); the second
+deposit or the whole sweep counted as the ransom's.
 
 ## The worked example (not graded)
 
@@ -106,14 +112,22 @@ victims share a wallet has read it right: it is the build, not a finding.
 - Naming the service, or saying the payouts are the thief's. The chain does not say.
 - Quoting a percentage.
 - Treating the backward walk as proof that K4 was the change. It shows K4 reached the service, not whose it was.
+- Adding the second deposit, E, to the ransom's total because it moves like the thief's trail (Q13), or counting
+  all of T6's output (Q14). Habits point to a kind of wallet; the amounts and the inputs decide.
+- Calling E's owner the thief because T6 co-spends E with D. The co-spend shows the service holds both deposit
+  addresses, not who paid into them.
 
 ## Notes on the build
 
-- The eleven other deposit addresses in T6 were funded by the course faucet, which stands in for the service's
-  customers. A sharp student may see that the faucet funded them all. The lab does not ask who the customers are, so do
-  not grade it either way.
-- The course faucet funded every payer: both victims' payments, the outside input Y and the deposits trace back to
-  it (victim 2's payment spends victim 1's change). The lab does not ask who funded whom; do not grade it either way.
+- Of the eleven other deposit addresses in T6, {{calc.faucet_deposits}} were funded by the course faucet, which
+  stands in for the service's customers; the eleventh, E, is the decoy's last peel. A sharp student may see that the
+  faucet funded the {{calc.faucet_deposits}}. The lab does not ask who the customers are, so do not grade it either way.
+- The course faucet funded every payer: both victims' payments, the outside input Y, the deposits and the decoy's
+  first coin Q0 trace back to it (victim 2's payment spends victim 1's change; Q0 comes from a mined coin of its own,
+  in victim 2's block, so it shares no payer with the ransom). A walk back from E stops at Q0, as Q13 asks. The lab
+  does not ask who funded the faucet's coins; do not grade it either way.
+- The decoy's hops Q1 and Q2 are mined in T2's and T3's blocks, and Q3 in the deposits' block, so block order
+  does not set the two trails apart: the student must read the amounts.
 - Every amount, fee rate and block time comes from the build. Block times are seconds apart; the worksheet tells
   students to use block numbers.
 - Rebuilding the chain (`chain/build-chain.sh`) changes every ID; this file and the worksheet follow, and the tests read
