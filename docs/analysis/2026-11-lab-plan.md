@@ -325,3 +325,8 @@ lists what moved and how to restore it).
 - Not removed, as asked: `signatures`, `micro-hashing`, `POW_mining_micro` and `distributed-systems` are still
   linked from lessons, `index.qmd`, the primer and the mind map; whether to retire them is put to the owner.
   `ether-smart-contract-micro` was already in `archive/static-labs/`.
+- 11 Nov 2026, owner, asked whether to archive the old static labs `signatures`, `micro-hashing`,
+  `POW_mining_micro` and `distributed-systems` and repoint their links in one task: "Archive all four
+  (Recommended)". Done: all four moved to `archive/static-labs/`; their links in the primer, `index.qmd`, 02-CP,
+  02-CM, 04-CP and the mind map now open Forge the payment (cfff8053), Guess the input (3be28b16) and its mining
+  step, and Who saw it first? (7da9e166).

@@ -1,6 +1,6 @@
 # Archived static labs
 
-Thirteen browser labs taken out of what students receive (eleven on 10 and 11 Nov 2026, two on 11 Nov at plan step 7), kept here so the owner can look at them
+Seventeen browser labs taken out of what students receive (eleven on 10 and 11 Nov 2026, two on 11 Nov at plan step 7, four more on 11 Nov once the owner chose "Archive all four (Recommended)"), kept here so the owner can look at them
 before deciding their future. Nothing was deleted. The reasons are in
 `docs/analysis/2026-11-static-labs-review.md` ("Lab by lab" and "Defects"). Eight went in the first commit; the
 owner approved `hashing_merkle` and `bitcoin-attacks` later the same day, after
@@ -26,10 +26,16 @@ reaches the site, the `src.zip` or the student VM.
 | `ether-smart-contract-micro` | `ether-smart-contract-micro/index.html` | 04-EF Smart Contracts (linked from the day 3 index) | Replaced by "The vault that paid twice" (11 Nov 2026): it logged an `ETHTransfer` event real transfers do not write, invented gas numbers and narrated forward |
 | `ether_mev` | `ether_mev/mev_builders.html` | 03-EF Ethereum Network and MEV (and the day 4 browser-labs line) | Replaced by "Find the sandwich" (built 88cc036a, 11 Nov 2026), from the card `docs/lab-cards/find-the-sandwich.md` |
 | `tamper-ledger` | `tamper-ledger/tamper_ledger_lab.html` | 04-DS Distributed Ledgers | Replaced by "Build a ledger in four failures" (built ba0b782a, 11 Nov 2026), from the card `docs/lab-cards/build-a-ledger-in-four-failures.md` |
+| `signatures` | `signatures/index.html` | The primer's "Keys and signatures", 04-CP Asymmetric Encryption and Digital Signatures, day 1 browser lab | Replaced by "Forge the payment" (built cfff8053, 11 Nov 2026), from the card `docs/lab-cards/forge-the-payment.md` |
+| `micro-hashing` | `micro-hashing/index.html` | 02-CP Hashing and Merkle Trees | Replaced by "Guess the input" (built 3be28b16, 11 Nov 2026), from the card `docs/lab-cards/guess-the-input.md` |
+| `POW_mining_micro` | `POW_mining_micro/index.html` | 02-CM Proof of Work and Security | Replaced by the mining step of "Guess the input" (built 3be28b16, 11 Nov 2026) |
+| `distributed-systems` | `distributed-systems/distributed_systems_lab.html` | 01-DS Distributed Systems | Replaced by "Who saw it first?" (built 7da9e166, 11 Nov 2026), from the card `docs/lab-cards/who-saw-it-first.md` |
 
 ## Looking at one
 
-Eleven of the thirteen are single files: double-click the file in the table and it opens in a browser.
+Fifteen of the seventeen open with a double-click on the file in the table (`signatures` and `micro-hashing` load a
+script from their own folder, and `distributed-systems` two stylesheets from the site's vendor folder; all work from
+the file).
 
 `asym_sym_overview` and `hashing_merkle` load Pyodide and two stylesheets from the site's vendor folder, so they
 need a local web server. From the repository root:
@@ -38,7 +44,8 @@ need a local web server. From the repository root:
 
 then open `http://localhost:8000/archive/static-labs/asym_sym_overview/crypto_primitives.html` (or
 `.../hashing_merkle/hashing_merkle_lab.html`). Each one's four vendor paths were changed from `../../vendor/` to
-`../../../blockchain-course/assets/vendor/` so that this works; that is the only edit made to any archived lab.
+`../../../blockchain-course/assets/vendor/` so that this works, and `distributed-systems`'s two the same way; those
+are the only edits made to any archived lab.
 
 ## What else changed in the same commits
 
@@ -62,6 +69,19 @@ For `ether_mev` and `tamper-ledger` (plan step 7, 11 Nov 2026), each link now op
 - 04-DS, slide "Micro Lab: Tamper-Evident Ledger": the link opens "Build a ledger in four failures".
 - 03-EF, slide "Searchers, builders and relays set the order": the "MEV demo" line was removed; the lesson
   already opens "Find the sandwich" from its sandwich slide.
+
+For `signatures`, `micro-hashing`, `POW_mining_micro` and `distributed-systems` (11 Nov 2026, owner: "Archive all
+four (Recommended)"), each link now opens its replacement:
+
+- `blockchain-course/primer.qmd`: "Keys and signatures" opens "Forge the payment", and its steps and plan row were
+  rewritten for it. "Hashing", "Distributed systems" and "Proof-of-work mining" already opened the replacements.
+- `blockchain-course/index.qmd`: the day 1 "Browser lab" line links "Forge the payment"; under "Browser labs for
+  these lessons", 02-CP links "Guess the input", 01-DS "Who saw it first?" and 02-CM the mining step of "Guess the
+  input".
+- `blockchain-course/assets/mindmap.html`: the 04-CP, 01-DS and 02-CM `lab:` blocks name the replacements.
+- 02-CP, slide "Micro lab: Hashing", and 02-CM, slide "Activity: A Mining Race": the link, the slide text and the
+  speaker notes now describe the replacement. 04-CP, hidden slide "Digital Signatures Microlab": the link opens
+  "Forge the payment".
 
 For `hashing_merkle` and `bitcoin-attacks` (the second commit):
 
