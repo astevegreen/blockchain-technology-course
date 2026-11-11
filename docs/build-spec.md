@@ -172,6 +172,10 @@ plan (what happens to every lab, the design card, the order of work) is `docs/an
   lectures run long.
 - Every one is repeatable by a student alone, later. The primer's labs stay in the primer; a student who
   skipped it can do them on the evening of day 1.
+- Day 1 opens one per lesson: Make change (①), Forge the payment (②) and the confirmation race (③). Guess the
+  input, Build a ledger in four failures and Who saw it first? are the primer's labs, replacing
+  `micro-hashing`, `tamper-ledger` and `distributed-systems` there; Forge the payment serves the primer too
+  (owner, 10 Nov: "Yes, record it").
 - Laptops only: every lab, of any kind, runs on the instructor's and students' laptops. No dice, paper or
   other props.
 - A design card first: before a lab is built or changed, the owner approves its one-page card (the plan,

@@ -279,6 +279,10 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
   "Keep day 3").
 - Day 1 holds more planned labs than it has room for (Who saw it first?, Build a ledger in four failures, Forge
   the payment, Guess the input, beside Make change and the race); this is settled when day 1's labs are placed
-  (owner: "Settle it later").
+  (owner: "Settle it later"). Settled later that evening (owner: "Yes, record it"): day 1 opens one lab per
+  lesson, Make change in ①, Forge the payment in ② and the confirmation race in ③. Guess the input (with its
+  mining-lottery step), Build a ledger in four failures and Who saw it first? are the primer's labs, in place of
+  the `micro-hashing`, `tamper-ledger` and `distributed-systems` the primer holds now; a student who skipped the
+  primer does them on the evening of day 1. Forge the payment serves the primer too, as `signatures` does now.
 - Belief 9 (unconfirmed means blocked) gets no lab; the slide "Delay may mean congestion, not censorship" covers
   it (owner: "Leave it to the slide").
