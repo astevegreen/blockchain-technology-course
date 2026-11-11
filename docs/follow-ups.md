@@ -39,6 +39,9 @@ slide index), which is never listed here.
 - `dynamic-labs/explorer/gateway/static/lab/terminal.html:71` "Next:" names the explorer worksheet; day 1 now runs the
   terminal scavenger hunt in between, and `quizes/run-sheet/RUN_SHEET.md:80` does not name the hunt. [11 Nov 2026,
   building the hunt]
+- The hlf and hlf-launcher Lab Tests jobs fail building `hlf-orderer-ttyd` and `hlf-peer-ttyd`
+  (`dynamic-labs/hlf/Dockerfile.ttyd:8`, `Dockerfile.orderer-ttyd:7`, on the Fabric images): apt-get exits 100,
+  "Unable to locate package curl". [11 Nov 2026, Lab Tests 43056313552, both attempts; router change d802910d]
 
 ## Tooling and rules
 - `regression-tests/automated/run-lab.sh` `--fresh-start` rebuilds the lab's images but not `lane-service:latest`, so a
