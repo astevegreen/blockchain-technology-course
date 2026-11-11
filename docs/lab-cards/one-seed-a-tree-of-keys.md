@@ -10,9 +10,8 @@
 | Day | Day 2, lesson ② (wallet types, seed phrases and derivation) |
 | Kind | prediction lab (five minutes) |
 
-Which slide opens it is a question for the owner. The build spec's trial rule is "the slide whose title states
-the right belief", here "One seed grows a whole tree of keys". This card proposes the path slide two slides later,
-because the twist turns on the path and that is where students meet it. Day 2's lesson ① opens What time was it
+The owner chose the path slide over the build spec's trial rule ("the slide whose title states the right belief",
+here "One seed grows a whole tree of keys"), because the twist turns on the path and that is where students meet it. Day 2's lesson ① opens What time was it
 sent?, so this is lesson ②'s one lab.
 
 ## The ten lines
@@ -110,4 +109,4 @@ published test values.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve as drafted" and "The path slide" (10 Nov 2026)

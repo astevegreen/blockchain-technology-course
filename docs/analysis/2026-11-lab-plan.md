@@ -271,7 +271,10 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
 ## Step 4's first cards (owner, 10 Nov, evening)
 
 - The four cards in `docs/lab-cards/` are approved as drafted: Make change, The confirmation race, Is it final
-  yet? and What time was it sent? (owner: "Approve all four"). The BIP39 card is still to write.
+  yet? and What time was it sent? (owner: "Approve all four").
+- The BIP39 card, One seed, a tree of keys, is approved as drafted (owner: "Approve as drafted"). It targets belief 4,
+  marked common, and opens from day 2's path slide, not the tree slide the trial rule names (owner: "The path
+  slide").
 - Is it final yet? opens on day 3 lesson ①, not day 1, since day 1 lesson ③ opens the confirmation race (owner:
   "Keep day 3").
 - Day 1 holds more planned labs than it has room for (Who saw it first?, Build a ledger in four failures, Forge
