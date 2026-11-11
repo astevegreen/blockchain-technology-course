@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find the line</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .case-head { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: baseline; margin: 0 0 0.3rem; }
+  .case-head h3 { margin: 0; font-size: 1.05rem; }
+  .complaint { margin: 0.2rem 0 0.5rem; font-style: italic; }
+  .links { display: flex; flex-wrap: wrap; gap: 0.4em; margin: 0.3rem 0 0.6rem; }
+  .links a { color: var(--accent-strong); }
+  .field { display: grid; gap: 0.2em; margin: 0.4rem 0; }
+  .field label { font-weight: 600; font-size: 0.92rem; }
+  .field textarea { font: inherit; min-height: 2.6em; padding: 0.3em 0.5em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  .field textarea:disabled { background: transparent; color: var(--ink); border-color: transparent; resize: none; }
+  .row { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center; margin-top: 0.4rem; }
+  .record { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 0.6rem 0; }
+  .record th, .record td { border: 1px solid var(--rule); padding: 0.25em 0.5em; text-align: left; }
+  .explorer-link { display: inline-block; padding: 0.3em 0.8em; border: 2px solid var(--accent); border-radius: 6px; font-weight: 600; text-decoration: none; color: var(--accent-strong); margin: 0.2em 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/find-the-line.md. Played in teams of three or four, one page per team, on the
+   cross-chain lab's frozen exploit chain (blocks 19-32). The page holds no key: it records each team's three
+   lines, when each was locked and when its source was opened. The scoring key and the accepted reasons are on the
+   instructor's sheet (dynamic-labs/cross-chain/quizes/FIND_THE_LINE_ANSWERS.md), which students never receive. */
+(function () {
+  "use strict";
+
+  /* ---- Chain data: dynamic-labs/cross-chain/exploit/chain/addresses.env ---- */
+  var A = {
+    account0: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    account8: "0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f",
+    account9: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
+    token: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+    staking: "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+    timelockVault: "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+    borrower: "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+    lender: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  };
+  var EXPLOIT_HOST = (function () {
+    var h = location.hostname;
+    var p = location.protocol;
+    if (h === "localhost" || h === "127.0.0.1" || h === "::1" || h.endsWith(".localhost")) {
+      return p + "//exploit.localhost:8445/";
+    }
+    if (h.endsWith(".lab")) return p + "//exploit.lab:8445/";
+    return p + "//exploit." + h.replace(/^[^.]+\./, "") + "/";
+  })();
+  function source(address, file) {
+    return EXPLOIT_HOST + "sourcify/contracts/full_match/31337/" + address + "/sources/src/" + file;
+  }
+
+  /* The three cases, in the order of the agent's complaints. Blocks are where the case's transactions are. */
+  var CASES = [
+    { id: "a", title: "Case A: the staking site", complaint: "“A staking site took all my tokens. I only clicked claim.”",
+      blocks: [20, 21, 22, 23],
+      addresses: [["The complainant", A.account8], ["The token (CTK)", A.token], ["The staking site’s contract", A.staking]],
+      sources: [["The staking contract’s source", source(A.staking, "StakingRewards.sol")]] },
+    { id: "b", title: "Case B: the vault", complaint: "“I withdrew 10 ETH from a vault and got 1 back.”",
+      blocks: [24, 25, 26, 27],
+      addresses: [["The complainant", A.account8], ["The vault", A.timelockVault]],
+      sources: [["The vault’s source", source(A.timelockVault, "TimelockVault.sol")]] },
+    { id: "c", title: "Case C: the pool", complaint: "“Someone borrowed 2,000 ETH from our pool in one transaction. Were we attacked?”",
+      blocks: [28, 29, 30],
+      addresses: [["The pool (the lender)", A.lender], ["The borrower’s contract", A.borrower]],
+      sources: [["The borrower’s source", source(A.borrower, "PlainBorrower.sol")],
+                ["The pool’s source", source(A.lender, "CourseFlashLender.sol")]] }
+  ];
+  var FIELDS = [
+    ["money", "The money: where it came from and where it went"],
+    ["moneyWhy", "Your reason (what in the record shows it)"],
+    ["line", "The line that let it leave: a transaction, a line of code, or “none”"],
+    ["lineWhy", "Your reason"],
+    ["allowed", "Who was allowed to do it, and who allowed them"],
+    ["allowedWhy", "Your reason"]
+  ];
+
+  var KEY = "lab:find-the-line:cases";
+  var store = {
+    get: function () { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } },
+    set: function (v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) { /* private window */ } }
+  };
+  function now() { return new Date().toISOString().replace(/\.\d+Z$/, "Z"); }
+  function clock(iso) { return iso ? iso.slice(11, 19) : "—"; }
+
+  /* ---- "Do it" step: three cases, each locked before its source opens ---- */
+  function renderDo(box, api) {
+    var el = api.el;
+    var cases = store.get();
+    CASES.forEach(function (c) { cases[c.id] = cases[c.id] || { fields: {}, lockedAt: null, sourceAt: null, changed: false }; });
+
+    function save() { store.set(cases); }
+    function allLocked() { return CASES.every(function (c) { return !!cases[c.id].lockedAt; }); }
+
+    function draw() {
+      box.innerHTML = "";
+      box.appendChild(el("p", null,
+        "For each case, open its blocks in the explorer and read the transactions: who sent each one, to which " +
+        "contract, which function, and what moved. Fill the line, then lock it. The source opens only after the " +
+        "line is locked."));
+      CASES.forEach(function (c) { box.appendChild(panel(c)); });
+      box.appendChild(record());
+      box.appendChild(el("div", { class: "row" },
+        el("button", { class: "btn", type: "button", onclick: function () {
+          if (!confirm("Clear all three lines and their times?")) return;
+          cases = {}; CASES.forEach(function (k) { cases[k.id] = { fields: {}, lockedAt: null, sourceAt: null, changed: false }; });
+          save(); draw();
+        } }, "Start the cases over")));
+    }
+
+    function panel(c) {
+      var s = cases[c.id];
+      var locked = !!s.lockedAt;
+      var wrap = el("div", { class: "locked-line", "data-locked": locked ? "yes" : "no", "data-changed": s.changed ? "yes" : "no" });
+      wrap.appendChild(el("div", { class: "case-head" }, el("h3", null, c.title),
+        locked ? el("span", { class: "lock-word" }, "Locked " + clock(s.lockedAt)) : el("span", { class: "lock-word open" }, "Not locked")));
+      wrap.appendChild(el("p", { class: "complaint" }, c.complaint));
+
+      var links = el("div", { class: "links" });
+      c.blocks.forEach(function (b) {
+        links.appendChild(el("a", { href: EXPLOIT_HOST + "block/" + b, target: "_blank", rel: "noopener" }, "Block " + b));
+      });
+      wrap.appendChild(links);
+      var who = el("div", { class: "links" });
+      c.addresses.forEach(function (pair) {
+        who.appendChild(el("span", null, pair[0] + ": ",
+          el("a", { class: "addr", href: EXPLOIT_HOST + "address/" + pair[1], target: "_blank", rel: "noopener", title: pair[1] }, api.short(pair[1]))));
+      });
+      wrap.appendChild(who);
+
+      var inputs = {};
+      FIELDS.forEach(function (f) {
+        var area = el("textarea", { "aria-label": f[1], disabled: locked,
+          oninput: function () { s.fields[f[0]] = area.value; save(); ready(); } });
+        area.value = s.fields[f[0]] || "";
+        inputs[f[0]] = area;
+        wrap.appendChild(el("div", { class: "field" }, el("label", null, f[1]), area));
+      });
+
+      var row = el("div", { class: "row" });
+      wrap.appendChild(row);
+      if (!locked) {
+        var lockBtn = el("button", { class: "btn primary", type: "button", onclick: function () {
+          s.lockedAt = now(); save(); draw(); maybeFinish();
+        } }, s.sourceAt ? "Lock the changed line" : "Lock this line");
+        row.appendChild(lockBtn);
+        var ready = function () {
+          lockBtn.disabled = FIELDS.some(function (f) { return !(s.fields[f[0]] || "").trim(); });
+        };
+        ready();
+        if (s.changed) row.appendChild(el("span", null, "Changed after the source was opened: +1 at most."));
+      } else {
+        c.sources.forEach(function (src) {
+          row.appendChild(el("a", { class: "explorer-link", href: src[1], target: "_blank", rel: "noopener", onclick: function () {
+            if (!s.sourceAt) { s.sourceAt = now(); save(); setTimeout(draw, 0); }
+          } }, src[0]));
+        });
+        if (s.sourceAt) {
+          row.appendChild(el("button", { class: "btn", type: "button", onclick: function () {
+            if (!confirm("Change this line? A line changed after its source was opened scores +1 at most.")) return;
+            s.lockedAt = null; s.changed = true; save(); draw();
+          } }, "Change this line"));
+        }
+        if (s.changed) row.appendChild(el("span", null, "Changed after the source was opened: +1 at most."));
+      }
+      return wrap;
+    }
+
+    function record() {
+      var t = el("table", { class: "record" });
+      t.appendChild(el("tr", null, el("th", null, "Case"), el("th", null, "Locked"), el("th", null, "Source opened"), el("th", null, "Changed after source")));
+      CASES.forEach(function (c) {
+        var s = cases[c.id];
+        t.appendChild(el("tr", null, el("td", null, c.title), el("td", null, s.lockedAt || "—"),
+          el("td", null, s.sourceAt || "—"), el("td", null, s.changed ? "yes (+1 at most)" : "no")));
+      });
+      return el("div", null, el("h3", null, "The team’s record (for the instructor)"), t);
+    }
+
+    function maybeFinish() {
+      if (!allLocked()) { api.say("Lock all three lines to go on."); return; }
+      api.finish({
+        choice: 2,
+        note: "<p>All three lines are locked. Open each source to confirm your line; your instructor scores the three " +
+          "from this page’s record.</p>" +
+          "<p>In every case the money moved only as the contract’s code allowed, and only for whoever its code " +
+          "allowed. A contract has no key of its own: money leaving shows that someone was allowed to call " +
+          "something, so ask who, and who allowed them.</p>"
+      });
+    }
+
+    draw();
+    if (allLocked()) maybeFinish(); else api.say("Lock all three lines to go on.");
+  }
+
+  /* ---- Shell config ---- */
+  LabShell.start({
+    id: "find-the-line",
+    title: "Find the line",
+    slide: {
+      title: "Three patterns in a trace look different",
+      href: "../../../lessons/forensics/10-FO-flash_loans_reentrancy_oracles.html#/three-patterns-in-a-trace-look-different"
+    },
+    steps: {
+      "case": {
+        html:
+          "<p>An agent forwards three complaints from one week (made up for the game):</p>" +
+          "<blockquote>“A staking site took all my tokens. I only clicked claim.”</blockquote>" +
+          "<blockquote>“I withdrew 10 ETH from a vault and got 1 back.”</blockquote>" +
+          "<blockquote>“Someone borrowed 2,000 ETH from our pool in one transaction. Were we attacked?”</blockquote>" +
+          "<p>All three are on the course’s exploit chain, after the vault you just replayed.</p>"
+      },
+      commit: {
+        question: "Three more contracts lost money, or seemed to. In how many did the contract’s code have a bug?",
+        choices: [
+          "Three: money left, so the code failed",
+          "Two: the flash loan was repaid",
+          "It depends on who called what, and who allowed them: read the transactions",
+          "None can be told until the source is read"
+        ]
+      },
+      "do": {
+        render: renderDo
+      },
+      name: {
+        term: "access control",
+        parts: "access (the right to call a function) + control (the rule that grants it)",
+        plain: "Who a contract lets do each thing. onlyOwner lets one address in; an approval lets a spender move a " +
+          "holder’s tokens; a function with no check lets anyone in."
+      },
+      explorer: {
+        html:
+          "<p>Read each transaction page in this order:</p>" +
+          "<ol>" +
+            "<li><strong>The sender</strong>, the contract and the function called (decoded from the verified source).</li>" +
+            "<li><strong>The internal transfers</strong> in the trace.</li>" +
+            "<li><strong>The Logs tab.</strong></li>" +
+          "</ol>" +
+          "<p>In the staking case, the contract’s own event is <code>RewardsClaimed</code>: it is the contract’s word " +
+          "for what happened. The token’s <code>Transfer</code> from the complainant to the treasury, beside it, is " +
+          "what moved.</p>" +
+          "<p>In the vault case, the owner’s call writes <code>WithdrawFeeSet(9000)</code>, and the withdrawal’s " +
+          "<code>Withdrawal</code> event records the 9 ETH fee.</p>" +
+          "<p class='row'>" +
+            "<a class='explorer-link' href='" + EXPLOIT_HOST + "block/23' target='_blank' rel='noopener'>Block 23</a> " +
+            "<a class='explorer-link' href='" + EXPLOIT_HOST + "block/26' target='_blank' rel='noopener'>Block 26</a> " +
+            "<a class='explorer-link' href='" + EXPLOIT_HOST + "block/27' target='_blank' rel='noopener'>Block 27</a> " +
+            "<a class='explorer-link' href='/labs/cross-chain/exploit-fallback/' target='_blank' rel='noopener'>Saved pages (fallback)</a>" +
+          "</p>"
+      },
+      twist: {
+        html:
+          "<p>The vault project’s page (made up for the game) says its vault is time-locked: every deposit is held " +
+          "for one day before it can be withdrawn.</p>",
+        question: "Does the timelock protect depositors from the fee change?",
+        choices: [
+          "Yes: fee changes wait out the delay",
+          "No: the delay holds the depositors’ withdrawals, and the owner’s settings take effect at once",
+          "Yes: the code caps the fee",
+          "Can’t tell without the owner’s key"
+        ],
+        answer: 1,
+        why: "The delay is checked only in withdraw. setWithdrawFeeBps takes effect in the block it is called: the " +
+          "owner raised the fee in block 26, twelve seconds before the deposit unlocked. setUnlockDelay has no cap " +
+          "at all, so the same owner can also keep depositors in. The cap is 90%, the fee the owner set. Read the " +
+          "access control, not the contract’s name or its page."
+      },
+      tell: {
+        prompt: "Tell the agent how the vault’s depositor lost 9 ETH.",
+        example: "In block 26 the vault’s owner raised its withdrawal fee to 90%, the most its code allows; in block " +
+          "27 a depositor withdrew 10 ETH, received 1 ETH, and 9 ETH went to the owner’s treasury. No code failed: " +
+          "the contract lets its owner set the fee at any time, and only the owner (High confidence: the two " +
+          "transactions and the verified source agree). It fits a rug pull: the owner’s power used against the " +
+          "depositors."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

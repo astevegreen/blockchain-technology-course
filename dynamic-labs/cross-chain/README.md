@@ -37,7 +37,7 @@ prefix stripped):
 
 - `exploit-gateway` is the shared explorer gateway (`explorer/gateway/gateway.py`) pointed at the
   exploit chain. It refuses signed transactions from the build script's accounts (deployer, attacker,
-  victim, drainer). It serves the exploit-chain fallback pages and the vendor scripts.
+  victim, staking deployer). It serves the exploit-chain fallback pages and the vendor scripts.
 
 - `exploit-otterscan` is Otterscan v2.11.0 with Sourcify verification from
   `exploit/chain/sourcify/`. The router sends it all non-API traffic on `exploit.<host>:8445`.
@@ -59,14 +59,18 @@ then `python build/saved_results.py` (DuckDB 1.4.3) to rewrite the saved results
 
 `exploit/chain/course-chain.json` is the frozen Anvil state, built by `exploit/chain/build-chain.sh`
 (which runs `quizes/exploit-build-steps.sh` in a Foundry container). The chain has 32 blocks with
-deployments, deposits, the reentrancy attack, replays against a fixed vault, an approval drain, a
-fee rug and a clean flash loan. `exploit/chain/addresses.env` lists every contract address and the
-key transactions.
+deployments, deposits, the reentrancy attack, replays against a fixed vault, and
+the three cases of the Find the line game (blocks 19-32: an approval, an owner's fee change and a
+clean flash loan). `exploit/chain/addresses.env` lists every contract address. The game's
+contracts carry neutral names (`StakingRewards`, `TimelockVault`), since Sourcify shows the name.
 
 The prediction lab (`blockchain-course/assets/labs/name-the-money-and-the-flaw/`) links to the
-exploit chain's Otterscan at `exploit.<host>:8445`. The answer key is
-`quizes/EXPLOIT_ANSWERS.md` and the build script is `quizes/exploit-build-steps.sh`; both are in
-`student-exclude.txt`.
+exploit chain's Otterscan at `exploit.<host>:8445`. So does the team game that follows it,
+Find the line (`blockchain-course/assets/labs/find-the-line/`, design card
+`docs/lab-cards/find-the-line.md`): three complaints, each answered by locking a line on the team
+page before its Sourcify source opens. The answer keys are `quizes/EXPLOIT_ANSWERS.md` and
+`quizes/FIND_THE_LINE_ANSWERS.md`, and the build script is `quizes/exploit-build-steps.sh`; all
+three are in `student-exclude.txt` (the whole `quizes/` folder).
 
 ## Tests
 

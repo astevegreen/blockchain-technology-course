@@ -50,6 +50,10 @@ slide index), which is never listed here.
 
 - `dynamic-labs/cross-chain/lab.yaml` memory_mb (90) and approx_download_mb (170) are estimates, not measured on a
   student release. Measure after the next release build that includes the exploit services. [11 Nov 2026, exploit build]
+- The glossary lists "Access control (smart contracts)" only as an alias of the permissioned-ledger entry (04-DS);
+  the Find the line card (`docs/lab-cards/find-the-line.md`, line 5) wants the alias given its own definition (who a
+  contract lets do each thing: `onlyOwner`, an approval, no check). Needs the glossary pipeline. [11 Nov 2026, Find the
+  line build]
 
 ## Notion and documents
 - `docs/analysis/2026-11-static-labs-review.md:28` still says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP

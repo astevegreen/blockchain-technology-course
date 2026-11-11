@@ -338,5 +338,88 @@ class ExploitChainLiveRegressionTests(unittest.TestCase):
         self.assertIn("VulnerableBankVault", resp.text)
 
 
+    # ---- Find the line (blocks 19-32; card docs/lab-cards/find-the-line.md) ----
+    # The game names no transaction hash (a hash in addresses.env would point at the lines), so these look the
+    # transactions up by block. The key they check is quizes/FIND_THE_LINE_ANSWERS.md.
+
+    TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+    WITHDRAWAL_FEE = "0xdf273cb619d95419a9cd0ec88123a0538c85064229baa6363788f743fff90deb"
+    WITHDRAW_FEE_SET = "0x0df50a046e7f9e3be935db05f28219bf3f31635fa92255aae45b460d3167583c"
+
+    def _block_tx(self, number: int) -> tuple[dict, dict]:
+        """The one transaction in a block, and its receipt."""
+        block = self.exploit_post_rpc("eth_getBlockByNumber", hex(number), True)
+        self.assertEqual(len(block["transactions"]), 1, number)
+        tx = block["transactions"][0]
+        return tx, self.exploit_post_rpc("eth_getTransactionReceipt", tx["hash"])
+
+    @staticmethod
+    def _word_address(word: str) -> str:
+        return "0x" + word[-40:]
+
+    def test_find_the_line_drain_is_two_transactions_from_the_complainant(self) -> None:
+        a8, staking, token = (self.ADDRESSES[k].lower() for k in ("A8", "STAKING", "TOKEN"))
+        approve, approve_receipt = self._block_tx(22)
+        self.assertEqual(approve["from"].lower(), a8)
+        self.assertEqual(approve["to"].lower(), token)
+        self.assertTrue(approve["input"].startswith("0x095ea7b3"))  # approve(address,uint256)
+        self.assertEqual(self._word_address(approve["input"][10:74]), staking)
+        self.assertEqual(approve_receipt["status"], "0x1")
+        claim, claim_receipt = self._block_tx(23)
+        self.assertEqual(claim["from"].lower(), a8)
+        self.assertEqual(claim["to"].lower(), staking)
+        self.assertTrue(claim["input"].startswith("0x9a99b4f0"))  # claimRewards(address,uint256)
+        self.assertEqual(claim_receipt["status"], "0x1")
+        moved = [log for log in claim_receipt["logs"]
+                 if log["address"].lower() == token and log["topics"][0] == self.TRANSFER]
+        self.assertEqual(len(moved), 1)
+        self.assertEqual(self._word_address(moved[0]["topics"][1]), a8)
+        self.assertEqual(self._word_address(moved[0]["topics"][2]), self.ADDRESSES["A9"].lower())
+        self.assertEqual(int(moved[0]["data"], 16), 1000 * 10**18)
+
+    def test_find_the_line_rug_is_the_owners_fee_change(self) -> None:
+        a0, vault = self.ADDRESSES["A0"].lower(), self.ADDRESSES["TIMELOCK_VAULT"].lower()
+        deposit, deposit_receipt = self._block_tx(25)
+        self.assertEqual(deposit["to"].lower(), vault)
+        self.assertEqual(int(deposit["value"], 16), 10 * 10**18)
+        self.assertEqual(deposit_receipt["status"], "0x1")
+        fee, fee_receipt = self._block_tx(26)
+        self.assertEqual(fee["from"].lower(), a0)
+        self.assertEqual(fee["to"].lower(), vault)
+        self.assertTrue(fee["input"].startswith("0x92092809"))  # setWithdrawFeeBps(uint256)
+        self.assertEqual(fee_receipt["status"], "0x1")
+        self.assertEqual([log["topics"][0] for log in fee_receipt["logs"]], [self.WITHDRAW_FEE_SET])
+        withdraw, withdraw_receipt = self._block_tx(27)
+        self.assertEqual(withdraw["from"].lower(), self.ADDRESSES["A8"].lower())
+        self.assertEqual(withdraw_receipt["status"], "0x1")
+        logs = [log for log in withdraw_receipt["logs"] if log["topics"][0] == self.WITHDRAWAL_FEE]
+        self.assertEqual(len(logs), 1)
+        data = logs[0]["data"][2:]
+        self.assertEqual(int(data[0:64], 16), 10 * 10**18)   # amount
+        self.assertEqual(int(data[64:128], 16), 9 * 10**18)  # fee to the treasury
+
+    def test_find_the_line_loan_is_repaid(self) -> None:
+        loan, receipt = self._block_tx(30)
+        self.assertEqual(loan["to"].lower(), self.ADDRESSES["BORROWER"].lower())
+        self.assertTrue(loan["input"].startswith("0xc5ebeaec"))  # borrow(uint256)
+        self.assertEqual(receipt["status"], "0x1")
+
+    def test_find_the_line_sources_carry_neutral_names(self) -> None:
+        for key, name in (("STAKING", "StakingRewards"), ("TIMELOCK_VAULT", "TimelockVault")):
+            resp = self.exploit_get(
+                f"/sourcify/contracts/full_match/31337/{self.ADDRESSES[key]}/metadata.json")
+            self.assertEqual(resp.status_code, 200, key)
+            self.assertIn(name, resp.text)
+            for giveaway in ("ApprovalDrainer", "TimelockRugVault", "Drainer", "Rug"):
+                self.assertNotIn(giveaway, resp.text, key)
+            source = self.exploit_get(
+                f"/sourcify/contracts/full_match/31337/{self.ADDRESSES[key]}/sources/src/{name}.sol")
+            self.assertEqual(source.status_code, 200, key)
+
+    def test_worksheet_links_find_the_line(self) -> None:
+        lab = get("/labs/cross-chain/lab/")
+        self.assertIn("/assets/labs/find-the-line/", lab.text)
+
+
 if __name__ == "__main__":
     unittest.main()
