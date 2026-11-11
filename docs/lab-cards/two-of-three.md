@@ -110,3 +110,5 @@ the same change.
 ## Approval
 
 - Owner: selected "Terminal scavenger hunt,Two-of-three,Spot the fake,Find the exchange" (11 Nov 2026)
+
+Built in ff3fe359 (11 Nov 2026).
