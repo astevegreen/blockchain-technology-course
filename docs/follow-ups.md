@@ -20,10 +20,10 @@ slide index), which is never listed here.
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
 - Day 8's lab has no worked example of following funds across a bridge yet (`docs/build-spec.md`, Additions,
-  "Following funds across a bridge"). The expert cannot supply material, so its three methods (destination chain
-  and recipient from the deposit's input data or the bridge's event, the bridge's own explorer, amount and timing
-  matching) are still to be sourced from public material, each with a `Blockchain.bib` key [10 Nov 2026, expert
-  feedback review]
+  "Following funds across a bridge"). Its three methods are now sourced from public material, each step with a
+  `Blockchain.bib` key, with their limits and the Bybit and Kelp transactions to use, in
+  `docs/analysis/2026-11-bridge-tracing-sources.md`; only the build remains (step 6 of the lab plan)
+  [10 Nov 2026, expert feedback review; sourced 10 Nov 2026]
 - Two open Dependabot alerts on `main`, both in `dynamic-labs/ethereum_lab/package-lock.json`: `tmp` (high, #275)
   and `minimatch` (moderate, #194), open since 7-8 Nov [10 Nov 2026, push output while recording an expert-feedback
   decision]
