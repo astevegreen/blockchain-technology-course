@@ -116,3 +116,5 @@ T-echo, Desk X, the vendors, the news story, the dates and the flows are made up
 ## Approval
 
 - Owner: selected "Bitcoin trace decoys", "Echo hunt", "Name the money and the flaw" (10 Nov 2026)
+
+- Built in d45bae2 (echo-hunt lab, 11 Nov 2026)
