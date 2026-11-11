@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find the sandwich</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.ctl { display: grid; grid-template-columns: 16em 1fr 4em; gap: .5em; align-items: center; margin: .4em 0; }
+.ctl input[type=range] { accent-color: var(--accent-strong); width: 100%; }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.tx { border-collapse: collapse; margin: .4em 0; }
+.tx td, .tx th { padding: .2em .8em .2em 0; text-align: left; vertical-align: top; }
+.tx tr.mark { background: var(--panel); }
+.take { margin: .6em 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/find-the-sandwich.md. Blocks A and B, the pool X/USDC, the addresses, the other
+   transactions, the 60 USDC cost and every amount are made up for this lab. The amounts are worked from the
+   constant product x*y = k with the 0.3% fee, and the page computes the slider's values itself (no network). */
+var POOL = { x: 1000000, y: 200000 };      // reserves of X and USDC before the block
+var FEE = 0.997, SUBJECT_IN = 10000, COST = 60;
+var BOT = "0xB07…e2", SUBJECT = "0x5c1…a9", TRADER_A = "0xA7…41", TRADER_C = "0xC3…9d";
+
+/** Buy X with dy USDC from a pool { x, y }: returns what came out and the pool after. */
+function buyX(p, dy) {
+  var out = p.x * dy * FEE / (p.y + dy * FEE);
+  return { out: out, pool: { x: p.x - out, y: p.y + dy } };
+}
+/** Sell dx X to the pool: returns the USDC that came out and the pool after. */
+function sellX(p, dx) {
+  var out = p.y * dx * FEE / (p.x + dx * FEE);
+  return { out: out, pool: { x: p.x + dx, y: p.y - out } };
+}
+function price(p) { return p.y / p.x; }
+function p4(n) { return n.toFixed(4); }
+function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+var QUOTE = buyX(POOL, SUBJECT_IN).out;      // what the subject's quote promised: 47,483 X
+var MIN_OUT = Math.round(QUOTE * 0.97);      // amountOutMin at 3%: 46,058 X
+
+/** Block A: the bot buys with 3,149 USDC, the subject's swap, the bot sells the same X back. */
+function blockA() {
+  var buy = buyX(POOL, 3149), subj = buyX(buy.pool, SUBJECT_IN), bx = Math.round(buy.out), sell = sellX(subj.pool, bx);
+  return [
+    { pos: 3, who: BOT, whoClass: "bot", inCoin: ["input", fmt(3149) + " USDC"], outCoin: ["output", fmt(bx) + " X"], price: price(buy.pool) },
+    { pos: 4, who: SUBJECT, whoClass: "subject", inCoin: ["input", fmt(SUBJECT_IN) + " USDC"], outCoin: ["output", fmt(subj.out) + " X"], price: price(subj.pool) },
+    { pos: 5, who: BOT, whoClass: "bot", inCoin: ["input", fmt(bx) + " X"], outCoin: ["output", fmt(sell.out) + " USDC"], price: price(sell.pool) }
+  ];
+}
+/** Block B: another trader buys 1,999 USDC of X, the subject's swap, a third trader sells 12,000 X it held long before. */
+function blockB() {
+  var buy = buyX(POOL, 1999), subj = buyX(buy.pool, SUBJECT_IN), sell = sellX(subj.pool, 12000);
+  return [
+    { pos: 3, who: TRADER_A, inCoin: ["input", fmt(1999) + " USDC"], outCoin: ["output", fmt(buy.out) + " X"], price: price(buy.pool) },
+    { pos: 4, who: SUBJECT, inCoin: ["input", fmt(SUBJECT_IN) + " USDC"], outCoin: ["output", fmt(subj.out) + " X"], price: price(subj.pool) },
+    { pos: 5, who: TRADER_C, inCoin: ["input", fmt(12000) + " X"], outCoin: ["output", fmt(sell.out) + " USDC"], price: price(sell.pool) }
+  ];
+}
+/** The most the bot can take at a tolerance t: it pushes the price until the subject gets exactly its minimum. */
+function botTake(t) {
+  var min = QUOTE * (1 - t), lo = 0, hi = 100000, i;
+  for (i = 0; i < 80; i++) {
+    var mid = (lo + hi) / 2, b = buyX(POOL, mid);
+    if (buyX(b.pool, SUBJECT_IN).out >= min) lo = mid; else hi = mid;
+  }
+  var b2 = buyX(POOL, lo), s2 = buyX(b2.pool, SUBJECT_IN);
+  return sellX(s2.pool, b2.out).out - lo;
+}
+function showTol() { document.getElementById("tol-n").textContent = document.getElementById("tol").value + "%"; showTake(); }
+function showTake() { document.getElementById("tol-out").textContent = takeText(Number(document.getElementById("tol").value) / 100); }
+function takeText(t) {
+  var take = botTake(t), net = take - COST;
+  return "At " + (t * 100) + "% the bot can take about " + Math.round(take) + " USDC. After its " + COST + " USDC cost it " +
+    (net > 0 ? "keeps about " + Math.round(net) + " USDC, so the sandwich is worth running." : "is " + Math.round(-net) + " USDC short, so it is not worth running.");
+}
+
+/** api.el takes children as arguments, not an array. */
+function kids(api, tag, attrs, list) { return api.el.apply(null, [tag, attrs].concat(list)); }
+
+function row(api, tx, shownPrice) {
+  var who = api.el("span", { class: "addr" }, tx.who);
+  return api.el("tr", null, api.el("td", null, String(tx.pos)), api.el("td", null, who),
+    api.el("td", null, api.coin({ role: tx.inCoin[0], amount: tx.inCoin[1] })),
+    api.el("td", null, api.coin({ role: tx.outCoin[0], amount: tx.outCoin[1] })),
+    api.el("td", null, shownPrice ? p4(tx.price) : ""));
+}
+function head(api) {
+  return kids(api, "tr", null, ["Position", "Sender", "Went in", "Came out", "Pool price after (USDC per X)"].map(function (h) { return api.el("th", null, h); }));
+}
+
+LabShell.start({
+  id: "find-the-sandwich",
+  title: "Find the sandwich",
+  slide: { title: "A sandwich: three transactions, one victim", href: "../../../lessons/ethereum/03-EF-ethereum_network.html#/a-sandwich-three-transactions-one-victim" },
+  steps: {
+    "case": { html:
+      "<p>An agent is tracing a subject's funds. In one block the subject swaps 10,000 USDC for a token. The address that traded just before the subject also traded just after.</p>" +
+      "<p>The agent says: \"That has to be a partner. Should we add it to the case?\"</p>" +
+      "<p>The block, the pool, the token and every address are made up for this lab.</p>" },
+    commit: {
+      question: "In block A the subject's swap of 10,000 USDC for token X sits at position 4. Address 0xB07…e2 bought X at position 3 and sold X at position 5, in the same pool. Is 0xB07…e2 working with the subject?",
+      choices: [
+        "Yes: a partner trading in concert with the subject.",
+        "It is the counterparty that sold the subject the X.",
+        "No: a third party that took value from the subject's trade.",
+        "Position alone says nothing."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var A = blockA(), B = blockB(), shown = 0, done = { a: false, b: false };
+      var tblA = api.el("table", { class: "tx" }, head(api));
+      var stepBtn = api.el("button", { class: "btn primary", type: "button" }, "Run the next swap in the pool");
+      var partA = api.el("div"), partB = api.el("div"), partC = api.el("div");
+
+      el.appendChild(api.el("p", null, "Block A, pool X/USDC. The pool starts at " + p4(price(POOL)) + " USDC per X. Step through its swaps in position order. The block's other transactions are not in this pool."));
+      el.appendChild(tblA);
+      el.appendChild(stepBtn);
+      el.appendChild(partA); el.appendChild(partB); el.appendChild(partC);
+
+      stepBtn.addEventListener("click", function () {
+        tblA.appendChild(row(api, A[shown], true));
+        shown++;
+        if (shown === A.length) { stepBtn.disabled = true; askA(); }
+      });
+
+      function askA() {
+        var boxes = [], list = api.el("fieldset", { class: "choices" }, api.el("legend", null, "Mark the positions of the sandwich (the block has positions 1 to 7)."));
+        for (var p = 1; p <= 7; p++) {
+          (function (p) {
+            var cb = api.el("input", { type: "checkbox", value: p });
+            boxes.push(cb);
+            list.appendChild(api.el("label", { class: "choice" }, cb, api.el("span", null, "Position " + p)));
+          })(p);
+        }
+        var evid = [
+          ["One address is on both sides of the subject.", true],
+          ["The sale undoes the purchase: the bot ends with the USDC it started with, plus the take.", true],
+          ["The subject received its minimum, " + fmt(MIN_OUT) + " X, against the " + fmt(QUOTE) + " X its quote promised.", true],
+          ["The subject sent X to the bot.", false]
+        ];
+        var ev = api.el("fieldset", { class: "choices" }, api.el("legend", null, "Tick the evidence that makes it a sandwich."));
+        var evBoxes = evid.map(function (e) {
+          var cb = api.el("input", { type: "checkbox" });
+          ev.appendChild(api.el("label", { class: "choice" }, cb, api.el("span", null, e[0])));
+          return cb;
+        });
+        var out = api.el("p", { role: "status" });
+        var btn = api.el("button", { class: "btn primary", type: "button", onclick: function () {
+          var marked = boxes.filter(function (b) { return b.checked; }).map(function (b) { return Number(b.value); }).join(",");
+          var evOk = evBoxes.every(function (b, i) { return b.checked === evid[i][1]; });
+          if (marked !== "3,4,5") { out.textContent = "Not yet: look again at which positions the bot and the subject swapped at."; return; }
+          if (!evOk) { out.textContent = "Positions right. The evidence is not: tick the facts you can read from the swaps above, and no others."; return; }
+          var take = A[2].outCoin[1].replace(/\D/g, "") - 3149;
+          out.textContent = "Right. The subject traded with the pool, not with the bot (so it was not the counterparty); about " + take + " USDC moved from the subject's trade to the bot. Now a look-alike.";
+          btn.disabled = true; done.a = true; askB();
+        } }, "Check my marks");
+        partA.appendChild(list); partA.appendChild(ev); partA.appendChild(btn); partA.appendChild(out);
+      }
+
+      function askB() {
+        var tbl = api.el("table", { class: "tx" }, head(api));
+        B.forEach(function (t) { tbl.appendChild(row(api, t, true)); });
+        var pick = api.el("select", { "aria-label": "Is block B a sandwich?" },
+          api.el("option", { value: "" }, "Choose"), api.el("option", { value: "yes" }, "A sandwich"), api.el("option", { value: "no" }, "No sandwich"));
+        var out = api.el("p", { role: "status" });
+        var btn = api.el("button", { class: "btn primary", type: "button", onclick: function () {
+          if (pick.value === "") return;
+          if (pick.value === "yes") { out.textContent = "Look at the senders: 0xA7…41 and 0xC3…9d are two addresses. Try again."; return; }
+          out.textContent = "Right: no sandwich. Two addresses, the sale is of X held long before (12,000 X, not the " + fmt(B[0].outCoin[1].replace(/\D/g, "")) + " X bought at position 3), and the subject got " + fmt(buyX(buyX(POOL, 1999).pool, SUBJECT_IN).out) + " X, above its minimum of " + fmt(MIN_OUT) + ". Neighbours, not partners and not a bot.";
+          btn.disabled = true; pick.disabled = true; done.b = true; askC();
+        } }, "Check");
+        partB.appendChild(api.el("p", null, "Block B, the same pool and subject, another day. Is it a sandwich?"));
+        partB.appendChild(tbl); partB.appendChild(pick); partB.appendChild(btn); partB.appendChild(out);
+      }
+
+      function askC() {
+        var sel = kids(api, "select", { "aria-label": "Which Swap field is what the subject received?" },
+          [api.el("option", { value: "" }, "Choose a field")].concat(["amount0In", "amount1Out", "to", "amountOutMin"].map(function (f) { return api.el("option", { value: f }, f); })));
+        var out = api.el("p", { role: "status" });
+        var btn = api.el("button", { class: "btn primary", type: "button", onclick: function () {
+          if (!sel.value) return;
+          if (sel.value !== "amount1Out") { out.textContent = "Not that one. amount0In is what went in; amountOutMin is the floor the subject set; to is who receives."; return; }
+          out.textContent = "Right: amount1Out is the X that came out of the pool. The subject's amountOutMin sits beside it: " + fmt(MIN_OUT) + " X, and the subject received " + fmt(A[1].outCoin[1].replace(/\D/g, "")) + " X.";
+          btn.disabled = true; sel.disabled = true;
+          api.finish({ choice: 2, note: "<p>The bot is a third party that took value from the subject's trade. The pattern shows it: one address on both sides, the sale undoing the purchase, and the subject held to its minimum. Position alone shows nothing: block B has the same neighbours and no sandwich.</p><p class=\"src\">Sources: <code>@ethereumorg_mev_2026</code>; <code>@uniswaplabs_uniswapv2router02_2020</code>; <code>@uniswap_v2pair_2020</code> (the <code>Swap</code> log); <code>@adams_uniswapv2core_2020</code> (the amounts are worked from the constant product with the 0.3% fee). Every block, address and amount here is made up.</p>" });
+        } }, "Check");
+        partC.appendChild(api.el("div", { class: "panel" },
+          api.el("h3", null, "Read the Swap log of the subject's swap (position 4, block A)"),
+          api.el("p", null, "amount0In = " + fmt(SUBJECT_IN) + " USDC; amount1Out = " + fmt(A[1].outCoin[1].replace(/\D/g, "")) + " X; to = ", api.el("span", { class: "addr" }, SUBJECT), "; the swap's input has amountOutMin = " + fmt(MIN_OUT) + " X."),
+          api.el("p", null, "Which field is what the subject received?"), sel, btn, out));
+      }
+    } },
+    name: {
+      term: "slippage tolerance",
+      parts: "slippage (the change in price while a swap waits to run) + tolerance (how much of it the trader accepts)",
+      plain: "<p>The worst price the trader agreed to, written into the swap as its minimum output; below it the swap fails. A sandwich bot pushes the price to just inside it, so the tolerance sets how much the bot can take.</p><p class=\"src\">Sources: <code>@uniswaplabs_understandingswaps_2026</code> (read 10 Nov 2026); <code>@uniswaplabs_uniswapv2router02_2020</code>.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var A = blockA(), H = ["9d41c07be2f358a60c1e74b95d02a3f8", "e703b5a19c26d48f0a7b31e5c9d684f2", "1b8f60d3a4e2975c0f3b6a8d41e95c07"];
+      var table = api.el("table", { class: "tx" }, kids(api, "tr", null, ["Position", "Txn hash", "From", "To", "Method"].map(function (h) { return api.el("th", null, h); })));
+      var rows = [
+        [3, H[0], BOT, "router", "swapExactTokensForTokens"],
+        [4, H[1], SUBJECT, "router", "swapExactTokensForTokens"],
+        [5, H[2], BOT, "router", "swapExactTokensForTokens"]
+      ];
+      rows.forEach(function (r) {
+        table.appendChild(api.el("tr", null, api.el("td", null, String(r[0])),
+          api.el("td", null, api.el("span", { class: "hash" }, api.short(r[1], 4))),
+          api.el("td", null, api.el("span", { class: "addr" }, r[2])), api.el("td", null, r[3]), api.el("td", null, r[4])));
+      });
+      el.appendChild(api.el("p", null, "Block A on an Otterscan-style block page, as an analyst meets it (a copy made up for this lab, not a live page). Open positions 3, 4 and 5."));
+      el.appendChild(table);
+      el.appendChild(api.el("ul", null,
+        api.el("li", null, "The same From at positions 3 and 5."),
+        api.el("li", null, "Each Swap log comes from the same pool."),
+        api.el("li", null, "The token Transfer logs show the " + A[0].outCoin[1] + " bought at position 3 leaving at position 5."),
+        api.el("li", null, "The subject's decoded input shows its amountOutMin (" + fmt(MIN_OUT) + " X); its X Transfer matches the " + A[1].outCoin[1] + " it received.")));
+    } },
+    twist: {
+      html: "<p>One thing changes: the subject's slippage tolerance. Slide it and watch the most the bot can take. The bot's cost for each sandwich (fees and the payment to the builder) is made up: about <span class=\"coin fee\"><span class=\"vh\">fee: </span><span class=\"amount\">" + COST + " USDC</span></span>.</p>" +
+        "<div class=\"panel\"><h3>The subject's tolerance (made-up figures)</h3>" +
+        "<p><label for=\"tol\">Tolerance: </label><input type=\"range\" id=\"tol\" min=\"0.5\" max=\"3\" step=\"0.5\" value=\"3\" style=\"accent-color: var(--accent-strong)\" oninput=\"showTol()\"> <output id=\"tol-n\">3%</output></p>" +
+        "<p id=\"tol-out\" class=\"take\" role=\"status\">" + takeText(0.03) + "</p></div>",
+      question: "At 0.5%, would block A hold a sandwich?",
+      choices: [
+        "Yes: the bot still takes about 49 USDC from the trade.",
+        "No: the most the bot can take is below what the sandwich costs it.",
+        "No: the router refuses any tolerance below 1%.",
+        "Yes: the bot just raises its bid to the builder."
+      ],
+      answer: 1,
+      why: "<p>A searcher pays up to what the trade earns it and no more. At 0.5% the take is about 49 USDC against a cost of about 60, so the sandwich is not worth running. A tight tolerance has its own cost: the swap fails if the price moves for any reason.</p><p class=\"src\">Sources: <code>@ethereumorg_mev_2026</code> (a searcher would lose money if it paid more than it makes); <code>@uniswaplabs_understandingswaps_2026</code>. The bot's cost is made up for this lab.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks whether 0xB07…e2 is the subject's partner. Say it in one sentence, with a confidence word.</p>",
+      example: "In block A the subject's swap at position 4 was sandwiched by 0xB07…e2, an MEV bot that bought 15,455 X just before it and sold the same 15,455 X just after, taking about 294 USDC from the trade (Moderate confidence: one address on both sides, and the sale undoes the purchase, all read from these three transactions; the bot's other blocks would be a second line). The bot was a third party, not the subject's counterparty or partner."
+    }
+  }
+});
+</script>
+</body>
+</html>
