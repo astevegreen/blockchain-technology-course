@@ -108,3 +108,4 @@ and Ronin's are real.
 ## Approval
 
 - Owner: "Approve, day 8 ① (Recommended)" (11 Nov 2026): opens on day 8 lesson ①, approvals, drainers and poisoning
+- Built in f4c34be5 (11 Nov 2026).
