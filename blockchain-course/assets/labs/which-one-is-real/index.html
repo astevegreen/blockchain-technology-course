@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which one is real?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.ring { display: grid; grid-template-columns: repeat(auto-fill, minmax(13em, 1fr)); gap: .5em; margin: .6em 0; padding: 0; list-style: none; }
+.ring button { width: 100%; text-align: left; cursor: pointer; background: none; border: 0; padding: 0; font: inherit; color: inherit; }
+.ring button[aria-pressed="true"] .coin { outline: 3px solid var(--ink); outline-offset: 2px; }
+.ring button:disabled { cursor: default; }
+.ring .coin { width: 100%; box-sizing: border-box; justify-content: space-between; gap: .5em; }
+.ring .real .coin { outline: 3px double var(--ink); outline-offset: 2px; }
+.ring .tag { display: block; font-size: .8em; color: var(--ink-soft); }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.ctl { display: flex; flex-wrap: wrap; gap: .6em; align-items: center; margin: .6em 0; }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.explore .no { color: var(--ink-soft); font-style: italic; }
+.three { display: flex; flex-wrap: wrap; gap: .8em; margin: .6em 0; padding: 0; list-style: none; }
+.three li { display: flex; flex-direction: column; gap: .3em; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/which-one-is-real.md. The suspect, the swap, the ransom, both Monero transactions,
+   their rings, ages, appearance counts, key images and the made-up truth are invented for this lab, and the lab
+   says so. The ring order is shuffled on every run, so position never marks the real member. Nothing here is
+   drawn from a live Monero explorer; it runs offline. */
+
+/* The 2024 ring: ages in days, sorted newest first. The real member is the ninth newest (index 8). The counts are
+   how many other rings each member also sits in: every member is a real output other rings can use. The fewest
+   (1) is a decoy, so "fewest other rings" picks wrong. */
+var AGES = [1, 2, 4, 5, 9, 12, 19, 26, 41, 58, 77, 103, 140, 188, 260, 351];
+var COUNTS = [3, 5, 2, 7, 4, 6, 1, 8, 4, 9, 3, 6, 2, 5, 7, 3];
+var REAL = 8;
+var TXID = "5b2e" + "a07c41d93f68b215ce07d94a31f862be5047c9a1d83e6f20b47a95c1" + "91cd";
+var KEYIMG = "c4d8e1f6a2b39507d1e84f62a9b0c375";
+
+/** A made-up 12-hex-digit output key for member i (a small repeatable scramble, not a real key). */
+function memberKey(i, salt) {
+  var x = (i + 1) * 2654435761 + salt, s = "";
+  for (var k = 0; k < 12; k++) { x = (x * 1103515245 + 12345) % 2147483648; s += (x >> 8 & 15).toString(16); }
+  return s;
+}
+function shuffle(list) {
+  var a = list.slice();
+  for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+function ageText(d) { return d < 60 ? d + (d === 1 ? " day" : " days") + " old" : Math.round(d / 30) + " months old"; }
+
+LabShell.start({
+  id: "which-one-is-real",
+  title: "Which one is real?",
+  slide: { title: "Old Monero leaked: zero decoys, newest is real", href: "../../../lessons/forensics/07-FO-privacy_coins.html#/old-monero-leaked-zero-decoys-newest-is-real" },
+  steps: {
+    "case": { html:
+      "<p>A ransom was paid in Bitcoin. The trace reached a swap service, and the service's receipt shows the ransom left as Monero. " +
+      "The agent says: &ldquo;The vendor's tool says Monero is a dead end. Is there anything you can tell me about this transaction?&rdquo;</p>" +
+      "<p>The suspect, the swap service, the ransom and every transaction in this lab are made up.</p>" },
+    commit: {
+      question: "This 2024 Monero transaction is the suspect spending the ransom. Its one input has a ring of 16, listed with each member's age. Which member is the ransom's coin?",
+      choices: [
+        "The newest member, because the 2018 study found the newest was real.",
+        "The member that appears in the fewest other rings.",
+        "Undetermined: it is one of 16, and nothing on the chain picks one.",
+        "Nothing about this transaction can be said at all."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var order = shuffle(AGES.map(function (a, i) { return i; }));
+      var picked = null, tested = false;
+      var keys = AGES.map(function (a, i) { return memberKey(i, 7); });
+      var list = api.el("ul", { class: "ring", "aria-label": "The 16 ring members, in the order the transaction lists them" });
+      var btns = [];
+      var reason = api.el("select", { id: "reason", "aria-label": "The on-chain reason for your pick" },
+        api.el("option", { value: "" }, "Pick the reason…"),
+        api.el("option", { value: "age" }, "Its age"),
+        api.el("option", { value: "count" }, "How few other rings it appears in"),
+        api.el("option", { value: "pos" }, "Its position in the list"));
+      var testBtn = api.el("button", { class: "btn primary", type: "button", disabled: true }, "Test my reason");
+      var out = api.el("div", { role: "status" });
+
+      function ready() { testBtn.disabled = tested || picked === null || !reason.value; }
+      order.forEach(function (idx, pos) {
+        var b = api.el("button", { type: "button", "aria-pressed": "false", onclick: function () {
+          if (tested) return;
+          picked = idx;
+          btns.forEach(function (x) { x.b.setAttribute("aria-pressed", x.idx === idx ? "true" : "false"); });
+          ready();
+        } }, api.el("span", { class: "coin input" },
+          api.el("span", { class: "vh" }, "ring member " + (pos + 1) + ": "),
+          api.el("span", { class: "amount" }, api.short(keys[idx] + keys[idx], 3)),
+          api.el("span", { class: "who" }, ageText(AGES[idx]))));
+        var li = api.el("li", null, b);
+        btns.push({ b: b, li: li, idx: idx, pos: pos });
+        list.appendChild(li);
+      });
+      reason.addEventListener("change", ready);
+
+      testBtn.addEventListener("click", function () {
+        if (tested) return;
+        tested = true;
+        testBtn.disabled = true; reason.disabled = true;
+        btns.forEach(function (x) { x.b.disabled = true; });
+        var mine = btns.filter(function (x) { return x.idx === picked; })[0];
+        mine.b.querySelector(".coin").classList.add("spent");     // the pick turns grey: no reason holds
+        var real = btns.filter(function (x) { return x.idx === REAL; })[0];
+        var fewest = COUNTS.indexOf(Math.min.apply(null, COUNTS));
+        // every member's count goes on the member it describes
+        btns.forEach(function (x) {
+          x.b.querySelector(".who").textContent = ageText(AGES[x.idx]) + " · in " + COUNTS[x.idx] + " other ring" + (COUNTS[x.idx] > 1 ? "s" : "");
+        });
+        real.li.classList.add("real");
+        real.li.appendChild(api.el("span", { class: "tag" }, "The real one (made up)"));
+        var tests = {
+          age: "Age: the 2018 study measured early Monero, and today's decoys are not drawn like that. Here the real member is the ninth newest of 16, not the newest.",
+          count: "How often a member appears elsewhere: every member is a real output that other rings can use too. The counts now shown run from 1 to 9. The real member sits in " + COUNTS[REAL] + " other rings; the member in the fewest (" + COUNTS[fewest] + ") is a decoy.",
+          pos: "Position in the list: this lab shuffles the order on every run. The real member was number " + (real.pos + 1) + " this time, and will be somewhere else next time."
+        };
+        out.appendChild(api.el("p", null, api.el("strong", null, "Tested: none of these holds."), " The member you picked is greyed out."));
+        ["age", "count", "pos"].forEach(function (k) {
+          out.appendChild(api.el("p", null, (k === reason.value ? "Your reason. " : "") + tests[k]));
+        });
+        out.appendChild(api.el("p", null, picked === REAL
+          ? "You picked the real member, but nothing on the chain gave it to you: that was luck, and a lucky guess is not a finding. The made-up truth: the real member was the ninth newest."
+          : "The made-up truth: the real member was the ninth newest, not the newest. The chain never said so; only the lab knows."));
+
+        var panel = api.el("div", { class: "panel" }, api.el("h3", null, "Still shows: what can be quoted"));
+        var items = api.el("ul");
+        [["The transaction ID ", api.el("span", { class: "hash" }, api.short(TXID, 4))],
+          ["The block and the time it was mined: block 3,112,640, 14 May 2024 09:41 UTC (made up)"],
+          ["The fee: ", api.coin({ role: "fee", amount: "0.000041 XMR" })],
+          ["Its shape: one input and two outputs"],
+          ["The 16 ring members the input lists"],
+          ["The key image: ", api.el("span", { class: "key" }, api.short(KEYIMG, 5))]].forEach(function (parts) {
+          items.appendChild(api.el("li", null, parts[0], parts[1] || null));
+        });
+        panel.appendChild(items);
+        panel.appendChild(api.el("p", null, "The spender is hidden, and the transaction is still a dated, quotable record. The key image shows that an output was spent, never which member."));
+        out.appendChild(panel);
+
+        api.finish({ choice: 2, note:
+          "<p>Undetermined: the coin is one of 16, and nothing on the chain picks one. Decoys are real outputs drawn from the chain, so a member's age, history or place in the list cannot mark it as a decoy. Answer (d) is the belief the lab is aimed at: the spender is hidden, but the transaction is still on record.</p>" +
+          "<p class=\"src\">Sources: <code>@koe_zeromonerosecond_2020</code> (a ring signature proves that one member signed, not which; decoys are earlier outputs from the chain); <code>@monero_networkupgradejuly_2022</code> (rings of 16 since the August 2022 upgrade, as of 31 Oct 2026); <code>@monerocommunityundermit_moneroprivatekey_2025</code> (one key image per spent output); <code>@moser_empiricalanalysistraceability_2018</code>, secs. 1–2 (the study's 80% was early Monero). Confidence: <code>@odni_icd203_2015</code>.</p>" });
+      });
+
+      el.appendChild(api.el("p", null, "This is the 2024 transaction. Its ring is below, in the order the transaction lists it (shuffled each run; every key and age is made up). Whatever you predicted, bet on one member: click it, then say the on-chain reason you would give an agent. The lab will test the reason."));
+      el.appendChild(list);
+      el.appendChild(api.el("div", { class: "ctl" }, api.el("label", { for: "reason" }, "My reason: "), reason, testBtn));
+      el.appendChild(out);
+    } },
+    name: {
+      term: "mixin",
+      parts: "mix (blend in) + in (added to the ring)",
+      plain: "<p>A decoy, under the name the 2018 study and many tools use. A ring of 16 has 15 mixins. An input with zero mixins has a ring of one: it names the output it spent, like Bitcoin.</p><p class=\"src\">Source: <code>@moser_empiricalanalysistraceability_2018</code>, secs. 1–2.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var table = api.el("table", { class: "explore" });
+      function row(label, cell, no) {
+        table.appendChild(api.el("tr", null, api.el("th", null, label), api.el("td", no ? { class: "no" } : null, cell)));
+      }
+      row("Transaction ID", api.el("span", { class: "hash" }, api.short(TXID, 4)));
+      row("Block", "3,112,640 (made up)");
+      row("Time", "14 May 2024 09:41 UTC (made up)");
+      row("Fee", api.coin({ role: "fee", amount: "0.000041 XMR" }));
+      row("Inputs / outputs", "1 input, 2 outputs");
+      row("Input 1: ring", "16 members, with the key image below");
+      row("Input 1: key image", api.el("span", { class: "key" }, api.short(KEYIMG, 5)));
+      row("Output 1", "a one-time key; amount hidden", true);
+      row("Output 2", "a one-time key; amount hidden", true);
+      row("Sender", "not shown", true);
+      row("Receiver", "not shown", true);
+      row("Amounts", "not shown", true);
+      el.appendChild(api.el("p", null, "A Monero transaction page as an analyst meets it (drawn for this lab, not a live explorer)."));
+      el.appendChild(table);
+      el.appendChild(api.el("p", null, "Quote the first rows: ID, block, time, fee, shape, ring and key image. For the grey rows, write \"not shown\": each output is a one-time key, and a Monero address is never found on the chain."));
+      el.appendChild(api.el("p", { class: "src" }, "Sources: ", api.el("code", null, "@monero_stealthaddress_2025"), "; ", api.el("code", null, "@koe_zeromonerosecond_2020"), "."));
+    } },
+    twist: {
+      html: "<p>Change the date. The same suspect's earlier spend, from 2016, has an input with a ring of three: one fresh member that no other input has spent, and two members that other transactions already spent. " +
+        "The lab looked each spent one up: each was spent elsewhere by an input with zero mixins, which named it outright. An output is spent only once. (All made up.)</p>" +
+        "<ul class=\"three\">" +
+        "<li><span class=\"coin input\"><span class=\"vh\">ring member: </span><span class=\"amount\">91e0…4b7a</span><span class=\"who\">9 days old</span></span><span>spent elsewhere</span></li>" +
+        "<li><span class=\"coin input\"><span class=\"vh\">ring member: </span><span class=\"amount\">d52c…08f1</span><span class=\"who\">23 days old</span></span><span>fresh: spent nowhere else</span></li>" +
+        "<li><span class=\"coin input\"><span class=\"vh\">ring member: </span><span class=\"amount\">6a3f…e2c9</span><span class=\"who\">131 days old</span></span><span>spent elsewhere</span></li>" +
+        "</ul>",
+      question: "Which member is real now?",
+      choices: [
+        "Still undetermined: it is one of three.",
+        "The newest member.",
+        "The fresh member, because the other two were already spent.",
+        "None: a ring hides the spender."
+      ],
+      answer: 2,
+      why: "<p>The fresh member. An output is spent only once, so a member already spent elsewhere cannot be this ring's real one. Early Monero leaked this way at scale: 64.04% of inputs in the study's data had no decoys, and striking those spent outputs off other rings traced about 62% of the inputs that did have decoys. Moderate, not High: it is a published heuristic with known misses. It worked before the minimum of four decoys (September 2017) and the ring of 16 (August 2022). The reach of the trace depends on when the transaction was made.</p><p class=\"src\">Sources: <code>@moser_empiricalanalysistraceability_2018</code>, secs. 1–2; <code>@monero_networkupgradejuly_2022</code> (as of 31 Oct 2026). Ring size could change: <code>@monero_roadmap_2026</code> lists &ldquo;Full-Chain Membership Proofs&rdquo; under &ldquo;Coming Soon&rdquo;, with no date (as of 10 Nov 2026). Confidence words: <code>@odni_icd203_2015</code>.</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks: &ldquo;So we lost him at the swap?&rdquo; Say it in a few sentences, with a confidence word for each lead.</p>",
+      example: "The ransom cluster's 2.0 BTC reached a swap service's deposit address in block 812,400 (Moderate confidence, carried from the cluster). The swap paid out in Monero, and the trace stops there: the suspect's spend in transaction 5b2e…91cd uses a ring of 16, and nothing on the chain says which member is his. That transaction's time, fee and shape are on record. A later Monero-to-Bitcoin swap paid out 1.97 BTC six hours on; it matches by amount and timing only (Low)."
+    }
+  }
+});
+</script>
+</body>
+</html>
