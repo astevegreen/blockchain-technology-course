@@ -115,4 +115,4 @@ T-echo, Desk X, the vendors, the news story, the dates and the flows are made up
 
 ## Approval
 
-- Owner: waiting
+- Owner: selected "Bitcoin trace decoys", "Echo hunt", "Name the money and the flaw" (10 Nov 2026)

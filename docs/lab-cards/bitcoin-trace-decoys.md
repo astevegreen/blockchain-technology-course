@@ -116,4 +116,4 @@ amounts are the design's.
 
 ## Approval
 
-- Owner: waiting
+- Owner: selected "Bitcoin trace decoys", "Echo hunt", "Name the money and the flaw" (10 Nov 2026)
