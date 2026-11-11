@@ -25,6 +25,9 @@ slide index), which is never listed here.
 - Day 8's lab has no worked example of following funds across a bridge yet (`docs/build-spec.md`, Additions,
   "Following funds across a bridge"); it waits on the guide the reviewing expert offered, which the owner is to
   request [10 Nov 2026, expert feedback review]
+- Two open Dependabot alerts on `main`, both in `dynamic-labs/ethereum_lab/package-lock.json`: `tmp` (high, #275)
+  and `minimatch` (moderate, #194), open since 7-8 Nov [10 Nov 2026, push output while recording an expert-feedback
+  decision]
 
 ## Tooling and rules
 - The alignment map's keyword match is wrong in places: it shows no lab for concept 42 though day 1's explorer
