@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The wallet that emptied itself</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  table.fields { border-collapse: collapse; margin: 0.6rem 0; }
+  table.fields th, table.fields td { text-align: left; padding: 0.3rem 0.8rem 0.3rem 0; vertical-align: middle; }
+  table.fields th { color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+  .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin: 0.6rem 0; }
+  .part { border-left: 5px solid var(--rule); background: var(--panel); padding: 0.5rem 0.8rem; margin: 0.8rem 0; }
+  .part h3 { margin: 0 0 0.3rem; font-size: 1em; }
+  .part p { margin: 0.3rem 0; }
+  .big { font-size: 1.15em; font-weight: 700; }
+  .mark { font-weight: 800; }
+  .meter { font-variant-numeric: tabular-nums; font-weight: 700; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script src="../forge-the-payment/noble-secp256k1-keccak.js"></script>
+<script>
+/* Design card: docs/lab-cards/the-wallet-that-emptied-itself.md. Ben, Ana, the wallet maker and both thefts are made
+   up for the lab. The wallet maker starts its random numbers from the clock, to the second, as Milk Sad's `bx` did
+   (to a 32-bit clock value). Ben's and Ana's addresses and the two signed payments were made at build; the answer
+   key (Ben's second, Ana's method) is quizes/microlabs/the_wallet_that_emptied_itself_INSTRUCTOR_ANSWERS.md. The
+   secp256k1 and Keccak library is the one vendored for Forge the payment. */
+(function () {
+  "use strict";
+  var S = NobleSecp.secp256k1, K = NobleSecp.keccak_256;
+  var el = LabShell.el;
+
+  // The made-up "yesterday": 10 Nov 2026, 00:00:00 to 23:59:59 UTC, 86,400 clock seconds.
+  var DAY_START = 1794268800, DAY_SECONDS = 86400;
+  var BEN = {
+    addr: "0x872083ec14af6f96dc9d615bfbbb308e47131200",
+    msg: "Pay 0xa74f…bc06 4.20 coins, number 0",
+    sig: "0071a6a58c858348f0ea333b43e5a0c76fbabe4fd8d6f7a63b1fb41fe0b66f60ed6a84bab121d75b11c033ddcd25a48adc67d3bbf95c149909f07f6dc397a4ef59"
+  };
+  var ANA = {
+    addr: "0x629c5922eb60d0b30847b6d3376c4d548b047be6",
+    msg: "Pay 0xa74f…bc06 2.75 coins, number 0",
+    sig: "000d72b260b6a7b72772a6b29781f3a337b698fdfbfe776dacda8175450ea7c49000b29644cbb927ebc1fcd725c8402a51975fd013cc96793a605e7b39f74e777a"
+  };
+
+  function hex(u8) { return Array.prototype.map.call(u8, function (b) { return ("0" + b.toString(16)).slice(-2); }).join(""); }
+  function unhex(h) { var o = new Uint8Array(h.length / 2); for (var i = 0; i < o.length; i++) o[i] = parseInt(h.substr(i * 2, 2), 16); return o; }
+  function utf8(s) { return new TextEncoder().encode(s); }
+  function addrOf(pub65) { return "0x" + hex(K(pub65.slice(1)).slice(12)); }
+  function shortAddr(a) { return a.slice(0, 6) + "…" + a.slice(-4); }
+  function addrChip(a) { return el("span", { "class": "addr" }, shortAddr(a)); }
+  function sigText(sig) { return hex(sig.slice(1, 33)).slice(0, 8) + "…" + hex(sig.slice(33)).slice(-6); }
+  function num(n) { return n.toLocaleString("en-US"); }
+  function clock(sec) { return new Date(sec * 1000).toISOString().slice(11, 19) + " UTC"; }
+
+  /** The wallet maker: a small generator (mulberry32) started from the clock's second. Same second, same key. */
+  function keyFromSecond(sec) {
+    var s = sec | 0, sk = new Uint8Array(32);
+    for (var j = 0; j < 8; j++) {
+      s = (s + 0x6D2B79F5) | 0;
+      var t = Math.imul(s ^ (s >>> 15), 1 | s);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      var v = (t ^ (t >>> 14)) >>> 0;
+      sk[j * 4] = v >>> 24; sk[j * 4 + 1] = (v >>> 16) & 255; sk[j * 4 + 2] = (v >>> 8) & 255; sk[j * 4 + 3] = v & 255;
+    }
+    return sk;
+  }
+  function walletFromSecond(sec) {
+    var sk = keyFromSecond(sec), pk = S.getPublicKey(sk, false);
+    return { sec: sec, sk: sk, pk: pk, addr: addrOf(pk) };
+  }
+  function sign(msg, sk) { return S.sign(K(utf8(msg)), sk, { prehash: false, format: "recovered" }); }
+  function recover(sig, msg) {
+    try { return addrOf(S.Point.fromBytes(S.recoverPublicKey(sig, K(utf8(msg)), { prehash: false })).toBytes(false)); }
+    catch (e) { return null; }
+  }
+
+  /** Try every clock second of the made-up day against one address, in slices so the page stays alive. */
+  function searchDay(target, onProgress, onDone) {
+    var i = 0, stopped = false;
+    function slice() {
+      if (stopped) return;
+      var end = Math.min(i + 1000, DAY_SECONDS);
+      for (; i < end; i++) {
+        var w = walletFromSecond(DAY_START + i);
+        if (w.addr === target) { i++; onProgress(i); onDone(w); return; }
+      }
+      onProgress(i);
+      if (i >= DAY_SECONDS) { onDone(null); return; }
+      setTimeout(slice, 0);
+    }
+    setTimeout(slice, 0);
+    return function () { stopped = true; };
+  }
+
+  // ---- Do it: two wallet makers, then Ben ----
+  function render(box, api) {
+    var made = null, secondsSeen = null, found = null;
+
+    function draw() {
+      box.innerHTML = "";
+      // Part 1: the class makes wallets.
+      var p1 = el("div", { "class": "part" }, el("h3", null, "1. Make a wallet"));
+      p1.appendChild(el("p", null, "This is the wallet maker Ben used: a made-up command-line tool that starts its random numbers from the clock, to the second. On the instructor's count, everyone presses the button."));
+      p1.appendChild(el("div", { "class": "actions" },
+        el("button", { "class": "btn primary", type: "button", onclick: function () {
+          var sec = Math.floor(Date.now() / 1000);
+          made = walletFromSecond(sec); secondsSeen = [sec]; draw();
+        } }, "Make a wallet")));
+      if (made) {
+        p1.appendChild(el("table", { "class": "fields" }, el("tbody", null,
+          el("tr", null, el("th", { scope: "row" }, "Started from the clock at"), el("td", null, el("strong", { "class": "big" }, clock(made.sec)))),
+          el("tr", null, el("th", { scope: "row" }, "Your wallet's address"), el("td", null, addrChip(made.addr))),
+          el("tr", null, el("th", { scope: "row" }, "Its private key"), el("td", null, el("span", { "class": "key private" }, hex(made.sk).slice(0, 8) + "…"))))));
+        p1.appendChild(el("p", null, "Compare with your neighbour: if you pressed in the same second, your address is the same, and so is the key behind it."));
+        p1.appendChild(el("div", { "class": "actions" },
+          el("button", { "class": "btn", type: "button", onclick: function () {
+            var again = walletFromSecond(made.sec);
+            p1.appendChild(el("p", null, "Made again from the same second: ", addrChip(again.addr), " ", el("span", { "class": "mark" }, again.addr === made.addr ? "✓ the same address" : "✗ different")));
+          } }, "Make another in the same second")));
+      }
+      box.appendChild(p1);
+
+      // Part 2: Ben.
+      var p2 = el("div", { "class": "part" }, el("h3", null, "2. Ben's wallet"));
+      if (!made) {
+        p2.appendChild(el("p", { "class": "from" }, "Make your wallet first; Ben's opens after it."));
+        box.appendChild(p2);
+        return;
+      }
+      p2.appendChild(el("p", null, "Ben's address is ", addrChip(BEN.addr), ". One fact: he made it yesterday, 10 November, with this same tool. Yesterday had 86,400 seconds."));
+      var meter = el("p", { "class": "meter", "aria-live": "polite" });
+      var tryBtn = el("button", { "class": "btn primary", type: "button", disabled: !!found, onclick: function () {
+        tryBtn.disabled = true;
+        searchDay(BEN.addr, function (n) {
+          meter.textContent = "Starting numbers tried: " + num(n) + " of " + num(DAY_SECONDS);
+        }, function (w) {
+          if (!w) { meter.textContent += ". Nothing matched."; return; }
+          found = w; draw();
+        });
+      } }, "Try every second of yesterday");
+      p2.appendChild(el("div", { "class": "actions" }, tryBtn));
+      p2.appendChild(meter);
+      if (found) {
+        meter.textContent = "Match after " + num(found.sec - DAY_START + 1) + " starting numbers.";
+        p2.appendChild(el("p", null, "The page tried each second of yesterday as the tool's starting number and compared each address with Ben's. One second gives his address, so the key behind it is Ben's."));
+        var payBtn = el("button", { "class": "btn primary", type: "button", onclick: function () { pay(p2, payBtn); } }, "Sign a payment from Ben's address");
+        p2.appendChild(el("div", { "class": "actions" }, payBtn));
+      }
+      box.appendChild(p2);
+    }
+
+    function pay(p2, btn) {
+      btn.disabled = true;
+      var msg = "Pay " + shortAddr(made.addr) + " 1.00 coins, number 1";
+      var sig = sign(msg, found.sk);
+      var signer = recover(sig, msg);
+      var ok = signer === BEN.addr && S.verify(sig.slice(1), K(utf8(msg)), found.pk, { prehash: false });
+      p2.appendChild(el("table", { "class": "fields" }, el("tbody", null,
+        el("tr", null, el("th", { scope: "row" }, "Payment"), el("td", null, "“" + msg + "”")),
+        el("tr", null, el("th", { scope: "row" }, "Signature"), el("td", null, el("span", { "class": "sig" }, sigText(sig)))),
+        el("tr", null, el("th", { scope: "row" }, "Signer worked out from it"), el("td", null, addrChip(signer || "0x0000…0000"), " ", el("span", { "class": "mark" }, ok ? "✓ Ben's address, signature valid" : "✗ does not fit"))))));
+      api.finish({
+        choice: 2,
+        note: "<p>Ben's key was found without touching the curve: the tool could start from only 86,400 numbers that day, and the page tried them all. Nobody forged a signature either: the one you just made is real, and any ledger would accept it as Ben's. His seed was the clock at " + clock(found.sec) +
+          " and his private key began <span class=\"key private\">" + hex(found.sk).slice(0, 8) + "…</span>.</p>" +
+          "<p>A private key is one number out of about 2<sup>256</sup>, far too many to try. A key made from a starting number that can take only 2<sup>32</sup> values (Milk Sad's <code>bx</code>) or 86,400 values (this tool) is one of that many, and an attacker can try them all. The curve holds; the randomness that picks the key is the weak point. A wallet must start from enough unpredictable bits: BIP 39 asks for 128 to 256.</p>"
+      });
+    }
+    draw();
+  }
+
+  // ---- The explorer's view: Ben's outflow ----
+  function explorer(box) {
+    var sig = unhex(BEN.sig);
+    var from = recover(sig, BEN.msg);
+    function field(name, value) { return el("tr", null, el("th", { scope: "row" }, name), el("td", null, value)); }
+    box.appendChild(el("p", null, "Ben's emptying payment, as an Ethereum explorer's transaction page shows it (the same view as Forge the payment on day 1):"));
+    box.appendChild(el("table", { "class": "fields" }, el("tbody", null,
+      field("Hash", el("span", { "class": "hash" }, LabShell.short(hex(K(utf8(BEN.msg + BEN.sig))), 6))),
+      field("From", el("span", null, addrChip(from || "0x0000…0000"), " ", el("em", null, "worked out from v, r and s; nobody typed it"))),
+      field("To", addrChip("0xa74fe59be4bf527ff5e4d96edb7ceb84ba51bc06")),
+      field("Value", "4.20 coins (all of it)"),
+      field("Nonce", el("strong", null, "0")),
+      field("v", String(27 + sig[0])),
+      field("r", el("span", { "class": "sig" }, LabShell.short(hex(sig.slice(1, 33)), 6))),
+      field("s", el("span", { "class": "sig" }, LabShell.short(hex(sig.slice(33)), 6))))));
+    box.appendChild(el("p", null, "Nothing on this page says theft. The sender is Ben's own address and the signature is valid: it is the stolen-key pattern from day 8's \"Five ways out of a wallet look different\", an outflow sent by the victim's own address with nothing on chain before it. The page cannot say who held the key."));
+  }
+
+  // ---- The twist: Ana's wallet, the same search, nothing found ----
+  function wireAna(slot) {
+    if (slot.getAttribute("data-wired")) return;
+    slot.setAttribute("data-wired", "1");
+    var meter = el("p", { "class": "meter", "aria-live": "polite" });
+    var btn = el("button", { "class": "btn primary", type: "button", onclick: function () {
+      btn.disabled = true;
+      searchDay(ANA.addr, function (n) {
+        meter.textContent = "Starting numbers tried: " + num(n) + " of " + num(DAY_SECONDS);
+      }, function (w) {
+        meter.textContent += w ? ". A match." : ". No match: none of the 86,400 starting numbers makes Ana's address.";
+      });
+    } }, "Run the same search on Ana's address");
+    slot.appendChild(el("div", { "class": "actions" }, btn));
+    slot.appendChild(meter);
+  }
+  new MutationObserver(function () {
+    var slot = document.getElementById("ana-search");
+    if (slot) wireAna(slot);
+  }).observe(document.body, { childList: true, subtree: true });
+
+  var anaFrom = recover(unhex(ANA.sig), ANA.msg);
+  var twistHtml = "<p>Ana's wallet was emptied the same way, last night, with a valid signature from her own address: " +
+    "<span class=\"addr\">" + shortAddr(ANA.addr) + "</span>" + (anaFrom === ANA.addr ? "" : " (the lab is broken: her payment does not fit her address)") +
+    ", 2.75 coins out, nonce 0. The difference: she made her wallet with one that follows BIP 39 and starts from 128 unpredictable bits. Run the search you ran on Ben's address, over the same day.</p>" +
+    "<div id=\"ana-search\"></div>";
+
+  LabShell.start({
+    id: "the-wallet-that-emptied-itself",
+    title: "The wallet that emptied itself",
+    slide: { title: "Ronin: stolen keys, not broken code",
+      href: "../../../lessons/forensics/09-FO-approvals_drainers_poisoning.html#/ronin-stolen-keys-not-broken-code" },
+    steps: {
+      "case": { html: "<p>An agent forwards a victim's report: <em>“My wallet emptied overnight. I made it offline, I never typed my words into anything, and I never clicked a link. The thief must have cracked the encryption. Can you prove it?”</em> The hash of the payment is attached.</p><p>Ben, Ana, the wallet maker and both thefts are made up for this lab; Milk Sad's and Ronin's facts are real.</p>" },
+      commit: {
+        question: "Ben made his wallet offline with a command-line tool, wrote down nothing anyone could see, and clicked no links. Last night every coin left it, in a payment with a valid signature from his own address. How?",
+        choices: [
+          "The thief worked out Ben's private key from his public key.",
+          "The thief forged Ben's signature.",
+          "The thief made the same key Ben's tool made, by trying every number the tool could start from.",
+          "Ben sent it himself and forgot."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "brute force", parts: "brute: by raw effort, with no cleverness; force: trying every possibility",
+        plain: "<p>Trying every possible value until one fits. It fails against a real private key, which is one of about 2<sup>256</sup> values, and it wins against a key drawn from a small set.</p>" },
+      explorer: { render: explorer },
+      twist: {
+        html: twistHtml,
+        question: "The search finds nothing, and Ana's report is the same as Ben's. What do you write now?",
+        choices: [
+          "The thief broke the cryptography after all.",
+          "The key was copied or taken some other way, as Ronin's were: phishing, malware, a photographed seed phrase.",
+          "The network moved the coins.",
+          "Ana is lying."
+        ],
+        answer: 1,
+        why: "<p>A failed search rules out one cause, not the key's theft. A thief's spend and an owner's spend look the same on chain, so who signed needs other evidence. Ronin's keys were taken by spear-phishing and a forgotten allowlist, with no broken code (the slide's case).</p>"
+      },
+      tell: {
+        prompt: "<p>The agent asks how Ben's wallet was emptied. Tell the agent, in one sentence with a confidence word.</p>",
+        example: "The payment that emptied Ben's wallet was signed with the key that controls his address (High confidence: the signature verifies). The tool Ben used could make only 86,400 keys that day, and we recreated his from his address alone, so the thief most likely did the same (Moderate confidence). Nothing shows that the cryptography was broken."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
