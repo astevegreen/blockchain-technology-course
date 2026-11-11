@@ -1,4 +1,4 @@
-# Day 5 and Day 9 Tron Lab Regression Playbook
+# Day 5 and Day 9 Tron Lab Regression Playbook (with the day 5 game)
 
 This playbook is the browser-driven companion to the automated `tron` regression suite.
 If this stage is split across agents, dispatch from `suite.yaml` instead.
@@ -103,3 +103,32 @@ and a screenshot.
 4. Open `/labs/tron/fallback/d9/`. Confirm nine sections with row counts 1, 34, 2, 14, 11, 7, 8, 1
    and 4, and that query 8's row matches Day 9 Query Flow step 8. Check console errors and failed
    network requests.
+
+## Find the Exchange Flow
+
+The day-5 game (`blockchain-course/assets/labs/find-the-exchange/`, design card
+`docs/lab-cards/find-the-exchange.md`). Its key is `dynamic-labs/tron/quizes/FIND_THE_EXCHANGE_ANSWERS.md`.
+
+1. With the browser's time zone still not UTC, open `/labs/tron/query/?lab=find`. Confirm the title
+   "Find the exchange: four addresses the suspect paid, and where their USDT went (Tron, day 5 game)" and within a
+   minute "Ready: 3 files, 7 queries."
+2. Run query 1. Confirm 5 rows: A 700.000000 at `2023-10-06 14:09:30`; B 330.000000 at `2023-10-08 11:43:03`
+   to `TL8m2AvfXKx8aLeepKQvTUfPkb3mDvW4WJ`; C 20.000000; D 12.000000 and 18.000000.
+3. Run query 2. Confirm 22 rows; B's last row is "out: empties the address", 919.600000 to
+   `TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi` at `2023-10-10 05:06:06`, balance 0.000000; A ends at 200.000000 and C at
+   68.000000.
+4. Run query 3. Confirm 2 rows: B, 1 sweep, 919.600000 to `TV6Mu…`, labelled a Binance wallet
+   `[binance_transparency_2023, updated 09 Oct 2023]`; D, 2 sweeps, 30.000000 to
+   `TKTyCnPwRDAPy1HjSCZPTNmPF5ZCQ9qtRE`, "no published source names this address".
+5. Run query 4. Confirm 3 rows: B's sweep, energy 31895, 13.3959 TRX burned, paid by
+   `TYD4pB7wGi1p8zK67rBTV3KdfEb9nvNDXh` with 14.536600 TRX 516 seconds before; D's two, paid by `TWGaiRN…` 3 and 6
+   seconds before. Run query 5: 10 rows, three of C's marked "the suspect".
+6. Run query 6. Confirm one row: 1549 transfers in, 1527 different senders, 17487522.078381 USDT, first
+   `2023-10-10 04:36:03`, last `2023-10-10 05:30:45`, from_the_four 1. Run query 7: 1527 rows, the first B
+   ("address B", 919.600000). Then "Run every query" and check console errors.
+7. Open `/labs/tron/fallback/find/`. Confirm seven sections with row counts 5, 22, 2, 3, 10, 1 and 1527.
+8. Open the course site's `/assets/labs/find-the-exchange/` (served over http). Walk the case, the prediction and
+   the board: confirm the four addresses in seats A to D as in query 1, the query-page link opens `?lab=find` and
+   the saved-results link `/labs/tron/fallback/find/`, and "These are our calls" stays disabled until all four have
+   a call, a reason and a note. Finish the twist (answer: "Only that the money reached Binance.") and the sentence
+   step, and confirm the slide link opens "Name the deposit, not the sweep". Check console errors.

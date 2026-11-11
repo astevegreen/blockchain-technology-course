@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find the exchange</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.7rem; margin: 0.6rem 0; }
+  .board .srccard label { display: grid; gap: 0.15em; font-size: 0.85em; margin-top: 0.35em; }
+  .board select, .board input[type="text"] { width: 100%; font: inherit; padding: 0.25em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  .board .addr { word-break: break-all; }
+  .src { color: var(--ink-soft); font-size: 0.85rem; }
+  .count { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+  table.q { width: 100%; border-collapse: collapse; background: var(--panel); margin: 0.6rem 0; }
+  table.q th, table.q td { padding: 0.4em 0.7em; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  table.q th { font-size: 0.85rem; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/find-the-exchange.md. The suspect and the agent are made up for the game. The four
+   addresses and their transfers are real, read from Tron for 25 Sep-17 Oct 2023 into dynamic-labs/tron/snapshot/find/,
+   which the query page opens as ?lab=find. The page lists the four in alphabetical order, which says nothing,
+   records each call with its reason, and leaves the scoring to the instructor's key in dynamic-labs/tron/quizes/,
+   which students never receive. The tell step's example is the card's: it uses the worked example's deposit address
+   (TXLh…), not the game's, so no step of the page gives the answer away. */
+(function () {
+  "use strict";
+  var BOARD_KEY = "lab:find-the-exchange:board";
+  var QUERY = "/labs/tron/query/?lab=find";
+  var FALLBACK = "/labs/tron/fallback/find/";
+  var HOT = "TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi"; // on Binance's own published wallet list
+
+  // The four addresses the suspect paid, alphabetical.
+  var ADDRS = [
+    { id: "A", addr: "TJnkMwcXJWNKcH3oCBtVExmhWuCsUyZmwm" },
+    { id: "B", addr: "TL8m2AvfXKx8aLeepKQvTUfPkb3mDvW4WJ" },
+    { id: "C", addr: "TLPCbtGepn9rVDqMor9Soh3ScAffEbfo38" },
+    { id: "D", addr: "TNmgHJ1kkMgegpGMdC1SUhWTSi23UqyuL7" }
+  ];
+
+  var CALLS = [
+    { key: "deposit", label: "A Binance deposit address: this address is the customer's account" },
+    { key: "hot", label: "Reached Binance: the customer is the hot wallet TV6Mu…" },
+    { key: "none", label: "No exchange reached" }
+  ];
+  var REASONS = [
+    { key: "sweep-listed", label: "Its whole balance was swept to an address on Binance's own published list, after a TRX top-up" },
+    { key: "sweep-unlabelled", label: "Its whole balance was swept, but to an address nobody has labelled" },
+    { key: "spends", label: "It spends in varied amounts and keeps a balance" },
+    { key: "ends-hot", label: "The money ends at Binance's hot wallet" },
+    { key: "trx", label: "A third account sent it small TRX amounts" }
+  ];
+  function find(list, key) { return list.filter(function (r) { return r.key === key; })[0]; }
+
+  function link(api, href, text) {
+    var loc = window.location;
+    return /^https?:$/.test(loc.protocol) ? api.el("a", { href: href, target: "_blank", rel: "noopener" }, text) : api.el("span", null, text);
+  }
+
+  function loadBoard() {
+    try { var b = JSON.parse(window.localStorage.getItem(BOARD_KEY)); if (b && b.call) return b; } catch (e) { /* none */ }
+    return { call: {}, reason: {}, note: {} };
+  }
+  function saveBoard(b) { try { window.localStorage.setItem(BOARD_KEY, JSON.stringify(b)); } catch (e) { /* private window */ } }
+
+  function select(api, id, label, options, value, onchange) {
+    var s = api.el("select", { id: id, "aria-label": label, onchange: function () { onchange(s.value); } });
+    s.appendChild(api.el("option", { value: "" }, "Pick…"));
+    options.forEach(function (o) { s.appendChild(api.el("option", { value: o.key }, o.label)); });
+    s.value = value || "";
+    return s;
+  }
+
+  function render(box, api) {
+    var el = api.el;
+    var board = loadBoard();
+
+    box.appendChild(el("p", null, "The suspect paid USDT to the four addresses below in October 2023. Open the ",
+      link(api, QUERY, "Find the exchange query page"), " and run its queries: for each address, what came in, what went out and where it ended, and who sent it TRX to pay its fees. ",
+      "Then say, for each one, whether it is an exchange deposit address, and why."));
+    box.appendChild(el("p", { class: "src" }, "The link opens the Tron lab on the course server. If the query page will not load, use its ",
+      link(api, FALLBACK, "saved results"), ". On another copy of this page, open the Tron lab from the course menu and pick Find the exchange."));
+
+    var grid = el("div", { class: "board", "aria-label": "The four addresses" });
+    ADDRS.forEach(function (a) {
+      var call = select(api, "call-" + a.id, "Address " + a.id + ": our call", CALLS, board.call[a.id],
+        function (v) { board.call[a.id] = v; saveBoard(board); gate(); });
+      var why = select(api, "why-" + a.id, "Address " + a.id + ": the reason", REASONS, board.reason[a.id],
+        function (v) { board.reason[a.id] = v; saveBoard(board); gate(); });
+      var note = el("input", { type: "text", id: "note-" + a.id, value: board.note[a.id] || "", maxlength: "200",
+        placeholder: "What you saw: the amount, where it went, the date", "aria-label": "Address " + a.id + ": what you saw",
+        oninput: function () { board.note[a.id] = note.value; saveBoard(board); gate(); } });
+      grid.appendChild(el("div", { class: "srccard" },
+        el("div", { class: "head" }, el("span", null, "Address " + a.id)),
+        el("p", { class: "says" }, el("span", { class: "addr" }, a.addr)),
+        el("label", null, "Our call", call),
+        el("label", null, "Because", why),
+        el("label", null, "What we saw", note)));
+    });
+    box.appendChild(grid);
+    var cnt = el("div", { class: "count", id: "tally", "aria-live": "polite" });
+    box.appendChild(cnt);
+    box.appendChild(el("button", { class: "btn primary", type: "button", id: "called", onclick: finish }, "These are our calls"));
+    gate();
+
+    function complete() {
+      return ADDRS.every(function (a) { return board.call[a.id] && board.reason[a.id] && (board.note[a.id] || "").trim() !== ""; });
+    }
+    function gate() {
+      var b = document.getElementById("called");
+      if (b) b.disabled = !complete();
+      cnt.textContent = "Each call needs a reason and what you saw. “No exchange reached” is a call too.";
+    }
+
+    function finish() {
+      var hot = 0;
+      var lines = ADDRS.map(function (a) {
+        var c = find(CALLS, board.call[a.id]);
+        var r = find(REASONS, board.reason[a.id]);
+        if (c.key === "hot") hot++;
+        return "<li>Address " + a.id + ": " + c.label.split(":")[0].toLowerCase() + ", because " + r.label.charAt(0).toLowerCase() + r.label.slice(1) + ".</li>";
+      });
+      // What happened is always (b): the address the suspect paid is the one customer's; the hot wallet fits them all.
+      var choice = 1;
+      var note = "<p>Your calls:</p><ul>" + lines.join("") + "</ul>" +
+        "<p>A deposit address shows one pattern: USDT arrives, a third account tops it up with a little TRX to pay the fee, and the whole balance is swept to an address on the exchange's own published list. " +
+        "The hot wallet's query shows sweeps arriving from many other addresses in the same hour: it fits every customer who deposits there, so it names only the exchange. " +
+        "A sweep to an address nobody has labelled reaches no exchange you can name.</p>" +
+        (hot ? "<p>" + hot + (hot === 1 ? " of your calls names" : " of your calls name") + " the hot wallet as the customer. Look again at which address the exchange gave one customer before you score.</p>" : "") +
+        "<p>Score yourselves from the instructor's sheet: +2 for each address called right with its reason, 0 for naming the hot wallet in place of the deposit address, -2 for an exchange named where none was reached. " +
+        "Your confidence word, with its reason, earns +1 in the last step. The first team to finish correctly wins a tie.</p>";
+      api.finish({ choice: choice, note: note });
+    }
+  }
+
+  LabShell.start({
+    id: "find-the-exchange",
+    title: "Find the exchange",
+    slide: { title: "Name the deposit, not the sweep",
+      href: "../../../lessons/forensics/04-FO-exchanges_otc_p2p.html#/name-the-deposit-not-the-sweep" },
+    steps: {
+      "case": { html: "<p>An agent says: “Our suspect sent USDT to four places on Tron. If one of them is an exchange, we want to know which account it went into.”</p>" +
+        "<p class=\"src\">The suspect and the agent are made up for the game. The four addresses and their transfers are real, read from Tron for October 2023.</p>" },
+      commit: {
+        question: "One of the suspect's payments ends at an exchange. Which address belongs to one customer of that exchange?",
+        choices: [
+          "The exchange's hot wallet, where the money ends.",
+          "The address the suspect paid, which the exchange gave one customer.",
+          "The account that sent it small TRX amounts.",
+          "None: an exchange's addresses are all shared."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "Sweep", parts: "sweep: to clear everything into one place",
+        plain: "<p>An exchange moving a deposit address's whole balance into its hot wallet, soon after the deposit, so that every deposit address feeds the same few wallets.</p>" +
+          "<p>Each customer gets their own deposit address, and the exchange forwards what arrives to its own wallets. The hot wallet then holds many customers' coins pooled, so it names only the exchange; the deposit address, with the transaction that paid into it, is the one customer's door.</p>" +
+          "<p class=\"src\">Sources: <code>@victor_clustering_2020</code>; <code>@coinbase_10k_2026</code>.</p>" },
+      explorer: { render: function (box, api) {
+        var el = api.el;
+        box.appendChild(el("p", null, "The query page shows what any Tron explorer shows for an address, with the label's source in sight. Each row answers one question an analyst asks of a possible deposit address."));
+        box.appendChild(el("table", { class: "q" },
+          el("thead", null, el("tr", null, el("th", null, "The question"), el("th", null, "Where the query page shows it"))),
+          el("tbody", null,
+            el("tr", null, el("td", null, "What came in, and did it all go out?"), el("td", null, "Each address's USDT transfers, in time order, with its running balance: a sweep leaves the balance at 0")),
+            el("tr", null, el("td", null, "Where did it go?"), el("td", null, "The sweeps' destinations, with the label column: the label, its source and the date that source was updated")),
+            el("tr", null, el("td", null, "Who paid the fee?"), el("td", null, "The TRX transfers in the half hour before each sweep. Moving USDT costs energy, which an account without staked TRX pays by burning TRX")),
+            el("tr", null, el("td", null, "Is the destination one customer's?"), el("td", null, "The hot wallet's incoming USDT for one hour: how many different addresses swept into it")))));
+        box.appendChild(el("p", { class: "src" }, "Labels come from the exchange's own published list, never an explorer's guess: ",
+          el("span", { class: "addr" }, HOT), " is on Binance's list, ", el("code", null, "@binance_transparency_2023"),
+          " (list updated 9 Oct 2023; read 31 Oct 2026). Energy and fees, ", el("code", null, "@tron_resourcemodel_2026"),
+          " (as of 10 Nov 2026); USDT on Tron, ", el("code", null, "@tether_usdttroncontract_2026"), " (as of 31 Oct 2026)."));
+      } },
+      twist: {
+        html: "<p>A colleague writes: “The money went to Binance's hot wallet <span class=\"addr\">TV6Mu…</span>, so ask Binance who owns <span class=\"addr\">TV6Mu…</span>.”</p>",
+        question: "What does naming the hot wallet tell Binance?",
+        choices: [
+          "The customer.",
+          "The customer, if the date is given.",
+          "Only that the money reached Binance.",
+          "Nothing."
+        ],
+        answer: 2,
+        why: "<p>The hot wallet holds many customers' funds; the deposit address, with the transaction that paid into it, is the one customer's door. Binance owns <span class=\"addr\">TV6Mu…</span> itself: naming it says only which exchange.</p>" +
+          "<p class=\"src\">Sources: <code>@victor_clustering_2020</code>; <code>@coinbase_10k_2026</code>.</p>"
+      },
+      tell: {
+        prompt: "<p>Tell the agent where the suspect's USDT went, and how sure you are.</p>" +
+          "<p class=\"src\">Confidence words, never a percentage: <code>@odni_icd203_2015</code>.</p>",
+        example: "Of the suspect's four payments, one reached Binance: 400 USDT to deposit address TXLh…, which forwarded its whole balance to TV6Mu…, an address on Binance's own published wallet list, after TRX top-ups from a third account. We assess with Moderate confidence that TXLh… is a Binance customer's deposit address: both lines come from the same sweeps, and Binance's records for TXLh… would confirm it. The other three reached no labelled exchange."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

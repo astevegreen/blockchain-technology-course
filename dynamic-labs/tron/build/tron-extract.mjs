@@ -7,6 +7,8 @@
 //   node tron-extract.mjs scan <outdir> <first-block> <last-block> <address>...
 //     Reads every block in the range from java-tron and keeps the transactions that touch the addresses:
 //     no index needed, but every block costs two calls.
+//   node tron-extract.mjs inbound <outdir> <from-iso> <to-iso> <address>...
+//     Like index, but only the USDT each address received: for a hot wallet, whose full history is too big to read.
 //
 // Writes transactions.csv, transfers.csv and meta.json (window, node version, file hashes).
 import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
@@ -66,18 +68,23 @@ const csv = (rows, cols) => [cols.join(','), ...rows.map((r) => cols.map((k) => 
 const TX_COLS = ['tx_id', 'block', 'time_utc', 'type', 'signer', 'result', 'fee_sun', 'energy_used', 'energy_fee_sun', 'bandwidth_used'];
 const TR_COLS = ['tx_id', 'seq', 'asset', 'from_addr', 'to_addr', 'amount'];
 
-async function viaIndex(from, to, seeds) {
+async function viaIndex(from, to, seeds, inboundOnly = false) {
   const ids = new Set();
   const window = `min_timestamp=${Date.parse(from)}&max_timestamp=${Date.parse(to)}&only_confirmed=true&limit=200`;
   for (const a of seeds) {
-    for (const r of await listAll(`/v1/accounts/${a}/transactions/trc20?contract_address=${USDT}&${window}`, 1e6)) ids.add(r.transaction_id);
+    const usdt = `/v1/accounts/${a}/transactions/trc20?contract_address=${USDT}&${window}${inboundOnly ? '&only_to=true' : ''}`;
+    for (const r of await listAll(usdt, 1e6)) ids.add(r.transaction_id);
+    if (inboundOnly) continue;
     for (const r of await listAll(`/v1/accounts/${a}/transactions?${window}`, 1e6)) ids.add(r.txID);
   }
   const out = [];
   for (const id of ids) {
     const tx = await call('/walletsolidity/gettransactionbyid', { value: id });
     const info = await call('/walletsolidity/gettransactioninfobyid', { value: id });
-    out.push(rowsFor(tx, info, seeds));
+    const r = rowsFor(tx, info, seeds);
+    // Inbound: only the USDT the seeds received (the same transaction may also move other tokens).
+    if (inboundOnly) r.transfers = r.transfers.filter((x) => x.asset === 'USDT' && seeds.has(x.to_addr));
+    out.push(r);
   }
   return out;
 }
@@ -101,13 +108,13 @@ async function viaScan(first, last, seeds) {
 }
 
 const [mode, outdir, a, b, ...seedList] = process.argv.slice(2);
-if (!['index', 'scan'].includes(mode) || !seedList.length) {
-  console.error('usage: node tron-extract.mjs index|scan <outdir> <from-iso|first-block> <to-iso|last-block> <address>...');
+if (!['index', 'scan', 'inbound'].includes(mode) || !seedList.length) {
+  console.error('usage: node tron-extract.mjs index|scan|inbound <outdir> <from-iso|first-block> <to-iso|last-block> <address>...');
   process.exit(2);
 }
 const seeds = new Set(seedList);
 const started = Date.now();
-const results = mode === 'index' ? await viaIndex(a, b, seeds) : await viaScan(Number(a), Number(b), seeds);
+const results = mode === 'scan' ? await viaScan(Number(a), Number(b), seeds) : await viaIndex(a, b, seeds, mode === 'inbound');
 
 const txs = results.map((r) => r.t).sort((x, y) => x.block - y.block || x.tx_id.localeCompare(y.tx_id));
 const order = new Map(txs.map((t, i) => [t.tx_id, i]));

@@ -24,6 +24,9 @@ own host (`router/routes.conf`, prefix stripped):
 | `/labs/tron/query/?lab=d9` | the query page over the day-9 snapshot |
 | `/labs/tron/fallback/d9/` | the day-9 saved results (`static/fallback/d9/`) |
 | `/labs/tron/snapshot/d9/` | the day-9 snapshot (`snapshot/d9/`) |
+| `/labs/tron/query/?lab=find` | the query page for the day-5 game "Find the exchange" (its page is `blockchain-course/assets/labs/find-the-exchange/`) |
+| `/labs/tron/fallback/find/` | the game's saved results (`static/fallback/find/`) |
+| `/labs/tron/snapshot/find/` | the game's snapshot (`snapshot/find/`) |
 
 The router also adds the slash to a page folder typed without one, since nginx's own redirect would
 drop the `/labs/tron` prefix.
@@ -52,18 +55,24 @@ touching `TDxZ1X…` from 1 Sep to 30 Nov 2023, the 30 Sep 2026 blacklist events
 block 87,630,406, and `opening_balance.csv`, the address's USDT balance when the window opens, summed
 from its history since March 2022 (`build/opening_balance.py`).
 
-`queries/d5.sql` and `queries/d9.sql` hold the queries; the query page and `build/saved_results.py` split it on
+`snapshot/find/` (java-tron 4.8.2.4, read 11 Nov 2026) holds every transaction touching the game's four
+addresses from 25 Sep to 17 Oct 2023, and one hour (04:36-05:36 UTC on 10 Oct 2023) of the USDT the Binance
+hot wallet `TV6Mu…` received (`tron-extract.mjs inbound`). Its queries are `queries/find.sql`.
+
+`queries/d5.sql`, `queries/d9.sql` and `queries/find.sql` hold the queries; the query page and `build/saved_results.py` split it on
 `-- name: ` the same way, so the saved results page shows the same text. `build/build-snapshot.sh`
 rebuilds everything from the network; a rebuild reads the blacklist as of a new block, so update
 `quizes/facts.json` (`facts_d9.json`), the worksheets and the instructor answers from its output.
 
-The instructor answers are in `quizes/INSTRUCTOR_ANSWERS.md` and `INSTRUCTOR_ANSWERS_D9.md`, and the
-expected query output in `quizes/facts.json` and `facts_d9.json`; neither reaches students (`pages.yml` and `vm-build.yml` leave out every lab's
+The instructor answers are in `quizes/INSTRUCTOR_ANSWERS.md`, `INSTRUCTOR_ANSWERS_D9.md` and
+`FIND_THE_EXCHANGE_ANSWERS.md` (the game's key), and the expected query output in `quizes/facts.json`,
+`facts_d9.json` and `facts_find.json`; neither reaches students (`pages.yml` and `vm-build.yml` leave out every lab's
 `quizes/` folder).
 
 ## Tests
 
 `regression-tests/automated/tron/run.sh` runs the lab and checks it through the router: it downloads
 the served snapshot, checks it against `meta.json`, runs the served queries with DuckDB 1.4.3 and
-compares the output with `quizes/facts.json` and `facts_d9.json` and both saved results pages. The browser walk is the
+compares the output with `quizes/facts.json`, `facts_d9.json` and `facts_find.json` and the saved results pages.
+`regression-tests/unit/test_find_the_exchange_page.py` checks the game page against the game's queries and key. The browser walk is the
 playbook in `regression-tests/agent/tron/`.

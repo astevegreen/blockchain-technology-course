@@ -1,9 +1,9 @@
-"""Live checks for the day-5 and day-9 Tron labs (dynamic-labs/tron), through the router.
+"""Live checks for the day-5 and day-9 Tron labs and the day-5 game "Find the exchange" (dynamic-labs/tron), through the router.
 
 Each lab serves a frozen snapshot, so its answers never change: this suite downloads the snapshot the query page
 reads, checks it against meta.json's SHA-256s, runs the lab's queries on it with the same DuckDB version as the
 browser engine (requirements.txt), and compares the output with the lab's facts file (quizes/facts.json for day 5,
-quizes/facts_d9.json for day 9), which the instructor answers and the worksheet quote. It also checks the saved
+quizes/facts_d9.json for day 9, quizes/facts_find.json for the game), which the instructor answers and the worksheet quote. It also checks the saved
 results page agrees.
 """
 from __future__ import annotations
@@ -14,6 +14,7 @@ import os
 import re
 import tempfile
 import time
+from decimal import Decimal
 import unittest
 from pathlib import Path
 
@@ -29,6 +30,9 @@ DATA = "/labs/tron/query/labs/d5/"
 FACTS9 = json.loads((LAB / "quizes" / "facts_d9.json").read_text(encoding="utf-8"))
 META9 = json.loads((LAB / "snapshot" / "d9" / "meta.json").read_text(encoding="utf-8"))
 DATA9 = "/labs/tron/query/labs/d9/"
+FACTSF = json.loads((LAB / "quizes" / "facts_find.json").read_text(encoding="utf-8"))
+METAF = json.loads((LAB / "snapshot" / "find" / "meta.json").read_text(encoding="utf-8"))
+DATAF = "/labs/tron/query/labs/find/"
 
 
 def get(path: str) -> requests.Response:
@@ -367,6 +371,70 @@ class TronDay9LiveRegressionTests(unittest.TestCase):
         for key in ("ofac_trendearagua_2026", "ustreasury_trendearagua_2026", "victor_clustering_2020",
                     "binance_transparency_2023", "odni_icd203_2015"):
             self.assertIn(key, text)
+
+
+class TronFindTheExchangeLiveRegressionTests(unittest.TestCase):
+    """The day-5 game: four addresses a made-up suspect paid, and which one is a Binance deposit (queries/find.sql).
+    The game page itself is in blockchain-course/; unit/test_find_the_exchange_page.py checks it against this key."""
+    results: dict[str, list[dict[str, str]]] = {}
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        wait_for_lab()
+        cls.results = run_lab(DATAF, METAF)
+        cls.key = FACTSF["deposit"]
+
+    def test_pages_load(self) -> None:
+        self.assertEqual(get("/labs/tron/query/?lab=find").status_code, 200)
+        self.assertIn("Find the exchange", get(DATAF + "lab.json").json()["title"])
+        resp = get("/labs/tron/fallback/find")
+        self.assertIn(resp.status_code, (301, 302))
+        self.assertTrue(resp.headers["Location"].endswith("/labs/tron/fallback/find/"))
+
+    def test_served_queries_are_the_repo_queries(self) -> None:
+        self.assertEqual(get(DATAF + "queries.sql").text, (LAB / "queries" / "find.sql").read_text(encoding="utf-8"))
+
+    def test_served_snapshot_matches_its_seal(self) -> None:
+        for base in (DATAF, "/labs/tron/snapshot/find/"):
+            for name, sha in METAF["sha256"].items():
+                with self.subTest(path=base + name):
+                    self.assertEqual(hashlib.sha256(get(base + name).content).hexdigest(), sha)
+
+    def test_every_query_gives_the_expected_row_count(self) -> None:
+        self.assertEqual({k: len(v) for k, v in self.results.items()}, FACTSF["rows"])
+
+    def test_query_1_the_suspect_paid_each_of_the_four(self) -> None:
+        self.assertEqual(sorted({r["seat"] for r in self.results["1"]}), ["A", "B", "C", "D"])
+        (paid,) = [r for r in self.results["1"] if r["seat"] == self.key["seat"]]
+        self.assertEqual((paid["paid_to"], Decimal(paid["usdt"])), (self.key["address"], Decimal(self.key["paid"])))
+        self.assertTrue(paid["time_utc"].startswith(self.key["paid_on"]))
+
+    def test_query_3_only_the_deposit_sweeps_to_a_labelled_address(self) -> None:
+        labelled = [r for r in self.results["3"] if not r["what_a_source_says"].startswith("no published source")]
+        (row,) = labelled
+        self.assertEqual((row["seat"], row["swept_to"]), (self.key["seat"], self.key["swept_to"]))
+        self.assertEqual((row["sweeps"], Decimal(row["usdt_swept"])), ("1", Decimal(self.key["swept"])))
+        self.assertIn("binance_transparency_2023", row["what_a_source_says"])
+        other = {r["seat"]: r["swept_to"] for r in self.results["3"] if r is not row}
+        self.assertEqual(other, FACTSF["other_sweeps"])
+
+    def test_query_4_a_third_account_paid_for_the_sweep(self) -> None:
+        (row,) = [r for r in self.results["4"] if r["seat"] == self.key["seat"]]
+        self.assertEqual(row["payer"], self.key["payer"])
+        self.assertEqual(Decimal(row["trx"]), Decimal(self.key["topup_trx"]))
+        self.assertEqual(Decimal(row["trx_burned_for_energy"]), Decimal(self.key["burned_trx"]))
+        self.assertEqual(int(row["seconds_before_sweep"]), self.key["seconds_after_topup"])
+
+    def test_queries_6_and_7_the_hot_wallet_takes_many_customers(self) -> None:
+        (hour,) = self.results["6"]
+        self.assertEqual(hour, FACTSF["hot_hour"])
+        self.assertEqual(hour["from_the_four"], "1")
+        (ours,) = [r for r in self.results["7"] if r["one_of_the_four"]]
+        self.assertEqual((ours["sender"], ours["one_of_the_four"]), (self.key["address"], "address " + self.key["seat"]))
+
+    def test_saved_results_page_matches_the_queries(self) -> None:
+        check_saved_results(self, "/labs/tron/fallback/find/", LAB / "static" / "fallback" / "find" / "index.html",
+                            self.results)
 
 
 if __name__ == "__main__":

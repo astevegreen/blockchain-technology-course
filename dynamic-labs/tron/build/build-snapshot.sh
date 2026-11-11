@@ -33,5 +33,13 @@ python opening_balance.py "$work/part-d9-history" ../snapshot/d9 "$case" 2023-09
 # Tether's blacklist events on designation day, and the other six addresses the OFAC action lists.
 node tron-freeze.mjs ../snapshot/d9 2026-09-30T16:14:00Z 2026-09-30T16:15:00Z   TJjRAn9kLiyh8h6gjBjaYjkfDkskgZfyW9 TCUmMCHQEbFFdGvfdg2LeS64QfzUKP2AgW THwbVuBBb26abe5TrAsYUpYz9mhWnBppdz   TBEmt7kPSwAv6NJTYKNdBVW524bUfPwJpJ TCifMAMwst3oEJx8GaNfqZw75dkFUa8vjG TWJmTGhquvdp1jhBmgeGxBBwefteGZUQYW
 node tron-merge.mjs seal ../snapshot/d9 "opening_balance.csv: the case address's USDT on 1 Sep 2023, summed by opening_balance.py from an index extract of 1 Mar 2022-1 Dec 2023 (its first USDT movement is 20 Mar 2022)."
+
+# Find the exchange (day 5 game): the four addresses the game's suspect paid, 25 Sep-17 Oct 2023 (the Binance deposit
+# address's first USDT arrives on 25 Sep), and one hour of the Binance hot wallet's incoming USDT around its sweep.
+# A rebuild changes nothing the game uses unless a transfer is dropped: compare quizes/facts_find.json.
+node tron-extract.mjs index "$work/part-find" 2023-09-25T00:00:00Z 2023-10-17T00:00:00Z   TL8m2AvfXKx8aLeepKQvTUfPkb3mDvW4WJ TNmgHJ1kkMgegpGMdC1SUhWTSi23UqyuL7 TLPCbtGepn9rVDqMor9Soh3ScAffEbfo38 TJnkMwcXJWNKcH3oCBtVExmhWuCsUyZmwm
+node tron-extract.mjs inbound "$work/part-find-hot" 2023-10-10T04:36:00Z 2023-10-10T05:36:00Z TV6MuMXfmLbBqPZvBHdwFsDnQeVfnmiuSi
+node tron-merge.mjs merge ../snapshot/find "$work/part-find" "$work/part-find-hot"
+node tron-merge.mjs seal ../snapshot/find "Find the exchange: four addresses 25 Sep-17 Oct 2023; the hot wallet TV6Mu's incoming USDT only, 04:36-05:36 UTC on 10 Oct 2023."
 cd ..
 python build/saved_results.py

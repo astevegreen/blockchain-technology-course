@@ -1,10 +1,11 @@
 """Writes a lab's saved results page: every query in its queries file with its output on its snapshot.
 
-    python build/saved_results.py [lab]    (from dynamic-labs/tron; needs the duckdb package; lab d5 or d9,
-                                            both when left out)
+    python build/saved_results.py [lab]    (from dynamic-labs/tron; needs the duckdb package; lab d5, d9 or find,
+                                            all when left out)
 
 d5 reads queries/d5.sql on snapshot/ and writes static/fallback/index.html; d9 reads queries/d9.sql on
-snapshot/d9/ and writes static/fallback/d9/index.html.
+snapshot/d9/ and writes static/fallback/d9/index.html; find (the Find the exchange game) reads queries/find.sql
+on snapshot/find/ and writes static/fallback/find/index.html.
 
 The query page splits queries.sql the same way and shows every value as DuckDB's own text, so a student who
 reads this page instead of the query page reads the same answers. Rerun it whenever the queries or the
@@ -22,6 +23,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LABS = {
     "d5": ("snapshot", os.path.join("static", "fallback", "index.html")),
     "d9": (os.path.join("snapshot", "d9"), os.path.join("static", "fallback", "d9", "index.html")),
+    "find": (os.path.join("snapshot", "find"), os.path.join("static", "fallback", "find", "index.html")),
 }
 
 
