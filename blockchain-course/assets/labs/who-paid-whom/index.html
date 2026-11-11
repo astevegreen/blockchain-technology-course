@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who paid whom?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.round { width: 100%; max-width: 40em; height: auto; margin: .4em 0; }
+.round .box { stroke-width: 2; }
+.round .in { fill: var(--input-tint); stroke: var(--input); }
+.round .out { fill: var(--output-tint); stroke: var(--output); cursor: pointer; }
+.round g[role=button]:focus .out, .round g[role=button]:hover .out { stroke-width: 4; }
+.round g[role=button].picked .out { stroke: var(--ink); stroke-width: 4; }
+.round text { fill: var(--ink); font-size: 14px; font-family: inherit; }
+.round .small { font-size: 11px; fill: var(--ink-soft); }
+.round .link { stroke: var(--accent-strong); stroke-width: 4; fill: none; }
+.round .link.grey { stroke: var(--ink-soft); stroke-dasharray: 6 5; stroke-width: 3; opacity: .7; }
+.ctl { display: grid; grid-template-columns: 16em 1fr 4em; gap: .5em; align-items: center; margin: .4em 0; }
+.ctl input[type=range] { accent-color: var(--accent-strong); width: 100%; }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.big { font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.evid { display: flex; flex-wrap: wrap; gap: .5em; margin: .4em 0; }
+.tried { margin: .2em 0; }
+.twistbox { display: flex; flex-wrap: wrap; gap: .5em 2em; }
+.twistbox ul { list-style: none; margin: .3em 0; padding: 0; display: flex; flex-direction: column; gap: .35em; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/who-paid-whom.md. The ransom, the five users, every address, amount, txid and
+   block are made up for this lab. The page draws the round and computes the slider's counts itself, so it runs
+   offline. In the twist each input pays the same fee share, 0.0002 BTC, so the change adds up exactly. */
+var TXID = "7c1e5a09d3b84f6271ae0c95b3d8f4e1a60729cb58d3e1f4a2b6907c3d5e40ab";
+var BLOCK = 812400;
+var TYPE = "bc1q";
+var IN_AMOUNTS = ["0.1003", "0.1002", "0.1001", "0.1002", "0.1002"];   // the ransom's coin is first
+var SVG = "http://www.w3.org/2000/svg";
+
+function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function tailOf(i, salt) { var h = ((i + 3) * 2654435761 + salt * 40503) >>> 0; return TYPE + h.toString(16).slice(0, 4) + "…" + (h >>> 8).toString(16).slice(0, 4); }
+function shuffle(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+function factorial(n) { var f = 1n; for (var i = 2n; i <= BigInt(n); i++) f *= i; return f; }
+function bigText(f) {
+  var s = f.toString();
+  if (s.length <= 9) return fmt(s);
+  return s[0] + "." + s.slice(1, 3) + " × 10" + "^" + (s.length - 1) + " (a " + s.length + "-digit number)";
+}
+function coinHtml(role, amount) { return "<span class=\"coin " + role + "\"><span class=\"vh\">" + role + ": </span><span class=\"amount\">" + amount + " BTC</span></span>"; }
+
+LabShell.start({
+  id: "who-paid-whom",
+  title: "Who paid whom?",
+  slide: { title: "Before and after the mix still leak", href: "../../../lessons/forensics/06-FO-mixers_and_coinjoin.html#/before-and-after-the-mix-still-leak" },
+  steps: {
+    "case": { html:
+      "<p>The ransom the agent has been following went into a transaction with four other people's coins. The tool says the trail ends there. " +
+      "&ldquo;Is that it? Do we close this lead?&rdquo;</p>" +
+      "<p>The ransom, the four other users, the addresses, the amounts and the transaction are all made up for this lab.</p>" },
+    commit: {
+      question: "The ransom's coin, 0.1003 BTC, is one of five inputs to this transaction. It pays five outputs of 0.1 BTC each. Which output is the ransom's now?",
+      choices: [
+        "Output 0, listed first like the ransom's input.",
+        "Whichever output is spent first afterwards.",
+        "Any of the five: nothing in the transaction pairs an input with an output.",
+        "None of them: the mix ended the trail, and there is nothing more to say."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var picked = -1, tried = {}, slid = false, finished = false, slots = [0, 1, 2, 3, 4], salt = 1;
+      var svg = document.createElementNS(SVG, "svg");
+      svg.setAttribute("viewBox", "0 0 600 270");
+      svg.setAttribute("class", "round");
+      svg.setAttribute("role", "group");
+      svg.setAttribute("aria-label", "One CoinJoin round: five inputs on the left, five outputs of 0.1 BTC on the right");
+      var verdict = api.el("p", { role: "status" }, "Pick the output you think is the ransom's: click it.");
+      var triedList = api.el("div", { class: "tried" });
+      var nIn = api.el("input", { type: "range", min: 2, max: 50, step: 1, value: 5, id: "n" });
+      var nOut = api.el("output", { for: "n" }, "5");
+      var any = api.el("span", { class: "big" }, "5");
+      var ways = api.el("span", { class: "big" }, "120");
+      var still = api.el("div", { class: "panel", hidden: true });
+      var linkEl = null;
+
+      function s(tag, attrs, text) {
+        var e = document.createElementNS(SVG, tag);
+        Object.keys(attrs).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+        if (text) e.textContent = text;
+        return e;
+      }
+      function y(i) { return 10 + i * 52; }
+      function draw() {
+        while (svg.firstChild) svg.removeChild(svg.firstChild);
+        IN_AMOUNTS.forEach(function (amt, i) {
+          var g = s("g", {});
+          g.appendChild(s("rect", { "class": "box in", x: 0, y: y(i), width: 200, height: 40, rx: 6 }));
+          g.appendChild(s("text", { x: 12, y: y(i) + 18 }, amt + " BTC" + (i === 0 ? "  (the ransom's)" : "")));
+          g.appendChild(s("text", { "class": "small", x: 12, y: y(i) + 33 }, tailOf(i, 9) + (i === 0 ? "" : "  another user")));
+          svg.appendChild(g);
+        });
+        slots.forEach(function (who, i) {
+          var g = s("g", { role: "button", tabindex: 0, "aria-label": "Output " + i + ", 0.1 BTC, address " + tailOf(who, salt) + (picked === i ? ", your pick" : "") });
+          if (picked === i) g.setAttribute("class", "picked");
+          g.appendChild(s("rect", { "class": "box out", x: 400, y: y(i), width: 200, height: 40, rx: 6 }));
+          g.appendChild(s("text", { x: 412, y: y(i) + 18 }, "Output " + i + ":  0.1 BTC"));
+          g.appendChild(s("text", { "class": "small", x: 412, y: y(i) + 33 }, tailOf(who, salt)));
+          function pick() { picked = i; tried = {}; triedList.textContent = ""; verdict.textContent = "Your line: the ransom's coin to output " + i + ". Now give the evidence for it: try each kind below."; draw(); check(); }
+          g.addEventListener("click", pick);
+          g.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+          svg.appendChild(g);
+        });
+        if (picked >= 0) {
+          var failed = Object.keys(tried).length > 0;
+          svg.insertBefore(s("line", { "class": "link" + (failed ? " grey" : ""), x1: 200, y1: y(0) + 20, x2: 400, y2: y(picked) + 20 }), svg.firstChild);
+        }
+      }
+      var EVID = {
+        amounts: "Amounts: all five outputs are 0.1 BTC. An amount shared by every output picks none of them.",
+        types: "Address types: all five outputs are the same kind (" + TYPE + "…). A kind shared by every output picks none of them.",
+        positions: "Positions: the round lists its outputs in a fresh order each run, so slot 0 means nothing. Press “Reshuffle” and watch the addresses move."
+      };
+      function tryEvidence(key) {
+        if (picked < 0) { verdict.textContent = "Pick an output first, then test the evidence for it."; return; }
+        if (!tried[key]) { tried[key] = true; triedList.appendChild(api.el("p", null, EVID[key])); }
+        verdict.textContent = "The line turns grey: nothing tried so far picks this output over the other four.";
+        draw(); check();
+      }
+      function reshuffle() { shuffle(slots); draw(); tryEvidence("positions"); }
+      function counts() {
+        var n = Number(nIn.value);
+        nOut.textContent = n; any.textContent = n; ways.textContent = bigText(factorial(n));
+        slid = slid || n !== 5;
+        check();
+      }
+      function check() {
+        if (finished || picked < 0 || !slid || !(tried.amounts && tried.types && tried.positions)) return;
+        finished = true;
+        still.hidden = false;
+        still.appendChild(api.el("h3", null, "What the transaction still shows"));
+        still.appendChild(api.el("ul", null,
+          api.el("li", null, "The five inputs: who took part. The ransom's cluster is one of them, and the cluster has a name."),
+          api.el("li", null, "The block and time: block " + fmt(BLOCK) + ", 14:20 (both made up)."),
+          api.el("li", null, "The five outputs: the ransom's money is in one of them. Each is a lead.")));
+        api.finish({ choice: 2, note:
+          "<p>Any of the five. Nothing in the transaction pairs an input with an output, so the trail narrows to five leads. Choice (d) is the common belief that a mixer ends the trail; it narrows it, and the inputs, the block and the five outputs all still show. Choice (a) mistakes list order for a link: the outputs come in a fresh order each run.</p>" +
+          "<p>Equal outputs are why this works for the users and why a CoinJoin is easy to spot: designs pay repeated amounts (Wasabi 1.x about 0.1 BTC, as of 31 Oct 2026), and the rounds are detected with more than 99% accuracy.</p>" +
+          "<p class=\"src\">Sources: <code>@gmaxwell_coinjoinbitcoinprivacy_2013</code>; <code>@svenda_coinjoinecosystem_2026</code> (sec. 2.1); <code>@stutz_adoptionprivacycoinjoin_2022</code>.</p>" });
+      }
+      nIn.addEventListener("input", counts);
+
+      el.appendChild(api.el("p", null, "Click the output you think is the ransom's coin. A line joins them. Then give the evidence for the line: try each of the three kinds. Then move the slider, which adds users to the round."));
+      el.appendChild(svg);
+      el.appendChild(api.el("div", { class: "evid" },
+        api.el("button", { class: "btn", type: "button", onclick: function () { tryEvidence("amounts"); } }, "Evidence: the amounts"),
+        api.el("button", { class: "btn", type: "button", onclick: function () { tryEvidence("types"); } }, "Evidence: the address types"),
+        api.el("button", { class: "btn", type: "button", onclick: reshuffle }, "Evidence: the positions (reshuffle)")));
+      el.appendChild(verdict);
+      el.appendChild(triedList);
+      el.appendChild(api.el("div", { class: "panel" },
+        api.el("h3", null, "How many people are in the round?"),
+        api.el("div", { class: "ctl" }, api.el("label", { for: "n" }, "Participants"), nIn, nOut),
+        api.el("p", null, "The ransom's coin could be any of ", any, " outputs."),
+        api.el("p", null, "Ways to pair the whole round (every input with one output): ", ways)));
+      el.appendChild(still);
+      draw();
+    } },
+    name: {
+      term: "anonymity set",
+      parts: "anonymity (not knowing which) + set (the equal outputs a coin could have become)",
+      plain: "<p>How many outputs the coin could now be. The larger the set, the weaker any guess, and the set is also your list of leads.</p><p class=\"src\">Source: <code>@svenda_coinjoinecosystem_2026</code>.</p>"
+    },
+    explorer: { render: function (el, api) {
+      var table = api.el("table", { class: "explore" });
+      function row(h, v) { table.appendChild(api.el("tr", null, api.el("th", null, h), api.el("td", null, v))); }
+      row("Transaction", api.el("span", { class: "hash" }, api.short(TXID, 4)));
+      row("Block", fmt(BLOCK) + ", 14:20 (a made-up time)");
+      IN_AMOUNTS.forEach(function (a, i) { row(i === 0 ? "Inputs (5)" : "", api.el("span", null, api.el("span", { class: "addr" }, tailOf(i, 9)), " ", api.coin({ role: "input", amount: a + " BTC" }))); });
+      for (var i = 0; i < 5; i++) row(i === 0 ? "Outputs (5)" : "", api.el("span", null, api.el("span", { class: "addr" }, tailOf(i, 1)), " ", api.coin({ role: "output", amount: "0.1 BTC" })));
+      el.appendChild(api.el("p", null, "The round on a mempool-style transaction page, as the afternoon CoinJoin trace meets it (a copy made up for this lab, not a live page; the real explorer is mempool, AGPL-3.0, as of 31 Oct 2026)."));
+      el.appendChild(table);
+      el.appendChild(api.el("p", null, "The analyst quotes the transaction id, the block, the time, the inputs and the output amount. The page has no field that pairs an input with an output, and nothing you can click will add one."));
+      el.appendChild(api.el("p", { class: "src" }, "Source: ", api.el("code", null, "@mempool_mempool_2026"), "."));
+    } },
+    twist: {
+      html: "<p>Same round, one change: two users brought odd-sized coins, and the ransom's is one of them. The round pays each of the two its leftover as change.</p>" +
+        "<div class=\"panel twistbox\"><div><strong>Inputs (5)</strong><ul><li>" + coinHtml("input", "0.1372") + " the ransom's</li><li>" + coinHtml("input", "0.2500") + "</li><li>" + coinHtml("input", "0.1002") + " ×3</li></ul></div>" +
+        "<div><strong>Outputs (7)</strong><ul><li>" + coinHtml("output", "0.1") + " ×5</li><li>" + coinHtml("change", "0.0370") + " (after a 0.0002 fee share)</li><li>" + coinHtml("change", "0.1498") + " (after a 0.0002 fee share)</li></ul></div>" +
+        "<div><strong>Fee</strong><ul><li><span class=\"coin fee\"><span class=\"vh\">fee: </span><span class=\"amount\">0.0010 BTC</span></span> (0.0002 from each input)</li></ul></div></div>" +
+        "<p>All amounts are made up for this lab.</p>",
+      question: "Which outputs can you now pair with an input?",
+      choices: [
+        "None: it is still a CoinJoin.",
+        "All seven.",
+        "The two change outputs only.",
+        "The change outputs and the ransom's 0.1."
+      ],
+      answer: 2,
+      why: "<p>Each change output matches one input by subtraction: 0.1372 − 0.1 − 0.0002 of fee = 0.0370, and 0.2500 − 0.1 − 0.0002 = 0.1498. Only that input fits, so the ransom's change is traceable again. The five 0.1 outputs are still any of five, and the ransom's 0.1 is among them. Confidence in the change link: <span class=\"conf\" data-level=\"moderate\">Moderate</span> (one strong line: the amounts add up only one way here).</p>" +
+        "<p>Unequal amounts give links back, which is why CoinJoins pay equal amounts. A 2014 tool analysed thousands of transactions from one CoinJoin service and could identify relationships between specific payments and payees (as of 10 Nov 2026).</p>" +
+        "<p class=\"src\">Sources: <code>@coindesk_sharedcoinusersidentified_2014</code>; <code>@odni_icd203_2015</code> (the confidence words).</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks: &ldquo;So the money's gone?&rdquo; Say it in one sentence, with a confidence word.</p>",
+      example: "The ransom cluster's 0.1003 BTC went into CoinJoin transaction 7c1e…40ab in block 812,400 (Moderate confidence, carried from the cluster). The trace stops there: the coin became one of five 0.1 BTC outputs, and nothing in the transaction says which. The five outputs are the leads. A later spend that joins two of them, or that pays an address already in the ransom cluster, would pick the trace up again."
+    }
+  }
+});
+</script>
+</body>
+</html>
