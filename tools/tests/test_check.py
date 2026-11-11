@@ -303,8 +303,8 @@ class AnswerFiles(unittest.TestCase):
         self.assertEqual(check.unfenced_answer_files(files, pages, vm), [])
 
     def test_the_named_runtime_keys_may_stay_on_the_vm(self) -> None:
-        pages = PAGES_FENCED + "dynamic-labs/bitcoin-forensics/lab.md\ndynamic-labs/p2p_trust/notes.md\n"
-        files = ["dynamic-labs/bitcoin-forensics/lab.md", "dynamic-labs/p2p_trust/notes.md"]
+        pages = PAGES_FENCED + "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml\ndynamic-labs/p2p_trust/notes.md\n"
+        files = ["dynamic-labs/lane-service/labs/bitcoin_catalog.yaml", "dynamic-labs/p2p_trust/notes.md"]
         problems = check.unfenced_answer_files(files, pages, VM_FENCED)
         self.assertEqual(len(problems), 1)
         self.assertIn("p2p_trust/notes.md: baked into the VM", problems[0])

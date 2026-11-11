@@ -18,14 +18,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          lfs: true   # pull the forensics chain snapshot (blocks/*.dat) — not pointers
+          lfs: false   # the VM copies only dynamic-labs/, which holds no LFS file since Forensics 1-3 were archived
       - name: Fix Script Permissions
         run: find . -type f -name "*.sh" -exec chmod +x {} \;
       - name: Remove Unused Repo Payload
         run: |
           set -euo pipefail
           echo "Before repo cleanup:"
-          du -sh dynamic-labs/bitcoin-forensics 2>/dev/null || true
           du -sh dynamic-labs/hlf 2>/dev/null || true
           # Instructor-only files (dynamic-labs/student-exclude.txt, shared with pages.yml and student-release.yml)
           # leave the VM, bar the runtime files its labs read (VM_RUNTIME_KEYS in tools/check.py).
@@ -36,7 +35,6 @@ jobs:
           # Instructor answers kept in a lab's own quizes/ folder never reach the VM (pages.yml leaves them out of src.zip)
           find dynamic-labs -type d -name quizes -prune -exec rm -rf {} + 2>/dev/null || true
           echo "After repo cleanup:"
-          du -sh dynamic-labs/bitcoin-forensics 2>/dev/null || true
           du -sh dynamic-labs/hlf 2>/dev/null || true
       - name: Free Disk Space
         uses: jlumbroso/free-disk-space@cf1e78c50ca91e757bab3edc229027eebfc07871 # main as of 8 Nov 2026

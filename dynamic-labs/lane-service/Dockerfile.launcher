@@ -1,14 +1,13 @@
 # lane-service for a student's own machine (the course launcher; docs/student-launcher-design.md).
-# Build from dynamic-labs/ (the context needs ../bitcoin and ../bitcoin-forensics):
+# Build from dynamic-labs/ (the context needs ../bitcoin):
 #   docker build -f lane-service/Dockerfile.launcher dynamic-labs
 # Dockerfile.launcher.dockerignore lets in only what this file copies.
 # Differences from Dockerfile, the classroom image:
 # - LANE_MODE=student-local: one lane per lab, no class code, no host folders (labs/env_utils.py).
-# - The bitcoin launcher compose file and the forensics chain are baked at the paths the classroom
-#   bind-mounts, so labs/bitcoin.py runs unchanged. The build fails on a Git LFS pointer in place of
-#   the chain, which is what a checkout without `git lfs pull` holds.
-# - The instructor answers stay out: bitcoin_catalog.yaml loses its `solution` fields, and the
-#   forensics lab.md (solution key) and cryptography/solution.md are not copied.
+# - The bitcoin launcher compose file is baked at the path the classroom bind-mounts, so labs/bitcoin.py
+#   runs unchanged.
+# - The instructor answers stay out: bitcoin_catalog.yaml loses any `solution` field, and
+#   cryptography/solution.md is not copied.
 FROM python:3.12-slim-trixie
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
@@ -38,15 +37,13 @@ COPY lane-service/admin.html lane-service/cryptography_admin.html lane-service/p
 COPY lane-service/labs/ /app/labs/
 COPY lane-service/launcher_bake.py /tmp/launcher_bake.py
 COPY bitcoin/docker-compose.launcher.yml /app/bitcoin-compose/docker-compose.launcher.yml
-COPY bitcoin-forensics/forensics-lab-v3-instructor-dir/ /app/bitcoin-forensics/forensics-lab-v3-instructor-dir/
 
-RUN python /tmp/launcher_bake.py /app/labs/bitcoin_catalog.yaml /app/bitcoin-forensics/forensics-lab-v3-instructor-dir \
+RUN python /tmp/launcher_bake.py /app/labs/bitcoin_catalog.yaml \
     && rm /tmp/launcher_bake.py && mkdir -p /app/runtime
 
 ENV LANE_MODE=student-local \
     CLASS_GATE=off \
-    BITCOIN_COMPOSE_FILE=/app/bitcoin-compose/docker-compose.launcher.yml \
-    BITCOIN_FORENSICS_V3_SNAPSHOT=/app/bitcoin-forensics/forensics-lab-v3-instructor-dir
+    BITCOIN_COMPOSE_FILE=/app/bitcoin-compose/docker-compose.launcher.yml
 
 EXPOSE 8090
 

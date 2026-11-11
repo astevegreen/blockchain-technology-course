@@ -1,8 +1,7 @@
 """lane-service in LANE_MODE=student-local, the course launcher on a student's own machine.
 
 docs/student-launcher-design.md section 2 item 5: one lane per lab, no class code or claim screen, no host home
-folders, and a student "Load the forensics chain" route that exists only in that mode. Classroom mode must not change,
-so each setting is also checked with LANE_MODE unset. The launcher compose files are checked for the launcher's rules:
+folders. Classroom mode must not change, so each setting is also checked with LANE_MODE unset. The launcher compose files are checked for the launcher's rules:
 images only, no host folders, and image variables named <ID>_<SERVICE>_IMAGE.
 """
 
@@ -42,21 +41,6 @@ out = {
     },
 }
 print("PROBE" + json.dumps(out))
-"""
-
-_LOAD_ROUTE = r"""
-import json, sys
-sys.path.insert(0, sys.argv[1])
-from types import SimpleNamespace
-from unittest.mock import patch
-from flask import Flask
-import labs.bitcoin as b
-app = Flask("probe")
-app.register_blueprint(b.blueprint)
-with patch.object(b, "_deploy_forensics", return_value=("compose-up", SimpleNamespace(returncode=0, stdout="", stderr=""))) as deploy:
-    resp = app.test_client().post("/api/local/bitcoin/forensics-load")
-print("PROBE" + json.dumps({"status": resp.status_code, "body": resp.get_json(),
-                            "args": [str(a) for a in deploy.call_args.args]}))
 """
 
 def _run_probe(script: str, extra_env: dict[str, str]) -> dict:
@@ -109,19 +93,11 @@ class LabSettingsTests(unittest.TestCase):
         self.assertEqual(labs["labs.bitcoin"]["home"], self.home)
         self.assertEqual(labs["labs.consensus"]["home"], self.home)
 
-    def test_forensics_load_route_exists_only_in_student_local(self) -> None:
-        route = "/api/local/bitcoin/forensics-load"
-        self.assertIn(route, self.local["routes"])
-        self.assertNotIn(route, self.classroom["routes"])
-        # The instructor's deploy route stays in both modes, behind its instructor check.
-        self.assertIn("/api/bitcoin/forensics/deploy", self.local["routes"])
-        self.assertIn("/api/bitcoin/forensics/deploy", self.classroom["routes"])
-
-    def test_forensics_load_runs_the_instructor_deploy_path(self) -> None:
-        out = _run_probe(_LOAD_ROUTE, {"LANE_MODE": "student-local"})
-        self.assertEqual(out["status"], 200, out)
-        self.assertTrue(out["body"].get("success"), out)
-        self.assertEqual(out["args"], ["/app/bitcoin-forensics/forensics-lab-v3-instructor-dir"])
+    def test_no_forensics_route_in_either_mode(self) -> None:
+        # Bitcoin Forensics 1 to 3 were archived at step 7 of the lab plan (archive/dynamic-labs/README.md).
+        for mode, out in (("local", self.local), ("classroom", self.classroom)):
+            with self.subTest(mode=mode):
+                self.assertEqual([r for r in out["routes"] if "forensics" in r], [])
 
 
 def _lane_modules():
@@ -313,7 +289,6 @@ class LauncherComposeTests(unittest.TestCase):
     def test_launcher_image_bakes_what_lane_service_reads_and_no_answers(self) -> None:
         dockerfile = (LANE_SERVICE / "Dockerfile.launcher").read_text(encoding="utf-8")
         self.assertIn("COPY bitcoin/docker-compose.launcher.yml /app/bitcoin-compose/", dockerfile)
-        self.assertIn("/app/bitcoin-forensics/forensics-lab-v3-instructor-dir/", dockerfile)
         self.assertIn("LANE_MODE=student-local", dockerfile)
         copies = [ln for ln in dockerfile.splitlines() if ln.startswith("COPY") or ln.startswith("     ")]
         for answer in ("lab.md", "solution.md", "cryptography/"):
@@ -329,23 +304,17 @@ class LauncherBakeTests(unittest.TestCase):
 
     def test_solutions_are_removed_from_the_catalog(self) -> None:
         bake = self._bake()
-        data = yaml.safe_load((LANE_SERVICE / "labs/bitcoin_catalog.yaml").read_text(encoding="utf-8"))
-        self.assertGreater(bake.strip_solutions(data), 0)
-        self.assertNotIn("solution:", yaml.safe_dump(data))
-
-    def test_build_fails_on_an_lfs_pointer(self) -> None:
-        bake = self._bake()
         with tempfile.TemporaryDirectory() as tmp:
-            snap = Path(tmp) / "snap"
-            (snap / "blocks").mkdir(parents=True)
-            block = snap / "blocks/blk00000.dat"
-            block.write_bytes(b"version https://git-lfs.github.com/spec/v1\noid sha256:0\n")
             catalog = Path(tmp) / "catalog.yaml"
-            catalog.write_text("exercises:\n- id: a\n  solution: x\n", encoding="utf-8")
-            self.assertEqual(bake.main(str(catalog), str(snap)), 1)
-            block.write_bytes(b"\xf9\xbe\xb4\xd9 real block bytes")
-            self.assertEqual(bake.main(str(catalog), str(snap)), 0)
+            catalog.write_text("exercises:\n- id: a\n  solution: x\n- id: b\n  steps: [one]\n", encoding="utf-8")
+            self.assertEqual(bake.main(str(catalog)), 0)
+            data = yaml.safe_load(catalog.read_text(encoding="utf-8"))
+            self.assertEqual([ex["id"] for ex in data["exercises"]], ["a", "b"])
             self.assertNotIn("solution", catalog.read_text(encoding="utf-8"))
+
+    def test_the_shipped_catalog_has_no_solutions(self) -> None:
+        data = yaml.safe_load((LANE_SERVICE / "labs/bitcoin_catalog.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(self._bake().strip_solutions(data), 0)
 
 
 if __name__ == "__main__":

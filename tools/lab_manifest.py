@@ -418,7 +418,7 @@ SH_REGIONS = {
 def sh_bodies(manifests: dict[str, dict]) -> dict[str, str]:
     nets = "".join(f'        "{n}:{"--internal" if internal else ""}"\n' for n, internal in network_list(manifests))
     cases = "".join(f'        {"|".join(aliases(m["id"]))}) echo "${{BASE_DIR}}/{m["id"]}" ;;\n'
-                    for m in ordered(manifests) if m["id"] != "bitcoin-forensics")
+                    for m in ordered(manifests))
     ids = "".join(f"{LIST_NAMES.get(m['id'], m['id'])}\n" for m in ordered(manifests))
     return {"NETWORKS": nets, "TARGETS": cases, "LIST_TARGETS": f"    cat <<'EOF'\n{ids}EOF\n"}
 

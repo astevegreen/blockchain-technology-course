@@ -23,10 +23,6 @@ services:
       # `docker compose up -d instructor mempool` after tearing
       # everything down.
       - BITCOIN_COMPOSE_FILE=/app/bitcoin-compose/docker-compose.yml
-      # Phase 9.3g: forensics-deploy reads the current 3-part chain
-      # snapshot from this bind mount and copies it into the
-      # instructor-data named volume via a one-shot busybox container.
-      - BITCOIN_FORENSICS_V3_SNAPSHOT=/app/bitcoin-forensics/forensics-lab-v3-instructor-dir
       - BITCOIN_INSTRUCTOR_VOLUME=bitcoin-instructor-data
       - STUDENT_PIDS_LIMIT=${STUDENT_PIDS_LIMIT:-256}
       - BITCOIN_STUDENT_HOME_ROOT=${BITCOIN_STUDENT_HOME_ROOT:-}
@@ -41,7 +37,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./runtime:/app/runtime
       - ../bitcoin:/app/bitcoin-compose:ro
-      - ../bitcoin-forensics:/app/bitcoin-forensics:ro
       - ../cryptography:/app/cryptography:ro
     pre_stop:
       - command: python /app/pre_stop_cleanup.py

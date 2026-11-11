@@ -269,17 +269,6 @@ class ShippedLfs(unittest.TestCase):
         got = sr.shipped_lfs(files, ["dynamic-labs/tron"], ["dynamic-labs/tron/answers/**"])
         self.assertEqual(got, ["dynamic-labs/tron/data/chain.dat"])
 
-    def test_lane_service_built_from_dynamic_labs_fetches_the_forensics_snapshot(self):
-        # S3's lane-service/Dockerfile.launcher builds from dynamic-labs/ and bakes the forensics v3 blocks (LFS).
-        import student_exclude
-        lane = {"lab": "lane-service", "service": "lane-service", "source": "build", "context": "dynamic-labs/",
-                "dockerfile": "lane-service/Dockerfile.launcher", "variable": "X", "platforms": ["linux/amd64"]}
-        files = sr.lfs_files()
-        blocks = [f for f in files if f.startswith("dynamic-labs/bitcoin-forensics/forensics-lab-v3-instructor-dir/blocks/")]
-        self.assertTrue(blocks, "the forensics blocks are no longer LFS files")
-        got = sr.shipped_lfs(files, sr.shipped_contexts([lane]), student_exclude.patterns())
-        self.assertTrue(set(blocks) <= set(got))
-
     def test_the_bases_and_launcher_count_as_shipped(self):
         contexts = sr.shipped_contexts([row("tron", "page")])
         self.assertIn("dynamic-labs/tron", contexts)

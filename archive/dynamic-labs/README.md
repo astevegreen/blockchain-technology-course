@@ -17,6 +17,7 @@ relative paths below this folder.
 | --- | --- | --- | --- |
 | P2P Trust (`p2p_trust`) | the lab; `lane-service/labs/p2p_trust*.py` and `p2p_trust_catalog.yaml`; `router/routes/p2p_trust.conf`; its automated and agent tests | Owner, 10 Nov: archive | No lab: the owner archived it outright |
 | Ethereum Lab (`ethereum_lab`) | the lab; `lane-service/labs/ethereum*.py`; `router/routes/ethereum.conf`; its automated and agent tests; `dynamic-labs/tests/test_ethereum_lab_docker_context.py` | Owner, 10 Nov: archive all but its DeFi-risk contracts | Day 8's exploit part, "Name the money and the flaw" (`dynamic-labs/cross-chain/exploit/`), which holds its own copies of those contracts |
+| Bitcoin Forensics 1 to 3 (labs 3-5 of the bitcoin lab) | `bitcoin-forensics/` (the class chain, its seeder and answer keys); `bitcoin/forensics-*.md` and `docs/plans/forensics-v2-curriculum-draft.md` (design notes); the labs' intro, chapters and exercises with their solutions, cut from `lane-service/labs/bitcoin_catalog.yaml` into `lane-service/labs/bitcoin_forensics_catalog.yaml` | Lab plan, Stage 1: archive | Day 6's decoy cases (`docs/lab-cards/bitcoin-trace-decoys.md`, built in 75f9584) |
 
 ## What changed where they were wired in
 
@@ -30,6 +31,15 @@ relative paths below this folder.
   instead of copying it out of the Ethereum Lab's image.
 - GitHub's dependency graph still reads the archived Ethereum Lab's lockfile, so its `package.json` pins
   `tmp` at 0.2.7 and `minimatch` at 11.0.1 or later through `overrides` (Dependabot alerts 275 and 194).
+
+- Bitcoin Forensics: the lane service drops its deploy, local-load, solution and show-solutions routes and the
+  per-part solution toggles; the instructor console drops the deploy button, the three solution buttons and the
+  solution-key panel; the router drops `/api/bitcoin/forensics/deploy`; the bitcoin lab's launcher button "Load the
+  forensics chain" is gone. The launcher image (`lane-service/Dockerfile.launcher`) no longer bakes the chain, so
+  `launcher_bake.py` only strips solutions. `vm-build.yml` checks out without Git LFS (the chain was the only LFS
+  data under `dynamic-labs/`), `.gitattributes` drops its forensics line, and `student-exclude.txt`,
+  `tools/check.py` and `tools/lab_tests.py` no longer list its files. The lab reset (nuke) and the Chain Graph
+  controls stay.
 
 ## To restore one
 

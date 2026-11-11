@@ -20,7 +20,7 @@ from flask import jsonify, request
 
 from exercises import register_catalog
 from generic_claims import ClaimManager
-from generic_lanes import LaneConfig, LaneManager, student_local_labels, student_local_mode
+from generic_lanes import LaneConfig, LaneManager, student_local_labels
 from instructor_auth import require_instructor
 from labs import bitcoin_hunt
 from labs.bitcoin_catalog import CATALOG as BITCOIN_CATALOG, EXERCISE_IDS as BITCOIN_EXERCISE_IDS
@@ -47,15 +47,6 @@ CORE_CONTAINERS = ("bitcoin-instructor-1", "bitcoin-mempool-1", "bitcoin-graph-1
 CORE_SERVICES = ("instructor", "mempool", "graph")
 GRAPH_CONTAINER = os.environ.get("BITCOIN_GRAPH_CONTAINER", "bitcoin-graph-1")
 
-# Phase 9.3g: forensics-deploy copies the current pre-built chain snapshot
-# into the instructor-data named volume, then restarts the core services so
-# the classroom picks up the shared forensics chain.
-# v3: the 3-part lab chain (jittered v34 + v35 + v36 "Forensics 3"). Built 2026-06-10.
-# This is the current canonical forensics chain the deploy button serves.
-FORENSICS_V3_SNAPSHOT = os.environ.get(
-    "BITCOIN_FORENSICS_V3_SNAPSHOT",
-    "/app/bitcoin-forensics/forensics-lab-v3-instructor-dir",
-)
 INSTRUCTOR_VOLUME = os.environ.get(
     "BITCOIN_INSTRUCTOR_VOLUME",
     "bitcoin-instructor-data",
@@ -142,7 +133,7 @@ PANEL_SCRIPT = """
   if (hunt) hunt.href = "/api/bitcoin/hunt/?c=" + encodeURIComponent(uuid);
 
   // Graph tool button: only shown while the instructor has the tool
-  // enabled (Forensics 2). Polled so it appears/disappears mid-session.
+  // enabled. Polled so it appears/disappears mid-session.
   var graphBtn = document.getElementById("graph-btn");
   function refreshGraphBtn() {
     fetch("/labs/bitcoin/graph/api/status", {credentials: "same-origin"})
@@ -252,40 +243,12 @@ PANEL_SCRIPT = """
 """
 
 
-# --- per-step solution gating (independent instructor toggles for Forensics 1 / 2) ---
-_SHOW_SOLUTION_FLAGS = {"f1": STATE_DIR / "show_solutions_f1", "f2": STATE_DIR / "show_solutions_f2",
-                        "f3": STATE_DIR / "show_solutions_f3"}
-
-
-def _solutions_on(part: str) -> bool:
-    try:
-        return _SHOW_SOLUTION_FLAGS[part].read_text(encoding="utf-8").strip() == "1"
-    except OSError:
-        return False
-
-
-def _exercise_part(ex: dict):
-    ch = (ex.get("chapter") or "")
-    if ch.startswith("lab3"):
-        return "f1"          # Bitcoin Forensics 1 (jittered v34)
-    if ch.startswith("lab4"):
-        return "f2"          # Bitcoin Forensics 2 (v35)
-    if ch.startswith("lab5"):
-        return "f3"          # Bitcoin Forensics 3 (v36)
-    return None
-
-
 def build_catalog():
-    """Re-evaluated per /exercises fetch. A per-exercise ``solution`` field reaches the client ONLY
-    when the matching instructor toggle is on (F1 -> lab3-*, F2 -> lab4-*, F3 -> lab5-*); otherwise
-    it's stripped, so with 'show solutions' off the answer never leaves the server."""
+    """Re-evaluated per /exercises fetch. No exercise carries a ``solution`` now that Forensics 1 to 3 are
+    archived; any that does is stripped, so an answer never leaves the server."""
     cat = copy.deepcopy(BITCOIN_CATALOG)
-    on = {"f1": _solutions_on("f1"), "f2": _solutions_on("f2"), "f3": _solutions_on("f3")}
     for ex in cat.get("exercises", []):
-        if "solution" in ex:
-            part = _exercise_part(ex)
-            if not (part and on.get(part)):
-                ex.pop("solution", None)
+        ex.pop("solution", None)
     return cat
 
 
@@ -428,93 +391,10 @@ def bitcoin_nuke():
     return jsonify({"success": True, "message": "lab reset — instructor reseeded"})
 
 
-_forensics_lock = threading.Lock()
-
-
-def _deploy_forensics(snapshot: str = FORENSICS_V3_SNAPSHOT):
-    """Replace the instructor's bitcoin datadir with the pre-built
-    forensics snapshot. Default is v3 — the current 3-part lab
-    (jittered v34 + v35 + v36). Leaves student lanes and mempool running.
-
-    Unlike nuke, this deliberately does not touch student containers:
-    the snapshot's greater height means student nodes will reorg to
-    the forensics chain via normal P2P gossip once the instructor
-    comes back online, so live workstations light up with the new
-    chain without any per-lane churn.
-
-    Returns (stage, CompletedProcess) — stage is the name of the last
-    subprocess we ran, so the caller can format a targeted error.
-    """
-    # 1. Stop only the instructor so we can replace its datadir volume.
-    _docker_rm_force(["bitcoin-instructor-1"])
-
-    # 2. Populate the volume via a short-lived busybox sidecar.
-    # docker cp streams from our container-local path to the sidecar's
-    # mount of the named volume — no host-path knowledge needed.
-    loader = "bitcoin-forensics-loader"
-    _docker_rm_force([loader])
-
-    start = subprocess.run(
-        ["docker", "run", "-d", "--name", loader, *student_local_labels("bitcoin"),
-         "-v", f"{INSTRUCTOR_VOLUME}:/dst",
-         LOADER_IMAGE, "sleep", "600"],
-        capture_output=True, text=True, timeout=60,
-    )
-    if start.returncode != 0:
-        return ("loader-start", start)
-
-    try:
-        # Wipe any prior chain contents (dotfiles included).
-        wipe = subprocess.run(
-            ["docker", "exec", loader, "sh", "-c",
-             "rm -rf /dst/..?* /dst/.[!.]* /dst/* 2>/dev/null; true"],
-            capture_output=True, text=True, timeout=60,
-        )
-        if wipe.returncode != 0:
-            return ("wipe", wipe)
-
-        # Stream snapshot contents into the volume.
-        cp = subprocess.run(
-            ["docker", "cp", f"{snapshot}/.", f"{loader}:/dst/"],
-            capture_output=True, text=True, timeout=300,
-        )
-        if cp.returncode != 0:
-            return ("cp", cp)
-
-        # Bitcoind runs as uid 1000 in the image.
-        chown = subprocess.run(
-            ["docker", "exec", loader, "chown", "-R", "1000:1000", "/dst"],
-            capture_output=True, text=True, timeout=120,
-        )
-        if chown.returncode != 0:
-            return ("chown", chown)
-    finally:
-        _docker_rm_force([loader])
-
-    # 3. Bring instructor back on the populated datadir. Students
-    # discover the deployed forensics chain via P2P gossip and reorg
-    # locally. Seed wrapper skips because getblockcount is nonzero.
-    up = subprocess.run(
-        ["docker", "compose", "-f", COMPOSE_FILE, "up", "-d", "instructor"],
-        capture_output=True, text=True, timeout=180,
-    )
-
-    # 4. Fire-and-forget graph rebuild: the graph node reorgs to the
-    # forensics chain like everyone else; graph-rebuild's --wait-sync
-    # loop waits for that before ingesting. Failure is non-fatal —
-    # the instructor can rebuild from the admin console.
-    if up.returncode == 0:
-        _trigger_graph_rebuild()
-
-    return ("compose-up", up)
-
-
 def _trigger_graph_rebuild() -> subprocess.CompletedProcess | None:
     """Detached `graph-rebuild` in the graph container. `--queue` makes it WAIT
     for any in-flight rebuild (e.g. a first-boot autobuild from a just-prior
-    reset) to finish and then rebuild against the freshly-deployed chain,
-    instead of no-op'ing on the lock — so a rapid reset->deploy still ends with
-    the graph reflecting the deployed chain rather than the reset's empty one."""
+    reset) to finish and then rebuild, instead of no-op'ing on the lock."""
     try:
         return subprocess.run(
             ["docker", "exec", "-d", GRAPH_CONTAINER,
@@ -523,45 +403,6 @@ def _trigger_graph_rebuild() -> subprocess.CompletedProcess | None:
         )
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return None
-
-
-def _forensics_deploy_response():
-    """Load the forensics chain once at a time and answer in JSON: the instructor's deploy button and, on a student's
-    own machine, the launcher's "Load the forensics chain" action."""
-    if not _forensics_lock.acquire(blocking=False):
-        return jsonify({
-            "success": False,
-            "message": "forensics deploy already in progress",
-        }), 409
-    try:
-        stage, result = _deploy_forensics(FORENSICS_V3_SNAPSHOT)
-    finally:
-        _forensics_lock.release()
-    if result.returncode != 0:
-        tail = (result.stderr or result.stdout or "").strip().splitlines()[-3:]
-        return jsonify({
-            "success": False,
-            "message": f"{stage} failed: " + " / ".join(tail),
-        }), 500
-    return jsonify({
-        "success": True,
-        "message": "forensics chain deployed — instructor serves the 3-part (v34 + v35 + v36) chain",
-    })
-
-
-@blueprint.route("/api/bitcoin/forensics/deploy", methods=["POST"])
-@require_instructor
-def bitcoin_forensics_deploy():
-    return _forensics_deploy_response()
-
-
-if student_local_mode():
-    # A student alone on their own machine is their own instructor for this one step (owner decision, 9 Nov 2026:
-    # forensics labs 3-5 run locally behind a "Load the forensics chain" button). The route exists only in this
-    # mode, so a classroom lane-service never serves it.
-    @blueprint.route("/api/local/bitcoin/forensics-load", methods=["POST"])
-    def bitcoin_local_forensics_load():
-        return _forensics_deploy_response()
 
 
 # --- Chain Graph controls (bitcoin-graph/DESIGN.md) ---
@@ -603,51 +444,6 @@ def bitcoin_graph_enable():
         return jsonify({"success": False, "message": f"toggle failed: {tail}"}), 500
     return jsonify({"success": True, "on": on,
                     "message": f"graph tool {'enabled' if on else 'disabled'}"})
-
-
-FORENSICS_LAB_MD = os.environ.get(
-    "BITCOIN_FORENSICS_LAB_MD",
-    "/app/bitcoin-forensics/lab.md",
-)
-_FORENSICS_SOLUTION_MARKER = "## Instructor Solution Key"
-
-
-@blueprint.route("/api/bitcoin/forensics/solution", methods=["GET"])
-@require_instructor
-def bitcoin_forensics_solution():
-    try:
-        text = Path(FORENSICS_LAB_MD).read_text(encoding="utf-8")
-    except OSError as exc:
-        return jsonify({"success": False, "message": f"read failed: {exc}"}), 500
-    idx = text.find(_FORENSICS_SOLUTION_MARKER)
-    if idx < 0:
-        return jsonify({"success": False, "message": "solution marker not found"}), 500
-    return jsonify({"success": True, "markdown": text[idx:]})
-
-
-@blueprint.route("/api/bitcoin/forensics/show-solutions", methods=["GET"])
-@require_instructor
-def bitcoin_show_solutions_state():
-    return jsonify({"success": True, "f1": _solutions_on("f1"), "f2": _solutions_on("f2"),
-                    "f3": _solutions_on("f3")})
-
-
-@blueprint.route("/api/bitcoin/forensics/show-solutions", methods=["POST"])
-@require_instructor
-def bitcoin_show_solutions_set():
-    body = request.get_json(silent=True) or {}
-    part = str(body.get("part", "")).lower()
-    if part not in ("f1", "f2", "f3"):
-        return jsonify({"success": False, "message": "part must be 'f1', 'f2', or 'f3'"}), 400
-    on = bool(body.get("on"))
-    path = _SHOW_SOLUTION_FLAGS[part]
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("1" if on else "0", encoding="utf-8")
-    except OSError as exc:
-        return jsonify({"success": False, "message": f"write failed: {exc}"}), 500
-    return jsonify({"success": True, "part": part, "on": on,
-                    "message": f"{part.upper()} solutions {'shown' if on else 'hidden'}"})
 
 
 def start():
