@@ -87,4 +87,4 @@ The victim, times and blocks are made up for the lab and say so.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve all four" and "Keep day 3" (10 Nov 2026)

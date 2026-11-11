@@ -83,4 +83,4 @@ Block heights, hashes and the dealer are made up for the lab and say so.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve all four" (10 Nov 2026)

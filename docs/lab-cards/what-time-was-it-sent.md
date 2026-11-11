@@ -79,4 +79,4 @@ real example.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve all four" (10 Nov 2026)

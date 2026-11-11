@@ -267,3 +267,15 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
   stopping at who holds what (legal process is out) (owner, after discussing it: "Yes, add it now"). The slide
   answers the expert's "what to do with all of that info", so nothing is asked of the expert (owner, 10 Nov: "we
   can consider that addressed").
+
+## Step 4's first cards (owner, 10 Nov, evening)
+
+- The four cards in `docs/lab-cards/` are approved as drafted: Make change, The confirmation race, Is it final
+  yet? and What time was it sent? (owner: "Approve all four"). The BIP39 card is still to write.
+- Is it final yet? opens on day 3 lesson ①, not day 1, since day 1 lesson ③ opens the confirmation race (owner:
+  "Keep day 3").
+- Day 1 holds more planned labs than it has room for (Who saw it first?, Build a ledger in four failures, Forge
+  the payment, Guess the input, beside Make change and the race); this is settled when day 1's labs are placed
+  (owner: "Settle it later").
+- Belief 9 (unconfirmed means blocked) gets no lab; the slide "Delay may mean congestion, not censorship" covers
+  it (owner: "Leave it to the slide").
