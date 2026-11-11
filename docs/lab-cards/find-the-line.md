@@ -135,4 +135,4 @@ the 10 ETH withdrawal and its 9 ETH fee are the approved card's; the contracts' 
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve as drafted (Recommended)" (11 Nov 2026)

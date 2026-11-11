@@ -62,7 +62,7 @@ the students' own moves make the trail. It is practice: day 7's graded point sta
    0.5 BTC change looked like the thieves' own (Low). At the deadline, in block 30, that change and the split's
    third coin were deposited to exchange deposit E3 in one transaction (Moderate: the co-spend is one strong line
    that the change is still the thieves'). Where the 0.3 BTC went is undetermined."
-9. **The game, if any**: hide and trace. Only the tracing scores (owner question below). Each call that names an
+9. **The game, if any**: hide and trace. Only the tracing scores (owner, 11 Nov 2026). Each call that names an
    output as the target's money, right or wrong: Low +1 or -1; Moderate +2 or -3; High +3 or -9. "Undetermined"
    scores 0. A word above what its reason allows on the course scale is scored as the word the reason allows (a
    High on timing alone scores as a Low). The call on where the trace stops, with its reason: +2 if it names the
@@ -101,9 +101,9 @@ Left out, for the owner to see:
   rules for each word, never these fractions, so the scale stays a scale of evidence and the game checks it.
 - The points alone reward a word by how often it turns out right, not by the evidence under it: a team often
   right on one strong line would still earn by saying High. So a word above what its reason allows is scored as
-  the allowed word, which keeps the points tied to the course scale (owner question).
+  the allowed word, which keeps the points tied to the course scale (owner, 11 Nov 2026: "Keep both").
 - The hiders do not score. A hiding score would reward laundering skill, which the course does not teach; the
-  hiders' payoff is the reveal, where they see their own leaks. (Owner question.)
+  hiders' payoff is the reveal, where they see their own leaks. (Owner, 11 Nov 2026: "Hiders don't score".)
 - Monero, Tornado Cash and bridges are not on the menu: day 7's chain is Bitcoin, and day 8 has the bridge.
 - The lab plan's row says "then swap". Here every team hides and every team traces, so the swap is built in, and
   the round runs once: a second round would not fit day 7's second half.
@@ -153,4 +153,6 @@ the game and say so; the 0.5 BTC pool and 0.5001 BTC pre-mix coins are day 7's c
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve as drafted (Recommended)" (11 Nov 2026)
+- Hiders: "Hiders don't score (Recommended)"; the payoffs and the confidence cap: "Keep both (Recommended)" (owner,
+  11 Nov 2026)
