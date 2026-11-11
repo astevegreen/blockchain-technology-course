@@ -19,8 +19,8 @@ question, "say who could have frozen the token".
 
 ## The ten lines
 
-1. **The wrong belief**: "Once the issuer freezes, the stolen money is caught." Not on the plan's list of fifteen;
-   proposed as a new one, for the owner to mark.
+1. **The wrong belief**: "Once the issuer freezes, the stolen money is caught." Not on the plan's list: the owner
+   left it off on 11 Nov 2026, and the card keeps its belief.
 2. **The prediction** (shell: `commit`): "1,000,000 USDT is stolen. The victim reports it 30 minutes later, naming
    the address the money went to. Tether freezes that address 2 hours after the report. How much is caught?"
    Choices: (a) all of it: the freeze stops the money; (b) about half: some got away; (c) whatever still sat in

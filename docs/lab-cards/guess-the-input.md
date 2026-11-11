@@ -13,7 +13,7 @@
 ## The ten lines
 
 1. **The wrong belief**: "A hash is just maths, so a powerful enough computer could work it backwards to the
-   input." Not on the plan's list (none of the primer's beliefs is marked); offered for the owner to add.
+   input." Belief 17 on the plan's list (added 11 Nov 2026).
 2. **The prediction** (shell: `commit`): "Your browser hashed your sentence with a counter on the end, 0, 1, 2 and
    so on, until the hash started with one 0. It took about 16 tries. How many tries until it starts with 000?"
    Choices: about 48; about 4,000; about a million; a few, since a smart program works back from the zeros. Then

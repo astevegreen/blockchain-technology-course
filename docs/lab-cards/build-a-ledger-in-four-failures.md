@@ -19,7 +19,7 @@ failure behind it. The other way, round 4 as a caption, was not taken.
 ## The ten lines
 
 1. **The wrong belief**: "Once each entry holds the hash of the one before, nobody can change the ledger." Not on
-   the plan's list (none of the primer's beliefs is marked); offered for the owner to add. Belief 7 (in the
+   the plan's list: the owner left it off on 11 Nov 2026, and the card keeps its belief. Belief 7 (in the
    explorer means final) is the confirmation race's.
 2. **The prediction** (shell: `commit`): "A ledger stores the hash of each entry in the next one. You are the
    cheat: you want entry 2 to say Ana paid you 50, not 5. Can you change it so the ledger still checks out?"

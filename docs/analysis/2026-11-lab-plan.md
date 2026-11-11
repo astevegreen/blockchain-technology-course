@@ -174,6 +174,10 @@ Mark each: common among incoming analysts, sometimes, or rare. Add any that are 
 15. A hack means the cryptography was broken.
 16. When an NFT keeps selling for more, people want it. (Added 11 Nov 2026 with the Volume from nowhere card; owner:
     "Approve and build it (Recommended)".)
+17. A hash is just maths, so a powerful enough computer could work it backwards to the input. (Added 11 Nov 2026
+    with the Guess the input card; owner picked "Hash can be reversed".)
+18. The network keeps one queue of payments, so everyone sees them in the same order and the one sent first is the
+    one that counts. (Added 11 Nov 2026 with the Who saw it first? card; owner picked "One queue of payments".)
 
 ## Order of work (each step is its own session)
 

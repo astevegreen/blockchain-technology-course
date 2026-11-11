@@ -13,8 +13,8 @@
 ## The ten lines
 
 1. **The wrong belief**: "The network keeps one queue of payments, so everyone sees them in the same order and
-   the one sent first is the one that counts." Not on the plan's list (none of the primer's beliefs is marked);
-   offered for the owner to add. Belief 8 (a transaction's time is when it was sent) is What time was it sent?'s.
+   the one sent first is the one that counts." Belief 18 on the plan's list
+   (added 11 Nov 2026). Belief 8 (a transaction's time is when it was sent) is What time was it sent?'s.
 2. **The prediction** (shell: `commit`): "Alice signs two payments of the same coin, both with the same fee: one
    to Carol, sent from a node in the west, and a split second later one to Dave, sent from a node in the east.
    Which payment ends up on the chain?" Choices: Carol's, it was sent first; Dave's, the later one replaces it;
