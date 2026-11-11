@@ -10,7 +10,7 @@
 | Day | Day 8, lesson ① (approvals, drainers and poisoning) |
 | Kind | prediction lab (five minutes) |
 
-Placement is the owner's call: day 1 ② already opens Forge the payment, and day 1 opens one lab per lesson
+Placement: day 8 ① (owner, 11 Nov 2026: "Approve, day 8 ① (Recommended)"). Day 1 ② already opens Forge the payment, and day 1 opens one lab per lesson
 (commit 9161452). Day 8 ① has no prediction lab, and it is the lesson where analysts explain thefts.
 
 ## The ten lines
@@ -107,4 +107,4 @@ and Ronin's are real.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve, day 8 ① (Recommended)" (11 Nov 2026): opens on day 8 lesson ①, approvals, drainers and poisoning

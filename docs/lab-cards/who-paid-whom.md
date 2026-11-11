@@ -70,7 +70,7 @@ Left out, for the owner to see:
   of hiding it, and the afternoon trail runs through one.
 - The plan's afternoon idea, in which the class joins one CoinJoin and each student tries to unmix a neighbour, is
   the many-player version of this lab's action. If it is built, this lab is the five-minute warm-up for it.
-- Confidence for the twist's change link: the card proposes Moderate (one strong line, the arithmetic). The slide's
+- Confidence for the twist's change link: Moderate (owner, 11 Nov 2026) (one strong line, the arithmetic). The slide's
   table rates matching amounts across pools Low, but that is a weaker case: amounts paired across separate
   transactions, not inside one.
 - PayJoin and dust are separate slides of the same lesson, and they are left to the lesson.
@@ -116,4 +116,4 @@ up for the lab, and the lab says so.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve, Moderate (Recommended)" (11 Nov 2026): the twist's change link carries Moderate

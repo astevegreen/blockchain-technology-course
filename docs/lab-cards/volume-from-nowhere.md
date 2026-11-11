@@ -10,7 +10,7 @@
 | Day | Day 8, lesson ③ (bytecode and NFT wash trading) |
 | Kind | prediction lab (five minutes) |
 
-Tentative in the plan: the owner decides from this card whether it is built at all.
+No longer tentative: the owner approved it to be built (11 Nov 2026).
 
 Why this slide: its title states the right belief (one party can be buyer and seller), and it is the first
 wash-trading slide, so the loop the student builds is the shape the next slide draws ("The loop: one token ID
@@ -19,8 +19,8 @@ confidence table, then read what the student made.
 
 ## The ten lines
 
-1. **The wrong belief**: "When an NFT keeps selling for more, people want it." Not on the plan's list of fifteen;
-   proposed as a new one, for the owner to mark. It sits next to belief 11 (a quoted value is what it sells for),
+1. **The wrong belief**: "When an NFT keeps selling for more, people want it." Belief 16 on the plan's list, added
+   by the owner with this card's approval (11 Nov 2026). It sits next to belief 11 (a quoted value is what it sells for),
    which day 4's What is it really worth? breaks; this one is about the sales themselves.
 2. **The prediction** (shell: `commit`): "NFT #7 sold three times this week, for 10, 12 and 15 ETH: 37 ETH of
    volume. Is there demand for it?" Choices: (a) yes: three buyers each paid more; (b) yes: 37 ETH changed hands;
@@ -105,4 +105,5 @@ NFT #7 and #12, the wallets, their addresses, the prices, the fees and the victi
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve and build it (Recommended)" (11 Nov 2026): day 8 ③, from "Wash trading: the seller on both
+  sides"; its wrong belief joins the plan's list as belief 16

@@ -117,4 +117,4 @@ and the made-up truth are made up for the lab, and the lab says so.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve (Recommended)" (11 Nov 2026)

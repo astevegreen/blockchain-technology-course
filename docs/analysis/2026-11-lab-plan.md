@@ -147,7 +147,7 @@ last column of the next section.
 | Find the sandwich (idea 20) | `ether_mev` | Read one block's swaps in order; mark the sandwich | Covered by day 4's pool game | none |
 | The vault that paid twice (idea 33) | `ether-smart-contract-micro` | Start at the drained vault; open the nested calls | Weak case: a diagnosis, not a contest | none |
 | Beat the freeze (idea 18, tentative) | new | The issuer freezes while stolen funds move hop by hop | Thief against issuer: how much is caught? | M |
-| Volume from nowhere (idea 35, tentative) | new | Trade an NFT among your own wallets, then read it as an analyst | Pump the floor, swap seats, catch your neighbour | M |
+| Volume from nowhere (idea 35) | new | Trade an NFT among your own wallets, then read it as an analyst | Pump the floor, swap seats, catch your neighbour | M |
 
 A spread that would put one game on most days without one day carrying two large ones: day 1 mining race,
 day 2 two-of-three, day 4 pool trading, days 6-7 hide and trace or the calibration score, day 8 find the line,
@@ -172,6 +172,8 @@ Mark each: common among incoming analysts, sometimes, or rare. Add any that are 
 13. Two inputs in one transaction always share an owner.
 14. A tool's label or a sanctions listing is proof.
 15. A hack means the cryptography was broken.
+16. When an NFT keeps selling for more, people want it. (Added 11 Nov 2026 with the Volume from nowhere card; owner:
+    "Approve and build it (Recommended)".)
 
 ## Order of work (each step is its own session)
 
