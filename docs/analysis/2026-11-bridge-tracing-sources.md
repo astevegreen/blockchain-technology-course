@@ -13,6 +13,10 @@ Why it matters for the role: chain-hopping is how stolen funds are now moved. El
 and high-risk activity past $21 billion as of May 2025 [@elliptic_crosschaincrime_2025], and TRM reports that the
 "vast majority" of Bybit's ETH was bridged to Bitcoin, "mostly via services using THORchain"
 [@trmlabs_bybitupdate_2025]. The FBI's PSA is the government write-up of the Bybit theft [@fbi_bybitpsa_2025].
+The Multilateral Sanctions Monitoring Team (eleven states, the US among them) gives North Korea's usual
+laundering pattern in nine steps, two of them bridges: ETH to "primarily BTC", then mixed BTC to Tron. It lists
+THORChain, Stargate/LayerZero and ChainFlip among the bridges its launderers relied on, and reports that all of
+Bybit's funds had been cashed out by September 2025 [@msmt_dprkcyber_2025].
 
 ## Method 1: read the destination chain and recipient from the deposit
 
@@ -76,6 +80,10 @@ cross-chain operations usually carry event names that hold them [@lin_tracktrace
 - The router's own `Deposit` event fields were not found in THORChain's docs; the snapshot reads them on-chain.
 - ABCTracer covers contract-based, non-privacy, EVM bridges only [@lin_tracktraceautomatically_2025]. THORChain
   to Bitcoin is outside it; the memo docs carry that case.
+- An aggregator hides the bridge. With a cross-chain aggregator the user may "not choose or even see" which bridge
+  is used, so the analyst must tell the aggregator apart from the bridge underneath it [@msmt_dprkcyber_2025]:
+  the contract the deposit calls may be the aggregator's, with the destination fields in the bridge's event
+  further down the same transaction (our inference, not the report's).
 
 ## Method 2: use the bridge's own explorer
 
@@ -206,9 +214,8 @@ the build needs no new data.
 ## Not found (searched 10 Nov 2026)
 
 - A government or court document that describes how bridge tracing is done. The FBI PSA names the theft and
-  addresses [@fbi_bybitpsa_2025]; no DOJ filing describing the method was found. The MSMT report (MSMT/2025/2)
-  on mofa.go.jp could not be read here (it refused automated fetches and downloads as a file), so what it says
-  about THORChain is unverified.
+  addresses [@fbi_bybitpsa_2025]; no DOJ filing describing the method was found. The MSMT report names THORChain
+  and the other bridges and gives the laundering steps, but describes no tracing method [@msmt_dprkcyber_2025].
 - A manual amount-and-time recipe from an analytics firm. Elliptic and TRM describe their own automatic tracing
   [@elliptic_crosschaincrime_2025; @trmlabs_bybitupdate_2025]; neither gives an analyst's steps.
 - Source code or licences for LayerZero Scan, RuneScan, ViewBlock, Wormholescan and the Across app.
