@@ -38,6 +38,9 @@ slide index), which is never listed here.
   building the hunt]
 
 ## Tooling and rules
+- `regression-tests/automated/run-lab.sh` `--fresh-start` rebuilds the lab's images but not `lane-service:latest`, so a
+  stale lane-service image on the host fails the panel-link tests (bitcoin hunt, two of three). [11 Nov 2026, wallet
+  lab test runs 2-3]
 - The alignment map still shows no lab for concept 42's day 1 terminal Q2 (`getblockchaininfo`): the map reads only
   each lab's `index.html`, not `terminal.html` (`tools/alignment_map.py`, `read_lab`). [10 Nov 2026, fixing the terms]
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
