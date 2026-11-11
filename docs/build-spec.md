@@ -197,7 +197,8 @@ plan (what happens to every lab, the design card, the order of work) is `docs/an
 - Archived: `hashing_merkle` and `bitcoin-attacks` (`archive/static-labs/README.md`).
 - The unscheduled Docker labs are decided. The P2P Trust Lab is archived. The Ethereum Lab is archived except
   its unused DeFi-risk contracts, which become an exploit part of about 40 minutes in day 8's afternoon lab.
-  Forensics 1 to 3 are archived once their decoy cases are folded into day 6's trace. The Cryptography Lab
+  Forensics 1 to 3 are archived once their decoy cases are folded into day 6's trace. Done 11 Nov 2026 (step 7):
+  all three are under `archive/dynamic-labs/`, and `ether_mev` and `tamper-ledger` under `archive/static-labs/`. The Cryptography Lab
   stays until `merkle-trees` has its proof step. The Consensus Lab and Byzantine Generals stay as optional.
   The Chain Graph tool is reviewed after everything else.
 - Day 9 gains an exercise that weighs disagreeing sources and ends in a characterization, built as the echo

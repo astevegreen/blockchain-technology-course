@@ -30,9 +30,6 @@ slide index), which is never listed here.
 - The build spec's slide saying no public method matches funds across a swap (`docs/build-spec.md`, Additions,
   "Following funds across a bridge") is not built; the worksheet's "A twist" step says it for THORChain only
   [11 Nov 2026, building the bridge worked example]
-- Two open Dependabot alerts on `main`, both in `dynamic-labs/ethereum_lab/package-lock.json`: `tmp` (high, #275)
-  and `minimatch` (moderate, #194), open since 7-8 Nov [10 Nov 2026, push output while recording an expert-feedback
-  decision]
 - The terminal scavenger hunt's slide link (`dynamic-labs/lane-service/labs/bitcoin_hunt/index.html`, `slide.href`)
   is `/lessons/...`, which only the classroom serves; in the student launcher the course is on Pages, so the link
   fails there. The launcher also has no instructor to mine the hunt's one and two blocks. [11 Nov 2026, building the hunt]
@@ -42,6 +39,18 @@ slide index), which is never listed here.
 - The hlf and hlf-launcher Lab Tests jobs fail building `hlf-orderer-ttyd` and `hlf-peer-ttyd`
   (`dynamic-labs/hlf/Dockerfile.ttyd:8`, `Dockerfile.orderer-ttyd:7`, on the Fabric images): apt-get exits 100,
   "Unable to locate package curl". [11 Nov 2026, Lab Tests 43056313552, both attempts; router change d802910d]
+- Docs still name the archived P2P Trust, Ethereum and Forensics 1-3 labs as live: `docs/before-first-class.md`,
+  `docs/student-launcher-*.md` (the design's forensics-load action), `docs/security-triage.md`, `docs/sprint.md`,
+  and the known-gap list in `.claude/rules/ci.md` (`bitcoin-forensics/lab.md`). [11 Nov 2026, step 7 archive]
+- `tools/tests/test_student_launcher*.py` fixtures still use a forensics-load `local_actions` entry as their
+  example; it no longer matches any lab. [11 Nov 2026, step 7 archive]
+- `dynamic-labs/bitcoin-graph/` DESIGN and README describe it as Forensics 2's tool; with Forensics archived it
+  serves no lab (the plan reviews it last). [11 Nov 2026, step 7 archive]
+- `dynamic-labs/bitcoin/INSTRUCTOR_SOLUTION_GUIDE.md` still has a Forensics section. [11 Nov 2026, step 7 archive]
+- `dynamic-labs/lane-service/lab.yaml` `approx_download_mb: 139` still counts the 13 MB forensics snapshot the
+  launcher image no longer bakes; measure at the next student release. [11 Nov 2026, step 7 archive]
+- `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` holds no solution now; it may come off
+  `student-exclude.txt` and `tools/check.py` VM_RUNTIME_KEYS. [11 Nov 2026, step 7 archive]
 
 ## Tooling and rules
 - `regression-tests/automated/run-lab.sh` `--fresh-start` rebuilds the lab's images but not `lane-service:latest`, so a

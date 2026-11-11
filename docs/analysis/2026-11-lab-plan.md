@@ -304,3 +304,24 @@ minutes but I was going slowly for both."
 Asked whether to build the rest at five minutes each, plan ten each, or trim first, the owner chose "Build as
 carded (Recommended)". The remaining labs are built at five minutes each. The timings stand on record; the real
 pace is checked at the first dry run with students.
+
+## Step 7: archived (11 Nov 2026)
+
+Done as the Stage 1 table's Archive row and the plan's order of work item 7 set out, the same way as the ten labs
+archived before (nothing deleted; each file keeps its old path under `archive/`; `archive/dynamic-labs/README.md`
+lists what moved and how to restore it).
+
+- P2P Trust Lab (`dynamic-labs/p2p_trust/`): archived whole, with its lane-service module, router route and tests.
+- Ethereum Lab (`dynamic-labs/ethereum_lab/`): archived whole. Day 8's exploit part (4f6a89e8) holds its own
+  copies of the DeFi-risk contracts in `dynamic-labs/cross-chain/exploit/`, so it needed nothing left behind. The
+  student VM now installs heimdall-rs from its upstream release instead of the lab's image.
+- Forensics 1 to 3 (labs 3-5 of the bitcoin lab, `dynamic-labs/bitcoin-forensics/`): archived with their
+  catalog entries and solutions (`archive/dynamic-labs/lane-service/labs/bitcoin_forensics_catalog.yaml`). Day 6's
+  decoy cases replace them (75f9584). The lab reset and the Chain Graph controls stay.
+- Static labs `ether_mev` and `tamper-ledger`: moved to `archive/static-labs/`; their links now point to Find the
+  sandwich (88cc036a) and Build a ledger in four failures (ba0b782a).
+- Dependabot alerts 275 (`tmp`) and 194 (`minimatch`), both in the archived Ethereum Lab's lockfile, are closed
+  by `overrides` in its `package.json`, since GitHub still reads archived lockfiles.
+- Not removed, as asked: `signatures`, `micro-hashing`, `POW_mining_micro` and `distributed-systems` are still
+  linked from lessons, `index.qmd`, the primer and the mind map; whether to retire them is put to the owner.
+  `ether-smart-contract-micro` was already in `archive/static-labs/`.
