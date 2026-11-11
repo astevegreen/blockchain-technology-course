@@ -105,4 +105,4 @@ Alice, Carol, Dave, the sellers, the nodes, block 812,450 and its hash are made 
 ## Approval
 
 - Owner: "Build a ledger in 4 failures,Guess the input,Who saw it first,Peel chain or payroll" (11 Nov 2026)
-- Built: 11 Nov 2026, `blockchain-course/assets/labs/who-saw-it-first/index.html`; opened from the primer's "Distributed systems" part, which now points here instead of at `distributed-systems`. The first block is always found by an eastern node (the card's example); later blocks are drawn by chance.
+- Built in 7da9e166 (11 Nov 2026), `blockchain-course/assets/labs/who-saw-it-first/index.html`; opened from the primer's "Distributed systems" part, which now points here instead of at `distributed-systems`. The first block is always found by an eastern node (the card's example); later blocks are drawn by chance.
