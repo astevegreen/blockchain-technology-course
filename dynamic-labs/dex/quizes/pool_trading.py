@@ -26,7 +26,7 @@ L1_URL = os.environ.get("L1_URL", "http://anvil:8545")
 # chain/addresses.env (the live suite checks these match), and Anvil's dev account 9.
 DOLLAR = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
 WETH = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512"
-PAIR = "0x9fe46736679d2d9a65f0992f2272dee9f3c7fa6e0"
+PAIR = "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"
 ROUTER = "0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9"
 BOT = "0xa0ee7a142d267c1f36714e4a8f75612f20a79720"
 # Seat N is account 9 + N of the test phrase (the swap page's rule); the live suite derives them and compares.

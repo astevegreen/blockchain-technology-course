@@ -47,6 +47,7 @@ def instructor(*args: str, popen: bool = False):
                                    text=True)
         process.stdin.write(source.decode())
         process.stdin.close()
+        process.stdin = None  # closed: communicate() must not flush it
         return process
     done = subprocess.run(command, input=source, capture_output=True, timeout=180)
     if done.returncode != 0:
