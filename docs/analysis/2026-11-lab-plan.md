@@ -261,6 +261,7 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
   day 3 (owner: "Yes, both").
 - A BIP39 prediction lab for day 2, on Ian Coleman's BIP39 tool (MIT-licensed upstream, read 10 Nov 2026), is
   proposed on a design card in step 4, with the first four (owner: "Yes, write the card").
-- Open, to discuss with the owner: a slide in day 9's third lesson on which outside party holds which record,
-  stopping at who holds what (legal process is out), after asking the expert what "what to do with all of that
-  info" means (owner chose "Discuss this more between us later").
+- Day 9's third lesson gains one slide on which outside party holds which record an on-chain finding points to,
+  stopping at who holds what (legal process is out). It is recorded now; the expert is asked what "what to do with
+  all of that info" means, in the same request as the bridge guide, and the answer can refine the slide before it
+  is built (owner, after discussing it: "Yes, add it now").

@@ -14,6 +14,9 @@ slide index), which is never listed here.
   `docs/before-first-class.md`, not this list.
 
 ## Lessons
+- Day 9 ③'s "Who holds which record" slide (`docs/build-spec.md`, Additions) needs the reviewing expert's meaning
+  of "what to do with all of that info", asked in the same request as the bridge guide, before it is built
+  [10 Nov 2026, expert feedback review]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
