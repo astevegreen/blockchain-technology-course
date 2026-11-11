@@ -38,6 +38,7 @@ var TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4d
 function pad(hexNoPrefix) { return ("0000000000000000000000000000000000000000000000000000000000000000" + hexNoPrefix).slice(-64); }
 function word(addr) { return pad(addr.slice(2).toLowerCase()); }
 function amountWord(n) { return pad(n.toString(16)); }
+function tail4(v) { return v.slice(0, 6) + "…" + v.slice(-4); }
 function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 
 LabShell.start({
@@ -102,8 +103,8 @@ LabShell.start({
         var d = box("1. The top of the transaction");
         var fee = api.coin({ role: "fee", amount: "0.0011 ETH", who: "paid by the sender" });
         d.appendChild(api.el("table", null,
-          api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr" }, api.short(VICTIM, 6)), " (the victim)")),
-          api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr" }, api.short(USDT, 4)), " (the USDT contract)")),
+          api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr" }, tail4(VICTIM)), " (the victim)")),
+          api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr" }, tail4(USDT)), " (the USDT contract)")),
           api.el("tr", null, api.el("th", null, "Value"), api.el("td", null, "0 ETH")),
           api.el("tr", null, api.el("th", null, "Fee"), api.el("td", null, fee))));
         d.appendChild(paidRow(1,
@@ -125,7 +126,7 @@ LabShell.start({
         function showDecoded() {
           decodedBox.appendChild(api.el("p", null, api.el("code", null, "transfer(_to, _value)")));
           decodedBox.appendChild(api.el("table", null,
-            api.el("tr", null, api.el("th", null, "_to"), api.el("td", null, api.el("span", { class: "addr" }, api.short(SELLER, 6)), " (the seller)")),
+            api.el("tr", null, api.el("th", null, "_to"), api.el("td", null, api.el("span", { class: "addr" }, tail4(SELLER)), " (the seller)")),
             api.el("tr", null, api.el("th", null, "_value"), api.el("td", null, fmt(RAW) + "  (the token's decimals: " + DECIMALS + ")"))));
           var num = api.el("input", { type: "text", inputmode: "numeric", size: 12, "aria-label": "Amount in USDT" });
           var amountSay = api.el("p", { class: "say", role: "status" });
@@ -154,8 +155,8 @@ LabShell.start({
         var tbl = api.el("table", null);
         var vBal = api.el("td", null, "5,200 USDT"), sBal = api.el("td", null, "0 USDT");
         tbl.appendChild(api.el("tr", null, api.el("th", null, "Address"), api.el("th", null, "Balance")));
-        tbl.appendChild(api.el("tr", null, api.el("td", null, api.el("span", { class: "addr" }, api.short(VICTIM, 6)), " (victim)"), vBal));
-        tbl.appendChild(api.el("tr", null, api.el("td", null, api.el("span", { class: "addr" }, api.short(SELLER, 6)), " (seller)"), sBal));
+        tbl.appendChild(api.el("tr", null, api.el("td", null, api.el("span", { class: "addr" }, tail4(VICTIM)), " (victim)"), vBal));
+        tbl.appendChild(api.el("tr", null, api.el("td", null, api.el("span", { class: "addr" }, tail4(SELLER)), " (seller)"), sBal));
         d.appendChild(tbl);
         var run = api.el("button", { class: "btn", type: "button", onclick: function () {
           run.remove();
@@ -175,9 +176,9 @@ LabShell.start({
       layers.push(function () {
         var d = box("4. The receipt's log");
         d.appendChild(api.el("pre", null,
-          "Transfer  (from the USDT contract " + api.short(USDT, 4) + ")\n" +
-          "  from   " + api.short(VICTIM, 6) + "  (victim)\n" +
-          "  to     " + api.short(SELLER, 6) + "  (seller)\n" +
+          "Transfer  (from the USDT contract " + tail4(USDT) + ")\n" +
+          "  from   " + tail4(VICTIM) + "  (victim)\n" +
+          "  to     " + tail4(SELLER) + "  (seller)\n" +
           "  value  " + fmt(RAW) + "  = 5,000 USDT"));
         d.appendChild(paidRow(3,
           { 1: "The log names no payment to anyone but the seller.", 2: "The contract wrote this note; it is not a party in it." },
@@ -199,13 +200,13 @@ LabShell.start({
     explorer: { render: function (el, api) {
       el.appendChild(api.el("p", null, "The same transaction in Otterscan, as the afternoon lab meets it (a copy made up for this lab, not a live page). The overview:"));
       el.appendChild(api.el("table", null,
-        api.el("tr", null, api.el("th", null, "Transaction"), api.el("td", null, api.el("span", { class: "hash" }, api.short(TX1, 6)))),
-        api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr" }, api.short(VICTIM, 6)))),
-        api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr" }, api.short(USDT, 4)), " (USDT contract)")),
+        api.el("tr", null, api.el("th", null, "Transaction"), api.el("td", null, api.el("span", { class: "hash" }, tail4(TX1)))),
+        api.el("tr", null, api.el("th", null, "From"), api.el("td", null, api.el("span", { class: "addr" }, tail4(VICTIM)))),
+        api.el("tr", null, api.el("th", null, "To"), api.el("td", null, api.el("span", { class: "addr" }, tail4(USDT)), " (USDT contract)")),
         api.el("tr", null, api.el("th", null, "Value"), api.el("td", null, "0 ETH")),
         api.el("tr", null, api.el("th", null, "Transaction fee"), api.el("td", null, api.coin({ role: "fee", amount: "0.0011 ETH" }))),
         api.el("tr", null, api.el("th", null, "Tokens Transferred"), api.el("td", null,
-          "From ", api.el("span", { class: "addr" }, api.short(VICTIM, 6)), " To ", api.el("span", { class: "addr" }, api.short(SELLER, 6)),
+          "From ", api.el("span", { class: "addr" }, tail4(VICTIM)), " To ", api.el("span", { class: "addr" }, tail4(SELLER)),
           " For ", api.coin({ role: "output", amount: "5,000 USDT" })))));
       el.appendChild(api.el("p", null, "The Logs tab, where the event itself is:"));
       el.appendChild(api.el("pre", null,
@@ -218,11 +219,11 @@ LabShell.start({
     } },
     twist: {
       html: "<p>The next day the victim's USDT balance drops by 5,000 again. The transaction behind it is not from her:</p>" +
-        "<ul><li>From: <span class=\"addr\">" + LabShell.short(DRAINER_FROM, 6) + "</span> (no one knows it)</li>" +
-        "<li>To: <span class=\"addr\">" + LabShell.short(DRAINER_CONTRACT, 6) + "</span> (an unknown contract)</li>" +
+        "<ul><li>From: <span class=\"addr\">" + tail4(DRAINER_FROM) + "</span> (no one knows it)</li>" +
+        "<li>To: <span class=\"addr\">" + tail4(DRAINER_CONTRACT) + "</span> (an unknown contract)</li>" +
         "<li>Value: 0 ETH. The input data holds no address at all.</li>" +
-        "<li>The Transfer log from USDT names: from <span class=\"addr\">" + LabShell.short(VICTIM, 6) + "</span>, to <span class=\"addr\">" + LabShell.short(DRAINER_TO, 6) + "</span>, value 5,000 USDT.</li></ul>" +
-        "<p>These addresses and the transaction (<span class=\"hash\">" + LabShell.short(TX2, 6) + "</span>) are made up for this lab.</p>",
+        "<li>The Transfer log from USDT names: from <span class=\"addr\">" + tail4(VICTIM) + "</span>, to <span class=\"addr\">" + tail4(DRAINER_TO) + "</span>, value 5,000 USDT.</li></ul>" +
+        "<p>These addresses and the transaction (<span class=\"hash\">" + tail4(TX2) + "</span>) are made up for this lab.</p>",
       question: "Who got her tokens?",
       choices: [
         "The From address.",
