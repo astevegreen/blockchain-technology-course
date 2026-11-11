@@ -80,8 +80,8 @@ display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
 .card{text-align:center;max-width:420px}.card h1{font-size:20px;color:#e6edf3}
 .card p{font-size:14px;line-height:1.6;color:#8b949e}</style></head><body>
 <div class="card"><h1>Chain Graph is not enabled</h1>
-<p>The graph analysis tool is unlocked by your instructor for the relevant
-part of the forensics lab. Check back when it&rsquo;s time.</p></div>
+<p>The graph analysis tool is unlocked by your instructor when a lab
+needs it. Check back when it&rsquo;s time.</p></div>
 </body></html>"""
 
 
