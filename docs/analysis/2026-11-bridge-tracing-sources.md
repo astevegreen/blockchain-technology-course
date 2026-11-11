@@ -75,8 +75,8 @@ cross-chain operations usually carry event names that hold them [@lin_tracktrace
   hidden (`docs/spikes/cross-chain.md`, Kelp query 12).
 - THORChain's Bitcoin change outputs are not payouts (`docs/spikes/cross-chain.md`, traps).
 - The `OUT:` memo may not last. THORNode issue 2232 proposes removing outbound memos behind a `MemolessOutbound`
-  setting (status not shown, as of 10 Nov 2026) [@thornode_outboundmemos_2026]. Bybit's payouts in Feb 2025 carry
-  it; a later case may not, and then method 3 is what is left on THORChain.
+  setting (open since 31 Jul 2025, with no merge request, as of 10 Nov 2026) [@thornode_outboundmemos_2026].
+  Bybit's payouts in Feb 2025 carry it; a later case may not, and then method 3 is what is left on THORChain.
 - The router's own `Deposit` event fields were not found in THORChain's docs; the snapshot reads them on-chain.
 - ABCTracer covers contract-based, non-privacy, EVM bridges only [@lin_tracktraceautomatically_2025]. THORChain
   to Bitcoin is outside it; the memo docs carry that case.

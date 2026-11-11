@@ -255,7 +255,10 @@ runs in the second half of day 7. With this, nothing in "Not yet confirmed" abov
   bridge's own explorer, and the far side matched by amount and timing. It is built as part of step 6's
   day 8 changes (owner: "Yes, take it"). The expert who suggested it cannot supply ready-made material, so the
   course sources each method itself from the best public material and cites it (owner, 10 Nov: "we will have to
-  source it ourselves with the best available information").
+  source it ourselves with the best available information"). Students join the two sides themselves from the
+  snapshot (THORChain's `OUT:` memo, LayerZero's GUID), as no bridge explorer is open source; a slide shows the
+  explorers for awareness. Amount and timing is a check and a fallback, never the link, with no exercise across a
+  swap (owner, 10 Nov: "I approve your recommendations").
 - Day 8's second lesson gains one slide mapping the smart-contract vulnerability types, from the OWASP Smart
   Contract Top 10 (2026 edition), placing the attacks day 8 teaches among them; a map, not a taxonomy day
   (owner: "Yes, one slide").
