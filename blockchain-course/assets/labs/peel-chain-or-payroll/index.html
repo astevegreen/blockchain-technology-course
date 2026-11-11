@@ -51,7 +51,7 @@ var T2OUT = ["0.1200", "0.4500", "0.9000", "0.3100", "0.2700", "0.6000", "0.0800
 function coinHtml(role, amount) { return "<span class=\"coin " + role + "\"><span class=\"vh\">" + role + ": </span><span class=\"amount\">" + amount + " BTC</span></span>"; }
 
 var GROUPS = [
-  { id: "T1", title: "T1: 2 inputs, 2 outputs", shape: "0.5 BTC (S) + 0.3 BTC in; 0.6 BTC and 0.1999 BTC out; fee 0.0001 BTC. Only the inputs are offered: they were spent together." },
+  { id: "T1", title: "T1: 2 inputs, 2 outputs", shape: "0.5 BTC (S) + 0.3 BTC in; 0.1999 BTC and 0.6 BTC out; fee 0.0001 BTC. Only the inputs are offered: they were spent together." },
   { id: "T2", title: "T2: 2 inputs, 12 outputs", shape: "3.0 + 2.5 BTC in; twelve outputs of different amounts (S is one of them: 0.7895 BTC); fee 0.0005 BTC. The two inputs and the eleven other payees are offered." },
   { id: "T3", title: "T3: 5 inputs, 5 outputs", shape: "S (0.2 BTC) and four other coins in; five outputs of 0.1 BTC each; fee 0.0005 BTC. Only the four other inputs are offered." }
 ];
@@ -131,7 +131,7 @@ LabShell.start({
         var wrong = CAND.filter(function (c) { return inCluster[c.id] && c.owner !== "mine"; });
         var missed = CAND.filter(function (c) { return !inCluster[c.id] && c.owner === "mine"; });
         var msg = "The owner list (made up for this lab): ";
-        msg += wrong.length ? "you added " + wrong.length + " address" + (wrong.length > 1 ? "es" : "") + " that are not the suspect's, and your cluster grew to " + fmt(size()) + " addresses, most of them strangers. " : "everything you added is the suspect's. ";
+        msg += wrong.length ? "you added " + wrong.length + " address" + (wrong.length > 1 ? "es" : "") + " that are not the suspect's, and your cluster grew to " + fmt(size()) + " addresses, of which " + fmt(size() - 1 - (inCluster.A1 ? 6 : 0)) + " belong to strangers. " : "everything you added is the suspect's. ";
         if (missed.length) msg += "You left out T1's other input, which is his. ";
         status.textContent = msg + "T1's two inputs are the suspect's. T2's inputs are the exchange's; S was one customer it paid, and the other eleven are other customers. T3's five inputs belong to five people. Now sort the three transactions by shape.";
         buildSort();
@@ -157,7 +157,8 @@ LabShell.start({
         api.finish({ choice: 3, note:
           "<p>Only T1's other input belongs in S's cluster: choice (d). Choice (c) is the common belief that two inputs in one transaction always share an owner: it merged four strangers into S's cluster. T2's inputs are an exchange paying its customers: S was one customer, and the other eleven are not his crew. T3's five equal outputs mark a likely CoinJoin, where several people each sign their own input.</p>" +
           "<p>Co-spending works because each input needs its own key's signature, so a wallet that spends two coins together usually owns both. It fails because people can join their coins on purpose, and from the input list alone one signer looks the same as five. One false link merges two clusters into one: in a 2022 study, 60 of 120 ground-truth clusters merged owners, each holding a CoinJoin.</p>" +
-          "<p class=\"src\">Sources: <code>@meiklejohn_fistfulbitcoinscharacterizing_2013</code>; <code>@gmaxwell_coinjoinbitcoinprivacy_2013</code>; <code>@kappos_howpeelmillion_2022</code>; <code>@bitcoinoptech_paymentbatching_2021</code>.</p>" });
+          "<p class=\"src\">Sources: <code>@meiklejohn_fistfulbitcoinscharacterizing_2013</code>; <code>@gmaxwell_coinjoinbitcoinprivacy_2013</code>; <code>@kappos_howpeelmillion_2022</code>; <code>@bitcoinoptech_paymentbatching_2021</code>.</p>" +
+          "<p>The slide “Co-spending links inputs, unless it's a CoinJoin” states the right belief in its title: go back to it.</p>" });
       }
     } },
     name: {
@@ -169,7 +170,7 @@ LabShell.start({
       var table = api.el("table", { class: "explore" });
       function row(h, v) { table.appendChild(api.el("tr", null, api.el("th", null, h), api.el("td", null, v))); }
       function sp() { return document.createTextNode(" "); }
-      row("T1", api.el("span", null, "inputs: 2 · outputs: 2 · ", api.coin({ role: "input", amount: "0.5 BTC" }), sp(), api.coin({ role: "input", amount: "0.3 BTC" }), " → ", api.coin({ role: "output", amount: "0.6 BTC" }), sp(), api.coin({ role: "change", amount: "0.1999 BTC" })));
+      row("T1", api.el("span", null, "inputs: 2 · outputs: 2 · ", api.coin({ role: "input", amount: "0.5 BTC" }), sp(), api.coin({ role: "input", amount: "0.3 BTC" }), " → ", api.coin({ role: "output", amount: "0.6 BTC" }), sp(), api.coin({ role: "output", amount: "0.1999 BTC" })));
       var t2 = api.el("span", null, "inputs: 2 · outputs: 12 · ", api.coin({ role: "input", amount: "3.0 BTC" }), sp(), api.coin({ role: "input", amount: "2.5 BTC" }), " → ");
       T2OUT.forEach(function (x) { t2.appendChild(api.coin({ role: "output", amount: x + " BTC" })); t2.appendChild(sp()); });
       row("T2", t2);
@@ -198,7 +199,7 @@ LabShell.start({
     },
     tell: {
       prompt: "<p>The agent asks: &ldquo;Are the other payees in T2 and the other inputs in T3 the suspect's crew?&rdquo; Say it in a few sentences, with a confidence word.</p>",
-      example: "Address bc1q…9e2d joins the suspect's cluster through T1 (Moderate confidence: the two were spent together, and co-spending has known false positives). T2 is likely an exchange paying its customers (Low until attribution): its inputs are the exchange's, and the eleven other payees are not linked to the suspect. T3's five equal outputs mark a likely CoinJoin, so I did not add its other inputs."
+      example: "Address bc1qb54d…785d joins the suspect's cluster through T1 (Moderate confidence: the two were spent together, and co-spending has known false positives). T2 is likely an exchange paying its customers (Low until attribution): its inputs are the exchange's, and the eleven other payees are not linked to the suspect. T3's five equal outputs mark a likely CoinJoin, so I did not add its other inputs."
     }
   }
 });
