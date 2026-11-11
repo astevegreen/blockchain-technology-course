@@ -45,6 +45,9 @@ slide index), which is never listed here.
 - The day 3 game Spot the fake has no questions in the 05-EF quiz bank on telling a token by its creator rather
   than its name (`quizes/quiz_json/`) [11 Nov 2026, building the game]
 
+- `dynamic-labs/cross-chain/lab.yaml` memory_mb (90) and approx_download_mb (170) are estimates, not measured on a
+  student release. Measure after the next release build that includes the exploit services. [11 Nov 2026, exploit build]
+
 ## Notion and documents
 - `docs/analysis/2026-11-static-labs-review.md:28` still says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP
   has 12 and 01-CM has 7, and the lessons with none are 01-EF, 04-EF and 05-EF. [10 Nov 2026, grep count]
