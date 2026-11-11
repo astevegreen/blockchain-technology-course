@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Is it final yet?</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.lane { border: 1px solid var(--rule, #bbb); border-radius: 6px; padding: .5em .8em; margin: .6em 0; }
+.lane h3 { margin: 0 0 .3em; font-size: 1em; }
+.lane p { margin: .25em 0; }
+.state { font-weight: 700; }
+.state[data-final="yes"] { color: #006b4f; }
+.clock { border: 2px solid var(--accent); background: var(--accent-tint); border-radius: 6px; padding: .5em .8em; margin: .6em 0; }
+.clock input[type=range] { width: 100%; }
+.clock output { font-weight: 700; font-variant-numeric: tabular-nums; }
+.lanes table { border-collapse: collapse; margin: .4em 0 .8em; }
+.lanes td, .lanes th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/is-it-final-yet.md. The victim, the three payments, the blocks, the hashes and the
+   times are made up for this lab. The rules are real, as of 23 Oct 2026 (card "Sources"): Tron solidifies a block
+   once 19 of its 27 Super Representatives have produced blocks at or above it (about a minute); Ethereum's
+   checkpoint is finalized by votes of two-thirds of the stake (about 15 minutes; 12.8 at best from 32-slot
+   epochs of 12-second slots); Bitcoin never declares an end, and six confirmations (about an hour) is the usual
+   wait. The lab runs offline. */
+var BTC_TX = "3c9e1f7a52b8d04e6a1c93f5d7208be4a6c1f09d5e387b24a0d6c91e4f857a2b";
+var ETH_TX = "0x9b47d2e08a5c13f6e0b94d7a2c681f35e9a04d7b1c82f6503ae7d94b0c2185f6";
+var TRX_TX = "61a8f30c7e95d2b4086c1fa3e7d9540b2c68e1a7f35d90b4c8e26a17d03f9b5e";
+var ETH_BLOCK = 21480320;   // made up
+var TRX_BLOCK = 71230455;   // made up
+var BTC_BLOCK = 912340;     // made up
+
+function tail4(v) { return v.slice(0, 6) + "…" + v.slice(-4); }
+function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+
+/* What each chain says about the payment t minutes after it was made. */
+function tronState(t) {
+  return t >= 1
+    ? { final: true, word: "solidified", detail: "Block " + TRX_BLOCK + " is solidified: 19 of the 27 producers have built on it." }
+    : { final: false, word: "in a block, not yet solidified", detail: "Block " + TRX_BLOCK + " has been produced; fewer than 19 of the 27 producers have built on it." };
+}
+function ethState(t) {
+  var onTop = Math.floor(t * 60 / 12);
+  return t >= 15
+    ? { final: true, word: "finalized", detail: "Block " + ETH_BLOCK + " is covered by a finalized checkpoint, with " + plural(onTop, "block") + " on top." }
+    : { final: false, word: "included, not finalized", detail: "Block " + ETH_BLOCK + " was included at once, with " + plural(onTop, "block") + " on top. Its checkpoint has not yet been finalized." };
+}
+function btcState(t) {
+  var n = t < 5 ? 0 : 1 + Math.floor((t - 5) / 11);
+  var word = n === 0 ? "unconfirmed" : plural(n, "confirmation");
+  var detail = n === 0
+    ? "Not in a block yet. Bitcoin's blocks arrive about ten minutes apart, on average."
+    : "In block " + BTC_BLOCK + ", with " + plural(n - 1, "block") + " on top. Each block makes a reversal costlier; the chain never says “final”." +
+      (n >= 6 ? " Six is the usual wait, and it is a habit, not a rule of the chain." : "");
+  return { final: false, word: word, detail: detail };
+}
+
+LabShell.start({
+  id: "is-it-final-yet",
+  title: "Is it final yet?",
+  slide: { title: "Pending, then included, then final", href: "../../../lessons/ethereum/01-EF-ethereum_intro.html#/pending-then-included-then-final" },
+  steps: {
+    "case": { html:
+      "<p>A victim paid a scammer three times, minutes apart, on three different chains: Bitcoin, Ethereum and Tron. " +
+      "An agent calls eight minutes after the last payment: &ldquo;Has the money gone? Can it still come back?&rdquo;</p>" +
+      "<p>The victim, the payments, the blocks and the times are made up for this lab.</p>" },
+    commit: {
+      question: "The same payment was made on Bitcoin, Ethereum and Tron eight minutes ago. The agent asks whether the money has moved for good. On which chains can you say it is final?",
+      choices: [
+        "All three: it appears in each explorer.",
+        "Ethereum and Tron.",
+        "Tron only.",
+        "None of them."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var seen8 = false, seen70 = false;
+      var out = api.el("div", { class: "lanes" });
+      var say = api.el("p", { class: "say", role: "status" });
+      var range = api.el("input", { type: "range", min: 0, max: 70, step: 1, value: 0, "aria-label": "Minutes since the payments" });
+      var readout = api.el("output", null, "0");
+      el.appendChild(api.el("p", null, "Drag the clock to 8 minutes, when the agent calls, and read each lane. Then drag it to 70 to watch each chain go on."));
+      el.appendChild(api.el("div", { class: "clock" },
+        api.el("label", null, "Minutes since the payments: ", readout), range));
+      el.appendChild(out);
+      el.appendChild(say);
+
+      function lane(name, tx, s) {
+        return api.el("div", { class: "lane" },
+          api.el("h3", null, name, " ", api.coin({ role: "output", amount: "payment" }), " ", api.el("span", { class: "hash" }, tail4(tx))),
+          api.el("p", null, "Status: ", api.el("span", { class: "state", "data-final": s.final ? "yes" : "no" }, s.word)),
+          api.el("p", null, s.detail));
+      }
+      function draw() {
+        var t = Number(range.value);
+        readout.textContent = t + (t === 1 ? " minute" : " minutes") + " (" + clockAt(t) + ")";
+        out.innerHTML = "";
+        out.appendChild(lane("Bitcoin", BTC_TX, btcState(t)));
+        out.appendChild(lane("Ethereum", ETH_TX, ethState(t)));
+        out.appendChild(lane("Tron", TRX_TX, tronState(t)));
+        if (t >= 8) seen8 = true;
+        if (t === 8) { say.textContent = "At 8 minutes: Tron says solidified. Ethereum says included, not finalized. Bitcoin shows a count."; }
+        else say.textContent = "";
+        if (t >= 60) seen70 = true;
+        if (seen8 && seen70 && !finished) { finished = true; finish(); }
+      }
+      var finished = false;
+      function finish() {
+        api.finish({ choice: 2, note:
+          "<p>At eight minutes only Tron's lane says final. Ethereum's block was included at once, but its checkpoint is finalized " +
+          "only after a vote of two-thirds of the stake, about 15 minutes (12.8 at best). Bitcoin never says final: its count only makes a reversal costlier.</p>" +
+          "<p>An open chain cannot count votes from strangers, so Bitcoin prices a reversal in work and never declares an end, and Ethereum waits for a vote " +
+          "of two-thirds of its stake. Tron's 27 producers are known and few, so it can count them quickly. Each design answers &ldquo;who may vote?&rdquo; " +
+          "differently, so each puts a different clock on &ldquo;final&rdquo;.</p>" });
+      }
+      range.addEventListener("input", draw);
+      draw();
+    } },
+    name: {
+      term: "finality",
+      parts: "final + -ity, the state of being final",
+      plain: "<p>The point after which a chain's own rules say a block will not be reversed. Bitcoin has no such point, only depth: its blocks get harder to reverse as more are added.</p>"
+    },
+    explorer: { render: function (el, api) {
+      el.appendChild(api.el("p", null, "Each explorer prints its chain's own status word (copies made up for this lab, not live pages):"));
+      el.appendChild(api.el("table", null,
+        api.el("tr", null, api.el("th", null, "Bitcoin explorer"), api.el("td", null,
+          api.el("span", { class: "hash" }, tail4(BTC_TX)), " in block " + BTC_BLOCK + ": ", api.el("strong", null, "1 confirmation"))),
+        api.el("tr", null, api.el("th", null, "Ethereum explorer"), api.el("td", null,
+          api.el("span", { class: "hash" }, tail4(ETH_TX)), " in block " + ETH_BLOCK + ": ", api.el("strong", null, "Status: included"), " (later it reads “finalized”)")),
+        api.el("tr", null, api.el("th", null, "Tron explorer"), api.el("td", null,
+          api.el("span", { class: "hash" }, tail4(TRX_TX)), " in block " + TRX_BLOCK + ": ", api.el("strong", null, "Solidified")))));
+      el.appendChild(api.el("p", null, "A report gives that status, the block and the time it was read, because the status changes. The words differ by chain; only a status your chain's own rules call final lets you state a transfer as fact."));
+    } },
+    twist: {
+      html: "<p>Back to Ethereum. More than a third of the stake stops voting. The clock reaches 20 minutes. New blocks keep arriving on top of the payment's block (" +
+        "<span class=\"hash\">" + tail4(ETH_TX) + "</span>, block " + ETH_BLOCK + "), but its status still reads &ldquo;included&rdquo;.</p>" +
+        "<p>The agent asks again: is it final now?</p>",
+      question: "Is the Ethereum payment final now?",
+      choices: [
+        "Yes: it has many blocks on top.",
+        "Yes: 15 minutes have passed.",
+        "No: finality has stopped while blocks keep coming.",
+        "No: the payment failed."
+      ],
+      answer: 2,
+      why: "<p>Blocks keep coming, but they stop being finalized until the protocol drains the stake of the validators who are not voting (the inactivity leak, which takes a while). The payment is recorded, not final: say so, and check again.</p>"
+    },
+    tell: {
+      prompt: "<p>Tell the agent where the payment stands at eight minutes. One sentence per chain is fine; include a confidence word.</p>",
+      example: "As of 09:38, the Tron transfer is in a solidified block and can be stated as fact; the Ethereum transfer is in block " + ETH_BLOCK + " but not yet finalized, and I will check again before we rely on it; the Bitcoin payment has one confirmation, so a reversal is unlikely but still possible (Moderate confidence that it stands)."
+    }
+  }
+});
+
+/* The payments were made at 09:30 on a made-up day; the agent calls at 09:38. */
+function clockAt(t) {
+  var m = 9 * 60 + 30 + t;
+  return ("0" + Math.floor(m / 60)).slice(-2) + ":" + ("0" + (m % 60)).slice(-2);
+}
+</script>
+</body>
+</html>

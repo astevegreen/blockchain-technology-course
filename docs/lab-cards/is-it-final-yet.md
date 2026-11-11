@@ -88,3 +88,4 @@ The victim, times and blocks are made up for the lab and say so.
 ## Approval
 
 - Owner: "Approve all four" and "Keep day 3" (10 Nov 2026)
+- Built 11 Nov 2026: `blockchain-course/assets/labs/is-it-final-yet/`; opens from the "Pending, then included, then final" slide in 01-EF.
