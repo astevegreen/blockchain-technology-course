@@ -111,4 +111,4 @@ explorer's block is real.
 ## Approval
 
 - Owner: "Build a ledger in 4 failures,Guess the input,Who saw it first,Peel chain or payroll" (11 Nov 2026)
-- Built in 95ecd81d (11 Nov 2026).
+- Built in 3be28b16 (11 Nov 2026).
