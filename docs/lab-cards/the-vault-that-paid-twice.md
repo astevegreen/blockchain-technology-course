@@ -102,4 +102,4 @@ so; the contracts' behaviour is their own code, run at build (the vault writes n
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Find the sandwich,What is it really worth,Beat the freeze,The vault that paid twice" (11 Nov 2026)

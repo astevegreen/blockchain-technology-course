@@ -110,4 +110,4 @@ explorer's block is real.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Build a ledger in 4 failures,Guess the input,Who saw it first,Peel chain or payroll" (11 Nov 2026)

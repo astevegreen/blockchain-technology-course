@@ -8,13 +8,13 @@
 | Replaces | `tamper-ledger` |
 | Opens from | `blockchain-course/primer.qmd`, "A tamper-evident ledger". Recall: `lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd`, "\"Immutable\" means an edit would show" |
 | Day | The primer; a student who skipped it does it on the evening of day 1, after day 1 lesson ③ |
-| Kind | prediction lab (five minutes asked; about seven as drafted: see the owner question) |
+| Kind | prediction lab (about eight minutes: all four rounds, owner 11 Nov 2026) |
 
-**Owner question: four rounds in five minutes?** On paper the lab runs about seven minutes: four rounds of
-about a minute each, plus the prediction, name, explorer, twist and sentence. Recommendation: keep all four
-rounds, make rounds 3 and 4 one press each, and allow eight minutes. The primer's part has 15 minutes and no
+**Length (owner, 11 Nov 2026): all four rounds, rounds 3 and 4 one press each, about eight minutes.** On paper
+the lab runs about seven minutes: four rounds of about a minute each, plus the prediction, name, explorer, twist
+and sentence. The primer's part has 15 minutes and no
 lesson clock, and each round's failure is the reason for the next fix, so a cut round leaves a fix with no
-failure behind it. The other way to hold five minutes is to show round 4 as a caption, not a run.
+failure behind it. The other way, round 4 as a caption, was not taken.
 
 ## The ten lines
 
@@ -31,7 +31,7 @@ failure behind it. The other way to hold five minutes is to show round 4 as a ca
    blink; the prediction's first two choices fail here. So three other people hold copies, and the student's no
    longer matches. Round 3: outvoted 3 to 1, the student makes three fake copies for free and wins 4 to 3. So
    each entry must carry work, a hash starting 000 (Guess the input's search), and nodes keep the copy with the
-   most work. Round 4: the student redoes the work from entry 2 on, while the other copies keep adding entries
+   most work. Rounds 3 and 4 are one press each. Round 4: the student redoes the work from entry 2 on, while the other copies keep adding entries
    faster; the gap grows, and cheating stops working. The hashes appear last, on each entry.
 4. **The constraint**: no one owns the ledger, so no one can be trusted to say which copy is right. An edit must
    show (the links), one person's copy must not count for everyone (the copies), and the choice between copies
@@ -112,4 +112,5 @@ real.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Build a ledger in 4 failures,Guess the input,Who saw it first,Peel chain or payroll" (11 Nov 2026)
+- Length: all four rounds, rounds 3 and 4 one press each, about eight minutes (owner, 11 Nov 2026)

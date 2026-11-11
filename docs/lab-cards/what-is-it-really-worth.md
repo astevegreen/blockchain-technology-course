@@ -54,9 +54,10 @@ afternoon lab's reading of a pool's reserves ("This afternoon you swap and read 
    reserves in the pool's latest `Sync` log). We found no other market for TKN; a listing elsewhere would raise
    the figure."
 9. **The game, if any**: none. Day 4's game, pool trading in the afternoon, has the class trading one shared pool
-   while a bot sandwiches the careless, ranked by what each ends with. This lab has one seller, no other traders
-   and no score, and it asks what a holding is worth, not how to trade well. Its pool and token are not the
-   game's.
+   while a bot sandwiches the careless; it scores each call and its reason, and shows each seat's balance without
+   ranking by it (owner, on the pool-trading card: "Approve, score the calls (Recommended)", 11 Nov 2026). This
+   lab has one seller, no other traders and no score, and it asks what a holding is worth, not how to trade well.
+   Its pool and token are not the game's.
 10. **The archetype**: simulation.
 
 The opening case (shell: `case`): an agent has a screenshot of a subject's wallet: "Portfolio: $10,000,000", all
@@ -105,4 +106,4 @@ amounts are worked from the constant product below.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Find the sandwich,What is it really worth,Beat the freeze,The vault that paid twice" (11 Nov 2026)
