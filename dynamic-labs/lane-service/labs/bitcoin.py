@@ -40,12 +40,8 @@ COMPOSE_FILE = os.environ.get(
     "BITCOIN_COMPOSE_FILE",
     "/app/bitcoin-compose/docker-compose.yml",
 )
-# bitcoin-graph runs a full node on the p2p net, so nuke must rm it like
-# any student node or it gossips the old chain back into a reseeded
-# instructor. It keeps no volumes; its graph store self-rebuilds on boot.
-CORE_CONTAINERS = ("bitcoin-instructor-1", "bitcoin-mempool-1", "bitcoin-graph-1")
-CORE_SERVICES = ("instructor", "mempool", "graph")
-GRAPH_CONTAINER = os.environ.get("BITCOIN_GRAPH_CONTAINER", "bitcoin-graph-1")
+CORE_CONTAINERS = ("bitcoin-instructor-1", "bitcoin-mempool-1")
+CORE_SERVICES = ("instructor", "mempool")
 
 INSTRUCTOR_VOLUME = os.environ.get(
     "BITCOIN_INSTRUCTOR_VOLUME",
@@ -110,8 +106,6 @@ PANEL_HTML = (
     '<span class="grow"></span>'
     '<a class="pbtn" href="/labs/bitcoin/mempool/" target="_blank" rel="noopener">Mempool</a>'
     '<a class="pbtn" href="/labs/bitcoin/btc-explorer/" target="_blank" rel="noopener">Explorer</a>'
-    '<a class="pbtn" id="graph-btn" href="/labs/bitcoin/graph/" target="_blank" rel="noopener"'
-    ' style="display:none">Graph</a>'
     '<a class="pbtn" id="my-static-btn" target="_blank" rel="noopener">My Static</a>'
     '<a class="pbtn" id="hunt-btn" target="_blank" rel="noopener">Hunt</a>'
     '<a class="pbtn" href="/assets/labs/two-of-three/index.html" target="_blank" rel="noopener">Two of three</a>'
@@ -131,17 +125,6 @@ PANEL_SCRIPT = """
   // Day 1's terminal scavenger hunt: the claim travels in the link so the checker finds this node.
   var hunt = document.getElementById("hunt-btn");
   if (hunt) hunt.href = "/api/bitcoin/hunt/?c=" + encodeURIComponent(uuid);
-
-  // Graph tool button: only shown while the instructor has the tool
-  // enabled. Polled so it appears/disappears mid-session.
-  var graphBtn = document.getElementById("graph-btn");
-  function refreshGraphBtn() {
-    fetch("/labs/bitcoin/graph/api/status", {credentials: "same-origin"})
-      .then(function(r){ return r.json(); })
-      .then(function(j){ if (graphBtn) graphBtn.style.display = j.enabled ? "" : "none"; })
-      .catch(function(){ if (graphBtn) graphBtn.style.display = "none"; });
-  }
-  if (graphBtn) { refreshGraphBtn(); setInterval(refreshGraphBtn, 60000); }
 
   var toggle = document.getElementById("peers-toggle");
   var dropdown = document.getElementById("peers-dropdown");
@@ -389,61 +372,6 @@ def bitcoin_nuke():
             "message": f"{stage} failed: " + " / ".join(tail),
         }), 500
     return jsonify({"success": True, "message": "lab reset — instructor reseeded"})
-
-
-def _trigger_graph_rebuild() -> subprocess.CompletedProcess | None:
-    """Detached `graph-rebuild` in the graph container. `--queue` makes it WAIT
-    for any in-flight rebuild (e.g. a first-boot autobuild from a just-prior
-    reset) to finish and then rebuild, instead of no-op'ing on the lock."""
-    try:
-        return subprocess.run(
-            ["docker", "exec", "-d", GRAPH_CONTAINER,
-             "graph-rebuild", "--wait-sync", "--queue"],
-            capture_output=True, text=True, timeout=30,
-        )
-    except (subprocess.TimeoutExpired, FileNotFoundError):
-        return None
-
-
-# --- Chain Graph controls (bitcoin-graph/DESIGN.md) ---
-# Read-side state (enabled, build status, height) is fetched by browsers
-# straight from /labs/bitcoin/graph/api/status; lane-service only hosts
-# the mutating, instructor-gated actions, which need the docker socket.
-
-
-@blueprint.route("/api/bitcoin/graph/rebuild", methods=["POST"])
-@require_instructor
-def bitcoin_graph_rebuild():
-    result = _trigger_graph_rebuild()
-    if result is None or result.returncode != 0:
-        tail = "" if result is None else (result.stderr or result.stdout or "").strip()
-        return jsonify({
-            "success": False,
-            "message": f"could not start rebuild: {tail or 'docker exec failed'}",
-        }), 500
-    return jsonify({
-        "success": True,
-        "message": "graph rebuild started — progress shows on the graph page",
-    })
-
-
-@blueprint.route("/api/bitcoin/graph/enable", methods=["POST"])
-@require_instructor
-def bitcoin_graph_enable():
-    body = request.get_json(silent=True) or {}
-    on = bool(body.get("on"))
-    try:
-        result = subprocess.run(
-            ["docker", "exec", GRAPH_CONTAINER, "graph-gate", "on" if on else "off"],
-            capture_output=True, text=True, timeout=30,
-        )
-    except (subprocess.TimeoutExpired, FileNotFoundError) as exc:
-        return jsonify({"success": False, "message": f"toggle failed: {exc}"}), 500
-    if result.returncode != 0:
-        tail = (result.stderr or result.stdout or "").strip()
-        return jsonify({"success": False, "message": f"toggle failed: {tail}"}), 500
-    return jsonify({"success": True, "on": on,
-                    "message": f"graph tool {'enabled' if on else 'disabled'}"})
 
 
 def start():

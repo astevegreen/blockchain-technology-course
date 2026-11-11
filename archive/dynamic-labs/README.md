@@ -1,8 +1,8 @@
 # Archived dynamic labs
 
-Docker labs taken out of what students receive at step 7 of the lab plan (11 Nov 2026), kept here so they can be
+Docker labs taken out of what students receive at steps 7 and 9 of the lab plan (11 Nov 2026), kept here so they can be
 looked at or restored. Nothing was deleted. The owner's decisions are in `docs/analysis/2026-11-lab-plan.md`
-("Decided so far" and "Stage 1"); what this step moved is recorded at the end of that file ("Step 7: archived").
+("Decided so far" and "Stage 1"); what each step moved is recorded near the end of that file ("Step 7: archived", "Step 9: Chain Graph review").
 
 Students receive only `blockchain-course/` and `dynamic-labs/` (CLAUDE.md rule 1), so nothing in this folder
 reaches the site, the `src.zip`, the student VM or the student images.
@@ -18,6 +18,7 @@ relative paths below this folder.
 | P2P Trust (`p2p_trust`) | the lab; `lane-service/labs/p2p_trust*.py` and `p2p_trust_catalog.yaml`; `router/routes/p2p_trust.conf`; its automated and agent tests | Owner, 10 Nov: archive | No lab: the owner archived it outright |
 | Ethereum Lab (`ethereum_lab`) | the lab; `lane-service/labs/ethereum*.py`; `router/routes/ethereum.conf`; its automated and agent tests; `dynamic-labs/tests/test_ethereum_lab_docker_context.py` | Owner, 10 Nov: archive all but its DeFi-risk contracts | Day 8's exploit part, "Name the money and the flaw" (`dynamic-labs/cross-chain/exploit/`), which holds its own copies of those contracts |
 | Bitcoin Forensics 1 to 3 (labs 3-5 of the bitcoin lab) | `bitcoin-forensics/` (the class chain, its seeder and answer keys); `bitcoin/forensics-*.md` and `docs/plans/forensics-v2-curriculum-draft.md` (design notes); the labs' intro, chapters and exercises with their solutions, cut from `lane-service/labs/bitcoin_catalog.yaml` into `lane-service/labs/bitcoin_forensics_catalog.yaml` | Lab plan, Stage 1: archive | Day 6's decoy cases (`docs/lab-cards/bitcoin-trace-decoys.md`, built in 75f9584) |
+| Chain Graph (`bitcoin-graph`, an instructor-switched tool in the bitcoin lab) | `bitcoin-graph/` (its Neo4j loader, web app, design notes and smoke test) | Owner, 11 Nov: archive, after the step 9 review found no lesson or card uses it | Days 6 and 7's traces in the mempool explorer (`docs/lab-cards/bitcoin-trace-decoys.md`, `docs/lab-cards/hide-and-trace.md`) |
 
 ## What changed where they were wired in
 
@@ -38,11 +39,16 @@ relative paths below this folder.
   forensics chain" is gone. The launcher image (`lane-service/Dockerfile.launcher`) no longer bakes the chain, so
   `launcher_bake.py` only strips solutions. `vm-build.yml` checks out without Git LFS (the chain was the only LFS
   data under `dynamic-labs/`), `.gitattributes` drops its forensics line, and `student-exclude.txt`,
-  `tools/check.py` and `tools/lab_tests.py` no longer list its files. The lab reset (nuke) and the Chain Graph
-  controls stay.
+  `tools/check.py` and `tools/lab_tests.py` no longer list its files. The lab reset (nuke) stays.
+- Chain Graph: the bitcoin lab's compose files drop the `graph` service, so the lab reset (nuke) no longer
+  removes or restarts `bitcoin-graph-1`; the lane service drops the student panel's Graph button and the
+  instructor-only rebuild and enable routes; the instructor console drops the Graph Tool and Rebuild Graph
+  buttons; the router drops `/labs/bitcoin/graph/`. The student release no longer builds or records
+  `base-bitcoin-graph` (`student-release.yml`, `tools/student_release.py`, `bitcoin/lab.yaml` and the
+  generated `student-release-images.json`), and `tools/lab_tests.py` no longer lists it as untested.
 
 ## To restore one
 
 Move its folders back with `git mv` (each to the path without the leading `archive/`), then revert the wiring
-changes for that lab in the step 7 commit (`git show` the commit that added this README) and run
+changes for that lab in its step's commit (`git log -- archive/dynamic-labs/<lab>` finds it) and run
 `python tools/lab_manifest.py --write`.

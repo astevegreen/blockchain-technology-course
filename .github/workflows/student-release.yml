@@ -16,7 +16,7 @@ on:
         type: boolean
         default: false
       rebuild_bases:
-        description: "Rebuild the Bitcoin base images (base-bitcoin-lab, -mempool, -graph) before the lab images"
+        description: "Rebuild the Bitcoin base images (base-bitcoin-lab, -mempool) before the lab images"
         type: boolean
         default: false
       images_file:
@@ -82,7 +82,7 @@ jobs:
             echo "fixture=$fixture"
           } >> "$GITHUB_OUTPUT"
 
-  # The Bitcoin bases (trixie): bitcoin-lab, then mempool and graph built FROM it, on each architecture's own runner.
+  # The Bitcoin bases (trixie): bitcoin-lab, then mempool built FROM it, on each architecture's own runner.
   # Arch tags first; bases-merge joins them into base-bitcoin-<name> (moving) and base-bitcoin-<name>-<version>.
   bases:
     needs: prepare
@@ -127,7 +127,6 @@ jobs:
           }
           build lab dynamic-labs/bitcoin/workstation
           build mempool dynamic-labs/bitcoin/mempool
-          build graph dynamic-labs/bitcoin-graph
 
   bases-merge:
     needs: [prepare, bases]
@@ -145,7 +144,7 @@ jobs:
       - name: Join the architectures and move the base tags
         run: |
           set -euo pipefail
-          for name in lab mempool graph; do
+          for name in lab mempool; do
             base="$PACKAGE:base-bitcoin-$name"
             docker buildx imagetools create -t "$base-$VERSION" -t "$base" "$base-$VERSION-amd64" "$base-$VERSION-arm64"
             docker buildx imagetools inspect "$base-$VERSION"

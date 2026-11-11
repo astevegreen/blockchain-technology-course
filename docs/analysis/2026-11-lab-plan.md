@@ -400,3 +400,10 @@ address-and-transaction graph at `/labs/bitcoin/graph/`, behind an instructor sw
    (`01-FO-illicit_finance_regulation_case_studies.qmd:108`), on a chain that holds a case, with a line on the
    cluster panel that co-spend clusters break on CoinJoins.
 3. Either way, its stale design notes, unpinned packages and Sonar items are listed in `docs/follow-ups.md`.
+
+### Decided: archive (owner, 11 Nov 2026)
+
+The owner chose recommendation 1. `dynamic-labs/bitcoin-graph/` is now `archive/dynamic-labs/bitcoin-graph/`, and
+the bitcoin lab, lane service, instructor console, router and student release no longer wire it in
+(`archive/dynamic-labs/README.md` lists each change). Questions 2 and 3 fall away with it. The bitcoin lab's
+download drops by the graph image's own layers, 318 MiB (from 827 to 509 MiB), and its 4 GB memory cap goes.

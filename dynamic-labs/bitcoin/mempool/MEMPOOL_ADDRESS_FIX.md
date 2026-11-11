@@ -34,8 +34,7 @@ indexes:
 **no persistent datadir volume** and the entrypoint set **no `addnode`**. So a
 *recreate* gives a fresh bitcoind at **height 0 / 0 peers** that never re-syncs
 (custom chain has no DNS seeds) — electrs then has nothing to index. The lab is
-hub-and-spoke: spokes `addnode` the instructor (the graph node does this and
-re-syncs fine after recreate). The `-addnode=bitcoin-instructor-1` above makes
+hub-and-spoke: spokes `addnode` the instructor. The `-addnode=bitcoin-instructor-1` above makes
 the mempool a proper spoke. `addnode` stays in the **deployment** layer (compose
 env), not the generic entrypoint, since the peer name is deployment-specific;
 only the universal `maxtipage` goes in the entrypoint/`course-containers`.

@@ -39,20 +39,12 @@ slide index), which is never listed here.
 - The hlf and hlf-launcher Lab Tests jobs fail building `hlf-orderer-ttyd` and `hlf-peer-ttyd`
   (`dynamic-labs/hlf/Dockerfile.ttyd:8`, `Dockerfile.orderer-ttyd:7`, on the Fabric images): apt-get exits 100,
   "Unable to locate package curl". [11 Nov 2026, Lab Tests 43056313552, both attempts; router change d802910d]
-- Docs still name the archived P2P Trust, Ethereum and Forensics 1-3 labs as live: `docs/before-first-class.md`,
-  `docs/student-launcher-*.md` (the design's forensics-load action), `docs/security-triage.md`, `docs/sprint.md`,
-  and the known-gap list in `.claude/rules/ci.md` (`bitcoin-forensics/lab.md`). [11 Nov 2026, step 7 archive]
+- Docs still name the archived P2P Trust, Ethereum and Forensics 1-3 labs and the Chain Graph (`bitcoin-graph`)
+  as live: `docs/before-first-class.md`, `docs/student-launcher-*.md` (the design's forensics-load action),
+  `docs/security-triage.md`, `docs/sprint.md`, and the known-gap list in `.claude/rules/ci.md`
+  (`bitcoin-forensics/lab.md`). [11 Nov 2026, step 7 archive; Chain Graph added at step 9]
 - `tools/tests/test_student_launcher*.py` fixtures still use a forensics-load `local_actions` entry as their
   example; it no longer matches any lab. [11 Nov 2026, step 7 archive]
-- `dynamic-labs/bitcoin-graph/` DESIGN and README describe it as Forensics 2's tool; with Forensics archived it
-  serves no lab (the plan reviews it last). [11 Nov 2026, step 7 archive]
-- `dynamic-labs/bitcoin-graph/` (only if the tool stays): stale notes in `DESIGN.md:206-228` (a time heatmap the UI
-  lacks; a staging swap the design's own deviation note drops for 503s), `graph-entrypoint.sh:41` ("named volume";
-  compose has none) and `dynamic-labs/bitcoin/docker-compose.yml:92` (the ~1.7M-tx forensics chain); unpinned apt
-  and pip packages (`Dockerfile:15-39`); 26 SonarCloud issues, 3 CRITICAL (`app/main.py:304`, `etl.py:145`
-  complexity; `etl.py:41` `/var/tmp` spool). [11 Nov 2026, step 9 review]
-- `dynamic-labs/bitcoin-graph/` has no automated test: `tools/lab_tests.py:36` lists it as not run, so only
-  `smoke-test.sh` checks it, by hand. [11 Nov 2026, step 9 review]
 - `dynamic-labs/bitcoin/INSTRUCTOR_SOLUTION_GUIDE.md` still has a Forensics section. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/lane-service/lab.yaml` `approx_download_mb: 139` still counts the 13 MB forensics snapshot the
   launcher image no longer bakes; measure at the next student release. [11 Nov 2026, step 7 archive]

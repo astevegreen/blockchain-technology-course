@@ -26,7 +26,7 @@ RELEASE = REPO / ".github" / "workflows" / "student-release.yml"
 def build_contexts() -> list[str]:
     data = json.loads((IMAGES if IMAGES.is_file() else STUB).read_text(encoding="utf-8"))
     contexts = {row["context"] for row in data["images"] if row["source"] == "build"}
-    contexts |= {"dynamic-labs/bitcoin/workstation", "dynamic-labs/bitcoin/mempool", "dynamic-labs/bitcoin-graph"}
+    contexts |= {"dynamic-labs/bitcoin/workstation", "dynamic-labs/bitcoin/mempool"}
     if (REPO / "student-launcher" / "control").is_dir():
         contexts.add("student-launcher/control")
     return sorted(contexts)

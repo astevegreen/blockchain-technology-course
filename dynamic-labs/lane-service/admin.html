@@ -120,8 +120,6 @@
           <button id="apply-pool">Apply</button>
         </label>
         <button id="pause-btn">Pause sweeper</button>
-        <button id="graph-toggle-btn" style="display:none;">Graph Tool: …</button>
-        <button id="graph-rebuild-btn" style="display:none;">Rebuild Graph</button>
         <button id="nuke-btn" class="danger" style="display:none;">Reset Lab</button>
         <span class="msg" id="msg"></span>
       </div>
@@ -517,52 +515,8 @@
         }
       });
 
-      // Chain Graph: tool-wide enable toggle + manual rebuild. Read state comes straight
-      // from the graph app; mutations go through lane-service.
-      async function wireGraphControls(){
-        var tg = document.getElementById("graph-toggle-btn");
-        var rb = document.getElementById("graph-rebuild-btn");
-        if (!tg || !rb) return;
-        tg.style.display = ""; rb.style.display = "";
-        async function refreshGraph(){
-          try {
-            var s = await (await fetch("/labs/bitcoin/graph/api/status",
-                                       {credentials:"same-origin"})).json();
-            tg.dataset.on = s.enabled ? "1" : "0";
-            var detail = s.state === "ready" ? ("@" + s.height)
-                       : (s.state || "empty");
-            tg.textContent = "Graph Tool: " + (s.enabled ? "ON" : "off") +
-                             " (" + detail + ")";
-          } catch(e){ tg.textContent = "Graph Tool: unreachable"; tg.dataset.on = "0"; }
-        }
-        tg.onclick = async function(){
-          var on = tg.dataset.on !== "1";
-          try {
-            var j = await (await api("/graph/enable", {method:"POST",
-              headers:{"Content-Type":"application/json"},
-              body: JSON.stringify({on: on})})).json();
-            setMsg(j.message || (j.success ? "updated" : "failed"), j.success ? "ok" : "error");
-          } catch(e){ setMsg("toggle failed: " + e.message, "error"); }
-          refreshGraph();
-        };
-        rb.onclick = async function(){
-          if (!confirm("Rebuild the transaction graph from the current chain?\n\n" +
-                       "Runs in the background (the graph page shows progress); " +
-                       "the tool serves a 'rebuilding' notice meanwhile.")) return;
-          try {
-            var j = await (await api("/graph/rebuild", {method:"POST"})).json();
-            setMsg(j.message || (j.success ? "rebuild started" : "rebuild failed"),
-                   j.success ? "ok" : "error");
-          } catch(e){ setMsg("rebuild failed: " + e.message, "error"); }
-          refreshGraph();
-        };
-        await refreshGraph();
-        setInterval(refreshGraph, 15000);
-      }
-
       if (LAB === "bitcoin") {
         document.getElementById("nuke-btn").style.display = "";
-        wireGraphControls();
       }
 
       function escapeHtml(s){

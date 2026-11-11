@@ -25,7 +25,7 @@ class LabsFor(unittest.TestCase):
         self.assertEqual(lab_tests.labs_for([f"{TESTS}/automated/quiz-engine/run.sh"]), ["quiz-engine"])
 
     def test_a_lab_not_yet_in_ci_runs_nothing(self) -> None:
-        self.assertEqual(lab_tests.labs_for(["dynamic-labs/bitcoin-graph/x.py", "dynamic-labs/hlf/app.py"]), [])
+        self.assertEqual(lab_tests.labs_for(["dynamic-labs/hlf/app.py"]), [])
 
     def test_hlf_changes_run_both_hlf_suites(self) -> None:
         with mock.patch.object(lab_tests, "IN_CI", ["exercises", "hlf", "hlf-launcher"]):
@@ -41,7 +41,7 @@ class LabsFor(unittest.TestCase):
             self.assertEqual(lab_tests.labs_for([f]), ["exercises", "quiz-engine"], f)
 
     def test_docs_playbooks_and_files_outside_the_labs_run_nothing(self) -> None:
-        for f in ["dynamic-labs/README.md", "dynamic-labs/docs/plan.md", "dynamic-labs/bitcoin-graph/README.md",
+        for f in ["dynamic-labs/README.md", "dynamic-labs/docs/plan.md", "dynamic-labs/PRIMER.md",
                   f"{TESTS}/agent/exercises/playbook.md", f"{TESTS}/unit/test_hlf_my_term.py",
                   f"{TESTS}/automated/README.md", "blockchain-course/index.qmd", "CLAUDE.md"]:
             self.assertEqual(lab_tests.labs_for([f]), [], f)

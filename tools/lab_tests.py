@@ -33,7 +33,7 @@ TEST_NAME = {"quiz-engine-v2": "quiz-engine"}
 ALSO_RUNS = {"hlf": ["hlf-launcher"]}
 
 # Folders and files under dynamic-labs/ that no lab runs: a change here tests nothing.
-NOT_RUN = {"bitcoin-graph", "docs", "tests", "PRIMER.md", "README.md", ".gitignore"}
+NOT_RUN = {"docs", "tests", "PRIMER.md", "README.md", ".gitignore"}
 NOT_RUN_UNDER_TESTS = {"agent", "unit", "README.md", "how-to-write-a-lab-regression-test.md"}
 
 

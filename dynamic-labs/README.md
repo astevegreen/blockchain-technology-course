@@ -310,8 +310,8 @@ Cloud deploy accepts the same claim-lane capacity controls as `lab-manager.sh de
 Measured on the course desktop (Docker Desktop, 20 CPUs, 15.6 GiB), not on a cloud host, with
 `scripts/measure-seats.py`: a fresh classroom deploy, ten lanes of each claim-based lab started through the
 instructor API, and `docker stats` read after a 45-second settle. The seats were idle (a student reading or typing),
-so CPU is a floor, not a peak. The Ethereum and P2P Trust labs were archived on 11 Nov 2026 (`archive/dynamic-labs/`
-in the course repository); their rows below are kept as measured.
+so CPU is a floor, not a peak. The Ethereum and P2P Trust labs and the Chain Graph (`bitcoin-graph`) were archived on 11 Nov 2026
+(`archive/dynamic-labs/` in the course repository); their rows and shares below are kept as measured.
 
 | What | RAM | CPU |
 |------|----:|------------------------:|

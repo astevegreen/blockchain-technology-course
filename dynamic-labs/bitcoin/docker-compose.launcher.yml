@@ -1,7 +1,7 @@
 # Bitcoin lab on a student's own machine (the course launcher; docs/student-launcher-design.md).
 # lane-service drives this file: it is baked into the lane-service launcher image at
 # /app/bitcoin-compose/docker-compose.launcher.yml, and the lab reset (nuke) runs
-# `docker compose up -d instructor mempool graph` against it. Same project, service and network
+# `docker compose up -d instructor mempool` against it. Same project, service and network
 # names as docker-compose.yml, so container names (bitcoin-instructor-1, ...) match the classroom.
 # Images only: no build contexts and no host folders. Each image comes from the release manifest as
 # ${BITCOIN_<SERVICE>_IMAGE}; the instructor is built from the same Dockerfile as the student lane,
@@ -43,14 +43,6 @@ services:
       BTCEXP_BASEURL: "/labs/bitcoin/btc-explorer/"
       MEMPOOL_BASE_PATH: "/labs/bitcoin/mempool"
       BITCOIN_EXTRA_ARGS: "-maxtipage=9999999999 -addnode=bitcoin-instructor-1"
-    labels: *course-labels
-    networks:
-      - p2p-net
-      - student-mgmt-net
-
-  graph:
-    image: ${BITCOIN_GRAPH_IMAGE:?}
-    mem_limit: 4g
     labels: *course-labels
     networks:
       - p2p-net

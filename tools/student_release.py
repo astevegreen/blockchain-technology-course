@@ -36,7 +36,7 @@ RUNNERS = {"linux/amd64": "ubuntu-24.04", "linux/arm64": "ubuntu-24.04-arm"}
 LFS_HEADER = b"version https://git-lfs.github.com/spec/v1"
 VERSION = re.compile(r"^\d{4}\.\d{2}\.\d{2}-\d+$")
 DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
-BASE_CONTEXTS = ("dynamic-labs/bitcoin/workstation", "dynamic-labs/bitcoin/mempool", "dynamic-labs/bitcoin-graph")
+BASE_CONTEXTS = ("dynamic-labs/bitcoin/workstation", "dynamic-labs/bitcoin/mempool")
 LAUNCHER_CONTEXT = "student-launcher/control"
 ROUTER_LOCAL = ("dynamic-labs/router/docker-compose.launcher.yml", "dynamic-labs/router/routes/local")
 
