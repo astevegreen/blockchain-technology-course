@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volume from nowhere</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+.wallets { display: grid; grid-template-columns: repeat(auto-fit, minmax(11em, 1fr)); gap: .6em; margin: .6em 0; }
+.wallet { border: 2px solid var(--rule); border-radius: 8px; padding: .5em .7em; background: var(--panel); min-height: 8.5em; }
+.wallet.over { border-color: var(--ink); background: var(--accent-tint); }
+.wallet h3 { margin: 0 0 .3em; font-size: .95em; }
+.wallet .bal { font-variant-numeric: tabular-nums; font-weight: 700; display: block; margin: .2em 0; }
+.token { display: inline-block; border: 2px solid var(--hash); background: var(--hash-tint); border-radius: 6px; padding: .15em .6em; font-family: var(--mono); font-weight: 700; cursor: grab; margin: .2em 0; }
+.token.picked { outline: 3px solid var(--ink); }
+.token:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.panel { border: 1px solid var(--rule); border-radius: 6px; padding: .5em .8em; margin: .8em 0; background: var(--panel); }
+.panel h3 { margin: 0 0 .3em; font-size: 1em; }
+.market { display: flex; flex-wrap: wrap; gap: .3em 2em; }
+.market div { min-width: 7em; }
+.market .k { display: block; font-size: .85em; color: var(--ink-soft); }
+.big { font-size: 1.3em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.sale { display: flex; flex-wrap: wrap; gap: .5em; align-items: center; }
+.sale input { width: 5em; font: inherit; padding: .2em .4em; }
+.explore td, .explore th { padding: .15em .7em .15em 0; text-align: left; vertical-align: top; }
+.fundrow { display: flex; flex-wrap: wrap; gap: .5em; margin: .4em 0; }
+.twistbox ul { list-style: none; margin: .3em 0; padding: 0; display: flex; flex-direction: column; gap: .35em; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/volume-from-nowhere.md. NFT #7 and #12, the wallets, their addresses, the prices,
+   the fees and the victim are made up for this lab. The page runs its own tiny chain and marketplace, so it
+   works offline. Every transaction costs the sender a flat 0.002 ETH. */
+var FEE = 0.002;
+var FUND = 13;
+var ADDR = { S: "0x2d94…6b58", A: "0x51c2…9a04", B: "0x8e7b…13d6", C: "0xa03f…c7e1" };
+var NAMES = { S: "Seller", A: "A", B: "B", C: "C" };
+var ORDER = ["S", "A", "B", "C"];
+var TX = ["0x4b1e…a7f2", "0x9d03…5c18", "0x62af…e0b4"];
+function r3(n) { return Math.round(n * 1000) / 1000; }
+function eth(n) { return String(r3(n)); }
+function coinHtml(role, amount) { return "<span class=\"coin " + role + "\"><span class=\"vh\">" + role + ": </span><span class=\"amount\">" + amount + "</span></span>"; }
+function addrHtml(a) { return "<span class=\"addr\">" + a + "</span>"; }
+
+LabShell.start({
+  id: "volume-from-nowhere",
+  title: "Volume from nowhere",
+  slide: { title: "Wash trading: the seller on both sides", href: "../../../lessons/forensics/11-FO-bytecode_nft_wash_trading.html#/wash-trading-the-seller-on-both-sides" },
+  steps: {
+    "case": { html:
+      "<p>A victim bought NFT #7 for 16 ETH because its last sale was 15 ETH and it &ldquo;was selling fast&rdquo;. Now no one will pay more than 1 ETH for it. " +
+      "The agent asks you: &ldquo;Were those earlier sales real?&rdquo;</p>" +
+      "<p>NFT #7, the wallets, the addresses, the prices, the fees and the victim are all made up for this lab.</p>" },
+    commit: {
+      question: "NFT #7 sold three times this week, for 10, 12 and 15 ETH: 37 ETH of volume. Is there demand for it?",
+      choices: [
+        "Yes: three buyers each paid more.",
+        "Yes: 37 ETH changed hands.",
+        "The sales alone cannot say: the buyers may be the seller.",
+        "No: NFT prices are always fake."
+      ]
+    },
+    "do": { render: function (el, api) {
+      var bal = { S: 40, A: 0, B: 0, C: 0 };
+      var holder = "S", funded = {}, sales = [], picked = false, finished = false;
+      var wallets = {}, balEls = {}, holdEls = {};
+      var say = api.el("p", { role: "status" }, "You are the seller: one wallet, NFT #7 and 40 ETH. Fund your three other wallets first.");
+      var market = api.el("div", { class: "panel" });
+      var totalEl = api.el("span", { class: "big" });
+      var saleBox = api.el("div", { class: "panel", hidden: true });
+      var fundRow = api.el("div", { class: "fundrow" });
+
+      function total() { return ORDER.reduce(function (s, k) { return s + bal[k]; }, 0); }
+      function buyers() { var o = {}; sales.forEach(function (s) { o[s.to] = 1; }); return Object.keys(o).length; }
+      function volume() { return sales.reduce(function (s, x) { return s + x.price; }, 0); }
+
+      function render() {
+        ORDER.forEach(function (k) {
+          balEls[k].textContent = eth(bal[k]) + " ETH";
+          holdEls[k].textContent = "";
+          if (holder === k) {
+            var t = api.el("span", { class: "token" + (picked ? " picked" : ""), role: "button", tabindex: 0, draggable: "true",
+              "aria-label": "NFT #7 in wallet " + NAMES[k] + (picked ? ", picked up: choose a wallet to send it to" : ". Press Enter to pick it up, or drag it to a wallet") }, "NFT #7");
+            t.addEventListener("dragstart", function (e) { e.dataTransfer.setData("text/plain", "7"); e.dataTransfer.effectAllowed = "move"; picked = true; });
+            t.addEventListener("dragend", function () { picked = false; render(); });
+            t.addEventListener("click", function () { picked = !picked; render(); });
+            t.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); picked = !picked; render(); } });
+            holdEls[k].appendChild(t);
+          } else if (picked) {
+            holdEls[k].appendChild(api.el("button", { class: "btn", type: "button", onclick: function () { target(k); } }, "Send #7 here"));
+          }
+        });
+        totalEl.textContent = eth(total()) + " ETH";
+        market.innerHTML = "";
+        market.appendChild(api.el("h3", null, "The marketplace page for NFT #7"));
+        var last = sales.length ? eth(sales[sales.length - 1].price) + " ETH" : "none yet";
+        market.appendChild(api.el("div", { class: "market" },
+          api.el("div", null, api.el("span", { class: "k" }, "Last sale"), api.el("span", { class: "big" }, last)),
+          api.el("div", null, api.el("span", { class: "k" }, "Volume"), api.el("span", { class: "big" }, eth(volume()) + " ETH")),
+          api.el("div", null, api.el("span", { class: "k" }, "Sales"), api.el("span", { class: "big" }, String(sales.length))),
+          api.el("div", null, api.el("span", { class: "k" }, "Buyers"), api.el("span", { class: "big" }, String(buyers())))));
+        Array.prototype.forEach.call(fundRow.querySelectorAll("button"), function (b) { b.disabled = !!funded[b.dataset.w]; });
+      }
+
+      function fund(w) {
+        if (funded[w]) return;
+        funded[w] = true; bal.S = r3(bal.S - FUND - FEE); bal[w] = r3(bal[w] + FUND);
+        say.textContent = "You sent " + FUND + " ETH from the seller wallet to " + NAMES[w] + " (fee " + FEE + " ETH). " +
+          (Object.keys(funded).length === 3 ? "All three are funded. Now move NFT #7 to wallet A: pick it up and send it, or drag it." : "");
+        render();
+      }
+      function target(to) {
+        if (to === holder) { picked = false; render(); return; }
+        if (holder === "S") {
+          if (to !== "A") { say.textContent = "Start the loop at A: move NFT #7 to A first."; picked = false; render(); return; }
+          if (bal.S < FEE) return;
+          bal.S = r3(bal.S - FEE); holder = "A"; picked = false;
+          say.textContent = "NFT #7 moved to A (a transfer, not a sale: no price). Now sell it round: A to B for 10, B to C for 12, C to A for 15, by dragging it from the holder to the buyer and typing a price.";
+          render(); return;
+        }
+        if (to === "S") { say.textContent = "The seller wallet is not a buyer in this loop; sell between A, B and C."; picked = false; render(); return; }
+        askPrice(holder, to);
+      }
+      function askPrice(from, to) {
+        saleBox.hidden = false; saleBox.innerHTML = "";
+        var price = api.el("input", { type: "number", min: "0.1", step: "0.1", "aria-label": "Price in ETH", value: sales.length === 0 ? "10" : sales.length === 1 ? "12" : "15" });
+        var msg = api.el("p", { role: "alert" });
+        saleBox.appendChild(api.el("h3", null, "Sell NFT #7: " + NAMES[from] + " to " + NAMES[to]));
+        saleBox.appendChild(api.el("div", { class: "sale" }, api.el("label", null, "Price (ETH) "), price,
+          api.el("button", { class: "btn primary", type: "button", onclick: function () {
+            var p = Number(price.value);
+            if (!(p > 0)) { msg.textContent = "Type a price above 0."; return; }
+            if (bal[to] < p + FEE) { msg.textContent = NAMES[to] + " has only " + eth(bal[to]) + " ETH, and a sale costs the buyer the price plus a " + FEE + " ETH fee."; return; }
+            bal[to] = r3(bal[to] - p - FEE); bal[from] = r3(bal[from] + p);
+            sales.push({ from: from, to: to, price: p }); holder = to; picked = false;
+            saleBox.hidden = true;
+            say.textContent = "Sold: NFT #7 from " + NAMES[from] + " to " + NAMES[to] + " for " + eth(p) + " ETH. The marketplace page updated.";
+            render(); check();
+          } }, "Sell"),
+          api.el("button", { class: "btn", type: "button", onclick: function () { saleBox.hidden = true; picked = false; render(); } }, "Cancel")));
+        saleBox.appendChild(msg);
+      }
+      function check() {
+        if (finished || sales.length < 3 || holder !== "A" || sales[sales.length - 1].to !== "A") return;
+        finished = true;
+        var fees = r3(40 - total());
+        api.finish({ choice: 2, note:
+          "<p>Look at the two numbers you can see. The marketplace says: last sale " + eth(sales[sales.length - 1].price) + " ETH, volume " + eth(volume()) + " ETH, " + sales.length + " sales, " + buyers() + " buyers. Your own four wallets together went from 40 ETH to " + eth(total()) + " ETH: only the " + eth(fees) + " ETH of fees left. Every buyer was you, so the demand came from nowhere.</p>" +
+          "<p>The sales alone cannot say, which is answer (c). Choices (a) and (b) count sales, not separate buyers: a marketplace records any sale between any two addresses, and a new address costs nothing to make. It cannot see who controls them. Choice (d) goes too far: some NFT sales are real.</p>" +
+          "<p class=\"src\">Sources: <code>@chainalysis_nftwashtrading_2022</code>; <code>@vonwachter_nftwashtrading_2022</code>.</p>" });
+      }
+
+      ORDER.forEach(function (k) {
+        balEls[k] = api.el("span", { class: "bal" }); holdEls[k] = api.el("div");
+        var w = api.el("div", { class: "wallet", "aria-label": "Wallet " + NAMES[k] }, api.el("h3", null, k === "S" ? "Seller wallet" : "Wallet " + k),
+          api.el("span", { class: "addr" }, ADDR[k]), balEls[k], holdEls[k]);
+        w.addEventListener("dragover", function (e) { e.preventDefault(); w.classList.add("over"); });
+        w.addEventListener("dragleave", function () { w.classList.remove("over"); });
+        w.addEventListener("drop", function (e) { e.preventDefault(); w.classList.remove("over"); target(k); });
+        wallets[k] = w;
+      });
+      ["A", "B", "C"].forEach(function (w) {
+        fundRow.appendChild(api.el("button", { class: "btn", type: "button", "data-w": w, onclick: function () { fund(w); } }, "Fund wallet " + w + " with " + FUND + " ETH"));
+      });
+
+      el.appendChild(api.el("p", null, "You are the seller. Click each button to fund a wallet of your own. Then move NFT #7 to A and sell it round: A to B for 10 ETH, B to C for 12, C to A for 15. Drag the token to the buyer (or click it, then click Send here), and type the price."));
+      el.appendChild(fundRow);
+      var grid = api.el("div", { class: "wallets" });
+      ORDER.forEach(function (k) { grid.appendChild(wallets[k]); });
+      el.appendChild(grid);
+      el.appendChild(saleBox);
+      el.appendChild(market);
+      el.appendChild(api.el("p", null, "Your total across all four wallets: ", totalEl));
+      el.appendChild(say);
+      render();
+    } },
+    name: {
+      term: "wash trade",
+      parts: "a seller (on one side of the sale) + the same seller again (on the other side, as the buyer)",
+      plain: "<p>A sale in which the seller is on both sides, so no real ownership changes, but the marketplace still records a price and a volume that others read as demand.</p><p class=\"src\">Source: <code>@chainalysis_nftwashtrading_2022</code> (2 Feb 2022).</p>"
+    },
+    explorer: { render: function (el, api) {
+      var table = api.el("table", { class: "explore" });
+      function row(h, v) { table.appendChild(api.el("tr", null, api.el("th", null, h), api.el("td", null, v))); }
+      function addr(k) { return api.el("span", { class: "addr" }, ADDR[k]); }
+      var loop = [["A", "B", "10"], ["B", "C", "12"], ["C", "A", "15"]];
+      loop.forEach(function (s, i) {
+        row("Sale " + (i + 1), api.el("span", null, api.el("span", { class: "hash" }, TX[i]), " calls the marketplace"));
+        row("", api.el("span", null, api.el("code", null, "Transfer"), " NFT #7: ", addr(s[0]), " → ", addr(s[1])));
+        row("", api.el("span", null, "paid the other way: ", addr(s[1]), " → ", addr(s[0]), " ", api.coin({ role: "output", amount: s[2] + " ETH" })));
+      });
+      row("First ETH in", "");
+      ["A", "B", "C"].forEach(function (k) { row("", api.el("span", null, addr(k), " ← ", addr("S"), " ", api.coin({ role: "output", amount: "13 ETH" }))); });
+      el.appendChild(api.el("p", null, "The same sales as an analyst meets them, in Otterscan's layout (a copy made up for this lab, not a live page; Otterscan is an open-source Ethereum explorer). Each sale is a transaction that calls the marketplace, with NFT #7's ", api.el("code", null, "Transfer"), " log and the payment going the other way. Then each buyer's first incoming ETH: all three from one funding wallet."));
+      el.appendChild(table);
+      el.appendChild(api.el("p", null, "Paid sales plus one funder: ", api.conf("moderate"), " on the lesson's “How sure” table. High needs a payoff, such as a later sale to an outside buyer near 15 ETH."));
+      el.appendChild(api.el("p", { class: "src" }, "Sources: ", api.el("code", null, "@entriken_eip721nonfungibletoken_2018"), "; ", api.el("code", null, "@chainalysis_nftwashtrading_2022"), "; ", api.el("code", null, "@odni_icd203_2015"), "."));
+    } },
+    twist: {
+      html: "<p>A second collection: NFT #12, held by three other wallets, goes round the same way, at the same rising prices, 10, 12 and 15 ETH. One fact changes.</p>" +
+        "<div class=\"panel twistbox\"><strong>First ETH in</strong><ul>" +
+        "<li>" + addrHtml("0x3c58…d1a7") + " ← " + addrHtml("0x7a10…e3c9") + " " + coinHtml("output", "13 ETH") + "</li>" +
+        "<li>" + addrHtml("0x91e4…20bf") + " ← " + addrHtml("0x7a10…e3c9") + " " + coinHtml("output", "13 ETH") + "</li>" +
+        "<li>" + addrHtml("0xd6a2…7c35") + " ← " + addrHtml("0x7a10…e3c9") + " " + coinHtml("output", "13 ETH") + "</li></ul>" +
+        "<p>The funder, <span class=\"addr\">0x7a10…e3c9</span>, is an exchange's hot wallet. All values are made up for this lab.</p></div>",
+      question: "Wash trading? How sure?",
+      choices: ["High", "Moderate", "Low", "Not wash trading"],
+      answer: 2,
+      why: "<p><span class=\"conf\" data-level=\"low\">Low</span>. An exchange funds millions of customers, so a shared exchange ties no one together: the funder must be the seller's own. The loop and the paid sales still fit friends, or a team, trading their own money. It is not ruled out as wash trading, and it is not shown either. So the answer is not &ldquo;not wash trading&rdquo;; it is that this evidence alone is Low.</p>" +
+        "<p class=\"src\">Sources: <code>@chainalysis_nftwashtrading_2022</code> (the funding marker); the lesson's slide &ldquo;Self-financed: follow the buyer's money back&rdquo;; <code>@odni_icd203_2015</code> (the confidence words).</p>"
+    },
+    tell: {
+      prompt: "<p>The agent asks: &ldquo;Is NFT #7's 15 ETH price real?&rdquo; Say it in two sentences, with a confidence word.</p>",
+      example: "Wallets 0x51c2…9a04, 0x8e7b…13d6 and 0xa03f…c7e1, all funded by 0x2d94…6b58, sold NFT #7 to each other three times, for 10, 12 and 15 ETH; we assess with Moderate confidence that these sales were wash trades, so the 15 ETH price shows no outside demand. We found no later sale to an outside buyer."
+    }
+  }
+});
+</script>
+</body>
+</html>
