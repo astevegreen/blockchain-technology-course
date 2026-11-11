@@ -123,6 +123,7 @@ PANEL_HTML = (
     ' style="display:none">Graph</a>'
     '<a class="pbtn" id="my-static-btn" target="_blank" rel="noopener">My Static</a>'
     '<a class="pbtn" id="hunt-btn" target="_blank" rel="noopener">Hunt</a>'
+    '<a class="pbtn" href="/assets/labs/two-of-three/index.html" target="_blank" rel="noopener">Two of three</a>'
     '<div class="peers-wrap">'
     '  <button class="pbtn" id="peers-toggle">Peers &#9662;</button>'
     '  <div id="peers-dropdown"></div>'

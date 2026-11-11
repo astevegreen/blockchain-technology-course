@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two of three</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .cmds { display: grid; gap: 0.7rem; margin: 0.6rem 0; }
+  .cmd { background: var(--panel); border: 2px solid var(--rule); border-radius: 8px; padding: 0.5rem 0.8rem; }
+  .cmd .who { font-size: 0.85rem; color: var(--ink-soft); margin: 0 0 0.2rem; }
+  .cmd pre { margin: 0.3rem 0; padding: 0.5rem 0.7rem; overflow-x: auto; background: var(--accent-tint); border-radius: 6px; font-size: 0.85rem; }
+  .cmd p { margin: 0.3rem 0; }
+  .read { display: grid; gap: 0.4rem; margin: 0.6rem 0; }
+  .read label { display: flex; flex-wrap: wrap; gap: 0.5em; align-items: center; }
+  .read select { font: inherit; padding: 0.2em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  .src { color: var(--ink-soft); font-size: 0.85rem; }
+  .note { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
+</style>
+</head>
+<body>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/two-of-three.md. Played in pairs in the Bitcoin lab, one terminal each, after the
+   instructor runs the funding script, which puts a 2-of-3 coin in each pair's wallet "two-of-three" and three
+   payments in each student's wallet "game-account". This page holds no key and no answer: the pairs' addresses
+   and the paid indexes are on the instructor's sheet, which students never receive. */
+(function () {
+  "use strict";
+
+  function cmd(who, lines, after) {
+    return "<div class=\"cmd\"><p class=\"who\">" + who + "</p><pre><code>" + lines.join("\n") + "</code></pre>" +
+      (after ? "<p>" + after + "</p>" : "") + "</div>";
+  }
+
+  var ROUND_1 = [
+    cmd("Both partners, first: who is your partner, and what does your shared wallet hold?", [
+      "cat ~/two-of-three/partner-host",
+      "bitcoin-cli -rpcwallet=two-of-three getbalance"
+    ], "The lower station number is partner 1. The balance is the pair's coin (0.5). If it shows 0, wait for the instructor's block and ask again."),
+    cmd("Partner 1: build the spend, to your pair's own address, and sign it with your one key", [
+      "TO=$(bitcoin-cli -rpcwallet=two-of-three getnewaddress)",
+      "PSBT=$(bitcoin-cli -rpcwallet=two-of-three walletcreatefundedpsbt '[]' \"[{\\\"$TO\\\":0.4}]\" | jq -r .psbt)",
+      "SIGNED=$(bitcoin-cli -rpcwallet=two-of-three walletprocesspsbt \"$PSBT\" | jq -r .psbt)"
+    ]),
+    cmd("Partner 1: ask the node to finish it", [
+      "bitcoin-cli finalizepsbt \"$SIGNED\""
+    ], "Read <code>\"complete\"</code>. Is there a <code>\"hex\"</code> to send?"),
+    cmd("Partner 1: pass the half-signed spend to your partner", [
+      "echo \"$SIGNED\" > ~/share/half-signed.psbt"
+    ]),
+    cmd("Partner 2: fetch it, and ask the node to finish it as it stands, with one signature", [
+      "HALF=$(curl -s http://$(cat ~/two-of-three/partner-host):8000/half-signed.psbt)",
+      "bitcoin-cli finalizepsbt \"$HALF\""
+    ], "Read <code>\"complete\"</code>: the same answer partner 1 got."),
+    cmd("Partner 2: sign the same spend, and ask the node to finish it", [
+      "FULL=$(bitcoin-cli -rpcwallet=two-of-three walletprocesspsbt \"$HALF\" | jq -r .psbt)",
+      "bitcoin-cli finalizepsbt \"$FULL\""
+    ], "Read <code>\"complete\"</code> again."),
+    cmd("Partner 2: send it, then mine the next block", [
+      "TXID=$(bitcoin-cli sendrawtransaction \"$(bitcoin-cli finalizepsbt \"$FULL\" | jq -r .hex)\")",
+      "echo $TXID",
+      "bitcoin-cli generatetoaddress 1 \"$(bitcoin-cli -rpcwallet=two-of-three getnewaddress)\""
+    ], "If the block command prints <code>[]</code>, the chain is briefly hard: wait 20 seconds and run it again. Give partner 1 the txid.")
+  ].join("");
+
+  function render(box, api) {
+    var el = api.el;
+    box.innerHTML = "<p>Round 1. Work in your own terminal, side by side with your partner. Copy each command as it stands.</p>" +
+      "<div class=\"cmds\">" + ROUND_1 + "</div>";
+    var one = select(["", "false", "true"]);
+    var two = select(["", "false", "true"]);
+    var form = el("div", { class: "read" },
+      el("label", null, "After one signature, finalizepsbt said complete: ", one),
+      el("label", null, "After two signatures, it said complete: ", two));
+    box.appendChild(form);
+    var msg = el("div");
+    box.appendChild(msg);
+
+    function select(options) {
+      var s = el("select");
+      options.forEach(function (o) { s.appendChild(el("option", { value: o }, o || "pick")); });
+      s.addEventListener("change", check);
+      return s;
+    }
+
+    function check() {
+      msg.innerHTML = "";
+      if (!one.value || !two.value) return;
+      if (one.value === "false" && two.value === "true") {
+        api.finish({ choice: 2, note: "One signature: complete false, nothing to send. Two signatures: complete true, and the spend went. The lock wanted a second signature, not the third key." });
+      } else {
+        msg.appendChild(el("p", { class: "note" }, "That is not what the node says for a 2-of-3 lock. Run finalizepsbt again on each spend (partner 1's $SIGNED, partner 2's $FULL) and read \"complete\" once more."));
+      }
+    }
+  }
+
+  LabShell.start({
+    id: "two-of-three",
+    title: "Two of three",
+    slide: { title: "A PSBT carries a half-signed spend",
+      href: "../../../lessons/bitcoin/06-BF-multisig_and_wallet_software.html#/a-psbt-carries-a-half-signed-spend" },
+    steps: {
+      "case": { html: "<p>A small firm keeps its money so that two of its three partners must agree to move it. One partner is away. The other two need to pay a bill today.</p>" +
+        "<p>You and your partner are those two. Your pair's coin waits in your terminals.</p>" },
+      commit: {
+        question: "Your pair's coin is locked so that any two of three keys can spend it. You have one key, your partner has another. You sign the spend alone and try to send it. What happens?",
+        choices: [
+          "It goes: an owner signed.",
+          "It goes, but only after a delay.",
+          "It is refused: the lock wants a second signature.",
+          "It is refused: the lock wants all three keys."
+        ]
+      },
+      "do": { render: render },
+      name: { term: "PSBT", parts: "partially signed Bitcoin transaction: the spend itself, plus what each signer needs to sign it",
+        plain: "<p>A spend passed from signer to signer until it carries enough signatures to send. Each signer adds a signature; a finalizer joins them once enough are there. That is what <code>finalizepsbt</code> did: after one signature there was not enough to join, after two there was.</p>" +
+          "<p>The coin was never in either wallet. It sits on the chain under a lock that names three keys and wants two; each wallet held only one key.</p>" +
+          "<p class=\"src\">Sources: <code>@chow_bip174psbt_2017</code>; <code>@bitcoincore_multisigtutorial_2026</code> (as of 10 Nov 2026).</p>" },
+      explorer: { html: "<p>Open the class's <a href=\"/labs/bitcoin/mempool/\" target=\"_blank\" rel=\"noopener\">mempool explorer</a> and search your pair's txid. Open the input's details. Or read the same witness in your terminal:</p>" +
+        "<div class=\"cmd\"><pre><code>bitcoin-cli getrawtransaction $TXID 2 | jq '.vin[0].txinwitness'</code></pre></div>" +
+        "<p>The input spends a P2WSH coin. Its witness has four items:</p>" +
+        "<ul><li>an empty first item, which the multisig check consumes and must be empty;</li>" +
+        "<li>two signatures;</li>" +
+        "<li>the script: <code>OP_2</code>, three public keys, <code>OP_3 OP_CHECKMULTISIG</code>. It names three keys and needs two.</li></ul>" +
+        "<p>The explorer shows which keys the lock names and that two signatures were given. It does not show who held them.</p>" +
+        "<p class=\"src\">Sources: <code>@andresen_bip11mofn_2011</code>; <code>@kerin_bip67sortedmulti_2015</code>; <code>@lau_bip147dummy_2016</code>; <code>@lombrozo_bip141segregatedwitness_2015</code>.</p>" },
+      twist: {
+        html: "<p>Round 2. Now you hold no key at all: only a classmate's extended public key (xpub) for their own account, in <code>~/two-of-three/classmate.xpub</code>.</p>",
+        question: "What can you do with it?",
+        choices: [
+          "Spend their coins.",
+          "List their addresses and see their coins, but spend none.",
+          "List their addresses, but not see their coins.",
+          "Nothing."
+        ],
+        answer: 1,
+        why: "<p>The xpub derives every receiving address of that account, so you can find which have been paid on the chain. It holds no private key, so none can be spent.</p>" +
+          "<p>Find them. List the first ten receiving addresses (indexes 0 to 9):</p>" +
+          "<div class=\"cmd\"><pre><code>XPUB=$(cat ~/two-of-three/classmate.xpub)\n" +
+          "DESC=$(bitcoin-cli getdescriptorinfo \"wpkh($XPUB/0/*)\" | jq -r .descriptor)\n" +
+          "bitcoin-cli deriveaddresses \"$DESC\" \"[0,9]\"</code></pre></div>" +
+          "<p>The first address listed is index 0. Search each in the mempool explorer: three have been paid. For each, write down its index and the block that paid it.</p>" +
+          "<p>Then try to spend them. Put the xpub in a wallet of your own that holds no private key, read its balance, and build and sign a spend from it:</p>" +
+          "<div class=\"cmd\"><pre><code>bitcoin-cli -named createwallet wallet_name=watch disable_private_keys=true blank=true\n" +
+          "bitcoin-cli -rpcwallet=watch importdescriptors \"[{\\\"desc\\\":\\\"$DESC\\\",\\\"timestamp\\\":0,\\\"range\\\":9}]\"\n" +
+          "bitcoin-cli -rpcwallet=watch getbalance\n" +
+          "TO=$(bitcoin-cli -rpcwallet=game-account getnewaddress)\n" +
+          "BACK=$(bitcoin-cli -rpcwallet=game-account getnewaddress)\n" +
+          "TRY=$(bitcoin-cli -rpcwallet=watch walletcreatefundedpsbt '[]' \"[{\\\"$TO\\\":0.05}]\" 0 \"{\\\"changeAddress\\\":\\\"$BACK\\\"}\" | jq -r .psbt)\n" +
+          "bitcoin-cli -rpcwallet=watch walletprocesspsbt \"$TRY\" | jq .complete</code></pre></div>" +
+          "<p>Read the balance, then <code>complete</code>, and say why you cannot spend them.</p>" +
+          "<p class=\"src\">Sources: <code>@wuille_bip32hierarchicaldeterministic_2012</code>; <code>@rusnak_bip84derivationscheme_2017</code>.</p>"
+      },
+      tell: {
+        prompt: "<p>Tell an agent what the chain shows about who spent the pair's coin.</p>",
+        example: "The coin left a 2-of-3 multisig address, signed by two of the three keys its script names. The chain does not show who held those keys: one person holding two keys would look the same. Naming a signer from the chain alone would rest at Low confidence."
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>

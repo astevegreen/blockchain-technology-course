@@ -52,3 +52,15 @@ the labs, you will need to update the `docker-compose.yml` file:
 ```
       BTCEXP_BASEURL: "/labs/bitcoin/btc-explorer/"
 ```
+
+## Two of three (day 2 pair game)
+
+The panel bar's "Two of three" button opens the game page
+(`blockchain-course/assets/labs/two-of-three/`; design card `docs/lab-cards/two-of-three.md`). Before the game,
+the instructor runs `python3 dynamic-labs/bitcoin/two-of-three/fund.py` on the lab host: it gives each pair a
+funded 2-of-3 wallet `two-of-three`, each student a paid wallet `game-account`, and writes the files under
+`~/two-of-three/`. The script names the paid indexes, so it is instructor-only (`dynamic-labs/student-exclude.txt`);
+the instructor key is `quizes/microlabs/two_of_three_INSTRUCTOR_ANSWERS.md`. The live test is
+`regression-tests/automated/bitcoin/test_two_of_three_live.py`.
+The button works in class mode, where the router serves the course site at `/`; the game needs the shared class
+chain and a partner, so it is not played in the single-student launcher.
