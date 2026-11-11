@@ -106,3 +106,5 @@ The suspect and the agent are made up for the game and say so; the addresses and
 ## Approval
 
 - Owner: selected "Terminal scavenger hunt,Two-of-three,Spot the fake,Find the exchange" (11 Nov 2026)
+
+Built in 71f7d263 (11 Nov 2026).
