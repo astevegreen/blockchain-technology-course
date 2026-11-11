@@ -106,4 +106,4 @@ worked example from *Mastering Bitcoin*.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Who got paid?", "Forge the payment", "Through the exchange" (10 Nov 2026)

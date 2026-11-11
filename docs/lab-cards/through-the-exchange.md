@@ -98,4 +98,4 @@ the lab and say so; the sweep's numbers are the slide's worked example. It runs 
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Who got paid?", "Forge the payment", "Through the exchange" (10 Nov 2026)

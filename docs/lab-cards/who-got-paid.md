@@ -102,4 +102,4 @@ made up for the lab and say so.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Who got paid?", "Forge the payment", "Through the exchange" (10 Nov 2026)
