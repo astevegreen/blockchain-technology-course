@@ -144,7 +144,9 @@ lab_fresh_start() {
   (
     cd "${ROOT_DIR}"
     bash ./lab-manager.sh deploy --mode instructor --no-tls --max-student-capacity 2
-    bash ./lab-manager.sh build-images "${LAB_STACK}"
+    # lane-service:latest is not one of the lab's images: build-images skips it unless it is named, and a stale
+    # copy on the host fails the panel-link tests.
+    bash ./lab-manager.sh build-images "${LAB_STACK}" lane-service
     bash ./lab-manager.sh start "${LAB_STACK}"
   )
 }
