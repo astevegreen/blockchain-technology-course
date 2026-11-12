@@ -105,8 +105,9 @@ theme without touching the lessons.
 The dynamic side requires a host running Docker + Docker Compose v2 with TCP 80
 (and 443 if you want TLS) free. The decision (owner, 8 Nov 2026) is one shared
 host per class: the cloud by default, the classroom server as the offline
-fallback, and the VM for practice and self-study. A student on their own
-computer uses the student launcher (`student-launcher/README.md`). The quick
+fallback. A student on their own computer uses the student launcher by default
+(`student-launcher/README.md`), with the VM kept as the offline option for
+practice and self-study (owner, 11 Nov 2026). The quick
 paths are below; see
 [`dynamic-labs/README.md`](dynamic-labs/README.md) for capacity tuning,
 classroom networking (WiFi AP / Ethernet LAN), instructor credential rotation,

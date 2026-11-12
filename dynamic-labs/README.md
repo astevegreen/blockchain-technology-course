@@ -27,10 +27,10 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 
 - **A class:** one shared host per class, the cloud by default and the classroom server as the offline fallback
   (see "Deployment" below).
-- **A student's own computer:** the student launcher, one double-click that runs the labs in Docker Desktop. See
+- **A student's own computer:** the student launcher, the default for self-study (owner, 11 Nov 2026): one double-click that runs the labs in Docker Desktop. See
   [`student-launcher/README.md`](../student-launcher/README.md), the student guide `blockchain-course/run-labs.qmd`
   and the owner decisions in [`docs/student-launcher-spec.md`](../docs/student-launcher-spec.md).
-- **Practice and self-study in a VM:** the prebuilt VM image below.
+- **Practice and self-study offline, in a VM:** the prebuilt VM image below, kept as the offline option.
 
 ## Prerequisites
 

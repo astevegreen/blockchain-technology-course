@@ -9,8 +9,8 @@ the numbers). Commit the page with the result. A step that fails becomes a fix, 
 passes.
 
 Lab hosting is decided (owner, 8 Nov 2026): one shared host per class, the cloud by default and the classroom
-server as the offline fallback, with the student VM kept for practice and self-study. The steps below are for the
-cloud host. The deploy itself is in `dynamic-labs/README.md`, "Cloud (public VM with HTTPS)".
+server as the offline fallback. Self-study on a student's own computer goes through the student launcher by default,
+with the student VM kept as the offline option (owner, 11 Nov 2026). The steps below are for the cloud host. The deploy itself is in `dynamic-labs/README.md`, "Cloud (public VM with HTTPS)".
 
 ## On the real cloud host
 
