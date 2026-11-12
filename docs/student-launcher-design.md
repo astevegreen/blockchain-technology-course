@@ -4,6 +4,10 @@ The contract every Phase 1 child builds against. It answers section 6 of `docs/s
 the names, the manifest and the control API. Written 9 Nov 2026 from `a5f809a`. `dl/` means `dynamic-labs/`.
 Where this departs from the spec, it says so and why. The spec still governs everything this file doesn't change.
 
+> **Status, 11 Nov 2026:** the P2P Trust, Ethereum, Forensics 1-3 and Chain Graph labs were archived under
+> `archive/dynamic-labs/`. The forensics-load action and the lane images named for them below are as designed on the
+> date above; no live lab uses them now.
+
 ## 1. Owner decision added in Phase 0
 
 | Question | Answer (9 Nov 2026) |

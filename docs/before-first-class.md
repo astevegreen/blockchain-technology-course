@@ -8,7 +8,7 @@ How to use it: do a step, then write the result in that step's **Result** line (
 the numbers). Commit the page with the result. A step that fails becomes a fix, and the step stays here until it
 passes.
 
-Lab hosting is decided (owner, 9 Nov 2026): one shared host per class, the cloud by default and the classroom
+Lab hosting is decided (owner, 8 Nov 2026): one shared host per class, the cloud by default and the classroom
 server as the offline fallback, with the student VM kept for practice and self-study. The steps below are for the
 cloud host. The deploy itself is in `dynamic-labs/README.md`, "Cloud (public VM with HTTPS)".
 

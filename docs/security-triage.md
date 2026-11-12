@@ -5,6 +5,8 @@ Every open GitHub security alert on `main`, sorted by lab and by whether it reac
 on Ubuntu 24.04 / Debian 13 / Python 3.12 in `docs/follow-ups.md`). Read 8 Nov 2026 with `gh api` (Dependabot and
 code-scanning alerts, `state=open`). The owner approved the dismiss list on 9 Nov 2026; see "Owner decisions".
 
+> **Status, 11 Nov 2026:** the P2P Trust, Ethereum, Forensics 1-3 and Chain Graph (`bitcoin-graph`) labs were archived under `archive/dynamic-labs/` (the lab plan's steps 7 and 9). Names of them below are as written on the date above and are not live labs.
+
 **Totals (as of 8 Nov 2026):** 182 Dependabot alerts (7 critical, 96 high, 66 medium, 13 low) and 149 CodeQL alerts.
 The groups below cover all of them: Dependabot 6 + 52 + 69 + 31 + 1 + 23 = 182; CodeQL 11 + 70 + 21 + 17 + 6 + 10 +
 2 + 3 + 4 + 3 + 2 = 149.

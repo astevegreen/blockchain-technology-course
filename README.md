@@ -3,40 +3,56 @@
 "Identifying, characterizing and explaining on-chain activity": a blockchain
 intelligence course for US government analysts, packaged as code. The repository
 ships the lecture site, hands-on labs, a question bank, a quiz engine, and the
-build pipeline that produces a classroom-ready VM image — all of it forkable and
+build pipelines that produce a student launcher and a practice VM image — all of it forkable and
 reusable for a specific course offering.
 
 ## Overview
 
-The course is split into three layers, each of which can stand on its own:
+The course is split into layers, each of which can stand on its own:
 
 - **`blockchain-course/`** — a [Quarto](https://quarto.org) website containing
   every lesson (RevealJS slides with instructor notes), the syllabus and
-  schedule, and a set of self-contained "static" lab pages that render as HTML
-  and need no server. This is what gets published to GitHub Pages.
-- **`dynamic-labs/`** — the containerized side of the course: an nginx router
-  fronting per-lab services (Bitcoin, Consensus, Cryptography,
-  Hyperledger Fabric, and the frozen-chain investigation labs), the centralized instructor login, the lane
-  service that spins up per-student containers on demand, the trust-game and
-  BGP exercises, and the quiz engine. This layer requires a host that can run
-  Docker.
+  schedule, and a set of self-contained browser labs and games
+  (`blockchain-course/assets/labs/`: prediction labs where a student commits a guess, then watches it fail) that
+  render as HTML and need no server. This is what gets published to GitHub Pages. Each lab was designed on a
+  one-page card first (`docs/lab-cards/`).
+- **`dynamic-labs/`** - the containerized side of the course: an nginx router
+  fronting per-lab services, the centralized instructor login, the lane
+  service that spins up per-student containers on demand, and the quiz engine.
+  The labs with a `lab.yaml` today: Bitcoin, Bitcoin trace, CoinJoin trace,
+  Consensus, Cryptography, Cross-chain, DEX (exchange and bridge), Explorer,
+  Final trace, Hide and trace, Hyperledger Fabric, Tokens, Tron, Wallet and the
+  `exercises` (trust and BGP games). This layer requires a host that can run Docker.
+- **`student-launcher/`** - how a student runs the Docker labs on their own
+  computer: unzip `Course-Labs.zip` (a release built by `student-release.yml`),
+  double-click **Start-Course-Labs**, and use the page it opens. Needs Docker
+  Desktop. The student guide is `blockchain-course/run-labs.qmd`; the spec is
+  `docs/student-launcher-spec.md`.
 - **`vm-build/`** — a [Packer](https://www.packer.io) build that produces a
   preconfigured Ubuntu VM image with the dynamic labs baked in. CI publishes
   split `qcow2` and `ova` artifacts to a GitHub Release for instructors to
-  download.
+  download (the practice VM).
+
+`archive/` holds labs taken out of what students receive (for example the P2P
+Trust, Ethereum and Forensics labs, archived 11 Nov 2026): nothing there is
+published or shipped, and nothing was deleted.
 
 The `quizes/` directory holds the lesson-level question banks (JSON) and the
 script that bundles them into a single import for the quiz engine. The bundle
 is produced by a manual workflow and consumed by an instructor through the quiz
 engine UI.
 
-Three manual GitHub Actions workflows drive the release pipeline:
+Six GitHub Actions workflows live in `.github/workflows/`. Two run on a push to
+`main`; four are manual and drive the release pipeline:
 
 | Workflow | Trigger | Output |
 |----------|---------|--------|
+| `check.yml` | push to `main`, pull requests | Runs `python tools/check.py` on Windows, as the computers that commit do. |
+| `lab-tests.yml` | push to `main` (lab paths), pull requests, `workflow_dispatch` | Runs the lab regression tests in Docker. |
 | `pages.yml` | `workflow_dispatch` | Renders the Quarto site and deploys it to GitHub Pages. Embeds links to the latest VM release. |
 | `vm-build.yml` | `workflow_dispatch` | Builds the VM image with Packer and publishes split `qcow2` + `ova` parts to a `latest-vm-<run_id>` Release. Keeps only the two most recent releases. |
 | `quiz-bundle.yml` | `workflow_dispatch` | Validates and concatenates the per-lesson quiz banks into one JSON file uploaded as a workflow artifact (30-day retention). |
+| `student-release.yml` | `workflow_dispatch` | Builds the student launcher image and publishes `Course-Labs.zip` as a Release. |
 
 ## Deploying as a Static Site (GitHub Pages only)
 
@@ -87,12 +103,16 @@ theme without touching the lessons.
 ## Deploying the Dynamic Labs
 
 The dynamic side requires a host running Docker + Docker Compose v2 with TCP 80
-(and 443 if you want TLS) free. The quick paths are below; see
+(and 443 if you want TLS) free. The decision (owner, 8 Nov 2026) is one shared
+host per class: the cloud by default, the classroom server as the offline
+fallback, and the VM for practice and self-study. A student on their own
+computer uses the student launcher (`student-launcher/README.md`). The quick
+paths are below; see
 [`dynamic-labs/README.md`](dynamic-labs/README.md) for capacity tuning,
 classroom networking (WiFi AP / Ethernet LAN), instructor credential rotation,
 and direct Compose use.
 
-### Prebuilt VM (recommended for instructors)
+### Prebuilt VM (practice, self-study, or a classroom server)
 
 Run the **Build VM Image (Manual)** workflow once. When it finishes, grab the
 `blockchain-lab.qcow2.part-*` (KVM/libvirt, source for Hyper-V conversion) or
@@ -158,7 +178,7 @@ flow back via pull request.
    described above.
 3. **Publish the site.** In **Settings → Pages** pick **GitHub Actions** as
    the source, then run the **Publish Course to GitHub Pages** workflow.
-4. **Build the VM** (optional, only if students will use a local VM image).
+4. **Build the VM** (optional, only if students will use a practice VM image).
    Run the **Build VM Image** workflow; expect 2 hours. It will
    self-clean and keep only the two most recent releases.
 5. **Build the quiz bundle.** Run the **Build Quiz Bank Bundle** workflow,
@@ -171,8 +191,10 @@ flow back via pull request.
 
 ### A Note on Workflow Artifacts and Retention
 
-All three workflows are `workflow_dispatch`-only — nothing fires on push, so
-your fork won't waste runner minutes until you ask for a build.
+The four release workflows (`pages.yml`, `quiz-bundle.yml`, `vm-build.yml`,
+`student-release.yml`) are `workflow_dispatch`-only so your fork won't
+spend runner minutes on them until you ask for a build. `check.yml` and
+`lab-tests.yml` do run on a push to `main`.
 
 The quiz bundle is published as a **workflow artifact** with **30-day
 retention**. After 30 days the artifact is purged, and re-running the workflow

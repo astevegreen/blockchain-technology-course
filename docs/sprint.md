@@ -91,7 +91,7 @@ policy.
   them; it waits for the Lab Tests run on `main` (`tools/sprint/ci-watch.mjs`). That run covers only the
   `exercises` and `quiz-engine` labs (`IN_CI` in `tools/lab_tests.py`, as of 24 Oct 2026), so for any other lab
   the proof is the `labs` lane's own `run.sh --fresh-start` result, pasted on the issue before it moves to
-  `to-integrate`. A lab with no automated tests (`bitcoin-forensics`) is handed back marked unverified.
+  `to-integrate`. A lab with no automated tests is handed back marked unverified.
   A hand-back, `to-integrate` note, close comment or sprint log line for a lab change says first whether its
   lab tests ran, so skipped tests never hide behind a passing summary.
 - **Web and Notion, read only**: sessions read the web with the
@@ -237,8 +237,8 @@ file, that is the file it reworks.
 - Sprints may overlap (owner, 24 Oct 2026: "sprints may overlap on this desktop"): Terminal Dusk's and YODC's
   may run here during the window. Their supervisors start at minutes 2 and 22, this one at 42; before each
   start, the supervisor needs its memory floor plus about 1.5 GB for every session it has already started.
-  Docker is shared, but `--fresh-start` takes down only the lab folders' compose projects; port 5173 clashes
-  with YODC's Vite only while the `ethereum_lab` runs. Every sprint on the account shares one usage limit, so
+  Docker is shared, but `--fresh-start` takes down only the lab folders' compose projects; port 5173 clashed
+  with YODC's Vite only while the Ethereum lab (archived 11 Nov 2026) ran. Every sprint on the account shares one usage limit, so
   one usage-limit stop can halt them all at once; the supervisor restarts the lanes after
   it.
 

@@ -137,7 +137,9 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
 - Slide titles state the point ("Co-spending links inputs, unless it's a CoinJoin"), never just the topic.
 
 ## A lab
-- Browser only, over HTTPS on port 443: students install nothing.
+- Browser only, over HTTPS on port 443: students install nothing. This describes the class host (one shared host
+  per class). Self-study on a student's own computer goes through the student launcher (`student-launcher/README.md`;
+  owner decisions of 9 Nov 2026 in `docs/student-launcher-spec.md`).
 - Opens with the questions the student answers (short answers, or an informal explanation to the instructor),
   then a worked example; a student whose pretest shows the basics
   starts at the problem. Optional challenge steps go at the end. One version, two entry points.

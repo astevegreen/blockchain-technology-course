@@ -3,6 +3,8 @@
 Written 9 Nov 2026 for an orchestration session that starts child sessions to build it.
 Paths are repo-relative, and `dl/` means `dynamic-labs/`. The facts in section 2 were read on 9 Nov at `520189c`.
 
+> **Status, 11 Nov 2026:** the P2P Trust, Ethereum, Forensics 1-3 and Chain Graph (`bitcoin-graph`) labs were archived under `archive/dynamic-labs/` (the lab plan's steps 7 and 9). Names of them below are as written on the date above and are not live labs.
+
 ## 1. Goal
 
 The owner said: "I will share this course with other people who are not tech-savvy and might not have access to an LLM that can explain to them how to get everything up and running... one-button functionality... we will continue to iterate on the course lessons and labs going forward, so a feature like this would need to adapt to that."

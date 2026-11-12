@@ -33,13 +33,9 @@ slide index), which is never listed here.
 - `dynamic-labs/explorer/gateway/static/lab/terminal.html:71` "Next:" names the explorer worksheet; day 1 now runs the
   terminal scavenger hunt in between, and `quizes/run-sheet/RUN_SHEET.md:80` does not name the hunt. [11 Nov 2026,
   building the hunt]
-- The hlf and hlf-launcher Lab Tests jobs fail building `hlf-orderer-ttyd` and `hlf-peer-ttyd`
-  (`dynamic-labs/hlf/Dockerfile.ttyd:8`, `Dockerfile.orderer-ttyd:7`, on the Fabric images): apt-get exits 100,
-  "Unable to locate package curl". [11 Nov 2026, Lab Tests 43056313552, both attempts; router change d802910d]
-- Docs still name the archived P2P Trust, Ethereum and Forensics 1-3 labs and the Chain Graph (`bitcoin-graph`)
-  as live: `docs/student-launcher-*.md` (the design's forensics-load action),
-  `docs/security-triage.md`, `docs/sprint.md`, and the known-gap list in `.claude/rules/ci.md`
-  (`bitcoin-forensics/lab.md`). [11 Nov 2026, step 7 archive; Chain Graph added at step 9]
+- The known-gap list in `.claude/rules/ci.md` (a rail) still says three instructor files reach the student VM and names
+  `bitcoin-forensics/lab.md`, which is archived; `VM_RUNTIME_KEYS` in `tools/check.py` holds two. Fix with the rail
+  audit. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/bitcoin/workstation/patches/custom-genesis.patch:53` still has a comment saying "see
   bitcoin-forensics/FORENSICS-V34-STATE.md"; that file is now under `archive/dynamic-labs/bitcoin-forensics/`. [11 Nov
   2026, wave 3 review]
@@ -78,8 +74,6 @@ slide index), which is never listed here.
   line build]
 
 ## Notion and documents
-- `docs/analysis/2026-11-static-labs-review.md:28` still says 04-CP, 01-CM and 01-EF have no "Ask:" prompts; 04-CP
-  has 12 and 01-CM has 7, and the lessons with none are 01-EF, 04-EF and 05-EF. [10 Nov 2026, grep count]
 - `03-CM-pos.qmd:1073` (and the source line at 1089) still links the archived `/assets/labs/pos-micro`, which has no folder; swap it for the Is it final yet? lab or drop it when day 1's labs are placed. [11 Nov 2026, reviewer on the Is it final yet? build]
 - `06-FO-mixers_and_coinjoin.qmd`, slide "Before and after the mix still leak": check in a browser that the six bullets plus the new "Who paid whom?" link still fit on one screen. [11 Nov 2026, reviewer on the Who paid whom? build]
 - `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]
