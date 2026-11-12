@@ -403,6 +403,7 @@ def _utc_label(value):
 
 def _instructor_links():
     return [
+        ("Run the Course", url_for("dashboard.course_dashboard")),
         ("Dashboard", url_for("instructor.instructor_dashboard")),
         ("Ingest", url_for("instructor.ingest_form")),
         ("Retire Imports", url_for("instructor.import_retirement_form")),
