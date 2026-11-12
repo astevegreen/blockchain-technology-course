@@ -637,6 +637,20 @@ QUIZ_TEMPLATE_ORDER_MODE_SCHEMA_STATEMENTS = [
     """,
 ]
 
+PRETEST_RESULTS_SCHEMA_STATEMENTS = [
+    """
+    CREATE TABLE IF NOT EXISTS pretest_results (
+        id INTEGER PRIMARY KEY,
+        student_name TEXT NOT NULL CHECK (length(student_name) > 0),
+        bank_form TEXT NOT NULL,
+        days_json TEXT NOT NULL,
+        items_json TEXT NOT NULL,
+        imported_at TEXT NOT NULL,
+        imported_by TEXT
+    )
+    """,
+]
+
 DEFAULT_APP_SETTINGS = (
     ("registration_mode", "open"),
     ("open_registration_cap", "40"),
@@ -653,6 +667,7 @@ SCHEMA_MIGRATIONS = (
     (6, "question_editing", QUESTION_EDITING_SCHEMA_STATEMENTS),
     (7, "quiz_review_release", QUIZ_REVIEW_RELEASE_SCHEMA_STATEMENTS),
     (8, "quiz_template_order_modes", QUIZ_TEMPLATE_ORDER_MODE_SCHEMA_STATEMENTS),
+    (9, "pretest_results", PRETEST_RESULTS_SCHEMA_STATEMENTS),
 )
 
 

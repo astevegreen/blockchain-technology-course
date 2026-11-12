@@ -34,7 +34,7 @@ def test_schema_initialization_is_idempotent(app):
         versions = get_db().execute(
             "SELECT version FROM schema_migrations ORDER BY version"
         ).fetchall()
-    assert [row["version"] for row in versions] == [1, 2, 3, 4, 5, 6, 7, 8]
+    assert [row["version"] for row in versions] == [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 
 def test_sqlite_foreign_keys_are_enforced(app):

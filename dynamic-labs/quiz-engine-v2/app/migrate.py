@@ -26,6 +26,7 @@ FULL_EXPORT_TABLES = (
     "attempts",
     "attempt_answers",
     "audit_events",
+    "pretest_results",
     "app_settings",
 )
 
@@ -51,6 +52,7 @@ IMPORT_ORDER = (
     "attempts",
     "attempt_answers",
     "audit_events",
+    "pretest_results",
     "app_settings",
 )
 

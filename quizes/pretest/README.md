@@ -22,7 +22,9 @@ site is next published) and works offline once open.
    ANSWERS -----`. Save each reply into one folder as `.txt` or `.eml` (in Outlook: File > Save As, "Text Only"), or
    paste every reply into one text file. A student who used Download sends `pretest-answers-<their name>.txt` as an attachment:
    save the attachment into the same folder.
-4. Mark them: `python quizes/pretest/mark_pretest.py <folder> --out results.md`. Multiple-choice items mark
+4. Mark them: `python quizes/pretest/mark_pretest.py <folder> --out results.md --json results.json`, then upload
+   `results.json` at `/instructor/pretest` in the quiz engine (a new upload replaces the last one; the page lists each
+   student's start for each day). Multiple-choice items mark
    themselves; for each written item the script shows the answer beside its `answer_key` and asks whether it states
    every point. Decisions are kept in `pretest-marks.json` in that folder, so a rerun for a late reply asks only
    what is new. The table says, for each student and day, **problem** or **worked example**.
