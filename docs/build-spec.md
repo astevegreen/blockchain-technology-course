@@ -241,8 +241,11 @@ links and buttons to run scripts would be helpful." Instructor-only, so its code
 - **Likely extras (to confirm with the owner):** pretest marking and each student's lab entry point per day, set from
   that day's gate items (`quizes/pretest/README.md`); marking the four graded lab points and the post-test's
   written items.
-- **Open question for the owner:** part of the quiz engine (recommended: it has the instructor login and the quiz
-  data) or a separate app.
+- **Decided (owner, 12 Nov 2026):** part of the existing quiz engine, not a separate app.
+- **Pretest is the exception to "load from the dashboard":** the owner does not want students' access to the pretest
+  to depend on the instructor hosting the labs (the engine runs only on the lab host). So the pretest is delivered
+  from somewhere always on, such as an external form, and the dashboard takes in its results for marking and lab
+  entry points. Delivery choice still open (`docs/follow-ups.md`, "The pretest has no delivery").
 
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
