@@ -41,25 +41,9 @@ slide index), which is never listed here.
   a separate app. Spec: `docs/build-spec.md`, "Instructor dashboard". Today the instructor pieces
   are separate: `/instructor/` on the quiz engine, `lab-manager.sh` on the host, the run sheet and hand marking.
   [12 Nov 2026, owner's request]
-- **The pretest has no delivery.** The rules say "an online pretest, required, due three working days before day 1"
-  (`.handoff/plans/current-rules.md:37`) but no tool is named, and nothing loads
-  `quizes/pretest/pretest_week1-quiz-bank.json` or `pretest_week2-quiz-bank.json` into the quiz engine
-  (`dynamic-labs/quiz-engine-v2` has no "pretest" reference) or into any student URL. Needs a design choice (the
-  engine, or an external form) and a host reachable before day 1. **Owner constraint, 12 Nov 2026: students must be
-  able to take the pretest without the instructor hosting the labs.** The engine runs only on the lab host while a
-  class is up, so it cannot be the only delivery; the choice is now an external form (or another always-on host) and
-  how its results reach the dashboard. **Decided (owner, 12 Nov 2026: "I concur with your recommendations"): an external form, with its results imported into the dashboard** for marking and lab entry points. Which form service (agency networks may block some) is still to pick when it is built. [12 Nov 2026, asked how students reach quizzes]
 - **Pretest marking and lab entry are by hand.** `quizes/run-sheet/RUN_SHEET.md:19-26` has the instructor mark the
   pretest and note who got each day's gate items right; nothing records it or shows a student's entry point per day.
   Written items have no marking aid. The dashboard should take this over. [12 Nov 2026, asked how students reach quizzes]
-- **Students cannot find the quizzes from the public site.** The daily, week-check and post-test quizzes are served
-  only by the quiz engine on the lab host (`/quiz/`); the Pages site has no quiz page. Read 12 Nov 2026:
-  `dynamic-labs/course-site/inject_dynamic_links.py` adds the "Student lab and quiz login" link and the lab links
-  into `index.qmd` only inside the lab host's course-site image (`dynamic-labs/course-site/Dockerfile:27`), where
-  root-relative paths like `/quiz/student/` resolve. `pages.yml` does not run it, so the GitHub Pages site has no
-  quiz or lab links at all and no dead link (the earlier note citing `01-IN-course_welcome.qmd:15` was wrong: that
-  file has no such link). What is open: whether the Pages site should point students at a lab host. The lab host
-  address is not fixed, so it would need to be set per class. **Decided (owner, 12 Nov 2026: "I concur with your recommendations"): the Pages site stays without quiz links.** Students reach quizzes through the lab host the instructor announces; the pretest gets its own link. [12 Nov 2026]
 
 ## Tooling and rules
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,

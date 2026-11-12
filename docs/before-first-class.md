@@ -92,14 +92,17 @@ Where to write it: the Result line below.
 
 ### 3a. The pretest from a student's browser
 
-Waits for the pretest delivery, which is not built (`docs/follow-ups.md`, "Quizzes and instructor tools"). Once it
-is, a person in a browser that has never visited the host opens the pretest from the link a student receives, takes
-it, and the instructor sees the answers and each day's gate items marked. A pass: it opens over HTTPS from outside
-the host's network at least three working days before day 1, and the result reaches the instructor.
+The pretest is a page of the public course site (`blockchain-course/assets/labs/pretest/`, built 12 Nov 2026; it
+appears on GitHub Pages once the site is next published). A person in a browser that has never visited the course
+site opens the link a student receives (`quizes/pretest/README.md`, "Sending it, and getting the answers back"),
+answers, and presses Email; the instructor saves the reply and runs `quizes/pretest/mark_pretest.py` on it. A pass:
+the page opens over HTTPS on an agency network, the email arrives with its answer block intact (or Copy works where
+no mail program opens), and the marker prints that student's start point for each day. Run it at least three working
+days before day 1.
 
 Where to write it: the Result line below.
 
-**Result:** not run yet; the pretest is not built.
+**Result:** not run yet.
 
 ## In the first real class
 

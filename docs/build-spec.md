@@ -243,9 +243,10 @@ links and buttons to run scripts would be helpful." Instructor-only, so its code
   written items.
 - **Decided (owner, 12 Nov 2026):** part of the existing quiz engine, not a separate app.
 - **Pretest is the exception to "load from the dashboard":** the owner does not want students' access to the pretest
-  to depend on the instructor hosting the labs (the engine runs only on the lab host). So the pretest is delivered
-  from somewhere always on, such as an external form, and the dashboard takes in its results for marking and lab
-  entry points. Decided 12 Nov 2026: an external form, results imported into the dashboard (`docs/follow-ups.md`, "The pretest has no delivery").
+  to depend on the instructor hosting the labs (the engine runs only on the lab host). Built 12 Nov 2026 instead of
+  the external form first decided: the pretest is a page of the public course site, students email their answers,
+  and `quizes/pretest/mark_pretest.py` marks them (`quizes/pretest/README.md`). The dashboard takes in the marker's
+  results for each student's lab entry points.
 
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
