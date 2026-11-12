@@ -226,18 +226,23 @@ Locked in by the owner on 10 Nov; the case for each is in `docs/analysis/2026-11
 - Each game gets a design card the owner approves before it is built, like any lab.
 
 ## Instructor dashboard (owner, 12 Nov 2026: to build, not designed)
-One place where an instructor runs the course and loads items easily. Not started; the build item is on
-`docs/follow-ups.md` ("Quizzes and instructor tools"). Instructor-only, so its code and data live under `quizes/` or
-in `dynamic-labs/` with a line in `dynamic-labs/student-exclude.txt` (CLAUDE.md rule 1).
-- **Why:** the instructor pieces are scattered today: `/instructor/` on the quiz engine (`dynamic-labs/quiz-engine-v2`),
-  `lab-manager.sh` on the host, `quizes/run-sheet/RUN_SHEET.md`, and the pretest marked by hand.
-- **Load items easily:** add or replace quiz banks, the pretest and its answer keys without editing JSON by hand or
-  restarting services (today: `quizes/build_quiz_bank_bundle.py`, then the engine).
-- **Likely scope (to confirm with the owner):** pretest delivery and marking; each student's lab entry point per day,
-  set from that day's gate items (`quizes/pretest/README.md`); daily, week-check and post-test control; marking the
-  four graded lab points and the post-test's written items; class code and lab start/stop.
-- **Open questions for the owner:** whether it is part of the quiz engine or a separate app; whether it covers lab
-  hosting controls or only items and marking; what "load items" covers beyond quizzes (lab content, class roster).
+One simple page that centralizes what an instructor has to do to run the course, so they stop jumping between
+`/instructor/` on the quiz engine, `lab-manager.sh` on the host, the run sheet and hand marking. Not started; the
+build item is on `docs/follow-ups.md` ("Quizzes and instructor tools"). Owner: "It does not need to be fancy, but
+links and buttons to run scripts would be helpful." Instructor-only, so its code and data live under `quizes/` or in
+`dynamic-labs/` with a line in `dynamic-labs/student-exclude.txt` (CLAUDE.md rule 1).
+- **Shape:** plain links and buttons, no styling work. A button runs an existing script on the host and shows its
+  result; a link opens an existing page (the quiz engine's `/instructor/`, the run sheet).
+- **Load quiz banks:** load a day's quiz bank, the week checks, the post-test and the pretest (with answer keys)
+  from a button, without editing JSON by hand or restarting services. Today: `quizes/build_quiz_bank_bundle.py`,
+  then the engine.
+- **Host labs:** start, stop and check the labs and the quiz engine for the class (today:
+  `./lab-manager.sh start all`, `start quiz-engine-v2`, `status all`), and show the class code.
+- **Likely extras (to confirm with the owner):** pretest marking and each student's lab entry point per day, set from
+  that day's gate items (`quizes/pretest/README.md`); marking the four graded lab points and the post-test's
+  written items.
+- **Open question for the owner:** part of the quiz engine (recommended: it has the instructor login and the quiz
+  data) or a separate app.
 
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
