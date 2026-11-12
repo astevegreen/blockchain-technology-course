@@ -252,7 +252,7 @@ links and buttons to run scripts would be helpful." Instructor-only, so its code
 
 ## Readability and site items (owner, 12 Nov 2026)
 Six build items the owner added on 12 Nov 2026, each a row in the Build Tracker, and a seventh from the owner's
-decisions on them the same day. None is started.
+decisions on them the same day. Each one's state is on its Build Tracker row.
 - **Sources in the speaker notes:** the in-line citations on lesson slides show only in the instructor's notes
   view, so the slides the class sees are cleaner. Every claim stays sourced: the `[@key]` citations stay in the
   `.qmd`, and the build moves them into the slide's notes rather than deleting them (a Quarto filter, so no
@@ -309,6 +309,11 @@ decisions on them the same day. None is started.
   - **Link to the teaching slide (owner, 12 Nov 2026):** each definition links to the slide that teaches the
     term. Each term in `terms.json` already carries that slide's link (`source.href`, built from
     `glossary/slide-index.yml`), as the glossary page's "Source" column uses now.
+  - **Built (12 Nov 2026):** the theme plugin `blockchain-course/_extensions/aci/_extensions/glossary-lookup/`,
+    on every lesson; a book icon beside the slide-menu and chalkboard icons. A link to a slide in the same lesson
+    moves there; one in another lesson opens a new tab, so the student keeps their place. `G` took over reveal.js's
+    own `G` (jump to a slide number); the slide menu still jumps to any slide. Not shown in the speaker view or
+    the PDF print. Tests: `tools/tests/glossary_lookup.test.mjs`.
 - **How to read these slides (owner, 12 Nov 2026):** a slide near the start of the course welcome
   (`lessons/introduction/01-IN-course_welcome.qmd`) on the course's administrative conventions, taught before
   lesson 1. Owner: "Let's actually include this information in one of the very first slides, along with other

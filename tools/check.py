@@ -728,9 +728,12 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
         plan.checks.append(Check("answer files", answer_files))
 
     # The labs' shared look and shell, and the design-card template, are tested in tools/tests/test_lab_shared.py.
-    # So are the site's Lua filters (tools/tests/test_filters.py).
+    # So are the site's Lua filters (tools/tests/test_filters.py), and the slides' glossary lookup and the terms.json
+    # it reads (tools/tests/test_glossary_lookup.py).
     if (touched("tools/") or touched(".claude/") or touched("blockchain-course/assets/labs/shared/")
-            or touched("docs/lab-cards/") or touched("blockchain-course/filters/")):
+            or touched("docs/lab-cards/") or touched("blockchain-course/filters/")
+            or touched("blockchain-course/_extensions/aci/_extensions/glossary-lookup/")
+            or touched("blockchain-course/glossary/terms.json")):
         plan.checks.append(Check("tool tests", tool_tests))
     if touched("dynamic-labs/") or touched("tools/lab_manifest.py"):
         for label, rule in (("lab manifests", "manifests"), ("lab generated lists", "generated"),

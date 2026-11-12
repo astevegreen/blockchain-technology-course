@@ -9,7 +9,8 @@ This folder contains the working files and final Quarto source for the course gl
 - `terms.yml`: canonical, merged glossary source.
 - `duplicates.md`: generated editorial notes for duplicate or conflicting candidates.
 - `index.qmd`: generated Quarto glossary page.
-- `terms.json`: generated client-side data used by the web glossary.
+- `terms.json`: generated client-side data used by the web glossary and by the slides' glossary lookup (the `G` key;
+  `_extensions/aci/_extensions/glossary-lookup/`), which links each term to `source.href`.
 - `glossary.css`: HTML styling for the glossary page.
 - `scripts/`: build, merge, render, and validation helpers.
 
