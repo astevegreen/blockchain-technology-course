@@ -178,6 +178,8 @@ Mark each: common among incoming analysts, sometimes, or rare. Add any that are 
     with the Guess the input card; owner picked "Hash can be reversed".)
 18. The network keeps one queue of payments, so everyone sees them in the same order and the one sent first is the
     one that counts. (Added 11 Nov 2026 with the Who saw it first? card; owner picked "One queue of payments".)
+19. To show one payment is in a block, you need the whole block, or you take the explorer's word for it. (Added 11 Nov
+    2026 with the Prove it is in the block card; owner: "Approve as drafted (Recommended)".)
 
 ## Order of work (each step is its own session)
 

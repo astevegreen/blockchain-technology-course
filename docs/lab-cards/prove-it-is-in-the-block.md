@@ -14,7 +14,7 @@
 ## The ten lines
 
 1. **The wrong belief**: "To show one payment is in a block, you need the whole block, or you take the
-   explorer's word for it." New: proposed as belief 19 on the plan's list (the list has no belief about proofs).
+   explorer's word for it." Belief 19 on the plan's list (added 11 Nov 2026).
 2. **The prediction** (shell: `commit`): "A block holds 2,048 transactions. You have one payment's transaction ID
    and the block's header. How many other hashes do you need to prove the payment is inside?" Choices: about
    2,048, all the others; about 1,000, half of them; about 45; 11. Then High, Moderate or Low. (Answer: 11; each
@@ -123,4 +123,4 @@ real example is Alice's.
 
 ## Approval
 
-- Owner: waiting
+- Owner: "Approve as drafted (Recommended)" (11 Nov 2026)
