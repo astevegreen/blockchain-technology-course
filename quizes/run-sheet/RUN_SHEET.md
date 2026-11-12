@@ -76,11 +76,12 @@ evening work. The certificate needs Meets on all four points by the end of day 1
 
 Pretest item for the day's lab entry: q6 alone (the explorer reading) in `quizes/pretest/pretest_week1-quiz-bank.json`. q1 to q5 and q7 are a readiness check: read them, but they do not decide lab entry.
 
-**Lab: explorer worksheet, then sign and send a transaction.** Start: `./lab-manager.sh start explorer` (from
-`dynamic-labs/`). Students open `/labs/explorer/`. The Insider game and terminal orientation open the lab: also start
+**Lab: terminal scavenger hunt, then explorer worksheet, then sign and send a transaction.** Start: `./lab-manager.sh start explorer` (from
+`dynamic-labs/`). The Insider game and terminal orientation open the day: also start
 `./lab-manager.sh start exercises` and `./lab-manager.sh start bitcoin` (terminal orientation lives in the Bitcoin
-lab). Details, host names and the fallback: `dynamic-labs/explorer/README.md`.
-Answers: `dynamic-labs/explorer/quizes/INSTRUCTOR_ANSWERS.md`. Graded point: none.
+lab, and the terminal scavenger hunt follows it from the **Hunt** button on the Bitcoin lab's panel bar, about 15
+minutes). Students then open `/labs/explorer/`. Details, host names and the fallback: `dynamic-labs/explorer/README.md`.
+Answers: the hunt, `quizes/microlabs/terminal_scavenger_hunt_INSTRUCTOR_ANSWERS.md`; the worksheet, `dynamic-labs/explorer/quizes/INSTRUCTOR_ANSWERS.md`. Graded point: none.
 **Debrief:** the lab's last 10 minutes, run from "Debrief (10 minutes)" at the end of the answer file.
 
 ---

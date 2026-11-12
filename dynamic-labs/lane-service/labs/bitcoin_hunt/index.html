@@ -247,6 +247,13 @@
       if (s && s.at === 0 && !s.commit) { hunt = blank(); save(); paintScore(); }
     }, 0);
   });
+  // The classroom serves /lessons/ itself. The student launcher does not (the lessons are on GitHub Pages), and
+  // its control page answers /api/health, so there the slide link goes to Pages instead.
+  fetch("/api/health", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (h) {
+    if (!h || h.ok !== true) return;
+    var link = document.querySelector(".lab-bar .from a");
+    if (link) link.href = "https://astevegreen.github.io/blockchain-technology-course" + link.getAttribute("href");
+  }).catch(function () {});
   paintScore();
   setInterval(paintScore, 1000);
 })();

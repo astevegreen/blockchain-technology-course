@@ -27,12 +27,7 @@ slide index), which is never listed here.
 - The build spec's slide saying no public method matches funds across a swap (`docs/build-spec.md`, Additions,
   "Following funds across a bridge") is not built; the worksheet's "A twist" step says it for THORChain only
   [11 Nov 2026, building the bridge worked example]
-- The terminal scavenger hunt's slide link (`dynamic-labs/lane-service/labs/bitcoin_hunt/index.html`, `slide.href`)
-  is `/lessons/...`, which only the classroom serves; in the student launcher the course is on Pages, so the link
-  fails there. The launcher also has no instructor to mine the hunt's one and two blocks. [11 Nov 2026, building the hunt]
-- `dynamic-labs/explorer/gateway/static/lab/terminal.html:71` "Next:" names the explorer worksheet; day 1 now runs the
-  terminal scavenger hunt in between, and `quizes/run-sheet/RUN_SHEET.md:80` does not name the hunt. [11 Nov 2026,
-  building the hunt]
+- The terminal scavenger hunt has no instructor under the student launcher to mine its one and two blocks. [11 Nov 2026, building the hunt]
 - The known-gap list in `.claude/rules/ci.md` (a rail) still says three instructor files reach the student VM and names
   `bitcoin-forensics/lab.md`, which is archived; `VM_RUNTIME_KEYS` in `tools/check.py` holds two. Fix with the rail
   audit. [11 Nov 2026, step 7 archive]
@@ -74,8 +69,7 @@ slide index), which is never listed here.
   line build]
 
 ## Notion and documents
-- `03-CM-pos.qmd:1073` (and the source line at 1089) still links the archived `/assets/labs/pos-micro`, which has no folder; swap it for the Is it final yet? lab or drop it when day 1's labs are placed. [11 Nov 2026, reviewer on the Is it final yet? build]
 - `06-FO-mixers_and_coinjoin.qmd`, slide "Before and after the mix still leak": check in a browser that the six bullets plus the new "Who paid whom?" link still fit on one screen. [11 Nov 2026, reviewer on the Who paid whom? build]
 - `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]
 - `02-BF-transactions_and_mining.qmd:533` says a client checking D "in a block of A to D" needs C, AB and the root, citing `@bitcoin.orgdevelopers_blockchaindeveloper_2024`; that page's example is a five-transaction tree, A to E (C, AB and EEEE). Restate it as the source's example. [11 Nov 2026, reviewer on the Prove it is in the block card]
-- `lessons/primitives/02-CP-hashing_and_merkle_trees.qmd:1004-1007` (Practice: Micro Labs) still describes the old merkle-trees page (sample text, block size, edit a hash), and `blockchain-course/index.qmd:255` still calls it "Merkle Tree Microlab"; rewrite both for Prove it is in the block. [11 Nov 2026, reviewer on the Prove it is in the block build]
+- Hidden slides in `02-DS-p2p_design.qmd:887`, `03-DS-trust_and_p2p.qmd:638`, `03-CP-symmetric_encryption.qmd:117,188,572` and `02-CP-hashing_and_merkle_trees.qmd` (the hidden Hashing Merkle link, now removed) link labs now under `archive/static-labs/`; students never see them, but each needs a keep-or-drop call. [11 Nov 2026, link sweep]
