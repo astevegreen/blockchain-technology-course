@@ -25,6 +25,13 @@ slide index), which is never listed here.
   `l33_nigeria_sec_…_2024`, `l33_fsca_…_2024`, `l33_government_of_india_union_budget_…_2022`,
   `l33_imf_imf_africa_s_digital_future_…_2024`; Reuters 401 to automated readers `l33_reuters_reuters_argentina_…_2024`.
   Each needs a live URL (or another source) and a `urldate`. [12 Nov 2026, adding read dates (R5)]
+- Hidden slides still cite the weak source `salisu_blockchainforensicsmodern_2023` (a low-tier journal article, W3
+  in `docs/analysis/2026-11-sources-review.md`): `blockchain-course/lessons/forensics/01-FO-*.qmd` (5 uses) and
+  `forensics/02-FO-*.qmd` (8 uses). Replace or pair it if those slides are ever shown.
+  [12 Nov 2026, replacing weak sources on the shown slides]
+- `blockchain-course/lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.qmd:537`: the
+  Sources line "Encyclopaedia Britannica, "Keynesian economics"" has no `Blockchain.bib` key.
+  [12 Nov 2026, labelling the Ammous citations]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
