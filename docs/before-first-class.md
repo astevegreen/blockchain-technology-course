@@ -90,6 +90,17 @@ Where to write it: the Result line below.
 
 **Result:** not run yet.
 
+### 3a. The pretest from a student's browser
+
+Waits for the pretest delivery, which is not built (`docs/follow-ups.md`, "Quizzes and instructor tools"). Once it
+is, a person in a browser that has never visited the host opens the pretest from the link a student receives, takes
+it, and the instructor sees the answers and each day's gate items marked. A pass: it opens over HTTPS from outside
+the host's network at least three working days before day 1, and the result reaches the instructor.
+
+Where to write it: the Result line below.
+
+**Result:** not run yet; the pretest is not built.
+
 ## In the first real class
 
 ### 4. The exchange and bridge lab (day 4)

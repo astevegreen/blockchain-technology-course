@@ -225,6 +225,20 @@ Locked in by the owner on 10 Nov; the case for each is in `docs/analysis/2026-11
   day 7.
 - Each game gets a design card the owner approves before it is built, like any lab.
 
+## Instructor dashboard (owner, 12 Nov 2026: to build, not designed)
+One place where an instructor runs the course and loads items easily. Not started; the build item is on
+`docs/follow-ups.md` ("Quizzes and instructor tools"). Instructor-only, so its code and data live under `quizes/` or
+in `dynamic-labs/` with a line in `dynamic-labs/student-exclude.txt` (CLAUDE.md rule 1).
+- **Why:** the instructor pieces are scattered today: `/instructor/` on the quiz engine (`dynamic-labs/quiz-engine-v2`),
+  `lab-manager.sh` on the host, `quizes/run-sheet/RUN_SHEET.md`, and the pretest marked by hand.
+- **Load items easily:** add or replace quiz banks, the pretest and its answer keys without editing JSON by hand or
+  restarting services (today: `quizes/build_quiz_bank_bundle.py`, then the engine).
+- **Likely scope (to confirm with the owner):** pretest delivery and marking; each student's lab entry point per day,
+  set from that day's gate items (`quizes/pretest/README.md`); daily, week-check and post-test control; marking the
+  four graded lab points and the post-test's written items; class code and lab start/stop.
+- **Open questions for the owner:** whether it is part of the quiz engine or a separate app; whether it covers lab
+  hosting controls or only items and marking; what "load items" covers beyond quizzes (lab content, class roster).
+
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
 well, evidence), each a judgement rather than a count. A review of a lesson or lab checks it against them; the

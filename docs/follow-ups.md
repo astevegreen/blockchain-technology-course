@@ -35,6 +35,25 @@ slide index), which is never listed here.
   missing element) still passes. A load test in a headless browser would catch it. [11 Nov 2026, reviewer on the
   wave 3 fixes]
 
+## Quizzes and instructor tools
+- **Instructor dashboard (to build; owner, 12 Nov 2026):** one place where an instructor runs the class and loads
+  items easily. Spec and open questions: `docs/build-spec.md`, "Instructor dashboard". Today the instructor pieces
+  are separate: `/instructor/` on the quiz engine, `lab-manager.sh` on the host, the run sheet and hand marking.
+  [12 Nov 2026, owner's request]
+- **The pretest has no delivery.** The rules say "an online pretest, required, due three working days before day 1"
+  (`.handoff/plans/current-rules.md:37`) but no tool is named, and nothing loads
+  `quizes/pretest/pretest_week1-quiz-bank.json` or `pretest_week2-quiz-bank.json` into the quiz engine
+  (`dynamic-labs/quiz-engine-v2` has no "pretest" reference) or into any student URL. Needs a design choice (the
+  engine, or an external form) and a host reachable before day 1. [12 Nov 2026, asked how students reach quizzes]
+- **Pretest marking and lab entry are by hand.** `quizes/run-sheet/RUN_SHEET.md:19-26` has the instructor mark the
+  pretest and note who got each day's gate items right; nothing records it or shows a student's entry point per day.
+  Written items have no marking aid. The dashboard should take this over. [12 Nov 2026, asked how students reach quizzes]
+- **Students cannot find the quizzes from the public site.** The daily, week-check and post-test quizzes are served
+  only by the quiz engine on the lab host (`/quiz/`); the Pages site has no quiz page, and its one link ("Student
+  lab and quiz login", `blockchain-course/lessons/introduction/01-IN-course_welcome.qmd:15`) is a root-relative
+  path that leads nowhere on GitHub Pages. Decide whether the site links to the lab host or drops the link
+  (check `dynamic-labs/course-site/inject_dynamic_links.py`, not read yet). [12 Nov 2026, asked how students reach quizzes]
+
 ## Tooling and rules
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
   so the day 3 game needs the live lab [11 Nov 2026, building the game]
