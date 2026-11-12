@@ -7,7 +7,7 @@ no parentheses, `[11 Nov 2026]{.asof}`, and the build shows it as "(11 Nov 2026)
 
 Usage:
   python tools/asof.py [<file.qmd>...]             list every tagged date with its lesson and slide, oldest first
-  python tools/asof.py --check <file.qmd>... | --all [--tags-only]
+  python tools/asof.py --check <file.qmd>... | --all
                                                    print nothing and exit 0 when clean; otherwise print
                                                    `path:line: message` lines and exit 1
 
@@ -15,7 +15,6 @@ The check refuses:
   - a leftover "as of" phrase (the quoted term "as of", used to name the convention, is allowed);
   - a `{.asof}` tag that does not hold a valid date: `D Mon YYYY`, `Mon YYYY` or `YYYY`, not in the future;
   - a tag inside parentheses, which would show two pairs.
-`--tags-only` skips the first.
 """
 
 from __future__ import annotations
@@ -131,14 +130,13 @@ def prose_lines(text: str) -> list[tuple[int, str, str]]:
     return out
 
 
-def scan(rel: str, text: str, phrases: bool = True,
-         today: datetime.date | None = None) -> tuple[list[Tagged], list[str]]:
+def scan(rel: str, text: str, today: datetime.date | None = None) -> tuple[list[Tagged], list[str]]:
     """Every tagged date in a lesson, and every line the check refuses."""
     tagged: list[Tagged] = []
     problems: list[str] = []
     for num, slide, line in prose_lines(text):
         clean = mask(line)
-        if phrases and PHRASE.search(QUOTED_TERM.sub(lambda m: " " * len(m.group(0)), clean)):
+        if PHRASE.search(QUOTED_TERM.sub(lambda m: " " * len(m.group(0)), clean)):
             problems.append(f"{rel}:{num}: \"as of\" phrase: tag the date, `[11 Nov 2026]{{.asof}}`, with no "
                             "words and no parentheses, or reword it when it holds no date")
         tags = list(TAG.finditer(clean))
@@ -184,7 +182,6 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("files", nargs="*", type=Path, help="lesson .qmd files (default: every lesson)")
     parser.add_argument("--check", action="store_true", help="check instead of listing")
     parser.add_argument("--all", action="store_true", help="with --check: every lesson")
-    parser.add_argument("--tags-only", action="store_true", help="with --check: skip the leftover-phrase rule")
     args = parser.parse_args(argv)
     if args.check and not args.files and not args.all:
         parser.error("--check needs .qmd files or --all")
@@ -196,7 +193,7 @@ def main(argv: list[str] | None = None) -> int:
         if not path.exists():
             problems.append(f"{path}:1: file not found")
             continue
-        found, refused = scan(relative(path), path.read_text(encoding="utf-8"), phrases=not args.tags_only)
+        found, refused = scan(relative(path), path.read_text(encoding="utf-8"))
         tagged += found
         problems += refused
 

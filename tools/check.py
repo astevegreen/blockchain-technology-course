@@ -163,10 +163,9 @@ def lint_lessons(files: list[str] | None) -> list[str]:
 def asof_dates(files: list[str] | None) -> list[str]:
     """The tagged "as of" dates (tools/asof.py): no leftover phrase, a valid date in each tag, none in parentheses.
 
-    Changed lessons get all three rules. `--all` checks the tags only until every lesson is converted (the Build
-    Tracker item "Sources in the speaker notes"); the lessons not yet converted still hold the phrase.
+    Changed lessons, and every lesson under `--all`, get all three rules.
     """
-    args = ["--all", "--tags-only"] if files is None else files
+    args = ["--all"] if files is None else files
     code, out = run([sys.executable, str(REPO / "tools" / "asof.py"), "--check", *args])
     return out.splitlines() if code else []
 

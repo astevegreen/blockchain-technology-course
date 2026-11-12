@@ -125,14 +125,14 @@ class Planning(unittest.TestCase):
                                  "glossary slide index", "mind-map links", "lesson pointers",
                                  "pretest", "post-test", "challenge bank"])
 
-    def test_a_changed_lesson_gets_every_date_rule_and_all_checks_the_tags(self) -> None:
+    def test_a_changed_lesson_and_all_get_every_date_rule(self) -> None:
         lesson = "blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd"
         with unittest.mock.patch.object(check, "run", return_value=(1, f"{lesson}:9: \"as of\" phrase")) as run:
             self.assertEqual(check.asof_dates([lesson]), [f"{lesson}:9: \"as of\" phrase"])
         self.assertEqual(run.call_args.args[0][2:], ["--check", lesson])
         with unittest.mock.patch.object(check, "run", return_value=(0, "")) as run:
             self.assertEqual(check.asof_dates(None), [])
-        self.assertEqual(run.call_args.args[0][2:], ["--check", "--all", "--tags-only"])
+        self.assertEqual(run.call_args.args[0][2:], ["--check", "--all"])
         self.assertIn("as-of dates", [c.name for c in check.plan_checks(None, added=[]).checks])
 
     def test_a_filter_change_is_site_wide_and_runs_the_filter_tests(self) -> None:

@@ -48,6 +48,11 @@ slide index), which is never listed here.
   [12 Nov 2026, marking build]
 
 ## Tooling and rules
+- **The parenthesis date format reaches the lessons only.** `tools/asof.py` reads `blockchain-course/lessons/`;
+  "as of <date>" is still written out in 14 quiz banks (`quizes/quiz_json/`), 26 lab cards (`docs/lab-cards/`), the
+  lab pages (`blockchain-course/assets/labs/*/index.html`, `run-labs.qmd`), `assets/mindmap.html` and the glossary
+  `lesson_terms/*.yml`, so those dates are neither tagged nor listed when a fact changes.
+  [12 Nov 2026, "Sources in the speaker notes" build]
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
   so the day 3 game needs the live lab [11 Nov 2026, building the game]
 

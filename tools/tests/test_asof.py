@@ -24,8 +24,8 @@ format:
 """
 
 
-def problems(body: str, phrases: bool = True) -> list[str]:
-    return asof.scan("probe.qmd", FRONT + body, phrases=phrases, today=TODAY)[1]
+def problems(body: str) -> list[str]:
+    return asof.scan("probe.qmd", FRONT + body, today=TODAY)[1]
 
 
 class Dates(unittest.TestCase):
@@ -69,12 +69,11 @@ class Rules(unittest.TestCase):
                 "<!-- as of the last edit -->\n\n<!--\nas of then\n-->\n\nWas of no use; has often.\n")
         self.assertEqual(problems(body), [])
 
-    def test_tags_only_skips_the_phrase_but_not_the_tags(self) -> None:
-        body = "## A\n\nOpen as of Jan 2026. Closed [soon]{.asof}.\n"
-        self.assertEqual(len(problems(body)), 2)
-        found = problems(body, phrases=False)
-        self.assertEqual(len(found), 1)
-        self.assertIn("is not a date", found[0])
+    def test_a_line_with_a_phrase_and_a_bad_tag_is_refused_for_both(self) -> None:
+        found = problems("## A\n\nOpen as of Jan 2026. Closed [soon]{.asof}.\n")
+        self.assertEqual(len(found), 2)
+        self.assertIn('"as of" phrase', found[0])
+        self.assertIn("is not a date", found[1])
 
     def test_a_tag_that_is_not_a_date_is_refused(self) -> None:
         for tag, why in (("[November 2026]{.asof}", "is not a date"), ("[31 Feb 2026]{.asof}", "calendar"),
@@ -144,15 +143,17 @@ class CommandLine(unittest.TestCase):
             code, out = self.run_main("--check", str(good), str(bad))
             self.assertEqual(code, 1)
             self.assertIn("bad.qmd:10: \"as of\" phrase", out)
-            self.assertEqual(self.run_main("--check", "--tags-only", str(bad)), (0, ""))
 
     def test_check_needs_files_or_all(self) -> None:
         with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
             asof.main(["--check"])
 
-    def test_every_lesson_s_tags_are_valid(self) -> None:
-        # The rule --all runs today; the phrase rule joins it when every lesson is converted.
-        self.assertEqual(self.run_main("--check", "--all", "--tags-only"), (0, ""))
+    def test_every_lesson_passes_every_date_rule(self) -> None:
+        self.assertEqual(self.run_main("--check", "--all"), (0, ""))
+
+    def test_the_tags_only_escape_is_gone(self) -> None:
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            asof.main(["--check", "--all", "--tags-only"])
 
 
 if __name__ == "__main__":
