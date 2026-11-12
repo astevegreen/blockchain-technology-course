@@ -124,3 +124,4 @@ real example is Alice's.
 ## Approval
 
 - Owner: "Approve as drafted (Recommended)" (11 Nov 2026)
+- Built: 11 Nov 2026, `blockchain-course/assets/labs/merkle-trees/index.html` (ceb5088c, fixes 5a08c40c); opened from the slide named above.
