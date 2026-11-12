@@ -21,6 +21,10 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/conclusion/05-AS-future_trajectories_and_synthesis.qmd:368`: the Cambridge figure for
   Bitcoin's electricity use (138 TWh, 0.54% of global use) cites no `Blockchain.bib` key.
   [12 Nov 2026, second look on the "as of" conversion]
+- Five cited `Blockchain.bib` pages have no read date because their links are dead or refuse readers: dead
+  `l33_nigeria_sec_…_2024`, `l33_fsca_…_2024`, `l33_government_of_india_union_budget_…_2022`,
+  `l33_imf_imf_africa_s_digital_future_…_2024`; Reuters 401 to automated readers `l33_reuters_reuters_argentina_…_2024`.
+  Each needs a live URL (or another source) and a `urldate`. [12 Nov 2026, adding read dates (R5)]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
