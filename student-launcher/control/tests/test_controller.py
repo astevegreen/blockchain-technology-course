@@ -152,43 +152,43 @@ class Api(unittest.TestCase):
 
 class Actions(unittest.TestCase):
     def setUp(self):
-        self.bench = Bench(labs=[router(), lab("forensics", local_actions=[
-            {"id": "seed", "label": "Load the case data", "api": "/api/forensics/seed"}])])
+        self.bench = Bench(labs=[router(), lab("wallet", local_actions=[
+            {"id": "reset", "label": "Reset the lab", "api": "/api/local/wallet/reset"}])])
 
     def tearDown(self):
         self.bench.close()
 
     def test_action_posts_to_lane_service_only_while_running(self):
         c = self.bench.controller
-        self.assertEqual(dispatch(c, "POST", "/api/labs/forensics/actions/seed")[0], 409)
-        dispatch(c, "POST", "/api/labs/forensics/start")
+        self.assertEqual(dispatch(c, "POST", "/api/labs/wallet/actions/reset")[0], 409)
+        dispatch(c, "POST", "/api/labs/wallet/start")
         self.assertIsNone(dispatch(c, "GET", "/api/labs")[1]["labs"][0]["action"])
-        status, body = dispatch(c, "POST", "/api/labs/forensics/actions/seed")
+        status, body = dispatch(c, "POST", "/api/labs/wallet/actions/reset")
         self.assertEqual(status, 202, body)
-        self.assertEqual(self.bench.posts, ["http://lane-service-lane-service-1:8090/api/forensics/seed"])
-        self.assertEqual(dispatch(c, "POST", "/api/labs/forensics/actions/other")[0], 404)
+        self.assertEqual(self.bench.posts, ["http://lane-service-lane-service-1:8090/api/local/wallet/reset"])
+        self.assertEqual(dispatch(c, "POST", "/api/labs/wallet/actions/other")[0], 404)
         row = dispatch(c, "GET", "/api/labs")[1]["labs"][0]
-        self.assertEqual(row["actions"], [{"id": "seed", "label": "Load the case data"}])
-        self.assertEqual((row["action"]["phase"], row["action"]["message"]), ("done", "Done: Load the case data."))
-        dispatch(c, "POST", "/api/labs/forensics/stop")
+        self.assertEqual(row["actions"], [{"id": "reset", "label": "Reset the lab"}])
+        self.assertEqual((row["action"]["phase"], row["action"]["message"]), ("done", "Done: Reset the lab."))
+        dispatch(c, "POST", "/api/labs/wallet/stop")
         self.assertIsNone(dispatch(c, "GET", "/api/labs")[1]["labs"][0]["action"])
 
-    def test_the_forensics_button_goes_straight_to_lane_service_not_the_router(self):
-        bench = Bench(labs=[router(), lab("bitcoin", local_actions=[
-            {"id": "forensics-load", "label": "Load the case data", "api": "/api/local/bitcoin/forensics-load"}])])
+    def test_a_lab_button_goes_straight_to_lane_service_not_the_router(self):
+        bench = Bench(labs=[router(), lab("wallet", local_actions=[
+            {"id": "reset", "label": "Reset the lab", "api": "/api/local/wallet/reset"}])])
         try:
-            dispatch(bench.controller, "POST", "/api/labs/bitcoin/start")
-            dispatch(bench.controller, "POST", "/api/labs/bitcoin/actions/forensics-load")
-            self.assertEqual(bench.posts, ["http://lane-service-lane-service-1:8090/api/local/bitcoin/forensics-load"])
+            dispatch(bench.controller, "POST", "/api/labs/wallet/start")
+            dispatch(bench.controller, "POST", "/api/labs/wallet/actions/reset")
+            self.assertEqual(bench.posts, ["http://lane-service-lane-service-1:8090/api/local/wallet/reset"])
         finally:
             bench.close()
 
     def test_a_failed_or_slow_button_says_so_plainly_and_runs_once(self):
         c = self.bench.controller
-        dispatch(c, "POST", "/api/labs/forensics/start")
+        dispatch(c, "POST", "/api/labs/wallet/start")
         self.bench.post = lambda url, timeout: (0, "timed out")
         c.post = self.bench.post
-        dispatch(c, "POST", "/api/labs/forensics/actions/seed")
+        dispatch(c, "POST", "/api/labs/wallet/actions/reset")
         row = dispatch(c, "GET", "/api/labs")[1]["labs"][0]
         self.assertEqual(row["action"]["phase"], "error")
         self.assertIn("didn't finish", row["action"]["message"])
@@ -196,15 +196,15 @@ class Actions(unittest.TestCase):
         calls = []
         c.background = True
         c.post = lambda url, timeout: (calls.append(timeout), gate.wait(5), (200, "{}"))[-1]
-        first = dispatch(c, "POST", "/api/labs/forensics/actions/seed")
-        again = dispatch(c, "POST", "/api/labs/forensics/actions/seed")
+        first = dispatch(c, "POST", "/api/labs/wallet/actions/reset")
+        again = dispatch(c, "POST", "/api/labs/wallet/actions/reset")
         self.assertEqual((first[1]["phase"], again[1]["phase"]), ("running", "running"))
         gate.set()
         for _ in range(50):
-            if c.actions["forensics"].phase != "running":
+            if c.actions["wallet"].phase != "running":
                 break
             time.sleep(0.05)
-        self.assertEqual(c.actions["forensics"].phase, "done")
+        self.assertEqual(c.actions["wallet"].phase, "done")
         self.assertEqual(calls, [900])
 
 

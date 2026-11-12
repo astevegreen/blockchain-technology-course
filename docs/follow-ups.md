@@ -34,8 +34,6 @@ slide index), which is never listed here.
 - `dynamic-labs/bitcoin/workstation/patches/custom-genesis.patch:53` still has a comment saying "see
   bitcoin-forensics/FORENSICS-V34-STATE.md"; that file is now under `archive/dynamic-labs/bitcoin-forensics/`. [11 Nov
   2026, wave 3 review]
-- `tools/tests/test_student_launcher*.py` fixtures still use a forensics-load `local_actions` entry as their
-  example; it no longer matches any lab. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/bitcoin/INSTRUCTOR_SOLUTION_GUIDE.md` still has a Forensics section. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/lane-service/lab.yaml` `approx_download_mb: 139` still counts the 13 MB forensics snapshot the
   launcher image no longer bakes; measure at the next student release. [11 Nov 2026, step 7 archive]
