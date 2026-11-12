@@ -48,4 +48,3 @@ slide index), which is never listed here.
 
 ## Notion and documents
 - `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]
-- Hidden slides in `02-DS-p2p_design.qmd:887`, `03-DS-trust_and_p2p.qmd:638`, `03-CP-symmetric_encryption.qmd:117,188,572` and `02-CP-hashing_and_merkle_trees.qmd` (the hidden Hashing Merkle link, now removed) link labs now under `archive/static-labs/`; students never see them, but each needs a keep-or-drop call. [11 Nov 2026, link sweep]
