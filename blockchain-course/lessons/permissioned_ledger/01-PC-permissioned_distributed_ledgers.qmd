@@ -26,7 +26,7 @@ format:
 | Who pays for a USDT transfer? | Why an empty address can still move USDT | Energy |
 | Why Tron? | Where most USDT sits | Half of all USDT |
 | Can Tether freeze USDT on Tron? | Who can stop the money | Same freeze, same owner |
-| Is this address frozen? | Only as of the block you read | As of the read |
+| Is this address frozen? | Only at the block you read | True at the read |
 | What can an analyst see on a permissioned ledger? | Where the trace stops | The operator's edge |
 | Is a CBDC different? | The same edge, run by a central bank | CBDCs |
 
@@ -64,7 +64,7 @@ This slide opens the lesson with its one idea: every ledger in this lesson has a
 
 - **Accounts, not coins:** an address holds a balance, as on Ethereum. A Tron address comes from the same secp256k1 key and Keccak-256 hash, then a `0x41` prefix and Base58Check, so it starts with **T** [@tron_accounts_2026].
 - **Tokens are contracts:** TRC-20 is "fully compatible with Ethereum's ERC-20 at the interface level" [@tron_trc20_2026]. A USDT transfer is a contract call that emits a `Transfer` log, as on day 3.
-- **The node is open source:** java-tron (LGPL-3.0, **as of 23 Oct 2026**) answers the lab's queries [@tronprotocol_javatron_2026].
+- **The node is open source:** java-tron is licensed LGPL-3.0 and answers the lab's queries [@tronprotocol_javatron_2026] [23 Oct 2026]{.asof}.
 - For the analyst: read Tron as you read Ethereum. Only the address format and the fee model are new.
 
 :::
@@ -193,11 +193,11 @@ This slide explains Tron's fee model in the one way an analyst needs: who paid f
 ## Half of all USDT sits on Tron {.smaller}
 
 - Of 180.1 billion USDT in circulation, **92.4 billion (51%)** is on Tron and **70.9 billion (39%)** on Ethereum [@defillama_tetherbychain_2026].
-- Day 3 showed that stablecoins carry most illicit volume (**as of January 2026**) [@chainalysis_2026cryptocrimereport_2026]. Tron holds most of the leading one's supply.
+- Day 3 showed that stablecoins carry most illicit volume [@chainalysis_2026cryptocrimereport_2026] [Jan 2026]{.asof}. Tron holds most of the leading one's supply.
 - For the analyst: a USDT case will often run through Tron, and the Day 9 and Day 10 traces do.
 
 ::: {.callout-note}
-**As of 31 Oct 2026.** Supply by chain moves daily; read the current figure before you quote it.
+Figures read [31 Oct 2026]{.asof}. Supply by chain moves daily; read the current figure before you quote it.
 :::
 
 ::: {.notes}
@@ -207,12 +207,12 @@ This slide explains why a US analyst needs Tron at all: it holds more USDT than 
 
 **Key Points**
 - About half of circulating USDT is on Tron; about two-fifths is on Ethereum.
-- Day 3: stablecoins carry most illicit volume (Chainalysis, as of January 2026).
+- Day 3: stablecoins carry most illicit volume, per Chainalysis [Jan 2026]{.asof}.
 - The day 9 trace and the day 10 scenario both include Tron USDT.
 
 **Walkthrough**
 1. Read the figures with their date.
-2. Ask: a case hands you a USDT address. How do you tell which chain to read? (Expected answer: from the address format: a T-address is Tron; a 0x address is an EVM chain, most often Ethereum, so check which. Tron and Ethereum together hold about nine-tenths of USDT, as of 31 Oct 2026.)
+2. Ask: a case hands you a USDT address. How do you tell which chain to read? Expected answer: from the address format: a T-address is Tron; a 0x address is an EVM chain, most often Ethereum, so check which. Tron and Ethereum together hold about nine-tenths of USDT [31 Oct 2026]{.asof}.
 
 **Sources**
 - @defillama_tetherbychain_2026
@@ -227,7 +227,7 @@ This slide explains why a US analyst needs Tron at all: it holds more USDT than 
 ::: {.column width="55%"}
 
 - Same `TetherToken` design as on Ethereum, with the same owner-only blacklist functions and events [@tether_usdttroncontract_2026; @tether_tethertokensource_2017]: `addBlackList`, `removeBlackList`, `destroyBlackFunds`.
-- The **owner** is a multisignature wallet contract, `TBPxhVAsuzoFnKyXtc1o2UySEydPHgATto` (**as of 31 Oct 2026**; an owner can change) [@tether_usdttroncontract_2026].
+- The **owner** is a multisignature wallet contract, `TBPxhVAsuzoFnKyXtc1o2UySEydPHgATto` [@tether_usdttroncontract_2026] [31 Oct 2026]{.asof}; an owner can change.
 - For the analyst: Tether is the gatekeeper for USDT on Tron. The SRs make the blocks, but only the owner can freeze.
 
 :::
@@ -272,13 +272,13 @@ This slide carries day 3's freeze lesson onto Tron. It matters here because most
 
 :::
 
-## A freeze is true only as of the read {.smaller}
+## A freeze is true only at the time of the read {.smaller}
 
 - **Two questions, two answers** [@tether_usdttroncontract_2026]:
   - *Is it frozen?* `isBlackListed(address)` answers for the block you read it at.
   - *When was it frozen?* The `AddedBlackList` event gives the block and time.
 - Day 3 covered what a freeze leaves on chain. New here: a later `RemovedBlackList` undoes a freeze, so status read today may not be status then [@tether_tethertokensource_2017].
-- So write the block and time beside every freeze answer: "Blacklisted as of block N, read on date D."
+- So write the block and time beside every freeze answer: "On the blacklist at block N, read on date D."
 - Set the freeze time against the case's transfers to answer day 9's question: **Freezable? Which issuer, and how fast?**
 
 ::: {.notes}
@@ -293,7 +293,7 @@ This slide teaches the analyst's habit for freeze status: date it. It matters he
 - Day 9 asks how fast the issuer acted, which needs the event time.
 
 **Walkthrough**
-1. Write a sample line on the board: "Blacklisted as of block N, read on date D."
+1. Write a sample line on the board: "On the blacklist at block N, read on date D."
 2. Ask: if the event came two hours after the last outgoing transfer, what does that tell you? (The funds had already left.)
 
 **Sources**
@@ -308,14 +308,14 @@ The lab gives you a snapshot of Tron data, read from java-tron [@tronprotocol_ja
 
 1. Read a **USDT transfer**: sender, receiver, amount, block and time.
 2. Follow an **exchange deposit and its sweep**, and find the account that paid for it.
-3. Read an **issuer freeze**: the `AddedBlackList` event, and the address's status as of the snapshot.
+3. Read an **issuer freeze**: the `AddedBlackList` event, and the address's status at the snapshot.
 
 Then the instructor runs a live **Hyperledger Fabric** network: the second half of this lesson, in front of you.
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide previews the afternoon lab so students know what to look for. It matters here because the lab applies the first half of this lesson to real data. Emphasize that the lab reads a fixed snapshot, so every answer is "as of" the snapshot.
+This slide previews the afternoon lab so students know what to look for. It matters here because the lab applies the first half of this lesson to real data. Emphasize that the lab reads a fixed snapshot, so every answer is true only at the snapshot.
 
 **Key Points**
 - The snapshot comes from java-tron, the open-source node.
@@ -325,7 +325,7 @@ This slide previews the afternoon lab so students know what to look for. It matt
 
 **Walkthrough**
 1. Read the three tasks aloud.
-2. Ask: why does a freeze answer from the lab carry "as of the snapshot"? (Expected answer: a freeze can be lifted later, so the status is true only at the block and date it was read.)
+2. Ask: why does a freeze answer from the lab carry the snapshot's block and date? (Expected answer: a freeze can be lifted later, so the status is true only at the block and date it was read.)
 
 **Sources**
 - @tronprotocol_javatron_2026
@@ -466,7 +466,7 @@ This slide sets every ledger met so far side by side by what an analyst can see.
 - For the analyst: a CBDC on a ledger is a permissioned ledger. The central bank is the operator, and the trace stops at its edge.
 
 ::: {.callout-note}
-**As of May 2026** (Atlantic Council's last update, read 31 Oct 2026). CBDC counts change often.
+Counts are from the Atlantic Council's last update [May 2026]{.asof}, read 31 Oct 2026. CBDC counts change often.
 :::
 
 ::: {.notes}
@@ -476,7 +476,7 @@ This slide places CBDCs in the lesson's frame: a CBDC on a ledger is a permissio
 
 **Key Points**
 - Many countries are exploring CBDCs; only three have launched one.
-- The US is the only G20 country not exploring a CBDC (as of May 2026).
+- The US is the only G20 country not exploring a CBDC [May 2026]{.asof}.
 - mBridge is a shared ledger whose validating nodes were run by central banks; the BIS left it in October 2024.
 
 **Walkthrough**
@@ -521,7 +521,7 @@ This slide sets up the instructor's Fabric demo that closes the day. It matters 
 
 - Tron reads like Ethereum: accounts, T-addresses, TRC-20 tokens; blocks are final once solidified.
 - On Tron, whoever supplies the Energy pays for a USDT move, and that payer is a link.
-- About half of all USDT is on Tron (as of 31 Oct 2026); Tether can freeze it there as on Ethereum.
+- About half of all USDT is on Tron [31 Oct 2026]{.asof}; Tether can freeze it there as on Ethereum.
 - A freeze answer carries its block and date.
 - On a permissioned ledger the operator admits, names and keeps everyone; the trace stops at its edge.
 - A CBDC on a ledger is a permissioned ledger run by a central bank.

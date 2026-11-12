@@ -116,5 +116,5 @@ scale"); a fact read straight off the chain takes none. Each question names the 
    addresses still blacklisted as of block 87,600,650 (read 31 Oct 2026), holding about $344M. Who
    controls them and why they were frozen come from Tether's statement, the press and the SDN list,
    not the chain (Q12-Q14). Slides: `blockchain-course/lessons/permissioned_ledger/01-PC-permissioned_distributed_ledgers.qmd`,
-   "A freeze is true only as of the read", and `blockchain-course/lessons/forensics/05-FO-vasps_and_the_rules.qmd`, "The SDN
+   "A freeze is true only at the time of the read", and `blockchain-course/lessons/forensics/05-FO-vasps_and_the_rules.qmd`, "The SDN
    list names some addresses, not all".

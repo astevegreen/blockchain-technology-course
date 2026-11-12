@@ -195,7 +195,7 @@ sanctioned, and is the money stuck?
   balance with no `Transfer` log. USDT checks only the sender, so it can still receive.
 - Set the freeze time against the trace's transfers: a freeze after the last send out caught nothing.
 
-**Traces to:** 14-FO "A freeze is a source: read it narrowly"; 05-EF "What a USDT freeze leaves on chain"; 01-PC "A freeze is true only as of the read"
+**Traces to:** 14-FO "A freeze is a source: read it narrowly"; 05-EF "What a USDT freeze leaves on chain"; 01-PC "A freeze is true only at the time of the read"
 
 ## c19 A Tron sweep ties a deposit address to the exchange, not to the customer
 
