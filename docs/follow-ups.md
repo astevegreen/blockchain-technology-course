@@ -88,5 +88,13 @@ slide index), which is never listed here.
   contract lets do each thing: `onlyOwner`, an approval, no check). Needs the glossary pipeline. [11 Nov 2026, Find the
   line build]
 
+- Mastering Bitcoin 3rd edition (R6): about 40 citations stay on the 2nd edition because the 3rd edition no longer has the
+  point (the Alice and Bob's Cafe example, the "no accounts or balances" quotation, the worked key's address,
+  pseudonymity, eclipse attacks) or because the point was not re-checked in the 3rd edition: `01-EF` ("Bitcoin keeps
+  none"), the 02-IN "blockchain vs currency" slide, the Spectrum of Decentralization slide (01-BF), and the lab cards
+  `build-a-ledger-in-four-failures`, `what-time-was-it-sent` and the block-time and confirmations line in
+  `terminal-scavenger-hunt`. Re-check each in ch. 2, 6, 11 and 12 of the 3rd edition and move it, or keep it with a note
+  where the 3rd edition lacks it. [12 Nov 2026, R6]
+
 ## Notion and documents
 - `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]

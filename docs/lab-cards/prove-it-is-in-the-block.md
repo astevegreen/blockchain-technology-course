@@ -102,7 +102,7 @@ real example is Alice's.
 
 - Txids are hashed in pairs up to a single root in the header; an odd one is hashed with a copy of itself —
   `@bitcoin.orgdevelopers_blockchaindeveloper_2024`
-- Bitcoin's Merkle tree uses double SHA-256 — `@antonopoulos_masteringbitcoinprogramming_2017`
+- Bitcoin's Merkle tree uses double SHA-256 — `@antonopoulos_masteringbitcoin3e_2023` (ch. 11)
 - A proof is the hashes beside one transaction's path: in a five-transaction tree, A to E, a client checking D
   needs only the C, AB and EEEE hashes and the root — `@bitcoin.orgdevelopers_blockchaindeveloper_2024`
 - A proof grows by one hash each time the block's size doubles (2,048 = 2¹¹; 419 needs 9, as 2⁹ = 512) —

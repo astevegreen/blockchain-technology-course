@@ -87,7 +87,7 @@ worked example from *Mastering Bitcoin*.
 
 - A signature is made with the private key over the transaction's hash; anyone checks it with the public key;
   change one byte and it fails — `@schmid_ecdsaapplicationimplementation_2015`;
-  `@antonopoulos_masteringbitcoinprogramming_2017`
+  `@antonopoulos_masteringbitcoin3e_2023` (ch. 8)
 - A signature authorizes, it does not identify: a key can be stolen, shared or held by a service; "signed with
   the key controlling address X" — the lesson's slide, from `@nakamoto_bitcoinpeertopeerelectronic_2008`;
   `@meiklejohn_fistfulbitcoinscharacterizing_2013`
@@ -100,7 +100,7 @@ worked example from *Mastering Bitcoin*.
   (read 10 Nov 2026)
 - On Bitcoin an output is spent whole and once — `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
 - The worked key: k from *Mastering Bitcoin* chapter 4; its Ethereum address 0xf4ddd38a2d2f4231e1ddf131a8f3fd80804e08fe;
-  "a key printed in a book or tutorial is a key anyone can sign with" — `@antonopoulos_masteringbitcoinprogramming_2017`;
+  "a key printed in a book or tutorial is a key anyone can sign with" — `@antonopoulos_masteringbitcoinprogramming_2017` (the key itself is also in `@antonopoulos_masteringbitcoin3e_2023`, ch. 4);
   `@wood_ethereumsecuredecentralised_2016` (the Ethereum form computed for the course, 4 Nov 2026)
 - Confidence words, never a percentage — `@odni_icd203_2015` (the course scale, build spec "Confidence scale")
 

@@ -91,11 +91,11 @@ command finds each fact) goes in `quizes/`, which students never receive.
 
 - An explorer shows what a node holds, plus figures it works out and labels it adds; Bitcoin Core's `bitcoin-cli`
   returns the record itself — `lessons/introduction/02-IN-blockchain_at_a_glance.qmd`;
-  `@antonopoulos_masteringbitcoinprogramming_2017`; `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
+  `@antonopoulos_masteringbitcoin3e_2023` (ch. 3); `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
 - A block's time is set by its miner; confirmations count the blocks on top of it, as seen by one node —
   `@bitcoin.orgdevelopers_blockchaindeveloper_2024`; `@antonopoulos_masteringbitcoinprogramming_2017`
 - Newly mined coins cannot be spent until 100 more blocks are mined —
-  `@antonopoulos_masteringbitcoinprogramming_2017`
+  `@antonopoulos_masteringbitcoin3e_2023` (ch. 12)
 - The class chain: the instructor node mines 11 blocks at a fresh start; the chain identifies as `main` —
   `dynamic-labs/bitcoin/bitcoin-instructor-seed.sh`; `dynamic-labs/bitcoin/README.md` (read 10 Nov 2026)
 - Bitcoin Core is open source (MIT) — `@bitcoincore_repository_2026` (as of 10 Nov 2026)

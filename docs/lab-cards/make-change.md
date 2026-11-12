@@ -64,7 +64,7 @@ Alice's.
 - Transactions have one input or several, and "at most two outputs: one for the payment, and one returning the
   change, if any, back to the sender" — `@nakamoto_bitcoinpeertopeerelectronic_2008` (section 9)
 - No fee field; the fee is inputs minus outputs; a forgotten change output pays the change to the miner —
-  `@antonopoulos_masteringbitcoinprogramming_2017`; `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
+  `@antonopoulos_masteringbitcoin3e_2023` (chs. 2, 9); `@bitcoin.orgdevelopers_transactionsdeveloperguide_2024`
 - "There are no accounts or balances in bitcoin; there are only unspent transaction outputs" —
   `@antonopoulos_masteringbitcoinprogramming_2017`
 - Alice's payment 0627052b…c2f2: 0.1 BTC in, 0.015 and 0.0845 out, 0.0005 fee —

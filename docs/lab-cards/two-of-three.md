@@ -102,7 +102,7 @@ the same change.
   `@wuille_bip32hierarchicaldeterministic_2012`; the account and address levels of the path —
   `@palatinus_bip44multiaccounthierarchy_2014`; `@rusnak_bip84derivationscheme_2017`
 - Newly mined coins cannot be spent until 100 more blocks are mined —
-  `@antonopoulos_masteringbitcoinprogramming_2017`
+  `@antonopoulos_masteringbitcoin3e_2023` (ch. 12)
 - A signature shows which key signed, not who held it; naming a person from the chain alone is Low —
   `lessons/bitcoin/06-BF-multisig_and_wallet_software.qmd`; the course scale, build spec "Confidence scale";
   `@odni_icd203_2015`

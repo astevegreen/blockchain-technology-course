@@ -97,7 +97,7 @@ and Ronin's are real.
   system time, so every seed could be tried; versions 3.0.0 to 3.6.0, CVE-2023-39910; funds were stolen —
   `@milksadteam_milksaddisclosure_2023` (read 10 Nov 2026);
   `@l35_milksad_update2_2023`
-- A private key is a number chosen at random from about 2^256 values — `@antonopoulos_masteringbitcoinprogramming_2017`
+- A private key is a number chosen at random from about 2^256 values — `@antonopoulos_masteringbitcoin3e_2023` (ch. 4)
 - A BIP 39 wallet starts from 128 to 256 bits of entropy — `@palatinus_bip39mnemoniccode_2013`
 - Ethereum works out the sender from the signature (v, r, s) — `@wood_ethereumsecuredecentralised_2016`
 - Ronin: five of nine validator keys, taken through spear-phishing and an allowlist never revoked; the
