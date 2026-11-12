@@ -10,6 +10,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 sys.path.insert(0, str(HERE.parent))
+sys.path.insert(0, str(HERE))
 from verify_single_quiz import check_single_quiz  # noqa: E402
 
 # docs/build-spec.md, "Pretest blueprint": day -> {Role Concepts Order: skill}.
@@ -130,6 +131,10 @@ def main() -> int:
         if seen & ids:
             errors.append(f"{bank_path.name}: ids {sorted(seen & ids)} are used in another pretest bank")
         seen |= ids
+
+    # The students' page (blockchain-course/assets/labs/pretest/) is built from these banks and holds no answer.
+    import build_page  # beside this file
+    errors += [f"pretest page: {e}" for e in build_page.check()]
 
     for e in errors:
         print(f"FAIL: {e}")

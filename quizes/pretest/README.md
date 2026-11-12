@@ -1,7 +1,35 @@
 # Pretest, weeks 1 and 2
 
-Instructor-only. Students take the pretest before day 1. Its items and answer keys never go to students, so they live
-here, outside `blockchain-course/` and `dynamic-labs/`.
+Instructor-only. Students take the pretest before day 1, on a page of the public course site. The page carries the
+questions and their options, built from these banks by `build_page.py`; the answers, explanations and answer keys
+never go to students, so the banks live here, outside `blockchain-course/` and `dynamic-labs/`.
+
+## Sending it, and getting the answers back
+
+Nothing needs hosting before class: the page is part of the course site (GitHub Pages; it appears there once the
+site is next published) and works offline once open.
+
+1. Send each student the link, with the address their answers should go to after `#to=`:
+   `https://astevegreen.github.io/blockchain-technology-course/assets/labs/pretest/#to=instructor@example.gov`.
+   Add `&week=1` to show week 1 alone (days 1-5, as Pilot A runs). The part after `#` never leaves the student's
+   browser, so the address is not sent to the site.
+2. A paragraph for the joining instructions: "Before day 1, take the pretest at the link below. It counts for
+   nothing; it decides where you start each day's lab and is the baseline for the post-test. Answer on your own and leave blank
+   what you don't know. Your answers stay in your browser until you press Email; if your mail program doesn't
+   open, use Copy and paste them into an email to the address on the page." Set it due three working days before
+   day 1 (the welcome lesson's pretest slide), so there is time to mark it.
+3. The student's email holds a block between `----- BEGIN PRETEST ANSWERS -----` and `----- END PRETEST
+   ANSWERS -----`. Save each reply into one folder as `.txt` or `.eml` (in Outlook: File > Save As, "Text Only"), or
+   paste every reply into one text file. A student who used Download sends `pretest-answers-<their name>.txt` as an attachment:
+   save the attachment into the same folder.
+4. Mark them: `python quizes/pretest/mark_pretest.py <folder> --out results.md`. Multiple-choice items mark
+   themselves; for each written item the script shows the answer beside its `answer_key` and asks whether it states
+   every point. Decisions are kept in `pretest-marks.json` in that folder, so a rerun for a late reply asks only
+   what is new. The table says, for each student and day, **problem** or **worked example**.
+
+Option ids on the page are hashes of the option text, and the options are listed in id order, so the page gives
+nothing away. If a bank changes after students answered, the marker flags their reply as an older form and leaves
+any item whose options changed unmarked.
 
 ## How an instructor uses it
 
@@ -24,7 +52,11 @@ Multiple-choice items are right or wrong. A written item is right when the answe
   with extra fields for the pretest (below).
 - `pretest_week2-quiz-bank.json`: days 6-9, 25 items (q18-q42), in the same format. Pilot A runs week 1 only, so it uses
   the week-1 bank alone.
-- `verify_pretest.py`: checks both banks. Run `python quizes/pretest/verify_pretest.py` from the repo root after any edit.
+- `verify_pretest.py`: checks both banks, and that the page's `items.js` is current and holds no answer. Run
+  `python quizes/pretest/verify_pretest.py` from the repo root after any edit.
+- `build_page.py`: writes `blockchain-course/assets/labs/pretest/items.js` (generated: run it after any bank edit;
+  `--check` fails on a stale or leaking file). The page itself is `index.html` and `pretest.js` in that folder.
+- `mark_pretest.py`: marks the emailed replies and prints the lab-entry table (above).
 
 The banks sit here rather than in `quiz_json/` for three reasons:
 

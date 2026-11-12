@@ -332,7 +332,8 @@ def verify_quiz(rel: str) -> list[str]:
 # change reruns it. The pretest, post-test and challenge verifiers trace items to visible lesson slides, so a
 # lesson change reruns them too.
 QUIZ_VERIFIERS = (
-    ("pretest", "quizes/pretest/verify_pretest.py", ("quizes/pretest/", "quizes/verify_single_quiz.py")),
+    ("pretest", "quizes/pretest/verify_pretest.py",
+     ("quizes/pretest/", "quizes/verify_single_quiz.py", "blockchain-course/assets/labs/pretest/")),
     ("post-test", "quizes/posttest/verify_posttest.py",
      ("quizes/posttest/", "quizes/pretest/", "quizes/verify_single_quiz.py")),
     ("challenge bank", "quizes/challenge/verify_challenge.py", ("quizes/challenge/", "quizes/pretest/verify_pretest.py")),
