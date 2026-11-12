@@ -28,7 +28,7 @@ Work through every lens that applies to your scope. If one turns up nothing, say
    nothing concrete beside it, a diagram that doesn't carry the hard part, no word on why the analyst cares, speaker
    notes that leave a stand-in instructor unsure what to say or what answer to expect.
 2. **Is it true, and still true?** Facts that look wrong, overstated or stale; changing facts (laws, figures,
-   upgrades, licences) with no "as of" date; a claim with no citation. You have no network: say what kind of source
+   upgrades, licences) with no `[date]{.asof}` tag; a claim with no citation. You have no network: say what kind of source
    would settle it, and never supply a figure from memory.
 3. **Does it hang together?** A term meaning different things in two places; slides and notes, or lessons and the
    lab, contradicting each other; something used before it is taught.

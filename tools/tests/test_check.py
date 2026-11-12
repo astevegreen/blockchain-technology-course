@@ -121,9 +121,24 @@ class Planning(unittest.TestCase):
     def test_lesson_change(self) -> None:
         lesson = "blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd"
         names, _ = self.names([lesson])
-        self.assertEqual(names, ["lesson lint", "render 02-IN-blockchain_at_a_glance.qmd",
+        self.assertEqual(names, ["lesson lint", "as-of dates", "render 02-IN-blockchain_at_a_glance.qmd",
                                  "glossary slide index", "mind-map links", "lesson pointers",
                                  "pretest", "post-test", "challenge bank"])
+
+    def test_a_changed_lesson_gets_every_date_rule_and_all_checks_the_tags(self) -> None:
+        lesson = "blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd"
+        with unittest.mock.patch.object(check, "run", return_value=(1, f"{lesson}:9: \"as of\" phrase")) as run:
+            self.assertEqual(check.asof_dates([lesson]), [f"{lesson}:9: \"as of\" phrase"])
+        self.assertEqual(run.call_args.args[0][2:], ["--check", lesson])
+        with unittest.mock.patch.object(check, "run", return_value=(0, "")) as run:
+            self.assertEqual(check.asof_dates(None), [])
+        self.assertEqual(run.call_args.args[0][2:], ["--check", "--all", "--tags-only"])
+        self.assertIn("as-of dates", [c.name for c in check.plan_checks(None, added=[]).checks])
+
+    def test_a_filter_change_is_site_wide_and_runs_the_filter_tests(self) -> None:
+        names, info = self.names(["blockchain-course/filters/asof.lua"])
+        self.assertIn("tool tests", names)
+        self.assertTrue(any("--all --render" in line for line in info))
 
     def test_run_sheet_change_checks_lesson_pointers(self) -> None:
         names, _ = self.names(["quizes/run-sheet/RUN_SHEET.md"])

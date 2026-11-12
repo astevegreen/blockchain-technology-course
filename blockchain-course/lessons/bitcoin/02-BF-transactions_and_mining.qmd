@@ -128,7 +128,7 @@ This slide extends day 1's address-prefix table into what each script type tells
 - P2WPKH and P2WSH are native SegWit version 0, told apart by program length: 20 bytes (42-character address) versus 32 bytes (62-character address).
 - P2TR (`bc1p...`) is SegWit version 1, Taproot.
 - OP_RETURN outputs carry data and are provably unspendable.
-- Their size is node policy, not a consensus rule. Bitcoin Core relayed and mined at most 83 bytes by default from 0.12.0 (Feb 2016); 30.0 (Oct 2025) raised the default to 100,000 bytes, "which effectively uncaps the limit", and allows several OP_RETURN outputs in one transaction (as of 24 Oct 2026).
+- Their size is node policy, not a consensus rule. Bitcoin Core relayed and mined at most 83 bytes by default from 0.12.0 (Feb 2016); 30.0 (Oct 2025) raised the default to 100,000 bytes, "which effectively uncaps the limit", and allows several OP_RETURN outputs in one transaction [24 Oct 2026]{.asof}.
 
 **Walkthrough**
 1. Read the first column: the type an explorer or bitcoin-cli shows.
@@ -235,7 +235,7 @@ This slide corrects a common error in reports: treating the explorer's time as t
 - Bitcoin transactions carry no timestamp field; the time shown is the block's.
 - Block timestamps are set by miners and need not increase from block to block.
 - Locktime is a lower bound on when a transaction may be mined: a height if below 500 million, a Unix time otherwise.
-- "Anti-fee-sniping": since 0.11.0 (2015) Bitcoin Core's wallet sets locktime near the current height, and one time in ten a further 0 to 99 blocks back; today it uses the current height, or 0 when the wallet's copy of the chain lags (as of 24 Oct 2026). A wallet stuck at one height once gave all its transactions the same locktime, which "makes it easier for passive observers to cluster transactions by wallet".
+- "Anti-fee-sniping": since 0.11.0 (2015) Bitcoin Core's wallet sets locktime near the current height, and one time in ten a further 0 to 99 blocks back; today it uses the current height, or 0 when the wallet's copy of the chain lags [24 Oct 2026]{.asof}. A wallet stuck at one height once gave all its transactions the same locktime, which "makes it easier for passive observers to cluster transactions by wallet".
 - The clue points to wallet software, not to a person: Low on its own.
 - Alice's payment: locktime 0; block 277,316's time is 1388185914, 27 Dec 2013 23:11:54 UTC.
 - Optional, five minutes: the What time was it sent? lab (link on the slide). Students predict what the explorer's 09:09 means for a payment sent at 09:02, watch a low-fee payment wait while a slow-clocked miner stamps it, meet the word block time, and see that block 800,002 can show an earlier time than block 800,001 yet be recorded after it.
@@ -309,7 +309,7 @@ This slide moves from day 1's fee (inputs minus outputs) to the fee rate that mi
 **Bottom line:** until it is mined, a transaction can be replaced by one paying a higher fee, which can pay someone else. Trace the version that was mined.
 
 - BIP 125's signal is an input sequence below `0xfffffffe`. The replacement pays at least the original's fee, with no rule on outputs [@harding_bip125optinfull_2015].
-- Bitcoin Core now replaces whether or not the original signaled: "full replace-by-fee" [@bitcoincore_bitcoincore29_2025] (as of 24 Oct 2026). The signal is a wallet trait, not a protection.
+- Bitcoin Core now replaces whether or not the original signaled: "full replace-by-fee" [@bitcoincore_bitcoincore29_2025] [24 Oct 2026]{.asof}. The signal is a wallet trait, not a protection.
 - Both spend the same inputs, so at most one is mined [@nakamoto_bitcoinpeertopeerelectronic_2008].
 - Alice's input has sequence `0xffffffff`: no signal [@antonopoulos_masteringbitcoinprogramming_2017].
 :::
@@ -345,7 +345,7 @@ This slide teaches replace-by-fee as the reason an unconfirmed transaction is no
 - BIP 125 opt-in signal: an input sequence number below 0xfffffffe.
 - The replacement pays at least the original's absolute fee; BIP 125 does not constrain its outputs.
 - Before full replace-by-fee, nodes kept the first version they saw unless it signaled, a policy "sometimes called first-seen"; Bitcoin Core 24.0.1 (Dec 2022) added an option to drop it, off by default.
-- Bitcoin Core 28.0 (Oct 2024) turned full replace-by-fee on by default and 29.0 (Apr 2025) removed the option, so nodes accept replacements whether or not the original signaled (as of 24 Oct 2026).
+- Bitcoin Core 28.0 (Oct 2024) turned full replace-by-fee on by default and 29.0 (Apr 2025) removed the option, so nodes accept replacements whether or not the original signaled [24 Oct 2026]{.asof}.
 - Two transactions spending the same output cannot both be mined.
 - Alice's input uses sequence 0xffffffff, so it did not signal; record the signal as wallet behavior.
 - Treat every unconfirmed transaction as able to change, as day 1 taught: unconfirmed is not paid.
@@ -433,7 +433,7 @@ This slide teaches proof of work at the level an analyst needs: what the miner h
 **Bottom line:** new bitcoin enters only through each block's first transaction, the coinbase. A trace that ends at a coinbase has reached newly mined coins, not someone's payment.
 
 - The coinbase collects the block subsidy and the block's fees [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
-- The subsidy began at 50 BTC and halves every 210,000 blocks [@antonopoulos_masteringbitcoinprogramming_2017; @narayanan_bitcoincryptocurrencytechnologies_2016]. After four halvings it is 3.125 BTC; the next halving is at block 1,050,000 (as of 24 Oct 2026).
+- The subsidy began at 50 BTC and halves every 210,000 blocks [@antonopoulos_masteringbitcoinprogramming_2017; @narayanan_bitcoincryptocurrencytechnologies_2016]. After four halvings it is 3.125 BTC; the next halving is at block 1,050,000 [24 Oct 2026]{.asof}.
 - Coinbase outputs cannot be spent for 100 blocks [@bitcoin.orgdevelopers_blockchaindeveloper_2024].
 - Most miners join pools: the coinbase pays the pool, which pays its members, often in one transaction to many addresses [@antonopoulos_masteringbitcoinprogramming_2017].
 :::
@@ -456,7 +456,7 @@ This slide compresses mining to what an analyst needs: where new coins come from
 **Key Points**
 - The coinbase is the first transaction in every block; it pays the subsidy plus all fees in the block.
 - The subsidy halves every 210,000 blocks: 50, 25, 12.5, 6.25, 3.125 BTC. Alice's block 277,316 paid 25 BTC plus fees, as day 1 showed.
-- As of 24 Oct 2026 the subsidy is 3.125 BTC; it halves again at block 1,050,000.
+- The subsidy is 3.125 BTC [24 Oct 2026]{.asof}; it halves again at block 1,050,000.
 - Coinbase outputs mature after 100 blocks.
 - Pool payouts look like one transaction paying many addresses.
 
@@ -615,7 +615,7 @@ Bitcoin Core's decode, trimmed [@antonopoulos_masteringbitcoinprogramming_2017]:
 </div>
 :::
 ::: {.column width="43%"}
-In mempool, an open-source explorer (31 Oct 2026) [@mempool_mempool_2026; @mempoolspace_transaction0627052b_2013]:
+In mempool, an open-source explorer [@mempool_mempool_2026; @mempoolspace_transaction0627052b_2013] [31 Oct 2026]{.asof}:
 
 ![](../images/mempool-alice-payment.png){fig-alt="mempool's transaction page for Alice's payment: 696,684 confirmations, 194 sat/vB, one P2PKH input from 1Cdid9KF... with nSequence 0xffffffff, two P2PKH outputs" width="100%"}
 :::
@@ -633,8 +633,8 @@ This slide reads day 1's payment again, this time for the fields a trace records
 - Sequence 0xffffffff: no BIP 125 signal. Locktime 0: no restriction.
 - Fee rate ≈ 194 sat/vB.
 - The second output pays 1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK, the address Joe paid: Alice reused her address for change.
-- The decode comes from Bitcoin Core's bitcoin-cli, as on day 1. The screenshot is mempool (open source, AGPL-3.0, as of 31 Oct 2026) on the public site mempool.space; the course lab runs the same software on the course chain.
-- mempool does the lookup the decode leaves to you: it shows the input's address (1Cdid9KF…), amount (0.1 BTC) and previous output type (P2PKH) beside the input, and works out the fee rate (194 sat/vB) and confirmations (696,684 on 31 Oct 2026; the count grows with every block).
+- The decode comes from Bitcoin Core's bitcoin-cli, as on day 1. The screenshot is mempool, open source under AGPL-3.0 [31 Oct 2026]{.asof}, on the public site mempool.space; the course lab runs the same software on the course chain.
+- mempool does the lookup the decode leaves to you: it shows the input's address (1Cdid9KF…), amount (0.1 BTC) and previous output type (P2PKH) beside the input, and works out the fee rate (194 sat/vB) and confirmations: 696,684 [31 Oct 2026]{.asof}, a count that grows with every block.
 - The "Details" button opens the nSequence and type rows; the screenshot hides the script rows, the miner row and the size, virtual size and weight rows lower down. The page gives confirmations, not a block-height row. Confirmed transactions get no RBF badge: read nSequence.
 - mempool shows times in the viewer's own time zone: the screenshot's 18:11:54 is 23:11:54 UTC, when block 277,316 was mined. Record times in UTC.
 - Ignore the dollar figure and the red "Overpaid" badge: they are mempool's own estimates, not fields of the transaction. The lab instance runs offline, so its dollar figures mean nothing at all.
@@ -720,7 +720,7 @@ This slide sets up the two Bitcoin clues day 6 teaches as heuristics: co-spendin
 - **Hidden rules:** P2SH and Taproot show their spending rule only when spent, Taproot often not even then.
 - **Time:** a transaction has no timestamp; record block height and the miner's block time.
 - **Fees:** record the fee rate in sat/vB and whether the wallet signaled RBF; any unconfirmed transaction can still be replaced.
-- **Origin:** a coinbase is newly mined coins; the subsidy is 3.125 BTC (as of 24 Oct 2026).
+- **Origin:** a coinbase is newly mined coins; the subsidy is 3.125 BTC [24 Oct 2026]{.asof}.
 - **Clues:** co-spending and change.
 - **Next, lesson ②:** wallet types. Clustering, change detection and peel chains, with their failures, are day 6.
 

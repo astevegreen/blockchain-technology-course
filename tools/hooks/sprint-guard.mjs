@@ -41,7 +41,7 @@ const LOCKED = [
   /^\.claude\//, /^\.githooks\//, /^\.github\//, /^\.gitattributes$/, /^docs\/sprint\.md$/, /^CLAUDE\.md$/,
   /^tools\/sprint\//, /^tools\/hooks\//, /^tools\/check\.py$/,
   // The checks tools/check.py runs and its tests, and the second look with its prompts and GEMINI.md.
-  /^tools\/qmd_lint\.py$/, /^tools\/tests\/test_(check|qmd_lint)\.py$/, /^quizes\/verify_single_quiz\.py$/,
+  /^tools\/(qmd_lint|asof)\.py$/, /^tools\/tests\/test_(check|qmd_lint|asof)\.py$/, /^quizes\/verify_single_quiz\.py$/,
   /^blockchain-course\/glossary\/scripts\/validate_glossary\.py$/,
   /^tools\/agy\.mjs$/, /^tools\/gemini-api\.mjs$/, /^tools\/second-look/, /^tools\/rail-audit/, /^GEMINI\.md$/,
   // Generated: they change only by running their scripts (CLAUDE.md, hard rule 2).

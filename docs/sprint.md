@@ -67,7 +67,7 @@ policy.
   comment one question on the issue with options and a recommendation, label it `blocked` (`move <n> blocked`),
   and move on. Never invent a fact. A technical question never stops a task: decide it as the architect and
   comment "Decision (architect): …" on the issue.
-- **Sources**: every fact cites a `Blockchain.bib` key; facts that change carry an "as of" date. A fact no key
+- **Sources**: every fact cites a `Blockchain.bib` key; facts that change carry an `{.asof}` date. A fact no key
   supports gets a source pass: WebSearch finds the primary source, WebFetch reads it, and the passage is quoted
   with its URL; only a fact no readable source states is `blocked`. Never feature Chainalysis, TRM or Elliptic
   (citing their research is fine); Blockscout needs the owner's yes.

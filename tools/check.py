@@ -38,6 +38,7 @@ MAX_LINES = 40
 SITE_WIDE = (
     "blockchain-course/_quarto.yml",
     "blockchain-course/_extensions/",
+    "blockchain-course/filters/",
     "blockchain-course/scripts/",
     "blockchain-course/templates/",
     "blockchain-course/styles.css",
@@ -159,6 +160,17 @@ def lint_lessons(files: list[str] | None) -> list[str]:
     return out.splitlines() if code else []
 
 
+def asof_dates(files: list[str] | None) -> list[str]:
+    """The tagged "as of" dates (tools/asof.py): no leftover phrase, a valid date in each tag, none in parentheses.
+
+    Changed lessons get all three rules. `--all` checks the tags only until every lesson is converted (the Build
+    Tracker item "Sources in the speaker notes"); the lessons not yet converted still hold the phrase.
+    """
+    args = ["--all", "--tags-only"] if files is None else files
+    code, out = run([sys.executable, str(REPO / "tools" / "asof.py"), "--check", *args])
+    return out.splitlines() if code else []
+
+
 def quarto_warnings(output: str, label: str) -> list[str]:
     """Each WARNING/ERROR block in Quarto output, prefixed with the lesson or step it came from."""
     found, block = [], []
@@ -244,7 +256,10 @@ def bib_entries(text: str) -> dict[str, tuple[int, str]]:
 
 
 def undated_web_sources(text: str, old_keys: set[str]) -> list[tuple[int, str]]:
-    """New entries with a `url` and no `urldate`: the "as of" date a web source carries (CLAUDE.md)."""
+    """New entries with a `url` and no `urldate`: the day a web source was read, the date its facts are true as of.
+
+    The bibliography keeps `urldate`; on a slide the same date is a tag, `[11 Nov 2026]{.asof}` (tools/asof.py).
+    """
     return [(line, key) for key, (line, body) in bib_entries(text).items()
             if key not in old_keys and re.search(r"^\s*url\s*=", body, re.M)
             and not re.search(r"^\s*urldate\s*=\s*[{\"]\d{4}-\d{2}-\d{2}[}\"]", body, re.M)]
@@ -651,8 +666,10 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     lessons = [f for f in present if is_lesson(f)]
     if everything:
         plan.checks.append(Check("lesson lint", lambda: lint_lessons(None)))
+        plan.checks.append(Check("as-of dates", lambda: asof_dates(None)))
     elif lessons:
         plan.checks.append(Check("lesson lint", lambda: lint_lessons(lessons)))
+        plan.checks.append(Check("as-of dates", lambda: asof_dates(lessons)))
 
     if everything and render:
         plan.checks.append(Check("site render", render_site))
@@ -712,8 +729,9 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
         plan.checks.append(Check("answer files", answer_files))
 
     # The labs' shared look and shell, and the design-card template, are tested in tools/tests/test_lab_shared.py.
+    # So are the site's Lua filters (tools/tests/test_filters.py).
     if (touched("tools/") or touched(".claude/") or touched("blockchain-course/assets/labs/shared/")
-            or touched("docs/lab-cards/")):
+            or touched("docs/lab-cards/") or touched("blockchain-course/filters/")):
         plan.checks.append(Check("tool tests", tool_tests))
     if touched("dynamic-labs/") or touched("tools/lab_manifest.py"):
         for label, rule in (("lab manifests", "manifests"), ("lab generated lists", "generated"),

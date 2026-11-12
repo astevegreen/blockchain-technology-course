@@ -89,8 +89,8 @@ this same checkout. The body:
   exist, what each teaches, which `docs/build-spec.md` rules apply (confidence scale, notes block, worked
   example). Read them back once and remove any two that contradict each other.
 - **Sources**: the `Blockchain.bib` keys each claim rests on (grep the file for them); for a fact no key
-  supports, the source pass's URL and quoted passage (step 2), so the implementer can add it (permission 4); an
-  "as of" date for each fact that changes. Never a commercial analytics platform as a tool (`CLAUDE.md`, Course
+  supports, the source pass's URL and quoted passage (step 2), so the implementer can add it (permission 4); the
+  `{.asof}` date for each fact that changes. Never a commercial analytics platform as a tool (`CLAUDE.md`, Course
   direction).
 - **Check**: `python tools/check.py`; for a lab, which `run.sh --fresh-start` proves it, or "unverified: no
   automated tests" (`docs/sprint.md`, Lab tests and Docker).

@@ -7,7 +7,7 @@ Look for:
 - contradictions with CLAUDE.md, docs/build-spec.md, docs/sprint.md or the matching .claude/rules/ file
 - a content decision the spec makes that none of those files make (what a lesson teaches beyond its slot,
   cutting material, a lab's scenario, quiz difficulty)
-- a claim with no `Blockchain.bib` key and no source to read; a fact that changes with no "as of" date
+- a claim with no `Blockchain.bib` key and no source to read; a fact that changes with no date it was true
 - instructor-only material (quiz answers, solutions, instructor seeds) headed for `blockchain-course/` or a
   `dynamic-labs/` path that `.github/workflows/pages.yml` packs for students
 - a commercial analytics platform (Chainalysis, TRM, Elliptic) featured as a tool

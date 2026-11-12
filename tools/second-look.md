@@ -4,7 +4,8 @@ and the diff. Follow GEMINI.md. Read the lessons, labs or quiz files around the 
 Check:
 - the change does what the request asks, and nothing outside the request changed
 - every new or changed claim cites a `@key` that exists in `blockchain-course/lessons/references/Blockchain.bib`,
-  the cited work plausibly supports the claim, and a fact that changes carries an "as of" date
+  the cited work plausibly supports the claim, and a fact that changes carries the date it was true as a tag,
+  `[11 Nov 2026]{.asof}` (the slide shows "(11 Nov 2026)"); a release or event date is plain text
 - every quiz answer traces to a line of its lesson, and no distractor is also correct
 - nothing instructor-only (quiz banks, answers, solutions, instructor seeds) reaches `blockchain-course/` or a
   `dynamic-labs/` path that `.github/workflows/pages.yml` packs for students

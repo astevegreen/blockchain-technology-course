@@ -18,7 +18,9 @@ The owner judges results, not code: explain every change in plain English and pr
 - Students mostly read code; they may write simple code in an instructor-led lab (like the NFT lab) when it teaches a
   concept, never as rote programming. Out of scope: legal process (warrants, subpoenas, seizure, chain of custody,
   testimony) and data engineering (Python, SQL, GraphQL).
-- Facts that change (laws, figures, upgrades, licenses) carry an "as of" date beside the citation.
+- Facts that change (laws, figures, upgrades, licenses) carry the date they were true, tagged after the citation:
+  `[11 Nov 2026]{.asof}`, the date alone; the slide shows "(11 Nov 2026)". Release and event dates, such as
+  "0.12.0 (Feb 2016)", stay plain text. `python tools/asof.py` lists every tagged date, oldest first.
 
 ## Commands
 - `python tools/check.py` - checks what you changed (it renders changed lessons); prints failures only; must pass

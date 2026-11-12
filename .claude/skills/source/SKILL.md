@@ -8,7 +8,7 @@ paths:
 # Adding a source
 
 Every fact cites a `Blockchain.bib` key (CLAUDE.md, rule 4); `docs/build-spec.md` ("Sources and dates") says which
-facts carry an "as of" date and which tools may appear. A fact with no source, or one a review disputes, climbs
+facts carry an `{.asof}` date and which tools may appear. A fact with no source, or one a review disputes, climbs
 this whole ladder before it is cut: a true, useful fact lost for want of a search costs the course more than the
 search. Truth still comes first: a fact no reputable source supports is corrected or cut.
 
@@ -25,7 +25,7 @@ search. Truth still comes first: a fact no reputable source supports is correcte
 5. **Cut only after steps 1-4 find nothing**: remove or hide the fact, and list it with the queries tried in the
    commit message (the `reviewer` looks there) and on the summary's **Searched, then cut** line.
 6. **Write the entry** in the style of its neighbors: key `<author-or-org>_<word>_<year>`, `title`, `author` or
-   `organization`, `date`, `url`, and `urldate = {YYYY-MM-DD}`, the day you read it. That date is the "as of" date
+   `organization`, `date`, `url`, and `urldate = {YYYY-MM-DD}`, the day you read it. That date is the `{.asof}` date
    for a fact that changes, and the check refuses a new entry with a `url` and no `urldate`.
 7. **Quote the passage** that supports each claim, word for word, with the entry's key and URL: in a sprint on the
    issue ("Implementer: source"), otherwise in the session's summary. The `reviewer` fetches the URL and checks

@@ -8,7 +8,7 @@ import { ARGON, FLASH, OPUS } from "./agy.mjs";
 
 // The rails, as path prefixes: every file whose content decides whether a change ships. The Claude Code hooks and
 // the sprint guard; the settings that wire hooks and hold the permission rules; the sprint skills and agents, which
-// wire the guard and say what a blocker is; the git hooks and the workflows; the check, with the lint, quiz and
+// wire the guard and say what a blocker is; the git hooks and the workflows; the check, with the lint, date, quiz and
 // glossary checks it runs and its own tests; the sprint queue, which decides what holds and what reaches the
 // integrator; and the second look and this audit, with GEMINI.md, which tells agy what a blocker is. The sprint
 // guard locks every one of them for the lanes (tools/hooks/sprint-guard.mjs, LOCKED).
@@ -22,8 +22,10 @@ export const RAILS = [
   ".github/",
   "tools/check.py",
   "tools/qmd_lint.py",
+  "tools/asof.py",
   "tools/tests/test_check.py",
   "tools/tests/test_qmd_lint.py",
+  "tools/tests/test_asof.py",
   "quizes/verify_single_quiz.py",
   "blockchain-course/glossary/scripts/validate_glossary.py",
   "tools/sprint/",

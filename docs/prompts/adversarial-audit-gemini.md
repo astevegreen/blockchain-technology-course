@@ -73,7 +73,7 @@ Work through every lens across all ten days. Skip none; if a lens turns up nothi
    beside it, a diagram that doesn't carry the hard part, no word on why the analyst cares? Where does week 2
    assume a fluency week 1 never built?
 2. **Is it true, and still true?** Facts that look wrong, overstated or stale; facts with no `Blockchain.bib` key;
-   changing facts (laws, figures, upgrades, licences) with no "as of" date. You cannot use the network: say what
+   changing facts (laws, figures, upgrades, licences) with no `[date]{.asof}` tag. You cannot use the network: say what
    kind of source would settle each one, and never supply a figure from memory.
 3. **Does it hang together?** A term meaning different things in two lessons, or in a lesson and the glossary; two
    lessons contradicting each other; a concept taught twice in different ways; something used in a lab or quiz

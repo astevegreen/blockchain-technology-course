@@ -33,7 +33,9 @@ holds as a `blocker` of yours.
    - the hard rules in `CLAUDE.md` and the matching `.claude/rules/` files still hold
    - the change meets `docs/build-spec.md`: its lesson, lab, confidence-scale, sources and out-of-scope sections
    - every new or changed claim cites a `@key` that exists in `blockchain-course/lessons/references/Blockchain.bib`,
-     the cited work is plausibly about that claim, and a fact that changes carries an "as of" date
+     the cited work is plausibly about that claim, and a fact that changes carries the date it was true as a tag
+     after the citation, `[11 Nov 2026]{.asof}` (the slide shows "(11 Nov 2026)"); a release or event date, such
+     as "0.12.0 (Feb 2016)", is plain text
    - each new `Blockchain.bib` entry: fetch its `url` with WebFetch and find the passage the claim rests on (in the
      sprint, the one quoted on the issue under "Implementer: source"). A quote that is not there, or that doesn't
      state the claim, is a `blocker`; a page you can't fetch (refused, paywalled, gone) is a `minor` concern, named
