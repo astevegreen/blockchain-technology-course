@@ -48,7 +48,7 @@ slide index), which is never listed here.
   engine, or an external form) and a host reachable before day 1. **Owner constraint, 12 Nov 2026: students must be
   able to take the pretest without the instructor hosting the labs.** The engine runs only on the lab host while a
   class is up, so it cannot be the only delivery; the choice is now an external form (or another always-on host) and
-  how its results reach the dashboard. Not yet chosen. [12 Nov 2026, asked how students reach quizzes]
+  how its results reach the dashboard. **Decided (owner, 12 Nov 2026: "I concur with your recommendations"): an external form, with its results imported into the dashboard** for marking and lab entry points. Which form service (agency networks may block some) is still to pick when it is built. [12 Nov 2026, asked how students reach quizzes]
 - **Pretest marking and lab entry are by hand.** `quizes/run-sheet/RUN_SHEET.md:19-26` has the instructor mark the
   pretest and note who got each day's gate items right; nothing records it or shows a student's entry point per day.
   Written items have no marking aid. The dashboard should take this over. [12 Nov 2026, asked how students reach quizzes]
@@ -59,7 +59,7 @@ slide index), which is never listed here.
   root-relative paths like `/quiz/student/` resolve. `pages.yml` does not run it, so the GitHub Pages site has no
   quiz or lab links at all and no dead link (the earlier note citing `01-IN-course_welcome.qmd:15` was wrong: that
   file has no such link). What is open: whether the Pages site should point students at a lab host. The lab host
-  address is not fixed, so it would need to be set per class. Owner has not decided. [12 Nov 2026]
+  address is not fixed, so it would need to be set per class. **Decided (owner, 12 Nov 2026: "I concur with your recommendations"): the Pages site stays without quiz links.** Students reach quizzes through the lab host the instructor announces; the pretest gets its own link. [12 Nov 2026]
 
 ## Tooling and rules
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
