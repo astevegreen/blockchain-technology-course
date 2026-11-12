@@ -12,6 +12,7 @@ from .blueprints.dashboard import bp as dashboard_bp
 from .blueprints.health import bp as health_bp
 from .blueprints.hosting import bp as hosting_bp
 from .blueprints.instructor import bp as instructor_bp
+from .blueprints.marking import bp as marking_bp
 from .blueprints.pretest import bp as pretest_bp
 from .blueprints.student import bp as student_bp
 
@@ -40,6 +41,7 @@ def create_app(config_overrides=None):
     app.register_blueprint(health_bp)
     app.register_blueprint(instructor_bp)
     app.register_blueprint(pretest_bp)
+    app.register_blueprint(marking_bp)
     app.register_blueprint(hosting_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(dashboard_bp)

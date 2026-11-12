@@ -38,6 +38,8 @@ scenario, so check that by eye when you edit an item.
   is short, so allow about two minutes per answer. Mark the written items only for a student who scores 19 to 30 of
   the 31 on multiple choice: 31 passes outright, and 18 or fewer cannot reach 31 even with all 12 written right
   (owner, 4 Nov 2026: "No change" to the pass rule; this only orders the marking).
+- The dashboard's Marking page (`/instructor/marking`) lists only the students whose result is still open, with
+  each written answer beside its key points to tick.
 - Each item's `explanation` gives the reason behind the answer, for going over the test with students afterwards.
 
 ## Fields beyond the quiz-engine spec

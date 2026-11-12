@@ -651,6 +651,23 @@ PRETEST_RESULTS_SCHEMA_STATEMENTS = [
     """,
 ]
 
+LAB_POINT_MARKS_SCHEMA_STATEMENTS = [
+    """
+    CREATE TABLE IF NOT EXISTS lab_point_marks (
+        id INTEGER PRIMARY KEY,
+        student_id INTEGER NOT NULL,
+        point INTEGER NOT NULL CHECK (point BETWEEN 1 AND 4),
+        try_number INTEGER NOT NULL CHECK (try_number IN (1, 2)),
+        result TEXT NOT NULL CHECK (result IN ('meets', 'not_yet')),
+        note TEXT,
+        marked_at TEXT NOT NULL,
+        marked_by TEXT,
+        FOREIGN KEY (student_id) REFERENCES students(id),
+        UNIQUE (student_id, point, try_number)
+    )
+    """,
+]
+
 DEFAULT_APP_SETTINGS = (
     ("registration_mode", "open"),
     ("open_registration_cap", "40"),
@@ -668,6 +685,7 @@ SCHEMA_MIGRATIONS = (
     (7, "quiz_review_release", QUIZ_REVIEW_RELEASE_SCHEMA_STATEMENTS),
     (8, "quiz_template_order_modes", QUIZ_TEMPLATE_ORDER_MODE_SCHEMA_STATEMENTS),
     (9, "pretest_results", PRETEST_RESULTS_SCHEMA_STATEMENTS),
+    (10, "lab_point_marks", LAB_POINT_MARKS_SCHEMA_STATEMENTS),
 )
 
 

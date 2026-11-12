@@ -155,6 +155,11 @@ def _links():
             _url_or_none("pretest.pretest_page"),
             "Load the pretest marker's results and see each student's lab start points.",
         ),
+        (
+            "Marking",
+            _url_or_none("marking.marking_page"),
+            "Mark the post-test's written items and the four graded lab points; see who has the certificate.",
+        ),
         ("Quiz engine home", url_for("instructor.instructor_dashboard"), None),
         ("Upload a quiz bank by hand", url_for("instructor.ingest_form"), None),
         ("Quiz templates and generated quizzes", url_for("instructor.template_list"), None),

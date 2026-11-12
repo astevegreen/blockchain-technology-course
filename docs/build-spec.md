@@ -239,9 +239,10 @@ links and buttons to run scripts would be helpful." Instructor-only, so its code
   then the engine.
 - **Host labs:** start, stop and check the labs and the quiz engine for the class (today:
   `./lab-manager.sh start all`, `start quiz-engine-v2`, `status all`), and show the class code.
-- **Likely extras (to confirm with the owner):** pretest marking and each student's lab entry point per day, set from
-  that day's gate items (`quizes/pretest/README.md`); marking the four graded lab points and the post-test's
-  written items.
+- **Extras:** pretest marking and each student's lab entry point per day, set from that day's gate items
+  (`quizes/pretest/README.md`): built 12 Nov 2026 at `/instructor/pretest`. Marking the four graded lab points and
+  the post-test's written items (owner, 12 Nov 2026: "Yes, add marking"): built 12 Nov 2026 at `/instructor/marking`,
+  which also shows who has the certificate except for attendance, which it does not track.
 - **Decided (owner, 12 Nov 2026):** part of the existing quiz engine, not a separate app.
 - **Pretest is the exception to "load from the dashboard":** the owner does not want students' access to the pretest
   to depend on the instructor hosting the labs (the engine runs only on the lab host). Built 12 Nov 2026 instead of

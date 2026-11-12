@@ -43,6 +43,9 @@ slide index), which is never listed here.
   desktop after a `./lab-manager.sh deploy --mode instructor`. [12 Nov 2026, built without a Docker run]
 - **Pretest written items have no marking aid.** `/instructor/pretest` shows each student's start point per day from
   `mark_pretest.py --json`, but written items are still judged by hand in the marker's sheet. [12 Nov 2026, dashboard build]
+- **Marking page untried in a class.** `/instructor/marking` passes its tests but no instructor has marked a real
+  post-test or lab point with it, and it does not track attendance (the certificate's third condition).
+  [12 Nov 2026, marking build]
 
 ## Tooling and rules
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,

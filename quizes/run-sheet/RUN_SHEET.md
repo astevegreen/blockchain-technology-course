@@ -63,7 +63,8 @@ and c7, c8, c10, c11, c13 and c14 an attribution.
 
 **Marking graded points** (days 6 to 9): each is Meets or Not yet against the rubric in that lab's answer file. A
 student gets one retry per point after you say what was missing, in lab time or in day 10's review session, never as
-evening work. The certificate needs Meets on all four points by the end of day 10's review session.
+evening work. The certificate needs Meets on all four points by the end of day 10's review session. Record each mark
+on the dashboard's Marking page (`/instructor/marking`), which shows each student's points and certificate status.
 
 ---
 
