@@ -139,8 +139,9 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   peer CLI output on purpose, the routes serve the lab's own network, and the text adds nothing a student can't see
   in their own lab terminal. Alerts 20-40.
   **Re-checked for a cloud host, 9 Nov 2026: still holds.** The dismissal leaned on "the lab's own network"; on the
-  cloud anyone who reaches the host reaches these routes until the student pages are gated (follow-ups, "Lab hosting
-  is decided"). What they would read is still harmless: the text is a container path, a `docker` or Fabric CLI
+  cloud, before the class gate, anyone who reached the host reached these routes; since 9 Nov 2026 the class code
+  gates every student page on a class host (`router/routes/_class_gate.conf`, on by default in `deploy-cloud.sh`), so
+  a stranger without the code reaches none of them. What they would read is still harmless: the text is a container path, a `docker` or Fabric CLI
   message, or peer CLI output, and none of the routes puts a password or key in it (the CA and CouchDB passwords
   reach Fabric through the environment, which neither `docker` nor the peer CLI prints). Most of the routes are
   instructor-only as well (`@require_instructor` in `hlf_router.py`, and the router's gated `/labs/hlf/api/hlf/`
@@ -171,8 +172,8 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
   only the caller's own session folder; the fallback sends one static file. A per-address rate limit was weighed
   and left out: a cloud class often reaches the host through one office address, so a limit low enough to stop a
   flood would also stop the class, and the one costly student action (a lane claim, which starts a container) is
-  capped by the lane count, and the student gate, once built, closes it to strangers (follow-ups, "Lab hosting is
-  decided").
+  capped by the lane count, and the class gate (built 9 Nov 2026, `router/routes/_class_gate.conf`) closes it to
+  strangers: a claim without a class pass goes to the code page, not a lane (`lane-service/lab_blueprint.py`, `class_pass_ok`).
   The hole: the instructor container published port 5173 on every host address
   (`ethereum_lab/docker-compose.yml`), and that port serves `/ws/terminal`, an unauthenticated shell in the
   instructor container, and believes any `X-Instructor: 1` header. On a classroom network a student could reach it;
