@@ -32,6 +32,9 @@ slide index), which is never listed here.
 - `blockchain-course/lessons/introduction/04-IN-money_institutions_and_the_case_for_alternatives.qmd:537`: the
   Sources line "Encyclopaedia Britannica, "Keynesian economics"" has no `Blockchain.bib` key.
   [12 Nov 2026, labelling the Ammous citations]
+- The slide help overlay (`?`) still lists reveal.js's "G Jump to slide" beside the glossary's `G`; the glossary
+  plugin (`_extensions/aci/_extensions/glossary-lookup/glossary-lookup.js`) replaced that binding, so the entry is
+  stale. [12 Nov 2026, writing "How to read these slides"]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
