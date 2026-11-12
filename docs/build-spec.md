@@ -251,11 +251,16 @@ links and buttons to run scripts would be helpful." Instructor-only, so its code
   results for each student's lab entry points.
 
 ## Readability and site items (owner, 12 Nov 2026)
-Six build items the owner added on 12 Nov 2026, each a row in the Build Tracker. None is started.
+Six build items the owner added on 12 Nov 2026, each a row in the Build Tracker, and a seventh from the owner's
+decisions on them the same day. None is started.
 - **Sources in the speaker notes:** the in-line citations on lesson slides show only in the instructor's notes
   view, so the slides the class sees are cleaner. Every claim stays sourced: the `[@key]` citations stay in the
   `.qmd`, and the build moves them into the slide's notes rather than deleting them (a Quarto filter, so no
   slide text is edited by hand). The lesson's reference list stays.
+  - **"As of" dates (owner, 12 Nov 2026):** the date stays on the slide, as a bare date ("10 Nov 2026", not "as of
+    10 Nov 2026"), and the course welcome teaches that a bare date means "as of" (the "How to read these slides"
+    item below). Owner: "this will save space on the slides and make them less cluttered." Building it also
+    updates the CLAUDE.md "as of" rule and the review prompts that look for the words.
 - **Language review of every slide and lab text:** owner: the text "reads like a collection of statements and
   facts strung together into grammatically correct sentences, but lacking clarity and understandability." The
   review raises how easily a student can process the text and cuts extraneous cognitive load in explanations and
@@ -263,6 +268,9 @@ Six build items the owner added on 12 Nov 2026, each a row in the Build Tracker.
   bottlenecks; cohesion versus coherence; system-centered versus task-centered framing; given before new; verbs
   versus nominalizations; clause branching; advance organizers; inferential bridges. It changes wording, not
   facts or citations, and goes lesson by lesson and lab by lab, each through the `reviewer`.
+  - **When (owner, 12 Nov 2026):** a day's review runs only after that day's content is final, not now. Owner:
+    "Only run language review after each day's content is final. Do not run it now, we will plan to do that large
+    task later."
 - **Sources review, findings only:** a review of every source in `Blockchain.bib` and the lessons for (1) sources a
   course like this would be expected to cite but does not, and (2) sources it cites that are not generally
   considered trustworthy. It changes nothing: it presents findings and itemized recommendations for the owner to
@@ -270,10 +278,28 @@ Six build items the owner added on 12 Nov 2026, each a row in the Build Tracker.
 - **Run labs contents:** a hyperlinked table of contents at the top of the "Run labs" page (`run-labs.qmd`).
 - **Explorer links page:** a new site page linking to the most-used blockchain websites (Etherscan,
   mempool.space and the like). Which sites it lists is the owner's call; naming commercial sites is fine for
-  awareness (Course direction).
-- **Glossary lookup in the slides:** if feasible, a glossary widget students open from within a slide to look up
-  a term and read its glossary definition without leaving the slide. Form factor and function are to be agreed
-  with the owner before it is built; it reads the generated `glossary/terms.json`.
+  awareness (Course direction). A draft list went to the owner on 12 Nov 2026 to cut; the page is built from
+  their cut.
+- **Glossary lookup in the slides:** a glossary widget students open from within a slide to look up a term and
+  read its glossary definition without leaving the slide. It reads the generated `glossary/terms.json`.
+  - **Form (owner, 12 Nov 2026: "Go with option A."):** a small button in the slide's corner, or the `G` key,
+    opens a search panel over the slide; selecting a word on the slide and pressing `G` searches for it.
+  - **Matches inside definitions (owner wanted them, if they don't clutter):** common words would clutter a
+    flat list. Of 1,766 terms (12 Nov 2026), "block" appears in 261 definitions and 44 term names, "transaction"
+    in 232 and 37, "chain" in 140 and 44, "key" in 137 and 30; rarer words stay small ("mixer" 4 and 1). So the
+    panel lists term and alias matches first, and puts definition matches in a second group below, collapsed
+    behind "Also mentioned in N definitions" and opened on a click. A stop list would not help: the clutter
+    comes from course words, not filler words.
+  - **Link to the teaching slide (owner, 12 Nov 2026):** each definition links to the slide that teaches the
+    term. Each term in `terms.json` already carries that slide's link (`source.href`, built from
+    `glossary/slide-index.yml`), as the glossary page's "Source" column uses now.
+- **How to read these slides (owner, 12 Nov 2026):** a slide near the start of the course welcome
+  (`lessons/introduction/01-IN-course_welcome.qmd`) on the course's administrative conventions, taught before
+  lesson 1: a bare date means "as of"; the circled number marks a lesson within a day (D7 ① is day 7's first
+  lesson); how to open and use the glossary lookup; and other administrative items. Owner: "Let's actually include
+  this information in one of the very first slides, along with other helpful 'administrative items' data." Built
+  after the glossary lookup and the date change, so it describes what exists. Which other items it carries is the
+  owner's call (draft put to the owner 12 Nov 2026).
 
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
