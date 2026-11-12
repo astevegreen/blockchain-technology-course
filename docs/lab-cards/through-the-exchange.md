@@ -19,8 +19,9 @@ a real deposit and its sweep.
    reaches someone; and where the trail stops, the money is anonymous." Beliefs 3 and 2 on the plan's list, both
    marked common by the owner.
 2. **The prediction** (shell: `commit`): "A victim's 2.0 ETH reached address 0xA1…, which passed it to an
-   exchange. An hour later, 2.0 ETH left the exchange for address 0xD4…. Where did the victim's 2.0 ETH go?"
-   Choices: (a) to 0xD4…: same amount, an hour later; (b) to 0xD4… or another withdrawal near 2.0; (c) the chain
+   exchange. An hour and forty minutes later, 2.0 ETH left the exchange for address 0xD4…. Where did the victim's
+   2.0 ETH go?" Choices: (a) to 0xD4…: same amount, an hour and forty minutes later; (b) to 0xD4… or another
+   withdrawal near 2.0; (c) the chain
    cannot say: once inside, it is in the exchange's pool and its books; (d) nowhere: it is still at 0xA1…. Then
    High, Moderate or Low.
 3. **The action** (shell: `do`): the student traces the money with a highlighter, one arrow at a time. Three
@@ -56,8 +57,8 @@ a real deposit and its sweep.
 10. **The archetype**: simulation.
 
 The opening case (shell: `case`): a victim's stolen 2.0 ETH went to an address the agent has never seen. From
-there it went into an exchange. An hour later 2.0 ETH came out of the same exchange to another address. The agent
-asks: "Is that our thief?"
+there it went into an exchange. An hour and forty minutes later 2.0 ETH came out of the same exchange to another
+address. The agent asks: "Is that our thief?"
 
 Left out, for the owner to see:
 
