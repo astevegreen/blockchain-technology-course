@@ -28,9 +28,6 @@ slide index), which is never listed here.
   "Following funds across a bridge") is not built; the worksheet's "A twist" step says it for THORChain only
   [11 Nov 2026, building the bridge worked example]
 - The terminal scavenger hunt has no instructor under the student launcher to mine its one and two blocks. [11 Nov 2026, building the hunt]
-- The known-gap list in `.claude/rules/ci.md` (a rail) still says three instructor files reach the student VM and names
-  `bitcoin-forensics/lab.md`, which is archived; `VM_RUNTIME_KEYS` in `tools/check.py` holds two. Fix with the rail
-  audit. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/bitcoin/workstation/patches/custom-genesis.patch:53` still has a comment saying "see
   bitcoin-forensics/FORENSICS-V34-STATE.md"; that file is now under `archive/dynamic-labs/bitcoin-forensics/`. [11 Nov
   2026, wave 3 review]

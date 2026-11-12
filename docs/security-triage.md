@@ -115,7 +115,7 @@ two major bumps (gunicorn 21 to 22+, Pillow 10 to 12+) have no PR.
 | C7 | `js/incomplete-sanitization`, `ethereum_lab/frontend` `TerminalPopup.jsx:133` and `InlineTerminal.jsx:164` | 2 | **Dismiss** | False positive |
 | C8 | `js/xss-through-dom`, `dex/gateway/static/sign/swap.js:81`, `tokens/gateway/static/sign/mint.js:55,94` | 3 | **Dismiss** | False positive |
 | C9 | `js/missing-rate-limiting`, `ethereum_lab/server/lab-api.js` 3 and `frontend-server.js` 1 | 4 | **Dismiss** | Won't fix |
-| C10 | Lab behaviour by design: `py/bind-socket-all-network-interfaces` (`bitcoin/workstation/agent.py:175`), `py/clear-text-logging-sensitive-data` (`cryptography/lab_cli.py:112`), `py/clear-text-storage-sensitive-data` (`lane-service/labs/ethereum.py:266`) | 3 | **Dismiss** | Won't fix |
+| C10 | Lab behaviour by design: `py/bind-socket-all-network-interfaces` (`bitcoin/workstation/agent.py:175`), `py/clear-text-logging-sensitive-data` (`cryptography/lab_cli.py:112`, archived 11 Nov 2026), `py/clear-text-storage-sensitive-data` (`lane-service/labs/ethereum.py:266`) | 3 | **Dismiss** | Won't fix |
 | C11 | `js/redos`, `tools/hooks/shell-reader.mjs:31` | 2 | **Dismiss** | Won't fix |
 
 - **C1, fix now: the only real CodeQL findings, all small. The 9 escaping alerts were fixed on 8 Nov 2026**

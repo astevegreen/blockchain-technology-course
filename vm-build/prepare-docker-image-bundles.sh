@@ -17,7 +17,6 @@ projects=(
   "dynamic-labs/lane-service"
   "dynamic-labs/bitcoin"
   "dynamic-labs/consensus"
-  "dynamic-labs/cryptography"
   "dynamic-labs/quiz-engine-v2"
   "dynamic-labs/exercises"
   "dynamic-labs/explorer"

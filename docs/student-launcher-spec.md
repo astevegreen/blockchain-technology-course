@@ -39,7 +39,8 @@ Lessons stay on the GitHub Pages site, and nothing about them changes. This spec
 - Compose files use `${VAR:?...}`, so a missing secret fails the start (for example `dl/lane-service/docker-compose.yml:51`).
 
 **Two services start containers through the Docker socket:**
-- `lane-service` (`dl/lane-service/docker-compose.yml:56`) bind-mounts `../bitcoin`, `../bitcoin-forensics` and `../cryptography` from the repo.
+- `lane-service` (`dl/lane-service/docker-compose.yml:56`) bind-mounts `../bitcoin`, `../bitcoin-forensics` and `../cryptography` from the repo. (Forensics and Cryptography
+  are archived since; only `../bitcoin` remains.)
 - `hlf-runner` uses a same-path mount, `${PWD}:${PWD}` (`dl/hlf/docker-compose.yml:44,53-56`).
 - Many labs bind-mount repo files: chain data, gateway code, and the explorer gateway, which dex and tokens share (`dl/dex/docker-compose.yml:69-74`).
 

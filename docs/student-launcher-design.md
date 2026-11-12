@@ -51,7 +51,7 @@ there. Named seeded volumes are not used, because baked data updates with the im
 **5. lane-service in student mode.** S3 builds a `LANE_MODE=student-local` setting in the lane-service image:
 - Capacity is 1 lane per lab. Students skip the class code and claim screen and go straight to their lane.
 - No `*_STUDENT_HOME_ROOT`, so no host home disks. Homes are the container's own filesystem or a named volume per lab.
-- The repo trees it reads today through `../bitcoin`, `../bitcoin-forensics` and `../cryptography` are baked into the
+- The repo trees it reads today through `../bitcoin`, `../bitcoin-forensics` and `../cryptography` (the last two archived since) are baked into the
   image at the same container paths.
 - The bitcoin compose file it drives becomes `bitcoin/docker-compose.launcher.yml`, which uses images only and no
   build contexts.

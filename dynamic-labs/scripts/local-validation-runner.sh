@@ -181,7 +181,6 @@ phase2() {
     lane-service.tar
     bitcoin.tar
     consensus.tar
-    cryptography.tar
     quiz-engine-v2.tar
     exercises.tar
     hlf.tar

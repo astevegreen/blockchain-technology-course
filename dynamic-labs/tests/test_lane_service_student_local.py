@@ -228,7 +228,6 @@ LAUNCHER_FILES = {  # lab id: launcher compose file
     "lane-service": "lane-service/docker-compose.launcher.yml",
     "bitcoin": "bitcoin/docker-compose.launcher.yml",
     "consensus": "consensus/docker-compose.launcher.yml",
-    "cryptography": "cryptography/docker-compose.launcher.yml",
 }
 # The one host path a launcher file may name: lane-service starts lanes through the Docker socket.
 ALLOWED_BINDS = {("lane-service", "/var/run/docker.sock")}
@@ -291,7 +290,7 @@ class LauncherComposeTests(unittest.TestCase):
         self.assertIn("COPY bitcoin/docker-compose.launcher.yml /app/bitcoin-compose/", dockerfile)
         self.assertIn("LANE_MODE=student-local", dockerfile)
         copies = [ln for ln in dockerfile.splitlines() if ln.startswith("COPY") or ln.startswith("     ")]
-        for answer in ("lab.md", "solution.md", "cryptography/"):
+        for answer in ("lab.md", "solution.md"):
             self.assertFalse(any(answer in ln for ln in copies), answer)
 
 

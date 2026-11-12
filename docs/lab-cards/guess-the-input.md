@@ -58,12 +58,13 @@ Left out, for the owner to see:
 
 - The MD5 collision demo goes: it shows two inputs with one hash, which is a collision, not a way back from a
   hash, so it does not serve this lab's belief. Collisions stay on the day 1 ② slide "One ID names one
-  transaction: no collisions" and in the Cryptography Lab's weak-hash collision.
+  transaction: no collisions" (the Cryptography Lab's weak-hash collision went when that lab was archived on
+  11 Nov 2026).
 - The old lab's algorithm picker (MD5, SHA-1, a toy hash), side-by-side inputs and uniform-distribution demo
   go; the action shows the avalanche on every try. The primer's "You are done when" line for Hashing changes to
   match when the lab is built.
-- Guessable inputs (a short PIN found by trying all of them) stay on the slide and in the Cryptography Lab's
-  weak seed; one twist per lab, and the mining step takes it.
+- Guessable inputs (a short PIN found by trying all of them) stay on the slide (the Cryptography Lab's weak seed
+  went when that lab was archived on 11 Nov 2026); one twist per lab, and the mining step takes it.
 - The old simulator's Level 2, where the student watched difficulty change every four blocks, becomes the
   twist's last sentence: stated, not practised. Its coin-flip game and five bots go.
 

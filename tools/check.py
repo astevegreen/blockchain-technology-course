@@ -57,7 +57,7 @@ VM_WORKFLOW = ".github/workflows/vm-build.yml"
 # The one list of what students never receive: pages.yml, vm-build.yml and student-release.yml all read it.
 STUDENT_EXCLUDE = "dynamic-labs/student-exclude.txt"
 # Kept out of src.zip but deliberately left on the VM: the lab services read them at run time (a known gap).
-VM_RUNTIME_KEYS = ("dynamic-labs/cryptography/solution.md", "dynamic-labs/lane-service/labs/bitcoin_catalog.yaml")
+VM_RUNTIME_KEYS = ("dynamic-labs/lane-service/labs/bitcoin_catalog.yaml",)
 # A path with one of these words in any folder or file name is instructor-only until shown otherwise (CLAUDE.md
 # rule 1): `dynamic-labs/x/instructor/key.json` counts as much as `dynamic-labs/x/instructor_key.json`.
 INSTRUCTOR_WORDS = re.compile(r"answer|solution|instructor|seed", re.IGNORECASE)
@@ -80,8 +80,6 @@ STUDENT_FACING = {
     "dynamic-labs/router/routes/_instructor.conf":
         "the router's /instructor locations, moved out of routes.conf (which students already ran); proxy rules, no answers",
     "dynamic-labs/instructor_auth_service/*": "the instructor login service: its code, image and compose file",
-    "dynamic-labs/cryptography/Dockerfile.instructor": "builds the lab's instructor container",
-    "dynamic-labs/cryptography/instructor-nginx.conf": "configures the lab's instructor container",
     "dynamic-labs/bitcoin/bitcoin-instructor-seed.sh": "seeds the class chain at container start; in the lab image",
     "dynamic-labs/wallet/chain/seedkeys.py": "derives keys from a seed phrase, which the wallet lab teaches",
 }

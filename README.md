@@ -20,7 +20,7 @@ The course is split into layers, each of which can stand on its own:
   fronting per-lab services, the centralized instructor login, the lane
   service that spins up per-student containers on demand, and the quiz engine.
   The labs with a `lab.yaml` today: Bitcoin, Bitcoin trace, CoinJoin trace,
-  Consensus, Cryptography, Cross-chain, DEX (exchange and bridge), Explorer,
+  Consensus, Cross-chain, DEX (exchange and bridge), Explorer,
   Final trace, Hide and trace, Hyperledger Fabric, Tokens, Tron, Wallet and the
   `exercises` (trust and BGP games). This layer requires a host that can run Docker.
 - **`student-launcher/`** - how a student runs the Docker labs on their own

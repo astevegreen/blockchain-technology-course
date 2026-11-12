@@ -16,7 +16,8 @@ games"). Two answers followed on 10 Nov (end of file, "Settled when step 3 began
   DeFi-risk contracts. The rest of the Ethereum Lab is archived.
 - P2P Trust Lab: archive. Consensus Lab and Byzantine Generals: keep as optional. Forensics 1 to 3: fold their
   decoy cases into day 6, then archive.
-- Cryptography Lab: keep until `merkle-trees` gains a proof step.
+- Cryptography Lab: keep until `merkle-trees` gains a proof step. (Archived 11 Nov 2026 once Prove it is in the
+  block was built: "Cryptography Lab archived" below.)
 - Day 9 gains an exercise that weighs disagreeing sources and ends in a characterization.
 - Chain Graph tool: review after all other stages are done.
 - Prediction labs (the five-minute format):
@@ -33,7 +34,7 @@ games"). Two answers followed on 10 Nov (end of file, "Settled when step 3 began
 | --- | --- |
 | Keep as is | Scheduled afternoon parts not listed under Change; Bitcoin Lab; `ether_evm` |
 | Keep, optional | Consensus Lab; Byzantine Generals |
-| Keep for now | Cryptography Lab (until `merkle-trees` has a proof step) |
+| Keep for now | Cryptography Lab (until `merkle-trees` has a proof step; archived 11 Nov 2026) |
 | Change | Day 6 trace (gains Forensics' decoy cases); day 8 (gains the exploit part); day 9 (gains the sources exercise); `merkle-trees` (gains the proof step, idea 12) |
 | Rebuild as prediction labs | `signatures`, `tamper-ledger`, `micro-hashing`, `POW_mining_micro`, `distributed-systems`, `ether_mev`, `ether-smart-contract-micro` |
 | Build new | Make change (idea 1); the confirmation race (idea 7); is it final yet? (idea 9) |
@@ -62,7 +63,8 @@ was re-opened for this check.
    a Role Concept, and network shape (concept 5) keeps a home in the rebuilt `distributed-systems`.
 2. Finality has no correct lab anywhere until "Is it final yet?" is built. Both archived labs taught it wrongly,
    so archiving lost nothing true.
-3. The Merkle proof depends on the Cryptography Lab until `merkle-trees` gains its proof step.
+3. The Merkle proof depends on the Cryptography Lab until `merkle-trees` gains its proof step. Prove it is in the
+   block (ceb5088c) is that step; the Cryptography Lab was archived on 11 Nov 2026.
 
 ## Stage 2: how each lab is designed
 
@@ -128,7 +130,7 @@ last column of the next section.
 | Bitcoin Lab 1 and 2 | Block format, a real double spend, fee bumping, a censoring miner | Double-spend duel in pairs: merchant picks how long to wait, attacker tries | M |
 | Consensus Lab | Selfish mining; a slashing game | Already a game | none |
 | Byzantine Generals | Traitors and majority | Already a game | none |
-| Cryptography Lab | Weak-hash collision, a key from a weak seed, Merkle proof | Crack the weak wallet: first to recover the key | S |
+| Cryptography Lab (archived 11 Nov 2026) | Weak-hash collision, a key from a weak seed, Merkle proof | Crack the weak wallet: first to recover the key | S |
 | `ether_evm` | Read a contract with no source | Guess what it does in three clues | S |
 | `merkle-trees` plus proof | Build a root; prove one transaction is in a block | Closest guess wins: how many hashes prove one in 2,000? | S |
 
@@ -409,3 +411,13 @@ The owner chose recommendation 1. `dynamic-labs/bitcoin-graph/` is now `archive/
 the bitcoin lab, lane service, instructor console, router and student release no longer wire it in
 (`archive/dynamic-labs/README.md` lists each change). Questions 2 and 3 fall away with it. The bitcoin lab's
 download drops by the graph image's own layers, 318 MiB (from 827 to 509 MiB), and its 4 GB memory cap goes.
+
+## Cryptography Lab archived (11 Nov 2026)
+
+The Stage 1 table kept the Cryptography Lab until `merkle-trees` had a proof step. Prove it is in the block
+(ceb5088c) built that step, and the owner approved archiving the lab on 11 Nov 2026 ("I approve your
+recommendations for "questions for you""). `dynamic-labs/cryptography/` is now
+`archive/dynamic-labs/cryptography/`, with its lane-service module, admin page, router route and tests;
+`archive/dynamic-labs/README.md` lists each wiring change. Its weak-hash collision and weak-seed parts have no
+lab now: collisions stay on the day 1 ② slide "One ID names one transaction: no collisions", and guessable
+inputs (a short PIN found by trying them all) on their slide (`docs/lab-cards/guess-the-input.md`).

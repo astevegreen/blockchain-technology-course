@@ -141,7 +141,7 @@ and no `course-launcher` container (`docker ps -a`):
    starts by itself, then "Getting the latest course labs...", and the browser opens `http://127.0.0.1:8470/` with
    the labs listed. A fail: "permission denied" or "cannot be executed" (the zip lost the executable bit), any
    other message from the guide's table of messages, or no browser.
-4. Start one lab from the page (the Cryptography Lab is a small one) and open it. A pass: its page opens.
+4. Start one lab from the page (the Consensus Lab is a small one) and open it. A pass: its page opens.
 5. Double-click **Stop Course Labs**. A pass: it prints "The course labs are stopped..." and `docker ps -a` shows no
    `course-launcher` and no lab running.
 6. Double-click **Start Course Labs** again with Docker Desktop running. A pass: no warning this time, and the page

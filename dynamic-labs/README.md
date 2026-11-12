@@ -8,7 +8,6 @@ Containerized labs, exercises, and quiz engine for the course. A shared nginx ro
 | `/instructor/` | Centralized instructor login |
 | `/labs/bitcoin/` | Bitcoin lab |
 | `/labs/consensus/` | Consensus lab |
-| `/labs/cryptography/` | Cryptography lab |
 | `/labs/hlf/` | Hyperledger Fabric lab |
 | `/exercises/<name>/` | Exercises (trust-game, bgp-game) |
 | `/labs/explorer/` | Explorer lab (redirects to its own host, `explorer.<host>`; reached by IP address, to port 8441) |
@@ -418,7 +417,6 @@ machine may be offline, and the build downloads Quarto.
 | `instructor-auth-service` | Centralized instructor login |
 | `bitcoin` | Bitcoin lab (ttyd + mempool + explorer) |
 | `consensus` | Consensus lab (ttyd) |
-| `cryptography` | Cryptography lab (Streamlit) |
 | `exercises` | Flask exercises (trust-game, bgp-game) |
 | `explorer` | Day-1 explorer lab (Otterscan on a frozen course chain); `explorer/README.md` |
 | `wallet` | Day-2 wallet lab (wallet page and mempool on a frozen Bitcoin chain); `wallet/README.md` |
@@ -439,7 +437,7 @@ Labs fall into two categories:
 
 **On-demand lanes** (bitcoin, consensus, hlf): Students claim a session via `/api/<lab>/claim`, and the lab control plane starts a lane-specific container from a pre-built image. `--max-student-capacity` is the base upper bound for how many claimable stations exist at once, and the per-lab capacity flags can override it for individual labs up to the 40-lane limit.
 
-**Shared singleton apps** (cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
+**Shared singleton apps** (exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2): Students connect to one shared service per lab started directly by `docker compose up`. These labs do not use claims, lanes, or per-student replicas.
 
 That is why lane capacity only applies to the claim-based labs:
 

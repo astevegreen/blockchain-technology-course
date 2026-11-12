@@ -34,9 +34,6 @@ GATED = [
     "/labs/bitcoin/static-web-instructor/",  # routes/bitcoin.conf
     "/labs/consensus/admin",  # routes/consensus.conf
     "/labs/consensus/instructor/",  # routes/consensus.conf
-    "/labs/cryptography/admin",  # routes/cryptography.conf
-    "/labs/cryptography/instructor/",  # routes/cryptography.conf
-    "/labs/cryptography/instructor/dashboard",  # routes/cryptography.conf
     "/labs/hlf/api/hlf/claims",  # routes/hlf.conf, the API catch-all
     "/labs/hlf/instructor/term/org1/",  # routes/hlf.conf
     "/labs/hlf/instructor/term/orderer/",  # routes/hlf.conf

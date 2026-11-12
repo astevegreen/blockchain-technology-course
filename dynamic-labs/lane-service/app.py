@@ -21,13 +21,11 @@ if not _secret:
 app.config["SECRET_KEY"] = _secret
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_host=1, x_proto=1, x_prefix=1)
 
-from labs import bitcoin, consensus, cryptography
+from labs import bitcoin, consensus
 app.register_blueprint(consensus.blueprint)
 consensus.start()
 app.register_blueprint(bitcoin.blueprint)
 bitcoin.start()
-app.register_blueprint(cryptography.blueprint)
-cryptography.start()
 
 from portal import portal_bp
 app.register_blueprint(portal_bp)
@@ -39,7 +37,7 @@ def _cleanup_runtime() -> None:
     if _shutdown_once.is_set():
         return
     _shutdown_once.set()
-    for module in (bitcoin, consensus, cryptography):
+    for module in (bitcoin, consensus):
         stop = getattr(module, "stop", None)
         if callable(stop):
             try:

@@ -76,7 +76,7 @@ Left out, for the owner to see:
 - `hashing_merkle`'s phone-wallet story survives as the explorer line's SPV sentence; its percentage of bits
   changed stays in Guess the input, which shows the same thing on every try.
 - What the Cryptography Lab becomes once this is built is a separate decision: its weak-hash collision and weak
-  seed parts are not covered here.
+  seed parts are not covered here. (Decided 11 Nov 2026: the lab is archived under `archive/dynamic-labs/`.)
 
 How it is built: the shared shell and look; the browser's own SHA-256 (Web Crypto), offline from `src.zip`. Each
 pair is hashed with Bitcoin's double SHA-256, and an odd hash pairs with a copy of itself. The builder settles

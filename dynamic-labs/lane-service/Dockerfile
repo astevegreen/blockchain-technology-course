@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir flask requests markdown pyyaml
 
 WORKDIR /app
 COPY app.py exercises.py generic_claims.py generic_lanes.py instructor_auth.py lab_blueprint.py portal.py pre_stop_cleanup.py progress.py /app/
-COPY admin.html cryptography_admin.html progress_summary.html wrapper.html /app/
+COPY admin.html progress_summary.html wrapper.html /app/
 COPY labs/ /app/labs/
 
 RUN mkdir -p /app/runtime

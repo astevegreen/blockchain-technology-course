@@ -34,7 +34,7 @@ COMPOSE_NAME = re.compile(r"^(docker-)?compose[^/]*\.ya?ml$", re.IGNORECASE)
 # The order lab-manager.sh starts the targets in today (it stops them in reverse), so the router comes up first.
 # A lab not listed here is appended after these, by kind, day and position.
 TARGET_ORDER = ["router", "course-site", "lane-service", "instructor_auth_service", "bitcoin",
-                "consensus", "cryptography", "exercises", "explorer", "wallet", "bitcoin-trace",
+                "consensus", "exercises", "explorer", "wallet", "bitcoin-trace",
                 "coinjoin-trace", "hide-and-trace", "tokens", "dex", "tron", "cross-chain", "final-trace", "quiz-engine-v2", "hlf"]
 # Names `lab-manager.sh` accepts besides the id and its - / _ spelling.
 EXTRA_ALIASES = {"quiz-engine-v2": ["quiz"],

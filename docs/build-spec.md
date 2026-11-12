@@ -205,7 +205,8 @@ plan (what happens to every lab, the design card, the order of work) is `docs/an
   its unused DeFi-risk contracts, which become an exploit part of about 40 minutes in day 8's afternoon lab.
   Forensics 1 to 3 are archived once their decoy cases are folded into day 6's trace. Done 11 Nov 2026 (step 7):
   all three are under `archive/dynamic-labs/`, and `ether_mev` and `tamper-ledger` under `archive/static-labs/`. The Cryptography Lab
-  stays until `merkle-trees` has its proof step. The Consensus Lab and Byzantine Generals stay as optional.
+  stayed until `merkle-trees` had its proof step; Prove it is in the block (ceb5088c) built it, and the lab was
+  archived under `archive/dynamic-labs/` (owner, 11 Nov 2026). The Consensus Lab and Byzantine Generals stay as optional.
   The Chain Graph tool was reviewed last (step 9) and archived under `archive/dynamic-labs/` (owner, 11 Nov 2026).
 - Day 9 gains an exercise that weighs disagreeing sources and ends in a characterization, built as the echo
   hunt below.

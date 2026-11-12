@@ -32,7 +32,6 @@ Use these links after the instructor tells the class which lab is active. They a
 ### Labs outside the ten-day schedule
 
 * [Byzantine Generals Lab](/exercises/bgp/)
-* [Cryptography Lab](/labs/cryptography/)
 * [Consensus Lab](/labs/consensus/)
 * [Bitcoin Lab](/labs/bitcoin/)
 

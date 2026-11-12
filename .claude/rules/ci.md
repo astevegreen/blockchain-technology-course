@@ -17,8 +17,7 @@ paths:
 - Workflows run on Ubuntu, where the interpreter is `python3`; `check.yml` alone runs on Windows, like the
   computers that commit, since the check and its tool tests are written for Git Bash there.
 - Workflows are rails: a change to one gets the rail audit (`tools/second-look.mjs` runs it; CLAUDE.md, Finishing).
-- Known gap: three instructor files reach the student VM because the lab services read them at run time:
-  `dynamic-labs/bitcoin-forensics/lab.md`, `dynamic-labs/cryptography/solution.md` and
-  `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` (`VM_RUNTIME_KEYS` in `tools/check.py`). The student images keep them
+- Known gap: one instructor file reaches the student VM because a lab service reads it at run time:
+  `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` (`VM_RUNTIME_KEYS` in `tools/check.py`). The student images keep it
   too. Any other `dynamic-labs/` path that `pages.yml` leaves out of `src.zip` must also be removed from the VM, or the check fails.
   Serving them from the instructor's machine instead is a later redesign.

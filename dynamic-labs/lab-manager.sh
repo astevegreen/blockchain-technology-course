@@ -65,7 +65,7 @@ Usage:
   ./lab-manager.sh list
 
 Managed targets:
-  router, course-site, instructor-auth-service, bitcoin, consensus, cryptography, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2, hlf
+  router, course-site, instructor-auth-service, bitcoin, consensus, exercises, explorer, wallet, bitcoin-trace, coinjoin-trace, hide-and-trace, tokens, dex, tron, cross-chain, final-trace, quiz-engine-v2, hlf
 
 Deploy options:
   --mode <instructor|student>
@@ -617,8 +617,6 @@ ensure_networks() {
         "bitcoin-student-mgmt-net:--internal"
         "consensus-instructor-net:--internal"
         "consensus-student-net:--internal"
-        "crypto-instructor-net:--internal"
-        "crypto-student-net:--internal"
         "exploit-net:--internal"
         "fabric_test:"
         "hlf-instructor-term:--internal"
@@ -649,7 +647,6 @@ target_dir() {
         instructor_auth_service|instructor-auth-service|auth-service|auth_service) echo "${BASE_DIR}/instructor_auth_service" ;;
         bitcoin) echo "${BASE_DIR}/bitcoin" ;;
         consensus) echo "${BASE_DIR}/consensus" ;;
-        cryptography) echo "${BASE_DIR}/cryptography" ;;
         exercises) echo "${BASE_DIR}/exercises" ;;
         explorer) echo "${BASE_DIR}/explorer" ;;
         wallet) echo "${BASE_DIR}/wallet" ;;
@@ -680,7 +677,6 @@ lane-service
 instructor-auth-service
 bitcoin
 consensus
-cryptography
 exercises
 explorer
 wallet
