@@ -15,6 +15,7 @@
   table.q { width: 100%; border-collapse: collapse; background: var(--panel); margin: 0.6rem 0; }
   table.q th, table.q td { padding: 0.4em 0.7em; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
   table.q th { font-size: 0.85rem; color: var(--ink-soft); }
+  .miss { color: #b3261e; }
 </style>
 </head>
 <body>
@@ -23,9 +24,11 @@
 <script>
 /* Design card: docs/lab-cards/find-the-exchange.md. The suspect and the agent are made up for the game. The four
    addresses and their transfers are real, read from Tron for 25 Sep-17 Oct 2023 into dynamic-labs/tron/snapshot/find/,
-   which the query page opens as ?lab=find. The page lists the four in alphabetical order, which says nothing,
-   records each call with its reason, and leaves the scoring to the instructor's key in dynamic-labs/tron/quizes/,
-   which students never receive. The tell step's example is the card's: it uses the worked example's deposit address
+   which the query page opens as ?lab=find. The page lists the four in alphabetical order, which says nothing, and
+   records each call with its reason. Once the calls are in it locks them and marks each right or wrong against the
+   deposit address, which it knows only as a salted hash (DEPOSIT_HASH), so the answer is not written here as text;
+   a static page cannot truly hide it, since four hashes are quick to try. The reasons and the points stay with the
+   instructor's key in dynamic-labs/tron/quizes/, which students never receive. The tell step's example is the card's: it uses the worked example's deposit address
    (TXLh…), not the game's, so no step of the page gives the answer away. */
 (function () {
   "use strict";
@@ -56,6 +59,17 @@
   ];
   function find(list, key) { return list.filter(function (r) { return r.key === key; })[0]; }
 
+  /** A salted FNV-1a hash, so the answer is not plain text in the source. Synchronous on purpose: crypto.subtle
+      is missing on a plain-http course server reached by IP. */
+  function tag(role, addr) {
+    var str = "find-the-exchange:" + role + ":" + addr.toLowerCase();
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return ("0000000" + h.toString(16)).slice(-8);
+  }
+  var DEPOSIT_HASH = "e24ab4e2"; // the one address that is a Binance deposit address; the other three reach no named exchange
+  function isDeposit(a) { return tag("deposit", a.addr) === DEPOSIT_HASH; }
+
   function link(api, href, text) {
     var loc = window.location;
     return /^https?:$/.test(loc.protocol) ? api.el("a", { href: href, target: "_blank", rel: "noopener" }, text) : api.el("span", null, text);
@@ -67,8 +81,8 @@
   }
   function saveBoard(b) { try { window.localStorage.setItem(BOARD_KEY, JSON.stringify(b)); } catch (e) { /* private window */ } }
 
-  function select(api, id, label, options, value, onchange) {
-    var s = api.el("select", { id: id, "aria-label": label, onchange: function () { onchange(s.value); } });
+  function select(api, id, label, options, value, onchange, locked) {
+    var s = api.el("select", { id: id, "aria-label": label, disabled: locked, onchange: function () { onchange(s.value); } });
     s.appendChild(api.el("option", { value: "" }, "Pick…"));
     options.forEach(function (o) { s.appendChild(api.el("option", { value: o.key }, o.label)); });
     s.value = value || "";
@@ -78,6 +92,7 @@
   function render(box, api) {
     var el = api.el;
     var board = loadBoard();
+    var locked = !!board.done;
 
     box.appendChild(el("p", null, "The suspect paid USDT to the four addresses below in October 2023. Open the ",
       link(api, QUERY, "Find the exchange query page"), " and run its queries: for each address, what came in, what went out and where it ended, and who sent it TRX to pay its fees. ",
@@ -88,10 +103,10 @@
     var grid = el("div", { class: "board", "aria-label": "The four addresses" });
     ADDRS.forEach(function (a) {
       var call = select(api, "call-" + a.id, "Address " + a.id + ": our call", CALLS, board.call[a.id],
-        function (v) { board.call[a.id] = v; saveBoard(board); gate(); });
+        function (v) { board.call[a.id] = v; saveBoard(board); gate(); }, locked);
       var why = select(api, "why-" + a.id, "Address " + a.id + ": the reason", REASONS, board.reason[a.id],
-        function (v) { board.reason[a.id] = v; saveBoard(board); gate(); });
-      var note = el("input", { type: "text", id: "note-" + a.id, value: board.note[a.id] || "", maxlength: "200",
+        function (v) { board.reason[a.id] = v; saveBoard(board); gate(); }, locked);
+      var note = el("input", { type: "text", id: "note-" + a.id, value: board.note[a.id] || "", maxlength: "200", disabled: locked,
         placeholder: "What you saw: the amount, where it went, the date", "aria-label": "Address " + a.id + ": what you saw",
         oninput: function () { board.note[a.id] = note.value; saveBoard(board); gate(); } });
       grid.appendChild(el("div", { class: "srccard" },
@@ -112,21 +127,39 @@
     }
     function gate() {
       var b = document.getElementById("called");
-      if (b) b.disabled = !complete();
+      if (b) b.disabled = locked || !complete();
       cnt.textContent = "Each call needs a reason and what you saw. “No exchange reached” is a call too.";
     }
 
     function finish() {
-      var hot = 0;
+      // The calls lock once made: a second try after seeing which call failed would be guessing, not reading.
+      locked = board.done = true; saveBoard(board);
+      ADDRS.forEach(function (a) {
+        ["call-", "why-", "note-"].forEach(function (p) { var f = document.getElementById(p + a.id); if (f) f.disabled = true; });
+      });
+      gate();
+      var hot = 0, wrong = 0, named = 0;
       var lines = ADDRS.map(function (a) {
         var c = find(CALLS, board.call[a.id]);
         var r = find(REASONS, board.reason[a.id]);
         if (c.key === "hot") hot++;
-        return "<li>Address " + a.id + ": " + c.label.split(":")[0].toLowerCase() + ", because " + r.label.charAt(0).toLowerCase() + r.label.slice(1) + ".</li>";
+        // Checked against the truth: the deposit address is called "deposit"; the other three, "no exchange reached".
+        var right = isDeposit(a) ? c.key === "deposit" : c.key === "none";
+        var mark = right ? " &mdash; right"
+          : isDeposit(a)
+            ? " &mdash; <strong>wrong: this one is the deposit address" + (c.key === "hot" ? " (naming the hot wallet in its place scores 0)" : "") + "</strong>"
+            : " &mdash; <strong>wrong: no exchange can be named here (an exchange named where none was reached scores -2)</strong>";
+        if (!right) { wrong++; if (!isDeposit(a)) named++; }
+        return "<li>Address " + a.id + ": " + c.label.split(":")[0].toLowerCase() + ", because " + r.label.charAt(0).toLowerCase() + r.label.slice(1) + mark + ".</li>";
       });
       // What happened is always (b): the address the suspect paid is the one customer's; the hot wallet fits them all.
       var choice = 1;
-      var note = "<p>Your calls:</p><ul>" + lines.join("") + "</ul>" +
+      var note = (wrong
+          ? "<p class=\"miss\"><strong>" + wrong + (wrong === 1 ? " call is" : " calls are") + " wrong.</strong>" +
+            (named ? " You named an exchange the chain does not show: that is the costly error." : "") +
+            " Open the wrong ones again in the query page and follow where the money went.</p>"
+          : "<p><strong>All four calls are right.</strong> Check your reasons against the instructor's sheet.</p>") +
+        "<p>Your calls:</p><ul>" + lines.join("") + "</ul>" +
         "<p>A deposit address shows one pattern: USDT arrives, a third account tops it up with a little TRX to pay the fee, and the whole balance is swept to an address on the exchange's own published list. " +
         "The hot wallet's query shows sweeps arriving from many other addresses in the same hour: it fits every customer who deposits there, so it names only the exchange. " +
         "A sweep to an address nobody has labelled reaches no exchange you can name.</p>" +

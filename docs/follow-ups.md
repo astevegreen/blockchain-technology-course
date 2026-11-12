@@ -21,9 +21,6 @@ slide index), which is never listed here.
   [11 Nov 2026, bridge worked example]
 
 ## Labs
-- The old `signatures` lab is still linked from 04-CP, index.qmd, primer.qmd and the mind map beside the new Forge
-  the payment lab; swap or retire it when day 1's labs are placed (the card says Forge the payment replaces it).
-  [11 Nov 2026, reviewer on the Forge the payment build]
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
   built on the shell; slide diagrams of inputs, outputs, change and keys, and the dynamic labs' web pages, still
   draw them their own way, so one object can look two ways in one day [10 Nov 2026, plan step 3]
@@ -40,9 +37,12 @@ slide index), which is never listed here.
   (`dynamic-labs/hlf/Dockerfile.ttyd:8`, `Dockerfile.orderer-ttyd:7`, on the Fabric images): apt-get exits 100,
   "Unable to locate package curl". [11 Nov 2026, Lab Tests 43056313552, both attempts; router change d802910d]
 - Docs still name the archived P2P Trust, Ethereum and Forensics 1-3 labs and the Chain Graph (`bitcoin-graph`)
-  as live: `docs/before-first-class.md`, `docs/student-launcher-*.md` (the design's forensics-load action),
+  as live: `docs/student-launcher-*.md` (the design's forensics-load action),
   `docs/security-triage.md`, `docs/sprint.md`, and the known-gap list in `.claude/rules/ci.md`
   (`bitcoin-forensics/lab.md`). [11 Nov 2026, step 7 archive; Chain Graph added at step 9]
+- `dynamic-labs/bitcoin/workstation/patches/custom-genesis.patch:53` still has a comment saying "see
+  bitcoin-forensics/FORENSICS-V34-STATE.md"; that file is now under `archive/dynamic-labs/bitcoin-forensics/`. [11 Nov
+  2026, wave 3 review]
 - `tools/tests/test_student_launcher*.py` fixtures still use a forensics-load `local_actions` entry as their
   example; it no longer matches any lab. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/bitcoin/INSTRUCTOR_SOLUTION_GUIDE.md` still has a Forensics section. [11 Nov 2026, step 7 archive]
@@ -50,6 +50,14 @@ slide index), which is never listed here.
   launcher image no longer bakes; measure at the next student release. [11 Nov 2026, step 7 archive]
 - `dynamic-labs/lane-service/labs/bitcoin_catalog.yaml` holds no solution now; it may come off
   `student-exclude.txt` and `tools/check.py` VM_RUNTIME_KEYS. [11 Nov 2026, step 7 archive]
+- `docs/lab-cards/through-the-exchange.md:22-23,59` says the 2.0 ETH left the exchange "an hour later"; the page now
+  says an hour and forty minutes after the deposit (sweep at 40 minutes, withdrawal an hour after the sweep). Make
+  the card say the same. [11 Nov 2026, reviewer on the wave 3 fixes]
+- `dynamic-labs/cross-chain/static/lab/index.html`: one list now mixes "SQL query 17", "Query 5" and "SQL queries 7
+  and 17"; pick one form. [11 Nov 2026, reviewer on the wave 3 fixes]
+- `tools/check.py` "lab page scripts" checks syntax only: a lab page that throws on load (a wrong answer hash, a
+  missing element) still passes. A load test in a headless browser would catch it. [11 Nov 2026, reviewer on the
+  wave 3 fixes]
 
 ## Tooling and rules
 - `regression-tests/automated/run-lab.sh` `--fresh-start` rebuilds the lab's images but not `lane-service:latest`, so a
@@ -75,6 +83,5 @@ slide index), which is never listed here.
 - `03-CM-pos.qmd:1073` (and the source line at 1089) still links the archived `/assets/labs/pos-micro`, which has no folder; swap it for the Is it final yet? lab or drop it when day 1's labs are placed. [11 Nov 2026, reviewer on the Is it final yet? build]
 - `06-FO-mixers_and_coinjoin.qmd`, slide "Before and after the mix still leak": check in a browser that the six bullets plus the new "Who paid whom?" link still fit on one screen. [11 Nov 2026, reviewer on the Who paid whom? build]
 - `blockchain-course/assets/labs/the-vault-that-paid-twice/index.html`: its call trace is hand-written, not recorded; the card says the vault and attacker contract run once on anvil at build. Record the real trace and logs (and save the Otterscan pages) when Docker is available. [11 Nov 2026, build had no anvil]
-- `blockchain-course/primer.qmd`, "A tamper-evident ledger": the text under the lab link still describes the old toy-hash lab (Add Transaction, Rehash, Event Log); rewrite it for Build a ledger in four failures, as the Distributed systems part was. [11 Nov 2026, Build a ledger in four failures build: the task allowed only the link]
 - `02-BF-transactions_and_mining.qmd:533` says a client checking D "in a block of A to D" needs C, AB and the root, citing `@bitcoin.orgdevelopers_blockchaindeveloper_2024`; that page's example is a five-transaction tree, A to E (C, AB and EEEE). Restate it as the source's example. [11 Nov 2026, reviewer on the Prove it is in the block card]
 - `lessons/primitives/02-CP-hashing_and_merkle_trees.qmd:1004-1007` (Practice: Micro Labs) still describes the old merkle-trees page (sample text, block size, edit a hash), and `blockchain-course/index.qmd:255` still calls it "Merkle Tree Microlab"; rewrite both for Prove it is in the block. [11 Nov 2026, reviewer on the Prove it is in the block build]

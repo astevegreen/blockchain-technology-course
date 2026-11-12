@@ -773,9 +773,17 @@ def add_call(tid: int, body: dict) -> dict:
         if r.get("kind") not in KINDS:
             raise Refused("Each reason names a kind of evidence from the list.")
         reasons.append({"kind": r["kind"], "txid": check_txid(r.get("txid"))})
-    call = {"id": secrets.token_hex(4), "outpoint": check_outpoint(body.get("outpoint")), "word": word,
+    outpoint = check_outpoint(body.get("outpoint"))
+    if outpoint == team(target_of(tid))["start"]["outpoint"]:
+        raise Refused("That is the starting coin you were given: a call on it scores nothing. "
+                      "Call an output further along the trail.")
+    calls = STATE["calls"].setdefault(str(tid), [])
+    if any(c["outpoint"] == outpoint for c in calls):
+        raise Refused("You have already called that output: one call per output. "
+                      "Delete the earlier call first to change it.")
+    call = {"id": secrets.token_hex(4), "outpoint": outpoint, "word": word,
             "reasons": reasons, "note": str(body.get("note") or "")[:400], "time": time.time()}
-    STATE["calls"].setdefault(str(tid), []).append(call)
+    calls.append(call)
     return call
 
 
@@ -817,6 +825,9 @@ def score_call(call: dict, target: int) -> dict:
         (dropped if r["kind"] == "cospend" and r["txid"] in rounds else kept).append(r)
     owner = STATE["owner"].get(call["outpoint"])
     right = owner is not None and owner["team"] == target
+    if call["outpoint"] == team(target)["start"]["outpoint"]:
+        # The starting coin is given to the tracers, not found: a call on it scores nothing (add_call refuses it).
+        return {"capped": None, "right": right, "points": 0, "struck": False, "dropped": dropped, "given": True}
     if call["word"] == "undetermined":
         return {"capped": "undetermined", "right": right, "points": 0, "struck": False, "dropped": dropped}
     allowed = allowed_word(kept)
@@ -850,9 +861,12 @@ def reveal_view() -> dict:
     scored_by, stop_by, scores, highs = {}, {}, [], []
     for tid, t in enumerate(STATE["teams"]):
         target = target_of(tid)
-        scored = []
+        scored, seen = [], set()
         for c in STATE["calls"].get(str(tid), []):
             row = {**c, **score_call(c, target), "tracer": t["name"], "target": team(target)["name"]}
+            if c["outpoint"] in seen:   # one scored call per output (add_call refuses a repeat; a saved game may not)
+                row.update({"points": 0, "repeat": True})
+            seen.add(c["outpoint"])
             row["evidence"] = " + ".join(sorted({r["kind"] for r in c["reasons"] if r not in row["dropped"]})) or "no reason"
             scored.append(row)
             if c["word"] == "high":

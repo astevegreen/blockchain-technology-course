@@ -8,7 +8,7 @@ checks. Times are UTC. Sources are the worksheet's numbered list.
 
 ## What the lab grades
 
-Question 17 is the day's graded point (build spec: "Day 8's cross-chain trace includes its contract read
+Worksheet question 17 is the day's graded point (build spec: "Day 8's cross-chain trace includes its contract read
 (what a function does, who may call it and what it changed) and a diagram naming each contract, the assets
 in and out and the far-side address").
 
@@ -79,14 +79,14 @@ alone. A name from a selector or a token symbol is one unverified label.
    left aside [17].
 9. Query 7: 22:39:21, 43 minutes later; 0.27748623, 0.27393619 and 0.27305932 BTC to `bc1qjm4u…`;
    `as_the_memo_asked` true for all three; each payout's memo is `OUT:` and its deposit's hash [19].
-   Query 17: 11 payouts, 22:19:16 to 23:22:51. Within 30 minutes: 3 (at 22:19, 23 minutes after), none
+   SQL query 17: 11 payouts, 22:19:16 to 23:22:51. Within 30 minutes: 3 (at 22:19, 23 minutes after), none
    of them the deposits'. Within an hour: 8 (three at 22:19, five at 22:39), three of them the deposits'.
    Amount and time alone pick wrong payouts; the memo pairs each deposit with its payout exactly.
 
 ### Across the bridge: the prediction and the twist
 
 - **The prediction**: (c). The deposit's memo names the coin and the address to pay [17], and the
-  payout's `OUT:` memo names the deposit [19]. A student who picks (b) sees in query 17 why it fails; one
+  payout's `OUT:` memo names the deposit [19]. A student who picks (b) sees in SQL query 17 why it fails; one
   who picks (d) is told the explorer is the second method, the bridge's own account. Any confidence word is
   fine before the run; afterwards, **high**: two records on two chains that agree.
 - **The twist**: the second choice. With no `OUT:` memo, the deposit's memo still says where it asked

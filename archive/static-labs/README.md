@@ -95,14 +95,17 @@ For `hashing_merkle` and `bitcoin-attacks` (the second commit):
 
 ## Putting one back
 
-To restore the first eight, revert the commit that added this file (`git log --diff-filter=A -- archive/static-labs/README.md`
-names it, then `git revert <sha>`). To restore the last two, revert the commit that moved them
-(`git log --diff-filter=A -- archive/static-labs/bitcoin-attacks/index.html`).
+To restore a group, revert the commit that moved it (`git revert <sha>`; the commit also restores the links in the
+lessons, so check what it changes first): the first eight, 8da50b24 (`git log --diff-filter=A -- archive/static-labs/micro-xor/index.html`
+finds it); `hashing_merkle` and `bitcoin-attacks`, c57675c6; `ether-smart-contract-micro`, 1f3e59b7; `ether_mev` and
+`tamper-ledger`, d8d29c11; `signatures`, `micro-hashing`, `POW_mining_micro` and `distributed-systems`, fd938968.
+A later commit may have edited the same lines, so a revert can conflict; the one-lab steps below always work.
 
 To restore one lab:
 
 1. `git mv archive/static-labs/<lab> blockchain-course/assets/labs/<lab>` (for `asym_sym_overview` and
-   `hashing_merkle`, change the four vendor paths back to `../../vendor/`).
+   `hashing_merkle`, change the three vendor paths in each back to `../../vendor/`; for `distributed-systems`, the
+   two stylesheet paths).
 2. Undo the matching item in the list above: remove the `content-hidden` wrapper, uncomment the mind-map block,
    and add the index line back.
 3. Run `python tools/check.py`.

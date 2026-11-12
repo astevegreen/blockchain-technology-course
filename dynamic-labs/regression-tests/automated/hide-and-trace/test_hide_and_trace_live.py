@@ -238,6 +238,9 @@ class HideAndTraceLiveTests(unittest.TestCase):
             self.assertEqual(resp.status_code, 200, resp.text)
         # A reason must name a transaction on this chain.
         self.assertEqual(team_post(one, "call", {**right_high, "reasons": [{"kind": "reuse", "txid": "ab" * 32}]}).status_code, 400)
+        # One call per output, and none on the starting coin the tracers were given.
+        self.assertIn("already called", team_post(one, "call", right_high).text)
+        self.assertIn("starting coin", team_post(one, "call", {**right_high, "outpoint": team2["start"]["outpoint"]}).text)
         self.assertEqual(team_post(one, "stop", {"kind": "coinjoin", "txid": join["txid"],
                                                  "reason": "equal outputs: the 0.5 BTC coin went in"}).status_code, 200)
         # Team 2 traces team 1 and gives one Undetermined.

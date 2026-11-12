@@ -35,9 +35,11 @@
 <script>
 /* Design card: docs/lab-cards/who-saw-it-first.md. Alice, Carol, Dave, the sellers, the twelve nodes, block 812,450
    and its hash are made up for this lab. Nothing is on a network: the delays, the spread and the block are simulated
-   here. Each hop takes a time drawn from the slider's range; the first block's miner is an eastern node (the
-   card's example), later blocks are drawn by chance, so some runs have a western node mining Carol's. Txids are
-   real SHA-256 hashes of the made-up payments. */
+   here. Each hop takes a time drawn from the slider's range; the first block found on the page is mined by an
+   eastern node holding Dave's (the card's example), however many times Send was pressed first; later blocks are
+   drawn by chance, so some runs have a western node mining Carol's. The run that ends in a block is kept in
+   localStorage, so the explorer step shows that run after a reload. Txids are real SHA-256 hashes of the
+   made-up payments. */
 
 /* SHA-256, so the txids are real hashes on any address (Web Crypto needs a secure origin). */
 function sha256(str) {
@@ -109,8 +111,17 @@ function spread(d, rnd) {
   return { first: first, at: at, msgs: msgs, turned: turned, end: Math.max.apply(null, msgs.map(function (x) { return x.t1; })) };
 }
 var LAST = null;                       // the latest run, shared with the explorer step
+var RUN_KEY = "lab:who-saw-it-first:run";
+function keepRun(r) {
+  try { window.localStorage.setItem(RUN_KEY, JSON.stringify({ first: r.first, miner: r.miner, winner: r.winner })); } catch (e) { /* private window */ }
+}
 function ensureRun() {
   if (LAST) return LAST;
+  try {
+    var kept = JSON.parse(window.localStorage.getItem(RUN_KEY));
+    if (kept && kept.first && kept.first.length === 12 && (kept.winner === "c" || kept.winner === "d")) { LAST = kept; return LAST; }
+  } catch (e) { /* none kept */ }
+  // Only reached if the block's run was never kept (a private window): a fixed run in the card's shape.
   var s = 7;
   var rnd = function () { s = (s * 16807) % 2147483647; return s / 2147483647; };
   var r = spread(400, rnd);
@@ -131,7 +142,7 @@ function nodeList(r, i, t, blockDone) {
 }
 function showDelay() { document.getElementById("delay-n").textContent = document.getElementById("delay").value + " ms"; }
 
-LabShell.start({
+var LAB = LabShell.start({
   id: "who-saw-it-first",
   title: "Who saw it first?",
   slide: { title: "Distributed systems", href: "../../../primer.html#distributed-systems" },
@@ -173,7 +184,7 @@ LabShell.start({
       var status = api.el("p", { role: "status" }, "Press Send. Alice's two payments leave a western node and an eastern node.");
       var listBox = api.el("p", { role: "status" }, "Click a node to open its waiting list.");
       var after = api.el("div");
-      var sel = -1, run = null, raf = 0, blockDone = false, runs = 0, finished = false;
+      var sel = -1, run = null, raf = 0, blockDone = false, runs = 0, blocks = 0, finished = false;
 
       function colour(t) {
         nodes.forEach(function (c, i) {
@@ -212,9 +223,10 @@ LabShell.start({
       }
       function mine() {
         var pool = [];
-        for (var k = 0; k < 12; k++) if (runs > 1 || (k >= 6 && run.first[k] === "d")) pool.push(k);
+        // The first block on this page is the card's example: an eastern node holding Dave's (node 12 always does).
+        for (var k = 0; k < 12; k++) if (blocks > 0 || (k >= 6 && run.first[k] === "d")) pool.push(k);
         run.miner = pool[Math.floor(Math.random() * pool.length)];
-        run.winner = run.first[run.miner]; LAST = run;
+        run.winner = run.first[run.miner]; LAST = run; keepRun(run); blocks++;
         blockDone = true; mineBtn.disabled = true; sendBtn.disabled = true;
         gDots.innerHTML = "";
         nodes.forEach(function (c, i) { c.setAttribute("class", "node " + run.winner + (i === run.miner ? " mined" : "")); c.nextSibling.textContent = run.winner === "c" ? "C" : "D"; });
@@ -225,7 +237,7 @@ LabShell.start({
           api.el("p", null, api.coin({ role: "output", amount: "0.5 BTC", who: "Carol's", spent: w === "d" }), " ", api.el("span", { class: "hash" }, api.short(TXID_C, 4)), w === "c" ? " in the block" : " dead"),
           api.el("p", null, api.coin({ role: "output", amount: "0.5 BTC", who: "Dave's", spent: w === "c" }), " ", api.el("span", { class: "hash" }, api.short(TXID_D, 4)), w === "d" ? " in the block" : " dead"),
           api.el("p", null, "Both payments spend coin A, so only one can be in the chain. The txids are real SHA-256 hashes of the two made-up payments.")));
-        if (runs === 1) after.appendChild(api.el("p", null, "Press Send again to run it as often as you like. This first block was found by an eastern node holding Dave's payment; later blocks are drawn by chance, so some runs have a western node mining Carol's."));
+        if (blocks === 1) after.appendChild(api.el("p", null, "Press Send again to run it as often as you like. This first block was found by an eastern node holding Dave's payment; later blocks are drawn by chance, so some runs have a western node mining Carol's."));
         select(sel < 0 ? 0 : sel);
         sendBtn.disabled = false;
         if (!finished) {
@@ -285,8 +297,8 @@ LabShell.start({
     twist: {
       html: "<p>Alice tries again, but this time she waits until a block already holds the payment to Carol, and only then sends the payment to Dave.</p>" +
         "<div class=\"panel\"><h3>Dave's payment, sent after the block (made up)</h3>" +
-        "<p><button class=\"btn\" type=\"button\" onclick=\"sendLate()\">Send Dave's payment to all twelve nodes</button></p>" +
-        "<p id=\"late-out\" role=\"status\"></p></div>",
+        "<p><button class=\"btn\" type=\"button\" id=\"late-send\" disabled onclick=\"sendLate()\">Send Dave's payment to all twelve nodes</button></p>" +
+        "<p id=\"late-out\" role=\"status\">Lock in your answer below first; then send it and see.</p></div>",
       question: "Does the network split this time?",
       choices: [
         "Yes, as before.",
@@ -303,7 +315,20 @@ LabShell.start({
     }
   }
 });
+/* The twist's send button prints the answer, so it opens only once the twist's pick is locked in. The shell redraws
+   the step when the pick locks, so the button is re-enabled whenever it appears. */
+function twistLocked() { return !!(LAB && LAB.state().twist); }
+function gateLate() {
+  var b = document.getElementById("late-send");
+  if (b && b.disabled === twistLocked()) {
+    b.disabled = !twistLocked();
+    if (!b.disabled) document.getElementById("late-out").textContent = "";
+  }
+}
+new MutationObserver(gateLate).observe(document.querySelector("[data-lab-root]"), { childList: true, subtree: true });
+gateLate();
 function sendLate() {
+  if (!twistLocked()) return;
   var out = document.getElementById("late-out"), rows = [];
   for (var i = 0; i < 12; i++) rows.push((i + 1));
   out.textContent = "Refused by " + rows.length + " of 12 nodes, at once: its coin is already spent in a block they all hold. No delay, no split, no waiting list to join.";

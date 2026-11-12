@@ -194,7 +194,10 @@ plan (what happens to every lab, the design card, the order of work) is `docs/an
   (idea 3), `POW_mining_micro` (as a step of idea 3; owner, 10 Nov: "A step of Guess the input"),
   `distributed-systems` (idea 2), `ether_mev` (idea 20) and `ether-smart-contract-micro` (idea 33).
   `merkle-trees` gains a proof step (idea 12).
-- Archived: `hashing_merkle` and `bitcoin-attacks` (`archive/static-labs/README.md`).
+- Archived (`archive/static-labs/README.md`): `hashing_merkle` and `bitcoin-attacks`; `ether_mev` and `tamper-ledger`
+  (replaced by Find the sandwich and Build a ledger in four failures); and, on 11 Nov 2026 (owner: "Archive all four
+  (Recommended)"), `signatures`, `micro-hashing`, `POW_mining_micro` and `distributed-systems`, replaced by Forge the
+  payment, Guess the input (with its mining step) and Who saw it first?.
 - The unscheduled Docker labs are decided. The P2P Trust Lab is archived. The Ethereum Lab is archived except
   its unused DeFi-risk contracts, which become an exploit part of about 40 minutes in day 8's afternoon lab.
   Forensics 1 to 3 are archived once their decoy cases are folded into day 6's trace. Done 11 Nov 2026 (step 7):

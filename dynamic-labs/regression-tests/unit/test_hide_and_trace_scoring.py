@@ -2,8 +2,8 @@
 """The "Hide and trace" scoring, without Docker or a chain (design card docs/lab-cards/hide-and-trace.md, line 9).
 
 The points per word, the cap (a word above what its reasons allow is scored as the allowed word), the struck call,
-the CoinJoin co-spend that is not counted, the stop call, the tie-break and the class table's counts are checked on
-a made-up game state. The live suite (automated/hide-and-trace/) plays the same rules on a running chain. The pages
+the CoinJoin co-spend that is not counted, the stop call, the tie-break, one scored call per output (none on the
+starting coin) and the class table's counts are checked on a made-up game state. The live suite (automated/hide-and-trace/) plays the same rules on a running chain. The pages
 students receive are checked for the guardrails: no break-even fractions, no real mixer or coordinator named."""
 from __future__ import annotations
 
@@ -139,6 +139,43 @@ class Reveal(GameState):
         self.assertNotIn("reveal", view)
         self.assertEqual(view["own_moves"], [])
         self.assertNotIn("moves", view)
+
+
+class OneCallPerOutput(GameState):
+    def setUp(self) -> None:
+        super().setUp()
+        srv.STATE["phase"] = "trace"
+        srv.check_outpoint = lambda op: str(op)     # no chain: take the outpoint as written
+        srv.check_txid = lambda txid: str(txid)
+
+    def tearDown(self) -> None:
+        spec.loader.exec_module(srv)                # put the real chain checks back
+
+    def body(self, outpoint: str) -> dict:
+        return {"outpoint": outpoint, "word": "low", "reasons": [{"kind": "amount", "txid": T["a"]}]}
+
+    def test_a_repeat_call_on_one_output_is_refused(self) -> None:
+        srv.add_call(0, self.body("t2:0"))
+        with self.assertRaisesRegex(srv.Refused, "already called that output"):
+            srv.add_call(0, self.body("t2:0"))
+        self.assertEqual(len(srv.STATE["calls"]["0"]), 1)
+
+    def test_a_call_on_the_starting_coin_is_refused(self) -> None:
+        start = srv.STATE["teams"][1]["start"]["outpoint"]     # team 1 traces team 2
+        with self.assertRaisesRegex(srv.Refused, "starting coin"):
+            srv.add_call(0, self.body(start))
+
+    def test_the_starting_coin_scores_nothing(self) -> None:
+        start = srv.STATE["teams"][1]["start"]["outpoint"]
+        srv.STATE["owner"][start] = {"team": 1, "role": "stolen coin"}
+        row = srv.score_call(call(start, "high", [reason("cospend", "a"), reason("timing", "b")]), 1)
+        self.assertEqual(row["points"], 0)
+
+    def test_a_saved_repeat_scores_once(self) -> None:
+        srv.STATE["phase"] = "reveal"
+        srv.STATE["calls"] = {"0": [call("t2:0", "low", [reason("amount", "a")], at=1.0),
+                                    call("t2:0", "low", [reason("amount", "b")], at=2.0)]}
+        self.assertEqual(srv.reveal_view()["scores"][0], {"team": "Team 1", "score": 1, "last": 2.0, "calls": 2})
 
 
 class Pages(unittest.TestCase):

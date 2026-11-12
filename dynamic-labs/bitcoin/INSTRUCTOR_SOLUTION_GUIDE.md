@@ -6,7 +6,8 @@
 > Verified on **2026-06-03** by walking the live chain on the `bitcoin-instructor-1` node
 > (chain height **275**) and cross-checking in the **btc-rpc-explorer** GUI. The lab text is served
 > from `/api/bitcoin/exercises` (source: `lane-service/labs/bitcoin_catalog.yaml`); the forensics
-> chain is built by `bitcoin-forensics/malicious_seed_v33.py`.
+> chain was built by a v33 seeder script that is no longer in the repo (the later seeders are under
+> `archive/dynamic-labs/bitcoin-forensics/`).
 >
 > **Scope note:** Lab 1 and Lab 2 are deterministic command exercises — the commands below are the
 > exact ones the lab hands the student. The **Forensics Lab** answer key (TXIDs / addresses) is from
@@ -340,7 +341,8 @@ VICTIM (21×50 BTC coinbases)
 ## 5. Regenerating the answer key (if the chain is redeployed)
 
 The intermediate TXIDs above are for the **currently deployed** chain (instructor node height 275).
-If `bitcoin-forensics/malicious_seed_v33.py` is re-run / a new chain is shipped, regenerate with this
+If the forensics chain is rebuilt (the v33 seeder is gone; its successors are under
+`archive/dynamic-labs/bitcoin-forensics/`) / a new chain is shipped, regenerate with this
 method (run on the host, against the `bitcoin-instructor-1` node — it has `txindex=1`):
 
 1. **Find the ransom:** scan blocks for the tx that pays **exactly 1,000 BTC** to the brief's start

@@ -79,7 +79,7 @@ LabShell.start({
       ]
     },
     "do": { render: function (el, api) {
-      var seen8 = false, seen70 = false;
+      var seen8 = false, seen70 = false, finished = false;
       var out = api.el("div", { class: "lanes" });
       var say = api.el("p", { class: "say", role: "status" });
       var range = api.el("input", { type: "range", min: 0, max: 70, step: 1, value: 0, "aria-label": "Minutes since the payments" });
@@ -103,20 +103,22 @@ LabShell.start({
         out.appendChild(lane("Bitcoin", BTC_TX, btcState(t)));
         out.appendChild(lane("Ethereum", ETH_TX, ethState(t)));
         out.appendChild(lane("Tron", TRX_TX, tronState(t)));
-        if (t >= 8) seen8 = true;
-        if (t === 8) { say.textContent = "At 8 minutes: Tron says solidified. Ethereum says included, not finalized. Bitcoin shows a count."; }
+        if (t === 8) { seen8 = true; say.textContent = "At 8 minutes: Tron says solidified. Ethereum says included, not finalized. Bitcoin shows a count. Now drag on to 70."; }
+        else if (t === 70 && !seen8) say.textContent = "Stop at 8 minutes first, when the agent calls, and read each lane there.";
         else say.textContent = "";
-        if (t >= 60) seen70 = true;
+        if (t === 70 && seen8) seen70 = true;
         if (seen8 && seen70 && !finished) { finished = true; finish(); }
       }
-      var finished = false;
       function finish() {
         api.finish({ choice: 2, note:
           "<p>At eight minutes only Tron's lane says final. Ethereum's block was included at once, but its checkpoint is finalized " +
           "only after a vote of two-thirds of the stake, about 15 minutes (12.8 at best). Bitcoin never says final: its count only makes a reversal costlier.</p>" +
           "<p>An open chain cannot count votes from strangers, so Bitcoin prices a reversal in work and never declares an end, and Ethereum waits for a vote " +
           "of two-thirds of its stake. Tron's 27 producers are known and few, so it can count them quickly. Each design answers &ldquo;who may vote?&rdquo; " +
-          "differently, so each puts a different clock on &ldquo;final&rdquo;.</p>" });
+          "differently, so each puts a different clock on &ldquo;final&rdquo;.</p>" +
+          "<p class=\"src\">Sources: <code>@tron_consensus_2026</code> (Tron: solidified once 19 of 27 Super Representatives have built on a block, about a minute; as of 23 Oct 2026); " +
+          "<code>@ethereumorg_pos_2026</code>, <code>@ethereumorg_ssf_2026</code> and <code>@ethereumorg_glossary_2026</code> (Ethereum: finalized by votes of two-thirds of the stake, about 15 minutes; 12-second slots, 32-slot epochs; as of 23 Oct 2026); " +
+          "<code>@bitcoinorg_payment_2026</code> and <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (Bitcoin: no declared finality, six confirmations is the usual wait; as of 23 Oct 2026).</p>" });
       }
       range.addEventListener("input", draw);
       draw();
@@ -134,7 +136,7 @@ LabShell.start({
         api.el("tr", null, api.el("th", null, "Ethereum explorer"), api.el("td", null,
           api.el("span", { class: "hash" }, tail4(ETH_TX)), " in block " + ETH_BLOCK + ": ", api.el("strong", null, "Status: included"), " (later it reads “finalized”)")),
         api.el("tr", null, api.el("th", null, "Tron explorer"), api.el("td", null,
-          api.el("span", { class: "hash" }, tail4(TRX_TX)), " in block " + TRX_BLOCK + ": ", api.el("strong", null, "Status: Confirmed"), " (Confirmed SRs: 19; the protocol's word for this is “solidified”)")))));
+          api.el("span", { class: "hash" }, tail4(TRX_TX)), " in block " + TRX_BLOCK + ": ", api.el("strong", null, "Status: Confirmed"), " (Confirmed SRs: 19; the protocol's word for this is “solidified”)"))));
       el.appendChild(api.el("p", null, "A report gives that status, the block and the time it was read, because the status changes. The words differ by chain; only a status your chain's own rules call final lets you state a transfer as fact."));
     } },
     twist: {

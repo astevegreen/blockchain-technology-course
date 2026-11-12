@@ -144,7 +144,12 @@ LabShell.start({
         saleBox.appendChild(msg);
       }
       function check() {
-        if (finished || sales.length < 3 || holder !== "A" || sales[sales.length - 1].to !== "A") return;
+        if (finished || sales.length < 3 || holder !== "A") return;
+        var LOOP = [["A", "B"], ["B", "C"], ["C", "A"]], last3 = sales.slice(-3);
+        if (!LOOP.every(function (l, i) { return last3[i].from === l[0] && last3[i].to === l[1]; })) {
+          if (sales[sales.length - 1].to === "A") say.textContent += " That is not the loop: the last three sales must go A to B, then B to C, then C to A.";
+          return;
+        }
         finished = true;
         var fees = r3(40 - total());
         api.finish({ choice: 2, note:
@@ -193,7 +198,7 @@ LabShell.start({
         row("", api.el("span", null, "paid the other way: ", addr(s[1]), " → ", addr(s[0]), " ", api.coin({ role: "output", amount: s[2] + " ETH" })));
       });
       row("First ETH in", "");
-      ["A", "B", "C"].forEach(function (k) { row("", api.el("span", null, addr(k), " ← ", addr("S"), " ", api.coin({ role: "output", amount: "13 ETH" }))); });
+      ["A", "B", "C"].forEach(function (k) { row("", api.el("span", null, addr(k), " ← ", addr("S"), " ", api.coin({ role: "output", amount: FUND + " ETH" }))); });
       el.appendChild(api.el("p", null, "The same sales as an analyst meets them, in Otterscan's layout (a copy made up for this lab, not a live page; Otterscan is an open-source Ethereum explorer). Each sale is a transaction that calls the marketplace, with NFT #7's ", api.el("code", null, "Transfer"), " log and the payment going the other way. Then each buyer's first incoming ETH: all three from one funding wallet."));
       el.appendChild(table);
       el.appendChild(api.el("p", null, "Paid sales plus one funder: ", api.conf("moderate"), " on the lesson's “How sure” table. High needs a payoff, such as a later sale to an outside buyer near 15 ETH."));

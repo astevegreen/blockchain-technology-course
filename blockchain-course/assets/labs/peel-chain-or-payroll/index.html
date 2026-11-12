@@ -28,7 +28,7 @@
 /* Design card: docs/lab-cards/peel-chain-or-payroll.md. The suspect, the seller, the exchange, the five CoinJoin
    users, the owner list, every address and amount, and the 41,000-address hot wallet are made up for this lab.
    The page draws the transactions itself, so it runs offline. T1: 0.5 + 0.3 in, 0.6 + 0.1999 out (fee 0.0001).
-   T2: 3.0 + 2.5 in, twelve outputs summing 5.4995 (fee 0.0005). T3: five inputs summing 0.5005, five of 0.1 (fee 0.0005). */
+   T2: 3.0 + 2.5 in, twelve outputs summing 5.4995 (fee 0.0005). T3: five inputs of 0.1001 (0.5005), five outputs of 0.1 (fee 0.0005). */
 var TYPE = "bc1q";
 function fmt(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function tail(i, salt) { var h = ((i + 5) * 2654435761 + salt * 40503) >>> 0; var x = ("00000000" + h.toString(16)).slice(-8); return TYPE + x.slice(0, 4) + "…" + x.slice(4); }
@@ -53,7 +53,7 @@ function coinHtml(role, amount) { return "<span class=\"coin " + role + "\"><spa
 var GROUPS = [
   { id: "T1", title: "T1: 2 inputs, 2 outputs", shape: "0.5 BTC (S) + 0.3 BTC in; 0.1999 BTC and 0.6 BTC out; fee 0.0001 BTC. Only the inputs are offered: they were spent together." },
   { id: "T2", title: "T2: 2 inputs, 12 outputs", shape: "3.0 + 2.5 BTC in; twelve outputs of different amounts (S is one of them: 0.7895 BTC); fee 0.0005 BTC. The two inputs and the eleven other payees are offered." },
-  { id: "T3", title: "T3: 5 inputs, 5 outputs", shape: "S (0.2 BTC) and four other coins in; five outputs of 0.1 BTC each; fee 0.0005 BTC. Only the four other inputs are offered." }
+  { id: "T3", title: "T3: 5 inputs, 5 outputs", shape: "S (0.1001 BTC) and four other coins of 0.1001 BTC in (0.5005 BTC); five outputs of 0.1 BTC each; fee 0.0005 BTC. Only the four other inputs are offered." }
 ];
 var SHAPES = [
   { key: "peel", text: "Peel hop: two outputs; the inputs are the payer's" },
@@ -174,7 +174,7 @@ LabShell.start({
       var t2 = api.el("span", null, "inputs: 2 · outputs: 12 · ", api.coin({ role: "input", amount: "3.0 BTC" }), sp(), api.coin({ role: "input", amount: "2.5 BTC" }), " → ");
       T2OUT.forEach(function (x) { t2.appendChild(api.coin({ role: "output", amount: x + " BTC" })); t2.appendChild(sp()); });
       row("T2", t2);
-      var t3 = api.el("span", null, "inputs: 5 (0.2, 0.11, 0.1, 0.05, 0.0405 BTC) · outputs: 5 · ");
+      var t3 = api.el("span", null, "inputs: 5 (0.1001 BTC each, 0.5005 BTC) · outputs: 5 · fee 0.0005 BTC · ");
       for (var i = 0; i < 5; i++) { t3.appendChild(api.coin({ role: "output", amount: "0.1 BTC" })); t3.appendChild(sp()); }
       row("T3", t3);
       el.appendChild(api.el("p", null, "The three transactions on a mempool-style transaction page, as the day 6 lab meets them (a copy made up for this lab, not a live page; the real explorer is mempool, AGPL-3.0, as of 31 Oct 2026)."));

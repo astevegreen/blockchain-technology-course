@@ -11,6 +11,7 @@
   .board select, .board input[type="text"] { width: 100%; font: inherit; padding: 0.25em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
   .board .addr { word-break: break-all; }
   .src { color: var(--ink-soft); font-size: 0.85rem; }
+  .miss { color: #b3261e; }
   .count { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
   table.q { width: 100%; border-collapse: collapse; background: var(--panel); margin: 0.6rem 0; }
   table.q th, table.q td { padding: 0.4em 0.7em; border: 1px solid var(--rule); text-align: left; vertical-align: top; }
@@ -23,10 +24,11 @@
 <script>
 /* Design card: docs/lab-cards/spot-the-fake.md. Course Pound, the victim, the car and the amounts are made up for the
    game. The tokens are real contracts on the token lab's course chain (dynamic-labs/tokens, blocks 18-30). The page lists
-   the three tokens in a fixed order that says nothing, records each call with its reason, and scores only the
-   reasons; the instructor's key is in dynamic-labs/tokens/quizes/, which students never receive. The tell step shows
-   the issuer's published address, as the card says, so that address is in this source: the game is played on the
-   rendered page, not its source. */
+   the three tokens in a fixed order that says nothing and records each call with its reason. It checks the calls
+   against the real token, which it knows only as a salted hash (REAL_HASH), so the answer is not written in this
+   source as text; a static page cannot truly hide it, since three hashes are quick to try. The tell step shows the
+   issuer's published address, as the card says, worked out from the same hash. The instructor's key is in
+   dynamic-labs/tokens/quizes/, which students never receive. */
 (function () {
   "use strict";
   var BOARD_KEY = "lab:spot-the-fake:board";
@@ -39,6 +41,20 @@
   ];
   var TWIST = "0x0a49923d13ab698cfC0e747b5b9594C16C8d130F";
   var ISSUER = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"; // Account 0, which issued Course Dollar
+
+  /** A salted FNV-1a hash, so the answer is not plain text in the source. Synchronous on purpose: crypto.subtle
+      is missing on a plain-http course server reached by IP. */
+  function tag(role, addr) {
+    var str = "spot-the-fake:" + role + ":" + addr.toLowerCase();
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return ("0000000" + h.toString(16)).slice(-8);
+  }
+  var REAL_HASH = "af72bdc0";  // the issuer's Course Pound
+  var COPY_HASH = "49e76d91";  // fake B, the copy of the issuer's code, named in the tell step's example
+  function isReal(t) { return tag("real", t.addr) === REAL_HASH; }
+  function find(role, hash) { return TOKENS.filter(function (t) { return tag(role, t.addr) === hash; })[0]; }
+  function short(a) { return a.slice(0, 6) + "…" + a.slice(-4); }
 
   // The reasons a pair can give. Only the first two rest on something the deployer could not choose.
   var REASONS = [
@@ -72,6 +88,7 @@
   function render(box, api) {
     var el = api.el;
     var board = loadBoard();
+    var locked = !!board.done;
 
     box.appendChild(el("p", null, "Three tokens in the victim's history, all answering ", el("strong", null, "Course Pound, cGBP, 6 decimals"),
       ". For each one: open it in the explorer, then ask it for its name, symbol and decimals on the ",
@@ -80,18 +97,18 @@
 
     var grid = el("div", { class: "board", "aria-label": "The three tokens" });
     TOKENS.forEach(function (t) {
-      var call = el("select", { id: "call-" + t.id, "aria-label": "Token " + t.id + ": real or fake",
+      var call = el("select", { id: "call-" + t.id, "aria-label": "Token " + t.id + ": real or fake", disabled: locked,
         onchange: function () { board.call[t.id] = call.value; saveBoard(board); gate(); } });
       [["", "Pick…"], ["real", "Real: the issuer's Course Pound"], ["fake", "Fake"]].forEach(function (o) {
         call.appendChild(el("option", { value: o[0] }, o[1]));
       });
       call.value = board.call[t.id] || "";
-      var why = el("select", { id: "why-" + t.id, "aria-label": "Token " + t.id + ": the reason",
+      var why = el("select", { id: "why-" + t.id, "aria-label": "Token " + t.id + ": the reason", disabled: locked,
         onchange: function () { board.reason[t.id] = why.value; saveBoard(board); gate(); } });
       why.appendChild(el("option", { value: "" }, "Pick…"));
       REASONS.forEach(function (r) { why.appendChild(el("option", { value: r.key }, r.label)); });
       why.value = board.reason[t.id] || "";
-      var note = el("input", { type: "text", id: "note-" + t.id, value: board.note[t.id] || "", maxlength: "200",
+      var note = el("input", { type: "text", id: "note-" + t.id, value: board.note[t.id] || "", maxlength: "200", disabled: locked,
         placeholder: "What you saw, e.g. created by 0x…", "aria-label": "Token " + t.id + ": what you saw",
         oninput: function () { board.note[t.id] = note.value; saveBoard(board); gate(); } });
       grid.appendChild(el("div", { class: "srccard" },
@@ -112,29 +129,42 @@
     }
     function gate() {
       var b = document.getElementById("called");
-      if (b) b.disabled = !complete();
+      if (b) b.disabled = locked || !complete();
       var reals = TOKENS.filter(function (t) { return board.call[t.id] === "real"; }).length;
       cnt.textContent = reals > 1 ? "You have called " + reals + " tokens real. Only one issuer issued Course Pound: look again at what differs." :
         "Each call needs a reason and what you saw.";
     }
 
     function finish() {
-      var label = 0;
+      // The calls lock once made: a second try after seeing which call failed would be guessing, not reading.
+      locked = board.done = true; saveBoard(board);
+      TOKENS.forEach(function (t) {
+        ["call-", "why-", "note-"].forEach(function (p) { var f = document.getElementById(p + t.id); if (f) f.disabled = true; });
+      });
+      gate();
+      var label = 0, wrong = 0, fakeAsReal = 0;
       var lines = TOKENS.map(function (t) {
         var r = reasonOf(board.reason[t.id]);
+        var right = (board.call[t.id] === "real") === isReal(t);
+        if (!right) { wrong++; if (board.call[t.id] === "real") fakeAsReal++; }
         if (!r.scores) label++;
         return "<li>Token " + t.id + ": " + (board.call[t.id] === "real" ? "real" : "fake") + ", because of " + r.label.toLowerCase() +
-          (r.scores ? "" : " <strong>(0 points: the deployer chose that)</strong>") + ".</li>";
+          (right ? " &mdash; right" : " &mdash; <strong>wrong: this token is " + (isReal(t) ? "the real one" : "a fake") + "</strong>") +
+          (right && !r.scores ? " <strong>(0 points: the deployer chose that)</strong>" : "") + ".</li>";
       });
-      // The prediction this matches: a call resting on a name, or on holders, is (a) or (b); contract reasons are (c).
-      var keys = TOKENS.map(function (t) { return board.reason[t.id]; });
-      var choice = keys.indexOf("name") >= 0 ? 0 : keys.indexOf("holders") >= 0 ? 1 : 2;
-      var note = "<p>Your calls:</p><ul>" + lines.join("") + "</ul>" +
+      // The prediction is checked against what proves a token real, its creator and its code (c), whatever the team
+      // picked. The team's calls are checked against the real token, so a wrong call fails here, in front of them.
+      var note = (wrong
+          ? "<p class=\"miss\"><strong>" + wrong + (wrong === 1 ? " call is" : " calls are") + " wrong.</strong>" +
+            (fakeAsReal ? " You called a fake real: that is the token a victim would be paid in." : "") +
+            " Open the wrong ones again and read their creator line.</p>"
+          : "<p><strong>All three calls are right.</strong></p>") +
+        "<p>Your calls:</p><ul>" + lines.join("") + "</ul>" +
         "<p>All three tokens answer the same name, symbol and decimals: the token standard lets whoever deploys a token set all three, so they prove nothing. " +
         "Two things differ: which account created each contract, and what its code does. Only the holder of the creating account's key could have created the contract, so the creator line is the one a counterfeiter cannot copy.</p>" +
         (label ? "<p>" + label + (label === 1 ? " of your reasons rests" : " of your reasons rest") + " on something the deployer chose. Find the contract reason for " + (label === 1 ? "that token" : "those tokens") + " before you score.</p>" : "") +
         "<p>Score yourselves from the instructor's sheet: +2 for each token called right with a contract reason, 0 for a reason the deployer chose, -2 for a fake called real.</p>";
-      api.finish({ choice: choice, note: note });
+      api.finish({ choice: 2, note: note });
     }
   }
 
@@ -184,6 +214,7 @@
           (labOrigin() ? " (<a href=\"" + labOrigin() + "/address/" + TWIST + "\" target=\"_blank\" rel=\"noopener\">open it in the explorer</a>)" : "") +
           ". Its code is the issuer's. Asked for its <code>owner()</code> on the sign page, it answers the issuer's address, <span class=\"addr\">" + ISSUER + "</span>.</p>",
         question: "Is it real now?",
+        reason: "Your reason: what on the chain tells you whether it is real? (Scored +2 with the right answer.)",
         choices: [
           "Yes: the owner is the issuer.",
           "Yes: the code matches.",
@@ -195,9 +226,9 @@
           "<p class=\"src\">Source: the token lab's <code>CoursePound.sol</code>, built like Course Dollar in <code>CourseTokens.sol</code> (read 11 Nov 2026).</p>"
       },
       tell: {
-        prompt: "<p>The issuer publishes one Course Pound address: <span class=\"addr\">" + TOKENS[1].addr + "</span>. Tell the agent which Course Pound the victim was paid in, and how sure you are.</p>" +
+        prompt: "<p>The issuer publishes one Course Pound address: <span class=\"addr\">" + find("real", REAL_HASH).addr + "</span>. Tell the agent which Course Pound the victim was paid in, and how sure you are.</p>" +
           "<p class=\"src\">Confidence words, never a percentage: <code>@odni_icd203_2015</code>.</p>",
-        example: "The victim's 500 cGBP came from contract 0x6E75…7fDc, which the course issuer did not create: an unknown account created it a minute after the real one, with a copy of the issuer's code. Its name and symbol match the real Course Pound, which the issuer's own account created at 0x0165…Eb8F. We assess with High confidence that the payment was in a counterfeit token: the creator and the issuer's published address agree."
+        example: "The victim's 500 cGBP came from contract " + short(find("copy", COPY_HASH).addr) + ", which the course issuer did not create: an unknown account created it a minute after the real one, with a copy of the issuer's code. Its name and symbol match the real Course Pound, which the issuer's own account created at " + short(find("real", REAL_HASH).addr) + ". We assess with High confidence that the payment was in a counterfeit token: the creator and the issuer's published address agree."
       }
     }
   });

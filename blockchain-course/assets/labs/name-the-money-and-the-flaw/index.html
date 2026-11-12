@@ -42,8 +42,10 @@
     return p + "//exploit." + h.replace(/^[^.]+\./, "") + "/";
   })();
 
-  /* The vault's 41 lines, as numbered in VulnerableBankVault.sol. Each entry: [lineNo, code, pickable].
-     pickable lines are the ones the student can move. */
+  /* The vault's lines, numbered as in VulnerableBankVault.sol up to line 29; lines 30-41 of the file (two view
+     functions and receive) are shown condensed as 30-33. Each entry: [lineNo, code, pickable]. pickable lines are
+     the ones the student can move. Line 20's source comment ("Intentionally vulnerable: ...") names the flaw, so
+     the listing shows that line blank; its number is kept. */
   var VAULT_LINES = [
     [1,  "// SPDX-License-Identifier: MIT", false],
     [2,  "pragma solidity ^0.8.19;", false],
@@ -64,7 +66,7 @@
     [17, "    function withdraw(uint256 amount) external {", false],
     [18, "        require(balances[msg.sender] >= amount, \"Insufficient balance\");", true],
     [19, "", false],
-    [20, "        // Intentionally vulnerable: control is transferred before accounting updates.", false],
+    [20, "", false],
     [21, "        (bool sent, ) = payable(msg.sender).call{ value: amount }(\"\");", true],
     [22, "        require(sent, \"ETH transfer failed\");", false],
     [23, "", false],
@@ -80,9 +82,11 @@
     [33, "}", false]
   ];
 
-  /* Replay results. Each key is a description of the change. The result records what happens when
-     the same attack is sent against a vault with that change applied. Recorded at build time by
-     running the modified vault against the same attacker on a scratch chain. */
+  /* Replay results. Each key is a description of the change. The result says what happens when the same
+     attack is sent against a vault with that change applied. Derived by reading VulnerableBankVault.sol and
+     VaultAttacker.sol, not recorded by a run: the build (exploit-build-steps.sh) deploys only FixedBankVault,
+     whose failed attack is FIXED_ATTACK_TX. credited: the change this step gives credit for (lines 24 and 25,
+     owner, 10 Nov 2026; line 21 maps to line 25's replay). */
   var REPLAYS = {
     "line25_above_line21": {
       label: "Move line 25 above line 21",
@@ -91,6 +95,7 @@
       vaultAfter: "500 ETH",
       attackerGain: "0 ETH",
       events: 0,
+      credited: true,
       why: "The balance is updated before the payment, so the second withdraw call finds the recorded balance is zero and reverts. The whole transaction fails."
     },
     "remove_unchecked": {
@@ -100,6 +105,7 @@
       vaultAfter: "500 ETH",
       attackerGain: "0 ETH",
       events: 0,
+      credited: true,
       why: "Without unchecked, the subtraction on the way back out (when the recorded balance is 0 and amount is 100) causes an arithmetic underflow, which reverts. The whole transaction fails."
     },
     "line27_above_line21": {
@@ -114,11 +120,12 @@
     "line18_below_line22": {
       label: "Move line 18 below line 22",
       which: [18],
-      status: "success",
-      vaultAfter: "0 ETH",
-      attackerGain: "~499.91 ETH",
-      events: 6,
-      why: "Moving the balance check below the payment means the check runs after the attacker has already been paid. Each re-entry still sees the original balance. The attack still works."
+      status: "fail",
+      vaultAfter: "500 ETH",
+      attackerGain: "0 ETH",
+      events: 0,
+      credited: false,
+      why: "With the check below the payment, nothing stops the re-entries going in: the vault pays six times. On the way back out, the innermost call passes the check and the unchecked subtraction takes the recorded balance to 0. The next call out then fails the check (0 is less than 100) and reverts. The attacker's contract does not catch the failure and the vault requires the payment to succeed, so the whole transaction reverts."
     }
   };
 
@@ -217,7 +224,10 @@
         "<p>" + esc(r.why) + "</p>";
       replayBox.appendChild(out);
 
-      if (isFix) {
+      if (isFix && !r.credited) {
+        out.appendChild(el("p", null, "This change stops this attack too, but it is not the line this step asks for. Try another line."));
+      }
+      if (isFix && r.credited) {
         api.finish({
           choice: 2,
           note: "<p>Moving that line stops the attack. " + esc(r.why) + "</p>" +
@@ -295,7 +305,10 @@
         why: "The fixed vault updates the balance first. The second withdraw call finds the recorded balance is zero and reverts. " +
           "Because the attacker’s contract does not catch the failure, the whole transaction reverts: the loan, the deposit and " +
           "every payment are undone. The attempt is still on chain with its sender, the attacker’s contract and a failure status, " +
-          "and the sender paid the gas fee. A failed attempt is evidence too."
+          "and the sender paid the gas fee. A failed attempt is evidence too." +
+          "<p>The failed attempt against the fixed vault: transaction <code>" + FIXED_ATTACK_TX.slice(0, 6) + "…" +
+          FIXED_ATTACK_TX.slice(-4) + "</code>, status failed. " +
+          "<a class='explorer-link' href='" + EXPLOIT_HOST + "tx/" + FIXED_ATTACK_TX + "' target='_blank'>Open it in the explorer</a></p>"
       },
       tell: {
         prompt: "Tell the agent how the vault was emptied.",

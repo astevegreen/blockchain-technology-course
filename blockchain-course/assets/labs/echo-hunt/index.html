@@ -11,6 +11,8 @@
   .board select, .board input[type="text"] { width: 100%; font: inherit; padding: 0.25em 0.4em; border: 2px solid var(--rule); border-radius: 6px; background: var(--panel); }
   .stacks { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.7rem; margin: 0.6rem 0; }
   .stacks .srccard { font-size: 0.8rem; }
+  .stack.off { outline: 3px dashed #b3261e; outline-offset: 2px; }
+  .miss { color: #b3261e; font-weight: 600; }
   .count { padding: 0.5rem 0.8rem; border-left: 6px solid var(--ink); background: var(--accent-tint); margin: 0.6rem 0; }
   .src { color: var(--ink-soft); font-size: 0.85rem; }
   table.q { width: 100%; border-collapse: collapse; background: var(--panel); margin: 0.6rem 0; }
@@ -23,9 +25,10 @@
 <script src="../shared/shell.js"></script>
 <script>
 /* Design card: docs/lab-cards/echo-hunt.md. Everything here is invented for the game (T-echo, Desk X, the vendors,
-   the story, the dates, the flows) except the explorer step, which shows the real day 9 address. This page holds no
-   key: it records the team's stacks and counts them. Each card's origin and the accepted reasons are in the
-   instructor's key, which students never receive. */
+   the story, the dates, the flows) except the explorer step, which shows the real day 9 address. The page checks
+   the team's stacks against the true origins below before it gives a verdict (a static page cannot hide them, and
+   they are the card's own reading); the accepted reasons and the score are in the instructor's key, which students
+   never receive. */
 (function () {
   "use strict";
   var BOARD_KEY = "lab:echo-hunt:board";
@@ -48,6 +51,18 @@
       says: "Tag: \"exchange hot wallet\".", basis: "receives sweeps from deposit addresses" }
   ];
   var DESK_X = [1, 2, 3, 4, 5]; // the five cards that name T-echo as Desk X's address
+
+  /** The true origin of each card (the design card's line 3). Vendor A (4) states no basis and is dated after the
+      release, so "basis unknown" and "the release" both hold; Vendor B (5) copies Vendor A, so it must share 4's. */
+  function wrongCards(place) {
+    var r4 = rootOf(place, 4);
+    var ok = {
+      1: ["orig:1"], 2: ["orig:1"], 3: ["orig:1"], 4: ["unknown", "orig:1"],
+      5: [r4 === "unknown" || r4 === "orig:1" ? r4 : "unknown"], 6: ["chain"], 7: ["chain"]
+    };
+    return CARDS.filter(function (c) { return ok[c.id].indexOf(rootOf(place, c.id)) < 0; })
+      .map(function (c) { return c.id; });
+  }
 
   /** Where a card's claim came from: follow the team's "came from" picks to the end. Pure, so it can be tested. */
   function rootOf(place, id) {
@@ -96,6 +111,7 @@
     var board = loadBoard();
     var drag = null;
     var focusId = null;
+    var checked = false; // set once the team presses the button; from then on wrong stacks are marked
 
     function allPlaced() {
       return CARDS.every(function (c) { return board.place[c.id] && (board.reason[c.id] || "").trim() !== ""; });
@@ -153,8 +169,11 @@
       var stacks = stacksOf(board.place);
       var keys = Object.keys(stacks).filter(function (k) { return k !== "unplaced"; });
       var wrap = el("div", { class: "stacks", "aria-label": "Your stacks", "aria-live": "polite" });
+      var bad = checked ? wrongCards(board.place) : [];
       keys.forEach(function (k) {
-        var st = el("div", { class: "stack" }, el("h3", null, stackTitle(k)));
+        var off = stacks[k].some(function (id) { return bad.indexOf(id) >= 0; });
+        var st = el("div", { class: "stack" + (off ? " off" : "") }, el("h3", null, stackTitle(k)));
+        if (off) st.appendChild(el("p", { class: "miss" }, "This stack does not hold together: at least one card here came from somewhere else. Check each card's basis and date against its reason."));
         stacks[k].forEach(function (id) { st.appendChild(cardEl(api, byId(id))); });
         wrap.appendChild(st);
       });
@@ -169,6 +188,8 @@
 
       var done = el("button", { class: "btn primary", type: "button", id: "stacked", onclick: finish }, "These are our stacks");
       box.appendChild(done);
+      if (checked && bad.length) box.appendChild(el("p", { class: "miss", role: "alert" },
+        "Not yet: " + bad.length + " card" + (bad.length === 1 ? " sits" : "s sit") + " in the wrong stack. The marked stacks are where to look. Move cards, then press the button again."));
       gate();
       if (focusId) { var f = document.getElementById(focusId); focusId = null; if (f) f.focus(); }
     }
@@ -179,22 +200,23 @@
     }
 
     function finish() {
+      checked = true;
+      if (wrongCards(board.place).length) { draw(); return; }
       var stacks = stacksOf(board.place);
       // How many separate stacks the five cards that name Desk X fall into; the unknown-basis cards share one bin.
       var seen = {};
       DESK_X.forEach(function (id) { seen[rootOf(board.place, id)] = true; });
       var n = Object.keys(seen).length;
-      // One stack is ambiguous: it fits (d), and it fits Vendor A traced to the release, which the key also accepts.
-      // So the page gives no verdict then; the instructor asks for the reasons.
-      var choice = n === 5 ? 0 : n === 4 ? 1 : n === 1 ? null : 2;
+      // The stacks now match the true origins, so the answer is the card's: one line per origin (c). The five Desk X
+      // cards fall into one stack (Vendor A read as an echo of the release) or two (Vendor A's basis unknown).
       var known = Object.keys(stacks).filter(function (k) { return k.indexOf("orig:") === 0 || k === "chain"; }).length;
       var unk = stacks.unknown ? stacks.unknown.length : 0;
       var note = "<p>Five cards name T-echo as Desk X's address. On your stacks they fall into <strong>" + n + "</strong> " +
         (n === 1 ? "stack" : "stacks") + ", and all seven cards make " + known + " known " + (known === 1 ? "origin" : "origins") +
         (unk ? " and " + unk + " card" + (unk === 1 ? "" : "s") + " whose basis you could not find" : "") + ".</p>" +
         "<p>Check each stack against its reasons. A copy carries its origin's claim and adds no evidence, so the lines you can count are the origins, not the cards. Cards with no findable basis are, at most, one unverified label between them.</p>" +
-        "<p>Score yourselves from the instructor's sheet: each card traced with its reason, the lines you counted with why, a typology with one indicator for it, one against and the alternative, and a confidence word with its reason.</p>";
-      api.finish({ choice: choice, note: note });
+        "<p>Score yourselves from the instructor's sheet: each of the eight cards traced with its reason (these seven, and the freeze, which arrives in &ldquo;Change one thing&rdquo;), the lines you counted with why, a typology with one indicator for it, one against and the alternative, and a confidence word with its reason.</p>";
+      api.finish({ choice: 2, note: note });
     }
     draw();
   }
@@ -207,8 +229,8 @@
   LabShell.start({
     id: "echo-hunt",
     title: "Echo hunt",
-    slide: { title: "Practice: weigh four sources on one address",
-      href: "../../../lessons/forensics/14-FO-fusing_sources.html#/practice-weigh-four-sources-on-one-address" },
+    slide: { title: "An echo is not a second line",
+      href: "../../../lessons/forensics/14-FO-fusing_sources.html#/an-echo-is-not-a-second-line" },
     steps: {
       "case": { html: "<p>A colleague pastes seven tabs into the case file about one Tron address, <span class=\"addr\">T-echo</span> (invented for this game), and writes:</p>" +
         "<p><em>“Five sources say it's Desk X. That's High, surely. Can we send it?”</em></p>" +
@@ -246,6 +268,7 @@
           says: "USDT's contract blacklisted T-echo; Tether says it acted in coordination with OFAC.", basis: "an on-chain record, and Tether's statement" }) +
           "<p class=\"src\">Tether freezes in coordination with OFAC: <code>@tether_freeze344m_2026</code>.</p>",
         question: "Does the freeze move the confidence word?",
+        reason: "Trace the eighth card as you did the seven: where did the freeze's reason come from, and why?",
         choices: [
           "Yes, to High: an on-chain record now agrees.",
           "Yes, because issuers check their own customers.",

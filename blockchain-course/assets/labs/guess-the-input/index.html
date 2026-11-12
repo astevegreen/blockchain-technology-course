@@ -40,7 +40,15 @@ var hashed = 0, spent = 0;          // total hashes and total seconds spent hash
 
 function fmt(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 function hex(buf) { var a = new Uint8Array(buf), s = ""; for (var i = 0; i < a.length; i++) s += (a[i] < 16 ? "0" : "") + a[i].toString(16); return s; }
-function sha(text) { return crypto.subtle.digest("SHA-256", ENC.encode(text)).then(hex); }
+var NO_HASH = "This lab hashes in your browser, which needs a secure page. Open it from localhost or https; over plain http from another computer's address the browser turns hashing off.";
+if (!(window.crypto && crypto.subtle)) {
+  var warn = document.createElement("p"); warn.setAttribute("role", "alert"); warn.className = "warn"; warn.style.cssText = "border:2px solid #b91c1c;padding:0.6em;margin:0.6em";
+  warn.textContent = NO_HASH; document.body.insertBefore(warn, document.body.firstChild);
+}
+function sha(text) {
+  if (!(window.crypto && crypto.subtle)) return Promise.reject(new Error(NO_HASH));
+  return crypto.subtle.digest("SHA-256", ENC.encode(text)).then(hex);
+}
 function zeros(h) { var n = 0; while (n < h.length && h.charAt(n) === "0") n++; return n; }
 function noteRate(count, ms) { hashed += count; spent += ms / 1000; if (spent > 0.05) rate = hashed / spent; }
 /** Years as plain words: below a million, a number; above, a power of ten. */

@@ -28,8 +28,8 @@ On a cloud host the router answers plain `http://127.0.0.1` with a redirect to H
 follow, so give it the domain:
 
 ```bash
-python3 scripts/measure-seats.py --seats 20 --base-url https://<domain> ethereum_lab bitcoin consensus p2p_trust hlf
-python3 scripts/measure-seats.py --seats 40 --burst --base-url https://<domain> ethereum_lab bitcoin hlf
+python3 scripts/measure-seats.py --seats 20 --base-url https://<domain> bitcoin consensus hlf
+python3 scripts/measure-seats.py --seats 40 --burst --base-url https://<domain> bitcoin hlf
 ```
 
 The first command starts 20 idle seats of each lab, reads `docker stats`, prints each lab's per-seat CPU and RAM and

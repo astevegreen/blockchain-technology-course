@@ -446,5 +446,20 @@ class Helpers(unittest.TestCase):
             self.assertEqual(check.compile_python([rel]), [f"{rel}:1: invalid syntax"])
 
 
+    def test_lab_page_scripts(self) -> None:
+        with tempfile.TemporaryDirectory(dir=check.REPO) as tmp:
+            page = Path(tmp) / "index.html"
+            rel = page.relative_to(check.REPO).as_posix()
+            page.write_text("<html>\n<script src=\"x.js\"></script>\n<script>\nvar a = 1;\n</script>\n</html>\n")
+            self.assertEqual(check.lab_page_scripts([rel]), [])
+            page.write_text("<html>\n<script>\nvar a = 1;\nvar b = f(1));\n</script>\n</html>\n")
+            failures = check.lab_page_scripts([rel])
+            self.assertEqual(len(failures), 1)
+            self.assertTrue(failures[0].startswith(f"{rel}:4: SyntaxError"), failures[0])
+
+    def test_lab_page_pattern(self) -> None:
+        self.assertTrue(check.LAB_PAGE.search("blockchain-course/assets/labs/is-it-final-yet/index.html"))
+        self.assertFalse(check.LAB_PAGE.search("blockchain-course/assets/labs/shared/shell.js"))
+
 if __name__ == "__main__":
     unittest.main()

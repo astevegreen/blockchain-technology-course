@@ -117,7 +117,7 @@ each source link only after the line is locked. It holds no key: the scoring key
 
 The complaints, the 2,000 ETH loan, the block numbers and the project's page are made up for the game and say so;
 the 10 ETH withdrawal and its 9 ETH fee are the approved card's; the contracts' behaviour is their own code
-(`dynamic-labs/ethereum_lab/contracts/defi-risk/`).
+(`dynamic-labs/cross-chain/exploit/contracts/`).
 
 - Access control is "who is allowed to do this thing"; ownership is its most common and basic form, and
   `onlyOwner` lets only the owner call a function — `@openzeppelin_accesscontrol_2026` (as of 10 Nov 2026)

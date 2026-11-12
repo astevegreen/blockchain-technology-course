@@ -22,7 +22,7 @@ VM-style deployment in `regression-tests/infrastructure/student-home-vm`.
   student path.
 - Root cause: `greedy_route()` truncation can interact badly with the outer
   auto-routing loop and leave the demo in a non-terminating or failed state.
-- Likely fix area: `p2p_trust/scripts/dht_demo.py`.
+- Likely fix area: `archive/dynamic-labs/p2p_trust/scripts/dht_demo.py` (the lab is archived).
 
 ### Consensus
 

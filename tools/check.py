@@ -384,6 +384,31 @@ def compile_python(files: list[str]) -> list[str]:
     return failures
 
 
+LAB_PAGE = re.compile(r"blockchain-course/assets/labs/[^/]+/index\.html$")
+INLINE_SCRIPT = re.compile(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", re.S | re.I)
+
+
+def lab_page_scripts(files: list[str]) -> list[str]:
+    """A lab page is one HTML file with its code inline: a syntax error leaves the student a blank page."""
+    if not shutil.which("node"):
+        return ["node not found: cannot syntax-check lab pages"]
+    failures = []
+    for rel in files:
+        text = (REPO / rel).read_text(encoding="utf-8", errors="replace")
+        for match in INLINE_SCRIPT.finditer(text):
+            first_line = text.count("\n", 0, match.start(1)) + 1
+            with tempfile.TemporaryDirectory() as tmp:
+                probe = Path(tmp) / "lab_page_probe.js"
+                probe.write_text(match.group(1), encoding="utf-8")
+                code, out = run(["node", "--check", str(probe)], timeout=60)
+            if code:
+                where = re.search(r"lab_page_probe\.js:(\d+)", out)
+                line = first_line + int(where.group(1)) - 1 if where else first_line
+                why = next((l.strip() for l in out.splitlines() if "Error" in l), f"node --check exited {code}")
+                failures.append(f"{rel}:{line}: {why}")
+    return failures
+
+
 def find_bash() -> str | None:
     """Git Bash; never the WSL launcher, which fails on this machine."""
     candidates = [Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Git" / "bin" / "bash.exe"]
@@ -674,6 +699,11 @@ def plan_checks(files: list[str] | None, render: bool = False, added: list[str] 
     sh = tracked_files(".sh") if everything else [f for f in present if f.endswith(".sh")]
     if sh:
         plan.checks.append(Check("shell syntax", lambda: syntax_check_shell(sh)))
+
+    pages = ([f for f in tracked_files(".html") if LAB_PAGE.search(f)] if everything
+             else [f for f in present if LAB_PAGE.search(f)])
+    if pages:
+        plan.checks.append(Check("lab page scripts", lambda: lab_page_scripts(pages)))
 
     new = added if added is not None else ([] if everything else [f for f in files if f in present])
     if new:
