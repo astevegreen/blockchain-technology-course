@@ -249,6 +249,31 @@ links and buttons to run scripts would be helpful." Instructor-only, so its code
   and `quizes/pretest/mark_pretest.py` marks them (`quizes/pretest/README.md`). The dashboard takes in the marker's
   results for each student's lab entry points.
 
+## Readability and site items (owner, 12 Nov 2026)
+Six build items the owner added on 12 Nov 2026, each a row in the Build Tracker. None is started.
+- **Sources in the speaker notes:** the in-line citations on lesson slides show only in the instructor's notes
+  view, so the slides the class sees are cleaner. Every claim stays sourced: the `[@key]` citations stay in the
+  `.qmd`, and the build moves them into the slide's notes rather than deleting them (a Quarto filter, so no
+  slide text is edited by hand). The lesson's reference list stays.
+- **Language review of every slide and lab text:** owner: the text "reads like a collection of statements and
+  facts strung together into grammatically correct sentences, but lacking clarity and understandability." The
+  review raises how easily a student can process the text and cuts extraneous cognitive load in explanations and
+  instructions. It checks for: the curse of knowledge; poor information structure (packaging); syntactic
+  bottlenecks; cohesion versus coherence; system-centered versus task-centered framing; given before new; verbs
+  versus nominalizations; clause branching; advance organizers; inferential bridges. It changes wording, not
+  facts or citations, and goes lesson by lesson and lab by lab, each through the `reviewer`.
+- **Sources review, findings only:** a review of every source in `Blockchain.bib` and the lessons for (1) sources a
+  course like this would be expected to cite but does not, and (2) sources it cites that are not generally
+  considered trustworthy. It changes nothing: it presents findings and itemized recommendations for the owner to
+  decide.
+- **Run labs contents:** a hyperlinked table of contents at the top of the "Run labs" page (`run-labs.qmd`).
+- **Explorer links page:** a new site page linking to the most-used blockchain websites (Etherscan,
+  mempool.space and the like). Which sites it lists is the owner's call; naming commercial sites is fine for
+  awareness (Course direction).
+- **Glossary lookup in the slides:** if feasible, a glossary widget students open from within a slide to look up
+  a term and read its glossary definition without leaving the slide. Form factor and function are to be agreed
+  with the owner before it is built; it reads the generated `glossary/terms.json`.
+
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
 well, evidence), each a judgement rather than a count. A review of a lesson or lab checks it against them; the
