@@ -975,6 +975,44 @@ build_lane_images() {
     )
 }
 
+# The host-side runner behind the quiz engine's lab hosting page (quiz-engine-v2/app/hosting_runner.py). It runs here
+# as whoever ran this script, so the page's buttons do exactly what this script does at the shell; the quiz engine
+# reaches it only through a socket file in .runtime/hosting-runner/, never the Docker socket (quiz-engine-v2/README.md,
+# "Lab hosting"). It keeps running across `stop all`, so the page works again after the next start.
+start_hosting_runner() {
+    local runner_dir="${RUNTIME_DIR}/hosting-runner"
+    local pid_file="${runner_dir}/runner.pid"
+    local pid=""
+    local name
+    local -a runner_env
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "  WARNING: python3 not found; the quiz engine's lab hosting page will say the runner is unavailable."
+        return 0
+    fi
+    mkdir -p "${runner_dir}"
+    chmod 711 "${runner_dir}" 2>/dev/null || true
+    if [[ -f "${pid_file}" ]]; then
+        pid="$(cat "${pid_file}" 2>/dev/null || true)"
+    fi
+    if [[ "${pid}" =~ ^[0-9]+$ ]] && kill -0 "${pid}" 2>/dev/null \
+        && tr '\0' ' ' < "/proc/${pid}/cmdline" 2>/dev/null | grep -q hosting_runner; then
+        return 0
+    fi
+
+    runner_env=("PATH=${PATH}" "HOME=${HOME:-/root}" "LANG=${LANG:-C.UTF-8}" "DYNAMIC_LABS_ROOT=${BASE_DIR}")
+    for name in USER LOGNAME DOCKER_HOST DOCKER_CONTEXT DOCKER_CONFIG SUDO_USER SUDO_UID SUDO_GID; do
+        if [[ -n "${!name:-}" ]]; then
+            runner_env+=("${name}=${!name}")
+        fi
+    done
+    echo "  Starting the lab hosting runner (log: ${runner_dir}/runner.log)"
+    env -i "${runner_env[@]}" nohup python3 "${BASE_DIR}/quiz-engine-v2/app/hosting_runner.py" \
+        --lab-manager "${SCRIPT_PATH}" --dir "${runner_dir}" --env-file "${RUNTIME_ENV_FILE}" \
+        >> "${runner_dir}/runner.log" 2>&1 < /dev/null &
+    echo "$!" > "${pid_file}"
+}
+
 start_project() {
     local target="$1"
     local dir
@@ -992,7 +1030,9 @@ start_project() {
     echo "Starting ${target}..."
     build_lane_images "${dir}"
     if [[ "${target}" == "quiz" || "${target}" == "quiz-engine-v2" ]]; then
-        QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=shared INSTRUCTOR_AUTH_MODE=shared compose_up_cmd "${dir}" "${cmd[@]}"
+        start_hosting_runner
+        QUIZ_ENGINE_HOSTING_RUNNER_DIR="${RUNTIME_DIR}/hosting-runner" \
+            QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=shared INSTRUCTOR_AUTH_MODE=shared compose_up_cmd "${dir}" "${cmd[@]}"
     else
         compose_up_cmd "${dir}" "${cmd[@]}"
     fi

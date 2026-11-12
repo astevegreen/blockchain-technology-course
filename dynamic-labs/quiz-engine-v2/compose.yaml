@@ -19,10 +19,16 @@ services:
       # ./lab-manager.sh deploy generates it into .runtime/runtime-secrets.env.
       # (Not ":?" here: that would also break `docker compose run --rm test`.)
       QUIZ_ENGINE_SECRET_KEY: ${QUIZ_ENGINE_SECRET_KEY:-}
+      # Lab hosting (/instructor/hosting): the page asks the host-side runner (app/hosting_runner.py) to run
+      # lab-manager.sh, through a socket file, with this secret. No Docker socket here: README.md, "Lab hosting".
+      QUIZ_ENGINE_HOSTING_RUNNER_SECRET: ${HOSTING_RUNNER_SECRET:-}
+      QUIZ_ENGINE_HOSTING_RUNNER_SOCKET: /run/hosting-runner/runner.sock
     ports:
       - "${QUIZ_ENGINE_HOST:-127.0.0.1}:${QUIZ_ENGINE_PORT:-8050}:8000"
     volumes:
       - quiz_engine_data:/data
+      # Only the runner's folder (its socket file), never the Docker socket.
+      - ${QUIZ_ENGINE_HOSTING_RUNNER_DIR:-../.runtime/hosting-runner}:/run/hosting-runner
     networks:
       router-net:
         aliases:

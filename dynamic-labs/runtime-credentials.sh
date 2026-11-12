@@ -90,6 +90,7 @@ INSTRUCTOR_AUTH_KEY=${INSTRUCTOR_AUTH_KEY}
 INSTRUCTOR_AUTH_SERVICE_SECRET_KEY=${INSTRUCTOR_AUTH_SERVICE_SECRET_KEY}
 HLF_WEB_SECRET_KEY=${HLF_WEB_SECRET_KEY}
 LANE_SERVICE_SECRET=${LANE_SERVICE_SECRET}
+HOSTING_RUNNER_SECRET=${HOSTING_RUNNER_SECRET}
 HLF_CA_ADMIN_PASSWORD=${HLF_CA_ADMIN_PASSWORD}
 HLF_COUCHDB_PASSWORD=${HLF_COUCHDB_PASSWORD}
 CLASS_CODE=${CLASS_CODE}
@@ -137,6 +138,9 @@ fill_missing_runtime_secrets() {
     if [[ -z "${LANE_SERVICE_SECRET:-}" ]]; then
         LANE_SERVICE_SECRET="$(runtime_random_hex 32)"
     fi
+    if [[ -z "${HOSTING_RUNNER_SECRET:-}" ]]; then
+        HOSTING_RUNNER_SECRET="$(runtime_random_hex 32)"
+    fi
     if [[ -z "${HLF_CA_ADMIN_PASSWORD:-}" ]]; then
         HLF_CA_ADMIN_PASSWORD="$(runtime_random_alnum 24)"
     fi
@@ -180,6 +184,7 @@ ensure_runtime_credentials() {
     INSTRUCTOR_AUTH_SERVICE_SECRET_KEY="$(runtime_random_hex 32)"
     HLF_WEB_SECRET_KEY="$(runtime_random_hex 32)"
     LANE_SERVICE_SECRET="$(runtime_random_hex 32)"
+    HOSTING_RUNNER_SECRET="$(runtime_random_hex 32)"
     HLF_CA_ADMIN_PASSWORD="$(runtime_random_alnum 24)"
     HLF_COUCHDB_PASSWORD="$(runtime_random_alnum 24)"
     CLASS_CODE="$(runtime_class_code)"

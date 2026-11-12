@@ -9,6 +9,7 @@ from .db import init_app as init_db_app
 from .expiration_worker import init_app as init_expiration_worker_app
 from .students import init_app as init_students_app
 from .blueprints.health import bp as health_bp
+from .blueprints.hosting import bp as hosting_bp
 from .blueprints.instructor import bp as instructor_bp
 from .blueprints.student import bp as student_bp
 
@@ -36,6 +37,7 @@ def create_app(config_overrides=None):
     init_shared_auth(app)
     app.register_blueprint(health_bp)
     app.register_blueprint(instructor_bp)
+    app.register_blueprint(hosting_bp)
     app.register_blueprint(student_bp)
     # Last: a start refused above must not leave the worker thread running.
     init_expiration_worker_app(app)
