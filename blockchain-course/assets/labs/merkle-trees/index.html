@@ -147,9 +147,8 @@
           box.appendChild(climbList(path)); }
         box.appendChild(el("p", null, el("strong", null, "Level " + (lv + 1) + " of 3: "), "click the hash that pairs with yours."));
         var row = el("div", { class: "nodes", role: "group", "aria-label": "Hashes at this level" });
-        var mine = ANA >> lv;
         tree[lv].forEach(function (h, i) {
-          var isMine = i === mine;
+          var isMine = toHex(path ? path[lv] : anaLeaf) === toHex(h);
           var label = isMine ? "Yours" : "Hash " + (i + 1) + " of " + tree[lv].length;
           row.appendChild(el("button", { type: "button", class: "node", disabled: isMine, "aria-label": label + ": " + toHex(h).slice(0, 8),
             onclick: function () { onPick(lv, i); } },
@@ -220,7 +219,7 @@
         col.appendChild(pc);
         if (k === 11 && !reached) {
           reached = true;
-          api.finish({ choice: 3, note: "<p>The proof needs <strong>11</strong> hashes for a block of 2,048 transactions. Each doubling of the block adds one hash, and 2,048 is 2<sup>11</sup>.</p><p>Your first check passed with three hashes for eight payments; a wrong sibling or a changed payment sent the root off and the proof was rejected.</p>" });
+          api.finish({ choice: 3, note: "<p>The proof needs <strong>11</strong> hashes for a block of 2,048 transactions. Each doubling of the block adds one hash, and 2,048 is 2<sup>11</sup>.</p><p>Your first check passed with three hashes for eight payments; a wrong sibling or a changed payment sent the root off and the proof was rejected.</p><p class=\"src\">Sources: <code>@narayanan_bitcoincryptocurrencytechnologies_2016</code> (a proof grows by one hash each time the block doubles). The block of eight is made up.</p>" });
         }
       }
       update();
@@ -265,7 +264,8 @@
       out.appendChild(el("div", { class: "block-head" }, el("span", { class: "lbl" }, "rebuilt root"), chip(api, rebuilt, ok ? "ok" : "bad"),
         el("span", { class: "lbl" }, "explorer's root"), chip(api, REAL_ROOT),
         el("span", { class: "flag " + (ok ? "ok" : "bad") }, ok ? "Match" : "No match")));
-      out.appendChild(el("p", null, "The txids come from mempool.space's public API, read 11 Nov 2026. Lightweight (SPV) wallets check their payments this way: a few hashes and the block header, not the block."));
+      out.appendChild(el("p", null, "Lightweight (SPV) wallets check their payments this way: a few hashes and the block header, not the block."));
+      out.appendChild(el("p", { class: "src", html: "Sources: <code>@antonopoulos_masteringbitcoinprogramming_2017</code> and <code>@mempoolspace_transaction0627052b_2013</code> (Alice's payment is in block 277,316, as of 31 Oct 2026); <code>@mempoolspace_block277316_2026</code> (419 transactions, as of 10 Nov 2026); <code>@mempoolspace_block277316txids_2026</code> (the 419 txids and the root, captured 11 Nov 2026); <code>@bitcoin.orgdevelopers_operatingmodesdeveloper_2024</code> and <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (SPV)." }));
     });
   }
 
@@ -283,7 +283,7 @@
       "do": { render: render },
       name: { term: "Merkle proof", parts: "Merkle + proof: Ralph Merkle, who described trees of hashes + the hashes beside one transaction's path to the root",
         plain: "<p>The few hashes that, with one transaction, rebuild the root in a block's header. Change one byte of the transaction, or use one wrong hash, and the root does not match.</p>" +
-          "<p>A block's transaction IDs are hashed in pairs, up to a single root in the header; an odd one is hashed with a copy of itself (Bitcoin.org Developer Guide 2024). Bitcoin hashes each pair with double SHA-256 (Antonopoulos 2017).</p>" },
+          "<p>A block's transaction IDs are hashed in pairs, up to a single root in the header; an odd one is hashed with a copy of itself. Bitcoin hashes each pair twice with SHA-256.</p><p class=\"src\">Sources: <code>@bitcoin.orgdevelopers_blockchaindeveloper_2024</code> (pairs up to one root; the odd one pairs with a copy of itself; a proof is the hashes beside one transaction's path); <code>@antonopoulos_masteringbitcoinprogramming_2017</code> (double SHA-256); <code>@merkle_digitalsignaturebased_1988</code> (Ralph Merkle, trees of hashes).</p>" },
       explorer: { render: explorer },
       twist: {
         html: "<p>A proof checks green. But the person who sent it also sent the header. Here it is done: a made-up block of eight with a payment that never happened, <strong>Mal pays Ana 5.00 BTC</strong>, built into its own tree and its own header (all made up for this lab).</p>" +
@@ -291,7 +291,7 @@
         question: "Does the green check show the payment is on Bitcoin?",
         choices: ["Yes: the root matched.", "Yes, if the hashes look real.", "No: the header must be one the chain holds, read from your own node or explorer.", "No: only a full node can check a proof."],
         answer: 2,
-        why: "<p>A proof only ties a transaction to a header. Anyone can build a tree and a header around a made-up payment, so the header must be one the chain holds. An SPV wallet trusts only headers from the longest proof-of-work chain (Nakamoto 2008, section 8).</p>"
+        why: "<p>A proof only ties a transaction to a header. Anyone can build a tree and a header around a made-up payment, so the header must be one the chain holds. An SPV wallet trusts only headers from the longest proof-of-work chain.</p><p class=\"src\">Source: <code>@nakamoto_bitcoinpeertopeerelectronic_2008</code> (section 8). The fake block is made up.</p>"
       },
       tell: {
         prompt: "<p>An informant says a payment is in block 277,316 and sends a short file of hashes as proof. Tell the agent what the proof shows, in one sentence with a confidence word.</p>",
