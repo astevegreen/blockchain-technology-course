@@ -44,6 +44,7 @@ GENERATORS: dict[str, Callable[[dict[str, str]], str]] = {
     "INSTRUCTOR_AUTH_SERVICE_SECRET_KEY": lambda v: random_hex(32),
     "HLF_WEB_SECRET_KEY": lambda v: random_hex(32),
     "LANE_SERVICE_SECRET": lambda v: random_hex(32),
+    "HOSTING_RUNNER_SECRET": lambda v: random_hex(32),
     "HLF_CA_ADMIN_PASSWORD": lambda v: random_alnum(24),
     "HLF_COUCHDB_PASSWORD": lambda v: random_alnum(24),
     "CLASS_CODE": lambda v: class_code(),

@@ -147,7 +147,7 @@ def _links():
         ("Run sheet", url_for("dashboard.run_sheet"), "The day-by-day timetable and what to load when."),
         (
             "Lab hosting",
-            _url_or_none("hosting.hosting_home"),
+            _url_or_none("hosting.hosting_page"),
             "Start, stop and check the labs and the quiz engine.",
         ),
         (
