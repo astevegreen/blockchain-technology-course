@@ -26,7 +26,7 @@ is marked with *g*.
 | 4 | Mempool dynamics | familiarity | 1 | D1: 6, D2: 5, D3: 1, D4: 9 | D1: 1 | D2: 3, D3: 1, D5: 2 | q4 | p4 |
 | 5 | Distributed network topologies | familiarity | 1 | D1: 3, D2: 1, D3: 1, D4: 3, D5: 2, D6: 1, D9: 1 | none | D2: 1 | q5 | p5 |
 | 41 | Block explorers | working | 1 | D1: 7, D2: 2, D3: 2, D6: 3, D7: 1, D8: 1 | D1: 10, D2: 8, D3: 7, D4: 4, D6: 2, D7: 1, D8: 3 | D2: 3, D3: 3, D4: 3, D7: 1, D8: 1 | q6 | p6 |
-| 42 | Direct node queries | familiarity | 1 | D1: 1, D2: 2, D7: 1 | D1: 2, D3: 1, D4: 1 | D3: 1 | q7 | p7 |
+| 42 | Direct node queries | familiarity | 1 | D1: 1, D2: 2, D7: 1 | D1: 4, D3: 1, D4: 1 | D3: 1 | q7 | p7 |
 | 50 | Wallets and key custody | familiarity | 2 | D2: 7 | D2: 3 | D3: 4, D5: 1 | q45 | p43 |
 | 18 | Reading and auditing smart contracts (Solidity, Vyper, Rust) | working | 3 | D3: 13, D4: 1, D8: 3 | D8: 3 (*g*) | D4: 2, D9: 2 | q8 | p8 |
 | 46 | Stablecoins as a laundering rail | working | 3 | D1: 2, D3: 12, D4: 14, D5: 13, D8: 2, D9: 10 | D3: 6, D4: 2, D5: 9, D8: 2, D9: 11, D10: 1 (*g*) | D2: 1, D4: 3, D5: 2, D6: 6, D9: 2 | q9, q43, q44 | p9 |
@@ -160,7 +160,7 @@ but no slot teaches them):
 
 ## Labs and quizzes no concept claims
 
-31 of 109 numbered lab questions and 9 of 124 daily-quiz items match no concept.
+33 of 113 numbered lab questions and 9 of 124 daily-quiz items match no concept.
 
 - D1 `explorer` Q2: How many seconds apart are blocks 4 and 5? What decides when this chain makes a block?
 - D1 `explorer` Q3: Preview: day 3 explains this. Is 0x5FbDB2315678afecb367f032d93F642f64180aa3 an account or a contract? Who crea
@@ -170,6 +170,8 @@ but no slot teaches them):
 - D1 `explorer` Q7: Block 7 holds two transactions. Who sent each one, and which came first in the block?
 - D1 `explorer` Q8: How many transactions has Account 3 sent? Which field on its page says so?
 - D1 `explorer` Q4: Account 2 held about 102.1 ETH at block 10. Using its page, list what came in and what went out. Its page show
+- D1 `explorer` Terminal Q1: What does pwd print, and which hidden folder holds the node's data?
+- D1 `explorer` Terminal Q3: Split the window, run ls in the new pane, and close it again.
 - D2 `wallet` Q1: What is the path of Dana's receiving address 0? What does each level of the path mean?
 - D2 `wallet` Q11: Write one sentence that states what the witness shows, and what the block 18 transaction does not.
 - D2 `wallet` Q12: Is there anything on the chain that links Dana's wallet in part 1 to the treasury? Is there anything off the c
@@ -260,7 +262,7 @@ Day 1, familiarity. Post-test p7 (multiple choice); pretest q7.
 
 - Post-test answer rests on: 02-IN: An explorer is a node's record, plus extras (day 1)
 - Slides: D1① 02-IN An explorer is a node's record, plus extras; D2③ 06-BF Wallet software builds, signs and broadcasts; D2③ 06-BF Servers learn which addresses a wallet has; D7① 06-FO Dust is bait: a dust input is not a link
-- Lab: D1 Part 2: sign and send a transaction, item 5; D1 Part 2: sign and send a transaction, item 2; D3 Part 2: mint a badge, item 5; D4 The problem, item 1
+- Lab: D1 Part 2: sign and send a transaction, item 5; D1 Part 2: sign and send a transaction, item 2; D1 Terminal Q2; D1 Terminal Q4; D3 Part 2: mint a badge, item 5; D4 The problem, item 1
 - Daily quiz: D3 q12
 
 ### 50. Wallets and key custody

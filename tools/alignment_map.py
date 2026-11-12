@@ -137,7 +137,7 @@ def read_run_sheet(text: str) -> dict[int, Day]:
             row = re.match(r"^\|\s*([①②③]|0845)\s*\|.*`(blockchain-course/lessons/[^`]+\.qmd)`", line)
             if row:
                 day.lessons.append(("W" if row.group(1) == "0845" else row.group(1), row.group(2)))
-        for url in re.findall(r"[Ss]tudents open\s+`(/labs/[^`]+)`", block)[:1]:
+        for url in re.findall(r"[Ss]tudents (?:then )?open\s+`(/labs/[^`]+)`", block)[:1]:
             page = lab_page(url)
             if page:
                 day.labs.append(page)
@@ -189,7 +189,22 @@ def read_lab(page: str) -> list[LabItem]:
             label = f"Q{n}" if numbered else f"{section}, item {n}"
             items.append(LabItem(page, label, n if numbered else None, strip_tags(li), section))
             n += 1
-    return items
+    return items + read_terminal_questions(page)
+
+
+def read_terminal_questions(page: str) -> list[LabItem]:
+    """The questions on the terminal.html beside a lab's index.html (the day 1 terminal orientation), as "Terminal Q<n>".
+    That page lays its questions out as bold-numbered paragraphs, not a list, so read_lab's list reader misses them."""
+    path = (REPO / page).with_name("terminal.html")
+    if not path.exists():
+        return []
+    src = path.read_text(encoding="utf-8")
+    start = re.search(r"<h2[^>]*>\s*The questions", src, re.I)
+    if not start:
+        return []
+    block = src[start.end():].split("<h2", 1)[0]
+    return [LabItem(page, f"Terminal Q{n}", int(n), strip_tags(text), "The questions you answer")
+            for n, text in re.findall(r"<p><b>(\d+)\.</b>(.*?)</p>", block, re.S)]
 
 
 # ---------------------------------------------------------------- quizzes
