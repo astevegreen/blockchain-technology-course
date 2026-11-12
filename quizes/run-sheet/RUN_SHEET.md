@@ -18,8 +18,9 @@ repo root. If this sheet and `docs/build-spec.md` disagree, the spec wins; tell 
   `./lab-manager.sh start course-site`.
 - Students take the **pretest** on the course site, due three working days before day 1; they email their answers. Send the link with the
   joining instructions (`quizes/pretest/README.md`, "Sending it, and getting the answers back"). Before class, save the
-  replies to one folder and run `python quizes/pretest/mark_pretest.py <folder> --out results.md`: it prints, for each
-  day, who got every gate item right (the readiness items are for the instructor's eye, not for entry).
+  replies to one folder and run `python quizes/pretest/mark_pretest.py <folder> --out results.md --json results.json`: it prints, for each
+  day, who got every gate item right (the readiness items are for the instructor's eye, not for entry). Then upload
+  `results.json` at `/instructor/pretest` in the quiz engine to see each student's start for each day.
 - **Lab entry rule** (build spec, "A lab"; set per day by the instructor). At the start of each lab, a student who
   got every gate item for that day right is offered the day's problem. The week-one bank marks them in `lab_gates`
   (day 1: q6 alone; day 2: q45 alone; day 3: q8, q9; day 4: q10, q11, q12; day 5: q43, q44); a day's other items are a readiness check.

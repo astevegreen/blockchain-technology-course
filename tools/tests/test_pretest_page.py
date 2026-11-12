@@ -163,6 +163,25 @@ class RoundTrip(unittest.TestCase):
             self.assertRegex(report, r"\| Ana \| \? ")
             self.assertRegex(report, r"\| Bo \| worked example")
 
+    def test_json_output_for_the_engine(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            (folder / "ana.txt").write_text(page_text({"name": "Ana", "answers": self.answers(True)}), encoding="utf-8")
+            (folder / "bo.txt").write_text(page_text({"name": "Bo", "answers": self.answers(False)}), encoding="utf-8")
+            out = folder / "results.json"
+            self.assertEqual(mark_pretest.main([str(folder), "--no-ask", "--json", str(out)]), 0)
+            data = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(data["form"], self.bank.form)
+        ana, bo = data["students"]
+        self.assertEqual((ana["name"], bo["name"]), ("Ana", "Bo"))
+        self.assertEqual(ana["days"]["2"], "problem")  # q45 is multiple choice, all right
+        self.assertEqual(ana["days"]["1"], "unmarked")  # q6 is written and was not judged (--no-ask)
+        self.assertEqual(bo["days"]["2"], "worked example")
+        self.assertEqual(ana["items"]["q45"], "right")
+        self.assertEqual(ana["items"]["q6"], "unmarked")
+        self.assertEqual(bo["items"]["q45"], "wrong")
+        self.assertEqual(set(ana["days"]), {str(d) for d in range(1, 10)})
+
 
 @unittest.skipUnless(NODE, "node not found")
 class PageHelpers(unittest.TestCase):

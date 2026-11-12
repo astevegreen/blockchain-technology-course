@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mark the students' pretest replies and say, day by day, who is offered the lab's problem.
 
-  python quizes/pretest/mark_pretest.py <folder or files>... [--out results.md] [--no-ask]
+  python quizes/pretest/mark_pretest.py <folder or files>... [--out results.md] [--json results.json] [--no-ask]
 
 Students take the pretest on the course site (blockchain-course/assets/labs/pretest/) and email their answers:
 a block between "----- BEGIN PRETEST ANSWERS -----" and "----- END PRETEST ANSWERS -----". Save each reply into
@@ -11,7 +11,8 @@ file. This script reads every block in them.
 Multiple-choice items mark themselves. For a written item the script shows the student's answer beside the
 answer key and asks whether it states every point (README.md, "How an instructor uses it"); each decision is kept in
 pretest-marks.json in the first folder given, so a second run asks nothing already decided. --no-ask leaves
-written items unmarked ("?") instead.
+written items unmarked ("?") instead. --json writes the same marks as a file to upload at /instructor/pretest in
+the quiz engine.
 
 The lab entry rule (README.md): a student who got every gate item for a day right is offered that day's problem;
 everyone else, and anyone with no pretest, starts at the worked example. Week 1 lists its gates in
@@ -266,10 +267,34 @@ def table(results: dict[str, dict[str, bool | None]], bank: Bank) -> str:
     return "\n".join(lines) + "\n"
 
 
+DAY_LABELS = {"?": "unmarked", "-": "not taken"}
+
+
+def results_json(results: dict[str, dict[str, bool | None]], bank: Bank) -> dict:
+    """The marks as the quiz engine imports them: per student, each day's start point and each item's mark.
+
+    A day is "problem", "worked example", "unmarked" (a gate item still to judge) or "not taken"; an item is
+    "right", "wrong" or "unmarked". `form` is the bank form the replies were marked against.
+    """
+    days = sorted(d for d in bank.days if any(any(q in m for q in bank.days[d]) for m in results.values()))
+    students = []
+    for name in sorted(results, key=str.casefold):
+        m = results[name]
+        cells = {}
+        for d in days:
+            got = entry(m, bank.gates[d])
+            cells[str(d)] = DAY_LABELS.get(got, got)
+        items = {q: {True: "right", False: "wrong", None: "unmarked"}[v] for q, v in m.items()}
+        students.append({"name": name, "days": cells, "items": items})
+    return {"format": "pretest-results-v1", "form": bank.form, "students": students}
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("paths", nargs="+", type=Path, help="folders of saved replies, or reply files")
     parser.add_argument("--out", type=Path, help="also write the table to this Markdown file")
+    parser.add_argument("--json", type=Path, dest="json_out",
+                        help="also write the marks as JSON, to upload at /instructor/pretest in the quiz engine")
     parser.add_argument("--no-ask", action="store_true", help="leave written items unmarked instead of asking")
     args = parser.parse_args(argv)
 
@@ -285,13 +310,17 @@ def main(argv: list[str] | None = None) -> int:
     results = mark(replies, load_bank(), decisions, not args.no_ask, notes)
     if decisions:
         marks_path.write_text(json.dumps(decisions, indent=1, sort_keys=True), encoding="utf-8")
-    report = table(results, load_bank())
+    bank = load_bank()
+    report = table(results, bank)
     print("\n" + report)
     for n in notes:
         print(f"note: {n}")
     if args.out:
         args.out.write_text(report, encoding="utf-8")
         print(f"wrote {args.out}")
+    if args.json_out:
+        args.json_out.write_text(json.dumps(results_json(results, bank), indent=1), encoding="utf-8")
+        print(f"wrote {args.json_out}")
     return 0
 
 
