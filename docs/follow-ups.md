@@ -15,10 +15,9 @@ slide index), which is never listed here.
 
 ## Lessons
 
-- The new 10-FO slide "Where the three sit on OWASP's Top 10" has no questions in
-  `quizes/quiz_json/forensics_10-FO-flash_loans_reentrancy_oracles-quiz-bank.json`. [10 Nov 2026, OWASP map slide]
-- The new 10-FO slide "A bridge's explorer pairs send and arrival" has no questions in the same bank.
-  [11 Nov 2026, bridge worked example]
+- Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
+  trace to 05-EF slides hidden on 31 Oct 2026 (`content-hidden` from line 680); the rebuilt slides (lines 17-676)
+  have few questions. [11 Nov 2026, writing the Spot the fake questions]
 
 ## Labs
 - The shared look's role colours and shapes (`blockchain-course/assets/labs/shared/look.css`) are used only by labs
