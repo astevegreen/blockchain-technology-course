@@ -157,3 +157,6 @@ the game and say so; the 0.5 BTC pool and 0.5001 BTC pre-mix coins are day 7's c
 - Hiders: "Hiders don't score (Recommended)"; the payoffs and the confidence cap: "Keep both (Recommended)" (owner,
   11 Nov 2026)
 - Built in 62d38b76 (11 Nov 2026).
+- Two scoring rules added by the wave 3 review's fixes: a call on the starting coin is refused and scores 0, and
+  each output takes one call (delete the earlier call to change it): "I approve your recommendations for all of my
+  calls" (owner, 11 Nov 2026)

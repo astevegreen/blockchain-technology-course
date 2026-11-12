@@ -79,8 +79,10 @@ Left out, for the owner to see:
   or "dated after the release, so likely an echo". Both are the lesson's.
 
 How it is built: one folder, `blockchain-course/assets/labs/echo-hunt/`, on the shared shell and look, offline;
-the `do` step is the stacking board, which records the team's stacks and holds no key. The scoring key (each
-card's origin and the accepted reasons) goes in `quizes/`, which students never receive.
+the `do` step is the stacking board, which records the team's stacks. Since the wave 3 review the board holds each
+card's origin and gives its verdict only once every stack matches, marking the wrong stacks; the origins are
+readable in the page source (owner, 11 Nov 2026). The accepted reasons and the points stay in `quizes/`, which
+students never receive.
 
 ## Load check
 
@@ -118,3 +120,5 @@ T-echo, Desk X, the vendors, the news story, the dates and the flows are made up
 - Owner: selected "Bitcoin trace decoys", "Echo hunt", "Name the money and the flaw" (10 Nov 2026)
 
 - Built in d45bae2 (echo-hunt lab, 11 Nov 2026)
+- The page checks the stacks against the true origins before its verdict: "I approve your recommendations for all
+  of my calls" (owner, 11 Nov 2026, on the wave 3 review's fixes)

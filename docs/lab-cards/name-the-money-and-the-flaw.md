@@ -65,7 +65,8 @@ Left out, for the owner to see: the vault has a second line that lets this attac
 `unchecked` block, so the attacker's recorded balance wraps round instead of failing; with Solidity's default check
 the same replay fails too. The page replays that change as well. Scoring (owner, 10 Nov 2026: "Either line, full
 credit"): a student who moves either line gets full credit, because both fixes stop the replay and the page shows
-it; the debrief then names reentrancy as the lesson's term. The oracle (price move) pattern stays with day 4's pool game and day 8 ②: the set has no oracle
+it. Moving line 18 (the balance check) below the payment stops the replay too and also gets full credit (owner,
+11 Nov 2026), and moving line 21 counts as moving line 25; the debrief then names reentrancy as the lesson's term. The oracle (price move) pattern stays with day 4's pool game and day 8 ②: the set has no oracle
 contract. `EntropyLottery` is not a game case: no source found states how a calling contract beats it (see
 Sources). The build spec keeps one exploit contract read at the start of day 8's lab (owner, 30 Oct), today
 Bybit's, which is graded; this part, decided on 10 Nov, puts the vault's read before it, ungraded. Outcome 5 has
@@ -130,3 +131,5 @@ the lab and say so; the contracts' behaviour is their own code.
 - Scoring of the unchecked line: "Either line, full credit"; the vault read before Bybit's and the game's cases read
   from transactions: "Keep both as drafted" (owner, 10 Nov 2026)
 - Built in 4f6a89e8 (11 Nov 2026).
+- Moving line 18 (the balance check) below the payment also stops the replay and earns full credit, like lines 24
+  and 25: "I approve your recommendations for all of my calls" (owner, 11 Nov 2026, on the wave 3 review's fixes)

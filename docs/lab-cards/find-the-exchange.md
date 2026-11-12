@@ -106,5 +106,8 @@ The suspect and the agent are made up for the game and say so; the addresses and
 ## Approval
 
 - Owner: selected "Terminal scavenger hunt,Two-of-three,Spot the fake,Find the exchange" (11 Nov 2026)
+- The page marks each call right or wrong against the deposit address (held as a salted hash) and locks a call
+  once made; the reasons and points stay with the instructor: "I approve your recommendations for all of my calls"
+  (owner, 11 Nov 2026, on the wave 3 review's fixes)
 
 Built in 71f7d263 (11 Nov 2026).

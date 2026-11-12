@@ -32,8 +32,8 @@ sandwiches, the 0.5% limit left alone, the twist's refused trade and the answer 
    seat, confirm "Read the pool now", the limits and "Send my trade in my turn" stay disabled. Confirm the score
    table and "Show the class's balances" render, in seat order with no ranking. Do not open a round or send a
    trade: the live suite plays the round.
-5. Back on the course page, set round 1 and round 2 to "none", "close to the quote", "no": a note and the button
-   "My blocks really show this" must appear and the step must not finish. Set both to "none", "well under the
+5. Back on the course page, set round 1 and round 2 to "none", "close to the quote", "no": a note must
+   appear, no override button is offered, and the step must not finish. Set both to "none", "well under the
    quote", "yes": the step finishes.
 6. Name step: the term is slippage tolerance. Twist: pick "Yes: a big trade came first." and confirm it is marked
    wrong; pick "No: no one bought before you and sold after you." and confirm it is accepted.

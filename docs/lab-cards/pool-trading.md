@@ -116,5 +116,8 @@ The trader, the block number and the amounts in the sentence are made up for the
 ## Approval
 
 - Owner: "Approve, score the calls (Recommended)" (11 Nov 2026)
+- No override on the do step: the "My blocks really show this" button was removed by the wave 3 review's fixes, so
+  a student reports what the bot is expected to do: "I approve your recommendations for all of my calls" (owner,
+  11 Nov 2026)
 
 Built in 5bfd664a (11 Nov 2026).

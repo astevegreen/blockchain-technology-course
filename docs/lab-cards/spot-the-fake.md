@@ -105,3 +105,6 @@ sentence are placeholders until the chain is built.
 ## Approval
 
 - Owner: selected "Terminal scavenger hunt,Two-of-three,Spot the fake,Find the exchange" (11 Nov 2026)
+- The page marks each call right or wrong against the real token (held as a salted hash) and locks a call once
+  made; the reasons and points stay with the instructor: "I approve your recommendations for all of my calls"
+  (owner, 11 Nov 2026, on the wave 3 review's fixes)
