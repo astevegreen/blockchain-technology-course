@@ -36,10 +36,10 @@ slide index), which is never listed here.
   plugin (`_extensions/aci/_extensions/glossary-lookup/glossary-lookup.js`) replaced that binding, so the entry is
   stale. [12 Nov 2026, writing "How to read these slides"]
 
-- `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd:1786` (hidden "chain hopping"
-  slide): the callout says UN and Chainalysis reports flag TRON-based USDT and calls TRON "the dominant chain", but its
-  only cite, `trm_t3fcu_2026`, says just that criminals use USDT on TRON because it is fast, liquid and cheap. Source
-  the UN and Chainalysis claim, or narrow it, before the slide is unhidden. [12 Nov 2026, swapping homepage citations (R4)]
+- `blockchain-course/lessons/forensics/02-FO-foundations_obfuscation_tracing.qmd:1784` (hidden "chain hopping"
+  slide, TRON callout): the UNODC claim (USDT on TRON the preferred choice of Asian crime syndicates) cites
+  `cointelegraph_unodcfraud_2024` because unodc.org returned 404 on 12 Nov 2026. Swap in the UNODC report itself
+  when it loads. [12 Nov 2026, source-checking R4's narrowed claims]
 - `sec.gov` and `crsreports.congress.gov` refuse automated readers (403); `crs_cryptoregulation_2026` was read
   through the EveryCRSReport mirror, `sec_custodybasics_2025` in a browser. Re-read both by hand before the first
   class. [12 Nov 2026, swapping homepage citations (R4)]
