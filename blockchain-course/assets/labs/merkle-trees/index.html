@@ -1,746 +1,305 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Merkle Tree Microlab</title>
-  <style>
-    :root {
-      --fg: #0f172a;
-      --muted: #475569;
-      --bg: #ffffff;
-      --soft: #f8fafc;
-      --panel: #ffffff;
-      --border: #e5e7eb;
-      --line: #cbd5e1;
-      --ok: #16a34a;
-      --bad: #b91c1c;
-      --accent: #2563eb;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-    }
-    html, body { margin: 0; min-height: 100%; }
-    body {
-      background: var(--bg);
-      color: var(--fg);
-      font-family: var(--sans);
-    }
-    .wrap { max-width: 1120px; margin: 32px auto; padding: 0 16px; }
-    header { margin-bottom: 18px; }
-    h1 { font-size: 1.35rem; margin: 0 0 6px; letter-spacing: 0; }
-    .sub { color: var(--muted); margin: 0; }
-    code, .mono { font-family: var(--mono); }
-
-    .toolbar {
-      background: var(--soft);
-      border-radius: 14px;
-      padding: 16px;
-      display: grid;
-      gap: 16px;
-      grid-template-columns: minmax(280px, 1.4fr) minmax(220px, 0.8fr) minmax(160px, auto);
-      align-items: start;
-      margin: 16px 0;
-    }
-    label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 6px;
-    }
-    textarea, select, input[type="number"], input.hash {
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: #fff;
-      color: var(--fg);
-      padding: 10px;
-      font: inherit;
-    }
-    textarea {
-      min-height: 96px;
-      resize: vertical;
-      font-family: var(--mono);
-      font-size: 0.95rem;
-    }
-    select, input[type="number"] {
-      min-height: 40px;
-    }
-    .toolbar .col {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    button {
-      font: inherit;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 12px;
-      background: #fff;
-      color: var(--fg);
-      cursor: pointer;
-    }
-    button.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .legend {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-    .pill {
-      display: inline-flex;
-      gap: 7px;
-      align-items: center;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 5px 9px;
-    }
-    .dot { width: 9px; height: 9px; border-radius: 999px; }
-    .dot.ok { background: var(--ok); }
-    .dot.bad { background: var(--bad); }
-
-    .tree-panel {
-      background: var(--soft);
-      border-radius: 14px;
-      padding: 16px;
-      margin-top: 16px;
-    }
-    .tree-summary {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-    }
-    .tree-scroll {
-      overflow: auto;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
-      max-height: min(72vh, 760px);
-    }
-    .tree {
-      position: relative;
-      display: grid;
-      gap: 34px;
-      grid-auto-rows: min-content;
-      width: max-content;
-      min-width: 100%;
-      padding: 4px 0;
-    }
-    .tree.compact {
-      gap: 28px;
-    }
-    .tree-connections {
-      position: absolute;
-      inset: 0;
-      overflow: visible;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .tree-connections path {
-      fill: none;
-      stroke: var(--line);
-      stroke-width: 1.5;
-      stroke-dasharray: 5 5;
-      vector-effect: non-scaling-stroke;
-    }
-    .level {
-      display: grid;
-      gap: 14px;
-      grid-auto-flow: column;
-      justify-content: center;
-      align-items: start;
-      position: relative;
-      z-index: 1;
-    }
-
-    .node {
-      width: 220px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      box-sizing: border-box;
-    }
-    .tree.compact .node { width: 190px; }
-    .node .title {
-      font-weight: 700;
-      font-size: 0.78rem;
-      color: var(--muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-    .kv { display: grid; gap: 8px; min-width: 0; }
-
-    .node textarea.leaftext {
-      height: 64px;
-      min-height: 64px;
-      resize: none;
-      font-family: var(--mono);
-      font-size: 0.82rem;
-      line-height: 1.35;
-    }
-
-    .hashbox { display: flex; align-items: center; gap: 8px; }
-    .hashbox label {
-      color: var(--muted);
-      font-size: 0.78rem;
-      margin: 0;
-      font-weight: 600;
-    }
-    .hashbox input.hash {
-      flex: 1;
-      min-width: 0;
-      font-family: var(--mono);
-      font-size: 0.78rem;
-      padding: 8px;
-    }
-    .hashbox .copy {
-      flex: 0 0 auto;
-      padding: 7px 8px;
-      font-size: 0.82rem;
-    }
-
-    .node.good { border-color: #bbf7d0; box-shadow: inset 3px 0 0 var(--ok); }
-    .node.bad  { border-color: #fecaca; box-shadow: inset 3px 0 0 var(--bad); }
-
-    .footnote {
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.4;
-      margin: 0;
-    }
-    @media (max-width: 820px) {
-      .wrap { margin: 24px auto; }
-      .toolbar { grid-template-columns: 1fr; }
-      .tree-scroll { padding: 12px; }
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prove it is in the block</title>
+<link rel="stylesheet" href="../shared/look.css">
+<style>
+  .block-head { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; padding: 0.6rem 0.8rem; border: 2px solid var(--rule); border-radius: 8px; background: var(--panel); margin: 0.6rem 0; }
+  .lbl { font-size: 0.8rem; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; }
+  .pays { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; padding: 0; list-style: none; }
+  .pays li { padding: 0.25rem 0.6rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); font-size: 0.9rem; }
+  .pays li.mine { border: 2px solid var(--input); background: var(--input-tint); font-weight: 700; }
+  .nodes { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.6rem 0; }
+  button.node { font: inherit; background: none; border: 0; padding: 2px; cursor: pointer; border-radius: 6px; }
+  button.node:disabled { cursor: default; opacity: 0.55; }
+  button.node:focus-visible { outline: 3px solid var(--ink); }
+  button.node:not(:disabled):hover .hash { background: var(--accent-tint); border-color: var(--accent-strong); }
+  .climb { display: grid; gap: 0.4rem; margin: 0.6rem 0; padding: 0; list-style: none; }
+  .climb li { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.4rem 0.6rem; border: 2px solid var(--rule); border-radius: 8px; background: var(--panel); }
+  .climb li.bad { border-color: var(--private-key); background: var(--private-key-tint); }
+  .hash.bad { border-color: var(--private-key); background: var(--private-key-tint); color: #7a3300; }
+  .hash.ok { border-color: var(--output); background: var(--output-tint); color: #064d39; }
+  .hash.pickd { border-color: var(--input); background: var(--input-tint); }
+  .flag { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 4px; font-weight: 800; border: 2px solid; }
+  .flag.ok { border-color: var(--output); background: var(--output-tint); color: #064d39; }
+  .flag.ok::before { content: "\2713  "; }
+  .flag.bad { border-color: var(--private-key); background: var(--private-key-tint); color: #7a3300; }
+  .flag.bad::before { content: "\2717  "; }
+  .row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin: 0.6rem 0; }
+  .made { font-size: 0.85rem; color: var(--ink-soft); }
+  .size-row input[type=range] { flex: 1 1 14rem; }
+  .proofcol { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.5rem 0; }
+  .proofcol .hash { font-size: 0.8em; padding: 0.1em 0.4em; }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Merkle Tree Microlab</h1>
-      <p class="sub">SHA-256 for calculation; each node displays the last 16 bytes as 32 hex characters.</p>
-    </header>
+<div data-lab-root></div>
+<script src="../shared/shell.js"></script>
+<script>
+/* Design card: docs/lab-cards/prove-it-is-in-the-block.md. Hashing is Bitcoin's: double SHA-256 over the two
+   child hashes joined, an odd hash paired with a copy of itself. The eight-payment block and the twist's fake
+   block are made up for the lab. Block 277,316's 419 txids and Merkle root are the captured ones (the card's
+   Sources; Blockchain.bib mempoolspace_block277316txids_2026). Explorer txids are shown in the explorer's
+   byte order; Bitcoin hashes them reversed, and the rebuilt root is reversed back to compare. */
+(function () {
+  "use strict";
+  var SUBTLE = window.crypto && window.crypto.subtle;
+  var TXIDS = "d5ada064c6417ca25c4308bd158c34b77e1c0eca2a73cda16c737e7424afba2fb268b45c59b39d759614757718b9918caf0ba9d97c56f3b91956ff877c503fbe04905ff987ddd4cfe603b03cfb7ca50ee81d89d1f8f5f265c38f763eea4a21fd32467aab5d04f51940075055c2f20bbd1195727c961431bf0aff8443f9710f81561c5216944e21fa29dd12aaa1a45e3397f9c0d888359cb05e1f79fe73da37bdc298318e6bbb7a5bbcdfb289e0e7397ea1e7dc0ab04b8ea9cdb42b2c35d0ea7ced80a424c64ae0e8f084c7af1e7cd8313078f748a1da480a6a5f21caa71a19d76d615fa6ff3e07f94d305946937f24d72e5497f25f631505b36ef33c267b938253476f0332d739b9890cf279bbdff139b6c81f5b43335e0dbb41ca62beaeb10f010aba11a4c15cf2c129d0a22c2459f873b9585a7bca9d83df22e7d4e59d65ae9499c7494f7f1bf97c98543cd7f4b90ba11892b21cd09c6b07d8d6d079ca29630f42d4f2e05829a7252de930acd23b8524b389b085993dcc59138da6840cb1a3fea108cf56a5ff95b2c66f2037c705bb49a63c17e55481f2262e9fda3dea65d960fb0f982b51efad54b98e0a4e0405472dcd71cd226306fc625639843167dbedd99c68e3e7f55fbd0a7f0b8b00eaa4fc4a3ab1334b9f34a8b6059dbcdd833235ce56dee6d8d3746f29e3fa8b110cbb64719d702bd5774618b3a5dad8137a702116d6a2748d080ffbdb2c557c0c50f6915f26bd06e4ea9efd5d1430b16fe71e7b8fdc5a3aa6383f9987255e8e36b2b8daa445aa7bbc70584d051d67021142df368ceaf03e5f158609d47465a23abe272310ea29d799b1ef5994ac1f93de2735469432e9e1475144baf8fb0e6d4ed4e739f9bb9279b45eaa049ffb4787259699a2b428ddc923b75d7f6f23db000d6364747b08d91757bd48c8b2f1595e211846991243291cada94b3be6799179dcad9a55b3108fea9e1187c8b09d7fc32fb3b328988565558934970f3f65e30c075b69528bba5aff0c4587f670306dc36ded0000b357e3b46d53da13398bfa8470832a395f4280ff2c6b4a40a065b6ed86ffe22eaca299b1c9695a0d38c450701ae83daefe1a6ae8d30f199b5db29e717fb988e87256efbc027ce28a80a913e3cce2bd95d2c87c6e7690a17426fed68d704cbdfa8f0a5365398f8998436022471b40effe1d9ba245c505da9156cebbebc741afba0c8765432c74a9517aec4de9c2b47b0373d023019126fba2f2280cd064f8155662e0def2d70278ffee346f53c2c82a48efc1bbcd451b01d52e786acbeb2659ee3b1bcdf97fc52c0875742b2bf0928a39cca51e7b25f1ceb0c0bdceb80e244d2385ee58f0110218cbaa752eb505e31d1aaa1a2bae144b8a1d59e611225d906c51aff6af6a060c5b4c21abdb5b3ffaf7bffd414c9a20ea2232f5bb00bf16084e29f2b42d504172ad23aff8f59ce07abed634b6d557b1fdcbaac556dd72971867d456030bc83deb07d8cc21396aaefe85f02a13506dd7bf39caaa5ee388937a8fcd62b631459686bf066593a6c774bdbb80983d0ad06d2684d709ffdc294a34455fd96a3528364cdf072afc294e8ae69bc24cc975e9e286616aff3595867a18bfb2763779c38016f6e80413ceb163e465a7eeaae1bc5341bb928e40b9cadbc5c044d45dbafae0bf6f7ba790a44594442b3d35f6b2f90f7c23b5b5f38725a8c7447013b13bc500fbd9f7c400c7d9d2efabe136690496bc86c5446055717fd416637372b536adfdf22034bc543ec5c1578a3f932175e5de9c97fd406b817b1373de1f91f409df182f2b8bee29dc0cf97aafce3b87ecd8d0d96becf520e0690c3b0f049b04e6d2ea6dbab450bf3348cb17eb9e3b7608a98bf97419fa30deae0977631bcfadf639f420f07cb4991c6bd28993af620784ee34d063af7c12804761ab6fe4a159b924e44d2938f7d3baa56c1c3b74a13803eb8696df01cddf99dfe704e0eaa58c07a2072b665dbe6bf43771426bb509dcea7b2ea490d367ab457ea53f51ba01ef14855f60c833826dffcfb9031865d85c435d77c3a81c5c9d9aaac0084a4da39d77110a88fc15ea37d620f9f73e6751d6b16275a0a6491b55ff594d5e3ff0bdad309afc6e7146624f5c22e5e1c5530175b890c452314912b5dd0750143e8e74f927f945b6ad13e5239b09acfcd6b211876cabb33203036128702d0f3aa5c65703326b0c9745ac345decff64474c1b6e691a9f97e6db9e18a97bfac41aabe8f174b3c601d592e19518ec3757c72cc2df7fb26e3889b52ffd5997cf80d599a1237db59800a74c0189e17ede880621c565c4a8cc39897232042dbcb56b509014a004293e120216eec800fc2c89d2c1a4d2d033a694bed0c8411d125108e37206cf971f5564818fb1a5703def9295e0ec84ac8a80fbbd9ebac133801807bd110a98217f07ddc53906236f1a0375a76e8c05673e0ef79543227ad877dacd1ad60d41e6cacc9305f5232a7012685203b4bce2f73aa0417bc477245f069230a9bf54dcb35011ca4790152f16bfc20506ac27cb2d81f14a66b956ded243666d506e2df3280248a020d26ae6743efa96e7a833a61bcc2f5df958437ac1eb300cd8434cc9503a12a51117f74ee85f02cbb9e3eb7c63227767f2b136d9a3950c20b39c43c9bb0dc62f29a7258b840753d69a230d0ebe3602dd90edf4c06c4184ea462b4ae18cfff4ce46629c49800f2718e414aabcf7f1f162646865abba2a13336dcf3db1fcb5f494a377efea6fbf956ba0e419870209ac42c143715477e99082e3c2c3d61663cb3a09e70424b415903af32984d594c4c9d91520f3bf1497b28acb27d934edaf3dca8f69738acdea63065141b79f022ba1b55f4a9ab4c5ea7ff9c4be440627052b6f28912f2703066a912ea577f2ce4da4caa5a5fbd8a57286c345c2f2485175e9c00519943a1efd95439f280f6afa4824b7f41df298cf3bfc277aae9dad05bd50f802c9e98b5feb9bff324a0f33bf12b2b165671328a0584ac8a793bfd3ec2017e2e1c51c10b2cef1e8d99308b971e5a14d56723ad9168497a4c93d376a9aff6cd164a768688b050dc310dc5d4a753b3404c7defbabf86d6734762d426a65a6c0c2e9b3da70ac57846ce10f9bb17afa24590e71466e96ec026fc7906659ea9e6f8302c5ac1a30ee7199283eda890ab5504f4f18ab97d025d6ff4d005b4f0d4477742fda6b6bbc1cf92cff5a184e3c8b97123304902be5d9382c82c46293cab5dec07c8063872f489558d032093b030f5b06b67651216672761f0756f9188a459a3532d5a330c436f6c86450b83a357edba54277bc77dde12141a43fc6e9b5ed0d3cf2b91842baf83039d5fa59e9bd688b79b4c246f6b4b246ed48376eed9cfd96520339a1442fdcac6a0fd7b3e7ab966412bc5e688d46ac1557a8d29dde605048ea1a47a34238c924082232129d2b5957e1384ecbcee6a538ae1cf42765dc3c43371aedd1f051f46d05ad0d44705e262a6b43fe20e8c213c5eb646a21557c4b102ca43c1934b4847378e6dcec72ee347470df77898cfe9ba007fe36bc21aa85c60323b3b5b4f980f6ab826788b84ea79d46a617553cb6b3de3d16b514517223bdb1779ed0064356be72dc3ddfed26354ccfb6d6ded9d0328523aae6eb1648a54fd2232437538ef5bcf8934d24b2e91b33c88858096307cd9f8858fa24b549421aba43539da6ad89e4007d191cc27ce48c6529fa4d1212b366328d681c38f0d1f8e1b6543a8aaba256944a082bbfffff2cd8b2b77315fa8fb684d00de05834ae77a6f7ceda931c7ce086960d606a494c6bb3798c78547d3c40e58b1b40d85d8bedc9a775e0ffecb44eed27981b7967af5c467ff7fa30c95fe5efa0c1ea31cb12f5431f94291c1aca45623bf0641fec3e57dd54e9111d8b9ccf7e2260b3b60460a256af0a7da74cfd49a35345c0ee463faacc59a79e0201459b7593609868ced5f802d62369f43099f8e927b4bde49b51a2f653bb4e890e135da214d2667a71468fe47006aa8cfa5a5e984b1bf7c971eb467d6607bd274362b07f5389d4c1feb359c20e49699d6947a8a47b5cefb43a9d67121b71942aaf0bdf332f5e58f55cf50916f554f9ff61febb748777ebcae34a14d739b88d426d5604cbcacb5d8dbcaf1ee3825303db409f8b9b38a77228e8ebd1b0ac73cf9f31fd977aca5a066bcf58cf6be637b4acfddcaa678832a3fb8a5515cfd7cf135f09607b33d8d37de07d2001379768c1a9c771dcb1013140ac530f648c2d1b9672a018ee2739bd3cabec82a31bfb46bb0796d872453fb2c1ed5f31d3407a99efb0ce0f71860f9228f93d34a47328b34ed619e48b8ccea1ba801415a11073fb4adea1e0d7ba1541640a0dea09a3652fabdbfa44432897f38ba18b7cabf79c2899dfe226fb1ae6a2958da7c5e156fffa6f72341b29a8ac66845b78c50d2866208fea57b8dcf91df0c25f8e07b9f963975f0fd37115d1f9f8e2354bae597e7f8ae896786df055c7d7658dbb332e313e32c2acf1adf522c524caa848500eedc160a4a87ce9778c7b8bd5c48a08c86d6ce627dcb9d279a7944687a22bb74e78c5df1f27857109aa42194f152e650a38fa6fcd4e48a6b9c83f0f8112adb90cad5da45249c9929cd03055099ced1527777b063f4b2637386bcf8da008b46854e41f7b10a9797fb6698564e811304ce5f87f0169d957b873d6338226d52445336cb011843ca682a9aa5b5cd5888d24d07f2eb8cb18e44d0132b827584fa1cff011ef5c0dba63951475aa5d34c02d48c8db1b27bd1e4cc378f4be143380516cc7f1d2eed652b078d185b5f07d24f80ccd87a512a9127eba345340f850417263fb5c616580b426b359fed8727a8bb809399aaa8ae97cc8372a30d25532ea59ee13bf141c081493abab53d17e26d32f98b51eac4215f143ed1209f5849067dd1b1e340ef0710b75fb9b472bb2c748319e11708b7240c584fc514ef6d097b4386d21293b6b93617165f5a323ae36d5e641053d38bf73836a5289607a283c1a81ccda58994bb959e0919f59f6479dd5db99f46c8bf21951bce5951a26450888a22a8d9ae7f21a5f2c065f7cdfe46cdabf67e9c6becb97934e23b23d6c38af6bd088b281b6690f4a6af378d752c7f8b8c0d43984878155606d0c3c0f6aedab3ad9cc1da13ce06962f4138f12a4f9756a76a12f0cabe5ba636c115b295198a52277ef34bf1be8f5896b74fc9fef71e028e3f6ee1693a6e6f51cb9f043d4815730d13dbf9efa27cd558a51b7f2ca2f19746ebee6e733a32d2ffa13305ac12949d0f07ca60bc3c40ce1ea27d1d44141c2dcaf8781f8d0abfc7a49b0aff5d2eb217543c22e779c7170b173c4dba1bf178ff331e9f39d020359441dfeb9b70113f944c4c2a08a1b8ebeb369ae07d9f202b94c8ce6043c4c213270a17f8aaa8be4b426c2d3e352101de6f6bb1a3d1b2b4cf7112b6443ce5425449ece3a3063e9c77412b361417cb216e164d551f23b104c271743929ec98730855128904ce2aad3046a27064e0647c343452e88ec5b6fb41c30620bd9099358d29d7c0cacf33b732fee75cbd42b459c3e7147dade2d9486aa41638aa12f6f0c4e61ec15ab443d1de2ac83190645d4515bee9b8c04e612adce105cefeb79f80812d8968877ea5e17a5830d1ad664f1723b764ec2c8d8e42cd5e47537b127068956a122d4addc067f0122e3bb7a14921e08a3a3f5cd25c2368e76941266e52a14d075b76600f6507395d4d744e229b522cd1de7d3d5ec2c456220af477c8f799a62778691e22b187f1d1bba3bd44b50233fda718dd4b0540b1c8c82122b3011760df1938fa67ff32b5b1313d5db952e8edee5be163caebd5314baa47e0505ae50cb7f278b4b63ae47e1825ae190135f899da1dff0715f2324b000b8dbf54b38f60fdc22c355c32f0f95ddd6492f85f9a3f3c9cd23d82a93853dbbb7791f29687e354271a4582d0e56e7a1fee0b1b93179f8c364d0208fe43a49dbb595eb57d8f29c95775fd296b6edef6c47bde849d1e00669361c0275a0ecb7bef8bc2347e47700d1a5e7ec85a865d5b5d6829c9ee8b3ee098b00133a928f7c0f6d641a1b53e5449e892ae2baec1c67a5695fb34820ba9f76aac3709b6206f69c99337ae203394fb50653c558fc9d4f67a8a33a5df4729d28dc21a1e349a4b0961d24cef4414e520923490a01c6467dfb8cf9e9a023037907dc592ab44ea910d864c895037a6356073abf975044a526b4433a9e825e4ce3cf87e392e82a4521bbf58c73e03636c67d4e3f7e3f0564dc552a62cea4f2f768b2a2c05456e5d6fdfe95fff733f64cabfb9c0a155b0208afb3d73bbd25db1cf7485fea5316b631438f9aaf3a45bbc88878e1615119ed3c36eac8a2cc052309adec0812e4efd7058a128111d213d5b7479f6ea53b1f769998651b18bb1e9b867913ada0402bd49a31b0f63a54e66c6bed2c7990f37ca8534791840441f32cde8fee024de4c3ef6b9461c60742ecce5e6d303678ebdb4f3d6ac85e143faa338c0afa6bef535b9aadd8f3598e88c9001965e7a0d51cca03b05d2eae12b54f9b78d9b4f4847193679b3ab2f6e20e4d42007ead47d0188099297c1749368cb74b3b7ae408cd0a05d9971c870a3b5deb58d07a3ecd17730522884d770972758e4f468eec840d2a92a0d8855076b32a4fb3cdbf47f78b42f4f6d88750bbdbd3d3dafb8e314c1605f6d70ca341b36292655e160100c7952d3ce4528ce125d8964881c9553300b0b810fb314d3946e47abc54dc64bb13384405ce242cab1c3bc5a4458a6ffc7c603cd8e886e82785778517bd564cab7f1b3a290a66d020b3beaea1b8f7a6520e33b523a42000c7913a98421203b1a0a71c6a926546a3594c18527ee76c1b2da9b50a6dfe9ade87018aeae401213ef6e7ce8af6fe718833bbb4ef31903a21c40e6d9ee2173067d208c2f9c303276c0aa05c454fc869474b09e9475e2ebe9c005fd4b6678cf6fad11ce2ce8dc67a3da6ba13688c65adb289dc82a0b6de106ceb476a3780c1297e7c66ca477f30a5a8227c0b60e383b9f809182aebabb744ce6b7620f400402a7a904ad2253954229199cd2e96bbc9d8865fe89db70aa797efbdbd9a6aece361aa4b20fe1ed70502261a48679c0ad4795b05f54a4c47c669ebe2b0e874ed058386488a2bbdf93b9d7ccbcfc359cd7e75ea098f905fe115dd4fe2e9617192c8ee5deb2b8e45a9f3f368e1d8dbf805a452729a21e6b24c9c7b88a2b9a86eafe8fac6e7a84a805a231017600c3452dad86436dab76ed3ba1f6c2f0ae5060be2f2046979f40f65f6a0351e4ff123b41cc2058c09f067495c59b509ba8f57298704de59b93d05c22961f90af23ce404fb660ea2cf27273f588dd6c14331cb62905cbc96fff122fe7452414d89aa6ed0950a1b226cd251ef9d5fa1c5637bdd34987903144545f4d14b67853d9adc5eb16a0209b324f0ff3a4ded925691a9976d960d9fac66a762c7221e142ea6b8ce8ca340c5ae2e806ee2952eaa4540ca9d18c260705ecdb2d51378393d572c3bf0572208ad61c414f32fc9075a8f40ed1d2ca669cd36d53ea8188d4b539ee92da59a2bd39066968cda53813ebdfb29c48253893dbb44f9ed919f46fdf2b243776fdfb59da19c1dbfd72a8b50aac426bb28fc1dc018d2661366dfa5d1207c67c3433156515445c6a96dfb8686ce53d585125562ac65a5465706285c76f0519a39bbd9259a9d244302aed2a90dfbca378931d10b20c3c887e48f166d9f20771de16627caf2109708bfe5c2c37d39c8319ed62d9aaa2b1847170c7acf6ae2c93304847b1d5c69bcc3eed30b976f5a221f75f4f2c1f89eb2d2b01571c8ed7daf010c0b82ebb5029d9ba11336c70fea99aedd6b937697fb7a2955f16d5d4b6ee91e10bdd9e872ad01e504a9a53faffc1d4092d4a4def838ad5ed3aa45f82d540160ea2d9acdbc2c57738ed5c7f4752842ce3406f780f6772b9bc0cbe8666f784fa6b17b1147ce31022633d32ea41ac19b087f5ac1e493c88054768180b1511156f2c183abacf6c4bffe681a24f27f7bd593666bb7dab13ebf9ba28594072d071103ff7068580d469088d33d8426bc5d204c760388f69ec6c1a5f967ec55056de8d366801fc04faefbcb8d9a18e643f604fe70da4fd5d669f711ba9b3b6b4ccaab9445ef287accd95052c3bb9652a56339f6a895aedcfaf1564374d2ac01f53276a178f9e74ec641c190844bfadd97ccd4ce0a81015496ef95899f00d60302d5ec9c53f9e14b3ac2d7f9878941a59f1503228c1cf198934c44a936a1939363376db7d96b018f2afdc950d53d512c7d85f00a18eeedd3000dc3271fedcda697b1f1dbd50c7084de5dafb02c3adc83effb1204fa8c7e4ae6c782292ff251c3caf1e1d4cd9e1825f075a94d523ee034940ad43791e1357d21258d9f2842952bd0b9f33ec12e38f4d3dd22206a374c5dd8c5baec812394aa15b2794032fc095fab0faad43be6323984c841414f4a2c0e9eb644697549a95ffd0d79d59a3e0f48dc901811f7e8a0cb2245e14763079091e0ec690c64f33e8697864e624d368792018851b7e3a3bc3f1fbd0c0e9a962ea20ab079d700488f77308756608b36ea770c2d3a77cca242a31296a124e9b0382d4c3a6a02f41779f66754c4c3ae6ef716f2c3e370c4cdd35c48b68fda1a0262b3720fa0484debf87a77cc2c5175683df8c33aaea667bae3bd11dac608031c968d1797a55aba441b774d68d8457366bc018b175ee9fa7ee5e542ec6c6815f32136d7444619b0531cb725bb2ede76a17b169935f2e530abbae7b984b263e64abba856b90ea0e90d70c67833a7f729d2aee3aff4558459aaac1adf5132a1eac8060bcfecdb829068051211e13c798b1ed801682d04739dc81a9777f2d09d03509f052a65890fa738e462b30056f15682c537aa7e412c88545f3c08faa870e76bf06e6d28def4a1a121792514f9293d0bf0b14f662d54b2b8359076c9220295e4594059464e5a1ff7f10ba884c601b906d34b17ee5a979217d463a436a7fcc42a4d8f22275b3cba7b943d8081d8bbc5b57a880a7e21cd2d9811f47a7afe2e174d7d61370212670ac8b2ce9451427aba5d25f5af525907fa77b278884a0e7d1c6b84b9d013db391e4182f387ffbd89b42accf1fde69c059cc08d35900a946c658c239efbbfb7a7fe311a6d63cfff65efc7680b6f9f6e7765fbbb94d80e550c70e5d66865d0fdc1c2320e06654e1160c652bfa9574f806e7a254c8383b724c9658148a73dc803646d6bceb24d5a6a35191e78012aec58cd153e8ad19958d5d5134f9340ee161b451b8fb65f8a41f323b958abc736ba0a103499bc732203cf5e37ed6573d7d7e15d529609e120d4c32145026324013e88278f3d2a7c0f811269d923ed0d3063765754fc003d3a90c2bd12a43115e4bc6adcf0ba1daac9cb21e532ecc8441165b10b3f301a3a47ac4064e6486fb464d74eeb72a458743a9ea1fa55fcdf179244ecbc15b4a53af7f375e47b612a0f5cba2dce1593d4374a2a4c5fdc117c72862069ca2ccf7ff23d2f22d48d006ac9eb41960d753e16b8928ef2a2534f267a3d7544462bebe47ea405c58072aa0edc23e06f35782da076e0e8fa434bd50fcb423eb94ac39e92a3a1b22171cf8e5d4acec26d4ef942eb566dcf37c54c438f6aec87db70aed737fc3c9bd2649b6c3fcdd10d0fa45e33fe31f7c142692812ba2c8334b460f3dfd68deb0e8e1d6377f692429668a9ae16b703c81b0eec17a2f44a4496f832e01c82a0b6ff23728b0c7c737eaae3a88345054ffa783c393f777b80d03f025e112d5fff9ee08c4c4565f1210c0c2c23789a10b6d2b6c1fefb793d3d490db2347f263f8345457f9f2e7b8c89ceed9e650cfd1e7122e5ba3db3bd1e97440dc9270a39c66627a3c84cd7bda03da7749680fc68ab13667a0fba910393b6ac01761b6ab6cf2927252d93297165082d56818171f26025fd4ee67f000aa06a6c2a46e5cac4c29a4fd1f71fb49dbd901091cec6e9d30cee602e26f33aacf0d0ccfc12c27871308f7fbca142763d8ac1bb99a8b16279a856874b6fe3afc4265a5f737f5ece79ebd5fde73ef823b98eaf4c42ded0d3763e317c447b5afdbad8f2926dda18a02c2c86c86c4bc5323cb2b942ee4cca14b55f2be97e1ccc2779d2997c218d2a3fa86d855976046ac20145e13b250c157598992fc458b7169d580513fcee267091141ff76c03500503c3602e679e235ac7e519761c8913ff4a306a41111c2122f269e8257107d15762291cb68d512573ba5526eeb90448e6e7cc39a332563a4ed05268a2dfbbfa04d0f095eff2d83eb556b72aea8941d7be93067e9cad658c190ca164dd14253b1a99146897de1dfa7a237b7c2672948ac0c637de79d041f40d02934609281bc32ab49f3206dfaf15c0dcc4ad3d9c24e04dba6474f0985908dee8b54b46639a238380fefa8496ea695685f6ebe189c2513b46509523f3e9fbdf4b8b35f8556affd1a1e1ba9ae1602a9fd16dd0374879149e72727ebd89bfb6f23c2d64b97cf8efa1bc98944404e24698ac1c370db133d6df3c0717896c9d327d816dc9172b19d01162560bf73dd80e0efa199dc062338a7a98cc9ff6c3d2a36d9ab2fa62ab559da5f2e3c25c1c1ae5251ef62ed71c23b7cfe87e8ce9fc7dd7e1993a2f630dfac31659611f26a8d10a6a50263c270e1c614ad6d921669be52bd0877f6bcc04d6c5b5a5c44166633ad6315a27ecfe057c52d0a40256000f74cf85c215b4acd18ceac1e9ffab744599206b1652c9f7c3d5184a02ea8014a9b0191bd9b340700183663a1c0960c5f85da510b400b73072848817d697b30d60ffc72c0789e29771fcf8eba4c2887e03f5bdca66f06b47a3022f1c3dbf4284e1ad6819255fc8263136c719c1d4f04166589ab003dbe3b753fe93100775dce46f62ae3234b3728d7529b4ab1ec7df3f1f031d4ddee74e30603361145a15dc5477df9f1b01be0dd6aef9d4089c04877ceeaa833c7f153a44930c3fa7207a41598f355e6dffe163c18d4f0da13013e18accc47430a70c57af18b0a044dd9d6670ee64f1a15f6ae906b2d581d575480eda3fad4c4a9471b92ae7d7bf1711df7f2e85e509a9638aead162d82bf409e1ea941d5fa0a8afe1291ee09ad6b9e05e8b5d70fa96beee682af4fd2f55a4d64a5a3284ff19b4917f60ab783c4429655ed03f69e8b7cca7ce6319ec1939294c4c43c22ae450af3c6656313359c7cf82da572db061a1cd9b7994297369ff9254c75e028d58020224c66a80b71901d356136c48d02f8237c89504ed5ae64892a9530ff413708028166c4ac9278813206a7190a623f1d8d7b29ec76b591e2f9222622db06a2cb88a35dee00b8bd17c32acb008247f7fd8bb9fa0054aee918b43b288949eb654afd8d7bc073aef6aa1b2c56e0b86891a2e1040f63cfdb80ac3efdf02912b4b921b141924c9a4596cb03c4378e2820d423e613b0952c892c095e2708341c255900524a59bc39beb3c46fe5d84ad2cf86fa4b3e405d6efc4e44ab65a249160eb44d2332edafa2298b843de2ef99487ddbe5fcf351948b2771b4b67b12291f703a69e47a5e27e7a8a8ab0dfdbd0dd8ab3da6df40a37108713fcc7b715179c4b4b67f2f7b7a74deb74360183fda82da34ef12b93ebb00b60c053b129fa25722f2e984c78b07ac22e08b7713fa3b87d54cfab29312b4d1c97076a27820cc6a75bbd01d43b7038284871143d31ddb1e58f644976f0e91815cd123bcced6a98daa692e6fecc6689a9756ffe788bb949ba111d1815c9c290116dac9c8a34f56343105e44445bccc6758505d971efcc90c397022d8cd271106ace56cfdfd18b2760e7cc824cf90101f6b31d20d8d5f2c1f1a47568ad9ba76a14e751b41ac202294c87aa8c2bee50b606c84f2bfa13ac2f4ef8ec2e9ca847825b3e925a74ab58019b43db366a3611118c448f38fdfe99de04057e73709733b83a06a98e6c92fcb20f929f502bc31f8960d648169c3305bd2932d89f9e8efaf84fe610263e88890da3b80fc418aa931412ee75396eb00c8070131df13514bdc2b96c6b9d27390b59fdd72052ef90dd63240776cfae5a4eabc7e0d7a41438bb41ce4be28c9fa1a1cb08385a4831963b6f3ef82b5e7e830d06ec46c6e4a614013bc2d468bc8ecd37ed25a3bb7a43f9c0db2c0845f0f2ecf8f7d470b305c62f3308af023390e113d1ca50376f26e2ac71bfa90451aa4d85a0ad0fa0ac0dcb1698cd09717124c275a64f79c4a751d78953e9f8a038a8fec3f740f2e71e923012f3703795bc931c6177f924507881f0a50656b8de93430e8cc1910d799beb40edbe5cbba5fdf1f6e137fd759b273af8efa89ed2b97ee059a6b7f728bde2fd26a869b8a8b66ff691a280da83c970ca60f4e3aaed70fbc25e767978161a37d86df447e330ea09799f8e03c5a3afbe94b9f49ce5455c2ee9057a9b077d1c8637511a045ed8c25aa4756d66b4128dbeeaa2dfe45699437aecb8db57d883de4cc499d3236c27dfdf8dae5f802a861690b07dec5384542ef10e3685253033ca34846e4c686c1fae3e248a2f03c6e28eaf52141d26a9fbb06d1e075ec87c52df47c4849a566d5711f505e1de19b657172186b57728d30128082a8f2465528ebb3cd709fe0987ce1af4cec6d57306bbd9d1df23dd790900056b2efe203e94d4c28eeb846f9a875b87c5f4286bf8e1a98d0e27b3c28c48820674ee7e32d609b308597e3e20626b54f50254af19bfb0ae8db6db908e679a8379e132fcb855971ba7c09d3ff53eddadee9fa279eb572ebdd40d7c97569c05a7ad480c651774531d0390c08443e70178344f922649fde69db6a9b9a073e43a32517d2b4f82beaf53b3a8b87843192a9c61698366dbff28baa58ac2b69b147ad81d8cbda187d9d555db90dae2ac760f1f5d3f63527a0abbf4452d850e7a685dc2bc4b54a8e5611f3b877606ad5b84cff9b37779aa9470f82dd94f6710451db7334c8569150d581f0e054f6b2f78d6d13cbb3e97f252724e616e34ff4d87cac01d7efa80d925a4b5d6f10e7bae83d99a3377f816398cef6b91f826dceb88b91cac5f7834db2bec052fb41d3b407b274d1089d6c69dd7153919a660c65f7c497a9854714b909caafb44c4cf135857c7d43553a6f9ec2fb3eb0f8ae08e6ec726df402a6f7b32a2e038662c186b9e419f5e2007aab77f07c43328e958600a3878dbd8f79145b0f1d7c0dab3bc0b76ae0dd58d0e8743575ce69d261ca320a6a212a58e06e7b4517aea3ab48eff0f3ecc0b17f0bc555e8a6d36a65f95945a439d2b19c20a28aa632636d3e074ff258c8866241245bdcf7932cf9b6be67c05c26e75a8e07fccf86b31cc08a72516de05e054b651f8c667e7efacecce9d8ab7876336cbf28801b06f401c4dad600a533564f44b8dbc8a1cb9d9d413fc2475cdeb555f1c2565657e4660a3f7c810fc4d6b4412b39635079d1474b2d6996718d7073b6873516975bd0046c12c1cd7d0a58443bf0c1ab4a68d01e8b5f41f96bc4e076efe7a0c268b45fc68149d4bc1004aa7f7e5bf3c5b1044bd9d7db91e096c6daba8602ef84068b28ec16aff7fcff778e60af2fc47c1078ed6b3f968a3b0ac0f844e3a72f6922f33450bc4d142594427f540109aff4bdd42fe3c1f177a5c2c301ba1a764402f1eb63adf692f6915589607a86aa9d4cd7e01872d71170e843f0040a27611affdc5f25c3a276ad4b6f1ca16b01220cbde2954f5b1bc6d0bd29bb978d1e708267f4f56b959522e6eae75f580d5bbfec5ce55aaa15399c64bb4d9aebc1040644e3ab080474564852ad7aef9338506f2da0257ceca1865b7ba684ce85d15df8b52dd0ff0a1eb9e4b509b8b0d7dc80a019f1b30e14731742d43861207a109bc3564a80a43bb0ab88cdb1b1be182d99403b20c35f6bb03df2a5bd911252c51624c973989c84291e9e86529f42017ece9a665c67187ad77bb5931ece9579479cfeee9b07caafb7a6367f94aa227022d6fd940c8006ca7b4f7ae94eeef66f6dcf4583d809cc90002f1df6eec0fee29f0db8f2d354ab291821fd4a5cc5e72119b1ea45d72688704f52c9604fde34872d9751b1e3a8ecf089c9f53e79d6b398cd13b9c63e7000ae918a0c0ef4ebcc4666cebb03fcdbc0e012bd270d5b376567e54cc303fbde30139bdc13810ead4fc03dfd9023f10aeb0429bf2db85acb677aba9b38b404f13ad86ddeb7951bc3d3ea50b5dd1cb4b676fdd9037182073b9fa0d7a469dc340dff80ec6845276de7081c9b4e391360d735f0d20002bd564aef9f02e75c99ad01bb93460b3b6765b38603436452305d6e2b4539cce4cbec0e4d34f969a052edbd92405e1dd39833fffd774d72f006d16804aefa9c04ada14845ef88823e023740d996ec9b25aa5905d249c2806d07df0f2b925f9579db006ddcc1d613b4ebd9d9a9258267e1176a838954de8ffdb74900337f6f6f1dcb1bab61bd1ba0577c76a64a0b564dc5f203171399fcf987b14630346ede01a82b9125a1e23c0b75626e4579ff5d178f19a81a59f4412dfa9e0a6eee31392865edce305e65ffcb53f96df4961995db3170a00d5140e91a65b5360d4b5e6117fba372d76da1237e71c8f75835cb82b112e7e270a8fabeda2b8c30d1e6e0f4bea8ea64ac88ec62ba035e978edd057253d93f7a9dc06070dbf8b558e2aed276daab897f4775a2cbb09cb38c43524629c734e3580bd45be2473618709a679aeba84e23db785402ee1c951d2e87c988b40d69107d92ac03fb3d2261a7dda01bf10b54869d4ade78930a2b884b6409aa4d7665e68c7ea6fb253aa3945839f19ea3dc3976415c5a2225d688d4ae3762abd879f61fb3fecd0e68cec14e80432034e6bb1946ec6ed0d94e67e2dd884f467e1b300b641d112d160ebfff92baaeac7e27d40a9c88cb81e47653f364fe0f565f7af42fe2ef46ae5d3a20f7c4fe57538a27c304be315ca37551c0a6f1b73fbbe8837514b0678012b5e9073d9542e346fb329861b802914cf937f23e97f17c4f78e59c68558b7efefa4d2560370f82f852f6c621ef0a4960c450f9b92fe501d6077e469d2bef581c67feb88674956db8005594fa1eeefb327b01486d9cfa0d83f748c382e1a3ded133a21310e665f44a0b2855be99a47892f75f7cb671b8f2a71338b5ca7dc3ee8bddee8d7e810c693e9fea7bc32767c9f01b40ccbac0082d3fea2be61d9ae679b936edb66c69cee08420eca0e73a0e7bc68672692d051da8ae96753da7f816ba0e5204480d9c8ca5a3516238675899b8f7af696ebaf562c1e1a66767ada95f857b807057dbf9d38130a6e49775b8b390da0c238a39d74c4ca708a4f17863f06fa01bd82b20a4374a396fbea67c461a8142baaba41c33c9c362a9c022295c212201099290a42d748f81f93a88c7b63588c15be7ae90971457481dc9205af797adea4067e29823a6b623428149bb29dc0b0e3e0c7d34618ed5a56d44aa240ec3468037005076b76725f9f8dda4a6aa5ca0da0f2e5a1f317aba0dd677859816657c19fc4769b004fbe30b341c65e6d586fe9d737b4a260b63b3aed6112703482cc0b0122ae6ae49153697182a16921196b99e2eed401e34cf8126cd202bceec9dd39a5a1fd34530ea510a5f2584138cea2ffeff60df59667a2f274709235ab6bdf1b701c482f2ffa65f63582635d2aa027037bebf821481973daa93bddea7ad1a1be3815da080b3d17c9500b4050c184477842e769c343e215092f48ac35101015eacbeff1fb9f08637e7a32ac2d4558c63f3a869f78929ea6722fc9f99c95f6426bab9975533283923881ab4439f989c316472985baa9fff58de03555b646ba127aeecf8f3fa04bd99fc28fdf770f5b8487d0a6aa6712a1157bedef6ab1c775a1213f7a33e5778f825d4d2a536f671378478fd11e59d1b9b2d1f2217c22e9150e6cef6bdf2d46abe2da139df4bc0f625ebf6fe54d5e15790865fc8320f7f3876bfa670b6c53bb1b2a56916055acdc56a48b7a539a70fe82ac03e081ca6f45c32862bc03ef8255433de1e12adfb771623472f1460f3feb162d541b139c5f4e1259021ec6ec73c74fabe426da5fd8c1ebfaf7580f291dd68030435126671b197420298a91382823bc10d80c1df2f15ef7b39cf4ec6e422c5c9ff00631b57b12c75b9e12948dcbdb1346fa960cc2d07241c0638484d8a88913730db1ce813ae435716268c7429f05f23fbc52706883fa986761754b5f213e3ed9bab7f64b63d6fa347dc51d8950e8046c24caf829ae1012ee3ed9f12a7f3b0617bbba4cf8506fc9bdbbd7e96b0807bb7f4401551421fe7e8d142b230be1990fd1ec1055412cf1dff333a4bb26e981799504663db929a011787a7e8f911a7cc44733da18624f4b280304017b3e0cbc6b9d3b05da9519040c43b260fadb6cb112c6f70b35a98254bbe239c3420394b977a4fdc0c52d59ea4e6615fd80de2de2f3ff6394b5e3cf5023f52a84a41bab3ec838280d94ff4b3c693bba5adc88a9f5d6f3d695f63fbfeece6cee062c36f3ce46913afcb7e7d1de206ea428fc87ec38e22c39a5a008d57463397c9f314476f79d46110aa3b266fcfaad21a876d86008b24c042e874ed58fd36bb6d554992865ca6b53340a7e8cf535eac96eb16f467479e8c6247c17aae361ba77036d3f3eb950742573b3b38efb3e46e3746f20629e8cf33b8462b91fb1a5329f6333e5cb9fdae1147812a8827dc37296648103db46292d3247197faae6f4c4bbc6a43bf991aa3ecccbd6b0183e9edc7965359b2ffab482739803eb60e2a338e07256ba8d60ee5d7aa8e6da6a5c7f303acf61747ae65e1e13681f31ef7c1c9f189160d162a29e761d84711cb5f9f66a943a902babe8b2db89d6e219cd0f39ede0bfa2d4950969b750cf893e083b7fa7263801b9629dc486ff8b02e42974afb1a4f6f87111dec8cd0fd3b62327c02b167abfe68f6ec9f2e0d294c0145078a2d6954b93072487ee912fd59c39a47785ec6d033eabffde53a26b10f7eba5da7e7b97c710f98d20e3957ac46837a9d6cb22e0277fa731449d7ec02f342a97826e279cf5fb4285fd1fdd3c7bc06c23f94915d9fbdf3e448dc20c6686a14fd5a97a35904fea47e22a08a3ef316d5a07f77098ee8758a26fe36c323a79049c1b1ec64fd7136ca1d8cb234083b1766bfcacb493640b02c048bb03f1591c161d4cfff9c0655563402e87e7c8e728c21bd1802ca3a00afecc0d018d87e4b2d40cc31c24fe35caf2988b0e6d8be837a94a8adc4b35810fd1a5695b9fb218df1a3ab01cc1624267e43f6901a01827ca4d38e085c90f3326b55ed4780cc293f668d03ef985acdc9b9770238abf60be8588192500b61c2d68ad55e14a61dc698f8f7351872584294f834627696b0c912dbc0184d35d0e8ebac684e940ab820682978dafad5f443dac6f0c7dcab77d1209010d17a0926ef3b8f104fc2422db595b209328cf5bc4daf4abfb93e24c97b112a304d59311f8a92311e6e02e6ab3b9a566ff13a5f4770e2859b35a691bda3fd4b4c1d548a121191df3726a3fb23c4c69dfa5f5217bb0e2759562a13f998deb0406331dd436aebeb22c9b629d6a769fd3f679e18ca4c6c34b15d6b3ab9ce936cd058d872b1e59ed3cb622972c5956f30cdb5a5632a025a1c416b6843d1d48dadc401e1cc04ca3520febf885f98688398fdb67284ed251cb68c11a2c103b6f74c13fb4e1423bab4245e6115f7456d71c9f0ec3da3ba1054a5b26a133d9af62f3b98e4e59174017c94f709f0272dd55c39ab6ad3284758e3bdbf9d8063e7de1fea5d812017f685bf4d43c69251c328bb231286eb8bf2c7f98f2553418f99b8c35e273a5910e96d7682b920a1b09b109c1408ac9cbe336e05e12e2d9ef66ff411af234f894a05f752c46ae8f04979e387941c62100926bac1ae7bebba6a666987040fb0c0849a6c5e9d1f656a2a058b346e9377d46a047678e62b2cf2d47d9a4b309d2ff9248b26513baccf14d1e50c07ab371bd6cb4bac7cad63d20a2e24897f3295fc7b520c72372318812931f3e783ab994dde32a72fa5957eff8df7d742132c3d1730a87108275a86cb00ef626f5c84b8c5d53cea9948d5b7e751b573e4736da8dda5c92ba1667091b7a591503304e5e08cf3f081a32626bbbd9b6e4fb5b37a326a0313078a14d85e93b36a2f76d3eb5b7380da9b43e4b87c63a7ee6119ce5161bc330d0f0598dc117a6488f6a2fa610c210f7db36a6108ce5a45732eb32063c41e9577a53b6fd7f3c869cc1b7b3007807c865b2fe42fabc5b9540ec81d6c36572d714774524f62e0a5e34d35a7e0f75d6eca0bd512a59240d9a613e25cdb387f9fcfe867fdd7dfee0e2e91c5209569bcee650fd08a53c07a0312c6cf27d6098135ba12838a1ba672aad6ae73d6cf36979bd35c22375974be1b9892b8fc08daffc3fd3431462b46b4adc8e3da663582993ecbfebf62ef7de4d81115b235a5020de78b300b2a1d2d9449b58db7bc71c3884d6e0579617e0da4991b9734cef7ab23a6c87130ec283ab4c2c493b190c20de4b28ff3caf72d16ffa1ce3e96f2069aca96f423dbc3636ef193fd8898dfdf7621dcade1bbe509e963ffbff91f696d81a62802ba8b2adabc5796a9471f25b02ae6aeee2439c679a5c33c4bbcee97e081196eaaf6a048588d9ad4d1c092539bd571dd8af30635c152a3b0e8b611e67d1a1afe67abc6bd5e2cac169821afc51b207127f42b92a841e976f9b752157879ba8bdd38985a6a1bfd35037cb7776b2dc86797abbb7a06630f5d03df2785d50d5a2ac45ea0a3f6016d2bb90ab92c34a7aac9767671a8a84b9bcce6c019e60197c134bc098445d748ced5f178ef2ff96f2758cbec9eb32cb0fc65db313bcac1d3bc98f";
+  var REAL_ROOT = "c91c008c26e50763e9f548bb8b2fc323735f73577effbc55502c51eb4cc7cf2e";
+  var ALICE = "0627052b6f28912f2703066a912ea577f2ce4da4caa5a5fbd8a57286c345c2f2";
+  var PAYS = ["Raj pays Lena 0.08 BTC", "Mia pays Omar 0.50 BTC", "Ana pays Ben 0.30 BTC", "Tom pays Eve 0.02 BTC",
+    "Kai pays Zoe 0.75 BTC", "Joy pays Sam 0.10 BTC", "Ned pays Ola 0.04 BTC", "Uma pays Vic 0.20 BTC"];
+  var ANA = 2; // Ana's payment sits third, so her siblings come from the right, the left and the right
+  var TAMPERED = "Ana pays Ben 3.00 BTC";
 
-    <section class="toolbar" id="toolbar">
-      <div class="col">
-        <label for="content">Content blocks</label>
-        <textarea id="content" spellcheck="false"></textarea>
-        <div class="legend">
-          <span class="pill"><span class="dot ok"></span> Consistent path</span>
-          <span class="pill"><span class="dot bad"></span> Mismatch in path</span>
-          <span class="pill">Leaf tag <code>0x00</code>; node tag <code>0x01</code></span>
-        </div>
-      </div>
-      <div class="col">
-        <label for="scene">Preset content</label>
-        <select id="scene"></select>
-        <button id="useScene">Load Preset</button>
-        <label for="blockSize">Block size (bytes per leaf)</label>
-        <input id="blockSize" type="number" min="8" step="1" value="64" />
-      </div>
-      <div class="col">
-        <button id="generate" class="primary" title="Build tree from current content and block size">Generate Tree</button>
-        <button id="recalc" disabled title="Recompute hashes from the current leaf text">Recalculate Hashes</button>
-        <div class="footnote">
-          The lab splits the UTF-8 byte stream into fixed-size leaves. If a level has an odd node count, the last node is duplicated for the parent hash.
-        </div>
-      </div>
-    </section>
+  function toHex(u8) { return Array.prototype.map.call(u8, function (b) { return ("0" + b.toString(16)).slice(-2); }).join(""); }
+  function fromHex(h) { var o = new Uint8Array(h.length / 2); for (var i = 0; i < o.length; i++) o[i] = parseInt(h.substr(i * 2, 2), 16); return o; }
+  function rev(u8) { return Uint8Array.from(u8).reverse(); }
+  function sha(u8) { return SUBTLE.digest("SHA-256", u8).then(function (b) { return new Uint8Array(b); }); }
+  function dsha(u8) { return sha(u8).then(sha); }
+  function pair(a, b) { var j = new Uint8Array(a.length + b.length); j.set(a, 0); j.set(b, a.length); return dsha(j); }
+  function leaf(text) { return dsha(new TextEncoder().encode(text)); }
 
-    <section class="tree-panel" aria-label="Merkle tree">
-      <div class="tree-summary" id="treeSummary">Tree has not been generated yet.</div>
-      <div class="tree-scroll" id="treeScroll">
-        <div class="tree" id="tree"></div>
-      </div>
-    </section>
-  </div>
-
-  <script>
-  // ----------------- Utilities -----------------
-  const enc = new TextEncoder();
-  const dec = new TextDecoder('utf-8', { fatal: false });
-  const TAG_LEAF = new Uint8Array([0x00]);
-  const TAG_NODE = new Uint8Array([0x01]);
-
-  function toHex(bytes) {
-    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  /** Every level of a Merkle tree, leaves first, root last; an odd level pairs its last hash with a copy of itself. */
+  function levelsOf(leaves) {
+    var all = [leaves];
+    function up(cur) {
+      if (cur.length === 1) return Promise.resolve(all);
+      var jobs = [];
+      for (var i = 0; i < cur.length; i += 2) jobs.push(pair(cur[i], cur[i + 1 < cur.length ? i + 1 : i]));
+      return Promise.all(jobs).then(function (next) { all.push(next); return up(next); });
+    }
+    return up(leaves);
   }
-  function fromHex(hex) {
-    const clean = hex.replace(/[^0-9a-f]/gi, '');
-    const out = new Uint8Array(clean.length / 2);
-    for (let i = 0; i < out.length; i++) out[i] = parseInt(clean.substr(i*2,2), 16);
-    return out;
-  }
-  function concatBytes(...arrays) {
-    const total = arrays.reduce((s,a) => s + a.length, 0);
-    const out = new Uint8Array(total);
-    let o = 0;
-    for (const a of arrays) { out.set(a, o); o += a.length; }
-    return out;
-  }
-  const SHA256_K = new Uint32Array([
-    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-  ]);
-  function rotr32(value, shift) {
-    return (value >>> shift) | (value << (32 - shift));
-  }
-  function sha256Fallback(bytes) {
-    const bitLength = BigInt(bytes.length) * 8n;
-    const paddedLength = (((bytes.length + 9 + 63) >> 6) << 6);
-    const padded = new Uint8Array(paddedLength);
-    padded.set(bytes);
-    padded[bytes.length] = 0x80;
-    const view = new DataView(padded.buffer);
-    view.setUint32(paddedLength - 8, Number((bitLength >> 32n) & 0xffffffffn), false);
-    view.setUint32(paddedLength - 4, Number(bitLength & 0xffffffffn), false);
 
-    const h = new Uint32Array([
-      0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-      0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-    ]);
-    const w = new Uint32Array(64);
+  function walk(start, steps) { // steps: [{ hash, left }]; returns every hash on the way up, start first
+    var out = [start];
+    return steps.reduce(function (p, s) {
+      return p.then(function (cur) { return (s.left ? pair(s.hash, cur) : pair(cur, s.hash)).then(function (n) { out.push(n); return n; }); });
+    }, Promise.resolve(start)).then(function () { return out; });
+  }
 
-    for (let offset = 0; offset < paddedLength; offset += 64) {
-      for (let i = 0; i < 16; i++) w[i] = view.getUint32(offset + i * 4, false);
-      for (let i = 16; i < 64; i++) {
-        const s0 = rotr32(w[i - 15], 7) ^ rotr32(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-        const s1 = rotr32(w[i - 2], 17) ^ rotr32(w[i - 2], 19) ^ (w[i - 2] >>> 10);
-        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+  function chip(api, hex, cls) { return api.el("span", { class: "hash" + (cls ? " " + cls : ""), title: hex }, api.short(hex, 4)); }
+
+  function render(box, api) {
+    var el = api.el;
+    if (!SUBTLE) { box.appendChild(el("p", { class: "made" }, "This page needs the browser's built-in hashing (Web Crypto). Open it from the course site or a local file in a current browser.")); return; }
+    var tree, anaLeaf, tamperLeaf;
+    var picks = [];      // [{ level, index }]
+    var path = null;     // hashes climbed with the picks
+    var phase = "pick";  // pick, result, ask, rechecked
+    var guess = null;
+    var redo = null;     // the recheck climb with 3.00 BTC
+    var sliderAt = 3, reached = false, busy = false;
+
+    function status(t) { api.say(t); }
+
+    function pickedSteps() {
+      return picks.map(function (p) { return { hash: tree[p.level][p.index], left: p.index < (ANA >> p.level) }; });
+    }
+
+    function onPick(level, index) {
+      if (busy) return;
+      busy = true;
+      picks.push({ level: level, index: index });
+      walk(anaLeaf, pickedSteps()).then(function (p) {
+        path = p; busy = false;
+        if (picks.length === 3) { phase = "result"; }
+        draw();
+      });
+    }
+
+    function root() { return tree[3][0]; }
+
+    function drawBlock(parent, withRoot) {
+      parent.appendChild(el("p", { class: "made" }, "A made-up block of eight payments, for this lab. Each payment's hash is a leaf of the tree."));
+      var ul = el("ul", { class: "pays", "aria-label": "The block's eight payments" });
+      PAYS.forEach(function (t, i) {
+        var tampered = phase === "ask" || phase === "rechecked";
+        ul.appendChild(el("li", { class: i === ANA ? "mine" : "" }, i === ANA ? el("span", { class: "lbl" }, "your payment ") : null, i === ANA && tampered ? TAMPERED : t));
+      });
+      parent.appendChild(ul);
+      if (withRoot) parent.appendChild(el("div", { class: "block-head" }, el("span", { class: "lbl" }, "header root"), chip(api, toHex(root())),
+        el("span", { class: "made" }, "printed on the block's header before you start; nothing you do changes it")));
+    }
+
+    function climbList(hashes, bad) {
+      var ol = el("ol", { class: "climb", "aria-label": "The climb, bottom up" });
+      for (var i = 0; i < picks.length; i++) {
+        var p = picks[i];
+        ol.appendChild(el("li", { class: bad ? "bad" : "" },
+          el("span", { class: "lbl" }, "level " + (i + 1)),
+          chip(api, toHex(hashes[i]), bad ? "bad" : ""), "+", chip(api, toHex(tree[p.level][p.index]), "pickd"), "→", chip(api, toHex(hashes[i + 1]), bad ? "bad" : "ok")));
       }
+      return ol;
+    }
 
-      let a = h[0], b = h[1], c = h[2], d = h[3];
-      let e = h[4], f = h[5], g = h[6], hh = h[7];
-      for (let i = 0; i < 64; i++) {
-        const s1 = rotr32(e, 6) ^ rotr32(e, 11) ^ rotr32(e, 25);
-        const ch = (e & f) ^ (~e & g);
-        const temp1 = (hh + s1 + ch + SHA256_K[i] + w[i]) >>> 0;
-        const s0 = rotr32(a, 2) ^ rotr32(a, 13) ^ rotr32(a, 22);
-        const maj = (a & b) ^ (a & c) ^ (b & c);
-        const temp2 = (s0 + maj) >>> 0;
-        hh = g; g = f; f = e; e = (d + temp1) >>> 0;
-        d = c; c = b; b = a; a = (temp1 + temp2) >>> 0;
+    function draw() {
+      box.innerHTML = "";
+      var live = el("div", { "aria-live": "polite" });
+      if (phase === "pick") {
+        box.appendChild(el("p", null, "A made-up block holds eight payments, and one is Ana's 0.30 BTC to Ben. You hold Ana's payment and the block's header. Prove it is inside: at each level, click the hash that pairs with yours."));
+        drawBlock(box, true);
+        var lv = picks.length;
+        if (lv > 0) { box.appendChild(el("p", null, el("span", { class: "lbl" }, "so far (your hash climbs)")));
+          box.appendChild(climbList(path)); }
+        box.appendChild(el("p", null, el("strong", null, "Level " + (lv + 1) + " of 3: "), "click the hash that pairs with yours."));
+        var row = el("div", { class: "nodes", role: "group", "aria-label": "Hashes at this level" });
+        var mine = ANA >> lv;
+        tree[lv].forEach(function (h, i) {
+          var isMine = i === mine;
+          var label = isMine ? "Yours" : "Hash " + (i + 1) + " of " + tree[lv].length;
+          row.appendChild(el("button", { type: "button", class: "node", disabled: isMine, "aria-label": label + ": " + toHex(h).slice(0, 8),
+            onclick: function () { onPick(lv, i); } },
+            el("span", { class: "hash" + (isMine ? " pickd" : "") }, (isMine ? "yours " : "") + api.short(toHex(h), 4))));
+        });
+        box.appendChild(row);
+        status("Pick the hash that pairs with yours. The page hashes the pair and the result climbs.");
+        return;
       }
-
-      h[0] = (h[0] + a) >>> 0; h[1] = (h[1] + b) >>> 0;
-      h[2] = (h[2] + c) >>> 0; h[3] = (h[3] + d) >>> 0;
-      h[4] = (h[4] + e) >>> 0; h[5] = (h[5] + f) >>> 0;
-      h[6] = (h[6] + g) >>> 0; h[7] = (h[7] + hh) >>> 0;
-    }
-
-    const out = new Uint8Array(32);
-    const outView = new DataView(out.buffer);
-    for (let i = 0; i < h.length; i++) outView.setUint32(i * 4, h[i], false);
-    return out;
-  }
-  async function sha256(bytes) {
-    if (globalThis.crypto?.subtle) {
-      const buf = await crypto.subtle.digest('SHA-256', bytes);
-      return new Uint8Array(buf);
-    }
-    return sha256Fallback(bytes);
-  }
-  function trunc16Hex(fullBytes) { // last 16 bytes of SHA-256 -> 32 hex chars
-    const last = fullBytes.slice(-16);
-    return toHex(last);
-  }
-  function displayedHash(fullBytes) {
-    return trunc16Hex(fullBytes).toLowerCase();
-  }
-
-  function splitUtf8ByBytes(str, size) {
-    const b = enc.encode(str);
-    const chunks = [];
-    for (let i = 0; i < b.length; i += size) {
-      const slice = b.slice(i, i + size);
-      chunks.push({ bytes: slice, text: dec.decode(slice) });
-    }
-    return chunks;
-  }
-
-  function setTreeSummary(levels, blockSize) {
-    const summary = document.getElementById('treeSummary');
-    const leaves = levels?.[0]?.length ?? 0;
-    const levelCount = levels?.length ?? 0;
-    const leafLabel = leaves === 1 ? 'leaf' : 'leaves';
-    const levelLabel = levelCount === 1 ? 'level' : 'levels';
-    summary.textContent = `${leaves} ${leafLabel} / ${levelCount} ${levelLabel} / ${blockSize} bytes per leaf`;
-  }
-
-  async function copyHash(input, button) {
-    const original = button.textContent;
-    try {
-      await navigator.clipboard.writeText(input.value);
-      button.textContent = 'Copied';
-    } catch (err) {
-      input.focus();
-      input.select();
-      button.textContent = 'Select';
-    }
-    setTimeout(() => { button.textContent = original; }, 900);
-  }
-
-  function scheduleConnectorDraw(levels = currentLevels) {
-    if (!levels) return;
-    requestAnimationFrame(() => drawConnectors(levels));
-  }
-
-  function drawConnectors(levels) {
-    const treeEl = document.getElementById('tree');
-    if (!treeEl || !levels?.length) return;
-    if (!levels.flat().every(node => node.dom instanceof Element)) return;
-
-    let svg = treeEl.querySelector('.tree-connections');
-    if (!svg) {
-      svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.classList.add('tree-connections');
-      treeEl.appendChild(svg);
-    }
-
-    const treeRect = treeEl.getBoundingClientRect();
-    const width = Math.max(treeEl.scrollWidth, treeRect.width);
-    const height = Math.max(treeEl.scrollHeight, treeRect.height);
-    svg.setAttribute('width', width);
-    svg.setAttribute('height', height);
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    svg.replaceChildren();
-
-    const point = (node, edge) => {
-      const rect = node.dom.getBoundingClientRect();
-      return {
-        x: rect.left - treeRect.left + rect.width / 2,
-        y: edge === 'top' ? rect.top - treeRect.top : rect.bottom - treeRect.top
-      };
-    };
-
-    const addPath = (parent, child) => {
-      const start = point(parent, 'bottom');
-      const end = point(child, 'top');
-      const midY = start.y + Math.max(12, (end.y - start.y) / 2);
-      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      path.setAttribute('d', `M ${start.x} ${start.y} V ${midY} H ${end.x} V ${end.y}`);
-      svg.appendChild(path);
-    };
-
-    for (let levelIndex = 1; levelIndex < levels.length; levelIndex++) {
-      for (const parent of levels[levelIndex]) {
-        addPath(parent, parent.left);
-        if (parent.right !== parent.left) addPath(parent, parent.right);
-      }
-    }
-  }
-
-  // ----------------- Merkle Structures -----------------
-  class MerkleNode {
-    constructor(kind, level, index) {
-      this.kind = kind; // 'leaf' or 'node'
-      this.level = level; // 0 = leaves
-      this.index = index; // position within level
-      this.left = null; this.right = null; this.parent = null;
-      this.leafBytes = null; // for leaves
-      this.computedFull = null; // Uint8Array 32 bytes (recomputed from leaves)
-      this.currentInputHex = null; // value from the editable input (truncated hex)
-      this.dom = null; // container element
-      this.inputEl = null; // hash input element
-      this.leafTextEl = null; // textarea for leaf text
-    }
-  }
-
-  // Build tree from content and block size (bytes)
-  async function buildMerkle(content, blockSize) {
-    const treeEl = document.getElementById('tree');
-    treeEl.innerHTML = '';
-
-    // Build leaves
-    const chunks = splitUtf8ByBytes(content, blockSize);
-    if (chunks.length === 0) chunks.push({ bytes: new Uint8Array(), text: '' });
-    treeEl.classList.toggle('compact', chunks.length > 8);
-
-    const levels = [];
-    const leaves = [];
-    const leavesRow = document.createElement('div');
-    leavesRow.className = 'level';
-
-    for (let i = 0; i < chunks.length; i++) {
-      const node = new MerkleNode('leaf', 0, i);
-      node.leafBytes = chunks[i].bytes;
-      const full = await sha256(concatBytes(TAG_LEAF, node.leafBytes));
-      node.computedFull = full;
-
-      // DOM for leaf
-      const card = document.createElement('div');
-      card.className = 'node leaf good';
-      const title = document.createElement('div');
-      title.className = 'title';
-      title.textContent = `Leaf ${i + 1}`;
-
-      const kv = document.createElement('div'); kv.className = 'kv';
-      const text = document.createElement('textarea'); text.className = 'leaftext'; text.value = chunks[i].text;
-      text.setAttribute('aria-label', `Leaf ${i + 1} text`);
-      text.addEventListener('input', () => { node.leafBytes = enc.encode(text.value); scheduleVerify(); scheduleConnectorDraw(levels); });
-
-      const hb = document.createElement('div'); hb.className = 'hashbox';
-      const label = document.createElement('label'); label.textContent = 'Hash';
-      const input = document.createElement('input'); input.className = 'hash'; input.value = displayedHash(full);
-      label.htmlFor = `hash-leaf-${i}`;
-      input.id = `hash-leaf-${i}`;
-      input.addEventListener('input', () => { node.currentInputHex = input.value.trim().toLowerCase(); scheduleVerify(); });
-      const copyBtn = document.createElement('button'); copyBtn.className = 'copy'; copyBtn.textContent = 'Copy';
-      copyBtn.addEventListener('click', () => copyHash(input, copyBtn));
-
-      hb.append(label, input, copyBtn);
-      kv.append(text, hb);
-      card.append(title, kv);
-      leavesRow.appendChild(card);
-
-      node.dom = card; node.inputEl = input; node.leafTextEl = text; node.currentInputHex = input.value.trim().toLowerCase();
-      leaves.push(node);
-    }
-
-    levels.push(leaves);
-    treeEl.appendChild(leavesRow);
-
-    // Internal levels
-    let current = leaves; let levelIdx = 1;
-    while (current.length > 1) {
-      const next = [];
-      // duplicate last if odd
-      const nodes = current.slice();
-      if (nodes.length % 2 === 1) nodes.push(nodes[nodes.length-1]);
-
-      const row = document.createElement('div'); row.className = 'level';
-
-      for (let i = 0; i < nodes.length; i += 2) {
-        const left = nodes[i], right = nodes[i+1];
-        const parent = new MerkleNode('node', levelIdx, i/2);
-        parent.left = left; parent.right = right; left.parent = parent; right.parent = parent;
-
-        const full = await sha256(concatBytes(TAG_NODE, left.computedFull, right.computedFull));
-        parent.computedFull = full;
-
-        // DOM for internal node
-        const card = document.createElement('div'); card.className = 'node good';
-        const title = document.createElement('div'); title.className = 'title';
-        title.textContent = (nodes.length === 2) ? 'Root' : `Level ${levelIdx} Node ${i / 2 + 1}`;
-
-        const hb = document.createElement('div'); hb.className = 'hashbox';
-        const label = document.createElement('label'); label.textContent = 'Hash';
-        const input = document.createElement('input'); input.className = 'hash'; input.value = displayedHash(full);
-        label.htmlFor = `hash-node-${levelIdx}-${i / 2}`;
-        input.id = `hash-node-${levelIdx}-${i / 2}`;
-        input.addEventListener('input', () => { parent.currentInputHex = input.value.trim().toLowerCase(); scheduleVerify(); });
-        const copyBtn = document.createElement('button'); copyBtn.className = 'copy'; copyBtn.textContent = 'Copy';
-        copyBtn.addEventListener('click', () => copyHash(input, copyBtn));
-
-        hb.append(label, input, copyBtn);
-        card.append(title, hb);
-        row.appendChild(card);
-
-        parent.dom = card; parent.inputEl = input; parent.currentInputHex = input.value.trim().toLowerCase();
-        next.push(parent);
-      }
-
-      levels.push(next);
-      treeEl.prepend(row); // so root ends up at top; we are building upward
-      current = next; levelIdx++;
-    }
-
-    // Enable recalc
-    const recalcBtn = document.getElementById('recalc');
-    recalcBtn.disabled = false;
-    setTreeSummary(levels, blockSize);
-
-    // Initial verify (all should be green)
-    await verifyAll(levels);
-    scheduleConnectorDraw(levels);
-
-    return { levels };
-  }
-
-  // Recompute all full hashes from leaves and update displayed inputs to match (fix tree)
-  async function recalcFromLeaves(levels) {
-    // Recompute bottom-up
-    for (const leaf of levels[0]) {
-      leaf.computedFull = await sha256(concatBytes(TAG_LEAF, leaf.leafBytes));
-    }
-    for (let L = 1; L < levels.length; L++) {
-      for (const node of levels[L]) {
-        node.computedFull = await sha256(concatBytes(TAG_NODE, node.left.computedFull, node.right.computedFull));
-      }
-    }
-    // Update inputs to truncated expected values
-    for (const level of levels) {
-      for (const node of level) {
-        const t = displayedHash(node.computedFull);
-        node.inputEl.value = t; node.currentInputHex = t;
-      }
-    }
-    await verifyAll(levels);
-    scheduleConnectorDraw(levels);
-  }
-
-  // Verify: mark nodes green/red based on whether the displayed hash equals recomputed truncated hash from leaves
-  let verifyTimer = null;
-  function scheduleVerify() {
-    if (verifyTimer) cancelAnimationFrame(verifyTimer);
-    verifyTimer = requestAnimationFrame(async () => {
-      const levels = currentLevels; if (!levels) return; await verifyAll(levels);
-    });
-  }
-
-  async function verifyAll(levels) {
-    if (!levels) return;
-    // 1) recompute from leaves using current leaf text
-    for (const leaf of levels[0]) {
-      leaf.computedFull = await sha256(concatBytes(TAG_LEAF, leaf.leafBytes));
-    }
-    for (let L = 1; L < levels.length; L++) {
-      for (const node of levels[L]) {
-        node.computedFull = await sha256(concatBytes(TAG_NODE, node.left.computedFull, node.right.computedFull));
-      }
-    }
-    // 2) compare displayed vs expected (self check)
-    for (const level of levels) {
-      for (const node of level) {
-        const expected = displayedHash(node.computedFull);
-        const got = (node.currentInputHex ?? node.inputEl.value).trim().toLowerCase();
-        node.selfOk = (expected === got);
-      }
-    }
-
-    // 3) propagate path validity upward: a node is green only if it and all descendants are selfOk
-    // leaves first
-    for (const leaf of levels[0]) { leaf.pathOk = !!leaf.selfOk; }
-    for (let L = 1; L < levels.length; L++) {
-      for (const node of levels[L]) {
-        node.pathOk = !!(node.selfOk && node.left.pathOk && node.right.pathOk);
-      }
-    }
-
-    // 4) colorize with propagated status (makes ancestors red if any descendant mismatches)
-    for (const level of levels) {
-      for (const node of level) {
-        node.dom.classList.toggle('good', !!node.pathOk);
-        node.dom.classList.toggle('bad', !node.pathOk);
-      }
-    }
-  }
-
-  // ----------------- Preset Content -----------------
-  const SCENES = [
-    'tx01 Alice pays Bob 12 coins; tx02 Bob pays Chen 4 coins; tx03 Dana stakes 9 coins.',
-    'Block 1087: mint reward, three transfers, fee total 0.004, validator signature attached.',
-    'Receipt batch: order A17 shipped, order A18 refunded, order A19 waiting for review.',
-    'Audit log: login accepted, settings changed, backup completed, admin session closed.',
-    'Dataset shard: row 1 hash checked, row 2 hash checked, row 3 hash requires review.',
-    'IoT report: sensor 14 temperature 21.8 C, humidity 42 percent, battery 88 percent.',
-    'Supply chain update: crate scanned at dock, seal verified, transfer accepted by carrier.',
-    'Vote batch: ballot 001 accepted, ballot 002 accepted, ballot 003 rejected as duplicate.',
-    'File manifest: intro.pdf 18 KB, notes.txt 3 KB, chart.png 42 KB, archive.zip 130 KB.',
-    'Checkpoint record: previous root saved, new leaves appended, operator note included.'
-  ];
-
-  function populateScenes() {
-    const sel = document.getElementById('scene');
-    sel.innerHTML = '';
-    SCENES.forEach((s, i) => {
-      const opt = document.createElement('option');
-      opt.value = i; opt.textContent = s; sel.appendChild(opt);
-    });
-    const pick = Math.floor(Math.random() * SCENES.length);
-    sel.value = String(pick);
-    document.getElementById('content').value = SCENES[pick];
-  }
-
-  // ----------------- Wire-up -----------------
-  let currentLevels = null;
-  window.addEventListener('DOMContentLoaded', () => {
-    populateScenes();
-
-    async function buildCurrentTree() {
-      const content = document.getElementById('content').value || '';
-      const blockSize = Math.max(8, Number(document.getElementById('blockSize').value) || 64);
-      const { levels } = await buildMerkle(content, blockSize);
-      currentLevels = levels;
-      scheduleConnectorDraw(levels);
-    }
-
-    document.getElementById('useScene').addEventListener('click', () => {
-      const sel = document.getElementById('scene');
-      document.getElementById('content').value = SCENES[Number(sel.value)];
-      buildCurrentTree();
-    });
-
-    document.getElementById('generate').addEventListener('click', buildCurrentTree);
-
-    document.getElementById('recalc').addEventListener('click', async () => {
-      if (currentLevels) await recalcFromLeaves(currentLevels);
-    });
-
-    window.addEventListener('resize', () => scheduleConnectorDraw());
-
-    // Auto-build once at start
-    setTimeout(buildCurrentTree, 0);
-
-    // ----------------- Minimal Self-Tests (console) -----------------
-    (async function runTests(){
-      const results = [];
-      function pass(name){ results.push({name, ok:true}); }
-      function fail(name, err){ results.push({name, ok:false, err}); console.error('FAIL', name, err); }
-      try {
-        // Test 1: SHA-256("abc") truncated last 16 bytes
-        const h = await sha256(enc.encode('abc'));
-        const t = trunc16Hex(h);
-        const expected = 'b00361a396177a9cb410ff61f20015ad';
-        if (t === expected) pass('sha256 trunc16Hex("abc")'); else fail('sha256 trunc16Hex("abc")', {got:t, expected});
-
-        // Test 2: splitter
-        const blocks = splitUtf8ByBytes('hello', 2);
-        if (blocks.length === 3 && blocks[0].text === 'he' && blocks[1].text === 'll' && blocks[2].text === 'o') pass('splitUtf8ByBytes("hello",2)');
-        else fail('splitUtf8ByBytes("hello",2)', blocks.map(b=>b.text));
-
-        // Test 3: path propagation (mocked tree)
-        // create 4 leaves with one byte each
-        const Ls = [];
-        for (const ch of ['A','B','C','D']){
-          const n = new MerkleNode('leaf',0,0);
-          n.leafBytes = enc.encode(ch);
-          n.dom = { classList: { toggle: ()=>{} } }; // mock
-          n.inputEl = { value: '' };
-          Ls.push(n);
+      drawBlock(box, true);
+      var match = toHex(path[3]) === toHex(root());
+      if (phase === "result") {
+        box.appendChild(climbList(path, !match));
+        box.appendChild(el("div", { class: "block-head" }, el("span", { class: "lbl" }, "climbed to"), chip(api, toHex(path[3]), match ? "ok" : "bad"),
+          el("span", { class: "lbl" }, "header root"), chip(api, toHex(root())),
+          el("span", { class: "flag " + (match ? "ok" : "bad") }, match ? "Match: proof accepted" : "Rejected: the root does not match")));
+        if (!match) {
+          box.appendChild(el("p", null, "At least one hash you picked sits on a different branch: a cousin, not the sibling. The pair you hash must be the two children of the same parent. Try again."));
+          box.appendChild(el("button", { class: "btn primary", type: "button", onclick: function () { picks = []; path = null; phase = "pick"; draw(); } }, "Try again"));
+          status("Rejected. Try again.");
+        } else {
+          box.appendChild(el("p", null, "Three hashes were enough: one per level, not the other seven payments' worth. These three are the proof."));
+          box.appendChild(el("button", { class: "btn primary", type: "button", onclick: function () { phase = "ask"; draw(); } }, "Now change Ana's payment to 3.00 BTC"));
+          status("Accepted.");
         }
-        const N1 = new MerkleNode('node',1,0); N1.left = Ls[0]; N1.right = Ls[1]; N1.dom = { classList: { toggle: ()=>{} } }; N1.inputEl = { value: '' };
-        const N2 = new MerkleNode('node',1,1); N2.left = Ls[2]; N2.right = Ls[3]; N2.dom = { classList: { toggle: ()=>{} } }; N2.inputEl = { value: '' };
-        const R  = new MerkleNode('node',2,0); R.left = N1; R.right = N2; R.dom = { classList: { toggle: ()=>{} } }; R.inputEl = { value: '' };
-        const mockLevels = [Ls, [N1,N2], [R]];
-        await recalcFromLeaves(mockLevels); // baseline OK
-        const before = R.pathOk === true;
-        // corrupt N1 by setting a wrong displayed hash
-        N1.currentInputHex = 'deadbeefdeadbeefdeadbeefdeadbeef';
-        await verifyAll(mockLevels);
-        const after = R.pathOk === false;
-        if (before && after) pass('path propagation to root'); else fail('path propagation to root', {before, after});
-      } catch (e) { console.error('Tests runtime error', e); }
-    })();
+        return;
+      }
+      // ask / rechecked: Ana's payment is now 3.00 BTC, same three hashes
+      box.appendChild(el("p", null, "Ana's payment is now ", el("strong", null, "0.30 → 3.00 BTC"), ". Same three proof hashes, same header."));
+      var q = el("fieldset", { class: "choices" }, el("legend", null, "Same three hashes: does it still pass? (not scored)"));
+      ["Yes, it still passes.", "No, it is rejected."].forEach(function (t, i) {
+        q.appendChild(el("label", { class: "choice" }, el("input", { type: "radio", name: "same3", value: i, checked: guess === i, disabled: phase === "rechecked",
+          onchange: function () { guess = i; draw(); } }), el("span", null, t)));
+      });
+      box.appendChild(q);
+      if (phase === "ask") {
+        box.appendChild(el("button", { class: "btn primary", type: "button", disabled: guess === null, onclick: function () {
+          if (busy) return; busy = true;
+          walk(tamperLeaf, pickedSteps()).then(function (r) { redo = r; phase = "rechecked"; busy = false; draw(); });
+        } }, "Recheck the proof"));
+        status(guess === null ? "Say yes or no first; it is not scored." : "Recheck when you are ready.");
+        return;
+      }
+      box.appendChild(climbList(redo, true));
+      box.appendChild(el("div", { class: "block-head" }, el("span", { class: "lbl" }, "climbed to"), chip(api, toHex(redo[3]), "bad"),
+        el("span", { class: "lbl" }, "header root"), chip(api, toHex(root())), el("span", { class: "flag bad" }, "Rejected: the root does not match")));
+      box.appendChild(el("p", null, "Every level turned red: one changed payment changes its hash, and every hash above it. The three proof hashes cannot hide that."));
+      drawSlider(box);
+    }
+
+    function drawSlider(parent) {
+      var n = Math.pow(2, sliderAt);
+      parent.appendChild(el("h3", null, "Now make the block bigger"));
+      var input = el("input", { type: "range", min: "3", max: "11", step: "1", value: String(sliderAt), id: "size", "aria-valuetext": n.toLocaleString("en-US") + " transactions, " + sliderAt + " proof hashes",
+        oninput: function () { sliderAt = Number(input.value); update(); } });
+      var out = el("div", { "aria-live": "polite" });
+      var col = el("div");
+      parent.appendChild(el("div", { class: "row size-row" }, el("label", { for: "size" }, "Transactions in the block: "), input));
+      parent.appendChild(out); parent.appendChild(col);
+      function update() {
+        var k = sliderAt, size = Math.pow(2, k);
+        out.innerHTML = ""; col.innerHTML = "";
+        out.appendChild(el("p", null, el("strong", null, size.toLocaleString("en-US") + " transactions"), " need ", el("strong", null, k + " proof hashes"), ". ",
+          size > 8 ? "The tree is no longer drawn: it does not fit." : "The block you just used."));
+        var pc = el("div", { class: "proofcol", role: "list", "aria-label": "The proof column" });
+        for (var i = 0; i < k; i++) pc.appendChild(el("span", { class: "hash", role: "listitem" }, "hash " + (i + 1)));
+        col.appendChild(el("span", { class: "lbl" }, "proof"));
+        col.appendChild(pc);
+        if (k === 11 && !reached) {
+          reached = true;
+          api.finish({ choice: 3, note: "<p>The proof needs <strong>11</strong> hashes for a block of 2,048 transactions. Each doubling of the block adds one hash, and 2,048 is 2<sup>11</sup>.</p><p>Your first check passed with three hashes for eight payments; a wrong sibling or a changed payment sent the root off and the proof was rejected.</p>" });
+        }
+      }
+      update();
+    }
+
+    Promise.all(PAYS.map(leaf).concat([leaf(TAMPERED)])).then(function (all) {
+      tamperLeaf = all.pop();
+      anaLeaf = all[ANA];
+      return levelsOf(all);
+    }).then(function (t) { tree = t; draw(); });
+  }
+
+  function explorer(box, api) {
+    var el = api.el;
+    var ids = []; for (var i = 0; i < TXIDS.length; i += 64) ids.push(TXIDS.substr(i, 64));
+    box.appendChild(el("p", null, "Alice's payment from day 1, ", el("span", { class: "hash" }, "0627052b…c2f2"),
+      ", is in block 277,316, which holds " + ids.length + " transactions. The block's page shows one Merkle root for all " + ids.length + "."));
+    if (!SUBTLE) { box.appendChild(el("p", null, "Needs the browser's built-in hashing to rebuild the root.")); return; }
+    var at = ids.indexOf(ALICE);
+    var out = el("div", { "aria-live": "polite" }, el("p", { class: "made" }, "Rebuilding the root…"));
+    box.appendChild(out);
+    var level = ids.map(function (h) { return rev(fromHex(h)); });
+    var steps = [], idx = at;
+    function climb(cur) {
+      if (cur.length === 1) return Promise.resolve(cur[0]);
+      if (cur.length % 2) cur = cur.concat([cur[cur.length - 1]]);
+      var sib = idx % 2 ? idx - 1 : idx + 1;
+      steps.push(cur[sib]);
+      var jobs = []; for (var j = 0; j < cur.length; j += 2) jobs.push(pair(cur[j], cur[j + 1]));
+      return Promise.all(jobs).then(function (next) { idx = idx >> 1; return climb(next); });
+    }
+    climb(level).then(function (r) {
+      var rebuilt = toHex(rev(r));
+      var ok = rebuilt === REAL_ROOT;
+      out.innerHTML = "";
+      out.appendChild(el("p", null, "The page built Alice's proof from the block's " + ids.length + " transaction IDs: ", el("strong", null, steps.length + " hashes"),
+        ", since 2",
+        el("sup", null, String(steps.length)), " = " + Math.pow(2, steps.length) + " is the first power of two that holds " + ids.length + "."));
+      var pc = el("div", { class: "proofcol", "aria-label": "Alice's proof" }, el("span", { class: "lbl" }, "proof "));
+      steps.forEach(function (s) { pc.appendChild(chip(api, toHex(rev(s)))); });
+      out.appendChild(pc);
+      out.appendChild(el("div", { class: "block-head" }, el("span", { class: "lbl" }, "rebuilt root"), chip(api, rebuilt, ok ? "ok" : "bad"),
+        el("span", { class: "lbl" }, "explorer's root"), chip(api, REAL_ROOT),
+        el("span", { class: "flag " + (ok ? "ok" : "bad") }, ok ? "Match" : "No match")));
+      out.appendChild(el("p", null, "The txids come from mempool.space's public API, read 11 Nov 2026. Lightweight (SPV) wallets check their payments this way: a few hashes and the block header, not the block."));
+    });
+  }
+
+  LabShell.start({
+    id: "merkle-trees",
+    title: "Prove it is in the block",
+    slide: { title: "A Merkle proof shows a tx is in a block",
+      href: "../../../lessons/bitcoin/02-BF-transactions_and_mining.html#/a-merkle-proof-shows-a-tx-is-in-a-block" },
+    steps: {
+      "case": { html: "<p>An informant tells an agent that a payment is in a block, and sends a short file of hashes as proof. The agent has none of the block's transactions.</p><p><strong>Is a short file enough to check, or is it missing most of the block?</strong></p>" },
+      commit: {
+        question: "A block holds 2,048 transactions. You have one payment's transaction ID and the block's header. How many other hashes do you need to prove the payment is inside?",
+        choices: ["About 2,048: all the others.", "About 1,000: half of them.", "About 45.", "11."]
+      },
+      "do": { render: render },
+      name: { term: "Merkle proof", parts: "Merkle + proof: Ralph Merkle, who described trees of hashes + the hashes beside one transaction's path to the root",
+        plain: "<p>The few hashes that, with one transaction, rebuild the root in a block's header. Change one byte of the transaction, or use one wrong hash, and the root does not match.</p>" +
+          "<p>A block's transaction IDs are hashed in pairs, up to a single root in the header; an odd one is hashed with a copy of itself (Bitcoin.org Developer Guide 2024). Bitcoin hashes each pair with double SHA-256 (Antonopoulos 2017).</p>" },
+      explorer: { render: explorer },
+      twist: {
+        html: "<p>A proof checks green. But the person who sent it also sent the header. Here it is done: a made-up block of eight with a payment that never happened, <strong>Mal pays Ana 5.00 BTC</strong>, built into its own tree and its own header (all made up for this lab).</p>" +
+          "<div class=\"block-head\"><span class=\"lbl\">payment</span><span class=\"hash\">0cf02f…0e18</span><span class=\"lbl\">header root (Mal's own)</span><span class=\"hash\">943c9b…1eaa</span><span class=\"flag ok\">Match: proof accepted</span></div>",
+        question: "Does the green check show the payment is on Bitcoin?",
+        choices: ["Yes: the root matched.", "Yes, if the hashes look real.", "No: the header must be one the chain holds, read from your own node or explorer.", "No: only a full node can check a proof."],
+        answer: 2,
+        why: "<p>A proof only ties a transaction to a header. Anyone can build a tree and a header around a made-up payment, so the header must be one the chain holds. An SPV wallet trusts only headers from the longest proof-of-work chain (Nakamoto 2008, section 8).</p>"
+      },
+      tell: {
+        prompt: "<p>An informant says a payment is in block 277,316 and sends a short file of hashes as proof. Tell the agent what the proof shows, in one sentence with a confidence word.</p>",
+        example: "Transaction 0627052b…c2f2 is in block 277,316 (High confidence: its nine proof hashes rebuild the Merkle root in that block's header, which we read from our own explorer, not from the informant's file). The proof shows only that the payment is in the block, not who controls the paying address."
+      }
+    }
   });
-  </script>
+})();
+</script>
 </body>
 </html>
