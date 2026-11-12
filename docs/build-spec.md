@@ -261,6 +261,11 @@ decisions on them the same day. None is started.
     10 Nov 2026"), and the course welcome teaches that a bare date means "as of" (the "How to read these slides"
     item below). Owner: "this will save space on the slides and make them less cluttered." Building it also
     updates the CLAUDE.md "as of" rule and the review prompts that look for the words.
+  - **Findable when facts change (12 Nov 2026):** without the words, a bare date cannot be told from a historical
+    one: the lessons hold 476 dates, of which 137 are "as of" dates (12 Nov 2026). So each "as of" date is marked
+    in the `.qmd` as a span, `[10 Nov 2026]{.asof}`, which the slide shows as the bare date. Searching `{.asof}`
+    then finds every one, the check refuses an "as of" phrase or a span that does not hold a valid date, and a
+    small tool lists every marked date with its lesson and slide, oldest first, for the next update pass.
 - **Language review of every slide and lab text:** owner: the text "reads like a collection of statements and
   facts strung together into grammatically correct sentences, but lacking clarity and understandability." The
   review raises how easily a student can process the text and cuts extraneous cognitive load in explanations and
@@ -278,8 +283,16 @@ decisions on them the same day. None is started.
 - **Run labs contents:** a hyperlinked table of contents at the top of the "Run labs" page (`run-labs.qmd`).
 - **Explorer links page:** a new site page linking to the most-used blockchain websites (Etherscan,
   mempool.space and the like). Which sites it lists is the owner's call; naming commercial sites is fine for
-  awareness (Course direction). A draft list went to the owner on 12 Nov 2026 to cut; the page is built from
-  their cut.
+  awareness (Course direction). The owner kept the whole draft of 20 (12 Nov 2026: "I approve all your
+  recommendations"), grouped as the page will group them:
+  - Bitcoin: mempool.space, Blockstream explorer (blockstream.info), Blockchain.com explorer, WalletExplorer.
+  - Ethereum and EVM chains: Etherscan, BscScan, Arbiscan, Basescan, Polygonscan.
+  - Other chains: Tronscan, Solscan.
+  - Many chains in one: Blockchair, OKLink.
+  - Sanctions and scam reports: OFAC Sanctions List Search, Chainabuse, CryptoScamDB.
+  - DeFi and analytics: DeFiLlama, Dune.
+  - Free tracing views (accounts needed for some features): Breadcrumbs, Arkham.
+  The links are on the Build Tracker row "Explorer links page"; each answered on 12 Nov 2026.
 - **Glossary lookup in the slides:** a glossary widget students open from within a slide to look up a term and
   read its glossary definition without leaving the slide. It reads the generated `glossary/terms.json`.
   - **Form (owner, 12 Nov 2026: "Go with option A."):** a small button in the slide's corner, or the `G` key,
@@ -295,11 +308,16 @@ decisions on them the same day. None is started.
     `glossary/slide-index.yml`), as the glossary page's "Source" column uses now.
 - **How to read these slides (owner, 12 Nov 2026):** a slide near the start of the course welcome
   (`lessons/introduction/01-IN-course_welcome.qmd`) on the course's administrative conventions, taught before
-  lesson 1: a bare date means "as of"; the circled number marks a lesson within a day (D7 ① is day 7's first
-  lesson); how to open and use the glossary lookup; and other administrative items. Owner: "Let's actually include
-  this information in one of the very first slides, along with other helpful 'administrative items' data." Built
-  after the glossary lookup and the date change, so it describes what exists. Which other items it carries is the
-  owner's call (draft put to the owner 12 Nov 2026).
+  lesson 1. Owner: "Let's actually include this information in one of the very first slides, along with other
+  helpful 'administrative items' data." Built after the glossary lookup and the date change, so it describes what
+  exists. Its six items (owner, 12 Nov 2026: "I approve all your recommendations"):
+  1. A bare date beside a fact means "as of" that date.
+  2. The circled number marks a lesson within a day (D7 ① is day 7's first lesson).
+  3. How to open and use the glossary lookup (corner button, `G`, or select a word and press `G`).
+  4. The keys for moving through the slides.
+  5. Sources are listed on each lesson's last slide.
+  6. Where things live on the course site.
+  The confidence words are not repeated here: they already have their own slide.
 
 ## Quality rubric
 Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
