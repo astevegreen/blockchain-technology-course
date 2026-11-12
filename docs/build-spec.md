@@ -225,10 +225,11 @@ Locked in by the owner on 10 Nov; the case for each is in `docs/analysis/2026-11
   day 7.
 - Each game gets a design card the owner approves before it is built, like any lab.
 
-## Instructor dashboard (owner, 12 Nov 2026: to build, not designed)
+## Instructor dashboard (owner, 12 Nov 2026; built 12 Nov 2026)
 One simple page that centralizes what an instructor has to do to run the course, so they stop jumping between
-`/instructor/` on the quiz engine, `lab-manager.sh` on the host, the run sheet and hand marking. Not started; the
-build item is on `docs/follow-ups.md` ("Quizzes and instructor tools"). Owner: "It does not need to be fancy, but
+`/instructor/` on the quiz engine, `lab-manager.sh` on the host, the run sheet and hand marking. Built 12 Nov 2026
+in quiz-engine-v2: `/instructor/dashboard` (links, class code, quiz bank buttons), `/instructor/hosting` (lab
+buttons, through a host-side runner, never the Docker socket) and `/instructor/pretest` (the marker's results). Owner: "It does not need to be fancy, but
 links and buttons to run scripts would be helpful." Instructor-only, so its code and data live under `quizes/` or in
 `dynamic-labs/` with a line in `dynamic-labs/student-exclude.txt` (CLAUDE.md rule 1).
 - **Shape:** plain links and buttons, no styling work. A button runs an existing script on the host and shows its

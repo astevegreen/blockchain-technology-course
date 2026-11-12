@@ -36,14 +36,13 @@ slide index), which is never listed here.
   wave 3 fixes]
 
 ## Quizzes and instructor tools
-- **Instructor dashboard (to build; owner, 12 Nov 2026):** one place where an instructor runs the class and loads
-  items easily. **Decided (owner, 12 Nov 2026): part of the existing quiz engine** (`dynamic-labs/quiz-engine-v2`), not
-  a separate app. Spec: `docs/build-spec.md`, "Instructor dashboard". Today the instructor pieces
-  are separate: `/instructor/` on the quiz engine, `lab-manager.sh` on the host, the run sheet and hand marking.
-  [12 Nov 2026, owner's request]
-- **Pretest marking and lab entry are by hand.** `quizes/run-sheet/RUN_SHEET.md:19-26` has the instructor mark the
-  pretest and note who got each day's gate items right; nothing records it or shows a student's entry point per day.
-  Written items have no marking aid. The dashboard should take this over. [12 Nov 2026, asked how students reach quizzes]
+- **The lab hosting page has not run on a lab host.** `/instructor/hosting` (quiz-engine-v2
+  `app/blueprints/hosting.py`, `app/hosting_runner.py`) is tested only through Flask and unit tests: untested are
+  `lab-manager.sh start quiz-engine-v2` starting the runner, its socket file reaching the container through the bind
+  mount (may fail on Docker Desktop), and the status parsing against real `docker compose ps` output. Run it on the
+  desktop after a `./lab-manager.sh deploy --mode instructor`. [12 Nov 2026, built without a Docker run]
+- **Pretest written items have no marking aid.** `/instructor/pretest` shows each student's start point per day from
+  `mark_pretest.py --json`, but written items are still judged by hand in the marker's sheet. [12 Nov 2026, dashboard build]
 
 ## Tooling and rules
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
