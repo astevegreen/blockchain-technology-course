@@ -38,8 +38,6 @@ slide index), which is never listed here.
 ## Tooling and rules
 - The token lab's saved fallback (`dynamic-labs/tokens/`) does not cover the Spot the fake game's blocks 18-30,
   so the day 3 game needs the live lab [11 Nov 2026, building the game]
-- The day 3 game Spot the fake has no questions in the 05-EF quiz bank on telling a token by its creator rather
-  than its name (`quizes/quiz_json/`) [11 Nov 2026, building the game]
 
 - `dynamic-labs/cross-chain/lab.yaml` memory_mb (90) and approx_download_mb (170) are estimates, not measured on a
   student release. Measure after the next release build that includes the exploit services. [11 Nov 2026, exploit build]
