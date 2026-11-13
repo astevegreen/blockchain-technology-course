@@ -15,33 +15,40 @@ format:
 
 ## Every hop in your trace names its heuristic {.smaller}
 
-**Bottom line:** this afternoon's trace follows the ransom to the first service. At every hop you write which heuristic took you there, what could make it wrong, and how sure you are. This lesson teaches the heuristics and how they fail.
+::: {style="font-size: .85em;"}
 
-| For every hop, write | Example |
-| --- | --- |
-| Where the money went | `T4`, output 1, to a fresh `bc1q...` address |
-| The heuristic that says so | Change: fresh address, same script type as the inputs |
-| What could make it wrong | Both outputs are fresh and of the same type |
-| How sure, on the course scale | Moderate |
+**The case:** two victims paid a ransom to addresses R1 and R2. The agent asks where the money went. This afternoon's lab follows it to the first service, and every hop of that trace needs a reason a reader can check.
 
-: {tbl-colwidths="[40,60]"}
+**Day 2 left off** with two clues to carry: co-spending and change. Today turns them into a method, in three parts:
 
-Two Bitcoin heuristics, **co-spending** and **change**, are the base of Bitcoin tracing [@meiklejohn_fistfulbitcoinscharacterizing_2013; @kappos_howpeelmillion_2022].
+1. **Link addresses into one actor:** co-spending, change, and how each fails.
+2. **Follow the money forward and back:** peel chains, batches, backward traces and look-alike trails.
+3. **Judge each hop:** a confidence for every row of the trace.
+
+**By the end:** given a Bitcoin trace, write for each hop where the money went, the heuristic that says so, what could make it wrong, and how sure you are (High, Moderate or Low).
+
+**The point to earn:** every hop rests on a heuristic that can fail: co-spending fails on a CoinJoin, and change rests on wallet habits. More clues from the same transaction stop at Moderate, so only a different kind of evidence makes a hop High [@meiklejohn_fistfulbitcoinscharacterizing_2013; @kappos_howpeelmillion_2022].
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide opens the lesson by tying it to the afternoon's lab product, the annotated trace. It matters here because the trace's graded point is that each hop names its heuristic. Emphasize that the four columns are the habit: destination, heuristic, failure, confidence.
+This slide opens the day 6 tracing lesson with a case and a question: two victims paid a ransom, and the agent asks where the money went. It matters here because the afternoon's lab hands in an annotated trace, and every hop in it must name its heuristic, its failure and its confidence. Emphasize the objective: each part ends with a check, and the review asks the objective again.
 
 **Key Points**
-This afternoon's trace runs from the ransom payment to the first service the money reaches. At every hop you record four things: where the money went, the heuristic that says so, what could break it, and how sure you are on the course scale of High, Moderate and Low, never a percentage. The two heuristics that move a Bitcoin trace, co-spending and change, both come from Meiklejohn et al. (2013), and Kappos et al. (2022) describe the co-spend heuristic as the one now widely used for tracing, so the lesson starts there.
+- Students already met both clues this lesson builds on. Day 2 (Reading a Transaction) ended on "Co-spending and change: two clues to carry": two addresses spent together suggest one owner, and the leftover output suggests which is change. Today makes each a method and shows when it fails.
+- The ransom case runs through the lesson. Part 1 links the ransom addresses, part 2 follows the money and meets a look-alike trail, and part 3 writes the trace rows. Its values are invented; the lab uses its own.
+- Both heuristics come from Meiklejohn et al. (2013), and Kappos et al. (2022) describe co-spending as the one now widely used for tracing.
+- The point is a claim the lesson earns, not one it assumes. Each heuristic can fail (co-spending on a CoinJoin, change whenever a wallet breaks its habits), and clues from one transaction are one kind of evidence. That is why they stop at Moderate.
 
-New glossary terms this lesson: cluster, co-spend heuristic, change output, super-cluster, peel chain, peel, payment batching, backward trace.
+New glossary terms this lesson: cluster, co-spend heuristic, change output, super-cluster, peel chain, peel, payment batching, backward trace, decoy trail.
 
 **Walkthrough**
-1. Read the bottom line.
-2. Walk the four rows using the example hop.
-3. Say: by the end of the lesson you can fill every row for any hop.
+1. Read the case and leave the agent's question open; the lesson answers it.
+2. Read the link back to day 2, then name the three parts.
+3. Read the objective aloud: by the end, every student can fill each row of a trace.
+4. Time plan, 50 minutes: opening 3, part 1 12, part 2 15, part 3 12, close 8 (answers, review and next). The optional five-minute lab on the batching slide is outside the plan: run it only with time in hand.
 
 **Sources**
 - @meiklejohn_fistfulbitcoinscharacterizing_2013
@@ -57,7 +64,7 @@ New glossary terms this lesson: cluster, co-spend heuristic, change output, supe
 ::: {.column width="55%"}
 - **The heuristic:** all inputs to one transaction are controlled by the same user [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 - **Why it works:** each input needs its own key's signature, so multi-input transactions "necessarily reveal that their inputs were owned by the same owner" [@nakamoto_bitcoinpeertopeerelectronic_2008].
-- **Why it fails:** a CoinJoin puts several people's inputs into one transaction [@gmaxwell_coinjoinbitcoinprivacy_2013]; spotting one is day 7 ①. A 2022 test set counts every cluster holding a CoinJoin as merging owners: 60 of its 120 [@kappos_howpeelmillion_2022].
+- **Why it fails:** a CoinJoin puts several people's inputs into one transaction [@gmaxwell_coinjoinbitcoinprivacy_2013]; spotting one is the work of Mixers and CoinJoin. A 2022 test set counts every cluster holding a CoinJoin as merging owners: 60 of its 120 [@kappos_howpeelmillion_2022].
 - **How sure:** co-spending alone is **Moderate**.
 :::
 ::: {.column width="45%"}
@@ -98,7 +105,7 @@ Start with the heuristic itself. Meiklejohn et al. state it this way: the inputs
 **Walkthrough**
 1. Left: A1 and A2 signed by one wallet. One owner, most likely.
 2. Right: three people sign one transaction. The same shape, three owners.
-3. Ask: from the inputs alone, can you always tell the two apart? (No; day 7 ① shows the clues.)
+3. Ask: from the inputs alone, can you always tell the two apart? (No; Mixers and CoinJoin shows the clues.)
 
 **Sources**
 - @meiklejohn_fistfulbitcoinscharacterizing_2013
@@ -148,7 +155,7 @@ digraph Merge {
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide shows why clustering errors are expensive: links are transitive, so one false link merges two entities. It matters here because the lab's trace and day 6 ③'s attribution both depend on clusters a reader can audit. Emphasize recording the heuristic behind each link.
+This slide shows why clustering errors are expensive: links are transitive, so one false link merges two entities. It matters here because the lab's trace and the attribution in Attribution and Confidence both depend on clusters a reader can audit. Emphasize recording the heuristic behind each link.
 
 **Key Points**
 The last slide ended on clusters; this one shows how a cluster goes wrong. Clustering chains links: if A and B co-spend, and B and C co-spend, all three join. So a single false link does not add one wrong address; it merges two whole clusters. Meiklejohn et al. warn that falsely linking even a few change addresses can collapse the graph into super-clusters, clusters that have wrongly merged many unrelated entities, and they hit one: a single super-cluster of 1.6 million public keys.
@@ -168,6 +175,8 @@ A huge cluster is not always an error, though. Kappos et al. found 20 of their r
 
 ## Change is a guess from several weak clues {.smaller}
 
+::: {style="font-size: .82em;"}
+
 **Bottom line:** the change output returns money to the payer and moves the trace on. Every clue below is a wallet habit, so none is proof [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 
 | Clue | Points to change when | Fails when |
@@ -184,22 +193,24 @@ A huge cluster is not always an error, though. Kappos et al. found 20 of their r
 
 **How sure:** one clue alone is **Low**; several agreeing are **Moderate**, because all come from the same transaction. On a rough reuse test, 13% of Meiklejohn's first change labels looked wrong [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 
+:::
+
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide turns 02-BF's change clues into a method: list the clues, say when each points to change and when it fails. It matters here because change detection decides where every hop of the trace goes next. Emphasize that agreeing clues raise confidence only to Moderate: they are one kind of evidence, the transaction's own shape.
+This slide turns day 2's change clues (Reading a Transaction) into a method: list the clues, say when each points to change and when it fails. It matters here because change detection decides where every hop of the trace goes next. Emphasize that agreeing clues raise confidence only to Moderate: they are one kind of evidence, the transaction's own shape.
 
 **Key Points**
 Co-spending grows a cluster; change moves the trace forward. A change output is the output that returns the unspent remainder of the inputs to the payer. Meiklejohn et al.'s change heuristic says a one-time change address is controlled by the inputs' owner, and they note it rests on an idiom of use, not on the protocol, so it is less robust than co-spending. That is why the table gives every clue a "fails when". Kappos et al. use address type, output index and the transaction features of the next hop, "the same transaction settings": version, SegWit, locktime and replaceability. They note that earlier change heuristics relied on address freshness and output values, including Ermilov et al.'s test that the change value is significant to at least the fourth decimal place.
 
-Two rows need a word. Self-change is an output paid back to one of the inputs' own addresses: Meiklejohn et al.'s change heuristic leaves out transactions with one, and when you see one, that output is the change. Branches meet is not a new heuristic but co-spending applied later: if both outputs of one transaction land at one address and are spent together, one holder received both, so the split was not a payment to a stranger. It fails when that address belongs to a service holding many customers' coins. 03-FO's Colonial trace uses both clues, at hops 2 and 4.
+Two rows need a word. Self-change is an output paid back to one of the inputs' own addresses: Meiklejohn et al.'s change heuristic leaves out transactions with one, and when you see one, that output is the change. Branches meet is not a new heuristic but co-spending applied later: if both outputs of one transaction land at one address and are spent together, one holder received both, so the split was not a payment to a stranger. It fails when that address belongs to a service holding many customers' coins. The Colonial Pipeline trace in Ransomware: the Payment and the Cash-out uses both clues, at hops 2 and 4.
 
 How far can you trust the clues? Meiklejohn et al.'s first attempt flagged over 4 million change addresses. To estimate false positives they counted labeled addresses that were later reused: 13%. They judged many of those, such as Satoshi Dice payouts, not truly false, so the figure is rough, and refinements cut it, but the super-cluster on the last slide still formed. So on the course scale, amount or behavior alone is Low, and weaker lines that agree are Moderate. Independent means a different kind of evidence, so more clues from the same transaction, self-change included, do not make High.
 
 **Walkthrough**
-1. Take 02-BF's example: Alice pays Bob 1.00 and A3, new, gets 0.29.
+1. Take day 2's example: Alice pays Bob 1.00 and A3, new, gets 0.29.
 2. Run down the table: fresh, same type, un-round. Three clues agree.
-3. Rate it: Moderate. Ask: what would raise it to High? (A different kind of evidence, such as off-chain information; day 6 ③.)
+3. Rate it: Moderate. Ask: what would raise it to High? (A different kind of evidence, such as off-chain information; Attribution and Confidence.)
 
 **Sources**
 - @meiklejohn_fistfulbitcoinscharacterizing_2013
@@ -215,7 +226,7 @@ How far can you trust the clues? Meiklejohn et al.'s first attempt flagged over 
 :::: {.columns}
 ::: {.column width="55%"}
 - **Two payees, no change:** mining pools and gambling sites often pay two people at once [@meiklejohn_fistfulbitcoinscharacterizing_2013].
-- **Look-alike outputs:** in the Bitcoin Fog case (a Bitcoin mixer; four slides on), both outputs of one hop were fresh, of one type and spent alike; no change heuristic could follow it [@kappos_howpeelmillion_2022].
+- **Look-alike outputs:** in the Bitcoin Fog case (a Bitcoin mixer; part 2 returns to it), both outputs of one hop were fresh, of one type and spent alike; no change heuristic could follow it [@kappos_howpeelmillion_2022].
 - **Wallets that break the habit:** some let the user choose or reuse the change address [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 - **What to do:** follow both outputs, or trace backward from where the money ended.
 :::
@@ -263,7 +274,55 @@ The last slide gave the clues; this one says when to stop using them. First, not
 
 :::
 
+## Check: which output is change, and how sure? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+The ransom has moved on. Transaction `T9` (invented) spends two addresses, K1 and K2, that the trace has reached:
+
+```
+Inputs   K1  bc1q...  0.8000 BTC
+         K2  bc1q...  0.4500 BTC
+Outputs  0   1Fh...   1.0000 BTC  seen before
+         1   bc1q...  0.2496 BTC  first use      fee 0.0004 BTC
+```
+
+**Write two lines:** what links K1 and K2, and how sure? Which output is change, and how sure?
+
+::: {.fragment}
+**Answer:** K1 and K2 are co-spent, with no sign of a CoinJoin: one owner, **Moderate**. Output 1 is change: the only fresh address, the inputs' script type, and un-round beside a round 1.0000. Three clues from one transaction: **Moderate**, not High [@meiklejohn_fistfulbitcoinscharacterizing_2013; @kappos_howpeelmillion_2022].
+
+**Part 1 in one line:** co-spending links addresses by shared signing, change by wallet habit; write the heuristic behind every link, because one false link merges two actors.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 1 with a check every student answers: one invented transaction, two judgments. It matters here because the trace's first rows are exactly these two calls, and the common mistake is to rate three agreeing change clues High. Emphasize that both answers are Moderate, for different reasons.
+
+**Key Points**
+- The co-spend answer: K1 and K2 sign one transaction, so the co-spend heuristic links them to one owner. Two inputs and two unequal outputs show no sign of a CoinJoin, but CoinJoin remains the known failure, so it is Moderate.
+- The change answer: output 1 is the only fresh address, it shares the inputs' bc1q script type, and its amount is un-round beside a round 1.0000. Three clues agree, but all come from this one transaction, so they are one kind of evidence: Moderate.
+- The fee confirms the reading: 1.2500 in, 1.2496 out, so 0.0004 is the fee and no output is missing.
+- The part's synthesis, on the slide: write the habit behind every link, because links chain and one false one merges two actors.
+
+**Walkthrough**
+1. Read the transaction: inputs, then outputs.
+2. Give every student a minute to write the two lines.
+3. Ask for a show of hands: who wrote High for the change? Ask one of them why, then reveal the answer.
+4. Read the part 1 synthesis.
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+
+:::
+
 ## A peel chain: a small peel, the rest rolls on {.smaller}
+
+*Part 2: follow the money forward, then back.*
 
 **Bottom line:** a peel chain starts with a large amount. Each hop pays a small amount (the **peel**) to one address and sends the rest to a fresh change address, which does it again, for hundreds or thousands of hops [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 
@@ -307,7 +366,7 @@ Each hop also pays a 0.001 BTC fee.
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide defines the peel chain, the most common pattern students will follow in the lab. It matters here because a peel chain is a run of change calls, so each hop inherits the change slide's clues and failures. Emphasize that peel chains are ordinary: services make them all day, so the pattern alone says nothing about crime.
+Part 2 follows the money forward, then back. This slide defines the peel chain, the most common pattern students will follow in the lab. It matters here because a peel chain is a run of change calls, so each hop inherits the change slide's clues and failures. Emphasize that peel chains are ordinary: services make them all day, so the pattern alone says nothing about crime.
 
 **Key Points**
 Now change at work over many hops. Meiklejohn et al. define the peeling chain: it starts with a large amount; at each hop a small amount, the peel, goes to one address and the remainder goes to a one-time change address, which does the same again, potentially for hundreds or thousands of hops. Leftovers may be gathered and peeled again. Why is the pattern so common? Kappos et al. explain that peel chains are fundamental to UTXO coins, because an output cannot be partly spent. So the pattern is ordinary: Meiklejohn et al. saw it in withdrawals from banks and exchanges and in mining-pool payouts, and Kappos et al. note that big services' scripted payments create long, patterned chains that are easier to follow. Thieves use the same shape: in Meiklejohn et al.'s theft cases, the Betcoin coins were gathered and then peeled, and the Bitfloor coins were peeled and gathered again and again. So the shape alone says nothing about crime. What it gives you is a run of change calls, each carrying the change slide's clues and failures.
@@ -331,7 +390,7 @@ Now change at work over many hops. Meiklejohn et al. define the peeling chain: i
 - **Betcoin, 2012:** 3,171 BTC stolen in April 2012 sat unmoved until March 2013. It was then gathered into one address and peeled. After 10 hops a peel went to the Bitcoin-24 exchange; 10 hops later, one went to Mt. Gox. In all, 374.49 BTC reached known exchanges straight off the chain [@meiklejohn_fistfulbitcoinscharacterizing_2013].
 - **Ransomware, 2022:** 96% of the peels from ransomware peel chains went to one-time addresses. That fits exchange deposit addresses, but the authors say it "does not clearly imply this" [@kappos_howpeelmillion_2022].
 - **For each peel, record:** amount, address, hop number and what that address does next.
-- **Naming the service** that owns a deposit address is attribution: day 6 ③.
+- **Naming the service** that owns a deposit address is attribution: Attribution and Confidence.
 
 ::: {.notes}
 
@@ -339,7 +398,7 @@ Now change at work over many hops. Meiklejohn et al. define the peeling chain: i
 This slide teaches the tracing method for a peel chain: follow the change, collect the peels. It matters here because the lab's trace ends at the first service, and that is almost always a peel landing in a deposit address. Emphasize that a one-time recipient address suggests a service but does not prove it.
 
 **Key Points**
-The last slide showed the shape; this one shows how to follow it. Meiklejohn et al.'s method is to follow the change address to the next transaction at each hop; the other output, the peel, is the meaningful recipient. So the change is your path and the peels are your leads. Betcoin shows where that leads. It was hacked on 11 April 2012, and 3,171 BTC were stolen in four installments. The coins were gathered on 15 March 2013 and peeled. After 10 hops a peel went to the Bitcoin-24 exchange, and 10 hops later one went to Mt. Gox; in all, 374.49 BTC went to known exchanges directly off the main chain. Where do peels usually land? Kappos et al. collected 91,493 counterparty addresses from ransomware peel chains, and 96% were one-time addresses. That is consistent with exchange deposit addresses, but the authors stress it is not proof. So a peel at a one-time address suggests a service; linking that deposit address to a named service is attribution, day 6 ③.
+The last slide showed the shape; this one shows how to follow it. Meiklejohn et al.'s method is to follow the change address to the next transaction at each hop; the other output, the peel, is the meaningful recipient. So the change is your path and the peels are your leads. Betcoin shows where that leads. It was hacked on 11 April 2012, and 3,171 BTC were stolen in four installments. The coins were gathered on 15 March 2013 and peeled. After 10 hops a peel went to the Bitcoin-24 exchange, and 10 hops later one went to Mt. Gox; in all, 374.49 BTC went to known exchanges directly off the main chain. Where do peels usually land? Kappos et al. collected 91,493 counterparty addresses from ransomware peel chains, and 96% were one-time addresses. That is consistent with exchange deposit addresses, but the authors stress it is not proof. So a peel at a one-time address suggests a service; linking that deposit address to a named service is attribution, taught in Attribution and Confidence.
 
 **Walkthrough**
 1. Return to the previous slide's chain: the green boxes are the path, the white boxes are the leads.
@@ -354,7 +413,7 @@ The last slide showed the shape; this one shows how to follow it. Meiklejohn et 
 
 ## Batched payouts look busy but aren't a peel {.smaller}
 
-**Bottom line:** services, "mainly exchanges", often pay many customers in one transaction, a **batch** [@bitcoinoptech_paymentbatching_2021]. A batch most often means a service paying out, so your trace has likely reached one: **Low** until attribution (day 6 ③).
+**Bottom line:** services, "mainly exchanges", often pay many customers in one transaction, a **batch** [@bitcoinoptech_paymentbatching_2021]. A batch most often means a service paying out, so your trace has likely reached one: **Low** until attribution (Attribution and Confidence).
 
 | | Peel-chain hop | Batched payout |
 | --- | --- | --- |
@@ -449,7 +508,113 @@ Describe the case as the 2022 paper does; its later court history is not taught 
 
 :::
 
+## Two trails, one service: walk each one back {.smaller}
+
+**Bottom line:** a look-alike trail, a **decoy trail**, can end at the same service as yours. Walk each one back, and check the amounts. (Invented data: the ransom, 2.9140 BTC from R1 and R2, runs down a peel chain to deposit D.)
+
+:::: {.columns}
+::: {.column width="52%"}
+::: {style="font-size: .9em;"}
+- **What you see:** the service spends deposits D and E together. E's trail has your thief's habits: round peels, `bc1q` change.
+- **That sweep links D and E to the service,** not to each other's senders [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+- **Walk back:** E's trail reaches `Q0`, a coin with no path from R1 or R2.
+- **Read the amounts:** `U1` spent 4.0000 BTC, more than the whole ransom (2.9140); outputs never exceed inputs, so the ransom alone could not have funded it [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024]. The walk back shows none of it came from R1 or R2.
+- **Write:** E is a separate trail; the ransom reached the service at D.
+:::
+:::
+::: {.column width="48%"}
+```{dot}
+//| fig-width: 4.6
+//| fig-height: 4.0
+digraph Decoy {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [shape=box, style="rounded,filled", fillcolor="#f8fafc", color="#cbd5e1", fontname="Helvetica", fontsize=12];
+  edge [color="#64748b", arrowsize=0.7, fontname="Helvetica", fontsize=11];
+
+  R [label="R1 + R2\nransom 2.9140", fillcolor="#fef3c7", color="#f59e0b"];
+  T [label="Peel chain"];
+  D [label="Deposit D", fillcolor="#dcfce7", color="#22c55e"];
+  Q [label="Q0: no path\nfrom R1 or R2", fillcolor="#fee2e2", color="#ef4444"];
+  U [label="U1 ... U3\ninput 4.0000", fillcolor="#fee2e2", color="#ef4444"];
+  E [label="Deposit E"];
+  S [label="Service sweep:\nD and E spent together", fillcolor="#e0f2fe", color="#38bdf8"];
+
+  R -> T -> D -> S;
+  Q -> U -> E -> S;
+  {rank=same; R; Q;}
+  {rank=same; D; E;}
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches how to tell a look-alike trail from the real one when both end at the same service. It matters here because the afternoon's trace includes a trail like this, and following the wrong one hands the agent the wrong deposit. Emphasize the two tests: walk each trail back, and read the amounts.
+
+**Key Points**
+The backward trace on the last slide has a second use. Suppose the ransom's peel chain ends in deposit D, and the service later spends D in one transaction with another deposit, E. E's trail looks like yours: round peels, the same address type, the same pace. Is E the ransom too? The sweep cannot say. Co-spending links D and E to whoever held their keys at the sweep, the service, and says nothing about who sent to them. So walk E's trail back, hop by hop, the way the Bitcoin Fog trace went. It reaches Q0, a coin with no path from R1 or R2. Then read the amounts. Every Bitcoin transaction's outputs add up to no more than its inputs, and the difference is the fee, so value cannot appear from nowhere. E's trail once held 4.0000 BTC in a single input, more than the whole ransom of 2.9140, so the ransom alone could not have funded it. The amounts cannot rule out part of the ransom mixed with other money; the walk back to Q0 does, because none of E's coins came from R1 or R2. Matching habits are behavior, the weakest evidence on the scale; a trail's origin and its amounts are what decide. So write E down as a separate trail, and keep D as the ransom's arrival. The values are invented; the lab's trail has its own.
+
+**Walkthrough**
+1. Left of the diagram: the ransom trail, R1 and R2 down a peel chain to deposit D.
+2. Right: E's trail, from Q0 through U1 to U3 to deposit E. Point out the habits it shares.
+3. Bottom: the sweep spends D and E together. Ask: does that make E ransom money? (No: it links both deposits to the service.)
+4. Walk E back to Q0, then compare 4.0000 with 2.9140. Ask: which test would you trust if only one were available? (The walk back decides; the amounts confirm it. Record both.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## Check: peel chain, batch or decoy? {.smaller}
+
+::: {style="font-size: .85em;"}
+
+Name each pattern, and say what you follow next.
+
+1. One input pays 0.3000 BTC to one address and 6.8412 BTC to a fresh one, which does the same again, and again.
+2. One input pays 45 different addresses, plus one output back to the payer.
+3. A second trail with your thief's habits reaches the same service as yours, but walks back to a coin that never touched the ransom.
+
+::: {.fragment}
+**Answers:** 1 is a **peel chain**: follow the 6.8412 change and record the 0.3000 peel as a lead. 2 is a **batch**, most often a service paying out: Low until attribution; only your subject's output is the lead [@bitcoinoptech_paymentbatching_2021]. 3 is a **decoy trail**: its origin never touched the ransom, so record it as separate. Reaching the same service links it to the service, not to your thief [@meiklejohn_fistfulbitcoinscharacterizing_2013].
+
+**Part 2 in one line:** follow the change and collect the peels; when forward stalls or trails look alike, walk back and read the amounts.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part 2 with a check: three short patterns, each named and given its next step. It matters here because the lab's trace meets all three, and naming the shape decides where the trace goes next. Emphasize that each answer ends in an action: follow, stop, or set aside.
+
+**Key Points**
+- Pattern 1 is a peel chain, Meiklejohn et al.'s shape: a small peel to one address and a large remainder to a fresh change address, repeated. The change is the path; the peel is a lead.
+- Pattern 2 is a batch, which Bitcoin Optech says exchanges mainly use. It most often means a service paying out, so it is Low until attribution, and the customers in it are not linked to each other.
+- Pattern 3 is the decoy trail from the last slide: it shares the habits but not the origin, so it is set aside, not merged into the ransom trace.
+- The part's synthesis, on the slide: follow the change, collect the peels, and when forward stalls or two trails look alike, walk back and read the amounts.
+
+**Walkthrough**
+1. Read the three patterns.
+2. Give students a minute to name each one and write what they follow next.
+3. Take answers for each in turn, then reveal.
+4. Read the part 2 synthesis.
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @bitcoinoptech_paymentbatching_2021
+
+:::
+
 ## Same-transaction clues never reach High alone {.smaller}
+
+*Part 3: write each hop with its confidence.*
+
+::: {style="font-size: .9em;"}
 
 **Bottom line:** confidence rises with independent evidence, not more clues: clues from the same transactions stop at Moderate.
 
@@ -459,16 +624,18 @@ Describe the case as the 2022 paper does; its later court history is not taught 
 | Co-spending, no sign of a CoinJoin | **Moderate** | One strong line; CoinJoin is a known false positive |
 | Several change clues that agree | **Moderate** | Weaker lines, all from the same transaction |
 | A long peel chain with a steady pattern | **Moderate** | One kind of evidence: the pattern |
-| Any of these, plus another kind of evidence (day 6 ③) | **High** | Independent lines agree; no known failure applies |
+| Any of these, plus another kind of evidence (Attribution and Confidence) | **High** | Independent lines agree; no known failure applies |
 
 : {tbl-colwidths="[42,16,42]"}
 
 Investigators "should not rely on" these heuristics "as definitive evidence": a careful actor defeats them [@kappos_howpeelmillion_2022].
 
+:::
+
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide applies the course confidence scale to the heuristics taught so far. It matters here because every hop in the lab trace carries a confidence, and the common mistake is to count clues instead of kinds of evidence. Emphasize the definition: independent means a different kind of evidence, not a second heuristic over the same transactions.
+Part 3 turns each hop into a written row with its confidence. This slide applies the course confidence scale to the heuristics taught so far. It matters here because every hop in the lab trace carries a confidence, and the common mistake is to count clues instead of kinds of evidence. Emphasize the definition: independent means a different kind of evidence, not a second heuristic over the same transactions.
 
 **Key Points**
 Most slides so far gave a confidence; this one puts them all on one scale. Low is timing, amount or behavior alone, or one unverified label. Moderate is one strong line, or weaker lines that agree, with a known false positive possible. High needs two or more independent lines that agree, with no known failure applying, and on-chain heuristics alone do not get there. Why not? Kappos et al. warn that randomizing transaction and address features defeats their heuristics, and that investigators should not rely on them as definitive evidence. They add that all clustering heuristics share these limits but still work, because many entities do not evade them. So use the heuristics, and give every hop a word from this scale, never a percentage.
@@ -527,6 +694,8 @@ Now the heuristics on one real-looking transaction. The data are invented, and t
 
 ## A worked trace: four steps, four judgments {.smaller}
 
+::: {style="font-size: .9em;"}
+
 **Bottom line:** your lab product looks like this: one row per judgment, with its heuristic, its failure and its confidence. (Invented data.)
 
 | Step | What you see | Heuristic | Could be wrong if | Confidence |
@@ -538,9 +707,11 @@ Now the heuristics on one real-looking transaction. The data are invented, and t
 
 : {tbl-colwidths="[7,30,26,22,15]"}
 
-Stop at step 4: the money has reached what looks like a service. Naming it, and raising that Low, is attribution (day 6 ③).
+Stop at step 4: the money has reached what looks like a service. Naming it, and raising that Low, is attribution (Attribution and Confidence).
 
 **Ask:** which row would you check first if the conclusion were challenged?
+
+:::
 
 ::: {.notes}
 
@@ -561,36 +732,187 @@ The last slide built two rows. This is the whole trace, again on invented data; 
 
 :::
 
-## Recap: every hop, a heuristic and a confidence {.smaller}
+## Practice: write the trace rows for three hops {.smaller}
 
-- **Co-spending** links a transaction's inputs to one owner; a CoinJoin breaks it. Alone: Moderate.
-- **One false link** merges two actors; a huge cluster is usually a service.
-- **Change** is a guess from weak clues; when they don't separate the outputs, write "undetermined".
-- **Peel chains:** follow the change; the peels are the leads, and the first peel at a service ends the trace.
-- **Batches** most often mean a service paying customers: likely a service, Low until attribution (day 6 ③).
-- **Backward** works when forward stalls; record the direction.
-- **Confidence** rises with independent evidence, not with more clues.
-- **This afternoon:** the annotated trace. **Day 6 ③:** attribution. **Day 7 ①:** CoinJoin and mixers.
+::: {style="font-size: .85em;"}
 
-**Check:** a hop rests on three change clues that agree. What confidence, and what would raise it?
+For each hop, write one row per judgment: the heuristic, what could make it wrong, and how sure you are (High, Moderate or Low). All three are invented.
+
+```
+A  Inputs   W1 bc1q 0.6000, W2 bc1q 0.9000
+   Outputs  0  3Ka... 0.5000 seen before   1  bc1q... 0.9995 first use
+B  Input    bc1q 1.2000
+   Outputs  0  bc1q... 0.7000 first use    1  bc1q... 0.4997 first use
+C  Input    bc1q 1.0000
+   Outputs  0  bc1q... 0.4251 first use    1  bc1q... 0.5745 first use
+   (both later spent in transactions with the same settings)
+```
+
+:::
 
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide summarizes the heuristics and their failures and hands over to the lab. It matters here because the annotated trace uses every line. Emphasize the habit: heuristic, failure, confidence, for every hop.
+The three parts are done; this slide has students write the trace rows the lab asks for, on three hops that need three different judgments. It matters here because the afternoon's trace is built from rows like these, and each hop tests a different part of the lesson. Emphasize that "undetermined" is a valid row.
 
 **Key Points**
-Here is the lesson in one pass, in the order it was taught. Co-spending links a transaction's inputs, and a CoinJoin is its known failure. Because clusters chain their links, one false link merges two clusters and a few can build a super-cluster, while a huge cluster that is not an error is usually a service. Change is a guess from clues, and when they don't separate the outputs, the answer is undetermined. A peel chain is change repeated, so you follow the change and treat the peels as leads; a batch most often means a service paying customers. When forward stalls, trace backward. And through all of it, confidence rises with kinds of evidence, not with the number of clues. That is the habit for this afternoon: every hop names its heuristic, its failure and its confidence.
+- Hop A tests part 1's two heuristics together: a co-spend, then a change call with three clues.
+- Hop B has two fresh bc1q outputs, so only one clue, the un-round amount, separates them.
+- Hop C has outputs that look alike in every way the lesson taught, the Bitcoin Fog problem from part 1.
+- The answers, with their reasons, are on the next slide; keep it hidden until students have written theirs.
 
 **Walkthrough**
-1. Put the check question; take two or three answers. (Moderate: all three clues come from one transaction. A different kind of evidence, such as an exchange's records or a sourced label, could raise it: day 6 ③.)
-2. Likely question: "If a huge cluster is usually a service, why is step 4 only Low?" Because a huge cluster can also be a super-cluster made by one false link; size is behaviour, and attribution decides.
+1. Give students five minutes in pairs to write the rows for each hop: one per judgment.
+2. Remind them to check each fee: inputs minus outputs.
+3. Take answers for hop A before moving on, then B, then C.
 
 **Sources**
 - @meiklejohn_fistfulbitcoinscharacterizing_2013
 - @kappos_howpeelmillion_2022
-- @bitcoinoptech_paymentbatching_2021
+
+:::
+
+## Answers: three hops, three judgments {.smaller}
+
+::: {style="font-size: .8em;"}
+
+| Hop | Heuristic | Could be wrong if | Confidence |
+| --- | --- | --- | --- |
+| **A** | Co-spend: W1 and W2 have one owner. Change is output 1: fresh, the inputs' type, un-round beside 0.5000 [@meiklejohn_fistfulbitcoinscharacterizing_2013; @kappos_howpeelmillion_2022] | A is a CoinJoin; output 1 is the payment | **Moderate** for each row |
+| **B** | Change is output 1: un-round beside a round 0.7000 [@kappos_howpeelmillion_2022] | The payee asked for an un-round amount | **Low:** one clue |
+| **C** | None separates the outputs: change undetermined [@kappos_howpeelmillion_2022] | Not applicable: no call is made | **None given:** no change call is made; keep both as leads and trace back from where the money ends |
+
+: {tbl-colwidths="[8,46,26,20]"}
+
+Fees: A 0.0005, B 0.0003, C 0.0004. Each one confirms every output was read [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the answers to the practice, each with its heuristic, its failure and its confidence. It matters here because the feedback is where students check their own rows against the habit the lab grades. Emphasize the reasons: Moderate for hop A, because three clues from one transaction are one kind of evidence; Low for hop B, because one clue is behavior alone.
+
+**Key Points**
+- Hop A is two rows, like steps 1 and 2 of the worked trace. The co-spend of W1 and W2 is Moderate, because a CoinJoin is its known false positive. The change call is Moderate too: the fresh address is Meiklejohn et al.'s clue, and the script type and amount are Kappos et al.'s.
+- Hop B rests on one clue. Both outputs are fresh and of one type, so only the un-round 0.4997 points to change, and one clue alone is Low.
+- Hop C is the Bitcoin Fog problem: both outputs are fresh, of one type and spent alike, so no change heuristic can follow it. The right row says "change undetermined" and keeps both outputs as leads; a backward trace from where the money ends is the way through.
+- The fees: inputs minus outputs gives 0.0005, 0.0003 and 0.0004. A fee that comes out negative or far too large means an output was misread.
+
+**Walkthrough**
+1. Reveal the slide after students have written their rows.
+2. Read each row; ask a pair who chose a different word to say why.
+3. Ask: what would raise hop A to High? (A different kind of evidence, such as an exchange's records; Attribution and Confidence covers it.)
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
+- @kappos_howpeelmillion_2022
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## Review: every hop, a heuristic and a confidence {.smaller}
+
+::: {style="font-size: .8em;"}
+
+**The objective:** given a Bitcoin trace, write for each hop where the money went, the heuristic that says so, what could make it wrong, and how sure you are. Answer each question from memory before the answer appears.
+
+**1. R1 and R2 are spent together. What does that suggest, what breaks it, and how sure?**
+
+::: {.fragment}
+One owner; a CoinJoin breaks it; **Moderate** [@meiklejohn_fistfulbitcoinscharacterizing_2013; @gmaxwell_coinjoinbitcoinprivacy_2013].
+:::
+
+**2. Three change clues agree. Is that High?**
+
+::: {.fragment}
+No, **Moderate**: all three come from one transaction. Only a different kind of evidence raises it [@kappos_howpeelmillion_2022].
+:::
+
+**3. No clue separates the two outputs. What do you write?**
+
+::: {.fragment}
+"Change undetermined"; keep both as leads, and trace back from where the money ends [@kappos_howpeelmillion_2022].
+:::
+
+**4. A trail like yours reaches the same service. How do you tell it from the ransom?**
+
+::: {.fragment}
+Walk it back to its first coin, and check the amounts: outputs never exceed inputs [@bitcoin.orgdevelopers_transactionsdeveloperguide_2024].
+:::
+
+**5. Where does the trace stop, and why is that hop only Low?**
+
+::: {.fragment}
+At the first service. A huge cluster is usually a service, but it could be a super-cluster made by a false link [@meiklejohn_fistfulbitcoinscharacterizing_2013; @kappos_howpeelmillion_2022].
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide reviews the lesson against its objective: five questions, answered from memory before each answer appears. It matters here because recalling an answer fixes it better than hearing a summary, and the questions show whether students can now write every row of a trace. Emphasize question 2: rating agreeing clues High is the mistake the lesson most wants to stop, asked a second time.
+
+**Key Points**
+- Question 1 returns to the opening case and part 1's first heuristic: co-spending of the two ransom addresses, with CoinJoin as its failure.
+- Question 2 is the part 1 check asked again, and the lesson's point: clues from one transaction stop at Moderate.
+- Question 3 is part 1's last slide: undetermined is a correct row, and the backward trace from part 2 is the way through.
+- Question 4 is part 2's decoy trail: the origin and the amounts decide, not the habits.
+- Question 5 is part 3's worked trace: the trace stops at the first service, and size alone is behavior.
+- No new facts appear here; every answer was taught on an earlier slide.
+
+**Walkthrough**
+1. Read the objective.
+2. For each question, give students a few seconds to answer aloud or on paper, then reveal the answer.
+3. Likely question: "If a huge cluster is usually a service, why is step 4 only Low?" Because a false link can build a super-cluster of the same size; attribution decides.
+4. Ask the class the objective as a question: can you now write every row of a trace, with its confidence?
+
+**Sources**
+- @meiklejohn_fistfulbitcoinscharacterizing_2013
 - @gmaxwell_coinjoinbitcoinprivacy_2013
+- @kappos_howpeelmillion_2022
+- @bitcoin.orgdevelopers_transactionsdeveloperguide_2024
+
+:::
+
+## Next: a ransom from payment to cash-out {.smaller}
+
+::: {style="font-size: .88em;"}
+
+The FBI's affidavit in the Colonial Pipeline case traces a real ransom with clues taught today, co-spending among them [@fbi_colonialaffidavit_2021]. That trace comes next.
+
+| Where | What you do with today's heuristics |
+| --- | --- |
+| **Next lesson (Ransomware: the Payment and the Cash-out)** | Follow a real ransom hop by hop, and see where ransomware money goes |
+| **Then (Attribution and Confidence)** | Name the service behind a deposit, and see what raises a Low to High |
+| **This afternoon's lab** | The Bitcoin trace: the ransom to the first service, every hop with its heuristic, failure and confidence, and a decoy trail to tell apart |
+| Day 7 (Mixers and CoinJoin) | How to spot the CoinJoins that break co-spending |
+
+: {tbl-colwidths="[34,66]"}
+
+**Bottom line:** every hop in a trace names its heuristic, what could make it wrong, and how sure you are. Clues from one transaction stop at Moderate.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+The review checked the objective; this slide gives the lesson's bottom line and names what comes next without teaching it. It matters here because the next lesson runs today's heuristics on a real ransom, and the lab asks for them on every hop. Emphasize the bottom line.
+
+**Key Points**
+- The FBI's Colonial Pipeline affidavit traces the ransom with clues taught today, co-spending among them; the next lesson walks that trace.
+- Attribution and Confidence covers naming the service behind a deposit, and the kinds of evidence that make a hop High.
+- This afternoon's lab hands in the annotated trace, including a decoy trail into the same service.
+- Mixers and CoinJoin, on day 7, shows how to spot the transactions that break co-spending.
+
+**Walkthrough**
+1. Read the Colonial line as the bridge to the next lesson.
+2. Walk the table.
+3. Close on the bottom line.
+
+**Sources**
+- @fbi_colonialaffidavit_2021
 
 :::
 
