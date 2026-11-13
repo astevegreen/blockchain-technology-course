@@ -44,6 +44,8 @@ holds as a `blocker` of yours.
      message says why, and a cut for want of a source lists the searches tried (`.claude/skills/source/SKILL.md`,
      step 5). A cut with no searches listed is a `blocker`; a cut or narrowing with no reason given is `minor`
    - every new or changed slide ends with a complete notes block (the four parts in `.claude/rules/lessons.md`)
+   - new or changed slide, notes, lab and quiz text meets `docs/writing-standard.md`: each passage that fails one
+     of its ten checks is a `minor` concern naming the check's number and a rewrite that keeps every fact
    - a lab change follows the steps in `.claude/skills/lab/SKILL.md`: questions first, worked example and a
      straight-to-the-problem entry, ready-made queries, and a test playbook in `dynamic-labs/regression-tests/agent/<lab>/`
    - quiz items follow `quizes/QUIZ_ENGINE_JSON_SPEC.md` and the distractor rules in
@@ -81,5 +83,5 @@ then, for each changed lesson, the line `--slides` printed: `Slides: <lesson fil
 `Sources not read: <keys>` naming the new entries whose URL you could not fetch, or `Sources not read: none`.
 
 Blockers are wrong facts, missing or unverified sources, broken rules, leaked answers, and a lesson that doesn't
-fit its slot. Only a blocker holds the work; a `minor` concern ships with a note. Style preferences are not
-concerns.
+fit its slot. Only a blocker holds the work; a `minor` concern ships with a note. Style preferences beyond
+`docs/writing-standard.md` are not concerns.

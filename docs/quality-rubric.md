@@ -5,7 +5,8 @@ the owner's decision (CLAUDE.md rule 4).
 
 The rubric says what "better" means for this course, so a review can score lessons and labs against it and fix
 each weakness that recurs across the course, instead of polishing slides one at a time. It sits on top of the
-rules in `docs/build-spec.md` ("A lesson", "A lab", "Confidence scale"). It is stage 1 of the quality plan:
+rules in `docs/build-spec.md` ("A lesson", "A lab", "Confidence scale"). Clarity at the level of the sentence
+has its own standard, `docs/writing-standard.md`, which serves criteria 5 and 13. It is stage 1 of the quality plan:
 rubric, alignment map (`docs/alignment-map.md`), pattern audit, learner tests, measurement loop.
 
 Three principles: the course is **aligned**, it **teaches well**, and there is **evidence** that it does. Every

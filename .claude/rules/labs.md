@@ -8,3 +8,4 @@ paths:
   extend them when lab behavior changes, and list in your summary whatever they don't cover.
 - `runtime-credentials.sh` generates runtime secrets and instructor credentials into `dynamic-labs/.runtime/`
   (git-ignored). Commit the code that generates them, never the values.
+- Write lab pages and worksheets to `docs/writing-standard.md`; the reviewer measures new and changed text against it.
