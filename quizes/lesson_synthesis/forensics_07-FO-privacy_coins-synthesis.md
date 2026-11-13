@@ -15,7 +15,7 @@ The lesson's discipline is to name the coin and the date first, say what the pub
 
 ## Core Learning Outcomes
 
-- Explain why co-spend and change rules have nothing to work on in Monero.
+- Explain why the co-spend rule and the change heuristic have nothing to work on in Monero.
 - Describe a ring signature and what "one of 16" does and does not tell the analyst.
 - Explain what a key image lets the network do.
 - Read what a Monero explorer shows and what it hides, and treat a Monero address as an off-chain lead.
@@ -101,7 +101,7 @@ High needs a different kind of evidence, not a second heuristic over the same tr
 ## Assessment Targets For Future Quiz Generation
 
 - Target: why earlier rules fail on Monero.
-  - Good question shape: apply the co-spend or change rule and say why it has nothing to work on.
+  - Good question shape: apply the co-spend rule or the change heuristic and say why it has nothing to work on.
   - Avoid: naming the cryptography.
 - Target: the ring and the key image.
   - Good question shape: what "one of 16" and a key image mean for the analyst.

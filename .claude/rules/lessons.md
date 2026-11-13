@@ -7,6 +7,8 @@ paths:
   `format: aci-revealjs` (`slide-level: 2`; 03-IN uses 3 for its `###` sub-slides).
 - Each substantive slide ends with a `::: {.notes}` block in four parts: `**Overall Slide Concept**`,
   `**Key Points**`, `**Walkthrough**` (`None` when there is nothing to walk through) and `**Sources**` (`- @key` lines).
+  Key Points is an ordered spoken explanation, not a list of separate facts (`docs/writing-standard.md`, "Speaker
+  notes"); existing notes change in each day's language review.
 - Cite with `@key` from `../references/Blockchain.bib`; `python tools/qmd_lint.py <file>` flags unknown keys.
 - Hide a slide by wrapping it in `:::: {.content-hidden}` and `::::`. Quarto still runs code cells inside HTML comments.
 - Slide headings sit outside every div: close `.columns` and callouts first.

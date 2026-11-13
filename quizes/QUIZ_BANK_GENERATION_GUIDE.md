@@ -137,6 +137,11 @@ Question quality rules:
 - Prefer scenario, mechanism-tracing, comparison, diagnosis, tradeoff,
   application, causal reasoning, and misconception questions.
 - Use clear stems that ask students to reason, not just recognize a phrase.
+- Phrase stems positively; avoid NOT and EXCEPT, which students misread
+  (Haladyna, Downing and Rodriguez, 2002). If a negative is unavoidable, put it
+  in bold capitals.
+- Stems and options use the lesson's own term for each idea and its confidence
+  words (`docs/writing-standard.md`, check 11).
 - Each multiple-choice item must have one unambiguously correct answer.
 - Incorrect answers must be plausible and should represent common
   misunderstandings, tempting oversimplifications, or adjacent concepts.

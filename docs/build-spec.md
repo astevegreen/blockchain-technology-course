@@ -278,6 +278,8 @@ decisions on them the same day. Each one's state is on its Build Tracker row.
   facts or citations, and goes lesson by lesson and lab by lab, each through the `reviewer`.
   - **Standard (12 Nov 2026):** `docs/writing-standard.md` writes the ten checks down, with examples, so the review
     and every later revision measure text against the same thing. The `reviewer` applies it to new and changed text.
+    The owner adopted the 12 Nov 2026 review's changes the same day: three added checks (same idea, same word;
+    titles and bottom lines; words and pictures), a review order, and Key Points written as spoken explanation.
   - **When (owner, 12 Nov 2026):** a day's review runs only after that day's content is final, not now. Owner:
     "Only run language review after each day's content is final. Do not run it now, we will plan to do that large
     task later."
