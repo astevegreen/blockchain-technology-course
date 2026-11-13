@@ -131,6 +131,13 @@ if command -v ttyd >/dev/null 2>&1 && [ -f "${SHELL_SCRIPT}" ]; then
     # Set HOME to the ttyd user's actual home so bash doesn't try /root/.bashrc
     ttyd_home="$(getent passwd "${TTYD_USER}" 2>/dev/null | cut -d: -f6)" || true
     [ -n "${ttyd_home}" ] && export HOME="${ttyd_home}"
+    # Start ttyd in a directory the ttyd user can enter: the container's working
+    # directory is /root (mode 0700), and zellij cannot daemonize from there.
+    if [ -n "${ttyd_home}" ] && [ -d "${ttyd_home}" ]; then
+        cd "${ttyd_home}" || cd /
+    else
+        cd /
+    fi
 
     if [ -n "${ZELLIJ_BIN}" ] && [ -x "${ZELLIJ_BIN}" ]; then
         if ! HLF_SHELL_RC_ONLY=1 bash "${SHELL_SCRIPT}"; then

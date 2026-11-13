@@ -63,11 +63,6 @@ slide index), which is never listed here.
   badge: its websocket connects to the unprefixed `ws://127.0.0.1/api/v1/ws` and fails, though the prefixed path
   `/labs/<lab>/mempool/api/v1/ws` works. Address and transaction pages are unaffected; the playbooks call it a note.
   [12 Nov 2026, desktop browser walks]
-- The hlf node consoles (`/labs/hlf/peer/org*/console/`) show no shell on a local run: `zellij attach` as `hlf`
-  panics "could not daemonize ... ChangeDirectory(13)" because ttyd starts in `/root` (mode 0700; no `WORKDIR` in
-  `dynamic-labs/hlf/Dockerfile.ttyd`, no `cd` before the `exec ttyd` at `dynamic-labs/hlf/scripts/hlf_ttyd_wrapper.sh:140`).
-  Reproduced in the Org2 peer container: fails from `/root`, starts from `/tmp`. Blocks the Fabric demo walk.
-  Check whether CI's Lab Tests pass only because they never open the shell. [12 Nov 2026, Fabric demo walk]
 
 ## Quizzes and instructor tools
 - **The lab hosting page has not run on a lab host.** `/instructor/hosting` (quiz-engine-v2
