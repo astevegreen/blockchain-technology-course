@@ -65,11 +65,13 @@ slide index), which is never listed here.
   [12 Nov 2026, desktop browser walks]
 
 ## Quizzes and instructor tools
-- **The lab hosting page has not run on a lab host.** `/instructor/hosting` (quiz-engine-v2
-  `app/blueprints/hosting.py`, `app/hosting_runner.py`) is tested only through Flask and unit tests: untested are
-  `lab-manager.sh start quiz-engine-v2` starting the runner, its socket file reaching the container through the bind
-  mount (may fail on Docker Desktop), and the status parsing against real `docker compose ps` output. Run it on the
-  desktop after a `./lab-manager.sh deploy --mode instructor`. [12 Nov 2026, built without a Docker run]
+- **The lab hosting page's runner cannot start on the desktop.** `lab-manager.sh start quiz-engine-v2` starts
+  `app/hosting_runner.py` (quiz-engine-v2), but it dies at `serve()` (line 252) with `OSError: [Errno 95] Operation not
+  supported`: it binds its socket under `.runtime/hosting-runner/`, which is on the Windows drive (`/mnt/c`) where WSL
+  cannot create Unix sockets, so `/instructor/hosting` shows "runner is not answering". Fix: keep the socket on a
+  Linux path (for example under `/tmp`, set in `start_hosting_runner`, `lab-manager.sh:982`, and mounted by
+  `compose.yaml:33`), then walk Start, Stop and Status, and check the status parsing against real `docker compose ps`
+  output. [12 Nov 2026, found walking the page on screen; runner.log]
 - **Pretest written items have no marking aid.** `/instructor/pretest` shows each student's start point per day from
   `mark_pretest.py --json`, but written items are still judged by hand in the marker's sheet. [12 Nov 2026, dashboard build]
 - **Marking page untried in a class.** `/instructor/marking` passes its tests but no instructor has marked a real
