@@ -57,8 +57,10 @@ socket into it would hand anyone who broke into the engine full control of the
 host. Instead, `./lab-manager.sh start quiz-engine-v2` starts a small helper on
 the host, `app/hosting_runner.py` (standard library only), which:
 
-- listens on a socket *file*, `.runtime/hosting-runner/runner.sock`, and on no
-  network port; `compose.yaml` mounts only that folder into the engine;
+- listens on a socket *file*, `runner.sock`, and on no network port. The file lives in
+  `/tmp/dynamic-labs-hosting-runner-<uid>/` (not under `.runtime/`: on WSL that is the
+  Windows drive, where a socket cannot be created); `compose.yaml` mounts only that
+  folder into the engine;
 - answers only requests carrying `HOSTING_RUNNER_SECRET`, which
   `./lab-manager.sh deploy` generates into `.runtime/runtime-secrets.env`
   (re-read on every request, so a credential rotation applies at once);

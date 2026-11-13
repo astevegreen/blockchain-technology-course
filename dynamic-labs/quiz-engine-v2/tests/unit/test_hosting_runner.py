@@ -159,6 +159,29 @@ def test_socket_round_trip(runner, tmp_path):
         server.server_close()
 
 
+def test_socket_goes_to_socket_dir_when_given(tmp_path, monkeypatch):
+    """Under WSL the state folder is on the Windows drive, where a socket cannot be bound: --socket-dir moves it."""
+    bound = []
+
+    class FakeServer:
+        def serve_forever(self):
+            pass
+
+        def server_close(self):
+            pass
+
+    monkeypatch.setattr(hosting_runner, "list_labs", lambda _path: LABS)
+    monkeypatch.setattr(hosting_runner, "serve", lambda _runner, path: bound.append(path) or FakeServer())
+    env = tmp_path / "runtime-secrets.env"
+    env.write_text(f"HOSTING_RUNNER_SECRET={SECRET}\n")
+    state, sockets = tmp_path / "state", tmp_path / "sockets"
+    base = ["--lab-manager", str(tmp_path / "lab-manager.sh"), "--dir", str(state), "--env-file", str(env)]
+
+    assert hosting_runner.main(base + ["--socket-dir", str(sockets)]) == 0
+    assert hosting_runner.main(base) == 0
+    assert bound == [sockets / "runner.sock", state / "runner.sock"]
+
+
 def test_call_reports_an_absent_runner(tmp_path):
     with pytest.raises(hosting_runner.RunnerUnavailable):
         hosting_runner.call(tmp_path / "nobody-here.sock", {"action": "state"}, timeout=1)

@@ -290,7 +290,11 @@ def main(argv=None) -> int:
     parser.add_argument("--lab-manager", required=True, type=Path, help="path to dynamic-labs/lab-manager.sh")
     parser.add_argument("--dir", required=True, type=Path, help="state folder (.runtime/hosting-runner)")
     parser.add_argument("--env-file", required=True, type=Path, help=".runtime/runtime-secrets.env")
+    parser.add_argument("--socket-dir", type=Path, default=None,
+                        help="folder for the socket file (default: --dir); must be on a Linux filesystem, "
+                             "since WSL cannot create Unix sockets on the Windows drive")
     args = parser.parse_args(argv)
+    socket_path = (args.socket_dir or args.dir) / SOCKET_NAME
 
     secret = read_secret(args.env_file)
     if not secret:
@@ -298,8 +302,8 @@ def main(argv=None) -> int:
         return 1
     lab_manager = args.lab_manager.resolve()
     runner = Runner(lab_manager, args.dir, lambda: read_secret(args.env_file), list_labs(lab_manager))
-    server = serve(runner, args.dir / SOCKET_NAME)
-    print(f"{utc_now()} hosting runner listening on {args.dir / SOCKET_NAME} for {', '.join(runner.labs)}", flush=True)
+    server = serve(runner, socket_path)
+    print(f"{utc_now()} hosting runner listening on {socket_path} for {', '.join(runner.labs)}", flush=True)
     try:
         server.serve_forever()
     finally:

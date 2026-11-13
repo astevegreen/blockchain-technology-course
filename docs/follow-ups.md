@@ -15,6 +15,12 @@ slide index), which is never listed here.
 
 ## Lessons
 
+- `docs/quality-rubric.md:139`: the first-time reader read is briefed to know "the earlier lessons and the
+  glossary", but the writing standard's reader (owner, 12 Nov 2026) knows only what earlier lessons taught and looks
+  glossary terms up. Align the brief. [12 Nov 2026, applying the writing-standard review]
+- Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
+  `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
+  [12 Nov 2026, writing-standard review]
 - Most of the 13 questions (q1-q10 by their `lesson_block`) in `quizes/quiz_json/ethereum_05-EF-digital_assets_tokenization_and_nfts-quiz-bank.json`
   trace to 05-EF slides hidden on 31 Oct 2026 (`content-hidden` from line 680); the rebuilt slides (lines 17-676)
   have few questions. [11 Nov 2026, writing the Spot the fake questions]
@@ -65,13 +71,6 @@ slide index), which is never listed here.
   [12 Nov 2026, desktop browser walks]
 
 ## Quizzes and instructor tools
-- **The lab hosting page's runner cannot start on the desktop.** `lab-manager.sh start quiz-engine-v2` starts
-  `app/hosting_runner.py` (quiz-engine-v2), but it dies at `serve()` (line 252) with `OSError: [Errno 95] Operation not
-  supported`: it binds its socket under `.runtime/hosting-runner/`, which is on the Windows drive (`/mnt/c`) where WSL
-  cannot create Unix sockets, so `/instructor/hosting` shows "runner is not answering". Fix: keep the socket on a
-  Linux path (for example under `/tmp`, set in `start_hosting_runner`, `lab-manager.sh:982`, and mounted by
-  `compose.yaml:33`), then walk Start, Stop and Status, and check the status parsing against real `docker compose ps`
-  output. [12 Nov 2026, found walking the page on screen; runner.log]
 - **Pretest written items have no marking aid.** `/instructor/pretest` shows each student's start point per day from
   `mark_pretest.py --json`, but written items are still judged by hand in the marker's sheet. [12 Nov 2026, dashboard build]
 - **Marking page untried in a class.** `/instructor/marking` passes its tests but no instructor has marked a real

@@ -982,6 +982,9 @@ build_lane_images() {
 start_hosting_runner() {
     local runner_dir="${RUNTIME_DIR}/hosting-runner"
     local pid_file="${runner_dir}/runner.pid"
+    # The socket file lives on a Linux path: under WSL, .runtime/ is on the Windows drive, where binding a Unix
+    # socket fails with "Operation not supported". Logs and job output stay in runner_dir.
+    local socket_dir="${HOSTING_RUNNER_SOCKET_DIR:-/tmp/dynamic-labs-hosting-runner-$(id -u)}"
     local pid=""
     local name
     local -a runner_env
@@ -992,6 +995,9 @@ start_hosting_runner() {
     fi
     mkdir -p "${runner_dir}"
     chmod 711 "${runner_dir}" 2>/dev/null || true
+    mkdir -p "${socket_dir}"
+    chmod 711 "${socket_dir}" 2>/dev/null || true
+    HOSTING_RUNNER_SOCKET_DIR="${socket_dir}"
     if [[ -f "${pid_file}" ]]; then
         pid="$(cat "${pid_file}" 2>/dev/null || true)"
     fi
@@ -1008,7 +1014,7 @@ start_hosting_runner() {
     done
     echo "  Starting the lab hosting runner (log: ${runner_dir}/runner.log)"
     env -i "${runner_env[@]}" nohup python3 "${BASE_DIR}/quiz-engine-v2/app/hosting_runner.py" \
-        --lab-manager "${SCRIPT_PATH}" --dir "${runner_dir}" --env-file "${RUNTIME_ENV_FILE}" \
+        --lab-manager "${SCRIPT_PATH}" --dir "${runner_dir}" --socket-dir "${socket_dir}" --env-file "${RUNTIME_ENV_FILE}" \
         >> "${runner_dir}/runner.log" 2>&1 < /dev/null &
     echo "$!" > "${pid_file}"
 }
@@ -1031,7 +1037,7 @@ start_project() {
     build_lane_images "${dir}"
     if [[ "${target}" == "quiz" || "${target}" == "quiz-engine-v2" ]]; then
         start_hosting_runner
-        QUIZ_ENGINE_HOSTING_RUNNER_DIR="${RUNTIME_DIR}/hosting-runner" \
+        QUIZ_ENGINE_HOSTING_RUNNER_DIR="${HOSTING_RUNNER_SOCKET_DIR:-${RUNTIME_DIR}/hosting-runner}" \
             QUIZ_ENGINE_INSTRUCTOR_AUTH_MODE=shared INSTRUCTOR_AUTH_MODE=shared compose_up_cmd "${dir}" "${cmd[@]}"
     else
         compose_up_cmd "${dir}" "${cmd[@]}"
