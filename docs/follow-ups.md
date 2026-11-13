@@ -38,6 +38,16 @@ slide index), which is never listed here.
   rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
 - `docs/lab-cards/is-it-final-yet.md:9` and `:90` name the old 01-EF title "Pending, then included, then final"; it
   is now "Pending, included, then final 15 minutes later" (the old anchor still resolves). [13 Nov 2026, 01-EF rebuild review]
+- Quiz fields name the old 02-IN title "Four beliefs to correct when you brief", now "Review: four beliefs, and what
+  breaks each" (the old anchor still resolves): `quizes/quiz_json/introduction_02-IN-blockchain_at_a_glance-quiz-bank.json:209`
+  and `:258`, `quizes/quiz_json/weekone_check-quiz-bank.json:115` and `:118`. The 02-IN bank's proof-of-work
+  question (`:313`) now rests on notes only, and it has no questions on the rebuild's checks, worked slide, practice
+  and review. [13 Nov 2026, 02-IN rebuild review]
+- `quizes/quiz_json/daily_d2_review_of_day1-quiz-bank.json`: its 02-IN account-model question should point at the
+  slide "One Ethereum payment: nonce, value and fee"; the UTXO-versus-account table it read is gone. [13 Nov 2026, 02-IN rebuild review]
+- `blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd:239` points to 02-IN's
+  account table and block-card nonce; the rebuild cut both (the Ethereum slide still shows an account's nonce).
+  Repoint it at its next rework. [13 Nov 2026, 02-IN rebuild review]
 - Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
   `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
   [12 Nov 2026, writing-standard review]
