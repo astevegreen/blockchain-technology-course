@@ -19,10 +19,13 @@ slide index), which is never listed here.
   titles first. The 04-FO trial found the common gaps: tasks practised that were never shown (check 8), no check
   at a section's end (9), no review or time plan (11, 12). [12 Nov 2026, lesson-standard trial on 04-FO]
 
-- `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd:200`: "Sendin tested 20 to 80 inputs" does not
+- `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd:208`: "Sendin tested 20 to 80 inputs" does not
   say whether these are the detector's settings or sweeps the paper observed; check `sendin_detectingcoldstorage_2018`
-  through the `source` skill. Line 511: "It marketed Paxful" has no clear subject; check `doj_paxful_2025` for who
+  through the `source` skill. Line 623: "It marketed Paxful" has no clear subject; check `doj_paxful_2025` for who
   did the marketing. [12 Nov 2026, writing-standard trial rewrite of 04-FO]
+- `quizes/quiz_json/forensics_04-FO-exchanges_otc_p2p-quiz-bank.json` has no questions on the reworked 04-FO's
+  new slides: the two checks (withdrawal from the pool; which address goes in the assessment), the practice answers
+  and their confidence words, and the review. [13 Nov 2026, 04-FO lesson-standard rework]
 - Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
   `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
   [12 Nov 2026, writing-standard review]
