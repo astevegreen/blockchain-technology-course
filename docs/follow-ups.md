@@ -26,6 +26,10 @@ slide index), which is never listed here.
 - `quizes/quiz_json/forensics_04-FO-exchanges_otc_p2p-quiz-bank.json` has no questions on the reworked 04-FO's
   new slides: the two checks (withdrawal from the pool; which address goes in the assessment), the practice answers
   and their confidence words, and the review. [13 Nov 2026, 04-FO lesson-standard rework]
+- `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd:467`:
+  the welcome's closing pre-question ("what do you expect the chain to tell you?") says Ledger and Finality comes
+  back to it, but this slide's notes do not refer to it; add a one-line callback at its next rework.
+  [13 Nov 2026, reviewer on the 01-IN rebuild]
 - Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
   `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
   [12 Nov 2026, writing-standard review]
