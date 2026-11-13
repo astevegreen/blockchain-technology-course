@@ -14,76 +14,1138 @@ format:
 aci-mermaid: true
 ---
 
-## Smart Contracts: Concept and Scope
 
-- The last lesson covered accounts and the EVM (01-EF). This one reads the code a contract account holds.
+## A contract's code decides what each caller can do {.smaller}
 
-- A smart contract is a program and its state at an address on the blockchain.
+::: {style="font-size: .84em;"}
 
-- Its functions run automatically when a transaction or call reaches that contract.
+[]{#smart-contracts-concept-and-scope}**The case:** an agent sends you the address of a token contract called Coin and asks one question: can anyone make more of it? The explorer's event list shows only `Sent` transfers, so the quick answer is "nobody has made any". Today is how to answer from the code instead.
 
-- Different from ‘legal contracts’: execution is automatic and deterministic, not interpretive.
+[]{#from-bitcoin-script-to-solidity}**01-EF left off** at block 6, where a token contract refused Account 4: once deployed, a contract's code decides how every call is handled. Bitcoin's Script only sets the conditions to spend one output; a contract keeps its own state and runs whatever logic its code holds, metered by gas [@nakamoto_bitcoinpeertopeerelectronic_2008; @buterin_ethereumnextgenerationsmart_2014].
 
-- An analyst reads a contract to say **what it lets each caller do**: who can create value, who can move it, what limits it, and what it records.
+**Four questions to ask of any contract**, and today's map:
 
-- Today: Solidity read by hand, then one Vyper and one Rust snippet to recognize on sight.
+1. **Who can create value?** 2. **Who can move it?** 3. **What limits it?** 4. **What does it record?**
 
-::: {.notes}
+Four parts build the answers: **A** reading Solidity, **B** two worked readings, **C** what the chain shows of a call, **D** contracts that change or look different.
 
-**Overall Slide Concept**
-This opening slide sets the purpose of the lesson: reading a contract's source well enough to say, in plain words, what the code lets each caller do. It follows 01-EF, which introduced accounts and the EVM, and it sets up the token lesson that comes next. Emphasize that students read code here; they are not asked to write it.
+**By the end:** given a contract's verified Solidity source, answer the four questions, point to the line that answers each, and say whether its code can be swapped and who can swap it. Recognise Vyper and Rust contract code on sight.
 
-**Key Points**
-- A smart contract is code plus persistent state that executes under shared consensus rules.
-- Smart contracts differ from legal contracts because execution is automatic and bounded by deployed bytecode behavior.
-- Define deterministic briefly as producing the same result for the same inputs on every validating node.
-- The analyst's four questions are about capability: who can create value, who can move it, what limits it, and what the contract records on-chain.
-- Solidity is read line by line today; Vyper and Rust are shown only so students recognize them when they meet them.
-
-**Walkthrough**
-1. Tie back to 01-EF: a contract account holds code; this lesson reads that code.
-2. Read the definition and the "not a legal contract" line.
-3. Put the four questions on the board; every code slide today answers some of them.
-4. Ask what the `SimpleCounter` contract in 01-EF let a stranger do. (Expected answer: call `increment` and read the count, but not `reset`, which checks `msg.sender` against `owner`.)
-
-**Sources**
-- @buterin_ethereumnextgenerationsmart_2014
-- @ethereum.org_smartcontractsdeveloper_2025
+**The point to earn:** the code, not the contract's name or its event list, says what each caller can do [@solidity_introsmartcontracts_2026].
 
 :::
 
-## From Bitcoin Script to Solidity {.smaller}
-
-| Feature | **Bitcoin Script** | **Solidity (Ethereum)** |
-|----------|-------------------|-------------------------|
-| **Purpose** | Defines *conditions to spend* a specific UTXO. | Defines *programs* that manage state and logic. |
-| **Language Type** | Stack-based, declarative, non–Turing complete. | High-level, imperative, Turing complete. |
-| **State Model** | Stateless: no memory of prior executions. | Stateful: contracts maintain persistent storage between calls. |
-| **Execution Context** | Runs only when spending an output. | Invoked via transactions or calls; read/write storage, call contracts. |
-| **Control Flow** | No loops or recursion; limited branching. | Full control flow (loops, branching, function calls, libraries). |
-| **Resource Control** | Bounded by design. | Bounded by gas metering; execution stops when gas runs out. |
-| **Security Model** | Simplicity and determinism reduce attack surface. | Expressiveness increases flexibility *and* vulnerability (reentrancy, etc.). |
-
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide establishes why Ethereum-style contracts represent a major jump from Bitcoin Script rather than a small language tweak. It matters here because students need to see the tradeoff between Script's constrained safety and Solidity's expressive power. Emphasize that richer state and control flow enable applications while expanding the attack surface.
+This slide opens the lesson with a case and a question: an agent asks whether anyone can make more of a token called Coin, and the explorer's event list seems to say nobody has. It matters here because every token, stablecoin and exploit later in the course is a contract, and the analyst who reads only the explorer's labels and events will get the agent's question wrong. Emphasize the objective: the practice and the review come back to it.
 
 **Key Points**
-- Bitcoin Script mainly expresses spending conditions for UTXOs, while Solidity defines stateful programs with persistent logic.
-- Ethereum accepts more complexity to support rich applications such as lending, governance, and tokens.
-- Define UTXO as unspent transaction output and note that Turing complete means the language supports general control flow under gas limits.
+- Students already know from 01-EF that a contract is code plus storage at an address, that only an EOA starts a transaction, and that a failed call still pays its fee and leaves no logs. This lesson reads the code itself.
+- The Script line is a one-sentence recall of day 2, so that students see why a contract needs gas: it can run any logic, so the fee meters each step.
+- The four questions are the lesson's spine. Every code slide answers some of them, and the practice asks all four of Coin.
+- Coin is the running case: its state appears in part A, it is read whole in part B, its calls are read on the chain in part C, and part D puts it behind a proxy. SimpleCounter and SimpleStorage are the second, smaller cases.
+- The wrong idea in the case, that the event list is the contract's history, is broken in part C and asked again in the review.
+- Students read code today; they are not asked to write any.
 
 **Walkthrough**
-1. Recall day 2: a Bitcoin script only says who may spend one output.
-2. Read the rows for state model and control flow, the two biggest differences.
-3. Ask why Solidity needs gas when Bitcoin Script does not. (Expected answer: Solidity allows loops, so without a gas limit a call could run forever; Script has no loops and is bounded by design.)
-4. Close on the security row: more power, more ways to get it wrong.
+1. Read the case and leave the agent's question open; the lesson answers it.
+2. Read the link back to 01-EF's block 6 and the one line on Script.
+3. Put the four questions on the board, then name parts A to D.
+4. Read the objective aloud. Each part ends with a check every student answers, and the close asks the objective again.
+5. Time plan, 50 minutes: opening 3, part A 12 (with its check), part B 10 (with its check), part C 7 (with its check), part D 10, practice 4, answers 2, review and next 2.
 
 **Sources**
 - @nakamoto_bitcoinpeertopeerelectronic_2008
 - @buterin_ethereumnextgenerationsmart_2014
+- @solidity_introsmartcontracts_2026
+
+:::
+
+## Deploying turns compiled code into a contract {.smaller}
+
+:::: {.columns}
+::: {.column width="56%"}
+
+::: {style="font-size: 0.84em;"}
+
+[]{#contract-deployment}A contract comes into being in one transaction:
+
+1. A developer writes Solidity and compiles it into bytecode, the EVM's machine code.
+2. A deployment transaction carries that creation code; it has no To address.
+3. The EVM runs the creation code once, including the **constructor**, the setup function, and charges gas for it.
+4. The result is a new contract address holding the **runtime bytecode** and its first storage values.
+
+The constructor does not stay on-chain; only the runtime code does [@ethereum.org_smartcontractsdeveloper_2025; @wood_ethereumsecuredecentralised_2016].
+
+The chain stores bytecode, not Solidity. An explorer shows source only when someone has verified that it compiles to that bytecode.
+
+:::
+
+:::
+::: {.column width="44%"}
+
+```{dot}
+//| fig-width: 5.2
+//| fig-height: 4.8
+digraph deployflow {
+  bgcolor="transparent"; rankdir=TB;
+  node [fontname="Helvetica" fontsize=11 style="filled,rounded" shape=box];
+  edge [fontname="Helvetica" fontsize=9];
+
+  src   [label="Solidity source" fillcolor="#dbeafe"];
+  comp  [label="Compile" fillcolor="#dcfce7"];
+  tx    [label="Deployment tx\nwith creation code" fillcolor="#fef3c7"];
+  exec  [label="Creation code + constructor\nrun once in the EVM" fillcolor="#fde68a"];
+  out   [label="Contract address\nruntime bytecode + storage" fillcolor="#bbf7d0"];
+
+  src -> comp -> tx -> exec -> out;
+}
+```
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+Part A starts here: it teaches enough Solidity to read a short contract, starting with how the code reaches the chain. This slide follows one contract from source to address. It matters here because an analyst reads the source on an explorer, but the chain holds only bytecode, so the source is evidence only once it is verified. Emphasize that the constructor runs once and is gone; what it wrote to storage stays.
+
+**Key Points**
+- 01-EF said a contract is code plus storage at an address; this slide shows where both come from.
+- The developer compiles the Solidity into bytecode, so the chain never sees the `.sol` file.
+- The deployment transaction carries creation code, and because it creates a contract it has no To address.
+- The EVM runs that code once. The constructor inside it sets the first storage values, such as who owns the contract, and the run returns the runtime bytecode that every later call executes.
+- So the contract's address ends up holding runtime code and storage, and the constructor itself is not kept.
+- An explorer's verified source is a match made later, by compiling the source and comparing it with the bytecode at the address. Unverified contracts show only bytecode.
+
+**Walkthrough**
+1. Say what part A is for: enough Solidity to read Coin by the end of part B.
+2. Follow the diagram from source to address.
+3. Stop on the constructor: it runs once, at step 3.
+4. Ask what an explorer shows for a contract nobody verified. (Expected answer: bytecode only, no Solidity.)
+
+**Sources**
 - @ethereum.org_smartcontractsdeveloper_2025
+- @wood_ethereumsecuredecentralised_2016
+
+:::
+
+## Read Solidity in order: state, then functions {.smaller}
+
+:::: {.columns}
+::: {.column width="52%"}
+
+::: {style="font-size: 0.78em;"}
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract SimpleCounter {
+    uint256 private count;
+    address public owner;
+
+    constructor(uint256 startingValue) {
+        owner = msg.sender;
+        count = startingValue;
+    }
+    function increment() public {
+        count += 1;
+    }
+    function reset() public {
+        require(msg.sender == owner, "Only owner can reset");
+        count = 0;
+    }
+    function getCount() public view returns (uint256) {
+        return count;
+    }
+}
+```
+
+:::
+
+:::
+::: {.column width="48%"}
+
+::: {style="font-size: 0.8em;"}
+
+[]{#solidity-file-structure-from-top-to-bottom}Read a file top to bottom, in this order:
+
+1. **`pragma`**: which compiler version, so which language rules apply; since 0.8, arithmetic that overflows reverts.
+2. **`contract SimpleCounter`**: the code that lives at one address.
+3. **State variables** (`count`, `owner`): what the contract remembers between calls. Read them first: the functions protect or change them.
+4. **`constructor`**: runs once, at deployment. `msg.sender` is the address that made the current call, so the deployer becomes `owner` [@solidity_introsmartcontracts_2026].
+5. **Functions**: what a caller can ask for. `reset`'s first line is a gate; two slides on.
+
+:::
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives students a reading order and one short contract to practise it on. It matters here because a contract read in order, state first, tells the analyst what is at stake before the functions say who may change it. Emphasize that students read the file; nobody here writes one.
+
+**Key Points**
+- SimpleCounter is a course example, written for 01-EF and moved here because this is the lesson that reads code. It keeps one number and the address of its owner.
+- The `pragma` line names the compiler version. It matters because the rules change between versions; for example, since 0.8 arithmetic that overflows reverts.
+- The `contract` line names the unit that is deployed at one address.
+- The state variables come next, and the analyst reads them first because everything else protects or changes them.
+- The constructor ran once at deployment, as the last slide showed. It stored `msg.sender`, the address that made the current call, as `owner`, so the deployer owns the counter.
+- Then come the functions, the requests a caller can make. `reset` starts with a `require`, which the slide after next teaches.
+
+**Walkthrough**
+1. Read the five steps in order, pointing at the matching lines.
+2. Ask what SimpleCounter remembers between calls. (Expected answer: a count and an owner's address.)
+3. Ask who the owner is. (Expected answer: whoever deployed it; the constructor stored `msg.sender`.)
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @solidityteam_solidityexample_2025
+- @ethereum.org_smartcontractsdeveloper_2025
+- @wood_ethereumsecuredecentralised_2016
+
+:::
+
+## State is numbers, addresses and mappings {.smaller}
+
+::: {style="font-size: 0.8em;"}
+
+[]{#types-value-types}[]{#types-reference-types}Three types hold almost all the state an analyst reads, and Coin uses all three:
+
+| Type | Holds | In Coin or SimpleCounter |
+|---|---|---|
+| `uint256` (also written `uint`) | A whole number, never negative | `count`; each balance; an `amount` |
+| `address` | A 20-byte account address | `owner`; `minter` |
+| `mapping(address => uint)` | A lookup table from each address to a number | `balances`: each address's coins |
+
+```solidity
+address public minter;
+mapping(address => uint) public balances;
+```
+
+- In a mapping, every key exists from the start and reads as zero, so an address nobody has paid has a balance of 0 [@solidity_introsmartcontracts_2026].
+- `private` stops other contracts reading a variable; it does not hide it: all state is "visible to the whole world outside of the blockchain" [@solidityteam_contracts_2026].
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the three kinds of state the lesson's contracts use: whole numbers, addresses and mappings. It matters here because the four questions are about value and who controls it, and in most contracts value is a number in a mapping keyed by address. Emphasize the mapping: it is where a token's balances live.
+
+**Key Points**
+- The last slide said to read state first, so this slide says what that state is made of.
+- A `uint256` is a whole number that cannot be negative; `uint` is the same type under a shorter name. Counts, balances and amounts are all `uint256`.
+- An `address` is a 20-byte account address, an EOA or a contract, as in 01-EF. Owners and minters are addresses.
+- A mapping is a lookup table. Coin's `balances` maps each address to its number of coins, and because every key starts at zero, an address nobody has paid simply reads 0.
+- `private` is often misread. It stops other contracts from reading the variable, but every node holds the contract's storage, so anyone can read it from the chain. SimpleCounter's `count` is private and still public knowledge.
+- Solidity has other types (true/false values, lists, records); the lesson leaves them out because the contracts read today do not use them.
+
+**Walkthrough**
+1. Read the table row by row, pointing to the variable in Coin or SimpleCounter.
+2. Read Coin's two state lines and ask what `balances[x]` returns for an address that never received a coin. (Expected answer: 0.)
+3. Ask whether SimpleCounter's `private` count is secret. (Expected answer: no; other contracts cannot read it, but anyone reading the chain can.)
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @solidityteam_contracts_2026
+- @solidityteam_solidityexample_2025
+
+:::
+
+## Visibility says who may call; payable takes ETH {.smaller}
+
+::: {style="font-size: 0.82em;"}
+
+[]{#visibility-mutability-and-payable}Words on each function line say who may call it and what it may do:
+
+- **`public`**: anyone may call it, from outside or from inside the contract. A `public` variable also gets a read function with its name, so `owner()` returns SimpleCounter's owner.
+- **`view`**: the function reads state but never changes it, as `getCount` does.
+- **`payable`**: the function accepts ETH sent with the call. Without it, the function "will automatically reject all Ether sent to it" [@solidityteam_contracts_2026], and the call reverts [@solidity_abispec_2026].
+
+You will also meet `external` (callable only from outside: read it as `public` for an analyst's purposes) and `private` or `internal` (callable only from inside the contract).
+
+**Reading SimpleCounter:** every function is `public`, so anyone may call any of them. Nothing is `payable`, so no call can leave ETH in it. Only a check inside a function narrows who succeeds.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the three words on a function line that matter most to an analyst: `public`, `view` and `payable`. It matters here because "who may call this?" starts at the function line, before any check inside it. Emphasize that `public` means anyone; whether the call succeeds is decided inside the function.
+
+**Key Points**
+- State is what the contract keeps; the functions are how callers reach it, so the next thing to read is each function's first line.
+- `public` lets anyone call the function. On a variable it also makes a read function with the same name, which is why explorers can show `owner` and `minter` without anyone writing code for it.
+- `view` marks a function that reads but never writes, so it cannot change a balance.
+- `payable` marks a function that accepts ETH with the call. A function without it rejects ETH, and the whole call reverts.
+- So an analyst can rule out ETH ever reaching a contract through a function that is not `payable`.
+- `external` works like `public` for an outside caller. `private` and `internal` functions cannot be called from outside at all, so they never answer "who may call?" directly.
+- SimpleCounter shows the gap this leaves: every function is public, yet only the owner can reset. The next slide shows the line that does that.
+
+**Walkthrough**
+1. Read the three words, pointing at SimpleCounter's lines for `public` and `view`.
+2. Ask what happens if someone sends ETH with a call to `increment`. (Expected answer: it is not `payable`, so the call reverts.)
+3. Read the SimpleCounter line and ask: if every function is public, how can only the owner reset? Leave it open for the next slide.
+
+**Sources**
+- @solidityteam_contracts_2026
+- @solidity_abispec_2026
+- @solidityteam_solidityexample_2025
+
+:::
+
+## require stops a call and reverts it {.smaller}
+
+::: {style="font-size: 0.84em;"}
+
+SimpleCounter's `reset`:
+
+```solidity
+function reset() public {
+    require(msg.sender == owner, "Only owner can reset");
+    count = 0;
+}
+```
+
+- **`require(condition, reason)`** checks the condition and, if it is false, throws an exception and stops the call [@solidityteam_controlstructures_2026].
+- The exception **reverts** the call: it "undoes all changes made to the state", so `count` keeps its value [@solidityteam_controlstructures_2026].
+- The caller **still pays the fee**: block 6 in 01-EF failed, left no logs and paid anyway [@ethereum.org_gasfeesdeveloper_2025; @ethereumorg_transactions_2025].
+- **`revert(...)`** stops a call the same way, with no condition to test [@solidityteam_controlstructures_2026].
+
+**Reading rule:** a `require` on `msg.sender` keeps a function for one address. A function with no `require` lets anyone in.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches `require` and revert, the line that answers "who may do this?" in most contracts. It matters here because every contract read from here on, and Tether's code in the next lesson, uses it. Emphasize the three results of a failed `require`: the call stops, its changes are undone, and the caller still pays.
+
+**Key Points**
+- The last slide left a question open: every SimpleCounter function is public, so how can only the owner reset? The answer is the first line of `reset`.
+- `require` checks a condition. Here the condition is that the caller, `msg.sender`, is the stored `owner`.
+- If the condition is false, `require` throws an exception, and the exception reverts the call: every change it made is undone, so `count` is untouched.
+- The transaction is still on the chain, though. Block 6 in 01-EF was exactly this: status Fail, no logs, fee paid. So a reverted call is a record of an attempt.
+- `revert` does the same without a condition; contracts use it inside an `if`.
+- The reason string ("Only owner can reset") is what an explorer shows as the error. Coin's `send` uses a named error instead, on its slide.
+- So the reading rule follows: a `require` on `msg.sender` reserves a function; no `require` means anyone.
+
+**Walkthrough**
+1. Read `reset` aloud and stop on the `require`.
+2. Read the three results: stop, undo, still pay.
+3. Ask what a stranger can do with SimpleCounter. (Expected answer: call `increment`, `getCount` and `owner`; a call to `reset` reverts, the count stays, and the stranger still pays the fee.)
+4. Read the reading rule.
+
+**Sources**
+- @solidityteam_controlstructures_2026
+- @ethereum.org_gasfeesdeveloper_2025
+- @ethereumorg_transactions_2025
+
+:::
+
+## Check: a stranger calls mint. What happens? {.smaller}
+
+::: {style="font-size: 0.84em;"}
+
+Coin's constructor and `mint`. Account 3, which did not deploy Coin, calls `mint(Account 3, 1000)`.
+
+```solidity
+constructor() { minter = msg.sender; }
+function mint(address receiver, uint amount) public {
+    require(msg.sender == minter, "not minter");
+    balances[receiver] += amount;
+}
+```
+
+**Write one line:** what does the chain show afterwards, and what has Account 3 lost?
+
+::: {.fragment}
+**Answer:** the `require` fails with "not minter" and the call reverts, so no balance changes. The failed transaction stays on the chain, and Account 3 has paid its fee [@solidity_introsmartcontracts_2026; @solidityteam_controlstructures_2026].
+
+**Part A in one line:** read the state first, then each function's line (`public`, `view`, `payable`) and its `require` gates.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part A with a check every student answers, on Coin's `mint`. It matters here because "who may create value?" is the agent's question from the opening, and part A has given students everything they need to answer it for a stranger. Emphasize that a failed call is still evidence: the attempt and its fee are on the chain.
+
+**Key Points**
+- Expected answer: the `require` fails because Account 3 is not the stored `minter`; the call reverts; `balances` is unchanged; the transaction stays with a failed status and a paid fee.
+- `minter` was set by the constructor to the deployer, exactly as SimpleCounter's `owner` was.
+- Students who say "Account 3 gets 1,000 coins" have read `mint` as public without reading its first line; send them back to the reading rule.
+- The part's synthesis, on the slide: state first, then each function's line and its gates.
+
+**Walkthrough**
+1. Read the case and the code.
+2. Give every student thirty seconds to write one line.
+3. Take a show of hands on "Account 3 gets the coins", then reveal the answer.
+4. Read the part A synthesis.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @solidityteam_controlstructures_2026
+
+:::
+
+## Worked: SimpleStorage lets anyone overwrite it {.smaller}
+
+:::: {.columns}
+::: {.column width="45%"}
+
+::: {style="font-size: 0.8em;"}
+
+[]{#example-simplestorage-code}
+
+```solidity
+pragma solidity ^0.8.26;
+contract SimpleStorage {
+    uint256 private stored;
+    event Updated(uint256 oldValue,
+                  uint256 newValue);
+
+    function set(uint256 x) public {
+        emit Updated(stored, x);
+        stored = x;
+    }
+
+    function get() public view
+        returns (uint256) {
+        return stored;
+    }
+}
+```
+
+:::
+
+:::
+::: {.column width="55%"}
+
+::: {style="font-size: 0.8em;"}
+
+`emit` writes an entry in the receipt's logs, which 01-EF read [@solidity_introsmartcontracts_2026].
+
+| Question | Answer, from the code | Line |
+|---|---|---|
+| Who can create value? | Nothing to create: it holds one number | `stored` |
+| Who can change it? | **Anyone**: `set` is `public`, with no `require` | `set` |
+| What limits it? | Nothing: no check on `x` | `set` |
+| What does it record? | `Updated(old, new)` on every `set` | `emit` |
+
+: {tbl-colwidths="[26,52,22]"}
+
+**Reading:** anyone can replace the stored number with any other, and every change leaves an `Updated` log.
+
+:::
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+Part B starts here: two contracts read with the four questions, first worked, then checked. This slide works the four questions on SimpleStorage, a contract with one number and no gate. It matters here because students need to see the questions answered once, with a line for each answer, before they answer them for Coin. Emphasize "no `require`": the missing line is the finding.
+
+**Key Points**
+- Part A taught the pieces; part B puts them together on whole contracts.
+- `emit` is new: it writes a log entry into the transaction's receipt, the logs 01-EF read. Part C looks at logs closely.
+- Question 1: SimpleStorage creates nothing; it holds one number.
+- Question 2: `set` is public and has no `require`, so anyone can change the number. That follows straight from the reading rule.
+- Question 3: nothing checks `x`, so any value is allowed.
+- Question 4: every `set` emits `Updated` with the old and new values, so here the logs do tell the whole history. Coin will not be so kind.
+- So the reading, in plain words: anyone can overwrite the number, and every overwrite is logged.
+
+**Walkthrough**
+1. Say what part B is for: the four questions on whole contracts.
+2. Read the code top to bottom in part A's order: state, event, functions.
+3. Work the table row by row, pointing at each line.
+4. Read the reading line aloud as the sentence an analyst would give an agent.
+
+**Sources**
+- @solidityteam_solidityexample_2025
+- @solidity_introsmartcontracts_2026
+
+:::
+
+## Coin: read the whole contract {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+
+::: {style="font-size: 0.88em;"}
+
+```solidity
+pragma solidity ^0.8.26;
+contract Coin {
+    address public minter;
+    mapping(address => uint) public balances;
+    event Sent(address from, address to, uint amount);
+
+    constructor() { minter = msg.sender; }
+
+    function mint(address receiver, uint amount) public {
+        require(msg.sender == minter, "not minter");
+        balances[receiver] += amount;
+    }
+
+    error InsufficientBalance(uint requested,
+                              uint available);
+
+    function send(address receiver, uint amount) public {
+        require(amount <= balances[msg.sender],
+            InsufficientBalance(amount, balances[msg.sender]));
+        balances[msg.sender] -= amount;
+        balances[receiver] += amount;
+        emit Sent(msg.sender, receiver, amount);
+    }
+}
+```
+
+:::
+
+:::
+::: {.column width="45%"}
+
+::: {style="font-size: 0.8em;"}
+
+[]{#example-coin-code-part-1}[]{#example-coin-code-part-2}The Solidity documentation's own example, shortened, with a reason string added to `mint`'s `require` [@solidity_introsmartcontracts_2026]:
+
+- **State:** `minter`, and `balances`, the coins each address holds.
+- **Constructor:** the deployer becomes `minter`.
+- **`mint`:** a `require` on `msg.sender`, then it adds to a balance. It emits nothing.
+- **`send`:** a `require` that the caller holds enough, else it reverts with the named error `InsufficientBalance`. Then it subtracts from the caller, adds to the receiver and emits `Sent`.
+
+:::
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide puts the whole Coin contract on one screen, because a listing is read whole. It matters here because the practice asks the four questions of exactly this code, and the agent's question in the opening is about it. Emphasize that every line on the right points at a line on the left.
+
+**Key Points**
+- SimpleStorage had one number and no gate; Coin has balances, a minter and two gates, which makes it a small token.
+- The state is the minter's address and the `balances` mapping from part A.
+- The constructor makes the deployer the minter, as SimpleCounter made its deployer the owner.
+- `mint` is gated by a `require` on `msg.sender`, and then it adds coins to any receiver's balance. It has no `emit`, which part C comes back to.
+- `send` is gated too, but on a different condition: the caller must hold at least `amount`. If not, it reverts with a named error, `InsufficientBalance`, which reports the amount asked for and the amount held; a named error does the same job as a reason string.
+- If the gate passes, `send` subtracts from the caller, adds to the receiver and emits `Sent`. So `send` only ever moves the caller's own coins.
+- This is the Solidity documentation's subcurrency example, with comments removed and a reason string, "not minter", added to `mint`'s `require`.
+
+**Walkthrough**
+1. Read the code in part A's order: state, constructor, then each function.
+2. For `mint`, read the gate, then what it changes, then what it records (nothing).
+3. For `send`, read the gate, the two balance lines and the `emit`.
+4. Ask whose balance `send` can lower. (Expected answer: only the caller's, `msg.sender`.)
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @solidityteam_controlstructures_2026
+
+:::
+
+## Check: who may mint, and which line says so? {.smaller}
+
+::: {style="font-size: 0.86em;"}
+
+Use the Coin listing.
+
+**Write one line:** who may call `mint` successfully, which line enforces it, and can that ever change?
+
+::: {.fragment}
+**Answer:** only the address stored in `minter`, the deployer. `require(msg.sender == minter, "not minter")` enforces it, and the constructor set `minter`. No function writes `minter` again, so it cannot change [@solidity_introsmartcontracts_2026].
+
+**Part B in one line:** answer each of the four questions with a line of code, and treat a missing `require` as a finding.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part B with a check every student answers on the whole Coin contract. It matters here because the analyst's answer to the agent must name a line, and must say whether the answer can change later. Emphasize the third part of the question: no function writes `minter` after the constructor.
+
+**Key Points**
+- Expected answer: only `minter`, the deployer; the `require` in `mint` enforces it; the constructor set it once, and no function changes it.
+- Part A's check asked what happens to a stranger; this one asks who succeeds and whether that can change, so students search the whole listing for any line that writes `minter`.
+- "Cannot change" holds only while the code itself cannot change. Part D shows contracts whose code can be swapped, which reopens this answer.
+- The part's synthesis, on the slide: a line for each answer, and a missing gate is a finding.
+
+**Walkthrough**
+1. Give every student a minute to write the line.
+2. Have one student read the `require` aloud.
+3. Ask the class to find any line that writes `minter` besides the constructor. (Expected answer: there is none.)
+4. Read the part B synthesis.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+
+:::
+
+## Events record only what the author chose to emit {.smaller}
+
+::: {style="font-size: 0.82em;"}
+
+[]{#events-and-logs}**The wrong idea:** a contract's event list is its history, so a token with only `Sent` events has never minted.
+
+**What a log is:** each `emit` adds one entry to the transaction's receipt, with three parts [@solidity_introsmartcontracts_2026; @solidity_abispec_2026]:
+
+| Part | In Coin's `Sent` |
+|---|---|
+| **Emitter**: the contract that wrote it | Coin's address |
+| **Topics**: topic0 is the keccak256 hash of the event's name and types | `0x3990db2d…3345` = keccak256 of `Sent(address,address,uint256)` |
+| **Data**: the values | `from`, `to`, `amount` |
+
+- An event appears only where the code says `emit`. Coin's `mint` has no `emit`, so mints leave **no log at all**.
+- Contracts cannot read logs; they are a record for people and tools outside the chain [@solidity_introsmartcontracts_2026].
+- A reverted call leaves no logs, as block 6 did in 01-EF: a failed call's logs are thrown away with its other changes [@wood_ethereumsecuredecentralised_2016].
+
+**So:** a mint shows only as a call to `mint` and a changed balance. Count `Sent` events and you miss every coin ever created.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+Part C starts here: what the chain shows when someone calls a contract, first its logs and then its input. This slide breaks the lesson's misconception, that the event list is the history. It matters here because explorers and analytics tools build their transfer lists from events, and Coin's mints never appear there. Emphasize that the author of the code chose what to log.
+
+**Key Points**
+- Part B found a function with no `emit`; this slide says what that costs the analyst.
+- State the wrong idea first and let students agree with it; it is the opening case.
+- A log entry has an emitter, topics and data. The emitter is the contract's address. Topic0 is a hash of the event's name and types, so every `Sent` event from any contract with this signature has the same topic0; tools search on it. The data holds the values. (`Sent` declares no indexed fields, so all three values sit in the data; the token lesson shows indexed fields.)
+- An event exists only where the code emits one. Coin's `mint` changes a balance and emits nothing, so a mint leaves a call and a state change, but no log.
+- Contracts cannot read logs, so logs are only a record for outside readers; the code never depends on them.
+- A reverted call leaves no logs at all, which is why block 6 in 01-EF showed none.
+- So "only `Sent` events" never means "nobody minted". The question goes back to the code, and the next slide shows how to find the mint calls.
+
+**Walkthrough**
+1. Read the wrong idea and ask for a show of hands: who agrees?
+2. Read the table using Coin's `Sent`.
+3. Point back to the Coin listing: find the `emit` lines. (Expected answer: one, in `send`.)
+4. Read the "So" line and ask how an analyst would find mints instead. Leave it for the next slide.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @ethereumorg_transactions_2025
+- @solidity_abispec_2026
+- @wood_ethereumsecuredecentralised_2016
+
+:::
+
+## A call's first 4 bytes name the function {.smaller}
+
+::: {style="font-size: 0.84em;"}
+
+[]{#abi-encoding-and-function-selectors}A transaction to a contract carries **input data**, laid out by the contract's **ABI** (Application Binary Interface), the rules for encoding a call [@solidity_abispec_2026]:
+
+1. The first **4 bytes** are the **function selector**: the start of the keccak256 hash of the function's name and types.
+2. The rest is the arguments, each padded to 32 bytes.
+
+| Function | Text that is hashed | Selector |
+|---|---|---|
+| `mint` | `mint(address,uint256)` | `0x40c10f19` |
+| `send` | `send(address,uint256)` | `0xd0679d34` |
+
+- `uint` is hashed as `uint256`: for the selector, "`uint256` and `int256` have to be used" [@solidity_abispec_2026].
+- Public signature databases map these 4 bytes back to a name such as `mint`, which is how tools label a call [@fourbyte_signaturedatabase_2026].
+
+**So:** to find Coin's mints, list the transactions to Coin whose input starts `0x40c10f19`.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide teaches the function selector, the 4 bytes at the start of every call that name the function. It matters here because it answers the question the last slide left open: mints leave no log, but every mint is a transaction whose input starts with `mint`'s selector. Emphasize that the selector is computed from the function's text, so anyone can compute it and search for it.
+
+**Key Points**
+- The last slide showed that events miss mints, so the analyst needs another record of a call: its input data.
+- The ABI is the contract's interface, the rules that say how a call is written as bytes.
+- The first 4 bytes are the selector. They are the first 4 bytes of the keccak256 hash of the function's name and argument types, with no spaces and no argument names.
+- Solidity's `uint` is the same type as `uint256`, and the long name is the one hashed, so the text is `mint(address,uint256)`. The selectors on the slide were computed from that text.
+- After the selector come the arguments, each padded to 32 bytes: for `mint`, the receiver's address and the amount.
+- Explorers label a transaction "Method: mint" by matching the selector against the verified source or a list of known names; the label is a match, and an unverified contract may show only the 4 bytes.
+- So the analyst finds every mint by searching Coin's transactions for input starting `0x40c10f19`, including any that reverted.
+
+**Walkthrough**
+1. Recall the open question: how do we find mints?
+2. Read the two-part layout of the input.
+3. Read the table and say how each selector was made.
+4. Read the "So" line as the method that answers the opening case.
+
+**Sources**
+- @solidity_abispec_2026
+- @fourbyte_signaturedatabase_2026
+
+:::
+
+## Check: a send reverts. Is there a Sent event? {.smaller}
+
+::: {style="font-size: 0.86em;"}
+
+Account 2 holds 50 coins and calls `send(Account 5, 80)` on Coin.
+
+**Write one line:** does a `Sent` event appear, and what does the chain keep of this call?
+
+::: {.fragment}
+**Answer:** no `Sent` event: the `require` fails with `InsufficientBalance(80, 50)`, the call reverts and a reverted call leaves no logs. The chain keeps the failed transaction, its fee and its input, which starts `0xd0679d34` [@solidityteam_controlstructures_2026; @wood_ethereumsecuredecentralised_2016; @solidity_abispec_2026; @ethereumorg_transactions_2025].
+
+**Part C in one line:** logs show only what the code emits and succeeds in doing; the input's selector shows every call, failed or not.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide closes part C with a check every student answers: a failed `send`. It matters here because an analyst asked "did this address try to move funds?" must look beyond the event list. Emphasize that the attempt is still evidence, found through its selector.
+
+**Key Points**
+- Expected answer: no `Sent` event; the `require` in `send` fails because 80 is more than 50; the call reverts with the named error; there are no logs; the transaction stays with its fee and input starting `0xd0679d34`.
+- `emit Sent` sits after the `require`, so execution never reaches it; and a revert would undo any log written anyway.
+- Students who answer "a Sent event for 80 coins" have read the event list as the history; send them back to the last two slides.
+- The part's synthesis, on the slide.
+
+**Walkthrough**
+1. Read the case.
+2. Give every student thirty seconds to write one line.
+3. Ask who expected a `Sent` event, then reveal the answer.
+4. Read the part C synthesis.
+
+**Sources**
+- @solidityteam_controlstructures_2026
+- @solidity_abispec_2026
+- @ethereumorg_transactions_2025
+- @wood_ethereumsecuredecentralised_2016
+
+:::
+
+## A proxy lets the code change; ask who upgrades {.smaller}
+
+::: {style="font-size: 0.8em;"}
+- []{#upgradeability-and-proxy-patterns}Part B said nothing can change Coin's minter. That holds only while the code cannot change. A deployed contract's code cannot change, but a **proxy** lets its owner change the code users run [@ethereumorg_upgradingsmartcontracts_2026].
+- The **proxy** address holds the state and balances; a separate **implementation** (logic) contract holds the code. The proxy runs it with `delegatecall`: the implementation's code acts on the proxy's own storage [@palladino_erc1967proxystorage_2019; @solidity_introsmartcontracts_2026].
+- Under **ERC-1967** the implementation's address sits in a fixed storage slot (one numbered 32-byte cell of the proxy's storage), and each change should emit `Upgraded(implementation)` [@palladino_erc1967proxystorage_2019].
+- For an analyst: the address you were given may hold only forwarding code. Read the implementation, and ask who can upgrade it.
+:::
+
+:::: columns
+::: {.column width="48%"}
+**Without proxy (immutable)**
+
+```{dot}
+//| fig-width: 4
+//| fig-height: 2.2
+digraph noproxy {
+  bgcolor="transparent"; rankdir=TB;
+  node [fontname="Helvetica" fontsize=12 style="filled,rounded" shape=box];
+  user [label="User" fillcolor="#dbeafe"];
+  v1   [label="Contract v1\n(code + state)" fillcolor="#dcfce7"];
+  v2   [label="Contract v2\n(new deploy)" fillcolor="#fef3c7" style="filled,rounded,dashed"];
+  user -> v1;
+  user -> v2 [label="migrate?" fontname="Helvetica" fontsize=10 style=dashed];
+}
+```
+:::
+::: {.column width="4%"}
+:::
+::: {.column width="48%"}
+**With proxy (upgradeable)**
+
+```{dot}
+//| fig-width: 4
+//| fig-height: 2.2
+digraph proxy {
+  bgcolor="transparent"; rankdir=TB;
+  node [fontname="Helvetica" fontsize=12 style="filled,rounded" shape=box];
+  user  [label="User" fillcolor="#dbeafe"];
+  proxy [label="Proxy\n(state lives here)" fillcolor="#dcfce7"];
+  v1    [label="Logic v1" fillcolor="#fee2e2" style="filled,rounded,dashed"];
+  v2    [label="Logic v2" fillcolor="#bbf7d0"];
+  user -> proxy;
+  proxy -> v1 [style=dashed label="old" fontname="Helvetica" fontsize=10];
+  proxy -> v2 [label="delegatecall" fontname="Helvetica" fontsize=10];
+}
+```
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+Part D starts here: contracts whose code can change, and contract code that does not look like Solidity. This slide shows why the contract at the address an analyst is given is often not the code that runs. A contract may sit behind a proxy: the proxy holds the balances, and a second contract holds the logic. It matters because the day 3 lab asks students to follow a proxy to its implementation, and because an upgrade can change every rule students learned to read in parts A to C. Emphasize the two addresses and the upgrade key, not how developers build proxies.
+
+**Key Points**
+- Part B's check ended with "no function changes `minter`, so it cannot change". This slide shows the case where that answer is incomplete.
+- Upgradeability is not mutability: the code at a deployed address still cannot change, but the code that runs when users call it can, through a proxy.
+- The proxy stores the implementation's address and forwards every call to it with `delegatecall`, an EVM operation that runs another contract's code against the caller's own storage, keeping the original `msg.sender` and `msg.value`. That is why the balances live at the proxy, and why `msg.sender` inside the implementation is the user who called the proxy, not the proxy itself.
+- ERC-1967 fixes the storage slot that holds the implementation's address, so block explorers can read it and show it, and it says each change should emit `Upgraded`. That event is a strong lead to past swaps, but "should" is not "must": a proxy that skips the event can still swap its logic, so read the slot as well as the logs.
+- The standard also defines an optional admin slot for the address allowed to upgrade, so an empty slot does not by itself mean nobody can upgrade. Whoever holds the upgrade right can change minting, freezing or any other rule, so it belongs in the characterization.
+- Teams often put that key behind a multi-sig and a timelock, a delay before an approved change executes; the delay gives users time to exit, but it does not stop the change.
+
+**Walkthrough**
+1. Say what part D is for: contracts that change, and code that looks different.
+2. Contrast the left diagram (redeploy and migrate) with the right one (one address, swappable logic).
+3. Point to `delegatecall`: the proxy runs the logic contract's code but keeps the state itself.
+4. Name the ERC-1967 implementation slot and the `Upgraded` event; the next slide works them through.
+5. Close with the analyst's question: who holds the upgrade key, and when did it last change the logic?
+
+**Sources**
+- @ethereumorg_upgradingsmartcontracts_2026
+- @palladino_erc1967proxystorage_2019
+- @solidity_introsmartcontracts_2026
+
+:::
+
+## Worked: the ERC-1967 slot names the code {.smaller}
+
+::: {style="font-size: 0.8em;"}
+
+Suppose Coin sits behind a proxy at `0x1111…1111` (addresses here are made up). Work it in five steps:
+
+| Step | Read | What it tells you |
+|---|---|---|
+| 1 | The code at `0x1111…`: short, forwarding every call | A proxy; the rules are elsewhere |
+| 2 | Storage slot `0x3608…2bbc` with `eth_getStorageAt` | The implementation address, `0x2222…2222` |
+| 3 | `Upgraded` logs from `0x1111…` | When the code was swapped, and to what |
+| 4 | The verified source at `0x2222…` | The rules: run the four questions on it |
+| 5 | Admin slot `0xb531…6103`, or the upgrade function in the source | Who can swap the code |
+
+: {tbl-colwidths="[8,46,46]"}
+
+The implementation slot is keccak256 of `eip1967.proxy.implementation`, minus 1; the admin slot is built the same way [@palladino_erc1967proxystorage_2019]. `eth_getStorageAt` is the node call that reads one slot [@ethereumorg_jsonrpcapi_2025].
+
+**Confidence:** when the slot and the latest `Upgraded` log name the same implementation, say so with high confidence; when they differ, report both and say which you trust.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide works one proxy reading from start to finish, so students have seen it done before the practice asks for it. It matters here because the day 3 lab asks students to find a token's implementation, and the agent's question about minting depends on the code that actually runs. Emphasize the order: prove it is a proxy, read the slot, check the logs, read the implementation, find who upgrades.
+
+**Key Points**
+- The last slide said where the implementation's address sits; this slide reads it.
+- Step 1: a proxy's own code is short and forwards everything. Explorers often label it "Proxy", but the forwarding is the proof.
+- Step 2: the implementation slot is a fixed number, computed from a text string so that it never collides with the contract's ordinary variables. `eth_getStorageAt` asks a node for the 32 bytes in one storage slot of one address; the last 20 bytes hold the implementation address. Explorers do this for you and show "Implementation".
+- Step 3: the `Upgraded` logs give the history of swaps. They should be there, but the standard does not force them, so step 2 is the authority on what runs now.
+- Step 4: the verified source at the implementation is where the four questions are asked. Coin's `mint` gate is read here, not at the proxy.
+- Step 5: who can swap the code. The admin slot holds the admin address in proxies that use it; others put an upgrade function in the implementation, gated by a `require` like the ones in part A.
+- Confidence uses the course's words: two independent records agreeing is high confidence; disagreement is reported, not hidden.
+- The addresses are made up so that the slide does not give away the lab.
+
+**Walkthrough**
+1. Read the supposed case.
+2. Work the table step by step, naming what each step proves.
+3. Ask why step 2 outranks step 3. (Expected answer: the slot is what runs now; the event is optional.)
+4. Read the confidence line.
+
+**Sources**
+- @palladino_erc1967proxystorage_2019
+- @ethereumorg_jsonrpcapi_2025
+- @ethereumorg_upgradingsmartcontracts_2026
+
+:::
+
+## Vyper looks like Python but runs on the same EVM {.smaller}
+
+[]{#recognize-it-vyper}
+
+```python
+company: public(address)
+totalShares: public(uint256)
+price: public(uint256)
+
+# Store a ledger of stockholder holdings.
+holdings: HashMap[address, uint256]
+
+@view
+@external
+def stockAvailable() -> uint256:
+    return self._stockAvailable()
+```
+
+::: {style="font-size: 0.85em;"}
+
+- **Vyper** is a contract language that looks like Python and compiles for the same EVM as Solidity [@vyper_docs_2026].
+- Clues on sight: `def`, decorators such as `@external` and `@view`, `self.`, and no curly braces.
+- Same ideas, new spelling: `public(...)` makes a read function, as `public` does in Solidity; `HashMap` is Solidity's `mapping`; `@external` and `@view` do the jobs of Solidity's `external` and `view` [@vyper_byexample_2026].
+- To recognize, not to read line by line: the same four questions still apply.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows one short Vyper snippet so students can recognize the language when an explorer shows verified Vyper source instead of Solidity. It matters because Vyper contracts run on the same EVM, so their transactions and logs look the same on-chain; only the source differs. Emphasize recognition, not reading: students are not expected to read Vyper line by line.
+
+**Key Points**
+- The proxy slides showed that the code to read can sit at another address; this slide shows that it can also be written in another language.
+- Vyper is a contract-oriented, Pythonic language that targets the EVM.
+- Declaring a variable `public` makes it callable by external contracts and creates a getter for it, as in Solidity.
+- `HashMap[address, uint256]` is the Vyper spelling of a Solidity `mapping(address => uint256)`.
+- Because it compiles to the same EVM, selectors, logs and proxies work exactly as parts C and D showed.
+- The snippet is the start of the Vyper documentation's Company Stock example.
+- The code block is highlighted as Python because Vyper's syntax is close enough for the highlighter.
+
+**Walkthrough**
+1. Point to the three `public(...)` state variables at the top and compare them with Coin's `address public minter`.
+2. Point to `HashMap` as the ledger, the same role `balances` plays in Coin.
+3. End with the decorated `def`, Vyper's equivalent of a Solidity `function ... external view`.
+
+**Sources**
+- @vyper_docs_2026
+- @vyper_byexample_2026
+
+:::
+
+## Solana: Rust programs, accounts listed per call {.smaller}
+
+:::: {.columns}
+::: {.column width="55%"}
+
+::: {style="font-size: 0.85em;"}
+
+```rust
+use anchor_lang::prelude::*;
+declare_id!("<program address>");
+
+#[program]
+mod hello_anchor {
+    use super::*;
+    pub fn initialize(ctx: Context<Initialize>,
+                      data: u64) -> Result<()> {
+        ctx.accounts.new_account.data = data;
+        msg!("Changed data to: {}!", data);
+        Ok(())
+    }
+}
+#[derive(Accounts)]
+pub struct Initialize<'info> {
+    #[account(init, payer = signer, space = 8 + 8)]
+    pub new_account: Account<'info, NewAccount>,
+    #[account(mut)]
+    pub signer: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+#[account]
+pub struct NewAccount { data: u64 }
+```
+
+:::
+
+:::
+::: {.column width="45%"}
+
+::: {style="font-size: 0.85em;"}
+
+[]{#recognize-it-rust-on-solana}
+
+- Solana programs are written in **Rust**, most often with the **Anchor** framework [@anchor_readme_2026].
+- Solana calls a contract a **program**; the data it keeps sits in separate **accounts** that each call must list [@anchor_programstructure_2026].
+- To recognize, not to read: the same four questions still apply.
+- Clues on sight: `fn`, `pub`, `#[...]` attributes, `declare_id!`, `Result<()>`.
+- `declare_id!` is the program's on-chain address.
+- `#[program]` holds the functions a caller can run (Solana calls them instructions).
+- `#[derive(Accounts)]` lists the accounts each instruction must be given, including the `Signer`.
+- `#[account]` defines the data kept in those accounts.
+
+:::
+
+:::
+::::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide shows one short Rust program so students can recognize Solana contract code, which looks nothing like Solidity. It matters because the analyst's questions stay the same on Solana even though the code and the account model differ. Emphasize recognition only: students are not expected to read Rust.
+
+**Key Points**
+- Vyper changed only the spelling; Solana changes the model too, which is why this slide comes last.
+- Anchor is the most popular framework for Solana programs and provides Rust tools for writing them.
+- `declare_id!` specifies the program's on-chain address, its program ID. The slide shows a placeholder, not a real address: by default the program ID is the public key of the keypair Anchor generates for the program, so a deployed program carries its own value here.
+- The `#[program]` module contains the instruction logic; `initialize` here is the one instruction.
+- `#[derive(Accounts)]` specifies the accounts that must be provided when an instruction is invoked; the `Signer` in that list is the counterpart of Solidity's `msg.sender`.
+- `#[account]` on a struct (`NewAccount`) defines the structure of the data stored in custom accounts; `#[account(...)]` on a field inside `Initialize` is different, a constraint on that account (here: create it, the signer pays).
+- The snippet is the Anchor documentation's own example program, shortened to fit: blank lines are removed, one long line is wrapped, the last struct sits on one line and the program ID is a placeholder.
+
+**Walkthrough**
+1. Point to `declare_id!` as the program's address.
+2. Point to `initialize` inside `#[program]` as the function a caller runs.
+3. Point to the `Initialize` struct as the list of accounts the caller must pass in, and to `Signer` as who signed.
+4. End with `NewAccount`, the data the instruction writes.
+
+**Sources**
+- @anchor_readme_2026
+- @anchor_programstructure_2026
+
+:::
+
+## Practice: four questions on Coin, then upgrades {.smaller}
+
+::: {style="font-size: 0.82em;"}
+
+[]{#your-turn-read-the-coin-contract}Use the Coin listing. Answer each question from the code alone, and name the line that shows it.
+
+1. Who can create new coins, and which line enforces that?
+2. Can the minter take coins out of someone else's balance?
+3. Is there a limit on how many coins can be created?
+4. A transfer leaves a `Sent` event on-chain. What record does a mint leave?
+5. The agent's address for Coin turns out to be an ERC-1967 proxy. What do you read first, and what question do you add?
+
+Work in pairs for four minutes. Every answer points to a line, a slot or a log.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This practice slide turns the four questions into the analyst's working skill: reading a contract by hand and stating what it lets each caller do. It matters here because it is the lesson's objective asked whole, on the running case. Emphasize that every answer must point to a line of code, not to what the contract's name suggests.
+
+**Key Points**
+- Every question was shown done earlier: questions 1 and 2 in parts A and B, question 3 in the Coin reading, question 4 in part C, question 5 in the worked proxy slide.
+- Students answer from the listing, not from memory of the answers given in the checks.
+- The answers are on the next slide; take them line by line.
+
+**Walkthrough**
+1. Give students the five questions and four minutes in pairs.
+2. Walk the room and ask each pair to point to the line behind one answer.
+3. Move to the answers slide.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @palladino_erc1967proxystorage_2019
+
+:::
+
+## Answers: what Coin lets each caller do {.smaller}
+
+::: {style="font-size: 0.8em;"}
+
+1. **Only the minter**, the deployer: `require(msg.sender == minter, "not minter")` in `mint`.
+2. **No.** The only lines that lower a balance are in `send`, and they lower `balances[msg.sender]`, the caller's own.
+3. **No cap.** Nothing in `mint` checks a total or a maximum. The only stop is Solidity 0.8's overflow check, which reverts a mint that would push one balance past the largest `uint256` [@solidity_introsmartcontracts_2026].
+4. **No log.** `mint` emits nothing: a mint shows only as a call whose input starts `0x40c10f19` and a changed balance.
+5. **The implementation slot** `0x3608…2bbc`, then the source at that address; add a sixth question: **who can upgrade**, from the admin slot or the upgrade function [@palladino_erc1967proxystorage_2019].
+
+**To the agent:** only the minter can create Coin, without limit, and its mints do not appear in the event list.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide gives the practice answers, each tied to a line, and the one sentence an analyst would give the agent. It matters here because it closes the opening case. Emphasize the sentence to the agent: plain words, each part backed by a line.
+
+**Key Points**
+- Answer 1: only the address stored in `minter`, the deployer, can call `mint`; the `require(msg.sender == minter)` line enforces it.
+- Answer 2: no. The only function that lowers a balance is `send`, and it lowers the balance of `msg.sender`, the caller.
+- Answer 3: no supply cap in the contract's logic. Nothing in `mint` checks a total or a maximum, so the minter can create any amount; the only stop is Solidity 0.8's built-in overflow check, which reverts a mint that would push one balance past the largest `uint` value.
+- Answer 4: no event. `mint` changes `balances` but emits nothing, so a mint is visible only in the call to `mint` and the changed balance, not in the logs; a reader who watches only `Sent` events misses every mint.
+- Answer 5: read the implementation slot first, then run the four questions on the implementation's source, and add who can upgrade, because that address can change every other answer.
+- The four questions carry straight into the token lesson, where students read the same kinds of lines in real token contracts.
+
+**Walkthrough**
+1. Take question 1 and have a student read the `require` line aloud.
+2. Take question 2 and trace every line that subtracts from `balances`.
+3. Take questions 3 and 4 and ask what an analyst would miss by trusting the events alone.
+4. Take question 5, then read the sentence to the agent.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @solidity_abispec_2026
+- @palladino_erc1967proxystorage_2019
+
+:::
+
+## Review: four questions turn code into statements {.smaller}
+
+::: {style="font-size: 0.82em;"}
+
+[]{#key-takeaways}**Objective:** given verified Solidity source, answer the four questions with a line for each, say whether the code can be swapped and by whom, and recognise Vyper and Rust.
+
+1. What does a `require` on `msg.sender` do to a stranger's call?
+
+::: {.fragment}
+It reverts the call: no state changes, no logs, and the stranger still pays the fee.
+:::
+
+2. A token shows only `Sent` events. Has nobody minted?
+
+::: {.fragment}
+No: events show only what the code emits. Read `mint`, and look for transactions whose input starts `0x40c10f19`.
+:::
+
+3. The address you were given holds only forwarding code. Where are the rules?
+
+::: {.fragment}
+At the implementation named in the ERC-1967 slot; then ask who can upgrade it.
+:::
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide asks the lesson's objective back as three recall questions, one of them the opening misconception. It matters here because students should leave able to answer the agent's question without the slides. Emphasize question 2: it is the wrong idea from the opening, asked again.
+
+**Key Points**
+- Question 1 recalls part A: a `require` gate reverts the call, undoes its changes and still costs the caller the fee.
+- Question 2 is the misconception from the opening. The expected answer is no, because a log exists only where the code emits one; the mints are found by reading `mint` and searching for its selector.
+- Question 3 recalls part D: the rules are at the implementation, and the upgrade key belongs in the answer.
+- The four questions themselves (who can create, who can move, what limits it, what it records) are the lesson's one takeaway.
+
+**Walkthrough**
+1. Read the objective.
+2. Ask each question, wait for answers from the room, then reveal.
+3. Take a show of hands on question 2 and compare it with the opening.
+
+**Sources**
+- @solidity_introsmartcontracts_2026
+- @solidity_abispec_2026
+- @palladino_erc1967proxystorage_2019
+
+:::
+
+## Next: a token is a contract that keeps balances {.smaller}
+
+::: {style="font-size: 0.86em;"}
+
+| Where | What you do |
+|---|---|
+| **05-EF, Tokens** | Read ERC-20, the standard most tokens follow: Coin's `balances` and `send` become `balanceOf` and `transfer`, with a `Transfer` event [@vogelsteller_eip20tokenstandard_2015] |
+| **Token lab (day 3)** | Read a token contract and follow its proxy to the code that runs |
+| **Day 8, exploits** | Read the contract an attacker used, with the same four questions |
+
+**Bottom line:** the code, not the contract's name or its event list, says what each caller can do.
+
+:::
+
+::: {.notes}
+
+**Overall Slide Concept**
+This slide hands the four questions on to the next lesson, the lab and day 8. It matters here because every token and every exploit students meet later is a contract read this way. Emphasize the bottom line: it is the point the lesson set out to earn.
+
+**Key Points**
+- 05-EF reads real token contracts. ERC-20 names the same ideas Coin had: a balance per address, a function to move it and an event when it moves.
+- The Token lab asks students to read a token's code and follow a proxy, which the worked slide in part D showed.
+- Day 8 reads exploit contracts with the same four questions.
+- The bottom line restates the point to earn from the opening.
+
+**Walkthrough**
+1. Read the table row by row.
+2. Read the bottom line aloud and end the lesson.
+
+**Sources**
+- @vogelsteller_eip20tokenstandard_2015
 
 :::
 
@@ -194,75 +1256,6 @@ None
 
 ::::
 
-## Contract Deployment {.smaller}
-
-:::: {.columns}
-::: {.column width="56%"}
-
-::: {style="font-size: 0.84em;"}
-
-Deployment happens in a short sequence:
-
-1. A developer writes Solidity and compiles it into deployment bytecode.
-2. The deployment transaction carries compiled creation code (`initcode`).
-3. The EVM runs that code, including constructor logic, and charges gas while it executes.
-4. The result is a new contract address with runtime bytecode and initialized storage on-chain.
-
-The contract address is derived deterministically from the deployment rule in use.
-
-Source-code verification on explorers is separate from deployment.
-
-:::
-
-:::
-::: {.column width="44%"}
-
-```{dot}
-//| fig-width: 5.2
-//| fig-height: 4.8
-digraph deployflow {
-  bgcolor="transparent"; rankdir=TB;
-  node [fontname="Helvetica" fontsize=11 style="filled,rounded" shape=box];
-  edge [fontname="Helvetica" fontsize=9];
-
-  src   [label="Solidity source" fillcolor="#dbeafe"];
-  comp  [label="Compile" fillcolor="#dcfce7"];
-  tx    [label="Deployment tx\nwith initcode" fillcolor="#fef3c7"];
-  exec  [label="Initcode + constructor\nrun in the EVM" fillcolor="#fde68a"];
-  out   [label="Contract address\nruntime bytecode + storage" fillcolor="#bbf7d0"];
-
-  src -> comp -> tx -> exec -> out;
-}
-```
-
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes deployment as a short workflow that turns source code into a live contract account. It matters here because students often understand contracts as code in the abstract, but not the actual sequence that creates an address with runtime bytecode and storage. Emphasize that constructors run once, but only the resulting runtime bytecode remains on-chain.
-
-**Key Points**
-- Deployment executes initcode, initializes storage, and returns the runtime code that will persist.
-- The EVM stores runtime bytecode on-chain; verified Solidity source shown by explorers is matched to that bytecode later.
-- Contract addresses are derived deterministically, which supports factories and predictable coordination patterns.
-- `CREATE` is the standard deployment opcode; it derives the new contract address from the creator address and nonce.
-- `CREATE2` derives the address from the creator address, a salt, and the initcode hash, which allows a contract address to be predicted before deployment.
-- Students should care about `CREATE2` because factories, precomputed addresses, and coordinated deployments use it.
-
-**Walkthrough**
-1. Start with the Solidity source and compilation step, making clear that source code is not what the chain stores.
-2. Follow the deployment transaction as it carries initcode into the EVM.
-3. Explain that constructor logic runs during this one-time execution and consumes gas.
-4. End with the final result: a contract address holding runtime bytecode and initialized storage.
-
-**Sources**
-- @ethereum.org_smartcontractsdeveloper_2025
-- @wood_ethereumsecuredecentralised_2016
-
-:::
-
 :::: {.content-hidden}
 
 ## Calls and Control Flow in the EVM {.smaller}
@@ -320,172 +1313,6 @@ This slide establishes that contract execution is really nested control flow acr
 :::
 
 ::::
-
-## Solidity: File Structure, From Top to Bottom
-
-::: {style="font-size: 0.88em;"}
-
-Each section in a Solidity file explains its behavior:
-
-- **`pragma solidity ...`** sets compiler expectations, so readers know which language rules and safety checks apply.
-- **`contract Name { ... }`** identifies the unit of code and state that will be deployed at one address.
-- **State variables** show which data persists between calls.
-- **Functions and modifiers** show how callers interact with the contract and whether state can change.
-- **Constructor and events** show what happens at deployment and what off-chain systems can observe afterward.
-- The source file is what humans review; the deployed contract is compiled runtime bytecode.
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes Solidity file structure as a reading strategy rather than just a list of syntax elements. It matters here because students need to learn how to inspect a contract in the same order a reviewer or auditor would: compiler assumptions first, then deployed unit, then persistent state, then entry points, then deployment-time and off-chain behavior. Emphasize that structure is part of how developers reason about safety and intent.
-
-**Key Points**
-- The file order helps readers separate compiler expectations, storage layout, callable behavior, and observability.
-- Solidity source is compiled before deployment; the EVM executes the resulting bytecode, not the `.sol` text file.
-- Reading state variables before functions helps students see what data the contract is protecting or changing.
-- Define pragma briefly as a compiler directive that constrains expected language version behavior.
-
-**Walkthrough**
-1. Start at the pragma to establish compiler expectations.
-2. Move to the contract declaration to identify the deployed unit of code and state.
-3. Read state variables to understand persistent storage.
-4. Read functions and modifiers to understand the callable surface and state transitions.
-5. End with constructor and events to separate deployment-time setup from runtime observability.
-
-**Sources**
-- @solidityteam_solidityexample_2025
-- @ethereum.org_smartcontractsdeveloper_2025
-
-:::
-
-## Types: Value Types 
-
-::: {style="font-size: 0.70em;"}
-
-Solidity groups types into **value types** and **reference types**. Value types are copied when assigned or passed around, so they do not use a data-location label like `storage`, `memory`, or `calldata`.
-
-| **Type** | **Represents** | **Uses** |
-|---|---|---|
-| `uint` / `int` | Signed and unsigned integers for arithmetic | Balances, counters, timestamps, and range checks |
-| `bool` | `true` / `false` values | Flags, checks, and branching logic |
-| `address` / `address payable` | Account identifiers; `payable` can receive ETH | Ownership, recipients, and access-control decisions |
-| `enum` | A limited set of named states | Helps constrain contract state to valid options |
-
-Literal suffixes like `1 ether` and time units are syntax conveniences, not a separate datatype family.
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes Solidity value types as an official language category rather than just a list of common examples. It matters here because students need to understand both what these types represent and why copy-by-value behavior differs from the reference types on the next slide. Emphasize that type choice shapes arithmetic safety, authorization logic, and state-machine clarity.
-
-**Key Points**
-- These are Solidity value types, meaning they are copied when used in assignments or function arguments.
-- “Value type” refers to copy behavior, not importance or frequency.
-- Choosing the right type helps constrain invalid states and clarify developer intent.
-- Define signed versus unsigned briefly and note that an address is the 20-byte identifier for an Ethereum account.
-
-**Walkthrough**
-1. Start with integers because they drive balances, counters, and arithmetic.
-2. Move to booleans as control and state flags.
-3. Cover addresses as account identifiers and the gateway to ETH transfer logic.
-4. End with enums as a way to constrain contract state to named options.
-5. Clarify that literal suffixes like `1 ether` are syntax around values, not a standalone type category.
-
-**Sources**
-- @solidityteam_solidityexample_2025
-- @ethereum.org_smartcontractsdeveloper_2025
-
-:::
-
-## Types: Reference Types 
-
-::: {style="font-size: 0.70em;"}
-**Reference types** types refer to larger data structures--their behavior depends on where the data lives: `storage`, `memory`, or `calldata`.
-
-
-| **Type** | **Represents** | **Uses** |
-|---|---|---|
-| Arrays | Ordered collections of values, fixed-size or dynamic | Lists of items, histories, and batched data |
-| `bytes` / `string` | Dynamic byte arrays and text data | Raw data/metadata |
-| `struct` | A custom grouped record with multiple fields | Models richer state such as users, proposals, or assets |
-| `mapping(Key => Value)` | Key-value lookup table | Balances, permissions, and registries |
-
-Reference types often need an explicit data location, and copying them can change both gas cost and behavior.
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes Solidity reference types as the language category used for larger, structured data. It matters here because these types behave differently from value types: students need to reason about data location, copying, and persistence, not just the shape of the data itself. Emphasize that arrays, mappings, and structs are powerful, but they are also where storage, memory, and calldata start to matter directly.
-
-**Key Points**
-- These are Solidity reference types, meaning their behavior depends on where the underlying data is stored.
-- Unlike value types, reference types often require an explicit data-location label.
-- Choosing among arrays, structs, mappings, `bytes`, and `string` shapes both contract design and gas cost.
-- Clarify that dynamic `bytes` and `string` are reference types, while fixed-size `bytes1`…`bytes32` belong to the value-type family.
-- Define mapping briefly as a key-value lookup structure commonly used for balances, permissions, and registries.
-- Define the three data locations in one line each: `storage` is the contract's persistent state, `memory` is temporary space that lasts only for the current call, and `calldata` is the read-only input the caller sent.
-
-**Walkthrough**
-1. Start with arrays as the simplest collection type.
-2. Move to `bytes` and `string` as common dynamic data containers.
-3. Cover structs as a way to group related fields into one record.
-4. End with mappings as the standard lookup structure for balances and permissions.
-5. Close by tying all of them to data location and gas cost.
-
-**Sources**
-- @solidityteam_solidityexample_2025
-- @ethereum.org_smartcontractsdeveloper_2025
-
-:::
-
-## Visibility, Mutability, and Payable
-
-::: {style="font-size: 0.70em;"}
-
-These are **function-level modifiers**. They tell readers who can call a function, whether it may read or change state, and whether it may receive ETH.
-
-- **Visibility** controls who can call or access the function:
-  - `public`: callable from inside the contract and from outside
-  - `external`: callable from outside the contract
-  - `internal`: callable only inside the contract or derived contracts
-  - `private`: callable only inside the same contract
-- **Mutability** describes how the function interacts with state:
-  - `view`: may read state, but not write it
-  - `pure`: does not read or write contract state
-  - default: may change state
-- **`payable`** means the function can receive ETH with the call.
-  - **`nonpayable`** is the contrasting default: attached ETH causes the call to revert.
-- Public state variables get auto-generated getters.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes the function-level modifiers that communicate who can call code, whether state may change, and whether ETH can accompany the call. It matters here because these annotations are among the first things auditors inspect when reasoning about privilege and side effects. Emphasize that visibility and mutability are not style choices; they constrain behavior.
-
-**Key Points**
-- Visibility controls who may access a function or state variable, while mutability communicates whether a function reads or writes state.
-- `payable` explicitly marks functions that are allowed to receive ETH, while the default `nonpayable` behavior rejects attached ETH.
-- Define `view` and `pure` briefly as functions that read state without writing, or avoid state entirely.
-- Public and external are often confused; emphasize that both are externally callable, but `external` is only for outside callers.
-
-**Walkthrough**
-1. Start by framing these as function-level modifiers rather than standalone keywords.
-2. Walk through visibility from broadest external access to most restricted internal use.
-3. Move to mutability so students can distinguish read-only behavior from state-changing behavior.
-4. End with `payable` versus `nonpayable` to connect function declarations to ETH transfers.
-
-**Sources**
-- @solidityteam_solidityexample_2025
-- @wood_ethereumsecuredecentralised_2016
-
-:::
 
 :::: {.content-hidden}
 
@@ -553,270 +1380,6 @@ None
 :::
 
 ::::
-
-## Example: SimpleStorage (Code)
-
-```solidity
-pragma solidity ^0.8.26;
-contract SimpleStorage {
-    uint256 private stored;
-    event Updated(uint256 oldValue, uint256 newValue);
-
-    function set(uint256 x) public {
-        emit Updated(stored, x);
-        stored = x;
-    }
-
-    function get() public view returns (uint256) {
-        return stored;
-    }
-}
-```
-::: {style="font-size: 0.70em;"}
-
-- One state variable; one setter, one getter, one event.
-- `stored` is a storage variable; `x` exists only for the duration of the call.
-- Demonstrates state write vs view read.
-- Events record history clients can subscribe to.
-- *What about access control or input validation?*
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This code slide establishes a minimal example students can use to connect Solidity syntax to persistent contract state. It matters here because simple examples make later security patterns easier to understand. Emphasize how little code is required to create stateful behavior on Ethereum.
-
-**Key Points**
-- The example demonstrates state declaration, one write path, and one read path in a minimal contract.
-- Even simple contracts rely on the same deployment, gas, and state rules as larger applications.
-- The `set` function is cheap to read but more expensive to write because it changes persistent storage.
-- Define persistent state here as data that remains after one transaction finishes and is available to later calls.
-
-**Walkthrough**
-1. Identify the stored variable that lives in contract state.
-2. Show the function that changes that value.
-3. End with the function that reads the value back for later callers.
-4. Take the slide's question on access control. (Expected answer: there is none; anyone can call `set` and overwrite the value, and nothing checks `x`.)
-5. Counting the `pragma` line as code line 1:
-   - state variable: code line 3
-   - event declaration: code line 4
-   - setter: code lines 6-9
-   - state write: code line 8
-   - getter: code lines 11-13
-   - state read: code line 12
-
-**Sources**
-- @solidityteam_solidityexample_2025
-
-:::
-
-## Example: Coin (Code, Part 1)
-
-```solidity
-pragma solidity ^0.8.26;
-contract Coin {
-    address public minter;
-    mapping(address => uint) public balances;
-    event Sent(address from, address to, uint amount);
-    constructor() { minter = msg.sender; }
-    function mint(address receiver, uint amount) public {
-        require(msg.sender == minter, "not minter");
-        balances[receiver] += amount;
-    }
-```
-- Public state vars auto-generate getters.
-- `minter` and `balances` live in storage.
-- `msg.sender` is the address that made the current call; the constructor stores the deployer as `minter`.
-- `mint` restricts access to minter via `require`.
-- Mapping initializes to zero.
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes a richer example where a token-like contract introduces balances, minting, and transfer logic. It matters here because students need to see how simple state examples scale into real asset-handling code. Emphasize the role of invariants when value is moved between accounts.
-
-**Key Points**
-- Token-style contracts track balances and define the rules for creating or moving units.
-- The function arguments arrive as calldata, while the balance updates change persistent storage.
-- Access control and accounting correctness become much more important once the contract manages value.
-- Define invariant briefly as a condition, such as conservation of balances, that should remain true after every valid call.
-- `msg.sender` is the immediate caller of the current call: the wallet when a person calls `Coin` directly, but the intermediary contract when `Coin` is called through a router or another contract. The `require` line is what makes `mint` the minter's alone.
-- This is the Solidity documentation's own subcurrency example, shortened.
-
-**Walkthrough**
-1. Point to the two state variables, `minter` and `balances`, and say they live in storage.
-2. Read the constructor: the deployer becomes `minter`.
-3. Read `mint` and stop on the `require` line.
-4. Ask what a call to `mint` from any other address does. (Expected answer: the `require` fails with "not minter", the call reverts and no balance changes.)
-
-**Sources**
-- @solidity_introsmartcontracts_2026
-- @ethereum.org_smartcontractsdeveloper_2025
-- @wood_ethereumsecuredecentralised_2016
-
-:::
-
-## Example: Coin (Code, Part 2)
-
-```solidity
-    error InsufficientBalance(uint requested, uint available);
-    function send(address receiver, uint amount) public {
-        require(amount <= balances[msg.sender], 
-                InsufficientBalance(amount, balances[msg.sender]));
-        balances[msg.sender] -= amount;
-        balances[receiver] += amount;
-        emit Sent(msg.sender, receiver, amount);
-    }
-}
-```
-
-::: {style="font-size: 0.70em;"}
-
-- The custom error function names the failure case and returns the requested and available amounts.
-- The `require` check stops the transfer unless the sender has enough balance.
-- Lines 5-6 move value by subtracting from the sender and adding to the receiver in storage.
-- The event on line 7 gives wallets, explorers, and indexers a record of the transfer.
-- This is the core accounting pattern behind token transfers, even though this example does not include allowances.
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This continuation slide establishes how token logic is completed through additional functions, checks, and event signaling. It matters here because students should see that most useful contracts are built from interacting pieces rather than isolated functions. Emphasize how each extra feature also expands the review surface.
-
-**Key Points**
-- Additional functions often add transfers, permission checks, and logging needed for real-world use.
-- As a contract grows, consistency between state updates and emitted events becomes more important.
-- Poor code can still be correct in principle but fail operationally if it consumes too much gas or reverts late.
-- Define event briefly as a log record emitted by the contract for off-chain consumers and tools.
-
-**Walkthrough**
-1. Start with the custom error and explain what information it returns on failure.
-2. Show the `require` check as the gate that prevents overspending.
-3. Walk through the two storage updates that preserve the balance-transfer invariant.
-4. End with the event emission as the off-chain record of the successful transfer.
-
-**Sources**
-- @solidity_introsmartcontracts_2026
-- @ethereum.org_smartcontractsdeveloper_2025
-- @wood_ethereumsecuredecentralised_2016
-
-:::
-
-## Your Turn: Read the Coin Contract
-
-::: {style="font-size: 0.80em;"}
-
-Use the two Coin slides. Answer each question from the code alone, and name the line that shows it.
-
-1. Who can create new coins, and which line enforces that?
-2. Can the minter take coins out of someone else's balance?
-3. Is there a limit on how many coins can be created?
-4. A transfer leaves a `Sent` event on-chain. What record does a mint leave?
-
-The same four questions (who can create, who can move, what limits, what is recorded) open any contract you are asked to characterize.
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This practice slide turns the Coin walkthrough into the analyst's working skill: reading a contract by hand and stating what it lets each caller do. Give students about five minutes in pairs, then take answers line by line. Emphasize that every answer must point to a line of code, not to what the contract's name suggests.
-
-**Key Points**
-- Answer 1: only the address stored in `minter`, the deployer, can call `mint`; the `require(msg.sender == minter)` line enforces it.
-- Answer 2: no. The only function that lowers a balance is `send`, and it lowers the balance of `msg.sender`, the caller.
-- Answer 3: no supply cap in the contract's logic. Nothing in `mint` checks a total or a maximum, so the minter can create any amount; the only stop is Solidity 0.8's built-in overflow check, which reverts a mint that would push one balance past the largest `uint` value.
-- Answer 4: no event. `mint` changes `balances` but emits nothing, so a mint is visible only in the call to `mint` and the changed balance, not in the logs; a reader who watches only `Sent` events misses every mint.
-- The four questions carry straight into the token lesson, where students read the same kinds of lines in real token contracts.
-
-**Walkthrough**
-1. Give students the four questions and five minutes.
-2. Take question 1 and have a student read the `require` line aloud.
-3. Take question 2 and trace every line that subtracts from `balances`.
-4. Take questions 3 and 4 and ask what an analyst would miss by trusting the events alone.
-
-**Sources**
-- @solidity_introsmartcontracts_2026
-
-:::
-
-## Events and Logs {.smaller}
-
-- Contracts emit events, append-only records stored in the transaction’s receipt.  
-- Each event creates a log entry with:
-  - emitter address
-  - topics (up to 4, including the event signature hash)
-  - data (unindexed fields, ABI-encoded)
-- Logs stored in transaction but are not contract storage; they are not visible to smart contracts but are visible to off-chain systems (UIs, indexers, proofs).  
-- Indexed fields (`indexed`) create searchable topics; non-indexed fields go into the data blob.  
-- Events vanish if the transaction reverts.
-
-::: {.callout-note appearance="simple"}
-**Topic:** a 32-byte indexed field in a log entry. Topic 0 is the keccak-256 hash of the event signature (e.g., `Transfer(address,address,uint256)`); topics 1--3 hold `indexed` parameter values. Clients filter logs by topic without scanning the full data blob.
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes events as Ethereum's main contract-to-off-chain communication channel. It matters here because users, explorers, and indexers often learn what happened from logs rather than by replaying all internal logic. Emphasize that events are part of a contract's interface to the outside world.
-
-**Key Points**
-- Events write structured log data that off-chain systems can monitor efficiently.
-- Good event design improves observability, auditing, and integration with wallets or indexers.
-- Define indexed field briefly as an event field optimized for filtering in log searches.
-- For an analyst, logs are the fastest record of what a contract did, but only of what its author chose to emit: the Coin's `mint` emits nothing.
-
-**Walkthrough**
-1. Read the three parts of a log: emitter, topics, data.
-2. Read the callout: topic 0 names the event, topics 1-3 hold indexed values.
-3. Ask whether a reverted transfer leaves a `Sent` event. (Expected answer: no; events vanish when the transaction reverts, so only the failed transaction and its fee remain.)
-4. Recall the Your Turn answer: `mint` emits nothing, so logs alone miss it.
-
-**Sources**
-- @solidity_abispec_2026
-- @solidity_introsmartcontracts_2026
-- @wood_ethereumsecuredecentralised_2016
-
-:::
-
-## ABI, Encoding, and Function Selectors {.smaller}
-
-- **ABI (Application Binary Interface)** is the byte-level interface that tells wallets, apps, and other contracts how to call a contract and interpret what comes back.  
-- Defines the format for: function calls, return values, event data
-- ABI Function call format:
-  - 4-byte selector = `keccak256("name(types)")[:4]`
-  - Followed by arguments, each encoded per ABI rules (32-byte words, offsets for dynamic types).  
-- Callers interact with deployed bytecode without needing the Solidity source on-chain.
-- Return data and event logs follow ABI conventions.  
-- `receive` handles plain ETH transfers; `fallback` handles unknown selectors or bad calldata.
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide establishes how external callers know what bytes to send and how contracts know which function to run. It matters here because interoperability, tooling, and low-level debugging all depend on ABI conventions. Emphasize that human-readable function names become structured encodings and selectors on the wire.
-
-**Key Points**
-- The ABI is the contract's external byte-level interface, not just a serialization detail.
-- The selector-plus-arguments layout is the ABI-defined format for a function call.
-- Function selectors route incoming calldata to the intended entry point.
-- Spell out ABI as Application Binary Interface and define selector as the short identifier derived from a function signature.
-- Clarify that the selector uses the **first** 4 bytes of the `keccak256` hash.
-- The selector is **not** a memory address; it is a compact dispatch code that gives a low-collision way to identify which function the caller wants.
-- For an analyst: when a wallet calls a function directly, the first 4 bytes of the transaction's input data are that function's selector, so a direct call to `mint` with no event still shows up in the transaction itself. The input carries only those 4 bytes, not the name `mint`.
-
-**Walkthrough**
-1. Define the ABI as the external interface format used by off-chain tools and other contracts.
-2. Show the function-call layout: selector first, encoded arguments after it.
-3. End by connecting selectors to dispatch, where the contract chooses which function body to run.
-4. If students ask why only 4 bytes are used, explain that 32-byte hashes are reduced to a short identifier to save calldata space while still keeping collisions rare enough for practical interface dispatch.
-
-**Sources**
-- @solidity_abispec_2026
-
-:::
 
 :::: {.content-hidden}
 
@@ -1032,81 +1595,6 @@ None
 
 ::::
 
-## Upgradeability and Proxy Patterns {.smaller}
-
-::: {style="font-size: 0.8em;"}
-- A deployed contract's code cannot change, but a **proxy** lets its owner change the code users run [@ethereumorg_upgradingsmartcontracts_2026].
-- The **proxy** address holds the state and balances; a separate **implementation** (logic) contract holds the code. The proxy runs it with `delegatecall`: the implementation's code acts on the proxy's own storage [@palladino_erc1967proxystorage_2019; @solidity_introsmartcontracts_2026].
-- Under **ERC-1967** the implementation's address sits in a fixed storage slot, and each change should emit `Upgraded(implementation)` [@palladino_erc1967proxystorage_2019].
-- For an analyst: the address you were given may hold only forwarding code. Read the implementation, and ask who can upgrade it.
-:::
-
-:::: columns
-::: {.column width="48%"}
-**Without proxy (immutable)**
-
-```{dot}
-//| fig-width: 4
-//| fig-height: 2.2
-digraph noproxy {
-  bgcolor="transparent"; rankdir=TB;
-  node [fontname="Helvetica" fontsize=12 style="filled,rounded" shape=box];
-  user [label="User" fillcolor="#dbeafe"];
-  v1   [label="Contract v1\n(code + state)" fillcolor="#dcfce7"];
-  v2   [label="Contract v2\n(new deploy)" fillcolor="#fef3c7" style="filled,rounded,dashed"];
-  user -> v1;
-  user -> v2 [label="migrate?" fontname="Helvetica" fontsize=10 style=dashed];
-}
-```
-:::
-::: {.column width="4%"}
-:::
-::: {.column width="48%"}
-**With proxy (upgradeable)**
-
-```{dot}
-//| fig-width: 4
-//| fig-height: 2.2
-digraph proxy {
-  bgcolor="transparent"; rankdir=TB;
-  node [fontname="Helvetica" fontsize=12 style="filled,rounded" shape=box];
-  user  [label="User" fillcolor="#dbeafe"];
-  proxy [label="Proxy\n(state lives here)" fillcolor="#dcfce7"];
-  v1    [label="Logic v1" fillcolor="#fee2e2" style="filled,rounded,dashed"];
-  v2    [label="Logic v2" fillcolor="#bbf7d0"];
-  user -> proxy;
-  proxy -> v1 [style=dashed label="old" fontname="Helvetica" fontsize=10];
-  proxy -> v2 [label="delegatecall" fontname="Helvetica" fontsize=10];
-}
-```
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide shows why the contract at the address an analyst is given is often not the code that runs. A contract may sit behind a proxy: the proxy holds the balances, and a second contract holds the logic. It matters because the day 3 lab asks students to follow a proxy to its implementation, and because an upgrade can change every rule the students learned to read this morning. Emphasize the two addresses and the upgrade key, not how developers build proxies.
-
-**Key Points**
-- Upgradeability is not mutability: the code at a deployed address still cannot change, but the code that runs when users call it can, through a proxy.
-- The proxy stores the implementation's address and forwards every call to it with `delegatecall`, an EVM operation that runs another contract's code against the caller's own storage, keeping the original `msg.sender` and `msg.value`. That is why the balances live at the proxy, and why `msg.sender` inside the implementation is the user who called the proxy, not the proxy itself.
-- ERC-1967 fixes the storage slot that holds the implementation's address, so block explorers can read it and show it, and it says each change should emit `Upgraded`. That event is a strong lead to past swaps, but "should" is not "must": a proxy that skips the event can still swap its logic, so read the slot as well as the logs.
-- The standard also defines an optional admin slot for the address allowed to upgrade, so an empty slot does not by itself mean nobody can upgrade. Whoever holds the upgrade right can change minting, freezing or any other rule, so it belongs in the characterization.
-- Teams often put that key behind a multi-sig and a timelock, a delay before an approved change executes; the delay gives users time to exit, but it does not stop the change.
-
-**Walkthrough**
-1. Contrast the left diagram (redeploy and migrate) with the right one (one address, swappable logic).
-2. Point to `delegatecall`: the proxy runs the logic contract's code but keeps the state itself.
-3. Name the ERC-1967 implementation slot and the `Upgraded` event as what the afternoon lab reads.
-4. Close with the analyst's question: who holds the upgrade key, and when did it last change the logic?
-
-**Sources**
-- @ethereumorg_upgradingsmartcontracts_2026
-- @palladino_erc1967proxystorage_2019
-- @solidity_introsmartcontracts_2026
-
-:::
-
 :::: {.content-hidden}
 
 ## Randomness, Oracles, and External Data {.smaller}
@@ -1142,176 +1630,5 @@ None
 :::
 
 ::::
-
-## Recognize It: Vyper {.smaller}
-
-```python
-company: public(address)
-totalShares: public(uint256)
-price: public(uint256)
-
-# Store a ledger of stockholder holdings.
-holdings: HashMap[address, uint256]
-
-@view
-@external
-def stockAvailable() -> uint256:
-    return self._stockAvailable()
-```
-
-::: {style="font-size: 0.85em;"}
-
-- **Vyper** is a contract language that looks like Python and compiles for the same EVM as Solidity.
-- Clues on sight: `def`, decorators such as `@external` and `@view`, `self.`, and no curly braces.
-- Same ideas, new spelling: `public(...)` makes a getter, as `public` does in Solidity; `HashMap` is Solidity's `mapping`; `@external` and `@view` play the role of Solidity's visibility and mutability words.
-- To recognize, not to read line by line: the same four questions still apply.
-
-:::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide shows one short Vyper snippet so students can recognize the language when an explorer shows verified Vyper source instead of Solidity. It matters because Vyper contracts run on the same EVM, so their transactions and logs look the same on-chain; only the source differs. Emphasize recognition, not reading: students are not expected to read Vyper line by line.
-
-**Key Points**
-- Vyper is a contract-oriented, Pythonic language that targets the EVM.
-- Declaring a variable `public` makes it callable by external contracts and creates a getter for it, as in Solidity.
-- `HashMap[address, uint256]` is the Vyper spelling of a Solidity `mapping(address => uint256)`.
-- The snippet is the start of the Vyper documentation's Company Stock example.
-- The code block is highlighted as Python because Vyper's syntax is close enough for the highlighter.
-
-**Walkthrough**
-1. Point to the three `public(...)` state variables at the top and compare them with Coin's `address public minter`.
-2. Point to `HashMap` as the ledger, the same role `balances` plays in Coin.
-3. End with the decorated `def`, Vyper's equivalent of a Solidity `function ... external view`.
-
-**Sources**
-- @vyper_docs_2026
-- @vyper_byexample_2026
-
-:::
-
-## Recognize It: Rust on Solana {.smaller}
-
-:::: {.columns}
-::: {.column width="55%"}
-
-::: {style="font-size: 0.85em;"}
-
-```rust
-use anchor_lang::prelude::*;
-declare_id!("<program address>");
-
-#[program]
-mod hello_anchor {
-    use super::*;
-    pub fn initialize(ctx: Context<Initialize>,
-                      data: u64) -> Result<()> {
-        ctx.accounts.new_account.data = data;
-        msg!("Changed data to: {}!", data);
-        Ok(())
-    }
-}
-#[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(init, payer = signer, space = 8 + 8)]
-    pub new_account: Account<'info, NewAccount>,
-    #[account(mut)]
-    pub signer: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-#[account]
-pub struct NewAccount { data: u64 }
-```
-
-:::
-
-:::
-::: {.column width="45%"}
-
-::: {style="font-size: 0.85em;"}
-
-- Solana programs are written in **Rust**, most often with the **Anchor** framework.
-- Solana calls a contract a **program**; the data it keeps sits in separate **accounts** that each call must list [@anchor_programstructure_2026].
-- To recognize, not to read: the same four questions still apply.
-- Clues on sight: `fn`, `pub`, `#[...]` attributes, `declare_id!`, `Result<()>`.
-- `declare_id!` is the program's on-chain address.
-- `#[program]` holds the instructions a caller can run.
-- `#[derive(Accounts)]` lists the accounts each instruction must be given, including the `Signer`.
-- `#[account]` defines the data kept in those accounts.
-
-:::
-
-:::
-::::
-
-::: {.notes}
-
-**Overall Slide Concept**
-This slide shows one short Rust program so students can recognize Solana contract code, which looks nothing like Solidity. It matters because the analyst's questions stay the same on Solana even though the code and the account model differ. Emphasize recognition only: students are not expected to read Rust.
-
-**Key Points**
-- Anchor is the most popular framework for Solana programs and provides Rust tools for writing them.
-- `declare_id!` specifies the program's on-chain address, its program ID. The slide shows a placeholder, not a real address: by default the program ID is the public key of the keypair Anchor generates for the program, so a deployed program carries its own value here.
-- The `#[program]` module contains the instruction logic; `initialize` here is the one instruction.
-- `#[derive(Accounts)]` specifies the accounts that must be provided when an instruction is invoked; the `Signer` in that list is the counterpart of Solidity's `msg.sender`.
-- `#[account]` on a struct (`NewAccount`) defines the structure of the data stored in custom accounts; `#[account(...)]` on a field inside `Initialize` is different, a constraint on that account (here: create it, the signer pays).
-- The snippet is the Anchor documentation's own example program, shortened to fit: blank lines are removed, one long line is wrapped, the last struct sits on one line and the program ID is a placeholder.
-
-**Walkthrough**
-1. Point to `declare_id!` as the program's address.
-2. Point to `initialize` inside `#[program]` as the function a caller runs.
-3. Point to the `Initialize` struct as the list of accounts the caller must pass in, and to `Signer` as who signed.
-4. End with `NewAccount`, the data the instruction writes.
-
-**Sources**
-- @anchor_readme_2026
-- @anchor_programstructure_2026
-
-:::
-
-## Key Takeaways {.smaller}
-
-- A smart contract is code + persistent state that executes deterministically on every node.
-
-- Read a Solidity contract top to bottom: state variables, then each function's visibility, its `require` gates and the storage it changes.
-
-- `msg.sender` is the immediate caller; a `require` on it is what reserves a function to one address.
-
-- Ask four questions of any contract: who can create, who can move, what limits it, what it records.
-
-- Events record only what the author chose to emit; a direct call's input still identifies the function called, by its 4-byte selector.
-
-- Behind a proxy, the address holds the state and the implementation holds the code: read the implementation, and ask who can upgrade it.
-
-- Vyper (Python-like, on the EVM) and Rust (Solana, via Anchor): recognize them, then ask the same questions.
-
-- Next: tokens, stablecoins and NFTs (05-EF), where these questions meet real token contracts and issuer freezes.
-
-::: {.notes}
-
-**Overall Slide Concept**
-This final slide gives students the reading habit they should leave with: find the state, find the gates, find what moves, and check what is recorded. It matters here because the token lesson that follows puts real token contracts in front of them, including an issuer's freeze and blacklist functions. Emphasize that the four questions work in any language.
-
-**Key Points**
-- Smart contracts combine code, persistent state, and shared execution under EVM rules.
-- Reading order and access checks are how an analyst turns source code into plain statements of capability.
-- Logs are convenient but incomplete; transaction input and contract state complete the picture.
-- A proxy's address holds forwarding code, not the contract's rules; the implementation, and the key that can swap it, are part of what the contract lets each caller do.
-- Vyper and Rust were shown for recognition only; the exploit contract students read closely comes on day 8.
-
-**Walkthrough**
-1. Read the takeaways as a reading order: state, gates, what moves, what is recorded.
-2. Ask what an analyst should check when the address they were given is a proxy. (Expected answer: read the implementation it points to, and find who holds the upgrade right.)
-3. Point to 05-EF, next.
-
-**Sources**
-- @solidity_introsmartcontracts_2026
-- @solidity_abispec_2026
-- @palladino_erc1967proxystorage_2019
-- @vyper_docs_2026
-- @anchor_readme_2026
-
-:::
 
 ## References

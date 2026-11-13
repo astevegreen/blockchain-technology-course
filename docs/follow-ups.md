@@ -30,9 +30,14 @@ slide index), which is never listed here.
   the welcome's closing pre-question ("what do you expect the chain to tell you?") says Ledger and Finality comes
   back to it, but this slide's notes do not refer to it; add a one-line callback at its next rework.
   [13 Nov 2026, reviewer on the 01-IN rebuild]
-- `blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd:47` asks what "the `SimpleCounter` contract in
-  01-EF" let a stranger do, but the 01-EF rebuild hid that listing as moving to 04-EF; show the listing in 04-EF at
-  its rebuild, or reword the question. [13 Nov 2026, 01-EF rebuild review]
+- `quizes/quiz_json/ethereum_04-EF-smart_contracts-quiz-bank.json` has no questions on the rebuilt 04-EF's checks
+  (a stranger calls `mint`; who may mint; a reverted `send`), the worked ERC-1967 slot reading, practice question 5
+  or the review; its `reading` fields and explanations name the old titles ("Visibility, Mutability, and Payable",
+  "Your Turn: Read the Coin Contract", "Recognize It: ..."), as does `quizes/quiz_json/daily_d4_review_of_day3-quiz-bank.json:197`
+  and `:223`. [13 Nov 2026, 04-EF rebuild]
+- `dynamic-labs/tokens/quizes/INSTRUCTOR_ANSWERS.md:172` names the old 04-EF title "Upgradeability and Proxy
+  Patterns"; it is now "A proxy lets the code change; ask who upgrades" (the old anchor still resolves).
+  [13 Nov 2026, 04-EF rebuild]
 - Quiz `reading` fields name 01-EF slide titles the rebuild renamed: `quizes/quiz_json/weekone_check-quiz-bank.json:332`,
   `quizes/quiz_json/daily_d4_review_of_day3-quiz-bank.json:118` and `:144`; and the 01-EF bank has no questions on the
   rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
