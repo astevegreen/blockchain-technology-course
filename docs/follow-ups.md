@@ -30,6 +30,14 @@ slide index), which is never listed here.
   the welcome's closing pre-question ("what do you expect the chain to tell you?") says Ledger and Finality comes
   back to it, but this slide's notes do not refer to it; add a one-line callback at its next rework.
   [13 Nov 2026, reviewer on the 01-IN rebuild]
+- `blockchain-course/lessons/ethereum/04-EF-smart_contracts.qmd:47` asks what "the `SimpleCounter` contract in
+  01-EF" let a stranger do, but the 01-EF rebuild hid that listing as moving to 04-EF; show the listing in 04-EF at
+  its rebuild, or reword the question. [13 Nov 2026, 01-EF rebuild review]
+- Quiz `reading` fields name 01-EF slide titles the rebuild renamed: `quizes/quiz_json/weekone_check-quiz-bank.json:332`,
+  `quizes/quiz_json/daily_d4_review_of_day3-quiz-bank.json:118` and `:144`; and the 01-EF bank has no questions on the
+  rebuild's checks, worked slides, practice and review. [13 Nov 2026, 01-EF rebuild review]
+- `docs/lab-cards/is-it-final-yet.md:9` and `:90` name the old 01-EF title "Pending, then included, then final"; it
+  is now "Pending, included, then final 15 minutes later" (the old anchor still resolves). [13 Nov 2026, 01-EF rebuild review]
 - Slide images with empty alt text (58 lines across the lessons, some on hidden slides), which check 13 of `docs/writing-standard.md` now fails (e.g.
   `![](../images/proof-of-work.png)`); `grep -rn '!\[\](' blockchain-course/lessons` lists them.
   [12 Nov 2026, writing-standard review]
