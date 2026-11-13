@@ -44,6 +44,12 @@ holds as a `blocker` of yours.
      message says why, and a cut for want of a source lists the searches tried (`.claude/skills/source/SKILL.md`,
      step 5). A cut with no searches listed is a `blocker`; a cut or narrowing with no reason given is `minor`
    - every new or changed slide ends with a complete notes block (the four parts in `.claude/rules/lessons.md`)
+   - a new or reworked lesson (slides added, moved or split, or its opening or close rewritten) meets
+     `docs/lesson-standard.md`, and an edit to one slide meets the checks it touches (usually 5, 6 and 4): each
+     failure is a concern naming the check's number, what a newcomer would miss, and the fix. An idea used before
+     it is taught (check 5) or a task asked of students that the lesson never showed done (check 8) is a
+     `blocker`; every other failure is `minor`. A fix that cuts, splits or replaces material is a question for
+     the owner
    - new or changed slide, notes, lab and quiz text meets `docs/writing-standard.md`: each passage that fails one
      of its checks is a concern naming the check's number, what a newcomer would misread, and a rewrite that keeps
      every fact. A term used before it is taught (check 1) or a step a newcomer cannot supply (check 5) is a
@@ -86,4 +92,4 @@ then, for each changed lesson, the line `--slides` printed: `Slides: <lesson fil
 
 Blockers are wrong facts, missing or unverified sources, broken rules, leaked answers, a lesson that doesn't
 fit its slot, and a term or step a newcomer cannot follow. Only a blocker holds the work; a `minor` concern ships with a note. Style preferences beyond
-`docs/writing-standard.md` are not concerns.
+`docs/lesson-standard.md` and `docs/writing-standard.md` are not concerns.

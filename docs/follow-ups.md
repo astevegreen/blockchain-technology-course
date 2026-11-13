@@ -15,6 +15,10 @@ slide index), which is never listed here.
 
 ## Lessons
 
+- Every lesson predates `docs/lesson-standard.md` (adopted 12 Nov 2026); bring each to it at its next rework,
+  titles first. The 04-FO trial found the common gaps: tasks practised that were never shown (check 8), no check
+  at a section's end (9), no review or time plan (11, 12). [12 Nov 2026, lesson-standard trial on 04-FO]
+
 - `blockchain-course/lessons/forensics/04-FO-exchanges_otc_p2p.qmd:200`: "Sendin tested 20 to 80 inputs" does not
   say whether these are the detector's settings or sweeps the paper observed; check `sendin_detectingcoldstorage_2018`
   through the `source` skill. Line 511: "It marketed Paxful" has no clear subject; check `doj_paxful_2025` for who

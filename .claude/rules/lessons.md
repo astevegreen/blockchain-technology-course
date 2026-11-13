@@ -15,4 +15,5 @@ paths:
 - A slide heading is its anchor (`## How Token Gating Works` is `#/how-token-gating-works`). A renamed one leaves
   links in `assets/mindmap.html` and the glossary slide index stale: list it in the session's notes for the phase's
   mind-map pass and glossary run (`docs/build-spec.md`, "During the build").
-- Write slide and notes text to `docs/writing-standard.md`; the reviewer measures new and changed text against it.
+- Build a new or reworked lesson to `docs/lesson-standard.md` (write the titles first), and slide and notes text to
+  `docs/writing-standard.md`; the reviewer measures the change against both. `docs/standards.md` indexes them.

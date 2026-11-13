@@ -12,7 +12,8 @@ The rules (front matter, notes parts, citations, hiding, anchors) are in `.claud
    around the hit. Lessons run to 2,000 lines.
 2. **Edit the slide** in the sibling slides' style. What the slide teaches is the owner's call: when the request
    leaves it open, ask one question with a recommendation before writing. How you build it (structure, naming,
-   placement) is yours: decide, and say why in the summary.
+   placement) is yours: decide, and say why in the summary. A new or reworked lesson follows
+   `docs/lesson-standard.md`: write its titles as a list first, and check them read alone as the argument.
 3. **Write its notes block**, all four parts, with **Sources** listing every key the slide cites.
 4. **Cite every fact** with a `@key` from `lessons/references/Blockchain.bib`: grep the bib for the author, title or
    topic. When no entry supports the claim, find a source on the web (`source` skill); when none you can read

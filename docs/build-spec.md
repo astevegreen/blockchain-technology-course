@@ -135,8 +135,13 @@ NFT wash trading keeps its full segment (D8 ③) and the Fabric demo (D5 lab) is
 - The analyst's voice: bottom line first, plain English, confidence on the course scale, every claim sourced. It is
   how lessons speak, not a writing format students are taught or graded on (Direction 4).
 - Slide titles state the point ("Co-spending links inputs, unless it's a CoinJoin"), never just the topic.
+- A lesson's slides work together to `docs/lesson-standard.md` (owner, 12 Nov 2026: "Adopt all 13"), among them: an objective
+  and why it matters, a link back and a map, titles that make the argument, each idea before it is used, each
+  task shown before it is asked, a question at every section's end, a running case beside a second, a close
+  that starts with students, and a time plan.
 - New teaching material needs no owner approval when it comes from a reputable source and meets
-  `docs/quality-rubric.md` and `docs/writing-standard.md` (owner, 12 Nov 2026: "I want Claude to be free to add
+  `docs/quality-rubric.md` and `docs/writing-standard.md` (the standards indexed in `docs/standards.md`; owner,
+  12 Nov 2026: "I want Claude to be free to add
   teaching material without needing my approval-- as long as it adds material according to our SOP (I.e. pulling
   from a legitimate and trustworthy source and writing according to our rubric criteria)"). Cutting, splitting or
   replacing material is still the owner's decision.
@@ -337,8 +342,9 @@ decisions on them the same day. Each one's state is on its Build Tracker row.
   The confidence words are not repeated here: they already have their own slide.
 
 ## Quality rubric
-Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fourteen criteria in three groups (aligned, teaches
-well, evidence), each a judgement rather than a count. A review of a lesson or lab checks it against them; the
+Adopted by the owner on 4 Nov 2026: `docs/quality-rubric.md`. Fifteen criteria in three groups (aligned, teaches
+well, evidence), each a judgement rather than a count; the fifteenth, the lesson standard, was added on 12 Nov
+2026. `docs/standards.md` indexes the rubric and the standards that serve it. A review of a lesson or lab checks it against them; the
 central one is whether a student meeting a concept for the first time can follow the explanation.
 
 ## Confidence scale

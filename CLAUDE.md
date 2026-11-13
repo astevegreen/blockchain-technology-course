@@ -40,6 +40,8 @@ The owner judges results, not code: explain every change in plain English and pr
   (S2187 "add some tests" on tests built inside a helper is a known false positive).
 
 ## Map
+- Standards (what to build, what "better" means, how lessons and text are written, in what order to check):
+  `docs/standards.md`, the index. Read it before writing or reviewing content.
 - Lessons `blockchain-course/lessons/<section>/<NN>-<XX>-<slug>.qmd`; citations `lessons/references/Blockchain.bib`.
 - Mind map `blockchain-course/assets/mindmap.html` links to slide anchors.
 - Labs: `dynamic-labs/README.md`. Quiz authoring: `quizes/*_GUIDE.md`, spec `quizes/QUIZ_ENGINE_JSON_SPEC.md`.
@@ -58,7 +60,7 @@ The owner judges results, not code: explain every change in plain English and pr
 4. Content decisions are the owner's: what a lesson teaches, cutting material the Course Audit leaves open, quiz
    difficulty, lab scenarios, how lab answers are checked. Ask one question with a recommendation. Adding teaching
    material is not asked (owner, 12 Nov 2026): add it when it comes from a reputable source and meets
-   `docs/quality-rubric.md` and `docs/writing-standard.md`; cutting, splitting or replacing material stays the
+   the standards in `docs/standards.md`; cutting, splitting or replacing material stays the
    owner's. Technical choices (how to
    build it, tooling, tests, structure, naming, placement, which tool fits) are never asked: decide, and say why.
    Every fact you add cites a `Blockchain.bib` key, and every quiz answer traces to the lesson. A fact with no key

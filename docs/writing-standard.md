@@ -4,7 +4,8 @@ The standard every slide, speaker note, lab page and quiz item is measured again
 owner's language review item (`docs/build-spec.md`, "Language review of every slide and lab text") into checks a
 writer can apply and a reviewer can point to. Changing a check is the owner's decision (CLAUDE.md rule 4). The
 owner adopted every recommendation of the 12 Nov 2026 review (`docs/analysis/2026-11-writing-standard-review.md`,
-which gives the research behind each change).
+which gives the research behind each change). How a lesson's slides work together, their order, openings and
+closes, is `docs/lesson-standard.md`, which a review applies first; `docs/standards.md` indexes both.
 
 **The problem it fixes.** Owner: the text "reads like a collection of statements and facts strung together into
 grammatically correct sentences, but lacking clarity and understandability." Each sentence can be true and correct

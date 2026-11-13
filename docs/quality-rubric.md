@@ -1,12 +1,15 @@
 # Course quality rubric
 
-**Adopted by the owner, 4 Nov 2026** ("Everything else stands and I approve it as rubric"). Changing a criterion is
-the owner's decision (CLAUDE.md rule 4).
+**Adopted by the owner, 4 Nov 2026** ("Everything else stands and I approve it as rubric"); criterion 15 added on
+12 Nov 2026 ("Adopt all 13"). Changing a criterion is the owner's decision (CLAUDE.md rule 4). Where it sits among
+the course's other standards: `docs/standards.md`.
 
 The rubric says what "better" means for this course, so a review can score lessons and labs against it and fix
 each weakness that recurs across the course, instead of polishing slides one at a time. It sits on top of the
-rules in `docs/build-spec.md` ("A lesson", "A lab", "Confidence scale"). Clarity at the level of the sentence
-has its own standard, `docs/writing-standard.md`, which serves criteria 5 and 13. It is stage 1 of the quality plan:
+rules in `docs/build-spec.md` ("A lesson", "A lab", "Confidence scale"). Two standards turn criteria into checks:
+`docs/lesson-standard.md`, how a lesson's slides work together (criterion 15, which places 5 to 8, 12 and 14 in
+the deck), and `docs/writing-standard.md`, clarity at the level of the sentence (criteria 5 and 13). It is stage 1
+of the quality plan:
 rubric, alignment map (`docs/alignment-map.md`), pattern audit, learner tests, measurement loop.
 
 Three principles: the course is **aligned**, it **teaches well**, and there is **evidence** that it does. Every
@@ -130,9 +133,19 @@ that is logical and easily grasped by students encountering them for the first t
 - Today: every substantive slide has notes in four parts (`.claude/rules/lessons.md`). Likely student questions
   and timings are not a standard part of them.
 
+**15. A lesson's slides make one argument, in an order a newcomer can follow.**
+- Meets: the lesson passes the 13 checks of `docs/lesson-standard.md`. It opens with an objective, why it
+  matters, a link back and a map; its titles read alone make its case; each idea comes before it is used; each
+  task is shown before it is asked; every section ends with a question; one case runs through it beside a second
+  to compare; it closes with students answering first, no new ideas; it has a time plan.
+- Check: the titles-only read (`grep -n "^## "`), then the reviewer agent against the standard.
+- Why: criteria 5 to 8 say what each concept needs; this says where in the deck each goes, so the slides work as
+  one lesson rather than a set of good slides. The research is in `docs/analysis/2026-11-lesson-standard-review.md`.
+- Today: adopted 12 Nov 2026; 04-FO is the first lesson measured against it.
+
 ## Evidence
 
-Until students sit the course, criteria 4 to 12 and 14 are judgements. Three kinds of evidence, in order:
+Until students sit the course, criteria 4 to 12, 14 and 15 are judgements. Three kinds of evidence, in order:
 
 **Before any student: the first-time reader read.** A reader who knows only what the course has taught so far
 reads one lesson or lab in order and marks every place they would get lost, with which of criterion 5's questions
