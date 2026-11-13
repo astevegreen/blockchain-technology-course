@@ -9,13 +9,13 @@
 
 ## Executive Summary
 
-This lesson shows where the tracing tools of earlier days stop working when many owners share one transaction or one pool. A CoinJoin is a single transaction built by several users, so day 6's co-spend rule, which assumes one owner, no longer holds. A mixer pools deposits and pays out other coins, so each withdrawal is a new start. Both are easy to recognize and hard to see through.
+This lesson shows where the tracing tools of earlier days stop working when many owners share one transaction or one pool. A CoinJoin is a single transaction built by several users, so day 6's co-spend heuristic, which assumes one owner, no longer holds. A mixer pools deposits and pays out other coins, so each withdrawal is a new start. Both are easy to recognize and hard to see through.
 
 The lesson's discipline is to say what the analyst can show and where it stops. Equal outputs mark a CoinJoin on sight; the leaks lie before and after the mix (post-mix co-spends, timing, user habits, address reuse). PayJoin hides a co-spend inside an ordinary-looking payment, and dust is bait, not a link. Facts that change carry dates: Samourai shut down and zkSNACKs stopped in 2024. The closing artifact is a limits-of-tracing note that states the step, the number of candidate outputs and a confidence word, and uses Undetermined when nothing narrows them.
 
 ## Core Learning Outcomes
 
-- Explain why the co-spend rule fails on a CoinJoin, and why the inputs are not one cluster.
+- Explain why the co-spend heuristic fails on a CoinJoin, and why the inputs are not one cluster.
 - Describe the anonymity set of a Whirlpool-style round and what can and cannot be said about one input's output.
 - Explain why spotting a CoinJoin is easy while seeing through one is not, and recognize Wasabi and Whirlpool shapes.
 - Rate a post-mix co-spend or a timing match with the right confidence word.
@@ -30,7 +30,7 @@ The lesson's discipline is to say what the analyst can show and where it stops. 
 
 ### A CoinJoin Is Many Owners In One Transaction
 
-Many users contribute inputs and receive outputs in a single transaction. Day 6's co-spend rule assumes one owner, so it must not be applied: 50 inputs from separate users are not one cluster. In a Whirlpool round of five inputs and five equal outputs, one input in a ransom cluster gives the analyst a set of five equally possible outputs, not an answer.
+Many users contribute inputs and receive outputs in a single transaction. Day 6's co-spend heuristic assumes one owner, so it must not be applied: 50 inputs from separate users are not one cluster. In a Whirlpool round of five inputs and five equal outputs, one input in a ransom cluster gives the analyst a set of five equally possible outputs, not an answer.
 
 ### Equal Outputs Mark A CoinJoin On Sight
 
@@ -68,7 +68,7 @@ When a CoinJoin step has many outputs and a few are candidates, the note states 
 
 | Concept | Why It Matters | What Learners Should Be Able To Do |
 | --- | --- | --- |
-| CoinJoin breaks the co-spend rule | Prevents false clusters | Explain why the rule is not applied |
+| CoinJoin breaks the co-spend heuristic | Prevents false clusters | Explain why the heuristic is not applied |
 | Anonymity set | Sets the limit of the trace | State "one of N" and not a pick |
 | Equal outputs as shape | Detection is easy, tracing is not | Recognize and say what follows |
 | Post-mix leaks | Where traces can continue | Rate a co-spend or timing match |
@@ -101,8 +101,8 @@ When a CoinJoin step has many outputs and a few are candidates, the note states 
 
 ## Assessment Targets For Future Quiz Generation
 
-- Target: why the co-spend rule fails.
-  - Good question shape: apply the rule to a many-input transaction and say why it fails.
+- Target: why the co-spend heuristic fails.
+  - Good question shape: apply the heuristic to a many-input transaction and say why it fails.
   - Avoid: defining a CoinJoin.
 - Target: the anonymity set.
   - Good question shape: what can be said about an output given a round shape.

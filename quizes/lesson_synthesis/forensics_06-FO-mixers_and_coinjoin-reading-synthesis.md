@@ -50,7 +50,7 @@ Where the reading and the lesson differ (the lesson wins for questions; no quest
 |---|---|---|
 | CoinJoin | One transaction built by several users, typically with repeated output values, hiding which input paid which output (sec. 2). | Core definition the analyst applies on sight. |
 | Trust-minimized coordinator | A server that gathers inputs and outputs and broadcasts, without custody of coins (sec. 2). | Separates a CoinJoin from a custodial mixer and explains why the coordinator is the enforcement target. |
-| Wallet-signs-own-inputs | Each wallet checks the final transaction and signs only its own inputs (sec. 2, step F). | Explains mechanically why the co-spend rule fails. |
+| Wallet-signs-own-inputs | Each wallet checks the final transaction and signs only its own inputs (sec. 2, step F). | Explains mechanically why the co-spend heuristic fails. |
 | Anonymity set | The plausible owners or recipients of an output, tied to the number of active participants (sec. 1). | Lets students state what a CoinJoin leaves undetermined. |
 | Wasabi 1.x shape | Many outputs of about 0.1 BTC, later also fixed multiples (sec. 2.1). | Recognition of the oldest design. |
 | Wasabi 2.x (WabiSabi) shape | Arbitrary output amounts chosen per wallet; low hundreds of inputs and outputs (sec. 2.1, sec. 5). | Recognition when there is no single size. |
@@ -107,7 +107,7 @@ The FBI shut down Samourai's Whirlpool coordinator on 24 April 2024; zkSNACKs st
 - Good question shape: two or three described transactions (hundreds of outputs with repeated mixed amounts; 5 by 5 at one size; one input split into pool-sized outputs) to match to Wasabi 2.x, Whirlpool round and TX0.
 - Avoid: asking for the list of pool sizes or the release year of a version.
 
-- Target: Explain why the co-spend rule fails on a CoinJoin, from the protocol.
+- Target: Explain why the co-spend heuristic fails on a CoinJoin, from the protocol.
 - Good question shape: "why do these inputs not share an owner" with distractors about coordinator custody or coordinator signing.
 - Avoid: repeating the bank's existing question on the consequence (merged clusters); test the mechanism.
 

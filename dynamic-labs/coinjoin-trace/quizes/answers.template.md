@@ -59,7 +59,7 @@ reaches it. A CoinJoin stop takes no confidence word: it is the transaction's sh
 |---|---|---|---|
 | 1 | T1 is `{{tx.t1.txid|short}}` in block {{tx.t1.height}}. It spends R1 alone and has five outputs: four of {{tx.t1.by.P1.btc}} BTC that look alike, and one of {{tx.t1.by.C1.btc}} BTC that does not. | | fact |
 | 2 | {{tx.t1.by.P1.btc}} BTC is the 0.5 BTC pool size plus a share of a round's fee: the same size as every input of the worked example. T1 is a pre-mix split. Row: *T1 splits the ransom into four pool-sized coins and a remainder; Continues: pre-mix; the ransom's owner is entering the 0.5 BTC pool; Moderate.* | T1 pays four other people who each want exactly that amount. What the coins do next (question 3) supports the reading. | Moderate |
-| 3 | J1 is `{{tx.j1.txid|short}}` (block {{tx.j1.height}}); J2 is `{{tx.j2.txid|short}}` (block {{tx.j2.height}}). Each has five inputs of {{tx.j1.in.0.btc}} BTC from five different transactions (two from T1, three from elsewhere) and five outputs of {{tx.j1.out.0.btc}} BTC. Equal outputs from many sources: CoinJoins. The co-spend rule does not apply: the three other inputs are not the ransom owner's. | | — (shape) |
+| 3 | J1 is `{{tx.j1.txid|short}}` (block {{tx.j1.height}}); J2 is `{{tx.j2.txid|short}}` (block {{tx.j2.height}}). Each has five inputs of {{tx.j1.in.0.btc}} BTC from five different transactions (two from T1, three from elsewhere) and five outputs of {{tx.j1.out.0.btc}} BTC. Equal outputs from many sources: CoinJoins. The co-spend heuristic does not apply: the three other inputs are not the ransom owner's. | | — (shape) |
 | 4 | Set of five in each round. Two of J1's five outputs are the ransom owner's (two coins in), and two of J2's; at this point which two is undetermined. Rows: *J1: Stops: CoinJoin, set of 5; two of five outputs are the ransom's, which two undetermined.* The same for J2. | | — |
 | 5 | M1 is `{{tx.m1.txid|short}}` (block {{tx.m1.height}}). It spends C1 together with `{{addr.A1}}` (J1's output {{tx.j1.by.A1.n}}) and `{{addr.B1}}` (J2's output {{tx.j2.by.B1.n}}). By co-spend, one wallet holds all three: A1 and B1 are the ransom's. Row: *M1: Resumes: post-mix co-spend; A1 and B1 rejoin the ransom cluster; Moderate.* M1 is not itself a CoinJoin: two unequal outputs. | M1 is a PayJoin, where the payee adds an input of their own (lesson 06-FO): then one of the three inputs is someone else's. | Moderate |
 | 6 | R1's page shows a second payment in: {{tx.m2.by.R1.btc}} BTC in block {{tx.m2.height}}, from `{{addr.B2}}` (J2's output {{tx.j2.by.B2.n}}), in M2 `{{tx.m2.txid|short}}`; then R1 is spent again in block {{tx.dep.height}}. Address reuse: B2 was sent back to the ransom address, so B2 is the ransom's. M2 also carries an OP_RETURN note, "HACKY HACK HACK": text whoever built M2 chose to write, so it fits the reading but adds no independent line, and the confidence stays Moderate. Row: *M2: Resumes: address reuse; J2's second ransom output found; Moderate.* Both of J2's ransom outputs are now found. | Someone else paid R1 (anyone can pay any address). One output, all of B2, sent to R1 makes that unlikely, but it is one line. | Moderate |
@@ -116,7 +116,7 @@ ransom's touches it; its inputs were funded by the course faucet before the rans
 
 ## Common mistakes
 
-- Clustering J1's, J2's or J3's inputs together by co-spend. They are CoinJoins: the rule's known false positive.
+- Clustering J1's, J2's or J3's inputs together by co-spend. They are CoinJoins: the co-spend heuristic's known false positive.
 - Picking one of J1's or J3's outputs because of its position or because it moved first or last.
 - Treating the timing lead or a fitting withdrawal as the ransom's. Each is Low and a lead only.
 - Treating the mixer label as fact. It is one unverified label.
@@ -161,7 +161,7 @@ give the ones below. Confidence words follow the course's scale (`docs/build-spe
 scale"); a fact read straight off the chain takes none. Each question names the slide it comes from.
 
 1. **J1's five inputs were spent together. Why may you not put them in one cluster, and what does the trace do
-   there?** A CoinJoin is the co-spend rule's known false positive: five inputs can be five owners. The trace stops
+   there?** A CoinJoin is the co-spend heuristic's known false positive: five inputs can be five owners. The trace stops
    at a set of five, and the stop takes no confidence word: it is the transaction's shape. (Q3, Q4.) Slides:
    `blockchain-course/lessons/forensics/06-FO-mixers_and_coinjoin.qmd`, "A CoinJoin is many owners in one
    transaction" and "Repeated equal amounts mark a CoinJoin".

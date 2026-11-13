@@ -15,7 +15,7 @@ format:
 
 ## Where the trace goes dark, and what still shows {.smaller}
 
-**Bottom line:** a CoinJoin or a mixer stops the co-spend rule and the change heuristic from day 6 ①. It does not erase the chain: what went in, what came out, and what users did before and after are still on the ledger. Your job is to say where the trace stops and what still shows.
+**Bottom line:** a CoinJoin or a mixer stops the co-spend heuristic and the change heuristic from day 6 ①. It does not erase the chain: what went in, what came out, and what users did before and after are still on the ledger. Your job is to say where the trace stops and what still shows.
 
 ::: {style="font-size: .8em;"}
 
@@ -39,7 +39,7 @@ The lab's product is a limits-of-tracing note: where the trace stops and what st
 This slide opens day 7's first lesson: the tools built to break the day 6 heuristics, and what an analyst can still say once they are used. It matters here because the lab asks for a limits-of-tracing note, not a full trace. Emphasize that "the trace stops here" is a finding, as long as it says why and what still shows.
 
 **Key Points**
-- CoinJoin defeats the co-spend rule; a mixer replaces the coins you were following with other people's.
+- CoinJoin defeats the co-spend heuristic; a mixer replaces the coins you were following with other people's.
 - The ledger still records the inputs, the outputs and the users' later behavior.
 - The note names the stop point, the reason and the leads that remain.
 - Privacy coins (Monero, Zcash) are day 7 ②, not this lesson.
@@ -58,7 +58,7 @@ None
 :::: {.columns}
 ::: {.column width="55%"}
 
-- **The rule it breaks:** day 6 ① read inputs spent together as one owner. A CoinJoin is one transaction that several users build and each sign for their own inputs [@gmaxwell_coinjoinbitcoinprivacy_2013].
+- **The heuristic it breaks:** day 6 ① read inputs spent together as one owner. A CoinJoin is one transaction that several users build and each sign for their own inputs [@gmaxwell_coinjoinbitcoinprivacy_2013].
 - **The cost of missing it:** treating a CoinJoin's inputs as one wallet makes clustering "erroneously merge unrelated address groups" [@svenda_coinjoinecosystem_2026, p. 557].
 - **Anonymity set:** the equal outputs a coin could have become. The larger the set, the weaker any guess.
 - **Analyst move:** mark the transaction as a CoinJoin and do not cluster across it.
@@ -96,7 +96,7 @@ digraph CoinJoinTx {
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide defines CoinJoin as the known false positive of the co-spend rule. It matters here because a missed CoinJoin merges strangers into one cluster, and every later hop inherits the error. Emphasize that the move is to stop clustering, not to guess.
+This slide defines CoinJoin as the known false positive of the co-spend heuristic. It matters here because a missed CoinJoin merges strangers into one cluster, and every later hop inherits the error. Emphasize that the move is to stop clustering, not to guess.
 
 **Key Points**
 - Gregory Maxwell proposed CoinJoin in 2013: users combine their payments into one transaction, each signing only their own inputs.
@@ -106,7 +106,7 @@ This slide defines CoinJoin as the known false positive of the co-spend rule. It
 
 **Walkthrough**
 1. Point at the three inputs: three owners, one transaction.
-2. Ask: if you applied day 6 ①'s rule here, what would your cluster contain? (Users A, B and C as one wallet: wrong.)
+2. Ask: if you applied day 6 ①'s co-spend heuristic here, what would your cluster contain? (Users A, B and C as one wallet: wrong.)
 
 **Sources**
 - @gmaxwell_coinjoinbitcoinprivacy_2013
@@ -164,7 +164,7 @@ This slide shows that CoinJoins are easy to recognize: their equal outputs are t
 - **The mix is one transaction; the user's habits surround it.** "The traceability of addresses during the pre-mixing and post-mixing narrows down the anonymity set" [@stutz_adoptionprivacycoinjoin_2022].
 - **Pre-mix:** Whirlpool first splits "any fresh input" into pool-sized outputs in a TX0 transaction [@svenda_coinjoinecosystem_2026, sec. 2.1]; that transaction spends from the cluster you were tracing.
 - **Address reuse:** paying a mixed output to an address already seen "directly reveals ownership by the same entity"; CoinJoin wallets avoid it, so a reuse is a user's mistake [@svenda_coinjoinecosystem_2026, p. 564].
-- **Post-mix:** outputs spent together after the mix undo it, by the co-spend rule.
+- **Post-mix:** outputs spent together after the mix undo it, by the co-spend heuristic.
 - **Timing:** a large wallet that stays in the mix for many rounds stands out; knowing how long it mixes raises the odds that the outputs leaving at the end are its own [@svenda_coinjoinecosystem_2026, sec. 5.3].
 - **Confidence:** timing alone is Low; a reuse or post-mix co-spend is one strong line, Moderate.
 
@@ -306,7 +306,7 @@ This slide lists the habits that pair a mixer deposit with a withdrawal. It matt
 ## PayJoin hides a co-spend inside a payment {.smaller}
 
 - **What it is:** a protocol "for two parties to negotiate a coinjoin transaction during a payment between them" (BIP 78) [@dorier_bip78payjoin_2019]; its status is Deployed [31 Oct 2026]{.asof}. The receiver adds an input of their own.
-- **What it breaks:** the co-spend rule. "Because payjoin is mixing the inputs of the sender and receiver, this heuristic becomes unreliable" [@dorier_bip78payjoin_2019].
+- **What it breaks:** the co-spend heuristic. "Because payjoin is mixing the inputs of the sender and receiver, this heuristic becomes unreliable" [@dorier_bip78payjoin_2019].
 - **Why it is hard:** a PayJoin "will look like a normal transaction" [@dorier_bip78payjoin_2019]. Unlike a CoinJoin, there are no equal outputs to warn you.
 - **Async PayJoin:** BIP 77 replaces the receiver's own server with an untrusted "directory server", so a receiver need not run one [@gould_bip77asyncpayjoin_2023]; its status is Draft [31 Oct 2026]{.asof}.
 - **For the analyst:** this is why co-spending with no sign of a CoinJoin stays Moderate, not High.
@@ -314,7 +314,7 @@ This slide lists the habits that pair a mixer deposit with a withdrawal. It matt
 ::: {.notes}
 
 **Overall Slide Concept**
-This slide introduces PayJoin, a two-party CoinJoin that looks like an ordinary payment. It matters here because it breaks the co-spend rule without the warning sign of equal outputs. Emphasize that it is the reason day 6 ①'s co-spend row stops at Moderate.
+This slide introduces PayJoin, a two-party CoinJoin that looks like an ordinary payment. It matters here because it breaks the co-spend heuristic without the warning sign of equal outputs. Emphasize that it is the reason day 6 ①'s co-spend row stops at Moderate.
 
 **Key Points**
 - BIP 78 (2019, Deployed): sender and receiver both contribute inputs to the payment.
