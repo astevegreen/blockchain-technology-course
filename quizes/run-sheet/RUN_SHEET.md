@@ -72,7 +72,7 @@ on the dashboard's Marking page (`/instructor/marking`), which shows each studen
 
 | Slot | Teach | File |
 | --- | --- | --- |
-| 0845 | No quiz (nothing to review). Welcome, in this slot (proposed; the spec gives it no time) | `blockchain-course/lessons/introduction/01-IN-course_welcome.qmd` |
+| 0845-0925 | No quiz (nothing to review). Welcome, 40 minutes (owner, 13 Nov 2026). Day 1 only: lesson ① 0925-1015, 5-minute breaks, lesson ② 1020-1110, lesson ③ 1115-1205; buffer and lunch unchanged | `blockchain-course/lessons/introduction/01-IN-course_welcome.qmd` |
 | ① | Blocks and chains; not the same as a cryptocurrency | `blockchain-course/lessons/introduction/02-IN-blockchain_at_a_glance.qmd` |
 | ② | Keys, signatures and addresses (the lesson already opens with the hash-property slides) | `blockchain-course/lessons/primitives/04-CP-asymmetric_encryption_and_digital_signatures.qmd` |
 | ③ | How a public ledger agrees and when it is final | `blockchain-course/lessons/consensus_primitives/01-CM-consensus_in_distributed_systems_and_blockchains_intro.qmd` |
@@ -293,6 +293,6 @@ Run it before anything restarts the tokens lab: a restart wipes the certificates
 ## Open questions for the owner
 
 The owner accepted all of these as written (2 Nov 2026). Proposed in this sheet, not fixed by the spec: set-up before 0845 (above); the 30-minute quiz and discussion block,
-the 10-minute breaks and the 5-minute buffer on days 1 to 9; the week-one check's length on day 5; day 1's Welcome in the 0845 slot; day 10's
+the 10-minute breaks and the 5-minute buffer on days 1 to 9; the week-one check's length on day 5; day 1's Welcome in the 0845 slot (40 minutes, set by the owner 13 Nov 2026); day 10's
 break, post-test start and end time, and whether marking can fit between the post-test and the end of lunch. The
 recommendation is to accept them as written.
